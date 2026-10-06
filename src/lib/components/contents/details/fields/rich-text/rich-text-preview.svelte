@@ -9,9 +9,11 @@
   import { parse, use } from 'marked';
   import markedBidi from 'marked-bidi';
   import { isValidElement } from 'react';
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
+  import { waitForAssetURL } from '$lib/services/api/asset-proxy';
+  import { createGetAsset } from '$lib/services/api/preview-data';
   import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
   import { customComponentRegistry } from '$lib/services/api/registries';
   import { getRichTextImageURL } from '$lib/services/assets/media-field';
@@ -31,7 +33,7 @@
   /**
    * @import { ReactElement } from 'react';
    * @import { FieldPreviewProps } from '$lib/types/private';
-   * @import { MarkdownField, RichTextField } from '$lib/types/public';
+   * @import { ApiAsset, MarkdownField, RichTextField } from '$lib/types/public';
    * @import { ComponentPreview } from '$lib/services/contents/fields/rich-text/previews';
    */
 
@@ -68,8 +70,19 @@
    */
   const previewNodes = new SvelteSet();
 
-  /** @type {Map<string, ComponentPreview>} */
+  /**
+   * Component previews by key. Deliberately not reactive: it is written while `markdown` is
+   * computed.
+   * @type {Map<string, ComponentPreview>}
+   */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
   let previewMap = new Map();
+  /**
+   * Assets the component previews computed in the latest run have got with `getAsset()`, keyed by
+   * the preview key. Deliberately not reactive, like `previewMap`.
+   * @type {Map<string, ApiAsset[]>}
+   */
+  let newPreviewAssets = new Map();
 
   /** @type {FieldPreviewProps & Props} */
   let {
@@ -88,6 +101,11 @@
    * the preview is rendered again with the code blocks highlighted.
    */
   let highlighterVersion = $state(0);
+  /**
+   * Bumped whenever a component preview has been dropped because an asset it got with `getAsset()`
+   * has a new URL. `markdown` reads it so the preview is computed again with the new URL.
+   */
+  let assetURLVersion = $state(0);
   /**
    * Sorted, comma-separated languages already handed to the highlighter, so a repeated edit doesn’t
    * request them again. Deliberately not reactive: it is written while rendering is in progress.
@@ -113,21 +131,40 @@
       )
       .filter((def) => !!def),
   );
+  const componentNames = $derived(componentDefs.map(({ id }) => id));
+  /**
+   * Asset getter passed to each editor component’s `toPreview()`, which resolves a file path the
+   * same way as an image in the preview, including a file that hasn’t been saved yet.
+   */
+  const getAsset = $derived(
+    createGetAsset({
+      entry,
+      collectionName,
+      fileName,
+      files: entryDraft.current?.files,
+      typedKeyPath,
+      componentNames,
+    }),
+  );
 
   const markdown = $derived.by(() => {
     if (typeof currentValue !== 'string' || !currentValue.trim()) {
       return '';
     }
 
+    // Compute again a preview dropped because an asset URL has changed
+    void assetURLVersion;
+
     // Pass the current map so unchanged components keep their existing preview instead of being
     // computed again, which would orphan an element preview along with any component mounted on it
-    const { markdown: string, previewMap: newMap } = buildMarkdownWithPreviews(
-      currentValue,
-      componentDefs,
-      previewMap,
-    );
+    const {
+      markdown: string,
+      previewMap: newMap,
+      assetMap,
+    } = buildMarkdownWithPreviews(currentValue, componentDefs, previewMap, getAsset);
 
     previewMap = newMap;
+    newPreviewAssets = assetMap;
 
     return string;
   });
@@ -288,6 +325,42 @@
   };
 
   /**
+   * Compute a component preview again once an asset it got with `getAsset()` has a new URL: the
+   * blob URL of a file that had to be retrieved first. The file may not have been published, in
+   * which case the public path the asset initially had doesn’t point to it. A string preview is
+   * then rendered again with the rest of the Markdown, while an element or React element preview
+   * replaces the current one in its placeholder, which stays as is.
+   * @param {Map<string, ApiAsset[]>} assetMap Assets the newly computed previews have got, keyed by
+   * the preview key.
+   */
+  const refreshOnAssetURLChange = (assetMap) => {
+    assetMap.forEach((assets, key) => {
+      const preview = previewMap.get(key);
+
+      Promise.all(assets.map(waitForAssetURL)).then(async (results) => {
+        // The preview may have been replaced meanwhile, e.g. because the component was edited
+        if (!results.includes(true) || previewMap.get(key) !== preview) {
+          return;
+        }
+
+        previewMap.delete(key);
+        assetURLVersion += 1;
+        await tick();
+
+        container?.querySelectorAll(`[data-component-key="${key}"]`).forEach((element) => {
+          const root = reactRoots.get(/** @type {HTMLElement} */ (element));
+
+          root?.unmount();
+          reactRoots.delete(/** @type {HTMLElement} */ (element));
+          renderComponent(/** @type {HTMLElement} */ (element));
+        });
+
+        notifyRemovedPreviews();
+      });
+    });
+  };
+
+  /**
    * Replace the `src` of an image element with the URL from the media field. This is needed to
    * properly display media fields in the preview, as the markdown may contain internal paths that
    * have to be resolved to blob URLs.
@@ -310,7 +383,7 @@
       collectionName,
       fileName,
       typedKeyPath,
-      componentNames: componentDefs.map(({ id }) => id),
+      componentNames,
     });
 
     if (url) {
@@ -386,6 +459,12 @@
     if (markdown) {
       preloadHighlighter(markdown);
     }
+  });
+
+  $effect(() => {
+    // Watch the assets of the previews computed along with the latest Markdown
+    void markdown;
+    refreshOnAssetURLChange(newPreviewAssets);
   });
 
   onMount(() => {

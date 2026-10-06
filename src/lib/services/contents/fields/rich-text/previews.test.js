@@ -1,8 +1,24 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
-import { describe, expect, it, vi } from 'vitest';
+import { fromJS, isList } from 'immutable';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { buildMarkdownWithPreviews, encodeImageSrc, splitMarkdownBlocks } from './previews.js';
+import {
+  buildMarkdownWithPreviews,
+  encodeImageSrc,
+  getComponentFieldList,
+  getNoAsset,
+  splitMarkdownBlocks,
+} from './previews.js';
+
+const { immutableLoaded } = vi.hoisted(() => ({
+  immutableLoaded: { current: false },
+}));
+
+vi.mock('$lib/services/api/immutable', () => ({
+  getImmutable: () => ({ fromJS }),
+  immutableLoaded,
+}));
 
 describe('encodeImageSrc', () => {
   it('should encode spaces in image URLs without title', () => {
@@ -558,7 +574,11 @@ describe('buildMarkdownWithPreviews', () => {
       const B = elementDef('B');
       const { markdown, previewMap } = buildMarkdownWithPreviews(nested, [A, B]);
 
-      expect(A.toPreview).toHaveBeenCalledWith({ body: 'outer\n\n<B>\n\ninner\n\n</B>' });
+      expect(A.toPreview).toHaveBeenCalledWith(
+        { body: 'outer\n\n<B>\n\ninner\n\n</B>' },
+        expect.any(Function),
+        undefined,
+      );
       expect(B.toPreview).not.toHaveBeenCalled();
       expect(previewMap.size).toBe(1);
       expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
@@ -569,7 +589,11 @@ describe('buildMarkdownWithPreviews', () => {
       const B = elementDef('B');
       const { markdown, previewMap } = buildMarkdownWithPreviews(nested, [B, A]);
 
-      expect(A.toPreview).toHaveBeenCalledWith({ body: 'outer\n\n<B>\n\ninner\n\n</B>' });
+      expect(A.toPreview).toHaveBeenCalledWith(
+        { body: 'outer\n\n<B>\n\ninner\n\n</B>' },
+        expect.any(Function),
+        undefined,
+      );
       expect(B.toPreview).not.toHaveBeenCalled();
       expect(previewMap.size).toBe(1);
       expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
@@ -588,7 +612,7 @@ describe('buildMarkdownWithPreviews', () => {
 
       expect(first.markdown).toMatch(expected);
       expect(first.previewMap.size).toBe(2);
-      expect(B.toPreview).toHaveBeenCalledWith({ body: 'inner' });
+      expect(B.toPreview).toHaveBeenCalledWith({ body: 'inner' }, expect.any(Function), undefined);
 
       const second = buildMarkdownWithPreviews(nested, [B, A]);
 
@@ -718,7 +742,7 @@ describe('buildMarkdownWithPreviews', () => {
 
       expect(markdown).toMatch(/^<A>outer\n\n<span data-component-key="[^"]+"><\/span><\/A>$/);
       expect(previewMap.size).toBe(2);
-      expect(B.toPreview).toHaveBeenCalledWith({ body: 'inner' });
+      expect(B.toPreview).toHaveBeenCalledWith({ body: 'inner' }, expect.any(Function), undefined);
     });
 
     it('should substitute a component that a preview exposes through a list item', () => {
@@ -740,7 +764,7 @@ describe('buildMarkdownWithPreviews', () => {
       const { markdown } = buildMarkdownWithPreviews(nested, [A, B]);
 
       expect(markdown).toMatch(/^<li>outer\n\n<span data-component-key="[^"]+"><\/span><\/li>$/);
-      expect(B.toPreview).toHaveBeenCalledWith({ body: 'inner' });
+      expect(B.toPreview).toHaveBeenCalledWith({ body: 'inner' }, expect.any(Function), undefined);
     });
 
     it('should stop after a bounded number of passes when a value reproduces its syntax', () => {
@@ -763,6 +787,89 @@ describe('buildMarkdownWithPreviews', () => {
       expect(previewMap.size).toBe(10);
       expect(markdown).toBe(`${'<b>'.repeat(10)}[loop]${'</b>'.repeat(10)}`);
     });
+  });
+});
+
+describe('toPreview arguments', () => {
+  /**
+   * Create a definition whose preview records the arguments it receives.
+   * @returns {import('$lib/types/public').EditorComponentDefinition & { toPreview: any }} Def.
+   */
+  const imageDef = () => ({
+    id: 'figure',
+    label: 'Figure',
+    fields: [{ name: 'src', widget: 'image' }],
+    pattern: /^:::figure (?<src>.+)$/m,
+    toBlock: ({ src }) => `:::figure ${src}`,
+    toPreview: vi.fn((/** @type {any} */ { src }, /** @type {any} */ getAsset) => {
+      const asset = getAsset(src);
+
+      return `<img src="${asset ?? ''}" alt="">`;
+    }),
+  });
+
+  afterEach(() => {
+    immutableLoaded.current = false;
+  });
+
+  it('should never find an asset without a getter', () => {
+    expect(getNoAsset('photo.jpg')).toBeUndefined();
+
+    const { markdown } = buildMarkdownWithPreviews(':::figure photo.jpg', [imageDef()]);
+
+    expect(markdown).toBe('<img src="" alt="">');
+  });
+
+  it('should pass the given asset getter', () => {
+    const getAsset = vi.fn(() => /** @type {any} */ ({ toString: () => 'blob:photo' }));
+    const def = imageDef();
+
+    const { markdown, previewMap, assetMap } = buildMarkdownWithPreviews(
+      ':::figure photo.jpg\n\n:::figure none.jpg',
+      [def],
+      undefined,
+      (path) => (path === 'photo.jpg' ? getAsset() : undefined),
+    );
+
+    expect(getAsset).toHaveBeenCalledOnce();
+    expect(def.toPreview).toHaveBeenCalledWith(
+      { src: 'photo.jpg' },
+      expect.any(Function),
+      undefined,
+    );
+
+    // The assets each preview has got are reported, so the preview can be computed again once
+    // their URL changes, but only for the previews computed in this run
+    const [photoKey] = previewMap.keys();
+
+    expect([...assetMap.keys()]).toEqual([photoKey]);
+    expect(assetMap.get(photoKey)).toEqual([getAsset.mock.results[0].value]);
+    expect(buildMarkdownWithPreviews(':::figure photo.jpg', [def], previewMap).assetMap.size).toBe(
+      0,
+    );
+    expect(markdown).toBe('<img src="blob:photo" alt="">\n\n<img src="" alt="">');
+  });
+
+  it('should pass the fields as an Immutable List once Immutable.js is loaded', () => {
+    const def = imageDef();
+
+    expect(getComponentFieldList(def)).toBeUndefined();
+
+    immutableLoaded.current = true;
+
+    const fields = getComponentFieldList(def);
+
+    expect(isList(fields)).toBe(true);
+    expect(fields?.toJS()).toEqual(def.fields);
+    // The list is created once per component
+    expect(getComponentFieldList(def)).toBe(fields);
+
+    buildMarkdownWithPreviews(':::figure photo.jpg', [def]);
+
+    expect(def.toPreview).toHaveBeenCalledWith({ src: 'photo.jpg' }, expect.any(Function), fields);
+    expect(
+      def.toPreview.mock.calls[0][2].find((/** @type {any} */ f) => f.get('widget') === 'image'),
+    ).toBeDefined();
   });
 });
 

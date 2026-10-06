@@ -6,6 +6,10 @@ import {
   isMultiLinePattern,
   normalizeProps,
 } from '$lib/services/contents/fields/rich-text/components/utils';
+import {
+  getComponentFieldList,
+  getNoAsset,
+} from '$lib/services/contents/fields/rich-text/previews';
 
 /**
  * @import {
@@ -55,12 +59,14 @@ const getTagName = (preview, block) => {
  * that needs the values can throw, e.g. by reading a property of `undefined`. The tag is then left
  * unknown, rather than the error breaking the editor, which creates the node class of every
  * registered component, whether an entry uses it or not.
- * @param {((props: Record<string, any>) => any) | undefined} method `toPreview()` or `toBlock()`.
+ * @param {((props: Record<string, any>, ...args: any[]) => any) | undefined} method `toPreview()`
+ * or `toBlock()`.
+ * @param {any[]} [args] Other arguments, e.g. the asset getter and field list for `toPreview()`.
  * @returns {any} Return value, or `undefined` if the method is missing or has thrown.
  */
-const callWithEmptyProps = (method) => {
+const callWithEmptyProps = (method, args = []) => {
   try {
-    return method?.({});
+    return method?.({}, ...args);
   } catch {
     return undefined;
   }
@@ -86,7 +92,7 @@ export const createCustomNodeClass = (componentDef) => {
   } = componentDef;
 
   const inline = !isMultiLinePattern(pattern);
-  const preview = callWithEmptyProps(toPreview);
+  const preview = callWithEmptyProps(toPreview, [getNoAsset, getComponentFieldList(componentDef)]);
   const block = callWithEmptyProps(toBlock);
   const tagName = getTagName(preview, block);
 

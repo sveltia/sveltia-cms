@@ -255,6 +255,261 @@ describe('RichTextPreview', () => {
     }
   });
 
+  test('passes an asset getter to the component preview', async () => {
+    customComponentRegistry.set('video', {
+      id: 'video',
+      label: 'Video',
+      fields: [
+        { name: 'src', widget: 'file', media_folder: '/static/videos', public_folder: '/videos' },
+      ],
+      pattern: /^:::video (?<src>.+)$/m,
+      /**
+       * Build the Markdown.
+       * @param {any} data Data.
+       * @returns {string} Markdown.
+       */
+      toBlock: ({ src }) => `:::video ${src}`,
+      /**
+       * Build the preview with the asset URL, which the preview can’t resolve by itself.
+       * @param {any} data Data.
+       * @param {any} getAsset Asset getter.
+       * @returns {HTMLElement} Element.
+       */
+      toPreview: ({ src }, getAsset) => {
+        const video = document.createElement('video');
+
+        video.src = getAsset(src)?.url ?? '';
+        video.dataset.path = src;
+
+        return video;
+      },
+    });
+
+    const videoFolder = {
+      componentName: 'video',
+      typedKeyPath: 'src',
+      internalPath: 'static/videos',
+      publicPath: '/videos',
+      entryRelative: false,
+      hasTemplateTags: false,
+    };
+
+    allAssetFolders.current = /** @type {any[]} */ ([
+      { internalPath: 'static/uploads', publicPath: '/uploads', entryRelative: false },
+      videoFolder,
+    ]);
+    allAssets.current = /** @type {any[]} */ ([
+      {
+        path: 'static/videos/clip.mp4',
+        name: 'clip.mp4',
+        blobURL: 'blob:clip',
+        folder: videoFolder,
+      },
+    ]);
+
+    const fieldConfig = /** @type {RichTextField} */ ({ name: 'body', widget: 'richtext' });
+    const draft = createMockDraft({ fields: [fieldConfig] });
+    const file = new File(['new'], 'new.mp4', { type: 'video/mp4' });
+
+    // A file added to the draft but not saved yet is referred to with its blob URL
+    draft.files = { 'blob:new-clip': { file, folder: undefined, replace: false } };
+
+    try {
+      const { container } = await renderWithDraft(RichTextPreview, {
+        draft,
+        props: {
+          locale: '_default',
+          keyPath: 'body',
+          typedKeyPath: 'body',
+          fieldConfig,
+          currentValue: ':::video clip.mp4\n\n:::video blob:new-clip\n\n:::video missing.mp4',
+        },
+      });
+
+      const preview = /** @type {HTMLElement} */ (
+        container.querySelector('[data-rich-text-preview]')
+      );
+
+      /**
+       * Get the `src` of the video preview for the given path.
+       * @param {string} path Path.
+       * @returns {string | null | undefined} Attribute value.
+       */
+      const getSrc = (path) =>
+        preview.querySelector(`video[data-path="${path}"]`)?.getAttribute('src');
+
+      await expect.poll(() => getSrc('clip.mp4')).toBe('blob:clip');
+      expect(getSrc('blob:new-clip')).toBe('blob:new-clip');
+      expect(getSrc('missing.mp4')).toBe('');
+    } finally {
+      allAssetFolders.current = [];
+      allAssets.current = [];
+    }
+  });
+
+  describe('a preview that got an asset still being retrieved', () => {
+    const folder = {
+      internalPath: 'static/uploads',
+      publicPath: '/uploads',
+      entryRelative: false,
+      hasTemplateTags: false,
+    };
+
+    /** @type {(file: File) => void} */
+    let resolveFile;
+
+    beforeEach(() => {
+      // The file is read from the repository once it’s requested, which the test decides when
+      const file = new Promise((resolve) => {
+        resolveFile = resolve;
+      });
+
+      allAssetFolders.current = /** @type {any[]} */ ([folder]);
+      allAssets.current = /** @type {any[]} */ ([
+        {
+          path: 'static/uploads/clip.mp4',
+          name: 'clip.mp4',
+          folder,
+          handle: { getFile: vi.fn(() => file) },
+        },
+      ]);
+    });
+
+    afterEach(() => {
+      allAssetFolders.current = [];
+      allAssets.current = [];
+    });
+
+    /**
+     * Define a video component with the given preview.
+     * @param {(data: any, getAsset: any) => any} toPreview Preview builder.
+     * @returns {any} Spied preview builder.
+     */
+    const defineVideo = (toPreview) => {
+      const spy = vi.fn(toPreview);
+
+      customComponentRegistry.set('video', {
+        id: 'video',
+        label: 'Video',
+        fields: [{ name: 'src', widget: 'file' }],
+        pattern: /^:::video (?<src>.+)$/m,
+        /**
+         * Build the Markdown.
+         * @param {any} data Data.
+         * @returns {string} Markdown.
+         */
+        toBlock: ({ src }) => `:::video ${src}`,
+        toPreview: spy,
+      });
+
+      return spy;
+    };
+
+    /**
+     * Let the file be read.
+     */
+    const retrieveFile = () => {
+      resolveFile(new File(['clip'], 'clip.mp4', { type: 'video/mp4' }));
+    };
+
+    test('replaces an element preview once the asset has its blob URL', async () => {
+      const toPreview = defineVideo(({ src }, getAsset) => {
+        const video = document.createElement('video');
+
+        video.src = getAsset(src)?.url ?? '';
+        video.dataset.url = getAsset(src)?.url ?? '';
+
+        return video;
+      });
+
+      const onUnmount = vi.fn();
+      const preview = await renderPreview(':::video /uploads/clip.mp4');
+      /**
+       * Get the video in the preview.
+       * @returns {HTMLVideoElement | null} Video.
+       */
+      const video = () => preview.querySelector('video');
+
+      await expect.poll(() => video()?.dataset.url).toBe('/uploads/clip.mp4');
+      video()?.addEventListener('Unmount', onUnmount);
+      retrieveFile();
+
+      await expect.poll(() => video()?.dataset.url).toMatch(/^blob:/);
+      expect(toPreview).toHaveBeenCalledTimes(2);
+      // The previous element is told it’s gone
+      expect(onUnmount).toHaveBeenCalledOnce();
+    });
+
+    test('renders a React element preview again once the asset has its blob URL', async () => {
+      await loadReactDom();
+      defineVideo(({ src }, getAsset) =>
+        createElement('video', { 'data-url': getAsset(src)?.url ?? '' }),
+      );
+
+      const preview = await renderPreview(':::video /uploads/clip.mp4');
+      /**
+       * Get the URL the video preview got.
+       * @returns {string | undefined} URL.
+       */
+      const url = () => preview.querySelector('video')?.dataset.url;
+
+      await expect.poll(url).toBe('/uploads/clip.mp4');
+      retrieveFile();
+      await expect.poll(url).toMatch(/^blob:/);
+      expect(preview.querySelectorAll('video')).toHaveLength(1);
+    });
+
+    test('renders a string preview again once the asset has its blob URL', async () => {
+      defineVideo(({ src }, getAsset) => `<video data-url="${getAsset(src)?.url ?? ''}"></video>`);
+
+      const preview = await renderPreview(':::video /uploads/clip.mp4');
+      /**
+       * Get the URL the video preview got.
+       * @returns {string | undefined} URL.
+       */
+      const url = () => preview.querySelector('video')?.dataset.url;
+
+      await expect.poll(url).toBe('/uploads/clip.mp4');
+      retrieveFile();
+      await expect.poll(url).toMatch(/^blob:/);
+    });
+
+    test('leaves a preview whose asset already has its blob URL or is gone', async () => {
+      const toPreview = defineVideo(
+        ({ src }, getAsset) => `<video data-url="${getAsset(src)?.url ?? ''}"></video>`,
+      );
+
+      allAssets.current[0].blobURL = 'blob:clip';
+
+      const preview = await renderPreview(':::video /uploads/clip.mp4');
+
+      await expect.poll(() => preview.querySelector('video')?.dataset.url).toBe('blob:clip');
+      // Wait for the asset to report its URL hasn’t changed
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      expect(toPreview).toHaveBeenCalledOnce();
+    });
+
+    test('leaves a preview that has been replaced meanwhile', async () => {
+      const toPreview = defineVideo(
+        ({ src }, getAsset) => `<video data-url="${getAsset(src)?.url ?? ''}"></video>`,
+      );
+
+      const { preview, props } = await renderPreviewWithProps(':::video /uploads/clip.mp4');
+
+      await expect.poll(() => preview.querySelector('video')).not.toBeNull();
+      props.currentValue = 'No video';
+      await expect.poll(() => preview.querySelector('video')).toBeNull();
+      retrieveFile();
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      expect(toPreview).toHaveBeenCalledOnce();
+      expect(preview.querySelector('video')).toBeNull();
+    });
+  });
+
   test('mounts an element preview, and notifies it when it’s removed', async () => {
     const element = document.createElement('em');
 

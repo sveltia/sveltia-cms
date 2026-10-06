@@ -1,4 +1,5 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../fixtures/configs/workflow.js';
+import { createPNG } from '../fixtures/files.js';
 import { BASE_CONFIG, expect, test } from '../fixtures/test.js';
 
 /**
@@ -245,6 +246,111 @@ test.describe('CMS.registerEditorComponent()', () => {
 
     await expect(preview).toContainText('{{< youtube dQw4w9WgXcQ >}}');
     await expect(preview.locator('.video')).toHaveCount(0);
+  });
+});
+
+test.describe('toPreview() arguments', () => {
+  test.use({ config: CONFIG });
+
+  test.beforeEach(async ({ cms, page }) => {
+    // A figure whose preview shows the URL `getAsset` resolves rather than an `<img>`, as the CMS
+    // replaces the `src` of an image by itself. The `fields` argument is read the way the built-in
+    // image component of Decap CMS does
+    await addScripts(page, {
+      after: `
+        CMS.registerEditorComponent({
+          id: 'figure',
+          label: 'Figure',
+          fields: [
+            { name: 'src', label: 'Image', widget: 'image' },
+            { name: 'caption', label: 'Caption', required: false },
+          ],
+          pattern: /^{{< figure src="(?<src>.*?)" >}}$/m,
+          toBlock: ({ src = '' }) => '{{< figure src="' + src + '" >}}',
+          toPreview: ({ src = '' }, getAsset, fields) => {
+            const imageField = fields?.find((field) => field.get('widget') === 'image');
+            const element = document.createElement('figure');
+
+            element.dataset.src = src;
+            element.dataset.url = getAsset(src, imageField)?.url ?? '';
+            element.dataset.field = imageField?.get('name') ?? '';
+
+            return element;
+          },
+        });
+      `,
+    });
+    await cms.open();
+  });
+
+  /**
+   * Get the figure preview for the given path.
+   * @param {Page} page Page.
+   * @param {string} src Path in the Markdown.
+   * @returns {Locator} Figure.
+   */
+  const getFigure = (page, src) =>
+    page.getByRole('document', { name: 'Content Preview' }).locator(`figure[data-src="${src}"]`);
+
+  test('resolves a file in the repository, and passes the fields', async ({ cms, page }) => {
+    await cms.seed({
+      'static/images/photo.png': createPNG({ color: [40, 120, 200] }),
+      'content/posts/gallery.md':
+        '---\ntitle: Gallery\n---\n\n{{< figure src="/images/photo.png" >}}\n',
+    });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Gallery/ }).click();
+
+    const figure = getFigure(page, '/images/photo.png');
+
+    // The asset has the public path until the file is read from the repository, which doesn’t point
+    // to a file that hasn’t been published; the preview is computed again with the blob URL
+    await expect(figure).toHaveAttribute('data-url', /^blob:/);
+    await expect(figure).toHaveAttribute('data-field', 'src');
+  });
+
+  test('resolves a file picked in the component but not saved yet', async ({ cms, page }) => {
+    await cms.signIn();
+
+    const editor = await createPost(page, 'Gallery');
+    const field = editor.getByRole('group', { name: /Body.*Field/ });
+
+    await cms.chooseMenuItem(
+      field.getByRole('button', { name: 'Insert' }),
+      page.getByRole('menuitem', { name: 'Figure' }),
+    );
+    await field
+      .getByRole('group', { name: 'Figure', exact: true })
+      .getByRole('group', { name: /Image/ })
+      .locator('input[type="file"]')
+      .first()
+      .setInputFiles({
+        name: 'dome.png',
+        mimeType: 'image/png',
+        buffer: createPNG({ color: [200, 180, 40] }),
+      });
+
+    const figure = page
+      .getByRole('document', { name: 'Content Preview' })
+      .locator('figure[data-src]:not([data-src=""])');
+
+    await expect(figure).toHaveAttribute('data-url', /^blob:/);
+  });
+
+  test('returns an external URL as is, and nothing for a missing file', async ({ cms, page }) => {
+    await cms.seed({
+      'content/posts/gallery.md':
+        '---\ntitle: Gallery\n---\n\n{{< figure src="https://example.com/photo.png" >}}\n\n' +
+        '{{< figure src="/images/missing.png" >}}\n',
+    });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Gallery/ }).click();
+
+    await expect(getFigure(page, 'https://example.com/photo.png')).toHaveAttribute(
+      'data-url',
+      'https://example.com/photo.png',
+    );
+    await expect(getFigure(page, '/images/missing.png')).toHaveAttribute('data-url', '');
   });
 });
 

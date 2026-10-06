@@ -556,6 +556,22 @@ describe('CMS.registerEditorComponent()', () => {
 
     expect(() => CMS.registerEditorComponent(definition)).not.toThrow();
   });
+
+  test('preloads Immutable.js only if `toPreview` takes the field list', () => {
+    CMS.registerEditorComponent(validDefinition);
+    CMS.registerEditorComponent({ ...validDefinition, toPreview: undefined });
+    expect(preloadImmutable).not.toHaveBeenCalled();
+
+    CMS.registerEditorComponent({
+      ...validDefinition,
+      toPreview: (
+        /** @type {any} */ _props,
+        /** @type {any} */ _getAsset,
+        /** @type {any} */ _fields,
+      ) => 'preview',
+    });
+    expect(preloadImmutable).toHaveBeenCalledOnce();
+  });
 });
 
 describe('CMS.registerPreviewStyle()', () => {

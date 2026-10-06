@@ -237,6 +237,12 @@ const registerEditorComponent = (definition) => {
   }
 
   customComponentRegistry.set(definition.id, definition);
+
+  // `toPreview()` receives the component’s fields as an Immutable List, like Netlify/Decap CMS, so
+  // start loading the library now if the function takes them, rather than for every component
+  if ((definition.toPreview?.length ?? 0) >= 3) {
+    preloadImmutable();
+  }
 };
 
 /**

@@ -1,6 +1,6 @@
 /**
  * @import { ComponentType, ReactElement } from 'react';
- * @import { MapOf } from 'immutable';
+ * @import { List, MapOf } from 'immutable';
  */
 
 /**
@@ -2237,18 +2237,26 @@
  * @property {(props: Record<string, any>) => string} toBlock Function to convert field values to
  * Markdown content. It’s also called once with an empty object when the component is first used in
  * a rich text editor or preview, so it must handle missing values.
- * @property {(props: Record<string, any>) => string | HTMLElement | ReactElement} [toPreview]
- * Function to convert field values to the component preview. Like `toBlock`, it’s also called once
- * with an empty object when the component is first used in a rich text editor or preview. A string
- * is parsed as Markdown/HTML and sanitized unless the `sanitize_preview` field option is disabled,
- * while an `HTMLElement` (e.g. an element with a Svelte or Vue component mounted on it) or a React
- * element is inserted as is without sanitization, so the developer is responsible for escaping any
- * user-provided content. An `HTMLElement` preview receives an `Unmount` event once it’s removed
- * from the preview pane or the preview is closed, which can be used to destroy the mounted
- * component. A preview is reused while the component’s Markdown is unchanged. If the function is
- * omitted or returns another type of value, nothing is shown in the preview. The value of a nested
- * RichText or Markdown field is passed verbatim, including any nested component syntax; use
- * `CMS.renderRichText()` to render it within an `HTMLElement` preview.
+ * @property {(props: Record<string, any>, getAsset: GetAsset, fields: List<MapOf<Record<string,
+ * any>>> | undefined) => string | HTMLElement | ReactElement} [toPreview] Function to convert field
+ * values to the component preview. Like `toBlock`, it’s also called once with an empty object when
+ * the component is first used in a rich text editor or preview. The second argument is a function
+ * that returns the asset item for a file path, e.g. an image field value, so the preview can
+ * display a file that hasn’t been published yet; the media folders of editor component fields are
+ * also searched. The third argument is the component’s `fields` as an Immutable List, for
+ * compatibility with Netlify/Decap CMS; it’s `undefined` until Immutable.js, which is loaded on
+ * demand when a component whose `toPreview` takes three parameters is registered, is available. A
+ * string is parsed as Markdown/HTML and sanitized unless the `sanitize_preview` field option is
+ * disabled, while an `HTMLElement` (e.g. an element with a Svelte or Vue component mounted on it)
+ * or a React element is inserted as is without sanitization, so the developer is responsible for
+ * escaping any user-provided content. An `HTMLElement` preview receives an `Unmount` event once
+ * it’s removed from the preview pane or the preview is closed, which can be used to destroy the
+ * mounted component. A preview is reused while the component’s Markdown is unchanged, except that
+ * it’s computed again once an asset it got with `getAsset` has been retrieved, as the asset’s `url`
+ * is then replaced with the blob URL. If the function is omitted or returns another type of value,
+ * nothing is shown in the preview. The value of a nested RichText or Markdown field is passed
+ * verbatim, including any nested component syntax; use `CMS.renderRichText()` to render it within
+ * an `HTMLElement` preview.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
@@ -2350,6 +2358,16 @@
  */
 
 /**
+ * Function that returns the asset item for a given path: an asset in the repository, a file added
+ * to the entry draft but not saved yet, which a field value refers to with its blob URL, or a file
+ * on an external location, which a field value refers to with its URL. It returns `undefined` if
+ * the asset is not found. The `field` argument of Netlify/Decap CMS, the configuration of the field
+ * the path comes from, is accepted but not used; the asset is looked up in the media folders that
+ * apply to the entry.
+ * @typedef {(path: string, field?: any) => ApiAsset | undefined} GetAsset
+ */
+
+/**
  * Widget preview data returned by `widgetsFor`.
  * @typedef {object} WidgetsForData
  * @property {unknown} data Raw values for the list item or object, as an Immutable collection or a
@@ -2369,8 +2387,8 @@
  * @typedef {object} CustomPreviewBaseProps
  * @property {MapOf<ApiEntry>} entry Entry data for the preview, wrapped in an Immutable Map. Read
  * the entry content from `entry.getIn(['data', 'fieldName'])`.
- * @property {(path: string) => ApiAsset | undefined} getAsset Function that returns the asset item
- * for a given path. Returns `undefined` if the asset is not found.
+ * @property {GetAsset} getAsset Function that returns the asset item for a given path. Returns
+ * `undefined` if the asset is not found.
  * @property {MapOf<Record<string, any>>} fieldsMetaData Immutable Map of metadata from all fields
  * in the entry, keyed by field key path, e.g. `author` or `details.author`. For a Relation field,
  * it contains the referenced entry content in the `{ [collectionName]: { [value]: content } }`
@@ -2468,7 +2486,7 @@
  * for a control that shows values derived from other fields in the same entry, such as dynamically
  * generated select options. The prop is updated whenever any field in the entry is updated. It’s
  * `undefined` if the control is rendered outside an entry draft.
- * @property {((path: string) => ApiAsset | undefined) | undefined} getAsset Function that returns
+ * @property {GetAsset | undefined} getAsset Function that returns
  * the asset item for a given path, e.g. a file path stored in the value, or `undefined` if not
  * found. Use its `url` property to display the file in the control. It’s the same as the `getAsset`
  * prop of a preview. It’s `undefined` if the control is rendered outside an entry draft.

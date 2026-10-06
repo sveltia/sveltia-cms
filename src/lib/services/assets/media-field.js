@@ -129,23 +129,25 @@ export const getMediaFieldURL = async ({ thumbnail = false, ...args }) =>
   getSourceURL(getMediaFieldSource(args), thumbnail);
 
 /**
- * Get the blob or public URL of an image in a RichText field preview. The image may come from the
- * preview of a custom editor component, whose fields can have their own media folders. As the
- * preview HTML doesn’t tell which component an image comes from, the media folders of the given
- * components are searched if the image is not found for the RichText field itself.
+ * Resolve a file referenced in a RichText field preview to the file it points to, without loading
+ * it. The file may come from the preview of a custom editor component, whose fields can have their
+ * own media folders. As the preview doesn’t tell which component a file comes from, the media
+ * folders of the given components are searched if the file is not found for the RichText field
+ * itself.
  * @param {object} args Arguments.
- * @param {string} args.value Image `src`.
+ * @param {string} args.value File path or URL, e.g. an image `src`.
  * @param {Entry} [args.entry] Associated entry. Can be `undefined` when editing a new draft.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Key path of the RichText field.
  * @param {string[]} args.componentNames Names or IDs of the components the field can contain.
- * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
+ * @returns {MediaFieldSource | undefined} The URL of a file on an external location, or the asset
+ * in the repository. `undefined` if the value is empty or the asset is not found.
  */
-export const getRichTextImageURL = async ({ componentNames, ...args }) => {
+export const getRichTextMediaSource = ({ componentNames, ...args }) => {
   const customComponentNames = componentNames.map(getCustomComponentName).filter(Boolean);
 
-  const source =
+  return (
     getMediaFieldSource(args) ??
     allAssetFolders.current
       .values()
@@ -156,7 +158,20 @@ export const getRichTextImageURL = async ({ componentNames, ...args }) => {
       .map(({ componentName, typedKeyPath }) =>
         getMediaFieldSource({ ...args, componentName, typedKeyPath }),
       )
-      .find(Boolean);
-
-  return getSourceURL(source);
+      .find(Boolean)
+  );
 };
+
+/**
+ * Get the blob or public URL of an image in a RichText field preview. See
+ * {@link getRichTextMediaSource} for how the image is located.
+ * @param {object} args Arguments.
+ * @param {string} args.value Image `src`.
+ * @param {Entry} [args.entry] Associated entry. Can be `undefined` when editing a new draft.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {TypedFieldKeyPath} [args.typedKeyPath] Key path of the RichText field.
+ * @param {string[]} args.componentNames Names or IDs of the components the field can contain.
+ * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
+ */
+export const getRichTextImageURL = async (args) => getSourceURL(getRichTextMediaSource(args));

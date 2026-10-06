@@ -1,8 +1,10 @@
 import { AssetProxy } from '$lib/services/api/asset-proxy';
+import { ExternalAssetProxy } from '$lib/services/api/external-asset-proxy';
 import { getImmutable } from '$lib/services/api/immutable';
 import { UnsavedAssetProxy } from '$lib/services/api/unsaved-asset-proxy';
-import { getAssetByPath, isAssetInFolder } from '$lib/services/assets';
+import { isAssetInFolder } from '$lib/services/assets';
 import { getAssetFolder } from '$lib/services/assets/folders';
+import { getMediaFieldSource, getRichTextMediaSource } from '$lib/services/assets/media-field';
 import { allAssets } from '$lib/services/assets/state';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
@@ -21,8 +23,9 @@ import { unflattenMap } from '$lib/services/utils/object';
  * FlattenedEntryContent,
  * GetFieldArgs,
  * InternalLocaleCode,
+ * TypedFieldKeyPath,
  * } from '$lib/types/private';
- * @import { ApiAsset, ApiEntry, FieldKeyPath } from '$lib/types/public';
+ * @import { ApiAsset, ApiEntry, FieldKeyPath, GetAsset } from '$lib/types/public';
  */
 
 /**
@@ -31,7 +34,7 @@ import { unflattenMap } from '$lib/services/utils/object';
  * @property {FlattenedEntryContent} valueMap Flattened content values for the current locale.
  * @property {Omit<GetFieldArgs, 'keyPath'>} getFieldArgs Arguments for getField function.
  * @property {MapOf<any>} fieldsMetaData Metadata for fields in the current locale.
- * @property {(path: string) => ApiAsset | undefined} getAsset Function to get asset URLs.
+ * @property {GetAsset} getAsset Function to get asset URLs.
  */
 
 /**
@@ -122,20 +125,26 @@ export const convertEntryToMap = ({ entry, locale, collectionName, associatedAss
 };
 
 /**
- * Create an asset getter function for React components (preview templates and custom field types).
+ * Create an asset getter function for React components (preview templates and custom field types)
+ * and editor component previews, compatible with the `getAsset` function of Netlify/Decap CMS.
  * @param {object} args Arguments.
- * @param {Entry} args.entry Entry object.
+ * @param {Entry} [args.entry] Entry object. Can be `undefined` when editing a new draft.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
  * @param {EntryFileMap} [args.files] Files added to the entry draft but not saved yet, keyed by the
  * blob URLs the field values refer to them with.
- * @returns {(path: string) => ApiAsset | undefined} Function that gets asset URLs.
+ * @param {TypedFieldKeyPath} [args.typedKeyPath] Key path of the RichText field, when the getter is
+ * used by editor component previews.
+ * @param {string[]} [args.componentNames] Names or IDs of the editor components the RichText field
+ * can contain, whose field-level media folders are also searched.
+ * @returns {GetAsset} Function that gets asset URLs.
  */
 export const createGetAsset =
-  ({ entry, collectionName, fileName, files }) =>
+  ({ entry, collectionName, fileName, files, typedKeyPath, componentNames }) =>
   /**
-   * Get the asset URL for a given asset path.
-   * @param {string} path Path to the asset, or the blob URL of a file that hasn’t been saved yet.
+   * Get the asset for a given asset path.
+   * @param {string} path Path to the asset, the blob URL of a file that hasn’t been saved yet, or
+   * the URL of a file on an external location.
    * @returns {ApiAsset | undefined} Asset item.
    */
   (path) => {
@@ -145,10 +154,19 @@ export const createGetAsset =
       return new UnsavedAssetProxy(path, unsavedFile);
     }
 
-    const asset = getAssetByPath({ value: path, entry, collectionName, fileName });
+    const args = { value: path, entry, collectionName, fileName, typedKeyPath };
+
+    const { asset, url } =
+      (componentNames
+        ? getRichTextMediaSource({ ...args, componentNames })
+        : getMediaFieldSource(args)) ?? {};
 
     if (asset) {
       return new AssetProxy(asset);
+    }
+
+    if (url) {
+      return new ExternalAssetProxy(url);
     }
 
     return undefined;

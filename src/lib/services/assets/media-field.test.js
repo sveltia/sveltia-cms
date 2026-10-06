@@ -6,6 +6,7 @@ import {
   getMediaFieldSource,
   getMediaFieldURL,
   getRichTextImageURL,
+  getRichTextMediaSource,
 } from '$lib/services/assets/media-field';
 import * as cloudStorageModule from '$lib/services/integrations/media-libraries/cloud';
 import * as cloudinaryModule from '$lib/services/integrations/media-libraries/cloud/cloudinary';
@@ -627,6 +628,17 @@ describe('assets/media-field', () => {
           typedKeyPath: 'src',
         }),
       );
+    });
+
+    it('should resolve a path to the asset without loading it', async () => {
+      const { getAssetByPath } = await import('$lib/services/assets');
+
+      mockAllAssetFolders.current = [{ componentName: 'figure', typedKeyPath: 'src' }];
+      vi.mocked(getAssetByPath).mockImplementation(({ componentName }) =>
+        componentName === 'figure' ? mockAsset : undefined,
+      );
+
+      expect(getRichTextMediaSource(args)).toEqual({ asset: mockAsset });
     });
 
     it('should return undefined if the image is not found anywhere', async () => {

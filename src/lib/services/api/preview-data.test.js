@@ -2,6 +2,8 @@
 import { Map as ImmutableMap, isMap } from 'immutable';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ExternalAssetProxy } from '$lib/services/api/external-asset-proxy';
+
 import {
   buildEntry,
   buildPreviewData,
@@ -15,7 +17,8 @@ import {
 // Mock dependencies using vi.hoisted()
 const {
   mockGetField,
-  mockGetAssetByPath,
+  mockGetMediaFieldSource,
+  mockGetRichTextMediaSource,
   mockGetEntriesByCollection,
   mockGetCollectionFileEntry,
   mockGetAssetFolder,
@@ -23,7 +26,8 @@ const {
   mockAllAssets,
 } = vi.hoisted(() => ({
   mockGetField: vi.fn(() => ({ widget: 'text' })),
-  mockGetAssetByPath: vi.fn(),
+  mockGetMediaFieldSource: vi.fn(),
+  mockGetRichTextMediaSource: vi.fn(),
   mockGetEntriesByCollection: vi.fn(() => []),
   mockGetCollectionFileEntry: vi.fn(),
   mockGetAssetFolder: vi.fn(),
@@ -32,8 +36,12 @@ const {
 }));
 
 vi.mock('$lib/services/assets', () => ({
-  getAssetByPath: mockGetAssetByPath,
   isAssetInFolder: mockIsAssetInFolder,
+}));
+
+vi.mock('$lib/services/assets/media-field', () => ({
+  getMediaFieldSource: mockGetMediaFieldSource,
+  getRichTextMediaSource: mockGetRichTextMediaSource,
 }));
 
 vi.mock('$lib/services/assets/state', () => ({
@@ -528,86 +536,88 @@ describe('React Helpers', () => {
   });
 
   describe('createGetAsset', () => {
-    it('should return an asset getter function', () => {
-      const getter = createGetAsset({
-        entry: { slug: 'test' },
-        collectionName: 'posts',
-        fileName: undefined,
-      });
-
-      expect(typeof getter).toBe('function');
-    });
+    const mockEntry = /** @type {any} */ ({ slug: 'article' });
 
     it('should return AssetProxy when asset is found', () => {
-      const mockAsset = { name: 'image.jpg', path: '/assets/image.jpg' };
+      mockGetMediaFieldSource.mockReturnValueOnce({ asset: { name: 'image.jpg' } });
 
-      mockGetAssetByPath.mockReturnValueOnce(mockAsset);
-
-      const getter = createGetAsset({
-        entry: { slug: 'test-post' },
-        collectionName: 'posts',
-        fileName: undefined,
-      });
-
+      const getter = createGetAsset({ entry: mockEntry, collectionName: 'posts' });
       const result = getter('images/test.jpg');
 
-      expect(mockGetAssetByPath).toHaveBeenCalled();
-      expect(result).toBeDefined();
-      expect(result).toHaveProperty('url');
+      expect(result).toEqual(expect.objectContaining({ url: 'blob:...' }));
+    });
+
+    it('should return a file on an external location by its URL', () => {
+      mockGetMediaFieldSource.mockReturnValueOnce({ url: 'https://example.com/photo.jpg' });
+
+      const result = createGetAsset({ collectionName: 'posts' })('https://example.com/photo.jpg');
+
+      expect(result).toBeInstanceOf(ExternalAssetProxy);
+      expect(result?.url).toBe('https://example.com/photo.jpg');
     });
 
     it('should return a file added to the draft by its blob URL', () => {
       const file = new File(['a'], 'a.png', { type: 'image/png' });
 
       const getter = createGetAsset({
-        entry: { slug: 'test-post' },
+        entry: mockEntry,
         collectionName: 'posts',
-        fileName: undefined,
         files: { 'blob:https://example.com/1': { file, folder: undefined, replace: false } },
       });
 
       const result = getter('blob:https://example.com/1');
 
-      expect(mockGetAssetByPath).not.toHaveBeenCalled();
+      expect(mockGetMediaFieldSource).not.toHaveBeenCalled();
       expect(result).toEqual(expect.objectContaining({ url: 'blob:https://example.com/1' }));
       expect(result?.fileObj).toBe(file);
       // Any other blob URL is looked up as usual
       expect(getter('blob:https://example.com/2')).toBeUndefined();
+      expect(mockGetMediaFieldSource).toHaveBeenCalledOnce();
     });
 
     it('should return undefined when asset is not found', () => {
-      mockGetAssetByPath.mockReturnValueOnce(undefined);
+      mockGetMediaFieldSource.mockReturnValueOnce(undefined);
 
-      const getter = createGetAsset({
-        entry: { slug: 'test-post' },
-        collectionName: 'posts',
-        fileName: undefined,
-      });
-
-      const result = getter('images/nonexistent.jpg');
-
-      expect(result).toBeUndefined();
+      expect(createGetAsset({ collectionName: 'posts' })('nonexistent.jpg')).toBeUndefined();
     });
 
-    it('should pass correct arguments to getAssetByPath', () => {
-      const mockEntry = { slug: 'article' };
-
-      mockGetAssetByPath.mockReturnValueOnce(undefined);
-
-      const getter = createGetAsset({
+    it('should look up the asset for the entry', () => {
+      createGetAsset({
         entry: mockEntry,
         collectionName: 'articles',
         fileName: 'config.json',
-      });
+      })('featured.jpg');
 
-      getter('featured.jpg');
-
-      expect(mockGetAssetByPath).toHaveBeenCalledWith({
+      expect(mockGetMediaFieldSource).toHaveBeenCalledWith({
         value: 'featured.jpg',
         entry: mockEntry,
         collectionName: 'articles',
         fileName: 'config.json',
+        typedKeyPath: undefined,
       });
+      expect(mockGetRichTextMediaSource).not.toHaveBeenCalled();
+    });
+
+    it('should also search the editor component folders for a RichText field', () => {
+      mockGetRichTextMediaSource.mockReturnValueOnce({ asset: { name: 'figure.jpg' } });
+
+      const result = createGetAsset({
+        entry: mockEntry,
+        collectionName: 'posts',
+        typedKeyPath: 'body',
+        componentNames: ['image', 'figure'],
+      })('figure.jpg');
+
+      expect(result).toEqual(expect.objectContaining({ url: 'blob:...' }));
+      expect(mockGetRichTextMediaSource).toHaveBeenCalledWith({
+        value: 'figure.jpg',
+        entry: mockEntry,
+        collectionName: 'posts',
+        fileName: undefined,
+        typedKeyPath: 'body',
+        componentNames: ['image', 'figure'],
+      });
+      expect(mockGetMediaFieldSource).not.toHaveBeenCalled();
     });
   });
 

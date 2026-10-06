@@ -4,6 +4,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createCustomNodeClass } from '$lib/components/contents/details/fields/rich-text/custom-node';
+import { getNoAsset } from '$lib/services/contents/fields/rich-text/previews';
 
 // Set up DOM globals for tests
 const makeMockElement = (tagName) => ({
@@ -405,6 +406,23 @@ describe('createCustomNodeClass', () => {
 
       expect(CustomNode).toBeDefined();
       expect(CustomNode.getType()).toBe('image-component');
+    });
+
+    it('should pass an asset getter to a Netlify/Decap CMS-style preview', () => {
+      const toPreview = vi.fn(
+        /**
+         * Convert properties to preview format like Decap CMS’s built-in image component.
+         * @param {Record<string, any>} props Properties.
+         * @param {(path: string) => any} getAsset Asset getter.
+         * @returns {string} Preview HTML.
+         */
+        ({ src }, getAsset) => `<img src="${getAsset(src) || ''}" alt="">`,
+      );
+
+      createCustomNodeClass({ ...mockComponentDef, id: 'decap-image', toPreview });
+
+      expect(toPreview).toHaveBeenCalledWith({}, getNoAsset, undefined);
+      expect(toPreview).toHaveReturnedWith('<img src="" alt="">');
     });
   });
 

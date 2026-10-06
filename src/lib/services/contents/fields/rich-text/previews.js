@@ -1,14 +1,46 @@
+import { getImmutable, immutableLoaded } from '$lib/services/api/immutable';
 import { GLOBAL_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
+ * @import { List, MapOf } from 'immutable';
  * @import { ReactElement } from 'react';
- * @import { EditorComponentDefinition } from '$lib/types/public';
+ * @import { ApiAsset, EditorComponentDefinition, Field, GetAsset } from '$lib/types/public';
  */
 
 /**
  * @typedef {string | HTMLElement | ReactElement | undefined} ComponentPreview
  */
+
+/**
+ * Asset getter used when a preview is built outside an entry draft, e.g. to learn the tag a
+ * component renders. It never finds an asset.
+ * @type {GetAsset}
+ */
+export const getNoAsset = () => undefined;
+
+/**
+ * Cache of {@link getComponentFieldList} results, keyed by the `fields` array of a component.
+ * @type {WeakMap<Field[], List<MapOf<Record<string, any>>>>}
+ */
+const fieldListCache = new WeakMap();
+
+/**
+ * Get the fields of an editor component as an Immutable List, which `toPreview()` receives as the
+ * third argument for compatibility with Netlify/Decap CMS.
+ * @param {EditorComponentDefinition} componentDef Component definition.
+ * @returns {List<MapOf<Record<string, any>>> | undefined} Field list, or `undefined` if
+ * Immutable.js isn’t loaded. It’s loaded when a component whose `toPreview()` takes three
+ * parameters is registered.
+ */
+export const getComponentFieldList = ({ fields }) =>
+  immutableLoaded.current
+    ? getOrCreate(
+        fieldListCache,
+        fields,
+        () => /** @type {List<MapOf<Record<string, any>>>} */ (getImmutable().fromJS(fields)),
+      )
+    : undefined;
 
 /**
  * Selector for the container element of a RichText field preview. Used to determine which preview
@@ -325,10 +357,21 @@ const findOutermostMatches = (string, componentDefs, regions) => {
  * @param {Map<string, ComponentPreview>} args.previewMap Preview map to be populated.
  * @param {Map<string, ComponentPreview>} [args.previousPreviewMap] Preview map from the previous
  * run, if any.
+ * @param {GetAsset} args.getAsset Asset getter passed to `toPreview()`.
+ * @param {Map<string, ApiAsset[]>} args.assetMap Map to be populated with the assets each newly
+ * computed preview has got with the asset getter, keyed by the preview’s key.
  * @returns {{ string: string, regions: PreviewRegion[] }} The processed string, and the regions of
  * the substituted string previews, which may expose further component syntax.
  */
-const substituteMatches = ({ string, matches, seenHashes, previewMap, previousPreviewMap }) => {
+const substituteMatches = ({
+  string,
+  matches,
+  seenHashes,
+  previewMap,
+  previousPreviewMap,
+  getAsset,
+  assetMap,
+}) => {
   /** @type {string[]} */
   const chunks = [];
   /** @type {PreviewRegion[]} */
@@ -336,12 +379,36 @@ const substituteMatches = ({ string, matches, seenHashes, previewMap, previousPr
   let cursor = 0;
   let length = 0;
 
-  matches.forEach(({ def: { fromBlock, toPreview }, match, index, end }) => {
+  matches.forEach(({ def, match, index, end }) => {
+    const { fromBlock, toPreview } = def;
     const baseHash = hashString(match[0]);
     const count = seenHashes.get(baseHash) ?? 0;
     const key = count === 0 ? baseHash : `${baseHash}-${count}`;
     const fieldProps = fromBlock?.(match) ?? match.groups ?? {};
-    const preview = previousPreviewMap?.get(key) ?? toPreview?.(fieldProps);
+    let preview = previousPreviewMap?.get(key);
+
+    if (preview == null && toPreview) {
+      /** @type {ApiAsset[]} */
+      const assets = [];
+
+      preview = toPreview(
+        fieldProps,
+        (path, field) => {
+          const asset = getAsset(path, field);
+
+          if (asset) {
+            assets.push(asset);
+          }
+
+          return asset;
+        },
+        getComponentFieldList(def),
+      );
+
+      if (assets.length) {
+        assetMap.set(key, assets);
+      }
+    }
 
     seenHashes.set(baseHash, count + 1);
     previewMap.set(key, preview);
@@ -394,12 +461,26 @@ const substituteMatches = ({ string, matches, seenHashes, previewMap, previousPr
  * unchanged. This avoids calling `toPreview()` again for every unmodified component on each
  * keystroke, which would orphan the DOM element and any component mounted on it in the case of an
  * element preview.
- * @returns {{ markdown: string, previewMap: Map<string, ComponentPreview> }} The processed Markdown
- * string and a map of component keys to their precomputed preview values.
+ * @param {GetAsset} [getAsset] Asset getter passed to `toPreview()`, which resolves a file path to
+ * the asset in the context of the entry draft. Defaults to one that never finds an asset.
+ * @returns {{
+ * markdown: string,
+ * previewMap: Map<string, ComponentPreview>,
+ * assetMap: Map<string, ApiAsset[]>,
+ * }} The processed Markdown string, a map of component keys to their precomputed preview values,
+ * and a map of the keys of the previews computed in this run to the assets they’ve got with
+ * `getAsset`, whose URL may still change.
  */
-export const buildMarkdownWithPreviews = (currentValue, componentDefs, previousPreviewMap) => {
+export const buildMarkdownWithPreviews = (
+  currentValue,
+  componentDefs,
+  previousPreviewMap,
+  getAsset = getNoAsset,
+) => {
   /** @type {Map<string, ComponentPreview>} */
   const previewMap = new Map();
+  /** @type {Map<string, ApiAsset[]>} */
+  const assetMap = new Map();
   /** @type {Map<string, number>} */
   const seenHashes = new Map();
   let string = (currentValue ?? '').replace(GLOBAL_IMAGE_REGEX, encodeImageSrc);
@@ -419,6 +500,8 @@ export const buildMarkdownWithPreviews = (currentValue, componentDefs, previousP
       seenHashes,
       previewMap,
       previousPreviewMap,
+      getAsset,
+      assetMap,
     });
 
     string = result.string;
@@ -430,5 +513,5 @@ export const buildMarkdownWithPreviews = (currentValue, componentDefs, previousP
     }
   }
 
-  return { markdown: string, previewMap };
+  return { markdown: string, previewMap, assetMap };
 };
