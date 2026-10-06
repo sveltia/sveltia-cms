@@ -639,7 +639,14 @@ test.describe('Code field', () => {
     await page.keyboard.type('a { color: red; }');
     await editor.getByRole('textbox', { name: 'Script' }).click();
     await page.keyboard.type('print(1)');
-    // Choosing a language gives the code the focus back
+    // Choosing a language gives the code the focus back. The editor only gives the code block the
+    // new language once the highlighter for it has loaded, and reports the content as pending
+    // until then, so that the Save below waits for the change rather than writing the previous
+    // language. Without that, the combobox showed the new language while the entry was saved with
+    // the old one, depending on how fast the machine loaded the highlighter, which made this test
+    // pass on a slow CI runner and fail on a fast machine. The wait is flagged as of @sveltia/ui
+    // 0.79.4, which is why the dependency has that floor; `code-editor-language.svelte.test.js`
+    // pins it down
     await cms.chooseMenuItem(
       getLanguage(editor, 'Script'),
       page.getByRole('option', { name: 'Ruby', exact: true }),
