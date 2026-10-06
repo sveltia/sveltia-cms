@@ -5,8 +5,8 @@ import {
   getAssetBaseURL,
   getMediaFieldSource,
   getMediaFieldURL,
-  getRichTextImageURL,
   getRichTextMediaSource,
+  getRichTextMediaURL,
 } from '$lib/services/assets/media-field';
 import * as cloudStorageModule from '$lib/services/integrations/media-libraries/cloud';
 import * as cloudinaryModule from '$lib/services/integrations/media-libraries/cloud/cloudinary';
@@ -568,7 +568,7 @@ describe('assets/media-field', () => {
     });
   });
 
-  describe('getRichTextImageURL', () => {
+  describe('getRichTextMediaURL', () => {
     const args = {
       value: 'photo.jpg',
       collectionName: 'posts',
@@ -586,7 +586,7 @@ describe('assets/media-field', () => {
     it('should return an external URL as-is', async () => {
       const { getAssetByPath } = await import('$lib/services/assets');
 
-      expect(await getRichTextImageURL({ ...args, value: 'https://example.com/photo.jpg' })).toBe(
+      expect(await getRichTextMediaURL({ ...args, value: 'https://example.com/photo.jpg' })).toBe(
         'https://example.com/photo.jpg',
       );
       expect(getAssetByPath).not.toHaveBeenCalled();
@@ -598,7 +598,7 @@ describe('assets/media-field', () => {
       mockAllAssetFolders.current = [{ componentName: 'figure', typedKeyPath: 'src' }];
       vi.mocked(getAssetByPath).mockReturnValue({ ...mockAsset, blobURL: 'blob:field' });
 
-      expect(await getRichTextImageURL(args)).toBe('blob:field');
+      expect(await getRichTextMediaURL(args)).toBe('blob:field');
       expect(getAssetByPath).toHaveBeenCalledTimes(1);
       expect(getAssetByPath).toHaveBeenCalledWith(
         expect.objectContaining({ value: 'photo.jpg', typedKeyPath: 'body' }),
@@ -619,7 +619,7 @@ describe('assets/media-field', () => {
         componentName === 'figure' ? { ...mockAsset, blobURL: 'blob:figure' } : undefined,
       );
 
-      expect(await getRichTextImageURL(args)).toBe('blob:figure');
+      expect(await getRichTextMediaURL(args)).toBe('blob:figure');
       expect(getAssetByPath).toHaveBeenCalledTimes(2);
       expect(getAssetByPath).toHaveBeenLastCalledWith(
         expect.objectContaining({
@@ -647,7 +647,7 @@ describe('assets/media-field', () => {
       mockAllAssetFolders.current = [{ componentName: 'figure', typedKeyPath: 'src' }];
       vi.mocked(getAssetByPath).mockReturnValue(undefined);
 
-      expect(await getRichTextImageURL(args)).toBeUndefined();
+      expect(await getRichTextMediaURL(args)).toBeUndefined();
       expect(getAssetByPath).toHaveBeenCalledTimes(2);
     });
   });

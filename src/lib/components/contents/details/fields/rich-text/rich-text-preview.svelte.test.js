@@ -202,6 +202,42 @@ describe('RichTextPreview', () => {
     expect(preview.querySelector('img')).toHaveAttribute('src', 'missing.png');
   });
 
+  test('resolves the URLs of videos, audio and image sets', async () => {
+    const folder = { internalPath: 'static/uploads', publicPath: '/uploads', entryRelative: false };
+
+    allAssetFolders.current = /** @type {any[]} */ ([folder]);
+    allAssets.current = /** @type {any[]} */ (
+      ['clip.mp4', 'poster.jpg', 'song.mp3', 'small.jpg', 'large.jpg'].map((name) => ({
+        path: `static/uploads/${name}`,
+        name,
+        folder,
+        blobURL: `blob:${name}`,
+      }))
+    );
+
+    try {
+      const preview = await renderPreview(
+        '<video src="/uploads/clip.mp4" poster="/uploads/poster.jpg"></video>\n\n' +
+          '<audio controls><source src="/uploads/song.mp3" type="audio/mpeg"></audio>\n\n' +
+          '<img srcset="/uploads/small.jpg 1x, /uploads/large.jpg 2x" alt="">',
+      );
+
+      await expect
+        .poll(() => preview.querySelector('video')?.getAttribute('src'))
+        .toBe('blob:clip.mp4');
+      expect(preview.querySelector('video')).toHaveAttribute('poster', 'blob:poster.jpg');
+      await expect
+        .poll(() => preview.querySelector('source')?.getAttribute('src'))
+        .toBe('blob:song.mp3');
+      await expect
+        .poll(() => preview.querySelector('img')?.getAttribute('srcset'))
+        .toBe('blob:small.jpg 1x, blob:large.jpg 2x');
+    } finally {
+      allAssetFolders.current = [];
+      allAssets.current = [];
+    }
+  });
+
   test('resolves an image in a component preview from the component’s media folder', async () => {
     customComponentRegistry.set('figure', {
       id: 'figure',

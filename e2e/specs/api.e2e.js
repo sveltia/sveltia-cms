@@ -354,6 +354,48 @@ test.describe('toPreview() arguments', () => {
   });
 });
 
+test.describe('media in an element preview', () => {
+  test.use({ config: CONFIG });
+
+  test('resolves the URLs of a video rendered after the fact', async ({ cms, page }) => {
+    // A component rendered by another library, like Comark, which fills the element in later
+    await addScripts(page, {
+      after: `
+        CMS.registerEditorComponent({
+          id: 'clip',
+          label: 'Clip',
+          fields: [{ name: 'src', label: 'Video', widget: 'file' }],
+          pattern: /^{{< clip src="(?<src>.*?)" >}}$/m,
+          toBlock: ({ src = '' }) => '{{< clip src="' + src + '" >}}',
+          toPreview: ({ src = '' }) => {
+            const element = document.createElement('div');
+
+            setTimeout(() => {
+              element.innerHTML =
+                '<video poster="/images/poster.png"><source src="' + src + '"></video>';
+            }, 100);
+
+            return element;
+          },
+        });
+      `,
+    });
+    await cms.open();
+    await cms.seed({
+      'static/images/clip.mp4': Buffer.from('clip'),
+      'static/images/poster.png': createPNG({ color: [10, 20, 30] }),
+      'content/posts/clips.md': '---\ntitle: Clips\n---\n\n{{< clip src="/images/clip.mp4" >}}\n',
+    });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Clips/ }).click();
+
+    const video = page.getByRole('document', { name: 'Content Preview' }).locator('video');
+
+    await expect(video).toHaveAttribute('poster', /^blob:/);
+    await expect(video.locator('source')).toHaveAttribute('src', /^blob:/);
+  });
+});
+
 test.describe('html', () => {
   test.use({
     config: {

@@ -16,7 +16,7 @@
   import { createGetAsset } from '$lib/services/api/preview-data';
   import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
   import { customComponentRegistry } from '$lib/services/api/registries';
-  import { getRichTextImageURL } from '$lib/services/assets/media-field';
+  import { getRichTextMediaURL } from '$lib/services/assets/media-field';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { BUILTIN_COMPONENTS } from '$lib/services/contents/fields/rich-text';
@@ -25,7 +25,8 @@
     buildMarkdownWithPreviews,
     COMPONENT_QUERY_SELECTOR,
     CONTAINER_QUERY_SELECTOR,
-    IMAGE_QUERY_SELECTOR,
+    MEDIA_QUERY_SELECTOR,
+    resolveMediaURLs,
     splitMarkdownBlocks,
   } from '$lib/services/contents/fields/rich-text/previews';
   import { sanitizeRichTextHTML } from '$lib/services/contents/fields/rich-text/sanitize';
@@ -361,40 +362,36 @@
   };
 
   /**
-   * Replace the `src` of an image element with the URL from the media field. This is needed to
-   * properly display media fields in the preview, as the markdown may contain internal paths that
-   * have to be resolved to blob URLs.
-   * @param {HTMLImageElement} element The image element to replace the `src` of.
+   * Resolve the file paths in the URL attributes of a media element, e.g. an image `src`. This is
+   * needed to properly display media fields in the preview, as the markdown may contain internal
+   * paths that have to be resolved to blob URLs.
+   * @param {Element} element Image, video, audio or source element.
    */
-  const replaceImageSrc = async (element) => {
-    // An image within a nested field preview belongs to that preview
+  const replaceMediaURLs = async (element) => {
+    // An element within a nested field preview belongs to that preview
     /* v8 ignore next 3 */
     if (!isOwnElement(element)) {
       return;
     }
 
-    element.dataset.processed = 'true';
+    /** @type {HTMLElement} */ (element).dataset.processed = 'true';
 
-    const value = /** @type {string} */ (element.getAttribute('src'));
-
-    const url = await getRichTextImageURL({
-      value,
-      entry,
-      collectionName,
-      fileName,
-      typedKeyPath,
-      componentNames,
-    });
-
-    if (url) {
-      element.src = url;
-    }
+    await resolveMediaURLs(element, (value) =>
+      getRichTextMediaURL({
+        value,
+        entry,
+        collectionName,
+        fileName,
+        typedKeyPath,
+        componentNames,
+      }),
+    );
   };
 
   /**
    * Callback for the `MutationObserver` to detect added and removed nodes in the container. It
    * renders component previews for added nodes and unmounts React roots for removed nodes. Also
-   * handles replacing image `src` attributes for media fields.
+   * handles replacing the URLs of images, videos and audio for media fields.
    * @param {MutationRecord[]} mutations The list of mutations observed.
    */
   const mutationCallback = (mutations) => {
@@ -421,13 +418,13 @@
           });
         }
 
-        if (element.matches(IMAGE_QUERY_SELECTOR)) {
-          replaceImageSrc(/** @type {HTMLImageElement} */ (element));
-        } else {
-          element.querySelectorAll(IMAGE_QUERY_SELECTOR).forEach((img) => {
-            replaceImageSrc(/** @type {HTMLImageElement} */ (img));
-          });
+        if (element.matches(MEDIA_QUERY_SELECTOR)) {
+          replaceMediaURLs(element);
         }
+
+        element.querySelectorAll(MEDIA_QUERY_SELECTOR).forEach((media) => {
+          replaceMediaURLs(media);
+        });
       });
     });
 

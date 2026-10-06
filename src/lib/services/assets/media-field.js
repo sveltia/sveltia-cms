@@ -163,10 +163,10 @@ export const getRichTextMediaSource = ({ componentNames, ...args }) => {
 };
 
 /**
- * Get the blob or public URL of an image in a RichText field preview. See
- * {@link getRichTextMediaSource} for how the image is located.
+ * Get the blob or public URL of an image, video or other file in a RichText field preview. See
+ * {@link getRichTextMediaSource} for how the file is located.
  * @param {object} args Arguments.
- * @param {string} args.value Image `src`.
+ * @param {string} args.value File path or URL, e.g. an image `src`.
  * @param {Entry} [args.entry] Associated entry. Can be `undefined` when editing a new draft.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
@@ -174,4 +174,4 @@ export const getRichTextMediaSource = ({ componentNames, ...args }) => {
  * @param {string[]} args.componentNames Names or IDs of the components the field can contain.
  * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
  */
-export const getRichTextImageURL = async (args) => getSourceURL(getRichTextMediaSource(args));
+export const getRichTextMediaURL = async (args) => getSourceURL(getRichTextMediaSource(args));
