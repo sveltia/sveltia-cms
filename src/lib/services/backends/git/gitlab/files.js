@@ -2,6 +2,11 @@
 
 import { fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import {
+  getWorkflowRepository,
+  initOpenAuthoring,
+  isOpenAuthoringConfigured,
+} from '$lib/services/backends/git/gitlab/fork';
+import {
   checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
@@ -14,6 +19,7 @@ import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { splitIntoChunks } from '$lib/services/utils/array';
+import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
@@ -296,10 +302,22 @@ export const fetchFileContents = async (fetchingFiles) => {
  * caller has just fetched it, so it isn’t fetched again.
  */
 export const fetchFiles = async ({ lastCommit } = {}) => {
+  // With Open Authoring, a user without write access is a contributor rather than a stranger, so
+  // they’re given a fork to work in instead of being turned away. Setting the fork up may involve
+  // the user, so it has to finish before the data is fetched, unlike a plain access check
+  const openAuthoring = isOpenAuthoringConfigured();
+
+  // Once only: a later call brings the stores up to date with the project, and setting the fork up
+  // again would reset the fork state while a workflow commit may be relying on it
+  if (openAuthoring && !openAuthoringInitialized.current) {
+    await initOpenAuthoring();
+  }
+
   await fetchAndParseFiles({
     repository,
-    checkAccess: checkRepositoryAccess,
-    checkBranchAccess,
+    checkAccess: openAuthoring ? undefined : checkRepositoryAccess,
+    // A contributor’s changes go to their fork, so the branch they can’t push to doesn’t matter
+    checkBranchAccess: forkedRepository.current ? undefined : checkBranchAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
     lastCommit,
@@ -319,12 +337,14 @@ export const fetchBlob = async (asset) => {
   const { branch = '' } = repository;
   const { path, workflow } = asset;
   // An asset attached to an unpublished entry is committed to a workflow branch only, so it has to
-  // be read from there; on the configured branch the path is missing or holds the published version
+  // be read from there; on the configured branch the path is missing or holds the published
+  // version. That branch lives in the contributor’s fork with Open Authoring, so it’s read there
   const ref = workflow?.branch ?? branch;
+  const projectId = getProjectId(workflow ? getWorkflowRepository() : undefined);
 
   return /** @type {Promise<Blob>} */ (
     fetchAPI(
-      `/projects/${getProjectId()}/repository/files` +
+      `/projects/${projectId}/repository/files` +
         `/${encodeURIComponent(path)}/raw?lfs=true&ref=${encodeURIComponent(ref)}`,
       { responseType: 'blob' },
     )

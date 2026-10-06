@@ -12,22 +12,14 @@
   import { createOneOffNotice } from '$lib/services/app/onboarding';
   import { backend } from '$lib/services/backends';
   import { openNewTab } from '$lib/services/utils/window';
-  import { forkedRepository } from '$lib/services/workflow/open-authoring';
+  import { forkedRepository, getForkPath, getForkURL } from '$lib/services/workflow/open-authoring';
 
   // The dismissal is stored alongside the other one-off notices
   const notice = createOneOffNotice('openAuthoringNotice');
 
   const fork = $derived(forkedRepository.current);
-  /* v8 ignore start -- only read while contributing via a fork */
-  const repoPath = $derived(fork ? `${fork.owner}/${fork.repo}` : '');
-  /* v8 ignore stop */
-  // The fork lives on the same service as the configured repository, which can be a GitHub
-  // Enterprise Server instance rather than github.com
-  const forkURL = $derived.by(() => {
-    const { repoURL } = backend.current?.repository ?? {};
-
-    return fork && repoURL ? new URL(`/${repoPath}`, repoURL).href : '';
-  });
+  const repoPath = $derived(getForkPath(fork));
+  const forkURL = $derived(getForkURL(backend.current?.repository, fork));
 
   // Only a contributor sees this, so the stored state isn’t read for anyone else
   $effect(() => {

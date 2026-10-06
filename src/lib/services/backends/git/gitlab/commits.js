@@ -1,5 +1,6 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 
+import { projectIds } from '$lib/services/backends/git/gitlab/fork';
 import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import {
@@ -12,6 +13,7 @@ import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { getGitHash } from '$lib/services/utils/file';
+import { forkedRepository, openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { CommitOptions, CommitResults, FileChange, FileCommit } from '$lib/types/private';
@@ -93,6 +95,19 @@ export const fetchLastCommit = async () => {
  * @see https://forum.gitlab.com/t/how-to-commit-a-image-via-gitlab-commit-api/26632/4
  */
 export const commitChanges = async (changes, options) => {
+  // An Open Authoring contributor can’t write to the configured project at all, so a change that
+  // doesn’t go through Editorial Workflow has nowhere to land. Fail here with an explanation rather
+  // than letting the API reject the commit with a bare permission error
+  if (openAuthoring.current && !options.branch) {
+    throw createLocalizedError(
+      'Cannot commit directly to the configured repository',
+      'open_authoring.direct_commit_unsupported',
+    );
+  }
+
+  // A workflow branch lives in the contributor’s fork with Open Authoring, while the configured
+  // branch is only ever committed to by someone who can write to the configured project
+  const fork = options.branch ? forkedRepository.current : undefined;
   const branch = options.branch ?? repository.branch;
   // On the configured branch, the commit the loaded site data reflects, which the caller has just
   // brought up to date. GitLab has no branch-level guard like GitHub’s `expectedHeadOid`: a
@@ -115,9 +130,16 @@ export const commitChanges = async (changes, options) => {
     })),
   );
 
-  const endpoint = `/projects/${getProjectId()}/repository/commits`;
+  const endpoint = `/projects/${getProjectId(fork)}/repository/commits`;
   const body = { branch, commit_message: createCommitMessage(changes, options), actions };
   const { startBranch } = options;
+  // With Open Authoring the branch is created in the contributor’s fork, but starts from the head
+  // of the configured project rather than the fork’s own copy of it, so a fork that has fallen
+  // behind or gained commits of its own doesn’t pass them on to the merge request. GitLab offers no
+  // way to sync a fork, which makes this the only way to keep the merge request to the entry
+  // edited. The project goes by its numeric ID: a path in the request body is taken as is, so the
+  // encoded one {@link getProjectId} gives for a request path would name no project at all
+  const startProject = fork ? { start_project: projectIds.base } : {};
   /** @type {CommitResponse} */
   let response;
 
@@ -128,7 +150,7 @@ export const commitChanges = async (changes, options) => {
     response = /** @type {CommitResponse} */ (
       await fetchAPI(endpoint, {
         method: 'POST',
-        body: startBranch ? { ...body, start_branch: startBranch } : body,
+        body: startBranch ? { ...body, start_branch: startBranch, ...startProject } : body,
       })
     );
   } catch (/** @type {any} */ ex) {

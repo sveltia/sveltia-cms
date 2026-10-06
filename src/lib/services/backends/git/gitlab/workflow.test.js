@@ -3,17 +3,24 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
+import { fetchPullRequests as fetchLabelledPullRequests } from '$lib/services/backends/git/gitlab/merge-requests';
 import gitlabWorkflow, {
   discard,
   fetchBranchHead,
   fetchMergeState,
+  fetchPullRequests,
   fetchUnchangedPaths,
   publish,
   savePullRequest,
   updateStatus,
 } from '$lib/services/backends/git/gitlab/workflow';
+import {
+  fetchForkPullRequests,
+  updateForkStatus,
+} from '$lib/services/backends/git/gitlab/workflow-fork';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { forkedRepository, openAuthoring } from '$lib/services/workflow/open-authoring';
 
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((key, { values } = {}) => (values ? `${key} ${JSON.stringify(values)}` : key)),
@@ -21,30 +28,47 @@ vi.mock('@sveltia/i18n', () => ({
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
 vi.mock('$lib/services/backends/git/gitlab/commits');
 vi.mock('$lib/services/backends/git/gitlab/files');
+// Only the merge request list is replaced, so the dispatch between the labelled and fork flows can
+// be observed; everything else in the module stays real, as the tests below exercise it
+vi.mock('$lib/services/backends/git/gitlab/merge-requests', async (importOriginal) => ({
+  .../** @type {any} */ (await importOriginal()),
+  fetchPullRequests: vi.fn(),
+}));
 vi.mock('$lib/services/backends/git/gitlab/repository', () => {
   const mockRepository = { owner: 'group/sub', repo: 'project', branch: 'main' };
+  /**
+   * Get the project ID the same way the real module does.
+   * @param {any} [repoPath] Project to address. Default: the configured project.
+   * @returns {string} URL-encoded project path.
+   */
+  const getProjectId = ({ owner, repo } = mockRepository) => encodeURIComponent(`${owner}/${repo}`);
 
   return {
     repository: mockRepository,
-    /**
-     * Get the project ID the same way the real module does.
-     * @returns {string} URL-encoded project path.
-     */
-    getProjectId: () => encodeURIComponent(`${mockRepository.owner}/${mockRepository.repo}`),
+    getProjectId,
     /**
      * Get the branch path the same way the real module does.
      * @param {string} branch Branch name.
+     * @param {any} [repoPath] Project holding the branch.
      * @returns {string} REST API path.
      */
-    getBranchPath: (branch) =>
-      `/projects/${encodeURIComponent(`${mockRepository.owner}/${mockRepository.repo}`)}` +
-      `/repository/branches/${encodeURIComponent(branch)}`,
+    getBranchPath: (branch, repoPath) =>
+      `/projects/${getProjectId(repoPath)}/repository/branches/${encodeURIComponent(branch)}`,
   };
 });
+vi.mock('$lib/services/backends/git/gitlab/workflow-fork');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
+vi.mock('$lib/services/workflow/open-authoring', () => ({
+  forkedRepository: { current: undefined },
+  openAuthoring: { current: false },
+}));
 
 const PROJECT_ID = encodeURIComponent('group/sub/project');
+const FORK = { owner: 'contributor', repo: 'project' };
+const FORK_ID = encodeURIComponent('contributor/project');
+/** Branch prefix an Open Authoring contributor’s branches carry. */
+const FORK_PREFIX = 'cms/contributor/project/';
 /** Path to cancel the auto-merge on merge request !1. */
 const CANCEL_PATH = `/projects/${PROJECT_ID}/merge_requests/1/cancel_merge_when_pipeline_succeeds`;
 /**
@@ -75,11 +99,43 @@ const createItem = (overrides = {}) => ({
 });
 
 describe('GitLab Editorial Workflow service', () => {
+  /**
+   * Pretend the signed-in user is contributing through the given fork, or working on the configured
+   * project when it’s omitted.
+   * @param {any} [fork] Fork.
+   */
+  const signInAs = (fork) => {
+    forkedRepository.current = fork;
+    /** @type {any} */ (openAuthoring).current = !!fork;
+  };
+
   beforeEach(() => {
     vi.resetAllMocks();
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitlab' } });
+    signInAs(undefined);
     vi.mocked(fetchAPI).mockResolvedValue({});
     vi.mocked(fetchGraphQL).mockResolvedValue({});
+  });
+
+  describe('fetchPullRequests', () => {
+    test('lists the labelled merge requests for a maintainer', async () => {
+      vi.mocked(fetchLabelledPullRequests).mockResolvedValue([]);
+
+      await expect(fetchPullRequests()).resolves.toEqual([]);
+
+      expect(fetchLabelledPullRequests).toHaveBeenCalled();
+      expect(fetchForkPullRequests).not.toHaveBeenCalled();
+    });
+
+    test('lists the fork branches for an Open Authoring contributor', async () => {
+      signInAs(FORK);
+      vi.mocked(fetchForkPullRequests).mockResolvedValue([]);
+
+      await expect(fetchPullRequests()).resolves.toEqual([]);
+
+      expect(fetchForkPullRequests).toHaveBeenCalled();
+      expect(fetchLabelledPullRequests).not.toHaveBeenCalled();
+    });
   });
 
   test('exports the expected service structure', () => {
@@ -301,6 +357,19 @@ describe('GitLab Editorial Workflow service', () => {
 
       expect(fetchAPI).toHaveBeenCalledWith(
         `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`,
+      );
+    });
+
+    test('reads an Open Authoring branch from the fork it lives in', async () => {
+      signInAs(FORK);
+      vi.mocked(fetchAPI).mockResolvedValue({ commit: { id: 'abc123' } });
+
+      const branch = `${FORK_PREFIX}posts/hello`;
+
+      await expect(fetchBranchHead(branch)).resolves.toBe('abc123');
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        `/projects/${FORK_ID}/repository/branches/${encodeURIComponent(branch)}`,
       );
     });
 
@@ -832,6 +901,112 @@ describe('GitLab Editorial Workflow service', () => {
       expect(fetchAPI).toHaveBeenNthCalledWith(
         2,
         `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`,
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+    });
+  });
+  describe('Open Authoring', () => {
+    const forkArgs = /** @type {any} */ ({
+      changes: [],
+      options: { commitType: 'create' },
+      branch: `${FORK_PREFIX}posts/hello`,
+      title: 'Create Post “hello”',
+    });
+
+    /** GitLab’s response to `start_branch` when the branch already exists. */
+    const branchExists = new Error('A branch already exists', { cause: { status: 400 } });
+
+    beforeEach(() => {
+      signInAs(FORK);
+    });
+
+    test('leaves a draft as a branch, with no merge request', async () => {
+      const date = new Date('2026-01-01T00:00:00Z');
+
+      vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', date, files: {} });
+
+      const result = await savePullRequest({ ...forkArgs, status: 'draft' });
+
+      expect(fetchAPI).not.toHaveBeenCalled();
+
+      expect(result.pullRequest).toEqual({
+        title: 'Create Post “hello”',
+        branch: `${FORK_PREFIX}posts/hello`,
+        status: 'draft',
+        createdDate: date,
+        updatedDate: date,
+        files: [],
+        canMerge: false,
+      });
+    });
+
+    test('opens a merge request right away for a removal', async () => {
+      vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
+      vi.mocked(fetchAPI).mockResolvedValue({
+        id: 900,
+        iid: 5,
+        web_url: 'u',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      });
+
+      const result = await savePullRequest({ ...forkArgs, status: 'pending_deletion' });
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        `/projects/${FORK_ID}/merge_requests`,
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.pullRequest.number).toBe(5);
+    });
+
+    test('commits onto an existing branch rather than wiping it', async () => {
+      vi.mocked(commitChanges)
+        .mockRejectedValueOnce(branchExists)
+        .mockResolvedValueOnce({ sha: 'def', files: {} });
+
+      await savePullRequest({ ...forkArgs, status: 'draft' });
+
+      // A draft is a branch without a merge request, so there’s no telling a leftover from a live
+      // one: the branch is kept, and neither looked up nor deleted
+      expect(fetchAPI).not.toHaveBeenCalled();
+      expect(commitChanges).toHaveBeenLastCalledWith([], {
+        commitType: 'create',
+        branch: `${FORK_PREFIX}posts/hello`,
+      });
+    });
+
+    test('hands the status change over to the fork flow', async () => {
+      const pullRequest = /** @type {any} */ ({ number: 1, title: 't', status: 'draft' });
+      const updated = { ...pullRequest, status: 'pending_review' };
+
+      vi.mocked(updateForkStatus).mockResolvedValue(updated);
+
+      await expect(updateStatus(pullRequest, 'pending_review')).resolves.toBe(updated);
+
+      expect(updateForkStatus).toHaveBeenCalledWith(pullRequest, 'pending_review');
+      expect(fetchAPI).not.toHaveBeenCalled();
+    });
+
+    test('refuses to publish', async () => {
+      await expect(
+        publish(/** @type {any} */ ({ number: 1, branch: 'cms/x', title: 't' })),
+      ).rejects.toThrow('Cannot publish as an Open Authoring contributor');
+
+      expect(fetchAPI).not.toHaveBeenCalled();
+    });
+
+    test('deletes the branch when discarding a draft with no merge request', async () => {
+      await discard(
+        /** @type {any} */ ({ number: undefined, branch: `${FORK_PREFIX}posts/hello` }),
+      );
+
+      // An Open Authoring draft has no merge request yet, so only the branch goes
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        `/projects/${FORK_ID}/repository/branches/${encodeURIComponent(
+          `${FORK_PREFIX}posts/hello`,
+        )}`,
         expect.objectContaining({ method: 'DELETE' }),
       );
     });

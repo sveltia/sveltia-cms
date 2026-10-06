@@ -2,7 +2,12 @@ import { createDerivedState, createRawState } from '$lib/services/utils/state.sv
 import { OPEN_AUTHORING_STAGES, WORKFLOW_STAGES } from '$lib/services/workflow/constants';
 
 /**
- * @import { ForkPermissionRequest, RepositoryPath, WorkflowStatus } from '$lib/types/private';
+ * @import {
+ * ForkPermissionRequest,
+ * RepositoryInfo,
+ * RepositoryPath,
+ * WorkflowStatus,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -37,6 +42,36 @@ export const openAuthoringInitialized = createRawState(false);
 export const workflowStages = createDerivedState(() =>
   openAuthoring.current ? OPEN_AUTHORING_STAGES : WORKFLOW_STAGES,
 );
+
+/**
+ * Get the path of the signed-in user’s fork, e.g. `contributor/site`, which is what the UI names
+ * when it says where their changes are saved.
+ * @param {RepositoryPath | undefined} fork Fork, from {@link forkedRepository}.
+ * @returns {string} Path, or an empty string when the session isn’t an Open Authoring one.
+ */
+export const getForkPath = (fork) => (fork ? `${fork.owner}/${fork.repo}` : '');
+
+/**
+ * Get the URL of the signed-in user’s fork on the backend service, which can be a GitHub Enterprise
+ * Server or self-hosted GitLab instance rather than github.com or gitlab.com. The configured
+ * repository’s URL ends with its path, which the fork’s path takes the place of. Resolving the fork
+ * against the origin instead would drop a path prefix the instance itself sits under — what GitLab
+ * calls a relative URL root — and a GitLab fork lands directly under the contributor’s namespace,
+ * so the configured path can’t be swapped segment by segment either.
+ * @param {RepositoryInfo | undefined} repository Configured repository.
+ * @param {RepositoryPath | undefined} fork Fork, from {@link forkedRepository}.
+ * @returns {string} URL, or an empty string while the repository isn’t known yet, or when the
+ * session isn’t an Open Authoring one.
+ */
+export const getForkURL = (repository, fork) => {
+  const { repoURL, owner, repo } = repository ?? {};
+
+  if (!fork || !repoURL) {
+    return '';
+  }
+
+  return repoURL.slice(0, -`${owner}/${repo}`.length) + getForkPath(fork);
+};
 
 /**
  * The pending request for permission to fork the configured repository, which the UI turns into a

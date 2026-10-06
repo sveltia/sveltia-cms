@@ -15,6 +15,11 @@ import {
   SELF_HOSTED_BLOB_CONCURRENCY,
 } from '$lib/services/backends/git/gitlab/files';
 import {
+  getWorkflowRepository,
+  initOpenAuthoring,
+  isOpenAuthoringConfigured,
+} from '$lib/services/backends/git/gitlab/fork';
+import {
   checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
@@ -24,6 +29,7 @@ import {
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
+import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 // The function returned by `startSimulatedProgress()`, so the tests can verify it’s called
 const stopProgress = vi.hoisted(() => vi.fn());
@@ -31,11 +37,16 @@ const stopProgress = vi.hoisted(() => vi.fn());
 // Mock dependencies
 vi.mock('@sveltia/utils/file');
 vi.mock('$lib/services/backends/git/gitlab/commits');
+vi.mock('$lib/services/backends/git/gitlab/fork');
 vi.mock('$lib/services/backends/git/gitlab/repository');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/fetch');
 vi.mock('$lib/services/backends/git/shared/progress', () => ({
   startSimulatedProgress: vi.fn(() => stopProgress),
+}));
+vi.mock('$lib/services/workflow/open-authoring', () => ({
+  forkedRepository: { current: undefined },
+  openAuthoringInitialized: { current: false },
 }));
 
 describe('GitLab files service', () => {
@@ -46,7 +57,12 @@ describe('GitLab files service', () => {
     vi.mocked(repository).repo = 'test-repo';
     vi.mocked(repository).branch = 'main';
     vi.mocked(repository).owner = 'test-owner';
-    vi.mocked(getProjectId).mockReturnValue(encodeURIComponent('test-owner/test-repo'));
+    vi.mocked(getProjectId).mockImplementation(({ owner, repo } = repository) =>
+      encodeURIComponent(`${owner}/${repo}`),
+    );
+    vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
+    forkedRepository.current = undefined;
+    openAuthoringInitialized.current = false;
   });
 
   describe('fetchFileList', () => {
@@ -743,6 +759,55 @@ describe('GitLab files service', () => {
 
       await expect(fetchFiles()).rejects.toThrow('Access denied');
     });
+
+    test('sets a contributor up with a fork when Open Authoring is enabled', async () => {
+      vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
+      vi.mocked(initOpenAuthoring).mockResolvedValue();
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
+      vi.mocked(initOpenAuthoring).mockImplementation(async () => {
+        forkedRepository.current = /** @type {any} */ ({
+          owner: 'contributor',
+          repo: 'test-repo',
+        });
+      });
+
+      await fetchFiles();
+
+      expect(initOpenAuthoring).toHaveBeenCalled();
+
+      expect(fetchAndParseFiles).toHaveBeenCalledWith(
+        expect.objectContaining({
+          // A contributor isn’t expected to be a member of the project, and their changes go to
+          // their fork, so neither the project nor the branch is checked for write access
+          checkAccess: undefined,
+          checkBranchAccess: undefined,
+        }),
+      );
+    });
+
+    test('sets the fork up only once', async () => {
+      vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
+      openAuthoringInitialized.current = true;
+
+      await fetchFiles();
+
+      // A later load brings the stores up to date; setting the fork up again would reset the fork
+      // state while a workflow commit may be relying on it
+      expect(initOpenAuthoring).not.toHaveBeenCalled();
+    });
+
+    test('keeps the branch check for a maintainer with Open Authoring enabled', async () => {
+      vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
+      vi.mocked(initOpenAuthoring).mockResolvedValue();
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
+
+      await fetchFiles();
+
+      expect(fetchAndParseFiles).toHaveBeenCalledWith(
+        expect.objectContaining({ checkAccess: undefined, checkBranchAccess }),
+      );
+    });
   });
 
   describe('fetchBlob', () => {
@@ -792,6 +857,28 @@ describe('GitLab files service', () => {
         { responseType: 'blob' },
       );
       expect(result).toBe(mockBlob);
+    });
+
+    test('reads an unpublished asset from the contributor’s fork', async () => {
+      vi.mocked(getWorkflowRepository).mockReturnValue({
+        owner: 'contributor',
+        repo: 'test-repo',
+      });
+
+      const asset = /** @type {any} */ ({
+        path: 'images/hero.png',
+        workflow: { branch: 'cms/contributor/test-repo/posts/hello' },
+      });
+
+      vi.mocked(fetchAPI).mockResolvedValue(new Blob(['image data']));
+
+      await fetchBlob(asset);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/projects/contributor%2Ftest-repo/repository/files' +
+          '/images%2Fhero.png/raw?lfs=true&ref=cms%2Fcontributor%2Ftest-repo%2Fposts%2Fhello',
+        { responseType: 'blob' },
+      );
     });
 
     test('handles missing branch', async () => {

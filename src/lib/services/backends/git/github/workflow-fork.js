@@ -14,7 +14,7 @@ import {
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { checkStatusAllowed } from '$lib/services/backends/git/shared/fork';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
 import { getBranchPrefix } from '$lib/services/workflow/branch';
@@ -350,12 +350,7 @@ const FETCH_PULL_REQUEST_STATE_QUERY = `
  * @throws {Error} When the entry is being marked ready to publish, which a contributor can’t do.
  */
 export const updateForkStatus = async (pullRequest, status) => {
-  if (status === 'pending_publish') {
-    throw createLocalizedError(
-      'Cannot mark an entry ready to publish as an Open Authoring contributor',
-      'open_authoring.publish_unsupported',
-    );
-  }
+  checkStatusAllowed(status);
 
   const { nodeId, branch, title } = pullRequest;
 

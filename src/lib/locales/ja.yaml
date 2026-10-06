@@ -1905,7 +1905,7 @@ config:
   warning:
     oauth_no_app_id: OAuth アプリケーション ID が定義されていません。ユーザーがログインするにはアクセストークンを入力する必要があります。
     editorial_workflow_unsupported: エディトリアルワークフローは現在 GitHub と GitLab バックエンドでのみサポートされています。
-    open_authoring_unsupported_backend: オープンオーサリングは現在 GitHub バックエンドでのみサポートされています。
+    open_authoring_unsupported_backend: オープンオーサリングは現在 GitHub と GitLab バックエンドでのみサポートされています。
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}` オプションは Sveltia CMS ではサポートされていません。このオプションは無視されます。'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`

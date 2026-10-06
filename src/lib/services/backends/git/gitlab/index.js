@@ -17,7 +17,11 @@ import {
 } from '$lib/services/backends/git/gitlab/constants';
 import { fetchBranchHeadSHA, fetchDeployments } from '$lib/services/backends/git/gitlab/deployment';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
-import { getBaseURLs, repository } from '$lib/services/backends/git/gitlab/repository';
+import {
+  getBaseURLs,
+  parseProjectPath,
+  repository,
+} from '$lib/services/backends/git/gitlab/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
 import workflow from '$lib/services/backends/git/gitlab/workflow';
 import { graphqlVars } from '$lib/services/backends/git/shared/api';
@@ -27,8 +31,6 @@ import { cmsConfig } from '$lib/services/config';
 /**
  * @import { BackendService, RepositoryInfo } from '$lib/types/private';
  */
-
-const REPO_PATH_REGEX = /(?<owner>.+)\/(?<repo>[^/]+)$/;
 
 /**
  * Initialize the GitLab backend.
@@ -57,14 +59,7 @@ export const init = () => {
     include_credentials: includeCredentials = false,
   } = backend;
 
-  /**
-   * In GitLab terminology, an owner is called a namespace, and a repository is called a project. A
-   * namespace can contain a group and a subgroup concatenated with a `/` so we cannot simply use
-   * `split('/')` here. A project name should not contain a `/`.
-   * @see https://docs.gitlab.com/user/namespace/
-   * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/80055
-   */
-  const { owner, repo } = /** @type {string} */ (projectPath).match(REPO_PATH_REGEX)?.groups ?? {};
+  const { owner, repo } = parseProjectPath(/** @type {string} */ (projectPath));
   const repoPath = `${owner}/${repo}`;
 
   initGitBackend(repository, {

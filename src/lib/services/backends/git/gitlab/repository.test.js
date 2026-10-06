@@ -8,6 +8,7 @@ import {
   getBaseURLs,
   getBranchPath,
   getProjectId,
+  parseProjectPath,
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
@@ -30,11 +31,30 @@ describe('GitLab repository service', () => {
     });
   });
 
+  describe('parseProjectPath', () => {
+    test('splits a nested namespace from the project name', () => {
+      expect(parseProjectPath('group/subgroup/project')).toEqual({
+        owner: 'group/subgroup',
+        repo: 'project',
+      });
+
+      expect(parseProjectPath('owner/repo')).toEqual({ owner: 'owner', repo: 'repo' });
+    });
+
+    test('returns nothing for a path without a namespace', () => {
+      expect(parseProjectPath('project')).toEqual({});
+    });
+  });
+
   describe('getProjectId', () => {
     test('returns the percent-encoded project path', () => {
       Object.assign(repository, { owner: 'group/subgroup', repo: 'project' });
 
       expect(getProjectId()).toBe('group%2Fsubgroup%2Fproject');
+    });
+
+    test('addresses another project, such as an Open Authoring contributor’s fork', () => {
+      expect(getProjectId({ owner: 'contributor', repo: 'project' })).toBe('contributor%2Fproject');
     });
   });
 
@@ -44,6 +64,12 @@ describe('GitLab repository service', () => {
 
       expect(getBranchPath('cms/posts/c#-tips')).toBe(
         '/projects/group%2Fsubgroup%2Fproject/repository/branches/cms%2Fposts%2Fc%23-tips',
+      );
+    });
+
+    test('addresses a branch in another project, such as a contributor’s fork', () => {
+      expect(getBranchPath('cms/posts/hello', { owner: 'contributor', repo: 'project' })).toBe(
+        '/projects/contributor%2Fproject/repository/branches/cms%2Fposts%2Fhello',
       );
     });
   });

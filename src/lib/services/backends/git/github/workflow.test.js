@@ -971,6 +971,8 @@ describe('GitHub Editorial Workflow service', () => {
           createdDate: new Date('2026-01-03T00:00:00Z'),
           updatedDate: new Date('2026-01-03T00:00:00Z'),
           files: [],
+          // A contributor never merges
+          canMerge: false,
         });
 
         // Only the `createRef` mutation; no pull request was opened

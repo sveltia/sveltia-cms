@@ -23,7 +23,7 @@ const mockI18nStrings = {
   'config.error.open_authoring_no_workflow':
     'The `open_authoring` option requires the `editorial_workflow` publish mode.',
   'config.warning.open_authoring_unsupported_backend':
-    'Open Authoring is currently supported only with the GitHub backend.',
+    'Open Authoring is currently supported only with the GitHub and GitLab backends.',
 };
 
 /**
@@ -845,7 +845,24 @@ describe('parseBackendConfig', () => {
       ]);
     });
 
-    it('should warn when the backend is not GitHub', async () => {
+    it('should accept the option with the GitLab backend', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        publish_mode: 'editorial_workflow',
+        backend: { name: 'gitlab', repo: 'group/project', open_authoring: true },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(0);
+      // GitLab has no `auth_scope` option, so the scope warning doesn’t apply to it
+      expect(collectors.warnings.size).toBe(0);
+    });
+
+    it('should warn when the backend supports neither', async () => {
       const { parseBackendConfig } = await import('./backend.js');
       const collectors = createCollectors();
 
@@ -853,17 +870,17 @@ describe('parseBackendConfig', () => {
       const config = {
         publish_mode: 'editorial_workflow',
         backend: {
-          name: 'gitlab',
+          name: 'gitea',
           repo: 'owner/repo',
+          app_id: 'app',
           open_authoring: true,
-          auth_scope: 'public_repo',
         },
       };
 
       parseBackendConfig(config, collectors);
 
       expect([...collectors.warnings]).toEqual([
-        'Open Authoring is currently supported only with the GitHub backend.',
+        'Open Authoring is currently supported only with the GitHub and GitLab backends.',
       ]);
     });
 

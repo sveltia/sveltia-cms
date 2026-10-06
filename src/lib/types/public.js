@@ -1981,10 +1981,15 @@
  * that carries the deploy preview URL, matched as a case-insensitive substring. Default: any
  * context or environment that looks like a deploy preview. See the
  * [documentation](https://sveltiacms.app/en/docs/workflows/deploy-previews) for details.
+ * @property {boolean} [open_authoring] Whether to enable Open Authoring, which lets a contributor
+ * without write access to the project propose changes from a fork. It requires the
+ * `editorial_workflow` publish mode. Default: `false`. See the
+ * [documentation](https://sveltiacms.app/en/docs/workflows/open) for details.
  * @see https://decapcms.org/docs/gitlab-backend/
  * @see https://decapcms.org/docs/editorial-workflows/
  * @see https://sveltiacms.app/en/docs/backends/gitlab
  * @see https://sveltiacms.app/en/docs/workflows/editorial
+ * @see https://sveltiacms.app/en/docs/workflows/open
  */
 
 /**

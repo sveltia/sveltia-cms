@@ -57,7 +57,11 @@ describe('OpenAuthoringIndicator', () => {
     const open = vi.spyOn(window, 'open').mockImplementation(() => null);
 
     backendName.current = 'github';
-    Object.assign(repository, { repoURL: 'https://github.com/acme/site' });
+    Object.assign(repository, {
+      repoURL: 'https://github.com/acme/site',
+      owner: 'acme',
+      repo: 'site',
+    });
     forkedRepository.current = /** @type {any} */ ({ owner: 'me', repo: 'site' });
 
     try {
@@ -72,7 +76,7 @@ describe('OpenAuthoringIndicator', () => {
       await expect.poll(() => container.querySelector('.infobar')).toBeNull();
     } finally {
       open.mockRestore();
-      Object.assign(repository, { repoURL: '' });
+      Object.assign(repository, { repoURL: '', owner: '', repo: '' });
       forkedRepository.current = undefined;
     }
   });

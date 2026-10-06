@@ -2,23 +2,33 @@ import { sleep } from '@sveltia/utils/misc';
 
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
+import { getWorkflowRepository } from '$lib/services/backends/git/gitlab/fork';
 import {
   createPullRequest,
   deleteBranch,
   DRAFT_TITLE_PREFIX,
+  fetchPullRequests as fetchLabelledPullRequests,
   fetchMergeRequest,
   fetchOpenMergeRequests,
-  fetchPullRequests,
 } from '$lib/services/backends/git/gitlab/merge-requests';
 import {
   getBranchPath,
   getProjectId,
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
+import {
+  fetchForkPullRequests,
+  updateForkStatus,
+} from '$lib/services/backends/git/gitlab/workflow-fork';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import {
+  checkPublishAllowed,
+  createDraftPullRequest,
+} from '$lib/services/backends/git/shared/fork';
 import { isSquashMergeEnabled } from '$lib/services/backends/git/shared/workflow';
 import { getAllStatusLabels, getStatusLabel } from '$lib/services/workflow/labels';
+import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
@@ -62,13 +72,23 @@ const AUTO_MERGE_WAIT_STATUSES = [...TRANSIENT_MERGE_STATUSES, 'ci_still_running
 const AUTO_MERGE_POLL = { interval: 10000, maxDuration: 60 * 60 * 1000 };
 
 /**
+ * Fetch all the unpublished entries the signed-in user has in progress.
+ * @returns {Promise<WorkflowPullRequest[]>} Merge requests.
+ */
+export const fetchPullRequests = async () =>
+  openAuthoring.current ? fetchForkPullRequests() : fetchLabelledPullRequests();
+
+/**
  * Commit the given changes on a workflow branch that no merge request is known for. The branch is
  * usually created along with the commit, but it can already exist: it’s left over from an earlier
  * merge request for the same entry, which the CMS knows nothing about — one merged without deleting
  * the branch, or one that was closed on GitLab rather than discarded here, which leaves the branch
  * behind. Starting the new merge request from the branch as it stands would carry that earlier
  * work into it — a merged one adds nothing, but a closed one brings back what was thrown away — so
- * the branch is deleted and created afresh from the configured branch.
+ * the branch is deleted and created afresh from the configured branch. With Open Authoring a draft
+ * is a branch without a merge request, so there’s no telling a leftover from a live one; the branch
+ * is kept, and it shows up as a draft the next time the fork is listed. The fork is the
+ * contributor’s own, so nobody else’s work can be on it.
  * @param {FileChange[]} changes Changes to be committed.
  * @param {CommitOptions} options Commit options, with the workflow branch.
  * @returns {Promise<CommitResults>} Commit results.
@@ -86,6 +106,10 @@ const commitToNewBranch = async (changes, options) => {
     if (ex.cause?.status !== 400) {
       throw ex;
     }
+  }
+
+  if (openAuthoring.current) {
+    return commitChanges(changes, options);
   }
 
   // A merge request open from the branch is one the board doesn’t show: it has lost its status
@@ -110,7 +134,8 @@ const commitToNewBranch = async (changes, options) => {
 /**
  * Fetch the commit the given workflow branch points at. Two editors working on the same entry
  * share its branch, so this is how a save finds out that someone else has committed to it since
- * the draft was opened.
+ * the draft was opened. The branch is looked up in the project it lives in, which is the
+ * contributor’s fork with Open Authoring.
  * @param {string} branch Branch name.
  * @returns {Promise<string | undefined>} Git object ID, or `undefined` if the branch is gone,
  * which is what a merged or closed merge request leaves behind.
@@ -119,7 +144,7 @@ const commitToNewBranch = async (changes, options) => {
 export const fetchBranchHead = async (branch) => {
   try {
     const { commit } = /** @type {{ commit?: { id?: string } }} */ (
-      await fetchAPI(getBranchPath(branch))
+      await fetchAPI(getBranchPath(branch, getWorkflowRepository()))
     );
 
     return commit?.id;
@@ -142,6 +167,10 @@ export const fetchBranchHead = async (branch) => {
  * @see https://docs.gitlab.com/api/merge_requests/#edit-merge-request
  */
 export const updateStatus = async (pullRequest, status) => {
+  if (openAuthoring.current) {
+    return updateForkStatus(pullRequest, status);
+  }
+
   const newLabel = getStatusLabel(status);
   const isDraft = status === 'draft';
   const title = isDraft ? `${DRAFT_TITLE_PREFIX}${pullRequest.title}` : pullRequest.title;
@@ -177,6 +206,12 @@ export const savePullRequest = async ({ changes, options, branch, title, status,
   // The commit itself creates the workflow branch on the first save, so it doesn’t need a request
   // of its own
   const commit = await commitToNewBranch(changes, { ...options, branch });
+
+  // A removal has no review stages to move through, so its merge request is opened right away like
+  // it is in the regular flow
+  if (openAuthoring.current && status === 'draft') {
+    return { commit, pullRequest: createDraftPullRequest({ commit, branch, title }) };
+  }
 
   return { commit, pullRequest: await createPullRequest({ branch, title, status }) };
 };
@@ -430,6 +465,8 @@ export const fetchUnchangedPaths = async ({ headSHA, paths }) => {
  * @see https://github.com/sveltia/sveltia-cms/issues/989
  */
 export const publish = async (pullRequest) => {
+  checkPublishAllowed();
+
   const squash = isSquashMergeEnabled();
   const path = `/projects/${getProjectId()}/merge_requests/${pullRequest.number}/merge`;
 
@@ -482,10 +519,13 @@ export const publish = async (pullRequest) => {
  * @see https://docs.gitlab.com/api/merge_requests/#edit-merge-request
  */
 export const discard = async (pullRequest) => {
-  await fetchAPI(`/projects/${getProjectId()}/merge_requests/${pullRequest.number}`, {
-    method: 'PUT',
-    body: { state_event: 'close' },
-  });
+  // An Open Authoring draft has no merge request yet, so deleting the branch is all there is to do
+  if (pullRequest.number !== undefined) {
+    await fetchAPI(`/projects/${getProjectId()}/merge_requests/${pullRequest.number}`, {
+      method: 'PUT',
+      body: { state_event: 'close' },
+    });
+  }
 
   await deleteBranch(pullRequest.branch);
 };

@@ -10,7 +10,10 @@ import { getBlobSHA, MockGitRepository } from './git.js';
  * @property {number} iid Merge request number in the project.
  * @property {number} id Global ID.
  * @property {string} title Title, with a `Draft: ` prefix for a draft.
- * @property {string} sourceBranch Branch the changes come from.
+ * @property {string} sourceBranch Branch the changes come from, as {@link MockGitLab.refs} keys it,
+ * so a branch in a fork reads `owner:branch`.
+ * @property {number} sourceProjectId ID of the project the source branch lives in, which is the
+ * fork’s for a merge request an Open Authoring contributor opened.
  * @property {string} targetBranch Branch the changes go to.
  * @property {string[]} labels Label names.
  * @property {'opened' | 'closed' | 'merged'} state State.
@@ -69,9 +72,49 @@ export class MockGitLab extends MockGitRepository {
   canPush = true;
 
   /**
+   * Numeric ID of the configured project, which the API reports where an encoded path won’t do:
+   * the source and target of a merge request, and the project a comparison runs against.
+   */
+  projectId = 1;
+
+  /**
+   * Numeric ID of the fork.
+   */
+  forkProjectId = 2;
+
+  /**
+   * Whether the project allows forks. GitLab turns forking off by default on a private project.
+   */
+  allowForking = true;
+
+  /**
+   * The signed-in user’s fork of the project, once {@link createFork} has made it.
+   * @type {{ owner: string, repo: string } | undefined}
+   */
+  fork = undefined;
+
+  /**
+   * How many times a newly requested fork reports an unfinished import before it’s ready, as GitLab
+   * copies the repository in the background.
+   */
+  forkImportDelay = 0;
+
+  /**
+   * How many more requests for the fork report an unfinished import; see {@link forkImportDelay}.
+   */
+  forkPendingRequests = 0;
+
+  /**
    * Maximum number of files in a page of the file list, which GitLab limits to 100.
    */
   treePageSize = 100;
+
+  /**
+   * Maximum number of merge requests in a page of the merge request list. A test lowers it to stand
+   * in for a contributor with more merge requests in the project than the CMS reads in one page,
+   * rather than opening a hundred of them.
+   */
+  mergeRequestPageSize = Infinity;
 
   /**
    * Merge requests, open or not, the oldest first.
@@ -106,6 +149,91 @@ export class MockGitLab extends MockGitRepository {
   }
 
   /**
+   * Path of the fork in the REST API. It’s the path the CMS asks for even before the fork exists,
+   * which is how it finds out it has to make one.
+   * @type {string}
+   */
+  get forkPath() {
+    return `/projects/${encodeURIComponent(`${this.user.login}/${this.fork?.repo ?? this.repo}`)}`;
+  }
+
+  /**
+   * Path the CMS looks for a fork at first: the signed-in user’s namespace and the project’s own
+   * name. It’s where a fork is unless the contributor renamed it.
+   * @type {string}
+   */
+  get defaultForkPath() {
+    return `/projects/${encodeURIComponent(`${this.user.login}/${this.repo}`)}`;
+  }
+
+  /**
+   * Fork the project onto the signed-in user’s namespace, with a copy of the default branch. Like a
+   * fork on GitLab, it shares the commits and blobs of the project, and only its branches are its
+   * own.
+   * @param {object} [options] Options.
+   * @param {string} [options.repo] Name of the fork, the project’s own by default. A fork has
+   * another name when the contributor renamed it.
+   * @returns {{ owner: string, repo: string }} Fork.
+   */
+  createFork({ repo = this.repo } = {}) {
+    this.fork = { owner: this.user.login, repo };
+    this.refs.set(this.forkBranch(this.branch), this.head.oid);
+
+    return this.fork;
+  }
+
+  /**
+   * Find a project the way GitLab does for a project parameter in a request body, such as a
+   * commit’s `start_project`: by its numeric ID, or by its full path as is. A path URL-encoded the
+   * way it is in a request path names no project.
+   * @param {number | string} idOrPath Project ID or full path.
+   * @returns {number | undefined} Project ID, or `undefined` if there’s no such project.
+   */
+  findProject(idOrPath) {
+    /** @type {[number, string][]} */
+    const projects = [[this.projectId, `${this.owner}/${this.repo}`]];
+
+    if (this.fork) {
+      projects.push([this.forkProjectId, `${this.fork.owner}/${this.fork.repo}`]);
+    }
+
+    return projects.find(([id, path]) => String(idOrPath) === String(id) || idOrPath === path)?.[0];
+  }
+
+  /**
+   * Get the key of a branch in the fork, for {@link refs}, {@link commit} and {@link readFile}.
+   * @param {string} branch Branch name.
+   * @returns {string} Key, e.g. `mona:main`.
+   */
+  forkBranch(branch) {
+    return `${this.user.login}:${branch}`;
+  }
+
+  /**
+   * Describe a project the way the REST API does.
+   * @param {object} args Arguments.
+   * @param {boolean} args.isFork Whether it’s the signed-in user’s fork.
+   * @returns {Record<string, any>} Project.
+   */
+  toProjectItem({ isFork }) {
+    const owner = isFork ? this.user.login : this.owner;
+    const repo = isFork ? /** @type {{ repo: string }} */ (this.fork).repo : this.repo;
+
+    return {
+      id: isFork ? this.forkProjectId : this.projectId,
+      path_with_namespace: `${owner}/${repo}`,
+      namespace: { kind: isFork ? 'user' : 'group', full_path: owner },
+      forking_access_level: this.allowForking ? 'enabled' : 'disabled',
+      ...(isFork
+        ? {
+            import_status: 'finished',
+            forked_from_project: { path_with_namespace: `${this.owner}/${this.repo}` },
+          }
+        : {}),
+    };
+  }
+
+  /**
    * Report the builds of a commit: a deployment to an environment, like a Review App, or a commit
    * status posted by an external CI/CD service. A later report replaces the earlier ones.
    * @param {string} sha Commit SHA.
@@ -127,6 +255,8 @@ export class MockGitLab extends MockGitRepository {
    * @param {string} [args.targetBranch] Branch the changes go to, the default branch by default.
    * @param {string[]} [args.labels] Label names.
    * @param {MockUser} [args.author] Author, the colleague by default.
+   * @param {number} [args.sourceProjectId] ID of the project the source branch lives in, the
+   * configured project’s by default.
    * @returns {MockMergeRequest} Merge request.
    */
   openMergeRequest({
@@ -135,6 +265,7 @@ export class MockGitLab extends MockGitRepository {
     targetBranch = this.branch,
     labels = [],
     author = this.colleague,
+    sourceProjectId = this.projectId,
   }) {
     const now = new Date();
 
@@ -144,6 +275,7 @@ export class MockGitLab extends MockGitRepository {
       id: 1000 + this.mergeRequests.length + 1,
       title,
       sourceBranch,
+      sourceProjectId,
       targetBranch,
       labels: [...labels],
       state: 'opened',
@@ -237,19 +369,27 @@ export class MockGitLab extends MockGitRepository {
    * @returns {Record<string, any>} Merge request.
    */
   toMergeRequestItem(mergeRequest) {
-    const { iid, id, title, sourceBranch, targetBranch, labels, state, author } = mergeRequest;
+    const { iid, id, title, sourceBranch, sourceProjectId, targetBranch, labels, state, author } =
+      mergeRequest;
+
     const open = state === 'opened' && this.refs.has(sourceBranch);
+    // A merge request from a fork names its source branch without the owner prefix the mock keys it
+    // with, the way GitLab reports a branch in the source project
+    const [, plainSourceBranch = sourceBranch] = sourceBranch.match(/^[^:]+:(.+)$/) ?? [];
 
     return {
       id,
       iid,
       title,
       state,
+      // GitLab has no draft field to set: the read-only one is derived from the title
+      // @see https://docs.gitlab.com/user/project/merge_requests/drafts/
+      draft: /^\s*(?:\[draft\]|\(draft\)|draft:|draft\s|\[wip\]|\(wip\)|wip:|wip\s)/i.test(title),
       labels,
-      source_branch: sourceBranch,
+      source_branch: plainSourceBranch,
       target_branch: targetBranch,
-      source_project_id: 1,
-      target_project_id: 1,
+      source_project_id: sourceProjectId,
+      target_project_id: this.projectId,
       author: { id: author.id, username: author.login, name: author.name },
       sha: open ? this.getHead(sourceBranch).oid : mergeRequest.lastHead,
       web_url: `https://gitlab.com/${this.owner}/${this.repo}/-/merge_requests/${iid}`,
@@ -276,24 +416,38 @@ export class MockGitLab extends MockGitRepository {
    * @param {string[]} segments URL path segments after `merge_requests`, decoded.
    * @param {Record<string, any> | null} body Request body.
    * @param {URLSearchParams} searchParams URL query.
+   * @param {boolean} [fromFork] Whether the request was made on the fork, which only happens when
+   * an Open Authoring contributor opens a merge request from a branch there.
    * @returns {MockResponse | undefined} Response, or `undefined` if the request isn’t mocked.
    */
-  handleMergeRequestRequest(method, segments, body, searchParams) {
+  handleMergeRequestRequest(method, segments, body, searchParams, fromFork = false) {
     if (!segments.length) {
       if (method === 'GET') {
         const state = searchParams.get('state');
         const labels = searchParams.get('labels')?.split(',') ?? [];
         const sourceBranch = searchParams.get('source_branch');
+        const authorId = searchParams.get('author_id');
+        // The Open Authoring flow asks for the newest first by creation; everything else by update
+        const byCreation = searchParams.get('order_by') === 'created_at';
 
         return {
           json: this.mergeRequests
             .filter(
               (mr) =>
-                (!state || mr.state === state) &&
+                (!state || state === 'all' || mr.state === state) &&
                 labels.every((label) => mr.labels.includes(label)) &&
-                (!sourceBranch || mr.sourceBranch === sourceBranch),
+                // A fork’s branch is keyed with its owner, which the filter is given without
+                (!sourceBranch ||
+                  mr.sourceBranch === sourceBranch ||
+                  mr.sourceBranch.endsWith(`:${sourceBranch}`)) &&
+                (!authorId || mr.author.id === Number(authorId)),
             )
-            .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+            .sort((a, b) =>
+              byCreation
+                ? b.createdAt.getTime() - a.createdAt.getTime()
+                : b.updatedAt.getTime() - a.updatedAt.getTime(),
+            )
+            .slice(0, this.mergeRequestPageSize)
             .map((mr) => this.toMergeRequestItem(mr)),
         };
       }
@@ -306,8 +460,12 @@ export class MockGitLab extends MockGitRepository {
           labels = '',
         } = body ?? {};
 
+        // A merge request opened on the fork targets the configured project by ID, and its source
+        // branch lives in the fork
+        const branchKey = fromFork ? this.forkBranch(sourceBranch) : sourceBranch;
+
         // Like GitLab, refuse a second open merge request from the same branch to the same target
-        if (this.getOpenMergeRequest(sourceBranch, targetBranch)) {
+        if (this.getOpenMergeRequest(branchKey, targetBranch)) {
           return {
             status: 409,
             json: { message: ['Another open merge request already exists for this source branch'] },
@@ -316,7 +474,8 @@ export class MockGitLab extends MockGitRepository {
 
         const mergeRequest = this.openMergeRequest({
           title,
-          sourceBranch,
+          sourceBranch: branchKey,
+          sourceProjectId: fromFork ? this.forkProjectId : this.projectId,
           targetBranch,
           labels: labels ? String(labels).split(',') : [],
           author: this.user,
@@ -367,6 +526,12 @@ export class MockGitLab extends MockGitRepository {
           state: 'closed',
           lastHead: this.refs.get(mergeRequest.sourceBranch),
         });
+      }
+
+      // A closed merge request can be reopened, which is how an Open Authoring contributor sends an
+      // entry for review again after taking it back to the drafting stage
+      if (body?.state_event === 'reopen') {
+        Object.assign(mergeRequest, { state: 'opened', lastHead: undefined });
       }
 
       mergeRequest.updatedAt = new Date();
@@ -561,30 +726,85 @@ export class MockGitLab extends MockGitRepository {
       };
     }
 
-    if (pathname.startsWith(`${this.projectPath}/merge_requests`)) {
+    // What the sign-in reads to find out whether the project can be forked, and its numeric ID
+    if (method === 'GET' && pathname === this.projectPath) {
+      return { json: this.toProjectItem({ isFork: false }) };
+    }
+
+    // The forks of the project the signed-in user owns, which is theirs or none
+    if (method === 'GET' && pathname === `${this.projectPath}/forks`) {
+      return { json: this.fork ? [this.toProjectItem({ isFork: true })] : [] };
+    }
+
+    if (method === 'POST' && pathname === `${this.projectPath}/fork`) {
+      if (!this.allowForking) {
+        return { status: 409, json: { message: 'Forking is not allowed' } };
+      }
+
+      if (this.fork) {
+        return { status: 409, json: { message: 'Project namespace name has already been taken' } };
+      }
+
+      this.createFork();
+      this.forkPendingRequests = this.forkImportDelay;
+
+      return { status: 201, json: this.toProjectItem({ isFork: true }) };
+    }
+
+    // Everything below is addressed to the configured project or to the signed-in user’s fork. The
+    // fork’s path is answered even before it exists, which is how the CMS finds out it has to make
+    // one
+    const onFork = pathname === this.forkPath || pathname.startsWith(`${this.forkPath}/`);
+    const projectPath = onFork ? this.forkPath : this.projectPath;
+
+    // The CMS looks for the fork at the project’s own name first, which isn’t where a renamed fork
+    // is. GitLab answers 404, which is how the CMS knows to look it up in the fork list instead
+    if (!onFork && pathname === this.defaultForkPath) {
+      return { status: 404, json: { message: '404 Project Not Found' } };
+    }
+
+    if (onFork) {
+      if (!this.fork) {
+        return { status: 404, json: { message: '404 Project Not Found' } };
+      }
+
+      if (pathname === this.forkPath) {
+        if (this.forkPendingRequests > 0) {
+          this.forkPendingRequests -= 1;
+
+          return { json: { ...this.toProjectItem({ isFork: true }), import_status: 'started' } };
+        }
+
+        return { json: this.toProjectItem({ isFork: true }) };
+      }
+    }
+
+    if (pathname.startsWith(`${projectPath}/merge_requests`)) {
       return this.handleMergeRequestRequest(
         method,
         pathname
-          .slice(`${this.projectPath}/merge_requests`.length)
+          .slice(`${projectPath}/merge_requests`.length)
           .split('/')
           .filter(Boolean)
           .map((segment) => decodeURIComponent(segment)),
         body,
         searchParams,
+        onFork,
       );
     }
 
-    if (!pathname.startsWith(`${this.projectPath}/repository/`)) {
+    if (!pathname.startsWith(`${projectPath}/repository/`)) {
       return undefined;
     }
 
     const [resource, ...rest] = pathname
-      .slice(`${this.projectPath}/repository/`.length)
+      .slice(`${projectPath}/repository/`.length)
       .split('/')
       .map((segment) => decodeURIComponent(segment));
 
-    // A comparison of a branch with a commit, from where they parted
-    if (method === 'GET' && resource === 'compare') {
+    // A comparison of a branch with a commit, from where they parted. One across projects is an
+    // Open Authoring draft’s, answered further down
+    if (method === 'GET' && resource === 'compare' && !searchParams.has('from_project_id')) {
       const from = searchParams.get('from') ?? '';
       const head = this.getCommit(searchParams.get('to') ?? '');
 
@@ -593,19 +813,57 @@ export class MockGitLab extends MockGitRepository {
         : { status: 404, json: { message: '404 Not Found' } };
     }
 
+    /**
+     * Get the key a branch of the project being addressed has in {@link refs}.
+     * @param {string} branch Branch name.
+     * @returns {string} Key.
+     */
+    const toRef = (branch) => (onFork ? this.forkBranch(branch) : branch);
+
     if (method === 'DELETE' && resource === 'branches') {
-      return this.deleteBranch(rest.join('/'))
+      return this.deleteBranch(toRef(rest.join('/')))
         ? { status: 204 }
         : { status: 404, json: { message: '404 Branch Not Found' } };
     }
 
+    // The branches of the project whose name begins with the `^prefix` search term, which is how
+    // the CMS lists an Open Authoring contributor’s Editorial Workflow branches in their fork
+    if (method === 'GET' && resource === 'branches' && !rest.length) {
+      const search = searchParams.get('search') ?? '';
+      const prefix = search.startsWith('^') ? search.slice(1) : undefined;
+      const keyPrefix = toRef('');
+
+      return {
+        json: [...this.refs.keys()]
+          .filter((key) => key.startsWith(keyPrefix) || (!onFork && !key.includes(':')))
+          .map((key) => (onFork ? key.slice(keyPrefix.length) : key))
+          .filter((branch) => (prefix ? branch.startsWith(prefix) : branch.includes(search)))
+          .sort()
+          .map((branch) => {
+            const { oid, message, date, author } = this.getHead(toRef(branch));
+
+            return {
+              name: branch,
+              can_push: this.canPush,
+              commit: {
+                id: oid,
+                message,
+                author_name: author.name,
+                author_email: author.email,
+                committed_date: date.toISOString(),
+              },
+            };
+          }),
+      };
+    }
+
     if (method === 'GET' && resource === 'branches') {
-      const branch = rest.join('/');
+      const branch = toRef(rest.join('/'));
 
       return this.refs.has(branch)
         ? {
             json: {
-              name: branch,
+              name: rest.join('/'),
               can_push: this.canPush,
               commit: { id: this.getHead(branch).oid },
             },
@@ -613,9 +871,39 @@ export class MockGitLab extends MockGitRepository {
         : { status: 404, json: { message: '404 Branch Not Found' } };
     }
 
+    // The files a branch changes against a branch of another project, which is how the CMS works
+    // out what an Open Authoring draft holds: it has no merge request to list the files from
+    // @see https://docs.gitlab.com/api/repositories/#compare-branches-tags-or-commits
+    if (method === 'GET' && resource === 'compare') {
+      const from = searchParams.get('from') ?? '';
+      const to = searchParams.get('to') ?? '';
+      const fromProjectId = Number(searchParams.get('from_project_id'));
+      // `from` lives in `from_project_id`, `to` in the project the request was made on
+      const fromRef = fromProjectId === this.forkProjectId ? this.forkBranch(from) : from;
+
+      if (!this.refs.has(fromRef) || !this.refs.has(toRef(to))) {
+        return { status: 404, json: { message: '404 Ref Not Found' } };
+      }
+
+      const head = this.getHead(toRef(to));
+      const mergeBase = this.getMergeBase(head.oid, this.getHead(fromRef).oid);
+
+      return {
+        json: {
+          diffs: MockGitLab.diffTrees(mergeBase.tree, head.tree).map(({ path, changeType }) => ({
+            old_path: path,
+            new_path: path,
+            new_file: changeType === 'ADDED',
+            deleted_file: changeType === 'DELETED',
+            renamed_file: false,
+          })),
+        },
+      };
+    }
+
     // A file’s path is a single, encoded segment, followed by `raw`
     if (method === 'GET' && resource === 'files' && rest[1] === 'raw') {
-      const ref = searchParams.get('ref') ?? this.branch;
+      const ref = toRef(searchParams.get('ref') ?? this.branch);
       const sha = this.refs.has(ref) ? this.getHead(ref).tree.get(rest[0]) : undefined;
 
       return sha
@@ -630,7 +918,7 @@ export class MockGitLab extends MockGitRepository {
 
     if (method === 'GET' && resource === 'commits' && !rest.length) {
       const path = searchParams.get('path') ?? '';
-      const branch = searchParams.get('ref_name') ?? this.branch;
+      const branch = toRef(searchParams.get('ref_name') ?? this.branch);
 
       return {
         json: this.getFileCommits(path, branch)
@@ -640,7 +928,7 @@ export class MockGitLab extends MockGitRepository {
     }
 
     if (method === 'POST' && resource === 'commits' && !rest.length) {
-      return this.handleCommit(/** @type {Record<string, any>} */ (body));
+      return this.handleCommit(/** @type {Record<string, any>} */ (body), onFork);
     }
 
     return undefined;
@@ -654,7 +942,11 @@ export class MockGitLab extends MockGitRepository {
    * mocked.
    */
   handleGraphQL(query, variables) {
-    if (variables.fullPath !== `${this.owner}/${this.repo}`) {
+    // The blobs of a workflow branch are read from the fork with Open Authoring, so the query names
+    // the fork’s path and its branches have to be resolved there
+    const onFork = !!this.fork && variables.fullPath === `${this.user.login}/${this.fork.repo}`;
+
+    if (!onFork && variables.fullPath !== `${this.owner}/${this.repo}`) {
       return { data: { project: null } };
     }
 
@@ -682,8 +974,8 @@ export class MockGitLab extends MockGitRepository {
     }
 
     // The variable holds a branch name or, for the contents of a merge request, its head commit
-    const { branch } = variables;
-    const head = this.refs.has(branch) ? this.getHead(branch) : this.getCommit(branch);
+    const branch = onFork ? this.forkBranch(variables.branch) : variables.branch;
+    const head = this.refs.has(branch) ? this.getHead(branch) : this.getCommit(variables.branch);
 
     if (query.includes('lastCommit')) {
       return {
@@ -798,9 +1090,11 @@ export class MockGitLab extends MockGitRepository {
    * to change a file that doesn’t, and refuse an action carrying a `last_commit_id` when the file
    * has changed since that commit, all with 400 Bad Request.
    * @param {Record<string, any>} body Request body.
+   * @param {boolean} [onFork] Whether the commit goes to the signed-in user’s fork, which is where
+   * an Open Authoring contributor’s workflow branches live.
    * @returns {MockResponse} Response.
    */
-  handleCommit(body) {
+  handleCommit(body, onFork = false) {
     this.received.push(body);
 
     const { beforeCommit } = this;
@@ -808,18 +1102,47 @@ export class MockGitLab extends MockGitRepository {
     this.beforeCommit = undefined;
     beforeCommit?.();
 
-    const { branch, commit_message: message, actions, start_branch: startBranch } = body;
+    const {
+      commit_message: message,
+      actions,
+      start_branch: startBranch,
+      start_project: startProject,
+    } = body;
 
-    if (!this.canPush) {
+    const branch = onFork ? this.forkBranch(body.branch) : body.branch;
+
+    // A contributor has no write access to the configured project, and the branch protection the
+    // flag stands for doesn’t apply to their own fork
+    if (!this.canPush && !onFork) {
       return { status: 403, json: { message: '403 Forbidden' } };
     }
 
     // A commit with a start branch creates the branch, which GitLab refuses if it exists already
     if (startBranch && this.refs.has(branch)) {
-      return { status: 400, json: { message: `A branch called '${branch}' already exists.` } };
+      return {
+        status: 400,
+        json: { message: `A branch called '${body.branch}' already exists.` },
+      };
     }
 
-    const head = this.getHead(startBranch ?? branch);
+    // The branch can start from a branch of another project, which is how a contributor’s workflow
+    // branch starts from the configured project’s head rather than their fork’s copy of it
+    const startProjectId = startProject === undefined ? undefined : this.findProject(startProject);
+
+    if (startProject !== undefined && startProjectId === undefined) {
+      return { status: 404, json: { message: '404 Project Not Found' } };
+    }
+
+    const startsOnFork =
+      startProject === undefined ? onFork : startProjectId === this.forkProjectId;
+
+    const startRef = startBranch
+      ? startsOnFork
+        ? this.forkBranch(startBranch)
+        : startBranch
+      : branch;
+
+    const head = this.getHead(startRef);
     const tree = new Map(head.tree);
     /** @type {string[]} */
     const paths = [];

@@ -11,6 +11,7 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { getGitHash } from '$lib/services/utils/file';
+import { forkedRepository, openAuthoring } from '$lib/services/workflow/open-authoring';
 
 // Mock dependencies
 vi.mock('@sveltia/i18n', () => ({
@@ -18,6 +19,7 @@ vi.mock('@sveltia/i18n', () => ({
   locale: { current: 'en', set: vi.fn() },
   dictionary: {},
 }));
+vi.mock('$lib/services/backends/git/gitlab/fork', () => ({ projectIds: { base: 42 } }));
 vi.mock('$lib/services/backends/git/gitlab/repository', () => {
   const mockRepository = { repo: 'test-repo', branch: 'main', owner: 'test-owner' };
 
@@ -25,11 +27,16 @@ vi.mock('$lib/services/backends/git/gitlab/repository', () => {
     repository: mockRepository,
     /**
      * Get the project ID the same way the real module does.
+     * @param {any} [repoPath] Project to address. Default: the configured project.
      * @returns {string} URL-encoded project path.
      */
-    getProjectId: () => encodeURIComponent(`${mockRepository.owner}/${mockRepository.repo}`),
+    getProjectId: ({ owner, repo } = mockRepository) => encodeURIComponent(`${owner}/${repo}`),
   };
 });
+vi.mock('$lib/services/workflow/open-authoring', () => ({
+  forkedRepository: { current: undefined },
+  openAuthoring: { current: false },
+}));
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
   .../** @type {any} */ (await importOriginal()),
@@ -47,6 +54,8 @@ vi.mock('@sveltia/utils/file', () => ({
 
 describe('GitLab commits service', () => {
   beforeEach(() => {
+    forkedRepository.current = undefined;
+    /** @type {any} */ (openAuthoring).current = false;
     vi.clearAllMocks();
     _resetAvatarURLCache();
     repositoryHead.current = '';
@@ -124,6 +133,73 @@ describe('GitLab commits service', () => {
       /** @type {any} */ ([{ action: 'create', path: 'test.md', data: 'x' }]),
       /** @type {any} */ ({ commitType: 'create', branch: 'cms/posts/hello', startBranch: 'main' }),
     ];
+
+    describe('Open Authoring', () => {
+      /**
+       * Pretend the signed-in user is contributing through the given fork.
+       * @param {any} fork Fork, or `undefined` to sign in as a maintainer.
+       */
+      const signInAs = (fork) => {
+        forkedRepository.current = fork;
+        /** @type {any} */ (openAuthoring).current = !!fork;
+      };
+
+      test('refuses to commit straight to the configured branch', async () => {
+        signInAs({ owner: 'contributor', repo: 'test-repo' });
+
+        const changes = /** @type {any} */ ([{ action: 'create', path: 'test.md', data: 'x' }]);
+
+        await expect(
+          commitChanges(changes, /** @type {any} */ ({ commitType: 'create' })),
+        ).rejects.toThrow('Cannot commit directly to the configured repository');
+
+        expect(fetchAPI).not.toHaveBeenCalled();
+      });
+
+      test('commits to the fork, branching off the configured project', async () => {
+        signInAs({ owner: 'contributor', repo: 'test-repo' });
+
+        const [changes, options] = createStartBranchArgs();
+
+        vi.mocked(createCommitMessage).mockReturnValue('Create new post');
+        vi.mocked(fetchAPI).mockResolvedValue({ id: 'c1', committed_date: '2023-01-01T12:00:00Z' });
+        vi.mocked(getGitHash).mockResolvedValue('file123');
+
+        await commitChanges(changes, options);
+
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/projects/contributor%2Ftest-repo/repository/commits',
+          expect.objectContaining({
+            body: expect.objectContaining({
+              branch: 'cms/posts/hello',
+              start_branch: 'main',
+              // The branch starts from the configured project rather than the fork’s copy of it,
+              // named by its ID: an encoded path in the body would name no project
+              start_project: 42,
+            }),
+          }),
+        );
+      });
+
+      test('leaves the start project out for a maintainer', async () => {
+        signInAs(undefined);
+
+        const [changes, options] = createStartBranchArgs();
+
+        vi.mocked(createCommitMessage).mockReturnValue('Create new post');
+        vi.mocked(fetchAPI).mockResolvedValue({ id: 'c1', committed_date: '2023-01-01T12:00:00Z' });
+        vi.mocked(getGitHash).mockResolvedValue('file123');
+
+        await commitChanges(changes, options);
+
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/projects/test-owner%2Ftest-repo/repository/commits',
+          expect.objectContaining({
+            body: expect.not.objectContaining({ start_project: expect.anything() }),
+          }),
+        );
+      });
+    });
 
     test('creates the branch along with the commit when a start branch is given', async () => {
       const [changes, options] = createStartBranchArgs();

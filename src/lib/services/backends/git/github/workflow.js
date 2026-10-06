@@ -19,6 +19,10 @@ import {
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import {
+  checkPublishAllowed,
+  createDraftPullRequest,
+} from '$lib/services/backends/git/shared/fork';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { isSquashMergeEnabled } from '$lib/services/backends/git/shared/workflow';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
@@ -468,22 +472,10 @@ export const savePullRequest = async ({ changes, options, branch, title, status,
     return { commit, pullRequest };
   }
 
-  // With Open Authoring a draft is nothing but a branch in the contributor’s fork. The pull request
-  // is opened when they hand the entry over for review, so maintainers aren’t notified about work
-  // that isn’t ready for them. A removal has no review stages to move through, so its pull request
-  // is opened right away like it is in the regular flow
+  // A removal has no review stages to move through, so its pull request is opened right away like
+  // it is in the regular flow
   if (openAuthoring.current && status === 'draft') {
-    return {
-      commit,
-      pullRequest: {
-        title,
-        branch,
-        status,
-        createdDate: /** @type {Date} */ (commit.date),
-        updatedDate: /** @type {Date} */ (commit.date),
-        files: [],
-      },
-    };
+    return { commit, pullRequest: createDraftPullRequest({ commit, branch, title }) };
   }
 
   return { commit, pullRequest: await createPullRequest({ branch, title, status }) };
@@ -645,12 +637,7 @@ export const fetchUnchangedPaths = async ({ headSHA, paths }) => {
  * @see https://docs.github.com/en/rest/pulls/pulls#merge-a-pull-request
  */
 export const publish = async (pullRequest) => {
-  if (openAuthoring.current) {
-    throw createLocalizedError(
-      'Cannot publish as an Open Authoring contributor',
-      'open_authoring.publish_unsupported',
-    );
-  }
+  checkPublishAllowed();
 
   const { owner, repo } = repository;
   const squash = isSquashMergeEnabled();

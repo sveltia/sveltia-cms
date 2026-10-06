@@ -34,6 +34,11 @@ vi.mock('$lib/services/backends/git/gitlab/files', () => ({
 vi.mock('$lib/services/backends/git/gitlab/repository', () => ({
   repository: {},
   getBaseURLs: vi.fn(),
+  parseProjectPath: vi.fn((path) => {
+    const [repo, ...owner] = path.split('/').reverse();
+
+    return owner.length ? { owner: owner.reverse().join('/'), repo } : {};
+  }),
 }));
 vi.mock('$lib/services/backends/git/gitlab/status', () => ({
   checkStatus: vi.fn(),
