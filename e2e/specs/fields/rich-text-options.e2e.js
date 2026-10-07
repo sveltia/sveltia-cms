@@ -60,7 +60,8 @@ const openNote = async ({ cms, page, body }) => {
   const editor = page.getByRole('group', { name: 'Content Editor' });
   const field = editor.getByRole('group', { name: /Body.*Field/ });
 
-  await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Note');
+  // The first one, as an image in the body, once rendered, has a Title field too
+  await expect(editor.getByRole('textbox', { name: 'Title' }).first()).toHaveValue('Note');
 
   return { editor, field, body: field.getByRole('textbox', { name: 'Body' }) };
 };
