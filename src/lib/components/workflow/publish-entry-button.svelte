@@ -13,6 +13,7 @@
   import { getPublishDialogStrings } from '$lib/services/workflow/dialogs';
   import { publishWorkflowEntry } from '$lib/services/workflow/save';
   import { canPublish } from '$lib/services/workflow/validate';
+  import { getPublishErrorKey } from '$lib/services/workflow/verify';
 
   /**
    * @import { UnpublishedEntry } from '$lib/types/private';
@@ -40,6 +41,8 @@
 
   let showPublishDialog = $state(false);
   let showErrorToast = $state(false);
+  /** I18n key of the message the error toast shows, which says why publishing was refused. */
+  let errorKey = $state('workflow.publishing_entry_failed');
   let showValidationToast = $state(false);
 
   // Publishing a removal is what deletes the entry, so the control is presented as Delete
@@ -83,6 +86,7 @@
         goBack(`/collections/${collectionName}`);
       }
     } catch (/** @type {any} */ ex) {
+      errorKey = getPublishErrorKey(ex, 'workflow.publishing_entry_failed');
       showErrorToast = true;
       // eslint-disable-next-line no-console
       console.error(ex);
@@ -114,7 +118,7 @@
 </ConfirmationDialog>
 
 <Toast bind:show={showErrorToast}>
-  <Alert status="error">{_('workflow.publishing_entry_failed')}</Alert>
+  <Alert status="error">{_(errorKey)}</Alert>
 </Toast>
 
 <Toast bind:show={showValidationToast}>

@@ -210,6 +210,112 @@ test('publishes an entry by merging its pull request', async ({ cms, github, pag
   ]);
 });
 
+test('refuses to publish an entry whose branch holds other work', async ({ cms, github, page }) => {
+  const pullRequest = openEntryPullRequest(github, {
+    slug: 'second-post',
+    files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+    status: 'pending_publish',
+  });
+
+  // Someone else committed to the same branch and opened a pull request from it to a branch the
+  // CMS doesn’t manage. Merging the entry’s request would take their work along
+  github.commit(
+    { 'content/posts/draft-notes.md': post('Draft Notes', 'Someone else’s work.') },
+    { branch: 'cms/posts/second-post', author: github.colleague },
+  );
+  github.createBranch('develop', github.head.oid);
+  github.openPullRequest({
+    title: 'Tidy up the posts',
+    head: 'cms/posts/second-post',
+    base: 'develop',
+  });
+
+  await cms.open();
+
+  const editor = await openEntry(page, 'Second Post');
+
+  await editor.getByRole('button', { name: 'Publish Entry' }).click();
+  await page
+    .getByRole('alertdialog', { name: 'Publish Entry' })
+    .getByRole('button', { name: 'Publish' })
+    .click();
+
+  // Their post isn’t part of the entry, and the CMS doesn’t show it, so the publish is refused
+  await expect(page.getByRole('alert')).toContainText(
+    'This entry can’t be published here, because it comes with other changes the CMS can’t show you.',
+  );
+  expect(pullRequest.state).toBe('open');
+  expect(github.readFile('content/posts/draft-notes.md')).toBeUndefined();
+});
+
+test('refuses to publish an entry whose pull request changes other files', async ({
+  cms,
+  github,
+  page,
+}) => {
+  // Someone who can push to the repository, but not merge into the configured branch, slips a
+  // change to the site’s code into a pull request that looks like an ordinary entry on the board
+  const pullRequest = openEntryPullRequest(github, {
+    slug: 'second-post',
+    files: {
+      'content/posts/second-post.md': post('Second Post', 'Coming soon.'),
+      '.github/workflows/deploy.yml': 'on: push\n',
+    },
+    status: 'pending_publish',
+  });
+
+  await cms.open();
+
+  const editor = await openEntry(page, 'Second Post');
+
+  await editor.getByRole('button', { name: 'Publish Entry' }).click();
+  await page
+    .getByRole('alertdialog', { name: 'Publish Entry' })
+    .getByRole('button', { name: 'Publish' })
+    .click();
+
+  await expect(page.getByRole('alert')).toContainText(
+    'This entry can’t be published here, because it comes with other changes the CMS can’t show you.',
+  );
+  expect(pullRequest.state).toBe('open');
+  expect(github.readFile('.github/workflows/deploy.yml')).toBeUndefined();
+  expect(github.readFile('content/posts/second-post.md')).toBeUndefined();
+});
+
+test('refuses to publish an entry whose branch has moved on since it was opened', async ({
+  cms,
+  github,
+  page,
+}) => {
+  const pullRequest = openEntryPullRequest(github, {
+    slug: 'second-post',
+    files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+    status: 'pending_publish',
+  });
+
+  await cms.open();
+
+  const editor = await openEntry(page, 'Second Post');
+
+  // Pushed after the entry has been reviewed, so publishing would merge what nobody has seen
+  github.commit(
+    { 'content/posts/second-post.md': post('Second Post', 'Something else entirely.') },
+    { branch: 'cms/posts/second-post', author: github.colleague },
+  );
+
+  await editor.getByRole('button', { name: 'Publish Entry' }).click();
+  await page
+    .getByRole('alertdialog', { name: 'Publish Entry' })
+    .getByRole('button', { name: 'Publish' })
+    .click();
+
+  await expect(page.getByRole('alert')).toContainText(
+    'The entry has been changed since you opened it.',
+  );
+  expect(pullRequest.state).toBe('open');
+  expect(github.readFile('content/posts/second-post.md')).toBeUndefined();
+});
+
 test.describe('with `squash_merges`', () => {
   test.use({
     config: { ...WORKFLOW_CONFIG, backend: { ...WORKFLOW_CONFIG.backend, squash_merges: true } },
@@ -467,7 +573,90 @@ test('resets a branch left over from an earlier pull request', async ({ cms, git
   expect(github.readFile('content/posts/stale.md', 'cms/posts/second-post')).toBeUndefined();
 });
 
-test('takes back a pull request that has lost its status label', async ({ cms, github, page }) => {
+test('drops a labelled pull request moved to another base branch from the board', async ({
+  cms,
+  github,
+  page,
+}) => {
+  // A pull request the CMS opened and labelled, whose base branch a maintainer then changed on
+  // GitHub. It goes somewhere the CMS doesn’t manage, so publishing the entry from the board would
+  // merge it into that branch instead
+  const moved = openEntryPullRequest(github, {
+    slug: 'second-post',
+    files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+  });
+
+  github.createBranch('develop', github.head.oid);
+  moved.base = 'develop';
+
+  await cms.open();
+
+  // The entry isn’t listed as unpublished, and the board has nothing on it
+  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+    /First Post/,
+  ]);
+  await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
+
+  const board = page.getByRole('group', { name: 'Editorial Workflow' });
+
+  // Wait for the board itself, or an empty column would read as one that hasn’t rendered yet
+  await expect(board.getByRole('list', { name: 'Drafts' })).toBeVisible();
+  await expect(board.getByRole('listitem')).toHaveCount(0);
+  // Its label is left as it stands, rather than moved as the entry changes status
+  expect(moved).toMatchObject({ base: 'develop', state: 'open', labels: ['sveltia-cms/draft'] });
+});
+
+test('refuses to save onto a workflow branch with a pull request to another branch', async ({
+  cms,
+  github,
+  page,
+}) => {
+  // A workflow branch someone else is working on
+  github.createBranch('cms/posts/second-post', github.head.oid);
+  github.commit(
+    { 'content/posts/draft-notes.md': post('Draft Notes', 'Someone else’s work.') },
+    { branch: 'cms/posts/second-post', author: github.colleague },
+  );
+  github.createBranch('develop', github.head.oid);
+
+  // A pull request they opened from that branch to a branch the CMS doesn’t manage. It isn’t the
+  // entry’s, so the CMS must neither act on it, wipe what it’s built on, nor commit onto it: their
+  // work would then go out with the entry
+  const decoy = github.openPullRequest({
+    title: 'Tidy up the posts',
+    head: 'cms/posts/second-post',
+    base: 'develop',
+  });
+
+  const branchHead = github.refs.get('cms/posts/second-post');
+
+  await cms.open();
+  await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+
+  const editor = page.getByRole('group', { name: 'Content Editor' });
+
+  await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
+  await editor.getByRole('textbox', { name: 'Body' }).fill('A new idea.');
+  await editor.getByRole('button', { name: 'Save' }).click();
+
+  await expect(page.getByRole('alertdialog', { name: 'Error' })).toContainText(
+    'Another request (\u2068#1\u2069) is already open for this entry outside the CMS.',
+  );
+  expect(github.pullRequests).toHaveLength(1);
+  expect(decoy).toMatchObject({
+    title: 'Tidy up the posts',
+    base: 'develop',
+    state: 'open',
+    labels: [],
+  });
+  expect(github.refs.get('cms/posts/second-post')).toBe(branchHead);
+});
+
+test('refuses to save onto a pull request that has lost its status label', async ({
+  cms,
+  github,
+  page,
+}) => {
   const pullRequest = openEntryPullRequest(github, {
     slug: 'first-post',
     files: { 'content/posts/first-post.md': post('First Post', 'Hello again!') },
@@ -475,25 +664,24 @@ test('takes back a pull request that has lost its status label', async ({ cms, g
 
   pullRequest.labels = ['documentation'];
 
+  const branchHead = github.refs.get('cms/posts/first-post');
+
   await cms.open();
 
-  // Without its label, the pull request isn’t one the CMS lists
+  // Without its label, the pull request isn’t one the CMS lists, so what else it holds hasn’t been
+  // shown. Committing the entry onto it would put that on the board as the entry’s own
   const editor = await openEntry(page, 'First Post');
 
   await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue('Hello, world!');
   await editor.getByRole('textbox', { name: 'Body' }).fill('Hello once more!');
   await editor.getByRole('button', { name: 'Save' }).click();
-  await page
-    .getByRole('alertdialog', { name: 'Send for Review' })
-    .getByRole('button', { name: 'Later' })
-    .click();
 
-  // The save goes into the pull request, which gets its label back, rather than a new one
-  await expect.poll(() => pullRequest.labels).toEqual(['documentation', 'sveltia-cms/draft']);
-  expect(github.pullRequests).toHaveLength(1);
-  expect(github.readFile('content/posts/first-post.md', 'cms/posts/first-post')).toBe(
-    post('First Post', 'Hello once more!'),
+  await expect(page.getByRole('alertdialog', { name: 'Error' })).toContainText(
+    `Another request (\u2068#${pullRequest.number}\u2069) is already open for this entry`,
   );
+  expect(pullRequest.labels).toEqual(['documentation']);
+  expect(github.pullRequests).toHaveLength(1);
+  expect(github.refs.get('cms/posts/first-post')).toBe(branchHead);
 });
 
 test('deletes several unpublished entries at once', async ({ cms, github, page }) => {

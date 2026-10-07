@@ -30,6 +30,7 @@ import {
 import { getBranchName } from '$lib/services/workflow/branch';
 import { trackDeployingEntry } from '$lib/services/workflow/deploy';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
+import { verifyMergeState } from '$lib/services/workflow/verify';
 
 /**
  * @import {
@@ -104,7 +105,7 @@ const resolveWorkflowBranch = ({ collectionName, slug, entry }) => {
 
   const existingEntry =
     (currentBranch ? getUnpublishedEntryByBranch(currentBranch) : undefined) ??
-    getUnpublishedEntryBySlug({ collectionName, slug });
+    getUnpublishedEntryBySlug({ collectionName, slug, entry });
 
   const branch =
     existingEntry?.workflow.pullRequest.branch ?? getBranchName({ collectionName, slug });
@@ -338,6 +339,15 @@ const mergeWorkflowEntry = async (entry) => {
     ? /** @type {const} */ (['preUnpublish', 'postUnpublish'])
     : /** @type {const} */ (['prePublish', 'postPublish']);
 
+  // The board shows the entry, but the merge takes the whole pull request as its branch stands. So
+  // the pull request is read afresh and checked against what has been shown before anything else
+  // happens; the merge is then pinned to the commit that was checked
+  await verifyMergeState(
+    entry,
+    await workflow.fetchMergeState(pullRequest),
+    workflow.fetchUnchangedPaths,
+  );
+
   if (hookArgs) {
     await callEventHooks({ ...hookArgs, type: preType });
   }
@@ -490,7 +500,7 @@ export const deleteWorkflowEntry = async (
 
   // Reuse any open pull request rather than discarding it first: closing it up front would throw
   // the pending changes away with no way back if opening the replacement then failed
-  const { pullRequest } = await workflow.savePullRequest({
+  const { commit, pullRequest } = await workflow.savePullRequest({
     changes: [
       ...[...paths, ...assetPaths].map(
         (path) => /** @type {FileChange} */ ({ action: 'delete', slug, path }),
@@ -509,11 +519,15 @@ export const deleteWorkflowEntry = async (
     pullRequest: existingEntry?.workflow.pullRequest,
   });
 
-  // A reused pull request keeps the status it already had, so it still needs the switch
-  const readyPullRequest =
-    pullRequest.status === 'pending_deletion'
+  // A reused pull request keeps the status it already had, so it still needs the switch. It also
+  // carries the head commit from before this one, which publishing compares with the branch, so
+  // it’s pointed at the new commit
+  const readyPullRequest = {
+    ...(pullRequest.status === 'pending_deletion'
       ? pullRequest
-      : await workflow.updateStatus(pullRequest, 'pending_deletion');
+      : await workflow.updateStatus(pullRequest, 'pending_deletion')),
+    headSHA: commit.sha,
+  };
 
   return storeUnpublishedEntry(entry, {
     pullRequest: readyPullRequest,

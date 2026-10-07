@@ -264,12 +264,23 @@ export class MockGitHub extends MockGitRepository {
   }
 
   /**
-   * Find the open pull request from a branch.
+   * Find every open pull request from a branch, whichever branch each one goes to.
    * @param {string} branch Head branch name.
+   * @returns {MockPullRequest[]} Pull requests.
+   */
+  getOpenPullRequests(branch) {
+    return this.pullRequests.filter(({ head, state }) => head === branch && state === 'open');
+  }
+
+  /**
+   * Find the open pull request from a branch to the given base branch. Like GitHub, a pull request
+   * to another branch doesn’t count: a head branch can have one open pull request per base branch.
+   * @param {string} branch Head branch name.
+   * @param {string} [base] Base branch name, the default branch by default.
    * @returns {MockPullRequest | undefined} Pull request.
    */
-  getOpenPullRequest(branch) {
-    return this.pullRequests.find(({ head, state }) => head === branch && state === 'open');
+  getOpenPullRequest(branch, base = this.branch) {
+    return this.getOpenPullRequests(branch).find((pr) => pr.base === base);
   }
 
   /**
@@ -279,16 +290,14 @@ export class MockGitHub extends MockGitRepository {
    * @returns {boolean} Whether the branch existed.
    */
   deleteBranch(branch) {
-    const pullRequest = this.getOpenPullRequest(branch);
-
-    // GitHub closes an open pull request whose head branch is deleted
-    if (pullRequest) {
+    // GitHub closes every open pull request whose head branch is deleted
+    this.getOpenPullRequests(branch).forEach((pullRequest) => {
       Object.assign(pullRequest, {
         state: 'closed',
         lastHead: this.refs.get(branch),
         updatedAt: new Date(),
       });
-    }
+    });
 
     return this.refs.delete(branch);
   }
@@ -787,24 +796,28 @@ export class MockGitHub extends MockGitRepository {
   }
 
   /**
-   * Answer a request to compare two branches, possibly across repositories, with the files the head
-   * changes since the merge base, like GitHub’s “Files changed”.
-   * @param {string} range Encoded range, e.g. `main...mona:cms/mona/e2e-site/posts/hello`.
+   * Answer a request to compare two branches, possibly across repositories, or a branch with a
+   * commit, with the files the head changes since the merge base, like GitHub’s “Files changed”.
+   * @param {string} range Encoded range, e.g. `main...mona:cms/mona/e2e-site/posts/hello` or
+   * `main...<oid>`.
    * @returns {MockResponse} Response.
    * @see https://docs.github.com/en/rest/commits/commits#compare-two-commits
    */
   handleCompareRequest(range) {
-    const [base, head] = range.split('...').map((ref) => {
-      const { owner, name } = splitBranchKey(decodeURIComponent(ref));
+    const [baseRef, headRef] = range.split('...').map((ref) => decodeURIComponent(ref));
+
+    const [base, head] = [baseRef, headRef].map((ref) => {
+      const { owner, name } = splitBranchKey(ref);
 
       return this.toBranchKey(owner, name);
     });
 
-    if (!this.refs.has(base) || !this.refs.has(head)) {
+    const headCommit = this.refs.has(head) ? this.getHead(head) : this.getCommit(headRef);
+
+    if (!this.refs.has(base) || !headCommit) {
       return { status: 404, json: { message: 'Not Found' } };
     }
 
-    const headCommit = this.getHead(head);
     const mergeBase = this.getMergeBase(headCommit.oid, this.getHead(base).oid);
     /** @type {Record<string, string>} */
     const statuses = { ADDED: 'added', MODIFIED: 'modified', DELETED: 'removed' };
@@ -882,7 +895,7 @@ export class MockGitHub extends MockGitRepository {
       return refuse(`Branch ${this.refs.has(head) ? base : head} doesn’t exist`);
     }
 
-    if (this.getOpenPullRequest(head)) {
+    if (this.getOpenPullRequest(head, base)) {
       return refuse(`A pull request already exists for ${this.owner}:${head}.`);
     }
 
@@ -952,6 +965,14 @@ export class MockGitHub extends MockGitRepository {
     }
 
     if (request === 'PUT pulls/merge') {
+      // Like GitHub, refuse a merge pinned to a commit the branch no longer points at
+      if (body.sha && body.sha !== this.getPullRequestHead(pullRequest).oid) {
+        return {
+          status: 409,
+          json: { message: 'Head branch was modified. Review and try the merge again.' },
+        };
+      }
+
       const commit = this.mergePullRequest(pullRequest, {
         method: body.merge_method,
         title: body.commit_title,
@@ -973,6 +994,8 @@ export class MockGitHub extends MockGitRepository {
    */
   toRestPullRequest(pullRequest) {
     const { number, nodeId, title, body, state, draft, labels, createdAt, updatedAt } = pullRequest;
+    const { owner: headOwner, name: headName } = splitBranchKey(pullRequest.head);
+    const headCommit = this.getPullRequestHead(pullRequest);
 
     return {
       number,
@@ -984,10 +1007,16 @@ export class MockGitHub extends MockGitRepository {
       draft,
       html_url: `https://github.com/${this.owner}/${this.repo}/pull/${number}`,
       head: {
-        ref: splitBranchKey(pullRequest.head).name,
-        sha: this.getPullRequestHead(pullRequest).oid,
+        ref: headName,
+        sha: headCommit.oid,
+        // A branch in the fork is keyed by the fork’s owner
+        repo: {
+          full_name: headOwner
+            ? `${headOwner}/${this.fork?.repo ?? this.repo}`
+            : `${this.owner}/${this.repo}`,
+        },
       },
-      base: { ref: pullRequest.base },
+      base: { ref: pullRequest.base, repo: { full_name: `${this.owner}/${this.repo}` } },
       labels: labels.map((name) => ({ name })),
       user: { login: pullRequest.author.login, id: pullRequest.author.id },
       created_at: createdAt.toISOString(),
@@ -1017,6 +1046,7 @@ export class MockGitHub extends MockGitRepository {
       createdAt: createdAt.toISOString(),
       updatedAt: updatedAt.toISOString(),
       headRefName,
+      baseRefName: pullRequest.base,
       headRepositoryOwner: { login: headOwner ?? this.owner },
       headRefOid: this.getPullRequestHead(pullRequest).oid,
       author: {
@@ -1132,10 +1162,25 @@ export class MockGitHub extends MockGitRepository {
       };
     }
 
-    // The pull requests opened from each fork branch, fetched in batches with an alias for each
+    // The head of a single branch, which a save reads to find out whether the workflow branch has
+    // moved since its own last commit. The branch lives in the fork with Open Authoring, so it’s
+    // keyed by the owner the query names
+    if (/branchHead:\s*ref\(qualifiedName:/.test(query)) {
+      const key = this.toBranchKey(variables.owner, toBranchName(variables.branch));
+
+      return { data: { repository: { branchHead: this.getRefNode(key, { oid: true }) } } };
+    }
+
+    // The pull requests opened from each fork branch to the configured branch, fetched in batches
+    // with an alias for each. The base branch is optional, so a query without it is still answered
+    // rather than silently falling through to the connection below
     const branchPullRequests = [
       ...query.matchAll(
-        new RegExp(`(pr_\\d+):\\s*pullRequests\\(\\s*headRefName:\\s*${STRING}`, 'g'),
+        new RegExp(
+          `(pr_\\d+):\\s*pullRequests\\(\\s*headRefName:\\s*${STRING}` +
+            `(?:\\s*baseRefName:\\s*${STRING})?`,
+          'g',
+        ),
       ),
     ];
 
@@ -1143,11 +1188,15 @@ export class MockGitHub extends MockGitRepository {
       return {
         data: {
           repository: Object.fromEntries(
-            branchPullRequests.map(([, alias, name]) => [
+            branchPullRequests.map(([, alias, name, baseName]) => [
               alias,
               {
                 nodes: this.pullRequests
-                  .filter(({ head }) => splitBranchKey(head).name === JSON.parse(name))
+                  .filter(
+                    ({ head, base }) =>
+                      splitBranchKey(head).name === JSON.parse(name) &&
+                      (!baseName || base === JSON.parse(baseName)),
+                  )
                   .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
                   .slice(0, 2)
                   .map((pullRequest) => this.toPullRequestNode(pullRequest)),
@@ -1184,13 +1233,15 @@ export class MockGitHub extends MockGitRepository {
         }
       });
 
-    // Files on a branch, as `branch:path` expressions, fetched in batches the same way
+    // Files on a branch or at a commit, as `branch:path` or `oid:path` expressions, fetched in
+    // batches the same way
     query
       .matchAll(new RegExp(`(\\w+_\\d+):\\s*object\\(expression:\\s*${STRING}\\)`, 'g'))
       .forEach(([, alias, expression]) => {
         const [name, ...rest] = JSON.parse(expression).split(':');
         const ref = this.toBranchKey(variables.owner, name);
-        const sha = this.refs.has(ref) ? this.getHead(ref).tree.get(rest.join(':')) : undefined;
+        const tree = this.refs.has(ref) ? this.getHead(ref).tree : this.getCommit(name)?.tree;
+        const sha = tree?.get(rest.join(':'));
         const blob = sha ? this.blobs.get(sha) : undefined;
 
         repository[alias] = blob
@@ -1201,6 +1252,30 @@ export class MockGitHub extends MockGitRepository {
               isTruncated: false,
               text: blob.includes(0) ? null : blob.toString(),
             }
+          : null;
+      });
+
+    // The entries of folders at a commit, as `oid:path` expressions, which give the file modes.
+    // Every file in the mock is a regular one. Like GitHub, answer `null` for a missing folder
+    query
+      .matchAll(
+        new RegExp(
+          `(\\w+_\\d+):\\s*object\\(expression:\\s*${STRING}\\)\\s*\\{\\s*\\.\\.\\.\\s*on\\s+Tree`,
+          'g',
+        ),
+      )
+      .forEach(([, alias, expression]) => {
+        const [oid, ...rest] = JSON.parse(expression).split(':');
+        const dir = rest.join(':');
+        const prefix = dir ? `${dir}/` : '';
+        const tree = this.getCommit(oid)?.tree;
+
+        const names = [...(tree?.keys() ?? [])]
+          .filter((path) => path.startsWith(prefix))
+          .map((path) => path.slice(prefix.length).split('/')[0]);
+
+        repository[alias] = names.length
+          ? { entries: [...new Set(names)].map((name) => ({ name, mode: 33188 })) }
           : null;
       });
 
@@ -1428,11 +1503,10 @@ export class MockGitHub extends MockGitRepository {
       { message: input.message.headline, author: this.user, branch: branchName },
     );
 
-    const pullRequest = this.getOpenPullRequest(branchName);
-
-    if (pullRequest) {
+    // The commit shows up on every pull request the branch is the head of
+    this.getOpenPullRequests(branchName).forEach((pullRequest) => {
       pullRequest.updatedAt = commit.date;
-    }
+    });
 
     /** @type {Record<string, any>} */
     const result = { oid: commit.oid, committedDate: commit.date.toISOString() };

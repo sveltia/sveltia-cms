@@ -5,6 +5,7 @@ import {
   deleteBranch,
   fetchMergeRequestFileContents,
   fetchMergeRequestFileList,
+  fetchOpenMergeRequests,
   fetchPullRequests,
   parseMergeRequest,
   stripDraftPrefix,
@@ -50,6 +51,7 @@ const createItem = (overrides = {}) => ({
   title: 'Draft: Create Post “hello”',
   web_url: 'https://gitlab.com/group/sub/project/-/merge_requests/1',
   source_branch: 'cms/posts/hello',
+  target_branch: 'main',
   sha: 'abc123',
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-02T00:00:00Z',
@@ -97,6 +99,13 @@ describe('GitLab merge requests', () => {
         author: { name: 'Me', email: '', id: 7, login: 'me' },
         files: [],
       });
+    });
+
+    test('returns undefined for a merge request to another branch', () => {
+      // One whose target branch was changed on GitLab after the CMS opened it, or one labelled
+      // by hand. Listing it would move the label on someone else’s request, and publish the entry
+      // into that other branch
+      expect(parseMergeRequest(createItem({ target_branch: 'develop' }))).toBeUndefined();
     });
 
     test('returns undefined without a CMS label', () => {
@@ -243,6 +252,27 @@ describe('GitLab merge requests', () => {
         size: 0,
         text: undefined,
         deleted: false,
+      });
+    });
+
+    test('reads the files at the head commit when there is one', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        project: { repository: { blobs: { nodes: [] } } },
+      });
+
+      await fetchMergeRequestFileContents(
+        /** @type {any} */ ({
+          branch: 'cms/posts/hello',
+          headSHA: 'abc123',
+          files: [{ path: 'content/posts/hello.md', sha: '', size: 0, deleted: false }],
+        }),
+      );
+
+      // The content shown is that of the commit a publish is pinned to, even if the branch has
+      // moved on since the merge request was listed
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('blobs'), {
+        branch: 'abc123',
+        paths: ['content/posts/hello.md'],
       });
     });
 
@@ -537,6 +567,58 @@ describe('GitLab merge requests', () => {
           author: { name: 'Alice', email: '', id: 1, login: 'alice' },
         }),
       );
+    });
+  });
+
+  describe('fetchOpenMergeRequests', () => {
+    /**
+     * Create a raw merge request from a branch of this project.
+     * @param {object} [overrides] Properties to override.
+     * @returns {any} Merge request.
+     */
+    const createOwnItem = (overrides = {}) =>
+      createItem({
+        iid: 7,
+        source_project_id: 1,
+        target_project_id: 1,
+        target_branch: 'main',
+        ...overrides,
+      });
+
+    test('returns the merge requests from the branch, whichever branch they go to', async () => {
+      const items = [createOwnItem(), createOwnItem({ iid: 8, target_branch: 'develop' })];
+
+      vi.mocked(fetchAPI).mockResolvedValue(items);
+
+      await expect(fetchOpenMergeRequests('cms/posts/hello')).resolves.toEqual(items);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        `/projects/${PROJECT_ID}/merge_requests` +
+          '?state=opened&source_branch=cms%2Fposts%2Fhello&per_page=100',
+      );
+    });
+
+    test('encodes the branch name', async () => {
+      // Left as is, `#` would start a fragment and the query would be dropped, so the request would
+      // ask about every open merge request from `cms/posts/c`
+      vi.mocked(fetchAPI).mockResolvedValue([]);
+
+      await expect(fetchOpenMergeRequests('cms/posts/c#-tips')).resolves.toEqual([]);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        `/projects/${PROJECT_ID}/merge_requests` +
+          '?state=opened&source_branch=cms%2Fposts%2Fc%23-tips&per_page=100',
+      );
+    });
+
+    test('skips a merge request from a fork', async () => {
+      // A fork can have a source branch of the same name, but its merge request isn’t this
+      // branch’s, and deleting this branch doesn’t touch it
+      vi.mocked(fetchAPI).mockResolvedValue([
+        createItem({ iid: 7, source_project_id: 2, target_project_id: 1, target_branch: 'main' }),
+      ]);
+
+      await expect(fetchOpenMergeRequests('cms/posts/hello')).resolves.toEqual([]);
     });
   });
 });

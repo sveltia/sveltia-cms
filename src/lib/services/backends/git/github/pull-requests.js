@@ -91,7 +91,9 @@ const FILES_CHUNK_SIZE = 100;
 /**
  * Fetch the content of the files changed in the given pull requests, and populate the
  * {@link WorkflowFile} objects in place. Binary files, such as images, are skipped; only their blob
- * metadata is stored.
+ * metadata is stored. The files are read at the pull request’s head commit rather than its branch,
+ * so the content shown is that of the commit a publish is pinned to, even if the branch moves on
+ * while the board loads.
  * @param {WorkflowPullRequest[]} pullRequests Pull requests to complete.
  */
 export const fetchPullRequestFiles = async (pullRequests) => {
@@ -122,8 +124,8 @@ export const fetchPullRequestFiles = async (pullRequests) => {
      * @param {{ pullRequest: WorkflowPullRequest, file: WorkflowFile }} target Target.
      * @returns {string} Field selection.
      */
-    getFragment: ({ pullRequest, file }) => `
-      object(expression: ${JSON.stringify(`${pullRequest.branch}:${file.path}`)}) {
+    getFragment: ({ pullRequest: { headSHA, branch }, file }) => `
+      object(expression: ${JSON.stringify(`${headSHA ?? branch}:${file.path}`)}) {
         ... on Blob {
           oid
           byteSize

@@ -5,7 +5,10 @@ import { repository } from '$lib/services/backends/git/github/repository';
 import githubWorkflow, {
   createBranch,
   discard,
+  fetchBranchHead,
+  fetchMergeState,
   fetchPullRequests,
+  fetchUnchangedPaths,
   parsePullRequest,
   publish,
   savePullRequest,
@@ -15,6 +18,9 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key, { values } = {}) => (values ? `${key} ${JSON.stringify(values)}` : key)),
+}));
 vi.mock('$lib/services/backends/git/github/commits');
 vi.mock('$lib/services/backends/git/github/files');
 vi.mock('$lib/services/backends/git/github/repository', () => ({
@@ -37,6 +43,7 @@ const createNode = (overrides = {}) => ({
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-02T00:00:00Z',
   headRefName: 'cms/posts/hello',
+  baseRefName: 'main',
   headRefOid: 'abc123',
   author: {
     login: 'me',
@@ -77,6 +84,9 @@ describe('GitHub Editorial Workflow service', () => {
       fetchPullRequests: expect.any(Function),
       savePullRequest: expect.any(Function),
       updateStatus: expect.any(Function),
+      fetchBranchHead: expect.any(Function),
+      fetchMergeState: expect.any(Function),
+      fetchUnchangedPaths: expect.any(Function),
       publish: expect.any(Function),
       discard: expect.any(Function),
     });
@@ -87,6 +97,13 @@ describe('GitHub Editorial Workflow service', () => {
       // An Open Authoring contribution that a maintainer labelled by hand: the branch isn’t on the
       // configured repository, so the card would report every file as deleted
       expect(parsePullRequest(createNode({ isCrossRepository: true }))).toBeUndefined();
+    });
+
+    test('ignores a pull request to a branch other than the configured one', () => {
+      // One whose base branch was changed on GitHub after the CMS opened it, or one labelled by
+      // hand. Listing it would move the label on someone else’s request, and publish the entry
+      // into that other branch
+      expect(parsePullRequest(createNode({ baseRefName: 'develop' }))).toBeUndefined();
     });
 
     test('parses a CMS-managed pull request', () => {
@@ -307,6 +324,40 @@ describe('GitHub Editorial Workflow service', () => {
       );
     });
 
+    test('refuses to reuse an existing reference that has an open pull request', async () => {
+      // The board doesn’t show the pull request — its label is gone, it’s beyond the number
+      // fetched, or it was never the CMS’s — so whatever else the branch holds would be merged
+      // along with the entry without anyone having seen it. The save is refused instead
+      mockExisting([createNode({ number: 7 })]);
+
+      await expect(createBranch('cms/posts/hello')).rejects.toThrow(
+        'The workflow branch is in use by another pull request.',
+      );
+
+      // The branch is left alone
+      expect(fetchAPI).not.toHaveBeenCalled();
+    });
+
+    test('names the pull request the branch is in use by', async () => {
+      mockExisting([createNode({ number: 7 })]);
+
+      const error = await createBranch('cms/posts/hello').catch((ex) => ex);
+
+      expect(error.cause.message).toBe('workflow.branch_in_use {"number":"#7"}');
+    });
+
+    test('refuses to reuse an existing reference with a pull request to another branch', async () => {
+      // Someone’s request to another branch isn’t the entry’s, and neither is the branch the CMS’s
+      // to wipe, nor to commit onto: their work would go out with the entry
+      mockExisting([createNode({ baseRefName: 'develop' })]);
+
+      await expect(createBranch('cms/posts/hello')).rejects.toThrow(
+        'The workflow branch is in use by another pull request.',
+      );
+
+      expect(fetchAPI).not.toHaveBeenCalled();
+    });
+
     test('encodes the name of the reference it resets', async () => {
       mockExisting([]);
       vi.mocked(fetchAPI).mockResolvedValueOnce({});
@@ -324,42 +375,6 @@ describe('GitHub Editorial Workflow service', () => {
       );
     });
 
-    test('keeps an existing reference that has an open pull request', async () => {
-      mockExisting([createNode()]);
-
-      // The load didn’t pick the pull request up — its label is gone, or it’s beyond the number
-      // fetched — but it’s someone’s work in progress, which is committed onto rather than wiped.
-      // The pull request is handed back, as GitHub won’t open another one from the branch
-      await expect(createBranch('cms/posts/hello')).resolves.toEqual({
-        openPullRequest: {
-          pullRequest: expect.objectContaining({ number: 1, nodeId: 'PR_1', status: 'draft' }),
-          labelled: true,
-        },
-      });
-
-      expect(fetchAPI).not.toHaveBeenCalled();
-    });
-
-    test('reads the status of an open pull request without a label from its draft state', async () => {
-      mockExisting([createNode({ isDraft: false, labels: { nodes: [{ name: 'other' }] } })]);
-
-      await expect(createBranch('cms/posts/hello')).resolves.toEqual({
-        openPullRequest: {
-          pullRequest: expect.objectContaining({ number: 1, status: 'pending_review' }),
-          labelled: false,
-        },
-      });
-
-      mockExisting([createNode({ labels: undefined })]);
-
-      await expect(createBranch('cms/posts/hello')).resolves.toEqual({
-        openPullRequest: {
-          pullRequest: expect.objectContaining({ number: 1, status: 'draft' }),
-          labelled: false,
-        },
-      });
-    });
-
     test('resets an existing reference whose only open pull request comes from a fork', async () => {
       // A contributor’s fork can have a branch of the same name, but its pull request isn’t this
       // branch’s
@@ -373,7 +388,7 @@ describe('GitHub Editorial Workflow service', () => {
       );
     });
 
-    test('keeps an existing reference whose own pull request comes after ones from forks', async () => {
+    test('refuses an existing reference whose own pull request comes after ones from forks', async () => {
       // Open Authoring contributors editing the same entry use the same branch name, so their pull
       // requests can come first; the lookup has to reach past them rather than reset the branch
       mockExisting([
@@ -382,12 +397,9 @@ describe('GitHub Editorial Workflow service', () => {
         createNode(),
       ]);
 
-      await expect(createBranch('cms/posts/hello')).resolves.toEqual({
-        openPullRequest: {
-          pullRequest: expect.objectContaining({ number: 1 }),
-          labelled: true,
-        },
-      });
+      await expect(createBranch('cms/posts/hello')).rejects.toThrow(
+        'The workflow branch is in use by another pull request.',
+      );
 
       expect(fetchGraphQL).toHaveBeenLastCalledWith(
         expect.stringContaining('first: 100'),
@@ -453,6 +465,30 @@ describe('GitHub Editorial Workflow service', () => {
     });
   });
 
+  describe('fetchBranchHead', () => {
+    test('reads the commit the branch points at', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: { branchHead: { target: { oid: 'abc123' } } },
+      });
+
+      await expect(fetchBranchHead('cms/posts/hello')).resolves.toBe('abc123');
+
+      // The ref is asked for by its qualified name, so a tag of the same name isn’t picked up
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('branchHead: ref('), {
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'refs/heads/cms/posts/hello',
+      });
+    });
+
+    test('answers undefined for a branch that is gone', async () => {
+      // A pull request merged or closed outside the CMS leaves no branch behind
+      vi.mocked(fetchGraphQL).mockResolvedValue({ repository: { branchHead: null } });
+
+      await expect(fetchBranchHead('cms/posts/hello')).resolves.toBeUndefined();
+    });
+  });
+
   describe('savePullRequest', () => {
     const args = /** @type {any} */ ({
       changes: [],
@@ -508,7 +544,7 @@ describe('GitHub Editorial Workflow service', () => {
       expect(commitChanges).toHaveBeenCalledWith([], expect.objectContaining({ headOid: 'abc' }));
     });
 
-    test('looks the head up when the branch has an open pull request the load missed', async () => {
+    test('refuses to save onto a branch with an open pull request the load missed', async () => {
       vi.mocked(fetchGraphQL)
         .mockResolvedValueOnce({ fork: { id: 'R_1' }, base: { ref: { target: { oid: 'abc' } } } })
         .mockRejectedValueOnce(
@@ -517,56 +553,14 @@ describe('GitHub Editorial Workflow service', () => {
           }),
         )
         .mockResolvedValueOnce({ repository: { pullRequests: { nodes: [createNode()] } } });
-      vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
 
-      const result = await savePullRequest({ ...args, status: 'draft' });
-
-      expect(commitChanges).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({ headOid: undefined }),
+      await expect(savePullRequest({ ...args, status: 'draft' })).rejects.toThrow(
+        'The workflow branch is in use by another pull request.',
       );
 
-      // GitHub refuses to open a second pull request from the same branch, so the commit goes into
-      // the one that’s open, which keeps its status
+      // Nothing is committed, labelled or opened
+      expect(commitChanges).not.toHaveBeenCalled();
       expect(fetchAPI).not.toHaveBeenCalled();
-      expect(result.pullRequest).toEqual(
-        expect.objectContaining({ number: 1, nodeId: 'PR_1', status: 'draft' }),
-      );
-    });
-
-    test('puts an open pull request that has lost its label back on the board', async () => {
-      vi.mocked(fetchGraphQL)
-        .mockResolvedValueOnce({ fork: { id: 'R_1' }, base: { ref: { target: { oid: 'abc' } } } })
-        .mockRejectedValueOnce(
-          new Error('Server responded with an error', {
-            cause: { status: 200, message: 'already exists' },
-          }),
-        )
-        .mockResolvedValueOnce({
-          repository: {
-            pullRequests: {
-              nodes: [createNode({ isDraft: false, labels: { nodes: [{ name: 'other' }] } })],
-            },
-          },
-        });
-      vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
-      vi.mocked(fetchAPI)
-        .mockResolvedValueOnce({ labels: [{ name: 'other' }] })
-        .mockResolvedValueOnce({});
-
-      const result = await savePullRequest({ ...args, status: 'draft' });
-
-      // Labelled with the status asked for, keeping the other label, and turned into a draft
-      expect(fetchAPI).toHaveBeenLastCalledWith('/repos/owner/repo/issues/1', {
-        method: 'PATCH',
-        body: { labels: ['other', 'sveltia-cms/draft'] },
-      });
-      expect(fetchGraphQL).toHaveBeenLastCalledWith(
-        expect.stringContaining('convertPullRequestToDraft'),
-        { input: { pullRequestId: 'PR_1' } },
-      );
-      expect(fetchAPI).not.toHaveBeenCalledWith('/repos/owner/repo/pulls', expect.anything());
-      expect(result.pullRequest).toEqual(expect.objectContaining({ number: 1, status: 'draft' }));
     });
 
     test('reuses an existing pull request without creating a branch', async () => {
@@ -582,6 +576,54 @@ describe('GitHub Editorial Workflow service', () => {
         expect.objectContaining({ headOid: undefined }),
       );
       expect(result.pullRequest).toBe(pullRequest);
+    });
+
+    test('saves onto the head the entry was loaded or saved at', async () => {
+      const pullRequest = /** @type {any} */ ({
+        number: 5,
+        branch: 'cms/posts/hello',
+        headSHA: 'reviewed',
+      });
+
+      vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
+
+      await savePullRequest({ ...args, pullRequest });
+
+      // GitHub refuses the commit if anyone has pushed to the branch since
+      expect(commitChanges).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ headOid: 'reviewed' }),
+      );
+    });
+
+    test('says so when the branch of the pull request has gone', async () => {
+      const pullRequest = /** @type {any} */ ({ number: 5, branch: 'cms/posts/hello' });
+      const apiError = new Error('Could not resolve to a Ref');
+
+      vi.mocked(commitChanges).mockRejectedValue(apiError);
+      // The branch is gone
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({ repository: { branchHead: null } });
+
+      await expect(savePullRequest({ ...args, pullRequest })).rejects.toThrow(
+        'Failed to save the changes.',
+      );
+
+      // Still there, or the lookup failed: GitHub’s own error is passed on
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        repository: { branchHead: { target: { oid: 'abc' } } },
+      });
+      await expect(savePullRequest({ ...args, pullRequest })).rejects.toBe(apiError);
+      vi.mocked(fetchGraphQL).mockRejectedValueOnce(new Error('Failed to fetch'));
+      await expect(savePullRequest({ ...args, pullRequest })).rejects.toBe(apiError);
+
+      // A new branch’s failure isn’t looked into
+      vi.mocked(fetchGraphQL)
+        .mockReset()
+        .mockResolvedValue({
+          fork: { id: 'R_1' },
+          base: { ref: { target: { oid: 'abc' } } },
+        });
+      await expect(savePullRequest(args)).rejects.toBe(apiError);
     });
   });
 
@@ -630,15 +672,180 @@ describe('GitHub Editorial Workflow service', () => {
     });
   });
 
+  describe('fetchMergeState', () => {
+    const pullRequest = /** @type {any} */ ({ number: 1, branch: 'cms/posts/hello' });
+
+    /**
+     * Create a pull request as returned by the REST API.
+     * @param {object} [overrides] Properties to override.
+     * @returns {any} Pull request.
+     */
+    const createRestPullRequest = (overrides = {}) => ({
+      head: { sha: 'abc123', repo: { full_name: 'Owner/Repo' } },
+      base: { ref: 'main', repo: { full_name: 'owner/repo' } },
+      ...overrides,
+    });
+
+    test('lists the files as of the head commit by comparing it with the configured branch', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce(createRestPullRequest())
+        .mockResolvedValueOnce({
+          files: [
+            { filename: 'content/posts/hello.md', status: 'modified' },
+            { filename: 'content/posts/new.md', status: 'renamed', previous_filename: 'old.md' },
+            { filename: 'static/a.png', status: 'added' },
+            { filename: 'static/b.png', status: 'copied' },
+            { filename: 'static/c.png', status: 'removed' },
+            { filename: 'bin/run', status: 'changed' },
+          ],
+        });
+
+      await expect(fetchMergeState(pullRequest)).resolves.toEqual({
+        headSHA: 'abc123',
+        onConfiguredBranches: true,
+        files: [
+          { path: 'content/posts/hello.md', status: 'modified', previousPath: undefined },
+          { path: 'content/posts/new.md', status: 'renamed', previousPath: 'old.md' },
+          { path: 'static/a.png', status: 'added', previousPath: undefined },
+          { path: 'static/b.png', status: 'added', previousPath: undefined },
+          { path: 'static/c.png', status: 'removed', previousPath: undefined },
+          { path: 'bin/run', status: 'modified', previousPath: undefined },
+        ],
+        complete: true,
+      });
+
+      expect(fetchAPI).toHaveBeenNthCalledWith(1, '/repos/owner/repo/pulls/1');
+      // Pinned to the commit, so the list describes exactly what a merge pinned to it brings in
+      expect(fetchAPI).toHaveBeenNthCalledWith(2, '/repos/owner/repo/compare/main...abc123');
+    });
+
+    test('reads the modes of the files that remain from the trees holding them', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce(createRestPullRequest())
+        .mockResolvedValueOnce({
+          files: [
+            { filename: 'README.md', status: 'modified' },
+            { filename: 'static/images/a.png', status: 'added' },
+            { filename: 'static/images/link', status: 'added' },
+            { filename: 'static/images/old.png', status: 'removed' },
+          ],
+        });
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        repository: {
+          tree_0: { entries: [{ name: 'README.md', mode: 33261 }] },
+          tree_1: {
+            entries: [
+              { name: 'a.png', mode: 33188 },
+              { name: 'link', mode: 40960 },
+            ],
+          },
+        },
+      });
+
+      const { files } = await fetchMergeState(pullRequest);
+
+      expect(files.map(({ path, mode }) => [path, mode])).toEqual([
+        ['README.md', '100755'],
+        ['static/images/a.png', '100644'],
+        ['static/images/link', '120000'],
+        ['static/images/old.png', undefined],
+      ]);
+
+      // One tree per folder, the root included, and none for a removed file’s folder alone
+      const [[query]] = vi.mocked(fetchGraphQL).mock.calls;
+
+      expect(query).toContain('tree_0: \n      object(expression: "abc123:")');
+      expect(query).toContain('object(expression: "abc123:static/images")');
+      expect(query).not.toContain('tree_2');
+    });
+
+    test('flags a list that may have been cut short', async () => {
+      // As many files as the comparison lists at most
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce(createRestPullRequest())
+        .mockResolvedValueOnce({
+          files: Array.from({ length: 300 }, (_, i) => ({ filename: `${i}.md`, status: 'added' })),
+        });
+
+      await expect(fetchMergeState(pullRequest)).resolves.toMatchObject({ complete: false });
+    });
+
+    test('handles a comparison without files', async () => {
+      vi.mocked(fetchAPI).mockResolvedValueOnce(createRestPullRequest()).mockResolvedValueOnce({});
+
+      await expect(fetchMergeState(pullRequest)).resolves.toMatchObject({
+        files: [],
+        complete: true,
+      });
+    });
+
+    test.each([
+      ['goes to another branch', { base: { ref: 'develop', repo: { full_name: 'owner/repo' } } }],
+      ['goes to another repository', { base: { ref: 'main', repo: { full_name: 'other/repo' } } }],
+      ['comes from a fork', { head: { sha: 'abc123', repo: { full_name: 'fork/repo' } } }],
+      ['comes from a deleted fork', { head: { sha: 'abc123', repo: null } }],
+      ['has no head', { head: undefined, base: undefined }],
+    ])('reports a pull request that %s without comparing it', async (_label, overrides) => {
+      vi.mocked(fetchAPI).mockResolvedValueOnce(createRestPullRequest(overrides));
+
+      await expect(fetchMergeState(pullRequest)).resolves.toMatchObject({
+        onConfiguredBranches: false,
+        files: [],
+        complete: false,
+      });
+
+      expect(fetchAPI).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('fetchUnchangedPaths', () => {
+    test('compares the blobs on the configured branch with those at the commit', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          // Rewritten the same way on both
+          file_0: { oid: 'b1' },
+          file_1: { oid: 'b1' },
+          // Changed
+          file_2: { oid: 'b2' },
+          file_3: { oid: 'b3' },
+          // Removed from both
+          file_4: null,
+          file_5: null,
+          // Added
+          file_7: { oid: 'b4' },
+        },
+      });
+
+      await expect(
+        fetchUnchangedPaths({
+          headSHA: 'abc123',
+          paths: ['content/pages/home.md', 'src/app.js', 'content/old.md', 'src/new.js'],
+        }),
+      ).resolves.toEqual(['content/pages/home.md', 'content/old.md']);
+
+      const [[query]] = vi.mocked(fetchGraphQL).mock.calls;
+
+      expect(query).toContain('file_0: object(expression: "main:content/pages/home.md") { oid }');
+      expect(query).toContain('file_1: object(expression: "abc123:content/pages/home.md") { oid }');
+    });
+  });
+
   describe('publish', () => {
     test('merges the pull request and deletes the branch', async () => {
+      // The merge is pinned to the head the entry was loaded or saved at, so a commit pushed since
+      // makes GitHub refuse it
       await publish(
-        /** @type {any} */ ({ number: 1, branch: 'cms/posts/hello', title: 'Create Post' }),
+        /** @type {any} */ ({
+          number: 1,
+          branch: 'cms/posts/hello',
+          title: 'Create Post',
+          headSHA: 'abc123',
+        }),
       );
 
       expect(fetchAPI).toHaveBeenNthCalledWith(1, '/repos/owner/repo/pulls/1/merge', {
         method: 'PUT',
-        body: { merge_method: 'merge', commit_title: 'Create Post' },
+        body: { merge_method: 'merge', commit_title: 'Create Post', sha: 'abc123' },
       });
 
       expect(fetchAPI).toHaveBeenNthCalledWith(

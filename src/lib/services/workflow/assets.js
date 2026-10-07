@@ -1,8 +1,31 @@
 import { allAssets } from '$lib/services/assets/state';
 
 /**
- * @import { Asset } from '$lib/types/private';
+ * @import { Asset, Entry, UnpublishedEntry } from '$lib/types/private';
  */
+
+/**
+ * Get the version of the given asset that belongs with the given entry. An asset committed to a
+ * workflow branch only exists on that branch, so it’s only the entry of that branch that can use
+ * it: any other entry gets the published version it shadows, if there’s one. Otherwise a file that
+ * someone pushed to one pull request would be copied into another entry’s commit — when the entry
+ * is moved or duplicated — without having been reviewed.
+ * @param {Asset | undefined} asset Asset from the asset list.
+ * @param {Entry | undefined} entry Entry using the asset, published or not.
+ * @returns {Asset | undefined} Asset, or `undefined` if the entry has no version of it.
+ */
+export const getEntryAssetVersion = (asset, entry) => {
+  const branch = asset?.workflow?.branch;
+
+  if (
+    !branch ||
+    branch === /** @type {UnpublishedEntry | undefined} */ (entry)?.workflow?.pullRequest.branch
+  ) {
+    return asset;
+  }
+
+  return /** @type {Asset} */ (asset).workflow?.replacedAsset;
+};
 
 /**
  * Merge assets committed to a workflow branch into the regular asset list, so an image attached to

@@ -26,7 +26,8 @@
   const draft = $derived(entryDraft.current);
   /**
    * The entry the draft was made from, if it’s one that the background checks watch: an existing
-   * entry on the configured branch. A workflow draft is saved to its own branch.
+   * entry on the configured branch. A workflow draft lives on a branch of its own, which those
+   * checks don’t look at; it’s compared with its branch when the draft is saved instead.
    */
   const originalEntry = $derived(
     draft && !draft.isNew && !isWorkflowDraft(draft) ? draft.originalEntry : undefined,

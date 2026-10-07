@@ -22,6 +22,7 @@ import { buildCascadeChanges } from '$lib/services/contents/entry/relations/casc
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { setLastCommitPublishHint } from '$lib/services/deployments';
 import { isWorkflowDraft } from '$lib/services/workflow';
+import { detectWorkflowConflict } from '$lib/services/workflow/conflict';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
 /**
@@ -160,14 +161,15 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
   }
 
   // Bring the site data up to date before the changes are worked out from it, and refuse to save
-  // over someone else’s change to this entry unless the user has said so. A workflow draft goes to
-  // its own branch, where nobody else writes
-  if (!useWorkflow) {
-    const conflict = await detectEntryConflict(draft);
+  // over someone else’s change to this entry unless the user has said so. A workflow draft is
+  // compared with its own branch instead of the configured one: the branch is named after the
+  // entry, not the editor, so a colleague working on the same entry writes to it too
+  const conflict = useWorkflow
+    ? await detectWorkflowConflict(draft)
+    : await detectEntryConflict(draft);
 
-    if (conflict && !overwrite) {
-      throw new Error('save_conflict', { cause: conflict });
-    }
+  if (conflict && !overwrite) {
+    throw new Error('save_conflict', { cause: conflict });
   }
 
   if (isNew && collection._type === 'entry') {

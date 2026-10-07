@@ -295,11 +295,26 @@ describe('GitHub fork service', () => {
   });
 
   describe('fetchForkByName', () => {
+    test('ignores a fork that has been transferred to someone else', async () => {
+      // GitHub redirects the old location of a transferred repository to the new one
+      vi.mocked(fetchAPI).mockResolvedValue(
+        createResponse(true, {
+          fork: true,
+          full_name: 'some-org/repo',
+          owner: { login: 'some-org' },
+          parent: { full_name: 'Owner/Repo' },
+        }),
+      );
+
+      await expect(fetchForkByName()).resolves.toBeUndefined();
+    });
+
     test('finds the fork on the user’s account', async () => {
       vi.mocked(fetchAPI).mockResolvedValue(
         createResponse(true, {
           fork: true,
           full_name: 'contributor/repo',
+          owner: { login: 'contributor' },
           parent: { full_name: 'Owner/Repo' },
         }),
       );
@@ -324,6 +339,7 @@ describe('GitHub fork service', () => {
         createResponse(true, {
           fork: true,
           full_name: 'contributor/repo',
+          owner: { login: 'contributor' },
           parent: { full_name: 'someone/else' },
         }),
       );
@@ -393,6 +409,7 @@ describe('GitHub fork service', () => {
         createResponse(true, {
           fork: true,
           full_name: 'contributor/repo',
+          owner: { login: 'contributor' },
           parent: { full_name: 'owner/repo' },
         }),
       );
@@ -518,6 +535,7 @@ describe('GitHub fork service', () => {
           createResponse(true, {
             fork: true,
             full_name: 'contributor/repo',
+            owner: { login: 'contributor' },
             parent: { full_name: 'owner/repo' },
           }),
         )
@@ -553,6 +571,7 @@ describe('GitHub fork service', () => {
           createResponse(true, {
             fork: true,
             full_name: 'contributor/repo',
+            owner: { login: 'contributor' },
             parent: { full_name: 'owner/repo' },
           }),
         )

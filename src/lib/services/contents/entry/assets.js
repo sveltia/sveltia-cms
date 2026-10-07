@@ -16,6 +16,7 @@ import { fillEntryPathTemplate } from '$lib/services/contents/entry';
 import { getField } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
+import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
 /**
  * @import { Asset, Entry, InternalEntryCollection } from '$lib/types/private';
@@ -395,10 +396,19 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @returns {Asset[]} Assets, or an empty list unless the collection stores them with the entry.
  * The entries of a collection storing all of them in one file share the folder of the file, and an
- * asset there can be used by any of them, so none of the assets belongs to one entry alone.
+ * asset there can be used by any of them, so none of the assets belongs to one entry alone. Only
+ * the versions the entry has are returned: a file another pull request put at the same path isn’t
+ * the entry’s to remove.
  */
 export const getEntryRelativeAssets = ({ entry, collectionName, fileName }) =>
   getAssetFolder({ collectionName, fileName })?.entryRelative &&
   !isArrayFileCollection(getCollection(collectionName))
-    ? getAssociatedAssets({ entry, collectionName, fileName, relative: true })
+    ? /** @type {Asset[]} */ ([
+        // Two versions of a file can map to the same asset, so the list is deduplicated again
+        ...new Set(
+          getAssociatedAssets({ entry, collectionName, fileName, relative: true })
+            .map((asset) => getEntryAssetVersion(asset, entry))
+            .filter(Boolean),
+        ),
+      ])
     : [];

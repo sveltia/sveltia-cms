@@ -170,7 +170,10 @@ describe('workflow/index', () => {
     });
 
     test('follows the collection’s publish mode for an entry without a pull request', () => {
-      const originalEntry = /** @type {any} */ ({ slug: 'a' });
+      const originalEntry = /** @type {any} */ ({
+        slug: 'a',
+        locales: { _default: { path: 'content/posts/a.md' } },
+      });
 
       expect(
         isWorkflowDraft({ collection: optedOut, collectionName: 'posts', originalEntry }),
@@ -200,7 +203,10 @@ describe('workflow/index', () => {
         isWorkflowDraft({
           collection: optedOut,
           collectionName: 'posts',
-          originalEntry: /** @type {any} */ ({ slug: 'a' }),
+          originalEntry: /** @type {any} */ ({
+            slug: 'a',
+            locales: { _default: { path: 'content/posts/a.md' } },
+          }),
         }),
       ).toBe(true);
       // Another entry in the same collection has no pull request
@@ -208,7 +214,10 @@ describe('workflow/index', () => {
         isWorkflowDraft({
           collection: optedOut,
           collectionName: 'posts',
-          originalEntry: /** @type {any} */ ({ slug: 'b' }),
+          originalEntry: /** @type {any} */ ({
+            slug: 'b',
+            locales: { _default: { path: 'content/posts/b.md' } },
+          }),
         }),
       ).toBe(false);
     });
@@ -260,19 +269,31 @@ describe('workflow/index', () => {
   });
 
   describe('getUnpublishedEntryBySlug', () => {
+    /**
+     * Create the published entry a branch would hold.
+     * @param {string} path File path.
+     * @returns {any} Entry.
+     */
+    const createPublished = (path) => ({ locales: { _default: { path } } });
+
     test('finds the entry by the branch opened for it', () => {
       const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+      const published = createPublished('content/posts/hello.md');
 
       // The branch keeps the slug the entry had when the pull request was opened
       entry.slug = 'renamed';
       entry.subPath = 'renamed';
       unpublishedEntries.current = [entry];
 
-      expect(getUnpublishedEntryBySlug({ collectionName: 'posts', slug: 'hello' })).toBe(entry);
       expect(
-        getUnpublishedEntryBySlug({ collectionName: 'posts', slug: 'renamed' }),
+        getUnpublishedEntryBySlug({ collectionName: 'posts', slug: 'hello', entry: published }),
+      ).toBe(entry);
+      expect(
+        getUnpublishedEntryBySlug({ collectionName: 'posts', slug: 'renamed', entry: published }),
       ).toBeUndefined();
-      expect(getUnpublishedEntryBySlug({ collectionName: 'pages', slug: 'hello' })).toBeUndefined();
+      expect(
+        getUnpublishedEntryBySlug({ collectionName: 'pages', slug: 'hello', entry: published }),
+      ).toBeUndefined();
     });
 
     test('finds a nested entry whether or not its branch encodes the slashes', () => {
@@ -282,13 +303,60 @@ describe('workflow/index', () => {
       encoded.workflow.pullRequest.branch = 'cms/pages/about%2Fethos';
       unpublishedEntries.current = [encoded, legacy];
 
-      expect(getUnpublishedEntryBySlug({ collectionName: 'pages', slug: 'about/ethos' })).toBe(
-        encoded,
-      );
-      expect(getUnpublishedEntryBySlug({ collectionName: 'pages', slug: 'about/team' })).toBe(
-        legacy,
-      );
-      expect(getUnpublishedEntryBySlug({ collectionName: 'pages', slug: 'about' })).toBeUndefined();
+      expect(
+        getUnpublishedEntryBySlug({
+          collectionName: 'pages',
+          slug: 'about/ethos',
+          entry: createPublished('content/pages/about/ethos.md'),
+        }),
+      ).toBe(encoded);
+      expect(
+        getUnpublishedEntryBySlug({
+          collectionName: 'pages',
+          slug: 'about/team',
+          entry: createPublished('content/pages/about/team.md'),
+        }),
+      ).toBe(legacy);
+      expect(
+        getUnpublishedEntryBySlug({
+          collectionName: 'pages',
+          slug: 'about',
+          entry: createPublished('content/pages/about.md'),
+        }),
+      ).toBeUndefined();
+    });
+
+    test('only finds a pull request that holds the entry', () => {
+      // Someone opened a pull request under the entry’s branch name that holds another entry.
+      // Taking it for the entry’s would make its editor offer to publish that other entry
+      const squatter = createEntry({ collectionName: 'posts', subPath: 'zzz' });
+
+      squatter.workflow.pullRequest.branch = 'cms/posts/hello';
+      unpublishedEntries.current = [squatter];
+
+      expect(
+        getUnpublishedEntryBySlug({
+          collectionName: 'posts',
+          slug: 'hello',
+          entry: createPublished('content/posts/hello.md'),
+        }),
+      ).toBeUndefined();
+
+      // A renamed entry is matched by the path it vacates
+      /** @type {any} */ (squatter.workflow).previousPaths = ['content/posts/hello.md'];
+
+      expect(
+        getUnpublishedEntryBySlug({
+          collectionName: 'posts',
+          slug: 'hello',
+          entry: createPublished('content/posts/hello.md'),
+        }),
+      ).toBe(squatter);
+
+      // A new entry has no pull request yet
+      expect(
+        getUnpublishedEntryBySlug({ collectionName: 'posts', slug: 'hello', entry: undefined }),
+      ).toBeUndefined();
     });
   });
 

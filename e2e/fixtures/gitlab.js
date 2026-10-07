@@ -124,11 +124,18 @@ export class MockGitLab extends MockGitRepository {
    * @param {object} args Arguments.
    * @param {string} args.title Title, with a `Draft: ` prefix for a draft.
    * @param {string} args.sourceBranch Branch the changes come from.
+   * @param {string} [args.targetBranch] Branch the changes go to, the default branch by default.
    * @param {string[]} [args.labels] Label names.
    * @param {MockUser} [args.author] Author, the colleague by default.
    * @returns {MockMergeRequest} Merge request.
    */
-  openMergeRequest({ title, sourceBranch, labels = [], author = this.colleague }) {
+  openMergeRequest({
+    title,
+    sourceBranch,
+    targetBranch = this.branch,
+    labels = [],
+    author = this.colleague,
+  }) {
     const now = new Date();
 
     /** @type {MockMergeRequest} */
@@ -137,7 +144,7 @@ export class MockGitLab extends MockGitRepository {
       id: 1000 + this.mergeRequests.length + 1,
       title,
       sourceBranch,
-      targetBranch: this.branch,
+      targetBranch,
       labels: [...labels],
       state: 'opened',
       author,
@@ -151,14 +158,40 @@ export class MockGitLab extends MockGitRepository {
   }
 
   /**
-   * Get the open merge request from a branch.
+   * Get the open merge request from a branch to the given target branch. Like GitLab, a merge
+   * request to another branch doesn’t count: a source branch can have one open merge request per
+   * target branch.
    * @param {string} branch Branch name.
+   * @param {string} [target] Target branch name, the default branch by default.
    * @returns {MockMergeRequest | undefined} Merge request.
    */
-  getOpenMergeRequest(branch) {
+  getOpenMergeRequest(branch, target = this.branch) {
     return this.mergeRequests.find(
-      ({ sourceBranch, state }) => sourceBranch === branch && state === 'opened',
+      ({ sourceBranch, targetBranch, state }) =>
+        sourceBranch === branch && targetBranch === target && state === 'opened',
     );
+  }
+
+  /**
+   * Delete a branch. Like GitLab, this closes every open merge request the branch is the source of,
+   * whichever branch each one goes to: without its source branch, a merge request has nothing left
+   * to merge.
+   * @param {string} branch Branch name.
+   * @returns {boolean} Whether the branch existed.
+   * @see https://docs.gitlab.com/user/project/merge_requests/#delete-the-source-branch
+   */
+  deleteBranch(branch) {
+    this.mergeRequests
+      .filter(({ sourceBranch, state }) => sourceBranch === branch && state === 'opened')
+      .forEach((mergeRequest) => {
+        Object.assign(mergeRequest, {
+          state: 'closed',
+          lastHead: this.refs.get(branch),
+          updatedAt: new Date(),
+        });
+      });
+
+    return this.refs.delete(branch);
   }
 
   /**
@@ -176,6 +209,26 @@ export class MockGitLab extends MockGitRepository {
         baseHead.tree.get(path) === mergeBase.tree.get(path) ||
         baseHead.tree.get(path) === head.tree.get(path),
     );
+  }
+
+  /**
+   * List the files the given commit changes since it parted from the given branch, as diffs.
+   * @param {MockCommit} head Commit.
+   * @param {string} targetBranch Branch to compare with.
+   * @returns {Record<string, any>[]} Diffs.
+   */
+  diffCommit(head, targetBranch) {
+    const mergeBase = this.getMergeBase(head.oid, this.getHead(targetBranch).oid);
+
+    return MockGitLab.diffTrees(mergeBase.tree, head.tree).map(({ path, changeType }) => ({
+      old_path: path,
+      new_path: path,
+      new_file: changeType === 'ADDED',
+      deleted_file: changeType === 'DELETED',
+      renamed_file: false,
+      // Every file in the mock is a regular one
+      b_mode: changeType === 'DELETED' ? '0' : '100644',
+    }));
   }
 
   /**
@@ -211,6 +264,9 @@ export class MockGitLab extends MockGitRepository {
             : 'mergeable',
       merge_when_pipeline_succeeds: !!mergeRequest.autoMerge,
       user: { can_merge: true },
+      changes_count: open
+        ? String(this.diffCommit(this.getHead(sourceBranch), targetBranch).length)
+        : null,
     };
   }
 
@@ -243,10 +299,15 @@ export class MockGitLab extends MockGitRepository {
       }
 
       if (method === 'POST') {
-        const { title, source_branch: sourceBranch, labels = '' } = body ?? {};
+        const {
+          title,
+          source_branch: sourceBranch,
+          target_branch: targetBranch,
+          labels = '',
+        } = body ?? {};
 
-        // Like GitLab, refuse another open merge request from the same branch
-        if (this.getOpenMergeRequest(sourceBranch)) {
+        // Like GitLab, refuse a second open merge request from the same branch to the same target
+        if (this.getOpenMergeRequest(sourceBranch, targetBranch)) {
           return {
             status: 409,
             json: { message: ['Another open merge request already exists for this source branch'] },
@@ -256,6 +317,7 @@ export class MockGitLab extends MockGitRepository {
         const mergeRequest = this.openMergeRequest({
           title,
           sourceBranch,
+          targetBranch,
           labels: labels ? String(labels).split(',') : [],
           author: this.user,
         });
@@ -278,17 +340,8 @@ export class MockGitLab extends MockGitRepository {
 
     // The files the merge request changes, from where the branches parted
     if (method === 'GET' && segments[1] === 'diffs') {
-      const head = this.getHead(mergeRequest.sourceBranch);
-      const mergeBase = this.getMergeBase(head.oid, this.getHead(mergeRequest.targetBranch).oid);
-
       return {
-        json: MockGitLab.diffTrees(mergeBase.tree, head.tree).map(({ path, changeType }) => ({
-          old_path: path,
-          new_path: path,
-          new_file: changeType === 'ADDED',
-          deleted_file: changeType === 'DELETED',
-          renamed_file: false,
-        })),
+        json: this.diffCommit(this.getHead(mergeRequest.sourceBranch), mergeRequest.targetBranch),
       };
     }
 
@@ -530,8 +583,18 @@ export class MockGitLab extends MockGitRepository {
       .split('/')
       .map((segment) => decodeURIComponent(segment));
 
+    // A comparison of a branch with a commit, from where they parted
+    if (method === 'GET' && resource === 'compare') {
+      const from = searchParams.get('from') ?? '';
+      const head = this.getCommit(searchParams.get('to') ?? '');
+
+      return head && this.refs.has(from)
+        ? { json: { diffs: this.diffCommit(head, from) } }
+        : { status: 404, json: { message: '404 Not Found' } };
+    }
+
     if (method === 'DELETE' && resource === 'branches') {
-      return this.refs.delete(rest.join('/'))
+      return this.deleteBranch(rest.join('/'))
         ? { status: 204 }
         : { status: 404, json: { message: '404 Branch Not Found' } };
     }
@@ -618,8 +681,9 @@ export class MockGitLab extends MockGitRepository {
       return { data: { project: { repository: { rootRef: this.branch } } } };
     }
 
+    // The variable holds a branch name or, for the contents of a merge request, its head commit
     const { branch } = variables;
-    const head = this.refs.has(branch) ? this.getHead(branch) : undefined;
+    const head = this.refs.has(branch) ? this.getHead(branch) : this.getCommit(branch);
 
     if (query.includes('lastCommit')) {
       return {
@@ -650,6 +714,25 @@ export class MockGitLab extends MockGitRepository {
                     .map(([path, sha]) => ({ type: 'blob', path, sha })),
                   pageInfo: { endCursor: String(end), hasNextPage: end < entries.length },
                 },
+              },
+            },
+          },
+        },
+      };
+    }
+
+    // The blob IDs of files, which GitLab leaves out for a path that isn’t on the branch
+    if (query.includes('blobs(ref:') && !query.includes('rawTextBlob')) {
+      return {
+        data: {
+          project: {
+            repository: {
+              blobs: {
+                nodes: /** @type {string[]} */ (variables.paths).flatMap((path) => {
+                  const sha = head?.tree.get(path);
+
+                  return sha ? [{ path, oid: sha }] : [];
+                }),
               },
             },
           },

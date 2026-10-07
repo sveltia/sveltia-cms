@@ -434,6 +434,31 @@
  */
 
 /**
+ * A file changed by a pull request, as read by {@link WorkflowBackendService.fetchMergeState}.
+ * @typedef {object} WorkflowChangedFile
+ * @property {string} path File path relative to the project’s root directory.
+ * @property {'added' | 'modified' | 'removed' | 'renamed'} status How the pull request changes the
+ * file.
+ * @property {string} [previousPath] Path a renamed file had before.
+ * @property {string} [mode] Git file mode at the head commit, as an octal string, e.g. `100644`
+ * for a regular file, `120000` for a symbolic link or `160000` for a submodule. Missing for a
+ * removed file.
+ */
+
+/**
+ * State of a pull request read right before it’s merged.
+ * @typedef {object} WorkflowMergeState
+ * @property {string | undefined} headSHA Git object ID of the commit the pull request’s branch
+ * points at.
+ * @property {boolean} onConfiguredBranches Whether the pull request goes from a branch of the
+ * configured repository, rather than a fork, to the configured branch, which its base branch can be
+ * changed from on the Git service.
+ * @property {WorkflowChangedFile[]} files Files the pull request changes as of `headSHA`.
+ * @property {boolean} complete Whether `files` lists every changed file. The Git services cap the
+ * list, and a pull request over the cap can’t be checked.
+ */
+
+/**
  * Arguments for the `saveEntry` function on {@link WorkflowBackendService}.
  * @typedef {object} WorkflowSaveOptions
  * @property {FileChange[]} changes Changes to be committed on the workflow branch.
@@ -458,10 +483,24 @@
  * @property {(pullRequest: WorkflowPullRequest, status: WorkflowStatus) =>
  * Promise<WorkflowPullRequest>} updateStatus Function to update the pull request’s status label and
  * draft state.
+ * @property {(branch: string) => Promise<string | undefined>} fetchBranchHead Function to fetch
+ * the commit the workflow branch points at, or `undefined` if the branch is gone. Two editors
+ * working on the same entry share its branch, so a save compares this with the head it last
+ * committed to find out whether someone else has written to it meanwhile.
+ * @property {(pullRequest: WorkflowPullRequest) => Promise<WorkflowMergeState>} fetchMergeState
+ * Function to read the pull request afresh right before it’s merged: where it goes, the commit its
+ * branch points at, and every file it changes as of that commit. Publishing checks this against
+ * what the CMS has shown for the entry, so a change it hasn’t shown can’t be merged along with it.
+ * @property {(args: { headSHA: string, paths: string[] }) => Promise<string[]>} fetchUnchangedPaths
+ * Function to find which of the given files are the same at the given commit as on the configured
+ * branch, missing from both counting as the same. A merge leaves such a file as it is, so it can’t
+ * publish anything; an answer the service can’t vouch for leaves the file out.
  * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} publish Function to merge the
- * pull request and delete the workflow branch. The service may leave the merge to the Git service
- * when a required check is still running, in which case it resolves once the merge has landed, and
- * rejects if it won’t — the check has failed, say — so the entry isn’t taken for published.
+ * pull request and delete the workflow branch. The merge is pinned to the pull request’s
+ * `headSHA`, so it fails if the branch has moved on since. The service may leave the merge to the
+ * Git service when a required check is still running, in which case it resolves once the merge has
+ * landed, and rejects if it won’t — the check has failed, say — so the entry isn’t taken for
+ * published.
  * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} discard Function to close the
  * pull request and delete the workflow branch.
  */

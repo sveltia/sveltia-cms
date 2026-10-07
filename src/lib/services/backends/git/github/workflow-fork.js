@@ -16,6 +16,7 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { encodePath } from '$lib/services/backends/git/shared/url';
+import { user } from '$lib/services/user/account.svelte';
 import { getBranchPrefix } from '$lib/services/workflow/branch';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
@@ -67,7 +68,11 @@ const BRANCH_PULL_REQUESTS_CHUNK_SIZE = 50;
 /**
  * Build the field selection to fetch the pull request the given fork branch has, if any. A ref in
  * the fork doesn’t report the pull requests opened from it against the configured repository, so
- * they’re looked up from that repository instead, matched by head branch name.
+ * they’re looked up from that repository instead, matched by head branch name. The base branch is
+ * matched as well: a pull request the contributor opened from the same branch to somewhere other
+ * than the configured branch isn’t the one the CMS manages, and acting on it would relabel, rename
+ * or close a request that isn’t the entry’s. The author is read too, as anyone can open a pull
+ * request from a branch of a public fork.
  * @param {string} branch Branch name to look up.
  * @returns {string} Field selection on the `Repository` type.
  * @see https://docs.github.com/en/graphql/reference/objects#repository
@@ -75,6 +80,7 @@ const BRANCH_PULL_REQUESTS_CHUNK_SIZE = 50;
 const getForkPullRequestsFragment = (branch) => `
   pullRequests(
     headRefName: ${JSON.stringify(branch)}
+    baseRefName: ${JSON.stringify(repository.branch)}
     states: [OPEN, CLOSED, MERGED]
     first: ${MAX_ITEMS.branchPullRequests}
     orderBy: { field: CREATED_AT, direction: DESC }
@@ -90,6 +96,9 @@ const getForkPullRequestsFragment = (branch) => `
       updatedAt
       headRefOid
       headRepositoryOwner {
+        login
+      }
+      author {
         login
       }
       files(first: ${MAX_ITEMS.files}) {
@@ -117,6 +126,7 @@ export const fetchForkBranchPullRequests = async (branches) => {
   }
 
   const fork = forkedRepository.current;
+  const login = user.account?.login?.toLowerCase();
 
   const results = await fetchAliasedBatch({
     items: branches,
@@ -128,8 +138,13 @@ export const fetchForkBranchPullRequests = async (branches) => {
   branches.forEach((branch, index) => {
     const [node] = (results[index]?.nodes ?? []).filter(
       // The configured repository can have a branch of the same name, whose pull request isn’t the
-      // contributor’s
-      (/** @type {any} */ pr) => pr.headRepositoryOwner?.login === fork?.owner,
+      // contributor’s. Nor is one someone else opened from the contributor’s branch: it would put
+      // their title on the entry, and the contributor can’t convert, reopen or close it, nor open
+      // their own while it’s open
+      (/** @type {any} */ pr) =>
+        pr.headRepositoryOwner?.login === fork?.owner &&
+        !!login &&
+        pr.author?.login?.toLowerCase() === login,
     );
 
     if (node) {
@@ -170,6 +185,9 @@ export const parseForkBranch = (node, branch, pullRequest) => {
     title: current?.title ?? message ?? '',
     url: current?.url,
     branch,
+    // The branch head, rather than the pull request’s: a save compares it with the branch to find
+    // out whether anything has been committed since, and a closed pull request’s head is stale
+    headSHA: node.target?.oid,
     status: inReview ? 'pending_review' : 'draft',
     createdDate: new Date(current?.createdAt ?? committedDate),
     updatedDate: new Date(current?.updatedAt ?? committedDate),

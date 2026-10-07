@@ -114,16 +114,34 @@ export const getUnpublishedEntry = ({ collectionName, subPath }) =>
 /**
  * Find the unpublished entry whose workflow branch addresses the given entry. This is the entry the
  * branch was opened for, which stays the same after the slug has been edited, unlike the result of
- * {@link getUnpublishedEntry}.
+ * {@link getUnpublishedEntry}. A branch name says nothing about what the pull request holds, so the
+ * unpublished entry also has to be the given one: one of its files, or of the files it vacates, is
+ * one of the entry’s. Without that, anyone who can push could open a pull request under an entry’s
+ * branch name that holds another entry, and the editor of the first would offer to publish it.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} args.slug Entry slug, or collection file name.
+ * @param {Entry | undefined} args.entry Entry the branch would hold, as it stands before the
+ * changes. `undefined` for a new entry, which has no pull request yet.
  * @returns {UnpublishedEntry | undefined} Unpublished entry.
  */
-export const getUnpublishedEntryBySlug = ({ collectionName, slug }) =>
-  unpublishedEntries.current.find(({ workflow }) =>
-    isEntryBranch({ branch: workflow.pullRequest.branch, collectionName, slug }),
+export const getUnpublishedEntryBySlug = ({ collectionName, slug, entry }) => {
+  if (!entry) {
+    return undefined;
+  }
+
+  const paths = new Set(getEntryPaths(entry));
+
+  return unpublishedEntries.current.find(
+    (unpublishedEntry) =>
+      isEntryBranch({
+        branch: unpublishedEntry.workflow.pullRequest.branch,
+        collectionName,
+        slug,
+      }) &&
+      getEntryPaths(unpublishedEntry, { includePrevious: true }).some((path) => paths.has(path)),
   );
+};
 
 /**
  * Find the unpublished entry that corresponds to the given workflow branch.
@@ -156,7 +174,11 @@ export const getUnpublishedEntryByDraft = ({ collectionName, fileName, originalE
 
   return (
     (branch ? getUnpublishedEntryByBranch(branch) : undefined) ??
-    getUnpublishedEntryBySlug({ collectionName, slug: fileName ?? originalEntry.slug })
+    getUnpublishedEntryBySlug({
+      collectionName,
+      slug: fileName ?? originalEntry.slug,
+      entry: originalEntry,
+    })
   );
 };
 

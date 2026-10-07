@@ -10,6 +10,7 @@ import {
 } from '$lib/services/backends/git/github/workflow-fork';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 vi.mock('$lib/services/backends/git/github/commits');
@@ -31,6 +32,7 @@ vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
  */
 const mockStores = ({ backend = { name: 'github' }, fork = undefined } = {}) => {
   forkedRepository.current = /** @type {any} */ (fork);
+  user.account = /** @type {any} */ ({ login: 'Contributor' });
   cmsConfig.current = /** @type {any} */ (backend ? { backend } : undefined);
 };
 
@@ -84,6 +86,7 @@ describe('GitHub Open Authoring workflow', () => {
       updatedAt: '2026-01-02T00:00:00Z',
       headRefOid: 'branch-head',
       headRepositoryOwner: { login: 'contributor' },
+      author: { login: 'contributor' },
       files: { nodes: [{ path: 'content/posts/hello.md', changeType: 'ADDED' }] },
       ...overrides,
     });
@@ -103,6 +106,9 @@ describe('GitHub Open Authoring workflow', () => {
           title: 'Create Post “hello”',
           url: undefined,
           branch: BRANCH,
+          // The branch head is on record even without a pull request, so a save can tell whether
+          // anything has been committed to the branch since the draft was opened
+          headSHA: 'branch-head',
           status: 'draft',
           createdDate: new Date('2026-01-03T00:00:00Z'),
           updatedDate: new Date('2026-01-03T00:00:00Z'),
@@ -224,6 +230,48 @@ describe('GitHub Open Authoring workflow', () => {
         );
 
         expect(result.get(BRANCH)).toEqual(expect.objectContaining({ number: 1 }));
+      });
+
+      test('asks only for the pull requests to the configured branch', async () => {
+        // A pull request the contributor opened from the same branch to another branch isn’t the
+        // entry’s, and acting on it would relabel, rename or close a request that isn’t the CMS’s
+        await fetchForkBranchPullRequests([BRANCH]);
+
+        expect(fetchGraphQL).toHaveBeenCalledWith(
+          expect.stringContaining('baseRefName: "main"'),
+          {},
+        );
+      });
+
+      test('ignores a pull request someone else opened from the contributor’s branch', async () => {
+        // Anyone can open a pull request from a branch of a public fork. Taking it for the
+        // contributor’s would put the other user’s title on the entry, and the contributor could
+        // neither convert, reopen nor close it, nor open their own while it’s open
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          repository: {
+            pr_0: {
+              nodes: [
+                createBranchPullRequest({ number: 9, author: { login: 'someone-else' } }),
+                createBranchPullRequest({ number: 8, author: null }),
+                createBranchPullRequest(),
+              ],
+            },
+          },
+        });
+
+        const result = await fetchForkBranchPullRequests([BRANCH]);
+
+        // The contributor’s own is picked, whatever the case of the login
+        expect(result.get(BRANCH)).toMatchObject({ author: { login: 'contributor' } });
+        expect(vi.mocked(fetchGraphQL).mock.calls[0][0]).toContain('author {');
+
+        // Nothing matches without a signed-in user
+        user.account = undefined;
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          repository: { pr_0: { nodes: [createBranchPullRequest()] } },
+        });
+
+        expect((await fetchForkBranchPullRequests([BRANCH])).size).toBe(0);
       });
 
       test('ignores a pull request from a branch of the same name elsewhere', async () => {

@@ -107,6 +107,14 @@ export const parseMergeRequest = (item) => {
     return undefined;
   }
 
+  // A merge request to a branch other than the configured one isn’t the CMS’s either, whatever
+  // label it carries: one whose target branch was changed on GitLab after the CMS opened it, or one
+  // labelled by hand. Listing it would put a card on the board that moves the label on someone
+  // else’s request, and publishes the entry by merging it into that other branch
+  if (item.target_branch !== repository.branch) {
+    return undefined;
+  }
+
   const status = getStatusFromLabels(item.labels ?? []);
 
   if (!status) {
@@ -225,7 +233,9 @@ export const fetchMergeRequestFileContents = async (mergeRequest) => {
   const nodes = await fetchBlobNodes(
     files.map(({ path }) => path),
     FETCH_BLOBS_QUERY,
-    { branch: mergeRequest.branch },
+    // Read at the head commit rather than the branch, so the content shown is that of the commit a
+    // publish is pinned to, even if the branch moves on while the board loads
+    { branch: mergeRequest.headSHA ?? mergeRequest.branch },
   );
 
   /** @type {Map<string, Record<string, any>>} */
@@ -343,15 +353,14 @@ export const createPullRequest = async ({ branch, title, status }) => {
 };
 
 /**
- * Fetch the open merge request from the given branch, if any. This is asked about a branch the CMS
- * doesn’t know a merge request for, so a merge request found is one the load skipped: it has lost
- * its status label, or it sits beyond the number of merge requests fetched.
+ * Fetch the open merge requests from the given branch of the configured project, whichever branch
+ * they go to. A merge request from a fork can have a source branch of the same name, but it isn’t
+ * from this branch, so it’s left out.
  * @param {string} branch Branch name.
- * @returns {Promise<Record<string, any> | undefined>} Merge request returned by the REST API, or
- * `undefined` if none is open from the branch.
+ * @returns {Promise<Record<string, any>[]>} Merge requests returned by the REST API.
  * @see https://docs.gitlab.com/api/merge_requests/#list-project-merge-requests
  */
-export const fetchOpenMergeRequest = async (branch) => {
+export const fetchOpenMergeRequests = async (branch) => {
   const items = /** @type {Record<string, any>[]} */ (
     await fetchAPI(
       `/projects/${getProjectId()}/merge_requests` +
@@ -360,8 +369,7 @@ export const fetchOpenMergeRequest = async (branch) => {
     )
   );
 
-  // A merge request from a fork can have a source branch of the same name, but it isn’t this branch
-  return items.find(
+  return items.filter(
     ({ source_project_id: sourceId, target_project_id: targetId }) => sourceId === targetId,
   );
 };

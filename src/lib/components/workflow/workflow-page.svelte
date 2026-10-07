@@ -22,6 +22,7 @@
     updateWorkflowStatus,
   } from '$lib/services/workflow/save';
   import { canMoveToStatus, canPublish } from '$lib/services/workflow/validate';
+  import { getPublishErrorKey } from '$lib/services/workflow/verify';
 
   /**
    * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -163,7 +164,9 @@
       toastMessage = messages.success;
     } catch (/** @type {any} */ ex) {
       toastStatus = 'error';
-      toastMessage = messages.error;
+      // A publish refused over what the pull request holds says why, rather than suggesting that
+      // trying again would help
+      toastMessage = getPublishErrorKey(ex, messages.error);
       // eslint-disable-next-line no-console
       console.error(ex);
     } finally {

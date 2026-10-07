@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { allAssets } from '$lib/services/assets/state';
 import {
+  getEntryAssetVersion,
   mergeWorkflowAssets,
   publishWorkflowAssets,
   removeWorkflowAssets,
@@ -19,6 +20,40 @@ const createAsset = (path, extra = {}) => ({ path, name: path.split('/').pop(), 
 describe('workflow/assets', () => {
   beforeEach(() => {
     allAssets.current = [];
+  });
+
+  describe('getEntryAssetVersion', () => {
+    const published = createAsset('static/logo.png', { sha: 'published' });
+
+    const pending = createAsset('static/logo.png', {
+      sha: 'pending',
+      workflow: { branch: BRANCH, replacedAsset: published },
+    });
+
+    const added = createAsset('static/new.png', { workflow: { branch: BRANCH } });
+    const ownEntry = /** @type {any} */ ({ workflow: { pullRequest: { branch: BRANCH } } });
+
+    const otherEntry = /** @type {any} */ ({
+      workflow: { pullRequest: { branch: 'cms/posts/x' } },
+    });
+
+    const publishedEntry = /** @type {any} */ ({});
+
+    test('gives a published asset to any entry', () => {
+      expect(getEntryAssetVersion(published, publishedEntry)).toBe(published);
+      expect(getEntryAssetVersion(published, undefined)).toBe(published);
+      expect(getEntryAssetVersion(undefined, ownEntry)).toBeUndefined();
+    });
+
+    test('gives an asset committed to a branch only to the entry of that branch', () => {
+      expect(getEntryAssetVersion(pending, ownEntry)).toBe(pending);
+      expect(getEntryAssetVersion(added, ownEntry)).toBe(added);
+      // Any other entry gets the published version it shadows, or nothing at all
+      expect(getEntryAssetVersion(pending, otherEntry)).toBe(published);
+      expect(getEntryAssetVersion(pending, publishedEntry)).toBe(published);
+      expect(getEntryAssetVersion(added, otherEntry)).toBeUndefined();
+      expect(getEntryAssetVersion(added, undefined)).toBeUndefined();
+    });
   });
 
   describe('mergeWorkflowAssets', () => {

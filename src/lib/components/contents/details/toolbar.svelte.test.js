@@ -1186,7 +1186,8 @@ describe('Toolbar', () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(updateWorkflowStatus).mockRejectedValue(new Error('Boom'));
 
-      await renderToolbar();
+      const { entryDraft } = await renderToolbar();
+
       await page.getByRole('button', { name: 'Save' }).click();
       await page.getByRole('alertdialog').getByRole('button', { name: 'Send for Review' }).click();
 
@@ -1195,8 +1196,13 @@ describe('Toolbar', () => {
         .toHaveTextContent(
           'Error There was an error while saving the entry. Please try again later. Couldn’t change the status. Please try again. OK',
         );
-      // The editor stays open
+      // The editor stays open, so the status change can be retried from the status menu
       expect(window.location.hash).not.toBe('#/collections/posts');
+      // The draft is pointed at the entry as saved, all the same. Left on the pre-save one, the
+      // next save would compare it with the branch and report the save that just landed as
+      // someone else’s change
+      await expect.poll(() => entryDraft.current?.isNew).toBe(false);
+      await expect.poll(() => entryDraft.current?.originalEntry).toBe(unpublishedEntry);
     });
 
     test('deletes an unpublished entry by discarding its pull request', async () => {

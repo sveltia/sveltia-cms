@@ -70,12 +70,22 @@ export const getDeployTargets = () => {
   }
 
   unpublishedEntries.current.forEach(({ workflow: { pullRequest } }) => {
-    const { headSHA, branch: prBranch } = pullRequest;
+    const { number, headSHA, branch: prBranch } = pullRequest;
 
-    if (headSHA && !seen.has(headSHA)) {
-      targets.push({ sha: headSHA, branch: prBranch, kind: 'preview' });
-      seen.add(headSHA);
+    // An Open Authoring draft with no number is a branch in the contributor’s fork that nothing
+    // has been opened for, so there’s no pull request for the service to have built a preview of.
+    // Its head is on record all the same, so a save can tell whether the branch has moved. A draft
+    // whose pull request was closed keeps its number and is still asked about, which costs one
+    // lookup that finds nothing: the state isn’t on record to tell the two apart.
+    // A contributor’s pull request, once opened, is asked about like any other: a service set up to
+    // build pull requests from forks does build it, and the commit is reachable from the configured
+    // repository because a fork shares its parent’s object store
+    if (number === undefined || !headSHA || seen.has(headSHA)) {
+      return;
     }
+
+    targets.push({ sha: headSHA, branch: prBranch, kind: 'preview' });
+    seen.add(headSHA);
   });
 
   return targets;

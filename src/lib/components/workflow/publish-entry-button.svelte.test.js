@@ -176,6 +176,34 @@ describe('PublishEntryButton', () => {
     await waitForToastsToHide();
   });
 
+  test.each([
+    [
+      'other_changes',
+      'This entry can’t be published here, because it comes with other changes the CMS can’t show you. Ask a developer to review it.',
+    ],
+    [
+      'entry_changed',
+      'The entry has been changed since you opened it. Reload the page to review the latest version before publishing it.',
+    ],
+  ])('says why a publish was refused: %s', async (reason, message) => {
+    vi.mocked(publishWorkflowEntry).mockRejectedValue(
+      new Error('publish_refused', { cause: { reason, paths: [] } }),
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await renderWithDraft(PublishEntryButton, {
+      draft: createMockDraft(),
+      props: { entry: createEntry('pending_publish') },
+    });
+
+    await page.getByRole('button', { name: 'Publish Entry' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Publish' }).click();
+
+    // Trying again wouldn’t help, so the message says what stands in the way instead
+    await expect.element(page.getByRole('alert')).toHaveTextContent(`error Error ${message}`);
+    await waitForToastsToHide();
+  });
+
   test('is presented as Delete for a pending deletion', async () => {
     await renderWithDraft(PublishEntryButton, {
       draft: createMockDraft(),

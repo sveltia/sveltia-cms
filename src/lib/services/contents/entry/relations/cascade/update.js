@@ -124,41 +124,24 @@ export const replaceReferences = ({ content, relation, replacements }) => {
 };
 
 /**
- * Build the file changes that keep Relation field references pointing at an entry whose slug has
- * been edited, the way a database cascades an update of a referenced key to the rows referencing
- * it. Nothing is written for an entry whose references still resolve, so a save that doesn’t rename
- * anything costs a single comparison.
- *
- * References are matched on the value the Relation field stores, which is the entry slug unless a
- * `value_field` is configured. A `value_field` pointing at a content field doesn’t depend on the
- * slug, so those references are left alone; one combining the slug with other fields, such as
- * `{{locale}}/{{slug}}`, is recomputed in full.
- *
- * A referencing entry that is read-only can’t be rewritten, so the rename is refused rather than
- * leaving that entry pointing at an entry that no longer exists under that name.
+ * Find the entries referencing an entry whose slug has been edited, which have to be rewritten so
+ * their references keep pointing at it. See {@link buildCascadeChanges}.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection of the renamed entry.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file of the renamed entry.
  * @param {Entry} [args.originalEntry] Renamed entry as it was before the save. `undefined` for a
  * new entry, which nothing can reference yet.
  * @param {Entry} args.savingEntry Renamed entry being saved.
- * @param {IndexedDB} [args.cacheDB] Pre-opened file-cache database to reuse.
- * @returns {Promise<{ changes: FileChange[], savingEntries: Entry[] }>} Collected changes and the
- * entries to be saved.
- * @throws {Error} When a referencing entry is read-only, with a message naming the entries.
+ * @returns {CascadeTarget[]} Referencing entries, with their references updated.
  */
-export const buildCascadeChanges = async ({
+export const collectRenameTargets = ({
   collection,
   collectionFile,
   originalEntry,
   savingEntry,
-  cacheDB,
 }) => {
-  /** @type {{ changes: FileChange[], savingEntries: Entry[] }} */
-  const noChanges = { changes: [], savingEntries: [] };
-
   if (!originalEntry || originalEntry.slug === savingEntry.slug) {
-    return noChanges;
+    return [];
   }
 
   const relations = getReferencingRelationFields({
@@ -167,7 +150,7 @@ export const buildCascadeChanges = async ({
   });
 
   if (!relations.length) {
-    return noChanges;
+    return [];
   }
 
   const {
@@ -205,9 +188,51 @@ export const buildCascadeChanges = async ({
     });
   });
 
+  return [...targets.values()];
+};
+
+/**
+ * Build the file changes that keep Relation field references pointing at an entry whose slug has
+ * been edited, the way a database cascades an update of a referenced key to the rows referencing
+ * it. Nothing is written for an entry whose references still resolve, so a save that doesn’t rename
+ * anything costs a single comparison.
+ *
+ * References are matched on the value the Relation field stores, which is the entry slug unless a
+ * `value_field` is configured. A `value_field` pointing at a content field doesn’t depend on the
+ * slug, so those references are left alone; one combining the slug with other fields, such as
+ * `{{locale}}/{{slug}}`, is recomputed in full.
+ *
+ * A referencing entry that is read-only can’t be rewritten, so the rename is refused rather than
+ * leaving that entry pointing at an entry that no longer exists under that name.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection of the renamed entry.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file of the renamed entry.
+ * @param {Entry} [args.originalEntry] Renamed entry as it was before the save. `undefined` for a
+ * new entry, which nothing can reference yet.
+ * @param {Entry} args.savingEntry Renamed entry being saved.
+ * @param {IndexedDB} [args.cacheDB] Pre-opened file-cache database to reuse.
+ * @returns {Promise<{ changes: FileChange[], savingEntries: Entry[] }>} Collected changes and the
+ * entries to be saved.
+ * @throws {Error} When a referencing entry is read-only, with a message naming the entries.
+ */
+export const buildCascadeChanges = async ({
+  collection,
+  collectionFile,
+  originalEntry,
+  savingEntry,
+  cacheDB,
+}) => {
+  /** @type {{ changes: FileChange[], savingEntries: Entry[] }} */
+  const noChanges = { changes: [], savingEntries: [] };
+  const targets = collectRenameTargets({ collection, collectionFile, originalEntry, savingEntry });
+
+  if (!targets.length) {
+    return noChanges;
+  }
+
   // An entry can also be locked by another collection it belongs to. Only the `readonly` option
   // counts, as explained in `isEntryReadonly()`
-  const readonlyTargets = [...targets.values()].filter(
+  const readonlyTargets = targets.filter(
     (target) =>
       isConfigReadonly({ collection: target.collection, collectionFile: target.collectionFile }) ||
       isEntryReadonly(target.entry),
@@ -221,5 +246,5 @@ export const buildCascadeChanges = async ({
     throw new Error(_('cannot_rename_referenced_entry', { values: { entries } }));
   }
 
-  return buildTargetChanges({ targets: [...targets.values()], cacheDB });
+  return buildTargetChanges({ targets, cacheDB });
 };

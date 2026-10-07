@@ -120,6 +120,31 @@ describe('GitHub pull request helpers', () => {
       expect(pullRequest.files[2].sha).toBe('');
     });
 
+    test('reads the files at the head commit, or at the branch without one', async () => {
+      const pullRequests = /** @type {any[]} */ ([
+        {
+          branch: 'cms/posts/hello',
+          headSHA: 'abc123',
+          files: [{ path: 'content/posts/hello.md', sha: '', size: 0, deleted: false }],
+        },
+        {
+          branch: 'cms/posts/draft',
+          files: [{ path: 'content/posts/draft.md', sha: '', size: 0, deleted: false }],
+        },
+      ]);
+
+      vi.mocked(fetchGraphQL).mockResolvedValue({ repository: {} });
+
+      await fetchPullRequestFiles(pullRequests);
+
+      // The content shown is that of the commit a publish is pinned to, even if the branch has
+      // moved on since the pull request was listed
+      const [[query]] = vi.mocked(fetchGraphQL).mock.calls;
+
+      expect(query).toContain('"abc123:content/posts/hello.md"');
+      expect(query).toContain('"cms/posts/draft:content/posts/draft.md"');
+    });
+
     test('normalizes a null text for an empty text file', async () => {
       const pullRequest = /** @type {any} */ ({
         branch: 'cms/posts/hello',

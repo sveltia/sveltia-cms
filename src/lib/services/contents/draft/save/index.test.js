@@ -254,6 +254,7 @@ describe('draft/save/index', () => {
         mockDraft.originalEntry = {
           id: 'test-id',
           slug: 'test-post',
+          locales: { _default: { path: 'content/posts/test-post.md' } },
           workflow: { status: 'draft', pullRequest: { branch: 'cms/posts/test-post' } },
         };
         await saveEntry();
@@ -267,6 +268,7 @@ describe('draft/save/index', () => {
         mockDraft.originalEntry = {
           id: 'test-id',
           slug: 'test-post',
+          locales: { _default: { path: 'content/posts/test-post.md' } },
           workflow: { status: 'pending_review', pullRequest: { branch: 'cms/posts/test-post' } },
         };
         await saveEntry();

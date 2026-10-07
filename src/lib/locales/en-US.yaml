@@ -2172,6 +2172,17 @@ workflow:
   entry_deleted: Entry deleted.
   # Error notification when publishing fails
   publishing_entry_failed: Couldn’t publish the entry. Please try again.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: This entry can’t be published here, because it comes with other changes the CMS can’t show you. Ask a developer to review it.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: The entry has been changed since you opened it. Reload the page to review the latest version before publishing it.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: Another request ({$number}) is already open for this entry outside the CMS. Ask a developer to close it first.
   # Workflow page: empty column message
   no_entries: No entries.
   # Workflow page: aria-label for a draggable entry card

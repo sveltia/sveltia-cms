@@ -58,7 +58,9 @@ const isDraftUntouched = (entryDraft, draft) =>
 export const refreshOpenedDraft = async (entryDraft) => {
   const draft = entryDraft.current;
 
-  // A new entry has nothing to compare; a workflow draft is saved to its own branch
+  // A new entry has nothing to compare. A workflow draft isn’t refreshed here either: this check
+  // watches the configured branch, while the draft lives on a branch of its own. That branch is
+  // compared with the draft when it’s saved, by {@link detectWorkflowConflict}
   if (!draft || draft.isNew || !draft.originalEntry || isWorkflowDraft(draft)) {
     return;
   }

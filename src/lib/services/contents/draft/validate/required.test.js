@@ -23,6 +23,7 @@ const draftFor = (status) => ({
   originalEntry: {
     id: 'entry-1',
     slug: 'my-post',
+    locales: { _default: { path: 'content/posts/my-post.md' } },
     ...(status ? { workflow: { status, pullRequest: { branch: 'cms/posts/my-post' } } } : {}),
   },
 });
@@ -87,6 +88,7 @@ describe('contents/draft/validate/required', () => {
     entries.current = [
       {
         id: 'entry-1',
+        locales: { _default: { path: 'content/posts/my-post.md' } },
         workflow: { status: 'pending_publish', pullRequest: { branch: 'cms/posts/my-post' } },
       },
     ];

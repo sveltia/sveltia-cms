@@ -95,6 +95,17 @@ describe('Deployment resolution', () => {
       ]);
     });
 
+    test('skips an Open Authoring draft, which has no pull request to have built a preview', () => {
+      // Its head is on record so a save can tell whether the branch has moved, but asking for a
+      // deployment would be asking about a pull request that doesn’t exist yet
+      unpublishedEntries.current = [
+        createEntry({ number: undefined, headSHA: 'a' }),
+        createEntry({ number: 2, headSHA: 'b', branch: 'cms/posts/b' }),
+      ];
+
+      expect(getDeployTargets()).toEqual([{ sha: 'b', branch: 'cms/posts/b', kind: 'preview' }]);
+    });
+
     test('falls back to an empty branch without repository info', () => {
       backendService = {};
       /** @type {any} */ (backend).current = backendService;

@@ -274,6 +274,30 @@ describe('WorkflowPage', () => {
       .toHaveTextContent('check_circle Success Entry published.');
   });
 
+  test('says why a publish was refused', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(publishWorkflowEntry).mockRejectedValue(
+      new Error('publish_refused', { cause: { reason: 'other_changes', paths: ['src/app.js'] } }),
+    );
+
+    await render(WorkflowPage);
+
+    await page
+      .getByRole('list', { name: 'Ready' })
+      .getByRole('button', { name: 'Publish Entry' })
+      .click();
+    await page
+      .getByRole('alertdialog', { name: 'Publish Entry' })
+      .getByRole('button', { name: 'Publish' })
+      .click();
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'error Error This entry can’t be published here, because it comes with other changes the CMS can’t show you. Ask a developer to review it.',
+      );
+  });
+
   test('lists the merged entries until the site has caught up', async () => {
     productionSHA.current = 'prod';
     trackDeployingEntry(createEntry('live-1', 'pending_publish'));

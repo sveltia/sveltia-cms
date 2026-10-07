@@ -1,18 +1,22 @@
 import { sleep } from '@sveltia/utils/misc';
 
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
+import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
 import {
   createPullRequest,
   deleteBranch,
   DRAFT_TITLE_PREFIX,
   fetchMergeRequest,
-  fetchOpenMergeRequest,
+  fetchOpenMergeRequests,
   fetchPullRequests,
-  parseMergeRequest,
-  toMergeRequest,
 } from '$lib/services/backends/git/gitlab/merge-requests';
-import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
+import {
+  getBranchPath,
+  getProjectId,
+  repository,
+} from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { isSquashMergeEnabled } from '$lib/services/backends/git/shared/workflow';
 import { getAllStatusLabels, getStatusLabel } from '$lib/services/workflow/labels';
 
@@ -21,6 +25,8 @@ import { getAllStatusLabels, getStatusLabel } from '$lib/services/workflow/label
  * CommitOptions,
  * CommitResults,
  * FileChange,
+ * WorkflowChangedFile,
+ * WorkflowMergeState,
  * WorkflowPullRequest,
  * WorkflowSaveOptions,
  * WorkflowStatus,
@@ -62,20 +68,18 @@ const AUTO_MERGE_POLL = { interval: 10000, maxDuration: 60 * 60 * 1000 };
  * the branch, or one that was closed on GitLab rather than discarded here, which leaves the branch
  * behind. Starting the new merge request from the branch as it stands would carry that earlier
  * work into it — a merged one adds nothing, but a closed one brings back what was thrown away — so
- * the branch is deleted and created afresh from the configured branch. That only holds when no
- * merge request is open from it: one the load skipped is someone’s work in progress, and it’s
- * committed onto rather than wiped, and handed back so it’s reused rather than opened again.
+ * the branch is deleted and created afresh from the configured branch.
  * @param {FileChange[]} changes Changes to be committed.
  * @param {CommitOptions} options Commit options, with the workflow branch.
- * @returns {Promise<{ commit: CommitResults, openMergeRequest?: Record<string, any> }>} Commit
- * results, along with the merge request open from the branch, if the commit went onto it.
+ * @returns {Promise<CommitResults>} Commit results.
+ * @throws {Error} When the branch exists and a merge request is open from it.
  */
 const commitToNewBranch = async (changes, options) => {
   const { branch = '' } = options;
   const startBranch = repository.branch;
 
   try {
-    return { commit: await commitChanges(changes, { ...options, startBranch }) };
+    return await commitChanges(changes, { ...options, startBranch });
   } catch (/** @type {any} */ ex) {
     // GitLab rejects `start_branch` outright once the branch exists. Anything else is a real
     // failure
@@ -84,15 +88,48 @@ const commitToNewBranch = async (changes, options) => {
     }
   }
 
-  const openMergeRequest = await fetchOpenMergeRequest(branch);
+  // A merge request open from the branch is one the board doesn’t show: it has lost its status
+  // label, it sits beyond the number of merge requests fetched, it goes to another branch, or it
+  // was never the CMS’s. Committing onto it would take whatever else it holds along with the entry,
+  // unseen, and deleting the branch would close it, so the save is refused instead
+  const [openMergeRequest] = await fetchOpenMergeRequests(branch);
 
   if (openMergeRequest) {
-    return { commit: await commitChanges(changes, options), openMergeRequest };
+    throw createLocalizedError(
+      'The workflow branch is in use by another merge request.',
+      'workflow.branch_in_use',
+      { number: `!${openMergeRequest.iid}` },
+    );
   }
 
   await deleteBranch(branch);
 
-  return { commit: await commitChanges(changes, { ...options, startBranch }) };
+  return commitChanges(changes, { ...options, startBranch });
+};
+
+/**
+ * Fetch the commit the given workflow branch points at. Two editors working on the same entry
+ * share its branch, so this is how a save finds out that someone else has committed to it since
+ * the draft was opened.
+ * @param {string} branch Branch name.
+ * @returns {Promise<string | undefined>} Git object ID, or `undefined` if the branch is gone,
+ * which is what a merged or closed merge request leaves behind.
+ * @see https://docs.gitlab.com/api/branches/#get-single-repository-branch
+ */
+export const fetchBranchHead = async (branch) => {
+  try {
+    const { commit } = /** @type {{ commit?: { id?: string } }} */ (
+      await fetchAPI(getBranchPath(branch))
+    );
+
+    return commit?.id;
+  } catch (/** @type {any} */ ex) {
+    if (ex.cause?.status === 404) {
+      return undefined;
+    }
+
+    throw ex;
+  }
 };
 
 /**
@@ -139,22 +176,9 @@ export const savePullRequest = async ({ changes, options, branch, title, status,
 
   // The commit itself creates the workflow branch on the first save, so it doesn’t need a request
   // of its own
-  const { commit, openMergeRequest } = await commitToNewBranch(changes, { ...options, branch });
+  const commit = await commitToNewBranch(changes, { ...options, branch });
 
-  if (!openMergeRequest) {
-    return { commit, pullRequest: await createPullRequest({ branch, title, status }) };
-  }
-
-  // The branch already has a merge request the load skipped, and GitLab refuses to open another one
-  // from the same branch, so the commit goes into that one. A merge request that still carries its
-  // status label keeps its status, like a known one does. One that has lost it is given the status
-  // asked for, which also puts it back on the board
-  const existing = parseMergeRequest(openMergeRequest);
-
-  return {
-    commit,
-    pullRequest: existing ?? (await updateStatus(toMergeRequest(openMergeRequest, status), status)),
-  };
+  return { commit, pullRequest: await createPullRequest({ branch, title, status }) };
 };
 
 /**
@@ -275,6 +299,125 @@ const waitForAutoMerge = async (
 };
 
 /**
+ * Number of files past which GitLab cuts a comparison short by default, without saying so.
+ * @see https://docs.gitlab.com/administration/diff_limits/
+ */
+const MAX_COMPARE_FILES = 1000;
+
+/**
+ * Get how the given diff changes its file.
+ * @param {Record<string, any>} diff Diff returned by the REST API.
+ * @returns {WorkflowChangedFile['status']} Status.
+ */
+const getDiffStatus = (diff) => {
+  if (diff.new_file) {
+    return 'added';
+  }
+
+  if (diff.deleted_file) {
+    return 'removed';
+  }
+
+  return diff.renamed_file ? 'renamed' : 'modified';
+};
+
+/**
+ * Read the merge request afresh right before it’s merged. The files are listed by comparing the
+ * configured branch with the very commit the merge request points at, rather than read off the
+ * merge request, so they describe exactly what a merge pinned to that commit would bring in, even
+ * if the branch moves on meanwhile. The comparison can stop short of the whole list on a large
+ * change, which the merge request’s own count of changes tells.
+ * @param {WorkflowPullRequest} pullRequest Merge request.
+ * @returns {Promise<WorkflowMergeState>} State.
+ * @see https://docs.gitlab.com/api/merge_requests/#get-single-mr
+ * @see https://docs.gitlab.com/api/repositories/#compare-branches-tags-or-commits
+ */
+export const fetchMergeState = async (pullRequest) => {
+  const {
+    sha: headSHA,
+    target_branch: targetBranch,
+    source_project_id: sourceId,
+    target_project_id: targetId,
+    changes_count: changesCount,
+  } = await fetchMergeRequest(pullRequest);
+
+  const onConfiguredBranches = targetBranch === repository.branch && sourceId === targetId;
+
+  if (!headSHA || !onConfiguredBranches) {
+    return { headSHA, onConfiguredBranches: false, files: [], complete: false };
+  }
+
+  const { diffs = [] } = /** @type {{ diffs?: Record<string, any>[] }} */ (
+    await fetchAPI(
+      `/projects/${getProjectId()}/repository/compare` +
+        `?from=${encodeURIComponent(/** @type {string} */ (targetBranch))}` +
+        `&to=${encodeURIComponent(headSHA)}&straight=false`,
+    )
+  );
+
+  // `changes_count` is a string, which reads like `1000+` past GitLab’s limit, and is missing
+  // while the merge request’s diff is still being worked out. The comparison is then all there is
+  // to go by, and one that reaches GitLab’s default limit on files may have been cut short
+  const count = changesCount === null || changesCount === undefined ? undefined : `${changesCount}`;
+
+  const complete =
+    count === undefined
+      ? diffs.length < MAX_COMPARE_FILES
+      : !count.endsWith('+') && diffs.length >= Number(count);
+
+  return {
+    headSHA,
+    onConfiguredBranches,
+    files: diffs.map((diff) => ({
+      path: diff.new_path,
+      status: getDiffStatus(diff),
+      previousPath: diff.renamed_file ? diff.old_path : undefined,
+      mode: diff.deleted_file ? undefined : diff.b_mode,
+    })),
+    complete,
+  };
+};
+
+/**
+ * Query to fetch the Git object IDs of the blobs at the given paths on a branch or commit.
+ */
+const FETCH_BLOB_IDS_QUERY = `
+  query($fullPath: ID!, $branch: String!, $paths: [String!]!) {
+    project(fullPath: $fullPath) {
+      repository {
+        blobs(ref: $branch, paths: $paths) {
+          nodes {
+            path
+            oid
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Find which of the given files are the same at the given commit as on the configured branch, by
+ * comparing the Git object IDs of their blobs. A file missing from both counts as the same.
+ * @param {object} args Arguments.
+ * @param {string} args.headSHA Git object ID of the commit.
+ * @param {string[]} args.paths File paths.
+ * @returns {Promise<string[]>} Paths of the files that are the same.
+ * @see https://docs.gitlab.com/api/graphql/reference/#repositoryblob
+ */
+export const fetchUnchangedPaths = async ({ headSHA, paths }) => {
+  const [base, head] = await Promise.all(
+    [/** @type {string} */ (repository.branch), headSHA].map(async (branch) => {
+      const nodes = await fetchBlobNodes(paths, FETCH_BLOB_IDS_QUERY, { branch });
+
+      return new Map(nodes.map((/** @type {any} */ { path, oid }) => [path, oid]));
+    }),
+  );
+
+  return paths.filter((path) => base.get(path) === head.get(path));
+};
+
+/**
  * Merge the merge request and delete the workflow branch. A project or group can require the merge
  * request’s pipeline to succeed before it can be merged; the group-level setting is not exposed by
  * the project API. In that case, GitLab refuses an immediate merge while the pipeline is running,
@@ -355,6 +498,9 @@ export default {
   fetchPullRequests,
   savePullRequest,
   updateStatus,
+  fetchBranchHead,
+  fetchMergeState,
+  fetchUnchangedPaths,
   publish,
   discard,
 };

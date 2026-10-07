@@ -397,6 +397,49 @@ test.describe('as a contributor', () => {
       expect(github.pullRequests).toEqual([]);
     });
 
+    test('warns before saving over a commit made to the fork branch', async ({
+      cms,
+      github,
+      page,
+    }) => {
+      // A contributor’s branch is theirs alone, but a maintainer can be allowed to push to it, and
+      // the contributor can have the entry open in another tab. The branch head is on record even
+      // for a draft with no pull request, so the save notices
+      const branch = saveForkDraft(github, {
+        slug: 'second-post',
+        files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+      });
+
+      await cms.open();
+
+      const editor = await openEntry(page, 'Second Post');
+
+      github.commit(
+        { 'content/posts/second-post.md': post('Second Post', 'Edited elsewhere.') },
+        { branch, author: github.colleague },
+      );
+
+      await editor.getByRole('textbox', { name: 'Body' }).fill('Almost there.');
+      await editor.getByRole('button', { name: 'Save' }).click();
+
+      const dialog = page.getByRole('alertdialog', { name: 'Entry Changed by Someone Else' });
+
+      await expect(dialog).toContainText('If you save now, their changes will be lost.');
+      expect(github.readFile('content/posts/second-post.md', branch)).toBe(
+        post('Second Post', 'Edited elsewhere.'),
+      );
+
+      await dialog.getByRole('button', { name: 'Save Anyway' }).click();
+      await page
+        .getByRole('alertdialog', { name: 'Send for Review' })
+        .getByRole('button', { name: 'Later' })
+        .click();
+
+      await expect
+        .poll(() => github.readFile('content/posts/second-post.md', branch))
+        .toBe(post('Second Post', 'Almost there.'));
+    });
+
     test('sends a new entry for review right after saving it', async ({ cms, github, page }) => {
       await cms.open();
       await page.getByRole('button', { name: 'Create New Entry' }).first().click();
@@ -538,6 +581,56 @@ test.describe('as a contributor', () => {
 
       // The pull request is kept, as a draft
       await expect.poll(() => github.pullRequests[0]).toMatchObject({ state: 'open', draft: true });
+    });
+
+    test('ignores a pull request the contributor opened to another branch', async ({
+      cms,
+      github,
+      page,
+    }) => {
+      const branch = saveForkDraft(github, {
+        slug: 'second-post',
+        files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+      });
+
+      github.createBranch('develop', github.head.oid);
+
+      // A pull request the contributor opened from the same fork branch to a branch the CMS doesn’t
+      // manage. It isn’t the entry’s, so the CMS must leave it alone
+      const decoy = github.openPullRequest({
+        title: 'Tidy up the posts',
+        head: branch,
+        base: 'develop',
+        author: github.user,
+      });
+
+      await cms.open();
+
+      // The entry is still a draft, rather than being taken for one in review
+      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+        /Unpublished Entries/,
+        /Second Post.*Draft/,
+        /Published Entries/,
+        /First Post/,
+      ]);
+
+      await openEntry(page, 'Second Post');
+      await cms.chooseMenuItem(
+        page.getByRole('button', { name: /Status: .*Draft/ }),
+        page.getByRole('menuitemradio', { name: 'In Review' }),
+      );
+
+      // Sending the entry for review opens a pull request of its own to the configured branch,
+      // rather than reusing the decoy
+      await expect.poll(() => github.pullRequests).toHaveLength(2);
+      expect(github.pullRequests[1]).toMatchObject({
+        title: 'Create Post “second-post”',
+        head: branch,
+        base: 'main',
+        state: 'open',
+        draft: false,
+      });
+      expect(decoy).toMatchObject({ title: 'Tidy up the posts', state: 'open', draft: false });
     });
 
     test('lists the entries in progress on the fork', async ({ cms, github, page }) => {

@@ -30,6 +30,7 @@ import {
   updateWorkflowStatus,
   upsertUnpublishedEntry,
 } from '$lib/services/workflow/save';
+import { verifyMergeState } from '$lib/services/workflow/verify';
 
 vi.mock('$lib/services/api/events');
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
@@ -45,11 +46,20 @@ vi.mock('$lib/services/backends/git/shared/commits');
 vi.mock('$lib/services/backends/save');
 vi.mock('$lib/services/deployments/resolve');
 vi.mock('$lib/services/workflow/deploy');
+vi.mock('$lib/services/workflow/verify', () => ({ verifyMergeState: vi.fn() }));
 
 const workflowService = {
   fetchPullRequests: vi.fn(),
   savePullRequest: vi.fn(),
   updateStatus: vi.fn(),
+  /** The pull request as read right before the merge. */
+  fetchMergeState: vi.fn(async () => ({
+    headSHA: 'abc',
+    onConfiguredBranches: true,
+    files: [],
+    complete: true,
+  })),
+  fetchUnchangedPaths: vi.fn(),
   publish: vi.fn(),
   discard: vi.fn(),
 };
@@ -292,6 +302,11 @@ describe('workflow/save', () => {
         collectionName: 'pages',
         slug: 'about/ethos',
         savingEntry: { ...savingEntry, slug: 'about/ethos', subPath: 'about/ethos' },
+        originalEntry: /** @type {any} */ ({
+          id: 'p0',
+          slug: 'about/ethos',
+          locales: existing.locales,
+        }),
       });
 
       expect(workflowService.savePullRequest).toHaveBeenCalledWith(
@@ -379,7 +394,11 @@ describe('workflow/save', () => {
         pullRequest: existing.workflow.pullRequest,
       });
 
-      const results = await saveWorkflowChanges(args);
+      // The published version of the entry was opened
+      const results = await saveWorkflowChanges({
+        ...args,
+        originalEntry: /** @type {any} */ ({ id: 'p0', slug: 'hello', locales: existing.locales }),
+      });
 
       expect(workflowService.savePullRequest).toHaveBeenCalledWith(
         expect.objectContaining({ pullRequest: existing.workflow.pullRequest }),
@@ -517,6 +536,35 @@ describe('workflow/save', () => {
       // The entry is listed as on its way to the site, once the branch head has been refreshed
       expect(refreshProductionSHA).toHaveBeenCalledBefore(vi.mocked(trackDeployingEntry));
       expect(trackDeployingEntry).toHaveBeenCalledWith(entry);
+    });
+
+    test('checks the pull request against the entry before anything else happens', async () => {
+      const entry = createEntry('cms/posts/hello', 'pending_publish');
+
+      await publishWorkflowEntry(entry);
+
+      expect(workflowService.fetchMergeState).toHaveBeenCalledWith(entry.workflow.pullRequest);
+      expect(verifyMergeState).toHaveBeenCalledWith(
+        entry,
+        { headSHA: 'abc', onConfiguredBranches: true, files: [], complete: true },
+        workflowService.fetchUnchangedPaths,
+      );
+      expect(verifyMergeState).toHaveBeenCalledBefore(vi.mocked(callEventHooks));
+    });
+
+    test('neither merges nor fires the hooks once the check has refused the publish', async () => {
+      const entry = createEntry('cms/posts/hello', 'pending_publish');
+
+      upsertUnpublishedEntry(entry);
+      vi.mocked(verifyMergeState).mockRejectedValueOnce(new Error('publish_refused'));
+
+      await expect(publishWorkflowEntry(entry)).rejects.toThrow('publish_refused');
+
+      expect(callEventHooks).not.toHaveBeenCalled();
+      expect(workflowService.publish).not.toHaveBeenCalled();
+      // The entry stays where it was, and can be published again
+      expect(unpublishedEntries.current).toEqual([entry]);
+      expect(publishingBranches.current).toEqual([]);
     });
 
     test('records the entry as being published while the merge is in flight', async () => {
@@ -807,6 +855,10 @@ describe('workflow/save', () => {
         'pending_deletion',
       );
 
+      // It carried the head from before the removal was committed, which publishing would take for
+      // someone else’s commit, so it’s pointed at the new one
+      expect(entry.workflow.pullRequest.headSHA).toBe('abc');
+
       // The entry list matches the removal against where the entry sits on the configured branch
       expect(entry.workflow.previousPaths).toEqual(['content/posts/hello.md']);
     });
@@ -815,6 +867,9 @@ describe('workflow/save', () => {
       // A branch created by Netlify/Decap CMS or an earlier version, before slashes were encoded
       const pending = createEntry('cms/pages/about/ethos');
 
+      pending.locales = {
+        _default: { slug: 'about/ethos', path: 'content/pages/about/ethos.md', content: {} },
+      };
       upsertUnpublishedEntry(pending);
 
       const published = createPublishedEntry();

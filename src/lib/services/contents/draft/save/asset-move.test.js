@@ -94,6 +94,38 @@ describe('buildEntryAssetMoveChanges()', () => {
     ]);
   });
 
+  test('leaves out a file another pull request put in the entry’s folder', async () => {
+    const published = createAsset('content/pages/about/our-history/photo.jpg');
+
+    setAssets([
+      // Someone else’s pull request replaced the published photo and added a file of its own
+      {
+        ...createAsset('content/pages/about/our-history/photo.jpg'),
+        sha: 'pending',
+        workflow: { branch: 'cms/pages/other', replacedAsset: published },
+      },
+      {
+        ...createAsset('content/pages/about/our-history/extra.js'),
+        workflow: { branch: 'cms/pages/other' },
+      },
+    ]);
+
+    const { changes } = await buildEntryAssetMoveChanges({
+      collection,
+      originalEntry: createEntry({ _default: 'content/pages/about/our-history/_index.md' }),
+      savingEntry: createEntry({ _default: 'content/pages/guides/our-history/_index.md' }),
+      changes: [],
+    });
+
+    // Only the published version of the photo is moved
+    expect(changes).toEqual([
+      expect.objectContaining({
+        path: 'content/pages/guides/our-history/photo.jpg',
+        previousSha: 'sha-content/pages/about/our-history/photo.jpg',
+      }),
+    ]);
+  });
+
   test('takes the assets of a descendant entry along', async () => {
     setAssets([createAsset('content/pages/about/team/portrait.jpg')]);
 

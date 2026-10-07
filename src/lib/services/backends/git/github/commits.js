@@ -92,8 +92,9 @@ const MAX_GRAPHQL_BLOB_SIZE = 10 * 1024 * 1024;
  * Get the head a commit is expected to go on top of. The caller knows it when it has just created
  * the branch. On the configured branch, it’s the commit the loaded site data reflects, which the
  * caller has just brought up to date: GitHub then refuses the commit if someone else has pushed in
- * the meantime, rather than letting it overwrite their change. A workflow branch is only ever
- * written by its own author, so its head is simply looked up.
+ * the meantime, rather than letting it overwrite their change. On a workflow branch, the caller
+ * passes the head the entry was loaded or saved at when there is one, for the same reason;
+ * otherwise the head is looked up.
  * @param {CommitOptions} options Commit options.
  * @returns {Promise<string>} Commit SHA.
  */

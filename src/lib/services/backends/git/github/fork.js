@@ -205,7 +205,13 @@ export const fetchForkByName = async () => {
   const result = await response.json();
   const parent = result.parent?.full_name?.toLowerCase();
 
-  if (!result.fork || parent !== `${owner}/${repo}`.toLowerCase()) {
+  // GitHub redirects a repository that has been transferred, so check that the fork found is still
+  // the user’s own, the way {@link fetchForkFromNetwork} does
+  if (
+    !result.fork ||
+    parent !== `${owner}/${repo}`.toLowerCase() ||
+    result.owner?.login?.toLowerCase() !== userName.toLowerCase()
+  ) {
     return undefined;
   }
 

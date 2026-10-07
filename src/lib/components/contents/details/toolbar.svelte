@@ -419,6 +419,7 @@
 
       const savedEntry = await saveEntry({ draft, skipCI, overwrite });
       const savedDraft = /** @type {UnpublishedEntry} */ (savedEntry);
+      let statusChangeFailed = false;
 
       // Saving with Editorial Workflow leaves the entry as a draft, which nothing on screen says:
       // it hasn’t been handed to anyone yet, and the status menu that would do it is easy to miss.
@@ -436,12 +437,9 @@
         } catch (/** @type {any} */ ex) {
           showErrorDialog = true;
           errorMessage = _('workflow.status_change_failed');
+          statusChangeFailed = true;
           // eslint-disable-next-line no-console
           console.error(ex);
-
-          // The entry itself is saved, so leave the editor open rather than navigating away from a
-          // failure the user may want to retry from the status menu
-          return;
         }
       }
 
@@ -458,11 +456,15 @@
         );
       }
 
-      if (prefs.closeOnSave ?? true) {
+      // The entry itself is saved, so a failed status change leaves the editor open rather than
+      // navigating away from something the user may want to retry from the status menu
+      if ((prefs.closeOnSave ?? true) && !statusChangeFailed) {
         _goBack();
         entryDraft.current = null;
       } else {
-        // Reset the draft
+        // Reset the draft. The next save compares the draft’s original entry with the branch, so
+        // leaving the pre-save one in place would report the save that just landed as someone
+        // else’s change to the entry
         createDraft({
           entryDraft,
           collection,

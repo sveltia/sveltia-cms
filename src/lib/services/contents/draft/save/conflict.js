@@ -49,8 +49,8 @@ export const compareWithStore = (originalEntry) => {
  * Find out whether saving the draft would overwrite someone else’s change: the repository is
  * checked for commits made since the site data was loaded, and the entry the draft was made from is
  * then compared with the entry as it is now. The check is only about an existing entry on the
- * configured branch; a new entry has nothing to overwrite, and an Editorial Workflow draft is saved
- * to its own branch.
+ * configured branch; a new entry has nothing to overwrite, and an Editorial Workflow draft is
+ * compared with the branch it lives on by {@link detectWorkflowConflict} instead.
  *
  * If the repository can’t be reached, the comparison is still made against what’s known, and the
  * commit that follows is left to fail on its own if the backend is really down.

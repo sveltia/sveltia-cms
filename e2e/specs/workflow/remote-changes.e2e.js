@@ -81,40 +81,50 @@ test('refuses to publish an entry a colleague has changed since', async ({ cms, 
   await expect(page.getByRole('button', { name: 'Publish Entry' })).toBeEnabled();
 });
 
-test('overwrites a colleague’s commit to the workflow branch (known issue)', async ({
+test('warns before saving over a colleague’s commit to the workflow branch', async ({
   cms,
   github,
   page,
 }) => {
-  // Changes made to the pull request on GitHub go unnoticed: the remote check only looks at the
-  // configured branch, and a save to a workflow branch goes on top of whatever the branch holds.
-  // Once fixed, the editor should offer to reload the entry, like it does for a published one, or
-  // warn before saving, and this test should check that instead
+  // An entry’s branch is named after the entry, not the editor, so a colleague working on the same
+  // entry writes to it too. The save compares the branch head with the one it last committed and
+  // reads the entry back when they differ
   openEntryPullRequest(github, {
     slug: 'first-post',
     files: { 'content/posts/first-post.md': post('First Post', 'Hello from Mona!') },
   });
 
-  await page.clock.install();
   await cms.open();
 
   const editor = await openEntry(page, 'First Post');
 
   github.commit(
     { 'content/posts/first-post.md': post('First Post', 'Hello from Alex!') },
-    { branch: 'cms/posts/first-post' },
+    { branch: 'cms/posts/first-post', author: github.colleague },
   );
-  await page.clock.fastForward('01:01');
-  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-  await expect(editor.getByRole('alert')).toHaveCount(0);
 
   await editor.getByRole('textbox', { name: 'Body' }).fill('Hello again from Mona!');
   await editor.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByRole('alertdialog', { name: 'Send for Review' })).toBeVisible();
 
+  const dialog = page.getByRole('alertdialog', { name: 'Entry Changed by Someone Else' });
+
+  await expect(dialog).toContainText('changed this entry on');
+  await expect(dialog).toContainText('If you save now, their changes will be lost.');
+  // Nothing is written while the question is open
   expect(github.readFile('content/posts/first-post.md', 'cms/posts/first-post')).toBe(
-    post('First Post', 'Hello again from Mona!'),
+    post('First Post', 'Hello from Alex!'),
   );
+
+  // The editor can still go ahead, which is what the warning is for
+  await dialog.getByRole('button', { name: 'Save Anyway' }).click();
+  await page
+    .getByRole('alertdialog', { name: 'Send for Review' })
+    .getByRole('button', { name: 'Later' })
+    .click();
+
+  await expect
+    .poll(() => github.readFile('content/posts/first-post.md', 'cms/posts/first-post'))
+    .toBe(post('First Post', 'Hello again from Mona!'));
 });
 
 test('shows GitHub’s error when the workflow branch moves during a save (known issue)', async ({

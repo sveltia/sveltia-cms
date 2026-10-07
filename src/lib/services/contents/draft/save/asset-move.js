@@ -2,6 +2,7 @@ import { getAssetFolder } from '$lib/services/assets/folders';
 import { getAssetBlob } from '$lib/services/assets/info';
 import { allAssets } from '$lib/services/assets/state';
 import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
+import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
 /**
  * @import { Asset, Entry, FileChange, InternalCollection } from '$lib/types/private';
@@ -83,7 +84,12 @@ export const buildEntryAssetMoveChanges = async ({
   }
 
   const takenPaths = new Set(changes.map(({ path }) => path));
-  const assets = allAssets.current;
+
+  // Only the versions of the assets this entry has: another pull request’s file isn’t moved along
+  const assets = /** @type {Asset[]} */ (
+    allAssets.current.map((asset) => getEntryAssetVersion(asset, originalEntry)).filter(Boolean)
+  );
+
   /** @type {FileChange[]} */
   const moveChanges = [];
   /** @type {Asset[]} */

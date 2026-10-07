@@ -1645,6 +1645,20 @@ describe('getEntryRelativeAssets', () => {
     );
   });
 
+  test('leaves out a file another pull request put at the same path', () => {
+    mockGetAssetFolder.mockReturnValue({ collectionName: 'posts', entryRelative: true });
+
+    // Someone else’s pull request replaced the published file, or added one of its own
+    mockGetAssetByPath.mockReturnValue({
+      ...asset,
+      workflow: { branch: 'cms/posts/other', replacedAsset: asset },
+    });
+    expect(getEntryRelativeAssets({ entry, collectionName: 'posts' })).toEqual([asset]);
+
+    mockGetAssetByPath.mockReturnValue({ ...asset, workflow: { branch: 'cms/posts/other' } });
+    expect(getEntryRelativeAssets({ entry, collectionName: 'posts' })).toEqual([]);
+  });
+
   test('passes the collection file name on', () => {
     mockGetAssetFolder.mockReturnValue(undefined);
 

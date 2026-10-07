@@ -9,6 +9,7 @@ import {
   getAssetLibraryFolderMap,
   getDefaultAssetFolder,
 } from '$lib/services/contents/fields/file/helpers';
+import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
 /**
  * @import {
@@ -72,7 +73,11 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
    * to copy.
    */
   const copyAsset = async ({ value, folder, typedKeyPath }) => {
-    const asset = getAssetByPath({ value, entry, collectionName, fileName, typedKeyPath });
+    // Only the version the source entry has: another pull request’s file isn’t copied along
+    const asset = getEntryAssetVersion(
+      getAssetByPath({ value, entry, collectionName, fileName, typedKeyPath }),
+      entry,
+    );
 
     if (!asset) {
       return undefined;

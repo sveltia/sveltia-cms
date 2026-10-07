@@ -2064,6 +2064,17 @@ workflow:
   entry_deleted: エントリーを削除しました。
   # Error notification when publishing fails
   publishing_entry_failed: エントリーを公開できませんでした。再度お試しください。
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: このエントリーには CMS で表示できない他の変更が含まれているため、ここでは公開できません。開発者にレビューを依頼してください。
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: エントリーを開いた後に変更が加えられました。ページを再読み込みして最新の内容を確認してから公開してください。
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: このエントリーには CMS の外で別のリクエスト ({$number}) が既に作成されています。先に開発者にそのリクエストを閉じてもらってください。
   # Workflow page: empty column message
   no_entries: エントリーはありません。
   # Workflow page: aria-label for a draggable entry card
