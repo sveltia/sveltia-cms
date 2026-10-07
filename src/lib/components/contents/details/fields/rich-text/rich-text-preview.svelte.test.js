@@ -141,6 +141,15 @@ describe('RichTextPreview', () => {
     expect(preview).toMatchTextContent(/:::greeting World/);
   });
 
+  test('takes the HTML format from the field defaults', async () => {
+    cmsConfig.current = /** @type {any} */ ({ field_defaults: { richtext: { format: 'html' } } });
+
+    const preview = await renderPreview('<p>Some *literal* text</p>\n\n# Not a heading');
+
+    await expect.poll(() => preview.querySelector('p')?.textContent).toBe('Some *literal* text');
+    expect(preview.querySelector('h1')).toBeNull();
+  });
+
   test('follows a change to an HTML value', async () => {
     const { preview, props } = await renderPreviewWithProps('<p>Hello</p>', { format: 'html' });
 

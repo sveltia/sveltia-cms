@@ -1,3 +1,5 @@
+import { cmsConfig } from '$lib/services/config';
+
 /**
  * @import { TextEditorBlockType, TextEditorInlineType, TextEditorMode } from '@sveltia/ui';
  * @import {
@@ -83,10 +85,18 @@ export const BUTTON_NAME_MAP = {
 export const BUILTIN_COMPONENTS = ['code-block', 'image'];
 
 /**
- * Get the format of the given field’s value. Only the RichText field type supports the `format`
- * option, as the Markdown field type, its alias, always holds Markdown.
+ * Get the format of the given field’s value, falling back to the `field_defaults.richtext` option.
+ * Only the RichText field type supports the `format` option, as the Markdown field type, its alias,
+ * always holds Markdown.
  * @param {MarkdownField | RichTextField} fieldConfig Field configuration.
  * @returns {RichTextValueFormat} Format.
  */
-export const getValueFormat = (fieldConfig) =>
-  fieldConfig.widget === 'richtext' && fieldConfig.format === 'html' ? 'html' : 'markdown';
+export const getValueFormat = (fieldConfig) => {
+  if (fieldConfig.widget !== 'richtext') {
+    return 'markdown';
+  }
+
+  const { format = cmsConfig.current?.field_defaults?.richtext?.format } = fieldConfig;
+
+  return format === 'html' ? 'html' : 'markdown';
+};

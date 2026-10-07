@@ -966,9 +966,8 @@
  */
 
 /**
- * RichText field properties.
- * @typedef {object} RichTextFieldProps
- * @property {'richtext'} widget Field type.
+ * RichText field properties for the value format, which the Markdown field type doesn’t support.
+ * @typedef {object} RichTextFieldFormatProps
  * @property {RichTextValueFormat} [format] Format of the field value: `markdown` or `html`.
  * Default: `markdown`. With `html`, the value is saved as HTML, and the raw mode shows the HTML
  * source. Editor components, including the built-in `image` component, are not available in the
@@ -976,12 +975,25 @@
  * button in Sveltia CMS, is still available. HTML with an element the rich text mode cannot handle,
  * like `<img>`, can only be edited in the raw mode. Attributes the editor doesn’t use, like
  * `class`, are dropped once the content is changed in the rich text mode.
+ * @see https://sveltiacms.app/en/docs/fields/richtext
+ */
+
+/**
+ * RichText field properties.
+ * @typedef {object} RichTextFieldProps
+ * @property {'richtext'} widget Field type.
  */
 
 /**
  * RichText field definition.
  * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & RichTextFieldBaseProps &
- * RichTextFieldProps} RichTextField
+ * RichTextFieldFormatProps & RichTextFieldProps} RichTextField
+ */
+
+/**
+ * Default options for the RichText and Markdown field types. The `format` option only applies to
+ * the RichText field type, as the Markdown field type always holds Markdown.
+ * @typedef {RichTextFieldBaseProps & RichTextFieldFormatProps} RichTextFieldDefaults
  */
 
 /**
@@ -2135,7 +2147,7 @@
  * Default options for fields. These options will be applied to all fields of the specified type
  * unless they are overridden by field-specific options.
  * @typedef {object} FieldDefaults
- * @property {RichTextFieldBaseProps} [richtext] Default options for the RichText and Markdown
+ * @property {RichTextFieldDefaults} [richtext] Default options for the RichText and Markdown
  * field types.
  */
 
