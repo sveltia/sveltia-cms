@@ -73,10 +73,15 @@ describe('Anthropic Translator Service', () => {
         'invalid-key',
         '',
         'sk-ant-api03-short',
+        `sk-ant-${'a'.repeat(80)}`,
         'ak-ant-api03-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_abcdefghijklmnopqrstuvwx',
       ];
 
       expect(anthropicTranslator.apiKeyPattern.test(validApiKey)).toBe(true);
+      // A key created by a user in the Claude Console (#1048)
+      expect(anthropicTranslator.apiKeyPattern.test(`sk-ant-usr-${'aB3_-x'.repeat(10)}`)).toBe(
+        true,
+      );
 
       invalidApiKeys.forEach((key) => {
         expect(anthropicTranslator.apiKeyPattern.test(key)).toBe(false);
