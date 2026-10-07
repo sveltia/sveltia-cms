@@ -2,20 +2,16 @@ import { sleep } from '@sveltia/utils/misc';
 
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
-import { getWorkflowRepository } from '$lib/services/backends/git/gitlab/fork';
 import {
   createPullRequest,
   deleteBranch,
   DRAFT_TITLE_PREFIX,
+  fetchBranchHead,
   fetchPullRequests as fetchLabelledPullRequests,
   fetchMergeRequest,
   fetchOpenMergeRequests,
 } from '$lib/services/backends/git/gitlab/merge-requests';
-import {
-  getBranchPath,
-  getProjectId,
-  repository,
-} from '$lib/services/backends/git/gitlab/repository';
+import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import {
   fetchForkPullRequests,
   updateForkStatus,
@@ -129,32 +125,6 @@ const commitToNewBranch = async (changes, options) => {
   await deleteBranch(branch);
 
   return commitChanges(changes, { ...options, startBranch });
-};
-
-/**
- * Fetch the commit the given workflow branch points at. Two editors working on the same entry
- * share its branch, so this is how a save finds out that someone else has committed to it since
- * the draft was opened. The branch is looked up in the project it lives in, which is the
- * contributor’s fork with Open Authoring.
- * @param {string} branch Branch name.
- * @returns {Promise<string | undefined>} Git object ID, or `undefined` if the branch is gone,
- * which is what a merged or closed merge request leaves behind.
- * @see https://docs.gitlab.com/api/branches/#get-single-repository-branch
- */
-export const fetchBranchHead = async (branch) => {
-  try {
-    const { commit } = /** @type {{ commit?: { id?: string } }} */ (
-      await fetchAPI(getBranchPath(branch, getWorkflowRepository()))
-    );
-
-    return commit?.id;
-  } catch (/** @type {any} */ ex) {
-    if (ex.cause?.status === 404) {
-      return undefined;
-    }
-
-    throw ex;
-  }
 };
 
 /**

@@ -4,6 +4,7 @@ import { fetchBlobText } from '$lib/services/backends/git/github/files';
 import {
   createPullRequest,
   deleteBranch,
+  fetchBranchHead,
   fetchPullRequestFileList,
   fetchPullRequestFiles,
   reopenPullRequest,
@@ -249,6 +250,30 @@ describe('GitHub pull request helpers', () => {
       expect(pullRequests[2].files[49]).toEqual(
         expect.objectContaining({ sha: 'sha149', text: 'text 149', deleted: false }),
       );
+    });
+  });
+
+  describe('fetchBranchHead', () => {
+    test('reads the commit the branch points at', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: { branchHead: { target: { oid: 'abc123' } } },
+      });
+
+      await expect(fetchBranchHead('cms/posts/hello')).resolves.toBe('abc123');
+
+      // The ref is asked for by its qualified name, so a tag of the same name isn’t picked up
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('branchHead: ref('), {
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'refs/heads/cms/posts/hello',
+      });
+    });
+
+    test('answers undefined for a branch that is gone', async () => {
+      // A pull request merged or closed outside the CMS leaves no branch behind
+      vi.mocked(fetchGraphQL).mockResolvedValue({ repository: { branchHead: null } });
+
+      await expect(fetchBranchHead('cms/posts/hello')).resolves.toBeUndefined();
     });
   });
 

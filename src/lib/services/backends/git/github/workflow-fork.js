@@ -3,6 +3,7 @@ import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import {
   createPullRequest,
   deleteBranch,
+  fetchBranchHead,
   fetchPullRequestFileList,
   fetchPullRequestFiles,
   MAX_ITEMS,
@@ -14,7 +15,7 @@ import {
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { checkStatusAllowed } from '$lib/services/backends/git/shared/fork';
+import { checkMergedBranch, checkStatusAllowed } from '$lib/services/backends/git/shared/fork';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
 import { getBranchPrefix } from '$lib/services/workflow/branch';
@@ -327,6 +328,7 @@ const FETCH_PULL_REQUEST_STATE_QUERY = `
         state
         isDraft
         baseRefName
+        headRefOid
         headRepositoryOwner {
           login
         }
@@ -347,7 +349,8 @@ const FETCH_PULL_REQUEST_STATE_QUERY = `
  * @param {WorkflowStatus} status New status.
  * @returns {Promise<WorkflowPullRequest>} Updated pull request, or a new one if the known one is no
  * longer the entry’s.
- * @throws {Error} When the entry is being marked ready to publish, which a contributor can’t do.
+ * @throws {Error} When the entry is being marked ready to publish, which a contributor can’t do, or
+ * has been published since the board was loaded: see {@link checkMergedBranch}.
  */
 export const updateForkStatus = async (pullRequest, status) => {
   checkStatusAllowed(status);
@@ -368,17 +371,23 @@ export const updateForkStatus = async (pullRequest, status) => {
     await fetchGraphQL(FETCH_PULL_REQUEST_STATE_QUERY, { id: nodeId })
   );
 
-  // It may also have been merged, or aimed at another branch, since the board was loaded. Either
-  // way it’s no longer the entry’s review, which is how the next load would see it too: reopening
-  // or taking it out of draft would put a request for that other branch in front of the
-  // maintainers, or claim a merged one is in review. So the entry carries on without it. GitHub
+  const isEntryRequest =
+    !!node && node.baseRefName === repository.branch && isForkPullRequest(node);
+
+  // It may have been merged into the configured branch since the board was loaded. With nothing
+  // committed to the branch since, the entry is published and has nothing left to review
+  if (isEntryRequest && node.state === 'MERGED') {
+    await checkMergedBranch({ branch, mergedSHA: node.headRefOid, fetchBranchHead, deleteBranch });
+  }
+
+  // Otherwise a merged pull request, or one aimed at another branch since the board was loaded, is
+  // no longer the entry’s review, which is how the next load would see it too: reopening or taking
+  // it out of draft would put a request for that other branch in front of the maintainers, or
+  // claim a merged one is in review. So the entry carries on without it, as a fresh draft. GitHub
   // allows one open pull request per head and base, so one aimed elsewhere doesn’t stand in the way
   // of a new one to the configured branch
   // @see https://github.com/sveltia/sveltia-cms/security/advisories/GHSA-8h97-74c4-g246
-  if (
-    node &&
-    (node.state === 'MERGED' || node.baseRefName !== repository.branch || !isForkPullRequest(node))
-  ) {
+  if (node && (node.state === 'MERGED' || !isEntryRequest)) {
     return updateForkStatus(
       { ...pullRequest, number: undefined, nodeId: undefined, url: undefined },
       status,

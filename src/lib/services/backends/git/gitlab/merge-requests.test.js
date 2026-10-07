@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   createPullRequest,
   deleteBranch,
+  fetchBranchHead,
   fetchMergeRequestFileContents,
   fetchMergeRequestFileList,
   fetchOpenMergeRequests,
@@ -467,6 +468,48 @@ describe('GitLab merge requests', () => {
 
       expect(mergeRequest.canMerge).toBeUndefined();
       expect(mergeRequest.files[0].text).toBe('# Hello');
+    });
+  });
+
+  describe('fetchBranchHead', () => {
+    test('reads the commit the branch points at', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({ commit: { id: 'abc123' } });
+
+      await expect(fetchBranchHead('cms/posts/hello')).resolves.toBe('abc123');
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`,
+      );
+    });
+
+    test('reads an Open Authoring branch from the fork it lives in', async () => {
+      forkedRepository.current = /** @type {any} */ ({ owner: 'contributor', repo: 'project' });
+      vi.mocked(fetchAPI).mockResolvedValue({ commit: { id: 'abc123' } });
+
+      const branch = 'cms/contributor/project/posts/hello';
+
+      await expect(fetchBranchHead(branch)).resolves.toBe('abc123');
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        `/projects/contributor%2Fproject/repository/branches/${encodeURIComponent(branch)}`,
+      );
+    });
+
+    test('answers undefined for a branch that is gone', async () => {
+      // A merge request merged or closed outside the CMS leaves no branch behind
+      vi.mocked(fetchAPI).mockRejectedValue(
+        new Error('Server responded with an error', { cause: { status: 404 } }),
+      );
+
+      await expect(fetchBranchHead('cms/posts/hello')).resolves.toBeUndefined();
+    });
+
+    test('raises any other failure, rather than taking the branch for gone', async () => {
+      vi.mocked(fetchAPI).mockRejectedValue(
+        new Error('Server responded with an error', { cause: { status: 500 } }),
+      );
+
+      await expect(fetchBranchHead('cms/posts/hello')).rejects.toThrow();
     });
   });
 

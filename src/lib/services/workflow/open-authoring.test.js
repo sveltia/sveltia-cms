@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import {
+  ENTRY_ALREADY_PUBLISHED,
   forkedRepository,
   forkPermissionRequest,
   getForkPath,
   getForkURL,
+  isEntryAlreadyPublished,
   openAuthoring,
   requestForkPermission,
   workflowStages,
@@ -36,6 +38,14 @@ describe('workflow/open-authoring', () => {
     test('leaves out the publishing stage for a contributor', () => {
       forkedRepository.current = { owner: 'contributor', repo: 'repo' };
       expect(workflowStages.current).toEqual(['draft', 'pending_review']);
+    });
+  });
+
+  describe('isEntryAlreadyPublished', () => {
+    test('tells the error that says an entry has been published', () => {
+      expect(isEntryAlreadyPublished(new Error(ENTRY_ALREADY_PUBLISHED))).toBe(true);
+      expect(isEntryAlreadyPublished(new Error('Failed'))).toBe(false);
+      expect(isEntryAlreadyPublished(undefined)).toBe(false);
     });
   });
 

@@ -328,6 +328,32 @@ export const fetchPullRequests = async () => {
 };
 
 /**
+ * Fetch the commit the given workflow branch points at. Two editors working on the same entry
+ * share its branch, so this is how a save finds out that someone else has committed to it since
+ * the draft was opened. The branch is looked up in the project it lives in, which is the
+ * contributor’s fork with Open Authoring.
+ * @param {string} branch Branch name.
+ * @returns {Promise<string | undefined>} Git object ID, or `undefined` if the branch is gone,
+ * which is what a merged or closed merge request leaves behind.
+ * @see https://docs.gitlab.com/api/branches/#get-single-repository-branch
+ */
+export const fetchBranchHead = async (branch) => {
+  try {
+    const { commit } = /** @type {{ commit?: { id?: string } }} */ (
+      await fetchAPI(getBranchPath(branch, getWorkflowRepository()))
+    );
+
+    return commit?.id;
+  } catch (/** @type {any} */ ex) {
+    if (ex.cause?.status === 404) {
+      return undefined;
+    }
+
+    throw ex;
+  }
+};
+
+/**
  * Delete the given branch. Failures are ignored, as the branch may already have been deleted when
  * the merge request was merged.
  * @param {string} branch Branch name.

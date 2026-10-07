@@ -29,7 +29,7 @@ import {
 } from '$lib/services/workflow/assets';
 import { getBranchName } from '$lib/services/workflow/branch';
 import { trackDeployingEntry } from '$lib/services/workflow/deploy';
-import { openAuthoring } from '$lib/services/workflow/open-authoring';
+import { isEntryAlreadyPublished, openAuthoring } from '$lib/services/workflow/open-authoring';
 import { verifyMergeState } from '$lib/services/workflow/verify';
 
 /**
@@ -184,6 +184,31 @@ const clearUnpublishedEntry = (pullRequest, settleAssets) => {
 };
 
 /**
+ * Move the given entry, whose pull request has been merged, from the unpublished entry list to the
+ * regular entry list, along with its assets.
+ * @param {UnpublishedEntry} entry Unpublished entry.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.deletion] Whether the merge was a removal, which takes the entry off
+ * the configured branch rather than putting a new version on it.
+ * @param {Map<string, Entry>} [options.cascadedEntries] Entries the removal rewrote, keyed by ID,
+ * to replace in the store.
+ */
+const settlePublishedEntry = (entry, { deletion = false, cascadedEntries = new Map() } = {}) => {
+  const { workflow, ...publishedEntry } = entry;
+  // Include the pre-rename paths, so the entry that the pull request renamed is replaced rather
+  // than left behind as a duplicate
+  const paths = new Set(getEntryPaths(entry, { includePrevious: true }));
+
+  const remaining = allEntries.current
+    .filter((e) => !Object.values(e.locales).some(({ path }) => paths.has(path)))
+    .map((e) => cascadedEntries.get(e.id) ?? e);
+
+  allEntries.current = deletion ? remaining : [...remaining, publishedEntry];
+
+  clearUnpublishedEntry(workflow.pullRequest, publishWorkflowAssets);
+};
+
+/**
  * Save the given entry changes as a pull request instead of committing them directly to the
  * configured branch. The pull request and the workflow branch are created on the first save, and
  * updated on subsequent saves.
@@ -299,8 +324,15 @@ export const updateWorkflowStatus = async (entry, status) => {
 
   try {
     newPullRequest = await workflow.updateStatus(pullRequest, status);
-  } catch (ex) {
-    upsertUnpublishedEntry(entry);
+  } catch (/** @type {any} */ ex) {
+    // A maintainer has merged the entry’s pull request since the board was loaded, and the branch
+    // held nothing more, so the entry is published: it leaves the board for the entry list, the
+    // way it does once published from the CMS. Anything else puts the entry back as it was
+    if (isEntryAlreadyPublished(ex)) {
+      settlePublishedEntry(entry);
+    } else {
+      upsertUnpublishedEntry(entry);
+    }
 
     throw ex;
   }
@@ -354,11 +386,6 @@ const mergeWorkflowEntry = async (entry) => {
 
   await workflow.publish(pullRequest);
 
-  const { workflow: _workflow, ...publishedEntry } = entry;
-  // Include the pre-rename paths, so the entry that the pull request renamed is replaced rather
-  // than left behind as a duplicate
-  const paths = new Set(getEntryPaths(entry, { includePrevious: true }));
-
   // A removal also rewrote the entries referencing the deleted one, so the store is brought up to
   // date with those as well, or they would show the stale references until the next reload. The
   // references are worked out again rather than remembered from when the pull request was opened,
@@ -375,15 +402,7 @@ const mergeWorkflowEntry = async (entry) => {
       : [],
   );
 
-  const remaining = allEntries.current
-    .filter((e) => !Object.values(e.locales).some(({ path }) => paths.has(path)))
-    .map((e) => cascadedEntries.get(e.id) ?? e);
-
-  // Publishing a removal takes the entry off the configured branch rather than putting a new
-  // version on it
-  allEntries.current = deletion ? remaining : [...remaining, publishedEntry];
-
-  clearUnpublishedEntry(pullRequest, publishWorkflowAssets);
+  settlePublishedEntry(entry, { deletion, cascadedEntries });
   // The merge put a new commit on the configured branch, so the production build to watch is a
   // different one now. The entry is listed as on its way until that build is done, so the head has
   // to be known before it’s recorded

@@ -6,7 +6,6 @@ import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
 import { fetchPullRequests as fetchLabelledPullRequests } from '$lib/services/backends/git/gitlab/merge-requests';
 import gitlabWorkflow, {
   discard,
-  fetchBranchHead,
   fetchMergeState,
   fetchPullRequests,
   fetchUnchangedPaths,
@@ -346,48 +345,6 @@ describe('GitLab Editorial Workflow service', () => {
 
       expect(removeLabels).toContain('decap-cms/draft');
       expect(removeLabels).toContain('netlify-cms/draft');
-    });
-  });
-
-  describe('fetchBranchHead', () => {
-    test('reads the commit the branch points at', async () => {
-      vi.mocked(fetchAPI).mockResolvedValue({ commit: { id: 'abc123' } });
-
-      await expect(fetchBranchHead('cms/posts/hello')).resolves.toBe('abc123');
-
-      expect(fetchAPI).toHaveBeenCalledWith(
-        `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`,
-      );
-    });
-
-    test('reads an Open Authoring branch from the fork it lives in', async () => {
-      signInAs(FORK);
-      vi.mocked(fetchAPI).mockResolvedValue({ commit: { id: 'abc123' } });
-
-      const branch = `${FORK_PREFIX}posts/hello`;
-
-      await expect(fetchBranchHead(branch)).resolves.toBe('abc123');
-
-      expect(fetchAPI).toHaveBeenCalledWith(
-        `/projects/${FORK_ID}/repository/branches/${encodeURIComponent(branch)}`,
-      );
-    });
-
-    test('answers undefined for a branch that is gone', async () => {
-      // A merge request merged or closed outside the CMS leaves no branch behind
-      vi.mocked(fetchAPI).mockRejectedValue(
-        new Error('Server responded with an error', { cause: { status: 404 } }),
-      );
-
-      await expect(fetchBranchHead('cms/posts/hello')).resolves.toBeUndefined();
-    });
-
-    test('raises any other failure, rather than taking the branch for gone', async () => {
-      vi.mocked(fetchAPI).mockRejectedValue(
-        new Error('Server responded with an error', { cause: { status: 500 } }),
-      );
-
-      await expect(fetchBranchHead('cms/posts/hello')).rejects.toThrow();
     });
   });
 

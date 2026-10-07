@@ -9,6 +9,7 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { env } from '$lib/services/user/env.svelte';
   import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
+  import { handleEntryAlreadyPublished } from '$lib/services/workflow/editor';
   import { workflowStages } from '$lib/services/workflow/open-authoring';
   import { updateWorkflowStatus } from '$lib/services/workflow/save';
   import { canMoveToStatus } from '$lib/services/workflow/validate';
@@ -66,13 +67,22 @@
 
     updating = true;
 
+    // Read these up front: an entry that turns out to have been published leaves
+    // `unpublishedEntries`, and the `entry` prop is derived from that store
+    const { collectionName, pullRequest } = entry.workflow;
+
     try {
       await updateWorkflowStatus(entry, newStatus);
     } catch (/** @type {any} */ ex) {
-      errorMessage = getWorkflowErrorMessage(ex, 'workflow.status_change_failed');
-      showErrorToast = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
+      // An entry published since it was opened closes the editor instead
+      if (
+        !handleEntryAlreadyPublished(ex, { entryDraft, branch: pullRequest.branch, collectionName })
+      ) {
+        errorMessage = getWorkflowErrorMessage(ex, 'workflow.status_change_failed');
+        showErrorToast = true;
+        // eslint-disable-next-line no-console
+        console.error(ex);
+      }
     } finally {
       updating = false;
     }

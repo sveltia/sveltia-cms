@@ -53,5 +53,14 @@ describe('ContentUpdatesToast', () => {
       .element(page.getByRole('status'))
       .toHaveTextContent('check_circle Success Deletion cancelled.');
     await waitForToastsToHide();
-  }, 40000);
+
+    // An Open Authoring entry found published when its status was changed in the editor
+    contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, alreadyPublished: true };
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'error Error A maintainer has already published this entry, so there’s nothing left to review.',
+      );
+    await waitForToastsToHide();
+  }, 50000);
 });

@@ -44,6 +44,7 @@ vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 vi.mock('$lib/services/user/account.svelte', () => ({ user: { account: { id: 7 } } }));
 vi.mock('$lib/services/workflow/open-authoring', () => ({
+  ENTRY_ALREADY_PUBLISHED: 'entry_already_published',
   forkedRepository: { current: undefined },
 }));
 
@@ -678,13 +679,116 @@ describe('GitLab Open Authoring workflow', () => {
       expect(result.number).toBe(5);
     });
 
+    /** REST API path of the entry’s branch in the fork. */
+    const FORK_BRANCH_PATH = `/projects/${FORK_ID}/repository/branches/${FORK_BRANCH_ID}`;
+
+    /**
+     * Answer the merge request lookup with one merged at `head1`, the branch lookup with the given
+     * commit, and the creation of a merge request with a new one.
+     * @param {string | undefined} head Commit the branch points at, `undefined` if it’s gone.
+     * @param {object} [overrides] Properties to override on the merge request.
+     */
+    const mockMergedMergeRequest = (head, overrides = {}) => {
+      vi.mocked(fetchAPI).mockImplementation(async (path, options) => {
+        if (path === FORK_BRANCH_PATH) {
+          if (options?.method === 'DELETE') {
+            return '';
+          }
+
+          if (!head) {
+            throw createAPIError(404);
+          }
+
+          return createBranch({ commit: { id: head } });
+        }
+
+        return options?.method === 'POST'
+          ? createdMergeRequest
+          : createForkItem({ state: 'merged', draft: false, sha: 'head1', ...overrides });
+      });
+    };
+
+    test('opens a new merge request when the known one was merged and edited since', async () => {
+      // The contributor committed to the branch after the merge, which makes the entry a fresh
+      // draft
+      mockMergedMergeRequest('head2');
+
+      const result = await updateForkStatus(pullRequest, 'pending_review');
+
+      expect(fetchAPI).toHaveBeenCalledWith(FORK_BRANCH_PATH);
+      expect(fetchAPI).toHaveBeenLastCalledWith(
+        `/projects/${FORK_ID}/merge_requests`,
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.number).toBe(5);
+    });
+
+    test('reports an entry merged since as published, rather than opening an empty request', async () => {
+      // The branch still points at the commit the merge request was merged at, so it holds nothing
+      // that isn’t on the configured branch already
+      mockMergedMergeRequest('head1');
+
+      await expect(updateForkStatus(pullRequest, 'pending_review')).rejects.toThrow(
+        'entry_already_published',
+      );
+
+      // The leftover branch is deleted from the fork, the way the next load would
+      expect(fetchAPI).toHaveBeenLastCalledWith(
+        FORK_BRANCH_PATH,
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+      expect(fetchAPI).not.toHaveBeenCalledWith(
+        `/projects/${FORK_ID}/merge_requests`,
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+
+    test('reports an entry merged since as published when it goes back to draft', async () => {
+      mockMergedMergeRequest('head1');
+
+      await expect(
+        updateForkStatus({ ...pullRequest, status: 'pending_review' }, 'draft'),
+      ).rejects.toThrow('entry_already_published');
+    });
+
+    test('reports an entry as published when its branch went with the merge', async () => {
+      mockMergedMergeRequest(undefined);
+
+      await expect(updateForkStatus(pullRequest, 'pending_review')).rejects.toThrow(
+        'entry_already_published',
+      );
+
+      // Nothing is left to delete, nor to open a merge request from
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
+      expect(fetchAPI).not.toHaveBeenCalledWith(
+        FORK_BRANCH_PATH,
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+    });
+
+    test('opens a new merge request when the known one was merged into another branch', async () => {
+      // Retargeted and merged elsewhere: nothing of the entry reached the configured branch, so the
+      // branch is kept, the way the load would keep it
+      mockMergedMergeRequest('head1', { target_branch: 'develop' });
+
+      const result = await updateForkStatus(pullRequest, 'pending_review');
+
+      expect(fetchAPI).not.toHaveBeenCalledWith(FORK_BRANCH_PATH);
+      expect(fetchAPI).toHaveBeenLastCalledWith(
+        `/projects/${FORK_ID}/merge_requests`,
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.number).toBe(5);
+    });
+
     test('lets go of a merged merge request when the entry goes back to draft', async () => {
-      vi.mocked(fetchAPI).mockResolvedValue(createForkItem({ state: 'merged', draft: false }));
+      // Edited again since the merge, so the branch has moved on from it
+      mockMergedMergeRequest('head2');
 
       const result = await updateForkStatus({ ...pullRequest, status: 'pending_review' }, 'draft');
 
       // A merged merge request can’t be marked a draft, nor does it say anything about the entry
-      expect(fetchAPI).toHaveBeenCalledTimes(1);
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
       expect(result).toMatchObject({ number: undefined, nodeId: undefined, status: 'draft' });
     });
 

@@ -2,6 +2,7 @@ import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  checkMergedBranch,
   checkPublishAllowed,
   checkStatusAllowed,
   createDraftPullRequest,
@@ -11,6 +12,7 @@ import {
   runOpenAuthoringSetUp,
 } from '$lib/services/backends/git/shared/fork';
 import {
+  ENTRY_ALREADY_PUBLISHED,
   forkedRepository,
   openAuthoringInitialized,
   requestForkPermission,
@@ -169,6 +171,54 @@ describe('shared fork service', () => {
       expect(() => checkStatusAllowed('pending_publish')).toThrow(
         'Cannot mark an entry ready to publish as an Open Authoring contributor',
       );
+    });
+  });
+
+  describe('checkMergedBranch', () => {
+    const branch = 'cms/contributor/repo/posts/hello';
+    const deleteBranch = vi.fn();
+
+    test('deletes a branch still at the merged head and reports the entry as published', async () => {
+      const fetchBranchHead = vi.fn().mockResolvedValue('head1');
+
+      await expect(
+        checkMergedBranch({ branch, mergedSHA: 'head1', fetchBranchHead, deleteBranch }),
+      ).rejects.toThrow(ENTRY_ALREADY_PUBLISHED);
+
+      expect(fetchBranchHead).toHaveBeenCalledWith(branch);
+      expect(deleteBranch).toHaveBeenCalledWith(branch);
+    });
+
+    test('carries the localized message for the contributor', async () => {
+      const fetchBranchHead = vi.fn().mockResolvedValue('head1');
+
+      await expect(
+        checkMergedBranch({ branch, mergedSHA: 'head1', fetchBranchHead, deleteBranch }),
+      ).rejects.toMatchObject({
+        cause: { message: 'open_authoring.entry_already_published' },
+      });
+    });
+
+    test('reports a branch that is already gone as published, with nothing to delete', async () => {
+      // A maintainer can delete the branch along with the merge
+      const fetchBranchHead = vi.fn().mockResolvedValue(undefined);
+
+      await expect(
+        checkMergedBranch({ branch, mergedSHA: 'head1', fetchBranchHead, deleteBranch }),
+      ).rejects.toThrow(ENTRY_ALREADY_PUBLISHED);
+
+      expect(deleteBranch).not.toHaveBeenCalled();
+    });
+
+    test('leaves a branch committed to since the merge alone', async () => {
+      // The contributor edited the entry again, which makes it a fresh draft
+      const fetchBranchHead = vi.fn().mockResolvedValue('head2');
+
+      await expect(
+        checkMergedBranch({ branch, mergedSHA: 'head1', fetchBranchHead, deleteBranch }),
+      ).resolves.toBeUndefined();
+
+      expect(deleteBranch).not.toHaveBeenCalled();
     });
   });
 

@@ -2111,6 +2111,10 @@ open_authoring:
   private_repo_scope_required: ログインにプライベートリポジトリへのアクセスが含まれていないため、「{$repo}」リポジトリを読み取れません。CMS の認証設定を確認するようメンテナーに依頼してください。
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: このサイトへの変更を公開できるのはメンテナーだけです。代わりにエントリーをレビュー中にしてください。誰かが確認します。
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: このエントリーはメンテナーによって既に公開されているため、レビューするものはありません。
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: この変更は直接行えません。レビューを依頼できるのはエントリーの編集のみです。

@@ -1230,6 +1230,8 @@
  * leaving the published version on the site.
  * @property {boolean} [deletionCancelled] Whether a pending removal has been called off, leaving
  * the items on the site.
+ * @property {boolean} [alreadyPublished] Whether an Open Authoring contributor’s entry turned out
+ * to have been published by a maintainer when its status was changed, which closes the editor.
  * @property {boolean} published Whether the items have been published. This is `true` only when
  * automatic deployments are enabled and triggered.
  */

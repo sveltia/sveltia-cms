@@ -479,6 +479,35 @@ describe('workflow/save', () => {
       expect(getUnpublishedEntryByBranch('cms/posts/hello')).toBe(entry);
     });
 
+    test('moves an entry published since to the published list rather than rolling it back', async () => {
+      // A maintainer merged the Open Authoring contributor’s request after the board was loaded,
+      // and nothing was committed to the branch since
+      const entry = createEntry('cms/contributor/repo/posts/hello', 'draft');
+
+      upsertUnpublishedEntry(entry);
+
+      allEntries.current = [
+        /** @type {any} */ ({
+          id: 'old',
+          slug: 'hello',
+          subPath: 'hello',
+          locales: { _default: { slug: 'hello', path: 'content/posts/hello.md', content: {} } },
+        }),
+      ];
+      workflowService.updateStatus.mockRejectedValue(new Error('entry_already_published'));
+
+      await expect(updateWorkflowStatus(entry, 'pending_review')).rejects.toThrow(
+        'entry_already_published',
+      );
+
+      expect(unpublishedEntries.current).toEqual([]);
+      expect(allEntries.current.map((/** @type {any} */ e) => e.id)).toEqual([entry.id]);
+      expect(/** @type {any} */ (allEntries.current[0]).workflow).toBeUndefined();
+      // Nobody published it from here, so neither the hooks fire nor is the deployment tracked
+      expect(callEventHooks).not.toHaveBeenCalled();
+      expect(trackDeployingEntry).not.toHaveBeenCalled();
+    });
+
     test('keeps the entry in place rather than moving it to the end', async () => {
       const first = createEntry('cms/posts/a');
       const second = createEntry('cms/posts/b');

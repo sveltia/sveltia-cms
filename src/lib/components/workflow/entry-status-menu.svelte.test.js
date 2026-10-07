@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import {
+  contentUpdatesToast,
+  UPDATE_TOAST_DEFAULT_STATE,
+} from '$lib/services/contents/collection/data';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { updateWorkflowStatus } from '$lib/services/workflow/save';
@@ -29,7 +33,11 @@ const entry = /** @type {any} */ ({
   slug: 'hello',
   subPath: 'hello',
   locales: {},
-  workflow: { status: 'draft', collectionName: 'posts', pullRequest: { number: 1 } },
+  workflow: {
+    status: 'draft',
+    collectionName: 'posts',
+    pullRequest: { number: 1, branch: 'cms/posts/hello' },
+  },
 });
 
 describe('EntryStatusMenu', () => {
@@ -131,5 +139,25 @@ describe('EntryStatusMenu', () => {
         'error Error Another request (\u2068!3\u2069) is already open for this entry outside the CMS. Ask a developer to close it first.',
       );
     await waitForToastsToHide();
+  });
+
+  test('closes the editor on an entry that turned out to have been published', async () => {
+    // A maintainer merged the contributor’s request since the editor was opened
+    vi.mocked(updateWorkflowStatus).mockRejectedValue(new Error('entry_already_published'));
+    window.location.hash = '#/collections/posts/entries/hello';
+
+    const { entryDraft } = await renderWithDraft(EntryStatusMenu, {
+      draft: createMockDraft({ draft: { isNew: false, originalEntry: entry } }),
+      props: { entry },
+    });
+
+    await page.getByRole('button').click();
+    await page.getByRole('menuitemradio', { name: 'In Review' }).click();
+
+    await expect.poll(() => entryDraft.current).toBe(null);
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+    // The global toast says why, as this menu goes away with the entry
+    expect(contentUpdatesToast.current.alreadyPublished).toBe(true);
+    contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE };
   });
 });

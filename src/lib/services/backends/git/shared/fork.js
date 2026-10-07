@@ -2,6 +2,7 @@ import { sleep } from '@sveltia/utils/misc';
 
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import {
+  ENTRY_ALREADY_PUBLISHED,
   forkedRepository,
   openAuthoring,
   openAuthoringInitialized,
@@ -148,6 +149,43 @@ export const checkStatusAllowed = (status) => {
       'open_authoring.publish_unsupported',
     );
   }
+};
+
+/**
+ * Find out whether the request an Open Authoring entry had, which a maintainer has merged since the
+ * board was loaded, took everything the entry’s branch holds. It did if the branch still points at
+ * the commit the request was merged at: the entry is published, and handing it over for review
+ * again would open a request with nothing in it. The leftover branch is then deleted, the way the
+ * next load would, and the entry reported as published. A branch that’s gone, which a maintainer
+ * can delete with the merge, has nothing left on it either.
+ *
+ * The branch head is read afresh rather than taken from the entry: a commit made since in another
+ * tab, or by a colleague sharing the fork, isn’t on record there, and deleting the branch would
+ * lose it.
+ * @param {object} args Arguments.
+ * @param {string} args.branch Workflow branch name.
+ * @param {string} args.mergedSHA Head commit the request was merged at.
+ * @param {(branch: string) => Promise<string | undefined>} args.fetchBranchHead Function to read
+ * the commit the branch points at, `undefined` if it’s gone.
+ * @param {(branch: string) => Promise<void>} args.deleteBranch Function to delete the branch.
+ * @throws {Error} An {@link ENTRY_ALREADY_PUBLISHED} error when the branch has nothing left on it.
+ * Nothing is thrown when the contributor has committed to the branch since the merge, which makes
+ * the entry a fresh draft.
+ */
+export const checkMergedBranch = async ({ branch, mergedSHA, fetchBranchHead, deleteBranch }) => {
+  const head = await fetchBranchHead(branch);
+
+  if (head && head !== mergedSHA) {
+    return;
+  }
+
+  // Deleting a branch is best effort: `deleteBranch` logs a failure rather than raising it, and a
+  // branch that outlives this is picked up on the next load
+  if (head) {
+    await deleteBranch(branch);
+  }
+
+  throw createLocalizedError(ENTRY_ALREADY_PUBLISHED, 'open_authoring.entry_already_published');
 };
 
 /**

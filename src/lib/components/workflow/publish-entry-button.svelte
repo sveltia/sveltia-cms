@@ -6,11 +6,11 @@
   import { _ } from '@sveltia/i18n';
   import { Alert, Button, ConfirmationDialog, Toast } from '@sveltia/ui';
 
-  import { goBack } from '$lib/services/app/navigation';
   import { getCollection } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { isPublishAllowed, publishingBranches } from '$lib/services/workflow';
   import { getPublishDialogStrings } from '$lib/services/workflow/dialogs';
+  import { closeWorkflowEntryEditor } from '$lib/services/workflow/editor';
   import { publishWorkflowEntry } from '$lib/services/workflow/save';
   import { canPublish } from '$lib/services/workflow/validate';
   import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
@@ -73,18 +73,7 @@
 
     try {
       await publishWorkflowEntry(entry);
-
-      // The merge can take minutes when the Git service waits for a pipeline, and the editor can
-      // have moved on by then: the draft state is shared by the whole page, so the draft open now
-      // may be another entry’s, with unsaved changes. Only this entry’s draft is closed
-      const originalEntry = /** @type {UnpublishedEntry | undefined} */ (
-        entryDraft.current?.originalEntry
-      );
-
-      if (originalEntry?.workflow?.pullRequest.branch === pullRequest.branch) {
-        entryDraft.current = null;
-        goBack(`/collections/${collectionName}`);
-      }
+      closeWorkflowEntryEditor({ entryDraft, branch: pullRequest.branch, collectionName });
     } catch (/** @type {any} */ ex) {
       errorMessage = getWorkflowErrorMessage(ex, 'workflow.publishing_entry_failed');
       showErrorToast = true;

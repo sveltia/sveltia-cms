@@ -507,6 +507,49 @@ test.describe('as a contributor', () => {
       expect(mergeRequest).toMatchObject({ targetBranch: 'develop', state: 'closed' });
     });
 
+    test('reports an entry published since the board was loaded instead of sending it for review', async ({
+      cms,
+      gitlab,
+      page,
+    }) => {
+      const branch = saveForkDraft(gitlab, {
+        slug: 'second-post',
+        files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+      });
+
+      const mergeRequest = gitlab.openMergeRequest({
+        title: 'Draft: Create Post “second-post”',
+        sourceBranch: branch,
+        sourceProjectId: gitlab.forkProjectId,
+        author: gitlab.user,
+      });
+
+      await cms.open();
+      // A draft merge request leaves the entry a draft
+      await openEntry(page, 'Second Post');
+
+      // A maintainer marks the merge request ready and merges it after the board was loaded, and
+      // the contributor commits nothing to the branch since
+      mergeRequest.title = 'Create Post “second-post”';
+      gitlab.handleMerge(mergeRequest, { squash: false, merge_commit_message: mergeRequest.title });
+
+      await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+
+      await expect(page.getByRole('alert')).toContainText(
+        'A maintainer has already published this entry, so there’s nothing left to review.',
+      );
+      // No merge request with nothing in it is opened, and the leftover branch is deleted the way
+      // the next load would
+      expect(gitlab.mergeRequests.map(({ state }) => state)).toEqual(['merged']);
+      await expect.poll(() => gitlab.refs.has(branch)).toBe(false);
+      // The editor closes onto the entry list, where the entry is published rather than a draft
+      await expect(page.getByRole('group', { name: 'Content Editor' })).toBeHidden();
+      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+        /First Post/,
+        /^\s*Second Post\s*$/,
+      ]);
+    });
+
     test('lists the entries in progress on the fork', async ({ cms, gitlab, page }) => {
       saveForkDraft(gitlab, {
         slug: 'second-post',

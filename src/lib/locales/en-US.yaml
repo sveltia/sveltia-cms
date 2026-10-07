@@ -2219,6 +2219,10 @@ open_authoring:
   private_repo_scope_required: Your sign-in doesn’t include access to private repositories, so the “{$repo}” repository can’t be read. Ask a maintainer to check the CMS authentication settings.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: Only a maintainer can publish changes to this site. Mark your entry as In Review instead, and someone will take a look.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: A maintainer has already published this entry, so there’s nothing left to review.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: This change can’t be made directly. Only edits to entries can be suggested for review.

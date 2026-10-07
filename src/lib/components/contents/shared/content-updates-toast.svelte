@@ -39,3 +39,7 @@
     )}
   </Alert>
 </Toast>
+
+<Toast bind:show={contentUpdatesToast.current.alreadyPublished}>
+  <Alert status="error">{_('open_authoring.entry_already_published')}</Alert>
+</Toast>

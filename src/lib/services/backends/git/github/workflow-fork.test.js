@@ -738,18 +738,95 @@ describe('GitHub Open Authoring workflow', () => {
         expect(result).toMatchObject({ number: 5, nodeId: 'PR_5', status: 'pending_review' });
       });
 
-      test('opens a new pull request when the known one was merged since', async () => {
-        // Moving the entry to review would otherwise do nothing, yet report it as in review
-        vi.mocked(fetchGraphQL).mockResolvedValue({ node: createStateNode({ state: 'MERGED' }) });
+      /**
+       * Answer the state query with a pull request merged at `merged-head`, and the branch head
+       * query with the given commit.
+       * @param {string | undefined} head Commit the branch points at, `undefined` if it’s gone.
+       * @param {object} [overrides] Properties to override on the state node.
+       */
+      const mockMergedPullRequest = (head, overrides = {}) => {
+        vi.mocked(fetchGraphQL).mockImplementation(async (query) =>
+          query.includes('branchHead')
+            ? { repository: { branchHead: head ? { target: { oid: head } } : null } }
+            : {
+                node: createStateNode({ state: 'MERGED', headRefOid: 'merged-head', ...overrides }),
+              },
+        );
+      };
+
+      test('opens a new pull request when the known one was merged and edited since', async () => {
+        // The contributor committed to the branch after the merge, which makes the entry a fresh
+        // draft. Moving it to review would otherwise do nothing, yet report it as in review
+        mockMergedPullRequest('branch-head');
         vi.mocked(fetchAPI).mockResolvedValue(createdPullRequest);
 
         const result = await updateForkStatus(knownPullRequest, 'pending_review');
 
+        expect(vi.mocked(fetchGraphQL).mock.calls[0][0]).toContain('headRefOid');
+        expect(fetchGraphQL).toHaveBeenLastCalledWith(expect.stringContaining('branchHead'), {
+          owner: 'contributor',
+          repo: 'repo',
+          branch: `refs/heads/${BRANCH}`,
+        });
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
         expect(fetchAPI).toHaveBeenCalledWith(
           '/repos/owner/repo/pulls',
           expect.objectContaining({ method: 'POST' }),
         );
         expect(result).toMatchObject({ number: 5, nodeId: 'PR_5', status: 'pending_review' });
+      });
+
+      test('reports an entry merged since as published, rather than opening an empty request', async () => {
+        // The branch still points at the commit the pull request was merged at, so it holds
+        // nothing that isn’t on the configured branch already
+        mockMergedPullRequest('merged-head');
+
+        await expect(updateForkStatus(knownPullRequest, 'pending_review')).rejects.toThrow(
+          'entry_already_published',
+        );
+
+        // The leftover branch is deleted from the fork, the way the next load would
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          `/repos/contributor/repo/git/refs/heads/${BRANCH}`,
+          expect.objectContaining({ method: 'DELETE' }),
+        );
+      });
+
+      test('reports an entry merged since as published when it goes back to draft', async () => {
+        mockMergedPullRequest('merged-head');
+
+        await expect(
+          updateForkStatus({ ...knownPullRequest, status: 'pending_review' }, 'draft'),
+        ).rejects.toThrow('entry_already_published');
+      });
+
+      test('reports an entry as published when its branch went with the merge', async () => {
+        mockMergedPullRequest(undefined);
+
+        await expect(updateForkStatus(knownPullRequest, 'pending_review')).rejects.toThrow(
+          'entry_already_published',
+        );
+
+        // Nothing is left to delete, nor to open a pull request from
+        expect(fetchAPI).not.toHaveBeenCalled();
+      });
+
+      test('opens a new pull request when the known one was merged into another branch', async () => {
+        // Retargeted and merged elsewhere: nothing of the entry reached the configured branch, so
+        // the branch is kept, the way the load would keep it
+        mockMergedPullRequest('merged-head', { baseRefName: 'develop' });
+        vi.mocked(fetchAPI).mockResolvedValue(createdPullRequest);
+
+        const result = await updateForkStatus(knownPullRequest, 'pending_review');
+
+        expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/owner/repo/pulls',
+          expect.objectContaining({ method: 'POST' }),
+        );
+        expect(result.number).toBe(5);
       });
 
       test.each([
@@ -775,7 +852,8 @@ describe('GitHub Open Authoring workflow', () => {
       });
 
       test('lets go of a merged pull request when the entry goes back to draft', async () => {
-        vi.mocked(fetchGraphQL).mockResolvedValue({ node: createStateNode({ state: 'MERGED' }) });
+        // Edited again since the merge, so the branch has moved on from it
+        mockMergedPullRequest('branch-head');
 
         const result = await updateForkStatus(
           { ...knownPullRequest, status: 'pending_review' },
@@ -784,7 +862,7 @@ describe('GitHub Open Authoring workflow', () => {
 
         // A merged pull request can’t be converted to a draft, nor does it say anything about the
         // entry, which is left a branch-only draft
-        expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+        expect(fetchGraphQL).toHaveBeenCalledTimes(2);
         expect(fetchAPI).not.toHaveBeenCalled();
         expect(result).toMatchObject({
           number: undefined,

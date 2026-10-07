@@ -44,6 +44,21 @@ export const workflowStages = createDerivedState(() =>
 );
 
 /**
+ * Message of the error thrown when an Open Authoring contributor moves an entry whose request a
+ * maintainer has merged since the board was loaded, with nothing committed to its branch since: the
+ * entry is published, and there’s nothing left to review.
+ */
+export const ENTRY_ALREADY_PUBLISHED = 'entry_already_published';
+
+/**
+ * Check whether the given error says that an entry turned out to have been published when its
+ * status was changed.
+ * @param {any} ex Error thrown by the status change.
+ * @returns {boolean} Result.
+ */
+export const isEntryAlreadyPublished = (ex) => ex?.message === ENTRY_ALREADY_PUBLISHED;
+
+/**
  * Get the path of the signed-in user’s fork, e.g. `contributor/site`, which is what the UI names
  * when it says where their changes are saved.
  * @param {RepositoryPath | undefined} fork Fork, from {@link forkedRepository}.

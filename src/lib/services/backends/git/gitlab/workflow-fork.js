@@ -3,6 +3,7 @@ import {
   createPullRequest,
   deleteBranch,
   DRAFT_TITLE_PREFIX,
+  fetchBranchHead,
   fetchMergeRequest,
   fetchMergeRequestFileContents,
   MAX_ITEMS,
@@ -14,7 +15,7 @@ import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repo
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
-import { checkStatusAllowed } from '$lib/services/backends/git/shared/fork';
+import { checkMergedBranch, checkStatusAllowed } from '$lib/services/backends/git/shared/fork';
 import { user } from '$lib/services/user/account.svelte';
 import { getBranchPrefix } from '$lib/services/workflow/branch';
 
@@ -380,7 +381,8 @@ export const createForkMergeRequest = async ({ branch, title, status }) => {
  * @param {WorkflowStatus} status New status.
  * @returns {Promise<WorkflowPullRequest>} Updated merge request, or a new one if the known one is
  * no longer the entry’s.
- * @throws {Error} When the entry is being marked ready to publish, which a contributor can’t do.
+ * @throws {Error} When the entry is being marked ready to publish, which a contributor can’t do, or
+ * has been published since the board was loaded: see {@link checkMergedBranch}.
  */
 export const updateForkStatus = async (pullRequest, status) => {
   checkStatusAllowed(status);
@@ -398,13 +400,20 @@ export const updateForkStatus = async (pullRequest, status) => {
   // The merge request may have been closed or reopened outside the CMS, so read the current state
   // rather than inferring it from the status the entry was last seen with
   const item = await fetchMergeRequest(pullRequest);
+  const isEntryRequest = isForkMergeRequest(item);
 
-  // It may also have been merged, or aimed at another branch, since the board was loaded. Either
-  // way it’s no longer the entry’s review, which is how the next load would see it too: reopening
-  // or taking it out of draft would put a request for that other branch in front of the
-  // maintainers, or claim a merged one is in review. So the entry carries on without it
+  // It may have been merged into the configured branch since the board was loaded. With nothing
+  // committed to the branch since, the entry is published and has nothing left to review
+  if (item.state === 'merged' && isEntryRequest) {
+    await checkMergedBranch({ branch, mergedSHA: item.sha, fetchBranchHead, deleteBranch });
+  }
+
+  // Otherwise a merged merge request, or one aimed at another branch since the board was loaded,
+  // is no longer the entry’s review, which is how the next load would see it too: reopening or
+  // taking it out of draft would put a request for that other branch in front of the maintainers,
+  // or claim a merged one is in review. So the entry carries on without it, as a fresh draft
   // @see https://github.com/sveltia/sveltia-cms/security/advisories/GHSA-8h97-74c4-g246
-  if (item.state === 'merged' || !isForkMergeRequest(item)) {
+  if (item.state === 'merged' || !isEntryRequest) {
     return updateForkStatus(
       { ...pullRequest, number: undefined, nodeId: undefined, url: undefined },
       status,

@@ -1113,6 +1113,7 @@ export class MockGitHub extends MockGitRepository {
                 state: pullRequest.state.toUpperCase(),
                 isDraft: pullRequest.draft,
                 baseRefName: pullRequest.base,
+                headRefOid: this.getPullRequestHead(pullRequest).oid,
                 headRepositoryOwner: {
                   login: splitBranchKey(pullRequest.head).owner ?? this.owner,
                 },

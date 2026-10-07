@@ -4,6 +4,7 @@ import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import {
   createPullRequest,
   deleteBranch,
+  fetchBranchHead,
   fetchPullRequestFileList,
   fetchPullRequestFiles,
   MAX_ITEMS,
@@ -267,38 +268,6 @@ const fetchOpenPullRequests = async (branch) => {
   return /** @type {Record<string, any>[]} */ (result?.pullRequests?.nodes ?? []).filter(
     ({ isCrossRepository }) => !isCrossRepository,
   );
-};
-
-const FETCH_BRANCH_HEAD_QUERY = `
-  query($owner: String!, $repo: String!, $branch: String!) {
-    repository(owner: $owner, name: $repo) {
-      branchHead: ref(qualifiedName: $branch) {
-        target {
-          oid
-        }
-      }
-    }
-  }
-`;
-
-/**
- * Fetch the commit the given workflow branch points at. Two editors working on the same entry
- * share its branch, so this is how a save finds out that someone else has committed to it since
- * the draft was opened. The branch is looked up in the repository it lives in, which is the
- * contributor’s fork with Open Authoring.
- * @param {string} branch Branch name.
- * @returns {Promise<string | undefined>} Git object ID, or `undefined` if the branch is gone,
- * which is what a merged or closed pull request leaves behind.
- * @see https://docs.github.com/en/graphql/reference/objects#ref
- */
-export const fetchBranchHead = async (branch) => {
-  const { owner, repo } = getWorkflowRepository();
-
-  const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
-    await fetchGraphQL(FETCH_BRANCH_HEAD_QUERY, { owner, repo, branch: `refs/heads/${branch}` })
-  );
-
-  return result?.branchHead?.target?.oid;
 };
 
 /**
