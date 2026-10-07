@@ -1904,8 +1904,6 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth アプリケーション ID が定義されていません。ユーザーがログインするにはアクセストークンを入力する必要があります。
-    editorial_workflow_unsupported: エディトリアルワークフローは現在 GitHub と GitLab バックエンドでのみサポートされています。
-    open_authoring_unsupported_backend: オープンオーサリングは現在 GitHub と GitLab バックエンドでのみサポートされています。
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}` オプションは Sveltia CMS ではサポートされていません。このオプションは無視されます。'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
@@ -2097,6 +2095,10 @@ open_authoring:
   fork_declined: 変更を提案するには、あなたのアカウントにリポジトリのフォークが必要です。
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: 「{$repo}」リポジトリのフォークをあなたのアカウントに作成できませんでした。
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: あなたの「{$fork}」フォークに「{$branch}」ブランチがありません。「{$repo}」リポジトリからフォークを更新してから、もう一度サインインしてください。
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: 「{$repo}」リポジトリへのアクセス権を確認できませんでした。しばらくしてから再度お試しください。

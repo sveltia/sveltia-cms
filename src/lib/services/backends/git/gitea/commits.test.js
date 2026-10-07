@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { getWorkflowRepository } from '$lib/services/backends/git/gitea/fork';
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 import { commitChanges, fetchFileCommits, fetchLastCommit } from './commits.js';
 
@@ -43,6 +45,10 @@ vi.mock('$lib/services/backends/git/gitea/repository', async (importOriginal) =>
 
 vi.mock('$lib/services/backends/git/shared/fetch', () => ({
   repositoryHead: { current: '' },
+}));
+
+vi.mock('$lib/services/backends/git/gitea/fork', () => ({
+  getWorkflowRepository: vi.fn(() => ({ owner: 'test-owner', repo: 'test-repo' })),
 }));
 
 vi.mock('$lib/services/user/account.svelte', () => ({
@@ -733,6 +739,83 @@ describe('Gitea Commits Service', () => {
           'file2.md': { sha: '' },
         },
       });
+    });
+
+    test('should commit a workflow branch to the contributor’s fork', async () => {
+      forkedRepository.current = { owner: 'me', repo: 'fork' };
+      vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'me', repo: 'fork' });
+      fetchAPIMock.mockResolvedValue({
+        commit: { sha: 'workflow-sha', created: '2023-01-15T16:00:00Z' },
+        files: [{ path: 'file1.md', sha: 'sha1' }],
+      });
+
+      await commitChanges(
+        [{ action: /** @type {CommitAction} */ ('create'), path: 'file1.md', data: 'a' }],
+        { commitType: /** @type {CommitType} */ ('create'), branch: 'cms/me/fork/posts/hello' },
+      );
+
+      expect(fetchAPIMock).toHaveBeenCalledWith('/repos/me/fork/contents', expect.anything());
+      forkedRepository.current = undefined;
+    });
+
+    test('should look a missing SHA up on the workflow branch in the fork', async () => {
+      forkedRepository.current = { owner: 'me', repo: 'fork' };
+      vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'me', repo: 'fork' });
+      fetchAPIMock.mockResolvedValueOnce({ sha: 'fork-sha' }).mockResolvedValueOnce({
+        commit: { sha: 'workflow-sha', created: '2023-01-15T16:00:00Z' },
+        files: [{ path: 'file1.md', sha: 'sha1' }],
+      });
+
+      await commitChanges(
+        [{ action: /** @type {CommitAction} */ ('update'), path: 'file1.md', data: 'a' }],
+        { commitType: /** @type {CommitType} */ ('update'), branch: 'cms/me/fork/posts/hello' },
+      );
+
+      expect(fetchAPIMock).toHaveBeenNthCalledWith(
+        1,
+        '/repos/me/fork/contents/file1.md?ref=cms%2Fme%2Ffork%2Fposts%2Fhello',
+      );
+      expect(fetchAPIMock.mock.calls[1][1].body.files[0].sha).toBe('fork-sha');
+      forkedRepository.current = undefined;
+    });
+
+    test('should refuse a direct commit from an Open Authoring contributor', async () => {
+      forkedRepository.current = { owner: 'me', repo: 'fork' };
+
+      await expect(
+        commitChanges(
+          [{ action: /** @type {CommitAction} */ ('create'), path: 'file1.md', data: 'a' }],
+          { commitType: /** @type {CommitType} */ ('create') },
+        ),
+      ).rejects.toThrow('Cannot commit directly to the configured repository');
+
+      expect(fetchAPIMock).not.toHaveBeenCalled();
+      forkedRepository.current = undefined;
+    });
+
+    test('should create the workflow branch as part of the first commit', async () => {
+      fetchAPIMock.mockResolvedValue({
+        commit: { sha: 'workflow-sha', created: '2023-01-15T16:00:00Z' },
+        files: [{ path: 'file1.md', sha: 'sha1' }],
+      });
+
+      await commitChanges(
+        [{ action: /** @type {CommitAction} */ ('create'), path: 'file1.md', data: 'a' }],
+        {
+          commitType: /** @type {CommitType} */ ('create'),
+          branch: 'cms/posts/hello',
+          startBranch: mockBranch,
+        },
+      );
+
+      expect(fetchAPIMock).toHaveBeenCalledTimes(1);
+
+      expect(fetchAPIMock).toHaveBeenCalledWith(
+        `/repos/${mockOwner}/${mockRepo}/contents`,
+        expect.objectContaining({
+          body: expect.objectContaining({ branch: mockBranch, new_branch: 'cms/posts/hello' }),
+        }),
+      );
     });
   });
 

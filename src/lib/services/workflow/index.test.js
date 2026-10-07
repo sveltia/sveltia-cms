@@ -80,13 +80,13 @@ describe('workflow/index', () => {
     });
 
     test('is false when the backend doesn’t implement the feature', () => {
-      backendName.current = 'gitea';
+      backendName.current = 'test-repo';
       cmsConfig.current = /** @type {any} */ ({ publish_mode: 'editorial_workflow' });
       expect(backend.current?.workflow).toBeUndefined();
       expect(workflowEnabled.current).toBe(false);
     });
 
-    test.each(['github', 'gitlab'])(
+    test.each(['github', 'gitlab', 'gitea'])(
       'is true with the %s backend and the editorial_workflow publish mode',
       (name) => {
         backendName.current = name;
@@ -144,7 +144,7 @@ describe('workflow/index', () => {
     });
 
     test('is false when the backend doesn’t implement the feature', () => {
-      backendName.current = 'gitea';
+      backendName.current = 'test-repo';
       cmsConfig.current = /** @type {any} */ ({ publish_mode: 'editorial_workflow' });
       expect(isWorkflowEnabled(posts)).toBe(false);
       expect(isWorkflowEnabled(optedIn)).toBe(false);

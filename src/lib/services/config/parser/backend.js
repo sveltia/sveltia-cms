@@ -88,7 +88,6 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       auth_type: authType,
       // @ts-ignore GitLab/Gitea only
       app_id: appId,
-      // @ts-ignore GitHub/GitLab only
       open_authoring: openAuthoring,
       // @ts-ignore GitHub only
       auth_scope: authScope,
@@ -130,15 +129,12 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
         errors.add(makeLink(_('config.error.open_authoring_no_workflow'), OPEN_AUTHORING_DOC_URL));
       }
 
-      if (!['github', 'gitlab'].includes(name)) {
-        warnings.add(_('config.warning.open_authoring_unsupported_backend'));
-      }
-
       // The default scope grants access to every repository the contributor owns, including their
       // private ones. That’s a lot to ask of someone who just wants to fix a typo, and a public
       // repository doesn’t need it. The visibility of the repository isn’t known until someone
       // signs in, so this can’t be decided automatically. GitLab has no equivalent option: its
-      // single `api` scope covers everything the CMS does
+      // single `api` scope covers everything the CMS does. Gitea/Forgejo scopes are already
+      // limited to what the CMS uses
       if (name === 'github' && authScope === undefined) {
         // Warnings are logged to the console for whoever set the CMS up, so this is plain English
         // with a plain URL rather than a localized string with a link in it

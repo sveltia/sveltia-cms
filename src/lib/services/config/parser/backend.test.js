@@ -22,8 +22,6 @@ const mockI18nStrings = {
     'OAuth application ID is not defined. Users are required to provide an access token to sign in.',
   'config.error.open_authoring_no_workflow':
     'The `open_authoring` option requires the `editorial_workflow` publish mode.',
-  'config.warning.open_authoring_unsupported_backend':
-    'Open Authoring is currently supported only with the GitHub and GitLab backends.',
 };
 
 /**
@@ -862,26 +860,22 @@ describe('parseBackendConfig', () => {
       expect(collectors.warnings.size).toBe(0);
     });
 
-    it('should warn when the backend supports neither', async () => {
+    it('should accept the option with the Gitea backend without asking for a scope', async () => {
       const { parseBackendConfig } = await import('./backend.js');
       const collectors = createCollectors();
 
       /** @type {any} */
       const config = {
         publish_mode: 'editorial_workflow',
-        backend: {
-          name: 'gitea',
-          repo: 'owner/repo',
-          app_id: 'app',
-          open_authoring: true,
-        },
+        backend: { name: 'gitea', repo: 'owner/repo', app_id: 'app', open_authoring: true },
       };
 
       parseBackendConfig(config, collectors);
 
-      expect([...collectors.warnings]).toEqual([
-        'Open Authoring is currently supported only with the GitHub and GitLab backends.',
-      ]);
+      // The `auth_scope` warning is about GitHub’s broad default scope; Gitea/Forgejo scopes are
+      // already limited to what the CMS uses
+      expect([...collectors.warnings]).toEqual([]);
+      expect([...collectors.errors]).toEqual([]);
     });
 
     it('should stay quiet when the option is off', async () => {

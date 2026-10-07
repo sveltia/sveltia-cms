@@ -2044,8 +2044,6 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: ID aplikácie OAuth nie je definované. Používatelia sa musia prihlásiť pomocou prístupového tokenu.
-    editorial_workflow_unsupported: Schvaľovací proces (Editorial Workflow) je momentálne podporovaný iba pre GitHub a GitLab.
-    open_authoring_unsupported_backend: Open Authoring je momentálne podporovaný iba pre GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Možnosť `{$prop}` nie je vo Sveltia CMS podporovaná. Bude ignorovaná.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`

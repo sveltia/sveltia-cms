@@ -1914,8 +1914,6 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: معرف تطبيق OAuth غير محدد. يلزم المستخدمون بتوفير رمز وصول لتسجيل الدخول.
-    editorial_workflow_unsupported: سير عمل التحرير غير مدعوم بعد في Sveltia CMS.
-    open_authoring_unsupported_backend: التأليف المفتوح (Open Authoring) مدعوم حالياً فقط مع الواجهة الخلفية GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: الخيار `{$prop}` غير مدعوم في Sveltia CMS. سيتم تجاهله.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`

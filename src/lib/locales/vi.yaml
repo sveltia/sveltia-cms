@@ -1653,8 +1653,6 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: ID ứng dụng OAuth không được xác định. Người dùng được yêu cầu cung cấp mã truy cập để đăng nhập.
-    editorial_workflow_unsupported: Quy trình biên tập hiện chỉ hỗ trợ dịch vụ GitHub và GitLab.
-    open_authoring_unsupported_backend: Open Authoring hiện chỉ được hỗ trợ với dịch vụ GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Tùy chọn `{$prop}` không được hỗ trợ trong Sveltia CMS. Nó sẽ bị bỏ qua.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`

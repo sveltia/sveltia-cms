@@ -2037,8 +2037,20 @@
  * @property {string} [auth_endpoint] OAuth base URL path. Default: `login/oauth/authorize`.
  * @property {string} [app_id] OAuth application ID. Required for OAuth sign-in; without one, users
  * can still sign in with a personal access token.
+ * @property {string} [cms_label_prefix] Pull request label prefix used when writing Editorial
+ * Workflow labels. Default: `sveltia-cms/`. When reading labels, the `sveltia-cms/`, `netlify-cms/`
+ * and `decap-cms/` prefixes are also recognized, so unpublished entries created with a different
+ * prefix or with Netlify/Decap CMS remain editable.
+ * @property {boolean} [squash_merges] Whether to use squash marge for Editorial Workflow. Default:
+ * `false`.
+ * @property {boolean} [open_authoring] Whether to enable Open Authoring, which lets a contributor
+ * without write access to the repository propose changes from a fork. It requires the
+ * `editorial_workflow` publish mode. Default: `false`. See the
+ * [documentation](https://sveltiacms.app/en/docs/workflows/open) for details.
  * @see https://decapcms.org/docs/gitea-backend/
  * @see https://sveltiacms.app/en/docs/backends/gitea-forgejo
+ * @see https://sveltiacms.app/en/docs/workflows/editorial
+ * @see https://sveltiacms.app/en/docs/workflows/open
  */
 
 /**

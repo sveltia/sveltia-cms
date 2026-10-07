@@ -1688,8 +1688,6 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: Die ID der OAuth-Anwendung ist nicht definiert. Zum Anmelden muss ein Zugriffstoken angegeben werden.
-    editorial_workflow_unsupported: Der Redaktions-Workflow wird derzeit nur mit den GitHub- und GitLab-Backends unterstützt.
-    open_authoring_unsupported_backend: Open Authoring wird derzeit nur mit dem GitHub-Backend unterstützt.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Die Option `{$prop}` wird in Sveltia CMS nicht unterstützt. Sie wird ignoriert.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`

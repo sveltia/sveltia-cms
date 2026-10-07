@@ -2001,8 +2001,6 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth application ID is not defined. Users are required to provide an access token to sign in.
-    editorial_workflow_unsupported: Editorial Workflow is currently supported only with the GitHub and GitLab backends.
-    open_authoring_unsupported_backend: Open Authoring is currently supported only with the GitHub and GitLab backends.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: The `{$prop}` option is not supported in Sveltia CMS. It will be ignored.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
@@ -2198,6 +2196,10 @@ open_authoring:
   fork_declined: You need a fork of the repository on your account to suggest changes.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
   fork_failed: Couldn’t create a fork of the “{$repo}” repository on your account.
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: Your “{$fork}” fork doesn’t have the “{$branch}” branch. Update the fork from the “{$repo}” repository, then sign in again.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
   permission_check_failed: Couldn’t check your access to the “{$repo}” repository. Please try again in a moment.

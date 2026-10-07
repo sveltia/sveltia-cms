@@ -22,7 +22,6 @@ const mockI18nStrings = {
   'config.error.invalid_sanitize_replacement': 'Unsafe replacement: {replacement}',
   'config.error.invalid_url_option': 'Invalid URL in {option}: {url}',
   'config.error.i18n_invalid_default_locale': 'Unknown default locale: {locale}',
-  'config.warning.editorial_workflow_unsupported': 'Editorial workflow is not supported',
   'config.error_locator.collection': 'Collection: {collection}',
   'config.error_locator.file': 'File: {file}',
   'config.error_locator.field': 'Field: {field}',
@@ -328,81 +327,6 @@ describe('Config Parser', () => {
       parseCmsConfig(config, collectors);
 
       expect(collectors.errors.size).toBeGreaterThan(0);
-    });
-
-    it('should collect warnings for editorial_workflow on unsupported backends', () => {
-      const collectors = createCollectors();
-
-      /** @type {any} */
-      const config = {
-        backend: { name: 'gitea', repo: 'owner/repo' },
-        media_folder: '/media',
-        publish_mode: 'editorial_workflow',
-        collections: [
-          {
-            name: 'posts',
-            label: 'Posts',
-            folder: 'content/posts',
-            fields: [{ name: 'title', widget: 'string' }],
-          },
-        ],
-      };
-
-      parseCmsConfig(config, collectors);
-
-      const warningArray = Array.from(collectors.warnings);
-
-      expect(warningArray.some((w) => w.includes('Editorial workflow'))).toBe(true);
-    });
-
-    it('should collect warnings for collection-level editorial_workflow on unsupported backends', () => {
-      const collectors = createCollectors();
-
-      /** @type {any} */
-      const config = {
-        backend: { name: 'gitea', repo: 'owner/repo' },
-        media_folder: '/media',
-        collections: [
-          {
-            name: 'posts',
-            label: 'Posts',
-            folder: 'content/posts',
-            publish_mode: 'editorial_workflow',
-            fields: [{ name: 'title', widget: 'string' }],
-          },
-        ],
-      };
-
-      parseCmsConfig(config, collectors);
-
-      const warningArray = Array.from(collectors.warnings);
-
-      expect(warningArray.some((w) => w.includes('Editorial workflow'))).toBe(true);
-    });
-
-    it('should not warn about editorial_workflow when no collection uses it', () => {
-      const collectors = createCollectors();
-
-      /** @type {any} */
-      const config = {
-        backend: { name: 'gitea', repo: 'owner/repo' },
-        media_folder: '/media',
-        collections: [
-          {
-            name: 'posts',
-            label: 'Posts',
-            folder: 'content/posts',
-            publish_mode: 'simple',
-            fields: [{ name: 'title', widget: 'string' }],
-          },
-        ],
-      };
-
-      parseCmsConfig(config, collectors);
-
-      const warningArray = Array.from(collectors.warnings);
-
-      expect(warningArray.some((w) => w.includes('Editorial workflow'))).toBe(false);
     });
 
     it('should collect errors for no collections', () => {

@@ -1687,8 +1687,6 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: L’identifiant de l’application OAuth n’est pas défini. Les utilisateurs doivent fournir un jeton d’accès pour se connecter.
-    editorial_workflow_unsupported: Le flux éditorial n’est pas encore pris en charge dans Sveltia CMS.
-    open_authoring_unsupported_backend: L’Open Authoring n’est actuellement pris en charge qu’avec le backend GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: L’option `{$prop}` n’est pas prise en charge dans Sveltia CMS. Elle sera ignorée.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`

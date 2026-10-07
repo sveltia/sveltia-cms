@@ -4,6 +4,11 @@ import { decodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { fetchLastCommit } from '$lib/services/backends/git/gitea/commits';
+import {
+  getWorkflowRepository,
+  initOpenAuthoring,
+  isOpenAuthoringConfigured,
+} from '$lib/services/backends/git/gitea/fork';
 import { checkInstanceVersion, instance } from '$lib/services/backends/git/gitea/instance';
 import {
   checkBranchAccess,
@@ -14,6 +19,7 @@ import {
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { dataLoadedProgress } from '$lib/services/contents';
+import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 import {
   createBatches,
@@ -21,6 +27,7 @@ import {
   fetchFileContents,
   fetchFileList,
   fetchFiles,
+  fetchRawFile,
   parseFileContents,
 } from './files.js';
 
@@ -36,6 +43,12 @@ vi.mock('@sveltia/utils/file', () => ({
 
 vi.mock('$lib/services/backends/git/gitea/commits', () => ({
   fetchLastCommit: vi.fn(),
+}));
+
+vi.mock('$lib/services/backends/git/gitea/fork', () => ({
+  getWorkflowRepository: vi.fn(() => ({ owner: 'test-owner', repo: 'test-repo' })),
+  initOpenAuthoring: vi.fn(),
+  isOpenAuthoringConfigured: vi.fn(() => false),
 }));
 
 vi.mock('$lib/services/backends/git/gitea/instance', () => ({
@@ -90,6 +103,11 @@ describe('Gitea Files Service', () => {
     progressValues.length = 0;
     // Reset instance to default state
     vi.mocked(instance).isForgejo = false;
+    // A maintainer works on the configured repository unless a test says otherwise
+    vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
+    vi.mocked(isOpenAuthoringConfigured).mockReturnValue(false);
+    forkedRepository.current = undefined;
+    openAuthoringInitialized.current = false;
   });
 
   describe('fetchFileList', () => {
@@ -720,6 +738,51 @@ describe('Gitea Files Service', () => {
       await expect(checking).resolves.toBeUndefined();
     });
 
+    test('should set up Open Authoring instead of the plain access check when configured', async () => {
+      vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
+      vi.mocked(checkInstanceVersion).mockResolvedValue();
+      vi.mocked(initOpenAuthoring).mockResolvedValue();
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
+
+      await fetchFiles();
+
+      // The version check comes first, because the set-up asks the instance for what only a
+      // supported version offers. The repository is read through the fork set-up, so no separate
+      // access check is handed over
+      expect(checkInstanceVersion).toHaveBeenCalledBefore(vi.mocked(initOpenAuthoring));
+      expect(checkRepositoryAccess).not.toHaveBeenCalled();
+      expect(vi.mocked(fetchAndParseFiles).mock.calls[0][0].checkAccess).toBeUndefined();
+    });
+
+    test('should set the fork up once, however often the files are fetched', async () => {
+      vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
+      vi.mocked(checkInstanceVersion).mockResolvedValue();
+      vi.mocked(initOpenAuthoring).mockImplementation(async () => {
+        openAuthoringInitialized.current = true;
+      });
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
+
+      await fetchFiles();
+      await fetchFiles();
+
+      // Setting it up again would reset the fork state a workflow commit may be relying on
+      expect(initOpenAuthoring).toHaveBeenCalledTimes(1);
+    });
+
+    test('should leave the branch check out for a contributor', async () => {
+      vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
+      vi.mocked(checkInstanceVersion).mockResolvedValue();
+      vi.mocked(initOpenAuthoring).mockImplementation(async () => {
+        forkedRepository.current = { owner: 'me', repo: 'repo' };
+      });
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
+
+      await fetchFiles();
+
+      // Their changes go to their fork, so the branch they can’t push to doesn’t matter
+      expect(vi.mocked(fetchAndParseFiles).mock.calls[0][0].checkBranchAccess).toBeUndefined();
+    });
+
     test('should report an unsupported instance before a repository access error', async () => {
       vi.mocked(checkInstanceVersion).mockRejectedValue(new Error('Version check failed'));
       vi.mocked(checkRepositoryAccess).mockRejectedValue(new Error('Access denied'));
@@ -805,6 +868,58 @@ describe('Gitea Files Service', () => {
     });
   });
 
+  describe('fetchRawFile', () => {
+    test('should read the file from the configured branch by default', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue('# Hello');
+
+      await expect(fetchRawFile('content/posts/hello.md')).resolves.toBe('# Hello');
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/raw/content/posts/hello.md?ref=main',
+        { responseType: 'text' },
+      );
+    });
+
+    test('should read the file from the given branch', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue('# Hello');
+
+      await fetchRawFile('content/posts/hello.md', 'cms/posts/hello');
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/raw/content/posts/hello.md?ref=cms%2Fposts%2Fhello',
+        { responseType: 'text' },
+      );
+    });
+
+    test('should read a workflow branch from the contributor’s fork', async () => {
+      vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'me', repo: 'fork' });
+      vi.mocked(fetchAPI).mockResolvedValue('# Hello');
+
+      await fetchRawFile('content/posts/hello.md', 'cms/me/fork/posts/hello');
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/me/fork/raw/content/posts/hello.md?ref=cms%2Fme%2Ffork%2Fposts%2Fhello',
+        { responseType: 'text' },
+      );
+    });
+
+    test('should fall back to an empty ref without a configured branch', async () => {
+      const { branch } = repository;
+
+      repository.branch = undefined;
+      vi.mocked(fetchAPI).mockResolvedValue('# Hello');
+
+      await fetchRawFile('content/posts/hello.md');
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/raw/content/posts/hello.md?ref=',
+        { responseType: 'text' },
+      );
+
+      repository.branch = branch;
+    });
+  });
+
   describe('fetchBlob', () => {
     test('should fetch asset blob from API', async () => {
       /** @type {Asset} */
@@ -874,6 +989,46 @@ describe('Gitea Files Service', () => {
       // Left as is, `#` would start a fragment and `?` a query, cutting the path short
       expect(fetchAPI).toHaveBeenCalledWith(
         '/repos/test-owner/test-repo/media/main/images/photo%20%231%3F.jpg',
+        { responseType: 'blob' },
+      );
+    });
+
+    test('should read a contributor’s unpublished asset from their fork', async () => {
+      vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'me', repo: 'fork' });
+      vi.mocked(fetchAPI).mockResolvedValue(new Blob(['binary data']));
+
+      await fetchBlob(
+        /** @type {any} */ ({
+          path: 'images/photo.jpg',
+          workflow: { branch: 'cms/me/fork/posts/hello' },
+        }),
+      );
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/me/fork/media/cms/me/fork/posts/hello/images/photo.jpg',
+        { responseType: 'blob' },
+      );
+    });
+
+    test('should read an unpublished asset from its workflow branch', async () => {
+      /** @type {Asset} */
+      const mockAsset = {
+        path: 'images/photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        name: 'photo.jpg',
+        kind: 'image',
+        // @ts-ignore - Type compatibility in test
+        folder: 'images',
+        workflow: { branch: 'cms/posts/hello' },
+      };
+
+      vi.mocked(fetchAPI).mockResolvedValue(new Blob(['binary data']));
+
+      await fetchBlob(mockAsset);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/media/cms/posts/hello/images/photo.jpg',
         { responseType: 'blob' },
       );
     });

@@ -11,7 +11,6 @@ import { parseMediaLibraries } from '$lib/services/config/parser/media-libraries
 import { parseSlugConfig } from '$lib/services/config/parser/slug';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 import { isNonEmptyString } from '$lib/services/utils/string';
-import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
 /**
  * @import { CmsConfig } from '$lib/types/public';
@@ -40,11 +39,6 @@ const UNSUPPORTED_OPTIONS = [
  * @type {(keyof CmsConfig)[]}
  */
 const URL_OPTIONS = ['site_url'];
-/**
- * Backend services that support Editorial Workflow.
- * @type {(string | undefined)[]}
- */
-const WORKFLOW_BACKENDS = ['github', 'gitlab'];
 
 /**
  * Parse and validate the CMS configuration.
@@ -56,17 +50,6 @@ const WORKFLOW_BACKENDS = ['github', 'gitlab'];
  */
 export const parseCmsConfig = (cmsConfig, collectors) => {
   parseBackendConfig(cmsConfig, collectors);
-
-  // Editorial Workflow is not implemented for every backend yet. A collection can enable it on its
-  // own, so the site-level option isn’t the only place to look
-  if (isWorkflowConfigured(cmsConfig) && !WORKFLOW_BACKENDS.includes(cmsConfig.backend?.name)) {
-    addMessage({
-      type: 'warning',
-      strKey: 'editorial_workflow_unsupported',
-      context: { cmsConfig },
-      collectors,
-    });
-  }
 
   URL_OPTIONS.forEach((option) => {
     const url = cmsConfig[option];

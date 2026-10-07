@@ -1687,8 +1687,6 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: Το OAuth application ID δεν έχει οριστεί. Οι χρήστες πρέπει να παρέχουν διακριτικό πρόσβασης για να συνδεθούν.
-    editorial_workflow_unsupported: Η ροή εργασίας σύνταξης δεν υποστηρίζεται ακόμη στο Sveltia CMS.
-    open_authoring_unsupported_backend: Το Open Authoring υποστηρίζεται προς το παρόν μόνο με το backend του GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Η επιλογή `{$prop}` δεν υποστηρίζεται στο Sveltia CMS και θα αγνοηθεί.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`

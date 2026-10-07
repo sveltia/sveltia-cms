@@ -104,14 +104,31 @@ describe('PageSwitcher', () => {
     await expect.poll(() => window.location.hash).toBe('#/assets/-/linked');
   });
 
-  test('adds the workflow page when Editorial Workflow is enabled', async () => {
+  test.each(['github', 'gitlab', 'gitea'])(
+    'adds the workflow page when Editorial Workflow is enabled with the %s backend',
+    async (name) => {
+      // The page only exists when the backend implements the feature, so each one that does is
+      // checked, not just the first
+      backendName.current = name;
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name },
+        publish_mode: 'editorial_workflow',
+      });
+
+      await render(PageSwitcher, {});
+      expect(getPageLabels()).toEqual(['Contents', 'Assets', 'Editorial Workflow']);
+    },
+  );
+
+  test('leaves the workflow page out when the backend doesn’t implement the feature', async () => {
+    backendName.current = 'test-repo';
     cmsConfig.current = /** @type {any} */ ({
-      backend: { name: 'github' },
+      backend: { name: 'test-repo' },
       publish_mode: 'editorial_workflow',
     });
 
     await render(PageSwitcher, {});
-    expect(getPageLabels()).toEqual(['Contents', 'Assets', 'Editorial Workflow']);
+    expect(getPageLabels()).toEqual(['Contents', 'Assets']);
   });
 
   test('adds the menu page on a small screen', async () => {
