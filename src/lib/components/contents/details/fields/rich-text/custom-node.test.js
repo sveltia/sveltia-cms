@@ -159,7 +159,7 @@ vi.mock('svelte', () => ({
   unmount: vi.fn(),
 }));
 
-vi.mock('$lib/components/contents/details/fields/rich-text/component.svelte', () => ({
+vi.mock('$lib/components/contents/details/fields/rich-text/editor-component.svelte', () => ({
   default: vi.fn(),
 }));
 
