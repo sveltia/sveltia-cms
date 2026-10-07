@@ -65,7 +65,7 @@
     "flat": "^6.0.1",
     "htm": "^3.1.1",
     "immutable": "^5.1.9",
-    "isomorphic-dompurify": "^4.4.0",
+    "isomorphic-dompurify": "^4.5.0",
     "leaflet": "^1.9.4",
     "lexical": "^0.52.0",
     "marked": "^18.1.0",
@@ -118,7 +118,7 @@
     "svelte-check": "^4.7.6",
     "ts-json-schema-generator": "^2.9.0",
     "typescript": "^6.0.3",
-    "vite": "^8.3.2",
+    "vite": "^8.3.3",
     "vitest": "^5.0.3",
     "vitest-browser-svelte": "^3.1.0"
   },
