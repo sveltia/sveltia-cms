@@ -192,8 +192,8 @@ export const messages = async ({
   model,
   systemPrompt,
   userMessage,
-  temperature = 0.3,
   maxTokens = 4000,
+  reasoning,
   extraBody = {},
 }) => {
   /** @type {Record<string, string>} */
@@ -211,16 +211,36 @@ export const messages = async ({
     body: {
       model,
       max_tokens: maxTokens,
-      temperature,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
+      // Other reasoning levels are left to the model’s default effort
+      ...(reasoning === 'none' ? { thinking: { type: 'disabled' } } : {}),
       ...extraBody,
     },
   });
 
-  if (!data.content || !Array.isArray(data.content) || !data.content[0]) {
+  if (data.stop_reason === 'refusal') {
+    throw new Error('The request was declined by the Messages API.');
+  }
+
+  if (data.stop_reason === 'max_tokens') {
+    throw new Error('The response from the Messages API was cut off at the token limit.');
+  }
+
+  // The response can begin with `thinking` blocks and split the answer into several text blocks
+  /** @type {string[]} */
+  const texts = Array.isArray(data.content)
+    ? data.content
+        .filter(
+          (/** @type {unknown} */ block) =>
+            isObject(block) && block.type === 'text' && typeof block.text === 'string',
+        )
+        .map((/** @type {{ text: string }} */ { text }) => text)
+    : [];
+
+  if (!texts.length) {
     throw new Error('Invalid response format from Messages API.');
   }
 
-  return data.content[0].text.trim();
+  return texts.join('').trim();
 };

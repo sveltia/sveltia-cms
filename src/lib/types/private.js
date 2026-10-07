@@ -617,12 +617,12 @@
  * @property {string} model Model name.
  * @property {string} systemPrompt System/instruction prompt.
  * @property {string} userMessage User message content.
- * @property {number} [temperature] Sampling temperature (0–1). Default is 0.3. GPT-6 does not
- * support this parameter, so it will be ignored for that model.
+ * @property {number} [temperature] Sampling temperature (0–1). Default is 0.3. The OpenAI and
+ * Anthropic APIs don’t get this parameter, as GPT-6 and Claude Haiku 5.5 reject it.
  * @property {number} [maxTokens] Maximum output tokens. Default is 4000.
  * @property {'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'} [reasoning]
  * Reasoning effort. Only supported by certain providers (e.g., DeepSeek, Mistral AI). Default
- * varies by provider.
+ * varies by provider. Anthropic Claude only supports `none`, which disables thinking.
  */
 
 /**

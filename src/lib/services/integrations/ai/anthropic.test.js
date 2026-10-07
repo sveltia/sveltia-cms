@@ -7,7 +7,7 @@ global.fetch = vi.fn();
 
 const defaultOptions = {
   apiKey: 'sk-ant-api03-test-key',
-  model: 'claude-haiku-4-5',
+  model: 'claude-haiku-5-5',
   systemPrompt: 'You are a helpful assistant.',
   userMessage: 'Hello!',
 };
@@ -20,7 +20,9 @@ describe('Anthropic AI Client', () => {
   describe('complete', () => {
     it('should return trimmed response text on success', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ content: [{ text: '  Hello there!  ' }] }), { status: 200 }),
+        new Response(JSON.stringify({ content: [{ type: 'text', text: '  Hello there!  ' }] }), {
+          status: 200,
+        }),
       );
 
       const result = await complete(defaultOptions);
@@ -30,7 +32,7 @@ describe('Anthropic AI Client', () => {
 
     it('should send a POST request to the Anthropic Messages API endpoint', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
+        new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), { status: 200 }),
       );
 
       await complete(defaultOptions);
@@ -43,7 +45,7 @@ describe('Anthropic AI Client', () => {
 
     it('should include required Anthropic headers', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
+        new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), { status: 200 }),
       );
 
       await complete(defaultOptions);
@@ -63,7 +65,7 @@ describe('Anthropic AI Client', () => {
 
     it('should send model, system prompt, and user message in the request body', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
+        new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), { status: 200 }),
       );
 
       await complete(defaultOptions);
@@ -75,29 +77,29 @@ describe('Anthropic AI Client', () => {
       expect(body.messages).toEqual([{ role: 'user', content: defaultOptions.userMessage }]);
     });
 
-    it('should use default temperature and maxTokens when not provided', async () => {
+    it('should use default maxTokens without temperature when not provided', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
+        new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), { status: 200 }),
       );
 
       await complete(defaultOptions);
 
       const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
 
-      expect(body.temperature).toBe(0.3);
+      expect(body).not.toHaveProperty('temperature');
       expect(body.max_tokens).toBe(4000);
     });
 
-    it('should forward custom temperature and maxTokens', async () => {
+    it('should forward custom maxTokens without temperature', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
+        new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), { status: 200 }),
       );
 
       await complete({ ...defaultOptions, temperature: 0.8, maxTokens: 1000 });
 
       const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
 
-      expect(body.temperature).toBe(0.8);
+      expect(body).not.toHaveProperty('temperature');
       expect(body.max_tokens).toBe(1000);
     });
 

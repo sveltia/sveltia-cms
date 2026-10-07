@@ -107,6 +107,7 @@ describe('Anthropic Translator Service', () => {
       const mockResponse = {
         content: [
           {
+            type: 'text',
             text: JSON.stringify(['Bonjour le monde', 'Comment allez-vous ?']),
           },
         ],
@@ -136,7 +137,7 @@ describe('Anthropic Translator Service', () => {
             'anthropic-version': '2023-06-01',
             'anthropic-dangerous-direct-browser-access': 'true',
           }),
-          body: expect.stringContaining('"model":"claude-haiku-4-5"'),
+          body: expect.stringContaining('"model":"claude-haiku-5-5"'),
         }),
       );
     });
@@ -145,6 +146,7 @@ describe('Anthropic Translator Service', () => {
       const mockResponse = {
         content: [
           {
+            type: 'text',
             text: JSON.stringify(['Hola mundo']),
           },
         ],
@@ -184,6 +186,7 @@ describe('Anthropic Translator Service', () => {
       const mockResponse = {
         content: [
           {
+            type: 'text',
             text: JSON.stringify(['# Bonjour **monde**']),
           },
         ],
@@ -319,6 +322,7 @@ describe('Anthropic Translator Service', () => {
       const mockResponse = {
         content: [
           {
+            type: 'text',
             text: 'invalid json response',
           },
         ],
@@ -343,6 +347,7 @@ describe('Anthropic Translator Service', () => {
       const mockResponse = {
         content: [
           {
+            type: 'text',
             text: JSON.stringify({
               // Missing translations field
               other: 'data',
@@ -370,6 +375,7 @@ describe('Anthropic Translator Service', () => {
       const mockResponse = {
         content: [
           {
+            type: 'text',
             text: JSON.stringify(['Only one translation']), // Should have 2
           },
         ],
@@ -402,10 +408,11 @@ describe('Anthropic Translator Service', () => {
       );
     });
 
-    it('should use correct model and temperature', async () => {
+    it('should use correct model, without temperature or thinking', async () => {
       const mockResponse = {
         content: [
           {
+            type: 'text',
             text: JSON.stringify(['Test']),
           },
         ],
@@ -427,8 +434,9 @@ describe('Anthropic Translator Service', () => {
         /** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body),
       );
 
-      expect(requestBody.model).toBe('claude-haiku-4-5');
-      expect(requestBody.temperature).toBe(0.3);
+      expect(requestBody.model).toBe('claude-haiku-5-5');
+      expect(requestBody).not.toHaveProperty('temperature');
+      expect(requestBody.thinking).toEqual({ type: 'disabled' });
       expect(requestBody.max_tokens).toBe(4000);
     });
   });

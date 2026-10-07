@@ -27,7 +27,9 @@ describe('AI API Utilities', () => {
     describe('header handling', () => {
       it('should set x-api-key when neither Authorization nor x-api-key headers are provided', async () => {
         vi.mocked(fetch).mockResolvedValueOnce(
-          new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
+          new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), {
+            status: 200,
+          }),
         );
 
         await messages(defaultOptions);
@@ -41,7 +43,9 @@ describe('AI API Utilities', () => {
 
       it('should not set x-api-key when Authorization header is already provided', async () => {
         vi.mocked(fetch).mockResolvedValueOnce(
-          new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
+          new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), {
+            status: 200,
+          }),
         );
 
         const customHeaders = { Authorization: 'Bearer existing-token' };
@@ -58,7 +62,9 @@ describe('AI API Utilities', () => {
 
       it('should not set x-api-key when x-api-key header is already provided', async () => {
         vi.mocked(fetch).mockResolvedValueOnce(
-          new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
+          new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), {
+            status: 200,
+          }),
         );
 
         const customHeaders = { 'x-api-key': 'existing-key' };
@@ -72,7 +78,9 @@ describe('AI API Utilities', () => {
 
       it('should preserve other custom headers', async () => {
         vi.mocked(fetch).mockResolvedValueOnce(
-          new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
+          new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), {
+            status: 200,
+          }),
         );
 
         const customHeaders = {
@@ -94,9 +102,11 @@ describe('AI API Utilities', () => {
     });
 
     describe('request body', () => {
-      it('should include model, max_tokens, temperature, system, and messages', async () => {
+      it('should include model, max_tokens, system, and messages without temperature', async () => {
         vi.mocked(fetch).mockResolvedValueOnce(
-          new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
+          new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), {
+            status: 200,
+          }),
         );
 
         await messages(defaultOptions);
@@ -105,27 +115,59 @@ describe('AI API Utilities', () => {
 
         expect(body.model).toBe(defaultOptions.model);
         expect(body.max_tokens).toBe(4000);
-        expect(body.temperature).toBe(0.3);
+        expect(body).not.toHaveProperty('temperature');
         expect(body.system).toBe(defaultOptions.systemPrompt);
         expect(body.messages).toEqual([{ role: 'user', content: defaultOptions.userMessage }]);
       });
 
-      it('should use custom temperature and maxTokens', async () => {
+      it('should use custom maxTokens and ignore temperature', async () => {
         vi.mocked(fetch).mockResolvedValueOnce(
-          new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
+          new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), {
+            status: 200,
+          }),
         );
 
         await messages({ ...defaultOptions, temperature: 0.7, maxTokens: 2000 });
 
         const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
 
-        expect(body.temperature).toBe(0.7);
+        expect(body).not.toHaveProperty('temperature');
         expect(body.max_tokens).toBe(2000);
+      });
+
+      it('should disable thinking when reasoning is none', async () => {
+        vi.mocked(fetch).mockResolvedValueOnce(
+          new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), {
+            status: 200,
+          }),
+        );
+
+        await messages({ ...defaultOptions, reasoning: 'none' });
+
+        const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
+
+        expect(body.thinking).toEqual({ type: 'disabled' });
+      });
+
+      it('should leave thinking to the model default for other reasoning levels', async () => {
+        vi.mocked(fetch).mockResolvedValueOnce(
+          new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), {
+            status: 200,
+          }),
+        );
+
+        await messages({ ...defaultOptions, reasoning: 'high' });
+
+        const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
+
+        expect(body).not.toHaveProperty('thinking');
       });
 
       it('should include extra body parameters', async () => {
         vi.mocked(fetch).mockResolvedValueOnce(
-          new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
+          new Response(JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }), {
+            status: 200,
+          }),
         );
 
         const extraBody = { custom_param: 'custom_value' };
@@ -141,7 +183,7 @@ describe('AI API Utilities', () => {
     describe('response handling', () => {
       it('should return trimmed text from content array', async () => {
         vi.mocked(fetch).mockResolvedValueOnce(
-          new Response(JSON.stringify({ content: [{ text: '  response text  ' }] }), {
+          new Response(JSON.stringify({ content: [{ type: 'text', text: '  response text  ' }] }), {
             status: 200,
           }),
         );
@@ -149,6 +191,90 @@ describe('AI API Utilities', () => {
         const result = await messages(defaultOptions);
 
         expect(result).toBe('response text');
+      });
+
+      it('should skip leading thinking blocks and return the text block', async () => {
+        vi.mocked(fetch).mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              content: [
+                { type: 'thinking', thinking: '', signature: 'sig' },
+                { type: 'text', text: '  response text  ' },
+              ],
+            }),
+            { status: 200 },
+          ),
+        );
+
+        const result = await messages(defaultOptions);
+
+        expect(result).toBe('response text');
+      });
+
+      it('should join the text blocks', async () => {
+        vi.mocked(fetch).mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              content: [
+                { type: 'text', text: ' ["a", ' },
+                { type: 'text', text: '"b"] ' },
+              ],
+            }),
+            { status: 200 },
+          ),
+        );
+
+        const result = await messages(defaultOptions);
+
+        expect(result).toBe('["a", "b"]');
+      });
+
+      it('should throw when the request is declined', async () => {
+        vi.mocked(fetch).mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              content: [],
+              stop_reason: 'refusal',
+              stop_details: { type: 'refusal', category: 'general_harms' },
+            }),
+            { status: 200 },
+          ),
+        );
+
+        await expect(messages(defaultOptions)).rejects.toThrow(
+          'The request was declined by the Messages API.',
+        );
+      });
+
+      it('should throw when the response is cut off at the token limit', async () => {
+        vi.mocked(fetch).mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              content: [{ type: 'text', text: '["a", "b' }],
+              stop_reason: 'max_tokens',
+            }),
+            { status: 200 },
+          ),
+        );
+
+        await expect(messages(defaultOptions)).rejects.toThrow(
+          'The response from the Messages API was cut off at the token limit.',
+        );
+      });
+
+      it('should throw when there is no text block', async () => {
+        vi.mocked(fetch).mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              content: [null, { type: 'thinking', thinking: '', signature: 'sig' }],
+            }),
+            { status: 200 },
+          ),
+        );
+
+        await expect(messages(defaultOptions)).rejects.toThrow(
+          'Invalid response format from Messages API.',
+        );
       });
 
       it('should throw on missing content array', async () => {
