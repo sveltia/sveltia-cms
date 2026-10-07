@@ -498,6 +498,49 @@ test.describe('as a contributor', () => {
       expect(github.pullRequests).toHaveLength(1);
     });
 
+    test('opens a new pull request when the known one was aimed elsewhere since', async ({
+      cms,
+      github,
+      page,
+    }) => {
+      const branch = saveForkDraft(github, {
+        slug: 'second-post',
+        files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+      });
+
+      const pullRequest = github.openPullRequest({
+        title: 'Create Post “second-post”',
+        head: branch,
+        author: github.user,
+      });
+
+      Object.assign(pullRequest, { state: 'closed', lastHead: github.refs.get(branch) });
+
+      await cms.open();
+      await openEntry(page, 'Second Post');
+
+      // Aimed at another branch on GitHub after the board was loaded. Reopening it would hand a
+      // request for that branch to the maintainers as the entry’s review
+      // @see https://github.com/sveltia/sveltia-cms/security/advisories/GHSA-8h97-74c4-g246
+      github.createBranch('develop', github.head.oid);
+      pullRequest.base = 'develop';
+
+      await cms.chooseMenuItem(
+        page.getByRole('button', { name: /Status: .*Draft/ }),
+        page.getByRole('menuitemradio', { name: 'In Review' }),
+      );
+
+      await expect.poll(() => github.pullRequests).toHaveLength(2);
+      expect(github.pullRequests[1]).toMatchObject({
+        head: branch,
+        base: 'main',
+        state: 'open',
+        draft: false,
+        author: github.user,
+      });
+      expect(pullRequest).toMatchObject({ base: 'develop', state: 'closed' });
+    });
+
     test('treats a branch changed after its pull request was merged as a new draft', async ({
       cms,
       github,

@@ -594,6 +594,39 @@ describe('GitHub Open Authoring workflow', () => {
     });
 
     describe('updateForkStatus', () => {
+      /**
+       * Create a pull request node as returned by the state query.
+       * @param {object} [overrides] Properties to override.
+       * @returns {any} Node.
+       */
+      const createStateNode = (overrides = {}) => ({
+        state: 'OPEN',
+        isDraft: false,
+        baseRefName: 'main',
+        headRepositoryOwner: { login: 'contributor' },
+        author: { login: 'contributor' },
+        ...overrides,
+      });
+
+      /** A pull request the board loaded for the entry. */
+      const knownPullRequest = /** @type {any} */ ({
+        nodeId: 'PR_1',
+        number: 1,
+        url: 'https://github.com/owner/repo/pull/1',
+        branch: 'cms/contributor/repo/posts/hello',
+        title: 'x',
+      });
+
+      /** The pull request the REST API answers with once one is opened. */
+      const createdPullRequest = {
+        number: 5,
+        node_id: 'PR_5',
+        title: 'x',
+        html_url: 'https://github.com/owner/repo/pull/5',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      };
+
       test('refuses to mark an entry ready to publish', async () => {
         await expect(
           updateForkStatus(/** @type {any} */ ({ branch: 'b' }), 'pending_publish'),
@@ -632,7 +665,9 @@ describe('GitHub Open Authoring workflow', () => {
       });
 
       test('converts an open pull request to a draft', async () => {
-        vi.mocked(fetchGraphQL).mockResolvedValue({ node: { state: 'OPEN', isDraft: false } });
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          node: createStateNode({ state: 'OPEN', isDraft: false }),
+        });
 
         await updateForkStatus(
           /** @type {any} */ ({ nodeId: 'PR_1', number: 1, branch: 'b', title: 'x' }),
@@ -646,7 +681,9 @@ describe('GitHub Open Authoring workflow', () => {
       });
 
       test('leaves a pull request that is already a draft alone', async () => {
-        vi.mocked(fetchGraphQL).mockResolvedValue({ node: { state: 'OPEN', isDraft: true } });
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          node: createStateNode({ state: 'OPEN', isDraft: true }),
+        });
 
         await updateForkStatus(
           /** @type {any} */ ({ nodeId: 'PR_1', number: 1, branch: 'b', title: 'x' }),
@@ -657,7 +694,9 @@ describe('GitHub Open Authoring workflow', () => {
       });
 
       test('reopens a closed pull request and marks it ready for review', async () => {
-        vi.mocked(fetchGraphQL).mockResolvedValue({ node: { state: 'CLOSED', isDraft: true } });
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          node: createStateNode({ state: 'CLOSED', isDraft: true }),
+        });
 
         await updateForkStatus(
           /** @type {any} */ ({ nodeId: 'PR_1', number: 1, branch: 'b', title: 'x' }),
@@ -673,6 +712,86 @@ describe('GitHub Open Authoring workflow', () => {
           expect.stringContaining('markPullRequestReadyForReview'),
           { input: { pullRequestId: 'PR_1' } },
         );
+      });
+
+      test('opens a new pull request when the known one was aimed at another branch', async () => {
+        // Retargeted on GitHub since the board was loaded, so it’s no longer the entry’s review,
+        // and reopening it would hand a request for that other branch to the maintainers
+        // @see https://github.com/sveltia/sveltia-cms/security/advisories/GHSA-8h97-74c4-g246
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          node: createStateNode({ state: 'CLOSED', isDraft: true, baseRefName: 'develop' }),
+        });
+        vi.mocked(fetchAPI).mockResolvedValue(createdPullRequest);
+
+        const result = await updateForkStatus(knownPullRequest, 'pending_review');
+
+        expect(vi.mocked(fetchGraphQL).mock.calls[0][0]).toContain('baseRefName');
+        expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/owner/repo/pulls',
+          expect.objectContaining({
+            method: 'POST',
+            body: expect.objectContaining({ head: 'contributor:cms/contributor/repo/posts/hello' }),
+          }),
+        );
+        expect(result).toMatchObject({ number: 5, nodeId: 'PR_5', status: 'pending_review' });
+      });
+
+      test('opens a new pull request when the known one was merged since', async () => {
+        // Moving the entry to review would otherwise do nothing, yet report it as in review
+        vi.mocked(fetchGraphQL).mockResolvedValue({ node: createStateNode({ state: 'MERGED' }) });
+        vi.mocked(fetchAPI).mockResolvedValue(createdPullRequest);
+
+        const result = await updateForkStatus(knownPullRequest, 'pending_review');
+
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/owner/repo/pulls',
+          expect.objectContaining({ method: 'POST' }),
+        );
+        expect(result).toMatchObject({ number: 5, nodeId: 'PR_5', status: 'pending_review' });
+      });
+
+      test.each([
+        ['from another repository', { headRepositoryOwner: { login: 'someone-else' } }],
+        ['by someone else', { author: { login: 'someone-else' } }],
+        ['by a deleted account', { author: null }],
+      ])('leaves alone a pull request opened %s', async (_label, overrides) => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          node: createStateNode({ state: 'CLOSED', isDraft: true, ...overrides }),
+        });
+        vi.mocked(fetchAPI).mockResolvedValue(createdPullRequest);
+
+        const result = await updateForkStatus(knownPullRequest, 'pending_review');
+
+        // Neither reopened nor taken out of draft, but replaced with a new one
+        expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/owner/repo/pulls',
+          expect.objectContaining({ method: 'POST' }),
+        );
+        expect(result.number).toBe(5);
+      });
+
+      test('lets go of a merged pull request when the entry goes back to draft', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({ node: createStateNode({ state: 'MERGED' }) });
+
+        const result = await updateForkStatus(
+          { ...knownPullRequest, status: 'pending_review' },
+          'draft',
+        );
+
+        // A merged pull request can’t be converted to a draft, nor does it say anything about the
+        // entry, which is left a branch-only draft
+        expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          number: undefined,
+          nodeId: undefined,
+          url: undefined,
+          status: 'draft',
+        });
       });
 
       test('copes with a pull request that can no longer be read', async () => {

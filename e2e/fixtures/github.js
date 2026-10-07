@@ -1101,14 +1101,23 @@ export class MockGitHub extends MockGitRepository {
       return { data: { [mutation]: { pullRequest: { isDraft: pullRequest.draft } } } };
     }
 
-    // The state of a pull request, read before an Open Authoring contributor changes it
+    // The state of a pull request, read before an Open Authoring contributor changes it, along with
+    // what tells whether it’s still the entry’s
     if (/node\(id:\s*\$id\)\s*\{\s*\.\.\.\s*on\s+PullRequest\b/.test(query)) {
       const pullRequest = this.pullRequests.find(({ nodeId }) => nodeId === variables.id);
 
       return {
         data: {
           node: pullRequest
-            ? { state: pullRequest.state.toUpperCase(), isDraft: pullRequest.draft }
+            ? {
+                state: pullRequest.state.toUpperCase(),
+                isDraft: pullRequest.draft,
+                baseRefName: pullRequest.base,
+                headRepositoryOwner: {
+                  login: splitBranchKey(pullRequest.head).owner ?? this.owner,
+                },
+                author: { login: pullRequest.author.login },
+              }
             : null,
         },
       };

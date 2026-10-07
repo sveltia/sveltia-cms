@@ -112,6 +112,25 @@ const getForkPullRequestsFragment = (branch) => `
 `;
 
 /**
+ * Check whether the given pull request is one the CMS manages for the contributor: opened by them,
+ * from the fork the CMS is working in. The configured repository can have a branch of the same
+ * name, whose pull request isn’t the contributor’s. Nor is one someone else opened from the
+ * contributor’s branch: it would put their title on the entry, and the contributor can’t convert,
+ * reopen or close it, nor open their own while it’s open.
+ * @param {Record<string, any>} pr Pull request node.
+ * @returns {boolean} Result.
+ */
+const isForkPullRequest = (pr) => {
+  const login = user.account?.login?.toLowerCase();
+
+  return (
+    pr.headRepositoryOwner?.login === forkedRepository.current?.owner &&
+    !!login &&
+    pr.author?.login?.toLowerCase() === login
+  );
+};
+
+/**
  * Fetch the pull request each of the given fork branches has on the configured repository.
  * @param {string[]} branches Branch names to look up.
  * @returns {Promise<Map<string, Record<string, any>>>} Map of branch name to the most recent pull
@@ -125,9 +144,6 @@ export const fetchForkBranchPullRequests = async (branches) => {
     return map;
   }
 
-  const fork = forkedRepository.current;
-  const login = user.account?.login?.toLowerCase();
-
   const results = await fetchAliasedBatch({
     items: branches,
     alias: 'pr',
@@ -136,16 +152,7 @@ export const fetchForkBranchPullRequests = async (branches) => {
   });
 
   branches.forEach((branch, index) => {
-    const [node] = (results[index]?.nodes ?? []).filter(
-      // The configured repository can have a branch of the same name, whose pull request isn’t the
-      // contributor’s. Nor is one someone else opened from the contributor’s branch: it would put
-      // their title on the entry, and the contributor can’t convert, reopen or close it, nor open
-      // their own while it’s open
-      (/** @type {any} */ pr) =>
-        pr.headRepositoryOwner?.login === fork?.owner &&
-        !!login &&
-        pr.author?.login?.toLowerCase() === login,
-    );
+    const [node] = (results[index]?.nodes ?? []).filter(isForkPullRequest);
 
     if (node) {
       map.set(branch, node);
@@ -319,6 +326,13 @@ const FETCH_PULL_REQUEST_STATE_QUERY = `
       ... on PullRequest {
         state
         isDraft
+        baseRefName
+        headRepositoryOwner {
+          login
+        }
+        author {
+          login
+        }
       }
     }
   }
@@ -331,7 +345,8 @@ const FETCH_PULL_REQUEST_STATE_QUERY = `
  * while an entry in review has a pull request waiting for a maintainer.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @param {WorkflowStatus} status New status.
- * @returns {Promise<WorkflowPullRequest>} Updated pull request.
+ * @returns {Promise<WorkflowPullRequest>} Updated pull request, or a new one if the known one is no
+ * longer the entry’s.
  * @throws {Error} When the entry is being marked ready to publish, which a contributor can’t do.
  */
 export const updateForkStatus = async (pullRequest, status) => {
@@ -354,9 +369,26 @@ export const updateForkStatus = async (pullRequest, status) => {
 
   // The pull request may have been closed or reopened outside the CMS, so read the current state
   // rather than inferring it from the status the entry was last seen with
-  const { node } = /** @type {{ node?: { state: string, isDraft: boolean } }} */ (
+  const { node } = /** @type {{ node?: Record<string, any> }} */ (
     await fetchGraphQL(FETCH_PULL_REQUEST_STATE_QUERY, { id: nodeId })
   );
+
+  // It may also have been merged, or aimed at another branch, since the board was loaded. Either
+  // way it’s no longer the entry’s review, which is how the next load would see it too: reopening
+  // or taking it out of draft would put a request for that other branch in front of the
+  // maintainers, or claim a merged one is in review. So the entry carries on without it. GitHub
+  // allows one open pull request per head and base, so one aimed elsewhere doesn’t stand in the way
+  // of a new one to the configured branch
+  // @see https://github.com/sveltia/sveltia-cms/security/advisories/GHSA-8h97-74c4-g246
+  if (
+    node &&
+    (node.state === 'MERGED' || node.baseRefName !== repository.branch || !isForkPullRequest(node))
+  ) {
+    return updateForkStatus(
+      { ...pullRequest, number: undefined, nodeId: undefined, url: undefined },
+      status,
+    );
+  }
 
   const { state, isDraft } = node ?? {};
 
