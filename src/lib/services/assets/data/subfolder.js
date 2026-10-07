@@ -3,6 +3,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { deleteAssets } from '$lib/services/assets/data/delete';
 import { moveAssets } from '$lib/services/assets/data/move';
+import { assertOutsideCmsFolders } from '$lib/services/assets/reserved';
 import { publishedAssets } from '$lib/services/assets/state';
 import { focusedSubfolder } from '$lib/services/assets/subfolders';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
@@ -47,6 +48,8 @@ const getSubfolderConfigFiles = (dirPath) =>
  */
 export const createSubfolder = async (dirPath) => {
   const path = `${dirPath}/${GITKEEP_FILE_NAME}`;
+
+  assertOutsideCmsFolders([path]);
 
   const { commit } = await saveChanges({
     // An empty `File` rather than an empty string: the local backend takes a falsy `data` for a

@@ -1014,6 +1014,34 @@ describe('assets/data/move', () => {
       vi.resetAllMocks();
     });
 
+    it('refuses to move a file into or out of a folder the CMS is served from', async () => {
+      const { saveChanges } = await import('$lib/services/backends/save');
+      const asset = /** @type {any} */ ({ path: 'static/images/a.png', sha: 'a' });
+
+      await expect(moveAssets('move', [{ asset, path: 'static/admin/a.png' }])).rejects.toThrow(
+        'Cannot change a file in a folder the CMS is served from',
+      );
+      await expect(
+        moveAssets('rename', [
+          { asset: { ...asset, path: 'static/admin/index.html' }, path: 'static/admin/old.html' },
+        ]),
+      ).rejects.toThrow('Cannot change a file in a folder the CMS is served from');
+      // An empty folder’s placeholder counts too
+      await expect(
+        moveAssets('move', [], {
+          extraChanges: [
+            { action: 'move', path: 'static/admin/.gitkeep', previousPath: 'static/x/.gitkeep' },
+          ],
+        }),
+      ).rejects.toThrow('Cannot change a file in a folder the CMS is served from');
+      await expect(
+        moveAssets('move', [], {
+          extraChanges: [{ action: 'create', path: 'static/cms/.gitkeep' }],
+        }),
+      ).rejects.toThrow('Cannot change a file in a folder the CMS is served from');
+      expect(saveChanges).not.toHaveBeenCalled();
+    });
+
     it('should move assets and update entries', async () => {
       const { getPathInfo } = await import('@sveltia/utils/file');
       const { getAssetBlob } = await import('$lib/services/assets/info');

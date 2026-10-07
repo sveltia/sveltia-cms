@@ -3,6 +3,7 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/folders';
+import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { showNewSubfolderDialog } from '$lib/services/assets/view';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
@@ -20,6 +21,7 @@ describe('NewFolderButton', () => {
     selectedAssetFolder.current = globalAssetFolder.current;
     forkedRepository.current = undefined;
     showNewSubfolderDialog.current = false;
+    selectedSubfolderPath.current = '';
   });
 
   test('opens the New Folder dialog', async () => {
@@ -61,6 +63,13 @@ describe('NewFolderButton', () => {
 
   test('is disabled while contributing via a fork', async () => {
     forkedRepository.current = /** @type {any} */ ({ owner: 'me', repo: 'site' });
+
+    await render(NewFolderButton);
+    await expect.element(page.getByRole('button', { name: 'New Folder' })).toBeDisabled();
+  });
+
+  test('is disabled within a folder the CMS is served from', async () => {
+    selectedSubfolderPath.current = 'admin';
 
     await render(NewFolderButton);
     await expect.element(page.getByRole('button', { name: 'New Folder' })).toBeDisabled();

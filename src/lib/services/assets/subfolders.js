@@ -2,6 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { compare } from '@sveltia/utils/string';
 
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+import { isCmsFolderName, isCmsFolderPath } from '$lib/services/assets/reserved';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { slugify } from '$lib/services/common/slug';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
@@ -149,6 +150,14 @@ export const browsedDirPath = createDerivedState(() => {
     ? createPath([folder.internalPath, selectedSubfolderPath.current])
     : undefined;
 });
+
+/**
+ * Whether the directory being browsed in the Asset Library is, or is below, a folder the CMS itself
+ * is usually served from, such as `admin`. Nothing can be uploaded or created there.
+ */
+export const browsingCmsFolder = createDerivedState(() =>
+  isCmsFolderPath(browsedDirPath.current ?? ''),
+);
 
 /**
  * List the immediate subfolders of a directory, read off the paths of the files below it. A folder
@@ -301,8 +310,8 @@ export const formatSubfolderName = (name) => {
  * @param {string[]} args.takenNames Names of the files and folders already in the parent
  * directory. A Git tree can’t hold a blob and a subtree under one name, so a file name is taken as
  * well.
- * @returns {'empty' | 'invalid' | 'duplicate' | undefined} What stops the name from being used, or
- * `undefined` if it can be used.
+ * @returns {'empty' | 'invalid' | 'reserved' | 'duplicate' | undefined} What stops the name from
+ * being used, or `undefined` if it can be used.
  */
 export const validateSubfolderName = ({ name, takenNames }) => {
   const trimmedName = name.trim();
@@ -317,6 +326,11 @@ export const validateSubfolderName = ({ name, takenNames }) => {
   // listings, and sanitization can leave nothing to name the folder with
   if (!folderName || trimmedName.includes('/') || folderName.startsWith('.')) {
     return 'invalid';
+  }
+
+  // The files in a folder the CMS itself is usually served from are read-only
+  if (isCmsFolderName(folderName)) {
+    return 'reserved';
   }
 
   const normalizedName = folderName.normalize().toLowerCase();

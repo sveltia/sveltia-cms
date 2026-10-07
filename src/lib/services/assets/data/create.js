@@ -2,6 +2,7 @@ import { getAssetsByDirName } from '$lib/services/assets';
 import { assetUpdatesToast, refreshFocusedAssets } from '$lib/services/assets/data';
 import { formatFileName } from '$lib/services/assets/file-name';
 import { getAssetKind } from '$lib/services/assets/kinds';
+import { assertOutsideCmsFolders } from '$lib/services/assets/reserved';
 import { getUploadDirPath } from '$lib/services/assets/subfolders';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
@@ -83,6 +84,8 @@ export const updateStores = ({ count }) => {
 export const saveAssets = async (uploadingAssets, options) => {
   const { files, folder } = uploadingAssets;
   const savingFileList = createFileList(uploadingAssets);
+
+  assertOutsideCmsFolders(savingFileList.map(({ path }) => path));
 
   const savingAssets = savingFileList.map(
     ({ name, path, file }) =>

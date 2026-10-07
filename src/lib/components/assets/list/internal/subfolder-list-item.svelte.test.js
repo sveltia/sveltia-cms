@@ -160,4 +160,16 @@ describe('SubfolderListItem', () => {
     /** @type {HTMLElement} */ (row.element()).click();
     await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/2024');
   });
+
+  test('withholds renaming and deleting a folder the CMS is served from', async () => {
+    await render(SubfolderListItem, {
+      subfolder: { name: 'admin', path: 'static/uploads/admin' },
+      rowIndex: 0,
+      viewType: 'grid',
+    });
+
+    await page.getByRole('button', { name: 'Show Folder Options' }).click();
+    await expect.element(page.getByRole('menuitem', { name: 'Rename Folder' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Delete Folder' })).toBeDisabled();
+  });
 });

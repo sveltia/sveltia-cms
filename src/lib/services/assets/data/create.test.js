@@ -790,6 +790,22 @@ describe('assets/data/create', () => {
   });
 
   describe('saveAssets', () => {
+    it('should refuse to upload to a folder the CMS is served from', async () => {
+      const { saveChanges } = await import('$lib/services/backends/save');
+
+      await expect(
+        saveAssets(
+          /** @type {any} */ ({
+            files: [new File([''], 'index.html')],
+            folder: { internalPath: 'static', entryRelative: false, hasTemplateTags: false },
+            subfolderPath: 'admin',
+          }),
+          { commitType: 'uploadMedia' },
+        ),
+      ).rejects.toThrow('Cannot change a file in a folder the CMS is served from');
+      expect(saveChanges).not.toHaveBeenCalled();
+    });
+
     it('should save assets and update stores', async () => {
       const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
 

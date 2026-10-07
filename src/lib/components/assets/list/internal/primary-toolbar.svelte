@@ -23,7 +23,7 @@
   import { getAssetBlob } from '$lib/services/assets/info';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
   import { focusedAsset, selectedOrFocusedAssets } from '$lib/services/assets/state';
-  import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
+  import { browsingCmsFolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { lockedBranch } from '$lib/services/backends/branch-access';
   import { getReadonlyMessage } from '$lib/services/config/readonly';
@@ -49,9 +49,9 @@
   // Uploading to the media library commits straight to the configured branch rather than going
   // through review, so it’s not something an Open Authoring contributor or a user who can’t push to
   // the branch can do. An asset attached to an entry is committed with that entry, so it’s
-  // unaffected
+  // unaffected. Nor can anything be added to a folder the CMS itself is served from
   const uploadDisabled = $derived(
-    assetsLocked.current || !canCreateAsset(targetAssetFolder.current),
+    assetsLocked.current || !canCreateAsset(targetAssetFolder.current) || browsingCmsFolder.current,
   );
 
   /**

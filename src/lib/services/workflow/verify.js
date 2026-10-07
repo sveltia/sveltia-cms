@@ -1,5 +1,6 @@
 import { getPathInfo } from '@sveltia/utils/file';
 
+import { isInCmsFolder } from '$lib/services/assets/reserved';
 import { createFileList } from '$lib/services/backends/process';
 import { findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
@@ -48,7 +49,6 @@ export const PUBLISH_REFUSED = 'publish_refused';
  * repository — isn’t something the CMS ever commits, and can’t be shown as an entry or an asset.
  */
 const REGULAR_FILE_MODES = ['100644', '100755'];
-
 /**
  * How a pull request touches a single path: a rename touches two, removing one and adding the
  * other.
@@ -220,7 +220,8 @@ const getReferencingPaths = ({ entry, collection, updatedEntry, deletion }) => {
  * code, workflows, configuration, another entry — would otherwise go live without having been seen.
  * What the CMS itself commits along with an entry is allowed: the entry’s own files, and those of
  * its published version, which a rename removes; assets, which go with the entry and are listed as
- * its unpublished assets, and are only removed when the entry is moved or deleted; when the entry
+ * its unpublished assets, and are only removed when the entry is moved or deleted, except for any
+ * file in an `admin` or `cms` folder, where the CMS itself is served from; when the entry
  * is renamed or deleted, the entries referencing it, which are rewritten; and, in a nested
  * collection with subfolders, the entries below the folder of an entry being moved, which move
  * along with it. A Relation field doesn’t offer to add an entry while an entry is saved through
@@ -273,9 +274,10 @@ export const findUnexpectedChanges = (entry, files) => {
       return false;
     }
 
-    // An asset is only removed along with the entry it sits beside, or moved away with it
+    // An asset is only removed along with the entry it sits beside, or moved away with it. Nothing
+    // in the folder the CMS is served from is an asset of an entry, whatever the change
     if (kind.type === 'asset') {
-      return change !== 'removed' || deletion || moved;
+      return !isInCmsFolder(path) && (change !== 'removed' || deletion || moved);
     }
 
     const sameCollection = kind.collectionName === collectionName;

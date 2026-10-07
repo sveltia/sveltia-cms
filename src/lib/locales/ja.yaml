@@ -570,6 +570,8 @@ new_folder_description: 新しいフォルダーは「{$folder}」内に作成�
 new_folder_error:
   empty: フォルダー名は空白にはできません。
   invalid: フォルダー名にスラッシュを含めたり、ドットで始めたりすることはできません。
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: この名前のフォルダーは通常 CMS 自体の配置に使われるため、中のファイルは読み取り専用です。
   duplicate: この名前のフォルダーまたはファイルは既に存在します。
 # Progress and error messages while the folder is being created
 creating_folder: フォルダーを作成中…

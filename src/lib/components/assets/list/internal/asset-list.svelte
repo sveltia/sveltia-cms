@@ -8,7 +8,11 @@
   import UploadAssetsButton from '$lib/components/assets/list/internal/upload-assets-button.svelte';
   import { assetsLocked, canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
   import { focusedAsset, uploadingAssets } from '$lib/services/assets/state';
-  import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
+  import {
+    browsingCmsFolder,
+    focusedSubfolder,
+    selectedSubfolderPath,
+  } from '$lib/services/assets/subfolders';
   import { assetGroups, listedAssets, listedSubfolders } from '$lib/services/assets/view';
   import { currentView } from '$lib/services/assets/view/settings';
 
@@ -22,8 +26,10 @@
   // Uploading to the media library commits straight to the configured branch rather than going
   // through review, so it’s not something an Open Authoring contributor or a user who can’t push to
   // the branch can do. An asset attached to an entry is committed with that entry, so it’s
-  // unaffected
-  const uploadDisabled = $derived(assetsLocked.current || !canCreateAsset(folder));
+  // unaffected. Nor can anything be added to a folder the CMS itself is served from
+  const uploadDisabled = $derived(
+    assetsLocked.current || !canCreateAsset(folder) || browsingCmsFolder.current,
+  );
 </script>
 
 <AssetListContainer

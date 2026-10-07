@@ -1775,6 +1775,49 @@ describe('Test replaceBlobURL()', () => {
     expect(savingAssets).toHaveLength(1);
   });
 
+  test('refuses a file headed for a folder the CMS is served from', async () => {
+    // The picker can browse to any subfolder, but the files in such a folder are read-only
+    /** @type {any[]} */
+    const changes = [];
+
+    await expect(
+      replaceBlobURL(
+        /** @type {any} */ ({
+          file: new File(['<html></html>'], 'index.html', { type: 'text/html' }),
+          folder: {
+            internalPath: 'static',
+            publicPath: '/',
+            entryRelative: false,
+            collectionName: 'posts',
+            hasTemplateTags: false,
+          },
+          subfolderPath: 'admin',
+          replace: true,
+          blobURL: 'blob:http://localhost:5173/abc-123',
+          draft: {
+            collection: {
+              _type: 'entry',
+              _i18n: { defaultLocale: 'en' },
+              _file: { basePath: 'posts' },
+              _assetFolder: { fields: [] },
+            },
+            collectionName: 'posts',
+            isIndexFile: false,
+            currentValues: { en: { title: 'Test' } },
+            currentSlugs: { en: 'test-post' },
+          },
+          defaultLocaleSlug: 'test-post',
+          keyPath: 'file',
+          content: { file: 'blob:http://localhost:5173/abc-123' },
+          changes,
+          savingAssets: [],
+          encodingEnabled: false,
+        }),
+      ),
+    ).rejects.toThrow('Cannot change a file in a folder the CMS is served from');
+    expect(changes).toHaveLength(0);
+  });
+
   describe('with a file name template', () => {
     const blobURL = 'blob:http://localhost:5173/tpl-123';
 

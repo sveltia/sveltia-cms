@@ -298,6 +298,37 @@ describe('SelectAssetsDialog', () => {
       await expect.element(dialog.getByRole('button', { name: 'New Folder' })).toBeDisabled();
     });
 
+    test('neither creates nor uploads anything in a folder the CMS is served from', async () => {
+      assets.push(
+        createMockAsset({
+          name: 'logo.png',
+          folderPath: 'static/uploads/admin',
+          file: await createMockImageFile({ name: 'logo.png' }),
+          asset: { folder: globalAssetFolder.current },
+        }),
+      );
+      setAssets(assets);
+
+      const { onSelect } = await renderDialog();
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
+
+      await waitForGrid(2);
+      await dialog
+        .getByRole('listbox', { name: 'Folders' })
+        .getByRole('option', { name: 'admin' })
+        .click();
+      await waitForGrid(1);
+
+      await expect.element(dialog.getByRole('button', { name: 'New Folder' })).toBeDisabled();
+      await expect.element(dialog.getByRole('button', { name: 'Upload' })).toBeDisabled();
+
+      // A dropped file is ignored rather than headed for the folder
+      dropFiles([await createMockImageFile({ name: 'index.png' })]);
+      await waitForGrid(1);
+      await expect.element(dialog.getByRole('button', { name: 'Insert' })).toBeDisabled();
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
     test('creates a folder where the user is, and uploads there', async () => {
       vi.mocked(createSubfolder).mockResolvedValue(undefined);
 

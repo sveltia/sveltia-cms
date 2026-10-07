@@ -1,6 +1,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 
+import { isInCmsFolder } from '$lib/services/assets/reserved';
 import { lockedBranch } from '$lib/services/backends/branch-access';
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
 import { getCustomComponentName } from '$lib/services/contents/fields/rich-text/components/definitions';
@@ -231,8 +232,10 @@ export const assetsLocked = createDerivedState(
 
 /**
  * Check if any of the given assets is stored in a read-only folder, in which case none of them can
- * be changed, renamed, replaced or deleted along with the others.
+ * be changed, renamed, replaced or deleted along with the others. A file in a folder the CMS itself
+ * is served from, such as `admin`, is read-only as well, wherever the media folder is.
  * @param {Asset[]} assets Assets.
  * @returns {boolean} Result.
  */
-export const hasReadonlyAsset = (assets) => assets.some(({ folder }) => !!folder?.readonly);
+export const hasReadonlyAsset = (assets) =>
+  assets.some(({ folder, path }) => !!folder?.readonly || isInCmsFolder(path));

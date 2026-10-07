@@ -113,6 +113,17 @@ describe('AssetList', () => {
     expect(page.getByRole('button').elements()).toHaveLength(0);
   });
 
+  test('doesn’t offer to upload within a folder the CMS is served from', async () => {
+    setAssets([]);
+    selectedAssetFolder.current = globalAssetFolder.current;
+    selectedSubfolderPath.current = 'admin';
+
+    await render(AssetList);
+
+    await expect.element(page.getByText('No files found.')).toBeInTheDocument();
+    expect(page.getByRole('button').elements()).toHaveLength(0);
+  });
+
   describe('with subfolders', () => {
     beforeAll(() => {
       const folder = globalAssetFolder.current;

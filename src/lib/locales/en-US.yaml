@@ -597,6 +597,8 @@ new_folder_description: The new folder will be created in “{$folder}”.
 new_folder_error:
   empty: The folder name cannot be empty.
   invalid: The folder name cannot contain slashes or start with a dot.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: The files in a folder with this name are read-only, as the CMS itself is usually served from it.
   duplicate: A folder or file with this name already exists here.
 # Progress and error messages while the folder is being created
 creating_folder: Creating the folder…

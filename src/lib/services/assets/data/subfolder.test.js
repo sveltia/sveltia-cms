@@ -247,6 +247,15 @@ describe('assets/data/subfolder', () => {
     });
   });
 
+  it('should refuse to create a folder below one the CMS is served from', async () => {
+    const { saveChanges } = await import('$lib/services/backends/save');
+
+    await expect(createSubfolder('static/admin/js')).rejects.toThrow(
+      'Cannot change a file in a folder the CMS is served from',
+    );
+    expect(saveChanges).not.toHaveBeenCalled();
+  });
+
   it('should commit a .gitkeep file to the new folder', async () => {
     const { saveChanges } = await import('$lib/services/backends/save');
 

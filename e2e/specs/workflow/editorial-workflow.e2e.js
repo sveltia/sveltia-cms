@@ -282,6 +282,47 @@ test('refuses to publish an entry whose pull request changes other files', async
   expect(github.readFile('content/posts/second-post.md')).toBeUndefined();
 });
 
+test.describe('with a media folder at the root of the public folder', () => {
+  test.use({ config: { ...WORKFLOW_CONFIG, media_folder: 'static', public_folder: '/' } });
+
+  test('refuses to publish an entry whose pull request replaces the admin page', async ({
+    cms,
+    github,
+    page,
+  }) => {
+    github.commit({ 'static/admin/index.html': '<script src="sveltia-cms.js"></script>' });
+
+    // The admin page counts as an asset here, which an entry’s pull request could otherwise
+    // replace with one that hands the next user’s sign-in to whoever wrote it
+    const pullRequest = openEntryPullRequest(github, {
+      slug: 'second-post',
+      files: {
+        'content/posts/second-post.md': post('Second Post', 'Coming soon.'),
+        'static/admin/index.html': '<script src="https://example.com/cms.js"></script>',
+      },
+      status: 'pending_publish',
+    });
+
+    await cms.open();
+
+    const editor = await openEntry(page, 'Second Post');
+
+    await editor.getByRole('button', { name: 'Publish Entry' }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Publish Entry' })
+      .getByRole('button', { name: 'Publish' })
+      .click();
+
+    await expect(page.getByRole('alert')).toContainText(
+      'This entry can’t be published here, because it comes with other changes the CMS can’t show you.',
+    );
+    expect(pullRequest.state).toBe('open');
+    expect(github.readFile('static/admin/index.html')).toBe(
+      '<script src="sveltia-cms.js"></script>',
+    );
+  });
+});
+
 test('refuses to publish an entry whose branch has moved on since it was opened', async ({
   cms,
   github,

@@ -156,6 +156,36 @@ describe('workflow/verify', () => {
       ]);
     });
 
+    test('flags any file in the folder the CMS is served from, even as an asset', () => {
+      // With a media folder at the root of the public folder, the admin page and its configuration
+      // count as assets. Replacing them would hand the next user’s sign-in to whoever wrote them
+      expect(
+        findUnexpectedChanges(createEntry({ status: 'pending_deletion' }), [
+          { path: 'static/admin/index.html', status: 'modified', mode: '100644' },
+          { path: 'static/admin/config.yml', status: 'added', mode: '100644' },
+          { path: 'static/CMS/app.js', status: 'added', mode: '100644' },
+          { path: 'static/admin/old.js', status: 'removed' },
+          // A file merely named like the folder is still an asset
+          { path: 'static/admin.png', status: 'added', mode: '100644' },
+          { path: 'static/images/cms', status: 'added', mode: '100644' },
+        ]),
+      ).toEqual([
+        'static/admin/index.html',
+        'static/admin/config.yml',
+        'static/CMS/app.js',
+        'static/admin/old.js',
+      ]);
+    });
+
+    test('leaves deployment configuration edited as an entry to the entry rules', () => {
+      // `_redirects` can be an entry of a file collection, edited in the CMS like any other
+      expect(
+        findUnexpectedChanges(createEntry({ paths: ['static/_redirects'] }), [
+          { path: 'static/_redirects', status: 'modified', mode: '100644' },
+        ]),
+      ).toEqual([]);
+    });
+
     test('flags a file that isn’t a regular one, whatever its path', () => {
       expect(
         findUnexpectedChanges(createEntry(), [

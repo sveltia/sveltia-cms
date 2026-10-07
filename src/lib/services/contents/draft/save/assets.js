@@ -5,6 +5,7 @@ import { getAssetsByDirName } from '$lib/services/assets';
 import { formatFileName } from '$lib/services/assets/file-name';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { getPendingFileName } from '$lib/services/assets/name';
+import { assertOutsideCmsFolders } from '$lib/services/assets/reserved';
 import { fillTemplate } from '$lib/services/common/template';
 import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
@@ -418,6 +419,10 @@ export const replaceBlobURL = async ({
     }
 
     const assetPath = resolvedInternalPath ? `${resolvedInternalPath}/${fileName}` : fileName;
+
+    // A file picked in the editor can go to any subfolder the picker browsed to, but the files in a
+    // folder the CMS itself is served from are read-only, like they are in the Asset Library
+    assertOutsideCmsFolders([assetPath]);
 
     changes.push({
       action: update ? 'update' : 'create',

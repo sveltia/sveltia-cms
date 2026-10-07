@@ -7,6 +7,7 @@
   import SubfolderListItem from '$lib/components/assets/list/subfolder-list-item.svelte';
   import { encodeRoutePath, goto } from '$lib/services/app/navigation';
   import { assetsLocked, selectedAssetFolder } from '$lib/services/assets/folders';
+  import { isCmsFolderPath } from '$lib/services/assets/reserved';
   import { focusedAsset } from '$lib/services/assets/state';
   import {
     deletingSubfolder,
@@ -69,5 +70,7 @@
   onDelete={() => {
     deletingSubfolder.current = subfolder;
   }}
-  actionsDisabled={assetsLocked.current || !!selectedAssetFolder.current?.readonly}
+  actionsDisabled={assetsLocked.current ||
+    !!selectedAssetFolder.current?.readonly ||
+    isCmsFolderPath(subfolder.path)}
 />

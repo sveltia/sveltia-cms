@@ -5,6 +5,7 @@ import { assetUpdatesToast, refreshFocusedAssets } from '$lib/services/assets/da
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
 import { getAssetBlob, getAssetPublicURL } from '$lib/services/assets/info';
 import { getEntriesByAssets } from '$lib/services/assets/references';
+import { assertOutsideCmsFolders } from '$lib/services/assets/reserved';
 import { saveChanges } from '$lib/services/backends/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import {
@@ -300,6 +301,14 @@ export const moveAssets = async (
   movingAssets,
   { extraChanges = [], notify = true } = {},
 ) => {
+  assertOutsideCmsFolders([
+    ...movingAssets.flatMap(({ asset, path }) => [asset.path, path]),
+    ...extraChanges.flatMap(({ path, previousPath }) => [
+      path,
+      ...(previousPath ? [previousPath] : []),
+    ]),
+  ]);
+
   const _globalAssetFolder = globalAssetFolder.current;
   /** @type {FileChange[]} */
   const changes = [];

@@ -2091,6 +2091,15 @@ describe('assets/folders', () => {
     });
   });
 
+  describe('hasReadonlyAsset in a folder the CMS is served from', () => {
+    it('should take a file in such a folder as read-only, whatever its folder says', () => {
+      // With a media folder at the root of the public folder, the admin page is listed as an asset
+      const adminPage = { path: 'static/admin/index.html', folder: { internalPath: 'static' } };
+
+      expect(hasReadonlyAsset([/** @type {any} */ (adminPage)])).toBe(true);
+    });
+  });
+
   describe('canCreateAsset', () => {
     it('should return true for valid folder', () => {
       const folder = {

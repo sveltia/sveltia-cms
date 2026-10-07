@@ -30,6 +30,7 @@
   } from '$lib/services/assets/browser/select-assets-dialog.svelte';
   import { assetsLocked } from '$lib/services/assets/folders';
   import { revokeBlobURLIfNeeded } from '$lib/services/assets/info';
+  import { isCmsFolderPath } from '$lib/services/assets/reserved';
   import {
     canBrowseSubfolders,
     getDirName,
@@ -208,6 +209,11 @@
   /** Path of the directory being browsed, which is where uploaded files go. */
   const browsedPath = $derived(createPath([targetFolderPath, subfolderPath]));
   /**
+   * Whether the directory being browsed is, or is below, a folder the CMS itself is usually served
+   * from, such as `admin`, whose files are read-only. Nothing can be uploaded or created there.
+   */
+  const browsingCmsFolder = $derived(isDefaultLibrary && isCmsFolderPath(browsedPath));
+  /**
    * Assets right in the browsed directory. Dropped files go there, even during a search, so only
    * these can be replaced by one.
    */
@@ -322,6 +328,11 @@
    * @param {File[]} files File list.
    */
   const onDrop = async (files) => {
+    // The files in a folder the CMS itself is served from are read-only
+    if (browsingCmsFolder) {
+      return;
+    }
+
     const replace = await checkDuplicates({ files, listedAssets: browsedDirAssets });
 
     if (replace === undefined) {
@@ -457,9 +468,12 @@
       review, so it’s not something an Open Authoring contributor or a user who can’t push to the
       branch can do, nor anyone within a read-only folder
     -->
-    {@render newFolderButton(() => {
-      showNewFolderDialog = true;
-    }, assetsLocked.current || !!selectedFolder?.readonly)}
+    {@render newFolderButton(
+      () => {
+        showNewFolderDialog = true;
+      },
+      assetsLocked.current || !!selectedFolder?.readonly || browsingCmsFolder,
+    )}
   {:else if isCloudLibrary && externalAssetsPanel?.canCreateFolder()}
     <!-- A folder on a cloud storage service is created by the service, not committed -->
     {@render newFolderButton(() => {
@@ -470,6 +484,7 @@
     <Button
       variant="primary"
       label={_('upload')}
+      disabled={browsingCmsFolder}
       onclick={() => {
         filePicker?.open();
       }}
