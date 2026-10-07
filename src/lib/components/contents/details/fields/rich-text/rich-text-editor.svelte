@@ -32,6 +32,7 @@
     COMPONENT_NAME_PREFIX_REGEX,
     DEFAULT_BUTTONS,
     DEFAULT_MODES,
+    getValueFormat,
     NODE_NAME_MAP,
   } from '$lib/services/contents/fields/rich-text';
   import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
@@ -108,6 +109,7 @@
     use_markdown_shortcuts: useMarkdownShortcuts = defaultConfig.use_markdown_shortcuts ?? true,
     minimal = defaultConfig.minimal ?? false,
   } = $derived(fieldConfig);
+  const format = $derived(getValueFormat(fieldConfig));
   const modes = $derived(_modes.map((name) => NODE_NAME_MAP[name]).filter(Boolean));
   /* v8 ignore start -- the editor is only rendered while the draft is there */
   const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
@@ -145,7 +147,8 @@
     return nested ?? defaultConfig.allow_nested_components ?? true;
   });
   const components = $derived.by(() => {
-    if (inEditorComponent && !allowNestedComponents) {
+    // Editor components are defined with Markdown syntax, so they can’t be used in HTML
+    if (format === 'html' || (inEditorComponent && !allowNestedComponents)) {
       return [];
     }
 
@@ -352,6 +355,7 @@
       <TextEditor
         lang={getCanonicalLocale(locale)}
         dir={getDirection(locale)}
+        {format}
         {modes}
         {buttons}
         {components}

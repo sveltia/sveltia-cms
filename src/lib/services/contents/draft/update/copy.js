@@ -7,13 +7,14 @@ import { getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { RICH_TEXT_FIELD_TYPES, TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
+import { getValueFormat } from '$lib/services/contents/fields/rich-text';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { EntryDraft, InternalLocaleCode, LocaleContentMap } from '$lib/types/private';
- * @import { Field, FieldKeyPath, ListField } from '$lib/types/public';
+ * @import { Field, FieldKeyPath, ListField, RichTextField } from '$lib/types/public';
  */
 
 /**
@@ -27,7 +28,8 @@ import { prefs } from '$lib/services/user/prefs.svelte';
  */
 
 /**
- * @typedef {Record<FieldKeyPath, { value: string, isMarkdown: boolean }>} CopyingFieldMap
+ * @typedef {Record<FieldKeyPath, { value: string, format: 'plain' | 'markdown' | 'html' }>}
+ * CopyingFieldMap
  */
 
 /**
@@ -155,9 +157,11 @@ export const getCopyingFieldMap = ({ draft, options }) => {
           return null;
         }
 
-        const isMarkdown = RICH_TEXT_FIELD_TYPES.includes(fieldType);
+        const format = RICH_TEXT_FIELD_TYPES.includes(fieldType)
+          ? getValueFormat(/** @type {RichTextField} */ (field))
+          : 'plain';
 
-        return [_keyPath, { value, isMarkdown }];
+        return [_keyPath, { value, format }];
       })
       .filter((entry) => !!entry),
   );
@@ -217,13 +221,14 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
 
   try {
     // A translator without Markdown support takes HTML, e.g. Google Translate with the `html`
-    // format and DeepL with HTML tag handling. A Markdown value is converted to HTML for it, and a
-    // plain text value is escaped, so that its special characters are read as text
+    // format and DeepL with HTML tag handling. A Markdown value is converted to HTML for it, a
+    // plain text value is escaped, so that its special characters are read as text, and an HTML
+    // value is passed as is
     const translatedValues = await translate(
-      Object.entries(copingFieldMap).map(([, { value, isMarkdown }]) =>
-        markdownSupported
+      Object.entries(copingFieldMap).map(([, { value, format }]) =>
+        markdownSupported || format === 'html'
           ? value
-          : isMarkdown
+          : format === 'markdown'
             ? /** @type {string} */ (parse(value))
             : escapeHTML(value),
       ),
@@ -231,21 +236,23 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
     );
 
     const needsTurndown =
-      !markdownSupported && Object.values(copingFieldMap).some(({ isMarkdown }) => isMarkdown);
+      !markdownSupported &&
+      Object.values(copingFieldMap).some(({ format }) => format === 'markdown');
 
     const turndownService = needsTurndown ? await getTurndownService() : undefined;
 
-    Object.entries(copingFieldMap).forEach(([_keyPath, { isMarkdown }], index) => {
+    Object.entries(copingFieldMap).forEach(([_keyPath, { format }], index) => {
       const value = translatedValues[index];
 
       // Convert the value back to Markdown or plain text if needed. The HTML comes back with its
       // special characters as entities, which Turndown decodes for a Markdown value
-      currentValues[targetLanguage][_keyPath] = markdownSupported
-        ? value
-        : isMarkdown
-          ? // @ts-ignore Silence a false type error
-            /** @type {import('turndown')} */ (turndownService).turndown(value)
-          : decodeHTMLEntities(value);
+      currentValues[targetLanguage][_keyPath] =
+        markdownSupported || format === 'html'
+          ? value
+          : format === 'markdown'
+            ? // @ts-ignore Silence a false type error
+              /** @type {import('turndown')} */ (turndownService).turndown(value)
+            : decodeHTMLEntities(value);
     });
 
     updateToast('success', 'translation.complete', { count, sourceLanguage });

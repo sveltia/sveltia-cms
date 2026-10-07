@@ -263,9 +263,31 @@ describe('draft/update/copy', () => {
       });
 
       expect(result).toHaveProperty('title');
-      expect(result.title).toEqual({ value: 'English Title', isMarkdown: false });
+      expect(result.title).toEqual({ value: 'English Title', format: 'plain' });
       expect(result).toHaveProperty('body');
-      expect(result.body).toEqual({ value: 'English Body', isMarkdown: true });
+      expect(result.body).toEqual({ value: 'English Body', format: 'markdown' });
+    });
+
+    it('should tell the format of a RichText field', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', i18n: true, widget: 'richtext' };
+        }
+
+        if (keyPath === 'body') {
+          return { name: 'body', i18n: true, widget: 'richtext', format: 'html' };
+        }
+
+        return undefined;
+      });
+
+      const result = getCopyingFieldMap({
+        draft: mockEntryDraft,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja', translate: false },
+      });
+
+      expect(result.title).toEqual({ value: 'English Title', format: 'markdown' });
+      expect(result.body).toEqual({ value: 'English Body', format: 'html' });
     });
 
     it('should filter by keyPath when provided', () => {
@@ -401,7 +423,7 @@ describe('draft/update/copy', () => {
       });
 
       expect(result).toHaveProperty('body');
-      expect(result.body).toEqual({ value: 'English Body', isMarkdown: true });
+      expect(result.body).toEqual({ value: 'English Body', format: 'markdown' });
     });
 
     it('should skip list fields that have sub-fields (fieldType list + hasSubFields true)', () => {
@@ -451,9 +473,9 @@ describe('draft/update/copy', () => {
         options: { sourceLanguage: 'en', targetLanguage: 'ja', translate: false },
       });
 
-      // List field without sub-fields should be included, isMarkdown = false
+      // List field without sub-fields should be included, format = 'plain'
       expect(result).toHaveProperty('tags');
-      expect(result.tags).toEqual({ value: 'tag1 tag2', isMarkdown: false });
+      expect(result.tags).toEqual({ value: 'tag1 tag2', format: 'plain' });
     });
 
     it('should skip the fields that are not translatable', () => {
@@ -523,8 +545,8 @@ describe('draft/update/copy', () => {
       };
 
       const copingFieldMap = {
-        title: { value: 'English Title', isMarkdown: false },
-        body: { value: 'English Body', isMarkdown: true },
+        title: { value: 'English Title', format: 'plain' },
+        body: { value: 'English Body', format: 'markdown' },
       };
 
       copyFields({
@@ -576,7 +598,7 @@ describe('draft/update/copy', () => {
       };
 
       const copingFieldMap = {
-        title: { value: 'English Title', isMarkdown: false },
+        title: { value: 'English Title', format: 'plain' },
       };
 
       await translateFields({
@@ -611,7 +633,7 @@ describe('draft/update/copy', () => {
       };
 
       const copingFieldMap = {
-        title: { value: 'English Title', isMarkdown: false },
+        title: { value: 'English Title', format: 'plain' },
       };
 
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -652,7 +674,7 @@ describe('draft/update/copy', () => {
       };
 
       const copingFieldMap = {
-        body: { value: '# English Title', isMarkdown: true },
+        body: { value: '# English Title', format: 'markdown' },
       };
 
       await translateFields({
@@ -687,8 +709,8 @@ describe('draft/update/copy', () => {
       };
 
       const copingFieldMap = {
-        title: { value: 'English Title', isMarkdown: false },
-        body: { value: 'English Body', isMarkdown: true },
+        title: { value: 'English Title', format: 'plain' },
+        body: { value: 'English Body', format: 'markdown' },
       };
 
       await translateFields({
@@ -732,7 +754,7 @@ describe('draft/update/copy', () => {
       };
 
       const copingFieldMap = {
-        body: { value: '# English Title', isMarkdown: true },
+        body: { value: '# English Title', format: 'markdown' },
       };
 
       await translateFields({
@@ -748,6 +770,37 @@ describe('draft/update/copy', () => {
       // turndown converts HTML back to markdown
       expect(mockTurndown).toHaveBeenCalledWith('<h1>Japanese Title</h1>');
       expect(currentValues.ja.body).toBe('# Japanese Title');
+    });
+
+    it('should pass an HTML value as is when the translator takes HTML', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+      const { parse } = await import('marked');
+      const mockTranslate = vi.fn().mockResolvedValue(['<p>日本語の&amp;本文</p>']);
+
+      prefs.apiKeys = { google: 'test-api-key' };
+
+      translator.current = {
+        serviceId: 'google',
+        markdownSupported: false,
+        translate: mockTranslate,
+      };
+
+      const currentValues = {
+        en: { body: '<p>English &amp; Body</p>' },
+        ja: { body: '' },
+      };
+
+      await translateFields({
+        currentValues,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja' },
+        copingFieldMap: { body: { value: '<p>English &amp; Body</p>', format: 'html' } },
+      });
+
+      expect(vi.mocked(parse)).not.toHaveBeenCalled();
+      expect(mockTranslate).toHaveBeenCalledWith(['<p>English &amp; Body</p>'], expect.any(Object));
+      expect(mockTurndown).not.toHaveBeenCalled();
+      expect(currentValues.ja.body).toBe('<p>日本語の&amp;本文</p>');
     });
 
     it('should send plain text as HTML and decode the result when the translator takes HTML', async () => {
@@ -775,7 +828,7 @@ describe('draft/update/copy', () => {
       await translateFields({
         currentValues,
         options: { sourceLanguage: 'en', targetLanguage: 'ja' },
-        copingFieldMap: { title: { value: 'Q&A <b> &amp; "x"', isMarkdown: false } },
+        copingFieldMap: { title: { value: 'Q&A <b> &amp; "x"', format: 'plain' } },
       });
 
       // The plain text is escaped, so its `<b>` and `&amp;` are sent as text rather than markup
@@ -807,7 +860,7 @@ describe('draft/update/copy', () => {
       await translateFields({
         currentValues,
         options: { sourceLanguage: 'en', targetLanguage: 'ja' },
-        copingFieldMap: { title: { value: 'Q&amp;A', isMarkdown: false } },
+        copingFieldMap: { title: { value: 'Q&amp;A', format: 'plain' } },
       });
 
       expect(mockTranslate).toHaveBeenCalledWith(['Q&amp;A'], expect.any(Object));

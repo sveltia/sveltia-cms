@@ -922,6 +922,12 @@
  */
 
 /**
+ * Value format of a RichText field.
+ * @typedef {'markdown' | 'html'} RichTextValueFormat
+ * @see https://sveltiacms.app/en/docs/fields/richtext
+ */
+
+/**
  * RichText field base properties.
  * @typedef {object} RichTextFieldBaseProps
  * @property {string} [default] Default value.
@@ -963,7 +969,13 @@
  * RichText field properties.
  * @typedef {object} RichTextFieldProps
  * @property {'richtext'} widget Field type.
- * @todo Add the `format` option for HTML output.
+ * @property {RichTextValueFormat} [format] Format of the field value: `markdown` or `html`.
+ * Default: `markdown`. With `html`, the value is saved as HTML, and the raw mode shows the HTML
+ * source. Editor components, including the built-in `image` component, are not available in the
+ * editor UI, as they are defined with Markdown syntax; the `code-block` component, which is a
+ * button in Sveltia CMS, is still available. HTML with an element the rich text mode cannot handle,
+ * like `<img>`, can only be edited in the raw mode. Attributes the editor doesn’t use, like
+ * `class`, are dropped once the content is changed in the rich text mode.
  */
 
 /**

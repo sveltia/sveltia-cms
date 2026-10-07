@@ -19,7 +19,7 @@
   import { getRichTextMediaURL } from '$lib/services/assets/media-field';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { BUILTIN_COMPONENTS } from '$lib/services/contents/fields/rich-text';
+  import { BUILTIN_COMPONENTS, getValueFormat } from '$lib/services/contents/fields/rich-text';
   import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
   import {
     buildMarkdownWithPreviews,
@@ -125,6 +125,7 @@
       [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
     linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
   } = $derived(fieldConfig);
+  const isHTML = $derived(getValueFormat(fieldConfig) === 'html');
   const componentDefs = $derived(
     _editorComponents
       .map((name) =>
@@ -153,6 +154,12 @@
       return '';
     }
 
+    // HTML is rendered as is: editor components are defined with Markdown syntax, so they can’t be
+    // used in HTML
+    if (isHTML) {
+      return currentValue;
+    }
+
     // Compute again a preview dropped because an asset URL has changed
     void assetURLVersion;
 
@@ -177,6 +184,11 @@
    * @type {{ key: string, block: string }[]}
    */
   const keyedBlocks = $derived.by(() => {
+    // HTML is rendered as a whole, as it can’t be split into blocks as easily as Markdown
+    if (isHTML) {
+      return [{ key: '', block: markdown }];
+    }
+
     // A scratch counter for this computation, not state
     // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const occurrences = /** @type {Map<string, number>} */ (new Map());
@@ -439,21 +451,21 @@
 
   /**
    * Parse a block of markdown into HTML, replacing component placeholders with their previews and
-   * sanitizing the result if needed.
-   * @param {string} block The markdown block to parse.
+   * sanitizing the result if needed. An HTML value is only sanitized.
+   * @param {string} block The markdown block to parse, or the whole HTML value.
    * @returns {string} The parsed (and possibly sanitized) HTML string.
    */
   const parseMarkdown = (block) => {
     // Re-parse once a grammar has loaded, so the renderer can highlight what it previously couldn’t
     void highlighterVersion;
 
-    const rawHTML = /** @type {string} */ (parse(block, { breaks: true }));
+    const rawHTML = isHTML ? block : /** @type {string} */ (parse(block, { breaks: true }));
 
     return doSanitize ? sanitizeRichTextHTML(rawHTML) : rawHTML;
   };
 
   $effect(() => {
-    if (markdown) {
+    if (markdown && !isHTML) {
       preloadHighlighter(markdown);
     }
   });

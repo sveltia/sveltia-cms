@@ -1,9 +1,12 @@
 /**
  * @import { TextEditorBlockType, TextEditorInlineType, TextEditorMode } from '@sveltia/ui';
  * @import {
+ * MarkdownField,
  * RichTextEditorButtonName,
  * RichTextEditorComponentName,
  * RichTextEditorMode,
+ * RichTextField,
+ * RichTextValueFormat,
  * } from '$lib/types/public';
  */
 
@@ -78,3 +81,12 @@ export const BUTTON_NAME_MAP = {
  * @type {RichTextEditorComponentName[]}
  */
 export const BUILTIN_COMPONENTS = ['code-block', 'image'];
+
+/**
+ * Get the format of the given field’s value. Only the RichText field type supports the `format`
+ * option, as the Markdown field type, its alias, always holds Markdown.
+ * @param {MarkdownField | RichTextField} fieldConfig Field configuration.
+ * @returns {RichTextValueFormat} Format.
+ */
+export const getValueFormat = (fieldConfig) =>
+  fieldConfig.widget === 'richtext' && fieldConfig.format === 'html' ? 'html' : 'markdown';

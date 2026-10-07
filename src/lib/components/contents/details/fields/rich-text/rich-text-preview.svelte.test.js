@@ -124,6 +124,48 @@ describe('RichTextPreview', () => {
     expect(raw.querySelector('p')).toHaveAttribute('onclick');
   });
 
+  test('renders an HTML value as is, without parsing it as Markdown', async () => {
+    defineGreeting(() => '<b class="greeting">Hello</b>');
+
+    const preview = await renderPreview(
+      '<h2>Title</h2>\n<p>Some *literal* text</p>\n\n:::greeting World\n\n```js\nconst a = 1;\n```',
+      { format: 'html' },
+    );
+
+    await expect.poll(() => preview.querySelector('h2')?.textContent).toBe('Title');
+    expect(preview.querySelector('p')?.textContent).toBe('Some *literal* text');
+    // Neither Markdown syntax nor editor components are converted
+    expect(preview.querySelector('em')).toBeNull();
+    expect(preview.querySelector('pre')).toBeNull();
+    expect(preview.querySelector('.greeting')).toBeNull();
+    expect(preview).toMatchTextContent(/:::greeting World/);
+  });
+
+  test('follows a change to an HTML value', async () => {
+    const { preview, props } = await renderPreviewWithProps('<p>Hello</p>', { format: 'html' });
+
+    await expect.poll(() => preview.querySelector('p')?.textContent).toBe('Hello');
+
+    props.currentValue = '<h2>Changed</h2>';
+
+    await expect.poll(() => preview.querySelector('h2')?.textContent).toBe('Changed');
+    expect(preview.querySelector('p')).toBeNull();
+  });
+
+  test('sanitizes an HTML value unless configured otherwise', async () => {
+    const html = '<p onclick="alert(1)">Hi</p><script>alert(1)</script>';
+    const sanitized = await renderPreview(html, { format: 'html' });
+
+    await expect.poll(() => sanitized.querySelector('p')?.textContent).toBe('Hi');
+    expect(sanitized.querySelector('p')).not.toHaveAttribute('onclick');
+    expect(sanitized.querySelector('script')).toBeNull();
+
+    const raw = await renderPreview(html, { format: 'html', sanitize_preview: false });
+
+    await expect.poll(() => raw.querySelector('p')).not.toBeNull();
+    expect(raw.querySelector('p')).toHaveAttribute('onclick');
+  });
+
   test('keeps the content within the preview', async () => {
     const preview = await renderPreview(
       '<style>body { display: none; }</style>\n\n' +

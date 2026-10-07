@@ -93,6 +93,41 @@ describe('RichTextEditor', () => {
     await expect.poll(() => props.currentValue).toBe('Hello, world!');
   });
 
+  test('shows an HTML value as rich text, and stores the edited content as HTML', async () => {
+    const { props } = await renderEditor('<h2>Title</h2><p>Some <strong>bold</strong> text.</p>', {
+      format: 'html',
+    });
+
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().querySelector('h2')?.textContent).toBe('Title');
+    expect(editor.element().querySelector('strong')).toHaveTextContent('bold');
+
+    // Replacing the whole content keeps the block type of the first block
+    await editor.fill('Hello, world!');
+    await expect.poll(() => props.currentValue).toBe('<h2>Hello, world!</h2>');
+  });
+
+  test('offers no components and inserts no images in the HTML format', async () => {
+    const { props } = await renderEditor('<p>Hello</p>', { format: 'html' });
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+    await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
+    expect(page.getByRole('button', { name: /Insert/ }).elements()).toHaveLength(0);
+
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.setData('text/html', '<img src="https://example.com/photo.png" alt="Photo">');
+    editor
+      .element()
+      .dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(props.currentValue).toBe('<p>Hello</p>');
+  });
+
   test('follows an external change to the value', async () => {
     const { props } = await renderEditor('Hello');
 
