@@ -112,10 +112,11 @@ test.describe('editing', () => {
     await body.getByText(/doors/).dblclick({ position: { x: 45, y: 8 } });
     await field.getByRole('button', { name: 'Link' }).click();
 
-    const dialog = page.getByRole('dialog', { name: 'Insert Link' });
+    // With text selected, the floating link editor takes the URL
+    const linkEditor = field.getByRole('group', { name: 'Link', exact: true });
 
-    await dialog.getByRole('textbox', { name: 'URL' }).fill('https://example.com/doors');
-    await dialog.getByRole('button', { name: 'Insert' }).click();
+    await linkEditor.getByRole('textbox', { name: 'URL' }).fill('https://example.com/doors');
+    await linkEditor.getByRole('button', { name: 'Insert' }).click();
 
     // The preview follows the editor
     const preview = editor.getByRole('document', { name: 'Content Preview' });
