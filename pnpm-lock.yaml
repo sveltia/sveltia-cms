@@ -30,8 +30,8 @@ importers:
         specifier: ^1.4.1
         version: 1.4.1(svelte@5.57.2(@typescript-eslint/types@8.71.1))
       '@sveltia/ui':
-        specifier: ^0.80.0
-        version: 0.80.0(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)
+        specifier: ^0.80.1
+        version: 0.80.1(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.3
         version: 0.12.3
@@ -1254,8 +1254,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.80.0':
-    resolution: {integrity: sha512-7brJFcVn38E2cPMdKvtoMKtUmjH5hv7QyhX9j/UwADMP4sgODD8jB/psCV02Ujw8ufaH6e6I66hshSrv57Dl+Q==}
+  '@sveltia/ui@0.80.1':
+    resolution: {integrity: sha512-Uj9PwVbKKgphBZkmk8bmsNXZ24XLyOfbOHhZmnHgfEr2OQjps+zOEukWjVfhyKtohnrCjA0HVcdcqwaVTRAXyQ==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -5012,7 +5012,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.57.2(@typescript-eslint/types@8.71.1)
 
-  '@sveltia/ui@0.80.0(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)':
+  '@sveltia/ui@0.80.1(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.52.0(typescript@6.0.3)
       '@lexical/dragon': 0.52.0(typescript@6.0.3)
