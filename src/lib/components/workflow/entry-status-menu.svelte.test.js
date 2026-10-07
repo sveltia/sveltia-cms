@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { updateWorkflowStatus } from '$lib/services/workflow/save';
@@ -109,6 +110,26 @@ describe('EntryStatusMenu', () => {
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent('error Error Couldn’t change the status. Please try again.');
+    await waitForToastsToHide();
+  });
+
+  test('says what stands in the way when trying again wouldn’t help', async () => {
+    vi.mocked(updateWorkflowStatus).mockRejectedValue(
+      createLocalizedError('The workflow branch is in use.', 'workflow.branch_in_use', {
+        number: '!3',
+      }),
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await renderWithDraft(EntryStatusMenu, { draft: createMockDraft(), props: { entry } });
+    await page.getByRole('button').click();
+    await page.getByRole('menuitemradio', { name: 'In Review' }).click();
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'error Error Another request (\u2068!3\u2069) is already open for this entry outside the CMS. Ask a developer to close it first.',
+      );
     await waitForToastsToHide();
   });
 });

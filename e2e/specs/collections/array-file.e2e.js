@@ -317,7 +317,9 @@ test.describe('GitHub', () => {
       .getByRole('button', { name: 'Delete' })
       .click();
 
-    await expect(page.getByRole('alert')).toContainText('Couldn’t delete the entry');
+    await expect(page.getByRole('alert')).toContainText(
+      'An entry stored in the same file has been changed by someone else.',
+    );
     expect(github.received).toHaveLength(0);
     expect(github.readFile(MEMBERS)).toBe(format([{ name: 'Zoe' }, ALICE, 'TBD', BOB, CAROL]));
   });

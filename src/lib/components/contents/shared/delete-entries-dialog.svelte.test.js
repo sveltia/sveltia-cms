@@ -5,6 +5,7 @@ import { render } from 'vitest-browser-svelte';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { backendName } from '$lib/services/backends';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
@@ -20,6 +21,7 @@ import {
   setAssets,
   setEntries,
 } from '$lib/test/config';
+import { waitForToastsToHide } from '$lib/test/toast';
 
 import DeleteEntriesDialog from './delete-entries-dialog.svelte';
 
@@ -136,6 +138,27 @@ describe('DeleteEntriesDialog', () => {
     await expect
       .element(page.getByRole('alertdialog'))
       .toMatchTextContent('One of them hasn’t been published yet');
+  });
+
+  test('says what stands in the way of the deletion', async () => {
+    vi.mocked(deleteEntries).mockRejectedValue(
+      createLocalizedError(
+        'Cannot delete a published entry as an Open Authoring contributor',
+        'open_authoring.direct_commit_unsupported',
+      ),
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    selectedEntries.current = [entries[0]];
+
+    await render(DeleteEntriesDialog, { open: true });
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'error Error This change can’t be made directly. Only edits to entries can be suggested for review.',
+      );
+    await waitForToastsToHide();
   });
 
   test('reports a failure', async () => {

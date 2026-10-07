@@ -1,6 +1,8 @@
+import { _ } from '@sveltia/i18n';
 import { getPathInfo } from '@sveltia/utils/file';
 
 import { isInCmsFolder } from '$lib/services/assets/reserved';
+import { getErrorMessage } from '$lib/services/backends/git/shared/errors';
 import { createFileList } from '$lib/services/backends/process';
 import { findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
@@ -349,17 +351,22 @@ export const verifyMergeState = async (entry, state, fetchUnchangedPaths) => {
 };
 
 /**
- * Get the message to show when publishing an entry has failed.
- * @param {any} ex Error thrown by `publishWorkflowEntry()`.
+ * Get the message to show when an Editorial Workflow action has failed. A refused publish says what
+ * the pull request holds, and a localized error from the backend what stands in the way, e.g.
+ * another request open from the workflow branch, neither of which trying again would change. See
+ * {@link getErrorMessage}.
+ * @param {any} ex Error thrown by the action.
  * @param {string} fallback I18n key of the message for any other failure.
- * @returns {string} I18n key.
+ * @returns {string} Localized message.
  */
-export const getPublishErrorKey = (ex, fallback) => {
+export const getWorkflowErrorMessage = (ex, fallback) => {
   if (ex?.message !== PUBLISH_REFUSED) {
-    return fallback;
+    return getErrorMessage(ex, fallback);
   }
 
-  return /** @type {PublishRefusal} */ (ex.cause).reason === 'entry_changed'
-    ? 'workflow.publish_refused_entry_changed'
-    : 'workflow.publish_refused_other_changes';
+  return _(
+    /** @type {PublishRefusal} */ (ex.cause).reason === 'entry_changed'
+      ? 'workflow.publish_refused_entry_changed'
+      : 'workflow.publish_refused_other_changes',
+  );
 };

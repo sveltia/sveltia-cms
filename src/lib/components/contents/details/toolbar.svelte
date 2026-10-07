@@ -26,6 +26,7 @@
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
   import { encodeRoutePath, goBack, goto, overlayTitle } from '$lib/services/app/navigation';
+  import { getErrorMessage } from '$lib/services/backends/git/shared/errors';
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
   import { isDraftReadonly } from '$lib/services/config/readonly';
   import { getCollectionLabel } from '$lib/services/contents/collection';
@@ -75,6 +76,7 @@
   import { getDiscardDialogStrings } from '$lib/services/workflow/dialogs';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
   import { discardWorkflowEntry, updateWorkflowStatus } from '$lib/services/workflow/save';
+  import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
   /**
    * @import { Entry, UnpublishedEntry, UpdateToastState } from '$lib/types/private';
@@ -117,6 +119,7 @@
    */
   let saveConflict = $state();
   let showDeleteErrorToast = $state(false);
+  let deleteErrorMessage = $state('');
   let showErrorDialog = $state(false);
   let errorMessage = $state('');
   let saving = $state(false);
@@ -312,6 +315,7 @@
     try {
       toastState = await action();
     } catch (/** @type {any} */ ex) {
+      deleteErrorMessage = getErrorMessage(ex, 'deleting_entry_failed');
       showDeleteErrorToast = true;
       // eslint-disable-next-line no-console
       console.error(ex);
@@ -436,7 +440,7 @@
           await updateWorkflowStatus(savedDraft, 'pending_review');
         } catch (/** @type {any} */ ex) {
           showErrorDialog = true;
-          errorMessage = _('workflow.status_change_failed');
+          errorMessage = getWorkflowErrorMessage(ex, 'workflow.status_change_failed');
           statusChangeFailed = true;
           // eslint-disable-next-line no-console
           console.error(ex);
@@ -803,7 +807,7 @@ because this toast goes away with the editor once the deletion has completed -->
 {/if}
 
 <Toast bind:show={showDeleteErrorToast}>
-  <Alert status="error">{_('deleting_entry_failed')}</Alert>
+  <Alert status="error">{deleteErrorMessage}</Alert>
 </Toast>
 
 <!-- @todo make the error message more informative -->

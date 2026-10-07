@@ -12,6 +12,7 @@
   import { workflowStages } from '$lib/services/workflow/open-authoring';
   import { updateWorkflowStatus } from '$lib/services/workflow/save';
   import { canMoveToStatus } from '$lib/services/workflow/validate';
+  import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
   /**
    * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -35,6 +36,7 @@
 
   let updating = $state(false);
   let showErrorToast = $state(false);
+  let errorMessage = $state('');
   let showValidationToast = $state(false);
 
   const status = $derived(entry.workflow.status);
@@ -67,6 +69,7 @@
     try {
       await updateWorkflowStatus(entry, newStatus);
     } catch (/** @type {any} */ ex) {
+      errorMessage = getWorkflowErrorMessage(ex, 'workflow.status_change_failed');
       showErrorToast = true;
       // eslint-disable-next-line no-console
       console.error(ex);
@@ -103,7 +106,7 @@
 </MenuButton>
 
 <Toast bind:show={showErrorToast}>
-  <Alert status="error">{_('workflow.status_change_failed')}</Alert>
+  <Alert status="error">{errorMessage}</Alert>
 </Toast>
 
 <Toast bind:show={showValidationToast}>

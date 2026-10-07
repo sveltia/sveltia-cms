@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-svelte';
 
 import { announcedPageStatus } from '$lib/services/app/navigation';
 import { backendName } from '$lib/services/backends';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { deployments, productionSHA } from '$lib/services/deployments';
 import {
   publishingBranches,
@@ -171,6 +172,49 @@ describe('WorkflowPage', () => {
         timeout: 7000,
       })
       .toBe('true');
+  });
+
+  test('says what stands in the way of a status change', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(updateWorkflowStatus).mockRejectedValue(
+      createLocalizedError('The workflow branch is in use.', 'workflow.branch_in_use', {
+        number: '!3',
+      }),
+    );
+
+    const { container } = await render(WorkflowPage);
+
+    await expect.poll(() => container.querySelectorAll('.card').length).toBe(5);
+    dragTo(
+      /** @type {HTMLElement} */ (container.querySelector('.card')),
+      /** @type {HTMLElement} */ (page.getByRole('list', { name: 'In Review' }).element()),
+    );
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'error Error Another request (\u2068!3\u2069) is already open for this entry outside the CMS. Ask a developer to close it first.',
+      );
+  });
+
+  test('reports a failed status change', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    // An API error’s own message isn’t meant for the user
+    vi.mocked(updateWorkflowStatus).mockRejectedValue(
+      new Error('Server responded with an error', { cause: { status: 500, message: 'Oops' } }),
+    );
+
+    const { container } = await render(WorkflowPage);
+
+    await expect.poll(() => container.querySelectorAll('.card').length).toBe(5);
+    dragTo(
+      /** @type {HTMLElement} */ (container.querySelector('.card')),
+      /** @type {HTMLElement} */ (page.getByRole('list', { name: 'In Review' }).element()),
+    );
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent('error Error Couldn’t change the status. Please try again.');
   });
 
   test('ignores a drop in the same stage, or from elsewhere', async () => {

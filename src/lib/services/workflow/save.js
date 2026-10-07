@@ -1,10 +1,10 @@
-import { _ } from '@sveltia/i18n';
 import { unique } from '@sveltia/utils/array';
 
 import { callEventHooks } from '$lib/services/api/events';
 import { backend } from '$lib/services/backends';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { getCommitAuthor } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
@@ -466,9 +466,10 @@ export const deleteWorkflowEntry = async (
   // Taking a published entry off the site is a maintainer’s call. A contributor can discard their
   // own draft, which leaves the published version alone, but not propose a removal
   if (openAuthoring.current) {
-    throw new Error('Cannot delete a published entry as an Open Authoring contributor', {
-      cause: new Error(_('open_authoring.direct_commit_unsupported')),
-    });
+    throw createLocalizedError(
+      'Cannot delete a published entry as an Open Authoring contributor',
+      'open_authoring.direct_commit_unsupported',
+    );
   }
 
   if (!targets) {

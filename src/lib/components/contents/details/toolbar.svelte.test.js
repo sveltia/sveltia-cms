@@ -3,6 +3,7 @@ import { page, userEvent } from 'vitest/browser';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { backendName } from '$lib/services/backends';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
@@ -735,6 +736,27 @@ describe('Toolbar', () => {
     await waitForToastsToHide();
   });
 
+  test('says what stands in the way of the deletion', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(deleteEntries).mockRejectedValue(
+      createLocalizedError(
+        'Cannot delete a published entry as an Open Authoring contributor',
+        'open_authoring.direct_commit_unsupported',
+      ),
+    );
+
+    await renderExisting();
+    await (await openMenu()).getByRole('menuitem', { name: 'Delete Entry' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'error Error This change can’t be made directly. Only edits to entries can be suggested for review.',
+      );
+    await waitForToastsToHide();
+  });
+
   test('reports a failure to save without a cause', async () => {
     vi.mocked(saveEntry).mockRejectedValue(new Error('saving_failed'));
 
@@ -1203,6 +1225,26 @@ describe('Toolbar', () => {
       // someone else’s change
       await expect.poll(() => entryDraft.current?.isNew).toBe(false);
       await expect.poll(() => entryDraft.current?.originalEntry).toBe(unpublishedEntry);
+    });
+
+    test('says what stands in the way of sending for review', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.mocked(updateWorkflowStatus).mockRejectedValue(
+        createLocalizedError('The workflow branch is in use.', 'workflow.branch_in_use', {
+          number: '!3',
+        }),
+      );
+
+      await renderToolbar();
+
+      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Send for Review' }).click();
+
+      await expect
+        .element(page.getByRole('alertdialog', { name: 'Error' }))
+        .toHaveTextContent(
+          'Error There was an error while saving the entry. Please try again later. Another request (\u2068!3\u2069) is already open for this entry outside the CMS. Ask a developer to close it first. OK',
+        );
     });
 
     test('deletes an unpublished entry by discarding its pull request', async () => {

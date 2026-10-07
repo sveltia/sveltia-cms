@@ -713,8 +713,10 @@ test.describe('as a contributor', () => {
       await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
 
       // GitLab refuses a second merge request from the branch, and the one in the way is left as
-      // it was
-      await expect(page.getByRole('alert')).toContainText('Couldn’t change the status.');
+      // it was. Trying again wouldn’t help, so the contributor is told what’s in the way
+      await expect(page.getByRole('alert')).toContainText(
+        `Another request (\u2068!${decoy.iid}\u2069) is already open for this entry`,
+      );
       expect(gitlab.mergeRequests).toHaveLength(1);
       expect(decoy).toMatchObject({ title: 'Draft: Tidy up the posts', state: 'opened' });
     });

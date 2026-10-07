@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { mergeLockedBranch } from '$lib/services/backends/branch-access';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { publishingBranches } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { publishWorkflowEntry } from '$lib/services/workflow/save';
@@ -173,6 +174,31 @@ describe('PublishEntryButton', () => {
       .element(page.getByRole('alert'))
       .toHaveTextContent('error Error Couldn’t publish the entry. Please try again.');
     expect(entryDraft.current).not.toBeNull();
+    await waitForToastsToHide();
+  });
+
+  test('says what stands in the way when trying again wouldn’t help', async () => {
+    vi.mocked(publishWorkflowEntry).mockRejectedValue(
+      createLocalizedError(
+        'Cannot publish as an Open Authoring contributor',
+        'open_authoring.publish_unsupported',
+      ),
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await renderWithDraft(PublishEntryButton, {
+      draft: createMockDraft(),
+      props: { entry: createEntry('pending_publish') },
+    });
+
+    await page.getByRole('button', { name: 'Publish Entry' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Publish' }).click();
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'error Error Only a maintainer can publish changes to this site. Mark your entry as In Review instead, and someone will take a look.',
+      );
     await waitForToastsToHide();
   });
 

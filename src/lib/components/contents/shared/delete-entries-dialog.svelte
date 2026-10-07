@@ -3,6 +3,7 @@
   import { Alert, ConfirmationDialog, Toast } from '@sveltia/ui';
 
   import CascadeDeleteNote from '$lib/components/common/cascade-delete-note.svelte';
+  import { getErrorMessage } from '$lib/services/backends/git/shared/errors';
   import { selectedCollection } from '$lib/services/contents/collection';
   import {
     contentUpdatesToast,
@@ -31,6 +32,7 @@
   let { open = $bindable(false) } = $props();
 
   let showErrorToast = $state(false);
+  let errorMessage = $state('');
 
   // Deleting an unpublished entry discards the draft instead of committing a deletion, so the two
   // kinds of entries have to be handled separately
@@ -85,6 +87,7 @@
         contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, ...toastState };
       }
     } catch (/** @type {any} */ ex) {
+      errorMessage = getErrorMessage(ex, 'deleting_entry_failed');
       showErrorToast = true;
       // eslint-disable-next-line no-console
       console.error(ex);
@@ -136,5 +139,5 @@
 </ConfirmationDialog>
 
 <Toast bind:show={showErrorToast}>
-  <Alert status="error">{_('deleting_entry_failed')}</Alert>
+  <Alert status="error">{errorMessage}</Alert>
 </Toast>

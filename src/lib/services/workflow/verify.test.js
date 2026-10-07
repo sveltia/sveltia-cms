@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
@@ -9,7 +10,7 @@ import { collectRenameTargets } from '$lib/services/contents/entry/relations/cas
 import { unpublishedEntries } from '$lib/services/workflow';
 import {
   findUnexpectedChanges,
-  getPublishErrorKey,
+  getWorkflowErrorMessage,
   PUBLISH_REFUSED,
   verifyMergeState,
 } from '$lib/services/workflow/verify';
@@ -24,6 +25,9 @@ const ENTRY_FOLDERS = {
   'content/tags/': 'tags',
 };
 
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key, options) => `${key}${options ? `:${JSON.stringify(options.values)}` : ''}`),
+}));
 vi.mock('$lib/services/backends/process', () => ({
   /**
    * Classify files the way the real file list does, against a fixed set of folders.
@@ -720,17 +724,28 @@ describe('workflow/verify', () => {
     });
   });
 
-  describe('getPublishErrorKey', () => {
+  describe('getWorkflowErrorMessage', () => {
+    test('shows what a localized error says', () => {
+      expect(
+        getWorkflowErrorMessage(
+          createLocalizedError('The workflow branch is in use.', 'workflow.branch_in_use', {
+            number: '!3',
+          }),
+          'fallback',
+        ),
+      ).toBe('workflow.branch_in_use:{"number":"!3"}');
+    });
+
     test('says why a publish was refused', () => {
       expect(
-        getPublishErrorKey(
+        getWorkflowErrorMessage(
           new Error(PUBLISH_REFUSED, { cause: { reason: 'entry_changed', paths: [] } }),
           'fallback',
         ),
       ).toBe('workflow.publish_refused_entry_changed');
 
       expect(
-        getPublishErrorKey(
+        getWorkflowErrorMessage(
           new Error(PUBLISH_REFUSED, { cause: { reason: 'other_changes', paths: ['a'] } }),
           'fallback',
         ),
@@ -738,8 +753,26 @@ describe('workflow/verify', () => {
     });
 
     test('falls back for any other failure', () => {
-      expect(getPublishErrorKey(new Error('Merge failed'), 'fallback')).toBe('fallback');
-      expect(getPublishErrorKey(undefined, 'fallback')).toBe('fallback');
+      expect(getWorkflowErrorMessage(new Error('Merge failed'), 'fallback')).toBe('fallback');
+      expect(getWorkflowErrorMessage(undefined, 'fallback')).toBe('fallback');
+    });
+
+    test('doesn’t show an API error’s own message', () => {
+      expect(
+        getWorkflowErrorMessage(
+          new Error('Server responded with an error', {
+            cause: { status: 409, message: 'Another open merge request already exists' },
+          }),
+          'fallback',
+        ),
+      ).toBe('fallback');
+
+      expect(
+        getWorkflowErrorMessage(
+          new Error('Failed to send the request', { cause: new TypeError('Failed to fetch') }),
+          'fallback',
+        ),
+      ).toBe('fallback');
     });
   });
 });

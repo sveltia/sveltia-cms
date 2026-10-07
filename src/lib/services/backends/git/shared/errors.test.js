@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   createLocalizedError,
+  getErrorMessage,
   NOT_COLLABORATOR_ERROR_MESSAGE,
 } from '$lib/services/backends/git/shared/errors';
 
@@ -40,5 +41,37 @@ describe('createLocalizedError', () => {
     expect(error.message).toBe('Cannot do something.');
     expect(/** @type {Error} */ (error.cause).message).toBe('open_authoring.fork_declined');
     expect(_).toHaveBeenCalledWith('open_authoring.fork_declined');
+  });
+});
+
+describe('getErrorMessage', () => {
+  it('should return the localized message of an error created with createLocalizedError', () => {
+    expect(
+      getErrorMessage(
+        createLocalizedError('The workflow branch is in use.', 'workflow.branch_in_use', {
+          number: '!3',
+        }),
+        'fallback',
+      ),
+    ).toBe('workflow.branch_in_use:{"number":"!3"}');
+  });
+
+  it('should return the fallback message for any other error', () => {
+    expect(
+      getErrorMessage(
+        new Error('Server responded with an error', {
+          cause: { status: 409, message: 'Conflict' },
+        }),
+        'fallback',
+      ),
+    ).toBe('fallback');
+    expect(
+      getErrorMessage(
+        new Error('Failed to send the request', { cause: new TypeError() }),
+        'fallback',
+      ),
+    ).toBe('fallback');
+    expect(getErrorMessage(new Error('Something failed'), 'fallback')).toBe('fallback');
+    expect(getErrorMessage(undefined, 'fallback')).toBe('fallback');
   });
 });
