@@ -161,6 +161,49 @@ describe('RichTextPreview', () => {
     expect(preview.querySelector('p')).toBeNull();
   });
 
+  test('renders the preview of a component with HTML syntax in an HTML value', async () => {
+    customComponentRegistry.set('note', {
+      id: 'note',
+      label: 'Note',
+      fields: [{ name: 'text', widget: 'string' }],
+      pattern: /^:::note (?<text>.+)$/m,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      toBlock: ({ text }) => `:::note ${text}`,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      toPreview: ({ text }) => {
+        const element = document.createElement('strong');
+
+        element.className = 'note-preview';
+        element.textContent = text;
+
+        return element;
+      },
+      htmlSelector: 'aside.note',
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      fromBlockHTML: (element) => ({ text: element.textContent }),
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      toBlockHTML: ({ text }) => `<aside class="note">${text}</aside>`,
+    });
+
+    const { preview, props } = await renderPreviewWithProps(
+      '<p>Intro</p><aside class="note">Heads up</aside>',
+      { format: 'html' },
+    );
+
+    await expect.poll(() => preview.querySelector('.note-preview')?.textContent).toBe('Heads up');
+    expect(preview.querySelector('aside')).toBeNull();
+    expect(preview.querySelector('p')?.textContent).toBe('Intro');
+
+    // Only the changed block is rendered again, so the preview stays where it is
+    const placeholder = preview.querySelector('[data-component-key]');
+
+    props.currentValue = '<p>Changed</p><aside class="note">Heads up</aside>';
+
+    await expect.poll(() => preview.querySelector('p')?.textContent).toBe('Changed');
+    expect(preview.querySelector('[data-component-key]')).toBe(placeholder);
+    expect(preview.querySelector('.note-preview')?.textContent).toBe('Heads up');
+  });
+
   test('sanitizes an HTML value unless configured otherwise', async () => {
     const html = '<p onclick="alert(1)">Hi</p><script>alert(1)</script>';
     const sanitized = await renderPreview(html, { format: 'html' });

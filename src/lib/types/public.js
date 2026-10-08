@@ -970,10 +970,10 @@
  * @typedef {object} RichTextFieldFormatProps
  * @property {RichTextValueFormat} [format] Format of the field value: `markdown` or `html`.
  * Default: `markdown`. With `html`, the value is saved as HTML, and the raw mode shows the HTML
- * source. Editor components, including the built-in `image` component, are not available in the
- * editor UI, as they are defined with Markdown syntax; the `code-block` component, which is a
- * button in Sveltia CMS, is still available. HTML with an element the rich text mode cannot handle,
- * like `<img>`, can only be edited in the raw mode. Attributes the editor doesn’t use, like
+ * source. Only the editor components that support HTML with the `htmlSelector`, `fromBlockHTML`
+ * and `toBlockHTML` options are available, including the built-in `code-block` and `image`
+ * components. HTML with an element the rich text mode cannot handle, like `<video>` without a
+ * component for it, can only be edited in the raw mode. Attributes the editor doesn’t use, like
  * `class`, are dropped once the content is changed in the rich text mode.
  * @see https://sveltiacms.app/en/docs/fields/richtext
  */
@@ -2278,6 +2278,28 @@
  * @property {(props: Record<string, any>) => string} toBlock Function to convert field values to
  * Markdown content. It’s also called once with an empty object when the component is first used in
  * a rich text editor or preview, so it must handle missing values.
+ * @property {string} [htmlSelector] CSS selector to find the component’s element in HTML
+ * content, the counterpart of `pattern` for a RichText field with the `html` format, e.g.
+ * `aside.note`. A component is only available in such a field if this, `fromBlockHTML` and
+ * `toBlockHTML` are all defined. Each selector in a list has to name the element type it matches,
+ * e.g. `a:has(> img), img`, as the editor finds the component by those tag names; `.note` is
+ * invalid. The outermost matching element is the component, including its content. An element
+ * of the named types that isn’t a component instance, e.g. an `<aside>` without the class for
+ * `aside.note`, is handled as if there was no component: the editor imports it if it can, e.g. as
+ * a link for `a`, or the field can only be edited in the raw mode otherwise.
+ * @property {(element: HTMLElement) => Record<string, any> | undefined} [fromBlockHTML] Function
+ * to convert an element matching `htmlSelector` to field values, the counterpart of `fromBlock`,
+ * e.g. by reading its attributes with `getAttribute()`, which returns decoded values. It can return
+ * `undefined` if the element is not an instance of the component after all, e.g. a link that has
+ * more than an image, which a selector cannot tell. The element comes from content edited by
+ * users, so read it as data: inserting the element itself into the page would bypass the preview
+ * sanitization.
+ * @property {(props: Record<string, any>) => string | HTMLElement} [toBlockHTML] Function to
+ * convert field values to HTML content, the counterpart of `toBlock`. It should return a single
+ * element matching `htmlSelector`, either as an HTML string, escaping the field values as needed,
+ * or as an `HTMLElement` created with `document.createElement()`. The latter is safer, as values
+ * set with `setAttribute()` or `textContent` don’t have to be escaped. The output is also used
+ * when the component is copied to the clipboard in the editor, in a Markdown field as well.
  * @property {(props: Record<string, any>, getAsset: GetAsset, fields: List<MapOf<Record<string,
  * any>>> | undefined) => string | HTMLElement | ReactElement} [toPreview] Function to convert field
  * values to the component preview. Like `toBlock`, it’s also called once with an empty object when
@@ -2295,9 +2317,10 @@
  * mounted component. A preview is reused while the component’s Markdown is unchanged, except that
  * it’s computed again once an asset it got with `getAsset` has been retrieved, as the asset’s `url`
  * is then replaced with the blob URL. If the function is omitted or returns another type of value,
- * nothing is shown in the preview. The value of a nested RichText or Markdown field is passed
- * verbatim, including any nested component syntax; use `CMS.renderRichText()` to render it within
- * an `HTMLElement` preview.
+ * nothing is shown in the preview, except that the HTML of a component is shown as is in a RichText
+ * field with the `html` format if the function is omitted. The value of a nested RichText or
+ * Markdown field is passed verbatim, including any nested component syntax; use
+ * `CMS.renderRichText()` to render it within an `HTMLElement` preview.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */

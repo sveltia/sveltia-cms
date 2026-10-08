@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 /* eslint-disable jsdoc/require-jsdoc */
 
 import { fromJS, isList } from 'immutable';
@@ -11,6 +12,7 @@ import {
   MEDIA_QUERY_SELECTOR,
   parseSrcset,
   resolveMediaURLs,
+  splitHTMLBlocks,
   splitMarkdownBlocks,
 } from './previews.js';
 
@@ -225,6 +227,27 @@ describe('encodeImageSrc', () => {
   });
 });
 
+describe('splitHTMLBlocks', () => {
+  it('should split HTML into its top-level nodes, keeping the text between them', () => {
+    expect(
+      splitHTMLBlocks(
+        '<h2>Title</h2>\n<p>A <b>bold</b> move</p><!-- more -->Tom &amp; <i>Jerry</i>',
+      ),
+    ).toEqual(['<h2>Title</h2>', '\n', '<p>A <b>bold</b> move</p>', 'Tom &amp; ', '<i>Jerry</i>']);
+  });
+
+  it('should keep a component placeholder as a block', () => {
+    expect(splitHTMLBlocks('<p>Hi</p><span data-component-key="abc"></span>')).toEqual([
+      '<p>Hi</p>',
+      '<span data-component-key="abc"></span>',
+    ]);
+  });
+
+  it('should return no blocks for an empty string', () => {
+    expect(splitHTMLBlocks('')).toEqual([]);
+  });
+});
+
 describe('buildMarkdownWithPreviews', () => {
   it('should return the original markdown when there are no component defs', () => {
     const { markdown, previewMap } = buildMarkdownWithPreviews('Hello **world**', []);
@@ -238,6 +261,97 @@ describe('buildMarkdownWithPreviews', () => {
 
     expect(markdown).toBe('');
     expect(previewMap.size).toBe(0);
+  });
+
+  describe('with the HTML format', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'note',
+        label: 'Note',
+        fields: [],
+        pattern: /\[note\](?<content>.*?)\[\/note\]/s,
+        toBlock: ({ content }) => `[note]${content}[/note]`,
+        toPreview: ({ content }) => `<div class="preview">${content}</div>`,
+        htmlSelector: 'aside',
+        fromBlockHTML: (element) =>
+          element.classList.contains('note') ? { content: element.innerHTML } : undefined,
+        toBlockHTML: ({ content }) => `<aside class="note">${content}</aside>`,
+      },
+      {
+        // A component without HTML support is left out
+        id: 'markdown-only',
+        label: 'Markdown Only',
+        fields: [],
+        pattern: /<p>/,
+        toBlock: () => '',
+        toPreview: () => '<b>should not be used</b>',
+      },
+    ];
+
+    /**
+     * Build the preview of an HTML value.
+     * @param {string | undefined} html HTML.
+     * @param {import('$lib/types/public').EditorComponentDefinition[]} [defs] Definitions.
+     * @param {Map<string, any>} [previousPreviewMap] Previous preview map.
+     * @returns {ReturnType<typeof buildMarkdownWithPreviews>} Result.
+     */
+    const build = (html, defs = componentDefs, previousPreviewMap = undefined) =>
+      buildMarkdownWithPreviews(html, defs, previousPreviewMap, undefined, 'html');
+
+    it('should find the components with the HTML syntax, outermost first', () => {
+      const { markdown, previewMap } = build(
+        '<p>[note]Not a note[/note]</p><section><aside class="note">Hi <aside class="note">' +
+          'nested</aside></aside></section><aside>Not a note either</aside>',
+      );
+
+      expect(markdown).toBe(
+        '<p>[note]Not a note[/note]</p><section><div class="preview">Hi <aside class="note">' +
+          'nested</aside></div></section><aside>Not a note either</aside>',
+      );
+      expect(previewMap.size).toBe(1);
+    });
+
+    it('should replace an element preview with a placeholder, with unique keys', () => {
+      const element = document.createElement('div');
+      const defs = [{ ...componentDefs[0], toPreview: () => element }];
+
+      const { markdown, previewMap } = build(
+        '<aside class="note">Hi</aside><aside class="note">Hi</aside>',
+        defs,
+      );
+
+      const keys = [...previewMap.keys()];
+
+      expect(keys).toHaveLength(2);
+      expect(keys[1]).toBe(`${keys[0]}-1`);
+      expect(markdown).toBe(
+        keys.map((key) => `<span data-component-key="${key}"></span>`).join(''),
+      );
+      expect([...previewMap.values()]).toEqual([element, element]);
+    });
+
+    it('should reuse a preview from the previous run', () => {
+      const toPreview = vi.fn(() => '<b>preview</b>');
+      const defs = [{ ...componentDefs[0], toPreview }];
+      const { previewMap } = build('<aside class="note">Hi</aside>', defs);
+      const { markdown } = build('<p>New</p><aside class="note">Hi</aside>', defs, previewMap);
+
+      expect(toPreview).toHaveBeenCalledOnce();
+      expect(markdown).toBe('<p>New</p><b>preview</b>');
+    });
+
+    it('should leave the HTML of a component without a preview as is', () => {
+      const html = '<p><aside class="note">Hi</aside></p>';
+      const { markdown, previewMap } = build(html, [{ ...componentDefs[0], toPreview: undefined }]);
+
+      expect(markdown).toBe(html);
+      expect(previewMap.size).toBe(0);
+    });
+
+    it('should return an empty string for an undefined value', () => {
+      expect(build(undefined).markdown).toBe('');
+    });
   });
 
   it('should inline a string preview directly in the markdown', () => {

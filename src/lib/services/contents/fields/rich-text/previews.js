@@ -1,11 +1,19 @@
 import { getImmutable, immutableLoaded } from '$lib/services/api/immutable';
+import { supportsHTML } from '$lib/services/contents/fields/rich-text/components/utils';
 import { GLOBAL_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { escapeHTML } from '$lib/services/utils/string';
 
 /**
  * @import { List, MapOf } from 'immutable';
  * @import { ReactElement } from 'react';
- * @import { ApiAsset, EditorComponentDefinition, Field, GetAsset } from '$lib/types/public';
+ * @import {
+ * ApiAsset,
+ * EditorComponentDefinition,
+ * Field,
+ * GetAsset,
+ * RichTextValueFormat,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -243,6 +251,29 @@ const HTML_OPEN_TAG_REGEX = /^<([a-zA-Z][a-zA-Z0-9]*)(?:[\s>])/;
 const htmlTagRegexCache = new Map();
 
 /**
+ * Split an HTML string into its top-level nodes, so a preview only re-renders the nodes that have
+ * changed, like {@link splitMarkdownBlocks} does for Markdown. Elements and text are kept,
+ * including the whitespace between them, while comments are dropped.
+ * @param {string} html The full HTML string.
+ * @returns {string[]} Array of non-empty block strings.
+ */
+export const splitHTMLBlocks = (html) => {
+  const template = document.createElement('template');
+
+  template.innerHTML = html;
+
+  return [...template.content.childNodes]
+    .map((node) => {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        return /** @type {Element} */ (node).outerHTML;
+      }
+
+      return node.nodeType === Node.TEXT_NODE ? escapeHTML(/** @type {Text} */ (node).data) : '';
+    })
+    .filter(Boolean);
+};
+
+/**
  * Split a Markdown string into logical blocks at blank lines, keeping fenced code blocks (backtick
  * or tilde fences) and HTML block elements (e.g. `<div>`) intact even when they contain blank
  * lines.
@@ -475,6 +506,68 @@ const findOutermostMatches = (string, componentDefs, regions) => {
 };
 
 /**
+ * Compute the preview of a component instance, or reuse the one computed in the previous run, and
+ * add it to the preview map.
+ * @param {object} args Arguments.
+ * @param {EditorComponentDefinition} args.def Component definition.
+ * @param {Record<string, any>} args.fieldProps Field values of the instance.
+ * @param {string} args.source Markdown or HTML of the instance, which its key is computed from.
+ * @param {Map<string, number>} args.seenHashes Number of occurrences of each block hash so far,
+ * used to make the keys unique.
+ * @param {Map<string, ComponentPreview>} args.previewMap Preview map to be populated.
+ * @param {Map<string, ComponentPreview>} [args.previousPreviewMap] Preview map from the previous
+ * run, if any.
+ * @param {GetAsset} args.getAsset Asset getter passed to `toPreview()`.
+ * @param {Map<string, ApiAsset[]>} args.assetMap Map to be populated with the assets each newly
+ * computed preview has got with the asset getter, keyed by the preview’s key.
+ * @returns {{ key: string, preview: ComponentPreview }} Key and preview.
+ */
+const addComponentPreview = ({
+  def,
+  fieldProps,
+  source,
+  seenHashes,
+  previewMap,
+  previousPreviewMap,
+  getAsset,
+  assetMap,
+}) => {
+  const { toPreview } = def;
+  const baseHash = hashString(source);
+  const count = seenHashes.get(baseHash) ?? 0;
+  const key = count === 0 ? baseHash : `${baseHash}-${count}`;
+  let preview = previousPreviewMap?.get(key);
+
+  if (preview == null && toPreview) {
+    /** @type {ApiAsset[]} */
+    const assets = [];
+
+    preview = toPreview(
+      fieldProps,
+      (path, field) => {
+        const asset = getAsset(path, field);
+
+        if (asset) {
+          assets.push(asset);
+        }
+
+        return asset;
+      },
+      getComponentFieldList(def),
+    );
+
+    if (assets.length) {
+      assetMap.set(key, assets);
+    }
+  }
+
+  seenHashes.set(baseHash, count + 1);
+  previewMap.set(key, preview);
+
+  return { key, preview };
+};
+
+/**
  * Substitute the given component matches in the string with their previews.
  * @param {object} args Arguments.
  * @param {string} args.string String to process.
@@ -507,38 +600,19 @@ const substituteMatches = ({
   let length = 0;
 
   matches.forEach(({ def, match, index, end }) => {
-    const { fromBlock, toPreview } = def;
-    const baseHash = hashString(match[0]);
-    const count = seenHashes.get(baseHash) ?? 0;
-    const key = count === 0 ? baseHash : `${baseHash}-${count}`;
-    const fieldProps = fromBlock?.(match) ?? match.groups ?? {};
-    let preview = previousPreviewMap?.get(key);
+    const fieldProps = def.fromBlock?.(match) ?? match.groups ?? {};
 
-    if (preview == null && toPreview) {
-      /** @type {ApiAsset[]} */
-      const assets = [];
+    const { key, preview } = addComponentPreview({
+      def,
+      fieldProps,
+      source: match[0],
+      seenHashes,
+      previewMap,
+      previousPreviewMap,
+      getAsset,
+      assetMap,
+    });
 
-      preview = toPreview(
-        fieldProps,
-        (path, field) => {
-          const asset = getAsset(path, field);
-
-          if (asset) {
-            assets.push(asset);
-          }
-
-          return asset;
-        },
-        getComponentFieldList(def),
-      );
-
-      if (assets.length) {
-        assetMap.set(key, assets);
-      }
-    }
-
-    seenHashes.set(baseHash, count + 1);
-    previewMap.set(key, preview);
     chunks.push(string.slice(cursor, index));
     length += index - cursor;
 
@@ -572,6 +646,100 @@ const substituteMatches = ({
 };
 
 /**
+ * Process an HTML string by finding editor component instances with their `htmlSelector` and
+ * `fromBlockHTML` options, computing their previews and replacing each instance with its string
+ * preview or a placeholder `<span>` keyed to the preview map, like
+ * {@link buildMarkdownWithPreviews} does for Markdown. The HTML is parsed into an inert template,
+ * so nothing in it runs or loads. The outermost instance wins, as its content is part of it.
+ * Components without HTML support or `toPreview()` are left out, and their HTML is rendered as is.
+ * A string preview isn’t searched for nested components; an element preview can render its nested
+ * content with `CMS.renderRichText()`.
+ * @param {string} html The raw HTML field value.
+ * @param {EditorComponentDefinition[]} componentDefs The resolved component definitions.
+ * @param {Map<string, ComponentPreview>} [previousPreviewMap] Preview map from the previous run.
+ * @param {GetAsset} [getAsset] Asset getter passed to `toPreview()`.
+ * @returns {{
+ * markdown: string,
+ * previewMap: Map<string, ComponentPreview>,
+ * assetMap: Map<string, ApiAsset[]>,
+ * }} The processed HTML string, a map of component keys to their preview values, and a map of
+ * the keys of the previews computed in this run to the assets they’ve got with `getAsset`.
+ */
+const buildHTMLWithPreviews = (html, componentDefs, previousPreviewMap, getAsset = getNoAsset) => {
+  const defs = componentDefs.filter((def) => supportsHTML(def) && !!def.toPreview);
+  /** @type {Map<string, ComponentPreview>} */
+  const previewMap = new Map();
+  /** @type {Map<string, ApiAsset[]>} */
+  const assetMap = new Map();
+  /** @type {Map<string, number>} */
+  const seenHashes = new Map();
+
+  if (!defs.length) {
+    return { markdown: html, previewMap, assetMap };
+  }
+
+  const template = document.createElement('template');
+
+  template.innerHTML = html;
+
+  /**
+   * Replace the component instances among the descendants of the given node with their previews.
+   * @param {ParentNode} parent Parent node.
+   */
+  const replaceInstances = (parent) => {
+    [...parent.children].forEach((element) => {
+      /** @type {Record<string, any> | undefined} */
+      let fieldProps;
+
+      const def = defs.find((d) => {
+        fieldProps = element.matches(/** @type {string} */ (d.htmlSelector))
+          ? /** @type {NonNullable<EditorComponentDefinition['fromBlockHTML']>} */ (
+              d.fromBlockHTML
+            )(/** @type {HTMLElement} */ (element))
+          : undefined;
+
+        return !!fieldProps;
+      });
+
+      if (!def) {
+        replaceInstances(element);
+
+        return;
+      }
+
+      const { key, preview } = addComponentPreview({
+        def,
+        fieldProps: /** @type {Record<string, any>} */ (fieldProps),
+        source: element.outerHTML,
+        seenHashes,
+        previewMap,
+        previousPreviewMap,
+        getAsset,
+        assetMap,
+      });
+
+      if (typeof preview === 'string') {
+        // Parse the preview into an inert template as well
+        const previewTemplate = document.createElement('template');
+
+        previewTemplate.innerHTML = preview;
+        element.replaceWith(previewTemplate.content);
+      } else {
+        // A placeholder for the `MutationObserver` to render an element or React element preview
+        const placeholder = document.createElement('span');
+
+        placeholder.dataset.componentKey = key;
+        element.replaceWith(placeholder);
+      }
+    });
+  };
+
+  replaceInstances(template.content);
+
+  return { markdown: template.innerHTML, previewMap, assetMap };
+};
+
+/**
  * Process a Markdown string by extracting editor component instances, computing their previews and
  * replacing each match with a placeholder `<span>` keyed to the preview map.
  *
@@ -590,6 +758,8 @@ const substituteMatches = ({
  * element preview.
  * @param {GetAsset} [getAsset] Asset getter passed to `toPreview()`, which resolves a file path to
  * the asset in the context of the entry draft. Defaults to one that never finds an asset.
+ * @param {RichTextValueFormat} [format] Format of the value. With `html`, the value is processed by
+ * {@link buildHTMLWithPreviews} instead.
  * @returns {{
  * markdown: string,
  * previewMap: Map<string, ComponentPreview>,
@@ -603,7 +773,12 @@ export const buildMarkdownWithPreviews = (
   componentDefs,
   previousPreviewMap,
   getAsset = getNoAsset,
+  format = 'markdown',
 ) => {
+  if (format === 'html') {
+    return buildHTMLWithPreviews(currentValue ?? '', componentDefs, previousPreviewMap, getAsset);
+  }
+
   /** @type {Map<string, ComponentPreview>} */
   const previewMap = new Map();
   /** @type {Map<string, ApiAsset[]>} */

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   escapeAttr,
+  escapeHTML,
   isNonEmptyString,
   makeLink,
   sanitizeInlineMarkdown,
@@ -227,5 +228,11 @@ describe('sanitizeInlineMarkdown', () => {
 
   it('should remove scripts', () => {
     expect(sanitizeInlineMarkdown('<script>alert(1)</script>ok')).toBe('ok');
+  });
+});
+
+describe('escapeHTML()', () => {
+  it('should escape the characters read as markup, but not quotes', () => {
+    expect(escapeHTML('Q&A <b> &amp; "x"')).toBe('Q&amp;A &lt;b&gt; &amp;amp; "x"');
   });
 });

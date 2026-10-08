@@ -59,6 +59,13 @@ vi.mock('$lib/services/utils/string', () => ({
   // @ts-ignore
   isNonEmptyString: (val) => typeof val === 'string' && val.trim().length > 0,
 }));
+// The document is a stub here, so check the selector syntax roughly; the function itself is tested
+// along with the rich text component utilities
+vi.mock('$lib/services/contents/fields/rich-text/components/utils', async (importOriginal) => ({
+  ...(await importOriginal()),
+  // @ts-ignore
+  isValidSelector: (selector) => !!selector && !selector.endsWith('('),
+}));
 vi.mock('$lib/services/api/field-types', () => ({
   getFieldTypeDefinition: vi.fn(),
 }));
@@ -499,6 +506,60 @@ describe('CMS.registerEditorComponent()', () => {
     // @ts-ignore
     expect(() => CMS.registerEditorComponent(definition)).toThrow(
       'The `definition.toPreview` must be a function',
+    );
+  });
+
+  test('registers a component with the HTML syntax', () => {
+    expect(() =>
+      CMS.registerEditorComponent({
+        ...validDefinition,
+        htmlSelector: 'aside.note, figure > img',
+        fromBlockHTML: () => ({}),
+        toBlockHTML: () => '<aside class="note"></aside>',
+      }),
+    ).not.toThrow();
+  });
+
+  test('throws with proper error messages for the invalid HTML syntax', () => {
+    const htmlOptions = {
+      htmlSelector: 'aside.note',
+      fromBlockHTML: () => ({}),
+      toBlockHTML: () => '<aside class="note"></aside>',
+    };
+
+    /**
+     * Get a function registering a component with the given HTML options.
+     * @param {Record<string, any>} options Options to override.
+     * @returns {() => void} Function.
+     */
+    const register = (options) => () =>
+      // @ts-ignore
+      CMS.registerEditorComponent({ ...validDefinition, ...htmlOptions, ...options });
+
+    const togetherMessage =
+      'The `definition.htmlSelector`, `definition.fromBlockHTML` and `definition.toBlockHTML` ' +
+      'must be given together';
+
+    expect(register({ htmlSelector: undefined })).toThrow(togetherMessage);
+    expect(register({ fromBlockHTML: undefined })).toThrow(togetherMessage);
+    expect(register({ toBlockHTML: undefined })).toThrow(togetherMessage);
+    expect(register({ htmlSelector: '' })).toThrow(
+      'The `definition.htmlSelector` must be a valid CSS selector',
+    );
+    expect(register({ htmlSelector: 42 })).toThrow(
+      'The `definition.htmlSelector` must be a valid CSS selector',
+    );
+    expect(register({ htmlSelector: 'aside:has(' })).toThrow(
+      'The `definition.htmlSelector` must be a valid CSS selector',
+    );
+    expect(register({ htmlSelector: 'aside, .note' })).toThrow(
+      'Each selector in the `definition.htmlSelector` must name the element type it matches',
+    );
+    expect(register({ fromBlockHTML: 'invalid' })).toThrow(
+      'The `definition.fromBlockHTML` must be a function',
+    );
+    expect(register({ toBlockHTML: 'invalid' })).toThrow(
+      'The `definition.toBlockHTML` must be a function',
     );
   });
 

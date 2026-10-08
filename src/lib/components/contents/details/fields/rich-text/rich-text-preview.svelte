@@ -27,6 +27,7 @@
     CONTAINER_QUERY_SELECTOR,
     MEDIA_QUERY_SELECTOR,
     resolveMediaURLs,
+    splitHTMLBlocks,
     splitMarkdownBlocks,
   } from '$lib/services/contents/fields/rich-text/previews';
   import { sanitizeRichTextHTML } from '$lib/services/contents/fields/rich-text/sanitize';
@@ -125,7 +126,8 @@
       [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
     linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
   } = $derived(fieldConfig);
-  const isHTML = $derived(getValueFormat(fieldConfig) === 'html');
+  const format = $derived(getValueFormat(fieldConfig));
+  const isHTML = $derived(format === 'html');
   const componentDefs = $derived(
     _editorComponents
       .map((name) =>
@@ -154,12 +156,6 @@
       return '';
     }
 
-    // HTML is rendered as is: editor components are defined with Markdown syntax, so they can’t be
-    // used in HTML
-    if (isHTML) {
-      return currentValue;
-    }
-
     // Compute again a preview dropped because an asset URL has changed
     void assetURLVersion;
 
@@ -169,7 +165,7 @@
       markdown: string,
       previewMap: newMap,
       assetMap,
-    } = buildMarkdownWithPreviews(currentValue, componentDefs, previewMap, getAsset);
+    } = buildMarkdownWithPreviews(currentValue, componentDefs, previewMap, getAsset, format);
 
     previewMap = newMap;
     newPreviewAssets = assetMap;
@@ -178,22 +174,17 @@
   });
 
   /**
-   * The Markdown split into blocks, each with a key that identifies it by content rather than by
-   * position: editing near the top of a long document then only re-renders the block that changed,
-   * instead of every block after it. Identical blocks are told apart by their occurrence.
+   * The Markdown or HTML split into blocks, each with a key that identifies it by content rather
+   * than by position: editing near the top of a long document then only re-renders the block that
+   * changed, instead of every block after it. Identical blocks are told apart by their occurrence.
    * @type {{ key: string, block: string }[]}
    */
   const keyedBlocks = $derived.by(() => {
-    // HTML is rendered as a whole, as it can’t be split into blocks as easily as Markdown
-    if (isHTML) {
-      return [{ key: '', block: markdown }];
-    }
-
     // A scratch counter for this computation, not state
     // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const occurrences = /** @type {Map<string, number>} */ (new Map());
 
-    return splitMarkdownBlocks(markdown).map((block) => {
+    return (isHTML ? splitHTMLBlocks : splitMarkdownBlocks)(markdown).map((block) => {
       const occurrence = occurrences.get(block) ?? 0;
 
       occurrences.set(block, occurrence + 1);

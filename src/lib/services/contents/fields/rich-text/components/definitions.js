@@ -13,6 +13,41 @@ import { escapeAttr } from '$lib/services/utils/string';
  */
 
 /**
+ * Get the image field values from an `<img>` element.
+ * @param {Element} img Image element.
+ * @returns {{ src: string, alt: string, title: string }} Values.
+ */
+const getImageProps = (img) => ({
+  src: img.getAttribute('src') ?? '',
+  alt: img.getAttribute('alt') ?? '',
+  title: img.getAttribute('title') ?? '',
+});
+
+/**
+ * Create an `<img>` element from the image field values. The values are set as attributes, so they
+ * don’t have to be escaped.
+ * @param {Record<string, any>} props Field values.
+ * @returns {HTMLImageElement | string} Element, or an empty string if the source is not set.
+ */
+const createImageElement = ({ src = '', alt = '', title = '' }) => {
+  if (!src) {
+    return '';
+  }
+
+  const img = document.createElement('img');
+
+  img.setAttribute('src', src);
+  // The alt text is always there for accessibility, even if empty
+  img.setAttribute('alt', alt);
+
+  if (title) {
+    img.setAttribute('title', title);
+  }
+
+  return img;
+};
+
+/**
  * Built-in image component definition. The labels are localized in `getBuiltInComponentDefs()`.
  * @type {EditorComponentDefinition}
  * @see https://decapcms.org/docs/widgets/#Markdown
@@ -36,9 +71,11 @@ export const IMAGE_COMPONENT = {
   toPreview: (props) => {
     const { src = '', alt = '', title = '' } = props;
 
-    // Return `<img>` even if `src` is empty to make sure the `tagName` below works
     return `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" title="${escapeAttr(title)}">`;
   },
+  htmlSelector: 'img',
+  fromBlockHTML: getImageProps,
+  toBlockHTML: createImageElement,
   /* eslint-enable jsdoc/require-jsdoc */
 };
 
@@ -74,8 +111,40 @@ export const LINKED_IMAGE_COMPONENT = {
     // eslint-disable-next-line @stylistic/max-len
     const img = `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" title="${escapeAttr(title)}">`;
 
-    // Return `<img>` even if `src` is empty to make sure the `tagName` below works
     return link ? `<a href="${escapeAttr(link)}">${img}</a>` : img;
+  },
+  // An image within a link that has nothing else, or a bare image
+  htmlSelector: 'a:has(> img:only-child), img',
+  fromBlockHTML: (element) => {
+    if (element.localName === 'img') {
+      return { ...getImageProps(element), link: '' };
+    }
+
+    // A selector cannot tell if a link has any text besides the image
+    if (element.textContent?.trim()) {
+      return undefined;
+    }
+
+    return {
+      // The selector makes sure the link has an image
+      ...getImageProps(/** @type {Element} */ (element.querySelector('img'))),
+      link: element.getAttribute('href') ?? '',
+    };
+  },
+  toBlockHTML: (props) => {
+    const { link = '' } = props;
+    const img = createImageElement(props);
+
+    if (!img || !link) {
+      return img;
+    }
+
+    const anchor = document.createElement('a');
+
+    anchor.setAttribute('href', link);
+    anchor.append(img);
+
+    return anchor;
   },
   /* eslint-enable jsdoc/require-jsdoc */
 };

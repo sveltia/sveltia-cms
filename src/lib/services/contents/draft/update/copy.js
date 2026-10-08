@@ -11,6 +11,7 @@ import { getValueFormat } from '$lib/services/contents/fields/rich-text';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { escapeHTML } from '$lib/services/utils/string';
 
 /**
  * @import { EntryDraft, InternalLocaleCode, LocaleContentMap } from '$lib/types/private';
@@ -76,22 +77,10 @@ export const getTurndownService = async () => {
 };
 
 /**
- * Characters that have to be escaped for plain text to be read as such within HTML.
- * @type {Record<string, string>}
- */
-const HTML_ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
-/**
  * Named HTML character references a translator may return, besides numeric ones.
  * @type {Record<string, string>}
  */
 const HTML_ENTITY_MAP = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
-/**
- * Escape plain text so that a translator taking HTML reads it as text rather than markup, e.g. a
- * literal `<b>` or `&amp;`.
- * @param {string} text Plain text.
- * @returns {string} Escaped text.
- */
-const escapeHTML = (text) => text.replace(/[&<>]/g, (char) => HTML_ESCAPE_MAP[char]);
 
 /**
  * Decode the HTML character references in text returned by a translator taking HTML, which

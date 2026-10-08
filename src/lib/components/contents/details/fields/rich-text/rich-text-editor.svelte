@@ -36,6 +36,7 @@
     NODE_NAME_MAP,
   } from '$lib/services/contents/fields/rich-text';
   import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
+  import { supportsHTML } from '$lib/services/contents/fields/rich-text/components/utils';
   import {
     getDroppedImages,
     getPastedImages,
@@ -147,8 +148,7 @@
     return nested ?? defaultConfig.allow_nested_components ?? true;
   });
   const components = $derived.by(() => {
-    // Editor components are defined with Markdown syntax, so they can’t be used in HTML
-    if (format === 'html' || (inEditorComponent && !allowNestedComponents)) {
+    if (inEditorComponent && !allowNestedComponents) {
       return [];
     }
 
@@ -158,6 +158,8 @@
           getComponentDef(name === 'image' && linkedImagesEnabled ? 'linked-image' : name),
         )
         .filter((def) => !!def)
+        // Only the components with HTML syntax can be used in HTML
+        .filter((def) => format !== 'html' || supportsHTML(def))
         // Compare the definition IDs, because the parent component names are the IDs, which are
         // prefixed for custom components, e.g. `x-youtube`
         .filter(

@@ -19,6 +19,20 @@ export const escapeAttr = (str) =>
   str.replace(/&(?![a-zA-Z0-9#]+;)/g, '&amp;').replaceAll('"', '&quot;');
 
 /**
+ * Characters that have to be escaped for plain text to be read as such within HTML.
+ * @type {Record<string, string>}
+ */
+const HTML_ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
+
+/**
+ * Escape plain text so that it’s read as text rather than markup within HTML, e.g. a literal `<b>`
+ * or `&amp;`, for example by a translator taking HTML.
+ * @param {string} text Plain text.
+ * @returns {string} Escaped text.
+ */
+export const escapeHTML = (text) => text.replace(/[&<>]/g, (char) => HTML_ESCAPE_MAP[char]);
+
+/**
  * Sanitization options for anchor tag links.
  */
 export const LINK_SANITIZE_OPTIONS = {

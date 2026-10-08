@@ -1,6 +1,16 @@
+// @vitest-environment happy-dom
+/* eslint-disable jsdoc/require-jsdoc */
+
 import { describe, expect, it } from 'vitest';
 
-import { isMultiLinePattern, normalizeProps, replaceQuotes } from './utils.js';
+import {
+  getSelectorTagNames,
+  isMultiLinePattern,
+  isValidSelector,
+  normalizeProps,
+  replaceQuotes,
+  supportsHTML,
+} from './utils.js';
 
 describe('utils', () => {
   describe('isMultiLinePattern', () => {
@@ -212,5 +222,52 @@ describe('utils', () => {
 
       expect(result).toBe("'''");
     });
+  });
+});
+
+describe('getSelectorTagNames', () => {
+  it('should get the element type of each selector in a list, without duplicates', () => {
+    expect(getSelectorTagNames('a:has(> img:only-child), IMG, img.wide')).toEqual(['a', 'img']);
+  });
+
+  it('should get the element type the last compound selector matches', () => {
+    expect(getSelectorTagNames('figure > img.wide')).toEqual(['img']);
+    expect(getSelectorTagNames('section aside ~ p')).toEqual(['p']);
+    expect(getSelectorTagNames(' aside.note ')).toEqual(['aside']);
+    expect(getSelectorTagNames('my-element[data-x]')).toEqual(['my-element']);
+  });
+
+  it('should ignore commas, spaces and combinators in brackets, parentheses and quotes', () => {
+    expect(getSelectorTagNames('div[title="a, b > c"]')).toEqual(['div']);
+    expect(getSelectorTagNames("[title='x ~ y'] > span")).toEqual(['span']);
+    expect(getSelectorTagNames('a:not(.x, .y) , b')).toEqual(['a', 'b']);
+  });
+
+  it('should return undefined if a selector doesn’t name its element type', () => {
+    expect(getSelectorTagNames('.note')).toBeUndefined();
+    expect(getSelectorTagNames('img, .note')).toBeUndefined();
+    expect(getSelectorTagNames(':is(aside, div)')).toBeUndefined();
+    expect(getSelectorTagNames('*')).toBeUndefined();
+  });
+});
+
+describe('isValidSelector', () => {
+  it('should tell a valid selector from an invalid one', () => {
+    expect(isValidSelector('a:has(> img), img')).toBe(true);
+    expect(isValidSelector('a:has(')).toBe(false);
+    expect(isValidSelector('')).toBe(false);
+  });
+});
+
+describe('supportsHTML', () => {
+  it('should require htmlSelector, fromBlockHTML and toBlockHTML', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition} */
+    const def = { id: 'b', fields: [], pattern: /b/, toBlock: () => '' };
+    const htmlOptions = { htmlSelector: 'b', fromBlockHTML: () => ({}), toBlockHTML: () => '' };
+
+    expect(supportsHTML({ ...def, ...htmlOptions })).toBe(true);
+    expect(supportsHTML({ ...def, ...htmlOptions, htmlSelector: undefined })).toBe(false);
+    expect(supportsHTML({ ...def, ...htmlOptions, fromBlockHTML: undefined })).toBe(false);
+    expect(supportsHTML({ ...def, ...htmlOptions, toBlockHTML: undefined })).toBe(false);
   });
 });

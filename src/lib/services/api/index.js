@@ -19,6 +19,10 @@ import {
 } from '$lib/services/api/registries';
 import { prefetchCmsConfig } from '$lib/services/config/loader';
 import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
+import {
+  getSelectorTagNames,
+  isValidSelector,
+} from '$lib/services/contents/fields/rich-text/components/utils';
 import { BUILTIN_FILE_FORMATS } from '$lib/services/contents/file/constants';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
@@ -201,7 +205,9 @@ const registerCustomFormat = (name, extension, { fromFile, toFile } = {}) => {
  * @param {EditorComponentDefinition} definition Component definition.
  * @throws {TypeError} If `definition` is not an object, `id` is not a non-empty string, `label` is
  * given but not a non-empty string, `pattern` is not a regular expression, `toBlock` is not a
- * function, `toPreview` is given but not a function, or `fields` is not an array.
+ * function, `toPreview` is given but not a function, `fields` is not an array, or the HTML options
+ * are invalid: `htmlSelector`, `fromBlockHTML` and `toBlockHTML` must be given together, and
+ * `htmlSelector` must be a valid CSS selector naming the element types it matches.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
@@ -234,6 +240,36 @@ const registerEditorComponent = (definition) => {
 
   if (!Array.isArray(definition.fields)) {
     throw new TypeError('The `definition.fields` must be an array');
+  }
+
+  const { htmlSelector, fromBlockHTML, toBlockHTML } = definition;
+  const htmlOptions = [htmlSelector, fromBlockHTML, toBlockHTML];
+
+  if (htmlOptions.some((option) => option !== undefined)) {
+    if (htmlOptions.includes(undefined)) {
+      throw new TypeError(
+        'The `definition.htmlSelector`, `definition.fromBlockHTML` and `definition.toBlockHTML` ' +
+          'must be given together',
+      );
+    }
+
+    if (!isNonEmptyString(htmlSelector) || !isValidSelector(htmlSelector)) {
+      throw new TypeError('The `definition.htmlSelector` must be a valid CSS selector');
+    }
+
+    if (!getSelectorTagNames(htmlSelector)) {
+      throw new TypeError(
+        'Each selector in the `definition.htmlSelector` must name the element type it matches',
+      );
+    }
+
+    if (typeof fromBlockHTML !== 'function') {
+      throw new TypeError('The `definition.fromBlockHTML` must be a function');
+    }
+
+    if (typeof toBlockHTML !== 'function') {
+      throw new TypeError('The `definition.toBlockHTML` must be a function');
+    }
   }
 
   customComponentRegistry.set(definition.id, definition);

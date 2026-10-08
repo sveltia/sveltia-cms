@@ -1,4 +1,5 @@
 // @ts-nocheck
+// @vitest-environment happy-dom
 /* eslint-disable jsdoc/require-jsdoc */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -305,6 +306,109 @@ describe('definitions', () => {
           link: '',
         });
       });
+    });
+  });
+
+  describe('HTML syntax of the image components', () => {
+    /**
+     * Parse HTML into an inert template and get its first element.
+     * @param {string} html HTML.
+     * @returns {HTMLElement} Element.
+     */
+    const parse = (html) => {
+      const template = document.createElement('template');
+
+      template.innerHTML = html;
+
+      return template.content.firstElementChild;
+    };
+
+    it('should write an image as an element', () => {
+      expect(
+        IMAGE_COMPONENT.toBlockHTML({ src: 'a b.png', alt: 'Tom & "Jerry"', title: 'it’s' })
+          .outerHTML,
+      ).toBe('<img src="a b.png" alt="Tom &amp; &quot;Jerry&quot;" title="it’s">');
+      // The title is left out if empty, while the alt text is always there
+      expect(IMAGE_COMPONENT.toBlockHTML({ src: 'a.png' }).outerHTML).toBe(
+        '<img src="a.png" alt="">',
+      );
+      // Nothing without a source, like the Markdown
+      expect(IMAGE_COMPONENT.toBlockHTML({ alt: 'x' })).toBe('');
+    });
+
+    it('should read an image from an element, with decoded values', () => {
+      expect(IMAGE_COMPONENT.htmlSelector).toBe('img');
+      expect(
+        IMAGE_COMPONENT.fromBlockHTML(
+          parse('<img alt=\'x > &amp; y\' src="/a.png" class="wide" title="T&nbsp;!">'),
+        ),
+      ).toEqual({ src: '/a.png', alt: 'x > & y', title: 'T\u00A0!' });
+      expect(IMAGE_COMPONENT.fromBlockHTML(parse('<img src=a.png />'))).toEqual({
+        src: 'a.png',
+        alt: '',
+        title: '',
+      });
+      expect(IMAGE_COMPONENT.fromBlockHTML(parse('<img alt="A">'))).toEqual({
+        src: '',
+        alt: 'A',
+        title: '',
+      });
+    });
+
+    it('should round-trip an image', () => {
+      const props = { src: 'a&b.png', alt: '"A" & <B>\u00A0', title: 'it’s' };
+
+      expect(
+        IMAGE_COMPONENT.fromBlockHTML(parse(IMAGE_COMPONENT.toBlockHTML(props).outerHTML)),
+      ).toEqual(props);
+    });
+
+    it('should write a linked image as an element', () => {
+      expect(
+        LINKED_IMAGE_COMPONENT.toBlockHTML({ src: 'a.png', alt: 'A', link: '/?a=1&b=2' }).outerHTML,
+      ).toBe('<a href="/?a=1&amp;b=2"><img src="a.png" alt="A"></a>');
+      expect(LINKED_IMAGE_COMPONENT.toBlockHTML({ src: 'a.png', link: '' }).outerHTML).toBe(
+        '<img src="a.png" alt="">',
+      );
+      expect(LINKED_IMAGE_COMPONENT.toBlockHTML({ link: '/x' })).toBe('');
+    });
+
+    it('should read a linked image or a bare image from an element', () => {
+      expect(LINKED_IMAGE_COMPONENT.htmlSelector).toBe('a:has(> img:only-child), img');
+      expect(
+        LINKED_IMAGE_COMPONENT.fromBlockHTML(
+          parse('<a href="/?a=1&amp;b=2" target="_blank">\n  <img src="a.png" alt="A">\n</a>'),
+        ),
+      ).toEqual({ src: 'a.png', alt: 'A', title: '', link: '/?a=1&b=2' });
+      expect(LINKED_IMAGE_COMPONENT.fromBlockHTML(parse('<img src="b.png">'))).toEqual({
+        src: 'b.png',
+        alt: '',
+        title: '',
+        link: '',
+      });
+      // A link without the `href` attribute
+      expect(LINKED_IMAGE_COMPONENT.fromBlockHTML(parse('<a><img src="c.png"></a>'))).toEqual({
+        src: 'c.png',
+        alt: '',
+        title: '',
+        link: '',
+      });
+    });
+
+    it('should not take a link with text for a linked image', () => {
+      expect(
+        LINKED_IMAGE_COMPONENT.fromBlockHTML(parse('<a href="/x">See <img src="a.png"></a>')),
+      ).toBeUndefined();
+    });
+
+    it('should round-trip a linked image', () => {
+      const props = { src: 'a.png', alt: 'A', title: 'T', link: 'https://example.com/?q="x"' };
+
+      expect(
+        LINKED_IMAGE_COMPONENT.fromBlockHTML(
+          parse(LINKED_IMAGE_COMPONENT.toBlockHTML(props).outerHTML),
+        ),
+      ).toEqual(props);
     });
   });
 
