@@ -85,7 +85,7 @@
     "yaml": "^2.9.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.0",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@types/leaflet": "^1.9.22",
@@ -107,7 +107,7 @@
     "happy-dom": "^20.14.5",
     "messageformat": "^4.0.0",
     "oxlint": "^1.87.0",
-    "playwright": "^1.63.0",
+    "playwright": "^1.64.0",
     "postcss-html": "^2.0.0",
     "prettier": "^3.9.9",
     "prettier-plugin-svelte": "^4.1.1",
