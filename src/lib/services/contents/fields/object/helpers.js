@@ -52,7 +52,12 @@ export const formatSummary = ({
 
   if (!summaryTemplate) {
     if (hasSingleSubField) {
-      return valueMap[itemKeyPath];
+      return getFieldDisplayValue({
+        ...getFieldArgs,
+        keyPath: itemKeyPath,
+        locale,
+        plainText: true,
+      });
     }
 
     return getVisibleFieldDisplayValue({
@@ -61,6 +66,7 @@ export const formatSummary = ({
       keyPath: itemKeyPath,
       keyPathPrefix: `${itemKeyPath}.`,
       getFieldArgs,
+      plainText: true,
     });
   }
 
@@ -87,6 +93,7 @@ export const formatSummary = ({
       ...getFieldArgs,
       keyPath: hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${fieldName}`,
       locale,
+      plainText: true,
       transformations: parsedTransformations
         ? processNestedTemplates(parsedTransformations, (innerTag) =>
             getDisplayValue(parseTransformations(innerTag).value),

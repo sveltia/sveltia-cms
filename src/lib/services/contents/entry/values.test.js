@@ -53,6 +53,7 @@ vi.mock('$lib/services/contents/fields', () => ({
   ],
   MEDIA_FIELD_TYPES: ['file', 'image'],
   MULTI_VALUE_FIELD_TYPES: ['file', 'image', 'relation', 'select'],
+  RICH_TEXT_FIELD_TYPES: ['richtext', 'markdown'],
 }));
 
 vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => ({
@@ -120,6 +121,11 @@ describe('Test getFieldDisplayValue()', () => {
         name: 'tags',
         widget: 'list',
         field: { name: 'tag', widget: 'string' },
+      },
+      {
+        name: 'notes',
+        widget: 'list',
+        field: { name: 'note', widget: 'richtext' },
       },
       {
         name: 'images',
@@ -356,6 +362,50 @@ describe('Test getFieldDisplayValue()', () => {
       // List field types with field property should be formatted as simple lists
       expect(result).toContain('javascript');
       expect(result).toContain('web development');
+    });
+
+    test('should strip Markdown syntax and HTML tags from Rich Text list items as plain text', () => {
+      const valueMap = {
+        'notes.0': '**First** note',
+        'notes.1': '<p>Second <em>note</em></p>',
+        'notes.2': '![](image.jpg)',
+      };
+
+      expect(
+        getFieldDisplayValue({ collectionName: 'posts', valueMap, keyPath: 'notes', locale: 'en' }),
+      ).toBe('**First** note, <p>Second <em>note</em></p>, ![](image.jpg)');
+
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap,
+          keyPath: 'notes',
+          locale: 'en',
+          plainText: true,
+        }),
+      ).toBe('First note, Second note');
+    });
+
+    test('should keep Markdown syntax in non-Rich Text list items as plain text', () => {
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap: { 'tags.0': '**javascript**' },
+          keyPath: 'tags',
+          locale: 'en',
+          plainText: true,
+        }),
+      ).toBe('**javascript**');
+
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap: { 'simpleTags.0': '_svelte_' },
+          keyPath: 'simpleTags',
+          locale: 'en',
+          plainText: true,
+        }),
+      ).toBe('_svelte_');
     });
 
     test('should reuse cached regex when getFieldDisplayValue is called twice with the same keyPath', () => {

@@ -28,6 +28,29 @@ describe('Test formatSummary() — comprehensive tests', async () => {
                 { name: 'hidden_field', widget: 'hidden' },
                 { name: 'tags', widget: 'list', field: { name: 'tag', widget: 'string' } },
                 { name: 'rating', widget: 'number' },
+                { name: 'body', widget: 'richtext' },
+              ],
+            },
+            {
+              name: 'section',
+              widget: 'object',
+              types: [
+                {
+                  name: 'text',
+                  summary: '{{body}}',
+                  fields: [{ name: 'body', widget: 'richtext' }],
+                },
+              ],
+            },
+            {
+              name: 'content_blocks',
+              widget: 'list',
+              types: [
+                {
+                  name: 'text',
+                  summary: '{{body}}',
+                  fields: [{ name: 'body', widget: 'richtext' }],
+                },
               ],
             },
           ],
@@ -443,6 +466,57 @@ describe('Test formatSummary() — comprehensive tests', async () => {
       const result2 = formatSummary({ ...baseArgs, valueMap: basicValueMap });
 
       expect(result1).toEqual(result2);
+    });
+  });
+
+  describe('Rich Text field values', () => {
+    const markdown =
+      'A **richtext** _widget_ as summary\n\nshows [raw](https://example.com) markdown';
+
+    const html = '<p>A <strong>richtext</strong> <em>widget</em> as summary shows raw markdown</p>';
+    const plainText = 'A richtext widget as summary shows raw markdown';
+
+    test('should strip Markdown syntax and HTML tags in an Object field summary', () => {
+      [markdown, html].forEach((body) => {
+        expect(formatSummary({ ...baseArgs, valueMap: { 'metadata.body': body } })).toEqual(
+          plainText,
+        );
+
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: { 'metadata.body': body },
+            summaryTemplate: '{{fields.body}}',
+          }),
+        ).toEqual(plainText);
+      });
+    });
+
+    test('should strip Markdown syntax and HTML tags in a typed Object field summary', () => {
+      [markdown, html].forEach((body) => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            keyPath: 'section',
+            valueMap: { 'section.type': 'text', 'section.body': body },
+            summaryTemplate: '{{body}}',
+          }),
+        ).toEqual(plainText);
+      });
+    });
+
+    test('should strip Markdown syntax and HTML tags in a typed List field item summary', () => {
+      [markdown, html].forEach((body) => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            keyPath: 'content_blocks',
+            itemKeyPath: 'content_blocks.0',
+            valueMap: { 'content_blocks.0.type': 'text', 'content_blocks.0.body': body },
+            summaryTemplate: '{{body}}',
+          }),
+        ).toEqual(plainText);
+      });
     });
   });
 });

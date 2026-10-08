@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { removeMarkdownSyntax } from './markdown';
+import { removeMarkdownSyntax, stripMarkdown } from './markdown';
 
 describe('removeMarkdownSyntax', () => {
   test('should remove matching bold markdown characters', () => {
@@ -284,5 +284,67 @@ describe('removeMarkdownSyntax', () => {
     removeMarkdownSyntax(input);
 
     expect(performance.now() - start).toBeLessThan(200);
+  });
+});
+
+describe('stripMarkdown', () => {
+  test('should remove inline Markdown syntax', () => {
+    expect(stripMarkdown('A **rich text** _field_ with [a link](https://example.com)')).toBe(
+      'A rich text field with a link',
+    );
+  });
+
+  test('should remove block Markdown syntax and collapse line breaks', () => {
+    expect(stripMarkdown('# Heading\n\nParagraph\n\n- One\n- Two')).toBe(
+      'Heading Paragraph One Two',
+    );
+  });
+
+  test('should remove HTML tags', () => {
+    expect(stripMarkdown('<p>A <strong>rich text</strong> <em>field</em></p>')).toBe(
+      'A rich text field',
+    );
+  });
+
+  test('should separate the text of adjacent HTML blocks and line breaks', () => {
+    expect(stripMarkdown('<p>First</p><p>Second</p>')).toBe('First Second');
+    expect(stripMarkdown('<ul><li>One</li><li>Two</li></ul>')).toBe('One Two');
+    expect(stripMarkdown('<p>Line 1<br>Line 2<br />Line 3</p>')).toBe('Line 1 Line 2 Line 3');
+    expect(stripMarkdown('a<br class="x">b<hr />c')).toBe('a b c');
+    expect(
+      stripMarkdown(
+        '<figure><img src="a.jpg"><figcaption>Caption</figcaption></figure><p>Text</p>',
+      ),
+    ).toBe('Caption Text');
+    expect(stripMarkdown('<table><tr><td>A</td><td>B</td></tr></table>Next')).toBe('A B Next');
+    expect(stripMarkdown('<p>un<em>believ</em>able <bra>x</bra></p>')).toBe('unbelievable x');
+  });
+
+  test('should drop the contents of script and style elements', () => {
+    expect(stripMarkdown('<style>p { color: red; }</style><script>alert(1)</script>Text')).toBe(
+      'Text',
+    );
+  });
+
+  test('should decode character references', () => {
+    expect(stripMarkdown('Tom &amp; Jerry &lt;3 & <b>"quotes"</b>')).toBe(
+      'Tom & Jerry <3 & "quotes"',
+    );
+  });
+
+  test('should not be affected by an async extension added to the shared Marked instance', async () => {
+    const { marked } = await import('marked');
+
+    marked.use({ async: true });
+
+    try {
+      expect(stripMarkdown('**bold**')).toBe('bold');
+    } finally {
+      marked.setOptions({ async: false });
+    }
+  });
+
+  test('should return an empty string for an empty value', () => {
+    expect(stripMarkdown('')).toBe('');
   });
 });

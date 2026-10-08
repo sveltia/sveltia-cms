@@ -38,6 +38,7 @@ describe('Test formatSummary() — comprehensive tests', () => {
                     { name: 'date', widget: 'date', picker_utc: true, time_format: false },
                     { name: 'hidden_field', widget: 'hidden' },
                     { name: 'number_value', widget: 'number' },
+                    { name: 'body', widget: 'richtext' },
                   ],
                 },
               ],
@@ -144,6 +145,15 @@ describe('Test formatSummary() — comprehensive tests', () => {
         ).toEqual('1,234');
       });
 
+      test('should strip Markdown syntax and HTML tags from a Rich Text field value', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: { 'images.0.body': 'A **rich text** _field_\n\nwith <em>HTML</em>' },
+          }),
+        ).toEqual('A rich text field with HTML');
+      });
+
       test('should reuse cached regex when called twice with the same keyPath and index', () => {
         // Exercises the listSummaryRegexCache hit path added by the perf optimisation.
         const result1 = formatSummary({ ...baseArgs, valueMap: basicValueMap });
@@ -154,6 +164,34 @@ describe('Test formatSummary() — comprehensive tests', () => {
     });
 
     describe('with template', () => {
+      test('should strip Markdown syntax and HTML tags from a Rich Text field value', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: { 'images.0.body': '<p>A <strong>rich text</strong> field</p>' },
+            summaryTemplate: '{{fields.body}}',
+          }),
+        ).toEqual('A rich text field');
+
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: { 'images.0.body': '# A **rich text** field' },
+            summaryTemplate: '{{fields.body | upper}}',
+          }),
+        ).toEqual('A RICH TEXT FIELD');
+      });
+
+      test('should keep Markdown syntax in a non-Rich Text field value', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            valueMap: { 'images.0.alt': '**hello**' },
+            summaryTemplate: '{{fields.alt}}',
+          }),
+        ).toEqual('**hello**');
+      });
+
       test('should use template field values', () => {
         expect(
           formatSummary({
@@ -412,6 +450,11 @@ describe('Test formatSummary() — comprehensive tests', () => {
                   widget: 'list',
                   field: { name: 'tag', widget: 'string' },
                 },
+                {
+                  name: 'notes',
+                  widget: 'list',
+                  field: { name: 'note', widget: 'richtext' },
+                },
               ],
             },
           ],
@@ -452,7 +495,7 @@ describe('Test formatSummary() — comprehensive tests', () => {
             ...baseArgs,
             valueMap: {},
           }),
-        ).toEqual(undefined);
+        ).toEqual('');
       });
 
       test('should handle different data types', () => {
@@ -461,14 +504,24 @@ describe('Test formatSummary() — comprehensive tests', () => {
             ...baseArgs,
             valueMap: { 'images.0': 123 },
           }),
-        ).toEqual(123);
+        ).toEqual('123');
 
         expect(
           formatSummary({
             ...baseArgs,
             valueMap: { 'images.0': true },
           }),
-        ).toEqual(true);
+        ).toEqual('true');
+      });
+
+      test('should strip Markdown syntax and HTML tags from a Rich Text field value', () => {
+        expect(
+          formatSummary({
+            ...baseArgs,
+            keyPath: 'notes',
+            valueMap: { 'notes.0': 'A **rich text** <em>field</em>' },
+          }),
+        ).toEqual('A rich text field');
       });
     });
 
