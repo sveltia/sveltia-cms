@@ -1178,13 +1178,13 @@ describe('contents/fields/file/helpers', () => {
         ).toBe(false);
       });
 
-      it('should return false when asset folder entryRelative differs', () => {
-        const relativeFolder = { ...folder, entryRelative: true };
+      it('should return false when only the asset folder is entry-relative', () => {
+        const relativeAsset = { ...asset, folder: { ...asset.folder, entryRelative: true } };
 
         expect(
           isAssetInSelectedFolder({
-            asset,
-            folder: relativeFolder,
+            asset: relativeAsset,
+            folder,
             folderPath: 'content/posts/images',
           }),
         ).toBe(false);
@@ -1314,6 +1314,69 @@ describe('contents/fields/file/helpers', () => {
             folderPath: undefined,
           }),
         ).toBe(false);
+      });
+    });
+
+    describe('when folder is in an editor component outside any collection', () => {
+      // A relative `media_folder` in a component registered with `CMS.registerEditorComponent()`
+      // has no base folder, while the asset next to the entry is filed under another folder
+      /** @type {import('$lib/types/private').AssetFolderInfo} */
+      const componentFolder = {
+        componentName: 'figure',
+        typedKeyPath: 'image',
+        internalPath: '',
+        internalSubPath: 'medias',
+        publicPath: 'medias',
+        entryRelative: true,
+        hasTemplateTags: false,
+      };
+
+      const entryAsset = {
+        ...asset,
+        path: 'content/posts/my-post/medias/photo.jpg',
+        folder: { ...asset.folder, internalPath: 'content/posts', entryRelative: true },
+      };
+
+      it('should return true when asset dirname matches folderPath', () => {
+        vi.mocked(getPathInfo).mockReturnValue(
+          /** @type {any} */ ({ dirname: 'content/posts/my-post/medias' }),
+        );
+
+        expect(
+          isAssetInSelectedFolder({
+            asset: entryAsset,
+            folder: componentFolder,
+            folderPath: 'content/posts/my-post/medias',
+          }),
+        ).toBe(true);
+      });
+
+      it('should return false when asset dirname is in another entry', () => {
+        vi.mocked(getPathInfo).mockReturnValue(
+          /** @type {any} */ ({ dirname: 'content/posts/other-post/medias' }),
+        );
+
+        expect(
+          isAssetInSelectedFolder({
+            asset: { ...entryAsset, path: 'content/posts/other-post/medias/photo.jpg' },
+            folder: componentFolder,
+            folderPath: 'content/posts/my-post/medias',
+          }),
+        ).toBe(false);
+      });
+
+      it('should return true when the asset is filed under an enclosing global folder', () => {
+        vi.mocked(getPathInfo).mockReturnValue(
+          /** @type {any} */ ({ dirname: 'content/posts/my-post/medias' }),
+        );
+
+        expect(
+          isAssetInSelectedFolder({
+            asset: { ...entryAsset, folder: { ...asset.folder, internalPath: 'content' } },
+            folder: componentFolder,
+            folderPath: 'content/posts/my-post/medias',
+          }),
+        ).toBe(true);
       });
     });
   });

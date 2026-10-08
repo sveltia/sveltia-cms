@@ -354,6 +354,90 @@ test.describe('toPreview() arguments', () => {
   });
 });
 
+test.describe('a relative media_folder in a component', () => {
+  // Each post is a folder with its images in `medias` next to it, like a Hugo page bundle. The
+  // cover field puts its images there as well
+  test.use({
+    config: {
+      ...BASE_CONFIG,
+      collections: [
+        {
+          ...BASE_CONFIG.collections[0],
+          path: '{{slug}}/index',
+          fields: [
+            { name: 'title', label: 'Title' },
+            {
+              name: 'cover',
+              label: 'Cover',
+              widget: 'image',
+              media_folder: 'medias',
+              required: false,
+            },
+            { name: 'body', label: 'Body', widget: 'markdown' },
+          ],
+        },
+      ],
+    },
+  });
+
+  test.beforeEach(async ({ cms, page }) => {
+    await addScripts(page, {
+      after: `
+        CMS.registerEditorComponent({
+          id: 'figure',
+          label: 'Figure',
+          fields: [{ name: 'src', label: 'Image', widget: 'image', media_folder: 'medias' }],
+          pattern: /^{{< figure src="(?<src>.*?)" >}}$/m,
+          toBlock: ({ src = '' }) => '{{< figure src="' + src + '" >}}',
+          toPreview: ({ src = '' }) => src,
+        });
+      `,
+    });
+    await cms.open();
+    await cms.seed({
+      'content/posts/lake/index.md':
+        '---\ntitle: Lake\ncover: medias/lake.png\n---\n\nCalm water.\n',
+      'content/posts/lake/medias/lake.png': createPNG({ color: [40, 120, 200] }),
+      'content/posts/dome/index.md': '---\ntitle: Dome\n---\n',
+      'content/posts/dome/medias/dome.png': createPNG({ color: [200, 180, 40] }),
+    });
+    await cms.signIn();
+  });
+
+  test('lists the images next to the entry, and picks one', async ({ cms, page }) => {
+    await page.getByRole('row', { name: /Lake/ }).click();
+
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const field = editor.getByRole('group', { name: /Body.*Field/ });
+    const dialog = page.getByRole('dialog', { name: 'Select Image' });
+
+    await cms.chooseMenuItem(
+      field.getByRole('button', { name: 'Insert' }),
+      page.getByRole('menuitem', { name: 'Figure' }),
+    );
+    await field
+      .getByRole('group', { name: 'Figure', exact: true })
+      .getByRole('button', { name: 'Browse' })
+      .click();
+
+    // Only the images of this post, not those of another post or the global media folder
+    await expect(
+      dialog.getByRole('listbox', { name: 'Available Images' }).getByRole('option'),
+    ).toHaveText([/lake\.png/]);
+    await dialog.getByRole('option', { name: 'lake.png' }).click();
+    await dialog.getByRole('button', { name: 'Insert' }).click();
+    await expect(dialog).toBeHidden();
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/posts/lake/index.md'])
+      .toBe(
+        '---\ntitle: Lake\ncover: medias/lake.png\n---\n\nCalm water.\n\n' +
+          '{{< figure src="medias/lake.png" >}}\n',
+      );
+  });
+});
+
 test.describe('media in an element preview', () => {
   test.use({ config: CONFIG });
 

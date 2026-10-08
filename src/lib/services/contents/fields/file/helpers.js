@@ -274,18 +274,22 @@ const isInTargetFolder = ({ path, folderPath }) =>
  * @returns {boolean} `true` if the asset is in the selected folder.
  */
 export const isAssetInSelectedFolder = ({ asset, folder, folderPath }) => {
-  if (
-    folder === undefined ||
-    asset.folder?.internalPath !== folder.internalPath ||
-    asset.folder?.entryRelative !== folder.entryRelative
-  ) {
+  if (folder === undefined) {
     return false;
   }
 
   if (!folder.entryRelative) {
-    return isInTargetFolder({ path: asset.path, folderPath });
+    return (
+      asset.folder?.internalPath === folder.internalPath &&
+      !asset.folder?.entryRelative &&
+      isInTargetFolder({ path: asset.path, folderPath })
+    );
   }
 
+  // The target folder path of an entry-relative folder is resolved against the entry, so the path
+  // alone tells whether the asset is stored next to it. The folder the asset is filed under can’t
+  // be compared: a folder in a custom editor component has no collection, hence no base folder,
+  // and an asset may be filed under an enclosing global folder instead
   const { dirname } = getPathInfo(asset.path);
 
   if (dirname === undefined) {
