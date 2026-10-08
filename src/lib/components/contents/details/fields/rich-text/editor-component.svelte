@@ -138,6 +138,13 @@
    */
   let isNewComponent = $state(false);
 
+  /**
+   * Whether the component has any fields to edit. A component without fields can still be used as
+   * a placeholder, but there is nothing to expand or collapse in block mode, or to edit in a dialog
+   * in dialog mode.
+   */
+  const hasFields = $derived(fields.length > 0);
+
   /* v8 ignore start -- the key paths are resolved together once the component is in place */
   const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${fieldId}:`);
   const typedKeyPathPrefix = $derived(!typedKeyPath ? '' : `${typedKeyPath}:${fieldId}:`);
@@ -181,6 +188,11 @@
    * Open the dialog and take a snapshot of current values (dialog mode only).
    */
   const openDialog = () => {
+    // There is nothing to edit, so the component is inserted and kept as is
+    if (!hasFields) {
+      return;
+    }
+
     /* v8 ignore next -- the values are set up before the dialog can be opened */
     valuesSnapshot = currentValues ? { ...currentValues } : undefined;
     dialogOpen = true;
@@ -355,6 +367,13 @@
             flattenWithPrefix(/** @type {Record<string, any>} */ (values), keyPathPrefix),
           );
         }
+
+        // A new component without fields skips the dialog, so it’s inserted right away (dialog mode
+        // only; block mode reports the values whenever they change)
+        if (mode === 'dialog' && !hasFields && isNewComponent) {
+          isNewComponent = false;
+          onChange(new CustomEvent('update', { detail: values }));
+        }
       }
     },
   );
@@ -375,10 +394,13 @@
 </script>
 
 {#if mode === 'dialog'}
-  <!-- Dialog mode: compact placeholder that opens a dialog on click -->
+  <!-- Dialog mode: compact placeholder that opens a dialog on click, unless there are no fields;
+  it can still be focused then, to be removed with the Backspace key -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <span
-    role="button"
+    role={hasFields ? 'button' : 'img'}
     class="component {inline ? 'inline' : 'block'} placeholder"
+    class:static={!hasFields}
     class:thumbnail-only={!!thumbnailSource && !displayText}
     bind:this={wrapper}
     contenteditable="false"
@@ -421,64 +443,66 @@
     {/if}
   </span>
 
-  <Dialog
-    title={label}
-    bind:open={dialogOpen}
-    size="large"
-    showOk={false}
-    showCancel={false}
-    onCancel={() => {
-      // The Escape key dismisses the dialog just like the Cancel button
-      handleCancel();
-    }}
-  >
-    <div role="none" class="fields">
-      {#if locale && keyPath}
-        {#each fields as fieldConfig (fieldConfig.name)}
-          <FieldEditor
-            {locale}
-            keyPath="{keyPathPrefix}{fieldConfig.name}"
-            typedKeyPath="{keyPathPrefix}{fieldConfig.name}"
-            {fieldConfig}
-            context="rich-text-editor-component"
-            {componentName}
-            {valueStoreKey}
-          />
-        {/each}
-      {/if}
-    </div>
-    {#snippet footer()}
-      <Button
-        variant="secondary"
-        label={_('remove')}
-        onclick={() => {
-          handleRemove();
-        }}
-      />
-      <Spacer flex={true} />
-      <Button
-        variant="primary"
-        label={_(isNewComponent ? 'insert' : 'update')}
-        onclick={() => {
-          handleOk();
-        }}
-      />
-      <Button
-        variant="secondary"
-        label={_('cancel')}
-        onclick={() => {
-          handleCancel();
-        }}
-      />
-    {/snippet}
-  </Dialog>
+  {#if hasFields}
+    <Dialog
+      title={label}
+      bind:open={dialogOpen}
+      size="large"
+      showOk={false}
+      showCancel={false}
+      onCancel={() => {
+        // The Escape key dismisses the dialog just like the Cancel button
+        handleCancel();
+      }}
+    >
+      <div role="none" class="fields">
+        {#if locale && keyPath}
+          {#each fields as fieldConfig (fieldConfig.name)}
+            <FieldEditor
+              {locale}
+              keyPath="{keyPathPrefix}{fieldConfig.name}"
+              typedKeyPath="{keyPathPrefix}{fieldConfig.name}"
+              {fieldConfig}
+              context="rich-text-editor-component"
+              {componentName}
+              {valueStoreKey}
+            />
+          {/each}
+        {/if}
+      </div>
+      {#snippet footer()}
+        <Button
+          variant="secondary"
+          label={_('remove')}
+          onclick={() => {
+            handleRemove();
+          }}
+        />
+        <Spacer flex={true} />
+        <Button
+          variant="primary"
+          label={_(isNewComponent ? 'insert' : 'update')}
+          onclick={() => {
+            handleOk();
+          }}
+        />
+        <Button
+          variant="secondary"
+          label={_('cancel')}
+          onclick={() => {
+            handleCancel();
+          }}
+        />
+      {/snippet}
+    </Dialog>
+  {/if}
 {:else}
   <!-- Block mode: expandable block with ObjectHeader -->
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <div
     role="group"
     class="component {inline ? 'inline' : 'block'} wrapper"
-    class:expanded
+    class:expanded={hasFields && expanded}
     bind:this={wrapper}
     contenteditable="false"
     tabindex="0"
@@ -513,7 +537,12 @@
       }
     }}
   >
-    <ObjectHeader {label} controlId="object-{fieldId}-item-list" bind:expanded>
+    <ObjectHeader
+      {label}
+      controlId="object-{fieldId}-item-list"
+      expandable={hasFields}
+      bind:expanded
+    >
       {#snippet endContent()}
         <Button
           size="small"
@@ -529,23 +558,25 @@
         </Button>
       {/snippet}
     </ObjectHeader>
-    <div role="none" class="item-list" id="object-{fieldId}-item-list">
-      {#if locale && keyPath && expanded}
-        {#each fields as fieldConfig (fieldConfig.name)}
-          <VisibilityObserver>
-            <FieldEditor
-              {locale}
-              keyPath="{keyPathPrefix}{fieldConfig.name}"
-              typedKeyPath="{typedKeyPathPrefix}{fieldConfig.name}"
-              {fieldConfig}
-              context="rich-text-editor-component"
-              {componentName}
-              {valueStoreKey}
-            />
-          </VisibilityObserver>
-        {/each}
-      {/if}
-    </div>
+    {#if hasFields}
+      <div role="none" class="item-list" id="object-{fieldId}-item-list">
+        {#if locale && keyPath && expanded}
+          {#each fields as fieldConfig (fieldConfig.name)}
+            <VisibilityObserver>
+              <FieldEditor
+                {locale}
+                keyPath="{keyPathPrefix}{fieldConfig.name}"
+                typedKeyPath="{typedKeyPathPrefix}{fieldConfig.name}"
+                {fieldConfig}
+                context="rich-text-editor-component"
+                {componentName}
+                {valueStoreKey}
+              />
+            </VisibilityObserver>
+          {/each}
+        {/if}
+      </div>
+    {/if}
   </div>
 {/if}
 
@@ -631,7 +662,7 @@
     -webkit-user-select: none;
     user-select: none;
 
-    &:hover {
+    &:not(.static):hover {
       border-color: currentColor;
     }
 
@@ -656,6 +687,11 @@
 
     &.thumbnail-only {
       padding: 2px;
+    }
+
+    /* A component without fields can’t be edited */
+    &.static {
+      cursor: default;
     }
   }
 

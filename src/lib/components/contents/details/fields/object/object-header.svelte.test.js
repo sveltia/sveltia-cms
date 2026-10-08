@@ -55,4 +55,16 @@ describe('ObjectHeader', () => {
     expect(container.querySelector('.center')).toHaveTextContent('Summary');
     expect(container.querySelector('.end')).toHaveTextContent('Actions');
   });
+
+  test('shows the label without the expander button when not expandable', async () => {
+    const { container } = await render(ObjectHeader, {
+      label: 'Divider',
+      controlId: 'item-1',
+      expanded: true,
+      expandable: false,
+    });
+
+    expect(container.querySelector('.type')).toHaveTextContent('Divider');
+    expect(container.querySelector('button')).toBeNull();
+  });
 });

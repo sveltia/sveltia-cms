@@ -13,6 +13,9 @@
    * @property {string} [label] Item label.
    * @property {string} controlId `aria-controls` ID.
    * @property {boolean} expanded Whether the item is expanded.
+   * @property {boolean} [expandable] Whether the item can be expanded and collapsed. If `false`,
+   * the label is displayed without the expander button, as there is nothing to show or hide.
+   * Default: `true`.
    * @property {() => void} [toggleExpanded] Function to toggle the item.
    * @property {Snippet | undefined} [centerContent] Center slot content.
    * @property {Snippet | undefined} [endContent] End slot content.
@@ -24,6 +27,7 @@
     label = '',
     controlId,
     expanded = $bindable(),
+    expandable = true,
     toggleExpanded,
     centerContent = undefined,
     endContent = undefined,
@@ -33,26 +37,32 @@
 
 <div role="none" class="header">
   <div role="none" class="start">
-    <Button
-      size="small"
-      iconic={!label}
-      aria-label={expanded ? _('collapse') : _('expand')}
-      aria-expanded={expanded}
-      aria-controls={controlId}
-      onclick={() => {
-        expanded = !expanded;
-        toggleExpanded?.();
-      }}
-    >
-      {#snippet startIcon()}
-        <ExpandIcon {expanded} />
-      {/snippet}
-      {#if label}
-        <span role="none" class="type">
-          {label}
-        </span>
-      {/if}
-    </Button>
+    {#if expandable}
+      <Button
+        size="small"
+        iconic={!label}
+        aria-label={expanded ? _('collapse') : _('expand')}
+        aria-expanded={expanded}
+        aria-controls={controlId}
+        onclick={() => {
+          expanded = !expanded;
+          toggleExpanded?.();
+        }}
+      >
+        {#snippet startIcon()}
+          <ExpandIcon {expanded} />
+        {/snippet}
+        {#if label}
+          <span role="none" class="type">
+            {label}
+          </span>
+        {/if}
+      </Button>
+    {:else}
+      <span role="none" class="type label">
+        {label}
+      </span>
+    {/if}
   </div>
   <div role="none" class="center">
     {@render centerContent?.()}
@@ -109,6 +119,10 @@
       .end {
         display: none;
       }
+    }
+
+    .label {
+      padding: var(--sui-button-small-padding);
     }
 
     .type {

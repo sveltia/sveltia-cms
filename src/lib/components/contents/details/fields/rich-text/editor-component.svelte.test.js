@@ -261,6 +261,26 @@ describe('EditorComponent', () => {
       ).toHaveLength(2);
     });
 
+    test('has no expander button without fields, but can be removed', async () => {
+      const { onChange, wrapper } = await renderComponent({
+        componentName: 'divider',
+        label: 'Divider',
+        fields: [],
+        summary: undefined,
+        values: undefined,
+      });
+
+      const group = page.getByRole('group', { name: 'Divider' });
+
+      await expect.element(group).toMatchTextContent('Divider');
+      expect(group.getByRole('button', { name: /^(Expand|Collapse)$/ }).elements()).toHaveLength(0);
+      expect(wrapper.querySelector('.item-list')).toBeNull();
+      expect(wrapper.querySelector('.component')?.classList.contains('expanded')).toBe(false);
+
+      await group.getByRole('button', { name: 'Remove' }).click();
+      expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'remove' }));
+    });
+
     test('shows the first text field or the label without a summary template', async () => {
       // A field without a widget is a string field
       const { wrapper } = await renderComponent({
@@ -440,6 +460,52 @@ describe('EditorComponent', () => {
 
       await dialog.getByRole('button', { name: 'Cancel' }).click();
       expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'remove' }));
+    });
+
+    test('is inserted right away without a dialog when there are no fields', async () => {
+      const { onChange, wrapper } = await renderComponent({
+        mode: 'dialog',
+        componentName: 'divider',
+        label: 'Divider',
+        fields: [],
+        summary: undefined,
+        values: undefined,
+      });
+
+      await expect
+        .poll(() => onChange.mock.calls.at(-1)?.[0])
+        .toEqual(expect.objectContaining({ type: 'update' }));
+      expect(onChange.mock.calls.at(-1)[0].detail).toEqual({ __sc_component_name: 'divider' });
+      expect(onChange).toHaveBeenCalledOnce();
+
+      const placeholder = page.getByRole('img', { name: 'Divider' });
+
+      await expect.element(placeholder).toHaveTextContent('Divider');
+
+      // Neither a click nor the Enter key opens a dialog, but the Backspace key removes it
+      await placeholder.click();
+      await userEvent.keyboard('{Enter}');
+      expect(document.querySelector('[role="dialog"]')).toBeNull();
+      wrapper
+        .querySelector('.placeholder')
+        ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+      expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'remove' }));
+    });
+
+    test('is not updated again without fields when it already exists', async () => {
+      const { draft, onChange } = await renderComponent({
+        mode: 'dialog',
+        componentName: 'divider',
+        label: 'Divider',
+        fields: [],
+        summary: undefined,
+        values: { __sc_component_name: 'divider' },
+      });
+
+      await expect.element(page.getByRole('img', { name: 'Divider' })).toBeInTheDocument();
+      // The values are stored by the same watcher that would report a new component
+      await expect.poll(() => getStoredValues(draft)).toEqual({ __sc_component_name: 'divider' });
+      expect(onChange).not.toHaveBeenCalled();
     });
 
     test('has no fields to edit outside an entry editor pane', async () => {
