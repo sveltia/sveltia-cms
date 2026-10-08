@@ -1322,6 +1322,7 @@ describe('contents/fields/file/helpers', () => {
       // has no base folder, while the asset next to the entry is filed under another folder
       /** @type {import('$lib/types/private').AssetFolderInfo} */
       const componentFolder = {
+        collectionName: undefined,
         componentName: 'figure',
         typedKeyPath: 'image',
         internalPath: '',
