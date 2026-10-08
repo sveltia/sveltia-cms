@@ -12,6 +12,7 @@ import { setLastCommitPublishHint } from '$lib/services/deployments';
 import { createDebugLogger } from '$lib/services/utils/logging';
 
 import {
+  advanceRepositoryHead,
   applyFileMetadata,
   fetchAndParseFiles,
   getFileList,
@@ -28,7 +29,10 @@ vi.mock('@sveltia/utils/storage');
 vi.mock('$lib/services/assets', () => ({ allAssets: { current: [] } }));
 vi.mock('$lib/services/backends/git/shared/config', () => ({ gitConfigFiles: { current: [] } }));
 vi.mock('$lib/services/backends/process');
-vi.mock('$lib/services/config', () => ({ cmsConfigVersion: { current: undefined } }));
+vi.mock('$lib/services/config', () => ({
+  cmsConfig: { current: undefined },
+  cmsConfigVersion: { current: undefined },
+}));
 vi.mock('$lib/services/contents', () => ({
   allEntries: { current: [] },
   dataLoaded: { current: false },
@@ -56,6 +60,8 @@ describe('git/shared/fetch', () => {
     mockMetaDB = {
       entries: vi.fn(),
       saveEntries: vi.fn(),
+      get: vi.fn(),
+      set: vi.fn(),
     };
 
     mockCacheDB = {
@@ -204,6 +210,47 @@ describe('git/shared/fetch', () => {
       });
 
       expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
+    });
+  });
+
+  describe('advanceRepositoryHead', () => {
+    const repository = /** @type {any} */ ({ databaseName: 'github:owner/repo:apps/site' });
+
+    it('should move the head and the file cache on to the new commit', async () => {
+      repositoryHead.current = 'head-1';
+      mockMetaDB.get.mockResolvedValue('head-1');
+
+      await advanceRepositoryHead(repository, 'head-1', 'head-2');
+
+      expect(repositoryHead.current).toBe('head-2');
+      expect(IndexedDB).toHaveBeenCalledWith('github:owner/repo:apps/site', 'meta');
+      expect(mockMetaDB.get).toHaveBeenCalledWith('last_commit_hash');
+      expect(mockMetaDB.set).toHaveBeenCalledWith('last_commit_hash', 'head-2');
+    });
+
+    it('should leave a file cache recorded at another commit alone', async () => {
+      // A cache update still in flight records its own commit afterwards
+      mockMetaDB.get.mockResolvedValue('head-0');
+
+      await advanceRepositoryHead(repository, 'head-1', 'head-2');
+
+      expect(repositoryHead.current).toBe('head-2');
+      expect(mockMetaDB.set).not.toHaveBeenCalled();
+    });
+
+    it('should still move the head when the file cache can’t be updated', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      mockMetaDB.get.mockRejectedValue(new Error('IndexedDB error'));
+
+      await advanceRepositoryHead(repository, 'head-1', 'head-2');
+
+      expect(repositoryHead.current).toBe('head-2');
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to update the file cache.',
+        expect.any(Error),
+      );
+      consoleErrorSpy.mockRestore();
     });
   });
 

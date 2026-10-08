@@ -1,4 +1,6 @@
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { encodePath } from '$lib/services/backends/git/shared/url';
+import { getRootDir } from '$lib/services/backends/root-dir';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
@@ -47,6 +49,32 @@ export const getRepoURL = (restApiRoot, repoPath) => {
 };
 
 /**
+ * Generate the base URLs for accessing the repository’s resources, pointing the tree and blob URLs
+ * at the configured root directory, so a file path relative to it can be appended. Without a
+ * branch, the tree base URL is the repository itself and there is no blob base URL, so they’re left
+ * as they are.
+ * @param {(repoURL: string, branch?: string) => RepositoryBaseURLs} getBaseURLs Backend’s function
+ * to generate the base URLs.
+ * @param {string} repoURL The base URL of the repository.
+ * @param {string} [branch] Branch name.
+ * @returns {RepositoryBaseURLs} Base URLs.
+ */
+const getScopedBaseURLs = (getBaseURLs, repoURL, branch) => {
+  const urls = getBaseURLs(repoURL, branch);
+  const rootDir = getRootDir();
+
+  if (!rootDir || !branch) {
+    return urls;
+  }
+
+  return {
+    ...urls,
+    treeBaseURL: `${urls.treeBaseURL}/${encodePath(rootDir)}`,
+    blobBaseURL: `${urls.blobBaseURL}/${encodePath(rootDir)}`,
+  };
+};
+
+/**
  * Fill in a backend’s repository info from the CMS configuration during backend initialization.
  * @param {RepositoryInfo} repository Repository info placeholder to be updated in place.
  * @param {object} args Arguments.
@@ -80,6 +108,7 @@ export const initRepositoryInfo = (
 ) => {
   const repoPath = `${owner}/${repo}`;
   const repoURL = getRepoURL(restApiRoot, repoPath);
+  const rootDir = getRootDir();
 
   Object.assign(
     repository,
@@ -91,10 +120,12 @@ export const initRepositoryInfo = (
       branch,
       repoURL,
       tokenPageURL: getTokenPageURL(repoURL),
-      databaseName: `${service}:${repoPath}`,
+      // The cached files are keyed with paths relative to the root directory, so each directory
+      // of a monorepo gets a database of its own
+      databaseName: rootDir ? `${service}:${repoPath}:${rootDir}` : `${service}:${repoPath}`,
       isSelfHosted: restApiRoot !== defaultApiRoot,
     }),
-    getBaseURLs(repoURL, branch),
+    getScopedBaseURLs(getBaseURLs, repoURL, branch),
   );
 
   if (prefs.devModeEnabled) {
@@ -135,7 +166,7 @@ export const applyDefaultBranch = (repository, { found, branch, getBaseURLs }) =
     });
   }
 
-  Object.assign(repository, { branch }, getBaseURLs(repoURL, branch));
+  Object.assign(repository, { branch }, getScopedBaseURLs(getBaseURLs, repoURL, branch));
 
   return branch;
 };

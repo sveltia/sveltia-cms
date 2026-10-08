@@ -593,6 +593,30 @@ export class MockGitHub extends MockGitRepository {
 
     if (method === 'GET' && path.startsWith('git/trees/')) {
       const ref = decodeURIComponent(path.slice('git/trees/'.length));
+
+      // A tree-ish expression, e.g. `main:apps/site`, addresses a directory of a commit
+      if (ref.includes(':')) {
+        const [commitRef, dirPath] = ref.split(/:(.*)/);
+
+        const commit = this.refs.has(commitRef)
+          ? this.getHead(commitRef)
+          : this.getCommit(commitRef);
+
+        const prefix = `${dirPath}/`;
+
+        if (!commit || ![...commit.tree.keys()].some((filePath) => filePath.startsWith(prefix))) {
+          return { status: 404, json: { message: 'Not Found' } };
+        }
+
+        return this.handleTreeRequest({
+          sha: ref,
+          tree: commit.tree,
+          prefix,
+          recursive: searchParams.has('recursive'),
+          truncate: this.truncateTree,
+        });
+      }
+
       const commit = this.refs.has(ref) ? this.getHead(ref) : this.getCommit(ref);
 
       if (commit) {
@@ -1170,6 +1194,16 @@ export class MockGitHub extends MockGitRepository {
           base: { ref: this.getRefNode(variables.branch, { oid: true }) },
         },
       };
+    }
+
+    // The tree of a directory at a commit, as a `ref:path` expression, which tells whether the
+    // root directory has changed. Like GitHub, answer `null` for one that doesn’t exist
+    if (/object\(expression:\s*\$expression\)/.test(query)) {
+      const [ref, dir] = String(variables.expression).split(/:(.*)/);
+      const commit = this.refs.has(ref) ? this.getHead(ref) : this.getCommit(ref);
+      const oid = commit ? MockGitRepository.getDirSHA(commit.tree, dir) : undefined;
+
+      return { data: { repository: { object: oid ? { oid } : null } } };
     }
 
     // The head of a single branch, which a save reads to find out whether the workflow branch has

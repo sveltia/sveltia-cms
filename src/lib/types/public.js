@@ -1893,6 +1893,14 @@
  * @typedef {object} GitBackendProps
  * @property {string} [branch] Git branch name. If omitted, the default branch, usually `main` or
  * `master`, will be automatically detected and used.
+ * @property {string} [root_dir] Directory in the repository that the CMS treats as the root, such
+ * as the directory of a site in a monorepo, e.g. `apps/blog`. Every path in the configuration,
+ * like a collection’s `folder` or the `media_folder`, is then relative to this directory, and files
+ * outside it are not shown. Editorial Workflow branches are named after it as well, so the sites in
+ * a monorepo don’t share them; with Editorial Workflow, no part of the path can start with a dot,
+ * end with `.lock` or contain a space or a character Git doesn’t allow in a branch name, such as
+ * `:` or `*`. Default: the repository root. See the
+ * [documentation](https://sveltiacms.app/en/docs/backends#monorepos) for details.
  * @property {string} [site_domain] Site domain used for OAuth, which will be included in the
  * `site_id` param to be sent to the API endpoint. Default: [current
  * hostname](https://developer.mozilla.org/en-US/docs/Web/API/Location/hostname) (or
@@ -2067,6 +2075,11 @@
  * Test backend.
  * @typedef {object} TestBackend
  * @property {'test-repo'} name Backend name.
+ * @property {string} [root_dir] Directory in the repository that the CMS treats as the root, such
+ * as the directory of a site in a monorepo, e.g. `apps/blog`. Every path in the configuration,
+ * like a collection’s `folder` or the `media_folder`, is then relative to this directory, and files
+ * outside it are not shown. Default: the repository root. See the
+ * [documentation](https://sveltiacms.app/en/docs/backends#monorepos) for details.
  * @see https://decapcms.org/docs/test-backend/
  * @see https://sveltiacms.app/en/docs/backends/test
  */

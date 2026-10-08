@@ -230,6 +230,24 @@ export class MockGitRepository {
   }
 
   /**
+   * Get a tree SHA for a directory of a file tree. Like Git’s, it’s made from the files in the
+   * directory, so it stays the same across commits that leave the directory alone.
+   * @param {Map<string, string>} tree File tree.
+   * @param {string} dir Directory path, without a trailing slash.
+   * @returns {string | undefined} SHA, or `undefined` if the tree has no file in the directory.
+   */
+  static getDirSHA(tree, dir) {
+    const prefix = `${dir}/`;
+    const files = [...tree].filter(([path]) => path.startsWith(prefix)).sort();
+
+    return files.length
+      ? createHash('sha1')
+          .update(`tree ${JSON.stringify(files)}`)
+          .digest('hex')
+      : undefined;
+  }
+
+  /**
    * Get the content of a file on a branch.
    * @param {string} path File path.
    * @param {string} [branch] Branch key in {@link refs}, the default branch by default.

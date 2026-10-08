@@ -3,9 +3,11 @@ import { isObject } from '@sveltia/utils/object';
 
 import { unsupportedBackends, validBackendNames } from '$lib/services/backends';
 import { gitBackendServices } from '$lib/services/backends/git/services';
+import { normalizeRootDir } from '$lib/services/backends/root-dir';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 import { makeLink } from '$lib/services/utils/string';
+import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
 /**
  * @import { CmsConfig, GitBackend } from '$lib/types/public';
@@ -34,6 +36,22 @@ const AUTH_DOC_URL = 'https://sveltiacms.app/en/docs/backends/BACKEND_NAME#authe
  */
 const BACKEND_DOC_SLUGS = { gitea: 'gitea-forgejo' };
 const OPEN_AUTHORING_DOC_URL = 'https://sveltiacms.app/en/docs/workflows/open';
+/**
+ * Regular expression matching a path segment Git doesn’t allow in a branch name: one starting with
+ * a dot or ending with `.lock`, or one containing a control character, a space, any of `~^:?*[\`
+ * or `@{`.
+ * @see https://git-scm.com/docs/git-check-ref-format
+ */
+// eslint-disable-next-line no-control-regex
+const INVALID_BRANCH_SEGMENT_REGEX = /^\.|\.lock$|[\x00-\x20\x7f~^:?*[\\]|@\{/;
+
+/**
+ * Check whether the given directory path can be part of a Git branch name.
+ * @param {string} path Normalized directory path.
+ * @returns {boolean} Result.
+ */
+const isValidBranchPath = (path) =>
+  path.split('/').every((segment) => !INVALID_BRANCH_SEGMENT_REGEX.test(segment));
 
 /**
  * Parse and validate the backend configuration from the site config.
@@ -77,6 +95,19 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     errors.add(`${message} ${suggestion}`);
 
     return;
+  }
+
+  const { root_dir: rootDir } = backend;
+
+  if (typeof rootDir === 'string') {
+    // The CMS can’t see anything outside the repository, so a root directory that climbs out of it
+    // could only ever lead to a confusing error later
+    if (rootDir.split('/').includes('..')) {
+      errors.add(_('config.error.invalid_root_dir'));
+    } else if (isWorkflowConfigured(cmsConfig) && !isValidBranchPath(normalizeRootDir(rootDir))) {
+      // Editorial Workflow names its branches after the directory, which Git would refuse
+      errors.add(_('config.error.invalid_root_dir_branch'));
+    }
   }
 
   if (name in gitBackendServices) {

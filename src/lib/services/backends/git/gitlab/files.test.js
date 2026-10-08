@@ -1,5 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import {
@@ -8,6 +8,7 @@ import {
   fetchBlobBatch,
   fetchBlobNodes,
   fetchBlobs,
+  fetchDirSHA,
   fetchFileContents,
   fetchFileList,
   fetchFiles,
@@ -36,6 +37,10 @@ const stopProgress = vi.hoisted(() => vi.fn());
 
 // Mock dependencies
 vi.mock('@sveltia/utils/file');
+
+const mockGetRootDir = vi.hoisted(() => vi.fn(() => ''));
+
+vi.mock('$lib/services/backends/root-dir', () => ({ getRootDir: mockGetRootDir }));
 vi.mock('$lib/services/backends/git/gitlab/commits');
 vi.mock('$lib/services/backends/git/gitlab/fork');
 vi.mock('$lib/services/backends/git/gitlab/repository');
@@ -63,6 +68,73 @@ describe('GitLab files service', () => {
     vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
     forkedRepository.current = undefined;
     openAuthoringInitialized.current = false;
+  });
+
+  describe('fetchDirSHA', () => {
+    /**
+     * Make a page of the subdirectory listing.
+     * @param {{ name: string, sha: string }[]} nodes Subdirectories.
+     * @param {boolean} [hasNextPage] Whether there are more pages.
+     * @returns {any} Response.
+     */
+    const makePage = (nodes, hasNextPage = false) => ({
+      project: {
+        repository: { tree: { trees: { nodes, pageInfo: { endCursor: 'next', hasNextPage } } } },
+      },
+    });
+
+    beforeEach(() => {
+      vi.mocked(getPathInfo).mockImplementation((path) => {
+        const index = path.lastIndexOf('/');
+
+        return {
+          dirname: index > -1 ? path.slice(0, index) : undefined,
+          basename: path.slice(index + 1),
+          filename: path.slice(index + 1),
+        };
+      });
+    });
+
+    test('finds the directory among the subdirectories of its parent', async () => {
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce(makePage([{ name: 'other', sha: 'x' }], true))
+        .mockResolvedValueOnce(makePage([{ name: 'site', sha: 'tree-sha' }], true));
+
+      await expect(fetchDirSHA('abc', 'apps/site')).resolves.toBe('tree-sha');
+      expect(fetchGraphQL).toHaveBeenNthCalledWith(1, expect.stringContaining('trees(after:'), {
+        ref: 'abc',
+        path: 'apps',
+        cursor: '',
+      });
+      expect(fetchGraphQL).toHaveBeenNthCalledWith(2, expect.any(String), {
+        ref: 'abc',
+        path: 'apps',
+        cursor: 'next',
+      });
+    });
+
+    test('lists the repository root for a top-level directory', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce(makePage([{ name: 'site', sha: 'tree-sha' }]));
+
+      await expect(fetchDirSHA('abc', 'site')).resolves.toBe('tree-sha');
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.any(String), {
+        ref: 'abc',
+        path: '',
+        cursor: '',
+      });
+    });
+
+    test('returns `undefined` for a directory that doesn’t exist', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce(makePage([{ name: 'other', sha: 'x' }]));
+
+      await expect(fetchDirSHA('abc', 'apps/site')).resolves.toBeUndefined();
+    });
+
+    test('returns `undefined` when there is no tree', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({ project: null });
+
+      await expect(fetchDirSHA('abc', 'apps/site')).resolves.toBeUndefined();
+    });
   });
 
   describe('fetchFileList', () => {
@@ -115,6 +187,10 @@ describe('GitLab files service', () => {
 
       expect(fetchGraphQL).toHaveBeenCalledTimes(2);
       expect(fetchGraphQL).toHaveBeenCalledWith(
+        expect.stringContaining('tree(ref: $branch, recursive: true)'),
+        { cursor: '' },
+      );
+      expect(fetchGraphQL).toHaveBeenCalledWith(
         expect.stringContaining('query($fullPath: ID!, $branch: String!, $cursor: String!)'),
         { cursor: '' },
       );
@@ -128,6 +204,53 @@ describe('GitLab files service', () => {
         { path: 'file2.md', sha: 'sha2', size: 0, name: 'file2.md' },
         { path: 'file3.md', sha: 'sha3', size: 0, name: 'file3.md' },
       ]);
+    });
+
+    describe('with a root directory', () => {
+      beforeEach(() => {
+        mockGetRootDir.mockReturnValue('apps/site');
+        vi.mocked(getPathInfo).mockReturnValue({
+          basename: 'a.md',
+          filename: 'a',
+          extension: 'md',
+        });
+      });
+
+      afterEach(() => {
+        mockGetRootDir.mockReturnValue('');
+      });
+
+      test('lists only the files in the root directory', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          project: {
+            repository: {
+              tree: {
+                blobs: {
+                  nodes: [{ type: 'blob', path: 'apps/site/a.md', sha: 'sha1' }],
+                  pageInfo: { endCursor: 'cursor1', hasNextPage: false },
+                },
+              },
+            },
+          },
+        });
+
+        await expect(fetchFileList()).resolves.toEqual([
+          { path: 'apps/site/a.md', sha: 'sha1', size: 0, name: 'a.md' },
+        ]);
+        expect(fetchGraphQL).toHaveBeenCalledWith(
+          expect.stringMatching(
+            /\$path: String![^]*tree\(ref: \$branch, path: \$path, recursive: true\)/,
+          ),
+          { cursor: '', path: 'apps/site' },
+        );
+      });
+
+      test('returns an empty list when the root directory has no tree', async () => {
+        vi.mocked(fetchGraphQL).mockResolvedValue({ project: { repository: { tree: null } } });
+
+        await expect(fetchFileList()).resolves.toEqual([]);
+        expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+      });
     });
 
     test('filters out non-blob entries', async () => {

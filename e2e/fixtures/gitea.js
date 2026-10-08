@@ -89,6 +89,13 @@ export class MockGitea extends MockGitRepository {
   treePageSize = 1000;
 
   /**
+   * Directories listed by the contents endpoint, keyed with the made-up SHA it gave each, which
+   * the trees endpoint lists in turn.
+   * @type {Map<string, { tree: Map<string, string>, prefix: string }>}
+   */
+  subtrees = new Map();
+
+  /**
    * Maximum number of items the instance returns in a page of a list, which it applies whatever
    * the request asks for. The CMS reads it from the settings endpoint and pages through.
    */
@@ -1028,6 +1035,20 @@ export class MockGitea extends MockGitRepository {
   }
 
   /**
+   * Get a made-up SHA for a directory of a file tree, which the trees endpoint then lists.
+   * @param {Map<string, string>} tree File tree.
+   * @param {string} dir Directory path.
+   * @returns {string} SHA.
+   */
+  getSubtreeSHA(tree, dir) {
+    const sha = /** @type {string} */ (MockGitRepository.getDirSHA(tree, dir));
+
+    this.subtrees.set(sha, { tree, prefix: `${dir}/` });
+
+    return sha;
+  }
+
+  /**
    * List the entries of a folder, the way the contents endpoint does for a path that isn’t a file.
    * @param {Map<string, string>} tree File tree.
    * @param {string} dir Folder path, or an empty string for the root.
@@ -1049,7 +1070,7 @@ export class MockGitea extends MockGitRepository {
       entries.set(
         entryPath,
         rest.length
-          ? { name, path: entryPath, type: 'dir' }
+          ? { name, path: entryPath, type: 'dir', sha: this.getSubtreeSHA(tree, entryPath) }
           : { name, path: entryPath, type: 'file', sha },
       );
     });
@@ -1212,18 +1233,26 @@ export class MockGitea extends MockGitRepository {
    */
   handleTreeRequest(ref, searchParams) {
     const commit = this.refs.has(ref) ? this.getHead(ref) : this.getCommit(ref);
+    const subtree = this.subtrees.get(ref);
 
-    if (!commit) {
+    if (!commit && !subtree) {
       return { status: 404, json: { message: 'Not Found' } };
     }
 
+    // A subtree lists the files in its directory, with paths relative to it
+    const { tree, prefix } = commit ? { tree: commit.tree, prefix: '' } : subtree;
     const page = Number(searchParams.get('page') ?? 1);
-    const entries = [...commit.tree].sort(([a], [b]) => a.localeCompare(b));
+
+    const entries = [...tree]
+      .filter(([path]) => path.startsWith(prefix))
+      .map(([path, sha]) => [path.slice(prefix.length), sha])
+      .sort(([a], [b]) => a.localeCompare(b));
+
     const start = (page - 1) * this.treePageSize;
 
     return {
       json: {
-        sha: commit.oid,
+        sha: commit?.oid ?? ref,
         tree: entries.slice(start, start + this.treePageSize).map(([path, sha]) => ({
           path,
           mode: '100644',

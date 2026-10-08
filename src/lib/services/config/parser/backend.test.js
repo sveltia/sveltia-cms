@@ -15,6 +15,8 @@ const mockI18nStrings = {
   'config.error.unsupported_backend_suggestion': 'Please check the supported backends.',
   'config.error.missing_repository': 'Missing repository',
   'config.error.invalid_repository': 'Invalid repository format',
+  'config.error.invalid_root_dir': 'Invalid root directory',
+  'config.error.invalid_root_dir_branch': 'Root directory not usable in branch names',
   'config.error.oauth_implicit_flow': 'OAuth implicit flow is not supported',
   'config.error.github_pkce_unsupported': 'GitHub does not support PKCE authentication',
   'config.error.oauth_no_app_id': 'OAuth app ID is required',
@@ -61,7 +63,7 @@ vi.mock('$lib/services/config/deprecations', () => ({
 }));
 
 vi.mock('$lib/services/backends', () => ({
-  validBackendNames: ['github', 'gitlab', 'gitea', 'local'],
+  validBackendNames: ['github', 'gitlab', 'gitea', 'local', 'test-repo'],
   unsupportedBackends: {
     azure: { label: 'Azure DevOps' },
     bitbucket: { label: 'Bitbucket' },
@@ -454,6 +456,133 @@ describe('parseBackendConfig', () => {
       const [error] = [...collectors.errors];
 
       expect(error).toBe('Invalid repository format');
+    });
+  });
+
+  describe('root directory', () => {
+    it.each(['apps/site', '/apps/site/', './apps/site', '.', ''])(
+      'should accept `%s`',
+      async (rootDir) => {
+        const { parseBackendConfig } = await import('./backend.js');
+        const collectors = createCollectors();
+
+        parseBackendConfig(
+          { backend: { name: 'github', repo: 'owner/repo', root_dir: rootDir } },
+          collectors,
+        );
+
+        expect(collectors.errors.size).toBe(0);
+      },
+    );
+
+    it.each(['..', '../site', 'apps/../../site'])('should reject `%s`', async (rootDir) => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      parseBackendConfig(
+        { backend: { name: 'github', repo: 'owner/repo', root_dir: rootDir } },
+        collectors,
+      );
+
+      expect([...collectors.errors]).toEqual(['Invalid root directory']);
+    });
+
+    it.each([
+      '.site',
+      'apps/.site',
+      'site.lock',
+      'My Site',
+      'a:b',
+      'a~1',
+      'a^b',
+      'a?',
+      'a*',
+      'a[1]',
+      'a\\b',
+      'a@{b',
+      'a\tb',
+    ])('should reject `%s`, which can’t be in a workflow branch name', async (rootDir) => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      parseBackendConfig(
+        {
+          backend: { name: 'github', repo: 'owner/repo', root_dir: rootDir },
+          publish_mode: 'editorial_workflow',
+        },
+        collectors,
+      );
+
+      expect([...collectors.errors]).toEqual(['Root directory not usable in branch names']);
+    });
+
+    it('should check the branch name when a collection uses Editorial Workflow', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      parseBackendConfig(
+        {
+          backend: { name: 'github', repo: 'owner/repo', root_dir: 'My Site' },
+          collections: [
+            { name: 'posts', folder: 'posts', fields: [], publish_mode: 'editorial_workflow' },
+          ],
+        },
+        collectors,
+      );
+
+      expect([...collectors.errors]).toEqual(['Root directory not usable in branch names']);
+    });
+
+    it.each(['apps/my-site', 'apps/site.v2', 'apps/a@b', '/apps/site/', './apps/site'])(
+      'should accept `%s` with Editorial Workflow',
+      async (rootDir) => {
+        const { parseBackendConfig } = await import('./backend.js');
+        const collectors = createCollectors();
+
+        parseBackendConfig(
+          {
+            backend: { name: 'github', repo: 'owner/repo', root_dir: rootDir },
+            publish_mode: 'editorial_workflow',
+          },
+          collectors,
+        );
+
+        expect(collectors.errors.size).toBe(0);
+      },
+    );
+
+    it('should accept a directory name with a space without Editorial Workflow', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      parseBackendConfig(
+        { backend: { name: 'github', repo: 'owner/repo', root_dir: 'My Site' } },
+        collectors,
+      );
+
+      expect(collectors.errors.size).toBe(0);
+    });
+
+    it('should check the option of the test backend as well', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      parseBackendConfig({ backend: { name: 'test-repo', root_dir: '../site' } }, collectors);
+
+      expect([...collectors.errors]).toEqual(['Invalid root directory']);
+    });
+
+    it('should leave a value that isn’t a string to the schema', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      parseBackendConfig(
+        // @ts-ignore Invalid value
+        { backend: { name: 'github', repo: 'owner/repo', root_dir: 42 } },
+        collectors,
+      );
+
+      expect(collectors.errors.size).toBe(0);
     });
   });
 

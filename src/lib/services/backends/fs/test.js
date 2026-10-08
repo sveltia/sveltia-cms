@@ -1,4 +1,8 @@
-import { getDirectoryHandle, readFile } from '$lib/services/backends/fs/shared/handles';
+import {
+  getDirectoryHandle,
+  getScopedRootDirHandle,
+  readFile,
+} from '$lib/services/backends/fs/shared/handles';
 import { loadFiles } from '$lib/services/backends/fs/shared/load';
 import { saveChanges } from '$lib/services/backends/fs/shared/save';
 import { dataLoaded } from '$lib/services/contents';
@@ -38,9 +42,10 @@ const init = () => undefined;
  */
 const signIn = async () => {
   try {
-    rootDirHandle = await getDirectoryHandle(
-      await navigator.storage.getDirectory(),
-      TEST_BACKEND_ROOT_DIR_NAME,
+    // The configured root directory is created if needed, like the backend’s own directory
+    rootDirHandle = await getScopedRootDirHandle(
+      await getDirectoryHandle(await navigator.storage.getDirectory(), TEST_BACKEND_ROOT_DIR_NAME),
+      { create: true },
     );
   } catch {
     // Directory handle could not be acquired for security reasons, but we can ignore the error

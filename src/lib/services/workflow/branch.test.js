@@ -1,11 +1,27 @@
 import { afterEach, describe, expect, test } from 'vitest';
 
-import { getBranchName, isEntryBranch, parseBranchName } from '$lib/services/workflow/branch';
+import { cmsConfig } from '$lib/services/config';
+import {
+  getBranchListPrefix,
+  getBranchName,
+  isEntryBranch,
+  parseBranchName,
+} from '$lib/services/workflow/branch';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
+
+/**
+ * Configure the `root_dir` backend option.
+ * @param {string} rootDir Option value.
+ */
+const setRootDir = (rootDir) => {
+  // @ts-ignore Partial configuration
+  cmsConfig.current = { backend: { name: 'github', repo: 'owner/repo', root_dir: rootDir } };
+};
 
 describe('workflow/branch', () => {
   afterEach(() => {
     forkedRepository.current = undefined;
+    cmsConfig.current = undefined;
   });
 
   describe('getBranchName', () => {
@@ -39,6 +55,22 @@ describe('workflow/branch', () => {
 
       expect(getBranchName({ collectionName: 'posts', slug: 'hello-world' })).toBe(
         'cms/contributor/repo/posts/hello-world',
+      );
+    });
+    test('includes the root directory', () => {
+      setRootDir('/apps/site/');
+
+      expect(getBranchName({ collectionName: 'posts', slug: 'hello-world' })).toBe(
+        'cms/apps/site/posts/hello-world',
+      );
+    });
+
+    test('includes the fork path and the root directory with Open Authoring', () => {
+      setRootDir('apps/site');
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
+
+      expect(getBranchName({ collectionName: 'posts', slug: 'hello-world' })).toBe(
+        'cms/contributor/repo/apps/site/posts/hello-world',
       );
     });
   });
@@ -98,6 +130,62 @@ describe('workflow/branch', () => {
 
       // A branch that belongs to another fork, or to the regular flow, isn’t the contributor’s
       expect(parseBranchName('cms/posts/hello-world')).toBeUndefined();
+    });
+    test('parses a branch of the root directory', () => {
+      setRootDir('apps/site');
+
+      expect(parseBranchName('cms/apps/site/posts/hello-world')).toEqual({
+        collectionName: 'posts',
+        slug: 'hello-world',
+      });
+    });
+
+    test('marks a branch named without the root directory as legacy', () => {
+      setRootDir('apps/site');
+
+      // A branch created before the option was set, whose files tell whether it’s this site’s
+      expect(parseBranchName('cms/posts/hello-world')).toEqual({
+        collectionName: 'posts',
+        slug: 'hello-world',
+        legacy: true,
+      });
+      // So is another site’s, which its files outside the directory rule out
+      expect(parseBranchName('cms/apps/other/posts/hello-world')).toEqual({
+        collectionName: 'apps',
+        slug: 'other/posts/hello-world',
+        legacy: true,
+      });
+      expect(parseBranchName('feature/foo')).toBeUndefined();
+    });
+
+    test('marks a fork branch named without the root directory as legacy', () => {
+      setRootDir('apps/site');
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
+
+      expect(parseBranchName('cms/contributor/repo/apps/site/posts/hello-world')).toEqual({
+        collectionName: 'posts',
+        slug: 'hello-world',
+      });
+      expect(parseBranchName('cms/contributor/repo/posts/hello-world')).toEqual({
+        collectionName: 'posts',
+        slug: 'hello-world',
+        legacy: true,
+      });
+      expect(parseBranchName('cms/posts/hello-world')).toBeUndefined();
+    });
+
+    test('doesn’t mark anything as legacy without a root directory', () => {
+      expect(parseBranchName('cms/posts/hello-world')).not.toHaveProperty('legacy');
+    });
+  });
+
+  describe('getBranchListPrefix', () => {
+    test('leaves the root directory out', () => {
+      setRootDir('apps/site');
+      expect(getBranchListPrefix()).toBe('cms/');
+
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
+      expect(getBranchListPrefix()).toBe('cms/contributor/repo/');
     });
   });
 

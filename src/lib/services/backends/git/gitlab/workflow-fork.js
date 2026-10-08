@@ -17,7 +17,7 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { checkMergedBranch, checkStatusAllowed } from '$lib/services/backends/git/shared/fork';
 import { user } from '$lib/services/user/account.svelte';
-import { getBranchPrefix } from '$lib/services/workflow/branch';
+import { getBranchListPrefix } from '$lib/services/workflow/branch';
 
 /**
  * @import { WorkflowPullRequest, WorkflowStatus } from '$lib/types/private';
@@ -31,7 +31,7 @@ import { getBranchPrefix } from '$lib/services/workflow/branch';
  * @see https://docs.gitlab.com/api/branches/#list-repository-branches
  */
 export const fetchForkBranchList = async () => {
-  const prefix = getBranchPrefix();
+  const prefix = getBranchListPrefix();
 
   const branches = /** @type {Record<string, any>[]} */ (
     await fetchAPI(

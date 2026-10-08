@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { fetchLastCommit } from '$lib/services/backends/git/github/commits';
 import {
   fetchBlob,
   fetchBlobText,
+  fetchDirSHA,
   fetchFileContents,
   fetchFileList,
   fetchFileMetadata,
@@ -48,6 +49,13 @@ vi.mock('$lib/services/backends/git/shared/progress', () => ({
   startSimulatedProgress: vi.fn(() => stopProgress),
 }));
 vi.mock('mime', () => ({ default: { getType: vi.fn() } }));
+
+const mockGetRootDir = vi.hoisted(() => vi.fn(() => ''));
+
+vi.mock('$lib/services/backends/root-dir', () => ({ getRootDir: mockGetRootDir }));
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key, { values } = {}) => `${key}:${JSON.stringify(values)}`),
+}));
 
 describe('GitHub files service', () => {
   beforeEach(() => {
@@ -162,10 +170,132 @@ describe('GitHub files service', () => {
       ]);
     });
 
+    describe('with a root directory', () => {
+      beforeEach(() => {
+        mockGetRootDir.mockReturnValue('apps/site');
+      });
+
+      afterEach(() => {
+        mockGetRootDir.mockReturnValue('');
+      });
+
+      test('lists only the root directory, with paths relative to the repository root', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue({
+          tree: [
+            { type: 'blob', path: 'content/a.md', sha: 'a', size: 1 },
+            { type: 'tree', path: 'content', sha: 't1' },
+          ],
+          truncated: false,
+        });
+
+        await expect(fetchFileList('abc')).resolves.toEqual([
+          { path: 'apps/site/content/a.md', sha: 'a', size: 1, name: 'a.md' },
+        ]);
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/test-owner/test-repo/git/trees/abc%3Aapps/site?recursive=1',
+        );
+      });
+
+      test('walks the subtrees of a root directory too big to list at once', async () => {
+        const prefix = '/repos/test-owner/test-repo/git/trees';
+
+        /** @type {Record<string, any>} */
+        const responses = {
+          [`${prefix}/abc%3Aapps/site?recursive=1`]: { tree: [], truncated: true },
+          [`${prefix}/abc%3Aapps/site`]: {
+            tree: [{ type: 'tree', path: 'content', sha: 't1' }],
+            truncated: false,
+          },
+          [`${prefix}/t1?recursive=1`]: {
+            tree: [{ type: 'blob', path: 'a.md', sha: 'a', size: 1 }],
+            truncated: false,
+          },
+        };
+
+        vi.mocked(fetchAPI).mockImplementation(async (path) => responses[path]);
+
+        await expect(fetchFileList('abc')).resolves.toEqual([
+          { path: 'apps/site/content/a.md', sha: 'a', size: 1, name: 'a.md' },
+        ]);
+      });
+
+      test('throws a localized error when the root directory doesn’t exist', async () => {
+        vi.mocked(fetchAPI).mockRejectedValue(
+          new Error('Not Found', { cause: { status: 404, message: 'Not Found' } }),
+        );
+
+        await expect(fetchFileList('abc')).rejects.toThrow(
+          expect.objectContaining({
+            message: 'Failed to list the files.',
+            cause: expect.objectContaining({
+              message: 'root_dir_not_found:{"repo":"test-owner/test-repo","dir":"apps/site"}',
+            }),
+          }),
+        );
+      });
+
+      test('passes any other error on', async () => {
+        const error = new Error('Server error', { cause: { status: 500 } });
+
+        vi.mocked(fetchAPI).mockRejectedValue(error);
+
+        await expect(fetchFileList('abc')).rejects.toBe(error);
+      });
+
+      test('passes on a 404 error for a subtree of the root directory', async () => {
+        const error = new Error('Not Found', { cause: { status: 404 } });
+
+        vi.mocked(fetchAPI).mockImplementation(async (path) => {
+          if (path.includes('/t1')) {
+            throw error;
+          }
+
+          return path.endsWith('?recursive=1')
+            ? { tree: [], truncated: true }
+            : { tree: [{ type: 'tree', path: 'content', sha: 't1' }], truncated: false };
+        });
+
+        await expect(fetchFileList('abc')).rejects.toBe(error);
+      });
+    });
+
+    test('passes on a 404 error without a root directory', async () => {
+      const error = new Error('Not Found', { cause: { status: 404 } });
+
+      vi.mocked(fetchAPI).mockRejectedValue(error);
+
+      await expect(fetchFileList('abc')).rejects.toBe(error);
+    });
+
     test('throws when a single directory is too big to list', async () => {
       vi.mocked(fetchAPI).mockResolvedValue({ tree: [], truncated: true });
 
       await expect(fetchFileList()).rejects.toThrow('too many files to list');
+    });
+  });
+
+  describe('fetchDirSHA', () => {
+    test('looks the tree of a directory up with a tree-ish expression', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({ repository: { object: { oid: 'tree-sha' } } });
+
+      await expect(fetchDirSHA('abc', 'apps/site')).resolves.toBe('tree-sha');
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('object(expression:'), {
+        owner: 'test-owner',
+        repo: 'test-repo',
+        expression: 'abc:apps/site',
+      });
+    });
+
+    test('returns `undefined` for a directory that doesn’t exist', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({ repository: { object: null } });
+
+      await expect(fetchDirSHA('abc', 'apps/site')).resolves.toBeUndefined();
+    });
+
+    test('returns `undefined` for a repository that can’t be read', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({ repository: null });
+
+      await expect(fetchDirSHA('abc', 'apps/site')).resolves.toBeUndefined();
     });
   });
 

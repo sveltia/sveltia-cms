@@ -5,6 +5,7 @@ import { backend } from '$lib/services/backends';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { toRepoChanges } from '$lib/services/backends/root-dir';
 import { getCommitAuthor } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
@@ -245,7 +246,9 @@ export const saveWorkflowChanges = async ({
     changes,
     options,
     branch,
-    title: createCommitMessage(changes, options),
+    // The commit message the backend writes names the paths relative to the repository root, so
+    // the title does as well
+    title: createCommitMessage(toRepoChanges(changes), options),
     status: 'draft',
     pullRequest: existingEntry?.workflow.pullRequest,
   });
@@ -529,7 +532,7 @@ export const deleteWorkflowEntry = async (
     ],
     options: { commitType: 'delete', collection },
     branch,
-    title: createCommitMessage([{ action: 'delete', slug, path: paths[0] }], {
+    title: createCommitMessage(toRepoChanges([{ action: 'delete', slug, path: paths[0] }]), {
       commitType: 'delete',
       collection,
     }),

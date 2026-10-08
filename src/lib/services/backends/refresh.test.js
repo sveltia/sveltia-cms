@@ -1,18 +1,37 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
-import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { advanceRepositoryHead, repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { allEntries } from '$lib/services/contents';
 import { productionSHA } from '$lib/services/deployments';
 
-import { checkForRemoteChanges, diffStores, MIN_CHECK_GAP, suspendChecksWhile } from './refresh';
+import {
+  _resetRootDirTree,
+  checkForRemoteChanges,
+  diffStores,
+  MIN_CHECK_GAP,
+  suspendChecksWhile,
+} from './refresh';
+
+const mockGetRootDir = vi.hoisted(() => vi.fn(() => ''));
 
 vi.mock('$lib/services/assets', () => ({ allAssets: { current: [] } }));
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
-vi.mock('$lib/services/backends/git/shared/fetch', () => ({ repositoryHead: { current: '' } }));
+vi.mock('$lib/services/backends/git/shared/fetch', () => {
+  const head = { current: '' };
+
+  return {
+    repositoryHead: head,
+    // Like the real one, record the new head
+    advanceRepositoryHead: vi.fn(async (_repository, _from, to) => {
+      head.current = to;
+    }),
+  };
+});
 vi.mock('$lib/services/contents', () => ({ allEntries: { current: [] } }));
 vi.mock('$lib/services/deployments', () => ({ productionSHA: { current: '' } }));
+vi.mock('$lib/services/backends/root-dir', () => ({ getRootDir: mockGetRootDir }));
 
 /**
  * Make a minimal entry.
@@ -181,6 +200,101 @@ describe('checkForRemoteChanges', () => {
 
     await checkForRemoteChanges();
     expect(productionSHA.current).toBe('head-3');
+  });
+
+  describe('with a root directory', () => {
+    const fetchDirSHA = vi.fn();
+
+    beforeEach(() => {
+      _resetRootDirTree();
+      mockGetRootDir.mockReturnValue('apps/site');
+      /** @type {any} */ (backend).current = {
+        fetchLastCommit,
+        fetchFiles,
+        fetchDirSHA,
+        repository: { databaseName: 'github:owner/repo:apps/site' },
+      };
+      productionSHA.current = 'head-1';
+      fetchLastCommit.mockResolvedValue({ hash: 'head-2', message: '' });
+    });
+
+    afterEach(() => {
+      mockGetRootDir.mockReturnValue('');
+    });
+
+    test('skips a commit that leaves the root directory as it is', async () => {
+      fetchDirSHA.mockResolvedValue('tree-1');
+
+      expect(await checkForRemoteChanges()).toBeUndefined();
+      expect(fetchDirSHA).toHaveBeenCalledWith('head-1', 'apps/site');
+      expect(fetchDirSHA).toHaveBeenCalledWith('head-2', 'apps/site');
+      expect(fetchFiles).not.toHaveBeenCalled();
+      // The new head is the one the data reflects now, but the site isn’t rebuilt for it
+      expect(advanceRepositoryHead).toHaveBeenCalledWith(
+        { databaseName: 'github:owner/repo:apps/site' },
+        'head-1',
+        'head-2',
+      );
+      expect(repositoryHead.current).toBe('head-2');
+      expect(productionSHA.current).toBe('head-1');
+    });
+
+    test('only looks up the new head on the next check', async () => {
+      fetchDirSHA.mockResolvedValue('tree-1');
+      await checkForRemoteChanges();
+      fetchDirSHA.mockClear();
+      fetchLastCommit.mockResolvedValue({ hash: 'head-3', message: '' });
+
+      await checkForRemoteChanges();
+      expect(fetchDirSHA).toHaveBeenCalledTimes(1);
+      expect(fetchDirSHA).toHaveBeenCalledWith('head-3', 'apps/site');
+    });
+
+    test('looks the head up again when the root directory has changed since', async () => {
+      fetchDirSHA.mockResolvedValue('tree-1');
+      await checkForRemoteChanges();
+      fetchDirSHA.mockClear();
+      mockGetRootDir.mockReturnValue('apps/other');
+      fetchLastCommit.mockResolvedValue({ hash: 'head-3', message: '' });
+
+      await checkForRemoteChanges();
+      expect(fetchDirSHA).toHaveBeenCalledWith('head-2', 'apps/other');
+    });
+
+    test('fetches the files when the root directory has changed', async () => {
+      fetchDirSHA.mockImplementation(async (commit) => `tree-of-${commit}`);
+
+      await checkForRemoteChanges();
+      expect(fetchFiles).toHaveBeenCalledTimes(1);
+    });
+
+    test('fetches the files when the root directory can’t be found', async () => {
+      fetchDirSHA.mockResolvedValue(undefined);
+
+      await checkForRemoteChanges();
+      expect(fetchFiles).toHaveBeenCalledTimes(1);
+    });
+
+    test('fetches the files when the lookup fails', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      fetchDirSHA.mockRejectedValue(new Error('Network error'));
+
+      await checkForRemoteChanges();
+      expect(fetchFiles).toHaveBeenCalledTimes(1);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to look up the root directory.',
+        expect.any(Error),
+      );
+      consoleErrorSpy.mockRestore();
+    });
+
+    test('fetches the files for a backend that can’t look the directory up', async () => {
+      /** @type {any} */ (backend).current = { fetchLastCommit, fetchFiles };
+
+      await checkForRemoteChanges();
+      expect(fetchFiles).toHaveBeenCalledTimes(1);
+    });
   });
 
   test('shares one check between callers that overlap', async () => {

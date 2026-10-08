@@ -1,5 +1,7 @@
 /* eslint-disable no-await-in-loop */
 
+import { getPathInfo } from '@sveltia/utils/file';
+
 import { fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import {
   getWorkflowRepository,
@@ -18,6 +20,7 @@ import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
+import { getRootDir } from '$lib/services/backends/root-dir';
 import { splitIntoChunks } from '$lib/services/utils/array';
 import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
@@ -31,17 +34,20 @@ import { forkedRepository, openAuthoringInitialized } from '$lib/services/workfl
  */
 
 /**
+ * @typedef {object} FileListTree
+ * @property {object} blobs Blobs information.
+ * @property {{ type: string, path: string, sha: string }[]} blobs.nodes List of file blobs.
+ * @property {object} blobs.pageInfo Pagination information.
+ * @property {string} blobs.pageInfo.endCursor Cursor for the next page.
+ * @property {boolean} blobs.pageInfo.hasNextPage Whether there are more pages to fetch.
+ */
+
+/**
  * @typedef {object} FetchFileListResponse
  * @property {object} project Project information.
  * @property {object} project.repository Repository information.
- * @property {object} project.repository.tree Tree information.
- * @property {object} project.repository.tree.blobs Blobs information.
- * @property {{ type: string, path: string, sha: string }[]} project.repository.tree.blobs.nodes
- * List of file blobs.
- * @property {object} project.repository.tree.blobs.pageInfo Pagination information.
- * @property {string} project.repository.tree.blobs.pageInfo.endCursor Cursor for the next page.
- * @property {boolean} project.repository.tree.blobs.pageInfo.hasNextPage Whether there are more
- * pages to fetch.
+ * @property {FileListTree | null} project.repository.tree Tree information, or `null` if there is
+ * none.
  */
 
 /**
@@ -63,11 +69,18 @@ import { forkedRepository, openAuthoringInitialized } from '$lib/services/workfl
  * text contents.
  */
 
-const FETCH_FILE_LIST_QUERY = `
-  query($fullPath: ID!, $branch: String!, $cursor: String!) {
+/**
+ * Get the query to fetch a page of the file list.
+ * @param {object} args Arguments.
+ * @param {boolean} args.scoped Whether to list the files in a directory, given as the `$path`
+ * variable, rather than the whole repository.
+ * @returns {string} Query.
+ */
+const getFetchFileListQuery = ({ scoped }) => `
+  query($fullPath: ID!, $branch: String!, $cursor: String!${scoped ? ', $path: String!' : ''}) {
     project(fullPath: $fullPath) {
       repository {
-        tree(ref: $branch, recursive: true) {
+        tree(ref: $branch, ${scoped ? 'path: $path, ' : ''}recursive: true) {
           blobs(after: $cursor) {
             nodes {
               type
@@ -86,12 +99,16 @@ const FETCH_FILE_LIST_QUERY = `
 `;
 
 /**
- * Fetch the repository’s complete file list, and return it in the canonical format.
+ * Fetch the repository’s complete file list, and return it in the canonical format. With the
+ * `root_dir` backend option, only the files in that directory are listed, which saves listing the
+ * whole of a big monorepo; the paths are still relative to the repository root.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
  * @see https://docs.gitlab.com/api/graphql/reference/index.html#repositorytree
  * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
  */
 export const fetchFileList = async () => {
+  const rootDir = getRootDir();
+  const query = getFetchFileListQuery({ scoped: !!rootDir });
   /** @type {{ type: string, path: string, sha: string }[]} */
   const blobs = [];
   let cursor = '';
@@ -99,13 +116,18 @@ export const fetchFileList = async () => {
   // Since GitLab has a limit of 100 records per query, use pagination to fetch all the files
   for (;;) {
     const result = /** @type {FetchFileListResponse} */ (
-      await fetchGraphQL(FETCH_FILE_LIST_QUERY, { cursor })
+      await fetchGraphQL(query, { cursor, ...(rootDir && { path: rootDir }) })
     );
 
+    // A directory that doesn’t exist comes back without blobs, while a missing tree is guarded
+    // against as well; either leaves the list empty, which the caller reports
     const {
       nodes,
       pageInfo: { endCursor, hasNextPage },
-    } = result.project.repository.tree.blobs;
+    } = result.project.repository.tree?.blobs ?? {
+      nodes: [],
+      pageInfo: { endCursor: '', hasNextPage: false },
+    };
 
     blobs.push(...nodes);
     cursor = endCursor;
@@ -117,6 +139,58 @@ export const fetchFileList = async () => {
 
   // The `size` is not available from the GitLab API in bulk, so it’s left as `0`
   return toFileListItems(blobs);
+};
+
+const FETCH_SUBTREES_QUERY = `
+  query($fullPath: ID!, $ref: String!, $path: String!, $cursor: String!) {
+    project(fullPath: $fullPath) {
+      repository {
+        tree(ref: $ref, path: $path) {
+          trees(after: $cursor) {
+            nodes {
+              name
+              sha
+            }
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Find the tree SHA of a directory at the given commit, by listing the subdirectories of the
+ * directory that holds it, a page at a time.
+ * @param {string} ref Commit SHA or branch name.
+ * @param {string} dirPath Directory path relative to the repository root.
+ * @returns {Promise<string | undefined>} Tree SHA, or `undefined` if the directory doesn’t exist.
+ * @see https://docs.gitlab.com/api/graphql/reference/#tree
+ */
+export const fetchDirSHA = async (ref, dirPath) => {
+  const { dirname = '', basename } = getPathInfo(dirPath);
+  let cursor = '';
+
+  for (;;) {
+    const result = /** @type {any} */ (
+      await fetchGraphQL(FETCH_SUBTREES_QUERY, { ref, path: dirname, cursor })
+    );
+
+    const { nodes = [], pageInfo } = result.project?.repository?.tree?.trees ?? {};
+
+    const sha = /** @type {{ name: string, sha: string }[]} */ (nodes).find(
+      ({ name }) => name === basename,
+    )?.sha;
+
+    if (sha || !pageInfo?.hasNextPage) {
+      return sha;
+    }
+
+    cursor = pageInfo.endCursor;
+  }
 };
 
 /**

@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { callEventHooks } from '$lib/services/api/events';
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { getCommitAuthor } from '$lib/services/backends/save';
+import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import {
@@ -94,6 +95,10 @@ describe('workflow/save', () => {
     /** @type {any} */ (backend).current = { workflow: workflowService };
   });
 
+  afterEach(() => {
+    cmsConfig.current = undefined;
+  });
+
   describe('store helpers', () => {
     test('upserts and finds an entry by branch', () => {
       const entry = createEntry('cms/posts/hello');
@@ -138,6 +143,28 @@ describe('workflow/save', () => {
     beforeEach(() => {
       vi.mocked(createCommitMessage).mockReturnValue('Create Post “hello”');
       vi.mocked(getCommitAuthor).mockReturnValue({ name: 'Me', email: 'me@example.com' });
+    });
+
+    test('titles the pull request with the paths relative to the repository root', async () => {
+      // @ts-ignore Partial configuration
+      cmsConfig.current = {
+        backend: { name: 'github', repo: 'owner/repo', root_dir: 'apps/site' },
+      };
+      workflowService.savePullRequest.mockResolvedValue({
+        commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
+        pullRequest: { branch: 'cms/apps/site/posts/hello', number: 1, status: 'draft' },
+      });
+
+      await saveWorkflowChanges(args);
+
+      expect(createCommitMessage).toHaveBeenCalledWith(
+        [expect.objectContaining({ path: 'apps/site/content/posts/hello.md' })],
+        { commitType: 'create' },
+      );
+      // The backend is given the paths the CMS deals with, and converts them itself
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ changes: args.changes }),
+      );
     });
 
     test('registers the committed assets so they can be previewed right away', async () => {
@@ -711,6 +738,20 @@ describe('workflow/save', () => {
 
       workflowService.updateStatus.mockImplementation(
         async (/** @type {any} */ pr, /** @type {any} */ status) => ({ ...pr, status }),
+      );
+    });
+
+    test('titles the pull request with the path relative to the repository root', async () => {
+      // @ts-ignore Partial configuration
+      cmsConfig.current = {
+        backend: { name: 'github', repo: 'owner/repo', root_dir: 'apps/site' },
+      };
+
+      await deleteWorkflowEntry(createPublishedEntry(), collection, undefined);
+
+      expect(createCommitMessage).toHaveBeenCalledWith(
+        [{ action: 'delete', slug: 'hello', path: 'apps/site/content/posts/hello.md' }],
+        { commitType: 'delete', collection },
       );
     });
 

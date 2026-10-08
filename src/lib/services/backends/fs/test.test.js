@@ -9,6 +9,7 @@ const mockLoadFiles = vi.fn();
 const mockReadFile = vi.fn();
 const mockSaveChanges = vi.fn();
 const mockGetDirectoryHandle = vi.fn();
+const mockGetScopedRootDirHandle = vi.fn(async (handle) => handle);
 
 vi.mock('$lib/services/backends/fs/shared/save', () => ({
   saveChanges: mockSaveChanges,
@@ -21,6 +22,7 @@ vi.mock('$lib/services/backends/fs/shared/load', () => ({
 vi.mock('$lib/services/backends/fs/shared/handles', () => ({
   readFile: mockReadFile,
   getDirectoryHandle: mockGetDirectoryHandle,
+  getScopedRootDirHandle: mockGetScopedRootDirHandle,
 }));
 
 vi.mock('$lib/services/contents', () => ({
@@ -105,6 +107,20 @@ describe('Test Backend Service', () => {
       expect(result).toEqual({ backendName: 'test-repo' });
       expect(navigator.storage.getDirectory).toHaveBeenCalled();
       expect(mockGetDirectoryHandle).toHaveBeenCalledWith(mockRootHandle, 'sveltia-cms-test');
+    });
+
+    it('should create and use the configured root directory', async () => {
+      const scopedHandle = { name: 'site' };
+
+      mockGetDirectoryHandle.mockResolvedValue(mockRootHandle);
+      mockGetScopedRootDirHandle.mockResolvedValueOnce(scopedHandle);
+
+      // @ts-ignore - Testing actual implementation signature
+      await testBackend.signIn();
+      await testBackend.fetchFiles();
+
+      expect(mockGetScopedRootDirHandle).toHaveBeenCalledWith(mockRootHandle, { create: true });
+      expect(mockLoadFiles).toHaveBeenCalledWith(scopedHandle);
     });
 
     it('should handle errors when getting directory handle fails', async () => {

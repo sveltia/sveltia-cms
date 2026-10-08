@@ -8,7 +8,7 @@ import {
   fetchLastCommit,
 } from '$lib/services/backends/git/gitlab/commits';
 import { BACKEND_LABEL, BACKEND_NAME } from '$lib/services/backends/git/gitlab/constants';
-import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
+import { fetchBlob, fetchDirSHA, fetchFiles } from '$lib/services/backends/git/gitlab/files';
 import gitlabBackend, { init } from '$lib/services/backends/git/gitlab/index';
 import { getBaseURLs, repository } from '$lib/services/backends/git/gitlab/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
@@ -29,6 +29,7 @@ vi.mock('$lib/services/backends/git/gitlab/commits', () => ({
 }));
 vi.mock('$lib/services/backends/git/gitlab/files', () => ({
   fetchBlob: vi.fn(),
+  fetchDirSHA: vi.fn(),
   fetchFiles: vi.fn(),
 }));
 vi.mock('$lib/services/backends/git/gitlab/repository', () => ({
@@ -337,6 +338,7 @@ describe('GitLab backend service', () => {
         fetchFiles,
         fetchLastCommit,
         fetchBlob,
+        fetchDirSHA,
         commitChanges,
         fetchFileCommits,
         fetchBranchHeadSHA: expect.any(Function),

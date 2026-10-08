@@ -179,6 +179,8 @@ repository_not_found: 「{$repo}」リポジトリは存在しません。
 repository_empty: 「{$repo}」リポジトリにはブランチがありません。
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: 「{$repo}」リポジトリに「{$branch}」ブランチは存在しません。
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: 「{$repo}」リポジトリにルートディレクトリ「{$dir}」は存在しません。
 
 # General errors
 # Fallback error dialog title for unexpected errors
@@ -1678,6 +1680,9 @@ config:
     unsupported_backend_suggestion: <a>サポートされているバックエンド</a> のいずれかを使用してください。
     missing_repository: リポジトリが定義されていません。
     invalid_repository: 設定されているリポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。
+    invalid_root_dir: 設定されているルートディレクトリが正しくありません。この設定は「..」を含まない、リポジトリ内のパスでなければなりません。
+    invalid_root_dir_branch: '設定されているルートディレクトリは `editorial_workflow` 公開モードのブランチ名に使用できません。パスの各部分は、ドットで始まったり「.lock」で終わったりせず、スペースやコロン、アスタリスクなどの特殊文字を含まないようにしてください。'
+    path_outside_root_dir: パス「{$path}」はルートディレクトリの外を指しています。CMS はルートディレクトリの外のファイルを一覧表示できません。
     oauth_implicit_flow: 設定されている認証方式 (暗黙的フロー) は Sveltia CMS では非対応です。代わりに他の <a>認証方法</a> を使用してください。
     github_pkce_unsupported: GitHub の制約により PKCE 認証はまだサポートされていません。代わりに他の <a>認証方法</a> を使用してください。
     oauth_no_app_id: ' OAuth アプリケーション ID が定義されていません。'

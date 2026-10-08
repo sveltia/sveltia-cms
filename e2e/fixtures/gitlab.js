@@ -989,9 +989,52 @@ export class MockGitLab extends MockGitRepository {
       };
     }
 
-    // The file list, a page at a time, with the index of the next file as the cursor
+    // The subdirectories of a directory at a commit, which tell whether the root directory has
+    // changed, all on one page
+    if (query.includes('trees(after:')) {
+      const commit = this.refs.has(variables.ref)
+        ? this.getHead(variables.ref)
+        : this.getCommit(variables.ref);
+
+      const prefix = variables.path ? `${variables.path}/` : '';
+
+      const names = new Set(
+        [...(commit?.tree.keys() ?? [])]
+          .filter((path) => path.startsWith(prefix) && path.slice(prefix.length).includes('/'))
+          .map((path) => path.slice(prefix.length).split('/')[0]),
+      );
+
+      return {
+        data: {
+          project: {
+            repository: {
+              tree: {
+                trees: {
+                  nodes: [...names].map((name) => ({
+                    name,
+                    sha: MockGitRepository.getDirSHA(
+                      /** @type {MockCommit} */ (commit).tree,
+                      `${prefix}${name}`,
+                    ),
+                  })),
+                  pageInfo: { endCursor: '', hasNextPage: false },
+                },
+              },
+            },
+          },
+        },
+      };
+    }
+
+    // The file list, a page at a time, with the index of the next file as the cursor. Like GitLab,
+    // only the files in the directory given as `path` are listed, with full paths
     if (query.includes('blobs(after:')) {
-      const entries = [...(head?.tree ?? [])].sort(([a], [b]) => a.localeCompare(b));
+      const prefix = variables.path ? `${variables.path}/` : '';
+
+      const entries = [...(head?.tree ?? [])]
+        .filter(([path]) => path.startsWith(prefix))
+        .sort(([a], [b]) => a.localeCompare(b));
+
       const start = Number(variables.cursor || 0);
       const end = start + this.treePageSize;
 

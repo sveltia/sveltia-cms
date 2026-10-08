@@ -16,7 +16,7 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { checkMergedBranch, checkStatusAllowed } from '$lib/services/backends/git/shared/fork';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
-import { getBranchPrefix } from '$lib/services/workflow/branch';
+import { getBranchListPrefix } from '$lib/services/workflow/branch';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
@@ -36,7 +36,7 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
  */
 export const fetchForkBranchList = async () => {
   const { owner, repo } = getWorkflowRepository();
-  const prefix = getBranchPrefix();
+  const prefix = getBranchListPrefix();
   // The instance can’t filter by prefix, so every branch is listed. A fork holds few besides the
   // workflow ones, so it’s a page or two in practice
   const branches = await fetchAllPages(`/repos/${owner}/${repo}/branches`);

@@ -13,7 +13,7 @@ import {
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
 } from '$lib/services/backends/git/gitea/constants';
-import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitea/files';
+import { fetchBlob, fetchDirSHA, fetchFiles } from '$lib/services/backends/git/gitea/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/gitea/repository';
 import workflow from '$lib/services/backends/git/gitea/workflow';
 import { initGitBackend } from '$lib/services/backends/git/shared/init';
@@ -96,6 +96,7 @@ export default {
   fetchFiles,
   fetchLastCommit,
   fetchBlob,
+  fetchDirSHA,
   commitChanges,
   fetchFileCommits,
   workflow,

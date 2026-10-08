@@ -7,6 +7,7 @@ import { hasSkipCIMarker } from '$lib/services/backends/git/shared/commits';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { reconcileAssets, reconcileEntries } from '$lib/services/backends/git/shared/reconcile';
 import { mergeEntries, planEntryReparse } from '$lib/services/backends/git/shared/reparse';
+import { scopeFileFetchers } from '$lib/services/backends/git/shared/scope';
 import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
@@ -155,6 +156,30 @@ export const saveFileListMeta = async ({ metaDB, lastConfigHash, lastCommitHash 
       git_config_fetched: true,
     }),
   );
+};
+
+/**
+ * Move the head the site data reflects on to a commit that has left the configured root directory
+ * as it was, so nothing has to be fetched. The file cache is moved on as well, so the next load
+ * restores the file list from it rather than listing the directory again, but only if it’s still
+ * recorded at the previous head: a cache update in flight records its own commit afterwards.
+ * @param {RepositoryInfo} repository Repository info.
+ * @param {string} from Head the site data reflects.
+ * @param {string} to New head.
+ */
+export const advanceRepositoryHead = async ({ databaseName }, from, to) => {
+  repositoryHead.current = to;
+
+  try {
+    const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
+
+    if ((await metaDB.get('last_commit_hash')) === from) {
+      await metaDB.set('last_commit_hash', to);
+    }
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to update the file cache.', ex);
+  }
 };
 
 /**
@@ -674,11 +699,16 @@ export const fetchAndParseFiles = async ({
   fetchDefaultBranchName,
   fetchLastCommit,
   lastCommit,
-  fetchFileList,
-  fetchFileContents,
-  fetchFileMetadata,
+  ...fetchers
 }) => {
   const { service, owner, repo, databaseName } = repository;
+
+  // Only the files in the configured root directory are listed, with paths relative to it
+  const { fetchFileList, fetchFileContents, fetchFileMetadata } = scopeFileFetchers({
+    repository,
+    ...fetchers,
+  });
+
   const log = createDebugLogger('Loading site data');
 
   log(`Started: ${service} ${owner}/${repo}`);

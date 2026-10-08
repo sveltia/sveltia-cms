@@ -12,21 +12,21 @@ const FIRST_POST = '---\ntitle: First Post\n---\n\nHello, world!\n';
  * A blog on GitHub with an image field, which offers to work with a local clone of the repository
  * on a page served from localhost.
  */
-test.use({
-  config: {
-    ...GITHUB_CONFIG,
-    collections: [
-      {
-        ...GITHUB_CONFIG.collections[0],
-        fields: [
-          { name: 'title', label: 'Title' },
-          { name: 'cover', label: 'Cover', widget: 'image', required: false },
-          { name: 'body', label: 'Body', widget: 'text' },
-        ],
-      },
-    ],
-  },
-});
+const LOCAL_CONFIG = {
+  ...GITHUB_CONFIG,
+  collections: [
+    {
+      ...GITHUB_CONFIG.collections[0],
+      fields: [
+        { name: 'title', label: 'Title' },
+        { name: 'cover', label: 'Cover', widget: 'image', required: false },
+        { name: 'body', label: 'Body', widget: 'text' },
+      ],
+    },
+  ],
+};
+
+test.use({ config: LOCAL_CONFIG });
 
 /**
  * Make the folder picker return a folder in the origin private file system (OPFS), as Playwright
@@ -223,5 +223,45 @@ test.describe('with the picker dismissed', () => {
     await expect(
       page.getByText('A repository root directory could not be selected. Please try again.'),
     ).toBeVisible();
+  });
+});
+
+test.describe('with a root directory', () => {
+  test.use({
+    config: { ...LOCAL_CONFIG, backend: { ...LOCAL_CONFIG.backend, root_dir: 'apps/blog' } },
+  });
+
+  test('works in the directory of the repository root that was picked', async ({ cms, page }) => {
+    // The site lives in a subdirectory of a monorepo, next to another site
+    await cms.seed({
+      '.git/HEAD': 'ref: refs/heads/main\n',
+      [`apps/blog/${POST_PATH}`]: FIRST_POST,
+      [`apps/docs/${POST_PATH}`]: '---\ntitle: Docs Post\n---\n\nRead the docs.\n',
+    });
+    await page.getByRole('button', { name: 'Work with Local Repository' }).click();
+    await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveText([
+      /First Post/,
+    ]);
+
+    const editor = await openFirstPost(page);
+
+    await editor.getByRole('textbox', { name: 'Body' }).fill('Hello from the blog!');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())[`apps/blog/${POST_PATH}`])
+      .toBe("---\ntitle: First Post\ncover: ''\n---\n\nHello from the blog!\n");
+    expect((await cms.readRepo())[POST_PATH]).toBeUndefined();
+  });
+
+  test('says so when the directory doesn’t exist', async ({ cms, page }) => {
+    await cms.seed({ '.git/HEAD': 'ref: refs/heads/main\n', [POST_PATH]: FIRST_POST });
+    await page.getByRole('button', { name: 'Work with Local Repository' }).click();
+
+    // Not mistaken for a folder that isn’t the root of a repository
+    await expect(
+      page.getByText(/The root directory .*apps\/blog.* doesn’t exist in the .*e2e-site/),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Show Account Menu' })).toHaveCount(0);
   });
 });

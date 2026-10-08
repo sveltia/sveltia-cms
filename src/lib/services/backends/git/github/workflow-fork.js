@@ -18,7 +18,7 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { checkMergedBranch, checkStatusAllowed } from '$lib/services/backends/git/shared/fork';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
-import { getBranchPrefix } from '$lib/services/workflow/branch';
+import { getBranchListPrefix } from '$lib/services/workflow/branch';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
@@ -217,7 +217,7 @@ export const parseForkBranch = (node, branch, pullRequest) => {
  */
 export const fetchForkBranches = async () => {
   const { owner, repo } = getWorkflowRepository();
-  const prefix = getBranchPrefix();
+  const prefix = getBranchListPrefix();
 
   const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
     await fetchGraphQL(getFetchForkBranchesQuery(), {

@@ -2,6 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 
 import { parseAssetFileInfo } from '$lib/services/backends/git/shared/fetch';
 import { createFileList } from '$lib/services/backends/process';
+import { isInRootDir } from '$lib/services/backends/root-dir';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { prepareEntries } from '$lib/services/contents/file/process';
@@ -70,7 +71,16 @@ const completeEntry = (entry, previousPaths) => {
 export const convertPullRequest = async (pullRequest) => {
   const parsed = parseBranchName(pullRequest.branch);
 
-  if (!parsed) {
+  // A branch named without the root directory belongs to the site only if all its files are in the
+  // directory; otherwise it’s another site’s in the monorepo, or a change the CMS can’t show
+  if (
+    !parsed ||
+    (parsed.legacy &&
+      pullRequest.files.some(
+        ({ path, previousPath }) =>
+          !isInRootDir(path) || (previousPath !== undefined && !isInRootDir(previousPath)),
+      ))
+  ) {
     return { entries: [], assets: [] };
   }
 

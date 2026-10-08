@@ -13,12 +13,14 @@ import {
   fetchDefaultBranchName,
   repository,
 } from '$lib/services/backends/git/github/repository';
-import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { mapConcurrently, runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { encodePath } from '$lib/services/backends/git/shared/url';
+import { getRootDir } from '$lib/services/backends/root-dir';
 import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 /**
@@ -55,22 +57,40 @@ const fetchTree = async (treeRef, recursive) => {
 /**
  * Fetch the repository’s complete file list, and return it in the canonical format. A tree too big
  * to be listed recursively in one response, as in a huge repository, has its subtrees listed
- * separately instead, as GitHub suggests.
+ * separately instead, as GitHub suggests. With the `root_dir` backend option, only the files in
+ * that directory are listed, which saves listing the whole of a big monorepo; the paths are still
+ * relative to the repository root.
  * @param {string} [lastHash] The last commit’s SHA-1 hash.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
- * @throws {Error} If a single directory has too many files to list.
+ * @throws {Error} If a single directory has too many files to list, or if the root directory
+ * doesn’t exist.
  */
 export const fetchFileList = async (lastHash) => {
+  const ref = /** @type {string} */ (lastHash ?? repository.branch);
+  const rootDir = getRootDir();
   /** @type {GitTreeEntry[]} */
   const blobs = [];
+
   /** @type {{ sha: string, prefix: string }[]} */
-  let pending = [{ sha: /** @type {string} */ (lastHash ?? repository.branch), prefix: '' }];
+  let pending = [
+    // A tree-ish expression addresses the directory’s tree without looking its SHA up first
+    rootDir ? { sha: `${ref}:${rootDir}`, prefix: `${rootDir}/` } : { sha: ref, prefix: '' },
+  ];
 
   // One level at a time, so the requests in flight stay within the concurrency limit
   while (pending.length) {
     // eslint-disable-next-line no-await-in-loop
     const results = await mapConcurrently(pending, async ({ sha, prefix }) => {
-      const { tree, truncated } = await fetchTree(sha, true);
+      const { tree, truncated } = await fetchTree(sha, true).catch((ex) => {
+        if (rootDir && sha === `${ref}:${rootDir}` && ex?.cause?.status === 404) {
+          throw createLocalizedError('Failed to list the files.', 'root_dir_not_found', {
+            repo: `${repository.owner}/${repository.repo}`,
+            dir: rootDir,
+          });
+        }
+
+        throw ex;
+      });
 
       if (!truncated) {
         return { prefix, entries: tree, subtrees: [] };
@@ -104,6 +124,33 @@ export const fetchFileList = async (lastHash) => {
   }
 
   return toFileListItems(blobs);
+};
+
+const FETCH_DIR_SHA_QUERY = `
+  query($owner: String!, $repo: String!, $expression: String!) {
+    repository(owner: $owner, name: $repo) {
+      object(expression: $expression) {
+        oid
+      }
+    }
+  }
+`;
+
+/**
+ * Find the tree SHA of a directory at the given commit.
+ * @param {string} ref Commit SHA or branch name.
+ * @param {string} dirPath Directory path relative to the repository root.
+ * @returns {Promise<string | undefined>} Tree SHA, or `undefined` if the directory doesn’t exist.
+ * @see https://docs.github.com/en/graphql/reference/objects#repository
+ */
+export const fetchDirSHA = async (ref, dirPath) => {
+  const { owner, repo } = repository;
+
+  const result = /** @type {{ repository?: { object?: { oid: string } | null } | null }} */ (
+    await fetchGraphQL(FETCH_DIR_SHA_QUERY, { owner, repo, expression: `${ref}:${dirPath}` })
+  );
+
+  return result.repository?.object?.oid;
 };
 
 /**

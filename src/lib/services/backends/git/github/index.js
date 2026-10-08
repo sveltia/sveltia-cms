@@ -22,7 +22,7 @@ import {
   fetchDeployments,
   triggerDeployment,
 } from '$lib/services/backends/git/github/deployment';
-import { fetchBlob, fetchFiles } from '$lib/services/backends/git/github/files';
+import { fetchBlob, fetchDirSHA, fetchFiles } from '$lib/services/backends/git/github/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/github/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/github/status';
 import workflow from '$lib/services/backends/git/github/workflow';
@@ -110,6 +110,7 @@ export default {
   fetchFiles,
   fetchLastCommit,
   fetchBlob,
+  fetchDirSHA,
   commitChanges,
   fetchFileCommits,
   triggerDeployment,

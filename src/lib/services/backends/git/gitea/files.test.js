@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 
 import { decodeBase64, getPathInfo } from '@sveltia/utils/file';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { fetchLastCommit } from '$lib/services/backends/git/gitea/commits';
 import {
@@ -22,8 +22,10 @@ import { dataLoadedProgress } from '$lib/services/contents';
 import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 import {
+  _resetDirLookup,
   createBatches,
   fetchBlob,
+  fetchDirSHA,
   fetchFileContents,
   fetchFileList,
   fetchFiles,
@@ -36,6 +38,9 @@ import {
  */
 
 // Mock dependencies
+const mockGetRootDir = vi.hoisted(() => vi.fn(() => ''));
+
+vi.mock('$lib/services/backends/root-dir', () => ({ getRootDir: mockGetRootDir }));
 vi.mock('@sveltia/utils/file', () => ({
   decodeBase64: vi.fn(),
   getPathInfo: vi.fn(),
@@ -137,6 +142,148 @@ describe('Gitea Files Service', () => {
         { path: 'file1.md', sha: 'abc123', size: 100, name: 'file1.md' },
         { path: 'file2.txt', sha: 'def456', size: 200, name: 'file2.txt' },
       ]);
+    });
+
+    describe('with a root directory', () => {
+      beforeEach(() => {
+        _resetDirLookup();
+        mockGetRootDir.mockReturnValue('apps/site');
+        vi.mocked(getPathInfo).mockImplementation((path) => {
+          const index = path.lastIndexOf('/');
+
+          return {
+            dirname: index > -1 ? path.slice(0, index) : undefined,
+            basename: path.slice(index + 1),
+            filename: path.slice(index + 1),
+          };
+        });
+      });
+
+      afterEach(() => {
+        mockGetRootDir.mockReturnValue('');
+      });
+
+      test('should list the tree of the root directory, found in its parent', async () => {
+        vi.mocked(fetchAPI)
+          .mockResolvedValueOnce([
+            { type: 'file', name: 'site', sha: 'file-sha' },
+            { type: 'dir', name: 'site', sha: 'tree-sha' },
+          ])
+          .mockResolvedValueOnce({
+            tree: [{ type: 'blob', path: 'content/a.md', sha: 'a', size: 1 }],
+            truncated: false,
+          });
+
+        await expect(fetchFileList('commit-sha')).resolves.toEqual([
+          { path: 'apps/site/content/a.md', sha: 'a', size: 1, name: 'a.md' },
+        ]);
+        expect(fetchAPI).toHaveBeenNthCalledWith(
+          1,
+          '/repos/test-owner/test-repo/contents/apps?ref=commit-sha',
+        );
+        expect(fetchAPI).toHaveBeenNthCalledWith(
+          2,
+          '/repos/test-owner/test-repo/git/trees/tree-sha?recursive=1&page=1',
+        );
+      });
+
+      test('should list the repository root to find a top-level root directory', async () => {
+        mockGetRootDir.mockReturnValue('site');
+        vi.mocked(fetchAPI)
+          .mockResolvedValueOnce([{ type: 'dir', name: 'site', sha: 'tree-sha' }])
+          .mockResolvedValueOnce({ tree: [], truncated: false });
+
+        await fetchFileList();
+
+        expect(fetchAPI).toHaveBeenNthCalledWith(
+          1,
+          '/repos/test-owner/test-repo/contents?ref=main',
+        );
+      });
+
+      test('should reuse the directory looked up at the same commit', async () => {
+        const commit = 'a'.repeat(40);
+
+        vi.mocked(fetchAPI)
+          .mockResolvedValueOnce([{ type: 'dir', name: 'site', sha: 'tree-sha' }])
+          .mockResolvedValueOnce({ tree: [], truncated: false });
+
+        // As the check for remote changes does, then the file list
+        await expect(fetchDirSHA(commit, 'apps/site')).resolves.toBe('tree-sha');
+        await fetchFileList(commit);
+
+        expect(fetchAPI).toHaveBeenCalledTimes(2);
+        expect(fetchAPI).toHaveBeenLastCalledWith(
+          '/repos/test-owner/test-repo/git/trees/tree-sha?recursive=1&page=1',
+        );
+      });
+
+      test('should keep the lookups of both heads a check makes at once', async () => {
+        const [from, to] = ['a'.repeat(40), 'b'.repeat(40)];
+
+        vi.mocked(fetchAPI).mockResolvedValue([{ type: 'dir', name: 'site', sha: 'tree-sha' }]);
+
+        await Promise.all([fetchDirSHA(from, 'apps/site'), fetchDirSHA(to, 'apps/site')]);
+        await fetchDirSHA(from, 'apps/site');
+        await fetchDirSHA(to, 'apps/site');
+
+        expect(fetchAPI).toHaveBeenCalledTimes(2);
+      });
+
+      test('should forget the oldest lookup', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue([{ type: 'dir', name: 'site', sha: 'tree-sha' }]);
+
+        // One more commit than are kept, one at a time
+        // eslint-disable-next-line no-restricted-syntax
+        for (const char of ['a', 'b', 'c', 'd', 'e']) {
+          // eslint-disable-next-line no-await-in-loop
+          await fetchDirSHA(char.repeat(40), 'apps/site');
+        }
+
+        await fetchDirSHA('e'.repeat(40), 'apps/site');
+        expect(fetchAPI).toHaveBeenCalledTimes(5);
+
+        await fetchDirSHA('a'.repeat(40), 'apps/site');
+        expect(fetchAPI).toHaveBeenCalledTimes(6);
+      });
+
+      test('should look a branch up every time, as it moves', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue([{ type: 'dir', name: 'site', sha: 'tree-sha' }]);
+
+        await fetchDirSHA('main', 'apps/site');
+        await fetchDirSHA('main', 'apps/site');
+
+        expect(fetchAPI).toHaveBeenCalledTimes(2);
+      });
+
+      test('should return an empty list when the root directory doesn’t exist', async () => {
+        vi.mocked(fetchAPI).mockResolvedValueOnce([{ type: 'dir', name: 'other', sha: 'x' }]);
+
+        await expect(fetchFileList()).resolves.toEqual([]);
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+      });
+
+      test('should return an empty list when the parent directory doesn’t exist', async () => {
+        vi.mocked(fetchAPI).mockRejectedValueOnce(
+          new Error('Not Found', { cause: { status: 404 } }),
+        );
+
+        await expect(fetchFileList()).resolves.toEqual([]);
+      });
+
+      test('should return an empty list when the parent is a file', async () => {
+        vi.mocked(fetchAPI).mockResolvedValueOnce({ type: 'file', name: 'apps', sha: 'x' });
+
+        await expect(fetchFileList()).resolves.toEqual([]);
+      });
+
+      test('should pass on any other error', async () => {
+        const error = new Error('Server error', { cause: { status: 500 } });
+
+        vi.mocked(fetchAPI).mockRejectedValueOnce(error);
+
+        await expect(fetchFileList()).rejects.toBe(error);
+      });
     });
 
     test('should fetch file list with pagination', async () => {

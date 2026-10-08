@@ -2,6 +2,8 @@
 
 import { stripSlashes } from '@sveltia/utils/string';
 
+import { getRootDir } from '$lib/services/backends/root-dir';
+
 /**
  * Get a file or directory handle at the given path.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
@@ -86,3 +88,20 @@ export const readFile = async (rootDirHandle, path) => {
 
   return handle.getFile();
 };
+
+/**
+ * Get the handle of the directory the CMS treats as the root of the repository, configured with the
+ * `root_dir` backend option, so every path read or written through it is relative to that
+ * directory.
+ * @param {FileSystemDirectoryHandle} repoRootDirHandle Handle of the repository’s root directory.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.create] Whether to create the directory if it doesn’t exist. Default:
+ * `false`.
+ * @returns {Promise<FileSystemDirectoryHandle>} Handle of the configured root directory, or the
+ * given handle itself when the option isn’t set.
+ * @throws {Error} If the directory doesn’t exist and `create` is `false`.
+ */
+export const getScopedRootDirHandle = async (repoRootDirHandle, { create = false } = {}) =>
+  /** @type {Promise<FileSystemDirectoryHandle>} */ (
+    getHandleByPath(repoRootDirHandle, getRootDir(), 'directory', { create })
+  );

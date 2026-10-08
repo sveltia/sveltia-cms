@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createFileList } from '$lib/services/backends/process';
+import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { convertPullRequest, convertPullRequests } from '$lib/services/workflow/entries';
@@ -45,6 +46,56 @@ describe('workflow/entries', () => {
 
       expect(result).toEqual({ entries: [], assets: [] });
       expect(createFileList).not.toHaveBeenCalled();
+    });
+
+    describe('with a root directory', () => {
+      beforeEach(() => {
+        // @ts-ignore Partial configuration
+        cmsConfig.current = { backend: { name: 'github', repo: 'o/r', root_dir: 'apps/site' } };
+      });
+
+      afterEach(() => {
+        cmsConfig.current = undefined;
+      });
+
+      test('converts a branch named before the option was set, with its files in the directory', async () => {
+        await convertPullRequest(
+          createPullRequest({
+            files: [
+              { path: 'content/posts/hello.md', sha: 'a', size: 1, text: '#', deleted: false },
+            ],
+          }),
+        );
+
+        expect(createFileList).toHaveBeenCalled();
+      });
+
+      test.each([
+        ['a file outside the directory', { path: '../other/content/hello.md' }],
+        [
+          'a file moved from outside the directory',
+          { path: 'content/posts/hello.md', previousPath: '../other/content/hello.md' },
+        ],
+      ])('skips a branch named without the directory, with %s', async (_label, file) => {
+        const result = await convertPullRequest(
+          createPullRequest({ files: [{ sha: 'a', size: 1, text: '#', deleted: false, ...file }] }),
+        );
+
+        expect(result).toEqual({ entries: [], assets: [] });
+        expect(createFileList).not.toHaveBeenCalled();
+      });
+
+      test('converts a branch named with the directory, whatever its files', async () => {
+        await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/apps/site/posts/hello',
+            files: [{ path: '../../package.json', sha: 'a', size: 1, text: '{}', deleted: false }],
+          }),
+        );
+
+        // A change outside the directory is caught when the entry is published
+        expect(createFileList).toHaveBeenCalled();
+      });
     });
 
     test('skips deleted files but keeps binary ones, which can be assets', async () => {

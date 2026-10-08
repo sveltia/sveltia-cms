@@ -1,11 +1,12 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
   getDirectoryHandle,
   getFileHandle,
   getHandleByPath,
+  getScopedRootDirHandle,
   readFile,
 } from '$lib/services/backends/fs/shared/handles';
 import { createMockDirectoryHandle } from '$lib/test/fs-handles';
@@ -13,6 +14,10 @@ import { createMockDirectoryHandle } from '$lib/test/fs-handles';
 vi.mock('@sveltia/utils/misc', () => ({
   sleep: vi.fn(async () => {}),
 }));
+
+const mockGetRootDir = vi.hoisted(() => vi.fn(() => ''));
+
+vi.mock('$lib/services/backends/root-dir', () => ({ getRootDir: mockGetRootDir }));
 
 // Provide a minimal FileSystemFileHandle global so canMoveFile() can inspect the prototype.
 // Tests that require canMoveFile() === false can set env.isBrave to true directly.
@@ -406,6 +411,45 @@ describe('readFile', () => {
     await getDirectoryHandle(rootDirHandle, 'static');
 
     await expect(readFile(rootDirHandle, 'static/a.png')).rejects.toThrow('File not found: a.png');
+  });
+});
+
+describe('getScopedRootDirHandle', () => {
+  afterEach(() => {
+    mockGetRootDir.mockReturnValue('');
+  });
+
+  test('should return the given handle without a root directory', async () => {
+    const rootDirHandle = createMockDirectoryHandle();
+
+    await expect(getScopedRootDirHandle(rootDirHandle)).resolves.toBe(rootDirHandle);
+  });
+
+  test('should return the handle of an existing root directory', async () => {
+    mockGetRootDir.mockReturnValue('apps/site');
+
+    const rootDirHandle = createMockDirectoryHandle();
+    const siteDirHandle = await getDirectoryHandle(rootDirHandle, 'apps/site');
+
+    await expect(getScopedRootDirHandle(rootDirHandle)).resolves.toBe(siteDirHandle);
+  });
+
+  test('should not create a missing root directory by default', async () => {
+    mockGetRootDir.mockReturnValue('apps/site');
+
+    await expect(getScopedRootDirHandle(createMockDirectoryHandle())).rejects.toThrow();
+  });
+
+  test('should create a missing root directory if requested', async () => {
+    mockGetRootDir.mockReturnValue('apps/site');
+
+    const rootDirHandle = createMockDirectoryHandle();
+    const siteDirHandle = await getScopedRootDirHandle(rootDirHandle, { create: true });
+
+    expect(siteDirHandle.name).toBe('site');
+    await expect(
+      getHandleByPath(rootDirHandle, 'apps/site', 'directory', { create: false }),
+    ).resolves.toBe(siteDirHandle);
   });
 });
 

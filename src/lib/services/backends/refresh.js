@@ -1,11 +1,18 @@
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
-import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { advanceRepositoryHead, repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { getRootDir } from '$lib/services/backends/root-dir';
 import { allEntries } from '$lib/services/contents';
 import { productionSHA } from '$lib/services/deployments';
 
 /**
- * @import { Asset, BackendService, Entry, RemoteChanges } from '$lib/types/private';
+ * @import {
+ * Asset,
+ * BackendService,
+ * Entry,
+ * RemoteChanges,
+ * RepositoryInfo,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -71,6 +78,55 @@ export const diffStores = ({ entriesBefore, assetsBefore }) => {
  * @returns {boolean} Result.
  */
 const hasChanges = (changes) => Object.values(changes).some((list) => list.length > 0);
+/**
+ * Tree SHA of the configured root directory at the commit it was last looked up for, so a check
+ * made after the branch has moved only has to look up the new head.
+ * @type {{ rootDir: string, commit: string, sha: string | undefined } | undefined}
+ */
+let rootDirTree;
+
+/**
+ * Forget the root directory tree looked up last. Used in tests.
+ */
+export const _resetRootDirTree = () => {
+  rootDirTree = undefined;
+};
+
+/**
+ * Check whether the configured root directory is the same at both commits, which means a commit
+ * made in between only changed the rest of the repository, such as another site in a monorepo.
+ * @param {BackendService} service Backend service.
+ * @param {string} from Commit the site data reflects.
+ * @param {string} to New head of the branch.
+ * @returns {Promise<boolean>} Result. It’s `false` without a root directory, for a backend that
+ * can’t tell, and when the lookup fails, so the files are fetched as usual.
+ */
+const isRootDirUnchanged = async ({ fetchDirSHA }, from, to) => {
+  const rootDir = getRootDir();
+
+  if (!rootDir || !fetchDirSHA) {
+    return false;
+  }
+
+  try {
+    // The tree at the commit the data reflects is usually known from the previous check
+    const [before, after] = await Promise.all([
+      rootDirTree?.rootDir === rootDir && rootDirTree.commit === from
+        ? rootDirTree.sha
+        : fetchDirSHA(from, rootDir),
+      fetchDirSHA(to, rootDir),
+    ]);
+
+    rootDirTree = { rootDir, commit: to, sha: after };
+
+    return !!before && before === after;
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to look up the root directory.', ex);
+
+    return false;
+  }
+};
 
 /**
  * Ask the backend for the branch head and, if it has moved since the site data was loaded, fetch
@@ -78,10 +134,25 @@ const hasChanges = (changes) => Object.values(changes).some((list) => list.lengt
  * @param {BackendService} service Backend service.
  * @returns {Promise<RemoteChanges | undefined>} What has changed, or `undefined` if nothing has.
  */
-const check = async ({ fetchLastCommit, fetchFiles }) => {
+const check = async (service) => {
+  const { fetchLastCommit, fetchFiles } = service;
   const lastCommit = await /** @type {NonNullable<typeof fetchLastCommit>} */ (fetchLastCommit)();
 
   if (lastCommit.hash === repositoryHead.current) {
+    return undefined;
+  }
+
+  // In a monorepo, most commits are likely made to the other sites. One that leaves the root
+  // directory as it is changes nothing the CMS shows, so nothing is fetched. The site isn’t taken
+  // to be rebuilt from the commit either, as a build for a commit that doesn’t touch it is
+  // typically skipped
+  if (await isRootDirUnchanged(service, repositoryHead.current, lastCommit.hash)) {
+    await advanceRepositoryHead(
+      /** @type {RepositoryInfo} */ (service.repository),
+      repositoryHead.current,
+      lastCommit.hash,
+    );
+
     return undefined;
   }
 

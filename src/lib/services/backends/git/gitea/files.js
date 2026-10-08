@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import { decodeBase64 } from '@sveltia/utils/file';
+import { decodeBase64, getPathInfo } from '@sveltia/utils/file';
 
 import { fetchLastCommit } from '$lib/services/backends/git/gitea/commits';
 import {
@@ -20,6 +20,7 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { encodePath } from '$lib/services/backends/git/shared/url';
+import { getRootDir } from '$lib/services/backends/root-dir';
 import { dataLoadedProgress } from '$lib/services/contents';
 import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
@@ -65,17 +66,110 @@ import { forkedRepository, openAuthoringInitialized } from '$lib/services/workfl
  * @see https://docs.gitea.com/administration/config-cheat-sheet
  */
 const DEFAULT_MAX_BLOB_SIZE = 10485760;
+/**
+ * Directories recently looked up at a commit, with their tree SHAs. The check for remote changes
+ * looks up the old and new heads at the same time, so more than one is kept.
+ * @type {Map<string, string | undefined>}
+ */
+const dirLookups = new Map();
+/**
+ * Maximum number of entries in {@link dirLookups}.
+ */
+const MAX_DIR_LOOKUPS = 4;
 
 /**
- * Fetch the repository’s complete file list, and return it in the canonical format.
+ * Forget the directory lookups. Used in tests.
+ */
+export const _resetDirLookup = () => {
+  dirLookups.clear();
+};
+
+/**
+ * Look the tree SHA of a directory up, without the cache of {@link fetchDirSHA}.
+ * @param {string} ref Commit SHA or branch name.
+ * @param {string} dirPath Directory path relative to the repository root.
+ * @returns {Promise<string | undefined>} Tree SHA, or `undefined` if the directory doesn’t exist.
+ */
+const lookUpDirSHA = async (ref, dirPath) => {
+  const { owner, repo } = repository;
+  const { dirname, basename } = getPathInfo(dirPath);
+  const parentPath = dirname ? `/${encodePath(dirname)}` : '';
+  /** @type {{ type: string, name: string, sha: string }[]} */
+  let entries;
+
+  try {
+    entries = /** @type {any} */ (
+      await fetchAPI(`/repos/${owner}/${repo}/contents${parentPath}?ref=${encodeURIComponent(ref)}`)
+    );
+  } catch (/** @type {any} */ ex) {
+    // The parent directory doesn’t exist either
+    if (ex?.cause?.status === 404) {
+      return undefined;
+    }
+
+    throw ex;
+  }
+
+  // A file is returned as a single item rather than a list
+  return Array.isArray(entries)
+    ? entries.find(({ type, name }) => type === 'dir' && name === basename)?.sha
+    : undefined;
+};
+
+/**
+ * Find the tree SHA of a directory at the given commit, by listing the directory that holds it.
+ * Gitea/Forgejo also resolve a `ref:path` expression in place of a tree SHA, but only with the
+ * slashes in the path encoded as `%2F`, which a reverse proxy in front of a self-hosted instance
+ * may decode, so the documented contents endpoint is used instead.
+ * @param {string} ref Commit SHA or branch name.
+ * @param {string} dirPath Directory path relative to the repository root.
+ * @returns {Promise<string | undefined>} Tree SHA, or `undefined` if the directory doesn’t exist.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetContentsList
+ */
+export const fetchDirSHA = async (ref, dirPath) => {
+  const key = `${repository.owner}/${repository.repo}:${ref}:${dirPath}`;
+
+  // The tree of a directory at a commit never changes, so the lookup the check for remote changes
+  // has just made is reused by the file list. A branch name moves, so it’s always looked up
+  if (dirLookups.has(key)) {
+    return dirLookups.get(key);
+  }
+
+  const sha = await lookUpDirSHA(ref, dirPath);
+
+  if (/^[\da-f]{40,64}$/.test(ref)) {
+    dirLookups.set(key, sha);
+
+    // Forget the oldest one
+    if (dirLookups.size > MAX_DIR_LOOKUPS) {
+      dirLookups.delete(/** @type {string} */ (dirLookups.keys().next().value));
+    }
+  }
+
+  return sha;
+};
+
+/**
+ * Fetch the repository’s complete file list, and return it in the canonical format. With the
+ * `root_dir` backend option, only the files in that directory are listed, which saves listing the
+ * whole of a big monorepo; the paths are still relative to the repository root.
  * @param {string} [lastHash] The last commit’s SHA-1 hash.
- * @returns {Promise<BaseFileListItemProps[]>} File list.
+ * @returns {Promise<BaseFileListItemProps[]>} File list. It’s empty if the root directory doesn’t
+ * exist.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/GetTree
  */
 export const fetchFileList = async (lastHash) => {
   const { owner, repo, branch } = repository;
-  const ref = encodePath(/** @type {string} */ (lastHash ?? branch));
-  const requestPath = `/repos/${owner}/${repo}/git/trees/${ref}?recursive=1`;
+  const commitRef = /** @type {string} */ (lastHash ?? branch);
+  const rootDir = getRootDir();
+  const treeSHA = rootDir ? await fetchDirSHA(commitRef, rootDir) : commitRef;
+
+  if (!treeSHA) {
+    return [];
+  }
+
+  const requestPath = `/repos/${owner}/${repo}/git/trees/${encodePath(treeSHA)}?recursive=1`;
+  const prefix = rootDir ? `${rootDir}/` : '';
   /** @type {PartialGitEntry[]} */
   const gitEntries = [];
   let page = 1;
@@ -87,7 +181,7 @@ export const fetchFileList = async (lastHash) => {
     );
 
     if (tree) {
-      gitEntries.push(...tree);
+      gitEntries.push(...tree.map((entry) => ({ ...entry, path: `${prefix}${entry.path}` })));
     }
 
     if (tree && truncated) {

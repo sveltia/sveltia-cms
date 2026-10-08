@@ -5,6 +5,7 @@ import { cmsConfig } from '$lib/services/config';
 // Mock dependencies
 const mockLoadFiles = vi.fn();
 const mockReadFile = vi.fn();
+const mockGetScopedRootDirHandle = vi.fn(async (handle) => handle);
 const mockSaveChanges = vi.fn();
 const mockInit = vi.fn();
 // Shared mock functions for IndexedDB instances — controlled by individual tests
@@ -42,10 +43,15 @@ vi.mock('$lib/services/backends/fs/shared/load', () => ({
 
 vi.mock('$lib/services/backends/fs/shared/handles', () => ({
   readFile: mockReadFile,
+  getScopedRootDirHandle: mockGetScopedRootDirHandle,
 }));
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
+}));
+
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key, { values } = {}) => `${key}:${JSON.stringify(values)}`),
 }));
 
 vi.mock('$lib/services/backends/git/services', () => ({
@@ -638,6 +644,52 @@ describe('Local Backend Service', () => {
 
       expect(global.window.showDirectoryPicker).toHaveBeenCalled();
       expect(result).toEqual({ backendName: 'local' });
+    });
+
+    it('should read and write in the configured root directory', async () => {
+      const scopedDirHandle = { name: 'site' };
+
+      mockDirHandle.getDirectoryHandle.mockResolvedValue({});
+      mockGetScopedRootDirHandle.mockResolvedValueOnce(scopedDirHandle);
+      mockDBGet.mockResolvedValue(null);
+      /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
+
+      const service = localBackend.default;
+
+      service.init();
+      await service.signIn({ auto: false });
+      await service.fetchFiles();
+
+      // The repository root picked by the user is the one scoped
+      expect(mockGetScopedRootDirHandle).toHaveBeenCalledWith(mockDirHandle);
+      expect(mockLoadFiles).toHaveBeenCalledWith(scopedDirHandle, expect.anything());
+    });
+
+    it('should throw a localized error when the root directory doesn’t exist', async () => {
+      const notFoundError = new Error('Directory not found');
+
+      notFoundError.name = 'NotFoundError';
+      cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github', root_dir: 'apps/x' } });
+      mockInit.mockReturnValue({ service: 'github', owner: 'owner', repo: 'repo' });
+      mockDirHandle.getDirectoryHandle.mockResolvedValue({});
+      mockGetScopedRootDirHandle.mockRejectedValueOnce(notFoundError);
+      mockDBGet.mockResolvedValue(null);
+      /** @type {any} */ (global.window).showDirectoryPicker.mockResolvedValue(mockDirHandle);
+
+      const service = localBackend.default;
+
+      service.init();
+
+      // Not a `NotFoundError`, which would be reported as a directory that isn’t a project root
+      await expect(service.signIn({ auto: false })).rejects.toThrow(
+        expect.objectContaining({
+          name: 'Error',
+          message: 'Failed to open the root directory.',
+          cause: expect.objectContaining({
+            message: 'root_dir_not_found:{"repo":"owner/repo","dir":"apps/x"}',
+          }),
+        }),
+      );
     });
 
     it('should throw error when handle cannot be acquired', async () => {

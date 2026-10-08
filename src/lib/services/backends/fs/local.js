@@ -1,7 +1,9 @@
-import { readFile } from '$lib/services/backends/fs/shared/handles';
+import { getScopedRootDirHandle, readFile } from '$lib/services/backends/fs/shared/handles';
 import { loadFiles } from '$lib/services/backends/fs/shared/load';
 import { saveChanges } from '$lib/services/backends/fs/shared/save';
 import { gitBackendServices } from '$lib/services/backends/git/services';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { getRootDir } from '$lib/services/backends/root-dir';
 import { cmsConfig } from '$lib/services/config';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
@@ -149,10 +151,19 @@ const init = () => {
 const signIn = async ({ auto = false }) => {
   const handle = await getRootDirHandle({ showPicker: !auto });
 
-  if (handle) {
-    rootDirHandle = handle;
-  } else {
+  if (!handle) {
     throw new Error('Directory handle could not be acquired');
+  }
+
+  // The user picks the repository root, which is verified by its `.git`, and the files are read and
+  // written in the configured root directory within it
+  try {
+    rootDirHandle = await getScopedRootDirHandle(handle);
+  } catch {
+    throw createLocalizedError('Failed to open the root directory.', 'root_dir_not_found', {
+      repo: `${repository.owner}/${repository.repo}`,
+      dir: getRootDir(),
+    });
   }
 
   return { backendName };

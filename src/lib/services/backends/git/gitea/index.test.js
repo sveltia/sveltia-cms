@@ -31,6 +31,7 @@ vi.mock('$lib/services/backends/git/gitea/constants', () => ({
 
 vi.mock('$lib/services/backends/git/gitea/files', () => ({
   fetchBlob: vi.fn(),
+  fetchDirSHA: vi.fn(),
   fetchFiles: vi.fn(),
 }));
 

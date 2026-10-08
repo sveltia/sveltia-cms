@@ -179,6 +179,8 @@ repository_not_found: The “{$repo}” repository doesn’t exist.
 repository_empty: The “{$repo}” repository has no branches.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
 branch_not_found: The “{$repo}” repository doesn’t have the “{$branch}” branch.
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: The root directory “{$dir}” doesn’t exist in the “{$repo}” repository.
 
 # General errors
 # Fallback error dialog title for unexpected errors
@@ -1775,6 +1777,9 @@ config:
     unsupported_backend_suggestion: Use one of the <a>supported backends</a> instead.
     missing_repository: The repository is not defined.
     invalid_repository: The configured repository is invalid. It must be in “owner/repo” format.
+    invalid_root_dir: The root directory is invalid. It must be a path within the repository, without “..”.
+    invalid_root_dir_branch: The root directory can’t be used in the branch names of the `editorial_workflow` publish mode. No part of its path can start with a dot, end with “.lock” or contain a space or a special character such as a colon or an asterisk.
+    path_outside_root_dir: The path “{$path}” leads outside the root directory, where the CMS can’t list files.
     oauth_implicit_flow: The configured authentication method (implicit flow) is not supported in Sveltia CMS. Use a different <a>authentication method</a> instead.
     github_pkce_unsupported: PKCE authorisation is not yet supported due to GitHub’s limitations. Use a different <a>authentication method</a> instead.
     oauth_no_app_id: OAuth application ID is not defined.

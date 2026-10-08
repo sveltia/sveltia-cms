@@ -16,7 +16,7 @@ import {
   DEFAULT_PKCE_AUTH_ROOT,
 } from '$lib/services/backends/git/gitlab/constants';
 import { fetchBranchHeadSHA, fetchDeployments } from '$lib/services/backends/git/gitlab/deployment';
-import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
+import { fetchBlob, fetchDirSHA, fetchFiles } from '$lib/services/backends/git/gitlab/files';
 import {
   getBaseURLs,
   parseProjectPath,
@@ -109,6 +109,7 @@ export default {
   fetchFiles,
   fetchLastCommit,
   fetchBlob,
+  fetchDirSHA,
   commitChanges,
   fetchFileCommits,
   fetchBranchHeadSHA,

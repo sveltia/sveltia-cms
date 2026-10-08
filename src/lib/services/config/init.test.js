@@ -28,6 +28,10 @@ vi.mock('$lib/services/config/folders/entries', () => ({
   getAllEntryFolders: vi.fn().mockReturnValue([]),
 }));
 
+vi.mock('$lib/services/config/parser/root-dir', () => ({
+  checkRootDirPaths: vi.fn(),
+}));
+
 vi.mock('$lib/services/assets/folders', () => ({
   allAssetFolders: { current: [] },
   selectedAssetFolder: { current: undefined },
@@ -433,6 +437,35 @@ describe('config/init', () => {
       expect(config?.collections?.[0].folder).toBe('');
       expect(config?.collections?.[1].folder).toBe('');
       expect(config?.collections?.[2].folder).toBe('docs');
+    });
+
+    it('should refuse a config with a path outside the root directory', async () => {
+      const { initCmsConfig } = await import('./init');
+      const { checkRootDirPaths } = await import('$lib/services/config/parser/root-dir');
+
+      vi.mocked(checkRootDirPaths).mockImplementationOnce(({ collectors }) => {
+        collectors.errors.add('Path outside the root directory');
+      });
+      fetchcmsConfigMock.mockResolvedValue({
+        backend: { name: 'github', repo: 'owner/repo', root_dir: 'apps/blog' },
+        media_folder: '../shared/images',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      });
+
+      await initCmsConfig();
+
+      expect(checkRootDirPaths).toHaveBeenCalledWith(
+        expect.objectContaining({ entryFolders: [], assetFolders: [] }),
+      );
+      expect(cmsConfig.current).toBeUndefined();
+      expect(cmsConfigErrors.current).toEqual(['Path outside the root directory']);
     });
 
     it('should set cmsConfigVersion with hash of config', async () => {

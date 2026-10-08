@@ -342,6 +342,9 @@
  * data was loaded. Git backends only.
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git
  * backends only.
+ * @property {(ref: string, dirPath: string) => Promise<string | undefined>} [fetchDirSHA] Function
+ * to find the tree SHA of a directory at the given commit, or `undefined` if it doesn’t exist. It
+ * tells whether the configured root directory has changed between two commits. Git backends only.
  * @property {(changes: FileChange[], options: CommitOptions) => Promise<CommitResults>}
  * commitChanges Function to save file changes, including additions and deletions, and return the
  * commit hash and a map of committed files.

@@ -18,6 +18,7 @@ import { getAllAssetFolders } from '$lib/services/config/folders/assets';
 import { getAllEntryFolders } from '$lib/services/config/folders/entries';
 import { fetchCmsConfig } from '$lib/services/config/loader';
 import { parseCmsConfig } from '$lib/services/config/parser';
+import { checkRootDirPaths } from '$lib/services/config/parser/root-dir';
 import { getConfigSchemas, validateConfigSchema } from '$lib/services/config/schema';
 import { allEntryFolders } from '$lib/services/contents';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -130,6 +131,21 @@ export const initCmsConfig = async (manualConfig) => {
 
     cmsConfig.current = config;
     updateFolders(config);
+
+    // The paths can only be told once they’re resolved to folders, after the parser has run
+    checkRootDirPaths({
+      config,
+      entryFolders: allEntryFolders.current,
+      assetFolders: allAssetFolders.current,
+      collectors,
+    });
+
+    if (collectors.errors.size) {
+      cmsConfig.current = undefined;
+
+      throw new Error('Errors found in configuration');
+    }
+
     cmsConfigVersion.current = await getHash(stringify(config));
 
     // eslint-disable-next-line no-console
