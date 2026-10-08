@@ -126,6 +126,22 @@ describe('getObjectThumbnail()', () => {
     });
   });
 
+  test('resolves a top-level field without a key path', () => {
+    expect(
+      getObjectThumbnail({
+        collectionName: 'posts',
+        keyPath: '',
+        typedKeyPath: '',
+        thumbnailFieldName: 'hero.image',
+        valueMap: { 'hero.image': '/uploads/photo.png' },
+      }),
+    ).toEqual({ asset: imageAsset });
+
+    expect(mockGetMediaFieldSource).toHaveBeenCalledWith(
+      expect.objectContaining({ typedKeyPath: 'hero.image' }),
+    );
+  });
+
   test('accepts the `fields.` prefix used in summary templates', () => {
     expect(
       getObjectThumbnail({

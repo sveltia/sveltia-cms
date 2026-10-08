@@ -27,9 +27,12 @@ import { isMultiple } from '$lib/services/integrations/media-libraries/multiple'
  * @param {string} [args.thumbnailFieldName] The `thumbnail` option: the name of a subfield, or the
  * key path of a nested one like `mobile.src`, optionally prefixed with `fields.` like a summary
  * template tag.
- * @param {FieldKeyPath} args.keyPath Key path of the object, e.g. `hero` or `gallery.0`.
+ * @param {FieldKeyPath} args.keyPath Key path of the object, e.g. `hero` or `gallery.0`, or an
+ * empty string if the subfields are at the top level of {@link args.valueMap}, as with the values
+ * of a rich text editor component.
  * @param {TypedFieldKeyPath} args.typedKeyPath Typed key path of the object, e.g. `hero`,
- * `gallery.*` or `sections.*<hero>`, used to find a field-level media folder.
+ * `gallery.*` or `sections.*<hero>`, used to find a field-level media folder, or an empty string
+ * along with an empty `keyPath`.
  * @param {boolean} [args.hasSingleSubField] Whether the object is an item of a List field with the
  * `field` option, whose value is stored at the item key path itself rather than under the subfield
  * name.
@@ -73,8 +76,8 @@ export const getObjectThumbnail = ({
   }
 
   const fieldNames = hasSingleSubField ? nestedFieldNames : [subFieldName, ...nestedFieldNames];
-  const fieldKeyPath = [keyPath, ...fieldNames].join('.');
-  const fieldTypedKeyPath = [typedKeyPath, ...fieldNames].join('.');
+  const fieldKeyPath = [keyPath, ...fieldNames].filter(Boolean).join('.');
+  const fieldTypedKeyPath = [typedKeyPath, ...fieldNames].filter(Boolean).join('.');
   const fieldConfig = getField({ ...getFieldArgs, keyPath: fieldKeyPath });
   const { widget: fieldType = 'string' } = fieldConfig ?? {};
 

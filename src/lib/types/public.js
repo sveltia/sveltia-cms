@@ -2266,7 +2266,13 @@
  * compact placeholder that opens a dialog when clicked.
  * @property {string} [summary] Template for the placeholder text when `mode` is `dialog`, e.g.
  * `{{title}} - {{videoId}}`. Like the Object field’s `summary` option, it supports nested field
- * names and transformations. Falls back to the first String/Text field value, then to the label.
+ * names and transformations. Text without placeholders is shown as is. If the summary is empty,
+ * it falls back to the first String/Text field value, then to the label.
+ * @property {string} [thumbnail] Name of an Image or File field whose image is displayed as a 20×20
+ * thumbnail in the placeholder when `mode` is `dialog`, e.g. `icon`. A nested field can be named
+ * with a key path like `mobile.src`. The placeholder shows the thumbnail along with the summary, or
+ * only the thumbnail if the summary and String/Text field values are empty. The label is shown
+ * instead if the image fails to load. Default: none.
  * @property {Field[]} fields Set of fields to be displayed in the component.
  * @property {RegExp} pattern Regular expression to search a block from Markdown document. The
  * component is treated as a block if the pattern has the `m` or `s` flag, or contains `[\s\S]`;

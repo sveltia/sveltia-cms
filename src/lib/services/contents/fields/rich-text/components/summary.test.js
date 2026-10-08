@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 import {
   formatComponentSummary,
   getComponentDisplayText,
+  getComponentDisplayValues,
 } from '$lib/services/contents/fields/rich-text/components/summary';
 
 vi.mock('$lib/services/config');
@@ -19,6 +20,11 @@ describe('formatComponentSummary()', () => {
     expect(formatComponentSummary({ values: { title: 'Hi' }, fields })).toBeNull();
     expect(formatComponentSummary({ template: '', values: { title: 'Hi' }, fields })).toBeNull();
     expect(formatComponentSummary({ template: '{{title}}', fields })).toBeNull();
+  });
+
+  test('returns a template without placeholders as is unless it’s blank', () => {
+    expect(formatComponentSummary({ template: ' Icon ', fields })).toBe('Icon');
+    expect(formatComponentSummary({ template: ' ', values: { title: 'Hi' }, fields })).toBeNull();
   });
 
   test('replaces placeholders with the values', () => {
@@ -136,5 +142,25 @@ describe('getComponentDisplayText()', () => {
         currentValues: { date: '2026-01-01' },
       }),
     ).toBe('Card');
+  });
+
+  test('omits the label when a thumbnail is shown', () => {
+    expect(getComponentDisplayText({ ...args, hasThumbnail: true })).toBe('');
+    expect(
+      getComponentDisplayText({ ...args, hasThumbnail: true, currentValues: { title: 'Hello' } }),
+    ).toBe('Hello');
+  });
+});
+
+describe('getComponentDisplayValues()', () => {
+  test('prefers the values in the draft once it has some', () => {
+    const values = { title: 'From Document' };
+
+    expect(getComponentDisplayValues({ fields, values })).toBe(values);
+    expect(getComponentDisplayValues({ fields, currentValues: {}, values })).toBe(values);
+
+    const currentValues = { title: 'From Draft' };
+
+    expect(getComponentDisplayValues({ fields, currentValues, values })).toBe(currentValues);
   });
 });

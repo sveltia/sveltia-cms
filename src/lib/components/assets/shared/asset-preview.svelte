@@ -2,7 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Icon } from '@sveltia/ui';
   import { removeVisibilityResolver, waitForVisibility } from '@sveltia/utils/element';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   import {
     getAssetBlobURL,
@@ -35,6 +35,9 @@
    * @property {string} [alt] Alt text for the image.
    * @property {boolean} [controls] Whether to show controls for audio/video. If this is `false` and
    * {@link kind} is `audio`, an icon will be displayed instead.
+   * @property {() => void} [onError] Function called once the preview falls back to an icon because
+   * the media can’t be loaded, either as its URL lookup has failed or as the element has failed to
+   * load it.
    */
 
   /** @type {Props & Record<string, any>} */
@@ -51,6 +54,7 @@
     dissolve = true,
     alt = '',
     controls = false,
+    onError = () => undefined,
     ...rest
     /* eslint-enable prefer-const */
   } = $props();
@@ -278,6 +282,13 @@
 
   $effect(() => {
     currentAsset = asset;
+  });
+
+  // Notify the parent of a failure, whether the URL lookup or the media element has failed
+  $effect(() => {
+    if (hasError) {
+      untrack(() => onError());
+    }
   });
 
   $effect(() => {

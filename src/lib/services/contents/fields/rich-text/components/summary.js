@@ -18,11 +18,22 @@ import { applyTransformations, parseTransformations } from '$lib/services/common
  * @param {RawEntryContent} [args.values] Current values (unflattened).
  * @param {Field[]} args.fields Field definitions of the component.
  * @param {string} [args.locale] Locale code passed to the transformations.
- * @returns {string | null} Formatted summary, or `null` if the template is empty or every
- * placeholder resolved to an empty value.
+ * @returns {string | null} Formatted summary, or `null` if the template is blank or every
+ * placeholder resolved to an empty value. A template without placeholders is returned as is.
  */
 export const formatComponentSummary = ({ template, values, fields, locale }) => {
-  if (!template || !values) {
+  if (!template) {
+    return null;
+  }
+
+  const strippedTemplate = replaceTemplateTags(template, () => '');
+
+  // A template without placeholders is plain text, shown as is unless it’s blank
+  if (strippedTemplate === template) {
+    return template.trim() || null;
+  }
+
+  if (!values) {
     return null;
   }
 
@@ -52,8 +63,6 @@ export const formatComponentSummary = ({ template, values, fields, locale }) => 
 
   // Return `null` if the result (after stripping all placeholder-based content) is empty. This
   // handles the case where all field values are empty but literal text (e.g. ' — ') remains.
-  const strippedTemplate = replaceTemplateTags(template, () => '');
-
   if (result !== strippedTemplate && result.trim()) {
     return result.trim();
   }
@@ -62,9 +71,23 @@ export const formatComponentSummary = ({ template, values, fields, locale }) => 
 };
 
 /**
+ * Get the values to display in the placeholder of a rich text editor component in `dialog` mode:
+ * the values stored in the entry draft, or the values parsed from the document while the draft has
+ * no field values yet, e.g. on the initial render.
+ * @param {object} args Arguments.
+ * @param {RawEntryContent} [args.currentValues] Values stored in the entry draft.
+ * @param {RawEntryContent} [args.values] Values parsed from the document.
+ * @param {Field[]} args.fields Field definitions of the component.
+ * @returns {RawEntryContent | undefined} Values.
+ */
+export const getComponentDisplayValues = ({ currentValues, values, fields }) =>
+  fields.some((f) => currentValues?.[f.name] !== undefined) ? currentValues : values;
+
+/**
  * Get the text shown in the placeholder of a rich text editor component in `dialog` mode: the
  * formatted summary template if it produces anything, the value of the first string or text field
- * otherwise, or the component label as a last resort.
+ * otherwise, or the component label as a last resort. The label is omitted if a thumbnail is shown
+ * instead, as the image identifies the component well enough.
  * @param {object} args Arguments.
  * @param {string} [args.template] Summary template, e.g. `{{title}}`.
  * @param {RawEntryContent} [args.currentValues] Values stored in the entry draft.
@@ -73,7 +96,8 @@ export const formatComponentSummary = ({ template, values, fields, locale }) => 
  * @param {Field[]} args.fields Field definitions of the component.
  * @param {string} [args.locale] Locale code passed to the transformations.
  * @param {string} args.label Component label.
- * @returns {string} Text.
+ * @param {boolean} [args.hasThumbnail] Whether the placeholder shows a thumbnail.
+ * @returns {string} Text, which can be empty if {@link args.hasThumbnail} is `true`.
  */
 export const getComponentDisplayText = ({
   template,
@@ -82,9 +106,9 @@ export const getComponentDisplayText = ({
   fields,
   locale,
   label,
+  hasThumbnail = false,
 }) => {
-  const hasFieldValues = fields.some((f) => currentValues?.[f.name] !== undefined);
-  const _values = hasFieldValues ? currentValues : values;
+  const _values = getComponentDisplayValues({ currentValues, values, fields });
   const formatted = formatComponentSummary({ template, values: _values, fields, locale });
 
   if (formatted) {
@@ -103,5 +127,5 @@ export const getComponentDisplayText = ({
     }
   }
 
-  return label;
+  return hasThumbnail ? '' : label;
 };

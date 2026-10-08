@@ -3,8 +3,9 @@ import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
+import { globalAssetFolder } from '$lib/services/assets/folders';
 import { EntryDraftState, setEntryDraftRoot } from '$lib/services/contents/draft/state.svelte';
-import { initTestConfig } from '$lib/test/config';
+import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
 import { createMockDraft } from '$lib/test/draft';
 
 import EditorComponent from './editor-component.svelte';
@@ -469,6 +470,161 @@ describe('EditorComponent', () => {
       expect(
         onChange.mock.calls.filter((/** @type {any[]} */ [event]) => event.type === 'remove'),
       ).toHaveLength(2);
+    });
+
+    describe('thumbnail', () => {
+      const iconFields = [
+        { name: 'icon', label: 'Icon', widget: 'image' },
+        { name: 'title', label: 'Title', widget: 'string', required: false },
+      ];
+
+      const iconProps = {
+        componentName: 'icon',
+        label: 'Icon',
+        mode: 'dialog',
+        inline: true,
+        summary: undefined,
+        thumbnail: 'icon',
+        fields: iconFields,
+      };
+
+      beforeAll(async () => {
+        customComponentRegistry.set(
+          'icon',
+          /** @type {any} */ ({ id: 'icon', label: 'Icon', fields: iconFields }),
+        );
+        setAssets([
+          createMockAsset({
+            name: 'photo.png',
+            file: await createMockImageFile(),
+            asset: { folder: globalAssetFolder.current },
+          }),
+          createMockAsset({ name: 'notes.docx', asset: { folder: globalAssetFolder.current } }),
+          createMockAsset({
+            name: 'broken.png',
+            file: new File(['broken'], 'broken.png', { type: 'image/png' }),
+            asset: { folder: globalAssetFolder.current },
+          }),
+        ]);
+      });
+
+      afterAll(() => {
+        customComponentRegistry.delete('icon');
+        setAssets([]);
+      });
+
+      /**
+       * Get the `src` of the thumbnail in the placeholder.
+       * @returns {string | null | undefined} Source.
+       */
+      const getThumbnailSrc = () =>
+        page
+          .getByRole('button', { name: 'Icon' })
+          .element()
+          .querySelector('img')
+          ?.getAttribute('src');
+
+      test('shows only the image when there is no text to show', async () => {
+        await renderComponent({
+          ...iconProps,
+          values: { icon: '/static/uploads/photo.png', title: '' },
+        });
+
+        const placeholder = page.getByRole('button', { name: 'Icon' });
+
+        await expect.poll(getThumbnailSrc).toMatch(/^blob:/);
+        await expect.element(placeholder).toHaveTextContent('');
+        await expect.element(placeholder).toHaveClass('thumbnail-only');
+
+        const { width, height } = /** @type {HTMLElement} */ (
+          placeholder.element().querySelector('.preview')
+        ).getBoundingClientRect();
+
+        expect([width, height]).toEqual([20, 20]);
+      });
+
+      test('shows the image along with the text', async () => {
+        await renderComponent({
+          ...iconProps,
+          values: { icon: '/static/uploads/photo.png', title: 'Star' },
+        });
+
+        const placeholder = page.getByRole('button', { name: 'Icon' });
+
+        await expect.poll(getThumbnailSrc).toMatch(/^blob:/);
+        await expect.element(placeholder).toHaveTextContent('Star');
+        await expect.element(placeholder).not.toHaveClass('thumbnail-only');
+      });
+
+      test('shows the image along with a summary without placeholders', async () => {
+        await renderComponent({
+          ...iconProps,
+          summary: 'Symbol',
+          values: { icon: '/static/uploads/photo.png', title: '' },
+        });
+
+        const placeholder = page.getByRole('button', { name: 'Icon' });
+
+        await expect.poll(getThumbnailSrc).toMatch(/^blob:/);
+        await expect.element(placeholder).toHaveTextContent('Symbol');
+      });
+
+      test('shows the label for a file that is not an image', async () => {
+        await renderComponent({
+          ...iconProps,
+          values: { icon: '/static/uploads/notes.docx', title: '' },
+        });
+
+        const placeholder = page.getByRole('button', { name: 'Icon' });
+
+        await expect.element(placeholder).toHaveTextContent('Icon');
+        expect(getThumbnailSrc()).toBeUndefined();
+      });
+
+      test('shows the label instead of an image that fails to load', async () => {
+        await renderComponent({
+          ...iconProps,
+          values: { icon: 'data:image/png;base64,AAAA', title: '' },
+        });
+
+        const placeholder = page.getByRole('button', { name: 'Icon' });
+
+        // The label is shown until the draft, which the thumbnail is looked up with, is resolved
+        await expect.poll(() => placeholder.element().dataset.keyPathPrefix).toMatch(/^body:/);
+        await expect.element(placeholder).toHaveTextContent('Icon');
+        await expect.element(placeholder).not.toHaveClass('thumbnail-only');
+        expect(placeholder.element().querySelector('.preview')).toBeNull();
+      });
+
+      test('shows the label instead of an asset that fails to load', async () => {
+        await renderComponent({
+          ...iconProps,
+          values: { icon: '/static/uploads/broken.png', title: '' },
+        });
+
+        const placeholder = page.getByRole('button', { name: 'Icon' });
+
+        await expect.poll(() => placeholder.element().dataset.keyPathPrefix).toMatch(/^body:/);
+        await expect.element(placeholder).toHaveTextContent('Icon');
+        await expect.poll(() => placeholder.element().querySelector('.preview')).toBeNull();
+      });
+
+      test('is not shown in block mode', async () => {
+        await renderComponent({
+          ...iconProps,
+          mode: 'block',
+          // Collapsed, so the Image field editor and its own preview aren’t rendered either
+          collapsed: true,
+          values: { icon: '/static/uploads/photo.png', title: '' },
+        });
+
+        const group = page.getByRole('group', { name: 'Icon' });
+
+        await expect.element(group).toBeVisible();
+        // Wait for the draft, which the thumbnail is looked up with, to be resolved
+        await expect.poll(() => group.element().dataset.keyPathPrefix).toMatch(/^body:/);
+        expect(group.element().querySelector('.preview')).toBeNull();
+      });
     });
   });
 });

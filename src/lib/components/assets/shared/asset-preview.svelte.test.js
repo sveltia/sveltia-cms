@@ -16,11 +16,14 @@ const PNG_BYTES = Uint8Array.from(
 
 describe('AssetPreview', () => {
   test('shows an image from a URL, and marks it loaded', async () => {
+    const onError = vi.fn();
+
     const { container } = await render(AssetPreview, {
       kind: 'image',
       src: `data:image/png;base64,${btoa(String.fromCharCode(...PNG_BYTES))}`,
       loading: 'eager',
       alt: 'Dot',
+      onError,
     });
 
     const img = container.querySelector('img');
@@ -29,6 +32,7 @@ describe('AssetPreview', () => {
     await expect
       .poll(() => container.querySelector('.preview')?.classList.contains('loaded'))
       .toBe(true);
+    expect(onError).not.toHaveBeenCalled();
   });
 
   test('doesn’t show a lazy image once its URL has been cleared', async () => {
@@ -74,13 +78,17 @@ describe('AssetPreview', () => {
   });
 
   test('shows a fallback icon when the image fails to load', async () => {
+    const onError = vi.fn();
+
     const { container } = await render(AssetPreview, {
       kind: 'image',
       src: 'data:image/png;base64,AAAA',
       loading: 'eager',
+      onError,
     });
 
     await expect.poll(() => container.textContent?.trim()).toBe('draft');
+    await vi.waitFor(() => expect(onError).toHaveBeenCalledOnce());
   });
 
   test('shows an icon for a document or an audio file without controls', async () => {
