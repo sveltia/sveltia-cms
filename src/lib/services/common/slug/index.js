@@ -87,8 +87,9 @@ export const slugify = (
     const escapedReplacement = escapeRegExp(sanitizeReplacement);
 
     const cachedSlugRegexes = getOrCreate(slugReplacementRegexCache, escapedReplacement, () => ({
-      consecutivePattern: new RegExp(`${escapedReplacement}+`, 'g'),
-      trimPattern: new RegExp(`^${escapedReplacement}+|${escapedReplacement}+$`, 'g'),
+      // Group the replacement so that a multi-character one is repeated as a whole
+      consecutivePattern: new RegExp(`(?:${escapedReplacement})+`, 'g'),
+      trimPattern: new RegExp(`^(?:${escapedReplacement})+|(?:${escapedReplacement})+$`, 'g'),
     }));
 
     slug = slug.replace(cachedSlugRegexes.consecutivePattern, sanitizeReplacement);

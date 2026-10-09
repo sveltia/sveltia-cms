@@ -100,6 +100,21 @@ describe('Test slugify()', () => {
     expect(slugify('File & Copy')).toBe('file_copy'); // Special chars become underscores
   });
 
+  test('consecutive replacement consolidation with a multi-character replacement', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '_-',
+      },
+    };
+
+    expect(slugify('Hello World')).toBe('hello_-world');
+    expect(slugify('Hello _-_- World')).toBe('hello_-world');
+    expect(slugify('_-_-Hello World_-_-')).toBe('hello_-world');
+  });
+
   test('unicode characters with unicode encoding', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig.current = {
