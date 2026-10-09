@@ -4,6 +4,7 @@ import 'vitest-browser-svelte';
 import { addMessages, init } from '@sveltia/i18n';
 import { AppShell } from '@sveltia/ui';
 import componentStrings from '@sveltia/ui/locales/en-US.yaml';
+import { setupSelfHostedAssets } from '@sveltia/ui/self-hosted';
 import { mount } from 'svelte';
 
 import appStrings from '$lib/locales/en-US.yaml';
@@ -12,6 +13,10 @@ import appStrings from '$lib/locales/en-US.yaml';
 // find an element by the text a user sees rather than by a message key
 addMessages('en-US', { ...appStrings, _sui: componentStrings });
 init({ fallbackLocale: 'en-US', initialLocale: 'en-US' });
+
+// Load the fonts and the syntax highlighter from the installed packages, not the CDNs, so that a
+// slow or unreachable CDN can’t hold up a test of the Code field or a code block
+setupSelfHostedAssets();
 
 // The Sveltia UI components take their colors and sizes from the custom properties the app shell
 // defines on the document, and a widget without a size is invisible to the browser. Mounting the
