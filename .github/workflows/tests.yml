@@ -30,35 +30,8 @@ jobs:
           - name: Test (components 3/3)
             command: pnpm test --project browser --shard=3/3
             browser: true
-          # The end-to-end tests run against the production bundle, so each shard builds it first.
-          # They take the longest, so they get twice as many shards as the component tests
-          - name: Test (end-to-end 1/6)
-            command: pnpm build && pnpm test:e2e --shard=1/6
-            browser: true
-            report: e2e-1
-          - name: Test (end-to-end 2/6)
-            command: pnpm build && pnpm test:e2e --shard=2/6
-            browser: true
-            report: e2e-2
-          - name: Test (end-to-end 3/6)
-            command: pnpm build && pnpm test:e2e --shard=3/6
-            browser: true
-            report: e2e-3
-          - name: Test (end-to-end 4/6)
-            command: pnpm build && pnpm test:e2e --shard=4/6
-            browser: true
-            report: e2e-4
-          - name: Test (end-to-end 5/6)
-            command: pnpm build && pnpm test:e2e --shard=5/6
-            browser: true
-            report: e2e-5
-          - name: Test (end-to-end 6/6)
-            command: pnpm build && pnpm test:e2e --shard=6/6
-            browser: true
-            report: e2e-6
-          - name: Build
-            command: pnpm build
-    steps:
+    # The steps are shared with the jobs below, which run the same way with their own tasks
+    steps: &steps
       - name: Checkout the branch
         uses: actions/checkout@v7.0.1
       - name: Install pnpm and Node.js
@@ -87,8 +60,24 @@ jobs:
       - name: Install Chromium dependencies
         if: ${{ matrix.task.browser && steps.chromium-cache.outputs.cache-hit == 'true' }}
         run: pnpm exec playwright install-deps chromium-headless-shell
+      - name: Download the bundle
+        if: ${{ matrix.task.bundle == 'download' }}
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: bundle
+          path: package/dist/
       - name: ${{ matrix.task.name }}
         run: ${{ matrix.task.command }}
+      - name: Upload the bundle
+        if: ${{ matrix.task.bundle == 'upload' }}
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: bundle
+          path: package/dist/
+          # Replace the bundle of an earlier attempt when the job is re-run, and keep it long
+          # enough for a failed shard to be re-run on its own a few days later
+          overwrite: true
+          retention-days: 7
       # The report holds a trace of each failed test, retried or not, to step through what the page
       # did. Each shard uploads its own, which lists the tests of that shard only
       - name: Upload the end-to-end test report
@@ -98,3 +87,54 @@ jobs:
           name: playwright-report-${{ matrix.task.report }}
           path: playwright-report/
           retention-days: 14
+  # The production bundle is built once, and handed to the end-to-end test jobs below
+  build:
+    name: CI
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task:
+          - name: Build
+            command: pnpm build
+            bundle: upload
+    steps: *steps
+  e2e:
+    name: CI
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # The end-to-end tests run against the production bundle. They take the longest, so they
+        # get twice as many shards as the component tests
+        task:
+          - name: Test (end-to-end 1/6)
+            command: pnpm test:e2e --shard=1/6
+            browser: true
+            bundle: download
+            report: e2e-1
+          - name: Test (end-to-end 2/6)
+            command: pnpm test:e2e --shard=2/6
+            browser: true
+            bundle: download
+            report: e2e-2
+          - name: Test (end-to-end 3/6)
+            command: pnpm test:e2e --shard=3/6
+            browser: true
+            bundle: download
+            report: e2e-3
+          - name: Test (end-to-end 4/6)
+            command: pnpm test:e2e --shard=4/6
+            browser: true
+            bundle: download
+            report: e2e-4
+          - name: Test (end-to-end 5/6)
+            command: pnpm test:e2e --shard=5/6
+            browser: true
+            bundle: download
+            report: e2e-5
+          - name: Test (end-to-end 6/6)
+            command: pnpm test:e2e --shard=6/6
+            browser: true
+            bundle: download
+            report: e2e-6
+    steps: *steps
