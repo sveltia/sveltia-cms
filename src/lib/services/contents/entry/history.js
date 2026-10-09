@@ -1,4 +1,5 @@
 import { backend } from '$lib/services/backends';
+import { getEntryPaths } from '$lib/services/contents/entry/paths';
 
 /**
  * @import { Entry, FileCommit } from '$lib/types/private';
@@ -21,7 +22,7 @@ const historyCache = new Map();
  * @returns {Promise<EntryHistory>} The commit history result.
  */
 export const fetchEntryHistory = async (entry) => {
-  const { id, locales } = entry;
+  const { id } = entry;
   const cached = historyCache.get(id);
 
   if (cached) {
@@ -34,7 +35,7 @@ export const fetchEntryHistory = async (entry) => {
     return { commits: [], loading: false, error: false };
   }
 
-  const paths = [...new Set(Object.values(locales).map((l) => l.path))];
+  const paths = getEntryPaths(entry);
 
   try {
     const commits = await _backend.fetchFileCommits(paths);

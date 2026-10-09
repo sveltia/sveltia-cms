@@ -9,11 +9,12 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Icon, TextInput } from '@sveltia/ui';
+  import { TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { getContext } from 'svelte';
   import { flip } from 'svelte/animate';
 
+  import RemoveButton from '$lib/components/common/remove-button.svelte';
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
@@ -337,20 +338,13 @@
           </td>
           {#if !keysReadonly}
             <td class="action">
-              <Button
+              <RemoveButton
                 variant="ghost"
-                size="small"
-                iconic
-                aria-label={_('remove')}
                 disabled={isOnlyBlankRow}
                 onclick={() => {
                   removePair(index);
                 }}
-              >
-                {#snippet startIcon()}
-                  <Icon name="close" />
-                {/snippet}
-              </Button>
+              />
             </td>
           {/if}
         </tr>

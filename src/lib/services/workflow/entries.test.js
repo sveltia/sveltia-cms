@@ -7,7 +7,7 @@ import { prepareEntries } from '$lib/services/contents/file/process';
 import { convertPullRequest, convertPullRequests } from '$lib/services/workflow/entries';
 
 vi.mock('$lib/services/backends/process');
-vi.mock('$lib/services/backends/git/shared/fetch', () => ({
+vi.mock('$lib/services/backends/git/shared/parse-files', () => ({
   parseAssetFileInfo: vi.fn((file) => ({ ...file, kind: 'image' })),
 }));
 vi.mock('$lib/services/contents/file/process');

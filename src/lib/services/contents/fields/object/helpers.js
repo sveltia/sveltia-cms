@@ -15,7 +15,7 @@ import {
  * InternalLocaleCode,
  * StringTransformation,
  * } from '$lib/types/private';
- * @import { FieldKeyPath, ListField } from '$lib/types/public';
+ * @import { Field, FieldKeyPath, ListField, VariableFieldType } from '$lib/types/public';
  */
 
 /**
@@ -137,4 +137,59 @@ export const getUnknownTypeMessage = ({ fieldType, type, typeKey, types }) => {
     ? `The “${type}” type is not defined for the ${fieldType} field.`
     : `The type key is not found in the ${target}. The item must include the “${typeKey}” ` +
         `property with one of the defined types: ${types.map((t) => t.name).join(', ')}`;
+};
+
+/**
+ * Log a warning about an Object field value or a List field item that doesn’t have a type the field
+ * defines, so the developer can fix the content or the configuration.
+ * @param {object} args Arguments.
+ * @param {'object' | 'list'} args.fieldType Type of the field holding the value.
+ * @param {FieldKeyPath} args.keyPath Key path of the Object field or the List field item.
+ * @param {string | undefined} args.type Type the value has, if any.
+ * @param {string} args.typeKey Property holding the type.
+ * @param {{ name: string }[]} args.types Types the field defines.
+ */
+export const warnUnknownType = ({ fieldType, keyPath, ...args }) => {
+  const target = fieldType === 'list' ? 'List item' : 'Object field';
+
+  // eslint-disable-next-line no-console
+  console.warn(`${target} ${keyPath}: ${getUnknownTypeMessage({ fieldType, ...args })}`);
+};
+
+/**
+ * Resolve the type of an Object field value or a List field item, along with the subfields and the
+ * summary template that apply to it.
+ * @param {object} args Arguments.
+ * @param {VariableFieldType[]} [args.types] Types the field defines. `undefined` if the field
+ * doesn’t have variable types.
+ * @param {Field[]} [args.fields] Subfields of a field without variable types.
+ * @param {string} [args.summary] Summary template of the field.
+ * @param {string} [args.type] Type the value has, if any.
+ * @returns {{
+ * typeConfig: VariableFieldType | undefined,
+ * unknownType: boolean,
+ * subFields: Field[],
+ * summaryTemplate: string | undefined,
+ * }} Configuration of the type, if found; whether the field has variable types but the value
+ * doesn’t have one of them; the subfields to show; and the summary template, which a type can
+ * override.
+ */
+export const resolveVariableType = ({ types, fields, summary, type }) => {
+  if (!types) {
+    return {
+      typeConfig: undefined,
+      unknownType: false,
+      subFields: fields ?? [],
+      summaryTemplate: summary,
+    };
+  }
+
+  const typeConfig = type ? types.find(({ name }) => name === type) : undefined;
+
+  return {
+    typeConfig,
+    unknownType: !typeConfig,
+    subFields: typeConfig?.fields ?? [],
+    summaryTemplate: typeConfig?.summary || summary,
+  };
 };

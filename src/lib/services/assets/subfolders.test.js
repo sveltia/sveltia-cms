@@ -6,7 +6,6 @@ import {
   canBrowseSubfolders,
   formatSubfolderName,
   getAssetsInDir,
-  getDirName,
   getFolderBreadcrumbItems,
   getRelativePath,
   getSubfolderPath,
@@ -75,17 +74,6 @@ describe('assets/subfolders', () => {
     _gitConfigFiles.current = [];
     _config.slugify_filename = false;
     selectedSubfolderPath.current = '';
-  });
-
-  describe('getDirName', () => {
-    it('should return the directory of a file path', () => {
-      expect(getDirName('static/images/photo.jpg')).toBe('static/images');
-      expect(getDirName('static/photo.jpg')).toBe('static');
-    });
-
-    it('should return an empty string for a file at the root', () => {
-      expect(getDirName('photo.jpg')).toBe('');
-    });
   });
 
   describe('canBrowseSubfolders', () => {

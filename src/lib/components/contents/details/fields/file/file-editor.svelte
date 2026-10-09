@@ -84,16 +84,13 @@
   let showSelectAssetsDialog = $state(false);
   let replaceMode = $state(false);
   let replaceIndex = $state(-1);
-  let showRejectedFilesAlert = $state(false);
   let showPhotoCreditDialog = $state(false);
   let photoCredit = $state('');
   /** @type {DropZone | undefined} */
   let dropZone = $state();
   let processing = $state(false);
-  /** @type {string[]} */
-  let oversizedFileNames = $state([]);
-  /** @type {string[]} */
-  let invalidFileNames = $state([]);
+  /** @type {RejectedFilesAlertDialog | undefined} */
+  let rejectedFilesAlert = $state();
   /** @type {File[]} */
   let pendingFiles = $state([]);
   /** @type {Asset[]} */
@@ -226,8 +223,6 @@
 
     resetSelection();
     processing = true;
-    oversizedFileNames = [];
-    invalidFileNames = [];
 
     // The field must not stay in the processing state if something goes wrong along the way
     try {
@@ -257,8 +252,6 @@
 
       const credits = resources.flatMap(({ credit }) => credit || []);
 
-      ({ oversizedFileNames, invalidFileNames } = getRejectedFileNames(resources));
-
       // Restore the previous value if no valid resources were processed, so that a failed
       // upload/replace doesn’t leave an empty or invalid reference in the YAML
       if (!hasValidResource && !multiple && previousValue !== undefined) {
@@ -272,9 +265,7 @@
         photoCredit = '';
       }
 
-      if (oversizedFileNames.length || invalidFileNames.length) {
-        showRejectedFilesAlert = true;
-      }
+      rejectedFilesAlert?.report(getRejectedFileNames(resources));
     } finally {
       processing = false;
     }
@@ -500,12 +491,7 @@
 
 <ConflictResolutionDialog />
 
-<RejectedFilesAlertDialog
-  bind:open={showRejectedFilesAlert}
-  {oversizedFileNames}
-  {invalidFileNames}
-  {maxSize}
-/>
+<RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} />
 
 <ConfirmationDialog
   bind:open={showPhotoCreditDialog}

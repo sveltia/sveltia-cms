@@ -10,10 +10,11 @@ import {
 } from '$lib/services/backends/git/shared/commits';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
-import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
+import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { getGitHash } from '$lib/services/utils/file';
-import { forkedRepository, openAuthoring } from '$lib/services/workflow/open-authoring';
+import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { CommitOptions, CommitResults, FileChange, FileCommit } from '$lib/types/private';
@@ -95,15 +96,7 @@ export const fetchLastCommit = async () => {
  * @see https://forum.gitlab.com/t/how-to-commit-a-image-via-gitlab-commit-api/26632/4
  */
 export const commitChanges = async (changes, options) => {
-  // An Open Authoring contributor can’t write to the configured project at all, so a change that
-  // doesn’t go through Editorial Workflow has nowhere to land. Fail here with an explanation rather
-  // than letting the API reject the commit with a bare permission error
-  if (openAuthoring.current && !options.branch) {
-    throw createLocalizedError(
-      'Cannot commit directly to the configured repository',
-      'open_authoring.direct_commit_unsupported',
-    );
-  }
+  checkDirectCommitAllowed(options);
 
   // A workflow branch lives in the contributor’s fork with Open Authoring, while the configured
   // branch is only ever committed to by someone who can write to the configured project

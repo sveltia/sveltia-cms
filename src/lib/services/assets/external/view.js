@@ -12,10 +12,11 @@ import {
   selectedExternalDirPath,
 } from '$lib/services/assets/external';
 import { LINKED_FILES_SERVICE_ID } from '$lib/services/assets/external/linked';
-import { getDirName, listSubfolders } from '$lib/services/assets/subfolders';
+import { listSubfolders } from '$lib/services/assets/subfolders';
 import { currentView } from '$lib/services/assets/view/settings';
 import { groupItems, sortItemsByKey } from '$lib/services/common/view';
 import { getNormalizedValueCache, hasMatch, normalize } from '$lib/services/search/util';
+import { getDirName } from '$lib/services/utils/file';
 import {
   createDerivedState,
   createRootEffect,

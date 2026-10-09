@@ -53,11 +53,8 @@
   let open = $state(false);
   /** @type {CustomFieldPickFileOptions} */
   let options = $state.raw({});
-  let showRejectedFilesAlert = $state(false);
-  /** @type {string[]} */
-  let oversizedFileNames = $state([]);
-  /** @type {string[]} */
-  let invalidFileNames = $state([]);
+  /** @type {RejectedFilesAlertDialog | undefined} */
+  let rejectedFilesAlert = $state();
   /**
    * Settles the promise returned by the pending `pick()` call. `undefined` while nothing is
    * pending. The resolver is dropped as soon as a selection is made, so that the dialog closing
@@ -151,11 +148,7 @@
         resources,
       });
 
-      ({ oversizedFileNames, invalidFileNames } = rejected);
-
-      if (oversizedFileNames.length || invalidFileNames.length) {
-        showRejectedFilesAlert = true;
-      }
+      rejectedFilesAlert?.report(rejected);
 
       if (!files.length) {
         resolve(null);
@@ -200,10 +193,5 @@
 
   <ConflictResolutionDialog />
 
-  <RejectedFilesAlertDialog
-    bind:open={showRejectedFilesAlert}
-    {oversizedFileNames}
-    {invalidFileNames}
-    {maxSize}
-  />
+  <RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} />
 {/if}

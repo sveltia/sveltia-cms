@@ -100,7 +100,7 @@ export const getAssetDetails = async (asset) => {
  * @param {Asset} asset Asset.
  * @returns {Promise<string | undefined>} URL, or `undefined` if the asset can’t be located.
  */
-export const getAssetReferenceURL = async (asset) =>
+const getAssetReferenceURL = async (asset) =>
   getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true }) ??
   (await getAssetBlobURL(asset));
 

@@ -491,6 +491,148 @@ const validateParentField = (context, { keyPath, value, getParentField, viaSubKe
 };
 
 /**
+ * Validate a single value of an entry draft, along with the List fields it’s in.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Draft to validate.
+ * @param {LocaleCode} args.locale Locale of the value.
+ * @param {FlattenedEntryContent} args.valueMap All the values in the locale.
+ * @param {FieldKeyPath} args.keyPath Key path of the value.
+ * @param {any} args.value Value.
+ * @param {LocaleValidityMap} args.validities Validity state, modified in place.
+ * @param {LocaleValidationMessagesMap} args.validationMessages Validation messages, modified in
+ * place.
+ * @param {boolean} args.enforceRequired Whether an empty required field is an error.
+ * @returns {boolean} Whether the value and the lists it’s in are valid.
+ */
+const validateValueEntry = ({
+  draft,
+  locale,
+  valueMap,
+  keyPath,
+  value,
+  validities,
+  validationMessages,
+  enforceRequired,
+}) => {
+  const { collectionName, fileName, isIndexFile } = draft;
+  const [prefix] = keyPath.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
+  const componentName = prefix ? valueMap[`${prefix}__sc_component_name`] : undefined;
+
+  // A value left behind by a rich text editor component that has since been removed has
+  // nothing to be validated against. Without the component name, its field would be looked up
+  // among the entry’s own fields instead, e.g. an image’s `title` as the entry title, and fail
+  // validation with no field to show the error in
+  if (prefix && !componentName) {
+    return true;
+  }
+
+  let valid = true;
+
+  /** @type {FieldValidationContext} */
+  const context = {
+    validateArgs: { draft, locale, valueMap, validities, enforceRequired, componentName },
+    validationMessages,
+    getFieldArgs: {
+      collectionName,
+      fileName,
+      isIndexFile,
+      keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
+      valueMap,
+      componentName,
+    },
+  };
+
+  // The items of a List field with subfields or types are flattened to their own subfields,
+  // e.g. `speakers.0.name`, so no key path stands for such a list. Validate each list the value
+  // is in through the path of its items, or its item count would never be checked
+  [...keyPath.matchAll(LIST_ITEM_SUBFIELD_REGEX)].forEach(({ index }) => {
+    const ancestorKeyPath = keyPath.slice(0, index);
+    const ancestorConfig = getConfig(context, ancestorKeyPath);
+
+    if (
+      ancestorConfig?.widget === 'list' &&
+      !validateListItself(context, {
+        listKeyPath: ancestorKeyPath,
+        fieldConfig: ancestorConfig,
+        listFieldConfig: ancestorConfig,
+      }).valid
+    ) {
+      valid = false;
+    }
+  });
+
+  const listKeyPath = LIST_KEY_PATH_REGEX.test(keyPath)
+    ? keyPath.replace(LIST_KEY_PATH_REGEX, '')
+    : undefined;
+
+  const listFieldConfig = listKeyPath === undefined ? undefined : getConfig(context, listKeyPath);
+
+  // An item of a List field without subfields has no config of its own, so the list stands in
+  // for it: the list is validated as a whole, while the items, plain strings, are left alone
+  const fieldConfig =
+    getConfig(context, keyPath) ??
+    (listFieldConfig?.widget === 'list' &&
+    !getListFieldInfo(/** @type {ListField} */ (listFieldConfig)).hasSubFields
+      ? listFieldConfig
+      : undefined);
+
+  if (!fieldConfig) {
+    // The value may be a KeyValue pair, or the code or language of a Code field
+    const pairValid = validateParentField(context, {
+      keyPath,
+      value,
+      getParentField: getKeyValueField,
+      viaSubKey: true,
+    });
+
+    const codeValid = validateParentField(context, {
+      keyPath,
+      value,
+      getParentField: getCodeField,
+      viaSubKey: false,
+    });
+
+    if (!pairValid || !codeValid) {
+      valid = false;
+    }
+
+    return valid;
+  }
+
+  // Skip unsupported field types: not built-in or custom
+  if (getFieldKind(fieldConfig) === 'unknown') {
+    return valid;
+  }
+
+  // Validate a list itself before the items. The item’s config is the subfield of a list with
+  // `field`, so the list’s own config has to be used for the list’s messages, such as the
+  // minimum item count
+  if (listKeyPath !== undefined) {
+    const { valid: listValid, validateItems } = validateListItself(context, {
+      listKeyPath,
+      fieldConfig,
+      listFieldConfig: /** @type {Field} */ (listFieldConfig),
+    });
+
+    if (!listValid) {
+      valid = false;
+    }
+
+    if (!validateItems) {
+      return valid;
+    }
+  }
+
+  if (!validateField({ ...context.validateArgs, keyPath, value })) {
+    valid = false;
+  }
+
+  recordValidationMessages({ validities, validationMessages, locale, keyPath, fieldConfig });
+
+  return valid;
+};
+
+/**
  * Validate the field values and return the results. Mimic the native `ValidityState` API.
  * @param {DraftValueStoreKey} valueStoreKey Key to store the values in {@link EntryDraft}.
  * @param {object} options Options.
@@ -501,7 +643,7 @@ const validateParentField = (context, { keyPath, value, getParentField, viaSubKe
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
 export const validateFields = (valueStoreKey, { draft, enforceRequired = true }) => {
-  const { collectionName, fileName, isIndexFile, currentLocales } = draft;
+  const { currentLocales } = draft;
   /** @type {LocaleValidityMap} */
   const validities = {};
   /** @type {LocaleValidationMessagesMap} */
@@ -528,118 +670,20 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
     validationMessages[locale] = {};
 
     valueEntries.forEach(([keyPath, value]) => {
-      const [prefix] = keyPath.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
-      const componentName = prefix ? valueMap[`${prefix}__sc_component_name`] : undefined;
-
-      // A value left behind by a rich text editor component that has since been removed has
-      // nothing to be validated against. Without the component name, its field would be looked up
-      // among the entry’s own fields instead, e.g. an image’s `title` as the entry title, and fail
-      // validation with no field to show the error in
-      if (prefix && !componentName) {
-        return;
-      }
-
-      /** @type {FieldValidationContext} */
-      const context = {
-        validateArgs: { draft, locale, valueMap, validities, enforceRequired, componentName },
-        validationMessages,
-        getFieldArgs: {
-          collectionName,
-          fileName,
-          isIndexFile,
-          keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
+      if (
+        !validateValueEntry({
+          draft,
+          locale,
           valueMap,
-          componentName,
-        },
-      };
-
-      // The items of a List field with subfields or types are flattened to their own subfields,
-      // e.g. `speakers.0.name`, so no key path stands for such a list. Validate each list the value
-      // is in through the path of its items, or its item count would never be checked
-      [...keyPath.matchAll(LIST_ITEM_SUBFIELD_REGEX)].forEach(({ index }) => {
-        const ancestorKeyPath = keyPath.slice(0, index);
-        const ancestorConfig = getConfig(context, ancestorKeyPath);
-
-        if (
-          ancestorConfig?.widget === 'list' &&
-          !validateListItself(context, {
-            listKeyPath: ancestorKeyPath,
-            fieldConfig: ancestorConfig,
-            listFieldConfig: ancestorConfig,
-          }).valid
-        ) {
-          valid = false;
-        }
-      });
-
-      const listKeyPath = LIST_KEY_PATH_REGEX.test(keyPath)
-        ? keyPath.replace(LIST_KEY_PATH_REGEX, '')
-        : undefined;
-
-      const listFieldConfig =
-        listKeyPath === undefined ? undefined : getConfig(context, listKeyPath);
-
-      // An item of a List field without subfields has no config of its own, so the list stands in
-      // for it: the list is validated as a whole, while the items, plain strings, are left alone
-      const fieldConfig =
-        getConfig(context, keyPath) ??
-        (listFieldConfig?.widget === 'list' &&
-        !getListFieldInfo(/** @type {ListField} */ (listFieldConfig)).hasSubFields
-          ? listFieldConfig
-          : undefined);
-
-      if (!fieldConfig) {
-        // The value may be a KeyValue pair, or the code or language of a Code field
-        const pairValid = validateParentField(context, {
           keyPath,
           value,
-          getParentField: getKeyValueField,
-          viaSubKey: true,
-        });
-
-        const codeValid = validateParentField(context, {
-          keyPath,
-          value,
-          getParentField: getCodeField,
-          viaSubKey: false,
-        });
-
-        if (!pairValid || !codeValid) {
-          valid = false;
-        }
-
-        return;
-      }
-
-      // Skip unsupported field types: not built-in or custom
-      if (getFieldKind(fieldConfig) === 'unknown') {
-        return;
-      }
-
-      // Validate a list itself before the items. The item’s config is the subfield of a list with
-      // `field`, so the list’s own config has to be used for the list’s messages, such as the
-      // minimum item count
-      if (listKeyPath !== undefined) {
-        const { valid: listValid, validateItems } = validateListItself(context, {
-          listKeyPath,
-          fieldConfig,
-          listFieldConfig: /** @type {Field} */ (listFieldConfig),
-        });
-
-        if (!listValid) {
-          valid = false;
-        }
-
-        if (!validateItems) {
-          return;
-        }
-      }
-
-      if (!validateField({ ...context.validateArgs, keyPath, value })) {
+          validities,
+          validationMessages,
+          enforceRequired,
+        })
+      ) {
         valid = false;
       }
-
-      recordValidationMessages({ validities, validationMessages, locale, keyPath, fieldConfig });
     });
   });
 

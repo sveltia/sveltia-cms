@@ -1,9 +1,10 @@
 import { getFolderPublicPath } from '$lib/services/assets/info';
-import { canBrowseSubfolders, getDirName, getRelativePath } from '$lib/services/assets/subfolders';
+import { canBrowseSubfolders, getRelativePath } from '$lib/services/assets/subfolders';
 import {
   allStockAssetProviders,
   getStockAssetMediaLibraryOptions,
 } from '$lib/services/integrations/media-libraries/stock';
+import { getDirName } from '$lib/services/utils/file';
 
 /**
  * @import {

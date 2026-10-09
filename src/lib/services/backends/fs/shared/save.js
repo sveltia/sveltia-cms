@@ -13,7 +13,7 @@ import {
   getHandleByPath,
 } from '$lib/services/backends/fs/shared/handles';
 import { env } from '$lib/services/user/env.svelte';
-import { getBlob, getGitHash } from '$lib/services/utils/file';
+import { getBlob, getDirName, getGitHash } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -375,7 +375,7 @@ export const saveChanges = async (rootDirHandle, changes) => {
           return undefined;
         })
         .filter((path) => path !== undefined)
-        .map((path) => getPathInfo(stripSlashes(path)).dirname ?? ''),
+        .map((path) => getDirName(stripSlashes(path))),
     );
   }
 

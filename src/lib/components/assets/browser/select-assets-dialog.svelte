@@ -33,7 +33,6 @@
   import { isCmsFolderPath } from '$lib/services/assets/reserved';
   import {
     canBrowseSubfolders,
-    getDirName,
     getRelativePath,
     getSubfolders,
     getTakenNames,
@@ -59,7 +58,7 @@
   import { normalize } from '$lib/services/search/util';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
-  import { createPath, getGitHash } from '$lib/services/utils/file';
+  import { createPath, getDirName, getGitHash } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
   import { watchAsync } from '$lib/services/utils/state.svelte';
 
@@ -445,6 +444,23 @@
   </Button>
 {/snippet}
 
+{#snippet locationOption(
+  /**
+   * @type {{
+   * name: string,
+   * label: string,
+   * icon: string,
+   * onclick?: () => void,
+   * }}
+   */ { name, label, icon, onclick },
+)}
+  <Option {name} {label} selected={libraryName === name} {onclick}>
+    {#snippet startIcon()}
+      <Icon name={icon} />
+    {/snippet}
+  </Option>
+{/snippet}
+
 {#snippet headerItems()}
   {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary') || (isStockLibrary && libraryName !== 'picsum')}
     {#if selectAssetsView.current}
@@ -556,15 +572,11 @@
               {#if isFolderOffered(entry, selectFolder)}
                 {@const { folder } = entry}
                 {@const name = `default-${id}`}
-                <Option
-                  {name}
-                  label={folder?.label || _(`assets_dialog.folder.${id}`)}
-                  selected={libraryName === name}
-                >
-                  {#snippet startIcon()}
-                    <Icon name="folder" />
-                  {/snippet}
-                </Option>
+                {@render locationOption({
+                  name,
+                  label: folder?.label || _(`assets_dialog.folder.${id}`),
+                  icon: 'folder',
+                })}
               {/if}
             {/each}
           </OptionGroup>
@@ -572,42 +584,37 @@
         {#if showURLInput || !!cloudServiceEntries.length}
           <OptionGroup label={_('asset_location.external')}>
             {#each cloudServiceEntries as [, { serviceId, serviceLabel }] (serviceId)}
-              <Option
-                name={serviceId}
-                label={serviceLabel}
-                selected={libraryName === serviceId}
-                onclick={() => {
+              {@render locationOption({
+                name: serviceId,
+                label: serviceLabel,
+                icon: 'cloud',
+                /**
+                 * Open the Cloudinary widget, once activated, when its location is clicked.
+                 */
+                onclick: () => {
                   if (serviceId === 'cloudinary' && cloudinaryActivated.current) {
                     cloudinaryDialogOpen.current = true;
                   }
-                }}
-              >
-                {#snippet startIcon()}
-                  <Icon name="cloud" />
-                {/snippet}
-              </Option>
+                },
+              })}
             {/each}
             {#if showURLInput}
-              <Option
-                name="enter-url"
-                label={_('assets_dialog.enter_url')}
-                selected={libraryName === 'enter-url'}
-              >
-                {#snippet startIcon()}
-                  <Icon name="link_2" />
-                {/snippet}
-              </Option>
+              {@render locationOption({
+                name: 'enter-url',
+                label: _('assets_dialog.enter_url'),
+                icon: 'link_2',
+              })}
             {/if}
           </OptionGroup>
         {/if}
         {#if enabledStockAssetProviderEntries.length}
           <OptionGroup label={_('asset_location.stock_photos')}>
             {#each enabledStockAssetProviderEntries as [serviceId, { serviceLabel }] (serviceId)}
-              <Option name={serviceId} label={serviceLabel} selected={libraryName === serviceId}>
-                {#snippet startIcon()}
-                  <Icon name="photo_camera_back" />
-                {/snippet}
-              </Option>
+              {@render locationOption({
+                name: serviceId,
+                label: serviceLabel,
+                icon: 'photo_camera_back',
+              })}
             {/each}
           </OptionGroup>
         {/if}

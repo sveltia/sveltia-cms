@@ -10,7 +10,13 @@ import { fillTemplate } from '$lib/services/common/template';
 import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { getFillSlugOptions } from '$lib/services/contents/draft/slugs';
-import { createPath, encodeFilePath, getGitHash, resolvePath } from '$lib/services/utils/file';
+import {
+  createPath,
+  encodeFilePath,
+  getDirName,
+  getGitHash,
+  resolvePath,
+} from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -372,7 +378,7 @@ export const replaceBlobURL = async ({
 
   // Files already being saved to the same folder in this save
   const savingAssetsInSameFolder = savingAssets.filter(
-    (f) => getPathInfo(f.path).dirname === (resolvedInternalPath || undefined),
+    (f) => getDirName(f.path) === resolvedInternalPath,
   );
 
   // The same file picked for another field or locale is saved once, as long as it goes to the same

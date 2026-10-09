@@ -2,15 +2,20 @@ import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  checkDirectCommitAllowed,
   checkMergedBranch,
   checkPublishAllowed,
   checkStatusAllowed,
   createDraftPullRequest,
   ensureForkPermission,
+  isOpenAuthoringConfiguredFor,
   pollForFork,
+  pruneForkBranches,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
+  updateForkStatusWith,
 } from '$lib/services/backends/git/shared/fork';
+import { cmsConfig } from '$lib/services/config';
 import {
   ENTRY_ALREADY_PUBLISHED,
   forkedRepository,
@@ -30,6 +35,29 @@ describe('shared fork service', () => {
     vi.resetAllMocks();
     forkedRepository.current = undefined;
     openAuthoringInitialized.current = false;
+  });
+
+  describe('isOpenAuthoringConfiguredFor', () => {
+    test('is on with the option for the given backend', () => {
+      cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitea', open_authoring: true } });
+      expect(isOpenAuthoringConfiguredFor('gitea')).toBe(true);
+    });
+
+    test('is off without the option, with another backend, or without a config', () => {
+      cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitea' } });
+      expect(isOpenAuthoringConfiguredFor('gitea')).toBe(false);
+
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'gitea', open_authoring: 'true' },
+      });
+      expect(isOpenAuthoringConfiguredFor('gitea')).toBe(false);
+
+      cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitea', open_authoring: true } });
+      expect(isOpenAuthoringConfiguredFor('github')).toBe(false);
+
+      cmsConfig.current = undefined;
+      expect(isOpenAuthoringConfiguredFor('gitea')).toBe(false);
+    });
   });
 
   describe('resolveWorkflowRepository', () => {
@@ -161,6 +189,31 @@ describe('shared fork service', () => {
     });
   });
 
+  describe('checkDirectCommitAllowed', () => {
+    test('lets a maintainer commit anywhere', () => {
+      expect(() => checkDirectCommitAllowed({ commitType: 'create' })).not.toThrow();
+      expect(() =>
+        checkDirectCommitAllowed({ commitType: 'create', branch: 'cms/posts/hello' }),
+      ).not.toThrow();
+    });
+
+    test('lets a contributor commit to a workflow branch', () => {
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
+
+      expect(() =>
+        checkDirectCommitAllowed({ commitType: 'create', branch: 'cms/posts/hello' }),
+      ).not.toThrow();
+    });
+
+    test('stops a contributor committing to the configured branch', () => {
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
+
+      expect(() => checkDirectCommitAllowed({ commitType: 'create' })).toThrow(
+        'Cannot commit directly to the configured repository',
+      );
+    });
+  });
+
   describe('checkStatusAllowed', () => {
     test('allows the stages a contributor has', () => {
       expect(() => checkStatusAllowed('draft')).not.toThrow();
@@ -219,6 +272,240 @@ describe('shared fork service', () => {
       ).resolves.toBeUndefined();
 
       expect(deleteBranch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('pruneForkBranches', () => {
+    test('deletes the leftover branches and returns the parsed rest in order', async () => {
+      const deleteBranch = vi.fn().mockResolvedValue(undefined);
+      const items = ['a', 'b', 'c', 'd'];
+
+      const classify = vi.fn((/** @type {string} */ name, /** @type {number} */ index) =>
+        index % 2
+          ? { leftover: `cms/${name}` }
+          : { pending: /** @type {any} */ ({ branch: `cms/${name}` }) },
+      );
+
+      await expect(pruneForkBranches(items, classify, deleteBranch)).resolves.toEqual([
+        { branch: 'cms/a' },
+        { branch: 'cms/c' },
+      ]);
+
+      expect(classify).toHaveBeenCalledWith('a', 0);
+      expect(classify).toHaveBeenCalledWith('d', 3);
+      expect(deleteBranch).toHaveBeenCalledTimes(2);
+      expect(deleteBranch).toHaveBeenCalledWith('cms/b');
+      expect(deleteBranch).toHaveBeenCalledWith('cms/d');
+    });
+
+    test('deletes nothing when no branch is left over', async () => {
+      const deleteBranch = vi.fn();
+
+      await expect(
+        pruneForkBranches(['a'], () => ({ pending: /** @type {any} */ ({}) }), deleteBranch),
+      ).resolves.toHaveLength(1);
+
+      expect(deleteBranch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateForkStatusWith', () => {
+    const branch = 'cms/contributor/repo/posts/hello';
+    const createRequest = vi.fn();
+    const fetchRequest = vi.fn();
+    const applyStatus = vi.fn();
+    const fetchBranchHead = vi.fn();
+    const deleteBranch = vi.fn();
+
+    /**
+     * Build a pull request known to the board.
+     * @param {Record<string, any>} [props] Properties to override.
+     * @returns {any} Pull request.
+     */
+    const createPullRequest = (props = {}) => ({
+      number: 5,
+      nodeId: 'PR_5',
+      url: 'https://example.com/pull/5',
+      title: 'Hello',
+      branch,
+      status: 'pending_review',
+      files: [],
+      ...props,
+    });
+
+    /**
+     * Build the state a backend reads for a request.
+     * @param {Record<string, any>} [props] Properties to override.
+     * @returns {any} Request state.
+     */
+    const createState = (props = {}) => ({
+      merged: false,
+      isEntryRequest: true,
+      getMergedSHA: vi.fn().mockResolvedValue('head1'),
+      state: 'open',
+      draft: false,
+      ...props,
+    });
+
+    /**
+     * Run the function with the mocked callbacks.
+     * @param {any} pullRequest Pull request.
+     * @param {any} status New status.
+     * @param {'number' | 'nodeId'} [requestKey] Identifying property.
+     * @returns {Promise<any>} Result.
+     */
+    const run = (pullRequest, status, requestKey = 'number') =>
+      updateForkStatusWith({
+        pullRequest,
+        status,
+        requestKey,
+        createRequest,
+        fetchRequest,
+        applyStatus,
+        fetchBranchHead,
+        deleteBranch,
+      });
+
+    test('stops the stage that publishes before reading anything', async () => {
+      await expect(run(createPullRequest(), 'pending_publish')).rejects.toThrow(
+        'Cannot mark an entry ready to publish as an Open Authoring contributor',
+      );
+
+      expect(fetchRequest).not.toHaveBeenCalled();
+    });
+
+    test('keeps a draft without a request as a branch', async () => {
+      const pullRequest = createPullRequest({ number: undefined, status: 'draft' });
+      const result = await run(pullRequest, 'draft');
+
+      expect(result).toMatchObject({ number: undefined, status: 'draft' });
+      expect(result.updatedDate).toBeInstanceOf(Date);
+      expect(createRequest).not.toHaveBeenCalled();
+      expect(fetchRequest).not.toHaveBeenCalled();
+    });
+
+    test('opens a request for a draft moving to review', async () => {
+      const created = createPullRequest({ number: 6 });
+
+      createRequest.mockResolvedValue(created);
+
+      await expect(run(createPullRequest({ number: undefined }), 'pending_review')).resolves.toBe(
+        created,
+      );
+
+      expect(createRequest).toHaveBeenCalledWith({
+        branch,
+        title: 'Hello',
+        status: 'pending_review',
+      });
+    });
+
+    test('identifies the request by the given property', async () => {
+      createRequest.mockResolvedValue(createPullRequest());
+
+      // A pull request with a number but no node ID has nothing opened as far as GitHub goes
+      await run(createPullRequest({ nodeId: undefined }), 'pending_review', 'nodeId');
+
+      expect(createRequest).toHaveBeenCalled();
+      expect(fetchRequest).not.toHaveBeenCalled();
+    });
+
+    test('applies the status to the request in the state it was read in', async () => {
+      const pullRequest = createPullRequest();
+
+      fetchRequest.mockResolvedValue(createState({ state: 'closed', draft: true }));
+
+      const result = await run(pullRequest, 'draft');
+
+      expect(fetchRequest).toHaveBeenCalledWith(pullRequest);
+      expect(applyStatus).toHaveBeenCalledWith({
+        pullRequest,
+        status: 'draft',
+        state: 'closed',
+        draft: true,
+      });
+      expect(result).toMatchObject({ number: 5, status: 'draft' });
+      expect(result.updatedDate).toBeInstanceOf(Date);
+    });
+
+    test('carries on with what the entry knows when the request can’t be found', async () => {
+      const pullRequest = createPullRequest();
+
+      fetchRequest.mockResolvedValue(undefined);
+
+      await expect(run(pullRequest, 'pending_review')).resolves.toMatchObject({
+        number: 5,
+        status: 'pending_review',
+      });
+
+      expect(applyStatus).toHaveBeenCalledWith({
+        pullRequest,
+        status: 'pending_review',
+        state: undefined,
+        draft: undefined,
+      });
+    });
+
+    test('reports an entry whose request was merged with nothing left as published', async () => {
+      const state = createState({ merged: true });
+
+      fetchRequest.mockResolvedValue(state);
+      fetchBranchHead.mockResolvedValue('head1');
+
+      await expect(run(createPullRequest(), 'draft')).rejects.toThrow(ENTRY_ALREADY_PUBLISHED);
+
+      expect(state.getMergedSHA).toHaveBeenCalled();
+      expect(deleteBranch).toHaveBeenCalledWith(branch);
+      expect(applyStatus).not.toHaveBeenCalled();
+    });
+
+    test('opens a fresh request for a branch committed to since the merge', async () => {
+      const created = createPullRequest({ number: 6 });
+
+      fetchRequest.mockResolvedValue(createState({ merged: true }));
+      fetchBranchHead.mockResolvedValue('head2');
+      createRequest.mockResolvedValue(created);
+
+      await expect(run(createPullRequest(), 'pending_review')).resolves.toBe(created);
+
+      expect(deleteBranch).not.toHaveBeenCalled();
+      expect(applyStatus).not.toHaveBeenCalled();
+      expect(createRequest).toHaveBeenCalledWith({
+        branch,
+        title: 'Hello',
+        status: 'pending_review',
+      });
+    });
+
+    test('drops a request that is no longer the entry’s', async () => {
+      const state = createState({ isEntryRequest: false });
+
+      fetchRequest.mockResolvedValue(state);
+
+      const result = await run(createPullRequest(), 'draft');
+
+      expect(result).toMatchObject({
+        number: undefined,
+        nodeId: undefined,
+        url: undefined,
+        status: 'draft',
+      });
+      expect(state.getMergedSHA).not.toHaveBeenCalled();
+      expect(fetchRequest).toHaveBeenCalledTimes(1);
+      expect(applyStatus).not.toHaveBeenCalled();
+    });
+
+    test('doesn’t check the branch of a merged request that isn’t the entry’s', async () => {
+      const state = createState({ merged: true, isEntryRequest: false });
+
+      fetchRequest.mockResolvedValue(state);
+      createRequest.mockResolvedValue(createPullRequest({ number: 6 }));
+
+      await run(createPullRequest(), 'pending_review');
+
+      expect(state.getMergedSHA).not.toHaveBeenCalled();
+      expect(fetchBranchHead).not.toHaveBeenCalled();
+      expect(createRequest).toHaveBeenCalled();
     });
   });
 

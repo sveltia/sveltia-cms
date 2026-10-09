@@ -4,11 +4,13 @@ import { sleep } from '@sveltia/utils/misc';
 
 import { formatFileName } from '$lib/services/assets/file-name';
 import { cmsConfig } from '$lib/services/config/state';
+import { assertResponseOK } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
 import {
   findLibraryOptions,
   resolveLibraryOptions,
 } from '$lib/services/integrations/media-libraries/options';
 import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
+import { splitIntoChunks } from '$lib/services/utils/array';
 import { hmacSha256, toHex } from '$lib/services/utils/crypto';
 
 /**
@@ -173,9 +175,7 @@ export const fetchFiles = async (options, { maxPages = 10, filter } = {}) => {
         headers,
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch files: ${response.statusText}`);
-      }
+      await assertResponseOK(response, 'Failed to fetch files');
 
       /** @type {UploadcareListResponse} */
       const data = await response.json();
@@ -282,9 +282,7 @@ export const upload = async (files, options) => {
     body: formData,
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to upload files: ${response.statusText}`);
-  }
+  await assertResponseOK(response, 'Failed to upload files');
 
   const data = await response.json();
 
@@ -324,23 +322,25 @@ export const upload = async (files, options) => {
  */
 export const deleteFiles = async (assets, options) => {
   const headers = { ...getRESTHeaders(getKeys(options)), 'Content-Type': 'application/json' };
-  const uuids = assets.map(({ id }) => id);
 
-  for (let index = 0; index < uuids.length; index += 100) {
+  const batches = splitIntoChunks(
+    assets.map(({ id }) => id),
+    100,
+  );
+
+  for (let index = 0; index < batches.length; index += 1) {
+    // Wait for a bit before sending the next batch
+    if (index > 0) {
+      await sleep(50);
+    }
+
     const response = await fetch('https://api.uploadcare.com/files/storage/', {
       method: 'DELETE',
       headers,
-      body: JSON.stringify(uuids.slice(index, index + 100)),
+      body: JSON.stringify(batches[index]),
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to delete files: ${response.statusText}`);
-    }
-
-    // Wait for a bit before sending the next batch
-    if (index + 100 < uuids.length) {
-      await sleep(50);
-    }
+    await assertResponseOK(response, 'Failed to delete files');
   }
 
   return undefined;

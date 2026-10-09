@@ -11,11 +11,11 @@ import {
 } from '$lib/services/backends/git/shared/errors';
 import {
   ensureForkPermission,
+  isOpenAuthoringConfiguredFor,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
 } from '$lib/services/backends/git/shared/fork';
 import { encodePath } from '$lib/services/backends/git/shared/url';
-import { cmsConfig } from '$lib/services/config';
 import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
@@ -30,16 +30,11 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
 const MAX_FORKS = 50;
 
 /**
- * Check whether Open Authoring is turned on in the site configuration. It doesn’t mean the
- * signed-in user is actually contributing through a fork: a user who can write to the configured
- * repository keeps working on it directly. Use the `openAuthoring` store for that.
+ * Check whether Open Authoring is turned on for this backend in the site configuration: see
+ * {@link isOpenAuthoringConfiguredFor}.
  * @returns {boolean} `true` if the `open_authoring` backend option is enabled.
  */
-export const isOpenAuthoringConfigured = () => {
-  const { backend } = cmsConfig.current ?? {};
-
-  return backend?.name === 'gitea' && backend.open_authoring === true;
-};
+export const isOpenAuthoringConfigured = () => isOpenAuthoringConfiguredFor('gitea');
 
 /**
  * Get the repository that receives the CMS’s commits: the signed-in user’s fork when the current

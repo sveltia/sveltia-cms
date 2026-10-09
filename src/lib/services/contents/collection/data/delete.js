@@ -1,5 +1,3 @@
-import { unique } from '@sveltia/utils/array';
-
 import { allAssets } from '$lib/services/assets/state';
 import { saveChanges } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
@@ -11,10 +9,10 @@ import {
 import { buildRenumberChanges } from '$lib/services/contents/collection/entries/reorder';
 import { getArrayItemTarget } from '$lib/services/contents/draft/save/changes';
 import { getPreviousSha, resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
+import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import {
   buildCascadeDeleteChanges,
-  EMPTY_CASCADE_DELETE_PLAN,
-  planCascadeDelete,
+  planCascadeDeleteOrThrow,
 } from '$lib/services/contents/entry/relations/cascade/delete';
 
 /**
@@ -59,13 +57,12 @@ export const deleteEntries = async (entries, assets = []) => {
     selectedCollection.current
   );
 
-  const { targets, blockers } = collection
-    ? planCascadeDelete({ collection, entries })
-    : EMPTY_CASCADE_DELETE_PLAN;
-
-  if (blockers.length) {
-    throw new Error('Cannot delete entries that other entries require', { cause: blockers });
-  }
+  const targets = collection
+    ? planCascadeDeleteOrThrow(
+        { collection, entries },
+        'Cannot delete entries that other entries require',
+      )
+    : [];
 
   const cacheDB = resolveCacheDB();
   const changes = /** @type {FileChange[]} */ ([]);
@@ -73,9 +70,9 @@ export const deleteEntries = async (entries, assets = []) => {
 
   const ids = await Promise.all(
     entries.map(async (entry) => {
-      const { id, locales, slug } = entry;
-      // Remove duplicate paths for single file i18n
-      const paths = /** @type {string[]} */ (unique(Object.values(locales).map((l) => l.path)));
+      const { id, slug } = entry;
+      // A single-file i18n entry lists its file once
+      const paths = getEntryPaths(entry);
 
       await Promise.all(
         paths.map(async (path) => {

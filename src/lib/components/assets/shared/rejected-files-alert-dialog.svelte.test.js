@@ -6,12 +6,9 @@ import RejectedFilesAlertDialog from './rejected-files-alert-dialog.svelte';
 
 describe('RejectedFilesAlertDialog', () => {
   test('lists the files that are too large', async () => {
-    await render(RejectedFilesAlertDialog, {
-      open: true,
-      oversizedFileNames: ['huge.png'],
-      invalidFileNames: [],
-      maxSize: 1024 * 1024,
-    });
+    const { component } = await render(RejectedFilesAlertDialog, { maxSize: 1024 * 1024 });
+
+    component.report({ oversizedFileNames: ['huge.png'], invalidFileNames: [] });
 
     const dialog = page.getByRole('alertdialog', { name: 'Large File' });
 
@@ -27,12 +24,9 @@ describe('RejectedFilesAlertDialog', () => {
   });
 
   test('lists the files that are invalid', async () => {
-    await render(RejectedFilesAlertDialog, {
-      open: true,
-      oversizedFileNames: [],
-      invalidFileNames: ['a.jpg', 'b.jpg'],
-      maxSize: Infinity,
-    });
+    const { component } = await render(RejectedFilesAlertDialog, { maxSize: Infinity });
+
+    component.report({ oversizedFileNames: [], invalidFileNames: ['a.jpg', 'b.jpg'] });
 
     const dialog = page.getByRole('alertdialog', { name: 'Invalid File' });
 
@@ -41,24 +35,20 @@ describe('RejectedFilesAlertDialog', () => {
   });
 
   test('names both kinds of rejection', async () => {
-    await render(RejectedFilesAlertDialog, {
-      open: true,
-      oversizedFileNames: ['huge.png'],
-      invalidFileNames: ['a.jpg'],
-      maxSize: 1024,
-    });
+    const { component } = await render(RejectedFilesAlertDialog, { maxSize: 1024 });
+
+    component.report({ oversizedFileNames: ['huge.png'], invalidFileNames: ['a.jpg'] });
 
     await expect
       .element(page.getByRole('alertdialog', { name: 'Files Cannot Be Uploaded' }))
       .toBeVisible();
   });
 
-  test('lists nothing without rejected files', async () => {
-    await render(RejectedFilesAlertDialog, /** @type {any} */ ({ open: true, maxSize: 1024 }));
+  test('stays closed without rejected files', async () => {
+    const { component } = await render(RejectedFilesAlertDialog, { maxSize: 1024 });
 
-    const dialog = page.getByRole('alertdialog');
+    component.report({ oversizedFileNames: [], invalidFileNames: [] });
 
-    await expect.element(dialog).toBeVisible();
-    expect(dialog.element().querySelectorAll('li')).toHaveLength(0);
+    await expect.element(page.getByRole('alertdialog')).not.toBeInTheDocument();
   });
 });

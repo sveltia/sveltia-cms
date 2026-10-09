@@ -9,9 +9,9 @@
 
   import SubfolderNameDialog from '$lib/components/assets/list/subfolder-name-dialog.svelte';
   import { getSubfolderAssets, renameSubfolder } from '$lib/services/assets/data/subfolder';
-  import { getDirName, getTakenNames, renamingSubfolder } from '$lib/services/assets/subfolders';
+  import { getTakenNames, renamingSubfolder } from '$lib/services/assets/subfolders';
   import { listedAssets, listedSubfolders } from '$lib/services/assets/view';
-  import { createPath } from '$lib/services/utils/file';
+  import { createPath, getDirName } from '$lib/services/utils/file';
 
   // Committing to a remote repository takes a few seconds, and the dialog is gone by then, so the
   // folder would otherwise be renamed with nothing on screen to say it’s under way

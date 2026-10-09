@@ -6,7 +6,7 @@
  * Library, and no asset change made through the CMS can touch them. Deployment configuration such
  * as `_redirects` can be edited as an entry of a file collection, so it isn’t ruled out here.
  */
-export const CMS_FOLDER_NAMES = ['admin', 'cms'];
+const CMS_FOLDER_NAMES = ['admin', 'cms'];
 
 /**
  * Check whether the given folder name is one the CMS itself is usually served from.

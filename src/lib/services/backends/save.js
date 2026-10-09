@@ -1,9 +1,10 @@
 import { cacheAssetBlob } from '$lib/services/assets/info';
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
-import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { checkForRemoteChanges, suspendChecksWhile } from '$lib/services/backends/refresh';
 import { allEntries } from '$lib/services/contents';
+import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { combineArrayFileChanges, createArrayFileEntries } from '$lib/services/contents/file/array';
 import { productionSHA } from '$lib/services/deployments';
 import { user } from '$lib/services/user/account.svelte';
@@ -107,10 +108,7 @@ export const updateCache = async ({ changes, commit }) => {
  */
 export const updateStores = ({ changes, savedEntries, savedAssets, arrayFileEntries = [] }) => {
   const savedEntryIds = new Set([...savedEntries, ...arrayFileEntries].map((e) => e.id));
-
-  const arrayFilePaths = new Set(
-    arrayFileEntries.flatMap((e) => Object.values(e.locales).map(({ path }) => path)),
-  );
+  const arrayFilePaths = new Set(arrayFileEntries.flatMap((e) => getEntryPaths(e)));
 
   allEntries.current = [
     ...allEntries.current.filter(

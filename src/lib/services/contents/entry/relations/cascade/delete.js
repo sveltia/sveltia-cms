@@ -255,6 +255,28 @@ export const planCascadeDelete = ({ collection, collectionFile, entries }) => {
 };
 
 /**
+ * Run {@link planCascadeDelete} and throw if anything blocks the deletion.
+ * @param {object} args Arguments for {@link planCascadeDelete}.
+ * @param {InternalCollection} args.collection Collection of the entries being deleted.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file of the entries being
+ * deleted.
+ * @param {Entry[]} args.entries Entries being deleted.
+ * @param {string} message Error message used when the deletion is blocked.
+ * @returns {CascadeTarget[]} Targets from the plan.
+ * @throws {Error} When removing the references would leave another entry invalid. The blockers are
+ * attached as the error’s `cause`.
+ */
+export const planCascadeDeleteOrThrow = (args, message) => {
+  const { targets, blockers } = planCascadeDelete(args);
+
+  if (blockers.length) {
+    throw new Error(message, { cause: blockers });
+  }
+
+  return targets;
+};
+
+/**
  * Build the file changes that carry out a {@link planCascadeDelete} plan, so that the references
  * are removed in the same commit as the entries they point at.
  * @param {object} args Arguments.

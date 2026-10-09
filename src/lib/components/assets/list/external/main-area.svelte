@@ -52,11 +52,8 @@
   const maxSize = $derived(getSharedMediaLibraryOptions().max_file_size ?? Infinity);
   /* v8 ignore stop */
 
-  /** @type {string[]} */
-  let oversizedFileNames = $state([]);
-  /** @type {string[]} */
-  let invalidFileNames = $state([]);
-  let showRejectedFilesAlert = $state(false);
+  /** @type {RejectedFilesAlertDialog | undefined} */
+  let rejectedFilesAlert = $state();
 
   // Upload the files dropped on the list, picked with the Upload button or chosen to replace an
   // existing asset
@@ -70,14 +67,7 @@
     untrack(async () => {
       uploadingExternalAssets.current = { files: [] };
 
-      const rejected = await uploadExternalAssets(files, { originalAsset });
-
-      oversizedFileNames = rejected.oversizedFileNames;
-      invalidFileNames = rejected.invalidFileNames;
-
-      if (oversizedFileNames.length || invalidFileNames.length) {
-        showRejectedFilesAlert = true;
-      }
+      rejectedFilesAlert?.report(await uploadExternalAssets(files, { originalAsset }));
     });
   });
 </script>
@@ -136,9 +126,4 @@
   </Alert>
 </Toast>
 
-<RejectedFilesAlertDialog
-  bind:open={showRejectedFilesAlert}
-  {oversizedFileNames}
-  {invalidFileNames}
-  {maxSize}
-/>
+<RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} />

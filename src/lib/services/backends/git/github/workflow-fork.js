@@ -15,14 +15,14 @@ import {
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { checkMergedBranch, checkStatusAllowed } from '$lib/services/backends/git/shared/fork';
+import { pruneForkBranches, updateForkStatusWith } from '$lib/services/backends/git/shared/fork';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
 import { getBranchListPrefix } from '$lib/services/workflow/branch';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { WorkflowPullRequest, WorkflowStatus } from '$lib/types/private';
+ * @import { ForkRequestState, WorkflowPullRequest, WorkflowStatus } from '$lib/types/private';
  */
 
 /**
@@ -242,32 +242,19 @@ export const fetchForkBranches = async () => {
 
   const branches = nodes.map(({ name }) => `${prefix}${name}`);
   const pullRequests = await fetchForkBranchPullRequests(branches);
-  /** @type {string[]} */
-  const leftover = [];
-  /** @type {WorkflowPullRequest[]} */
-  const pending = [];
 
-  nodes.forEach((node, index) => {
-    const branch = branches[index];
-    const pullRequest = pullRequests.get(branch);
+  return pruneForkBranches(
+    nodes,
+    (node, index) => {
+      const branch = branches[index];
+      const pullRequest = pullRequests.get(branch);
 
-    // A merged pull request whose head the branch still points at has nothing left on it. Tidying
-    // it up keeps the fork from collecting a branch per published entry, and saves comparing each
-    // one with the configured branch on every load just to find out it holds nothing. A branch the
-    // contributor has committed to since the merge has a different head, so it survives and shows
-    // up as a fresh draft
-    if (pullRequest?.state === 'MERGED' && pullRequest.headRefOid === node.target?.oid) {
-      leftover.push(branch);
-    } else {
-      pending.push(parseForkBranch(node, branch, pullRequest));
-    }
-  });
-
-  // Deleting a branch is best effort: `deleteBranch` logs a failure rather than raising it, and a
-  // branch that outlives this is picked up on the next load
-  await runConcurrently(leftover, deleteBranch);
-
-  return pending;
+      return pullRequest?.state === 'MERGED' && pullRequest.headRefOid === node.target?.oid
+        ? { leftover: branch }
+        : { pending: parseForkBranch(node, branch, pullRequest) };
+    },
+    deleteBranch,
+  );
 };
 
 /**
@@ -341,6 +328,61 @@ const FETCH_PULL_REQUEST_STATE_QUERY = `
 `;
 
 /**
+ * Read the current state of the pull request an Open Authoring entry has, for
+ * {@link updateForkStatusWith}.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @returns {Promise<ForkRequestState | undefined>} State, or `undefined` if the pull request can’t
+ * be found, in which case the entry carries on with what it knows.
+ */
+const fetchForkRequestState = async ({ nodeId }) => {
+  const { node } = /** @type {{ node?: Record<string, any> }} */ (
+    await fetchGraphQL(FETCH_PULL_REQUEST_STATE_QUERY, { id: nodeId })
+  );
+
+  if (!node) {
+    return undefined;
+  }
+
+  return {
+    merged: node.state === 'MERGED',
+    isEntryRequest: node.baseRefName === repository.branch && isForkPullRequest(node),
+    /**
+     * Read the head commit the pull request was merged at.
+     * @returns {Promise<string>} Commit SHA.
+     */
+    getMergedSHA: async () => node.headRefOid,
+    state: node.state,
+    draft: node.isDraft,
+  };
+};
+
+/**
+ * Bring a pull request in line with the given status, for {@link updateForkStatusWith}.
+ * @param {object} args Arguments.
+ * @param {WorkflowPullRequest} args.pullRequest Pull request.
+ * @param {WorkflowStatus} args.status New status.
+ * @param {string} [args.state] Pull request state, e.g. `OPEN`.
+ * @param {boolean} [args.draft] Whether the pull request is a draft.
+ */
+const applyForkStatus = async ({ pullRequest, status, state, draft }) => {
+  if (status === 'draft') {
+    // Converting the pull request to a draft keeps it — and the discussion on it — in place while
+    // taking it out of the maintainers’ review queue
+    if (state === 'OPEN' && !draft) {
+      await updateDraftState(pullRequest, true);
+    }
+  } else {
+    if (state === 'CLOSED') {
+      await reopenPullRequest(pullRequest);
+    }
+
+    if (draft) {
+      await updateDraftState(pullRequest, false);
+    }
+  }
+};
+
+/**
  * Move an Open Authoring entry between the drafting and review stages. A contributor can’t label a
  * pull request on a repository they don’t have access to, so the stage is recorded in the pull
  * request itself: a draft is a branch with no pull request, or one that’s still a GitHub draft,
@@ -350,67 +392,16 @@ const FETCH_PULL_REQUEST_STATE_QUERY = `
  * @returns {Promise<WorkflowPullRequest>} Updated pull request, or a new one if the known one is no
  * longer the entry’s.
  * @throws {Error} When the entry is being marked ready to publish, which a contributor can’t do, or
- * has been published since the board was loaded: see {@link checkMergedBranch}.
+ * has been published since the board was loaded: see {@link updateForkStatusWith}.
  */
-export const updateForkStatus = async (pullRequest, status) => {
-  checkStatusAllowed(status);
-
-  const { nodeId, branch, title } = pullRequest;
-
-  // Nothing has been opened yet, so moving out of the drafting stage is what creates the pull
-  // request. Moving within the drafting stage leaves the branch as it is
-  if (nodeId === undefined) {
-    return status === 'draft'
-      ? { ...pullRequest, status, updatedDate: new Date() }
-      : createPullRequest({ branch, title, status });
-  }
-
-  // The pull request may have been closed or reopened outside the CMS, so read the current state
-  // rather than inferring it from the status the entry was last seen with
-  const { node } = /** @type {{ node?: Record<string, any> }} */ (
-    await fetchGraphQL(FETCH_PULL_REQUEST_STATE_QUERY, { id: nodeId })
-  );
-
-  const isEntryRequest =
-    !!node && node.baseRefName === repository.branch && isForkPullRequest(node);
-
-  // It may have been merged into the configured branch since the board was loaded. With nothing
-  // committed to the branch since, the entry is published and has nothing left to review
-  if (isEntryRequest && node.state === 'MERGED') {
-    await checkMergedBranch({ branch, mergedSHA: node.headRefOid, fetchBranchHead, deleteBranch });
-  }
-
-  // Otherwise a merged pull request, or one aimed at another branch since the board was loaded, is
-  // no longer the entry’s review, which is how the next load would see it too: reopening or taking
-  // it out of draft would put a request for that other branch in front of the maintainers, or
-  // claim a merged one is in review. So the entry carries on without it, as a fresh draft. GitHub
-  // allows one open pull request per head and base, so one aimed elsewhere doesn’t stand in the way
-  // of a new one to the configured branch
-  // @see https://github.com/sveltia/sveltia-cms/security/advisories/GHSA-8h97-74c4-g246
-  if (node && (node.state === 'MERGED' || !isEntryRequest)) {
-    return updateForkStatus(
-      { ...pullRequest, number: undefined, nodeId: undefined, url: undefined },
-      status,
-    );
-  }
-
-  const { state, isDraft } = node ?? {};
-
-  if (status === 'draft') {
-    // Converting the pull request to a draft keeps it — and the discussion on it — in place while
-    // taking it out of the maintainers’ review queue
-    if (state === 'OPEN' && !isDraft) {
-      await updateDraftState(pullRequest, true);
-    }
-  } else {
-    if (state === 'CLOSED') {
-      await reopenPullRequest(pullRequest);
-    }
-
-    if (isDraft) {
-      await updateDraftState(pullRequest, false);
-    }
-  }
-
-  return { ...pullRequest, status, updatedDate: new Date() };
-};
+export const updateForkStatus = async (pullRequest, status) =>
+  updateForkStatusWith({
+    pullRequest,
+    status,
+    requestKey: 'nodeId',
+    createRequest: createPullRequest,
+    fetchRequest: fetchForkRequestState,
+    applyStatus: applyForkStatus,
+    fetchBranchHead,
+    deleteBranch,
+  });

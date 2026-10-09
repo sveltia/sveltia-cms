@@ -20,12 +20,14 @@ import {
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
-import {
-  checkPublishAllowed,
-  createDraftPullRequest,
-} from '$lib/services/backends/git/shared/fork';
+import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
 import { encodePath } from '$lib/services/backends/git/shared/url';
-import { isSquashMergeEnabled } from '$lib/services/backends/git/shared/workflow';
+import {
+  getParentDirs,
+  isSquashMergeEnabled,
+  openWorkflowPullRequest,
+  toChangedFilesWithModes,
+} from '$lib/services/backends/git/shared/workflow';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -441,13 +443,16 @@ export const savePullRequest = async ({ changes, options, branch, title, status,
     return { commit, pullRequest };
   }
 
-  // A removal has no review stages to move through, so its pull request is opened right away like
-  // it is in the regular flow
-  if (openAuthoring.current && status === 'draft') {
-    return { commit, pullRequest: createDraftPullRequest({ commit, branch, title }) };
-  }
-
-  return { commit, pullRequest: await createPullRequest({ branch, title, status }) };
+  return {
+    commit,
+    pullRequest: await openWorkflowPullRequest({
+      commit,
+      branch,
+      title,
+      status,
+      createPullRequest,
+    }),
+  };
 };
 
 /**
@@ -480,7 +485,7 @@ const REST_FILE_STATUSES = {
  * @see https://docs.github.com/en/graphql/reference/objects#treeentry
  */
 const fetchFileModes = async ({ headSHA, paths }) => {
-  const dirs = [...new Set(paths.map((path) => path.slice(0, Math.max(path.lastIndexOf('/'), 0))))];
+  const dirs = getParentDirs(paths);
 
   const trees = await fetchAliasedBatch({
     items: dirs,
@@ -550,21 +555,14 @@ export const fetchMergeState = async (pullRequest) => {
     )
   );
 
-  const changedFiles = files.map(({ filename, status, previous_filename: previousPath }) => ({
-    path: /** @type {string} */ (filename),
-    status: REST_FILE_STATUSES[status] ?? 'modified',
-    previousPath,
-  }));
-
-  const modes = await fetchFileModes({
-    headSHA,
-    paths: changedFiles.filter(({ status }) => status !== 'removed').map(({ path }) => path),
-  });
-
   return {
     headSHA,
     onConfiguredBranches,
-    files: changedFiles.map((file) => ({ ...file, mode: modes.get(file.path) })),
+    files: await toChangedFilesWithModes(files, {
+      statusMap: REST_FILE_STATUSES,
+      headSHA,
+      fetchFileModes,
+    }),
     complete: files.length < MAX_COMPARE_FILES,
   };
 };

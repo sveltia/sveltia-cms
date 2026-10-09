@@ -5,22 +5,39 @@
   import { formatSize } from '$lib/services/assets/file-size';
 
   /**
+   * @import { RejectedFileNames } from '$lib/services/contents/fields/file/resources';
+   */
+
+  /**
    * @typedef {object} Props
-   * @property {boolean} open Whether the dialog is open.
-   * @property {string[]} oversizedFileNames The names of the files that exceed the size limit.
-   * @property {string[]} invalidFileNames The names of the files that cannot be decoded.
    * @property {number} maxSize The maximum allowed file size in bytes.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
-    open = $bindable(false),
-    oversizedFileNames = [],
-    invalidFileNames = [],
     maxSize,
     /* eslint-enable prefer-const */
   } = $props();
+
+  let open = $state(false);
+  /** @type {string[]} */
+  let oversizedFileNames = $state.raw([]);
+  /** @type {string[]} */
+  let invalidFileNames = $state.raw([]);
+
+  /**
+   * Show the dialog if any files were rejected. Nothing happens if both lists are empty.
+   * @param {RejectedFileNames} args Names of the rejected files.
+   */
+  export const report = (args) => {
+    if (!args.oversizedFileNames.length && !args.invalidFileNames.length) {
+      return;
+    }
+
+    ({ oversizedFileNames, invalidFileNames } = args);
+    open = true;
+  };
 
   /**
    * The dialog covers both rejection reasons, so a file batch that hits only one of them keeps the

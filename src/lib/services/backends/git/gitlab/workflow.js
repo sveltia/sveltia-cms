@@ -19,12 +19,13 @@ import {
 } from '$lib/services/backends/git/gitlab/workflow-fork';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { assertBranchNotMoved } from '$lib/services/backends/git/shared/commits';
-import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
 import {
-  checkPublishAllowed,
-  createDraftPullRequest,
-} from '$lib/services/backends/git/shared/fork';
-import { isSquashMergeEnabled } from '$lib/services/backends/git/shared/workflow';
+  assertBranchAtHead,
+  commitToNewWorkflowBranch,
+  isSquashMergeEnabled,
+  saveWorkflowBranch,
+} from '$lib/services/backends/git/shared/workflow';
 import { getAllStatusLabels, getStatusLabel } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -77,16 +78,9 @@ export const fetchPullRequests = async () =>
   openAuthoring.current ? fetchForkPullRequests() : fetchLabelledPullRequests();
 
 /**
- * Commit the given changes on a workflow branch that no merge request is known for. The branch is
- * usually created along with the commit, but it can already exist: it’s left over from an earlier
- * merge request for the same entry, which the CMS knows nothing about — one merged without deleting
- * the branch, or one that was closed on GitLab rather than discarded here, which leaves the branch
- * behind. Starting the new merge request from the branch as it stands would carry that earlier
- * work into it — a merged one adds nothing, but a closed one brings back what was thrown away — so
- * the branch is deleted and created afresh from the configured branch. With Open Authoring a draft
- * is a branch without a merge request, so there’s no telling a leftover from a live one; the branch
- * is kept, and it shows up as a draft the next time the fork is listed. The fork is the
- * contributor’s own, so nobody else’s work can be on it.
+ * Commit the given changes on a workflow branch that no merge request is known for, creating the
+ * branch from the configured one; see {@link commitToNewWorkflowBranch} for a branch that already
+ * exists.
  * @param {FileChange[]} changes Changes to be committed.
  * @param {CommitOptions} options Commit options, with the workflow branch.
  * @returns {Promise<CommitResults>} Commit results.
@@ -96,37 +90,32 @@ const commitToNewBranch = async (changes, options) => {
   const { branch = '' } = options;
   const startBranch = repository.branch;
 
-  try {
-    return await commitChanges(changes, { ...options, startBranch });
-  } catch (/** @type {any} */ ex) {
-    // GitLab rejects `start_branch` outright once the branch exists. Anything else is a real
-    // failure
-    if (ex.cause?.status !== 400) {
-      throw ex;
-    }
-  }
+  return commitToNewWorkflowBranch({
+    branch,
+    // GitLab rejects `start_branch` outright once the branch exists
+    branchExistsStatus: 400,
+    /**
+     * Commit the changes on a branch created from the start branch.
+     * @returns {Promise<CommitResults>} Commit results.
+     */
+    commitFromStart: () => commitChanges(changes, { ...options, startBranch }),
+    /**
+     * Commit the changes onto the existing branch.
+     * @returns {Promise<CommitResults>} Commit results.
+     */
+    commitOnBranch: () => commitChanges(changes, options),
+    /**
+     * Look up a merge request open from the branch.
+     * @returns {Promise<string | undefined>} Its reference, or `undefined` if there is none.
+     */
+    findOpenPullRequest: async () => {
+      const [openMergeRequest] = await fetchOpenMergeRequests(branch);
 
-  if (openAuthoring.current) {
-    return commitChanges(changes, options);
-  }
-
-  // A merge request open from the branch is one the board doesn’t show: it has lost its status
-  // label, it sits beyond the number of merge requests fetched, it goes to another branch, or it
-  // was never the CMS’s. Committing onto it would take whatever else it holds along with the entry,
-  // unseen, and deleting the branch would close it, so the save is refused instead
-  const [openMergeRequest] = await fetchOpenMergeRequests(branch);
-
-  if (openMergeRequest) {
-    throw createLocalizedError(
-      'The workflow branch is in use by another merge request.',
-      'workflow.branch_in_use',
-      { number: `!${openMergeRequest.iid}` },
-    );
-  }
-
-  await deleteBranch(branch);
-
-  return commitChanges(changes, { ...options, startBranch });
+      return openMergeRequest ? `!${openMergeRequest.iid}` : undefined;
+    },
+    inUseMessage: 'The workflow branch is in use by another merge request.',
+    deleteBranch,
+  });
 };
 
 /**
@@ -146,25 +135,13 @@ const commitToNewBranch = async (changes, options) => {
  */
 const commitToExistingBranch = async (changes, options, pullRequest) => {
   const { branch = '' } = options;
-  const { headSHA } = pullRequest;
-  const head = await fetchBranchHead(branch);
 
-  // The branch can have gone, e.g. with a merge request merged or closed on GitLab, which is worth
-  // saying in words rather than with GitLab’s message about a branch it can’t find
-  if (head === undefined) {
-    throw createLocalizedError('Failed to save the changes.', 'branch_not_found', {
-      repo: getWorkflowRepository().repo,
-      branch,
-    });
-  }
-
-  // Trying again reloads the entry first, which takes the other commit into account
-  if (!headSHA || head !== headSHA) {
-    throw createLocalizedError(
-      'The workflow branch has moved since the entry was loaded.',
-      'save_conflict.branch_moved',
-    );
-  }
+  const headSHA = await assertBranchAtHead({
+    branch,
+    headSHA: pullRequest.headSHA,
+    fetchBranchHead,
+    getWorkflowRepository,
+  });
 
   try {
     return await commitChanges(changes, { ...options, headOid: headSHA });
@@ -221,26 +198,8 @@ export const updateStatus = async (pullRequest, status) => {
  * @returns {Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} Commit results
  * and the new or updated merge request.
  */
-export const savePullRequest = async ({ changes, options, branch, title, status, pullRequest }) => {
-  if (pullRequest) {
-    return {
-      commit: await commitToExistingBranch(changes, { ...options, branch }, pullRequest),
-      pullRequest,
-    };
-  }
-
-  // The commit itself creates the workflow branch on the first save, so it doesn’t need a request
-  // of its own
-  const commit = await commitToNewBranch(changes, { ...options, branch });
-
-  // A removal has no review stages to move through, so its merge request is opened right away like
-  // it is in the regular flow
-  if (openAuthoring.current && status === 'draft') {
-    return { commit, pullRequest: createDraftPullRequest({ commit, branch, title }) };
-  }
-
-  return { commit, pullRequest: await createPullRequest({ branch, title, status }) };
-};
+export const savePullRequest = async (args) =>
+  saveWorkflowBranch(args, { commitToNewBranch, commitToExistingBranch, createPullRequest });
 
 /**
  * Fetch the merge request’s detailed merge status, which names the single check that stands in the

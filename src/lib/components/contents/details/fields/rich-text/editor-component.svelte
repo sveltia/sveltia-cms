@@ -1,10 +1,11 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Dialog, Icon, Spacer, VisibilityObserver } from '@sveltia/ui';
+  import { Button, Dialog, Spacer, VisibilityObserver } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { onMount, untrack } from 'svelte';
 
   import Image from '$lib/components/assets/shared/image.svelte';
+  import RemoveButton from '$lib/components/common/remove-button.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
   import {
@@ -393,6 +394,36 @@
   });
 </script>
 
+{#snippet fieldEditors(
+  /**
+   * @type {{
+   * typedPrefix: string,
+   * observe: boolean,
+   * }}
+   */ { typedPrefix, observe },
+)}
+  {#each fields as fieldConfig (fieldConfig.name)}
+    {#snippet fieldEditor()}
+      <FieldEditor
+        {locale}
+        keyPath="{keyPathPrefix}{fieldConfig.name}"
+        typedKeyPath="{typedPrefix}{fieldConfig.name}"
+        {fieldConfig}
+        context="rich-text-editor-component"
+        {componentName}
+        {valueStoreKey}
+      />
+    {/snippet}
+    {#if observe}
+      <VisibilityObserver>
+        {@render fieldEditor()}
+      </VisibilityObserver>
+    {:else}
+      {@render fieldEditor()}
+    {/if}
+  {/each}
+{/snippet}
+
 {#if mode === 'dialog'}
   <!-- Dialog mode: compact placeholder that opens a dialog on click, unless there are no fields;
   it can still be focused then, to be removed with the Backspace key -->
@@ -457,17 +488,7 @@
     >
       <div role="none" class="fields">
         {#if locale && keyPath}
-          {#each fields as fieldConfig (fieldConfig.name)}
-            <FieldEditor
-              {locale}
-              keyPath="{keyPathPrefix}{fieldConfig.name}"
-              typedKeyPath="{keyPathPrefix}{fieldConfig.name}"
-              {fieldConfig}
-              context="rich-text-editor-component"
-              {componentName}
-              {valueStoreKey}
-            />
-          {/each}
+          {@render fieldEditors({ typedPrefix: keyPathPrefix, observe: false })}
         {/if}
       </div>
       {#snippet footer()}
@@ -544,36 +565,17 @@
       bind:expanded
     >
       {#snippet endContent()}
-        <Button
-          size="small"
-          iconic
-          aria-label={_('remove')}
+        <RemoveButton
           onclick={() => {
             onChange(new CustomEvent('remove'));
           }}
-        >
-          {#snippet startIcon()}
-            <Icon name="close" />
-          {/snippet}
-        </Button>
+        />
       {/snippet}
     </ObjectHeader>
     {#if hasFields}
       <div role="none" class="item-list" id="object-{fieldId}-item-list">
         {#if locale && keyPath && expanded}
-          {#each fields as fieldConfig (fieldConfig.name)}
-            <VisibilityObserver>
-              <FieldEditor
-                {locale}
-                keyPath="{keyPathPrefix}{fieldConfig.name}"
-                typedKeyPath="{typedKeyPathPrefix}{fieldConfig.name}"
-                {fieldConfig}
-                context="rich-text-editor-component"
-                {componentName}
-                {valueStoreKey}
-              />
-            </VisibilityObserver>
-          {/each}
+          {@render fieldEditors({ typedPrefix: typedKeyPathPrefix, observe: true })}
         {/if}
       </div>
     {/if}

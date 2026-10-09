@@ -17,12 +17,11 @@ import {
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
+import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { splitIntoChunks } from '$lib/services/utils/array';
-import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
@@ -376,22 +375,12 @@ export const fetchFileContents = async (fetchingFiles) => {
  * caller has just fetched it, so it isn’t fetched again.
  */
 export const fetchFiles = async ({ lastCommit } = {}) => {
-  // With Open Authoring, a user without write access is a contributor rather than a stranger, so
-  // they’re given a fork to work in instead of being turned away. Setting the fork up may involve
-  // the user, so it has to finish before the data is fetched, unlike a plain access check
-  const openAuthoring = isOpenAuthoringConfigured();
-
-  // Once only: a later call brings the stores up to date with the project, and setting the fork up
-  // again would reset the fork state while a workflow commit may be relying on it
-  if (openAuthoring && !openAuthoringInitialized.current) {
-    await initOpenAuthoring();
-  }
-
-  await fetchAndParseFiles({
+  await fetchRepositoryFiles({
+    isOpenAuthoringConfigured,
+    initOpenAuthoring,
     repository,
-    checkAccess: openAuthoring ? undefined : checkRepositoryAccess,
-    // A contributor’s changes go to their fork, so the branch they can’t push to doesn’t matter
-    checkBranchAccess: forkedRepository.current ? undefined : checkBranchAccess,
+    checkAccess: checkRepositoryAccess,
+    checkBranchAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
     lastCommit,

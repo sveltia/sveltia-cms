@@ -16,6 +16,7 @@ vi.mock('$lib/services/utils/file', () => ({
   encodeFilePath: vi.fn((path) => encodeURIComponent(path)),
   createPath: vi.fn((parts) => parts.filter(Boolean).join('/')),
   resolvePath: vi.fn((path) => path),
+  getDirName: vi.fn((path) => path.split('/').slice(0, -1).join('/')),
   sanitizePath: vi.fn((path) =>
     path
       .split('/')

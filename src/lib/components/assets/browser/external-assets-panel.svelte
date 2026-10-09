@@ -123,11 +123,8 @@
   let error = $state();
   /** @type {{ show: boolean, status: 'info' | 'error', length: number }} */
   let uploadingToast = $state({ show: false, status: 'info', length: 0 });
-  /** @type {string[]} */
-  let oversizedFileNames = $state([]);
-  /** @type {string[]} */
-  let invalidFileNames = $state([]);
-  let showRejectedFilesAlert = $state(false);
+  /** @type {RejectedFilesAlertDialog | undefined} */
+  let rejectedFilesAlert = $state();
 
   /** @type {MediaLibraryFetchOptions} */
   const listFetchOptions = $derived({ kind, fieldConfig, apiKey, userName, password });
@@ -252,12 +249,7 @@
     const prepared = await prepareExternalUploads(files, allMediaLibraryOptions);
 
     files = prepared.validFiles;
-    oversizedFileNames = prepared.oversizedFileNames;
-    invalidFileNames = prepared.invalidFileNames;
-
-    if (oversizedFileNames.length || invalidFileNames.length) {
-      showRejectedFilesAlert = true;
-    }
+    rejectedFilesAlert?.report(prepared);
 
     if (!files.length) {
       return;
@@ -514,12 +506,7 @@
   </Alert>
 </Toast>
 
-<RejectedFilesAlertDialog
-  bind:open={showRejectedFilesAlert}
-  {oversizedFileNames}
-  {invalidFileNames}
-  {maxSize}
-/>
+<RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} />
 
 <Toast bind:show={folderCreationFailed}>
   <Alert status="error">{_('creating_folder_failed')}</Alert>

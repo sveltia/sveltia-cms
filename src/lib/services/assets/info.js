@@ -1,4 +1,3 @@
-import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 import mime from 'mime';
 
@@ -14,7 +13,7 @@ import { cmsConfig } from '$lib/services/config';
 import { getEntryFolderPath } from '$lib/services/contents/entry/paths';
 import { shareInFlight } from '$lib/services/utils/cache';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
-import { createPath, createPathRegEx, encodeFilePath } from '$lib/services/utils/file';
+import { createPath, createPathRegEx, encodeFilePath, getDirName } from '$lib/services/utils/file';
 import { createInertSVG } from '$lib/services/utils/media/image/svg';
 import {
   THUMBNAIL_TRANSFORM_OPTIONS,
@@ -178,6 +177,22 @@ const downloadAssetBlob = async (asset) => {
 const fetchAssetBlob = async (asset) => cacheAssetBlob(asset, await downloadAssetBlob(asset));
 
 /**
+ * Read the file behind the given handle.
+ * @param {FileSystemFileHandle} handle File handle.
+ * @param {(file: File) => Promise<Blob>} [transform] Function to process the file with, whose
+ * failure is reported the same way as a failed read.
+ * @returns {Promise<Blob>} File, or the result of `transform`.
+ * @throws {Error} When the file cannot be read or processed.
+ */
+const readHandle = async (handle, transform = async (file) => file) => {
+  try {
+    return await transform(await handle.getFile());
+  } catch {
+    throw new Error('Failed to retrieve blob from file handle');
+  }
+};
+
+/**
  * Get the blob for the given asset, from wherever it’s available: the file it was created from, the
  * object URL already cached on it, a file system handle, or the backend.
  * @param {Asset} asset Asset.
@@ -203,11 +218,7 @@ export const getAssetBlob = async (asset) => {
   }
 
   if (handle) {
-    try {
-      return await cacheAssetBlob(asset, await handle.getFile());
-    } catch {
-      throw new Error('Failed to retrieve blob from file handle');
-    }
+    return readHandle(handle, (blob) => cacheAssetBlob(asset, blob));
   }
 
   return downloadOnce(path, () => fetchAssetBlob(asset));
@@ -241,11 +252,7 @@ const getThumbnailSourceBlob = async (asset) => {
   }
 
   if (handle) {
-    try {
-      return await handle.getFile();
-    } catch {
-      throw new Error('Failed to retrieve blob from file handle');
-    }
+    return readHandle(handle);
   }
 
   return downloadAssetBlob(asset);
@@ -520,6 +527,60 @@ const replaceTemplatePath = ({ path, internalPath, publicPath }) => {
 };
 
 /**
+ * Get the asset folder whose public path applies to the given asset.
+ * @param {Asset} asset Asset.
+ * @returns {AssetFolderInfo} Asset folder.
+ */
+const resolvePublicFolder = (asset) =>
+  asset.folder.collectionName === undefined
+    ? // Use the global asset folder
+      asset.folder
+    : // Search for the asset folder instead of using `asset.folder` directly, as an asset can be
+      // used for multiple collections, and the public path can be different for each
+      (getAssetFoldersByPath(asset.path).find(
+        ({ collectionName }) => collectionName !== undefined,
+      ) ??
+      globalAssetFolder.current ??
+      // There is no global folder without the global `media_folder` option
+      asset.folder);
+
+/**
+ * Get the path of the given asset in an entry-relative folder, relative to the entry’s folder.
+ * @param {Asset} asset Asset.
+ * @param {Entry} [entry] Associated entry. Can be `undefined` when editing a new draft.
+ * @returns {string | undefined} Relative path, e.g. `images/photo.jpg`, or `undefined` if it
+ * cannot be determined.
+ */
+const getEntryRelativePath = (asset, entry) => {
+  // A file at the repository root has no folder path
+  const assetFolderPath = getDirName(asset.path);
+  const entryFolderPath = entry ? getEntryFolderPath(entry) : undefined;
+
+  if (entryFolderPath !== undefined) {
+    // If the asset is in the same folder as the entry, return the file name only
+    if (assetFolderPath === entryFolderPath) {
+      return asset.name;
+    }
+
+    // Return the path relative to the entry’s folder, e.g. `images/photo.jpg`, or `undefined` if
+    // the path cannot be determined
+    const prefix = entryFolderPath ? `${entryFolderPath}/` : '';
+
+    return asset.path.startsWith(prefix) ? asset.path.slice(prefix.length) : undefined;
+  }
+
+  const { internalPath, internalSubPath } = asset.folder;
+
+  // Resolve simple entry-relative paths like `images/photo.jpg` if the asset is in the same folder
+  // as the entry, which can be the repository root
+  if (asset.path === createPath([internalPath, internalSubPath, asset.name])) {
+    return internalPath ? asset.path.slice(internalPath.length + 1) : asset.path;
+  }
+
+  return undefined;
+};
+
+/**
  * Get the public URL for the given asset.
  * @param {Asset} asset Asset file, such as an image.
  * @param {object} [options] Options.
@@ -535,50 +596,12 @@ export const getAssetPublicURL = (
   asset,
   { pathOnly = false, allowSpecial = false, entry = undefined } = {},
 ) => {
-  const { publicPath, entryRelative, hasTemplateTags } =
-    asset.folder.collectionName === undefined
-      ? // Use the global asset folder
-        asset.folder
-      : // Search for the asset folder instead of using `asset.folder` directly, as an asset can be
-        // used for multiple collections, and the public path can be different for each
-        (getAssetFoldersByPath(asset.path).find(
-          ({ collectionName }) => collectionName !== undefined,
-        ) ??
-        globalAssetFolder.current ??
-        // There is no global folder without the global `media_folder` option
-        asset.folder);
+  const { publicPath, entryRelative, hasTemplateTags } = resolvePublicFolder(asset);
 
   // Try to determine an entry-relative path if the asset is in the same folder as the entry, or a
   // sub-folder of it
   if (entryRelative) {
-    if (pathOnly) {
-      // A file at the repository root has no folder path
-      const assetFolderPath = getPathInfo(asset.path).dirname ?? '';
-      const entryFolderPath = entry ? getEntryFolderPath(entry) : undefined;
-
-      if (entryFolderPath !== undefined) {
-        // If the asset is in the same folder as the entry, return the file name only
-        if (assetFolderPath === entryFolderPath) {
-          return asset.name;
-        }
-
-        // Return the path relative to the entry’s folder, e.g. `images/photo.jpg`, or `undefined`
-        // if the path cannot be determined
-        const prefix = entryFolderPath ? `${entryFolderPath}/` : '';
-
-        return asset.path.startsWith(prefix) ? asset.path.slice(prefix.length) : undefined;
-      }
-
-      const { internalPath, internalSubPath } = asset.folder;
-
-      // Resolve simple entry-relative paths like `images/photo.jpg` if the asset is in the same
-      // folder as the entry, which can be the repository root
-      if (asset.path === createPath([internalPath, internalSubPath, asset.name])) {
-        return internalPath ? asset.path.slice(internalPath.length + 1) : asset.path;
-      }
-    }
-
-    return undefined;
+    return pathOnly ? getEntryRelativePath(asset, entry) : undefined;
   }
 
   const { _baseURL: baseURL = '', output: { encode_file_path: encodingEnabled = false } = {} } =

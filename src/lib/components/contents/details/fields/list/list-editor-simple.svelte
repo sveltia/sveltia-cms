@@ -12,11 +12,12 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Icon, TextInput } from '@sveltia/ui';
+  import { TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { getContext, tick } from 'svelte';
   import { flip } from 'svelte/animate';
 
+  import RemoveButton from '$lib/components/common/remove-button.svelte';
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
@@ -230,20 +231,13 @@
         }}
       />
       {#if canEdit && !singleItem}
-        <Button
+        <RemoveButton
           variant="ghost"
-          size="small"
-          iconic
           disabled={!hasMultipleItems}
-          aria-label={_('remove')}
           onclick={() => {
             removeItem(index);
           }}
-        >
-          {#snippet startIcon()}
-            <Icon name="close" />
-          {/snippet}
-        </Button>
+        />
       {/if}
     </div>
   {/each}

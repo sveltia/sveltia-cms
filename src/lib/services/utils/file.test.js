@@ -7,6 +7,7 @@ import {
   encodeFilePath,
   getBlob,
   getByteSize,
+  getDirName,
   getGitHash,
   isEquivalentFileExtension,
   renameIfNeeded,
@@ -471,6 +472,17 @@ describe('Test createPath()', () => {
 
   test('should handle array with only falsy values', () => {
     expect(createPath([null, undefined, ''])).toBe('');
+  });
+});
+
+describe('Test getDirName()', () => {
+  test('should return the directory of a file path', () => {
+    expect(getDirName('static/images/photo.jpg')).toBe('static/images');
+    expect(getDirName('static/photo.jpg')).toBe('static');
+  });
+
+  test('should return an empty string for a file at the root', () => {
+    expect(getDirName('photo.jpg')).toBe('');
   });
 });
 

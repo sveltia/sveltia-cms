@@ -10,9 +10,9 @@ import {
   dedupeFileCommits,
 } from '$lib/services/backends/git/shared/commits';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
-import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
+import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { getByteSize } from '$lib/services/utils/file';
-import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { CommitOptions, CommitResults, FileChange, FileCommit } from '$lib/types/private';
@@ -259,15 +259,7 @@ const createCommit = async ({
  * @see https://docs.github.com/en/graphql/reference/mutations#createcommitonbranch
  */
 export const commitChanges = async (changes, options) => {
-  // An Open Authoring contributor can’t write to the configured repository at all, so a change that
-  // doesn’t go through Editorial Workflow has nowhere to land. Fail here with an explanation rather
-  // than letting the API reject the commit with a bare permission error
-  if (openAuthoring.current && !options.branch) {
-    throw createLocalizedError(
-      'Cannot commit directly to the configured repository',
-      'open_authoring.direct_commit_unsupported',
-    );
-  }
+  checkDirectCommitAllowed(options);
 
   // A workflow branch lives in the contributor’s fork with Open Authoring, while the configured
   // branch is only ever committed to by someone who can write to the configured repository

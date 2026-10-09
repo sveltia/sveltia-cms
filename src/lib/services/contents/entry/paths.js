@@ -1,4 +1,4 @@
-import { getPathInfo } from '@sveltia/utils/file';
+import { getDirName } from '$lib/services/utils/file';
 
 /**
  * @import { Entry, UnpublishedEntry } from '$lib/types/private';
@@ -26,5 +26,4 @@ export const getEntryPaths = (entry, { includePrevious = false } = {}) => [
  * @param {Entry | UnpublishedEntry} entry Entry.
  * @returns {string} Folder path, or an empty string if the entry is at the repository root.
  */
-export const getEntryFolderPath = (entry) =>
-  getPathInfo(Object.values(entry.locales)[0].path).dirname ?? '';
+export const getEntryFolderPath = (entry) => getDirName(Object.values(entry.locales)[0].path);

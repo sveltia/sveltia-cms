@@ -322,7 +322,7 @@ const addAssetCollections = (folders, { assetCollections, globalFolders }) => {
  * @param {Collection[]} args.validCollections Valid collections.
  * @returns {boolean} Result.
  */
-export const isAssetFolderReadonly = ({ config, folder, validCollections }) => {
+const isAssetFolderReadonly = ({ config, folder, validCollections }) => {
   const { collectionName, fileName, isAssetCollection } = folder;
 
   if (isAssetCollection) {

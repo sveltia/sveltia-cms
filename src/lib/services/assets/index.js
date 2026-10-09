@@ -9,11 +9,7 @@ import {
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
 import { allAssets, focusedAsset } from '$lib/services/assets/state';
-import {
-  focusedSubfolder,
-  getDirName,
-  selectedSubfolderPath,
-} from '$lib/services/assets/subfolders';
+import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { fillTemplate } from '$lib/services/common/template';
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
 import { hasTemplateTags } from '$lib/services/common/template/tags';
@@ -22,7 +18,7 @@ import { isCollectionIndexFile } from '$lib/services/contents/collection/entries
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
-import { createPath, resolvePath, stripPathPrefix } from '$lib/services/utils/file';
+import { createPath, getDirName, resolvePath, stripPathPrefix } from '$lib/services/utils/file';
 import { createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
@@ -477,8 +473,7 @@ export const getAssetsByFolder = (folder) =>
  * @returns {Asset[]} Assets.
  */
 export const getAssetsByDirName = (dirname) =>
-  // `getPathInfo()` has no directory for a file at the root
-  allAssets.current.filter((a) => (getPathInfo(a.path).dirname ?? '') === dirname);
+  allAssets.current.filter((a) => getDirName(a.path) === dirname);
 
 // Reset the asset selection when a different folder or subfolder is selected
 createRootEffect(() => {

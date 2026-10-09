@@ -506,32 +506,44 @@ const findOutermostMatches = (string, componentDefs, regions) => {
 };
 
 /**
+ * @typedef {object} PreviewContext
+ * @property {Map<string, number>} seenHashes Number of occurrences of each block hash so far, used
+ * to make the keys unique across passes.
+ * @property {Map<string, ComponentPreview>} previewMap Preview map to be populated.
+ * @property {Map<string, ComponentPreview>} [previousPreviewMap] Preview map from the previous run,
+ * if any.
+ * @property {GetAsset} getAsset Asset getter passed to `toPreview()`.
+ * @property {Map<string, ApiAsset[]>} assetMap Map to be populated with the assets each newly
+ * computed preview has got with the asset getter, keyed by the preview’s key.
+ */
+
+/**
+ * Create the state shared by the previews computed in a single run.
+ * @param {Map<string, ComponentPreview> | undefined} previousPreviewMap Preview map from the
+ * previous run, if any.
+ * @param {GetAsset} getAsset Asset getter passed to `toPreview()`.
+ * @returns {PreviewContext} Context.
+ */
+const createPreviewContext = (previousPreviewMap, getAsset) => ({
+  seenHashes: new Map(),
+  previewMap: new Map(),
+  previousPreviewMap,
+  getAsset,
+  assetMap: new Map(),
+});
+
+/**
  * Compute the preview of a component instance, or reuse the one computed in the previous run, and
  * add it to the preview map.
+ * @param {PreviewContext} context Preview context.
  * @param {object} args Arguments.
  * @param {EditorComponentDefinition} args.def Component definition.
  * @param {Record<string, any>} args.fieldProps Field values of the instance.
  * @param {string} args.source Markdown or HTML of the instance, which its key is computed from.
- * @param {Map<string, number>} args.seenHashes Number of occurrences of each block hash so far,
- * used to make the keys unique.
- * @param {Map<string, ComponentPreview>} args.previewMap Preview map to be populated.
- * @param {Map<string, ComponentPreview>} [args.previousPreviewMap] Preview map from the previous
- * run, if any.
- * @param {GetAsset} args.getAsset Asset getter passed to `toPreview()`.
- * @param {Map<string, ApiAsset[]>} args.assetMap Map to be populated with the assets each newly
- * computed preview has got with the asset getter, keyed by the preview’s key.
  * @returns {{ key: string, preview: ComponentPreview }} Key and preview.
  */
-const addComponentPreview = ({
-  def,
-  fieldProps,
-  source,
-  seenHashes,
-  previewMap,
-  previousPreviewMap,
-  getAsset,
-  assetMap,
-}) => {
+const addComponentPreview = (context, { def, fieldProps, source }) => {
+  const { seenHashes, previewMap, previousPreviewMap, getAsset, assetMap } = context;
   const { toPreview } = def;
   const baseHash = hashString(source);
   const count = seenHashes.get(baseHash) ?? 0;
@@ -569,29 +581,14 @@ const addComponentPreview = ({
 
 /**
  * Substitute the given component matches in the string with their previews.
+ * @param {PreviewContext} context Preview context.
  * @param {object} args Arguments.
  * @param {string} args.string String to process.
  * @param {ComponentMatch[]} args.matches Outermost matches found in the string.
- * @param {Map<string, number>} args.seenHashes Number of occurrences of each block hash so far,
- * used to make the keys unique across passes.
- * @param {Map<string, ComponentPreview>} args.previewMap Preview map to be populated.
- * @param {Map<string, ComponentPreview>} [args.previousPreviewMap] Preview map from the previous
- * run, if any.
- * @param {GetAsset} args.getAsset Asset getter passed to `toPreview()`.
- * @param {Map<string, ApiAsset[]>} args.assetMap Map to be populated with the assets each newly
- * computed preview has got with the asset getter, keyed by the preview’s key.
  * @returns {{ string: string, regions: PreviewRegion[] }} The processed string, and the regions of
  * the substituted string previews, which may expose further component syntax.
  */
-const substituteMatches = ({
-  string,
-  matches,
-  seenHashes,
-  previewMap,
-  previousPreviewMap,
-  getAsset,
-  assetMap,
-}) => {
+const substituteMatches = (context, { string, matches }) => {
   /** @type {string[]} */
   const chunks = [];
   /** @type {PreviewRegion[]} */
@@ -601,17 +598,7 @@ const substituteMatches = ({
 
   matches.forEach(({ def, match, index, end }) => {
     const fieldProps = def.fromBlock?.(match) ?? match.groups ?? {};
-
-    const { key, preview } = addComponentPreview({
-      def,
-      fieldProps,
-      source: match[0],
-      seenHashes,
-      previewMap,
-      previousPreviewMap,
-      getAsset,
-      assetMap,
-    });
+    const { key, preview } = addComponentPreview(context, { def, fieldProps, source: match[0] });
 
     chunks.push(string.slice(cursor, index));
     length += index - cursor;
@@ -667,12 +654,8 @@ const substituteMatches = ({
  */
 const buildHTMLWithPreviews = (html, componentDefs, previousPreviewMap, getAsset = getNoAsset) => {
   const defs = componentDefs.filter((def) => supportsHTML(def) && !!def.toPreview);
-  /** @type {Map<string, ComponentPreview>} */
-  const previewMap = new Map();
-  /** @type {Map<string, ApiAsset[]>} */
-  const assetMap = new Map();
-  /** @type {Map<string, number>} */
-  const seenHashes = new Map();
+  const context = createPreviewContext(previousPreviewMap, getAsset);
+  const { previewMap, assetMap } = context;
 
   if (!defs.length) {
     return { markdown: html, previewMap, assetMap };
@@ -707,15 +690,10 @@ const buildHTMLWithPreviews = (html, componentDefs, previousPreviewMap, getAsset
         return;
       }
 
-      const { key, preview } = addComponentPreview({
+      const { key, preview } = addComponentPreview(context, {
         def,
         fieldProps: /** @type {Record<string, any>} */ (fieldProps),
         source: element.outerHTML,
-        seenHashes,
-        previewMap,
-        previousPreviewMap,
-        getAsset,
-        assetMap,
       });
 
       if (typeof preview === 'string') {
@@ -779,12 +757,8 @@ export const buildMarkdownWithPreviews = (
     return buildHTMLWithPreviews(currentValue ?? '', componentDefs, previousPreviewMap, getAsset);
   }
 
-  /** @type {Map<string, ComponentPreview>} */
-  const previewMap = new Map();
-  /** @type {Map<string, ApiAsset[]>} */
-  const assetMap = new Map();
-  /** @type {Map<string, number>} */
-  const seenHashes = new Map();
+  const context = createPreviewContext(previousPreviewMap, getAsset);
+  const { previewMap, assetMap } = context;
   let string = (currentValue ?? '').replace(GLOBAL_IMAGE_REGEX, encodeImageSrc);
   /** @type {PreviewRegion[] | undefined} */
   let regions;
@@ -796,15 +770,7 @@ export const buildMarkdownWithPreviews = (
       break;
     }
 
-    const result = substituteMatches({
-      string,
-      matches,
-      seenHashes,
-      previewMap,
-      previousPreviewMap,
-      getAsset,
-      assetMap,
-    });
+    const result = substituteMatches(context, { string, matches });
 
     string = result.string;
     regions = result.regions;

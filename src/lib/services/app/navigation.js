@@ -429,6 +429,25 @@ export const goBack = (path, { returnTo, ...options } = {}) => {
 };
 
 /**
+ * Get the path the entry editor goes back to: the collections list for a singleton file, or the
+ * collection entries list otherwise — the folder being browsed for a nested collection, so the user
+ * lands where they opened the entry from.
+ * @param {object} args Arguments.
+ * @param {string | undefined} args.collectionName Name of the entry’s collection.
+ * @param {string} [args.dirPath] Folder being browsed in a nested collection, if any.
+ * @returns {string} Route path.
+ */
+export const getEntryEditorBackPath = ({ collectionName, dirPath = '' }) => {
+  if (collectionName === '_singletons') {
+    return '/collections';
+  }
+
+  return dirPath
+    ? encodeRoutePath(`/collections/${collectionName}/filter/${dirPath}`)
+    : `/collections/${collectionName}`;
+};
+
+/**
  * Open the production site in a new browser tab.
  */
 export const openProductionSite = () => {

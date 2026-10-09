@@ -1120,11 +1120,12 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
         /** @type {any} */ ({
           ok: false,
           statusText: 'Unauthorized',
+          text: vi.fn().mockResolvedValue('Incorrect authentication credentials.'),
         }),
       );
 
       await expect(list({ apiKey: mockSecretKey })).rejects.toThrow(
-        'Failed to fetch files: Unauthorized',
+        'Failed to fetch files: Incorrect authentication credentials.',
       );
     });
 
@@ -1345,11 +1346,12 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
         /** @type {any} */ ({
           ok: false,
           statusText: 'Bad Request',
+          text: vi.fn().mockResolvedValue('Invalid query.'),
         }),
       );
 
       await expect(search('test', { apiKey: mockSecretKey })).rejects.toThrow(
-        'Failed to fetch files: Bad Request',
+        'Failed to fetch files: Invalid query.',
       );
     });
 
@@ -1698,10 +1700,13 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
           ok: false,
           status: 403,
           statusText: 'Forbidden',
+          text: vi.fn().mockResolvedValue('Public key is blocked.'),
         }),
       );
 
-      await expect(upload([mockFile], { apiKey: mockSecretKey })).rejects.toThrow();
+      await expect(upload([mockFile], { apiKey: mockSecretKey })).rejects.toThrow(
+        'Failed to upload files: Public key is blocked.',
+      );
     });
 
     it('should handle empty file array', async () => {
@@ -1832,11 +1837,15 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
 
     it('should throw when the request fails', async () => {
       vi.mocked(fetch).mockResolvedValue(
-        /** @type {any} */ ({ ok: false, statusText: 'Forbidden' }),
+        /** @type {any} */ ({
+          ok: false,
+          statusText: 'Forbidden',
+          text: vi.fn().mockResolvedValue('Secret key is invalid.'),
+        }),
       );
 
       await expect(deleteFiles(assets, { apiKey: mockSecretKey })).rejects.toThrow(
-        'Failed to delete files: Forbidden',
+        'Failed to delete files: Secret key is invalid.',
       );
     });
   });

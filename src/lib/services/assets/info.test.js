@@ -72,7 +72,15 @@ vi.mock('$lib/services/assets/folders', () => ({
   selectedAssetFolder: { current: undefined },
 }));
 vi.mock('$lib/services/assets/references');
-vi.mock('$lib/services/utils/file');
+vi.mock('$lib/services/utils/file', async (importOriginal) => {
+  const actual = /** @type {Record<string, any>} */ (await importOriginal());
+
+  // Mock every function but the directory name helper, which calls the mocked `getPathInfo()`
+  return {
+    ...Object.fromEntries(Object.keys(actual).map((key) => [key, vi.fn()])),
+    getDirName: actual.getDirName,
+  };
+});
 vi.mock('$lib/services/utils/media');
 vi.mock('$lib/services/utils/media/image/svg');
 vi.mock('$lib/services/utils/media/image/transform');

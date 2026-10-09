@@ -87,10 +87,11 @@ vi.mock('$lib/services/contents/entry/collections');
 vi.mock('$lib/services/utils/file', async (importOriginal) => {
   const actual = /** @type {Record<string, any>} */ (await importOriginal());
 
-  // Mock every function but the path prefix helper
+  // Mock every function but the path prefix and directory name helpers
   return {
     ...Object.fromEntries(Object.keys(actual).map((key) => [key, vi.fn()])),
     stripPathPrefix: actual.stripPathPrefix,
+    getDirName: actual.getDirName,
   };
 });
 

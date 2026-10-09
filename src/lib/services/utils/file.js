@@ -141,6 +141,14 @@ export const isEquivalentFileExtension = (a, b) => {
 export const createPath = (segments) => segments.filter(Boolean).join('/');
 
 /**
+ * Get the directory part of a file path. Unlike `getPathInfo()`, which has no directory for a file
+ * at the root, this is always a string, so a root file’s directory compares equal to the root path.
+ * @param {string} path File path.
+ * @returns {string} Directory path, which is an empty string for a file at the root.
+ */
+export const getDirName = (path) => getPathInfo(path).dirname ?? '';
+
+/**
  * Remove the given directory from the start of a path, if the path sits below it.
  * @param {string} path Path, e.g. `images/photo.jpg`.
  * @param {string | undefined} dir Directory path, e.g. `images`. An empty string or `undefined`

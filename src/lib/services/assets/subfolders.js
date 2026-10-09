@@ -1,4 +1,3 @@
-import { getPathInfo } from '@sveltia/utils/file';
 import { compare } from '@sveltia/utils/string';
 
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
@@ -6,7 +5,7 @@ import { isCmsFolderName, isCmsFolderPath } from '$lib/services/assets/reserved'
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { slugify } from '$lib/services/common/slug';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-import { createPath, sanitizeFileName } from '$lib/services/utils/file';
+import { createPath, getDirName, sanitizeFileName } from '$lib/services/utils/file';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -43,14 +42,6 @@ export const renamingSubfolder = createRawState();
  * @type {{ current: AssetSubfolder | undefined }}
  */
 export const deletingSubfolder = createRawState();
-
-/**
- * Get the directory part of a file path. Unlike `getPathInfo()`, which has no directory for a file
- * at the root, this is always a string, so a root file’s directory compares equal to the root path.
- * @param {string} path File path.
- * @returns {string} Directory path, which is an empty string for a file at the root.
- */
-export const getDirName = (path) => getPathInfo(path).dirname ?? '';
 
 /**
  * Check if the given asset folder can be browsed by subfolder, which takes a folder whose files all

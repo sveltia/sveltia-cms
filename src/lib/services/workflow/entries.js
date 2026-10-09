@@ -1,6 +1,6 @@
 import { getPathInfo } from '@sveltia/utils/file';
 
-import { parseAssetFileInfo } from '$lib/services/backends/git/shared/fetch';
+import { parseAssetFileInfo } from '$lib/services/backends/git/shared/parse-files';
 import { createFileList } from '$lib/services/backends/process';
 import { isInRootDir } from '$lib/services/backends/root-dir';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';

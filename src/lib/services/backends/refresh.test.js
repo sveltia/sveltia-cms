@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
-import { advanceRepositoryHead, repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { advanceRepositoryHead } from '$lib/services/backends/git/shared/file-cache';
+import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { allEntries } from '$lib/services/contents';
 import { productionSHA } from '$lib/services/deployments';
 
@@ -15,20 +16,17 @@ import {
 } from './refresh';
 
 const mockGetRootDir = vi.hoisted(() => vi.fn(() => ''));
+const mockRepositoryHead = vi.hoisted(() => ({ current: '' }));
 
 vi.mock('$lib/services/assets', () => ({ allAssets: { current: [] } }));
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
-vi.mock('$lib/services/backends/git/shared/fetch', () => {
-  const head = { current: '' };
-
-  return {
-    repositoryHead: head,
-    // Like the real one, record the new head
-    advanceRepositoryHead: vi.fn(async (_repository, _from, to) => {
-      head.current = to;
-    }),
-  };
-});
+vi.mock('$lib/services/backends/git/shared/head', () => ({ repositoryHead: mockRepositoryHead }));
+vi.mock('$lib/services/backends/git/shared/file-cache', () => ({
+  // Like the real one, record the new head
+  advanceRepositoryHead: vi.fn(async (_repository, _from, to) => {
+    mockRepositoryHead.current = to;
+  }),
+}));
 vi.mock('$lib/services/contents', () => ({ allEntries: { current: [] } }));
 vi.mock('$lib/services/deployments', () => ({ productionSHA: { current: '' } }));
 vi.mock('$lib/services/backends/root-dir', () => ({ getRootDir: mockGetRootDir }));

@@ -39,10 +39,33 @@ vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(() => ({ name: 'posts', _type: 'entry' })),
 }));
 vi.mock('$lib/services/contents/collection/files', () => ({ getCollectionFile: vi.fn() }));
-vi.mock('$lib/services/contents/entry/relations/cascade/delete', () => ({
-  planCascadeDelete: vi.fn(() => ({ targets: [], blockers: [] })),
-  buildCascadeDeleteChanges: vi.fn(async () => ({ changes: [], savingEntries: [] })),
-}));
+vi.mock('$lib/services/contents/entry/relations/cascade/delete', () => {
+  /** @type {import('vitest').Mock<(args: any) => any>} */
+  const planMock = vi.fn(() => ({ targets: [], blockers: [] }));
+
+  /**
+   * Mirror the real wrapper so that the tests can drive it through `planCascadeDelete()`.
+   * @param {any} args Arguments.
+   * @param {string} message Error message.
+   * @returns {any[]} Targets.
+   * @throws {Error} When the plan has blockers.
+   */
+  const planCascadeDeleteOrThrow = (args, message) => {
+    const { targets, blockers } = planMock(args);
+
+    if (blockers.length) {
+      throw new Error(message, { cause: blockers });
+    }
+
+    return targets;
+  };
+
+  return {
+    planCascadeDelete: planMock,
+    planCascadeDeleteOrThrow,
+    buildCascadeDeleteChanges: vi.fn(async () => ({ changes: [], savingEntries: [] })),
+  };
+});
 vi.mock('$lib/services/backends/git/shared/commits');
 vi.mock('$lib/services/backends/save');
 vi.mock('$lib/services/deployments/resolve');

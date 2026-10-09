@@ -1,6 +1,6 @@
 import transliterate from '@sindresorhus/transliterate';
 import { generateUUID } from '@sveltia/utils/crypto';
-import { truncate } from '@sveltia/utils/string';
+import { escapeRegExp, truncate } from '@sveltia/utils/string';
 
 import {
   UNSAFE_ASCII_SLUG_CHARS_REGEX,
@@ -84,7 +84,7 @@ export const slugify = (
 
   // Consolidate consecutive replacement characters into a single one and trim them from ends
   if (sanitizeReplacement) {
-    const escapedReplacement = sanitizeReplacement.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedReplacement = escapeRegExp(sanitizeReplacement);
 
     const cachedSlugRegexes = getOrCreate(slugReplacementRegexCache, escapedReplacement, () => ({
       consecutivePattern: new RegExp(`${escapedReplacement}+`, 'g'),

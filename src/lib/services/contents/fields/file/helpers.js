@@ -1,4 +1,3 @@
-import { getPathInfo } from '@sveltia/utils/file';
 import { isURL } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
@@ -13,7 +12,7 @@ import { createPublicURL, getAssetFolderPaths } from '$lib/services/contents/dra
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getEntryFolderPath } from '$lib/services/contents/entry/paths';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { createPath } from '$lib/services/utils/file';
+import { createPath, getDirName } from '$lib/services/utils/file';
 import { decodeURISafely } from '$lib/services/utils/url';
 
 /**
@@ -291,11 +290,8 @@ export const isAssetInSelectedFolder = ({ asset, folder, folderPath }) => {
   // The target folder path of an entry-relative folder is resolved against the entry, so the path
   // alone tells whether the asset is stored next to it. The folder the asset is filed under can’t
   // be compared: a folder in a custom editor component has no collection, hence no base folder,
-  // and an asset may be filed under an enclosing global folder instead. A file at the repository
-  // root has no folder path
-  const dirname = getPathInfo(asset.path).dirname ?? '';
-
-  return isInTargetFolder({ path: dirname, folderPath });
+  // and an asset may be filed under an enclosing global folder instead
+  return isInTargetFolder({ path: getDirName(asset.path), folderPath });
 };
 
 /**
@@ -323,14 +319,12 @@ export const resolveUnsavedAssetPaths = ({ savedAssets, unsavedAssets, slugifica
   const replacedPaths = new Set();
 
   savedAssets.forEach(({ path, name }) => {
-    const dirName = getPathInfo(path).dirname ?? '';
-
-    getOrCreate(namesByDir, dirName, () => []).push(name.normalize());
+    getOrCreate(namesByDir, getDirName(path), () => []).push(name.normalize());
   });
 
   const resolvedUnsavedAssets = unsavedAssets.map((asset) => {
     const { name, path, replace } = asset;
-    const dirName = getPathInfo(path).dirname ?? '';
+    const dirName = getDirName(path);
     const namesInDir = namesByDir.get(dirName) ?? [];
 
     // A replacing file keeps its original name because it overwrites the existing asset

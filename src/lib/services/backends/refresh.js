@@ -1,6 +1,7 @@
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
-import { advanceRepositoryHead, repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { advanceRepositoryHead } from '$lib/services/backends/git/shared/file-cache';
+import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { allEntries } from '$lib/services/contents';
 import { productionSHA } from '$lib/services/deployments';

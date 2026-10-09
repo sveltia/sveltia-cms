@@ -11,7 +11,7 @@ import {
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 // Mock dependencies
@@ -22,7 +22,7 @@ vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => (
   .../** @type {any} */ (await importOriginal()),
   createCommitMessage: vi.fn().mockReturnValue('Test commit message'),
 }));
-vi.mock('$lib/services/backends/git/shared/fetch', () => ({
+vi.mock('$lib/services/backends/git/shared/head', () => ({
   repositoryHead: { current: '' },
 }));
 vi.mock('@sveltia/i18n', () => ({

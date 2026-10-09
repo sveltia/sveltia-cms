@@ -17,23 +17,24 @@
   } from '@sveltia/ui';
 
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
-  import DeleteEntryDialog from '$lib/components/contents/details/delete-entry-dialog.svelte';
   import ResetDialog from '$lib/components/contents/details/editor/reset-dialog.svelte';
   import ResetMenuItems from '$lib/components/contents/details/editor/reset-menu-items.svelte';
   import ViewMenuItems from '$lib/components/contents/details/editor/view-menu-items.svelte';
+  import EntryRemoval from '$lib/components/contents/details/entry-removal.svelte';
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import SaveConflictDialog from '$lib/components/contents/details/save-conflict-dialog.svelte';
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
-  import { encodeRoutePath, goBack, goto, overlayTitle } from '$lib/services/app/navigation';
-  import { getErrorMessage } from '$lib/services/backends/git/shared/errors';
+  import {
+    encodeRoutePath,
+    getEntryEditorBackPath,
+    goBack,
+    goto,
+    overlayTitle,
+  } from '$lib/services/app/navigation';
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
   import { isDraftReadonly } from '$lib/services/config/readonly';
   import { getCollectionLabel } from '$lib/services/contents/collection';
-  import {
-    contentUpdatesToast,
-    UPDATE_TOAST_DEFAULT_STATE,
-  } from '$lib/services/contents/collection/data';
   import { getCollectionFileLabel } from '$lib/services/contents/collection/files';
   import { isNestedCollection, nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { collectionState } from '$lib/services/contents/collection/view';
@@ -72,14 +73,13 @@
     isWorkflowEnabled,
     workflowEnabled,
   } from '$lib/services/workflow';
-  import { deleteOrDiscardEntries } from '$lib/services/workflow/delete';
   import { getDiscardDialogStrings } from '$lib/services/workflow/dialogs';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
-  import { discardWorkflowEntry, updateWorkflowStatus } from '$lib/services/workflow/save';
+  import { updateWorkflowStatus } from '$lib/services/workflow/save';
   import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
   /**
-   * @import { Entry, UnpublishedEntry, UpdateToastState } from '$lib/types/private';
+   * @import { UnpublishedEntry } from '$lib/types/private';
    * @import { EntryConflict } from '$lib/services/contents/draft/save/conflict';
    * @import { ResetAction } from '$lib/services/contents/editor/reset';
    */
@@ -103,14 +103,12 @@
   // count: the fields are revalidated as they’re corrected, and a toast counting down to “0 fields
   // have errors” while it’s still on screen would be confusing
   let errorCount = $state(0);
-  let showDeleteDialog = $state(false);
   let showReviewDialog = $state(false);
   /**
    * Resolver for the review prompt, so the save can wait for the answer.
    * @type {((sendForReview: boolean) => void) | undefined}
    */
   let resolveReviewPrompt = $state();
-  let showDiscardDialog = $state(false);
   let showConflictDialog = $state(false);
   /**
    * Someone else’s change to the entry that the last save attempt would have overwritten, along
@@ -118,18 +116,16 @@
    * @type {{ conflict: EntryConflict, skipCI: boolean | undefined } | undefined}
    */
   let saveConflict = $state();
-  let showDeleteErrorToast = $state(false);
-  let deleteErrorMessage = $state('');
   let showErrorDialog = $state(false);
   let errorMessage = $state('');
   let saving = $state(false);
   let deleting = $state(false);
   /** Whether the entry is being duplicated, which takes a moment when it has assets to copy. */
   let duplicating = $state(false);
-  /** I18n key of the message shown while a deletion is in flight. */
-  let progressMessage = $state('');
   /** @type {MenuButton | undefined} */
   let menuButton = $state();
+  /** @type {EntryRemoval | undefined} */
+  let entryRemoval = $state();
   /**
    * Whether restoring the default values or clearing the fields would change anything. It takes
    * going through the whole entry, so it’s only checked as the menu opens rather than on every
@@ -261,11 +257,6 @@
   const discardItemStrings = $derived(
     getDiscardDialogStrings({ pendingDeletion, publishedVersionExists }),
   );
-  // The discard dialog is only opened for an entry with a published version. Its text is kept as it
-  // is when the discarded entry goes away, so it doesn’t change while the dialog is closing
-  const discardDialogStrings = $derived(
-    getDiscardDialogStrings({ pendingDeletion, publishedVersionExists: true }),
-  );
 
   // Keep the deploy state fresh while the editor is open, so a build that finishes in the
   // background turns the preview link live without the user reloading. The release function is
@@ -273,104 +264,15 @@
   $effect(() => retainDeployPolling());
 
   /**
-   * Go back to the previous page: the search results if the entry was opened from them. Otherwise,
-   * if the entry is a singleton file, go to the collections list, or go to the collection entries
-   * list — the folder being browsed for a nested collection, so the user lands where they opened
-   * the entry from.
+   * Go back to the previous page: the search results if the entry was opened from them, or the
+   * path given by `getEntryEditorBackPath()` otherwise.
    */
   const _goBack = () => {
-    const options = { returnTo: isSearchResultsPath };
-
-    if (collectionName === '_singletons') {
-      goBack('/collections', options);
-
-      return;
-    }
-
     const dirPath = collection && isNestedCollection(collection) ? nestedFilterPath.current : '';
 
-    goBack(
-      dirPath
-        ? encodeRoutePath(`/collections/${collectionName}/filter/${dirPath}`)
-        : `/collections/${collectionName}`,
-      options,
-    );
-  };
-
-  /**
-   * Run the given deletion action, then go back to the entry list. The action reports what happened
-   * by returning a toast state, which is shown by the content library page: the editor is closed by
-   * then, so a toast rendered here would go with it. Errors are reported with a toast and leave the
-   * editor open.
-   * @param {() => Promise<Partial<UpdateToastState> | undefined>} action Action to be performed.
-   * @param {string} progressKey I18n key of the message shown while the action is in flight.
-   */
-  const runDeletion = async (action, progressKey) => {
-    /** @type {Partial<UpdateToastState> | undefined} */
-    let toastState;
-
-    progressMessage = progressKey;
-    deleting = true;
-
-    try {
-      toastState = await action();
-    } catch (/** @type {any} */ ex) {
-      deleteErrorMessage = getErrorMessage(ex, 'deleting_entry_failed');
-      showDeleteErrorToast = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
-
-      return;
-    } finally {
-      deleting = false;
-    }
-
-    if (toastState) {
-      contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, count: 1, ...toastState };
-    }
-
-    _goBack();
-  };
-
-  /**
-   * Delete the entry. With Editorial Workflow the removal goes through a pull request like any
-   * other change, so the entry stays on the site until that is published. An unpublished entry that
-   * has never been published is discarded instead, because there’s nothing on the configured branch
-   * to remove.
-   */
-  const deleteEntry = async () => {
-    await runDeletion(
-      () =>
-        deleteOrDiscardEntries({
-          drafts: discardsDraft ? [/** @type {UnpublishedEntry} */ (unpublishedEntry)] : [],
-          // The option is only offered for an existing entry
-          items: discardsDraft
-            ? []
-            : [{ entry: /** @type {Entry} */ (originalEntry), assets: associatedAssets }],
-          collection,
-          collectionFile,
-          useWorkflow,
-        }),
-      'workflow.deleting_entry',
-    );
-  };
-
-  /**
-   * Discard the unpublished changes by closing the pull request, leaving the published version of
-   * the entry untouched.
-   */
-  const discardChanges = async () => {
-    await runDeletion(
-      async () => {
-        /* v8 ignore next 3 -- the option is only offered for an unpublished entry */
-        if (unpublishedEntry) {
-          await discardWorkflowEntry(unpublishedEntry);
-        }
-
-        return pendingDeletion ? { deletionCancelled: true } : { discarded: true };
-      },
-      pendingDeletion ? 'workflow.cancelling_deletion' : 'workflow.discarding_changes',
-    );
+    goBack(getEntryEditorBackPath({ collectionName, dirPath }), {
+      returnTo: isSearchResultsPath,
+    });
   };
 
   /**
@@ -650,9 +552,9 @@
               aria-label={discardItemStrings.title}
               onclick={() => {
                 if (publishedVersionExists) {
-                  showDiscardDialog = true;
+                  entryRemoval?.confirmDiscard();
                 } else {
-                  showDeleteDialog = true;
+                  entryRemoval?.confirmDelete();
                 }
               }}
             />
@@ -662,7 +564,7 @@
           <MenuItem
             label={_('delete')}
             onclick={() => {
-              showDeleteDialog = true;
+              entryRemoval?.confirmDelete();
             }}
           />
         {/if}
@@ -760,32 +662,24 @@
   {_('workflow.confirm_sending_for_review')}
 </ConfirmationDialog>
 
-<DeleteEntryDialog
-  bind:open={showDeleteDialog}
+<EntryRemoval
+  bind:this={entryRemoval}
+  bind:deleting
+  {collection}
+  {collectionFile}
+  {originalEntry}
+  {unpublishedEntry}
+  {associatedAssets}
   {discardsDraft}
   {useWorkflow}
-  withAssets={!!associatedAssets.length}
-  onOk={async () => {
-    await deleteEntry();
+  {pendingDeletion}
+  onDone={() => {
+    _goBack();
   }}
   onClose={() => {
     menuButton?.focus();
   }}
 />
-
-<ConfirmationDialog
-  bind:open={showDiscardDialog}
-  title={discardDialogStrings.title}
-  okLabel={discardDialogStrings.label}
-  onOk={async () => {
-    await discardChanges();
-  }}
-  onClose={() => {
-    menuButton?.focus();
-  }}
->
-  {discardDialogStrings.message}
-</ConfirmationDialog>
 
 <SaveConflictDialog
   bind:open={showConflictDialog}
@@ -797,18 +691,6 @@
     menuButton?.focus();
   }}
 />
-
-<!-- Shown while the request is in flight. The result is reported by the content library page,
-because this toast goes away with the editor once the deletion has completed -->
-{#if progressMessage}
-  <Toast id={progressMessage} show={deleting} duration={0}>
-    <Alert status="info">{_(progressMessage)}</Alert>
-  </Toast>
-{/if}
-
-<Toast bind:show={showDeleteErrorToast}>
-  <Alert status="error">{deleteErrorMessage}</Alert>
-</Toast>
 
 <!-- @todo make the error message more informative -->
 <AlertDialog

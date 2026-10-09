@@ -8,6 +8,7 @@ import {
   getDeletedValues,
   getDeletedVersions,
   planCascadeDelete,
+  planCascadeDeleteOrThrow,
   removeReferences,
 } from '$lib/services/contents/entry/relations/cascade/delete';
 
@@ -765,6 +766,45 @@ describe('planCascadeDelete()', () => {
     expect(createSyntheticDraft).toHaveBeenCalledWith(
       expect.objectContaining({ isIndexFile: true }),
     );
+  });
+});
+
+describe('planCascadeDeleteOrThrow()', () => {
+  const baseArgs = { collection: tagsCollection, entries: [travelTag] };
+
+  test('returns the targets when nothing blocks the deletion', () => {
+    registerTagRelation();
+    getEntriesByCollection.mockReturnValue([createPost('my-trip', { tag: 'travel' })]);
+
+    expect(planCascadeDeleteOrThrow(baseArgs, 'Blocked')).toEqual([
+      {
+        entry: createPost('my-trip', { tag: '' }),
+        collection: postsCollection,
+        collectionFile: undefined,
+      },
+    ]);
+  });
+
+  test('returns no targets when nothing references the entries', () => {
+    expect(planCascadeDeleteOrThrow(baseArgs, 'Blocked')).toEqual([]);
+  });
+
+  test('throws with the blockers as the cause when the deletion is blocked', () => {
+    registerTagRelation({ fieldConfig: { label: 'Tag' } });
+    validateAnyField.mockReturnValue({ valid: false, valueMissing: true });
+    getEntriesByCollection.mockReturnValue([createPost('a', { title: 'Post A', tag: 'travel' })]);
+
+    let error;
+
+    try {
+      planCascadeDeleteOrThrow(baseArgs, 'Blocked');
+    } catch (ex) {
+      error = ex;
+    }
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe('Blocked');
+    expect(error.cause).toEqual([expect.objectContaining({ keyPath: 'tag', fieldLabel: 'Tag' })]);
   });
 });
 

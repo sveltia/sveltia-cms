@@ -14,6 +14,7 @@ import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import {
   buildCascadeDeleteChanges,
   planCascadeDelete,
+  planCascadeDeleteOrThrow,
 } from '$lib/services/contents/entry/relations/cascade/delete';
 import { forgetDeployments } from '$lib/services/deployments';
 import { refreshProductionSHA } from '$lib/services/deployments/resolve';
@@ -494,17 +495,10 @@ export const deleteWorkflowEntry = async (
     );
   }
 
-  if (!targets) {
-    const plan = planCascadeDelete({ collection, collectionFile, entries: [entry] });
-
-    if (plan.blockers.length) {
-      throw new Error('Cannot delete an entry that other entries require', {
-        cause: plan.blockers,
-      });
-    }
-
-    ({ targets } = plan);
-  }
+  targets ??= planCascadeDeleteOrThrow(
+    { collection, collectionFile, entries: [entry] },
+    'Cannot delete an entry that other entries require',
+  );
 
   const workflow = getWorkflowService();
   const collectionName = collection.name;
@@ -608,17 +602,13 @@ export const deleteWorkflowEntries = async (items) => {
   groups.forEach((group, key) => {
     const [{ collection, collectionFile }] = group;
 
-    const { targets, blockers } = planCascadeDelete({
-      collection,
-      collectionFile,
-      entries: group.map(({ entry }) => entry),
-    });
-
-    if (blockers.length) {
-      throw new Error('Cannot delete entries that other entries require', { cause: blockers });
-    }
-
-    targetMap.set(key, targets);
+    targetMap.set(
+      key,
+      planCascadeDeleteOrThrow(
+        { collection, collectionFile, entries: group.map(({ entry }) => entry) },
+        'Cannot delete entries that other entries require',
+      ),
+    );
   });
 
   await runConcurrently(items, async (item) => {

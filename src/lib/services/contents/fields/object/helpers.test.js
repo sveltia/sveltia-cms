@@ -1,6 +1,11 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { formatSummary, getUnknownTypeMessage } from '$lib/services/contents/fields/object/helpers';
+import {
+  formatSummary,
+  getUnknownTypeMessage,
+  resolveVariableType,
+  warnUnknownType,
+} from '$lib/services/contents/fields/object/helpers';
 
 vi.mock('$lib/services/config');
 
@@ -546,5 +551,88 @@ describe('getUnknownTypeMessage()', () => {
       'The type key is not found in the list item. The item must include the “kind” property ' +
         'with one of the defined types: image, text',
     );
+  });
+});
+
+describe('warnUnknownType()', () => {
+  const types = [{ name: 'image' }];
+
+  test('logs the message with the field or item key path', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    warnUnknownType({
+      fieldType: 'object',
+      keyPath: 'hero',
+      type: 'video',
+      typeKey: 'type',
+      types,
+    });
+    warnUnknownType({
+      fieldType: 'list',
+      keyPath: 'blocks.1',
+      type: 'video',
+      typeKey: 'type',
+      types,
+    });
+
+    expect(warn.mock.calls).toEqual([
+      ['Object field hero: The “video” type is not defined for the object field.'],
+      ['List item blocks.1: The “video” type is not defined for the list field.'],
+    ]);
+
+    warn.mockRestore();
+  });
+});
+
+describe('resolveVariableType()', () => {
+  const fields = [{ name: 'title' }];
+
+  const types = [
+    { name: 'image', fields: [{ name: 'src' }], summary: '{{fields.src}}' },
+    { name: 'text' },
+  ];
+
+  test('returns the subfields of a field without variable types', () => {
+    expect(resolveVariableType({ fields, summary: '{{fields.title}}', type: 'image' })).toEqual({
+      typeConfig: undefined,
+      unknownType: false,
+      subFields: fields,
+      summaryTemplate: '{{fields.title}}',
+    });
+    expect(resolveVariableType({})).toEqual({
+      typeConfig: undefined,
+      unknownType: false,
+      subFields: [],
+      summaryTemplate: undefined,
+    });
+  });
+
+  test('returns the subfields and summary of a known type', () => {
+    expect(resolveVariableType({ types, fields, summary: 'default', type: 'image' })).toEqual({
+      typeConfig: types[0],
+      unknownType: false,
+      subFields: types[0].fields,
+      summaryTemplate: '{{fields.src}}',
+    });
+    expect(resolveVariableType({ types, summary: 'default', type: 'text' })).toEqual({
+      typeConfig: types[1],
+      unknownType: false,
+      subFields: [],
+      summaryTemplate: 'default',
+    });
+  });
+
+  test('flags a missing or unknown type', () => {
+    const expected = {
+      typeConfig: undefined,
+      unknownType: true,
+      subFields: [],
+      summaryTemplate: 'default',
+    };
+
+    expect(resolveVariableType({ types, fields, summary: 'default', type: 'video' })).toEqual(
+      expected,
+    );
+    expect(resolveVariableType({ types, fields, summary: 'default' })).toEqual(expected);
   });
 });

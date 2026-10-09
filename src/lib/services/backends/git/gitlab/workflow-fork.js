@@ -15,12 +15,12 @@ import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repo
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
-import { checkMergedBranch, checkStatusAllowed } from '$lib/services/backends/git/shared/fork';
+import { pruneForkBranches, updateForkStatusWith } from '$lib/services/backends/git/shared/fork';
 import { user } from '$lib/services/user/account.svelte';
 import { getBranchListPrefix } from '$lib/services/workflow/branch';
 
 /**
- * @import { WorkflowPullRequest, WorkflowStatus } from '$lib/types/private';
+ * @import { ForkRequestState, WorkflowPullRequest, WorkflowStatus } from '$lib/types/private';
  */
 
 /**
@@ -216,29 +216,19 @@ export const fetchForkBranchFileList = async (pullRequest) => {
 export const fetchForkPullRequests = async () => {
   const branchList = await fetchForkBranchList();
   const mergeRequests = await fetchForkBranchMergeRequests(branchList.map(({ name }) => name));
-  /** @type {string[]} */
-  const leftover = [];
-  /** @type {WorkflowPullRequest[]} */
-  const pending = [];
 
-  branchList.forEach((branchInfo) => {
-    const mergeRequest = mergeRequests.get(branchInfo.name);
+  const pending = await pruneForkBranches(
+    branchList,
+    (branchInfo) => {
+      const mergeRequest = mergeRequests.get(branchInfo.name);
 
-    // A merged merge request whose head the branch still points at has nothing left on it. Tidying
-    // it up keeps the fork from collecting a branch per published entry, and saves comparing each
-    // one with the configured branch on every load just to find out it holds nothing. A branch the
-    // contributor has committed to since the merge has a different head, so it survives and shows
-    // up as a fresh draft
-    if (mergeRequest?.state === 'merged' && mergeRequest.sha === branchInfo.commit?.id) {
-      leftover.push(branchInfo.name);
-    } else {
-      pending.push(parseForkBranch(branchInfo, mergeRequest));
-    }
-  });
+      return mergeRequest?.state === 'merged' && mergeRequest.sha === branchInfo.commit?.id
+        ? { leftover: branchInfo.name }
+        : { pending: parseForkBranch(branchInfo, mergeRequest) };
+    },
+    deleteBranch,
+  );
 
-  // Deleting a branch is best effort: `deleteBranch` logs a failure rather than raising it, and a
-  // branch that outlives this is picked up on the next load
-  await runConcurrently(leftover, deleteBranch);
   await runConcurrently(pending, fetchForkBranchFileList);
 
   // A branch that no longer differs from the configured branch holds nothing to publish. That’s
@@ -375,6 +365,44 @@ export const createForkMergeRequest = async ({ branch, title, status }) => {
 };
 
 /**
+ * Read the current state of the merge request an Open Authoring entry has, for
+ * {@link updateForkStatusWith}.
+ * @param {WorkflowPullRequest} pullRequest Merge request.
+ * @returns {Promise<ForkRequestState>} State.
+ */
+const fetchForkRequestState = async (pullRequest) => {
+  const item = await fetchMergeRequest(pullRequest);
+
+  return {
+    merged: item.state === 'merged',
+    isEntryRequest: isForkMergeRequest(item),
+    /**
+     * Read the head commit the merge request was merged at.
+     * @returns {Promise<string>} Commit SHA.
+     */
+    getMergedSHA: async () => item.sha,
+    state: item.state,
+    draft: item.draft,
+  };
+};
+
+/**
+ * Bring a merge request in line with the given status, for {@link updateForkStatusWith}. Unlike on
+ * the other services, the whole transition is made with a single request.
+ * @param {object} args Arguments.
+ * @param {WorkflowPullRequest} args.pullRequest Merge request.
+ * @param {WorkflowStatus} args.status New status.
+ * @param {string} [args.state] Merge request state, e.g. `opened`.
+ * @param {boolean} [args.draft] Whether GitLab considers the merge request a draft.
+ */
+const applyForkStatus = async ({ pullRequest: { number, title }, status, state, draft }) => {
+  await applyStatusChange(
+    /** @type {number} */ (number),
+    getStatusChange({ status, title, state, draft }),
+  );
+};
+
+/**
  * Move an Open Authoring entry between the drafting and review stages, which is recorded in its
  * merge request: see {@link getStatusChange}.
  * @param {WorkflowPullRequest} pullRequest Merge request.
@@ -382,47 +410,16 @@ export const createForkMergeRequest = async ({ branch, title, status }) => {
  * @returns {Promise<WorkflowPullRequest>} Updated merge request, or a new one if the known one is
  * no longer the entry’s.
  * @throws {Error} When the entry is being marked ready to publish, which a contributor can’t do, or
- * has been published since the board was loaded: see {@link checkMergedBranch}.
+ * has been published since the board was loaded: see {@link updateForkStatusWith}.
  */
-export const updateForkStatus = async (pullRequest, status) => {
-  checkStatusAllowed(status);
-
-  const { number, branch, title } = pullRequest;
-
-  // Nothing has been opened yet, so moving out of the drafting stage is what creates the merge
-  // request. Moving within the drafting stage leaves the branch as it is
-  if (number === undefined) {
-    return status === 'draft'
-      ? { ...pullRequest, status, updatedDate: new Date() }
-      : createForkMergeRequest({ branch, title, status });
-  }
-
-  // The merge request may have been closed or reopened outside the CMS, so read the current state
-  // rather than inferring it from the status the entry was last seen with
-  const item = await fetchMergeRequest(pullRequest);
-  const isEntryRequest = isForkMergeRequest(item);
-
-  // It may have been merged into the configured branch since the board was loaded. With nothing
-  // committed to the branch since, the entry is published and has nothing left to review
-  if (item.state === 'merged' && isEntryRequest) {
-    await checkMergedBranch({ branch, mergedSHA: item.sha, fetchBranchHead, deleteBranch });
-  }
-
-  // Otherwise a merged merge request, or one aimed at another branch since the board was loaded,
-  // is no longer the entry’s review, which is how the next load would see it too: reopening or
-  // taking it out of draft would put a request for that other branch in front of the maintainers,
-  // or claim a merged one is in review. So the entry carries on without it, as a fresh draft
-  // @see https://github.com/sveltia/sveltia-cms/security/advisories/GHSA-8h97-74c4-g246
-  if (item.state === 'merged' || !isEntryRequest) {
-    return updateForkStatus(
-      { ...pullRequest, number: undefined, nodeId: undefined, url: undefined },
-      status,
-    );
-  }
-
-  const { state, draft } = item;
-
-  await applyStatusChange(number, getStatusChange({ status, title, state, draft }));
-
-  return { ...pullRequest, status, updatedDate: new Date() };
-};
+export const updateForkStatus = async (pullRequest, status) =>
+  updateForkStatusWith({
+    pullRequest,
+    status,
+    requestKey: 'number',
+    createRequest: createForkMergeRequest,
+    fetchRequest: fetchForkRequestState,
+    applyStatus: applyForkStatus,
+    fetchBranchHead,
+    deleteBranch,
+  });

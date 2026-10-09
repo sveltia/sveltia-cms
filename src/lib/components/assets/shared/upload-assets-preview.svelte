@@ -1,10 +1,11 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { Button, Icon, TruncatedText } from '@sveltia/ui';
+  import { Icon, TruncatedText } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { onDestroy } from 'svelte';
 
   import Image from '$lib/components/assets/shared/image.svelte';
+  import RemoveButton from '$lib/components/common/remove-button.svelte';
   import { formatSize } from '$lib/services/assets/file-size';
   import { getFileTypeLabel } from '$lib/services/assets/file-type';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
@@ -111,19 +112,16 @@
             {/if}
           </div>
         </div>
-        <Button
+        <RemoveButton
           variant="ghost"
-          iconic
-          aria-label={_('remove')}
+          size="medium"
           hidden={!removable || files.length === 1}
           onclick={(event) => {
             event.stopPropagation();
             // Reassigned rather than spliced, so a parent binding a derived list gets the change
             files = files.toSpliced(index, 1);
           }}
-        >
-          <Icon name="close" />
-        </Button>
+        />
       </div>
     {/await}
   {/each}

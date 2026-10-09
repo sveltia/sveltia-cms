@@ -6,20 +6,15 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Checkbox, Icon } from '@sveltia/ui';
-  import { toRaw } from '@sveltia/utils/object';
-  import { getContext, onMount, tick } from 'svelte';
+  import { Checkbox } from '@sveltia/ui';
+  import { getContext, onMount } from 'svelte';
 
+  import RemoveButton from '$lib/components/common/remove-button.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import ObjectBody from '$lib/components/contents/details/fields/object/object-body.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
-  import { suspendAutoDuplication } from '$lib/services/contents/draft';
-  import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import {
-    copyDefaultLocaleValues,
-    forEachTargetLocale,
-  } from '$lib/services/contents/draft/update/locale';
+  import { addObjectFields, removeObjectFields } from '$lib/services/contents/draft/update/object';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getInitialExpanderState,
@@ -29,7 +24,8 @@
   import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
   import {
     formatSummary,
-    getUnknownTypeMessage,
+    resolveVariableType,
+    warnUnknownType,
   } from '$lib/services/contents/fields/object/helpers';
   import { getObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
 
@@ -84,7 +80,6 @@
 
   const {
     name: fieldName,
-    i18n = false,
     // Field type-specific options
     collapsed,
     summary,
@@ -97,7 +92,6 @@
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
   /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
-  const defaultLocale = $derived(entryDraft.current?.defaultLocale);
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const getFieldArgs = $derived({ collectionName, fileName, valueMap, isIndexFile });
   // Ask the shared key path index rather than scanning the whole value map: the editor renders one
@@ -113,10 +107,9 @@
   /* v8 ignore start -- only read for an object with variable types */
   const type = $derived(hasVariableTypes ? valueMap[typeKeyPath] : undefined);
   /* v8 ignore stop */
-  const typeConfig = $derived(type ? types?.find(({ name }) => name === type) : undefined);
-  const unknownType = $derived(hasVariableTypes && !typeConfig);
-  const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
-  const summaryTemplate = $derived(hasVariableTypes ? typeConfig?.summary || summary : summary);
+  const { typeConfig, unknownType, subFields, summaryTemplate } = $derived(
+    resolveVariableType({ types: hasVariableTypes ? types : undefined, fields, summary, type }),
+  );
 
   /**
    * Initialize the expander state.
@@ -141,86 +134,30 @@
    * @param {object} [args] Arguments.
    * @param {string} [args.type] Variable type name. If the field doesn’t have variable types, it
    * will be `undefined`.
-   * @returns {Promise<void>} A promise that resolves once the fields have been added.
    */
-  const addFields = async ({ type: _type } = {}) =>
-    // Avoid triggering the Proxy’s i18n duplication strategy for descendant fields. The suspension
-    // has to span the `await` below, because the values are written after it
-    suspendAutoDuplication(async () => {
-      const draft = entryDraft.current;
+  const addFields = ({ type: _type } = {}) => {
+    const draft = entryDraft.current;
 
-      /* v8 ignore next 3 -- the button is only offered while the draft is there */
-      if (!draft) {
-        return;
-      }
+    /* v8 ignore next 3 -- the button is only offered while the draft is there */
+    if (!draft) {
+      return;
+    }
 
-      if (_type) {
-        forEachTargetLocale(
-          { valueStore: draft[valueStoreKey], locale, i18n, draft, keyPath },
-          (_valueMap) => {
-            _valueMap[typeKeyPath] = _type;
-          },
-        );
-
-        // Wait until `subFields` is updated
-        await tick();
-      }
-
-      const newContent = Object.fromEntries(
-        Object.entries(
-          getDefaultValues({ fields: subFields, locale, defaultLocale: draft.defaultLocale }),
-        ) //
-          .map(([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value]),
-      );
-
-      const newValueMap =
-        locale === defaultLocale
-          ? newContent
-          : copyDefaultLocaleValues({
-              draft,
-              content: newContent,
-              targetLanguage: locale,
-              keyPathPrefix: keyPath,
-            });
-
-      forEachTargetLocale(
-        { valueStore: draft[valueStoreKey], locale, i18n, draft, keyPath },
-        (_valueMap) => {
-          // Apply the new values through the Proxy
-          Object.assign(_valueMap, toRaw({ ...newValueMap, ..._valueMap }));
-
-          // Disable validation
-          delete _valueMap[keyPath];
-        },
-      );
-    });
+    addObjectFields({ draft, valueStoreKey, locale, keyPath, fieldConfig, type: _type });
+  };
 
   /**
    * Remove the object’s subfields from the entry draft.
    */
   const removeFields = () => {
-    forEachTargetLocale(
-      {
-        valueStore: entryDraft.current?.[valueStoreKey],
-        locale,
-        i18n,
-        // The Remove button is only offered while the draft is there
-        draft: /** @type {EntryDraft} */ (entryDraft.current),
-        keyPath,
-      },
-      (_valueMap) => {
-        // Assign `null` before deleting each property, so the draft proxy can revalidate the field.
-        // The value map is the draft’s live map, which is mutated right below, so its key paths
-        // have to be read as they are right now
-        getKeysByPrefix(_valueMap, `${keyPath}.`, { live: true }).forEach((_keyPath) => {
-          _valueMap[_keyPath] = null;
-          delete _valueMap[_keyPath];
-        });
-
-        // Enable validation
-        _valueMap[keyPath] = null;
-      },
-    );
+    removeObjectFields({
+      // The Remove button is only offered while the draft is there
+      draft: /** @type {EntryDraft} */ (entryDraft.current),
+      valueStoreKey,
+      locale,
+      keyPath,
+      fieldConfig,
+    });
   };
 
   /**
@@ -247,21 +184,11 @@
       files: entryDraft.current?.files,
     });
 
-  /**
-   * Warn about unknown variable type.
-   */
-  const warnUnknownType = () => {
-    const message = getUnknownTypeMessage({ fieldType: 'object', type, typeKey, types });
-
-    // eslint-disable-next-line no-console
-    console.warn(`Object field ${keyPath}: ${message}`);
-  };
-
   onMount(() => {
     initializeExpanderState();
 
     if (hasValues && unknownType) {
-      warnUnknownType();
+      warnUnknownType({ fieldType: 'object', keyPath, type, typeKey, types });
     }
   });
 </script>
@@ -308,19 +235,12 @@
       >
         {#snippet endContent()}
           {#if hasVariableTypes}
-            <Button
-              size="small"
-              iconic
+            <RemoveButton
               disabled={readonly}
-              aria-label={_('remove')}
               onclick={() => {
                 removeFields();
               }}
-            >
-              {#snippet startIcon()}
-                <Icon name="close" />
-              {/snippet}
-            </Button>
+            />
           {/if}
         {/snippet}
       </ObjectHeader>

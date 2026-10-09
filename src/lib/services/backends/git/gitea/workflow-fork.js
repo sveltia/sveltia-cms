@@ -13,7 +13,7 @@ import {
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { checkMergedBranch, checkStatusAllowed } from '$lib/services/backends/git/shared/fork';
+import { pruneForkBranches, updateForkStatusWith } from '$lib/services/backends/git/shared/fork';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
 import { getBranchListPrefix } from '$lib/services/workflow/branch';
@@ -21,6 +21,7 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
+ * ForkRequestState,
  * WorkflowFile,
  * WorkflowPullRequest,
  * WorkflowStatus,
@@ -198,10 +199,6 @@ export const fetchForkPullRequests = async () => {
   }
 
   const pullRequests = await fetchForkPullRequestMap();
-  /** @type {string[]} */
-  const leftover = [];
-  /** @type {WorkflowPullRequest[]} */
-  const pending = [];
   /** @type {Map<number, string | undefined>} */
   const mergedHeads = new Map();
 
@@ -216,24 +213,17 @@ export const fetchForkPullRequests = async () => {
     },
   );
 
-  nodes.forEach((node) => {
-    const pullRequest = pullRequests.get(node.name);
+  const pending = await pruneForkBranches(
+    nodes,
+    (node) => {
+      const pullRequest = pullRequests.get(node.name);
 
-    // A merged pull request whose head the branch still points at has nothing left on it. Tidying
-    // it up keeps the fork from collecting a branch per published entry, and saves comparing each
-    // one with the configured branch on every load just to find out it holds nothing. A branch the
-    // contributor has committed to since the merge has a different head, so it survives and shows
-    // up as a fresh draft
-    if (pullRequest?.merged && mergedHeads.get(pullRequest.number) === node.commit?.id) {
-      leftover.push(node.name);
-    } else {
-      pending.push(parseForkBranch(node, pullRequest));
-    }
-  });
-
-  // Deleting a branch is best effort: `deleteBranch` logs a failure rather than raising it, and a
-  // branch that outlives this is picked up on the next load
-  await runConcurrently(leftover, deleteBranch);
+      return pullRequest?.merged && mergedHeads.get(pullRequest.number) === node.commit?.id
+        ? { leftover: node.name }
+        : { pending: parseForkBranch(node, pullRequest) };
+    },
+    deleteBranch,
+  );
 
   // An open pull request already reports the files it changes, which is cheaper than comparing the
   // branch with the configured branch. A closed pull request is left to the comparison as well:
@@ -269,69 +259,42 @@ export const reopenPullRequest = async (pullRequest) => {
 };
 
 /**
- * Move an Open Authoring entry between the drafting and review stages. A contributor can’t label a
- * pull request on a repository they don’t have access to, so the stage is recorded in the pull
- * request itself: a draft is a branch with no pull request, or one that’s still a work in
- * progress, while an entry in review has a pull request waiting for a maintainer.
+ * Read the current state of the pull request an Open Authoring entry has, for
+ * {@link updateForkStatusWith}.
  * @param {WorkflowPullRequest} pullRequest Pull request.
- * @param {WorkflowStatus} status New status.
- * @returns {Promise<WorkflowPullRequest>} Updated pull request, or a new one if the known one is
- * no longer the entry’s.
- * @throws {Error} When the entry is being marked ready to publish, which a contributor can’t do, or
- * has been published since the board was loaded: see {@link checkMergedBranch}.
+ * @returns {Promise<ForkRequestState>} State.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetPullRequest
  */
-export const updateForkStatus = async (pullRequest, status) => {
-  checkStatusAllowed(status);
-
-  const { number, branch, title } = pullRequest;
-
-  // Nothing has been opened yet, so moving out of the drafting stage is what creates the pull
-  // request. Moving within the drafting stage leaves the branch as it is
-  if (number === undefined) {
-    return status === 'draft'
-      ? { ...pullRequest, status, updatedDate: new Date() }
-      : createPullRequest({ branch, title, status });
-  }
-
+const fetchForkRequestState = async ({ number }) => {
   const { owner, repo } = repository;
 
-  // The pull request may have been closed, reopened or merged outside the CMS, so read the current
-  // state rather than inferring it from the status the entry was last seen with
   const item = /** @type {Record<string, any>} */ (
     await fetchAPI(`/repos/${owner}/${repo}/pulls/${number}`)
   );
 
-  const isEntryRequest = isForkPullRequest(item);
+  return {
+    merged: !!item.merged,
+    isEntryRequest: isForkPullRequest(item),
+    /**
+     * Read the head commit the pull request was merged at. It’s read from the pull request’s
+     * reference, because the head the pull request reports follows the branch.
+     * @returns {Promise<string>} Commit SHA.
+     */
+    getMergedSHA: async () => (await fetchPullRequestHeadRef(/** @type {number} */ (number))) ?? '',
+    state: item.state,
+    draft: item.draft,
+  };
+};
 
-  // It may have been merged into the configured branch since the board was loaded. With nothing
-  // committed to the branch since, the entry is published and has nothing left to review
-  if (item.merged && isEntryRequest) {
-    await checkMergedBranch({
-      branch,
-      mergedSHA: (await fetchPullRequestHeadRef(number)) ?? '',
-      fetchBranchHead,
-      deleteBranch,
-    });
-  }
-
-  // Otherwise a merged pull request, or one aimed at another branch since the board was loaded, is
-  // no longer the entry’s review, which is how the next load would see it too: reopening or taking
-  // it out of the work-in-progress state would put a request for that other branch in front of the
-  // maintainers, or claim a merged one is in review — and the instance refuses to reopen a merged
-  // one anyway. So the entry carries on without it, as a fresh draft. The instance allows one open
-  // pull request per head and base, so one aimed elsewhere doesn’t stand in the way of a new one to
-  // the configured branch
-  // @see https://github.com/sveltia/sveltia-cms/security/advisories/GHSA-8h97-74c4-g246
-  if (item.merged || !isEntryRequest) {
-    return updateForkStatus(
-      { ...pullRequest, number: undefined, nodeId: undefined, url: undefined },
-      status,
-    );
-  }
-
-  const { state, draft } = item;
-
+/**
+ * Bring a pull request in line with the given status, for {@link updateForkStatusWith}.
+ * @param {object} args Arguments.
+ * @param {WorkflowPullRequest} args.pullRequest Pull request.
+ * @param {WorkflowStatus} args.status New status.
+ * @param {string} [args.state] Pull request state, e.g. `open`.
+ * @param {boolean} [args.draft] Whether the pull request is a work in progress.
+ */
+const applyForkStatus = async ({ pullRequest, status, state, draft }) => {
   if (status === 'draft') {
     // Converting the pull request to a work in progress keeps it — and the discussion on it — in
     // place while taking it out of the maintainers’ review queue
@@ -347,6 +310,28 @@ export const updateForkStatus = async (pullRequest, status) => {
       await updateDraftState(pullRequest, false);
     }
   }
-
-  return { ...pullRequest, status, updatedDate: new Date() };
 };
+
+/**
+ * Move an Open Authoring entry between the drafting and review stages. A contributor can’t label a
+ * pull request on a repository they don’t have access to, so the stage is recorded in the pull
+ * request itself: a draft is a branch with no pull request, or one that’s still a work in
+ * progress, while an entry in review has a pull request waiting for a maintainer.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {WorkflowStatus} status New status.
+ * @returns {Promise<WorkflowPullRequest>} Updated pull request, or a new one if the known one is
+ * no longer the entry’s.
+ * @throws {Error} When the entry is being marked ready to publish, which a contributor can’t do, or
+ * has been published since the board was loaded: see {@link updateForkStatusWith}.
+ */
+export const updateForkStatus = async (pullRequest, status) =>
+  updateForkStatusWith({
+    pullRequest,
+    status,
+    requestKey: 'number',
+    createRequest: createPullRequest,
+    fetchRequest: fetchForkRequestState,
+    applyStatus: applyForkStatus,
+    fetchBranchHead,
+    deleteBranch,
+  });

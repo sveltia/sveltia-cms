@@ -16,13 +16,13 @@ import {
   repository,
 } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
+import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { dataLoadedProgress } from '$lib/services/contents';
-import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
@@ -94,21 +94,13 @@ const lookUpDirSHA = async (ref, dirPath) => {
   const { owner, repo } = repository;
   const { dirname, basename } = getPathInfo(dirPath);
   const parentPath = dirname ? `/${encodePath(dirname)}` : '';
-  /** @type {{ type: string, name: string, sha: string }[]} */
-  let entries;
 
-  try {
-    entries = /** @type {any} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/contents${parentPath}?ref=${encodeURIComponent(ref)}`)
-    );
-  } catch (/** @type {any} */ ex) {
-    // The parent directory doesn’t exist either
-    if (ex?.cause?.status === 404) {
-      return undefined;
-    }
-
-    throw ex;
-  }
+  // Missing when the parent directory doesn’t exist either
+  const entries = /** @type {{ type: string, name: string, sha: string }[] | undefined} */ (
+    await fetchAPIOrUndefined(
+      `/repos/${owner}/${repo}/contents${parentPath}?ref=${encodeURIComponent(ref)}`,
+    )
+  );
 
   // A file is returned as a single item rather than a list
   return Array.isArray(entries)
@@ -414,6 +406,16 @@ const checkAccess = async () => {
 };
 
 /**
+ * Set up Open Authoring for the signed-in user. The set-up asks the instance for what only a
+ * supported version offers, so the version is checked first here rather than alongside the
+ * repository, as {@link checkAccess} does.
+ */
+const setUpOpenAuthoring = async () => {
+  await checkInstanceVersion();
+  await initOpenAuthoring();
+};
+
+/**
  * Fetch file list from the backend service, download/parse all the entry files, then cache them in
  * the {@link allEntries} and {@link allAssets} stores.
  * @param {object} [options] Options.
@@ -421,25 +423,12 @@ const checkAccess = async () => {
  * caller has just fetched it, so it isn’t fetched again.
  */
 export const fetchFiles = async ({ lastCommit } = {}) => {
-  // With Open Authoring, a user without write access is a contributor rather than a stranger, so
-  // they’re given a fork to work in instead of being turned away. Setting the fork up may involve
-  // the user, so it has to finish before the data is fetched, unlike a plain access check
-  const openAuthoring = isOpenAuthoringConfigured();
-
-  // Once only: a later call brings the stores up to date with the repository, and setting the fork
-  // up again would reset the fork state while a workflow commit may be relying on it
-  if (openAuthoring && !openAuthoringInitialized.current) {
-    // The set-up asks the instance for what only a supported version offers, so the version is
-    // checked first here rather than alongside the repository, as {@link checkAccess} does
-    await checkInstanceVersion();
-    await initOpenAuthoring();
-  }
-
-  await fetchAndParseFiles({
+  await fetchRepositoryFiles({
+    isOpenAuthoringConfigured,
+    initOpenAuthoring: setUpOpenAuthoring,
     repository,
-    checkAccess: openAuthoring ? undefined : checkAccess,
-    // A contributor’s changes go to their fork, so the branch they can’t push to doesn’t matter
-    checkBranchAccess: forkedRepository.current ? undefined : checkBranchAccess,
+    checkAccess,
+    checkBranchAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
     lastCommit,

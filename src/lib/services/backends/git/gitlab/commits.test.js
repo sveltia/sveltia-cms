@@ -9,7 +9,7 @@ import {
 import { repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
-import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { getGitHash } from '$lib/services/utils/file';
 import { forkedRepository, openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -42,7 +42,7 @@ vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => (
   .../** @type {any} */ (await importOriginal()),
   createCommitMessage: vi.fn(),
 }));
-vi.mock('$lib/services/backends/git/shared/fetch', () => ({
+vi.mock('$lib/services/backends/git/shared/head', () => ({
   repositoryHead: { current: '' },
 }));
 vi.mock('$lib/services/utils/file', () => ({

@@ -7,20 +7,13 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import {
-    Button,
-    Icon,
-    Menu,
-    MenuButton,
-    MenuItem,
-    Spacer,
-    VisibilityObserver,
-  } from '@sveltia/ui';
+  import { Button, Menu, MenuButton, MenuItem, Spacer, VisibilityObserver } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { getContext, onMount } from 'svelte';
   import { flip } from 'svelte/animate';
 
   import ExpandIcon from '$lib/components/common/expand-icon.svelte';
+  import RemoveButton from '$lib/components/common/remove-button.svelte';
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import ObjectBody from '$lib/components/contents/details/fields/object/object-body.svelte';
@@ -41,7 +34,10 @@
     createListItem,
     getInitialListExpanderStates,
   } from '$lib/services/contents/fields/list/items';
-  import { getUnknownTypeMessage } from '$lib/services/contents/fields/object/helpers';
+  import {
+    resolveVariableType,
+    warnUnknownType,
+  } from '$lib/services/contents/fields/object/helpers';
   import { getObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
   import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
@@ -53,7 +49,6 @@
    * ListFieldWithSubField,
    * ListFieldWithSubFields,
    * ListFieldWithTypes,
-   * VariableFieldType,
    * } from '$lib/types/public';
    */
 
@@ -115,11 +110,17 @@
   /* v8 ignore stop */
 
   /**
-   * Get the configuration of the given type.
-   * @param {string} type Type name.
-   * @returns {VariableFieldType | undefined} Type configuration.
+   * Resolve the type of an item, along with the subfields and the summary template for it.
+   * @param {string | undefined} type Type name, if any.
+   * @returns {ReturnType<typeof resolveVariableType>} Resolved type.
    */
-  const getTypeConfig = (type) => variableTypes.find(({ name }) => name === type);
+  const resolveType = (type) =>
+    resolveVariableType({
+      types: hasVariableTypes ? variableTypes : undefined,
+      fields: singleSubFields,
+      summary,
+      type,
+    });
 
   /* v8 ignore start -- the editor is only rendered while the draft is there */
   const isIndexFile = $derived(!!entryDraft.current?.isIndexFile);
@@ -251,8 +252,7 @@
     }
 
     updateComplexList(({ valueList, expanderStateList }) => {
-      /* v8 ignore next -- a type is only added from the menu listing the known ones */
-      const subFields = type ? (getTypeConfig(type)?.fields ?? []) : singleSubFields;
+      const { subFields } = resolveType(type);
 
       const newItem = createListItem({
         valueList,
@@ -394,14 +394,15 @@
     items.forEach((item, index) => {
       const type = item?.[typeKey];
 
-      if (type && types.some(({ name }) => name === type)) {
-        return;
+      if (resolveType(type).unknownType) {
+        warnUnknownType({
+          fieldType: 'list',
+          keyPath: `${keyPath}.${index}`,
+          type,
+          typeKey,
+          types,
+        });
       }
-
-      const message = getUnknownTypeMessage({ fieldType: 'list', type, typeKey, types });
-
-      // eslint-disable-next-line no-console
-      console.warn(`List item ${keyPath}.${index}: ${message}`);
     });
   };
 
@@ -498,11 +499,8 @@
       <VisibilityObserver>
         {@const itemKeyPath = `${keyPath}.${index}`}
         {@const type = hasVariableTypes ? item[typeKey] : undefined}
-        {@const typeConfig = type ? getTypeConfig(type) : undefined}
-        {@const unknownType = hasVariableTypes && !typeConfig}
+        {@const { typeConfig, unknownType, subFields, summaryTemplate } = resolveType(type)}
         {@const expanded = isExpanded(entryDraft.current, itemKeyPath)}
-        {@const subFields = hasVariableTypes ? (typeConfig?.fields ?? []) : singleSubFields}
-        {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
         <div
           role="group"
           class="item"
@@ -568,18 +566,11 @@
                 </MenuButton>
               {/if}
               {#if canRemoveItem}
-                <Button
+                <RemoveButton
                   variant="ghost"
-                  size="small"
-                  iconic
-                  aria-label={_('remove')}
                   disabled={isLocked}
                   onclick={() => removeItem(index)}
-                >
-                  {#snippet startIcon()}
-                    <Icon name="close" />
-                  {/snippet}
-                </Button>
+                />
               {/if}
             {/snippet}
           </ObjectHeader>

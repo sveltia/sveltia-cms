@@ -6,6 +6,7 @@ import { showContentOverlay } from '$lib/services/contents/editor';
 
 import {
   encodeRoutePath,
+  getEntryEditorBackPath,
   goBack,
   goto,
   hasOverlay,
@@ -1440,6 +1441,27 @@ describe('navigation', () => {
       expect(mockHistoryBack).toHaveBeenCalled();
 
       await mockTransition.finished;
+    });
+  });
+
+  describe('getEntryEditorBackPath', () => {
+    it('returns the collections list for a singleton file', () => {
+      expect(getEntryEditorBackPath({ collectionName: '_singletons', dirPath: 'a' })).toBe(
+        '/collections',
+      );
+    });
+
+    it('returns the collection entries list', () => {
+      expect(getEntryEditorBackPath({ collectionName: 'posts' })).toBe('/collections/posts');
+      expect(getEntryEditorBackPath({ collectionName: 'posts', dirPath: '' })).toBe(
+        '/collections/posts',
+      );
+    });
+
+    it('returns the folder being browsed in a nested collection, encoded', () => {
+      expect(
+        getEntryEditorBackPath({ collectionName: 'docs', dirPath: 'guides/getting started' }),
+      ).toBe('/collections/docs/filter/guides/getting%20started');
     });
   });
 });

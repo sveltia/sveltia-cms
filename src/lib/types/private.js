@@ -437,6 +437,19 @@
  */
 
 /**
+ * Current state of the request an Open Authoring entry has, as read by a backend for
+ * `updateForkStatusWith`.
+ * @typedef {object} ForkRequestState
+ * @property {boolean} merged Whether the request has been merged.
+ * @property {boolean} isEntryRequest Whether the request is still the one the CMS manages for the
+ * contributor: opened by them, from their fork, to the configured branch.
+ * @property {() => Promise<string>} getMergedSHA Function to read the head commit the request was
+ * merged at. Only called for a merged request that is the entry’s.
+ * @property {string} [state] Request state in the service’s own terms, e.g. `open`.
+ * @property {boolean} [draft] Whether the service considers the request a draft.
+ */
+
+/**
  * A file changed by a pull request, as read by {@link WorkflowBackendService.fetchMergeState}.
  * @typedef {object} WorkflowChangedFile
  * @property {string} path File path relative to the project’s root directory.

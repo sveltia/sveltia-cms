@@ -116,7 +116,7 @@ vi.mock('$lib/services/backends/branch-access', () => ({
   mergeLockedBranch: mockMergeLockedBranch,
 }));
 
-vi.mock('$lib/services/backends/git/shared/fetch', () => ({
+vi.mock('$lib/services/backends/git/shared/head', () => ({
   repositoryHead: mockRepositoryHead,
 }));
 
