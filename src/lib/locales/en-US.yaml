@@ -2027,6 +2027,10 @@ config:
     missing_identifier_field: The collection has no `{$name}` field to name new entries with, so each new entry gets a random slug. Add a `{$name}` field, or set the `identifier_field` or `slug` option.
     # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
     slug_i18n_ineffective: The `i18n` option of `slug` has no effect, because the collection doesn’t use the `multiple_files`, `multiple_folders` or `multiple_root_folders` i18n structure, where each locale has a file of its own.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: The `locale` placeholder can’t be removed from the `file` path `{$file}`, so the default locale is kept in it despite the `omit_default_locale_from_file_path` i18n option. To leave the locale out, use the placeholder as a whole folder name, like `\{\{locale\}\}/about.md`, or between the file name and the extension, like `about.\{\{locale\}\}.md`. To keep it, set the option to `false` in the file’s `i18n` option.
     # Don’t localize `i18n`
     i18n_not_configured: The `i18n` option is enabled, but i18n is not configured at the top level of the configuration or in the collection, so the option has no effect.
     # Don’t localize `public_folder` and `media_folder`

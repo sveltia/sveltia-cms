@@ -82,6 +82,18 @@ describe('DetailsOverlay', () => {
     await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/a.png');
   });
 
+  test('keeps the selected folder, e.g. All Assets, while moving between the listed assets', async () => {
+    const allAssetsFolder = { internalPath: undefined, publicPath: undefined };
+
+    selectedAssetFolder.current = /** @type {any} */ (allAssetsFolder);
+    overlaidAsset.current = textAsset;
+
+    await render(DetailsOverlay);
+    await page.getByRole('button', { name: 'Next Asset' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/doc.pdf');
+    expect(window.history.state.folder).toEqual(allAssetsFolder);
+  });
+
   test('shows an image', async () => {
     overlaidAsset.current = imageAsset;
 
@@ -217,5 +229,6 @@ describe('DetailsOverlay', () => {
     await page.getByRole('button', { name: 'Cancel Editing' }).click();
 
     await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/2024/summer');
+    expect(window.history.state.folder).toEqual(globalAssetFolder.current);
   });
 });

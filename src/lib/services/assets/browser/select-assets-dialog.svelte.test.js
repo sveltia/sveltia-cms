@@ -7,6 +7,7 @@ import {
   getFirstDefaultLibraryName,
   getInsertedResources,
   getPickedFolderPublicPaths,
+  getSelectionWithResource,
   getStockAssetProviderEntries,
   getUnsavedAssetSubfolderPath,
   isFolderOffered,
@@ -251,5 +252,45 @@ describe('getInsertedResources()', () => {
     // The file is passed as is rather than cloned
     expect(result.file).toBe(file);
     expect(result.folder).not.toBe(browsableFolder);
+  });
+});
+
+describe('getSelectionWithResource()', () => {
+  const a = { url: 'https://example.com/a.jpg' };
+  const b = { url: 'https://example.com/b.jpg' };
+  const c = { url: 'https://example.com/c.jpg' };
+  /**
+   * Check if a resource is the same as `b`.
+   * @param {{ url?: string }} r Resource.
+   * @returns {boolean} Result.
+   */
+  const isSameAsB = (r) => r.url === b.url;
+
+  test('replaces a single selection, including picks no longer listed', () => {
+    expect(getSelectionWithResource({ resources: [a], resource: b, isSame: isSameAsB })).toEqual([
+      b,
+    ]);
+    expect(
+      getSelectionWithResource({
+        resources: [a, c],
+        resource: b,
+        isSame: isSameAsB,
+        multiple: false,
+      }),
+    ).toEqual([b]);
+  });
+
+  test('adds to a multiple selection without listing the resource twice', () => {
+    expect(
+      getSelectionWithResource({
+        resources: [a, b, c],
+        resource: b,
+        isSame: isSameAsB,
+        multiple: true,
+      }),
+    ).toEqual([a, c, b]);
+    expect(
+      getSelectionWithResource({ resources: [], resource: b, isSame: isSameAsB, multiple: true }),
+    ).toEqual([b]);
   });
 });

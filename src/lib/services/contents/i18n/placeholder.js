@@ -43,20 +43,89 @@ export const isValidLocaleFolderPath = (folderPath) =>
   folderPath.split(LOCALE_PLACEHOLDER).length === 2 && LOCALE_FOLDER_REGEX.test(folderPath);
 
 /**
+ * Remove the first `{{locale}}` placeholder from the given path, as the
+ * `omit_default_locale_from_file_path` and `omit_default_locale_from_preview_path` i18n options do
+ * for the default locale. That’s only possible where the placeholder can go without breaking the
+ * rest of the path. As a whole path segment, it’s dropped along with the slash after it, or the
+ * slash before it at the end of the path: `content/{{locale}}/about.md` → `content/about.md`,
+ * `content/{{locale}}` → `content`, `/{{locale}}` → `/`. As a dot-separated part of a segment after
+ * the first one, it’s dropped along with the dot before it: `about.{{locale}}.md` → `about.md`,
+ * `about.{{locale}}` → `about`. As the first dot-separated part of a segment, it’s dropped along
+ * with the dot after it, as long as a name is left in front of an extension, or another template
+ * placeholder follows: `{{locale}}.about.md` → `about.md`, `/posts/{{locale}}.{{slug}}` →
+ * `/posts/{{slug}}`. Anywhere else, the rest of the path would turn into something else:
+ * `i18n/{{locale}}.yaml` would become `i18n/yaml`, and `settings_{{locale}}.json` would become
+ * `settings_json`. Any other occurrence of the placeholder is left as is.
+ * @param {string} path Path with the placeholder.
+ * @returns {string | undefined} Path without the placeholder, or `undefined` if the path has no
+ * placeholder or the first one can’t be removed.
+ */
+export const omitLocalePlaceholder = (path) => {
+  const index = path.indexOf(LOCALE_PLACEHOLDER);
+
+  if (index === -1) {
+    return undefined;
+  }
+
+  const before = path.slice(0, index);
+  const after = path.slice(index + LOCALE_PLACEHOLDER.length);
+
+  if (before === '' || before.endsWith('/')) {
+    // A whole path segment
+    if (after.startsWith('/')) {
+      return `${before}${after.slice(1)}`;
+    }
+
+    if (after === '') {
+      // A host name, like in the `https://{{locale}}` preview path, can’t be removed
+      if (before.endsWith('//')) {
+        return undefined;
+      }
+
+      // Keep a root slash, so a preview path like `/{{locale}}` points at the root
+      return before.length > 1 ? before.slice(0, -1) : before;
+    }
+
+    // The first part of a segment, followed by a name and an extension, or by another template
+    // placeholder standing for a name, like `{{slug}}` in a preview path
+    if (/^\.(?:[^./][^/]*\.|{{)/.test(after)) {
+      return `${before}${after.slice(1)}`;
+    }
+
+    return undefined;
+  }
+
+  // A later part of a segment, like a locale suffix in a file name
+  if (/[^/]\.$/.test(before) && /^(?:[./]|$)/.test(after)) {
+    return `${before.slice(0, -1)}${after}`;
+  }
+
+  return undefined;
+};
+
+/**
+ * Check whether the first `{{locale}}` placeholder in the given path can be removed for the
+ * default locale. See {@link omitLocalePlaceholder} for the supported positions.
+ * @param {string} path Path with the placeholder.
+ * @returns {boolean} Result.
+ */
+export const canOmitLocalePlaceholder = (path) => omitLocalePlaceholder(path) !== undefined;
+
+/**
  * Fill the `{{locale}}` placeholder in the given path.
  * @param {object} args Arguments.
  * @param {string} args.path Path with the placeholder.
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {boolean} [args.omitLocale] Whether to leave the locale out of the path altogether, as
- * the `omit_default_locale_from_file_path` i18n option does for the default locale.
+ * the `omit_default_locale_from_file_path` i18n option does for the default locale. The locale is
+ * filled in anyway if the placeholder isn’t in a position where it can be removed, which the config
+ * parser warns about.
  * @returns {string} Path with the locale.
  */
 export const fillLocalePlaceholder = ({ path, locale, omitLocale = false }) => {
   if (omitLocale) {
-    // Drop the placeholder along with the separator that follows it, or, for a placeholder at the
-    // end of a folder path, the separator before it, so no double or trailing slash is left behind
     // @see https://github.com/sveltia/sveltia-cms/discussions/394
-    path = path.replace(/{{locale}}[./]|\/?{{locale}}$/, '');
+    path = omitLocalePlaceholder(path) ?? path;
   }
 
   // The placeholder may appear multiple times in a file path

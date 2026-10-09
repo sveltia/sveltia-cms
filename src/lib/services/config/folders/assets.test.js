@@ -522,6 +522,59 @@ describe('config/folders/assets', () => {
       });
     });
 
+    it('should resolve a relative media folder of a file collection against each file', () => {
+      const files = [
+        { name: 'about', file: 'content/pages/about.md', fields: [] },
+        { name: 'home', file: 'home.md', fields: [] },
+        {
+          name: 'contact',
+          file: 'content/contact/index.md',
+          media_folder: 'assets',
+          fields: [],
+        },
+      ];
+
+      const collections = [
+        { name: 'pages', media_folder: 'images', public_folder: '/img', files },
+        { name: 'settings', media_folder: '/static/settings', files: [] },
+      ];
+
+      vi.mocked(getValidCollections).mockReturnValue(/** @type {any} */ (collections));
+      vi.mocked(getValidCollectionFiles).mockImplementation(
+        (_files) => /** @type {any} */ (_files),
+      );
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static',
+        public_folder: '/assets',
+        collections,
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      expect(
+        result.map(({ collectionName, fileName, internalPath, internalSubPath, publicPath }) => [
+          collectionName,
+          fileName,
+          internalPath,
+          internalSubPath,
+          publicPath,
+        ]),
+      ).toEqual([
+        [undefined, undefined, undefined, undefined, undefined],
+        [undefined, undefined, 'static', undefined, '/assets'],
+        // The file at the repository root
+        ['pages', 'home', '', 'images', '/img'],
+        // The file’s own `media_folder` comes with its own `public_folder`
+        ['pages', 'contact', 'content/contact', 'assets', '/assets'],
+        ['pages', 'about', 'content/pages', 'images', '/img'],
+        // An absolute folder still belongs to the collection
+        ['settings', undefined, 'static/settings', undefined, '/static/settings'],
+      ]);
+    });
+
     it('should handle singletons', () => {
       vi.mocked(getValidCollections).mockReturnValue([]);
       vi.mocked(getValidCollectionFiles).mockReturnValue([

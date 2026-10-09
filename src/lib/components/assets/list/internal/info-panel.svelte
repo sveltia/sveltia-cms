@@ -56,6 +56,9 @@
     const _asset = asset;
 
     requestedAsset = _asset;
+    // Don’t leave the previous asset’s details on show while this one’s are being retrieved. The
+    // used entries are being looked up as well
+    details = { ...defaultAssetDetails, usedEntries: undefined };
 
     try {
       const _details = _asset ? await getAssetDetails(_asset) : { ...defaultAssetDetails };
@@ -71,6 +74,11 @@
       // The file couldn’t be downloaded, so only the basic info is shown
       // eslint-disable-next-line no-console
       console.error(ex);
+
+      if (requestedAsset === _asset) {
+        // Stop showing the used entries as being loaded
+        details.usedEntries = [];
+      }
     }
   };
 

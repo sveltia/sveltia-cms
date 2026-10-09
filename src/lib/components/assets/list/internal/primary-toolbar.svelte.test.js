@@ -40,6 +40,20 @@ describe('PrimaryToolbar', () => {
     selectedAssets.current = [];
   });
 
+  test('opens the focused asset’s details within the selected folder, e.g. All Assets', async () => {
+    window.location.hash = '#/assets/-/all';
+
+    const allAssetsFolder = { internalPath: undefined, publicPath: undefined };
+
+    selectedAssetFolder.current = /** @type {any} */ (allAssetsFolder);
+
+    await render(PrimaryToolbar);
+    focusedAsset.current = firstAsset;
+    await page.getByRole('button', { name: 'Show Preview' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/a.png');
+    expect(window.history.state.folder).toEqual(allAssetsFolder);
+  });
+
   test('disables the asset actions until an asset is focused', async () => {
     await render(PrimaryToolbar);
 

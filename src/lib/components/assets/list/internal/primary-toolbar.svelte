@@ -22,6 +22,7 @@
   } from '$lib/services/assets/folders';
   import { getAssetBlob } from '$lib/services/assets/info';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
+  import { getAssetFolderHistoryState } from '$lib/services/assets/navigation';
   import { focusedAsset, selectedOrFocusedAssets } from '$lib/services/assets/state';
   import { browsingCmsFolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
@@ -91,6 +92,7 @@
     <PreviewAssetButton
       path={asset ? encodeRoutePath(`/assets/${asset.path}`) : undefined}
       disabled={!asset || !canPreviewAsset(asset)}
+      state={getAssetFolderHistoryState()}
     />
     <CopyAssetsButton assets={asset ? [asset] : []} />
     <DownloadAssetsButton {assets} getName={(a) => a.name} getBlob={getAssetBlob} />

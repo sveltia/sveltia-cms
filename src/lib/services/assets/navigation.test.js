@@ -4,7 +4,12 @@ import { _, locale as appLocale } from '@sveltia/i18n';
 import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
+import {
+  announcedPageStatus,
+  encodeRoutePath,
+  goto,
+  parseLocation,
+} from '$lib/services/app/navigation';
 import {
   enabledCloudServices,
   getCloudService,
@@ -18,8 +23,10 @@ import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folde
 import {
   ASSETS_ROUTE_REGEX,
   discardAssetsNavigation,
+  getAssetFolderHistoryState,
   getSelectedAssetFolderLabel,
   resolveAssetsRoute,
+  showAssetDetails,
 } from '$lib/services/assets/navigation';
 import { allAssets, overlaidAsset } from '$lib/services/assets/state';
 import { resolveAssetFolderPath, selectedSubfolderPath } from '$lib/services/assets/subfolders';
@@ -43,6 +50,7 @@ vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
 
 vi.mock('$lib/services/app/navigation', () => ({
   announcedPageStatus: { current: '' },
+  encodeRoutePath: vi.fn(),
   goto: vi.fn(),
   parseLocation: vi.fn(),
 }));
@@ -121,6 +129,7 @@ beforeEach(async () => {
         pendingSleeps.push(() => resolve(undefined));
       }),
   );
+  vi.mocked(encodeRoutePath).mockImplementation((path) => `encoded:${path}`);
   vi.mocked(getFolderLabelByCollection).mockImplementation((folder) => folder.label ?? 'Folder');
   vi.mocked(getCloudServicePath).mockImplementation(({ serviceId }) => `/assets/-/${serviceId}`);
   /** @type {any} */ (appLocale).current = 'en';
@@ -175,6 +184,39 @@ describe('getSelectedAssetFolderLabel()', () => {
 
     expect(getSelectedAssetFolderLabel()).toBe('');
     expect(getFolderLabelByCollection).not.toHaveBeenCalled();
+  });
+});
+
+describe('getAssetFolderHistoryState()', () => {
+  test('carries the selected asset folder', () => {
+    selectedAssetFolder.current = allFolder;
+    expect(getAssetFolderHistoryState()).toEqual({ folder: allFolder });
+    selectedAssetFolder.current = undefined;
+    expect(getAssetFolderHistoryState()).toEqual({ folder: undefined });
+  });
+});
+
+describe('showAssetDetails()', () => {
+  const asset = /** @type {any} */ ({ name: 'a.png', path: 'static/posts/a.png' });
+
+  test('opens the asset within the selected folder, e.g. All Assets', () => {
+    selectedAssetFolder.current = allFolder;
+    showAssetDetails(asset);
+    expect(goto).toHaveBeenCalledWith('encoded:/assets/static/posts/a.png', {
+      transitionType: 'forwards',
+      replaceState: false,
+      state: { folder: allFolder },
+    });
+  });
+
+  test('can replace the history entry with another transition', () => {
+    selectedAssetFolder.current = postsFolder;
+    showAssetDetails(asset, { transitionType: 'next', replaceState: true });
+    expect(goto).toHaveBeenCalledWith('encoded:/assets/static/posts/a.png', {
+      transitionType: 'next',
+      replaceState: true,
+      state: { folder: postsFolder },
+    });
   });
 });
 

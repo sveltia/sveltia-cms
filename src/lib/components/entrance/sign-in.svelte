@@ -54,8 +54,10 @@
 
   onMount(() => {
     // Skip automatic sign-in if there’s already an error (e.g. repository access denied), so the
-    // error message is preserved and the user can try again with different credentials
-    if (!auth.signInError.message) {
+    // error message is preserved and the user can try again with different credentials. Also skip
+    // it while a sign-in is in progress, which would otherwise select the configured backend while
+    // the user is signing in with the local one
+    if (!auth.signInError.message && !auth.signingIn) {
       signInAutomatically();
     }
   });

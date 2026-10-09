@@ -54,6 +54,9 @@
     const _asset = asset;
 
     requestedAsset = _asset;
+    // Drop the previous asset’s links, so they’re not offered while this one’s are being retrieved
+    // or once that fails
+    details = { ...defaultAssetDetails };
 
     try {
       const _details = _asset ? await getAssetDetails(_asset) : { ...defaultAssetDetails };

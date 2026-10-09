@@ -30,7 +30,12 @@ export const sortEntriesByOrderField = (entries, collection) => {
   // Pre-compute each entry’s numeric order value once so the comparator — which runs O(N log N)
   // times — only does a cheap numeric comparison rather than re-walking the property chain.
   const keyed = entries.map((entry) => {
-    const v = Number(entry.locales[defaultLocale]?.content?.[orderKey]);
+    const raw = entry.locales[defaultLocale]?.content?.[orderKey];
+
+    // `Number()` turns `null` and a blank string into `0`, so only a number or a non-blank string
+    // counts as a value; anything else is missing and sorts last
+    const v =
+      typeof raw === 'number' || (typeof raw === 'string' && raw.trim()) ? Number(raw) : NaN;
 
     return { entry, v, has: Number.isFinite(v) };
   });

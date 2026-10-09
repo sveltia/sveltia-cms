@@ -487,6 +487,41 @@ describe('GitLab commits service', () => {
         });
       });
 
+      test('sends the merge request head as the last commit to a workflow branch', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue({ id: 'c1', committed_date: '2023-01-01' });
+
+        await commitChanges(
+          changes,
+          /** @type {any} */ ({ commitType: 'update', branch: 'cms/posts/a', headOid: 'mr-head' }),
+        );
+
+        const { body } = /** @type {any} */ (vi.mocked(fetchAPI).mock.calls[0][1]);
+
+        expect(body.branch).toBe('cms/posts/a');
+        expect(body.actions.map((/** @type {any} */ a) => a.last_commit_id)).toEqual([
+          undefined,
+          'mr-head',
+          'mr-head',
+          'mr-head',
+        ]);
+      });
+
+      test('leaves a refused workflow commit to the workflow service', async () => {
+        vi.mocked(fetchAPI).mockRejectedValue(changedFileError);
+
+        await expect(
+          commitChanges(
+            changes,
+            /** @type {any} */ ({
+              commitType: 'update',
+              branch: 'cms/posts/a',
+              headOid: 'mr-head',
+            }),
+          ),
+        ).rejects.toBe(changedFileError);
+        expect(fetchGraphQL).not.toHaveBeenCalled();
+      });
+
       test('sends no last commit before the site data is loaded', async () => {
         repositoryHead.current = '';
         vi.mocked(fetchAPI).mockResolvedValue({ id: 'c1', committed_date: '2023-01-01' });

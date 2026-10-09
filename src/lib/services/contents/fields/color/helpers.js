@@ -72,3 +72,31 @@ export const getColorFieldValue = ({ rgb, alpha, enableAlpha = false }) => {
 
   return enableAlpha ? `${rgb}${alpha.toString(16).padStart(2, '0')}` : rgb;
 };
+
+/**
+ * Get the values the editor’s controls should take for the stored color. An empty value resets the
+ * controls, unless they already produce it, like a half-typed hex color in the text input does.
+ * @param {object} args Arguments.
+ * @param {any} args.currentValue Value in the entry draft.
+ * @param {string} args.rgb Current value of the color input.
+ * @param {number} args.alpha Current value of the opacity slider, from 0 to 255.
+ * @param {boolean} [args.enableAlpha] Whether the field stores the alpha channel.
+ * @returns {{ rgb: string, alpha: number } | undefined} New values, or `undefined` if the controls
+ * should keep what they have.
+ */
+export const getColorFieldInputValues = ({ currentValue, rgb, alpha, enableAlpha = false }) => {
+  const parts = parseColorFieldValue(currentValue);
+
+  if (parts) {
+    return parts;
+  }
+
+  if (
+    (currentValue === undefined || currentValue === null || currentValue === '') &&
+    getColorFieldValue({ rgb, alpha, enableAlpha }) !== ''
+  ) {
+    return { rgb: '', alpha: 255 };
+  }
+
+  return undefined;
+};

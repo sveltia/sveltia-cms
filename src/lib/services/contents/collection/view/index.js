@@ -508,9 +508,12 @@ createRootEffect(() => {
   }
 });
 
+// Clear the selection when the listed entries or the filters change, so it never includes an entry
+// the current view hides, which a bulk action like Delete would otherwise apply to
 createRootEffect(() => {
   const entries = listedEntries.current;
 
+  void filterConditions.current;
   selectedEntries.current = [];
 
   if (untrack(() => prefs.devModeEnabled)) {

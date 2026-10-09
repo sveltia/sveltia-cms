@@ -503,6 +503,27 @@ describe('assets/view/index', () => {
       expect(_selectedAssets.current).toEqual([]);
     });
 
+    it('should reset the selected assets when the filter changes', async () => {
+      const selection = [createAsset('images/photo1.jpg', globalFolder)];
+
+      await wait();
+      _selectedAssets.current = selection;
+      // Switching between grid and list doesn’t change the filter, so the selection is kept
+      currentView.current = { type: 'list', showInfo: true };
+      await wait();
+
+      expect(_selectedAssets.current).toEqual(selection);
+
+      currentView.current = {
+        type: 'list',
+        showInfo: true,
+        filter: { field: 'kind', pattern: 'video' },
+      };
+      await wait();
+
+      expect(_selectedAssets.current).toEqual([]);
+    });
+
     it('should not log the assets to the console when dev mode is disabled', async () => {
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 

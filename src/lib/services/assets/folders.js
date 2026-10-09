@@ -4,6 +4,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import { isInCmsFolder } from '$lib/services/assets/reserved';
 import { lockedBranch } from '$lib/services/backends/branch-access';
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
+import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { getCustomComponentName } from '$lib/services/contents/fields/rich-text/components/definitions';
 import {
   getLocaleFolderPattern,
@@ -112,7 +113,7 @@ export const getAssetFolder = (cond) => {
  * @param {AssetFolderInfo} folder Asset folder.
  * @returns {RegExp} Regular expression.
  */
-const getEntryRelativePathRegEx = ({ internalPath, localeFolderNames }) => {
+const getEntryRelativePathRegEx = ({ internalPath, internalSubPath, localeFolderNames }) => {
   const localeMatcher = localeFolderNames?.length
     ? `(?:(?:${localeFolderNames.map(escapeRegExp).join('|')})\\/)?`
     : '';
@@ -123,7 +124,28 @@ const getEntryRelativePathRegEx = ({ internalPath, localeFolderNames }) => {
     return new RegExp(`^${getLocaleFolderPattern(folderPath, localeMatcher)}`);
   }
 
-  return new RegExp(`^${localeMatcher}${escapeRegExp(folderPath)}\\/`);
+  if (folderPath) {
+    return new RegExp(`^${localeMatcher}${escapeRegExp(folderPath)}\\/`);
+  }
+
+  // A collection at the repository root, e.g. `folder: .`, has an empty folder path, below which
+  // every file in the repository would count as its asset. Limit the folder to its media subfolder
+  // instead, e.g. `images/` and the folders below it for `media_folder: images`. An entry in a
+  // subfolder of a nested collection keeps its own `images` folder there, which is left out, since
+  // any folder named like that would match. Media stored next to the entries (no subfolder), out of
+  // the repository (`../`) or in a folder named after each entry (a leading tag like `{{slug}}`)
+  // can’t be told apart from the other files in the repository, so the folder matches nothing then
+  const subPath = /** @type {string} */ (internalSubPath);
+  const [firstSegment] = subPath.split('/');
+
+  if (!firstSegment || firstSegment === '..' || hasTemplateTags(firstSegment)) {
+    return /(?!)/;
+  }
+
+  // A template tag further down matches one folder name, e.g. `images/{{slug}}`
+  const subPathPattern = escapeRegExp(subPath).replace(ESCAPED_PLACEHOLDER_REGEX, '[^/]+');
+
+  return new RegExp(`^${localeMatcher}${subPathPattern}\\/`);
 };
 
 /**

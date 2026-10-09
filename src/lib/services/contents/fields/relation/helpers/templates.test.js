@@ -219,6 +219,24 @@ describe('Test replaceTemplateFields()', () => {
     expect(result.searchValue).toBe('John Doe john@example.com');
   });
 
+  test('should insert field values containing `$` patterns verbatim', () => {
+    const dollarContext = {
+      ...context,
+      getDisplayValue: vi.fn((keyPath) => {
+        if (keyPath === 'name') return 'Save $$$ now';
+        if (keyPath === 'email') return "$` $'";
+        if (keyPath === 'id') return 'A $& B';
+        return '';
+      }),
+    };
+
+    const result = replaceTemplateFields(templates, fieldNames, dollarContext, fallbackContext);
+
+    expect(result.label).toBe("Save $$$ now - $` $'");
+    expect(result.value).toBe('A $& B');
+    expect(result.searchValue).toBe("Save $$$ now $` $'");
+  });
+
   test('should handle undefined searchValue and set it to empty string', () => {
     const templatesWithoutSearch = {
       label: '{{name}}',

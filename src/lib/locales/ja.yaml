@@ -1923,6 +1923,10 @@ config:
     missing_identifier_field: コレクションに新しいエントリーの名前となる `{$name}` フィールドがないため、新しいエントリーにはランダムなスラッグが付けられます。`{$name}` フィールドを追加するか、`identifier_field` または `slug` オプションを設定してください。
     # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
     slug_i18n_ineffective: コレクションが各ロケールのファイルを個別に持つ `multiple_files`、`multiple_folders`、`multiple_root_folders` のいずれの i18n 構造も使用していないため、`slug` の `i18n` オプションは効果がありません。
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: '`file` パス `{$file}` から `locale` プレースホルダーを取り除けないため、`omit_default_locale_from_file_path` i18n オプションが有効でもデフォルトロケールがパスに残ります。ロケールを省くには、プレースホルダーを `\{\{locale\}\}/about.md` のようにフォルダー名全体として、または `about.\{\{locale\}\}.md` のようにファイル名と拡張子の間に配置してください。ロケールを残す場合は、ファイルの `i18n` オプションでこのオプションを `false` に設定してください。'
     # Don’t localize `i18n`
     i18n_not_configured: '`i18n` オプションが有効になっていますが、設定のトップレベルまたはコレクションで i18n が設定されていないため、このオプションは効果がありません。'
     # Don’t localize `public_folder` and `media_folder`

@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 
-import { formatHexAsRGB, getColorFieldValue, parseColorFieldValue } from './helpers.js';
+import {
+  formatHexAsRGB,
+  getColorFieldInputValues,
+  getColorFieldValue,
+  parseColorFieldValue,
+} from './helpers.js';
 
 describe('formatHexAsRGB()', () => {
   test('formats a 6-digit hex color', () => {
@@ -60,5 +65,48 @@ describe('getColorFieldValue()', () => {
   test('stores an empty string when the input holds no color', () => {
     expect(getColorFieldValue({ rgb: '', alpha: 255 })).toBe('');
     expect(getColorFieldValue({ rgb: 'red', alpha: 255, enableAlpha: true })).toBe('');
+  });
+});
+
+describe('getColorFieldInputValues()', () => {
+  test('returns the parts of a hex color', () => {
+    expect(getColorFieldInputValues({ currentValue: '#ff800080', rgb: '', alpha: 255 })).toEqual({
+      rgb: '#ff8000',
+      alpha: 128,
+    });
+  });
+
+  test('resets the controls when the value is cleared from outside', () => {
+    expect(getColorFieldInputValues({ currentValue: '', rgb: '#ff8000', alpha: 128 })).toEqual({
+      rgb: '',
+      alpha: 255,
+    });
+    expect(
+      getColorFieldInputValues({
+        currentValue: undefined,
+        rgb: '#ff8000',
+        alpha: 128,
+        enableAlpha: true,
+      }),
+    ).toEqual({ rgb: '', alpha: 255 });
+    expect(getColorFieldInputValues({ currentValue: null, rgb: '#ff8000', alpha: 255 })).toEqual({
+      rgb: '',
+      alpha: 255,
+    });
+  });
+
+  test('keeps the controls when they already produce the value', () => {
+    // A half-typed hex color stores an empty string
+    expect(getColorFieldInputValues({ currentValue: '', rgb: '#00f', alpha: 255 })).toBe(undefined);
+    expect(getColorFieldInputValues({ currentValue: '', rgb: '', alpha: 255 })).toBe(undefined);
+  });
+
+  test('keeps the controls for a value that is not a hex color', () => {
+    expect(getColorFieldInputValues({ currentValue: 'red', rgb: '#ff8000', alpha: 255 })).toBe(
+      undefined,
+    );
+    expect(getColorFieldInputValues({ currentValue: 42, rgb: '#ff8000', alpha: 255 })).toBe(
+      undefined,
+    );
   });
 });

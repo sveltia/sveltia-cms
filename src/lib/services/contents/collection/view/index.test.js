@@ -500,6 +500,30 @@ describe('collection/view/index', () => {
     expect(_selectedEntries.current).toEqual([]);
   });
 
+  test('resets selectedEntries when the filters change', async () => {
+    /** @type {any} */
+    const mockEntries = [{ id: '1', slug: 'post-1', locales: {}, collectionName: 'posts' }];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    _allEntries.current = mockEntries;
+    _selectedCollection.current = /** @type {any} */ ({ name: 'posts' });
+    await wait();
+    _selectedEntries.current = mockEntries;
+    // Switching between list and grid doesn’t change the filters, so the selection is kept
+    currentView.current = /** @type {any} */ ({ type: 'grid' });
+    await wait();
+
+    expect(_selectedEntries.current).toEqual(mockEntries);
+
+    currentView.current = /** @type {any} */ ({
+      type: 'grid',
+      filters: [{ field: 'draft', pattern: true }],
+    });
+    await wait();
+
+    expect(_selectedEntries.current).toEqual([]);
+  });
+
   test('selectedCollection subscription logs in dev mode', async () => {
     const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 

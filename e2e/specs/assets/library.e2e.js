@@ -209,6 +209,38 @@ test('previews an asset and moves to the next one', async ({ page }) => {
   await expect(page.getByRole('grid', { name: 'Assets' })).toBeVisible();
 });
 
+test('previews an asset from All Assets and stays there', async ({ page }) => {
+  await page.getByRole('row', { name: 'bridge.png' }).click();
+  await page.getByRole('button', { name: 'Show Preview' }).click();
+
+  const editor = page.getByRole('group', { name: 'Asset Editor' });
+
+  await expect(editor.getByRole('img', { name: 'bridge.png' })).toBeVisible();
+  // The next asset is the next one in All Assets, in another folder than the Projects one
+  await expect(editor.getByRole('button', { name: 'Previous Asset' })).toBeDisabled();
+  await editor.getByRole('button', { name: 'Next Asset' }).click();
+  await expect(editor.getByRole('img', { name: 'forest.png' })).toBeVisible();
+
+  await editor.getByRole('button', { name: 'Cancel Editing' }).click();
+  await expect(editor).toBeHidden();
+  await expect(page.getByRole('option', { name: /All Assets/ })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await expect.poll(() => listedAssets(page)).toHaveLength(6);
+
+  // The same goes for an asset opened with a double click
+  await page.getByRole('row', { name: 'hero.png' }).dblclick();
+  await expect(editor.getByRole('img', { name: 'hero.png' })).toBeVisible();
+  await editor.getByRole('button', { name: 'Next Asset' }).click();
+  await expect(editor.getByRole('img', { name: 'ocean.png' })).toBeVisible();
+  await editor.getByRole('button', { name: 'Cancel Editing' }).click();
+  await expect(page.getByRole('option', { name: /All Assets/ })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+});
+
 test('copies the public URL, the file path and the data of an asset', async ({ cms, page }) => {
   const copy = page.getByRole('button', { name: 'Copy' });
 

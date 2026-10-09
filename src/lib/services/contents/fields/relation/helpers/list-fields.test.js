@@ -103,6 +103,32 @@ describe('Test processSingleSubfieldList()', () => {
     result.forEach((option) => expect(option.value).toBe('123'));
   });
 
+  test('should insert list item values containing `$` patterns verbatim', () => {
+    const content = { 'skills.0': 'Save $$$ now', 'skills.1': 'A $& B' };
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{skills.*}}',
+      _valueField: '{{skills.*}}',
+      _searchField: '{{skills.*}}',
+      allFieldNames: ['skills.*'],
+      hasListFields: true,
+    };
+
+    const result = processSingleSubfieldList({
+      baseFieldName: 'skills',
+      groupEntries: [['skills.*', { baseFieldName: 'skills' }]],
+      content,
+      templates,
+      allFieldNames: ['skills.*'],
+      context: { slug: 'test-slug', locale: 'en', getDisplayValue: vi.fn(() => '') },
+      fallbackContext: { content, locales: {}, defaultLocale: 'en', identifierField: 'title' },
+    });
+
+    expect(result.map((option) => option.label)).toEqual(['Save $$$ now', 'A $& B']);
+    expect(result.map((option) => option.value)).toEqual(['Save $$$ now', 'A $& B']);
+  });
+
   test('should not take a sibling field whose name starts with the list name as an item', () => {
     // `photos_2` is a separate field, not the third item of the `photos` list
     const content = {

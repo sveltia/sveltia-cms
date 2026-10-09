@@ -57,9 +57,9 @@ export const createSimpleOption = ({ templates, allFieldNames, context, fallback
   let searchValue = _searchField;
 
   Object.entries(replacers).forEach(([key, val]) => {
-    label = label.replaceAll(`{{${key}}}`, val);
-    value = value.replaceAll(`{{${key}}}`, val);
-    searchValue = searchValue.replaceAll(`{{${key}}}`, val);
+    label = label.replaceAll(`{{${key}}}`, () => val);
+    value = value.replaceAll(`{{${key}}}`, () => val);
+    searchValue = searchValue.replaceAll(`{{${key}}}`, () => val);
   });
 
   // Handle empty label fallback

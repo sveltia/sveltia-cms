@@ -70,7 +70,10 @@ export const reconcileEntries = ({ entries, previous, changedPaths }) => {
 /**
  * Keep the asset objects already in the store wherever the file hasn’t changed, so that a blob URL
  * or thumbnail attached to one survives a fetch, and so that the caller can tell what has changed
- * by comparing the objects.
+ * by comparing the objects. An asset committed to an Editorial Workflow branch is not in the file
+ * list of the configured branch, so it’s carried over the way `mergeWorkflowAssets` merged it: it
+ * keeps shadowing the published file at the same path, which becomes its `replacedAsset`, and one
+ * that only exists on the workflow branch stays at the end of the list.
  * @param {object} args Arguments.
  * @param {Asset[]} args.assets Assets from the latest fetch.
  * @param {Asset[]} args.previous Assets in the store at the moment.
@@ -84,10 +87,37 @@ export const reconcileAssets = ({ assets, previous, changedPaths }) => {
   }
 
   const previousByPath = new Map(previous.map((asset) => [asset.path, asset]));
+  const fetchedPaths = new Set(assets.map(({ path }) => path));
 
-  return assets.map((asset) => {
-    const match = previousByPath.get(asset.path);
+  /**
+   * Put the given published asset under the workflow asset shadowing it.
+   * @param {Asset} workflowAsset Workflow asset in the store.
+   * @param {Asset | undefined} published Published asset at the same path, if any.
+   * @returns {Asset} Workflow asset; the same object if its published version hasn’t changed.
+   */
+  const shadow = (workflowAsset, published) => {
+    const { workflow } = /** @type {{ workflow: NonNullable<Asset['workflow']> }} */ (
+      workflowAsset
+    );
 
-    return match && !changedPaths.has(asset.path) ? match : asset;
-  });
+    return workflow.replacedAsset === published
+      ? workflowAsset
+      : { ...workflowAsset, workflow: { ...workflow, replacedAsset: published } };
+  };
+
+  return [
+    ...assets.map((asset) => {
+      const match = previousByPath.get(asset.path);
+      const previousPublished = match?.workflow ? match.workflow.replacedAsset : match;
+
+      const published =
+        previousPublished && !changedPaths.has(asset.path) ? previousPublished : asset;
+
+      return match?.workflow ? shadow(match, published) : published;
+    }),
+    // The published file a workflow asset was shadowing may have been deleted in the meantime
+    ...previous
+      .filter(({ path, workflow }) => !!workflow && !fetchedPaths.has(path))
+      .map((asset) => shadow(asset, undefined)),
+  ];
 };

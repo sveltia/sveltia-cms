@@ -83,9 +83,9 @@ export const replaceTemplateFields = (templates, fieldNames, context, fallbackCo
   fieldNames.forEach((fieldName) => {
     const replacement = getFieldReplacement(fieldName, context, fallbackContext);
 
-    label = label.replaceAll(`{{${fieldName}}}`, replacement);
-    value = value.replaceAll(`{{${fieldName}}}`, replacement);
-    searchValue = searchValue?.replaceAll(`{{${fieldName}}}`, replacement) ?? '';
+    label = label.replaceAll(`{{${fieldName}}}`, () => replacement);
+    value = value.replaceAll(`{{${fieldName}}}`, () => replacement);
+    searchValue = searchValue?.replaceAll(`{{${fieldName}}}`, () => replacement) ?? '';
   });
 
   return { label, value, searchValue };

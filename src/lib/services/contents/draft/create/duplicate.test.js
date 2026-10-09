@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock dependencies
-vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
+vi.mock('$lib/services/contents/draft/create/proxy.svelte', async (importOriginal) => ({
+  ...(await importOriginal()),
   createProxy: vi.fn(({ target }) => target),
 }));
 
@@ -358,6 +359,89 @@ describe('contents/draft/create/duplicate', () => {
       expect(setCallArg.currentValues.ja.uuid).toBe('old-uuid-value-ja');
     });
 
+    it('should give a duplicated uuid field the default locale’s new value', async () => {
+      mockEntryDraft.currentValues.en.uuid = 'old-uuid-value';
+      mockEntryDraft.currentValues.ja.uuid = 'old-uuid-value';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'uuid') {
+          return { widget: 'uuid', i18n: 'duplicate' };
+        }
+
+        return undefined;
+      });
+
+      mockGetInitialUuidValue.mockReturnValueOnce('new-uuid-en').mockReturnValue('another-uuid');
+
+      const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      expect(newDraft.currentValues.en.uuid).toBe('new-uuid-en');
+      expect(newDraft.currentValues.ja.uuid).toBe('new-uuid-en');
+    });
+
+    it('should give a uuid field in a duplicated list the default locale’s new value', async () => {
+      // The default locale comes after the other one, so its new value isn’t there yet when the
+      // other locale is reset
+      mockEntryDraft.currentValues = {
+        ja: { 'items.0.id': 'old-uuid-value', 'items.0.name': 'First' },
+        en: { 'items.0.id': 'old-uuid-value', 'items.0.name': 'First' },
+      };
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'items') {
+          return { widget: 'list', i18n: 'duplicate', fields: [] };
+        }
+
+        if (keyPath === 'items.0.id') {
+          return { widget: 'uuid' };
+        }
+
+        return keyPath === 'items.0.name' ? { widget: 'string' } : undefined;
+      });
+
+      mockGetInitialUuidValue.mockReturnValueOnce('new-uuid-en').mockReturnValue('another-uuid');
+
+      const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      expect(newDraft.currentValues.en['items.0.id']).toBe('new-uuid-en');
+      expect(newDraft.currentValues.ja['items.0.id']).toBe('new-uuid-en');
+    });
+
+    it('should give a uuid field in a list item missing from the default locale a new value', async () => {
+      mockEntryDraft.currentValues = {
+        en: { 'items.0.id': 'old-uuid-0', 'items.0.name': 'First' },
+        ja: {
+          'items.0.id': 'old-uuid-0',
+          'items.0.name': 'First',
+          'items.1.id': 'old-uuid-1',
+          'items.1.name': 'Second',
+        },
+      };
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'items') {
+          return { widget: 'list', i18n: 'duplicate', fields: [] };
+        }
+
+        if (/^items\.\d+\.id$/.test(keyPath)) {
+          return { widget: 'uuid' };
+        }
+
+        return /^items\.\d+\.name$/.test(keyPath) ? { widget: 'string' } : undefined;
+      });
+
+      mockGetInitialUuidValue.mockReturnValueOnce('new-uuid-en').mockReturnValue('new-uuid-ja');
+
+      const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      expect(newDraft.currentValues.en['items.0.id']).toBe('new-uuid-en');
+      expect(newDraft.currentValues.ja['items.0.id']).toBe('new-uuid-en');
+      expect(newDraft.currentValues.ja['items.1.id']).toBe('new-uuid-ja');
+    });
+
     it('should clear a compute field holding a UUID', async () => {
       mockEntryDraft.currentValues.en.id = 'post-de305d54-75b4-431b-adb2-eb6b9e546014';
       mockEntryDraft.currentValues.ja.id = 'post-de305d54-75b4-431b-adb2-eb6b9e546014';
@@ -508,37 +592,101 @@ describe('contents/draft/create/duplicate', () => {
       expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledOnce();
     });
 
-    it('should not reset hidden field for non-default locale when i18n is duplicate', async () => {
+    it('should give a duplicated hidden field the default locale’s new value', async () => {
       mockEntryDraft.currentValues.en.hiddenField = 'old-value';
-      mockEntryDraft.currentValues.ja.hiddenField = 'old-value-ja';
+      mockEntryDraft.currentValues.ja.hiddenField = 'old-value';
 
       mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
         if (keyPath === 'hiddenField') {
-          return { widget: 'hidden', default: 'new-default-value', i18n: 'duplicate' };
+          return { widget: 'hidden', default: '{{uuid}}', i18n: 'duplicate' };
         }
 
         return undefined;
       });
 
-      mockGetHiddenFieldDefaultValueMap.mockReturnValue({ hiddenField: 'new-default-value' });
+      mockGetHiddenFieldDefaultValueMap.mockReturnValue({ hiddenField: 'new-value-en' });
 
       const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
 
-      await duplicateDraft(entryDraft);
-
+      expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledOnce();
       expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledWith({
-        fieldConfig: { widget: 'hidden', default: 'new-default-value', i18n: 'duplicate' },
+        fieldConfig: { widget: 'hidden', default: '{{uuid}}', i18n: 'duplicate' },
         keyPath: 'hiddenField',
         locale: 'en',
         defaultLocale: 'en',
       });
+      expect(newDraft.currentValues.en.hiddenField).toBe('new-value-en');
+      expect(newDraft.currentValues.ja.hiddenField).toBe('new-value-en');
+    });
 
-      // Should not be called for Japanese locale
-      expect(mockGetHiddenFieldDefaultValueMap).not.toHaveBeenCalledWith(
-        expect.objectContaining({
-          locale: 'ja',
-        }),
+    it('should copy a duplicated hidden field’s list value without sharing it', async () => {
+      // The default locale comes after the other one, so its new value isn’t there yet when the
+      // other locale is reset
+      mockEntryDraft.currentValues = {
+        ja: { 'tags.0': 'old1', 'tags.1': 'old2' },
+        en: { 'tags.0': 'old1', 'tags.1': 'old2' },
+      };
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) =>
+        keyPath === 'tags'
+          ? { widget: 'hidden', default: ['a', 'b'], i18n: 'duplicate' }
+          : undefined,
       );
+
+      mockGetHiddenFieldDefaultValueMap.mockReturnValue({ tags: ['a', 'b'] });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      expect(newDraft.currentValues.ja).toEqual({ tags: ['a', 'b'] });
+      expect(newDraft.currentValues.ja.tags).not.toBe(newDraft.currentValues.en.tags);
+    });
+
+    it('should give a hidden field in a duplicated list the default locale’s new value', async () => {
+      mockEntryDraft.currentValues.en['items.0.name'] = 'First';
+      mockEntryDraft.currentValues.en['items.0.secret'] = 'old-value';
+      mockEntryDraft.currentValues.ja['items.0.name'] = 'First';
+      mockEntryDraft.currentValues.ja['items.0.secret'] = 'old-value';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'items') {
+          return { widget: 'list', i18n: 'duplicate', fields: [] };
+        }
+
+        if (keyPath === 'items.0.secret') {
+          return { widget: 'hidden', default: '{{uuid}}' };
+        }
+
+        return keyPath === 'items.0.name' ? { widget: 'string' } : undefined;
+      });
+
+      mockGetHiddenFieldDefaultValueMap.mockReturnValue({ 'items.0.secret': 'new-value-en' });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      expect(newDraft.currentValues.en['items.0.secret']).toBe('new-value-en');
+      expect(newDraft.currentValues.ja['items.0.secret']).toBe('new-value-en');
+    });
+
+    it('should drop a duplicated hidden field the default locale doesn’t hold', async () => {
+      mockEntryDraft.currentValues.ja.hiddenField = 'old-value';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'hiddenField') {
+          return { widget: 'hidden', default: '{{uuid}}', i18n: 'duplicate' };
+        }
+
+        return undefined;
+      });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      expect(mockGetHiddenFieldDefaultValueMap).not.toHaveBeenCalled();
+      expect(newDraft.currentValues.en).not.toHaveProperty('hiddenField');
+      expect(newDraft.currentValues.ja).not.toHaveProperty('hiddenField');
     });
 
     it('should reset all validities', async () => {
@@ -701,14 +849,14 @@ describe('contents/draft/create/duplicate', () => {
         return undefined;
       });
 
-      mockGetInitialUuidValue.mockReturnValue('new-uuid-value');
+      mockGetInitialUuidValue.mockReturnValueOnce('new-uuid-en').mockReturnValueOnce('new-uuid-ja');
 
       const { duplicateDraft } = await import('./duplicate.js');
       const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
-      const setCallArg = newDraft;
 
-      expect(setCallArg.currentValues.en.uuid).toBe('new-uuid-value');
-      expect(setCallArg.currentValues.ja.uuid).toBe('new-uuid-value');
+      // A translatable field gets a UUID of its own in each locale
+      expect(newDraft.currentValues.en.uuid).toBe('new-uuid-en');
+      expect(newDraft.currentValues.ja.uuid).toBe('new-uuid-ja');
     });
 
     it('should reset hidden field with i18n translate for non-default locale', async () => {

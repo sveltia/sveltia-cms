@@ -10,6 +10,7 @@
   import SubfolderStrip from '$lib/components/assets/browser/subfolder-strip.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { getAssetKey } from '$lib/services/assets';
+  import { getSelectionWithResource } from '$lib/services/assets/browser/select-assets-dialog.svelte';
   import { getNormalizedValueCache, hasAllMatches, tokenize } from '$lib/services/search/util';
   import { env } from '$lib/services/user/env.svelte';
 
@@ -128,16 +129,23 @@
    */
   const onSelectionChange = (asset, selected) => {
     const key = getAssetKey(asset);
-
-    const otherResources = selectedResources.filter(
-      (r) => !r.asset || getAssetKey(r.asset) !== key,
-    );
+    /**
+     * Check if a selected resource holds the given asset.
+     * @param {SelectedResource} resource Selected resource.
+     * @returns {boolean} Result.
+     */
+    const isSame = (resource) => !!resource.asset && getAssetKey(resource.asset) === key;
 
     if (selected) {
-      selectedResources = [...otherResources, { asset }];
+      selectedResources = getSelectionWithResource({
+        resources: selectedResources,
+        resource: { asset },
+        isSame,
+        multiple,
+      });
       onSelect?.({ asset });
     } else {
-      selectedResources = otherResources;
+      selectedResources = selectedResources.filter((r) => !isSame(r));
     }
   };
 </script>

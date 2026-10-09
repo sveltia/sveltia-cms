@@ -172,6 +172,13 @@ describe('assets/subfolders', () => {
       });
     });
 
+    it('should keep the All Assets folder passed as history state for an asset folder path', () => {
+      expect(resolveAssetFolderPath('static/images/posts', allAssets)).toEqual({
+        folder: allAssets,
+        subfolderPath: '',
+      });
+    });
+
     it('should find the All Assets folder', () => {
       expect(resolveAssetFolderPath('-/all')).toEqual({ folder: allAssets, subfolderPath: '' });
     });

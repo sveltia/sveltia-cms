@@ -680,6 +680,95 @@ describe('assets/folders', () => {
       expect(getAssetFoldersByPath('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaA/image.jpg')).toEqual([]);
     });
 
+    describe('with an entry-relative folder at the repository root', () => {
+      /**
+       * Register one entry-relative folder for a collection at the repository root.
+       * @param {string} internalSubPath Media folder relative to the entries.
+       * @param {string[]} [localeFolderNames] Locale folder names.
+       */
+      const setupFolder = (internalSubPath, localeFolderNames) => {
+        allAssetFolders.current = [
+          /** @type {any} */ ({
+            collectionName: 'pages',
+            internalPath: '',
+            internalSubPath,
+            publicPath: internalSubPath,
+            entryRelative: true,
+            hasTemplateTags: internalSubPath.includes('{{'),
+            localeFolderNames,
+          }),
+        ];
+      };
+
+      /**
+       * Get the names of the collections whose folders match the given path.
+       * @param {string} path Asset path.
+       * @returns {(string | undefined)[]} Collection names.
+       */
+      const findCollections = (path) => {
+        const index = path.lastIndexOf('/');
+
+        getPathInfoMock.mockReturnValue({
+          filename: path.slice(index + 1),
+          basename: path.slice(index + 1),
+          dirname: index > -1 ? path.slice(0, index) : undefined,
+        });
+
+        return getAssetFoldersByPath(path).map((f) => f.collectionName);
+      };
+
+      it('matches only the files in the media folder and its subfolders', () => {
+        setupFolder('images');
+
+        expect(findCollections('images/a.jpg')).toEqual(['pages']);
+        expect(findCollections('images/2026/a.jpg')).toEqual(['pages']);
+        expect(findCollections('a.jpg')).toEqual([]);
+        expect(findCollections('package.json')).toEqual([]);
+        expect(findCollections('src/main.js')).toEqual([]);
+        expect(findCollections('images.jpg')).toEqual([]);
+        expect(findCollections('images-old/a.jpg')).toEqual([]);
+        expect(findCollections('sub/images/a.jpg')).toEqual([]);
+      });
+
+      it('matches a nested media folder', () => {
+        setupFolder('assets/images');
+
+        expect(findCollections('assets/images/a.jpg')).toEqual(['pages']);
+        expect(findCollections('assets/a.jpg')).toEqual([]);
+      });
+
+      it('allows a locale folder in front of the media folder', () => {
+        setupFolder('images', ['en', 'de']);
+
+        expect(findCollections('images/a.jpg')).toEqual(['pages']);
+        expect(findCollections('de/images/a.jpg')).toEqual(['pages']);
+        expect(findCollections('fr/images/a.jpg')).toEqual([]);
+        expect(findCollections('de/a.jpg')).toEqual([]);
+      });
+
+      it('matches one folder name for a template tag below the media folder', () => {
+        setupFolder('images/{{slug}}');
+
+        expect(findCollections('images/hello/a.jpg')).toEqual(['pages']);
+        expect(findCollections('images/a.jpg')).toEqual([]);
+      });
+
+      it.each([
+        ['next to the entries', ''],
+        ['in a folder named after each entry', '{{slug}}'],
+        ['in a folder named after each entry with a subfolder', '{{slug}}/images'],
+        ['out of the repository', '../images'],
+      ])('matches nothing for media stored %s', (_label, internalSubPath) => {
+        setupFolder(internalSubPath);
+
+        ['a.jpg', 'package.json', 'images/a.jpg', 'hello/a.jpg', 'hello/images/a.jpg'].forEach(
+          (path) => {
+            expect(findCollections(path)).toEqual([]);
+          },
+        );
+      });
+    });
+
     describe('with a locale root folder structure', () => {
       /**
        * Register one entry-relative folder that records the site’s locale folder names.

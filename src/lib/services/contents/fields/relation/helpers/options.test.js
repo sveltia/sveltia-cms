@@ -53,6 +53,46 @@ describe('Test createSimpleOption()', () => {
     expect(result.searchValue).toBe('John Doe john@example.com');
   });
 
+  test('should insert field values containing `$` patterns verbatim', () => {
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{name}}',
+      _valueField: '{{id}}',
+      _searchField: '{{name}} {{email}}',
+      allFieldNames: ['name', 'id', 'email'],
+      hasListFields: false,
+    };
+
+    const context = {
+      slug: 'test-slug',
+      locale: 'en',
+      getDisplayValue: vi.fn((keyPath) => {
+        if (keyPath === 'name') return 'Save $$$ now';
+        if (keyPath === 'id') return 'A $& B';
+        if (keyPath === 'email') return "$` $'";
+        return '';
+      }),
+    };
+
+    const fallbackContext = {
+      content: {},
+      locales: {},
+      defaultLocale: 'en',
+      identifierField: 'name',
+    };
+
+    const result = createSimpleOption({
+      templates,
+      allFieldNames: ['name', 'id', 'email'],
+      context,
+      fallbackContext,
+    });
+
+    expect(result.label).toBe('Save $$$ now');
+    expect(result.value).toBe('A $& B');
+    expect(result.searchValue).toBe("Save $$$ now $` $'");
+  });
+
   test('should use slug as fallback for empty label', async () => {
     const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
 

@@ -2,6 +2,7 @@ import { sleep } from '@sveltia/utils/misc';
 
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
+import { getWorkflowRepository } from '$lib/services/backends/git/gitlab/fork';
 import {
   createPullRequest,
   deleteBranch,
@@ -17,6 +18,7 @@ import {
   updateForkStatus,
 } from '$lib/services/backends/git/gitlab/workflow-fork';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { assertBranchNotMoved } from '$lib/services/backends/git/shared/commits';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import {
   checkPublishAllowed,
@@ -128,6 +130,57 @@ const commitToNewBranch = async (changes, options) => {
 };
 
 /**
+ * Commit the given changes onto the branch of an existing merge request. An entry’s branch is named
+ * after the entry, not the editor, so someone else can push to it too, and GitLab can’t be told
+ * which commit a commit has to go on top of: it lands on whatever the branch points at. So the
+ * branch has to point at the commit the entry was loaded or saved at, which the conflict check has
+ * just compared it with, or a commit pushed since would go out with the save, vouched for by the
+ * head recorded afterwards. Without a head on record there’s nothing to compare, which is refused
+ * just the same. The head also goes with the commit as the last commit of each file it changes, so
+ * a push that lands in the last moment and touches the same files makes GitLab refuse the save.
+ * @param {FileChange[]} changes Changes to be committed.
+ * @param {CommitOptions} options Commit options, with the workflow branch.
+ * @param {WorkflowPullRequest} pullRequest Merge request.
+ * @returns {Promise<CommitResults>} Commit results.
+ * @throws {Error} When the branch is gone, or points at another commit than the one on record.
+ */
+const commitToExistingBranch = async (changes, options, pullRequest) => {
+  const { branch = '' } = options;
+  const { headSHA } = pullRequest;
+  const head = await fetchBranchHead(branch);
+
+  // The branch can have gone, e.g. with a merge request merged or closed on GitLab, which is worth
+  // saying in words rather than with GitLab’s message about a branch it can’t find
+  if (head === undefined) {
+    throw createLocalizedError('Failed to save the changes.', 'branch_not_found', {
+      repo: getWorkflowRepository().repo,
+      branch,
+    });
+  }
+
+  // Trying again reloads the entry first, which takes the other commit into account
+  if (!headSHA || head !== headSHA) {
+    throw createLocalizedError(
+      'The workflow branch has moved since the entry was loaded.',
+      'save_conflict.branch_moved',
+    );
+  }
+
+  try {
+    return await commitChanges(changes, { ...options, headOid: headSHA });
+  } catch (/** @type {any} */ ex) {
+    // GitLab refuses a file changed since with a 400 Bad Request, like any other invalid request
+    if (ex.cause?.status === 400) {
+      await assertBranchNotMoved(headSHA, async () => ({
+        hash: /** @type {string} */ (await fetchBranchHead(branch)),
+      }));
+    }
+
+    throw ex;
+  }
+};
+
+/**
  * Update the merge request’s status label and draft state. A merge request in the `draft` status is
  * kept as a GitLab draft, so it cannot be merged accidentally. GitLab stores the draft state in the
  * title, so the title is rewritten along with the labels in a single request.
@@ -170,7 +223,10 @@ export const updateStatus = async (pullRequest, status) => {
  */
 export const savePullRequest = async ({ changes, options, branch, title, status, pullRequest }) => {
   if (pullRequest) {
-    return { commit: await commitChanges(changes, { ...options, branch }), pullRequest };
+    return {
+      commit: await commitToExistingBranch(changes, { ...options, branch }, pullRequest),
+      pullRequest,
+    };
   }
 
   // The commit itself creates the workflow branch on the first save, so it doesn’t need a request

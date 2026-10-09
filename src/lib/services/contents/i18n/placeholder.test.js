@@ -1,11 +1,13 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+  canOmitLocalePlaceholder,
   fillLocalePlaceholder,
   getLocaleFolderPattern,
   hasLocalePlaceholder,
   isValidLocaleFolderPath,
   LOCALE_PLACEHOLDER,
+  omitLocalePlaceholder,
   stripLocaleFolderPath,
 } from '$lib/services/contents/i18n/placeholder';
 
@@ -93,6 +95,82 @@ describe('Test fillLocalePlaceholder()', () => {
     expect(
       fillLocalePlaceholder({ path: '{{locale}}/{{locale}}.yaml', locale: 'en', omitLocale }),
     ).toBe('en.yaml');
+  });
+
+  test('fills in the placeholder it can’t drop when the locale is omitted', () => {
+    const omitLocale = true;
+
+    expect(fillLocalePlaceholder({ path: 'i18n/{{locale}}.yaml', locale: 'en', omitLocale })).toBe(
+      'i18n/en.yaml',
+    );
+    expect(
+      fillLocalePlaceholder({ path: 'data/settings_{{locale}}.json', locale: 'en', omitLocale }),
+    ).toBe('data/settings_en.json');
+    expect(
+      fillLocalePlaceholder({ path: 'settings-{{locale}}.json', locale: 'en', omitLocale }),
+    ).toBe('settings-en.json');
+  });
+});
+
+describe('Test omitLocalePlaceholder()', () => {
+  test('drops a placeholder used as a whole path segment', () => {
+    expect(omitLocalePlaceholder('content/{{locale}}/about.md')).toBe('content/about.md');
+    expect(omitLocalePlaceholder('{{locale}}/about.md')).toBe('about.md');
+    expect(omitLocalePlaceholder('content/{{locale}}')).toBe('content');
+    expect(omitLocalePlaceholder('{{locale}}')).toBe('');
+    expect(omitLocalePlaceholder('/{{locale}}/posts/{{slug}}')).toBe('/posts/{{slug}}');
+    expect(omitLocalePlaceholder('/blog/{{locale}}/')).toBe('/blog/');
+    expect(omitLocalePlaceholder('/blog/{{locale}}')).toBe('/blog');
+    // A root slash is kept
+    expect(omitLocalePlaceholder('/{{locale}}')).toBe('/');
+    expect(omitLocalePlaceholder('https://{{locale}}')).toBeUndefined();
+  });
+
+  test('drops a placeholder used as a later dot-separated part of a segment', () => {
+    expect(omitLocalePlaceholder('content/about.{{locale}}.md')).toBe('content/about.md');
+    expect(omitLocalePlaceholder('about.{{locale}}.md')).toBe('about.md');
+    expect(omitLocalePlaceholder('content/about.{{locale}}')).toBe('content/about');
+    expect(omitLocalePlaceholder('content/about.{{locale}}/index.md')).toBe(
+      'content/about/index.md',
+    );
+    expect(omitLocalePlaceholder('/posts/{{slug}}.{{locale}}.html')).toBe('/posts/{{slug}}.html');
+  });
+
+  test('drops a placeholder used as the first dot-separated part of a file name', () => {
+    expect(omitLocalePlaceholder('data/{{locale}}.settings.json')).toBe('data/settings.json');
+    expect(omitLocalePlaceholder('{{locale}}.about.md')).toBe('about.md');
+    expect(omitLocalePlaceholder('/posts/{{locale}}.{{slug}}')).toBe('/posts/{{slug}}');
+  });
+
+  test('only drops the first occurrence', () => {
+    expect(omitLocalePlaceholder('{{locale}}/about.{{locale}}.md')).toBe('about.{{locale}}.md');
+  });
+
+  test('returns undefined for a placeholder that can’t be dropped', () => {
+    expect(omitLocalePlaceholder('i18n/{{locale}}.yaml')).toBeUndefined();
+    expect(omitLocalePlaceholder('{{locale}}.md')).toBeUndefined();
+    expect(omitLocalePlaceholder('data/settings_{{locale}}.json')).toBeUndefined();
+    expect(omitLocalePlaceholder('settings-{{locale}}.json')).toBeUndefined();
+    expect(omitLocalePlaceholder('data/.{{locale}}.json')).toBeUndefined();
+    expect(omitLocalePlaceholder('data/{{locale}}..json')).toBeUndefined();
+    expect(omitLocalePlaceholder('content-{{locale}}/about.md')).toBeUndefined();
+    expect(omitLocalePlaceholder('content/{{locale}}-site/about.md')).toBeUndefined();
+    expect(omitLocalePlaceholder('content/about.{{locale}}-x.md')).toBeUndefined();
+    expect(omitLocalePlaceholder('/{{locale}}.html')).toBeUndefined();
+    expect(omitLocalePlaceholder('/posts?lang={{locale}}')).toBeUndefined();
+  });
+
+  test('returns undefined for a path without the placeholder', () => {
+    expect(omitLocalePlaceholder('content/about.md')).toBeUndefined();
+  });
+});
+
+describe('Test canOmitLocalePlaceholder()', () => {
+  test('tells whether the placeholder can be dropped', () => {
+    expect(canOmitLocalePlaceholder('content/{{locale}}/about.md')).toBe(true);
+    expect(canOmitLocalePlaceholder('content/about.{{locale}}.md')).toBe(true);
+    expect(canOmitLocalePlaceholder('i18n/{{locale}}.yaml')).toBe(false);
+    expect(canOmitLocalePlaceholder('content/about.md')).toBe(false);
   });
 });
 

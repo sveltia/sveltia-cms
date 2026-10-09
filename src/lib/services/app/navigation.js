@@ -5,6 +5,7 @@ import { showAssetOverlay } from '$lib/services/assets/view';
 import { cmsConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/editor';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
+import { decodeURIComponentSafely } from '$lib/services/utils/url';
 import { openNewTab } from '$lib/services/utils/window';
 
 /**
@@ -68,27 +69,6 @@ export const overlayTitle = createRawState('');
 export const encodeRoutePath = (path) => path.split('/').map(encodeURIComponent).join('/');
 
 /**
- * Decode the given route path. A malformed escape sequence, e.g. the `%` sign in a link to a
- * `50%off.jpg` file built before route paths were encoded, would make `decodeURIComponent()` throw,
- * so in that case only the valid escape sequences are decoded and anything else is left as is.
- * @param {string} path Encoded route path.
- * @returns {string} Decoded path.
- */
-const decodeRoutePath = (path) => {
-  try {
-    return decodeURIComponent(path);
-  } catch {
-    return path.replace(/(?:%[\da-f]{2})+/gi, (sequence) => {
-      try {
-        return decodeURIComponent(sequence);
-      } catch {
-        return sequence;
-      }
-    });
-  }
-};
-
-/**
  * Parse the URL and return the decoded result.
  * @param {string} [href] URL. Omit this to use the current URL.
  * @returns {{ path: string, params: Record<string, string> }} Path and search params.
@@ -100,7 +80,7 @@ export const parseLocation = (href = window.location.href) => {
   return {
     // Drop any trailing slash before decoding, so a hand-typed `#/collections/` resolves the same
     // way as `#/collections` rather than matching no route at all. The root path is left as is
-    path: decodeRoutePath(pathname.replace(/(?!^)\/+$/, '')),
+    path: decodeURIComponentSafely(pathname.replace(/(?!^)\/+$/, '')),
     params: Object.fromEntries(
       // Merge multiple values of the same key with a comma, e.g. `?a=1&a=2` becomes `{ a: '1,2' }`.
       // This is to support both `?tags=tag1,tag2` and `?tags=tag1&tags=tag2` formats for dynamic
@@ -290,7 +270,11 @@ export const goto = async (
 
   // If we’re already on this page AND not updating state, don’t navigate or trigger a transition.
   // The given path is encoded, while the current one is decoded
-  if (currentPath === decodeRoutePath(path) && !Object.keys(state).length && !replaceState) {
+  if (
+    currentPath === decodeURIComponentSafely(path) &&
+    !Object.keys(state).length &&
+    !replaceState
+  ) {
     return;
   }
 
@@ -423,7 +407,7 @@ export const goBack = (path, { returnTo, ...options } = {}) => {
     if (
       sameDocument &&
       previousPath !== undefined &&
-      (previousPath === decodeRoutePath(path) || returnTo?.(previousPath))
+      (previousPath === decodeURIComponentSafely(path) || returnTo?.(previousPath))
     ) {
       startViewTransition(transitionType, () => {
         window.navigation.back();

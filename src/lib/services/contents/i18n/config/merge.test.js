@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { mergeI18nConfigs } from './merge';
+import { getOmitDefaultLocaleOption, mergeI18nConfigs } from './merge';
 
 describe('Test mergeI18nConfigs()', () => {
   /** @type {any} */
@@ -122,5 +122,20 @@ describe('Test mergeI18nConfigs()', () => {
     mergeI18nConfigs({ cmsConfig: cmsConfigWithI18n, collection });
 
     expect(cmsConfigWithI18n.i18n).toEqual({ structure: 'single_file', locales: ['en', 'fr'] });
+  });
+});
+
+describe('Test getOmitDefaultLocaleOption()', () => {
+  test('reads the option, falling back to its deprecated alias', () => {
+    expect(getOmitDefaultLocaleOption(undefined)).toBe(false);
+    expect(getOmitDefaultLocaleOption({})).toBe(false);
+    expect(getOmitDefaultLocaleOption({ omit_default_locale_from_file_path: true })).toBe(true);
+    expect(getOmitDefaultLocaleOption({ omit_default_locale_from_filename: true })).toBe(true);
+    expect(
+      getOmitDefaultLocaleOption({
+        omit_default_locale_from_file_path: false,
+        omit_default_locale_from_filename: true,
+      }),
+    ).toBe(false);
   });
 });

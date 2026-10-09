@@ -6,7 +6,10 @@ import {
   I18N_STRUCTURES,
 } from '$lib/services/contents/i18n/config/constants';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
-import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
+import {
+  canOmitLocalePlaceholder,
+  hasLocalePlaceholder,
+} from '$lib/services/contents/i18n/placeholder';
 
 /**
  * @import {
@@ -153,8 +156,10 @@ export const determineOmitDefaultLocale = (omitDefaultLocale, structureMap, file
     return false;
   }
 
+  // The placeholder has to be where it can be removed without breaking the rest of the path. In any
+  // other position the locale is kept, which the config parser warns about
   if (file) {
-    return /{{locale}}[./]/.test(file.file);
+    return canOmitLocalePlaceholder(file.file);
   }
 
   return (

@@ -1,6 +1,6 @@
 import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { getAssetDetails } from '$lib/services/assets/details';
@@ -187,5 +187,29 @@ describe('EditOptionsButton', () => {
     await openMenu();
     await page.getByRole('menuitem', { name: 'View on Live Site' }).click();
     expect(openNewTab).toHaveBeenLastCalledWith('https://example.com/uploads/photo.png');
+  });
+
+  test('drops the public URL of the previous asset while the next one loads, or fails to', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { rerender } = await render(EditOptionsButton, { asset: textAsset });
+
+    await openMenu();
+    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
+    await userEvent.keyboard('{Escape}');
+
+    const { promise, reject } = Promise.withResolvers();
+
+    vi.mocked(getAssetDetails).mockReturnValueOnce(/** @type {any} */ (promise));
+    await rerender({ asset: imageAsset });
+    await openMenu();
+    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeDisabled();
+    await userEvent.keyboard('{Escape}');
+
+    reject(new Error('Failed'));
+    await vi.waitFor(() =>
+      expect(error).toHaveBeenCalledWith(expect.objectContaining({ message: 'Failed' })),
+    );
+    await openMenu();
+    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeDisabled();
   });
 });

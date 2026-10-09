@@ -147,6 +147,10 @@ export const getAssetByRelativePathAndCollection = ({
       })
     : undefined;
 
+  // A collection file without its own `media_folder` inherits the collection’s, along with its
+  // `public_folder`
+  const folderOptions = file?.media_folder !== undefined ? file : collection;
+
   // A field-level folder that isn’t entry-relative is an absolute one, e.g. `/src/assets/authors`,
   // which has to be used along with its own `public_folder` rather than the collection’s
   // `media_folder`
@@ -154,11 +158,12 @@ export const getAssetByRelativePathAndCollection = ({
     ? fieldFolder.entryRelative
       ? (fieldFolder.internalSubPath ?? '')
       : `/${fieldFolder.internalPath}`
-    : /** @type {string | undefined} */ ((file ?? collection).media_folder);
+    : /** @type {string | undefined} */ (folderOptions.media_folder);
 
-  const publicFolder = fieldFolder?.publicPath
-    ? fieldFolder.publicPath
-    : /** @type {string | undefined} */ ((file ?? collection).public_folder);
+  const publicFolder =
+    fieldFolder?.publicPath !== undefined
+      ? fieldFolder.publicPath
+      : /** @type {string | undefined} */ (folderOptions.public_folder);
 
   const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
   const { path: entryFilePath, content: entryContent } = locales[locale];
@@ -199,7 +204,8 @@ export const getAssetByRelativePathAndCollection = ({
   // where images are stored in a shared folder but referenced with relative paths from each entry.
   // Strip the `public_folder` prefix from the stored value and resolve directly against the
   // absolute `media_folder`, bypassing `entryFolder` concatenation.
-  if (mediaFolder?.startsWith('/') && publicFolder) {
+  // An empty `public_folder` stores bare file names, which are relative to the `media_folder` too
+  if (mediaFolder?.startsWith('/') && publicFolder !== undefined) {
     // Normalize `public_folder` by removing leading `./`
     const normalizedPublicFolder = publicFolder.replace(/^\.\//, '');
 

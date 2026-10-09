@@ -551,13 +551,14 @@ export const getAssetPublicURL = (
   // sub-folder of it
   if (entryRelative) {
     if (pathOnly) {
-      const assetFolderPath = getPathInfo(asset.path).dirname;
+      // A file at the repository root has no folder path
+      const assetFolderPath = getPathInfo(asset.path).dirname ?? '';
 
       const entryFolderPath = entry
-        ? getPathInfo(Object.values(entry.locales)[0].path).dirname
+        ? (getPathInfo(Object.values(entry.locales)[0].path).dirname ?? '')
         : undefined;
 
-      if (assetFolderPath !== undefined && entryFolderPath !== undefined) {
+      if (entryFolderPath !== undefined) {
         // If the asset is in the same folder as the entry, return the file name only
         if (assetFolderPath === entryFolderPath) {
           return asset.name;
@@ -565,7 +566,7 @@ export const getAssetPublicURL = (
 
         // Return the path relative to the entry’s folder, e.g. `images/photo.jpg`, or `undefined`
         // if the path cannot be determined
-        const prefix = `${entryFolderPath}/`;
+        const prefix = entryFolderPath ? `${entryFolderPath}/` : '';
 
         return asset.path.startsWith(prefix) ? asset.path.slice(prefix.length) : undefined;
       }
@@ -573,9 +574,9 @@ export const getAssetPublicURL = (
       const { internalPath, internalSubPath } = asset.folder;
 
       // Resolve simple entry-relative paths like `images/photo.jpg` if the asset is in the same
-      // folder as the entry
+      // folder as the entry, which can be the repository root
       if (asset.path === createPath([internalPath, internalSubPath, asset.name])) {
-        return asset.path.slice(/** @type {string} */ (internalPath).length + 1);
+        return internalPath ? asset.path.slice(internalPath.length + 1) : asset.path;
       }
     }
 
@@ -594,6 +595,12 @@ export const getAssetPublicURL = (
       ? asset.path.replace(internalPath, publicBasePath)
       : // An asset in a root media folder has no folder path to swap for the public path
         `${publicBasePath}/${asset.path}`;
+
+  // An empty public folder stores a bare path relative to the media folder, e.g. `photo.jpg`, as
+  // Netlify/Decap CMS does, which can’t be linked
+  if (publicPath === '') {
+    path = path.replace(/^\//, '');
+  }
 
   if (encodingEnabled) {
     path = encodeFilePath(path);

@@ -12,7 +12,7 @@
   import TextPreview from '$lib/components/assets/list/text-preview.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import NotFound from '$lib/components/global/not-found.svelte';
-  import { encodeRoutePath, goBack, goto } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goBack } from '$lib/services/app/navigation';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import {
@@ -22,6 +22,7 @@
   } from '$lib/services/assets/folders';
   import { getAssetBlob } from '$lib/services/assets/info';
   import { isMediaKind } from '$lib/services/assets/kinds';
+  import { getAssetFolderHistoryState, showAssetDetails } from '$lib/services/assets/navigation';
   import { overlaidAsset } from '$lib/services/assets/state';
   import { browsedDirPath } from '$lib/services/assets/subfolders';
   import { assetGroups, getAdjacentAssets } from '$lib/services/assets/view';
@@ -63,8 +64,8 @@
    * @param {Asset} target Asset to be shown.
    * @param {ViewTransitionType} transitionType View transition type.
    */
-  const showAsset = ({ path }, transitionType) => {
-    goto(encodeRoutePath(`/assets/${path}`), { replaceState: true, transitionType });
+  const showAsset = (target, transitionType) => {
+    showAssetDetails(target, { replaceState: true, transitionType });
   };
 
   $effect(() => {
@@ -88,7 +89,7 @@
   title={name}
   contentKey={asset?.sha}
   onBack={() => {
-    goBack(backPath, { returnTo: isSearchResultsPath });
+    goBack(backPath, { returnTo: isSearchResultsPath, state: getAssetFolderHistoryState() });
   }}
   onPrevious={previous ? () => showAsset(previous, 'previous') : undefined}
   onNext={next ? () => showAsset(next, 'next') : undefined}
@@ -112,7 +113,7 @@
       buttonDescription={_('delete_assets', { values: { count: 1 } })}
       dialogDescription={_('confirm_deleting_this_asset')}
       onDelete={() => {
-        goBack(backPath, { returnTo: isSearchResultsPath });
+        goBack(backPath, { returnTo: isSearchResultsPath, state: getAssetFolderHistoryState() });
       }}
       {useButton}
     />

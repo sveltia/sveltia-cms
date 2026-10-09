@@ -7,6 +7,7 @@
   import { getAssetsByDirName } from '$lib/services/assets';
   import { moveAssets } from '$lib/services/assets/data/move';
   import { getAssetUsedEntries } from '$lib/services/assets/details';
+  import { getAssetFolderHistoryState } from '$lib/services/assets/navigation';
   import { renamingAsset } from '$lib/services/assets/state';
   import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
@@ -62,6 +63,8 @@
       await goto(encodeRoutePath(`/assets/${newPath}`), {
         replaceState: true,
         notifyChange: false,
+        // Keep the folder the asset was opened from, e.g. All Assets
+        state: getAssetFolderHistoryState(),
       });
     }
   };

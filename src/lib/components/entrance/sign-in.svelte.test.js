@@ -167,10 +167,13 @@ describe('SignIn', () => {
     await expect.element(page.getByRole('alert')).toHaveTextContent('error Access denied');
   });
 
-  test('reports while signing in', async () => {
+  test('reports while signing in, and skips the automatic sign-in', async () => {
     auth.signingIn = true;
 
     await render(SignIn, {});
+
+    // A form mounted during a manual sign-in mustn’t switch to the configured backend
+    expect(signInAutomatically).not.toHaveBeenCalled();
     await expect.element(page.getByRole('alert')).toHaveTextContent('Signing in…');
     expect(page.getByRole('button').elements()).toHaveLength(0);
   });

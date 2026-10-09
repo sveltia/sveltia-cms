@@ -202,8 +202,15 @@ export const addFolderIfNeeded = (folders, args) => {
  * @param {(CollectionFile | CollectionDivider)[]} args.files Collection files. May include
  * dividers.
  * @param {GlobalFolders | undefined} args.globalFolders Global folders information.
+ * @param {string} [args.mediaFolder] Relative `media_folder` option of the file collection, which
+ * applies to each file without its own `media_folder`, relative to that file.
+ * @param {string} [args.publicFolder] `public_folder` option of the file collection, which goes
+ * along with `args.mediaFolder`.
  */
-export const iterateFiles = (folders, { collectionName, files, globalFolders }) => {
+export const iterateFiles = (
+  folders,
+  { collectionName, files, globalFolders, mediaFolder, publicFolder },
+) => {
   getValidCollectionFiles(files).forEach((file) => {
     const {
       name: fileName,
@@ -212,12 +219,16 @@ export const iterateFiles = (folders, { collectionName, files, globalFolders }) 
       public_folder: filePublicFolder,
     } = file;
 
+    // A file without its own `media_folder` inherits the collection’s relative one along with its
+    // `public_folder`, while its own `media_folder` defaults its `public_folder` to itself
+    const inherits = fileMediaFolder === undefined;
+
     addFolderIfNeeded(folders, {
       collectionName,
       fileName,
       // @ts-ignore
-      mediaFolder: fileMediaFolder,
-      publicFolder: filePublicFolder,
+      mediaFolder: inherits ? mediaFolder : fileMediaFolder,
+      publicFolder: inherits ? publicFolder : filePublicFolder,
       baseFolder: getPathInfo(filePath).dirname,
       globalFolders,
     });
@@ -422,18 +433,33 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
         ? ''
         : _mediaFolder;
 
-    addFolderIfNeeded(assetFolders, {
-      collectionName,
-      // @ts-ignore
-      mediaFolder,
-      publicFolder,
-      baseFolder: getCollectionBaseFolder(collection),
-      entryPath,
-      globalFolders,
-    });
+    // A relative `media_folder` of a file collection is relative to each file, so it’s added for
+    // every file instead of the collection, which has no folder of its own to be relative to
+    const isRelativeFileCollectionFolder =
+      'files' in collection &&
+      typeof mediaFolder === 'string' &&
+      !hasTags(mediaFolder) &&
+      !mediaFolder.startsWith('/');
+
+    if (!isRelativeFileCollectionFolder) {
+      addFolderIfNeeded(assetFolders, {
+        collectionName,
+        // @ts-ignore
+        mediaFolder,
+        publicFolder,
+        baseFolder: getCollectionBaseFolder(collection),
+        entryPath,
+        globalFolders,
+      });
+    }
 
     if (collectionFiles?.length) {
-      iterateFiles(assetFolders, { collectionName, files: collectionFiles, globalFolders });
+      iterateFiles(assetFolders, {
+        collectionName,
+        files: collectionFiles,
+        globalFolders,
+        ...(isRelativeFileCollectionFolder ? { mediaFolder, publicFolder } : {}),
+      });
     }
   });
 

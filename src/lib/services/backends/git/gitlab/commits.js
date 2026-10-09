@@ -109,15 +109,17 @@ export const commitChanges = async (changes, options) => {
   // branch is only ever committed to by someone who can write to the configured project
   const fork = options.branch ? forkedRepository.current : undefined;
   const branch = options.branch ?? repository.branch;
-  // On the configured branch, the commit the loaded site data reflects, which the caller has just
-  // brought up to date. GitLab has no branch-level guard like GitHub’s `expectedHeadOid`: a
-  // `start_sha` is refused on an existing branch unless `force` is set, which would discard someone
-  // else’s push instead. But an action can take a `last_commit_id`, and GitLab 15.10+ refuses an
-  // update, move or deletion when the file’s last commit on the branch differs from its last commit
-  // as of that ID, i.e. when someone else has changed the file since. So the head goes with every
-  // such action, which takes no lookup per file. A workflow branch is only ever written by its own
-  // author, and its files differ from those on the configured branch, so it’s left alone
-  const expectedHead = options.branch ? undefined : repositoryHead.current || undefined;
+  // The commit the branch is expected to point at: on the configured branch, the one the loaded
+  // site data reflects, which the caller has just brought up to date; on a workflow branch, the
+  // merge request’s head, which the caller has just compared the branch with. GitLab has no
+  // branch-level guard like GitHub’s `expectedHeadOid`: a `start_sha` is refused on an existing
+  // branch unless `force` is set, which would discard someone else’s push instead. But an action
+  // can take a `last_commit_id`, and GitLab 15.10+ refuses an update, move or deletion when the
+  // file’s last commit on the branch differs from its last commit as of that ID, i.e. when someone
+  // else has changed the file since. So the head goes with every such action, which takes no lookup
+  // per file. A workflow branch is named after the entry, not the editor, so others can push to it
+  // too
+  const expectedHead = (options.branch ? options.headOid : repositoryHead.current) || undefined;
 
   const actions = await Promise.all(
     changes.map(async ({ action, path, previousPath, data = '' }) => ({
@@ -154,8 +156,9 @@ export const commitChanges = async (changes, options) => {
       })
     );
   } catch (/** @type {any} */ ex) {
-    // GitLab refuses a changed file with a 400 Bad Request, like any other invalid request
-    if (expectedHead && ex.cause?.status === 400) {
+    // GitLab refuses a changed file with a 400 Bad Request, like any other invalid request. A
+    // workflow branch’s head is looked up by the Editorial Workflow service, which knows the branch
+    if (expectedHead && !options.branch && ex.cause?.status === 400) {
       await assertBranchNotMoved(expectedHead, fetchLastCommit);
     }
 

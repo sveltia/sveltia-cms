@@ -13,6 +13,10 @@
   import { prefs, prefsError } from '$lib/services/user/prefs.svelte';
   import { sanitizeInlineMarkdown } from '$lib/services/utils/string';
 
+  const dataFetchError = $derived(
+    !!auth.signInError.message && auth.signInError.context === 'dataFetch',
+  );
+
   $effect(() => {
     if (cmsConfigLoaded.current) {
       announcedPageStatus.current = _('welcome_message', { values: { name: appTitle.current } });
@@ -49,18 +53,22 @@
       </div>
     {:else if !cmsConfig.current || !Object.keys(prefs).length}
       <div role="alert" class="message">{_('loading_cms_config')}</div>
-    {:else if auth.signInError.message && auth.signInError.context === 'dataFetch'}
-      <div role="alert">
-        <div role="none" class="message">{_('loading_site_data_error')}</div>
-        <div role="none" class="error">
-          {@render parseMarkdown(auth.signInError.message)}
+    {:else if dataFetchError || (!inAuthPopup.current && (!user.account || auth.unauthenticated))}
+      <!--
+        One branch for both cases, so that the sign-in form isn’t mounted again — which would start
+        an automatic sign-in — when a manual sign-in clears the data loading error
+      -->
+      {#if dataFetchError}
+        <div role="alert">
+          <div role="none" class="message">{_('loading_site_data_error')}</div>
+          <div role="none" class="error">
+            {@render parseMarkdown(auth.signInError.message)}
+          </div>
         </div>
-      </div>
+      {/if}
       <SignIn />
     {:else if inAuthPopup.current}
       <div role="alert" class="message">{_('authorizing')}</div>
-    {:else if !user.account || auth.unauthenticated}
-      <SignIn />
     {:else if !dataLoaded.current}
       <div role="alert" class="message">{_('loading_site_data')}</div>
       {#if dataLoadedProgress.current !== undefined}

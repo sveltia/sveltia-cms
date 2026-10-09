@@ -5,6 +5,14 @@ import { checkPreviewPath } from '$lib/services/config/parser/collections/previe
 import { parseFields } from '$lib/services/config/parser/fields';
 import { checkI18nOverrides } from '$lib/services/config/parser/i18n';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
+import {
+  getOmitDefaultLocaleOption,
+  mergeI18nConfigs,
+} from '$lib/services/contents/i18n/config/merge';
+import {
+  canOmitLocalePlaceholder,
+  hasLocalePlaceholder,
+} from '$lib/services/contents/i18n/placeholder';
 
 /**
  * @import { CmsConfig, CollectionFile, FileCollection } from '$lib/types/public';
@@ -21,7 +29,7 @@ import { addMessage, checkName } from '$lib/services/config/parser/utils/validat
  * @param {ConfigParserCollectors} collectors Collectors.
  */
 export const parseCollectionFile = (context, collectors) => {
-  const { collection, collectionFile } = context;
+  const { cmsConfig, collection, collectionFile } = context;
   // @ts-ignore singleton files don’t have `format` property on their files
   const { file, format = collection.format, fields, i18n } = collectionFile;
 
@@ -43,11 +51,29 @@ export const parseCollectionFile = (context, collectors) => {
     addMessage({ strKey: 'collection_file_no_fields', context, collectors });
   }
 
-  if (file.includes('{{locale}}') && !i18n) {
+  if (hasLocalePlaceholder(file) && !i18n) {
     // The `{{locale}}` placeholder in the `file` path is only valid if i18n is enabled for the
     // collection file. Otherwise, it will be replaced with the internal `_default` locale code,
     // which is likely not the intended behavior.
     addMessage({ strKey: 'collection_file_i18n_required', context, collectors });
+  }
+
+  if (hasLocalePlaceholder(file) && !canOmitLocalePlaceholder(file)) {
+    // The `omit_default_locale_from_file_path` option can be set at the site, collection or file
+    // level, as can its deprecated alias. With the placeholder anywhere it can’t be removed without
+    // breaking the rest of the path, like `i18n/{{locale}}.yaml`, the option can’t apply, and the
+    // default locale is kept in the path instead, which is worth a warning
+    const config = mergeI18nConfigs({ cmsConfig, collection, file: collectionFile });
+
+    if (config?.locales?.length && getOmitDefaultLocaleOption(config)) {
+      addMessage({
+        type: 'warning',
+        strKey: 'locale_not_omitted_from_file_path',
+        values: { file },
+        context,
+        collectors,
+      });
+    }
   }
 
   // Validate the `i18n` option against the collection’s configuration it builds on

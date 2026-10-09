@@ -19,6 +19,7 @@
   import CloudServiceAuth from '$lib/components/assets/shared/cloud-service-auth.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
+  import { getSelectionWithResource } from '$lib/services/assets/browser/select-assets-dialog.svelte';
   import { getFetchOptions, mergeUploadedExternalAssets } from '$lib/services/assets/external';
   import {
     fetchExternalAssetBlob,
@@ -338,6 +339,14 @@
   const onSelectionChange = async (asset, selected) => {
     const { downloadURL } = asset;
 
+    if (selected && !multiple) {
+      // A new single selection replaces the earlier one, including a pick hidden by a search or
+      // left in another folder, which the list box doesn’t deselect, and a pick still downloading
+      [...requestedSelection.keys()].forEach((url) => {
+        requestedSelection.set(url, false);
+      });
+    }
+
     requestedSelection.set(downloadURL, selected);
 
     if (selected) {
@@ -345,7 +354,17 @@
 
       // Read the selection again, as it may have changed during the `await`
       if (resource && requestedSelection.get(downloadURL)) {
-        selectedResources = [...selectedResources.filter((r) => r.url !== downloadURL), resource];
+        selectedResources = getSelectionWithResource({
+          resources: selectedResources,
+          resource,
+          /**
+           * Check if a selected resource comes from the same asset.
+           * @param {SelectedResource} r Selected resource.
+           * @returns {boolean} Result.
+           */
+          isSame: (r) => r.url === downloadURL,
+          multiple,
+        });
       }
     } else {
       selectedResources = selectedResources.filter((r) => r.url !== downloadURL);

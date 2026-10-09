@@ -230,12 +230,39 @@ describe('Git deployment selection', () => {
       const result = pickDeployment(
         [
           createCandidate({ name: 'deploy', url: 'http://insecure.example.com' }),
-          createCandidate({ name: 'lint', url: 'https://lint.example.com' }),
+          createCandidate({ name: 'vercel', url: 'https://vercel.example.com' }),
         ],
         { kind: 'preview' },
       );
 
-      expect(result.url).toBe('https://lint.example.com');
+      expect(result.url).toBe('https://vercel.example.com');
+    });
+
+    test('ranks a finished CI job below a deploy preview that’s still building', () => {
+      const result = pickDeployment(
+        [
+          createCandidate({
+            name: 'netlify/site/deploy-preview',
+            url: undefined,
+            state: 'pending',
+          }),
+          createCandidate({ name: 'ci/circleci: test', url: 'https://circleci.com/gh/o/r/1' }),
+        ],
+        { kind: 'preview' },
+      );
+
+      expect(result.state).toBe('pending');
+      expect(result.context).toBe('netlify/site/deploy-preview');
+    });
+
+    test('still takes the URL of a commit status from an unknown provider', () => {
+      const result = pickDeployment(
+        [createCandidate({ name: 'acme/site', url: 'https://acme.example.com' })],
+        { kind: 'preview' },
+      );
+
+      expect(result.state).toBe('ready');
+      expect(result.url).toBe('https://acme.example.com');
     });
 
     test('keeps a pending candidate without a URL', () => {

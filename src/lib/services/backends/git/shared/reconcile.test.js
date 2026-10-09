@@ -161,4 +161,74 @@ describe('reconcileAssets', () => {
       reconcileAssets({ assets: [added], previous: [previous], changedPaths: new Set() })[0],
     ).toBe(added);
   });
+
+  describe('workflow assets', () => {
+    const published = /** @type {any} */ ({ path: 'img/a.png', sha: '1' });
+
+    const shadowing = /** @type {any} */ ({
+      path: 'img/a.png',
+      sha: '2',
+      workflow: { branch: 'cms/posts/a', replacedAsset: published },
+    });
+
+    const branchOnly = /** @type {any} */ ({
+      path: 'img/b.png',
+      sha: '3',
+      workflow: { branch: 'cms/posts/a' },
+    });
+
+    test('keeps an asset that only exists on a workflow branch', () => {
+      const other = /** @type {any} */ ({ path: 'img/c.png', sha: '4' });
+
+      expect(
+        reconcileAssets({
+          assets: [{ ...published }, other],
+          previous: [published, branchOnly],
+          changedPaths: new Set(['img/c.png']),
+        }),
+      ).toEqual([published, other, branchOnly]);
+    });
+
+    test('keeps a workflow asset shadowing an unchanged published file as is', () => {
+      const [result] = reconcileAssets({
+        assets: [{ ...published }],
+        previous: [shadowing],
+        changedPaths: new Set(),
+      });
+
+      expect(result).toBe(shadowing);
+    });
+
+    test('puts a changed published file under the workflow asset shadowing it', () => {
+      const updated = /** @type {any} */ ({ path: 'img/a.png', sha: '5' });
+
+      const [result] = reconcileAssets({
+        assets: [updated],
+        previous: [shadowing],
+        changedPaths: new Set(['img/a.png']),
+      });
+
+      expect(result).toEqual({
+        ...shadowing,
+        workflow: { branch: 'cms/posts/a', replacedAsset: updated },
+      });
+      expect(result.workflow?.replacedAsset).toBe(updated);
+    });
+
+    test('puts a newly published file under a workflow asset that had none', () => {
+      const [result] = reconcileAssets({
+        assets: [{ ...published }],
+        previous: [{ ...branchOnly, path: 'img/a.png' }],
+        changedPaths: new Set(),
+      });
+
+      expect(result.workflow).toEqual({ branch: 'cms/posts/a', replacedAsset: published });
+    });
+
+    test('drops the published version of a workflow asset once the file is deleted', () => {
+      expect(
+        reconcileAssets({ assets: [], previous: [shadowing, branchOnly], changedPaths: new Set() }),
+      ).toEqual([{ ...shadowing, workflow: { branch: 'cms/posts/a' } }, branchOnly]);
+    });
+  });
 });

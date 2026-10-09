@@ -447,5 +447,5 @@ export const replaceBlobURL = async ({
     publicURL = encodeFilePath(publicURL);
   }
 
-  content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(blobURL, publicURL);
+  content[keyPath] = /** @type {string} */ (content[keyPath]).replaceAll(blobURL, () => publicURL);
 };

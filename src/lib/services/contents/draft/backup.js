@@ -33,6 +33,11 @@ let backupTimeout = 0;
  * @type {IndexedDB | null | undefined}
  */
 let backupDB = undefined;
+/**
+ * Name of the database {@link backupDB} was opened for.
+ * @type {string | undefined}
+ */
+let backupDBName = undefined;
 
 /**
  * Default for {@link backupToastState}.
@@ -380,21 +385,23 @@ export const resetBackupToastState = () => {
 };
 
 createRootEffect(() => {
-  const { current: _backend } = backend;
+  const { databaseName } = backend.current?.repository ?? {};
 
-  if (_backend && !backupDB) {
-    const { databaseName } = _backend.repository ?? {};
+  if (!databaseName) {
+    backupDB = null;
+    backupDBName = undefined;
 
-    if (databaseName) {
-      backupDB = new IndexedDB(databaseName, 'draft-backups', {
-        keyPath: ['collectionName', 'slug'], // Composite key
-      });
-
-      return;
-    }
+    return;
   }
 
-  backupDB = null;
+  // Reopen the database when the backend or repository has changed, e.g. when the user signs in
+  // with the local backend after the GitHub backend was selected
+  if (databaseName !== backupDBName) {
+    backupDBName = databaseName;
+    backupDB = new IndexedDB(databaseName, 'draft-backups', {
+      keyPath: ['collectionName', 'slug'], // Composite key
+    });
+  }
 });
 
 /**

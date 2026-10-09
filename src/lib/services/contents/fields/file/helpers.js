@@ -13,6 +13,7 @@ import { createPublicURL, getAssetFolderPaths } from '$lib/services/contents/dra
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { createPath } from '$lib/services/utils/file';
+import { decodeURISafely } from '$lib/services/utils/url';
 
 /**
  * @import {
@@ -226,7 +227,7 @@ export const getFileDisplayPath = ({ draft, value, unsavedFileName }) => {
     return getUnsavedFileDisplayPath({
       draft,
       blobURL: value,
-      fileName: decodeURI(unsavedFileName.normalize()),
+      fileName: decodeURISafely(unsavedFileName.normalize()),
     });
   }
 
@@ -234,7 +235,7 @@ export const getFileDisplayPath = ({ draft, value, unsavedFileName }) => {
     return '';
   }
 
-  const decodedValue = decodeURI(value);
+  const decodedValue = decodeURISafely(value);
 
   // Truncate query string for display. This is mainly for Unsplash URLs which have a long query
   // string for image parameters.

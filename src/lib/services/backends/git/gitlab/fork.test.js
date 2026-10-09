@@ -348,6 +348,82 @@ describe('GitLab Open Authoring service', () => {
       expect(error).toHaveBeenCalled();
       error.mockRestore();
     });
+
+    describe('when the contributor has an unrelated project at the default path', () => {
+      /**
+       * Create GitLab’s response to a fork whose name and path are taken in the namespace.
+       * @param {number} [status] HTTP status.
+       * @returns {Error} Error.
+       */
+      const nameTaken = (status = 409) =>
+        new Error('Server responded with an error', { cause: { status, message: '' } });
+
+      test.each([409, 400])('retries under another name after a %s', async (status) => {
+        vi.mocked(fetchAPI)
+          .mockRejectedValueOnce(nameTaken(status))
+          // The unrelated project at the default path
+          .mockResolvedValueOnce({ id: 5, path_with_namespace: 'contributor/project' })
+          .mockResolvedValueOnce({ id: 77, path_with_namespace: 'contributor/group-sub-project' })
+          .mockResolvedValueOnce({ import_status: 'finished' });
+
+        await expect(createFork()).resolves.toEqual({
+          owner: 'contributor',
+          repo: 'group-sub-project',
+        });
+        expect(projectIds.fork).toBe(77);
+
+        expect(fetchAPI).toHaveBeenNthCalledWith(2, `/projects/${FORK_ID}`);
+        // A path can’t hold the slash of the subgroup
+        expect(fetchAPI).toHaveBeenNthCalledWith(3, `/projects/${PROJECT_ID}/fork`, {
+          method: 'POST',
+          body: { name: 'group-sub-project', path: 'group-sub-project' },
+        });
+        expect(fetchAPI).toHaveBeenNthCalledWith(
+          4,
+          `/projects/${encodeURIComponent('contributor/group-sub-project')}`,
+        );
+      });
+
+      test('finds the renamed fork in a later session', async () => {
+        vi.mocked(fetchAPI)
+          // The unrelated project at the default path isn’t a fork
+          .mockResolvedValueOnce(createForkProject({ forked_from_project: undefined }))
+          .mockResolvedValueOnce([
+            createForkProject({ id: 77, path_with_namespace: 'contributor/group-sub-project' }),
+          ]);
+
+        await expect(fetchFork()).resolves.toEqual({
+          owner: 'contributor',
+          repo: 'group-sub-project',
+        });
+        expect(projectIds.fork).toBe(77);
+      });
+
+      test('reports a refusal when the default path is free', async () => {
+        const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        vi.mocked(fetchAPI)
+          .mockRejectedValueOnce(nameTaken())
+          .mockRejectedValueOnce(new Error('Not Found', { cause: { status: 404 } }));
+
+        await expect(createFork()).rejects.toThrow('Failed to fork the repository.');
+        expect(fetchAPI).toHaveBeenCalledTimes(2);
+        error.mockRestore();
+      });
+
+      test('reports a retry that fails as well', async () => {
+        const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        vi.mocked(fetchAPI)
+          .mockRejectedValueOnce(nameTaken())
+          .mockResolvedValueOnce({ id: 5, path_with_namespace: 'contributor/project' })
+          .mockRejectedValueOnce(nameTaken());
+
+        await expect(createFork()).rejects.toThrow('Failed to fork the repository.');
+        expect(fetchAPI).toHaveBeenCalledTimes(3);
+        error.mockRestore();
+      });
+    });
   });
 
   describe('initOpenAuthoring', () => {

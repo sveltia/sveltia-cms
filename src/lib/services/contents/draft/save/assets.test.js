@@ -1775,6 +1775,46 @@ describe('Test replaceBlobURL()', () => {
     expect(savingAssets).toHaveLength(1);
   });
 
+  test('should insert a public URL containing `$` patterns verbatim', async () => {
+    const blobURL = 'blob:http://localhost:5173/abc-123';
+    const content = { body: `![](${blobURL})` };
+
+    await replaceBlobURL(
+      /** @type {any} */ ({
+        file: new File(['test content'], 'save-$$-$&.jpg', { type: 'image/jpeg' }),
+        folder: {
+          internalPath: 'static/images',
+          publicPath: '/images',
+          entryRelative: false,
+          collectionName: 'posts',
+          hasTemplateTags: false,
+        },
+        replace: false,
+        blobURL,
+        draft: {
+          collection: {
+            _type: 'entry',
+            _i18n: { defaultLocale: 'en' },
+            _file: { basePath: 'posts' },
+            _assetFolder: { fields: [] },
+          },
+          collectionName: 'posts',
+          isIndexFile: false,
+          currentValues: { en: { title: 'Test' } },
+          currentSlugs: { en: 'test-post' },
+        },
+        defaultLocaleSlug: 'test-post',
+        keyPath: 'body',
+        content,
+        changes: [],
+        savingAssets: [],
+        encodingEnabled: false,
+      }),
+    );
+
+    expect(content.body).toBe('![](/images/save-$$-$&.jpg)');
+  });
+
   test('refuses a file headed for a folder the CMS is served from', async () => {
     // The picker can browse to any subfolder, but the files in such a folder are read-only
     /** @type {any[]} */

@@ -84,6 +84,18 @@ describe('sortEntriesByOrderField()', () => {
     ).toEqual([first, second, unorderedA, unorderedB]);
   });
 
+  test('places an entry with an empty order value at the end rather than as 0', () => {
+    const nullOrder = makeEntry('n', { title: 'N', order: null });
+    const emptyOrder = makeEntry('e', { title: 'E', order: '' });
+    const blankOrder = makeEntry('w', { title: 'W', order: '  ' });
+    const zero = makeEntry('z', { title: 'Z', order: 0 });
+    const one = makeEntry('o', { title: 'O', order: '1' });
+
+    expect(
+      sortEntriesByOrderField([nullOrder, one, emptyOrder, blankOrder, zero], makeCollection()),
+    ).toEqual([zero, one, nullOrder, emptyOrder, blankOrder]);
+  });
+
   test('sorts the entries of an array file collection by their position', () => {
     const second = makeArrayEntry('b', 2);
     const unknownA = makeArrayEntry('x', undefined);

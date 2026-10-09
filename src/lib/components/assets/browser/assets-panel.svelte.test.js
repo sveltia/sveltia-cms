@@ -157,6 +157,21 @@ describe('AssetsPanel', () => {
     expect(props.selectedResources).toHaveLength(1);
   });
 
+  test('replaces a single selection hidden by a search', async () => {
+    const props = $state({
+      assets,
+      searchTerms: 'logo',
+      selectedResources: /** @type {any[]} */ ([{ asset: assets[0] }]),
+    });
+
+    const { container } = await render(AssetsPanel, props);
+
+    await expect.poll(() => getLabels(container)).toEqual(['logo.png']);
+    await getOption(assets[1].path).click();
+    await expect.poll(() => props.selectedResources[0]?.asset).toBe(props.assets[1]);
+    expect(props.selectedResources).toHaveLength(1);
+  });
+
   test('selects multiple assets, keeping the other resources', async () => {
     const props = $state({
       assets,

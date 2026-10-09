@@ -13,6 +13,7 @@
    * @typedef {object} Props
    * @property {string} [path] Path of the details overlay, or `undefined` if no asset is selected.
    * @property {boolean} [disabled] Whether the asset can’t be previewed.
+   * @property {Record<string, any>} [state] History state to navigate with.
    */
 
   /** @type {Props} */
@@ -20,6 +21,7 @@
     /* eslint-disable prefer-const */
     path = undefined,
     disabled = false,
+    state = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 </script>
@@ -30,6 +32,6 @@
   label={_('preview')}
   aria-label={_('show_preview')}
   onclick={() => {
-    goto(/** @type {string} */ (path), { transitionType: 'forwards' });
+    goto(/** @type {string} */ (path), { transitionType: 'forwards', state });
   }}
 />

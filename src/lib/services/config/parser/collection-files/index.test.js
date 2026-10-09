@@ -360,6 +360,163 @@ describe('Collection Files Parser', () => {
         }),
       );
     });
+
+    describe('locale placeholder with the default locale omitted from the file path', () => {
+      /**
+       * Parse a collection file with the given `file` path and i18n options.
+       * @param {object} args Arguments.
+       * @param {string} args.file File path.
+       * @param {Record<string, any>} [args.siteI18n] Site-level i18n options.
+       * @param {any} [args.collectionI18n] Collection-level `i18n` option.
+       * @param {any} [args.fileI18n] File-level `i18n` option.
+       * @param {string} [args.collectionName] Collection name.
+       * @returns {Promise<any>} Context passed to the parser.
+       */
+      const parse = async ({
+        file,
+        siteI18n = { locales: ['en', 'fr'], omit_default_locale_from_file_path: true },
+        collectionI18n = true,
+        fileI18n = true,
+        collectionName = 'settings',
+      }) => {
+        const { parseCollectionFile } = await import('.');
+
+        /** @type {any} */
+        const context = {
+          cmsConfig: { i18n: siteI18n },
+          collection: { name: collectionName, files: [], i18n: collectionI18n },
+          collectionFile: {
+            name: 'general',
+            file,
+            fields: [{ name: 'title', widget: 'string' }],
+            i18n: fileI18n,
+          },
+        };
+
+        parseCollectionFile(context, createCollectors());
+
+        return context;
+      };
+
+      it.each([
+        'i18n/{{locale}}.yaml',
+        'data/settings_{{locale}}.json',
+        'settings-{{locale}}.json',
+        '{{locale}}.md',
+        'data/.{{locale}}.json',
+        'content/about-{{locale}}/index.md',
+      ])('should add a warning for the unresolvable path %s', async (file) => {
+        const context = await parse({ file });
+
+        expect(mockAddMessage).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'warning',
+            strKey: 'locale_not_omitted_from_file_path',
+            values: { file },
+            context,
+          }),
+        );
+      });
+
+      it.each([
+        'content/{{locale}}/about.md',
+        '{{locale}}/about.md',
+        'content/about.{{locale}}.md',
+        'data/{{locale}}.settings.json',
+        'content/about.{{locale}}',
+      ])('should not add a warning for the resolvable path %s', async (file) => {
+        await parse({ file });
+
+        expect(mockAddMessage).not.toHaveBeenCalledWith(
+          expect.objectContaining({ strKey: 'locale_not_omitted_from_file_path' }),
+        );
+      });
+
+      it('should not add a warning when the option is disabled', async () => {
+        await parse({ file: 'i18n/{{locale}}.yaml', siteI18n: { locales: ['en', 'fr'] } });
+
+        expect(mockAddMessage).not.toHaveBeenCalledWith(
+          expect.objectContaining({ strKey: 'locale_not_omitted_from_file_path' }),
+        );
+      });
+
+      it('should not add a warning when i18n is not enabled for the file', async () => {
+        await parse({ file: 'i18n/{{locale}}.yaml', fileI18n: false });
+
+        expect(mockAddMessage).not.toHaveBeenCalledWith(
+          expect.objectContaining({ strKey: 'locale_not_omitted_from_file_path' }),
+        );
+      });
+
+      it('should not add a warning without locales', async () => {
+        await parse({
+          file: 'i18n/{{locale}}.yaml',
+          siteI18n: { omit_default_locale_from_file_path: true },
+        });
+
+        expect(mockAddMessage).not.toHaveBeenCalledWith(
+          expect.objectContaining({ strKey: 'locale_not_omitted_from_file_path' }),
+        );
+      });
+
+      it('should add a warning when the option is enabled at the collection level', async () => {
+        await parse({
+          file: 'i18n/{{locale}}.yaml',
+          siteI18n: { locales: ['en', 'fr'] },
+          collectionI18n: { omit_default_locale_from_file_path: true },
+        });
+
+        expect(mockAddMessage).toHaveBeenCalledWith(
+          expect.objectContaining({ strKey: 'locale_not_omitted_from_file_path' }),
+        );
+      });
+
+      it('should add a warning when the option is enabled at the file level', async () => {
+        await parse({
+          file: 'i18n/{{locale}}.yaml',
+          siteI18n: { locales: ['en', 'fr'] },
+          fileI18n: { omit_default_locale_from_file_path: true },
+        });
+
+        expect(mockAddMessage).toHaveBeenCalledWith(
+          expect.objectContaining({ strKey: 'locale_not_omitted_from_file_path' }),
+        );
+      });
+
+      it('should not add a warning when the file level disables the option', async () => {
+        await parse({
+          file: 'i18n/{{locale}}.yaml',
+          fileI18n: { omit_default_locale_from_file_path: false },
+        });
+
+        expect(mockAddMessage).not.toHaveBeenCalledWith(
+          expect.objectContaining({ strKey: 'locale_not_omitted_from_file_path' }),
+        );
+      });
+
+      it('should add a warning when the deprecated alias enables the option', async () => {
+        await parse({
+          file: 'i18n/{{locale}}.yaml',
+          siteI18n: { locales: ['en', 'fr'], omit_default_locale_from_filename: true },
+        });
+
+        expect(mockAddMessage).toHaveBeenCalledWith(
+          expect.objectContaining({ strKey: 'locale_not_omitted_from_file_path' }),
+        );
+      });
+
+      it('should add a warning for a singleton file', async () => {
+        await parse({
+          file: 'i18n/{{locale}}.yaml',
+          collectionName: '_singletons',
+          collectionI18n: false,
+        });
+
+        expect(mockAddMessage).toHaveBeenCalledWith(
+          expect.objectContaining({ strKey: 'locale_not_omitted_from_file_path' }),
+        );
+      });
+    });
   });
 
   describe('parseCollectionFiles', () => {

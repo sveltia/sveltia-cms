@@ -134,19 +134,32 @@ const isGitServiceURL = (url, selfURL) => {
 };
 
 /**
- * Whether a candidate is claiming to describe a deployment at all. A check run that doesn’t name
- * itself a preview is some other job on the same push — a test suite, a linter — which says nothing
- * about whether the site is live and whose URL is a build log. It isn’t thrown away, because a
- * provider this list has never heard of would otherwise report nothing and let a failed build pass
- * unnoticed; it’s just outranked by anything that does claim to be a deployment, and it never
- * supplies a URL. A configured `preview_context` has already narrowed the field by name, so
- * whatever survived that is taken at its word.
+ * Whether a candidate is named like a deployment. A deployment always is one, while a commit status
+ * or a check run that doesn’t name itself a preview is likely some other job on the same push — a
+ * test suite, a linter — which says nothing about whether the site is live. GitLab posts a commit
+ * status for every CI job, and a GitHub Actions or CircleCI job posts one too. Such a candidate
+ * isn’t thrown away, because a provider this list has never heard of would otherwise report nothing
+ * and let a failed build pass unnoticed; it’s just outranked by anything that does claim to be a
+ * deployment, so a finished test suite can’t stand in for a deploy preview that’s still building. A
+ * configured `preview_context` has already narrowed the field by name, so whatever survived that is
+ * taken at its word.
  * @param {DeployCandidate} candidate Candidate to judge.
  * @param {string} previewContext Configured context, empty when unset.
  * @returns {boolean} Result.
  */
 const claimsDeployment = ({ name, source }, previewContext) =>
-  !!previewContext || source !== 'check' || PREVIEW_NAME_REGEX.test(name);
+  !!previewContext || source === 'deployment' || PREVIEW_NAME_REGEX.test(name);
+
+/**
+ * Whether a candidate’s URL can lead to the site. A commit status target URL usually does, even
+ * for a provider missing from the name list, whereas a check run’s details URL is normally a build
+ * log unless the run claims to be a deployment.
+ * @param {DeployCandidate} candidate Candidate to judge.
+ * @param {string} previewContext Configured context, empty when unset.
+ * @returns {boolean} Result.
+ */
+const canSupplyURL = (candidate, previewContext) =>
+  candidate.source !== 'check' || claimsDeployment(candidate, previewContext);
 
 /**
  * Rank a candidate so the best one can be picked with a single sort. A higher number wins.
@@ -218,7 +231,7 @@ export const pickDeployment = (candidates, { kind, selfURL }) => {
     ...candidate,
     url:
       candidate.state === 'ready' &&
-      claimsDeployment(candidate, previewContext) &&
+      canSupplyURL(candidate, previewContext) &&
       !isGitServiceURL(candidate.url, selfURL)
         ? normalizeURL(candidate.url)
         : undefined,

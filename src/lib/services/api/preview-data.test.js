@@ -24,6 +24,7 @@ const {
   mockGetAssetFolder,
   mockIsAssetInFolder,
   mockAllAssets,
+  mockGetEntryOptions,
 } = vi.hoisted(() => ({
   mockGetField: vi.fn(() => ({ widget: 'text' })),
   mockGetMediaFieldSource: vi.fn(),
@@ -33,6 +34,15 @@ const {
   mockGetAssetFolder: vi.fn(),
   mockIsAssetInFolder: vi.fn(),
   mockAllAssets: { current: /** @type {any[]} */ ([]) },
+  // Resolve a `{{slug}}` or bare field name `value_field` like the Relation field does
+  mockGetEntryOptions: vi.fn(({ locale, fieldConfig, refEntry }) => {
+    const { value_field: valueField = '{{slug}}' } = fieldConfig;
+
+    const value =
+      valueField === '{{slug}}' ? refEntry.slug : refEntry.locales[locale]?.content?.[valueField];
+
+    return [{ label: value, value, searchValue: value }];
+  }),
 }));
 
 vi.mock('$lib/services/assets', () => ({
@@ -87,6 +97,10 @@ vi.mock('$lib/services/contents/collection/files', () => ({
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: mockGetField,
+}));
+
+vi.mock('$lib/services/contents/fields/relation/helpers', () => ({
+  getEntryOptions: mockGetEntryOptions,
 }));
 
 vi.mock('$lib/services/assets/folders', () => ({
@@ -714,6 +728,68 @@ describe('React Helpers', () => {
       expect(build().relatedPost.posts.dup.title).toBe('First');
       // Answered from the lookup table cached with the entry list
       expect(build().relatedPost.posts.dup.title).toBe('First');
+    });
+
+    it('should key referenced entries by the values the `value_field` template resolves to', () => {
+      const alice = {
+        slug: 'alice',
+        locales: { en: { content: { 'name.first': 'Alice', 'tags.0': 'a', 'tags.1': 'b' } } },
+      };
+
+      const bob = { slug: 'bob', locales: { en: { content: { 'name.first': 'Bob' } } } };
+
+      const field = {
+        widget: 'relation',
+        collection: 'authors',
+        value_field: '{{locale}}/{{fields.name.first}}-{{tags.*}}',
+      };
+
+      mockGetField.mockReturnValueOnce(field).mockReturnValueOnce(field).mockReturnValueOnce(field);
+      mockGetEntriesByCollection.mockReturnValueOnce([alice, bob]);
+      // What the Relation field stores, including one value per list item
+      mockGetEntryOptions
+        .mockReturnValueOnce([{ value: 'en/Alice-a' }, { value: 'en/Alice-b' }])
+        .mockReturnValueOnce([{ value: 'en/Bob-' }]);
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: { 'authors.0': 'en/Alice-b', 'authors.1': 'en/Bob-', 'authors.2': 'missing' },
+          isIndexFile: false,
+        },
+      }).toJS();
+
+      expect(mockGetEntryOptions).toHaveBeenCalledWith({
+        locale: 'en',
+        fieldConfig: field,
+        refEntry: alice,
+      });
+      expect(result.authors.authors['en/Alice-b']['name.first']).toBe('Alice');
+      expect(result.authors.authors['en/Bob-']['name.first']).toBe('Bob');
+      expect(result.authors.authors.missing).toBeUndefined();
+    });
+
+    it('should match a numeric stored value against the string option value', () => {
+      const entry = { slug: 'one', locales: { en: { content: { id: 1, title: 'One' } } } };
+      const field = { widget: 'relation', collection: 'items', value_field: 'id' };
+
+      mockGetField.mockReturnValueOnce(field);
+      mockGetEntriesByCollection.mockReturnValueOnce([entry]);
+      mockGetEntryOptions.mockReturnValueOnce([{ value: '1' }]);
+
+      const result = getMetaData({
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: { item: 1 },
+          isIndexFile: false,
+        },
+      }).toJS();
+
+      expect(result.item.items[1].title).toBe('One');
     });
 
     it('should handle multiple relation fields', () => {

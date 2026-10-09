@@ -3,6 +3,7 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { parseLocation } from '$lib/services/app/navigation';
+import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { focusedAsset, selectedAssets } from '$lib/services/assets/state';
 import { focusedSubfolder } from '$lib/services/assets/subfolders';
 import { env } from '$lib/services/user/env.svelte';
@@ -26,6 +27,7 @@ describe('AssetListItem', () => {
     env.hasMouse = true;
     selectedAssets.current = [];
     focusedAsset.current = undefined;
+    selectedAssetFolder.current = undefined;
   });
 
   test('reflects the position and selection of the asset in the list', async () => {
@@ -70,6 +72,20 @@ describe('AssetListItem', () => {
 
     await row.dblClick();
     await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/a.png');
+  });
+
+  test('opens the details within the selected folder, e.g. All Assets', async () => {
+    window.location.hash = '#/assets/-/all';
+
+    const allAssetsFolder = { internalPath: undefined, publicPath: undefined };
+
+    selectedAssetFolder.current = /** @type {any} */ (allAssetsFolder);
+
+    await render(AssetListItem, { asset: assets[0], viewType: 'list' });
+    await page.getByRole('row', { name: 'a.png' }).dblClick();
+    await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/a.png');
+    // The folder travels as history state, so the page doesn’t switch to the asset’s own folder
+    expect(window.history.state.folder).toEqual(allAssetsFolder);
   });
 
   test('encodes special characters in the file name of the opened asset', async () => {

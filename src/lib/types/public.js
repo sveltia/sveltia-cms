@@ -1325,12 +1325,22 @@
  * option, which is used instead if both are defined.
  * DEPRECATED: Use the `omit_default_locale_from_file_path` option instead.
  * @property {boolean} [omit_default_locale_from_file_path] Whether to exclude the default locale
- * from entry file paths. Default: `false`. This option applies to both entry collections and file
- * collections, where the path includes a `{{locale}}.` or `{{locale}}/` placeholder. It aims to
- * support [Zola’s multilingual sites](https://www.getzola.org/documentation/content/multilingual/).
+ * from entry file paths. Default: `false`. This option applies to entry collections with the
+ * `multiple_files`, `multiple_folders` or `multiple_root_folders` structure, or with the
+ * `{{locale}}` placeholder in the `folder` option, and to collection files with the placeholder in
+ * the `file` option. The placeholder must be used where it can be removed along with a separator:
+ * as a whole folder or file name, like `content/{{locale}}/about.md`, or as a dot-separated part of
+ * a file name, like `about.{{locale}}.md` or `{{locale}}.about.md`. A placeholder in any other
+ * position, like `i18n/{{locale}}.yaml` or `settings_{{locale}}.json`, can’t be removed, so the
+ * default locale is kept in that path and a configuration warning is shown. If the placeholder
+ * appears more than once, only the first occurrence is removed. It aims to support
+ * [Zola’s multilingual sites](https://www.getzola.org/documentation/content/multilingual/).
  * @property {boolean} [omit_default_locale_from_preview_path] Whether to exclude the default locale
  * from preview URL paths. Default: `false`. This option helps to create cleaner URLs for the
- * default locale when generating preview links for multilingual content.
+ * default locale when generating preview links for multilingual content. The `{{locale}}`
+ * placeholder is removed in the same positions as with the `omit_default_locale_from_file_path`
+ * option, e.g. `/{{locale}}/posts/{{slug}}` becomes `/posts/{{slug}}` and `/{{locale}}` becomes
+ * `/`; anywhere else, the locale is kept.
  * @see https://decapcms.org/docs/i18n/
  * @see https://sveltiacms.app/en/docs/i18n
  * @see https://github.com/decaporg/decap-cms/issues/6932

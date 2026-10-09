@@ -1365,6 +1365,99 @@ describe('assets/index', () => {
       expect(resolvePath).toHaveBeenCalledWith('content/posts/assets/photo.jpg');
     });
 
+    it('should fall back to the collection media_folder for a file without its own', async () => {
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'about',
+        slug: 'about',
+        locales: {
+          en: {
+            path: 'content/pages/about.md',
+            sha: 'sha123',
+            slug: 'about',
+            content: { title: 'About' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'pages',
+        media_folder: 'images',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      const mockFile = /** @type {any} */ ({ name: 'about', _i18n: { defaultLocale: 'en' } });
+
+      vi.mocked(createPath).mockReturnValue('content/pages/images/photo.jpg');
+      vi.mocked(resolvePath).mockReturnValue('content/pages/images/photo.jpg');
+      allAssets.current = [];
+
+      getAssetByRelativePathAndCollection({
+        path: 'images/photo.jpg',
+        entry: mockEntry,
+        collection: mockCollection,
+        file: mockFile,
+      });
+
+      expect(createPath).toHaveBeenCalledWith(['content/pages', 'images', 'photo.jpg']);
+    });
+
+    it('should resolve a bare file name against an absolute media_folder with an empty public_folder', async () => {
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        locales: {
+          en: {
+            path: 'content/posts/my-post.md',
+            sha: 'sha123',
+            slug: 'my-post',
+            content: { title: 'My Post' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'posts',
+        media_folder: '/static/images',
+        public_folder: '',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      vi.mocked(createPath).mockReturnValue('static/images/photo.jpg');
+      vi.mocked(resolvePath).mockReturnValue('static/images/photo.jpg');
+      allAssets.current = [];
+
+      getAssetByRelativePathAndCollection({
+        path: 'photo.jpg',
+        entry: mockEntry,
+        collection: mockCollection,
+      });
+
+      expect(createPath).toHaveBeenLastCalledWith(['static/images', 'photo.jpg']);
+
+      // The same goes for an absolute field-level folder with an empty public folder
+      vi.mocked(getAssetFolder).mockReturnValue(
+        /** @type {any} */ ({
+          internalPath: 'static/authors',
+          publicPath: '',
+          entryRelative: false,
+        }),
+      );
+
+      getAssetByRelativePathAndCollection({
+        path: 'photo.jpg',
+        entry: mockEntry,
+        collection: { ...mockCollection, public_folder: '/images' },
+        typedKeyPath: 'avatar',
+      });
+
+      expect(createPath).toHaveBeenLastCalledWith(['static/authors', 'photo.jpg']);
+    });
+
     it('should handle different media_folder values correctly', async () => {
       const { resolvePath, createPath } = await import('$lib/services/utils/file');
 

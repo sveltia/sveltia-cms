@@ -156,6 +156,53 @@ describe('InfoPanel', () => {
     expect(getSections(container)['Public URL']).toMatch(/second\.txt$/);
   });
 
+  test('clears the details of the previous asset while the next one loads, or fails to', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const first = createMockAsset({ name: 'first.txt' });
+    const second = createMockAsset({ name: 'second.txt' });
+    const { container, rerender } = await render(InfoPanel, { asset: first });
+
+    await expect.poll(() => getSections(container)['Public URL']).toMatch(/first\.txt$/);
+    await expect.poll(() => getSections(container)['Used in']).toBe('None');
+
+    const { promise, reject } = Promise.withResolvers();
+
+    vi.mocked(getAssetDetails).mockReturnValueOnce(/** @type {any} */ (promise));
+    await rerender({ asset: second });
+
+    // The first asset’s details are gone while the second one’s are loading
+    await expect.poll(() => getSections(container)['Public URL']).toBe('–');
+    expect(getSections(container)['Used in']).toBe('Loading…');
+
+    // The details can’t be retrieved, so only the basic info is shown
+    reject(new Error('Failed'));
+    await expect.poll(() => getSections(container)['Used in']).toBe('None');
+    expect(getSections(container)['Public URL']).toBe('–');
+    expect(getSections(container)['File Path']).toBe('/static/uploads/second.txt');
+    expect(error).toHaveBeenCalledWith(expect.objectContaining({ message: 'Failed' }));
+  });
+
+  test('ignores a late failure to get the details of an asset focused earlier', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { promise, reject } = Promise.withResolvers();
+
+    vi.mocked(getAssetDetails).mockReturnValueOnce(/** @type {any} */ (promise));
+
+    const first = createMockAsset({ name: 'first.txt' });
+    const second = createMockAsset({ name: 'second.txt' });
+    const { container, rerender } = await render(InfoPanel, { asset: first });
+
+    await rerender({ asset: second });
+    await expect.poll(() => getSections(container)['Public URL']).toMatch(/second\.txt$/);
+
+    reject(new Error('Failed'));
+    await vi.waitFor(() =>
+      expect(error).toHaveBeenCalledWith(expect.objectContaining({ message: 'Failed' })),
+    );
+    await expect.poll(() => getSections(container)['Used in']).toBe('None');
+    expect(getSections(container)['Public URL']).toMatch(/second\.txt$/);
+  });
+
   test('falls back to the extension and the author’s email', async () => {
     const asset = createMockAsset({
       name: 'data.qqq',

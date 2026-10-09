@@ -913,7 +913,7 @@ describe('Test getEntryPreviewURL()', () => {
 
     const collectionWithDotLocaleInPath = {
       ...mockCollection,
-      preview_path: '/posts/{{locale}}.{{slug}}',
+      preview_path: '/posts/{{slug}}.{{locale}}.html',
       _i18n: {
         ...mockCollection._i18n,
         defaultLocale: 'en',
@@ -934,14 +934,55 @@ describe('Test getEntryPreviewURL()', () => {
 
     const result = getEntryPreviewURL(mockEntry, 'en', collectionWithDotLocaleInPath);
 
-    // Verify that fillTemplate was called with the modified template (locale. segment removed)
+    // Verify that fillTemplate was called with the modified template (.locale segment removed)
     expect(fillTemplate).toHaveBeenCalledWith(
-      '/posts/{{slug}}',
+      '/posts/{{slug}}.html',
       expect.objectContaining({
         type: 'preview_path',
       }),
     );
     expect(result).toBe('https://example.com/test-entry');
+  });
+
+  test.each([
+    ['/{{locale}}', '/'],
+    ['/blog/{{locale}}', '/blog'],
+    ['/posts/{{locale}}.{{slug}}', '/posts/{{slug}}'],
+    // The placeholder can’t be removed without breaking the rest of the path, so it’s filled in
+    ['/{{locale}}.html', '/{{locale}}.html'],
+    ['/posts/{{locale}}-{{slug}}', '/posts/{{locale}}-{{slug}}'],
+  ])('omits locale from preview path %s where possible', async (previewPath, expected) => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        show_preview_links: true,
+        _baseURL: 'https://example.com',
+      },
+    };
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    vi.mocked(fillTemplate).mockReturnValue('test-entry');
+
+    getEntryPreviewURL(mockEntry, 'en', {
+      ...mockCollection,
+      preview_path: previewPath,
+      _i18n: {
+        ...mockCollection._i18n,
+        defaultLocale: 'en',
+        omitDefaultLocaleFromPreviewPath: true,
+      },
+    });
+
+    expect(fillTemplate).toHaveBeenCalledWith(
+      expected,
+      expect.objectContaining({ type: 'preview_path' }),
+    );
   });
 
   test('preserves locale in preview path for non-default locales even when omitDefaultLocaleFromPreviewPath is true', async () => {

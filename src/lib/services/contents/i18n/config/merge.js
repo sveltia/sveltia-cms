@@ -54,3 +54,12 @@ export const mergeI18nConfigs = ({ cmsConfig, collection, file }) => {
 
   return config;
 };
+
+/**
+ * Get the `omit_default_locale_from_file_path` option from the given merged i18n configuration,
+ * falling back to its deprecated `omit_default_locale_from_filename` alias.
+ * @param {I18nOptions | undefined} config Merged configuration.
+ * @returns {boolean} Whether to omit the default locale from file paths.
+ */
+export const getOmitDefaultLocaleOption = (config) =>
+  config?.omit_default_locale_from_file_path ?? config?.omit_default_locale_from_filename ?? false;

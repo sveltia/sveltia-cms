@@ -14,10 +14,16 @@ import ColorEditor from './color-editor.svelte';
  * @param {string | undefined} [options.currentValue] Field value.
  * @param {Partial<ColorField>} [options.config] Field options.
  * @param {boolean} [options.required] Whether the field is required.
+ * @param {boolean} [options.readonly] Whether the field is read-only.
  * @returns {Promise<{ props: { currentValue: string | undefined }, container: HTMLElement }>}
  * Props, whose `currentValue` follows the editor, and the container.
  */
-const renderEditor = async ({ currentValue = undefined, config = {}, required = true } = {}) => {
+const renderEditor = async ({
+  currentValue = undefined,
+  config = {},
+  required = true,
+  readonly = false,
+} = {}) => {
   const props = $state({
     locale: 'en',
     keyPath: 'color',
@@ -27,6 +33,7 @@ const renderEditor = async ({ currentValue = undefined, config = {}, required = 
     fieldConfig: /** @type {ColorField} */ ({ name: 'color', widget: 'color', ...config }),
     currentValue,
     required,
+    readonly,
   });
 
   const { container } = await render(ColorEditor, props);
@@ -96,6 +103,56 @@ describe('ColorEditor', () => {
     await slider.element().focus();
     await userEvent.keyboard('{ArrowRight}');
     await expect.poll(() => props.currentValue).toBe('#ff800081');
+  });
+
+  test('resets the controls when the value is cleared from outside', async () => {
+    const { props, container } = await renderEditor({
+      currentValue: '#ff800080',
+      config: { enableAlpha: true, allowInput: true },
+    });
+
+    const slider = page.getByRole('slider', { name: 'Opacity' });
+
+    const input = page.elementLocator(
+      /** @type {HTMLElement} */ (container.querySelector('input[type="text"]')),
+    );
+
+    props.currentValue = '';
+
+    await expect.element(input).toHaveValue('');
+    expect(getPicker(container).value).toBe('#000000');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '255');
+    await expect.element(slider).toHaveAttribute('aria-disabled', 'true');
+    expect(props.currentValue).toBe('');
+
+    // A value set from outside again is picked up
+    props.currentValue = '#00ff0040';
+    await expect.element(input).toHaveValue('#00ff00');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '64');
+
+    props.currentValue = undefined;
+    await expect.element(input).toHaveValue('');
+  });
+
+  test('cannot be edited when read-only', async () => {
+    const { props, container } = await renderEditor({
+      currentValue: '#ff800080',
+      config: { enableAlpha: true, allowInput: true },
+      required: false,
+      readonly: true,
+    });
+
+    const slider = page.getByRole('slider', { name: 'Opacity' });
+
+    expect(getPicker(container)).toBeDisabled();
+    await expect.element(slider).toHaveAttribute('aria-readonly', 'true');
+    expect(container.querySelector('input[type="text"]')).toHaveAttribute('readonly');
+    expect(page.getByRole('button', { name: 'Clear' }).elements()).toHaveLength(0);
+
+    await slider.element().focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(props.currentValue).toBe('#ff800080');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '128');
   });
 
   test('can be cleared when optional', async () => {

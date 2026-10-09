@@ -1437,6 +1437,18 @@ describe('Test internal helper functions', () => {
       expect(determineOmitDefaultLocale(true, baseStructureMap, file)).toBe(false);
     });
 
+    test.each([
+      'i18n/{{locale}}.yaml',
+      'data/settings_{{locale}}.json',
+      'settings-{{locale}}.json',
+      '{{locale}}.md',
+    ])('should return false for file with {{locale}} that can’t be removed: %s', (path) => {
+      /** @type {CollectionFile} */
+      const file = { name: 'about', file: path, fields: [] };
+
+      expect(determineOmitDefaultLocale(true, baseStructureMap, file)).toBe(false);
+    });
+
     test('should return false for file with {{locale}} at end of path (no separator)', () => {
       /** @type {CollectionFile} */
       const file = { name: 'about', file: 'content/about-{{locale}}', fields: [] };

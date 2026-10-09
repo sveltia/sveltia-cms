@@ -10,8 +10,8 @@
   import { Button, Slider, TextInput } from '@sveltia/ui';
 
   import {
+    getColorFieldInputValues,
     getColorFieldValue,
-    parseColorFieldValue,
   } from '$lib/services/contents/fields/color/helpers';
   import { watch } from '$lib/services/utils/state.svelte';
 
@@ -49,7 +49,12 @@
    * Update {@link inputValue} and {@link inputAlphaValue} based on {@link currentValue}.
    */
   const setInputValue = () => {
-    const parts = parseColorFieldValue(currentValue);
+    const parts = getColorFieldInputValues({
+      currentValue,
+      rgb: inputValue,
+      alpha: inputAlphaValue,
+      enableAlpha,
+    });
 
     if (!parts) {
       return;
@@ -97,7 +102,7 @@
     id="{id}-picker"
     type="color"
     bind:value={inputValue}
-    {readonly}
+    disabled={readonly}
     aria-invalid={invalid}
     aria-readonly={readonly}
     aria-required={required}
@@ -124,6 +129,7 @@
           min={0}
           max={255}
           disabled={!inputValue}
+          {readonly}
           bind:value={inputAlphaValue}
           sliderLabel={_('opacity')}
         />

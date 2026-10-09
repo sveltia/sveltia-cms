@@ -2,7 +2,12 @@ import { _, locale as appLocale } from '@sveltia/i18n';
 import { sleep } from '@sveltia/utils/misc';
 import equal from 'fast-deep-equal';
 
-import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
+import {
+  announcedPageStatus,
+  encodeRoutePath,
+  goto,
+  parseLocation,
+} from '$lib/services/app/navigation';
 import {
   enabledCloudServices,
   EXTERNAL_LOCATION_PATH_PREFIX,
@@ -26,7 +31,8 @@ import { isSearchRoute } from '$lib/services/search/navigation';
 import { env } from '$lib/services/user/env.svelte';
 
 /**
- * @import { AssetFolderInfo } from '$lib/types/private';
+ * @import { ViewTransitionType } from '$lib/services/app/navigation';
+ * @import { Asset, AssetFolderInfo } from '$lib/types/private';
  */
 
 /**
@@ -73,6 +79,33 @@ export const getSelectedAssetFolderLabel = () =>
   appLocale.current && selectedAssetFolder.current
     ? getFolderLabelByCollection(selectedAssetFolder.current)
     : '';
+
+/**
+ * Get the history state to navigate with within the Asset Library. The selected asset folder
+ * travels as history state, the same way it does from the sidebar, so the page can tell it from
+ * another folder sharing its path, and an asset opened from a folder that doesn’t contain it
+ * directly, such as All Assets, is shown within that folder rather than its own.
+ * @returns {{ folder: AssetFolderInfo | undefined }} History state.
+ */
+export const getAssetFolderHistoryState = () => ({ folder: selectedAssetFolder.current });
+
+/**
+ * Show the details of a repository asset in the overlay, within the selected asset folder.
+ * @param {Asset} asset Asset.
+ * @param {object} [options] Options.
+ * @param {ViewTransitionType} [options.transitionType] View transition type.
+ * @param {boolean} [options.replaceState] Whether to replace the current history entry.
+ */
+export const showAssetDetails = (
+  { path },
+  { transitionType = 'forwards', replaceState = false } = {},
+) => {
+  goto(encodeRoutePath(`/assets/${path}`), {
+    transitionType,
+    replaceState,
+    state: getAssetFolderHistoryState(),
+  });
+};
 
 /**
  * Discard the navigation still in flight, if any, so its delayed announcement is not made. Call

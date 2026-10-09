@@ -166,3 +166,18 @@ export const getInsertedResources = ({ resources, targetFolderPath }) =>
       replace,
     };
   });
+
+/**
+ * Get the selection with a newly selected resource. A single selection is replaced as a whole: the
+ * list box only deselects the options it shows, so an earlier pick hidden by a search or left in
+ * another folder would otherwise stay selected.
+ * @param {object} args Arguments.
+ * @param {SelectedResource[]} args.resources Currently selected resources.
+ * @param {SelectedResource} args.resource Newly selected resource.
+ * @param {(resource: SelectedResource) => boolean} args.isSame Function telling whether a selected
+ * resource is the same as the new one, so that it is not listed twice.
+ * @param {boolean} [args.multiple] Whether multiple resources can be selected.
+ * @returns {SelectedResource[]} New selection.
+ */
+export const getSelectionWithResource = ({ resources, resource, isSame, multiple = false }) =>
+  multiple ? [...resources.filter((r) => !isSame(r)), resource] : [resource];

@@ -3,7 +3,8 @@ import { getEntryDirPath, getSharedEntryFileName } from '$lib/services/contents/
 import { STATIC_DRAFT_KEYS } from '$lib/services/contents/draft';
 import { getSlugEditorProp } from '$lib/services/contents/draft/create';
 import { copyEntryRelativeAssets } from '$lib/services/contents/draft/create/duplicate-assets';
-import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
+import { createProxy, isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
+import { fillUuidValues } from '$lib/services/contents/draft/create/uuid';
 import { showDuplicateToast } from '$lib/services/contents/editor';
 import { getAliasesKey, removeAliases } from '$lib/services/contents/entry/aliases';
 import { getField } from '$lib/services/contents/entry/fields';
@@ -11,11 +12,17 @@ import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
 import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/fields/hidden/defaults';
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
 import { isFieldLocalized, isFieldTranslatable } from '$lib/services/contents/i18n/fields';
+import { getOrCreate } from '$lib/services/utils/cache';
 import { createState, getSnapshot } from '$lib/services/utils/state.svelte';
 
 /**
  * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
- * @import { EntryDraft, GetFieldArgs, LocaleContentMap } from '$lib/types/private';
+ * @import {
+ * EntryDraft,
+ * GetFieldArgs,
+ * InternalLocaleCode,
+ * LocaleContentMap,
+ * } from '$lib/types/private';
  * @import { ComputeField, FieldKeyPath, HiddenField, UuidField } from '$lib/types/public';
  */
 
@@ -70,6 +77,19 @@ export const duplicateDraft = async (entryDraft) => {
     ]),
   );
 
+  /**
+   * Key paths of the duplicated Hidden fields in each non-default locale, which take the default
+   * locale’s new values once those are in place.
+   * @type {Map<InternalLocaleCode, Set<FieldKeyPath>>}
+   */
+  const duplicatedHiddenFieldMap = new Map();
+  /**
+   * Duplicated UUID fields cleared in each non-default locale, along with their configuration, for
+   * the ones the default locale has no value to copy for.
+   * @type {Map<InternalLocaleCode, Map<FieldKeyPath, UuidField>>}
+   */
+  const clearedUuidFieldMap = new Map();
+
   Object.entries(currentValues).forEach(([locale, valueMap]) => {
     // Remove the canonical slug
     delete valueMap[canonicalSlugKey];
@@ -93,8 +113,15 @@ export const duplicateDraft = async (entryDraft) => {
       const fieldConfig = getField({ ...getFieldArgs, keyPath });
 
       if (fieldConfig?.widget === 'uuid') {
-        if (locale === defaultLocale || isFieldTranslatable(fieldConfig?.i18n)) {
+        if (locale === defaultLocale || isFieldTranslatable(fieldConfig.i18n)) {
           valueMap[keyPath] = getInitialUuidValue(/** @type {UuidField} */ (fieldConfig));
+        } else if (isDuplicatedField({ fieldConfig, getFieldArgs: { ...getFieldArgs, keyPath } })) {
+          // Cleared for `fillUuidValues()` below to copy the default locale’s new value
+          valueMap[keyPath] = '';
+          getOrCreate(clearedUuidFieldMap, locale, () => new Map()).set(
+            keyPath,
+            /** @type {UuidField} */ (fieldConfig),
+          );
         }
       }
 
@@ -112,11 +139,21 @@ export const duplicateDraft = async (entryDraft) => {
 
       const hidden = findHiddenField({ ...getFieldArgs, keyPath });
 
-      if (hidden && (locale === defaultLocale || isFieldTranslatable(hidden.fieldConfig.i18n))) {
-        // An object or array value is flattened into key paths below the field’s own, e.g.
-        // `tags.0`, which are replaced along with it
-        delete valueMap[keyPath];
-        hiddenFields.set(hidden.keyPath, hidden.fieldConfig);
+      if (hidden) {
+        if (locale === defaultLocale || isFieldTranslatable(hidden.fieldConfig.i18n)) {
+          // An object or array value is flattened into key paths below the field’s own, e.g.
+          // `tags.0`, which are replaced along with it
+          delete valueMap[keyPath];
+          hiddenFields.set(hidden.keyPath, hidden.fieldConfig);
+        } else if (
+          isDuplicatedField({
+            fieldConfig: hidden.fieldConfig,
+            getFieldArgs: { ...getFieldArgs, keyPath: hidden.keyPath },
+          })
+        ) {
+          delete valueMap[keyPath];
+          getOrCreate(duplicatedHiddenFieldMap, locale, () => new Set()).add(hidden.keyPath);
+        }
       }
     });
 
@@ -127,6 +164,34 @@ export const duplicateDraft = async (entryDraft) => {
         valueMap,
         getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale }),
       );
+    });
+  });
+
+  const defaultValueMap = currentValues[defaultLocale];
+
+  // A duplicated field holds the same value in every locale, so the other locales take the default
+  // locale’s new value rather than keeping the original entry’s or getting one of their own
+  duplicatedHiddenFieldMap.forEach((keyPaths, locale) => {
+    keyPaths.forEach((keyPath) => {
+      if (keyPath in defaultValueMap) {
+        currentValues[locale][keyPath] = structuredClone(defaultValueMap[keyPath]);
+      }
+    });
+  });
+
+  fillUuidValues({
+    contentMap: currentValues,
+    defaultLocale,
+    getFieldArgs: { collectionName, fileName, isIndexFile },
+  });
+
+  // A list item that only exists in another locale has no default locale’s value to copy, so it
+  // gets a UUID of its own rather than keeping the original entry’s or being left empty
+  clearedUuidFieldMap.forEach((fieldMap, locale) => {
+    fieldMap.forEach((fieldConfig, keyPath) => {
+      if (!currentValues[locale][keyPath]) {
+        currentValues[locale][keyPath] = getInitialUuidValue(fieldConfig);
+      }
     });
   });
 

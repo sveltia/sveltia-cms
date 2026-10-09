@@ -527,6 +527,66 @@ describe('Test matchesConditions()', () => {
       expect(matches('2026-09-16', { field: 'date', lte: '{{today}}' }, options)).toBe(true);
     });
 
+    test('compares a date and time value with `{{today}}` as the local day', () => {
+      // The tests run in UTC, where local and UTC midnight are the same, so switch to a time zone
+      // behind UTC, where parsing `{{today}}` as UTC midnight would move it to the previous evening
+      const { TZ } = process.env;
+
+      process.env.TZ = 'America/New_York';
+
+      try {
+        const now = new Date(2026, 8, 16, 14, 5, 9);
+        const lateYesterday = new Date(2026, 8, 15, 22, 0).toISOString();
+        const earlyToday = new Date(2026, 8, 16, 0, 30).toISOString();
+
+        [dateTimeField, { ...dateTimeField, output_utc: true }].forEach((dateFieldConfig) => {
+          const conditions = prepareConditions(
+            { field: 'date', gte: '{{today}}' },
+            { dateFieldConfig, now },
+          );
+
+          expect(conditions.comparisons).toEqual([
+            { operator: 'gte', target: new Date(2026, 8, 16) },
+          ]);
+          expect(matchesConditions({ rawValue: lateYesterday, conditions })).toBe(false);
+          expect(matchesConditions({ rawValue: earlyToday, conditions })).toBe(true);
+        });
+
+        // A field without a time parses its values and the target the same way, as UTC midnight
+        expect(
+          prepareConditions(
+            { field: 'date', gte: '{{today}}' },
+            { dateFieldConfig: dateOnlyField, now },
+          ).comparisons,
+        ).toEqual([{ operator: 'gte', target: new Date(Date.UTC(2026, 8, 16)) }]);
+
+        // So does a field edited in UTC
+        expect(
+          prepareConditions({ field: 'date', gte: '{{today}}' }, { dateFieldConfig: utcField, now })
+            .comparisons,
+        ).toEqual([{ operator: 'gte', target: new Date(Date.UTC(2026, 8, 16)) }]);
+
+        // A field in a custom format parses the target in that format, falling back to the default
+        // parser
+        expect(
+          prepareConditions(
+            { field: 'date', gte: '{{today}}' },
+            { dateFieldConfig: { name: 'date', widget: 'datetime', format: 'YYYY-MM-DD' }, now },
+          ).comparisons,
+        ).toEqual([{ operator: 'gte', target: new Date(2026, 8, 16) }]);
+
+        // A field without a date can’t be compared with a date
+        expect(
+          prepareConditions(
+            { field: 'date', gte: '{{today}}' },
+            { dateFieldConfig: { name: 'date', widget: 'datetime', date_format: false }, now },
+          ).comparisons,
+        ).toEqual([{ operator: 'gte', target: undefined }]);
+      } finally {
+        process.env.TZ = TZ;
+      }
+    });
+
     test('compares with a literal date', () => {
       const options = { dateFieldConfig: dateTimeField };
 

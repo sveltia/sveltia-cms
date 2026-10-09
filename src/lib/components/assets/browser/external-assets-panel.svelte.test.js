@@ -16,6 +16,27 @@ import { waitForToastsToHide } from '$lib/test/toast';
 
 import ExternalAssetsPanel from './external-assets-panel.svelte';
 
+/**
+ * Downloads held until the test resolves them, keyed by download URL. A download not listed here
+ * goes ahead as usual.
+ */
+const { heldDownloads } = vi.hoisted(() => ({
+  heldDownloads: /** @type {Map<string, Promise<Blob>>} */ (new Map()),
+}));
+
+vi.mock('$lib/services/assets/external/data', async (importOriginal) => {
+  /** @type {typeof import('$lib/services/assets/external/data')} */
+  const actual = await importOriginal();
+
+  return {
+    ...actual,
+    fetchExternalAssetBlob: vi.fn(
+      async (/** @type {import('$lib/types/private').ExternalAsset} */ asset) =>
+        heldDownloads.get(asset.downloadURL) ?? actual.fetchExternalAssetBlob(asset),
+    ),
+  };
+});
+
 const assets = [
   createMockExternalAsset({ fileName: 'a.png' }),
   createMockExternalAsset({ fileName: 'b.png' }),
@@ -54,6 +75,7 @@ describe('ExternalAssetsPanel', () => {
     prefs.apiKeys = {};
     prefs.logins = {};
     selectAssetsView.current = { type: 'grid' };
+    heldDownloads.clear();
   });
 
   test('lists the assets and selects one by hotlinking', async () => {
@@ -97,6 +119,76 @@ describe('ExternalAssetsPanel', () => {
     await sleep(50);
     expect(props.selectedResources).toEqual([
       { url: 'https://cdn.example.com/images/a.png', credit: undefined },
+    ]);
+  });
+
+  test('replaces a single selection hidden by a search', async () => {
+    const props = $state({
+      serviceProps: createMockCloudService({
+        list: vi.fn().mockResolvedValue(assets),
+        search: vi.fn().mockResolvedValue([assets[1]]),
+      }),
+      searchTerms: '',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    await waitForList(2);
+
+    await getOption('images/a.png').click();
+    await expect
+      .poll(() => props.selectedResources)
+      .toEqual([{ url: 'https://cdn.example.com/images/a.png', credit: undefined }]);
+
+    props.searchTerms = 'b';
+    await waitForList(1);
+    await getOption('images/b.png').click();
+    await expect
+      .poll(() => props.selectedResources)
+      .toEqual([{ url: 'https://cdn.example.com/images/b.png', credit: undefined }]);
+  });
+
+  test('leaves out a single selection replaced while it was hidden and still downloading', async () => {
+    /** @type {Record<string, (blob: Blob) => void>} */
+    const release = {};
+
+    assets.forEach(({ downloadURL }) => {
+      heldDownloads.set(
+        downloadURL,
+        new Promise((resolve) => {
+          release[downloadURL] = resolve;
+        }),
+      );
+    });
+
+    const props = $state({
+      serviceProps: createMockCloudService({
+        hotlinking: false,
+        list: vi.fn().mockResolvedValue(assets),
+        search: vi.fn().mockResolvedValue([assets[1]]),
+      }),
+      searchTerms: '',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    await waitForList(2);
+
+    await getOption('images/a.png').click();
+    props.searchTerms = 'b';
+    await waitForList(1);
+    await getOption('images/b.png').click();
+
+    release['https://cdn.example.com/images/b.png'](new Blob(['b'], { type: 'image/png' }));
+    await expect
+      .poll(() => props.selectedResources.map((/** @type {any} */ r) => r.url))
+      .toEqual(['https://cdn.example.com/images/b.png']);
+
+    // The earlier pick is not added once its download completes
+    release['https://cdn.example.com/images/a.png'](new Blob(['a'], { type: 'image/png' }));
+    await sleep(50);
+    expect(props.selectedResources.map((/** @type {any} */ r) => r.url)).toEqual([
+      'https://cdn.example.com/images/b.png',
     ]);
   });
 

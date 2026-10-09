@@ -14,6 +14,7 @@ import {
 } from '$lib/services/contents/collection/entries/index-file';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/parse';
+import { omitLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
 
 /**
  * @import {
@@ -164,7 +165,7 @@ export const getPreviewPath = ({
   // Handle the case where the default locale is omitted from the preview path, ensuring that the
   // URL is correctly generated without the locale segment for the default locale.
   if (locale === defaultLocale && omitDefaultLocaleFromPreviewPath) {
-    template = template.replace(/{{locale}}[./]/, '');
+    template = omitLocalePlaceholder(template) ?? template;
   }
 
   return fillEntryPathTemplate({

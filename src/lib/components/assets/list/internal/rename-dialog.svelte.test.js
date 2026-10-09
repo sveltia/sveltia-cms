@@ -5,6 +5,7 @@ import { render } from 'vitest-browser-svelte';
 
 import { moveAssets } from '$lib/services/assets/data/move';
 import { getAssetUsedEntries } from '$lib/services/assets/details';
+import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { renamingAsset } from '$lib/services/assets/state';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
@@ -45,11 +46,17 @@ describe('RenameDialog', () => {
   beforeEach(() => {
     showAssetOverlay.current = true;
     renamingAsset.current = undefined;
+    selectedAssetFolder.current = undefined;
     vi.mocked(moveAssets).mockResolvedValue(undefined);
   });
 
   test('opens for the asset being renamed and moves it', async () => {
     window.location.hash = '#/assets/static/uploads/a.png';
+
+    // The asset was opened from All Assets
+    const allAssetsFolder = { internalPath: undefined, publicPath: undefined };
+
+    selectedAssetFolder.current = /** @type {any} */ (allAssetsFolder);
 
     await render(RenameDialog);
 
@@ -76,6 +83,8 @@ describe('RenameDialog', () => {
     );
     // The details overlay of the asset stays open
     await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/c.png');
+    // The folder the asset was opened from still travels as history state
+    expect(window.history.state.folder).toEqual(allAssetsFolder);
     await expect.poll(() => renamingAsset.current).toBeUndefined();
   });
 

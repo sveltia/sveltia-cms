@@ -1119,6 +1119,15 @@ describe('contents/fields/file/helpers', () => {
       );
     });
 
+    it('should not throw on a path or file name with a literal `%` sign', () => {
+      expect(getFileDisplayPath({ draft, value: '/images/50%off%20sale.jpg' })).toBe(
+        '/images/50%off sale.jpg',
+      );
+      expect(getFileDisplayPath({ draft, value: 'blob:test', unsavedFileName: '50%off.png' })).toBe(
+        '/images/uploads/50%off.png',
+      );
+    });
+
     it('should return a URL without a query string as is', () => {
       expect(getFileDisplayPath({ draft, value: 'https://example.com/photo.png' })).toBe(
         'https://example.com/photo.png',

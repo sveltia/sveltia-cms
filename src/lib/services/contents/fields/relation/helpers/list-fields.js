@@ -106,7 +106,7 @@ const buildListItemOption = ({
    */
   const replaceWildcards = (template) =>
     replacements.reduce(
-      (result, [fieldName, itemValue]) => result.replaceAll(`{{${fieldName}}}`, itemValue),
+      (result, [fieldName, itemValue]) => result.replaceAll(`{{${fieldName}}}`, () => itemValue),
       template,
     );
 

@@ -260,27 +260,73 @@ export const waitForFork = async (fork, attemptsLeft) => {
 };
 
 /**
- * Fork the configured project onto the signed-in user’s namespace.
+ * Check whether the signed-in user already has a project at the path a fork gets by default, which
+ * is what stops a fork from being created there.
+ * @returns {Promise<boolean>} `true` if the path is taken.
+ * @see https://docs.gitlab.com/api/projects/#get-a-single-project
+ */
+const isForkPathTaken = async () => {
+  const userName = /** @type {string} */ (user.account?.login);
+
+  try {
+    await fetchAPI(`/projects/${getProjectId({ owner: userName, repo: repository.repo })}`);
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Fork the configured project onto the signed-in user’s namespace. GitLab doesn’t pick another
+ * name when the contributor already has an unrelated project at the default path, the way GitHub
+ * does, so the fork is given one made of the configured project’s namespace and name. Later
+ * sessions find it by {@link fetchForkFromNetwork}, as {@link fetchForkByName} only looks at the
+ * default path.
  * @returns {Promise<RepositoryPath>} The new fork.
  * @throws {Error} When the fork could not be created.
  * @see https://docs.gitlab.com/api/project_forks/#fork-a-project
  */
 export const createFork = async () => {
   const { owner, repo } = repository;
+  const endpoint = `/projects/${getProjectId()}/fork`;
   /** @type {Record<string, any>} */
   let result;
 
-  try {
-    result = /** @type {Record<string, any>} */ (
-      await fetchAPI(`/projects/${getProjectId()}/fork`, { method: 'POST' })
-    );
-  } catch (/** @type {any} */ ex) {
+  /**
+   * Log the given failure and create an error that tells the user the fork couldn’t be made.
+   * @param {Error} ex Failure.
+   * @returns {Error} Error to throw.
+   */
+  const createForkError = (ex) => {
     // eslint-disable-next-line no-console
     console.error('Failed to fork the repository.', ex);
 
-    throw createLocalizedError('Failed to fork the repository.', 'open_authoring.fork_failed', {
+    return createLocalizedError('Failed to fork the repository.', 'open_authoring.fork_failed', {
       repo: `${owner}/${repo}`,
     });
+  };
+
+  try {
+    result = /** @type {Record<string, any>} */ (await fetchAPI(endpoint, { method: 'POST' }));
+  } catch (/** @type {any} */ ex) {
+    // GitLab refuses a name or path that has already been taken in the namespace with 409 Conflict,
+    // or with 400 Bad Request on some versions. The lookup tells that from any other failure, such
+    // as forking being turned off
+    if (![400, 409].includes(ex.cause?.status) || !(await isForkPathTaken())) {
+      throw createForkError(ex);
+    }
+
+    // A path can’t hold a slash, which a project in a subgroup has in its namespace
+    const name = `${owner.replaceAll('/', '-')}-${repo}`;
+
+    try {
+      result = /** @type {Record<string, any>} */ (
+        await fetchAPI(endpoint, { method: 'POST', body: { name, path: name } })
+      );
+    } catch (/** @type {any} */ retryEx) {
+      throw createForkError(retryEx);
+    }
   }
 
   const fork = parseProjectPath(result.path_with_namespace);

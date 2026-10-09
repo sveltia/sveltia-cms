@@ -9,6 +9,7 @@ import { allAssets } from '$lib/services/assets/state';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getEntryOptions } from '$lib/services/contents/fields/relation/helpers';
 import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 import { unflattenMap } from '$lib/services/utils/object';
 
@@ -25,7 +26,7 @@ import { unflattenMap } from '$lib/services/utils/object';
  * InternalLocaleCode,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
- * @import { ApiAsset, ApiEntry, FieldKeyPath, GetAsset } from '$lib/types/public';
+ * @import { ApiAsset, ApiEntry, FieldKeyPath, GetAsset, RelationField } from '$lib/types/public';
  */
 
 /**
@@ -173,52 +174,48 @@ export const createGetAsset =
   };
 
 /**
- * Cache of {@link getReferencedEntryLookup} results, keyed by the entry list they index.
- * @type {WeakMap<Entry[], Map<string, Map<any, Entry>>>}
+ * Cache of {@link getReferencedEntryLookup} results, keyed by the entry list they index, then by
+ * the Relation field config, then by locale.
+ * @type {WeakMap<Entry[], WeakMap<RelationField, Map<InternalLocaleCode, Map<any, Entry>>>>}
  */
 const referencedEntryLookupCache = new WeakMap();
 
 /**
  * Get a lookup table of the given referenced entries by the value a Relation field stores. The
- * table is built once per entry list, locale and value field, instead of the list being scanned
- * for every value — the metadata is rebuilt whenever the entry draft is updated.
+ * values are resolved with the field’s `value_field` template the same way as the field’s options,
+ * so a template like `{{locale}}/{{slug}}` or `{{fields.name.first}}` matches the stored values.
+ * The table is built once per entry list, field and locale, instead of the list being scanned for
+ * every value — the metadata is rebuilt whenever the entry draft is updated.
  * @param {Entry[]} entries Referenced entries.
  * @param {InternalLocaleCode} locale Locale code.
- * @param {string} valueField Relation field’s `value_field` option.
+ * @param {RelationField} fieldConfig Relation field config.
  * @returns {Map<any, Entry>} Entries by value. When several entries share a value, the first one
  * is kept.
  */
-const getReferencedEntryLookup = (entries, locale, valueField) => {
-  let lookups = referencedEntryLookupCache.get(entries);
+const getReferencedEntryLookup = (entries, locale, fieldConfig) =>
+  getOrCreate(
+    getOrCreate(
+      getOrCreate(referencedEntryLookupCache, entries, () => new WeakMap()),
+      fieldConfig,
+      () => new Map(),
+    ),
+    locale,
+    () => {
+      /** @type {Map<any, Entry>} */
+      const lookup = new Map();
 
-  if (!lookups) {
-    lookups = new Map();
-    referencedEntryLookupCache.set(entries, lookups);
-  }
+      entries.forEach((refEntry) => {
+        // A `value_field` referencing a list field gives one value per list item
+        getEntryOptions({ locale, fieldConfig, refEntry }).forEach(({ value }) => {
+          if (!lookup.has(value)) {
+            lookup.set(value, refEntry);
+          }
+        });
+      });
 
-  const key = `${locale}\n${valueField}`;
-  const cached = lookups.get(key);
-
-  if (cached) {
-    return cached;
-  }
-
-  /** @type {Map<any, Entry>} */
-  const lookup = new Map();
-
-  entries.forEach((entry) => {
-    const value =
-      valueField === '{{slug}}' ? entry.slug : entry.locales[locale]?.content?.[valueField];
-
-    if (!lookup.has(value)) {
-      lookup.set(value, entry);
-    }
-  });
-
-  lookups.set(key, lookup);
-
-  return lookup;
-};
+      return lookup;
+    },
+  );
 
 /**
  * Get metadata for fields. For relation fields, looks up and stores the referenced entry content
@@ -242,11 +239,7 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
 
     // Populate metadata for relation fields by looking up referenced entries
     if (field?.widget === 'relation') {
-      const {
-        value_field: valueField = '{{slug}}',
-        collection: refCollection,
-        file: refFile,
-      } = field;
+      const { collection: refCollection, file: refFile } = field;
 
       const refEntries = (() => {
         const cacheKey = `${refCollection}:${refFile ?? ''}`;
@@ -269,11 +262,12 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
 
       metaData[keyPath] ??= {};
       metaData[keyPath][refCollection] ??= {};
+      // The option values are strings, while a value written by hand may be a number, e.g. `1`
       metaData[keyPath][refCollection][value] = getReferencedEntryLookup(
         refEntries,
         locale,
-        valueField,
-      ).get(value)?.locales[locale]?.content;
+        /** @type {RelationField} */ (field),
+      ).get(String(value))?.locales[locale]?.content;
     }
   });
 

@@ -270,9 +270,12 @@ createRootEffect(() => {
   }
 });
 
+// Clear the selection when the listed assets or the filter change, so it never includes an asset
+// the current view hides, which a bulk action like Delete would otherwise apply to
 createRootEffect(() => {
   const assets = listedAssets.current;
 
+  void filterConditions.current;
   selectedAssets.current = [];
 
   if (untrack(() => prefs.devModeEnabled)) {

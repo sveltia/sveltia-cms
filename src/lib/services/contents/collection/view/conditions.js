@@ -6,6 +6,7 @@ import {
   TEMPLATE_TAG_REPLACE_REGEX,
 } from '$lib/services/common/template/constants';
 import { COMPARISON_OPERATORS, matchesFilter } from '$lib/services/common/view';
+import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/parse';
 import { isValueEmpty } from '$lib/services/utils/object';
 import { getRegex } from '$lib/services/utils/regex';
@@ -112,6 +113,18 @@ export const resolveComparisonValue = (value, now = new Date()) => {
 };
 
 /**
+ * Check whether a DateTime field holds a date and time in the user’s local time zone, in the
+ * default format.
+ * @param {DateTimeField} dateFieldConfig DateTime field configuration.
+ * @returns {boolean} Result.
+ */
+const isLocalDateTime = (dateFieldConfig) => {
+  const { format, dateOnly, timeOnly, utc } = parseDateTimeConfig(dateFieldConfig);
+
+  return !format && !dateOnly && !timeOnly && !utc;
+};
+
+/**
  * Parse a value as a date the way the target field’s value is parsed.
  * @param {any} value Field value or resolved comparison value.
  * @param {DateTimeField | undefined} dateFieldConfig DateTime field configuration, if any.
@@ -126,17 +139,22 @@ const toDate = (value, dateFieldConfig) => {
     return undefined;
   }
 
-  if (dateFieldConfig) {
-    return getDate(String(value), dateFieldConfig);
-  }
-
-  // A date-only value, such as the `{{today}}` tag compared with an entry’s `commit_date`, stands
-  // for the local day, whereas `new Date()` would parse it as UTC midnight and shift the day
-  // boundary by the user’s UTC offset
-  if (DATE_ONLY_REGEX.test(String(value))) {
+  // A date-only value, such as the `{{today}}` tag compared with an entry’s `commit_date` or with a
+  // date and time field, stands for the local day, whereas `new Date()` would parse it as UTC
+  // midnight and shift the day boundary by the user’s UTC offset. A field without a time, whose
+  // values are parsed that way as well, and a field edited in UTC or in a custom format keep the
+  // field’s own parsing
+  if (
+    DATE_ONLY_REGEX.test(String(value)) &&
+    (!dateFieldConfig || isLocalDateTime(dateFieldConfig))
+  ) {
     const [year, month, day] = String(value).split('-').map(Number);
 
     return new Date(year, month - 1, day);
+  }
+
+  if (dateFieldConfig) {
+    return getDate(String(value), dateFieldConfig);
   }
 
   const date = new Date(value);

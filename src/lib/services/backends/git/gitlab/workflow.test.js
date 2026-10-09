@@ -186,20 +186,101 @@ describe('GitLab Editorial Workflow service', () => {
       expect(result.pullRequest.number).toBe(5);
     });
 
-    test('reuses an existing merge request without creating a branch', async () => {
-      const pullRequest = /** @type {any} */ ({ number: 5, branch: 'cms/posts/hello' });
-
-      vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
-
-      const result = await savePullRequest({ ...args, pullRequest });
-
-      expect(fetchAPI).not.toHaveBeenCalled();
-      expect(commitChanges).toHaveBeenCalledWith([], {
-        commitType: 'create',
+    describe('onto an existing merge request', () => {
+      const pullRequest = /** @type {any} */ ({
+        number: 5,
         branch: 'cms/posts/hello',
+        headSHA: 'mr-head',
       });
 
-      expect(result.pullRequest).toBe(pullRequest);
+      const BRANCH_PATH = `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`;
+      /**
+       * Mock the branch lookup response.
+       * @param {string} id Commit the branch points at.
+       * @returns {any} Response.
+       */
+      const branchResponse = (id) => ({ name: 'cms/posts/hello', commit: { id } });
+
+      /** GitLab’s response to a `last_commit_id` that no longer matches the file. */
+      const changedFileError = new Error('You are attempting to update a file that has changed', {
+        cause: { status: 400 },
+      });
+
+      test('commits onto the branch at the head on record', async () => {
+        vi.mocked(fetchAPI).mockResolvedValueOnce(branchResponse('mr-head'));
+        vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
+
+        const result = await savePullRequest({ ...args, pullRequest });
+
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchAPI).toHaveBeenCalledWith(BRANCH_PATH);
+        expect(commitChanges).toHaveBeenCalledWith([], {
+          commitType: 'create',
+          branch: 'cms/posts/hello',
+          headOid: 'mr-head',
+        });
+
+        expect(result.pullRequest).toBe(pullRequest);
+      });
+
+      test('refuses to commit when the branch has moved', async () => {
+        vi.mocked(fetchAPI).mockResolvedValueOnce(branchResponse('someone-elses-sha'));
+
+        await expect(savePullRequest({ ...args, pullRequest })).rejects.toThrow(
+          'The workflow branch has moved since the entry was loaded.',
+        );
+        expect(commitChanges).not.toHaveBeenCalled();
+      });
+
+      test('refuses to commit without a head on record', async () => {
+        vi.mocked(fetchAPI).mockResolvedValueOnce(branchResponse('mr-head'));
+
+        await expect(
+          savePullRequest({ ...args, pullRequest: { ...pullRequest, headSHA: undefined } }),
+        ).rejects.toThrow('The workflow branch has moved since the entry was loaded.');
+        expect(commitChanges).not.toHaveBeenCalled();
+      });
+
+      test('reports a branch that is gone', async () => {
+        vi.mocked(fetchAPI).mockRejectedValueOnce(
+          new Error('404 Branch Not Found', { cause: { status: 404 } }),
+        );
+
+        await expect(savePullRequest({ ...args, pullRequest })).rejects.toThrow(
+          'Failed to save the changes.',
+        );
+        expect(commitChanges).not.toHaveBeenCalled();
+      });
+
+      test('reports a commit refused because the branch moved in the meantime', async () => {
+        vi.mocked(fetchAPI)
+          .mockResolvedValueOnce(branchResponse('mr-head'))
+          .mockResolvedValueOnce(branchResponse('someone-elses-sha'));
+        vi.mocked(commitChanges).mockRejectedValue(changedFileError);
+
+        await expect(savePullRequest({ ...args, pullRequest })).rejects.toThrow(
+          'The branch has moved since the site data was loaded.',
+        );
+      });
+
+      test('passes a refused commit on when the branch has not moved', async () => {
+        vi.mocked(fetchAPI)
+          .mockResolvedValueOnce(branchResponse('mr-head'))
+          .mockResolvedValueOnce(branchResponse('mr-head'));
+        vi.mocked(commitChanges).mockRejectedValue(changedFileError);
+
+        await expect(savePullRequest({ ...args, pullRequest })).rejects.toBe(changedFileError);
+      });
+
+      test('passes any other failure on without a head lookup', async () => {
+        const serverError = new Error('Server error', { cause: { status: 500 } });
+
+        vi.mocked(fetchAPI).mockResolvedValueOnce(branchResponse('mr-head'));
+        vi.mocked(commitChanges).mockRejectedValue(serverError);
+
+        await expect(savePullRequest({ ...args, pullRequest })).rejects.toBe(serverError);
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+      });
     });
 
     /** GitLab’s response to `start_branch` when the branch already exists. */
