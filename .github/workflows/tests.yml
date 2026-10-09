@@ -13,11 +13,11 @@ jobs:
             command: pnpm check
           # The unit test files are split into shards that run in parallel, as spawning a worker
           # per file is what takes most of the time on the runner
-          - name: Test (1/3)
+          - name: Test (unit 1/3)
             command: pnpm test --project unit --shard=1/3
-          - name: Test (2/3)
+          - name: Test (unit 2/3)
             command: pnpm test --project unit --shard=2/3
-          - name: Test (3/3)
+          - name: Test (unit 3/3)
             command: pnpm test --project unit --shard=3/3
           # The component tests run in Chromium, which only these jobs install. They are split
           # the same way, as a runner has few cores to run the files in parallel on
