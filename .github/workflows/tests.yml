@@ -4,7 +4,7 @@ on: push
 
 jobs:
   ci:
-    name: CI
+    name: ${{ matrix.task.name }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -65,7 +65,7 @@ jobs:
         uses: actions/download-artifact@v8.0.2
         with:
           name: bundle
-          path: package/dist/
+          path: package/
       - name: ${{ matrix.task.name }}
         run: ${{ matrix.task.command }}
       - name: Upload the bundle
@@ -73,7 +73,10 @@ jobs:
         uses: actions/upload-artifact@v7.0.1
         with:
           name: bundle
-          path: package/dist/
+          # The bundle, and the locale files the tests serve in place of the CDN
+          path: |
+            package/dist/
+            package/locales/
           # Replace the bundle of an earlier attempt when the job is re-run, and keep it long
           # enough for a failed shard to be re-run on its own a few days later
           overwrite: true
@@ -89,7 +92,7 @@ jobs:
           retention-days: 14
   # The production bundle is built once, and handed to the end-to-end test jobs below
   build:
-    name: CI
+    name: ${{ matrix.task.name }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -99,7 +102,7 @@ jobs:
             bundle: upload
     steps: *steps
   e2e:
-    name: CI
+    name: ${{ matrix.task.name }}
     needs: build
     runs-on: ubuntu-latest
     strategy:
