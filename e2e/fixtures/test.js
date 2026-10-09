@@ -14,6 +14,12 @@ import { MockGitLab } from './gitlab.js';
  */
 
 /**
+ * URL of the installed Sveltia UI entry point, in the package manager’s store, where the Shiki
+ * packages it depends on sit next to it.
+ */
+const SVELTIA_UI_URL = new URL(import.meta.resolve('@sveltia/ui'));
+
+/**
  * Name of the directory in the origin private file system (OPFS) where the `test-repo` backend
  * stores the repository files. Keep it in sync with `TEST_BACKEND_ROOT_DIR_NAME` in
  * `src/lib/services/backends/fs/test.js`.
@@ -344,6 +350,25 @@ export const serveSite = async (context, { config, siteOrigin, baseURL }) => {
         new URL(`../../package/locales/${route.request().url().split('/').pop()}`, import.meta.url),
       ),
     }),
+  );
+  // The code editor loads the syntax highlighting engine, grammars and themes from the CDN on
+  // demand; serve the copies installed with Sveltia UI instead, so a slow CDN can’t hold up a test
+  await context.route(
+    /^https:\/\/unpkg\.com\/(?:@sveltia\/ui@[^/]+\/dist\/shiki-engine|@shikijs\/(?:langs|themes)@)/,
+    async (route) => {
+      const { pathname } = new URL(route.request().url());
+
+      // A grammar imports the ones it embeds by relative path, which resolves to the same layout
+      const path = pathname.startsWith('/@sveltia/ui@')
+        ? 'dist/shiki-engine.js'
+        : pathname.replace(/^\/@shikijs\/(\w+)@[^/]+\//, '../../@shikijs/$1/');
+
+      await route.fulfill({
+        contentType: 'text/javascript',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: await readFile(new URL(`../${path}`, SVELTIA_UI_URL)),
+      });
+    },
   );
   // The CMS adds a cache-busting query to the URL, hence the trailing wildcard. A sign-in popup
   // opens the CMS as well, so the config is served to every page of the browser context. Routes
