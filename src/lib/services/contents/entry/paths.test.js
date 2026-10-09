@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getEntryPaths } from '$lib/services/contents/entry/paths';
+import { getEntryFolderPath, getEntryPaths } from '$lib/services/contents/entry/paths';
 
 /**
  * @import { Entry, UnpublishedEntry } from '$lib/types/private';
@@ -50,5 +50,25 @@ describe('getEntryPaths()', () => {
 
     expect(getEntryPaths(published, { includePrevious: true })).toEqual(['posts/a.md']);
     expect(getEntryPaths(noPrevious, { includePrevious: true })).toEqual(['posts/a.md']);
+  });
+});
+
+describe('getEntryFolderPath()', () => {
+  it('returns the folder of the first locale’s file', () => {
+    const entry = /** @type {Entry} */ (
+      /** @type {unknown} */ ({
+        locales: { en: { path: 'posts/new.en.md' }, fr: { path: 'posts/fr/new.md' } },
+      })
+    );
+
+    expect(getEntryFolderPath(entry)).toBe('posts');
+  });
+
+  it('returns an empty string for an entry at the repository root', () => {
+    const entry = /** @type {Entry} */ (
+      /** @type {unknown} */ ({ locales: { en: { path: 'index.md' } } })
+    );
+
+    expect(getEntryFolderPath(entry)).toBe('');
   });
 });

@@ -11,6 +11,7 @@ import {
   TEMPLATE_TAG_REPLACE_REGEX,
 } from '$lib/services/common/template/constants';
 import { cmsConfig } from '$lib/services/config';
+import { getEntryFolderPath } from '$lib/services/contents/entry/paths';
 import { shareInFlight } from '$lib/services/utils/cache';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 import { createPath, createPathRegEx, encodeFilePath } from '$lib/services/utils/file';
@@ -553,10 +554,7 @@ export const getAssetPublicURL = (
     if (pathOnly) {
       // A file at the repository root has no folder path
       const assetFolderPath = getPathInfo(asset.path).dirname ?? '';
-
-      const entryFolderPath = entry
-        ? (getPathInfo(Object.values(entry.locales)[0].path).dirname ?? '')
-        : undefined;
+      const entryFolderPath = entry ? getEntryFolderPath(entry) : undefined;
 
       if (entryFolderPath !== undefined) {
         // If the asset is in the same folder as the entry, return the file name only

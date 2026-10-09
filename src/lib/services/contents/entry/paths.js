@@ -1,3 +1,5 @@
+import { getPathInfo } from '@sveltia/utils/file';
+
 /**
  * @import { Entry, UnpublishedEntry } from '$lib/types/private';
  */
@@ -17,3 +19,12 @@ export const getEntryPaths = (entry, { includePrevious = false } = {}) => [
     ...((includePrevious && /** @type {UnpublishedEntry} */ (entry).workflow?.previousPaths) || []),
   ]),
 ];
+
+/**
+ * Get the folder an entry’s file is stored in. For a multi-file i18n entry, the first locale’s file
+ * is used.
+ * @param {Entry | UnpublishedEntry} entry Entry.
+ * @returns {string} Folder path, or an empty string if the entry is at the repository root.
+ */
+export const getEntryFolderPath = (entry) =>
+  getPathInfo(Object.values(entry.locales)[0].path).dirname ?? '';

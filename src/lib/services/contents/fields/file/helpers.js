@@ -11,6 +11,7 @@ import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/consta
 import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { createPublicURL, getAssetFolderPaths } from '$lib/services/contents/draft/save/assets';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
+import { getEntryFolderPath } from '$lib/services/contents/entry/paths';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { createPath } from '$lib/services/utils/file';
 import { decodeURISafely } from '$lib/services/utils/url';
@@ -141,9 +142,7 @@ export const getTargetFolderPath = ({ entry, folder }) => {
   const subPath = internalSubPath || undefined;
 
   if (entry) {
-    const entryDir = getPathInfo(Object.values(entry.locales)[0].path).dirname;
-
-    return subPath ? `${entryDir}/${subPath}` : entryDir;
+    return createPath([getEntryFolderPath(entry), subPath]);
   }
 
   // Append a placeholder because the complete path is not determined until the entry is saved
@@ -261,7 +260,9 @@ export const getFileDisplayPath = ({ draft, value, unsavedFileName }) => {
  */
 const isInTargetFolder = ({ path, folderPath }) =>
   folderPath !== undefined &&
-  (path === folderPath ||
+  // An empty path is the repository root, which holds every other path
+  (folderPath === '' ||
+    path === folderPath ||
     // Handle the case where the target folder is a template with an unresolved placeholder
     `${path}/-` === folderPath ||
     path.startsWith(`${folderPath}/`));
@@ -290,12 +291,9 @@ export const isAssetInSelectedFolder = ({ asset, folder, folderPath }) => {
   // The target folder path of an entry-relative folder is resolved against the entry, so the path
   // alone tells whether the asset is stored next to it. The folder the asset is filed under can’t
   // be compared: a folder in a custom editor component has no collection, hence no base folder,
-  // and an asset may be filed under an enclosing global folder instead
-  const { dirname } = getPathInfo(asset.path);
-
-  if (dirname === undefined) {
-    return false;
-  }
+  // and an asset may be filed under an enclosing global folder instead. A file at the repository
+  // root has no folder path
+  const dirname = getPathInfo(asset.path).dirname ?? '';
 
   return isInTargetFolder({ path: dirname, folderPath });
 };

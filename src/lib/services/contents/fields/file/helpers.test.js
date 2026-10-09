@@ -875,6 +875,33 @@ describe('contents/fields/file/helpers', () => {
         expect(result).toBe('content/posts/images');
       });
 
+      it('should resolve against the repository root for an entry at the root', () => {
+        vi.mocked(getPathInfo).mockReturnValue(/** @type {any} */ ({ dirname: undefined }));
+
+        const entry = /** @type {any} */ ({ locales: { en: { path: 'my-post.md' } } });
+
+        expect(
+          getTargetFolderPath({
+            entry,
+            folder: /** @type {any} */ ({
+              entryRelative: true,
+              internalPath: '',
+              internalSubPath: 'images',
+            }),
+          }),
+        ).toBe('images');
+        expect(
+          getTargetFolderPath({
+            entry,
+            folder: /** @type {any} */ ({
+              entryRelative: true,
+              internalPath: '',
+              internalSubPath: '',
+            }),
+          }),
+        ).toBe('');
+      });
+
       it('should return internalPath/-  when no entry and no internalSubPath', () => {
         const result = getTargetFolderPath({
           entry: undefined,
@@ -1168,6 +1195,18 @@ describe('contents/fields/file/helpers', () => {
       },
     };
 
+    it('should return true for any asset in a root folder when the target folder is the root', () => {
+      const rootFolder = { ...folder, internalPath: '' };
+
+      expect(
+        isAssetInSelectedFolder({
+          asset: { ...asset, folder: rootFolder },
+          folder: rootFolder,
+          folderPath: '',
+        }),
+      ).toBe(true);
+    });
+
     describe('returns false for mismatching folder info', () => {
       it('should return false when folder is undefined', () => {
         expect(
@@ -1285,7 +1324,7 @@ describe('contents/fields/file/helpers', () => {
         ).toBe(true);
       });
 
-      it('should return false when dirname is undefined', () => {
+      it('should return false for an asset at the root when the target folder is not', () => {
         vi.mocked(getPathInfo).mockReturnValue(/** @type {any} */ ({ dirname: undefined }));
 
         expect(
@@ -1295,6 +1334,22 @@ describe('contents/fields/file/helpers', () => {
             folderPath: 'content/posts/my-post',
           }),
         ).toBe(false);
+      });
+
+      it('should return true for an asset at the root when the target folder is the root', () => {
+        vi.mocked(getPathInfo).mockReturnValue(/** @type {any} */ ({ dirname: undefined }));
+
+        expect(
+          isAssetInSelectedFolder({ asset: relativeAsset, folder: relativeFolder, folderPath: '' }),
+        ).toBe(true);
+      });
+
+      it('should return true for any asset when the target folder is the root', () => {
+        vi.mocked(getPathInfo).mockReturnValue(/** @type {any} */ ({ dirname: 'images/2024' }));
+
+        expect(
+          isAssetInSelectedFolder({ asset: relativeAsset, folder: relativeFolder, folderPath: '' }),
+        ).toBe(true);
       });
 
       it('should return false when dirname does not match folderPath', () => {
