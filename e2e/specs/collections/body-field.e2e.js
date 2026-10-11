@@ -213,12 +213,16 @@ test.describe('`inline: true`', () => {
     );
   });
 
-  test('drops the text below the front matter (known issue)', async ({ cms, page }) => {
-    // The text below the front matter is neither shown nor kept, so a Save deletes it without a
-    // warning. Once fixed, it should be kept below the front matter, or at least not be lost
-    // silently
+  test('moves the text below the front matter into it', async ({ cms, page }) => {
+    await start(cms, { 'content/notes/old.md': '---\ntitle: Old\n---\n\nHello.\n' });
+    await editBody(await openEntry(page, 'notes', 'Old', 'Hello.'));
+    await expectFile(cms, 'content/notes/old.md', '---\ntitle: Old\nbody: Edited.\n---\n');
+  });
+
+  test('prefers the body in the front matter to the text below it', async ({ cms, page }) => {
+    // The front matter takes precedence over the text below it, which is dropped, as with `key`
     await start(cms, {
-      'content/notes/old.md': '---\ntitle: Old\nbody: Hello.\n---\n\nBelow.\n',
+      'content/notes/old.md': '---\ntitle: Old\nbody: Hello.\n---\n\nIgnored.\n',
     });
     await editBody(await openEntry(page, 'notes', 'Old', 'Hello.'));
     await expectFile(cms, 'content/notes/old.md', '---\ntitle: Old\nbody: Edited.\n---\n');

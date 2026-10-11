@@ -162,8 +162,13 @@ export const parseFrontMatter = ({ collection, collectionFile, isIndexFile, form
     ...parsedHead,
     // The formatter inserts a blank line between the closing delimiter and the body, so the regex
     // above leaves that blank line as a leading line break. Strip it to make the value a faithful
-    // round-trip of what was written; otherwise a freshly-opened draft looks modified.
-    ...(!bodyInline && !(bodyKey in parsedHead) ? { [bodyKey]: body?.replace(/^\n/, '') } : {}),
+    // round-trip of what was written; otherwise a freshly-opened draft looks modified. The front
+    // matter takes precedence over the text below it. With `body_field.inline` on, text below is
+    // still read when the front matter lacks the key, so it’s moved inline on a Save rather than
+    // lost, but no empty body is added to a file that has none.
+    ...(!(bodyKey in parsedHead) && (!bodyInline || body?.trim())
+      ? { [bodyKey]: body?.replace(/^\n/, '') }
+      : {}),
   };
 };
 

@@ -1227,6 +1227,38 @@ describe('Test parseEntryFile()', () => {
     expect(result.body).not.toContain('Ignored content');
   });
 
+  test('reads the text below the front matter as an inline body missing from it', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
+
+    const inlineBodyCollection = /** @type {any} */ ({
+      name: 'test-collection',
+      _file: {
+        format: 'frontmatter',
+        fmDelimiters: ['---', '---'],
+        bodyField: { key: 'body', inline: true },
+      },
+    });
+
+    const result = parseFrontMatter({
+      collection: inlineBodyCollection,
+      format: 'yaml-frontmatter',
+      text: '---\ntitle: Test Post\n---\n\nBelow.',
+    });
+
+    expect(result).toEqual({ title: 'Test Post', body: 'Below.' });
+
+    // No empty body is added to a file without one
+    expect(
+      parseFrontMatter({
+        collection: inlineBodyCollection,
+        format: 'yaml-frontmatter',
+        text: '---\ntitle: Test Post\n---\n',
+      }),
+    ).toEqual({ title: 'Test Post' });
+  });
+
   test('parses frontmatter with custom body key', async () => {
     const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 
