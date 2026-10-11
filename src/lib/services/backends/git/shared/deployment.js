@@ -56,7 +56,6 @@ const SOURCE_RANK = { deployment: 2, status: 1, check: 0 };
 export const getPreviewContext = () => {
   const { backend } = cmsConfig.current ?? {};
 
-  // @ts-ignore The option is GitHub/GitLab only
   return /** @type {GitBackend} */ (backend ?? {}).preview_context ?? '';
 };
 

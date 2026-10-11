@@ -132,6 +132,12 @@ export class MockGitea extends MockGitRepository {
   forksDisabled = false;
 
   /**
+   * Commit statuses reported for each commit with {@link reportBuild}, keyed by commit SHA.
+   * @type {Map<string, Record<string, any>[]>}
+   */
+  builds = new Map();
+
+  /**
    * Open a pull request the way the instance does.
    * @param {object} args Arguments.
    * @param {string} args.title Title.
@@ -166,6 +172,28 @@ export class MockGitea extends MockGitRepository {
     this.pullRequests.push(pullRequest);
 
     return pullRequest;
+  }
+
+  /**
+   * Report the builds of a commit with commit statuses, which is all Gitea/Forgejo has for them: an
+   * external CI/CD service posts one, and Gitea/Forgejo Actions posts one for every job, linked to
+   * the job log. A later report replaces the earlier ones.
+   * @param {string} sha Commit SHA.
+   * @param {object} builds Builds.
+   * @param {{ context: string, status: string, target_url?: string, description?: string }[]}
+   * builds.statuses Latest status of each context, with a status like `pending` or `success`.
+   */
+  reportBuild(sha, { statuses }) {
+    this.builds.set(
+      sha,
+      statuses.map((status, index) => ({
+        id: index + 1,
+        description: '',
+        target_url: '',
+        updated_at: new Date(Date.UTC(2026, 0, 1, 0, index)).toISOString(),
+        ...status,
+      })),
+    );
   }
 
   /**
@@ -505,6 +533,19 @@ export class MockGitea extends MockGitRepository {
 
     if (method === 'POST' && path === 'contents') {
       return this.handleCommit(/** @type {Record<string, any>} */ (body));
+    }
+
+    // The combined status of a commit, which only has the latest status of each context
+    if (method === 'GET' && resource === 'commits' && rest[1] === 'status') {
+      const statuses = this.builds.get(rest[0]) ?? [];
+
+      return {
+        json: {
+          sha: rest[0],
+          total_count: statuses.length,
+          statuses,
+        },
+      };
     }
 
     if (method === 'GET' && path === 'commits') {

@@ -1,5 +1,5 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
-import { expect, GITLAB_CONFIG, test } from '../../fixtures/test.js';
+import { expect, GITEA_CONFIG, GITLAB_CONFIG, test } from '../../fixtures/test.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -288,6 +288,76 @@ test.describe('on GitLab', () => {
 
     expect(await getOpenedURL(page, editor.getByRole('button', { name: 'View Preview' }))).toBe(
       'https://second-post.review.example.com/posts/second-post',
+    );
+  });
+});
+
+test.describe('on Forgejo', () => {
+  test.use({
+    config: {
+      ...CONFIG,
+      backend: GITEA_CONFIG.backend,
+    },
+  });
+
+  test('opens the entry on the deploy preview a workflow reports with a commit status', async ({
+    cms,
+    gitea,
+    page,
+  }) => {
+    // A Forgejo Actions workflow builds each pull request, publishes it to a static site server,
+    // then posts the address as a commit status of its own
+    // @see https://github.com/sveltia/sveltia-cms/issues/1058
+    gitea.version = '16.0.5+gitea-1.22.0';
+    gitea.createBranch('cms/posts/second-post', gitea.head.oid);
+
+    const { oid: sha } = gitea.commit(
+      { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+      { branch: 'cms/posts/second-post', author: gitea.user },
+    );
+
+    gitea.openPullRequest(
+      { title: 'Create Post “second-post”', headBranch: 'cms/posts/second-post' },
+      { labels: ['sveltia-cms/pending_review'], author: gitea.user },
+    );
+
+    /**
+     * The status Forgejo Actions posts for the workflow job, linked to the job log.
+     * @param {string} status Job status.
+     * @returns {{ context: string, status: string, target_url: string }} Commit status.
+     */
+    const jobStatus = (status) => ({
+      context: 'Preview / preview (pull_request)',
+      status,
+      target_url: 'https://gitea.com/sveltia/e2e-site/actions/runs/1/jobs/0',
+    });
+
+    gitea.reportBuild(sha, { statuses: [jobStatus('pending')] });
+    await page.clock.install();
+    await cms.open();
+
+    const editor = await openSecondPost(page);
+    const waiting = editor.getByRole('button', { name: 'Checking for Preview' });
+
+    await expect(waiting).toBeDisabled();
+    await expect(waiting).toHaveAccessibleDescription('The preview is still being built.');
+
+    // The job posts the preview address, then finishes. The job log is never taken for the site
+    gitea.reportBuild(sha, {
+      statuses: [
+        {
+          context: 'pages/preview',
+          status: 'success',
+          target_url: 'https://sveltia.pr.example.com/e2e-site@1/',
+          description: 'Preview',
+        },
+        jobStatus('success'),
+      ],
+    });
+    await page.clock.fastForward('00:06');
+
+    expect(await getOpenedURL(page, editor.getByRole('button', { name: 'View Preview' }))).toBe(
+      'https://sveltia.pr.example.com/e2e-site@1/posts/second-post',
     );
   });
 });

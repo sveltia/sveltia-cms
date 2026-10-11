@@ -29,6 +29,11 @@ vi.mock('$lib/services/backends/git/gitea/constants', () => ({
   DEFAULT_AUTH_ROOT: 'https://gitea.com',
 }));
 
+vi.mock('$lib/services/backends/git/gitea/deployment', () => ({
+  fetchBranchHeadSHA: vi.fn(),
+  fetchDeployments: vi.fn(),
+}));
+
 vi.mock('$lib/services/backends/git/gitea/files', () => ({
   fetchBlob: vi.fn(),
   fetchDirSHA: vi.fn(),
@@ -311,6 +316,8 @@ describe('Gitea Index Service', () => {
       expect(typeof backend.fetchLastCommit).toBe('function');
       expect(typeof backend.fetchBlob).toBe('function');
       expect(typeof backend.commitChanges).toBe('function');
+      expect(typeof backend.fetchBranchHeadSHA).toBe('function');
+      expect(typeof backend.fetchDeployments).toBe('function');
     });
   });
 });
