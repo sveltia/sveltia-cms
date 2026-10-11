@@ -1038,6 +1038,37 @@ describe('shouldUpdateValue', () => {
     ).toBe(false);
   });
 
+  test('should not update a value rewritten in the format of an IANA time zone field', () => {
+    /** @type {DateTimeField} */
+    const tokyoFieldConfig = {
+      ...baseFieldConfig,
+      format: 'DD.MM.YYYY HH:mm',
+      input_timezone: 'Asia/Tokyo',
+    };
+
+    // An ISO 8601 value not in the format is the same instant as the input rewritten in the format
+    const currentValue = '2026-01-15T01:30:00Z';
+
+    const inputValue = getInputValue({
+      currentValue,
+      fieldConfig: tokyoFieldConfig,
+      timeZone: 'Asia/Tokyo',
+    });
+
+    const newValue = getCurrentValue({
+      inputValue,
+      currentValue,
+      fieldConfig: tokyoFieldConfig,
+      timeZone: 'Asia/Tokyo',
+    });
+
+    expect(inputValue).toBe('2026-01-15T10:30');
+    expect(newValue).toBe('15.01.2026 10:30');
+    expect(shouldUpdateValue({ newValue, currentValue, fieldConfig: tokyoFieldConfig })).toBe(
+      false,
+    );
+  });
+
   test('should not update when the values resolve to the same instant', () => {
     expect(
       shouldUpdateValue({

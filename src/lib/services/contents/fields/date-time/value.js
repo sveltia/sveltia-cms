@@ -276,7 +276,7 @@ export const getCurrentStorableValue = (
  * @returns {string | undefined} New value.
  */
 export const getInputValue = ({ currentValue, fieldConfig, timeZone }) => {
-  const { dateOnly, timeOnly, inputTimeZone, format, outputUTC } = parseDateTimeConfig(fieldConfig);
+  const { dateOnly, timeOnly, inputTimeZone, format } = parseDateTimeConfig(fieldConfig);
   const displayTimeZone = getTimeZoneForStoredValue(currentValue, fieldConfig) ?? timeZone;
 
   // If the default value is an empty string, the input will be blank by default
@@ -310,27 +310,8 @@ export const getInputValue = ({ currentValue, fieldConfig, timeZone }) => {
     return parsed.isValid() ? parsed.format('YYYY-MM-DD') : '';
   }
 
-  // `currentValue` is always truthy here (the empty-string guard above returned early). When a
-  // custom timezone is active with a format and `output_utc` is `false`, `getDate()` would parse
-  // the stored value as browser-local time (wrong epoch when local ≠ input timezone). Interpret it
-  // as being in the selected timezone using `.tz(tz, true)` instead. Note: the `output_utc: true`
-  // case is handled correctly by `getDate()` via `parseAsUTC`.
-  let dateForParts;
-
-  if (displayTimeZone && format && !outputUTC) {
-    try {
-      const parsed = dayjs(currentValue, format).tz(displayTimeZone, true);
-
-      // `.tz()` returns invalid (without throwing) in rare edge cases; fall through to `??=` below
-      dateForParts = parsed.isValid() ? parsed.toDate() : undefined;
-    } catch {
-      // `.tz()` can throw a RangeError for invalid dates in some dayjs versions
-    }
-
-    dateForParts ??= getDate(currentValue, fieldConfig);
-  } else {
-    dateForParts = getDate(currentValue, fieldConfig);
-  }
+  // `getDate()` reads a value without an offset in the field’s time zone, which the input shows
+  const dateForParts = getDate(currentValue, fieldConfig);
 
   // If `getDate` returned `undefined` (parsing failed), return empty string
   if (!dateForParts) {

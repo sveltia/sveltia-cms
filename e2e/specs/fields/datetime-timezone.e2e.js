@@ -137,7 +137,7 @@ test.beforeEach(async ({ cms, page }) => {
       '2026-01-15 15:30',
       '15.01.2026 10:30',
     ]),
-    // The same departure, stored at other offsets
+    // The same departure, stored at other offsets, and in ISO 8601 rather than the custom format
     'content/flights/kix.yml': getFlight('KIX', [
       '2026-01-15T15:30:00Z',
       '2026-01-15T10:30:00-05:00',
@@ -146,7 +146,7 @@ test.beforeEach(async ({ cms, page }) => {
       '2026-01-15T01:30:00Z',
       '2026-01-15T10:30:00+09:00',
       '2026-01-15T15:30:00Z',
-      '15.01.2026 10:30',
+      '2026-01-15T01:30:00Z',
     ]),
     // The fields with a time zone of their own store a value without an offset
     'content/flights/itm.yml': getFlight('ITM', [
@@ -294,30 +294,45 @@ test('converts a value stored at another offset, leaving it unmodified', async (
   await expect(editor.getByRole('button', { name: 'Save' })).toBeDisabled();
 });
 
-test('reads a value without an offset in the browser’s time zone (known issue)', async ({
-  page,
-}) => {
-  // A field with a time zone of its own reads a value without an offset as the browser’s local
-  // time, so it shows another time depending on where the editor is. Once fixed, the UTC, Picker
-  // UTC and Tokyo fields should all show `2026-01-15T10:30`, read in their own time zone, as the
-  // fields in a custom format already do
+test('reads a value without an offset in the time zone of its field', async ({ page }) => {
+  // A local field reads it in the browser’s time zone, and a field with a time zone of its own in
+  // that one, as the fields in a custom format do
   await page.getByRole('row', { name: /ITM/ }).click();
 
   const editor = page.getByRole('group', { name: 'Content Editor' });
 
-  await expect(editor.getByRole('textbox', { name: 'Local', exact: true })).toHaveValue(
-    '2026-01-15T10:30',
+  await expect.poll(() => getInputValues(editor)).toEqual(LABELS.map(() => '2026-01-15T10:30'));
+
+  // Reading the values back changes nothing
+  await expect(editor.getByRole('button', { name: 'Save' })).toBeDisabled();
+});
+
+test('stores a typed value without an offset in the form the field writes', async ({
+  cms,
+  page,
+}) => {
+  await page.getByRole('row', { name: /ITM/ }).click();
+
+  const editor = page.getByRole('group', { name: 'Content Editor' });
+
+  await forEachField((label) =>
+    editor.getByRole('textbox', { name: label, exact: true }).fill('2026-07-15T14:45'),
   );
-  await expect(editor.getByRole('textbox', { name: 'UTC', exact: true })).toHaveValue(
-    '2026-01-15T15:30',
-  );
-  await expect(editor.getByRole('textbox', { name: 'Picker UTC', exact: true })).toHaveValue(
-    '2026-01-15T15:30',
-  );
-  await expect(editor.getByRole('textbox', { name: 'Tokyo', exact: true })).toHaveValue(
-    '2026-01-16T00:30',
-  );
-  await expect(editor.getByRole('textbox', { name: 'Tokyo Formatted', exact: true })).toHaveValue(
-    '2026-01-15T10:30',
-  );
+
+  await editor.getByRole('button', { name: 'Save' }).click();
+
+  await expect
+    .poll(async () => (await cms.readRepo())['content/flights/itm.yml'])
+    .toBe(
+      getFlight('ITM', [
+        '2026-07-15T14:45:00',
+        '2026-07-15T18:45:00Z',
+        '2026-07-15T14:45:00Z',
+        '2026-07-15T14:45:00Z',
+        '2026-07-15T14:45:00+09:00',
+        '2026-07-15T05:45:00Z',
+        '2026-07-15 18:45',
+        '15.07.2026 14:45',
+      ]),
+    );
 });

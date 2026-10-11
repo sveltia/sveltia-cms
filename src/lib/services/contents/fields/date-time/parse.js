@@ -45,44 +45,95 @@ export const parseWithFormatFallback = ({ value, format, parseAsUTC }) => {
 };
 
 /**
- * Get a `Date` object given the current value.
+ * Match a value ending in a time followed by a UTC offset, like `10:30:00Z` or `10:30+09:00`. A
+ * date-only value like `2026-01-15` has no time before its last hyphen, so it doesn’t match.
+ */
+const OFFSET_SUFFIX_REGEX = /\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}(?::?\d{2})?)$/i;
+/**
+ * Match an offset token (`Z` or `ZZ`) in a Day.js format, once the escaped text in square brackets
+ * has been removed.
+ */
+const FORMAT_OFFSET_TOKEN_REGEX = /Z/;
+
+/**
+ * Get the instant of a wall-clock time in the given time zone.
+ * @param {dayjs.Dayjs} wallTime Wall-clock time, parsed as UTC.
+ * @param {string} timeZone `UTC` or an IANA time zone name.
+ * @returns {Date} Date.
+ */
+const getDateInTimeZone = (wallTime, timeZone) =>
+  timeZone === 'UTC'
+    ? wallTime.toDate()
+    : dayjs.tz(wallTime.format('YYYY-MM-DDTHH:mm:ss.SSS'), timeZone).toDate();
+
+/**
+ * Parse an ISO 8601 value. A value with a UTC offset is an instant on its own, while one without
+ * an offset is read in the given time zone, or the browser’s if none is given.
+ * @param {string} value Value to parse.
+ * @param {string} [timeZone] `UTC` or an IANA time zone name.
+ * @returns {Date | undefined} Date, which can be invalid, or `undefined` if the value can’t be
+ * parsed in the time zone.
+ */
+const parseISODate = (value, timeZone) => {
+  if (!timeZone || OFFSET_SUFFIX_REGEX.test(value)) {
+    return new Date(value);
+  }
+
+  const wallTime = dayjs.utc(value);
+
+  return wallTime.isValid() ? getDateInTimeZone(wallTime, timeZone) : undefined;
+};
+
+/**
+ * Get a `Date` object given the current value. A stored value without a UTC offset is read in the
+ * time zone of the field: UTC with `input_timezone: utc`, the deprecated `picker_utc` or, in a
+ * custom format, `output_utc`, which stores the value in UTC; an IANA time zone with
+ * `input_timezone` set to one; and the browser’s otherwise. A date without a time is read as is.
  * @param {string | undefined} currentValue Value in the entry draft datastore.
  * @param {DateTimeField} fieldConfig Field configuration.
  * @returns {Date | undefined} Date or `undefined` if invalid.
  */
 export const getDate = (currentValue, fieldConfig) => {
-  const { format, timeOnly, utc, outputUTC } = parseDateTimeConfig(fieldConfig);
-  // Parse the stored value as UTC when: `input_timezone` is 'utc', OR `output_utc` is `true`. With
-  // a custom format, the stored string carries no timezone info, so we must specify UTC explicitly
-  // — otherwise the browser’s local offset is applied and the epoch is wrong.
-  const parseAsUTC = utc || outputUTC;
+  const { format, dateOnly, timeOnly, utc, outputUTC, singleCustomTimeZone } =
+    parseDateTimeConfig(fieldConfig);
 
   if (!currentValue) {
     return undefined;
   }
 
+  const timeZone =
+    utc || (format && outputUTC) ? 'UTC' : dateOnly ? undefined : singleCustomTimeZone;
+
   /** @type {Date | undefined} */
   let date;
 
-  // If a format is specified, use Day.js to parse
   if (format) {
-    const parsed = parseWithFormatFallback({ value: currentValue, format, parseAsUTC });
+    if (timeZone === 'UTC' || !timeZone) {
+      // A value stored in the custom format carries no time zone, so it has to be parsed in the
+      // field’s explicitly — otherwise the browser’s local offset is applied and the epoch is wrong
+      const parsed = parseWithFormatFallback({
+        value: currentValue,
+        format,
+        parseAsUTC: timeZone === 'UTC',
+      });
 
-    if (parsed.isValid()) {
-      return parsed.toDate();
+      date = parsed.isValid() ? parsed.toDate() : undefined;
+    } else {
+      const wallTime = dayjs.utc(currentValue, format);
+
+      date = !wallTime.isValid()
+        ? // The value isn’t in the custom format, e.g. an ISO 8601 value written before the format
+          // was set
+          parseISODate(currentValue, timeZone)
+        : FORMAT_OFFSET_TOKEN_REGEX.test(format.replaceAll(/\[.*?]/g, ''))
+          ? wallTime.toDate()
+          : getDateInTimeZone(wallTime, timeZone);
     }
-
-    // eslint-disable-next-line no-console
-    console.error('Invalid Date', currentValue);
-
-    return undefined;
-  }
-
-  if (timeOnly) {
+  } else if (timeOnly) {
     // Use the current date
-    date = new Date(`${new Date().toJSON().split('T')[0]}T${currentValue}`);
+    date = parseISODate(`${new Date().toJSON().split('T')[0]}T${currentValue}`, timeZone);
   } else {
-    date = new Date(currentValue);
+    date = parseISODate(currentValue, timeZone);
   }
 
   if (isValidDate(date)) {
