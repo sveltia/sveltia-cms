@@ -30,8 +30,8 @@ importers:
         specifier: ^1.4.1
         version: 1.4.1(svelte@5.57.2(@typescript-eslint/types@8.71.1))
       '@sveltia/ui':
-        specifier: ^0.80.4
-        version: 0.80.4(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)
+        specifier: ^0.81.0
+        version: 0.81.0(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.4
         version: 0.12.4
@@ -1254,8 +1254,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.80.4':
-    resolution: {integrity: sha512-beFjsF/pCVP9kjtmDsMtnfgWj7z8BBigliAYqr9udbAo848XjMfZHIlLZr6H+Ei4kr+h+vC3SUoOBBySE4hmJA==}
+  '@sveltia/ui@0.81.0':
+    resolution: {integrity: sha512-3Aih+wdK/h+qbJRoNMGAji30wutu+i9H98p7q7jd3ekF63dvx+4Gnx8n8nzj8n4dCdJWWoFyMlnVAOoLKPRNag==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -3709,8 +3709,8 @@ packages:
   tiny-open@1.3.0:
     resolution: {integrity: sha512-GUFS8yjJZq0oWqCKCJVHcBgMpmi2WEGXY1le3E5ncR0DsgTII5uUyxtfk8/vGyDDGBE42UYHR6Ocvlk8mkXSRg==}
 
-  tinybench@6.2.1:
-    resolution: {integrity: sha512-IAbQaPJIIdhVxi0mqy9lez1wEwje0UQf9F1vwtbelEG5Nbgn0nPOxCvU+mNeNS9gyJTAhrHp74CbUaSynQpZcQ==}
+  tinybench@6.2.2:
+    resolution: {integrity: sha512-nIZ2N2dFpjBsg2hgitKu7mA+FvsIJuGJOwysRngmVRRmWgR/UyPjwJj8c/fT/dhm8EkHnF5EOogRf+0Z2qrimA==}
     engines: {node: '>=20.0.0'}
 
   tinyexec@1.3.1:
@@ -5012,7 +5012,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.57.2(@typescript-eslint/types@8.71.1)
 
-  '@sveltia/ui@0.80.4(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)':
+  '@sveltia/ui@0.81.0(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.52.0(typescript@6.0.3)
       '@lexical/dragon': 0.52.0(typescript@6.0.3)
@@ -7779,7 +7779,7 @@ snapshots:
 
   tiny-open@1.3.0: {}
 
-  tinybench@6.2.1: {}
+  tinybench@6.2.2: {}
 
   tinyexec@1.3.1: {}
 
@@ -7994,7 +7994,7 @@ snapshots:
       obug: 2.2.1
       picomatch: 4.0.7
       std-env: 4.3.0
-      tinybench: 6.2.1
+      tinybench: 6.2.2
       tinyexec: 1.3.1
       tinyglobby: 0.2.17
       vite: 8.3.4(@types/node@26.6.5)(yaml@2.9.1)
