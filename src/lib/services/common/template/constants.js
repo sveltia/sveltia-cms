@@ -40,11 +40,6 @@ export const FIELD_TAG_PREFIX_REGEX = /^fields\./;
 export const DEFAULT_TRANSFORMATION_REGEX = /\|\s*default\s*\(/;
 
 /**
- * Regex to match inner tags within transformation values.
- */
-export const INNER_TAG_REGEX = /^{{(?<innerTag>.+?)}}$/;
-
-/**
  * UUID generator functions mapped by tag name.
  * Note: Functions are called dynamically to generate UUIDs on demand.
  */

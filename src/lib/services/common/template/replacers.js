@@ -155,12 +155,6 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
     (tf) => tf.args.defaultValue !== undefined,
   );
 
-  const hasComplexNestedTemplateArgs = parsedTransformations.some((tf) =>
-    [tf.args.defaultValue, tf.args.truthyValue, tf.args.falsyValue].some(
-      (arg) => typeof arg === 'string' && arg.includes('{{') && !/^{{[^{}]+}}$/.test(arg),
-    ),
-  );
-
   const { type, locale } = replaceSubContext;
 
   // A random fallback keeps generated slugs and paths unique, but a `preview_path` is recomputed on
@@ -185,20 +179,6 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
 
     return getRandomValue(replaceSubContext, `${locale}:fallback:${placeholder}`, () =>
       generateUUID('short'),
-    );
-  }
-
-  if (
-    (value === undefined || value === '') &&
-    hasDefaultTransformation &&
-    hasComplexNestedTemplateArgs
-  ) {
-    bailOnUnresolvableTag();
-
-    return getRandomValue(
-      replaceSubContext,
-      `${locale}:fallback:${placeholder}`,
-      () => `${generateUUID('short')}-${generateUUID('short')}`,
     );
   }
 

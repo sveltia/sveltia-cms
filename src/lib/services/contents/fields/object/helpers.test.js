@@ -355,6 +355,21 @@ describe('Test formatSummary() — comprehensive tests', async () => {
       ).toEqual('Main Title');
     });
 
+    test('should resolve several nested templates in a transformation argument', () => {
+      expect(
+        formatSummary({
+          ...baseArgs,
+          valueMap: {
+            'metadata.description': '',
+            'metadata.title': 'Main Title',
+            'metadata.name': 'Jane',
+          },
+          summaryTemplate:
+            "{{fields.description | default('{{fields.title}} by {{fields.name}}')}}",
+        }),
+      ).toEqual('Main Title by Jane');
+    });
+
     test('should handle nested templates with missing inner field', () => {
       expect(
         formatSummary({

@@ -474,19 +474,25 @@ describe('replaceTemplatePlaceholder()', () => {
     expect(replaceTemplatePlaceholder("draft | ternary('Yes', 'No')", context)).toBe('yes');
   });
 
-  test('falls back to a pair of random IDs for a complex nested `default` template', () => {
+  test('resolves every template in the `default` transformation', () => {
+    const context = createContext({ content: { title: '', a: 'A', b: 'B' } });
+
+    expect(replaceTemplatePlaceholder("title | default('{{a}}-{{b}}')", context)).toBe('a-b');
+    expect(replaceTemplatePlaceholder("missing | default('prefix-{{a}}')", context)).toBe(
+      'prefix-a',
+    );
+  });
+
+  test('falls back to a random ID when the templates in `default` resolve to nothing', () => {
     /** @type {Map<string, string>} */
     const randomValues = new Map();
     const placeholder = "title | default('{{a}}-{{b}}')";
-    const context = createContext({ randomValues, content: { title: '', a: 'A', b: 'B' } });
+    const context = createContext({ randomValues, content: { title: '' } });
     const id = replaceTemplatePlaceholder(placeholder, context);
 
-    expect(id).toMatch(/^[0-9a-f]{12}-[0-9a-f]{12}$/);
+    expect(id).toMatch(SHORT_ID_REGEX);
     expect(replaceTemplatePlaceholder(placeholder, context)).toBe(id);
     expect(randomValues.get(`en:fallback:${placeholder}`)).toBe(id);
-    expect(replaceTemplatePlaceholder("missing | default('prefix-{{a}}')", context)).toMatch(
-      /^[0-9a-f]{12}-[0-9a-f]{12}$/,
-    );
   });
 
   test('ignores a complex nested `default` template when the value is there', () => {
@@ -495,41 +501,44 @@ describe('replaceTemplatePlaceholder()', () => {
     expect(replaceTemplatePlaceholder("title | default('{{a}}-{{b}}')", context)).toBe('hello');
   });
 
-  test('throws for a complex nested `default` template in a preview path', () => {
+  test('resolves several templates in the `default` transformation in a preview path', () => {
     const context = createContext({
       type: 'preview_path',
-      content: { title: '' },
+      content: { title: '', a: 'A', b: 'B' },
       entryFilePath: 'content/posts/a.md',
     });
 
-    expect(() => replaceTemplatePlaceholder("title | default('{{a}}-{{b}}')", context)).toThrow(
-      'Unresolvable template tag in preview path: title',
-    );
+    expect(replaceTemplatePlaceholder("title | default('{{a}}-{{b}}')", context)).toBe('A-B');
   });
 
-  test('resolves a complex nested `ternary` template to nothing (known issue)', () => {
-    // A `default` argument with several tags falls back to random IDs, but a `ternary` one is
-    // taken by `processNestedTemplates()` as a single tag named `a}}-{{b`, which resolves to an
-    // empty string instead of `A-B`
-    const content = { draft: true, a: 'A', b: 'B' };
-    const placeholder = "draft | ternary('{{a}}-{{b}}', 'No')";
+  test('resolves every template in the `ternary` transformation', () => {
+    const content = { draft: true, published: false, a: 'A', b: 'B' };
 
+    const previewContext = createContext({
+      type: 'preview_path',
+      content,
+      entryFilePath: 'content/posts/a.md',
+    });
+
+    expect(replaceTemplatePlaceholder("draft | ternary('{{a}}-{{b}}', 'No')", previewContext)).toBe(
+      'A-B',
+    );
+    expect(
+      replaceTemplatePlaceholder("published | ternary('Yes', '{{b}} {{a}}')", previewContext),
+    ).toBe('B A');
     expect(
       replaceTemplatePlaceholder(
-        placeholder,
-        createContext({ type: 'preview_path', content, entryFilePath: 'content/posts/a.md' }),
+        "draft | ternary('{{a}}-{{b}}', 'No')",
+        createContext({ content }),
       ),
-    ).toBe('');
-    expect(replaceTemplatePlaceholder(placeholder, createContext({ content }))).toMatch(
-      SHORT_ID_REGEX,
-    );
+    ).toBe('a-b');
   });
 
-  test('treats a complex nested `ternary` template with a `default` like a complex default', () => {
+  test('applies `default` after a `ternary` with templates', () => {
     const context = createContext({ content: { draft: '' } });
 
     expect(
       replaceTemplatePlaceholder("draft | ternary('{{a}}-{{b}}', 'x') | default('y')", context),
-    ).toMatch(/^[0-9a-f]{12}-[0-9a-f]{12}$/);
+    ).toBe('x');
   });
 });

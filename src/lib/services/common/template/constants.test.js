@@ -5,7 +5,6 @@ import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import {
   DATE_TIME_FIELDS,
   ESCAPED_PLACEHOLDER_REGEX,
-  INNER_TAG_REGEX,
   TEMPLATE_TAG_REGEX,
   TEMPLATE_TAG_REPLACE_REGEX,
   UUID_TYPES,
@@ -125,27 +124,6 @@ describe('Template constants', () => {
 
     test('should not match unescaped patterns', () => {
       expect(ESCAPED_PLACEHOLDER_REGEX.test('{{unescaped}}')).toBe(false);
-    });
-  });
-
-  describe('INNER_TAG_REGEX', () => {
-    test('should match and capture inner tag content', () => {
-      const str = '{{title}}';
-      const match = str.match(INNER_TAG_REGEX);
-
-      expect(match?.groups?.innerTag).toBe('title');
-    });
-
-    test('should capture complex inner tags', () => {
-      const str = '{{fields.title | upper}}';
-      const match = str.match(INNER_TAG_REGEX);
-
-      expect(match?.groups?.innerTag).toBe('fields.title | upper');
-    });
-
-    test('should not match incomplete tags', () => {
-      expect('{{title'.match(INNER_TAG_REGEX)).toBeNull();
-      expect('title}}'.match(INNER_TAG_REGEX)).toBeNull();
     });
   });
 

@@ -290,6 +290,38 @@ describe('Test getEntrySummary()', () => {
     ).toEqual('Main Title');
   });
 
+  test('several nested templates in a transformation argument', () => {
+    /**
+     * Create an entry with the given German content.
+     * @param {Record<string, any>} content Content.
+     * @returns {any} Entry.
+     */
+    const withValues = (content) => ({
+      ...entry,
+      locales: { de: { ...entry.locales.de, content } },
+    });
+
+    const options = { locale: 'de', useTemplate: true };
+
+    expect(
+      getEntrySummary(
+        { ...collection, summary: "{{fields.subtitle | default('{{title}} ({{author}})')}}" },
+        withValues({ title: 'Main Title', author: 'Jane', subtitle: '' }),
+        options,
+      ),
+    ).toEqual('Main Title (Jane)');
+    expect(
+      getEntrySummary(
+        {
+          ...collection,
+          summary: "{{fields.draft | ternary('Draft: {{title}}', '{{title}} – {{author}}')}}",
+        },
+        withValues({ title: 'Main Title', author: 'Jane', draft: false }),
+        options,
+      ),
+    ).toEqual('Main Title – Jane');
+  });
+
   test('Markdown', () => {
     const markdownStr =
       'This `code` on [GitHub](https://github.com/sveltia/sveltia-cms) _is_ ~~so~~ **good**!';

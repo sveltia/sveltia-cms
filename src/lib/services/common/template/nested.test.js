@@ -70,13 +70,41 @@ describe('processNestedTemplates()', () => {
     expect(resolver).not.toHaveBeenCalled();
   });
 
-  test('leaves a value that only partially is a template alone', () => {
+  test('resolves a template mixed with other text', () => {
     /** @type {StringTransformation[]} */
     const transformations = [
       { method: 'default', args: { defaultValue: 'prefix-{{title}}' } },
-      { method: 'default', args: { defaultValue: '{{title}}-suffix' } },
+      { method: 'default', args: { defaultValue: '{{title}} (draft)' } },
+    ];
+
+    expect(processNestedTemplates(transformations, resolveTag)).toEqual([
+      { method: 'default', args: { defaultValue: 'prefix-[title]' } },
+      { method: 'default', args: { defaultValue: '[title] (draft)' } },
+    ]);
+  });
+
+  test('resolves every template in an argument', () => {
+    /** @type {StringTransformation[]} */
+    const transformations = [
+      { method: 'default', args: { defaultValue: '{{a}}-{{b}}' } },
+      { method: 'ternary', args: { truthyValue: '{{a}} {{b}}', falsyValue: 'No' } },
+    ];
+
+    const resolver = vi.fn(resolveTag);
+
+    expect(processNestedTemplates(transformations, resolver)).toEqual([
+      { method: 'default', args: { defaultValue: '[a]-[b]' } },
+      { method: 'ternary', args: { truthyValue: '[a] [b]', falsyValue: 'No' } },
+    ]);
+    expect(resolver.mock.calls).toEqual([['a'], ['b'], ['a'], ['b']]);
+  });
+
+  test('leaves an incomplete or empty template alone', () => {
+    /** @type {StringTransformation[]} */
+    const transformations = [
       { method: 'default', args: { defaultValue: '{{}}' } },
       { method: 'default', args: { defaultValue: '{{title' } },
+      { method: 'default', args: { defaultValue: 'title}}' } },
     ];
 
     const resolver = vi.fn(resolveTag);
@@ -86,23 +114,6 @@ describe('processNestedTemplates()', () => {
       expect(tf).toBe(transformations[index]);
     });
     expect(resolver).not.toHaveBeenCalled();
-  });
-
-  test('passes everything between the outer braces of several templates as one tag (known issue)', () => {
-    // The inner tag regex is anchored but lazy, so `{{a}}-{{b}}` is taken as a single tag named
-    // `a}}-{{b`, which no field can match. `replaceTemplatePlaceholder()` falls back to a random ID
-    // for such a `default` argument, but not for a `ternary` one, which then resolves to nothing
-    /** @type {StringTransformation[]} */
-    const transformations = [
-      { method: 'ternary', args: { truthyValue: '{{a}}-{{b}}', falsyValue: 'No' } },
-    ];
-
-    const resolver = vi.fn(resolveTag);
-
-    expect(processNestedTemplates(transformations, resolver)).toEqual([
-      { method: 'ternary', args: { truthyValue: '[a}}-{{b]', falsyValue: 'No' } },
-    ]);
-    expect(resolver).toHaveBeenCalledExactlyOnceWith('a}}-{{b');
   });
 
   test('replaces a tag the resolver returns nothing for with an empty string', () => {

@@ -272,7 +272,7 @@ describe('fillTemplate()', async () => {
     const template = "{{uuid_shorter}}_{{title}}_{{name | default('{{a}}-{{b}}')}}";
     const first = fillTemplate(template, options);
 
-    expect(first).toMatch(/^[0-9a-f]{8}_[0-9a-f]{12}_[0-9a-f]{12}-[0-9a-f]{12}$/);
+    expect(first).toMatch(/^[0-9a-f]{8}_[0-9a-f]{12}_[0-9a-f]{12}$/);
     expect(fillTemplate(template, options)).toBe(first);
     expect([...randomValues.keys()]).toEqual([
       'en:uuid_shorter',
@@ -936,7 +936,7 @@ describe('fillTemplate()', async () => {
       content: content2,
     });
 
-    expect(result2).toMatch(/^[0-9a-f]{12}-[0-9a-f]{12}$/);
+    expect(result2).toEqual('backup-slug-tech');
   });
 
   test('date parts without explicit dateTimeParts', async () => {

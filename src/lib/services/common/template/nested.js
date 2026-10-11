@@ -1,29 +1,20 @@
-import { INNER_TAG_REGEX } from '$lib/services/common/template/constants';
+import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 
 /**
  * @import { StringTransformation } from '$lib/types/private';
  */
 
 /**
- * Resolve a single nested template value in transformation arguments.
+ * Resolve the nested template tags in a transformation argument, e.g. `{{fields.title}}` or
+ * `{{fields.first_name}} {{fields.last_name}}`, keeping the text around them.
  * @param {string} value The transformation argument value.
  * @param {(tag: string) => string} resolveTag Function to resolve a nested tag.
  * @returns {string} Resolved value.
  */
-const resolveNestedTemplateValues = (value, resolveTag) => {
-  if (!value.includes('{{')) {
-    return value;
-  }
-
-  const { innerTag } = value.match(INNER_TAG_REGEX)?.groups ?? {};
-
-  if (innerTag === undefined) {
-    return value;
-  }
-
-  /* v8 ignore next */
-  return String(resolveTag(innerTag) ?? '');
-};
+const resolveNestedTemplateValues = (value, resolveTag) =>
+  value.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, (_match, /** @type {string} */ innerTag) =>
+    String(resolveTag(innerTag) ?? ''),
+  );
 
 /**
  * Process nested template tags in transformation arguments (e.g., `default('{{fields.title}}')`).
