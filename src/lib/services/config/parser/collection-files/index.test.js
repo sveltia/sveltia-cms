@@ -137,7 +137,8 @@ describe('Collection Files Parser', () => {
           collectors,
         );
 
-        const [{ context, collectors: _collectors, ...args }] = mockCheckBodyField.mock.calls[0];
+        const [{ context: _context, collectors: _collectors, ...args }] =
+          mockCheckBodyField.mock.calls[0];
 
         return args;
       };

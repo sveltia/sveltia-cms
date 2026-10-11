@@ -111,7 +111,8 @@ const isNonTextField = (field) => {
 
   // A Number field with a `*/string` value type stores what the user typed as a string
   if (widget === 'number') {
-    return !/\/string$/.test(/** @type {NumberField} */ (field).value_type ?? '');
+    // prettier-ignore
+    return !(/** @type {NumberField} */ (field).value_type ?? '').endsWith('/string');
   }
 
   return NON_TEXT_FIELD_TYPES.includes(widget) || isFieldMultiple(field);
