@@ -25,27 +25,40 @@ const CONFIG = {
 /**
  * Add scripts to the admin page, the way a site extends the CMS: after the CMS `<script>`, and
  * optionally before it. A single route has to add both, as a later route would fetch the original
- * page again.
+ * page again. The dev server’s admin page loads the CMS as a module, which runs once the page is
+ * parsed, so the script after it is a module too, to run after the CMS all the same.
  * @param {Page} page Page.
  * @param {object} scripts Scripts.
  * @param {string} [scripts.before] Script to run before the CMS is loaded.
  * @param {string} [scripts.after] Script to run after the CMS is loaded.
  */
 const addScripts = async (page, { before, after }) => {
-  await page.route('**/admin/', async (route) => {
-    const response = await route.fetch();
-    let html = await response.text();
+  const { adminPath } = /** @type {{ adminPath: string }} */ (test.info().project.use);
 
-    if (before) {
-      html = html.replace('<script src=', `<script>${before}</script><script src=`);
-    }
+  await page.route(
+    (url) => url.pathname === adminPath,
+    async (route) => {
+      const response = await route.fetch();
+      let html = await response.text();
+      const isModule = /<script type="module" src=/.test(html);
 
-    if (after) {
-      html = html.replace('</body>', `<script>${after}</script></body>`);
-    }
+      if (before) {
+        html = html.replace(
+          /<script (?:type="module" )?src=/,
+          (tag) => `<script>${before}</script>${tag}`,
+        );
+      }
 
-    await route.fulfill({ response, body: html });
-  });
+      if (after) {
+        html = html.replace(
+          '</body>',
+          `<script${isModule ? ' type="module"' : ''}>${after}</script></body>`,
+        );
+      }
+
+      await route.fulfill({ response, body: html });
+    },
+  );
 };
 
 /**
@@ -65,9 +78,6 @@ const createPost = async (page, title) => {
 };
 
 test.describe('CMS.init()', () => {
-  // The admin page of the dev server starts the CMS on its own
-  test.skip(process.env.E2E_TARGET === 'dev', 'The dev server’s admin page can’t be changed');
-
   test.use({ config: CONFIG });
 
   test('merges the config it’s given with the config file', async ({ cms, page }) => {
