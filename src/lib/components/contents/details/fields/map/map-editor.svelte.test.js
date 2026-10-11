@@ -217,6 +217,30 @@ describe('MapEditor', () => {
     expect(container.querySelectorAll('.leaflet-30-pane path')).toHaveLength(1);
   });
 
+  test('saves a line drawn on the map once it’s finished', async () => {
+    const { props, container } = await renderEditor({ type: 'LineString' }, '');
+
+    const map = page.elementLocator(
+      /** @type {HTMLElement} */ (
+        await vi.waitUntil(() => container.querySelector('.leaflet-container'))
+      ),
+    );
+
+    // The drawing tools are ready once the map shows the crosshair cursor
+    await expect.element(map).toHaveStyle({ cursor: 'crosshair' });
+
+    // The points placed while drawing don’t make a value yet
+    await map.click({ position: { x: 100, y: 100 } });
+    await map.click({ position: { x: 200, y: 150 } });
+    await sleep(100);
+    expect(props.currentValue).toBe('');
+
+    // Clicking the last point again finishes the line
+    await map.click({ position: { x: 200, y: 150 } });
+    await expect.poll(() => JSON.parse(props.currentValue || '{}').type).toBe('LineString');
+    expect(JSON.parse(/** @type {string} */ (props.currentValue)).coordinates).toHaveLength(2);
+  });
+
   test('doesn’t round or reformat a stored point', async () => {
     const value = '{"type": "Point", "coordinates": [139.69171, 35.68951]}';
     const { props, container } = await renderEditor({ decimals: 2 }, value);
