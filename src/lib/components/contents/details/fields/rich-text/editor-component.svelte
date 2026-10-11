@@ -11,8 +11,10 @@
   import {
     getEntryDraftByElement,
     setEntryDraftContext,
+    setEntryDraftRoot,
   } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
   import {
     getComponentDisplayText,
     getComponentDisplayValues,
@@ -214,6 +216,19 @@
   });
 
   /**
+   * Attach the draft state to the element holding the fields in the dialog (dialog mode only). The
+   * dialog is rendered outside the entry editor, so a component nested in a rich text field there
+   * would otherwise never find the draft with {@link getEntryDraftByElement}; the element also
+   * carries the locale in its `data-locale` attribute, while the field editors carry the key paths.
+   * @param {HTMLElement} element Element.
+   */
+  const attachEntryDraft = (element) => {
+    if (entryDraft) {
+      setEntryDraftRoot(element, entryDraft);
+    }
+  };
+
+  /**
    * Open the dialog and take a snapshot of current values (dialog mode only).
    */
   const openDialog = () => {
@@ -251,9 +266,13 @@
   };
 
   /**
-   * Handle OK button click. Validates fields and only closes if valid (dialog mode only).
+   * Handle OK button click. Validates fields and only closes if valid (dialog mode only). A change
+   * just made in a rich text field in the dialog, including one in a component nested there, only
+   * reaches the draft a moment later, so wait for it first, or the previous values would be used.
    */
-  const handleOk = () => {
+  const handleOk = async () => {
+    await awaitPendingFieldUpdates();
+
     const draft = entryDraft?.current;
 
     /* v8 ignore next 3 -- the dialog can only be confirmed while the draft is being edited */
@@ -516,7 +535,13 @@
         handleCancel();
       }}
     >
-      <div role="none" class="fields" data-component-path={componentPath}>
+      <div
+        role="none"
+        class="fields"
+        data-locale={locale}
+        data-component-path={componentPath}
+        {@attach attachEntryDraft}
+      >
         {#if locale && keyPath}
           {@render fieldEditors({ typedPrefix: keyPathPrefix, observe: false })}
         {/if}

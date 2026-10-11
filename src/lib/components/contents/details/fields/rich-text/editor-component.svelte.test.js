@@ -4,7 +4,12 @@ import { render } from 'vitest-browser-svelte';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
 import { globalAssetFolder } from '$lib/services/assets/folders';
-import { EntryDraftState, setEntryDraftRoot } from '$lib/services/contents/draft/state.svelte';
+import {
+  EntryDraftState,
+  getEntryDraftByElement,
+  setEntryDraftRoot,
+} from '$lib/services/contents/draft/state.svelte';
+import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
 import { createMockDraft } from '$lib/test/draft';
 
@@ -25,8 +30,13 @@ const wrappers = [];
  * @param {object} [options] Options.
  * @param {boolean} [options.contained] Whether the pane elements are there. Otherwise the
  * component can’t tell which locale and field it belongs to.
- * @returns {Promise<{ draft: any, onChange: any, wrapper: HTMLElement, component: any }>} Draft,
- * handler, wrapper and component.
+ * @returns {Promise<{
+ * draft: any,
+ * entryDraft: EntryDraftState,
+ * onChange: any,
+ * wrapper: HTMLElement,
+ * component: any,
+ * }>} Draft, its state, handler, wrapper and component.
  */
 const renderComponent = async (props, { contained = true } = {}) => {
   const draft = createMockDraft({
@@ -64,7 +74,7 @@ const renderComponent = async (props, { contained = true } = {}) => {
     }),
   });
 
-  return { draft, onChange, wrapper, component };
+  return { draft, entryDraft, onChange, wrapper, component };
 };
 
 /**
@@ -361,6 +371,66 @@ describe('EditorComponent', () => {
         ),
       );
       await expect.element(placeholder).toHaveTextContent('Hi');
+    });
+
+    test('lets a component nested in the dialog find the draft and locale', async () => {
+      const { entryDraft } = await renderComponent({
+        mode: 'dialog',
+        values: { title: 'Hello', url: '' },
+      });
+
+      await page.getByRole('button', { name: 'Card' }).click();
+
+      const dialog = page.getByRole('dialog', { name: 'Card' });
+
+      await expect.element(dialog.getByRole('textbox', { name: 'Title' })).toBeVisible();
+
+      // The dialog is rendered outside the editor, so its fields can’t be found from the elements
+      // around the component; the element holding them tells a nested component instead
+      const title = dialog.getByRole('textbox', { name: 'Title' }).element();
+      const fieldsElement = /** @type {HTMLElement} */ (title.closest('[data-locale]'));
+
+      expect(fieldsElement.closest('dialog')).not.toBeNull();
+      expect(fieldsElement.dataset.locale).toBe('_default');
+      expect(getEntryDraftByElement(title)).toBe(entryDraft);
+    });
+
+    test('waits for a change still on its way to the draft before confirming', async () => {
+      const { draft, onChange } = await renderComponent({
+        mode: 'dialog',
+        values: { title: 'Hello', url: '' },
+      });
+
+      await page.getByRole('button', { name: 'Card' }).click();
+
+      const dialog = page.getByRole('dialog', { name: 'Card' });
+
+      await expect.element(dialog.getByRole('textbox', { name: 'Title' })).toHaveValue('Hello');
+
+      // A rich text field in the dialog converts what was just typed with a short delay
+      /** @type {PromiseWithResolvers<void>} */
+      const { promise, resolve } = Promise.withResolvers();
+
+      trackPendingFieldUpdate(promise);
+      await dialog.getByRole('button', { name: 'Update' }).click();
+      expect(onChange).not.toHaveBeenCalled();
+
+      const key = /** @type {string} */ (
+        Object.keys(draft.extraValues._default).find((k) => k.endsWith(':title'))
+      );
+
+      draft.extraValues._default[key] = 'Late';
+      resolve();
+
+      await vi.waitFor(() =>
+        expect(onChange).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'update',
+            detail: expect.objectContaining({ title: 'Late' }),
+          }),
+        ),
+      );
+      await expect.element(dialog).not.toBeInTheDocument();
     });
 
     test('adds no space between an inline placeholder and the text before it', async () => {

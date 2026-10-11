@@ -197,32 +197,60 @@ test.describe('with `allow_nested_components: exclude_self`', () => {
   });
 });
 
+/**
+ * Insert the Note component, edited in a dialog, in the body field, and get the dialog’s Markdown
+ * field. The dialog is rendered outside the entry editor.
+ * @param {Page} page Page.
+ * @returns {Promise<Locator>} Field.
+ */
+const insertNote = async (page) => {
+  await getToolbar(getBody(page)).getByRole('button', { name: 'Insert' }).click();
+  await page.getByRole('menuitem', { name: 'Note' }).click();
+
+  return page
+    .getByRole('dialog', { name: 'Note' })
+    .getByRole('group', { name: /Note Text.*Field/ });
+};
+
 test.describe('with a component in the dialog of another', () => {
   test.use({ config: getConfig() });
 
-  // A component in block mode inserted in the rich text field of a component in dialog mode never
-  // finds the locale and key path it belongs to, as it looks them up from the elements around it,
-  // and the dialog is rendered outside the entry editor. So it shows no fields, and the Save writes
-  // its block with `undefined` for its value, or drops it. Once fixed, the Callout shows its
-  // “Callout Text” field, and `exclude_self` leaves both components out of its Insert menu.
-  test('shows no fields for a component in a dialog (known issue)', async ({ page }) => {
-    await getToolbar(getBody(page)).getByRole('button', { name: 'Insert' }).click();
-    await page.getByRole('menuitem', { name: 'Note' }).click();
+  test('shows the fields of a component in a dialog, and saves it', async ({ cms, page }) => {
+    const editor = page.getByRole('group', { name: 'Content Editor' });
 
-    const note = page
-      .getByRole('dialog', { name: 'Note' })
-      .getByRole('group', { name: /Note Text.*Field/ });
+    await editor.getByRole('textbox', { name: 'Title' }).fill('Nested');
 
-    const callout = await insertComponent(note, 'Callout');
+    const note = await insertNote(page);
+    const callout = getComponentField(await insertComponent(note, 'Callout'));
 
-    // The component looks for them in the next frame, and renders its fields in the one after
-    await page.evaluate(
-      () =>
-        new Promise((resolve) => {
-          requestAnimationFrame(() => requestAnimationFrame(resolve));
-        }),
-    );
-    await expect(callout.getByRole('group', { name: /Callout Text.*Field/ })).toHaveCount(0);
+    // The component finds the draft, locale and key path from within the dialog
+    await expect(callout).toBeVisible();
+    await callout.getByRole('textbox', { name: 'Callout Text' }).click();
+    await page.keyboard.type('Inside.');
+
+    const dialog = page.getByRole('dialog', { name: 'Note' });
+
+    // The dialog’s own Insert button comes after those of the editor toolbars in it
+    await dialog.getByRole('button', { name: 'Insert' }).last().click();
+    await expect(page.locator('dialog:not([inert])')).toHaveCount(0);
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect
+      .poll(async () => (await cms.readRepo())['content/posts/nested.md'])
+      .toBe('---\ntitle: Nested\n---\n\n<section>\n<aside>\nInside.\n</aside>\n</section>\n');
+  });
+});
+
+test.describe('with `allow_nested_components: exclude_self` and a component in a dialog', () => {
+  test.use({ config: getConfig('exclude_self') });
+
+  test('offers the components other than those it’s in', async ({ page }) => {
+    const note = await insertNote(page);
+
+    await expectInsertMenu(note, ['Callout', 'Details', 'YouTube']);
+
+    const callout = getComponentField(await insertComponent(note, 'Callout'));
+
+    await expectInsertMenu(callout, ['Details', 'YouTube']);
   });
 });
 
