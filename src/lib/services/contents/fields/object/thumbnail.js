@@ -14,6 +14,7 @@ import { isMultiple } from '$lib/services/integrations/media-libraries/multiple'
  * Entry,
  * EntryFileMap,
  * FlattenedEntryContent,
+ * InternalLocaleCode,
  * MediaFieldSource,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
@@ -46,6 +47,8 @@ import { isMultiple } from '$lib/services/integrations/media-libraries/multiple'
  * @param {Entry} [args.entry] Entry being edited, used to locate an asset from a relative path.
  * @param {EntryFileMap} [args.files] Files uploaded in the draft but not saved yet, keyed by the
  * blob URL the field holds meanwhile.
+ * @param {InternalLocaleCode} [args.locale] Locale being edited, which an entry-relative path is
+ * relative to. Default: the default locale.
  * @returns {MediaFieldSource | undefined} The file to preview, or `undefined` if the option is not
  * set, the subfield is not an Image/File field, it’s empty, or the file has no thumbnail.
  */
@@ -61,6 +64,7 @@ export const getObjectThumbnail = ({
   isIndexFile = false,
   entry,
   files,
+  locale,
 }) => {
   if (!thumbnailFieldName) {
     return undefined;
@@ -101,6 +105,7 @@ export const getObjectThumbnail = ({
     componentName,
     fieldConfig: mediaFieldConfig,
     typedKeyPath: fieldTypedKeyPath,
+    locale,
   });
 
   if (!source) {

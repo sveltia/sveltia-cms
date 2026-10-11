@@ -8,6 +8,7 @@ import {
   canCreateIndexFile,
   countCollectionEntries,
   getEntriesByCollection,
+  getEntriesInCollectionFolder,
   getListedCollections,
   matchesCollectionFilter,
   selectedEntries,
@@ -427,6 +428,149 @@ describe('getEntriesByCollection()', () => {
   });
 });
 
+describe('getEntriesInCollectionFolder()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    _resetEntriesByCollectionCache();
+  });
+
+  test('returns every entry in the collection folder, including those filtered out', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
+    const { getRegex } = await import('$lib/services/utils/regex');
+
+    const fr = {
+      name: 'fr',
+      _type: 'entry',
+      _i18n: { defaultLocale: '_default' },
+      filter: { field: 'lang', value: 'fr' },
+    };
+
+    const en = { name: 'en', _type: 'entry', filter: { field: 'lang', value: 'en' } };
+
+    const entries = [
+      { id: 'hello', locales: { _default: { content: { lang: 'en' } } } },
+      { id: 'bonjour', locales: { _default: { content: { lang: 'fr' } } } },
+    ];
+
+    vi.mocked(getCollection).mockReturnValue(fr);
+    vi.mocked(getRegex).mockReturnValue(undefined);
+    // Both collections share the folder
+    vi.mocked(getAssociatedCollections).mockReturnValue([en, fr]);
+    vi.mocked(getPropertyValue).mockImplementation(({ entry }) =>
+      entry.id === 'hello' ? 'en' : 'fr',
+    );
+    allEntries.current = entries;
+    allEntryFolders.current = [];
+
+    expect(getEntriesByCollection('fr').map(({ id }) => id)).toEqual(['bonjour']);
+    expect(getEntriesInCollectionFolder('fr').map(({ id }) => id)).toEqual(['hello', 'bonjour']);
+    expect(getEntriesInCollectionFolder('missing')).toEqual([]);
+
+    // The cache is dropped once the entries are replaced
+    allEntries.current = [entries[0]];
+    expect(getEntriesInCollectionFolder('fr').map(({ id }) => id)).toEqual(['hello']);
+  });
+});
+
+describe('getEntriesInCollectionFolder() with files claimed by another collection', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    _resetEntriesByCollectionCache();
+  });
+
+  test('adds them with the slugs the collection would give them', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+
+    const blog = {
+      name: 'blog',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      _file: {
+        fullPathRegEx: /^content\/blog\/(?<subPath>[^/]+?)(?:\.(?<locale>fr))?\.md$/,
+        subPath: undefined,
+      },
+    };
+
+    const first = {
+      id: 'first',
+      slug: 'first',
+      locales: { en: { slug: 'first', path: 'content/blog/first.md' } },
+    };
+
+    // Hugo’s section page, declared as a file collection’s file
+    const index = {
+      id: 'index',
+      slug: 'blog-index',
+      locales: {
+        en: { slug: 'blog-index', path: 'content/blog/_index.md' },
+        fr: { slug: 'blog-index', path: 'content/blog/_index.fr.md' },
+      },
+    };
+
+    // Stored elsewhere, in a locale stored outside the folder too
+    const about = {
+      id: 'about',
+      slug: 'about',
+      locales: {
+        en: { slug: 'about', path: 'content/about.md' },
+        fr: { slug: 'about', path: 'content/blog/about.fr.md' },
+      },
+    };
+
+    const other = {
+      id: 'other',
+      slug: 'other',
+      locales: { en: { slug: 'other', path: 'content/other.md' } },
+    };
+
+    vi.mocked(getCollection).mockImplementation((name) => (name === 'blog' ? blog : undefined));
+    vi.mocked(getAssociatedCollections).mockImplementation((entry) =>
+      entry === first ? [blog] : [{ name: 'pages' }],
+    );
+    allEntries.current = [first, index, about, other];
+    allEntryFolders.current = [];
+
+    const entries = getEntriesInCollectionFolder('blog');
+
+    expect(entries).toEqual([
+      first,
+      {
+        ...index,
+        slug: '_index',
+        subPath: '_index',
+        locales: {
+          en: { slug: '_index', path: 'content/blog/_index.md' },
+          fr: { slug: '_index', path: 'content/blog/_index.fr.md' },
+        },
+      },
+      {
+        ...about,
+        slug: 'about',
+        subPath: 'about',
+        locales: { fr: { slug: 'about', path: 'content/blog/about.fr.md' } },
+      },
+    ]);
+    // The result is cached
+    expect(getEntriesInCollectionFolder('blog')).toBe(entries);
+    expect(getEntriesInCollectionFolder('missing')).toEqual([]);
+  });
+
+  test('adds none to a collection without a folder', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+
+    vi.mocked(getCollection).mockReturnValue({ name: 'pages', _type: 'file', _i18n: {} });
+    vi.mocked(getAssociatedCollections).mockReturnValue([]);
+    allEntries.current = [{ id: 'a', locales: { _default: { path: 'a.md' } } }];
+    allEntryFolders.current = [];
+
+    expect(getEntriesInCollectionFolder('pages')).toEqual([]);
+  });
+});
+
 describe('matchesCollectionFilter()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -622,6 +766,17 @@ describe('getListedCollections()', () => {
 
     vi.mocked(getAssociatedCollections).mockReturnValue([listed, filtered]);
     vi.mocked(getPropertyValue).mockReturnValue('published');
+
+    expect(getListedCollections(entry)).toEqual([listed]);
+  });
+
+  test('omits the hidden collections, which can’t be opened', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+    const listed = { name: 'posts', _type: 'entry', _i18n: { defaultLocale: 'en' } };
+    const hidden = { name: 'archive', _type: 'entry', _i18n: { defaultLocale: 'en' }, hide: true };
+    const entry = { id: '1', locales: { en: { content: {} } } };
+
+    vi.mocked(getAssociatedCollections).mockReturnValue([hidden, listed]);
 
     expect(getListedCollections(entry)).toEqual([listed]);
   });

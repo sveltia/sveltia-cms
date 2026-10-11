@@ -222,14 +222,31 @@ export const saveChanges = async ({ changes, savingEntries = [], savingAssets = 
         // gets the URL of a wrapper that can’t run any script, like an asset loaded from the
         // repository does. The file is remembered with it, so reading the asset gives the file
         if (file) {
-          await cacheAssetBlob(savedAsset, file);
+          try {
+            await cacheAssetBlob(savedAsset, file);
+          } catch (ex) {
+            // The commit has landed, so the save has succeeded; the asset is loaded from the
+            // repository instead
+            // eslint-disable-next-line no-console
+            console.error('Failed to cache the saved asset.', ex);
+          }
         }
 
         return savedAsset;
       }),
     );
 
-    await updateCache({ changes: combinedChanges, commit });
+    try {
+      await updateCache({ changes: combinedChanges, commit });
+    } catch (ex) {
+      // The commit has landed, so the save has succeeded even if the cache couldn’t be written,
+      // e.g. when the storage quota is exceeded. The stores still have to be updated and the head
+      // advanced, or the next commit would be refused. A file missing from the cache is fetched
+      // again on the next load
+      // eslint-disable-next-line no-console
+      console.error('Failed to update the file cache.', ex);
+    }
+
     updateStores({ changes: combinedChanges, savedEntries, savedAssets, arrayFileEntries });
     // The site is rebuilt from this commit, so the deploy state the UI reports is now about the
     // user’s own change. Editorial Workflow commits don’t come through here; they land on a

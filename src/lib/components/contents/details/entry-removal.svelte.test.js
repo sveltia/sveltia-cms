@@ -21,7 +21,8 @@ const unpublishedEntry = /** @type {any} */ ({ ...entry, workflow: { status: 'dr
 /**
  * Render the component for an existing entry.
  * @param {Record<string, any>} [props] Props.
- * @returns {Promise<{ component: any, props: Record<string, any> }>} Component and props.
+ * @returns {Promise<{ component: any, props: Record<string, any>, entryDraft: any }>} Component,
+ * props and the entry draft state.
  */
 const renderRemoval = async (props = {}) => {
   const draft = createMockDraft({
@@ -45,9 +46,12 @@ const renderRemoval = async (props = {}) => {
     ...props,
   });
 
-  const { component } = await renderWithDraft(EntryRemoval, { draft, props: allProps });
+  const { component, entryDraft } = await renderWithDraft(EntryRemoval, {
+    draft,
+    props: allProps,
+  });
 
-  return { component, props: allProps };
+  return { component, props: allProps, entryDraft };
 };
 
 describe('EntryRemoval', () => {
@@ -77,6 +81,33 @@ describe('EntryRemoval', () => {
     expect(contentUpdatesToast.current).toMatchObject({ count: 1, deleted: true });
     expect(props.deleting).toBe(false);
     await vi.waitFor(() => expect(props.onClose).toHaveBeenCalled());
+  });
+
+  test('leaves the editor alone once the user has moved on during the deletion', async () => {
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(deleteOrDiscardEntries).mockReturnValueOnce(/** @type {any} */ (promise));
+
+    const { component, props, entryDraft } = await renderRemoval();
+
+    component.confirmDelete();
+    await page
+      .getByRole('alertdialog', { name: 'Delete Entry' })
+      .getByRole('button', { name: 'Delete' })
+      .click();
+    await vi.waitFor(() => expect(props.deleting).toBe(true));
+    // The user goes back with the Back button, which stays available, and opens another entry
+    entryDraft.current = createMockDraft({
+      fields: [{ name: 'title', widget: 'string' }],
+      values: { _default: { title: 'World' } },
+      draft: { isNew: false },
+    });
+    resolve({ deleted: true });
+
+    await vi.waitFor(() => expect(props.deleting).toBe(false));
+    // The deletion is still reported, but the editor isn’t closed under the other entry
+    expect(contentUpdatesToast.current).toMatchObject({ count: 1, deleted: true });
+    expect(props.onDone).not.toHaveBeenCalled();
   });
 
   test('discards an entry that has never been published', async () => {

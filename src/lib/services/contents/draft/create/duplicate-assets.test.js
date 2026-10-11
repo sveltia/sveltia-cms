@@ -218,6 +218,19 @@ describe('copyEntryRelativeAssets()', () => {
     expect(currentValues.en.body).toBe('Text');
   });
 
+  test('looks each locale’s asset up relative to that locale’s entry file', async () => {
+    currentValues = { en: { image: 'photo.jpg' }, ja: { image: 'photo.jpg' } };
+
+    await copyEntryRelativeAssets({ draft, currentValues });
+
+    expect(mockGetAssetByPath).toHaveBeenCalledWith(
+      expect.objectContaining({ value: 'photo.jpg', locale: 'en' }),
+    );
+    expect(mockGetAssetByPath).toHaveBeenCalledWith(
+      expect.objectContaining({ value: 'photo.jpg', locale: 'ja' }),
+    );
+  });
+
   test('looks the asset up with the field’s typed key path', async () => {
     currentValues = { en: { 'images.0.src': 'a.jpg' } };
 
@@ -245,6 +258,7 @@ describe('copyEntryRelativeAssets()', () => {
       collectionName: 'posts',
       fileName: undefined,
       typedKeyPath: 'images.*.src',
+      locale: 'en',
     });
   });
 

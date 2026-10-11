@@ -11,6 +11,7 @@ import { lockedBranch } from '$lib/services/backends/branch-access';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
+import { waitForToastsToHide } from '$lib/test/toast';
 
 import PrimaryToolbar from './primary-toolbar.svelte';
 
@@ -125,6 +126,36 @@ describe('PrimaryToolbar', () => {
 
     await vi.waitFor(() => expect(deleteAssets).toHaveBeenCalledWith(assets));
   });
+
+  test('reports a failure to delete the selected assets', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(deleteAssets).mockRejectedValueOnce(new Error('offline'));
+
+    try {
+      await render(PrimaryToolbar);
+
+      // The selection is reset whenever the listed assets change, so select the assets afterwards
+      await tick();
+      selectedAssets.current = [...assets];
+
+      await page.getByRole('button', { name: 'Delete Selected Assets' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+      await vi.waitFor(() => expect(deleteAssets).toHaveBeenCalledWith(assets));
+      await expect
+        .poll(() =>
+          document
+            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
+            ?.textContent?.replace(/\s+/g, ' ')
+            .trim(),
+        )
+        .toBe('error Error Delete failed.');
+      expect(error).toHaveBeenCalledWith(new Error('offline'));
+      await waitForToastsToHide();
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
 
   test('disables uploading and deleting while contributing via a fork', async () => {
     forkedRepository.current = /** @type {any} */ ({ owner: 'me', repo: 'site' });

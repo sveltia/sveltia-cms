@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { focusOverlay, keepFocusIn, rememberFocus } from './focus';
+import { focusList, focusOverlay, keepFocusIn, rememberFocus } from './focus';
 
 describe('rememberFocus', () => {
   afterEach(() => {
@@ -65,6 +65,101 @@ describe('rememberFocus', () => {
     opener.blur();
     restoreFocus();
     // Nothing else to focus on this page either
+    expect(document.activeElement).toBe(document.body);
+  });
+});
+
+describe('focusList', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'performance'] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    document.body.innerHTML = '';
+  });
+
+  /**
+   * Get the page container.
+   * @returns {HTMLElement} Element.
+   */
+  const getContainer = () => /** @type {HTMLElement} */ (document.querySelector('#page-container'));
+
+  it('focuses the row of the list that is in the tab order', () => {
+    document.body.innerHTML = `
+      <div id="page-container">
+        <div role="grid" tabindex="-1">
+          <div role="row" tabindex="-1"></div>
+          <div role="row" tabindex="0" id="row"></div>
+        </div>
+      </div>
+    `;
+
+    focusList();
+    expect(document.activeElement?.id).toBe('row');
+    // It stays there while the list is left alone
+    vi.advanceTimersToNextFrame();
+    expect(document.activeElement?.id).toBe('row');
+  });
+
+  it('moves the focus on once the focused row is removed', () => {
+    document.body.innerHTML = `
+      <div id="page-container">
+        <div role="grid"><div role="row" tabindex="0" id="deleted"></div></div>
+      </div>
+    `;
+
+    focusList();
+    expect(document.activeElement?.id).toBe('deleted');
+
+    // The row of the deleted entry is removed, and another row takes its place
+    /** @type {HTMLElement} */ (document.querySelector('[role="grid"]')).innerHTML =
+      '<div role="row" tabindex="0" id="kept"></div>';
+    // happy-dom doesn’t move the focus off a removed element the way a browser does
+    /** @type {HTMLElement} */ (document.activeElement).blur();
+    vi.advanceTimersToNextFrame();
+    expect(document.activeElement?.id).toBe('kept');
+  });
+
+  it('focuses the page container until a row shows up', () => {
+    document.body.innerHTML = '<div id="page-container"></div>';
+    focusList();
+
+    const container = getContainer();
+
+    expect(container.tabIndex).toBe(-1);
+    expect(document.activeElement).toBe(container);
+    vi.advanceTimersToNextFrame();
+    expect(document.activeElement).toBe(container);
+
+    container.innerHTML = '<div role="grid"><div role="row" tabindex="0" id="row"></div></div>';
+    vi.advanceTimersToNextFrame();
+    expect(document.activeElement?.id).toBe('row');
+  });
+
+  it('stops watching once the user has moved the focus elsewhere', () => {
+    document.body.innerHTML = '<div id="page-container"></div><button id="outside"></button>';
+    focusList();
+    /** @type {HTMLElement} */ (document.querySelector('#outside')).focus();
+    getContainer().innerHTML = '<div role="grid"><div role="row" tabindex="0"></div></div>';
+    vi.advanceTimersToNextFrame();
+    vi.advanceTimersToNextFrame();
+    expect(document.activeElement?.id).toBe('outside');
+  });
+
+  it('stops watching after the timeout', () => {
+    document.body.innerHTML = '<div id="page-container"></div>';
+    focusList({ timeout: 100 });
+    vi.advanceTimersByTime(200);
+
+    // A row showing up later is left alone
+    getContainer().innerHTML = '<div role="grid"><div role="row" tabindex="0"></div></div>';
+    vi.advanceTimersByTime(200);
+    expect(document.activeElement).toBe(getContainer());
+  });
+
+  it('does nothing without a page container', () => {
+    focusList();
     expect(document.activeElement).toBe(document.body);
   });
 });

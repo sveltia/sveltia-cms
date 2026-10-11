@@ -121,6 +121,19 @@ describe('contents/fields/custom/files', () => {
     });
   });
 
+  it('processes the file for the locale being edited', async () => {
+    const file = new File(['x'], 'photo.webp', { type: 'image/webp' });
+
+    await addFileToDraft({ draft, fieldConfig, typedKeyPath: 'photo', locale: 'fr', file });
+
+    expect(processResource).toHaveBeenCalledWith({
+      draft,
+      resource: { file, folder },
+      libraryConfig,
+      locale: 'fr',
+    });
+  });
+
   it('passes the enclosing rich text editor component name for the folder lookup', async () => {
     const file = new File(['x'], 'photo.webp', { type: 'image/webp' });
 
@@ -362,9 +375,13 @@ describe('contents/fields/custom/files', () => {
         fieldConfig,
         typedKeyPath: 'photo',
         componentName: 'gallery',
+        locale: 'fr',
         resources: [{ file }],
       });
 
+      // The file is processed and looked up for the locale being edited, which an entry-relative
+      // path is relative to
+      expect(processResource).toHaveBeenCalledWith(expect.objectContaining({ locale: 'fr' }));
       expect(getAssetByPath).toHaveBeenCalledWith({
         value: '/photos/photo.webp',
         entry: draft.originalEntry,
@@ -372,6 +389,7 @@ describe('contents/fields/custom/files', () => {
         fileName: undefined,
         componentName: 'gallery',
         typedKeyPath: 'photo',
+        locale: 'fr',
       });
       expect(files).toEqual([{ value: '/photos/photo.webp', file: blob, credit: undefined }]);
     });

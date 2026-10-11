@@ -29,6 +29,8 @@ import { decodeURIComponentSafely } from '$lib/services/utils/url';
  * Entry,
  * InternalCollection,
  * InternalCollectionFile,
+ * InternalLocaleCode,
+ * LocalizedEntry,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
  */
@@ -62,6 +64,22 @@ export const getAssetByInternalPath = (path) => getAssetPathMap().get(path);
 export const getAssetKey = ({ unsaved, blobURL, path }) => (unsaved && blobURL ? blobURL : path);
 
 /**
+ * Get the given locale’s file of an entry, which an entry-relative asset referenced in that locale
+ * is stored beside. With the `multiple_folders` or `multiple_root_folders` i18n structure, each
+ * locale’s file is in a folder of its own. Falls back to the default locale’s file, or the first
+ * one if the entry doesn’t have it, when no locale is given or the entry doesn’t have the locale
+ * yet.
+ * @param {Entry} entry Entry.
+ * @param {InternalLocaleCode} defaultLocale Default locale of the entry’s collection.
+ * @param {InternalLocaleCode} [locale] Locale.
+ * @returns {LocalizedEntry} Localized entry, including the file path.
+ */
+const getEntryLocaleFile = (entry, defaultLocale, locale) =>
+  (locale ? entry.locales[locale] : undefined) ??
+  entry.locales[defaultLocale] ??
+  Object.values(entry.locales)[0];
+
+/**
  * Resolve template tags in an asset folder’s `internalPath`, such as `/assets/images/{{slug}}`,
  * using the given entry’s content.
  * @param {object} args Arguments.
@@ -70,11 +88,13 @@ export const getAssetKey = ({ unsaved, blobURL, path }) => (unsaved && blobURL ?
  * `undefined` for the global asset folder as well as field-level asset folders in custom editor
  * components.
  * @param {Entry} [args.entry] Associated entry. Can be `undefined` when editing a new draft.
+ * @param {InternalLocaleCode} [args.locale] Locale whose entry file the path is resolved against.
+ * Default: the collection’s default locale.
  * @returns {string | undefined} Resolved path, which is the given `internalPath` itself if it has
  * no template tags, or `undefined` if the tags cannot be resolved, typically because the entry has
  * not been saved yet.
  */
-export const fillInternalPathTemplate = ({ internalPath, collectionName, entry }) => {
+export const fillInternalPathTemplate = ({ internalPath, collectionName, entry, locale }) => {
   if (!hasTemplateTags(internalPath)) {
     return internalPath;
   }
@@ -90,10 +110,13 @@ export const fillInternalPathTemplate = ({ internalPath, collectionName, entry }
     return undefined;
   }
 
-  const { slug, locales } = entry;
-  const { defaultLocale } = collection._i18n;
-  const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
-  const { content, path: entryFilePath } = locales[locale];
+  const { slug } = entry;
+
+  const { content, path: entryFilePath } = getEntryLocaleFile(
+    entry,
+    collection._i18n.defaultLocale,
+    locale,
+  );
 
   return fillTemplate(internalPath, {
     type: 'media_folder',
@@ -116,6 +139,8 @@ export const fillInternalPathTemplate = ({ internalPath, collectionName, entry }
  * @param {string} [context.componentName] Custom editor component name for a field-level asset
  * folder.
  * @param {TypedFieldKeyPath} [context.typedKeyPath] Field key path for field-level media folders.
+ * @param {InternalLocaleCode} [context.locale] Locale the path is referenced in, whose entry file
+ * the path is relative to. Default: the default locale.
  * @returns {Asset | undefined} Found asset.
  */
 export const getAssetByRelativePathAndCollection = ({
@@ -125,9 +150,8 @@ export const getAssetByRelativePathAndCollection = ({
   file,
   componentName,
   typedKeyPath,
+  locale,
 }) => {
-  const { locales } = entry;
-
   const {
     _i18n: { defaultLocale },
   } = file ?? collection;
@@ -162,8 +186,11 @@ export const getAssetByRelativePathAndCollection = ({
       ? fieldFolder.publicPath
       : /** @type {string | undefined} */ (folderOptions.public_folder);
 
-  const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
-  const { path: entryFilePath, content: entryContent } = locales[locale];
+  const { path: entryFilePath, content: entryContent } = getEntryLocaleFile(
+    entry,
+    defaultLocale,
+    locale,
+  );
 
   if (!entryFilePath || !entryContent) {
     return undefined;
@@ -232,6 +259,8 @@ export const getAssetByRelativePathAndCollection = ({
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {string} [args.componentName] Custom editor component name for a field-level asset folder.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
+ * @param {InternalLocaleCode} [args.locale] Locale the path is referenced in, which tells which
+ * locale’s entry file an entry-relative path is relative to. Default: the default locale.
  * @returns {Asset | undefined} Corresponding asset.
  */
 export const getAssetByRelativePath = ({
@@ -241,6 +270,7 @@ export const getAssetByRelativePath = ({
   fileName,
   componentName,
   typedKeyPath,
+  locale,
 }) => {
   if (!entry) {
     // Without an entry we use collectionName/fileName to scan configured folders. For
@@ -279,7 +309,7 @@ export const getAssetByRelativePath = ({
     .values()
     .flatMap((collection) => {
       const collectionFiles = getCollectionFilesByEntry(collection, entry);
-      const args = { path, entry, collection, componentName, typedKeyPath };
+      const args = { path, entry, collection, componentName, typedKeyPath, locale };
       /** @type {(InternalCollectionFile | undefined)[]} */
       const files = collectionFiles.length ? collectionFiles : [undefined];
 
@@ -332,6 +362,8 @@ export const isRelativePath = (path) => !/^[/@]/.test(path);
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {string} [args.componentName] Custom editor component name for a field-level asset folder.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
+ * @param {InternalLocaleCode} [args.locale] Locale the path is referenced in, which tells which
+ * locale’s entry file an entry-relative path is relative to. Default: the default locale.
  * @returns {Asset | undefined} Corresponding asset.
  */
 export const getAssetByAbsolutePath = ({
@@ -341,6 +373,7 @@ export const getAssetByAbsolutePath = ({
   fileName,
   componentName,
   typedKeyPath,
+  locale,
 }) => {
   const exactMatch = getAssetPathMap().get(stripSlashes(path));
 
@@ -365,6 +398,7 @@ export const getAssetByAbsolutePath = ({
         internalPath,
         collectionName: _collectionName,
         entry,
+        locale,
       });
 
       if (internalPath === undefined) {
@@ -436,6 +470,8 @@ export const getAssetByAbsolutePath = ({
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {string} [args.componentName] Custom editor component name for a field-level asset folder.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
+ * @param {InternalLocaleCode} [args.locale] Locale the path is referenced in, which tells which
+ * locale’s entry file an entry-relative path is relative to. Default: the default locale.
  * @returns {Asset | undefined} Corresponding asset.
  */
 export const getAssetByPath = ({ value, ...rest }) => {

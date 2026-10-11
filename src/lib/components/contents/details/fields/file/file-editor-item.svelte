@@ -20,14 +20,17 @@
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { Asset, AssetKind, Entry, EntryDraft } from '$lib/types/private';
+   * @import { Asset, AssetKind, Entry, EntryDraft, InternalLocaleCode } from '$lib/types/private';
    * @import { FileField, MediaField } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
    * @property {string} value The file value (URL, blob URL, or file path).
-   * @property {string} fieldId The field ID for accessibility.
+   * @property {string} fieldId The ID of the item, which its value element is identified with.
+   * @property {string} [groupFieldId] The ID of the field the item belongs to, whose label and
+   * error message describe the item. Defaults to {@link fieldId}, which is the same for a single
+   * file.
    * @property {MediaField} fieldConfig Field configuration.
    * @property {boolean} readonly Whether the field is readonly.
    * @property {boolean} invalid Whether the field is invalid.
@@ -37,6 +40,8 @@
    * @property {string} [typedKeyPath] Field key path for field-level media folders.
    * @property {string} [componentName] Custom editor component name for a field-level asset folder.
    * @property {Entry | undefined} entry The entry object.
+   * @property {InternalLocaleCode} [locale] Locale being edited, which an entry-relative path is
+   * relative to.
    * @property {() => void} [onReplace] Event handler for replace action.
    * @property {() => void} [onRemove] Event handler for remove action.
    * @property {number} [index] Index of the item within a multi-value field.
@@ -55,6 +60,7 @@
   const {
     value,
     fieldId,
+    groupFieldId = fieldId,
     fieldConfig,
     readonly = false,
     invalid = false,
@@ -64,6 +70,7 @@
     typedKeyPath = undefined,
     componentName = undefined,
     entry = undefined,
+    locale = undefined,
     onReplace,
     onRemove,
     index = 0,
@@ -148,6 +155,7 @@
     componentName,
     typedKeyPath,
     fieldConfig,
+    locale,
   });
 
   /**
@@ -325,8 +333,8 @@
         {required}
         applyDisabled={!finalName}
         dir="ltr"
-        ariaLabelledby="{fieldId}-label"
-        ariaErrormessage="{fieldId}-error"
+        ariaLabelledby="{groupFieldId}-label"
+        ariaErrormessage="{groupFieldId}-error"
         getSelectionEnd={(name) => getPathInfo(name).filename.length}
         onApply={applyNewName}
       />

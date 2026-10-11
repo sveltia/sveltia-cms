@@ -649,6 +649,17 @@ describe('EditorComponent', () => {
       ).toHaveLength(2);
     });
 
+    test('opens the dialog with the Space key, which doesn’t reach the editor', async () => {
+      await renderComponent({ mode: 'dialog', values: { title: 'Hello' } });
+
+      const placeholder = page.getByRole('button', { name: 'Card' });
+      const space = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+
+      placeholder.element().dispatchEvent(space);
+      expect(space.defaultPrevented).toBe(true);
+      await expect.element(page.getByRole('dialog', { name: 'Card' })).toBeInTheDocument();
+    });
+
     describe('thumbnail', () => {
       const iconFields = [
         { name: 'icon', label: 'Icon', widget: 'image' },

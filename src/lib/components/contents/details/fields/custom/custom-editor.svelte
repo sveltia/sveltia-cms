@@ -168,6 +168,7 @@
       fieldConfig,
       typedKeyPath,
       componentName,
+      locale,
       file,
       options,
     });
@@ -315,4 +316,5 @@
   {typedKeyPath}
   {componentName}
   {inEditorComponent}
+  {locale}
 />

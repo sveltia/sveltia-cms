@@ -1028,6 +1028,28 @@ describe('workflow/save', () => {
       expect(entry.workflow.previousPaths).toEqual(['content/posts/hello.md']);
     });
 
+    test('keeps track of the commit when the status of a reused pull request can’t be switched', async () => {
+      const pending = createEntry('cms/posts/hello');
+
+      pending.workflow.pullRequest.headSHA = 'old';
+      upsertUnpublishedEntry(pending);
+      workflowService.updateStatus.mockRejectedValue(new Error('API error'));
+
+      await expect(
+        deleteWorkflowEntry(createPublishedEntry(), collection, undefined),
+      ).rejects.toThrow('API error');
+
+      // The removal has been committed to the branch, so the entry follows the new head commit,
+      // keeping the status the pull request still has
+      expect(unpublishedEntries.current).toHaveLength(1);
+
+      const [stored] = unpublishedEntries.current;
+
+      expect(stored.workflow.pullRequest.headSHA).toBe('abc');
+      expect(stored.workflow.status).toBe('draft');
+      expect(stored.workflow.pullRequest.status).toBe('draft');
+    });
+
     test('reuses a pull request whose branch keeps the slashes of the slug', async () => {
       // A branch created by Netlify/Decap CMS or an earlier version, before slashes were encoded
       const pending = createEntry('cms/pages/about/ethos');

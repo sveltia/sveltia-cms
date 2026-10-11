@@ -139,6 +139,71 @@ describe('draft/save/changes', () => {
       expect(result.changes[0].action).toBe('create');
     });
 
+    it('should save an entry without a file in the default locale', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(createEntryPath).mockImplementation(({ locale }) => `posts/hello.${locale}.md`);
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Salut' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      /**
+       * Create a draft of an entry that only has a French file.
+       * @param {Record<string, boolean>} currentLocales Locales enabled in the draft.
+       * @returns {any} Draft.
+       */
+      const createDraft = (currentLocales) => ({
+        id: 'test-uuid',
+        isNew: false,
+        originalEntry: {
+          id: 'test-uuid',
+          slug: 'hello',
+          subPath: 'hello',
+          locales: { fr: { slug: 'hello', path: 'posts/hello.fr.md', content: {} } },
+        },
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: /^posts\/(?<subPath>.+?)\.(?:en|fr)\.md$/ },
+          _i18n: {
+            i18nEnabled: true,
+            allLocales: ['en', 'fr'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false, i18nMultiFile: true },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        originalLocales: { en: false, fr: true },
+        currentLocales,
+        currentValues: { de: { title: 'Hallo' }, fr: { title: 'Salut' } },
+        files: {},
+      });
+
+      const slugs = {
+        defaultLocaleSlug: 'hello',
+        canonicalSlug: undefined,
+        localizedSlugs: undefined,
+      };
+
+      const result = await createSavingEntryData({ draft: createDraft({ fr: true }), slugs });
+
+      // The French file stands in for the missing English one, like when the entry is read
+      expect(result.savingEntry.subPath).toBe('hello');
+      expect(result.savingEntry.locales.fr).toMatchObject({ path: 'posts/hello.fr.md' });
+      expect(result.changes).toContainEqual(
+        expect.objectContaining({ action: 'update', path: 'posts/hello.fr.md' }),
+      );
+
+      // Any locale will do if none has content
+      const result2 = await createSavingEntryData({ draft: createDraft({}), slugs });
+
+      expect(result2.savingEntry.subPath).toBe('hello');
+    });
+
     it('should keep the position of an existing entry stored in an array file', async () => {
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');
@@ -1740,12 +1805,27 @@ describe('draft/save/changes', () => {
       );
     });
 
-    it('should trim whitespace from string values', async () => {
+    it('should trim whitespace from string values as the field needs', async () => {
       const { createEntryPath } = await import('./entry-path');
       const { getBlobRegex } = await import('@sveltia/utils/file');
+      const { getField } = await import('$lib/services/contents/entry/fields');
 
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+
+      /** @type {Record<string, any>} */
+      const fields = {
+        title: { name: 'title' },
+        subtitle: { name: 'subtitle', widget: 'string' },
+        body: { name: 'body', widget: 'markdown' },
+        rich: { name: 'rich', widget: 'richtext' },
+        summary: { name: 'summary', widget: 'text' },
+        code: { name: 'code', widget: 'code' },
+        snippet: { name: 'snippet', widget: 'code', output_code_only: false },
+        'list.0': { name: 'list', widget: 'code' },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
 
       const draft = {
         collection: {
@@ -1760,7 +1840,19 @@ describe('draft/save/changes', () => {
         isIndexFile: false,
         currentLocales: { en: true },
         currentValues: {
-          en: { title: '  Test Post  ', body: '\n\nContent\n\n' },
+          en: {
+            title: '  Test Post  ',
+            subtitle: '\tSub\n',
+            body: '    indented code\n\nContent\n\n',
+            rich: '\n\nRich  \n',
+            summary: '  Line 1\n  Line 2\n',
+            code: '  indented: 1\ntop: 2\n',
+            'snippet.code': '\tpass\n',
+            'snippet.lang': 'python',
+            'list.0': '  x\n',
+            unknown: '  value  ',
+            'meta.note': '  note  ',
+          },
         },
         files: {},
       };
@@ -1772,10 +1864,22 @@ describe('draft/save/changes', () => {
       };
 
       const result = await createBaseSavingEntryData({ draft, slugs });
+      const { content } = result.localizedEntryMap.en;
 
-      expect(result.localizedEntryMap.en).toBeDefined();
-      expect(result.localizedEntryMap.en.content.title).toBe('Test Post');
-      expect(result.localizedEntryMap.en.content.body).toBe('Content');
+      // Other fields, and values no field describes, are trimmed on both ends
+      expect(content.title).toBe('Test Post');
+      expect(content.subtitle).toBe('Sub');
+      expect(content.unknown).toBe('value');
+      expect(content['meta.note']).toBe('note');
+      // Multiline text keeps its leading whitespace
+      expect(content.body).toBe('    indented code\n\nContent');
+      expect(content.rich).toBe('\n\nRich');
+      expect(content.summary).toBe('  Line 1\n  Line 2');
+      // Code is kept as is
+      expect(content.code).toBe('  indented: 1\ntop: 2\n');
+      expect(content['snippet.code']).toBe('\tpass\n');
+      expect(content['snippet.lang']).toBe('python');
+      expect(content['list.0']).toBe('  x\n');
     });
 
     it('should skip non-string values without trimming', async () => {

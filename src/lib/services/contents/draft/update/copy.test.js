@@ -9,6 +9,7 @@ import {
   copyFromLocale,
   getCopyingFieldMap,
   getTurndownService,
+  isTranslationPending,
   translateFields,
   updateToast,
 } from './copy';
@@ -596,6 +597,135 @@ describe('draft/update/copy', () => {
 
       expect(currentValues.ja.title).toBe('English Title');
       expect(currentValues.ja.body).toBe('English Body');
+    });
+  });
+
+  describe('translation in flight', () => {
+    /** @type {ReturnType<typeof Promise.withResolvers<string[]>>} */
+    let request;
+    let mockTranslate;
+
+    beforeEach(async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+
+      request = Promise.withResolvers();
+      mockTranslate = vi.fn(() => request.promise);
+      prefs.apiKeys = { google: 'test-api-key' };
+      translator.current = {
+        serviceId: 'google',
+        markdownSupported: true,
+        translate: mockTranslate,
+      };
+    });
+
+    it('should not overwrite a field filled in while translating all the fields', async () => {
+      const { copyFromLocaleToast } = await import('$lib/services/contents/editor');
+
+      const promise = copyFromLocaleUpdate({
+        sourceLanguage: 'en',
+        targetLanguage: 'ja',
+        translate: true,
+      });
+
+      await vi.waitFor(() => expect(mockTranslate).toHaveBeenCalled());
+      mockEntryDraft.currentValues.ja.title = 'Typed by the user';
+      request.resolve(['Japanese Title', 'Japanese Body']);
+      await promise;
+
+      expect(mockEntryDraft.currentValues.ja.title).toBe('Typed by the user');
+      expect(mockEntryDraft.currentValues.ja.body).toBe('Japanese Body');
+      expect(copyFromLocaleToast.current).toEqual(
+        expect.objectContaining({ status: 'success', message: 'translation.complete', count: 1 }),
+      );
+    });
+
+    it('should overwrite the field when translating that field', async () => {
+      const promise = copyFromLocaleUpdate({
+        sourceLanguage: 'en',
+        targetLanguage: 'ja',
+        keyPath: 'title',
+        translate: true,
+      });
+
+      await vi.waitFor(() => expect(mockTranslate).toHaveBeenCalled());
+      mockEntryDraft.currentValues.ja.title = 'Typed by the user';
+      request.resolve(['Japanese Title']);
+      await promise;
+
+      expect(mockEntryDraft.currentValues.ja.title).toBe('Japanese Title');
+    });
+
+    it('should drop the results once another entry has been opened', async () => {
+      const { copyFromLocaleToast } = await import('$lib/services/contents/editor');
+      const entryDraft = { current: mockEntryDraft };
+
+      const promise = copyFromLocale({
+        draft: mockEntryDraft,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja', translate: true },
+        entryDraft,
+      });
+
+      await vi.waitFor(() => expect(mockTranslate).toHaveBeenCalled());
+      copyFromLocaleToast.current = undefined;
+      entryDraft.current = { currentValues: { en: {}, ja: {} } };
+      request.resolve(['Japanese Title', 'Japanese Body']);
+      await promise;
+
+      expect(mockEntryDraft.currentValues.ja).toEqual({ title: '', body: '' });
+      expect(entryDraft.current.currentValues.ja).toEqual({});
+      expect(copyFromLocaleToast.current).toBeUndefined();
+    });
+
+    it('should not report a failure once another entry has been opened', async () => {
+      const { copyFromLocaleToast } = await import('$lib/services/contents/editor');
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const entryDraft = { current: mockEntryDraft };
+
+      const promise = copyFromLocale({
+        draft: mockEntryDraft,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja', translate: true },
+        entryDraft,
+      });
+
+      await vi.waitFor(() => expect(mockTranslate).toHaveBeenCalled());
+      copyFromLocaleToast.current = undefined;
+      entryDraft.current = null;
+      request.reject(new Error('Translation API failed'));
+      await promise;
+
+      expect(copyFromLocaleToast.current).toBeUndefined();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
+      consoleSpy.mockRestore();
+    });
+
+    it('should not send the same request again until it’s settled', async () => {
+      const options = { sourceLanguage: 'en', targetLanguage: 'ja', translate: true };
+      const pendingArgs = { draft: mockEntryDraft, targetLanguage: 'ja' };
+
+      expect(isTranslationPending(pendingArgs)).toBe(false);
+
+      const first = copyFromLocaleUpdate(options);
+
+      expect(isTranslationPending(pendingArgs)).toBe(true);
+      // Another field, or another draft, can be translated meanwhile
+      expect(isTranslationPending({ ...pendingArgs, keyPath: 'title' })).toBe(false);
+      expect(isTranslationPending({ ...pendingArgs, draft: {} })).toBe(false);
+      await vi.waitFor(() => expect(mockTranslate).toHaveBeenCalledTimes(1));
+      await copyFromLocaleUpdate(options);
+      expect(mockTranslate).toHaveBeenCalledTimes(1);
+
+      request.resolve(['Japanese Title', 'Japanese Body']);
+      await first;
+      expect(isTranslationPending(pendingArgs)).toBe(false);
+
+      // A failed request can be sent again
+      mockEntryDraft.currentValues.ja = { title: '', body: '' };
+      mockTranslate.mockRejectedValueOnce(new Error('Translation API failed'));
+      vi.spyOn(console, 'error').mockImplementationOnce(() => {});
+      await copyFromLocaleUpdate(options);
+      expect(mockTranslate).toHaveBeenCalledTimes(2);
+      expect(isTranslationPending(pendingArgs)).toBe(false);
     });
   });
 

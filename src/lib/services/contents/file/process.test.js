@@ -7,6 +7,7 @@ import {
   createArrayItemEntry,
   extractPathInfo,
   getSlug,
+  hasCircularReference,
   isIndexFile,
   normalizeDefaultRootContent,
   parseFileContent,
@@ -327,6 +328,62 @@ describe('Test parseFileContent()', () => {
     expect(errors[0].message).toBe('posts/large.md could not be read.');
 
     consoleSpy.mockRestore();
+  });
+  test('rejects content referring back to itself, e.g. through a YAML alias', async () => {
+    /** @type {Record<string, any>} */
+    const meta = {};
+
+    meta.self = meta;
+    parseEntryFile.mockResolvedValue({ title: 'Test', meta });
+
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'loop.md',
+      path: 'posts/loop.md',
+      text: '---\\nmeta: &m\\n  self: *m\\n---',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    const errors = /** @type {Error[]} */ ([]);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const result = await parseFileContent(file, errors);
+
+    expect(result).toBeUndefined();
+    expect(errors).toHaveLength(1);
+    expect(errors[0].message).toBe(
+      'posts/loop.md could not be parsed, as it contains a circular reference.',
+    );
+
+    consoleSpy.mockRestore();
+  });
+});
+
+describe('Test hasCircularReference()', () => {
+  test('finds an object or array referring back to an ancestor', () => {
+    /** @type {Record<string, any>} */
+    const object = { a: { b: 1 } };
+
+    object.a.c = object;
+
+    /** @type {any[]} */
+    const array = [1, { list: [] }];
+
+    array[1].list.push(array);
+
+    expect(hasCircularReference(object)).toBe(true);
+    expect(hasCircularReference({ nested: array })).toBe(true);
+  });
+
+  test('accepts a value referred to from several places, and primitives', () => {
+    const shared = { name: 'shared' };
+
+    expect(hasCircularReference({ a: shared, b: [shared, { c: shared }] })).toBe(false);
+    expect(hasCircularReference({ date: new Date(0), empty: null, text: 'a' })).toBe(false);
+    expect(hasCircularReference('text')).toBe(false);
+    expect(hasCircularReference(null)).toBe(false);
+    expect(hasCircularReference(undefined)).toBe(false);
   });
 });
 
@@ -2569,6 +2626,87 @@ describe('Test prepareEntries()', () => {
     expect(result.entries[0].id).toBe('test-uuid-1');
     expect(result.entries[1].id).toBe('test-uuid-2');
     expect(result.errors).toHaveLength(0);
+  });
+
+  test('reports a file that can’t be processed, and loads the others', async () => {
+    generateUUID.mockImplementation(() => 'test-uuid');
+
+    /** @type {Record<string, any>} */
+    const meta = {};
+
+    meta.self = meta;
+    parseEntryFile.mockImplementation(async (/** @type {{ path: string }} */ { path }) =>
+      path === '/posts/loop.md' ? { title: 'Loop', meta } : { title: path },
+    );
+
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: false,
+        allLocales: ['en'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nSingleFileDefaultRoot: false,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nMultiRootFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    /**
+     * Create a file list item.
+     * @param {string} name File name.
+     * @returns {BaseEntryListItem} File.
+     */
+    const createFile = (name) =>
+      /** @type {BaseEntryListItem} */ ({
+        name,
+        path: `/posts/${name}`,
+        text: '',
+        sha: 'abc123',
+        size: 100,
+        type: 'entry',
+        folder: { collectionName: 'posts' },
+      });
+
+    const brokenError = new Error('broken');
+
+    // A file whose processing throws for any other reason
+    const broken = /** @type {BaseEntryListItem} */ (
+      Object.defineProperty({ ...createFile('broken.md') }, 'folder', {
+        get: () => {
+          throw brokenError;
+        },
+      })
+    );
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await prepareEntries([
+      createFile('first.md'),
+      createFile('loop.md'),
+      broken,
+      createFile('last.md'),
+    ]);
+
+    expect(result.entries.map(({ slug }) => slug)).toEqual(['first', 'last']);
+    expect(result.errors).toHaveLength(2);
+    expect(result.errors[0].message).toBe(
+      '/posts/loop.md could not be parsed, as it contains a circular reference.',
+    );
+    expect(result.errors[1]).toBe(brokenError);
+    expect(consoleSpy).toHaveBeenCalledWith(brokenError);
+
+    consoleSpy.mockRestore();
   });
 
   test('keeps the file order across chunks while yielding between them', async () => {

@@ -1083,6 +1083,79 @@ describe('save', () => {
       expect(cacheAssetBlob).toHaveBeenCalledExactlyOnceWith(result.savedAssets[0], file);
     });
 
+    test('should complete the save when the saved asset can’t be cached', async () => {
+      const { cacheAssetBlob } = await import('$lib/services/assets/info');
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new Error('cache failed');
+      const file = new File(['fake image data'], 'photo.jpg');
+
+      vi.mocked(cacheAssetBlob).mockRejectedValueOnce(error);
+      allAssets.current = [];
+      mockCommitChanges.mockResolvedValue({
+        sha: 'commit456',
+        date: new Date('2023-01-01T12:00:00Z'),
+        files: { 'images/photo.jpg': { sha: 'file123', file } },
+      });
+
+      const result = await saveChanges({
+        changes: [{ action: 'create', path: 'images/photo.jpg', data: file }],
+        // @ts-ignore - Minimal test object
+        savingAssets: [{ path: 'images/photo.jpg', name: 'photo.jpg' }],
+        options: { commitType: 'create' },
+      });
+
+      expect(result.savedAssets[0]).toMatchObject({ path: 'images/photo.jpg', sha: 'file123' });
+      expect(allAssets.current).toEqual(result.savedAssets);
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to cache the saved asset.', error);
+      consoleSpy.mockRestore();
+    });
+
+    test('should complete the save when the file cache can’t be written', async () => {
+      const { IndexedDB } = await import('@sveltia/utils/storage');
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new DOMException('Quota exceeded', 'QuotaExceededError');
+
+      /**
+       * Mock IndexedDB constructor whose writes fail.
+       * @returns {object} Mock cache database instance.
+       */
+      function MockIndexedDB() {
+        return { delete: vi.fn(), set: vi.fn().mockRejectedValue(error) };
+      }
+
+      vi.mocked(IndexedDB).mockImplementationOnce(/** @type {any} */ (MockIndexedDB));
+
+      /** @type {any} */ (backend).current = {
+        commitChanges: mockCommitChanges,
+        fetchLastCommit: vi.fn(),
+        repository: { databaseName: 'quota-db' },
+      };
+      repositoryHead.current = 'commit000';
+      allEntries.current = [];
+      mockCommitChanges.mockResolvedValue({
+        sha: 'commit123',
+        parentSha: 'commit000',
+        date: new Date('2023-01-01T12:00:00Z'),
+        files: {},
+      });
+
+      /** @type {any} */
+      const entry = { id: 'entry-a', slug: 'a', locales: {} };
+
+      const result = await saveChanges({
+        changes: simpleChanges,
+        savingEntries: [entry],
+        options: simpleOptions,
+      });
+
+      // The commit has landed, so the stores reflect it and the head moves on
+      expect(result.commit.sha).toBe('commit123');
+      expect(allEntries.current).toEqual([expect.objectContaining({ id: 'entry-a' })]);
+      expect(repositoryHead.current).toBe('commit123');
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to update the file cache.', error);
+      consoleSpy.mockRestore();
+    });
+
     test('should handle asset changes with missing file in commit results', async () => {
       /** @type {FileChange[]} */
       const changes = [

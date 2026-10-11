@@ -748,6 +748,13 @@ cannot_delete_referenced_assets: |
   .match $count
     1   {{ このアセットを使用しているエントリーの以下のフィールドがアセットなしでは無効になるため、削除できません。先にそれらのエントリーを更新してください。 }}
     *   {{ これらのアセットを使用しているエントリーの以下のフィールドがアセットなしでは無効になるため、削除できません。先にそれらのエントリーを更新してください。 }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    1   {{ このアセットを使用しているエントリーを確認できませんでした。このダイアログを閉じて、もう一度お試しください。 }}
+    *   {{ これらのアセットを使用しているエントリーを確認できませんでした。このダイアログを閉じて、もう一度お試しください。 }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -899,6 +906,8 @@ uploading_files_failed: アップロードに失敗しました。
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: 削除に失敗しました。
 renaming_asset_failed: 名前の変更に失敗しました。
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: 保存に失敗しました。
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)

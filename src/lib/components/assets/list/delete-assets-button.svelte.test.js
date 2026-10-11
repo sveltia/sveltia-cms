@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, onTestFinished, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
@@ -70,6 +70,32 @@ describe('DeleteAssetsButton', () => {
 
     await render(DeleteAssetsButton, { assets, deleteAssets: vi.fn(), useButton: false });
     await expect.element(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await expect.element(page.getByRole('alertdialog', { name: 'Delete Assets' })).toBeVisible();
+  });
+
+  test('moves the focus to the asset list once the focused button is disabled', async () => {
+    // The asset list next to the toolbar, with the row in the tab order
+    const pageContainer = document.createElement('div');
+
+    pageContainer.id = 'page-container';
+    pageContainer.innerHTML = '<div role="grid"><div role="row" tabindex="0">a.png</div></div>';
+    document.body.append(pageContainer);
+    onTestFinished(() => {
+      pageContainer.remove();
+    });
+
+    const props = $state({ assets, deleteAssets: vi.fn(), buttonDescription: 'Delete Assets' });
+
+    await render(DeleteAssetsButton, props);
+
+    const button = page.getByRole('button', { name: 'Delete Assets' });
+
+    await expect.element(button).toBeEnabled();
+    button.element().focus();
+    // The selected assets have been deleted
+    props.assets = [];
+    await expect.element(page.getByRole('row')).toHaveFocus();
   });
 
   describe('with entries using the assets', () => {
@@ -208,6 +234,80 @@ describe('DeleteAssetsButton', () => {
       await expect.element(reopened.getByRole('button', { name: 'Delete' })).toBeDisabled();
 
       second.resolve({ targets: [], blockers: [] });
+      await expect.element(reopened.getByRole('button', { name: 'Delete' })).toBeEnabled();
+    });
+
+    test('reports a plan that can’t be worked out, which is tried again once reopened', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const planDeletion = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Boom'))
+        .mockResolvedValueOnce({ targets: [], blockers: [] });
+
+      await render(DeleteAssetsButton, {
+        assets,
+        deleteAssets: vi.fn(),
+        planDeletion,
+        dialogDescription: 'Are you sure?',
+      });
+
+      await page.getByRole('button', { name: 'Delete' }).click();
+
+      const dialog = page.getByRole('alertdialog', { name: 'Delete Assets' });
+
+      await expect
+        .element(dialog.getByRole('alert'))
+        .toHaveTextContent(
+          'Couldn’t check which entries use these assets. Close this dialog and try again.',
+        );
+      // There’s nothing to confirm
+      await expect.element(dialog).not.toMatchTextContent('Are you sure?');
+      await expect.element(dialog.getByRole('button', { name: 'Delete' })).toBeDisabled();
+      expect(consoleError).toHaveBeenCalledWith(new Error('Boom'));
+
+      await dialog.getByRole('button', { name: 'Cancel' }).click();
+      await expect.poll(() => page.getByRole('alertdialog').elements().length).toBe(0);
+      await page.getByRole('button', { name: 'Delete' }).click();
+
+      const reopened = page.getByRole('alertdialog', { name: 'Delete Assets' });
+
+      await expect.element(reopened.getByRole('button', { name: 'Delete' })).toBeEnabled();
+      await expect.element(reopened).toHaveTextContent('Delete Assets Are you sure? Delete Cancel');
+    });
+
+    test('ignores a plan that fails after the dialog has been reopened', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const first = /** @type {PromiseWithResolvers<any>} */ (Promise.withResolvers());
+
+      const planDeletion = vi
+        .fn()
+        .mockReturnValueOnce(first.promise)
+        .mockResolvedValue({ targets: [], blockers: [] });
+
+      const { rerender } = await render(DeleteAssetsButton, {
+        assets: [assets[0]],
+        deleteAssets: vi.fn(),
+        planDeletion,
+        dialogDescription: 'Are you sure?',
+      });
+
+      await page.getByRole('button', { name: 'Delete' }).click();
+      await page
+        .getByRole('alertdialog', { name: 'Delete Asset' })
+        .getByRole('button', { name: 'Cancel' })
+        .click();
+      await expect.poll(() => page.getByRole('alertdialog').elements().length).toBe(0);
+
+      await rerender({ assets });
+      await page.getByRole('button', { name: 'Delete' }).click();
+
+      const reopened = page.getByRole('alertdialog', { name: 'Delete Assets' });
+
+      await expect.element(reopened.getByRole('button', { name: 'Delete' })).toBeEnabled();
+      first.reject(new Error('Boom'));
+      await vi.waitFor(() => expect(consoleError).toHaveBeenCalled());
+      expect(reopened.getByRole('alert').elements()).toHaveLength(0);
       await expect.element(reopened.getByRole('button', { name: 'Delete' })).toBeEnabled();
     });
 

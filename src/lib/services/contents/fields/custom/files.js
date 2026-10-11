@@ -11,6 +11,7 @@ import {
 /**
  * @import {
  * EntryDraft,
+ * InternalLocaleCode,
  * MediaLibraryAssetKind,
  * SelectedResource,
  * TypedFieldKeyPath,
@@ -31,6 +32,8 @@ import {
  * @property {TypedFieldKeyPath} typedKeyPath Typed key path to the field.
  * @property {string} [componentName] Name of the rich text editor component the field is part of,
  * if any.
+ * @property {InternalLocaleCode} [locale] Locale the field is edited in, which an existing asset in
+ * an entry-relative folder is referenced relative to. Default: the default locale.
  */
 
 /**
@@ -83,6 +86,7 @@ export const addFileToDraft = async ({
   fieldConfig,
   typedKeyPath,
   componentName,
+  locale,
   file,
   options = {},
 }) => {
@@ -112,6 +116,7 @@ export const addFileToDraft = async ({
     draft,
     resource: { file: namedFile, folder },
     libraryConfig,
+    locale,
   });
 
   if (invalidFileName) {
@@ -157,7 +162,7 @@ export const getPickedAssetKind = ({ kind, accept }) => {
  * including the resource and the value {@link processResource} has resolved it to.
  * @returns {Promise<Blob | undefined>} Blob, if the resource has one.
  */
-const getPickedBlob = async ({ draft, typedKeyPath, componentName, resource, value }) => {
+const getPickedBlob = async ({ draft, typedKeyPath, componentName, locale, resource, value }) => {
   if (value.startsWith('blob:')) {
     return draft.files[value]?.file;
   }
@@ -167,7 +172,15 @@ const getPickedBlob = async ({ draft, typedKeyPath, componentName, resource, val
   const asset =
     resource.asset ??
     (resource.file
-      ? getAssetByPath({ value, entry, collectionName, fileName, componentName, typedKeyPath })
+      ? getAssetByPath({
+          value,
+          entry,
+          collectionName,
+          fileName,
+          componentName,
+          typedKeyPath,
+          locale,
+        })
       : undefined);
 
   return asset ? getAssetBlob(asset) : undefined;
@@ -195,6 +208,7 @@ export const resolvePickedResources = async ({
   fieldConfig,
   typedKeyPath,
   componentName,
+  locale,
   inEditorComponent = false,
   resources,
   accept,
@@ -206,7 +220,14 @@ export const resolvePickedResources = async ({
     componentName,
   });
 
-  const results = await processResources({ draft, resources, folder, libraryConfig, accept });
+  const results = await processResources({
+    draft,
+    resources,
+    folder,
+    libraryConfig,
+    accept,
+    locale,
+  });
 
   const files = await Promise.all(
     results.map(async ({ value, credit }, index) =>
@@ -219,6 +240,7 @@ export const resolvePickedResources = async ({
               fieldConfig,
               typedKeyPath,
               componentName,
+              locale,
               resource: resources[index],
               value,
             }),

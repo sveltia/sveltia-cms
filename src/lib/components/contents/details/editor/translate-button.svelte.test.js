@@ -1,18 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { copyFromLocale } from '$lib/services/contents/draft/update/copy';
+import { copyFromLocale, pendingTranslations } from '$lib/services/contents/draft/update/copy';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import TranslateButton from './translate-button.svelte';
 
-vi.mock('$lib/services/contents/draft/update/copy', () => ({
-  getTurndownService: vi.fn(),
-  getCopyingFieldMap: vi.fn(),
-  updateToast: vi.fn(),
-  translateFields: vi.fn(),
-  copyFields: vi.fn(),
+vi.mock('$lib/services/contents/draft/update/copy', async (importOriginal) => ({
+  ...(await importOriginal()),
   copyFromLocale: vi.fn(),
 }));
 
@@ -58,7 +54,32 @@ describe('TranslateButton', () => {
     expect(copyFromLocale).toHaveBeenCalledWith({
       draft,
       options: { sourceLanguage: 'en', targetLanguage: 'fr', keyPath: 'title', translate: true },
+      entryDraft: expect.objectContaining({ current: draft }),
     });
+  });
+
+  test('is disabled while the translation is in flight', async () => {
+    const { promise, resolve } = Promise.withResolvers();
+
+    // Like the real one, record the request until it’s settled
+    vi.mocked(copyFromLocale).mockImplementationOnce(async ({ draft, options }) => {
+      const translation = { draft, targetLanguage: options.targetLanguage, keyPath: '' };
+
+      pendingTranslations.add(translation);
+      await promise;
+      pendingTranslations.delete(translation);
+    });
+
+    await renderButton({ locale: 'fr', otherLocales: ['en'] });
+
+    const button = page.getByRole('button', { name: 'Translate from \u2068English\u2069' });
+
+    await button.click();
+    await expect.element(button).toBeDisabled();
+
+    resolve(undefined);
+    await expect.element(button).toBeEnabled();
+    expect(copyFromLocale).toHaveBeenCalledTimes(1);
   });
 
   test('names a locale by its code when it has no label', async () => {

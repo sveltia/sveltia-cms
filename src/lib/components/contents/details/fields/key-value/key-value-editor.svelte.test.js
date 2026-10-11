@@ -184,6 +184,36 @@ describe('KeyValueEditor', () => {
     await expect.poll(() => getStoredPairs(draft)).toEqual({ size: 'L' });
   });
 
+  test('keeps the focus in the table as pairs are removed', async () => {
+    await renderEditor({ color: 'red', size: 'L', shape: 'round' });
+
+    const removeButtons = page.getByRole('button', { name: 'Remove' });
+
+    /**
+     * Get the key in the row that has the focus.
+     * @returns {string | undefined} Key.
+     */
+    const getFocusedRowKey = () =>
+      /** @type {HTMLInputElement | null | undefined} */ (
+        document.activeElement?.closest('tr')?.querySelector('td.key input')
+      )?.value;
+
+    // The Remove button of the next row takes the place of the removed one
+    await removeButtons.nth(1).click();
+    await expect.poll(getFocusedRowKey).toBe('shape');
+    expect(document.activeElement).toBe(removeButtons.nth(1).element());
+
+    // The previous row’s, once the last row is removed
+    await removeButtons.nth(1).click();
+    await expect.poll(getFocusedRowKey).toBe('color');
+    expect(document.activeElement).toBe(removeButtons.nth(0).element());
+
+    // The key of the blank row left once the last pair is removed, as it can’t be removed
+    await removeButtons.nth(0).click();
+    await expect.element(page.getByRole('textbox', { name: 'Key' })).toHaveFocus();
+    await expect.poll(getRows).toEqual([['', '']]);
+  });
+
   test('offers a blank row for an empty field, storing a placeholder so it can be validated', async () => {
     const { draft } = await renderEditor({});
 

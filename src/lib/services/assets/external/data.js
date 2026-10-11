@@ -289,6 +289,9 @@ export const uploadExternalAssets = async (files, { originalAsset } = {}) => {
       }
     } catch (ex) {
       reportError('uploading_files_failed', ex);
+      // The files are uploaded one by one, so those uploaded before the failure are on the service
+      // already. Reload the list to show them rather than leave them out until the next reload
+      await loadExternalAssets(service);
     }
   }
 

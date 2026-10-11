@@ -366,6 +366,7 @@
       isIndexFile: draft.isIndexFile,
       entry: draft.originalEntry,
       files: draft.files,
+      locale,
     });
 
     return source && (source.asset ?? source.url) !== brokenThumbnail ? source : undefined;
@@ -527,7 +528,9 @@
       openDialog();
     }}
     onkeydown={(event) => {
-      if (event.key === 'Enter') {
+      // Activate the button with the Enter or Space key, like a native one. The Space key would
+      // otherwise reach the rich text editor
+      if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         openDialog();
       }

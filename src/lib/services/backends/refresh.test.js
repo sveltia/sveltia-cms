@@ -451,4 +451,47 @@ describe('suspendChecksWhile', () => {
     expect(await suspendChecksWhile(async () => 'committed')).toBe('committed');
     expect(await checkPromise).toBe('failed');
   });
+
+  test('makes one commit at a time, each on top of the head the previous one left', async () => {
+    /** @type {string[]} */
+    const order = [];
+    const { promise: firstCommitDone, resolve: finishFirstCommit } = Promise.withResolvers();
+
+    const firstPromise = suspendChecksWhile(async () => {
+      order.push(`first on ${repositoryHead.current}`);
+      await firstCommitDone;
+      repositoryHead.current = 'head-2';
+      order.push('first done');
+    });
+
+    const secondPromise = suspendChecksWhile(async () => {
+      order.push(`second on ${repositoryHead.current}`);
+    });
+
+    // The second commit waits for the first one, and no check is made in the meantime
+    await vi.waitFor(() => expect(order).toEqual(['first on head-1']));
+    expect(await checkForRemoteChanges()).toBeUndefined();
+    expect(fetchLastCommit).not.toHaveBeenCalled();
+
+    finishFirstCommit(undefined);
+    await Promise.all([firstPromise, secondPromise]);
+    expect(order).toEqual(['first on head-1', 'first done', 'second on head-2']);
+  });
+
+  test('makes the next commit even if the previous one fails', async () => {
+    const { promise: firstCommitDone, reject: failFirstCommit } = Promise.withResolvers();
+    const firstPromise = suspendChecksWhile(() => firstCommitDone);
+    const secondCommit = vi.fn(async () => 'committed');
+    const secondPromise = suspendChecksWhile(secondCommit);
+
+    await Promise.resolve();
+    expect(secondCommit).not.toHaveBeenCalled();
+    failFirstCommit(new Error('commit failed'));
+    await expect(firstPromise).rejects.toThrow('commit failed');
+    expect(await secondPromise).toBe('committed');
+
+    // Checks are allowed again once both are done
+    await checkForRemoteChanges();
+    expect(fetchLastCommit).toHaveBeenCalledTimes(1);
+  });
 });

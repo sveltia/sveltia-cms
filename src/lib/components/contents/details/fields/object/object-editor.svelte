@@ -7,7 +7,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Checkbox } from '@sveltia/ui';
-  import { getContext, onMount } from 'svelte';
+  import { getContext, onMount, tick } from 'svelte';
 
   import RemoveButton from '$lib/components/common/remove-button.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
@@ -77,6 +77,11 @@
   } = $props();
 
   const fieldId = $props.id();
+
+  /** @type {HTMLElement | undefined} */
+  let wrapper = $state();
+  /** @type {AddItemButton | undefined} */
+  let addItemButton = $state();
 
   const {
     name: fieldName,
@@ -161,6 +166,31 @@
   };
 
   /**
+   * Add the subfields of the type picked from the Add menu. The menu button is gone along with the
+   * menu once the object takes its place, so move the focus to the object’s expander button. The
+   * header is hidden within a single-subfield list, whose item has an expander of its own.
+   * @param {object} args Arguments.
+   * @param {string} [args.type] Variable type name.
+   */
+  const addTypedFields = async ({ type: _type }) => {
+    addFields({ type: _type });
+    await tick();
+    /** @type {HTMLElement | null} */ (
+      /** @type {HTMLElement} */ (wrapper).querySelector(':scope > .header button')
+    )?.focus();
+  };
+
+  /**
+   * Remove the subfields of an object with variable types. The focused Remove button is gone along
+   * with them, so move the focus to the Add button that takes the object’s place.
+   */
+  const removeTypedFields = async () => {
+    removeFields();
+    await tick();
+    /** @type {AddItemButton} */ (addItemButton).focus();
+  };
+
+  /**
    * Format the summary template.
    * @returns {string} Formatted summary.
    */
@@ -182,6 +212,7 @@
       isIndexFile,
       entry: entryDraft.current?.originalEntry,
       files: entryDraft.current?.files,
+      locale,
     });
 
   // Worked out only while the object is collapsed, and shared with the body showing them
@@ -219,11 +250,17 @@
 {/if}
 
 {#if hasVariableTypes && !hasValues}
-  <AddItemButton disabled={readonly} {fieldConfig} addItem={addFields} />
+  <AddItemButton
+    bind:this={addItemButton}
+    disabled={readonly}
+    {fieldConfig}
+    addItem={(args) => addTypedFields(/** @type {{ type: string }} */ (args))}
+  />
 {/if}
 
 {#if !(!required || hasVariableTypes) || hasValues}
   <div
+    bind:this={wrapper}
     role="group"
     class="wrapper"
     class:unknown-type={unknownType}
@@ -248,7 +285,7 @@
             <RemoveButton
               disabled={readonly}
               onclick={() => {
-                removeFields();
+                removeTypedFields();
               }}
             />
           {/if}

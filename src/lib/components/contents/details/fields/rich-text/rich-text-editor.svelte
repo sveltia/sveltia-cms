@@ -223,6 +223,7 @@
           draft,
           resource: { file, folder },
           libraryConfig,
+          locale,
         });
 
         src = value;

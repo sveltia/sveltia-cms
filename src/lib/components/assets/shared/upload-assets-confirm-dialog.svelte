@@ -80,24 +80,24 @@
   okLabel={_(originalAsset ? 'replace' : 'upload')}
   okDisabled={!files.length}
   onOk={async () => {
+    const request = originalAsset
+      ? { files, folder, originalAssets }
+      : { files, folder, subfolderPath, replaceDuplicates: replaceFiles };
+
+    // Clear the selection before the commit, which can take a while: files the user picks or drops
+    // meanwhile then open the dialog again rather than being swallowed by this upload, and a failed
+    // upload doesn’t leave the store holding files that no dialog is showing any more
+    uploadingAssets.current = { folder: undefined, files: [] };
     uploading = true;
 
     try {
-      await saveAssets(
-        originalAsset
-          ? { files, folder, originalAssets }
-          : { files, folder, subfolderPath, replaceDuplicates: replaceFiles },
-        { commitType: 'uploadMedia' },
-      );
+      await saveAssets(request, { commitType: 'uploadMedia' });
     } catch (/** @type {any} */ ex) {
       uploadFailed = true;
       // eslint-disable-next-line no-console
       console.error(ex);
     } finally {
       uploading = false;
-      // Clear the selection whatever happened, so a failed upload doesn’t leave the store holding
-      // files that no dialog is showing any more
-      uploadingAssets.current = { folder: undefined, files: [] };
     }
   }}
   onCancel={() => {

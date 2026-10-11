@@ -9,7 +9,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { AlertDialog, Button, Icon, Listbox, Option, SearchBar } from '@sveltia/ui';
-  import { onDestroy, untrack } from 'svelte';
+  import { onDestroy, tick, untrack } from 'svelte';
 
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
   import { loadModule } from '$lib/services/app/dependencies';
@@ -53,6 +53,8 @@
 
   /** @type {HTMLElement | undefined} */
   let mapElement = $state();
+  /** @type {HTMLElement | undefined} */
+  let toolbar = $state();
   /** @type {TerraDraw | undefined} */
   let draw = $state(undefined);
   /** @type {string} */
@@ -297,10 +299,15 @@
 
   /**
    * Clear the current value of the map editor. This is called when the Clear button is clicked.
-   * It sets the `currentValue` to an empty string, effectively clearing the map.
+   * It sets the `currentValue` to an empty string, effectively clearing the map. The Clear button
+   * is then disabled, which would drop its focus, so the place search box takes it.
    */
-  const clearValue = () => {
+  const clearValue = async () => {
     currentValue = '';
+    await tick();
+    /** @type {HTMLInputElement} */ (
+      /** @type {HTMLElement} */ (toolbar).querySelector('input')
+    ).focus();
   };
 
   onDestroy(() => {
@@ -345,7 +352,7 @@
   );
 </script>
 
-<div role="none" class="toolbar">
+<div role="none" class="toolbar" bind:this={toolbar}>
   <!-- @todo Replace this with `<Combobox>` -->
   <SearchBar
     bind:value={searchQuery}

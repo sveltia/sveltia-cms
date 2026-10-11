@@ -11,6 +11,7 @@ import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-
  * AssetFolderInfo,
  * AssetLibraryFolderMap,
  * EntryDraft,
+ * InternalLocaleCode,
  * MediaLibraryService,
  * SelectedResource,
  * TypedFieldKeyPath,
@@ -94,16 +95,17 @@ export const getMediaFieldAssetOptions = ({
  * @param {AssetFolderInfo | undefined} args.folder Default folder for uploads.
  * @param {DefaultMediaLibraryConfig} args.libraryConfig Default media library configuration.
  * @param {string} [args.accept] File types a file to be uploaded is checked against once processed.
+ * @param {InternalLocaleCode} [args.locale] Locale the resources are selected for.
  * @returns {Promise<ProcessResourceResult[]>} Results, in the same order as the resources.
  */
-export const processResources = ({ draft, resources, folder, libraryConfig, accept }) =>
+export const processResources = ({ draft, resources, folder, libraryConfig, accept, locale }) =>
   Promise.all(
     resources.map((resource) => {
       if (resource.file && !resource.folder) {
         resource.folder = folder;
       }
 
-      return processResource({ draft, resource, libraryConfig, accept });
+      return processResource({ draft, resource, libraryConfig, accept, locale });
     }),
   );
 

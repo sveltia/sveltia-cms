@@ -17,6 +17,7 @@ import { getEntryAssetVersion } from '$lib/services/workflow/assets';
  * EntryDraft,
  * EntryFileMap,
  * FlattenedEntryContent,
+ * InternalLocaleCode,
  * LocaleContentMap,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
@@ -69,13 +70,15 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
    * @param {string} args.value Field value or image source: an asset path relative to the entry.
    * @param {AssetFolderInfo} args.folder Folder the field saves a new file to.
    * @param {TypedFieldKeyPath} args.typedKeyPath Typed key path of the field.
+   * @param {InternalLocaleCode} args.locale Locale the value is found in, which the path is
+   * relative to.
    * @returns {Promise<string | undefined>} Blob URL of the copy, or `undefined` if there’s nothing
    * to copy.
    */
-  const copyAsset = async ({ value, folder, typedKeyPath }) => {
+  const copyAsset = async ({ value, folder, typedKeyPath, locale }) => {
     // Only the version the source entry has: another pull request’s file isn’t copied along
     const asset = getEntryAssetVersion(
-      getAssetByPath({ value, entry, collectionName, fileName, typedKeyPath }),
+      getAssetByPath({ value, entry, collectionName, fileName, typedKeyPath, locale }),
       entry,
     );
 
@@ -125,9 +128,10 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
    * Copy the assets referenced by a field, and update its value.
    * @param {object} args Arguments.
    * @param {FlattenedEntryContent} args.valueMap Values of one locale.
+   * @param {InternalLocaleCode} args.locale Locale of the values.
    * @param {FieldKeyPath} args.keyPath Key path of the field.
    */
-  const copyFieldAssets = async ({ valueMap, keyPath }) => {
+  const copyFieldAssets = async ({ valueMap, locale, keyPath }) => {
     const value = valueMap[keyPath];
 
     if (typeof value !== 'string' || !value) {
@@ -156,7 +160,7 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
     }
 
     if (MEDIA_FIELD_TYPES.includes(fieldType)) {
-      const blobURL = await copyAsset({ value, folder, typedKeyPath });
+      const blobURL = await copyAsset({ value, folder, typedKeyPath, locale });
 
       if (blobURL) {
         valueMap[keyPath] = blobURL;
@@ -174,7 +178,7 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
           async (src) =>
             /** @type {[string, string | undefined]} */ ([
               src,
-              await copyAsset({ value: src, folder, typedKeyPath }),
+              await copyAsset({ value: src, folder, typedKeyPath, locale }),
             ]),
         ),
       ),
@@ -198,8 +202,8 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
   };
 
   await Promise.all(
-    Object.values(currentValues).flatMap((valueMap) =>
-      Object.keys(valueMap).map((keyPath) => copyFieldAssets({ valueMap, keyPath })),
+    Object.entries(currentValues).flatMap(([locale, valueMap]) =>
+      Object.keys(valueMap).map((keyPath) => copyFieldAssets({ valueMap, locale, keyPath })),
     ),
   );
 

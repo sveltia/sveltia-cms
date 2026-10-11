@@ -10,6 +10,11 @@ import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { getFrontMatterDelimiters, resolveFileConfig } from '$lib/services/contents/file/config';
 import { FRONTMATTER_FORMATS } from '$lib/services/contents/file/constants';
 import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
+import {
+  mayHaveUnsafeInteger,
+  replaceBigInts,
+  reviveUnsafeInteger,
+} from '$lib/services/contents/file/integers';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -22,27 +27,39 @@ import { getOrCreate } from '$lib/services/utils/cache';
  */
 
 /**
- * Parse a JSON document using the built-in method.
+ * Parse a JSON document using the built-in method. An integer that a `number` can’t represent
+ * exactly is remembered, so it can be saved as it was.
  * @param {string} str JSON document.
  * @returns {any} Parsed object.
+ * @see {@link reviveUnsafeInteger}
  */
-export const parseJSON = (str) => JSON.parse(str);
+export const parseJSON = (str) =>
+  mayHaveUnsafeInteger(str) ? JSON.parse(str, reviveUnsafeInteger) : JSON.parse(str);
 
 /**
  * Parse a TOML document using a library. The TOML parser returns date fields as `Date` objects, but
- * we need strings to match the JSON and YAML parsers, so we have to parse twice.
+ * we need strings to match the JSON and YAML parsers, so we have to parse twice. An integer that a
+ * `number` can’t represent exactly, which the parser would otherwise reject, is remembered, so it
+ * can be saved as it was.
  * @param {string} str TOML document.
  * @returns {any} Parsed object.
+ * @see {@link replaceBigInts}
  */
-export const parseTOML = (str) => toRaw(libParseTOML(str));
+export const parseTOML = (str) =>
+  toRaw(replaceBigInts(libParseTOML(str, { integersAsBigInt: 'asNeeded' })));
 
 /**
- * Parse a YAML document using a library.
+ * Parse a YAML document using a library. An integer that a `number` can’t represent exactly is
+ * remembered, so it can be saved as it was.
  * @param {string} str YAML document.
  * @param {object} [options] Parsing options.
  * @returns {any} Parsed object.
+ * @see {@link replaceBigInts}
  */
-export const parseYAML = (str, options) => libParseYAML(str, options);
+export const parseYAML = (str, options) =>
+  mayHaveUnsafeInteger(str)
+    ? replaceBigInts(libParseYAML(str, { ...options, intAsBigInt: true }))
+    : libParseYAML(str, options);
 
 /**
  * Detect the Markdown front matter serialization format by checking a delimiter in the content.

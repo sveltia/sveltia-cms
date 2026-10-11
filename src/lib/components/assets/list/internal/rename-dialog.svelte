@@ -1,5 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
+  import { Alert, Toast } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
 
   import RenameDialog from '$lib/components/assets/list/rename-dialog.svelte';
@@ -18,6 +19,7 @@
    */
 
   let open = $state(false);
+  let renamingFailed = $state(false);
   /** @type {Entry[]} */
   let usedEntries = $state([]);
 
@@ -57,7 +59,15 @@
     const oldPath = asset.path;
     const newPath = `${dirname}/${newName}`;
 
-    await moveAssets('rename', [{ asset, path: newPath }]);
+    try {
+      await moveAssets('rename', [{ asset, path: newPath }]);
+    } catch (/** @type {any} */ ex) {
+      renamingFailed = true;
+      // eslint-disable-next-line no-console
+      console.error(ex);
+
+      return;
+    }
 
     if (parseLocation().path === `/assets/${oldPath}`) {
       await goto(encodeRoutePath(`/assets/${newPath}`), {
@@ -92,3 +102,7 @@
     renamingAsset.current = undefined;
   }}
 />
+
+<Toast bind:show={renamingFailed}>
+  <Alert status="error">{_('renaming_asset_failed')}</Alert>
+</Toast>

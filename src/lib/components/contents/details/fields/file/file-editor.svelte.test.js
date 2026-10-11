@@ -4,6 +4,7 @@ import { page, userEvent } from 'vitest/browser';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { listAssets } from '$lib/services/contents/fields/file/helpers';
 import { getUnsavedAssets } from '$lib/services/contents/fields/file/process';
+import { processResources } from '$lib/services/contents/fields/file/resources';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { env } from '$lib/services/user/env.svelte';
 import {
@@ -20,6 +21,7 @@ import FileEditor from './file-editor.svelte';
 
 vi.mock('$lib/services/contents/fields/file/helpers', { spy: true });
 vi.mock('$lib/services/contents/fields/file/process', { spy: true });
+vi.mock('$lib/services/contents/fields/file/resources', { spy: true });
 
 /**
  * Build a drop event carrying the given files.
@@ -61,8 +63,8 @@ const createDropEvent = (files) => {
  * @param {Record<string, any>} [values] Flattened values.
  * @param {Record<string, any>} [props] Props to override.
  * @param {Record<string, any>} [context] Field editor context.
- * @returns {Promise<{ draft: any, props: any, container: HTMLElement }>} Draft, props and
- * container.
+ * @returns {Promise<{ draft: any, props: any, container: HTMLElement, entryDraft: any }>} Draft,
+ * props, container and the draft state, whose `current` can be replaced to open another entry.
  */
 const renderEditor = async (config, currentValue, values = {}, props = {}, context = undefined) => {
   const fieldConfig = { name: 'image', widget: 'image', ...config };
@@ -79,13 +81,13 @@ const renderEditor = async (config, currentValue, values = {}, props = {}, conte
     ...props,
   });
 
-  const { container } = await renderWithDraft(FileEditor, {
+  const { container, entryDraft } = await renderWithDraft(FileEditor, {
     draft,
     props: _props,
     context: context ? { 'field-editor': context } : {},
   });
 
-  return { draft, props: _props, container };
+  return { draft, props: _props, container, entryDraft };
 };
 
 describe('FileEditor', () => {
@@ -314,6 +316,99 @@ describe('FileEditor', () => {
     await page.getByRole('button', { name: 'Remove Image' }).nth(0).click();
     await expect.poll(() => draft.currentValues._default['images.0']).toBe('/static/uploads/a.png');
     expect(draft.currentValues._default['images.2']).toBeUndefined();
+  });
+
+  test('labels each of multiple files with the field’s label and error message', async () => {
+    await renderEditor(
+      { name: 'images', multiple: true },
+      ['/static/uploads/a.png', '/static/uploads/b.png'],
+      { 'images.0': '/static/uploads/a.png', 'images.1': '/static/uploads/b.png' },
+      { keyPath: 'images', typedKeyPath: 'images', fieldId: 'images' },
+    );
+
+    await expect.poll(() => page.getByRole('textbox').elements()).toHaveLength(2);
+
+    page
+      .getByRole('textbox')
+      .elements()
+      .forEach((textbox, index) => {
+        // The value element is the item’s own, which the item’s buttons control
+        expect(textbox).toHaveAttribute('id', `images-${index}-value`);
+        expect(textbox).toHaveAttribute('aria-labelledby', 'images-label');
+        expect(textbox).toHaveAttribute('aria-errormessage', 'images-error');
+      });
+
+    expect(page.getByRole('button', { name: 'Remove Image' }).nth(1)).toHaveAttribute(
+      'aria-controls',
+      'images-1-value',
+    );
+  });
+
+  test('keeps the focus in the field as files are removed', async () => {
+    const fieldConfig = { name: 'images', widget: 'image', multiple: true };
+
+    const draft = createMockDraft({
+      fields: [fieldConfig],
+      values: {
+        _default: {
+          'images.0': '/static/uploads/a.png',
+          'images.1': '/static/uploads/b.png',
+          'images.2': '/static/uploads/c.png',
+        },
+      },
+    });
+
+    await renderWithDraft(FileEditor, {
+      draft,
+      props: {
+        locale: '_default',
+        keyPath: 'images',
+        typedKeyPath: 'images',
+        fieldId: 'images',
+        fieldConfig,
+        required: false,
+        /**
+         * Recompute the value from the draft, the way the field editor does.
+         * @returns {string[]} Value.
+         */
+        get currentValue() {
+          return Object.entries(draft.currentValues._default)
+            .filter(([key]) => key.startsWith('images.'))
+            .map(([, value]) => value);
+        },
+      },
+    });
+
+    const removeButtons = page.getByRole('button', { name: 'Remove Image' });
+
+    /**
+     * Get the path of the item whose Remove button has the focus.
+     * @returns {string | undefined} Path.
+     */
+    const getFocusedItemPath = () =>
+      document
+        .getElementById(String(document.activeElement?.getAttribute('aria-controls')))
+        ?.textContent?.trim();
+
+    await expect.poll(() => removeButtons.elements()).toHaveLength(3);
+
+    // The next item takes the place of the removed one
+    await removeButtons.nth(1).click();
+    await expect.poll(getFocusedItemPath).toBe('/static/uploads/c.png');
+
+    // The previous item, once the last one is removed
+    await removeButtons.nth(1).click();
+    await expect.poll(getFocusedItemPath).toBe('/static/uploads/a.png');
+
+    // The upload button, once no item is left
+    await removeButtons.nth(0).click();
+    await expect.poll(() => document.activeElement?.textContent?.trim()).toBe('Browse');
+  });
+
+  test('moves the focus to the upload button once the single file is removed', async () => {
+    await renderEditor({}, '/static/uploads/photo.png');
+    await page.getByRole('button', { name: 'Remove Image' }).click();
+    await expect.poll(() => document.activeElement?.textContent?.trim()).toBe('Browse');
   });
 
   test('takes any kind of file for a file field', async () => {
@@ -691,6 +786,35 @@ describe('FileEditor', () => {
     expect(dialog.element().textContent).toContain('big.png');
     await dialog.getByRole('button', { name: 'OK' }).click();
     await expect.poll(() => page.getByRole('alertdialog').elements().length).toBe(0);
+  });
+
+  test('doesn’t take a file processed after another entry has been opened', async () => {
+    const { props, container, entryDraft } = await renderEditor({}, '');
+    /**
+     * Finish processing the dropped file.
+     * @type {(value: any) => void}
+     */
+    let resolve = () => undefined;
+
+    vi.mocked(processResources).mockImplementationOnce(
+      () =>
+        new Promise((_resolve) => {
+          resolve = _resolve;
+        }),
+    );
+    /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+      createDropEvent([await createMockImageFile({ name: 'new.png' })]),
+    );
+    await vi.waitFor(() => expect(processResources).toHaveBeenCalled());
+
+    // Open another entry while the file is being processed
+    const otherDraft = createMockDraft({ fields: [{ name: 'image', widget: 'image' }] });
+
+    entryDraft.current = otherDraft;
+    resolve([{ value: 'blob:late' }]);
+    // The field is no longer processing, but the value isn’t taken
+    await expect.element(page.getByText(/Drop an image file here/)).toBeInTheDocument();
+    expect(props.currentValue).toBe('');
   });
 
   test('asks what to do with a file that has the name of an existing asset', async () => {

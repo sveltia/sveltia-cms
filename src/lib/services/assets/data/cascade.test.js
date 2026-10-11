@@ -300,12 +300,15 @@ describe('removeMarkdownImages()', () => {
         value: '![a](a.png) ![b](b.png)',
         urls: new Set(),
         paths: new Set(['content/posts/a/a.png']),
+        locale: 'fr',
       }),
     ).toBe(' ![b](b.png)');
+    // The image is resolved relative to the locale’s entry file
     expect(getMediaFieldSource).toHaveBeenCalledWith({
       entry,
       collectionName: 'posts',
       fileName: undefined,
+      locale: 'fr',
       value: 'a.png',
     });
   });
@@ -382,6 +385,24 @@ describe('removeAssetReferences()', () => {
       content: { body: 'Hi  there' },
       fields: new Map([['body', bodyField]]),
     });
+  });
+
+  test('resolves the images of a reference relative to its locale’s entry file', async () => {
+    getMediaFieldSource.mockImplementation(({ locale }) =>
+      locale === 'fr' ? { asset: { path: 'content/posts/fr/a/a.png' } } : undefined,
+    );
+
+    const content = { body: '![a](a.png)' };
+    const post = createPost('a', content);
+
+    expect(
+      await removeAssetReferences({
+        content,
+        references: [createReference(post, 'body', bodyField, { locale: 'fr' })],
+        urls: new Set(),
+        paths: new Set(['content/posts/fr/a/a.png']),
+      }),
+    ).toEqual({ content: { body: '' }, fields: new Map([['body', bodyField]]) });
   });
 
   test('handles several fields at once', async () => {

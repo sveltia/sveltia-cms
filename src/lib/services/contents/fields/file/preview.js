@@ -2,7 +2,7 @@ import { getMediaKind } from '$lib/services/assets/kinds';
 import { getMediaFieldURL } from '$lib/services/assets/media-field';
 
 /**
- * @import { AssetKind, Entry, TypedFieldKeyPath } from '$lib/types/private';
+ * @import { AssetKind, Entry, InternalLocaleCode, TypedFieldKeyPath } from '$lib/types/private';
  * @import { MediaField } from '$lib/types/public';
  */
 
@@ -21,6 +21,8 @@ import { getMediaFieldURL } from '$lib/services/assets/media-field';
  * @param {MediaField} [args.fieldConfig] Field configuration.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
  * @param {boolean} [args.thumbnail] Whether to use a thumbnail of the image.
+ * @param {InternalLocaleCode} [args.locale] Locale the value is referenced in, which an
+ * entry-relative path is relative to. Default: the default locale.
  * @returns {Promise<{ kind: AssetKind | undefined, src: string | undefined }>} Media kind and
  * source URL. Both are `undefined` if the value is not a media file, and the URL is `undefined` if
  * the file could not be found.

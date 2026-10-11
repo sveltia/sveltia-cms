@@ -62,11 +62,12 @@
    * @param {LanguagePair} languagePair Language pair.
    */
   const copy = (languagePair) => {
-    /* v8 ignore next 6 -- the menu is only offered while the draft is there */
+    /* v8 ignore next 7 -- the menu is only offered while the draft is there */
     if (entryDraft.current) {
       copyFromLocale({
         draft: entryDraft.current,
         options: { ...languagePair, keyPath, translate },
+        entryDraft,
       });
     }
   };
@@ -74,7 +75,7 @@
 
 {#snippet localeItems()}
   {#each otherLocales as otherLocale (otherLocale)}
-    {@const localeLabel = getLocaleLabel(otherLocale)}
+    {@const localeLabel = getLocaleLabel(otherLocale) ?? otherLocale}
     {@const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
     {#await isMenuDisabled(languagePair) then disabled}
       <MenuItem

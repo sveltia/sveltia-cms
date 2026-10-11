@@ -1025,6 +1025,41 @@ describe('assets/info', () => {
       expect(result).toBe('test.jpg');
     });
 
+    it('should return the path relative to the given locale’s entry file', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+
+      vi.mocked(getPathInfo).mockImplementation(
+        (path) => /** @type {any} */ ({ dirname: path.slice(0, path.lastIndexOf('/')) }),
+      );
+
+      // With the `multiple_folders` i18n structure, each locale’s entry file has a folder of its
+      // own, which the locale’s entry-relative assets are stored in
+      const entryRelativeAsset = {
+        ...mockAsset,
+        path: 'content/posts/fr/hello/photo-fr.jpg',
+        name: 'photo-fr.jpg',
+        folder: { ...mockAsset.folder, internalPath: 'content/posts', entryRelative: true },
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'hello',
+        slug: 'hello',
+        subPath: 'hello/index',
+        locales: {
+          en: { path: 'content/posts/en/hello/index.md' },
+          fr: { path: 'content/posts/fr/hello/index.md' },
+        },
+      });
+
+      expect(
+        getAssetPublicURL(entryRelativeAsset, { pathOnly: true, entry: mockEntry, locale: 'fr' }),
+      ).toBe('photo-fr.jpg');
+      // The default locale’s folder doesn’t hold the asset
+      expect(
+        getAssetPublicURL(entryRelativeAsset, { pathOnly: true, entry: mockEntry }),
+      ).toBeUndefined();
+    });
+
     it('should return relative path for entry-relative asset in sub-folder', async () => {
       const { getPathInfo } = await import('@sveltia/utils/file');
       const getPathInfoMock = vi.mocked(getPathInfo);

@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
-import { initComposingEscapeGuard } from '$lib/services/app/keyboard';
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { backendName } from '$lib/services/backends';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
@@ -64,12 +63,29 @@ vi.mock('$lib/services/workflow/save', () => ({
   deleteWorkflowEntries: vi.fn(),
 }));
 
-// As the app does, before any keyboard shortcut is registered
-initComposingEscapeGuard();
-
 const fields = [{ name: 'title', widget: 'string' }];
 const postsCollection = { name: 'posts', label: 'Posts', folder: 'content/posts', fields };
 const helloEntry = createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello' } } });
+const worldEntry = createMockEntry({ slug: 'world', content: { _default: { title: 'World' } } });
+
+/**
+ * Open another entry in the editor, as the user can do with the Back button while a save is in
+ * flight.
+ * @param {any} entryDraft Entry draft state.
+ * @returns {any} Draft of the other entry, with a change of its own.
+ */
+const openOtherEntry = (entryDraft) => {
+  const draft = createMockDraft({
+    fields,
+    values: { _default: { title: 'World edited' } },
+    draft: { collection: getCollection('posts'), isNew: false, originalEntry: worldEntry },
+  });
+
+  entryDraft.current = draft;
+  window.location.hash = '#/collections/posts/entries/world';
+
+  return draft;
+};
 
 /**
  * Render the toolbar.
@@ -791,6 +807,94 @@ describe('Toolbar', () => {
     expect(/** @type {any} */ (entryEditorSettings.current)?.showSecondPane).toBe(false);
   });
 
+  describe('a save that lands after another entry has been opened', () => {
+    test('leaves the other entry open when the editor would be closed', async () => {
+      const { promise, resolve } = Promise.withResolvers();
+
+      vi.mocked(saveEntry).mockReturnValueOnce(/** @type {any} */ (promise));
+
+      const { entryDraft } = await renderToolbar();
+
+      await page.getByRole('button', { name: 'Save' }).click();
+      await vi.waitFor(() => expect(saveEntry).toHaveBeenCalledOnce());
+      openOtherEntry(entryDraft);
+      resolve(helloEntry);
+
+      // The save is over once the button is no longer labelled as saving
+      await expect
+        .element(page.getByRole('button', { name: 'Save', exact: true }))
+        .toBeInTheDocument();
+      expect(window.location.hash).toBe('#/collections/posts/entries/world');
+      expect(entryDraft.current?.originalEntry).toEqual(worldEntry);
+      expect(entryDraft.current?.currentValues._default.title).toBe('World edited');
+    });
+
+    test('leaves the other entry’s draft alone when the editor would stay open', async () => {
+      prefs.closeOnSave = false;
+
+      const { promise, resolve } = Promise.withResolvers();
+
+      vi.mocked(saveEntry).mockReturnValueOnce(/** @type {any} */ (promise));
+
+      const { draft, entryDraft } = await renderExisting();
+
+      draft.currentValues._default.title = 'Hi';
+      await page.getByRole('button', { name: 'Save' }).click();
+      await vi.waitFor(() => expect(saveEntry).toHaveBeenCalledOnce());
+      openOtherEntry(entryDraft);
+      resolve(helloEntry);
+
+      await expect
+        .element(page.getByRole('button', { name: 'Save', exact: true }))
+        .toBeInTheDocument();
+      expect(window.location.hash).toBe('#/collections/posts/entries/world');
+      expect(entryDraft.current?.originalEntry).toEqual(worldEntry);
+      expect(entryDraft.current?.currentValues._default.title).toBe('World edited');
+    });
+
+    test('doesn’t offer to save over someone else’s change to the other entry', async () => {
+      const { promise, reject } = Promise.withResolvers();
+
+      vi.mocked(saveEntry).mockReturnValueOnce(/** @type {any} */ (promise));
+
+      const { draft, entryDraft } = await renderExisting();
+
+      draft.currentValues._default.title = 'Hi';
+      await page.getByRole('button', { name: 'Save' }).click();
+      await vi.waitFor(() => expect(saveEntry).toHaveBeenCalledOnce());
+      openOtherEntry(entryDraft);
+      reject(
+        new Error('save_conflict', {
+          cause: { type: 'modified', entry: helloEntry, canOverwrite: true },
+        }),
+      );
+
+      // Saving anyway would save the other entry, so the save is only reported as failed
+      await expect.element(page.getByRole('alertdialog', { name: 'Error' })).toBeInTheDocument();
+      expect(
+        page.getByRole('alertdialog', { name: 'Entry Changed by Someone Else' }).query(),
+      ).toBeNull();
+    });
+
+    test('isn’t saved once another entry is opened while a change is on its way', async () => {
+      const { draft, entryDraft } = await renderExisting();
+      const { promise, resolve } = Promise.withResolvers();
+
+      draft.currentValues._default.title = 'Hi';
+      trackPendingFieldUpdate(promise);
+      await page.getByRole('button', { name: 'Save' }).click();
+      openOtherEntry(entryDraft);
+      // The other entry has changes of its own, which the save must not pick up
+      entryDraft.current.currentValues._default.title = 'World changed';
+      resolve(undefined);
+
+      await expect
+        .element(page.getByRole('button', { name: 'Save', exact: true }))
+        .toBeInTheDocument();
+      expect(saveEntry).not.toHaveBeenCalled();
+    });
+  });
+
   test('closes the editor after saving by default', async () => {
     prefs.closeOnSave = undefined;
     window.location.hash = '#/collections/posts/new';
@@ -1167,6 +1271,29 @@ describe('Toolbar', () => {
       );
       await expect.poll(() => window.location.hash).toBe('#/collections/posts');
       expect(draft).toBeDefined();
+    });
+
+    test('leaves another entry opened while sending for review alone', async () => {
+      const { promise, resolve } = Promise.withResolvers();
+
+      vi.mocked(updateWorkflowStatus).mockReturnValueOnce(/** @type {any} */ (promise));
+
+      const { entryDraft } = await renderToolbar();
+
+      await page.getByRole('button', { name: 'Save' }).click();
+      await page
+        .getByRole('alertdialog', { name: 'Send for Review' })
+        .getByRole('button', { name: 'Send for Review' })
+        .click();
+      await vi.waitFor(() => expect(updateWorkflowStatus).toHaveBeenCalledOnce());
+      openOtherEntry(entryDraft);
+      resolve(unpublishedEntry);
+
+      await expect
+        .element(page.getByRole('button', { name: 'Save', exact: true }))
+        .toBeInTheDocument();
+      expect(window.location.hash).toBe('#/collections/posts/entries/world');
+      expect(entryDraft.current?.originalEntry).toEqual(worldEntry);
     });
 
     test('can leave the draft as is', async () => {

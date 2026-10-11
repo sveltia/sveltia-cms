@@ -222,6 +222,40 @@ describe('ObjectEditor', () => {
     await expect.poll(() => getStoredValues(draft, 'block')).toEqual({});
   });
 
+  test('keeps the focus in the field as a type is picked and removed', async () => {
+    await renderEditor(blockField, {});
+
+    await page.getByRole('button', { name: /Add\W+block/ }).click();
+    await page.getByRole('menuitem', { name: 'Hero' }).click();
+
+    // The Add button is gone, so the expander of the object takes the focus
+    await expect.element(page.getByRole('button', { name: 'Collapse' })).toHaveFocus();
+    // It stays there once the menu has closed
+    await expect.poll(() => document.querySelector('[role="menu"]')).toBeNull();
+    await expect.element(page.getByRole('button', { name: 'Collapse' })).toHaveFocus();
+
+    // The Remove button is gone along with the object, so the Add button takes the focus
+    await page.getByRole('button', { name: 'Remove' }).click();
+    await expect.element(page.getByRole('button', { name: /Add\W+block/ })).toHaveFocus();
+  });
+
+  test('picks a type without a header within a single-subfield list', async () => {
+    const { draft } = await renderEditor(
+      blockField,
+      {},
+      {
+        context: {
+          'field-editor': { fieldContext: 'single-subfield-list-field', parentComponentNames: [] },
+        },
+      },
+    );
+
+    await page.getByRole('button', { name: /Add\W+block/ }).click();
+    await page.getByRole('menuitem', { name: 'Hero' }).click();
+    await expect.poll(() => getStoredValues(draft, 'block')['block.type']).toBe('hero');
+    await expect.element(page.getByRole('textbox', { name: 'heading' })).toBeVisible();
+  });
+
   test('summarizes a typed object with the type’s summary, or the field’s', async () => {
     const { container } = await renderEditor(blockField, {
       'block.type': 'hero',

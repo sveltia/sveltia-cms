@@ -19,7 +19,7 @@
   import { getAcceptedFileTypes } from '$lib/services/integrations/media-libraries/default';
 
   /**
-   * @import { SelectedResource, TypedFieldKeyPath } from '$lib/types/private';
+   * @import { InternalLocaleCode, SelectedResource, TypedFieldKeyPath } from '$lib/types/private';
    * @import {
    * CustomField,
    * CustomFieldPickFileOptions,
@@ -36,6 +36,8 @@
    * of, if any.
    * @property {boolean} [inEditorComponent] Whether the field is rendered in a rich text editor
    * component.
+   * @property {InternalLocaleCode} [locale] Locale the field is edited in, which an existing asset
+   * in an entry-relative folder is referenced relative to.
    */
 
   /** @type {Props} */
@@ -45,6 +47,7 @@
     typedKeyPath,
     componentName = undefined,
     inEditorComponent = false,
+    locale = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -144,6 +147,7 @@
         fieldConfig,
         typedKeyPath,
         componentName,
+        locale,
         inEditorComponent,
         resources,
         accept,
@@ -184,6 +188,7 @@
     multiple={!!options.multiple}
     canEnterURL={options.allowURL ?? true}
     draft={entryDraft.current}
+    {locale}
     fieldConfig={mediaFieldConfig}
     assetLibraryFolderMap={assetOptions.folderMap}
     enabledCloudServiceEntries={assetOptions.cloudServiceEntries}

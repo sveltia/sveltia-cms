@@ -24,6 +24,7 @@
   /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
+    locale,
     typedKeyPath,
     fieldConfig,
     currentValue,
@@ -34,9 +35,9 @@
 {#if isMultiple(fieldConfig)}
   {#if Array.isArray(currentValue)}
     {#each currentValue as value, index (`${value}-${index}`)}
-      <FilePreviewItem {value} {fieldConfig} {typedKeyPath} />
+      <FilePreviewItem {value} {fieldConfig} {typedKeyPath} {locale} />
     {/each}
   {/if}
 {:else if typeof currentValue === 'string' && currentValue}
-  <FilePreviewItem value={currentValue} {fieldConfig} {typedKeyPath} />
+  <FilePreviewItem value={currentValue} {fieldConfig} {typedKeyPath} {locale} />
 {/if}

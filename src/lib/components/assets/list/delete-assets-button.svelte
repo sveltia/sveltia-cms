@@ -8,8 +8,10 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, ConfirmationDialog, MenuItem } from '@sveltia/ui';
+  import { tick } from 'svelte';
 
   import CascadeDeleteNote from '$lib/components/common/cascade-delete-note.svelte';
+  import { focusList } from '$lib/services/app/focus';
 
   /**
    * @import { Asset, CascadeDeletePlan, ExternalAsset } from '$lib/types/private';
@@ -53,8 +55,12 @@
    * @type {CascadeDeletePlan | undefined}
    */
   let plan = $state();
+  /** Whether the plan couldn’t be worked out, which leaves nothing to delete the assets with. */
+  let planFailed = $state(false);
+  /** @type {HTMLButtonElement | undefined} */
+  let button = $state();
 
-  const Component = $derived(useButton ? Button : MenuItem);
+  const buttonDisabled = $derived(disabled || !assets.length);
   const blocked = $derived(!!plan?.blockers.length);
 
   // Work out the plan whenever the dialog opens. The lookup is asynchronous, so the dialog starts
@@ -68,25 +74,60 @@
     const selection = assets;
 
     plan = undefined;
+    planFailed = false;
 
-    planDeletion(selection).then((result) => {
-      // The dialog may have been reopened for another selection meanwhile
-      if (showDialog && assets === selection) {
-        plan = result;
-      }
-    });
+    planDeletion(selection).then(
+      (result) => {
+        // The dialog may have been reopened for another selection meanwhile
+        if (showDialog && assets === selection) {
+          plan = result;
+        }
+      },
+      (/** @type {any} */ ex) => {
+        // eslint-disable-next-line no-console
+        console.error(ex);
+
+        // Say why the assets can’t be deleted. A failed plan isn’t kept, so it’s worked out again
+        // once the dialog is reopened
+        if (showDialog && assets === selection) {
+          planFailed = true;
+        }
+      },
+    );
+  });
+
+  // The Delete button is disabled once the selected assets are deleted, which would drop its focus
+  // on `<body>`, so move it to the asset list. This runs before the button is updated, while it
+  // still has the focus
+  $effect.pre(() => {
+    if (buttonDisabled && document.activeElement === button) {
+      tick().then(() => focusList());
+    }
   });
 </script>
 
-<Component
-  variant="ghost"
-  disabled={disabled || !assets.length}
-  label={_('delete')}
-  aria-label={buttonDescription}
-  onclick={() => {
-    showDialog = true;
-  }}
-/>
+{#if useButton}
+  <Button
+    bind:element={button}
+    variant="ghost"
+    disabled={buttonDisabled}
+    label={_('delete')}
+    aria-label={buttonDescription}
+    onclick={() => {
+      showDialog = true;
+    }}
+  />
+{:else}
+  <MenuItem
+    variant="ghost"
+    disabled={buttonDisabled}
+    label={_('delete')}
+    aria-label={buttonDescription}
+    onclick={() => {
+      showDialog = true;
+    }}
+  />
+{/if}
 
 <ConfirmationDialog
   bind:open={showDialog}
@@ -99,8 +140,13 @@
     }
   }}
 >
-  <!-- There’s nothing to confirm when the deletion is refused; the note explains why -->
-  {#if !blocked}
+  <!-- There’s nothing to confirm when the deletion is refused or can’t go ahead; the note or the
+  error explains why -->
+  {#if planFailed}
+    <div role="alert">
+      {_('checking_asset_references_failed', { values: { count: assets.length } })}
+    </div>
+  {:else if !blocked}
     {dialogDescription}
   {/if}
   {#if plan}

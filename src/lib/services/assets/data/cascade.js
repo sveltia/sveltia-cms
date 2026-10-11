@@ -28,6 +28,7 @@ import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
  * CascadeTarget,
  * Entry,
  * FlattenedEntryContent,
+ * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import { Field, FieldKeyPath } from '$lib/types/public';
  * @import { AssetReferenceTarget } from '$lib/services/assets/references';
@@ -122,6 +123,8 @@ const cutMarkup = (text, index, length) => {
  * @param {Entry} args.entry Entry holding the field.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name.
+ * @param {InternalLocaleCode} [args.locale] Locale the field is in, which an entry-relative image
+ * source is relative to.
  * @returns {string} Markdown without the images.
  */
 export const removeMarkdownImages = ({
@@ -131,6 +134,7 @@ export const removeMarkdownImages = ({
   entry,
   collectionName,
   fileName,
+  locale,
 }) => {
   const matches = [...value.matchAll(MARKDOWN_IMAGE_REGEX)];
 
@@ -144,7 +148,8 @@ export const removeMarkdownImages = ({
     }
 
     // Resolve the image’s path the way the editor does to display it, without loading the asset
-    const path = getMediaFieldSource({ entry, collectionName, fileName, value: src })?.asset?.path;
+    const path = getMediaFieldSource({ entry, collectionName, fileName, locale, value: src })?.asset
+      ?.path;
 
     return path !== undefined && paths.has(path);
   });
@@ -176,7 +181,7 @@ export const removeAssetReferences = ({ content, references, urls, paths = new S
   /** @type {Map<FieldKeyPath, Set<FieldKeyPath>>} */
   const staleListItems = new Map();
 
-  references.forEach(({ entry, collection, collectionFile, keyPath, fieldConfig }) => {
+  references.forEach(({ entry, collection, collectionFile, locale, keyPath, fieldConfig }) => {
     const { widget: fieldType = 'string' } = fieldConfig;
 
     if (!MEDIA_FIELD_TYPES.includes(fieldType)) {
@@ -188,6 +193,7 @@ export const removeAssetReferences = ({ content, references, urls, paths = new S
         entry,
         collectionName: collection.name,
         fileName: collectionFile?.name,
+        locale,
       });
 
       fields.set(keyPath, fieldConfig);

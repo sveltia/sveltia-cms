@@ -134,11 +134,13 @@ describe('getObjectThumbnail()', () => {
         typedKeyPath: '',
         thumbnailFieldName: 'hero.image',
         valueMap: { 'hero.image': '/uploads/photo.png' },
+        locale: 'fr',
       }),
     ).toEqual({ asset: imageAsset });
 
+    // An entry-relative path is resolved against the locale being edited
     expect(mockGetMediaFieldSource).toHaveBeenCalledWith(
-      expect.objectContaining({ typedKeyPath: 'hero.image' }),
+      expect.objectContaining({ typedKeyPath: 'hero.image', locale: 'fr' }),
     );
   });
 

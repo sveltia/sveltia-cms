@@ -662,27 +662,43 @@ describe('ExternalAssetsPanel', () => {
     expect(document.querySelector('.drop-target')).toBeNull();
   });
 
-  test('reports an upload failure', async () => {
+  test('reports an upload failure, listing the files uploaded before it', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // The first file made it to the service before the second one failed
+    const uploaded = createMockExternalAsset({ fileName: 'c.png' });
+    const list = vi.fn().mockResolvedValueOnce([]).mockResolvedValue([uploaded]);
+
     const props = $state({
       serviceProps: createMockCloudService({
-        list: vi.fn().mockResolvedValue([]),
+        list,
         upload: vi.fn().mockRejectedValue(new Error('Boom')),
       }),
       selectedResources: /** @type {any[]} */ ([]),
     });
 
-    const { component } = await render(ExternalAssetsPanel, props);
+    try {
+      const { component } = await render(ExternalAssetsPanel, props);
 
-    await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
-    await component.uploadFiles([await createMockImageFile({ name: 'c.png' })]);
+      await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+      await component.uploadFiles([
+        await createMockImageFile({ name: 'c.png' }),
+        await createMockImageFile({ name: 'd.png' }),
+      ]);
 
-    await expect
-      .poll(() =>
-        document.querySelector('.sui.alert.error')?.textContent?.replace(/\s+/g, ' ').trim(),
-      )
-      .toBe('error Error Upload failed.');
-    // The failure toast hides itself after a while
-    await waitForToastsToHide();
+      await expect
+        .poll(() =>
+          document.querySelector('.sui.alert.error')?.textContent?.replace(/\s+/g, ' ').trim(),
+        )
+        .toBe('error Error Upload failed.');
+      expect(error).toHaveBeenCalledWith(new Error('Boom'));
+      // The list is reloaded, showing the file uploaded before the failure
+      await expect.poll(() => getAssetOptions().elements().length).toBe(1);
+      expect(list).toHaveBeenCalledTimes(2);
+      // The failure toast hides itself after a while
+      await waitForToastsToHide();
+    } finally {
+      error.mockRestore();
+    }
   });
 
   test('keeps the progress toast up until a slow upload is done, then hides it', async () => {

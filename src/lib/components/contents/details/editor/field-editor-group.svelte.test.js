@@ -38,6 +38,37 @@ describe('FieldEditorGroup', () => {
     expect(listener).toHaveBeenCalledOnce();
   });
 
+  test('hides the header buttons until hovered, but not while the field has focus', async () => {
+    const { container } = await render(FieldEditorGroup, {
+      children: createRawSnippet(() => ({
+        /**
+         * Render the content.
+         * @returns {string} HTML.
+         */
+        render: () => '<header><button>Copy</button><input /></header>',
+      })),
+    });
+
+    // Without hover, there’s no rule hiding the buttons for the test to check
+    expect(matchMedia('(hover: hover)').matches).toBe(true);
+
+    const button = /** @type {HTMLButtonElement} */ (container.querySelector('button'));
+    const input = /** @type {HTMLInputElement} */ (container.querySelector('input'));
+    /**
+     * Get the opacity of the button.
+     * @returns {string} Opacity.
+     */
+    const getOpacity = () => getComputedStyle(button).opacity;
+
+    expect(getOpacity()).toBe('0');
+    button.focus();
+    expect(getOpacity()).toBe('1');
+    input.focus();
+    expect(getOpacity()).toBe('1');
+    input.blur();
+    expect(getOpacity()).toBe('0');
+  });
+
   test('renders empty without content', async () => {
     const { container } = await render(FieldEditorGroup, {});
 

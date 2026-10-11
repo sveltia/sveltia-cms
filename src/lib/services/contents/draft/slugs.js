@@ -1,8 +1,14 @@
+import { stripSlashes } from '@sveltia/utils/string';
+
 import { fillTemplate } from '$lib/services/common/template';
 import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { parseTransformations } from '$lib/services/common/transformations';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import {
+  getSharedEntryFileName,
+  usesCustomEntryPath,
+} from '$lib/services/contents/collection/nested';
 import { getSlugOptions, LEGACY_SLUG_EDITOR_TAG } from '$lib/services/contents/collection/slug';
 import { getOrCreate } from '$lib/services/utils/cache';
 
@@ -53,6 +59,26 @@ const randomValueMaps = new WeakMap();
  * @returns {Map<string, string>} Random values keyed by what they stand for.
  */
 export const getRandomValues = (draft) => getOrCreate(randomValueMaps, draft, () => new Map());
+
+/**
+ * Get the folder a new entry goes to, as chosen with the path editor of a nested collection, when
+ * the entry’s file is named after its slug. The slug of an entry in such a collection is its sub
+ * path, e.g. `docs/intro`, so a new slug has to be unique among the entries in that folder rather
+ * than compared with the sub paths of every entry. Where every entry shares one file name, the
+ * entry gets a folder of its own, which is checked with the path instead.
+ * @param {EntryDraft} draft Entry draft.
+ * @returns {string | undefined} Folder path without leading and trailing slashes, or `undefined`
+ * if the entry isn’t new or the path editor doesn’t decide where it goes.
+ */
+export const getNewEntryDirPath = (draft) => {
+  const { collection, isNew, currentPath } = draft;
+
+  if (!isNew || !usesCustomEntryPath(draft) || getSharedEntryFileName(collection)) {
+    return undefined;
+  }
+
+  return stripSlashes(/** @type {string} */ (currentPath));
+};
 
 /**
  * Get base options for {@link fillTemplate}.
@@ -333,10 +359,10 @@ export const getSlugs = ({ draft, templateOnly = false }) => {
   const defaultLocaleSlug =
     fileName ??
     (isNew
-      ? fillTemplate(
-          getSlugTemplate({ draft, locale: defaultLocale, templateOnly }),
-          fillSlugOptions,
-        )
+      ? fillTemplate(getSlugTemplate({ draft, locale: defaultLocale, templateOnly }), {
+          ...fillSlugOptions,
+          dirPath: getNewEntryDirPath(draft),
+        })
       : /** @type {string} */ (currentSlugs?.[defaultLocale] ?? currentSlugs?._));
 
   const localizedSlugs = getLocalizedSlugs({ draft, defaultLocaleSlug, templateOnly });

@@ -75,8 +75,10 @@
         }
       }
 
+      /* The buttons are shown on hover, and kept visible while a keyboard user is in the field, so
+        the focused one isn’t invisible */
       @media (hover: hover) {
-        &:not(:hover) > header button {
+        &:not(:hover, :focus-within) > header button {
           opacity: 0;
         }
       }

@@ -271,8 +271,13 @@
       // The uploaded files, listed first and selected, confirm the upload
       selectedResources = resources.filter((r) => !!r).slice(0, multiple ? undefined : 1);
       listedAssets = mergeUploadedExternalAssets(uploaded, listedAssets ?? []);
-    } catch {
+    } catch (ex) {
       uploadFailed = true;
+      // eslint-disable-next-line no-console
+      console.error(ex);
+      // The files are uploaded one by one, so those uploaded before the failure are on the service
+      // already. Reload the list to show them rather than leave them out until the next reload
+      getAssets(searchQuery);
     } finally {
       uploading = false;
     }

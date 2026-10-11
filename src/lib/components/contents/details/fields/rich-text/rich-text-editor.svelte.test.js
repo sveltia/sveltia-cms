@@ -84,6 +84,35 @@ describe('RichTextEditor', () => {
     await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
   });
 
+  test('lets each paragraph take the direction of its own text without i18n', async () => {
+    // An Arabic paragraph, “Hello”, followed by an English one
+    const value = 'مرحبا\n\nHello'; // cspell:disable-line
+    const { container } = await renderEditor(value, {}, { props: { locale: '_default' } });
+    const editor = page.getByRole('textbox');
+
+    await expect
+      .poll(() =>
+        [...editor.element().querySelectorAll('p')].map((p) => getComputedStyle(p).direction),
+      )
+      .toEqual(['rtl', 'ltr']);
+
+    const textarea = /** @type {HTMLTextAreaElement} */ (container.querySelector('textarea'));
+
+    // The hidden `<textarea>` gets the value on every change, which `dir="auto"` would make slow
+    expect(textarea.dir).toBe('');
+  });
+
+  test('applies the direction of the locale', async () => {
+    const { container } = await renderEditor('Hello', {}, { props: { locale: 'ar' } });
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().getAttribute('dir')).toBe('rtl');
+
+    const textarea = /** @type {HTMLTextAreaElement} */ (container.querySelector('textarea'));
+
+    expect(textarea.dir).toBe('rtl');
+  });
+
   test('stores the edited content as Markdown', async () => {
     const { props } = await renderEditor('Hello');
     const editor = page.getByRole('textbox');

@@ -152,18 +152,29 @@ describe('Gitea Repository Service', () => {
       await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
     });
 
-    test('should handle API fetch error', async () => {
-      fetchAPIMock.mockRejectedValue(new Error('Network error'));
+    test('should report a missing repository on a 404', async () => {
+      fetchAPIMock.mockRejectedValue(new Error('Not found', { cause: { status: 404 } }));
 
       await expect(checkRepositoryAccess()).rejects.toThrow('Failed to check repository access');
     });
 
-    test('should re-throw collaborator errors', async () => {
-      const collaboratorError = new Error('Not a collaborator of the repository');
-
-      fetchAPIMock.mockRejectedValue(collaboratorError);
+    test.each([401, 403])('should report no access on a %i', async (status) => {
+      fetchAPIMock.mockRejectedValue(new Error('Denied', { cause: { status } }));
 
       await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+    });
+
+    test.each([
+      ['a server error', new Error('Server error', { cause: { status: 500 } })],
+      ['a rate limit', new Error('Too many requests', { cause: { status: 429 } })],
+      ['a network error', new Error('Failed to send the request', { cause: new TypeError() })],
+      ['a non-error rejection', undefined],
+    ])('should report a failed check rather than a missing repository on %s', async (_, error) => {
+      fetchAPIMock.mockRejectedValue(error);
+
+      await expect(checkRepositoryAccess()).rejects.toThrow(
+        'Failed to check the repository permission.',
+      );
     });
   });
 

@@ -733,31 +733,64 @@ describe('Test copyProperty()', () => {
       expect(typeof sortedMap.publishDate).toBe('string');
     });
 
-    test('sets invalid date to undefined when string does not match date format', () => {
-      /** @type {FlattenedEntryContent} */
-      const sortedMap = {};
+    test('keeps a string that is not a date as it is', async () => {
+      const { TomlDate: TomlDateClass } = await vi.importActual('smol-toml');
 
       /** @type {FlattenedEntryContent} */
       const unsortedMap = {
-        title: 'Some random string',
+        a: 'TBD',
+        b: '2024-01',
+        c: '3:04 PM',
+        d: '2024-01-02',
+        e: '03:04:05',
       };
 
-      const args = {
-        locale: 'en',
-        unsortedMap,
-        sortedMap,
-        isTomlOutput: true,
-        omitEmptyOptionalFields: false,
-      };
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
 
-      copyProperty({
-        ...args,
-        key: 'title',
-        field: { name: 'title', widget: 'datetime', required: false },
+      Object.keys(unsortedMap).forEach((key) => {
+        copyProperty({
+          locale: 'en',
+          unsortedMap,
+          sortedMap,
+          isTomlOutput: true,
+          omitEmptyOptionalFields: false,
+          key,
+          field: { name: key, widget: 'datetime', required: false },
+        });
       });
 
-      // Invalid date strings result in undefined to prevent serialization errors
-      expect(sortedMap.title).toBeUndefined();
+      // Previously, any string `TomlDate` couldn’t parse was dropped
+      expect(sortedMap.a).toBe('TBD');
+      expect(sortedMap.b).toBe('2024-01');
+      expect(sortedMap.c).toBe('3:04 PM');
+      // A date or a time alone becomes a native TOML local date or time
+      expect(sortedMap.d).toBeInstanceOf(TomlDateClass);
+      expect(sortedMap.d.toISOString()).toBe('2024-01-02');
+      expect(sortedMap.e).toBeInstanceOf(TomlDateClass);
+      expect(sortedMap.e.toISOString()).toBe('03:04:05.000');
+    });
+
+    test('saves nothing for an empty value', () => {
+      /** @type {FlattenedEntryContent} */
+      const unsortedMap = { a: '', b: null, c: undefined };
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
+
+      Object.keys(unsortedMap).forEach((key) => {
+        copyProperty({
+          locale: 'en',
+          unsortedMap,
+          sortedMap,
+          isTomlOutput: true,
+          omitEmptyOptionalFields: false,
+          key,
+          field: { name: key, widget: 'datetime', required: false },
+        });
+      });
+
+      // `null` would otherwise become the Unix epoch
+      expect(sortedMap).toEqual({ a: undefined, b: undefined, c: undefined });
     });
 
     test('does not convert date when datetime format is configured', () => {
@@ -1578,6 +1611,62 @@ describe('Test serializeContent()', () => {
       expect(JSON.stringify(result)).toBe(
         JSON.stringify({ items: [{ meta: { id: 1, kind: 'a' }, name: 'First' }] }),
       );
+    });
+  });
+
+  describe('object field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [],
+      isIndexFile: false,
+    };
+
+    test('keeps subfields named like list indexes in an object without a placeholder', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'stats',
+        'stats.2024',
+        'stats.2025',
+        'items',
+        'items.*.meta',
+        'items.*.meta.0',
+        'other',
+        'other.a',
+      ]);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: /^(?:stats|items\.\d+\.meta|items\.\*\.meta|other)$/.test(keyPath)
+          ? 'object'
+          : 'string',
+      }));
+
+      // A new entry or a newly added object has no placeholder, unlike the value read from a file
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: {
+          'stats.2024': 'a',
+          'stats.2025': 'b',
+          'items.0.meta.0': 'c',
+          'other.a': 'd',
+        },
+      });
+
+      expect(result).toEqual({
+        stats: { 2024: 'a', 2025: 'b' },
+        items: [{ meta: { 0: 'c' } }],
+        other: { a: 'd' },
+      });
+      expect(Array.isArray(result.stats)).toBe(false);
+      expect(Array.isArray(result.items[0].meta)).toBe(false);
     });
   });
 

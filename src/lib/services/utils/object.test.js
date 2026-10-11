@@ -5,6 +5,7 @@ import { describe, expect, test } from 'vitest';
 import {
   escapeKeySegment,
   flattenKeys,
+  hasIndexLikeChildKey,
   isValueEmpty,
   unescapeKeySegment,
   unflattenKeys,
@@ -65,6 +66,7 @@ describe('flattenKeys()', () => {
     expect(flattenKeys(list, 'list')).toEqual({ list: [] });
     expect(flattenKeys(list, 'list').list).toBe(list);
     expect(flattenKeys({}, 'obj')).toEqual({ obj: {} });
+    expect(flattenKeys({})).toEqual({});
   });
 
   test('round-trips with `unflattenKeys()`', () => {
@@ -77,6 +79,65 @@ describe('flattenKeys()', () => {
 
     expect(unflattenKeys(flattenKeys(value))).toEqual(value);
     expect(unflattenMap(flattenKeys(value))).toEqual(value);
+  });
+
+  test('adds a placeholder ahead of an object with a key that looks like a list index', () => {
+    expect(
+      flattenKeys({
+        years: { 2023: 'a', 2024: 'b' },
+        mixed: { a: 1, 0: 'x' },
+        list: ['x', { meta: { 1: 'y' } }],
+        plain: { a: 1 },
+      }),
+    ).toEqual({
+      years: {},
+      'years.2023': 'a',
+      'years.2024': 'b',
+      mixed: {},
+      'mixed.0': 'x',
+      'mixed.a': 1,
+      'list.0': 'x',
+      'list.1.meta': {},
+      'list.1.meta.1': 'y',
+      'plain.a': 1,
+    });
+    expect(Object.keys(flattenKeys({ o: { 5: 'a' } }))).toEqual(['o', 'o.5']);
+    // The root is always an object, so it needs no placeholder, unless it has a prefix
+    expect(flattenKeys({ 10: 'a' })).toEqual({ 10: 'a' });
+    expect(flattenKeys({ 10: 'a' }, 'map')).toEqual({ map: {}, 'map.10': 'a' });
+    expect(flattenKeys(['a'], 'list')).toEqual({ 'list.0': 'a' });
+  });
+
+  test('round-trips an object with keys that look like list indexes', () => {
+    // The `flat` library alone turns such an object into a sparse array
+    expect(unflatten({ 'map.10': 'a' })).toEqual({ map: [...Array(10), 'a'] });
+
+    const value = {
+      10: 'root',
+      years: { 2023: 'a', 2024: 'b' },
+      zero: { 0: 'x', 1: 'y' },
+      mixed: { a: 1, 3: 'c', 'd.e': 'f', '': 'g' },
+      list: [{ hidden: { 1: 'x' } }, ['y', { 0: 'z' }]],
+    };
+
+    expect(unflattenKeys(flattenKeys(value))).toEqual(value);
+    expect(unflattenMap(flattenKeys(value))).toEqual(value);
+    expect(unflattenKeys({ hidden: { 0: 'x', 1: { 2: 'y' } } })).toEqual({
+      hidden: { 0: 'x', 1: { 2: 'y' } },
+    });
+  });
+});
+
+describe('hasIndexLikeChildKey()', () => {
+  test('checks whether an object at a key path has a key that looks like a list index', () => {
+    const map = { 'o.2024': 'a', 'p.a': 'b', 'p.1x': 'c', 'q.a.0': 'd', 'r.0.t': 'e', 'or.1': 'f' };
+
+    expect(hasIndexLikeChildKey(map, 'o')).toBe(true);
+    expect(hasIndexLikeChildKey(map, 'p')).toBe(false);
+    expect(hasIndexLikeChildKey(map, 'q')).toBe(false);
+    expect(hasIndexLikeChildKey(map, 'q.a')).toBe(true);
+    expect(hasIndexLikeChildKey(map, 'r')).toBe(true);
+    expect(hasIndexLikeChildKey(map, 'x')).toBe(false);
   });
 });
 

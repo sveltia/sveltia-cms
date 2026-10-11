@@ -138,10 +138,12 @@ export const convertEntryToMap = ({ entry, locale, collectionName, associatedAss
  * used by editor component previews.
  * @param {string[]} [args.componentNames] Names or IDs of the editor components the RichText field
  * can contain, whose field-level media folders are also searched.
+ * @param {InternalLocaleCode} [args.locale] Locale being previewed, which an entry-relative path is
+ * relative to. Default: the default locale.
  * @returns {GetAsset} Function that gets asset URLs.
  */
 export const createGetAsset =
-  ({ entry, collectionName, fileName, files, typedKeyPath, componentNames }) =>
+  ({ entry, collectionName, fileName, files, typedKeyPath, componentNames, locale }) =>
   /**
    * Get the asset for a given asset path.
    * @param {string} path Path to the asset, the blob URL of a file that hasn’t been saved yet, or
@@ -155,7 +157,7 @@ export const createGetAsset =
       return new UnsavedAssetProxy(path, unsavedFile);
     }
 
-    const args = { value: path, entry, collectionName, fileName, typedKeyPath };
+    const args = { value: path, entry, collectionName, fileName, typedKeyPath, locale };
 
     const { asset, url } =
       (componentNames
@@ -366,6 +368,6 @@ export const buildPreviewData = ({ draft, locale }) => {
 
       return fieldsMetaData;
     },
-    getAsset: createGetAsset({ entry, collectionName, fileName, files }),
+    getAsset: createGetAsset({ entry, collectionName, fileName, files, locale }),
   };
 };

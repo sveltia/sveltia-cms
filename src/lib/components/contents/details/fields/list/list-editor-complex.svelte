@@ -397,6 +397,7 @@
       isIndexFile,
       entry: entryDraft.current?.originalEntry,
       files: entryDraft.current?.files,
+      locale,
     });
 
   /**

@@ -87,6 +87,8 @@ describe('MapEditor', () => {
     await clear.click();
     expect(props.currentValue).toBe('');
     await expect.element(clear).toBeDisabled();
+    // The disabled button can’t keep the focus, so the search box takes it
+    await expect.element(page.getByRole('searchbox', { name: 'Find a Place' })).toHaveFocus();
   });
 
   test('places a point at a searched location', async () => {

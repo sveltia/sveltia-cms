@@ -905,8 +905,33 @@ describe('getEntriesByAssets()', () => {
       entry: a,
       collectionName: 'posts',
       fileName: undefined,
+      locale: 'en',
       value: 'photo.jpg',
     });
+  });
+
+  test('resolves a reference relative to the entry file of the locale holding it', async () => {
+    const { getMediaFieldSource } = await setup();
+    // With the `multiple_folders` i18n structure, each locale’s entry file has a folder of its own
+    const asset = { path: 'posts/fr/a/photo.jpg', name: 'photo.jpg' };
+
+    const a = {
+      id: 'a',
+      slug: 'a',
+      subPath: 'a',
+      locales: {
+        en: { slug: 'a', path: 'posts/en/a/index.md', content: { cover: 'photo.jpg' } },
+        fr: { slug: 'a', path: 'posts/fr/a/index.md', content: { cover: 'photo.jpg' } },
+      },
+    };
+
+    vi.mocked(getMediaFieldSource).mockImplementation(({ locale }) =>
+      locale === 'fr' ? { asset: { ...asset } } : undefined,
+    );
+
+    expect(await getAssetReferences([{ asset }], { entries: [a] })).toEqual([
+      expect.objectContaining({ entry: a, locale: 'fr', keyPath: 'cover' }),
+    ]);
   });
 
   test('replaces the references to each target with its own new URL', async () => {

@@ -176,6 +176,57 @@ test('commits a change to the branch', async ({ cms, github, page }) => {
   expect(github.head.author.login).toBe(github.user.login);
 });
 
+test('makes a save started during another one on top of that one', async ({
+  cms,
+  github,
+  page,
+}) => {
+  github.commit({ 'content/posts/second-post.md': '---\ntitle: Second Post\n---\n' });
+  await cms.open();
+
+  const { promise: released, resolve: release } = Promise.withResolvers();
+  const { promise: held, resolve: hold } = Promise.withResolvers();
+  let commitCount = 0;
+
+  // The first commit takes a while, as a large one does
+  await page.route('https://api.github.com/graphql', async (route) => {
+    if (route.request().postData()?.includes('createCommitOnBranch')) {
+      commitCount += 1;
+
+      if (commitCount === 1) {
+        hold(undefined);
+        await released;
+      }
+    }
+
+    await route.fallback();
+  });
+
+  const editor = await openFirstPost(page);
+
+  await editor.getByRole('textbox', { name: 'Body' }).fill('Hello from Mona!');
+  await editor.getByRole('button', { name: 'Save' }).click();
+  await held;
+
+  // The user goes on to another entry while the first one is being saved
+  await page.getByRole('button', { name: 'Cancel Editing' }).click();
+  await page.getByRole('row', { name: /Second Post/ }).click();
+  await editor.getByRole('textbox', { name: 'Body' }).fill('Hello again!');
+  await editor.getByRole('button', { name: 'Save' }).click();
+  release(undefined);
+
+  await expect
+    .poll(() => github.readFile('content/posts/second-post.md'))
+    .toBe('---\ntitle: Second Post\n---\n\nHello again!\n');
+  expect(github.readFile('content/posts/first-post.md')).toBe(
+    '---\ntitle: First Post\n---\n\nHello from Mona!\n',
+  );
+  // The second commit was made on top of the first one, rather than refused as the branch moved
+  expect(github.received).toHaveLength(2);
+  expect(github.received[1].expectedHeadOid).not.toBe(github.received[0].expectedHeadOid);
+  await expect(page.getByRole('alertdialog', { name: 'Error' })).toHaveCount(0);
+});
+
 test('lists an entry a colleague has added, on the next scheduled check', async ({
   cms,
   github,

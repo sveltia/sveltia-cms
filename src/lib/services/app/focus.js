@@ -1,6 +1,18 @@
 import { tick } from 'svelte';
 
 /**
+ * Move the focus to the page container, which is made focusable first.
+ */
+const focusPageContainer = () => {
+  const container = document.querySelector('#page-container');
+
+  if (container instanceof HTMLElement) {
+    container.tabIndex = -1;
+    container.focus();
+  }
+};
+
+/**
  * Remember the element that has the focus as an overlay opens, and return a function that gives it
  * the focus back once the overlay has closed. Without this, closing the entry editor or the asset
  * details drops the focus on `<body>`, and a keyboard or screen reader user has to work their way
@@ -20,13 +32,64 @@ export const rememberFocus = () => {
       return;
     }
 
-    const container = document.querySelector('#page-container');
+    focusPageContainer();
+  };
+};
 
-    if (container instanceof HTMLElement) {
+/**
+ * Move the focus to the entry or asset list on the page. A control acting on the selected items,
+ * like the Delete button, is disabled once they are gone, which drops its focus on `<body>`, so a
+ * keyboard or screen reader user would have to work their way back from the top of the document.
+ * The row of the list that is in the tab order takes the focus, or the page container if the list
+ * is empty. The list may still be updated after that, e.g. the row of a deleted entry removed, so
+ * the page is watched for a moment to move the focus on to a row again if it has been dropped on
+ * `<body>`, or if a row shows up while the page container has it.
+ * @param {object} [options] Options.
+ * @param {number} [options.timeout] How long to watch the page, in milliseconds.
+ */
+export const focusList = ({ timeout = 2000 } = {}) => {
+  const container = document.querySelector('#page-container');
+
+  if (!(container instanceof HTMLElement)) {
+    return;
+  }
+
+  const startTime = performance.now();
+
+  /**
+   * Focus the row in the tab order, or the page container if there is none.
+   */
+  const focus = () => {
+    const row = container.querySelector('[role="grid"] [tabindex="0"]');
+
+    if (row instanceof HTMLElement) {
+      row.focus();
+    } else {
       container.tabIndex = -1;
       container.focus();
     }
   };
+
+  /**
+   * Check where the focus is, once the list has been updated.
+   */
+  const check = () => {
+    const { activeElement } = document;
+
+    if (activeElement === document.body || activeElement === container) {
+      focus();
+    } else if (!container.contains(activeElement)) {
+      // The user has moved the focus elsewhere
+      return;
+    }
+
+    if (performance.now() - startTime < timeout) {
+      window.requestAnimationFrame(check);
+    }
+  };
+
+  focus();
+  window.requestAnimationFrame(check);
 };
 
 /**

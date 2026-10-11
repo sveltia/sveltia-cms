@@ -1,9 +1,10 @@
 import { _ } from '@sveltia/i18n';
 
 import { slugify } from '$lib/services/common/slug';
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { getSlugOptions } from '$lib/services/contents/collection/slug';
+import { getNewEntryDirPath } from '$lib/services/contents/draft/slugs';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { getRegex } from '$lib/services/utils/regex';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
@@ -27,7 +28,10 @@ import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
  * Get the other entries of the collection the draft belongs to: the published ones and the
- * unpublished ones, leaving out any version of the entry being edited. With Editorial Workflow, a
+ * unpublished ones, leaving out any version of the entry being edited. The published ones include
+ * every entry stored in the collection folder, even those the collection’s `filter` option leaves
+ * out: they can belong to another collection sharing the folder, and their files can’t be
+ * overwritten either. With Editorial Workflow, a
  * draft that has already renamed the entry leaves the published version behind under the old slug,
  * so that version has to be recognized as the same entry — otherwise reverting the slug looks like
  * a conflict. The unpublished entries are concatenated rather than swapped over their published
@@ -47,7 +51,7 @@ export const getOtherEntries = (draft) => {
   );
 
   return [
-    ...getEntriesByCollection(collectionName),
+    ...getEntriesInCollectionFolder(collectionName),
     ...getUnpublishedEntriesByCollection(collectionName),
   ].filter((entry) => !Object.values(entry.locales).some(({ path }) => ownPaths.has(path)));
 };
@@ -55,28 +59,59 @@ export const getOtherEntries = (draft) => {
 /**
  * Get the slugs taken by the other entries of the collection, for each locale of the draft’s slugs.
  * A locale-agnostic slug, under the `_` key, can collide with another entry’s slug in any locale.
- * The entry’s own original slugs never count as taken.
+ * The entry’s own original slug in a locale never counts as taken in that locale; in another
+ * locale, it can be another entry’s slug, which would be overwritten. For a new entry placed with
+ * the path editor of a nested collection, only the entries in the chosen folder count, by their
+ * file names, because the slug of an entry there is its sub path.
  * @param {EntryDraft} draft Entry draft.
  * @param {InternalLocaleCode[]} [locales] Locales to get the taken slugs for. Default: the locales
  * of the draft’s slugs.
  * @returns {Record<InternalLocaleCode, string[]>} Taken slugs for each locale.
  */
 export const getTakenSlugs = (draft, locales = Object.keys(draft.currentSlugs)) => {
-  const { originalSlugs } = draft;
+  const { collection, originalSlugs } = draft;
   const otherEntries = getOtherEntries(draft);
-  const ownSlugs = new Set(Object.values(originalSlugs));
+  const dirPath = getNewEntryDirPath(draft);
+  const dirPrefix = dirPath ? `${dirPath}/` : '';
+
+  /**
+   * Get the file name of the given slug within the folder chosen with the path editor.
+   * @param {string} slug Slug, which is a sub path.
+   * @returns {string | undefined} File name, or `undefined` if the entry is in another folder.
+   */
+  const getNameInFolder = (slug) => {
+    const name = slug.startsWith(dirPrefix) ? slug.slice(dirPrefix.length) : undefined;
+
+    return name?.includes('/') ? undefined : name;
+  };
 
   return Object.fromEntries(
-    locales.map((locale) => [
-      locale,
-      otherEntries
-        .flatMap((entry) =>
-          locale === '_'
-            ? Object.values(entry.locales).map(({ slug }) => slug)
-            : [entry.locales[locale]?.slug],
-        )
-        .filter((slug) => typeof slug === 'string' && !ownSlugs.has(slug)),
-    ]),
+    locales.map((locale) => {
+      const ownSlug = originalSlugs[locale] ?? originalSlugs._;
+
+      // The folder is chosen in the default locale; the localized folders aren’t looked up here
+      const inFolder =
+        dirPath !== undefined && (locale === '_' || locale === collection._i18n.defaultLocale);
+
+      return [
+        locale,
+        otherEntries
+          .flatMap((entry) =>
+            locale === '_'
+              ? Object.values(entry.locales).map(({ slug }) => slug)
+              : [entry.locales[locale]?.slug],
+          )
+          .flatMap((slug) => {
+            if (typeof slug !== 'string' || slug === ownSlug) {
+              return [];
+            }
+
+            const name = inFolder ? getNameInFolder(slug) : slug;
+
+            return name === undefined ? [] : [name];
+          }),
+      ];
+    }),
   );
 };
 

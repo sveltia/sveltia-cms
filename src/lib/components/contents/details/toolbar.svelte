@@ -314,18 +314,31 @@
 
     saving = true;
 
+    /**
+     * Check whether the draft being saved is still the one in the editor. The Back button stays
+     * available during a save, so the user may have closed the entry, or opened another one, by the
+     * time the commit has landed; the editor and the URL then belong to that one and are left
+     * alone.
+     * @returns {boolean} Result.
+     */
+    const isDraftOpen = () => entryDraft.current === draft;
+
     try {
       // A change still on its way to the draft enabled the button, but may turn out to change
       // nothing, e.g. a trailing space typed in a rich text editor
       await awaitPendingFieldUpdates();
 
-      if (!isNew && !entryDraft.modified) {
+      if (!isDraftOpen() || (!isNew && !entryDraft.modified)) {
         return;
       }
 
       const savedEntry = await saveEntry({ draft, skipCI, overwrite });
       const savedDraft = /** @type {UnpublishedEntry} */ (savedEntry);
       let statusChangeFailed = false;
+
+      if (!isDraftOpen()) {
+        return;
+      }
 
       // Saving with Editorial Workflow leaves the entry as a draft, which nothing on screen says:
       // it hasn’t been handed to anyone yet, and the status menu that would do it is easy to miss.
@@ -347,6 +360,10 @@
           // eslint-disable-next-line no-console
           console.error(ex);
         }
+      }
+
+      if (!isDraftOpen()) {
+        return;
       }
 
       if (isNew) {
@@ -387,9 +404,16 @@
         errorCount = countInvalidFields(draft.validities);
         showValidationToast = true;
       } else if (failure.type === 'conflict') {
-        // Someone else has changed the entry since it was opened; let the user decide
-        saveConflict = { conflict: failure.conflict, skipCI };
-        showConflictDialog = true;
+        if (isDraftOpen()) {
+          // Someone else has changed the entry since it was opened; let the user decide
+          saveConflict = { conflict: failure.conflict, skipCI };
+          showConflictDialog = true;
+        } else {
+          // Saving over the change saves the draft in the editor, which is now another one, so the
+          // save is only reported as failed
+          showErrorDialog = true;
+          errorMessage = '';
+        }
       } else {
         showErrorDialog = true;
         errorMessage = failure.message;

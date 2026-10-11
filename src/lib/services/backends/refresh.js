@@ -37,6 +37,13 @@ let lastCheckTime = 0;
  * repository from before the commit.
  */
 let commitCount = 0;
+/**
+ * The last commit queued, settled once it’s done, whether it succeeded or not. Commits are made one
+ * at a time, so each is made on top of the head the previous one left: GitHub refuses a commit made
+ * against a head other than the branch’s current one.
+ * @type {Promise<void>}
+ */
+let commitQueue = Promise.resolve();
 
 /**
  * Work out what a fetch has changed. The fetch keeps every unchanged entry and asset as the same
@@ -224,20 +231,29 @@ export const checkForRemoteChanges = async ({ maxAge = 0 } = {}) => {
 
 /**
  * Run a commit, holding off any check for remote changes until its results are in the stores. A
- * check already in flight is waited for first, so it can’t land in the middle either.
+ * check already in flight is waited for first, so it can’t land in the middle either. A commit
+ * queued while another is being made waits for that one to finish, so the user’s own commits don’t
+ * race each other; a failed commit doesn’t hold up the next one.
  * @template T
  * @param {() => Promise<T>} commit Function that makes the commit and updates the stores.
  * @returns {Promise<T>} Whatever the function returns.
  */
 export const suspendChecksWhile = async (commit) => {
-  // Waiting for the promise is what matters; the result, or a failure, is the other caller’s
-  await pending?.catch(() => undefined);
+  const previousCommit = commitQueue;
+  const { promise, resolve } = Promise.withResolvers();
 
+  commitQueue = promise;
+  // Counted from the start, so no check is started while the commit is waiting for its turn
   commitCount += 1;
 
   try {
+    await previousCommit;
+    // Waiting for the promise is what matters; the result, or a failure, is the other caller’s
+    await pending?.catch(() => undefined);
+
     return await commit();
   } finally {
     commitCount -= 1;
+    resolve(undefined);
   }
 };

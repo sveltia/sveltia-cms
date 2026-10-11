@@ -10,7 +10,12 @@ import { allCloudStorageServices } from '$lib/services/integrations/media-librar
 import { getMergedLibraryOptions } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
 
 /**
- * @import { Entry, MediaFieldSource, TypedFieldKeyPath } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * InternalLocaleCode,
+ * MediaFieldSource,
+ * TypedFieldKeyPath,
+ * } from '$lib/types/private';
  * @import { MediaField } from '$lib/types/public';
  */
 
@@ -45,6 +50,8 @@ export const getAssetBaseURL = (fieldConfig) => {
  * @param {string} [args.componentName] Custom editor component name for a field-level asset folder.
  * @param {MediaField} [args.fieldConfig] Field configuration.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
+ * @param {InternalLocaleCode} [args.locale] Locale the value is referenced in, which tells which
+ * locale’s entry file an entry-relative path is relative to. Default: the default locale.
  * @returns {MediaFieldSource | undefined} The URL of a file on an external location, or the asset
  * in the repository. `undefined` if the value is empty or the asset is not found.
  */
@@ -56,6 +63,7 @@ export const getMediaFieldSource = ({
   componentName,
   fieldConfig,
   typedKeyPath,
+  locale,
 }) => {
   if (!value) {
     return undefined;
@@ -82,6 +90,7 @@ export const getMediaFieldSource = ({
     fileName,
     componentName,
     typedKeyPath,
+    locale,
   });
 
   return asset ? { asset } : undefined;
@@ -122,6 +131,8 @@ const getSourceURL = async (source, thumbnail = false) => {
  * @param {string} [args.componentName] Custom editor component name for a field-level asset folder.
  * @param {MediaField} [args.fieldConfig] Field configuration.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
+ * @param {InternalLocaleCode} [args.locale] Locale the value is referenced in, which tells which
+ * locale’s entry file an entry-relative path is relative to. Default: the default locale.
  * @param {boolean} [args.thumbnail] Whether to use a thumbnail of the image.
  * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
  */
@@ -141,6 +152,8 @@ export const getMediaFieldURL = async ({ thumbnail = false, ...args }) =>
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Key path of the RichText field.
  * @param {string[]} args.componentNames Names or IDs of the components the field can contain.
+ * @param {InternalLocaleCode} [args.locale] Locale the value is referenced in. Default: the default
+ * locale.
  * @returns {MediaFieldSource | undefined} The URL of a file on an external location, or the asset
  * in the repository. `undefined` if the value is empty or the asset is not found.
  */
@@ -172,6 +185,8 @@ export const getRichTextMediaSource = ({ componentNames, ...args }) => {
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {TypedFieldKeyPath} [args.typedKeyPath] Key path of the RichText field.
  * @param {string[]} args.componentNames Names or IDs of the components the field can contain.
+ * @param {InternalLocaleCode} [args.locale] Locale the value is referenced in. Default: the default
+ * locale.
  * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
  */
 export const getRichTextMediaURL = async (args) => getSourceURL(getRichTextMediaSource(args));

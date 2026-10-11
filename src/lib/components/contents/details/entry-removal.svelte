@@ -14,6 +14,7 @@
     contentUpdatesToast,
     UPDATE_TOAST_DEFAULT_STATE,
   } from '$lib/services/contents/collection/data';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { deleteOrDiscardEntries } from '$lib/services/workflow/delete';
   import { getDiscardDialogStrings } from '$lib/services/workflow/dialogs';
   import { discardWorkflowEntry } from '$lib/services/workflow/save';
@@ -45,10 +46,13 @@
    * @property {boolean} pendingDeletion Whether the entry is awaiting deletion, in which case the
    * discard calls off the deletion.
    * @property {() => void} onDone Function called once the entry has been deleted or discarded, to
-   * close the editor.
+   * close the editor. It’s not called if the user has left the entry, or opened another one, in the
+   * meantime.
    * @property {() => void} onClose Function called once a dialog is closed, e.g. to move the focus
    * back to the menu button.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
   let {
@@ -103,6 +107,7 @@
    * @param {string} progressKey I18n key of the message shown while the action is in flight.
    */
   const runDeletion = async (action, progressKey) => {
+    const draft = entryDraft.current;
     /** @type {Partial<UpdateToastState> | undefined} */
     let toastState;
 
@@ -126,7 +131,11 @@
       contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, count: 1, ...toastState };
     }
 
-    onDone();
+    // The Back button stays available while the request is in flight; if the user has moved on,
+    // going back would take them away from where they are now
+    if (entryDraft.current === draft) {
+      onDone();
+    }
   };
 
   /**

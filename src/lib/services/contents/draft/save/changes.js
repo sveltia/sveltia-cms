@@ -171,8 +171,49 @@ const replaceBlobURLs = async ({
 };
 
 /**
- * Normalize a field value for saving: remove an undefined value, trim a string, and replace the
- * blob URLs in it with asset paths.
+ * Field types whose leading whitespace is part of the value: indentation in a Text field, or an
+ * indented code block at the start of Markdown. Their values only lose trailing whitespace.
+ */
+const MULTILINE_FIELD_TYPES = ['text', ...RICH_TEXT_FIELD_TYPES];
+
+/**
+ * Remove the whitespace from a string value that the field it belongs to doesn’t need. A Code
+ * field value is kept as is, as any whitespace can be significant in code, e.g. the indentation of
+ * the first line in YAML or Python and the final newline. A Text, Markdown or rich text field value
+ * keeps its leading whitespace. Any other value, including one that no field configuration
+ * describes, is trimmed on both ends.
+ * @param {object} args Arguments.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments to get a field configuration.
+ * @param {FlattenedEntryContent} args.content Entry content.
+ * @param {FieldKeyPath} args.keyPath Key path of the value.
+ * @param {string} args.value Value.
+ * @returns {string} Trimmed value.
+ */
+const trimValue = ({ getFieldArgs, content, keyPath, value }) => {
+  const fieldArgs = { ...getFieldArgs, valueMap: content };
+  const field = getField({ ...fieldArgs, keyPath });
+  // A Code field that saves the language too stores the code below its own key path, e.g.
+  // `code.code`, which no field configuration describes
+  const parentKeyPath = keyPath.split('.').slice(0, -1).join('.');
+
+  const fieldType = field
+    ? (field.widget ?? 'string')
+    : parentKeyPath && getField({ ...fieldArgs, keyPath: parentKeyPath })?.widget;
+
+  if (fieldType === 'code') {
+    return value;
+  }
+
+  if (MULTILINE_FIELD_TYPES.includes(String(fieldType))) {
+    return value.trimEnd();
+  }
+
+  return value.trim();
+};
+
+/**
+ * Normalize a field value for saving: remove an undefined value, trim a string as the field needs
+ * with {@link trimValue}, and replace the blob URLs in it with asset paths.
  * @param {NormalizeContentArgs & {
  * locale: InternalLocaleCode, slug: string, content: FlattenedEntryContent, keyPath: FieldKeyPath,
  * value: any }} args Arguments. `content` is modified in place.
@@ -190,8 +231,7 @@ const normalizeFieldValue = async ({ keyPath, value, ...args }) => {
     return;
   }
 
-  // Remove leading & trailing whitespace
-  content[keyPath] = value.trim();
+  content[keyPath] = trimValue({ getFieldArgs: args.getFieldArgs, content, keyPath, value });
 
   const matches = [...value.matchAll(getBlobRegex('g'))];
 
@@ -453,12 +493,14 @@ export const createSavingEntryData = async ({ draft, slugs, recreate = false }) 
     slugs,
   });
 
-  const subPath = getSubPath({
-    collection: entryCollection,
-    path: localizedEntryMap[defaultLocale].path,
-    fallback: defaultLocaleSlug,
-  });
+  // An entry may have no file in the default locale, e.g. when only `hello.fr.md` exists. Another
+  // locale then stands in for it, just like when the entry is read from the repository
+  const { path } =
+    localizedEntryMap[defaultLocale] ??
+    Object.values(localizedEntryMap).find(({ content }) => content) ??
+    Object.values(localizedEntryMap)[0];
 
+  const subPath = getSubPath({ collection: entryCollection, path, fallback: defaultLocaleSlug });
   // In a nested collection, an entry is identified by its path within the collection folder rather
   // than by a file name, so that’s also the slug the entry gets when it’s read back from the
   // repository. Use it here as well, or the entry saved in this session would differ from the same

@@ -2487,6 +2487,152 @@ describe('assets/index', () => {
     });
   });
 
+  describe('entry-relative assets with a locale folder per locale', () => {
+    // With the `multiple_folders` i18n structure and `path: '{{slug}}/index'`, each locale’s entry
+    // file has a folder of its own, which the locale’s entry-relative assets are stored in
+    /** @type {any} */
+    const collection = {
+      name: 'posts',
+      media_folder: '',
+      public_folder: '',
+      _i18n: { defaultLocale: 'en' },
+    };
+
+    /** @type {any} */
+    const entry = {
+      id: 'hello',
+      slug: 'hello',
+      subPath: 'hello/index',
+      locales: {
+        en: { slug: 'hello', path: 'content/posts/en/hello/index.md', content: {} },
+        fr: { slug: 'hello', path: 'content/posts/fr/hello/index.md', content: {} },
+      },
+    };
+
+    /**
+     * Create an asset in an entry-relative folder.
+     * @param {string} path
+     * @returns {any}
+     */
+    const createAsset = (path) => ({
+      path,
+      name: path.split('/').pop(),
+      sha: path,
+      size: 1,
+      kind: 'image',
+      folder: { internalPath: 'content/posts', collectionName: 'posts', entryRelative: true },
+    });
+
+    const enPhoto = createAsset('content/posts/en/hello/photo.jpg');
+    const frPhoto = createAsset('content/posts/fr/hello/photo.jpg');
+    const frOnlyPhoto = createAsset('content/posts/fr/hello/photo-fr.jpg');
+
+    beforeEach(async () => {
+      const fileUtils = await import('$lib/services/utils/file');
+
+      const actual = /** @type {Record<string, any>} */ (
+        await vi.importActual('$lib/services/utils/file')
+      );
+
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+
+      vi.mocked(fileUtils.createPath).mockImplementation(actual.createPath);
+      vi.mocked(fileUtils.resolvePath).mockImplementation(actual.resolvePath);
+      vi.mocked(getAssociatedCollections).mockReturnValue([collection]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      vi.mocked(getAssetFolder).mockReturnValue(undefined);
+      allAssets.current = [enPhoto, frPhoto, frOnlyPhoto];
+    });
+
+    it('should find an asset beside the given locale’s entry file', () => {
+      expect(
+        getAssetByPath({ value: 'photo-fr.jpg', entry, collectionName: 'posts', locale: 'fr' }),
+      ).toBe(frOnlyPhoto);
+      expect(
+        getAssetByRelativePathAndCollection({
+          path: 'photo-fr.jpg',
+          entry,
+          collection,
+          locale: 'fr',
+        }),
+      ).toBe(frOnlyPhoto);
+    });
+
+    it('should prefer the given locale’s copy of an asset both locales have', () => {
+      expect(
+        getAssetByPath({ value: 'photo.jpg', entry, collectionName: 'posts', locale: 'fr' }),
+      ).toBe(frPhoto);
+      expect(
+        getAssetByPath({ value: 'photo.jpg', entry, collectionName: 'posts', locale: 'en' }),
+      ).toBe(enPhoto);
+    });
+
+    it('should look beside the default locale’s entry file without a locale', () => {
+      expect(getAssetByPath({ value: 'photo.jpg', entry, collectionName: 'posts' })).toBe(enPhoto);
+      expect(
+        getAssetByPath({ value: 'photo-fr.jpg', entry, collectionName: 'posts' }),
+      ).toBeUndefined();
+    });
+
+    it('should look beside the default locale’s entry file if the entry lacks the locale', () => {
+      expect(
+        getAssetByPath({ value: 'photo.jpg', entry, collectionName: 'posts', locale: 'de' }),
+      ).toBe(enPhoto);
+    });
+
+    it('should resolve a template in an internal path against the given locale’s entry file', async () => {
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const { fillTemplate } = await import('$lib/services/common/template');
+
+      vi.mocked(getCollection).mockReturnValue(collection);
+      vi.mocked(fillTemplate).mockReturnValue('content/posts/fr/hello');
+
+      fillInternalPathTemplate({
+        internalPath: 'content/posts/{{slug}}',
+        collectionName: 'posts',
+        entry,
+        locale: 'fr',
+      });
+
+      expect(fillTemplate).toHaveBeenCalledWith(
+        'content/posts/{{slug}}',
+        expect.objectContaining({ entryFilePath: 'content/posts/fr/hello/index.md' }),
+      );
+    });
+
+    it('should resolve a template in an absolute path’s folder against the given locale', async () => {
+      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const { fillTemplate } = await import('$lib/services/common/template');
+      const { stripSlashes } = await import('@sveltia/utils/string');
+
+      vi.mocked(stripSlashes).mockImplementation((path) => path.replace(/^\/+|\/+$/g, ''));
+      vi.mocked(getAssetFolder).mockReturnValue(
+        /** @type {any} */ ({
+          collectionName: 'posts',
+          internalPath: 'static/images/{{slug}}',
+          publicPath: '/images/{{slug}}',
+        }),
+      );
+      vi.mocked(getCollection).mockReturnValue(collection);
+      vi.mocked(fillTemplate).mockReturnValue('static/images/hello-fr');
+
+      getAssetByAbsolutePath({
+        path: '/images/hello-fr/photo.jpg',
+        entry,
+        collectionName: 'posts',
+        locale: 'fr',
+      });
+
+      expect(fillTemplate).toHaveBeenCalledWith(
+        'static/images/{{slug}}',
+        expect.objectContaining({ entryFilePath: 'content/posts/fr/hello/index.md' }),
+      );
+    });
+  });
+
   describe('getAssetByRelativePath', () => {
     it('should return undefined when no entry and no collectionName provided', () => {
       const result = getAssetByRelativePath({

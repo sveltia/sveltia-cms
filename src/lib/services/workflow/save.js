@@ -580,23 +580,32 @@ export const deleteWorkflowEntry = async (
     pullRequest: existingEntry?.workflow.pullRequest,
   });
 
-  // A reused pull request keeps the status it already had, so it still needs the switch. It also
-  // carries the head commit from before this one, which publishing compares with the branch, so
-  // it’s pointed at the new commit
-  const readyPullRequest = {
-    ...(pullRequest.status === 'pending_deletion'
-      ? pullRequest
-      : await workflow.updateStatus(pullRequest, 'pending_deletion')),
-    headSHA: commit.sha,
-  };
+  /**
+   * Store the entry with the given pull request, pointed at the new commit: a reused pull request
+   * carries the head commit from before this one, which publishing compares with the branch.
+   * @param {WorkflowPullRequest} pr Pull request.
+   * @returns {UnpublishedEntry} Unpublished entry.
+   */
+  const store = (pr) =>
+    storeUnpublishedEntry(entry, {
+      pullRequest: { ...pr, headSHA: commit.sha },
+      collectionName,
+      fileName: collectionFile?.name,
+      // Where the entry lives on the configured branch, which a rename has already moved away from
+      previousPaths: getPreviousPaths(existingEntry, paths),
+    });
 
-  return storeUnpublishedEntry(entry, {
-    pullRequest: readyPullRequest,
-    collectionName,
-    fileName: collectionFile?.name,
-    // Where the entry lives on the configured branch, which a rename has already moved away from
-    previousPaths: getPreviousPaths(existingEntry, paths),
-  });
+  if (pullRequest.status === 'pending_deletion') {
+    return store(pullRequest);
+  }
+
+  // A reused pull request keeps the status it already had, so it still needs the switch. The
+  // commit has landed by now, so the entry is stored first with the status it has: if the switch
+  // then fails, the entry still follows the branch rather than its previous head commit, which
+  // would hold up publishing and saving until the next reload
+  store(pullRequest);
+
+  return store(await workflow.updateStatus(pullRequest, 'pending_deletion'));
 };
 
 /**

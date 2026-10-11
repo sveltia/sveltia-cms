@@ -1,6 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { EmptyState } from '@sveltia/ui';
+  import { Alert, EmptyState, Toast } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
 
   import DeleteAssetsButton from '$lib/components/assets/list/delete-assets-button.svelte';
@@ -40,6 +40,7 @@
    * @type {{ asset: Asset, blob: Blob } | undefined}
    */
   let loaded = $state.raw();
+  let deletingFailed = $state(false);
 
   const asset = $derived(overlaidAsset.current);
   const blob = $derived(loaded?.asset === asset ? /** @type {Blob} */ (loaded?.blob) : undefined);
@@ -105,9 +106,19 @@
     <DeleteAssetsButton
       {assets}
       disabled={assetsLocked.current || hasReadonlyAsset(assets)}
-      deleteAssets={(_assets) => {
-        // Don’t wait for the commit; the list is updated optimistically
-        deleteAssets(_assets);
+      deleteAssets={async (_assets) => {
+        try {
+          await deleteAssets(_assets);
+        } catch (/** @type {any} */ ex) {
+          deletingFailed = true;
+          // eslint-disable-next-line no-console
+          console.error(ex);
+
+          // Stay on the asset, which is still there
+          return false;
+        }
+
+        return true;
       }}
       planDeletion={planAssetDeletion}
       buttonDescription={_('delete_assets', { values: { count: 1 } })}
@@ -151,3 +162,7 @@
     {/if}
   {/snippet}
 </DetailsOverlay>
+
+<Toast bind:show={deletingFailed}>
+  <Alert status="error">{_('deleting_assets_failed')}</Alert>
+</Toast>

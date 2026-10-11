@@ -85,10 +85,18 @@
    * @type {Map<string, ApiAsset[]>}
    */
   let newPreviewAssets = new Map();
+  /**
+   * Items of the latest {@link keyedBlocks} by key, reused for an unchanged block so the keyed
+   * `{#each}` sees the same object and doesn’t parse and sanitize the block again. Deliberately not
+   * reactive, like `previewMap`.
+   * @type {Map<string, { key: string, block: string }>}
+   */
+  let blockItems = new Map();
 
   /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
+    locale,
     typedKeyPath,
     fieldConfig,
     currentValue,
@@ -148,6 +156,7 @@
       files: entryDraft.current?.files,
       typedKeyPath,
       componentNames,
+      locale,
     }),
   );
 
@@ -177,20 +186,31 @@
    * The Markdown or HTML split into blocks, each with a key that identifies it by content rather
    * than by position: editing near the top of a long document then only re-renders the block that
    * changed, instead of every block after it. Identical blocks are told apart by their occurrence.
+   * An unchanged block keeps its item object, so the block isn’t parsed again: the keyed `{#each}`
+   * would otherwise update every item with a new object and render every block again.
    * @type {{ key: string, block: string }[]}
    */
   const keyedBlocks = $derived.by(() => {
-    // A scratch counter for this computation, not state
+    // Scratch maps for this computation, not state
     // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const occurrences = /** @type {Map<string, number>} */ (new Map());
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
+    const items = /** @type {Map<string, { key: string, block: string }>} */ (new Map());
 
-    return (isHTML ? splitHTMLBlocks : splitMarkdownBlocks)(markdown).map((block) => {
+    const list = (isHTML ? splitHTMLBlocks : splitMarkdownBlocks)(markdown).map((block) => {
       const occurrence = occurrences.get(block) ?? 0;
+      const key = `${occurrence}\n${block}`;
+      const item = blockItems.get(key) ?? { key, block };
 
       occurrences.set(block, occurrence + 1);
+      items.set(key, item);
 
-      return { key: `${occurrence}\n${block}`, block };
+      return item;
     });
+
+    blockItems = items;
+
+    return list;
   });
 
   /**
@@ -387,6 +407,7 @@
         fileName,
         typedKeyPath,
         componentNames,
+        locale,
       }),
     );
   };

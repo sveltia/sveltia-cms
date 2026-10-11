@@ -1,6 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
 import { compare } from '@sveltia/utils/string';
-import { flatten, unflatten } from 'flat';
+import { unflatten } from 'flat';
 
 /**
  * Character that replaces a dot in an object key when the key becomes a key path segment, so that
@@ -100,30 +100,6 @@ export const unescapeKeySegment = (segment) =>
     : segment;
 
 /**
- * Flatten an object or array into a map of dot-notated key paths with the `flat` library, escaping
- * every object key with {@link escapeKeySegment}, so that {@link unflattenKeys} restores the same
- * structure even if a key contains a dot.
- * @param {Record<string, any> | any[]} value Object or array to flatten.
- * @param {string} [prefix] Key path to prepend to every key path, e.g. `list.0`. It must be escaped
- * already, if needed. An empty value is then stored at the prefix itself, as `flatten()` does with
- * `{ [prefix]: value }`.
- * @returns {Record<string, any>} Flattened map.
- */
-export const flattenKeys = (value, prefix) => {
-  const map = flatten(value, { transformKey: escapeKeySegment });
-
-  if (prefix === undefined) {
-    return map;
-  }
-
-  const entries = Object.entries(map);
-
-  return entries.length
-    ? Object.fromEntries(entries.map(([key, val]) => [`${prefix}.${key}`, val]))
-    : { [prefix]: value };
-};
-
-/**
  * Check whether the given value is a plain object or array with any key, which the `flat` library
  * flattens itself when it finds one in a map to unflatten.
  * @param {any} value Value.
@@ -132,6 +108,84 @@ export const flattenKeys = (value, prefix) => {
 const isNonEmptyCollection = (value) =>
   ['[object Object]', '[object Array]'].includes(Object.prototype.toString.call(value)) &&
   !!Object.keys(value).length;
+
+/**
+ * Check whether the given value is a plain object, not an array, with a key that looks like a list
+ * index, e.g. `{ "2024": "a" }`. A key path doesn’t tell an object key from a list index, so the
+ * `flat` library would unflatten the object into an array.
+ * @param {any} value Value.
+ * @returns {boolean} Result.
+ */
+const hasIndexLikeKey = (value) =>
+  Object.prototype.toString.call(value) === '[object Object]' &&
+  Object.keys(value).some((key) => INDEX_KEY_REGEX.test(key));
+
+/**
+ * Check whether the given flattened map holds a property of the object at the given key path whose
+ * key looks like a list index, e.g. `years.2024` for `years`. Unless the map also holds a
+ * placeholder at the key path, as {@link flattenKeys} adds, the object would be unflattened into an
+ * array.
+ * @param {Record<string, any>} map Flattened map.
+ * @param {string} keyPath Key path of the object.
+ * @returns {boolean} Result.
+ */
+export const hasIndexLikeChildKey = (map, keyPath) => {
+  const prefix = `${keyPath}.`;
+
+  return Object.keys(map).some(
+    (key) => key.startsWith(prefix) && INDEX_KEY_REGEX.test(key.slice(prefix.length).split('.')[0]),
+  );
+};
+
+/**
+ * Flatten an object or array into a map of dot-notated key paths, like the `flat` library does,
+ * escaping every object key with {@link escapeKeySegment}, so that {@link unflattenKeys} restores
+ * the same structure even if a key contains a dot.
+ *
+ * A plain object with a key that looks like a list index, e.g. `{ "2024": "a" }`, also gets an
+ * empty object at its own key path, ahead of its properties, e.g. `years: {}` before `years.2024`.
+ * When unflattening, the placeholder makes the parent an object rather than an array, while the key
+ * paths stay the same, so the value can still be found by the key path of a field named `2024`.
+ * @param {Record<string, any> | any[]} value Object or array to flatten.
+ * @param {string} [prefix] Key path to prepend to every key path, e.g. `list.0`. It must be escaped
+ * already, if needed. An empty value is then stored at the prefix itself, as `flatten()` does with
+ * `{ [prefix]: value }`.
+ * @returns {Record<string, any>} Flattened map.
+ */
+export const flattenKeys = (value, prefix) => {
+  /** @type {Record<string, any>} */
+  const map = {};
+
+  /**
+   * Add the properties of an object or array to the map.
+   * @param {Record<string, any> | any[]} object Object or array.
+   * @param {string} [parentKeyPath] Key path of the object or array.
+   */
+  const step = (object, parentKeyPath) => {
+    if (parentKeyPath !== undefined && hasIndexLikeKey(object)) {
+      map[parentKeyPath] = {};
+    }
+
+    Object.entries(object).forEach(([key, val]) => {
+      const segment = escapeKeySegment(key);
+      const keyPath = parentKeyPath === undefined ? segment : `${parentKeyPath}.${segment}`;
+
+      if (isNonEmptyCollection(val)) {
+        step(val, keyPath);
+      } else {
+        map[keyPath] = val;
+      }
+    });
+  };
+
+  if (isNonEmptyCollection(value)) {
+    step(value, prefix);
+  } else if (prefix !== undefined) {
+    map[prefix] = value;
+  }
+
+  return map;
+};
 
 /**
  * Transform a key path segment while unflattening: unescape it, then add {@link STRING_KEY_PREFIX}
@@ -147,7 +201,9 @@ const transformSegment = (segment) => prefixStringKey(unescapeKeySegment(segment
  *
  * The library turns any segment that `Number()` can parse into a number, so an empty key, which a
  * KeyValue field can hold, becomes `0`, and a key like `01` becomes `1`, which also makes an array
- * out of a new parent object. Such segments are prefixed while unflattening, then restored.
+ * out of a new parent object. Such segments are prefixed while unflattening, then restored. A key
+ * that looks like a list index, e.g. `2024`, is a list index unless the map holds an empty object
+ * at the parent key path first, as {@link flattenKeys} adds for an object with such a key.
  * @param {Record<string, any>} map Map of dot-notated keys.
  * @returns {Record<string, any>} Unflattened map.
  * @see https://github.com/hughsk/flat/issues/103

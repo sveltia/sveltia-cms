@@ -904,6 +904,87 @@ describe('Test processResource()', () => {
     expect(Object.keys(draft.files)).toHaveLength(0);
   });
 
+  test('should only deduplicate a file saved beside the given locale’s entry file', async () => {
+    const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+    Object.defineProperty(mockFile, 'size', { value: 50000 });
+
+    const folder = {
+      entryRelative: true,
+      internalPath: 'src/content/people',
+      internalSubPath: '',
+      publicPath: '',
+      hasTemplateTags: false,
+      collectionName: 'people',
+    };
+
+    // With the `multiple_folders` i18n structure, each locale’s entry file has a folder of its own
+    /**
+     * Create a draft of the entry.
+     * @returns {any} Draft.
+     */
+    const createDraft = () => ({
+      files: {},
+      defaultLocale: 'en',
+      originalEntry: {
+        locales: {
+          en: { path: 'src/content/people/en/person-b/index.md' },
+          fr: { path: 'src/content/people/fr/person-b/index.md' },
+        },
+      },
+      collection: {
+        _type: 'entry',
+        _file: { subPath: '{{slug}}/index' },
+      },
+    });
+
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = { max_file_size: 1000000 };
+
+    const enAsset = {
+      sha: 'git-hash',
+      folder,
+      path: 'src/content/people/en/person-b/photo.jpg',
+      unsaved: false,
+    };
+
+    getGitHashMock.mockResolvedValue('git-hash');
+    allAssets.current = /** @type {any} */ ([enAsset]);
+    equalMock.mockReturnValue(true);
+    getAssetPublicURLMock.mockReturnValue('photo.jpg');
+
+    // The default locale’s folder has the file
+    let draft = createDraft();
+
+    let result = await processResource({
+      draft,
+      resource: /** @type {any} */ ({ file: mockFile, folder, credit: '' }),
+      libraryConfig,
+      locale: 'en',
+    });
+
+    expect(result.value).toBe('photo.jpg');
+    expect(getAssetPublicURLMock).toHaveBeenCalledWith(enAsset, {
+      pathOnly: true,
+      allowSpecial: true,
+      entry: draft.originalEntry,
+      locale: 'en',
+    });
+
+    // The French folder doesn’t, so the file is uploaded there rather than referenced in the
+    // English folder, which a path relative to the French entry file can’t reach
+    draft = createDraft();
+    result = await processResource({
+      draft,
+      resource: /** @type {any} */ ({ file: mockFile, folder, credit: '' }),
+      libraryConfig,
+      locale: 'fr',
+    });
+
+    expect(result.value).toBe('blob:mock-url');
+    expect(Object.keys(draft.files)).toHaveLength(1);
+  });
+
   test('should allow upload for new entry (no originalEntry) with entry-relative folder', async () => {
     const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
 

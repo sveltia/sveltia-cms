@@ -12,9 +12,14 @@ import FilePreviewItem from './file-preview-item.svelte';
  * URLs to resolve given values to, each after a delay in milliseconds, so the lookup for one value
  * can be answered after the one for a later value.
  */
-const { mockedURLs } = vi.hoisted(() => ({
+const { mockedURLs, lookups } = vi.hoisted(() => ({
   /** @type {Map<string, { url: string, delay: number }>} */
   mockedURLs: new Map(),
+  /**
+   * Arguments of every URL lookup.
+   * @type {any[]}
+   */
+  lookups: [],
 }));
 
 /** A transparent 1×1 PNG, which loads without a network request. */
@@ -33,6 +38,8 @@ vi.mock('$lib/services/assets/media-field', async (importOriginal) => {
      * @returns {Promise<string | undefined>} URL.
      */
     getMediaFieldURL: async (args) => {
+      lookups.push(args);
+
       const mocked = mockedURLs.get(args.value);
 
       if (!mocked) {
@@ -78,6 +85,27 @@ describe('FilePreviewItem', () => {
     const container = await renderItem(url, { widget: 'image' });
 
     await expect.poll(() => container.querySelector('img')?.getAttribute('src')).toBe(url);
+  });
+
+  test('looks the file up for the locale being previewed', async () => {
+    /** @type {MediaField} */
+    const fieldConfig = { name: 'cover', widget: 'image' };
+
+    mockedURLs.set('photo.png', { url: PNG_DATA_URL, delay: 0 });
+    lookups.length = 0;
+    onTestFinished(() => {
+      mockedURLs.clear();
+    });
+
+    const { container } = await renderWithDraft(FilePreviewItem, {
+      draft: createMockDraft({ fields: [fieldConfig] }),
+      props: { value: 'photo.png', fieldConfig, typedKeyPath: 'cover', locale: 'fr' },
+    });
+
+    await expect.poll(() => container.querySelector('img')?.getAttribute('src')).toBe(PNG_DATA_URL);
+    // An entry-relative path is relative to the locale’s own entry file
+    expect(lookups).toContainEqual(expect.objectContaining({ value: 'photo.png', locale: 'fr' }));
+    expect(lookups.every(({ locale }) => locale === 'fr')).toBe(true);
   });
 
   test('detects the kind of a file and shows a player with controls', async () => {

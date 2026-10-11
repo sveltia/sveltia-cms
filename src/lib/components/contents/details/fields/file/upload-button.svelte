@@ -38,6 +38,15 @@
 
   const toast = $state({ show: false, message: '' });
   const disabled = $derived(readonly || processing);
+  /** @type {HTMLButtonElement | undefined} */
+  let browseButton = $state();
+
+  /**
+   * Move the focus to the Browse button, e.g. once the file it replaces has been removed.
+   */
+  export const focus = () => {
+    browseButton?.focus();
+  };
 
   /**
    * Handle click on the paste button. If `onFilePaste` is provided, it will attempt to read an
@@ -92,6 +101,7 @@
 {#snippet buttons()}
   <div role="none" class="buttons">
     <Button
+      bind:element={browseButton}
       label={_('browse')}
       variant="tertiary"
       size="small"

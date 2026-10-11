@@ -442,3 +442,51 @@ describe('Test LINKED_IMAGE_REGEX', () => {
     expect(match?.groups?.link).toBe('https://example.com/page?id=1&ref=gallery');
   });
 });
+
+describe('Test image regex performance and nesting', () => {
+  test('matches an image nested in an unclosed one on its own', () => {
+    expect('![a ![b](c.jpg)'.match(IMAGE_REGEX)?.groups).toEqual({
+      alt: 'b',
+      src: 'c.jpg',
+      title: undefined,
+    });
+    expect('![a](b (![c](d.jpg)'.match(IMAGE_REGEX)?.groups?.src).toBe('d.jpg');
+    expect('![a](b "![c](d.jpg)'.match(IMAGE_REGEX)?.groups?.src).toBe('d.jpg');
+  });
+
+  test('matches a title after spaces and an escaped space in the source', () => {
+    expect('![a](b   "t")'.match(IMAGE_REGEX)?.groups).toEqual({ alt: 'a', src: 'b', title: 't' });
+    expect('![a](b\\  "t")'.match(IMAGE_REGEX)?.groups).toEqual({
+      alt: 'a',
+      src: 'b\\ ',
+      title: 't',
+    });
+    expect('![a](b "x" "t")'.match(IMAGE_REGEX)?.groups).toEqual({
+      alt: 'a',
+      src: 'b "x"',
+      title: 't',
+    });
+  });
+
+  test('matches a link with an unclosed parenthesis', () => {
+    expect('[![a](b)](c(d)'.match(LINKED_IMAGE_REGEX)?.groups?.link).toBe('c(d');
+    expect('[![a](b)](c(d)e)'.match(LINKED_IMAGE_REGEX)?.groups?.link).toBe('c(d)e');
+  });
+
+  test.each([
+    ['unclosed parentheses', '![](a('.repeat(20_000)],
+    ['image starts', '!['.repeat(60_000)],
+    ['escaped image starts', '\\!['.repeat(40_000)],
+    ['unclosed titles', '![](a "'.repeat(20_000)],
+    ['trailing spaces', `![](a${' '.repeat(100_000)}`],
+    ['spaces before an unclosed title', `![](a${' '.repeat(100_000)}"`],
+    ['unclosed link parentheses', `[![](a)](${'('.repeat(100_000)}`],
+    ['linked image starts', '[![](a)]('.repeat(20_000)],
+  ])('matches in linear time: %s', (_name, markdown) => {
+    const start = performance.now();
+
+    Array.from(markdown.matchAll(GLOBAL_IMAGE_REGEX));
+    Array.from(markdown.matchAll(new RegExp(IMAGE_OR_LINKED_IMAGE_REGEX, 'g')));
+    expect(performance.now() - start).toBeLessThan(100);
+  });
+});

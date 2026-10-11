@@ -63,3 +63,60 @@ describe('UsedEntries', () => {
     await expect.element(page.getByRole('paragraph')).toHaveTextContent('None');
   });
 });
+
+describe('UsedEntries with collections sharing a folder', () => {
+  beforeAll(async () => {
+    const fields = [
+      { name: 'title', widget: 'string' },
+      { name: 'lang', widget: 'string' },
+    ];
+
+    await initTestConfig({
+      collections: [
+        {
+          name: 'en',
+          label: 'English',
+          folder: 'content/posts',
+          filter: { field: 'lang', value: 'en' },
+          fields,
+        },
+        {
+          name: 'fr',
+          label: 'French',
+          folder: 'content/posts',
+          filter: { field: 'lang', value: 'fr' },
+          fields,
+        },
+        { name: 'archive', label: 'Archive', folder: 'content/posts', hide: true, fields },
+      ],
+    });
+  });
+
+  test('links only to the collections listing the entry', async () => {
+    await render(UsedEntries, {
+      entries: [
+        createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello', lang: 'en' } } }),
+      ],
+    });
+
+    // The French collection filters the entry out, and the archive is hidden, so neither can
+    // open it
+    expect(
+      page
+        .getByRole('link')
+        .elements()
+        .map((el) => el.textContent?.trim()),
+    ).toEqual(['English › Hello']);
+  });
+
+  test('leaves out an entry no collection lists', async () => {
+    await render(UsedEntries, {
+      entries: [
+        createMockEntry({ slug: 'old', content: { _default: { title: 'Old', lang: 'de' } } }),
+      ],
+    });
+
+    await expect.element(page.getByRole('paragraph')).toHaveTextContent('None');
+    expect(page.getByRole('link').elements()).toHaveLength(0);
+  });
+});

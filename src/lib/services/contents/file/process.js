@@ -79,6 +79,32 @@ export const getSlug = ({ subPath, subPathTemplate }) => {
 };
 
 /**
+ * Check if the given value refers back to itself, e.g. through a YAML alias pointing at one of its
+ * own ancestors like `meta: &m { self: *m }`. Such content can’t be flattened or saved. A value
+ * referred to from several places, which isn’t circular, is fine.
+ * @param {unknown} value Parsed value.
+ * @param {Set<object>} [ancestors] Objects on the path from the root to the value.
+ * @returns {boolean} Result.
+ */
+export const hasCircularReference = (value, ancestors = new Set()) => {
+  if (value === null || typeof value !== 'object') {
+    return false;
+  }
+
+  if (ancestors.has(value)) {
+    return true;
+  }
+
+  ancestors.add(value);
+
+  const found = Object.values(value).some((child) => hasCircularReference(child, ancestors));
+
+  ancestors.delete(value);
+
+  return found;
+};
+
+/**
  * Parse the raw content from the file and handle any errors.
  * @param {BaseEntryListItem} file Entry file list item.
  * @param {Error[]} errors List of parse errors.
@@ -92,7 +118,13 @@ export const parseFileContent = async (file, errors) => {
       throw new Error(`${file.path} could not be read.`);
     }
 
-    return await parseEntryFile(file);
+    const content = await parseEntryFile(file);
+
+    if (hasCircularReference(content)) {
+      throw new Error(`${file.path} could not be parsed, as it contains a circular reference.`);
+    }
+
+    return content;
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
@@ -651,7 +683,17 @@ export const prepareEntries = async (entryFiles) => {
 
   // Parsing is synchronous, so a large repository would freeze the tab for the whole batch while
   // the progress indicator stalls. Yield between chunks instead
-  await runInChunks(entryFiles, (file) => prepareEntry({ file, entries, entryMap, errors }));
+  await runInChunks(entryFiles, async (file) => {
+    // A file that can’t be processed is reported like a parse error, rather than stopping the whole
+    // list from loading
+    try {
+      await prepareEntry({ file, entries, entryMap, errors });
+    } catch (/** @type {any} */ ex) {
+      // eslint-disable-next-line no-console
+      console.error(ex);
+      errors.push(ex);
+    }
+  });
 
   return {
     entries: entries.filter((entry) => {

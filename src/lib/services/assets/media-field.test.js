@@ -191,6 +191,7 @@ describe('assets/media-field', () => {
           fileName: 'about',
           componentName: 'figure',
           typedKeyPath: 'hero.image',
+          locale: 'fr',
         }),
       ).toEqual({ asset: mockAsset });
 
@@ -201,6 +202,7 @@ describe('assets/media-field', () => {
         fileName: 'about',
         componentName: 'figure',
         typedKeyPath: 'hero.image',
+        locale: 'fr',
       });
 
       vi.mocked(getAssetByPath).mockReturnValue(undefined);

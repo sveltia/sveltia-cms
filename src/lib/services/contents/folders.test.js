@@ -154,9 +154,10 @@ describe('contents/folders', () => {
       expect(result).toHaveLength(1);
     });
 
-    it('should prioritize a file collection over an entry collection containing the file', () => {
+    it('should give a file to a file collection over an entry collection containing it', () => {
       // Hugo’s special index file can be declared as a file collection item while it also lives in
-      // an entry collection’s folder. The explicit `file` declaration must win
+      // an entry collection’s folder. The explicit `file` declaration must win, and the entry
+      // collection mustn’t list the file as well
       vi.mocked(getCollection).mockReturnValue(
         /** @type {any} */ ({
           _file: {
@@ -183,10 +184,9 @@ describe('contents/folders', () => {
 
       const result = getEntryFoldersByPath('content/updates/news/_index.md');
 
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(1);
       expect(result[0].collectionName).toBe('pages');
       expect(result[0].fileName).toBe('news');
-      expect(result[1].collectionName).toBe('news');
     });
 
     it('should return every file folder that declares the same path', () => {

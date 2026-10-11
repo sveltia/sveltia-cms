@@ -28,6 +28,7 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * AssetFolderInfo,
  * Entry,
  * InternalCmsConfig,
+ * InternalLocaleCode,
  * } from '$lib/types/private';
  */
 
@@ -548,13 +549,14 @@ const resolvePublicFolder = (asset) =>
  * Get the path of the given asset in an entry-relative folder, relative to the entry’s folder.
  * @param {Asset} asset Asset.
  * @param {Entry} [entry] Associated entry. Can be `undefined` when editing a new draft.
+ * @param {InternalLocaleCode} [locale] Locale whose entry file the path is relative to.
  * @returns {string | undefined} Relative path, e.g. `images/photo.jpg`, or `undefined` if it
  * cannot be determined.
  */
-const getEntryRelativePath = (asset, entry) => {
+const getEntryRelativePath = (asset, entry, locale) => {
   // A file at the repository root has no folder path
   const assetFolderPath = getDirName(asset.path);
-  const entryFolderPath = entry ? getEntryFolderPath(entry) : undefined;
+  const entryFolderPath = entry ? getEntryFolderPath(entry, locale) : undefined;
 
   if (entryFolderPath !== undefined) {
     // If the asset is in the same folder as the entry, return the file name only
@@ -590,18 +592,20 @@ const getEntryRelativePath = (asset, entry) => {
  * starting with `@`, etc.
  * @param {Entry} [options.entry] Associated entry to be used to help locate an asset from a
  * relative path. Can be `undefined` when editing a new draft.
+ * @param {InternalLocaleCode} [options.locale] Locale whose entry file an entry-relative path is
+ * relative to. Default: the entry’s first locale.
  * @returns {string | undefined} URL or `undefined` if it cannot be determined.
  */
 export const getAssetPublicURL = (
   asset,
-  { pathOnly = false, allowSpecial = false, entry = undefined } = {},
+  { pathOnly = false, allowSpecial = false, entry = undefined, locale = undefined } = {},
 ) => {
   const { publicPath, entryRelative, hasTemplateTags } = resolvePublicFolder(asset);
 
   // Try to determine an entry-relative path if the asset is in the same folder as the entry, or a
   // sub-folder of it
   if (entryRelative) {
-    return pathOnly ? getEntryRelativePath(asset, entry) : undefined;
+    return pathOnly ? getEntryRelativePath(asset, entry, locale) : undefined;
   }
 
   const { _baseURL: baseURL = '', output: { encode_file_path: encodingEnabled = false } = {} } =

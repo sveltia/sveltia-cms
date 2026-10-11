@@ -7,7 +7,7 @@
   import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { AssetKind } from '$lib/types/private';
+   * @import { AssetKind, InternalLocaleCode } from '$lib/types/private';
    * @import { MediaField } from '$lib/types/public';
    */
 
@@ -16,6 +16,8 @@
    * @property {string} value Field value, either a URL or a file path.
    * @property {MediaField} fieldConfig Field configuration.
    * @property {string} [typedKeyPath] Field key path for field-level media folders.
+   * @property {InternalLocaleCode} [locale] Locale being previewed, which an entry-relative path is
+   * relative to.
    */
 
   const entryDraft = getEntryDraftContext();
@@ -26,6 +28,7 @@
     value,
     fieldConfig,
     typedKeyPath = undefined,
+    locale = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -59,6 +62,7 @@
               fileName,
               fieldConfig,
               typedKeyPath,
+              locale,
             })
           : { kind: undefined, src: undefined },
       );

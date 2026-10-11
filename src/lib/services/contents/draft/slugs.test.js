@@ -8,6 +8,7 @@ import {
   getFillSlugOptions,
   getLocalizedSlug,
   getLocalizedSlugs,
+  getNewEntryDirPath,
   getRandomValues,
   getSlugs,
   getSlugTemplate,
@@ -669,6 +670,63 @@ describe('draft/slugs', () => {
         expect.objectContaining({
           content: expect.objectContaining({ image: '202407_IMG_0023' }),
         }),
+      );
+    });
+  });
+
+  describe('getNewEntryDirPath', () => {
+    const collection = {
+      _type: 'entry',
+      folder: 'content/pages',
+      fields: [],
+      nested: { depth: 5 },
+      meta: { path: { widget: 'string' } },
+      _i18n: { defaultLocale: 'en', structureMap: {} },
+    };
+
+    it('should return the folder chosen for a new entry named after its slug', () => {
+      expect(getNewEntryDirPath({ collection, isNew: true, currentPath: '/docs/' })).toBe('docs');
+      // Clearing the folder of a duplicated entry moves it up to the collection folder
+      expect(
+        getNewEntryDirPath({ collection, isNew: true, originalPath: 'docs', currentPath: '' }),
+      ).toBe('');
+    });
+
+    it('should return `undefined` when the slug isn’t compared within a folder', () => {
+      expect(getNewEntryDirPath({ collection, isNew: false, currentPath: 'docs' })).toBeUndefined();
+      expect(getNewEntryDirPath({ collection, isNew: true, currentPath: '' })).toBeUndefined();
+      expect(getNewEntryDirPath({ collection, isNew: true })).toBeUndefined();
+      // Every entry shares one file name, so the entry gets a folder of its own
+      expect(
+        getNewEntryDirPath({
+          collection: { ...collection, meta: { path: { widget: 'string', index_file: 'index' } } },
+          isNew: true,
+          currentPath: 'docs',
+        }),
+      ).toBeUndefined();
+    });
+
+    it('should be passed to the template for a new entry’s slug', async () => {
+      const { fillTemplate } = await import('$lib/services/common/template');
+
+      vi.mocked(fillTemplate).mockReturnValue('intro');
+
+      getSlugs({
+        draft: {
+          isNew: true,
+          collection: { ...collection, slug: '{{title}}' },
+          currentPath: 'docs',
+          currentSlugs: {},
+          slugEditor: {},
+          currentValues: { en: { title: 'Intro' } },
+          currentLocales: { en: true },
+          files: {},
+        },
+      });
+
+      expect(fillTemplate).toHaveBeenCalledWith(
+        '{{title}}',
+        expect.objectContaining({ dirPath: 'docs' }),
       );
     });
   });

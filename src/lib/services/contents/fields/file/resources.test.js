@@ -99,7 +99,16 @@ describe('processResources', () => {
     ]);
 
     const accept = 'image/png';
-    const results = await processResources({ draft, resources, folder, libraryConfig, accept });
+    const locale = 'fr';
+
+    const results = await processResources({
+      draft,
+      resources,
+      folder,
+      libraryConfig,
+      accept,
+      locale,
+    });
 
     expect(resources.map((resource) => resource.folder)).toEqual([folder, ownFolder, undefined]);
     expect(processResource).toHaveBeenCalledTimes(3);
@@ -108,6 +117,7 @@ describe('processResources', () => {
       resource: resources[0],
       libraryConfig,
       accept,
+      locale,
     });
     expect(results.map(({ value }) => value)).toEqual([
       'blob:x',

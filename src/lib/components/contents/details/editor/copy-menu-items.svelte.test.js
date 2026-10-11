@@ -82,7 +82,20 @@ describe('CopyMenuItems', () => {
     expect(copyFromLocale).toHaveBeenCalledWith({
       draft,
       options: { sourceLanguage: 'fr', targetLanguage: 'de', keyPath: 'title', translate: false },
+      entryDraft: expect.objectContaining({ current: draft }),
     });
+  });
+
+  test('names a locale by its code when it has no display name', async () => {
+    // `en_US` isn’t a valid language tag, so `Intl.DisplayNames` can’t name it
+    await renderItems({ locale: 'de', otherLocales: ['en_US'], keyPath: 'title' });
+
+    const items = page.getByRole('menuitem');
+
+    await expect.poll(() => items.elements().length).toBe(1);
+    expect(items.elements().map((el) => el.textContent?.trim())).toEqual([
+      'Copy from \u2068en_US\u2069',
+    ]);
   });
 
   test('disables copying from a locale with the same or no value', async () => {
@@ -154,6 +167,7 @@ describe('CopyMenuItems', () => {
     expect(copyFromLocale).toHaveBeenCalledWith({
       draft,
       options: { sourceLanguage: 'en', targetLanguage: 'de', keyPath: '', translate: true },
+      entryDraft: expect.objectContaining({ current: draft }),
     });
   });
 

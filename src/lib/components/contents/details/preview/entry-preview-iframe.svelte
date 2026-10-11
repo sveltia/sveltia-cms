@@ -17,6 +17,7 @@
     getEntryDraftContext,
   } from '$lib/services/contents/draft/state.svelte';
   import { highlightPreviewTemplateField } from '$lib/services/contents/editor/fields';
+  import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
   import { escapeAttr } from '$lib/services/utils/string';
 
   /**
@@ -74,13 +75,22 @@
    */
   let placeholder;
 
+  /** Language of the frame’s document, unless the locale isn’t a valid language tag. */
+  const lang = $derived(getCanonicalLocale(locale));
+  /**
+   * Text direction of the frame’s document. Without i18n, the locale doesn’t tell the language, so
+   * the direction is left to the template rather than set to `auto`, which would turn the whole
+   * document right-to-left whenever its first text is in a right-to-left script.
+   */
+  const dir = $derived(locale === '_default' ? undefined : getDirection(locale));
+
   /**
    * Generate the HTML content for the iframe.
    * @returns {string} The HTML string.
    */
   const generateHTML = () => `
     <!DOCTYPE html>
-    <html lang="${escapeAttr(locale)}">
+    <html${lang ? ` lang="${escapeAttr(lang)}"` : ''}${dir ? ` dir="${dir}"` : ''}>
     <head>
       <meta charset="UTF-8">
       <base href="${escapeAttr(window.location.origin)}" target="_blank">
@@ -215,6 +225,28 @@
   $effect(() => {
     if (iframe && !initialized) {
       initializeIframe();
+    }
+  });
+
+  // Update the language and direction once the pane shows another locale, which doesn’t load the
+  // frame again
+  $effect(() => {
+    const root = initialized ? iframe?.contentDocument?.documentElement : undefined;
+
+    if (!root) {
+      return;
+    }
+
+    if (lang) {
+      root.lang = lang;
+    } else {
+      root.removeAttribute('lang');
+    }
+
+    if (dir) {
+      root.dir = dir;
+    } else {
+      root.removeAttribute('dir');
     }
   });
 

@@ -63,7 +63,51 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * contains a Relation field label and has to be regenerated once other entries change.
  */
 
-const BODY_HEADER_REGEX = /^#+\s+(?<header>.+?)(?:\s+\{#.+?\})?\s*$/m;
+/**
+ * Regular expression to match an ATX heading line in Markdown, capturing its text. The body is
+ * untrusted, so it’s written to match in linear time: the heading text runs to the end of the line
+ * in one go, and the trailing spaces and a custom anchor are removed with string operations in
+ * {@link getBodyHeader}, as a lazy capture followed by optional suffixes reads the rest of the line
+ * again at every character.
+ */
+const BODY_HEADER_REGEX = /^#+[^\S\n\r\u2028\u2029]+(.*)$/gm;
+
+/**
+ * Remove a custom anchor like `{#my-anchor}` at the end of the given heading text.
+ * @param {string} text Heading text without leading and trailing whitespace.
+ * @returns {string} Heading text without the anchor.
+ * @see https://vitepress.dev/guide/markdown#custom-anchors
+ */
+const removeHeadingAnchor = (text) => {
+  if (!text.endsWith('}')) {
+    return text;
+  }
+
+  // The anchor starts at the first `{#` that follows whitespace and has a name before the last `}`
+  for (let index = text.indexOf('{#', 1); index > 0; index = text.indexOf('{#', index + 1)) {
+    if (index + 2 >= text.length - 1) {
+      break;
+    }
+
+    if (/\s/.test(text[index - 1])) {
+      return text.slice(0, index).trimEnd();
+    }
+  }
+
+  return text;
+};
+
+/**
+ * Find the first ATX heading with text in the given Markdown.
+ * @param {string} markdown Markdown string.
+ * @returns {string} Heading text without a custom anchor, or an empty string if there is no
+ * heading.
+ */
+const getBodyHeader = (markdown) =>
+  markdown
+    .matchAll(BODY_HEADER_REGEX)
+    .map(([, text]) => removeHeadingAnchor(text.trim()))
+    .find((header) => !!header) ?? '';
 
 /**
  * Parse the given entry summary as Markdown and sanitize HTML with a few exceptions if the Markdown
@@ -120,7 +164,7 @@ export const getEntrySummaryFromContent = (
   // Find a header in Markdown, excluding an anchor suffix
   // https://vitepress.dev/guide/markdown#custom-anchors
   if (useBody && typeof content.body === 'string') {
-    return content.body.match(BODY_HEADER_REGEX)?.groups?.header ?? '';
+    return getBodyHeader(content.body);
   }
 
   return '';

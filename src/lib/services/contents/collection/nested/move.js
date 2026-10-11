@@ -4,7 +4,7 @@ import { fillTemplate } from '$lib/services/common/template';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import {
   getEntryDirPath,
-  getNestedConfig,
+  getSharedEntryFileName,
   isDescendantPath,
 } from '$lib/services/contents/collection/nested';
 import {
@@ -224,9 +224,9 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
 
 /**
  * Build the file changes that move the whole subtree of a nested collection entry along with the
- * entry itself. In the `subfolders` mode, an entry owns the folder it’s stored in, so relocating it
- * with the path editor has to take everything below that folder with it, or the descendants would
- * be orphaned in a folder that no longer has an entry of its own.
+ * entry itself. In the `subfolders` mode, an entry stored as the index file owns the folder it’s
+ * stored in, so relocating it with the path editor has to take everything below that folder with
+ * it, or the descendants would be orphaned in a folder that no longer has an entry of its own.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection of the moved entry.
  * @param {Entry} [args.originalEntry] Moved entry as it was before the save. `undefined` for a new
@@ -245,8 +245,16 @@ export const buildNestedMoveChanges = async ({
 }) => {
   /** @type {{ changes: FileChange[], savingEntries: Entry[] }} */
   const noChanges = { changes: [], savingEntries: [] };
+  const indexFileName = getSharedEntryFileName(collection);
 
-  if (!originalEntry || !getNestedConfig(collection)?.subfolders) {
+  // An entry only owns its folder when it’s stored as the index file that names every entry in the
+  // `subfolders` mode. Otherwise it’s a regular file sharing the folder with its siblings and with
+  // whatever is below, none of which moves with it
+  if (
+    !originalEntry ||
+    !indexFileName ||
+    originalEntry.subPath.slice(originalEntry.subPath.lastIndexOf('/') + 1) !== indexFileName
+  ) {
     return noChanges;
   }
 

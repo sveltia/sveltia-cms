@@ -23,6 +23,7 @@ import { decodeURISafely } from '$lib/services/utils/url';
  * AssetLibraryFolderMap,
  * Entry,
  * EntryDraft,
+ * InternalLocaleCode,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
  */
@@ -118,9 +119,12 @@ export const getDefaultAssetFolder = (folderMap) =>
  * @param {object} args Arguments.
  * @param {Entry | undefined} args.entry Original entry.
  * @param {AssetFolderInfo | undefined} args.folder Selected folder.
+ * @param {InternalLocaleCode} [args.locale] Locale being edited. With the `multiple_folders` or
+ * `multiple_root_folders` i18n structure, each locale’s entry file has a folder of its own, which
+ * an entry-relative asset is stored beside. Default: the default locale.
  * @returns {string | undefined} Target folder path.
  */
-export const getTargetFolderPath = ({ entry, folder }) => {
+export const getTargetFolderPath = ({ entry, folder, locale }) => {
   const { collectionName, entryRelative, internalPath, internalSubPath } = folder ?? {};
 
   if (!entryRelative) {
@@ -129,7 +133,7 @@ export const getTargetFolderPath = ({ entry, folder }) => {
     }
 
     return (
-      fillInternalPathTemplate({ internalPath, collectionName, entry }) ??
+      fillInternalPathTemplate({ internalPath, collectionName, entry, locale }) ??
       // Replace the tags with a placeholder because the complete path is not determined until the
       // entry is saved
       internalPath.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, '-')
@@ -142,7 +146,7 @@ export const getTargetFolderPath = ({ entry, folder }) => {
   const subPath = internalSubPath || undefined;
 
   if (entry) {
-    return createPath([getEntryFolderPath(entry), subPath]);
+    return createPath([getEntryFolderPath(entry, locale), subPath]);
   }
 
   // Append a placeholder because the complete path is not determined until the entry is saved

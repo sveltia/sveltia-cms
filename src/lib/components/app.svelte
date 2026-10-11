@@ -18,7 +18,6 @@
   } from '$lib/services/app/branding';
   import { initAppLocale } from '$lib/services/app/i18n';
   import { initAppInstallDetection } from '$lib/services/app/install';
-  import { initComposingEscapeGuard } from '$lib/services/app/keyboard';
   import {
     announcedPageStatus,
     mainAreaTitle,
@@ -51,8 +50,6 @@
   // The strings for the default locale are always bundled with the app, so the UI can be rendered
   // right away, even while the strings for another locale are being fetched from the CDN
   initAppLocale();
-  // Before any component registers a keyboard shortcut, so the guard’s listener runs first
-  initComposingEscapeGuard();
 
   $effect.pre(() => {
     initUserEnvDetection();

@@ -1,4 +1,5 @@
 import { parse } from 'marked';
+import { SvelteSet } from 'svelte/reactivity';
 
 import { loadModule } from '$lib/services/app/dependencies';
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
@@ -13,6 +14,7 @@ import { prefs } from '$lib/services/user/prefs.svelte';
 import { escapeHTML } from '$lib/services/utils/string';
 
 /**
+ * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
  * @import {
  * EntryDraft,
  * GetFieldArgs,
@@ -36,6 +38,36 @@ import { escapeHTML } from '$lib/services/utils/string';
  * @typedef {Record<FieldKeyPath, { value: string, format: 'plain' | 'markdown' | 'html' }>}
  * CopyingFieldMap
  */
+
+/**
+ * @typedef {object} PendingTranslation
+ * @property {EntryDraft} draft Entry draft being translated into.
+ * @property {InternalLocaleCode} targetLanguage Target locale.
+ * @property {FieldKeyPath} keyPath Field key path, or an empty string for all the fields.
+ */
+
+/**
+ * Translations in flight. A request costs money and takes a while, so the same one isn’t sent again
+ * until it’s settled, and the UI disables the button that would send it.
+ * @type {SvelteSet<PendingTranslation>}
+ */
+export const pendingTranslations = new SvelteSet();
+
+/**
+ * Check if the fields at the given key path are being translated into the given locale.
+ * @param {object} args Arguments.
+ * @param {EntryDraft | null | undefined} args.draft Entry draft.
+ * @param {InternalLocaleCode} args.targetLanguage Target locale.
+ * @param {FieldKeyPath} [args.keyPath] Field key path. Omit this for all the fields.
+ * @returns {boolean} Result.
+ */
+export const isTranslationPending = ({ draft, targetLanguage, keyPath = '' }) =>
+  [...pendingTranslations].some(
+    (translation) =>
+      translation.draft === draft &&
+      translation.targetLanguage === targetLanguage &&
+      translation.keyPath === keyPath,
+  );
 
 /**
  * Turndown service instance, created on first use.
@@ -214,11 +246,28 @@ export const updateToast = (status, message, { count, sourceLanguage }) => {
  * updated with the translated values.
  * @param {CopyOptions} args.options Copy options.
  * @param {CopyingFieldMap} args.copingFieldMap Copied or translated field values.
+ * @param {() => boolean} [args.isDraftClosed] Function telling whether the draft has been closed
+ * since the request was made, in which case the results are dropped.
  */
-export const translateFields = async ({ currentValues, options, copingFieldMap }) => {
+export const translateFields = async ({
+  currentValues,
+  options,
+  copingFieldMap,
+  isDraftClosed = () => false,
+}) => {
   const { serviceId } = translator.current;
-  const { sourceLanguage, targetLanguage } = options;
+  const { sourceLanguage, targetLanguage, keyPath } = options;
   const count = Object.keys(copingFieldMap).length;
+
+  // The target values as they were when the fields to translate were picked, so that a field the
+  // user fills in while the request is in flight isn’t overwritten when translating all the fields
+  const targetValues = Object.fromEntries(
+    Object.keys(copingFieldMap).map((_keyPath) => [
+      _keyPath,
+      currentValues[targetLanguage][_keyPath],
+    ]),
+  );
+
   let apiKey = prefs.apiKeys?.[serviceId];
 
   if (!apiKey) {
@@ -262,8 +311,21 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
 
     const turndownService = needsTurndown ? await getTurndownService() : undefined;
 
+    // The user has opened another entry in the meantime
+    if (isDraftClosed()) {
+      return;
+    }
+
+    let translatedCount = 0;
+
     Object.entries(copingFieldMap).forEach(([_keyPath, { format }], index) => {
       const value = translatedValues[index];
+
+      if (!keyPath && currentValues[targetLanguage][_keyPath] !== targetValues[_keyPath]) {
+        return;
+      }
+
+      translatedCount += 1;
 
       // Convert the value back to Markdown or plain text if needed. The HTML comes back with its
       // special characters as entities, which Turndown decodes for a Markdown value
@@ -276,10 +338,13 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
             : decodeHTMLEntities(value);
     });
 
-    updateToast('success', 'translation.complete', { count, sourceLanguage });
+    updateToast('success', 'translation.complete', { count: translatedCount, sourceLanguage });
   } catch (ex) {
-    // @todo Show a detailed error message.
-    updateToast('error', 'translation.error', { count, sourceLanguage });
+    if (!isDraftClosed()) {
+      // @todo Show a detailed error message.
+      updateToast('error', 'translation.error', { count, sourceLanguage });
+    }
+
     // eslint-disable-next-line no-console
     console.error(ex);
   }
@@ -305,13 +370,21 @@ export const copyFields = ({ currentValues, options, copingFieldMap }) => {
 };
 
 /**
- * Copy or translate field value(s) from another locale.
+ * Copy or translate field value(s) from another locale. A translation already in flight for the
+ * same fields and locale isn’t requested again.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {CopyOptions} args.options Copy options.
+ * @param {EntryDraftState} [args.entryDraft] Entry draft state of the editor. If given, the results
+ * of a translation are dropped once the draft is no longer the one in the editor.
  */
-export const copyFromLocale = async ({ draft, options }) => {
-  const { sourceLanguage, translate = false } = options;
+export const copyFromLocale = async ({ draft, options, entryDraft }) => {
+  const { sourceLanguage, targetLanguage, keyPath = '', translate = false } = options;
+
+  if (translate && isTranslationPending({ draft, targetLanguage, keyPath })) {
+    return;
+  }
+
   const { currentValues } = draft;
   const copingFieldMap = getCopyingFieldMap({ draft, options });
   const count = Object.keys(copingFieldMap).length;
@@ -323,7 +396,21 @@ export const copyFromLocale = async ({ draft, options }) => {
   }
 
   if (translate) {
-    await translateFields({ currentValues, options, copingFieldMap });
+    /** @type {PendingTranslation} */
+    const pendingTranslation = { draft, targetLanguage, keyPath };
+    /**
+     * Check whether the draft is no longer the one in the editor.
+     * @returns {boolean} Result.
+     */
+    const isDraftClosed = () => !!entryDraft && entryDraft.current !== draft;
+
+    pendingTranslations.add(pendingTranslation);
+
+    try {
+      await translateFields({ currentValues, options, copingFieldMap, isDraftClosed });
+    } finally {
+      pendingTranslations.delete(pendingTranslation);
+    }
   } else {
     copyFields({ currentValues, options, copingFieldMap });
   }

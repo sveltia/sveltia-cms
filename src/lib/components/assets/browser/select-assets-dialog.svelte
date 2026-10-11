@@ -70,6 +70,7 @@
    * AssetLibraryFolderMapKey,
    * AssetSubfolder,
    * EntryDraft,
+   * InternalLocaleCode,
    * MediaLibraryAssetKind,
    * MediaLibraryService,
    * SelectAssetsView,
@@ -89,6 +90,9 @@
    * field with the `select_folder` option. Only the repository folders that can be browsed by
    * subfolder are offered, and the directory being browsed is what gets selected.
    * @property {EntryDraft | null | undefined} [draft] Associated entry draft.
+   * @property {InternalLocaleCode} [locale] Locale the assets are selected for. With the
+   * `multiple_folders` or `multiple_root_folders` i18n structure, each locale’s entry file has a
+   * folder of its own, which entry-relative assets are listed from.
    * @property {MediaField} [fieldConfig] Field configuration.
    * @property {AssetLibraryFolderMap} assetLibraryFolderMap Default asset library folder map.
    * @property {[string, MediaLibraryService][]} enabledCloudServiceEntries List of enabled cloud
@@ -113,6 +117,7 @@
     canEnterURL = true,
     selectFolder = false,
     draft = undefined,
+    locale = undefined,
     fieldConfig,
     assetLibraryFolderMap,
     enabledCloudServiceEntries,
@@ -185,7 +190,7 @@
     return folder;
   });
   const targetFolderPath = $derived(
-    getTargetFolderPath({ entry: draft?.originalEntry, folder: selectedFolder }),
+    getTargetFolderPath({ entry: draft?.originalEntry, folder: selectedFolder, locale }),
   );
   const slugificationEnabled = $derived(
     getDefaultMediaLibraryOptions({ fieldConfig }).config.slugify_filename,

@@ -15,6 +15,7 @@ import {
   setAssets,
   setEntries,
 } from '$lib/test/config';
+import { waitForToastsToHide } from '$lib/test/toast';
 
 import DetailsOverlay from './details-overlay.svelte';
 
@@ -201,6 +202,34 @@ describe('DetailsOverlay', () => {
       click.mockRestore();
     }
   });
+
+  test('reports a failure to delete the asset, and stays on it', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(deleteAssets).mockRejectedValue(new Error('offline'));
+    overlaidAsset.current = textAsset;
+
+    try {
+      await render(DetailsOverlay);
+      await page.getByRole('button', { name: 'Delete Asset' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+      await vi.waitFor(() => expect(deleteAssets).toHaveBeenCalledWith([textAsset]));
+      await expect
+        .poll(() =>
+          document
+            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
+            ?.textContent?.replace(/\s+/g, ' ')
+            .trim(),
+        )
+        .toBe('error Error Delete failed.');
+      expect(error).toHaveBeenCalledWith(new Error('offline'));
+      // The asset hasn’t been deleted, so the overlay isn’t left
+      expect(window.location.hash).toBe('#/assets/static/uploads/notes.txt');
+      await waitForToastsToHide();
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
 
   test('can’t delete an asset in a read-only folder', async () => {
     overlaidAsset.current = { ...zipAsset, folder: { ...zipAsset.folder, readonly: true } };

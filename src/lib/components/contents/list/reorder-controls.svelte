@@ -7,6 +7,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Alert, Button, Toast } from '@sveltia/ui';
+  import { tick } from 'svelte';
 
   import { selectedCollection } from '$lib/services/contents/collection';
   import { reorderEntries } from '$lib/services/contents/collection/entries/reorder';
@@ -20,11 +21,43 @@
    * @import { InternalEntryCollection } from '$lib/types/private';
    */
 
+  /**
+   * @typedef {object} Props
+   * @property {() => void} [onExit] Called once the reorder mode has been left, so the parent can
+   * move the focus to the button that took the place of these.
+   */
+
+  /** @type {Props} */
+  const { onExit = undefined } = $props();
+
   let saving = $state(false);
   let errorToast = $state(false);
+  /** @type {HTMLButtonElement | undefined} */
+  let doneButton = $state();
+  /** @type {HTMLButtonElement | undefined} */
+  let cancelButton = $state();
+
+  /**
+   * Move the focus to the Done button, or the Cancel button while there is nothing to save, e.g.
+   * once the reorder mode has been entered with the button these take the place of.
+   */
+  export const focus = () => {
+    const done = /** @type {HTMLButtonElement} */ (doneButton);
+
+    /** @type {HTMLButtonElement} */ (done.disabled ? cancelButton : done).focus();
+  };
+
+  /**
+   * Leave the reorder mode.
+   */
+  const exit = () => {
+    setReorderMode(false);
+    onExit?.();
+  };
 </script>
 
 <Button
+  bind:element={doneButton}
   variant="primary"
   label={_('done')}
   aria-label={_('done_reordering_entries')}
@@ -36,23 +69,27 @@
 
     try {
       await reorderEntries(collection, reorderedEntries.current);
-      setReorderMode(false);
+      saving = false;
+      exit();
     } catch (/** @type {any} */ ex) {
       // eslint-disable-next-line no-console
       console.error(ex);
       errorToast = true;
+      saving = false;
+      // The button lost the focus while it was disabled during the save, so give it back
+      await tick();
+      /** @type {HTMLButtonElement} */ (doneButton).focus();
     }
-
-    saving = false;
   }}
 />
 <Button
+  bind:element={cancelButton}
   variant="secondary"
   label={_('cancel')}
   aria-label={_('cancel_reordering_entries')}
   disabled={saving}
   onclick={() => {
-    setReorderMode(false);
+    exit();
   }}
 />
 

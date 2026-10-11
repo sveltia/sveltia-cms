@@ -4,6 +4,11 @@ import { Document, isMap, visit } from 'yaml';
 import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { cmsConfig } from '$lib/services/config';
 import { FRONTMATTER_FORMATS } from '$lib/services/contents/file/constants';
+import {
+  getUnsafeIntegerSource,
+  hasUnsafeIntegerSources,
+  restoreBigInts,
+} from '$lib/services/contents/file/integers';
 
 /**
  * @import { Scalar, ToStringOptions } from 'yaml';
@@ -15,6 +20,25 @@ import { FRONTMATTER_FORMATS } from '$lib/services/contents/file/constants';
  * YamlFormatOptions,
  * } from '$lib/types/public';
  */
+
+/**
+ * Get `JSON.rawJSON()`, which TypeScript doesn’t know yet.
+ * @returns {((text: string) => any) | undefined} Function, or `undefined` in a browser without it.
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/rawJSON
+ */
+const getRawJSON = () => /** @type {{ rawJSON?: (text: string) => any }} */ (JSON).rawJSON;
+
+/**
+ * Create a `JSON.stringify()` replacer that writes an integer read from a file, which a `number`
+ * can’t represent exactly, as it was read.
+ * @param {(text: string) => any} rawJSON `JSON.rawJSON()`.
+ * @returns {(key: string, value: any) => any} Replacer.
+ */
+const createUnsafeIntegerReplacer = (rawJSON) => (_key, value) => {
+  const source = getUnsafeIntegerSource(value);
+
+  return source === undefined ? value : rawJSON(source);
+};
 
 /**
  * Format the given object as a JSON document using the built-in method.
@@ -29,9 +53,13 @@ export const formatJSON = (obj, options = cmsConfig.current?.output?.json ?? {})
     indent_size: indentSize = indentStyle === 'tab' ? 1 : 2,
   } = options;
 
+  const rawJSON = getRawJSON();
+
   return JSON.stringify(
     obj,
-    null,
+    // Write an integer that a `number` can’t represent exactly as it was read. A browser without
+    // `JSON.rawJSON()` writes the number
+    hasUnsafeIntegerSources() && rawJSON ? createUnsafeIntegerReplacer(rawJSON) : undefined,
     indentStyle === 'tab' ? '\t'.repeat(indentSize) : indentSize,
   ).trim();
 };
@@ -42,7 +70,9 @@ export const formatJSON = (obj, options = cmsConfig.current?.output?.json ?? {})
  * @returns {string} Formatted document.
  * @see https://github.com/squirrelchat/smol-toml
  */
-export const formatTOML = (obj) => stringifyTOML(obj).trim();
+export const formatTOML = (obj) =>
+  // Write an integer that a `number` can’t represent exactly as it was read
+  stringifyTOML(hasUnsafeIntegerSources() ? restoreBigInts(obj) : obj).trim();
 
 /**
  * Add the given comments to the keys of a YAML map and the maps nested in it, like Netlify/Decap
@@ -165,13 +195,20 @@ export const formatYAML = (
   // `version: '1.1'` option instead, as it would also quote dates
   visit(doc, {
     /**
-     * Quote a string scalar if needed.
+     * Quote a string scalar if needed, and restore an integer that a `number` can’t represent.
      * @param {unknown} _key Key of the node in its parent.
      * @param {Scalar} node Scalar node.
      */
     Scalar: (_key, node) => {
       if (typeof node.value === 'string' && isAmbiguousYAMLString(node.value)) {
         node.type = toStringOptions.singleQuote ? 'QUOTE_SINGLE' : 'QUOTE_DOUBLE';
+      }
+
+      // Write an integer that a `number` can’t represent exactly as it was read
+      const source = getUnsafeIntegerSource(node.value);
+
+      if (source !== undefined) {
+        node.value = BigInt(source);
       }
     },
   });

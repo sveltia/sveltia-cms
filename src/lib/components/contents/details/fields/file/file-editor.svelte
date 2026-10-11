@@ -10,7 +10,7 @@
   import { _ } from '@sveltia/i18n';
   import { ConfirmationDialog, TextArea } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import { flushSync, getContext } from 'svelte';
+  import { flushSync, getContext, tick } from 'svelte';
   import { flip } from 'svelte/animate';
 
   import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
@@ -97,6 +97,8 @@
   let unsavedAssets = $state([]);
   /** @type {HTMLElement | undefined} */
   let itemList = $state();
+  /** @type {UploadButton | undefined} */
+  let uploadButton = $state();
 
   const {
     widget: fieldType,
@@ -139,7 +141,11 @@
   const assetLibraryFolderMap = $derived(assetOptions.folderMap);
   const targetFolder = $derived(assetOptions.folder);
   const targetFolderPath = $derived(
-    getTargetFolderPath({ entry: entryDraft.current?.originalEntry, folder: targetFolder }),
+    getTargetFolderPath({
+      entry: entryDraft.current?.originalEntry,
+      folder: targetFolder,
+      locale,
+    }),
   );
   // The existing files a dropped one could replace. One of another type isn’t listed: a dropped
   // file of that type is refused, unless a transformation gives it another name
@@ -178,6 +184,7 @@
     componentName,
     typedKeyPath,
     entry,
+    locale,
   });
   const enabledCloudServiceEntries = $derived(assetOptions.cloudServiceEntries);
   /**
@@ -209,6 +216,16 @@
   };
 
   /**
+   * Remove the single file, and move the focus to the upload button that takes its place, as the
+   * focused Remove button is gone along with the file.
+   */
+  const removeSingleFile = async () => {
+    resetSelection();
+    await tick();
+    uploadButton?.focus();
+  };
+
+  /**
    * Handle selected resources.
    * @param {SelectedResource[]} selectedResources Selected resources.
    */
@@ -235,7 +252,15 @@
         folder: targetFolder,
         libraryConfig,
         accept: acceptedTypes,
+        locale,
       });
+
+      // Another entry may have been opened while the files were being processed, e.g. a large
+      // HEIC photo being converted. The value would then be written to that entry’s draft, as
+      // `<FieldEditor>` writes a single value to the current draft
+      if (entryDraft.current !== draft) {
+        return;
+      }
 
       const values = resources.flatMap(({ value }) => value ?? []);
       const hasValidResource = !!values.length;
@@ -313,7 +338,7 @@
    * anyway. Updating the draft is what makes the list re-render.
    * @param {number} index Index of the item to remove.
    */
-  const removeItem = (index) => {
+  const removeItem = async (index) => {
     const draft = entryDraft.current;
 
     // The items are gone along with the draft, so this is only a race with the editor closing
@@ -323,6 +348,31 @@
     }
 
     removeMultiValueItem({ draft, locale, valueStoreKey, keyPath, index });
+    await tick();
+
+    /**
+     * Get the Remove button of an item, which is the last of the buttons controlling its value.
+     * @param {number} _index Item index.
+     * @returns {HTMLButtonElement | undefined} Button.
+     */
+    const getRemoveButton = (_index) => {
+      const buttons = itemList?.querySelectorAll(
+        `button[aria-controls="${fieldId}-${_index}-value"]`,
+      );
+
+      return /** @type {HTMLButtonElement | undefined} */ (buttons?.[buttons.length - 1]);
+    };
+
+    // The focused Remove button is gone along with the item, so move the focus to the Remove button
+    // of the item now at the same position, the previous item if the last one was removed, or the
+    // upload button if no item is left
+    const button = getRemoveButton(index) ?? getRemoveButton(index - 1);
+
+    if (button) {
+      button.focus();
+    } else {
+      uploadButton?.focus();
+    }
   };
 
   /**
@@ -382,8 +432,9 @@
   );
 </script>
 
-{#snippet uploadButton()}
+{#snippet uploadButtonSnippet()}
   <UploadButton
+    bind:this={uploadButton}
     {allowDrop}
     {invalid}
     {readonly}
@@ -426,6 +477,7 @@
                 {itemCount}
                 value={currentValue[index]}
                 fieldId="{fieldId}-{index}"
+                groupFieldId={fieldId}
                 dragging={sorter.dragIndex === index}
                 onReplace={() => {
                   replaceMode = true;
@@ -441,7 +493,7 @@
           {/each}
         </div>
         {#if currentValue.length < max}
-          {@render uploadButton()}
+          {@render uploadButtonSnippet()}
         {/if}
       {/if}
     {:else if typeof currentValue === 'string' && currentValue}
@@ -453,11 +505,11 @@
           replaceMode = true;
           showSelectAssetsDialog = true;
         }}
-        onRemove={showRemoveButton ? resetSelection : undefined}
+        onRemove={showRemoveButton ? removeSingleFile : undefined}
       />
     {/if}
   {:else}
-    {@render uploadButton()}
+    {@render uploadButtonSnippet()}
   {/if}
 {/snippet}
 
@@ -491,6 +543,7 @@
   {canEnterURL}
   {selectFolder}
   draft={entryDraft.current}
+  {locale}
   {fieldConfig}
   {assetLibraryFolderMap}
   {enabledCloudServiceEntries}

@@ -95,6 +95,8 @@ test.describe('with the magazine’s files', () => {
     await expect(page.getByText(/selected$/)).toBeHidden();
     await expect(selectAll).not.toBeChecked();
     await expect(getDeleteButton(page)).toBeDisabled();
+    // The disabled button can’t keep the focus, so the entry list takes it
+    await expect(rows.first()).toBeFocused();
   });
 
   test('selects and clears all the entries with the Select All checkbox', async ({ page }) => {
@@ -133,6 +135,8 @@ test.describe('with the magazine’s files', () => {
         .getByRole('group', { name: 'Entry List' })
         .getByRole('button', { name: 'Create New Entry' }),
     ).toBeVisible();
+    // The disabled Delete button can’t keep the focus, and the list is gone, so the page takes it
+    await expect(page.locator('#page-container')).toBeFocused();
     await expect
       .poll(async () => Object.keys(await cms.readRepo()).filter((path) => path.includes('posts/')))
       .toEqual([]);

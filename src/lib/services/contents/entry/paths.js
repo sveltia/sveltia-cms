@@ -7,7 +7,7 @@ import {
 import { getDirName, stripPathPrefix } from '$lib/services/utils/file';
 
 /**
- * @import { Entry, FileConfig, UnpublishedEntry } from '$lib/types/private';
+ * @import { Entry, FileConfig, InternalLocaleCode, UnpublishedEntry } from '$lib/types/private';
  */
 
 /**
@@ -27,12 +27,18 @@ export const getEntryPaths = (entry, { includePrevious = false } = {}) => [
 ];
 
 /**
- * Get the folder an entry’s file is stored in. For a multi-file i18n entry, the first locale’s file
- * is used.
+ * Get the folder an entry’s file is stored in. For a multi-file i18n entry, the given locale’s file
+ * is used, as each locale has a folder of its own with the `multiple_folders` and
+ * `multiple_root_folders` i18n structures. The first locale’s file is used if no locale is given,
+ * or the entry doesn’t have the locale yet.
  * @param {Entry | UnpublishedEntry} entry Entry.
+ * @param {InternalLocaleCode} [locale] Locale.
  * @returns {string} Folder path, or an empty string if the entry is at the repository root.
  */
-export const getEntryFolderPath = (entry) => getDirName(Object.values(entry.locales)[0].path);
+export const getEntryFolderPath = (entry, locale) =>
+  getDirName(
+    ((locale ? entry.locales[locale] : undefined) ?? Object.values(entry.locales)[0]).path,
+  );
 
 /**
  * Get the folder an entry file is stored in, relative to the collection folder, which is what the

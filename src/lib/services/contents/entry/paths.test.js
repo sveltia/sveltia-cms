@@ -70,6 +70,22 @@ describe('getEntryFolderPath()', () => {
     expect(getEntryFolderPath(entry)).toBe('posts');
   });
 
+  it('returns the folder of the given locale’s file', () => {
+    const entry = /** @type {Entry} */ (
+      /** @type {unknown} */ ({
+        locales: {
+          en: { path: 'posts/en/hello/index.md' },
+          fr: { path: 'posts/fr/hello/index.md' },
+        },
+      })
+    );
+
+    expect(getEntryFolderPath(entry, 'fr')).toBe('posts/fr/hello');
+    expect(getEntryFolderPath(entry, 'en')).toBe('posts/en/hello');
+    // The entry doesn’t have the locale yet
+    expect(getEntryFolderPath(entry, 'de')).toBe('posts/en/hello');
+  });
+
   it('returns an empty string for an entry at the repository root', () => {
     const entry = /** @type {Entry} */ (
       /** @type {unknown} */ ({ locales: { en: { path: 'index.md' } } })

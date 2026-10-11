@@ -13,7 +13,13 @@ import { createPath, getGitHash } from '$lib/services/utils/file';
 import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
 /**
- * @import { Asset, AssetFolderInfo, EntryDraft, SelectedResource } from '$lib/types/private';
+ * @import {
+ * Asset,
+ * AssetFolderInfo,
+ * EntryDraft,
+ * InternalLocaleCode,
+ * SelectedResource,
+ * } from '$lib/types/private';
  * @import { DefaultMediaLibraryConfig } from '$lib/types/public';
  */
 
@@ -144,9 +150,11 @@ export const getUnsavedAssets = async ({ draft, targetFolderPath }) => {
  * the rest of the collection, as determined by {@link getEntryAssetFolderPath}.
  * @param {EntryDraft} draft Entry draft.
  * @param {AssetFolderInfo | undefined} folder Asset folder associated with the field.
+ * @param {InternalLocaleCode} [locale] Locale being edited, whose entry file the assets are stored
+ * beside. Default: the default locale.
  * @returns {Asset[]} Filtered saved assets.
  */
-const getSavedAssetsForEntry = (draft, folder) => {
+const getSavedAssetsForEntry = (draft, folder, locale) => {
   const savedAssets = allAssets.current;
 
   if (!folder?.entryRelative) {
@@ -154,7 +162,10 @@ const getSavedAssetsForEntry = (draft, folder) => {
   }
 
   const { originalEntry, defaultLocale, collection } = draft;
-  const entryFilePath = originalEntry?.locales[defaultLocale]?.path;
+
+  const entryFilePath = (
+    (locale ? originalEntry?.locales[locale] : undefined) ?? originalEntry?.locales[defaultLocale]
+  )?.path;
 
   if (!entryFilePath) {
     // New entry — no saved assets exist for this entry yet
@@ -196,9 +207,12 @@ const getMismatchedResult = (file) => ({
  * A file to be uploaded is checked against them once it’s transformed, which can change its format,
  * e.g. a PNG image converted to WebP fits a field only taking WebP images. A file picked in the
  * browser’s file picker is checked as well as a dropped one, as a picker can offer every file.
+ * @param {InternalLocaleCode} [args.locale] Locale the resource is selected for. An existing asset
+ * in an entry-relative folder is referenced with a path relative to that locale’s entry file.
+ * Default: the default locale.
  * @returns {Promise<ProcessResourceResult>} Result of processing the resource.
  */
-export const processResource = async ({ draft, resource, libraryConfig, accept }) => {
+export const processResource = async ({ draft, resource, libraryConfig, accept, locale }) => {
   const { url, folderPath, credit, replace = false, subfolderPath } = resource;
   let { asset, file } = resource;
   /** @type {string | undefined} */
@@ -271,7 +285,7 @@ export const processResource = async ({ draft, resource, libraryConfig, accept }
       // Check if the selected file has already been uploaded or is pending upload, otherwise
       // duplicate files lead to an `each_key_duplicate` error in Svelte
       const existingAsset = [
-        ...getSavedAssetsForEntry(draft, folder),
+        ...getSavedAssetsForEntry(draft, folder, locale),
         ...(await getUnsavedAssets({ draft })),
       ].find((a) => a.sha === sha && equal(a.folder, folder));
 
@@ -319,6 +333,7 @@ export const processResource = async ({ draft, resource, libraryConfig, accept }
         pathOnly: true,
         allowSpecial: true,
         entry: draft.originalEntry,
+        locale,
       });
     } else if (asset.blobURL) {
       // A pending file listed by `getUnsavedAssets()` is referenced with its blob URL. It can’t be

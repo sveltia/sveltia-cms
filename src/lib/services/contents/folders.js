@@ -52,21 +52,25 @@ const getEntryFolderCache = memoizeOnSource(
  * @param {string} path Entry path.
  * @returns {EntryFolderInfo[]} Entry folders. Sometimes it’s hard to find the right folder because
  * multiple collections can have the same folder or partially overlapping folder paths, but the
- * first one is most likely what you need.
+ * first one is most likely what you need. The ones declaring the exact path, if any, are returned
+ * alone.
  */
 export const getEntryFoldersByPath = (path) => {
   const { fileMap, regexFolders } = getEntryFolderCache();
+  const fileFolders = fileMap.get(path);
 
-  return [
-    // A file/singleton collection declares the exact path, so it’s always more specific than an
-    // entry collection, whose folder may happen to contain the same file. This notably applies to
-    // Hugo’s special index file: `content/blog/_index.md` can be declared as a file collection item
-    // while `content/blog` is also an entry collection’s folder
-    ...(fileMap.get(path) ?? []),
-    // Deeper folder paths are more specific, so sort them in descending order
-    ...regexFolders
-      .filter(([, regex]) => regex?.test(path))
-      .map(([folder]) => folder)
-      .sort((a, b) => (b.folderPath ?? '').localeCompare(a.folderPath ?? '')),
-  ];
+  // A file/singleton collection declares the exact path, so it claims the file over an entry
+  // collection, whose folder may happen to contain the same file. This notably applies to Hugo’s
+  // special index file: `content/blog/_index.md` can be declared as a file collection item while
+  // `content/blog` is also an entry collection’s folder. The entry collection doesn’t list the file
+  // then, or it could be edited with the wrong fields or deleted from there
+  if (fileFolders) {
+    return fileFolders;
+  }
+
+  // Deeper folder paths are more specific, so sort them in descending order
+  return regexFolders
+    .filter(([, regex]) => regex?.test(path))
+    .map(([folder]) => folder)
+    .sort((a, b) => (b.folderPath ?? '').localeCompare(a.folderPath ?? ''));
 };

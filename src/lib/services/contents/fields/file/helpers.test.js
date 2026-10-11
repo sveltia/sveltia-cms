@@ -809,6 +809,29 @@ describe('contents/fields/file/helpers', () => {
         });
       });
 
+      it('should resolve template tags against the given locale', () => {
+        const entry = /** @type {any} */ ({ slug: 'my-post' });
+
+        vi.mocked(fillInternalPathTemplate).mockReturnValue('content/posts/fr/my-post');
+
+        getTargetFolderPath({
+          entry,
+          folder: /** @type {any} */ ({
+            collectionName: 'posts',
+            entryRelative: false,
+            internalPath: 'content/posts/{{slug}}',
+          }),
+          locale: 'fr',
+        });
+
+        expect(fillInternalPathTemplate).toHaveBeenCalledWith({
+          internalPath: 'content/posts/{{slug}}',
+          collectionName: 'posts',
+          entry,
+          locale: 'fr',
+        });
+      });
+
       it('should replace all the template tags with a dash placeholder when they cannot be resolved', () => {
         vi.mocked(fillInternalPathTemplate).mockReturnValue(undefined);
 
@@ -855,6 +878,30 @@ describe('contents/fields/file/helpers', () => {
 
         expect(result).toBe('content/posts');
         expect(getPathInfo).toHaveBeenCalledWith('content/posts/my-post.md');
+      });
+
+      it('should return the directory of the given locale’s entry file', () => {
+        vi.mocked(getPathInfo).mockReturnValue(
+          /** @type {any} */ ({ dirname: 'content/posts/fr/hello' }),
+        );
+
+        const result = getTargetFolderPath({
+          entry: /** @type {any} */ ({
+            locales: {
+              en: { path: 'content/posts/en/hello/index.md' },
+              fr: { path: 'content/posts/fr/hello/index.md' },
+            },
+          }),
+          folder: /** @type {any} */ ({
+            entryRelative: true,
+            internalPath: 'content/posts',
+            internalSubPath: '',
+          }),
+          locale: 'fr',
+        });
+
+        expect(result).toBe('content/posts/fr/hello');
+        expect(getPathInfo).toHaveBeenCalledWith('content/posts/fr/hello/index.md');
       });
 
       it('should return entry directory with subPath when internalSubPath is set', () => {

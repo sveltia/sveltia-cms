@@ -74,6 +74,7 @@ const collection = {
   name: 'pages',
   folder: 'content/pages',
   nested: {},
+  meta: { path: { widget: 'string', label: 'Path', index_file: '_index' } },
   _file: { extension: 'md' },
   _i18n: {
     i18nEnabled: false,
@@ -121,6 +122,39 @@ describe('buildNestedMoveChanges()', () => {
     expect(
       await buildNestedMoveChanges({
         collection: { ...collection, nested: { subfolders: false } },
+        originalEntry: entry('1', 'docs/intro'),
+        savingEntry: entry('1', 'guides/intro'),
+      }),
+    ).toEqual({ changes: [], savingEntries: [] });
+  });
+
+  test('returns nothing when the collection has no index file', async () => {
+    // Without `meta.path.index_file`, entries are regular files sharing a folder with siblings
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      entry('1', 'docs/intro'),
+      entry('2', 'docs/other'),
+      entry('3', 'docs/deep/x'),
+    ]);
+
+    expect(
+      await buildNestedMoveChanges({
+        collection: { ...collection, meta: { path: { widget: 'string', label: 'Path' } } },
+        originalEntry: entry('1', 'docs/intro'),
+        savingEntry: entry('1', 'guides/intro'),
+      }),
+    ).toEqual({ changes: [], savingEntries: [] });
+  });
+
+  test('returns nothing when the entry is not stored as the index file', async () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      entry('1', 'docs/intro'),
+      entry('2', 'docs/_index'),
+      entry('3', 'docs/deep/_index'),
+    ]);
+
+    expect(
+      await buildNestedMoveChanges({
+        collection,
         originalEntry: entry('1', 'docs/intro'),
         savingEntry: entry('1', 'guides/intro'),
       }),

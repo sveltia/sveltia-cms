@@ -6,6 +6,7 @@ import { saveAssets } from '$lib/services/assets/data/create';
 import { editingAsset } from '$lib/services/assets/state';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { createMockAsset } from '$lib/test/config';
+import { waitForToastsToHide } from '$lib/test/toast';
 
 import EditAssetDialog from './edit-asset-dialog.svelte';
 
@@ -72,4 +73,92 @@ describe('EditAssetDialog', () => {
     await expect.poll(() => page.getByRole('dialog').elements().length).toBe(0);
     await expect.poll(() => editingAsset.current).toBeUndefined();
   });
+
+  test('reports a failure to save, and reopens with the edited text', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(saveAssets).mockRejectedValueOnce(new Error('offline'));
+
+    try {
+      await render(EditAssetDialog);
+
+      editingAsset.current = asset;
+
+      const dialog = page.getByRole('dialog', { name: 'Edit \u2068notes.txt\u2069' });
+      const textarea = dialog.getByRole('textbox');
+
+      await expect.element(textarea).toHaveValue('Hello');
+      await textarea.fill('Hello, world!');
+      await dialog.getByRole('button', { name: 'Save' }).click();
+
+      await vi.waitFor(() => expect(saveAssets).toHaveBeenCalledOnce());
+      await expect
+        .poll(() =>
+          document
+            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
+            ?.textContent?.replace(/\s+/g, ' ')
+            .trim(),
+        )
+        .toBe('error Error Save failed.');
+      expect(error).toHaveBeenCalledWith(new Error('offline'));
+
+      // The dialog is back with the edited text, so saving can be retried
+      await expect.element(textarea).toHaveValue('Hello, world!');
+      expect(editingAsset.current).toBe(asset);
+      await dialog.getByRole('button', { name: 'Save' }).click();
+      await vi.waitFor(() => expect(saveAssets).toHaveBeenCalledTimes(2));
+      expect(await vi.mocked(saveAssets).mock.calls[1][0].files[0].text()).toBe('Hello, world!');
+      await expect.poll(() => editingAsset.current).toBeUndefined();
+      await waitForToastsToHide();
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
+
+  test('lets go of the asset when saving fails after the asset details overlay has closed', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    /**
+     * Fail the pending save.
+     * @type {(reason: Error) => void}
+     */
+    let reject = () => {};
+
+    vi.mocked(saveAssets).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, _reject) => {
+          reject = _reject;
+        }),
+    );
+
+    try {
+      await render(EditAssetDialog);
+
+      editingAsset.current = asset;
+
+      const dialog = page.getByRole('dialog');
+      const textarea = dialog.getByRole('textbox');
+
+      await expect.element(textarea).toHaveValue('Hello');
+      await textarea.fill('Hello, world!');
+      await dialog.getByRole('button', { name: 'Save' }).click();
+      await vi.waitFor(() => expect(saveAssets).toHaveBeenCalledOnce());
+
+      showAssetOverlay.current = false;
+      reject(new Error('offline'));
+
+      await expect
+        .poll(() =>
+          document
+            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
+            ?.textContent?.replace(/\s+/g, ' ')
+            .trim(),
+        )
+        .toBe('error Error Save failed.');
+      await expect.poll(() => editingAsset.current).toBeUndefined();
+      expect(page.getByRole('dialog').elements()).toHaveLength(0);
+      await waitForToastsToHide();
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
 });

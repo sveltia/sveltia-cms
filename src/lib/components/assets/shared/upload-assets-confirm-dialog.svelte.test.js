@@ -289,6 +289,44 @@ describe('UploadAssetsConfirmDialog', () => {
     await waitForToastsToHide();
   });
 
+  test('asks about files dropped while an upload is in flight, and keeps them', async () => {
+    const { promise, resolve } = Promise.withResolvers();
+    const folder = globalAssetFolder.current;
+
+    vi.mocked(saveAssets).mockReturnValueOnce(/** @type {any} */ (promise));
+    await render(UploadAssetsConfirmDialog, {});
+    uploadingAssets.current = { folder, files: [image] };
+
+    const dialog = page.getByRole('alertdialog', { name: 'Upload New Assets' });
+
+    await dialog.getByRole('button', { name: 'Upload' }).click();
+    await vi.waitFor(() => expect(saveAssets).toHaveBeenCalledOnce());
+    await expect.poll(() => dialog.elements().length).toBe(0);
+
+    // Another file is dropped while the first one is being committed
+    uploadingAssets.current = { folder, files: [doc] };
+    await expect.element(dialog).toBeVisible();
+    await expect.element(dialog.getByRole('listitem')).toMatchTextContent(/notes\.txt/);
+
+    // The first upload finishing leaves the new selection alone
+    resolve(undefined);
+    await promise;
+    // Let the upload’s `finally` block run
+    await new Promise((r) => {
+      setTimeout(r, 0);
+    });
+    expect(uploadingAssets.current.files).toEqual([doc]);
+    await expect.element(dialog).toBeVisible();
+
+    await dialog.getByRole('button', { name: 'Upload' }).click();
+    await vi.waitFor(() =>
+      expect(saveAssets).toHaveBeenLastCalledWith(
+        { files: [doc], folder, replaceDuplicates: true },
+        { commitType: 'uploadMedia' },
+      ),
+    );
+  });
+
   test('closes along with the asset details overlay', async () => {
     await render(UploadAssetsConfirmDialog, {});
 

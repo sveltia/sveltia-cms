@@ -612,6 +612,14 @@ describe('React Helpers', () => {
       expect(mockGetRichTextMediaSource).not.toHaveBeenCalled();
     });
 
+    it('should look up the asset for the locale being previewed', () => {
+      createGetAsset({ entry: mockEntry, collectionName: 'posts', locale: 'fr' })('photo.jpg');
+
+      expect(mockGetMediaFieldSource).toHaveBeenCalledWith(
+        expect.objectContaining({ value: 'photo.jpg', entry: mockEntry, locale: 'fr' }),
+      );
+    });
+
     it('should also search the editor component folders for a RichText field', () => {
       mockGetRichTextMediaSource.mockReturnValueOnce({ asset: { name: 'figure.jpg' } });
 

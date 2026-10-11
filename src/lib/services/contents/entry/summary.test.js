@@ -689,6 +689,41 @@ describe('Test getEntrySummaryFromContent()', () => {
     expect(result).toBe('Main Header');
   });
 
+  test('should only strip a custom anchor at the end of the header', () => {
+    expect(getEntrySummaryFromContent({ body: '## Header {#a} and {#b}' })).toBe('Header');
+    expect(getEntrySummaryFromContent({ body: '# Header {#a}x' })).toBe('Header {#a}x');
+    expect(getEntrySummaryFromContent({ body: '# Header{#a}' })).toBe('Header{#a}');
+    expect(getEntrySummaryFromContent({ body: '# Header {#}' })).toBe('Header {#}');
+    expect(getEntrySummaryFromContent({ body: '# {#a}' })).toBe('{#a}');
+    expect(getEntrySummaryFromContent({ body: '# {#a} {#b}' })).toBe('{#a}');
+    expect(getEntrySummaryFromContent({ body: '# Header {#a}  \t' })).toBe('Header');
+    expect(getEntrySummaryFromContent({ body: '# Header }' })).toBe('Header }');
+  });
+
+  test('should skip lines that are not headers or have no text', () => {
+    expect(getEntrySummaryFromContent({ body: '#Hashtag\n#\n#   \n\n## Header' })).toBe('Header');
+    expect(getEntrySummaryFromContent({ body: 'Text # Not a header' })).toBe('');
+  });
+
+  test('should find a header in linear time', () => {
+    const bodies = [
+      `# a${' '.repeat(100_000)}b`,
+      `# a${' '.repeat(100_000)}{#b`,
+      `# a${' {#'.repeat(50_000)}`,
+      `${'#'.repeat(100_000)}x`,
+      '# \n'.repeat(50_000),
+    ];
+
+    bodies.forEach((body) => {
+      const start = performance.now();
+
+      getEntrySummaryFromContent({ body });
+      expect(performance.now() - start).toBeLessThan(50);
+    });
+
+    expect(getEntrySummaryFromContent({ body: bodies[0] })).toBe(`a${' '.repeat(100_000)}b`);
+  });
+
   test('should return empty string when nothing found', () => {
     const content = {
       body: 'No headers here, just content',

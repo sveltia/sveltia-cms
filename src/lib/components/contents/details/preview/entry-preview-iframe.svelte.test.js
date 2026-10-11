@@ -55,10 +55,64 @@ describe('EntryPreviewIframe', () => {
     const doc = /** @type {Document} */ (getDocument(container));
 
     expect(doc.documentElement.lang).toBe('fr');
+    expect(doc.documentElement.dir).toBe('ltr');
     expect(doc.querySelector('base')?.getAttribute('href')).toBe(window.location.origin);
     expect(
       [...doc.querySelectorAll('link[rel="stylesheet"]')].map((el) => el.getAttribute('href')),
     ).toEqual(['https://example.com/a.css', 'https://example.com/b.css']);
+  });
+
+  test('sets the language and direction of the locale, and updates them with the locale', async () => {
+    const props = $state({ locale: 'ar', styleURLs: [], children });
+
+    const { container } = await renderWithDraft(EntryPreviewIframe, {
+      draft: createMockDraft(),
+      props,
+    });
+
+    await expect
+      .poll(() => getDocument(container)?.querySelector('.preview-content')?.textContent)
+      .toBe('Hello');
+
+    const root = /** @type {Document} */ (getDocument(container)).documentElement;
+
+    expect(root.lang).toBe('ar');
+    expect(root.dir).toBe('rtl');
+
+    // The pane switches to another locale without loading the frame again
+    props.locale = 'he';
+    await expect.poll(() => root.lang).toBe('he');
+    expect(root.dir).toBe('rtl');
+
+    props.locale = 'en';
+    await expect.poll(() => root.dir).toBe('ltr');
+    expect(root.lang).toBe('en');
+
+    // A locale code that isn’t a valid language tag
+    props.locale = 'en_US';
+    await expect.poll(() => root.hasAttribute('lang')).toBe(false);
+    expect(root.dir).toBe('ltr');
+
+    // Without i18n, neither the language nor the direction is known
+    props.locale = '_default';
+    await expect.poll(() => root.hasAttribute('dir')).toBe(false);
+    expect(root.hasAttribute('lang')).toBe(false);
+  });
+
+  test('sets no language or direction without i18n', async () => {
+    const { container } = await renderWithDraft(EntryPreviewIframe, {
+      draft: createMockDraft(),
+      props: { locale: '_default', styleURLs: [], children },
+    });
+
+    await expect
+      .poll(() => getDocument(container)?.querySelector('.preview-content')?.textContent)
+      .toBe('Hello');
+
+    const root = /** @type {Document} */ (getDocument(container)).documentElement;
+
+    expect(root.hasAttribute('lang')).toBe(false);
+    expect(root.hasAttribute('dir')).toBe(false);
   });
 
   test('tears down the content mounted in the frame when it’s unmounted', async () => {

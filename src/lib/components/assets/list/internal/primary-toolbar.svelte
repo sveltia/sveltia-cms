@@ -1,6 +1,6 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { Infobar } from '@sveltia/ui';
+  import { Alert, Infobar, Toast } from '@sveltia/ui';
 
   import DeleteAssetsButton from '$lib/components/assets/list/delete-assets-button.svelte';
   import DownloadAssetsButton from '$lib/components/assets/list/download-assets-button.svelte';
@@ -30,6 +30,8 @@
   import { getReadonlyMessage } from '$lib/services/config/readonly';
   import { env } from '$lib/services/user/env.svelte';
   import { createPath } from '$lib/services/utils/file';
+
+  let deletingFailed = $state(false);
 
   const folder = $derived(selectedAssetFolder.current);
   // `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized label
@@ -104,9 +106,14 @@
     <DeleteAssetsButton
       {assets}
       disabled={assetsLocked.current || hasReadonlyAsset(assets)}
-      deleteAssets={(_assets) => {
-        // Don’t wait for the commit; the list is updated optimistically
-        deleteAssets(_assets);
+      deleteAssets={async (_assets) => {
+        try {
+          await deleteAssets(_assets);
+        } catch (/** @type {any} */ ex) {
+          deletingFailed = true;
+          // eslint-disable-next-line no-console
+          console.error(ex);
+        }
       }}
       planDeletion={planAssetDeletion}
       buttonDescription={_('delete_selected_assets', { values: { count: assets.length } })}
@@ -128,3 +135,7 @@
     {/if}
   {/snippet}
 </PrimaryToolbar>
+
+<Toast bind:show={deletingFailed}>
+  <Alert status="error">{_('deleting_assets_failed')}</Alert>
+</Toast>

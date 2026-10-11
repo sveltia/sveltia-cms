@@ -113,26 +113,45 @@ export const fetchBranch = async () => {
 
 /**
  * Check if the user has write access to the current repository, like Netlify/Decap CMS requires.
- * @throws {Error} If the user can’t push to the repository.
+ * @throws {Error} If the user can’t push to the repository, the repository doesn’t exist, or the
+ * access couldn’t be checked.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
 export const checkRepositoryAccess = async () => {
-  const { repo } = repository;
+  const { owner, repo } = repository;
+  /** @type {Record<string, any>} */
+  let result;
 
   try {
-    const { permissions } = await getRepositoryInfo();
+    result = await getRepositoryInfo();
+  } catch (/** @type {any} */ ex) {
+    const status = ex?.cause?.status;
 
-    if (!permissions?.push) {
+    // A private repository answers a request from someone without access with a 404 as well, so
+    // its existence isn’t leaked
+    if (status === 404) {
+      throw createLocalizedError('Failed to check repository access', 'repository_not_found', {
+        repo,
+      });
+    }
+
+    // An invalid token or one lacking the scope can’t read the repository. The shared message is
+    // what the sign-in flow looks for to drop the cached credentials
+    if (status === 401 || status === 403) {
       throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });
     }
-  } catch (error) {
-    if (error instanceof Error && error.message === NOT_COLLABORATOR_ERROR_MESSAGE) {
-      throw error;
-    }
 
-    throw createLocalizedError('Failed to check repository access', 'repository_not_found', {
-      repo,
-    });
+    // A rate limit, an outage or a network error leaves the question unanswered, which isn’t a
+    // reason to say the repository doesn’t exist
+    throw createLocalizedError(
+      'Failed to check the repository permission.',
+      'open_authoring.permission_check_failed',
+      { repo: `${owner}/${repo}` },
+    );
+  }
+
+  if (!result.permissions?.push) {
+    throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });
   }
 };
 

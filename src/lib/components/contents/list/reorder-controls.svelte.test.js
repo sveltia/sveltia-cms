@@ -68,7 +68,13 @@ describe('ReorderControls', () => {
   });
 
   test('reports a failure', async () => {
-    vi.mocked(reorderEntries).mockRejectedValue(new Error('Boom'));
+    // Take long enough for the browser to drop the focus of the button disabled meanwhile
+    vi.mocked(reorderEntries).mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          setTimeout(() => reject(new Error('Boom')), 200);
+        }),
+    );
     vi.spyOn(console, 'error').mockImplementation(() => {});
     reorderDirty.current = true;
 
@@ -79,6 +85,44 @@ describe('ReorderControls', () => {
       .element(page.getByRole('alert'))
       .toHaveTextContent('error Error Failed to save new entry order. Please try again.');
     expect(reordering.current).toBe(true);
+    // The button lost the focus while it was disabled during the save, and gets it back
+    await expect
+      .element(page.getByRole('button', { name: 'Done Reordering Entries' }))
+      .toHaveFocus();
     await waitForToastsToHide();
+  });
+
+  test('takes the focus on the Done button once something has moved', async () => {
+    const { component } = await render(ReorderControls, {});
+
+    // The Done button is disabled until then
+    component.focus();
+    await expect
+      .element(page.getByRole('button', { name: 'Cancel Reordering Entries' }))
+      .toHaveFocus();
+
+    reorderDirty.current = true;
+    await expect
+      .element(page.getByRole('button', { name: 'Done Reordering Entries' }))
+      .toBeEnabled();
+    component.focus();
+    await expect
+      .element(page.getByRole('button', { name: 'Done Reordering Entries' }))
+      .toHaveFocus();
+  });
+
+  test('tells the parent once the reorder mode has been left', async () => {
+    vi.mocked(reorderEntries).mockResolvedValue(1);
+
+    const onExit = vi.fn();
+
+    reorderDirty.current = true;
+    await render(ReorderControls, { onExit });
+    await page.getByRole('button', { name: 'Done Reordering Entries' }).click();
+    await vi.waitFor(() => expect(onExit).toHaveBeenCalledOnce());
+
+    setReorderMode(true);
+    await page.getByRole('button', { name: 'Cancel Reordering Entries' }).click();
+    expect(onExit).toHaveBeenCalledTimes(2);
   });
 });

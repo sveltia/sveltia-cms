@@ -7,6 +7,7 @@ import {
 } from '$lib/services/contents/collection/entries/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 import { getPropertyValue } from '$lib/services/contents/entry/values';
+import { getSlug } from '$lib/services/contents/file/process';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { getRegex } from '$lib/services/utils/regex';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
@@ -125,13 +126,15 @@ export const matchesCollectionFilter = (collection, entry) => {
 
 /**
  * Get a list of collections the given entry is listed in, which are the collections the entry
- * belongs to, minus any whose `filter` option the entry doesn’t pass.
+ * belongs to, minus any whose `filter` option the entry doesn’t pass and any hidden with the `hide`
+ * option. A hidden collection can’t be opened, so its entries mustn’t be linked from anywhere, such
+ * as the search results or the “Used in” section of an asset.
  * @param {Entry} entry Entry.
  * @returns {InternalCollection[]} Collections.
  */
 export const getListedCollections = (entry) =>
-  getAssociatedCollections(entry).filter((collection) =>
-    matchesCollectionFilter(collection, entry),
+  getAssociatedCollections(entry).filter(
+    (collection) => !collection.hide && matchesCollectionFilter(collection, entry),
   );
 
 /**
@@ -142,6 +145,7 @@ export const getListedCollections = (entry) =>
  * folderSource: EntryFolderInfo[] | undefined,
  * buckets: Map<string, Entry[]> | undefined,
  * map: Map<string, Entry[]>,
+ * folderMap: Map<string, Entry[]>,
  * }}
  */
 const entriesByCollectionCache = {
@@ -149,6 +153,7 @@ const entriesByCollectionCache = {
   folderSource: undefined,
   buckets: undefined,
   map: new Map(),
+  folderMap: new Map(),
 };
 
 /**
@@ -204,6 +209,27 @@ export const _resetEntriesByCollectionCache = () => {
   entriesByCollectionCache.folderSource = undefined;
   entriesByCollectionCache.buckets = undefined;
   entriesByCollectionCache.map = new Map();
+  entriesByCollectionCache.folderMap = new Map();
+};
+
+/**
+ * Drop the cached entries of {@link getEntriesByCollection} and
+ * {@link getEntriesInCollectionFolder} once the entry stores have been replaced.
+ */
+const syncEntriesByCollectionCache = () => {
+  const entrySource = allEntries.current;
+  const folderSource = allEntryFolders.current;
+
+  if (
+    entrySource !== entriesByCollectionCache.entrySource ||
+    folderSource !== entriesByCollectionCache.folderSource
+  ) {
+    entriesByCollectionCache.entrySource = entrySource;
+    entriesByCollectionCache.folderSource = folderSource;
+    entriesByCollectionCache.buckets = undefined;
+    entriesByCollectionCache.map = new Map();
+    entriesByCollectionCache.folderMap = new Map();
+  }
 };
 
 /**
@@ -222,18 +248,7 @@ export const _resetEntriesByCollectionCache = () => {
  * @see https://sveltiacms.app/en/docs/collections/entries/listings#filtering-entries
  */
 export const getEntriesByCollection = (collectionName) => {
-  const entrySource = allEntries.current;
-  const folderSource = allEntryFolders.current;
-
-  if (
-    entrySource !== entriesByCollectionCache.entrySource ||
-    folderSource !== entriesByCollectionCache.folderSource
-  ) {
-    entriesByCollectionCache.entrySource = entrySource;
-    entriesByCollectionCache.folderSource = folderSource;
-    entriesByCollectionCache.buckets = undefined;
-    entriesByCollectionCache.map = new Map();
-  }
+  syncEntriesByCollectionCache();
 
   const cache = entriesByCollectionCache.map.get(collectionName);
 
@@ -246,6 +261,84 @@ export const getEntriesByCollection = (collectionName) => {
   entriesByCollectionCache.map.set(collectionName, entries);
 
   return entries;
+};
+
+/**
+ * Get the entries another collection claims although their files are stored in the folder of the
+ * given entry collection, e.g. Hugo’s `_index.md` declared as a file collection’s file, as they
+ * would be read in the entry collection: with the slugs and sub paths it would give them.
+ * @param {InternalCollection} collection Entry collection.
+ * @param {Entry[]} ownEntries Entries the collection already has.
+ * @returns {Entry[]} Entries.
+ */
+const getForeignEntriesInFolder = (collection, ownEntries) => {
+  const { _file: { fullPathRegEx = undefined, subPath: subPathTemplate = undefined } = {} } =
+    collection._type === 'entry' ? collection : {};
+
+  if (!fullPathRegEx) {
+    return [];
+  }
+
+  const { defaultLocale } = collection._i18n;
+  const ownEntrySet = new Set(ownEntries);
+
+  return allEntries.current.flatMap((entry) => {
+    if (ownEntrySet.has(entry)) {
+      return [];
+    }
+
+    /** @type {Entry['locales']} */
+    const locales = {};
+    /** @type {Record<string, string>} */
+    const subPaths = {};
+
+    Object.values(entry.locales).forEach((localizedEntry) => {
+      const { subPath, locale = defaultLocale } =
+        localizedEntry.path.match(fullPathRegEx)?.groups ?? {};
+
+      if (subPath) {
+        locales[locale] = { ...localizedEntry, slug: getSlug({ subPath, subPathTemplate }) };
+        subPaths[locale] = subPath;
+      }
+    });
+
+    // The default locale’s file may not be in the folder, e.g. with the `multiple_root_folders`
+    // i18n structure
+    const locale = locales[defaultLocale] ? defaultLocale : Object.keys(locales)[0];
+
+    if (!locale) {
+      return [];
+    }
+
+    const { slug } = locales[locale];
+    const subPath = subPaths[locale];
+
+    return [{ ...entry, slug, subPath, locales }];
+  });
+};
+
+/**
+ * Get every entry stored in the folder of the given collection, whether it passes the collection’s
+ * `filter` option or not, and even if another collection claims it. Collections can share a folder
+ * and tell their entries apart with a filter, and a file collection can declare a file in the
+ * folder, such as Hugo’s `_index.md`, so a file name has to be unique among all of these entries,
+ * not only the listed ones: a new entry taking the slug of an entry another collection lists would
+ * overwrite its file. An entry another collection claims comes with the slug and sub path this
+ * collection would give it.
+ *
+ * The returned array is shared between callers, so treat it as read-only.
+ * @param {string} collectionName Collection name.
+ * @returns {Entry[]} Entries.
+ */
+export const getEntriesInCollectionFolder = (collectionName) => {
+  syncEntriesByCollectionCache();
+
+  return getOrCreate(entriesByCollectionCache.folderMap, collectionName, () => {
+    const collection = getCollection(collectionName);
+    const entries = getCollectionBuckets().get(collectionName) ?? [];
+
+    return collection ? [...entries, ...getForeignEntriesInFolder(collection, entries)] : entries;
+  });
 };
 
 /**

@@ -37,12 +37,23 @@
   // Hide the button instead of disabling it once the list is full, as a disabled button confuses
   // users, especially when `max` is `1`
   const hasMaxItems = $derived(items.length >= max);
+
+  /** @type {MenuButton | undefined} */
+  let menuButton = $state();
+
+  /**
+   * Move the focus to the menu button of a field with variable types, e.g. once the object that
+   * took its place has been removed.
+   */
+  export const focus = () => {
+    /** @type {MenuButton} */ (menuButton).focus();
+  };
 </script>
 
 {#if hasMaxItems}
   <!-- The list is full -->
 {:else if Array.isArray(types)}
-  <MenuButton variant="tertiary" size="small" {label} {disabled}>
+  <MenuButton bind:this={menuButton} variant="tertiary" size="small" {label} {disabled}>
     {#snippet startIcon()}
       <Icon name="add" />
     {/snippet}

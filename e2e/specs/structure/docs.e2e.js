@@ -39,6 +39,52 @@ test('creates an entry in the folder being browsed', async ({ cms, page }) => {
     .toBe('---\ntitle: Errors\n---\n');
 });
 
+test('creates an entry named like another one in the folder under a new name', async ({
+  cms,
+  page,
+}) => {
+  await page.getByRole('tree', { name: 'Collection List' }).getByText('guide').click();
+  await page.getByRole('button', { name: 'Create New Entry' }).click();
+
+  const editor = page.getByRole('group', { name: 'Content Editor' });
+
+  await expect(editor.getByRole('button', { name: 'Parent Folder' })).toContainText('guide');
+  await editor.getByRole('textbox', { name: 'Title' }).fill('Usage');
+  await editor.getByRole('textbox', { name: 'Body' }).fill('New page');
+  await editor.getByRole('button', { name: 'Save' }).click();
+
+  await expect
+    .poll(async () => (await cms.readRepo())['content/docs/guide/usage-1.md'])
+    .toBe('---\ntitle: Usage\n---\n\nNew page\n');
+  // The entry already stored as `usage.md` in the folder is left alone
+  expect((await cms.readRepo())['content/docs/guide/usage.md']).toBe(
+    NESTED_FILES['content/docs/guide/usage.md'],
+  );
+});
+
+test('duplicates an entry in a folder under a new name', async ({ cms, page }) => {
+  await page.getByRole('tree', { name: 'Collection List' }).getByText('guide').click();
+  await page.getByRole('row', { name: /Usage/ }).click();
+  await cms.chooseMenuItem(
+    page.getByRole('button', { name: 'Show Editor Options' }),
+    page.getByRole('menuitem', { name: 'Duplicate Entry' }),
+  );
+
+  const editor = page.getByRole('group', { name: 'Content Editor' });
+
+  await expect(page.getByRole('status').filter({ hasText: 'Entry duplicated' })).toBeVisible();
+  await editor.getByRole('textbox', { name: 'Body' }).fill('Copy');
+  await editor.getByRole('button', { name: 'Save' }).click();
+
+  await expect
+    .poll(async () => (await cms.readRepo())['content/docs/guide/usage-1.md'])
+    .toBe('---\ntitle: Usage\n---\n\nCopy\n');
+  // The original is left alone
+  expect((await cms.readRepo())['content/docs/guide/usage.md']).toBe(
+    NESTED_FILES['content/docs/guide/usage.md'],
+  );
+});
+
 test('creates an entry in a new folder', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).click();
 

@@ -4,7 +4,7 @@ import { escapeRegExp, truncate } from '@sveltia/utils/string';
 import { replaceTemplatePlaceholder } from '$lib/services/common/template/replacers';
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { cmsConfig } from '$lib/services/config';
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import { renameIfNeeded } from '$lib/services/utils/file';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
@@ -16,15 +16,37 @@ import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 /**
  * Creates existing slugs list for uniqueness validation. With Editorial Workflow, the entries that
  * are still in a pull request count as well: a new entry taking the slug of one of them would take
- * its file path and its workflow branch too.
+ * its file path and its workflow branch too. Every entry stored in the collection folder counts,
+ * including those the collection’s `filter` option leaves out, which can belong to another
+ * collection sharing the folder.
  * @param {string} collectionName Collection name.
  * @param {string | undefined} locale Locale string.
+ * @param {string} [dirPath] Folder within the collection folder the new entry goes to, as chosen
+ * with the path editor of a nested collection. The slug of an entry there is its sub path, e.g.
+ * `docs/intro`, so only the entries directly in the folder are taken into account, by their file
+ * names.
  * @returns {string[]} List of existing slugs.
  */
-const getExistingSlugs = (collectionName, locale) =>
-  [...getEntriesByCollection(collectionName), ...getUnpublishedEntriesByCollection(collectionName)]
-    .map((e) => (locale ? e.locales[locale]?.slug : e.slug))
-    .filter(Boolean);
+const getExistingSlugs = (collectionName, locale, dirPath) => {
+  const slugs = /** @type {string[]} */ (
+    [
+      ...getEntriesInCollectionFolder(collectionName),
+      ...getUnpublishedEntriesByCollection(collectionName),
+    ]
+      .map((e) => (locale ? e.locales[locale]?.slug : e.slug))
+      .filter(Boolean)
+  );
+
+  if (dirPath === undefined) {
+    return slugs;
+  }
+
+  const prefix = dirPath ? `${dirPath}/` : '';
+
+  return slugs
+    .filter((slug) => slug.startsWith(prefix) && !slug.slice(prefix.length).includes('/'))
+    .map((slug) => slug.slice(prefix.length));
+};
 
 /**
  * Fills a template string with values from the given options.
@@ -45,6 +67,7 @@ export const fillTemplate = (template, options) => {
     locale,
     dateTimeParts,
     isIndexFile = false,
+    dirPath,
   } = options;
 
   const { _type, name: collectionName } = collection;
@@ -101,5 +124,5 @@ export const fillTemplate = (template, options) => {
     }
   }
 
-  return renameIfNeeded(slug, getExistingSlugs(collectionName, locale));
+  return renameIfNeeded(slug, getExistingSlugs(collectionName, locale, dirPath));
 };

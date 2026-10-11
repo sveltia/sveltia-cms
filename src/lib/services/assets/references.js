@@ -18,6 +18,7 @@ import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents
  * FlattenedEntryContent,
  * InternalCollection,
  * InternalCollectionFile,
+ * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import { Field, FieldKeyPath } from '$lib/types/public';
  */
@@ -113,9 +114,11 @@ const createMatcher = (targets) => {
  * @param {Entry} context.entry Entry.
  * @param {string} context.collectionName Collection name.
  * @param {string} [context.fileName] Collection file name.
+ * @param {InternalLocaleCode} [context.locale] Locale the value is found in, which an
+ * entry-relative path is relative to.
  * @returns {number[]} Indexes of the targets.
  */
-const getMatchingTargets = (matcher, src, { entry, collectionName, fileName }) => {
+const getMatchingTargets = (matcher, src, { entry, collectionName, fileName, locale }) => {
   const indexes = matcher.byURL.get(src) ?? [];
 
   if (!matcher.resolves) {
@@ -125,7 +128,9 @@ const getMatchingTargets = (matcher, src, { entry, collectionName, fileName }) =
   // Resolve the value to its asset without loading it. The asset’s blob URL is created once and
   // kept on the asset object, so only the asset being looked up can hold the given one — and
   // there’s no need to download every other asset the entries reference just to compare URLs
-  const { url, asset } = getMediaFieldSource({ entry, collectionName, fileName, value: src }) ?? {};
+  const { url, asset } =
+    getMediaFieldSource({ entry, collectionName, fileName, locale, value: src }) ?? {};
+
   const blobURL = url ?? asset?.blobURL;
 
   return [
@@ -178,6 +183,7 @@ const mayReferToTargets = (matcher, value) =>
  * @param {boolean} args.isIndexFile Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file. File collection only.
+ * @param {InternalLocaleCode} args.locale Locale the value is found in.
  * @returns {{ indexes: Set<number>, field?: Field }} Indexes of the targets found, and the field
  * config, unless the field isn’t configured.
  */
@@ -190,6 +196,7 @@ const matchField = ({
   value,
   isIndexFile,
   collectionFile,
+  locale,
 }) => {
   /** @type {Set<number>} */
   const indexes = new Set();
@@ -201,7 +208,7 @@ const matchField = ({
   }
 
   const { widget: fieldType = 'string' } = field;
-  const context = { entry, collectionName, fileName };
+  const context = { entry, collectionName, fileName, locale };
 
   if (MEDIA_FIELD_TYPES.includes(fieldType)) {
     const matched = getMatchingTargets(matcher, value, context);
@@ -313,7 +320,14 @@ const findAssetReferences = (targets, { entries, every = false, onMatch }) => {
         });
 
         for (const { collection, isIndexFile, files } of collections) {
-          const matchArgs = { matcher, collectionName: collection.name, entry, content, keyPath };
+          const matchArgs = {
+            matcher,
+            collectionName: collection.name,
+            entry,
+            content,
+            keyPath,
+            locale,
+          };
 
           const matches = files.map((collectionFile) =>
             matchField({ ...matchArgs, value, isIndexFile, collectionFile }),

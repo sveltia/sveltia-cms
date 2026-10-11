@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
 import {
@@ -8,6 +8,7 @@ import {
   formatTOML,
   formatYAML,
 } from '$lib/services/contents/file/format';
+import { clearUnsafeIntegerSources, toNumber } from '$lib/services/contents/file/integers';
 
 /**
  * @import { FileConfig } from '$lib/types/private';
@@ -109,6 +110,49 @@ describe('Test formatJSON()', () => {
 }
 `.trim(),
     );
+  });
+});
+
+describe('Test formatting integers a number can’t represent exactly', () => {
+  const content = { big: 12345678901234567000, list: [12345678901234567000, 1.5], small: 3 };
+
+  afterEach(() => {
+    clearUnsafeIntegerSources();
+  });
+
+  test('writes them as they were read', () => {
+    clearUnsafeIntegerSources();
+    // The number the integer is read as, which `formatJSON()` writes as the number
+    expect(formatJSON(content)).toContain('"big": 12345678901234567000,');
+
+    toNumber(12345678901234567890n);
+
+    expect(formatJSON(content)).toBe(
+      '{\n  "big": 12345678901234567890,\n  "list": [\n    12345678901234567890,\n    1.5\n  ],\n  "small": 3\n}',
+    );
+    expect(formatYAML(content)).toBe(
+      'big: 12345678901234567890\nlist:\n  - 12345678901234567890\n  - 1.5\nsmall: 3',
+    );
+    expect(formatTOML(content)).toBe(
+      'big = 12345678901234567890\nlist = [ 12345678901234567890, 1.5 ]\nsmall = 3',
+    );
+    // The content is left as it is
+    expect(content.big).toBe(12345678901234567000);
+  });
+
+  test('writes the number in a browser without `JSON.rawJSON()`', () => {
+    // TypeScript doesn’t know `JSON.rawJSON()` yet
+    const json = /** @type {any} */ (JSON);
+    const { rawJSON } = json;
+
+    toNumber(12345678901234567890n);
+    delete json.rawJSON;
+
+    try {
+      expect(formatJSON(content)).toContain('"big": 12345678901234567000,');
+    } finally {
+      json.rawJSON = rawJSON;
+    }
   });
 });
 

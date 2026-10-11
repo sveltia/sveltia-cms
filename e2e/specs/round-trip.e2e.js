@@ -212,4 +212,149 @@ test.describe('TOML front matter', () => {
       .poll(async () => (await cms.readRepo())[path])
       .toBe('+++\ntitle = "Dated"\ndate = 2024-01-02T03:04:05.000Z\n+++\n\nEdited.\n');
   });
+
+  test('keeps a date that is not a TOML date as a string', async ({ cms, page }) => {
+    const path = 'content/posts/undated.md';
+
+    await cms.open();
+    await cms.seed({ [path]: '+++\ntitle = "Undated"\ndate = "TBD"\n+++\n\nHello.\n' });
+    await cms.signIn();
+    await openEntry(page, 'posts', 'Undated');
+
+    const editor = getEditor(page);
+
+    await editor.getByRole('textbox', { name: 'Body' }).fill('Edited.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    // The date was dropped
+    await expect
+      .poll(async () => (await cms.readRepo())[path])
+      .toBe('+++\ntitle = "Undated"\ndate = "TBD"\n+++\n\nEdited.\n');
+  });
+});
+
+test.describe('leading whitespace', () => {
+  test('is kept in a text body', async ({ cms, page }) => {
+    const path = 'content/posts/indented.md';
+
+    const file =
+      '---\ntitle: Indented\ndate: 2024-01-02T03:04:05.000Z\n---\n\n    const code = true;\n\nText.\n';
+
+    await cms.open();
+    await cms.seed({ [path]: file });
+    await cms.signIn();
+    await openEntry(page, 'posts', 'Indented');
+
+    const editor = getEditor(page);
+
+    await editor.getByRole('textbox', { name: 'Title' }).fill('Code');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    // The indented code block became a paragraph
+    await expect
+      .poll(async () => (await cms.readRepo())[path])
+      .toBe(file.replace('Indented', 'Code'));
+  });
+});
+
+test.describe('keys that look like list indexes', () => {
+  /**
+   * Files holding objects whose keys look like list indexes: in a KeyValue field, and in objects
+   * that no field configuration describes.
+   */
+  const NUMERIC_KEY_FILES = {
+    'content/yml/stats.yml': [
+      'title: Stats',
+      'redirects:',
+      "  '404': /not-found",
+      'years:',
+      "  '2023': a",
+      "  '2024': b",
+      'zero:',
+      "  '0': x",
+      "  '1': 'y'",
+      '',
+    ].join('\n'),
+    'content/toml/stats.toml': [
+      'title = "Stats"',
+      '',
+      '[redirects]',
+      '404 = "/not-found"',
+      '',
+      '[years]',
+      '2023 = "a"',
+      '2024 = "b"',
+      '',
+    ].join('\n'),
+    'content/json/stats.json': [
+      '{',
+      '  "title": "Stats",',
+      '  "redirects": {',
+      '    "404": "/not-found"',
+      '  },',
+      '  "years": {',
+      '    "10": "a"',
+      '  }',
+      '}',
+      '',
+    ].join('\n'),
+  };
+
+  test.beforeEach(async ({ cms }) => {
+    await cms.open();
+    await cms.seed(NUMERIC_KEY_FILES);
+    await cms.signIn();
+  });
+
+  Object.entries(NUMERIC_KEY_FILES).forEach(([path, file]) => {
+    const extension = /** @type {string} */ (path.split('.').pop());
+
+    test(`are kept as object keys in a ${extension.toUpperCase()} file`, async ({ cms, page }) => {
+      await openEntry(page, extension, 'Stats');
+
+      const editor = getEditor(page);
+
+      await expect(editor.getByRole('textbox', { name: 'From' })).toHaveValue('404');
+      await editor.getByRole('textbox', { name: 'Title' }).fill('Numbers');
+      await editor.getByRole('button', { name: 'Save' }).click();
+
+      // The objects were saved as sparse lists, e.g. 2,023 `null` items followed by `a` and `b`
+      await expect
+        .poll(async () => (await cms.readRepo())[path])
+        .toBe(file.replace('Stats', 'Numbers'));
+    });
+  });
+});
+
+test.describe('integers a number can’t represent exactly', () => {
+  const BIG_INTEGER_FILES = {
+    'content/yml/big.yml': 'title: Big\nredirects: {}\nid: 12345678901234567890\n',
+    'content/toml/big.toml': 'title = "Big"\nid = 9007199254740993\n\n[redirects]\n',
+    'content/json/big.json':
+      '{\n  "title": "Big",\n  "redirects": {},\n  "id": 12345678901234567890\n}\n',
+  };
+
+  test.beforeEach(async ({ cms }) => {
+    await cms.open();
+    await cms.seed(BIG_INTEGER_FILES);
+    await cms.signIn();
+  });
+
+  Object.entries(BIG_INTEGER_FILES).forEach(([path, file]) => {
+    const extension = /** @type {string} */ (path.split('.').pop());
+
+    test(`are kept as they are in a ${extension.toUpperCase()} file`, async ({ cms, page }) => {
+      await openEntry(page, extension, 'Big');
+
+      const editor = getEditor(page);
+
+      await editor.getByRole('textbox', { name: 'Title' }).fill('Large');
+      await editor.getByRole('button', { name: 'Save' }).click();
+
+      // The integer was rounded, e.g. to `12345678901234567000`, and the TOML file couldn’t be read
+      await expect
+        .poll(async () => (await cms.readRepo())[path])
+        .toBe(file.replace('Big', 'Large'));
+    });
+  });
 });

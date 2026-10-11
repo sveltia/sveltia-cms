@@ -792,6 +792,13 @@ cannot_delete_referenced_assets: |
   .match $count
     one {{ This asset can’t be deleted, because the following fields in the entries using it would no longer be valid without it. Update those entries first. }}
     *   {{ These assets can’t be deleted, because the following fields in the entries using them would no longer be valid without them. Update those entries first. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Couldn’t check which entries use this asset. Close this dialog and try again. }}
+    *   {{ Couldn’t check which entries use these assets. Close this dialog and try again. }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
@@ -952,6 +959,8 @@ uploading_files_failed: Upload failed.
 # Errors shown when a file on a cloud storage service could not be deleted or renamed
 deleting_assets_failed: Delete failed.
 renaming_asset_failed: Rename failed.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: Save failed.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)

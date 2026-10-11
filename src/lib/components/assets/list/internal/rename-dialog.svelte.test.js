@@ -11,6 +11,7 @@ import { showAssetOverlay } from '$lib/services/assets/view';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
 import { expectFileNameSelected } from '$lib/test/dialog';
+import { waitForToastsToHide } from '$lib/test/toast';
 
 import RenameDialog from './rename-dialog.svelte';
 
@@ -192,4 +193,39 @@ describe('RenameDialog', () => {
     await vi.waitFor(() => expect(moveAssets).toHaveBeenCalledOnce());
     expect(window.location.hash).toBe('#/assets');
   });
+
+  test('reports a failure to rename the asset, leaving the URL alone', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    window.location.hash = '#/assets/static/uploads/a.png';
+    vi.mocked(moveAssets).mockRejectedValueOnce(new Error('offline'));
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = firstAsset;
+
+      const dialog = page.getByRole('dialog');
+
+      await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
+      await dialog.getByRole('textbox').fill('c.png');
+      await dialog.getByRole('button', { name: 'Rename' }).click();
+
+      await vi.waitFor(() => expect(moveAssets).toHaveBeenCalledOnce());
+      await expect
+        .poll(() =>
+          document
+            .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
+            ?.textContent?.replace(/\s+/g, ' ')
+            .trim(),
+        )
+        .toBe('error Error Rename failed.');
+      expect(error).toHaveBeenCalledWith(new Error('offline'));
+      // The asset keeps its name, so the URL isn’t updated
+      expect(window.location.hash).toBe('#/assets/static/uploads/a.png');
+      await waitForToastsToHide();
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
 });

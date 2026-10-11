@@ -11,7 +11,7 @@
   import { _ } from '@sveltia/i18n';
   import { TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { getContext } from 'svelte';
+  import { getContext, tick } from 'svelte';
   import { flip } from 'svelte/animate';
 
   import RemoveButton from '$lib/components/common/remove-button.svelte';
@@ -158,10 +158,22 @@
    * Remove a pair from {@link rows}.
    * @param {number} index Row index.
    */
-  const removePair = (index) => {
+  const removePair = async (index) => {
     rows.remove(index);
     edited.splice(index, 1);
     ensureBlankRow();
+    await tick();
+
+    // The focused Remove button is gone along with the row, so move the focus to the Remove button
+    // of the row now at the same position, or the previous row if the last one was removed. The
+    // blank row left once the last pair is removed can’t be removed, so its key takes the focus
+    // There’s always a row left, as the blank row takes the place of the last pair
+    const { rows: rowList } = /** @type {HTMLTableSectionElement} */ (tableBody);
+    const row = rowList[index] ?? rowList[index - 1];
+
+    /** @type {HTMLElement} */ (
+      row.querySelector('td.action button:enabled') ?? row.querySelector('td.key input')
+    ).focus();
   };
 
   /**

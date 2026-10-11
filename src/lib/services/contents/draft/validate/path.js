@@ -1,6 +1,6 @@
 import { stripSlashes } from '@sveltia/utils/string';
 
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import {
   getMetaPathConfig,
   getNestedConfig,
@@ -26,11 +26,13 @@ import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 const INVALID_SEGMENT_REGEX = /(?:^|\/)(?:\.{1,2})(?:\/|$)/;
 
 /**
- * Check whether another entry is already stored where this one is headed. The destination can only
- * be worked out ahead of the save when every entry in the collection shares one file name, which is
- * the case that matters: the path editor is then the only thing deciding it, so an overlooked
- * collision would quietly overwrite a page. With localized slugs, each locale has a destination of
- * its own, so every enabled locale is checked against the other entries’ files in that locale.
+ * Check whether another entry is already stored where this one is headed. The path editor decides
+ * the folder, so an overlooked collision would quietly overwrite a page: either a folder already
+ * taken by another entry, where every entry in the collection shares one file name, or a file of
+ * the same name in the chosen folder otherwise, e.g. when moving or duplicating an entry. With
+ * localized slugs, each locale has a destination of its own, so every enabled locale is checked
+ * against the other entries’ files in that locale. Every entry stored in the collection folder
+ * counts, including those the collection’s `filter` option leaves out.
  * @param {EntryDraft} draft Entry draft.
  * @returns {boolean} Whether the destination is taken.
  * @see https://github.com/decaporg/decap-cms/issues/7094
@@ -42,7 +44,7 @@ const isPathTaken = (draft) => {
 
   // A blank folder hands the destination back to the collection’s own `path` option and slug, which
   // this check knows nothing about
-  if (!indexFileName || !usesCustomEntryPath(draft)) {
+  if (!usesCustomEntryPath(draft)) {
     return false;
   }
 
@@ -55,7 +57,7 @@ const isPathTaken = (draft) => {
   // the draft is validated again — to see whether the entry can be sent for review — while the
   // saved entry already sits at the destination
   const otherEntries = [
-    ...getEntriesByCollection(collection.name),
+    ...getEntriesInCollectionFolder(collection.name),
     ...getUnpublishedEntriesByCollection(collection.name),
   ].filter((entry) => entry.id !== id);
 

@@ -6,6 +6,7 @@ import { customComponentRegistry } from '$lib/services/api/registries';
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { allAssets } from '$lib/services/assets/state';
 import { cmsConfig } from '$lib/services/config';
+import { sanitizeRichTextHTML } from '$lib/services/contents/fields/rich-text/sanitize';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import RichTextPreview from './rich-text-preview.svelte';
@@ -28,6 +29,9 @@ vi.mock('$lib/services/api/react-dom', async (importOriginal) => {
     loadReactDom: vi.fn(() => (reactDomLoader.current ?? original.loadReactDom)()),
   };
 });
+
+// Count the blocks parsed and sanitized
+vi.mock('$lib/services/contents/fields/rich-text/sanitize', { spy: true });
 
 /**
  * Render the preview, keeping the props to change the value later.
@@ -122,6 +126,20 @@ describe('RichTextPreview', () => {
 
     await expect.poll(() => raw.querySelector('p')).not.toBeNull();
     expect(raw.querySelector('p')).toHaveAttribute('onclick');
+  });
+
+  test('only parses the blocks that have changed', async () => {
+    const { preview, props } = await renderPreviewWithProps('First\n\nSecond\n\nFirst');
+
+    await expect.poll(() => preview.querySelectorAll('p').length).toBe(3);
+
+    vi.mocked(sanitizeRichTextHTML).mockClear();
+    props.currentValue = 'First\n\nChanged\n\nFirst';
+
+    await expect
+      .poll(() => [...preview.querySelectorAll('p')].map((p) => p.textContent))
+      .toEqual(['First', 'Changed', 'First']);
+    expect(vi.mocked(sanitizeRichTextHTML).mock.calls).toEqual([['<p dir="auto">Changed</p>\n']]);
   });
 
   test('renders an HTML value as is, without parsing it as Markdown', async () => {

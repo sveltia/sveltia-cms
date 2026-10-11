@@ -376,17 +376,20 @@ describe('assets/external/data', () => {
       expect(result).toEqual({ oversizedFileNames: ['big.png'], invalidFileNames: ['bad.png'] });
     });
 
-    it('should report an upload failure', async () => {
+    it('should report an upload failure and reload the list, as some files may be uploaded', async () => {
+      // The first file made it before the second one failed
       service.upload.mockRejectedValue(new Error('fail'));
+      service.list.mockResolvedValue([c, a, b]);
 
-      await uploadExternalAssets([file]);
+      await uploadExternalAssets([file, new File(['y'], 'd.png', { type: 'image/png' })]);
 
       expect(externalAssetsToast.current).toEqual({
         show: true,
         status: 'error',
         message: 'uploading_files_failed',
       });
-      expect(externalAssets.current).toEqual([a, b]);
+      expect(service.list).toHaveBeenCalledWith(fetchOptions);
+      expect(externalAssets.current).toEqual([c, a, b]);
     });
 
     it('should replace an existing asset', async () => {

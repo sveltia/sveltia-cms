@@ -18,7 +18,7 @@ import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/con
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { TOML_FORMATS } from '$lib/services/contents/file/constants';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { isValueEmpty, unflattenKeys } from '$lib/services/utils/object';
+import { hasIndexLikeChildKey, isValueEmpty, unflattenKeys } from '$lib/services/utils/object';
 
 /**
  * @import {
@@ -87,13 +87,20 @@ export const copyProperty = ({
     field?.widget === 'datetime' &&
     !parseDateTimeConfig(/** @type {DateTimeField} */ (field)).format
   ) {
-    const tomlDate = new TomlDate(value);
+    if (isValueEmpty(value)) {
+      // An optional field without a value saves nothing. We cannot save `null` because TOML
+      // doesn’t support it, and an empty string may not be the expected value for a date field
+      value = undefined;
+    } else {
+      const tomlDate = new TomlDate(value);
 
-    // Ignore invalid dates to prevent serialization errors. This occurs when the field is optional
-    // and no value is provided, such as an empty string. In such cases, save nothing. We cannot
-    // save `null` because TOML doesn’t support it, and an empty string may not be the expected
-    // value for a date field.
-    value = tomlDate.isValid() ? tomlDate : undefined;
+      // A date, a time or a date-time, with or without an offset, becomes a native TOML value. Any
+      // other value, e.g. `TBD`, `2024-01` or `3:04 PM`, which a field without a date or a time can
+      // hold, is kept as a string
+      if (tomlDate.isValid()) {
+        value = tomlDate;
+      }
+    }
   }
 
   if (
@@ -276,6 +283,19 @@ const finalizeContent = ({
       });
   };
 
+  /**
+   * Add an empty object as a placeholder for an Object field whose subfields include one named like
+   * a list index, e.g. `2024`, so it’s not unflattened into an array. A value read from a file
+   * already has one, but a new entry or a newly added object doesn’t.
+   * @param {string} keyPath Concrete key path of the field.
+   * @param {Field} [field] Field configuration.
+   */
+  const addObjectPlaceholder = (keyPath, field) => {
+    if (field?.widget === 'object' && hasIndexLikeChildKey(unsortedMap, keyPath)) {
+      sortedMap[keyPath] = {};
+    }
+  };
+
   // Move the listed properties to a new object
   createKeyPathList(fields).forEach((keyPath) => {
     const field = getField({ ...getFieldArgs, keyPath });
@@ -313,6 +333,8 @@ const finalizeContent = ({
             copyOpaqueField(concreteKeyPath, resolvedField);
           } else if (concreteKeyPath in unsortedMap) {
             copyProperty({ ...copyArgs, key: concreteKeyPath, field: resolvedField });
+          } else {
+            addObjectPlaceholder(concreteKeyPath, resolvedField);
           }
         });
     }
