@@ -33,14 +33,21 @@ import { formatEntryFile } from '$lib/services/contents/file/format';
  */
 export const formatEntryData = ({ draft, config, _file, entry, locale }) =>
   formatEntryFile(
+    // The format of `_file` is the one the file is actually saved in, e.g. the front matter format
+    // detected in an existing file of a collection in the `frontmatter` format
     locale === undefined
       ? {
-          content: buildSingleFileContent({ config, entry, draft }),
+          content: buildSingleFileContent({ config, entry, draft, format: _file.format }),
           _file,
           comments: getSingleFileComments({ config, fields: draft.fields }),
         }
       : {
-          content: serializeContent({ draft, locale, valueMap: entry.locales[locale].content }),
+          content: serializeContent({
+            draft,
+            locale,
+            valueMap: entry.locales[locale].content,
+            format: _file.format,
+          }),
           _file,
           comments: getFieldComments(draft.fields),
         },

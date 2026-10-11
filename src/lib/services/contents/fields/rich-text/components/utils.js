@@ -1,4 +1,4 @@
-import { flatten, unflatten } from 'flat';
+import { flattenKeys, unflattenKeys } from '$lib/services/utils/object';
 
 /**
  * @import { EditorComponentDefinition } from '$lib/types/public';
@@ -119,9 +119,11 @@ export const supportsHTML = ({ htmlSelector, fromBlockHTML, toBlockHTML }) =>
  * for internal purposes.
  */
 export const normalizeProps = (props) =>
-  unflatten(
+  unflattenKeys(
     Object.fromEntries(
-      Object.entries(flatten(props)).filter(([key]) => !key.split('.').pop()?.startsWith('__sc_')),
+      Object.entries(flattenKeys(props)).filter(
+        ([key]) => !key.split('.').pop()?.startsWith('__sc_'),
+      ),
     ),
   );
 

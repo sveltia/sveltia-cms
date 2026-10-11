@@ -685,20 +685,6 @@ describe('assets/index', () => {
   });
 
   describe('getAssetByPath', () => {
-    /**
-     * @type {import('vitest').MockedFunction<typeof
-     * import('@sveltia/utils/file').decodeFilePath
-     * >}
-     */
-    let decodeFilePathMock;
-
-    beforeEach(async () => {
-      const { decodeFilePath } = await import('@sveltia/utils/file');
-
-      decodeFilePathMock = vi.mocked(decodeFilePath);
-      decodeFilePathMock.mockImplementation((path) => path); // Default passthrough
-    });
-
     it('should handle absolute paths', async () => {
       const { stripSlashes } = await import('@sveltia/utils/string');
       const stripSlashesMock = vi.mocked(stripSlashes);
@@ -823,8 +809,6 @@ describe('assets/index', () => {
       });
 
       expect(result).toEqual(mockAsset);
-      expect(decodeFilePathMock).toHaveBeenCalledWith('/assets/image.jpg');
-      expect(stripSlashesMock).toHaveBeenCalledWith('/assets/image.jpg');
     });
 
     it('should remove URL fragments with complex hashes', async () => {
@@ -856,7 +840,6 @@ describe('assets/index', () => {
       });
 
       expect(result).toEqual(mockAsset);
-      expect(decodeFilePathMock).toHaveBeenCalledWith('/assets/image.jpg');
     });
 
     it('should handle relative paths with fragments', async () => {
@@ -911,7 +894,6 @@ describe('assets/index', () => {
       });
 
       expect(result).toEqual(mockAsset);
-      expect(decodeFilePathMock).toHaveBeenCalledWith('image.jpg');
     });
 
     it('should handle @ prefixed paths as absolute', async () => {
@@ -943,6 +925,91 @@ describe('assets/index', () => {
       });
 
       expect(result).toEqual(mockAsset);
+    });
+
+    describe('with special characters in the file name', () => {
+      const globalFolder = {
+        internalPath: 'static/images',
+        publicPath: '/images',
+        collectionName: undefined,
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      /**
+       * Create an asset in the global media folder.
+       * @param {string} name File name.
+       * @returns {any} Asset.
+       */
+      const createAsset = (name) => ({
+        path: `static/images/${name}`,
+        name,
+        sha: 'abc123',
+        size: 1024,
+        kind: 'image',
+        folder: globalFolder,
+      });
+
+      beforeEach(async () => {
+        const { stripSlashes } = await import('@sveltia/utils/string');
+        const folders = await import('$lib/services/assets/folders');
+        const { createPath } = await import('$lib/services/utils/file');
+
+        vi.mocked(stripSlashes).mockImplementation((str) => str.replace(/^\/+|\/+$/g, ''));
+        vi.mocked(createPath).mockImplementation((paths) => paths.join('/'));
+        folders.allAssetFolders.current = [];
+        /** @type {any} */ (folders.globalAssetFolder).current = globalFolder;
+      });
+
+      afterEach(async () => {
+        const folders = await import('$lib/services/assets/folders');
+
+        /** @type {any} */ (folders.globalAssetFolder).current = {};
+      });
+
+      it('should find an asset whose unencoded name contains a `%` sign', () => {
+        const asset = createAsset('50% off.jpg');
+
+        allAssets.current = [asset];
+
+        expect(getAssetByPath({ value: '/images/50% off.jpg', collectionName: '' })).toEqual(asset);
+      });
+
+      it('should find an asset whose unencoded name contains a `#` sign', () => {
+        const asset = createAsset('photo #1.jpg');
+
+        allAssets.current = [createAsset('photo '), asset];
+
+        expect(getAssetByPath({ value: '/images/photo #1.jpg', collectionName: '' })).toEqual(
+          asset,
+        );
+      });
+
+      it('should find an asset whose encoded name contains a `#` sign', () => {
+        const asset = createAsset('photo #1.jpg');
+
+        allAssets.current = [asset];
+
+        expect(getAssetByPath({ value: '/images/photo%20%231.jpg', collectionName: '' })).toEqual(
+          asset,
+        );
+      });
+
+      it('should remove a fragment if the whole value doesn’t match', () => {
+        const asset = createAsset('logo.svg');
+
+        allAssets.current = [asset];
+
+        expect(getAssetByPath({ value: '/images/logo.svg#icon', collectionName: '' })).toEqual(
+          asset,
+        );
+        expect(
+          getAssetByPath({ value: '/images/missing.svg#icon', collectionName: '' }),
+        ).toBeUndefined();
+        expect(
+          getAssetByPath({ value: '/images/missing.svg', collectionName: '' }),
+        ).toBeUndefined();
+      });
     });
   });
 
@@ -3094,10 +3161,14 @@ describe('assets/index', () => {
       expect(createPath).toHaveBeenCalledWith(['content/posts/images/subfolder', 'photo.jpg']);
     });
 
-    it('should not modify internalPath when dirName does not start with publicPath', async () => {
+    it('should not resolve a path outside the public path to the media folder', async () => {
+      // A value whose directory isn’t the folder’s public path or below it, such as
+      // `/other/directory/photo.jpg` with the `/posts/images` public path, must not be looked up in
+      // the media folder by its file name, or the field would show a file the value doesn’t refer
+      // to. The folder is skipped, so nothing is found here
       const { stripSlashes } = await import('@sveltia/utils/string');
       const { getPathInfo } = await import('@sveltia/utils/file');
-      const { getAssetFolder } = await import('$lib/services/assets/folders');
+      const { getAssetFolder, allAssetFolders } = await import('$lib/services/assets/folders');
       const { createPath } = await import('$lib/services/utils/file');
 
       const mockAsset = {
@@ -3133,10 +3204,11 @@ describe('assets/index', () => {
       });
       vi.mocked(getAssetFolder).mockReturnValueOnce(mockFolder).mockReturnValueOnce(mockFolder);
 
-      // Mock createPath to use original internal path
-      vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
+      // Join the paths, so a lookup by the file name in the media folder would find the asset
+      vi.mocked(createPath).mockImplementation((paths) => paths.join('/'));
 
       allAssets.current = [mockAsset];
+      allAssetFolders.current = /** @type {any} */ ([mockFolder]);
 
       const result = getAssetByAbsolutePath({
         path: '/other/directory/photo.jpg',
@@ -3145,9 +3217,152 @@ describe('assets/index', () => {
         fileName: undefined,
       });
 
-      expect(result).toEqual(mockAsset);
-      // Verify that createPath was called with the original internal path (not modified)
-      expect(createPath).toHaveBeenCalledWith(['content/posts/images', 'photo.jpg']);
+      expect(result).toBeUndefined();
+      expect(createPath).not.toHaveBeenCalledWith(['content/posts/images', 'photo.jpg']);
+    });
+
+    describe('with a global media folder', () => {
+      const globalFolder = {
+        internalPath: 'static/images',
+        publicPath: '/images',
+        collectionName: undefined,
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      const logoAsset = {
+        path: 'static/images/logo.png',
+        name: 'logo.png',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: globalFolder,
+      };
+
+      /** @type {{ current: any }} */
+      let globalAssetFolder;
+
+      beforeEach(async () => {
+        const { stripSlashes } = await import('@sveltia/utils/string');
+        const folders = await import('$lib/services/assets/folders');
+        const { createPath } = await import('$lib/services/utils/file');
+
+        vi.mocked(stripSlashes).mockImplementation((str) => str.replace(/^\/+|\/+$/g, ''));
+        vi.mocked(createPath).mockImplementation((paths) => paths.join('/'));
+        ({ globalAssetFolder } = folders);
+        folders.allAssetFolders.current = [];
+        globalAssetFolder.current = globalFolder;
+      });
+
+      afterEach(() => {
+        globalAssetFolder.current = /** @type {any} */ ({});
+      });
+
+      it('should resolve a path at or below the public path', () => {
+        const subAsset = { ...logoAsset, path: 'static/images/brand/logo.png' };
+
+        allAssets.current = [logoAsset, subAsset];
+
+        expect(getAssetByAbsolutePath({ path: '/images/logo.png', collectionName: '' })).toEqual(
+          logoAsset,
+        );
+        expect(
+          getAssetByAbsolutePath({ path: '/images/brand/logo.png', collectionName: '' }),
+        ).toEqual(subAsset);
+      });
+
+      it('should not resolve a path whose directory only starts with the public path', () => {
+        allAssets.current = [logoAsset];
+
+        expect(
+          getAssetByAbsolutePath({ path: '/images-old/logo.png', collectionName: '' }),
+        ).toBeUndefined();
+      });
+
+      it('should not resolve a path in an unrelated directory with the same file name', () => {
+        allAssets.current = [logoAsset];
+
+        expect(
+          getAssetByAbsolutePath({ path: '/files/logo.png', collectionName: '' }),
+        ).toBeUndefined();
+      });
+
+      it('should still try a collection folder when the global one doesn’t match', async () => {
+        const { getAssetFolder } = await import('$lib/services/assets/folders');
+
+        const collectionFolder = {
+          internalPath: 'static/files',
+          publicPath: '/files',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        };
+
+        const fileAsset = { ...logoAsset, path: 'static/files/logo.png', folder: collectionFolder };
+
+        allAssets.current = [logoAsset, fileAsset];
+        vi.mocked(getAssetFolder).mockReturnValue(collectionFolder);
+
+        expect(
+          getAssetByAbsolutePath({ path: '/files/logo.png', collectionName: 'posts' }),
+        ).toEqual(fileAsset);
+      });
+
+      it('should resolve any absolute path below the `/` public path', () => {
+        const rootFolder = { ...globalFolder, internalPath: 'static', publicPath: '/' };
+        const oldAsset = { ...logoAsset, path: 'static/images-old/logo.png', folder: rootFolder };
+
+        globalAssetFolder.current = rootFolder;
+        allAssets.current = [logoAsset, oldAsset];
+
+        expect(
+          getAssetByAbsolutePath({ path: '/images-old/logo.png', collectionName: '' }),
+        ).toEqual(oldAsset);
+        expect(getAssetByAbsolutePath({ path: '/files/logo.png', collectionName: '' })).toBe(
+          undefined,
+        );
+      });
+
+      it('should resolve a path matching a public path with template tags', () => {
+        // The public path isn’t filled in, so the directory is matched with any segment in place
+        // of the tag; the internal path is given as if it were already filled in for the entry
+        const templateFolder = {
+          ...globalFolder,
+          internalPath: 'static/images/my-post',
+          publicPath: '/images/{{slug}}',
+        };
+
+        const postAsset = { ...logoAsset, path: 'static/images/my-post/logo.png' };
+
+        globalAssetFolder.current = templateFolder;
+        allAssets.current = [postAsset];
+
+        expect(
+          getAssetByAbsolutePath({ path: '/images/my-post/logo.png', collectionName: '' }),
+        ).toEqual(postAsset);
+      });
+
+      it('should keep looking up a path in a folder with a relative public path', () => {
+        // An entry-relative folder’s public path, like `.`, doesn’t start with a slash, so an
+        // absolute value can’t be checked against it
+        const relativeFolder = { ...globalFolder, publicPath: '.' };
+
+        globalAssetFolder.current = relativeFolder;
+        allAssets.current = [logoAsset];
+
+        expect(getAssetByAbsolutePath({ path: '/files/logo.png', collectionName: '' })).toEqual(
+          logoAsset,
+        );
+      });
+
+      it('should keep looking up a path in a folder without a public path', () => {
+        globalAssetFolder.current = { ...globalFolder, publicPath: '' };
+        allAssets.current = [logoAsset];
+
+        expect(getAssetByAbsolutePath({ path: '/files/logo.png', collectionName: '' })).toEqual(
+          logoAsset,
+        );
+      });
     });
 
     it('should not modify internalPath when any required parameters are missing', async () => {
@@ -3370,10 +3585,9 @@ describe('assets/index', () => {
       });
 
       expect(result).toBeUndefined();
-      // Verify that createPath was called with the original internal path (not modified)
-      // because `/posts/images-backup` doesn't start with `/posts/images/`
-      // But since no asset exists at that path, the result should be undefined
-      expect(createPath).toHaveBeenCalledWith(['content/posts/images', 'photo.jpg']);
+      // `/posts/images-backup` is neither `/posts/images` nor below it, so the folder is skipped
+      // instead of being looked up by the file name
+      expect(createPath).not.toHaveBeenCalledWith(['content/posts/images', 'photo.jpg']);
     });
 
     it('should modify internalPath when dirName properly starts with publicPath plus slash', async () => {

@@ -87,3 +87,30 @@ test('restores the search from the URL after a reload', async ({ page }) => {
     page.getByRole('main').getByRole('grid', { name: 'Entries' }).getByRole('row'),
   ).toHaveText([/Projects.*Bridge/]);
 });
+
+test('goes back to the asset folder the search started from when cleared', async ({ page }) => {
+  await page.getByRole('radio', { name: 'Assets' }).click();
+
+  const folders = page.getByRole('listbox', { name: 'Asset Folder List' });
+
+  await expect(folders.getByRole('option', { selected: true })).toBeVisible();
+
+  const libraryURL = page.url();
+
+  await folders.getByRole('option', { name: /Projects/ }).click();
+  await expect(page).toHaveURL(/#\/assets\/static\/projects$/);
+
+  const search = page.getByRole('searchbox', { name: 'Search for assets…' });
+
+  await search.fill('bridge');
+  await expect(page).toHaveURL(/#\/search\/bridge$/);
+
+  // Clearing the terms goes back to the folder, not to the content library
+  await search.fill('');
+  await expect(page).toHaveURL(/#\/assets\/static\/projects$/);
+  await expect(page.getByRole('searchbox', { name: 'Search for assets…' })).toBeVisible();
+
+  // Rather than adding another page to the history
+  await page.goBack();
+  await expect(page).toHaveURL(libraryURL);
+});

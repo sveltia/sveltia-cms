@@ -124,6 +124,89 @@ describe('MapEditor', () => {
     await expect.element(page.getByRole('alert')).toHaveTextContent('No results found.');
   });
 
+  test('shows the results for the latest query only, even if an earlier one finishes last', async () => {
+    /** @type {Record<string, (results: any[]) => void>} */
+    const resolvers = {};
+
+    vi.mocked(searchLocations).mockImplementation(
+      (query) =>
+        new Promise((resolve) => {
+          resolvers[query] = resolve;
+        }),
+    );
+
+    const { container } = await renderEditor();
+    const searchBox = page.getByRole('searchbox');
+    const listbox = page.getByRole('listbox', { name: 'Search Results' });
+
+    await waitForMap(container);
+    await searchBox.fill('Par');
+    await expect.poll(() => resolvers.Par).toBeDefined();
+    await searchBox.fill('Paris');
+    await expect.poll(() => resolvers.Paris).toBeDefined();
+
+    // The earlier query finishes first: the latest one is still being searched
+    resolvers.Par([{ place_id: 1, display_name: 'Parma, Italy', lat: '44.8', lon: '10.3' }]);
+    await sleep(100);
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Searching…');
+    await expect.element(listbox).not.toBeInTheDocument();
+
+    resolvers.Paris([{ place_id: 2, display_name: 'Paris, France', lat: '48.9', lon: '2.4' }]);
+    await expect
+      .element(listbox.getByRole('option', { name: 'Paris, France' }))
+      .toBeInTheDocument();
+    await expect.element(page.getByRole('alert')).not.toBeInTheDocument();
+  });
+
+  test('ignores the results of an earlier query that finishes last', async () => {
+    /** @type {Record<string, (results: any[]) => void>} */
+    const resolvers = {};
+
+    vi.mocked(searchLocations).mockImplementation(
+      (query) =>
+        new Promise((resolve) => {
+          resolvers[query] = resolve;
+        }),
+    );
+
+    const { container } = await renderEditor();
+    const searchBox = page.getByRole('searchbox');
+    const listbox = page.getByRole('listbox', { name: 'Search Results' });
+
+    await waitForMap(container);
+    await searchBox.fill('Par');
+    await expect.poll(() => resolvers.Par).toBeDefined();
+    await searchBox.fill('Paris');
+    await expect.poll(() => resolvers.Paris).toBeDefined();
+
+    resolvers.Paris([{ place_id: 2, display_name: 'Paris, France', lat: '48.9', lon: '2.4' }]);
+    await expect
+      .element(listbox.getByRole('option', { name: 'Paris, France' }))
+      .toBeInTheDocument();
+
+    resolvers.Par([{ place_id: 1, display_name: 'Parma, Italy', lat: '44.8', lon: '10.3' }]);
+    await sleep(100);
+    await expect
+      .element(listbox.getByRole('option', { name: 'Paris, France' }))
+      .toBeInTheDocument();
+    await expect
+      .element(listbox.getByRole('option', { name: 'Parma, Italy' }))
+      .not.toBeInTheDocument();
+  });
+
+  test('stops searching once the query is cleared', async () => {
+    vi.mocked(searchLocations).mockImplementation(() => new Promise(() => {}));
+
+    const { container } = await renderEditor();
+    const searchBox = page.getByRole('searchbox');
+
+    await waitForMap(container);
+    await searchBox.fill('Par');
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Searching…');
+    await searchBox.fill('');
+    await expect.element(page.getByRole('alert')).not.toBeInTheDocument();
+  });
+
   test('uses the current location', async () => {
     const { props, container } = await renderEditor();
 

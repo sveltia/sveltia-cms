@@ -6,12 +6,14 @@ import { getStockAssetMediaLibraryOptions } from '$lib/services/integrations/med
 import {
   getFirstDefaultLibraryName,
   getInsertedResources,
+  getLocationResources,
   getPickedFolderPublicPaths,
   getSelectionWithResource,
   getStockAssetProviderEntries,
   getUnsavedAssetSubfolderPath,
   isFolderOffered,
   sortServicesByName,
+  trackInsertedExternalAssets,
 } from './select-assets-dialog.svelte';
 
 vi.mock('$lib/services/assets/info', () => ({
@@ -292,5 +294,69 @@ describe('getSelectionWithResource()', () => {
     expect(
       getSelectionWithResource({ resources: [], resource: b, isSame: isSameAsB, multiple: true }),
     ).toEqual([b]);
+  });
+});
+
+describe('getLocationResources()', () => {
+  test('selects the URL entered earlier on coming back to Enter URL', () => {
+    expect(
+      getLocationResources({ libraryName: 'enter-url', enteredURL: ' https://example.com/a.png ' }),
+    ).toEqual([{ url: 'https://example.com/a.png' }]);
+  });
+
+  test('selects nothing without a URL', () => {
+    expect(getLocationResources({ libraryName: 'enter-url', enteredURL: ' ' })).toEqual([]);
+  });
+
+  test('selects nothing on another location', () => {
+    expect(
+      getLocationResources({ libraryName: 'default-global', enteredURL: 'https://example.com/' }),
+    ).toEqual([]);
+  });
+});
+
+describe('trackInsertedExternalAssets()', () => {
+  const asset = /** @type {any} */ ({ id: '1', downloadURL: 'https://example.com/1.jpg' });
+  const assets = new Map([[asset.downloadURL, asset]]);
+  const options = /** @type {any} */ ({ apiKey: 'key' });
+
+  test('reports the inserted assets the service has listed', () => {
+    const trackDownload = vi.fn().mockResolvedValue(undefined);
+
+    trackInsertedExternalAssets({
+      trackDownload,
+      resources: [{ url: asset.downloadURL }, { url: 'https://example.com/other.jpg' }, {}],
+      assets,
+      options,
+    });
+
+    expect(trackDownload).toHaveBeenCalledTimes(1);
+    expect(trackDownload).toHaveBeenCalledWith(asset, options);
+  });
+
+  test('ignores a failure', async () => {
+    const trackDownload = vi.fn().mockRejectedValue(new Error('Boom'));
+
+    expect(() =>
+      trackInsertedExternalAssets({
+        trackDownload,
+        resources: [{ url: asset.downloadURL }],
+        assets,
+        options,
+      }),
+    ).not.toThrow();
+    await Promise.resolve();
+    expect(trackDownload).toHaveBeenCalledTimes(1);
+  });
+
+  test('does nothing for a service that doesn’t track downloads', () => {
+    expect(() =>
+      trackInsertedExternalAssets({
+        trackDownload: undefined,
+        resources: [{ url: asset.downloadURL }],
+        assets,
+        options,
+      }),
+    ).not.toThrow();
   });
 });

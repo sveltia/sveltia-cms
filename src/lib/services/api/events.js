@@ -1,11 +1,11 @@
 import { isObject } from '@sveltia/utils/object';
-import { flatten } from 'flat';
 
 import { loadImmutable } from '$lib/services/api/immutable';
 import { createEntryMap } from '$lib/services/api/preview-data';
 import { eventHookRegistry } from '$lib/services/api/registries';
 import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
 import { user } from '$lib/services/user/account.svelte';
+import { flattenKeys } from '$lib/services/utils/object';
 
 /**
  * @import {
@@ -52,6 +52,8 @@ export const UPDATABLE_EVENT_TYPES = ['preSave'];
  * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
  * only.
  * @param {boolean} [args.isNew] Whether the entry is being created rather than updated.
+ * @throws {Error} When a `pre*` hook throws, which stops the operation. An error thrown by a
+ * `post*` hook is only logged, as the operation has already been carried out by then.
  */
 export const callEventHooks = async ({
   type,
@@ -104,38 +106,52 @@ export const callEventHooks = async ({
     // multi-file i18n entry can be missing its default locale file, in which case any locale stands
     // in rather than the destructuring throwing
     const { content, path } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {};
+    let updatedMap;
 
-    // eslint-disable-next-line no-await-in-loop
-    const updatedMap = await hook.handler({
-      author: { login, name },
-      // Create an Immutable.js Map representing the entry data with deep conversion
-      entry: createEntryMap({
-        content,
-        otherLocales,
-        locales,
-        slug,
-        path,
-        isNew,
-        collectionName,
-        associatedAssets,
-      }),
-    });
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      updatedMap = await hook.handler({
+        author: { login, name },
+        // Create an Immutable.js Map representing the entry data with deep conversion
+        entry: createEntryMap({
+          content,
+          otherLocales,
+          locales,
+          slug,
+          path,
+          isNew,
+          collectionName,
+          associatedAssets,
+        }),
+      });
+    } catch (error) {
+      // A `pre*` hook can stop the operation by throwing, but a `post*` hook runs once the change
+      // has been made, so its failure can’t undo it. Report the error and carry on with the next
+      // hook, rather than making a successful save or publish look like it failed. No `post*` hook
+      // can update the entry, so there’s nothing more to do with this one
+      if (!type.startsWith('post')) {
+        throw error;
+      }
+
+      // eslint-disable-next-line no-console
+      console.error(`The ${type} event hook failed`, error);
+    }
 
     // If the hook returned an updated entry, merge its data back into the savingEntry
     if (UPDATABLE_EVENT_TYPES.includes(type) && isMap(updatedMap)) {
       const map = updatedMap.toJS();
 
       if (isObject(map.data) && isObject(map.i18n)) {
-        locales[defaultLocale].content = flatten(map.data);
+        locales[defaultLocale].content = flattenKeys(map.data);
 
         otherLocales.forEach((locale) => {
           if (isObject(map.i18n[locale]?.data)) {
-            locales[locale].content = flatten(map.i18n[locale].data);
+            locales[locale].content = flattenKeys(map.i18n[locale].data);
           }
         });
       } else {
         // `map` is always a plain object here (guaranteed by `isMap(updatedMap)` above)
-        locales[defaultLocale].content = flatten(map);
+        locales[defaultLocale].content = flattenKeys(map);
       }
     }
   }

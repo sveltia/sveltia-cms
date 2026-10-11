@@ -6,7 +6,7 @@ import { goto, parseLocation } from '$lib/services/app/navigation';
 import { backend, backendName, selectBackend } from '$lib/services/backends';
 import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { NOT_COLLABORATOR_ERROR_MESSAGE } from '$lib/services/backends/git/shared/errors';
-import { repositoryHead } from '$lib/services/backends/git/shared/head';
+import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
 import { startRemoteChangePolling, stopRemoteChangePolling } from '$lib/services/backends/poll';
 import { cmsConfig } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
@@ -16,6 +16,7 @@ import { resetPageLiveness } from '$lib/services/deployments/ping';
 import { initDeployments } from '$lib/services/deployments/resolve';
 import { user } from '$lib/services/user/account.svelte';
 import { LEGACY_USER_STORAGE_KEYS, USER_STORAGE_KEY } from '$lib/services/user/constants';
+import { decodeMagicLinkData } from '$lib/services/user/magic-link';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import {
   publishingBranches,
@@ -72,12 +73,16 @@ const clearUserCache = async () => {
 /**
  * Remove the API keys and log-in credentials for integrations, such as translation services and
  * cloud storage, from the user preferences, so they don’t remain on the device once the user has
- * signed out. Other preferences, like the theme and language, are kept. This is only done on an
- * explicit sign-out, not when an expired or revoked token sends the user back to the sign-in form.
+ * signed out. The deploy hook URL and its `Authorization` header go too, as either can carry a
+ * secret that triggers a deployment. Other preferences, like the theme and language, are kept. This
+ * is only done on an explicit sign-out, not when an expired or revoked token sends the user back to
+ * the sign-in form.
  */
 const clearIntegrationCredentials = () => {
   prefs.apiKeys = {};
   delete prefs.logins;
+  delete prefs.deployHookURL;
+  delete prefs.deployHookAuthHeader;
 };
 
 /**
@@ -150,7 +155,7 @@ export const parseMagicLink = () => {
   let copiedPrefs = undefined;
 
   try {
-    const data = JSON.parse(atob(encodedData));
+    const data = decodeMagicLinkData(encodedData);
 
     if (isObject(data) && typeof data.token === 'string') {
       _user = { token: data.token };
@@ -366,6 +371,9 @@ export const signInManually = async (_backendName, token) => {
 
   let _user;
 
+  // An account may be left in the store from a previous session whose data failed to load. It may
+  // be someone else’s, so its tokens mustn’t be picked up while signing in, e.g. as renewed ones
+  user.account = undefined;
   auth.signingIn = true;
 
   try {
@@ -409,6 +417,9 @@ export const signInManually = async (_backendName, token) => {
  */
 export const signOut = async () => {
   stopRemoteChangePolling();
+  // A check for remote changes, or a load, still on its way belongs to this session, so it mustn’t
+  // put its results back into the stores once they have been reset below
+  dataGeneration.current += 1;
   await backend.current?.signOut();
   await clearUserCache();
   clearIntegrationCredentials();

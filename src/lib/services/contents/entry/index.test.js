@@ -1377,6 +1377,16 @@ describe('Test getEntryRepoBlobURL()', () => {
     );
   });
 
+  test('should encode the characters in the path that have a meaning in a URL', () => {
+    const mockEntry = /** @type {any} */ ({
+      locales: { en: { path: 'content/posts/50% off #1.md' } },
+    });
+
+    expect(getEntryRepoBlobURL(mockEntry, 'en')).toBe(
+      'https://github.com/user/repo/blob/main/content/posts/50%25%20off%20%231.md?plain=1',
+    );
+  });
+
   test('should handle missing locale gracefully', () => {
     const mockEntry = {
       id: 'test-entry',
@@ -1393,6 +1403,6 @@ describe('Test getEntryRepoBlobURL()', () => {
 
     const result = getEntryRepoBlobURL(mockEntry, 'fr');
 
-    expect(result).toBe('https://github.com/user/repo/blob/main/undefined?plain=1');
+    expect(result).toBe('https://github.com/user/repo/blob/main/?plain=1');
   });
 });

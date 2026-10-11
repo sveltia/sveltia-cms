@@ -1,10 +1,9 @@
-import { flatten } from 'flat';
-
 import { suspendAutoDuplication } from '$lib/services/contents/draft';
 import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { getSubtree } from '$lib/services/contents/entry/subtree';
 import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
+import { flattenKeys } from '$lib/services/utils/object';
 
 /**
  * @import { DraftValueStoreKey, EntryDraft, InternalLocaleCode } from '$lib/types/private';
@@ -76,13 +75,13 @@ export const updateListField = ({
 
   suspendAutoDuplication(() => {
     updateObject(draft[valueStoreKey][locale], {
-      ...flatten({ [keyPath]: valueList }),
+      ...flattenKeys(valueList, keyPath),
       ...valueListRemainder,
     });
 
     if (locale === defaultLocale) {
       updateObject(draft.expanderStates._, {
-        ...flatten({ [keyPath]: expanderStateList }),
+        ...flattenKeys(expanderStateList, keyPath),
         ...expanderStateListRemainder,
       });
     }
@@ -211,6 +210,8 @@ export const moveMultiValueItem = ({
  * @param {any[]} args.newValues Values to add.
  * @param {number} [args.replaceIndex] Index of the item to replace with the first value. The other
  * values are ignored, because an item can only be replaced by one.
+ * @param {number} [args.max] Maximum number of items the field takes. The values that don’t fit are
+ * ignored, so dropping or picking more files than there’s room for doesn’t exceed the limit.
  */
 export const addMultiValueItems = ({
   draft,
@@ -219,6 +220,7 @@ export const addMultiValueItems = ({
   keyPath,
   newValues,
   replaceIndex,
+  max = Infinity,
 }) => {
   const values = draft[valueStoreKey][locale];
 
@@ -234,7 +236,7 @@ export const addMultiValueItems = ({
 
   const { length } = getMultiValueList(values, keyPath);
 
-  newValues.forEach((value, index) => {
+  newValues.slice(0, Math.max(0, max - length)).forEach((value, index) => {
     values[`${keyPath}.${length + index}`] = value;
   });
 };

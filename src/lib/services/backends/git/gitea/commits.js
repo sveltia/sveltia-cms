@@ -23,6 +23,7 @@ import { user } from '$lib/services/user/account.svelte';
  * @property {object} commit Commit information, including the commit SHA and creation date.
  * @property {string} commit.sha Commit SHA.
  * @property {string} commit.created Commit creation date in ISO format.
+ * @property {{ sha: string }[]} [commit.parents] Parent commits, each with its SHA.
  * @property {({ path: string, sha: string } | null)[]} files List of saved files, each with its
  * path and SHA. It can be `null` if the file was deleted.
  */
@@ -177,6 +178,9 @@ export const commitChanges = async (changes, options) => {
   return {
     sha: commit.sha,
     date: new Date(commit.created),
+    // Only the files being changed are checked, so the commit can land on top of someone else’s
+    // commit to another file; the caller tells that from the parent
+    parentSha: commit.parents?.[0]?.sha,
     files: Object.fromEntries(
       savedFiles.map((file, index) => [
         file?.path ?? changes[index].path,

@@ -289,6 +289,65 @@ describe('Test getDefaultValueMap()', () => {
         'tags.2': 'option3',
       });
     });
+
+    test('should convert dynamicValue to the matching option value', () => {
+      const args = { keyPath: 'rating', locale: '_default', defaultLocale: '_default' };
+      /** @type {SelectField} */
+      const numberField = { ...baseFieldConfig, name: 'rating', options: [1, 2, 3] };
+
+      expect(getDefaultValueMap({ ...args, fieldConfig: numberField, dynamicValue: '2' })).toEqual({
+        rating: 2,
+      });
+
+      /** @type {SelectField} */
+      const booleanField = {
+        ...baseFieldConfig,
+        name: 'rating',
+        options: [
+          { label: 'Yes', value: true },
+          { label: 'No', value: false },
+        ],
+      };
+
+      expect(
+        getDefaultValueMap({ ...args, fieldConfig: booleanField, dynamicValue: 'false' }),
+      ).toEqual({ rating: false });
+
+      // A value matching no option is kept as is
+      expect(getDefaultValueMap({ ...args, fieldConfig: numberField, dynamicValue: '4' })).toEqual({
+        rating: '4',
+      });
+
+      expect(
+        getDefaultValueMap({
+          ...args,
+          fieldConfig: { ...numberField, multiple: true },
+          dynamicValue: '1, 3, x',
+        }),
+      ).toEqual({ 'rating.0': 1, 'rating.1': 3, 'rating.2': 'x' });
+    });
+
+    test('should not split dynamicValue for a single select or relation field', () => {
+      const args = { keyPath: 'author', locale: '_default', defaultLocale: '_default' };
+      /** @type {SelectField} */
+      const selectField = { ...baseFieldConfig, name: 'author', options: ['Smith, John', 'Doe'] };
+
+      expect(
+        getDefaultValueMap({ ...args, fieldConfig: selectField, dynamicValue: ' Smith, John ' }),
+      ).toEqual({ author: 'Smith, John' });
+
+      /** @type {import('$lib/types/public').RelationField} */
+      const relationField = {
+        widget: 'relation',
+        name: 'author',
+        collection: 'authors',
+        value_field: 'name',
+      };
+
+      expect(
+        getDefaultValueMap({ ...args, fieldConfig: relationField, dynamicValue: 'Smith, John' }),
+      ).toEqual({ author: 'Smith, John' });
+    });
   });
 
   test('should use the value of a default given as an option object', () => {

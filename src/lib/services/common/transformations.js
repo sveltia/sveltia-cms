@@ -6,6 +6,7 @@ import dayjsUTC from 'dayjs/plugin/utc';
 
 import { slugify } from '$lib/services/common/slug';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
+import { getParser, parseWithFormatFallback } from '$lib/services/contents/fields/date-time/parse';
 import { getOrCreateBounded } from '$lib/services/utils/cache';
 
 /**
@@ -161,7 +162,8 @@ export const applyLowerCaseTransformation = (value) => String(value).toLowerCase
 
 /**
  * Transform the input value to a formatted string based on the provided format and time zone
- * options.
+ * options. A value other than a `Date` is parsed in the field’s own `format` if it has one,
+ * falling back to the default parsing if the value doesn’t match the format.
  * @param {any} value The input value to be transformed into a date string.
  * @param {DateTimeTransformationArgs} args Transformation arguments.
  * @param {DateTimeField} fieldConfig Field configuration containing date and time settings.
@@ -169,7 +171,7 @@ export const applyLowerCaseTransformation = (value) => String(value).toLowerCase
  */
 export const applyDateTransformation = (value, { format, timeZone }, fieldConfig) => {
   const sValue = String(value);
-  const { dateOnly, utc } = parseDateTimeConfig(fieldConfig);
+  const { format: storedFormat, dateOnly, utc } = parseDateTimeConfig(fieldConfig);
 
   const useUTC =
     timeZone === 'utc' ||
@@ -177,7 +179,11 @@ export const applyDateTransformation = (value, { format, timeZone }, fieldConfig
     (dateOnly && !!sValue.match(DATE_ONLY_REGEX)) ||
     (dateOnly && !!sValue.match(DATE_PART_REGEX));
 
-  const date = (useUTC ? dayjs.utc : dayjs)(sValue);
+  const date =
+    // A value in a format like `X` (Unix timestamp) can come as a number from the front matter
+    storedFormat && !(value instanceof Date)
+      ? parseWithFormatFallback({ value: sValue, format: storedFormat, parseAsUTC: useUTC })
+      : getParser(useUTC)(sValue);
 
   if (date.isValid()) {
     return date.format(format);

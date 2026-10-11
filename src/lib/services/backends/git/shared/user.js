@@ -22,6 +22,10 @@ import { user } from '$lib/services/user/account.svelte';
  * @returns {Promise<User>} User information.
  */
 export const fetchUserProfile = async ({ token, refreshToken }, backendName, fieldMap) => {
+  // The stored account may belong to someone else, e.g. a previous session the user is signing in
+  // again from, so its tokens are only taken if they change during the request
+  const tokenBefore = user.account?.token;
+
   const response = /** @type {Record<string, any>} */ (
     await fetchAPI('/user', { token, refreshToken })
   );
@@ -30,7 +34,7 @@ export const fetchUserProfile = async ({ token, refreshToken }, backendName, fie
 
   // Update the tokens because these may have been renewed in `refreshAccessToken` while fetching
   // the user info
-  if (_user?.token && _user.token !== token) {
+  if (_user?.token && _user.token !== token && _user.token !== tokenBefore) {
     token = _user.token;
     refreshToken = _user.refreshToken;
   }

@@ -1,7 +1,8 @@
 import { getAssetBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
 import { isMediaKind } from '$lib/services/assets/kinds';
-import { getEntriesByAssetURL } from '$lib/services/assets/references';
+import { getEntriesByAssets, getEntriesByAssetURL } from '$lib/services/assets/references';
 import { backend } from '$lib/services/backends';
+import { encodePath } from '$lib/services/backends/git/shared/url';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { getMediaMetadata } from '$lib/services/utils/media';
 
@@ -90,31 +91,29 @@ export const getAssetDetails = async (asset) => {
   return {
     ...metaData,
     publicURL: getAssetPublicURL(asset),
-    repoBlobURL: blobBaseURL ? `${blobBaseURL}/${path}` : undefined,
+    // Encode the path, as a file name can contain `#`, `?` or `%`, which would break the URL
+    repoBlobURL: blobBaseURL ? `${blobBaseURL}/${encodePath(path)}` : undefined,
   };
 };
 
 /**
- * Get the URL an asset is referenced by in the entries: its public path, or its blob URL if it has
- * no public path, as with an asset in an entry-relative folder.
- * @param {Asset} asset Asset.
- * @returns {Promise<string | undefined>} URL, or `undefined` if the asset can’t be located.
- */
-const getAssetReferenceURL = async (asset) =>
-  getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true }) ??
-  (await getAssetBlobURL(asset));
-
-/**
- * Get the list of entries using the given asset.
+ * Get the list of entries using the given asset. An asset is matched by its public path, in the
+ * form it’s stored in a field value, or else by the asset itself, as in an entry-relative folder,
+ * where a value like `images/photo.jpg` refers to a different file in each entry’s folder, so only
+ * a value resolving to the asset refers to it.
  * @param {Asset} asset Asset.
  * @returns {Promise<Entry[]>} List of entries using the asset.
  */
 export const getAssetUsedEntries = async (asset) => {
-  const url = await getAssetReferenceURL(asset);
+  const url = asset.folder.entryRelative
+    ? undefined
+    : getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true });
 
-  if (!url) {
-    return [];
+  if (url) {
+    return getEntriesByAssetURL(url);
   }
 
-  return getEntriesByAssetURL(url);
+  const [entries] = await getEntriesByAssets([{ asset }]);
+
+  return entries;
 };

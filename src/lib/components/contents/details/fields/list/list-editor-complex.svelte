@@ -128,6 +128,9 @@
   /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
   const defaultLocale = $derived(entryDraft.current?.defaultLocale);
+  // A rich text editor component’s values live in the document of the locale they’re edited in,
+  // so its items can be added in any locale, with the subfields getting their defaults there
+  const inEditorComponent = valueStoreKey === 'extraValues';
   // The items can’t be added, removed or reordered in a read-only field, which includes a field
   // duplicated from the default locale, whether with its own `duplicate` strategy or along with an
   // ancestor’s, in another locale. Changing them there would change the default locale as well
@@ -161,6 +164,7 @@
   );
   const hasEditableSubFields = $derived(
     locale === defaultLocale ||
+      inEditorComponent ||
       allSubFields.some(({ i18n: subI18n }) => isFieldTranslatable(subI18n)),
   );
   const isAddDisabled = $derived(isLocked || !hasEditableSubFields);
@@ -251,6 +255,10 @@
       return;
     }
 
+    // Shared by the locales, so a duplicated UUID that is the same in each gets the same new one
+    /** @type {Map<string, string>} */
+    const renewedUuids = new Map();
+
     updateComplexList(({ valueList, expanderStateList }) => {
       const { subFields } = resolveType(type);
 
@@ -262,9 +270,11 @@
         hasSingleSubField,
         field,
         type,
+        types,
         typeKey,
+        renewedUuids,
         locale,
-        defaultLocale: draft.defaultLocale,
+        defaultLocale: inEditorComponent ? locale : draft.defaultLocale,
       });
 
       valueList.splice(index, 0, newItem);
@@ -301,7 +311,13 @@
     });
 
     await sleep(50);
-    (getItem(index) ?? itemList?.closest('[role="group"]')?.querySelector('button'))?.focus();
+    // Move focus to the expander button of the item now at the same position, the previous item if
+    // the last one was removed, or the list’s own button if no item is left
+    (
+      getItem(index)?.querySelector('button') ??
+      getItem(index - 1)?.querySelector('button') ??
+      itemList?.closest('[role="group"]')?.querySelector('button')
+    )?.focus();
   };
 
   /**

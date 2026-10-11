@@ -1084,6 +1084,48 @@ describe('GitHub commits service', () => {
       expect(result[1].sha).toBe('oldest');
     });
 
+    test('keeps the history when a commit has no author', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          history_0: {
+            target: {
+              history: {
+                nodes: [
+                  { oid: 'no-author', author: null, committedDate: '2024-01-02T00:00:00Z' },
+                  {
+                    oid: 'with-author',
+                    author: { name: 'Alice', email: 'alice@example.com', user: null },
+                    committedDate: '2024-01-01T00:00:00Z',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result).toEqual([
+        {
+          sha: 'no-author',
+          authorName: '',
+          authorEmail: undefined,
+          authorAvatarURL: undefined,
+          authorLogin: undefined,
+          date: new Date('2024-01-02T00:00:00Z'),
+        },
+        {
+          sha: 'with-author',
+          authorName: 'Alice',
+          authorEmail: 'alice@example.com',
+          authorAvatarURL: undefined,
+          authorLogin: undefined,
+          date: new Date('2024-01-01T00:00:00Z'),
+        },
+      ]);
+    });
+
     test('handles missing history nodes gracefully', async () => {
       vi.mocked(fetchGraphQL).mockResolvedValue({
         repository: {

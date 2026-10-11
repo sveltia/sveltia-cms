@@ -174,6 +174,70 @@ describe('events module', () => {
       consoleError.mockRestore();
     });
 
+    it.each(['postSave', 'postPublish', 'postUnpublish'])(
+      'should not throw if %s event hooks fail',
+      async (type) => {
+        const error = new Error('Event hook error');
+        const failingHandler = vi.fn().mockRejectedValue(error);
+        const nextHandler = vi.fn();
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        eventHookRegistry.add(/** @type {any} */ ({ name: type, handler: failingHandler }));
+        eventHookRegistry.add(/** @type {any} */ ({ name: type, handler: nextHandler }));
+
+        // The change has already been made by the time a `post*` hook runs, so its failure is only
+        // reported: a rejection would make a successful save or publish look like it failed
+        await expect(
+          callEventHooks(
+            /** @type {any} */ ({
+              type,
+              entry: { slug: 'test-post', locales: { en: { content: {}, path: 'posts/a.md' } } },
+              collection: { name: 'posts', _i18n: { defaultLocale: 'en' } },
+              collectionFile: null,
+              isNew: false,
+            }),
+          ),
+        ).resolves.toBeUndefined();
+
+        expect(consoleError).toHaveBeenCalledWith(`The ${type} event hook failed`, error);
+        // The other hooks still run
+        expect(nextHandler).toHaveBeenCalledOnce();
+
+        consoleError.mockRestore();
+      },
+    );
+
+    it.each(['preSave', 'prePublish', 'preUnpublish'])(
+      'should throw if %s event hooks fail, which stops the operation',
+      async (type) => {
+        const nextHandler = vi.fn();
+
+        eventHookRegistry.add(
+          /** @type {any} */ ({
+            name: type,
+            handler: vi.fn(async () => {
+              throw new Error('Event hook error');
+            }),
+          }),
+        );
+        eventHookRegistry.add(/** @type {any} */ ({ name: type, handler: nextHandler }));
+
+        await expect(
+          callEventHooks(
+            /** @type {any} */ ({
+              type,
+              entry: { slug: 'test-post', locales: { en: { content: {}, path: 'posts/a.md' } } },
+              collection: { name: 'posts', _i18n: { defaultLocale: 'en' } },
+              collectionFile: null,
+              isNew: false,
+            }),
+          ),
+        ).rejects.toThrow('Event hook error');
+
+        expect(nextHandler).not.toHaveBeenCalled();
+      },
+    );
+
     it('should fall back to another locale when the default one has no file', async () => {
       const handler = vi.fn();
 
@@ -682,6 +746,47 @@ describe('events module', () => {
       expect(savingEntry.locales.en.content).toEqual({
         title: 'Modified Title',
         body: 'Modified Body',
+      });
+    });
+
+    it('should keep the dotted keys in the data a preSave handler sees and returns', async () => {
+      /** @type {any} */
+      let receivedData;
+
+      const handler = vi.fn(({ entry }) => {
+        receivedData = entry.get('data').toJS();
+
+        return entry.setIn(['data', 'redirects', 'new.example.com'], 'c');
+      });
+
+      eventHookRegistry.add({ name: 'preSave', handler });
+
+      const savingEntry = {
+        slug: 'test-post',
+        locales: {
+          en: {
+            content: { 'redirects.example\uE000com': 'a', 'nav\uE000home': 'Home' },
+            path: 'posts/test-post.md',
+          },
+        },
+      };
+
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: { name: 'posts', _i18n: { defaultLocale: 'en' } },
+          collectionFile: null,
+          isNew: true,
+        }),
+      );
+
+      expect(receivedData).toEqual({ redirects: { 'example.com': 'a' }, 'nav.home': 'Home' });
+      // The content is flattened again with the dots escaped
+      expect(savingEntry.locales.en.content).toEqual({
+        'redirects.example\uE000com': 'a',
+        'redirects.new\uE000example\uE000com': 'c',
+        'nav\uE000home': 'Home',
       });
     });
 

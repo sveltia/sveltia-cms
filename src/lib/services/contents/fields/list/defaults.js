@@ -18,14 +18,16 @@ import { getSubtreeEntries } from '$lib/services/contents/entry/subtree';
 
 /**
  * Fill in the subfields a default item leaves out, so that the item has the same shape as one
- * added in the editor: each missing subfield gets its own default value, or an empty value.
+ * added in the editor: each missing subfield gets its own default value, or an empty value. Also
+ * used for the `default` of an Object field, which is an item of the same kind.
  * @param {object} args Arguments.
  * @param {Record<FieldKeyPath, any>} args.content Default value map being built.
- * @param {FieldKeyPath} args.itemKeyPath Key path of the item, e.g. `links.0`.
+ * @param {FieldKeyPath} args.itemKeyPath Key path of the item, e.g. `links.0`, or of the Object
+ * field, e.g. `author`.
  * @param {Field[]} args.fields Subfields of the item.
  * @param {GetDefaultValueMapFuncArgs} args.funcArgs Arguments given to the field’s function.
  */
-const populateMissingSubfields = ({ content, itemKeyPath, fields, funcArgs }) => {
+export const populateMissingSubfields = ({ content, itemKeyPath, fields, funcArgs }) => {
   const { locale, defaultLocale, populateDefault } = funcArgs;
   const keys = Object.keys(content);
 

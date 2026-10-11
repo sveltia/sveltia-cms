@@ -25,7 +25,11 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
 vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummaryFromContent: vi.fn(() => 'summary'),
 }));
-vi.mock('$lib/services/utils/file', () => ({
+vi.mock('$lib/services/workflow', () => ({
+  getUnpublishedEntriesByCollection: vi.fn(() => []),
+}));
+vi.mock('$lib/services/utils/file', async (importOriginal) => ({
+  ...(await importOriginal()),
   renameIfNeeded: vi.fn((slug) => slug),
   sanitizePath: vi.fn((path) =>
     path
@@ -1190,6 +1194,35 @@ describe('fillTemplate()', async () => {
     });
 
     fillTemplate('{{title}}', { collection, content: { title: 'New Post' } });
+  });
+
+  test('getExistingSlugs includes the entries still in a pull request', async () => {
+    await setupCmsConfig();
+
+    const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
+    const { getUnpublishedEntriesByCollection } = await import('$lib/services/workflow');
+    const { renameIfNeeded } = await import('$lib/services/utils/file');
+
+    vi.mocked(getEntriesByCollection).mockReturnValueOnce([
+      // @ts-ignore
+      { slug: 'published', locales: { en: { slug: 'published' } } },
+    ]);
+    // A new entry saved with Editorial Workflow is only in the pull request so far: a second one
+    // with the same title would otherwise take its slug, and with it its file and branch
+    vi.mocked(getUnpublishedEntriesByCollection).mockReturnValueOnce([
+      // @ts-ignore
+      { slug: 'new-post', locales: { en: { slug: 'new-post' } } },
+    ]);
+    vi.mocked(renameIfNeeded).mockImplementationOnce((slug, existingSlugs) => {
+      expect(existingSlugs).toEqual(['published', 'new-post']);
+
+      return `${slug}-1`;
+    });
+
+    expect(fillTemplate('{{title}}', { collection, content: { title: 'New Post' } })).toBe(
+      'new-post-1',
+    );
+    expect(getUnpublishedEntriesByCollection).toHaveBeenCalledWith(collection.name);
   });
 
   test('getExistingSlugs with locale returns locale-specific slugs', async () => {

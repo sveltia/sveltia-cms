@@ -1,5 +1,6 @@
 import { getField } from '$lib/services/contents/entry/fields';
 import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
+import { escapeKeySegment, unescapeKeySegment } from '$lib/services/utils/object';
 
 /**
  * @import { FlattenedEntryContent, GetFieldArgs } from '$lib/types/private';
@@ -35,7 +36,8 @@ export const getKeyValueField = (args) => {
 };
 
 /**
- * Get key-value pairs from the given flattened content.
+ * Get key-value pairs from the given flattened content. A key is stored escaped, so a dot in it
+ * isn’t taken as a key path delimiter, and is unescaped here.
  * @param {FlattenedEntryContent} content Flattened content for a locale.
  * @param {FieldKeyPath} keyPath Field key path.
  * @param {object} [options] Options.
@@ -49,14 +51,15 @@ export const getPairsFromContent = (content, keyPath, { live = true } = {}) => {
 
   return /** @type {[string, string][]} */ (
     getKeysByPrefix(content, prefix, { live }).map((key) => [
-      key.slice(prefix.length),
+      unescapeKeySegment(key.slice(prefix.length)),
       content[key],
     ])
   );
 };
 
 /**
- * Replace the key-value pairs stored in the given flattened content.
+ * Replace the key-value pairs stored in the given flattened content. A key is escaped, so a dot in
+ * it isn’t taken as a key path delimiter.
  * @param {FlattenedEntryContent} content Flattened content for a locale, modified in place.
  * @param {FieldKeyPath} keyPath Field key path.
  * @param {[string, string][]} pairs Key-value pairs.
@@ -79,7 +82,7 @@ export const setPairs = (content, keyPath, pairs) => {
   }
 
   pairs.forEach(([key, value]) => {
-    content[`${keyPath}.${key}`] = value;
+    content[`${keyPath}.${escapeKeySegment(key)}`] = value;
   });
 };
 

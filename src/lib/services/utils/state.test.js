@@ -318,11 +318,11 @@ describe('syncValues()', () => {
     });
 
     await wait();
-    // Both sides are synced on the first run: the converted value `''` equals the input, so it’s
-    // not written, but the converted input `''` differs from the `undefined` value, so it is
-    expect(writes).toEqual(['value ']);
-    expect(value.current).toBe('');
-    writes.length = 0;
+    // The input is synced on the first run, but the converted value `''` equals the input, so it’s
+    // not written. The field value isn’t written either, even though the input `''` converts to a
+    // different value: the input merely reflects the field value, which the user hasn’t edited
+    expect(writes).toEqual([]);
+    expect(value.current).toBeUndefined();
 
     value.current = 'a';
     await wait();
@@ -353,6 +353,51 @@ describe('syncValues()', () => {
     expect(value.current).toBe('c');
     sync?.updateValue();
     expect(writes).toEqual(['input b', 'value c']);
+
+    stop();
+  });
+
+  it('should keep a field value the input can’t represent until the input is edited', async () => {
+    const value = createRawState(/** @type {number | undefined} */ (4.5));
+    const input = createRawState('');
+    /** @type {string[]} */
+    const writes = [];
+
+    const stop = createRootEffect(() => {
+      syncValues(
+        () => value.current,
+        (newValue) => {
+          writes.push(`value ${newValue}`);
+          value.current = newValue;
+        },
+        () => input.current,
+        (newInput) => {
+          writes.push(`input ${newInput}`);
+          input.current = newInput;
+        },
+        (newValue) => String(newValue ?? ''),
+        (newInput) => Number.parseInt(newInput, 10),
+      );
+    });
+
+    await wait();
+    // The input shows the value, which converts back to `4`, but the stored value is kept
+    expect(writes).toEqual(['input 4.5']);
+    expect(value.current).toBe(4.5);
+    writes.length = 0;
+
+    // A value replaced from elsewhere is reflected in the input, and kept as well
+    value.current = 7.5;
+    await wait();
+    expect(writes).toEqual(['input 7.5']);
+    expect(value.current).toBe(7.5);
+    writes.length = 0;
+
+    // An edit is converted and written, and the input is normalized
+    input.current = '8.9';
+    await wait();
+    expect(writes).toEqual(['value 8', 'input 8']);
+    expect(value.current).toBe(8);
 
     stop();
   });

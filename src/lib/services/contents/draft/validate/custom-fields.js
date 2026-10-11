@@ -54,13 +54,21 @@ export const registerCustomFieldInstance = ({ locale, keyPath, instance }) => {
 };
 
 /**
- * Unregister a custom field instance and discard any cached or in-flight validation state.
+ * Unregister a custom field instance and discard any cached or in-flight validation state. Nothing
+ * happens if another instance has been registered under the same key path since: the field editors
+ * in a list are kept when the items are reordered or one is removed, so the key path an editor
+ * unregisters may already belong to the editor of another item.
  * @param {object} args Arguments.
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {any} args.instance Instance registered by the caller, if any.
  */
-export const unregisterCustomFieldInstance = ({ locale, keyPath }) => {
+export const unregisterCustomFieldInstance = ({ locale, keyPath, instance }) => {
   const cacheKey = getCacheKey(locale, keyPath);
+
+  if (customFieldInstances.has(cacheKey) && customFieldInstances.get(cacheKey) !== instance) {
+    return;
+  }
 
   customFieldInstances.delete(cacheKey);
   validationCache.delete(cacheKey);

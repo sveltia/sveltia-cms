@@ -36,16 +36,43 @@ import { normalizeFieldName } from '$lib/services/contents/fields/relation/helpe
  */
 
 /**
- * Get the replacement value for a field name based on standard field types.
+ * Get the stored value of a field as a string, for the `value_field` template.
+ * @param {FlattenedEntryContent | undefined} valueMap Entry content.
+ * @param {FieldKeyPath} keyPath Field key path.
+ * @returns {string} Stored value, or an empty string if the field has none. A `0` or `false` is a
+ * value, not an empty field.
+ */
+const getStoredValue = (valueMap, keyPath) => {
+  const value = valueMap?.[keyPath];
+
+  return value === undefined || value === null ? '' : String(value);
+};
+
+/**
+ * Get the replacement value for a field name based on standard field types. An empty field is
+ * replaced with an empty string: falling back to the entry summary or slug here would put them in
+ * the `value_field` template, storing a reference that doesn’t identify the entry, or repeat them
+ * in a `display_fields` template. A label that comes out empty falls back to them instead; see
+ * {@link getLabelFallback}.
  * @param {string} fieldName The field name to get replacement for.
  * @param {ReplacementContext} context Context object containing `slug`, `locale`, and
  * `getDisplayValue` function.
  * @param {FallbackContext} fallbackContext Fallback context for additional content.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.stored] Whether to get the stored value rather than the display value.
+ * The `value_field` template takes the stored value, so a reference matches the referenced field
+ * as saved: a number without the thousands separators, the value of a Select field option rather
+ * than its label, a date in its stored format, and so on.
  * @returns {string} The replacement value.
  */
-export const getFieldReplacement = (fieldName, context, fallbackContext) => {
+export const getFieldReplacement = (
+  fieldName,
+  context,
+  fallbackContext,
+  { stored = false } = {},
+) => {
   const { slug, locale, getDisplayValue } = context;
-  const { content, locales, defaultLocale, identifierField } = fallbackContext;
+  const { content, locales, defaultLocale } = fallbackContext;
 
   if (fieldName === 'slug') {
     return slug;
@@ -57,19 +84,40 @@ export const getFieldReplacement = (fieldName, context, fallbackContext) => {
 
   const keyPath = stripFieldTagPrefix(fieldName);
 
+  if (stored) {
+    return (
+      getStoredValue(content, keyPath) ||
+      // A multi-file entry can lack a locale’s file, including the default locale’s
+      getStoredValue(locales[defaultLocale]?.content, keyPath)
+    );
+  }
+
+  return getDisplayValue(keyPath) || getDisplayValue(keyPath, defaultLocale) || '';
+};
+
+/**
+ * Get the label of an option whose `display_fields` template comes out empty: the entry summary,
+ * or the slug if the entry has none.
+ * @param {ReplacementContext} context Replacement context.
+ * @param {FallbackContext} fallbackContext Fallback context.
+ * @returns {string} Label.
+ */
+export const getLabelFallback = (context, fallbackContext) => {
+  const { content, locales, defaultLocale, identifierField } = fallbackContext;
+
   return (
-    getDisplayValue(keyPath) ||
-    getDisplayValue(keyPath, defaultLocale) ||
     getEntrySummaryFromContent(content, { identifierField }) ||
-    getEntrySummaryFromContent(locales[defaultLocale]?.content || {}, {
-      identifierField,
-    }) ||
-    slug
+    getEntrySummaryFromContent(locales[defaultLocale]?.content || {}, { identifierField }) ||
+    context.slug
   );
 };
 
 /**
- * Replace all template tags in the given strings with actual values.
+ * Replace all template tags in the given strings with actual values: the stored field values in the
+ * value, and the display values in the label and search value. The value is left empty if
+ * any tag in its template has no value, as such a value can’t identify the entry; the caller
+ * leaves out an option without a value. The label and search value are trimmed, and the label
+ * falls back to {@link getLabelFallback} if it comes out empty.
  * @param {RelationOption} templates Object containing `label`, `value`, and `searchValue`
  * templates.
  * @param {string[]} fieldNames Array of field names to replace.
@@ -79,16 +127,35 @@ export const getFieldReplacement = (fieldName, context, fallbackContext) => {
  */
 export const replaceTemplateFields = (templates, fieldNames, context, fallbackContext) => {
   let { label, value, searchValue } = templates;
+  let hasEmptyValueTag = false;
 
   fieldNames.forEach((fieldName) => {
+    const tag = `{{${fieldName}}}`;
     const replacement = getFieldReplacement(fieldName, context, fallbackContext);
 
-    label = label.replaceAll(`{{${fieldName}}}`, () => replacement);
-    value = value.replaceAll(`{{${fieldName}}}`, () => replacement);
-    searchValue = searchValue?.replaceAll(`{{${fieldName}}}`, () => replacement) ?? '';
+    if (value.includes(tag)) {
+      const storedValue = getFieldReplacement(fieldName, context, fallbackContext, {
+        stored: true,
+      });
+
+      if (!storedValue) {
+        hasEmptyValueTag = true;
+      }
+
+      value = value.replaceAll(tag, () => storedValue);
+    }
+
+    label = label.replaceAll(tag, () => replacement);
+    searchValue = searchValue?.replaceAll(tag, () => replacement) ?? '';
   });
 
-  return { label, value, searchValue };
+  return {
+    // Trim the spaces around an empty field, e.g. the second of the `display_fields` joined with
+    // a space
+    label: label.trim() || getLabelFallback(context, fallbackContext),
+    value: hasEmptyValueTag ? '' : value,
+    searchValue: searchValue.trim(),
+  };
 };
 
 /**

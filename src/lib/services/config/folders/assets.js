@@ -154,8 +154,12 @@ export const normalizeAssetFolder = ({
     internalSubPath: entryRelative ? stripSlashes(mediaFolder) : undefined,
     publicPath:
       // Prefix the public path with `/` unless it’s empty or starting with `.` (entry-relative
-      // setting) or starting with `@` (framework-specific)
-      /^($|[.@])/.test(publicFolder) ? publicFolder : `/${stripSlashes(publicFolder)}`,
+      // setting) or starting with `@` (framework-specific). A trailing slash is removed either way,
+      // like the global public folder’s, so a path can be joined with `/` and a file name; `./`
+      // becomes `.`, which stores the same `./photo.jpg` value
+      /^($|[.@])/.test(publicFolder)
+        ? publicFolder.replace(/(?<=.)\/+$/, '')
+        : `/${stripSlashes(publicFolder)}`,
     entryRelative,
     hasTemplateTags: hasTemplateTags(mediaFolder),
     label,

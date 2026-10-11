@@ -11,6 +11,7 @@ import {
   getArrayItemTarget,
   planMultiFileChange,
   planSingleFileChange,
+  removeDisabledLocales,
 } from './changes';
 import { buildEntryFileChanges } from './file-changes';
 
@@ -1107,6 +1108,104 @@ describe('draft/save/changes', () => {
         previousPath: undefined,
         currentPath: 'posts/en/same-post.md',
       });
+    });
+  });
+
+  describe('plans for an entry someone else has deleted', () => {
+    it('should create the single file rather than move it', () => {
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml-frontmatter' },
+          _i18n: { i18nEnabled: false, defaultLocale: 'en' },
+        },
+        isNew: false,
+        originalEntry: { locales: { en: { slug: 'old', path: 'posts/old.md' } } },
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: { en: { slug: 'new', path: 'posts/new.md', content: { title: 'New' } } },
+      };
+
+      // The old file is gone, so there’s nothing to move, and no SHA to look up for it
+      expect(planSingleFileChange({ draft, savingEntry, recreate: true })).toEqual({
+        action: 'create',
+        slug: 'new',
+        path: 'posts/new.md',
+        previousPath: undefined,
+        currentPath: undefined,
+      });
+    });
+
+    it('should create every locale file rather than update, move or delete it', () => {
+      const draft = {
+        collection: { _type: 'entry', _file: { format: 'yaml-frontmatter' } },
+        isNew: false,
+        originalLocales: { en: true, fr: true, de: true },
+        currentLocales: { en: true, fr: true, de: false },
+        originalEntry: {
+          locales: {
+            en: { slug: 'post', path: 'posts/en/post.md' },
+            fr: { slug: 'post', path: 'posts/fr/post.md' },
+            de: { slug: 'post', path: 'posts/de/post.md' },
+          },
+        },
+        collectionFile: undefined,
+      };
+
+      const savingEntry = {
+        locales: {
+          en: { slug: 'post', path: 'posts/en/post.md', content: { title: 'Post' } },
+          fr: { slug: 'renamed', path: 'posts/fr/renamed.md', content: { title: 'Post' } },
+          de: { path: 'posts/de/post.md' },
+        },
+      };
+
+      /**
+       * Plan the change to the file of the given locale.
+       * @param {string} locale Locale.
+       * @returns {any} Planned change.
+       */
+      const plan = (locale) => planMultiFileChange({ draft, savingEntry, locale, recreate: true });
+
+      expect(plan('en')).toEqual({
+        action: 'create',
+        slug: 'post',
+        path: 'posts/en/post.md',
+        previousPath: undefined,
+        currentPath: undefined,
+      });
+      expect(plan('fr')).toEqual({
+        action: 'create',
+        slug: 'renamed',
+        path: 'posts/fr/renamed.md',
+        previousPath: undefined,
+        currentPath: undefined,
+      });
+      // The file of the locale turned off is gone along with the others
+      expect(plan('de')).toBeUndefined();
+    });
+  });
+
+  describe('removeDisabledLocales', () => {
+    it('should leave out the locales without content', () => {
+      const entry = {
+        id: 'id',
+        slug: 'post',
+        locales: {
+          en: { slug: 'post', path: 'posts/post.en.md', content: { title: 'Post' } },
+          fr: { path: 'posts/post.fr.md' },
+        },
+      };
+
+      expect(removeDisabledLocales(entry)).toEqual({
+        id: 'id',
+        slug: 'post',
+        locales: { en: entry.locales.en },
+      });
+      // The entry the change plan was worked out from is left alone
+      expect(Object.keys(entry.locales)).toEqual(['en', 'fr']);
     });
   });
 

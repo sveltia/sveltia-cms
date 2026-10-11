@@ -7,7 +7,7 @@ import {
   getAssetUsedEntries,
 } from '$lib/services/assets/details';
 import { getAssetBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
-import { getEntriesByAssetURL } from '$lib/services/assets/references';
+import { getEntriesByAssets, getEntriesByAssetURL } from '$lib/services/assets/references';
 import { getMediaMetadata } from '$lib/services/utils/media';
 
 /**
@@ -23,6 +23,7 @@ vi.mock('$lib/services/assets/info', () => ({
 }));
 
 vi.mock('$lib/services/assets/references', () => ({
+  getEntriesByAssets: vi.fn(),
   getEntriesByAssetURL: vi.fn(),
 }));
 
@@ -89,6 +90,16 @@ describe('assets/details', () => {
         repoBlobURL: 'https://github.com/a/b/blob/main/static/images/photo.jpg',
       });
       expect(getMediaMetadata).toHaveBeenCalledWith(asset, 'blob:test', 'image');
+    });
+
+    it('should encode special characters in the repository URL', async () => {
+      const details = await getAssetDetails(
+        createAsset({ name: '50% off #1.jpg', path: 'static/images/50% off #1.jpg' }),
+      );
+
+      expect(details.repoBlobURL).toBe(
+        'https://github.com/a/b/blob/main/static/images/50%25%20off%20%231.jpg',
+      );
     });
 
     it('should not include a repository URL when the backend has no blob base URL', async () => {
@@ -185,20 +196,34 @@ describe('assets/details', () => {
       expect(getAssetBlobURL).not.toHaveBeenCalled();
     });
 
-    it('should fall back to the blob URL for an asset without a public path', async () => {
+    it('should look up the entries by the asset itself when it has no public path', async () => {
+      const entries = /** @type {any[]} */ ([{ id: 'post-1' }]);
+      const asset = createAsset();
+
       vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
-      vi.mocked(getEntriesByAssetURL).mockResolvedValue([]);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([entries]);
 
-      await getAssetUsedEntries(createAsset());
-
-      expect(getEntriesByAssetURL).toHaveBeenCalledWith('blob:test');
+      await expect(getAssetUsedEntries(asset)).resolves.toBe(entries);
+      expect(getEntriesByAssets).toHaveBeenCalledWith([{ asset }]);
+      expect(getEntriesByAssetURL).not.toHaveBeenCalled();
+      expect(getAssetBlobURL).not.toHaveBeenCalled();
     });
 
-    it('should return an empty list when the asset cannot be located', async () => {
-      vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
-      vi.mocked(getAssetBlobURL).mockResolvedValue(undefined);
+    it('should look up the entries by the asset itself in an entry-relative folder', async () => {
+      // A path relative to the entry, like `images/photo.jpg`, would match the same path in any
+      // entry, which refers to a different file in that entry’s own folder
+      const entries = /** @type {any[]} */ ([{ id: 'post-1' }]);
 
-      await expect(getAssetUsedEntries(createAsset())).resolves.toEqual([]);
+      const asset = createAsset({
+        path: 'content/posts/images/photo.jpg',
+        folder: /** @type {any} */ ({ internalPath: 'content/posts', entryRelative: true }),
+      });
+
+      vi.mocked(getAssetPublicURL).mockReturnValue('images/photo.jpg');
+      vi.mocked(getEntriesByAssets).mockResolvedValue([entries]);
+
+      await expect(getAssetUsedEntries(asset)).resolves.toBe(entries);
+      expect(getEntriesByAssets).toHaveBeenCalledWith([{ asset }]);
       expect(getEntriesByAssetURL).not.toHaveBeenCalled();
     });
   });

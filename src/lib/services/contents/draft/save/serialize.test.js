@@ -1144,6 +1144,87 @@ describe('Test serializeContent()', () => {
     expect(result).toHaveProperty('date');
   });
 
+  test('writes native TOML dates for the front matter format detected in the file', async () => {
+    const { TomlDate: TomlDateClass } = await vi.importActual('smol-toml');
+
+    getField.mockImplementation(({ keyPath }) => ({
+      name: keyPath,
+      widget: keyPath === 'date' ? 'datetime' : 'string',
+    }));
+
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      // A Markdown collection reads YAML, TOML and JSON front matter alike
+      collection: { _file: { format: 'frontmatter' }, _i18n: { canonicalSlug: { key: 'slug' } } },
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'date', widget: 'datetime' },
+      ],
+      isIndexFile: false,
+    };
+
+    const valueMap = { title: 'Test Post', date: '2024-01-02T03:04:05+09:00' };
+
+    // An existing file with TOML front matter
+    expect(
+      serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: { ...valueMap },
+        format: 'toml-frontmatter',
+      }).date,
+    ).toBeInstanceOf(TomlDateClass);
+    // An existing file with YAML front matter, or a new file, which gets YAML front matter
+    expect(
+      serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: { ...valueMap },
+        format: 'yaml-frontmatter',
+      }).date,
+    ).toBe('2024-01-02T03:04:05+09:00');
+    expect(serializeContent({ draft, locale: 'en', valueMap: { ...valueMap } }).date).toBe(
+      '2024-01-02T03:04:05+09:00',
+    );
+
+    getField.mockImplementation(({ keyPath }) => ({ name: keyPath, widget: 'string' }));
+  });
+
+  test('keeps object keys with a dot as they are', () => {
+    getField.mockImplementation(
+      ({ keyPath }) =>
+        /** @type {any} */ (
+          keyPath === 'redirects' ? { name: 'redirects', widget: 'keyvalue' } : undefined
+        ),
+    );
+
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: { _file: { format: 'json' }, _i18n: { canonicalSlug: { key: 'slug' } } },
+      fields: [{ name: 'redirects', widget: 'keyvalue' }],
+      isIndexFile: false,
+    };
+
+    // Content flattened with `flattenKeys()`, which escapes the dots in the keys: a KeyValue pair,
+    // and a property no field configuration describes, nested or not
+    const valueMap = {
+      'redirects.example\uE000com': 'a',
+      'redirects.v1\uE0002': 'b',
+      'nav\uE000home': 'Home',
+      'meta.og\uE000title': 'Title',
+    };
+
+    expect(serializeContent({ draft, locale: 'en', valueMap })).toEqual({
+      redirects: { 'example.com': 'a', 'v1.2': 'b' },
+      meta: { 'og.title': 'Title' },
+      'nav.home': 'Home',
+    });
+
+    getField.mockImplementation(({ keyPath }) => ({ name: keyPath, widget: 'string' }));
+  });
+
   test('serializes content with collectionFile', () => {
     /** @type {any} */
     const draft = {

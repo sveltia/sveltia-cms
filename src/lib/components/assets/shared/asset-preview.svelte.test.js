@@ -91,6 +91,91 @@ describe('AssetPreview', () => {
     await vi.waitFor(() => expect(onError).toHaveBeenCalledOnce());
   });
 
+  test('shows the next asset after one whose image has failed to load', async () => {
+    const broken = createMockAsset({
+      name: 'broken.png',
+      file: new File([new Uint8Array([1, 2, 3])], 'broken.png', { type: 'image/png' }),
+      asset: { unsaved: true },
+    });
+
+    const valid = createMockAsset({
+      name: 'dot.png',
+      file: new File([PNG_BYTES], 'dot.png', { type: 'image/png' }),
+      asset: { unsaved: true },
+    });
+
+    const { container, rerender } = await render(AssetPreview, {
+      kind: 'image',
+      asset: broken,
+      loading: 'eager',
+      dissolve: false,
+    });
+
+    await expect.poll(() => container.textContent?.trim()).toBe('draft');
+
+    // The info panel keeps the same preview while the focus moves to another asset
+    await rerender({ asset: valid });
+
+    await expect
+      .poll(() => {
+        const src = container.querySelector('img')?.getAttribute('src');
+
+        return !!src && src === valid.blobURL;
+      })
+      .toBe(true);
+    await expect
+      .poll(() => container.querySelector('.preview')?.classList.contains('loaded'))
+      .toBe(true);
+    expect(container.textContent?.trim()).toBe('');
+  });
+
+  test.each([
+    ['an image', undefined],
+    ['a thumbnail', /** @type {const} */ ('tile')],
+  ])('shows the latest asset after a quick move from one to another, as %s', async (_, variant) => {
+    const { promise: firstFile, resolve: resolveFirst } = Promise.withResolvers();
+
+    // The first asset is read from a file handle, which takes a while
+    const first = createMockAsset({
+      name: 'first.png',
+      asset: { handle: /** @type {any} */ ({ getFile: vi.fn(() => firstFile) }) },
+    });
+
+    const second = createMockAsset({
+      name: 'second.png',
+      file: new File([PNG_BYTES], 'second.png', { type: 'image/png' }),
+      asset: { unsaved: true },
+    });
+
+    const { container, rerender } = await render(AssetPreview, {
+      kind: 'image',
+      asset: first,
+      variant,
+      loading: 'eager',
+      dissolve: false,
+    });
+
+    // Move on while the first asset is still being read
+    await sleep(50);
+    await rerender({ asset: second });
+
+    /**
+     * Get the source of the image shown.
+     * @returns {string | null | undefined} URL.
+     */
+    const getSrc = () => container.querySelector('img')?.getAttribute('src');
+
+    // The second asset shows up while the first one is still being read
+    await expect.poll(getSrc).toMatch(/^blob:/);
+
+    const src = getSrc();
+
+    // The first lookup ends, too late to replace the second asset
+    resolveFirst(new File([PNG_BYTES], 'first.png', { type: 'image/png' }));
+    await sleep(200);
+    expect(getSrc()).toBe(src);
+  });
+
   test('shows an icon for a document or an audio file without controls', async () => {
     const document = (await render(AssetPreview, { kind: 'document' })).container;
 

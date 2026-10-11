@@ -496,6 +496,65 @@ describe('integrations/media-libraries/default', () => {
       expect(result).toBe(jpegFile);
     });
 
+    it('should upload an animated image as is, as only its first frame would be kept', async () => {
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+
+      vi.mocked(transformImage).mockResolvedValue(new Blob(['still'], { type: 'image/webp' }));
+
+      // An animated WebP: the `VP8X` header with the animation flag
+      const animatedWebP = new File(
+        [
+          new Uint8Array([
+            ...[...'RIFF'].map((c) => c.charCodeAt(0)),
+            30,
+            0,
+            0,
+            0,
+            ...[...'WEBPVP8X'].map((c) => c.charCodeAt(0)),
+            10,
+            0,
+            0,
+            0,
+            0x02,
+            ...Array(9).fill(0),
+          ]),
+        ],
+        'loop.webp',
+        { type: 'image/webp' },
+      );
+
+      // An APNG: an `acTL` chunk before the image data
+      const animatedPNG = new File(
+        [
+          new Uint8Array([
+            0x89,
+            ...[...'PNG\r\n\x1a\n'].map((c) => c.charCodeAt(0)),
+            0,
+            0,
+            0,
+            8,
+            ...[...'acTL'].map((c) => c.charCodeAt(0)),
+            ...Array(12).fill(0),
+            0,
+            0,
+            0,
+            0,
+            ...[...'IDAT'].map((c) => c.charCodeAt(0)),
+            0,
+            0,
+            0,
+            0,
+          ]),
+        ],
+        'loop.png',
+        { type: 'image/png' },
+      );
+
+      await expect(transformFile(animatedWebP, { raster_image: {} })).resolves.toBe(animatedWebP);
+      await expect(transformFile(animatedPNG, { raster_image: {} })).resolves.toBe(animatedPNG);
+      expect(vi.mocked(transformImage)).not.toHaveBeenCalled();
+    });
+
     describe('HEIC', () => {
       /** @type {Blob} */
       let webpBlob;

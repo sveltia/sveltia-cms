@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets/state';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
-import { repositoryHead } from '$lib/services/backends/git/shared/head';
+import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
 import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
@@ -404,6 +404,42 @@ describe('git/shared/fetch', () => {
       expect(repositoryHead.current).toBe('abc123');
     });
 
+    it('should drop the data when it has been discarded while loading, e.g. on sign-out', async () => {
+      const entryFile = { path: 'posts/a.md', name: 'a.md', sha: 'sha1', size: 10, type: 'entry' };
+
+      dataLoaded.current = false;
+      vi.mocked(createFileList).mockReturnValue({
+        count: 1,
+        entryFiles: [entryFile],
+        assetFiles: [],
+        configFiles: [],
+        allFiles: [entryFile],
+      });
+      vi.mocked(prepareEntries).mockImplementation(async () => {
+        // The user signs out while the files are being parsed
+        dataGeneration.current += 1;
+
+        return { entries: [{ id: 'a', locales: { en: { path: 'posts/a.md' } } }], errors: [] };
+      });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      // Nothing is left for the next user: the stores and the head are as the sign-out left them,
+      // so the next sign-in loads from scratch, and nothing is cached for the discarded session
+      expect(allEntries.current).toEqual([]);
+      expect(dataLoaded.current).toBe(false);
+      expect(repositoryHead.current).toBe('');
+      expect(mockMetaDB.set).not.toHaveBeenCalled();
+      expect(mockCacheDB.saveEntries).not.toHaveBeenCalled();
+      expect(mockLog).toHaveBeenLastCalledWith('Discarded: the site data was reset while loading');
+    });
+
     it('should not repeat the access check on a later fetch', async () => {
       const mockCheckAccess = vi.fn().mockResolvedValue(undefined);
 
@@ -518,7 +554,7 @@ describe('git/shared/fetch', () => {
         fetchFileContents: mockFetchFileContents,
       });
 
-      expect(mockFetchFileContents).toHaveBeenCalledWith([changedFile]);
+      expect(mockFetchFileContents).toHaveBeenCalledWith([changedFile], 'abc123');
       expect(allEntries.current[0]).toBe(oldEntry);
       expect(allEntries.current[1]).toEqual({ ...newChangedEntry, id: 'b' });
       expect(allAssets.current[0]).toBe(oldAsset);
@@ -714,7 +750,8 @@ describe('git/shared/fetch', () => {
       });
 
       expect(prepareEntries).toHaveBeenCalled();
-      expect(mockFetchFileContents).toHaveBeenCalledWith(allFilesArray);
+      // The contents are read at the commit the file list comes from
+      expect(mockFetchFileContents).toHaveBeenCalledWith(allFilesArray, 'abc123');
       // The asset is in the list for its metadata only; its contents are not downloaded
       expect(mockLog).toHaveBeenCalledWith('Fetched the contents of 2 files');
     });
@@ -1101,6 +1138,7 @@ describe('git/shared/fetch', () => {
       expect(mockFetchFileContents).toHaveBeenCalled();
       expect(mockFetchFileContents).toHaveBeenCalledWith(
         expect.arrayContaining([expect.objectContaining({ path: 'posts/post2.md' })]),
+        'abc123',
       );
     });
 

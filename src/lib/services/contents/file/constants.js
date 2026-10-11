@@ -18,21 +18,6 @@ export const MARKDOWN_EXTENSIONS = [
 ];
 
 /**
- * Template engine extensions that support any front matter format.
- * @type {string[]}
- */
-export const TEMPLATE_ENGINE_EXTENSIONS = ['njk'];
-
-/**
- * Allowed extensions for the `frontmatter` auto-detect format.
- * @type {string[]}
- */
-export const ALLOWED_FRONTMATTER_EXTENSIONS = [
-  ...MARKDOWN_EXTENSIONS,
-  ...TEMPLATE_ENGINE_EXTENSIONS,
-];
-
-/**
  * Map of supported file formats to their default extensions.
  * @type {Record<string, FileExtension>}
  */

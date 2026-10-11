@@ -265,7 +265,11 @@ describe('draft/index', () => {
       };
 
       expect(isDraftModified(draft)).toBe(true);
-      expect(isPairOrderModified).toHaveBeenCalledWith({ draft, isRealKey: expect.any(Function) });
+      expect(isPairOrderModified).toHaveBeenCalledWith({
+        draft,
+        isRealKey: expect.any(Function),
+        locales: ['en'],
+      });
     });
 
     it('should return true when the entry path is modified', () => {
@@ -472,6 +476,47 @@ describe('draft/index', () => {
       };
 
       expect(isDraftModified(draft)).toBe(true);
+    });
+
+    it('should ignore the values of a locale disabled before and after the edit', () => {
+      // A locale enabled and then disabled again keeps the values copied from the default locale,
+      // which are not saved
+      const draft = {
+        originalLocales: { en: true, ja: false },
+        currentLocales: { en: true, ja: false },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { title: 'Test', image: 'a.jpg' }, ja: { title: '' } },
+        currentValues: { en: { title: 'Test', image: 'a.jpg' }, ja: { title: '', image: 'a.jpg' } },
+      };
+
+      expect(isDraftModified(draft)).toBe(false);
+      // The pair order is only checked for the compared locales
+      expect(isPairOrderModified).toHaveBeenCalledWith({
+        draft,
+        isRealKey: expect.any(Function),
+        locales: ['en'],
+      });
+
+      // Even when only one of the value maps has the locale
+      expect(
+        isDraftModified({ ...draft, originalValues: { en: { title: 'Test', image: 'a.jpg' } } }),
+      ).toBe(false);
+    });
+
+    it('should compare the values of a locale disabled only before the edit', () => {
+      const draft = {
+        originalLocales: { en: true, ja: false },
+        currentLocales: { en: true, ja: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { title: 'Test' }, ja: { title: '' } },
+        currentValues: { en: { title: 'Test' }, ja: { title: 'Test' } },
+      };
+
+      expect(isDraftModified(draft)).toBe(true);
+      // The values are compared even if the locale states are equal
+      expect(isDraftModified({ ...draft, originalLocales: { en: true, ja: true } })).toBe(true);
     });
 
     it('should return true when a locale is missing from originalValues', () => {

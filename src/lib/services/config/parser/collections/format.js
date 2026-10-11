@@ -1,8 +1,4 @@
-import {
-  ALLOWED_FRONTMATTER_EXTENSIONS,
-  MARKDOWN_EXTENSIONS,
-  TEMPLATE_ENGINE_EXTENSIONS,
-} from '$lib/services/contents/file/constants';
+import { EXTENSION_FORMAT_MAP, MARKDOWN_EXTENSIONS } from '$lib/services/contents/file/constants';
 
 /**
  * @import { Field, FileExtension, FileFormat } from '$lib/types/public';
@@ -62,24 +58,17 @@ export const isFormatMismatch = (extension, format, fields = []) => {
     return !isFrontMatterFormat;
   }
 
-  // Check for front-matter format mismatches with non-markdown extensions
-  if (normalizedFormat.endsWith('-frontmatter')) {
-    // Front-matter format: yaml-frontmatter, toml-frontmatter, json-frontmatter
-    const fmFormatType = normalizedFormat.replace('-frontmatter', '');
+  // Any other extension, such as `html` or `njk`, works with every front-matter format, like in
+  // Decap CMS, where the `format` option takes precedence over the extension. The exceptions are
+  // the data file extensions (`yaml`, `toml`, `json`), which only work with the matching
+  // front-matter format, if any, and `astro`, whose front matter is JavaScript, not YAML
+  if (isFrontMatterFormat) {
+    const extensionFormat = EXTENSION_FORMAT_MAP[normalizedExtension];
 
-    // Template engines (njk) work with any front-matter format
-    if (TEMPLATE_ENGINE_EXTENSIONS.includes(normalizedExtension)) {
-      return false;
-    }
-
-    // For other extensions, front-matter only works with matching extension
-    return normalizedExtension !== fmFormatType;
-  }
-
-  // The 'frontmatter' auto-detect format works with markdown extensions and some template engines
-  // (already handled above), so reject it for other extensions
-  if (normalizedFormat === 'frontmatter') {
-    return !ALLOWED_FRONTMATTER_EXTENSIONS.includes(normalizedExtension);
+    return (
+      extensionFormat !== undefined &&
+      extensionFormat !== normalizedFormat.replace('-frontmatter', '')
+    );
   }
 
   // For known formats, ensure extension matches (yaml/toml/json)

@@ -194,6 +194,47 @@ describe('EditorComponent', () => {
       expect(onChange).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'remove' }));
     });
 
+    test('lets the field controls within the block handle the keys first', async () => {
+      const listFields = [{ name: 'tags', label: 'Tags', widget: 'list' }];
+
+      customComponentRegistry.set(
+        'tags',
+        /** @type {any} */ ({ id: 'tags', label: 'Tags', fields: listFields }),
+      );
+
+      try {
+        const { wrapper } = await renderComponent({
+          componentName: 'tags',
+          label: 'Tags',
+          fields: listFields,
+          summary: undefined,
+          values: { tags: ['a'] },
+        });
+
+        const group = page.getByRole('group', { name: 'Tags' });
+        const items = group.getByRole('textbox', { name: 'Item Value' });
+        const outerListener = vi.fn();
+
+        await expect.element(items.first()).toHaveValue('a');
+        // The outer editor’s listener, which the keys pressed within the block must not reach
+        wrapper.addEventListener('keydown', outerListener);
+
+        // A listener added to a control directly gets the key
+        const input = /** @type {HTMLInputElement} */ (items.first().element());
+        const inputListener = vi.fn();
+
+        input.addEventListener('keydown', inputListener);
+        input.focus();
+        // A listener the list delegates to Svelte gets the Enter key too, and adds an item
+        await userEvent.keyboard('{Enter}');
+        expect(inputListener).toHaveBeenCalledOnce();
+        await expect.poll(() => items.elements().length).toBe(2);
+        expect(outerListener).not.toHaveBeenCalled();
+      } finally {
+        customComponentRegistry.delete('tags');
+      }
+    });
+
     test('leaves the keys pressed within a nested rich text editor alone', async () => {
       // The nested editor would otherwise build nodes from the stub definitions in the registry
       const nestedFields = [

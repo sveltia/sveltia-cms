@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-svelte';
 
 import { showMobileSignInDialog } from '$lib/services/app/onboarding';
 import { user } from '$lib/services/user/account.svelte';
+import { decodeMagicLinkData } from '$lib/services/user/magic-link';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 import MobileSignInDialog from './mobile-sign-in-dialog.svelte';
@@ -49,6 +50,35 @@ describe('MobileSignInDialog', () => {
       );
     } finally {
       prefs.devModeEnabled = false;
+      showMobileSignInDialog.current = false;
+    }
+  });
+
+  test('encodes preferences holding text outside Latin-1', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const deployHookURL = 'https://例え.jp/フック?q=🚀';
+
+    user.account = /** @type {any} */ ({ backendName: 'github', login: 'octocat', token: 'abc' });
+    prefs.devModeEnabled = true;
+    prefs.deployHookURL = deployHookURL;
+    showMobileSignInDialog.current = true;
+
+    try {
+      await render(MobileSignInDialog, {});
+      await vi.waitFor(() => expect(info).toHaveBeenCalled());
+
+      const url = /** @type {string} */ (info.mock.calls[0][1]);
+      const [, encodedData] = url.split('#/signin/');
+
+      expect(decodeMagicLinkData(encodedData)).toMatchObject({
+        token: 'abc',
+        prefs: { deployHookURL },
+      });
+      expect(error).not.toHaveBeenCalled();
+    } finally {
+      prefs.devModeEnabled = false;
+      delete prefs.deployHookURL;
       showMobileSignInDialog.current = false;
     }
   });

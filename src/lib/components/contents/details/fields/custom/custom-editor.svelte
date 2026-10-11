@@ -38,7 +38,7 @@
 <script>
   import { isObject } from '@sveltia/utils/object';
   import { createElement } from 'react';
-  import { getContext, onMount } from 'svelte';
+  import { getContext, onMount, untrack } from 'svelte';
 
   import AssetPicker from '$lib/components/contents/details/fields/custom/asset-picker.svelte';
   import { assetURLUpdates } from '$lib/services/api/asset-proxy';
@@ -196,13 +196,15 @@
    * @param {any} instance The React component instance.
    */
   const handleRef = (instance) => {
+    const previousInstance = componentInstance;
+
     componentInstance = instance;
 
     if (instance) {
       // Register the instance for validation when it’s available
-      registerCustomFieldInstance({ locale, keyPath, instance });
+      registerCustomFieldInstance({ ...registration, instance });
     } else {
-      unregisterCustomFieldInstance(registration);
+      unregisterCustomFieldInstance({ ...registration, instance: previousInstance });
     }
   };
 
@@ -255,13 +257,27 @@
     return () => {
       reactRoot?.unmount();
       // Unregister the instance on unmount
-      unregisterCustomFieldInstance(registration);
+      unregisterCustomFieldInstance({ ...registration, instance: componentInstance });
     };
   });
 
+  // Move the registration along when the key path changes: the editor is kept when the list item
+  // it belongs to is moved, or an item before it is removed, so the instance would otherwise stay
+  // registered under the old key path, which may now belong to another item
   $effect(() => {
-    registration = { locale, keyPath };
+    const newRegistration = { locale, keyPath };
 
+    untrack(() => {
+      if (componentInstance) {
+        unregisterCustomFieldInstance({ ...registration, instance: componentInstance });
+        registerCustomFieldInstance({ ...newRegistration, instance: componentInstance });
+      }
+    });
+
+    registration = newRegistration;
+  });
+
+  $effect(() => {
     // Depend on every field in the locale, so that a control showing values derived from other
     // fields, such as dynamically generated select options, stays up to date. The values are read
     // through a cache shared between controls when the props are built, so they have to be tracked

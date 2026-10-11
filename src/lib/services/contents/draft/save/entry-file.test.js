@@ -43,7 +43,13 @@ describe('formatEntryData()', () => {
       'formatted:{"title":"Single"}',
     );
 
-    expect(buildSingleFileContent).toHaveBeenCalledWith({ config, entry, draft });
+    // The content is serialized for the format the file is saved in, not the configured one
+    expect(buildSingleFileContent).toHaveBeenCalledWith({
+      config,
+      entry,
+      draft,
+      format: 'yaml-frontmatter',
+    });
     expect(getSingleFileComments).toHaveBeenCalledWith({ config, fields });
     expect(formatEntryFile).toHaveBeenCalledWith({
       content: { title: 'Single' },
@@ -63,6 +69,7 @@ describe('formatEntryData()', () => {
       draft,
       locale: 'ja',
       valueMap: { title: 'こんにちは' },
+      format: 'yaml-frontmatter',
     });
     expect(getFieldComments).toHaveBeenCalledWith(fields);
     expect(formatEntryFile).toHaveBeenCalledWith({

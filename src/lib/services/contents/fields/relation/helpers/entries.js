@@ -47,6 +47,15 @@ import { replaceTemplateFields } from '$lib/services/contents/fields/relation/he
  */
 
 /**
+ * Leave out options without a value. The value is empty when the entry lacks a field in the
+ * `value_field` template, and such an option can’t refer to the entry: falling back to another
+ * value, like the entry summary, would store a reference that doesn’t match the entry.
+ * @param {RelationOption[]} options Options.
+ * @returns {RelationOption[]} Options with a value.
+ */
+const excludeOptionsWithoutValue = (options) => options.filter(({ value }) => !!value);
+
+/**
  * Process a single entry to generate relation options.
  * @param {object} params Parameters.
  * @param {Entry} params.refEntry Reference entry.
@@ -106,7 +115,9 @@ export const processEntry = ({
   const fallbackContext = { content, locales, defaultLocale, identifierField };
 
   if (!hasListFields) {
-    return [createSimpleOption({ templates, allFieldNames, context, fallbackContext })];
+    return excludeOptionsWithoutValue([
+      createSimpleOption({ templates, allFieldNames, context, fallbackContext }),
+    ]);
   }
 
   // Handle list fields
@@ -122,7 +133,7 @@ export const processEntry = ({
   });
 
   if (hasProcessedListFields) {
-    return results;
+    return excludeOptionsWithoutValue(results);
   }
 
   const { _displayField, _valueField, _searchField } = templates;
@@ -141,11 +152,5 @@ export const processEntry = ({
     fallbackContext,
   );
 
-  return [
-    {
-      label: label || '',
-      value: value || slug,
-      searchValue: searchValue || label || '',
-    },
-  ];
+  return excludeOptionsWithoutValue([{ label, value, searchValue: searchValue || label }]);
 };

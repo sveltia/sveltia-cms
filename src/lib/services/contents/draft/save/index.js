@@ -8,10 +8,13 @@ import {
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
-import { deleteBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
+import { cancelBackup, deleteBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
 import { getReferencedPendingEntries } from '$lib/services/contents/draft/pending-entries';
 import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
-import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
+import {
+  createSavingEntryData,
+  removeDisabledLocales,
+} from '$lib/services/contents/draft/save/changes';
 import { detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
@@ -68,17 +71,23 @@ const updateStores = ({ useWorkflow, skipCI, count }) => {
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Draft to save.
  * @param {EntrySlugVariants} args.slugs Entry slugs.
+ * @param {boolean} args.recreate Whether to write the entry anew, because someone else has deleted
+ * it since the draft was opened. See {@link createSavingEntryData}.
  * @returns {Promise<{ savingEntry: Entry, changes: FileChange[], savingAssets: Asset[],
  * cascadeEntries: Entry[], movedEntries: Entry[] }>} Saving entry, file changes, assets, and the
  * other entries rewritten in the same commit.
  * @throws {Error} A `saving_failed` error when the changes could not be worked out, with the
  * original error as its `cause`, so the message can be shown to the user.
  */
-const buildChanges = async ({ draft, slugs }) => {
+const buildChanges = async ({ draft, slugs, recreate }) => {
   const { collection, fileName, originalEntry } = draft;
 
   try {
-    const { savingEntry, changes, savingAssets } = await createSavingEntryData({ draft, slugs });
+    const { savingEntry, changes, savingAssets } = await createSavingEntryData({
+      draft,
+      slugs,
+      recreate,
+    });
 
     // When the slug has been edited, the entries referencing this one through a Relation field have
     // to be rewritten in the same commit, or they would be left pointing at an entry that no longer
@@ -101,12 +110,13 @@ const buildChanges = async ({ draft, slugs }) => {
 
     changes.push(...moveChanges);
 
-    // Assets stored next to the entry belong to it, so they follow it to its new folder
+    // Assets stored next to the entry belong to it, so they follow it to its new folder. An entry
+    // someone else has deleted has taken its assets along, so there’s nothing left to move
     const { changes: assetMoveChanges, savingAssets: movedAssets } =
       await buildEntryAssetMoveChanges({
         collection,
         fileName,
-        originalEntry,
+        originalEntry: recreate ? undefined : originalEntry,
         savingEntry,
         changes,
       });
@@ -114,7 +124,14 @@ const buildChanges = async ({ draft, slugs }) => {
     changes.push(...assetMoveChanges);
     savingAssets.push(...movedAssets);
 
-    return { savingEntry, changes, savingAssets, cascadeEntries, movedEntries };
+    return {
+      // The locales turned off have served their purpose in the change plan, deleting their files
+      savingEntry: removeDisabledLocales(savingEntry),
+      changes,
+      savingAssets,
+      cascadeEntries,
+      movedEntries,
+    };
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
@@ -187,11 +204,14 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
   assignAutoNowValues(draft);
 
   const slugs = getSlugs({ draft });
-  const { defaultLocaleSlug } = slugs;
+  // Saving over a deletion writes the entry anew, as its files and the assets stored with it are
+  // gone
+  const recreate = conflict?.type === 'deleted';
 
   const { savingEntry, changes, savingAssets, cascadeEntries, movedEntries } = await buildChanges({
     draft,
     slugs,
+    recreate,
   });
 
   // The entries created from a Relation field go into the same commit as the entry referring to
@@ -205,7 +225,7 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
   /** @type {ChangeResults} */
   let results;
   /** @type {CommitOptions} */
-  const options = { commitType: isNew ? 'create' : 'update', collection, skipCI };
+  const options = { commitType: isNew || recreate ? 'create' : 'update', collection, skipCI };
 
   try {
     results = useWorkflow
@@ -216,7 +236,9 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
           options,
           collectionName,
           fileName,
-          slug: defaultLocaleSlug,
+          // The slug the entry goes by, which is its path within the collection folder in a nested
+          // collection, so an entry doesn’t take the branch of another with the same file name
+          slug: savingEntry.slug,
           originalEntry,
         })
       : await saveChanges({
@@ -236,7 +258,12 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
   // may reload the page right after they’re written, e.g. Eleventy, and a backup that outlives the
   // save would then offer to restore a draft that has already been saved. The changes are saved
   // already, so a backup that can’t be deleted doesn’t fail the save. The backup is stored under
-  // the slug the entry had when it was opened, which a rename leaves behind
+  // the slug the entry had when it was opened, which a rename leaves behind. A backup scheduled for
+  // a change made just before the save is dropped as well: the editor may stay open on the saved
+  // draft for a while, e.g. while asking whether to send it for review, and the backup made then
+  // would take the place of the one deleted here and be offered the next time the entry is opened
+  cancelBackup();
+
   try {
     await deleteBackup(collectionName, getBackupSlug(draft));
   } catch (ex) {

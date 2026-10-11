@@ -89,12 +89,18 @@ const postsCollection = {
 const imageField = { name: 'image', label: 'Image', widget: 'image' };
 const galleryField = { name: 'gallery', label: 'Gallery', widget: 'image', multiple: true };
 const bodyField = { name: 'body', label: 'Body', widget: 'markdown' };
+
 /**
  * Create an asset.
  * @param {string} name File name.
  * @returns {object} Asset.
  */
-const createAsset = (name) => ({ name, path: `static/uploads/${name}`, sha: name });
+const createAsset = (name) => ({
+  name,
+  path: `static/uploads/${name}`,
+  sha: name,
+  folder: { internalPath: 'static/uploads', entryRelative: false },
+});
 
 /**
  * Create a blog post entry.
@@ -173,6 +179,21 @@ describe('getReferenceTargets()', () => {
       { url: '/static/uploads/a.png' },
       { asset },
     ]);
+  });
+
+  test('matches an asset in an entry-relative folder by the asset itself', () => {
+    // A path relative to the entry, like `images/a.png`, would match the same path in any entry,
+    // which refers to a different file in that entry’s own folder
+    const asset = {
+      ...createAsset('a.png'),
+      path: 'content/posts/images/a.png',
+      folder: { internalPath: 'content/posts', entryRelative: true },
+    };
+
+    getAssetPublicURL.mockReturnValue('images/a.png');
+
+    expect(getReferenceTargets([asset])).toEqual([{ asset }]);
+    expect(getAssetPublicURL).not.toHaveBeenCalled();
   });
 });
 
@@ -576,10 +597,15 @@ describe('planAssetDeletion() with read-only entries', () => {
 
 describe('planAssetDeletion() with assets without a public path', () => {
   test('removes the images resolving to the assets, without loading them', async () => {
-    const asset = { name: 'a.png', path: 'content/posts/a/a.png', sha: 'a' };
+    const asset = {
+      name: 'a.png',
+      path: 'content/posts/a/a.png',
+      sha: 'a',
+      folder: { internalPath: 'content/posts', entryRelative: true },
+    };
+
     const post = createPost('a', { body: 'Hi ![a](a.png) ![b](b.png)' });
 
-    getAssetPublicURL.mockReturnValue(undefined);
     getMediaFieldSource.mockImplementation(({ value }) =>
       value === 'a.png' ? { asset } : undefined,
     );

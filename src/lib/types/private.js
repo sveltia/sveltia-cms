@@ -203,6 +203,10 @@
  * backend.
  * @property {CommitAuthor} [author] Git committer info for a Git backend.
  * @property {Date} [date] Commit date for a Git backend.
+ * @property {string} [parentSha] Git object ID of the commit’s parent, for a Git backend that may
+ * make the commit on top of someone else’s commit to another file rather than on the head the site
+ * data reflects: GitLab and Gitea/Forgejo only check the files being changed. `undefined` for a
+ * backend that refuses a commit unless the branch is still at that head, like GitHub.
  * @property {Record<string, { sha: string, file?: Blob }>} files Map of committed files. The key is
  * a file path, and the value is an object containing the Git object ID of the updated file. The
  * blob object is also included for the local backend.
@@ -588,6 +592,10 @@
  * [search] Function to search files.
  * @property {(options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>} [list] Function to
  * list files. For stock asset services, it should return popular or curated images.
+ * @property {(asset: ExternalAsset, options: MediaLibraryFetchOptions) => Promise<void>}
+ * [trackDownload] Function to let the service know a file has been inserted into an entry, as the
+ * API guidelines of a stock asset service like Unsplash require. It’s called without being
+ * awaited, and should never reject, as a failure must not get in the way of the insertion.
  * @property {(files: File[], options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>}
  * [upload] Function to upload files to the cloud storage service.
  * @property {(assets: ExternalAsset[], options: MediaLibraryFetchOptions) => Promise<void>}
@@ -635,10 +643,11 @@
  * @property {string} userMessage User message content.
  * @property {number} [temperature] Sampling temperature (0–1). Default is 0.3. The OpenAI and
  * Anthropic APIs don’t get this parameter, as GPT-6 and Claude Haiku 5.5 reject it.
- * @property {number} [maxTokens] Maximum output tokens. Default is 4000.
+ * @property {number} [maxTokens] Maximum output tokens, including reasoning tokens. Default is
+ * 16,000.
  * @property {'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'} [reasoning]
- * Reasoning effort. Only supported by certain providers (e.g., DeepSeek, Mistral AI). Default
- * varies by provider. Anthropic Claude only supports `none`, which disables thinking.
+ * Reasoning effort. Only supported by certain providers (e.g., OpenAI, DeepSeek, Mistral AI).
+ * Default varies by provider. Anthropic Claude only supports `none`, which disables thinking.
  */
 
 /**
@@ -1403,6 +1412,9 @@
  * @property {AssetKind} kind Basic file type.
  * @property {string} [credit] Attribution HTML string, including the photographer name/link and
  * service name/link.
+ * @property {string} [downloadTrackingURL] URL to request once the asset has been used, for a
+ * stock asset service that counts the downloads, like Unsplash. See
+ * {@link MediaLibraryService.trackDownload}.
  */
 
 /**

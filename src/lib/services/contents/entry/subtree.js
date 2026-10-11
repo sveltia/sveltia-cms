@@ -1,8 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
-import { flatten } from 'flat';
 
 import { getKeysByPrefix, isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
-import { unflattenMap } from '$lib/services/utils/object';
+import { flattenKeys, unflattenMap } from '$lib/services/utils/object';
 
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
@@ -34,9 +33,9 @@ export const isPlaceholder = (value) =>
  */
 export const getSubtreeEntries = (keyPath, value) => ({
   [keyPath]: Array.isArray(value) ? [] : {},
-  ...Object.fromEntries(
-    Object.entries(flatten(value)).map(([key, val]) => [`${keyPath}.${key}`, val]),
-  ),
+  // Escape the object keys, so a key with a dot, e.g. in a KeyValue field in a list item, isn’t
+  // split into nested objects on save
+  ...flattenKeys(value, keyPath),
 });
 
 /**

@@ -55,10 +55,6 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
   ),
 }));
 
-vi.mock('flat', () => ({
-  flatten: vi.fn((obj) => obj),
-}));
-
 vi.mock('@sveltia/utils/crypto', () => ({
   generateUUID: vi.fn(() => 'test-uuid'),
 }));
@@ -1116,6 +1112,22 @@ describe('Test processNonI18nEntry()', () => {
 
     expect(entry.slug).toBe('members');
   });
+
+  test('escapes the dots in object keys, so they aren’t split into nested objects on save', () => {
+    const entry = /** @type {Entry} */ ({ id: '', slug: '', subPath: 'nav', locales: {} });
+
+    processNonI18nEntry({
+      entry,
+      rawContent: { 'nav.home': 'Home', redirects: { 'example.com': 'a' } },
+      path: '/data/nav.json',
+      subPath: 'nav',
+    });
+
+    expect(entry.locales._default.content).toEqual({
+      'nav\uE000home': 'Home',
+      'redirects.example\uE000com': 'a',
+    });
+  });
 });
 
 describe('Test processI18nSingleFileEntry()', () => {
@@ -1192,6 +1204,21 @@ describe('Test processI18nSingleFileEntry()', () => {
 
     expect(Object.keys(entry.locales)).toEqual(['en']);
   });
+
+  test('escapes the dots in object keys', () => {
+    const entry = /** @type {Entry} */ ({ id: '', slug: '', subPath: 'nav', locales: {} });
+
+    processI18nSingleFileEntry({
+      entry,
+      rawContent: { en: { 'nav.home': 'Home' }, fr: { 'nav.home': 'Accueil' } },
+      path: '/data/nav.json',
+      subPath: 'nav',
+      allLocales: ['en', 'fr'],
+    });
+
+    expect(entry.locales.en.content).toEqual({ 'nav\uE000home': 'Home' });
+    expect(entry.locales.fr.content).toEqual({ 'nav\uE000home': 'Accueil' });
+  });
 });
 
 describe('Test processI18nMultiFileEntry()', () => {
@@ -1227,6 +1254,23 @@ describe('Test processI18nMultiFileEntry()', () => {
       path: '/posts/my-post.en.md',
       content: { title: 'My Post', body: 'Content' },
     });
+  });
+
+  test('escapes the dots in object keys', () => {
+    const entry = /** @type {Entry} */ ({ id: '', slug: '', subPath: 'nav', locales: {} });
+
+    processI18nMultiFileEntry({
+      entry,
+      rawContent: { 'nav.home': 'Home' },
+      path: '/data/nav.en.json',
+      subPath: 'nav',
+      locale: 'en',
+      defaultLocale: 'en',
+      collectionName: 'data',
+      entryMap: new Map(),
+    });
+
+    expect(entry.locales.en.content).toEqual({ 'nav\uE000home': 'Home' });
   });
 
   test('merges with existing entry', () => {

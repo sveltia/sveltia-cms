@@ -11,6 +11,8 @@ import { getDirName } from '$lib/services/utils/file';
  * Asset,
  * AssetFolderInfo,
  * AssetLibraryFolderMap,
+ * ExternalAsset,
+ * MediaLibraryFetchOptions,
  * MediaLibraryService,
  * SelectedResource,
  * } from '$lib/types/private';
@@ -182,3 +184,43 @@ export const getInsertedResources = ({ resources, targetFolderPath }) =>
  */
 export const getSelectionWithResource = ({ resources, resource, isSame, multiple = false }) =>
   multiple ? [...resources.filter((r) => !isSame(r)), resource] : [resource];
+
+/**
+ * Get the resources selected on a location the user has just switched to. The URL entered under
+ * Enter URL is kept while another location is browsed, so it’s selected again on coming back, while
+ * the selection made on any other location starts afresh.
+ * @param {object} args Arguments.
+ * @param {string} args.libraryName Name of the location switched to.
+ * @param {string} args.enteredURL URL entered under Enter URL, if any.
+ * @returns {SelectedResource[]} Resources.
+ */
+export const getLocationResources = ({ libraryName, enteredURL }) => {
+  const url = libraryName === 'enter-url' ? enteredURL.trim() : '';
+
+  return url ? [{ url }] : [];
+};
+
+/**
+ * Let a stock asset service know its assets have been inserted, if its API guidelines require it,
+ * like Unsplash’s. The requests are not awaited, so they never hold up the insertion.
+ * @param {object} args Arguments.
+ * @param {MediaLibraryService['trackDownload']} args.trackDownload Service’s function to report a
+ * used asset, if any.
+ * @param {SelectedResource[]} args.resources Inserted resources.
+ * @param {Map<string, ExternalAsset>} args.assets Selected assets, keyed by download URL.
+ * @param {MediaLibraryFetchOptions} args.options Options, including the API key.
+ */
+export const trackInsertedExternalAssets = ({ trackDownload, resources, assets, options }) => {
+  if (!trackDownload) {
+    return;
+  }
+
+  resources.forEach(({ url }) => {
+    const asset = url ? assets.get(url) : undefined;
+
+    if (asset) {
+      // The service never rejects, but an unexpected error mustn’t surface either
+      trackDownload(asset, options).catch(() => {});
+    }
+  });
+};

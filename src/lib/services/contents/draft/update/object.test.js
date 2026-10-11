@@ -159,6 +159,22 @@ describe('draft/update/object', () => {
       expect(draft.extraValues.en).toEqual({ 'obj.title': 'Untitled', 'obj.count': 1 });
       expect(draft.currentValues.en).toEqual({ obj: null });
     });
+
+    it('gives a rich text editor component’s subfields their defaults in another locale', () => {
+      addObjectFields({
+        draft,
+        valueStoreKey: 'extraValues',
+        locale: 'fr',
+        keyPath: 'body:c1:obj',
+        fieldConfig: { name: 'obj', widget: 'object', fields },
+      });
+
+      expect(draft.extraValues.fr).toEqual({
+        'body:c1:obj.title': 'Untitled',
+        'body:c1:obj.count': 1,
+      });
+      expect(copyDefaultLocaleValues).not.toHaveBeenCalled();
+    });
   });
 
   describe('removeObjectFields', () => {

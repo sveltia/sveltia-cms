@@ -3,7 +3,7 @@ import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
  * @import { Entry, InternalCollection, InternalCollectionFile } from '$lib/types/private';
- * @import { Field, FieldKeyPath } from '$lib/types/public';
+ * @import { Field, FieldKeyPath, FileFormat } from '$lib/types/public';
  */
 
 /**
@@ -76,9 +76,10 @@ export const getSingleFileComments = ({ config, fields }) => {
  * @param {Entry} args.entry Entry whose locales have already been updated.
  * @param {any} args.draft Entry draft, or a synthetic draft holding the properties read by
  * {@link serializeContent}.
+ * @param {FileFormat} [args.format] Format of the file being saved. See {@link serializeContent}.
  * @returns {Record<string, any>} Serializable content object passed to `formatEntryFile()`.
  */
-export const buildSingleFileContent = ({ config, entry, draft }) => {
+export const buildSingleFileContent = ({ config, entry, draft, format }) => {
   const {
     _i18n: { i18nEnabled, defaultLocale, structureMap: { i18nSingleFileDefaultRoot } = {} },
   } = config;
@@ -88,13 +89,17 @@ export const buildSingleFileContent = ({ config, entry, draft }) => {
       draft,
       locale: '_default',
       valueMap: entry.locales[defaultLocale].content,
+      format,
     });
   }
 
   const localeContents = Object.fromEntries(
     Object.entries(entry.locales)
       .filter(([, le]) => !!le.content)
-      .map(([locale, le]) => [locale, serializeContent({ draft, locale, valueMap: le.content })]),
+      .map(([locale, le]) => [
+        locale,
+        serializeContent({ draft, locale, valueMap: le.content, format }),
+      ]),
   );
 
   if (i18nSingleFileDefaultRoot) {

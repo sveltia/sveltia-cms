@@ -681,7 +681,61 @@ describe('ExternalAssetsPanel', () => {
         document.querySelector('.sui.alert.error')?.textContent?.replace(/\s+/g, ' ').trim(),
       )
       .toBe('error Error Upload failed.');
+    // The failure toast hides itself after a while
+    await waitForToastsToHide();
   });
+
+  test('keeps the progress toast up until a slow upload is done, then hides it', async () => {
+    /**
+     * Finish the upload with the given assets.
+     * @type {(assets: any[]) => void}
+     */
+    let finishUpload = () => {};
+
+    const upload = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          finishUpload = resolve;
+        }),
+    );
+
+    const props = $state({
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue([]), upload }),
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    const { component } = await render(ExternalAssetsPanel, props);
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+
+    const uploading = component.uploadFiles([await createMockImageFile({ name: 'c.png' })]);
+
+    await vi.waitFor(() => expect(upload).toHaveBeenCalled());
+
+    /**
+     * Get the toast showing the progress.
+     * @returns {Element | null | undefined} Toast.
+     */
+    const getProgressToast = () =>
+      [...document.querySelectorAll('.sui.toast')].find((toast) =>
+        toast.textContent?.includes('Uploading…'),
+      );
+
+    await expect.poll(() => getProgressToast()?.getAttribute('aria-hidden')).toBe('false');
+    // A toast hides itself after 5 seconds by default, but this one stays while uploading
+    await sleep(5500);
+    expect(getProgressToast()?.getAttribute('aria-hidden')).toBe('false');
+
+    finishUpload([createMockExternalAsset({ fileName: 'c.png' })]);
+    await uploading;
+
+    await expect.poll(() => getProgressToast()?.getAttribute('aria-hidden')).toBe('true');
+    expect(props.selectedResources).toEqual([
+      { url: 'https://cdn.example.com/images/c.png', credit: undefined },
+    ]);
+    // No failure is reported
+    expect(document.querySelector('.sui.alert.error')).toBeNull();
+  }, 15000);
 
   test('shows the captions of stock photos in the list view', async () => {
     const asset = createMockExternalAsset({

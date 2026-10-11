@@ -536,6 +536,33 @@ describe('matchesCollectionFilter()', () => {
     expect(matchesCollectionFilter(patternCollection, entry)).toBe(false);
   });
 
+  test('never matches a missing value against the filter pattern', async () => {
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
+    const { getRegex } = await import('$lib/services/utils/regex');
+
+    const collection = {
+      name: 'translated',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'lang', pattern: '^n' },
+    };
+
+    const entry = { id: '1', locales: { en: { content: {} } } };
+
+    vi.mocked(getRegex).mockReturnValue(/^n/);
+
+    vi.mocked(getPropertyValue)
+      .mockReturnValueOnce(undefined)
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce([null, undefined])
+      .mockReturnValueOnce('nl');
+
+    expect(matchesCollectionFilter(collection, entry)).toBe(false);
+    expect(matchesCollectionFilter(collection, entry)).toBe(false);
+    expect(matchesCollectionFilter(collection, entry)).toBe(false);
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+  });
+
   test('treats a missing value as null', async () => {
     const { getPropertyValue } = await import('$lib/services/contents/entry/values');
 

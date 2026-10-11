@@ -69,6 +69,7 @@ describe('draft/backup', () => {
   let showBackupToastIfNeeded;
   let resetBackupToastState;
   let scheduleBackup;
+  let cancelBackup;
 
   // Mock IndexedDB constructor to return our mock (must happen before importing backup module)
   // Vitest 4 requires proper constructor with 'class' keyword
@@ -109,6 +110,7 @@ describe('draft/backup', () => {
       showBackupToastIfNeeded,
       resetBackupToastState,
       scheduleBackup,
+      cancelBackup,
     } = backupModule);
 
     // Mock stores
@@ -1585,6 +1587,35 @@ describe('draft/backup', () => {
       await vi.advanceTimersByTimeAsync(600);
 
       expect(mockBackupDB.put).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cancelBackup', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.mocked(isDraftModified).mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should drop a pending backup', async () => {
+      scheduleBackup({
+        collectionName: 'posts',
+        originalEntry: { slug: 'test-post' },
+        currentValues: { en: { title: 'Hello' } },
+        files: {},
+        interacted: true,
+      });
+      cancelBackup();
+      await vi.advanceTimersByTimeAsync(600);
+
+      expect(mockBackupDB.put).not.toHaveBeenCalled();
+    });
+
+    it('should do nothing when no backup is pending', () => {
+      expect(() => cancelBackup()).not.toThrow();
     });
   });
 

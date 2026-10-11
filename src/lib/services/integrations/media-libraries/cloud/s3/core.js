@@ -485,6 +485,15 @@ export const moveS3Object = async (asset, newPath, config, options) => {
 
   await assertResponseOK(response, `Failed to copy object ${key}`);
 
+  // A copy that fails after S3 has sent the `200 OK` status comes with an `Error` document instead
+  // of `CopyObjectResult`, so check the body before deleting the source. Some S3-compatible
+  // services send an empty body on success.
+  const body = await response.text();
+
+  if (/^\s*(?:<\?xml[^>]*>\s*)?<Error[\s>]/.test(body)) {
+    throw new Error(`Failed to copy object ${key}: ${body}`);
+  }
+
   await deleteS3Object({ key, config, credential: secretAccessKey });
 
   return parseS3Results(

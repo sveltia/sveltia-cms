@@ -1,7 +1,32 @@
 import { isObject } from '@sveltia/utils/object';
 import { compare } from '@sveltia/utils/string';
-import { unflatten } from 'flat';
+import { flatten, unflatten } from 'flat';
 
+/**
+ * Character that replaces a dot in an object key when the key becomes a key path segment, so that
+ * a key like `example.com`, which a KeyValue field or any data the configuration doesn’t cover can
+ * hold, isn’t split into nested objects on save. A Private Use Area character is unlikely to appear
+ * in a key, and it leaves the dot as the only key path delimiter, so a key path can still be split
+ * with `.` and its segments matched with `[^.]`. The UI only shows unescaped keys.
+ */
+const ESCAPED_DOT = '\uE000';
+/**
+ * Character that precedes a literal {@link ESCAPED_DOT} or itself in an escaped key segment, so any
+ * key round-trips unchanged.
+ */
+const ESCAPE_CHAR = '\uE001';
+/**
+ * Regular expression matching the characters to escape in a key segment.
+ */
+const ESCAPE_REGEX = /[.\uE000\uE001]/g;
+/**
+ * Regular expression matching an escape sequence in a key segment.
+ */
+const UNESCAPE_REGEX = /\uE001([\uE000\uE001])|\uE000/g;
+/**
+ * Regular expression testing whether a key segment or path holds an escape sequence.
+ */
+const ESCAPED_KEY_REGEX = /[\uE000\uE001]/;
 /**
  * Prefix temporarily added to a key segment that {@link unflattenKeys} must keep as a string key.
  * A NUL character can’t start a list index, and a key starting with it is not a number.
@@ -54,8 +79,71 @@ const restoreStringKeys = (value) => {
 };
 
 /**
+ * Escape an object key to be used as a key path segment, so a dot in it isn’t taken as a delimiter.
+ * @param {string} key Object key, e.g. `example.com`.
+ * @returns {string} Key path segment without any dot.
+ */
+export const escapeKeySegment = (key) =>
+  // Testing first is faster than always replacing, as hardly any key needs escaping
+  key.includes('.') || ESCAPED_KEY_REGEX.test(key)
+    ? key.replace(ESCAPE_REGEX, (char) => (char === '.' ? ESCAPED_DOT : `${ESCAPE_CHAR}${char}`))
+    : key;
+
+/**
+ * Restore an object key from a key path segment escaped with {@link escapeKeySegment}.
+ * @param {string} segment Key path segment.
+ * @returns {string} Object key.
+ */
+export const unescapeKeySegment = (segment) =>
+  ESCAPED_KEY_REGEX.test(segment)
+    ? segment.replace(UNESCAPE_REGEX, (_match, char) => char ?? '.')
+    : segment;
+
+/**
+ * Flatten an object or array into a map of dot-notated key paths with the `flat` library, escaping
+ * every object key with {@link escapeKeySegment}, so that {@link unflattenKeys} restores the same
+ * structure even if a key contains a dot.
+ * @param {Record<string, any> | any[]} value Object or array to flatten.
+ * @param {string} [prefix] Key path to prepend to every key path, e.g. `list.0`. It must be escaped
+ * already, if needed. An empty value is then stored at the prefix itself, as `flatten()` does with
+ * `{ [prefix]: value }`.
+ * @returns {Record<string, any>} Flattened map.
+ */
+export const flattenKeys = (value, prefix) => {
+  const map = flatten(value, { transformKey: escapeKeySegment });
+
+  if (prefix === undefined) {
+    return map;
+  }
+
+  const entries = Object.entries(map);
+
+  return entries.length
+    ? Object.fromEntries(entries.map(([key, val]) => [`${prefix}.${key}`, val]))
+    : { [prefix]: value };
+};
+
+/**
+ * Check whether the given value is a plain object or array with any key, which the `flat` library
+ * flattens itself when it finds one in a map to unflatten.
+ * @param {any} value Value.
+ * @returns {boolean} Result.
+ */
+const isNonEmptyCollection = (value) =>
+  ['[object Object]', '[object Array]'].includes(Object.prototype.toString.call(value)) &&
+  !!Object.keys(value).length;
+
+/**
+ * Transform a key path segment while unflattening: unescape it, then add {@link STRING_KEY_PREFIX}
+ * if it’s a numeric string key.
+ * @param {string} segment Key path segment.
+ * @returns {string} Transformed segment.
+ */
+const transformSegment = (segment) => prefixStringKey(unescapeKeySegment(segment));
+
+/**
  * Unflatten a map of dot-notated keys with the `flat` library, while keeping every key segment that
- * isn’t a list index as a string key.
+ * isn’t a list index as a string key, and restoring the keys escaped with {@link escapeKeySegment}.
  *
  * The library turns any segment that `Number()` can parse into a number, so an empty key, which a
  * KeyValue field can hold, becomes `0`, and a key like `01` becomes `1`, which also makes an array
@@ -65,11 +153,27 @@ const restoreStringKeys = (value) => {
  * @see https://github.com/hughsk/flat/issues/103
  */
 export const unflattenKeys = (map) => {
-  if (!Object.keys(map).some((key) => key.split('.').some(isNumericStringKey))) {
+  const entries = Object.entries(map);
+
+  // The library flattens a nested object or array value itself, without escaping its keys, and
+  // would apply the transformation below to them. Flatten it here instead, at the same position
+  if (entries.some(([, value]) => isNonEmptyCollection(value))) {
+    return unflattenKeys(
+      Object.fromEntries(
+        entries.flatMap(([key, value]) =>
+          isNonEmptyCollection(value) ? Object.entries(flattenKeys(value, key)) : [[key, value]],
+        ),
+      ),
+    );
+  }
+
+  if (
+    !entries.some(([key]) => ESCAPED_KEY_REGEX.test(key) || key.split('.').some(isNumericStringKey))
+  ) {
     return unflatten(map);
   }
 
-  return restoreStringKeys(unflatten(map, { transformKey: prefixStringKey }));
+  return restoreStringKeys(unflatten(map, { transformKey: transformSegment }));
 };
 
 /**

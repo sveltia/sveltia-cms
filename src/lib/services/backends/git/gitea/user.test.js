@@ -88,13 +88,15 @@ describe('Gitea User Service', () => {
         html_url: 'https://gitea.example.com/janesmith',
       };
 
-      // Mock user store returning updated tokens
-      mockUserState.account = /** @type {any} */ ({
-        token: 'new-access-token',
-        refreshToken: 'new-refresh-token',
-      });
+      // The token is renewed in `refreshAccessToken` while the profile is being fetched
+      fetchAPIMock.mockImplementation(async () => {
+        mockUserState.account = /** @type {any} */ ({
+          token: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+        });
 
-      fetchAPIMock.mockResolvedValue(mockApiResponse);
+        return mockApiResponse;
+      });
 
       const result = await getUserProfile(mockTokens);
 

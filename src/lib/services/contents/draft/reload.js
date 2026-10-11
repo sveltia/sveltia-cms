@@ -1,6 +1,11 @@
 import { checkForRemoteChanges, MIN_CHECK_GAP } from '$lib/services/backends/refresh';
 import { isDraftModified } from '$lib/services/contents/draft';
-import { deleteBackup, getBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
+import {
+  cancelBackup,
+  deleteBackup,
+  getBackup,
+  getBackupSlug,
+} from '$lib/services/contents/draft/backup';
 import { createDraft } from '$lib/services/contents/draft/create';
 import { compareWithStore } from '$lib/services/contents/draft/save/conflict';
 import { isWorkflowDraft } from '$lib/services/workflow';
@@ -24,6 +29,8 @@ export const reloadDraft = async ({ entryDraft, entry }) => {
   const draft = /** @type {EntryDraft} */ (entryDraft.current);
   const { collectionName, collection, collectionFile, expanderStates } = draft;
 
+  // A backup scheduled for the edits being dropped would otherwise bring them back
+  cancelBackup();
   await deleteBackup(collectionName, getBackupSlug(draft));
 
   return createDraft({

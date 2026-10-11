@@ -105,12 +105,14 @@ describe('scopeFileFetchers()', () => {
 
       const scoped = scopeFileFetchers({ repository, fetchFileList, fetchFileContents });
 
-      await expect(scoped.fetchFileContents([createFile('content/a.md')])).resolves.toEqual({
+      await expect(scoped.fetchFileContents([createFile('content/a.md')], 'abc')).resolves.toEqual({
         'content/a.md': { sha: '1', text: 'A' },
       });
-      expect(fetchFileContents).toHaveBeenCalledWith([
-        expect.objectContaining({ path: 'apps/site/content/a.md' }),
-      ]);
+      // The commit the file list comes from is passed through
+      expect(fetchFileContents).toHaveBeenCalledWith(
+        [expect.objectContaining({ path: 'apps/site/content/a.md' })],
+        'abc',
+      );
     });
 
     it('should fetch the metadata with paths relative to the repository root', async () => {
@@ -163,9 +165,9 @@ describe('scopeFileFetchers()', () => {
       });
 
       await expect(scoped.fetchFileList('abc')).resolves.toBe(list);
-      await expect(scoped.fetchFileContents(files)).resolves.toBe(contents);
+      await expect(scoped.fetchFileContents(files, 'abc')).resolves.toBe(contents);
       await expect(scoped.fetchFileMetadata?.(files)).resolves.toBe(metadata);
-      expect(fetchFileContents).toHaveBeenCalledWith(files);
+      expect(fetchFileContents).toHaveBeenCalledWith(files, 'abc');
       expect(fetchFileMetadata).toHaveBeenCalledWith(files);
     });
   });

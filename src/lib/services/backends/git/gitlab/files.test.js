@@ -253,6 +253,26 @@ describe('GitLab files service', () => {
       });
     });
 
+    test('lists the commit it was given rather than the branch', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        project: {
+          repository: {
+            tree: { blobs: { nodes: [], pageInfo: { endCursor: '', hasNextPage: false } } },
+          },
+        },
+      });
+
+      await fetchFileList('last-commit-sha');
+
+      // The tree is listed at the commit the file cache is keyed on, not at the tip of the branch,
+      // which a push may have moved in the meantime; the `$branch` variable takes a commit SHA
+      expect(fetchGraphQL).toHaveBeenCalledOnce();
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('tree(ref: $branch,'), {
+        cursor: '',
+        branch: 'last-commit-sha',
+      });
+    });
+
     test('filters out non-blob entries', async () => {
       const mockResponse = {
         project: {
@@ -741,6 +761,27 @@ describe('GitLab files service', () => {
       expect(result['file1.md'].text).toBe('file content');
       expect(result['file1.md'].sha).toBe('sha1');
       expect(result['file1.md'].size).toBe(0);
+    });
+
+    test('reads the blobs at the commit the file list comes from', async () => {
+      const files = /** @type {any} */ ([
+        { path: 'file1.md', sha: 'sha1', type: 'entry', size: 0, name: 'file1.md' },
+      ]);
+
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        project: {
+          repository: { blobs: { nodes: [{ path: 'file1.md', rawTextBlob: 'file content' }] } },
+        },
+      });
+
+      await fetchFileContents(files, 'last-commit-sha');
+
+      // Not at the tip of the branch, which may hold another version of the file by now, whose text
+      // would then be cached under the blob SHA from the file list
+      expect(fetchGraphQL).toHaveBeenCalledWith(
+        expect.stringContaining('blobs(ref: $branch, paths: $paths)'),
+        { branch: 'last-commit-sha', paths: ['file1.md'] },
+      );
     });
 
     test('stops the simulated progress when a request fails', async () => {

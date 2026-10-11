@@ -1,0 +1,215 @@
+import { expect, test } from '../fixtures/test.js';
+
+/**
+ * @import { Locator, Page } from '@playwright/test';
+ */
+
+/**
+ * Fields of a page: a title and a KeyValue field of redirects, whose keys are host names and
+ * version numbers holding dots.
+ */
+const FIELDS = [
+  { name: 'title', label: 'Title' },
+  {
+    name: 'redirects',
+    label: 'Redirects',
+    widget: 'keyvalue',
+    key_label: 'From',
+    value_label: 'To',
+    required: false,
+  },
+];
+
+/**
+ * A collection of pages in the given data format.
+ * @param {string} extension File extension, also the collection name.
+ * @returns {Record<string, any>} Collection.
+ */
+const collection = (extension) => ({
+  name: extension,
+  label: extension,
+  folder: `content/${extension}`,
+  extension,
+  create: true,
+  fields: FIELDS,
+});
+
+const CONFIG = {
+  backend: { name: 'test-repo' },
+  media_folder: 'static/images',
+  collections: [
+    collection('yml'),
+    collection('toml'),
+    collection('json'),
+    {
+      // A Markdown collection without a format reads YAML, TOML and JSON front matter alike
+      name: 'posts',
+      label: 'posts',
+      folder: 'content/posts',
+      create: true,
+      fields: [
+        { name: 'title', label: 'Title' },
+        { name: 'date', label: 'Date', widget: 'datetime' },
+        { name: 'body', label: 'Body', widget: 'text' },
+      ],
+    },
+  ],
+};
+
+/**
+ * Files holding keys with a dot: in a KeyValue field, at the top level and in an object that no
+ * field configuration describes.
+ */
+const FILES = {
+  'content/yml/home.yml': [
+    'title: Home',
+    'redirects:',
+    '  example.com: /a',
+    '  v1.2: /b',
+    'meta:',
+    '  og.image: cover.jpg',
+    'og.title: Welcome',
+    '',
+  ].join('\n'),
+  'content/toml/home.toml': [
+    'title = "Home"',
+    '"og.title" = "Welcome"',
+    '',
+    '[redirects]',
+    '"example.com" = "/a"',
+    '"v1.2" = "/b"',
+    '',
+    '[meta]',
+    '"og.image" = "cover.jpg"',
+    '',
+  ].join('\n'),
+  'content/json/home.json': [
+    '{',
+    '  "title": "Home",',
+    '  "redirects": {',
+    '    "example.com": "/a",',
+    '    "v1.2": "/b"',
+    '  },',
+    '  "meta": {',
+    '    "og.image": "cover.jpg"',
+    '  },',
+    '  "og.title": "Welcome"',
+    '}',
+    '',
+  ].join('\n'),
+};
+
+test.use({ config: CONFIG });
+
+/**
+ * Get the editor.
+ * @param {Page} page Page.
+ * @returns {Locator} Content editor.
+ */
+const getEditor = (page) => page.getByRole('group', { name: 'Content Editor' });
+
+/**
+ * Open an entry of the given collection.
+ * @param {Page} page Page.
+ * @param {string} collectionName Collection name.
+ * @param {string} title Entry title.
+ */
+const openEntry = async (page, collectionName, title) => {
+  await page.getByRole('treeitem', { name: new RegExp(`^${collectionName}\\b`) }).click();
+  await page.getByRole('row', { name: new RegExp(title) }).click();
+};
+
+test.describe('keys with a dot', () => {
+  test.beforeEach(async ({ cms }) => {
+    await cms.open();
+    await cms.seed(FILES);
+    await cms.signIn();
+  });
+
+  Object.entries(FILES).forEach(([path, file]) => {
+    const extension = /** @type {string} */ (path.split('.').pop());
+
+    test(`are kept as they are in a ${extension.toUpperCase()} file`, async ({ cms, page }) => {
+      await openEntry(page, extension, 'Home');
+
+      const editor = getEditor(page);
+
+      // The editor shows the keys as they are
+      await expect(editor.getByRole('textbox', { name: 'From' }).first()).toHaveValue(
+        'example.com',
+      );
+      await expect(editor.getByRole('textbox', { name: 'From' }).nth(1)).toHaveValue('v1.2');
+
+      await editor.getByRole('textbox', { name: 'Title' }).fill('Start');
+      await editor.getByRole('button', { name: 'Save' }).click();
+
+      await expect
+        .poll(async () => (await cms.readRepo())[path])
+        .toBe(file.replace('Home', 'Start'));
+    });
+  });
+
+  test('are kept as they are when added in the editor', async ({ cms, page }) => {
+    await openEntry(page, 'yml', 'Home');
+
+    const editor = getEditor(page);
+    const redirects = editor.getByRole('group', { name: /Redirects.*Field/ });
+
+    await redirects.getByRole('button', { name: /Add/ }).click();
+    await redirects.getByRole('textbox', { name: 'From' }).nth(2).fill('www.example.org');
+    await redirects.getByRole('textbox', { name: 'To' }).nth(2).fill('/c');
+    // Rename an existing key
+    await redirects.getByRole('textbox', { name: 'From' }).nth(1).fill('v1.2.3');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/yml/home.yml'])
+      .toBe(
+        FILES['content/yml/home.yml'].replace('  v1.2: /b', '  v1.2.3: /b\n  www.example.org: /c'),
+      );
+  });
+});
+
+test.describe('YAML strings a YAML 1.1 parser misreads', () => {
+  test('are quoted', async ({ cms, page }) => {
+    await cms.open();
+    await cms.signIn();
+    await page.getByRole('treeitem', { name: /^yml\b/ }).click();
+    await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+
+    const editor = getEditor(page);
+    const redirects = editor.getByRole('group', { name: /Redirects.*Field/ });
+
+    // Jekyll and go-yaml v2 would read `yes` and `no` as booleans and `1:20` as 80
+    await editor.getByRole('textbox', { name: 'Title' }).fill('yes');
+    await redirects.getByRole('textbox', { name: 'From' }).fill('no');
+    await redirects.getByRole('textbox', { name: 'To' }).fill('1:20');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/yml/yes.yml'])
+      .toBe("title: 'yes'\nredirects:\n  'no': '1:20'\n");
+  });
+});
+
+test.describe('TOML front matter', () => {
+  test('keeps a native date', async ({ cms, page }) => {
+    const path = 'content/posts/dated.md';
+
+    await cms.open();
+    await cms.seed({
+      [path]: '+++\ntitle = "Dated"\ndate = 2024-01-02T03:04:05.000Z\n+++\n\nHello.\n',
+    });
+    await cms.signIn();
+    await openEntry(page, 'posts', 'Dated');
+
+    const editor = getEditor(page);
+
+    await editor.getByRole('textbox', { name: 'Body' }).fill('Edited.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())[path])
+      .toBe('+++\ntitle = "Dated"\ndate = 2024-01-02T03:04:05.000Z\n+++\n\nEdited.\n');
+  });
+});

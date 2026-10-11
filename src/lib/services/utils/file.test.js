@@ -45,8 +45,23 @@ describe('Test sanitizeFileName()', () => {
 
 describe('Test renameIfNeeded()', () => {
   test('should take the highest number already used, whatever order the names come in', () => {
-    expect(renameIfNeeded('photo.png', ['photo-1.png', 'photo-0.png'])).toEqual('photo-2.png');
-    expect(renameIfNeeded('photo.png', ['photo-10.png', 'photo-9.png'])).toEqual('photo-11.png');
+    expect(renameIfNeeded('photo.png', ['photo-1.png', 'photo.png', 'photo-0.png'])).toEqual(
+      'photo-2.png',
+    );
+    expect(renameIfNeeded('photo.png', ['photo-10.png', 'photo-9.png', 'photo.png'])).toEqual(
+      'photo-11.png',
+    );
+    expect(renameIfNeeded('photo.png', ['photo.png', 'photo-0.png'])).toEqual('photo-1.png');
+    // A slug has no extension
+    expect(renameIfNeeded('my-post', ['my-post-1', 'my-post'])).toEqual('my-post-2');
+  });
+
+  test('should keep a name that isn’t taken, even if numbered variants of it are', () => {
+    expect(renameIfNeeded('summer.jpg', ['summer-2023.jpg'])).toEqual('summer.jpg');
+    expect(renameIfNeeded('photo.jpg', ['photo-1.jpg', 'photo-2.jpg'])).toEqual('photo.jpg');
+    expect(renameIfNeeded('my-post', ['my-post-1', 'other'])).toEqual('my-post');
+    // A different extension doesn’t clash
+    expect(renameIfNeeded('photo.jpg', ['photo.png', 'photo-1.png'])).toEqual('photo.jpg');
   });
 
   test('should treat names that only differ in case as taken', () => {
@@ -58,10 +73,12 @@ describe('Test renameIfNeeded()', () => {
   test('should not be fooled by a dot in the base name', () => {
     // The base name is everything before the last dot, so these candidates all share the `x.y.z`
     // prefix. Picking anything but the highest number would hand back a name that is already taken
-    expect(renameIfNeeded('x.y.z.png', ['x.y.z-1.png', 'x.y.z-0.png'])).toEqual('x.y.z-2.png');
-    expect(renameIfNeeded('my.photo.jpg', ['my.photo-8.jpg', 'my.photo-3.jpg'])).toEqual(
-      'my.photo-9.jpg',
+    expect(renameIfNeeded('x.y.z.png', ['x.y.z.png', 'x.y.z-1.png', 'x.y.z-0.png'])).toEqual(
+      'x.y.z-2.png',
     );
+    expect(
+      renameIfNeeded('my.photo.jpg', ['my.photo-8.jpg', 'my.photo.jpg', 'my.photo-3.jpg']),
+    ).toEqual('my.photo-9.jpg');
   });
 
   test('should leave the given list of other names alone', () => {

@@ -1,7 +1,6 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
-import { flatten } from 'flat';
 
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { resolveCollectionAndFile } from '$lib/services/contents/collection/files';
@@ -9,6 +8,7 @@ import { getNestedIndexFileName } from '$lib/services/contents/collection/nested
 import { hasRootField } from '$lib/services/contents/entry/fields';
 import { parseEntryFile } from '$lib/services/contents/file/parse';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { flattenKeys } from '$lib/services/utils/object';
 import { runInChunks } from '$lib/services/utils/scheduling';
 
 /**
@@ -302,7 +302,7 @@ export const processNonI18nEntry = ({
   const slug = fileName || getSlug({ subPath, subPathTemplate });
 
   entry.slug = slug;
-  entry.locales._default = { slug, path, content: flatten(rawContent) };
+  entry.locales._default = { slug, path, content: flattenKeys(rawContent) };
 };
 
 /**
@@ -332,7 +332,7 @@ export const processI18nSingleFileEntry = ({
     allLocales
       // A locale key without an object, e.g. an empty `fr:` stub, has no content to read
       .filter((_locale) => isObject(rawContent[_locale]))
-      .map((_locale) => [_locale, { slug, path, content: flatten(rawContent[_locale]) }]),
+      .map((_locale) => [_locale, { slug, path, content: flattenKeys(rawContent[_locale]) }]),
   );
 };
 
@@ -373,7 +373,7 @@ export const processI18nMultiFileEntry = ({
       : undefined;
 
   const slug = fileName || getSlug({ subPath, subPathTemplate });
-  const localizedEntry = { slug, path, content: flatten(rawContent) };
+  const localizedEntry = { slug, path, content: flattenKeys(rawContent) };
   // Use a temporary ID to locate all the localized files for the entry. The sub path is the same
   // across locales, while the slug may not be unique, e.g. with the `{{year}}/{{slug}}` path. A
   // collection file is identified by its name, so a canonical slug in one of its locales can’t

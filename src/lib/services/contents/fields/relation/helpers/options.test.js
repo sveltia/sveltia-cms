@@ -40,7 +40,7 @@ describe('Test createSimpleOption()', () => {
     };
 
     const fallbackContext = {
-      content: { name: 'John Doe' },
+      content: { name: 'John Doe', id: 123 },
       locales: {},
       defaultLocale: 'en',
       identifierField: 'name',
@@ -75,7 +75,7 @@ describe('Test createSimpleOption()', () => {
     };
 
     const fallbackContext = {
-      content: {},
+      content: { id: 'A $& B' },
       locales: {},
       defaultLocale: 'en',
       identifierField: 'name',
@@ -126,7 +126,9 @@ describe('Test createSimpleOption()', () => {
     const result = createSimpleOption({ templates, allFieldNames, context, fallbackContext });
 
     expect(result.label).toBe('test-slug');
-    expect(result.value).toBe('test-slug');
+    // The slug is only a fallback for the label: an empty `id` leaves the value empty, so the
+    // option is left out rather than storing a reference that doesn’t identify the entry
+    expect(result.value).toBe('');
   });
 
   test('should fall back to slug when label is empty after all fallback attempts', async () => {
@@ -163,7 +165,7 @@ describe('Test createSimpleOption()', () => {
 
     // Should fall back to slug after all fallback attempts fail
     expect(result.label).toBe('test-slug');
-    expect(result.value).toBe('test-slug');
+    expect(result.value).toBe('');
   });
 
   test('uses default-locale summary when primary content summary is empty', async () => {
@@ -326,14 +328,14 @@ describe('Test createSimpleOption()', () => {
     expect(result.label).toBe('fallback-slug');
   });
 
-  test('should use slug as value fallback when _valueField is empty string (line 325)', () => {
-    // When _valueField is '' there are no template tags, so value stays '' after substitution,
-    // which triggers the `value || slug` fallback.
+  test('should not fall back to the slug when _valueField is empty string', () => {
+    // When _valueField is '' there are no template tags, so value stays '' after substitution.
+    // There’s no fallback: the option is left out by `processEntry()`.
 
     /** @type {TemplateStrings} */
     const templates = {
       _displayField: '{{name}}',
-      _valueField: '', // empty → value stays '' → falls back to slug
+      _valueField: '', // empty → value stays ''
       _searchField: '{{name}}',
       allFieldNames: ['name'],
       hasListFields: false,
@@ -360,7 +362,7 @@ describe('Test createSimpleOption()', () => {
     });
 
     expect(result.label).toBe('Some Name');
-    expect(result.value).toBe('value-fallback-slug');
+    expect(result.value).toBe('');
   });
 
   test('should cover label||"" and searchValue||label||"" false branches when all fallbacks and slug are empty (lines 324-326)', async () => {
@@ -396,7 +398,7 @@ describe('Test createSimpleOption()', () => {
     const result = createSimpleOption({ templates, allFieldNames: [], context, fallbackContext });
 
     expect(result.label).toBe(''); // label || '' → ''
-    expect(result.value).toBe(''); // value || slug → '' || '' → ''
+    expect(result.value).toBe('');
     expect(result.searchValue).toBe(''); // searchValue || label || '' → ''
   });
 });

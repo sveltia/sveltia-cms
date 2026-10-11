@@ -4,7 +4,7 @@ import {
 } from '$lib/services/contents/fields/key-value/pairs';
 
 /**
- * @import { EntryDraft, FlattenedEntryContent } from '$lib/types/private';
+ * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
 
@@ -49,12 +49,15 @@ const groupKeyPathsByParent = (valueMap, isRealKey) => {
  * @param {EntryDraft} args.draft Entry draft.
  * @param {(valueMap: FlattenedEntryContent, key: string) => boolean} args.isRealKey Function to
  * check whether a key holds content that has to be compared.
+ * @param {InternalLocaleCode[]} [args.locales] Locales to check, whose values are known to be the
+ * same. Defaults to every locale in the draft’s current values.
  * @returns {boolean} Whether any pairs have been reordered.
  */
-export const isPairOrderModified = ({ draft, isRealKey }) => {
+export const isPairOrderModified = ({ draft, isRealKey, locales }) => {
   const { collectionName, fileName, isIndexFile, originalValues, currentValues } = draft;
 
-  return Object.entries(currentValues).some(([locale, currentValueMap]) => {
+  return (locales ?? Object.keys(currentValues)).some((locale) => {
+    const currentValueMap = currentValues[locale];
     // The locales are known to be the same in both value stores by now
     const originalGroups = groupKeyPathsByParent(originalValues[locale], isRealKey);
     const currentGroups = groupKeyPathsByParent(currentValueMap, isRealKey);

@@ -388,10 +388,11 @@ export const fetchFileCommits = async (paths) => {
     results.flatMap((result) =>
       (result?.target?.history?.nodes ?? []).map((/** @type {any} */ node) => ({
         sha: node.oid,
-        authorName: node.author.name,
-        authorEmail: node.author.email,
-        authorAvatarURL: node.author.avatarUrl,
-        authorLogin: node.author.user?.login,
+        // The author can be `null` when the commit has no valid author info
+        authorName: node.author?.name ?? '',
+        authorEmail: node.author?.email,
+        authorAvatarURL: node.author?.avatarUrl,
+        authorLogin: node.author?.user?.login,
         date: new Date(node.committedDate),
       })),
     ),

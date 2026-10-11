@@ -316,6 +316,24 @@ export const createBaseSavingEntryData = async ({ draft, slugs }) => {
 };
 
 /**
+ * Remove the locales turned off in the draft from the saving entry, once the file changes have been
+ * worked out. Such a locale only carries the path of its file, so the change plan can delete the
+ * file, but the entry saved to the stores has no file in that locale anymore — or never had one, if
+ * the locale was turned on and off again before the first save. Left in, the path would count as
+ * one of the entry’s files: deleting the entry later in the same session would delete a file that
+ * no longer exists, which the Git services refuse, and the entry would look changed when compared
+ * with the same entry read back from the repository.
+ * @param {Entry} entry Saving entry.
+ * @returns {Entry} Entry with the locales that have content only.
+ */
+export const removeDisabledLocales = (entry) => ({
+  ...entry,
+  locales: Object.fromEntries(
+    Object.entries(entry.locales).filter(([, { content }]) => content !== undefined),
+  ),
+});
+
+/**
  * Get the item that a change to an entry applies to, if the entry is stored in a file with the
  * other entries of an entry collection. The item is identified by its position, and by the content
  * the user has seen, so that the change doesn’t apply to another item if the array has changed.
@@ -341,17 +359,20 @@ export const getArrayItemTarget = (entry) => {
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {Entry} args.savingEntry Entry to be saved.
+ * @param {boolean} [args.recreate] Whether to write the entry anew, because someone else has
+ * deleted it since the draft was opened. See {@link createSavingEntryData}.
  * @returns {EntryFilePlan} Planned change.
  */
-export const planSingleFileChange = ({ draft, savingEntry }) => {
-  const { collection, isNew, originalEntry, collectionFile } = draft;
+export const planSingleFileChange = ({ draft, savingEntry, recreate = false }) => {
+  const { collection, originalEntry, collectionFile } = draft;
+  const isNew = draft.isNew || recreate;
 
   const {
     _i18n: { defaultLocale },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const { slug, path } = savingEntry.locales[defaultLocale];
-  const previousPath = originalEntry?.locales[defaultLocale]?.path;
+  const previousPath = isNew ? undefined : originalEntry?.locales[defaultLocale]?.path;
   // Comparing the paths rather than the slugs also catches an entry moved with the path editor,
   // which leaves the slug alone
   const renamed = !isNew && !!previousPath && previousPath !== path;
@@ -372,13 +393,16 @@ export const planSingleFileChange = ({ draft, savingEntry }) => {
  * @param {EntryDraft} args.draft Entry draft.
  * @param {Entry} args.savingEntry Entry to be saved.
  * @param {InternalLocaleCode} args.locale Locale code.
+ * @param {boolean} [args.recreate] Whether to write the entry anew, because someone else has
+ * deleted it since the draft was opened. See {@link createSavingEntryData}.
  * @returns {EntryFilePlan | undefined} Planned change, or `undefined` if there’s no file to save
  * or delete for the locale.
  */
-export const planMultiFileChange = ({ draft, savingEntry, locale }) => {
-  const { isNew, originalLocales, currentLocales, originalEntry } = draft;
+export const planMultiFileChange = ({ draft, savingEntry, locale, recreate = false }) => {
+  const { originalLocales, currentLocales, originalEntry } = draft;
+  const isNew = draft.isNew || recreate;
   const { slug, path } = savingEntry.locales[locale] ?? {};
-  const previousPath = originalEntry?.locales[locale]?.path;
+  const previousPath = isNew ? undefined : originalEntry?.locales[locale]?.path;
 
   if (currentLocales[locale]) {
     const renamed = !isNew && !!originalLocales[locale] && !!previousPath && previousPath !== path;
@@ -411,10 +435,13 @@ export const planMultiFileChange = ({ draft, savingEntry, locale }) => {
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {EntrySlugVariants} args.slugs Entry slugs.
+ * @param {boolean} [args.recreate] Whether to write the entry anew, as if it were new, because
+ * someone else has deleted it since the draft was opened and the user has chosen to save anyway.
+ * Its files are then created rather than updated, moved or deleted, as none of them exists anymore.
  * @returns {Promise<{ savingEntry: Entry, savingAssets: Asset[], changes: FileChange[] }>} Saving
  * entry, assets and file changes.
  */
-export const createSavingEntryData = async ({ draft, slugs }) => {
+export const createSavingEntryData = async ({ draft, slugs, recreate = false }) => {
   const { id, collection, collectionFile } = draft;
   const { defaultLocaleSlug } = slugs;
   // A file/singleton collection keeps its file configuration on the collection file
@@ -488,8 +515,8 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
        */
       planChange: (locale) =>
         locale === undefined
-          ? planSingleFileChange({ draft, savingEntry })
-          : planMultiFileChange({ draft, savingEntry, locale }),
+          ? planSingleFileChange({ draft, savingEntry, recreate })
+          : planMultiFileChange({ draft, savingEntry, locale, recreate }),
     })),
   );
 

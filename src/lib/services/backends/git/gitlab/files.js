@@ -101,11 +101,14 @@ const getFetchFileListQuery = ({ scoped }) => `
  * Fetch the repository’s complete file list, and return it in the canonical format. With the
  * `root_dir` backend option, only the files in that directory are listed, which saves listing the
  * whole of a big monorepo; the paths are still relative to the repository root.
+ * @param {string} [lastHash] The last commit’s SHA-1 hash. The tree is listed at that commit
+ * rather than at the tip of the branch, which may have moved on since, so the file list matches the
+ * commit the file cache is keyed on. Default: the branch.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
  * @see https://docs.gitlab.com/api/graphql/reference/index.html#repositorytree
  * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
  */
-export const fetchFileList = async () => {
+export const fetchFileList = async (lastHash) => {
   const rootDir = getRootDir();
   const query = getFetchFileListQuery({ scoped: !!rootDir });
   /** @type {{ type: string, path: string, sha: string }[]} */
@@ -115,7 +118,12 @@ export const fetchFileList = async () => {
   // Since GitLab has a limit of 100 records per query, use pagination to fetch all the files
   for (;;) {
     const result = /** @type {FetchFileListResponse} */ (
-      await fetchGraphQL(query, { cursor, ...(rootDir && { path: rootDir }) })
+      await fetchGraphQL(query, {
+        cursor,
+        // The `$branch` variable takes a commit SHA as well as a branch name
+        ...(lastHash && { branch: lastHash }),
+        ...(rootDir && { path: rootDir }),
+      })
     );
 
     // A directory that doesn’t exist comes back without blobs, while a missing tree is guarded
@@ -316,11 +324,13 @@ export const fetchBlobNodes = async (paths, query, variables = {}) => {
  * Fetch the blobs for the given file paths, and map them back to those paths.
  * @param {string[]} paths List of file paths to fetch.
  * @param {string} query GraphQL query string, which has to select the `path` of each blob.
+ * @param {Record<string, any>} [variables] Any variable to be applied to the query, other than the
+ * paths.
  * @returns {Promise<Record<string, BlobItem>>} Fetched blobs mapped by file path. A path missing
  * from the branch has no blob.
  */
-export const fetchBlobs = async (paths, query) => {
-  const blobs = await fetchBlobNodes(paths, query);
+export const fetchBlobs = async (paths, query, variables = {}) => {
+  const blobs = await fetchBlobNodes(paths, query, variables);
 
   // Map the blobs back by their own paths rather than by position: GitLab leaves a path that isn’t
   // on the branch out of the response, e.g. a file deleted by a push made during the load, which
@@ -347,9 +357,13 @@ export const parseFileContents = ({ fetchingFiles, blobs }) =>
 /**
  * Fetch the metadata of entry/asset files as well as text file contents.
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
+ * @param {string} [lastHash] The last commit’s SHA-1 hash, which the file list comes from. The
+ * blobs are read at that commit rather than at the tip of the branch, which may have moved on
+ * since, so a text is never cached under the blob SHA of another version of the file. Default: the
+ * branch.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  */
-export const fetchFileContents = async (fetchingFiles) => {
+export const fetchFileContents = async (fetchingFiles, lastHash) => {
   // Show a simulated progress bar because the request waiting time is long
   const stopProgress = startSimulatedProgress(fetchingFiles.length);
   // Fetch blobs for entry/config files only
@@ -358,7 +372,8 @@ export const fetchFileContents = async (fetchingFiles) => {
   let blobs;
 
   try {
-    blobs = await fetchBlobs(textPaths, FETCH_BLOBS_QUERY);
+    // The `$branch` variable takes a commit SHA as well as a branch name
+    blobs = await fetchBlobs(textPaths, FETCH_BLOBS_QUERY, lastHash ? { branch: lastHash } : {});
   } finally {
     // Also on failure, so the interval doesn’t keep running behind the error message
     stopProgress();

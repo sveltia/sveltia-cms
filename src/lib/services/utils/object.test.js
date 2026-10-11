@@ -2,7 +2,83 @@ import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
 import { describe, expect, test } from 'vitest';
 
-import { isValueEmpty, unflattenKeys, unflattenMap } from '$lib/services/utils/object';
+import {
+  escapeKeySegment,
+  flattenKeys,
+  isValueEmpty,
+  unescapeKeySegment,
+  unflattenKeys,
+  unflattenMap,
+} from '$lib/services/utils/object';
+
+describe('escapeKeySegment() and unescapeKeySegment()', () => {
+  test('leaves a key without a dot as it is', () => {
+    expect(escapeKeySegment('title')).toBe('title');
+    expect(escapeKeySegment('')).toBe('');
+    expect(unescapeKeySegment('title')).toBe('title');
+  });
+
+  test('escapes dots, so the segment holds none', () => {
+    expect(escapeKeySegment('example.com')).toBe('example\uE000com');
+    expect(escapeKeySegment('.a..b.')).toBe('\uE000a\uE000\uE000b\uE000');
+    expect(unescapeKeySegment('example\uE000com')).toBe('example.com');
+    expect(unescapeKeySegment('\uE000a\uE000\uE000b\uE000')).toBe('.a..b.');
+  });
+
+  test('escapes the escape characters themselves, so any key round-trips', () => {
+    ['\uE000', '\uE001', 'a.\uE000.\uE001b', '\uE001\uE000', '\uE001.'].forEach((key) => {
+      expect(escapeKeySegment(key)).not.toContain('.');
+      expect(unescapeKeySegment(escapeKeySegment(key))).toBe(key);
+    });
+  });
+});
+
+describe('flattenKeys()', () => {
+  test('flattens like the `flat` library, escaping the dots in object keys', () => {
+    expect(
+      flattenKeys({
+        title: 'Hello',
+        redirects: { 'example.com': 'a', 'v1.2': 'b' },
+        list: [{ 'a.b': 1 }, 'x'],
+        empty: {},
+      }),
+    ).toEqual({
+      title: 'Hello',
+      'redirects.example\uE000com': 'a',
+      'redirects.v1\uE0002': 'b',
+      'list.0.a\uE000b': 1,
+      'list.1': 'x',
+      empty: {},
+    });
+  });
+
+  test('prefixes the key paths', () => {
+    expect(flattenKeys({ 'a.b': 1, c: [2] }, 'list.0')).toEqual({
+      'list.0.a\uE000b': 1,
+      'list.0.c.0': 2,
+    });
+  });
+
+  test('stores an empty value at the prefix itself', () => {
+    const list = /** @type {any[]} */ ([]);
+
+    expect(flattenKeys(list, 'list')).toEqual({ list: [] });
+    expect(flattenKeys(list, 'list').list).toBe(list);
+    expect(flattenKeys({}, 'obj')).toEqual({ obj: {} });
+  });
+
+  test('round-trips with `unflattenKeys()`', () => {
+    const value = {
+      'nav.home': 'Home',
+      redirects: { 'example.com': 'a', 'v1.2': 'b', 1.5: 'c', '.': 'd', '': 'e' },
+      list: [{ kv: { 'a.b': { 'c.d': [1, { 'e.f': 2 }] } } }],
+      '\uE000.\uE001': 'escape characters',
+    };
+
+    expect(unflattenKeys(flattenKeys(value))).toEqual(value);
+    expect(unflattenMap(flattenKeys(value))).toEqual(value);
+  });
+});
 
 describe('unflattenKeys()', () => {
   test('unflattens a map like the `flat` library', () => {
@@ -43,6 +119,37 @@ describe('unflattenKeys()', () => {
       },
       { kv: { foo: 'bar' } },
     ]);
+  });
+
+  test('restores escaped keys', () => {
+    // The `flat` library alone splits a dotted key
+    expect(unflatten({ 'redirects.example.com': 'a' })).toEqual({
+      redirects: { example: { com: 'a' } },
+    });
+
+    expect(
+      unflattenKeys({
+        'redirects.example\uE000com': 'a',
+        'redirects.v1\uE0002': 'b',
+        'list.0.kv.1\uE0005': 'c',
+        'list.1.kv.x': 'd',
+      }),
+    ).toEqual({
+      redirects: { 'example.com': 'a', 'v1.2': 'b' },
+      list: [{ kv: { 1.5: 'c' } }, { kv: { x: 'd' } }],
+    });
+  });
+
+  test('flattens a nested object value with its keys escaped', () => {
+    // A Hidden field’s default value is stored as is at its own key path. The `flat` library alone
+    // would split its dotted keys
+    expect(
+      unflattenKeys({ 'meta.x': 1, hidden: { 'a.b': { 'c.d': 1 }, list: [{ 'e.f': 2 }] } }),
+    ).toEqual({ meta: { x: 1 }, hidden: { 'a.b': { 'c.d': 1 }, list: [{ 'e.f': 2 }] } });
+    expect(unflattenKeys({ 'kv.': 'x', nested: { '01': 'y' } })).toEqual({
+      kv: { '': 'x' },
+      nested: { '01': 'y' },
+    });
   });
 
   test('leaves class instances as they are', () => {

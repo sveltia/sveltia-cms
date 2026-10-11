@@ -87,7 +87,7 @@ describe('Anthropic AI Client', () => {
       const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
 
       expect(body).not.toHaveProperty('temperature');
-      expect(body.max_tokens).toBe(4000);
+      expect(body.max_tokens).toBe(16_000);
     });
 
     it('should forward custom maxTokens without temperature', async () => {

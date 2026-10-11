@@ -125,6 +125,11 @@ describe('OpenAI Translator Service', () => {
           },
         }),
       );
+
+      const body = JSON.parse(/** @type {string} */ (mockFetch.mock.calls[0][1]?.body));
+
+      // Low effort, so that reasoning doesn’t use up the output budget
+      expect(body.reasoning).toEqual({ effort: 'low' });
     });
 
     it('should handle markdown content in translation', async () => {

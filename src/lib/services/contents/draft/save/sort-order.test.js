@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
+import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 import { assignManualSortOrder } from './sort-order';
 
@@ -11,6 +12,10 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
 
 vi.mock('$lib/services/contents/collection/entries/reorder/config', () => ({
   getOrderFieldKey: vi.fn(() => undefined),
+}));
+
+vi.mock('$lib/services/workflow', () => ({
+  getUnpublishedEntriesByCollection: vi.fn(() => []),
 }));
 
 /**
@@ -27,6 +32,7 @@ describe('assignManualSortOrder', () => {
   beforeEach(() => {
     vi.mocked(getOrderFieldKey).mockReturnValue('order');
     vi.mocked(getEntriesByCollection).mockReturnValue([]);
+    vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue([]);
   });
 
   it('leaves the values alone when the collection has no order field', () => {
@@ -70,5 +76,21 @@ describe('assignManualSortOrder', () => {
 
     assignManualSortOrder(draft, 2);
     expect(draft.currentValues.en.order).toBe(8);
+  });
+
+  it('counts the orders of the entries still in a pull request', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue(
+      /** @type {any} */ ([{ locales: { en: { content: { order: 2 } } } }]),
+    );
+    // A new entry saved with Editorial Workflow has taken the next order in its pull request
+    vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue(
+      /** @type {any} */ ([{ locales: { en: { content: { order: 3 } } } }]),
+    );
+
+    const draft = createDraft({ en: {} });
+
+    assignManualSortOrder(draft);
+    expect(draft.currentValues.en.order).toBe(4);
+    expect(getUnpublishedEntriesByCollection).toHaveBeenCalledWith('tags');
   });
 });

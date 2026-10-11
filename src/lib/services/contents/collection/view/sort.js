@@ -33,9 +33,19 @@ const MARKDOWN_SORT_KEY_LENGTH = 1000;
 export const MARKDOWN_FIELD_KEYS = ['title', 'summary', 'description'];
 
 /**
+ * Check whether a raw field value is empty, so that the entry has nothing to sort by.
+ * @param {any} value Raw value.
+ * @returns {boolean} Whether the value is `undefined`, `null` or an empty string.
+ */
+const isEmptyValue = (value) => value === undefined || value === null || value === '';
+
+/**
  * Get a function that computes the sort key for a single entry. Pre-computing this once (O(n))
  * instead of re-computing inside the comparator (O(n log n)) avoids re-parsing dates and stripping
- * Markdown syntax on every comparison.
+ * Markdown syntax on every comparison. An entry without a value gets `undefined`, which
+ * `sortItemsByKey()` puts last in either order, so empty numbers, dates and strings alike end up
+ * at the bottom, rather than among the negative numbers, at the epoch or before `a`. A Boolean
+ * field without a value is taken as `false`, as the editor shows it.
  * @param {object} args Arguments.
  * @param {string} args.key Sort key field path.
  * @param {StringConstructor | NumberConstructor | DateConstructor | BooleanConstructor} args.type
@@ -46,7 +56,7 @@ export const MARKDOWN_FIELD_KEYS = ['title', 'summary', 'description'];
  * @param {DateTimeField | undefined} args.dateFieldConfig DateTime field config, or `undefined` if
  * the field is not a DateTime field.
  * @param {boolean} args.isMarkdownField Whether the field may contain Markdown syntax.
- * @returns {(entry: Entry) => string | number} Sort key getter for one entry.
+ * @returns {(entry: Entry) => string | number | undefined} Sort key getter for one entry.
  */
 export const getSortKeyGetter = ({
   key,
@@ -66,15 +76,22 @@ export const getSortKeyGetter = ({
   if (dateFieldConfig) {
     return (/** @type {Entry} */ entry) => {
       const raw = getPropertyValue({ entry, locale, collectionName, key });
+      const time = getDate(raw, dateFieldConfig)?.getTime() ?? NaN;
 
-      return raw ? Number(getDate(raw, dateFieldConfig) ?? 0) : 0;
+      // A date that can’t be parsed is no better than a missing one
+      return Number.isNaN(time) ? undefined : time;
     };
   }
 
   if (type === String) {
     return (/** @type {Entry} */ entry) => {
       const raw = getPropertyValue({ entry, locale, collectionName, key });
-      const str = raw ? String(raw) : '';
+
+      if (isEmptyValue(raw)) {
+        return undefined;
+      }
+
+      const str = String(raw);
 
       // Only the beginning of a long Markdown value tells entries apart, and stripping the syntax
       // takes time that grows faster than the length on a value crafted to be nested deeply
@@ -82,10 +99,20 @@ export const getSortKeyGetter = ({
     };
   }
 
+  if (type === Boolean) {
+    return (/** @type {Entry} */ entry) => {
+      const raw = getPropertyValue({ entry, locale, collectionName, key });
+
+      return raw === true ? 1 : 0;
+    };
+  }
+
+  // A number, or the commit date, which is a `Date`
   return (/** @type {Entry} */ entry) => {
     const raw = getPropertyValue({ entry, locale, collectionName, key });
+    const num = isEmptyValue(raw) ? NaN : Number(raw);
 
-    return Number(raw ?? 0);
+    return Number.isNaN(num) ? undefined : num;
   };
 };
 

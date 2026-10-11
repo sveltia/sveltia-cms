@@ -49,11 +49,9 @@ export const scanEntry = ({ entry, terms, normalizedValueCache = undefined }) =>
     ).length;
   });
 
-  const summary = getEntrySummary(collections[0], entry, {
-    useTemplate: true,
-    allowMarkdown: true,
-  });
-
+  // Match the plain-text summary, as a user sees it, rather than the HTML rendered from Markdown,
+  // which would match tag names like `strong` and character references like `&lt;`
+  const summary = getEntrySummary(collections[0], entry, { useTemplate: true });
   // The entry’s own values are normalized once and kept for later searches, as long as the entry
   // object is around
   const entryValueCache = getNormalizedValueCache(entry);

@@ -27,9 +27,12 @@ import { parseBranchName } from '$lib/services/workflow/branch';
  * request has no slug at all, because the slug is read from that file alone.
  * @param {Entry} entry Entry parsed from the pull request.
  * @param {string[]} previousPaths File paths the pull request renamed the entry from.
+ * @param {Set<string>} deletedPaths File paths the pull request deletes. A locale turned off for
+ * the entry has its file deleted, so it’s left out rather than brought back from the published
+ * version.
  * @returns {Entry} Entry with the unchanged locales merged in.
  */
-const completeEntry = (entry, previousPaths) => {
+const completeEntry = (entry, previousPaths, deletedPaths) => {
   const paths = new Set([...getEntryPaths(entry), ...previousPaths]);
   // `allEntries` holds the version currently on the configured branch
   const publishedEntry = findEntryByPaths(paths);
@@ -46,8 +49,14 @@ const completeEntry = (entry, previousPaths) => {
   return {
     ...publishedEntry,
     ...entry,
-    // The pull request wins for the locales it carries; the others stay as published
-    locales: { ...publishedEntry.locales, ...entry.locales },
+    // The pull request wins for the locales it carries; the others stay as published, unless it
+    // deletes their files
+    locales: {
+      ...Object.fromEntries(
+        Object.entries(publishedEntry.locales).filter(([, { path }]) => !deletedPaths.has(path)),
+      ),
+      ...entry.locales,
+    },
     slug: renamed ? entry.slug : publishedEntry.slug,
     subPath: renamed ? entry.subPath : publishedEntry.subPath,
   };
@@ -111,7 +120,7 @@ export const convertPullRequest = async (pullRequest) => {
     return deleted ? [path] : [];
   });
 
-  const previousPaths = vacatedPaths.length
+  const vacatedEntryFiles = vacatedPaths.length
     ? createFileList(
         vacatedPaths.map((path) => ({
           path,
@@ -119,10 +128,16 @@ export const convertPullRequest = async (pullRequest) => {
           sha: '',
           size: 0,
         })),
-      )
-        .entryFiles.filter(({ folder }) => folder.collectionName === collectionName)
-        .map(({ path }) => path)
+      ).entryFiles.filter(({ folder }) => folder.collectionName === collectionName)
     : [];
+
+  const previousPaths = vacatedEntryFiles.map(({ path }) => path);
+
+  // Files deleted outright, as opposed to renamed. With the multi-file i18n structure, turning off
+  // a locale deletes that locale’s file only.
+  const deletedPaths = new Set(
+    pullRequest.files.filter(({ deleted }) => deleted).map(({ path }) => path),
+  );
 
   // An image attached to an unpublished entry is committed to the workflow branch only, so it’s
   // missing from the asset list built from the configured branch. Parse it here so the entry
@@ -140,9 +155,10 @@ export const convertPullRequest = async (pullRequest) => {
     ({ folder, text }) => folder.collectionName === collectionName && text !== undefined,
   );
 
-  // A pull request that only removes entry files is an Unpublish: there’s nothing to parse, so
-  // reuse the published entry it removes. Its content is what the list and the editor display
-  // while the removal awaits publication.
+  // A pull request that only removes entry files has nothing to parse, so reuse the published entry
+  // it touches. When it deletes all the entry’s files, it’s an Unpublish, and the published content
+  // is what the list and the editor display while the removal awaits publication. Otherwise it only
+  // deletes the files of locales turned off for the entry: it’s an edit without those locales.
   if (!targetFiles.length) {
     const removedPaths = new Set(previousPaths);
 
@@ -153,18 +169,38 @@ export const convertPullRequest = async (pullRequest) => {
       : [];
 
     return {
-      entries: removedEntries.map((entry) => ({
-        ...entry,
-        workflow: {
-          pullRequest,
-          // A removal opened before the dedicated status existed carries `pending_publish`, so the
-          // status is taken from the contents rather than the label
-          status: /** @type {WorkflowStatus} */ ('pending_deletion'),
-          collectionName,
-          fileName: undefined,
-          previousPaths,
-        },
-      })),
+      entries: removedEntries.map((entry) => {
+        const remainingLocales = Object.entries(entry.locales).filter(
+          ([, { path }]) => !deletedPaths.has(path),
+        );
+
+        if (remainingLocales.length) {
+          return {
+            ...entry,
+            locales: Object.fromEntries(remainingLocales),
+            workflow: {
+              pullRequest,
+              status: pullRequest.status,
+              collectionName,
+              fileName: vacatedEntryFiles[0].folder.fileName,
+              previousPaths,
+            },
+          };
+        }
+
+        return {
+          ...entry,
+          workflow: {
+            pullRequest,
+            // A removal opened before the dedicated status existed carries `pending_publish`, so
+            // the status is taken from the contents rather than the label
+            status: /** @type {WorkflowStatus} */ ('pending_deletion'),
+            collectionName,
+            fileName: undefined,
+            previousPaths,
+          },
+        };
+      }),
       assets,
     };
   }
@@ -174,7 +210,7 @@ export const convertPullRequest = async (pullRequest) => {
 
   return {
     entries: entries.map((entry) => ({
-      ...completeEntry(entry, previousPaths),
+      ...completeEntry(entry, previousPaths, deletedPaths),
       workflow: {
         pullRequest,
         status: pullRequest.status,

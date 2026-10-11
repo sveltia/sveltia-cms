@@ -60,6 +60,15 @@
   const timeZone = $derived(getInitialTimeZone(currentValue, fieldConfig));
 
   /**
+   * Value of the input right after it was last synced with {@link currentValue}. The value is only
+   * written back once the user has changed the input from this, so a stored value the input can’t
+   * represent isn’t replaced, or erased, as soon as the editor is opened. This also keeps a
+   * read-only field’s value as it is: the input drops the seconds with its default `step`, so
+   * writing it back would truncate a value like one set by `auto_now`.
+   */
+  let syncedInputValue = '';
+
+  /**
    * Update {@link inputValue} based on {@link currentValue}. Only update if the input is not
    * currently focused to avoid interfering with user typing.
    */
@@ -74,17 +83,22 @@
     if (_inputValue !== undefined && _inputValue !== inputValue) {
       inputValue = _inputValue;
     }
+
+    syncedInputValue = inputValue;
   };
 
   /**
-   * Update {@link currentValue} based on {@link inputValue}.
+   * Update {@link currentValue} based on {@link inputValue}, if the user has changed it.
    */
   const setCurrentValue = () => {
-    // A read-only field keeps its stored value as it is. The input drops the seconds with its
-    // default `step`, so writing it back would truncate a value like one set by `auto_now`
-    if (readonly) {
+    if (inputValue === syncedInputValue) {
       return;
     }
+
+    // The input now reflects the value written below. While the input is focused,
+    // `setInputValue()` doesn’t run, so record it here: otherwise changing the input back to the
+    // value it had when it was focused would be ignored
+    syncedInputValue = inputValue;
 
     const newValue = getCurrentValue({ inputValue, currentValue, fieldConfig, timeZone });
 

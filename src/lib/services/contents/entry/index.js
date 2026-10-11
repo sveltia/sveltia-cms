@@ -5,6 +5,7 @@ import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
 import dayjsUTC from 'dayjs/plugin/utc';
 
 import { backend } from '$lib/services/backends';
+import { encodePath } from '$lib/services/backends/git/shared/url';
 import { fillTemplate } from '$lib/services/common/template';
 import { DATE_TIME_TEMPLATE_REGEX } from '$lib/services/common/template/constants';
 import { cmsConfig } from '$lib/services/config';
@@ -239,5 +240,9 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile, op
  * @param {InternalLocaleCode} locale Locale.
  * @returns {string} URL on the repository.
  */
-export const getEntryRepoBlobURL = (entry, locale) =>
-  `${backend.current?.repository?.blobBaseURL}/${entry.locales[locale]?.path}?plain=1`;
+export const getEntryRepoBlobURL = (entry, locale) => {
+  const path = entry.locales[locale]?.path;
+
+  // A name can contain characters like `#` or `%` that have a meaning in a URL
+  return `${backend.current?.repository?.blobBaseURL}/${path ? encodePath(path) : ''}?plain=1`;
+};

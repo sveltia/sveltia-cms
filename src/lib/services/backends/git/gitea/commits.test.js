@@ -457,6 +457,22 @@ describe('Gitea Commits Service', () => {
         },
       );
 
+      test('reports the parent the commit has been made on top of', async () => {
+        fetchAPIMock.mockResolvedValue({
+          commit: {
+            sha: 'c1',
+            created: '2023-01-01T00:00:00Z',
+            parents: [{ sha: 'colleague-sha', url: 'https://example.com/colleague-sha' }],
+          },
+          files: [{ path: 'a.md', sha: 'new-blob-sha' }],
+        });
+
+        const result = await commitChanges(changes, options);
+
+        // Someone else’s commit to another file doesn’t stop this one, which lands on top of it
+        expect(result.parentSha).toBe('colleague-sha');
+      });
+
       test('doesn’t look up a SHA for a new file', async () => {
         fetchAPIMock.mockResolvedValueOnce({
           commit: { sha: 'c1', created: '2023-01-01T00:00:00Z' },

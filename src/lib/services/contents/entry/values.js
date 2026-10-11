@@ -55,6 +55,9 @@ const isRichTextField = (fieldConfig) =>
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {string} [args.componentName] Name of the rich text editor component whose field the key
+ * path points to. The key path and the value map then come without the component’s key path
+ * prefix.
  * @param {FlattenedEntryContent} [args.valueMap] Object holding current entry values.
  * @param {FieldKeyPath} args.keyPath Key path, e.g. `author.name`.
  * @param {InternalLocaleCode} args.locale Locale.
@@ -70,6 +73,7 @@ const isRichTextField = (fieldConfig) =>
 export const getFieldDisplayValue = ({
   collectionName,
   fileName,
+  componentName = undefined,
   valueMap = {},
   keyPath,
   locale,
@@ -78,7 +82,15 @@ export const getFieldDisplayValue = ({
   pendingEntries = undefined,
   plainText = false,
 }) => {
-  const fieldConfig = getField({ collectionName, fileName, valueMap, keyPath, isIndexFile });
+  const fieldConfig = getField({
+    collectionName,
+    fileName,
+    componentName,
+    valueMap,
+    keyPath,
+    isIndexFile,
+  });
+
   let value = valueMap[keyPath];
 
   // If the field doesn’t exist in `valueMap` and transformations are applied, return empty string

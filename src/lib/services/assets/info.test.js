@@ -1791,14 +1791,11 @@ describe('assets/info', () => {
       expect(result).toBeDefined();
     });
 
-    it('should handle getEntriesByAssetURL when url is undefined', async () => {
-      const { getEntriesByAssetURL } = await import('$lib/services/assets/references');
+    it('should look up the entries by the asset itself in an entry-relative folder', async () => {
+      const { getEntriesByAssets, getEntriesByAssetURL } =
+        await import('$lib/services/assets/references');
 
-      vi.mocked(getEntriesByAssetURL).mockResolvedValue([]);
-
-      const mockHandle = {
-        getFile: vi.fn(async () => new File(['content'], 'test.jpg', { type: 'image/jpeg' })),
-      };
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[]]);
 
       const entryRelativeAsset = {
         ...mockAsset,
@@ -1806,14 +1803,15 @@ describe('assets/info', () => {
           ...mockAsset.folder,
           entryRelative: true,
         },
-        handle: mockHandle,
       };
 
       const result = await getAssetUsedEntries(entryRelativeAsset);
 
-      // publicURL is undefined for entry-relative assets; blobURL is set from the handle,
-      // so getEntriesByAssetURL is called with the blob URL and returns []
+      // A path relative to the entry would match the same path in any entry, so a value only
+      // refers to the asset when it resolves to it
       expect(result).toEqual([]);
+      expect(vi.mocked(getEntriesByAssets)).toHaveBeenCalledWith([{ asset: entryRelativeAsset }]);
+      expect(vi.mocked(getEntriesByAssetURL)).not.toHaveBeenCalled();
     });
 
     it('should handle getEntriesByAssetURL with used entries', async () => {
@@ -2405,36 +2403,6 @@ describe('assets/info', () => {
 
       // blobURL is undefined (createObjectURL returned undefined), falls back to publicURL
       expect(result).toBe('https://example.com/assets/images/test.jpg');
-    });
-
-    it('should return empty array when url is undefined in getAssetUsedEntries', async () => {
-      // Covers the !url branch: both getAssetPublicURL and getAssetBlobURL return undefined
-      const { getEntriesByAssetURL } = await import('$lib/services/assets/references');
-
-      // @ts-ignore
-      global.URL = {
-        createObjectURL: vi.fn().mockReturnValue(undefined),
-        revokeObjectURL: vi.fn(),
-      };
-
-      const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
-
-      // entryRelative=true with no entry → getAssetPublicURL returns undefined
-      const entryRelativeAsset = {
-        ...mockAsset,
-        file: mockFile,
-        blobURL: undefined,
-        folder: {
-          ...mockAsset.folder,
-          entryRelative: true,
-        },
-      };
-
-      const result = await getAssetUsedEntries(entryRelativeAsset);
-
-      // url = undefined ?? undefined = undefined → returns []
-      expect(vi.mocked(getEntriesByAssetURL)).not.toHaveBeenCalled();
-      expect(result).toEqual([]);
     });
   });
 

@@ -1,5 +1,7 @@
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import { applyTransformations } from '$lib/services/common/transformations';
+import { getField } from '$lib/services/contents/entry/fields';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import {
   getComputedValue,
@@ -7,6 +9,9 @@ import {
   hasUuidTag,
 } from '$lib/services/contents/fields/compute/helpers';
 
+vi.mock('$lib/services/contents/entry/fields', () => ({
+  getField: vi.fn(),
+}));
 vi.mock('$lib/services/contents/entry/values', () => ({
   getFieldDisplayValue: vi.fn(),
 }));
@@ -95,6 +100,46 @@ describe('getComputedValue()', () => {
     expect(getComputedValue(getArgs('{{fields.title | upper}}'))).toBe('HELLO WORLD');
   });
 
+  test('should let the field apply transformations to its raw value', () => {
+    // Stand in for `getFieldDisplayValue()`, which displays a boolean as `true` or `false` but
+    // applies the transformations to the raw value
+    vi.mocked(getFieldDisplayValue).mockImplementation(
+      ({ valueMap = {}, keyPath, transformations }) =>
+        transformations?.length
+          ? String(
+              applyTransformations({ value: valueMap[keyPath], transformations, locale: 'en' }),
+            )
+          : String(valueMap[keyPath]),
+    );
+
+    const args = getArgs("{{fields.draft | ternary('Draft', 'Live')}}");
+
+    expect(getComputedValue({ ...args, valueMap: { draft: false } })).toBe('Live');
+    expect(getComputedValue({ ...args, valueMap: { draft: true } })).toBe('Draft');
+
+    expect(vi.mocked(getFieldDisplayValue)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        keyPath: 'draft',
+        transformations: [expect.objectContaining({ method: 'ternary' })],
+      }),
+    );
+  });
+
+  test('should apply transformations to the display value of a value missing from the content', () => {
+    // A List field’s value is stored under its item key paths, so the field itself has no value
+    vi.mocked(getFieldDisplayValue).mockReturnValue('a, b');
+
+    expect(getComputedValue(getArgs('{{fields.tags | upper}}'))).toBe('A, B');
+    expect(vi.mocked(getFieldDisplayValue)).toHaveBeenCalledWith(
+      expect.objectContaining({ keyPath: 'tags', transformations: undefined }),
+    );
+
+    // An unset field falls back to the default
+    vi.mocked(getFieldDisplayValue).mockReturnValue('');
+
+    expect(getComputedValue(getArgs("{{fields.title | default('Untitled')}}"))).toBe('Untitled');
+  });
+
   test('should return a stable empty slug for an empty source field', () => {
     // A random fallback would make the field recompute forever
     // @see https://github.com/sveltia/sveltia-cms/issues/946
@@ -112,6 +157,162 @@ describe('getComputedValue()', () => {
     expect(
       getComputedValue({ ...getArgs(''), fieldConfig: { name: 'slug', widget: 'compute' } }),
     ).toBe('');
+  });
+
+  describe('Number fields', () => {
+    afterEach(() => {
+      vi.mocked(getField).mockReset();
+    });
+
+    test('should insert a number as stored rather than formatted', () => {
+      vi.mocked(getField).mockReturnValue({ name: 'sku', widget: 'number' });
+      vi.mocked(getFieldDisplayValue).mockReturnValue('123,456');
+
+      const args = { ...getArgs('/p/{{fields.sku}}'), valueMap: { sku: 123456 } };
+
+      expect(getComputedValue(args)).toBe('/p/123456');
+      expect(getFieldDisplayValue).not.toHaveBeenCalled();
+      expect(getField).toHaveBeenCalledWith(
+        expect.objectContaining({ collectionName: 'posts', keyPath: 'sku' }),
+      );
+    });
+
+    test('should apply transformations to the stored number', () => {
+      vi.mocked(getField).mockReturnValue({ name: 'sku', widget: 'number' });
+
+      const args = { ...getArgs("{{fields.sku | default('none')}}"), valueMap: { sku: 1000 } };
+
+      expect(getComputedValue(args)).toBe('1000');
+      expect(getComputedValue({ ...args, valueMap: { sku: 0 } })).toBe('0');
+      expect(getComputedValue({ ...args, valueMap: { sku: null } })).toBe('none');
+    });
+
+    test('should leave an empty number empty', () => {
+      vi.mocked(getField).mockReturnValue({ name: 'sku', widget: 'number' });
+
+      expect(getComputedValue({ ...getArgs('p-{{fields.sku}}'), valueMap: { sku: null } })).toBe(
+        'p-',
+      );
+    });
+
+    test('should keep the display value of another field type', () => {
+      vi.mocked(getField).mockReturnValue({
+        name: 'cat',
+        widget: 'select',
+        options: [{ label: 'Books', value: 'b' }],
+      });
+      vi.mocked(getFieldDisplayValue).mockReturnValue('Books');
+
+      expect(getComputedValue({ ...getArgs('{{fields.cat}}'), valueMap: { cat: 'b' } })).toBe(
+        'Books',
+      );
+    });
+  });
+
+  describe('Rich text editor component fields', () => {
+    const componentFields = [{ name: 'heading' }, { name: 'meta', widget: 'object' }];
+
+    /**
+     * Get the arguments for a Compute field of a component instance.
+     * @param {string} value Value template.
+     * @returns {any} Arguments.
+     */
+    const getComponentArgs = (value) => ({
+      ...getArgs(value, 'body:c1:anchor'),
+      keyPathPrefix: 'body:c1:',
+      valueMap: {
+        'body:c1:__sc_component_name': 'section',
+        'body:c1:heading': 'Intro',
+        'body:c1:meta.label': 'Label',
+        'body:c2:__sc_component_name': 'section',
+        'body:c2:heading': 'Other',
+      },
+      entryValueMap: { title: 'Hello', heading: 'Entry heading' },
+    });
+
+    afterEach(() => {
+      vi.mocked(getField).mockReset();
+    });
+
+    test('should resolve a field of the component', () => {
+      vi.mocked(getField).mockImplementation(({ componentName, keyPath }) =>
+        componentName === 'section'
+          ? componentFields.find(({ name }) => name === keyPath.split('.')[0])
+          : undefined,
+      );
+      vi.mocked(getFieldDisplayValue).mockImplementation(
+        ({ valueMap = {}, keyPath }) => valueMap[keyPath],
+      );
+
+      expect(getComputedValue(getComponentArgs('#{{fields.heading}}'))).toBe('#Intro');
+      expect(getComputedValue(getComponentArgs('{{fields.heading}}/{{fields.meta.label}}'))).toBe(
+        'Intro/Label',
+      );
+      expect(getFieldDisplayValue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          componentName: 'section',
+          keyPath: 'heading',
+          valueMap: {
+            __sc_component_name: 'section',
+            heading: 'Intro',
+            'meta.label': 'Label',
+          },
+        }),
+      );
+    });
+
+    test('should fall back to a field of the entry', () => {
+      vi.mocked(getField).mockImplementation(({ componentName, keyPath }) =>
+        componentName === 'section'
+          ? componentFields.find(({ name }) => name === keyPath)
+          : undefined,
+      );
+      vi.mocked(getFieldDisplayValue).mockImplementation(
+        ({ valueMap = {}, keyPath }) => valueMap[keyPath],
+      );
+
+      expect(getComputedValue(getComponentArgs('{{fields.title}}'))).toBe('Hello');
+      expect(getFieldDisplayValue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          componentName: undefined,
+          keyPath: 'title',
+          valueMap: { title: 'Hello', heading: 'Entry heading' },
+        }),
+      );
+    });
+
+    test('should insert a number of the component as stored', () => {
+      vi.mocked(getField).mockReturnValue({ name: 'count', widget: 'number' });
+
+      const args = getComponentArgs('n-{{fields.count}}');
+
+      args.valueMap['body:c1:count'] = 1500;
+
+      expect(getComputedValue(args)).toBe('n-1500');
+    });
+
+    test('should look up the entry’s fields for a component without a name', () => {
+      vi.mocked(getFieldDisplayValue).mockImplementation(
+        ({ valueMap = {}, keyPath }) => valueMap[keyPath],
+      );
+
+      const args = getComponentArgs('{{fields.heading}}');
+
+      delete args.valueMap['body:c1:__sc_component_name'];
+
+      expect(getComputedValue(args)).toBe('Entry heading');
+      expect(getField).not.toHaveBeenCalledWith(
+        expect.objectContaining({ componentName: 'section' }),
+      );
+    });
+
+    test('should resolve an entry field against an empty map without the entry content', () => {
+      vi.mocked(getFieldDisplayValue).mockReturnValue('');
+
+      const { entryValueMap: _entryValueMap, ...args } = getComponentArgs('{{fields.title}}');
+
+      expect(getComputedValue(args)).toBe('');
+    });
   });
 
   describe('UUID tags', () => {

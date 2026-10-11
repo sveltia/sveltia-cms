@@ -11,7 +11,7 @@
     getAssetDetails,
     getAssetUsedEntries,
   } from '$lib/services/assets/details';
-  import { isMediaKind } from '$lib/services/assets/kinds';
+  import { isMediaKind, isPDF } from '$lib/services/assets/kinds';
   import { formatDate } from '$lib/services/utils/date';
 
   /**
@@ -39,7 +39,7 @@
   const { path, size, kind, commitAuthor, commitDate } = $derived(asset);
   const { publicURL, repoBlobURL, dimensions, duration, createdDate, coordinates, usedEntries } =
     $derived(details);
-  const canPreview = $derived(isMediaKind(kind) || path.endsWith('.pdf'));
+  const canPreview = $derived(isMediaKind(kind) || isPDF(path));
 
   /**
    * Asset the details were last requested for. The panel stays mounted while the focus moves from

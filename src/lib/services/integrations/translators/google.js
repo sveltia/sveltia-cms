@@ -86,6 +86,22 @@ export const normalizeLanguage = (locale) => {
     }
   }
 
+  if (script && !SUPPORTED_LANGUAGES.includes(`${lang}-${script}`)) {
+    let defaultScript;
+
+    try {
+      defaultScript = new Intl.Locale(lang).maximize().script;
+    } catch {
+      // Invalid language code
+    }
+
+    // The bare language code gives the text in the language’s usual script, so don’t fall back to
+    // it for another script, e.g. `sr` for `sr-Latn`, which Google writes in Cyrillic
+    if (script !== defaultScript) {
+      return undefined;
+    }
+  }
+
   const candidates = [
     script ? `${lang}-${script}` : undefined,
     region ? `${lang}-${region}` : undefined,
@@ -104,7 +120,57 @@ export const availability = async ({ sourceLanguage, targetLanguage }) =>
   !!normalizeLanguage(sourceLanguage) && !!normalizeLanguage(targetLanguage);
 
 /**
+ * Maximum number of text segments the Cloud Translation API v2 accepts in a request.
+ */
+const MAX_SEGMENTS_PER_REQUEST = 128;
+/**
+ * Maximum total size of the texts in a request, in UTF-8 bytes. The API rejects a request larger
+ * than 100K bytes, so this leaves room for the rest of the JSON body.
+ * @see https://cloud.google.com/translate/quotas
+ */
+const MAX_BYTES_PER_REQUEST = 90_000;
+
+/**
+ * Split the given texts into chunks that each fit in a single API request: at most
+ * {@link MAX_SEGMENTS_PER_REQUEST} texts and {@link MAX_BYTES_PER_REQUEST} bytes. A text larger
+ * than the byte budget is given a chunk of its own, as a single text can’t be split.
+ * @param {string[]} texts Texts.
+ * @returns {string[][]} Chunks of texts in the original order.
+ */
+export const chunkTexts = (texts) => {
+  const encoder = new TextEncoder();
+  /** @type {string[][]} */
+  const chunks = [];
+  /** @type {string[]} */
+  let chunk = [];
+  let chunkSize = 0;
+
+  texts.forEach((text) => {
+    const size = encoder.encode(text).length;
+
+    if (
+      chunk.length &&
+      (chunk.length >= MAX_SEGMENTS_PER_REQUEST || chunkSize + size > MAX_BYTES_PER_REQUEST)
+    ) {
+      chunks.push(chunk);
+      chunk = [];
+      chunkSize = 0;
+    }
+
+    chunk.push(text);
+    chunkSize += size;
+  });
+
+  if (chunk.length) {
+    chunks.push(chunk);
+  }
+
+  return chunks;
+};
+
+/**
  * Translate the given text with Google Cloud Translation API using the basic model and HTML format.
+ * The texts are sent in as many requests as the API limits require, one after another.
  * @param {string[]} texts Array of original texts.
  * @param {TranslationOptions} options Options.
  * @returns {Promise<string[]>} Translated strings in the original order.
@@ -127,26 +193,35 @@ const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
 
   // Cloud Translation API v2 endpoint
   const url = 'https://translation.googleapis.com/language/translate/v2';
+  /** @type {string[]} */
+  const results = [];
 
-  const requestBody = {
-    q: texts,
-    source: sourceLanguage,
-    target: targetLanguage,
-    format: 'html',
-  };
+  // Send the requests one after another rather than at once, not to burst the per-minute quota
+  // eslint-disable-next-line no-restricted-syntax
+  for (const chunk of chunkTexts(texts)) {
+    const requestBody = {
+      q: chunk,
+      source: sourceLanguage,
+      target: targetLanguage,
+      format: 'html',
+    };
 
-  const { data } = /** @type {{ data: { translations: { translatedText: string }[] } }} */ (
-    await postJSON({
-      endpoint: url,
-      headers: { 'Content-Type': 'application/json', 'X-goog-api-key': apiKey },
-      apiLabel: 'Google Translate',
-      body: requestBody,
-    })
-  );
+    const { data } = /** @type {{ data: { translations: { translatedText: string }[] } }} */ (
+      // eslint-disable-next-line no-await-in-loop
+      await postJSON({
+        endpoint: url,
+        headers: { 'Content-Type': 'application/json', 'X-goog-api-key': apiKey },
+        apiLabel: 'Google Translate',
+        body: requestBody,
+      })
+    );
 
-  // cspell:disable-next-line
-  // Decode apostrophes in translated text (e.g., "Aujourd&#39;hui" → "Aujourd'hui")
-  return data.translations.map((t) => t.translatedText.replace(/&#39;/g, "'"));
+    // cspell:disable-next-line
+    // Decode apostrophes in translated text (e.g., "Aujourd&#39;hui" → "Aujourd'hui")
+    results.push(...data.translations.map((t) => t.translatedText.replace(/&#39;/g, "'")));
+  }
+
+  return results;
 };
 
 /**

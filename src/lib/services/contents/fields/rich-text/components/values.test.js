@@ -39,6 +39,16 @@ describe('contents/fields/rich-text/components/values', () => {
     });
   });
 
+  describe('flattenWithPrefix() and getValuesByPrefix()', () => {
+    test('keep the keys with a dot as they are', () => {
+      const values = { kv: { 'example.com': 'a' } };
+      const valueMap = flattenWithPrefix(values, 'body:c1:');
+
+      expect(valueMap).toEqual({ 'body:c1:kv.example\uE000com': 'a' });
+      expect(getValuesByPrefix(valueMap, 'body:c1:')).toEqual(values);
+    });
+  });
+
   describe('getValuesByPrefix()', () => {
     test('returns the values of the component without the prefix', () => {
       expect(
@@ -73,6 +83,23 @@ describe('contents/fields/rich-text/components/values', () => {
       expect(reconcileComponentValues({ ...args, values: undefined })).toEqual({
         src: 'default.jpg',
         alt: '',
+        __sc_component_name: 'image',
+      });
+    });
+
+    test('gives a new component the default values in a non-default locale as well', () => {
+      expect(
+        reconcileComponentValues({
+          ...args,
+          fields: [...fields, { name: 'autoplay', widget: 'boolean', default: true }],
+          values: undefined,
+          locale: 'fr',
+          defaultLocale: 'en',
+        }),
+      ).toEqual({
+        src: 'default.jpg',
+        alt: '',
+        autoplay: true,
         __sc_component_name: 'image',
       });
     });

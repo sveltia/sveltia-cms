@@ -217,6 +217,12 @@ export const watchAsync = (fn, onResult) => {
  * read other state, e.g. the field configuration, without being rerun on changes to it. The
  * arguments are positional because an arrow function in an object literal would need a JSDoc
  * comment of its own at every call site.
+ *
+ * The field value is only written once the user has edited the input, so that it differs from what
+ * the field value was last converted to. A value the input can’t represent, like a decimal number
+ * in an integer field, converts to an input that doesn’t convert back to the same value, so writing
+ * it back right away would replace the stored value as soon as the editor is opened, without any
+ * user action, and the next save would lose it.
  * @template V, I
  * @param {() => V} getValue Function returning the field value.
  * @param {(value: V) => void} setValue Function updating the field value.
@@ -238,6 +244,12 @@ export const syncValues = (
   toValue = (input) => /** @type {V} */ (/** @type {unknown} */ (input)),
 ) => {
   /**
+   * Input value converted from the field value the last time the input was synced with it.
+   * @type {I | undefined}
+   */
+  let syncedInput;
+
+  /**
    * Update the input value based on the field value.
    */
   const updateInput = () => {
@@ -246,6 +258,8 @@ export const syncValues = (
     if (getInput() !== input) {
       setInput(input);
     }
+
+    syncedInput = input;
   };
 
   /**
@@ -260,7 +274,12 @@ export const syncValues = (
   };
 
   watch(getValue, updateInput);
-  watch(getInput, updateValue);
+  watch(getInput, () => {
+    // Skip the input that merely reflects the field value, including the one set on the first run
+    if (getInput() !== syncedInput) {
+      updateValue();
+    }
+  });
 
   return { updateInput, updateValue };
 };

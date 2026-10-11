@@ -11,6 +11,7 @@ import {
 } from '$lib/services/contents/entry/values';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/display';
 import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helpers';
+import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { getOptionLabel } from '$lib/services/contents/fields/select/helpers';
 
 // Mock dependencies
@@ -853,6 +854,29 @@ describe('Test getFieldDisplayValue()', () => {
       });
 
       expect(result).toBe('some value');
+    });
+  });
+
+  describe('Rich text editor component fields', () => {
+    test('should look up the field in the component definition', () => {
+      vi.mocked(getComponentDef).mockReturnValue(
+        /** @type {any} */ ({
+          fields: [{ name: 'title', widget: 'select', options: [{ label: 'Books', value: 'b' }] }],
+        }),
+      );
+      mockGetOptionLabel.mockReturnValue('Books');
+
+      // The entry’s `title` is a String field, but the component’s is a Select field
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        componentName: 'card',
+        valueMap: { title: 'b' },
+        keyPath: 'title',
+        locale: 'en',
+      });
+
+      expect(result).toBe('Books');
+      expect(getComponentDef).toHaveBeenCalledWith('card');
     });
   });
 

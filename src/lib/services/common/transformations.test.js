@@ -13,6 +13,7 @@ import {
   parseTransformations,
   ternaryTransformation,
 } from '$lib/services/common/transformations';
+import { getDate } from '$lib/services/contents/fields/date-time/parse';
 
 dayjs.extend(dayjsTimeZone);
 dayjs.tz.setDefault('America/New_York');
@@ -419,6 +420,112 @@ describe('Test individual transformation functions', () => {
           '2024-01-23T06:00:00Z',
           { format: 'YYYY-MM-DD' },
           { name: 'date', widget: 'datetime', time_format: false },
+        ),
+      ).toBe('2024-01-23');
+    });
+
+    test('should parse a value in the field’s own format', () => {
+      /** @type {import('$lib/types/public').DateTimeField} */
+      const fieldConfig = { name: 'date', widget: 'datetime', format: 'DD/MM/YYYY' };
+
+      expect(applyDateTransformation('25/12/2024', { format: 'YYYY' }, fieldConfig)).toBe('2024');
+      // Not read as May 12
+      expect(applyDateTransformation('05/12/2024', { format: 'YYYY-MM-DD' }, fieldConfig)).toBe(
+        '2024-12-05',
+      );
+      // In UTC if the field says so
+      expect(
+        applyDateTransformation(
+          '05/12/2024 23:30',
+          { format: 'YYYY-MM-DD HH:mm' },
+          { ...fieldConfig, format: 'DD/MM/YYYY HH:mm', picker_utc: true },
+        ),
+      ).toBe('2024-12-05 23:30');
+    });
+
+    test('should parse a number in the field’s own format', () => {
+      /** @type {import('$lib/types/public').DateTimeField} */
+      const fieldConfig = { name: 'date', widget: 'datetime', format: 'X', picker_utc: true };
+
+      // A Unix timestamp, which the front matter parser reads as a number
+      expect(applyDateTransformation(1700000000, { format: 'YYYY-MM-DD' }, fieldConfig)).toBe(
+        '2023-11-14',
+      );
+    });
+
+    describe('in a field with a custom time zone', () => {
+      /** @type {import('$lib/types/public').DateTimeField} */
+      const fieldConfig = {
+        name: 'date',
+        widget: 'datetime',
+        format: 'YYYY-MM-DD HH:mm',
+        input_timezone: 'Asia/Tokyo',
+      };
+
+      /**
+       * Run a function in the given browser time zone, like `parse.test.js` does. Node reads
+       * `process.env.TZ` again when it’s set, so the local time of a `Date` follows it.
+       * @param {string} timeZone IANA time zone name.
+       * @param {() => void} fn Function to run.
+       */
+      const withTimeZone = (timeZone, fn) => {
+        const { TZ } = process.env;
+
+        process.env.TZ = timeZone;
+
+        try {
+          fn();
+        } finally {
+          process.env.TZ = TZ;
+        }
+      };
+
+      // The stored value is a wall-clock time in the field’s time zone, and it’s formatted as such,
+      // so a slug or path made with `{{date | date('YYYY-MM-DD')}}` doesn’t depend on where the
+      // editor is. `getDate()` must not be used here: it converts the value to an instant, whose
+      // local date in the browser can be a day off, e.g. 23:30 in Tokyo is already the next day
+      // on Kiritimati (UTC+14), and 08:30 in Tokyo is still the previous day in Los Angeles
+      test.each([
+        ['Pacific/Kiritimati', '2024-12-05 23:30', 6],
+        ['America/Los_Angeles', '2024-12-05 08:30', 4],
+        ['UTC', '2024-12-05 23:30', 5],
+      ])(
+        'should keep the stored wall-clock date in the browser time zone %s',
+        (timeZone, value, localDayOfInstant) => {
+          withTimeZone(timeZone, () => {
+            // The browser time zone is in effect: the instant falls on another day there
+            expect(getDate(value, fieldConfig)?.getDate()).toBe(localDayOfInstant);
+            expect(applyDateTransformation(value, { format: 'YYYY-MM-DD' }, fieldConfig)).toBe(
+              '2024-12-05',
+            );
+            expect(
+              applyDateTransformation(value, { format: 'YYYY-MM-DD HH:mm' }, fieldConfig),
+            ).toBe(value);
+            expect(
+              applyTransformations({
+                fieldConfig,
+                value,
+                transformations: [{ method: 'date', args: { format: 'YYYY-MM-DD' } }],
+              }),
+            ).toBe('2024-12-05');
+          });
+        },
+      );
+    });
+
+    test('should fall back to the default parsing if the value doesn’t match the format', () => {
+      /** @type {import('$lib/types/public').DateTimeField} */
+      const fieldConfig = { name: 'date', widget: 'datetime', format: 'DD/MM/YYYY' };
+
+      expect(applyDateTransformation('2024-01-23', { format: 'YYYY-MM-DD' }, fieldConfig)).toBe(
+        '2024-01-23',
+      );
+      // A value that isn’t a string, like a `Date` parsed from front matter
+      expect(
+        applyDateTransformation(
+          new Date('2024-01-23T12:00:00Z'),
+          { format: 'YYYY-MM-DD', timeZone: 'utc' },
+          fieldConfig,
         ),
       ).toBe('2024-01-23');
     });

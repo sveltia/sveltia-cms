@@ -1,10 +1,14 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
+import { getPathInfo } from '@sveltia/utils/file';
+import mime from 'mime';
 
+import { isEquivalentFileExtension } from '$lib/services/utils/file';
 import {
   RASTER_IMAGE_EXTENSION_REGEX,
   SUPPORTED_IMAGE_TYPES,
   VECTOR_IMAGE_EXTENSION_REGEX,
 } from '$lib/services/utils/media/image';
+import { decodeURIComponentSafely } from '$lib/services/utils/url';
 
 /**
  * An image to be inserted into the rich text editor.
@@ -43,6 +47,35 @@ export const getTimestampFileName = (extension, suffix = '') => {
   const { year, month, day, hour, minute, second } = getDateTimeParts();
 
   return `${year}${month}${day}-${hour}${minute}${second}${suffix}.${extension}`;
+};
+
+/**
+ * Get the name of a pasted image file from the URL of the remote image it was copied from. The
+ * last path segment is decoded, and its extension is replaced to match the file’s MIME type, which
+ * can differ from the remote image’s: a browser typically puts a PNG image on the clipboard,
+ * whatever the format of the image copied.
+ * @param {string} url Remote image URL starting with `http:` or `https:`.
+ * @param {string} type MIME type of the pasted file, one of the supported image types.
+ * @returns {string | undefined} File name, e.g. `my photo.png` for `/my%20photo.jpg`. `undefined`
+ * if the URL doesn’t end with a file name that has an image extension.
+ */
+const getRemoteImageFileName = (url, type) => {
+  const name = decodeURIComponentSafely(
+    // `split()` always yields at least one segment, so `pop()` never returns `undefined`
+    /** @type {string} */ (new URL(url).pathname.split('/').pop()),
+  );
+
+  if (!hasImageExtension(name)) {
+    return undefined;
+  }
+
+  const { filename, extension } = getPathInfo(name);
+  // Every supported image type has a known extension
+  const typeExtension = /** @type {string} */ (mime.getExtension(type));
+
+  return isEquivalentFileExtension(extension, typeExtension)
+    ? name
+    : `${filename}.${typeExtension}`;
 };
 
 /**
@@ -106,12 +139,7 @@ export const getPastedImages = async (event) => {
       alt = img.alt;
 
       if (/^https?:/.test(img.src)) {
-        // `split()` always yields at least one segment, so `pop()` never returns `undefined`
-        const name = /** @type {string} */ (new URL(img.src).pathname.split('/').pop());
-
-        if (hasImageExtension(name)) {
-          fileName = name;
-        }
+        fileName = getRemoteImageFileName(img.src, file.type) ?? fileName;
       }
     }
 

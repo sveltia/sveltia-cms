@@ -341,6 +341,73 @@ image:
   });
 });
 
+describe('Test formatYAML() with strings a YAML 1.1 parser misreads', () => {
+  test('quotes the strings read as booleans', () => {
+    const words = ['y', 'Y', 'yes', 'Yes', 'YES', 'n', 'N', 'no', 'No', 'NO', 'on', 'On', 'ON'];
+    const moreWords = ['off', 'Off', 'OFF', 'True', 'FALSE'];
+
+    expect(formatYAML({ list: [...words, ...moreWords] })).toBe(
+      `list:\n${[...words, ...moreWords].map((word) => `  - '${word}'`).join('\n')}`,
+    );
+    // A real boolean is left alone, and so is a word that is no boolean in YAML 1.1 either
+    expect(formatYAML({ a: true, b: false, c: 'yeah', d: 'Norway', e: 'oN' })).toBe(
+      'a: true\nb: false\nc: yeah\nd: Norway\ne: oN',
+    );
+  });
+
+  test('quotes the strings read as numbers', () => {
+    expect(
+      formatYAML({
+        sexagesimal: '1:20',
+        time: '12:30:45',
+        sexagesimalFloat: '-1:20.5',
+        underscore: '1_000',
+        floatUnderscore: '1_000.5',
+        comma: '1,000',
+        binary: '0b1010',
+        octal: '0_17',
+        hex: '0xFF_FF',
+      }),
+    ).toBe(
+      [
+        "sexagesimal: '1:20'",
+        "time: '12:30:45'",
+        "sexagesimalFloat: '-1:20.5'",
+        "underscore: '1_000'",
+        "floatUnderscore: '1_000.5'",
+        "comma: '1,000'",
+        "binary: '0b1010'",
+        "octal: '0_17'",
+        "hex: '0xFF_FF'",
+      ].join('\n'),
+    );
+    // A real number is left alone, and so are strings that are no numbers in YAML 1.1 either
+    expect(formatYAML({ a: 80, b: 1.5, c: '1:2:3a', d: 'v1.2', e: 'a_1', f: '1:60' })).toBe(
+      'a: 80\nb: 1.5\nc: 1:2:3a\nd: v1.2\ne: a_1\nf: 1:60',
+    );
+  });
+
+  test('leaves dates alone', () => {
+    expect(formatYAML({ date: '2024-01-02', datetime: '2024-01-02T03:04:05Z' })).toBe(
+      'date: 2024-01-02\ndatetime: 2024-01-02T03:04:05Z',
+    );
+  });
+
+  test('quotes the keys', () => {
+    expect(formatYAML({ labels: { yes: 'Agree', no: 'Disagree', '1:20': 'x', ok: 'OK' } })).toBe(
+      "labels:\n  'yes': Agree\n  'no': Disagree\n  '1:20': x\n  ok: OK",
+    );
+  });
+
+  test('uses the configured quotes', () => {
+    expect(formatYAML({ no: 'yes' }, { quote: 'single' })).toBe("'no': 'yes'");
+    expect(formatYAML({ no: 'yes', title: 'Hi' }, { quote: 'double' })).toBe(
+      '"no": "yes"\ntitle: "Hi"',
+    );
+    expect(formatYAML({ no: 'yes' }, {}, { quote: true })).toBe('"no": "yes"');
+  });
+});
+
 describe('Test formatYAML() with comments', () => {
   test('writes a comment before a top-level key, including the first one', () => {
     expect(formatYAML({ title: 'Hello', draft: false }, {}, {}, { title: 'Title' })).toBe(

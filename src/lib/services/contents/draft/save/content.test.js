@@ -46,6 +46,37 @@ describe('buildSingleFileContent()', () => {
     expect(serializeContent).toHaveBeenCalledTimes(2);
   });
 
+  test('passes the format of the saved file on', () => {
+    const draft = {};
+    const format = 'toml-frontmatter';
+
+    buildSingleFileContent({
+      config: { _i18n: { i18nEnabled: false, defaultLocale: 'en' } },
+      entry,
+      draft,
+      format,
+    });
+    expect(serializeContent).toHaveBeenCalledWith({
+      draft,
+      locale: '_default',
+      valueMap: { title: 'Hello' },
+      format,
+    });
+
+    buildSingleFileContent({
+      config: { _i18n: { i18nEnabled: true, defaultLocale: 'en' } },
+      entry,
+      draft,
+      format,
+    });
+    expect(serializeContent).toHaveBeenCalledWith({
+      draft,
+      locale: 'fr',
+      valueMap: { title: 'Bonjour' },
+      format,
+    });
+  });
+
   test('puts the default locale at the root for `single_file_default_root`', () => {
     const config = {
       _i18n: {

@@ -19,6 +19,8 @@ import {
  * @property {string} alt_description Alt description.
  * @property {{ regular: string, thumb: string }} urls Image URLs.
  * @property {{ username: string, name: string }} user User info.
+ * @property {{ download_location?: string }} [links] Links, including the endpoint to request once
+ * the photo is used.
  */
 
 /**
@@ -60,6 +62,7 @@ export const parseResults = (results) =>
       alt_description: alt,
       urls: { regular, thumb },
       user: { username, name },
+      links,
     }) => ({
       id: String(id),
       description: [description, alt].filter(Boolean).join(' — '),
@@ -70,6 +73,7 @@ export const parseResults = (results) =>
       credit:
         `Photo by <a href="https://unsplash.com/@${username}?${CREDIT_LINK_PARAMS}">${name}</a> on ` +
         `<a href="https://unsplash.com/?${CREDIT_LINK_PARAMS}">Unsplash</a>`,
+      downloadTrackingURL: links?.download_location,
     }),
   );
 
@@ -130,6 +134,27 @@ export const search = async (query, { apiKey }) => {
 };
 
 /**
+ * Let Unsplash know a photo has been used, as its API guidelines require. A failure is only logged,
+ * so it never gets in the way of the insertion.
+ * @param {ExternalAsset} asset Inserted photo.
+ * @param {MediaLibraryFetchOptions} options Options.
+ * @returns {Promise<void>}
+ * @see https://help.unsplash.com/en/articles/2511258-guideline-triggering-a-download
+ */
+export const trackDownload = async ({ downloadTrackingURL }, { apiKey }) => {
+  if (!downloadTrackingURL) {
+    return;
+  }
+
+  try {
+    await fetchJSON(downloadTrackingURL, { headers: { Authorization: `Client-ID ${apiKey}` } });
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+  }
+};
+
+/**
  * @type {MediaLibraryService}
  */
 export default {
@@ -145,4 +170,5 @@ export default {
   apiKeyPattern: /^[a-zA-Z\d_-]{40,}$/,
   list,
   search,
+  trackDownload,
 };

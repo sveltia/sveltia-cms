@@ -1,7 +1,6 @@
 import { parse } from 'marked';
 
 import { loadModule } from '$lib/services/app/dependencies';
-import { getInheritedI18nOption } from '$lib/services/contents/draft/create/proxy.svelte';
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
@@ -14,7 +13,12 @@ import { prefs } from '$lib/services/user/prefs.svelte';
 import { escapeHTML } from '$lib/services/utils/string';
 
 /**
- * @import { EntryDraft, InternalLocaleCode, LocaleContentMap } from '$lib/types/private';
+ * @import {
+ * EntryDraft,
+ * GetFieldArgs,
+ * InternalLocaleCode,
+ * LocaleContentMap,
+ * } from '$lib/types/private';
  * @import { Field, FieldKeyPath, ListField, RichTextField } from '$lib/types/public';
  */
 
@@ -102,6 +106,38 @@ const decodeHTMLEntities = (text) =>
   });
 
 /**
+ * Regular expression matching the key path of a list item, capturing the key path of the list.
+ */
+const LIST_ITEM_KEY_PATH_REGEX = /^(.+)\.\d+$/;
+
+/**
+ * Get the `i18n` option that decides whether a field can be copied or translated from another
+ * locale. Like the editor (`getFieldLocaleAccess()`), the validator and the default values, it’s
+ * the field’s own option, so a subfield without one isn’t written in a locale where the editor
+ * hides it, even if the List or Object field it belongs to is translatable. An item of a List field
+ * without subfields has no configuration of its own, so it takes the option of the List field,
+ * which the editor shows as a whole.
+ * @param {object} args Arguments.
+ * @param {Field | undefined} args.field Field configuration, if the key path has one.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
+ * path of the field.
+ * @returns {Field['i18n']} Option.
+ */
+const getCopyI18nOption = ({ field, getFieldArgs }) => {
+  if (field) {
+    return field.i18n;
+  }
+
+  const [, listKeyPath] = getFieldArgs.keyPath.match(LIST_ITEM_KEY_PATH_REGEX) ?? [];
+  const listField = listKeyPath ? getField({ ...getFieldArgs, keyPath: listKeyPath }) : undefined;
+
+  return listField?.widget === 'list' &&
+    !getListFieldInfo(/** @type {ListField} */ (listField)).hasSubFields
+    ? listField.i18n
+    : undefined;
+};
+
+/**
  * Get a list of fields to be copied or translated from the source locale to the target locale.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -125,13 +161,9 @@ export const getCopyingFieldMap = ({ draft, options }) => {
           (keyPath && !isKeyPathWithin(_keyPath, keyPath)) ||
           // Only a translatable field has a value of its own in each locale: a field that isn’t
           // localized is only saved in the default locale, and a duplicated one can’t be edited
-          // in the other locales. An item of a List field without subfields has no configuration
-          // of its own, so it takes the option of the List field
+          // in the other locales
           !isFieldTranslatable(
-            getInheritedI18nOption({
-              fieldConfig: field ?? /** @type {Field} */ ({}),
-              getFieldArgs: { ...getFieldArgs, keyPath: _keyPath },
-            }),
+            getCopyI18nOption({ field, getFieldArgs: { ...getFieldArgs, keyPath: _keyPath } }),
           ) ||
           typeof value !== 'string' ||
           !value ||

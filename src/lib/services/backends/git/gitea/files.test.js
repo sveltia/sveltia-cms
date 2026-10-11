@@ -565,6 +565,26 @@ describe('Gitea Files Service', () => {
       expect(dataLoadedProgress.current).toBeUndefined();
     });
 
+    test('should clear the progress when a request fails', async () => {
+      /** @type {BaseFileListItem[]} */
+      const fetchingFiles = [
+        // @ts-ignore - Type compatibility in test
+        { path: 'file1.md', sha: 'abc123', size: 100, type: 'entry', name: 'file1.md' },
+      ];
+
+      const error = new Error('offline');
+
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({ default_paging_num: 30 })
+        .mockRejectedValueOnce(error);
+
+      await expect(fetchFileContents(fetchingFiles)).rejects.toThrow(error);
+
+      // The progress bar doesn’t stay on screen
+      expect(progressValues).toEqual([0, undefined]);
+      expect(dataLoadedProgress.current).toBeUndefined();
+    });
+
     test('should fetch file contents for Forgejo', async () => {
       // Mock Forgejo instance
       vi.mocked(instance).isForgejo = true;
@@ -730,6 +750,60 @@ describe('Gitea Files Service', () => {
         meta: {},
       });
       expect(progressValues).toContain(100);
+    });
+
+    test('should read the files at the commit the file list comes from', async () => {
+      /** @type {BaseFileListItem[]} */
+      const fetchingFiles = [
+        // @ts-ignore - Type compatibility in test
+        { path: 'content/small.md', sha: 'sha1', size: 100, type: 'entry', name: 'small.md' },
+        // @ts-ignore - Type compatibility in test
+        { path: 'content/large.md', sha: 'sha2', size: 2000, type: 'entry', name: 'large.md' },
+      ];
+
+      vi.mocked(fetchAPI).mockImplementation(async (path) => {
+        if (path === '/settings/api') {
+          return { default_max_blob_size: 1000 };
+        }
+
+        return path.includes('/raw/') ? 'Content' : [];
+      });
+
+      await fetchFileContents(fetchingFiles, 'last-commit-sha');
+
+      // Not at the tip of the branch, which may hold another version of a file by now, whose text
+      // would then be cached under the blob SHA from the file list
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/file-contents?ref=last-commit-sha',
+        { method: 'POST', body: { files: ['content/small.md'] } },
+      );
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/raw/content/large.md?ref=last-commit-sha',
+        { responseType: 'text' },
+      );
+    });
+
+    test('should read an oversized blob at the commit on Forgejo too', async () => {
+      vi.mocked(instance).isForgejo = true;
+
+      /** @type {BaseFileListItem[]} */
+      const fetchingFiles = [
+        // @ts-ignore - Type compatibility in test
+        { path: 'content/large.md', sha: 'sha2', size: 2000, type: 'entry', name: 'large.md' },
+      ];
+
+      vi.mocked(fetchAPI).mockImplementation(async (path) =>
+        path === '/settings/api' ? { default_max_blob_size: 1000 } : 'Content',
+      );
+
+      const result = await fetchFileContents(fetchingFiles, 'last-commit-sha');
+
+      // The raw endpoint goes by path, unlike the bulk one Forgejo reads by blob SHA
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/raw/content/large.md?ref=last-commit-sha',
+        { responseType: 'text' },
+      );
+      expect(result['content/large.md'].text).toBe('Content');
     });
 
     test('should encode the path of an oversized blob segment by segment', async () => {

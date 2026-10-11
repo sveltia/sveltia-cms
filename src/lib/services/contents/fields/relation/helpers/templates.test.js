@@ -174,9 +174,61 @@ describe('Test getFieldReplacement()', () => {
     expect(context.getDisplayValue).toHaveBeenCalledWith('title');
   });
 
+  test('should not fall back to the entry summary or slug for an empty field', async () => {
+    const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
+
+    vi.mocked(getEntrySummaryFromContent).mockReturnValue('Test Title');
+
+    expect(getFieldReplacement('missing', context, fallbackContext)).toBe('');
+    expect(context.getDisplayValue).toHaveBeenCalledWith('missing', '_default');
+  });
+
+  test('should fall back to the value in the default locale', () => {
+    const localizedContext = {
+      ...context,
+      getDisplayValue: vi.fn((keyPath, locale) => (locale === '_default' ? 'Default' : '')),
+    };
+
+    expect(getFieldReplacement('name', localizedContext, fallbackContext)).toBe('Default');
+  });
+
   test('should strip fields. prefix when getting value', () => {
     getFieldReplacement('fields.email', context, fallbackContext);
     expect(context.getDisplayValue).toHaveBeenCalledWith('email');
+  });
+
+  test('should get the stored value rather than the display value', () => {
+    const storedFallbackContext = {
+      ...fallbackContext,
+      content: { sku: 123456, count: 0, featured: false, empty: '', none: null },
+      locales: { _default: { content: { sku: 1, name: 'Default' } } },
+    };
+
+    /**
+     * Get the stored value of the given field.
+     * @param {string} fieldName Field name.
+     * @returns {string} Value.
+     */
+    const getStored = (fieldName) =>
+      getFieldReplacement(fieldName, context, storedFallbackContext, { stored: true });
+
+    expect(getStored('fields.sku')).toBe('123456');
+    // `0` and `false` are values, not empty fields
+    expect(getStored('count')).toBe('0');
+    expect(getStored('featured')).toBe('false');
+    // An empty field falls back to the default locale
+    expect(getStored('name')).toBe('Default');
+    expect(getStored('empty')).toBe('');
+    expect(getStored('none')).toBe('');
+    expect(getStored('missing')).toBe('');
+    expect(getStored('slug')).toBe('test-slug');
+    expect(getStored('locale')).toBe('en');
+    expect(context.getDisplayValue).not.toHaveBeenCalled();
+
+    // The default locale can lack content
+    expect(
+      getFieldReplacement('name', context, { ...fallbackContext, locales: {} }, { stored: true }),
+    ).toBe('');
   });
 });
 
@@ -212,11 +264,31 @@ describe('Test replaceTemplateFields()', () => {
   });
 
   test('should replace all template fields', () => {
-    const result = replaceTemplateFields(templates, fieldNames, context, fallbackContext);
+    const result = replaceTemplateFields(templates, fieldNames, context, {
+      ...fallbackContext,
+      content: { id: '123' },
+    });
 
     expect(result.label).toBe('John Doe - john@example.com');
     expect(result.value).toBe('123');
     expect(result.searchValue).toBe('John Doe john@example.com');
+  });
+
+  test('should put the stored value in the value and the display value elsewhere', () => {
+    const result = replaceTemplateFields(
+      { label: '{{sku}} ({{cat}})', value: '{{cat}}-{{sku}}', searchValue: '{{sku}}' },
+      ['sku', 'cat'],
+      {
+        ...context,
+        getDisplayValue: vi.fn(
+          (/** @type {string} */ keyPath) =>
+            /** @type {Record<string, string>} */ ({ sku: '123,456', cat: 'Books' })[keyPath] ?? '',
+        ),
+      },
+      { ...fallbackContext, content: { sku: 123456, cat: 'b' } },
+    );
+
+    expect(result).toEqual({ label: '123,456 (Books)', value: 'b-123456', searchValue: '123,456' });
   });
 
   test('should insert field values containing `$` patterns verbatim', () => {
@@ -230,7 +302,10 @@ describe('Test replaceTemplateFields()', () => {
       }),
     };
 
-    const result = replaceTemplateFields(templates, fieldNames, dollarContext, fallbackContext);
+    const result = replaceTemplateFields(templates, fieldNames, dollarContext, {
+      ...fallbackContext,
+      content: { id: 'A $& B' },
+    });
 
     expect(result.label).toBe("Save $$$ now - $` $'");
     expect(result.value).toBe('A $& B');
@@ -245,19 +320,17 @@ describe('Test replaceTemplateFields()', () => {
       searchValue: undefined,
     };
 
-    const result = replaceTemplateFields(
-      templatesWithoutSearch,
-      ['name', 'id'],
-      context,
-      fallbackContext,
-    );
+    const result = replaceTemplateFields(templatesWithoutSearch, ['name', 'id'], context, {
+      ...fallbackContext,
+      content: { id: '123' },
+    });
 
     expect(result.label).toBe('John Doe');
     expect(result.value).toBe('123');
     expect(result.searchValue).toBe('');
   });
 
-  test('should handle empty replacements with fallback to slug', async () => {
+  test('should leave empty replacements empty, falling back only for a wholly empty label', async () => {
     const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
 
     const emptyContext = {
@@ -268,10 +341,90 @@ describe('Test replaceTemplateFields()', () => {
     // Vitest 4: Explicitly set mock return value to avoid leaking from other tests
     vi.mocked(getEntrySummaryFromContent).mockReturnValue('');
 
-    const result = replaceTemplateFields(templates, fieldNames, emptyContext, fallbackContext);
+    // An empty field used to fall back to the entry summary or slug in every tag, giving
+    // `test-slug - test-slug` and storing the slug as the value. Now each tag is replaced with an
+    // empty string, and the value of a template with an empty tag is left empty
+    let result = replaceTemplateFields(templates, fieldNames, emptyContext, fallbackContext);
 
-    // When fields return empty, it falls back to slug via getFieldReplacement
-    expect(result.label).toBe('test-slug - test-slug');
+    expect(result.label).toBe('-');
+    expect(result.value).toBe('');
+    expect(result.searchValue).toBe('');
+
+    // A label that comes out empty falls back to the entry summary, then to the slug
+    result = replaceTemplateFields(
+      { ...templates, label: '{{name}} {{email}}' },
+      fieldNames,
+      emptyContext,
+      fallbackContext,
+    );
+
+    expect(result.label).toBe('test-slug');
+
+    vi.mocked(getEntrySummaryFromContent).mockReturnValueOnce('Summary');
+
+    result = replaceTemplateFields(
+      { ...templates, label: '{{name}} {{email}}' },
+      fieldNames,
+      emptyContext,
+      fallbackContext,
+    );
+
+    expect(result.label).toBe('Summary');
+  });
+
+  test('should leave an empty field in a display template empty', async () => {
+    const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
+
+    vi.mocked(getEntrySummaryFromContent).mockReturnValue('Alice');
+
+    const result = replaceTemplateFields(
+      { label: '{{name}} ({{nickname}})', value: '{{slug}}', searchValue: '{{name}} {{nickname}}' },
+      ['name', 'nickname', 'slug'],
+      { ...context, getDisplayValue: vi.fn((keyPath) => (keyPath === 'name' ? 'Alice' : '')) },
+      fallbackContext,
+    );
+
+    // Not `Alice (Alice)`, with the entry summary in place of the missing nickname
+    expect(result.label).toBe('Alice ()');
     expect(result.value).toBe('test-slug');
+    expect(result.searchValue).toBe('Alice');
+  });
+
+  test('should leave the value empty when the value field is empty', async () => {
+    const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
+
+    // The referenced entry has a title but no `id` yet
+    const emptyIdContext = {
+      ...context,
+      getDisplayValue: vi.fn((keyPath) =>
+        keyPath === 'name' ? 'John Doe' : keyPath === 'email' ? 'john@example.com' : '',
+      ),
+    };
+
+    vi.mocked(getEntrySummaryFromContent).mockReturnValue('Hello World');
+
+    const result = replaceTemplateFields(
+      templates,
+      fieldNames,
+      emptyIdContext,
+      // @ts-ignore Partial content
+      { ...fallbackContext, content: { title: 'Hello World' } },
+    );
+
+    // The entry title used to be stored as the reference, which doesn’t match the entry once its
+    // `id` is filled, or once the title changes. The empty value makes `processEntry()` leave the
+    // option out, as the entry can’t be referenced
+    expect(result.label).toBe('John Doe - john@example.com');
+    expect(result.value).toBe('');
+
+    // Also when the empty field is only a part of the value template
+    expect(
+      replaceTemplateFields(
+        { ...templates, value: '{{slug}}#{{id}}' },
+        [...fieldNames, 'slug'],
+        emptyIdContext,
+        fallbackContext,
+      ).value,
+    ).toBe('');
   });
 });

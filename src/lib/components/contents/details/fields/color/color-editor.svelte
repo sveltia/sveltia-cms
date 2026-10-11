@@ -46,6 +46,13 @@
   const id = $props.id();
 
   /**
+   * Values of the controls right after they were last synced with {@link currentValue}. The value
+   * is only written back once the user has changed a control from these, so a stored color the
+   * controls can’t represent, like `#fff` or `red`, isn’t replaced as soon as the editor is opened.
+   */
+  let syncedInputValues = { rgb: '', alpha: 255 };
+
+  /**
    * Update {@link inputValue} and {@link inputAlphaValue} based on {@link currentValue}.
    */
   const setInputValue = () => {
@@ -56,24 +63,29 @@
       enableAlpha,
     });
 
-    if (!parts) {
-      return;
+    if (parts) {
+      // Avoid a cycle dependency & infinite loop
+      if (inputValue !== parts.rgb) {
+        inputValue = parts.rgb;
+      }
+
+      if (enableAlpha && inputAlphaValue !== parts.alpha) {
+        inputAlphaValue = parts.alpha;
+      }
     }
 
-    // Avoid a cycle dependency & infinite loop
-    if (inputValue !== parts.rgb) {
-      inputValue = parts.rgb;
-    }
-
-    if (enableAlpha && inputAlphaValue !== parts.alpha) {
-      inputAlphaValue = parts.alpha;
-    }
+    syncedInputValues = { rgb: inputValue, alpha: inputAlphaValue };
   };
 
   /**
-   * Update {@link currentValue} based on {@link inputValue} and {@link inputAlphaValue}.
+   * Update {@link currentValue} based on {@link inputValue} and {@link inputAlphaValue}, if the
+   * user has changed either of them.
    */
   const setCurrentValue = () => {
+    if (inputValue === syncedInputValues.rgb && inputAlphaValue === syncedInputValues.alpha) {
+      return;
+    }
+
     const newValue = getColorFieldValue({ rgb: inputValue, alpha: inputAlphaValue, enableAlpha });
 
     // Avoid a cycle dependency & infinite loop

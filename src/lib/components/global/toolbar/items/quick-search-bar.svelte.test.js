@@ -40,6 +40,19 @@ describe('QuickSearchBar', () => {
     await expect.poll(() => window.location.hash).toBe('#/collections');
   });
 
+  test('goes back to the asset folder the search has started from when cleared', async () => {
+    searchMode.current = 'assets';
+    window.location.hash = '#/assets/static/uploads';
+
+    await render(QuickSearchBar, {});
+
+    await page.getByRole('searchbox').fill('photo');
+    await expect.poll(() => window.location.hash).toBe('#/search/photo');
+
+    await page.getByRole('button', { name: 'Clear' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads');
+  });
+
   test('keeps the special characters of the search terms in the URL', async () => {
     searchMode.current = 'contents';
 

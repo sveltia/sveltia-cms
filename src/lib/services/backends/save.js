@@ -166,7 +166,12 @@ export const saveChanges = async ({ changes, savingEntries = [], savingAssets = 
     console.error('Failed to check the repository for changes.', ex);
   }
 
-  return suspendChecksWhile(async () => {
+  /** Whether the commit has landed on top of someone else’s commit the stores don’t reflect. */
+  let missedRemoteChanges = false;
+
+  const results = await suspendChecksWhile(async () => {
+    // The head the stores reflect, which the commit is expected to be made on top of
+    const headBefore = repositoryHead.current;
     // A check for remote changes made from here on would replace the items the changes are applied
     // to, and the entries the saved ones are matched up with
     const { changes: combinedChanges, arrayFileUpdates } = await combineArrayFileChanges(changes);
@@ -231,11 +236,33 @@ export const saveChanges = async ({ changes, savingEntries = [], savingAssets = 
     // workflow branch and are tracked by the pull request instead
     productionSHA.current = commit.sha;
 
-    // The stores now reflect this commit, so it’s the head to compare the branch with from here on
     if (fetchLastCommit) {
-      repositoryHead.current = commit.sha;
+      // GitLab and Gitea/Forgejo only refuse a commit when one of the files being changed has been
+      // changed by someone else, so the commit can be made on top of a colleague’s commit to
+      // another file. The stores then reflect the commit only as far as the user’s own files go,
+      // and taking it as the head would mean the colleague’s commit is never fetched: the file
+      // would be saved over later, or the save refused for good. The head is left where it was
+      // instead, so the colleague’s commit is fetched by the next check
+      if (commit.parentSha === undefined || commit.parentSha === headBefore) {
+        // The stores now reflect this commit, so it’s the head to compare the branch with from here
+        // on
+        repositoryHead.current = commit.sha;
+      } else {
+        missedRemoteChanges = true;
+      }
     }
 
     return { commit, savedEntries, savedAssets };
   });
+
+  if (missedRemoteChanges) {
+    // Fetch the commits made in the meantime now rather than on the next scheduled check. It’s not
+    // waited for: the save is done, and a failure leaves it to the next check
+    checkForRemoteChanges().catch((ex) => {
+      // eslint-disable-next-line no-console
+      console.error('Failed to check the repository for changes.', ex);
+    });
+  }
+
+  return results;
 };

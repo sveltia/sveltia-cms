@@ -321,6 +321,8 @@ describe('FieldEditor', () => {
 
     const optionsButton = page.getByRole('button', { name: 'Show Field Options' });
 
+    // A value entered there has no original value to match, so it can be reverted
+    await page.getByRole('textbox').fill('Konnichiwa');
     await optionsButton.click();
     await expect
       .element(page.getByRole('menuitem', { name: 'Revert Changes' }))

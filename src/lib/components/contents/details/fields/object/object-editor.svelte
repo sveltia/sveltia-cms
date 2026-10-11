@@ -184,6 +184,16 @@
       files: entryDraft.current?.files,
     });
 
+  // Worked out only while the object is collapsed, and shared with the body showing them
+  const summaryText = $derived(_formatSummary());
+  const thumbnailSource = $derived(getThumbnail());
+  const summaryId = `object-${fieldId}-summary`;
+  // The summary labels the object while collapsed, but the body only renders it for a known type
+  // if there’s something to show
+  const labelledBy = $derived(
+    !parentExpanded && !unknownType && (summaryText || thumbnailSource) ? summaryId : undefined,
+  );
+
   onMount(() => {
     initializeExpanderState();
 
@@ -218,7 +228,7 @@
     class="wrapper"
     class:unknown-type={unknownType}
     class:expanded={parentExpanded}
-    aria-labelledby={parentExpanded ? undefined : `object-${fieldId}-summary`}
+    aria-labelledby={labelledBy}
   >
     {#if !hideHeader}
       <ObjectHeader
@@ -258,9 +268,9 @@
         })}
         expanded={parentExpanded}
         {unknownType}
-        getSummary={_formatSummary}
-        {getThumbnail}
-        summaryId="object-{fieldId}-summary"
+        getSummary={() => summaryText}
+        getThumbnail={() => thumbnailSource}
+        {summaryId}
       />
     </div>
   </div>

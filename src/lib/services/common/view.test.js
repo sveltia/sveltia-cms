@@ -323,6 +323,29 @@ describe('Test sortItemsByKey()', () => {
     expect(result.map((i) => i.v)).toEqual([30, 20, 10]);
   });
 
+  test.each(['ascending', 'descending'])(
+    'puts items without a key last in their original order when %s',
+    (order) => {
+      const items = [{ id: 1 }, { id: 2, v: 'b' }, { id: 3 }, { id: 4, v: 'a' }];
+
+      sortItemsByKey(items, (i) => i.v, true, order);
+
+      expect(items.map((i) => i.id)).toEqual(order === 'ascending' ? [4, 2, 1, 3] : [2, 4, 1, 3]);
+    },
+  );
+
+  test.each(['ascending', 'descending'])(
+    'puts numeric items without a key last when %s',
+    (order) => {
+      /** @type {{ id: number, v?: number }[]} */
+      const items = [{ id: 1 }, { id: 2, v: -5 }, { id: 3, v: 0 }];
+
+      sortItemsByKey(items, (i) => i.v, false, order);
+
+      expect(items.map((i) => i.id)).toEqual(order === 'ascending' ? [2, 3, 1] : [3, 2, 1]);
+    },
+  );
+
   test('mutates and returns the same array reference', () => {
     const items = [{ v: 'b' }, { v: 'a' }];
     const result = sortItemsByKey(items, (i) => i.v, true, 'ascending');

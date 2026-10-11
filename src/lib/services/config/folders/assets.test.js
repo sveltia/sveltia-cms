@@ -1998,6 +1998,29 @@ describe('config/folders/assets', () => {
       },
     );
 
+    it.each([
+      ['@assets/images/', '@assets/images'],
+      ['../../assets/images/', '../../assets/images'],
+      ['./images//', './images'],
+      ['./', '.'],
+      ['.', '.'],
+      ['../', '..'],
+      ['', ''],
+    ])(
+      'should remove a trailing slash from the `%s` public folder kept without a leading slash',
+      (publicFolder, publicPath) => {
+        const result = normalizeAssetFolder({
+          collectionName: 'posts',
+          mediaFolder: '/src/assets/images',
+          publicFolder,
+          baseFolder: 'content/posts',
+          globalFolders,
+        });
+
+        expect(result?.publicPath).toBe(publicPath);
+      },
+    );
+
     it('should return undefined when media folder has template tags without global folders', () => {
       const result = normalizeAssetFolder({
         collectionName: 'posts',

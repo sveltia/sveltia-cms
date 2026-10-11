@@ -43,8 +43,9 @@ vi.mock('$lib/services/contents/draft/pending-entries', () => ({
   getReferencedPendingEntries: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/draft/save/changes', () => ({
+vi.mock('$lib/services/contents/draft/save/changes', async (importOriginal) => ({
   createSavingEntryData: vi.fn(),
+  removeDisabledLocales: /** @type {any} */ (await importOriginal()).removeDisabledLocales,
 }));
 
 vi.mock('$lib/services/contents/draft/save/sort-order', () => ({
@@ -442,6 +443,22 @@ describe('createPendingEntry', () => {
       savingAssets,
       values: ['en/svelte', 'svelte', 'fr/svelte'],
     });
+  });
+
+  it('leaves the locales turned off out of the entry', async () => {
+    vi.mocked(createSavingEntryData).mockResolvedValue(
+      /** @type {any} */ ({
+        // A locale turned off only carries the path its file would have
+        savingEntry: { ...savingEntry, locales: { ...savingEntry.locales, fr: { path: 'x.md' } } },
+        changes,
+        savingAssets,
+      }),
+    );
+
+    const parentDraft = createParentDraft({ currentValues: { en: {} } });
+    const result = await createPendingEntry({ draft, parentDraft, fieldConfig });
+
+    expect(result.entry).toEqual(savingEntry);
   });
 });
 

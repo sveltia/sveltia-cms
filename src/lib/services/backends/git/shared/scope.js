@@ -145,9 +145,9 @@ export const scopeFileFetchers = ({
     }),
     fetchFileContents: whenScoped(
       fetchFileContents,
-      async (rootDir, files) =>
+      async (rootDir, files, lastHash) =>
         /** @type {RepositoryContentsMap} */ (
-          convertKeys(await fetchFileContents(toRepoFiles(files, rootDir)), (path) =>
+          convertKeys(await fetchFileContents(toRepoFiles(files, rootDir), lastHash), (path) =>
             fromRepoPath(path, rootDir),
           )
         ),

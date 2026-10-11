@@ -172,6 +172,34 @@ describe('InternalAssetsPanel', () => {
     expect(page.getByRole('alertdialog').elements()).toHaveLength(0);
   });
 
+  test('takes no dropped files where nothing can be uploaded', async () => {
+    const onDrop = vi.fn();
+
+    const { container } = await render(InternalAssetsPanel, {
+      assets,
+      uploadDisabled: true,
+      selectedResources: [],
+      onDrop,
+    });
+
+    const target = /** @type {HTMLElement} */ (container.querySelector('.drop-target'));
+
+    // Dragging files over the panel doesn’t invite a drop
+    target.dispatchEvent(
+      new DragEvent('dragover', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer: new DataTransfer(),
+      }),
+    );
+    target.dispatchEvent(createDropEvent([new File(['x'], 'kite.png', { type: 'image/png' })]));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+    expect(container.querySelector('.drop-indicator')).toBeNull();
+    expect(onDrop).not.toHaveBeenCalled();
+  });
+
   test('lists nothing without assets', async () => {
     await render(InternalAssetsPanel, /** @type {any} */ ({}));
 

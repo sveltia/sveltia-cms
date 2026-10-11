@@ -233,7 +233,7 @@ describe('Test processEntry()', async () => {
       expect(result[0].label).toBe('fallback-slug');
     });
 
-    test('should fallback to slug for empty value (line 668)', () => {
+    test('should leave out the option when the value is empty', () => {
       vi.mocked(isCollectionIndexFile).mockReturnValue(false);
       vi.mocked(getFieldDisplayValue).mockReturnValue('');
 
@@ -271,9 +271,9 @@ describe('Test processEntry()', async () => {
         identifierField: 'title',
       });
 
-      // Value should fallback to slug when empty
-      expect(result).toHaveLength(1);
-      expect(result[0].value).toBe('value-fallback-slug');
+      // The value used to fall back to the slug, which was stored as a reference that doesn’t
+      // identify the entry. Now an entry without a value can’t be referenced, so it’s left out
+      expect(result).toEqual([]);
     });
 
     test('should fallback searchValue to label when searchValue template is empty', () => {
@@ -359,21 +359,17 @@ describe('Test processEntry()', async () => {
         identifierField: 'title',
       });
 
-      // All should fallback appropriately
-      expect(result).toHaveLength(1);
-      expect(result[0].label).toBe('all-empty-slug'); // Label falls back to slug
-      expect(result[0].value).toBe('all-empty-slug'); // Value falls back to slug
-      expect(result[0].searchValue).toBe('all-empty-slug'); // SearchValue falls back to label which is slug
+      // The label would fall back to the slug, but the value doesn’t, so the option is left out
+      expect(result).toEqual([]);
     });
   });
 
   describe('Complex multi-list fallback scenarios', () => {
-    test('should cover || fallbacks in the processEntry fallback block (lines 716-718)', () => {
+    test('should leave out the option without a value in the processEntry fallback block', () => {
       // Reach the fallback block: hasListFields=true BUT no wildcard fields
       // → analyzeListFields returns empty map → hasProcessedListFields stays false
       // → code falls into the fallback block at lines 697-720.
-      // Using empty templates so label/value/searchValue resolve to '',
-      // which exercises all the `|| ''` / `|| slug` false branches.
+      // Using empty templates so label/value/searchValue resolve to ''.
 
       /** @type {Entry} */
       const entry = {
@@ -399,9 +395,9 @@ describe('Test processEntry()', async () => {
         // @ts-ignore
         collection: mockCollection,
         templates: {
-          _displayField: '', // empty → label = '' → `label || ''` false branch
-          _valueField: '', // empty → value = '' → `value || slug` false branch
-          _searchField: '', // empty → searchValue = '' → `... || ''` false branch
+          _displayField: '',
+          _valueField: '',
+          _searchField: '',
           allFieldNames: [], // no wildcards → analyzeListFields returns empty Map
           hasListFields: true, // true so we enter list-handling path then fall through
         },
@@ -410,10 +406,8 @@ describe('Test processEntry()', async () => {
         identifierField: 'title',
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].label).toBe(''); // label || '' → ''
-      expect(result[0].value).toBe('fallback-slug'); // value || slug → 'fallback-slug'
-      expect(result[0].searchValue).toBe(''); // searchValue || label || '' → ''
+      // The empty value no longer falls back to the slug, so the option is left out
+      expect(result).toEqual([]);
     });
 
     test('should process entries with mixed list and non-list fields', () => {
@@ -612,12 +606,11 @@ describe('Test processEntry()', async () => {
       expect(result[0].label).toBe('File Entry');
     });
 
-    test('should cover || fallbacks in the processEntry fallback block (lines 716-718)', () => {
+    test('should leave out the option without a value in the processEntry fallback block', () => {
       // Reach the fallback block: hasListFields=true BUT no wildcard fields
       // → analyzeListFields returns empty map → hasProcessedListFields stays false
       // → code falls into the fallback block at lines 697-720.
-      // Using empty templates so label/value/searchValue resolve to '',
-      // which exercises all the `|| ''` / `|| slug` false branches.
+      // Using empty templates so label/value/searchValue resolve to ''.
 
       /** @type {Entry} */
       const entry = {
@@ -643,9 +636,9 @@ describe('Test processEntry()', async () => {
         // @ts-ignore
         collection: mockCollection,
         templates: {
-          _displayField: '', // empty → label = '' → `label || ''` false branch
-          _valueField: '', // empty → value = '' → `value || slug` false branch
-          _searchField: '', // empty → searchValue = '' → `... || ''` false branch
+          _displayField: '',
+          _valueField: '',
+          _searchField: '',
           allFieldNames: [], // no wildcards → analyzeListFields returns empty Map
           hasListFields: true, // true so we enter list-handling path then fall through
         },
@@ -654,10 +647,8 @@ describe('Test processEntry()', async () => {
         identifierField: 'title',
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].label).toBe(''); // label || '' → ''
-      expect(result[0].value).toBe('fallback-slug'); // value || slug → 'fallback-slug'
-      expect(result[0].searchValue).toBe(''); // searchValue || label || '' → ''
+      // The empty value no longer falls back to the slug, so the option is left out
+      expect(result).toEqual([]);
     });
   });
 });

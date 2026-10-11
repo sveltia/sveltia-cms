@@ -115,7 +115,9 @@ export const matchesCollectionFilter = (collection, entry) => {
   const items = Array.isArray(value) ? value : [value ?? null];
 
   if (pattern) {
-    return items.some((item) => pattern.test(item));
+    // A missing value never matches a pattern, like Decap CMS’s view filters do. `RegExp.test()`
+    // would coerce `null` to the string `null`, which `.+` or `^n` would match
+    return items.some((item) => item !== null && item !== undefined && pattern.test(String(item)));
   }
 
   return items.some((item) => values.includes(item));

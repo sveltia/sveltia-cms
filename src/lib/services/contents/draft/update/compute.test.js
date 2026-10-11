@@ -10,6 +10,17 @@ import { indexListItems } from '$lib/services/contents/entry/content-index';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
 
+vi.mock('$lib/services/contents/entry/fields', () => ({
+  // Look up a rich text editor component’s field in its definition; the entry’s fields aren’t
+  // needed, as no Number field is involved
+  getField: vi.fn(({ componentName, keyPath }) =>
+    componentName
+      ? getComponentDef(componentName)?.fields.find(
+          (/** @type {any} */ { name }) => name === keyPath,
+        )
+      : undefined,
+  ),
+}));
 vi.mock('$lib/services/contents/entry/values', () => ({
   getFieldDisplayValue: vi.fn(({ valueMap, keyPath }) => valueMap[keyPath]),
 }));
@@ -363,6 +374,53 @@ describe('updateComputedValues(draft)', () => {
     expect(updateComputedValues(draft)).toBe(true);
     expect(draft.extraValues.en['body:c1:slug']).toBe('');
     expect(draft.currentValues.en.slug).toBe('');
+  });
+
+  test('should resolve the field tags of a rich text editor component', () => {
+    vi.mocked(getComponentDef).mockImplementation((/** @type {any} */ name) =>
+      name === 'section'
+        ? /** @type {any} */ ({
+            fields: [
+              { name: 'heading' },
+              { name: 'anchor', widget: 'compute', value: '#{{fields.heading}}' },
+              { name: 'ref', widget: 'compute', value: '{{fields.title}}' },
+            ],
+          })
+        : undefined,
+    );
+
+    draft.extraValues.en = {
+      'body:c1:__sc_component_name': 'section',
+      'body:c1:heading': 'intro',
+      'body:c2:__sc_component_name': 'section',
+      'body:c2:heading': 'usage',
+    };
+
+    expect(updateComputedValues(draft)).toBe(true);
+
+    // The component’s own field
+    expect(draft.extraValues.en['body:c1:anchor']).toBe('#intro');
+    expect(draft.extraValues.en['body:c2:anchor']).toBe('#usage');
+    // The entry’s field
+    expect(draft.extraValues.en['body:c1:ref']).toBe('Hello');
+    expect(draft.extraValues.en['body:c2:ref']).toBe('Hello');
+  });
+
+  test('should prefer a component’s own field to the entry’s field of the same name', () => {
+    vi.mocked(getComponentDef).mockReturnValue(
+      /** @type {any} */ ({
+        fields: [{ name: 'title' }, { name: 'ref', widget: 'compute', value: '{{fields.title}}' }],
+      }),
+    );
+
+    draft.extraValues.en = {
+      'body:c1:__sc_component_name': 'card',
+      'body:c1:title': 'Card title',
+    };
+
+    updateComputedValues(draft);
+
+    expect(draft.extraValues.en['body:c1:ref']).toBe('Card title');
   });
 
   test('should resolve the values with the display value helper', () => {

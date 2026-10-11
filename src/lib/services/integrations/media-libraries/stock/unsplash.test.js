@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import unsplashService, { getLocale, list, parseResults, search } from './unsplash';
+import unsplashService, { getLocale, list, parseResults, search, trackDownload } from './unsplash';
 
 const mockLocale = vi.hoisted(() => ({ current: 'en', set: vi.fn() }));
 
@@ -205,6 +205,66 @@ describe('integrations/media-libraries/stock/unsplash', () => {
           'href="https://unsplash.com/?utm_source=sveltia-cms&utm_medium=referral"',
         );
       });
+    });
+  });
+
+  describe('download tracking', () => {
+    it('should keep the download location of a photo', () => {
+      const [asset] = parseResults(
+        /** @type {any} */ ([
+          {
+            id: '12345',
+            description: 'Sunset',
+            alt_description: '',
+            urls: {
+              regular: 'https://images.unsplash.com/a',
+              thumb: 'https://images.unsplash.com/b',
+            },
+            user: { username: 'johndoe', name: 'John Doe' },
+            links: { download_location: 'https://api.unsplash.com/photos/12345/download?ixid=x' },
+          },
+        ]),
+      );
+
+      expect(asset.downloadTrackingURL).toBe(
+        'https://api.unsplash.com/photos/12345/download?ixid=x',
+      );
+      // eslint-disable-next-line import-x/no-named-as-default-member
+      expect(unsplashService.trackDownload).toBe(trackDownload);
+    });
+
+    it('should request the download location with the API key', async () => {
+      vi.mocked(fetch).mockResolvedValue(
+        /** @type {any} */ ({ ok: true, json: vi.fn().mockResolvedValue({}) }),
+      );
+
+      await trackDownload(
+        /** @type {any} */ ({ downloadTrackingURL: 'https://api.unsplash.com/photos/1/download' }),
+        /** @type {any} */ ({ apiKey: mockApiKey }),
+      );
+
+      expect(fetch).toHaveBeenCalledWith('https://api.unsplash.com/photos/1/download', {
+        headers: { Authorization: `Client-ID ${mockApiKey}` },
+      });
+    });
+
+    it('should do nothing without a download location', async () => {
+      await trackDownload(/** @type {any} */ ({}), /** @type {any} */ ({ apiKey: mockApiKey }));
+
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('should only log a failed request, without rejecting', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const asset = /** @type {any} */ ({ downloadTrackingURL: 'https://api.unsplash.com/x' });
+      const options = /** @type {any} */ ({ apiKey: mockApiKey });
+
+      vi.mocked(fetch).mockResolvedValueOnce(/** @type {any} */ ({ ok: false, status: 403 }));
+      await expect(trackDownload(asset, options)).resolves.toBeUndefined();
+      vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+      await expect(trackDownload(asset, options)).resolves.toBeUndefined();
+
+      expect(consoleError).toHaveBeenCalledTimes(2);
     });
   });
 

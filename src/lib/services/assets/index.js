@@ -1,4 +1,4 @@
-import { decodeFilePath, getPathInfo } from '@sveltia/utils/file';
+import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 
@@ -20,6 +20,7 @@ import { getAssociatedCollections } from '$lib/services/contents/entry/collectio
 import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 import { createPath, getDirName, resolvePath, stripPathPrefix } from '$lib/services/utils/file';
 import { createRootEffect } from '$lib/services/utils/state.svelte';
+import { decodeURIComponentSafely } from '$lib/services/utils/url';
 
 /**
  * @import {
@@ -314,6 +315,14 @@ const getPublicPathRegex = (folder) =>
   });
 
 /**
+ * Check if a path is a relative path. A path starting with `@`, like `@assets/images/...` is a
+ * special case, considered as an absolute path.
+ * @param {string} path Path to check.
+ * @returns {boolean} `true` if the path is relative.
+ */
+export const isRelativePath = (path) => !/^[/@]/.test(path);
+
+/**
  * Get an asset by an absolute public path typically stored as an image field value.
  * @param {object} args Arguments.
  * @param {string} args.path Saved absolute path.
@@ -364,12 +373,20 @@ export const getAssetByAbsolutePath = ({
       }
     }
 
-    // Handle assets stored in a subfolder of the internal path
-    if (publicPath && internalPath && dirName) {
-      if (publicPath === '/') {
-        internalPath = `${internalPath}${dirName}`;
-      } else if (dirName.startsWith(`${publicPath}/`)) {
-        internalPath = dirName.replace(publicPath, internalPath);
+    if (publicPath && dirName) {
+      if (publicPath === '/' || dirName.startsWith(`${publicPath}/`)) {
+        // Handle assets stored in a subfolder of the internal path
+        if (internalPath) {
+          internalPath =
+            publicPath === '/'
+              ? `${internalPath}${dirName}`
+              : dirName.replace(publicPath, internalPath);
+        }
+      } else if (!isRelativePath(publicPath) && !getPublicPathRegex(folder).test(dirName)) {
+        // The directory is neither the public path nor below it, e.g. `/images-old` or `/files`
+        // with the `/images` public path, so the asset cannot be in this folder. A public path with
+        // template tags, like `/images/{{slug}}`, matches any segment in place of the tags
+        return undefined;
       }
     }
 
@@ -410,14 +427,6 @@ export const getAssetByAbsolutePath = ({
 };
 
 /**
- * Check if a path is a relative path. A path starting with `@`, like `@assets/images/...` is a
- * special case, considered as an absolute path.
- * @param {string} path Path to check.
- * @returns {boolean} `true` if the path is relative.
- */
-export const isRelativePath = (path) => !/^[/@]/.test(path);
-
-/**
  * Get an asset by a public path typically stored as an image field value.
  * @param {object} args Arguments.
  * @param {string} args.value Saved absolute path or relative path.
@@ -430,15 +439,26 @@ export const isRelativePath = (path) => !/^[/@]/.test(path);
  * @returns {Asset | undefined} Corresponding asset.
  */
 export const getAssetByPath = ({ value, ...rest }) => {
-  // Remove potential fragment before decoding
-  const path = decodeFilePath(value.split('#')[0]);
+  /**
+   * Look up an asset by the given path.
+   * @param {string} encodedPath Path that may contain URL-encoded characters.
+   * @returns {Asset | undefined} Corresponding asset.
+   */
+  const find = (encodedPath) => {
+    // The path is not encoded unless the `encode_file_path` option is enabled, so a file name can
+    // contain a `%` sign, like `50% off.jpg`, which would make `decodeURIComponent()` throw
+    const path = decodeURIComponentSafely(encodedPath);
 
-  // Handle a relative path
-  if (isRelativePath(path)) {
-    return getAssetByRelativePath({ path, ...rest });
-  }
+    return isRelativePath(path)
+      ? getAssetByRelativePath({ path, ...rest })
+      : getAssetByAbsolutePath({ path, ...rest });
+  };
 
-  return getAssetByAbsolutePath({ path, ...rest });
+  // Look up the whole value first, as an unencoded file name can contain a `#` sign, like
+  // `photo #1.jpg`; then remove a potential fragment, like `#section`, and try again
+  const [pathWithoutFragment] = value.split('#');
+
+  return find(value) ?? (pathWithoutFragment !== value ? find(pathWithoutFragment) : undefined);
 };
 
 /**

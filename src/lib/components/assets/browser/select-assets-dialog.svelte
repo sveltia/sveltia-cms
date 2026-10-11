@@ -23,6 +23,7 @@
   import {
     getFirstDefaultLibraryName,
     getInsertedResources,
+    getLocationResources,
     getPickedFolderPublicPaths,
     getStockAssetProviderEntries,
     isFolderOffered,
@@ -336,7 +337,9 @@
    * @param {File[]} files File list.
    */
   const onDrop = async (files) => {
-    // The files in a read-only folder, or one the CMS itself is served from, can’t be changed
+    // The files in a read-only folder, or one the CMS itself is served from, can’t be changed. The
+    // drop zone and the Upload button are disabled there, so this is only a safeguard
+    /* v8 ignore next 3 -- unreachable, as explained above */
     if (uploadDisabled) {
       return;
     }
@@ -389,6 +392,8 @@
       return;
     }
 
+    // A stock asset service may need to know which of its assets have been used
+    externalAssetsPanel?.trackDownloads();
     onSelect?.(getInsertedResources({ resources: selectedResources, targetFolderPath }));
   };
 
@@ -569,7 +574,8 @@
           libraryName = event.detail.name;
           subfolderPath = '';
           selectedSubfolderPaths = [];
-          selectedResources = [];
+          // The URL entered earlier is still in the text box, so it’s selected again
+          selectedResources = getLocationResources({ libraryName, enteredURL });
         }}
       >
         {#if isDefaultLibraryEnabled}
@@ -639,6 +645,7 @@
           {multiple}
           {kind}
           {selectFolder}
+          {uploadDisabled}
           assets={selectFolder ? [] : panelAssets}
           bind:selectedResources
           {searchTerms}
@@ -669,9 +676,7 @@
             bind:value={enteredURL}
             flex
             oninput={() => {
-              const url = enteredURL.trim();
-
-              selectedResources = url ? [{ url }] : [];
+              selectedResources = getLocationResources({ libraryName, enteredURL });
             }}
           />
         </EmptyState>

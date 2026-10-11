@@ -1,6 +1,5 @@
-import { flatten } from 'flat';
-
 import { getObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
+import { flattenKeys } from '$lib/services/utils/object';
 
 /**
  * @import { Entry, EntryFileMap, MediaFieldSource } from '$lib/types/private';
@@ -36,6 +35,6 @@ export const getComponentThumbnail = ({ thumbnailFieldName, values, ...args }) =
     thumbnailFieldName,
     keyPath: '',
     typedKeyPath: '',
-    valueMap: flatten(values),
+    valueMap: flattenKeys(values),
   });
 };

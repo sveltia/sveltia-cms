@@ -34,9 +34,54 @@ describe('normalize', () => {
     expect(normalize('test-file_name.txt')).toBe('test-file_name.txt');
     expect(normalize('user@example.com')).toBe('user@example.com');
   });
+
+  it('should keep the breve of the Cyrillic letters й and ў', () => {
+    // `мой` (my) and `мои` (my, plural) are different words
+    expect(normalize('мой')).not.toBe(normalize('мои'));
+    expect(normalize('Ўладзімір')).not.toBe(normalize('Уладзімір'));
+    // `ё` is commonly written as `е`
+    expect(normalize('ёлка')).toBe(normalize('елка'));
+  });
+
+  it('should fold accents in Greek, Cyrillic, Hebrew and Arabic too', () => {
+    expect(normalize('Tiếng Việt')).toBe(normalize('tieng viet'));
+    expect(normalize('Αθήνα')).toBe(normalize('αθηνα'));
+    expect(normalize('ёлка')).toBe(normalize('елка'));
+    expect(normalize('שָׁלוֹם')).toBe(normalize('שלום'));
+    expect(normalize('مُحَمَّد')).toBe(normalize('محمد'));
+  });
+
+  it('should keep the marks that are part of the spelling in other scripts', () => {
+    // Japanese kana voicing marks and the prolonged sound mark
+    expect(normalize('コピー')).not.toBe(normalize('コーヒー'));
+    expect(normalize('ビール')).not.toBe(normalize('ヒル'));
+    expect(normalize('パン')).not.toBe(normalize('ハン'));
+    expect(normalize('ﾋﾞｰﾙ')).not.toBe(normalize('ﾋﾙ'));
+    // Devanagari virama and Thai tone marks
+    expect(normalize('हिन्दी')).not.toBe(normalize('हिनदी'));
+    expect(normalize('ไม้')).not.toBe(normalize('ไม'));
+    // Composed and decomposed forms still match each other
+    expect(normalize('ビール')).toBe(normalize('ビール'.normalize('NFD')));
+  });
 });
 
 describe('hasMatch', () => {
+  it('should keep Hangul syllables composed', () => {
+    expect(normalize('학교')).toBe('학교');
+    expect(normalize('학교'.normalize('NFD'))).toBe('학교');
+    // A syllable must not match the start of another one that has a final consonant
+    expect(hasMatch({ value: normalize('학교'), terms: normalize('하') })).toBe(false);
+    expect(hasMatch({ value: '학교 생활', terms: normalize('학교') })).toBe(true);
+    expect(tokenize('하')).toEqual(['하']);
+  });
+
+  it('should not match a kana word that differs only in its marks', () => {
+    // This is how the entry search compares a value with the normalized terms
+    expect(hasMatch({ value: 'コーヒーの淹れ方', terms: normalize('コピー') })).toBe(false);
+    expect(hasMatch({ value: 'コピー機', terms: normalize('コピー') })).toBe(true);
+    expect(hasMatch({ value: 'ビール', terms: normalize('ヒル') })).toBe(false);
+  });
+
   it('should find exact matches', () => {
     expect(hasMatch({ value: 'hello world', terms: 'hello' })).toBe(true);
     expect(hasMatch({ value: 'hello world', terms: 'world' })).toBe(true);
@@ -144,6 +189,12 @@ describe('tokenize', () => {
 
   it('should keep hyphenated words as one token', () => {
     expect(tokenize('annual-report cover')).toEqual(['annual-report', 'cover']);
+  });
+
+  it('should keep Japanese kana voicing marks and prolonged sound marks', () => {
+    expect(hasAllMatches({ value: 'コーヒー豆', tokens: tokenize('コピー') })).toBe(false);
+    expect(hasAllMatches({ value: 'ビールの写真', tokens: tokenize('ヒル') })).toBe(false);
+    expect(hasAllMatches({ value: 'ビールの写真', tokens: tokenize('ビール 写真') })).toBe(true);
   });
 });
 

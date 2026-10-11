@@ -289,6 +289,8 @@ test('saves a change while a colleague changes another file', async ({ cms, gitl
     .poll(() => gitlab.readFile(POST_PATH))
     .toBe('---\ntitle: First Post\n---\n\nHello from Mona!\n');
   expect(gitlab.readFile('content/posts/second-post.md')).toBe('---\ntitle: Second Post\n---\n');
+  // The commit has landed on top of the colleague’s, which is fetched rather than skipped over
+  await expect(page.getByRole('row', { name: /Second Post/ })).toBeVisible();
 });
 
 test('lists the commits of an entry in the History panel', async ({ cms, gitlab, page }) => {

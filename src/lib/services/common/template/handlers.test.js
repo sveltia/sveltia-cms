@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
+import { getEntryPathRegEx } from '$lib/services/contents/file/config';
+
 import { handleDateTimeTag, handleFilePathTag, handleSlugTag, handleUuidTag } from './handlers';
 
 /**
@@ -233,6 +235,57 @@ describe('Template handler functions', () => {
       expect(handleFilePathTag('dirname', 'content/fr/posts/my-post.md', basePath)).toBe('');
       // The default locale may be omitted from the path
       expect(handleFilePathTag('dirname', 'content/posts/2024/my-post.md', basePath)).toBe('2024');
+    });
+
+    test('should leave the locale folder out of dirname with a folder per locale', () => {
+      // With the `multiple_folders` and `multiple_root_folders` i18n structures, the locale folder
+      // is added to the entry path but not to the base path, which is the collection’s `folder`
+      // option. The entry path matcher tells where it is, so a preview path or media folder
+      // template using `{{dirname}}` is the same for every locale.
+      const basePath = 'content/posts';
+
+      /**
+       * Get the entry path matcher for the given i18n structure.
+       * @param {'i18nMultiFolder' | 'i18nMultiRootFolder'} structure I18n structure flag.
+       * @returns {RegExp} Matcher.
+       */
+      const getRegEx = (structure) =>
+        getEntryPathRegEx({
+          extension: 'md',
+          format: 'frontmatter',
+          basePath,
+          nestedDepth: Infinity,
+          _i18n: /** @type {any} */ ({
+            allLocales: ['en', 'fr'],
+            defaultLocale: 'en',
+            omitDefaultLocaleFromFilePath: false,
+            structureMap: { [structure]: true },
+          }),
+        });
+
+      const multiFolder = getRegEx('i18nMultiFolder');
+      const multiRootFolder = getRegEx('i18nMultiRootFolder');
+
+      // `multiple_folders`
+      expect(
+        handleFilePathTag('dirname', 'content/posts/en/2024/my-post.md', basePath, [], multiFolder),
+      ).toBe('2024');
+      expect(
+        handleFilePathTag('dirname', 'content/posts/fr/my-post.md', basePath, [], multiFolder),
+      ).toBe('');
+      // `multiple_root_folders`: the base path isn’t removed from the middle of the path
+      expect(
+        handleFilePathTag(
+          'dirname',
+          'en/content/posts/2024/my-post.md',
+          basePath,
+          [],
+          multiRootFolder,
+        ),
+      ).toBe('2024');
+      expect(
+        handleFilePathTag('dirname', 'fr/content/posts/my-post.md', basePath, [], multiRootFolder),
+      ).toBe('');
     });
 
     test('should return filename without extension', () => {

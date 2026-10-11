@@ -1,8 +1,7 @@
-import { flatten } from 'flat';
-
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
+import { flattenKeys } from '$lib/services/utils/object';
 
 /**
  * @import { Field, RawEntryContent } from '$lib/types/public';
@@ -38,7 +37,7 @@ export const formatComponentSummary = ({ template, values, fields, locale }) => 
   }
 
   /** @type {Record<string, any>} */
-  const flatValues = flatten(values);
+  const flatValues = flattenKeys(values);
 
   const result = replaceTemplateTags(template, (__, placeholder) => {
     const { value: tag, transformations } = parseTransformations(placeholder);

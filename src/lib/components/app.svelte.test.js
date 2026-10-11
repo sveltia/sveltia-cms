@@ -3,6 +3,7 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { appIconURLs } from '$lib/services/app/branding';
+import { installPrompt } from '$lib/services/app/install';
 import { announcedPageStatus, mainAreaTitle, overlayTitle } from '$lib/services/app/navigation';
 import { backendName } from '$lib/services/backends';
 import { cmsConfigLoaded } from '$lib/services/config';
@@ -174,6 +175,28 @@ describe('App', () => {
     } finally {
       header.remove();
       ncRoot.remove();
+    }
+  });
+
+  test('keeps the install prompt the browser offers before the account menu is opened', async () => {
+    const { unmount } = await render(App, { config });
+
+    const event = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
+      prompt: vi.fn(),
+    });
+
+    try {
+      window.dispatchEvent(event);
+      expect(event.defaultPrevented).toBe(true);
+      expect(installPrompt.current).toBe(event);
+
+      // The listeners are removed with the app
+      unmount();
+      installPrompt.current = null;
+      window.dispatchEvent(event);
+      expect(installPrompt.current).toBeNull();
+    } finally {
+      installPrompt.current = null;
     }
   });
 });

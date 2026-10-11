@@ -81,6 +81,17 @@ describe('InfoPanel', () => {
     await expect.poll(() => container.querySelector('img')?.getAttribute('src')).toMatch(/^blob:/);
   });
 
+  test('treats a PDF document as previewable, whatever the case of its extension', async () => {
+    const asset = createMockAsset({
+      name: 'Brochure.PDF',
+      file: new File(['%PDF-1.4'], 'Brochure.PDF', { type: 'application/pdf' }),
+    });
+
+    const { container } = await render(InfoPanel, { asset, showPreview: true });
+
+    await expect.poll(() => getSections(container).Dimensions).toBeDefined();
+  });
+
   test('shows the duration, creation date and location of a video', async () => {
     backendName.current = 'github';
     Object.assign(repository, { blobBaseURL: 'https://github.com/owner/repo/blob/main' });

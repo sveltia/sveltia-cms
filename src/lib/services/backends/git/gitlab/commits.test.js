@@ -472,6 +472,19 @@ describe('GitLab commits service', () => {
         expect(body.actions[0]).not.toHaveProperty('last_commit_id');
       });
 
+      test('reports the parent the commit has been made on top of', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue({
+          id: 'c1',
+          committed_date: '2023-01-01',
+          parent_ids: ['colleague-sha'],
+        });
+
+        const result = await commitChanges(changes, /** @type {any} */ ({ commitType: 'update' }));
+
+        // Someone else’s commit to another file doesn’t stop this one, which lands on top of it
+        expect(result.parentSha).toBe('colleague-sha');
+      });
+
       test('sends no last commit to a workflow branch', async () => {
         vi.mocked(fetchAPI).mockResolvedValue({ id: 'c1', committed_date: '2023-01-01' });
 

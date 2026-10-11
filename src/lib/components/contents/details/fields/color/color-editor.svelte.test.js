@@ -49,7 +49,42 @@ const renderEditor = async ({
 const getPicker = (container) =>
   /** @type {HTMLInputElement} */ (container.querySelector('input[type="color"]'));
 
+/**
+ * Wait for the editor’s effects to settle.
+ * @returns {Promise<void>} Promise that resolves after a short delay.
+ */
+const wait = () =>
+  new Promise((resolve) => {
+    setTimeout(resolve, 50);
+  });
+
 describe('ColorEditor', () => {
+  test.each([
+    ['#fff', false],
+    ['#F00', false],
+    ['red', false],
+    ['red', true],
+  ])('keeps a stored color the controls can’t represent: %s (read-only: %s)', async (value, ro) => {
+    const { props } = await renderEditor({
+      currentValue: value,
+      config: { allowInput: true, enableAlpha: true },
+      readonly: ro,
+    });
+
+    await wait();
+    expect(props.currentValue).toBe(value);
+  });
+
+  test('replaces a stored color the controls can’t represent once a color is picked', async () => {
+    const { props, container } = await renderEditor({ currentValue: '#fff' });
+    const picker = getPicker(container);
+
+    picker.value = '#00ff00';
+    picker.dispatchEvent(new Event('input', { bubbles: true }));
+
+    await expect.poll(() => props.currentValue).toBe('#00ff00');
+  });
+
   test('reflects the value in a labelled color picker', async () => {
     const { container } = await renderEditor({ currentValue: '#ff8000' });
     const picker = getPicker(container);
@@ -87,6 +122,9 @@ describe('ColorEditor', () => {
     // An incomplete color is not stored
     await input.fill('#00f');
     expect(props.currentValue).toBe('');
+    await input.fill('#00');
+    expect(props.currentValue).toBe('');
+    await expect.element(input).toHaveValue('#00');
   });
 
   test('offers an opacity slider when the alpha channel is enabled', async () => {

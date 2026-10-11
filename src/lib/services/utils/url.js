@@ -35,3 +35,20 @@ export const decodeURISafely = (uri) => decodeSafely(uri, decodeURI);
  * @returns {string} Decoded URI component.
  */
 export const decodeURIComponentSafely = (component) => decodeSafely(component, decodeURIComponent);
+
+/**
+ * Encode the given URL for an `href` or `src` attribute. Unlike `encodeURI()`, an escape sequence
+ * already in the URL is kept as is rather than encoded again, so that `https://example.com/caf%C3%A9`
+ * doesn’t become `https://example.com/caf%25C3%25A9`. A URL that can’t be parsed is decoded first,
+ * then encoded with `encodeURI()`.
+ * @param {string} url URL, e.g. `https://example.com/café` or `mailto:alice@example.com`.
+ * @returns {string} Encoded URL.
+ */
+export const encodeURLSafely = (url) => {
+  try {
+    return new URL(url).href;
+  } catch {
+    // A lone surrogate would make `encodeURI()` throw
+    return encodeURI(decodeURISafely(url).toWellFormed());
+  }
+};

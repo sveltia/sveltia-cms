@@ -27,7 +27,7 @@ import { isValueEmpty, unflattenKeys } from '$lib/services/utils/object';
  * InternalEntryCollection,
  * InternalLocaleCode,
  * } from '$lib/types/private';
- * @import { DateTimeField, Field, RawEntryContent } from '$lib/types/public';
+ * @import { DateTimeField, Field, FileFormat, RawEntryContent } from '$lib/types/public';
  */
 
 /**
@@ -335,9 +335,12 @@ const finalizeContent = ({
  * @param {EntryDraft} args.draft Entry draft.
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {FlattenedEntryContent} args.valueMap Original content.
+ * @param {FileFormat} [args.format] Format of the file being saved. In a collection in the
+ * `frontmatter` format, it’s the front matter format detected in the existing file, which decides
+ * whether dates are written as native TOML dates. Defaults to the configured format.
  * @returns {RawEntryContent} Modified and unflattened content.
  */
-export const serializeContent = ({ draft, locale, valueMap }) => {
+export const serializeContent = ({ draft, locale, valueMap, format }) => {
   const { collection, collectionName, collectionFile, fields, isIndexFile } = draft;
 
   const {
@@ -346,8 +349,9 @@ export const serializeContent = ({ draft, locale, valueMap }) => {
     },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
-  const { format } = resolveFileConfig({ collection, collectionFile, isIndexFile });
-  const isTomlOutput = TOML_FORMATS.includes(format);
+  const isTomlOutput = TOML_FORMATS.includes(
+    format ?? resolveFileConfig({ collection, collectionFile, isIndexFile }).format,
+  );
 
   const content = finalizeContent({
     collectionName,

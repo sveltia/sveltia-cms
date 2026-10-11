@@ -19,7 +19,10 @@
   import CloudServiceAuth from '$lib/components/assets/shared/cloud-service-auth.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
-  import { getSelectionWithResource } from '$lib/services/assets/browser/select-assets-dialog.svelte';
+  import {
+    getSelectionWithResource,
+    trackInsertedExternalAssets,
+  } from '$lib/services/assets/browser/select-assets-dialog.svelte';
   import { getFetchOptions, mergeUploadedExternalAssets } from '$lib/services/assets/external';
   import {
     fetchExternalAssetBlob,
@@ -83,6 +86,7 @@
     search,
     upload,
     createFolder,
+    trackDownload,
   } = $derived(serviceProps);
 
   // Use the grid view for Picsum as it doesn’t provide description for the assets, and the list
@@ -121,8 +125,9 @@
   let folderCreationFailed = $state(false);
   /** @type {string | undefined} */
   let error = $state();
-  /** @type {{ show: boolean, status: 'info' | 'error', length: number }} */
-  let uploadingToast = $state({ show: false, status: 'info', length: 0 });
+  /** Whether files are being uploaded, which shows a progress toast until the upload settles. */
+  let uploading = $state(false);
+  let uploadFailed = $state(false);
   /** @type {RejectedFilesAlertDialog | undefined} */
   let rejectedFilesAlert = $state();
 
@@ -255,17 +260,21 @@
       return;
     }
 
-    uploadingToast = { show: true, status: 'info', length: files.length };
+    uploading = true;
+    uploadFailed = false;
 
     try {
       // The files go to the folder being browsed, or the one the search started from
       const uploaded = await upload(files, { ...listFetchOptions, dirPath });
       const resources = await Promise.all(uploaded.map((asset) => getResource(asset)));
 
+      // The uploaded files, listed first and selected, confirm the upload
       selectedResources = resources.filter((r) => !!r).slice(0, multiple ? undefined : 1);
       listedAssets = mergeUploadedExternalAssets(uploaded, listedAssets ?? []);
     } catch {
-      uploadingToast = { show: true, status: 'error', length: files.length };
+      uploadFailed = true;
+    } finally {
+      uploading = false;
     }
   };
 
@@ -324,6 +333,27 @@
   const requestedSelection = new Map();
 
   /**
+   * The assets picked from the list, keyed by download URL, so the service can be told which ones
+   * have been inserted. An asset stays here once deselected: only the selected resources count.
+   * @type {Map<string, ExternalAsset>}
+   */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
+  const pickedAssets = new Map();
+
+  /**
+   * Let the service know the selected assets have been inserted, if its API guidelines require it,
+   * like Unsplash’s. The requests are not awaited, so they never hold up the insertion.
+   */
+  export const trackDownloads = () => {
+    trackInsertedExternalAssets({
+      trackDownload,
+      resources: selectedResources,
+      assets: pickedAssets,
+      options: listFetchOptions,
+    });
+  };
+
+  /**
    * Handle selection change of an asset.
    * @param {ExternalAsset} asset The asset whose selection changed.
    * @param {boolean} selected `true` if the asset is now selected, `false` otherwise.
@@ -346,6 +376,7 @@
 
       // Read the selection again, as it may have changed during the `await`
       if (resource && requestedSelection.get(downloadURL)) {
+        pickedAssets.set(downloadURL, asset);
         selectedResources = getSelectionWithResource({
           resources: selectedResources,
           resource,
@@ -495,15 +526,13 @@
   </EmptyState>
 {/if}
 
-<Toast bind:show={uploadingToast.show}>
-  <Alert status={uploadingToast.status}>
-    {#if uploadingToast.status === 'info'}
-      {_('uploading_files_progress')}
-    {/if}
-    {#if uploadingToast.status === 'error'}
-      {_('uploading_files_failed')}
-    {/if}
-  </Alert>
+<!-- `duration={0}` keeps this up until the upload settles, however long it takes -->
+<Toast show={uploading} duration={0}>
+  <Alert status="info">{_('uploading_files_progress')}</Alert>
+</Toast>
+
+<Toast bind:show={uploadFailed}>
+  <Alert status="error">{_('uploading_files_failed')}</Alert>
 </Toast>
 
 <RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} />

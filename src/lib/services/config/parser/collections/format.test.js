@@ -285,9 +285,14 @@ describe('isFormatMismatch', () => {
       expect(isFormatMismatch('html', 'toml')).toBe(false);
     });
 
-    it('should return true when html extension with yaml-frontmatter', () => {
-      // html doesn't match yaml-frontmatter base type and isn't md/markdown
-      expect(isFormatMismatch('html', 'yaml-frontmatter')).toBe(true);
+    it('should return false when html extension with any front-matter format', () => {
+      // Like Decap CMS, a non-data extension works with every front-matter format
+      expect(isFormatMismatch('html', 'yaml-frontmatter')).toBe(false);
+      expect(isFormatMismatch('html', 'toml-frontmatter')).toBe(false);
+      expect(isFormatMismatch('html', 'json-frontmatter')).toBe(false);
+      expect(isFormatMismatch('html', 'frontmatter')).toBe(false);
+      expect(isFormatMismatch('liquid', 'yaml-frontmatter')).toBe(false);
+      expect(isFormatMismatch('txt', 'frontmatter')).toBe(false);
     });
 
     it('should return true when yml extension with json-frontmatter', () => {
@@ -368,11 +373,6 @@ describe('isFormatMismatch', () => {
     it('should return true when astro extension with frontmatter', () => {
       // Astro is treated as a raw file format, not a front-matter-compatible template engine
       expect(isFormatMismatch('astro', 'frontmatter')).toBe(true);
-    });
-
-    it('should return true when custom extension with frontmatter', () => {
-      // frontmatter is only valid with markdown extensions and template engines
-      expect(isFormatMismatch('html', 'frontmatter')).toBe(true);
     });
   });
 

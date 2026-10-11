@@ -36,6 +36,53 @@ describe('Google Gemini AI Client', () => {
       expect(result).toBe('Hello there!');
     });
 
+    it('should join the text parts, skipping thought summaries and non-text parts', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    { text: 'Thinking about it…', thought: true },
+                    { text: ' ["Bonjour", ' },
+                    { inlineData: {} },
+                    { text: '"Comment allez-vous ?"] ' },
+                  ],
+                },
+                finishReason: 'STOP',
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      );
+
+      const result = await complete(defaultOptions);
+
+      expect(result).toBe('["Bonjour", "Comment allez-vous ?"]');
+    });
+
+    it('should throw when the response is cut off at the token limit', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: { parts: [{ text: '["Bonjour", "Comment' }] },
+                finishReason: 'MAX_TOKENS',
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      );
+
+      await expect(complete(defaultOptions)).rejects.toThrow(
+        'The response from the Gemini API was cut off at the token limit.',
+      );
+    });
+
     it('should send a POST request to the Gemini generateContent endpoint', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(successResponse('ok'));
 
@@ -81,7 +128,7 @@ describe('Google Gemini AI Client', () => {
       const body = JSON.parse(/** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body));
 
       expect(body.generationConfig.temperature).toBe(0.3);
-      expect(body.generationConfig.maxOutputTokens).toBe(4000);
+      expect(body.generationConfig.maxOutputTokens).toBe(16_000);
     });
 
     it('should forward custom temperature and maxTokens', async () => {
@@ -159,6 +206,16 @@ describe('Google Gemini AI Client', () => {
     it('should throw on empty candidates array in response', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
         new Response(JSON.stringify({ candidates: [] }), { status: 200 }),
+      );
+
+      await expect(complete(defaultOptions)).rejects.toThrow(
+        'Invalid response format from Gemini API.',
+      );
+    });
+
+    it('should throw on a candidate without content', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response(JSON.stringify({ candidates: [{ finishReason: 'SAFETY' }] }), { status: 200 }),
       );
 
       await expect(complete(defaultOptions)).rejects.toThrow(

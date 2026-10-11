@@ -61,15 +61,37 @@
 
   /** @type {HTMLImageElement | HTMLMediaElement | undefined} */
   let mediaElement = $state();
-  let hasError = $state(false);
-  let loaded = $state(false);
+  /**
+   * What the preview shows: the asset, or the source URL if there is no asset. The info panels keep
+   * one preview while the focus moves between assets, so the states below are tied to the source
+   * they were reached for, and a new source starts afresh.
+   */
+  const source = $derived(asset ?? src);
+  /**
+   * The source whose media has failed to load.
+   * @type {Asset | string | undefined}
+   */
+  let failedSource = $state.raw();
+  /**
+   * The source whose media has been loaded.
+   * @type {Asset | string | undefined}
+   */
+  let loadedSource = $state.raw();
+  const hasError = $derived(!!source && failedSource === source);
+  const loaded = $derived(!!source && loadedSource === source);
   /** @type {string | undefined} */
   let blurImageURL = $state();
   /**
    * The source URL: the `src` property, or for the `asset`-based flow, the URL looked up in
    * {@link updateSrc}. A change of the property replaces the looked-up URL.
    */
-  let resolvedSrc = $derived(src);
+  let resolvedSrc = $derived.by(() => {
+    // Drop the URL looked up for the previous asset once another one comes, so that its media isn’t
+    // displayed with the details of the new one until the new URL has been looked up
+    void asset;
+
+    return src;
+  });
   /**
    * The actual `src` applied to the media element. For the `asset`-based flow this mirrors
    * {@link resolvedSrc} (which is set after a visibility check inside {@link updateSrc}). For an
@@ -87,7 +109,17 @@
       (isThumbnail && THUMBNAIL_KINDS.includes(kind)),
   );
 
-  let updatingSrc = false;
+  /**
+   * The number of {@link updateSrc} calls so far. A call that finds a later one has started on the
+   * way leaves the result to that one, so that the latest asset wins when the focus moves quickly.
+   */
+  let srcRequestCount = 0;
+  /**
+   * The URL the last {@link updateSrc} call has looked up, to be released once it’s been replaced.
+   * Kept outside the reactive graph, as {@link resolvedSrc} is reset when the asset changes.
+   * @type {string | undefined}
+   */
+  let lookedUpSrc = undefined;
   /**
    * Object URLs created by this preview. Every `getAssetThumbnailURL()` call returns a URL of its
    * own, so these have to be released here — `revokeAssetBlobURLIfNeeded()` only knows about the
@@ -143,39 +175,62 @@
    * Update the {@link resolvedSrc} value.
    */
   const updateSrc = async () => {
-    /* v8 ignore next 3 -- the effect below only calls this for a mounted asset, one at a time */
-    if (!asset || !mediaElement || updatingSrc) {
+    /* v8 ignore next 3 -- the effect below only calls this for a mounted asset */
+    if (!asset || !mediaElement) {
       return;
     }
 
-    updatingSrc = true;
-    hasError = false;
+    srcRequestCount += 1;
+
+    const request = srcRequestCount;
+    // Read up front, as a derived can’t be read once the component has been destroyed
+    const requestedAsset = asset;
+    const thumbnail = isThumbnail;
 
     if (loading === 'lazy') {
       await waitForVisibility(mediaElement);
     }
 
-    // Read up front, as a derived can’t be read once the component has been destroyed
-    const previousSrc = resolvedSrc;
-    const thumbnail = isThumbnail;
-    let nextSrc = previousSrc;
+    /** @type {string | undefined} */
+    let url = undefined;
+    let failed = false;
 
     try {
-      const url = thumbnail ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset);
+      url = thumbnail
+        ? await getAssetThumbnailURL(requestedAsset)
+        : await getAssetBlobURL(requestedAsset);
+    } catch {
+      failed = true;
+    }
 
-      // The preview was removed while the URL was being looked up. Release it as the cleanup does,
-      // which skips a URL another element is displaying
-      if (destroyed) {
+    // The preview was removed while the URL was being looked up. Release it as the cleanup does,
+    // which skips a URL another element is displaying
+    if (destroyed) {
+      revokeBlobURLIfNeeded(url);
+
+      return;
+    }
+
+    // Another asset has come in the meantime. Release a thumbnail made for this one, which nothing
+    // displays; the full-size URL is shared on the asset itself, so leave that alone
+    if (request !== srcRequestCount) {
+      if (thumbnail) {
         revokeBlobURLIfNeeded(url);
-
-        return;
       }
 
-      nextSrc = url;
-      resolvedSrc = url;
-    } catch {
-      hasError = true;
+      return;
     }
+
+    if (failed) {
+      failedSource = requestedAsset;
+    } else {
+      resolvedSrc = url;
+    }
+
+    const previousSrc = lookedUpSrc;
+    const nextSrc = failed ? previousSrc : url;
+
+    lookedUpSrc = nextSrc;
 
     if (thumbnail) {
       ownURL(nextSrc);
@@ -188,8 +243,6 @@
     if (blurBackground && !blurImageURL && nextSrc) {
       blurImageURL = nextSrc;
     }
-
-    updatingSrc = false;
 
     // For some reason this is required to update the `$effect` calling `checkLoaded()`, otherwise
     // navigating from `/assets` to `/assets/<collection>` on small screen leaves the preview empty.
@@ -220,6 +273,10 @@
         ? /** @type {HTMLImageElement} */ (mediaElement).complete
         : !!(/** @type {HTMLMediaElement} */ (mediaElement).readyState));
 
+    // Read up front: the outcome only counts if the preview still shows the same media afterwards
+    const currentSource = source;
+    const currentSrc = mediaSrc;
+
     if (!isReady) {
       // Not loaded yet; wait until it’s ready
       const failed = await new Promise((resolve) => {
@@ -229,9 +286,14 @@
         mediaElement?.addEventListener('error', () => resolve(true), { once: true });
       });
 
+      // Another source has come while the media was loading
+      if (mediaSrc !== currentSrc) {
+        return;
+      }
+
       if (failed) {
         // Show the fallback icon rather than an empty tile that never finishes its transition
-        hasError = true;
+        failedSource = currentSource;
 
         return;
       }
@@ -248,7 +310,7 @@
       await waitForVisibility(mediaElement);
     }
 
-    loaded = true;
+    loadedSource = currentSource;
   };
 
   $effect(() => {

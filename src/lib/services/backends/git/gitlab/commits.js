@@ -34,6 +34,7 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
  * @typedef {object} CommitResponse
  * @property {string} id Commit SHA-1 hash.
  * @property {string} committed_date Commit date in ISO 8601 format.
+ * @property {string[]} [parent_ids] SHA-1 hashes of the parent commits.
  */
 
 const FETCH_LAST_COMMIT_QUERY = `
@@ -158,7 +159,7 @@ export const commitChanges = async (changes, options) => {
     throw ex;
   }
 
-  const { id: sha, committed_date: committedDate } = response;
+  const { id: sha, committed_date: committedDate, parent_ids: parentIds } = response;
 
   // Calculate the SHA-1 hash for each file because the GitLab REST API does not return file SHAs
   const entries = await Promise.all(
@@ -170,6 +171,9 @@ export const commitChanges = async (changes, options) => {
   return {
     sha,
     date: new Date(committedDate),
+    // GitLab only checks the files being changed, so the commit can land on top of someone else’s
+    // commit to another file; the caller tells that from the parent
+    parentSha: parentIds?.[0],
     files: Object.fromEntries(entries.filter((entry) => !!entry)),
   };
 };

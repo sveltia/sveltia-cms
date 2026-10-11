@@ -410,6 +410,48 @@ describe('FileEditor', () => {
     expect(page.getByText(/Drop/).elements()).toHaveLength(0);
   });
 
+  test('takes no more dropped files than the limit allows', async () => {
+    const { draft, props, container } = await renderEditor(
+      { name: 'images', multiple: true, max: 2 },
+      ['/static/uploads/a.png'],
+      { 'images.0': '/static/uploads/a.png' },
+      { keyPath: 'images', typedKeyPath: 'images', fieldId: 'images' },
+    );
+
+    await expect.element(page.getByText(/Drop image files here/)).toBeInTheDocument();
+
+    const dropTarget = /** @type {HTMLElement} */ (container.querySelector('.drop-target'));
+
+    // Only the first of the two dropped files fits. The files differ, as a file with the same
+    // content as an earlier one would be stored only once
+    dropTarget.dispatchEvent(
+      createDropEvent([
+        await createMockImageFile({ name: 'b.png', width: 5 }),
+        await createMockImageFile({ name: 'c.png', width: 6 }),
+      ]),
+    );
+    await expect.poll(() => draft.currentValues._default['images.1']).toMatch(/^blob:/);
+    expect(draft.currentValues._default['images.2']).toBeUndefined();
+
+    // The drop zone is disabled once the list is full
+    props.currentValue = [
+      draft.currentValues._default['images.0'],
+      draft.currentValues._default['images.1'],
+    ];
+    await expect.poll(() => page.getByText(/Drop/).elements()).toHaveLength(0);
+
+    const files = { ...draft.files };
+
+    dropTarget.dispatchEvent(
+      createDropEvent([await createMockImageFile({ name: 'd.png', width: 7 })]),
+    );
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+    expect(draft.currentValues._default['images.2']).toBeUndefined();
+    expect(draft.files).toEqual(files);
+  });
+
   test('reports a file that can’t be used', async () => {
     const { props, container } = await renderEditor({}, '');
 

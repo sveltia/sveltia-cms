@@ -14,6 +14,7 @@ import {
   getMediaKindFromType,
   hasPDFThumbnail,
   isMediaKind,
+  isPDF,
   MEDIA_KINDS,
 } from './kinds';
 
@@ -85,6 +86,15 @@ describe('assets/kinds', () => {
     });
   });
 
+  describe('isPDF', () => {
+    it('should match the extension case-insensitively', () => {
+      expect(isPDF('files/brochure.pdf')).toBe(true);
+      expect(isPDF('Brochure.PDF')).toBe(true);
+      expect(isPDF('brochure.pdf.zip')).toBe(false);
+      expect(isPDF('pdf')).toBe(false);
+    });
+  });
+
   describe('hasPDFThumbnail', () => {
     afterEach(() => {
       vi.unstubAllEnvs();
@@ -93,6 +103,12 @@ describe('assets/kinds', () => {
     it('should generate a thumbnail for a PDF document', () => {
       expect(hasPDFThumbnail('files/brochure.pdf')).toBe(true);
       expect(hasPDFThumbnail('files/brochure.docx')).toBe(false);
+    });
+
+    it('should match the extension case-insensitively', () => {
+      expect(hasPDFThumbnail('files/Brochure.PDF')).toBe(true);
+      expect(hasPDFThumbnail('files/Brochure.Pdf')).toBe(true);
+      expect(hasPDFThumbnail('files/brochure.pdf.zip')).toBe(false);
     });
 
     it('should not in the npm build, which doesn’t include PDF.js', () => {

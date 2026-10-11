@@ -68,6 +68,20 @@ describe('Test isPairOrderModified()', () => {
     expect(isPairOrderModified({ draft, isRealKey })).toBe(true);
   });
 
+  test('should only check the given locales', () => {
+    const draft = createDraft(
+      { title: 'Hello', 'metadata.a': '1', 'metadata.b': '2' },
+      { title: 'Hello', 'metadata.a': '1', 'metadata.b': '2' },
+    );
+
+    // A locale disabled before and after the edit, whose values aren’t compared, may have pairs
+    // missing from the original values, e.g. the ones copied from the default locale
+    draft.originalValues.ja = { title: '' };
+    draft.currentValues.ja = { title: '', 'metadata.b': '2', 'metadata.a': '1' };
+
+    expect(isPairOrderModified({ draft, isRealKey, locales: ['en'] })).toBe(false);
+  });
+
   test('should return true when the pairs of a nested KeyValue field have been reordered', () => {
     const draft = createDraft(
       { 'sections.0.title': 'One', 'sections.0.attrs.a': '1', 'sections.0.attrs.b': '2' },

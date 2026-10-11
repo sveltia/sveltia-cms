@@ -9,6 +9,7 @@ import {
   SUPPORTED_IMAGE_TYPES,
   SUPPORTED_IMAGE_TYPES_WITH_HEIC,
 } from '$lib/services/utils/media/image';
+import { isAnimatedImage } from '$lib/services/utils/media/image/animation';
 import { sniffRasterImageFormat } from '$lib/services/utils/media/image/sniff';
 import { optimizeSVG, transformImage } from '$lib/services/utils/media/image/transform';
 
@@ -182,7 +183,9 @@ export const transformFile = async (file, transformations) => {
     (declaredFormat ? formatTransformations[declaredFormat] : undefined) ??
     transformations.raster_image;
 
-  if (!transformation) {
+  // An animated GIF, WebP or PNG would be flattened to its first frame, as the browser decodes no
+  // more, so it’s uploaded as is
+  if (!transformation || (await isAnimatedImage(file, sourceFormat))) {
     return file;
   }
 

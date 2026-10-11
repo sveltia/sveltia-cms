@@ -5,7 +5,10 @@ import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { countQuotaEntries } from '$lib/services/contents/collection/entries/count';
 import { getReferencedPendingEntries } from '$lib/services/contents/draft/pending-entries';
-import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
+import {
+  createSavingEntryData,
+  removeDisabledLocales,
+} from '$lib/services/contents/draft/save/changes';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
@@ -201,7 +204,10 @@ export const createPendingEntry = async ({ draft, parentDraft, fieldConfig }) =>
   assignManualSortOrder(draft, getPendingEntriesByCollection(parentDraft, collectionName).length);
 
   const slugs = getPendingEntrySlugs({ draft, parentDraft });
-  const { savingEntry, changes, savingAssets } = await createSavingEntryData({ draft, slugs });
+  const prepared = await createSavingEntryData({ draft, slugs });
+  const { changes, savingAssets } = prepared;
+  // The locales turned off have no file to save, so they’re left out of the entry the stores get
+  const savingEntry = removeDisabledLocales(prepared.savingEntry);
   // The value can be localized, e.g. `{{locale}}/{{slug}}`, so collect it for every locale the
   // parent entry has
   const { pendingEntries } = parentDraft;

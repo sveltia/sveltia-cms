@@ -45,6 +45,10 @@ export const addObjectFields = ({
   const valueStore = draft[valueStoreKey];
   /** @type {Field[]} */
   const subFields = (type ? types?.find(({ name }) => name === type)?.fields : fields) ?? [];
+  // A rich text editor component’s values live in the document of the locale they’re edited in,
+  // so its subfields get their defaults in every locale, with nothing to copy from the default
+  // locale, unlike an entry field
+  const defaultLocale = valueStoreKey === 'extraValues' ? locale : draft.defaultLocale;
 
   // Avoid triggering the Proxy’s i18n duplication strategy for descendant fields
   suspendAutoDuplication(() => {
@@ -55,13 +59,13 @@ export const addObjectFields = ({
     }
 
     const newContent = Object.fromEntries(
-      Object.entries(
-        getDefaultValues({ fields: subFields, locale, defaultLocale: draft.defaultLocale }),
-      ).map(([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value]),
+      Object.entries(getDefaultValues({ fields: subFields, locale, defaultLocale })).map(
+        ([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value],
+      ),
     );
 
     const newValueMap =
-      locale === draft.defaultLocale
+      locale === defaultLocale
         ? newContent
         : copyDefaultLocaleValues({
             draft,

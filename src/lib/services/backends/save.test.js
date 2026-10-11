@@ -787,6 +787,83 @@ describe('save', () => {
       expect(repositoryHead.current).toBe('commit123');
     });
 
+    test('should record the commit as the head when it is made on top of the head', async () => {
+      /** @type {any} */ (backend).current = {
+        commitChanges: mockCommitChanges,
+        fetchLastCommit: vi.fn(),
+        repository: { databaseName: 'test-db' },
+      };
+      repositoryHead.current = 'head0';
+      mockCommitChanges.mockResolvedValue({
+        sha: 'commit123',
+        date: new Date(),
+        parentSha: 'head0',
+        files: {},
+      });
+
+      await saveChanges({ changes: simpleChanges, options: simpleOptions });
+
+      expect(repositoryHead.current).toBe('commit123');
+      // Only the check before committing
+      expect(checkForRemoteChanges).toHaveBeenCalledTimes(1);
+    });
+
+    test('should keep the head and check again when the commit lands on someone else’s', async () => {
+      /** @type {any} */ (backend).current = {
+        commitChanges: mockCommitChanges,
+        fetchLastCommit: vi.fn(),
+        repository: { databaseName: 'test-db' },
+      };
+      repositoryHead.current = 'head0';
+      // A colleague’s commit to another file was made after the check before committing
+      mockCommitChanges.mockResolvedValue({
+        sha: 'commit123',
+        date: new Date(),
+        parentSha: 'colleague1',
+        files: {},
+      });
+
+      const { commit } = await saveChanges({ changes: simpleChanges, options: simpleOptions });
+
+      expect(commit.sha).toBe('commit123');
+      // The colleague’s commit is still to be fetched, so the stores don’t reflect the new head
+      expect(repositoryHead.current).toBe('head0');
+      // Once before committing, once after to fetch the colleague’s commit
+      expect(checkForRemoteChanges).toHaveBeenCalledTimes(2);
+    });
+
+    test('should report a failed check after a commit landing on someone else’s', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new Error('offline');
+
+      /** @type {any} */ (backend).current = {
+        commitChanges: mockCommitChanges,
+        fetchLastCommit: vi.fn(),
+        repository: { databaseName: 'test-db' },
+      };
+      repositoryHead.current = 'head0';
+      mockCommitChanges.mockResolvedValue({
+        sha: 'commit123',
+        date: new Date(),
+        parentSha: 'colleague1',
+        files: {},
+      });
+      vi.mocked(checkForRemoteChanges)
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(error);
+
+      await saveChanges({ changes: simpleChanges, options: simpleOptions });
+
+      await vi.waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'Failed to check the repository for changes.',
+          error,
+        );
+      });
+      expect(repositoryHead.current).toBe('head0');
+      consoleSpy.mockRestore();
+    });
+
     test('should leave the head alone on a backend without commits to compare', async () => {
       await saveChanges({ changes: simpleChanges, options: simpleOptions });
 

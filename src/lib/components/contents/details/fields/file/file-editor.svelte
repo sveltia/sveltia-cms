@@ -154,9 +154,9 @@
     }),
   );
   const multiple = $derived(isMultiple(fieldConfig));
-  /* v8 ignore start -- only read while the list of files is rendered */
   const itemCount = $derived(Array.isArray(currentValue) ? currentValue.length : 0);
-  /* v8 ignore stop */
+  /** Whether a multiple-file field has as many files as it takes, so no more can be dropped. */
+  const isFull = $derived(multiple && itemCount >= max);
   const maxSize = $derived(/** @type {number} */ (libraryConfig.max_file_size));
   /**
    * Whether a single file can be removed here. A required field can’t go without one, and within a
@@ -248,6 +248,7 @@
           keyPath,
           newValues: values,
           replaceIndex: replaceMode ? replaceIndex : undefined,
+          max,
         });
       } else if (hasValidResource) {
         // A single-value field takes the last file, like it would if they were picked in turn
@@ -463,7 +464,8 @@
 {#if allowDrop}
   <!--
     The drop zone is disabled while an item is being reordered: a reorder drag carries no file, so
-    letting it land anywhere outside the item list would only report an unsupported file type.
+    letting it land anywhere outside the item list would only report an unsupported file type. It’s
+    also disabled once a multiple-file field is full, like the upload button is hidden then.
     Dropped files are not filtered by `accept` here, just like the files chosen in the file picker:
     `processResources()` checks the format once the files have been processed, which is the only
     point a transformation could have changed it. The attribute still narrows the file picker.
@@ -471,7 +473,7 @@
   <DropZone
     bind:this={dropZone}
     {multiple}
-    disabled={readonly || sorter.dragIndex !== undefined}
+    disabled={readonly || sorter.dragIndex !== undefined || isFull}
     accept={acceptedTypes}
     filterDroppedFiles={false}
     {onDrop}

@@ -6,6 +6,7 @@ import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { cmsConfig } from '$lib/services/config';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { renameIfNeeded } from '$lib/services/utils/file';
+import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';
@@ -13,13 +14,15 @@ import { renameIfNeeded } from '$lib/services/utils/file';
  */
 
 /**
- * Creates existing slugs list for uniqueness validation.
+ * Creates existing slugs list for uniqueness validation. With Editorial Workflow, the entries that
+ * are still in a pull request count as well: a new entry taking the slug of one of them would take
+ * its file path and its workflow branch too.
  * @param {string} collectionName Collection name.
  * @param {string | undefined} locale Locale string.
  * @returns {string[]} List of existing slugs.
  */
 const getExistingSlugs = (collectionName, locale) =>
-  getEntriesByCollection(collectionName)
+  [...getEntriesByCollection(collectionName), ...getUnpublishedEntriesByCollection(collectionName)]
     .map((e) => (locale ? e.locales[locale]?.slug : e.slug))
     .filter(Boolean);
 
@@ -49,7 +52,7 @@ export const fillTemplate = (template, options) => {
   const {
     identifier_field: identifierField = 'title',
     slug_length: legacySlugLength = undefined,
-    _file: { basePath } = {},
+    _file: { basePath, fullPathRegEx } = {},
   } = _type === 'entry' ? collection : {};
 
   const slugOptions = cmsConfig.current?.slug;
@@ -64,6 +67,7 @@ export const fillTemplate = (template, options) => {
       dateTimeParts: dateTimeParts ?? getDateTimeParts({ timeZone }),
       identifierField,
       basePath,
+      fullPathRegEx,
     },
     getFieldArgs: { collectionName, keyPath: '', valueMap, isIndexFile },
   };

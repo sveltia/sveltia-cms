@@ -3,7 +3,13 @@
  * @see https://ai.google.dev/api/generate-content
  */
 
-import { postJSON } from '$lib/services/integrations/ai/api';
+import { isObject } from '@sveltia/utils/object';
+
+import {
+  createTruncationError,
+  DEFAULT_MAX_TOKENS,
+  postJSON,
+} from '$lib/services/integrations/ai/api';
 
 /**
  * @import { AiCompletionOptions } from '$lib/types/private';
@@ -30,7 +36,7 @@ export const complete = async ({
   systemPrompt,
   userMessage,
   temperature = 0.3,
-  maxTokens = 4000,
+  maxTokens = DEFAULT_MAX_TOKENS,
   responseFormat,
 }) => {
   const data = await postJSON({
@@ -49,9 +55,26 @@ export const complete = async ({
     },
   });
 
-  if (!Array.isArray(data.candidates) || !data.candidates[0]?.content?.parts?.[0]) {
+  const candidate = Array.isArray(data.candidates) ? data.candidates[0] : undefined;
+
+  if (candidate?.finishReason === 'MAX_TOKENS') {
+    throw createTruncationError('Gemini');
+  }
+
+  // The answer can be split into several parts, and a thinking model can add a thought summary
+  /** @type {string[]} */
+  const texts = Array.isArray(candidate?.content?.parts)
+    ? candidate.content.parts
+        .filter(
+          (/** @type {unknown} */ part) =>
+            isObject(part) && !part.thought && typeof part.text === 'string',
+        )
+        .map((/** @type {{ text: string }} */ { text }) => text)
+    : [];
+
+  if (!texts.length) {
     throw new Error('Invalid response format from Gemini API.');
   }
 
-  return data.candidates[0].content.parts[0].text.trim();
+  return texts.join('').trim();
 };

@@ -5,6 +5,7 @@ import { FIELD_TAG_PREFIX_REGEX } from '$lib/services/common/template/constants'
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
+import { getField } from '$lib/services/contents/entry/fields';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import { getListFormatter } from '$lib/services/contents/i18n';
 import { getOrCreate } from '$lib/services/utils/cache';
@@ -207,6 +208,27 @@ const getUuids = ({ valueTemplate, keyPath, valueMap }) => {
 };
 
 /**
+ * Where a `{{fields.*}}` tag of a Compute field is resolved: the content and the rich text editor
+ * component, if any, the key path refers to.
+ * @typedef {object} FieldTagSource
+ * @property {FlattenedEntryContent} valueMap Content holding the field value.
+ * @property {string} [componentName] Name of the component whose field the key path refers to.
+ */
+
+/**
+ * Get the values of a rich text editor component instance, without its key path prefix.
+ * @param {FlattenedEntryContent} valueMap Content of the `extraValues` store.
+ * @param {string} keyPathPrefix Key path prefix of the component instance, e.g. `body:c12:`.
+ * @returns {FlattenedEntryContent} Component values, e.g. `heading` for `body:c12:heading`.
+ */
+const getComponentValues = (valueMap, keyPathPrefix) =>
+  Object.fromEntries(
+    Object.entries(valueMap)
+      .filter(([key]) => key.startsWith(keyPathPrefix))
+      .map(([key, value]) => [key.slice(keyPathPrefix.length), value]),
+  );
+
+/**
  * Resolve the `value` template of a Compute field.
  * @param {object} args Arguments.
  * @param {ComputeField} args.fieldConfig Field configuration.
@@ -218,6 +240,12 @@ const getUuids = ({ valueTemplate, keyPath, valueMap }) => {
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
+ * @param {string} [args.keyPathPrefix] Key path prefix of the rich text editor component instance
+ * the field belongs to, e.g. `body:c12:`, in which case {@link args.valueMap} is the content of the
+ * `extraValues` store. A `{{fields.*}}` tag then refers to a field of the component, or, if the
+ * component has no such field, to a field of the entry.
+ * @param {FlattenedEntryContent} [args.entryValueMap] Flattened entry content, for a field of a
+ * rich text editor component to refer to a field of the entry.
  * @returns {string | number} Computed value.
  */
 export const getComputedValue = ({
@@ -228,6 +256,8 @@ export const getComputedValue = ({
   collectionName,
   fileName,
   isIndexFile = false,
+  keyPathPrefix = '',
+  entryValueMap = {},
 }) => {
   const { value: valueTemplate = '' } = fieldConfig;
 
@@ -239,7 +269,31 @@ export const getComputedValue = ({
 
   const listFormatter = getListFormatter(locale);
   const uuids = getUuids({ valueTemplate, keyPath, valueMap });
+  const componentName = keyPathPrefix ? valueMap[`${keyPathPrefix}__sc_component_name`] : undefined;
+  /** @type {FlattenedEntryContent | undefined} */
+  let componentValues;
   let uuidIndex = 0;
+
+  /**
+   * Get the content and the component the given key path refers to.
+   * @param {FieldKeyPath} fieldKeyPath Key path from a `{{fields.*}}` tag.
+   * @returns {FieldTagSource} Source.
+   */
+  const getFieldTagSource = (fieldKeyPath) => {
+    if (!keyPathPrefix) {
+      return { valueMap };
+    }
+
+    const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath: fieldKeyPath };
+
+    if (componentName && getField({ ...getFieldArgs, componentName })) {
+      componentValues ??= getComponentValues(valueMap, keyPathPrefix);
+
+      return { valueMap: componentValues, componentName };
+    }
+
+    return { valueMap: entryValueMap };
+  };
 
   return replaceTemplateTags(valueTemplate, (_match, placeholder) => {
     const { value: tagName, transformations } = parseTransformations(placeholder);
@@ -255,16 +309,61 @@ export const getComputedValue = ({
       value = uuids[uuidIndex];
       uuidIndex += 1;
     } else if (FIELD_TAG_PREFIX_REGEX.test(tagName)) {
-      const fieldValue = getFieldDisplayValue({
+      const fieldKeyPath = stripFieldTagPrefix(tagName);
+
+      const { valueMap: sourceValueMap, componentName: sourceComponentName } =
+        getFieldTagSource(fieldKeyPath);
+
+      const getFieldArgs = {
         collectionName,
         fileName,
-        valueMap,
-        keyPath: stripFieldTagPrefix(tagName),
-        locale,
+        componentName: sourceComponentName,
+        valueMap: sourceValueMap,
+        keyPath: fieldKeyPath,
         isIndexFile,
+      };
+
+      // Let `getFieldDisplayValue()` apply the transformations, so they get the raw value and the
+      // field configuration: a boolean for `ternary` rather than `'false'`, which is truthy, and
+      // the stored date for `date` rather than the localized display value. A value missing from
+      // the content, like that of a List field, which is stored under its item key paths, or an
+      // unset field, would come back empty whatever the transformations, breaking `default`, so
+      // the transformations are applied to its display value instead.
+      const rawValue = sourceValueMap[fieldKeyPath];
+      const hasRawValue = rawValue !== undefined;
+
+      // A number is inserted as stored rather than formatted for display, so a template like
+      // `/p/{{fields.sku}}` doesn’t give `/p/123,456`
+      if (hasRawValue) {
+        const sourceFieldConfig = getField(getFieldArgs);
+
+        if (sourceFieldConfig?.widget === 'number') {
+          // The transformations get a string as they would get the display value, so `0` isn’t
+          // taken as empty by `default`
+          value = String(rawValue ?? '');
+
+          return transformations.length
+            ? applyTransformations({
+                fieldConfig: sourceFieldConfig,
+                value,
+                transformations,
+                locale,
+              })
+            : value;
+        }
+      }
+
+      const fieldValue = getFieldDisplayValue({
+        ...getFieldArgs,
+        locale,
+        transformations: hasRawValue ? transformations : undefined,
       });
 
       value = Array.isArray(fieldValue) ? listFormatter.format(fieldValue) : String(fieldValue);
+
+      if (hasRawValue) {
+        return value;
+      }
     } else {
       return '';
     }

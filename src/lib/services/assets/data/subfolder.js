@@ -3,6 +3,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { deleteAssets } from '$lib/services/assets/data/delete';
 import { moveAssets } from '$lib/services/assets/data/move';
+import { allAssetFolders } from '$lib/services/assets/folders';
 import { assertOutsideCmsFolders } from '$lib/services/assets/reserved';
 import { publishedAssets } from '$lib/services/assets/state';
 import { focusedSubfolder } from '$lib/services/assets/subfolders';
@@ -21,23 +22,52 @@ import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/da
 export const GITKEEP_FILE_NAME = '.gitkeep';
 
 /**
- * Get the assets below a folder, at any depth. These are what a rename moves along and a deletion
- * removes, and what the deletion dialog checks the entries for.
+ * Create a function that checks if a file belongs to a folder: whether it’s below the folder, at
+ * any depth, but not in another asset folder configured below it, such as a collection’s
+ * `media_folder` nested in the global one. The files of a nested asset folder are that folder’s,
+ * which the Asset Library lists separately, so they’re neither moved along with a renamed subfolder
+ * nor deleted with it — like the subfolder list, which leaves them out as well.
+ * @param {string} dirPath Folder path, e.g. `static/images/2024`.
+ * @returns {(path: string) => boolean} Function taking a file path.
+ */
+const createSubfolderFileFilter = (dirPath) => {
+  const prefix = `${dirPath}/`;
+
+  const nestedFolderPrefixes = allAssetFolders.current
+    .map(({ internalPath }) => internalPath)
+    .filter((path) => path !== undefined && (path === dirPath || path.startsWith(prefix)))
+    .map((path) => `${path}/`);
+
+  return (path) =>
+    path.startsWith(prefix) &&
+    !nestedFolderPrefixes.some((nestedPrefix) => path.startsWith(nestedPrefix));
+};
+
+/**
+ * Get the assets below a folder, at any depth, leaving out those of another asset folder nested in
+ * it. These are what a rename moves along and a deletion removes, and what the deletion dialog
+ * checks the entries for.
  * @param {string} dirPath Folder path, e.g. `static/images/2024`.
  * @returns {Asset[]} Assets.
  */
-export const getSubfolderAssets = (dirPath) =>
-  publishedAssets.current.filter(({ path }) => path.startsWith(`${dirPath}/`));
+export const getSubfolderAssets = (dirPath) => {
+  const filter = createSubfolderFileFilter(dirPath);
+
+  return publishedAssets.current.filter(({ path }) => filter(path));
+};
 
 /**
- * Get the Git config files below a folder, at any depth: the `.gitkeep` files that keep the empty
- * folders, and the odd `.gitignore`. Not being assets, these have to be moved and deleted along
- * with the folder separately.
+ * Get the Git config files below a folder, at any depth, leaving out those of another asset folder
+ * nested in it: the `.gitkeep` files that keep the empty folders, and the odd `.gitignore`. Not
+ * being assets, these have to be moved and deleted along with the folder separately.
  * @param {string} dirPath Folder path.
  * @returns {BaseConfigListItem[]} Files.
  */
-const getSubfolderConfigFiles = (dirPath) =>
-  gitConfigFiles.current.filter(({ path }) => path.startsWith(`${dirPath}/`));
+const getSubfolderConfigFiles = (dirPath) => {
+  const filter = createSubfolderFileFilter(dirPath);
+
+  return gitConfigFiles.current.filter(({ path }) => filter(path));
+};
 
 /**
  * Create a subfolder in an asset folder by committing a `.gitkeep` file to it. The file is added to

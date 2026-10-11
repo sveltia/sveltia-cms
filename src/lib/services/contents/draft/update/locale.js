@@ -6,8 +6,10 @@ import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
+import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
 import { getDuplicateKeysFieldKeyPaths } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getPairsFromContent, setPairs } from '$lib/services/contents/fields/key-value/pairs';
+import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
 import {
   isFieldI18nDisabled,
   isFieldLocalized,
@@ -16,7 +18,7 @@ import {
 
 /**
  * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
- * @import { Field, FieldKeyPath, HiddenField } from '$lib/types/public';
+ * @import { ComputeField, Field, FieldKeyPath, HiddenField, UuidField } from '$lib/types/public';
  */
 
 /**
@@ -132,6 +134,20 @@ export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPat
     // Otherwise, the content would be copied from the default locale.
     if (TEXT_FIELD_TYPES.includes(fieldType) && isFieldTranslatable(i18n)) {
       newContent[keyPath] = content[keyPath] ?? '';
+    }
+
+    // A translatable UUID field gets a UUID of its own rather than the default locale’s, just like
+    // each locale of a new draft does (see `fillUuidValues()`). A Compute field generating UUIDs is
+    // cleared for the same reason, as it keeps the UUIDs found in its value when resolved again
+    if (isFieldTranslatable(i18n)) {
+      if (fieldType === 'uuid') {
+        newContent[keyPath] =
+          content[keyPath] || getInitialUuidValue(/** @type {UuidField} */ (field));
+      }
+
+      if (fieldType === 'compute' && hasUuidTag(/** @type {ComputeField} */ (field).value)) {
+        newContent[keyPath] = '';
+      }
     }
 
     // Support special case for the Hidden field with `default` value set to `{{locale}}`: if the

@@ -121,10 +121,16 @@ const buildListItemOption = ({
     fallbackContext,
   );
 
+  // Like an empty field, an empty list item value can’t identify the item
+  const hasEmptyValueTag = replacements.some(
+    ([fieldName, itemValue]) =>
+      _valueField.includes(`{{${fieldName}}}`) && String(itemValue ?? '') === '',
+  );
+
   return {
-    label: label || '',
-    value: value || context.slug,
-    searchValue: searchValue || label || '',
+    label,
+    value: hasEmptyValueTag ? '' : value,
+    searchValue: searchValue || label,
   };
 };
 

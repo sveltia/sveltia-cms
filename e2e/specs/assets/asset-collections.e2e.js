@@ -313,10 +313,10 @@ test('keeps uploads out of a read-only asset collection in an Image field', asyn
   ).toHaveText(['old.png']);
   await expect(dialog.getByRole('button', { name: 'Upload' })).toBeDisabled();
 
-  // A dropped file is ignored rather than headed for the folder
+  // Files can’t be dropped into the folder either
   const list = dialog.getByRole('listbox', { name: 'Available Images' });
 
-  await cms.dropFiles(list, [{ name: 'bell.png', buffer: createPNG({ color: [0, 200, 200] }) }]);
+  await cms.expectNoDrop(list, [{ name: 'bell.png', buffer: createPNG({ color: [0, 200, 200] }) }]);
   await expect(list.getByRole('option')).toHaveText(['old.png']);
   await expect(dialog.getByRole('button', { name: 'Insert' })).toBeDisabled();
 });

@@ -456,6 +456,18 @@ describe('config/loader', () => {
       expect(result).toEqual({ backend: { name: 'gitlab' } });
     });
 
+    test('should handle legacy application/x-yaml type', async () => {
+      fetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve('backend:\n  name: gitea'),
+      });
+
+      const result = await fetchFile({ href: '/config.yml', type: 'application/x-yaml' });
+
+      expect(result).toEqual({ backend: { name: 'gitea' } });
+    });
+
     test('should throw error for unsupported file type', async () => {
       const mockLinks = [{ href: 'config.xml', type: 'application/xml' }];
 

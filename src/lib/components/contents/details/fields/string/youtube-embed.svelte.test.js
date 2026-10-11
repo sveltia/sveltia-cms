@@ -43,6 +43,20 @@ describe('YouTubeEmbed', () => {
     dispatchViolation({});
   });
 
+  test('doesn’t encode the escape sequences of the URL again', async () => {
+    const encodedURL = 'https://www.youtube.com/embed/abc123?title=caf%C3%A9';
+    const screen = await render(YouTubeEmbed, { url: encodedURL });
+
+    expect(screen.container.querySelector('iframe')).toHaveAttribute(
+      'src',
+      'https://www.youtube-nocookie.com/embed/abc123?title=caf%C3%A9',
+    );
+
+    dispatchViolation({});
+
+    await expect.element(screen.getByRole('link')).toHaveAttribute('href', encodedURL);
+  });
+
   test('ignores a violation of another origin or directive', async () => {
     const { container } = await render(YouTubeEmbed, { url });
 

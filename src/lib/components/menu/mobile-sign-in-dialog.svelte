@@ -5,6 +5,7 @@
 
   import { showMobileSignInDialog } from '$lib/services/app/onboarding';
   import { user } from '$lib/services/user/account.svelte';
+  import { encodeMagicLinkData } from '$lib/services/user/magic-link';
   import { prefs } from '$lib/services/user/prefs.svelte';
 
   /** @type {HTMLCanvasElement | undefined} */
@@ -14,7 +15,7 @@
     if (canvas && showMobileSignInDialog.current) {
       const { origin, pathname } = window.location;
       const snapshot = $state.snapshot(prefs);
-      const encodedData = btoa(JSON.stringify({ token: user.account?.token, prefs: snapshot }));
+      const encodedData = encodeMagicLinkData({ token: user.account?.token, prefs: snapshot });
       const url = `${origin}${pathname}#/signin/${encodedData}`;
 
       toCanvas(canvas, url);

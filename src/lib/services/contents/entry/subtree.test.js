@@ -46,6 +46,13 @@ describe('getSubtreeEntries()', () => {
     });
   });
 
+  test('should escape the dots in object keys', () => {
+    const entries = getSubtreeEntries('list', [{ kv: { 'example.com': 'a' } }]);
+
+    expect(entries).toEqual({ list: [], 'list.0.kv.example\uE000com': 'a' });
+    expect(getSubtree(entries, 'list')).toEqual([{ kv: { 'example.com': 'a' } }]);
+  });
+
   test('should keep the placeholder for an empty value', () => {
     expect(getSubtreeEntries('tags', [])).toEqual({ tags: [] });
     expect(getSubtreeEntries('meta', {})).toEqual({ meta: {} });

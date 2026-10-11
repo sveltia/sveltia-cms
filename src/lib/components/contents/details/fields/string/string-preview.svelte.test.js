@@ -43,6 +43,19 @@ describe('StringPreview', () => {
     expect(link).toHaveTextContent('https://example.com/café');
   });
 
+  test('doesn’t encode the escape sequences of a link again', async () => {
+    const encodedURL = 'https://example.com/caf%C3%A9?q=a%20b';
+    const link = (await renderPreview(encodedURL)).querySelector('a');
+
+    expect(link).toHaveAttribute('href', encodedURL);
+
+    const email = (await renderPreview('jos%C3%A9@example.com', { type: 'email' })).querySelector(
+      'a',
+    );
+
+    expect(email).toHaveAttribute('href', 'mailto:jos%C3%A9@example.com');
+  });
+
   test('shows a URL with an unsafe protocol as text', async () => {
     const container = await renderPreview(UNSAFE_URL, { type: 'url' });
 

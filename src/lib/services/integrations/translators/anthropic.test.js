@@ -437,7 +437,7 @@ describe('Anthropic Translator Service', () => {
       expect(requestBody.model).toBe('claude-haiku-5-5');
       expect(requestBody).not.toHaveProperty('temperature');
       expect(requestBody.thinking).toEqual({ type: 'disabled' });
-      expect(requestBody.max_tokens).toBe(4000);
+      expect(requestBody.max_tokens).toBe(16_000);
     });
   });
 });

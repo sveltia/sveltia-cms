@@ -9,7 +9,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { AlertDialog, Button, Icon, Listbox, Option, SearchBar } from '@sveltia/ui';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
 
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
   import { loadModule } from '$lib/services/app/dependencies';
@@ -21,7 +21,7 @@
     roundCoordinates,
   } from '$lib/services/contents/fields/map/helpers';
   import { toFixed } from '$lib/services/utils/number';
-  import { watch } from '$lib/services/utils/state.svelte';
+  import { watch, watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
    * @import Leaflet from 'leaflet';
@@ -232,19 +232,6 @@
   };
 
   /**
-   * Search for locations matching the query.
-   */
-  const searchLocation = async () => {
-    if (!searchQuery.trim()) {
-      return;
-    }
-
-    searching = true;
-    searchResults = await searchLocations(searchQuery);
-    searching = false;
-  };
-
-  /**
    * Set the location on the map editor.
    * @param {GeoCoordinates} coordinates GeoCoordinates of the location to set.
    */
@@ -335,10 +322,25 @@
     },
   );
 
-  watch(
-    () => searchQuery,
+  // Search for locations matching the query. The debounced search bar can send another query
+  // before the results for the previous one arrive, which `watchAsync` takes care of
+  watchAsync(
     () => {
-      searchLocation();
+      const query = searchQuery;
+
+      if (!query.trim()) {
+        searching = false;
+
+        return undefined;
+      }
+
+      searching = true;
+
+      return untrack(() => searchLocations(query));
+    },
+    (results) => {
+      searchResults = results;
+      searching = false;
     },
   );
 </script>

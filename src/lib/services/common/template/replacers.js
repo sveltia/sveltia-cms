@@ -27,6 +27,7 @@ import { sanitizePath } from '$lib/services/utils/file';
  * @typedef {object} ReplaceSubContextBase
  * @property {string} identifierField Field name to identify the title.
  * @property {string | undefined} basePath Base path for the entry file.
+ * @property {RegExp} [fullPathRegEx] Entry path matcher of the entry collection.
  */
 
 /**
@@ -71,6 +72,7 @@ export const replaceTemplateTag = (tag, context) => {
     locale,
     dateTimeParts,
     basePath,
+    fullPathRegEx,
     assetFileName,
   } = context;
 
@@ -116,6 +118,7 @@ export const replaceTemplateTag = (tag, context) => {
       entryFilePath,
       basePath,
       getFileNameLocaleSuffixes(collection),
+      fullPathRegEx,
     );
 
     if (filePathValue !== undefined) {

@@ -184,11 +184,13 @@ export const matchesFilter = (value, pattern, regex) => {
 };
 
 /**
- * Sort an array of items using a key function and apply ascending/descending order.
+ * Sort an array of items using a key function and apply ascending/descending order. An item whose
+ * key is `undefined` has no value to sort by, so it goes last in either order, keeping its place
+ * among the other such items.
  * @template T
  * @param {T[]} items Items to sort in place.
- * @param {(item: T) => string | number} getKey Returns the sort key for an item. Called once per
- * item.
+ * @param {(item: T) => string | number | undefined} getKey Returns the sort key for an item, or
+ * `undefined` if the item has no value. Called once per item.
  * @param {boolean} isStringType Whether keys should be compared as strings (locale-aware); if
  * `false`, numeric subtraction is used instead.
  * @param {string | undefined} [order] Sort order; reverses the array when `'descending'`.
@@ -196,20 +198,22 @@ export const matchesFilter = (value, pattern, regex) => {
  */
 export const sortItemsByKey = (items, getKey, isStringType, order) => {
   const keyedItems = items.map((item) => ({ item, key: getKey(item) }));
+  const valuedItems = keyedItems.filter(({ key }) => key !== undefined);
+  const emptyItems = keyedItems.filter(({ key }) => key === undefined);
 
-  keyedItems.sort(({ key: aKey }, { key: bKey }) =>
+  valuedItems.sort(({ key: aKey }, { key: bKey }) =>
     isStringType
       ? compare(/** @type {string} */ (aKey), /** @type {string} */ (bKey))
       : /** @type {number} */ (aKey) - /** @type {number} */ (bKey),
   );
 
   if (order === 'descending') {
-    keyedItems.reverse();
+    valuedItems.reverse();
   }
 
   // Write the order back in place. Spreading the list into `splice()` would pass every item as an
   // argument, which throws a `RangeError` once the list is large enough
-  keyedItems.forEach(({ item }, index) => {
+  [...valuedItems, ...emptyItems].forEach(({ item }, index) => {
     items[index] = item;
   });
 

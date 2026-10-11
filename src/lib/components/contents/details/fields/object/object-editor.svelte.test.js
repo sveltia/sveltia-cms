@@ -129,6 +129,27 @@ describe('ObjectEditor', () => {
     expect(page.getByRole('textbox').elements()).toHaveLength(2);
   });
 
+  test('is labelled by its summary only while one is shown', async () => {
+    await renderEditor(authorField, { 'author.name': 'Melvin' });
+
+    const group = page.getByRole('group').first();
+
+    await expect.element(group).not.toHaveAttribute('aria-labelledby');
+    await page.getByRole('button', { name: 'Collapse' }).click();
+    await expect.element(page.getByRole('group', { name: 'Melvin' })).toBeInTheDocument();
+  });
+
+  test('isn’t labelled by a summary that isn’t shown for a collapsed object', async () => {
+    const { container } = await renderEditor(
+      { ...authorField, collapsed: true },
+      { 'author.name': '', 'author.email': '' },
+    );
+
+    await expect.element(page.getByRole('button', { name: 'Expand' })).toBeInTheDocument();
+    expect(container.querySelector('.summary')).toBeNull();
+    expect(container.querySelector('.wrapper')).not.toHaveAttribute('aria-labelledby');
+  });
+
   test('starts collapsed when configured so', async () => {
     const { draft } = await renderEditor({ ...authorField, collapsed: true }, {});
 
@@ -396,6 +417,23 @@ describe('ObjectEditor', () => {
       await page.getByRole('button', { name: 'Collapse' }).click();
       await expect.element(page.getByRole('alert')).toBeVisible();
       expect(draft.expanderStates._['block#']).toBe(true);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  test('isn’t labelled by a summary while collapsed with an unknown type', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    try {
+      const { draft, container } = await renderEditor(
+        { ...blockField, collapsed: true },
+        { 'block.type': 'video' },
+      );
+
+      await expect.poll(() => draft.expanderStates._['block#']).toBe(false);
+      await expect.element(page.getByRole('alert')).toBeVisible();
+      expect(container.querySelector('.wrapper')).not.toHaveAttribute('aria-labelledby');
     } finally {
       warn.mockRestore();
     }

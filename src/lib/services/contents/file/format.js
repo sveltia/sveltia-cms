@@ -1,5 +1,5 @@
 import { stringify as stringifyTOML } from 'smol-toml';
-import { Document, isMap } from 'yaml';
+import { Document, isMap, visit } from 'yaml';
 
 import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { cmsConfig } from '$lib/services/config';
@@ -77,6 +77,52 @@ const addYAMLComments = (node, comments, prefix = '') => {
 };
 
 /**
+ * Regular expression matching a string that a YAML 1.1 parser, like Psych used by Jekyll or go-yaml
+ * v2 used by older Hugo releases, reads as a boolean, e.g. `yes`, `No` or `off`, the “Norway
+ * problem”.
+ * @see https://yaml.org/type/bool.html
+ */
+const YAML_1_1_BOOL_REGEX =
+  /^(?:y|Y|yes|Yes|YES|n|N|no|No|NO|true|True|TRUE|false|False|FALSE|on|On|ON|off|Off|OFF)$/;
+
+/**
+ * Regular expression matching a string that a YAML 1.1 parser reads as a number: an integer or a
+ * float with underscores, a binary or octal integer, or a sexagesimal number like `1:20` (80),
+ * as well as an integer or a float with commas, which Psych also accepts. A date isn’t included, as
+ * it’s meant to be read as one.
+ * @see https://yaml.org/type/int.html
+ * @see https://yaml.org/type/float.html
+ * @see https://github.com/ruby/psych/blob/master/lib/psych/scalar_scanner.rb
+ */
+const YAML_1_1_NUMBER_REGEX = new RegExp(
+  [
+    '^[-+]?(?:',
+    [
+      // Binary, octal and hexadecimal integers
+      '0b[01_,]+',
+      '0[0-7_,]+',
+      '0x[\\da-fA-F_,]+',
+      // Decimal integers and floats
+      '(?:\\d[\\d_,]*)?\\.[\\d_,]*(?:[eE][-+]?\\d+)?',
+      '\\d[\\d_,]*',
+      // Sexagesimal integers and floats
+      '\\d[\\d_]*(?::[0-5]?\\d)+(?:\\.[\\d_]*)?',
+    ].join('|'),
+    ')$',
+  ].join(''),
+);
+
+/**
+ * Check whether the given string would be read as something else than a string by a YAML 1.1
+ * parser if written as a plain scalar. The `yaml` library follows YAML 1.2, which only quotes a
+ * string that a YAML 1.2 parser would misread, like `true` or `1.5`.
+ * @param {string} value String.
+ * @returns {boolean} Result.
+ */
+export const isAmbiguousYAMLString = (value) =>
+  YAML_1_1_BOOL_REGEX.test(value) || YAML_1_1_NUMBER_REGEX.test(value);
+
+/**
  * Format the given object as a YAML document using a library.
  * @param {Record<string, any>} obj Object to be formatted.
  * @param {YamlFormatOptions} [options] Options.
@@ -113,6 +159,22 @@ export const formatYAML = (
   };
 
   const doc = new Document(obj);
+
+  // Quote the strings, including keys, that a YAML 1.1 parser would read as a boolean or a number,
+  // which a YAML 1.2 parser doesn’t, so the `yaml` library writes them plain. Don’t use the
+  // `version: '1.1'` option instead, as it would also quote dates
+  visit(doc, {
+    /**
+     * Quote a string scalar if needed.
+     * @param {unknown} _key Key of the node in its parent.
+     * @param {Scalar} node Scalar node.
+     */
+    Scalar: (_key, node) => {
+      if (typeof node.value === 'string' && isAmbiguousYAMLString(node.value)) {
+        node.type = toStringOptions.singleQuote ? 'QUOTE_SINGLE' : 'QUOTE_DOUBLE';
+      }
+    },
+  });
 
   addYAMLComments(doc.contents, comments);
 

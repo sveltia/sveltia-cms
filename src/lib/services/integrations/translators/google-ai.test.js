@@ -467,7 +467,7 @@ describe('Gemini Translator Service', () => {
         contents: expect.any(Array),
         generationConfig: {
           temperature: 0.3,
-          maxOutputTokens: 4000,
+          maxOutputTokens: 16_000,
           responseMimeType: 'application/json',
         },
       });

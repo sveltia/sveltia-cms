@@ -4,6 +4,10 @@ import { page } from 'vitest/browser';
 
 import { React } from '$lib/services/api';
 import { allAssetFolders } from '$lib/services/assets/folders';
+import {
+  awaitCustomFieldValidations,
+  validateCustomField,
+} from '$lib/services/contents/draft/validate/custom-fields';
 import { buildControlProps } from '$lib/services/contents/fields/custom/editor';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
@@ -65,6 +69,45 @@ const renderEditor = async (currentValue, control = RatingControl) => {
   const { entryDraft, unmount } = await renderWithDraft(CustomEditor, { draft, props });
 
   return { draft, props, entryDraft, unmount };
+};
+
+/**
+ * Create a class control with an `isValid` method, as Netlify/Decap CMS expects.
+ * @param {(...args: any[]) => any} isValid Validation method.
+ * @returns {any} Control.
+ */
+const createValidatingControl = (isValid) => {
+  /**
+   * The control.
+   */
+  class ValidatingControl {
+    /**
+     * Create the control.
+     * @param {any} props Control props.
+     */
+    constructor(props) {
+      this.props = props;
+    }
+
+    /**
+     * Validate the value.
+     * @returns {any} Result.
+     */
+    isValid = isValid;
+
+    /**
+     * Render the control.
+     * @returns {any} React element.
+     */
+    render() {
+      return createElement('input', { value: this.props.value ?? '', readOnly: true });
+    }
+  }
+
+  // React treats a class as a component when it has a `render()` method
+  /** @type {any} */ (ValidatingControl.prototype).isReactComponent = {};
+
+  return ValidatingControl;
 };
 
 /** @type {any[]} */
@@ -232,44 +275,52 @@ describe('CustomEditor', () => {
 
   test('registers the control instance for validation', async () => {
     const isValid = vi.fn(() => true);
-
-    /**
-     * A class control with an `isValid` method, as Netlify/Decap CMS expects.
-     */
-    class ValidatingControl {
-      /**
-       * Create the control.
-       * @param {any} props Control props.
-       */
-      constructor(props) {
-        this.props = props;
-      }
-
-      /**
-       * Validate the value.
-       * @returns {boolean} Result.
-       */
-      isValid = isValid;
-
-      /**
-       * Render the control.
-       * @returns {any} React element.
-       */
-      render() {
-        return createElement('input', { value: this.props.value ?? '', readOnly: true });
-      }
-    }
-
-    // React treats a class as a component when it has a `render()` method
-    /** @type {any} */ (ValidatingControl.prototype).isReactComponent = {};
-
-    const { unmount } = await renderEditor(3, ValidatingControl);
+    const { unmount } = await renderEditor(3, createValidatingControl(isValid));
 
     await vi.waitFor(() => expect(isValid).toHaveBeenCalled());
 
     // The instance is unregistered along with the control
     unmount();
     await expect.poll(() => document.querySelector('input')).toBeNull();
+  });
+
+  test('moves the validation along with the key path, e.g. when list items are reordered', async () => {
+    const isValid = vi.fn(() => ({ error: { message: 'Invalid' } }));
+    const { props, unmount } = await renderEditor(3, createValidatingControl(isValid));
+
+    /**
+     * Get the validity of the field at the given key path.
+     * @param {string} keyPath Key path.
+     * @returns {any} Validity.
+     */
+    const getValidity = (keyPath) => {
+      /** @type {Record<string, boolean>} */
+      const validity = {};
+
+      validateCustomField({ locale: '_default', keyPath, validity });
+
+      return validity;
+    };
+
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalled());
+    await awaitCustomFieldValidations();
+    expect(getValidity('stars')).toEqual({ customError: true, customErrorMessage: 'Invalid' });
+
+    // The editor is kept while its list item moves, so the key path changes under it
+    isValid.mockClear();
+    props.keyPath = 'list.0.stars';
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalled());
+    await awaitCustomFieldValidations();
+    expect(getValidity('list.0.stars')).toEqual({
+      customError: true,
+      customErrorMessage: 'Invalid',
+    });
+    // Nothing is left registered under the old key path
+    expect(getValidity('stars')).toEqual({});
+
+    unmount();
+    await expect.poll(() => document.querySelector('input')).toBeNull();
+    expect(getValidity('list.0.stars')).toEqual({});
   });
 
   test('renders a function control using hooks from the React the CMS exposes', async () => {

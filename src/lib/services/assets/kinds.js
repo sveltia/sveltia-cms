@@ -19,15 +19,22 @@ export const MEDIA_KINDS = ['image', 'video', 'audio'];
 export const THUMBNAIL_KINDS = ['image', 'video'];
 
 /**
+ * Whether the given file is a PDF document, judging by its extension, which is matched
+ * case-insensitively, as in `Brochure.PDF`.
+ * @param {string} fileName File name or path, e.g. `files/brochure.pdf`.
+ * @returns {boolean} Result.
+ */
+export const isPDF = (fileName) => /\.pdf$/i.test(fileName);
+
+/**
  * Whether a thumbnail can be generated for a PDF document with the given name, by rendering its
  * first page with PDF.js. Not in the npm build, which doesn’t load PDF.js from a CDN and doesn’t
  * bundle it either, as the library comes with hundreds of files for character maps, fonts and
  * image decoders; `pdf.npm.js` replaces `pdf.js` there. A PDF is shown with a generic icon instead.
- * @param {string} fileName File name or path, e.g. `files/brochure.pdf`.
+ * @param {string} fileName File name or path, e.g. `files/brochure.pdf`. See {@link isPDF}.
  * @returns {boolean} Result.
  */
-export const hasPDFThumbnail = (fileName) =>
-  !import.meta.env.NPM_BUILD && fileName.endsWith('.pdf');
+export const hasPDFThumbnail = (fileName) => !import.meta.env.NPM_BUILD && isPDF(fileName);
 
 /**
  * Whether a thumbnail can be generated for the given asset: an image, a video, or a PDF document

@@ -58,9 +58,9 @@ describe('FileEditorItem', () => {
   test('shows a saved asset with its path and the actions', async () => {
     const onReplace = vi.fn();
     const onRemove = vi.fn();
-    const { container } = await renderItem('/uploads/photo.png', { onReplace, onRemove });
+    const { container } = await renderItem('/static/uploads/photo.png', { onReplace, onRemove });
 
-    await expect.element(page.getByRole('textbox')).toHaveTextContent('/uploads/photo.png');
+    await expect.element(page.getByRole('textbox')).toHaveTextContent('/static/uploads/photo.png');
     await expect.poll(() => container.querySelector('img')?.getAttribute('src')).toMatch(/^blob:/);
     // A saved asset can’t be renamed here
     expect(page.getByRole('button', { name: 'Rename' }).elements()).toHaveLength(0);
@@ -313,7 +313,7 @@ describe('FileEditorItem', () => {
   });
 
   test('clears the preview when the value is removed', async () => {
-    const { container, props } = await renderItem('/uploads/photo.png');
+    const { container, props } = await renderItem('/static/uploads/photo.png');
 
     await expect.poll(() => container.querySelector('img')).not.toBeNull();
 
@@ -337,8 +337,8 @@ describe('FileEditorItem', () => {
       .toHaveTextContent('/static/uploads/new photo.png');
     await expect.element(page.getByRole('button', { name: 'Rename' })).toBeVisible();
 
-    props.value = '/uploads/photo.png';
-    await expect.element(page.getByRole('textbox')).toHaveTextContent('/uploads/photo.png');
+    props.value = '/static/uploads/photo.png';
+    await expect.element(page.getByRole('textbox')).toHaveTextContent('/static/uploads/photo.png');
     expect(page.getByRole('button', { name: 'Rename' }).elements()).toHaveLength(0);
   });
 
@@ -349,7 +349,7 @@ describe('FileEditorItem', () => {
     const blobB = URL.createObjectURL(fileB);
 
     const { container, props } = await renderItem(
-      '/uploads/photo.png',
+      '/static/uploads/photo.png',
       {},
       {
         files: {
@@ -373,7 +373,7 @@ describe('FileEditorItem', () => {
     const blobURL = URL.createObjectURL(file);
 
     const { container, props } = await renderItem(
-      '/uploads/photo.png',
+      '/static/uploads/photo.png',
       {},
       { files: { [blobURL]: { file, folder: globalAssetFolder.current } } },
     );
@@ -395,7 +395,7 @@ describe('FileEditorItem', () => {
   test('offers the reorder controls in a list', async () => {
     const onMove = vi.fn();
 
-    await renderItem('/uploads/photo.png', { index: 1, itemCount: 3, onMove });
+    await renderItem('/static/uploads/photo.png', { index: 1, itemCount: 3, onMove });
 
     await page.getByRole('button', { name: 'Reorder Item' }).element().focus();
     await userEvent.keyboard('{ArrowUp}');
@@ -406,7 +406,7 @@ describe('FileEditorItem', () => {
     const onDragStart = vi.fn();
     const onDragEnd = vi.fn();
 
-    const { container } = await renderItem('/uploads/photo.png', {
+    const { container } = await renderItem('/static/uploads/photo.png', {
       index: 1,
       itemCount: 3,
       onMove: vi.fn(),
@@ -424,7 +424,7 @@ describe('FileEditorItem', () => {
 
     item.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer }));
     expect(onDragStart).toHaveBeenCalledOnce();
-    expect(dataTransfer.getData('text/plain')).toBe('/uploads/photo.png');
+    expect(dataTransfer.getData('text/plain')).toBe('/static/uploads/photo.png');
 
     item.dispatchEvent(new DragEvent('dragend', { bubbles: true }));
     expect(onDragEnd).toHaveBeenCalledOnce();
@@ -445,7 +445,7 @@ describe('FileEditorItem', () => {
   });
 
   test('disables the actions while read-only', async () => {
-    await renderItem('/uploads/photo.png', {
+    await renderItem('/static/uploads/photo.png', {
       readonly: true,
       index: 0,
       itemCount: 2,

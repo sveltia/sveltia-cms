@@ -1,7 +1,7 @@
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
 import { advanceRepositoryHead } from '$lib/services/backends/git/shared/file-cache';
-import { repositoryHead } from '$lib/services/backends/git/shared/head';
+import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { allEntries } from '$lib/services/contents';
 import { productionSHA } from '$lib/services/deployments';
@@ -137,9 +137,17 @@ const isRootDirUnchanged = async ({ fetchDirSHA }, from, to) => {
  */
 const check = async (service) => {
   const { fetchLastCommit, fetchFiles } = service;
+  // The site data may be discarded while the requests are on their way, e.g. by signing out; the
+  // results then belong to the previous session and must not be written back
+  const generation = dataGeneration.current;
+  /**
+   * Whether the site data has been discarded since the check was started.
+   * @returns {boolean} Result.
+   */
+  const isStale = () => generation !== dataGeneration.current;
   const lastCommit = await /** @type {NonNullable<typeof fetchLastCommit>} */ (fetchLastCommit)();
 
-  if (lastCommit.hash === repositoryHead.current) {
+  if (isStale() || lastCommit.hash === repositoryHead.current) {
     return undefined;
   }
 
@@ -148,6 +156,10 @@ const check = async (service) => {
   // to be rebuilt from the commit either, as a build for a commit that doesn’t touch it is
   // typically skipped
   if (await isRootDirUnchanged(service, repositoryHead.current, lastCommit.hash)) {
+    if (isStale()) {
+      return undefined;
+    }
+
     await advanceRepositoryHead(
       /** @type {RepositoryInfo} */ (service.repository),
       repositoryHead.current,
@@ -161,6 +173,10 @@ const check = async (service) => {
   const assetsBefore = allAssets.current;
 
   await fetchFiles({ lastCommit });
+
+  if (isStale()) {
+    return undefined;
+  }
 
   // The site is now being built from the new head, so that’s the deployment to watch
   productionSHA.current = repositoryHead.current;

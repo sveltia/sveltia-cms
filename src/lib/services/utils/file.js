@@ -48,42 +48,37 @@ export const encodeFilePath = (path) => {
 };
 
 /**
- * Check if the given file name or slug has duplicate(s) or its variant in the other names. If
- * found, rename it by prepending a number like `summer-beach-2.jpg`.
+ * Check if the given file name or slug is already taken in the other names. If so, rename it by
+ * appending a number higher than any variant already used, like `summer-beach-2.jpg`. A name that
+ * is free is returned as is, even if numbered variants of it exist.
  * @param {string} name Original name.
  * @param {string[]} otherNames Other names (of files in the same folder).
  * @returns {string} Determined name.
  */
 export const renameIfNeeded = (name, otherNames) => {
-  if (!otherNames.length) {
+  const lowerCaseName = name.toLowerCase();
+
+  // Case-insensitive, since `Photo.jpg` and `photo.jpg` clash on a case-insensitive file system
+  // like macOS’s or Windows’s
+  if (!otherNames.some((otherName) => otherName.toLowerCase() === lowerCaseName)) {
     return name;
   }
 
   const { filename: slug, extension } = getPathInfo(name);
-
-  // Case-insensitive, since `Photo.jpg` and `photo.jpg` clash on a case-insensitive file system
-  // like macOS’s or Windows’s
-  const regex = new RegExp(
-    `^${escapeRegExp(slug)}(?:-(?<num>\\d+?))?${extension ? `\\.${extension}` : ''}$`,
-    'i',
-  );
+  const suffix = extension ? `\\.${extension}` : '';
+  const regex = new RegExp(`^${escapeRegExp(slug)}-(?<num>\\d+)${suffix}$`, 'i');
+  let highest = 0;
 
   // Only the highest number already taken matters, so the names are scanned once rather than
   // sorted. The caller’s array is left alone: it’s typically every name in the folder, reused for
   // each of the files being added
-  let highest = -1;
-
   otherNames.forEach((otherName) => {
     const match = otherName.match(regex);
 
     if (match) {
-      highest = Math.max(highest, Number(match.groups?.num ?? 0));
+      highest = Math.max(highest, Number(/** @type {Record<string, string>} */ (match.groups).num));
     }
   });
-
-  if (highest === -1) {
-    return name;
-  }
 
   return `${slug}-${highest + 1}${extension ? `.${extension}` : ''}`;
 };

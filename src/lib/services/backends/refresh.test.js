@@ -17,10 +17,14 @@ import {
 
 const mockGetRootDir = vi.hoisted(() => vi.fn(() => ''));
 const mockRepositoryHead = vi.hoisted(() => ({ current: '' }));
+const mockDataGeneration = vi.hoisted(() => ({ current: 0 }));
 
 vi.mock('$lib/services/assets', () => ({ allAssets: { current: [] } }));
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
-vi.mock('$lib/services/backends/git/shared/head', () => ({ repositoryHead: mockRepositoryHead }));
+vi.mock('$lib/services/backends/git/shared/head', () => ({
+  dataGeneration: mockDataGeneration,
+  repositoryHead: mockRepositoryHead,
+}));
 vi.mock('$lib/services/backends/git/shared/file-cache', () => ({
   // Like the real one, record the new head
   advanceRepositoryHead: vi.fn(async (_repository, _from, to) => {
@@ -30,6 +34,14 @@ vi.mock('$lib/services/backends/git/shared/file-cache', () => ({
 vi.mock('$lib/services/contents', () => ({ allEntries: { current: [] } }));
 vi.mock('$lib/services/deployments', () => ({ productionSHA: { current: '' } }));
 vi.mock('$lib/services/backends/root-dir', () => ({ getRootDir: mockGetRootDir }));
+
+/**
+ * Discard the site data like a sign-out does.
+ */
+const discardData = () => {
+  mockDataGeneration.current += 1;
+  mockRepositoryHead.current = '';
+};
 
 /**
  * Make a minimal entry.
@@ -200,6 +212,37 @@ describe('checkForRemoteChanges', () => {
     expect(productionSHA.current).toBe('head-3');
   });
 
+  describe('after the site data has been discarded during the check', () => {
+    test('ignores the head when signed out while asking for it', async () => {
+      fetchLastCommit.mockImplementation(async () => {
+        discardData();
+
+        return { hash: 'head-2', message: '' };
+      });
+
+      expect(await checkForRemoteChanges()).toBeUndefined();
+      expect(fetchFiles).not.toHaveBeenCalled();
+      expect(repositoryHead.current).toBe('');
+    });
+
+    test('drops the result of a fetch that was on its way at sign-out', async () => {
+      productionSHA.current = '';
+      allEntries.current = [makeEntry('old')];
+      fetchLastCommit.mockResolvedValue({ hash: 'head-2', message: '' });
+      fetchFiles.mockImplementation(async () => {
+        discardData();
+        // The next user has signed in and loaded their data in the meantime
+        allEntries.current = [makeEntry('new')];
+        repositoryHead.current = 'next-head';
+      });
+
+      // The difference from the previous user’s entries isn’t reported to the next user, nor is a
+      // deployment to watch picked for them
+      expect(await checkForRemoteChanges()).toBeUndefined();
+      expect(productionSHA.current).toBe('');
+    });
+  });
+
   describe('with a root directory', () => {
     const fetchDirSHA = vi.fn();
 
@@ -235,6 +278,18 @@ describe('checkForRemoteChanges', () => {
       );
       expect(repositoryHead.current).toBe('head-2');
       expect(productionSHA.current).toBe('head-1');
+    });
+
+    test('doesn’t advance the head when signed out during the lookup', async () => {
+      fetchDirSHA.mockImplementation(async () => {
+        discardData();
+
+        return 'tree-1';
+      });
+
+      expect(await checkForRemoteChanges()).toBeUndefined();
+      expect(advanceRepositoryHead).not.toHaveBeenCalled();
+      expect(repositoryHead.current).toBe('');
     });
 
     test('only looks up the new head on the next check', async () => {

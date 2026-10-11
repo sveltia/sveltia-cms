@@ -80,6 +80,30 @@ describe('NumberEditor', () => {
     expect(props.currentValue).toBe(null);
   });
 
+  test.each(
+    /** @type {[string | number, Partial<NumberField>][]} */ ([
+      [4.5, {}],
+      ['42', {}],
+      ['007', { value_type: 'int/string' }],
+      ['4.50', { value_type: 'float/string' }],
+    ]),
+  )('keeps the stored value %j until the input is edited', async (currentValue, config) => {
+    const { props } = await renderEditor({ currentValue, config });
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    expect(props.currentValue).toBe(currentValue);
+  });
+
+  test('casts an edit of a stored value the input can’t represent', async () => {
+    const { props } = await renderEditor({ currentValue: 4.5 });
+
+    await page.getByRole('spinbutton').fill('5');
+
+    expect(props.currentValue).toBe(5);
+  });
+
   test('follows an external change to the value', async () => {
     const { props } = await renderEditor({ currentValue: 1 });
 

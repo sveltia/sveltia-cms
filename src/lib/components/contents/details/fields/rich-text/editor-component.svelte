@@ -3,6 +3,7 @@
   import { Button, Dialog, Spacer, VisibilityObserver } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
   import { onMount, setContext, untrack } from 'svelte';
+  import { on } from 'svelte/events';
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import RemoveButton from '$lib/components/common/remove-button.svelte';
@@ -185,6 +186,39 @@
    * @returns {HTMLElement | undefined} Wrapper.
    */
   export const getElement = () => wrapper;
+
+  /**
+   * Handle a key pressed within the block, once the field controls in it have handled the key. The
+   * listener is added with `on()` in the bubble phase rather than as an `onkeydown` attribute or in
+   * the capture phase: Svelte delegates `keydown` to the root, which the event must not reach, and
+   * stopping it any earlier would keep it from the controls, e.g. the Enter key in a list or the
+   * arrow keys in a combobox. `on()` runs the delegated listeners below the block first.
+   * @param {KeyboardEvent} event `keydown` event.
+   */
+  const handleBlockKeyDown = (event) => {
+    const { target } = /** @type {KeyboardEvent & { target: HTMLElement }} */ (event);
+
+    // A nested rich text editor handles its own keys, so leave the event alone when it comes from
+    // one: cancelling it would block typing there. The outer editor ignores the event once it
+    // bubbles up, as Lexical marks it as handled by the nested one
+    if (target.closest('[contenteditable]') !== wrapper) {
+      return;
+    }
+
+    // Keep the outer editor from acting on the key, e.g. selecting all of its content with Ctrl+A
+    // pressed in a `TextInput` within the block
+    event.stopPropagation();
+
+    // Keep the browser from editing the outer editor’s content, except in a text field or button,
+    // and let Tab move the focus
+    if (!target.matches('button, input, textarea') && event.key !== 'Tab') {
+      event.preventDefault();
+    }
+
+    if (target === wrapper && event.key === 'Backspace') {
+      onChange(new CustomEvent('remove'));
+    }
+  };
 
   /**
    * Key to store the current values in the {@link entryDraft}. Usually `currentValues`, but we use
@@ -586,33 +620,7 @@
     data-key-path-prefix={keyPathPrefix}
     data-component-name={componentName}
     data-component-path={componentPath}
-    onkeydowncapture={(event) => {
-      const { target } = event;
-
-      // A nested rich text editor handles its own keys, so leave the event alone when it comes
-      // from one: stopping it here would keep it from ever reaching the nested editor, which is
-      // below in the capture phase, and cancelling it would block typing there. The outer editor
-      // ignores the event once it bubbles up, as Lexical marks it as handled by the nested one
-      if (/** @type {HTMLElement} */ (target).closest('[contenteditable]') !== wrapper) {
-        return;
-      }
-
-      // Allow to select all in any `TextInput` within the component below using Ctrl+A. Svelte
-      // delegates `keydown` to the root, which the event never reaches once it’s stopped, so the
-      // block’s own handling has to happen here as well
-      event.stopPropagation();
-
-      if (
-        !(/** @type {HTMLElement} */ (target).matches('button, input, textarea')) &&
-        event.key !== 'Tab'
-      ) {
-        event.preventDefault();
-      }
-
-      if (event.target === wrapper && event.key === 'Backspace') {
-        onChange(new CustomEvent('remove'));
-      }
-    }}
+    {@attach (element) => on(element, 'keydown', handleBlockKeyDown)}
   >
     <ObjectHeader
       {label}

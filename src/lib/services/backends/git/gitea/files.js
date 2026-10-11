@@ -224,6 +224,22 @@ export const parseFileContents = async (fetchingFiles, results) => {
 };
 
 /**
+ * Request the text content of a single file with the raw endpoint.
+ * @param {object} args Arguments.
+ * @param {string} args.owner Repository owner.
+ * @param {string} args.repo Repository name.
+ * @param {string} args.path File path.
+ * @param {string} args.ref Branch name or commit SHA to read the file at.
+ * @returns {Promise<string>} File content.
+ */
+const requestRawFile = async ({ owner, repo, path, ref }) =>
+  /** @type {Promise<string>} */ (
+    fetchAPI(`/repos/${owner}/${repo}/raw/${encodePath(path)}?ref=${encodeURIComponent(ref)}`, {
+      responseType: 'text',
+    })
+  );
+
+/**
  * Fetch the text content of a single file with the raw endpoint, which returns it in full. The bulk
  * endpoints leave the content of an oversized blob empty, and keeping that would wipe the file the
  * next time the entry is saved.
@@ -241,12 +257,7 @@ export const fetchRawFile = async (path, ref) => {
   const { owner, repo } = ref ? getWorkflowRepository() : repository;
   const { branch = '' } = repository;
 
-  return /** @type {Promise<string>} */ (
-    fetchAPI(
-      `/repos/${owner}/${repo}/raw/${encodePath(path)}?ref=${encodeURIComponent(ref ?? branch)}`,
-      { responseType: 'text' },
-    )
-  );
+  return requestRawFile({ owner, repo, path, ref: ref ?? branch });
 };
 
 /**
@@ -295,17 +306,22 @@ export const createBatches = (files, { maxItems, maxResponseSize }) => {
  * Fetch the metadata of entry/asset files as well as text file contents. Gitea and Forgejo have
  * different API endpoints for this, so we handle both cases here.
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
+ * @param {string} [lastHash] The last commit’s SHA-1 hash, which the file list comes from. Gitea
+ * reads the files by path, so they’re read at that commit rather than at the tip of the branch,
+ * which may have moved on since, so a text is never cached under the blob SHA of another version
+ * of the file. Forgejo reads them by blob SHA, which needs no commit. Default: the branch.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  * @see https://github.com/go-gitea/gitea/pull/34139
  * @see https://codeberg.org/forgejo/forgejo/pulls/8139
  */
-export const fetchFileContents = async (fetchingFiles) => {
+export const fetchFileContents = async (fetchingFiles, lastHash) => {
   const { owner, repo, branch } = repository;
   const { isForgejo } = instance;
+  const commitRef = String(lastHash ?? branch);
 
   const requestPath = isForgejo
     ? `/repos/${owner}/${repo}/git/blobs`
-    : `/repos/${owner}/${repo}/file-contents?ref=${encodeURIComponent(String(branch))}`;
+    : `/repos/${owner}/${repo}/file-contents?ref=${encodeURIComponent(commitRef)}`;
 
   // Forgejo uses `sha` as the identifier for files, while Gitea uses `path`. Each item in the
   // response carries the same field, which is how a result is matched to the file it was requested
@@ -319,74 +335,81 @@ export const fetchFileContents = async (fetchingFiles) => {
 
   dataLoadedProgress.current = 0;
 
-  // Ask the instance for the limits it applies to a response, so a request can be kept within them
-  const {
-    default_paging_num: pagingNum = 30,
-    max_response_items: maxResponseItems = Infinity,
-    default_max_blob_size: maxBlobSize,
-    default_max_response_size: maxResponseSize = Infinity,
-  } = /** @type {ApiSettings} */ (await fetchAPI('/settings/api'));
+  // The progress bar is cleared even when a request fails, so it doesn’t stay on screen
+  try {
+    // Ask the instance for the limits it applies to a response, so a request can be kept within
+    // them
+    const {
+      default_paging_num: pagingNum = 30,
+      max_response_items: maxResponseItems = Infinity,
+      default_max_blob_size: maxBlobSize,
+      default_max_response_size: maxResponseSize = Infinity,
+    } = /** @type {ApiSettings} */ (await fetchAPI('/settings/api'));
 
-  // A blob this large comes back with no content at all, so it has to be read separately
-  const blobSizeLimit = Number(maxBlobSize) || DEFAULT_MAX_BLOB_SIZE;
-  const oversizedFiles = textFiles.filter(({ size = 0 }) => size >= blobSizeLimit);
+    // A blob this large comes back with no content at all, so it has to be read separately
+    const blobSizeLimit = Number(maxBlobSize) || DEFAULT_MAX_BLOB_SIZE;
+    const oversizedFiles = textFiles.filter(({ size = 0 }) => size >= blobSizeLimit);
 
-  const batches = createBatches(
-    textFiles.filter(({ size = 0 }) => size < blobSizeLimit),
-    { maxItems: Math.min(pagingNum, maxResponseItems), maxResponseSize },
-  );
-
-  /** @type {Record<string, PartialContentsListItem>} */
-  const results = {};
-  let fetchedCount = 0;
-
-  /**
-   * Update the progress bar to reflect the files fetched so far.
-   * @param {number} count Number of files just fetched.
-   */
-  const advanceProgress = (count) => {
-    fetchedCount += count;
-    dataLoadedProgress.current = Math.ceil((fetchedCount / textFiles.length) * 100);
-  };
-
-  // Use the new bulk API endpoint to fetch multiple files at once. The batches are independent, so
-  // several of them are requested in parallel rather than one after another; a large repository
-  // needs dozens of them, and each is a full round trip to the instance
-  await runConcurrently(batches, async (batch) => {
-    const result = /** @type {PartialContentsListItem[]} */ (
-      await (isForgejo
-        ? fetchAPI(`${requestPath}?shas=${batch.map(({ sha }) => sha).join(',')}`)
-        : fetchAPI(requestPath, {
-            method: 'POST',
-            body: { files: batch.map(({ path }) => path) },
-          }))
+    const batches = createBatches(
+      textFiles.filter(({ size = 0 }) => size < blobSizeLimit),
+      { maxItems: Math.min(pagingNum, maxResponseItems), maxResponseSize },
     );
 
-    const itemMap = new Map(result.filter((item) => !!item).map((item) => [item[idField], item]));
+    /** @type {Record<string, PartialContentsListItem>} */
+    const results = {};
+    let fetchedCount = 0;
 
-    batch.forEach((file) => {
-      const item = itemMap.get(file[idField]);
+    /**
+     * Update the progress bar to reflect the files fetched so far.
+     * @param {number} count Number of files just fetched.
+     */
+    const advanceProgress = (count) => {
+      fetchedCount += count;
+      dataLoadedProgress.current = Math.ceil((fetchedCount / textFiles.length) * 100);
+    };
 
-      if (item) {
-        results[file.path] = item;
-      }
+    // Use the new bulk API endpoint to fetch multiple files at once. The batches are independent,
+    // so several of them are requested in parallel rather than one after another; a large
+    // repository needs dozens of them, and each is a full round trip to the instance
+    await runConcurrently(batches, async (batch) => {
+      const result = /** @type {PartialContentsListItem[]} */ (
+        await (isForgejo
+          ? fetchAPI(`${requestPath}?shas=${batch.map(({ sha }) => sha).join(',')}`)
+          : fetchAPI(requestPath, {
+              method: 'POST',
+              body: { files: batch.map(({ path }) => path) },
+            }))
+      );
+
+      const itemMap = new Map(result.filter((item) => !!item).map((item) => [item[idField], item]));
+
+      batch.forEach((file) => {
+        const item = itemMap.get(file[idField]);
+
+        if (item) {
+          results[file.path] = item;
+        }
+      });
+
+      advanceProgress(batch.length);
     });
 
-    advanceProgress(batch.length);
-  });
+    const fileMap = await parseFileContents(fetchingFiles, results);
 
-  const fileMap = await parseFileContents(fetchingFiles, results);
+    // Read whatever the bulk endpoints won’t return from the raw endpoint, which has no size cap
+    await runConcurrently(oversizedFiles, async ({ path }) => {
+      // The bulk endpoints weren’t asked for the file, so its metadata is filled in with the text
+      // Read at the same commit as the file list, on Forgejo too, as the endpoint goes by path
+      const text = await requestRawFile({ owner, repo, path, ref: commitRef });
 
-  // Read whatever the bulk endpoints won’t return from the raw endpoint, which has no size cap
-  await runConcurrently(oversizedFiles, async ({ path }) => {
-    // The bulk endpoints weren’t asked for the file, so its metadata is filled in with the text
-    Object.assign(fileMap[path], { text: await fetchRawFile(path), meta: {} });
-    advanceProgress(1);
-  });
+      Object.assign(fileMap[path], { text, meta: {} });
+      advanceProgress(1);
+    });
 
-  dataLoadedProgress.current = undefined;
-
-  return fileMap;
+    return fileMap;
+  } finally {
+    dataLoadedProgress.current = undefined;
+  }
 };
 
 /**

@@ -405,13 +405,14 @@ export class MockGitea extends MockGitRepository {
       return this.handleTreeRequest(filePath.replace(/^trees\//, ''), searchParams);
     }
 
-    // Gitea reads several files at once with this endpoint, which Forgejo doesn’t have
+    // Gitea reads several files at once with this endpoint, which Forgejo doesn’t have. Like the
+    // other endpoints, it takes a commit SHA as well as a branch name as the ref
     if (method === 'POST' && resource === 'file-contents' && !this.isForgejo) {
-      const { tree } = this.getHead(searchParams.get('ref') ?? this.branch);
+      const ref = searchParams.get('ref') ?? this.branch;
 
       return {
         json: /** @type {string[]} */ (body?.files ?? []).map((filePath_) => {
-          const sha = tree.get(filePath_);
+          const sha = this.getFileSHA(ref, filePath_);
 
           return sha ? this.toContentsItem(sha, { path: filePath_ }) : null;
         }),
@@ -1216,13 +1217,15 @@ export class MockGitea extends MockGitRepository {
   }
 
   /**
-   * Get the blob SHA of a file on a branch.
-   * @param {string} branch Branch name.
+   * Get the blob SHA of a file at a branch or commit.
+   * @param {string} ref Branch name or commit SHA.
    * @param {string} path File path.
-   * @returns {string | undefined} SHA, or `undefined` if the branch or the file doesn’t exist.
+   * @returns {string | undefined} SHA, or `undefined` if the ref or the file doesn’t exist.
    */
-  getFileSHA(branch, path) {
-    return this.refs.has(branch) ? this.getHead(branch).tree.get(path) : undefined;
+  getFileSHA(ref, path) {
+    const commit = this.refs.has(ref) ? this.getHead(ref) : this.getCommit(ref);
+
+    return commit?.tree.get(path);
   }
 
   /**
@@ -1412,7 +1415,11 @@ export class MockGitea extends MockGitRepository {
     return {
       status: 201,
       json: {
-        commit: { sha: commit.oid, created: commit.date.toISOString() },
+        commit: {
+          sha: commit.oid,
+          created: commit.date.toISOString(),
+          parents: commit.parents.map((sha) => ({ sha })),
+        },
         files: /** @type {Record<string, any>[]} */ (files).map(({ operation, path }) =>
           operation === 'delete' ? null : { path, sha: tree.get(path) },
         ),

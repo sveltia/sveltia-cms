@@ -22,8 +22,24 @@ export const getNormalizedValueCache = (owner) =>
   getOrCreate(persistentCaches, owner, () => new Map());
 
 /**
- * Normalize the given string for search value comparison. Since `transliterate` is slow, we only
- * apply basic normalization.
+ * Match the combining marks that follow a letter of a script where they are accents or optional
+ * vowel points a query can leave out: Latin, Greek, Cyrillic, Hebrew and Arabic. Elsewhere a mark
+ * is part of the spelling — Japanese kana voicing marks (`ビ` vs `ヒ`), Devanagari vowel signs,
+ * Thai tone marks — so stripping it would make unrelated words match. The same goes for the breve
+ * of the Cyrillic `й` and `ў`, which are letters of their own, unlike `ё`, commonly written `е`.
+ */
+const ACCENT_REGEX = new RegExp(
+  `(?<=[${['Latin', 'Greek', 'Hebrew', 'Arabic']
+    .map((script) => `\\p{Script=${script}}`)
+    .join('')}]\\p{M}*)\\p{M}|(?<=\\p{Script=Cyrillic}\\p{M}*)[\\p{M}--[\\u0306]]`,
+  'gv',
+);
+
+/**
+ * Normalize the given string for search value comparison: fold accents like `é` to `e` and
+ * lowercase it. Since `transliterate` is slow, we only apply basic normalization. The accents are
+ * stripped from the decomposed (NFD) string, then the result is composed (NFC) again, so that a
+ * Hangul syllable like `학` isn’t left split into its letters, where `하` would match it.
  * @param {string} value Original value.
  * @returns {string} Normalized value.
  * @see https://stackoverflow.com/q/990904
@@ -35,10 +51,7 @@ export const normalize = (value) => {
     return '';
   }
 
-  return value
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLocaleLowerCase();
+  return value.normalize('NFD').replace(ACCENT_REGEX, '').toLocaleLowerCase().normalize('NFC');
 };
 
 /**

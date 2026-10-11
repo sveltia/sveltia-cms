@@ -296,6 +296,17 @@ const updateLocaleComputedValues = ({ draft, valueStoreKey, locale, valueMap }) 
       collectionName,
       fileName,
       isIndexFile,
+      // A field of a rich text editor component can refer to the component’s other fields as well
+      // as to the entry’s fields
+      ...(valueStoreKey === 'extraValues'
+        ? {
+            // Every key path collected from the store starts with a component’s prefix
+            keyPathPrefix: /** @type {RegExpMatchArray} */ (
+              keyPath.match(COMPONENT_NAME_PREFIX_REGEX)
+            )[0],
+            entryValueMap: draft.currentValues[locale],
+          }
+        : {}),
     });
 
     if (valueMap[keyPath] !== value) {

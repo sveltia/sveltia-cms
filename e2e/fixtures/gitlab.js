@@ -1105,10 +1105,11 @@ export class MockGitLab extends MockGitRepository {
    * @param {MockCommit} commit Commit.
    * @returns {Record<string, any>} Item.
    */
-  toCommitItem({ oid, message, date, author }) {
+  toCommitItem({ oid, message, date, author, parents }) {
     return {
       id: oid,
       short_id: oid.slice(0, 8),
+      parent_ids: parents,
       title: message.split('\n')[0],
       message,
       author_name: author.name,

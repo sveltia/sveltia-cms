@@ -16,7 +16,8 @@ vi.mock('$lib/services/assets', () => ({
   getAssetsByDirName: vi.fn(() => []),
   getAssetFolder: vi.fn(() => ({})),
 }));
-vi.mock('$lib/services/utils/file', () => ({
+vi.mock('$lib/services/utils/file', async (importOriginal) => ({
+  ...(await importOriginal()),
   getGitHash: vi.fn(),
   encodeFilePath: vi.fn((path) => encodeURIComponent(path)),
   createPath: vi.fn((parts) => parts.filter(Boolean).join('/')),
@@ -3327,6 +3328,197 @@ describe('Test getAssetSavingInfo()', () => {
     // The resolved paths should have the template tags replaced
     expect(result.assetFolderPaths.resolvedInternalPath).toBe('static/uploads/template-test');
     expect(result.assetFolderPaths.resolvedPublicPath).toBe('/uploads/template-test');
+  });
+});
+
+describe('Test getAssetSavingInfo() for an entry moving to another folder', () => {
+  /**
+   * Create the draft of a page bundle entry, which keeps its assets in a folder of its own.
+   * @param {object} [props] Draft properties to override.
+   * @returns {any} Draft.
+   */
+  const createDraft = (props = {}) => ({
+    collection: {
+      name: 'blog',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      _file: { basePath: 'content/blog', subPath: '{{slug}}/index' },
+    },
+    collectionName: 'blog',
+    collectionFile: undefined,
+    isIndexFile: false,
+    isNew: false,
+    originalEntry: { locales: { en: { path: 'content/blog/old/index.md' } } },
+    ...props,
+  });
+
+  /** @type {any} */
+  const folder = {
+    collectionName: 'blog',
+    entryRelative: true,
+    internalPath: 'content/blog',
+    publicPath: '',
+  };
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+
+    const { getAssetsByDirName } = await import('$lib/services/assets');
+
+    vi.mocked(getAssetsByDirName).mockImplementation(
+      (/** @type {string} */ dirName) =>
+        /** @type {any} */ (dirName === 'content/blog/old' ? [{ name: 'photo.jpg' }] : []),
+    );
+    vi.mocked(getFillSlugOptions).mockReturnValue(
+      /** @type {any} */ ({ collection: createDraft().collection, content: {} }),
+    );
+    vi.mocked(createEntryPath).mockReturnValue('content/blog/new/index.md');
+  });
+
+  test('lists the names of the assets moving to the new folder in the same save', () => {
+    const result = getAssetSavingInfo({ draft: createDraft(), defaultLocaleSlug: 'new', folder });
+
+    expect(result.assetFolderPaths.resolvedInternalPath).toBe('content/blog/new');
+    // The folder is empty until the save, but the assets of the old one are on their way there
+    expect(result.assetNamesInSameFolder).toEqual([]);
+    expect(result.assetNamesMovingIn).toEqual(['photo.jpg']);
+  });
+
+  test('maps a subfolder of the new folder to the same subfolder of the old one', async () => {
+    const { getAssetsByDirName } = await import('$lib/services/assets');
+
+    vi.mocked(getAssetsByDirName).mockImplementation(
+      (/** @type {string} */ dirName) =>
+        /** @type {any} */ (dirName === 'content/blog/old/images' ? [{ name: 'photo.jpg' }] : []),
+    );
+
+    const result = getAssetSavingInfo({
+      draft: createDraft(),
+      defaultLocaleSlug: 'new',
+      folder,
+      subfolderPath: 'images',
+    });
+
+    expect(result.assetFolderPaths.resolvedInternalPath).toBe('content/blog/new/images');
+    expect(result.assetNamesMovingIn).toEqual(['photo.jpg']);
+  });
+
+  test('lists nothing when the entry stays in its folder', () => {
+    vi.mocked(createEntryPath).mockReturnValue('content/blog/old/index.md');
+
+    const result = getAssetSavingInfo({ draft: createDraft(), defaultLocaleSlug: 'old', folder });
+
+    expect(result.assetNamesInSameFolder).toEqual(['photo.jpg']);
+    expect(result.assetNamesMovingIn).toEqual([]);
+  });
+
+  test('lists nothing for a new entry, or one without a file in the locale', () => {
+    expect(
+      getAssetSavingInfo({ draft: createDraft({ isNew: true }), defaultLocaleSlug: 'new', folder })
+        .assetNamesMovingIn,
+    ).toEqual([]);
+    expect(
+      getAssetSavingInfo({
+        draft: createDraft({ originalEntry: { locales: {} } }),
+        defaultLocaleSlug: 'new',
+        folder,
+      }).assetNamesMovingIn,
+    ).toEqual([]);
+  });
+
+  test('lists nothing when the entry has no folder of its own', () => {
+    const draft = createDraft({
+      collection: {
+        name: 'blog',
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'content/blog', subPath: '{{slug}}' },
+      },
+      originalEntry: { locales: { en: { path: 'content/blog/old.md' } } },
+    });
+
+    vi.mocked(createEntryPath).mockReturnValue('content/blog/new.md');
+
+    // The assets are shared with the rest of the collection, so none of them moves
+    expect(
+      getAssetSavingInfo({ draft, defaultLocaleSlug: 'new', folder }).assetNamesMovingIn,
+    ).toEqual([]);
+  });
+
+  test('lists nothing for a folder outside the entry’s own', () => {
+    // A file collection or a global folder isn’t moved along with the entry
+    expect(
+      getAssetSavingInfo({
+        draft: createDraft(),
+        defaultLocaleSlug: 'new',
+        folder: { ...folder, entryRelative: false, internalPath: 'static/uploads' },
+      }).assetNamesMovingIn,
+    ).toEqual([]);
+  });
+
+  test('avoids the name of an asset moving in for a new file that doesn’t replace it', async () => {
+    const { formatFileName } = await import('$lib/services/assets/file-name');
+    const { getGitHash } = await import('$lib/services/utils/file');
+    const blobURL = 'blob:http://localhost:5173/abc-123';
+    /** @type {any[]} */
+    const changes = [];
+
+    vi.mocked(getGitHash).mockResolvedValue('sha123');
+
+    await replaceBlobURL(
+      /** @type {any} */ ({
+        file: new File(['other image'], 'photo.jpg', { type: 'image/jpeg' }),
+        folder,
+        replace: false,
+        blobURL,
+        draft: createDraft({ currentValues: { en: {} }, currentSlugs: { en: 'new' } }),
+        defaultLocaleSlug: 'new',
+        keyPath: 'image',
+        content: { image: blobURL },
+        changes,
+        savingAssets: [],
+        encodingEnabled: false,
+      }),
+    );
+
+    // Otherwise the file would take the place of the existing `photo.jpg` once it has moved, and
+    // the move would drop the existing file as replaced
+    expect(vi.mocked(formatFileName)).toHaveBeenCalledWith('photo.jpg', {
+      assetNamesInSameFolder: ['photo.jpg'],
+    });
+  });
+
+  test('replaces an asset moving in only when the file is meant to replace it', async () => {
+    const { formatFileName } = await import('$lib/services/assets/file-name');
+    const { getGitHash } = await import('$lib/services/utils/file');
+    const blobURL = 'blob:http://localhost:5173/abc-123';
+    /** @type {any[]} */
+    const changes = [];
+
+    vi.mocked(getGitHash).mockResolvedValue('sha123');
+
+    await replaceBlobURL(
+      /** @type {any} */ ({
+        file: new File(['new image'], 'photo.jpg', { type: 'image/jpeg' }),
+        folder,
+        replace: true,
+        blobURL,
+        draft: createDraft({ currentValues: { en: {} }, currentSlugs: { en: 'new' } }),
+        defaultLocaleSlug: 'new',
+        keyPath: 'image',
+        content: { image: blobURL },
+        changes,
+        savingAssets: [],
+        encodingEnabled: false,
+      }),
+    );
+
+    // The file is created in the new folder, which has nothing to update yet; the move then drops
+    // the old copy it replaces
+    expect(vi.mocked(formatFileName)).toHaveBeenCalledWith('photo.jpg', {});
+    expect(changes).toEqual([
+      { action: 'create', path: 'content/blog/new/photo.jpg', data: expect.any(File) },
+    ]);
   });
 });
 

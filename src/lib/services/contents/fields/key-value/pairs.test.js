@@ -52,6 +52,43 @@ describe('Test getPairsFromContent()', () => {
   });
 });
 
+describe('Test pairs with a dot in the key', () => {
+  test('should unescape the keys stored escaped', () => {
+    const content = { 'metadata.example\uE000com': 'a', 'metadata.v1\uE0002': 'b' };
+
+    expect(getPairsFromContent(content, 'metadata')).toEqual([
+      ['example.com', 'a'],
+      ['v1.2', 'b'],
+    ]);
+  });
+
+  test('should store the keys escaped, so they aren’t split into nested objects on save', () => {
+    /** @type {Record<string, any>} */
+    const content = { title: 'Hello', metadata: null };
+
+    setPairs(content, 'metadata', [
+      ['example.com', 'a'],
+      ['v1.2', 'b'],
+    ]);
+
+    expect(content).toEqual({
+      title: 'Hello',
+      'metadata.example\uE000com': 'a',
+      'metadata.v1\uE0002': 'b',
+    });
+    expect(getPairsFromContent(content, 'metadata')).toEqual([
+      ['example.com', 'a'],
+      ['v1.2', 'b'],
+    ]);
+  });
+
+  test('should resolve the KeyValue field a pair with an escaped key belongs to', () => {
+    expect(
+      getKeyValueField({ collectionName: 'posts', keyPath: 'metadata.example\uE000com' }),
+    ).toEqual(fields[1]);
+  });
+});
+
 describe('Test setPairs()', () => {
   test('should replace the existing pairs, leaving other fields alone', () => {
     const content = {

@@ -1206,8 +1206,10 @@ describe('Test getOptions()', async () => {
           refEntries: malformedFileCollectionEntries,
         });
 
-        // Should still handle the data, but entries with missing required fields are filtered out
-        expect(result).toHaveLength(2);
+        // Should still handle the data, but list items with missing required fields are filtered
+        // out: the item without a name isn’t matched, and the one without an ID can’t be referenced
+        // (its value used to fall back to the entry slug)
+        expect(result).toHaveLength(1);
 
         // Find the complete entry
         const completeEntry = result.find((r) => r.label === 'San Francisco');
@@ -1620,9 +1622,10 @@ describe('Test getOptions()', async () => {
             : (valueMap[keyPath] ?? ''),
         );
 
-        // The nested reference falls back to the stored value; an empty one to the entry summary
+        // The nested reference falls back to the stored value; an empty one is left out of the
+        // label, which used to fall back to the entry summary
         expect(getOptions({ locale, fieldConfig, refEntries: entries })).toEqual([
-          { label: 'Ann summary', value: 'a', searchValue: 'Ann summary' },
+          { label: 'Ann', value: 'a', searchValue: 'Ann' },
           { label: 'Bob a', value: 'b', searchValue: 'Bob a' },
         ]);
         expect(
@@ -1660,19 +1663,16 @@ describe('Test getOptions()', async () => {
           ...baseFieldConfig,
           collection: 'members',
           display_fields: ['name.first'],
-          value_field: 'email',
+          // Maxine and Melvin are both active, so their options share the value
+          value_field: 'active',
         };
 
-        vi.mocked(getFieldDisplayValue).mockImplementation(({ keyPath, valueMap }) => {
-          if (keyPath === 'email') {
-            return 'shared@example.com';
-          }
-
-          return valueMap?.[keyPath] || 'display-value';
-        });
+        vi.mocked(getFieldDisplayValue).mockImplementation(
+          ({ keyPath, valueMap }) => valueMap?.[keyPath] || 'display-value',
+        );
 
         const valueMap = {
-          author: 'shared@example.com',
+          author: 'true',
         };
 
         const args = {
@@ -1682,8 +1682,8 @@ describe('Test getOptions()', async () => {
           locale,
         };
 
-        expect(getReferencedOptionLabel(args)).toBe('Elsie');
-        expect(getReferencedOptionLabel(args)).toBe('Elsie');
+        expect(getReferencedOptionLabel(args)).toBe('Maxine');
+        expect(getReferencedOptionLabel(args)).toBe('Maxine');
       });
     });
 

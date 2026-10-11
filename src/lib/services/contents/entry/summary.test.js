@@ -7,6 +7,7 @@ import {
   replaceSub,
   sanitizeEntrySummary,
 } from '$lib/services/contents/entry/summary';
+import { getEntryPathRegEx } from '$lib/services/contents/file/config';
 
 /**
  * @import { Entry, InternalCollection, LocalizedEntry } from '$lib/types/private';
@@ -960,6 +961,58 @@ describe('Test replaceSub()', () => {
     ).toBe('');
   });
 
+  test('should leave the locale folder out of dirname with a folder per locale', () => {
+    // With the `multiple_folders` and `multiple_root_folders` i18n structures, the locale folder
+    // is added to the entry path but not to the base path, which is the collection’s `folder`
+    // option. The entry path matcher tells where it is, so the summary is the same for every
+    // locale.
+    const basePath = 'content/posts';
+
+    /**
+     * Get the entry path matcher for the given i18n structure.
+     * @param {'i18nMultiFolder' | 'i18nMultiRootFolder'} structure I18n structure flag.
+     * @returns {RegExp} Matcher.
+     */
+    const getRegEx = (structure) =>
+      getEntryPathRegEx({
+        extension: 'md',
+        format: 'frontmatter',
+        basePath,
+        nestedDepth: Infinity,
+        _i18n: /** @type {any} */ ({
+          allLocales: ['en', 'fr'],
+          defaultLocale: 'en',
+          omitDefaultLocaleFromFilePath: false,
+          structureMap: { [structure]: true },
+        }),
+      });
+
+    const localeContext = {
+      slug: 'foo',
+      basePath,
+      locales: ['en', 'fr'],
+      commitDate: undefined,
+      commitAuthor: undefined,
+    };
+
+    // `multiple_folders`
+    expect(
+      replaceSub('dirname', {
+        ...localeContext,
+        entryPath: 'content/posts/en/2024/foo.md',
+        fullPathRegEx: getRegEx('i18nMultiFolder'),
+      }),
+    ).toBe('2024');
+    // `multiple_root_folders`
+    expect(
+      replaceSub('dirname', {
+        ...localeContext,
+        entryPath: 'fr/content/posts/2024/foo.md',
+        fullPathRegEx: getRegEx('i18nMultiRootFolder'),
+      }),
+    ).toBe('2024');
+  });
+
   test('should handle dirname when basePath is undefined (line 105)', () => {
     // Test when basePath is undefined to exercise basePath ?? ''
     const contextWithoutBasePath = {
@@ -979,11 +1032,8 @@ describe('Test replaceSub()', () => {
     expect(result).toBe('content/posts');
   });
 
-  test('should handle dirname when dirPath starts with basePath but not with prefix (line 113 else if branch)', () => {
-    // This specifically tests the else if branch on line 113
-    // We need dirPath that starts with basePath but NOT with prefix (basePath + '/')
-    // Example: basePath='content/posts', dirPath='content/posts-backup/index/'
-    // prefix would be 'content/posts/', but dirPath starts with 'content/posts-'
+  test('should not strip a base path that is only a string prefix of the dirname', () => {
+    // `content/posts-backup` isn’t below `content/posts`, so the base path isn’t removed
     const contextEdgeCase = {
       slug: 'test-entry',
       entryPath: 'content/posts-backup/index/test-entry.md',
@@ -995,13 +1045,7 @@ describe('Test replaceSub()', () => {
 
     const result = replaceSub('dirname', contextEdgeCase);
 
-    // After removing 'test-entry.md', dirPath is 'content/posts-backup/index/'
-    // prefix is 'content/posts/' (basePath + '/')
-    // dirPath doesn't start with prefix 'content/posts/' (next char is -, not /)
-    // dirPath DOES start with basePath 'content/posts'
-    // So else if branch removes 'content/posts' leaving '-backup/index/'
-    // stripSlashes only removes slashes, leaving '-backup/index'
-    expect(result).toBe('-backup/index');
+    expect(result).toBe('content/posts-backup/index');
   });
 
   test('should handle dirname when dirPath does NOT start with basePath (line 113 skip)', () => {
@@ -1025,9 +1069,7 @@ describe('Test replaceSub()', () => {
     expect(result).toBe('content/posts/index');
   });
 
-  test('should handle dirname with basePath as substring prefix (line 113 else if)', () => {
-    // Another case for the else if on line 113
-    // basePath='posts', dirPath starts with 'posts' but prefix='posts/' doesn't match
+  test('should not strip a base path that is a substring prefix of the dirname', () => {
     const contextSubstring = {
       slug: 'entry',
       entryPath: 'posts-archive/2024/entry.md',
@@ -1039,13 +1081,7 @@ describe('Test replaceSub()', () => {
 
     const result = replaceSub('dirname', contextSubstring);
 
-    // After removing 'entry.md', dirPath is 'posts-archive/2024/'
-    // prefix is 'posts/' (basePath + '/')
-    // dirPath doesn't start with prefix (next is -, not /)
-    // dirPath DOES start with basePath 'posts'
-    // So else if removes 'posts' leaving '-archive/2024/'
-    // stripSlashes removes slashes leaving '-archive/2024'
-    expect(result).toBe('-archive/2024');
+    expect(result).toBe('posts-archive/2024');
   });
 
   test('should handle dirname when basePath ends with slash (line 109 ternary)', () => {
@@ -1447,10 +1483,8 @@ describe('Additional comprehensive tests for edge cases', () => {
     expect(result).toBe('');
   });
 
-  test('replaceSub dirname should handle basePath boundary correctly (branch 114-115)', () => {
-    // Test case where dirPath starts with basePath but not with prefix
-    // This would only happen if there's unusual path construction
-    // For normal usage, the if branch will be taken
+  test('replaceSub dirname should handle basePath boundary correctly', () => {
+    // `content/blogpost` isn’t below `content/blog`, so the base path isn’t removed
     const context = {
       slug: 'entry',
       entryPath: 'content/blogpost/entry.md',
@@ -1462,13 +1496,7 @@ describe('Additional comprehensive tests for edge cases', () => {
 
     const result = replaceSub('dirname', context);
 
-    // After removing filename: 'content/blogpost/'
-    // prefix would be 'content/blog/', but dirPath is 'content/blogpost/'
-    // prefix doesn't match (expects slash after 'blog')
-    // So checks if dirPath.startsWith('content/blog') which is true
-    // Then slices off 'content/blog', leaving 'post/'
-    // stripSlashes gives 'post'
-    expect(result).toBe('post');
+    expect(result).toBe('content/blogpost');
   });
 
   test('replaceSub should handle entryPath with no base path', () => {

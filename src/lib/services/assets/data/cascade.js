@@ -48,7 +48,11 @@ export const getReferenceTargets = (assets) => {
   const urls = new Set();
 
   assets.forEach((asset) => {
-    const url = getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true });
+    // A path relative to the entry, like `images/photo.jpg`, refers to a different file in each
+    // entry’s folder, so it can’t be compared as text across entries
+    const url = asset.folder.entryRelative
+      ? undefined
+      : getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true });
 
     if (url === undefined) {
       targets.push({ asset });

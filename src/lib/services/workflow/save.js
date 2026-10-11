@@ -1,6 +1,7 @@
 import { unique } from '@sveltia/utils/array';
 
 import { callEventHooks } from '$lib/services/api/events';
+import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
@@ -186,6 +187,32 @@ const clearUnpublishedEntry = (pullRequest, settleAssets) => {
 };
 
 /**
+ * Remove the assets at the given paths from the asset list, as the merge of a pull request has
+ * removed the files from the configured branch: the assets stored with an entry that the pull
+ * request deletes, or moves to another folder along with the entry. An asset that another pull
+ * request has committed to the same path stays, but no longer has a published version to restore
+ * if that pull request is discarded.
+ * @param {Set<string>} paths File paths.
+ */
+const removePublishedAssets = (paths) => {
+  if (!paths.size) {
+    return;
+  }
+
+  allAssets.current = allAssets.current.flatMap((asset) => {
+    if (!paths.has(asset.path)) {
+      return [asset];
+    }
+
+    if (!asset.workflow) {
+      return [];
+    }
+
+    return [{ ...asset, workflow: { branch: asset.workflow.branch } }];
+  });
+};
+
+/**
  * Move the given entry, whose pull request has been merged, from the unpublished entry list to the
  * regular entry list, along with its assets.
  * @param {UnpublishedEntry} entry Unpublished entry.
@@ -194,8 +221,13 @@ const clearUnpublishedEntry = (pullRequest, settleAssets) => {
  * the configured branch rather than putting a new version on it.
  * @param {Map<string, Entry>} [options.cascadedEntries] Entries the removal rewrote, keyed by ID,
  * to replace in the store.
+ * @param {Set<string>} [options.removedPaths] Paths of the files the merge removed from the
+ * configured branch, deleted or moved elsewhere, whose assets are taken off the asset list.
  */
-const settlePublishedEntry = (entry, { deletion = false, cascadedEntries = new Map() } = {}) => {
+const settlePublishedEntry = (
+  entry,
+  { deletion = false, cascadedEntries = new Map(), removedPaths = new Set() } = {},
+) => {
   const { workflow, ...publishedEntry } = entry;
   // Include the pre-rename paths, so the entry that the pull request renamed is replaced rather
   // than left behind as a duplicate
@@ -208,6 +240,7 @@ const settlePublishedEntry = (entry, { deletion = false, cascadedEntries = new M
   allEntries.current = deletion ? remaining : [...remaining, publishedEntry];
 
   clearUnpublishedEntry(workflow.pullRequest, publishWorkflowAssets);
+  removePublishedAssets(removedPaths);
 };
 
 /**
@@ -378,11 +411,9 @@ const mergeWorkflowEntry = async (entry) => {
   // The board shows the entry, but the merge takes the whole pull request as its branch stands. So
   // the pull request is read afresh and checked against what has been shown before anything else
   // happens; the merge is then pinned to the commit that was checked
-  await verifyMergeState(
-    entry,
-    await workflow.fetchMergeState(pullRequest),
-    workflow.fetchUnchangedPaths,
-  );
+  const mergeState = await workflow.fetchMergeState(pullRequest);
+
+  await verifyMergeState(entry, mergeState, workflow.fetchUnchangedPaths);
 
   if (hookArgs) {
     await callEventHooks({ ...hookArgs, type: preType });
@@ -406,7 +437,20 @@ const mergeWorkflowEntry = async (entry) => {
       : [],
   );
 
-  settlePublishedEntry(entry, { deletion, cascadedEntries });
+  // The files the pull request removes or moves elsewhere are gone from the configured branch now,
+  // which includes the assets stored with an entry that has been deleted or renamed. They’re still
+  // on the asset list, as the pull request only added its own files there
+  const removedPaths = new Set(
+    mergeState.files.flatMap(({ status: fileStatus, path, previousPath }) =>
+      fileStatus === 'removed'
+        ? [path]
+        : fileStatus === 'renamed' && previousPath
+          ? [previousPath]
+          : [],
+    ),
+  );
+
+  settlePublishedEntry(entry, { deletion, cascadedEntries, removedPaths });
   // The merge put a new commit on the configured branch, so the production build to watch is a
   // different one now. The entry is listed as on its way until that build is done, so the head has
   // to be known before it’s recorded

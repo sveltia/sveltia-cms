@@ -1,10 +1,9 @@
 import equal from 'fast-deep-equal';
-import { flatten, unflatten } from 'flat';
 
 import { normalizeContent } from '$lib/services/contents/draft/create/normalize';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
-import { unflattenMap } from '$lib/services/utils/object';
+import { flattenKeys, unflattenKeys, unflattenMap } from '$lib/services/utils/object';
 
 /**
  * @import { InternalLocaleCode } from '$lib/types/private';
@@ -34,7 +33,7 @@ export const deleteKeysByPrefix = (valueMap, keyPathPrefix) => {
  */
 export const flattenWithPrefix = (values, keyPathPrefix) =>
   Object.fromEntries(
-    Object.entries(flatten(values)).map(([key, value]) => [`${keyPathPrefix}${key}`, value]),
+    Object.entries(flattenKeys(values)).map(([key, value]) => [`${keyPathPrefix}${key}`, value]),
   );
 
 /**
@@ -78,16 +77,20 @@ export const reconcileComponentValues = ({
   defaultLocale,
 }) => {
   const _values = /** @type {Record<string, any>} */ (
-    values ?? unflatten(getDefaultValues({ fields, locale, defaultLocale }))
+    values ??
+      // The component values live in the document of the locale they’re inserted in, so they have
+      // no i18n options of their own: give them the defaults in every locale, rather than only in
+      // the default locale as with an entry field without the `i18n` option
+      unflattenKeys(getDefaultValues({ fields, locale, defaultLocale: locale }))
   );
 
   _values.__sc_component_name = componentName;
 
   /** @type {Record<string, any>} */
-  const normalizedValues = unflatten(
+  const normalizedValues = unflattenKeys(
     normalizeContent({
       fields,
-      content: flatten(_values),
+      content: flattenKeys(_values),
       locale,
       defaultLocale,
       fillDefaults: false,

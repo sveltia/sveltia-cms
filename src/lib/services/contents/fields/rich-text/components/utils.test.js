@@ -80,6 +80,12 @@ describe('utils', () => {
   });
 
   describe('normalizeProps', () => {
+    it('should keep the keys with a dot as they are', () => {
+      expect(normalizeProps({ kv: { 'example.com': 'a' }, __sc_component_name: 'x' })).toEqual({
+        kv: { 'example.com': 'a' },
+      });
+    });
+
     it('should remove properties starting with __sc_', () => {
       const props = {
         title: 'Test Title',

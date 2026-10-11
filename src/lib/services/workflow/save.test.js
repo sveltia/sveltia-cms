@@ -617,6 +617,78 @@ describe('workflow/save', () => {
       expect(trackDeployingEntry).toHaveBeenCalledWith(entry);
     });
 
+    test('takes the assets a renaming pull request moved away off the asset list', async () => {
+      const entry = createEntry('cms/posts/hello', 'pending_publish');
+
+      upsertUnpublishedEntry(entry);
+      allAssets.current = /** @type {any} */ ([
+        // Published, and moved to the entry’s new folder by the pull request
+        { path: 'content/posts/old/cover.jpg', sha: '1' },
+        // The moved copy, committed to the branch
+        {
+          path: 'content/posts/hello/cover.jpg',
+          sha: '1',
+          workflow: { branch: 'cms/posts/hello', replacedAsset: undefined },
+        },
+        // Published, and deleted by the pull request, but shadowed by another draft
+        {
+          path: 'content/posts/old/photo.jpg',
+          sha: '2',
+          workflow: { branch: 'cms/posts/other', replacedAsset: { path: 'x', sha: '2' } },
+        },
+        // Untouched
+        { path: 'static/uploads/logo.png', sha: '3' },
+      ]);
+      workflowService.fetchMergeState.mockResolvedValueOnce({
+        headSHA: 'abc',
+        onConfiguredBranches: true,
+        files: /** @type {any} */ ([
+          { path: 'content/posts/hello.md', status: 'added' },
+          {
+            path: 'content/posts/hello/cover.jpg',
+            status: 'renamed',
+            previousPath: 'content/posts/old/cover.jpg',
+          },
+          { path: 'content/posts/old/photo.jpg', status: 'removed' },
+          { path: 'content/posts/hello/new.jpg', status: 'renamed' },
+        ]),
+        complete: true,
+      });
+
+      await publishWorkflowEntry(entry);
+
+      // Deleting the old copy from the Asset Library would otherwise fail, as it’s gone
+      expect(allAssets.current).toEqual([
+        { path: 'content/posts/hello/cover.jpg', sha: '1' },
+        // The other draft’s file has no published version to restore anymore
+        { path: 'content/posts/old/photo.jpg', sha: '2', workflow: { branch: 'cms/posts/other' } },
+        { path: 'static/uploads/logo.png', sha: '3' },
+      ]);
+    });
+
+    test('takes the assets a removing pull request deleted off the asset list', async () => {
+      const entry = createEntry('cms/posts/hello', 'pending_deletion');
+
+      upsertUnpublishedEntry(entry);
+      allAssets.current = /** @type {any} */ ([
+        { path: 'content/posts/hello/cover.jpg', sha: '1' },
+        { path: 'static/uploads/logo.png', sha: '3' },
+      ]);
+      workflowService.fetchMergeState.mockResolvedValueOnce({
+        headSHA: 'abc',
+        onConfiguredBranches: true,
+        files: /** @type {any} */ ([
+          { path: 'content/posts/hello.md', status: 'removed' },
+          { path: 'content/posts/hello/cover.jpg', status: 'removed' },
+        ]),
+        complete: true,
+      });
+
+      await publishWorkflowEntry(entry);
+
+      expect(allAssets.current).toEqual([{ path: 'static/uploads/logo.png', sha: '3' }]);
+    });
+
     test('checks the pull request against the entry before anything else happens', async () => {
       const entry = createEntry('cms/posts/hello', 'pending_publish');
 

@@ -6,7 +6,7 @@
 -->
 <script>
   import { TextInput } from '@sveltia/ui';
-  import { onMount } from 'svelte';
+  import { getContext, onMount } from 'svelte';
 
   import { warnDeprecation } from '$lib/services/config/deprecations';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
@@ -15,7 +15,7 @@
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import { UuidField } from '$lib/types/public';
    */
 
@@ -26,6 +26,12 @@
    */
 
   const entryDraft = getEntryDraftContext();
+
+  /** @type {FieldEditorContext} */
+  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  // A rich text editor component’s values live in the document of the locale they’re edited in,
+  // so its UUID is filled in whatever the locale
+  const inEditorComponent = valueStoreKey === 'extraValues';
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -49,7 +55,10 @@
   watch(
     () => locale,
     () => {
-      if (!currentValue && (locale === defaultLocale || isFieldTranslatable(fieldConfig?.i18n))) {
+      if (
+        !currentValue &&
+        (locale === defaultLocale || inEditorComponent || isFieldTranslatable(fieldConfig?.i18n))
+      ) {
         currentValue = getInitialValue(fieldConfig);
       }
     },

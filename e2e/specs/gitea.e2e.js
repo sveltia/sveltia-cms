@@ -233,6 +233,29 @@ test('uploads an image along with the entry', async ({ cms, gitea, page }) => {
   ]);
 });
 
+test('saves a change while a colleague changes another file', async ({ cms, gitea, page }) => {
+  await cms.open();
+
+  const editor = await openFirstPost(page);
+
+  // Only the blob SHAs of the files being changed are checked, so a commit to another file doesn’t
+  // get in the way
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  gitea.beforeCommit = () => {
+    gitea.commit({ 'content/posts/second-post.md': '---\ntitle: Second Post\n---\n' });
+  };
+
+  await editor.getByRole('textbox', { name: 'Body' }).fill('Hello from Mona!');
+  await editor.getByRole('button', { name: 'Save' }).click();
+
+  await expect
+    .poll(() => gitea.readFile(POST_PATH))
+    .toBe('---\ntitle: First Post\n---\n\nHello from Mona!\n');
+  expect(gitea.readFile('content/posts/second-post.md')).toBe('---\ntitle: Second Post\n---\n');
+  // The commit has landed on top of the colleague’s, which is fetched rather than skipped over
+  await expect(page.getByRole('row', { name: /Second Post/ })).toBeVisible();
+});
+
 test('lists an entry a colleague has added, on the next scheduled check', async ({
   cms,
   gitea,

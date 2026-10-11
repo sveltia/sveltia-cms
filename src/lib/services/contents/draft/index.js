@@ -20,7 +20,12 @@ export const INTERNAL_PROP_REGEX = /\.__sc_\w+$/;
 export const STATIC_DRAFT_KEYS = ['collection', 'collectionFile', 'fields', 'originalEntry'];
 
 /**
- * @import { EntryDraft, FlattenedEntryContent, LocaleContentMap } from '$lib/types/private';
+ * @import {
+ * EntryDraft,
+ * FlattenedEntryContent,
+ * InternalLocaleCode,
+ * LocaleContentMap,
+ * } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
 
@@ -191,19 +196,33 @@ export const isValueMapModified = (originalValueMap, currentValueMap) => {
 };
 
 /**
- * Compare the original and current values of every locale in the draft.
- * @param {LocaleContentMap} originalValues Original values.
- * @param {LocaleContentMap} currentValues Current values.
+ * Get the locales of the draft’s values that have to be compared to tell whether the draft has been
+ * modified. A locale disabled before and after the edit is not saved, so its values make no
+ * difference, e.g. the ones copied from the default locale when the locale was enabled and then
+ * disabled again.
+ * @param {EntryDraft} draft Entry draft.
+ * @param {LocaleContentMap} values Original or current values of the draft.
+ * @returns {InternalLocaleCode[]} Locales.
+ */
+const getComparedLocales = ({ originalLocales, currentLocales }, values) =>
+  Object.keys(values).filter(
+    (locale) => originalLocales[locale] !== false || currentLocales[locale] !== false,
+  );
+
+/**
+ * Compare the original and current values of the given locales in the draft.
+ * @param {EntryDraft} draft Entry draft.
+ * @param {InternalLocaleCode[]} locales Locales to compare, from {@link getComparedLocales}.
  * @returns {boolean} Whether the values differ.
  */
-const areValuesModified = (originalValues, currentValues) => {
-  const currentLocales = Object.keys(currentValues);
+const areValuesModified = (draft, locales) => {
+  const { originalValues, currentValues } = draft;
 
-  if (currentLocales.length !== Object.keys(originalValues).length) {
+  if (locales.length !== getComparedLocales(draft, originalValues).length) {
     return true;
   }
 
-  return currentLocales.some((locale) => {
+  return locales.some((locale) => {
     const originalValueMap = originalValues[locale];
 
     return !originalValueMap || isValueMapModified(originalValueMap, currentValues[locale]);
@@ -231,9 +250,9 @@ export const isDraftModified = (draft) => {
     currentSlugs,
     originalPath,
     currentPath,
-    originalValues,
-    currentValues,
   } = draft;
+
+  const locales = getComparedLocales(draft, draft.currentValues);
 
   return (
     !equal(originalLocales, currentLocales) ||
@@ -241,8 +260,8 @@ export const isDraftModified = (draft) => {
     // Moving an entry with the path editor is a change of its own, with no field to go with it
     stripSlashes(originalPath ?? '') !== stripSlashes(currentPath ?? '') ||
     // Internal properties are excluded from the value comparison
-    areValuesModified(originalValues, currentValues) ||
+    areValuesModified(draft, locales) ||
     // Reordering the pairs of a KeyValue field changes no value, only the order they are saved in
-    isPairOrderModified({ draft, isRealKey })
+    isPairOrderModified({ draft, isRealKey, locales })
   );
 };

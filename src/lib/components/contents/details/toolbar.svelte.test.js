@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
+import { initComposingEscapeGuard } from '$lib/services/app/keyboard';
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { backendName } from '$lib/services/backends';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
@@ -62,6 +63,9 @@ vi.mock('$lib/services/workflow/save', () => ({
   discardWorkflowEntries: vi.fn(),
   deleteWorkflowEntries: vi.fn(),
 }));
+
+// As the app does, before any keyboard shortcut is registered
+initComposingEscapeGuard();
 
 const fields = [{ name: 'title', widget: 'string' }];
 const postsCollection = { name: 'posts', label: 'Posts', folder: 'content/posts', fields };
@@ -838,6 +842,43 @@ describe('Toolbar', () => {
     await userEvent.keyboard('{Escape}');
     await page.getByRole('button', { name: 'Save' }).last().click();
     await expect.element(page.getByRole('button', { name: 'Saving…' })).toBeInTheDocument();
+  });
+
+  test('doesn’t close the editor with the Escape key pressed during an IME composition', async () => {
+    prefs.closeWithEscape = true;
+    await renderToolbar();
+
+    const backButton = page.getByRole('button', { name: 'Cancel Editing' });
+
+    await expect.element(backButton).toHaveAttribute('aria-keyshortcuts', 'Escape');
+
+    /**
+     * Press the Escape key.
+     * @param {KeyboardEventInit & { keyCode?: number }} [init] Event details.
+     */
+    const pressEscape = (init = {}) => {
+      document.body.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          code: 'Escape',
+          bubbles: true,
+          cancelable: true,
+          ...init,
+        }),
+      );
+    };
+
+    // Cancelling a conversion: Chrome and Firefox flag the event, Safari sends it right after the
+    // composition has ended with the `keyCode` of `229`
+    pressEscape({ key: 'Process', isComposing: true });
+    pressEscape({ keyCode: 229 });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+    expect(window.location.hash).toBe('#/collections/posts/new');
+
+    pressEscape();
+    await expect.poll(() => window.location.hash).toBe('#/collections/posts');
   });
 
   test('titles a collection file, which can only be discarded', async () => {

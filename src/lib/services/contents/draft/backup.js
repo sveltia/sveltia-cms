@@ -405,13 +405,20 @@ createRootEffect(() => {
 });
 
 /**
+ * Drop the backup scheduled by {@link scheduleBackup}, if it hasn’t been made yet.
+ */
+export const cancelBackup = () => {
+  globalThis.clearTimeout(backupTimeout);
+};
+
+/**
  * Schedule a backup of the given entry draft, cancelling any backup scheduled before. The editor
  * calls this whenever the draft changes; the timer avoids typing lag. Call it with no draft when
  * the editor is closed, so that a pending backup of the draft that is gone is dropped as well.
  * @param {EntryDraft | null | undefined} draft Entry draft.
  */
 export const scheduleBackup = (draft) => {
-  globalThis.clearTimeout(backupTimeout);
+  cancelBackup();
 
   if (draft && backupDB) {
     backupTimeout = globalThis.setTimeout(() => {

@@ -12,7 +12,8 @@ import {
 } from '$lib/services/contents/collection/data';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
-import { deleteBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
+import { cancelBackup, deleteBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
+import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
@@ -55,7 +56,11 @@ vi.mock('$lib/services/api/events', () => ({
 vi.mock('$lib/services/contents/draft/save/asset-move', () => ({
   buildEntryAssetMoveChanges: vi.fn(async () => ({ changes: [], savingAssets: [] })),
 }));
-vi.mock('$lib/services/contents/draft/save/changes');
+vi.mock('$lib/services/contents/draft/save/changes', async (importOriginal) => ({
+  createSavingEntryData: vi.fn(),
+  // The real one, so the entry the stores get can be checked
+  removeDisabledLocales: (await importOriginal()).removeDisabledLocales,
+}));
 vi.mock('$lib/services/contents/draft/save/conflict');
 vi.mock('$lib/services/contents/draft/slugs');
 vi.mock('$lib/services/contents/draft/validate');
@@ -118,7 +123,9 @@ describe('draft/save/index', () => {
       savingEntry: {
         id: 'test-id',
         slug: 'test-post',
-        locales: { en: { slug: 'test-post', path: 'posts/test-post.md' } },
+        locales: {
+          en: { slug: 'test-post', path: 'posts/test-post.md', content: { title: 'Test Post' } },
+        },
       },
       changes: [],
       savingAssets: [],
@@ -349,6 +356,52 @@ describe('draft/save/index', () => {
       expect(saveChanges).toHaveBeenCalledTimes(1);
     });
 
+    it('should write an entry someone else has deleted anew when saving over the deletion', async () => {
+      const originalEntry = {
+        id: 'test-id',
+        slug: 'old-post',
+        locales: { en: { slug: 'old-post', path: 'posts/old-post.md', content: {} } },
+      };
+
+      mockDraft.isNew = false;
+      mockDraft.originalEntry = originalEntry;
+      vi.mocked(detectEntryConflict).mockResolvedValue({ type: 'deleted', canOverwrite: true });
+
+      await saveEntry({ overwrite: true });
+
+      // The files and the assets stored with them are gone, so nothing can be updated, moved or
+      // deleted: the files are created as for a new entry
+      expect(createSavingEntryData).toHaveBeenCalledWith(
+        expect.objectContaining({ recreate: true }),
+      );
+      expect(buildEntryAssetMoveChanges).toHaveBeenCalledWith(
+        expect.objectContaining({ originalEntry: undefined }),
+      );
+      expect(vi.mocked(saveChanges).mock.calls[0][0].options.commitType).toBe('create');
+    });
+
+    it('should update an entry someone else has changed when saving over the change', async () => {
+      const originalEntry = {
+        id: 'test-id',
+        slug: 'test-post',
+        locales: { en: { slug: 'test-post', path: 'posts/test-post.md', content: {} } },
+      };
+
+      mockDraft.isNew = false;
+      mockDraft.originalEntry = originalEntry;
+      vi.mocked(detectEntryConflict).mockResolvedValue({ type: 'modified', canOverwrite: true });
+
+      await saveEntry({ overwrite: true });
+
+      expect(createSavingEntryData).toHaveBeenCalledWith(
+        expect.objectContaining({ recreate: false }),
+      );
+      expect(buildEntryAssetMoveChanges).toHaveBeenCalledWith(
+        expect.objectContaining({ originalEntry }),
+      );
+      expect(vi.mocked(saveChanges).mock.calls[0][0].options.commitType).toBe('update');
+    });
+
     it('should keep checking the item of an entry in an array file when overwriting', async () => {
       const locales = { en: { path: 'data/members.json', content: { title: 'A' } } };
 
@@ -391,6 +444,101 @@ describe('draft/save/index', () => {
       await saveEntry();
 
       expect(detectEntryConflict).not.toHaveBeenCalled();
+    });
+
+    it('should leave the locales turned off out of the saved entry', async () => {
+      const deletion = { action: 'delete', slug: 'test-post', path: 'posts/test-post.fr.md' };
+
+      mockDraft.isNew = false;
+      vi.mocked(createSavingEntryData).mockResolvedValue({
+        savingEntry: {
+          id: 'test-id',
+          slug: 'test-post',
+          locales: {
+            en: { slug: 'test-post', path: 'posts/test-post.en.md', content: { title: 'A' } },
+            // A locale turned off only carries the path of the file to delete
+            fr: { path: 'posts/test-post.fr.md' },
+          },
+        },
+        changes: [deletion],
+        savingAssets: [],
+      });
+
+      await saveEntry();
+
+      const { changes, savingEntries } = vi.mocked(saveChanges).mock.calls[0][0];
+
+      // The file is still deleted, but the entry in the stores no longer has it
+      expect(changes).toEqual([deletion]);
+      expect(Object.keys(savingEntries[0].locales)).toEqual(['en']);
+      expect(callEventHooks).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'postSave',
+          entry: expect.objectContaining({ locales: { en: expect.any(Object) } }),
+        }),
+      );
+    });
+
+    it('should leave the locales turned off out of the Editorial Workflow entry', async () => {
+      vi.mocked(isWorkflowDraft).mockReturnValue(true);
+      vi.mocked(createSavingEntryData).mockResolvedValue({
+        savingEntry: {
+          id: 'test-id',
+          slug: 'test-post',
+          locales: {
+            en: { slug: 'test-post', path: 'posts/test-post.en.md', content: { title: 'A' } },
+            // Turned on and off again before the first save, so there has never been a file
+            fr: { path: 'posts/test-post.fr.md' },
+          },
+        },
+        changes: [],
+        savingAssets: [],
+      });
+      vi.mocked(saveWorkflowChanges).mockResolvedValue({
+        commit: { sha: 'abc', files: {} },
+        savedEntries: [{ id: 'test-id', slug: 'test-post', locales: {} }],
+        savedAssets: [],
+      });
+
+      await saveEntry();
+
+      const { savingEntry } = vi.mocked(saveWorkflowChanges).mock.calls[0][0];
+
+      expect(Object.keys(savingEntry.locales)).toEqual(['en']);
+    });
+
+    it('should name the Editorial Workflow branch of a new nested entry after its path', async () => {
+      vi.mocked(isWorkflowDraft).mockReturnValue(true);
+      // The slug template only gives the last segment of the path of a new entry in a nested
+      // collection, which another entry in another folder can have as well
+      vi.mocked(getSlugs).mockReturnValue({
+        defaultLocaleSlug: 'team',
+        canonicalSlug: undefined,
+        localizedSlugs: undefined,
+      });
+      vi.mocked(createSavingEntryData).mockResolvedValue({
+        savingEntry: {
+          id: 'test-id',
+          slug: 'about/team',
+          subPath: 'about/team',
+          locales: {
+            en: { slug: 'about/team', path: 'pages/about/team/index.md', content: { title: 'A' } },
+          },
+        },
+        changes: [],
+        savingAssets: [],
+      });
+      vi.mocked(saveWorkflowChanges).mockResolvedValue({
+        commit: { sha: 'abc', files: {} },
+        savedEntries: [{ id: 'test-id', slug: 'about/team', locales: {} }],
+        savedAssets: [],
+      });
+
+      await saveEntry();
+
+      expect(saveWorkflowChanges).toHaveBeenCalledWith(
+        expect.objectContaining({ slug: 'about/team' }),
+      );
     });
 
     it('should handle save failure', async () => {
@@ -503,6 +651,32 @@ describe('draft/save/index', () => {
 
       expect(calls[0]).toBe('deleteBackup');
       expect(calls).toContain('callEventHooks');
+    });
+
+    it('should drop a backup scheduled before the save as the backup is deleted', async () => {
+      /** @type {string[]} */
+      const calls = [];
+
+      vi.mocked(cancelBackup).mockImplementation(() => {
+        calls.push('cancelBackup');
+      });
+      vi.mocked(deleteBackup).mockImplementation(async () => {
+        calls.push('deleteBackup');
+      });
+
+      await saveEntry();
+
+      // Otherwise the backup scheduled for the last change could be made once the save has deleted
+      // the backup, e.g. while the editor asks whether to send the entry for review
+      expect(calls).toEqual(['cancelBackup', 'deleteBackup']);
+    });
+
+    it('should keep a scheduled backup if save fails', async () => {
+      vi.mocked(saveChanges).mockRejectedValue(new Error('Save failed'));
+
+      await expect(saveEntry()).rejects.toThrow('saving_failed');
+
+      expect(cancelBackup).not.toHaveBeenCalled();
     });
 
     it('should complete the save even if the backup cannot be deleted', async () => {
@@ -622,16 +796,6 @@ describe('draft/save/index', () => {
       // callEventHooks should be called after saveChanges
       expect(callEventHooksCallOrder).toBe(2);
       expect(saveChangesCallOrder).toBe(1);
-    });
-
-    it('should not throw if postSave event hooks fail', async () => {
-      vi.mocked(callEventHooks).mockImplementation(() => {
-        throw new Error('Event hook error');
-      });
-
-      // This should not throw because the error handling is not implemented
-      // If you want to add error handling, adjust this expectation accordingly
-      await expect(saveEntry()).rejects.toThrow('Event hook error');
     });
 
     it('should clear entry history cache when originalEntry exists', async () => {

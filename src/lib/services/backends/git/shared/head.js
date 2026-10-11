@@ -7,3 +7,11 @@ import { createRawState } from '$lib/services/utils/state.svelte';
  * backend that doesn’t track commits.
  */
 export const repositoryHead = createRawState('');
+
+/**
+ * Generation of the loaded site data, incremented when it’s discarded, e.g. on sign-out. A fetch
+ * still on its way at that point, like a check for remote changes, belongs to the previous session:
+ * it compares the generation it started in with the current one and drops its results instead of
+ * putting them back into the stores, where the next user would find them.
+ */
+export const dataGeneration = { current: 0 };

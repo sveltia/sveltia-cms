@@ -17,10 +17,16 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9
  * @param {string | undefined} [options.currentValue] Field value.
  * @param {string} [options.locale] Locale of the pane.
  * @param {Partial<UuidField>} [options.config] Field options.
+ * @param {Record<string, any>} [options.context] Any other Svelte context, e.g. `field-editor`.
  * @returns {Promise<{ props: { locale: string, currentValue: string | undefined } }>} Props, whose
  * `currentValue` follows the editor and whose `locale` can be changed as the entry editor does.
  */
-const renderEditor = async ({ currentValue = undefined, locale = 'en', config = {} } = {}) => {
+const renderEditor = async ({
+  currentValue = undefined,
+  locale = 'en',
+  config = {},
+  context = {},
+} = {}) => {
   const props = $state({
     locale,
     keyPath: 'id',
@@ -34,6 +40,7 @@ const renderEditor = async ({ currentValue = undefined, locale = 'en', config = 
   await renderWithDraft(UuidEditor, {
     draft: createMockDraft({ i18n: { defaultLocale: 'en', allLocales: ['en', 'ja'] } }),
     props,
+    context,
   });
 
   return { props };
@@ -71,6 +78,15 @@ describe('UuidEditor', () => {
     expect(
       (await renderEditor({ locale: 'ja', config: { i18n: 'translate' } })).props.currentValue,
     ).toMatch(UUID_REGEX);
+  });
+
+  test('generates a UUID in another locale within a rich text editor component', async () => {
+    const { props } = await renderEditor({
+      locale: 'ja',
+      context: { 'field-editor': { valueStoreKey: 'extraValues', parentComponentNames: ['yt'] } },
+    });
+
+    expect(props.currentValue).toMatch(UUID_REGEX);
   });
 
   test('generates a UUID when the editor is reused for another locale', async () => {

@@ -10,7 +10,7 @@ import {
   restoreCachedFileData,
   updateCache,
 } from '$lib/services/backends/git/shared/file-cache';
-import { repositoryHead } from '$lib/services/backends/git/shared/head';
+import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
 import { parseFiles, updateStores } from '$lib/services/backends/git/shared/parse-files';
 import { scopeFileFetchers } from '$lib/services/backends/git/shared/scope';
 import { cmsConfigVersion } from '$lib/services/config';
@@ -39,7 +39,11 @@ import { createDebugLogger } from '$lib/services/utils/logging';
  */
 
 /**
- * @typedef {(fetchingFiles: BaseFileListItem[]) => Promise<RepositoryContentsMap>
+ * A function to fetch the contents of the given files. It’s given the hash of the commit the file
+ * list comes from, so a backend that reads a file by path rather than by blob SHA can read it at
+ * that commit; reading it at the tip of the branch, which may have moved on since, could cache a
+ * text under the blob SHA of another version of the file.
+ * @typedef {(fetchingFiles: BaseFileListItem[], lastHash: string) => Promise<RepositoryContentsMap>
  * } FetchFileContentsFunction
  */
 
@@ -125,6 +129,8 @@ const resolveHead = async ({
  * Restore the cached files, and fetch the contents of the rest.
  * @param {object} args Arguments.
  * @param {BaseFileList} args.fileList Repository’s file list.
+ * @param {string} args.lastCommitHash The commit hash the file list comes from, which the
+ * contents are read at.
  * @param {[string, any][]} args.cachedFileEntries Cached file entries.
  * @param {FetchFileContentsFunction} args.fetchFileContents Function to fetch the metadata of
  * entry/asset files as well as text file contents.
@@ -137,6 +143,7 @@ const resolveHead = async ({
  */
 const loadContents = async ({
   fileList: { allFiles },
+  lastCommitHash,
   cachedFileEntries,
   fetchFileContents,
   fetchFileMetadata,
@@ -175,7 +182,7 @@ const loadContents = async ({
   );
 
   if (contentFiles.length) {
-    Object.assign(fetchedFileMap, await fetchFileContents(contentFiles));
+    Object.assign(fetchedFileMap, await fetchFileContents(contentFiles, lastCommitHash));
 
     // Only the text files are downloaded; an asset in the list is just there for its metadata
     log(
@@ -201,9 +208,12 @@ const loadContents = async ({
  * the stores have been updated.
  * @param {DebugLogger} args.log Function to trace the loading in the console.
  * @param {string} args.readyMessage Message to log once the site data is ready.
+ * @param {number} args.generation Generation of the site data the files were fetched for. If the
+ * data has been discarded since, e.g. the user has signed out, nothing is written.
  */
 const finishLoad = async ({
   data,
+  generation,
   parseKey,
   metaDB,
   lastConfigHash,
@@ -212,6 +222,12 @@ const finishLoad = async ({
   log,
   readyMessage,
 }) => {
+  if (generation !== dataGeneration.current) {
+    log('Discarded: the site data was reset while loading');
+
+    return;
+  }
+
   updateStores(data);
   lastParseKey = parseKey;
   // Recorded once the stores reflect the commit, so a check made in the meantime still sees the
@@ -276,6 +292,7 @@ export const fetchAndParseFiles = async ({
   // entry files that have changed. The key is taken now, as the configuration could change while
   // the files are on their way
   const parseKey = getParseKey(databaseName);
+  const generation = dataGeneration.current;
   const incremental = !!repositoryHead.current && lastParseKey === parseKey;
   const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
   const cacheDB = new IndexedDB(/** @type {string} */ (databaseName), 'file-cache');
@@ -316,7 +333,7 @@ export const fetchAndParseFiles = async ({
   setLastCommitPublishHint(!hasSkipCIMarker(message));
   await branchAccessPromise;
 
-  const finishArgs = { parseKey, metaDB, lastConfigHash, lastCommitHash, log };
+  const finishArgs = { generation, parseKey, metaDB, lastConfigHash, lastCommitHash, log };
 
   // Skip fetching files if no files found
   if (!fileList.count) {
@@ -343,6 +360,7 @@ export const fetchAndParseFiles = async ({
 
   const { cachedFiles, changedPaths, fetchingFiles, fetchedFileMap } = await loadContents({
     fileList,
+    lastCommitHash,
     cachedFileEntries,
     fetchFileContents,
     fetchFileMetadata,

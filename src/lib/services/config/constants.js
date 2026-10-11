@@ -31,6 +31,7 @@ export const DEV_CONFIG_PATH = '/admin/config.yml';
  */
 export const SUPPORTED_TYPES = [
   'text/yaml', // legacy
+  'application/x-yaml', // legacy
   'application/yaml', // default
   'application/toml',
   'application/json',

@@ -94,6 +94,39 @@ describe('fetchUserProfile', () => {
     expect(result.refreshToken).toBe('new-ref');
   });
 
+  test('keeps the given tokens over a stale account left in the store', async () => {
+    // A previous session’s account, not renewed during the request, must not lend its tokens to
+    // the user signing in now
+    mockUserState.account = { token: 'tok-a', refreshToken: 'ref-a' };
+
+    const result = await fetchUserProfile(
+      { token: 'tok-b', refreshToken: 'ref-b' },
+      'gitea',
+      fieldMap,
+    );
+
+    expect(result.token).toBe('tok-b');
+    expect(result.refreshToken).toBe('ref-b');
+  });
+
+  test('uses the tokens renewed while fetching over a stored account', async () => {
+    mockUserState.account = { token: 'old-tok', refreshToken: 'old-ref' };
+    vi.mocked(fetchAPI).mockImplementation(async () => {
+      mockUserState.account = { token: 'new-tok', refreshToken: 'new-ref' };
+
+      return response;
+    });
+
+    const result = await fetchUserProfile(
+      { token: 'old-tok', refreshToken: 'old-ref' },
+      'gitlab',
+      fieldMap,
+    );
+
+    expect(result.token).toBe('new-tok');
+    expect(result.refreshToken).toBe('new-ref');
+  });
+
   test('keeps the given tokens when the signed-in user has the same token', async () => {
     mockUserState.account = { token: 'tok', refreshToken: 'other-ref' };
 

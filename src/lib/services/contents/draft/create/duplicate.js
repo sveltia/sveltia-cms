@@ -227,6 +227,12 @@ export const duplicateDraft = async (entryDraft) => {
       // parent and get a folder of its own there
       originalPath: duplicatePath,
       currentPath: duplicatePath,
+      // The duplicate starts from its own values and locales, not the original’s, so that a revert
+      // doesn’t bring back the original’s UUIDs, aliases or asset paths. The draft is new, so it
+      // can still be saved without any change
+      originalLocales: getSnapshot(draft.currentLocales),
+      currentLocales: getSnapshot(draft.currentLocales),
+      originalValues: structuredClone(currentValues),
       // The value proxies are created below, as they need a reference to the new draft
       currentValues: {},
       files,

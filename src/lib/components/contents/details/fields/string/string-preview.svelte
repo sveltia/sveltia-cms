@@ -8,6 +8,7 @@
   import YouTubeEmbed from '$lib/components/contents/details/fields/string/youtube-embed.svelte';
   import { getPreviewType } from '$lib/services/contents/fields/string/preview';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
+  import { encodeURLSafely } from '$lib/services/utils/url';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
@@ -48,9 +49,9 @@
     {#if previewType === 'youtube'}
       <YouTubeEmbed url={value} />
     {:else if previewType === 'link'}
-      <a href={encodeURI(value)}>{value}</a>
+      <a href={encodeURLSafely(value)}>{value}</a>
     {:else if previewType === 'email'}
-      <a href="mailto:{encodeURI(value)}">{value}</a>
+      <a href={encodeURLSafely(`mailto:${value}`)}>{value}</a>
     {:else}
       {value}
     {/if}

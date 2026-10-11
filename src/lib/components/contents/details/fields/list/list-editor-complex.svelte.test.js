@@ -121,10 +121,9 @@ describe('ListEditorComplex', () => {
 
     await expect
       .poll(() => getStoredItems(draft, 'authors'))
-      .toEqual([
-        { name: 'Melvin', role: '' },
-        { name: 'Anonymous', role: '' },
-      ]);
+      // The existing item's unset `role` is left alone by its editor, while the new item gets the
+      // subfield defaults
+      .toEqual([{ name: 'Melvin' }, { name: 'Anonymous', role: '' }]);
   });
 
   test('duplicates and removes an item', async () => {
@@ -146,6 +145,37 @@ describe('ListEditorComplex', () => {
     await expect
       .poll(() => getStoredItems(draft, 'authors'))
       .toEqual([{ name: 'Melvin', role: 'Editor' }]);
+  });
+
+  test('moves focus to the next item, or the previous one, after removing an item', async () => {
+    const { draft, container } = await renderEditor(authorsField, {
+      'authors.0.name': 'Melvin',
+      'authors.1.name': 'Elsie',
+      'authors.2.name': 'Sarah',
+    });
+
+    /**
+     * Get the expander button of the item at the given position.
+     * @param {number} index Item index.
+     * @returns {HTMLButtonElement | null | undefined} Button.
+     */
+    const getExpander = (index) =>
+      container.querySelectorAll('.item-wrapper')[index]?.querySelector('button');
+
+    // Removing the middle item focuses the one that takes its place
+    await page.getByRole('button', { name: 'Remove' }).nth(1).click();
+    await expect
+      .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
+      .toEqual(['Melvin', 'Sarah']);
+    await expect.poll(() => document.activeElement).toBe(getExpander(1));
+
+    // Removing the last item focuses the previous one
+    await page.getByRole('button', { name: 'Remove' }).nth(1).click();
+    await expect
+      .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
+      .toEqual(['Melvin']);
+    await expect.poll(() => document.activeElement).toBe(getExpander(0));
+    expect(getExpander(0)).toBeInstanceOf(HTMLButtonElement);
   });
 
   test('doesn’t take the original position of the item it duplicates', async () => {
@@ -732,6 +762,41 @@ describe('ListEditorComplex (more)', () => {
     });
 
     await expect.element(page.getByRole('button', { name: /Add\W+Author/ })).toBeDisabled();
+  });
+
+  test('adds items with their defaults in another locale within a rich text editor component', async () => {
+    const i18n = {
+      i18nEnabled: true,
+      allLocales: ['en', 'fr'],
+      initialLocales: ['en', 'fr'],
+      defaultLocale: 'en',
+      structure: /** @type {const} */ ('multiple_folders'),
+    };
+
+    const draft = createMockDraft({ fields: [], i18n, values: { en: {}, fr: {} } });
+
+    await renderWithDraft(ListEditorComplex, {
+      draft,
+      props: {
+        locale: 'fr',
+        keyPath: 'body:c1:authors',
+        typedKeyPath: 'body:c1:authors',
+        fieldId: 'authors',
+        fieldLabel: 'Authors',
+        fieldConfig: authorsField,
+      },
+      context: { 'field-editor': { valueStoreKey: 'extraValues', parentComponentNames: ['yt'] } },
+    });
+
+    const addButton = page.getByRole('button', { name: /Add\W+Author/ });
+
+    // The subfields have no `i18n` option, but the values live in the French document
+    await expect.element(addButton).toBeEnabled();
+    await addButton.click();
+
+    await expect.poll(() => draft.extraValues.fr['body:c1:authors.0.name']).toBe('Anonymous');
+    expect(draft.extraValues.fr['body:c1:authors.0.role']).toBe('');
+    expect(draft.currentValues.fr).toEqual({});
   });
 
   /** @type {ComplexListField} */

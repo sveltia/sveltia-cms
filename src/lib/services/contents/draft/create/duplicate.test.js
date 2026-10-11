@@ -157,6 +157,44 @@ describe('contents/draft/create/duplicate', () => {
       expect(mockEntryDraft.currentValues.en.image).toBeUndefined();
     });
 
+    it('starts the duplicate’s original values and locales from its own', async () => {
+      const { copyEntryRelativeAssets } =
+        await import('$lib/services/contents/draft/create/duplicate-assets');
+
+      vi.mocked(copyEntryRelativeAssets).mockImplementation(async ({ currentValues }) => {
+        currentValues.en.image = 'blob:copy';
+
+        return {};
+      });
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) =>
+        keyPath === 'id' ? { widget: 'uuid' } : undefined,
+      );
+      mockGetInitialUuidValue.mockReturnValue('new-uuid');
+      mockEntryDraft.currentValues.en.id = 'old-uuid';
+      mockEntryDraft.currentValues.en['aliases.0'] = '/posts/old-post';
+      mockEntryDraft.currentValues.en.image = 'photo.jpg';
+      mockEntryDraft.originalValues = structuredClone(mockEntryDraft.currentValues);
+      mockEntryDraft.originalLocales = { en: true, ja: false };
+      mockEntryDraft.currentLocales = { en: true, ja: true };
+
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      // A revert brings back the duplicate’s own values, not the original’s
+      expect(newDraft.originalValues).toEqual(newDraft.currentValues);
+      expect(newDraft.originalValues.en).toEqual(
+        expect.objectContaining({ id: 'new-uuid', image: 'blob:copy' }),
+      );
+      expect(newDraft.originalValues.en['aliases.0']).toBeUndefined();
+      // Detached from the values being edited
+      expect(newDraft.originalValues.en).not.toBe(newDraft.currentValues.en);
+      expect(newDraft.originalLocales).toEqual({ en: true, ja: true });
+      expect(newDraft.currentLocales).toEqual({ en: true, ja: true });
+      expect(newDraft.originalLocales).not.toBe(newDraft.currentLocales);
+      // The draft is new, so it can be saved as is
+      expect(newDraft.isNew).toBe(true);
+    });
+
     it('gives up if the editor moves on while the assets are being copied', async () => {
       const { copyEntryRelativeAssets } =
         await import('$lib/services/contents/draft/create/duplicate-assets');

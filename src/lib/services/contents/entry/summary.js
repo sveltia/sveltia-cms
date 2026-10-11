@@ -1,6 +1,5 @@
 import { locale as appLocale } from '@sveltia/i18n';
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import { stripSlashes } from '@sveltia/utils/string';
 import { sanitize } from 'isomorphic-dompurify';
 import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
@@ -19,11 +18,8 @@ import {
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getEntryDirName } from '$lib/services/contents/entry/paths';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
-import {
-  hasLocalePlaceholder,
-  stripLocaleFolderPath,
-} from '$lib/services/contents/i18n/placeholder';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -42,6 +38,8 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * @property {string} slug Entry slug.
  * @property {string} entryPath Entry path.
  * @property {string | undefined} basePath Base path for the entry.
+ * @property {RegExp} [fullPathRegEx] Entry collection’s entry path matcher, which tells the
+ * `{{dirname}}` tag where the locale folder is.
  * @property {string[]} locales Enabled locales for the entry.
  * @property {string[]} [localeSuffixes] Locale codes that can follow the entry file name, with the
  * `multiple_files` i18n structure.
@@ -135,7 +133,16 @@ export const getEntrySummaryFromContent = (
  * @returns {string | Date | undefined} Replaced value or `undefined` if the tag is not recognized.
  */
 export const replaceSub = (tag, context) => {
-  const { slug, entryPath, basePath, locales, localeSuffixes, commitDate, commitAuthor } = context;
+  const {
+    slug,
+    entryPath,
+    basePath,
+    fullPathRegEx,
+    locales,
+    localeSuffixes,
+    commitDate,
+    commitAuthor,
+  } = context;
 
   if (tag === 'slug') {
     return slug;
@@ -146,23 +153,7 @@ export const replaceSub = (tag, context) => {
   }
 
   if (tag === 'dirname') {
-    let dirPath = entryPath.replace(/[^/]+$/, '');
-
-    if (basePath && hasLocalePlaceholder(basePath)) {
-      // The base path stands for a folder per locale
-      dirPath = stripLocaleFolderPath(dirPath, basePath);
-    } else if (basePath) {
-      // Remove basePath prefix with boundary awareness
-      const prefix = basePath.endsWith('/') ? basePath : `${basePath}/`;
-
-      if (dirPath.startsWith(prefix)) {
-        dirPath = dirPath.slice(prefix.length);
-      } else if (dirPath.startsWith(basePath)) {
-        dirPath = dirPath.slice(basePath.length);
-      }
-    }
-
-    return stripSlashes(dirPath);
+    return getEntryDirName(entryPath, { basePath, fullPathRegEx });
   }
 
   if (tag === 'filename' || tag === 'extension') {
@@ -324,7 +315,7 @@ const formatEntrySummary = (
   } = collection;
 
   const {
-    _file: { basePath } = {},
+    _file: { basePath, fullPathRegEx } = {},
     identifier_field: identifierField = 'title',
     summary: collectionSummaryTemplate,
   } = _type === 'entry' ? collection : {};
@@ -350,6 +341,7 @@ const formatEntrySummary = (
       slug,
       entryPath,
       basePath,
+      fullPathRegEx,
       locales: Object.keys(locales),
       localeSuffixes: getFileNameLocaleSuffixes(collection),
       commitDate,

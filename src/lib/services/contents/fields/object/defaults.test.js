@@ -2,6 +2,8 @@
 
 import { describe, expect, test, vi } from 'vitest';
 
+import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
+
 import { getDefaultValueMap } from './defaults';
 
 vi.mock('$lib/services/config');
@@ -167,7 +169,26 @@ describe('Test getDefaultValueMap()', () => {
       });
     });
 
-    test('should return empty object for empty object default', () => {
+    test('should escape the dots in the keys of the default value', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: { redirects: { 'example.com': 'a' } },
+        fields: [{ name: 'redirects', widget: 'keyvalue' }],
+      };
+
+      expect(
+        getDefaultValueMap({
+          fieldConfig,
+          keyPath: 'metadata',
+          locale: '_default',
+          defaultLocale: '_default',
+          populateDefault: testPopulateDefault,
+        }),
+      ).toEqual({ 'metadata.redirects.example\uE000com': 'a' });
+    });
+
+    test('should populate subfield defaults for empty object default', () => {
       /** @type {ObjectField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -186,7 +207,7 @@ describe('Test getDefaultValueMap()', () => {
         populateDefault: testPopulateDefault,
       });
 
-      expect(result).toEqual({});
+      expect(result).toEqual({ 'metadata.title': '' });
     });
 
     test('should handle nested object with mixed data types', () => {
@@ -592,11 +613,190 @@ describe('Test getDefaultValueMap()', () => {
         populateDefault: testPopulateDefault,
       });
 
-      // Object default should take precedence
+      // Object default should take precedence, while a subfield it leaves out gets its own default
       expect(result).toEqual({
         'post.title': 'Object Default Title',
         'post.content': 'Object Default Content',
+        'post.published': true,
       });
+    });
+
+    test('should populate the defaults of subfields the object default leaves out', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: { title: 'x' },
+        fields: [
+          { name: 'title', widget: 'string', default: 'Subfield Default Title' },
+          { name: 'featured', widget: 'boolean', default: true },
+          { name: 'summary', widget: 'string' },
+        ],
+      };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'post',
+        locale: '_default',
+        defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
+      });
+
+      expect(result).toEqual({ 'post.title': 'x', 'post.featured': true, 'post.summary': '' });
+    });
+
+    test('should not populate a nested subfield the object default gives in part', () => {
+      const populateDefault = vi.fn(testPopulateDefault);
+
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: { author: { name: 'Jane' }, links: [] },
+        fields: [
+          {
+            name: 'author',
+            widget: 'object',
+            fields: [
+              { name: 'name', widget: 'string' },
+              { name: 'email', widget: 'string', default: 'a@example.com' },
+            ],
+          },
+          { name: 'links', widget: 'list', default: ['https://example.com'] },
+          { name: 'body', widget: 'object', fields: [{ name: 'text', widget: 'string' }] },
+        ],
+      };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'post',
+        locale: 'en',
+        defaultLocale: 'en',
+        populateDefault,
+      });
+
+      // `author` and `links` are given by the object default and kept as they are; `body` is left
+      // out, so it gets its own default value through the field’s function
+      expect(populateDefault).toHaveBeenCalledTimes(1);
+      expect(populateDefault).toHaveBeenCalledWith({
+        content: result,
+        keyPath: 'post.body',
+        fieldConfig: fieldConfig.fields[2],
+        locale: 'en',
+        defaultLocale: 'en',
+        dynamicValues: {},
+      });
+      expect(result).toEqual({
+        'post.author.name': 'Jane',
+        'post.links': [],
+        'post.body': '',
+      });
+    });
+
+    test('should give left-out nested subfields their own defaults with the real functions', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: { title: 'x' },
+        fields: [
+          { name: 'title', widget: 'string' },
+          { name: 'featured', widget: 'boolean', default: true },
+          {
+            name: 'meta',
+            widget: 'object',
+            fields: [{ name: 'lang', widget: 'string', default: 'en' }],
+          },
+          {
+            name: 'seo',
+            widget: 'object',
+            default: { noindex: false },
+            fields: [
+              { name: 'noindex', widget: 'boolean', default: true },
+              { name: 'description', widget: 'string', default: 'Hello' },
+            ],
+          },
+          { name: 'tags', widget: 'list', default: ['news'] },
+        ],
+      };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'post',
+        locale: '_default',
+        defaultLocale: '_default',
+        populateDefault: populateDefaultValue,
+      });
+
+      expect(result).toEqual({
+        'post.title': 'x',
+        'post.featured': true,
+        'post.meta.lang': 'en',
+        'post.seo.noindex': false,
+        'post.seo.description': 'Hello',
+        'post.tags': [],
+        'post.tags.0': 'news',
+      });
+    });
+
+    test('should populate the subfield defaults of the type chosen in the object default', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: { kind: 'article', title: 'x' },
+        typeKey: 'kind',
+        types: [
+          {
+            name: 'article',
+            widget: 'object',
+            fields: [
+              { name: 'title', widget: 'string' },
+              { name: 'featured', widget: 'boolean', default: true },
+            ],
+          },
+          {
+            name: 'gallery',
+            widget: 'object',
+            fields: [{ name: 'caption', widget: 'string', default: 'Gallery' }],
+          },
+        ],
+      };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'block',
+        locale: '_default',
+        defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
+      });
+
+      expect(result).toEqual({
+        'block.kind': 'article',
+        'block.title': 'x',
+        'block.featured': true,
+      });
+    });
+
+    test('should populate no subfield defaults when the object default has no known type', () => {
+      /** @type {ObjectField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: { title: 'x' },
+        types: [
+          {
+            name: 'article',
+            widget: 'object',
+            fields: [{ name: 'featured', widget: 'boolean', default: true }],
+          },
+        ],
+      };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'block',
+        locale: '_default',
+        defaultLocale: '_default',
+        populateDefault: testPopulateDefault,
+      });
+
+      expect(result).toEqual({ 'block.title': 'x' });
     });
   });
 

@@ -90,6 +90,28 @@ describe('draft/update/list', () => {
       });
     });
 
+    it('should keep the escaped keys of the items', () => {
+      mockEntryDraft.currentValues.en = {
+        list: [],
+        'list.0.kv.a\uE000b': '1',
+        'list.1.kv.c\uE000d': '2',
+      };
+      mockEntryDraft.expanderStates._ = {};
+
+      updateListField({
+        locale: 'en',
+        keyPath: 'list',
+        manipulate: ({ valueList }) => {
+          valueList.reverse();
+        },
+      });
+
+      expect(mockEntryDraft.currentValues.en).toEqual({
+        'list.0.kv.c\uE000d': '2',
+        'list.1.kv.a\uE000b': '1',
+      });
+    });
+
     it('should remove item from list', () => {
       updateListField({
         locale: 'en',
@@ -633,6 +655,27 @@ describe('draft/update/list', () => {
         'tags.3': 'tag4',
         'tags.4': 'tag5',
       });
+    });
+
+    it('should only add as many values as fit within the maximum', () => {
+      addMultiValueItems({
+        locale: 'en',
+        keyPath: 'tags',
+        newValues: ['tag4', 'tag5', 'tag6'],
+        max: 4,
+      });
+
+      expect(mockEntryDraft.currentValues.en).toEqual({
+        'tags.0': 'tag1',
+        'tags.1': 'tag2',
+        'tags.2': 'tag3',
+        'tags.3': 'tag4',
+      });
+
+      // Nothing is added once the list is full, or already over the maximum
+      addMultiValueItems({ locale: 'en', keyPath: 'tags', newValues: ['tag7'], max: 4 });
+      addMultiValueItems({ locale: 'en', keyPath: 'tags', newValues: ['tag8'], max: 2 });
+      expect(Object.keys(mockEntryDraft.currentValues.en)).toHaveLength(4);
     });
 
     it('should start a new list at the first index', () => {

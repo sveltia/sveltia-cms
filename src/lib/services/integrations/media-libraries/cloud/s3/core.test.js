@@ -999,6 +999,56 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       );
     });
 
+    it('should delete the source once the copy returns a CopyObjectResult document', async () => {
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(
+          new Response(
+            '<?xml version="1.0" encoding="UTF-8"?>\n' +
+              '<CopyObjectResult><ETag>"abc"</ETag><LastModified>2024-01-01T00:00:00.000Z' +
+              '</LastModified></CopyObjectResult>',
+            { status: 200 },
+          ),
+        )
+        .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+      const result = await moveS3Object(
+        /** @type {any} */ ({ id: 'uploads/2024/photo.jpg', fileName: 'photo.jpg', size: 12 }),
+        '2025/photo.jpg',
+        mockConfig,
+        options,
+      );
+
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(fetch).toHaveBeenNthCalledWith(
+        2,
+        'https://test-bucket.s3.us-east-1.amazonaws.com/uploads/2024/photo.jpg',
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+      expect(result.id).toBe('uploads/2025/photo.jpg');
+    });
+
+    it('should keep the source when the copy returns an Error document with 200 OK', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response(
+          '<?xml version="1.0" encoding="UTF-8"?>\n' +
+            '<Error><Code>InternalError</Code><Message>We encountered an internal error.' +
+            '</Message><RequestId>1</RequestId></Error>',
+          { status: 200 },
+        ),
+      );
+
+      await expect(
+        moveS3Object(
+          /** @type {any} */ ({ id: 'uploads/2024/photo.jpg', fileName: 'photo.jpg', size: 12 }),
+          '2025/photo.jpg',
+          mockConfig,
+          options,
+        ),
+      ).rejects.toThrow(/^Failed to copy object uploads\/2024\/photo\.jpg: .*<Code>InternalError/s);
+
+      expect(fetch).toHaveBeenCalledOnce();
+    });
+
     it('should rename an object below the prefix within its folder', async () => {
       vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
 
