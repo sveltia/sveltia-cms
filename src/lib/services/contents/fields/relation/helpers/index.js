@@ -213,8 +213,9 @@ export const getOptions = ({
   // Use object identity for `fieldConfig` and `refEntries` instead of `JSON.stringify`, which would
   // serialize the entire entries array (potentially hundreds of entries × many fields). The
   // resolved template values are included as a plain string so the cache is invalidated when the
-  // current entry’s relevant field value changes.
-  const resolvedKey = resolvedFilters.flatMap(({ values }) => values).join('\x00');
+  // current entry’s relevant field value changes. They’re kept apart by filter, as a list value
+  // can move from one filter to another, and by type, as a number doesn’t match its string.
+  const resolvedKey = JSON.stringify(resolvedFilters.map(({ values }) => values));
   const ids = `${getObjectId(fieldConfig)}|${getObjectId(refEntries)}`;
   // The pending entries are held in a reactive array that grows in place, so its identity doesn’t
   // tell them apart; the count does, as they are only ever added while the draft is edited

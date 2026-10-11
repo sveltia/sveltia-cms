@@ -662,6 +662,37 @@ describe('Test getOptions()', async () => {
         expect(result1.every((r) => r.value !== 'melvin-lucas')).toBe(true);
         expect(result2.every((r) => r.value !== 'maxine-field')).toBe(true);
       });
+
+      test('should cache separately when a resolved value moves to another filter', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          collection: 'members',
+          filters: [
+            { field: 'department', values: ['{{fields.include}}'] },
+            { field: 'department', values: ['{{fields.exclude}}'], exclude: true },
+          ],
+        };
+
+        // An empty list resolves to no value, so both calls resolve to `engineering` alone
+        const included = getOptions({
+          locale,
+          fieldConfig,
+          refEntries: comprehensiveMemberEntries,
+          currentLocaleValues: { include: 'engineering', exclude: [] },
+        });
+
+        const excluded = getOptions({
+          locale,
+          fieldConfig,
+          refEntries: comprehensiveMemberEntries,
+          currentLocaleValues: { include: [], exclude: 'engineering' },
+        });
+
+        expect(included.map((r) => r.value)).toEqual(['melvin-lucas']);
+        expect(excluded.some((r) => r.value === 'melvin-lucas')).toBe(false);
+        expect(excluded.length).toBeGreaterThan(0);
+      });
     });
 
     describe('Locale handling', () => {

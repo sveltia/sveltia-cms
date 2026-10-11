@@ -2,7 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Dialog, Spacer, VisibilityObserver } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { onMount, untrack } from 'svelte';
+  import { onMount, setContext, untrack } from 'svelte';
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import RemoveButton from '$lib/components/common/remove-button.svelte';
@@ -18,6 +18,7 @@
     getComponentDisplayValues,
   } from '$lib/services/contents/fields/rich-text/components/summary';
   import { getComponentThumbnail } from '$lib/services/contents/fields/rich-text/components/thumbnail';
+  import { getParentComponentNames } from '$lib/services/contents/fields/rich-text/components/utils';
   import { validateComponentValues } from '$lib/services/contents/fields/rich-text/components/validate';
   import {
     deleteKeysByPrefix,
@@ -32,6 +33,7 @@
    * @import {
    * DraftValueStoreKey,
    * EntryDraft,
+   * FieldEditorContext,
    * InternalLocaleCode,
    * MediaFieldSource,
    * TypedFieldKeyPath,
@@ -77,6 +79,27 @@
     },
     /* v8 ignore stop */
   });
+
+  /**
+   * Names of the components this one is nested in, the outermost first. They’re looked up through
+   * the DOM like the draft state, as the context doesn’t reach here, and handed down to the field
+   * editors below, so a rich text field among them knows every component it’s nested in.
+   * @type {string[]}
+   */
+  let parentComponentNames = $state.raw([]);
+
+  setContext(
+    'field-editor',
+    /** @type {FieldEditorContext} */ ({
+      /**
+       * Get the names of the components this one is nested in.
+       * @returns {string[]} Names.
+       */
+      get parentComponentNames() {
+        return parentComponentNames;
+      },
+    }),
+  );
 
   /**
    * @typedef {object} Props
@@ -145,6 +168,11 @@
    * in dialog mode.
    */
   const hasFields = $derived(fields.length > 0);
+  /**
+   * Names of this component and those it’s nested in, which the components nested in its fields
+   * read with {@link getParentComponentNames}.
+   */
+  const componentPath = $derived(JSON.stringify([...parentComponentNames, componentName]));
 
   /* v8 ignore start -- the key paths are resolved together once the component is in place */
   const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${fieldId}:`);
@@ -314,6 +342,8 @@
     window.requestAnimationFrame(() => {
       // Get the draft state, locale and key path from the closest containers
       entryDraft = getEntryDraftByElement(wrapper);
+      // Before the locale and key path, which render the field editors: they read the names once
+      parentComponentNames = getParentComponentNames(wrapper);
 
       const localeContainer = /** @type {HTMLElement} */ (wrapper?.closest('[data-locale]'));
       const keyPathContainer = /** @type {HTMLElement} */ (wrapper?.closest('[data-key-path]'));
@@ -486,7 +516,7 @@
         handleCancel();
       }}
     >
-      <div role="none" class="fields">
+      <div role="none" class="fields" data-component-path={componentPath}>
         {#if locale && keyPath}
           {@render fieldEditors({ typedPrefix: keyPathPrefix, observe: false })}
         {/if}
@@ -530,6 +560,7 @@
     aria-label={label}
     data-key-path-prefix={keyPathPrefix}
     data-component-name={componentName}
+    data-component-path={componentPath}
     onkeydowncapture={(event) => {
       const { target } = event;
 

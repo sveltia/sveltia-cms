@@ -114,7 +114,13 @@
     _draw.start();
     _draw.setMode(drawMode);
 
-    _draw.on('change', (_ids, changeType) => {
+    _draw.on('change', (_ids, changeType, context) => {
+      // Ignore the features added or removed by the editor itself, e.g. the stored value: rounding
+      // it would modify the entry as soon as it’s opened
+      if (context && 'origin' in context) {
+        return;
+      }
+
       // eslint-disable-next-line no-use-before-define
       onDrawChange(changeType);
     });

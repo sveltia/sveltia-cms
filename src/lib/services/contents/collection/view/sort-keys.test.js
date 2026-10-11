@@ -1282,4 +1282,37 @@ describe('Test sortKeys state', () => {
     selectedCollection.current = undefined;
     allEntries.current = [];
   });
+
+  test('marks a Number field key as a number, so the menu words its orders for one', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    /** @type {Record<string, any>} */
+    const fields = {
+      title: { name: 'title', widget: 'string' },
+      price: { name: 'price', label: 'Price', widget: 'number' },
+      code: { name: 'code', label: 'Code', widget: 'number', value_type: 'int/string' },
+    };
+
+    vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+    allEntries.current = [];
+    selectedCollection.current = /** @type {any} */ ({
+      name: 'products',
+      _type: 'entry',
+      folder: 'content/products',
+      sortable_fields: ['title', 'price', 'code'],
+      fields: Object.values(fields),
+      _i18n: { i18nEnabled: false },
+    });
+
+    // A Number field saving its value as a string is sorted as a string
+    expect(sortKeys.current).toEqual([
+      { key: 'title', label: 'title' },
+      { key: 'price', label: 'Price', type: 'number' },
+      { key: 'code', label: 'Code' },
+    ]);
+
+    // Clean up
+    selectedCollection.current = undefined;
+  });
 });

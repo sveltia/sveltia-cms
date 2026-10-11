@@ -213,6 +213,11 @@
    */
   const browsingCmsFolder = $derived(isDefaultLibrary && isCmsFolderPath(browsedPath));
   /**
+   * Whether nothing can be uploaded to the directory being browsed: one the CMS is served from, or
+   * one in a read-only folder, such as a read-only asset collection offered to every field.
+   */
+  const uploadDisabled = $derived(browsingCmsFolder || !!selectedFolder?.readonly);
+  /**
    * Assets right in the browsed directory. Dropped files go there, even during a search, so only
    * these can be replaced by one.
    */
@@ -327,8 +332,8 @@
    * @param {File[]} files File list.
    */
   const onDrop = async (files) => {
-    // The files in a folder the CMS itself is served from are read-only
-    if (browsingCmsFolder) {
+    // The files in a read-only folder, or one the CMS itself is served from, can’t be changed
+    if (uploadDisabled) {
       return;
     }
 
@@ -484,12 +489,9 @@
       review, so it’s not something an Open Authoring contributor or a user who can’t push to the
       branch can do, nor anyone within a read-only folder
     -->
-    {@render newFolderButton(
-      () => {
-        showNewFolderDialog = true;
-      },
-      assetsLocked.current || !!selectedFolder?.readonly || browsingCmsFolder,
-    )}
+    {@render newFolderButton(() => {
+      showNewFolderDialog = true;
+    }, assetsLocked.current || uploadDisabled)}
   {:else if isCloudLibrary && externalAssetsPanel?.canCreateFolder()}
     <!-- A folder on a cloud storage service is created by the service, not committed -->
     {@render newFolderButton(() => {
@@ -500,7 +502,7 @@
     <Button
       variant="primary"
       label={_('upload')}
-      disabled={browsingCmsFolder}
+      disabled={uploadDisabled}
       onclick={() => {
         filePicker?.open();
       }}

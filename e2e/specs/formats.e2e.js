@@ -218,3 +218,95 @@ test.describe('output options', () => {
       );
   });
 });
+
+test.describe('more output options', () => {
+  test.use({
+    config: {
+      backend: { name: 'test-repo' },
+      media_folder: 'static/images',
+      output: {
+        yaml: { quote: 'single', indent_sequences: false },
+        json: { indent_size: 4 },
+      },
+      collections: [
+        collection('pages', { extension: 'yml' }),
+        collection('posts'),
+        collection('data', { extension: 'json' }),
+        collection('jsonfm', { format: 'json-frontmatter' }),
+        // The deprecated option takes precedence over the global quote type
+        collection('legacy', { extension: 'yml', yaml_quote: true }),
+        collection('legacyfm', { yaml_quote: true }),
+      ],
+    },
+  });
+
+  test.beforeEach(async ({ cms }) => {
+    await cms.open();
+    await cms.signIn();
+  });
+
+  test('single-quotes YAML strings and leaves sequences unindented', async ({ cms, page }) => {
+    const editor = await createEntry(page, 'pages');
+
+    // A single quote in a value is doubled
+    await editor.getByRole('textbox', { name: 'Title' }).fill("Night Sky, Isn't It");
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/pages/night-sky-isn-t-it.yml'])
+      .toBe("title: 'Night Sky, Isn''t It'\ntags:\n- 'stars'\nbody: 'Look up.'\n");
+  });
+
+  test('formats YAML front matter the same way', async ({ cms, page }) => {
+    const editor = await createEntry(page, 'posts');
+
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/posts/night-sky.md'])
+      .toBe("---\ntitle: 'Night Sky'\ntags:\n- 'stars'\n---\n\nLook up.\n");
+  });
+
+  test('indents JSON with the configured number of spaces, also in front matter', async ({
+    cms,
+    page,
+  }) => {
+    let editor = await createEntry(page, 'data');
+
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/data/night-sky.json'])
+      .toBe(
+        '{\n    "title": "Night Sky",\n    "tags": [\n        "stars"\n    ],\n    "body": "Look up."\n}\n',
+      );
+
+    editor = await createEntry(page, 'jsonfm');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/jsonfm/night-sky.md'])
+      .toBe('{\n    "title": "Night Sky",\n    "tags": [\n        "stars"\n    ]\n}\n\nLook up.\n');
+  });
+
+  test('double-quotes YAML strings with the deprecated collection `yaml_quote`', async ({
+    cms,
+    page,
+  }) => {
+    let editor = await createEntry(page, 'legacy');
+
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    // The other YAML options still apply
+    await expect
+      .poll(async () => (await cms.readRepo())['content/legacy/night-sky.yml'])
+      .toBe('title: "Night Sky"\ntags:\n- "stars"\nbody: "Look up."\n');
+
+    editor = await createEntry(page, 'legacyfm');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/legacyfm/night-sky.md'])
+      .toBe('---\ntitle: "Night Sky"\ntags:\n- "stars"\n---\n\nLook up.\n');
+  });
+});

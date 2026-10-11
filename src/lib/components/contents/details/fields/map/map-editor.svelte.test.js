@@ -217,6 +217,15 @@ describe('MapEditor', () => {
     expect(container.querySelectorAll('.leaflet-30-pane path')).toHaveLength(1);
   });
 
+  test('doesn’t round or reformat a stored point', async () => {
+    const value = '{"type": "Point", "coordinates": [139.69171, 35.68951]}';
+    const { props, container } = await renderEditor({ decimals: 2 }, value);
+
+    await waitForMap(container);
+    await expect.poll(() => container.querySelectorAll('.leaflet-30-pane path').length).toBe(1);
+    expect(props.currentValue).toBe(value);
+  });
+
   test('fits the map to a line, which a searched location can’t replace', async () => {
     vi.mocked(searchLocations).mockResolvedValue([
       /** @type {any} */ ({ place_id: 1, display_name: 'Tokyo, Japan', lat: '35.7', lon: '139.7' }),

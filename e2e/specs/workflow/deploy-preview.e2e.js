@@ -205,6 +205,50 @@ test('opens the deploy preview from the card on the Editorial Workflow page', as
   );
 });
 
+test.describe('with `show_preview_links: false`', () => {
+  test.use({ config: { ...CONFIG, show_preview_links: false } });
+
+  test('offers neither the deploy preview nor the live site', async ({ cms, github, page }) => {
+    github.reportBuild(openSecondPostPullRequest(github), {
+      deployments: [
+        {
+          environment: 'Preview',
+          state: 'SUCCESS',
+          environmentUrl: 'https://pr-1.preview.example.com',
+        },
+      ],
+    });
+
+    // A missing link alone passes before a lookup could have shown one, so check that the CMS
+    // never asks for the deployments either
+    /** @type {string[]} */
+    const lookups = [];
+
+    page.on('request', (request) => {
+      if (request.postData()?.includes('deployments(')) {
+        lookups.push(request.url());
+      }
+    });
+
+    await cms.open();
+    await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
+
+    const card = page.getByRole('listitem').filter({ hasText: 'Second Post' });
+
+    await expect(card).toBeVisible();
+    await expect(card.getByRole('button', { name: 'View Preview' })).toHaveCount(0);
+    await card.click();
+
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+
+    await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Second Post');
+    await expect(
+      editor.getByRole('button', { name: /View Preview|View on Live Site/ }),
+    ).toHaveCount(0);
+    expect(lookups).toEqual([]);
+  });
+});
+
 test.describe('on GitLab', () => {
   test.use({
     config: {

@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  getParentComponentNames,
   getSelectorTagNames,
   isMultiLinePattern,
   isValidSelector,
@@ -269,5 +270,25 @@ describe('supportsHTML', () => {
     expect(supportsHTML({ ...def, ...htmlOptions, htmlSelector: undefined })).toBe(false);
     expect(supportsHTML({ ...def, ...htmlOptions, fromBlockHTML: undefined })).toBe(false);
     expect(supportsHTML({ ...def, ...htmlOptions, toBlockHTML: undefined })).toBe(false);
+  });
+});
+
+describe('getParentComponentNames', () => {
+  it('should read the names from the closest component’s fields, but not its own', () => {
+    // A YouTube component in a Details component, in a Callout component in a dialog: the dialog is
+    // rendered elsewhere, so only the elements holding the fields tell where a component is
+    document.body.innerHTML =
+      '<div data-component-path=\'["x-callout"]\'>' +
+      '<div data-component-path=\'["x-callout","x-details"]\'>' +
+      '<p><span id="youtube" data-component-path=\'["x-callout","x-details","x-youtube"]\'>' +
+      '</span></p></div></div>' +
+      '<span id="top" data-component-path=\'["x-image"]\'></span>';
+
+    expect(getParentComponentNames(document.querySelector('#youtube') ?? undefined)).toEqual([
+      'x-callout',
+      'x-details',
+    ]);
+    expect(getParentComponentNames(document.querySelector('#top') ?? undefined)).toEqual([]);
+    expect(getParentComponentNames(undefined)).toEqual([]);
   });
 });

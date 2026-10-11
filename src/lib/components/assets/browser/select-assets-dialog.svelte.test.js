@@ -279,8 +279,9 @@ describe('SelectAssetsDialog', () => {
       expect(dialog.getByRole('listbox', { name: 'Folders' }).elements()).toHaveLength(0);
     });
 
-    test('creates no folder within a read-only folder', async () => {
-      await renderDialog({
+    test('neither creates nor uploads anything within a read-only folder', async () => {
+      // A read-only asset collection is offered to every field, which can still pick from it
+      const { onSelect } = await renderDialog({
         assetLibraryFolderMap: {
           global: { folder: { ...globalAssetFolder.current, readonly: true }, enabled: true },
         },
@@ -289,6 +290,7 @@ describe('SelectAssetsDialog', () => {
       const dialog = page.getByRole('dialog', { name: 'Select Image' });
 
       await waitForGrid(2);
+      await expect.element(dialog.getByRole('button', { name: 'Upload' })).toBeDisabled();
       await dialog
         .getByRole('listbox', { name: 'Folders' })
         .getByRole('option', { name: '2024' })
@@ -296,6 +298,13 @@ describe('SelectAssetsDialog', () => {
       await waitForGrid(1);
 
       await expect.element(dialog.getByRole('button', { name: 'New Folder' })).toBeDisabled();
+      await expect.element(dialog.getByRole('button', { name: 'Upload' })).toBeDisabled();
+
+      // A dropped file is ignored rather than headed for the folder
+      dropFiles([await createMockImageFile({ name: 'index.png' })]);
+      await waitForGrid(1);
+      await expect.element(dialog.getByRole('button', { name: 'Insert' })).toBeDisabled();
+      expect(onSelect).not.toHaveBeenCalled();
     });
 
     test('neither creates nor uploads anything in a folder the CMS is served from', async () => {

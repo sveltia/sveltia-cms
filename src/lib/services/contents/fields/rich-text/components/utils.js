@@ -126,6 +126,21 @@ export const normalizeProps = (props) =>
   );
 
 /**
+ * Get the names of the rich text editor components the given component is nested in. Lexical mounts
+ * each component outside the Svelte component tree, so the names can’t come from the context; each
+ * component instead lists its own name and those of its parents in the `data-component-path`
+ * attribute of the element holding its fields, which this reads from the closest one.
+ * @param {Element | undefined} element Element of a component.
+ * @returns {string[]} Component names, the outermost first.
+ */
+export const getParentComponentNames = (element) => {
+  /** @type {HTMLElement | null | undefined} */
+  const container = element?.parentElement?.closest('[data-component-path]');
+
+  return container ? JSON.parse(/** @type {string} */ (container.dataset.componentPath)) : [];
+};
+
+/**
  * Replace double quotes with single quotes to avoid breaking Markdown syntax.
  * @param {string} str String to escape.
  * @returns {string} Escaped string.

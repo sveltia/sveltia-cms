@@ -11,7 +11,12 @@ import { isNumeric } from '$lib/services/utils/number';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { InternalEntryCollection, SortingConditions, SortOrder } from '$lib/types/private';
+ * @import {
+ * InternalEntryCollection,
+ * SortingConditions,
+ * SortKey,
+ * SortOrder,
+ * } from '$lib/types/private';
  * @import { Field, FieldKeyPath, NumberField } from '$lib/types/public';
  */
 
@@ -236,8 +241,9 @@ export const getSortKeyLabel = ({ collection, key }) => {
 /**
  * List of available sort keys for the selected entry collection. `getSortKeyLabel()` may return a
  * localized label, and it reads the current app locale, so the list is also recomputed when the
- * locale changes.
- * @type {{ readonly current: { key: string, label: string }[] }}
+ * locale changes. A key sorted as a number is marked as such, so that the sort menu words its
+ * orders for one, e.g. “small to large”.
+ * @type {{ readonly current: SortKey[] }}
  */
 export const sortKeys = createDerivedState(() => {
   const collection = selectedCollection.current;
@@ -255,5 +261,15 @@ export const sortKeys = createDerivedState(() => {
     isCommitDateAvailable: _allEntries.some((entry) => !!entry.commitDate),
   });
 
-  return keys.map((key) => ({ key, label: getSortKeyLabel({ collection, key }) }));
+  return keys.map((key) => {
+    const fieldConfig = getField({ collectionName: collection.name, keyPath: key });
+    /** @type {SortKey} */
+    const sortKey = { key, label: getSortKeyLabel({ collection, key }) };
+
+    if (getSortKeyType({ key, fieldConfig }) === Number) {
+      sortKey.type = 'number';
+    }
+
+    return sortKey;
+  });
 });
