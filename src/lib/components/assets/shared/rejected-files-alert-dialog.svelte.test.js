@@ -44,6 +44,52 @@ describe('RejectedFilesAlertDialog', () => {
       .toBeVisible();
   });
 
+  test('names the accepted types for the files of another type', async () => {
+    const { component } = await render(RejectedFilesAlertDialog, {
+      maxSize: Infinity,
+      accept: '.pdf, .txt',
+    });
+
+    component.report({
+      oversizedFileNames: [],
+      invalidFileNames: [],
+      mismatchedFileNames: ['kite.png'],
+    });
+
+    const dialog = page.getByRole('alertdialog', { name: 'Unsupported File Type' });
+
+    await expect
+      .element(dialog)
+      .toMatchTextContent(
+        'This file cannot be uploaded because it’s not one of the following types: \u2068.pdf or .txt\u2069.',
+      );
+    expect([...dialog.element().querySelectorAll('li')].map((li) => li.textContent)).toEqual([
+      'kite.png',
+    ]);
+  });
+
+  test('names the accepted image types as formats', async () => {
+    const { component } = await render(RejectedFilesAlertDialog, {
+      maxSize: 1024,
+      accept: 'image/avif,image/gif,image/jpeg,image/png,image/webp,image/svg+xml',
+    });
+
+    component.report({
+      oversizedFileNames: ['huge.png'],
+      invalidFileNames: [],
+      mismatchedFileNames: ['notes.txt', 'data.csv'],
+    });
+
+    const dialog = page.getByRole('alertdialog', { name: 'Files Cannot Be Uploaded' });
+
+    await expect
+      .element(dialog)
+      .toMatchTextContent(
+        'These files cannot be uploaded because only images of the following types are accepted: ' +
+          '\u2068AVIF, GIF, JPEG, PNG, WebP, or SVG\u2069.',
+      );
+  });
+
   test('stays closed without rejected files', async () => {
     const { component } = await render(RejectedFilesAlertDialog, { maxSize: 1024 });
 

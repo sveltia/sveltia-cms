@@ -33,6 +33,8 @@ import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-
  * @typedef {object} RejectedFileNames
  * @property {string[]} oversizedFileNames Names of the files that exceed the size limit.
  * @property {string[]} invalidFileNames Names of the files that cannot be decoded.
+ * @property {string[]} [mismatchedFileNames] Names of the files that are not one of the accepted
+ * file types, even once transformed.
  */
 
 /**
@@ -91,16 +93,17 @@ export const getMediaFieldAssetOptions = ({
  * @param {SelectedResource[]} args.resources Resources. A missing `folder` is filled in.
  * @param {AssetFolderInfo | undefined} args.folder Default folder for uploads.
  * @param {DefaultMediaLibraryConfig} args.libraryConfig Default media library configuration.
+ * @param {string} [args.accept] File types a file to be uploaded is checked against once processed.
  * @returns {Promise<ProcessResourceResult[]>} Results, in the same order as the resources.
  */
-export const processResources = ({ draft, resources, folder, libraryConfig }) =>
+export const processResources = ({ draft, resources, folder, libraryConfig, accept }) =>
   Promise.all(
     resources.map((resource) => {
       if (resource.file && !resource.folder) {
         resource.folder = folder;
       }
 
-      return processResource({ draft, resource, libraryConfig });
+      return processResource({ draft, resource, libraryConfig, accept });
     }),
   );
 
@@ -112,6 +115,7 @@ export const processResources = ({ draft, resources, folder, libraryConfig }) =>
 export const getRejectedFileNames = (results) => ({
   oversizedFileNames: results.flatMap(({ oversizedFileName }) => oversizedFileName ?? []),
   invalidFileNames: results.flatMap(({ invalidFileName }) => invalidFileName ?? []),
+  mismatchedFileNames: results.flatMap(({ mismatchedFileName }) => mismatchedFileName ?? []),
 });
 
 /**

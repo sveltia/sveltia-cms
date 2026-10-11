@@ -11,6 +11,7 @@ import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { createPublicURL, getAssetFolderPaths } from '$lib/services/contents/draft/save/assets';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getEntryFolderPath } from '$lib/services/contents/entry/paths';
+import { isAcceptedFile } from '$lib/services/integrations/media-libraries/default';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { createPath, getDirName } from '$lib/services/utils/file';
 import { decodeURISafely } from '$lib/services/utils/url';
@@ -354,20 +355,28 @@ export const resolveUnsavedAssetPaths = ({ savedAssets, unsavedAssets, slugifica
 };
 
 /**
- * Get the list of assets to show in the asset library, filtered by the selected folder and kind.
+ * Get the list of assets to show in the asset library, filtered by the selected folder, kind and
+ * accepted file types.
  * @param {object} args Arguments.
  * @param {'image' | undefined} args.kind Asset kind.
+ * @param {string} [args.accept] File types the field accepts, as given by `getAcceptedFileTypes()`.
+ * An existing file is never transformed, so one of another type can’t be used.
  * @param {AssetFolderInfo | undefined} args.folder Selected folder.
  * @param {string | undefined} args.folderPath Target folder path.
  * @param {Asset[]} args.unsavedAssets Unsaved assets.
+ * @param {File[]} [args.uncheckedFiles] Files just dropped or picked in the asset selection dialog.
+ * Their assets are listed whatever their kind and type: a file is only checked once it’s processed,
+ * as a transformation can change its format.
  * @param {boolean} [args.slugificationEnabled] Whether the file names are slugified on upload.
  * @returns {Asset[]} List of assets to show in the asset library.
  */
 export const listAssets = ({
   kind,
+  accept,
   folder,
   folderPath,
   unsavedAssets,
+  uncheckedFiles = [],
   slugificationEnabled = false,
 }) => {
   /**
@@ -385,7 +394,12 @@ export const listAssets = ({
 
   return (
     [...resolved.unsavedAssets, ...resolved.savedAssets]
-      .filter((asset) => !kind || kind === asset.kind)
+      .filter(
+        (asset) =>
+          (!!asset.file && uncheckedFiles.includes(asset.file)) ||
+          // An asset’s `type` property isn’t a MIME type, so the file name alone gives one
+          ((!kind || kind === asset.kind) && isAcceptedFile({ name: asset.name }, accept)),
+      )
       .sort((a, b) => a.name.localeCompare(b.name))
       // Unsaved assets should go first
       .sort((a, b) => Number(!!b.unsaved) - Number(!!a.unsaved))

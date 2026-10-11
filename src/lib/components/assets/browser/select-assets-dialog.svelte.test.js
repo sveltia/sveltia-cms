@@ -825,6 +825,40 @@ describe('SelectAssetsDialog', () => {
     expect(onSelect.mock.calls[0][0][0].file).toBe(file);
   });
 
+  test('lists only the existing files of the accepted types, but any dropped file', async () => {
+    const { onSelect } = await renderDialog({
+      kind: undefined,
+      accept: '.txt',
+      fieldConfig: { name: 'file', widget: 'file', accept: '.txt' },
+    });
+
+    const dialog = page.getByRole('dialog', { name: 'Select File' });
+
+    // An existing file is never transformed, so one of another type can’t be used
+    await waitForGrid(1);
+    await expect.element(getOption(assets[2].path)).toBeInTheDocument();
+
+    // A dropped file is only checked once inserted and processed, as a transformation can change
+    // its format, so it’s listed and selected anyway
+    const file = await createMockImageFile({ name: 'kite.png' });
+
+    dropFiles([file]);
+    await waitForGrid(2);
+    await dialog.getByRole('button', { name: 'Insert' }).click();
+    await vi.waitFor(() =>
+      expect(onSelect).toHaveBeenCalledWith([
+        { file, folder: globalAssetFolder.current, subfolderPath: '', replace: false },
+      ]),
+    );
+  });
+
+  test('lists a dropped file of another kind in the Select Image dialog', async () => {
+    await renderDialog({ accept: 'image/png' });
+    await waitForGrid(2);
+    dropFiles([new File(['x'], 'notes.txt', { type: 'text/plain' })]);
+    await waitForGrid(3);
+  });
+
   test('ignores the unsaved assets of an earlier draft state that are read late', async () => {
     const draft = $state({ originalEntry: undefined, files: /** @type {any} */ ({}) });
     /** @type {((assets: any[]) => void)[]} */

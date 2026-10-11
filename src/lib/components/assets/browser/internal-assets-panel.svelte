@@ -77,7 +77,19 @@
   });
 </script>
 
-<DropZone bind:this={dropZone} disabled={selectFolder} {multiple} {accept} {onDrop}>
+<!--
+  Dropped files are not filtered by `accept` here, just like the files chosen with the Upload
+  button: the field checks the format once the inserted files have been processed, which is the
+  only point a transformation could have changed it.
+-->
+<DropZone
+  bind:this={dropZone}
+  disabled={selectFolder}
+  {multiple}
+  {accept}
+  filterDroppedFiles={false}
+  {onDrop}
+>
   <div role="none" class="wrapper">
     <PickerBreadcrumb rootLabel={folderLabel} path={subfolderPath} {onNavigate} />
     <div role="none" class="panel">

@@ -146,6 +146,7 @@
         componentName,
         inEditorComponent,
         resources,
+        accept,
       });
 
       rejectedFilesAlert?.report(rejected);
@@ -193,5 +194,5 @@
 
   <ConflictResolutionDialog />
 
-  <RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} />
+  <RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} {accept} />
 {/if}

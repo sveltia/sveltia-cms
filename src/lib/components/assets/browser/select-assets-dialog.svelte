@@ -189,12 +189,16 @@
   const slugificationEnabled = $derived(
     getDefaultMediaLibraryOptions({ fieldConfig }).config.slugify_filename,
   );
+  // Existing files are limited to the accepted types, while the files dropped or picked here are
+  // only checked once inserted and processed, as a transformation can change their format
   const listedAssets = $derived(
     listAssets({
       kind,
+      accept,
       folder: selectedFolder,
       folderPath: targetFolderPath,
       unsavedAssets,
+      uncheckedFiles: droppedAssets.map(({ file }) => /** @type {File} */ (file)),
       slugificationEnabled,
     }),
   );

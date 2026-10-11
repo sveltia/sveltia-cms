@@ -283,6 +283,7 @@ describe('contents/fields/custom/files', () => {
         files: [{ value: '/photos/a.webp', file: blob, credit: undefined }],
         oversizedFileNames: [],
         invalidFileNames: [],
+        mismatchedFileNames: [],
       });
 
       expect(processResource).toHaveBeenCalledWith({ draft, resource: { asset }, libraryConfig });
@@ -427,6 +428,7 @@ describe('contents/fields/custom/files', () => {
         files: [{ value: 'https://example.com/a.png', file: undefined, credit: undefined }],
         oversizedFileNames: [],
         invalidFileNames: [],
+        mismatchedFileNames: [],
       });
       expect(getAssetBlob).not.toHaveBeenCalled();
     });
@@ -464,7 +466,38 @@ describe('contents/fields/custom/files', () => {
         files: [{ value: 'blob:good.webp', file: undefined, credit: undefined }],
         oversizedFileNames: ['big.webp'],
         invalidFileNames: ['bad.webp'],
+        mismatchedFileNames: [],
       });
+    });
+
+    it('checks the files against the accepted types and reports the mismatched ones', async () => {
+      const kite = new File(['x'], 'kite.png', { type: 'image/png' });
+
+      vi.mocked(processResource).mockResolvedValue({
+        value: undefined,
+        credit: '',
+        oversizedFileName: undefined,
+        invalidFileName: undefined,
+        mismatchedFileName: 'kite.png',
+      });
+
+      await expect(
+        resolvePickedResources({
+          draft,
+          fieldConfig,
+          typedKeyPath: 'photo',
+          resources: [{ file: kite }],
+          accept: '.pdf',
+        }),
+      ).resolves.toEqual({
+        files: [],
+        oversizedFileNames: [],
+        invalidFileNames: [],
+        mismatchedFileNames: ['kite.png'],
+      });
+      expect(processResource).toHaveBeenCalledWith(
+        expect.objectContaining({ libraryConfig, accept: '.pdf' }),
+      );
     });
 
     it('rejects when the bytes of a picked asset cannot be retrieved', async () => {

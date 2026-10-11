@@ -75,7 +75,7 @@ const getField = (page, label) =>
     .getByRole('group', { name: `“\u2068${label}\u2069” Field` });
 
 /**
- * Check that a file dropped on a field is refused with the given message, and nothing is added.
+ * Check that a file added to a field is refused with the given message, and nothing is added.
  * @param {Page} page Page.
  * @param {Locator} field Field group.
  * @param {string} message Message of the alert dialog.
@@ -125,7 +125,7 @@ test('refuses a dropped file of another type', async ({ cms, page }) => {
   await expectRefused(
     page,
     document,
-    'The dropped file is not one of the following types: \u2068.pdf or .txt\u2069. Please try again.',
+    'This file cannot be uploaded because it’s not one of the following types: \u2068.pdf or .txt\u2069.',
   );
 
   // A MIME type is matched against the type the browser gives the file
@@ -137,7 +137,7 @@ test('refuses a dropped file of another type', async ({ cms, page }) => {
   await expectRefused(
     page,
     photo,
-    'The dropped file is not one of the following types: \u2068image/png\u2069. Please try again.',
+    'This file cannot be uploaded because it’s not one of the following types: \u2068image/png\u2069.',
   );
 
   // The default types of an Image field are named as formats
@@ -147,8 +147,8 @@ test('refuses a dropped file of another type', async ({ cms, page }) => {
   await expectRefused(
     page,
     cover,
-    'The dropped file is not supported. Only an image of the following types is accepted: ' +
-      '\u2068AVIF, GIF, JPEG, PNG, WebP, or SVG\u2069. Please try again.',
+    'This file cannot be uploaded because only an image of the following types is accepted: ' +
+      '\u2068AVIF, GIF, JPEG, PNG, WebP, or SVG\u2069.',
   );
 
   await page
@@ -197,30 +197,40 @@ test('refuses a file of another type dropped in the Select File dialog', async (
   await expect(list.getByRole('option').first()).toBeVisible();
   await cms.dropFiles(list, [{ name: 'kite.png', buffer: createPNG({ color: [255, 255, 0] }) }]);
 
-  const alert = page.getByRole('alertdialog', { name: 'Unsupported File Type' });
-
-  await expect(alert).toContainText(
-    'The dropped file is not one of the following types: \u2068.pdf or .txt\u2069. Please try again.',
+  // The file is only checked once inserted, as a transformation could change its format
+  await expect(list.getByRole('option', { name: /kite\.png/ })).toHaveAttribute(
+    'aria-selected',
+    'true',
   );
-  await alert.getByRole('button', { name: 'OK' }).click();
-  await expect(list.getByRole('option', { name: 'kite.png' })).toHaveCount(0);
-  await expect(dialog.getByRole('button', { name: 'Insert' })).toBeDisabled();
+  await dialog.getByRole('button', { name: 'Insert' }).click();
+  await expect(dialog).toBeHidden();
+  await expectRefused(
+    page,
+    getField(page, 'Document'),
+    'This file cannot be uploaded because it’s not one of the following types: \u2068.pdf or .txt\u2069.',
+  );
+
+  await page
+    .getByRole('group', { name: 'Content Editor' })
+    .getByRole('button', { name: 'Save' })
+    .click();
+  await expect
+    .poll(async () => (await cms.readRepo())['content/notes/memo.md'])
+    .toBe("---\ntitle: Memo\ndocument: ''\nphoto: ''\ncover: ''\n---\n");
+  expect(await cms.readRepoFile('static/uploads/kite.png')).toBeUndefined();
 });
 
-test('lists existing files of any type in the Select File dialog (known issue)', async ({
+test('lists only existing files of the accepted types in the Select File dialog', async ({
   page,
 }) => {
-  // Known issue: `accept` only applies to new files, so an existing file of another type can still
-  // be picked from the dialog, and an Image field limited to PNG images lists an SVG image. Once
-  // the dialog filters the files by `accept` too, expect only `guide.pdf` and `readme.txt` for the
-  // File field, and only `sunset.png` for the Image field
+  // An existing file is never transformed, so one of another type can’t be used
   await getField(page, 'Document').getByRole('button', { name: 'Browse' }).click();
 
   const fileDialog = page.getByRole('dialog', { name: 'Select File' });
 
   await expect(
     fileDialog.getByRole('listbox', { name: 'Available Files' }).getByRole('option'),
-  ).toHaveText([/guide\.pdf/, /logo\.svg/, /readme\.txt/, /sunset\.png/]);
+  ).toHaveText([/guide\.pdf/, /readme\.txt/]);
   await page.keyboard.press('Escape');
   await expect(fileDialog).toBeHidden();
 
@@ -230,32 +240,123 @@ test('lists existing files of any type in the Select File dialog (known issue)',
 
   await expect(
     imageDialog.getByRole('listbox', { name: 'Available Images' }).getByRole('option'),
-  ).toHaveText(['logo.svg', 'sunset.png']);
+  ).toHaveText(['sunset.png']);
 });
 
-test('takes a file of another type chosen in the file picker (known issue)', async ({
-  cms,
-  page,
-}) => {
-  // Known issue: the type of a file chosen in the browser’s file picker isn’t checked, as the
-  // `accept` attribute is taken to narrow the picker, while a picker can still offer every file,
-  // like the “All Files” filter on Windows. Once it’s checked like a dropped file, expect the
-  // Unsupported File Type dialog and an empty field
-  const kite = createPNG({ color: [255, 255, 0] });
+test('refuses a file of another type chosen in the file picker', async ({ cms, page }) => {
+  // The `accept` attribute narrows the picker, while a picker can still offer every file, like the
+  // “All Files” filter on Windows
+  const document = getField(page, 'Document');
+  const kite = { name: 'kite.png', mimeType: 'image/png', buffer: createPNG({ color: [0, 0, 0] }) };
 
-  await getField(page, 'Document')
-    .locator('input[type="file"]')
-    .first()
-    .setInputFiles({ name: 'kite.png', mimeType: 'image/png', buffer: kite });
-  await expect(getField(page, 'Document').getByRole('textbox', { name: 'Document' })).toHaveText(
-    '/uploads/kite.png',
-  );
+  const message =
+    'This file cannot be uploaded because it’s not one of the following types: \u2068.pdf or .txt\u2069.';
+
+  await document.locator('input[type="file"]').first().setInputFiles(kite);
+  await expectRefused(page, document, message);
+
+  // The same goes for the Upload button in the Select File dialog, once the file is inserted
+  await document.getByRole('button', { name: 'Browse' }).click();
+
+  const dialog = page.getByRole('dialog', { name: 'Select File' });
+
+  const [chooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    dialog.getByRole('button', { name: 'Upload' }).click(),
+  ]);
+
+  await chooser.setFiles(kite);
+  await expect(
+    dialog.getByRole('listbox', { name: 'Available Files' }).getByRole('option', {
+      name: /kite\.png/,
+    }),
+  ).toHaveAttribute('aria-selected', 'true');
+  await dialog.getByRole('button', { name: 'Insert' }).click();
+  await expectRefused(page, document, message);
+
   await page
     .getByRole('group', { name: 'Content Editor' })
     .getByRole('button', { name: 'Save' })
     .click();
   await expect
     .poll(async () => (await cms.readRepo())['content/notes/memo.md'])
-    .toBe("---\ntitle: Memo\ndocument: /uploads/kite.png\nphoto: ''\ncover: ''\n---\n");
-  expect(await cms.readRepoFile('static/uploads/kite.png')).toEqual(kite);
+    .toBe("---\ntitle: Memo\ndocument: ''\nphoto: ''\ncover: ''\n---\n");
+  expect(await cms.readRepoFile('static/uploads/kite.png')).toBeUndefined();
+});
+
+test.describe('with a transformation', () => {
+  // The Photo field takes WebP images only, and PNG images are converted to WebP on upload
+  test.use({
+    config: {
+      ...CONFIG,
+      collections: CONFIG.collections.map((collection) => ({
+        ...collection,
+        fields: collection.fields.map((field) =>
+          field.name === 'photo'
+            ? {
+                ...field,
+                accept: 'image/webp',
+                media_libraries: {
+                  default: { config: { transformations: { raster_image: { format: 'webp' } } } },
+                },
+              }
+            : field,
+        ),
+      })),
+    },
+  });
+
+  test('takes a file of another type that is converted to an accepted one', async ({
+    cms,
+    page,
+  }) => {
+    const photo = getField(page, 'Photo');
+
+    // Checked once converted, whether dropped or picked
+    await cms.dropFiles(photo, [{ name: 'kite.png', buffer: createPNG({ color: [255, 255, 0] }) }]);
+    await expect(photo.getByRole('button', { name: 'Replace Image' })).toBeVisible();
+    await expect(page.getByRole('alertdialog')).toBeHidden();
+
+    await page
+      .getByRole('group', { name: 'Content Editor' })
+      .getByRole('button', { name: 'Save' })
+      .click();
+    await expect
+      .poll(async () => (await cms.readRepo())['content/notes/memo.md'])
+      .toBe("---\ntitle: Memo\ndocument: ''\nphoto: /uploads/kite.webp\ncover: ''\n---\n");
+
+    const webp = await cms.readRepoFile('static/uploads/kite.webp');
+
+    expect(webp?.subarray(8, 12).toString('ascii')).toBe('WEBP');
+    expect(await cms.readRepoFile('static/uploads/kite.png')).toBeUndefined();
+  });
+
+  test('takes a picked file of another type that is converted to an accepted one', async ({
+    cms,
+    page,
+  }) => {
+    const photo = getField(page, 'Photo');
+
+    await photo
+      .locator('input[type="file"]')
+      .first()
+      .setInputFiles({
+        name: 'moth.png',
+        mimeType: 'image/png',
+        buffer: createPNG({ color: [0, 128, 255] }),
+      });
+    await expect(photo.getByRole('button', { name: 'Replace Image' })).toBeVisible();
+    await expect(page.getByRole('alertdialog')).toBeHidden();
+
+    await page
+      .getByRole('group', { name: 'Content Editor' })
+      .getByRole('button', { name: 'Save' })
+      .click();
+    await expect
+      .poll(async () => (await cms.readRepo())['content/notes/memo.md'])
+      .toBe("---\ntitle: Memo\ndocument: ''\nphoto: /uploads/moth.webp\ncover: ''\n---\n");
+    expect((await cms.readRepoFile('static/uploads/moth.webp'))?.subarray(8, 12).toString()).toBe(
+      'WEBP',
+    );
+  });
 });

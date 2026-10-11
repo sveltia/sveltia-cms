@@ -98,11 +98,17 @@ describe('processResources', () => {
       { url: 'https://example.com/a.png' },
     ]);
 
-    const results = await processResources({ draft, resources, folder, libraryConfig });
+    const accept = 'image/png';
+    const results = await processResources({ draft, resources, folder, libraryConfig, accept });
 
     expect(resources.map((resource) => resource.folder)).toEqual([folder, ownFolder, undefined]);
     expect(processResource).toHaveBeenCalledTimes(3);
-    expect(processResource).toHaveBeenCalledWith({ draft, resource: resources[0], libraryConfig });
+    expect(processResource).toHaveBeenCalledWith({
+      draft,
+      resource: resources[0],
+      libraryConfig,
+      accept,
+    });
     expect(results.map(({ value }) => value)).toEqual([
       'blob:x',
       'blob:x',
@@ -112,14 +118,25 @@ describe('processResources', () => {
 });
 
 describe('getRejectedFileNames', () => {
-  test('collects the names of the oversized and invalid files', () => {
+  test('collects the names of the oversized, invalid and mismatched files', () => {
     expect(
       getRejectedFileNames([
         { value: 'a', credit: '', oversizedFileName: undefined, invalidFileName: undefined },
         { value: undefined, credit: '', oversizedFileName: 'b.png', invalidFileName: undefined },
         { value: undefined, credit: '', oversizedFileName: undefined, invalidFileName: 'c.png' },
+        {
+          value: undefined,
+          credit: '',
+          oversizedFileName: undefined,
+          invalidFileName: undefined,
+          mismatchedFileName: 'd.png',
+        },
       ]),
-    ).toEqual({ oversizedFileNames: ['b.png'], invalidFileNames: ['c.png'] });
+    ).toEqual({
+      oversizedFileNames: ['b.png'],
+      invalidFileNames: ['c.png'],
+      mismatchedFileNames: ['d.png'],
+    });
   });
 });
 

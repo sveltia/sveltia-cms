@@ -553,6 +553,77 @@ describe('FileEditor', () => {
     expect(getAccept(convertingContainer)).toContain('image/heic');
   });
 
+  test('refuses a file of another type, whether dropped or picked', async () => {
+    const { draft, props, container } = await renderEditor(
+      { name: 'file', widget: 'file', accept: '.pdf, .txt' },
+      '',
+      {},
+      { keyPath: 'file', typedKeyPath: 'file', fieldId: 'file' },
+    );
+
+    const dialog = page.getByRole('alertdialog', { name: 'Unsupported File Type' });
+
+    /**
+     * Check that the file is refused and the field is left alone.
+     */
+    const expectRefused = async () => {
+      await expect
+        .element(dialog)
+        .toMatchTextContent(
+          'This file cannot be uploaded because it’s not one of the following types: \u2068.pdf or .txt\u2069.',
+        );
+      expect(dialog.element().querySelector('li')?.textContent).toBe('kite.png');
+      await dialog.getByRole('button', { name: 'OK' }).click();
+      await expect.poll(() => page.getByRole('alertdialog').elements().length).toBe(0);
+      expect(props.currentValue).toBe('');
+      expect(draft.files).toEqual({});
+    };
+
+    /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+      createDropEvent([await createMockImageFile({ name: 'kite.png' })]),
+    );
+    await expectRefused();
+
+    // A file picker can offer every file, like the “All Files” filter on Windows
+    const input = /** @type {HTMLInputElement} */ (container.querySelector('input[type="file"]'));
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.items.add(await createMockImageFile({ name: 'kite.png' }));
+    input.files = dataTransfer.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    await expectRefused();
+  });
+
+  test('checks the type of a file once it is transformed', async () => {
+    await initTestConfig({
+      media_libraries: {
+        default: { config: { transformations: { png: { format: 'webp', quality: 80 } } } },
+      },
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          fields: [{ name: 'image', widget: 'image' }],
+        },
+      ],
+    });
+
+    const { draft, props, container } = await renderEditor({ accept: 'image/webp' }, '');
+
+    // A PNG image converted to WebP fits a field only taking WebP images
+    /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+      createDropEvent([await createMockImageFile({ name: 'kite.png' })]),
+    );
+
+    await expect.poll(() => props.currentValue).toMatch(/^blob:/);
+    expect(draft.files[props.currentValue].file).toMatchObject({
+      name: 'kite.webp',
+      type: 'image/webp',
+    });
+    expect(page.getByRole('alertdialog').elements()).toHaveLength(0);
+  });
+
   test('reports a file that is too large', async () => {
     await initTestConfig({
       media_libraries: { all: { max_file_size: 10 } },

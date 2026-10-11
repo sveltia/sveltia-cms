@@ -38,6 +38,8 @@ import {
  * @property {CustomFieldPickedFile[]} files Usable resources, in the order they were selected.
  * @property {string[]} oversizedFileNames Names of the files that exceed the size limit.
  * @property {string[]} invalidFileNames Names of the files that cannot be decoded.
+ * @property {string[]} [mismatchedFileNames] Names of the files that are not one of the accepted
+ * file types, even once transformed.
  */
 
 /**
@@ -175,11 +177,16 @@ const getPickedBlob = async ({ draft, typedKeyPath, componentName, resource, val
  * Resolve the resources picked in the Select Assets dialog on behalf of a custom field control.
  * Each resource is processed the way a built-in File/Image field would: an existing asset is
  * resolved to its public path, a file to be uploaded is cached in the draft and given a temporary
- * blob URL, and a URL is used as is. Files that are oversized or cannot be decoded are reported
- * separately, so the caller can show them the way a File/Image field does.
- * @param {CustomFieldArgs & { inEditorComponent?: boolean, resources: SelectedResource[] }} args
- * Arguments, including the resources picked in the dialog and whether the field is rendered in a
- * rich text editor component.
+ * blob URL, and a URL is used as is. Files that are oversized, cannot be decoded or are not one of
+ * the accepted types are reported separately, so the caller can show them the way a File/Image
+ * field does.
+ * @param {CustomFieldArgs & {
+ * inEditorComponent?: boolean,
+ * resources: SelectedResource[],
+ * accept?: string,
+ * }} args Arguments, including the resources picked in the dialog, whether the field is rendered in
+ * a rich text editor component, and the file types a file to be uploaded is checked against once
+ * processed.
  * @returns {Promise<PickedResourcesResult>} Result.
  * @throws {Error} When the bytes of a picked asset cannot be retrieved.
  */
@@ -190,6 +197,7 @@ export const resolvePickedResources = async ({
   componentName,
   inEditorComponent = false,
   resources,
+  accept,
 }) => {
   const { folder, libraryConfig } = getCustomFieldAssetOptions({
     draft,
@@ -198,7 +206,7 @@ export const resolvePickedResources = async ({
     componentName,
   });
 
-  const results = await processResources({ draft, resources, folder, libraryConfig });
+  const results = await processResources({ draft, resources, folder, libraryConfig, accept });
 
   const files = await Promise.all(
     results.map(async ({ value, credit }, index) =>

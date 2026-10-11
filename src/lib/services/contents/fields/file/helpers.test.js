@@ -46,7 +46,7 @@ vi.mock('$lib/services/contents/draft/save/assets', async (importOriginal) => ({
 const { getAssetFolder } = await import('$lib/services/assets/folders');
 const { allAssetFolders } = await import('$lib/services/assets/folders');
 const { getHash } = await import('@sveltia/utils/crypto');
-const { getPathInfo } = await import('@sveltia/utils/file');
+const { getPathInfo, isValidFileType } = await import('@sveltia/utils/file');
 const { default: equal } = await import('fast-deep-equal');
 const { fillInternalPathTemplate } = await import('$lib/services/assets');
 const { allAssets } = await import('$lib/services/assets/state');
@@ -54,9 +54,8 @@ const { getSlugs } = await import('$lib/services/contents/draft/slugs');
 const { getPendingFileName } = await import('$lib/services/assets/name');
 const { getAssetFolderPaths } = await import('$lib/services/contents/draft/save/assets');
 
-const { getPathInfo: getActualPathInfo } = /** @type {any} */ (
-  await vi.importActual('@sveltia/utils/file')
-);
+const { getPathInfo: getActualPathInfo, isValidFileType: isActualValidFileType } =
+  /** @type {any} */ (await vi.importActual('@sveltia/utils/file'));
 
 describe('contents/fields/file/helpers', () => {
   beforeEach(() => {
@@ -1476,6 +1475,7 @@ describe('contents/fields/file/helpers', () => {
       allAssets.current = [];
       // `listAssets` resolves unsaved asset paths, which needs the real path parser
       vi.mocked(getPathInfo).mockImplementation(getActualPathInfo);
+      vi.mocked(isValidFileType).mockImplementation(isActualValidFileType);
     });
 
     it('should return empty array when there are no assets', () => {
@@ -1553,6 +1553,58 @@ describe('contents/fields/file/helpers', () => {
       });
 
       expect(result).toHaveLength(2);
+    });
+
+    it('should only include the assets of the accepted file types', () => {
+      allAssets.current = [
+        makeAsset('guide.PDF', 'document'),
+        makeAsset('readme.txt', 'document'),
+        // A scanned asset has a `type` that isn’t a MIME type
+        /** @type {any} */ ({ ...makeAsset('sunset.png'), type: 'asset' }),
+        makeAsset('logo.svg'),
+      ];
+
+      /**
+       * List the asset names.
+       * @param {string | undefined} accept Accepted file types.
+       * @param {'image'} [kind] Asset kind.
+       * @returns {string[]} Names.
+       */
+      const list = (accept, kind) =>
+        listAssets({
+          kind,
+          accept,
+          folder,
+          folderPath: 'content/posts/images',
+          unsavedAssets: [makeAsset('draft.png')],
+        }).map(({ name }) => name);
+
+      // Matched by extension in any case, or by the MIME type of the extension
+      expect(list('.pdf, .txt')).toEqual(['guide.PDF', 'readme.txt']);
+      expect(list('image/png', 'image')).toEqual(['draft.png', 'sunset.png']);
+      expect(list('image/*')).toEqual(['draft.png', 'logo.svg', 'sunset.png']);
+      expect(list(undefined)).toHaveLength(5);
+    });
+
+    it('should list the unchecked files whatever their kind and type', () => {
+      const dropped = makeAsset('kite.png');
+      const droppedText = makeAsset('notes.txt', 'document');
+      const pending = makeAsset('draft.png');
+
+      dropped.file = new File([''], 'kite.png');
+      droppedText.file = new File([''], 'notes.txt');
+      pending.file = new File([''], 'draft.png');
+
+      const result = listAssets({
+        kind: 'image',
+        accept: 'image/webp',
+        folder,
+        folderPath: 'content/posts/images',
+        unsavedAssets: [dropped, droppedText, pending],
+        uncheckedFiles: [dropped.file, droppedText.file],
+      });
+
+      expect(result.map(({ name }) => name)).toEqual(['kite.png', 'notes.txt']);
     });
 
     it('should sort assets alphabetically by name', () => {

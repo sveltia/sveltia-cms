@@ -141,9 +141,12 @@
   const targetFolderPath = $derived(
     getTargetFolderPath({ entry: entryDraft.current?.originalEntry, folder: targetFolder }),
   );
+  // The existing files a dropped one could replace. One of another type isn’t listed: a dropped
+  // file of that type is refused, unless a transformation gives it another name
   const listedAssets = $derived(
     listAssets({
       kind,
+      accept: acceptedTypes,
       folder: targetFolder,
       folderPath: targetFolderPath,
       unsavedAssets,
@@ -231,6 +234,7 @@
         resources: selectedResources,
         folder: targetFolder,
         libraryConfig,
+        accept: acceptedTypes,
       });
 
       const values = resources.flatMap(({ value }) => value ?? []);
@@ -460,12 +464,16 @@
   <!--
     The drop zone is disabled while an item is being reordered: a reorder drag carries no file, so
     letting it land anywhere outside the item list would only report an unsupported file type.
+    Dropped files are not filtered by `accept` here, just like the files chosen in the file picker:
+    `processResources()` checks the format once the files have been processed, which is the only
+    point a transformation could have changed it. The attribute still narrows the file picker.
   -->
   <DropZone
     bind:this={dropZone}
     {multiple}
     disabled={readonly || sorter.dragIndex !== undefined}
     accept={acceptedTypes}
+    filterDroppedFiles={false}
     {onDrop}
   >
     {@render content()}
@@ -491,7 +499,7 @@
 
 <ConflictResolutionDialog />
 
-<RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} />
+<RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} accept={acceptedTypes} />
 
 <ConfirmationDialog
   bind:open={showPhotoCreditDialog}

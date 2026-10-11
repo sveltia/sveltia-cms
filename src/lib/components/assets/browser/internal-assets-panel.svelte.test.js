@@ -152,6 +152,26 @@ describe('InternalAssetsPanel', () => {
     await vi.waitFor(() => expect(onDrop).toHaveBeenCalledWith({ files: [file] }));
   });
 
+  test('passes on a dropped file of another type, to be checked once processed', async () => {
+    const onDrop = vi.fn();
+
+    const { container } = await render(InternalAssetsPanel, {
+      assets,
+      accept: 'image/webp',
+      selectedResources: [],
+      onDrop,
+    });
+
+    const file = new File(['x'], 'kite.png', { type: 'image/png' });
+
+    /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+      createDropEvent([file]),
+    );
+
+    await vi.waitFor(() => expect(onDrop).toHaveBeenCalledWith({ files: [file] }));
+    expect(page.getByRole('alertdialog').elements()).toHaveLength(0);
+  });
+
   test('lists nothing without assets', async () => {
     await render(InternalAssetsPanel, /** @type {any} */ ({}));
 

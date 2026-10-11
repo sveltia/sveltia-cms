@@ -908,6 +908,20 @@ warning_invalid_files: |
   .match $count
     one {{ This file cannot be uploaded because it’s damaged, or its content doesn’t match its file extension. This often happens when a photo is renamed rather than converted, such as a HEIC image saved as a JPEG file. Please convert the file and try again. }}
     *   {{ These files cannot be uploaded because they’re damaged, or their content doesn’t match their file extensions. This often happens when photos are renamed rather than converted, such as HEIC images saved as JPEG files. Please convert the files and try again. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ This file cannot be uploaded because it’s not one of the following types: {$types}. }}
+    *   {{ These files cannot be uploaded because they’re not one of the following types: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ This file cannot be uploaded because only an image of the following types is accepted: {$types}. }}
+    *   {{ These files cannot be uploaded because only images of the following types are accepted: {$types}. }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format

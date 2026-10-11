@@ -850,6 +850,20 @@ warning_invalid_files: |
   .match $count
     1   {{ このファイルは破損しているか、内容が拡張子と一致しないため、アップロードできません。HEIC 画像を JPEG として保存するなど、写真を変換せずに拡張子だけを変更した場合によく発生します。ファイルを変換してから再度アップロードしてください。 }}
     *   {{ これらのファイルは破損しているか、内容が拡張子と一致しないため、アップロードできません。HEIC 画像を JPEG として保存するなど、写真を変換せずに拡張子だけを変更した場合によく発生します。ファイルを変換してから再度アップロードしてください。 }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ このファイルは次の形式のいずれでもないため、アップロードできません: {$types}。 }}
+    *   {{ これらのファイルは次の形式のいずれでもないため、アップロードできません: {$types}。 }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ このファイルはアップロードできません。受け入れられる画像形式は次のとおりです: {$types}。 }}
+    *   {{ これらのファイルはアップロードできません。受け入れられる画像形式は次のとおりです: {$types}。 }}
 
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format

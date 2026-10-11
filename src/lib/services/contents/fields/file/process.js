@@ -8,6 +8,7 @@ import { processFile } from '$lib/services/assets/process';
 import { allAssets } from '$lib/services/assets/state';
 import { getEntryAssetFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
+import { isAcceptedFile } from '$lib/services/integrations/media-libraries/default';
 import { createPath, getGitHash } from '$lib/services/utils/file';
 import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
@@ -26,6 +27,8 @@ import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
  * @property {string | undefined} oversizedFileName File name if the file exceeds the size limit.
  * @property {string | undefined} invalidFileName File name if the file is corrupt or mislabeled and
  * therefore cannot be decoded.
+ * @property {string | undefined} [mismatchedFileName] File name if the file, once processed, is not
+ * one of the accepted file types.
  */
 
 /**
@@ -171,14 +174,31 @@ const getSavedAssetsForEntry = (draft, folder) => {
 };
 
 /**
+ * Get the result of processing a file that is not one of the accepted file types.
+ * @param {File} file File.
+ * @returns {ProcessResourceResult} Result.
+ */
+const getMismatchedResult = (file) => ({
+  value: undefined,
+  credit: '',
+  oversizedFileName: undefined,
+  invalidFileName: undefined,
+  mismatchedFileName: file.name,
+});
+
+/**
  * Process a selected resource.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft containing the resource.
  * @param {SelectedResource} args.resource Resource to be processed.
  * @param {DefaultMediaLibraryConfig} args.libraryConfig Configuration for the media library.
+ * @param {string} [args.accept] File types the field accepts, as given by `getAcceptedFileTypes()`.
+ * A file to be uploaded is checked against them once it’s transformed, which can change its format,
+ * e.g. a PNG image converted to WebP fits a field only taking WebP images. A file picked in the
+ * browser’s file picker is checked as well as a dropped one, as a picker can offer every file.
  * @returns {Promise<ProcessResourceResult>} Result of processing the resource.
  */
-export const processResource = async ({ draft, resource, libraryConfig }) => {
+export const processResource = async ({ draft, resource, libraryConfig, accept }) => {
   const { url, folderPath, credit, replace = false, subfolderPath } = resource;
   let { asset, file } = resource;
   /** @type {string | undefined} */
@@ -216,6 +236,12 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
     }
 
     if (existingBlobURL) {
+      // The file is already pending, as processed for another field maybe, which can accept other
+      // file types
+      if (!isAcceptedFile(file, accept)) {
+        return getMismatchedResult(file);
+      }
+
       value = existingBlobURL;
     } else {
       const {
@@ -233,6 +259,11 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
           oversizedFileName: undefined,
           invalidFileName: file.name,
         };
+      }
+
+      // The original file is named, as the user knows it by that name
+      if (!isAcceptedFile(file, accept)) {
+        return getMismatchedResult(/** @type {File} */ (resource.file));
       }
 
       const sha = await getGitHash(file);

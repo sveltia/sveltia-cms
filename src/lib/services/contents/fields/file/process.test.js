@@ -24,9 +24,10 @@ vi.mock('$lib/services/assets/info', () => ({
   hasCachedThumbnail: vi.fn(async () => false),
 }));
 
-vi.mock('$lib/services/integrations/media-libraries/default', () => ({
+vi.mock('$lib/services/integrations/media-libraries/default', async (importOriginal) => ({
   canConvertHEIC: vi.fn(() => false),
   transformFile: vi.fn(),
+  isAcceptedFile: /** @type {any} */ (await importOriginal()).isAcceptedFile,
 }));
 
 vi.mock('$lib/services/utils/file', () => ({
@@ -339,6 +340,88 @@ describe('Test processResource()', () => {
     expect(result.value).toBeUndefined();
     // The file isn’t queued for upload
     expect(draft.files).toEqual({});
+  });
+
+  test('should reject a file that is not one of the accepted types', async () => {
+    const mockFile = new File(['png'], 'kite.png', { type: 'image/png' });
+    /** @type {any} */
+    const draft = { files: {} };
+    const resource = { file: mockFile, folder: { name: 'uploads' } };
+
+    getGitHashMock.mockResolvedValue('git-hash');
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig: {}, accept: '.pdf' });
+
+    expect(result).toEqual({
+      value: undefined,
+      credit: '',
+      oversizedFileName: undefined,
+      invalidFileName: undefined,
+      mismatchedFileName: 'kite.png',
+    });
+    // The file isn’t queued for upload
+    expect(draft.files).toEqual({});
+  });
+
+  test('should check the type of a file once it is transformed', async () => {
+    const mockFile = new File(['png'], 'kite.png', { type: 'image/png' });
+    const webpFile = new File(['webp'], 'kite.webp', { type: 'image/webp' });
+    /** @type {any} */
+    const draft = { files: {} };
+    const resource = { file: mockFile, folder: { name: 'uploads' } };
+    const libraryConfig = { transformations: { png: { format: 'webp' } } };
+
+    getGitHashMock.mockResolvedValue('git-hash');
+    transformFileMock.mockResolvedValue(webpFile);
+
+    // A PNG image converted to WebP fits a field only taking WebP images
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig, accept: 'image/webp' });
+
+    expect(result.value).toBe('blob:mock-url');
+    expect(result.mismatchedFileName).toBeUndefined();
+    expect(draft.files['blob:mock-url'].file).toBe(webpFile);
+  });
+
+  test('should name the original file if it still does not fit once transformed', async () => {
+    const mockFile = new File(['png'], 'kite.png', { type: 'image/png' });
+    /** @type {any} */
+    const draft = { files: {} };
+    const resource = { file: mockFile, folder: { name: 'uploads' } };
+    const libraryConfig = { transformations: { png: { format: 'webp' } } };
+
+    getGitHashMock.mockResolvedValue('git-hash');
+    transformFileMock.mockResolvedValue(new File(['webp'], 'kite.webp', { type: 'image/webp' }));
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig, accept: 'image/png' });
+
+    expect(result.mismatchedFileName).toBe('kite.png');
+    expect(result.value).toBeUndefined();
+    expect(draft.files).toEqual({});
+  });
+
+  test('should reject a pending file that is not one of the accepted types', async () => {
+    const mockFile = new File(['png'], 'kite.png', { type: 'image/png' });
+    /** @type {any} */
+    const draft = { files: { 'blob:pending': { file: mockFile, folder: { name: 'uploads' } } } };
+    const resource = { file: mockFile, folder: { name: 'uploads' } };
+
+    // The same file is already pending, as added to a field taking images
+    getGitHashMock.mockResolvedValue('git-hash');
+
+    // @ts-ignore - Test with simplified types
+    const rejected = await processResource({ draft, resource, libraryConfig: {}, accept: '.pdf' });
+
+    expect(rejected.mismatchedFileName).toBe('kite.png');
+    expect(rejected.value).toBeUndefined();
+
+    // @ts-ignore - Test with simplified types
+    const taken = await processResource({ draft, resource, libraryConfig: {}, accept: 'image/*' });
+
+    expect(taken.value).toBe('blob:pending');
+    expect(taken.mismatchedFileName).toBeUndefined();
   });
 
   test('should reject a file that cannot be read', async () => {

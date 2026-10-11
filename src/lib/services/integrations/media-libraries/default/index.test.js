@@ -5,6 +5,7 @@ import {
   getAcceptedFileTypes,
   getAcceptedImageTypes,
   getDefaultMediaLibraryOptions,
+  isAcceptedFile,
   transformFile,
 } from '.';
 
@@ -952,6 +953,30 @@ describe('integrations/media-libraries/default', () => {
 
     it('should accept any file otherwise', () => {
       expect(getAcceptedFileTypes({ image: false, transformations: undefined })).toBeUndefined();
+    });
+  });
+
+  describe('isAcceptedFile', () => {
+    it('should accept any file without file types', () => {
+      expect(isAcceptedFile({ name: 'a.zip' }, undefined)).toBe(true);
+      expect(isAcceptedFile({ name: 'a.zip' }, ' , ')).toBe(true);
+    });
+
+    it('should match a file extension in any case', () => {
+      expect(isAcceptedFile({ name: 'guide.PDF' }, '.pdf, .txt')).toBe(true);
+      expect(isAcceptedFile({ name: 'kite.png', type: 'image/png' }, '.pdf, .txt')).toBe(false);
+    });
+
+    it('should match the MIME type of a file', () => {
+      expect(isAcceptedFile({ name: 'kite', type: 'image/webp' }, 'image/webp')).toBe(true);
+      expect(isAcceptedFile({ name: 'kite.png', type: 'image/png' }, 'image/*')).toBe(true);
+      expect(isAcceptedFile({ name: 'kite.png', type: 'image/png' }, 'image/webp')).toBe(false);
+    });
+
+    it('should give a file without a type the MIME type of its extension', () => {
+      expect(isAcceptedFile({ name: 'logo.svg' }, 'image/png,image/svg+xml')).toBe(true);
+      expect(isAcceptedFile({ name: 'logo.svg', type: '' }, 'image/png')).toBe(false);
+      expect(isAcceptedFile({ name: 'README' }, 'image/png')).toBe(false);
     });
   });
 
