@@ -10,6 +10,7 @@
   import {
     getNumberFieldValue,
     getNumberInputValue,
+    isFloatType,
   } from '$lib/services/contents/fields/number/helpers';
   import { syncValues } from '$lib/services/utils/state.svelte';
 
@@ -75,6 +76,7 @@
   {min}
   {max}
   {step}
+  fractional={isFloatType(fieldConfig)}
   {readonly}
   {required}
   {invalid}

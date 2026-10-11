@@ -1961,7 +1961,7 @@ config:
     # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
     invalid_range_options: Možnosť `{$min}` nesmie byť väčšia ako možnosť `{$max}`.
     # {$step} is the configured value; Don’t localize `step`
-    invalid_step: Možnosť `step` je nastavená na `{$step}`, ale musí byť väčšia ako nula.
+    invalid_step: Možnosť `step` je nastavená na `{$step}`, ale musí byť väčšia ako nula alebo `-1` na vypnutie krokovania.
     # Don’t localize `options`
     select_field_no_options: Pole typu Select musí mať v možnosti `options` aspoň jednu položku.
     # {$value} is the option value from the configuration; Don’t localize `options`

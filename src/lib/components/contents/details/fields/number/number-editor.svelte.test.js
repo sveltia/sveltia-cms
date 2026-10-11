@@ -53,6 +53,20 @@ describe('NumberEditor', () => {
     expect(props.currentValue).toBe(42);
   });
 
+  test('uses the input mode of the value type and the range', async () => {
+    await renderEditor({ config: { value_type: 'float', min: 0 } });
+
+    // The default step of 1 alone would bring up the numeric keypad, without a decimal point
+    await expect.element(page.getByRole('spinbutton')).toHaveAttribute('inputmode', 'decimal');
+  });
+
+  test('uses the full keyboard when a negative number is allowed', async () => {
+    await renderEditor({ config: { value_type: 'float' } });
+
+    // The keypads on iOS have no minus key
+    await expect.element(page.getByRole('spinbutton')).toHaveAttribute('inputmode', 'text');
+  });
+
   test('stores a float for the `float` type', async () => {
     const { props } = await renderEditor({ currentValue: null, config: { value_type: 'float' } });
 
@@ -174,5 +188,23 @@ describe('NumberEditor', () => {
     // The step is applied by the spin buttons
     await page.getByRole('button', { name: 'Increase' }).click();
     await expect.element(input).toHaveValue('6');
+  });
+
+  test('turns stepping off with a step of -1', async () => {
+    const { props } = await renderEditor({ currentValue: 4, config: { step: -1, min: 1 } });
+    const input = page.getByRole('textbox');
+
+    await expect.element(input).toHaveValue('4');
+    // An integer field gets the numeric keypad, even though the step no longer tells it apart
+    await expect.element(input).toHaveAttribute('inputmode', 'numeric');
+    await expect.element(input).toHaveAccessibleDescription('Minimum 1');
+    await expect.element(page.getByRole('button', { name: 'Increase' })).not.toBeInTheDocument();
+    await expect.element(page.getByRole('button', { name: 'Decrease' })).not.toBeInTheDocument();
+    await input.click();
+    await userEvent.keyboard('{ArrowUp}');
+    await expect.element(input).toHaveValue('4');
+    expect(props.currentValue).toBe(4);
+    await input.fill('12345');
+    await expect.poll(() => props.currentValue).toBe(12345);
   });
 });

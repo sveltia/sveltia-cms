@@ -4,6 +4,7 @@ import {
   getNumberFieldValue,
   getNumberFormatter,
   getNumberInputValue,
+  isFloatType,
   isInvalidNumberValue,
 } from './helpers.js';
 
@@ -17,6 +18,20 @@ import {
  * @returns {NumberField} Field configuration.
  */
 const createField = (valueType) => ({ name: 'count', widget: 'number', value_type: valueType });
+
+describe('isFloatType()', () => {
+  test('returns true for the floating-point types', () => {
+    expect(isFloatType(createField('float'))).toBe(true);
+    expect(isFloatType(createField('float/string'))).toBe(true);
+  });
+
+  test('returns false for the integer types, a custom type and the default', () => {
+    expect(isFloatType(createField('int'))).toBe(false);
+    expect(isFloatType(createField('int/string'))).toBe(false);
+    expect(isFloatType(createField(/** @type {any} */ ('custom')))).toBe(false);
+    expect(isFloatType(createField())).toBe(false);
+  });
+});
 
 describe('getNumberInputValue()', () => {
   test('passes a number through', () => {

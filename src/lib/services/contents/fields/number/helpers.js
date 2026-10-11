@@ -28,7 +28,7 @@ export const getNumberFormatter = (canonicalLocale) =>
  * @param {NumberField} fieldConfig Field configuration.
  * @returns {boolean} `true` if the `value_type` is `float` or `float/string`.
  */
-const isFloatType = ({ value_type: valueType = 'int' }) =>
+export const isFloatType = ({ value_type: valueType = 'int' }) =>
   ['float', 'float/string'].includes(valueType);
 
 /**

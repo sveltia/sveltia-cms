@@ -55,21 +55,24 @@ describe('parseNumberFieldConfig', () => {
     vi.resetAllMocks();
   });
 
-  test('accepts a positive step, any, or none', () => {
+  test('accepts a positive step, -1 to turn stepping off, any, or none', () => {
     check(1);
     check(0.5);
+    check(-1);
     check('any');
     check(undefined);
     expect(addMessage).not.toHaveBeenCalled();
   });
 
-  test('reports a step of zero or less', () => {
+  test('reports a step of zero or less other than -1', () => {
     check(0);
-    check(-1);
+    check(-2);
+    check(-0.5);
 
     expect(vi.mocked(addMessage).mock.calls.map(([args]) => args)).toEqual([
       { strKey: 'invalid_step', values: { step: '0' }, context, collectors },
-      { strKey: 'invalid_step', values: { step: '-1' }, context, collectors },
+      { strKey: 'invalid_step', values: { step: '-2' }, context, collectors },
+      { strKey: 'invalid_step', values: { step: '-0.5' }, context, collectors },
     ]);
   });
 

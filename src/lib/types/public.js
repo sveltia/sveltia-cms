@@ -1019,8 +1019,12 @@
  * the input accept only an integer or floating-point value, respectively, but save it as a string.
  * Default: `int`.
  * @property {number} [min] Minimum value that can be entered in the input. Default: `-Infinity`.
+ * Setting it to `0` or higher also brings up a numeric keypad on mobile devices. Otherwise, the
+ * full keyboard is shown, as the numeric keypad on iOS has no minus key.
  * @property {number} [max] Maximum value that can be entered in the input. Default: `Infinity`.
  * @property {number} [step] Number to increase/decrease with the arrow key/button. Default: `1`.
+ * Set to `-1` to hide the buttons and disable stepping with the arrow keys, for a number that isn’t
+ * meant to be stepped, like an ID.
  * @see https://decapcms.org/docs/widgets/#Number
  * @see https://sveltiacms.app/en/docs/fields/number
  */

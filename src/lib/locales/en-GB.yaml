@@ -1973,7 +1973,7 @@ config:
     # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
     invalid_range_options: The `{$min}` option must not be greater than the `{$max}` option.
     # {$step} is the configured value; Don’t localize `step`
-    invalid_step: The `step` option is set to `{$step}`, but it must be greater than zero.
+    invalid_step: The `step` option is set to `{$step}`, but it must be greater than zero, or `-1` to turn stepping off.
     # Don’t localize `options`
     select_field_no_options: The Select field must have at least one item in the `options` option.
     # {$value} is the option value from the configuration; Don’t localize `options`
