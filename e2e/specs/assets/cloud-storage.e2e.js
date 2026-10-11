@@ -372,6 +372,56 @@ test.describe('Amazon S3 bucket holding more files than listed at once', () => {
   });
 });
 
+test.describe('Self-hosted S3-compatible storage', () => {
+  test.use({
+    config: createConfig({
+      aws_s3: {
+        access_key_id: 'GKe2e0000000000000000000000',
+        bucket: 'e2e-bucket',
+        region: 'garage',
+        endpoint: 'https://s3.example.com',
+        public_url: 'https://web.example.com',
+      },
+    }),
+  });
+
+  test('accepts a secret key longer than an Amazon S3 one, and picks an image', async ({
+    cms,
+    page,
+  }) => {
+    // A Garage server is addressed with the bucket in the path, and its secret keys are 64 hex
+    // digits rather than the 40 characters of Amazon S3
+    const garage = new MockS3({
+      bucket: 'e2e-bucket',
+      region: 'garage',
+      baseURL: 'https://s3.example.com/e2e-bucket',
+      publicURL: 'https://web.example.com',
+    });
+
+    garage.accessKeyId = 'GKe2e0000000000000000000000';
+    garage.secretAccessKey = '0123456789abcdef'.repeat(4);
+    garage.put({ 'sunset.png': SUNSET });
+    await garage.install(page);
+    await cms.open();
+    await cms.signIn();
+
+    const { cover, dialog } = await openSelectImageDialog(page, 'Amazon S3');
+
+    await enterCredential(dialog, 'Amazon S3', garage.secretAccessKey);
+    await selectOption(
+      dialog
+        .getByRole('listbox', { name: 'Available Images' })
+        .getByRole('option', { name: 'sunset.png' }),
+    );
+    await dialog.getByRole('button', { name: 'Insert' }).click();
+
+    await expect(cover.getByRole('textbox', { name: 'Cover' })).toHaveText(
+      'https://web.example.com/sunset.png',
+    );
+    expect(garage.refused).toEqual([]);
+  });
+});
+
 test.describe('Cloudflare R2', () => {
   test.use({
     config: createConfig({
