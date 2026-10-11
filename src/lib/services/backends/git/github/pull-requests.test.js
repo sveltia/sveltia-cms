@@ -7,6 +7,8 @@ import {
   fetchBranchHead,
   fetchPullRequestFileList,
   fetchPullRequestFiles,
+  parseFileNodes,
+  parseRestFiles,
   reopenPullRequest,
   updateDraftState,
   updateLabels,
@@ -43,6 +45,40 @@ describe('GitHub pull request helpers', () => {
     mockStores();
     vi.mocked(fetchAPI).mockResolvedValue({});
     vi.mocked(fetchGraphQL).mockResolvedValue({});
+  });
+
+  describe('parseFileNodes', () => {
+    test('converts the GraphQL file nodes to workflow files', () => {
+      expect(
+        parseFileNodes([
+          { path: 'a.md', changeType: 'ADDED' },
+          { path: 'b.md', changeType: 'MODIFIED' },
+          { path: 'c.md', changeType: 'DELETED' },
+          { path: 'd.md', changeType: 'RENAMED' },
+        ]),
+      ).toEqual([
+        { path: 'a.md', sha: '', size: 0, deleted: false, renamed: false },
+        { path: 'b.md', sha: '', size: 0, deleted: false, renamed: false },
+        { path: 'c.md', sha: '', size: 0, deleted: true, renamed: false },
+        { path: 'd.md', sha: '', size: 0, deleted: false, renamed: true },
+      ]);
+    });
+  });
+
+  describe('parseRestFiles', () => {
+    test('converts the REST files to workflow files with the previous path of a rename', () => {
+      expect(
+        parseRestFiles([
+          { filename: 'a.md', status: 'added', patch: '@@' },
+          { filename: 'b.md', status: 'removed' },
+          { filename: 'new.md', status: 'renamed', previous_filename: 'old.md' },
+        ]),
+      ).toEqual([
+        { path: 'a.md', sha: '', size: 0, deleted: false, previousPath: undefined },
+        { path: 'b.md', sha: '', size: 0, deleted: true, previousPath: undefined },
+        { path: 'new.md', sha: '', size: 0, deleted: false, previousPath: 'old.md' },
+      ]);
+    });
   });
 
   describe('fetchPullRequestFileList', () => {

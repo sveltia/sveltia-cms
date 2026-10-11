@@ -6,6 +6,7 @@ import {
   canCreateThumbnail,
   canEditAsset,
   canPreviewAsset,
+  canPreviewFile,
   DOC_EXTENSION_REGEX,
   getAssetKind,
   getMediaKind,
@@ -112,6 +113,46 @@ describe('assets/kinds', () => {
       expect(isMediaKind('document')).toBe(false);
       expect(isMediaKind('other')).toBe(false);
       expect(isMediaKind('unknown')).toBe(false);
+    });
+  });
+
+  describe('canPreviewFile', () => {
+    beforeEach(async () => {
+      const { isTextFileType } = await import('@sveltia/utils/file');
+
+      vi.mocked(isTextFileType).mockImplementation((type) => type.startsWith('text/'));
+    });
+
+    it('should preview a media file whatever its name', () => {
+      expect(canPreviewFile('image', 'photo')).toBe(true);
+      expect(canPreviewFile('video', 'clip.mp4')).toBe(true);
+      expect(canPreviewFile('audio', 'song.mp3')).toBe(true);
+    });
+
+    it('should preview a PDF document', () => {
+      vi.mocked(mime.getType).mockReturnValue('application/pdf');
+
+      expect(canPreviewFile('document', 'files/report.pdf')).toBe(true);
+      expect(mime.getType).toHaveBeenCalledWith('files/report.pdf');
+    });
+
+    it('should preview a plaintext file', () => {
+      vi.mocked(mime.getType).mockReturnValue('text/plain');
+
+      expect(canPreviewFile('document', 'notes.txt')).toBe(true);
+    });
+
+    it('should not preview another document', () => {
+      vi.mocked(mime.getType).mockReturnValue('application/zip');
+
+      expect(canPreviewFile('other', 'archive.zip')).toBe(false);
+    });
+
+    it('should not preview a file of an unknown type', async () => {
+      const { isTextFileType } = await import('@sveltia/utils/file');
+
+      expect(canPreviewFile('other', 'unknown')).toBe(false);
+      expect(isTextFileType).not.toHaveBeenCalled();
     });
   });
 

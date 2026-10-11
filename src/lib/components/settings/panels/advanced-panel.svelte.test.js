@@ -13,6 +13,7 @@ describe('AdvancedPanel', () => {
     prefs.beta = false;
     prefs.devModeEnabled = false;
     prefs.deployHookURL = '';
+    prefs.deployHookAuthHeader = '';
     backendName.current = 'github';
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
   });
@@ -81,6 +82,61 @@ describe('AdvancedPanel', () => {
     const eraseDialog = page.getByRole('alertdialog', { name: 'Erase All Data' });
 
     await expect.element(eraseDialog).toBeVisible();
+    await eraseDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect.element(eraseDialog).not.toBeInTheDocument();
+  });
+
+  test('reflects and updates the beta preference', async () => {
+    prefs.beta = true;
+
+    await render(AdvancedPanel, {});
+
+    const beta = page.getByRole('switch', { name: 'Join Beta Program' });
+
+    await expect.element(beta).toBeChecked();
+    await beta.click();
+    await expect.poll(() => prefs.beta).toBe(false);
+    await expect.element(beta).not.toBeChecked();
+  });
+
+  test('shows the saved deploy hook settings', async () => {
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github', skip_ci: true } });
+    prefs.deployHookURL = 'https://example.com/hook';
+    prefs.deployHookAuthHeader = 'Bearer abc';
+
+    await render(AdvancedPanel, {});
+
+    await expect
+      .element(page.getByRole('textbox', { name: 'Hook URL' }))
+      .toHaveValue('https://example.com/hook');
+    await expect
+      .element(page.getByRole('textbox', { name: /^Authorization header/ }))
+      .toHaveValue('Bearer abc');
+  });
+
+  test('explains what clearing the data does before it’s confirmed', async () => {
+    await render(AdvancedPanel, {});
+    await page.getByRole('button', { name: 'Clear File Cache' }).click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Clear File Cache' });
+
+    await expect
+      .element(dialog)
+      .toMatchTextContent('Your unsaved drafts and settings will be kept');
+    await expect
+      .element(dialog.getByRole('button', { name: 'Clear File Cache' }))
+      .toBeInTheDocument();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect.element(dialog).not.toBeInTheDocument();
+
+    await page.getByRole('button', { name: 'Erase All Data' }).click();
+
+    const eraseDialog = page.getByRole('alertdialog', { name: 'Erase All Data' });
+
+    await expect.element(eraseDialog).toMatchTextContent('you’ll have to sign in again');
+    await expect
+      .element(eraseDialog.getByRole('button', { name: 'Erase All Data' }))
+      .toBeInTheDocument();
     await eraseDialog.getByRole('button', { name: 'Cancel' }).click();
     await expect.element(eraseDialog).not.toBeInTheDocument();
   });

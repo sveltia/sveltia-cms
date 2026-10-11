@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { parseDateTimeConfig } from './config';
+import { isCustomTimeZone, parseDateTimeConfig } from './config';
 
 /**
  * @import { DateTimeField } from '$lib/types/public';
@@ -394,5 +394,24 @@ describe('parseDateTimeConfig - singleCustomTimeZone', () => {
     const result = parseDateTimeConfig(fieldConfig);
 
     expect(result.singleCustomTimeZone).toBeUndefined();
+  });
+});
+
+describe('isCustomTimeZone', () => {
+  test('should accept an IANA time zone name', () => {
+    expect(isCustomTimeZone('America/Toronto')).toBe(true);
+    expect(isCustomTimeZone('Asia/Tokyo')).toBe(true);
+  });
+
+  test('should reject the special values', () => {
+    expect(isCustomTimeZone('local')).toBe(false);
+    expect(isCustomTimeZone('utc')).toBe(false);
+  });
+
+  test('should reject a value that is not a string', () => {
+    expect(isCustomTimeZone(undefined)).toBe(false);
+    expect(isCustomTimeZone(null)).toBe(false);
+    expect(isCustomTimeZone(true)).toBe(false);
+    expect(isCustomTimeZone(9)).toBe(false);
   });
 });

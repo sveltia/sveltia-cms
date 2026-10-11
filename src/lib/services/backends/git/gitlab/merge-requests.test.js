@@ -8,8 +8,10 @@ import {
   fetchMergeRequestFileList,
   fetchOpenMergeRequests,
   fetchPullRequests,
+  parseDiff,
   parseMergeRequest,
   stripDraftPrefix,
+  toMergeRequest,
 } from '$lib/services/backends/git/gitlab/merge-requests';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
@@ -97,6 +99,59 @@ describe('GitLab merge requests', () => {
       ['Drafting the plan', 'Drafting the plan'],
     ])('strips %s', (input, expected) => {
       expect(stripDraftPrefix(input)).toBe(expected);
+    });
+  });
+
+  describe('toMergeRequest', () => {
+    test('converts a merge request with the given status, whatever its labels', () => {
+      const mergeRequest = toMergeRequest(createItem({ labels: [] }), 'pending_publish');
+
+      expect(mergeRequest.status).toBe('pending_publish');
+      expect(mergeRequest.title).toBe('Create Post “hello”');
+      expect(mergeRequest.nodeId).toBe('900');
+    });
+
+    test('reads whether the user can merge it, when the merge request tells', () => {
+      expect(toMergeRequest(createItem({ user: { can_merge: true } }), 'draft').canMerge).toBe(
+        true,
+      );
+      expect(toMergeRequest(createItem({ user: { can_merge: false } }), 'draft').canMerge).toBe(
+        false,
+      );
+      expect(toMergeRequest(createItem({ user: {} }), 'draft').canMerge).toBeUndefined();
+      expect(toMergeRequest(createItem(), 'draft').canMerge).toBeUndefined();
+    });
+  });
+
+  describe('parseDiff', () => {
+    test('converts an added or modified file', () => {
+      expect(parseDiff({ old_path: 'a.md', new_path: 'a.md' })).toEqual({
+        path: 'a.md',
+        sha: '',
+        size: 0,
+        deleted: false,
+        previousPath: undefined,
+      });
+    });
+
+    test('converts a deleted file at its old path', () => {
+      expect(parseDiff({ old_path: 'a.md', new_path: 'a.md', deleted_file: true })).toEqual({
+        path: 'a.md',
+        sha: '',
+        size: 0,
+        deleted: true,
+        previousPath: undefined,
+      });
+    });
+
+    test('converts a renamed file with its previous path', () => {
+      expect(parseDiff({ old_path: 'old.md', new_path: 'new.md', renamed_file: true })).toEqual({
+        path: 'new.md',
+        sha: '',
+        size: 0,
+        deleted: false,
+        previousPath: 'old.md',
+      });
     });
   });
 

@@ -15,10 +15,12 @@ import {
   getUnpublishedEntryByDraft,
   getUnpublishedEntryBySlug,
   hasPublishedVersion,
+  isPendingDeletion,
   isPublishAllowed,
   isWorkflowDraft,
   isWorkflowEnabled,
   mergeUnpublishedEntries,
+  swapUnpublishedEntries,
   unpublishedEntries,
   unpublishedEntriesLoaded,
   workflowDataReady,
@@ -663,6 +665,81 @@ describe('mergeUnpublishedEntries', () => {
     expect(
       mergeUnpublishedEntries([published], [draft]).map((/** @type {any} */ { id }) => id),
     ).toEqual(['a-draft']);
+  });
+});
+
+describe('swapUnpublishedEntries', () => {
+  /**
+   * Create an entry for testing.
+   * @param {string} id Entry ID.
+   * @param {Record<string, string>} paths File path of each locale.
+   * @param {object} [workflow] Workflow properties, for an unpublished entry.
+   * @returns {any} Entry.
+   */
+  const createEntryWithPaths = (id, paths, workflow) => ({
+    id,
+    locales: Object.fromEntries(
+      Object.entries(paths).map(([locale, path]) => [locale, { path, content: {} }]),
+    ),
+    ...(workflow ? { workflow } : {}),
+  });
+
+  test('returns the given array as is without any draft', () => {
+    const entries = [createEntryWithPaths('a', { _default: 'a.md' })];
+
+    expect(swapUnpublishedEntries(entries, [])).toBe(entries);
+  });
+
+  test('swaps in a draft and keeps the order of the published entries', () => {
+    const a = createEntryWithPaths('a', { _default: 'a.md' });
+    const b = createEntryWithPaths('b', { _default: 'b.md' });
+    const draft = createEntryWithPaths('b-draft', { _default: 'b.md' }, { status: 'draft' });
+    const result = swapUnpublishedEntries([a, b], [draft]);
+
+    expect(result).toEqual([a, draft]);
+    expect(result[0]).toBe(a);
+  });
+
+  test('does not append a draft that matches no published entry', () => {
+    const a = createEntryWithPaths('a', { _default: 'a.md' });
+    const draft = createEntryWithPaths('new', { _default: 'new.md' }, { status: 'draft' });
+
+    expect(swapUnpublishedEntries([a], [draft])).toEqual([a]);
+  });
+
+  test('matches a multi-file entry by the path of any locale', () => {
+    const published = createEntryWithPaths('a', { en: 'en/a.md', ja: 'ja/a.md' });
+    const draft = createEntryWithPaths('a-draft', { ja: 'ja/a.md' }, { status: 'draft' });
+
+    expect(swapUnpublishedEntries([published], [draft])).toEqual([draft]);
+  });
+
+  test('matches an entry by a path the pull request renamed it from', () => {
+    const published = createEntryWithPaths('a', { _default: 'old.md' });
+
+    const draft = createEntryWithPaths(
+      'a-draft',
+      { _default: 'new.md' },
+      { status: 'draft', previousPaths: ['old.md'] },
+    );
+
+    expect(swapUnpublishedEntries([published], [draft])).toEqual([draft]);
+  });
+});
+
+describe('isPendingDeletion', () => {
+  test('detects an entry whose pull request deletes it', () => {
+    expect(
+      isPendingDeletion(/** @type {any} */ ({ workflow: { status: 'pending_deletion' } })),
+    ).toBe(true);
+  });
+
+  test('ignores an entry at any other status, a published entry and no entry', () => {
+    expect(
+      isPendingDeletion(/** @type {any} */ ({ workflow: { status: 'pending_publish' } })),
+    ).toBe(false);
+    expect(isPendingDeletion(/** @type {any} */ ({ locales: {} }))).toBe(false);
+    expect(isPendingDeletion(undefined)).toBe(false);
   });
 });
 

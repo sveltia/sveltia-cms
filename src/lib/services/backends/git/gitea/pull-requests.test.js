@@ -15,6 +15,7 @@ import {
   fetchPullRequestFileContents,
   fetchPullRequestFileList,
   fetchPullRequestHeadRef,
+  isSameRepositoryPullRequest,
   parsePullRequest,
   resetPageSize,
   resolveChangeSHAs,
@@ -144,6 +145,30 @@ describe('Gitea pull request service', () => {
       ['Wiping the slate', 'Wiping the slate'],
     ])('strips %s', (input, expected) => {
       expect(stripWipPrefix(input)).toBe(expected);
+    });
+  });
+
+  describe('isSameRepositoryPullRequest', () => {
+    test('accepts a pull request from a branch of the configured repository', () => {
+      expect(isSameRepositoryPullRequest({ head: { repo_id: 1 }, base: { repo_id: 1 } })).toBe(
+        true,
+      );
+    });
+
+    test('rejects a pull request from a fork', () => {
+      expect(isSameRepositoryPullRequest({ head: { repo_id: 2 }, base: { repo_id: 1 } })).toBe(
+        false,
+      );
+    });
+
+    test('rejects a pull request whose head repository is unknown', () => {
+      // The head repository ID is `-1` until resolved, and missing when the fork was deleted
+      expect(isSameRepositoryPullRequest({ head: { repo_id: -1 }, base: { repo_id: -1 } })).toBe(
+        false,
+      );
+      expect(isSameRepositoryPullRequest({ head: {}, base: { repo_id: 1 } })).toBe(false);
+      expect(isSameRepositoryPullRequest({ base: { repo_id: 1 } })).toBe(false);
+      expect(isSameRepositoryPullRequest({ head: { repo_id: 1 } })).toBe(false);
     });
   });
 

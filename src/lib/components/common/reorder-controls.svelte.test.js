@@ -69,4 +69,97 @@ describe('ReorderControls', () => {
     await render(ReorderControls, { index: 1, itemCount: 3, disabled: true });
     await expect.element(page.getByRole('button')).toHaveAttribute('aria-disabled', 'true');
   });
+
+  test('releases the item once when the press is cancelled', async () => {
+    env.hasMouse = true;
+
+    const onGrab = vi.fn();
+    const onRelease = vi.fn();
+
+    await render(ReorderControls, { index: 0, itemCount: 2, onGrab, onRelease });
+
+    const handle = page.getByRole('button', { name: 'Reorder Item' }).element();
+
+    handle.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    expect(onGrab).toHaveBeenCalledOnce();
+    // A scroll gesture cancels the press, which may end outside the handle
+    globalThis.dispatchEvent(new PointerEvent('pointercancel'));
+    expect(onRelease).toHaveBeenCalledOnce();
+    // The window listeners are gone, so a later press elsewhere doesn’t release the item again
+    globalThis.dispatchEvent(new PointerEvent('pointerup'));
+    globalThis.dispatchEvent(new PointerEvent('pointercancel'));
+    expect(onRelease).toHaveBeenCalledOnce();
+  });
+
+  test('moves the item with the keyboard without scrolling the page', async () => {
+    env.hasMouse = true;
+
+    const onMove = vi.fn();
+
+    await render(ReorderControls, { index: 1, itemCount: 3, onMove });
+
+    const handle = page.getByRole('button', { name: 'Reorder Item' }).element();
+
+    /**
+     * Press a key on the handle.
+     * @param {string} key Key.
+     * @returns {KeyboardEvent} Event.
+     */
+    const press = (key) => {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+
+      handle.dispatchEvent(event);
+
+      return event;
+    };
+
+    expect(press('ArrowDown').defaultPrevented).toBe(true);
+    expect(onMove).toHaveBeenLastCalledWith(2, 'reorder');
+    expect(press('Home').defaultPrevented).toBe(true);
+    expect(onMove).toHaveBeenLastCalledWith(0, 'reorder');
+    // Other keys keep their default action, e.g. Tab moves the focus
+    expect(press('Tab').defaultPrevented).toBe(false);
+    expect(onMove).toHaveBeenCalledTimes(2);
+  });
+
+  test('works without handlers', async () => {
+    env.hasMouse = true;
+
+    await render(ReorderControls, { index: 1, itemCount: 3 });
+
+    const handle = page.getByRole('button', { name: 'Reorder Item' }).element();
+
+    handle.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    globalThis.dispatchEvent(new PointerEvent('pointerup'));
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+
+    // The controls follow the environment, e.g. when a mouse is unplugged
+    env.hasMouse = false;
+
+    await page.getByRole('button', { name: 'Move Up' }).click();
+    await page.getByRole('button', { name: 'Move Down' }).click();
+  });
+
+  test('uses the given icon for the drag handle', async () => {
+    env.hasMouse = true;
+
+    await render(ReorderControls, { index: 0, itemCount: 2, icon: 'swap_vert' });
+
+    await expect
+      .element(page.getByRole('button', { name: 'Reorder Item' }))
+      .toMatchTextContent('swap_vert');
+  });
+
+  test('disables both buttons on a touch device when disabled', async () => {
+    env.hasMouse = false;
+
+    await render(ReorderControls, { index: 1, itemCount: 3, disabled: true });
+
+    await expect
+      .element(page.getByRole('button', { name: 'Move Up' }))
+      .toHaveAttribute('aria-disabled', 'true');
+    await expect
+      .element(page.getByRole('button', { name: 'Move Down' }))
+      .toHaveAttribute('aria-disabled', 'true');
+  });
 });

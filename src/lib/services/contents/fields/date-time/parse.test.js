@@ -1,7 +1,12 @@
 import dayjs from 'dayjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { getDate, getParser, isValidDate } from '$lib/services/contents/fields/date-time/parse';
+import {
+  getDate,
+  getParser,
+  isValidDate,
+  parseWithFormatFallback,
+} from '$lib/services/contents/fields/date-time/parse';
 
 /**
  * @import { DateTimeField } from '$lib/types/public';
@@ -314,5 +319,50 @@ describe('getParser', () => {
 
     expect(result.isValid()).toBe(true);
     expect(result.format('YYYY-MM-DD')).toBe('2023-12-25');
+  });
+});
+
+describe('Test parseWithFormatFallback()', () => {
+  test('should parse a value with the given format', () => {
+    const parsed = parseWithFormatFallback({
+      value: '31/12/2024 23:30',
+      format: 'DD/MM/YYYY HH:mm',
+      parseAsUTC: true,
+    });
+
+    expect(parsed.isValid()).toBe(true);
+    expect(parsed.toISOString()).toBe('2024-12-31T23:30:00.000Z');
+  });
+
+  test('should fall back to the default parser when the format does not match', () => {
+    const parsed = parseWithFormatFallback({
+      value: '2024-12-31T23:30:00Z',
+      format: 'DD/MM/YYYY',
+      parseAsUTC: true,
+    });
+
+    expect(parsed.isValid()).toBe(true);
+    expect(parsed.toISOString()).toBe('2024-12-31T23:30:00.000Z');
+  });
+
+  test('should parse in local time unless UTC is requested', () => {
+    const parsed = parseWithFormatFallback({
+      value: '2024-12-31 23:30',
+      format: 'YYYY-MM-DD HH:mm',
+      parseAsUTC: false,
+    });
+
+    expect(parsed.isUTC()).toBe(false);
+    expect(parsed.format('YYYY-MM-DD HH:mm')).toBe('2024-12-31 23:30');
+  });
+
+  test('should return an invalid result when neither parser can read the value', () => {
+    expect(
+      parseWithFormatFallback({
+        value: 'not a date',
+        format: 'YYYY-MM-DD',
+        parseAsUTC: true,
+      }).isValid(),
+    ).toBe(false);
   });
 });

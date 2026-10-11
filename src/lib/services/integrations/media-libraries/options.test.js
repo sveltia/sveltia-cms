@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { cmsConfig } from '$lib/services/config/state';
 import {
   findLibraryOptions,
+  mergeLibraryOptions,
   resolveLibraryOptions,
 } from '$lib/services/integrations/media-libraries/options';
 
@@ -184,5 +185,48 @@ describe('resolveLibraryOptions()', () => {
     cmsConfig.current = undefined;
 
     expect(resolveLibraryOptions('uploadcare', { widget: 'image' })).toBeUndefined();
+  });
+});
+
+describe('mergeLibraryOptions()', () => {
+  test('returns the site options when the field sets none', () => {
+    const site = { config: { a: 1 } };
+
+    expect(mergeLibraryOptions(site, undefined)).toBe(site);
+    expect(mergeLibraryOptions(false, undefined)).toBe(false);
+    expect(mergeLibraryOptions(undefined, undefined)).toBeUndefined();
+  });
+
+  test('returns the field options as is when either side has nothing to merge', () => {
+    const field = { config: { a: 1 } };
+
+    expect(mergeLibraryOptions({ config: { b: 2 } }, false)).toBe(false);
+    expect(mergeLibraryOptions(false, field)).toBe(field);
+    expect(mergeLibraryOptions(undefined, field)).toBe(field);
+  });
+
+  test('merges the objects one level deep only', () => {
+    expect(
+      mergeLibraryOptions(
+        { max_file_size: 100, config: { a: 1, nested: { x: 1, y: 2 } } },
+        { config: { b: 2, nested: { x: 3 } } },
+      ),
+    ).toEqual({ max_file_size: 100, config: { a: 1, b: 2, nested: { x: 3 } } });
+  });
+
+  test('replaces an array rather than merging it', () => {
+    expect(mergeLibraryOptions({ formats: ['jpg', 'png'] }, { formats: ['webp'] })).toEqual({
+      formats: ['webp'],
+    });
+  });
+
+  test('leaves the given options untouched', () => {
+    const site = { config: { a: 1 } };
+    const field = { config: { b: 2 } };
+
+    mergeLibraryOptions(site, field);
+
+    expect(site).toEqual({ config: { a: 1 } });
+    expect(field).toEqual({ config: { b: 2 } });
   });
 });

@@ -9,6 +9,7 @@ import {
   isAutoDuplicationEnabled,
   isDraftModified,
   isRealKey,
+  isValueMapModified,
   revokeDraftFileURLs,
   suspendAutoDuplication,
 } from '.';
@@ -78,6 +79,48 @@ describe('draft/index', () => {
       expect(isRealKey(valueMap, 'items.0.__sc_item_id')).toBe(false);
       expect(isRealKey(valueMap, 'title')).toBe(false);
       expect(isRealKey(valueMap, 'missing')).toBe(false);
+    });
+  });
+
+  describe('isValueMapModified', () => {
+    it('should not report identical maps', () => {
+      expect(isValueMapModified({ title: 'A', 'tags.0': 'x' }, { title: 'A', 'tags.0': 'x' })).toBe(
+        false,
+      );
+      expect(isValueMapModified({}, {})).toBe(false);
+    });
+
+    it('should report a changed value', () => {
+      expect(isValueMapModified({ title: 'A' }, { title: 'B' })).toBe(true);
+    });
+
+    it('should compare the values deeply', () => {
+      expect(isValueMapModified({ list: [] }, { list: [] })).toBe(false);
+      expect(isValueMapModified({ obj: { a: 1 } }, { obj: { a: 2 } })).toBe(true);
+    });
+
+    it('should report a key added or removed', () => {
+      expect(isValueMapModified({ title: 'A' }, { title: 'A', body: '' })).toBe(true);
+      expect(isValueMapModified({ title: 'A', body: '' }, { title: 'A' })).toBe(true);
+    });
+
+    it('should report a key renamed with the same number of keys', () => {
+      expect(isValueMapModified({ 'tags.0': 'x' }, { 'tags.1': 'x' })).toBe(true);
+    });
+
+    it('should ignore the internal properties on either side', () => {
+      expect(
+        isValueMapModified({ title: 'A' }, { title: 'A', 'items.0.__sc_item_id': 'abc' }),
+      ).toBe(false);
+      expect(
+        isValueMapModified({ title: 'A', 'items.0.__sc_item_id': 'abc' }, { title: 'A' }),
+      ).toBe(false);
+    });
+
+    it('should treat a key holding `undefined` as missing', () => {
+      expect(isValueMapModified({ title: 'A', body: undefined }, { title: 'A' })).toBe(false);
+      expect(isValueMapModified({ title: 'A' }, { title: 'A', body: undefined })).toBe(false);
+      expect(isValueMapModified({ body: undefined }, { body: '' })).toBe(true);
     });
   });
 

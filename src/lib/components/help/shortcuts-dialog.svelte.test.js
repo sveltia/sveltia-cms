@@ -44,4 +44,46 @@ describe('ShortcutsDialog', () => {
     await vi.waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(props.open).toBe(false);
   });
+
+  test('lists every shortcut with its keys in a labelled table', async () => {
+    env.isMacOS = false;
+
+    await render(ShortcutsDialog, { open: true });
+
+    const table = page.getByRole('table', { name: 'Keyboard Shortcuts' });
+
+    await expect.element(table).toBeVisible();
+    expect(
+      table
+        .getByRole('row')
+        .elements()
+        .map((row) => [
+          row.querySelector('.feature')?.textContent?.trim(),
+          [...row.querySelectorAll('kbd')].map((kbd) => kbd.textContent).join('+'),
+        ]),
+    ).toEqual([
+      ['View Content Library', 'Alt+1'],
+      ['View Asset Library', 'Alt+2'],
+      ['Search for entries and assets', 'Ctrl+F'],
+      ['Create a new entry', 'Ctrl+E'],
+      ['Save an entry', 'Ctrl+S'],
+      ['Cancel entry editing', 'Escape'],
+    ]);
+    // Only the Close button is offered
+    expect(page.getByRole('dialog').getByRole('button').elements()).toHaveLength(1);
+  });
+
+  test('opens and closes with the bound prop', async () => {
+    const props = $state({ open: false });
+
+    await render(ShortcutsDialog, props);
+    expect(page.getByRole('dialog').elements()).toHaveLength(0);
+
+    props.open = true;
+    await expect.element(page.getByRole('dialog', { name: 'Keyboard Shortcuts' })).toBeVisible();
+
+    // The dialog can be closed without a handler
+    await page.getByRole('button', { name: 'Close' }).click();
+    await expect.poll(() => props.open).toBe(false);
+  });
 });

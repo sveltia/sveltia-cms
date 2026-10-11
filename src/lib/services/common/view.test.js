@@ -12,6 +12,7 @@ import {
   getGroupingKey,
   getGroupLabel,
   getViewConditions,
+  groupItems,
   hasComparison,
   initViewSettingsStorage,
   isGroupCollapsed,
@@ -195,6 +196,67 @@ describe('Test getGroupLabel()', () => {
     expect(getGroupLabel(OTHER_GROUP_NAME)).toBe('Other');
     expect(getGroupLabel('news')).toBe('news');
     expect(getGroupLabel('*')).toBe('*');
+  });
+});
+
+describe('Test groupItems()', () => {
+  const items = [
+    { title: 'A', category: 'news' },
+    { title: 'B', category: 'blog' },
+    { title: 'C', category: 'news' },
+    { title: 'D' },
+  ];
+
+  /**
+   * Get the value of the given field.
+   * @param {Record<string, any>} item Item.
+   * @param {string} field Field name.
+   * @returns {any} Value.
+   */
+  const getValue = (item, field) => item[field];
+
+  beforeEach(async () => {
+    const { getRegex } = await import('$lib/services/utils/regex');
+
+    vi.mocked(getRegex).mockReturnValue(undefined);
+  });
+
+  test('puts all the items in a single group without a field to group by', () => {
+    expect(groupItems(items, undefined, getValue)).toEqual({ '*': items });
+    expect(groupItems(items, null, getValue)).toEqual({ '*': items });
+    expect(groupItems(items, /** @type {any} */ ({ field: '' }), getValue)).toEqual({
+      '*': items,
+    });
+  });
+
+  test('returns no group for an empty list without a field to group by', () => {
+    expect(groupItems([], undefined, getValue)).toEqual({});
+  });
+
+  test('groups the items by the field value, in the order of the group labels', () => {
+    const getValueSpy = vi.fn(getValue);
+    const groups = groupItems(items, { field: 'category' }, getValueSpy);
+
+    expect(Object.keys(groups)).toEqual(['*other', 'blog', 'news']);
+    expect(groups.news.map(({ title }) => title)).toEqual(['A', 'C']);
+    expect(groups.blog.map(({ title }) => title)).toEqual(['B']);
+    expect(groups[OTHER_GROUP_NAME].map(({ title }) => title)).toEqual(['D']);
+    expect(getValueSpy).toHaveBeenCalledWith(items[0], 'category');
+  });
+
+  test('groups the items by the pattern match', async () => {
+    const { getRegex } = await import('$lib/services/utils/regex');
+
+    vi.mocked(getRegex).mockReturnValue(/^\w/);
+
+    const groups = groupItems(items, { field: 'category', pattern: '^\\w' }, getValue);
+
+    expect(getRegex).toHaveBeenCalledWith('^\\w');
+    expect(Object.keys(groups).sort()).toEqual(['*other', 'b', 'n']);
+  });
+
+  test('returns no group for an empty list with a field to group by', () => {
+    expect(groupItems([], { field: 'category' }, getValue)).toEqual({});
   });
 });
 

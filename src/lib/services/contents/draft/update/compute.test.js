@@ -124,6 +124,43 @@ describe('collectComputeFields()', () => {
       'sections.0.authors.1.slug',
     ]);
   });
+
+  test('should build the list item index only once a list is reached', () => {
+    const getIndex = vi.fn(() => new Map());
+
+    collectComputeFields({
+      fields: [
+        SLUG_FIELD,
+        { name: 'author', widget: 'object', fields: [SLUG_FIELD] },
+        { name: 'tags', widget: 'list', field: { name: 'tag' } },
+      ],
+      valueMap: {},
+      getIndex,
+    });
+
+    expect(getIndex).not.toHaveBeenCalled();
+
+    collectComputeFields({
+      fields: [{ name: 'authors', widget: 'list', fields: [SLUG_FIELD] }],
+      valueMap: {},
+      getIndex,
+    });
+
+    expect(getIndex).toHaveBeenCalledOnce();
+  });
+
+  test('should prepend the given key path prefix', () => {
+    const valueMap = { 'body:c1:items.0.slug': '' };
+
+    expect(
+      collectComputeFields({
+        fields: [SLUG_FIELD, { name: 'items', widget: 'list', fields: [SLUG_FIELD] }],
+        valueMap,
+        getIndex: () => indexListItems(valueMap),
+        keyPathPrefix: 'body:c1:',
+      }).map(({ keyPath }) => keyPath),
+    ).toEqual(['body:c1:slug', 'body:c1:items.0.slug']);
+  });
 });
 
 describe('collectComponentComputeFields()', () => {
@@ -147,6 +184,27 @@ describe('collectComponentComputeFields()', () => {
         ({ keyPath }) => keyPath,
       ),
     ).toEqual(['body:c1:slug']);
+  });
+
+  test('should look up each component instance once', () => {
+    vi.mocked(getComponentDef).mockReturnValue(
+      /** @type {any} */ ({ fields: [{ name: 'items', widget: 'list', fields: [SLUG_FIELD] }] }),
+    );
+
+    const valueMap = {
+      'body:c1:__sc_component_name': 'gallery',
+      'body:c1:items.0.src': 'a.png',
+      'body:c1:items.1.src': 'b.png',
+      'body:c2:__sc_component_name': 'gallery',
+    };
+
+    expect(
+      collectComponentComputeFields(valueMap, () => indexListItems(valueMap)).map(
+        ({ keyPath }) => keyPath,
+      ),
+    ).toEqual(['body:c1:items.0.slug', 'body:c1:items.1.slug']);
+    expect(getComponentDef).toHaveBeenCalledTimes(2);
+    expect(getComponentDef).toHaveBeenNthCalledWith(1, 'gallery');
   });
 });
 
@@ -286,6 +344,25 @@ describe('updateComputedValues(draft)', () => {
 
     expect(updateComputedValues(draft)).toBe(false);
     expect(Object.keys(draft.currentValues.en)).not.toContain('items.2.slug');
+  });
+
+  test('should skip a locale without any content', () => {
+    draft.currentLocales = { en: true, fr: true };
+    draft.currentValues.fr = {};
+
+    updateComputedValues(draft);
+
+    expect(draft.currentValues.fr).toEqual({});
+  });
+
+  test('should compute a component’s fields even if the entry has no Compute field', () => {
+    vi.mocked(getComponentDef).mockReturnValue(/** @type {any} */ ({ fields: [SLUG_FIELD] }));
+    draft.fields = [{ name: 'title' }, { name: 'body', widget: 'richtext' }];
+    draft.extraValues.en = { 'body:c1:__sc_component_name': 'card' };
+
+    expect(updateComputedValues(draft)).toBe(true);
+    expect(draft.extraValues.en['body:c1:slug']).toBe('');
+    expect(draft.currentValues.en.slug).toBe('');
   });
 
   test('should resolve the values with the display value helper', () => {

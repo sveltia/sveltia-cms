@@ -106,3 +106,36 @@ describe('getListItemIndexes()', () => {
     expect(getListItemIndexes(indexListItems({}), 'authors')).toEqual([]);
   });
 });
+
+describe('indexListItems() and indexContent()', () => {
+  test('should report the same list items for every key path', () => {
+    const content = {
+      title: 'Hello',
+      'tags.0': 'a',
+      'tags.2': 'c',
+      'tags.10': 'k',
+      'authors.0.name': 'A',
+      'authors.0.links.0.url': 'https://example.com',
+      'authors.1.name': 'B',
+      'matrix.0.0': 1,
+      'matrix.0.1': 2,
+      'matrix.1.0': 3,
+      'meta.version2.label': 'v2',
+      'body:c1:items.0.src': 'a.png',
+    };
+
+    const contentIndex = indexContent(content);
+    const listItemIndex = indexListItems(content);
+
+    [...contentIndex.childSegmentMap.keys(), ...listItemIndex.keys()].forEach((keyPath) => {
+      expect(getListItemIndexes(listItemIndex, keyPath)).toEqual(
+        getItemIndexes(contentIndex, keyPath),
+      );
+    });
+
+    expect(getListItemIndexes(listItemIndex, 'tags')).toEqual([0, 2, 10]);
+    expect(getListItemIndexes(listItemIndex, 'matrix.0')).toEqual([0, 1]);
+    expect(getListItemIndexes(listItemIndex, 'body:c1:items')).toEqual([0]);
+    expect(getListItemIndexes(listItemIndex, 'meta')).toEqual([]);
+  });
+});

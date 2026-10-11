@@ -12,6 +12,7 @@ import {
   getSubfolders,
   getTakenNames,
   getUploadDirPath,
+  listSubfolders,
   resolveAssetFolderPath,
   selectedSubfolderPath,
   validateSubfolderName,
@@ -349,6 +350,53 @@ describe('assets/subfolders', () => {
       const assets = ['static/imagesets/photo.jpg'].map(createAsset);
 
       expect(getSubfolders({ dirPath: 'static/images', assets })).toEqual([]);
+    });
+  });
+
+  describe('listSubfolders', () => {
+    it('should list the immediate subfolders of a directory, sorted by name', () => {
+      expect(
+        listSubfolders({
+          dirPath: 'static/images',
+          paths: [
+            'static/images/photo.jpg',
+            'static/images/zoo/lion.jpg',
+            'static/images/animals/cats/tabby.jpg',
+            'static/images/animals/dog.jpg',
+          ],
+        }),
+      ).toEqual([
+        { name: 'animals', path: 'static/images/animals' },
+        { name: 'zoo', path: 'static/images/zoo' },
+      ]);
+    });
+
+    it('should list the subfolders of the root', () => {
+      expect(
+        listSubfolders({ dirPath: '', paths: ['a.jpg', 'images/b.jpg', 'docs/c.pdf'] }),
+      ).toEqual([
+        { name: 'docs', path: 'docs' },
+        { name: 'images', path: 'images' },
+      ]);
+    });
+
+    it('should list an empty folder kept by a placeholder', () => {
+      expect(listSubfolders({ dirPath: 'uploads', paths: ['uploads/empty/'] })).toEqual([
+        { name: 'empty', path: 'uploads/empty' },
+      ]);
+    });
+
+    it('should leave out the paths outside the directory', () => {
+      expect(
+        listSubfolders({
+          dirPath: 'static/images',
+          paths: ['static/imagesets/a/b.jpg', 'static/other/c.jpg', 'static/images/'],
+        }),
+      ).toEqual([]);
+    });
+
+    it('should skip an empty path segment', () => {
+      expect(listSubfolders({ dirPath: 'uploads', paths: ['uploads//a.jpg'] })).toEqual([]);
     });
   });
 

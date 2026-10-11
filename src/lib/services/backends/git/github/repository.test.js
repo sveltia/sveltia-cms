@@ -6,6 +6,7 @@ import {
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getBaseURLs,
+  isRateLimited,
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
@@ -50,6 +51,31 @@ describe('GitHub repository service', () => {
         blobBaseURL: '',
         commitBaseURL: `${repoURL}/commit`,
       });
+    });
+  });
+
+  describe('isRateLimited', () => {
+    /**
+     * Create a response with the given status and headers.
+     * @param {number} status HTTP status.
+     * @param {Record<string, string>} [headers] Headers.
+     * @returns {Response} Response.
+     */
+    const createResponse = (status, headers = {}) => new Response(null, { status, headers });
+
+    test('detects a secondary rate limit', () => {
+      expect(isRateLimited(createResponse(429))).toBe(true);
+      expect(isRateLimited(createResponse(403, { 'Retry-After': '60' }))).toBe(true);
+    });
+
+    test('detects an exhausted primary rate limit', () => {
+      expect(isRateLimited(createResponse(403, { 'X-RateLimit-Remaining': '0' }))).toBe(true);
+    });
+
+    test('ignores a refusal with requests remaining', () => {
+      expect(isRateLimited(createResponse(403, { 'X-RateLimit-Remaining': '42' }))).toBe(false);
+      expect(isRateLimited(createResponse(403))).toBe(false);
+      expect(isRateLimited(createResponse(404))).toBe(false);
     });
   });
 
