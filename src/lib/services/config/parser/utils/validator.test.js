@@ -793,6 +793,11 @@ describe('messages', () => {
       expect(isValidName('valid@name')).toBe(true);
     });
 
+    it('should return false for `__proto__`, which a plain object can’t hold a value under', () => {
+      expect(isValidName('__proto__')).toBe(false);
+      expect(isValidName('constructor')).toBe(true);
+    });
+
     it('should return false for names with spaces', () => {
       expect(isValidName('invalid name')).toBe(false);
       expect(isValidName(' name')).toBe(false);
@@ -864,6 +869,18 @@ describe('messages', () => {
       expect(result).toBe(true);
       expect(collectors.errors.size).toBe(0);
       expect(nameCounts.validName).toBe(1);
+    });
+
+    it('should catch a duplicate name that is an `Object.prototype` member', () => {
+      const collectors = createCollectors();
+      /** @type {Record<string, number>} */
+      const nameCounts = {};
+      const args = { nameCounts, strKeyBase: 'field_name', context: {}, collectors };
+
+      expect(checkName({ ...args, name: 'constructor', index: 0 })).toBe(true);
+      // `Object` was taken for the count, so the second one wasn’t caught
+      expect(checkName({ ...args, name: 'constructor', index: 1 })).toBe(false);
+      expect(collectors.errors.size).toBe(1);
     });
 
     it('should leave a missing name to the schema', () => {

@@ -18,7 +18,7 @@ describe('initGitBackend', () => {
 
   it('should fill in the repository info and the API endpoint configuration', () => {
     const repository = /** @type {any} */ ({});
-    const getTokenPageURL = vi.fn((repoURL) => `${repoURL}/tokens`);
+    const getTokenPageURL = vi.fn((instanceURL) => `${instanceURL}/tokens`);
     const getBaseURLs = vi.fn((repoURL, branch) => ({ treeBaseURL: `${repoURL}/tree/${branch}` }));
 
     const result = initGitBackend(repository, {
@@ -50,7 +50,7 @@ describe('initGitBackend', () => {
       repo: 'repo',
       branch: 'main',
       repoURL: 'https://gitea.example.com/owner/repo',
-      tokenPageURL: 'https://gitea.example.com/owner/repo/tokens',
+      tokenPageURL: 'https://gitea.example.com/tokens',
       databaseName: 'gitea:owner/repo',
       isSelfHosted: true,
       treeBaseURL: 'https://gitea.example.com/owner/repo/tree/main',

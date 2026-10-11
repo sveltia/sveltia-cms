@@ -180,12 +180,15 @@ const resolveIndexRoute = (state) => {
       resolveAssetFolderPath('-/all')
     ).folder;
     selectedSubfolderPath.current = '';
-    // Redirect to All Assets
-    goto('/assets/-/all');
+    // Redirect to All Assets, replacing the index route in the history, so the browser’s Back
+    // button doesn’t come back here only to be redirected again
+    goto('/assets/-/all', { replaceState: true });
   } else {
     // No asset folder is configured, so redirect to the first external location, or to the files
     // linked from entries if there is none either
-    goto(getCloudServicePath(enabledCloudServices.current[0] ?? linkedFilesService));
+    goto(getCloudServicePath(enabledCloudServices.current[0] ?? linkedFilesService), {
+      replaceState: true,
+    });
   }
 
   return state;
@@ -265,8 +268,21 @@ export const resolveAssetsRoute = () => {
     return resolveIndexRoute(state);
   }
 
-  // The regex takes a last path segment with a dot for a file name, but a folder can have a dot in
-  // its name too, e.g. `v1.2`. Browse the folder if there is no asset at the path
+  // The regex takes a last path segment with a dot for a file name, but a file doesn’t have to have
+  // an extension, e.g. `LICENSE`. Show the asset if there is one at the path
+  if (
+    !fileName &&
+    folderPath.includes('/') &&
+    allAssets.current.some((asset) => asset.path === folderPath)
+  ) {
+    const index = folderPath.lastIndexOf('/');
+
+    fileName = folderPath.slice(index + 1);
+    folderPath = folderPath.slice(0, index);
+  }
+
+  // Conversely, a folder can have a dot in its name too, e.g. `v1.2`. Browse the folder if there is
+  // no asset at the path
   if (fileName) {
     const fullPath = `${folderPath}/${fileName}`;
 

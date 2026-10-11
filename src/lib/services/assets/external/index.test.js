@@ -14,6 +14,7 @@ import {
   externalAssets,
   externalAssetSearchTerms,
   externalAssetsError,
+  externalAssetsTruncated,
   externalFolders,
   focusedExternalAsset,
   focusedExternalSubfolder,
@@ -249,6 +250,7 @@ describe('assets/external', () => {
       externalAssets.current = [asset];
       externalAssetCounts.current = { uploadcare: 1 };
       externalAssetsError.current = 'search_fetch_failed';
+      externalAssetsTruncated.current = true;
       selectedExternalAssets.current = [asset];
       focusedExternalAsset.current = asset;
       overlaidExternalAssetId.current = 'a';
@@ -262,6 +264,7 @@ describe('assets/external', () => {
       expect(externalAssetCounts.current).toEqual({ uploadcare: 1 });
       expect(externalAssets.current).toBeUndefined();
       expect(externalAssetsError.current).toBeUndefined();
+      expect(externalAssetsTruncated.current).toBe(false);
       expect(selectedExternalAssets.current).toEqual([]);
       expect(focusedExternalAsset.current).toBeUndefined();
       expect(overlaidExternalAssetId.current).toBeUndefined();

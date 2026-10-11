@@ -430,9 +430,16 @@ describe('GitLab Editorial Workflow service', () => {
   });
 
   describe('fetchMergeState', () => {
-    const pullRequest = /** @type {any} */ ({ number: 1, branch: 'cms/posts/hello' });
+    const pullRequest = /** @type {any} */ ({
+      number: 1,
+      branch: 'cms/posts/hello',
+      headSHA: 'abc123',
+    });
+
     const COMPARE_QUERY = 'from=main&to=abc123&straight=false';
     const COMPARE_PATH = `/projects/${PROJECT_ID}/repository/compare?${COMPARE_QUERY}`;
+    const MR_PATH = `/projects/${PROJECT_ID}/merge_requests/1`;
+    const BRANCH_PATH = `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`;
 
     /**
      * Create a single merge request as returned by the REST API.
@@ -442,10 +449,43 @@ describe('GitLab Editorial Workflow service', () => {
     const createMergeRequest = (overrides = {}) =>
       createItem({ source_project_id: 1, target_project_id: 1, changes_count: '4', ...overrides });
 
+    /**
+     * Mock the REST API.
+     * @param {object} args Arguments.
+     * @param {any[]} args.items Merge request returned by each read, the last one repeated.
+     * @param {string | null} [args.branchHead] Head of the branch, or `null` if it’s gone.
+     * @param {any} [args.comparison] Result of the comparison.
+     */
+    const mockAPI = ({ items, branchHead = 'abc123', comparison = {} }) => {
+      let reads = 0;
+
+      vi.mocked(fetchAPI).mockImplementation(async (path) => {
+        if (path === MR_PATH) {
+          reads += 1;
+
+          return items[Math.min(reads, items.length) - 1];
+        }
+
+        if (path === BRANCH_PATH) {
+          if (branchHead === null) {
+            throw new Error('Not Found', { cause: { status: 404 } });
+          }
+
+          return { commit: { id: branchHead } };
+        }
+
+        if (path.includes('/repository/compare?')) {
+          return comparison;
+        }
+
+        throw new Error(`Unexpected request: ${path}`);
+      });
+    };
+
     test('lists the files as of the head commit by comparing it with the configured branch', async () => {
-      vi.mocked(fetchAPI)
-        .mockResolvedValueOnce(createMergeRequest())
-        .mockResolvedValueOnce({
+      mockAPI({
+        items: [createMergeRequest()],
+        comparison: {
           diffs: [
             {
               new_path: 'content/posts/hello.md',
@@ -471,7 +511,8 @@ describe('GitLab Editorial Workflow service', () => {
               b_mode: '0',
             },
           ],
-        });
+        },
+      });
 
       await expect(fetchMergeState(pullRequest)).resolves.toEqual({
         headSHA: 'abc123',
@@ -497,9 +538,73 @@ describe('GitLab Editorial Workflow service', () => {
         complete: true,
       });
 
-      expect(fetchAPI).toHaveBeenNthCalledWith(1, `/projects/${PROJECT_ID}/merge_requests/1`);
+      expect(fetchAPI).toHaveBeenNthCalledWith(1, MR_PATH);
+      expect(fetchAPI).toHaveBeenNthCalledWith(2, BRANCH_PATH);
       // Pinned to the commit, so the list describes exactly what a merge pinned to it brings in
-      expect(fetchAPI).toHaveBeenNthCalledWith(2, COMPARE_PATH);
+      expect(fetchAPI).toHaveBeenNthCalledWith(3, COMPARE_PATH);
+      expect(sleep).not.toHaveBeenCalled();
+    });
+
+    test('waits for a merge request that trails the branch to catch up', async () => {
+      mockAPI({
+        items: [
+          createMergeRequest({ sha: 'old456', changes_count: '1' }),
+          createMergeRequest({ sha: 'old456', changes_count: '1' }),
+          createMergeRequest({ changes_count: '2' }),
+        ],
+        comparison: { diffs: [{ new_path: 'a.md' }, { new_path: 'b.md' }] },
+      });
+
+      await expect(fetchMergeState(pullRequest)).resolves.toMatchObject({
+        headSHA: 'abc123',
+        onConfiguredBranches: true,
+        complete: true,
+      });
+
+      expect(vi.mocked(fetchAPI).mock.calls.filter(([path]) => path === MR_PATH)).toHaveLength(3);
+      expect(sleep).toHaveBeenCalledTimes(2);
+      expect(fetchAPI).toHaveBeenLastCalledWith(COMPARE_PATH);
+    });
+
+    test('gives up waiting, and goes by the branch head and the comparison', async () => {
+      mockAPI({
+        // The stale count would otherwise flag the list as cut short
+        items: [createMergeRequest({ sha: 'old456', changes_count: '5' })],
+        comparison: { diffs: [{ new_path: 'a.md' }, { new_path: 'b.md' }] },
+      });
+
+      await expect(fetchMergeState(pullRequest)).resolves.toMatchObject({
+        headSHA: 'abc123',
+        onConfiguredBranches: true,
+        complete: true,
+      });
+
+      expect(vi.mocked(fetchAPI).mock.calls.filter(([path]) => path === MR_PATH)).toHaveLength(10);
+      expect(sleep).toHaveBeenCalledTimes(9);
+      expect(fetchAPI).toHaveBeenLastCalledWith(COMPARE_PATH);
+    });
+
+    test('doesn’t wait for a branch that has moved on from the commit on record', async () => {
+      mockAPI({
+        items: [createMergeRequest({ sha: 'old456' })],
+        branchHead: 'new789',
+      });
+
+      // The check before publishing refuses it, as the branch has moved on
+      await expect(fetchMergeState(pullRequest)).resolves.toMatchObject({ headSHA: 'new789' });
+
+      expect(sleep).not.toHaveBeenCalled();
+      expect(fetchAPI).toHaveBeenLastCalledWith(
+        `/projects/${PROJECT_ID}/repository/compare?from=main&to=new789&straight=false`,
+      );
+    });
+
+    test('goes by the merge request’s head when the branch is gone', async () => {
+      mockAPI({ items: [createMergeRequest({ sha: 'old456' })], branchHead: null });
+
+      await expect(fetchMergeState(pullRequest)).resolves.toMatchObject({ headSHA: 'old456' });
+
+      expect(sleep).not.toHaveBeenCalled();
     });
 
     test.each([
@@ -508,19 +613,18 @@ describe('GitLab Editorial Workflow service', () => {
       ['a count past GitLab’s limit', '1000+', 1000],
       ['as many files as GitLab lists by default, with no count yet', null, 1000],
     ])('flags a list cut short: %s', async (_label, count, length) => {
-      vi.mocked(fetchAPI)
-        .mockResolvedValueOnce(createMergeRequest({ changes_count: count }))
-        .mockResolvedValueOnce({
+      mockAPI({
+        items: [createMergeRequest({ changes_count: count })],
+        comparison: {
           diffs: Array.from({ length }, (_, i) => ({ new_path: `${i}.md`, old_path: `${i}.md` })),
-        });
+        },
+      });
 
       await expect(fetchMergeState(pullRequest)).resolves.toMatchObject({ complete: false });
     });
 
     test('relies on the comparison while the merge request’s count is unknown', async () => {
-      vi.mocked(fetchAPI)
-        .mockResolvedValueOnce(createMergeRequest({ changes_count: null }))
-        .mockResolvedValueOnce({});
+      mockAPI({ items: [createMergeRequest({ changes_count: null })] });
 
       await expect(fetchMergeState(pullRequest)).resolves.toMatchObject({
         files: [],
@@ -533,7 +637,7 @@ describe('GitLab Editorial Workflow service', () => {
       ['comes from a fork', { source_project_id: 2 }],
       ['has no head', { sha: null }],
     ])('reports a merge request that %s without comparing it', async (_label, overrides) => {
-      vi.mocked(fetchAPI).mockResolvedValueOnce(createMergeRequest(overrides));
+      mockAPI({ items: [createMergeRequest(overrides)] });
 
       await expect(fetchMergeState(pullRequest)).resolves.toMatchObject({
         onConfiguredBranches: false,

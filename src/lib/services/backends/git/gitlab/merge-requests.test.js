@@ -92,11 +92,16 @@ describe('GitLab merge requests', () => {
       ['draft: Title', 'Title'],
       ['[Draft] Title', 'Title'],
       ['(Draft) Title', 'Title'],
-      ['WIP: Title', 'Title'],
-      ['[WIP] Title', 'Title'],
-      ['Draft: WIP: Title', 'Title'],
+      ['Draft: [Draft] Title', 'Title'],
       ['Title', 'Title'],
       ['Drafting the plan', 'Drafting the plan'],
+      // GitLab doesn’t read these as draft indicators, so they’re part of the title
+      ['Draft notes', 'Draft notes'],
+      ['WIP: Title', 'WIP: Title'],
+      ['[WIP] Title', '[WIP] Title'],
+      ['(WIP) Title', '(WIP) Title'],
+      ['WIP notes for the post', 'WIP notes for the post'],
+      ['Draft: WIP notes', 'WIP notes'],
     ])('strips %s', (input, expected) => {
       expect(stripDraftPrefix(input)).toBe(expected);
     });
@@ -266,6 +271,89 @@ describe('GitLab merge requests', () => {
         deleted: false,
         previousPath: 'content/posts/hello.md',
       });
+    });
+
+    /**
+     * Mock the REST API for a merge request whose head is `abc123`.
+     * @param {string} branchHead Head of the branch.
+     */
+    const mockBranch = (branchHead) => {
+      vi.mocked(fetchAPI).mockImplementation(async (path) => {
+        if (path.includes('/repository/branches/')) {
+          return { commit: { id: branchHead } };
+        }
+
+        if (path.includes('/repository/compare?')) {
+          return { diffs: [{ new_path: 'static/new.png', old_path: 'static/new.png' }] };
+        }
+
+        return [{ new_path: 'content/posts/hello.md', old_path: 'content/posts/hello.md' }];
+      });
+    };
+
+    test('keeps the diff of a merge request that is up to date with its branch', async () => {
+      mockBranch('abc123');
+
+      const mergeRequest = /** @type {any} */ ({
+        number: 1,
+        branch: 'cms/posts/hello',
+        headSHA: 'abc123',
+        files: [],
+      });
+
+      await fetchMergeRequestFileList(mergeRequest);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`,
+      );
+      expect(fetchAPI).not.toHaveBeenCalledWith(expect.stringContaining('/compare'));
+      expect(mergeRequest.headSHA).toBe('abc123');
+      expect(mergeRequest.files.map((/** @type {any} */ { path }) => path)).toEqual([
+        'content/posts/hello.md',
+      ]);
+    });
+
+    test('compares the branch head while the merge request trails a push', async () => {
+      mockBranch('def456');
+
+      const mergeRequest = /** @type {any} */ ({
+        number: 1,
+        branch: 'cms/posts/hello',
+        headSHA: 'abc123',
+        files: [],
+      });
+
+      await fetchMergeRequestFileList(mergeRequest);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        `/projects/${PROJECT_ID}/repository/compare?from=main&to=def456&straight=false`,
+      );
+      // The branch head is the one on record, which the contents are read at
+      expect(mergeRequest.headSHA).toBe('def456');
+      expect(mergeRequest.files.map((/** @type {any} */ { path }) => path)).toEqual([
+        'static/new.png',
+      ]);
+    });
+
+    test('takes a comparison without diffs as no change', async () => {
+      vi.mocked(fetchAPI).mockImplementation(async (path) =>
+        path.includes('/repository/branches/')
+          ? { commit: { id: 'def456' } }
+          : path.includes('/compare?')
+            ? {}
+            : [],
+      );
+
+      const mergeRequest = /** @type {any} */ ({
+        number: 1,
+        branch: 'cms/posts/hello',
+        headSHA: 'abc123',
+        files: [],
+      });
+
+      await fetchMergeRequestFileList(mergeRequest);
+
+      expect(mergeRequest.files).toEqual([]);
     });
   });
 

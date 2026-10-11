@@ -16,6 +16,8 @@
    * @property {string} title Dialog title.
    * @property {string} okLabel Label of the OK button.
    * @property {string} description Text shown above the input field.
+   * @property {string} [warning] Warning shown below the description, e.g. that entries linking to
+   * the files in the folder will break once it’s renamed. The name can still be submitted.
    * @property {string} [name] Current folder name, shown in the input field when renaming. Empty
    * for a new folder.
    * @property {string[]} takenNames Names of the files and folders already in the parent folder,
@@ -32,6 +34,7 @@
     title,
     okLabel,
     description,
+    warning = undefined,
     name = '',
     takenNames,
     onSubmit,
@@ -73,6 +76,9 @@
   {onClose}
 >
   <p>{description}</p>
+  {#if warning}
+    <p role="alert" class="warning">{warning}</p>
+  {/if}
   <div role="none">
     <TextInput
       dir="auto"
@@ -96,6 +102,10 @@
 <style>
   p {
     margin: 0 0 8px;
+  }
+
+  .warning {
+    color: var(--sui-warning-foreground-color);
   }
 
   div {

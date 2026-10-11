@@ -10,6 +10,7 @@
   import { getAssetUsedEntries } from '$lib/services/assets/details';
   import { getAssetFolderHistoryState } from '$lib/services/assets/navigation';
   import { renamingAsset } from '$lib/services/assets/state';
+  import { getFolderNamesInDir } from '$lib/services/assets/subfolders';
   import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { watchAsync } from '$lib/services/utils/state.svelte';
@@ -44,6 +45,8 @@
           .filter((n) => n !== asset.name)
       : [],
   );
+  /** Names of the subfolders next to the asset, which a file can’t take either. */
+  const folderNames = $derived(asset ? getFolderNamesInDir(dirname) : []);
 
   /**
    * Rename the asset by moving it to a new path. Also, update the URL hash silently to reflect the
@@ -94,6 +97,7 @@
   bind:open
   name={basename}
   {otherNames}
+  {folderNames}
   usedEntryCount={usedEntries.length}
   {blockedMessage}
   slugificationEnabled={getDefaultMediaLibraryOptions().config.slugify_filename}

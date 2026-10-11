@@ -110,14 +110,15 @@ export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue
   }
 
   if (dateOnly) {
+    // `getDate()` reads a date as UTC midnight, which the custom time zone would show as the
+    // previous day west of UTC, so only a value with a time is shown in that zone
     return getDisplayFormatter({
       locale: canonicalLocale,
       parts: 'date',
       timeZone:
-        displayTimeZone ||
-        (utc || DATE_REGEX.test(currentValue) || TIME_SUFFIX_REGEX.test(currentValue)
+        utc || DATE_REGEX.test(currentValue) || TIME_SUFFIX_REGEX.test(currentValue)
           ? 'UTC'
-          : undefined),
+          : displayTimeZone,
     }).format(date);
   }
 

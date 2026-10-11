@@ -6,7 +6,12 @@ import { getLocalizedRelationValue } from '$lib/services/contents/fields/relatio
 import { flattenKeys } from '$lib/services/utils/object';
 
 /**
- * @import { DraftValueStoreKey, EntryDraft, InternalLocaleCode } from '$lib/types/private';
+ * @import {
+ * DraftValueStoreKey,
+ * EntryDraft,
+ * ExpanderStateList,
+ * InternalLocaleCode,
+ * } from '$lib/types/private';
  * @import { Field, FieldKeyPath } from '$lib/types/public';
  */
 
@@ -46,15 +51,59 @@ export const getItemList = (obj, keyPath) => [
 ];
 
 /**
+ * Move the expander states of a list’s items to follow the items once the list has been
+ * manipulated. The states are flattened, so an item’s own state, e.g. `authors.1`, comes with the
+ * states of the objects and lists nested in it, e.g. `authors.1.details#` or `authors.1.books.0`,
+ * which all have to be renumbered along with the item.
+ * @param {Record<string, boolean>} states Flattened expander states.
+ * @param {FieldKeyPath} keyPath Dot-notated field name of the list.
+ * @param {ExpanderStateList} expanderStateList Manipulated list.
+ * @returns {Record<string, boolean>} New expander states.
+ */
+export const moveListExpanderStates = (states, keyPath, expanderStateList) => {
+  const prefix = `${keyPath}.`;
+  /** @type {Record<string, boolean>} */
+  const newStates = {};
+  /** @type {Map<number, [suffix: string, state: boolean][]>} */
+  const itemStates = new Map();
+
+  Object.entries(states).forEach(([key, state]) => {
+    // The list’s own state, e.g. `authors#`, stays as it is, as do the states of other fields
+    const [, index, suffix] = key.startsWith(prefix)
+      ? (key.slice(prefix.length).match(/^(\d+)($|[.#].*)/) ?? [])
+      : [];
+
+    if (index === undefined) {
+      newStates[key] = state;
+    } else {
+      itemStates.set(Number(index), [...(itemStates.get(Number(index)) ?? []), [suffix, state]]);
+    }
+  });
+
+  expanderStateList.forEach((item, index) => {
+    if (typeof item === 'number') {
+      itemStates.get(item)?.forEach(([suffix, state]) => {
+        newStates[`${prefix}${index}${suffix}`] = state;
+      });
+    } else {
+      newStates[`${prefix}${index}`] = item;
+    }
+  });
+
+  return newStates;
+};
+
+/**
  * Update the value in a list field.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {InternalLocaleCode} args.locale Target locale.
  * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
  * @param {FieldKeyPath} args.keyPath Dot-notated field name.
- * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) => void } args.manipulate A
- * function to manipulate the list, which takes one object argument containing the value list, file
- * list and view state list. The typical usage is `list.splice()`.
+ * @param {(arg: { valueList: any[], expanderStateList: ExpanderStateList }) => void }
+ * args.manipulate A function to manipulate the list, which takes one object argument containing the
+ * value list and the expander state list, to be manipulated in the same way. The typical usage is
+ * `list.splice()`.
  */
 export const updateListField = ({
   draft,
@@ -66,10 +115,10 @@ export const updateListField = ({
   const { collection, collectionFile } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const [valueList, valueListRemainder] = getItemList(draft[valueStoreKey][locale], keyPath);
-
-  const [expanderStateList, expanderStateListRemainder] =
-    // Manipulation should only happen once with the default locale
-    locale === defaultLocale ? getItemList(draft.expanderStates._, keyPath) : [[], []];
+  const isDefaultLocale = locale === defaultLocale;
+  // Manipulation should only happen once with the default locale
+  /** @type {ExpanderStateList} */
+  const expanderStateList = isDefaultLocale ? [...Array(valueList.length).keys()] : [];
 
   manipulate({ valueList, expanderStateList });
 
@@ -79,11 +128,11 @@ export const updateListField = ({
       ...valueListRemainder,
     });
 
-    if (locale === defaultLocale) {
-      updateObject(draft.expanderStates._, {
-        ...flattenKeys(expanderStateList, keyPath),
-        ...expanderStateListRemainder,
-      });
+    if (isDefaultLocale) {
+      updateObject(
+        draft.expanderStates._,
+        moveListExpanderStates(draft.expanderStates._, keyPath, expanderStateList),
+      );
     }
   });
 };
@@ -102,8 +151,8 @@ export const updateListField = ({
  * so that its value is stored as `fr/foo` rather than `en/foo` in the French content.
  * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
  * @param {FieldKeyPath} args.keyPath Dot-notated field name.
- * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) => void } args.manipulate A
- * function to manipulate the list. See {@link updateListField}.
+ * @param {(arg: { valueList: any[], expanderStateList: ExpanderStateList }) => void }
+ * args.manipulate A function to manipulate the list. See {@link updateListField}.
  */
 export const updateListFieldForLocales = ({
   draft,

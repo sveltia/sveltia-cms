@@ -42,11 +42,12 @@ export const MAX_ITEMS = {
 /**
  * Regular expression matching the draft indicators GitLab accepts at the beginning of a merge
  * request title. GitLab has no dedicated API field to toggle the draft state; the read-only `draft`
- * property is derived from the title instead.
+ * property is derived from the title instead. Only these three count: GitLab no longer reads `WIP`
+ * as one, and a title like `WIP notes` or `Draft notes` is an ordinary title, which is kept as it
+ * is, as it goes back to GitLab with a status change and into the merge commit message.
  * @see https://docs.gitlab.com/user/project/merge_requests/drafts/
  */
-const DRAFT_TITLE_REGEX =
-  /^\s*(?:\[draft\]|\(draft\)|draft:|draft\s|\[wip\]|\(wip\)|wip:|wip\s)\s*/i;
+const DRAFT_TITLE_REGEX = /^\s*(?:\[draft\]|\(draft\)|draft:)\s*/i;
 
 /**
  * Prefix added to a merge request title to mark it as a draft.
@@ -61,7 +62,7 @@ export const DRAFT_TITLE_PREFIX = 'Draft: ';
 export const stripDraftPrefix = (title) => {
   let result = title;
 
-  // Repeat, because GitLab tolerates combinations such as `Draft: WIP: Title`
+  // Repeat, because GitLab tolerates combinations such as `Draft: [Draft] Title`
   while (DRAFT_TITLE_REGEX.test(result)) {
     result = result.replace(DRAFT_TITLE_REGEX, '');
   }
@@ -150,19 +151,61 @@ export const parseDiff = (diff) => ({
 });
 
 /**
- * Fetch the list of files changed in the given merge request.
+ * Fetch the commit the given workflow branch points at. Two editors working on the same entry
+ * share its branch, so this is how a save finds out that someone else has committed to it since
+ * the draft was opened. The branch is looked up in the project it lives in, which is the
+ * contributor’s fork with Open Authoring.
+ * @param {string} branch Branch name.
+ * @returns {Promise<string | undefined>} Git object ID, or `undefined` if the branch is gone,
+ * which is what a merged or closed merge request leaves behind.
+ * @see https://docs.gitlab.com/api/branches/#get-single-repository-branch
+ */
+export const fetchBranchHead = async (branch) => {
+  const result = /** @type {{ commit?: { id?: string } } | undefined} */ (
+    await fetchAPIOrUndefined(getBranchPath(branch, getWorkflowRepository()))
+  );
+
+  return result?.commit?.id;
+};
+
+/**
+ * Fetch the list of files changed in the given merge request. GitLab refreshes a merge request in
+ * the background after a push to its branch, so for a while its head commit and its diff can trail
+ * the branch, e.g. right after a save. The branch head is read along with it, and while the merge
+ * request trails, the files are listed by comparing the configured branch with the branch head
+ * instead, which reflects the push right away. The branch head becomes the head on record either
+ * way: the contents are read at it, and a save checks the branch against it.
  * @param {WorkflowPullRequest} mergeRequest Merge request to complete.
  * @see https://docs.gitlab.com/api/merge_requests/#list-merge-request-diffs
+ * @see https://docs.gitlab.com/api/repositories/#compare-branches-tags-or-commits
  */
 export const fetchMergeRequestFileList = async (mergeRequest) => {
-  const diffs = /** @type {Record<string, any>[]} */ (
+  const { number, branch, headSHA } = mergeRequest;
+  const projectPath = `/projects/${getProjectId()}`;
+
+  const [branchHead, diffs] = await Promise.all([
+    fetchBranchHead(branch),
+    /** @type {Promise<Record<string, any>[]>} */ (
+      fetchAPI(`${projectPath}/merge_requests/${number}/diffs?per_page=${MAX_ITEMS.files}`)
+    ),
+  ]);
+
+  // A branch that’s gone leaves nothing to compare, so the merge request is all there is to go by
+  if (!branchHead || branchHead === headSHA) {
+    mergeRequest.files = diffs.map(parseDiff);
+
+    return;
+  }
+
+  const { diffs: comparedDiffs = [] } = /** @type {{ diffs?: Record<string, any>[] }} */ (
     await fetchAPI(
-      `/projects/${getProjectId()}/merge_requests/${mergeRequest.number}` +
-        `/diffs?per_page=${MAX_ITEMS.files}`,
+      `${projectPath}/repository/compare` +
+        `?from=${encodeURIComponent(/** @type {string} */ (repository.branch))}` +
+        `&to=${encodeURIComponent(branchHead)}&straight=false`,
     )
   );
 
-  mergeRequest.files = diffs.map(parseDiff);
+  Object.assign(mergeRequest, { headSHA: branchHead, files: comparedDiffs.map(parseDiff) });
 };
 
 const FETCH_BLOBS_QUERY = `
@@ -327,24 +370,6 @@ export const fetchPullRequests = async () => {
   ]);
 
   return mergeRequests;
-};
-
-/**
- * Fetch the commit the given workflow branch points at. Two editors working on the same entry
- * share its branch, so this is how a save finds out that someone else has committed to it since
- * the draft was opened. The branch is looked up in the project it lives in, which is the
- * contributor’s fork with Open Authoring.
- * @param {string} branch Branch name.
- * @returns {Promise<string | undefined>} Git object ID, or `undefined` if the branch is gone,
- * which is what a merged or closed merge request leaves behind.
- * @see https://docs.gitlab.com/api/branches/#get-single-repository-branch
- */
-export const fetchBranchHead = async (branch) => {
-  const result = /** @type {{ commit?: { id?: string } } | undefined} */ (
-    await fetchAPIOrUndefined(getBranchPath(branch, getWorkflowRepository()))
-  );
-
-  return result?.commit?.id;
 };
 
 /**

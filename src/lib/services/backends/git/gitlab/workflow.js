@@ -69,6 +69,12 @@ const AUTO_MERGE_WAIT_STATUSES = [...TRANSIENT_MERGE_STATUSES, 'ci_still_running
  * safety net for a merge that never lands, e.g. one GitLab has queued but not carried out.
  */
 const AUTO_MERGE_POLL = { interval: 10000, maxDuration: 60 * 60 * 1000 };
+/**
+ * How many times, and how often, a merge request is read before it’s merged while its head trails
+ * the branch. GitLab refreshes a merge request in the background after a push to its branch, which
+ * usually takes a second or two, and refuses to merge it pinned to the new commit until then.
+ */
+const MERGE_REQUEST_REFRESH_POLL = { attempts: 10, interval: 1000 };
 
 /**
  * Fetch all the unpublished entries the signed-in user has in progress.
@@ -342,42 +348,78 @@ const getDiffStatus = (diff) => {
 };
 
 /**
- * Read the merge request afresh right before it’s merged. The files are listed by comparing the
- * configured branch with the very commit the merge request points at, rather than read off the
- * merge request, so they describe exactly what a merge pinned to that commit would bring in, even
- * if the branch moves on meanwhile. The comparison can stop short of the whole list on a large
- * change, which the merge request’s own count of changes tells.
+ * Read the merge request afresh right before it’s merged, along with the commit its branch points
+ * at. GitLab refreshes a merge request in the background after a push, so its head can trail the
+ * branch for a moment, e.g. right after a save, and a merge pinned to the branch head is refused
+ * until it has caught up. While the branch still points at the commit on record, the merge request
+ * is read again until it does, up to a limit. A branch that has moved on from the commit on record
+ * is refused by the check before publishing anyway, so there’s no point in waiting for that.
  * @param {WorkflowPullRequest} pullRequest Merge request.
- * @returns {Promise<WorkflowMergeState>} State.
+ * @param {number} [attemptsLeft] Number of reads left.
+ * @returns {Promise<{ item: Record<string, any>, branchHead: string | undefined }>} Merge request
+ * returned by the REST API, and the branch head, or `undefined` if the merge request isn’t
+ * merged into the configured branch from one of this project’s branches, or has no head.
  * @see https://docs.gitlab.com/api/merge_requests/#get-single-mr
- * @see https://docs.gitlab.com/api/repositories/#compare-branches-tags-or-commits
  */
-export const fetchMergeState = async (pullRequest) => {
+const fetchRefreshedMergeRequest = async (
+  pullRequest,
+  attemptsLeft = MERGE_REQUEST_REFRESH_POLL.attempts,
+) => {
+  const item = await fetchMergeRequest(pullRequest);
+
   const {
-    sha: headSHA,
+    sha,
     target_branch: targetBranch,
     source_project_id: sourceId,
     target_project_id: targetId,
-    changes_count: changesCount,
-  } = await fetchMergeRequest(pullRequest);
+  } = item;
 
-  const onConfiguredBranches = targetBranch === repository.branch && sourceId === targetId;
+  if (!sha || targetBranch !== repository.branch || sourceId !== targetId) {
+    return { item, branchHead: undefined };
+  }
 
-  if (!headSHA || !onConfiguredBranches) {
-    return { headSHA, onConfiguredBranches: false, files: [], complete: false };
+  // A branch that’s gone leaves the merge request’s head as the only one there is
+  const branchHead = (await fetchBranchHead(pullRequest.branch)) ?? sha;
+
+  if (branchHead === sha || branchHead !== pullRequest.headSHA || attemptsLeft <= 1) {
+    return { item, branchHead };
+  }
+
+  await sleep(MERGE_REQUEST_REFRESH_POLL.interval);
+
+  return fetchRefreshedMergeRequest(pullRequest, attemptsLeft - 1);
+};
+
+/**
+ * Read the merge request afresh right before it’s merged. The files are listed by comparing the
+ * configured branch with the very commit the branch points at, rather than read off the merge
+ * request, so they describe exactly what a merge pinned to that commit would bring in, even if the
+ * branch moves on meanwhile. The comparison can stop short of the whole list on a large change,
+ * which the merge request’s own count of changes tells, as long as it’s up to date with the branch.
+ * @param {WorkflowPullRequest} pullRequest Merge request.
+ * @returns {Promise<WorkflowMergeState>} State.
+ * @see https://docs.gitlab.com/api/repositories/#compare-branches-tags-or-commits
+ */
+export const fetchMergeState = async (pullRequest) => {
+  const { item, branchHead: headSHA } = await fetchRefreshedMergeRequest(pullRequest);
+
+  if (!headSHA) {
+    return { headSHA: item.sha, onConfiguredBranches: false, files: [], complete: false };
   }
 
   const { diffs = [] } = /** @type {{ diffs?: Record<string, any>[] }} */ (
     await fetchAPI(
       `/projects/${getProjectId()}/repository/compare` +
-        `?from=${encodeURIComponent(/** @type {string} */ (targetBranch))}` +
+        `?from=${encodeURIComponent(/** @type {string} */ (repository.branch))}` +
         `&to=${encodeURIComponent(headSHA)}&straight=false`,
     )
   );
 
   // `changes_count` is a string, which reads like `1000+` past GitLab’s limit, and is missing
-  // while the merge request’s diff is still being worked out. The comparison is then all there is
-  // to go by, and one that reaches GitLab’s default limit on files may have been cut short
+  // while the merge request’s diff is still being worked out, or describes another commit while the
+  // merge request trails the branch. The comparison is then all there is to go by, and one that
+  // reaches GitLab’s default limit on files may have been cut short
+  const changesCount = item.sha === headSHA ? item.changes_count : undefined;
   const count = changesCount === null || changesCount === undefined ? undefined : `${changesCount}`;
 
   const complete =
@@ -387,7 +429,7 @@ export const fetchMergeState = async (pullRequest) => {
 
   return {
     headSHA,
-    onConfiguredBranches,
+    onConfiguredBranches: true,
     files: diffs.map((diff) => ({
       path: diff.new_path,
       status: getDiffStatus(diff),

@@ -1717,6 +1717,7 @@ describe('Test serializeContent()', () => {
       collection: {
         _file: { format: 'json' },
         _i18n: {
+          defaultLocale: 'en',
           canonicalSlug: { key: '' },
         },
       },
@@ -1780,6 +1781,56 @@ describe('Test serializeContent()', () => {
       vi.mocked(createKeyPathList).mockReturnValueOnce(['shown']);
       expect(serializeContent({ draft, locale: 'en', valueMap: { shown: 'text' } })).toEqual({
         shown: 'text',
+      });
+    });
+
+    test('adds an empty object to another locale only for a localized field', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      /** @type {Record<string, any>} */
+      const fieldMap = {
+        kv: { name: 'kv', widget: 'keyvalue' },
+        kvt: { name: 'kvt', widget: 'keyvalue', i18n: true },
+        o: { name: 'o', widget: 'object', i18n: true },
+        'o.kv': { name: 'kv', widget: 'keyvalue' },
+        'o.off': { name: 'off', widget: 'keyvalue', i18n: false },
+        p: { name: 'p', widget: 'object' },
+        'p.kv': { name: 'kv', widget: 'keyvalue', i18n: true },
+        items: { name: 'items', widget: 'list', i18n: 'duplicate' },
+        'items.*.kv': { name: 'kv', widget: 'keyvalue' },
+        'items.0.kv': { name: 'kv', widget: 'keyvalue' },
+      };
+
+      const keyPaths = ['kv', 'kvt', 'o.kv', 'o.off', 'p.kv', 'items.*.kv'];
+
+      getField.mockImplementation(({ keyPath }) => fieldMap[keyPath]);
+
+      // A list item holding nothing but a blank pair
+      const valueMap = { 'items.0.kv.': '' };
+
+      // Every field belongs in the default locale
+      vi.mocked(createKeyPathList).mockReturnValueOnce(keyPaths);
+      expect(serializeContent({ draft, locale: 'en', valueMap: { ...valueMap } })).toEqual({
+        kv: {},
+        kvt: {},
+        o: { kv: {}, off: {} },
+        p: { kv: {} },
+        items: [{ kv: {} }],
+      });
+
+      // A field that isn’t translatable, or whose ancestor isn’t, is left out of another locale.
+      // It got an empty object, which also added the file’s value of the Object field
+      vi.mocked(createKeyPathList).mockReturnValueOnce(keyPaths);
+      expect(serializeContent({ draft, locale: 'fr', valueMap: { ...valueMap } })).toEqual({
+        kvt: {},
+        o: { kv: {} },
+        items: [{ kv: {} }],
+      });
+
+      // A value the locale already holds is kept
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['kv']);
+      expect(serializeContent({ draft, locale: 'fr', valueMap: { kv: 'text' } })).toEqual({
+        kv: 'text',
       });
     });
 

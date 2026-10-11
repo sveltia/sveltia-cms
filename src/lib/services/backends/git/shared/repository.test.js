@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   applyDefaultBranch,
+  getInstanceURL,
   getRepoURL,
   initRepositoryInfo,
   REPOSITORY_INFO_PLACEHOLDER,
@@ -64,6 +65,19 @@ describe('git/shared/repository', () => {
 
       expect(REPOSITORY_INFO_PLACEHOLDER.service).toBe('github');
       expect(original.service).toBe('');
+    });
+  });
+
+  describe('getInstanceURL', () => {
+    it.each([
+      ['https://api.github.com', 'https://github.com'],
+      ['https://github.example.com/api/v3', 'https://github.example.com'],
+      ['https://gitlab.com/api/v4', 'https://gitlab.com'],
+      // A self-hosted instance under a subpath keeps it
+      ['https://example.com/gitlab/api/v4', 'https://example.com/gitlab'],
+      ['https://example.com/gitea/api/v1', 'https://example.com/gitea'],
+    ])('should get the web interface URL from %s', (restApiRoot, expected) => {
+      expect(getInstanceURL(restApiRoot)).toBe(expected);
     });
   });
 
@@ -188,7 +202,7 @@ describe('git/shared/repository', () => {
   });
 
   describe('initRepositoryInfo', () => {
-    const getTokenPageURL = vi.fn((repoURL) => `${repoURL}/tokens`);
+    const getTokenPageURL = vi.fn((instanceURL) => `${instanceURL}/tokens`);
 
     const getBaseURLs = vi.fn((repoURL, branch) => ({
       treeBaseURL: `${repoURL}/tree/${branch}`,
@@ -228,14 +242,15 @@ describe('git/shared/repository', () => {
         repo: 'repo',
         branch: 'main',
         repoURL: 'https://github.com/owner/repo',
-        tokenPageURL: 'https://github.com/owner/repo/tokens',
+        tokenPageURL: 'https://github.com/tokens',
         databaseName: 'github:owner/repo',
         isSelfHosted: false,
         treeBaseURL: 'https://github.com/owner/repo/tree/main',
         blobBaseURL: 'https://github.com/owner/repo/blob/main',
         commitBaseURL: 'https://github.com/owner/repo/commit',
       });
-      expect(getTokenPageURL).toHaveBeenCalledWith('https://github.com/owner/repo');
+      // The token page belongs to the instance, not the repository
+      expect(getTokenPageURL).toHaveBeenCalledWith('https://github.com');
       expect(getBaseURLs).toHaveBeenCalledWith('https://github.com/owner/repo', 'main');
     });
 

@@ -3,7 +3,11 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { createSubfolder } from '$lib/services/assets/data/subfolder';
-import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/folders';
+import {
+  allAssetFolders,
+  globalAssetFolder,
+  selectedAssetFolder,
+} from '$lib/services/assets/folders';
 import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { showNewSubfolderDialog } from '$lib/services/assets/view';
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
@@ -85,6 +89,36 @@ describe('NewFolderDialog', () => {
     // The new folder is listed where the user is, rather than opened
     await expect.poll(() => page.getByRole('dialog').elements().length).toBe(0);
     expect(window.location.hash).toBe('#/assets/static/uploads');
+  });
+
+  test('refuses the name of a folder leading to another asset folder nested in the directory', async () => {
+    const folders = allAssetFolders.current;
+
+    // A collection’s own folder nested in the global one, which is browsed as a folder of its own
+    allAssetFolders.current = [
+      ...folders,
+      /** @type {import('$lib/types/private').AssetFolderInfo} */ ({
+        ...globalAssetFolder.current,
+        collectionName: 'posts',
+        internalPath: 'static/uploads/projects',
+      }),
+    ];
+    showNewSubfolderDialog.current = true;
+
+    try {
+      await render(NewFolderDialog);
+
+      const dialog = page.getByRole('dialog', { name: 'New Folder' });
+
+      // A placeholder file would otherwise be added to the collection’s folder
+      await dialog.getByRole('textbox', { name: 'Folder Name' }).fill('projects');
+      await expect
+        .element(dialog.getByText('A folder or file with this name already exists here.'))
+        .toBeVisible();
+      await expect.element(dialog.getByRole('button', { name: 'Create' })).toBeDisabled();
+    } finally {
+      allAssetFolders.current = folders;
+    }
   });
 
   test('creates the folder in the subfolder being browsed, reporting the progress', async () => {

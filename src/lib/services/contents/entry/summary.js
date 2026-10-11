@@ -253,7 +253,7 @@ export const replace = (placeholder, context) => {
     // avoid applying the transformation to the display value, which leads to unexpected results.
     // Also use raw value for ternary transformations to preserve boolean truthiness.
     if (transformations.some(({ method }) => method === 'date' || method === 'ternary')) {
-      value = valueMap[keyPath];
+      value = Object.hasOwn(valueMap, keyPath) ? valueMap[keyPath] : undefined;
     } else {
       // A Relation field is displayed with a label taken from the referenced entry
       if (getField(getFieldArgs)?.widget === 'relation') {

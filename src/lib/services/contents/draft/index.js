@@ -146,7 +146,7 @@ export const collectFieldValues = (
   // This runs for every field editor on every change, so the key paths under the field are looked
   // up in the value map’s index rather than by walking all of them
   return Object.fromEntries(
-    [...(keyPath in valueMap ? [keyPath] : []), ...getKeysByPrefix(valueMap, prefix)]
+    [...(Object.hasOwn(valueMap, keyPath) ? [keyPath] : []), ...getKeysByPrefix(valueMap, prefix)]
       .filter((key) => {
         if (!isRealKey(valueMap, key)) {
           return false;

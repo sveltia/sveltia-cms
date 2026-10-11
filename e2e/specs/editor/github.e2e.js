@@ -160,6 +160,48 @@ test.describe('draft backup', () => {
     await textbox.fill(value);
   };
 
+  /**
+   * List the keys of the draft backups stored in IndexedDB.
+   * @param {Page} page Page.
+   * @returns {Promise<string[][]>} Collection name and slug of each backup.
+   */
+  const getBackupKeys = (page) =>
+    page.evaluate(async () => {
+      /**
+       * Wait for an IndexedDB request to succeed.
+       * @param {IDBRequest} request Request.
+       * @returns {Promise<any>} Result.
+       */
+      const getResult = (request) =>
+        new Promise((resolve) => {
+          request.addEventListener('success', () => resolve(request.result));
+        });
+
+      const keys = await Promise.all(
+        (await indexedDB.databases()).map(async ({ name }) => {
+          /** @type {IDBDatabase} */
+          const db = await getResult(indexedDB.open(/** @type {string} */ (name)));
+
+          if (!db.objectStoreNames.contains('draft-backups')) {
+            db.close();
+
+            return [];
+          }
+
+          /** @type {{ collectionName: string, slug: string }[]} */
+          const backups = await getResult(
+            db.transaction('draft-backups').objectStore('draft-backups').getAll(),
+          );
+
+          db.close();
+
+          return backups.map(({ collectionName, slug }) => [collectionName, slug]);
+        }),
+      );
+
+      return keys.flat();
+    });
+
   test('restores the changes made before leaving the editor', async ({ cms, github, page }) => {
     await cms.open();
     await editAndLeave(page, async (editor) => {
@@ -276,6 +318,44 @@ test.describe('draft backup', () => {
     await openFirstPost(page);
     await page.waitForTimeout(500);
     await expect(page.getByRole('alertdialog', { name: 'Restore Draft' })).toBeHidden();
+  });
+
+  test('doesn’t offer the backup of a deleted entry to a new one with the same slug', async ({
+    cms,
+    page,
+  }) => {
+    await cms.open();
+
+    const editor = await openFirstPost(page);
+
+    await typeIn(editor.getByRole('textbox', { name: 'Body' }), 'Edited before the deletion.');
+    await expect.poll(() => getBackupKeys(page)).toEqual([['posts', 'first-post']]);
+    await cms.chooseMenuItem(
+      editor.getByRole('button', { name: 'Show Editor Options' }),
+      page.getByRole('menuitem', { name: 'Delete Entry' }),
+    );
+    await page
+      .getByRole('alertdialog', { name: 'Delete Entry' })
+      .getByRole('button', { name: 'Delete' })
+      .click();
+    await expect(page.getByRole('row', { name: /First Post/ })).toBeHidden();
+    // The unsaved changes went with the entry
+    await expect.poll(() => getBackupKeys(page)).toEqual([]);
+
+    // A new entry with the same title gets the same slug
+    await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+    await editor.getByRole('textbox', { name: 'Title' }).fill('First Post');
+    await editor.getByRole('textbox', { name: 'Item Value' }).fill('one');
+    await editor.getByRole('button', { name: /Add.*Links/ }).click();
+    await editor.getByRole('textbox', { name: 'Label' }).fill('Home');
+    await editor.getByRole('textbox', { name: 'URL' }).fill('https://example.com/');
+    await editor.getByRole('textbox', { name: 'Body' }).fill('A new post.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await openFirstPost(page);
+    // The prompt can take more than a second to show up after a save
+    await page.waitForTimeout(2000);
+    await expect(page.getByRole('alertdialog', { name: 'Restore Draft' })).toBeHidden();
+    await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue('A new post.');
   });
 
   test('restores the lists an item was removed from', async ({ cms, github, page }) => {

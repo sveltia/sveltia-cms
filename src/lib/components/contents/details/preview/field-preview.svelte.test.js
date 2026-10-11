@@ -102,6 +102,23 @@ describe('FieldPreview', () => {
     ).toHaveLength(0);
   });
 
+  test('renders nothing without a field configuration', async () => {
+    const { container } = await renderWithDraft(FieldPreview, {
+      draft: createMockDraft({
+        fields: [{ name: 'title', widget: 'string' }],
+        values: { en: { title: 'Hello' } },
+      }),
+      props: {
+        locale: 'en',
+        keyPath: 'missing',
+        typedKeyPath: 'missing',
+        fieldConfig: /** @type {any} */ (undefined),
+      },
+    });
+
+    expect(container.querySelector('section')).toBeNull();
+  });
+
   test('renders a non-translatable field in the default locale only', async () => {
     /** @type {Field} */
     const fieldConfig = { name: 'title', widget: 'string', i18n: false };

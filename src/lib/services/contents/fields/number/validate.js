@@ -1,4 +1,5 @@
 import { isFieldRequired } from '$lib/services/contents/entry/fields';
+import { isInvalidNumberValue } from '$lib/services/contents/fields/number/helpers';
 
 /**
  * @import { EntryValidityState, ValidateFieldFuncArgs } from '$lib/types/private';
@@ -19,14 +20,19 @@ export const validateNumberField = ({ fieldConfig, locale, value }) => {
   const number =
     value === null || (typeof value === 'string' && !value.trim()) ? NaN : Number(value);
 
-  const hasNumber = Number.isFinite(number);
+  // Text the number input couldn’t parse, like `1,5` or `abc`, as well as a number the field can’t
+  // store, like `Infinity`, is kept in the draft so it can be reported here, rather than saved as
+  // an empty value without a word
+  const invalidNumber = isInvalidNumberValue(value, config);
+  const hasNumber = !invalidNumber && Number.isFinite(number);
   const rangeUnderflow = hasNumber && typeof min === 'number' && number < min;
   const rangeOverflow = !rangeUnderflow && hasNumber && typeof max === 'number' && number > max;
 
   const typeMismatch =
-    (valueType === 'int' || valueType === 'float') &&
-    isFieldRequired({ fieldConfig, locale }) &&
-    value === null;
+    invalidNumber ||
+    ((valueType === 'int' || valueType === 'float') &&
+      isFieldRequired({ fieldConfig, locale }) &&
+      value === null);
 
   return {
     validity: { rangeUnderflow, rangeOverflow, typeMismatch },

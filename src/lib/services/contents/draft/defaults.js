@@ -43,7 +43,7 @@ export const populateDefaultValue = ({
   const dynamicValue =
     // Ignore the dynamic value if the key path looks like an array item, e.g. `tags.0` or
     // `tags.0.name`, because lists are complicated to handle
-    keyPath in dynamicValues && !/\.\d+(?:\.|$)/.test(keyPath)
+    Object.hasOwn(dynamicValues, keyPath) && !/\.\d+(?:\.|$)/.test(keyPath)
       ? dynamicValues[keyPath].trim() || undefined
       : undefined;
 

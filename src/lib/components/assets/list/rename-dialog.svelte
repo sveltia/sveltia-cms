@@ -12,7 +12,7 @@
   import { tick } from 'svelte';
 
   import FileExtensionChangeDialog from '$lib/components/assets/shared/file-extension-change-dialog.svelte';
-  import { formatFileName } from '$lib/services/assets/file-name';
+  import { formatFileName, validateAssetName } from '$lib/services/assets/file-name';
   import { showAssetOverlay } from '$lib/services/assets/view';
   import { isEquivalentFileExtension } from '$lib/services/utils/file';
 
@@ -22,8 +22,12 @@
    * @property {string} name Current file name.
    * @property {string[]} otherNames Names of the other files in the same folder, which the new name
    * must not duplicate.
+   * @property {string[]} [folderNames] Names of the subfolders in the same folder, which the new
+   * name must not duplicate either.
    * @property {number} [usedEntryCount] Number of entries using the asset, mentioned in the dialog
    * body because they will be updated as well.
+   * @property {string} [warning] Warning shown below the dialog body, e.g. that entries linking to
+   * the asset will break, as they can’t be updated. The asset can still be renamed.
    * @property {string} [blockedMessage] Why the asset can’t be renamed, e.g. because a read-only
    * entry uses it. The message is shown in place of the input, and the Rename button is disabled.
    * @property {boolean} [slugificationEnabled] Whether the new name is slugified, according to the
@@ -40,7 +44,9 @@
     open = $bindable(false),
     name,
     otherNames,
+    folderNames = [],
     usedEntryCount = 0,
+    warning = undefined,
     blockedMessage = undefined,
     slugificationEnabled = false,
     onRename,
@@ -59,22 +65,20 @@
 
   const { extension: oldExtension } = $derived(getPathInfo(name));
   const trimmedName = $derived(newName.trim());
-  /** Name the file will be renamed to, which may be different from the entered name. */
+  /**
+   * Name the file will be renamed to, which may be different from the entered name: sanitized like
+   * an uploaded file’s name, and slugified if enabled.
+   */
   const finalName = $derived(
-    slugificationEnabled && trimmedName
-      ? formatFileName(trimmedName, { slugificationEnabled })
-      : trimmedName,
+    trimmedName ? formatFileName(trimmedName, { slugificationEnabled }) : '',
   );
   const newExtension = $derived(getPathInfo(finalName).extension);
   /** Whether the file extension is being changed in a way that requires confirmation. */
   const extensionChanged = $derived(!isEquivalentFileExtension(oldExtension, newExtension));
 
-  const error = $derived.by(() => {
-    if (!trimmedName) return 'empty';
-    if (trimmedName.includes('/')) return 'character';
-    if (otherNames.includes(finalName)) return 'duplicate';
-    return undefined;
-  });
+  const error = $derived(
+    validateAssetName({ name: trimmedName, fileName: finalName, otherNames, folderNames }),
+  );
 
   const invalid = $derived(!!error);
 
@@ -146,6 +150,9 @@
     <p>
       {_('enter_new_name_for_asset', { values: { count: usedEntryCount } })}
     </p>
+    {#if warning}
+      <p role="alert" class="warning">{warning}</p>
+    {/if}
   {/if}
   <div role="none">
     <TextInput
@@ -195,6 +202,10 @@
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+
+  .warning {
+    color: var(--sui-warning-foreground-color);
   }
 
   .note {

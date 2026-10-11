@@ -29,17 +29,26 @@ export const createFileList = (uploadingAssets) => {
   const dirPath = getUploadDirPath(uploadingAssets);
   const assetsInSameFolder = dirPath !== undefined ? getAssetsByDirName(dirPath) : [];
   const assetNamesInSameFolder = assetsInSameFolder.map((a) => a.name.normalize());
+  /** @type {string[]} */
+  const namesInBatch = [];
 
   return files.map((file, index) => {
     // The user picked this asset to be replaced, so the file takes over its name and path even
     // when it’s called something else. Failing that, an ordinary upload overwrites an existing
-    // file of the same name when the user chose to replace it.
+    // file of the same name when the user chose to replace it — but only the first of the files
+    // with that name in the batch, e.g. two `photo.png` files from different subfolders of a
+    // dropped folder; another one gets a name of its own, or it would overwrite the first one.
     const replacedAsset =
       originalAssets?.[index] ??
       (replaceDuplicates
-        ? assetsInSameFolder.find(
-            (a) => a.name.normalize().toLowerCase() === file.name.normalize().toLowerCase(),
-          )
+        ? assetsInSameFolder.find((a) => {
+            const name = a.name.normalize().toLowerCase();
+
+            return (
+              name === file.name.normalize().toLowerCase() &&
+              !namesInBatch.some((n) => n.toLowerCase() === name)
+            );
+          })
         : undefined);
 
     const fileName =
@@ -49,6 +58,8 @@ export const createFileList = (uploadingAssets) => {
     if (!assetNamesInSameFolder.includes(fileName)) {
       assetNamesInSameFolder.push(fileName);
     }
+
+    namesInBatch.push(fileName.normalize());
 
     return {
       action: /** @type {CommitAction} */ (replacedAsset ? 'update' : 'create'),

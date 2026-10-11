@@ -49,8 +49,10 @@ vi.mock('$lib/services/config/parser/fields', () => ({
 }));
 
 const mockIsFormatMismatch = vi.fn();
+const mockCheckBodyField = vi.fn();
 
 vi.mock('$lib/services/config/parser/collections/format', () => ({
+  checkBodyField: mockCheckBodyField,
   isFormatMismatch: mockIsFormatMismatch,
 }));
 
@@ -111,6 +113,78 @@ describe('Collection Files Parser', () => {
         context,
         collectors,
       );
+    });
+
+    it('should check the body field with the file’s or the collection’s options', async () => {
+      const { parseCollectionFile } = await import('.');
+      const collectors = createCollectors();
+      const fields = [{ name: 'body', widget: 'object', fields: [] }];
+
+      /**
+       * Parse a collection file and get the `checkBodyField()` arguments.
+       * @param {any} collection Collection.
+       * @param {any} collectionFile Collection file.
+       * @returns {any} Arguments, without the context and collectors.
+       */
+      const parse = (collection, collectionFile) => {
+        mockCheckBodyField.mockClear();
+        parseCollectionFile(
+          {
+            cmsConfig: /** @type {any} */ ({}),
+            collection,
+            collectionFile: { fields, ...collectionFile },
+          },
+          collectors,
+        );
+
+        const [{ context, collectors: _collectors, ...args }] = mockCheckBodyField.mock.calls[0];
+
+        return args;
+      };
+
+      expect(
+        parse(
+          { name: 'pages', format: 'yaml-frontmatter', body_field: { key: 'body' } },
+          { name: 'about', file: 'content/about.html' },
+        ),
+      ).toEqual({
+        extension: 'html',
+        format: 'yaml-frontmatter',
+        bodyField: { key: 'body' },
+        fields,
+      });
+      expect(
+        parse(
+          { name: 'pages', body_field: { key: 'body' } },
+          { name: 'about', file: 'content/about.md', body_field: { inline: true } },
+        ),
+      ).toEqual({ extension: 'md', format: undefined, bodyField: { inline: true }, fields });
+    });
+
+    it('should check the template tags in the file’s folder options', async () => {
+      const { parseCollectionFile } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'pages' },
+        collectionFile: {
+          name: 'about',
+          file: 'content/about.md',
+          media_folder: '/static/{{locale}}',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      };
+
+      parseCollectionFile(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith({
+        strKey: 'unsupported_folder_template_tag',
+        values: { option: 'media_folder', tag: '{{locale}}' },
+        context,
+        collectors,
+      });
     });
 
     it('should use inherited format from collection if file format is not specified', async () => {

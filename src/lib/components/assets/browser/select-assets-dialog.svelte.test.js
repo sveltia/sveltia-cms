@@ -407,6 +407,35 @@ describe('SelectAssetsDialog', () => {
       );
     });
 
+    test('refuses the name of a folder leading to another asset folder', async () => {
+      await initTestConfig({
+        media_libraries: { stock_assets: { providers: ['picsum'] } },
+        collections: [
+          {
+            name: 'projects',
+            folder: 'content/projects',
+            media_folder: '/static/uploads/projects',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      });
+
+      await renderDialog();
+
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
+
+      await waitForGrid(2);
+      await dialog.getByRole('button', { name: 'New Folder' }).click();
+
+      const newFolder = page.getByRole('dialog', { name: 'New Folder' });
+
+      // The collection’s own folder isn’t listed, but a new folder can’t take its name
+      await newFolder.getByRole('textbox', { name: 'Folder Name' }).fill('projects');
+      await expect.element(newFolder.getByRole('button', { name: 'Create' })).toBeDisabled();
+      await newFolder.getByRole('textbox', { name: 'Folder Name' }).fill('portfolio');
+      await expect.element(newFolder.getByRole('button', { name: 'Create' })).toBeEnabled();
+    });
+
     test('only asks to replace a file in the directory the dropped file goes to', async () => {
       const { onSelect } = await renderDialog();
       const dialog = page.getByRole('dialog', { name: 'Select Image' });

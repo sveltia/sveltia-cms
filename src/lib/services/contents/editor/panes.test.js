@@ -175,6 +175,13 @@ describe('getRestoredPanes()', () => {
       getRestoredPanes({ ...base, allLocales: ['en', 'fr'], savedPanes: [editEn, editFr] }),
     ).toEqual([editEn, editFr]);
   });
+
+  test('shows the locale given in the URL first even with exactly two locales', () => {
+    expect(getRestoredPanes({ ...base, allLocales: ['en', 'fr'], editorLocale: 'fr' })).toEqual([
+      editFr,
+      { mode: 'preview', locale: 'fr' },
+    ]);
+  });
 });
 
 describe('getDefaultPanes()', () => {
@@ -194,6 +201,28 @@ describe('getDefaultPanes()', () => {
 
   test('keeps the current locale', () => {
     expect(getDefaultPanes({ ...base, currentLocale: 'fr' })).toEqual([
+      editFr,
+      { mode: 'preview', locale: 'fr' },
+    ]);
+  });
+
+  test('edits the locale given in the URL', () => {
+    expect(getDefaultPanes({ ...base, editorLocale: 'fr', currentLocale: 'en' })).toEqual([
+      editFr,
+      { mode: 'preview', locale: 'fr' },
+    ]);
+    expect(getDefaultPanes({ ...base, editorLocale: 'fr', showPreview: false })).toEqual([
+      editFr,
+      editEn,
+    ]);
+    expect(getDefaultPanes({ ...base, editorLocale: 'fr', showSecondPane: false })).toEqual([
+      editFr,
+      null,
+    ]);
+  });
+
+  test('ignores a locale given in the URL that the entry doesn’t have', () => {
+    expect(getDefaultPanes({ ...base, editorLocale: 'ja', currentLocale: 'fr' })).toEqual([
       editFr,
       { mode: 'preview', locale: 'fr' },
     ]);

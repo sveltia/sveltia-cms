@@ -612,6 +612,11 @@
  * empty folders it keeps. The Asset Library and the asset picker then browse the service folder by
  * folder, reading the folders off the file paths in `description`. Omitted when the service has no
  * folders, like Uploadcare, or handles them in its own widget, like Cloudinary.
+ * @property {(dirPath: string, options: MediaLibraryFetchOptions) =>
+ * Promise<ExternalFolderListing>} [listFolder] Function to list every file and empty folder below
+ * a folder on a service with folder support, at any depth, however many there are. Unlike
+ * `browse`, which may stop short of the end on a large service, it lists the folder in full, so a
+ * folder rename or deletion leaves nothing behind.
  * @property {(dirPath: string, options: MediaLibraryFetchOptions) => Promise<void>}
  * [createFolder] Function to create an empty folder on the service, which keeps a placeholder
  * object for it, as object storage has no folders of its own. The path is relative to the
@@ -632,6 +637,8 @@
  * @property {string[]} folders Paths of the folders kept by a placeholder object, relative to the
  * configured prefix, e.g. `2024/summer`. The folders that hold files are read off the file paths
  * instead.
+ * @property {boolean} [truncated] Whether the listing stopped short of the end, as there are more
+ * files on the service than it lists at once, so some files are left out.
  */
 
 /**
@@ -1118,6 +1125,14 @@
  */
 
 /**
+ * Expander states of a list’s items, in list order, which a List field manipulates along with its
+ * values. An existing item is represented by its index before the manipulation, which carries its
+ * own state and those of the objects and lists nested in it; a new item is represented by its own
+ * state, e.g. `true` to show it expanded.
+ * @typedef {(number | boolean)[]} ExpanderStateList
+ */
+
+/**
  * Entry draft.
  * @typedef {object} EntryDraft
  * @property {string} id Unique draft ID. For a new entry, it’s a randomly-generated UUID. For an
@@ -1173,7 +1188,8 @@
  * edited. It’s kept on that entry’s draft and saved in the same commit as the entry, rather than on
  * its own, so the two never go out of sync. Everything needed to commit it is prepared as soon as
  * it’s added, because the preparation replaces the blob URLs in the content with asset paths, which
- * can only be done once.
+ * can only be done once. The `preSave` event hooks are the exception: they’re only called when the
+ * entry is committed, so they don’t run for an entry that is discarded along with the draft.
  * @typedef {object} PendingEntry
  * @property {string} collectionName Name of the collection the entry belongs to.
  * @property {Entry} entry Entry as it will be saved.

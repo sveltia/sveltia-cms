@@ -190,6 +190,29 @@ test('moves an entry through the review stages', async ({ cms, gitlab, page }) =
     .toEqual({ labels: ['sveltia-cms/draft'], title: 'Draft: Update Post “second-post”' });
 });
 
+test('keeps a title GitLab doesn’t read as a draft', async ({ cms, gitlab, page }) => {
+  const mergeRequest = openEntryMergeRequest(gitlab, {
+    slug: 'second-post',
+    files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+    status: 'pending_review',
+  });
+
+  // Only `Draft:`, `[Draft]` and `(Draft)` mark a draft; a `WIP` prefix is just part of the title
+  mergeRequest.title = 'WIP notes for Second Post';
+
+  await cms.open();
+  await openEntry(page, 'Second Post');
+  await changeStatus(cms, page, /Status: .*In Review/, 'Draft');
+  await expect
+    .poll(() => ({ labels: mergeRequest.labels, title: mergeRequest.title }))
+    .toEqual({ labels: ['sveltia-cms/draft'], title: 'Draft: WIP notes for Second Post' });
+
+  await changeStatus(cms, page, /Status: .*Draft/, 'Ready');
+  await expect
+    .poll(() => ({ labels: mergeRequest.labels, title: mergeRequest.title }))
+    .toEqual({ labels: ['sveltia-cms/pending_publish'], title: 'WIP notes for Second Post' });
+});
+
 test('keeps the other labels of a merge request', async ({ cms, gitlab, page }) => {
   const mergeRequest = openEntryMergeRequest(gitlab, {
     slug: 'second-post',
@@ -227,6 +250,72 @@ test('publishes an entry by merging its merge request', async ({ cms, gitlab, pa
     /First Post/,
     /Second Post/,
   ]);
+});
+
+test.describe('while a merge request trails a push to its branch', () => {
+  /**
+   * Open a merge request for a post, then push another commit to its branch that GitLab hasn’t
+   * refreshed the merge request for yet: it still reports the first commit as its head.
+   * @param {MockGitLab} gitlab GitLab mock.
+   * @param {object} args Arguments.
+   * @param {string} [args.status] Workflow status.
+   * @param {number} [args.trailingReads] Number of reads before the merge request catches up.
+   * @returns {MockMergeRequest} Merge request.
+   */
+  const openTrailingMergeRequest = (gitlab, { status, trailingReads }) => {
+    const branch = 'cms/posts/second-post';
+
+    const mergeRequest = openEntryMergeRequest(gitlab, {
+      slug: 'second-post',
+      files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+      status,
+    });
+
+    const { oid: trailingHead } = gitlab.getHead(branch);
+
+    gitlab.commit(
+      { 'content/posts/second-post.md': post('Second Post', 'Almost there.') },
+      { branch, author: gitlab.user, message: 'Update Post “second-post”' },
+    );
+
+    return Object.assign(mergeRequest, { trailingHead, trailingReads });
+  };
+
+  test('shows and saves the branch as it stands', async ({ cms, gitlab, page }) => {
+    openTrailingMergeRequest(gitlab, {});
+
+    await cms.open();
+
+    const editor = await openEntry(page, 'Second Post');
+
+    await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue('Almost there.');
+
+    // The save goes on top of the branch head, which isn’t taken for someone else’s push
+    await editor.getByRole('textbox', { name: 'Body' }).fill('Ready now.');
+    await saveDraft(page, editor);
+    await expect
+      .poll(() => gitlab.readFile('content/posts/second-post.md', 'cms/posts/second-post'))
+      .toBe(post('Second Post', 'Ready now.'));
+  });
+
+  test('waits for the merge request to catch up before publishing', async ({
+    cms,
+    gitlab,
+    page,
+  }) => {
+    const mergeRequest = openTrailingMergeRequest(gitlab, {
+      status: 'pending_publish',
+      trailingReads: 2,
+    });
+
+    await cms.open();
+    await publish(page, await openEntry(page, 'Second Post'));
+
+    await expect.poll(() => mergeRequest.state).toBe('merged');
+    expect(gitlab.readFile('content/posts/second-post.md')).toBe(
+      post('Second Post', 'Almost there.'),
+    );
+  });
 });
 
 test.describe('with `squash_merges`', () => {
@@ -506,4 +595,34 @@ test('refuses to publish an entry whose branch has moved on since it was opened'
     'The entry has been changed since you opened it.',
   );
   expect(mergeRequest.state).toBe('opened');
+});
+
+test.describe('without a configured branch', () => {
+  test.use({
+    config: {
+      ...GITLAB_WORKFLOW_CONFIG,
+      backend: {
+        name: GITLAB_WORKFLOW_CONFIG.backend.name,
+        repo: GITLAB_WORKFLOW_CONFIG.backend.repo,
+      },
+    },
+  });
+
+  test('lists an unpublished entry against the default branch', async ({ cms, gitlab, page }) => {
+    openEntryMergeRequest(gitlab, {
+      slug: 'second-post',
+      files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+    });
+
+    await cms.open();
+
+    // The pull requests can only be told apart from someone else’s once the default branch is known
+    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      /Unpublished Entries/,
+      /Second Post.*Draft/,
+      /Published Entries/,
+      /First Post/,
+    ]);
+    await openEntry(page, 'Second Post');
+  });
 });

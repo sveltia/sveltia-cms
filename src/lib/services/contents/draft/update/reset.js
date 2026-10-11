@@ -115,7 +115,7 @@ const resetContent = (args) => {
     subFields.forEach((subField) => {
       // The default value of the Object field as a whole takes precedence over the subfield’s own
       const subFieldConfig =
-        restore && isObject(objectDefault) && subField.name in objectDefault
+        restore && isObject(objectDefault) && Object.hasOwn(objectDefault, subField.name)
           ? /** @type {Field} */ ({ ...subField, default: objectDefault[subField.name] })
           : subField;
 

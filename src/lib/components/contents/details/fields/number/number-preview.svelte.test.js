@@ -38,6 +38,15 @@ describe('NumberPreview', () => {
     expect(await renderPreview('1000')).toHaveTextContent('1,000');
   });
 
+  test('keeps every fraction digit', async () => {
+    expect(await renderPreview(35.681236)).toHaveTextContent('35.681236');
+    expect(await renderPreview(0.0004)).toHaveTextContent('0.0004');
+  });
+
+  test('shows text that isn’t a number as is', async () => {
+    expect(await renderPreview('1,5')).toHaveTextContent('1,5');
+  });
+
   test('marks the paragraph with the language and direction', async () => {
     const paragraph = (await renderPreview(1, 'ar')).querySelector('p');
 

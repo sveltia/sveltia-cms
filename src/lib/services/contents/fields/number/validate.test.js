@@ -686,3 +686,48 @@ describe('validateNumberField()', () => {
     });
   });
 });
+
+describe('validateNumberField() with an invalid value', () => {
+  test('reports text that isn’t a number as a type mismatch, even in an optional field', () => {
+    ['1,5', 'abc', 'Infinity', Infinity, '1e+21'].forEach((value) => {
+      [undefined, 'float', 'int/string'].forEach((valueType) => {
+        /** @type {NumberField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          value_type: /** @type {any} */ (valueType),
+          required: false,
+          min: 0,
+          max: 10,
+        };
+
+        const { validity } = validateNumberField({ fieldConfig, locale: 'en', value });
+
+        // A float field can hold `1e+21`, which is out of range instead
+        if (valueType === 'float' && value === '1e+21') {
+          expect(validity).toEqual({
+            rangeUnderflow: false,
+            rangeOverflow: true,
+            typeMismatch: false,
+          });
+        } else {
+          expect(validity).toEqual({
+            rangeUnderflow: false,
+            rangeOverflow: false,
+            typeMismatch: true,
+          });
+        }
+      });
+    });
+  });
+
+  test('accepts an empty optional field', () => {
+    [null, ''].forEach((value) => {
+      /** @type {NumberField} */
+      const fieldConfig = { ...baseFieldConfig, value_type: 'int/string', required: false };
+
+      expect(validateNumberField({ fieldConfig, locale: 'en', value }).validity.typeMismatch).toBe(
+        false,
+      );
+    });
+  });
+});

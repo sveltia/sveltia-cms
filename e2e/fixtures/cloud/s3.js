@@ -34,6 +34,12 @@ export class MockS3 extends MockObjectStore {
   secretAccessKey = 'e2eSecretAccessKey0000000000000000000000';
 
   /**
+   * Number of objects a list request returns at most, like the `max-keys` limit of 1,000 that S3
+   * applies, but small enough to make a bucket take more pages than the CMS lists at once.
+   */
+  pageSize = Infinity;
+
+  /**
    * Create a bucket.
    * @param {object} args Arguments.
    * @param {string} args.bucket Bucket name.
@@ -189,7 +195,14 @@ export class MockS3 extends MockObjectStore {
     }
 
     if (method === 'GET' && url.searchParams.get('list-type') === '2') {
-      const contents = this.list(url.searchParams.get('prefix') ?? '')
+      // The continuation token is the index of the first object on the page
+      const start = Number(url.searchParams.get('continuation-token') ?? 0);
+      const objects = this.list(url.searchParams.get('prefix') ?? '');
+      const end = start + this.pageSize;
+      const truncated = end < objects.length;
+
+      const contents = objects
+        .slice(start, end)
         .map(
           ([objectKey, { body: content, lastModified }]) =>
             `<Contents><Key>${escapeXML(objectKey)}</Key>` +
@@ -202,7 +215,8 @@ export class MockS3 extends MockObjectStore {
         contentType: 'application/xml',
         body:
           '<?xml version="1.0" encoding="UTF-8"?>' +
-          `<ListBucketResult><Name>${this.bucket}</Name><IsTruncated>false</IsTruncated>` +
+          `<ListBucketResult><Name>${this.bucket}</Name><IsTruncated>${truncated}</IsTruncated>` +
+          `${truncated ? `<NextContinuationToken>${end}</NextContinuationToken>` : ''}` +
           `${contents}</ListBucketResult>`,
       });
 

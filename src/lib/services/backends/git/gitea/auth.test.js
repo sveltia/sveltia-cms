@@ -33,39 +33,18 @@ describe('Gitea Auth Service', () => {
   });
 
   describe('getTokenPageURL', () => {
-    test('returns correct Gitea Personal Access Token URL', () => {
-      const repoURL = 'https://gitea.com/owner/repo';
-      const result = getTokenPageURL(repoURL);
-
-      expect(result).toBe('https://gitea.com/user/settings/applications');
-    });
-
-    test('handles Forgejo instance URLs', () => {
-      const repoURL = 'https://codeberg.org/owner/repo';
-      const result = getTokenPageURL(repoURL);
-
-      expect(result).toBe('https://codeberg.org/user/settings/applications');
-    });
-
-    test('handles self-hosted Gitea instance URLs', () => {
-      const repoURL = 'https://git.example.com/owner/repo';
-      const result = getTokenPageURL(repoURL);
-
-      expect(result).toBe('https://git.example.com/user/settings/applications');
-    });
-
-    test('handles different repository paths', () => {
-      const repoURL = 'https://gitea.example.com/different-owner/different-repo';
-      const result = getTokenPageURL(repoURL);
-
-      expect(result).toBe('https://gitea.example.com/user/settings/applications');
-    });
-
-    test('handles URLs with ports', () => {
-      const repoURL = 'https://gitea.example.com:3000/owner/repo';
-      const result = getTokenPageURL(repoURL);
-
-      expect(result).toBe('https://gitea.example.com:3000/user/settings/applications');
+    test.each([
+      ['https://gitea.com', 'https://gitea.com/user/settings/applications'],
+      ['https://codeberg.org', 'https://codeberg.org/user/settings/applications'],
+      ['https://git.example.com', 'https://git.example.com/user/settings/applications'],
+      [
+        'https://gitea.example.com:3000',
+        'https://gitea.example.com:3000/user/settings/applications',
+      ],
+      // A self-hosted instance under a subpath
+      ['https://example.com/gitea', 'https://example.com/gitea/user/settings/applications'],
+    ])('returns the token page of %s', (instanceURL, expected) => {
+      expect(getTokenPageURL(instanceURL)).toBe(expected);
     });
   });
 

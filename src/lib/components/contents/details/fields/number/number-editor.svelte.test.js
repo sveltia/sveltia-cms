@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import NumberEditor from './number-editor.svelte';
@@ -102,6 +102,57 @@ describe('NumberEditor', () => {
     await page.getByRole('spinbutton').fill('5');
 
     expect(props.currentValue).toBe(5);
+  });
+
+  test('stores text that isn’t a number, keeping it in the input, so it can be reported', async () => {
+    const { props } = await renderEditor({ currentValue: 42, config: { value_type: 'float' } });
+    const input = page.getByRole('spinbutton');
+
+    // Typed one character at a time, like a user would
+    await input.clear();
+    await userEvent.type(input, '1,5');
+
+    await expect.poll(() => props.currentValue).toBe('1,5');
+    await expect.element(input).toHaveValue('1,5');
+
+    // Blurring the input keeps the text, too
+    await userEvent.tab();
+
+    await expect.element(input).toHaveValue('1,5');
+    expect(props.currentValue).toBe('1,5');
+
+    // A number typed over it is stored as usual
+    await input.fill('2.5');
+
+    await expect.poll(() => props.currentValue).toBe(2.5);
+  });
+
+  test('stores a number the field can’t hold as a string, so it can be reported', async () => {
+    const { props } = await renderEditor({ currentValue: null, config: { value_type: 'float' } });
+    const input = page.getByRole('spinbutton');
+
+    await input.fill('1e400');
+
+    await expect.poll(() => props.currentValue).toBe('Infinity');
+    await expect.element(input).toHaveValue('1e400');
+
+    await userEvent.tab();
+
+    await expect.element(input).toHaveValue('1e400');
+  });
+
+  test('stores a large integer in full or as a string beyond the safe range', async () => {
+    const { props } = await renderEditor({ currentValue: null });
+    const input = page.getByRole('spinbutton');
+
+    await input.fill('1e15');
+
+    await expect.poll(() => props.currentValue).toBe(1e15);
+
+    await input.fill('1e21');
+
+    await expect.poll(() => props.currentValue).toBe('1e+21');
+    await expect.element(input).toHaveValue('1e21');
   });
 
   test('follows an external change to the value', async () => {

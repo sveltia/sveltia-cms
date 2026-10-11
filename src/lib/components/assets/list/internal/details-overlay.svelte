@@ -21,7 +21,7 @@
     selectedAssetFolder,
   } from '$lib/services/assets/folders';
   import { getAssetBlob } from '$lib/services/assets/info';
-  import { isMediaKind } from '$lib/services/assets/kinds';
+  import { canPreviewAsset, isMediaKind } from '$lib/services/assets/kinds';
   import { getAssetFolderHistoryState, showAssetDetails } from '$lib/services/assets/navigation';
   import { overlaidAsset } from '$lib/services/assets/state';
   import { browsedDirPath } from '$lib/services/assets/subfolders';
@@ -54,9 +54,17 @@
       `/assets/${browsedDirPath.current ?? selectedAssetFolder.current?.internalPath ?? '-/all'}`,
     ),
   );
-  /** The assets right before and after the shown one in the list the overlay was opened from. */
+  /**
+   * The assets right before and after the shown one in the list the overlay was opened from. An
+   * asset that can’t be previewed isn’t opened in the overlay from the list, so it’s skipped.
+   */
   const { previous, next } = $derived(
-    getAdjacentAssets(Object.values(assetGroups.current).flat(1), (a) => a.path === asset?.path),
+    getAdjacentAssets(
+      Object.values(assetGroups.current)
+        .flat(1)
+        .filter((a) => a.path === asset?.path || canPreviewAsset(a)),
+      (a) => a.path === asset?.path,
+    ),
   );
 
   /**

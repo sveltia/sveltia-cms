@@ -358,3 +358,65 @@ test.describe('integers a number can’t represent exactly', () => {
     });
   });
 });
+
+test.describe('names of `Object.prototype` members', () => {
+  test.use({
+    config: {
+      backend: { name: 'test-repo' },
+      media_folder: 'static/images',
+      collections: [
+        {
+          name: 'notes',
+          label: 'Notes',
+          folder: 'content/notes',
+          create: true,
+          fields: [
+            { name: 'title', label: 'Title' },
+            { name: 'constructor', label: 'Constructor', required: false },
+            { name: 'toString', label: 'To String', required: false },
+          ],
+        },
+      ],
+    },
+  });
+
+  test('work as field names in a new entry', async ({ cms, page }) => {
+    await cms.open();
+    await cms.signIn();
+    await page.getByRole('treeitem', { name: /^Notes\b/ }).click();
+    await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+
+    const editor = getEditor(page);
+
+    await editor.getByRole('textbox', { name: 'Title' }).fill('New');
+    await editor.getByRole('textbox', { name: 'Constructor' }).fill('Ada');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    // The editor couldn’t be opened, as the default values couldn’t be filled in
+    await expect
+      .poll(async () => (await cms.readRepo())['content/notes/new.md'])
+      .toBe("---\ntitle: New\nconstructor: Ada\ntoString: ''\n---\n");
+  });
+
+  test('work as field names and keys in an existing entry', async ({ cms, page }) => {
+    const path = 'content/notes/old.md';
+
+    await cms.open();
+    // The fields are missing, and the file holds a key that no field configuration describes
+    await cms.seed({ [path]: '---\ntitle: Old\nvalueOf: kept\n---\n' });
+    await cms.signIn();
+    await openEntry(page, 'Notes', 'Old');
+
+    const editor = getEditor(page);
+
+    await expect(editor.getByRole('textbox', { name: 'Constructor' })).toHaveValue('');
+    await editor.getByRole('textbox', { name: 'Title' }).fill('Older');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    // The fields held the source of `Object` and `Object.prototype.toString`, and the Save failed
+    // as the `toString` key was looked up as a comment
+    await expect
+      .poll(async () => (await cms.readRepo())[path])
+      .toBe("---\ntitle: Older\nconstructor: ''\ntoString: ''\nvalueOf: kept\n---\n");
+  });
+});

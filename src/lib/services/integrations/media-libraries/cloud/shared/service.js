@@ -22,6 +22,9 @@ import {
  * Function to list files.
  * @property {(config: C, options: MediaLibraryFetchOptions) => Promise<ExternalFolderListing>}
  * browse Function to list the files and the empty folders.
+ * @property {(dirPath: string, config: C, options: MediaLibraryFetchOptions) =>
+ * Promise<ExternalFolderListing>} listFolder Function to list every file and empty folder below a
+ * folder, at any depth.
  * @property {(query: string, config: C, options: MediaLibraryFetchOptions) =>
  * Promise<ExternalAsset[]>} search Function to search files.
  * @property {(files: File[], config: C, options: MediaLibraryFetchOptions) =>
@@ -173,6 +176,15 @@ export class ObjectStorageService {
    * @returns {Promise<ExternalFolderListing>} Files and folders.
    */
   browse = async (options) => this.operations.browse(this.getConfig(options), options);
+
+  /**
+   * List every file and empty folder below a folder on the service, at any depth.
+   * @param {string} dirPath Folder path relative to the configured prefix.
+   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+   * @returns {Promise<ExternalFolderListing>} Files and folders.
+   */
+  listFolder = async (dirPath, options) =>
+    this.operations.listFolder(dirPath, this.getConfig(options), options);
 
   /**
    * Search files on the service.

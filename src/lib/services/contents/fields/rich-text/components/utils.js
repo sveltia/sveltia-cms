@@ -143,8 +143,21 @@ export const getParentComponentNames = (element) => {
 };
 
 /**
- * Replace double quotes with single quotes to avoid breaking Markdown syntax.
- * @param {string} str String to escape.
- * @returns {string} Escaped string.
+ * Unescape the title of a Markdown image, like `T \"q\"` in `![a](/a.png "T \"q\"")`, so the
+ * field shows `T "q"`. A backslash before an ASCII punctuation character escapes it, as anywhere
+ * else in Markdown, while one before any other character is a literal backslash.
+ * @param {string} title Title as it appears in Markdown, between the quotes.
+ * @returns {string} Unescaped title.
+ * @see https://spec.commonmark.org/0.31.2/#link-title
  */
-export const replaceQuotes = (str) => str.replace(/"/g, "'");
+export const unescapeTitle = (title) => title.replace(/\\([!-/:-@[-`{-~])/g, '$1');
+
+/**
+ * Escape the title of a Markdown image, the counterpart of `unescapeTitle()`, so it can be put
+ * between double quotes: a double quote is escaped, as well as a backslash that would otherwise
+ * escape the next character or the closing quote.
+ * @param {string} title Title.
+ * @returns {string} Escaped title.
+ */
+export const escapeTitle = (title) =>
+  title.replace(/\\(?=[!-/:-@[-`{-~]|$)/g, '\\\\').replace(/"/g, '\\"');

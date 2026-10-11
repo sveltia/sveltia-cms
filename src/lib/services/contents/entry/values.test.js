@@ -855,6 +855,18 @@ describe('Test getFieldDisplayValue()', () => {
 
       expect(result).toBe('some value');
     });
+
+    test('should not take an `Object.prototype` member for a missing field value', () => {
+      const result = getFieldDisplayValue({
+        collectionName: 'posts',
+        valueMap: { title: 'Hello' },
+        keyPath: 'toString',
+        locale: 'en',
+      });
+
+      // The source of `Object.prototype.toString` was displayed
+      expect(result).toBe('');
+    });
   });
 
   describe('Rich text editor component fields', () => {
@@ -916,7 +928,7 @@ describe('Test getFieldDisplayValue()', () => {
       });
 
       expect(result).toBe('1,234');
-      expect(Intl.NumberFormat).toHaveBeenCalledWith('en');
+      expect(Intl.NumberFormat).toHaveBeenCalledWith('en', { maximumFractionDigits: 20 });
     });
 
     test('should format float numbers using Intl.NumberFormat', () => {
@@ -1072,7 +1084,28 @@ describe('Test getFieldDisplayValue()', () => {
       });
 
       expect(result).toBe('1234'); // Our mock returns toString() for non-en locales
-      expect(Intl.NumberFormat).toHaveBeenCalledWith('ja');
+      expect(Intl.NumberFormat).toHaveBeenCalledWith('ja', { maximumFractionDigits: 20 });
+    });
+
+    test('should keep every fraction digit of a float number', () => {
+      vi.restoreAllMocks();
+
+      // Use 'fr' which no other test uses, so the real formatter is created and cached
+      [
+        [35.681236, '35,681236'],
+        [0.0004, '0,0004'],
+        ['0.000123456', '0,000123456'],
+        [1234.5, '1\u202f234,5'],
+      ].forEach(([floatNumber, expected]) => {
+        expect(
+          getFieldDisplayValue({
+            collectionName: 'posts',
+            valueMap: { floatNumber },
+            keyPath: 'floatNumber',
+            locale: 'fr',
+          }),
+        ).toBe(expected);
+      });
     });
 
     test('should reuse the cached number formatter for the same locale', () => {
@@ -1131,7 +1164,8 @@ describe('Test getFieldDisplayValue()', () => {
       // These would be handled by Number() constructor and Intl.NumberFormat
       expect(nanResult).toBe('NaN');
       expect(infinityResult).toBe('∞'); // toLocaleString returns ∞ for Infinity
-      expect(invalidResult).toBe('NaN');
+      // Text that isn’t a number is shown as is
+      expect(invalidResult).toBe('invalid');
     });
   });
 });
@@ -1736,6 +1770,29 @@ describe('Test getPropertyValue()', () => {
     expect(getPropertyValue({ ...args, key: 'author.name' })).toBe('Jane');
     // Not an object field, whose name happens to share a prefix with one
     expect(getPropertyValue({ ...args, key: 'authors' })).toBe('Jane, John');
+  });
+
+  test('should not take an `Object.prototype` member for a field value', () => {
+    /** @type {any} */
+    const entry = { locales: { en: { content: { 'constructor.name': 'Jane' } } } };
+
+    mockGetCollection.mockReturnValue(
+      /** @type {any} */ ({
+        _type: 'entry',
+        fields: [
+          { name: 'constructor', widget: 'object', fields: [{ name: 'name', widget: 'string' }] },
+          { name: 'toString', widget: 'string' },
+        ],
+        _i18n: { i18nEnabled: false },
+      }),
+    );
+
+    // A collection name of its own, as the field configurations are cached by collection
+    const args = { entry, locale: 'en', collectionName: 'prototype-members' };
+
+    // `Object` and `Object.prototype.toString` were returned
+    expect(getPropertyValue({ ...args, key: 'constructor' })).toEqual(['Jane']);
+    expect(getPropertyValue({ ...args, key: 'toString' })).toBeUndefined();
   });
 
   test('should return raw field value for non-relation fields', () => {

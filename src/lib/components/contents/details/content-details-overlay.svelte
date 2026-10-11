@@ -187,6 +187,7 @@
 
     if (!(await restorePanes())) {
       [editorFirstPane.current, editorSecondPane.current] = getDefaultPanes({
+        editorLocale,
         currentLocale: editorFirstPane.current?.locale,
         defaultLocale,
         allLocales,

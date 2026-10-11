@@ -89,6 +89,42 @@ describe('RenameDialog', () => {
     await expect.poll(() => renamingAsset.current).toBeUndefined();
   });
 
+  test('refuses the name of another asset in another case, or of a subfolder', async () => {
+    setAssets([...assets, createMockAsset({ name: 'c.png', folderPath: 'static/uploads/sub' })]);
+
+    try {
+      renamingAsset.current = firstAsset;
+
+      await render(RenameDialog);
+
+      const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+      const textbox = dialog.getByRole('textbox');
+      const button = dialog.getByRole('button', { name: 'Rename' });
+
+      await expectFileNameSelected(textbox, 'a.png');
+
+      await textbox.fill('B.png');
+      await expect
+        .element(dialog.getByText('This file name is used for another asset.'))
+        .toBeInTheDocument();
+      await expect.element(button).toBeDisabled();
+
+      await textbox.fill('sub');
+      await expect
+        .element(dialog.getByText('A folder with this name already exists here.'))
+        .toBeInTheDocument();
+      await expect.element(button).toBeDisabled();
+
+      await textbox.fill('.a.png');
+      await expect
+        .element(dialog.getByText('File name cannot start with a dot.'))
+        .toBeInTheDocument();
+      await expect.element(button).toBeDisabled();
+    } finally {
+      setAssets(assets);
+    }
+  });
+
   test('slugifies the new name with the `slugify_filename` option', async () => {
     const config = { site_url: 'https://example.com' };
 

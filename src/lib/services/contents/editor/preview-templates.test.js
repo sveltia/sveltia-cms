@@ -150,58 +150,20 @@ describe('Preview Templates', () => {
 
   describe('createFieldPreviewMounter', () => {
     it('should return a mounter function', () => {
-      const mounter = createFieldPreviewMounter({
-        entryDraft: mockEntryDraft,
-        locale: 'en',
-        getFieldArgs: {
-          collectionName: 'posts',
-          fileName: undefined,
-          valueMap: {},
-          isIndexFile: false,
-        },
-      });
+      const mounter = createFieldPreviewMounter({ entryDraft: mockEntryDraft, locale: 'en' });
 
       expect(typeof mounter).toBe('function');
     });
 
-    it('should mount a Svelte component with correct props', () => {
-      const mounter = createFieldPreviewMounter({
-        entryDraft: mockEntryDraft,
-        locale: 'en',
-        getFieldArgs: {
-          collectionName: 'posts',
-          fileName: undefined,
-          valueMap: {},
-          isIndexFile: false,
-        },
-      });
-
-      /** @type {any} */
-      const mockTarget = {};
-
-      mounter(mockTarget, 'title');
-
-      expect(vi.mocked(svelte.mount)).toHaveBeenCalled();
-    });
-
     it('should provide the entry draft state to the mounted component as a context', () => {
       const entryDraft = { current: { collectionName: 'posts' } };
-
-      const mounter = createFieldPreviewMounter({
-        entryDraft,
-        locale: 'en',
-        getFieldArgs: {
-          collectionName: 'posts',
-          fileName: undefined,
-          valueMap: {},
-          isIndexFile: false,
-        },
-      });
-
+      const mounter = createFieldPreviewMounter({ entryDraft, locale: 'en' });
       /** @type {any} */
       const mockTarget = {};
+      /** @type {any} */
+      const fieldConfig = { name: 'title', widget: 'text' };
 
-      mounter(mockTarget, 'title');
+      mounter(mockTarget, 'title', fieldConfig);
 
       expect(vi.mocked(svelte.mount)).toHaveBeenCalledTimes(1);
 
@@ -216,29 +178,42 @@ describe('Preview Templates', () => {
         keyPath: 'title',
         typedKeyPath: '',
         locale: 'en',
-        fieldConfig: { widget: 'text' },
+        fieldConfig,
         showLabel: false,
       });
     });
   });
 
   describe('createWidgetFor', () => {
+    /** @type {any} */
+    const getFieldArgs = { collectionName: 'posts', valueMap: {} };
+
     it('should return a widget factory function', () => {
       const mockMountFieldPreview = /** @type {any} */ (vi.fn());
-      const widgetFor = createWidgetFor(mockMountFieldPreview);
+      const widgetFor = createWidgetFor(mockMountFieldPreview, getFieldArgs);
 
       expect(typeof widgetFor).toBe('function');
     });
 
     it('should create a React element with ref callback', () => {
       const mockMountFieldPreview = vi.fn(() => ({ destroy: vi.fn() }));
-      const widgetFor = createWidgetFor(mockMountFieldPreview);
-      const element = widgetFor('field.name');
+      const widgetFor = createWidgetFor(mockMountFieldPreview, getFieldArgs);
+      const element = /** @type {any} */ (widgetFor('field.name'));
 
       expect(element).toHaveProperty('type', 'div');
-      // @ts-ignore
       expect(element).toHaveProperty('ref');
       expect(typeof element.ref).toBe('function');
+      expect(mockGetField).toHaveBeenCalledWith({ ...getFieldArgs, keyPath: 'field.name' });
+    });
+
+    it('should return `null` for a key path without a field configuration', () => {
+      const mockMountFieldPreview = vi.fn();
+      const widgetFor = createWidgetFor(mockMountFieldPreview, getFieldArgs);
+
+      mockGetField.mockReturnValueOnce(/** @type {any} */ (undefined));
+
+      expect(widgetFor('missing')).toBeNull();
+      expect(mockCreateElement).not.toHaveBeenCalled();
     });
 
     it('should mount and unmount components via ref callback', () => {
@@ -255,7 +230,7 @@ describe('Preview Templates', () => {
         return { type: tag, ref: props.ref };
       });
 
-      const widgetFor = createWidgetFor(mockMountFieldPreview);
+      const widgetFor = createWidgetFor(mockMountFieldPreview, getFieldArgs);
 
       widgetFor('field.name');
 
@@ -268,7 +243,9 @@ describe('Preview Templates', () => {
       // @ts-ignore
       capturedRefCallback(mockDiv);
 
-      expect(mockMountFieldPreview).toHaveBeenCalledWith(mockDiv, 'field.name');
+      expect(mockMountFieldPreview).toHaveBeenCalledWith(mockDiv, 'field.name', {
+        widget: 'text',
+      });
 
       // Unmount by calling ref with null
       if (capturedRefCallback) {
@@ -289,7 +266,7 @@ describe('Preview Templates', () => {
         return { type: tag, ref: props.ref };
       });
 
-      const widgetFor = createWidgetFor(mockMountFieldPreview);
+      const widgetFor = createWidgetFor(mockMountFieldPreview, getFieldArgs);
 
       widgetFor('field.name');
 
@@ -317,6 +294,17 @@ describe('Preview Templates', () => {
       expect(mockWidgetFor).toHaveBeenCalledWith('article.body');
       expect(mockWidgetFor).toHaveBeenCalledWith('article.author');
       expect(mockWidgetFor).toHaveBeenCalledTimes(3);
+    });
+
+    it('should leave out the keys without a field configuration', () => {
+      /** @type {any} */
+      const mockWidgetFor = vi.fn((keyPath) =>
+        keyPath === 'article.title' ? { path: keyPath } : null,
+      );
+
+      const result = createWidgetsMap({ title: 'test', extra: 'x' }, 'article', mockWidgetFor);
+
+      expect(result.toJS()).toEqual({ title: { path: 'article.title' } });
     });
 
     it('should handle empty objects', () => {

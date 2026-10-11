@@ -13,6 +13,7 @@ import { getReferencedPendingEntries } from '$lib/services/contents/draft/pendin
 import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
 import {
   createSavingEntryData,
+  preparePendingEntryCommit,
   removeDisabledLocales,
 } from '$lib/services/contents/draft/save/changes';
 import { detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
@@ -38,6 +39,7 @@ import { saveWorkflowChanges } from '$lib/services/workflow/save';
  * EntrySlugVariants,
  * FileChange,
  * InternalCollection,
+ * PendingEntry,
  * } from '$lib/types/private';
  */
 
@@ -216,7 +218,15 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
 
   // The entries created from a Relation field go into the same commit as the entry referring to
   // them, so neither can end up without the other
-  const pendingEntries = getReferencedPendingEntries(draft);
+  /** @type {PendingEntry[]} */
+  const pendingEntries = [];
+
+  // Call the `preSave` event hooks one entry after another, like for the hooks of a single entry
+  // eslint-disable-next-line no-restricted-syntax
+  for (const pendingEntry of getReferencedPendingEntries(draft)) {
+    // eslint-disable-next-line no-await-in-loop
+    pendingEntries.push(await preparePendingEntryCommit(pendingEntry));
+  }
 
   changes.push(...pendingEntries.flatMap((pendingEntry) => pendingEntry.changes));
   savingAssets.push(...pendingEntries.flatMap((pendingEntry) => pendingEntry.savingAssets));

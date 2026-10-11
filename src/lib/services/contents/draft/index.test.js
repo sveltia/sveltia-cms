@@ -143,6 +143,11 @@ describe('draft/index', () => {
       });
     });
 
+    it('should not collect an `Object.prototype` member for a missing field', () => {
+      // `Object` was collected
+      expect(collectFieldValues(valueMap, 'constructor')).toEqual({});
+    });
+
     it('should key the values by relative key path and drop empty placeholders', () => {
       expect(
         collectFieldValues(valueMap, 'items', { relative: true, dropEmptyPlaceholders: true }),

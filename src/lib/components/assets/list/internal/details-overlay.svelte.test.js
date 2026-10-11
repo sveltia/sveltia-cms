@@ -159,6 +159,16 @@ describe('DetailsOverlay', () => {
     await expect.element(page.getByRole('button', { name: 'Next Asset' })).toBeDisabled();
   });
 
+  test('skips the listed assets that can’t be previewed', async () => {
+    overlaidAsset.current = audioAsset;
+
+    await render(DetailsOverlay);
+
+    await expect.element(page.getByRole('button', { name: 'Previous Asset' })).toBeEnabled();
+    // The binary file after the audio file isn’t opened in the overlay from the list either
+    await expect.element(page.getByRole('button', { name: 'Next Asset' })).toBeDisabled();
+  });
+
   test('reports a missing asset', async () => {
     overlaidAsset.current = undefined;
 

@@ -3,6 +3,7 @@ import {
   externalAssetCounts,
   externalAssets,
   externalAssetsError,
+  externalAssetsTruncated,
   externalFolders,
   focusedExternalAsset,
   focusedExternalSubfolder,
@@ -21,7 +22,13 @@ import { createPath } from '$lib/services/utils/file';
 import { createDeepState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { AssetSubfolder, ExternalAsset, MediaLibraryService } from '$lib/types/private';
+ * @import {
+ * AssetSubfolder,
+ * ExternalAsset,
+ * ExternalFolderListing,
+ * MediaLibraryFetchOptions,
+ * MediaLibraryService,
+ * } from '$lib/types/private';
  * @import { MediaField, SharedMediaLibraryOptions } from '$lib/types/public';
  */
 
@@ -183,12 +190,17 @@ export const loadExternalAssets = async (service) => {
 
   setAssets(undefined);
   externalAssetsError.current = undefined;
+  externalAssetsTruncated.current = false;
 
   try {
     const fetchOptions = getFetchOptions(service);
 
     // A service with folder support lists its empty folders along with the files
-    const { assets, folders } = service.browse
+    const {
+      assets,
+      folders,
+      truncated = false,
+    } = service.browse
       ? await service.browse(fetchOptions)
       : { assets: (await service.list?.(fetchOptions)) ?? [], folders: [] };
 
@@ -197,6 +209,7 @@ export const loadExternalAssets = async (service) => {
     if (selectedCloudService.current === service && loadId === latestLoadId) {
       setAssets(assets);
       externalFolders.current = folders;
+      externalAssetsTruncated.current = truncated;
       pruneSelection(assets, folders);
     }
   } catch (ex) {
@@ -374,6 +387,23 @@ const getExternalFolderTree = (dirPath) =>
   externalFolders.current.filter((path) => path === dirPath || path.startsWith(`${dirPath}/`));
 
 /**
+ * Get the assets and the empty folders below a folder on the given cloud storage service, at any
+ * depth, which are what a rename moves along and a deletion removes. They are listed from the
+ * service in full when it can list a folder, as the asset list stops short of the end on a service
+ * holding many files, and a folder operation working off it would leave files behind; otherwise
+ * they are read off the list.
+ * @param {MediaLibraryService} service Service.
+ * @param {string} dirPath Folder path relative to the configured prefix.
+ * @param {MediaLibraryFetchOptions} fetchOptions Fetch options.
+ * @returns {Promise<ExternalFolderListing>} Assets and folder paths, including the folder itself
+ * if it’s kept by a placeholder.
+ */
+const getExternalFolderContents = async (service, dirPath, fetchOptions) =>
+  service.listFolder
+    ? service.listFolder(dirPath, fetchOptions)
+    : { assets: getExternalSubfolderAssets(dirPath), folders: getExternalFolderTree(dirPath) };
+
+/**
  * Create an empty folder in the folder being browsed on the selected cloud storage service. The
  * service keeps a placeholder object for it, which is what the folder is listed from.
  * @param {string} name Folder name.
@@ -426,14 +456,14 @@ export const renameExternalFolder = async ({ path: dirPath }, newName) => {
    */
   const rebase = (path) => `${newDirPath}${path.slice(dirPath.length)}`;
   const fetchOptions = getFetchOptions(service);
-  const assets = getExternalSubfolderAssets(dirPath);
-  const folders = getExternalFolderTree(dirPath);
   // Checked up front, as reloading the list lets go of a focused folder that is no longer there
   const focused = focusedExternalSubfolder.current?.path === dirPath;
 
   externalAssetsToast.current = { show: true, status: 'info', message: 'renaming_folder' };
 
   try {
+    const { assets, folders } = await getExternalFolderContents(service, dirPath, fetchOptions);
+
     // Move the files one at a time, as the services do
     // eslint-disable-next-line no-restricted-syntax
     for (const asset of assets) {
@@ -483,12 +513,16 @@ export const deleteExternalFolder = async ({ path: dirPath }) => {
   }
 
   const fetchOptions = getFetchOptions(service);
-  const assets = getExternalSubfolderAssets(dirPath);
-  const folders = getExternalFolderTree(dirPath);
+  /** @type {ExternalAsset[]} */
+  let assets = [];
+  /** @type {string[]} */
+  let folders = [];
 
   externalAssetsToast.current = { show: true, status: 'info', message: 'deleting_folder' };
 
   try {
+    ({ assets, folders } = await getExternalFolderContents(service, dirPath, fetchOptions));
+
     await service.delete(assets, fetchOptions);
 
     // eslint-disable-next-line no-restricted-syntax

@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { deleteEntries } from '$lib/services/contents/collection/data/delete';
+import { cancelBackup, deleteBackup } from '$lib/services/contents/draft/backup';
 import { deleteOrDiscardEntries } from '$lib/services/workflow/delete';
 import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
 
 vi.mock('$lib/services/contents/collection/data/delete', () => ({ deleteEntries: vi.fn() }));
+vi.mock('$lib/services/contents/draft/backup', () => ({
+  cancelBackup: vi.fn(),
+  deleteBackup: vi.fn(),
+}));
 vi.mock('$lib/services/workflow/save', () => ({
   deleteWorkflowEntries: vi.fn(),
   discardWorkflowEntries: vi.fn(),
@@ -28,6 +33,7 @@ describe('deleteOrDiscardEntries', () => {
     vi.mocked(deleteEntries).mockResolvedValue(undefined);
     vi.mocked(deleteWorkflowEntries).mockResolvedValue(undefined);
     vi.mocked(discardWorkflowEntries).mockResolvedValue(undefined);
+    vi.mocked(deleteBackup).mockResolvedValue(undefined);
   });
 
   test('does nothing without entries', async () => {
@@ -102,5 +108,76 @@ describe('deleteOrDiscardEntries', () => {
       }),
     ).rejects.toThrow('Boom');
     expect(deleteEntries).not.toHaveBeenCalled();
+  });
+
+  test('deletes the draft backups of the discarded and deleted entries', async () => {
+    await deleteOrDiscardEntries({
+      drafts: [draft],
+      items: [{ entry: entryA, assets: [] }],
+      collection,
+      useWorkflow: false,
+    });
+    expect(cancelBackup).toHaveBeenCalled();
+    expect(deleteBackup).toHaveBeenCalledTimes(2);
+    expect(deleteBackup).toHaveBeenCalledWith('posts', 'draft');
+    expect(deleteBackup).toHaveBeenCalledWith('posts', 'a');
+  });
+
+  test('deletes the draft backups of the entries whose deletion is requested', async () => {
+    await deleteOrDiscardEntries({
+      items: [
+        { entry: entryA, assets: [] },
+        { entry: entryB, assets: [] },
+      ],
+      collection,
+      useWorkflow: true,
+    });
+    expect(deleteBackup).toHaveBeenCalledWith('posts', 'a');
+    expect(deleteBackup).toHaveBeenCalledWith('posts', 'b');
+  });
+
+  test('deletes the draft backup of a collection file under its name', async () => {
+    await deleteOrDiscardEntries({
+      items: [{ entry: entryA, assets: [] }],
+      collection,
+      collectionFile,
+      useWorkflow: false,
+    });
+    expect(deleteBackup).toHaveBeenCalledWith('posts', 'about');
+  });
+
+  test('leaves the draft backups alone without a collection', async () => {
+    await deleteOrDiscardEntries({ items: [{ entry: entryA, assets: [] }], useWorkflow: false });
+    expect(cancelBackup).toHaveBeenCalled();
+    expect(deleteBackup).not.toHaveBeenCalled();
+  });
+
+  test('leaves the draft backups alone when the deletion fails', async () => {
+    vi.mocked(deleteEntries).mockRejectedValue(new Error('Boom'));
+
+    await expect(
+      deleteOrDiscardEntries({
+        items: [{ entry: entryA, assets: [] }],
+        collection,
+        useWorkflow: false,
+      }),
+    ).rejects.toThrow('Boom');
+    expect(deleteBackup).not.toHaveBeenCalled();
+  });
+
+  test('ignores a draft backup that can’t be deleted', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(deleteBackup).mockRejectedValue(new Error('Boom'));
+
+    await expect(
+      deleteOrDiscardEntries({
+        items: [{ entry: entryA, assets: [] }],
+        collection,
+        useWorkflow: false,
+      }),
+    ).resolves.toBeUndefined();
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });

@@ -4,7 +4,7 @@
   import { untrack } from 'svelte';
 
   import { searchMode, searchTerms } from '$lib/services/search';
-  import { updateSearchTerms } from '$lib/services/search/input';
+  import { resetSearchAfterLeaving, updateSearchTerms } from '$lib/services/search/input';
 
   /**
    * @typedef {object} Props
@@ -32,6 +32,12 @@
     });
   });
 </script>
+
+<svelte:window
+  onhashchange={() => {
+    resetSearchAfterLeaving();
+  }}
+/>
 
 <div role="none" class="wrapper">
   {#if searchMode.current}

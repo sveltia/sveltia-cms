@@ -204,7 +204,8 @@ export const createPendingEntry = async ({ draft, parentDraft, fieldConfig }) =>
   assignManualSortOrder(draft, getPendingEntriesByCollection(parentDraft, collectionName).length);
 
   const slugs = getPendingEntrySlugs({ draft, parentDraft });
-  const prepared = await createSavingEntryData({ draft, slugs });
+  // The `preSave` event hooks are called when the entry is actually saved, along with the parent
+  const prepared = await createSavingEntryData({ draft, slugs, runPreSave: false });
   const { changes, savingAssets } = prepared;
   // The locales turned off have no file to save, so they’re left out of the entry the stores get
   const savingEntry = removeDisabledLocales(prepared.savingEntry);

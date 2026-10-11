@@ -38,8 +38,19 @@
 
   /** @type {number | undefined} */
   let inputValue = $state();
+  /**
+   * Text in the input, which `inputValue` is `undefined` for if it can’t be parsed as a number.
+   */
+  let inputText = $state('');
 
   const { min, max, step = 1 } = $derived(fieldConfig);
+
+  /**
+   * Get the input value, or the text in the input if it holds something other than a number, so
+   * that text is stored and reported as invalid rather than silently stored as an empty value.
+   * @returns {number | string | undefined} Input value.
+   */
+  const getInput = () => (inputValue === undefined && inputText.trim() ? inputText : inputValue);
 
   // Sync `inputValue` with `currentValue` in both directions, casting the value according to the
   // `value_type` configuration
@@ -48,11 +59,13 @@
     (value) => {
       currentValue = value;
     },
-    () => inputValue,
+    getInput,
     (input) => {
-      inputValue = input;
+      // A string, the text in the input, is only converted from the stored value when it’s the
+      // input already, so it never gets here
+      inputValue = /** @type {number | undefined} */ (input);
     },
-    (value) => getNumberInputValue({ currentValue: value, fieldConfig }),
+    (value) => getNumberInputValue({ currentValue: value, fieldConfig, inputValue: getInput() }),
     (input) => getNumberFieldValue({ inputValue: input, fieldConfig }),
   );
 </script>
@@ -67,6 +80,9 @@
   {invalid}
   aria-labelledby="{fieldId}-label"
   aria-errormessage="{fieldId}-error"
+  oninput={(event) => {
+    inputText = /** @type {HTMLInputElement} */ (event.target).value;
+  }}
   onblur={() => {
     // Ensure synchronization on blur
     updateInput();

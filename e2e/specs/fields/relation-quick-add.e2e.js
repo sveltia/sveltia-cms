@@ -36,6 +36,9 @@ const CONFIG = {
       folder: 'content/authors',
       create: true,
       identifier_field: 'name',
+      // A custom format, whose formatter can hold an author being prepared, see below
+      format: 'name-only',
+      extension: 'txt',
       fields: [{ name: 'name', label: 'Name' }],
     },
   ],
@@ -52,20 +55,22 @@ test('doesn’t add an author once the dialog is closed while it’s being prepa
   cms,
   page,
 }) => {
-  // Hold the entry being prepared with a slow `preSave` event listener, which runs for the new
-  // author too, until the test lets it go
+  // Hold the entry being prepared with a slow formatter, until the test lets it go
   await page.evaluate(() => {
     /** @type {any} */
     const win = window;
 
-    win.preSaveGate = Promise.withResolvers();
-    win.preSaveCalled = false;
-    win.CMS.registerEventListener({
-      name: 'preSave',
+    win.formatGate = Promise.withResolvers();
+    win.formatCalled = false;
+    win.CMS.registerCustomFormat('name-only', 'txt', {
       // eslint-disable-next-line jsdoc/require-jsdoc
-      handler: async () => {
-        win.preSaveCalled = true;
-        await win.preSaveGate.promise;
+      fromFile: (/** @type {string} */ text) => ({ name: text.trim() }),
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      toFile: async (/** @type {any} */ { name }) => {
+        win.formatCalled = true;
+        await win.formatGate.promise;
+
+        return name;
       },
     });
   });
@@ -81,9 +86,7 @@ test('doesn’t add an author once the dialog is closed while it’s being prepa
 
   await dialog.getByRole('textbox', { name: 'Name' }).fill('Ada');
   await dialog.getByRole('button', { name: 'Add', exact: true }).click();
-  await expect
-    .poll(() => page.evaluate(() => /** @type {any} */ (window).preSaveCalled))
-    .toBe(true);
+  await expect.poll(() => page.evaluate(() => /** @type {any} */ (window).formatCalled)).toBe(true);
 
   // The footer buttons are disabled meanwhile, but the Escape key still closes the dialog
   await page.keyboard.press('Escape');
@@ -94,7 +97,7 @@ test('doesn’t add an author once the dialog is closed while it’s being prepa
     /** @type {any} */
     const win = window;
 
-    win.preSaveGate.resolve();
+    win.formatGate.resolve();
   });
   await editor.getByRole('button', { name: 'Save' }).click();
 
@@ -103,4 +106,62 @@ test('doesn’t add an author once the dialog is closed while it’s being prepa
   expect(await cms.readRepo()).toEqual({
     'content/posts/hello.md': "---\ntitle: Hello\nauthor: ''\n---\n",
   });
+});
+
+test('calls the event listeners for an added author when the post is saved', async ({
+  cms,
+  page,
+}) => {
+  await page.evaluate(() => {
+    /** @type {any} */
+    const win = window;
+
+    win.events = [];
+    win.CMS.registerCustomFormat('name-only', 'txt', {
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      fromFile: (/** @type {string} */ text) => ({ name: text.trim() }),
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      toFile: (/** @type {any} */ { name }) => name,
+    });
+    ['preSave', 'postSave'].forEach((name) => {
+      win.CMS.registerEventListener({
+        name,
+        // eslint-disable-next-line jsdoc/require-jsdoc
+        handler: ({ entry }) => {
+          win.events.push(`${name} ${entry.get('collection')} ${entry.get('slug')}`);
+
+          // The change made by a `preSave` listener is what’s written for the author too
+          return name === 'preSave' && entry.get('collection') === 'authors'
+            ? entry.get('data').set('name', entry.getIn(['data', 'name']).toUpperCase())
+            : undefined;
+        },
+      });
+    });
+  });
+
+  await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+
+  const editor = page.getByRole('group', { name: 'Content Editor' });
+
+  await editor.getByRole('textbox', { name: 'Title' }).fill('Hello');
+  await editor.getByRole('button', { name: /Add.*Author/ }).click();
+
+  const dialog = page.getByRole('dialog', { name: /Creating.*Author/ });
+
+  await dialog.getByRole('textbox', { name: 'Name' }).fill('Ada');
+  await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(dialog).toBeHidden();
+
+  // Nothing is saved yet, so no listener has been called
+  expect(await page.evaluate(() => /** @type {any} */ (window).events)).toEqual([]);
+
+  await editor.getByRole('button', { name: 'Save' }).click();
+
+  await expect.poll(async () => (await cms.readRepo())['content/authors/ada.txt']).toBe('ADA\n');
+  expect(await page.evaluate(() => /** @type {any} */ (window).events)).toEqual([
+    'preSave posts hello',
+    'preSave authors ada',
+    'postSave posts hello',
+    'postSave authors ada',
+  ]);
 });

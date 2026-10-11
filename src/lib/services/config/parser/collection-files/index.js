@@ -1,9 +1,10 @@
 import { getPathInfo } from '@sveltia/utils/file';
 
-import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
+import { checkBodyField, isFormatMismatch } from '$lib/services/config/parser/collections/format';
 import { checkPreviewPath } from '$lib/services/config/parser/collections/preview';
 import { parseFields } from '$lib/services/config/parser/fields';
 import { checkI18nOverrides } from '$lib/services/config/parser/i18n';
+import { checkFolderTemplateTags } from '$lib/services/config/parser/media';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 import {
   getOmitDefaultLocaleOption,
@@ -79,7 +80,19 @@ export const parseCollectionFile = (context, collectors) => {
   // Validate the `i18n` option against the collection’s configuration it builds on
   checkI18nOverrides(context, collectors);
 
+  checkFolderTemplateTags({ config: collectionFile, context, collectors });
+
   parseFields(fields, context, collectors);
+
+  checkBodyField({
+    extension,
+    format,
+    // @ts-ignore A singleton collection doesn’t have the `body_field` option
+    bodyField: collectionFile.body_field ?? collection.body_field,
+    fields,
+    context,
+    collectors,
+  });
 
   // A collection file’s own `preview_path` is used instead of the collection’s, not merged with
   // it, so the fields available to fill it in are the file’s own

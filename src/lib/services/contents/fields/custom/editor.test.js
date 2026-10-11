@@ -103,6 +103,27 @@ describe('contents/fields/custom/helpers', () => {
     expect(resolveControl('parent-widget')).toBe(control);
   });
 
+  it.each([
+    ['a field type naming itself', [['a', 'a']], 'a'],
+    [
+      'field types naming each other',
+      [
+        ['a', 'b'],
+        ['b', 'a'],
+      ],
+      'b',
+    ],
+  ])('returns undefined with a warning for %s as the control', (_label, types, control) => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    types.forEach(([name, ctrl]) => mockRegistry.set(name, { control: ctrl }));
+
+    expect(resolveControl(control)).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringMatching(/^Custom field type "[ab]" references itself through its control\.$/),
+    );
+  });
+
   it('builds props for the React widget with immutable field data', () => {
     const onChange = vi.fn();
     const addFile = vi.fn();

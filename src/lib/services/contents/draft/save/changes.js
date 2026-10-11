@@ -5,8 +5,10 @@ import { callEventHooks } from '$lib/services/api/events';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
+import { getCollection } from '$lib/services/contents/collection';
 import { isNestedCollection } from '$lib/services/contents/collection/nested';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+import { filterRealValues } from '$lib/services/contents/draft';
 import { addAlias } from '$lib/services/contents/draft/save/aliases';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
@@ -33,6 +35,7 @@ import { resolveFileConfig } from '$lib/services/contents/file/config';
  * InternalEntryCollection,
  * InternalLocaleCode,
  * LocalizedEntryMap,
+ * PendingEntry,
  * } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  * @import { EntryFilePlan } from '$lib/services/contents/draft/save/file-changes';
@@ -328,7 +331,9 @@ export const createBaseSavingEntryData = async ({ draft, slugs }) => {
         // the commit fails, a retry then saves the files again, rather than committing the entry
         // with paths to files that never reached the repository
         // @see https://github.com/sveltia/sveltia-cms/issues/1012
-        const content = { ...valueMap };
+        // The internal properties the editor adds to list items, like `__sc_item_id`, are left out:
+        // they’re not part of the content, and would otherwise reach the event hooks and the stores
+        const content = filterRealValues(valueMap);
         const localizedSlug = localizedSlugs?.[locale];
         const slug = localizedSlug ?? defaultLocaleSlug;
         const path = createEntryPath({ draft, locale, slug });
@@ -478,10 +483,18 @@ export const planMultiFileChange = ({ draft, savingEntry, locale, recreate = fal
  * @param {boolean} [args.recreate] Whether to write the entry anew, as if it were new, because
  * someone else has deleted it since the draft was opened and the user has chosen to save anyway.
  * Its files are then created rather than updated, moved or deleted, as none of them exists anymore.
+ * @param {boolean} [args.runPreSave] Whether to call the `preSave` event hooks. It’s `false` for an
+ * entry created from a Relation field, which is only saved along with the entry referring to it;
+ * the hooks are then called by {@link preparePendingEntryCommit} at that point.
  * @returns {Promise<{ savingEntry: Entry, savingAssets: Asset[], changes: FileChange[] }>} Saving
  * entry, assets and file changes.
  */
-export const createSavingEntryData = async ({ draft, slugs, recreate = false }) => {
+export const createSavingEntryData = async ({
+  draft,
+  slugs,
+  recreate = false,
+  runPreSave = true,
+}) => {
   const { id, collection, collectionFile } = draft;
   const { defaultLocaleSlug } = slugs;
   // A file/singleton collection keeps its file configuration on the collection file
@@ -534,13 +547,15 @@ export const createSavingEntryData = async ({ draft, slugs, recreate = false }) 
     ),
   };
 
-  await callEventHooks({
-    type: 'preSave',
-    entry: savingEntry,
-    collection,
-    collectionFile,
-    isNew: draft.isNew,
-  });
+  if (runPreSave) {
+    await callEventHooks({
+      type: 'preSave',
+      entry: savingEntry,
+      collection,
+      collectionFile,
+      isNew: draft.isNew,
+    });
+  }
 
   changes.push(
     ...(await buildEntryFileChanges({
@@ -563,4 +578,73 @@ export const createSavingEntryData = async ({ draft, slugs, recreate = false }) 
   );
 
   return { savingEntry, savingAssets, changes };
+};
+
+/**
+ * Prepare an entry created from a Relation field for the commit of the entry referring to it: call
+ * the `preSave` event hooks, which are held back until then, so they don’t run for an entry that is
+ * discarded along with the draft. If a hook updates the entry, its file changes are built again
+ * from the updated content; the other changes, like the assets uploaded with the entry, are kept.
+ * The pending entry itself is left as is, so a retry after a failed commit starts over from it.
+ * @param {PendingEntry} pendingEntry Pending entry.
+ * @returns {Promise<PendingEntry>} Pending entry to commit.
+ */
+export const preparePendingEntryCommit = async (pendingEntry) => {
+  const { collectionName, entry, changes } = pendingEntry;
+  // Quick-add only creates entries in an entry collection, see `getCreatableCollection()`
+  const collection = /** @type {InternalEntryCollection} */ (getCollection(collectionName));
+
+  /** @type {Entry} */
+  const savingEntry = {
+    ...entry,
+    locales: Object.fromEntries(
+      Object.entries(entry.locales).map(([locale, localizedEntry]) => [
+        locale,
+        { ...localizedEntry },
+      ]),
+    ),
+  };
+
+  await callEventHooks({ type: 'preSave', entry: savingEntry, collection, isNew: true });
+
+  // A hook updating the entry replaces the content of the locales
+  const updated = Object.entries(savingEntry.locales).some(
+    ([locale, { content }]) => content !== entry.locales[locale].content,
+  );
+
+  if (!updated) {
+    return pendingEntry;
+  }
+
+  const { defaultLocale } = collection._i18n;
+  const entryPaths = new Set(Object.values(entry.locales).map(({ path }) => path));
+
+  const fileChanges = await buildEntryFileChanges({
+    // A synthetic draft holding the properties read by `formatEntryData()`
+    draft: { collection, collectionName, fields: collection.fields, isIndexFile: false },
+    config: collection,
+    _file: resolveFileConfig({ collection }),
+    entry: savingEntry,
+    cacheDB: resolveCacheDB(),
+    /**
+     * Plan the creation of a file of the entry.
+     * @param {InternalLocaleCode} [locale] Locale of the file, or `undefined` for the single
+     * file.
+     * @returns {EntryFilePlan | undefined} Planned change, or `undefined` if the entry has no file
+     * in the locale.
+     */
+    planChange: (locale) => {
+      const localizedEntry = savingEntry.locales[locale ?? defaultLocale];
+
+      return localizedEntry
+        ? { action: 'create', slug: localizedEntry.slug, path: localizedEntry.path }
+        : undefined;
+    },
+  });
+
+  return {
+    ...pendingEntry,
+    entry: savingEntry,
+    changes: [...changes.filter(({ path }) => !entryPaths.has(path)), ...fileChanges],
+  };
 };

@@ -498,6 +498,13 @@ describe('Test formatYAML() with comments', () => {
     expect(formatYAML({ title: 'Hello' }, {}, {}, { body: 'Body' })).toBe('title: Hello');
   });
 
+  test('ignores a key named after an `Object.prototype` member without a comment', () => {
+    // `Object.prototype.toString` was taken for the comment, and `comment.split` threw
+    expect(formatYAML({ toString: 'a', o: { constructor: 'b' } }, {}, {}, {})).toBe(
+      'toString: a\no:\n  constructor: b',
+    );
+  });
+
   test('ignores the comments when the document is not a map', () => {
     expect(formatYAML(/** @type {any} */ (['a', 'b']), {}, {}, { 0: 'First' })).toBe('- a\n- b');
   });
@@ -707,6 +714,22 @@ published: true
 title: My Post
 ---
 `,
+    );
+  });
+
+  test('non-text body content is kept in the front matter', () => {
+    /** @type {import('$lib/types/private').FileConfig} */
+    const _file = { format: 'frontmatter', extension: '.md' };
+
+    // The values were thrown away
+    expect(formatFrontMatter({ content: { title: 'A', body: { a: 1 } }, _file })).toBe(
+      '---\ntitle: A\nbody:\n  a: 1\n---\n',
+    );
+    expect(formatFrontMatter({ content: { title: 'A', body: ['x'] }, _file })).toBe(
+      '---\ntitle: A\nbody:\n  - x\n---\n',
+    );
+    expect(formatFrontMatter({ content: { title: 'A', body: 42 }, _file })).toBe(
+      '---\ntitle: A\nbody: 42\n---\n',
     );
   });
 

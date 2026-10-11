@@ -824,3 +824,30 @@ test.describe('with an image field', () => {
     ).toBeVisible();
   });
 });
+
+test.describe('without a configured branch', () => {
+  test.use({
+    config: {
+      ...WORKFLOW_CONFIG,
+      backend: { name: WORKFLOW_CONFIG.backend.name, repo: WORKFLOW_CONFIG.backend.repo },
+    },
+  });
+
+  test('lists an unpublished entry against the default branch', async ({ cms, github, page }) => {
+    openEntryPullRequest(github, {
+      slug: 'second-post',
+      files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+    });
+
+    await cms.open();
+
+    // The pull requests can only be told apart from someone else’s once the default branch is known
+    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      /Unpublished Entries/,
+      /Second Post.*Draft/,
+      /Published Entries/,
+      /First Post/,
+    ]);
+    await openEntry(page, 'Second Post');
+  });
+});

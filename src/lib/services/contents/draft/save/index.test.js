@@ -56,11 +56,18 @@ vi.mock('$lib/services/api/events', () => ({
 vi.mock('$lib/services/contents/draft/save/asset-move', () => ({
   buildEntryAssetMoveChanges: vi.fn(async () => ({ changes: [], savingAssets: [] })),
 }));
-vi.mock('$lib/services/contents/draft/save/changes', async (importOriginal) => ({
-  createSavingEntryData: vi.fn(),
-  // The real one, so the entry the stores get can be checked
-  removeDisabledLocales: (await importOriginal()).removeDisabledLocales,
-}));
+vi.mock('$lib/services/contents/draft/save/changes', async (importOriginal) => {
+  const { removeDisabledLocales, preparePendingEntryCommit } = /** @type {any} */ (
+    await importOriginal()
+  );
+
+  return {
+    createSavingEntryData: vi.fn(),
+    // The real ones, so the entries the stores and the hooks get can be checked
+    removeDisabledLocales,
+    preparePendingEntryCommit,
+  };
+});
 vi.mock('$lib/services/contents/draft/save/conflict');
 vi.mock('$lib/services/contents/draft/slugs');
 vi.mock('$lib/services/contents/draft/validate');
@@ -1037,6 +1044,31 @@ describe('draft/save/index', () => {
       );
       expect(getCollection).toHaveBeenCalledWith('tags');
       expect(contentUpdatesToast.current).toEqual(expect.objectContaining({ count: 2 }));
+    });
+
+    it('should call the preSave event hooks of the pending entries once they’re committed', async () => {
+      const svelte = createPendingEntry('svelte');
+
+      mockDraft.currentValues = { en: { title: 'Test Post', 'tags.0': 'svelte' } };
+      mockDraft.pendingEntries = [svelte];
+
+      await saveEntry();
+
+      // The hooks of the entry being edited are called by the mocked `createSavingEntryData()`
+      expect(callEventHooks).toHaveBeenCalledWith({
+        type: 'preSave',
+        entry: svelte.entry,
+        collection: tagCollection,
+        isNew: true,
+      });
+      expect(vi.mocked(callEventHooks).mock.calls.map(([{ type }]) => type)).toEqual([
+        'preSave',
+        'postSave',
+        'postSave',
+      ]);
+      expect(saveChanges).toHaveBeenCalledWith(
+        expect.objectContaining({ changes: expect.arrayContaining(svelte.changes) }),
+      );
     });
 
     it('should leave the pending entries out of the Editorial Workflow entry', async () => {

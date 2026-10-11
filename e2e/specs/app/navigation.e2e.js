@@ -51,6 +51,27 @@ test.describe('after signing in', () => {
     await expect(page.getByRole('radio', { name: 'Assets' })).toBeChecked();
   });
 
+  test('goes back from the Asset Library with the browser’s Back button', async ({ cms, page }) => {
+    await expect(page.getByRole('main', { name: /Notes.*Collection/ })).toBeVisible();
+
+    const collectionURL = page.url();
+
+    // The Create menu opens the Asset Library, which redirects to All Assets. The redirect takes
+    // the place of the library’s own URL in the history, so going back doesn’t land on it again
+    await cms.chooseMenuItem(
+      page.getByRole('button', { name: 'Create Entry or Assets' }),
+      page.getByRole('menuitem', { name: 'Assets' }),
+    );
+    await expect(page).toHaveURL(/#\/assets\/-\/all$/);
+    await page
+      .getByRole('dialog', { name: 'Upload New Assets' })
+      .getByRole('button', { name: 'Cancel' })
+      .click();
+    await page.goBack();
+    await expect(page).toHaveURL(collectionURL);
+    await expect(page.getByRole('radio', { name: 'Contents' })).toBeChecked();
+  });
+
   test('creates an entry in the collection chosen from the Create menu', async ({ cms, page }) => {
     const button = page.getByRole('button', { name: 'Create Entry or Assets' });
     const menu = page.getByRole('menu', { name: 'Create Entry or Assets' });

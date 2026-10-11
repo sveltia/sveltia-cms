@@ -53,6 +53,22 @@ describe('File Field Parser', () => {
   });
 
   describe('parseFileFieldConfig', () => {
+    it('should check the template tags in the field’s folder options', async () => {
+      const { parseFileFieldConfig } = await import('./file.js');
+      const context = createContext();
+      const collectors = createCollectors();
+      const config = { name: 'image', widget: 'image', media_folder: '/static/{{fields.title}}' };
+
+      parseFileFieldConfig({ config, context, collectors });
+
+      expect(mockAddMessage).toHaveBeenCalledWith({
+        strKey: 'unsupported_folder_template_tag',
+        values: { option: 'media_folder', tag: '{{fields.title}}' },
+        context,
+        collectors,
+      });
+    });
+
     it('should parse file field', async () => {
       const { parseFileFieldConfig } = await import('./file.js');
       const context = createContext();

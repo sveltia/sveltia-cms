@@ -22,6 +22,7 @@ describe('integrations/media-libraries/cloud/shared/service', () => {
   const operations = {
     list: vi.fn(async () => []),
     browse: vi.fn(async () => ({ assets: [], folders: [] })),
+    listFolder: vi.fn(async () => ({ assets: [], folders: [] })),
     search: vi.fn(async () => []),
     upload: vi.fn(async () => []),
     delete: vi.fn(async () => undefined),
@@ -136,13 +137,25 @@ describe('integrations/media-libraries/cloud/shared/service', () => {
   });
 
   it('should call the operations with the resolved config', async () => {
-    const { list, browse, search, upload, rename, replace, move, createFolder, deleteFolder } =
-      service;
+    const {
+      list,
+      browse,
+      listFolder,
+      search,
+      upload,
+      rename,
+      replace,
+      move,
+      createFolder,
+      deleteFolder,
+    } = service;
 
     await list(fetchOptions);
     expect(operations.list).toHaveBeenCalledWith(libOptions, fetchOptions);
     await browse(fetchOptions);
     expect(operations.browse).toHaveBeenCalledWith(libOptions, fetchOptions);
+    await listFolder('2024', fetchOptions);
+    expect(operations.listFolder).toHaveBeenCalledWith('2024', libOptions, fetchOptions);
     await search('photo', fetchOptions);
     expect(operations.search).toHaveBeenCalledWith('photo', libOptions, fetchOptions);
     await upload([file], fetchOptions);

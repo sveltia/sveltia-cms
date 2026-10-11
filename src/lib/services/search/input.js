@@ -36,3 +36,28 @@ export const updateSearchTerms = (terms) => {
     originPath = undefined;
   }
 };
+
+/**
+ * Forget the current search once the search results have been left for another page, e.g. with the
+ * browser’s Back button, so the search bar doesn’t keep showing terms that no longer apply. The
+ * search is kept while an entry or an asset opened from the results is shown, as the user goes
+ * back to the results from there. Call this whenever the URL hash changes.
+ */
+export const resetSearchAfterLeaving = () => {
+  if (isSearchResultsPath(parseLocation().path)) {
+    return;
+  }
+
+  /** @type {string | undefined} */
+  const from = window.history.state?.from;
+
+  if (from && isSearchResultsPath(parseLocation(from).path)) {
+    return;
+  }
+
+  originPath = undefined;
+
+  if (searchTerms.current) {
+    searchTerms.current = '';
+  }
+};

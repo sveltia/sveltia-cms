@@ -59,8 +59,13 @@ export const extractDateTime = ({ dateFieldName, fields, content }) => {
     return undefined;
   }
 
-  const { utc, outputUTC } = parseDateTimeConfig(config);
-  const timeZone = utc || outputUTC ? 'UTC' : undefined;
+  const { format, dateOnly, utc, outputUTC, singleCustomTimeZone } = parseDateTimeConfig(config);
+
+  // Read the parts in the time zone `getDate()` parsed the value in: a date without a custom format
+  // is UTC midnight, while one in a custom format is the browser’s midnight, and a date/time is
+  // shown in the field’s custom time zone if any, like in the input
+  const timeZone =
+    utc || outputUTC || (dateOnly && !format) ? 'UTC' : dateOnly ? undefined : singleCustomTimeZone;
 
   return getDateTimeParts({ date, timeZone });
 };

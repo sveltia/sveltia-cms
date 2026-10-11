@@ -14,6 +14,8 @@ const mockI18nStrings = {
   'config.error.missing_asset_collection_name': 'Missing asset collection name at index {count}',
   'config.error.invalid_asset_collection_name': 'Invalid asset collection name: {name}',
   'config.error.duplicate_asset_collection_name': 'Duplicate asset collection name: {name}',
+  'config.error.unsupported_folder_template_tag': 'Unsupported tag {tag} in {option}',
+  'config.error.global_folder_template_tag': 'Global tag {tag} in {option}',
 };
 
 /**
@@ -560,5 +562,83 @@ describe('parseMediaConfig', () => {
       expect(errors.some((e) => e.includes('Invalid asset collection name'))).toBe(true);
       expect(errors.some((e) => e.includes('Duplicate asset collection name'))).toBe(true);
     });
+  });
+});
+
+describe('checkFolderTemplateTags', () => {
+  /**
+   * Check the given folder options and get the errors.
+   * @param {Record<string, any>} config Configuration holding the options.
+   * @param {boolean} [isGlobal] Whether the configuration is the site configuration.
+   * @returns {Promise<string[]>} Errors.
+   */
+  const check = async (config, isGlobal) => {
+    const { checkFolderTemplateTags } = await import('./media.js');
+    const collectors = createCollectors();
+
+    checkFolderTemplateTags({ config, isGlobal, context: {}, collectors });
+
+    return [...collectors.errors];
+  };
+
+  it('should accept the tags a collection, a collection file or a field supports', async () => {
+    expect(
+      await check({
+        media_folder: '{{media_folder}}/{{year}}/{{month}}/{{day}}/{{slug}}',
+        public_folder:
+          '{{public_folder}}/{{ slug | upper }}/{{dirname}}/{{filename}}.{{extension}}',
+      }),
+    ).toEqual([]);
+    expect(
+      await check({ media_folder: '/static/{{uuid}}/{{uuid_short}}/{{uuid_shorter}}' }),
+    ).toEqual([]);
+    expect(await check({ media_folder: 'static', public_folder: '' })).toEqual([]);
+    // A value of another type is reported against the JSON schema
+    expect(await check({ media_folder: 1 })).toEqual([]);
+  });
+
+  it('should report a tag that a collection, a collection file or a field doesn’t support', async () => {
+    // These resolved to a random ID that changed with every entry draft
+    expect(
+      await check({
+        media_folder: '/static/{{title}}/{{fields.title}}/{{locale}}',
+        public_folder: '/{{nope | default("x")}}',
+      }),
+    ).toEqual([
+      'Unsupported tag {{title}} in media_folder',
+      'Unsupported tag {{fields.title}} in media_folder',
+      'Unsupported tag {{locale}} in media_folder',
+      'Unsupported tag {{nope | default("x")}} in public_folder',
+    ]);
+    // The global folder tags are replaced as they are, without spaces or transformations
+    expect(await check({ media_folder: '{{ media_folder }}/a' })).toEqual([
+      'Unsupported tag {{ media_folder }} in media_folder',
+    ]);
+  });
+
+  it('should report any tag in the global options', async () => {
+    // The tags were used literally
+    expect(
+      await check({ media_folder: 'static/{{year}}', public_folder: '/{{slug}}' }, true),
+    ).toEqual(['Global tag {{year}} in media_folder', 'Global tag {{slug}} in public_folder']);
+    expect(await check({ media_folder: 'static/images' }, true)).toEqual([]);
+  });
+
+  it('should be called for the global options and each asset collection', async () => {
+    const { parseMediaConfig } = await import('./media.js');
+    const collectors = createCollectors();
+
+    parseMediaConfig(
+      /** @type {any} */ ({
+        media_folder: 'static/{{year}}',
+        asset_collections: [{ name: 'images', media_folder: 'assets/{{slug}}' }],
+      }),
+      collectors,
+    );
+
+    expect([...collectors.errors]).toEqual([
+      'Global tag {{year}} in media_folder',
+      'Global tag {{slug}} in media_folder',
+    ]);
   });
 });

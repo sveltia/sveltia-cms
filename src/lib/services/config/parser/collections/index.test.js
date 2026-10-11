@@ -58,8 +58,10 @@ vi.mock('$lib/services/config/parser/fields', () => ({
 }));
 
 const mockIsFormatMismatch = vi.fn();
+const mockCheckBodyField = vi.fn();
 
 vi.mock('$lib/services/config/parser/collections/format', () => ({
+  checkBodyField: mockCheckBodyField,
   isFormatMismatch: mockIsFormatMismatch,
 }));
 
@@ -927,6 +929,74 @@ describe('Collections Parser', () => {
       expect(secondCall[1].isIndexFile).toBe(true);
     });
 
+    it('should check the body field of the collection and of an index file', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+      const fields = [{ name: 'title', widget: 'string' }];
+      const indexFields = [{ name: 'body', widget: 'object', fields }];
+      const bodyField = { key: 'body' };
+
+      /**
+       * Parse a collection with the given index file and get the `checkBodyField()` arguments.
+       * @param {any} indexFile Index file option.
+       * @returns {any[]} Arguments of each call, without the collectors.
+       */
+      const parse = (indexFile) => {
+        mockCheckBodyField.mockClear();
+        parseEntryCollection(
+          {
+            cmsConfig: /** @type {any} */ ({}),
+            collection: /** @type {any} */ ({
+              name: 'posts',
+              folder: 'content/posts',
+              extension: 'html',
+              format: 'yaml-frontmatter',
+              body_field: bodyField,
+              fields,
+              index_file: indexFile,
+            }),
+          },
+          collectors,
+        );
+
+        return mockCheckBodyField.mock.calls.map(
+          ([{ extension, format, bodyField: _bodyField, fields: _fields, context }]) => ({
+            extension,
+            format,
+            bodyField: _bodyField,
+            fields: _fields,
+            isIndexFile: !!context.isIndexFile,
+          }),
+        );
+      };
+
+      const collectionCall = {
+        extension: 'html',
+        format: 'yaml-frontmatter',
+        bodyField,
+        fields,
+        isIndexFile: false,
+      };
+
+      // The index file shares the collection’s fields and format
+      expect(parse(true)).toEqual([collectionCall]);
+      expect(parse({})).toEqual([collectionCall]);
+      // The index file has fields of its own
+      expect(parse({ fields: indexFields })).toEqual([
+        collectionCall,
+        { ...collectionCall, fields: indexFields, isIndexFile: true },
+      ]);
+      // The index file has a format of its own, which replaces the collection’s extension too
+      expect(parse({ format: 'toml-frontmatter' })).toEqual([
+        collectionCall,
+        { ...collectionCall, extension: undefined, format: 'toml-frontmatter', isIndexFile: true },
+      ]);
+      expect(parse({ extension: 'md' })).toEqual([
+        collectionCall,
+        { ...collectionCall, extension: 'md', format: undefined, isIndexFile: true },
+      ]);
+    });
+
     it('should check for unsupported options', async () => {
       const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();
@@ -949,6 +1019,35 @@ describe('Collections Parser', () => {
   });
 
   describe('parseCollection', () => {
+    it('should check the template tags in the collection’s folder options', async () => {
+      const { parseCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          media_folder: '/static/{{slug}}',
+          public_folder: '/{{title}}',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      };
+
+      parseCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith({
+        strKey: 'unsupported_folder_template_tag',
+        values: { option: 'public_folder', tag: '{{title}}' },
+        context,
+        collectors,
+      });
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ values: { option: 'media_folder', tag: '{{slug}}' } }),
+      );
+    });
+
     it('should error when collection has no options', async () => {
       const { parseCollection } = await import('.');
       const collectors = createCollectors();

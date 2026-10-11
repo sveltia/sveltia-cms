@@ -8,11 +8,17 @@ import {
   renamingExternalAsset,
   selectedCloudService,
 } from '$lib/services/assets/external';
+import { getExternalAssetUsedEntries } from '$lib/services/assets/external/details';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { createMockCloudService, createMockExternalAsset } from '$lib/test/config';
 import { expectFileNameSelected } from '$lib/test/dialog';
 
 import RenameDialog from './rename-dialog.svelte';
+
+vi.mock('$lib/services/assets/external/details', async (importOriginal) => ({
+  .../** @type {any} */ (await importOriginal()),
+  getExternalAssetUsedEntries: vi.fn(async () => []),
+}));
 
 const assets = [
   createMockExternalAsset({ fileName: 'a.png' }),
@@ -20,7 +26,7 @@ const assets = [
   createMockExternalAsset({ fileName: 'c.png', folder: 'other' }),
 ];
 
-const [firstAsset] = assets;
+const [firstAsset, secondAsset] = assets;
 
 describe('RenameDialog', () => {
   /** @type {import('vitest').Mock} */
@@ -35,6 +41,7 @@ describe('RenameDialog', () => {
     showAssetOverlay.current = true;
     renamingExternalAsset.current = undefined;
     overlaidExternalAssetId.current = undefined;
+    vi.mocked(getExternalAssetUsedEntries).mockResolvedValue([]);
   });
 
   test('opens for the asset being renamed and updates the list', async () => {
@@ -83,5 +90,65 @@ describe('RenameDialog', () => {
 
     await expect.poll(() => overlaidExternalAssetId.current).toBe('images/d.png');
     await expect.poll(() => window.location.hash).toBe('#/assets/-/test_cloud/images/d.png');
+  });
+
+  test('warns that the links of the entries using the asset will break', async () => {
+    const warning = page.getByRole('alert').filter({ hasText: 'link' });
+
+    await render(RenameDialog);
+
+    // No warning for an asset no entry uses
+    renamingExternalAsset.current = firstAsset;
+    await expect.element(page.getByRole('dialog')).toBeInTheDocument();
+    await vi.waitFor(() => expect(getExternalAssetUsedEntries).toHaveBeenCalledWith(firstAsset));
+    expect(warning.elements()).toHaveLength(0);
+    renamingExternalAsset.current = undefined;
+    await expect.poll(() => page.getByRole('dialog').elements()).toHaveLength(0);
+
+    vi.mocked(getExternalAssetUsedEntries).mockResolvedValue(/** @type {any[]} */ ([{}, {}]));
+    renamingExternalAsset.current = secondAsset;
+
+    const dialog = page.getByRole('dialog', { name: 'Rename \u2068b.png\u2069' });
+
+    await expect
+      .element(dialog.getByRole('alert'))
+      .toHaveTextContent(
+        '2 entries link to this file. The entries won’t be updated, so the links will break once ' +
+          'the file is renamed.',
+      );
+
+    // The asset can still be renamed
+    await dialog.getByRole('textbox').fill('d.png');
+    await dialog.getByRole('button', { name: 'Rename' }).click();
+    await vi.waitFor(() =>
+      expect(rename).toHaveBeenCalledWith(secondAsset, 'd.png', expect.anything()),
+    );
+  });
+
+  test('ignores the entries of an asset no longer being renamed', async () => {
+    /**
+     * Resolve the pending lookup of the entries.
+     * @type {(entries: any[]) => void}
+     */
+    let resolve = () => {};
+
+    vi.mocked(getExternalAssetUsedEntries).mockReturnValueOnce(
+      new Promise((r) => {
+        resolve = r;
+      }),
+    );
+
+    await render(RenameDialog);
+
+    renamingExternalAsset.current = firstAsset;
+    await vi.waitFor(() => expect(getExternalAssetUsedEntries).toHaveBeenCalledWith(firstAsset));
+    renamingExternalAsset.current = secondAsset;
+    await vi.waitFor(() => expect(getExternalAssetUsedEntries).toHaveBeenCalledWith(secondAsset));
+    resolve([{}]);
+    await new Promise((r) => {
+      setTimeout(r, 50);
+    });
+
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
   });
 });

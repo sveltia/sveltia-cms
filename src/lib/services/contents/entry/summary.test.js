@@ -191,6 +191,13 @@ describe('Test getEntrySummary()', () => {
     expect(format("{{draft | ternary('Draft', 'Public')}}")).toEqual('Public');
   });
 
+  test('fields named after `Object.prototype` members', () => {
+    // `Object` was taken for a truthy value, and the source of `Object.prototype.toString` was
+    // shown. A missing field gives nothing, even with a transformation
+    expect(format("{{constructor | ternary('Yes', 'No')}}")).toEqual('');
+    expect(format('{{title}}{{toString}}')).toEqual('.Net');
+  });
+
   test('nested templates in default transformation', () => {
     // Test the issue from GitHub #813: default transformation with nested template
     const entryWithSubtitle = {

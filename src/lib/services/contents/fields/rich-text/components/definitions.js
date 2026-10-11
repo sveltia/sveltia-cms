@@ -1,7 +1,10 @@
 import { _ } from '@sveltia/i18n';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
-import { replaceQuotes } from '$lib/services/contents/fields/rich-text/components/utils';
+import {
+  escapeTitle,
+  unescapeTitle,
+} from '$lib/services/contents/fields/rich-text/components/utils';
 import {
   IMAGE_OR_LINKED_IMAGE_REGEX,
   IMAGE_REGEX,
@@ -63,10 +66,15 @@ export const IMAGE_COMPONENT = {
     { name: 'title', label: 'Title', required: false },
   ],
   pattern: IMAGE_REGEX,
+  fromBlock: (match) => {
+    const { src, alt, title } = match.groups ?? {};
+
+    return { src, alt, title: title && unescapeTitle(title) };
+  },
   toBlock: (props) => {
     const { src = '', alt = '', title = '' } = props;
 
-    return src ? `![${alt}](${src}${title ? ` "${replaceQuotes(title)}"` : ''})` : '';
+    return src ? `![${alt}](${src}${title ? ` "${escapeTitle(title)}"` : ''})` : '';
   },
   toPreview: (props) => {
     const { src = '', alt = '', title = '' } = props;
@@ -96,13 +104,13 @@ export const LINKED_IMAGE_COMPONENT = {
     return {
       src: (src || src2 || '').trim(),
       alt: (alt || alt2 || '').trim(),
-      title: (title || title2 || '').trim(),
+      title: unescapeTitle(title || title2 || '').trim(),
       link: (link || '').trim(),
     };
   },
   toBlock: (props) => {
     const { src = '', alt = '', title = '', link = '' } = props;
-    const img = src ? `![${alt}](${src}${title ? ` "${replaceQuotes(title)}"` : ''})` : '';
+    const img = src ? `![${alt}](${src}${title ? ` "${escapeTitle(title)}"` : ''})` : '';
 
     return img && link ? `[${img}](${link})` : img;
   },

@@ -118,8 +118,9 @@ export const getRestoredPanes = ({
     ((!showPreview || !canPreview) &&
       (firstPane.mode === 'preview' || secondPane.mode === 'preview')) ||
     // If there are only 2 locales and the first pane is not in the default locale, don’t restore
-    // the panes so that the default locale is always shown in the first pane
-    (allLocales.length === 2 && firstPane.locale !== defaultLocale)
+    // the saved panes so that the default locale is always shown in the first pane. The locale
+    // given in the URL is what the user asked for, so it’s shown anyway
+    (!editorLocale && allLocales.length === 2 && firstPane.locale !== defaultLocale)
   ) {
     return undefined;
   }
@@ -129,9 +130,11 @@ export const getRestoredPanes = ({
 
 /**
  * Work out the default panes for an entry, when nothing is restored: the first pane edits the
- * current or default locale, and the second one holds the preview, or another locale when there’s
- * no preview to show, or nothing at all when there’s no room for it.
+ * locale given in the URL, or the current or default locale, and the second one holds the preview,
+ * or another locale when there’s no preview to show, or nothing at all when there’s no room for
+ * it.
  * @param {object} args Arguments.
+ * @param {string} [args.editorLocale] Locale given in the URL, which is used if the entry has it.
  * @param {InternalLocaleCode} [args.currentLocale] Locale of the current first pane, if any.
  * @param {InternalLocaleCode} args.defaultLocale Default locale of the entry.
  * @param {InternalLocaleCode[]} args.allLocales Locales of the entry.
@@ -143,6 +146,7 @@ export const getRestoredPanes = ({
  * @returns {[EntryEditorPane, ?EntryEditorPane]} Panes.
  */
 export const getDefaultPanes = ({
+  editorLocale,
   currentLocale,
   defaultLocale,
   allLocales,
@@ -152,7 +156,11 @@ export const getDefaultPanes = ({
   showSecondPane,
   singlePane,
 }) => {
-  const locale = currentLocale ?? defaultLocale;
+  const locale =
+    (editorLocale && allLocales.includes(editorLocale) ? editorLocale : undefined) ??
+    currentLocale ??
+    defaultLocale;
+
   /** @type {EntryEditorPane} */
   const firstPane = { mode: 'edit', locale };
 

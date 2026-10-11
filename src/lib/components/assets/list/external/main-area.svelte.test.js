@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-svelte';
 
 import {
   externalAssets,
+  externalAssetsTruncated,
   externalFolders,
   focusedExternalAsset,
   focusedExternalSubfolder,
@@ -48,6 +49,7 @@ describe('MainArea', () => {
     selectedExternalAssets.current = [];
     uploadingExternalAssets.current = { files: [] };
     externalAssetsToast.current = { show: false, status: 'info', message: '' };
+    externalAssetsTruncated.current = false;
   });
 
   test('lays out the toolbars, list and info pane', async () => {
@@ -164,5 +166,21 @@ describe('MainArea', () => {
     await render(MainArea);
 
     expect(page.getByRole('toolbar', { name: 'Asset List' }).elements()).toHaveLength(0);
+  });
+
+  test('tells the user when some files are left out of the list', async () => {
+    selectedCloudService.current = createMockCloudService();
+
+    await render(MainArea);
+
+    const notice = page.getByRole('alert').filter({ hasText: 'too many files' });
+
+    expect(notice.elements()).toHaveLength(0);
+    externalAssetsTruncated.current = true;
+    await expect
+      .element(notice)
+      .toMatchTextContent(
+        'There are too many files on the service to list them all, so some of them are left out.',
+      );
   });
 });

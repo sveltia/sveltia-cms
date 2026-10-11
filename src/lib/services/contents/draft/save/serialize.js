@@ -5,6 +5,7 @@ import { TomlDate } from 'smol-toml';
 import { cmsConfig } from '$lib/services/config';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
+import { getInheritedI18nOption } from '$lib/services/contents/draft/create/proxy.svelte';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getAliasesKey, getAliasKeyPaths } from '$lib/services/contents/entry/aliases';
 import {
@@ -17,6 +18,7 @@ import { getWildcardKeyPathPattern } from '$lib/services/contents/entry/key-path
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { TOML_FORMATS } from '$lib/services/contents/file/constants';
+import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { hasIndexLikeChildKey, isValueEmpty, unflattenKeys } from '$lib/services/utils/object';
 
@@ -154,6 +156,8 @@ const isOpaqueField = (field) =>
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {Field[]} args.fields Field list of a collection or a file.
  * @param {InternalLocaleCode} args.locale Locale code.
+ * @param {InternalLocaleCode} args.defaultLocale Default locale code, or `_default` if i18n is not
+ * enabled.
  * @param {FlattenedEntryContent} args.valueMap Flattened entry content.
  * @param {string} [args.canonicalSlugKey] Property name of a canonical slug.
  * @param {string} [args.aliasesKey] Property name of the entry’s URL aliases. Placed right after
@@ -171,6 +175,7 @@ const finalizeContent = ({
   fileName,
   fields,
   locale,
+  defaultLocale,
   valueMap,
   canonicalSlugKey,
   aliasesKey,
@@ -189,8 +194,38 @@ const finalizeContent = ({
   const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
   const copyArgs = { locale, unsortedMap, sortedMap, isTomlOutput, omitEmptyOptionalFields };
 
+  /**
+   * Check whether the field at the given key path belongs in the locale’s content. Every field does
+   * in the default locale, but in another locale, only one that is localized along with all of its
+   * ancestors, as the others are left out of that locale’s content.
+   * @param {string} keyPath Concrete key path of the field.
+   * @returns {boolean} Result.
+   */
+  const isFieldInLocale = (keyPath) => {
+    if (locale === defaultLocale) {
+      return true;
+    }
+
+    const segments = keyPath.split('.');
+
+    // Skip the list item indexes, which aren’t fields of their own, e.g. `items.0` in `items.0.kv`
+    return segments.every((segment, index) => {
+      if (index < segments.length - 1 && /^\d+$/.test(segment)) {
+        return true;
+      }
+
+      const args = { ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') };
+      const fieldConfig = getField(args);
+
+      return (
+        !!fieldConfig &&
+        isFieldLocalized(getInheritedI18nOption({ fieldConfig, getFieldArgs: args }))
+      );
+    });
+  };
+
   // Add the slug first
-  if (canonicalSlugKey && canonicalSlugKey in unsortedMap) {
+  if (canonicalSlugKey && Object.hasOwn(unsortedMap, canonicalSlugKey)) {
     copyProperty({ ...copyArgs, key: canonicalSlugKey });
   }
 
@@ -198,7 +233,7 @@ const finalizeContent = ({
   // to. The property normally holds a list, which is flattened into indexed key paths, but copy the
   // property itself too in case the user stores something else in it
   if (aliasesKey) {
-    if (aliasesKey in unsortedMap) {
+    if (Object.hasOwn(unsortedMap, aliasesKey)) {
       copyProperty({ ...copyArgs, key: aliasesKey });
     }
 
@@ -208,7 +243,7 @@ const finalizeContent = ({
   }
 
   // Add the order field next so it appears at the top of the output
-  if (orderKey && orderKey in unsortedMap) {
+  if (orderKey && Object.hasOwn(unsortedMap, orderKey)) {
     copyProperty({ ...copyArgs, key: orderKey });
   }
 
@@ -243,9 +278,13 @@ const finalizeContent = ({
     // it can’t make a difference to the output. `copyProperty()` still omits the empty object if
     // the field is optional and the `omit_empty_optional_fields` output option is enabled
     if (!pairKeyPaths.length) {
-      // Any other value, such as a string where the file doesn’t hold an object, is left as is
-      unsortedMap[keyPath] ??= {};
-      copyProperty({ ...copyArgs, key: keyPath, field });
+      // A field that isn’t in the locale’s content, e.g. one that isn’t translatable in a locale
+      // other than the default, doesn’t get the empty object either
+      if (Object.hasOwn(unsortedMap, keyPath) || isFieldInLocale(keyPath)) {
+        // Any other value, such as a string where the file doesn’t hold an object, is left as is
+        unsortedMap[keyPath] ??= {};
+        copyProperty({ ...copyArgs, key: keyPath, field });
+      }
 
       return;
     }
@@ -270,7 +309,7 @@ const finalizeContent = ({
    * @param {Field} field Field configuration.
    */
   const copyOpaqueField = (keyPath, field) => {
-    if (keyPath in unsortedMap) {
+    if (Object.hasOwn(unsortedMap, keyPath)) {
       copyProperty({ ...copyArgs, key: keyPath, field });
     }
 
@@ -306,7 +345,7 @@ const finalizeContent = ({
       copyKeyValueField(keyPath, field);
     } else if (field && !keyPath.includes('*') && isOpaqueField(field)) {
       copyOpaqueField(keyPath, field);
-    } else if (keyPath in unsortedMap) {
+    } else if (Object.hasOwn(unsortedMap, keyPath)) {
       copyProperty({ ...copyArgs, key: keyPath, field });
     } else {
       // Resolve the wildcards in the key path to the concrete key paths of the list items, e.g.
@@ -331,7 +370,7 @@ const finalizeContent = ({
             copyKeyValueField(concreteKeyPath, resolvedField);
           } else if (resolvedField && isOpaqueField(resolvedField)) {
             copyOpaqueField(concreteKeyPath, resolvedField);
-          } else if (concreteKeyPath in unsortedMap) {
+          } else if (Object.hasOwn(unsortedMap, concreteKeyPath)) {
             copyProperty({ ...copyArgs, key: concreteKeyPath, field: resolvedField });
           } else {
             addObjectPlaceholder(concreteKeyPath, resolvedField);
@@ -367,6 +406,7 @@ export const serializeContent = ({ draft, locale, valueMap, format }) => {
 
   const {
     _i18n: {
+      defaultLocale,
       canonicalSlug: { key: canonicalSlugKey },
     },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
@@ -380,6 +420,7 @@ export const serializeContent = ({ draft, locale, valueMap, format }) => {
     fileName: collectionFile?.name,
     fields,
     locale,
+    defaultLocale,
     valueMap,
     canonicalSlugKey,
     aliasesKey: getAliasesKey({ collection, fields }),

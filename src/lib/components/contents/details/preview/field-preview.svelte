@@ -50,7 +50,9 @@
   const previewProps = $derived({ locale, keyPath, typedKeyPath, fieldConfig, currentValue });
 </script>
 
-{#if fieldType !== 'hidden' && preview && isShown}
+<!-- Render nothing for a missing field configuration, e.g. when a custom preview template asks
+  for a key path that isn’t a configured field. The derived values above are read past the check -->
+{#if fieldConfig && fieldType !== 'hidden' && preview && isShown}
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <section

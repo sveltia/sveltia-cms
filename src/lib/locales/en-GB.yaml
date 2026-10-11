@@ -627,6 +627,13 @@ enter_new_name_for_external_folder: |
     0   {{ Enter a new name below. }}
     one {{ Enter a new name below. The file in the folder will be moved along, and its URL will change, so update any entry using it. }}
     *   {{ Enter a new name below. The {$count} files in the folder will be moved along, and their URLs will change, so update any entries using them. }}
+# Rename Folder dialog for a cloud storage service: warning shown when entries link to files in the
+# folder, which aren’t updated. {$count} is the number of entries
+renaming_external_folder_breaks_links: |
+  .input {$count :integer}
+  .match $count
+    one {{ An entry links to a file in this folder. The entry won’t be updated, so the link will break once the folder is renamed. }}
+    *   {{ {$count} entries link to files in this folder. The entries won’t be updated, so the links will break once the folder is renamed. }}
 # Delete Folder confirmation
 # {$name} is the folder name and {$count} is the number of assets in the folder
 confirm_deleting_folder: |
@@ -640,6 +647,9 @@ renaming_folder: Renaming the folder…
 renaming_folder_failed: Couldn’t rename the folder.
 deleting_folder: Deleting the folder…
 deleting_folder_failed: Couldn’t delete the folder.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: There are too many files on the service to list them all, so some of them are left out.
 
 # Edit options menu: button and item labels
 edit_options: Edit Options
@@ -666,11 +676,22 @@ enter_new_name_for_asset: |
     0   {{ Enter a new name below. }}
     one {{ Enter a new name below. An entry using the asset will also be updated. }}
     *   {{ Enter a new name below. {$count} entries using the asset will also be updated. }}
+# Rename Asset dialog for a file on a cloud storage service: warning shown when entries link to the
+# file, which aren’t updated. {$count} is the number of entries
+renaming_external_asset_breaks_links: |
+  .input {$count :integer}
+  .match $count
+    one {{ An entry links to this file. The entry won’t be updated, so the link will break once the file is renamed. }}
+    *   {{ {$count} entries link to this file. The entries won’t be updated, so the links will break once the file is renamed. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: File name cannot be empty.
   character: File name cannot contain special characters.
   duplicate: This file name is used for another asset.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: File name cannot start with a dot.
+  # The name of a folder next to the file
+  folder_duplicate: A folder with this name already exists here.
 # Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
 # media library option
 file_will_be_saved_as: The file will be saved as “{$name}”.
@@ -1813,6 +1834,10 @@ config:
     missing_media_folder: The media folder is not defined.
     public_folder_relative_path: The configured public folder is invalid. It must be an absolute path starting with “/”.
     public_folder_absolute_url: An absolute URL for the public folder option is not supported in Sveltia CMS.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: The `{$option}` option contains the `{$tag}` template tag, which isn’t supported there. Only the slug template tags, such as `\{\{slug\}\}` and `\{\{year\}\}`, and the `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` and `\{\{public_folder\}\}` tags can be used.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: The `{$option}` option contains the `{$tag}` template tag, which can only be used in the option of a collection, a collection file or a field, where there is an entry to fill it in with.
     # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
     invalid_sanitize_replacement: The `sanitize_replacement` option is set to `{$replacement}`, but it contains a character that can’t be used in a slug, so it can’t stand in for one.
     # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
@@ -1843,6 +1868,8 @@ config:
     invalid_collection_multiple_options: The collection cannot have more than one of the `folder`, `file`, `files` and `divider` options.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: The `{$extension}` extension doesn’t match the `{$format}` format.
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: The `{$name}` field is saved as the body below the front matter, which can only hold text, not a number, a boolean, a list or an object as a `{$widget}` field does. Use a field type holding text, or rename the field.
     # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
     # brackets are escaped with backslashes for MessageFormat 2
     invalid_collection_data_file: The `file` option `{$file}` is invalid. It must be the path to a JSON file, without the `\{\{locale\}\}` placeholder.

@@ -183,7 +183,7 @@ export const parseFrontMatter = ({ collection, collectionFile, isIndexFile, form
     // matter takes precedence over the text below it. With `body_field.inline` on, text below is
     // still read when the front matter lacks the key, so it’s moved inline on a Save rather than
     // lost, but no empty body is added to a file that has none.
-    ...(!(bodyKey in parsedHead) && (!bodyInline || body?.trim())
+    ...(!Object.hasOwn(parsedHead, bodyKey) && (!bodyInline || body?.trim())
       ? { [bodyKey]: body?.replace(/^\n/, '') }
       : {}),
   };

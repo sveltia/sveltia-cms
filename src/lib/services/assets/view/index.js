@@ -3,7 +3,12 @@ import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
 
 import { selectedAssetFolder } from '$lib/services/assets/folders';
-import { publishedAssets, selectedAssets, uploadingAssets } from '$lib/services/assets/state';
+import {
+  focusedAsset,
+  publishedAssets,
+  selectedAssets,
+  uploadingAssets,
+} from '$lib/services/assets/state';
 import {
   browsedDirPath,
   focusedSubfolder,
@@ -271,12 +276,26 @@ createRootEffect(() => {
 });
 
 // Clear the selection when the listed assets or the filter change, so it never includes an asset
-// the current view hides, which a bulk action like Delete would otherwise apply to
+// the current view hides, which a bulk action like Delete would otherwise apply to. Likewise, drop
+// the focus from an asset the view no longer lists, e.g. an image once the list is filtered to
+// documents, as the toolbar actions and the info panel fall back to the focused asset. An updated
+// copy of the focused asset, e.g. after it’s replaced, has the same path, so the focus stays.
 createRootEffect(() => {
   const assets = listedAssets.current;
+  const filter = filterConditions.current;
+  const asset = untrack(() => focusedAsset.current);
 
-  void filterConditions.current;
   selectedAssets.current = [];
+
+  if (
+    asset &&
+    !filterAssets(
+      assets.filter(({ path }) => path === asset.path),
+      filter,
+    ).length
+  ) {
+    focusedAsset.current = undefined;
+  }
 
   if (untrack(() => prefs.devModeEnabled)) {
     // eslint-disable-next-line no-console

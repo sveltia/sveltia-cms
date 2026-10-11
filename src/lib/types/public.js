@@ -2491,8 +2491,9 @@
 /**
  * Base props for custom preview template React components.
  * @typedef {object} CustomPreviewTemplateBaseProps
- * @property {(keyPath: FieldKeyPath) => ReactElement} widgetFor Function that returns a React
- * element mounting a Svelte field preview for the given field key path.
+ * @property {(keyPath: FieldKeyPath) => ReactElement | null} widgetFor Function that returns a
+ * React element mounting a Svelte field preview for the given field key path, or `null` if the key
+ * path doesn’t point to a configured field.
  * @property {(name: string) => WidgetsForResult} widgetsFor Function that returns widget data for a
  * given top-level field name. For a List field, it returns an array of Immutable Maps; for an
  * Object field, a single Immutable Map; and for other fields, the raw value. Each Map has `data`

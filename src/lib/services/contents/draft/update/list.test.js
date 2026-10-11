@@ -9,6 +9,7 @@ import {
   updateListField as _updateListField,
   updateListFieldForLocales as _updateListFieldForLocales,
   getItemList,
+  moveListExpanderStates,
   updateObject,
 } from './list';
 
@@ -142,6 +143,44 @@ describe('draft/update/list', () => {
           valueList.push('tag4');
           expanderStateList.push(false);
         },
+      });
+    });
+
+    it('should keep the expander states nested in the items when one is removed', () => {
+      mockEntryDraft.currentValues.en = {
+        'authors.0.name': 'A',
+        'authors.0.details.bio': 'a',
+        'authors.1.name': 'B',
+        'authors.1.details.bio': 'b',
+        'authors.2.name': 'C',
+        'authors.2.details.bio': 'c',
+      };
+      mockEntryDraft.expanderStates._ = {
+        'authors#': true,
+        'authors.0': true,
+        'authors.1': false,
+        'authors.1.details#': false,
+        'authors.2': true,
+        'authors.2.details#': false,
+        'authors.2.books.0': false,
+      };
+
+      updateListField({
+        locale: 'en',
+        keyPath: 'authors',
+        manipulate: ({ valueList, expanderStateList }) => {
+          valueList.splice(0, 1);
+          expanderStateList.splice(0, 1);
+        },
+      });
+
+      expect(mockEntryDraft.expanderStates._).toEqual({
+        'authors#': true,
+        'authors.0': false,
+        'authors.0.details#': false,
+        'authors.1': true,
+        'authors.1.details#': false,
+        'authors.1.books.0': false,
       });
     });
 
@@ -703,6 +742,49 @@ describe('draft/update/list', () => {
       addMultiValueItems({ locale: 'en', keyPath: 'tags', newValues: [], replaceIndex: 1 });
 
       expect(mockEntryDraft.currentValues.en['tags.1']).toBe('tag2');
+    });
+  });
+
+  describe('moveListExpanderStates', () => {
+    const states = {
+      'authors#': false,
+      'authors-extra#': false,
+      'authors.name#': false,
+      'authors.0': false,
+      'authors.0#': false,
+      'authors.0.details#': false,
+      'authors.1': true,
+      'authors.1.books.0': false,
+      'authors.10': false,
+    };
+
+    it('should move the states of each item along with the item', () => {
+      expect(moveListExpanderStates(states, 'authors', [1, true, 0])).toEqual({
+        'authors#': false,
+        'authors-extra#': false,
+        'authors.name#': false,
+        'authors.0': true,
+        'authors.0.books.0': false,
+        'authors.1': true,
+        'authors.2': false,
+        'authors.2#': false,
+        'authors.2.details#': false,
+      });
+    });
+
+    it('should drop the states of a removed item', () => {
+      expect(moveListExpanderStates(states, 'authors', [false])).toEqual({
+        'authors#': false,
+        'authors-extra#': false,
+        'authors.name#': false,
+        'authors.0': false,
+      });
+    });
+
+    it('should leave the item without states as it is', () => {
+      expect(moveListExpanderStates({ 'tags#': true }, 'tags', [0, 1])).toEqual({
+        'tags#': true,
+      });
     });
   });
 });

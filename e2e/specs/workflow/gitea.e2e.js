@@ -730,3 +730,41 @@ test('warns before saving over a colleague’s commit to the workflow branch', a
     .poll(() => gitea.readFile('content/posts/first-post.md', 'cms/posts/first-post'))
     .toBe(post('First Post', 'Hello again from Mona!'));
 });
+
+test.describe('without a configured branch', () => {
+  test.use({
+    config: {
+      ...GITEA_WORKFLOW_CONFIG,
+      backend: {
+        name: GITEA_WORKFLOW_CONFIG.backend.name,
+        repo: GITEA_WORKFLOW_CONFIG.backend.repo,
+      },
+    },
+  });
+
+  test('lists an unpublished entry against the default branch', async ({ cms, gitea, page }) => {
+    openEntryPullRequest(gitea, {
+      slug: 'second-post',
+      files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+    });
+
+    // Hold the repository, which tells the default branch, back a little: the pull requests are
+    // otherwise listed after it anyway, because the page size is looked up first
+    await page.route(`${gitea.apiRoot}/repos/${gitea.owner}/${gitea.repo}`, async (route) => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1000);
+      });
+      await route.fallback();
+    });
+    await cms.open();
+
+    // The pull requests can only be told apart from someone else’s once the default branch is known
+    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      /Unpublished Entries/,
+      /Second Post.*Draft/,
+      /Published Entries/,
+      /First Post/,
+    ]);
+    await openEntry(page, 'Second Post');
+  });
+});

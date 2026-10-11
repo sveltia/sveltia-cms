@@ -1,5 +1,5 @@
 import { isMediaKind } from '$lib/services/assets/kinds';
-import { getEntriesByAssetURL } from '$lib/services/assets/references';
+import { getEntriesByAssets, getEntriesByAssetURL } from '$lib/services/assets/references';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { getSourceInfo } from '$lib/services/utils/media';
 
@@ -57,3 +57,19 @@ export const getExternalAssetDetails = (asset) => {
  */
 export const getExternalAssetUsedEntries = async ({ downloadURL }) =>
   getEntriesByAssetURL(downloadURL);
+
+/**
+ * Get the entries using any of the given assets on a cloud storage service, e.g. the files in a
+ * folder being renamed. Each entry is listed once, however many of the assets it uses.
+ * @param {ExternalAsset[]} assets Assets.
+ * @returns {Promise<Entry[]>} List of entries using any of the assets.
+ */
+export const getExternalAssetsUsedEntries = async (assets) => {
+  if (!assets.length) {
+    return [];
+  }
+
+  const results = await getEntriesByAssets(assets.map(({ downloadURL }) => ({ url: downloadURL })));
+
+  return [...new Set(results.flat())];
+};

@@ -421,6 +421,26 @@ describe('Test resetField() for restoring', () => {
     expect(draft.currentValues.en).toEqual({ 'venue.name': 'Hall', 'venue.city': 'Toronto' });
   });
 
+  test('should not take an `Object.prototype` member for a subfield default value', () => {
+    /** @type {Field} */
+    const fieldConfig = {
+      name: 'venue',
+      widget: 'object',
+      default: { name: 'Hall' },
+      fields: [
+        { name: 'name', widget: 'string' },
+        { name: 'toString', widget: 'string', default: 'Toronto' },
+      ],
+    };
+
+    const draft = createDraft({ en: { 'venue.name': 'Arena', 'venue.toString': 'Ottawa' } });
+
+    resetField({ draft, fieldConfig, keyPath: 'venue', locale: 'en', restore: true });
+
+    // `Object.prototype.toString` was taken for the default value
+    expect(draft.currentValues.en).toEqual({ 'venue.name': 'Hall', 'venue.toString': 'Toronto' });
+  });
+
   test('should tell whether the field holds anything but the default values', () => {
     /** @type {Field} */
     const fieldConfig = { name: 'tags', widget: 'list', default: ['a'] };

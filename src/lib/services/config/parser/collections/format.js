@@ -1,7 +1,18 @@
+import { customFileFormatRegistry } from '$lib/services/api/registries';
+import { addMessage } from '$lib/services/config/parser/utils/validator';
+import { isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { detectFileExtension, detectFileFormat } from '$lib/services/contents/file/config';
 import { EXTENSION_FORMAT_MAP, MARKDOWN_EXTENSIONS } from '$lib/services/contents/file/constants';
 
 /**
- * @import { Field, FileExtension, FileFormat } from '$lib/types/public';
+ * @import {
+ * BodyFieldOptions,
+ * Field,
+ * FileExtension,
+ * FileFormat,
+ * NumberField,
+ * } from '$lib/types/public';
+ * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
  */
 
 /**
@@ -30,8 +41,10 @@ export const isFormatMismatch = (extension, format, fields = []) => {
     return false;
   }
 
-  // Raw format never mismatches
-  if (format === 'raw') {
+  // Raw format never mismatches, and neither does a custom format registered with
+  // `CMS.registerCustomFormat()`, which can take any extension, including `md`. Custom formats are
+  // registered before the configuration is parsed
+  if (format === 'raw' || customFileFormatRegistry.has(format)) {
     return false;
   }
 
@@ -80,4 +93,62 @@ export const isFormatMismatch = (extension, format, fields = []) => {
 
   // Unknown format - don’t enforce mismatch
   return false;
+};
+
+/**
+ * Field types whose value is never text, so it can’t be stored as the body below the front matter.
+ */
+const NON_TEXT_FIELD_TYPES = ['boolean', 'keyvalue', 'list', 'number', 'object'];
+
+/**
+ * Check whether the given field holds something other than text: an object, an array, a number or
+ * a boolean.
+ * @param {Field} field Field configuration.
+ * @returns {boolean} Result.
+ */
+const isNonTextField = (field) => {
+  const { widget = 'string' } = field;
+
+  // A Number field with a `*/string` value type stores what the user typed as a string
+  if (widget === 'number') {
+    return !/\/string$/.test(/** @type {NumberField} */ (field).value_type ?? '');
+  }
+
+  return NON_TEXT_FIELD_TYPES.includes(widget) || isFieldMultiple(field);
+};
+
+/**
+ * Check that the field storing the body below the front matter, `body` by default, holds text. Only
+ * a string can be written there, so any other value would be lost on save.
+ * @param {object} args Arguments.
+ * @param {FileExtension} [args.extension] Developer-defined file extension.
+ * @param {FileFormat} [args.format] Developer-defined file format.
+ * @param {BodyFieldOptions} [args.bodyField] Developer-defined `body_field` option.
+ * @param {Field[]} [args.fields] Fields of the collection or collection file.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+export const checkBodyField = ({ extension, format, bodyField, fields, context, collectors }) => {
+  const { key = 'body', inline = false } = bodyField ?? {};
+  const field = Array.isArray(fields) ? fields.find(({ name }) => name === key) : undefined;
+
+  // The type of the options is checked against the JSON schema
+  if (inline || !field || typeof key !== 'string') {
+    return;
+  }
+
+  const _format = detectFileFormat({
+    extension: detectFileExtension({ extension, format }),
+    format,
+  });
+
+  if ((_format === 'frontmatter' || _format.endsWith('-frontmatter')) && isNonTextField(field)) {
+    addMessage({
+      strKey: 'front_matter_body_field_not_text',
+      // A field without the `widget` option is a String field, which holds text
+      values: { name: key, widget: /** @type {string} */ (field.widget) },
+      context: { ...context, typedKeyPath: key },
+      collectors,
+    });
+  }
 };

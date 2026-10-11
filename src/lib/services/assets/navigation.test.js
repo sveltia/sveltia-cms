@@ -328,7 +328,7 @@ describe('resolveAssetsRoute()', () => {
       expect(resolveAssetFolderPath).toHaveBeenCalledWith('-/all');
       expect(selectedAssetFolder.current).toBe(allFolder);
       expect(selectedSubfolderPath.current).toBe('');
-      expect(goto).toHaveBeenCalledWith('/assets/-/all');
+      expect(goto).toHaveBeenCalledWith('/assets/-/all', { replaceState: true });
     });
 
     test('redirects to the first external location without a folder', () => {
@@ -338,7 +338,7 @@ describe('resolveAssetsRoute()', () => {
       resolveAssetsRoute();
 
       expect(getCloudServicePath).toHaveBeenCalledWith(uploadcare);
-      expect(goto).toHaveBeenCalledWith('/assets/-/uploadcare');
+      expect(goto).toHaveBeenCalledWith('/assets/-/uploadcare', { replaceState: true });
     });
 
     test('redirects to the linked files when nothing else is configured', () => {
@@ -347,7 +347,7 @@ describe('resolveAssetsRoute()', () => {
       resolveAssetsRoute();
 
       expect(getCloudServicePath).toHaveBeenCalledWith(linkedFilesService);
-      expect(goto).toHaveBeenCalledWith('/assets/-/linked');
+      expect(goto).toHaveBeenCalledWith('/assets/-/linked', { replaceState: true });
     });
   });
 
@@ -514,6 +514,28 @@ describe('resolveAssetsRoute()', () => {
       expect(selectedAssetFolder.current).toBeUndefined();
       expect(selectedSubfolderPath.current).toBe('');
       expect(overlaidAsset.current).toBe(asset);
+    });
+
+    test('shows the details of an asset without a file extension', () => {
+      const license = /** @type {any} */ ({ name: 'LICENSE', path: 'static/posts/LICENSE' });
+
+      visit('/assets/static/posts/LICENSE');
+      allAssets.current = [asset, license];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({ folder: postsFolder, subfolderPath: '' });
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('static/posts', undefined);
+      expect(overlaidAsset.current).toBe(license);
+      expect(showAssetOverlay.current).toBe(true);
+    });
+
+    test('leaves a path without a parent folder to the folder lookup', () => {
+      visit('/assets/LICENSE');
+      allAssets.current = [/** @type {any} */ ({ name: 'LICENSE', path: 'LICENSE' })];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue(undefined);
+
+      expect(resolveAssetsRoute()).toEqual({ ...initial, notFound: true });
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('LICENSE', undefined);
     });
 
     test('reports a missing file', () => {

@@ -28,6 +28,30 @@ vi.mock('$lib/services/backends', () => ({
   },
 }));
 
+// The real implementation caches its formatter for the browser’s time zone, which a test changing
+// `process.env.TZ` would otherwise keep reading the first zone from
+vi.mock('@sveltia/utils/datetime', () => ({
+  getDateTimeParts: vi.fn(({ date = new Date(), timeZone = undefined } = {}) => {
+    /** @type {Intl.DateTimeFormatOptions} */
+    const options = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'longOffset',
+    };
+
+    return Object.fromEntries(
+      new Intl.DateTimeFormat('en-US', { ...options, hourCycle: 'h23', timeZone })
+        .formatToParts(date)
+        .filter(({ type }) => type in options)
+        .map(({ type, value }) => [type, value]),
+    );
+  }),
+}));
+
 describe('Test getEntryPreviewURL()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -1263,6 +1287,91 @@ describe('Test extractDateTime()', () => {
         second: '00',
       }),
     );
+  });
+});
+
+describe('Test extractDateTime() in different time zones', () => {
+  /**
+   * Run a function in each of the given browser time zones.
+   * @param {(timeZone: string) => void} fn Function.
+   */
+  const inTimeZones = (fn) => {
+    const { TZ } = process.env;
+
+    ['UTC', 'America/New_York', 'Asia/Tokyo', 'Etc/GMT+12', 'Pacific/Kiritimati'].forEach(
+      (timeZone) => {
+        process.env.TZ = timeZone;
+
+        try {
+          fn(timeZone);
+        } finally {
+          process.env.TZ = TZ;
+        }
+      },
+    );
+  };
+
+  /**
+   * Get the date part of the parts extracted from the given field value.
+   * @param {Record<string, any>} options Field options.
+   * @param {string} value Field value.
+   * @returns {string | undefined} `YYYY-MM-DD`.
+   */
+  const getDatePart = (options, value) => {
+    const parts = extractDateTime({
+      fields: [{ name: 'date', widget: 'datetime', ...options }],
+      content: { date: value },
+    });
+
+    return parts ? `${parts.year}-${parts.month}-${parts.day}` : undefined;
+  };
+
+  test('keeps the date of a date-only field', () => {
+    inTimeZones(() => {
+      expect(getDatePart({ time_format: false }, '2026-01-15')).toBe('2026-01-15');
+      expect(getDatePart({ time_format: false, format: 'YYYY-MM-DD' }, '2026-01-15')).toBe(
+        '2026-01-15',
+      );
+      expect(getDatePart({ time_format: false, format: 'DD/MM/YYYY' }, '15/01/2026')).toBe(
+        '2026-01-15',
+      );
+      expect(
+        getDatePart({ time_format: false, format: 'YYYY-MM-DD', output_utc: true }, '2026-01-15'),
+      ).toBe('2026-01-15');
+      expect(
+        getDatePart({ time_format: false, input_timezone: 'America/New_York' }, '2026-01-15'),
+      ).toBe('2026-01-15');
+      expect(
+        getDatePart(
+          { time_format: false, format: 'YYYY-MM-DD', input_timezone: 'Asia/Tokyo' },
+          '2026-01-15',
+        ),
+      ).toBe('2026-01-15');
+    });
+  });
+
+  test('reads a date/time in the custom input time zone', () => {
+    inTimeZones(() => {
+      expect(getDatePart({ input_timezone: 'Asia/Tokyo' }, '2026-01-15T08:00:00+09:00')).toBe(
+        '2026-01-15',
+      );
+      expect(getDatePart({ input_timezone: 'Asia/Tokyo' }, '2026-01-15T08:00:00')).toBe(
+        '2026-01-15',
+      );
+      expect(
+        getDatePart(
+          { input_timezone: 'Asia/Tokyo', format: 'YYYY-MM-DD HH:mm' },
+          '2026-01-15 08:00',
+        ),
+      ).toBe('2026-01-15');
+      expect(getDatePart({ input_timezone: 'America/New_York' }, '2026-01-15T22:00:00-05:00')).toBe(
+        '2026-01-15',
+      );
+      // A value stored in UTC is read in UTC
+      expect(
+        getDatePart({ input_timezone: 'Asia/Tokyo', output_utc: true }, '2026-01-14T23:00:00Z'),
+      ).toBe('2026-01-14');
+    });
   });
 });
 

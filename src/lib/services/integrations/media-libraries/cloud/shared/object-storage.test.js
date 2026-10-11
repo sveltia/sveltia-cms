@@ -8,6 +8,7 @@ import {
   deleteObjects,
   fetchListing,
   getRenamedPath,
+  listFolderObjects,
   listObjects,
   replaceObject,
   searchObjects,
@@ -86,6 +87,7 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
           { key: 'uploads/2024/beach.png' },
         ],
         folders: ['2024', '2024/summer'],
+        truncated: false,
       });
       expect(provider.listPage).toHaveBeenNthCalledWith(1, {
         config,
@@ -106,7 +108,27 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
       const result = await fetchListing(provider, config, options, { maxPages: 1 });
 
       expect(result.files).toHaveLength(2);
+      // The objects on the next page are left out, which the caller is told about
+      expect(result.truncated).toBe(true);
       expect(provider.listPage).toHaveBeenCalledTimes(1);
+    });
+
+    it('should list the objects below the given folder', async () => {
+      pages = [[{ key: 'uploads/2024/' }, { key: 'uploads/2024/beach.png' }]];
+
+      const result = await fetchListing(provider, config, options, { dirPath: '2024' });
+
+      expect(result).toEqual({
+        files: [{ key: 'uploads/2024/beach.png' }],
+        folders: ['2024'],
+        truncated: false,
+      });
+      expect(provider.listPage).toHaveBeenCalledWith({
+        config,
+        credential: 'secret',
+        prefix: 'uploads/2024/',
+        cursor: undefined,
+      });
     });
 
     it('should reject when the credential is missing', async () => {
@@ -145,6 +167,45 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
 
       expect(assets).toHaveLength(2);
       expect(folders).toEqual(['2024', '2024/summer']);
+    });
+
+    it('should tell whether the listing was cut short', async () => {
+      expect((await browseObjects(provider, config, options)).truncated).toBe(false);
+
+      // 11 pages are more than the 10 listed at once
+      pages = Array.from({ length: 11 }, (_, index) => [{ key: `uploads/${index}.jpg` }]);
+
+      const { assets, truncated } = await browseObjects(provider, config, options);
+
+      expect(assets).toHaveLength(10);
+      expect(truncated).toBe(true);
+    });
+  });
+
+  describe('listFolderObjects', () => {
+    it('should list every file and folder below the folder, past the page limit', async () => {
+      // 12 pages are more than the 10 the asset list fetches, yet every one is listed
+      pages = [
+        [{ key: 'uploads/2024/' }, { key: 'uploads/2024/notes.txt' }],
+        ...Array.from({ length: 10 }, (_, index) => [{ key: `uploads/2024/${index}.jpg` }]),
+        [{ key: 'uploads/2024/summer/' }, { key: 'uploads/2024/summer/beach.png' }],
+      ];
+
+      // The kind filter is ignored, as a folder operation acts on every file
+      const { assets, folders } = await listFolderObjects(provider, '2024', config, {
+        ...options,
+        kind: 'image',
+      });
+
+      expect(assets).toHaveLength(12);
+      expect(assets.map(({ id }) => id)).toContain('uploads/2024/notes.txt');
+      expect(assets.at(-1)?.id).toBe('uploads/2024/summer/beach.png');
+      expect(folders).toEqual(['2024', '2024/summer']);
+      expect(provider.listPage).toHaveBeenCalledTimes(12);
+      expect(provider.listPage).toHaveBeenCalledWith(
+        expect.objectContaining({ prefix: 'uploads/2024/' }),
+      );
+      expect(provider.parseResults).toHaveBeenCalledWith(expect.any(Array), config, 'secret');
     });
   });
 
@@ -295,6 +356,10 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
         'uploads/2024/beach.png',
       ]);
       expect((await operations.browse(config, options)).folders).toEqual(['2024', '2024/summer']);
+      expect((await operations.listFolder('2024', config, options)).folders).toEqual([
+        '2024',
+        '2024/summer',
+      ]);
       expect((await operations.search('beach', config, options)).map(({ id }) => id)).toEqual([
         'uploads/2024/beach.png',
       ]);

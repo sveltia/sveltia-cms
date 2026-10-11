@@ -11,11 +11,15 @@
     showNewSubfolderDialog,
   } from '$lib/services/assets/view';
 
-  /** Names already taken in the directory, by a subfolder or a file. */
+  /**
+   * Names already taken in the directory, by a subfolder, a file or a folder leading to another
+   * asset folder nested in it.
+   */
   const takenNames = $derived(
     getTakenNames({
       subfolders: listedSubfolders.current,
       fileNames: listedAssets.current.map(({ name }) => name),
+      dirPath: browsedDirPath.current,
     }),
   );
 </script>

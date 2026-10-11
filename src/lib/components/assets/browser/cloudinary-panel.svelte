@@ -62,6 +62,8 @@
    * Send configuration message to the Cloudinary Media Library iframe.
    */
   const sendMessage = () => {
+    const { folder } = libOptions.config;
+
     const config = {
       ...Object.fromEntries(
         Object.entries(libOptions.config).filter(([k]) => CONFIG_PROPS.includes(k)),
@@ -69,8 +71,11 @@
       multiple,
       max_files: fieldConfig?.max ?? libOptions.config.max_files ?? 20,
       folder: {
-        path: libOptions.config.folder?.path ?? '',
-        resource_type: kind ?? 'raw',
+        path: folder?.path ?? '',
+        // The resource type filters the view. The configured one wins; otherwise an Image field
+        // shows images only, while a File field shows every type, as a PDF file is an image and a
+        // video file a video on Cloudinary. An `undefined` type is left out of the message
+        resource_type: folder?.resource_type ?? kind,
       },
     };
 
@@ -87,8 +92,8 @@
 
   /**
    * Handle asset insertion from the Cloudinary Media Library.
-   * @param {{ assets: { secure_url: string; derived?: { secure_url: string }[] }[] }} assets The
-   * inserted assets data.
+   * @param {{ assets: { public_id: string; format?: string; secure_url: string; derived?: {
+   * secure_url: string }[] }[] }} assets The inserted assets data.
    */
   const onInsert = ({ assets }) => {
     const {
@@ -101,7 +106,11 @@
       const url = asset.secure_url;
 
       if (outputFilenameOnly) {
-        return { url: /** @type {string} */ (url.split('/').pop()) };
+        // Like Decap CMS, output the public ID, which includes the folder, with the format as the
+        // extension. A raw file has no format, as its public ID ends with the extension already
+        const { public_id: publicId, format } = asset;
+
+        return { url: format ? `${publicId}.${format}` : publicId };
       }
 
       if (useTransformations) {

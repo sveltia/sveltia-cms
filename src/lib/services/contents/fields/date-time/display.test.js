@@ -242,4 +242,30 @@ describe('getDateTimeFieldDisplayValue', () => {
     // When dayjs parsing fails in the try block, it falls to regular date parsing
     expect(typeof result).toBe('string');
   });
+
+  test('shows the stored date of a date-only field with a custom input time zone', () => {
+    const { TZ } = process.env;
+
+    ['UTC', 'America/New_York', 'Asia/Tokyo', 'Etc/GMT+12'].forEach((browserTimeZone) => {
+      process.env.TZ = browserTimeZone;
+
+      try {
+        ['America/New_York', 'Etc/GMT+12', 'Asia/Tokyo'].forEach((inputTimeZone) => {
+          expect(
+            getDateTimeFieldDisplayValue({
+              locale: 'en',
+              fieldConfig: {
+                ...baseFieldConfig,
+                time_format: false,
+                input_timezone: inputTimeZone,
+              },
+              currentValue: '2026-01-15',
+            }),
+          ).toBe('01/15/2026');
+        });
+      } finally {
+        process.env.TZ = TZ;
+      }
+    });
+  });
 });

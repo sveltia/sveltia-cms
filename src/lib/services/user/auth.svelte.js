@@ -269,8 +269,12 @@ export const copyMagicLinkPrefs = (copiedPrefs) => {
  * @param {BackendService} _backend Backend.
  */
 const loadRepositoryData = async (_backend) => {
-  // The pull requests don’t depend on the files, so they’re requested at the same time
-  const pullRequests = startLoadingPullRequests();
+  // The pull requests don’t depend on the files, so they’re requested at the same time. That needs
+  // the branch they target, though: without one configured, the default branch is only known once
+  // the files are being fetched, and every pull request would be dropped as targeting another
+  // branch. They’re then requested once the files are there
+  const branchKnown = !_backend.repository || !!_backend.repository.branch;
+  const pullRequests = branchKnown ? startLoadingPullRequests() : undefined;
 
   await _backend.fetchFiles();
   await loadUnpublishedEntries(pullRequests);

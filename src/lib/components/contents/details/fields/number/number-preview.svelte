@@ -5,6 +5,7 @@
   @see https://sveltiacms.app/en/docs/fields/number
 -->
 <script>
+  import { getNumberFormatter } from '$lib/services/contents/fields/number/helpers';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
 
   /**
@@ -27,11 +28,16 @@
   } = $props();
 
   const canonicalLocale = $derived(getCanonicalLocale(locale));
-  const numberFormatter = $derived(Intl.NumberFormat(canonicalLocale));
+  const number = $derived(Number(currentValue));
+  // Text that isn’t a number, which the editor stores so it can be reported as invalid, is shown as
+  // is rather than as `NaN`
+  const displayValue = $derived(
+    Number.isNaN(number) ? currentValue : getNumberFormatter(canonicalLocale).format(number),
+  );
 </script>
 
 {#if currentValue !== undefined && currentValue !== null && currentValue !== ''}
   <p lang={canonicalLocale} dir={getDirection(locale)}>
-    {numberFormatter.format(Number(currentValue))}
+    {displayValue}
   </p>
 {/if}

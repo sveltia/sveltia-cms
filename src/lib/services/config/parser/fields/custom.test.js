@@ -41,6 +41,16 @@ describe('config/parser/fields/custom', () => {
     expect([...collectors.mediaFields]).toEqual([{ fieldConfig: config, context }]);
   });
 
+  it('checks the template tags in the field’s folder options', () => {
+    const collectors = createCollectors();
+    /** @type {any} */
+    const config = { name: 'photo', widget: 'derived-image', media_folder: '/static/{{title}}' };
+
+    parseCustomFieldConfig({ config, context, collectors });
+
+    expect(collectors.errors.size).toBe(1);
+  });
+
   it('collects nothing when the field has no media folder', () => {
     const collectors = createCollectors();
     /** @type {any} */

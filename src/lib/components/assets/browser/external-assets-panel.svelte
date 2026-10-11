@@ -5,7 +5,7 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, EmptyState, InfiniteScroll, Toast } from '@sveltia/ui';
+  import { Alert, EmptyState, InfiniteScroll, Infobar, Toast } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { onMount } from 'svelte';
 
@@ -121,6 +121,11 @@
    * prefix. Empty at the root.
    */
   let dirPath = $state('');
+  /**
+   * Whether the listing stopped short of the end, as the service holds more files than are listed
+   * at once, so some files are left out.
+   */
+  let truncated = $state(false);
   let newFolderDialogOpen = $state(false);
   let folderCreationFailed = $state(false);
   /** @type {string | undefined} */
@@ -179,18 +184,24 @@
 
     listedAssets = null;
     error = undefined;
+    truncated = false;
 
     try {
       /** @type {ExternalAsset[]} */
       let assets;
       /** @type {string[] | undefined} */
       let emptyFolders;
+      let incomplete = false;
 
       if (query) {
         assets = await /** @type {NonNullable<typeof search>} */ (search)(query, listFetchOptions);
       } else if (browse) {
         // A service with folder support lists its empty folders along with the files
-        ({ assets, folders: emptyFolders } = await browse(listFetchOptions));
+        ({
+          assets,
+          folders: emptyFolders,
+          truncated: incomplete = false,
+        } = await browse(listFetchOptions));
       } else {
         assets = (await list?.(listFetchOptions)) ?? [];
       }
@@ -200,6 +211,7 @@
       }
 
       listedAssets = assets;
+      truncated = incomplete;
 
       if (emptyFolders) {
         folders = emptyFolders;
@@ -462,6 +474,16 @@
     </EmptyState>
   {:else}
     {@render breadcrumb()}
+    {#if truncated}
+      <Infobar
+        status="warning"
+        dismissible={false}
+        --sui-infobar-border-width="0 0 1px"
+        --sui-infobar-message-justify-content="center"
+      >
+        {_('external_assets_truncated')}
+      </Infobar>
+    {/if}
     <div role="none" class="grid-wrapper">
       {#if subfolders.length}
         <SubfolderStrip

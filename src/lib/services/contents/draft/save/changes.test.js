@@ -11,6 +11,7 @@ import {
   getArrayItemTarget,
   planMultiFileChange,
   planSingleFileChange,
+  preparePendingEntryCommit,
   removeDisabledLocales,
 } from './changes';
 import { buildEntryFileChanges } from './file-changes';
@@ -27,6 +28,9 @@ vi.mock('$lib/services/backends', () => ({
 }));
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
+}));
+vi.mock('$lib/services/contents/collection', () => ({
+  getCollection: vi.fn(),
 }));
 vi.mock('$lib/services/contents/draft/save/assets');
 vi.mock('$lib/services/contents/draft/save/entry-path');
@@ -137,6 +141,94 @@ describe('draft/save/changes', () => {
       expect(result.savingEntry.slug).toBe('test-post');
       expect(result.changes).toHaveLength(1);
       expect(result.changes[0].action).toBe('create');
+    });
+
+    it('should leave the internal list item properties out of the saving entry', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { callEventHooks } = await import('$lib/services/api/events');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        id: 'test-uuid',
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: false,
+            allLocales: ['en'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: {
+          en: {
+            title: 'Test',
+            'items.0.name': 'A',
+            'items.0.__sc_item_id': 'id-1',
+            'items.0.__sc_item_original_key_path': 'items.0',
+          },
+        },
+        files: {},
+      };
+
+      const slugs = { defaultLocaleSlug: 'test-post', canonicalSlug: undefined };
+      const { savingEntry } = await createSavingEntryData({ draft, slugs });
+      const expected = { title: 'Test', 'items.0.name': 'A' };
+
+      expect(savingEntry.locales.en.content).toEqual(expected);
+      expect(vi.mocked(callEventHooks).mock.calls[0][0].entry.locales.en.content).toEqual(expected);
+      // The draft keeps them
+      expect(draft.currentValues.en['items.0.__sc_item_id']).toBe('id-1');
+    });
+
+    it('should not call the preSave event hooks with `runPreSave: false`', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { callEventHooks } = await import('$lib/services/api/events');
+
+      vi.mocked(createEntryPath).mockReturnValue('tags/svelte.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Svelte' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        id: 'test-uuid',
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          _file: { fullPathRegEx: null },
+          _i18n: {
+            i18nEnabled: false,
+            allLocales: ['_default'],
+            defaultLocale: '_default',
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'tags',
+        isIndexFile: false,
+        currentLocales: { _default: true },
+        currentValues: { _default: { title: 'Svelte' } },
+        files: {},
+      };
+
+      const slugs = { defaultLocaleSlug: 'svelte', canonicalSlug: undefined };
+      const result = await createSavingEntryData({ draft, slugs, runPreSave: false });
+
+      expect(result.changes).toHaveLength(1);
+      expect(callEventHooks).not.toHaveBeenCalled();
     });
 
     it('should save an entry without a file in the default locale', async () => {
@@ -2998,6 +3090,143 @@ describe('draft/save/changes', () => {
       // Only 'en' produces a file change
       expect(result.savingEntry).toBeDefined();
       expect(result.changes).toHaveLength(1);
+    });
+  });
+
+  describe('preparePendingEntryCommit', () => {
+    /**
+     * Create a collection.
+     * @param {boolean} [multiFile] Whether the entries are stored in a file per locale.
+     * @returns {any} Collection.
+     */
+    const createCollection = (multiFile = false) => ({
+      name: 'tags',
+      _type: 'entry',
+      fields: [{ name: 'title' }],
+      _file: { format: 'yaml-frontmatter', extension: 'md' },
+      _i18n: {
+        i18nEnabled: multiFile,
+        allLocales: multiFile ? ['en', 'fr'] : ['_default'],
+        defaultLocale: multiFile ? 'en' : '_default',
+        structureMap: { i18nSingleFile: false },
+      },
+    });
+
+    /**
+     * Create a pending entry.
+     * @param {Record<string, any>} locales Localized entries.
+     * @returns {any} Pending entry.
+     */
+    const createPendingEntry = (locales) => ({
+      collectionName: 'tags',
+      entry: { id: 'id-svelte', slug: 'svelte', subPath: 'svelte', locales },
+      changes: [
+        { action: 'create', path: 'uploads/logo.png', data: 'blob' },
+        ...Object.values(locales).map(({ path }) => ({ action: 'create', path, data: 'old' })),
+      ],
+      savingAssets: [{ path: 'uploads/logo.png' }],
+      values: ['svelte'],
+    });
+
+    it('should call the preSave event hooks and keep an entry no hook has updated', async () => {
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const { callEventHooks } = await import('$lib/services/api/events');
+      const collection = createCollection();
+
+      vi.mocked(getCollection).mockReturnValue(collection);
+
+      const pendingEntry = createPendingEntry({
+        _default: { slug: 'svelte', path: 'tags/svelte.md', content: { title: 'Svelte' } },
+      });
+
+      expect(await preparePendingEntryCommit(pendingEntry)).toBe(pendingEntry);
+      expect(callEventHooks).toHaveBeenCalledWith({
+        type: 'preSave',
+        entry: pendingEntry.entry,
+        collection,
+        isNew: true,
+      });
+    });
+
+    it.each([
+      [
+        'single file',
+        false,
+        { _default: { slug: 'svelte', path: 'tags/svelte.md', content: { title: 'Svelte' } } },
+        ['tags/svelte.md'],
+      ],
+      [
+        'file per locale',
+        true,
+        {
+          en: { slug: 'svelte', path: 'tags/svelte.en.md', content: { title: 'Svelte' } },
+          fr: { slug: 'svelte', path: 'tags/svelte.fr.md', content: { title: 'Svelte' } },
+        },
+        ['tags/svelte.en.md', 'tags/svelte.fr.md'],
+      ],
+    ])(
+      'should rebuild the file changes of an entry a hook has updated (%s)',
+      async (_label, multiFile, locales, paths) => {
+        const { getCollection } = await import('$lib/services/contents/collection');
+        const { callEventHooks } = await import('$lib/services/api/events');
+        const { serializeContent } = await import('./serialize');
+        const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+        vi.mocked(getCollection).mockReturnValue(createCollection(multiFile));
+        vi.mocked(serializeContent).mockImplementation(({ valueMap }) => valueMap);
+        vi.mocked(formatEntryFile).mockImplementation(async ({ content }) => content.title);
+        vi.mocked(callEventHooks).mockImplementation(async ({ entry }) => {
+          Object.values(entry.locales).forEach((localizedEntry) => {
+            localizedEntry.content = { title: 'Svelte 5' };
+          });
+        });
+
+        const pendingEntry = createPendingEntry(locales);
+        const result = await preparePendingEntryCommit(pendingEntry);
+
+        expect(Object.values(result.entry.locales).map(({ content }) => content)).toEqual(
+          paths.map(() => ({ title: 'Svelte 5' })),
+        );
+        expect(result.changes).toEqual([
+          { action: 'create', path: 'uploads/logo.png', data: 'blob' },
+          ...paths.map((path) => ({
+            action: 'create',
+            slug: 'svelte',
+            path,
+            previousSha: undefined,
+            data: 'Svelte 5',
+          })),
+        ]);
+        expect(result.savingAssets).toBe(pendingEntry.savingAssets);
+        // The pending entry is left as is, so a retry starts over from it
+        expect(pendingEntry.entry.locales).toEqual(locales);
+        expect(pendingEntry.changes).toHaveLength(paths.length + 1);
+      },
+    );
+
+    it('should skip a locale the entry has no file in', async () => {
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const { callEventHooks } = await import('$lib/services/api/events');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(getCollection).mockReturnValue(createCollection(true));
+      vi.mocked(serializeContent).mockImplementation(({ valueMap }) => valueMap);
+      vi.mocked(formatEntryFile).mockImplementation(async ({ content }) => content.title);
+      vi.mocked(callEventHooks).mockImplementation(async ({ entry }) => {
+        entry.locales.en.content = { title: 'Svelte 5' };
+      });
+
+      const result = await preparePendingEntryCommit(
+        createPendingEntry({
+          en: { slug: 'svelte', path: 'tags/svelte.en.md', content: { title: 'Svelte' } },
+        }),
+      );
+
+      expect(result.changes.map(({ path }) => path)).toEqual([
+        'uploads/logo.png',
+        'tags/svelte.en.md',
+      ]);
     });
   });
 });

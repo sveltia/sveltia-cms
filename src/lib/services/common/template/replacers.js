@@ -133,8 +133,11 @@ export const replaceTemplateTag = (tag, context) => {
     }
   }
 
-  // Handle field values
-  return content[stripFieldTagPrefix(tag)];
+  const keyPath = stripFieldTagPrefix(tag);
+
+  // Handle field values. A field named after an `Object.prototype` member, e.g. `constructor`,
+  // mustn’t resolve to that member when the content lacks the field
+  return Object.hasOwn(content, keyPath) ? content[keyPath] : undefined;
 };
 
 /**

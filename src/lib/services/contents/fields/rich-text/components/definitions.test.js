@@ -19,11 +19,6 @@ vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((key) => key),
 }));
 
-vi.mock('./utils.js', () => ({
-  encodeQuotes: vi.fn((str) => str.replace(/"/g, '&quot;')),
-  replaceQuotes: vi.fn((str) => str.replace(/"/g, "'")),
-}));
-
 vi.mock('$lib/services/contents/fields/rich-text/constants', () => ({
   IMAGE_OR_LINKED_IMAGE_REGEX: /!\[([^\]]*)\]\(([^)]+)\)/g,
   IMAGE_REGEX: /!\[([^\]]*)\]\(([^)]+)\)/,
@@ -136,6 +131,40 @@ describe('definitions', () => {
       });
     });
 
+    describe('fromBlock method', () => {
+      it('should unescape the title', () => {
+        const match = { groups: { src: '/a.png', alt: 'A', title: 'T \\"q\\" C:\\d' } };
+
+        expect(IMAGE_COMPONENT.fromBlock(match)).toEqual({
+          src: '/a.png',
+          alt: 'A',
+          title: 'T "q" C:\\d',
+        });
+      });
+
+      it('should handle a missing title or missing groups', () => {
+        expect(IMAGE_COMPONENT.fromBlock({ groups: { src: '/a.png', alt: '' } })).toEqual({
+          src: '/a.png',
+          alt: '',
+          title: undefined,
+        });
+        expect(IMAGE_COMPONENT.fromBlock({ groups: undefined })).toEqual({
+          src: undefined,
+          alt: undefined,
+          title: undefined,
+        });
+      });
+
+      it('should keep a title with quotes across a round trip', () => {
+        const title = 'T "q" and \\" and end\\';
+        const markdown = '![A](/a.png "T \\"q\\" and \\\\\\" and end\\\\")';
+        const groups = { src: '/a.png', alt: 'A', title: markdown.slice(13, -2) };
+
+        expect(IMAGE_COMPONENT.toBlock({ src: '/a.png', alt: 'A', title })).toBe(markdown);
+        expect(IMAGE_COMPONENT.fromBlock({ groups }).title).toBe(title);
+      });
+    });
+
     describe('toPreview method', () => {
       it('should generate HTML for image with all properties', () => {
         const props = {
@@ -243,6 +272,14 @@ describe('definitions', () => {
       });
     });
 
+    describe('toBlock method with quotes', () => {
+      it('should escape the double quotes in the title', () => {
+        const props = { src: '/a.png', alt: 'A', title: 'T "q"', link: '/b' };
+
+        expect(LINKED_IMAGE_COMPONENT.toBlock(props)).toBe('[![A](/a.png "T \\"q\\"")](/b)');
+      });
+    });
+
     describe('toPreview method', () => {
       it('should generate HTML for linked image', () => {
         const props = {
@@ -293,6 +330,12 @@ describe('definitions', () => {
           title: 'Test title',
           link: 'https://example.com',
         });
+      });
+
+      it('should unescape the title', () => {
+        const match = { groups: { src2: '/a.png', alt2: 'A', title2: 'T \\"q\\"', link: '/b' } };
+
+        expect(LINKED_IMAGE_COMPONENT.fromBlock(match).title).toBe('T "q"');
       });
 
       it('should handle missing groups', () => {

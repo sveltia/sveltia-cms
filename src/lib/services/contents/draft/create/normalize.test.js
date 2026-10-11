@@ -26,6 +26,17 @@ describe('contents/draft/create/normalize', () => {
       });
     });
 
+    it('should fill in a missing field named after an `Object.prototype` member', () => {
+      const fields = [
+        { name: 'constructor', widget: 'string', default: 'Ada' },
+        { name: 'toString', widget: 'string' },
+        { name: 'valueOf', widget: 'object', fields: [{ name: 'a', widget: 'string' }] },
+      ];
+
+      // The inherited members were taken as the field values and stringified
+      expect(normalize(fields, {})).toEqual({ constructor: 'Ada', toString: '', 'valueOf.a': '' });
+    });
+
     it('should not overwrite an empty string with a default value', () => {
       const fields = [{ name: 'title', widget: 'string', default: 'Untitled' }];
 

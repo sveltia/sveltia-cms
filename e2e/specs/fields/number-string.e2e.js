@@ -51,3 +51,31 @@ test('saves an entry whose optional number field is left empty', async ({ cms, p
     .poll(async () => (await cms.readRepo())['content/reports/summit.yml'])
     .toBe("title: Summit\nlow: ''\n");
 });
+
+test('reports text that isn’t a number instead of saving the field empty', async ({
+  cms,
+  page,
+}) => {
+  await cms.open();
+  await cms.signIn();
+  await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+
+  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const field = editor.getByRole('group', { name: /Low Temperature/ });
+  const input = editor.getByRole('spinbutton', { name: 'Low Temperature' });
+
+  await editor.getByRole('textbox', { name: 'Title' }).fill('Summit');
+  // A decimal comma doesn’t parse as a number in an English locale
+  await input.pressSequentially('-1,5');
+  await editor.getByRole('button', { name: 'Save' }).click();
+  await expect(field.getByRole('alert')).toContainText('Please enter a number.');
+  await expect(input).toHaveValue('-1,5');
+
+  // The error goes once the field holds a number, which is then saved
+  await input.fill('-15');
+  await expect(field.getByRole('alert')).toHaveCount(0);
+  await editor.getByRole('button', { name: 'Save' }).click();
+  await expect
+    .poll(async () => (await cms.readRepo())['content/reports/summit.yml'])
+    .toBe("title: Summit\nlow: '-15'\n");
+});

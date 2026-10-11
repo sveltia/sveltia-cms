@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { goBack, goto, parseLocation } from '$lib/services/app/navigation';
 import { searchMode, searchTerms } from '$lib/services/search';
 
-import { updateSearchTerms } from './input';
+import { resetSearchAfterLeaving, updateSearchTerms } from './input';
 
 vi.mock('$lib/services/app/navigation', () => ({
   goBack: vi.fn(),
@@ -82,5 +82,68 @@ describe('updateSearchTerms', () => {
     expect(searchTerms.current).toBe('');
     expect(goBack).not.toHaveBeenCalled();
     expect(goto).not.toHaveBeenCalled();
+  });
+});
+
+describe('resetSearchAfterLeaving', () => {
+  /**
+   * Show the given page, as if it had been reached from the given one.
+   * @param {string} path Path of the page.
+   * @param {string} [fromPath] Path of the previous page, if any.
+   */
+  const visit = (path, fromPath) => {
+    vi.mocked(parseLocation).mockImplementation((href) => ({
+      path: href ? new URL(href).hash.slice(1) : path,
+      params: {},
+    }));
+    vi.stubGlobal('window', {
+      history: { state: fromPath ? { from: `https://example.com/#${fromPath}` } : null },
+    });
+  };
+
+  beforeEach(() => {
+    searchMode.current = 'contents';
+    searchTerms.current = '';
+    type('/search/x', 'x');
+    type('/search/x', '');
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test('clears the search once the results have been left, e.g. with the Back button', () => {
+    type('/collections/posts', 'hello');
+    expect(searchTerms.current).toBe('hello');
+
+    visit('/search/hello', '/collections/posts');
+    resetSearchAfterLeaving();
+    expect(searchTerms.current).toBe('hello');
+
+    visit('/collections/posts');
+    resetSearchAfterLeaving();
+    expect(searchTerms.current).toBe('');
+
+    // The page the search has started from is forgotten as well
+    searchTerms.current = 'hello';
+    type('/search/hello', '');
+    expect(goBack).toHaveBeenCalledWith('/collections');
+  });
+
+  test('keeps the search while a result opened from the results is shown', () => {
+    searchTerms.current = 'hello';
+    visit('/collections/posts/entries/hello', '/search/hello');
+    resetSearchAfterLeaving();
+    expect(searchTerms.current).toBe('hello');
+
+    // But not an entry opened from elsewhere
+    visit('/collections/posts/entries/hello', '/collections/posts');
+    resetSearchAfterLeaving();
+    expect(searchTerms.current).toBe('');
+
+    // Nothing to clear the next time
+    resetSearchAfterLeaving();
+    expect(searchTerms.current).toBe('');
   });
 });

@@ -127,6 +127,39 @@ describe('EntryPreview', () => {
     await expect.poll(() => getBody()?.querySelector('article')?.textContent).toContain('World');
   });
 
+  test('renders a custom preview template calling `widgetFor()` with an unknown field', async () => {
+    /**
+     * A template asking for a field that isn’t configured, which gets `null` as in Netlify/Decap
+     * CMS, rather than the whole preview failing.
+     * @param {any} props Props.
+     * @returns {any} React element.
+     */
+    const Template = ({ entry, widgetFor }) =>
+      createElement(
+        'article',
+        null,
+        createElement('h1', null, entry.getIn(['data', 'title'])),
+        createElement('p', null, String(widgetFor('missing'))),
+        widgetFor('body'),
+      );
+
+    customPreviewTemplateRegistry.set('posts', Template);
+
+    const { container } = await renderPreview();
+
+    /**
+     * Get the body of the frame, which appears once the Immutable library is loaded.
+     * @returns {HTMLElement | undefined} Body.
+     */
+    const getBody = () =>
+      /** @type {HTMLIFrameElement | null} */ (container.querySelector('iframe.preview'))
+        ?.contentDocument?.body;
+
+    await expect.poll(() => getBody()?.querySelector('h1')?.textContent).toBe('Hello');
+    await expect.poll(() => getBody()?.querySelector('p')?.textContent).toBe('null');
+    await expect.poll(() => getBody()?.querySelector('article')?.textContent).toContain('World');
+  });
+
   test('renders nothing without a draft', async () => {
     const { container } = await renderWithDraft(EntryPreview, {
       draft: null,

@@ -121,4 +121,26 @@ describe('SubfolderNameDialog', () => {
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledExactlyOnceWith('2025'));
     await expect.poll(() => props.open).toBe(false);
   });
+
+  test('shows a warning without keeping the name from being submitted', async () => {
+    const onSubmit = vi.fn();
+
+    await render(SubfolderNameDialog, {
+      open: true,
+      title: 'Rename',
+      okLabel: 'Rename',
+      description: 'Pick a name.',
+      warning: 'Links will break.',
+      name: '2024',
+      takenNames: [],
+      onSubmit,
+    });
+
+    const dialog = page.getByRole('dialog', { name: 'Rename' });
+
+    await expect.element(dialog.getByRole('alert')).toHaveTextContent('Links will break.');
+    await dialog.getByRole('textbox').fill('2025');
+    await dialog.getByRole('button', { name: 'Rename' }).click();
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledWith('2025'));
+  });
 });

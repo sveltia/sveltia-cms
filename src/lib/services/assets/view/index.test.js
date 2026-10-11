@@ -28,6 +28,7 @@ import {
 const {
   _publishedAssets,
   _selectedAssets,
+  _focusedAsset,
   _uploadingAssets,
   _selectedAssetFolder,
   _browsedDirPath,
@@ -45,6 +46,8 @@ const {
     _publishedAssets: createRawState([]),
     /** @type {{ current: any[] }} */
     _selectedAssets: createRawState([]),
+    /** @type {{ current: any }} */
+    _focusedAsset: createRawState(undefined),
     /** @type {{ current: any }} */
     _uploadingAssets: createRawState({ folder: undefined, files: [] }),
     /** @type {{ current: any }} */
@@ -91,6 +94,7 @@ vi.mock('$lib/services/contents/collection/files', () => ({
 vi.mock('$lib/services/assets/state', () => ({
   publishedAssets: _publishedAssets,
   selectedAssets: _selectedAssets,
+  focusedAsset: _focusedAsset,
   uploadingAssets: _uploadingAssets,
 }));
 
@@ -178,6 +182,7 @@ describe('assets/view/index', () => {
     _prefs.devModeEnabled = false;
     _publishedAssets.current = [];
     _selectedAssets.current = [];
+    _focusedAsset.current = undefined;
     _uploadingAssets.current = { folder: undefined, files: [] };
     _selectedAssetFolder.current = undefined;
     _browsedDirPath.current = undefined;
@@ -522,6 +527,62 @@ describe('assets/view/index', () => {
       await wait();
 
       expect(_selectedAssets.current).toEqual([]);
+    });
+
+    it('should drop the focus from an asset the filter hides', async () => {
+      await wait();
+
+      const [photo1] = _publishedAssets.current;
+
+      _focusedAsset.current = photo1;
+      // A filter the focused asset matches keeps the focus
+      vi.mocked(filterAssets).mockImplementation((assets, filter) =>
+        filter?.pattern
+          ? assets.filter(({ name }) => name.includes(String(filter.pattern)))
+          : assets,
+      );
+      currentView.current = {
+        type: 'grid',
+        showInfo: true,
+        filter: { field: 'name', pattern: '1' },
+      };
+      await wait();
+
+      expect(_focusedAsset.current).toBe(photo1);
+
+      // The focused asset is filtered out, so the toolbar actions must no longer apply to it
+      currentView.current = {
+        type: 'grid',
+        showInfo: true,
+        filter: { field: 'name', pattern: '2' },
+      };
+      await wait();
+
+      expect(_focusedAsset.current).toBeUndefined();
+
+      vi.mocked(filterAssets).mockImplementation((assets) => assets);
+    });
+
+    it('should drop the focus from an asset no longer listed', async () => {
+      _focusedAsset.current = createAsset('images/photo1.jpg', globalFolder);
+      _selectedAssetFolder.current = blogFolder;
+      await wait();
+
+      expect(_focusedAsset.current).toBeUndefined();
+    });
+
+    it('should keep the focus on an asset replaced with an updated copy', async () => {
+      await wait();
+
+      [_focusedAsset.current] = _publishedAssets.current;
+      // An upload replaces the asset objects, e.g. with a new SHA
+      _publishedAssets.current = _publishedAssets.current.map((/** @type {any} */ a) => ({
+        ...a,
+        sha: `${a.sha}-new`,
+      }));
+      await wait();
+
+      expect(_focusedAsset.current?.path).toBe('images/photo1.jpg');
     });
 
     it('should not log the assets to the console when dev mode is disabled', async () => {

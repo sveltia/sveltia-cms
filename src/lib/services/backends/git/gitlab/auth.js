@@ -7,19 +7,18 @@ import { signInToBackend } from '$lib/services/backends/git/shared/auth';
 
 /**
  * Get the URL of the page for creating a new Personal Access Token (PAT) on GitLab.
- * @param {string} repoURL Repository URL, e.g. `https://gitlab.com/owner/repo`.
+ * @param {string} instanceURL Base URL of the GitLab instance, e.g. `https://gitlab.com` or
+ * `https://example.com/gitlab` for a self-hosted one under a subpath.
  * @returns {string} URL to create a new PAT.
  * @see https://docs.gitlab.com/user/profile/personal_access_tokens/
  */
-export const getTokenPageURL = (repoURL) => {
-  const { origin } = new URL(repoURL);
-
+export const getTokenPageURL = (instanceURL) => {
   const params = new URLSearchParams({
     name: 'Sveltia CMS',
     scopes: 'api,read_user',
   });
 
-  return `${origin}/-/user_settings/personal_access_tokens?${params}`;
+  return `${instanceURL}/-/user_settings/personal_access_tokens?${params}`;
 };
 
 /**

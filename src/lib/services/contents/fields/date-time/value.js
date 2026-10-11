@@ -193,9 +193,11 @@ export const getCurrentValue = ({ inputValue, currentValue, fieldConfig, timeZon
       return parsed.format(format);
     }
 
-    // Apply IANA timezone context first, then optionally convert to UTC
+    // Apply IANA timezone context first, then optionally convert to UTC. Read the wall time in the
+    // zone rather than keeping it with `.tz(zone, true)`, which uses the zone’s offset at the
+    // instant the time was parsed as in the browser’s zone, a different one around a DST change
     if (effectiveTimeZone) {
-      parsed = parsed.tz(effectiveTimeZone, true);
+      parsed = dayjs.tz(parsed.format('YYYY-MM-DDTHH:mm:ss'), effectiveTimeZone);
     }
 
     if (_outputUTC && inputTimeZone !== 'utc') {

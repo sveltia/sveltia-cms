@@ -456,24 +456,30 @@ export const replaceBlobURL = async ({
     // store yet, so take its name into account too, or one file would overwrite the other. The
     // code below runs without awaiting anything, so concurrent calls can’t pick the same name
     const item = { file, folder, replace, nameTemplate };
+    const pendingFileName = getPendingFileName({ draft, item, defaultLocaleSlug });
+    const namesInSave = savingAssetsInSameFolder.map((f) => f.name.normalize());
+    const ownName = replace ? formatFileName(pendingFileName) : undefined;
 
-    fileName = formatFileName(
-      getPendingFileName({ draft, item, defaultLocaleSlug }),
-      replace
-        ? {}
-        : {
-            assetNamesInSameFolder: [
-              ...assetNamesInSameFolder,
-              ...assetNamesMovingIn,
-              ...savingAssetsInSameFolder.map((f) => f.name.normalize()),
-            ],
-          },
-    );
+    // Only the first of the files with the same name in this save replaces the existing file;
+    // another one gets a name of its own, or it would overwrite the first one
+    const replacing =
+      ownName !== undefined &&
+      !namesInSave.some((name) => name.toLowerCase() === ownName.toLowerCase());
+
+    fileName = replacing
+      ? ownName
+      : formatFileName(pendingFileName, {
+          assetNamesInSameFolder: [
+            ...assetNamesInSameFolder,
+            ...assetNamesMovingIn,
+            ...namesInSave,
+          ],
+        });
 
     // A replacing file overwrites the existing asset whose name only differs in case, e.g.
     // `Photo.jpg` and `photo.jpg`, rather than being added next to it, as the two would clash on a
     // case-insensitive file system
-    const replacedName = replace
+    const replacedName = replacing
       ? assetNamesInSameFolder.find((name) => name.toLowerCase() === fileName.toLowerCase())
       : undefined;
 

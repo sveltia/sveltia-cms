@@ -2,6 +2,7 @@ import { compare } from '@sveltia/utils/string';
 
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
 import { isCmsFolderName, isCmsFolderPath } from '$lib/services/assets/reserved';
+import { allAssets } from '$lib/services/assets/state';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { slugify } from '$lib/services/common/slug';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
@@ -188,12 +189,48 @@ export const listSubfolders = ({ dirPath, paths }) => {
  * @param {AssetSubfolder[]} args.subfolders Subfolders of the directory.
  * @param {string[]} args.fileNames Names of the files right in the directory.
  * @param {string} [args.exclude] Name of the subfolder being renamed, which it can keep.
+ * @param {string} [args.dirPath] Path of the directory in the repository. When given, the names of
+ * the subfolders leading to another configured asset folder nested in it, e.g. `projects` in
+ * `static/uploads` for a collection’s `static/uploads/projects` folder, are taken too: such a
+ * folder isn’t listed as a subfolder, as it’s browsed as a folder of its own, but a subfolder
+ * renamed or created with its name would be merged into it.
  * @returns {string[]} Names.
  */
-export const getTakenNames = ({ subfolders, fileNames, exclude = undefined }) => [
+export const getTakenNames = ({
+  subfolders,
+  fileNames,
+  exclude = undefined,
+  dirPath = undefined,
+}) => [
   ...subfolders.map(({ name }) => name).filter((name) => name !== exclude),
   ...fileNames,
+  ...(dirPath === undefined
+    ? []
+    : listSubfolders({
+        dirPath,
+        // A trailing slash makes `listSubfolders` read the folder itself as a subfolder path
+        paths: allAssetFolders.current
+          .filter(({ internalPath, hasTemplateTags }) => internalPath && !hasTemplateTags)
+          .map(({ internalPath }) => `${internalPath}/`),
+      }).map(({ name }) => name)),
 ];
+
+/**
+ * Get the names of every folder right in a directory of the repository, which a file renamed in it
+ * can’t take: the folders holding assets or Git config files, whichever asset folder they belong
+ * to, and the ones leading to a configured asset folder nested in the directory.
+ * @param {string} dirPath Directory path. An empty string for the repository root.
+ * @returns {string[]} Names.
+ */
+export const getFolderNamesInDir = (dirPath) =>
+  getTakenNames({
+    subfolders: listSubfolders({
+      dirPath,
+      paths: [...allAssets.current, ...gitConfigFiles.current].map(({ path }) => path),
+    }),
+    fileNames: [],
+    dirPath,
+  });
 
 /**
  * Get the breadcrumb trail of the subfolder being browsed, from the location root down. Each

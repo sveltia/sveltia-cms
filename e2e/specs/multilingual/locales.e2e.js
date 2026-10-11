@@ -126,3 +126,26 @@ test('disables a locale for an entry, deleting its file', async ({ cms, page }) 
     MULTILINGUAL_FILES['content/en/guides/marrakesh-souks.md'],
   );
 });
+
+test.describe('with two locales', () => {
+  test.use({
+    config: {
+      ...MULTILINGUAL_CONFIG,
+      i18n: { ...MULTILINGUAL_CONFIG.i18n, locales: ['fr', 'en'] },
+    },
+  });
+
+  test('opens an entry in the locale given in the URL', async ({ page }) => {
+    // The default locale is kept first when the saved panes are restored for an entry with two
+    // locales, which also dropped the locale asked for in the URL
+    await page.getByRole('treeitem', { name: 'Articles' }).click();
+    await expect(page.getByRole('row', { name: /Lyon/ })).toBeVisible();
+    await page.evaluate(() => {
+      window.location.hash = '#/collections/articles/entries/lyon?_locale=fr';
+    });
+    await expect(getEditPane(page, 'French').getByRole('textbox', { name: 'Title' })).toHaveValue(
+      'Un week-end à Lyon',
+    );
+    await expect(getEditPane(page, 'English')).toBeHidden();
+  });
+});

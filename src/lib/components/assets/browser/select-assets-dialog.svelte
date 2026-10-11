@@ -239,9 +239,16 @@
   const subfolders = $derived(
     browsingSubfolders ? getSubfolders({ dirPath: browsedPath, assets: listedAssets }) : [],
   );
-  /** Names already taken in the browsed directory, which a new folder can’t be given. */
+  /**
+   * Names already taken in the browsed directory, which a new folder can’t be given, including the
+   * names of the folders leading to another asset folder nested in it.
+   */
   const takenNames = $derived(
-    getTakenNames({ subfolders, fileNames: panelAssets.map(({ name }) => name) }),
+    getTakenNames({
+      subfolders,
+      fileNames: panelAssets.map(({ name }) => name),
+      dirPath: browsingSubfolders ? browsedPath : undefined,
+    }),
   );
   /** Label of the selected folder, at the start of the breadcrumb. */
   const selectedFolderLabel = $derived(

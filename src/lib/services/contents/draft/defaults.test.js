@@ -493,6 +493,20 @@ describe('Test populateDefaultValue()', () => {
 });
 
 describe('Test getDefaultValues()', () => {
+  test('should not take an `Object.prototype` member for a dynamic value', () => {
+    /** @type {Field[]} */
+    const fields = [
+      { name: 'constructor', widget: 'string', default: 'Ada' },
+      { name: 'toString', widget: 'string' },
+    ];
+
+    // Threw `dynamicValues[keyPath].trim is not a function`
+    expect(getDefaultValues({ fields, locale: 'en', defaultLocale: 'en' })).toEqual({
+      constructor: 'Ada',
+      toString: '',
+    });
+  });
+
   test('should return empty object for empty fields array', () => {
     const result = getDefaultValues({ fields: [], locale: 'en', defaultLocale: 'en' });
 

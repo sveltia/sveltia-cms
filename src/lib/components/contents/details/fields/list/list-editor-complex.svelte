@@ -43,7 +43,12 @@
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
 
   /**
-   * @import { FieldEditorContext, FieldEditorProps, MediaFieldSource } from '$lib/types/private';
+   * @import {
+   * ExpanderStateList,
+   * FieldEditorContext,
+   * FieldEditorProps,
+   * MediaFieldSource,
+   * } from '$lib/types/private';
    * @import {
    * ComplexListField,
    * ListFieldWithSubField,
@@ -215,7 +220,7 @@
 
   /**
    * Update the value for the List field with subfield(s).
-   * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) => void} manipulate
+   * @param {(arg: { valueList: any[], expanderStateList: ExpanderStateList }) => void} manipulate
    * See {@link updateListFieldForLocales}.
    */
   const updateComplexList = (manipulate) => {

@@ -72,7 +72,7 @@ const OPAQUE_FIELD_TYPES = ['code', 'hidden', 'keyvalue'];
  * @param {FieldKeyPath} keyPath Key path.
  */
 const discardConflictingValue = (content, keyPath) => {
-  if (keyPath in content && !isPlaceholder(content[keyPath])) {
+  if (Object.hasOwn(content, keyPath) && !isPlaceholder(content[keyPath])) {
     delete content[keyPath];
   }
 };
@@ -350,7 +350,7 @@ const normalizeField = (args) => {
     return;
   }
 
-  const occupied = keyPath in content || hasChildKeys(index, keyPath);
+  const occupied = Object.hasOwn(content, keyPath) || hasChildKeys(index, keyPath);
 
   if (
     !occupied ||

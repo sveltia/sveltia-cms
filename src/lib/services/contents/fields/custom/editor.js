@@ -18,14 +18,25 @@ import { getFieldConfigMap, getPreviewData } from '$lib/services/contents/fields
 /**
  * Resolve the actual control component from a string reference or return the component itself.
  * @param {CustomFieldControl | string | undefined} ctrl Control component or widget name.
+ * @param {Set<string>} [visited] Names of the field types already looked up, used to avoid an
+ * infinite loop when custom field types reference each other.
  * @returns {CustomFieldControl | undefined} Resolved control component or undefined.
  */
-export const resolveControl = (ctrl) => {
+export const resolveControl = (ctrl, visited = new Set()) => {
   if (isReactComponent(ctrl)) {
     return ctrl;
   }
 
   if (typeof ctrl === 'string') {
+    if (visited.has(ctrl)) {
+      // eslint-disable-next-line no-console
+      console.warn(`Custom field type "${ctrl}" references itself through its control.`);
+
+      return undefined;
+    }
+
+    visited.add(ctrl);
+
     const customFieldType = customFieldTypeRegistry.get(ctrl);
 
     if (customFieldType?.control) {
@@ -33,7 +44,7 @@ export const resolveControl = (ctrl) => {
         return customFieldType.control;
       }
 
-      return resolveControl(customFieldType.control);
+      return resolveControl(customFieldType.control, visited);
     }
 
     if (/** @type {string[]} */ (BUILTIN_FIELD_TYPES).includes(ctrl)) {

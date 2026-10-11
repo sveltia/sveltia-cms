@@ -600,6 +600,12 @@ enter_new_name_for_external_folder: |
     0   {{ 新しい名前を以下に入力してください。 }}
     1   {{ 新しい名前を以下に入力してください。フォルダー内のファイルも一緒に移動され、URL が変わるため、それを使用しているエントリーは更新してください。 }}
     *   {{ 新しい名前を以下に入力してください。フォルダー内の {$count} 個のファイルも一緒に移動され、URL が変わるため、それらを使用しているエントリーは更新してください。 }}
+# Rename Folder dialog for a cloud storage service: warning shown when entries link to files in the
+# folder, which aren’t updated. {$count} is the number of entries
+renaming_external_folder_breaks_links: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} 個のエントリーがこのフォルダー内のファイルにリンクしています。エントリーは更新されないため、フォルダー名を変更するとリンクが切れます。 }}
 # Delete Folder confirmation
 # {$name} is the folder name and {$count} is the number of assets in the folder
 confirm_deleting_folder: |
@@ -613,6 +619,9 @@ renaming_folder: フォルダーの名前を変更中…
 renaming_folder_failed: フォルダーの名前を変更できませんでした。
 deleting_folder: フォルダーを削除中…
 deleting_folder_failed: フォルダーを削除できませんでした。
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: サービス上のファイルが多すぎるため、一部のファイルは一覧に表示されていません。
 
 # Edit options menu: button and item labels
 edit_options: 編集オプション
@@ -639,11 +648,21 @@ enter_new_name_for_asset: |
     0   {{ 新しい名前を以下に入力してください。 }}
     1   {{ 新しい名前を以下に入力してください。このアセットを使用している 1 個のエントリーも更新されます。 }}
     *   {{ 新しい名前を以下に入力してください。このアセットを使用している {$count} 個のエントリーも更新されます。 }}
+# Rename Asset dialog for a file on a cloud storage service: warning shown when entries link to the
+# file, which aren’t updated. {$count} is the number of entries
+renaming_external_asset_breaks_links: |
+  .input {$count :integer}
+  .match $count
+    *   {{ {$count} 個のエントリーがこのファイルにリンクしています。エントリーは更新されないため、ファイル名を変更するとリンクが切れます。 }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: ファイル名を空白にすることはできません。
   character: ファイル名に特別な文字を含めることはできません。
   duplicate: このファイル名は他のアセットに使われています。
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: ファイル名をドットで始めることはできません。
+  # The name of a folder next to the file
+  folder_duplicate: この名前のフォルダーは既に存在します。
 # Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
 # media library option
 file_will_be_saved_as: ファイルは「{$name}」として保存されます。
@@ -1716,6 +1735,10 @@ config:
     missing_media_folder: メディアフォルダーが定義されていません。
     public_folder_relative_path: 設定されているパブリックフォルダーが正しくありません。この設定は「/」で始まる絶対パスでなければなりません。
     public_folder_absolute_url: パブリックフォルダーオプションの絶対 URL は Sveltia CMS では非対応です。
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: '`{$option}` オプションに含まれるテンプレートタグ `{$tag}` はここではサポートされていません。使用できるのは `\{\{slug\}\}` や `\{\{year\}\}` などのスラッグのテンプレートタグと、`\{\{dirname\}\}`、`\{\{filename\}\}`、`\{\{extension\}\}`、`\{\{media_folder\}\}`、`\{\{public_folder\}\}` タグのみです。'
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: '`{$option}` オプションにテンプレートタグ `{$tag}` が含まれています。テンプレートタグは、値を埋めるエントリーがあるコレクション、コレクションファイル、フィールドのオプションでのみ使用できます。'
     # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
     invalid_sanitize_replacement: '`sanitize_replacement` オプションに `{$replacement}` が指定されていますが、スラッグに使用できない文字が含まれているため、置換文字として使用できません。'
     # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
@@ -1746,6 +1769,8 @@ config:
     invalid_collection_multiple_options: コレクションは `folder`、`file`、`files`、`divider` オプションのうち複数を同時に持つことはできません。
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: 拡張子 `{$extension}` は `{$format}` 形式と一致しません。
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: '`{$name}` フィールドはフロントマターの下に本文として保存され、本文はテキストのみを保持でき、`{$widget}` フィールドのように数値、真偽値、リスト、オブジェクトを保持することはできません。テキストを保持するフィールドタイプを使用するか、フィールド名を変更してください。'
     # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
     # brackets are escaped with backslashes for MessageFormat 2
     invalid_collection_data_file: '`file` オプション `{$file}` は無効です。`\{\{locale\}\}` プレースホルダーを含まない JSON ファイルのパスである必要があります。'

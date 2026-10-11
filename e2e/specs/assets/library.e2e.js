@@ -154,6 +154,50 @@ test('uploads a file dropped on the asset list', async ({ cms, page }) => {
   expect(await cms.readRepoFile('static/uploads/kite.png')).toEqual(kite);
 });
 
+test('keeps every file of the same name uploaded at once, and drops a leading dot', async ({
+  cms,
+  page,
+}) => {
+  const ocean = await cms.readRepoFile('static/uploads/ocean.png');
+  const first = createPNG({ color: [1, 2, 3] });
+  const second = createPNG({ color: [4, 5, 6] });
+  const kite = createPNG({ color: [255, 255, 0] });
+
+  await openFolder(page, /Global Assets/);
+  await page.getByRole('button', { name: 'Upload New Assets' }).click();
+
+  const [chooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page
+      .getByRole('dialog', { name: 'Upload New Assets' })
+      .getByRole('button', { name: 'Choose Files' })
+      .click(),
+  ]);
+
+  // Two different files of the same name, e.g. from two subfolders of a dropped folder, and a dot
+  // file, which the CMS wouldn’t list
+  await chooser.setFiles([
+    { name: 'ocean.png', mimeType: 'image/png', buffer: first },
+    { name: 'ocean.png', mimeType: 'image/png', buffer: second },
+    { name: '.kite.png', mimeType: 'image/png', buffer: kite },
+  ]);
+
+  const dialog = page.getByRole('alertdialog', { name: 'Upload New Assets' });
+
+  await dialog.getByRole('button', { name: 'Upload' }).click();
+  await expect(dialog).toBeHidden();
+
+  // The first file replaces the existing one, and the second one is kept next to it
+  await expect.poll(() => cms.readRepoFile('static/uploads/ocean-1.png')).toEqual(second);
+  expect(ocean).not.toEqual(first);
+  expect(await cms.readRepoFile('static/uploads/ocean.png')).toEqual(first);
+  expect(await cms.readRepoFile('static/uploads/kite.png')).toEqual(kite);
+  expect(await cms.readRepoFile('static/uploads/.kite.png')).toBeUndefined();
+  await expect
+    .poll(() => listedAssets(page))
+    .toEqual(['forest.png', 'guide.txt', 'kite.png', 'ocean.png', 'ocean-1.png', 'sunset.png']);
+});
+
 test('cancels an upload', async ({ cms, page }) => {
   await openFolder(page, /Global Assets/);
   await cms.dropFiles(page.getByRole('grid', { name: 'Assets' }), [
@@ -207,6 +251,54 @@ test('previews an asset and moves to the next one', async ({ page }) => {
   await editor.getByRole('button', { name: 'Cancel Editing' }).click();
   await expect(editor).toBeHidden();
   await expect(page.getByRole('grid', { name: 'Assets' })).toBeVisible();
+});
+
+test('skips a file without an extension, which can’t be previewed, to the next asset', async ({
+  page,
+}) => {
+  await openFolder(page, /Global Assets/);
+  await page.getByRole('button', { name: 'Upload New Assets' }).click();
+
+  const [chooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page
+      .getByRole('dialog', { name: 'Upload New Assets' })
+      .getByRole('button', { name: 'Choose Files' })
+      .click(),
+  ]);
+
+  await chooser.setFiles([
+    { name: 'paper', mimeType: 'application/octet-stream', buffer: Buffer.from('Paper') },
+  ]);
+  await page
+    .getByRole('alertdialog', { name: 'Upload New Assets' })
+    .getByRole('button', { name: 'Upload' })
+    .click();
+  await expect(page.getByRole('row', { name: 'paper' })).toBeVisible();
+
+  const listed = await listedAssets(page);
+
+  expect(listed.indexOf('paper')).toBe(listed.indexOf('ocean.png') + 1);
+  expect(listed.indexOf('sunset.png')).toBe(listed.indexOf('paper') + 1);
+
+  await page.getByRole('row', { name: 'ocean.png' }).click();
+  await page.getByRole('button', { name: 'Show Preview' }).click();
+
+  const editor = page.getByRole('group', { name: 'Asset Editor' });
+
+  await expect(editor.getByRole('img', { name: 'ocean.png' })).toBeVisible();
+  await editor.getByRole('button', { name: 'Next Asset' }).click();
+  await expect(editor.getByRole('img', { name: 'sunset.png' })).toBeVisible();
+  await editor.getByRole('button', { name: 'Previous Asset' }).click();
+  await expect(editor.getByRole('img', { name: 'ocean.png' })).toBeVisible();
+
+  // The file still has its own URL, which shows its details rather than an empty folder
+  await page.evaluate(() => {
+    window.location.hash = '#/assets/static/uploads/paper';
+  });
+  await expect(editor).toContainText('paper');
+  await expect(page.getByRole('alert').filter({ hasText: 'Preview Unavailable.' })).toBeVisible();
+  await expect(page.getByText('/static/uploads/paper', { exact: true })).toBeVisible();
 });
 
 test('previews an asset from All Assets and stays there', async ({ page }) => {
@@ -361,6 +453,25 @@ test('deletes an asset', async ({ cms, page }) => {
   await expect.poll(() => listedAssets(page)).toEqual(['guide.txt', 'ocean.png', 'sunset.png']);
   expect(await cms.readRepoFile('static/uploads/forest.png')).toBeUndefined();
   await expect(page.getByRole('option', { name: 'Global Assets (3 assets)' })).toBeVisible();
+});
+
+test('lets go of the asset the filter hides', async ({ cms, page }) => {
+  const info = page.getByRole('group', { name: 'Asset Info' });
+
+  await openFolder(page, /Global Assets/);
+  await page.getByRole('row', { name: 'ocean.png' }).click();
+  await expect(info).toContainText('/static/uploads/ocean.png');
+  await expect(page.getByRole('button', { name: 'Delete Selected Asset' })).toBeEnabled();
+
+  await cms.chooseMenuItem(
+    page.getByRole('button', { name: 'Type' }),
+    page.getByRole('menuitemradio', { name: 'Document' }),
+  );
+  await expect(page.getByText('No files found')).toBeVisible();
+
+  // Neither the info panel nor the toolbar actions refer to the hidden asset any more
+  await expect(info).not.toContainText('ocean.png');
+  await expect(page.getByRole('button', { name: /^Delete Selected Asset/ })).toBeDisabled();
 });
 
 test('deletes several assets', async ({ cms, page }) => {

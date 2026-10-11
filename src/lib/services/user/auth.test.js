@@ -870,6 +870,42 @@ describe('auth service', () => {
       expect(mockLoadUnpublishedEntries).toHaveBeenCalledWith(pullRequests);
     });
 
+    it.each([
+      { branch: 'main', early: true },
+      { branch: '', early: false },
+      { branch: undefined, early: false },
+    ])(
+      'should request the pull requests early only if the branch is known ($branch)',
+      async ({ branch, early }) => {
+        const cachedUser = { backendName: 'github', token: 'cached-token', login: 'user' };
+        const pullRequests = Promise.resolve([]);
+        const backendWithRepository = { ...mockBackend, repository: { branch } };
+
+        mockLocalStorage.get.mockImplementation((key) =>
+          Promise.resolve(key === 'sveltia-cms.user' ? cachedUser : null),
+        );
+        mockBackendStore.current = backendWithRepository;
+        mockCmsConfigStore.current = mockCmsConfig;
+        mockBackend.signIn.mockResolvedValue(cachedUser);
+        mockBackend.fetchFiles.mockResolvedValue(undefined);
+        mockStartLoadingPullRequests.mockReturnValue(pullRequests);
+
+        await authModule.signInAutomatically();
+
+        expect(mockBackend.fetchFiles).toHaveBeenCalled();
+
+        if (early) {
+          expect(mockStartLoadingPullRequests).toHaveBeenCalledBefore(mockBackend.fetchFiles);
+          expect(mockLoadUnpublishedEntries).toHaveBeenCalledWith(pullRequests);
+        } else {
+          // Without a configured branch, the default branch is only known once the files are
+          // being fetched, so the pull requests are left for `loadUnpublishedEntries()` to request
+          expect(mockStartLoadingPullRequests).not.toHaveBeenCalled();
+          expect(mockLoadUnpublishedEntries).toHaveBeenCalledWith(undefined);
+        }
+      },
+    );
+
     it('should handle QR code authentication', async () => {
       const encodedData = btoa(JSON.stringify({ token: 'qr-token', prefs: { theme: 'dark' } }));
 

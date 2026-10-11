@@ -197,6 +197,15 @@ describe('ContentDetailsOverlay', () => {
       .toBeInTheDocument();
   });
 
+  test('starts with the requested locale without the preview', async () => {
+    entryEditorSettings.current = { showPreview: false, showSecondPane: true };
+
+    await renderOverlay(createDraft(), { editorLocale: 'de' });
+
+    await expect.poll(() => editorFirstPane.current).toEqual({ mode: 'edit', locale: 'de' });
+    expect(editorSecondPane.current).toEqual({ mode: 'edit', locale: 'en' });
+  });
+
   test('highlights a field on request', async () => {
     await renderOverlay(createDraft());
     await expect.element(page.getByRole('textbox', { name: 'Title' })).toBeInTheDocument();

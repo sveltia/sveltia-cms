@@ -89,6 +89,17 @@ describe('replaceTemplateTag()', () => {
     ).toBe('1999');
   });
 
+  test('does not take an `Object.prototype` member for a missing field value', () => {
+    const context = createSubContext({ dateTimeParts: {}, content: { title: 'A' } });
+
+    // `Object.prototype.toString` and `Object` were returned
+    expect(replaceTemplateTag('toString', context)).toBeUndefined();
+    expect(replaceTemplateTag('fields.constructor', context)).toBeUndefined();
+    expect(
+      replaceTemplateTag('constructor', createSubContext({ content: { constructor: 'Ada' } })),
+    ).toBe('Ada');
+  });
+
   test('returns the current slug for the `slug` tag', () => {
     expect(replaceTemplateTag('slug', createSubContext({ currentSlug: 'my-post' }))).toBe(
       'my-post',

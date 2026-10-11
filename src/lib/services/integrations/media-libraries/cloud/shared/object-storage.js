@@ -6,6 +6,7 @@ import { getAssetKind } from '$lib/services/assets/kinds';
 import { filterAssetsByQuery } from '$lib/services/integrations/media-libraries/cloud/search';
 import {
   getFileKey,
+  getFolderKey,
   getPrefix,
   getRelativeKey,
 } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
@@ -66,28 +67,37 @@ export const assertResponseOK = async (response, message, { allowNotFound = fals
 };
 
 /**
- * Fetch the objects under the configured prefix, page by page.
+ * Fetch the objects under the configured prefix, or under a folder below it, page by page.
  * @template T
  * @template {CloudStorageConfig} C
  * @param {ObjectStorageProvider<T, C>} provider Service provider.
  * @param {C} config Service configuration.
  * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the credential).
  * @param {object} [params] Additional parameters.
- * @param {number} [params.maxPages] Maximum number of pages to fetch. Default: 10.
- * @returns {Promise<{ files: T[], folders: string[] }>} Objects, split into the files and the
- * folder placeholders, the latter given as folder paths relative to the prefix.
+ * @param {number} [params.maxPages] Maximum number of pages to fetch. Default: 10. `Infinity` to
+ * fetch every page.
+ * @param {string} [params.dirPath] Path of the folder to list, at any depth, relative to the
+ * configured prefix. Default: the configured prefix itself.
+ * @returns {Promise<{ files: T[], folders: string[], truncated: boolean }>} Objects, split into the
+ * files and the folder placeholders, the latter given as folder paths relative to the prefix, and
+ * whether the listing was cut short by the page limit, leaving some objects out.
  */
-export const fetchListing = async (provider, config, options, { maxPages = 10 } = {}) => {
+export const fetchListing = async (provider, config, options, { maxPages = 10, dirPath } = {}) => {
   const credential = provider.requireCredential(options);
-  const prefix = getPrefix(config);
+  const prefix = dirPath ? getFolderKey(config, dirPath) : getPrefix(config);
   /** @type {T[]} */
   const files = [];
   /** @type {string[]} */
   const folders = [];
+  let truncated = false;
 
   const items = await fetchPages(
     async (/** @type {string | undefined} */ cursor) => {
       const result = await provider.listPage({ config, credential, prefix, cursor });
+
+      // The paging stops at the last page, which has no cursor, or at the page limit, in which
+      // case the cursor of the last page fetched points to the objects left out
+      truncated = !!result.cursor;
 
       return { results: result.items, next: result.cursor };
     },
@@ -100,18 +110,18 @@ export const fetchListing = async (provider, config, options, { maxPages = 10 } 
     // A key ending with a slash is a folder placeholder — one the CMS created for an empty folder,
     // or one a hierarchical namespace account returns — rather than a file
     if (key.endsWith('/')) {
-      const dirPath = getRelativeKey(config, key).replace(/\/$/, '');
+      const folderPath = getRelativeKey(config, key).replace(/\/$/, '');
 
       // The placeholder of the prefix itself isn’t a folder below it
-      if (dirPath) {
-        folders.push(dirPath);
+      if (folderPath) {
+        folders.push(folderPath);
       }
     } else {
       files.push(item);
     }
   });
 
-  return { files, folders };
+  return { files, folders, truncated };
 };
 
 /**
@@ -153,12 +163,35 @@ export const listObjects = async (provider, config, options, params = {}) => {
  * @returns {Promise<ExternalFolderListing>} Files and folders.
  */
 export const browseObjects = async (provider, config, options) => {
-  const { files, folders } = await fetchListing(provider, config, options);
+  const { files, folders, truncated } = await fetchListing(provider, config, options);
 
   return {
     assets: provider.parseResults(filterByKind(provider, files, options), config, options.apiKey),
     folders,
+    truncated,
   };
+};
+
+/**
+ * List every file and empty folder below the given folder, at any depth, following the listing to
+ * the end rather than stopping at the page limit, so that a folder operation like a rename or a
+ * deletion leaves nothing behind, however large the bucket. The asset kind filter is ignored.
+ * @template T
+ * @template {CloudStorageConfig} C
+ * @param {ObjectStorageProvider<T, C>} provider Service provider.
+ * @param {string} dirPath Folder path relative to the configured prefix.
+ * @param {C} config Service configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the credential).
+ * @returns {Promise<ExternalFolderListing>} Files and folders, including the folder itself if it
+ * has a placeholder.
+ */
+export const listFolderObjects = async (provider, dirPath, config, options) => {
+  const { files, folders } = await fetchListing(provider, config, options, {
+    maxPages: Infinity,
+    dirPath,
+  });
+
+  return { assets: provider.parseResults(files, config, options.apiKey), folders };
 };
 
 /**
@@ -274,8 +307,8 @@ export const getRenamedPath = (config, asset, newName) => {
 
 /**
  * Create the operations of an object storage service, binding the given provider to the shared
- * list, browse, search, upload, delete and replace operations. A file is renamed by moving it
- * within its folder.
+ * list, browse, folder listing, search, upload, delete and replace operations. A file is renamed
+ * by moving it within its folder.
  * @template T
  * @template {CloudStorageConfig} C
  * @param {ObjectStorageProvider<T, C>} provider Service provider.
@@ -298,6 +331,14 @@ export const createObjectStorageOperations = (provider, { move, createFolder, de
    * @returns {Promise<ExternalFolderListing>} Files and folders.
    */
   browse: (config, options) => browseObjects(provider, config, options),
+  /**
+   * List every file and empty folder below a folder, at any depth.
+   * @param {string} dirPath Folder path relative to the configured prefix.
+   * @param {C} config Service configuration.
+   * @param {MediaLibraryFetchOptions} options Fetch options.
+   * @returns {Promise<ExternalFolderListing>} Files and folders.
+   */
+  listFolder: (dirPath, config, options) => listFolderObjects(provider, dirPath, config, options),
   /**
    * Search the files under the configured prefix.
    * @param {string} query Search query.

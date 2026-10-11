@@ -885,6 +885,28 @@ describe('ExternalAssetsPanel', () => {
       await page.viewport(414, 896);
     });
 
+    test('tells the user when some files are left out of the list', async () => {
+      const notice = page.getByRole('alert').filter({ hasText: 'too many files' });
+
+      const { props } = await renderPanel({
+        browse: vi
+          .fn()
+          .mockResolvedValue({ assets: folderAssets, folders: ['images/empty'], truncated: true }),
+      });
+
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+      await expect
+        .element(notice)
+        .toMatchTextContent(
+          'There are too many files on the service to list them all, so some of them are left out.',
+        );
+
+      // A search result has nothing to do with the listing
+      props.searchTerms = 'b';
+      await waitForList(1);
+      expect(notice.elements()).toHaveLength(0);
+    });
+
     test('uploads files to the folder being browsed', async () => {
       const { props, component } = await renderPanel();
 

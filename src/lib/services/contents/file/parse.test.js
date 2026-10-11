@@ -1321,6 +1321,25 @@ describe('Test parseEntryFile()', () => {
     expect(result.body).not.toContain('Ignored content');
   });
 
+  test('reads the body under a key named after an `Object.prototype` member', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
+
+    const _file = { format: 'frontmatter', bodyField: { key: 'constructor', inline: false } };
+
+    const result = parseFrontMatter({
+      collection: /** @type {any} */ ({ name: 'test-collection', _file }),
+      collectionFile: /** @type {any} */ ({ _file }),
+      format: 'yaml-frontmatter',
+      text: '---\ntitle: Test Post\n---\n\nBody text.',
+    });
+
+    // The inherited `Object` was taken for a body in the front matter, and the text was dropped
+    expect(Object.hasOwn(result, 'constructor')).toBe(true);
+    expect(result.constructor).toBe('Body text.');
+  });
+
   test('reads the text below the front matter as an inline body missing from it', async () => {
     const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 

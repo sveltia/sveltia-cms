@@ -6,8 +6,10 @@ import { isAssetInFolder } from '$lib/services/assets';
 import { getAssetFolder } from '$lib/services/assets/folders';
 import { getMediaFieldSource, getRichTextMediaSource } from '$lib/services/assets/media-field';
 import { allAssets } from '$lib/services/assets/state';
+import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
+import { filterRealValues } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getEntryOptions } from '$lib/services/contents/fields/relation/helpers';
 import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
@@ -262,14 +264,24 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
         return entries;
       })();
 
-      metaData[keyPath] ??= {};
-      metaData[keyPath][refCollection] ??= {};
       // The option values are strings, while a value written by hand may be a number, e.g. `1`
-      metaData[keyPath][refCollection][value] = getReferencedEntryLookup(
+      const refEntry = getReferencedEntryLookup(
         refEntries,
         locale,
         /** @type {RelationField} */ (field),
-      ).get(String(value))?.locales[locale]?.content;
+      ).get(String(value));
+
+      const defaultLocale = getCollection(refCollection)?._i18n.defaultLocale;
+
+      metaData[keyPath] ??= {};
+      metaData[keyPath][refCollection] ??= {};
+      // Fall back to the referenced collection’s default locale, then `_default` (no i18n), the
+      // same way the field’s options are looked up
+      metaData[keyPath][refCollection][value] = (
+        refEntry?.locales[locale] ??
+        (defaultLocale ? refEntry?.locales[defaultLocale] : undefined) ??
+        refEntry?.locales._default
+      )?.content;
     }
   });
 
@@ -277,7 +289,9 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
 };
 
 /**
- * Build a synthetic entry object with current values for live preview updates.
+ * Build a synthetic entry object with current values for live preview updates. The internal
+ * properties the editor adds to list items, like `__sc_item_id`, are left out, as they’re not part
+ * of the content.
  * @param {object} args Arguments.
  * @param {Entry | undefined} args.originalEntry The original entry object.
  * @param {Record<InternalLocaleCode, FlattenedEntryContent>} args.currentValues Object with locale
@@ -294,7 +308,7 @@ export const buildEntry = ({ originalEntry, currentValues }) =>
         {
           slug: originalEntry?.locales[locale]?.slug ?? originalEntry?.slug,
           path: originalEntry?.locales[locale]?.path ?? originalEntry?.subPath,
-          content,
+          content: filterRealValues(content),
         },
       ]),
     ),

@@ -322,3 +322,53 @@ test.describe('Gitea', () => {
     await expect(page.getByRole('row', { name: /First Post/ })).toBeVisible();
   });
 });
+
+/**
+ * Get the address of the link to the token page in the dialog the sign-in page offers for an
+ * access token.
+ * @param {Page} page Page.
+ * @returns {Promise<string | null>} Address.
+ */
+const getTokenPageLink = async (page) => {
+  await page.getByRole('button', { name: 'Sign In Using Access Token' }).click();
+
+  return page
+    .getByRole('alertdialog', { name: 'Sign In Using Access Token' })
+    .getByRole('link', { name: /user settings page/ })
+    .getAttribute('href');
+};
+
+test.describe('self-hosted GitLab under a subpath', () => {
+  test.use({
+    config: {
+      ...GITLAB_CONFIG,
+      backend: { ...GITLAB_CONFIG.backend, api_root: 'https://example.com/gitlab/api/v4' },
+    },
+  });
+
+  test('links to the token page of the instance, under its subpath', async ({ cms, page }) => {
+    await cms.open();
+
+    expect(await getTokenPageLink(page)).toBe(
+      'https://example.com/gitlab/-/user_settings/personal_access_tokens' +
+        '?name=Sveltia+CMS&scopes=api%2Cread_user',
+    );
+  });
+});
+
+test.describe('self-hosted Gitea under a subpath', () => {
+  test.use({
+    config: {
+      ...GITEA_CONFIG,
+      backend: { ...GITEA_CONFIG.backend, api_root: 'https://example.com/gitea/api/v1' },
+    },
+  });
+
+  test('links to the token page of the instance, under its subpath', async ({ cms, page }) => {
+    await cms.open();
+
+    expect(await getTokenPageLink(page)).toBe(
+      'https://example.com/gitea/user/settings/applications',
+    );
+  });
+});

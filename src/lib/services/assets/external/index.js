@@ -163,6 +163,13 @@ export const externalAssetCounts = createRawState({});
 export const externalAssetsError = createRawState();
 
 /**
+ * Whether the list of assets stopped short of the end, as the service holds more files than are
+ * listed at once, so the user can be told that some files are left out.
+ * @type {{ current: boolean }}
+ */
+export const externalAssetsTruncated = createRawState(false);
+
+/**
  * Assets selected in the list.
  * @type {{ current: ExternalAsset[] }}
  */
@@ -264,6 +271,7 @@ export const resetExternalAssets = () => {
   externalAssets.current = undefined;
   externalFolders.current = [];
   externalAssetsError.current = undefined;
+  externalAssetsTruncated.current = false;
   selectedExternalAssets.current = [];
   selectedExternalDirPath.current = '';
   focusedExternalAsset.current = undefined;

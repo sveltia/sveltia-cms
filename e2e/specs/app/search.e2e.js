@@ -77,6 +77,23 @@ test('shows no results for unknown terms, and clears the search', async ({ page 
   await expect(page.getByRole('main', { name: /Notes.*Collection/ })).toBeVisible();
 });
 
+test('forgets the search when the browser goes back from the results', async ({ page }) => {
+  const search = page.getByRole('searchbox', { name: 'Search for contents…' });
+
+  await search.fill('sunset');
+  await expect(page).toHaveURL(/#\/search\/sunset$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/collections\/notes$/);
+  await expect(page.getByRole('main', { name: /Notes.*Collection/ })).toBeVisible();
+  await expect(search).toHaveValue('');
+
+  // A new search then starts from the collection again, which clearing the terms goes back to
+  await search.fill('bridge');
+  await expect(page).toHaveURL(/#\/search\/bridge$/);
+  await search.fill('');
+  await expect(page).toHaveURL(/#\/collections\/notes$/);
+});
+
 test('restores the search from the URL after a reload', async ({ page }) => {
   await page.getByRole('searchbox', { name: 'Search for contents…' }).fill('bridge');
   await expect(page).toHaveURL(/#\/search\/bridge$/);

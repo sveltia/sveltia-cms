@@ -769,6 +769,70 @@ describe('getCurrentValue', () => {
       ),
     ).toBe('2026/10/03');
   });
+
+  test('stores the offset the custom time zone has at the entered time around a DST change', () => {
+    /**
+     * Run a function with the given browser time zone.
+     * @param {string} timeZone IANA time zone name.
+     * @param {() => void} fn Function.
+     */
+    const withTimeZone = (timeZone, fn) => {
+      const { TZ } = process.env;
+
+      process.env.TZ = timeZone;
+
+      try {
+        fn();
+      } finally {
+        process.env.TZ = TZ;
+      }
+    };
+
+    const timeZone = 'America/New_York';
+
+    /** @type {DateTimeField} */
+    const offsetConfig = {
+      ...baseFieldConfig,
+      format: 'YYYY-MM-DDTHH:mm:ssZ',
+      input_timezone: timeZone,
+    };
+
+    /** @type {DateTimeField} */
+    const utcConfig = {
+      ...baseFieldConfig,
+      format: 'YYYY-MM-DD HH:mm',
+      input_timezone: timeZone,
+      output_utc: true,
+    };
+
+    // New York switches to EDT (-04:00) at 2026-03-08T02:00 local time, and back to EST (-05:00) at
+    // 2026-11-01T02:00 local time
+    [
+      ['Asia/Tokyo', '2026-03-08T15:00', '2026-03-08T15:00:00-04:00', '2026-03-08 19:00'],
+      ['UTC', '2026-03-08T03:30', '2026-03-08T03:30:00-04:00', '2026-03-08 07:30'],
+      ['Etc/GMT+12', '2026-03-08T01:30', '2026-03-08T01:30:00-05:00', '2026-03-08 06:30'],
+      ['Asia/Tokyo', '2026-11-01T15:00', '2026-11-01T15:00:00-05:00', '2026-11-01 20:00'],
+      ['America/New_York', '2026-03-08T15:00', '2026-03-08T15:00:00-04:00', '2026-03-08 19:00'],
+    ].forEach(([browserTimeZone, inputValue, expectedOffset, expectedUTC]) => {
+      withTimeZone(browserTimeZone, () => {
+        const stored = getCurrentValue({
+          inputValue,
+          currentValue: '',
+          fieldConfig: offsetConfig,
+          timeZone,
+        });
+
+        expect(stored).toBe(expectedOffset);
+        // The input shows the entered time again
+        expect(getInputValue({ currentValue: stored, fieldConfig: offsetConfig, timeZone })).toBe(
+          inputValue,
+        );
+        expect(
+          getCurrentValue({ inputValue, currentValue: '', fieldConfig: utcConfig, timeZone }),
+        ).toBe(expectedUTC);
+      });
+    });
+  });
 });
 
 describe('getInputValue', () => {

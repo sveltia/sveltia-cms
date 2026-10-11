@@ -7,6 +7,7 @@ import {
   formatSubfolderName,
   getAssetsInDir,
   getFolderBreadcrumbItems,
+  getFolderNamesInDir,
   getRelativePath,
   getSubfolderPath,
   getSubfolders,
@@ -423,6 +424,56 @@ describe('assets/subfolders', () => {
         'hero.png',
         'logo.svg',
       ]);
+    });
+
+    it('should take the names leading to the asset folders nested in the directory', () => {
+      _allAssetFolders.current = [
+        createFolder({ internalPath: undefined }),
+        createFolder({ internalPath: '' }),
+        createFolder({ internalPath: 'images' }),
+        createFolder({ internalPath: 'images/projects', collectionName: 'projects' }),
+        createFolder({ internalPath: 'images/blog/covers', collectionName: 'blog' }),
+        createFolder({ internalPath: 'images/{{slug}}', hasTemplateTags: true }),
+        createFolder({ internalPath: 'static/images', collectionName: 'pages' }),
+      ];
+
+      expect(getTakenNames({ subfolders, fileNames, dirPath: 'images' })).toEqual([
+        'archive',
+        '2024',
+        'hero.png',
+        'logo.svg',
+        'blog',
+        'projects',
+      ]);
+      // Nothing is nested in a directory without a configured folder below it
+      expect(getTakenNames({ subfolders: [], fileNames: [], dirPath: 'images/2024' })).toEqual([]);
+
+      _allAssetFolders.current = [];
+    });
+  });
+
+  describe('getFolderNamesInDir', () => {
+    it('should list the folders holding assets or Git config files, and nested asset folders', async () => {
+      const { allAssets } = await import('$lib/services/assets/state');
+
+      allAssets.current = [
+        createAsset('images/a.png'),
+        createAsset('images/2024/b.png'),
+        createAsset('images/blog/2023/c.png'),
+        createAsset('other/d.png'),
+      ];
+      _gitConfigFiles.current = [{ path: 'images/empty/.gitkeep' }];
+      _allAssetFolders.current = [
+        createFolder({ internalPath: 'images' }),
+        createFolder({ internalPath: 'images/projects', collectionName: 'projects' }),
+      ];
+
+      expect(getFolderNamesInDir('images')).toEqual(['2024', 'blog', 'empty', 'projects']);
+      expect(getFolderNamesInDir('images/2024')).toEqual([]);
+
+      allAssets.current = [];
+      _gitConfigFiles.current = [];
+      _allAssetFolders.current = [];
     });
   });
 

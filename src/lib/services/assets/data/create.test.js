@@ -383,6 +383,54 @@ describe('assets/data/create', () => {
       ]);
     });
 
+    it('should only overwrite a same-named asset with the first of the same-named files', async () => {
+      const { getAssetsByDirName } = await import('$lib/services/assets');
+      const { formatFileName } = await import('$lib/services/assets/file-name');
+
+      /** @type {any} */
+      const folder = {
+        internalPath: '/images',
+        collectionName: 'assets',
+        publicPath: '/images',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      vi.mocked(getAssetsByDirName).mockReturnValue([
+        {
+          name: 'ocean.png',
+          path: '/images/ocean.png',
+          sha: 'abc',
+          size: 1,
+          kind: 'image',
+          folder,
+        },
+      ]);
+      // Same as the actual implementation: add a suffix to a name that’s taken
+      vi.mocked(formatFileName).mockImplementation((name, { assetNamesInSameFolder = [] } = {}) =>
+        assetNamesInSameFolder.some((n) => n.toLowerCase() === name.toLowerCase())
+          ? name.replace('.', '-1.')
+          : name,
+      );
+
+      // Two different files with the same name, e.g. from two subfolders of a dropped folder
+      const firstFile = new File(['first'], 'ocean.png', { type: 'image/png' });
+      const secondFile = new File(['second'], 'Ocean.png', { type: 'image/png' });
+
+      const result = createFileList({
+        files: [firstFile, secondFile],
+        folder,
+        replaceDuplicates: true,
+      });
+
+      expect(result).toEqual([
+        { action: 'update', name: 'ocean.png', path: '/images/ocean.png', file: firstFile },
+        { action: 'create', name: 'Ocean-1.png', path: '/images/Ocean-1.png', file: secondFile },
+      ]);
+
+      vi.mocked(formatFileName).mockImplementation((fileName) => fileName);
+    });
+
     it('should keep a same-named asset when replaceDuplicates is disabled', async () => {
       const { getAssetsByDirName } = await import('$lib/services/assets');
       const { formatFileName } = await import('$lib/services/assets/file-name');

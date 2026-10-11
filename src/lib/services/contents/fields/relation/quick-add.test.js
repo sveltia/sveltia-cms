@@ -423,7 +423,8 @@ describe('createPendingEntry', () => {
     const result = await createPendingEntry({ draft, parentDraft, fieldConfig });
 
     expect(assignManualSortOrder).toHaveBeenCalledWith(draft, 1);
-    expect(createSavingEntryData).toHaveBeenCalledWith({ draft, slugs });
+    // The `preSave` event hooks are held back until the entry is committed with the parent
+    expect(createSavingEntryData).toHaveBeenCalledWith({ draft, slugs, runPreSave: false });
     expect(getEntryOptions).toHaveBeenCalledWith({
       locale: 'en',
       fieldConfig,

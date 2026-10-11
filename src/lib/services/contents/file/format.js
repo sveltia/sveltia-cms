@@ -92,7 +92,8 @@ const addYAMLComments = (node, comments, prefix = '') => {
     // A key created from an object is always a scalar
     const key = /** @type {Scalar} */ (_key);
     const keyPath = `${prefix}${key.value}`;
-    const comment = comments[keyPath];
+    // A key named after an `Object.prototype` member, e.g. `toString`, mustn’t pick up that member
+    const comment = Object.hasOwn(comments, keyPath) ? comments[keyPath] : undefined;
 
     if (comment) {
       // A line break can be given as a real one or, like Netlify/Decap CMS, as an escaped `\n`
@@ -240,9 +241,16 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
   const [sd, ed] = fmDelimiters ?? ['---', '---'];
   let body = '';
 
-  if (!bodyInline && bodyKey in content) {
-    body = typeof content[bodyKey] === 'string' ? content[bodyKey] : '';
-    delete content[bodyKey];
+  if (!bodyInline && Object.hasOwn(content, bodyKey)) {
+    const value = content[bodyKey];
+
+    // Only text can go below the front matter. Any other value, e.g. an object in a file not
+    // written by the CMS, stays in the front matter rather than being thrown away; a missing value
+    // is just an empty body
+    if (typeof value === 'string' || value === null || value === undefined) {
+      body = value ?? '';
+      delete content[bodyKey];
+    }
   }
 
   // Support Markdown without a front matter block, particularly for VitePress

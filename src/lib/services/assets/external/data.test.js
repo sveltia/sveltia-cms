@@ -5,6 +5,7 @@ import {
   externalAssetCounts,
   externalAssets,
   externalAssetsError,
+  externalAssetsTruncated,
   externalFolders,
   focusedExternalAsset,
   focusedExternalSubfolder,
@@ -48,6 +49,7 @@ vi.mock('$lib/services/assets/external', async (importOriginal) => {
     externalAssetCounts: { current: {} },
     externalAssets: { current: undefined },
     externalAssetsError: { current: undefined },
+    externalAssetsTruncated: { current: false },
     externalFolders: { current: [] },
     focusedExternalSubfolder: { current: undefined },
     selectedCloudService: { current: undefined },
@@ -104,6 +106,7 @@ describe('assets/external/data', () => {
     externalAssets.current = [a, b];
     externalAssetCounts.current = {};
     externalAssetsError.current = undefined;
+    externalAssetsTruncated.current = false;
     externalFolders.current = [];
     selectedExternalDirPath.current = '';
     selectedExternalAssets.current = [a];
@@ -478,6 +481,25 @@ describe('assets/external/data', () => {
       expect(externalFolders.current).toEqual([]);
     });
 
+    it('should tell whether the listing was cut short', async () => {
+      vi.mocked(service.browse).mockResolvedValueOnce({
+        assets: [a],
+        folders: [],
+        truncated: true,
+      });
+      await loadExternalAssets(service);
+      expect(externalAssetsTruncated.current).toBe(true);
+
+      // A complete listing, or a failed one, clears the flag
+      await loadExternalAssets(service);
+      expect(externalAssetsTruncated.current).toBe(false);
+
+      externalAssetsTruncated.current = true;
+      vi.mocked(service.browse).mockRejectedValueOnce(new Error('offline'));
+      await loadExternalAssets(service);
+      expect(externalAssetsTruncated.current).toBe(false);
+    });
+
     it('should upload files to the folder being browsed', async () => {
       const file = new File(['x'], 'x.png');
 
@@ -606,6 +628,50 @@ describe('assets/external/data', () => {
       expect(service.delete).toHaveBeenCalledWith([], fetchOptions);
       expect(service.deleteFolder).toHaveBeenCalledExactlyOnceWith('other', fetchOptions);
       expect(focusedExternalSubfolder.current).toBeUndefined();
+    });
+
+    describe('on a service that lists a folder in full', () => {
+      // A file the asset list left out, as the service holds more files than it lists at once
+      const unlisted = { ...createAsset('2024/unlisted.png'), fileName: 'unlisted.png' };
+
+      beforeEach(() => {
+        service.listFolder = vi.fn(async () => ({
+          assets: [spring, nested, unlisted],
+          folders: ['2024/empty', '2024/unlisted-empty'],
+        }));
+      });
+
+      it('should rename every file below the folder, listed or not', async () => {
+        expect(await renameExternalFolder({ name: '2024', path: '2024' }, '2025')).toBe(true);
+
+        expect(service.listFolder).toHaveBeenCalledWith('2024', fetchOptions);
+        expect(service.move).toHaveBeenCalledTimes(3);
+        expect(service.move).toHaveBeenCalledWith(unlisted, '2025/unlisted.png', fetchOptions);
+        expect(service.createFolder).toHaveBeenCalledWith('2025/unlisted-empty', fetchOptions);
+        expect(service.deleteFolder).toHaveBeenCalledWith('2024/unlisted-empty', fetchOptions);
+      });
+
+      it('should delete every file below the folder, listed or not', async () => {
+        expect(await deleteExternalFolder({ name: '2024', path: '2024' })).toBe(true);
+
+        expect(service.listFolder).toHaveBeenCalledWith('2024', fetchOptions);
+        expect(service.delete).toHaveBeenCalledWith([spring, nested, unlisted], fetchOptions);
+        expect(service.deleteFolder).toHaveBeenCalledWith('2024/unlisted-empty', fetchOptions);
+        expect(externalAssets.current).toEqual([a]);
+        expect(externalFolders.current).toEqual(['other']);
+      });
+
+      it('should report a failure to list the folder without touching any file', async () => {
+        vi.mocked(service.listFolder).mockRejectedValue(new Error('denied'));
+
+        expect(await deleteExternalFolder({ name: '2024', path: '2024' })).toBe(false);
+        expect(service.delete).not.toHaveBeenCalled();
+        expect(externalAssetsToast.current.message).toBe('deleting_folder_failed');
+
+        expect(await renameExternalFolder({ name: '2024', path: '2024' }, '2025')).toBe(false);
+        expect(service.move).not.toHaveBeenCalled();
+        expect(externalAssetsToast.current.message).toBe('renaming_folder_failed');
+      });
     });
 
     it('should report a failure to delete a folder and reload the list', async () => {

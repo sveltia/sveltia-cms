@@ -34,46 +34,48 @@ import { unflattenMap } from '$lib/services/utils/object';
  * @param {EntryDraftState} args.entryDraft Entry draft state of the editor. The mounted component
  * is outside the Svelte component tree, so the state has to be passed to it as a mount context.
  * @param {InternalLocaleCode} args.locale Current locale.
- * @param {Omit<GetFieldArgs, 'keyPath'>} args.getFieldArgs Arguments for getField function.
- * @returns {(target: HTMLElement, keyPath: FieldKeyPath) => Record<string, any>} Function that
- * mounts a field preview component.
+ * @returns {(target: HTMLElement, keyPath: FieldKeyPath, fieldConfig: Field) => Record<string,
+ * any>} Function that mounts a field preview component.
  */
 export const createFieldPreviewMounter =
-  ({ entryDraft, locale, getFieldArgs }) =>
+  ({ entryDraft, locale }) =>
   /**
    * Mount a Svelte component for field preview.
    * @param {HTMLElement} target The DOM element to mount the Svelte component into.
    * @param {FieldKeyPath} keyPath The key path of the field to preview.
+   * @param {Field} fieldConfig Configuration of the field.
    * @returns {Record<string, any>} The mounted Svelte component instance.
    */
-  (target, keyPath) =>
+  (target, keyPath, fieldConfig) =>
     mount(FieldPreview, {
       target,
       context: createEntryDraftMountContext(entryDraft),
-      props: {
-        keyPath,
-        typedKeyPath: '',
-        locale,
-        fieldConfig: /** @type {Field} */ (getField({ ...getFieldArgs, keyPath })),
-        showLabel: false,
-      },
+      props: { keyPath, typedKeyPath: '', locale, fieldConfig, showLabel: false },
     });
 
 /**
  * Create a widget preview function for React preview templates.
- * @param {(target: HTMLElement, keyPath: FieldKeyPath) => Record<string, any>} mountComponent
- * Function to mount Svelte components for field preview.
- * @returns {(keyPath: string) => ReactElement} Function that creates widget preview components.
+ * @param {(target: HTMLElement, keyPath: FieldKeyPath, fieldConfig: Field) => Record<string, any>}
+ * mountComponent Function to mount Svelte components for field preview.
+ * @param {Omit<GetFieldArgs, 'keyPath'>} getFieldArgs Arguments for getField function.
+ * @returns {(keyPath: string) => ReactElement | null} Function that creates widget previews.
  */
 export const createWidgetFor =
-  (mountComponent) =>
+  (mountComponent, getFieldArgs) =>
   /**
    * Get a widget preview component for a field.
    * @param {string} keyPath Field key path.
-   * @returns {ReactElement} Widget preview. It’s a React element that renders a Svelte component
-   * inside a div.
+   * @returns {ReactElement | null} Widget preview. It’s a React element that renders a Svelte
+   * component inside a div, or `null` if the key path doesn’t point to a configured field, like
+   * Netlify/Decap CMS returns.
    */
   (keyPath) => {
+    const fieldConfig = getField({ ...getFieldArgs, keyPath });
+
+    if (!fieldConfig) {
+      return null;
+    }
+
     /** @type {Record<string, any>} */
     let component;
 
@@ -83,7 +85,7 @@ export const createWidgetFor =
      */
     const ref = (div) => {
       if (div) {
-        component = mountComponent(div, keyPath);
+        component = mountComponent(div, keyPath, fieldConfig);
       } else if (component) {
         unmount(component);
       }
@@ -93,21 +95,27 @@ export const createWidgetFor =
   };
 
 /**
- * Create widgets map for an object value.
+ * Create widgets map for an object value. Only the keys pointing to a configured subfield are
+ * included.
  * @param {Record<string, any>} obj Object value.
  * @param {string} basePath Base key path.
- * @param {(keyPath: string) => ReactElement} widgetFor Function to create widget previews.
+ * @param {(keyPath: string) => ReactElement | null} widgetFor Function to create widget previews.
  * @returns {MapOf<any>} Immutable Map of widgets.
  */
 export const createWidgetsMap = (obj, basePath, widgetFor) =>
   getImmutable().Map(
-    Object.fromEntries(Object.keys(obj).map((key) => [key, widgetFor(`${basePath}.${key}`)])),
+    Object.fromEntries(
+      Object.keys(obj)
+        .map((key) => [key, widgetFor(`${basePath}.${key}`)])
+        .filter(([, widget]) => widget !== null),
+    ),
   );
 
 /**
  * Create a widgetsFor function.
  * @param {RawEntryContent} content Unflattened entry content.
- * @param {(keyPath: string) => ReactElement} widgetFor Function to create widget previews.
+ * @param {(keyPath: string) => ReactElement | null} widgetFor Function to create widget
+ * previews.
  * @returns {(name: string) => any} Function that gets widgets data structure for a field.
  */
 export const createWidgetsFor =
@@ -210,8 +218,8 @@ export const preparePreviewTemplateProps = ({ entryDraft, draft, locale }) => {
   });
 
   // Create factory functions with bound dependencies
-  const mountFieldPreview = createFieldPreviewMounter({ entryDraft, locale, getFieldArgs });
-  const widgetFor = createWidgetFor(mountFieldPreview);
+  const mountFieldPreview = createFieldPreviewMounter({ entryDraft, locale });
+  const widgetFor = createWidgetFor(mountFieldPreview, getFieldArgs);
 
   return {
     entry: entryMap,

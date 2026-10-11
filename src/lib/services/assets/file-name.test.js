@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { formatFileName } from '$lib/services/assets/file-name';
+import { formatFileName, validateAssetName } from '$lib/services/assets/file-name';
 
 // Mock i18n dependencies
 vi.mock('@sveltia/i18n', () => ({
@@ -9,6 +9,17 @@ vi.mock('@sveltia/i18n', () => ({
 }));
 
 describe('Test formatFileName()', () => {
+  test('Leading dots are dropped', () => {
+    // A dot file is hidden, so the CMS wouldn’t list it once uploaded
+    expect(formatFileName('.foo.png')).toEqual('foo.png');
+    expect(formatFileName('..foo.png')).toEqual('foo.png');
+    expect(formatFileName('.foo.png', { assetNamesInSameFolder: ['foo.png'] })).toEqual(
+      'foo-1.png',
+    );
+    // Other dots are kept
+    expect(formatFileName('foo..bar.png')).toEqual('foo..bar.png');
+  });
+
   test('Basic sanitization without slugification', () => {
     // Test basic filename sanitization
     expect(formatFileName('test.jpg')).toEqual('test.jpg');
@@ -123,10 +134,10 @@ describe('Test formatFileName()', () => {
     expect(formatFileName('')).toEqual('');
     expect(formatFileName('   ')).toEqual('');
 
-    // Test files that start with dots
-    expect(formatFileName('.gitignore')).toEqual('.gitignore');
+    // Test files that start with dots, which are dropped as a dot file is hidden
+    expect(formatFileName('.gitignore')).toEqual('gitignore');
     expect(formatFileName('.hidden-file.txt', { slugificationEnabled: true })).toEqual(
-      '.hidden-file.txt',
+      'hidden-file.txt',
     );
   });
 
@@ -160,5 +171,53 @@ describe('Test formatFileName()', () => {
     expect(formatFileName('My (Important) File - Copy [2023].pdf', options)).toEqual(
       'my-important-file-copy-2023.pdf',
     );
+  });
+});
+
+describe('Test validateAssetName()', () => {
+  const otherNames = ['forest.png', 'cafe\u0301.png'];
+  const folderNames = ['sub'];
+
+  /**
+   * Validate a name the way the Rename dialog does.
+   * @param {string} name Name as typed.
+   * @returns {string | undefined} Error.
+   */
+  const validate = (name) =>
+    validateAssetName({
+      name: name.trim(),
+      fileName: name.trim() ? formatFileName(name.trim()) : '',
+      otherNames,
+      folderNames,
+    });
+
+  test('accepts a name that is not taken', () => {
+    expect(validate('ocean-2.png')).toBeUndefined();
+    expect(validateAssetName({ name: 'a.png', fileName: 'a.png', otherNames: [] })).toBeUndefined();
+  });
+
+  test('refuses an empty name', () => {
+    expect(validate('  ')).toBe('empty');
+  });
+
+  test('refuses a slash or a name sanitization leaves nothing of', () => {
+    expect(validate('a/b.png')).toBe('character');
+    expect(validate('???')).toBe('character');
+  });
+
+  test('refuses a leading dot', () => {
+    expect(validate('.ocean.png')).toBe('leading_dot');
+  });
+
+  test('refuses the name of another file regardless of case and Unicode normalization', () => {
+    expect(validate('forest.png')).toBe('duplicate');
+    expect(validate('Forest.PNG')).toBe('duplicate');
+    // Composed `é` matches the decomposed one
+    expect(validate('café.png')).toBe('duplicate');
+  });
+
+  test('refuses the name of a folder', () => {
+    expect(validate('sub')).toBe('folder_duplicate');
+    expect(validate('SUB')).toBe('folder_duplicate');
   });
 });

@@ -25,7 +25,9 @@ const {
   mockIsAssetInFolder,
   mockAllAssets,
   mockGetEntryOptions,
+  mockGetCollection,
 } = vi.hoisted(() => ({
+  mockGetCollection: vi.fn(),
   mockGetField: vi.fn(() => ({ widget: 'text' })),
   mockGetMediaFieldSource: vi.fn(),
   mockGetRichTextMediaSource: vi.fn(),
@@ -85,6 +87,10 @@ vi.mock('$lib/services/api/unsaved-asset-proxy', () => ({
       this.fileObj = file;
     },
   ),
+}));
+
+vi.mock('$lib/services/contents/collection', () => ({
+  getCollection: mockGetCollection,
 }));
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
@@ -660,6 +666,42 @@ describe('React Helpers', () => {
       expect(result instanceof ImmutableMap).toBe(true);
     });
 
+    it.each([
+      ['the default locale of the referenced collection', { en: { content: { name: 'Jane' } } }],
+      ['the content without i18n', { _default: { content: { name: 'Jane' } } }],
+    ])('should fall back to %s for an entry without content in the locale', (_label, locales) => {
+      mockGetField.mockReturnValueOnce({
+        widget: 'relation',
+        collection: 'authors',
+        value_field: '{{slug}}',
+      });
+      mockGetEntriesByCollection.mockReturnValueOnce([{ slug: 'jane', locales }]);
+      mockGetCollection.mockReturnValueOnce({ _i18n: { defaultLocale: 'en' } });
+
+      const result = getMetaData({
+        locale: 'fr',
+        getFieldArgs: { collectionName: 'posts', valueMap: { author: 'jane' } },
+      });
+
+      expect(result.toJS()).toEqual({ author: { authors: { jane: { name: 'Jane' } } } });
+    });
+
+    it('should leave the metadata empty for an entry without content in any locale', () => {
+      mockGetField.mockReturnValueOnce({
+        widget: 'relation',
+        collection: 'authors',
+        value_field: '{{slug}}',
+      });
+      mockGetEntriesByCollection.mockReturnValueOnce([{ slug: 'jane', locales: { de: {} } }]);
+
+      const result = getMetaData({
+        locale: 'fr',
+        getFieldArgs: { collectionName: 'posts', valueMap: { author: 'jane' } },
+      });
+
+      expect(result.toJS()).toEqual({ author: { authors: { jane: undefined } } });
+    });
+
     it('should ignore missing field definitions when building metadata', () => {
       mockGetField.mockReturnValueOnce(undefined);
 
@@ -1119,6 +1161,30 @@ describe('React Helpers', () => {
       // The result is kept, so several previews reading it in the same tick share the computation
       expect(result.fieldsMetaData).toBe(fieldsMetaData);
       expect(mockGetField).toHaveBeenCalledOnce();
+    });
+
+    it('should leave the internal list item properties out of the data', () => {
+      const values = {
+        title: 'Hello',
+        'items.0.name': 'A',
+        'items.0.__sc_item_id': 'id-1',
+        'items.0.__sc_item_original_key_path': 'items.0',
+      };
+
+      const mockDraft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        originalEntry: undefined,
+        currentValues: { en: values, ja: values },
+      };
+
+      const { entryMap, valueMap } = buildPreviewData({ draft: mockDraft, locale: 'en' });
+      const expected = { title: 'Hello', items: [{ name: 'A' }] };
+
+      expect(valueMap).toEqual({ title: 'Hello', 'items.0.name': 'A' });
+      expect(entryMap.get('data').toJS()).toEqual(expected);
+      expect(entryMap.getIn(['i18n', 'ja', 'data']).toJS()).toEqual(expected);
     });
 
     it('should build preview data with all required properties', () => {
