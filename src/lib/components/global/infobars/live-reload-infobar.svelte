@@ -10,6 +10,6 @@
   const show = $derived(backendName.current === 'local' && isLiveReloadedPage());
 </script>
 
-<Infobar {show} status="error" --sui-infobar-message-justify-content="center">
+<Infobar {show} status="warning" --sui-infobar-message-justify-content="center">
   {@html makeLink(_('live_reload_warning'), LIVE_RELOAD_DOCS_URL)}
 </Infobar>
