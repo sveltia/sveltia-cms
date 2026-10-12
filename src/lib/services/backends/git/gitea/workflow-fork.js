@@ -1,21 +1,21 @@
+import { fetchAllPages } from '$lib/services/backends/git/gitea/api';
 import { getWorkflowRepository } from '$lib/services/backends/git/gitea/fork';
 import {
   createPullRequest,
   deleteBranch,
-  fetchAllPages,
   fetchBranchHead,
   fetchPullRequestFileContents,
   fetchPullRequestFileList,
   fetchPullRequestHeadRef,
-  stripWipPrefix,
   updateDraftState,
+  wipTitle,
 } from '$lib/services/backends/git/gitea/pull-requests';
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { pruneForkBranches, updateForkStatusWith } from '$lib/services/backends/git/shared/fork';
-import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
+import { encodePathSegments } from '$lib/services/utils/url';
 import { getBranchListPrefix } from '$lib/services/workflow/branch';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
@@ -134,7 +134,7 @@ export const parseForkBranch = (node, pullRequest) => {
     // the message the pull request would be opened with anyway. The prefix that marks a work in
     // progress is dropped, because it’s written back when the entry returns to the drafting stage —
     // keeping it would leave the pull request a work in progress on the way out of that stage
-    title: stripWipPrefix(current?.title ?? message ?? ''),
+    title: wipTitle.strip(current?.title ?? message ?? ''),
     url: current?.html_url,
     branch,
     headSHA,
@@ -168,8 +168,8 @@ export const parseForkBranch = (node, pullRequest) => {
  */
 export const fetchForkBranchFileList = async (pullRequest) => {
   const { owner, repo } = getWorkflowRepository();
-  const base = encodePath(/** @type {string} */ (repository.branch));
-  const head = encodePath(pullRequest.headSHA ?? pullRequest.branch);
+  const base = encodePathSegments(/** @type {string} */ (repository.branch));
+  const head = encodePathSegments(pullRequest.headSHA ?? pullRequest.branch);
 
   const { commits = [] } = /** @type {{ commits?: Record<string, any>[] }} */ (
     await fetchAPI(`/repos/${owner}/${repo}/compare/${base}...${head}`)

@@ -1,7 +1,8 @@
 import { tick } from 'svelte';
 import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import DateTimeEditor from './date-time-editor.svelte';
 
@@ -24,23 +25,13 @@ const renderEditor = async ({
   config = {},
   required = true,
   readonly = false,
-} = {}) => {
-  const props = $state({
-    locale: 'en',
-    keyPath: 'date',
-    typedKeyPath: 'date',
-    fieldId: 'date',
-    fieldLabel: 'Date',
+} = {}) =>
+  renderFieldEditor(DateTimeEditor, {
     fieldConfig: /** @type {DateTimeField} */ ({ name: 'date', widget: 'datetime', ...config }),
+    fieldLabel: 'Date',
     currentValue,
-    required,
-    readonly,
+    props: { required, readonly },
   });
-
-  const { container } = await render(DateTimeEditor, props);
-
-  return { props, container };
-};
 
 /**
  * Get the native input.

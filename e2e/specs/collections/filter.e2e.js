@@ -3,8 +3,7 @@ import {
   COLLECTION_OPTIONS_FILES,
 } from '../../fixtures/configs/collection-options.js';
 import { expect, test } from '../../fixtures/test.js';
-
-import { getEntryList, openCollection } from './helpers.js';
+import { getEditor, getEntryList, openCollection } from '../../fixtures/ui.js';
 
 test.use({ config: COLLECTION_OPTIONS_CONFIG });
 
@@ -45,7 +44,7 @@ test('saves a new entry with the value of the filter field, listing it there onl
   await openCollection(page, 'Workshops');
   await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Pruning Basics');
   await editor.getByRole('button', { name: 'Save' }).click();
@@ -65,7 +64,7 @@ test('leaves a field out of the preview with `preview: false`', async ({ page })
   await openCollection(page, 'Events');
   await page.getByRole('row', { name: /Seed Swap/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const preview = editor.getByRole('document', { name: 'Content Preview' });
 
   // The field is still edited as usual

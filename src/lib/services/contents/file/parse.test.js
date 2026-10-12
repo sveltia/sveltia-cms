@@ -7,7 +7,7 @@ import {
   formatYAML,
 } from '$lib/services/contents/file/format';
 import {
-  clearUnsafeIntegerSources,
+  _resetUnsafeIntegerSources,
   getUnsafeIntegerSource,
 } from '$lib/services/contents/file/integers';
 import {
@@ -203,7 +203,7 @@ date: 2023-01-01
 
 describe('Integers a number can’t represent exactly', () => {
   beforeEach(() => {
-    clearUnsafeIntegerSources();
+    _resetUnsafeIntegerSources();
   });
 
   test('are written back as they were read from JSON', () => {

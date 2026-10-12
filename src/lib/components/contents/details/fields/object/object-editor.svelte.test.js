@@ -4,7 +4,8 @@ import { page } from 'vitest/browser';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { env } from '$lib/services/user/env.svelte';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
-import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import ObjectEditor from './object-editor.svelte';
 
@@ -72,18 +73,11 @@ const renderEditor = async (
     values: i18n ? { en: { ...values }, fr: { ...values } } : { _default: values },
   });
 
-  const { container } = await renderWithDraft(ObjectEditor, {
+  const { container } = await renderFieldEditor(ObjectEditor, {
+    fieldConfig,
+    locale,
+    props: { required: fieldConfig.required ?? true, ...props },
     draft,
-    props: {
-      locale,
-      keyPath: fieldConfig.name,
-      typedKeyPath: fieldConfig.name,
-      fieldId: fieldConfig.name,
-      fieldLabel: fieldConfig.label ?? fieldConfig.name,
-      fieldConfig,
-      required: fieldConfig.required ?? true,
-      ...props,
-    },
     context,
   });
 

@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { collectScanningPaths, getPathRegex, scanDir } from '$lib/services/backends/fs/shared/scan';
+import { createMockAssetFolder } from '$lib/test/factories';
 import { createMockDirectoryHandle, createMockFileHandle } from '$lib/test/fs-handles';
 
 vi.mock('@sveltia/utils/misc', () => ({
@@ -369,27 +370,21 @@ describe('collectScanningPaths', () => {
     ];
 
     allAssetFolders.current = [
-      {
+      createMockAssetFolder({
         collectionName: 'images',
         internalPath: 'static/images',
         publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
-      {
+      }),
+      createMockAssetFolder({
         collectionName: 'videos',
         internalPath: 'static/videos',
         publicPath: '/videos',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
-      {
+      }),
+      createMockAssetFolder({
         collectionName: 'other',
         internalPath: undefined,
         publicPath: undefined,
-        entryRelative: false,
-        hasTemplateTags: false,
-      }, // Should be filtered out
+      }), // Should be filtered out
     ];
 
     const paths = collectScanningPaths();
@@ -421,13 +416,11 @@ describe('collectScanningPaths', () => {
     ];
 
     allAssetFolders.current = [
-      {
+      createMockAssetFolder({
         collectionName: 'images',
         internalPath: '/static/images/',
         publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     ];
 
     const paths = collectScanningPaths();

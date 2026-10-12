@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * A blog whose posts have List fields limited to one item: a required author and an optional
@@ -48,7 +49,7 @@ test.beforeEach(async ({ cms }) => {
 test('fills in the item of a required list limited to one item', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const author = editor.getByRole('group', { name: 'Author', exact: true });
   const sponsor = editor.getByRole('group', { name: 'Sponsor', exact: true });
 
@@ -73,7 +74,7 @@ test('adds the missing item to an existing entry without counting it as a change
 }) => {
   await page.getByRole('row', { name: /Hello/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const saveButton = editor.getByRole('button', { name: 'Save' });
   const name = editor.getByRole('group', { name: 'Author', exact: true }).getByRole('textbox');
 

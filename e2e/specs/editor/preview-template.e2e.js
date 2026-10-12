@@ -1,5 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { BASE_CONFIG, expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Page } from '@playwright/test';
@@ -85,7 +86,7 @@ test.describe('unsaved image', () => {
     await cms.open();
     await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Title' }).fill('Hello');
     // The field refers to the file with its temporary blob URL until the entry is saved
@@ -155,7 +156,7 @@ test.describe('click-to-highlight', () => {
     await page.getByRole('row', { name: /Hello/ }).click();
 
     const preview = page.frameLocator('iframe').first();
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     // The collapsed item is expanded to reveal the field
     await preview.getByText('Second').click();

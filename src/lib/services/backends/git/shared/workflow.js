@@ -11,6 +11,7 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
  * FileChange,
  * RepositoryPath,
  * WorkflowChangedFile,
+ * WorkflowMergeState,
  * WorkflowPullRequest,
  * WorkflowSaveOptions,
  * WorkflowStatus,
@@ -267,4 +268,39 @@ export const toChangedFilesWithModes = async (files, { statusMap, headSHA, fetch
   });
 
   return changedFiles.map((file) => ({ ...file, mode: modes.get(file.path) }));
+};
+
+/**
+ * Get the merge state to report when the pull request’s branch has moved on from the commit on
+ * record. Publishing refuses such a pull request outright, as the merge is pinned to that commit,
+ * so there’s no point in listing the files of a commit that won’t be merged. The list is reported
+ * as complete, or the check would put the refusal down to changes it can’t show instead.
+ * @param {WorkflowPullRequest} pullRequest Pull request, with the head commit on record.
+ * @param {string} headSHA Commit the branch points at now.
+ * @returns {WorkflowMergeState | undefined} State, or `undefined` if the branch hasn’t moved, in
+ * which case the files have to be listed.
+ */
+export const getMovedHeadMergeState = (pullRequest, headSHA) =>
+  headSHA === pullRequest.headSHA
+    ? undefined
+    : { headSHA, onConfiguredBranches: true, files: [], complete: true };
+
+/**
+ * Check whether the given pull request has been merged, on GitHub or Gitea/Forgejo, whose APIs
+ * share the endpoint. It answers with a status rather than a body: `204 No Content` when it has,
+ * `404 Not Found` when it hasn’t. Both services answer a merge request for any pull request that
+ * can’t be merged with a `405 Method Not Allowed`, the pull request having been merged already
+ * included, so this tells that case from a real refusal.
+ * @param {RepositoryPath} repository Repository holding the pull request.
+ * @param {number} number Pull request number.
+ * @returns {Promise<boolean>} `true` if the pull request has been merged.
+ * @see https://docs.github.com/en/rest/pulls/pulls#check-if-a-pull-request-has-been-merged
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoPullRequestIsMerged
+ */
+export const isPullRequestMerged = async ({ owner, repo }, number) => {
+  const response = /** @type {Response} */ (
+    await fetchAPI(`/repos/${owner}/${repo}/pulls/${number}/merge`, { responseType: 'raw' })
+  );
+
+  return response.ok;
 };

@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * Mountain reports with an optional low temperature, which is always below freezing, stored as a
@@ -39,7 +40,7 @@ test('saves an entry whose optional number field is left empty', async ({ cms, p
   await cms.signIn();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Summit');
   // The empty string the field starts with isn’t shown as `NaN`
@@ -60,7 +61,7 @@ test('reports text that isn’t a number instead of saving the field empty', asy
   await cms.signIn();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const field = editor.getByRole('group', { name: /Low Temperature/ });
   const input = editor.getByRole('spinbutton', { name: 'Low Temperature' });
 

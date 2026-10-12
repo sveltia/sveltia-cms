@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { createMockAssetFolder } from '$lib/test/factories';
+
 /**
  * @import { Asset, Entry, InternalEntryCollection } from '$lib/types/private';
  */
@@ -520,13 +522,11 @@ describe('getAssociatedAssets', () => {
       size: 1024,
       text: '',
       sha: 'abc123',
-      folder: {
+      folder: createMockAssetFolder({
         collectionName: 'posts',
         internalPath: 'images',
         publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     };
 
     mockGetCollection.mockReturnValue(mockCollection);
@@ -756,13 +756,11 @@ describe('getAssociatedAssets', () => {
       size: 1024,
       text: '',
       sha: 'abc123',
-      folder: {
+      folder: createMockAssetFolder({
         collectionName: 'posts',
         internalPath: 'images',
         publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     };
 
     // Entry with duplicate image references
@@ -923,13 +921,11 @@ describe('getAssociatedAssets', () => {
       size: 1024,
       text: '',
       sha: 'abc123',
-      folder: {
+      folder: createMockAssetFolder({
         collectionName: 'posts',
         internalPath: 'images',
         publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     };
 
     const entryWithAsset = /** @type {any} */ ({
@@ -1198,13 +1194,11 @@ describe('getAssociatedAssets', () => {
       size: 1024,
       text: '',
       sha: 'abc123',
-      folder: {
+      folder: createMockAssetFolder({
         collectionName: 'posts',
         internalPath: 'media',
         publicPath: '/media',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     };
 
     const entryWithAliasPath = /** @type {any} */ ({

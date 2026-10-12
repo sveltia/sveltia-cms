@@ -16,6 +16,7 @@
   import { isFieldChanged, revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getFieldLocaleAccess } from '$lib/services/contents/editor/locale';
+  import { createResetMenuState } from '$lib/services/contents/editor/reset-menu.svelte';
   import {
     getCurrentValue,
     getFieldKind,
@@ -225,25 +226,17 @@
   // A field can be restored to its default value or cleared, unless it can’t be edited or its keys
   // follow the default locale, as with a KeyValue field using the `duplicate_keys` i18n strategy
   const canReset = $derived(!inEditorComponent && !readonly && !areKeysDuplicated);
-  /**
-   * Whether restoring the default value or clearing the field would change anything. It takes
-   * going through the whole field, so it’s only checked as the menu opens rather than on every
-   * change.
-   */
-  let resetAvailability = $state({ restore: false, clear: false });
-  const invalid = $derived(validity?.valid === false);
-
-  /**
-   * Check whether restoring the default value or clearing the field would change anything.
-   */
-  const updateResetAvailability = () => {
+  // The field’s reset actions are taken right away rather than confirmed in a dialog, so only the
+  // availability is used
+  const resetMenu = createResetMenuState(() => {
     const args = { valueMap, fieldConfig, keyPath, locale, defaultLocale };
 
-    resetAvailability = {
+    return {
       restore: canResetField({ ...args, restore: true }),
       clear: canResetField(args),
     };
-  };
+  });
+  const invalid = $derived(validity?.valid === false);
   const editorProps = $derived({
     locale,
     keyPath,
@@ -301,8 +294,8 @@
           disabled={pendingDeletion}
           popupPosition="bottom-right"
           aria-label={_('show_field_options')}
-          onclick={updateResetAvailability}
-          onkeydown={updateResetAvailability}
+          onclick={resetMenu.update}
+          onkeydown={resetMenu.update}
         >
           {#snippet popup()}
             <Menu ariaLabel={_('field_options')}>
@@ -316,7 +309,7 @@
                 separator={!!canCopy}
                 available={{
                   revert: !isRevertDisabled,
-                  ...(canReset ? resetAvailability : {}),
+                  ...(canReset ? resetMenu.availability : {}),
                 }}
                 onSelect={(action) => {
                   const draft = /** @type {EntryDraft} */ (entryDraft.current);

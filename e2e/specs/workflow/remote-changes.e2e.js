@@ -1,5 +1,6 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, test } from '../../fixtures/test.js';
+import { openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -10,21 +11,6 @@ test.use({ config: WORKFLOW_CONFIG });
 test.beforeEach(async ({ github }) => {
   github.commit({ 'content/posts/first-post.md': post('First Post', 'Hello, world!') });
 });
-
-/**
- * Open an entry in the editor.
- * @param {Page} page Page.
- * @param {string} title Entry title.
- * @returns {Promise<Locator>} Editor.
- */
-const openEntry = async (page, title) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await page.getByRole('row', { name: new RegExp(`^${title}`) }).click();
-  await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue(title);
-
-  return editor;
-};
 
 /**
  * Publish the entry open in the editor.
@@ -79,6 +65,29 @@ test('refuses to publish an entry a colleague has changed since', async ({ cms, 
     post('First Post', 'Hello from Alex!'),
   );
   await expect(page.getByRole('button', { name: 'Publish Entry' })).toBeEnabled();
+});
+
+test('takes a pull request merged on GitHub as published', async ({ cms, github, page }) => {
+  const pullRequest = openEntryPullRequest(github, {
+    slug: 'second-post',
+    files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+    status: 'pending_publish',
+  });
+
+  await cms.open();
+  await openEntry(page, 'Second Post');
+  // A maintainer merges it on GitHub while this board is open
+  github.mergePullRequest(pullRequest);
+  await publishEntry(page);
+
+  // The entry is live, so publishing carries on rather than reporting a failure: the branch is
+  // tidied up and the entry is listed as published rather than kept on the board
+  await expect.poll(() => github.refs.has('cms/posts/second-post')).toBe(false);
+  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+    /First Post/,
+    /Second Post/,
+  ]);
+  expect(github.readFile('content/posts/second-post.md')).toBe(post('Second Post', 'Coming soon.'));
 });
 
 test('warns before saving over a colleague’s commit to the workflow branch', async ({

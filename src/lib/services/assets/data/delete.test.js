@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createMockAssetFolder } from '$lib/test/factories';
+
 import { deleteAssets, updateStores } from './delete.js';
 
 // Mock dependencies
@@ -55,13 +57,11 @@ describe('assets/data/delete', () => {
       sha: 'mock-sha',
       size: 1024,
       kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-      folder: {
-        internalPath: '/images',
+      folder: createMockAssetFolder({
         collectionName: 'assets',
+        internalPath: '/images',
         publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     });
 
     it('should clear focused asset if it matches deleted assets', async () => {
@@ -138,13 +138,11 @@ describe('assets/data/delete', () => {
       sha,
       size: 1024,
       kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-      folder: {
-        internalPath: '/images',
+      folder: createMockAssetFolder({
         collectionName: 'assets',
+        internalPath: '/images',
         publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     });
 
     it('should call saveChanges with correct parameters', async () => {

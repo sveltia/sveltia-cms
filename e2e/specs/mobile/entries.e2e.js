@@ -1,7 +1,8 @@
 import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/monolingual.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
-import { getEditor, PHONE, signIn } from './helpers.js';
+import { PHONE, signIn } from './helpers.js';
 
 test.use({ ...PHONE });
 

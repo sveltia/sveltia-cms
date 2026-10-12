@@ -1,6 +1,7 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../fixtures/configs/workflow.js';
 import { createPNG } from '../fixtures/files.js';
 import { BASE_CONFIG, expect, test } from '../fixtures/test.js';
+import { getEditor } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -70,7 +71,7 @@ const addScripts = async (page, { before, after }) => {
 const createPost = async (page, title) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill(title);
 
@@ -206,9 +207,7 @@ test.describe('CMS.registerEditorComponent()', () => {
     await cms.signIn();
     await page.getByRole('row', { name: /Launch Day/ }).click();
 
-    const field = page
-      .getByRole('group', { name: 'Content Editor' })
-      .getByRole('group', { name: /Body.*Field/ });
+    const field = getEditor(page).getByRole('group', { name: /Body.*Field/ });
 
     await expect(
       field
@@ -417,7 +416,7 @@ test.describe('a relative media_folder in a component', () => {
   test('lists the images next to the entry, and picks one', async ({ cms, page }) => {
     await page.getByRole('row', { name: /Lake/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const field = editor.getByRole('group', { name: /Body.*Field/ });
     const dialog = page.getByRole('dialog', { name: 'Select Image' });
 

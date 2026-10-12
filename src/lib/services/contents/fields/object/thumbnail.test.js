@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { getObjectThumbnail } from './thumbnail';
+import { getDraftObjectThumbnail, getObjectThumbnail } from './thumbnail';
 
 /**
  * @import { Asset } from '$lib/types/private';
@@ -424,6 +424,58 @@ describe('getObjectThumbnail()', () => {
         typedKeyPath: 'photos.*',
         hasSingleSubField: true,
         valueMap,
+      }),
+    ).toBeUndefined();
+  });
+});
+
+describe('getDraftObjectThumbnail()', () => {
+  beforeEach(() => {
+    mockGetMediaFieldSource.mockImplementation(() => ({ asset: imageAsset }));
+  });
+
+  test('takes the collection, entry and files from the draft', () => {
+    const entry = /** @type {any} */ ({ id: 'post' });
+
+    const draft = /** @type {any} */ ({
+      collectionName: 'posts',
+      fileName: undefined,
+      isIndexFile: false,
+      originalEntry: entry,
+      files: {},
+    });
+
+    expect(
+      getDraftObjectThumbnail({
+        draft,
+        thumbnailFieldName: 'background',
+        keyPath: 'sections.0',
+        typedKeyPath: 'sections.*',
+        type: 'banner',
+        valueMap: { 'sections.0.type': 'banner', 'sections.0.background': '/uploads/photo.png' },
+        locale: 'en',
+      }),
+    ).toEqual({ asset: imageAsset });
+
+    expect(mockGetMediaFieldSource).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entry,
+        collectionName: 'posts',
+        typedKeyPath: 'sections.*<banner>.background',
+        locale: 'en',
+      }),
+    );
+  });
+
+  test('finds nothing without a draft', () => {
+    expect(
+      getDraftObjectThumbnail({
+        draft: undefined,
+        thumbnailFieldName: 'image',
+        keyPath: 'hero',
+        typedKeyPath: 'hero',
+        valueMap: { 'hero.image': '/uploads/photo.png' },
+        locale: 'en',
       }),
     ).toBeUndefined();
   });

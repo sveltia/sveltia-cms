@@ -16,9 +16,7 @@ import {
 } from '$lib/services/contents/collection';
 
 // Mock dependencies
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key) => key),
-}));
+vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
 }));

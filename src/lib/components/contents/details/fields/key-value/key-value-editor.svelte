@@ -10,7 +10,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { TextInput } from '@sveltia/ui';
-  import equal from 'fast-deep-equal';
   import { getContext, tick } from 'svelte';
   import { flip } from 'svelte/animate';
 
@@ -22,11 +21,14 @@
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getPairs,
+    getPairsToSave,
+    haveStoredPairsChanged,
     savePairs,
+    shouldStorePlaceholder,
     validatePairs,
   } from '$lib/services/contents/fields/key-value/helpers';
   import { getDirection } from '$lib/services/contents/i18n';
-  import { moveListItem } from '$lib/services/utils/drag-sorting';
+  import { focusAfterRemoval, moveListItem } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { createKeyedRows } from '$lib/services/utils/keyed-rows.svelte';
   import { watch } from '$lib/services/utils/state.svelte';
@@ -115,11 +117,9 @@
     }
 
     const updatedPairs = getPairs({ draft, valueStoreKey, keyPath, locale });
-    // A pair whose key is still empty hasn’t been written to the draft — adding one removes the
-    // `null` placeholder from the draft, which is what runs this — so it doesn’t count as a change
-    const savedPairs = rows.values.filter(([key]) => key.trim());
+    const valueStore = draft[valueStoreKey][locale];
 
-    if (!equal(savedPairs, updatedPairs)) {
+    if (haveStoredPairsChanged({ rows: rows.values, storedPairs: updatedPairs })) {
       // Preserve existing IDs for unchanged positions; assign new IDs for new pairs
       rows.replace([...updatedPairs], { keepIds: true });
       edited = updatedPairs.map(() => false);
@@ -127,9 +127,7 @@
 
     ensureBlankRow();
 
-    // A blank row isn’t stored, so the field holds nothing until a key is filled in
-    if (!updatedPairs.length && draft[valueStoreKey][locale][keyPath] !== null) {
-      const valueStore = draft[valueStoreKey][locale];
+    if (shouldStorePlaceholder({ storedPairs: updatedPairs, storedValue: valueStore[keyPath] })) {
       const _keyPath = keyPath;
 
       // Enable validation. This runs from an effect, so the write is deferred like the one in
@@ -169,11 +167,25 @@
     // blank row left once the last pair is removed can’t be removed, so its key takes the focus
     // There’s always a row left, as the blank row takes the place of the last pair
     const { rows: rowList } = /** @type {HTMLTableSectionElement} */ (tableBody);
-    const row = rowList[index] ?? rowList[index - 1];
 
-    /** @type {HTMLElement} */ (
-      row.querySelector('td.action button:enabled') ?? row.querySelector('td.key input')
-    ).focus();
+    focusAfterRemoval({
+      index,
+      /**
+       * Get the Remove button of a row, or the key input if the row can’t be removed.
+       * @param {number} _index Row index.
+       * @returns {HTMLElement | null | undefined} Element.
+       */
+      getTarget: (_index) => {
+        const row = rowList[_index];
+
+        return (
+          row &&
+          /** @type {HTMLElement | null} */ (
+            row.querySelector('td.action button:enabled') ?? row.querySelector('td.key input')
+          )
+        );
+      },
+    });
   };
 
   /**
@@ -198,6 +210,12 @@
      */
     getListElement: () => tableBody,
     onMove: movePair,
+    /**
+     * Get the key of a pair, to be attached to its drag.
+     * @param {number} index Row index.
+     * @returns {string} Key.
+     */
+    getItemData: (index) => rows.values[index][0],
   });
 
   /**
@@ -208,23 +226,22 @@
 
     validations = validatePairs({ pairs: rows.values, edited });
 
-    const keyedPairs = rows.values.filter(([key]) => key.trim());
-
-    if (!draft || validations.some(Boolean)) {
+    /* v8 ignore next 3 -- the editor is only rendered while the draft is there */
+    if (!draft) {
       return;
     }
 
-    if (keyedPairs.length) {
-      // Wait until every row has a key before saving
-      if (keyedPairs.length !== rows.values.length) {
-        return;
-      }
-    } else if (
-      // With no key in any row, the field holds no pairs, which only has to be saved when the last
-      // pair has just been removed, leaving a blank row that isn’t stored. A blank pair stored as
-      // the default value of a required field is left alone, so opening an entry changes nothing
-      !getPairs({ draft, valueStoreKey, keyPath, locale }).some(([key]) => key.trim())
-    ) {
+    const pairs = getPairsToSave({
+      rows: rows.values,
+      validations,
+      /**
+       * Get the pairs stored in the draft.
+       * @returns {[string, string][]} Pairs.
+       */
+      getStoredPairs: () => getPairs({ draft, valueStoreKey, keyPath, locale }),
+    });
+
+    if (!pairs) {
       return;
     }
 
@@ -234,7 +251,7 @@
       fieldConfig,
       keyPath,
       locale,
-      pairs: $state.snapshot(keyedPairs),
+      pairs: $state.snapshot(pairs),
     };
 
     // This runs from an effect, so defer the write to the draft like `<FieldEditor>` does: a write
@@ -283,9 +300,7 @@
         <tr
           bind:this={rowElements[index]}
           class:dragging={sorter.dragIndex === index}
-          draggable={sorter.grabbedIndex === index}
-          ondragstart={(event) => sorter.onDragStart(index, event, rows.values[index][0])}
-          ondragend={sorter.onDragEnd}
+          {...sorter.itemProps(index)}
           animate:flip={{ duration: 200 }}
         >
           {#if !keysReadonly}

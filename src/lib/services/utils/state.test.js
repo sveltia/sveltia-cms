@@ -289,6 +289,45 @@ describe('watchAsync()', () => {
 
     stop();
   });
+
+  it('should pass on the error of the latest run only', async () => {
+    const input = createRawState(1);
+    /** @type {Record<number, (reason: Error) => void>} */
+    const rejecters = {};
+    /** @type {string[]} */
+    const results = [];
+    /** @type {unknown[]} */
+    const errors = [];
+
+    const stop = createRootEffect(() => {
+      watchAsync(
+        () => {
+          const value = input.current;
+
+          return new Promise((_resolve, reject) => {
+            rejecters[value] = reject;
+          });
+        },
+        (result) => {
+          results.push(result);
+        },
+        (error) => {
+          errors.push(error);
+        },
+      );
+    });
+
+    await wait();
+    input.current = 2;
+    await wait();
+    rejecters[1](new Error('one'));
+    rejecters[2](new Error('two'));
+    await wait();
+    expect(results).toEqual([]);
+    expect(errors).toEqual([new Error('two')]);
+
+    stop();
+  });
 });
 
 describe('syncValues()', () => {

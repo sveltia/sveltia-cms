@@ -5,9 +5,9 @@ import { allEntries } from '$lib/services/contents';
 
 import { compareWithStore, describeConflict, detectEntryConflict } from './conflict';
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key, options) => (options?.values ? `${key}:${JSON.stringify(options.values)}` : key)),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
 vi.mock('$lib/services/backends/refresh', () => ({ checkForRemoteChanges: vi.fn() }));
 vi.mock('$lib/services/contents', () => ({ allEntries: { current: [] } }));
 vi.mock('$lib/services/utils/date', () => ({

@@ -1,5 +1,6 @@
 import { post } from '../../fixtures/configs/workflow.js';
 import { expect, GITLAB_CONFIG, test } from '../../fixtures/test.js';
+import { getEditor, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -45,21 +46,6 @@ const openEntryMergeRequest = (gitlab, { slug, files, status = 'draft' }) => {
 };
 
 /**
- * Open an entry in the editor.
- * @param {Page} page Page.
- * @param {string} title Entry title.
- * @returns {Promise<Locator>} Editor.
- */
-const openEntry = async (page, title) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await page.getByRole('row', { name: new RegExp(title) }).click();
-  await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue(title);
-
-  return editor;
-};
-
-/**
  * Save the entry, and keep it a draft rather than sending it for review.
  * @param {Page} page Page.
  * @param {Locator} editor Editor.
@@ -85,20 +71,6 @@ const publish = async (page, editor) => {
     .click();
 };
 
-/**
- * Change the status of the entry open in the editor with its status menu.
- * @param {CMS} cms CMS.
- * @param {Page} page Page.
- * @param {RegExp} current Current status.
- * @param {string} status New status.
- */
-const changeStatus = async (cms, page, current, status) => {
-  await cms.chooseMenuItem(
-    page.getByRole('button', { name: current }),
-    page.getByRole('menuitemradio', { name: status }),
-  );
-};
-
 test('saves a new entry to a branch and opens a draft merge request', async ({
   cms,
   gitlab,
@@ -109,7 +81,7 @@ test('saves a new entry to a branch and opens a draft merge request', async ({
   await cms.open();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
   await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
@@ -176,15 +148,15 @@ test('moves an entry through the review stages', async ({ cms, gitlab, page }) =
   await openEntry(page, 'Second Post');
 
   // A draft is marked in the title, which the CMS strips when it reads it
-  await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+  await cms.changeStatus(/Status: .*Draft/, 'In Review');
   await expect
     .poll(() => ({ labels: mergeRequest.labels, title: mergeRequest.title }))
     .toEqual({ labels: ['sveltia-cms/pending_review'], title: 'Update Post “second-post”' });
 
-  await changeStatus(cms, page, /Status: .*In Review/, 'Ready');
+  await cms.changeStatus(/Status: .*In Review/, 'Ready');
   await expect.poll(() => mergeRequest.labels).toEqual(['sveltia-cms/pending_publish']);
 
-  await changeStatus(cms, page, /Status: .*Ready/, 'Draft');
+  await cms.changeStatus(/Status: .*Ready/, 'Draft');
   await expect
     .poll(() => ({ labels: mergeRequest.labels, title: mergeRequest.title }))
     .toEqual({ labels: ['sveltia-cms/draft'], title: 'Draft: Update Post “second-post”' });
@@ -202,12 +174,12 @@ test('keeps a title GitLab doesn’t read as a draft', async ({ cms, gitlab, pag
 
   await cms.open();
   await openEntry(page, 'Second Post');
-  await changeStatus(cms, page, /Status: .*In Review/, 'Draft');
+  await cms.changeStatus(/Status: .*In Review/, 'Draft');
   await expect
     .poll(() => ({ labels: mergeRequest.labels, title: mergeRequest.title }))
     .toEqual({ labels: ['sveltia-cms/draft'], title: 'Draft: WIP notes for Second Post' });
 
-  await changeStatus(cms, page, /Status: .*Draft/, 'Ready');
+  await cms.changeStatus(/Status: .*Draft/, 'Ready');
   await expect
     .poll(() => ({ labels: mergeRequest.labels, title: mergeRequest.title }))
     .toEqual({ labels: ['sveltia-cms/pending_publish'], title: 'WIP notes for Second Post' });
@@ -223,7 +195,7 @@ test('keeps the other labels of a merge request', async ({ cms, gitlab, page }) 
 
   await cms.open();
   await openEntry(page, 'Second Post');
-  await changeStatus(cms, page, /Status: .*Draft/, 'Ready');
+  await cms.changeStatus(/Status: .*Draft/, 'Ready');
 
   await expect
     .poll(() => mergeRequest.labels)

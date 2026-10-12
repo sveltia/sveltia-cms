@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { cmsConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/editor';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 import {
-  encodeRoutePath,
   getEntryEditorBackPath,
   goBack,
   goto,
@@ -265,13 +265,13 @@ describe('navigation', () => {
 
     it('should decode an encoded route path back to the original path', () => {
       const path = '/assets/images/50%off #1?.jpg';
-      const encoded = encodeRoutePath(path);
+      const encoded = encodePathSegments(path);
 
       expect(encoded).toEqual('/assets/images/50%25off%20%231%3F.jpg');
       expect(parseLocation(`https://example.com/#${encoded}`)).toEqual({ path, params: {} });
       // An already-encoded name is kept as is, rather than being decoded to another name
       expect(
-        parseLocation(`https://example.com/#${encodeRoutePath('/assets/a%20b.jpg')}`).path,
+        parseLocation(`https://example.com/#${encodePathSegments('/assets/a%20b.jpg')}`).path,
       ).toEqual('/assets/a%20b.jpg');
     });
 
@@ -689,7 +689,7 @@ describe('navigation', () => {
       window.location.href = 'https://example.com/#/assets/50%25off.jpg';
       window.location.hash = '#/assets/50%25off.jpg';
 
-      await goto(encodeRoutePath('/assets/50%off.jpg'));
+      await goto(encodePathSegments('/assets/50%off.jpg'));
 
       expect(window.history.pushState).not.toHaveBeenCalled();
     });
@@ -928,7 +928,7 @@ describe('navigation', () => {
         configurable: true,
       });
 
-      goBack(encodeRoutePath('/assets/a/50%off #1'));
+      goBack(encodePathSegments('/assets/a/50%off #1'));
 
       expect(window.history.pushState).not.toHaveBeenCalled();
       expect(document.startViewTransition).toHaveBeenCalledWith({

@@ -7,7 +7,7 @@ import { publishingBranches } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { publishWorkflowEntry } from '$lib/services/workflow/save';
 import { canPublish } from '$lib/services/workflow/validate';
-import { initTestConfig } from '$lib/test/config';
+import { createMockWorkflowEntry, initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 import { waitForToastsToHide } from '$lib/test/toast';
 
@@ -33,17 +33,8 @@ vi.mock('$lib/services/workflow/validate', () => ({ canPublish: vi.fn(() => true
  * @param {Record<string, any>} [pullRequest] Pull request properties to override.
  * @returns {any} Entry.
  */
-const createEntry = (status, slug = 'hello', pullRequest = {}) => ({
-  id: `posts/${slug}`,
-  slug,
-  subPath: slug,
-  locales: {},
-  workflow: {
-    status,
-    collectionName: 'posts',
-    pullRequest: { number: 1, branch: `cms/posts/${slug}`, ...pullRequest },
-  },
-});
+const createEntry = (status, slug = 'hello', pullRequest = {}) =>
+  createMockWorkflowEntry({ status, slug, pullRequest });
 
 /**
  * Build a draft editing the given unpublished entry.

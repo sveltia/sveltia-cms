@@ -5,6 +5,7 @@ import { globalAssetFolder } from '$lib/services/assets/folders';
 import { env } from '$lib/services/user/env.svelte';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import ListEditorComplex from './list-editor-complex.svelte';
 
@@ -52,17 +53,11 @@ const sectionsField = {
 const renderEditor = async (fieldConfig, values, props = {}) => {
   const draft = createMockDraft({ fields: [fieldConfig], values: { _default: values } });
 
-  const { container, entryDraft } = await renderWithDraft(ListEditorComplex, {
+  const { container, entryDraft } = await renderFieldEditor(ListEditorComplex, {
+    fieldConfig,
+    locale: '_default',
+    props,
     draft,
-    props: {
-      locale: '_default',
-      keyPath: fieldConfig.name,
-      typedKeyPath: fieldConfig.name,
-      fieldId: fieldConfig.name,
-      fieldLabel: fieldConfig.label ?? fieldConfig.name,
-      fieldConfig,
-      ...props,
-    },
   });
 
   return { draft, container, entryDraft };
@@ -594,6 +589,22 @@ describe('ListEditorComplex (more)', () => {
     await expect
       .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
       .toEqual(['b', 'a']);
+  });
+
+  test('describes a dragged item with the summary of its type', async () => {
+    const { container } = await renderEditor(
+      { ...sectionsField, types: [{ ...sectionsField.types[0], summary: '{{fields.heading}}' }] },
+      { 'sections.0.type': 'hero', 'sections.0.heading': 'Welcome' },
+    );
+
+    await expect.poll(() => container.querySelectorAll('.item').length).toBe(1);
+
+    const item = /** @type {HTMLElement} */ (container.querySelector('.item'));
+    const dataTransfer = new DataTransfer();
+
+    item.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer }));
+    expect(dataTransfer.getData('text/plain')).toBe('Welcome');
+    item.dispatchEvent(new DragEvent('dragend', { bubbles: true }));
   });
 
   test('grabs an item with the reorder control', async () => {

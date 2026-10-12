@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import UuidEditor from './uuid-editor.svelte';
 
@@ -26,25 +27,15 @@ const renderEditor = async ({
   locale = 'en',
   config = {},
   context = {},
-} = {}) => {
-  const props = $state({
-    locale,
-    keyPath: 'id',
-    typedKeyPath: 'id',
-    fieldId: 'id',
-    fieldLabel: 'ID',
+} = {}) =>
+  renderFieldEditor(UuidEditor, {
     fieldConfig: /** @type {UuidField} */ ({ name: 'id', widget: 'uuid', ...config }),
+    fieldLabel: 'ID',
+    locale,
     currentValue,
-  });
-
-  await renderWithDraft(UuidEditor, {
     draft: createMockDraft({ i18n: { defaultLocale: 'en', allLocales: ['en', 'ja'] } }),
-    props,
     context,
   });
-
-  return { props };
-};
 
 describe('UuidEditor', () => {
   test('generates a UUID for a new entry', async () => {

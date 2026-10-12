@@ -3,12 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildObjectApiUrl,
   buildObjectUrl,
-  createS3Folder,
-  deleteS3Folder,
   encodeKey,
   generateAwsSignature,
   isS3ObjectUrl,
-  moveS3Object,
   parseS3Results,
   s3Operations,
   signedRequest,
@@ -22,6 +19,9 @@ const {
   delete: deleteS3Objects,
   rename: renameS3Object,
   replace: replaceS3Object,
+  move: moveS3Object,
+  createFolder: createS3Folder,
+  deleteFolder: deleteS3Folder,
 } = s3Operations;
 
 /* eslint-disable jsdoc/require-jsdoc */
@@ -966,6 +966,15 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       expect(fetch).toHaveBeenCalledExactlyOnceWith(
         'https://test-bucket.s3.us-east-1.amazonaws.com/uploads/2024/summer/',
         expect.objectContaining({ method: 'DELETE' }),
+      );
+
+      // S3 itself reports success for a missing key, but a compatible service may not
+      vi.mocked(fetch).mockResolvedValue(new Response('NoSuchKey', { status: 404 }));
+      await expect(deleteS3Folder('2024', mockConfig, options)).resolves.toBeUndefined();
+
+      vi.mocked(fetch).mockResolvedValue(new Response('Access Denied', { status: 403 }));
+      await expect(deleteS3Folder('2024', mockConfig, options)).rejects.toThrow(
+        'Failed to delete object uploads/2024/: Access Denied',
       );
     });
 

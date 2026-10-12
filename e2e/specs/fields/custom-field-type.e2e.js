@@ -1,4 +1,5 @@
 import { BASE_CONFIG, expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 test.use({
   config: {
@@ -63,7 +64,7 @@ test('renders a custom field control using hooks from the React the CMS exposes'
 }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const counter = editor.getByRole('button', { name: /^Count: / });
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Counted');
@@ -84,7 +85,7 @@ test('validates a custom field with an `isValid` method exposed by a function co
 }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const counter = editor.getByRole('button', { name: /^Count: / });
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Counted');

@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor, getField } from '../../fixtures/ui.js';
 
 /**
  * Options shared by the Relation fields referring to a dish. Up to 10 options are shown as radio
@@ -158,13 +159,6 @@ const signIn = async ({ cms, menu }) => {
 };
 
 /**
- * Get the editor.
- * @param {import('@playwright/test').Page} page Page.
- * @returns {import('@playwright/test').Locator} Content editor.
- */
-const getEditor = (page) => page.getByRole('group', { name: 'Content Editor' });
-
-/**
  * Get the radio buttons of a field, which a Select or Relation field with a few options shows.
  * @param {import('@playwright/test').Page} page Page.
  * @param {string} label Field label.
@@ -200,15 +194,6 @@ const pick = async (page, label, name) => {
     .and(page.getByRole('radio', { name, exact: true }))
     .click();
 };
-
-/**
- * Get the group of a field in the editor.
- * @param {import('@playwright/test').Page} page Page.
- * @param {string} label Field label.
- * @returns {import('@playwright/test').Locator} Field group.
- */
-const getField = (page, label) =>
-  getEditor(page).getByRole('group', { name: new RegExp(`${label}.*Field`) });
 
 test.describe('menus', () => {
   test('offer only the dishes matching fixed values, and save the one picked', async ({

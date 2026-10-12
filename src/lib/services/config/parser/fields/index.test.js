@@ -1,58 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createCollectors } from '$lib/test/config-parser';
+
 import { parseFields } from '.';
 
-/**
- * @import { ConfigParserCollectors } from '$lib/types/private';
- */
-
-// Mock @sveltia/i18n
-/** @type {Record<string, string>} */
-const mockI18nStrings = {};
-
-/**
- * I18n translation function.
- * @param {string} key Message key.
- * @param {object & { values?: Record<string, string> }} [options] Options.
- * @returns {string} Translated string.
- */
-function mockTranslate(key, options) {
-  let message = mockI18nStrings[key] || key;
-
-  if (options?.values) {
-    Object.entries(options.values).forEach(([k, v]) => {
-      message = message.replace(`{${k}}`, v);
-    });
-  }
-
-  return message;
-}
-
-vi.mock('@sveltia/i18n', () => ({
-  _: mockTranslate,
-  locale: { current: 'en', set: vi.fn() },
-}));
-
-const mockGetStore = vi.fn();
-
-/**
- * Create a fresh collectors object for testing.
- * @returns {ConfigParserCollectors} Collectors instance.
- */
-function createCollectors() {
-  return {
-    errors: new Set(),
-    warnings: new Set(),
-    mediaFields: new Set(),
-    relationFields: new Set(),
-  };
-}
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ locale: 'en' }),
+);
 
 describe('Field Collectors', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockGetStore.mockImplementation((store) => store);
   });
 
   describe('Media field collection in nested structures', () => {

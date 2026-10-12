@@ -1,5 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -106,7 +107,7 @@ test('shows the preview of a restored unsaved image replacing a saved one', asyn
   await cms.open();
 
   const row = page.getByRole('row', { name: /Kite/ });
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const cover = editor.getByRole('group', { name: '“\u2068Cover\u2069” Field' });
   const preview = cover.locator('img');
 

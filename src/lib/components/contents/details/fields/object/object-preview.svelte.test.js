@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import ObjectPreview from './object-preview.svelte';
 
@@ -35,20 +36,14 @@ const blockField = {
  * @param {Record<string, any>} values Flattened values.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (fieldConfig, values) => {
-  const { container } = await renderWithDraft(ObjectPreview, {
-    draft: createMockDraft({ fields: [fieldConfig], values: { _default: values } }),
-    props: {
-      locale: '_default',
-      keyPath: fieldConfig.name,
-      typedKeyPath: fieldConfig.name,
+const renderPreview = async (fieldConfig, values) =>
+  (
+    await renderFieldPreview(ObjectPreview, {
       fieldConfig,
-      currentValue: undefined,
-    },
-  });
-
-  return container;
-};
+      locale: '_default',
+      draft: createMockDraft({ fields: [fieldConfig], values: { _default: values } }),
+    })
+  ).container;
 
 describe('ObjectPreview', () => {
   test('previews each subfield', async () => {

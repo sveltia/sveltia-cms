@@ -1,5 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { BASE_CONFIG, expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * Blog with an empty site-level `public_folder`, which falls back to the `media_folder` path
@@ -46,7 +47,7 @@ test('warns about an empty public folder and saves the media folder path', async
 
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const cover = editor.getByRole('group', { name: '“\u2068Cover\u2069” Field' });
   const kite = createPNG({ color: [255, 255, 0] });
 

@@ -5,7 +5,6 @@ import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
 import dayjsUTC from 'dayjs/plugin/utc';
 
 import { backend } from '$lib/services/backends';
-import { encodePath } from '$lib/services/backends/git/shared/url';
 import { fillTemplate } from '$lib/services/common/template';
 import { DATE_TIME_TEMPLATE_REGEX } from '$lib/services/common/template/constants';
 import { cmsConfig } from '$lib/services/config';
@@ -16,6 +15,7 @@ import {
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/parse';
 import { omitLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import {
@@ -249,5 +249,5 @@ export const getEntryRepoBlobURL = (entry, locale) => {
   const path = entry.locales[locale]?.path;
 
   // A name can contain characters like `#` or `%` that have a meaning in a URL
-  return `${backend.current?.repository?.blobBaseURL}/${path ? encodePath(path) : ''}?plain=1`;
+  return `${backend.current?.repository?.blobBaseURL}/${path ? encodePathSegments(path) : ''}?plain=1`;
 };

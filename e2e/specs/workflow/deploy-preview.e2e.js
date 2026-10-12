@@ -1,5 +1,6 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, GITEA_CONFIG, GITLAB_CONFIG, test } from '../../fixtures/test.js';
+import { getEditor, getOpenedURL } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -44,27 +45,12 @@ const openSecondPostPullRequest = (github) => {
  * @returns {Promise<Locator>} Editor.
  */
 const openSecondPost = async (page) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await page.getByRole('row', { name: /Second Post/ }).click();
   await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Second Post');
 
   return editor;
-};
-
-/**
- * Click a control and get the URL of the tab it opens.
- * @param {Page} page Page.
- * @param {Locator} control Control.
- * @returns {Promise<string>} URL.
- */
-const getOpenedURL = async (page, control) => {
-  const [popup] = await Promise.all([page.waitForEvent('popup'), control.click()]);
-  const url = popup.url();
-
-  await popup.close();
-
-  return url;
 };
 
 test('opens the entry on the deploy preview of its pull request', async ({ cms, github, page }) => {
@@ -239,7 +225,7 @@ test.describe('with `show_preview_links: false`', () => {
     await expect(card.getByRole('button', { name: 'View Preview' })).toHaveCount(0);
     await card.click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Second Post');
     await expect(

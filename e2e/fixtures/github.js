@@ -146,12 +146,6 @@ export class MockGitHub extends MockGitRepository {
   allowForking = true;
 
   /**
-   * The signed-in user’s fork of the repository, once {@link createFork} has made it.
-   * @type {{ owner: string, repo: string } | undefined}
-   */
-  fork = undefined;
-
-  /**
    * GraphQL node ID of the fork.
    */
   forkId = 'R_e2e_fork';
@@ -190,32 +184,6 @@ export class MockGitHub extends MockGitRepository {
    * @type {string[]}
    */
   dispatches = [];
-
-  /**
-   * Fork the repository onto the signed-in user’s account, with a copy of the default branch. Like
-   * a fork on GitHub, it shares the commits and blobs of the repository, and only its branches are
-   * its own.
-   * @param {object} [options] Options.
-   * @param {string} [options.repo] Name of the fork, the repository’s own by default. A fork has
-   * another name when it was renamed, or when the user already had a repository of that name.
-   * @returns {{ owner: string, repo: string }} Fork.
-   */
-  createFork({ repo = this.repo } = {}) {
-    this.fork = { owner: this.user.login, repo };
-    this.refs.set(this.forkBranch(this.branch), this.head.oid);
-
-    return this.fork;
-  }
-
-  /**
-   * Get the key of a branch in the fork, for {@link refs}, {@link commit}, {@link readFile} and
-   * the `head` of a pull request.
-   * @param {string} branch Branch name.
-   * @returns {string} Key, e.g. `mona:main`.
-   */
-  forkBranch(branch) {
-    return `${this.user.login}:${branch}`;
-  }
 
   /**
    * Get the key of a branch in the repository of the given owner: the fork if it’s the signed-in
@@ -986,6 +954,13 @@ export class MockGitHub extends MockGitRepository {
       pullRequest.updatedAt = new Date();
 
       return { json: pullRequest.labels.map((name) => ({ name })) };
+    }
+
+    // Like GitHub, answer whether the pull request has been merged with a status alone
+    if (request === 'GET pulls/merge') {
+      return pullRequest.state === 'merged'
+        ? { status: 204 }
+        : { status: 404, json: { message: 'Not Found' } };
     }
 
     if (request === 'PUT pulls/merge') {

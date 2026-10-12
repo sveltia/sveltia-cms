@@ -1,5 +1,3 @@
-/* eslint-disable jsdoc/require-jsdoc */
-
 import { describe, expect, test, vi } from 'vitest';
 
 import { allEntries } from '$lib/services/contents';
@@ -20,10 +18,9 @@ import {
  * @import { InternalEntryCollection } from '$lib/types/private';
  */
 
-vi.mock('@sveltia/i18n', () => ({
-  _: (/** @type {string} */ key) => key,
-  locale: { current: 'en', set: vi.fn() },
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ locale: 'en' }),
+);
 
 vi.mock('$lib/services/config');
 vi.mock('$lib/services/contents', () => ({ allEntries: { current: [] } }));

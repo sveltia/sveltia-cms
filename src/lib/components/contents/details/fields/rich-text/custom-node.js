@@ -11,7 +11,7 @@ import {
 import {
   getComponentFieldList,
   getNoAsset,
-} from '$lib/services/contents/fields/rich-text/previews';
+} from '$lib/services/contents/fields/rich-text/previews/components';
 
 /**
  * @import {

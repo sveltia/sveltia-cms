@@ -3,6 +3,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  focusAfterRemoval,
   focusReorderControl,
   getAutoScrollSpeed,
   getDropIndex,
@@ -494,5 +495,45 @@ describe('focusReorderControl', () => {
     expect(() => focusReorderControl({ listElement: list, index: 5 })).not.toThrow();
 
     list.remove();
+  });
+});
+
+describe('focusAfterRemoval', () => {
+  /**
+   * Create buttons attached to the document so they can be focused.
+   * @param {number} count Number of buttons.
+   * @returns {HTMLButtonElement[]} Buttons.
+   */
+  const createButtons = (count) =>
+    [...Array(count).keys()].map(() => document.body.appendChild(document.createElement('button')));
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  test('focuses the item now at the same position', () => {
+    const buttons = createButtons(2);
+    const fallback = vi.fn();
+
+    focusAfterRemoval({ index: 0, getTarget: vi.fn((index) => buttons[index]), fallback });
+    expect(document.activeElement).toBe(buttons[0]);
+    expect(fallback).not.toHaveBeenCalled();
+  });
+
+  test('focuses the previous item once the last one was removed', () => {
+    const buttons = createButtons(2);
+
+    focusAfterRemoval({ index: 2, getTarget: vi.fn((index) => buttons[index]) });
+    expect(document.activeElement).toBe(buttons[1]);
+  });
+
+  test('falls back without any item left', () => {
+    const fallback = vi.fn();
+
+    focusAfterRemoval({ index: 0, getTarget: vi.fn(() => undefined), fallback });
+    expect(fallback).toHaveBeenCalledOnce();
+
+    // Without a fallback, the focus is left alone
+    expect(() => focusAfterRemoval({ index: 0, getTarget: vi.fn(() => null) })).not.toThrow();
   });
 });

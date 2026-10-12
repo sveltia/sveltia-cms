@@ -3,6 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OTHER_GROUP_NAME } from '$lib/services/common/view';
+import { createMockAssetFolder } from '$lib/test/factories';
 
 import { groupAssets } from './group';
 
@@ -56,13 +57,7 @@ describe('assets/view/group', () => {
         sha: 'sha1',
         size: 1024000,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
         commitAuthor: { name: 'Alice', email: 'alice@example.com' },
         commitDate: new Date('2023-01-01'),
       },
@@ -72,13 +67,7 @@ describe('assets/view/group', () => {
         sha: 'sha2',
         size: 2048000,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
         commitAuthor: { name: 'Bob', email: 'bob@example.com' },
         commitDate: new Date('2023-01-02'),
       },
@@ -88,13 +77,7 @@ describe('assets/view/group', () => {
         sha: 'sha3',
         size: 10240000,
         kind: 'video',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/videos',
-          publicPath: '/videos',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/videos', publicPath: '/videos' }),
         commitAuthor: { name: 'Charlie', email: 'charlie@example.com' },
         commitDate: new Date('2023-01-03'),
       },
@@ -104,13 +87,7 @@ describe('assets/view/group', () => {
         sha: 'sha4',
         size: 512000,
         kind: 'document',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/docs',
-          publicPath: '/docs',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/docs', publicPath: '/docs' }),
         commitAuthor: { name: 'David', email: 'david@example.com' },
         commitDate: new Date('2023-01-04'),
       },
@@ -196,13 +173,7 @@ describe('assets/view/group', () => {
           sha: 'sha1',
           size: 1000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
         },
       ]);
 
@@ -225,13 +196,7 @@ describe('assets/view/group', () => {
           sha: 'sha1',
           size: 1000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
         },
         {
           path: '/other.jpg',
@@ -239,13 +204,7 @@ describe('assets/view/group', () => {
           sha: 'sha2',
           size: 2000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
         },
       ]);
 
@@ -270,13 +229,7 @@ describe('assets/view/group', () => {
           sha: 'sha1',
           size: 1000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
         },
       ]);
 
@@ -296,13 +249,7 @@ describe('assets/view/group', () => {
           sha: 'sha1',
           size: 1000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           category: 'photos',
         },
         {
@@ -311,13 +258,7 @@ describe('assets/view/group', () => {
           sha: 'sha2',
           size: 2000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           category: undefined,
         },
       ]);
@@ -339,13 +280,7 @@ describe('assets/view/group', () => {
           sha: 'sha1',
           size: 1000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           letter: 'z',
         },
         {
@@ -354,13 +289,7 @@ describe('assets/view/group', () => {
           sha: 'sha2',
           size: 2000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           letter: 'a',
         },
         {
@@ -369,13 +298,7 @@ describe('assets/view/group', () => {
           sha: 'sha3',
           size: 3000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           letter: 'm',
         },
       ]);
@@ -449,13 +372,7 @@ describe('assets/view/group', () => {
           sha: 'sha1',
           size: 1000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           description: '', // Empty string value
         },
         {
@@ -464,13 +381,7 @@ describe('assets/view/group', () => {
           sha: 'sha2',
           size: 2000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           description: '123abc', // Matches regex
         },
       ]);
@@ -496,13 +407,7 @@ describe('assets/view/group', () => {
           sha: 'sha1',
           size: 1000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           description: null, // null value
         },
         {
@@ -511,13 +416,7 @@ describe('assets/view/group', () => {
           sha: 'sha2',
           size: 2000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           description: undefined, // undefined value
         },
       ]);

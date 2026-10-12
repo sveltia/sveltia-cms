@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor, getField } from '../../fixtures/ui.js';
 
 /**
  * Talks with a `hint` on fields of several types: a string field with every kind of inline Markdown
@@ -70,22 +71,6 @@ const CONFIG = {
 
 // The editor renders a field once it’s scrolled into view, so make every field visible at once
 test.use({ config: CONFIG, viewport: { width: 1280, height: 3000 } });
-
-/**
- * Get the editor.
- * @param {import('@playwright/test').Page} page Page.
- * @returns {import('@playwright/test').Locator} Content editor.
- */
-const getEditor = (page) => page.getByRole('group', { name: 'Content Editor' });
-
-/**
- * Get the group of a field in the editor.
- * @param {import('@playwright/test').Page} page Page.
- * @param {string} label Field label.
- * @returns {import('@playwright/test').Locator} Field group.
- */
-const getField = (page, label) =>
-  getEditor(page).getByRole('group', { name: new RegExp(`${label}.*Field`) });
 
 /**
  * Get a hint, a paragraph below the input, by its text.

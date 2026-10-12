@@ -69,6 +69,47 @@ export const getFirstDefaultLibraryName = ({
 };
 
 /**
+ * Get the name of the location selected when the dialog opens: the first repository folder
+ * offered, or else the first cloud storage service if there are files to be uploaded to it, or else
+ * the first external service.
+ * @param {object} args Arguments.
+ * @param {AssetLibraryFolderMap} args.assetLibraryFolderMap Asset library folder map.
+ * @param {boolean} args.isDefaultLibraryEnabled Whether the default media library is enabled.
+ * @param {boolean} args.selectFolder Whether a folder is to be selected instead of files.
+ * @param {boolean} args.hasPendingFiles Whether files dropped on the field are waiting to be
+ * uploaded to a cloud storage service.
+ * @param {[string, MediaLibraryService][]} args.cloudServiceEntries Cloud storage services offered.
+ * @param {[string, MediaLibraryService][]} args.externalServiceEntries Cloud storage services and
+ * stock asset providers offered, sorted by name.
+ * @returns {string} Library name. Empty if no location is offered, which is the case when a folder
+ * is to be selected but the field has no folder that can be browsed.
+ */
+export const getInitialLibraryName = ({
+  assetLibraryFolderMap,
+  isDefaultLibraryEnabled,
+  selectFolder,
+  hasPendingFiles,
+  cloudServiceEntries,
+  externalServiceEntries,
+}) => {
+  const firstDefaultLibraryName = getFirstDefaultLibraryName({
+    assetLibraryFolderMap,
+    isDefaultLibraryEnabled,
+    selectFolder,
+  });
+
+  if (firstDefaultLibraryName) {
+    return firstDefaultLibraryName;
+  }
+
+  // A cloud storage service can take the files to be uploaded
+  const [serviceId] = (hasPendingFiles ? cloudServiceEntries[0] : undefined) ??
+    externalServiceEntries[0] ?? [''];
+
+  return serviceId;
+};
+
+/**
  * Get the stock asset providers offered in the dialog, sorted by name.
  * @param {object} args Arguments.
  * @param {MediaField} [args.fieldConfig] Field configuration.

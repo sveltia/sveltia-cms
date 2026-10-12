@@ -21,9 +21,9 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
 import { forkedRepository, openAuthoring } from '$lib/services/workflow/open-authoring';
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key, { values } = {}) => (values ? `${key} ${JSON.stringify(values)}` : key)),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
 vi.mock('$lib/services/backends/git/gitlab/commits');
 vi.mock('$lib/services/backends/git/gitlab/files');
@@ -353,7 +353,7 @@ describe('GitLab Editorial Workflow service', () => {
       const error = await savePullRequest({ ...args, status: 'draft' }).catch((ex) => ex);
 
       expect(error.message).toBe('The workflow branch is in use by another merge request.');
-      expect(error.cause.message).toBe('workflow.branch_in_use {"number":"!7"}');
+      expect(error.cause.message).toBe('workflow.branch_in_use:{"number":"!7"}');
       expect(commitChanges).toHaveBeenCalledOnce();
       expect(fetchAPI).toHaveBeenCalledOnce();
     });
@@ -590,13 +590,17 @@ describe('GitLab Editorial Workflow service', () => {
         branchHead: 'new789',
       });
 
-      // The check before publishing refuses it, as the branch has moved on
-      await expect(fetchMergeState(pullRequest)).resolves.toMatchObject({ headSHA: 'new789' });
+      // The check before publishing refuses it, as the branch has moved on, so a commit that won’t
+      // be merged isn’t compared either
+      await expect(fetchMergeState(pullRequest)).resolves.toEqual({
+        headSHA: 'new789',
+        onConfiguredBranches: true,
+        files: [],
+        complete: true,
+      });
 
       expect(sleep).not.toHaveBeenCalled();
-      expect(fetchAPI).toHaveBeenLastCalledWith(
-        `/projects/${PROJECT_ID}/repository/compare?from=main&to=new789&straight=false`,
-      );
+      expect(fetchAPI).not.toHaveBeenCalledWith(expect.stringContaining('/repository/compare'));
     });
 
     test('goes by the merge request’s head when the branch is gone', async () => {
@@ -779,6 +783,25 @@ describe('GitLab Editorial Workflow service', () => {
 
       /** A merge request that has been merged. */
       const mergedItem = { state: 'merged', merge_when_pipeline_succeeds: false };
+
+      test('takes a merge request merged on GitLab meanwhile as published', async () => {
+        // GitLab answers 405 for a merge request that can’t be merged for any reason, this one
+        // included
+        vi.mocked(fetchAPI)
+          .mockRejectedValueOnce(createError(405))
+          .mockResolvedValueOnce({ state: 'merged', detailed_merge_status: 'not_open' })
+          .mockResolvedValueOnce({});
+
+        await publish(pullRequest);
+
+        // The failed merge, the status read, and the branch deletion, with no auto-merge
+        expect(fetchAPI).toHaveBeenCalledTimes(3);
+        expect(fetchAPI).toHaveBeenNthCalledWith(
+          3,
+          `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`,
+          expect.objectContaining({ method: 'DELETE' }),
+        );
+      });
 
       test('sets the merge request to auto-merge while the pipeline is running', async () => {
         vi.mocked(fetchAPI)

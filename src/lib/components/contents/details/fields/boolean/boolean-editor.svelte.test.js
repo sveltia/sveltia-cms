@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import BooleanEditor from './boolean-editor.svelte';
 
@@ -19,22 +20,13 @@ const fieldConfig = { name: 'published', widget: 'boolean' };
  * @returns {Promise<{ props: { currentValue: boolean | 'mixed' | undefined } }>} Props, whose
  * `currentValue` follows the editor.
  */
-const renderEditor = async ({ currentValue = undefined, readonly = false } = {}) => {
-  const props = $state({
-    locale: 'en',
-    keyPath: 'published',
-    typedKeyPath: 'published',
-    fieldId: 'published',
-    fieldLabel: 'Published',
+const renderEditor = async ({ currentValue = undefined, readonly = false } = {}) =>
+  renderFieldEditor(BooleanEditor, {
     fieldConfig,
+    fieldLabel: 'Published',
     currentValue,
-    readonly,
+    props: { readonly },
   });
-
-  await render(BooleanEditor, props);
-
-  return { props };
-};
 
 describe('BooleanEditor', () => {
   test('reflects the value', async () => {

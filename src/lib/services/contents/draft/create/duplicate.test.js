@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { duplicateDraft } from './duplicate.js';
+import {
+  createDuplicateDraftState,
+  duplicateDraft,
+  propagateDuplicatedValues,
+  resetUniqueValues,
+} from './duplicate.js';
 
 // Mock dependencies
 vi.mock('$lib/services/contents/draft/create/proxy.svelte', async (importOriginal) => ({
@@ -1012,6 +1017,119 @@ describe('contents/draft/create/duplicate', () => {
       const jaLocaleCall = (calls ?? []).filter((/** @type {any} */ c) => c[0].locale === 'ja');
 
       expect(jaLocaleCall).toHaveLength(0);
+    });
+  });
+
+  describe('resetUniqueValues', () => {
+    const getFieldArgs = { collectionName: 'posts', fileName: undefined, isIndexFile: false };
+
+    it('removes the slug, aliases and order and resets a UUID in the default locale', () => {
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) =>
+        keyPath === 'id' ? { widget: 'uuid' } : undefined,
+      );
+      mockGetInitialUuidValue.mockReturnValue('new-uuid');
+
+      const valueMap = {
+        translationKey: 'abc',
+        'aliases.0': '/old',
+        order: 3,
+        id: 'old-uuid',
+        title: 'Title',
+      };
+
+      const result = resetUniqueValues({
+        getFieldArgs,
+        locale: 'en',
+        defaultLocale: 'en',
+        valueMap,
+        canonicalSlugKey: 'translationKey',
+        aliasesKey: 'aliases',
+        orderFieldKey: 'order',
+      });
+
+      expect(valueMap).toEqual({ id: 'new-uuid', title: 'Title' });
+      expect(result.duplicatedHiddenKeyPaths.size).toBe(0);
+      expect(result.clearedUuidFields.size).toBe(0);
+    });
+
+    it('clears duplicated UUID and Hidden fields in another locale and reports them', () => {
+      const uuidField = { widget: 'uuid', i18n: 'duplicate' };
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'id') {
+          return uuidField;
+        }
+
+        if (keyPath === 'tags') {
+          return { widget: 'hidden', default: ['a'], i18n: 'duplicate' };
+        }
+
+        return undefined;
+      });
+
+      const valueMap = { id: 'old-uuid', 'tags.0': 'x', title: 'Titre' };
+
+      const result = resetUniqueValues({
+        getFieldArgs,
+        locale: 'ja',
+        defaultLocale: 'en',
+        valueMap,
+        canonicalSlugKey: 'translationKey',
+        aliasesKey: undefined,
+        orderFieldKey: undefined,
+      });
+
+      expect(valueMap).toEqual({ id: '', title: 'Titre' });
+      expect([...result.duplicatedHiddenKeyPaths]).toEqual(['tags']);
+      expect([...result.clearedUuidFields]).toEqual([['id', uuidField]]);
+      expect(mockGetHiddenFieldDefaultValueMap).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('propagateDuplicatedValues', () => {
+    it('copies the default locale’s Hidden values and fills the cleared UUIDs left empty', () => {
+      mockGetField.mockReturnValue(undefined);
+      mockGetInitialUuidValue.mockReturnValue('fresh-uuid');
+
+      const uuidField = /** @type {any} */ ({ widget: 'uuid', i18n: 'duplicate' });
+
+      /** @type {Record<string, Record<string, any>>} */
+      const currentValues = {
+        en: { tags: ['a', 'b'] },
+        ja: { 'items.0.id': '' },
+      };
+
+      propagateDuplicatedValues({
+        currentValues,
+        defaultLocale: 'en',
+        getFieldArgs: { collectionName: 'posts', fileName: undefined, isIndexFile: false },
+        duplicatedHiddenFieldMap: new Map([['ja', new Set(['tags', 'missing'])]]),
+        clearedUuidFieldMap: new Map([['ja', new Map([['items.0.id', uuidField]])]]),
+      });
+
+      expect(currentValues.ja).toEqual({ 'items.0.id': 'fresh-uuid', tags: ['a', 'b'] });
+      expect(currentValues.ja.tags).not.toBe(currentValues.en.tags);
+    });
+  });
+
+  describe('createDuplicateDraftState', () => {
+    it('creates a new draft from the original with the given values and files', () => {
+      const file = new File(['x'], 'a.txt');
+
+      const newDraft = createDuplicateDraftState({
+        draft: { ...mockEntryDraft, currentLocales: { en: true }, currentPath: 'posts/a.md' },
+        currentValues: { en: { title: 'Copy' } },
+        files: { 'a.txt': /** @type {any} */ ({ file }) },
+      });
+
+      expect(newDraft.isNew).toBe(true);
+      expect(newDraft.originalEntry).toBeUndefined();
+      expect(newDraft.currentPath).toBe('posts/a.md');
+      expect(newDraft.originalValues).toEqual({ en: { title: 'Copy' } });
+      expect(newDraft.currentValues).toEqual({ en: { title: 'Copy' } });
+      expect(newDraft.files).toEqual({ 'a.txt': { file } });
+      expect(newDraft.validities).toEqual({ en: {}, ja: {} });
+      expect(newDraft.slugEditor).toEqual({ en: true, ja: 'readonly' });
     });
   });
 });

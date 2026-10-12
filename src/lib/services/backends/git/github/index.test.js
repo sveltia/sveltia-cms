@@ -24,9 +24,7 @@ vi.mock('$lib/services/config', () => ({
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: mockPrefs,
 }));
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key) => key),
-}));
+vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 vi.mock('$lib/services/backends/git/github/auth', () => ({
   getTokenPageURL: vi.fn(),
   signIn: vi.fn(),

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import ColorEditor from './color-editor.svelte';
 
@@ -23,23 +24,13 @@ const renderEditor = async ({
   config = {},
   required = true,
   readonly = false,
-} = {}) => {
-  const props = $state({
-    locale: 'en',
-    keyPath: 'color',
-    typedKeyPath: 'color',
-    fieldId: 'color',
-    fieldLabel: 'Color',
+} = {}) =>
+  renderFieldEditor(ColorEditor, {
     fieldConfig: /** @type {ColorField} */ ({ name: 'color', widget: 'color', ...config }),
+    fieldLabel: 'Color',
     currentValue,
-    required,
-    readonly,
+    props: { required, readonly },
   });
-
-  const { container } = await render(ColorEditor, props);
-
-  return { props, container };
-};
 
 /**
  * Get the color picker.

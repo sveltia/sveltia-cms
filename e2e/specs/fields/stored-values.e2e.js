@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * Paint swatches with fields whose editors can’t show every value a file may hold: a color input
@@ -56,7 +57,7 @@ test('keeps the stored values the editors can’t show when another field is sav
   await cms.signIn();
   await page.getByRole('row', { name: /White/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   // The input shows the number, without the leading zeros of the string it’s stored as
   await expect(editor.getByRole('spinbutton', { name: 'Code' })).toHaveValue('7');

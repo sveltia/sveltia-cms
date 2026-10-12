@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -80,13 +81,6 @@ const signIn = async ({ cms, order }) => {
   });
   await cms.signIn();
 };
-
-/**
- * Get the editor.
- * @param {Page} page Page.
- * @returns {Locator} Content editor.
- */
-const getEditor = (page) => page.getByRole('group', { name: 'Content Editor' });
 
 /**
  * Get the radio buttons of the Product field.

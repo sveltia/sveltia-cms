@@ -11,6 +11,7 @@ import {
 } from '$lib/services/contents/draft/save/assets';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { getFillSlugOptions } from '$lib/services/contents/draft/slugs';
+import { createMockAssetFolder } from '$lib/test/factories';
 
 vi.mock('$lib/services/assets', () => ({
   getAssetsByDirName: vi.fn(() => []),
@@ -1749,13 +1750,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: 'static/images',
       publicPath: '/images',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = { image: blobURL };
     /** @type {any[]} */
@@ -1789,13 +1788,11 @@ describe('Test replaceBlobURL()', () => {
     await replaceBlobURL(
       /** @type {any} */ ({
         file: new File(['test content'], 'save-$$-$&.jpg', { type: 'image/jpeg' }),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'static/images',
           publicPath: '/images',
-          entryRelative: false,
-          collectionName: 'posts',
-          hasTemplateTags: false,
-        },
+        }),
         replace: false,
         blobURL,
         draft: {
@@ -1831,13 +1828,11 @@ describe('Test replaceBlobURL()', () => {
       replaceBlobURL(
         /** @type {any} */ ({
           file: new File(['<html></html>'], 'index.html', { type: 'text/html' }),
-          folder: {
+          folder: createMockAssetFolder({
+            collectionName: 'posts',
             internalPath: 'static',
             publicPath: '/',
-            entryRelative: false,
-            collectionName: 'posts',
-            hasTemplateTags: false,
-          },
+          }),
           subfolderPath: 'admin',
           replace: true,
           blobURL: 'blob:http://localhost:5173/abc-123',
@@ -2001,13 +1996,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: 'static/images',
       publicPath: '/images',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = { image: blobURL };
     /** @type {any[]} */
@@ -2068,13 +2061,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: '',
       publicPath: '/',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = { image: blobURL };
     /** @type {any[]} */
@@ -2134,13 +2125,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: 'static/images',
       publicPath: '/images',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = { image: blobURL };
     /** @type {any[]} */
@@ -2202,13 +2191,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: 'static',
       publicPath: '/',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = { image: blobURL };
     /** @type {any[]} */
@@ -2258,13 +2245,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: 'static/images',
       publicPath: '/images',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = { image: blobURL };
     /** @type {any[]} */
@@ -2310,13 +2295,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: '',
       publicPath: '',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = { image: blobURL };
     /** @type {any[]} */
@@ -2362,13 +2345,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: 'static',
       publicPath: '/static',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = {
       body: `![Image](${blobURL}) and another reference ${blobURL}`,
@@ -2663,13 +2644,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: 'static/images',
       publicPath: '/images',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = { image: blobURL };
     /** @type {any[]} */
@@ -2723,13 +2702,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: 'static/images',
       publicPath: '/images',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = { image: blobURL };
     /** @type {any[]} */
@@ -2795,13 +2772,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: 'static/images',
       publicPath: '/images',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = { body: `![](${firstBlobURL}) ![](${secondBlobURL})` };
     /** @type {any[]} */
@@ -2872,13 +2847,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: 'static/images',
       publicPath: '/images',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = { image1: firstBlobURL, image2: secondBlobURL };
     /** @type {any[]} */
@@ -2933,13 +2906,11 @@ describe('Test replaceBlobURL()', () => {
     };
 
     /** @type {any} */
-    const folder = {
+    const folder = createMockAssetFolder({
+      collectionName: 'posts',
       internalPath: 'static/images',
       publicPath: '/images',
-      entryRelative: false,
-      collectionName: 'posts',
-      hasTemplateTags: false,
-    };
+    });
 
     const content = { image: blobURL };
     /** @type {any[]} */

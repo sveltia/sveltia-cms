@@ -9,16 +9,18 @@ import {
   assertBranchAtHead,
   commitToNewWorkflowBranch,
   deleteRemoteBranch,
+  getMovedHeadMergeState,
   getParentDirs,
+  isPullRequestMerged,
   isSquashMergeEnabled,
   openWorkflowPullRequest,
   saveWorkflowBranch,
   toChangedFilesWithModes,
 } from './workflow';
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key, { values } = {}) => (values ? `${key} ${JSON.stringify(values)}` : key)),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 
@@ -273,7 +275,7 @@ describe('commitToNewWorkflowBranch()', () => {
 
     await expect(promise).rejects.toThrow('The workflow branch is in use by another pull request.');
     await promise.catch((ex) => {
-      expect(ex.cause.message).toBe('workflow.branch_in_use {"number":"#5"}');
+      expect(ex.cause.message).toBe('workflow.branch_in_use:{"number":"#5"}');
     });
     expect(args.commitFromStart).toHaveBeenCalledOnce();
     expect(args.deleteBranch).not.toHaveBeenCalled();
@@ -322,7 +324,7 @@ describe('assertBranchAtHead()', () => {
 
     await expect(promise).rejects.toThrow('Failed to save the changes.');
     await promise.catch((ex) => {
-      expect(ex.cause.message).toBe('branch_not_found {"repo":"repo","branch":"cms/a"}');
+      expect(ex.cause.message).toBe('branch_not_found:{"repo":"repo","branch":"cms/a"}');
     });
   });
 
@@ -400,5 +402,34 @@ describe('toChangedFilesWithModes()', () => {
       headSHA: 'head',
       paths: ['a.md', 'link', 'c.md'],
     });
+  });
+});
+
+describe('getMovedHeadMergeState()', () => {
+  test('returns nothing while the branch is at the commit on record', () => {
+    expect(getMovedHeadMergeState({ headSHA: 'abc' }, 'abc')).toBeUndefined();
+  });
+
+  test('reports a complete, empty list once the branch has moved on', () => {
+    expect(getMovedHeadMergeState({ headSHA: 'abc' }, 'def')).toEqual({
+      headSHA: 'def',
+      onConfiguredBranches: true,
+      files: [],
+      complete: true,
+    });
+    expect(getMovedHeadMergeState({}, 'def')).toMatchObject({ complete: true });
+  });
+});
+
+describe('isPullRequestMerged()', () => {
+  test('tells a merged pull request by the status of the check', async () => {
+    vi.mocked(fetchAPI).mockResolvedValueOnce(new Response(null, { status: 204 }));
+    await expect(isPullRequestMerged({ owner: 'owner', repo: 'repo' }, 1)).resolves.toBe(true);
+    expect(fetchAPI).toHaveBeenLastCalledWith('/repos/owner/repo/pulls/1/merge', {
+      responseType: 'raw',
+    });
+
+    vi.mocked(fetchAPI).mockResolvedValueOnce(new Response(null, { status: 404 }));
+    await expect(isPullRequestMerged({ owner: 'owner', repo: 'repo' }, 1)).resolves.toBe(false);
   });
 });

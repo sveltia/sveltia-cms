@@ -1,4 +1,5 @@
 import { BASE_CONFIG, expect, test } from '../../fixtures/test.js';
+import { getEditor, getOpenedURL } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -35,28 +36,10 @@ test.beforeEach(async ({ cms, page }) => {
  */
 const getAccountButton = (page) => page.getByRole('button', { name: 'Show Account Menu' });
 
-/**
- * Click a control and get the URL of the tab it opens.
- * @param {Page} page Page.
- * @param {() => Promise<void>} click Function clicking the control.
- * @returns {Promise<string>} URL.
- */
-const getOpenedURL = async (page, click) => {
-  const [popup] = await Promise.all([page.waitForEvent('popup'), click()]);
-
-  await popup.waitForLoadState();
-
-  const url = popup.url();
-
-  await popup.close();
-
-  return url;
-};
-
 test('opens the page of an entry on the live site', async ({ cms, page }) => {
   await page.getByRole('row', { name: /First Post/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const button = editor.getByRole('button', { name: 'View on Live Site' });
 
   expect(await getOpenedURL(page, () => button.click())).toBe(
@@ -77,7 +60,7 @@ test('opens the page of an entry on the live site', async ({ cms, page }) => {
 test('offers no live page for an entry that hasn’t been saved yet', async ({ page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('textbox', { name: 'Title' })).toBeVisible();
   await expect(editor.getByRole('button', { name: 'View on Live Site' })).toHaveCount(0);
@@ -113,7 +96,7 @@ test.describe('with `display_url`', () => {
     // An entry’s page is still on the site at `site_url`
     await page.getByRole('row', { name: /First Post/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     expect(
       await getOpenedURL(page, () =>
@@ -135,7 +118,7 @@ test.describe('with `show_preview_links: false`', () => {
 
     await page.getByRole('row', { name: /First Post/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('First Post');
     await expect(editor.getByRole('button', { name: 'View on Live Site' })).toHaveCount(0);

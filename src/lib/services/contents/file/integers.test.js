@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import {
-  clearUnsafeIntegerSources,
+  _resetUnsafeIntegerSources,
   getUnsafeIntegerSource,
   hasUnsafeIntegerSources,
   mayHaveUnsafeInteger,
@@ -12,7 +12,7 @@ import {
 } from '$lib/services/contents/file/integers';
 
 beforeEach(() => {
-  clearUnsafeIntegerSources();
+  _resetUnsafeIntegerSources();
 });
 
 describe('mayHaveUnsafeInteger()', () => {

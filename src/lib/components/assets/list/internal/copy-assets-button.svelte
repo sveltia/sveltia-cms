@@ -8,6 +8,7 @@
   import { getAssetDetails } from '$lib/services/assets/details';
   import { getAssetBlob } from '$lib/services/assets/info';
   import { canCopyFileData, copyFileData } from '$lib/services/utils/clipboard';
+  import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { Asset, AssetDetails } from '$lib/types/private';
@@ -37,14 +38,6 @@
 
   /** @type {Blob | undefined} */
   let assetBlob = undefined;
-  /**
-   * Assets the details were last requested for. The menu stays mounted while the focus moves from
-   * one asset to another, so a slow lookup for an asset focused earlier must not overwrite the
-   * details of the one focused now.
-   * @type {Asset[] | undefined}
-   */
-  let requestedAssets;
-
   const items = $derived([
     {
       label: _('public_urls', { values: { count: assets.length } }),
@@ -80,39 +73,37 @@
     },
   ]);
 
-  $effect(() => {
-    const _assets = assets;
+  // The menu stays mounted while the focus moves from one asset to another, so a slow lookup for an
+  // asset focused earlier must not overwrite the details of the one focused now, which `watchAsync`
+  // takes care of
+  watchAsync(
+    () => {
+      const _assets = assets;
 
-    requestedAssets = _assets;
-    // Don’t copy the URLs or data of the assets selected before while the new ones are being
-    // looked up
-    assetsDetailList = [];
-    assetBlob = undefined;
-    canCopyData = false;
+      // Don’t copy the URLs or data of the assets selected before while the new ones are being
+      // looked up
+      assetsDetailList = [];
+      assetBlob = undefined;
+      canCopyData = false;
 
-    (async () => {
-      try {
-        const [detailList, blob] = await Promise.all([
-          Promise.all(_assets.map(getAssetDetails)),
-          // Since OSes usually support only one item, the data can be copied only when one file is
-          // selected. The data may not be available, e.g. for a file that can’t be downloaded
-          _assets.length === 1 ? getAssetBlob(_assets[0]).catch(() => undefined) : undefined,
-        ]);
-
-        if (requestedAssets !== _assets) {
-          return;
-        }
-
-        assetsDetailList = detailList;
-        assetBlob = blob;
-        canCopyData = !!blob && canCopyFileData(blob.type);
-      } catch (/** @type {any} */ ex) {
-        // The details couldn’t be retrieved, so the public URLs are unknown
-        // eslint-disable-next-line no-console
-        console.error(ex);
-      }
-    })();
-  });
+      return Promise.all([
+        Promise.all(_assets.map(getAssetDetails)),
+        // Since OSes usually support only one item, the data can be copied only when one file is
+        // selected. The data may not be available, e.g. for a file that can’t be downloaded
+        _assets.length === 1 ? getAssetBlob(_assets[0]).catch(() => undefined) : undefined,
+      ]);
+    },
+    ([detailList, blob]) => {
+      assetsDetailList = detailList;
+      assetBlob = blob;
+      canCopyData = !!blob && canCopyFileData(blob.type);
+    },
+    (ex) => {
+      // The details couldn’t be retrieved, so the public URLs are unknown
+      // eslint-disable-next-line no-console
+      console.error(ex);
+    },
+  );
 </script>
 
 <CopyMenu {items} count={assets.length} {useButton} />

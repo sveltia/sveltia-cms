@@ -4,7 +4,7 @@
   import { getPathInfo } from '@sveltia/utils/file';
 
   import RenameDialog from '$lib/components/assets/list/rename-dialog.svelte';
-  import { encodeRoutePath, goto, parseLocation } from '$lib/services/app/navigation';
+  import { goto, parseLocation } from '$lib/services/app/navigation';
   import { getAssetsByDirName } from '$lib/services/assets';
   import { moveAssets } from '$lib/services/assets/data/move';
   import { getAssetUsedEntries } from '$lib/services/assets/details';
@@ -14,6 +14,7 @@
   import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { watchAsync } from '$lib/services/utils/state.svelte';
+  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { Entry } from '$lib/types/private';
@@ -73,7 +74,7 @@
     }
 
     if (parseLocation().path === `/assets/${oldPath}`) {
-      await goto(encodeRoutePath(`/assets/${newPath}`), {
+      await goto(encodePathSegments(`/assets/${newPath}`), {
         replaceState: true,
         notifyChange: false,
         // Keep the folder the asset was opened from, e.g. All Assets

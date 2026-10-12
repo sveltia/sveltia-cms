@@ -25,9 +25,9 @@ const ENTRY_FOLDERS = {
   'content/tags/': 'tags',
 };
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key, options) => `${key}${options ? `:${JSON.stringify(options.values)}` : ''}`),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
 vi.mock('$lib/services/backends/process', () => ({
   /**
    * Classify files the way the real file list does, against a fixed set of folders.

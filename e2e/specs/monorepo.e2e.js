@@ -8,6 +8,7 @@ import {
   GITLAB_CONFIG,
   test,
 } from '../fixtures/test.js';
+import { getEditor } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page, Request } from '@playwright/test';
@@ -48,7 +49,7 @@ const getWorkflowEntryRows = (page) => page.getByRole('grid', { name: 'Entries' 
  * @param {string} body New body.
  */
 const updateFirstPost = async (page, body) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await page.getByRole('row', { name: /First Post/ }).click();
   await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue('Hello, world!');
@@ -299,10 +300,7 @@ const openSitePullRequest = (github, files, branch = SECOND_POST_BRANCH) => {
  */
 const publishSecondPost = async (page) => {
   await page.getByRole('row', { name: /Second Post/ }).click();
-  await page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('button', { name: 'Publish Entry' })
-    .click();
+  await getEditor(page).getByRole('button', { name: 'Publish Entry' }).click();
   await page
     .getByRole('alertdialog', { name: 'Publish Entry' })
     .getByRole('button', { name: 'Publish' })

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { createMockAssetFolder } from '$lib/test/factories';
+
 /**
  * @import { Asset, AssetFolderInfo } from '$lib/types/private';
  */
@@ -74,13 +76,7 @@ const entryFolder = {
 };
 
 /** @type {AssetFolderInfo} */
-const globalFolder = {
-  collectionName: undefined,
-  internalPath: 'static/uploads',
-  publicPath: '/uploads',
-  entryRelative: false,
-  hasTemplateTags: false,
-};
+const globalFolder = createMockAssetFolder();
 
 /**
  * Create a saved asset.

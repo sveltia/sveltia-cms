@@ -1,5 +1,6 @@
 import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/monolingual.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 test.use({ config: MONOLINGUAL_CONFIG });
 
@@ -13,7 +14,7 @@ test.beforeEach(async ({ cms, page }) => {
 test('creates an author with a list of objects, in JSON', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const links = editor.getByRole('group', { name: /Links.*Field/ });
 
   await editor.getByRole('textbox', { name: 'Name' }).fill('Ana Lima');
@@ -49,7 +50,7 @@ test('creates an author with a list of objects, in JSON', async ({ cms, page }) 
 test('validates a field against its pattern', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const email = editor.getByRole('group', { name: /Email/ });
 
   await editor.getByRole('textbox', { name: 'Name' }).fill('Ana Lima');
@@ -69,7 +70,7 @@ test('validates a field against its pattern', async ({ cms, page }) => {
 test('offers a new author in a post’s relation field', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Name' }).fill('Ana Lima');
   await editor.getByRole('textbox', { name: 'Email' }).fill('ana@example.com');
@@ -79,18 +80,13 @@ test('offers a new author in a post’s relation field', async ({ cms, page }) =
   await page.getByRole('treeitem', { name: 'Posts' }).click();
   await page.getByRole('row', { name: /First Light/ }).click();
 
-  const author = page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('radiogroup', { name: 'Author' });
+  const author = getEditor(page).getByRole('radiogroup', { name: 'Author' });
 
   await expect(author.getByRole('radio')).toHaveCount(3);
   await expect(author.getByRole('radio', { name: 'Ana Lima' })).not.toBeChecked();
   await expect(author.getByRole('radio', { name: 'Jane Doe' })).toBeChecked();
   await author.getByRole('radio', { name: 'Ana Lima' }).click();
-  await page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('button', { name: 'Save' })
-    .click();
+  await getEditor(page).getByRole('button', { name: 'Save' }).click();
 
   // The relation stores the author’s slug
   await expect

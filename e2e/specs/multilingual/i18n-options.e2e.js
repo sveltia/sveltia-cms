@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getOpenedURL } from '../../fixtures/ui.js';
 
 import { getEditPane, save, showLocale } from './helpers.js';
 
@@ -57,21 +58,6 @@ test.beforeEach(async ({ cms, page }) => {
   });
   await cms.signIn();
 });
-
-/**
- * Click a control and get the URL of the tab it opens.
- * @param {Page} page Page.
- * @param {() => Promise<void>} click Function clicking the control.
- * @returns {Promise<string>} URL.
- */
-const getOpenedURL = async (page, click) => {
-  const [popup] = await Promise.all([page.waitForEvent('popup'), click()]);
-  const url = popup.url();
-
-  await popup.close();
-
-  return url;
-};
 
 test('writes the canonical slug to every translation of a new entry', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();

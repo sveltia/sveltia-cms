@@ -4,7 +4,8 @@ import { page, userEvent } from 'vitest/browser';
 
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { initTestConfig } from '$lib/test/config';
-import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import KeyValueEditor from './key-value-editor.svelte';
 
@@ -62,18 +63,12 @@ const renderEditor = async (pairs, { config = {}, readonly = false, locale = '_d
     draft.currentValues._default = createProxy({ draft, locale: '_default', target: values });
   }
 
-  await renderWithDraft(KeyValueEditor, {
+  await renderFieldEditor(KeyValueEditor, {
+    fieldConfig,
+    fieldLabel: 'Meta',
+    locale,
+    props: { readonly },
     draft,
-    props: {
-      locale,
-      keyPath: 'meta',
-      typedKeyPath: 'meta',
-      fieldId: 'meta',
-      fieldLabel: 'Meta',
-      fieldConfig,
-      currentValue: undefined,
-      readonly,
-    },
   });
 
   return { draft };

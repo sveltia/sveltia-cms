@@ -4,6 +4,7 @@ import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-a
 import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
 
 import {
+  _resetRepositoryInfoCache,
   checkBranchAccess,
   checkRepositoryAccess,
   fetchBranch,
@@ -11,7 +12,6 @@ import {
   getBaseURLs,
   getRepositoryInfo,
   repository,
-  resetRepositoryInfoCache,
 } from './repository.js';
 
 // Mock dependencies with vi.hoisted to ensure proper hoisting
@@ -22,9 +22,7 @@ const { mockUser } = vi.hoisted(() => ({
   mockUser: { account: /** @type {{ id: number } | undefined} */ ({ id: 1 }) },
 }));
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key) => key),
-}));
+vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 
 vi.mock('$lib/services/backends/git/shared/api', () => ({
   fetchAPI: fetchAPIMock,
@@ -43,7 +41,7 @@ describe('Gitea Repository Service', () => {
     vi.clearAllMocks();
 
     // Reset the repository info cache
-    resetRepositoryInfoCache();
+    _resetRepositoryInfoCache();
     mockUser.account = { id: 1 };
 
     // Mock _ to return a translation function (following pattern from other tests)
@@ -498,7 +496,7 @@ describe('Gitea Repository Service', () => {
 
     test('should use cached data after successful fetch', async () => {
       // Reset cache first
-      resetRepositoryInfoCache();
+      _resetRepositoryInfoCache();
 
       const mockRepoInfo = {
         id: 456,

@@ -1,5 +1,6 @@
 import { FIELD_TYPES_CONFIG, FIELD_TYPES_FILES } from '../../fixtures/configs/field-types.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 // The editor renders a field once it’s scrolled into view, so make every field visible at once
 test.use({ config: FIELD_TYPES_CONFIG, viewport: { width: 1280, height: 6000 } });
@@ -15,7 +16,7 @@ test.beforeEach(async ({ cms }) => {
 test('creates an event with every field type filled in', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('group', { name: /Notes/ })).toBeVisible();
   await editor.getByRole('textbox', { name: 'Title' }).fill('Meteor Night');
@@ -116,7 +117,7 @@ test('creates an event with every field type filled in', async ({ cms, page }) =
 test('keeps every other field as it was when one changes', async ({ cms, page }) => {
   await page.getByRole('row', { name: /Star Party/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('group', { name: /Notes/ })).toBeVisible();
   await editor.getByRole('textbox', { name: 'Title' }).fill('Star Party!');
@@ -148,7 +149,7 @@ test('refuses to save a list of objects with more items than its maximum', async
   await page.reload();
   await page.getByRole('row', { name: /Star Party/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const speakers = editor.getByRole('group', { name: /Speakers.*Field/ });
 
   await expect(editor.getByRole('group', { name: /Notes/ })).toBeVisible();
@@ -190,7 +191,7 @@ test('reorders key-value pairs, saving them in the new order', async ({ cms, pag
   await page.reload();
   await page.getByRole('row', { name: /Star Party/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const metadata = editor.getByRole('group', { name: /Metadata/ });
   const saveButton = editor.getByRole('button', { name: 'Save' });
 

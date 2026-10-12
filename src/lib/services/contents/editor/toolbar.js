@@ -84,3 +84,73 @@ export const getSaveFailure = (ex) => {
 
   return { type: 'error', message: '', unexpected: true };
 };
+
+/**
+ * Get what the entry editor toolbar offers for the entry being edited.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} [args.collection] Collection the entry belongs to.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file, if the entry is one.
+ * @param {boolean} args.isIndexFile Whether the entry is the index file of a nested collection.
+ * @param {boolean} args.hasPullRequest Whether the entry has a pull request.
+ * @param {boolean} args.workflowEnabled Whether the collection uses Editorial Workflow.
+ * @param {boolean} args.publishedVersionExists Whether the entry has a published version.
+ * @param {boolean} args.pendingDeletion Whether the entry is awaiting deletion.
+ * @param {boolean} args.readonly Whether the entry is read-only.
+ * @param {boolean} args.openAuthoring Whether the user is an Open Authoring contributor.
+ * @param {boolean} args.creationDisabled Whether creating new entries is currently disabled.
+ * @returns {{ useWorkflow: boolean, discardsDraft: boolean, locked: boolean,
+ * canDuplicate: boolean, removalMenuItems: { discard: boolean, delete: boolean } }} Whether the
+ * entry is saved to a pull request, whether deleting it just throws the draft away, whether its
+ * content can’t be changed, whether it can be duplicated, and which removal menu items are offered.
+ */
+export const getEntryToolbarState = ({
+  collection,
+  collectionFile,
+  isIndexFile,
+  hasPullRequest,
+  workflowEnabled,
+  publishedVersionExists,
+  pendingDeletion,
+  readonly,
+  openAuthoring,
+  creationDisabled,
+}) => {
+  // A collection can opt in or out of Editorial Workflow with its own `publish_mode` option, but an
+  // entry that already has a pull request stays in it until it’s published or discarded
+  const useWorkflow = hasPullRequest || workflowEnabled;
+  // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves
+  // the published version untouched, so it stays available even when deletion is disabled
+  const canDelete = !(collection?._type === 'entry' && collection.delete === false);
+  // Deleting an entry that was never published just throws the draft away; anything else takes an
+  // entry off the site
+  const discardsDraft = hasPullRequest && !publishedVersionExists;
+  // Taking a published entry off the site is a maintainer’s call. An Open Authoring contributor can
+  // discard their own draft, but not propose the removal of something already live
+  const canDeleteEntry = canDelete && (discardsDraft || !openAuthoring);
+  // An entry awaiting deletion is read-only: there’s nothing to save or move through the stages,
+  // only the deletion itself to carry out or call off. An entry in a read-only collection, or a
+  // read-only collection file, can only be viewed: there’s nothing to save, move through the
+  // stages, publish, discard or delete. Neither kind of entry can have its content changed
+  const locked = pendingDeletion || readonly;
+
+  return {
+    useWorkflow,
+    discardsDraft,
+    locked,
+    canDuplicate: canDuplicateEntry({
+      collection,
+      collectionFile,
+      isIndexFile,
+      readonly,
+      creationDisabled,
+    }),
+    // A collection file is part of the collection definition, so it can only be discarded
+    removalMenuItems: getRemovalMenuItems({
+      publishedVersionExists,
+      canDeleteEntry,
+      isCollectionFile: !!collectionFile,
+      readonly,
+      locked,
+    }),
+  };
+};

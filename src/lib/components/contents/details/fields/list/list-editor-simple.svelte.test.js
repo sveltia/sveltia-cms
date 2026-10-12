@@ -1,7 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
-import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import ListEditorSimple from './list-editor-simple.svelte';
 
@@ -33,18 +34,14 @@ const renderEditor = async (value, { config = {}, readonly = false } = {}) => {
     values: { _default: Object.fromEntries(value.map((item, index) => [`tags.${index}`, item])) },
   });
 
-  const props = $state({
-    locale: '_default',
-    keyPath: 'tags',
-    typedKeyPath: 'tags',
-    fieldId: 'tags',
-    fieldLabel: 'Tags',
+  const { props, container } = await renderFieldEditor(ListEditorSimple, {
     fieldConfig,
+    fieldLabel: 'Tags',
+    locale: '_default',
     currentValue: value,
-    readonly,
+    props: { readonly },
+    draft,
   });
-
-  const { container } = await renderWithDraft(ListEditorSimple, { draft, props });
 
   return { draft, props, container };
 };

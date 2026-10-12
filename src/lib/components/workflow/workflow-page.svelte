@@ -12,7 +12,13 @@
     unpublishedEntries,
     workflowDataReady,
   } from '$lib/services/workflow';
-  import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
+  import {
+    COLUMN_LABELS,
+    getDiscardMessages,
+    getPublishMessages,
+    groupEntriesByStatus,
+    STATUS_UPDATE_MESSAGES,
+  } from '$lib/services/workflow/board';
   import { deployingEntries } from '$lib/services/workflow/deploy';
   import { getDiscardDialogStrings, getPublishDialogStrings } from '$lib/services/workflow/dialogs';
   import { openAuthoring, workflowStages } from '$lib/services/workflow/open-authoring';
@@ -26,49 +32,8 @@
 
   /**
    * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
+   * @import { ToastMessages } from '$lib/services/workflow/board';
    */
-
-  /**
-   * Column headings. The `drafts` heading is plural, unlike the singular status label used in the
-   * entry editor’s status button.
-   * @type {Record<WorkflowStatus, string>}
-   */
-  const COLUMN_LABELS = { ...WORKFLOW_STATUS_LABELS, draft: 'status.drafts' };
-
-  /**
-   * @typedef {object} ToastMessages
-   * @property {string} info I18n string key shown while the action is in progress.
-   * @property {string} success I18n string key shown once the action has completed.
-   * @property {string} error I18n string key shown when the action has failed.
-   */
-
-  /** @type {ToastMessages} */
-  const STATUS_UPDATE_MESSAGES = {
-    info: 'workflow.updating_status',
-    success: 'workflow.status_updated',
-    error: 'workflow.status_change_failed',
-  };
-
-  /** @type {ToastMessages} */
-  const DELETION_MESSAGES = {
-    info: 'workflow.deleting_entry',
-    success: 'workflow.entry_deleted',
-    error: 'deleting_entry_failed',
-  };
-
-  /** @type {ToastMessages} */
-  const CANCELLATION_MESSAGES = {
-    info: 'workflow.cancelling_deletion',
-    success: 'workflow.deletion_cancelled',
-    error: 'workflow.cancelling_deletion_failed',
-  };
-
-  /** @type {ToastMessages} */
-  const PUBLISHING_MESSAGES = {
-    info: 'workflow.publishing_entry',
-    success: 'workflow.entry_published',
-    error: 'workflow.publishing_entry_failed',
-  };
 
   // `$state.raw` rather than `$state`, because the latter deeply proxies the entry, and the proxy
   // would end up back in the store when the status is saved. `structuredClone()` throws on a proxy,
@@ -121,14 +86,8 @@
 
   // A pending deletion has a status of its own, so it never lands in a stage column. It’s listed
   // below the board instead, and its cards don’t drag: there are no stages to move it through
-  const columns = $derived(
-    workflowStages.current.map((status) => ({
-      status,
-      entries: unpublishedEntries.current.filter((entry) => entry.workflow.status === status),
-    })),
-  );
-  const pendingDeletions = $derived(
-    unpublishedEntries.current.filter(({ workflow }) => workflow.status === 'pending_deletion'),
+  const { columns, pendingDeletions } = $derived(
+    groupEntriesByStatus(workflowStages.current, unpublishedEntries.current),
   );
 
   // Keep the deploy state fresh while the board is open, so a preview link turns live as soon as
@@ -370,11 +329,7 @@
 
     /* v8 ignore next 7 -- the dialog is only opened for an entry */
     if (entry) {
-      await runAction(
-        entry,
-        discardWorkflowEntry(entry),
-        targetIsDeletion ? CANCELLATION_MESSAGES : DELETION_MESSAGES,
-      );
+      await runAction(entry, discardWorkflowEntry(entry), getDiscardMessages(targetIsDeletion));
     }
   }}
 >
@@ -399,11 +354,7 @@
       return;
     }
 
-    await runAction(
-      entry,
-      publishWorkflowEntry(entry),
-      targetIsDeletion ? DELETION_MESSAGES : PUBLISHING_MESSAGES,
-    );
+    await runAction(entry, publishWorkflowEntry(entry), getPublishMessages(targetIsDeletion));
   }}
 >
   {publishDialogStrings.message}

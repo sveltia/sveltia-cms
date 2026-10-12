@@ -13,6 +13,7 @@ import {
   pruneForkBranches,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
+  setUpForkFor,
   updateForkStatusWith,
 } from '$lib/services/backends/git/shared/fork';
 import { cmsConfig } from '$lib/services/config';
@@ -23,7 +24,7 @@ import {
   requestForkPermission,
 } from '$lib/services/workflow/open-authoring';
 
-vi.mock('@sveltia/i18n', () => ({ _: vi.fn((key) => key) }));
+vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
 vi.mock('$lib/services/workflow/open-authoring', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
@@ -172,6 +173,81 @@ describe('shared fork service', () => {
       ).rejects.toThrow('No access to the repository');
 
       expect(openAuthoringInitialized.current).toBe(false);
+    });
+  });
+
+  describe('setUpForkFor', () => {
+    const fork = { owner: 'contributor', repo: 'repo' };
+
+    /**
+     * Create the set-up hooks.
+     * @param {object} [options] Options.
+     * @param {boolean} [options.canWrite] Whether the user can write to the repository.
+     * @param {{ owner: string, repo: string }} [options.existingFork] Existing fork.
+     * @returns {any} Arguments.
+     */
+    const createArgs = ({ canWrite = false, existingFork = undefined } = {}) => ({
+      repoPath: 'owner/repo',
+      fetchAccess: vi.fn(async () => ({ canWrite, allowForking: true })),
+      prepare: vi.fn(async () => {}),
+      fetchFork: vi.fn(async () => existingFork),
+      prepareFork: vi.fn(async () => {}),
+      fetchForkingAllowed: vi.fn(({ allowForking }) => allowForking),
+      createFork: vi.fn(async () => fork),
+    });
+
+    test('leaves a maintainer on the configured repository', async () => {
+      const args = createArgs({ canWrite: true });
+
+      await setUpForkFor(args);
+      expect(args.prepare).not.toHaveBeenCalled();
+      expect(args.fetchFork).not.toHaveBeenCalled();
+      expect(forkedRepository.current).toBeUndefined();
+    });
+
+    test('takes an existing fork once it’s prepared', async () => {
+      const args = createArgs({ existingFork: fork });
+
+      await setUpForkFor(args);
+      expect(args.prepare).toHaveBeenCalledOnce();
+      expect(args.prepareFork).toHaveBeenCalledWith(fork);
+      expect(args.createFork).not.toHaveBeenCalled();
+      expect(forkedRepository.current).toEqual(fork);
+    });
+
+    test('creates a fork with the user’s permission', async () => {
+      const args = createArgs();
+
+      vi.mocked(requestForkPermission).mockResolvedValue(true);
+      await setUpForkFor(args);
+      expect(args.fetchForkingAllowed).toHaveBeenCalledWith({
+        canWrite: false,
+        allowForking: true,
+      });
+      expect(requestForkPermission).toHaveBeenCalledWith('owner/repo');
+      expect(args.prepareFork).not.toHaveBeenCalled();
+      expect(forkedRepository.current).toEqual(fork);
+    });
+
+    test('works without the optional hooks', async () => {
+      const args = createArgs({ existingFork: fork });
+
+      delete args.prepare;
+      delete args.prepareFork;
+
+      await setUpForkFor(args);
+      expect(forkedRepository.current).toEqual(fork);
+    });
+
+    test('creates no fork when the user declines', async () => {
+      const args = createArgs();
+
+      vi.mocked(requestForkPermission).mockResolvedValue(false);
+      await expect(setUpForkFor(args)).rejects.toThrow(
+        'Permission to fork the repository was declined',
+      );
+      expect(args.createFork).not.toHaveBeenCalled();
+      expect(forkedRepository.current).toBeUndefined();
     });
   });
 

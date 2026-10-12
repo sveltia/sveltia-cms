@@ -1,5 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { BASE_CONFIG, expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * Entries and collections sharing a folder: what one of them owns, and where each is listed.
@@ -108,9 +109,7 @@ test.describe('with collections telling the entries of one folder apart', () => 
     // The French collection filters the entry out, and the archive is hidden
     await expect(entryLinks).toHaveText(['English › Hello']);
     await entryLinks.click();
-    await expect(
-      page.getByRole('group', { name: 'Content Editor' }).getByRole('textbox', { name: 'Title' }),
-    ).toHaveValue('Hello');
+    await expect(getEditor(page).getByRole('textbox', { name: 'Title' })).toHaveValue('Hello');
   });
 
   test('leaves the hidden collection out of the search results', async ({ page }) => {
@@ -171,7 +170,7 @@ test.describe('with collections creating entries in one folder', () => {
       .getByRole('button', { name: 'Create New Entry' })
       .click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Title' }).fill('Hello');
     await editor.getByRole('button', { name: 'Save' }).click();
@@ -226,7 +225,7 @@ test.describe('with a file collection’s file in an entry collection’s folder
   test('names a new entry after the file under a new name', async ({ cms, page }) => {
     await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Title' }).fill('_index');
     await editor.getByRole('button', { name: 'Save' }).click();

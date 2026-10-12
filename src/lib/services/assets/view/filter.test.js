@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createMockAssetFolder } from '$lib/test/factories';
+
 import { filterAssets } from './filter';
 
 // Mock dependencies
@@ -36,13 +38,7 @@ describe('assets/view/filter', () => {
         sha: 'sha1',
         size: 1024000,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
         commitAuthor: { name: 'Test User', email: 'test@example.com' },
         commitDate: new Date('2023-01-01'),
       },
@@ -52,13 +48,7 @@ describe('assets/view/filter', () => {
         sha: 'sha2',
         size: 2048000,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
         commitAuthor: { name: 'Test User', email: 'test@example.com' },
         commitDate: new Date('2023-01-02'),
       },
@@ -68,13 +58,7 @@ describe('assets/view/filter', () => {
         sha: 'sha3',
         size: 10240000,
         kind: 'video',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/videos',
-          publicPath: '/videos',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/videos', publicPath: '/videos' }),
         commitAuthor: { name: 'Test User', email: 'test@example.com' },
         commitDate: new Date('2023-01-03'),
       },
@@ -84,13 +68,7 @@ describe('assets/view/filter', () => {
         sha: 'sha4',
         size: 512000,
         kind: 'document',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/docs',
-          publicPath: '/docs',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/docs', publicPath: '/docs' }),
         commitAuthor: { name: 'Test User', email: 'test@example.com' },
         commitDate: new Date('2023-01-04'),
       },
@@ -168,13 +146,7 @@ describe('assets/view/filter', () => {
           sha: 'sha1',
           size: 1000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           description: undefined,
         },
         {
@@ -183,13 +155,7 @@ describe('assets/view/filter', () => {
           sha: 'sha2',
           size: 2000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           description: 'test description',
         },
       ]);
@@ -211,13 +177,7 @@ describe('assets/view/filter', () => {
           sha: 'sha1',
           size: 1000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           description: undefined,
         },
         {
@@ -226,13 +186,7 @@ describe('assets/view/filter', () => {
           sha: 'sha2',
           size: 2000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           description: 'exact',
         },
       ]);

@@ -1,8 +1,9 @@
 import { MEDIA_CONFIG, MEDIA_FILES } from '../../fixtures/configs/media.js';
 import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/monolingual.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
-import { getBottomNavigation, getEditor, PHONE, signIn } from './helpers.js';
+import { getBottomNavigation, PHONE, signIn } from './helpers.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';

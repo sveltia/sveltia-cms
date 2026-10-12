@@ -1,6 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
-
-import { openCollection } from './helpers.js';
+import { getEditor, openCollection } from '../../fixtures/ui.js';
 
 /**
  * A site with a read-only archive collection next to an editable one, and a file collection with
@@ -85,7 +84,7 @@ test('shows a read-only collection for reference only', async ({ cms, page }) =>
 
   await page.getByRole('row', { name: /Old Post/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('status')).toHaveText(
     /This entry is read-only\. You can view it but cannot make any changes\./,
@@ -109,7 +108,7 @@ test('refuses to open a new entry in a read-only collection from its URL', async
     window.location.hash = '#/collections/archive/new';
   });
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor).toContainText(
     'This collection is read-only. You can view its content but cannot make any changes.',
@@ -121,7 +120,7 @@ test('locks a read-only file while its sibling stays editable', async ({ cms, pa
   await openCollection(page, 'Settings');
   await page.getByRole('row', { name: /Site/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('textbox', { name: 'Site Name' })).toHaveAttribute('readonly');
   await expect(editor.getByRole('button', { name: 'Save' })).toHaveCount(0);
@@ -164,10 +163,7 @@ test('refuses to rename an entry a read-only entry refers to', async ({ cms, pag
   await panel.getByRole('button', { name: 'Edit Slug' }).click();
   await panel.getByRole('textbox', { name: 'Slug' }).fill('hi');
   await page.keyboard.press('Enter');
-  await page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('button', { name: 'Save' })
-    .click();
+  await getEditor(page).getByRole('button', { name: 'Save' }).click();
 
   await expect(page.getByRole('alertdialog')).toContainText(
     'This entry can’t be renamed, because the following read-only entries refer to it by its ' +
@@ -217,7 +213,7 @@ test.describe('with the whole CMS read-only', () => {
 
     await page.getByRole('row', { name: /Hello/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await expect(editor.getByRole('status')).toHaveText(/The CMS is in read-only mode\./);
     await expect(editor.getByRole('button', { name: 'Save' })).toHaveCount(0);

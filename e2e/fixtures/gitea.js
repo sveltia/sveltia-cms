@@ -115,12 +115,6 @@ export class MockGitea extends MockGitRepository {
   labels = [];
 
   /**
-   * The signed-in user’s fork of the repository, once {@link createFork} has made it.
-   * @type {{ owner: string, repo: string } | undefined}
-   */
-  fork = undefined;
-
-  /**
    * Whether the fork request fails because the user already has a repository of that name, which
    * makes the CMS ask for the fork under another name.
    */
@@ -214,30 +208,6 @@ export class MockGitea extends MockGitRepository {
     this.labels.push(label);
 
     return label;
-  }
-
-  /**
-   * Fork the repository onto the signed-in user’s account, with a copy of the configured branch.
-   * Like a fork on the instance, it shares the commits and blobs of the repository, and only its
-   * branches are its own.
-   * @param {object} [options] Options.
-   * @param {string} [options.repo] Name of the fork, the repository’s own by default.
-   * @returns {{ owner: string, repo: string }} Fork.
-   */
-  createFork({ repo = this.repo } = {}) {
-    this.fork = { owner: this.user.login, repo };
-    this.refs.set(this.forkBranch(this.branch), this.head.oid);
-
-    return this.fork;
-  }
-
-  /**
-   * Get the key of a branch in the fork, for {@link refs}, {@link commit} and {@link readFile}.
-   * @param {string} branch Branch name.
-   * @returns {string} Key, e.g. `mona:cms/posts/hello`.
-   */
-  forkBranch(branch) {
-    return `${this.user.login}:${branch}`;
   }
 
   /**

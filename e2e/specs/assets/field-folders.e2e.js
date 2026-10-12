@@ -1,5 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * An Astro-like site whose blog collection keeps its images in one folder and the author photos,
@@ -45,10 +46,7 @@ test('shows an image in an absolute field-level media folder referred to by a re
   await cms.signIn();
   await page.getByRole('row', { name: 'Hello' }).click();
 
-  const field = page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('group', { name: '“\u2068Author Photo\u2069” Field' });
-
+  const field = getEditor(page).getByRole('group', { name: '“\u2068Author Photo\u2069” Field' });
   // The thumbnail is decorative, with an empty `alt`, so it has no role
   const thumbnail = field.locator('img');
 

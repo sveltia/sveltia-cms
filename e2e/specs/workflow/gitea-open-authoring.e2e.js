@@ -2,6 +2,7 @@ import { post } from '../../fixtures/configs/workflow.js';
 import { createPNG } from '../../fixtures/files.js';
 import { FORK_REPO_ID } from '../../fixtures/gitea.js';
 import { expect, GITEA_CONFIG, test } from '../../fixtures/test.js';
+import { getEditor, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -32,28 +33,13 @@ test.beforeEach(async ({ gitea }) => {
 });
 
 /**
- * Open an entry in the editor.
- * @param {Page} page Page.
- * @param {string} title Entry title.
- * @returns {Promise<Locator>} Editor.
- */
-const openEntry = async (page, title) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await page.getByRole('row', { name: new RegExp(title) }).click();
-  await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue(title);
-
-  return editor;
-};
-
-/**
  * Create the second post and save it, leaving it a draft.
  * @param {Page} page Page.
  */
 const saveSecondPost = async (page) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
   await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
@@ -62,20 +48,6 @@ const saveSecondPost = async (page) => {
     .getByRole('alertdialog', { name: 'Send for Review' })
     .getByRole('button', { name: 'Later' })
     .click();
-};
-
-/**
- * Change the status of the entry open in the editor with its status menu.
- * @param {CMS} cms CMS.
- * @param {Page} page Page.
- * @param {RegExp} current Current status.
- * @param {string} status New status.
- */
-const changeStatus = async (cms, page, current, status) => {
-  await cms.chooseMenuItem(
-    page.getByRole('button', { name: current }),
-    page.getByRole('menuitemradio', { name: status }),
-  );
 };
 
 /**
@@ -112,15 +84,6 @@ const openForkPullRequest = (gitea, { slug, branch }) =>
     { headRepoId: FORK_REPO_ID, author: gitea.user },
   );
 
-/**
- * Get the names of the branches in the repository or in the fork that hold Editorial Workflow
- * entries.
- * @param {MockGitea} gitea Gitea mock.
- * @returns {string[]} Branch keys, as {@link MockGitea.refs} has them.
- */
-const getWorkflowBranches = (gitea) =>
-  [...gitea.refs.keys()].filter((key) => /^(\w+:)?cms\//.test(key));
-
 test('keeps a maintainer working on the repository', async ({ cms, gitea, page }) => {
   await cms.open();
   await saveSecondPost(page);
@@ -135,7 +98,7 @@ test('keeps a maintainer working on the repository', async ({ cms, gitea, page }
       },
     ]);
   expect(gitea.fork).toBeUndefined();
-  expect(getWorkflowBranches(gitea)).toEqual(['cms/posts/second-post']);
+  expect(gitea.getWorkflowBranches({ includeFork: true })).toEqual(['cms/posts/second-post']);
   await expect(page.getByText(/Your changes are saved to your fork/)).toHaveCount(0);
 });
 
@@ -210,7 +173,7 @@ test.describe('as a contributor', () => {
     await saveSecondPost(page);
 
     await expect
-      .poll(() => getWorkflowBranches(gitea))
+      .poll(() => gitea.getWorkflowBranches({ includeFork: true }))
       .toEqual([gitea.forkBranch('cms/mona/e2e-site-fork/posts/second-post')]);
     await expect(page.getByRole('alertdialog', { name: 'Fork Repository' })).toHaveCount(0);
   });
@@ -358,7 +321,7 @@ test.describe('as a contributor', () => {
         await cms.open();
         await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-        const editor = page.getByRole('group', { name: 'Content Editor' });
+        const editor = getEditor(page);
 
         await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
         await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
@@ -407,7 +370,7 @@ test.describe('as a contributor', () => {
         new_branch: SECOND_POST_BRANCH,
       });
       // Nothing reaches the repository, and the maintainers aren’t bothered with a draft
-      expect(getWorkflowBranches(gitea)).toEqual([branch]);
+      expect(gitea.getWorkflowBranches({ includeFork: true })).toEqual([branch]);
       expect(gitea.head.oid).toBe(mainBefore);
       expect(gitea.pullRequests).toEqual([]);
       await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
@@ -440,7 +403,7 @@ test.describe('as a contributor', () => {
       await expect
         .poll(() => gitea.readFile('content/posts/second-post.md', branch))
         .toBe(post('Second Post', 'Almost there.'));
-      expect(getWorkflowBranches(gitea)).toEqual([branch]);
+      expect(gitea.getWorkflowBranches({ includeFork: true })).toEqual([branch]);
       expect(gitea.pullRequests).toEqual([]);
     });
 
@@ -502,7 +465,7 @@ test.describe('as a contributor', () => {
           },
         ]);
 
-      await changeStatus(cms, page, /Status: .*In Review/, 'Draft');
+      await cms.changeStatus(/Status: .*In Review/, 'Draft');
 
       // The pull request is kept, as a work in progress
       await expect
@@ -516,7 +479,7 @@ test.describe('as a contributor', () => {
       // The reload comes back to the editor, with the entry read from the branch and its pull
       // request rather than from the draft in memory
       await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Second Post');
-      await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+      await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
       await expect
         .poll(() => gitea.pullRequests[0])
@@ -537,7 +500,7 @@ test.describe('as a contributor', () => {
       await cms.open();
       // A closed pull request leaves the entry a draft
       await openEntry(page, 'Second Post');
-      await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+      await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
       await expect.poll(() => pullRequest.state).toBe('open');
       expect(gitea.pullRequests).toHaveLength(1);
@@ -575,7 +538,7 @@ test.describe('as a contributor', () => {
           /Second Post.*Draft/,
         ]);
         await openEntry(page, 'Second Post');
-        await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+        await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
         // A new pull request, rather than an attempt to reopen the merged one, which the instance
         // refuses with a 412
@@ -609,7 +572,7 @@ test.describe('as a contributor', () => {
       pullRequest.title = 'Create Post “second-post”';
       gitea.mergePullRequest(pullRequest);
 
-      await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+      await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
       await expect(page.getByRole('alert')).toContainText(
         'A maintainer has already published this entry, so there’s nothing left to review.',
@@ -619,7 +582,7 @@ test.describe('as a contributor', () => {
       expect(gitea.pullRequests.map(({ merged }) => merged)).toEqual([true]);
       await expect.poll(() => gitea.refs.has(gitea.forkBranch(branch))).toBe(false);
       // The editor closes onto the entry list, where the entry is published rather than a draft
-      await expect(page.getByRole('group', { name: 'Content Editor' })).toBeHidden();
+      await expect(getEditor(page)).toBeHidden();
       await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
         /First Post/,
         /^\s*Second Post\s*$/,
@@ -649,7 +612,7 @@ test.describe('as a contributor', () => {
       // @see https://github.com/sveltia/sveltia-cms/security/advisories/GHSA-8h97-74c4-g246
       pullRequest.baseBranch = 'develop';
 
-      await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+      await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
       await expect.poll(() => gitea.pullRequests).toHaveLength(2);
       expect(pullRequest.title).toBe('WIP: Create Post “second-post”');

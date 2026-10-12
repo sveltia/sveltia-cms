@@ -25,6 +25,25 @@ import {
  * @property {(event: DragEvent) => void} onDragOver Handle a `dragover` event on the list.
  * @property {(event: DragEvent) => void} onDrop Handle a `drop` event on the list.
  * @property {() => void} onDragEnd End the drag.
+ * @property {(index: number, options?: DragItemOptions) => DragItemProps} itemProps Get the
+ * attributes and event handlers to spread on the element of the item at the given index.
+ */
+
+/**
+ * Options for {@link DragSorter.itemProps}.
+ * @typedef {object} DragItemOptions
+ * @property {boolean} [ownEventsOnly] Whether to ignore the drag events bubbling up from a nested
+ * sortable list, which starts its own drag.
+ */
+
+/**
+ * Attributes and event handlers of a sortable item element, returned by
+ * {@link DragSorter.itemProps}.
+ * @typedef {object} DragItemProps
+ * @property {boolean} draggable Whether the item can be dragged, which is only while its drag
+ * handle is pressed.
+ * @property {(event: DragEvent) => void} ondragstart `dragstart` event handler.
+ * @property {(event: DragEvent) => void} ondragend `dragend` event handler.
  */
 
 /**
@@ -41,11 +60,19 @@ import {
  * @param {(from: number, to: number) => void} args.onMove Function moving the item at the source
  * index to the destination index, called once an item has been dropped somewhere else or moved
  * with {@link DragSorter.move}.
+ * @param {(index: number) => string} [args.getItemData] Function returning plain text describing
+ * the item at the given index, to be attached to a drag started with {@link DragSorter.itemProps}.
  * @param {() => Promise<void>} [args.settle] Function waiting for the moved item to be rendered in
  * its new position, before its reorder control gets the focus. Defaults to Svelte’s `tick`.
  * @returns {DragSorter} Reactive state and event handlers.
  */
-export const createDragSorter = ({ getItemCount, getListElement, onMove, settle = tick }) => {
+export const createDragSorter = ({
+  getItemCount,
+  getListElement,
+  onMove,
+  getItemData,
+  settle = tick,
+}) => {
   /** @type {number | undefined} */
   let grabbedIndex = $state();
   /**
@@ -84,6 +111,27 @@ export const createDragSorter = ({ getItemCount, getListElement, onMove, settle 
     onMove(from, to);
     await settle();
     focusReorderControl({ listElement: getListElement(), index: to, action });
+  };
+
+  /**
+   * Start dragging the item at the given index.
+   * @param {number} index Item index.
+   * @param {DragEvent} [event] `dragstart` event. When given, the drag is marked as a move, and
+   * the given data is attached to it, because Firefox doesn’t start a drag unless some data is
+   * attached.
+   * @param {string} [data] Plain text describing the item, to be attached to the drag.
+   */
+  const onDragStart = (index, event, data) => {
+    drag = { index, previewOrder: [...displayOrder] };
+    // Let the editor pane scroll while the pointer is dragged near its top or bottom edge, so a
+    // long list can be reordered without letting go
+    startAutoScroll(getListElement());
+
+    if (event?.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      // Firefox doesn’t start a drag unless some data is attached to it
+      event.dataTransfer.setData('text/plain', data ?? '');
+    }
   };
 
   return {
@@ -128,24 +176,8 @@ export const createDragSorter = ({ getItemCount, getListElement, onMove, settle 
     move,
     /**
      * Start dragging the item at the given index. Call it from the item’s `dragstart` event.
-     * @param {number} index Item index.
-     * @param {DragEvent} [event] `dragstart` event. When given, the drag is marked as a move, and
-     * the given data is attached to it, because Firefox doesn’t start a drag unless some data is
-     * attached.
-     * @param {string} [data] Plain text describing the item, to be attached to the drag.
      */
-    onDragStart: (index, event, data) => {
-      drag = { index, previewOrder: [...displayOrder] };
-      // Let the editor pane scroll while the pointer is dragged near its top or bottom edge, so a
-      // long list can be reordered without letting go
-      startAutoScroll(getListElement());
-
-      if (event?.dataTransfer) {
-        event.dataTransfer.effectAllowed = 'move';
-        // Firefox doesn’t start a drag unless some data is attached to it
-        event.dataTransfer.setData('text/plain', data ?? '');
-      }
-    },
+    onDragStart,
     /**
      * Handle a `dragover` event on the list, moving the dragged item’s gap under the pointer.
      * @param {DragEvent} event `dragover` event.
@@ -215,5 +247,35 @@ export const createDragSorter = ({ getItemCount, getListElement, onMove, settle 
      * dropped or the drag was cancelled; a cancelled drag puts every item back where it started.
      */
     onDragEnd: reset,
+    /**
+     * Get the attributes and event handlers to spread on the element of the item at the given
+     * index: it’s draggable while its handle is pressed, and its `dragstart` and `dragend` events
+     * start and end the drag. The `dragging` class marking the item being dragged is left to the
+     * element’s own `class:` directive, which can’t be spread.
+     * @param {number} index Item index.
+     * @param {DragItemOptions} [options] Options.
+     * @returns {DragItemProps} Attributes and event handlers.
+     */
+    itemProps: (index, { ownEventsOnly = false } = {}) => ({
+      draggable: grabbedIndex === index,
+      /**
+       * Start dragging the item.
+       * @param {DragEvent} event `dragstart` event.
+       */
+      ondragstart: (event) => {
+        if (!ownEventsOnly || event.target === event.currentTarget) {
+          onDragStart(index, event, getItemData?.(index));
+        }
+      },
+      /**
+       * End the drag.
+       * @param {DragEvent} event `dragend` event.
+       */
+      ondragend: (event) => {
+        if (!ownEventsOnly || event.target === event.currentTarget) {
+          reset();
+        }
+      },
+    }),
   };
 };

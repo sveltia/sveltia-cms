@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { checkRootDirPaths } from '$lib/services/config/parser/root-dir';
+import { createCollectors } from '$lib/test/config-parser';
 
 /**
- * @import { AssetFolderInfo, ConfigParserCollectors, EntryFolderInfo } from '$lib/types/private';
+ * @import {
+ * AssetFolderInfo,
+ * EntryFolderInfo,
+ * } from '$lib/types/private';
  */
 
 const mockGetRootDir = vi.hoisted(() => vi.fn(() => 'apps/blog'));
@@ -12,17 +16,6 @@ vi.mock('$lib/services/backends/root-dir', () => ({ getRootDir: mockGetRootDir }
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((key, { values } = {}) => `${key}:${values.path}`),
 }));
-
-/**
- * Create the collectors.
- * @returns {ConfigParserCollectors} Collectors.
- */
-const createCollectors = () => ({
-  errors: new Set(),
-  warnings: new Set(),
-  mediaFields: new Set(),
-  relationFields: new Set(),
-});
 
 /**
  * Create an asset folder.

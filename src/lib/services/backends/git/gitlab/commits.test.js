@@ -14,11 +14,9 @@ import { getGitHash } from '$lib/services/utils/file';
 import { forkedRepository, openAuthoring } from '$lib/services/workflow/open-authoring';
 
 // Mock dependencies
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key) => key),
-  locale: { current: 'en', set: vi.fn() },
-  dictionary: {},
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ locale: 'en', exports: { dictionary: {} } }),
+);
 vi.mock('$lib/services/backends/git/gitlab/fork', () => ({ projectIds: { base: 42 } }));
 vi.mock('$lib/services/backends/git/gitlab/repository', () => {
   const mockRepository = { repo: 'test-repo', branch: 'main', owner: 'test-owner' };

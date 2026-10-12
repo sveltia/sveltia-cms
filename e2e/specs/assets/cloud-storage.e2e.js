@@ -4,6 +4,7 @@ import { MockS3 } from '../../fixtures/cloud/s3.js';
 import { MockUploadcare } from '../../fixtures/cloud/uploadcare.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -49,7 +50,7 @@ const createConfig = (mediaLibraries, extraFields = []) => ({
 const openSelectImageDialog = async (page, service) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const cover = editor.getByRole('group', { name: '“\u2068Cover\u2069” Field' });
   const dialog = page.getByRole('dialog', { name: 'Select Image' });
 

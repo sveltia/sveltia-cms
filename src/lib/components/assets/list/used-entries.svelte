@@ -7,7 +7,7 @@
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
 
-  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
+  import { goto } from '$lib/services/app/navigation';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { getListedCollections } from '$lib/services/contents/collection/entries';
   import {
@@ -15,6 +15,7 @@
     getCollectionFilesByEntry,
   } from '$lib/services/contents/collection/files';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
+  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { Entry } from '$lib/types/private';
@@ -66,13 +67,13 @@
           {@const collectionLabel = getCollectionLabel(collection)}
           {#each getCollectionFilesByEntry(collection, entry) as file (file.name)}
             {@render usedEntryLink({
-              link: encodeRoutePath(`/collections/${collection.name}/entries/${file.name}`),
+              link: encodePathSegments(`/collections/${collection.name}/entries/${file.name}`),
               collectionLabel,
               entryLabel: getCollectionFileLabel(file),
             })}
           {:else}
             {@render usedEntryLink({
-              link: encodeRoutePath(`/collections/${collection.name}/entries/${entry.subPath}`),
+              link: encodePathSegments(`/collections/${collection.name}/entries/${entry.subPath}`),
               collectionLabel,
               entryLabel: getEntrySummary(collection, entry, { useTemplate: true }),
             })}

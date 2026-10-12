@@ -12,7 +12,7 @@
   import TextPreview from '$lib/components/assets/list/text-preview.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import NotFound from '$lib/components/global/not-found.svelte';
-  import { encodeRoutePath, goBack } from '$lib/services/app/navigation';
+  import { goBack } from '$lib/services/app/navigation';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import {
@@ -27,6 +27,7 @@
   import { browsedDirPath } from '$lib/services/assets/subfolders';
   import { assetGroups, getAdjacentAssets } from '$lib/services/assets/view';
   import { isSearchResultsPath } from '$lib/services/search/navigation';
+  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { ViewTransitionType } from '$lib/services/app/navigation';
@@ -50,7 +51,7 @@
   const assets = $derived(asset ? [asset] : []);
   // Back to the subfolder the asset was opened from, if the folder is browsed by subfolder
   const backPath = $derived(
-    encodeRoutePath(
+    encodePathSegments(
       `/assets/${browsedDirPath.current ?? selectedAssetFolder.current?.internalPath ?? '-/all'}`,
     ),
   );

@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * A blog whose posts record when they were created and last updated, with DateTime fields set on
@@ -58,7 +59,7 @@ test.beforeEach(async ({ cms, page }) => {
 test('sets the creation and modification dates when an entry is created', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   // The fields have no value until the entry is saved, so they’re hidden, and they don’t stop the
   // entry from being saved although they’re required
@@ -79,7 +80,7 @@ test('sets the creation and modification dates when an entry is created', async 
 test('only sets the modification date when an entry is updated', async ({ cms, page }) => {
   await page.getByRole('row', { name: /Hello/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   // Once saved, the fields show their values as text, which can’t be edited
   await expect(editor.getByRole('group', { name: /Last Modified/ })).toContainText(

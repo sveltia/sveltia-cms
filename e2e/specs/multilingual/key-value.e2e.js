@@ -1,6 +1,7 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
-import { getEditor, getEditPane } from './helpers.js';
+import { getEditPane } from './helpers.js';
 
 /**
  * A multilingual blog whose posts have a KeyValue field duplicated to every locale.

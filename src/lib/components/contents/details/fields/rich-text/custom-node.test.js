@@ -4,7 +4,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createCustomNodeClass } from '$lib/components/contents/details/fields/rich-text/custom-node';
-import { getNoAsset } from '$lib/services/contents/fields/rich-text/previews';
+import { getNoAsset } from '$lib/services/contents/fields/rich-text/previews/components';
 
 // Set up DOM globals for tests
 const makeMockElement = (tagName) => ({

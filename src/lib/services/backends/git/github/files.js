@@ -19,8 +19,8 @@ import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
-import { encodePath } from '$lib/services/backends/git/shared/url';
 import { getRootDir } from '$lib/services/backends/root-dir';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import {
@@ -49,7 +49,7 @@ const fetchTree = async (treeRef, recursive) => {
   const query = recursive ? '?recursive=1' : '';
 
   return /** @type {{ tree: GitTreeEntry[], truncated: boolean }} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/git/trees/${encodePath(treeRef)}${query}`)
+    await fetchAPI(`/repos/${owner}/${repo}/git/trees/${encodePathSegments(treeRef)}${query}`)
   );
 };
 

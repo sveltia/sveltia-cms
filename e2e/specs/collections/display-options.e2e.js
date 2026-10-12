@@ -1,6 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
-
-import { openCollection } from './helpers.js';
+import { getEditor, getOpenedURL, openCollection } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -177,24 +176,6 @@ const getTreeItem = (page, name) =>
     .getByRole('tree', { name: 'Collection List' })
     .getByRole('treeitem', { name: new RegExp(`^${name}\\b`) });
 
-/**
- * Click a control and get the URL of the tab it opens.
- * @param {Page} page Page.
- * @param {Locator} button Control.
- * @returns {Promise<string>} URL.
- */
-const getOpenedURL = async (page, button) => {
-  const [popup] = await Promise.all([page.waitForEvent('popup'), button.click()]);
-
-  await popup.waitForLoadState();
-
-  const url = popup.url();
-
-  await popup.close();
-
-  return url;
-};
-
 test.describe('icon and description', () => {
   test('shows the icon of a collection in the sidebar, or the default one', async ({ page }) => {
     await expect(getTreeItem(page, 'Posts').locator('.icon').first()).toHaveText('edit_note');
@@ -242,7 +223,7 @@ test.describe('preview path with dates', () => {
     await openCollection(page, 'Posts');
     await page.getByRole('row', { name: /Spring Planting/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const button = editor.getByRole('button', { name: 'View on Live Site' });
 
     // From Published, not Updated, the first DateTime field, nor today
@@ -267,7 +248,7 @@ test.describe('preview path with dates', () => {
     await openCollection(page, 'Notes');
     await page.getByRole('row', { name: /Frost Warning/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     expect(
       await getOpenedURL(page, editor.getByRole('button', { name: 'View on Live Site' })),
@@ -280,7 +261,7 @@ test.describe('preview path with dates', () => {
     await openCollection(page, 'Notes');
     await page.getByRole('row', { name: /Undated Idea/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Undated Idea');
     await expect(editor.getByRole('button', { name: 'View on Live Site' })).toHaveCount(0);
@@ -296,7 +277,7 @@ test.describe('dropdown threshold', () => {
 
     await collection.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Title' }).fill('Apron');
 

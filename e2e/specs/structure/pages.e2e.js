@@ -1,5 +1,6 @@
 import { NESTED_CONFIG, NESTED_FILES } from '../../fixtures/configs/nested.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Page } from '@playwright/test';
@@ -72,7 +73,7 @@ test('creates an entry in the folder being browsed', async ({ cms, page }) => {
   await page.getByRole('tree', { name: 'Collection List' }).getByText('About Us').click();
   await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('button', { name: 'Parent Folder' })).toContainText('About Us');
   await editor.getByRole('textbox', { name: 'Title' }).fill('History');
@@ -86,7 +87,7 @@ test('creates an entry in the folder being browsed', async ({ cms, page }) => {
 test('creates an entry in another folder chosen with the path editor', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('button', { name: 'Parent Folder' })).toContainText('Pages');
   await chooseParentFolder(page, 'Contact');
@@ -111,7 +112,7 @@ test('moves an entry along with the pages below it', async ({ cms, page }) => {
   await page.getByRole('tree', { name: 'Collection List' }).getByText('About Us').click();
   await page.getByRole('row', { name: /Our Team/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('button', { name: 'Parent Folder' })).toContainText('About Us');
   await chooseParentFolder(page, 'Pages');
@@ -151,7 +152,7 @@ test('offers no folder that would put an entry deeper than the collection’s de
 });
 
 test('offers no folder too deep for the pages below the entry being moved', async ({ page }) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await page.getByRole('row', { name: /About Us/ }).click();
   await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('About Us');

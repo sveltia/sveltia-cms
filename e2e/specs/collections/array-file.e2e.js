@@ -1,8 +1,7 @@
 import { createPNG } from '../../fixtures/files.js';
 import { expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
-import { getEditor, showLocale } from '../multilingual/helpers.js';
-
-import { getEntryList, openCollection } from './helpers.js';
+import { getEditor, getEntryList, openCollection } from '../../fixtures/ui.js';
+import { showLocale } from '../multilingual/helpers.js';
 
 /**
  * @import { Page } from '@playwright/test';
@@ -64,7 +63,7 @@ const CAROL = { name: 'Carol', role: 'Secretary' };
  * @returns {Promise<import('@playwright/test').Locator>} Editor.
  */
 const openMember = async (page, name) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await page.getByRole('row', { name: new RegExp(name) }).click();
   await expect(editor.getByRole('textbox', { name: 'Name' })).toHaveValue(name);
@@ -118,7 +117,7 @@ test.describe('test repository', () => {
   test('adds a new entry to the end of the file', async ({ cms, page }) => {
     await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Name' }).fill('Dave');
     await editor.getByRole('button', { name: 'Save' }).click();
@@ -132,7 +131,7 @@ test.describe('test repository', () => {
   test('saves an entry twice without reloading', async ({ cms, page }) => {
     await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Name' }).fill('Dave');
     await editor.getByRole('button', { name: 'Save' }).click();

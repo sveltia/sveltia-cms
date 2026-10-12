@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import KeyValuePreview from './key-value-preview.svelte';
 
@@ -19,16 +20,14 @@ const renderPreview = async (values, config = {}) => {
   /** @type {KeyValueField} */
   const fieldConfig = { name: 'meta', widget: 'keyvalue', ...config };
 
-  return renderWithDraft(KeyValuePreview, {
-    draft: createMockDraft({ fields: [fieldConfig], values: { _default: values } }),
-    props: {
-      locale: '_default',
-      keyPath: 'meta',
-      typedKeyPath: 'meta',
+  // A draft is given, so the result comes with the draft state
+  return /** @type {Promise<Awaited<ReturnType<typeof renderWithDraft>>>} */ (
+    renderFieldPreview(KeyValuePreview, {
       fieldConfig,
-      currentValue: undefined,
-    },
-  });
+      locale: '_default',
+      draft: createMockDraft({ fields: [fieldConfig], values: { _default: values } }),
+    })
+  );
 };
 
 describe('KeyValuePreview', () => {

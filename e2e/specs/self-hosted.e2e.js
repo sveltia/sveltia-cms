@@ -1,4 +1,5 @@
 import { expect, GITEA_CONFIG, GITHUB_CONFIG, GITLAB_CONFIG, test } from '../fixtures/test.js';
+import { openFirstPost } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -7,20 +8,6 @@ import { expect, GITEA_CONFIG, GITHUB_CONFIG, GITLAB_CONFIG, test } from '../fix
 
 const POST_PATH = 'content/posts/first-post.md';
 const FIRST_POST = '---\ntitle: First Post\n---\n\nHello, world!\n';
-
-/**
- * Open the first post in the entry editor.
- * @param {Page} page Page.
- * @returns {Promise<Locator>} Editor.
- */
-const openFirstPost = async (page) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await page.getByRole('row', { name: /First Post/ }).click();
-  await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue('Hello, world!');
-
-  return editor;
-};
 
 /**
  * Open the History panel of the first post and get the URL its first commit opens.

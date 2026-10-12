@@ -2,7 +2,7 @@ import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { resolveDeployments } from '$lib/services/backends/git/shared/deployment';
-import { encodePath } from '$lib/services/backends/git/shared/url';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import { DeployState, DeployStatus, DeployTarget } from '$lib/types/private';
@@ -47,7 +47,7 @@ export const fetchBranchHeadSHA = async () => {
   }
 
   const result = /** @type {Record<string, any>} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePath(branch)}`)
+    await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePathSegments(branch)}`)
   );
 
   return result?.commit?.id ?? undefined;

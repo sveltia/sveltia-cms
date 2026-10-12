@@ -1,5 +1,6 @@
 import { MEDIA_CONFIG, MEDIA_FILES } from '../../fixtures/configs/media.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 test.use({ config: MEDIA_CONFIG });
 
@@ -21,7 +22,7 @@ test('finds entries from the content library, and opens one', async ({ page }) =
   await expect(results).toHaveText([/Notes.*Evening/]);
   await results.first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(page).toHaveURL(/#\/collections\/notes\/entries\/evening$/);
   await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Evening');

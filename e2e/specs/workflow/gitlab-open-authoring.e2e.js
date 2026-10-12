@@ -1,6 +1,7 @@
 import { post } from '../../fixtures/configs/workflow.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, GITLAB_CONFIG, test } from '../../fixtures/test.js';
+import { getEditor, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -31,28 +32,13 @@ test.beforeEach(async ({ gitlab }) => {
 const SECOND_POST_BRANCH = 'cms/mona/e2e-site/posts/second-post';
 
 /**
- * Open an entry in the editor.
- * @param {Page} page Page.
- * @param {string} title Entry title.
- * @returns {Promise<Locator>} Editor.
- */
-const openEntry = async (page, title) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await page.getByRole('row', { name: new RegExp(`^${title}`) }).click();
-  await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue(title);
-
-  return editor;
-};
-
-/**
  * Create the second post and save it, leaving it a draft.
  * @param {Page} page Page.
  */
 const saveSecondPost = async (page) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
   await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
@@ -61,20 +47,6 @@ const saveSecondPost = async (page) => {
     .getByRole('alertdialog', { name: 'Send for Review' })
     .getByRole('button', { name: 'Later' })
     .click();
-};
-
-/**
- * Change the status of the entry open in the editor with its status menu.
- * @param {CMS} cms CMS.
- * @param {Page} page Page.
- * @param {RegExp} current Current status.
- * @param {string} status New status.
- */
-const changeStatus = async (cms, page, current, status) => {
-  await cms.chooseMenuItem(
-    page.getByRole('button', { name: current }),
-    page.getByRole('menuitemradio', { name: status }),
-  );
 };
 
 /**
@@ -98,14 +70,6 @@ const saveForkDraft = (gitlab, { slug, files }) => {
   return branch;
 };
 
-/**
- * Get the names of the branches in the project or in the fork that hold Editorial Workflow entries.
- * @param {MockGitLab} gitlab GitLab mock.
- * @returns {string[]} Branch keys, as {@link MockGitLab.refs} has them.
- */
-const getWorkflowBranches = (gitlab) =>
-  [...gitlab.refs.keys()].filter((key) => /^(\w+:)?cms\//.test(key));
-
 test('keeps a maintainer working on the project', async ({ cms, gitlab, page }) => {
   await cms.open();
   await saveSecondPost(page);
@@ -122,7 +86,7 @@ test('keeps a maintainer working on the project', async ({ cms, gitlab, page }) 
       },
     ]);
   expect(gitlab.fork).toBeUndefined();
-  expect(getWorkflowBranches(gitlab)).toEqual(['cms/posts/second-post']);
+  expect(gitlab.getWorkflowBranches({ includeFork: true })).toEqual(['cms/posts/second-post']);
   await expect(page.getByText(/Your changes are saved to your fork/)).toHaveCount(0);
 });
 
@@ -202,7 +166,7 @@ test.describe('as a contributor', () => {
     await saveSecondPost(page);
 
     await expect
-      .poll(() => getWorkflowBranches(gitlab))
+      .poll(() => gitlab.getWorkflowBranches({ includeFork: true }))
       .toEqual([gitlab.forkBranch('cms/mona/e2e-site-fork/posts/second-post')]);
     await expect(page.getByRole('alertdialog', { name: 'Fork Repository' })).toHaveCount(0);
   });
@@ -235,7 +199,7 @@ test.describe('as a contributor', () => {
 
       // A contributor can’t commit to the configured branch, so their change goes through a merge
       // request whatever the collection’s publish mode says
-      const editor = page.getByRole('group', { name: 'Content Editor' });
+      const editor = getEditor(page);
 
       await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
       await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
@@ -282,7 +246,7 @@ test.describe('as a contributor', () => {
         start_project: gitlab.projectId,
       });
       // Nothing reaches the project, and the maintainers aren’t bothered with a draft
-      expect(getWorkflowBranches(gitlab)).toEqual([branch]);
+      expect(gitlab.getWorkflowBranches({ includeFork: true })).toEqual([branch]);
       expect(gitlab.head.oid).toBe(mainBefore);
       expect(gitlab.mergeRequests).toEqual([]);
       await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
@@ -347,7 +311,7 @@ test.describe('as a contributor', () => {
         .toBe(post('Second Post', 'Almost there.'));
       // The second commit goes onto the branch as it stands
       expect(gitlab.received[1]).not.toHaveProperty('start_branch');
-      expect(getWorkflowBranches(gitlab)).toEqual([branch]);
+      expect(gitlab.getWorkflowBranches({ includeFork: true })).toEqual([branch]);
       expect(gitlab.mergeRequests).toEqual([]);
     });
 
@@ -430,7 +394,7 @@ test.describe('as a contributor', () => {
           },
         ]);
 
-      await changeStatus(cms, page, /Status: .*In Review/, 'Draft');
+      await cms.changeStatus(/Status: .*In Review/, 'Draft');
 
       // GitLab has no draft field, so the merge request is kept open with a `Draft: ` title
       await expect
@@ -460,7 +424,7 @@ test.describe('as a contributor', () => {
       await cms.open();
       // A closed merge request leaves the entry a draft
       await openEntry(page, 'Second Post');
-      await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+      await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
       await expect.poll(() => mergeRequest.state).toBe('opened');
       expect(mergeRequest.title).toBe('Create Post “second-post”');
@@ -495,7 +459,7 @@ test.describe('as a contributor', () => {
       gitlab.createBranch('develop', gitlab.head.oid);
       mergeRequest.targetBranch = 'develop';
 
-      await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+      await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
       await expect.poll(() => gitlab.mergeRequests).toHaveLength(2);
       expect(gitlab.mergeRequests[1]).toMatchObject({
@@ -533,7 +497,7 @@ test.describe('as a contributor', () => {
       mergeRequest.title = 'Create Post “second-post”';
       gitlab.handleMerge(mergeRequest, { squash: false, merge_commit_message: mergeRequest.title });
 
-      await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+      await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
       await expect(page.getByRole('alert')).toContainText(
         'A maintainer has already published this entry, so there’s nothing left to review.',
@@ -543,7 +507,7 @@ test.describe('as a contributor', () => {
       expect(gitlab.mergeRequests.map(({ state }) => state)).toEqual(['merged']);
       await expect.poll(() => gitlab.refs.has(branch)).toBe(false);
       // The editor closes onto the entry list, where the entry is published rather than a draft
-      await expect(page.getByRole('group', { name: 'Content Editor' })).toBeHidden();
+      await expect(getEditor(page)).toBeHidden();
       await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
         /First Post/,
         /^\s*Second Post\s*$/,
@@ -616,7 +580,7 @@ test.describe('as a contributor', () => {
 
       // Its merge request wasn’t in the page, so the entry looks like a draft with none at all
       await openEntry(page, 'Second Post');
-      await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+      await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
       // GitLab refuses a second merge request from the branch, so the one already open is taken
       // over and handed to the maintainers instead of the contributor seeing the conflict
@@ -658,7 +622,7 @@ test.describe('as a contributor', () => {
       ]);
 
       await openEntry(page, 'Second Post');
-      await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+      await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
       // Sending it for review opens the contributor’s own merge request from the fork, rather than
       // reopening or relabelling the unrelated one
@@ -709,7 +673,7 @@ test.describe('as a contributor', () => {
       ]);
 
       await openEntry(page, 'Second Post');
-      await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+      await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
       // Sending the entry for review opens a merge request of its own to the configured branch,
       // rather than reusing the decoy
@@ -753,7 +717,7 @@ test.describe('as a contributor', () => {
       ]);
 
       await openEntry(page, 'Second Post');
-      await changeStatus(cms, page, /Status: .*Draft/, 'In Review');
+      await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
       // GitLab refuses a second merge request from the branch, and the one in the way is left as
       // it was. Trying again wouldn’t help, so the contributor is told what’s in the way
@@ -876,7 +840,7 @@ test.describe('as a contributor', () => {
         await cms.open();
         await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-        const editor = page.getByRole('group', { name: 'Content Editor' });
+        const editor = getEditor(page);
 
         await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
         await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');

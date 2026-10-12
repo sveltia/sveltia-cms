@@ -1,6 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
-import { openCollection } from '../collections/helpers.js';
+import { getEditor, getField, openCollection } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -101,21 +101,12 @@ const createEntry = async (page, collection, title) => {
     .first()
     .click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill(title);
 
   return editor;
 };
-
-/**
- * Get a field group in the editor.
- * @param {Locator} editor Content editor.
- * @param {string} label Field label.
- * @returns {Locator} Field group.
- */
-const getField = (editor, label) =>
-  editor.getByRole('group', { name: `“\u2068${label}\u2069” Field` });
 
 /**
  * Open the Select Folder dialog of a field.
@@ -143,7 +134,7 @@ const getSubfolders = (dialog) =>
 
 test('saves the public path of a picked folder', async ({ cms, page }) => {
   const editor = await createEntry(page, 'Albums', 'Trip');
-  const photos = getField(editor, 'Photos');
+  const photos = getField(editor, 'Photos', { exact: true });
 
   // A folder can’t be dropped or pasted
   await expect(photos).toContainText('Click to browse');
@@ -199,7 +190,7 @@ test('saves the public path of a picked folder', async ({ cms, page }) => {
 
 test('saves the root of a folder', async ({ cms, page }) => {
   const editor = await createEntry(page, 'Albums', 'All');
-  const photos = getField(editor, 'Photos');
+  const photos = getField(editor, 'Photos', { exact: true });
   const dialog = await browse(page, photos);
 
   await expect(getSubfolders(dialog)).toHaveText([/\bsummer\b/]);
@@ -215,7 +206,7 @@ test('saves the root of a folder', async ({ cms, page }) => {
 
 test('saves several folders in a multiple field', async ({ cms, page }) => {
   const editor = await createEntry(page, 'Albums', 'Mix');
-  const extras = getField(editor, 'Extras');
+  const extras = getField(editor, 'Extras', { exact: true });
   const dialog = await browse(page, extras);
 
   await dialog
@@ -240,7 +231,7 @@ test('saves several folders in a multiple field', async ({ cms, page }) => {
 
 test('offers no entry-relative folder', async ({ page }) => {
   const editor = await createEntry(page, 'Posts', 'Walk');
-  const dialog = await browse(page, getField(editor, 'Photos'));
+  const dialog = await browse(page, getField(editor, 'Photos', { exact: true }));
 
   // The folder next to the entry isn’t offered, only the global one
   await expect(dialog.getByRole('listbox', { name: 'Locations' }).getByRole('option')).toHaveText([
@@ -251,7 +242,7 @@ test('offers no entry-relative folder', async ({ page }) => {
 
 test('offers no folder with template tags', async ({ page }) => {
   const editor = await createEntry(page, 'Events', 'Fair');
-  const dialog = await browse(page, getField(editor, 'Photos'));
+  const dialog = await browse(page, getField(editor, 'Photos', { exact: true }));
 
   await expect(dialog.getByRole('listbox', { name: 'Locations' }).getByRole('option')).toHaveText([
     /\bGlobal Assets\b/,

@@ -37,6 +37,7 @@
   import { getRelativePath, getTakenNames } from '$lib/services/assets/subfolders';
   import { selectAssetsView } from '$lib/services/contents/editor';
   import { env } from '$lib/services/user/env.svelte';
+  import { createLatestGuard } from '$lib/services/utils/scheduling';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
@@ -168,19 +169,17 @@
   const folderLabel = $derived(getExternalFolderLabel({ dirPath, serviceLabel }));
 
   /**
-   * ID of the latest {@link getAssets} request. A request made earlier, e.g. a search for the terms
-   * typed before, can come back after a later one, and its result must not replace the latest one.
+   * Guard for {@link getAssets}. A request made earlier, e.g. a search for the terms typed before,
+   * can come back after a later one, and its result must not replace the latest one.
    */
-  let latestRequestId = 0;
+  const requestGuard = createLatestGuard();
 
   /**
    * Search or list assets from the external media library.
    * @param {string} query Search query, which is only given to a service that can search.
    */
   const getAssets = async (query) => {
-    latestRequestId += 1;
-
-    const requestId = latestRequestId;
+    const isLatest = requestGuard.next();
 
     listedAssets = null;
     error = undefined;
@@ -206,7 +205,7 @@
         assets = (await list?.(listFetchOptions)) ?? [];
       }
 
-      if (requestId !== latestRequestId) {
+      if (!isLatest()) {
         return;
       }
 
@@ -217,7 +216,7 @@
         folders = emptyFolders;
       }
     } catch (ex) {
-      if (requestId !== latestRequestId) {
+      if (!isLatest()) {
         return;
       }
 

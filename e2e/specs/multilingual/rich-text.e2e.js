@@ -1,7 +1,8 @@
 import { MULTILINGUAL_CONFIG, MULTILINGUAL_FILES } from '../../fixtures/configs/multilingual.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
-import { getEditor, openEntry, showLocale, watchSaveButton } from './helpers.js';
+import { openEntry, showLocale, watchSaveButton } from './helpers.js';
 
 test.use({ config: MULTILINGUAL_CONFIG });
 

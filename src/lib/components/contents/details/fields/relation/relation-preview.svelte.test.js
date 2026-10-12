@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
-import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import RelationPreview from './relation-preview.svelte';
 
@@ -35,20 +36,15 @@ const renderPreview = async (
   currentValue,
   config = {},
   { locale = 'en', pendingEntries = [] } = {},
-) => {
-  const { container } = await renderWithDraft(RelationPreview, {
-    draft: createMockDraft({ fields: [fieldConfig], draft: { pendingEntries } }),
-    props: {
-      locale,
-      keyPath: 'author',
-      typedKeyPath: 'author',
+) =>
+  (
+    await renderFieldPreview(RelationPreview, {
       fieldConfig: { ...fieldConfig, ...config },
+      locale,
       currentValue,
-    },
-  });
-
-  return container;
-};
+      draft: createMockDraft({ fields: [fieldConfig], draft: { pendingEntries } }),
+    })
+  ).container;
 
 describe('RelationPreview', () => {
   beforeEach(() => {

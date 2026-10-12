@@ -61,7 +61,9 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
       ),
     ),
     putObject: vi.fn(async ({ key }) => ({ key })),
+    copyObject: vi.fn(async ({ key }) => ({ key })),
     deleteObject: vi.fn(async () => undefined),
+    putFolderObject: vi.fn(async () => undefined),
   };
 
   beforeEach(() => {
@@ -339,15 +341,7 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
   });
 
   describe('createObjectStorageOperations', () => {
-    const move = vi.fn(async (/** @type {ExternalAsset} */ asset) => asset);
-    const createFolder = vi.fn(async () => undefined);
-    const deleteFolder = vi.fn(async () => undefined);
-
-    const operations = createObjectStorageOperations(provider, {
-      move,
-      createFolder,
-      deleteFolder,
-    });
+    const operations = createObjectStorageOperations(provider);
 
     it('should bind the provider to the shared operations', async () => {
       expect((await operations.list(config, options)).map(({ id }) => id)).toEqual([
@@ -389,15 +383,77 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
     it('should rename a file by moving it within its folder', async () => {
       const asset = /** @type {ExternalAsset} */ ({ id: 'uploads/2024/a.jpg' });
 
-      await operations.rename(asset, 'b.jpg', config, options);
-
-      expect(move).toHaveBeenCalledWith(asset, '2024/b.jpg', config, options);
+      expect((await operations.rename(asset, 'b.jpg', config, options)).id).toBe(
+        'uploads/2024/b.jpg',
+      );
+      expect(provider.copyObject).toHaveBeenCalledWith({
+        asset,
+        key: 'uploads/2024/b.jpg',
+        config,
+        credential: 'secret',
+      });
     });
 
-    it('should pass the service-specific operations through', () => {
-      expect(operations.move).toBe(move);
-      expect(operations.createFolder).toBe(createFolder);
-      expect(operations.deleteFolder).toBe(deleteFolder);
+    it('should move a file by copying it and deleting the source', async () => {
+      const asset = /** @type {ExternalAsset} */ ({ id: 'uploads/a.jpg' });
+
+      expect((await operations.move(asset, '2024/a.jpg', config, options)).id).toBe(
+        'uploads/2024/a.jpg',
+      );
+      expect(provider.copyObject).toHaveBeenCalledWith({
+        asset,
+        key: 'uploads/2024/a.jpg',
+        config,
+        credential: 'secret',
+      });
+      expect(provider.deleteObject).toHaveBeenCalledWith({
+        key: 'uploads/a.jpg',
+        config,
+        credential: 'secret',
+      });
+      expect(provider.parseResults).toHaveBeenLastCalledWith(
+        [{ key: 'uploads/2024/a.jpg' }],
+        config,
+        'secret',
+      );
+    });
+
+    it('should keep the source when the copy fails', async () => {
+      vi.mocked(provider.copyObject).mockRejectedValueOnce(new Error('Failed to copy'));
+
+      await expect(
+        operations.move(/** @type {ExternalAsset} */ ({ id: 'uploads/a.jpg' }), 'b.jpg', config, {
+          ...options,
+        }),
+      ).rejects.toThrow('Failed to copy');
+      expect(provider.deleteObject).not.toHaveBeenCalled();
+    });
+
+    it('should create a folder by putting a placeholder object', async () => {
+      await operations.createFolder('2024/summer', config, options);
+
+      expect(provider.putFolderObject).toHaveBeenCalledWith({
+        key: 'uploads/2024/summer/',
+        config,
+        credential: 'secret',
+      });
+      await expect(operations.createFolder('2024', config, { apiKey: '' })).rejects.toThrow(
+        'Credential is required',
+      );
+    });
+
+    it('should delete the placeholder object of a folder, if any', async () => {
+      await operations.deleteFolder('2024/summer', config, options);
+
+      expect(provider.deleteObject).toHaveBeenCalledWith({
+        key: 'uploads/2024/summer/',
+        config,
+        credential: 'secret',
+        allowNotFound: true,
+      });
+      await expect(operations.deleteFolder('2024', config, { apiKey: '' })).rejects.toThrow(
+        'Credential is required',
+      );
     });
   });
 });

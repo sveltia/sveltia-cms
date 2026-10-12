@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * Blog whose posts refer to an author with an optional Relation field, from which an author can be
@@ -77,7 +78,7 @@ test('doesn’t add an author once the dialog is closed while it’s being prepa
 
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Hello');
   await editor.getByRole('button', { name: /Add.*Author/ }).click();
@@ -141,7 +142,7 @@ test('calls the event listeners for an added author when the post is saved', asy
 
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Hello');
   await editor.getByRole('button', { name: /Add.*Author/ }).click();

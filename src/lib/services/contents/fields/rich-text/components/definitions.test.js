@@ -15,9 +15,7 @@ import {
 } from './definitions.js';
 
 // Mock dependencies
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key) => key),
-}));
+vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 
 vi.mock('$lib/services/contents/fields/rich-text/constants', () => ({
   IMAGE_OR_LINKED_IMAGE_REGEX: /!\[([^\]]*)\]\(([^)]+)\)/g,

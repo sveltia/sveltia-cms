@@ -19,19 +19,14 @@
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import ResetDialog from '$lib/components/contents/details/editor/reset-dialog.svelte';
   import ResetMenuItems from '$lib/components/contents/details/editor/reset-menu-items.svelte';
+  import ValidationErrorsToast from '$lib/components/contents/details/editor/validation-errors-toast.svelte';
   import ViewMenuItems from '$lib/components/contents/details/editor/view-menu-items.svelte';
   import EntryRemoval from '$lib/components/contents/details/entry-removal.svelte';
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import SaveConflictDialog from '$lib/components/contents/details/save-conflict-dialog.svelte';
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
-  import {
-    encodeRoutePath,
-    getEntryEditorBackPath,
-    goBack,
-    goto,
-    overlayTitle,
-  } from '$lib/services/app/navigation';
+  import { getEntryEditorBackPath, goBack, goto, overlayTitle } from '$lib/services/app/navigation';
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
   import { isDraftReadonly } from '$lib/services/config/readonly';
   import { getCollectionLabel } from '$lib/services/contents/collection';
@@ -39,24 +34,15 @@
   import { isNestedCollection, nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { collectionState } from '$lib/services/contents/collection/view';
   import { createDraft } from '$lib/services/contents/draft/create';
-  import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
-  import { saveEntry } from '$lib/services/contents/draft/save';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { canResetEntry } from '$lib/services/contents/draft/update/reset';
-  import { validateDraft } from '$lib/services/contents/draft/validate';
-  import { countInvalidFields } from '$lib/services/contents/draft/validate/reveal';
   import { activeInlineEditors, copyFromLocaleToast } from '$lib/services/contents/editor';
-  import {
-    awaitPendingFieldUpdates,
-    fieldUpdatePending,
-  } from '$lib/services/contents/editor/pending';
+  import { fieldUpdatePending } from '$lib/services/contents/editor/pending';
+  import { createResetMenuState } from '$lib/services/contents/editor/reset-menu.svelte';
+  import { duplicateEntryDraft, saveEntryDraftFlow } from '$lib/services/contents/editor/save';
   import { getSidebarPanels, showSidebarPanel } from '$lib/services/contents/editor/sidebar';
   import { canUpdateSlug } from '$lib/services/contents/editor/slug';
-  import {
-    canDuplicateEntry,
-    getRemovalMenuItems,
-    getSaveFailure,
-  } from '$lib/services/contents/editor/toolbar';
+  import { getEntryToolbarState } from '$lib/services/contents/editor/toolbar';
   import { getEntryRelativeAssets } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
@@ -75,13 +61,9 @@
   } from '$lib/services/workflow';
   import { getDiscardDialogStrings } from '$lib/services/workflow/dialogs';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
-  import { updateWorkflowStatus } from '$lib/services/workflow/save';
-  import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
   /**
-   * @import { UnpublishedEntry } from '$lib/types/private';
    * @import { EntryConflict } from '$lib/services/contents/draft/save/conflict';
-   * @import { ResetAction } from '$lib/services/contents/editor/reset';
    */
 
   /**
@@ -126,33 +108,19 @@
   let menuButton = $state();
   /** @type {EntryRemoval | undefined} */
   let entryRemoval = $state();
-  /**
-   * Whether restoring the default values or clearing the fields would change anything. It takes
-   * going through the whole entry, so it’s only checked as the menu opens rather than on every
-   * change.
-   */
-  let resetAvailability = $state({ restore: false, clear: false });
-  /** @type {ResetAction} */
-  let resetAction = $state('revert');
-  let showResetDialog = $state(false);
-
-  /**
-   * Check whether restoring the default values or clearing the fields would change anything.
-   */
-  const updateResetAvailability = () => {
+  const resetMenu = createResetMenuState(() => {
     const draft = entryDraft.current;
 
-    resetAvailability = {
+    return {
       restore: !!draft && canResetEntry({ draft, restore: true }),
       clear: !!draft && canResetEntry({ draft }),
     };
-  };
+  });
 
   const notFound = $derived(entryDraft.current === undefined);
   const isNew = $derived(entryDraft.current?.isNew ?? true);
   const isIndexFile = $derived(!!entryDraft.current?.isIndexFile);
   const collection = $derived(entryDraft.current?.collection);
-  const entryCollection = $derived(collection?._type === 'entry' ? collection : undefined);
   const collectionFile = $derived(entryDraft.current?.collectionFile);
   const originalEntry = $derived(entryDraft.current?.originalEntry);
   const { defaultLocale } = $derived(getDraftI18nConfig(entryDraft.current));
@@ -211,45 +179,22 @@
       ? getUnpublishedEntryByDraft({ collectionName, fileName, originalEntry })
       : undefined,
   );
-  // A collection can opt in or out of Editorial Workflow with its own `publish_mode` option, but an
-  // entry that already has a pull request stays in it until it’s published or discarded
-  const useWorkflow = $derived(!!unpublishedEntry || isWorkflowEnabled(collection));
-  // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves
-  // the published version untouched, so it stays available even when deletion is disabled
-  const canDelete = $derived(entryCollection?.delete !== false);
   // The entry can be published from another view, so the check depends on `allEntries`
   const publishedVersionExists = $derived(checkPublishedVersion(unpublishedEntry));
-  // Deleting an entry that was never published just throws the draft away; anything else takes an
-  // entry off the site
-  const discardsDraft = $derived(!!unpublishedEntry && !publishedVersionExists);
-  // Taking a published entry off the site is a maintainer’s call. An Open Authoring contributor can
-  // discard their own draft, but not propose the removal of something already live
-  const canDeleteEntry = $derived(canDelete && (discardsDraft || !openAuthoring.current));
-  // An entry awaiting deletion is read-only: there’s nothing to save or move through the stages,
-  // only the deletion itself to carry out or call off
   const pendingDeletion = $derived(isPendingDeletion(unpublishedEntry));
-  // An entry in a read-only collection, or a read-only collection file, can only be viewed: there’s
-  // nothing to save, move through the stages, publish, discard or delete
   const readonly = $derived(isDraftReadonly(entryDraft.current));
-  // Neither kind of entry can have its content changed
-  const locked = $derived(pendingDeletion || readonly);
-  const canDuplicate = $derived(
-    canDuplicateEntry({
+  const { useWorkflow, discardsDraft, locked, canDuplicate, removalMenuItems } = $derived(
+    getEntryToolbarState({
       collection,
       collectionFile,
       isIndexFile,
-      readonly,
-      creationDisabled: collectionState.current.creationDisabled,
-    }),
-  );
-  // A collection file is part of the collection definition, so it can only be discarded
-  const removalMenuItems = $derived(
-    getRemovalMenuItems({
+      hasPullRequest: !!unpublishedEntry,
+      workflowEnabled: isWorkflowEnabled(collection),
       publishedVersionExists,
-      canDeleteEntry,
-      isCollectionFile: !!collectionFile,
+      pendingDeletion,
       readonly,
-      locked,
+      openAuthoring: openAuthoring.current,
+      creationDisabled: collectionState.current.creationDisabled,
     }),
   );
   // The menu item either throws the pull request away or deletes the entry outright, depending on
@@ -276,19 +221,6 @@
   };
 
   /**
-   * Check whether the entry that has just been saved is complete enough to be handed over for
-   * review. Required fields aren’t enforced while an entry is a draft, so it may have been saved
-   * with some of them empty. The check leaves the editor state alone: nothing is wrong with the
-   * draft as saved, so no errors are shown for it.
-   * @returns {boolean} Result.
-   */
-  const isReadyForReview = () => {
-    const draft = entryDraft.current;
-
-    return !!draft && validateDraft({ draft }).valid;
-  };
-
-  /**
    * Ask whether the entry just saved should be handed over for review, and wait for the answer.
    * @returns {Promise<boolean>} `true` if the user wants to send it.
    */
@@ -297,6 +229,19 @@
       resolveReviewPrompt = resolve;
       showReviewDialog = true;
     });
+
+  /**
+   * Check whether the entry is saved to a pull request. Read once the entry is saved, as saving it
+   * may have opened a pull request.
+   * @returns {boolean} Result.
+   */
+  const isWorkflowUsed = () => useWorkflow;
+
+  /**
+   * Check whether the editor is to be closed once the entry is saved.
+   * @returns {boolean} Result.
+   */
+  const isCloseOnSaveEnabled = () => prefs.closeOnSave ?? true;
 
   /**
    * Save the entry draft.
@@ -314,114 +259,49 @@
 
     saving = true;
 
-    /**
-     * Check whether the draft being saved is still the one in the editor. The Back button stays
-     * available during a save, so the user may have closed the entry, or opened another one, by the
-     * time the commit has landed; the editor and the URL then belong to that one and are left
-     * alone.
-     * @returns {boolean} Result.
-     */
-    const isDraftOpen = () => entryDraft.current === draft;
-
     try {
-      // A change still on its way to the draft enabled the button, but may turn out to change
-      // nothing, e.g. a trailing space typed in a rich text editor
-      await awaitPendingFieldUpdates();
+      const outcome = await saveEntryDraftFlow({
+        entryDraft,
+        useWorkflow: isWorkflowUsed,
+        skipCI,
+        overwrite,
+        askForReview,
+        closeOnSave: isCloseOnSaveEnabled,
+      });
 
-      if (!isDraftOpen() || (!isNew && !entryDraft.modified)) {
-        return;
-      }
-
-      const savedEntry = await saveEntry({ draft, skipCI, overwrite });
-      const savedDraft = /** @type {UnpublishedEntry} */ (savedEntry);
-      let statusChangeFailed = false;
-
-      if (!isDraftOpen()) {
-        return;
-      }
-
-      // Saving with Editorial Workflow leaves the entry as a draft, which nothing on screen says:
-      // it hasn’t been handed to anyone yet, and the status menu that would do it is easy to miss.
-      // Offer it as the next step instead, once, while the entry is still in the drafting stage
-      if (
-        useWorkflow &&
-        savedDraft.workflow?.status === 'draft' &&
-        // An incomplete entry isn’t ready to be handed over; the status menu is still there once
-        // the remaining fields have been filled in
-        isReadyForReview() &&
-        (await askForReview())
-      ) {
-        try {
-          await updateWorkflowStatus(savedDraft, 'pending_review');
-        } catch (/** @type {any} */ ex) {
+      if (outcome.type === 'saved') {
+        if (outcome.statusError !== undefined) {
           showErrorDialog = true;
-          errorMessage = getWorkflowErrorMessage(ex, 'workflow.status_change_failed');
-          statusChangeFailed = true;
-          // eslint-disable-next-line no-console
-          console.error(ex);
+          errorMessage = outcome.statusError;
         }
-      }
 
-      if (!isDraftOpen()) {
-        return;
-      }
+        if (outcome.path) {
+          goto(outcome.path, { replaceState: true, notifyChange: false });
+        }
 
-      if (isNew) {
-        // Update the URL. A collection file is addressed by its name, while its `subPath` is the
-        // whole file path. This is done even when the editor is about to be closed, so the `new`
-        // route doesn’t stay in the session history: moving forward from the entry list then
-        // reopens the entry that was just created instead of a blank editor
-        goto(
-          encodeRoutePath(
-            `/collections/${collectionName}/entries/${fileName ?? savedEntry.subPath}`,
-          ),
-          { replaceState: true, notifyChange: false },
-        );
-      }
-
-      // The entry itself is saved, so a failed status change leaves the editor open rather than
-      // navigating away from something the user may want to retry from the status menu
-      if ((prefs.closeOnSave ?? true) && !statusChangeFailed) {
-        _goBack();
-        entryDraft.current = null;
-      } else {
-        // Reset the draft. The next save compares the draft’s original entry with the branch, so
-        // leaving the pre-save one in place would report the save that just landed as someone
-        // else’s change to the entry
-        createDraft({
-          entryDraft,
-          collection,
-          collectionFile,
-          originalEntry: savedEntry,
-          extraValues: draft.extraValues,
-          expanderStates: draft.expanderStates,
-        });
-      }
-    } catch (/** @type {any} */ ex) {
-      const failure = getSaveFailure(ex);
-
-      if (failure.type === 'validation') {
-        errorCount = countInvalidFields(draft.validities);
+        if (outcome.next === 'close') {
+          _goBack();
+          entryDraft.current = null;
+        } else if (outcome.next === 'reset') {
+          createDraft({
+            entryDraft,
+            collection,
+            collectionFile,
+            originalEntry: outcome.savedEntry,
+            extraValues: draft.extraValues,
+            expanderStates: draft.expanderStates,
+          });
+        }
+      } else if (outcome.type === 'invalid') {
+        errorCount = outcome.errorCount;
         showValidationToast = true;
-      } else if (failure.type === 'conflict') {
-        if (isDraftOpen()) {
-          // Someone else has changed the entry since it was opened; let the user decide
-          saveConflict = { conflict: failure.conflict, skipCI };
-          showConflictDialog = true;
-        } else {
-          // Saving over the change saves the draft in the editor, which is now another one, so the
-          // save is only reported as failed
-          showErrorDialog = true;
-          errorMessage = '';
-        }
-      } else {
+      } else if (outcome.type === 'conflict') {
+        // Someone else has changed the entry since it was opened; let the user decide
+        saveConflict = { conflict: outcome.conflict, skipCI };
+        showConflictDialog = true;
+      } else if (outcome.type === 'error') {
         showErrorDialog = true;
-        errorMessage = failure.message;
-
-        if (failure.unexpected) {
-          // eslint-disable-next-line no-console
-          console.error(ex);
-        }
+        errorMessage = outcome.message;
       }
     } finally {
       saving = false;
@@ -519,8 +399,8 @@
     iconic
     popupPosition="bottom-right"
     aria-label={_('show_editor_options')}
-    onclick={updateResetAvailability}
-    onkeydown={updateResetAvailability}
+    onclick={resetMenu.update}
+    onkeydown={resetMenu.update}
     bind:this={menuButton}
   >
     {#snippet popup()}
@@ -552,14 +432,13 @@
               onclick={async () => {
                 duplicating = true;
 
-                // The original’s own assets are copied along with the entry, so this can take a
-                // moment. The URL is updated only once the duplicate is in place
-                const duplicated = !!(await duplicateDraft(entryDraft));
+                // The URL is updated only once the duplicate is in place
+                const path = await duplicateEntryDraft(entryDraft);
 
                 duplicating = false;
 
-                if (duplicated) {
-                  goto(`/collections/${collectionName}/new`, {
+                if (path) {
+                  goto(path, {
                     replaceState: true,
                     notifyChange: false,
                     transitionType: 'forwards',
@@ -609,13 +488,10 @@
           separator={!env.isSmallScreen || (!disabled && !isNew)}
           available={{
             revert: modified && !locked,
-            restore: resetAvailability.restore && !locked,
-            clear: resetAvailability.clear && !locked,
+            restore: resetMenu.availability.restore && !locked,
+            clear: resetMenu.availability.clear && !locked,
           }}
-          onSelect={(action) => {
-            resetAction = action;
-            showResetDialog = true;
-          }}
+          onSelect={resetMenu.select}
         />
         {#if deployPollTimedOut.current}
           <Divider />
@@ -634,20 +510,13 @@
   </MenuButton>
 </Toolbar>
 
-<Toast bind:show={showValidationToast}>
-  <Alert status="error">
-    {_('entry_validation_errors', { values: { count: errorCount } })}
-    <Button
-      variant="secondary"
-      size="small"
-      label={_('show_errors')}
-      onclick={() => {
-        showValidationToast = false;
-        showSidebarPanel('validation');
-      }}
-    />
-  </Alert>
-</Toast>
+<ValidationErrorsToast
+  bind:show={showValidationToast}
+  count={errorCount}
+  onShowErrors={() => {
+    showSidebarPanel('validation');
+  }}
+/>
 
 <Toast id={copyFromLocaleToast.current.id} bind:show={copyFromLocaleToast.current.show}>
   {@const { status, message, count, sourceLanguage } = copyFromLocaleToast.current}
@@ -662,8 +531,8 @@
 </Toast>
 
 <ResetDialog
-  bind:open={showResetDialog}
-  action={resetAction}
+  bind:open={resetMenu.dialogOpen}
+  action={resetMenu.action}
   onClose={() => {
     menuButton?.focus();
   }}

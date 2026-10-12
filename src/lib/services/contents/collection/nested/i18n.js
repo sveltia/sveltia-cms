@@ -81,10 +81,10 @@ const getLocalizedFolderName = ({ entries, dirPath, indexFileNames, locale }) =>
  * section can be started and filled in one sitting, so a folder that only exists as a draft has to
  * be recognized too, or the sub-pages filed under it would land in a folder with the default
  * locale’s name.
- * @param {InternalCollection} collection Collection.
+ * @param {Pick<InternalCollection, 'name'>} collection Collection.
  * @returns {Entry[]} Entries.
  */
-const getAllEntries = (collection) => {
+export const getAllEntries = (collection) => {
   const { name } = collection;
 
   return mergeUnpublishedEntries(

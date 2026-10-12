@@ -2,7 +2,8 @@
   import { _ } from '@sveltia/i18n';
   import { Icon, TreeItem } from '@sveltia/ui';
 
-  import { announcedPageStatus, encodeRoutePath, goto } from '$lib/services/app/navigation';
+  import { announcedPageStatus, goto } from '$lib/services/app/navigation';
+  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { CollectionFile } from '$lib/types/public';
@@ -41,7 +42,7 @@
       });
     }}
     onclick={() => {
-      goto(encodeRoutePath(`/collections/_singletons/entries/${name}`), {
+      goto(encodePathSegments(`/collections/_singletons/entries/${name}`), {
         transitionType: 'forwards',
       });
       // Reset the selected state and remove the focused class from the option

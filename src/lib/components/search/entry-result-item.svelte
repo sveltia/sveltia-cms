@@ -4,7 +4,7 @@
   import { sleep } from '@sveltia/utils/misc';
 
   import EntryThumbnail from '$lib/components/contents/shared/entry-thumbnail.svelte';
-  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
+  import { goto } from '$lib/services/app/navigation';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { getListedCollections } from '$lib/services/contents/collection/entries';
   import {
@@ -12,6 +12,7 @@
     getCollectionFilesByEntry,
   } from '$lib/services/contents/collection/files';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
+  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import {
@@ -48,7 +49,7 @@
   <GridRow
     onclick={() => {
       goto(
-        encodeRoutePath(
+        encodePathSegments(
           `/collections/${collection.name}/entries/${collectionFile?.name || subPath}`,
         ),
         {

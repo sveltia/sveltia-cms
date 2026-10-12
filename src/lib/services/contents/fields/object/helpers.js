@@ -14,6 +14,7 @@ import {
  * GetFieldArgs,
  * InternalLocaleCode,
  * StringTransformation,
+ * TypedFieldKeyPath,
  * } from '$lib/types/private';
  * @import { Field, FieldKeyPath, ListField, VariableFieldType } from '$lib/types/public';
  */
@@ -193,3 +194,25 @@ export const resolveVariableType = ({ types, fields, summary, type }) => {
     summaryTemplate: typeConfig?.summary || summary,
   };
 };
+
+/**
+ * Get the typed key path of a value that can have a variable type, such as an Object field or a
+ * List field item, with the type it has.
+ * @param {TypedFieldKeyPath} typedKeyPath Typed key path of the value, e.g. `hero` or
+ * `sections.*`.
+ * @param {string} [type] Type of the value, if the field has variable types.
+ * @returns {TypedFieldKeyPath} Typed key path, e.g. `sections.*<banner>`.
+ */
+export const getTypedKeyPath = (typedKeyPath, type) =>
+  type ? `${typedKeyPath}<${type}>` : typedKeyPath;
+
+/**
+ * Get the typed key path of a subfield of a value that can have a variable type.
+ * @param {object} args Arguments.
+ * @param {TypedFieldKeyPath} args.typedKeyPath Typed key path of the value, e.g. `sections.*`.
+ * @param {string} [args.type] Type of the value, if the field has variable types.
+ * @param {string} args.subFieldName Name of the subfield.
+ * @returns {TypedFieldKeyPath} Typed key path, e.g. `sections.*<banner>.title`.
+ */
+export const getTypedSubKeyPath = ({ typedKeyPath, type, subFieldName }) =>
+  `${getTypedKeyPath(typedKeyPath, type)}.${subFieldName}`;

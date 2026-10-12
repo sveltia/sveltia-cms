@@ -1,6 +1,5 @@
-import { getPathInfo } from '@sveltia/utils/file';
-
 import { parseAssetFileInfo } from '$lib/services/backends/git/shared/parse-files';
+import { toFileListItem } from '$lib/services/backends/git/shared/tree';
 import { createFileList } from '$lib/services/backends/process';
 import { isInRootDir } from '$lib/services/backends/root-dir';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
@@ -98,13 +97,7 @@ export const convertPullRequest = async (pullRequest) => {
   const files = /** @type {BaseFileListItemProps[]} */ (
     pullRequest.files
       .filter(({ deleted }) => !deleted)
-      .map(({ path, sha, size, text }) => ({
-        path,
-        sha,
-        size,
-        text,
-        name: getPathInfo(path).basename,
-      }))
+      .map(({ path, sha, size, text }) => toFileListItem(path, { sha, size, text }))
   );
 
   const { entryFiles, assetFiles } = createFileList(files);
@@ -121,14 +114,9 @@ export const convertPullRequest = async (pullRequest) => {
   });
 
   const vacatedEntryFiles = vacatedPaths.length
-    ? createFileList(
-        vacatedPaths.map((path) => ({
-          path,
-          name: getPathInfo(path).basename,
-          sha: '',
-          size: 0,
-        })),
-      ).entryFiles.filter(({ folder }) => folder.collectionName === collectionName)
+    ? createFileList(vacatedPaths.map((path) => toFileListItem(path))).entryFiles.filter(
+        ({ folder }) => folder.collectionName === collectionName,
+      )
     : [];
 
   const previousPaths = vacatedEntryFiles.map(({ path }) => path);

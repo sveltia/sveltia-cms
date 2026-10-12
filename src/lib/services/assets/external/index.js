@@ -4,6 +4,7 @@ import { cmsConfig } from '$lib/services/config';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import {
@@ -62,7 +63,7 @@ export const getCloudServicePath = ({ serviceId }) =>
  * @returns {string} Path, e.g. `/assets/-/aws_s3/images/photo.jpg`.
  */
 export const getExternalAssetPath = (service, { id }) =>
-  `${getCloudServicePath(service)}/${id.split('/').map(encodeURIComponent).join('/')}`;
+  `${getCloudServicePath(service)}/${encodePathSegments(id)}`;
 
 /**
  * Whether the given asset can be previewed in the details overlay: a media file, a PDF document

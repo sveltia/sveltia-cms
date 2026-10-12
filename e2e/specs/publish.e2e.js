@@ -1,4 +1,5 @@
 import { expect, GITHUB_CONFIG, test } from '../fixtures/test.js';
+import { getEditor } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -21,7 +22,7 @@ test.beforeEach(async ({ github }) => {
  * @returns {Promise<Locator>} Content editor.
  */
 const editFirstPost = async (page) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await page.getByRole('row', { name: /First Post/ }).click();
   await editor.getByRole('textbox', { name: 'Body' }).fill('Hello again!');

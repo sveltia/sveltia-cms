@@ -32,10 +32,3 @@ export const signIn = async (page) => {
   await page.getByRole('button', { name: 'Work with Test Repository' }).click();
   await expect(getBottomNavigation(page)).toBeVisible();
 };
-
-/**
- * Get the content editor.
- * @param {Page} page Page.
- * @returns {Locator} Editor.
- */
-export const getEditor = (page) => page.getByRole('group', { name: 'Content Editor' });

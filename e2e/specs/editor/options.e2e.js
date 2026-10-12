@@ -1,5 +1,6 @@
 import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/monolingual.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -21,7 +22,7 @@ test.beforeEach(async ({ cms, page }) => {
  * @returns {Promise<Locator>} Editor.
  */
 const openFirstLight = async (page) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await page.getByRole('row', { name: /First Light/ }).click();
   await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('First Light');
@@ -234,7 +235,7 @@ test.describe('sync scrolling', () => {
   const openLongNight = async (page) => {
     await page.getByRole('row', { name: /Long Night/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await expect(editor.getByRole('textbox', { name: 'Body' })).toContainText('Paragraph 80.');
 
@@ -310,7 +311,7 @@ Object.entries(UNCHANGED_ENTRIES).forEach(([name, { collection, row, field }]) =
       await page.getByRole('row', { name: row }).click();
     }
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await expect(editor.getByRole('textbox', { name: field }).first()).not.toHaveValue('');
     // A post’s tags used to count as a change, as the list editor rewrote them when it was shown.

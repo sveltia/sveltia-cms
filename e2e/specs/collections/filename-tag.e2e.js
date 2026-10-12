@@ -1,5 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * Config whose collections use the `{{filename}}` template tag for the summary and the media
@@ -65,7 +66,7 @@ test('strips only the last extension in the media folder', async ({ cms, page })
   // Open the only post, `my.post.md`
   await page.getByRole('grid', { name: 'Entries' }).getByRole('row').click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const cover = editor.getByRole('group', { name: '“\u2068Cover\u2069” Field' });
   const kite = createPNG({ color: [255, 255, 0] });
 

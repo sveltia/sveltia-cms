@@ -1,4 +1,5 @@
 import { BASE_CONFIG, expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -72,9 +73,7 @@ test('shows the keyboard shortcuts, which work', async ({ cms, page }) => {
   await page.getByRole('row', { name: /First Post/ }).focus();
   await page.keyboard.press('ControlOrMeta+E');
   await expect(page).toHaveURL(/#\/collections\/posts\/new$/);
-  await expect(
-    page.getByRole('group', { name: 'Content Editor' }).getByRole('textbox', { name: 'Title' }),
-  ).toBeVisible();
+  await expect(getEditor(page).getByRole('textbox', { name: 'Title' })).toBeVisible();
 });
 
 test('signs out, and back in', async ({ cms, page }) => {

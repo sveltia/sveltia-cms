@@ -1,6 +1,7 @@
 import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/monolingual.js';
 import { selectText } from '../../fixtures/rich-text.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -20,7 +21,7 @@ test.beforeEach(async ({ cms }) => {
  * @returns {Promise<Locator>} Editor.
  */
 const openFirstLight = async (page) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await page.getByRole('row', { name: /First Light/ }).click();
   await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('First Light');
@@ -102,7 +103,7 @@ test('closes the editor with Escape', async ({ page }) => {
 test('closes the editor with Escape pressed right after it opens', async ({ page }) => {
   // The editor opens with a view transition, which used to catch the hit test Sveltia UI makes
   // before activating a button with its shortcut, so the key was ignored until it was over
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await page.getByRole('row', { name: /First Light/ }).click();
   await expect(editor.getByRole('button', { name: 'Cancel Editing' })).toBeVisible();

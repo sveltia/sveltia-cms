@@ -1,59 +1,38 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-/**
- * @import { ConfigParserCollectors } from '$lib/types/private';
- */
-
-/**
- * Mock translation function.
- * @param {string} key Message key.
- * @param {object & { values?: Record<string, string> }} [options] Options.
- * @returns {string} Translated string.
- */
-function mockTranslate(key, options) {
-  /** @type {Record<string, string>} */
-  const strings = {
-    'config.error.test_error': 'Test error message',
-    'config.warning.test_warning': 'Test warning message',
-    'config.error.invalid_type': 'Expected {expected}, got {actual}',
-    'config.error.unsupported_deprecated_option': 'Unsupported option: {prop} (use {newProp})',
-    'config.error.custom_message': 'Custom unsupported option: {prop}',
-    'config.error.invalid_regex': 'Invalid regex in {option}: {pattern}',
-    'config.error.duplicate_names': 'Duplicate name found: {name}',
-    'config.error.duplicate_duplicate_names': 'Duplicate name found: {name}',
-    'config.error.invalid_duplicate_names': 'Invalid name found: {name}',
-    'config.error.my_custom_key': 'Custom duplicate message: {name}',
-    'config.error.missing_field_names': 'Missing field name at position {count}',
-    'config.error.invalid_field_name': 'Invalid field name <a>learn more</a>',
-    'config.error.invalid_field_names': 'Invalid field name: {name}',
-    'config.error.duplicate_field_names': 'Duplicate field name: {name}',
-    'config.error_locator.collection': 'Collection: {collection}',
-    'config.error_locator.file': 'File: {file}',
-    'config.error_locator.component': 'Component: {component}',
-    'config.error_locator.field': 'Field: {field}',
-    'config.custom_extra': 'Custom extra message',
-    'config.compatibility_link':
-      'See the compatibility notes for details: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented',
-  };
-
-  let message = strings[key] || key;
-
-  if (options?.values) {
-    Object.entries(options.values).forEach(([k, v]) => {
-      message = message.replace(`{${k}}`, v);
-    });
-  }
-
-  return message;
-}
+import { createCollectors } from '$lib/test/config-parser';
 
 const mockGet = vi.fn();
 const mockGetListFormatter = vi.fn();
 
-vi.mock('@sveltia/i18n', () => ({
-  _: mockTranslate,
-  locale: { current: 'en-US', set: vi.fn() },
-}));
+/** @type {Record<string, string>} */
+const mockI18nStrings = {
+  'config.error.test_error': 'Test error message',
+  'config.warning.test_warning': 'Test warning message',
+  'config.error.invalid_type': 'Expected {expected}, got {actual}',
+  'config.error.unsupported_deprecated_option': 'Unsupported option: {prop} (use {newProp})',
+  'config.error.custom_message': 'Custom unsupported option: {prop}',
+  'config.error.invalid_regex': 'Invalid regex in {option}: {pattern}',
+  'config.error.duplicate_names': 'Duplicate name found: {name}',
+  'config.error.duplicate_duplicate_names': 'Duplicate name found: {name}',
+  'config.error.invalid_duplicate_names': 'Invalid name found: {name}',
+  'config.error.my_custom_key': 'Custom duplicate message: {name}',
+  'config.error.missing_field_names': 'Missing field name at position {count}',
+  'config.error.invalid_field_name': 'Invalid field name <a>learn more</a>',
+  'config.error.invalid_field_names': 'Invalid field name: {name}',
+  'config.error.duplicate_field_names': 'Duplicate field name: {name}',
+  'config.error_locator.collection': 'Collection: {collection}',
+  'config.error_locator.file': 'File: {file}',
+  'config.error_locator.component': 'Component: {component}',
+  'config.error_locator.field': 'Field: {field}',
+  'config.custom_extra': 'Custom extra message',
+  'config.compatibility_link':
+    'See the compatibility notes for details: https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented',
+};
+
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ strings: mockI18nStrings, locale: 'en-US' }),
+);
 
 vi.mock('$lib/services/contents/i18n', () => ({
   getListFormatter: mockGetListFormatter,
@@ -62,19 +41,6 @@ vi.mock('$lib/services/contents/i18n', () => ({
 // Must import after mocking
 const { addMessage, checkUnsupportedOptions, isValidName, checkName, checkRegex } =
   await import('./validator.js');
-
-/**
- * Create a fresh collectors object for testing.
- * @returns {ConfigParserCollectors} A fresh collectors instance.
- */
-function createCollectors() {
-  return {
-    errors: new Set(),
-    warnings: new Set(),
-    mediaFields: new Set(),
-    relationFields: new Set(),
-  };
-}
 
 describe('messages', () => {
   beforeEach(() => {

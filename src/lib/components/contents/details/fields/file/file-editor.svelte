@@ -26,24 +26,25 @@
     removeMultiValueItem,
   } from '$lib/services/contents/draft/update/list';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
-  import { getTargetFolderPath, listAssets } from '$lib/services/contents/fields/file/helpers';
-  import { getUnsavedAssets } from '$lib/services/contents/fields/file/process';
+  import { createFolderAssetListing } from '$lib/services/contents/fields/file/listing.svelte';
   import {
     getMediaFieldAssetOptions,
-    getRejectedFileNames,
     processResources,
-    toFieldValue,
+    resolveSelectionResult,
   } from '$lib/services/contents/fields/file/resources';
   import { getAcceptedFileTypes } from '$lib/services/integrations/media-libraries/default';
   import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
+  import { focusAfterRemoval } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
-  import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
    * @import {
-   * Asset,
+   * AssetFolderInfo,
+   * EntryDraft,
    * FieldEditorContext,
    * FieldEditorProps,
+   * InternalLocaleCode,
+   * MediaLibraryAssetKind,
    * SelectedResource,
    * } from '$lib/types/private';
    * @import { FileField, MediaField } from '$lib/types/public';
@@ -93,8 +94,6 @@
   let rejectedFilesAlert = $state();
   /** @type {File[]} */
   let pendingFiles = $state([]);
-  /** @type {Asset[]} */
-  let unsavedAssets = $state([]);
   /** @type {HTMLElement | undefined} */
   let itemList = $state();
   /** @type {UploadButton | undefined} */
@@ -140,25 +139,40 @@
   );
   const assetLibraryFolderMap = $derived(assetOptions.folderMap);
   const targetFolder = $derived(assetOptions.folder);
-  const targetFolderPath = $derived(
-    getTargetFolderPath({
-      entry: entryDraft.current?.originalEntry,
-      folder: targetFolder,
-      locale,
-    }),
-  );
   // The existing files a dropped one could replace. One of another type isn’t listed: a dropped
   // file of that type is refused, unless a transformation gives it another name
-  const listedAssets = $derived(
-    listAssets({
-      kind,
-      accept: acceptedTypes,
-      folder: targetFolder,
-      folderPath: targetFolderPath,
-      unsavedAssets,
-      slugificationEnabled: libraryConfig.slugify_filename,
-    }),
-  );
+  const assetListing = createFolderAssetListing({
+    /**
+     * Get the entry draft.
+     * @returns {EntryDraft | null | undefined} Draft.
+     */
+    getDraft: () => entryDraft.current,
+    /**
+     * Get the target folder.
+     * @returns {AssetFolderInfo | undefined} Folder.
+     */
+    getFolder: () => targetFolder,
+    /**
+     * Get the locale being edited.
+     * @returns {InternalLocaleCode} Locale.
+     */
+    getLocale: () => locale,
+    /**
+     * Get the asset kind.
+     * @returns {MediaLibraryAssetKind | undefined} Kind.
+     */
+    getKind: () => kind,
+    /**
+     * Get the accepted file types.
+     * @returns {string | undefined} Types.
+     */
+    getAccept: () => acceptedTypes,
+    /**
+     * Get whether file names are slugified.
+     * @returns {boolean | undefined} Whether to slugify.
+     */
+    getSlugificationEnabled: () => libraryConfig.slugify_filename,
+  });
   const multiple = $derived(isMultiple(fieldConfig));
   const itemCount = $derived(Array.isArray(currentValue) ? currentValue.length : 0);
   /** Whether a multiple-file field has as many files as it takes, so no more can be dropped. */
@@ -238,7 +252,7 @@
       return;
     }
 
-    // Save the current value so we can restore it if all resources fail validation
+    // Save the current value so it can be restored if all resources fail validation
     const previousValue = multiple ? undefined : currentValue;
 
     resetSelection();
@@ -262,8 +276,12 @@
         return;
       }
 
-      const values = resources.flatMap(({ value }) => value ?? []);
-      const hasValidResource = !!values.length;
+      const { values, value, credit, rejected } = resolveSelectionResult({
+        resources,
+        multiple,
+        previousValue,
+        inEditorComponent,
+      });
 
       if (multiple) {
         addMultiValueItems({
@@ -275,27 +293,17 @@
           replaceIndex: replaceMode ? replaceIndex : undefined,
           max,
         });
-      } else if (hasValidResource) {
-        // A single-value field takes the last file, like it would if they were picked in turn
-        currentValue = toFieldValue(/** @type {string} */ (values.at(-1)), inEditorComponent);
-      }
-
-      const credits = resources.flatMap(({ credit }) => credit || []);
-
-      // Restore the previous value if no valid resources were processed, so that a failed
-      // upload/replace doesn’t leave an empty or invalid reference in the YAML
-      if (!hasValidResource && !multiple && previousValue !== undefined) {
-        currentValue = previousValue;
-      }
-
-      if (credits.length) {
-        photoCredit = credits.join('\n');
-        showPhotoCreditDialog = true;
       } else {
-        photoCredit = '';
+        currentValue = value;
       }
 
-      rejectedFilesAlert?.report(getRejectedFileNames(resources));
+      photoCredit = credit;
+
+      if (credit) {
+        showPhotoCreditDialog = true;
+      }
+
+      rejectedFilesAlert?.report(rejected);
     } finally {
       processing = false;
     }
@@ -315,7 +323,7 @@
     replaceMode = false;
 
     if (isDefaultLibraryAvailable) {
-      const replace = await checkDuplicates({ files, listedAssets });
+      const replace = await checkDuplicates({ files, listedAssets: assetListing.listedAssets });
 
       if (replace === undefined) {
         // User cancelled the dialog
@@ -366,13 +374,16 @@
     // The focused Remove button is gone along with the item, so move the focus to the Remove button
     // of the item now at the same position, the previous item if the last one was removed, or the
     // upload button if no item is left
-    const button = getRemoveButton(index) ?? getRemoveButton(index - 1);
-
-    if (button) {
-      button.focus();
-    } else {
-      uploadButton?.focus();
-    }
+    focusAfterRemoval({
+      index,
+      getTarget: getRemoveButton,
+      /**
+       * Focus the upload button.
+       */
+      fallback: () => {
+        uploadButton?.focus();
+      },
+    });
   };
 
   /**
@@ -410,26 +421,6 @@
      */
     settle: () => sleep(50),
   });
-
-  // A read started for an earlier state of the draft can be answered after a later one, which
-  // `watchAsync` takes care of
-  watchAsync(
-    () => {
-      const draft = entryDraft.current;
-
-      // The editor is closed along with the draft, so this is only a race with the editor closing
-      /* v8 ignore next 3 */
-      if (!draft) {
-        return undefined;
-      }
-
-      // The draft’s files are read synchronously, so their changes are tracked as well
-      return getUnsavedAssets({ draft, targetFolderPath });
-    },
-    (assets) => {
-      unsavedAssets = assets;
-    },
-  );
 </script>
 
 {#snippet uploadButtonSnippet()}

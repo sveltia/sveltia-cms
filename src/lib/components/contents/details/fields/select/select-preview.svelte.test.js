@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 
+import { renderFieldPreview } from '$lib/test/field.svelte';
+
 import SelectPreview from './select-preview.svelte';
 
 /**
@@ -23,17 +25,13 @@ const fieldConfig = {
  * @param {Partial<SelectField>} [config] Field options.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (currentValue, config = {}) => {
-  const { container } = await render(SelectPreview, {
-    locale: 'en',
-    keyPath: 'category',
-    typedKeyPath: 'category',
-    fieldConfig: { ...fieldConfig, ...config },
-    currentValue,
-  });
-
-  return container;
-};
+const renderPreview = async (currentValue, config = {}) =>
+  (
+    await renderFieldPreview(SelectPreview, {
+      fieldConfig: { ...fieldConfig, ...config },
+      currentValue,
+    })
+  ).container;
 
 describe('SelectPreview', () => {
   test('shows the label of the selected option', async () => {

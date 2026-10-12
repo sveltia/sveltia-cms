@@ -45,8 +45,16 @@ import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
  * to convert objects into the `ExternalAsset` format.
  * @property {(params: { key: string, file: File, config: C, credential: string }) => Promise<T>}
  * putObject Function to upload a file under the given key, overwriting any existing object.
+ * @property {(params: { asset: ExternalAsset, key: string, config: C, credential: string }) =>
+ * Promise<T>} copyObject Function to copy the object of the given asset, whose `id` is the object
+ * key, to the given key on the service, overwriting any existing object. It throws unless the copy
+ * is complete, as the source is deleted next.
+ * @property {(params: { key: string, config: C, credential: string, allowNotFound?: boolean }) =>
+ * Promise<void>} deleteObject Function to delete the object with the given key. With
+ * `allowNotFound`, an object that doesn’t exist counts as deleted.
  * @property {(params: { key: string, config: C, credential: string }) => Promise<void>}
- * deleteObject Function to delete the object with the given key.
+ * putFolderObject Function to put a zero-byte placeholder object at the given folder key, which
+ * ends with a slash.
  */
 
 /**
@@ -293,6 +301,67 @@ export const replaceObject = async (provider, asset, file, config, options) => {
 };
 
 /**
+ * Move an object to another path. Object storage has no move operation, so the object is copied to
+ * the new key and then the original is deleted.
+ * @template T
+ * @template {CloudStorageConfig} C
+ * @param {ObjectStorageProvider<T, C>} provider Service provider.
+ * @param {ExternalAsset} asset Asset to move. Its `id` is the object key.
+ * @param {string} newPath New path relative to the configured prefix.
+ * @param {C} config Service configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the credential).
+ * @returns {Promise<ExternalAsset>} Moved asset.
+ */
+export const moveObject = async (provider, asset, newPath, config, options) => {
+  const credential = provider.requireCredential(options);
+  const key = getFileKey(config, newPath);
+  const object = await provider.copyObject({ asset, key, config, credential });
+
+  await provider.deleteObject({ key: asset.id, config, credential });
+
+  return provider.parseResults([object], config, credential)[0];
+};
+
+/**
+ * Create an empty folder by putting a zero-byte placeholder object at the folder key, the way the
+ * services’ own consoles do.
+ * @template T
+ * @template {CloudStorageConfig} C
+ * @param {ObjectStorageProvider<T, C>} provider Service provider.
+ * @param {string} dirPath Folder path relative to the configured prefix.
+ * @param {C} config Service configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the credential).
+ * @returns {Promise<void>}
+ */
+export const createFolderObject = async (provider, dirPath, config, options) => {
+  const credential = provider.requireCredential(options);
+
+  await provider.putFolderObject({ key: getFolderKey(config, dirPath), config, credential });
+};
+
+/**
+ * Remove the placeholder object of a folder. A folder that has no placeholder, because it only
+ * ever held files, is as good as removed.
+ * @template T
+ * @template {CloudStorageConfig} C
+ * @param {ObjectStorageProvider<T, C>} provider Service provider.
+ * @param {string} dirPath Folder path relative to the configured prefix.
+ * @param {C} config Service configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the credential).
+ * @returns {Promise<void>}
+ */
+export const deleteFolderObject = async (provider, dirPath, config, options) => {
+  const credential = provider.requireCredential(options);
+
+  await provider.deleteObject({
+    key: getFolderKey(config, dirPath),
+    config,
+    credential,
+    allowNotFound: true,
+  });
+};
+
+/**
  * Get the path an object is moved to when it’s renamed, keeping it in its folder.
  * @param {CloudStorageConfig} config Service configuration.
  * @param {ExternalAsset} asset Asset to rename. Its `id` is the object key.
@@ -307,82 +376,109 @@ export const getRenamedPath = (config, asset, newName) => {
 
 /**
  * Create the operations of an object storage service, binding the given provider to the shared
- * list, browse, folder listing, search, upload, delete and replace operations. A file is renamed
- * by moving it within its folder.
+ * operations. A file is renamed by moving it within its folder.
  * @template T
  * @template {CloudStorageConfig} C
  * @param {ObjectStorageProvider<T, C>} provider Service provider.
- * @param {Pick<ObjectStorageOperations<C>, 'move' | 'createFolder' | 'deleteFolder'>} operations
- * Service-specific operations.
  * @returns {ObjectStorageOperations<C>} Operations.
  */
-export const createObjectStorageOperations = (provider, { move, createFolder, deleteFolder }) => ({
+export const createObjectStorageOperations = (provider) => {
   /**
-   * List the files under the configured prefix.
+   * Move a file to another path.
+   * @param {ExternalAsset} asset Asset to move.
+   * @param {string} newPath New path relative to the configured prefix.
    * @param {C} config Service configuration.
    * @param {MediaLibraryFetchOptions} options Fetch options.
-   * @returns {Promise<ExternalAsset[]>} Assets.
+   * @returns {Promise<ExternalAsset>} Moved asset.
    */
-  list: (config, options) => listObjects(provider, config, options),
-  /**
-   * List the files and the empty folders under the configured prefix.
-   * @param {C} config Service configuration.
-   * @param {MediaLibraryFetchOptions} options Fetch options.
-   * @returns {Promise<ExternalFolderListing>} Files and folders.
-   */
-  browse: (config, options) => browseObjects(provider, config, options),
-  /**
-   * List every file and empty folder below a folder, at any depth.
-   * @param {string} dirPath Folder path relative to the configured prefix.
-   * @param {C} config Service configuration.
-   * @param {MediaLibraryFetchOptions} options Fetch options.
-   * @returns {Promise<ExternalFolderListing>} Files and folders.
-   */
-  listFolder: (dirPath, config, options) => listFolderObjects(provider, dirPath, config, options),
-  /**
-   * Search the files under the configured prefix.
-   * @param {string} query Search query.
-   * @param {C} config Service configuration.
-   * @param {MediaLibraryFetchOptions} options Fetch options.
-   * @returns {Promise<ExternalAsset[]>} Assets.
-   */
-  search: (query, config, options) => searchObjects(provider, query, config, options),
-  /**
-   * Upload files to the folder given in the fetch options.
-   * @param {File[]} files Files to upload.
-   * @param {C} config Service configuration.
-   * @param {MediaLibraryFetchOptions} options Fetch options.
-   * @returns {Promise<ExternalAsset[]>} Uploaded assets.
-   */
-  upload: (files, config, options) => uploadObjects(provider, files, config, options),
-  /**
-   * Delete files.
-   * @param {ExternalAsset[]} assets Assets to delete.
-   * @param {C} config Service configuration.
-   * @param {MediaLibraryFetchOptions} options Fetch options.
-   * @returns {Promise<void>}
-   */
-  delete: (assets, config, options) => deleteObjects(provider, assets, config, options),
-  /**
-   * Rename a file, keeping it in its folder.
-   * @param {ExternalAsset} asset Asset to rename.
-   * @param {string} newName New file name, without a directory.
-   * @param {C} config Service configuration.
-   * @param {MediaLibraryFetchOptions} options Fetch options.
-   * @returns {Promise<ExternalAsset>} Renamed asset.
-   */
-  rename: (asset, newName, config, options) =>
-    move(asset, getRenamedPath(config, asset, newName), config, options),
-  /**
-   * Replace a file, keeping the object key so that the URL stays the same.
-   * @param {ExternalAsset} asset Asset to replace.
-   * @param {File} file New file.
-   * @param {C} config Service configuration.
-   * @param {MediaLibraryFetchOptions} options Fetch options.
-   * @returns {Promise<ExternalAsset>} Replaced asset.
-   */
-  replace: (asset, file, config, options) => replaceObject(provider, asset, file, config, options),
-  move,
-  createFolder,
-  deleteFolder,
-});
+  const move = (asset, newPath, config, options) =>
+    moveObject(provider, asset, newPath, config, options);
+
+  return {
+    /**
+     * List the files under the configured prefix.
+     * @param {C} config Service configuration.
+     * @param {MediaLibraryFetchOptions} options Fetch options.
+     * @returns {Promise<ExternalAsset[]>} Assets.
+     */
+    list: (config, options) => listObjects(provider, config, options),
+    /**
+     * List the files and the empty folders under the configured prefix.
+     * @param {C} config Service configuration.
+     * @param {MediaLibraryFetchOptions} options Fetch options.
+     * @returns {Promise<ExternalFolderListing>} Files and folders.
+     */
+    browse: (config, options) => browseObjects(provider, config, options),
+    /**
+     * List every file and empty folder below a folder, at any depth.
+     * @param {string} dirPath Folder path relative to the configured prefix.
+     * @param {C} config Service configuration.
+     * @param {MediaLibraryFetchOptions} options Fetch options.
+     * @returns {Promise<ExternalFolderListing>} Files and folders.
+     */
+    listFolder: (dirPath, config, options) => listFolderObjects(provider, dirPath, config, options),
+    /**
+     * Search the files under the configured prefix.
+     * @param {string} query Search query.
+     * @param {C} config Service configuration.
+     * @param {MediaLibraryFetchOptions} options Fetch options.
+     * @returns {Promise<ExternalAsset[]>} Assets.
+     */
+    search: (query, config, options) => searchObjects(provider, query, config, options),
+    /**
+     * Upload files to the folder given in the fetch options.
+     * @param {File[]} files Files to upload.
+     * @param {C} config Service configuration.
+     * @param {MediaLibraryFetchOptions} options Fetch options.
+     * @returns {Promise<ExternalAsset[]>} Uploaded assets.
+     */
+    upload: (files, config, options) => uploadObjects(provider, files, config, options),
+    /**
+     * Delete files.
+     * @param {ExternalAsset[]} assets Assets to delete.
+     * @param {C} config Service configuration.
+     * @param {MediaLibraryFetchOptions} options Fetch options.
+     * @returns {Promise<void>}
+     */
+    delete: (assets, config, options) => deleteObjects(provider, assets, config, options),
+    /**
+     * Rename a file, keeping it in its folder.
+     * @param {ExternalAsset} asset Asset to rename.
+     * @param {string} newName New file name, without a directory.
+     * @param {C} config Service configuration.
+     * @param {MediaLibraryFetchOptions} options Fetch options.
+     * @returns {Promise<ExternalAsset>} Renamed asset.
+     */
+    rename: (asset, newName, config, options) =>
+      move(asset, getRenamedPath(config, asset, newName), config, options),
+    /**
+     * Replace a file, keeping the object key so that the URL stays the same.
+     * @param {ExternalAsset} asset Asset to replace.
+     * @param {File} file New file.
+     * @param {C} config Service configuration.
+     * @param {MediaLibraryFetchOptions} options Fetch options.
+     * @returns {Promise<ExternalAsset>} Replaced asset.
+     */
+    replace: (asset, file, config, options) =>
+      replaceObject(provider, asset, file, config, options),
+    move,
+    /**
+     * Create an empty folder.
+     * @param {string} dirPath Folder path relative to the configured prefix.
+     * @param {C} config Service configuration.
+     * @param {MediaLibraryFetchOptions} options Fetch options.
+     * @returns {Promise<void>}
+     */
+    createFolder: (dirPath, config, options) =>
+      createFolderObject(provider, dirPath, config, options),
+    /**
+     * Remove the placeholder of a folder.
+     * @param {string} dirPath Folder path relative to the configured prefix.
+     * @param {C} config Service configuration.
+     * @param {MediaLibraryFetchOptions} options Fetch options.
+     * @returns {Promise<void>}
+     */
+    deleteFolder: (dirPath, config, options) =>
+      deleteFolderObject(provider, dirPath, config, options),
+  };
+};

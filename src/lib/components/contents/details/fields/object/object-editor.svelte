@@ -24,10 +24,11 @@
   import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
   import {
     formatSummary,
+    getTypedSubKeyPath,
     resolveVariableType,
     warnUnknownType,
   } from '$lib/services/contents/fields/object/helpers';
-  import { getObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
+  import { getDraftObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
 
   /**
    * @import {
@@ -201,17 +202,14 @@
    * @returns {MediaFieldSource | undefined} Thumbnail.
    */
   const getThumbnail = () =>
-    getObjectThumbnail({
+    getDraftObjectThumbnail({
+      draft: entryDraft.current,
       thumbnailFieldName,
       keyPath,
-      typedKeyPath: type ? `${typedKeyPath}<${type}>` : typedKeyPath,
-      collectionName,
-      fileName,
+      typedKeyPath,
+      type,
       componentName,
       valueMap,
-      isIndexFile,
-      entry: entryDraft.current?.originalEntry,
-      files: entryDraft.current?.files,
       locale,
     });
 
@@ -298,10 +296,7 @@
         {subFields}
         getSubFieldProps={(subField) => ({
           keyPath: `${keyPath}.${subField.name}`,
-          typedKeyPath:
-            hasVariableTypes && type
-              ? `${typedKeyPath}<${type}>.${subField.name}`
-              : `${typedKeyPath}.${subField.name}`,
+          typedKeyPath: getTypedSubKeyPath({ typedKeyPath, type, subFieldName: subField.name }),
         })}
         expanded={parentExpanded}
         {unknownType}

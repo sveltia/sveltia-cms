@@ -1,6 +1,7 @@
 import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/monolingual.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 test.use({ config: MONOLINGUAL_CONFIG });
 
@@ -17,7 +18,7 @@ test('creates a post with every field type filled in', async ({ cms, page }) => 
 
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Comet Watch: Tonight’s Guide');
   await editor.getByRole('textbox', { name: 'Date' }).fill('2026-04-01');
@@ -79,7 +80,7 @@ test('creates a post with every field type filled in', async ({ cms, page }) => 
 test('updates one field, and writes the empty optional fields', async ({ cms, page }) => {
   await page.getByRole('row', { name: /First Light/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('First Light');
   await editor.getByRole('spinbutton', { name: 'Rating' }).fill('3');
@@ -117,7 +118,7 @@ test.describe('with the empty optional fields omitted', () => {
   test('updates one field and leaves the rest of the file as it was', async ({ cms, page }) => {
     await page.getByRole('row', { name: /First Light/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('First Light');
     await editor.getByRole('spinbutton', { name: 'Rating' }).fill('3');
@@ -137,7 +138,7 @@ test.describe('with the empty optional fields omitted', () => {
 test('refuses to save a post with invalid fields', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('spinbutton', { name: 'Rating' }).fill('7');
   await editor.getByRole('button', { name: 'Save' }).click();

@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import SelectEditor from './select-editor.svelte';
 
@@ -23,18 +24,14 @@ const renderEditor = async ({ config, currentValue = undefined, values = {}, req
   const fieldConfig = { name: 'category', widget: 'select', options: [], ...config };
   const draft = createMockDraft({ fields: [fieldConfig], values: { _default: values } });
 
-  const props = $state({
-    locale: '_default',
-    keyPath: 'category',
-    typedKeyPath: 'category',
-    fieldId: 'category',
-    fieldLabel: 'Category',
+  const { props } = await renderFieldEditor(SelectEditor, {
     fieldConfig,
+    fieldLabel: 'Category',
+    locale: '_default',
     currentValue,
-    required,
+    props: { required },
+    draft,
   });
-
-  await renderWithDraft(SelectEditor, { draft, props });
 
   return { props, draft };
 };

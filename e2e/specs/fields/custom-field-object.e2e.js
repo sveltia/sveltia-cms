@@ -1,5 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { BASE_CONFIG, expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 test.use({
   config: {
@@ -67,7 +68,7 @@ test('saves an object value in place, in the order the control gave the properti
 }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Lake');
   await editor.getByRole('textbox', { name: 'Caption' }).fill('Text');

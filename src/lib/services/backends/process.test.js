@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { isIndexFile } from '$lib/services/contents/file/process';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
+import { createMockAssetFolder } from '$lib/test/factories';
 
 import { createFileList, describeFileList } from './process.js';
 
@@ -132,13 +133,10 @@ describe('Backend Process', () => {
       ];
 
       /** @type {AssetFolderInfo} */
-      const mockAssetFolder = {
-        collectionName: undefined,
+      const mockAssetFolder = createMockAssetFolder({
         internalPath: 'images',
         publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(getEntryFoldersByPath).mockReturnValue([]);
       vi.mocked(getAssetFoldersByPath).mockImplementation((path) => {
@@ -172,13 +170,10 @@ describe('Backend Process', () => {
       };
 
       /** @type {AssetFolderInfo} */
-      const mockAssetFolder = {
-        collectionName: undefined,
+      const mockAssetFolder = createMockAssetFolder({
         internalPath: 'content',
         publicPath: '/content',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(getEntryFoldersByPath).mockReturnValue([mockEntryFolder]);
       vi.mocked(getAssetFoldersByPath).mockReturnValue([mockAssetFolder]);
@@ -196,13 +191,10 @@ describe('Backend Process', () => {
       const files = [{ path: 'content/_index.md', name: '_index.md', size: 200, sha: 'hash1' }];
 
       /** @type {AssetFolderInfo} */
-      const mockAssetFolder = {
-        collectionName: undefined,
+      const mockAssetFolder = createMockAssetFolder({
         internalPath: 'content',
         publicPath: '/content',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(getEntryFoldersByPath).mockReturnValue([]);
       vi.mocked(getAssetFoldersByPath).mockReturnValue([mockAssetFolder]);
@@ -231,13 +223,10 @@ describe('Backend Process', () => {
       };
 
       /** @type {AssetFolderInfo} */
-      const mockAssetFolder = {
-        collectionName: undefined,
+      const mockAssetFolder = createMockAssetFolder({
         internalPath: 'images',
         publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(getEntryFoldersByPath).mockImplementation((path) => {
         if (path.startsWith('posts/')) return [mockEntryFolder];

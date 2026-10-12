@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
 import {
-  encodeKey,
   getFileKey,
   getFolderKey,
   getPrefix,
@@ -74,23 +73,5 @@ describe('getRelativeKey', () => {
     const cfg = config('a/b');
 
     expect(getRelativeKey(cfg, getFileKey(cfg, 'c/d.png'))).toBe('c/d.png');
-  });
-});
-
-describe('encodeKey', () => {
-  test('encodes each segment while keeping the path separators', () => {
-    expect(encodeKey('my folder/my file#1?.png')).toBe('my%20folder/my%20file%231%3F.png');
-    expect(encodeKey('日本/写真.jpg')).toBe(
-      `${encodeURIComponent('日本')}/${encodeURIComponent('写真.jpg')}`,
-    );
-  });
-
-  test('keeps empty segments of leading, trailing and double slashes', () => {
-    expect(encodeKey('/a//b/')).toBe('/a//b/');
-    expect(encodeKey('')).toBe('');
-  });
-
-  test('uses a custom segment encoder when given', () => {
-    expect(encodeKey('a b/c+d', (segment) => segment.replaceAll(' ', '+'))).toBe('a+b/c+d');
   });
 });

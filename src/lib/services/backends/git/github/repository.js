@@ -3,6 +3,7 @@ import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/
 import {
   createLocalizedError,
   NOT_COLLABORATOR_ERROR_MESSAGE,
+  toRepositoryAccessError,
 } from '$lib/services/backends/git/shared/errors';
 import {
   applyDefaultBranch,
@@ -32,13 +33,6 @@ export const getBaseURLs = (repoURL, branch) => ({
   blobBaseURL: branch ? `${repoURL}/blob/${branch}` : '',
   commitBaseURL: `${repoURL}/commit`,
 });
-
-/**
- * HTTP statuses that mean the signed-in user can’t see the repository at all. A private repository
- * answers a request from someone without access with a 404 rather than a 403, so its existence
- * isn’t leaked. A 401 means the token has expired or been revoked.
- */
-const NO_ACCESS_STATUSES = [401, 403, 404];
 
 /**
  * Check whether the given response was rejected because the API rate limit is exhausted. GitHub
@@ -71,21 +65,19 @@ export const checkRepositoryAccess = async () => {
     })
   );
 
-  // A rate limit or an outage leaves the question unanswered. Reading that as “no access” would
-  // clear the credentials and sign the user out over something passing, so report it as a failed
-  // check instead. A `raw` response skips the token refresh, so an expired token (401) still counts
-  // as no access, sending the user back to the sign-in form
-  if (!response.ok && (!NO_ACCESS_STATUSES.includes(response.status) || isRateLimited(response))) {
-    throw createLocalizedError(
-      'Failed to check the repository permission.',
-      'open_authoring.permission_check_failed',
-      { repo: `${owner}/${repo}` },
+  // A rate limit shares the 403 status with a refusal, so it’s reported as a failed check rather
+  // than as no access. A `raw` response skips the token refresh, so an expired token (401) still
+  // counts as no access, sending the user back to the sign-in form
+  if (!response.ok) {
+    throw toRepositoryAccessError(
+      repository,
+      isRateLimited(response) ? undefined : response.status,
     );
   }
 
-  const { permissions } = response.ok
-    ? /** @type {{ permissions?: { push?: boolean } }} */ (await response.json())
-    : {};
+  const { permissions } = /** @type {{ permissions?: { push?: boolean } }} */ (
+    await response.json()
+  );
 
   if (!permissions?.push) {
     throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });

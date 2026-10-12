@@ -9,9 +9,7 @@ const getMock = vi.hoisted(() => vi.fn());
 const fetchAPIMock = vi.hoisted(() => vi.fn());
 const sendRequestMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key) => key),
-}));
+vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 
 vi.mock('$lib/services/backends/git/shared/api', () => ({
   apiConfig: { restBaseURL: 'https://git.example.com/api/v1', includeCredentials: false },

@@ -1,5 +1,6 @@
 import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/monolingual.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -50,7 +51,7 @@ test.describe('Validation panel', () => {
   test('lists the errors, and focuses a field when its error is clicked', async ({ page }) => {
     await page.getByRole('row', { name: /First Light/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const { button, panel } = getPanel(page, 'Validation');
 
     await editor.getByRole('textbox', { name: 'Title' }).fill('');
@@ -80,7 +81,7 @@ test.describe('Validation panel', () => {
   test('is shown with the errors when a save fails validation', async ({ page }) => {
     await page.getByRole('row', { name: /First Light/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const { button, panel } = getPanel(page, 'Validation');
 
     await editor.getByRole('textbox', { name: 'Title' }).fill('');
@@ -101,7 +102,7 @@ test.describe('Backlinks panel', () => {
     await page.getByRole('treeitem', { name: 'Authors' }).click();
     await page.getByRole('row', { name: /Jane Doe/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const { button, panel } = getPanel(page, 'Backlinks');
 
     await expect(editor.getByRole('textbox', { name: 'Name' })).toHaveValue('Jane Doe');

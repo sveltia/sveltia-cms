@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import NumberEditor from './number-editor.svelte';
 
@@ -16,21 +17,12 @@ import NumberEditor from './number-editor.svelte';
  * @returns {Promise<{ props: { currentValue: string | number | null | undefined } }>} Props, whose
  * `currentValue` follows the editor.
  */
-const renderEditor = async ({ currentValue = undefined, config = {} } = {}) => {
-  const props = $state({
-    locale: 'en',
-    keyPath: 'count',
-    typedKeyPath: 'count',
-    fieldId: 'count',
-    fieldLabel: 'Count',
+const renderEditor = async ({ currentValue = undefined, config = {} } = {}) =>
+  renderFieldEditor(NumberEditor, {
     fieldConfig: /** @type {NumberField} */ ({ name: 'count', widget: 'number', ...config }),
+    fieldLabel: 'Count',
     currentValue,
   });
-
-  await render(NumberEditor, props);
-
-  return { props };
-};
 
 describe('NumberEditor', () => {
   test('reflects the value', async () => {

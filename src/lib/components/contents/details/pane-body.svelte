@@ -28,6 +28,7 @@
   } from '$lib/services/contents/editor/scroll';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
+  import { createLatestGuard } from '$lib/services/utils/scheduling';
 
   /**
    * @import { EntryEditorPane } from '$lib/types/private';
@@ -159,8 +160,8 @@
    * @type {AddEventListenerOptions}
    */
   const scrollEventOptions = { passive: true };
-  /** Counter to ignore an outdated initialization once a newer one has started. */
-  let initCount = 0;
+  /** Guard to ignore an outdated initialization once a newer one has started. */
+  const initGuard = createLatestGuard();
 
   /**
    * Find the preview iframe, which is used in the preview mode only when a custom preview
@@ -193,9 +194,7 @@
       return;
     }
 
-    initCount += 1;
-
-    const currentCount = initCount;
+    const isLatest = initGuard.next();
 
     if (thisPaneContentArea) {
       // Remove previous event listeners if they exist
@@ -216,7 +215,7 @@
       await sleep(250);
     }
 
-    if (currentCount !== initCount) {
+    if (!isLatest()) {
       // The mode has changed in the meantime, and a newer initialization has taken over
       return;
     }

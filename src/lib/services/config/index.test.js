@@ -55,10 +55,9 @@ vi.mock('$lib/services/backends/git/services', () => ({
 }));
 
 // Mock i18n
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key) => key),
-  locale: { current: 'en', set: vi.fn() },
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ locale: 'en' }),
+);
 
 describe('config/index', () => {
   beforeEach(async () => {

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import StringPreview from './string-preview.svelte';
 
@@ -16,17 +17,13 @@ const UNSAFE_URL = 'javascript:alert(1)';
  * @param {Partial<StringField>} [config] Field options.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (currentValue, config = {}) => {
-  const { container } = await render(StringPreview, {
-    locale: 'en',
-    keyPath: 'link',
-    typedKeyPath: 'link',
-    fieldConfig: { name: 'link', widget: 'string', ...config },
-    currentValue,
-  });
-
-  return container;
-};
+const renderPreview = async (currentValue, config = {}) =>
+  (
+    await renderFieldPreview(StringPreview, {
+      fieldConfig: { name: 'link', widget: 'string', ...config },
+      currentValue,
+    })
+  ).container;
 
 describe('StringPreview', () => {
   test('shows plain text', async () => {

@@ -1,5 +1,6 @@
 import { createPNG } from '../fixtures/files.js';
 import { expect, GITHUB_CONFIG, test, TEST_REPO_DIR_NAME } from '../fixtures/test.js';
+import { getEditor, openFirstPost } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -90,20 +91,6 @@ const signInWithClone = async (cms, page, files = {}) => {
   await expect(page.getByRole('button', { name: 'Show Account Menu' })).toBeVisible();
 };
 
-/**
- * Open the first post in the entry editor.
- * @param {Page} page Page.
- * @returns {Promise<Locator>} Editor.
- */
-const openFirstPost = async (page) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await page.getByRole('row', { name: /First Post/ }).click();
-  await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue('Hello, world!');
-
-  return editor;
-};
-
 test('offers to work with a local clone of the repository', async ({ page }) => {
   await expect(
     page.getByText(/Once prompted, select the root directory of the .*e2e-site.* repository\./),
@@ -135,7 +122,7 @@ test('creates an entry with an image, then deletes it', async ({ cms, page }) =>
   await signInWithClone(cms, page);
   await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Kites');
   await editor

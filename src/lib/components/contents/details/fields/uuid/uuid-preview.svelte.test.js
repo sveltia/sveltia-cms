@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import UuidPreview from './uuid-preview.svelte';
 
@@ -15,17 +16,8 @@ const fieldConfig = { name: 'id', widget: 'uuid' };
  * @param {string | undefined} currentValue Field value.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (currentValue) => {
-  const { container } = await render(UuidPreview, {
-    locale: 'en',
-    keyPath: 'id',
-    typedKeyPath: 'id',
-    fieldConfig,
-    currentValue,
-  });
-
-  return container;
-};
+const renderPreview = async (currentValue) =>
+  (await renderFieldPreview(UuidPreview, { fieldConfig, currentValue })).container;
 
 describe('UuidPreview', () => {
   test('shows the value', async () => {

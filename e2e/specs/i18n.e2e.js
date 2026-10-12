@@ -1,4 +1,5 @@
 import { BASE_CONFIG, expect, test } from '../fixtures/test.js';
+import { getEditor } from '../fixtures/ui.js';
 
 test.use({
   config: {
@@ -31,7 +32,7 @@ test.beforeEach(async ({ cms }) => {
 test('creates an entry in every locale', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const english = editor.getByRole('group', { name: /Edit.*English/ });
   const french = editor.getByRole('group', { name: /Edit.*French/ });
 
@@ -61,7 +62,7 @@ test('creates an entry in every locale', async ({ cms, page }) => {
 test('updates one locale only', async ({ cms, page }) => {
   await page.getByRole('row', { name: /Hello/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   // Show French in the first pane
   await editor
@@ -90,7 +91,7 @@ test('updates an entry without a file in the default locale', async ({ cms, page
 
   await page.getByRole('row', { name: /Salut/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   // English is disabled; show French in the first pane
   await editor

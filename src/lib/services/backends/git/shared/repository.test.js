@@ -12,9 +12,9 @@ import {
 const mockPrefs = vi.hoisted(() => ({ devModeEnabled: false }));
 const mockGetRootDir = vi.hoisted(() => vi.fn(() => ''));
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key, { values } = {}) => `${key}:${JSON.stringify(values)}`),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
 vi.mock('$lib/services/user/prefs.svelte', () => ({ prefs: mockPrefs }));
 vi.mock('$lib/services/backends/root-dir', () => ({ getRootDir: mockGetRootDir }));
 

@@ -7,11 +7,13 @@ import { getMediaFieldSource } from '$lib/services/assets/media-field';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { getField } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getTypedKeyPath } from '$lib/services/contents/fields/object/helpers';
 import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
 
 /**
  * @import {
  * Entry,
+ * EntryDraft,
  * EntryFileMap,
  * FlattenedEntryContent,
  * InternalLocaleCode,
@@ -127,3 +129,32 @@ export const getObjectThumbnail = ({
 
   return kind === 'image' ? source : undefined;
 };
+
+/**
+ * Get the thumbnail of a collapsed Object field or List field item in the entry editor, with the
+ * collection, entry and files taken from the draft.
+ * @param {object} args Arguments.
+ * @param {EntryDraft | null | undefined} args.draft Entry draft.
+ * @param {string} [args.thumbnailFieldName] The `thumbnail` option.
+ * @param {FieldKeyPath} args.keyPath Key path of the object.
+ * @param {TypedFieldKeyPath} args.typedKeyPath Typed key path of the object, without its type.
+ * @param {string} [args.type] Type of the object, if the field has variable types.
+ * @param {boolean} [args.hasSingleSubField] Whether the object is an item of a List field with the
+ * `field` option.
+ * @param {string} [args.componentName] Custom editor component name, if the object is part of a
+ * rich text editor component.
+ * @param {FlattenedEntryContent} args.valueMap Entry content.
+ * @param {InternalLocaleCode} args.locale Locale being edited.
+ * @returns {MediaFieldSource | undefined} The file to preview, if any.
+ * @see {@link getObjectThumbnail}
+ */
+export const getDraftObjectThumbnail = ({ draft, typedKeyPath, type, ...args }) =>
+  getObjectThumbnail({
+    ...args,
+    typedKeyPath: getTypedKeyPath(typedKeyPath, type),
+    collectionName: draft?.collectionName ?? '',
+    fileName: draft?.fileName,
+    isIndexFile: !!draft?.isIndexFile,
+    entry: draft?.originalEntry,
+    files: draft?.files,
+  });

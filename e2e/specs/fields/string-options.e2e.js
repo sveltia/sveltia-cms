@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor, getField } from '../../fixtures/ui.js';
 
 /**
  * Concert venues with a string field for each option that shapes the input or checks the value:
@@ -70,22 +71,13 @@ const createVenue = async ({ cms, page }) => {
   await cms.signIn();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Massey Hall');
   await editor.getByRole('textbox', { name: 'Email' }).fill('box@example.com');
 
   return editor;
 };
-
-/**
- * Get a field’s group in the editor.
- * @param {import('@playwright/test').Locator} editor Content editor.
- * @param {string} label Field label.
- * @returns {import('@playwright/test').Locator} Field group.
- */
-const getField = (editor, label) =>
-  editor.getByRole('group', { name: new RegExp(`${label}.*Field`) });
 
 /**
  * Get a pattern matching the text of a character counter, like `10 / 4 / 20` for the minimum, the
@@ -239,7 +231,7 @@ test.describe('`prefix` and `suffix` options', () => {
     await cms.signIn();
     await page.getByRole('row', { name: /Massey Hall/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const input = getField(editor, 'Price').getByRole('textbox', { name: 'Price' });
 
     await expect(input).toHaveValue('45');

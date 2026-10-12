@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import NumberPreview from './number-preview.svelte';
 
@@ -16,17 +17,8 @@ const fieldConfig = { name: 'price', widget: 'number' };
  * @param {string} [locale] Locale code.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (currentValue, locale = 'en') => {
-  const { container } = await render(NumberPreview, {
-    locale,
-    keyPath: 'price',
-    typedKeyPath: 'price',
-    fieldConfig,
-    currentValue,
-  });
-
-  return container;
-};
+const renderPreview = async (currentValue, locale = 'en') =>
+  (await renderFieldPreview(NumberPreview, { fieldConfig, locale, currentValue })).container;
 
 describe('NumberPreview', () => {
   test('formats a number for the locale', async () => {

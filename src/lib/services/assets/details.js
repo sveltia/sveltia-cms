@@ -2,9 +2,9 @@ import { getAssetBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
 import { isMediaKind } from '$lib/services/assets/kinds';
 import { getEntriesByAssets, getEntriesByAssetURL } from '$lib/services/assets/references';
 import { backend } from '$lib/services/backends';
-import { encodePath } from '$lib/services/backends/git/shared/url';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { getMediaMetadata } from '$lib/services/utils/media';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import { Asset, AssetDetails, Entry } from '$lib/types/private';
@@ -92,7 +92,7 @@ export const getAssetDetails = async (asset) => {
     ...metaData,
     publicURL: getAssetPublicURL(asset),
     // Encode the path, as a file name can contain `#`, `?` or `%`, which would break the URL
-    repoBlobURL: blobBaseURL ? `${blobBaseURL}/${encodePath(path)}` : undefined,
+    repoBlobURL: blobBaseURL ? `${blobBaseURL}/${encodePathSegments(path)}` : undefined,
   };
 };
 

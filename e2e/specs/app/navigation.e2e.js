@@ -1,6 +1,7 @@
 import { MEDIA_CONFIG, MEDIA_FILES } from '../../fixtures/configs/media.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -82,7 +83,7 @@ test.describe('after signing in', () => {
 
     await expect(page).toHaveURL(/#\/collections\/projects\/new$/);
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Title' }).fill('Tower');
     await editor.getByRole('button', { name: 'Save' }).click();
@@ -137,9 +138,7 @@ test.describe('with file names containing URL characters', () => {
   test('opens an entry whose file name has a percent sign', async ({ page }) => {
     await page.getByRole('row', { name: /Clearance/ }).click();
     await expect(page).toHaveURL(/#\/collections\/notes\/entries\/100%25-off$/);
-    await expect(
-      page.getByRole('group', { name: 'Content Editor' }).getByRole('textbox', { name: 'Title' }),
-    ).toHaveValue('Clearance');
+    await expect(getEditor(page).getByRole('textbox', { name: 'Title' })).toHaveValue('Clearance');
   });
 
   test('previews an asset whose file name has a percent and a hash sign', async ({ cms, page }) => {
@@ -163,7 +162,7 @@ test.describe('with file names containing URL characters', () => {
   test('tells an entry is not found for a malformed escape sequence', async ({ cms, page }) => {
     await page.goto(`${cms.adminPath}#/collections/notes/entries/%E0%A4%A`);
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await expect(editor).toContainText('Entry not found.');
     await editor.getByRole('button', { name: 'Back to Collection' }).click();

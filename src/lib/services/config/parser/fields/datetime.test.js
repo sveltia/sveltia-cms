@@ -1,15 +1,14 @@
-/* eslint-disable jsdoc/require-jsdoc */
-
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createCollectors } from '$lib/test/config-parser';
+
 /**
- * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
+ * @import { ConfigParserContext } from '$lib/types/private';
  */
 
-vi.mock('@sveltia/i18n', () => ({
-  _: (/** @type {string} */ key) => key,
-  locale: { current: 'en-US', set: vi.fn() },
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ locale: 'en-US' }),
+);
 
 const mockCheckUnsupportedOptions = vi.fn();
 const mockAddMessage = vi.fn();
@@ -18,19 +17,6 @@ vi.mock('$lib/services/config/parser/utils/validator', () => ({
   checkUnsupportedOptions: mockCheckUnsupportedOptions,
   addMessage: mockAddMessage,
 }));
-
-/**
- * Create a fresh collectors object for testing.
- * @returns {ConfigParserCollectors} Collectors instance.
- */
-function createCollectors() {
-  return {
-    errors: new Set(),
-    warnings: new Set(),
-    mediaFields: new Set(),
-    relationFields: new Set(),
-  };
-}
 
 /**
  * Create a fresh context object for testing.

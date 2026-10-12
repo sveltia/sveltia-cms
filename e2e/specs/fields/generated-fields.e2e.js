@@ -1,4 +1,5 @@
 import { expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -49,7 +50,7 @@ const config = (fields) => ({
 const createNote = async (page, title) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill(title);
 
@@ -65,7 +66,7 @@ const createNote = async (page, title) => {
 const openNote = async (page, title) => {
   await page.getByRole('row', { name: new RegExp(title) }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue(title);
 

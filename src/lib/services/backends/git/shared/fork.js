@@ -140,6 +140,55 @@ export const runOpenAuthoringSetUp = async (setUp) => {
 };
 
 /**
+ * Work out how the signed-in user is going to write to the repository, and set up a fork for them
+ * if they can’t write to the configured one. This replaces the plain access check performed when
+ * Open Authoring is turned off, because a contributor without write access is expected here rather
+ * than turned away. The steps are the same on every service, which supplies the requests that
+ * differ.
+ * @template {{ canWrite: boolean }} A
+ * @param {object} args Arguments.
+ * @param {string} args.repoPath Configured repository path, e.g. `owner/repo`.
+ * @param {() => Promise<A>} args.fetchAccess Function to read the signed-in user’s access to the
+ * configured repository.
+ * @param {() => Promise<void>} [args.prepare] Function to run once the user turns out to be a
+ * contributor, before the fork is looked up.
+ * @param {() => Promise<RepositoryPath | undefined>} args.fetchFork Function to look up the user’s
+ * existing fork.
+ * @param {(fork: RepositoryPath) => Promise<void>} [args.prepareFork] Function to bring an existing
+ * fork up to date, or check it’s usable, before it’s taken.
+ * @param {(access: A) => boolean | Promise<boolean>} args.fetchForkingAllowed Function to tell
+ * whether the configured repository can be forked, given the access read earlier.
+ * @param {() => Promise<RepositoryPath>} args.createFork Function to create a fork.
+ * @throws {Error} When the fork could not be set up.
+ * @see https://sveltiacms.app/en/docs/workflows/open
+ */
+export const setUpForkFor = async (args) => {
+  const { repoPath, fetchAccess, prepare, fetchFork, prepareFork, fetchForkingAllowed } = args;
+  const access = await fetchAccess();
+
+  // A maintainer keeps working on the configured repository, as if Open Authoring was off
+  if (access.canWrite) {
+    return;
+  }
+
+  await prepare?.();
+
+  const existingFork = await fetchFork();
+
+  if (existingFork) {
+    await prepareFork?.(existingFork);
+    forkedRepository.current = existingFork;
+
+    return;
+  }
+
+  // Forking can be turned off on the repository or the instance, and the user has to agree to it
+  await ensureForkPermission({ repoPath, allowForking: await fetchForkingAllowed(access) });
+
+  forkedRepository.current = await args.createFork();
+};
+
+/**
  * Make sure the signed-in user can publish an unpublished entry, which an Open Authoring
  * contributor can’t: merging their own pull request is what they lack the access for in the first
  * place.

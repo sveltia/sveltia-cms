@@ -5,7 +5,7 @@ import { showAssetOverlay } from '$lib/services/assets/view';
 import { cmsConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/editor';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
-import { decodeURIComponentSafely } from '$lib/services/utils/url';
+import { decodeURIComponentSafely, encodePathSegments } from '$lib/services/utils/url';
 import { openNewTab } from '$lib/services/utils/window';
 
 /**
@@ -57,16 +57,6 @@ export const mainAreaTitle = createRawState('');
  * in preference to {@link mainAreaTitle}. Empty while no overlay is open.
  */
 export const overlayTitle = createRawState('');
-
-/**
- * Percent-encode each segment of the given route path, keeping the slashes, so a file or folder
- * name containing a `%`, `#` or `?` sign makes it through the URL hash intact and is decoded back
- * to the same name by {@link parseLocation}. Build every route that contains an entry or asset
- * path with this before passing it to {@link goto} or {@link goBack}.
- * @param {string} path Route path without a query string, e.g. `/assets/images/50%off.jpg`.
- * @returns {string} Encoded path, e.g. `/assets/images/50%25off.jpg`.
- */
-export const encodeRoutePath = (path) => path.split('/').map(encodeURIComponent).join('/');
 
 /**
  * Parse the URL and return the decoded result.
@@ -259,7 +249,9 @@ export const updateContentFromHashChange = (event, updateContent, routeRegex) =>
  * Navigate to a different URL or replace the current URL. This is similar to SvelteKit’s `goto`
  * method but assumes hash-based SPA routing.
  * @param {string} path URL path. It will appear in th URL hash but omit the leading `#` sign here.
- * Encode any entry or asset path in it with {@link encodeRoutePath}.
+ * Encode any entry or asset path in it with {@link encodePathSegments}, so a file or folder name
+ * containing a `%`, `#` or `?` sign makes it through the URL hash intact and is decoded back to the
+ * same name by {@link parseLocation}.
  * @param {GoToMethodOptions} [options] Options.
  */
 export const goto = async (
@@ -330,7 +322,7 @@ export const redirectLegacyEntryLink = () => {
   const query = new URLSearchParams(params).toString();
 
   goto(
-    `${encodeRoutePath(`/collections/${collectionName}/entries/${subPath}`)}${query ? `?${query}` : ''}`,
+    `${encodePathSegments(`/collections/${collectionName}/entries/${subPath}`)}${query ? `?${query}` : ''}`,
     {
       replaceState: true,
     },
@@ -443,7 +435,7 @@ export const getEntryEditorBackPath = ({ collectionName, dirPath = '' }) => {
   }
 
   return dirPath
-    ? encodeRoutePath(`/collections/${collectionName}/filter/${dirPath}`)
+    ? encodePathSegments(`/collections/${collectionName}/filter/${dirPath}`)
     : `/collections/${collectionName}`;
 };
 

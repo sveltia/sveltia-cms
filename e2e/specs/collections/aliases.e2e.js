@@ -1,6 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
-
-import { getEntryList, openCollection } from './helpers.js';
+import { openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -71,24 +70,6 @@ const start = async (cms, files) => {
 };
 
 /**
- * Open an entry from the list of a collection.
- * @param {Page} page Page.
- * @param {string} collectionName Collection name.
- * @param {string} title Entry title.
- * @returns {Promise<Locator>} Content editor.
- */
-const openEntry = async (page, collectionName, title) => {
-  await openCollection(page, collectionName);
-  await getEntryList(page).getByRole('row', { name: title, exact: true }).click();
-
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await expect(editor.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue(title);
-
-  return editor;
-};
-
-/**
  * Give the entry open in the editor another slug in the Slug panel.
  * @param {CMS} cms CMS fixture.
  * @param {Page} page Page.
@@ -126,7 +107,7 @@ const save = async (editor) => {
  * @param {string} slug New slug.
  */
 const rename = async (cms, page, collectionName, title, slug) => {
-  const editor = await openEntry(page, collectionName, title);
+  const editor = await openEntry(page, title, { collection: collectionName, exact: true });
 
   await editSlug(cms, page, slug);
   await save(editor);
@@ -231,7 +212,7 @@ test.describe('default `aliases` property', () => {
       'content/posts/hello.md': '---\naliases:\n  - /old/hello\ntitle: Hello\n---\n\nHi.\n',
     });
 
-    const editor = await openEntry(page, 'posts', 'Hello');
+    const editor = await openEntry(page, 'Hello', { collection: 'posts', exact: true });
 
     await editor.getByRole('textbox', { name: 'Body' }).fill('Edited.');
     await save(editor);
@@ -253,7 +234,7 @@ test.describe('default `aliases` property', () => {
       'content/posts/hello.md': '---\naliases:\n  - /old/hello\ntitle: Hello\n---\n\nHi.\n',
     });
 
-    const editor = await openEntry(page, 'posts', 'Hello');
+    const editor = await openEntry(page, 'Hello', { collection: 'posts', exact: true });
 
     await cms.chooseMenuItem(
       page.getByRole('button', { name: 'Show Editor Options' }),
@@ -277,7 +258,7 @@ test.describe('default `aliases` property', () => {
       'content/news/flood.md': '---\ntitle: Flood\ncategory: local\n---\n\nRain.\n',
     });
 
-    const editor = await openEntry(page, 'news', 'Flood');
+    const editor = await openEntry(page, 'Flood', { collection: 'news', exact: true });
 
     await editor.getByRole('radio', { name: 'world' }).click();
     await editSlug(cms, page, 'great-flood');
@@ -295,7 +276,7 @@ test.describe('default `aliases` property', () => {
       'content/news/flood.md': '---\ntitle: Flood\ncategory: local\n---\n\nRain.\n',
     });
 
-    const editor = await openEntry(page, 'news', 'Flood');
+    const editor = await openEntry(page, 'Flood', { collection: 'news', exact: true });
 
     // The aliases follow a change of slug only
     await editor.getByRole('radio', { name: 'world' }).click();

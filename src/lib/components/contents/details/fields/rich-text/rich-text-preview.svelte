@@ -15,28 +15,36 @@
   import { waitForAssetURL } from '$lib/services/api/asset-proxy';
   import { createGetAsset } from '$lib/services/api/preview-data';
   import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
-  import { customComponentRegistry } from '$lib/services/api/registries';
   import { getRichTextMediaURL } from '$lib/services/assets/media-field';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { BUILTIN_COMPONENTS, getValueFormat } from '$lib/services/contents/fields/rich-text';
-  import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
+  import { getValueFormat } from '$lib/services/contents/fields/rich-text';
+  import { getEditorComponentDefs } from '$lib/services/contents/fields/rich-text/options';
+  import {
+    getFencedCodeLanguages,
+    keyBlocks,
+    splitHTMLBlocks,
+    splitMarkdownBlocks,
+  } from '$lib/services/contents/fields/rich-text/previews/blocks';
   import {
     buildMarkdownWithPreviews,
     COMPONENT_QUERY_SELECTOR,
     CONTAINER_QUERY_SELECTOR,
+  } from '$lib/services/contents/fields/rich-text/previews/components';
+  import {
     MEDIA_QUERY_SELECTOR,
     resolveMediaURLs,
-    splitHTMLBlocks,
-    splitMarkdownBlocks,
-  } from '$lib/services/contents/fields/rich-text/previews';
+  } from '$lib/services/contents/fields/rich-text/previews/media-urls';
   import { sanitizeRichTextHTML } from '$lib/services/contents/fields/rich-text/sanitize';
 
   /**
    * @import { ReactElement } from 'react';
    * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { ApiAsset, MarkdownField, RichTextField } from '$lib/types/public';
-   * @import { ComponentPreview } from '$lib/services/contents/fields/rich-text/previews';
+   * @import {
+   * ComponentPreview,
+   * } from '$lib/services/contents/fields/rich-text/previews/components';
+   * @import { KeyedBlock } from '$lib/services/contents/fields/rich-text/previews/blocks';
    */
 
   /**
@@ -89,7 +97,7 @@
    * Items of the latest {@link keyedBlocks} by key, reused for an unchanged block so the keyed
    * `{#each}` sees the same object and doesn’t parse and sanitize the block again. Deliberately not
    * reactive, like `previewMap`.
-   * @type {Map<string, { key: string, block: string }>}
+   * @type {Map<string, KeyedBlock>}
    */
   let blockItems = new Map();
 
@@ -127,22 +135,11 @@
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
   /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
-  const {
-    sanitize_preview: doSanitize = defaultConfig.sanitize_preview ?? true,
-    editor_components: _editorComponents = defaultConfig.editor_components ??
-      // Include all built-in and custom components by default
-      [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
-    linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
-  } = $derived(fieldConfig);
+  const { sanitize_preview: doSanitize = defaultConfig.sanitize_preview ?? true } =
+    $derived(fieldConfig);
   const format = $derived(getValueFormat(fieldConfig));
   const isHTML = $derived(format === 'html');
-  const componentDefs = $derived(
-    _editorComponents
-      .map((name) =>
-        getComponentDef(name === 'image' && linkedImagesEnabled ? 'linked-image' : name),
-      )
-      .filter((def) => !!def),
-  );
+  const componentDefs = $derived(getEditorComponentDefs(fieldConfig));
   const componentNames = $derived(componentDefs.map(({ id }) => id));
   /**
    * Asset getter passed to each editor component’s `toPreview()`, which resolves a file path the
@@ -184,29 +181,13 @@
 
   /**
    * The Markdown or HTML split into blocks, each with a key that identifies it by content rather
-   * than by position: editing near the top of a long document then only re-renders the block that
-   * changed, instead of every block after it. Identical blocks are told apart by their occurrence.
-   * An unchanged block keeps its item object, so the block isn’t parsed again: the keyed `{#each}`
-   * would otherwise update every item with a new object and render every block again.
-   * @type {{ key: string, block: string }[]}
+   * than by position. See {@link keyBlocks}.
    */
   const keyedBlocks = $derived.by(() => {
-    // Scratch maps for this computation, not state
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity
-    const occurrences = /** @type {Map<string, number>} */ (new Map());
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity
-    const items = /** @type {Map<string, { key: string, block: string }>} */ (new Map());
-
-    const list = (isHTML ? splitHTMLBlocks : splitMarkdownBlocks)(markdown).map((block) => {
-      const occurrence = occurrences.get(block) ?? 0;
-      const key = `${occurrence}\n${block}`;
-      const item = blockItems.get(key) ?? { key, block };
-
-      occurrences.set(block, occurrence + 1);
-      items.set(key, item);
-
-      return item;
-    });
+    const { list, items } = keyBlocks(
+      (isHTML ? splitHTMLBlocks : splitMarkdownBlocks)(markdown),
+      blockItems,
+    );
 
     blockItems = items;
 
@@ -222,11 +203,7 @@
    * @param {string} value Markdown to scan for fenced code blocks.
    */
   const preloadHighlighter = async (value) => {
-    const languages = [...value.matchAll(/^ {0,3}```(\S+)/gm)]
-      .map(([, lang]) => lang)
-      .filter((lang, index, list) => list.indexOf(lang) === index)
-      .sort()
-      .join(',');
+    const languages = getFencedCodeLanguages(value).join(',');
 
     // Once requested, a set of languages is never requested again, whether or not each turned out
     // to be supported

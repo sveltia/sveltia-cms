@@ -1,5 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor, getField } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -57,22 +58,8 @@ test.beforeEach(async ({ cms, page }) => {
   await cms.seed(FILES);
   await cms.signIn();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
-  await page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('textbox', { name: 'Title' })
-    .fill('Memo');
+  await getEditor(page).getByRole('textbox', { name: 'Title' }).fill('Memo');
 });
-
-/**
- * Get a field group in the editor.
- * @param {Page} page Page.
- * @param {string} label Field label.
- * @returns {Locator} Field group.
- */
-const getField = (page, label) =>
-  page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('group', { name: `“\u2068${label}\u2069” Field` });
 
 /**
  * Check that a file added to a field is refused with the given message, and nothing is added.
@@ -91,21 +78,18 @@ const expectRefused = async (page, field, message) => {
 
 test('narrows the file picker to the accepted types', async ({ page }) => {
   // The value is passed on as is, and an Image field defaults to the supported image types
-  await expect(getField(page, 'Document').locator('input[type="file"]').first()).toHaveAttribute(
-    'accept',
-    '.pdf, .txt',
-  );
-  await expect(getField(page, 'Photo').locator('input[type="file"]').first()).toHaveAttribute(
-    'accept',
-    'image/png',
-  );
-  await expect(getField(page, 'Cover').locator('input[type="file"]').first()).toHaveAttribute(
-    'accept',
-    IMAGE_TYPES,
-  );
+  await expect(
+    getField(page, 'Document', { exact: true }).locator('input[type="file"]').first(),
+  ).toHaveAttribute('accept', '.pdf, .txt');
+  await expect(
+    getField(page, 'Photo', { exact: true }).locator('input[type="file"]').first(),
+  ).toHaveAttribute('accept', 'image/png');
+  await expect(
+    getField(page, 'Cover', { exact: true }).locator('input[type="file"]').first(),
+  ).toHaveAttribute('accept', IMAGE_TYPES);
 
   // The Upload button in the Select File dialog opens a picker narrowed the same way
-  await getField(page, 'Document').getByRole('button', { name: 'Browse' }).click();
+  await getField(page, 'Document', { exact: true }).getByRole('button', { name: 'Browse' }).click();
 
   const dialog = page.getByRole('dialog', { name: 'Select File' });
 
@@ -118,7 +102,7 @@ test('narrows the file picker to the accepted types', async ({ page }) => {
 });
 
 test('refuses a dropped file of another type', async ({ cms, page }) => {
-  const document = getField(page, 'Document');
+  const document = getField(page, 'Document', { exact: true });
 
   // A file extension is matched in any case
   await cms.dropFiles(document, [{ name: 'photo.PNG', buffer: createPNG({ color: [0, 0, 255] }) }]);
@@ -129,7 +113,7 @@ test('refuses a dropped file of another type', async ({ cms, page }) => {
   );
 
   // A MIME type is matched against the type the browser gives the file
-  const photo = getField(page, 'Photo');
+  const photo = getField(page, 'Photo', { exact: true });
 
   await cms.dropFiles(photo, [
     { name: 'logo.svg', buffer: Buffer.from(FILES['static/uploads/logo.svg']) },
@@ -141,7 +125,7 @@ test('refuses a dropped file of another type', async ({ cms, page }) => {
   );
 
   // The default types of an Image field are named as formats
-  const cover = getField(page, 'Cover');
+  const cover = getField(page, 'Cover', { exact: true });
 
   await cms.dropFiles(cover, [{ name: 'notes.txt', buffer: Buffer.from('Hello\n') }]);
   await expectRefused(
@@ -151,10 +135,7 @@ test('refuses a dropped file of another type', async ({ cms, page }) => {
       '\u2068AVIF, GIF, JPEG, PNG, WebP, or SVG\u2069.',
   );
 
-  await page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('button', { name: 'Save' })
-    .click();
+  await getEditor(page).getByRole('button', { name: 'Save' }).click();
   await expect
     .poll(async () => (await cms.readRepo())['content/notes/memo.md'])
     .toBe("---\ntitle: Memo\ndocument: ''\nphoto: ''\ncover: ''\n---\n");
@@ -166,19 +147,20 @@ test('takes a dropped file of an accepted type', async ({ cms, page }) => {
   const minutes = Buffer.from('%PDF-1.4\n% minutes\n%%EOF\n');
   const kite = createPNG({ color: [255, 255, 0] });
 
-  await cms.dropFiles(getField(page, 'Document'), [{ name: 'minutes.pdf', buffer: minutes }]);
-  await expect(getField(page, 'Document').getByRole('textbox', { name: 'Document' })).toHaveText(
-    '/uploads/minutes.pdf',
-  );
-  await cms.dropFiles(getField(page, 'Photo'), [{ name: 'kite.png', buffer: kite }]);
+  await cms.dropFiles(getField(page, 'Document', { exact: true }), [
+    { name: 'minutes.pdf', buffer: minutes },
+  ]);
   await expect(
-    getField(page, 'Photo').getByRole('button', { name: 'Replace Image' }),
+    getField(page, 'Document', { exact: true }).getByRole('textbox', { name: 'Document' }),
+  ).toHaveText('/uploads/minutes.pdf');
+  await cms.dropFiles(getField(page, 'Photo', { exact: true }), [
+    { name: 'kite.png', buffer: kite },
+  ]);
+  await expect(
+    getField(page, 'Photo', { exact: true }).getByRole('button', { name: 'Replace Image' }),
   ).toBeVisible();
 
-  await page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('button', { name: 'Save' })
-    .click();
+  await getEditor(page).getByRole('button', { name: 'Save' }).click();
   await expect
     .poll(async () => (await cms.readRepo())['content/notes/memo.md'])
     .toBe(
@@ -189,7 +171,7 @@ test('takes a dropped file of an accepted type', async ({ cms, page }) => {
 });
 
 test('refuses a file of another type dropped in the Select File dialog', async ({ cms, page }) => {
-  await getField(page, 'Document').getByRole('button', { name: 'Browse' }).click();
+  await getField(page, 'Document', { exact: true }).getByRole('button', { name: 'Browse' }).click();
 
   const dialog = page.getByRole('dialog', { name: 'Select File' });
   const list = dialog.getByRole('listbox', { name: 'Available Files' });
@@ -206,14 +188,11 @@ test('refuses a file of another type dropped in the Select File dialog', async (
   await expect(dialog).toBeHidden();
   await expectRefused(
     page,
-    getField(page, 'Document'),
+    getField(page, 'Document', { exact: true }),
     'This file cannot be uploaded because it’s not one of the following types: \u2068.pdf or .txt\u2069.',
   );
 
-  await page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('button', { name: 'Save' })
-    .click();
+  await getEditor(page).getByRole('button', { name: 'Save' }).click();
   await expect
     .poll(async () => (await cms.readRepo())['content/notes/memo.md'])
     .toBe("---\ntitle: Memo\ndocument: ''\nphoto: ''\ncover: ''\n---\n");
@@ -224,7 +203,7 @@ test('lists only existing files of the accepted types in the Select File dialog'
   page,
 }) => {
   // An existing file is never transformed, so one of another type can’t be used
-  await getField(page, 'Document').getByRole('button', { name: 'Browse' }).click();
+  await getField(page, 'Document', { exact: true }).getByRole('button', { name: 'Browse' }).click();
 
   const fileDialog = page.getByRole('dialog', { name: 'Select File' });
 
@@ -234,7 +213,7 @@ test('lists only existing files of the accepted types in the Select File dialog'
   await page.keyboard.press('Escape');
   await expect(fileDialog).toBeHidden();
 
-  await getField(page, 'Photo').getByRole('button', { name: 'Browse' }).click();
+  await getField(page, 'Photo', { exact: true }).getByRole('button', { name: 'Browse' }).click();
 
   const imageDialog = page.getByRole('dialog', { name: 'Select Image' });
 
@@ -246,7 +225,7 @@ test('lists only existing files of the accepted types in the Select File dialog'
 test('refuses a file of another type chosen in the file picker', async ({ cms, page }) => {
   // The `accept` attribute narrows the picker, while a picker can still offer every file, like the
   // “All Files” filter on Windows
-  const document = getField(page, 'Document');
+  const document = getField(page, 'Document', { exact: true });
   const kite = { name: 'kite.png', mimeType: 'image/png', buffer: createPNG({ color: [0, 0, 0] }) };
 
   const message =
@@ -274,10 +253,7 @@ test('refuses a file of another type chosen in the file picker', async ({ cms, p
   await dialog.getByRole('button', { name: 'Insert' }).click();
   await expectRefused(page, document, message);
 
-  await page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('button', { name: 'Save' })
-    .click();
+  await getEditor(page).getByRole('button', { name: 'Save' }).click();
   await expect
     .poll(async () => (await cms.readRepo())['content/notes/memo.md'])
     .toBe("---\ntitle: Memo\ndocument: ''\nphoto: ''\ncover: ''\n---\n");
@@ -310,17 +286,14 @@ test.describe('with a transformation', () => {
     cms,
     page,
   }) => {
-    const photo = getField(page, 'Photo');
+    const photo = getField(page, 'Photo', { exact: true });
 
     // Checked once converted, whether dropped or picked
     await cms.dropFiles(photo, [{ name: 'kite.png', buffer: createPNG({ color: [255, 255, 0] }) }]);
     await expect(photo.getByRole('button', { name: 'Replace Image' })).toBeVisible();
     await expect(page.getByRole('alertdialog')).toBeHidden();
 
-    await page
-      .getByRole('group', { name: 'Content Editor' })
-      .getByRole('button', { name: 'Save' })
-      .click();
+    await getEditor(page).getByRole('button', { name: 'Save' }).click();
     await expect
       .poll(async () => (await cms.readRepo())['content/notes/memo.md'])
       .toBe("---\ntitle: Memo\ndocument: ''\nphoto: /uploads/kite.webp\ncover: ''\n---\n");
@@ -335,7 +308,7 @@ test.describe('with a transformation', () => {
     cms,
     page,
   }) => {
-    const photo = getField(page, 'Photo');
+    const photo = getField(page, 'Photo', { exact: true });
 
     await photo
       .locator('input[type="file"]')
@@ -348,10 +321,7 @@ test.describe('with a transformation', () => {
     await expect(photo.getByRole('button', { name: 'Replace Image' })).toBeVisible();
     await expect(page.getByRole('alertdialog')).toBeHidden();
 
-    await page
-      .getByRole('group', { name: 'Content Editor' })
-      .getByRole('button', { name: 'Save' })
-      .click();
+    await getEditor(page).getByRole('button', { name: 'Save' }).click();
     await expect
       .poll(async () => (await cms.readRepo())['content/notes/memo.md'])
       .toBe("---\ntitle: Memo\ndocument: ''\nphoto: /uploads/moth.webp\ncover: ''\n---\n");

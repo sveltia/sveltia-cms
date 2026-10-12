@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -165,7 +166,7 @@ test('keeps the editor open after saving when Close the Editor is off', async ({
 
   await page.getByRole('row', { name: /First Post/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Updated Post');
   await editor.getByRole('button', { name: 'Save' }).click();
@@ -191,7 +192,7 @@ test('keeps the editor open on Escape when Close with Escape is off', async ({ c
 
   await page.getByRole('row', { name: /First Post/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const title = editor.getByRole('textbox', { name: 'Title' });
 
   await expect(title).toHaveValue('First Post');

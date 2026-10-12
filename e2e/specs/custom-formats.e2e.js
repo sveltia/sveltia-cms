@@ -1,4 +1,5 @@
 import { BASE_CONFIG, expect, test } from '../fixtures/test.js';
+import { getEditor } from '../fixtures/ui.js';
 
 test.use({
   config: {
@@ -43,7 +44,7 @@ test('fails to save an entry in a custom format without a formatter, leaving the
 }) => {
   await page.getByRole('row', { name: /First Post/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const body = editor.getByRole('textbox', { name: 'Body' });
 
   await expect(body).toHaveValue('Hello, world!');

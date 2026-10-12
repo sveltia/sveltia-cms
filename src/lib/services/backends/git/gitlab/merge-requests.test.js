@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   createPullRequest,
   deleteBranch,
+  draftTitle,
   fetchBranchHead,
   fetchMergeRequestFileContents,
   fetchMergeRequestFileList,
@@ -10,7 +11,6 @@ import {
   fetchPullRequests,
   parseDiff,
   parseMergeRequest,
-  stripDraftPrefix,
   toMergeRequest,
 } from '$lib/services/backends/git/gitlab/merge-requests';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
@@ -86,7 +86,7 @@ describe('GitLab merge requests', () => {
     vi.mocked(fetchGraphQL).mockResolvedValue({});
   });
 
-  describe('stripDraftPrefix', () => {
+  describe('draftTitle.strip', () => {
     test.each([
       ['Draft: Title', 'Title'],
       ['draft: Title', 'Title'],
@@ -103,7 +103,7 @@ describe('GitLab merge requests', () => {
       ['WIP notes for the post', 'WIP notes for the post'],
       ['Draft: WIP notes', 'WIP notes'],
     ])('strips %s', (input, expected) => {
-      expect(stripDraftPrefix(input)).toBe(expected);
+      expect(draftTitle.strip(input)).toBe(expected);
     });
   });
 

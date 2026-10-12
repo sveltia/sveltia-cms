@@ -1,6 +1,13 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
-import { getPairs, savePairs, validatePairs } from './helpers';
+import {
+  getPairs,
+  getPairsToSave,
+  haveStoredPairsChanged,
+  savePairs,
+  shouldStorePlaceholder,
+  validatePairs,
+} from './helpers';
 
 /**
  * @import { KeyValueField } from '$lib/types/public';
@@ -159,6 +166,97 @@ describe('Test validatePairs()', () => {
     const result = validatePairs({ pairs, edited });
 
     expect(result).toEqual([undefined, 'empty', undefined, undefined]);
+  });
+});
+
+describe('Test haveStoredPairsChanged()', () => {
+  test('ignores the rows without a key', () => {
+    expect(
+      haveStoredPairsChanged({
+        rows: [
+          ['a', '1'],
+          [' ', 'x'],
+        ],
+        storedPairs: [['a', '1']],
+      }),
+    ).toBe(false);
+  });
+
+  test('detects a difference', () => {
+    expect(haveStoredPairsChanged({ rows: [['a', '1']], storedPairs: [['a', '2']] })).toBe(true);
+    expect(haveStoredPairsChanged({ rows: [], storedPairs: [['a', '1']] })).toBe(true);
+  });
+});
+
+describe('Test shouldStorePlaceholder()', () => {
+  test('stores the placeholder for a field without pairs', () => {
+    expect(shouldStorePlaceholder({ storedPairs: [], storedValue: undefined })).toBe(true);
+    expect(shouldStorePlaceholder({ storedPairs: [], storedValue: null })).toBe(false);
+    expect(shouldStorePlaceholder({ storedPairs: [['a', '1']], storedValue: undefined })).toBe(
+      false,
+    );
+  });
+});
+
+describe('Test getPairsToSave()', () => {
+  test('saves nothing while a row is invalid', () => {
+    const getStoredPairs = vi.fn(() => []);
+
+    expect(
+      getPairsToSave({ rows: [['a', '1']], validations: ['duplicate'], getStoredPairs }),
+    ).toBeUndefined();
+    expect(getStoredPairs).not.toHaveBeenCalled();
+  });
+
+  test('saves the rows once every one has a key', () => {
+    const getStoredPairs = vi.fn(() => []);
+
+    expect(
+      getPairsToSave({
+        rows: [
+          ['a', '1'],
+          ['', ''],
+        ],
+        validations: [undefined, undefined],
+        getStoredPairs,
+      }),
+    ).toBeUndefined();
+    expect(
+      getPairsToSave({
+        rows: [
+          ['a', '1'],
+          ['b', '2'],
+        ],
+        validations: [undefined, undefined],
+        getStoredPairs,
+      }),
+    ).toEqual([
+      ['a', '1'],
+      ['b', '2'],
+    ]);
+    expect(getStoredPairs).not.toHaveBeenCalled();
+  });
+
+  test('saves no pairs only when the stored ones have to be removed', () => {
+    const rows = /** @type {[string, string][]} */ ([['', '']]);
+    const validations = [undefined];
+
+    expect(
+      getPairsToSave({
+        rows,
+        validations,
+        getStoredPairs: vi.fn(() => /** @type {[string, string][]} */ ([['a', '1']])),
+      }),
+    ).toEqual([]);
+    expect(getPairsToSave({ rows, validations, getStoredPairs: vi.fn(() => []) })).toBeUndefined();
+    // A blank pair stored as a default value is left alone
+    expect(
+      getPairsToSave({
+        rows,
+        validations,
+        getStoredPairs: vi.fn(() => /** @type {[string, string][]} */ ([['', '']])),
+      }),
+    ).toBeUndefined();
   });
 });
 

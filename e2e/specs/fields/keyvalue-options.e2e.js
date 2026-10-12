@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor, getField } from '../../fixtures/ui.js';
 
 /**
  * A shop whose products have KeyValue fields with the options that shape the editor: the
@@ -68,22 +69,6 @@ const SCARF_PATH = 'content/products/scarf.yml';
 
 // The editor renders a field once it’s scrolled into view, so make every field visible at once
 test.use({ config: CONFIG, viewport: { width: 1280, height: 3000 } });
-
-/**
- * Get the editor.
- * @param {import('@playwright/test').Page} page Page.
- * @returns {import('@playwright/test').Locator} Content editor.
- */
-const getEditor = (page) => page.getByRole('group', { name: 'Content Editor' });
-
-/**
- * Get the group of a field in the editor.
- * @param {import('@playwright/test').Page} page Page.
- * @param {string} label Field label.
- * @returns {import('@playwright/test').Locator} Field group.
- */
-const getField = (page, label) =>
-  getEditor(page).getByRole('group', { name: new RegExp(`${label}.*Field`) });
 
 /**
  * Get the values of the text boxes with the given name in a field, in order.

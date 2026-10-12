@@ -6,7 +6,7 @@ import { getWorkflowRepository } from '$lib/services/backends/git/gitlab/fork';
 import {
   createPullRequest,
   deleteBranch,
-  DRAFT_TITLE_PREFIX,
+  draftTitle,
   fetchBranchHead,
   fetchPullRequests as fetchLabelledPullRequests,
   fetchMergeRequest,
@@ -23,6 +23,7 @@ import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
 import {
   assertBranchAtHead,
   commitToNewWorkflowBranch,
+  getMovedHeadMergeState,
   isSquashMergeEnabled,
   saveWorkflowBranch,
 } from '$lib/services/backends/git/shared/workflow';
@@ -179,7 +180,7 @@ export const updateStatus = async (pullRequest, status) => {
 
   const newLabel = getStatusLabel(status);
   const isDraft = status === 'draft';
-  const title = isDraft ? `${DRAFT_TITLE_PREFIX}${pullRequest.title}` : pullRequest.title;
+  const title = draftTitle.format(pullRequest.title, isDraft);
 
   await fetchAPI(`/projects/${getProjectId()}/merge_requests/${pullRequest.number}`, {
     method: 'PUT',
@@ -208,19 +209,20 @@ export const savePullRequest = async (args) =>
   saveWorkflowBranch(args, { commitToNewBranch, commitToExistingBranch, createPullRequest });
 
 /**
- * Fetch the merge request’s detailed merge status, which names the single check that stands in the
- * way of an immediate merge, e.g. `ci_still_running`. A transient status is polled until it settles
- * or the attempts run out, in which case the transient status is returned as is.
+ * Fetch the merge request’s state and detailed merge status, which names the single check that
+ * stands in the way of an immediate merge, e.g. `ci_still_running`. A transient status is polled
+ * until it settles or the attempts run out, in which case the transient status is returned as is.
  * @param {WorkflowPullRequest} pullRequest Merge request.
  * @param {number} [attemptsLeft] Remaining reads, including this one.
- * @returns {Promise<string | undefined>} Detailed merge status.
+ * @returns {Promise<{ state: string | undefined, status: string | undefined }>} State, e.g.
+ * `merged`, and detailed merge status.
  * @see https://docs.gitlab.com/api/merge_requests/#merge-status
  */
 const fetchMergeStatus = async (pullRequest, attemptsLeft = MERGE_STATUS_POLL.attempts) => {
-  const { detailed_merge_status: status } = await fetchMergeRequest(pullRequest);
+  const { state, detailed_merge_status: status } = await fetchMergeRequest(pullRequest);
 
   if (!TRANSIENT_MERGE_STATUSES.includes(status) || attemptsLeft <= 1) {
-    return status;
+    return { state, status };
   }
 
   await sleep(MERGE_STATUS_POLL.interval);
@@ -407,6 +409,12 @@ export const fetchMergeState = async (pullRequest) => {
     return { headSHA: item.sha, onConfiguredBranches: false, files: [], complete: false };
   }
 
+  const movedHeadState = getMovedHeadMergeState(pullRequest, headSHA);
+
+  if (movedHeadState) {
+    return movedHeadState;
+  }
+
   const { diffs = [] } = /** @type {{ diffs?: Record<string, any>[] }} */ (
     await fetchAPI(
       `/projects/${getProjectId()}/repository/compare` +
@@ -514,12 +522,26 @@ export const publish = async (pullRequest) => {
   try {
     await fetchAPI(path, { method: 'PUT', body });
   } catch (/** @type {any} */ ex) {
+    if (ex.cause?.status !== 405) {
+      throw ex;
+    }
+
+    const { state, status } = await fetchMergeStatus(pullRequest);
+
     // GitLab answers 405 Method Not Allowed whenever the merge request can’t be merged right away,
-    // whatever the reason, so the detailed status tells a running pipeline from a real blocker,
-    // such as a conflict. Auto-merge would take a blocked merge request as well, but it would sit
-    // there unmerged while the CMS reports the entry as published, so anything else stays an
-    // error
-    if (ex.cause?.status !== 405 || (await fetchMergeStatus(pullRequest)) !== 'ci_still_running') {
+    // whatever the reason, including when it has been merged already — by a maintainer on GitLab
+    // while this board was open, say. That’s the outcome the user asked for, so it’s the branch
+    // cleanup that’s left to do rather than an error to report
+    if (state === 'merged') {
+      await deleteBranch(pullRequest.branch);
+
+      return;
+    }
+
+    // The detailed status tells a running pipeline from a real blocker, such as a conflict.
+    // Auto-merge would take a blocked merge request as well, but it would sit there unmerged while
+    // the CMS reports the entry as published, so anything else stays an error
+    if (status !== 'ci_still_running') {
       throw ex;
     }
 

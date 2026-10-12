@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createCollectors } from '$lib/test/config-parser';
+
 import { checkViewOptions } from './views';
 
 /**
- * @import { ConfigParserCollectors } from '$lib/types/private';
  * @import { Field } from '$lib/types/public';
  */
 
@@ -16,17 +17,6 @@ vi.mock('$lib/services/config/parser/utils/validator', () => ({
   addMessage: mockAddMessage,
   checkName: mockCheckName,
 }));
-
-/**
- * Create a fresh collectors object for testing.
- * @returns {ConfigParserCollectors} Collectors instance.
- */
-const createCollectors = () => ({
-  errors: new Set(),
-  warnings: new Set(),
-  mediaFields: new Set(),
-  relationFields: new Set(),
-});
 
 /**
  * Call {@link checkViewOptions} with the given collection options.

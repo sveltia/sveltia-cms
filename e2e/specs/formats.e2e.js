@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/test.js';
+import { getEditor } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -39,7 +40,7 @@ const createEntry = async (page, name) => {
   await page.getByRole('treeitem', { name: new RegExp(`^${name}\\b`) }).click();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Night Sky');
   // A new simple list comes with an empty item
@@ -59,7 +60,7 @@ const editBody = async (page, collectionName, title) => {
   await page.getByRole('treeitem', { name: new RegExp(`^${collectionName}\\b`) }).click();
   await page.getByRole('row', { name: new RegExp(title) }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Body' }).fill('Edited.');
   await editor.getByRole('button', { name: 'Save' }).click();

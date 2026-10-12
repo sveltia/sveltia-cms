@@ -13,6 +13,7 @@
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { backend } from '$lib/services/backends';
   import { prefs } from '$lib/services/user/prefs.svelte';
+  import { watchAsync } from '$lib/services/utils/state.svelte';
   import { openNewTab } from '$lib/services/utils/window';
 
   /**
@@ -39,42 +40,28 @@
 
   const { publicURL, repoBlobURL } = $derived(details);
 
-  /**
-   * Asset the details were last requested for. The menu stays mounted while the focus moves from
-   * one asset to another, so a slow lookup for an asset focused earlier must not overwrite the
-   * details of the one focused now.
-   * @type {Asset | undefined}
-   */
-  let requestedAsset;
+  // The menu stays mounted while the focus moves from one asset to another, so a slow lookup for an
+  // asset focused earlier must not overwrite the details of the one focused now, which `watchAsync`
+  // takes care of
+  watchAsync(
+    () => {
+      const _asset = asset;
 
-  /**
-   * Update the properties above.
-   */
-  const updateProps = async () => {
-    const _asset = asset;
+      // Drop the previous asset’s links, so they’re not offered while this one’s are being
+      // retrieved or once that fails
+      details = { ...defaultAssetDetails };
 
-    requestedAsset = _asset;
-    // Drop the previous asset’s links, so they’re not offered while this one’s are being retrieved
-    // or once that fails
-    details = { ...defaultAssetDetails };
-
-    try {
-      const _details = _asset ? await getAssetDetails(_asset) : { ...defaultAssetDetails };
-
-      if (requestedAsset === _asset) {
-        details = _details;
-      }
-    } catch (/** @type {any} */ ex) {
+      return _asset ? getAssetDetails(_asset) : Promise.resolve({ ...defaultAssetDetails });
+    },
+    (_details) => {
+      details = _details;
+    },
+    (ex) => {
       // The file couldn’t be downloaded, so the public URL is unknown
       // eslint-disable-next-line no-console
       console.error(ex);
-    }
-  };
-
-  $effect(() => {
-    void [asset];
-    updateProps();
-  });
+    },
+  );
 </script>
 
 <!--

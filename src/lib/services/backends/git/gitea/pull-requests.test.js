@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { _resetApiSettings } from '$lib/services/backends/git/gitea/api';
 import { fetchRawFile } from '$lib/services/backends/git/gitea/files';
 import {
   applyLabels,
@@ -7,21 +8,18 @@ import {
   createStatusLabel,
   decodeFileText,
   deleteBranch,
-  fetchAllPages,
   fetchBranchHead,
   fetchFileSHA,
-  fetchPages,
   fetchPullRequestFileContent,
   fetchPullRequestFileContents,
   fetchPullRequestFileList,
   fetchPullRequestHeadRef,
   isSameRepositoryPullRequest,
   parsePullRequest,
-  resetPageSize,
   resolveChangeSHAs,
-  stripWipPrefix,
   updateDraftState,
   updateLabels,
+  wipTitle,
 } from '$lib/services/backends/git/gitea/pull-requests';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
@@ -70,71 +68,13 @@ const createItem = (overrides = {}) => ({
 describe('Gitea pull request service', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    resetPageSize();
+    _resetApiSettings();
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitea' } });
     forkedRepository.current = undefined;
     vi.mocked(fetchAPI).mockResolvedValue({});
   });
 
-  describe('fetchAllPages', () => {
-    test('reads every page at the size the instance applies', async () => {
-      vi.mocked(fetchAPI)
-        .mockResolvedValueOnce({ max_response_items: 2 })
-        .mockResolvedValueOnce([1, 2])
-        .mockResolvedValueOnce([3, 4])
-        .mockResolvedValueOnce([5]);
-
-      await expect(fetchAllPages(`${REPO_PATH}/branches`)).resolves.toEqual([1, 2, 3, 4, 5]);
-
-      expect(fetchAPI).toHaveBeenNthCalledWith(1, '/settings/api');
-      expect(fetchAPI).toHaveBeenNthCalledWith(2, `${REPO_PATH}/branches?page=1&limit=2`);
-      expect(fetchAPI).toHaveBeenNthCalledWith(4, `${REPO_PATH}/branches?page=3&limit=2`);
-    });
-
-    test('asks for the page size once, and falls back to the default', async () => {
-      vi.mocked(fetchAPI).mockResolvedValueOnce({}).mockResolvedValue([]);
-
-      await fetchAllPages(`${REPO_PATH}/pulls?state=open`);
-      await fetchAllPages(`${REPO_PATH}/pulls?state=open`);
-
-      expect(fetchAPI).toHaveBeenCalledTimes(3);
-      // The parameters are appended to the ones the path already has
-      expect(fetchAPI).toHaveBeenLastCalledWith(`${REPO_PATH}/pulls?state=open&page=1&limit=50`);
-    });
-
-    test('stops after a bounded number of pages', async () => {
-      vi.mocked(fetchAPI).mockResolvedValueOnce({ max_response_items: 1 }).mockResolvedValue(['x']);
-
-      const result = await fetchAllPages(`${REPO_PATH}/branches`);
-
-      expect(result).toHaveLength(10);
-      expect(fetchAPI).toHaveBeenCalledTimes(11);
-    });
-  });
-
-  describe('fetchPages', () => {
-    test('says whether the list was read to the end', async () => {
-      vi.mocked(fetchAPI)
-        .mockResolvedValueOnce({ max_response_items: 2 })
-        .mockResolvedValueOnce([1, 2])
-        .mockResolvedValueOnce([3]);
-
-      await expect(fetchPages(`${REPO_PATH}/pulls/1/files`)).resolves.toEqual({
-        items: [1, 2, 3],
-        complete: true,
-      });
-    });
-
-    test('says so when the page cap cut the list short', async () => {
-      vi.mocked(fetchAPI).mockResolvedValueOnce({ max_response_items: 1 }).mockResolvedValue(['x']);
-
-      await expect(fetchPages(`${REPO_PATH}/pulls/1/files`)).resolves.toMatchObject({
-        complete: false,
-      });
-    });
-  });
-
-  describe('stripWipPrefix', () => {
+  describe('wipTitle.strip', () => {
     test.each([
       ['WIP: Title', 'Title'],
       ['wip: Title', 'Title'],
@@ -144,7 +84,7 @@ describe('Gitea pull request service', () => {
       ['Title', 'Title'],
       ['Wiping the slate', 'Wiping the slate'],
     ])('strips %s', (input, expected) => {
-      expect(stripWipPrefix(input)).toBe(expected);
+      expect(wipTitle.strip(input)).toBe(expected);
     });
   });
 

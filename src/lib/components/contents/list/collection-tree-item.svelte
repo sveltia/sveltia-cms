@@ -7,14 +7,11 @@
   import { appNumberFormatter } from '$lib/services/app/i18n';
   import { goto } from '$lib/services/app/navigation';
   import { getCollection, selectedCollection } from '$lib/services/contents/collection';
-  import {
-    countCollectionEntries,
-    getEntriesByCollection,
-  } from '$lib/services/contents/collection/entries';
+  import { countCollectionEntries } from '$lib/services/contents/collection/entries';
   import { nestedFilterPath } from '$lib/services/contents/collection/nested';
+  import { getAllEntries } from '$lib/services/contents/collection/nested/i18n';
   import { getNestedTree } from '$lib/services/contents/collection/nested/tree';
   import { env } from '$lib/services/user/env.svelte';
-  import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
   /**
    * @import { Collection } from '$lib/types/public';
@@ -49,14 +46,7 @@
    * browsed before it’s published. Without it, a draft filed below another draft is nowhere to be
    * found.
    */
-  const entries = $derived.by(() =>
-    'files' in collection
-      ? []
-      : mergeUnpublishedEntries(
-          getEntriesByCollection(name),
-          unpublishedEntries.current.filter(({ workflow }) => workflow.collectionName === name),
-        ),
-  );
+  const entries = $derived('files' in collection ? [] : getAllEntries(collection));
 
   // Hugo’s special index file stands for the collection’s own page rather than for one of the
   // entries in it, so it’s not counted here, while it’s still shown in the entry list

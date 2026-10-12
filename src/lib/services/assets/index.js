@@ -250,6 +250,44 @@ export const getAssetByRelativePathAndCollection = ({
 };
 
 /**
+ * Get the asset folders that may hold an asset referenced in a field, from the most specific to the
+ * least: the custom editor component’s folder, the field’s, the collection file’s, the
+ * collection’s, then the global one.
+ * @param {object} args Arguments.
+ * @param {string} [args.collectionName] Collection name.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {string} [args.componentName] Custom editor component name for a field-level asset folder.
+ * @param {TypedFieldKeyPath} [args.typedKeyPath] Field key path for field-level media folders.
+ * @param {boolean} [args.requireCollectionName] Whether to leave out the field, collection file
+ * and collection folders when no collection name is given.
+ * @param {boolean} [args.skipTemplateFolders] Whether to leave out the folders whose path has
+ * template tags, which can’t be resolved without an entry.
+ * @returns {AssetFolderInfo[]} Asset folders.
+ */
+const getCandidateAssetFolders = ({
+  collectionName,
+  fileName,
+  componentName,
+  typedKeyPath,
+  requireCollectionName = false,
+  skipTemplateFolders = false,
+}) => {
+  const hasCollection = !requireCollectionName || !!collectionName;
+
+  return /** @type {AssetFolderInfo[]} */ (
+    [
+      componentName ? getAssetFolder({ componentName, typedKeyPath }) : undefined,
+      hasCollection && typedKeyPath
+        ? getAssetFolder({ collectionName, fileName, typedKeyPath })
+        : undefined,
+      hasCollection ? getAssetFolder({ collectionName, fileName }) : undefined,
+      hasCollection ? getAssetFolder({ collectionName }) : undefined,
+      globalAssetFolder.current,
+    ].filter((folder) => !!folder && !(skipTemplateFolders && folder.hasTemplateTags))
+  );
+};
+
+/**
  * Get an asset by a relative public path typically stored as an image field value.
  * @param {object} args Arguments.
  * @param {string} args.path Saved relative path.
@@ -275,17 +313,14 @@ export const getAssetByRelativePath = ({
   if (!entry) {
     // Without an entry we use collectionName/fileName to scan configured folders. For
     // entry-relative folders, internalPath + internalSubPath is used as a best-effort path.
-    const scanningFolders = /** @type {AssetFolderInfo[]} */ (
-      [
-        componentName ? getAssetFolder({ componentName, typedKeyPath }) : undefined,
-        collectionName && typedKeyPath
-          ? getAssetFolder({ collectionName, fileName, typedKeyPath })
-          : undefined,
-        collectionName ? getAssetFolder({ collectionName, fileName }) : undefined,
-        collectionName ? getAssetFolder({ collectionName }) : undefined,
-        globalAssetFolder.current,
-      ].filter((folder) => !!folder && !folder.hasTemplateTags)
-    );
+    const scanningFolders = getCandidateAssetFolders({
+      collectionName,
+      fileName,
+      componentName,
+      typedKeyPath,
+      requireCollectionName: true,
+      skipTemplateFolders: true,
+    });
 
     const foundAsset = scanningFolders
       .values()
@@ -427,15 +462,12 @@ export const getAssetByAbsolutePath = ({
     return getAssetPathMap().get(createPath([internalPath, baseName]));
   };
 
-  const scanningFolders = /** @type {AssetFolderInfo[]} */ (
-    [
-      componentName ? getAssetFolder({ componentName, typedKeyPath }) : undefined,
-      typedKeyPath ? getAssetFolder({ collectionName, fileName, typedKeyPath }) : undefined,
-      getAssetFolder({ collectionName, fileName }),
-      getAssetFolder({ collectionName }),
-      globalAssetFolder.current,
-    ].filter((folder) => !!folder)
-  );
+  const scanningFolders = getCandidateAssetFolders({
+    collectionName,
+    fileName,
+    componentName,
+    typedKeyPath,
+  });
 
   /** @type {Asset | undefined} */
   let foundAsset = undefined;

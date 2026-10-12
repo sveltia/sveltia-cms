@@ -5,8 +5,8 @@ import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { PULL_REQUEST_DESCRIPTION } from '$lib/services/backends/git/shared/pull-requests';
-import { encodePath } from '$lib/services/backends/git/shared/url';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
+import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels, getStatusLabel } from '$lib/services/workflow/labels';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
@@ -212,7 +212,7 @@ export const deleteBranch = async (branch) => {
 
   await deleteRemoteBranch({
     branch,
-    path: `/repos/${owner}/${repo}/git/refs/heads/${encodePath(branch)}`,
+    path: `/repos/${owner}/${repo}/git/refs/heads/${encodePathSegments(branch)}`,
     // GitHub answers a missing reference with a 422 rather than a 404
     goneStatuses: [404, 422],
   });

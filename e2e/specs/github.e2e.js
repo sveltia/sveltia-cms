@@ -1,4 +1,5 @@
 import { expect, GITHUB_CONFIG, test } from '../fixtures/test.js';
+import { openFirstPost } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -11,20 +12,6 @@ test.use({ config: GITHUB_CONFIG });
 test.beforeEach(async ({ github }) => {
   github.commit({ 'content/posts/first-post.md': FIRST_POST });
 });
-
-/**
- * Open the first post in the entry editor.
- * @param {Page} page Page.
- * @returns {Promise<Locator>} Editor.
- */
-const openFirstPost = async (page) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await page.getByRole('row', { name: /First Post/ }).click();
-  await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue('Hello, world!');
-
-  return editor;
-};
 
 test('signs in with the stored session and lists the entries', async ({ cms, page }) => {
   await cms.open();

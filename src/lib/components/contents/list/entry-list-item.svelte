@@ -7,11 +7,12 @@
   import { GridRow } from '@sveltia/ui';
 
   import EntryListItemCells from '$lib/components/contents/list/entry-list-item-cells.svelte';
-  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
+  import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntryIndexMap } from '$lib/services/contents/collection/view';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { toggleListItem } from '$lib/services/utils/array';
+  import { encodePathSegments } from '$lib/services/utils/url';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
@@ -66,7 +67,7 @@
     updateSelection(event.detail.selected);
   }}
   onclick={() => {
-    goto(encodeRoutePath(`/collections/${collection.name}/entries/${entry.subPath}`), {
+    goto(encodePathSegments(`/collections/${collection.name}/entries/${entry.subPath}`), {
       transitionType: 'forwards',
     });
   }}

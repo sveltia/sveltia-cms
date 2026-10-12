@@ -1,5 +1,6 @@
 import { selectText } from '../../fixtures/rich-text.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -57,7 +58,7 @@ const openNote = async ({ cms, page, body }) => {
   await cms.signIn();
   await page.getByRole('row', { name: /Note/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const field = editor.getByRole('group', { name: /Body.*Field/ });
 
   // The first one, as an image in the body, once rendered, has a Title field too

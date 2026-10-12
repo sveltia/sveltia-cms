@@ -1,15 +1,9 @@
 import { expect } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
  */
-
-/**
- * Get the content editor.
- * @param {Page} page Page.
- * @returns {Locator} Editor.
- */
-export const getEditor = (page) => page.getByRole('group', { name: 'Content Editor' });
 
 /**
  * Get the editor pane showing a locale. Its name wraps the locale name in bidi isolates.

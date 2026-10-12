@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * Events with a date-only DateTime field in a custom format, stored with `output_utc`. A date has
@@ -41,7 +42,7 @@ test.describe('east of UTC', () => {
     await cms.signIn();
     await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Title' }).fill('Launch');
     await editor.getByRole('textbox', { name: 'Date' }).fill('2026-10-03');
@@ -62,7 +63,7 @@ test.describe('west of UTC', () => {
     await cms.signIn();
     await page.getByRole('row', { name: /Launch/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Launch');
     await expect(editor.getByRole('textbox', { name: 'Date' })).toHaveValue('2026-10-03');

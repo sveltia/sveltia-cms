@@ -3,6 +3,7 @@ import { readFile } from 'fs/promises';
 import { MEDIA_CONFIG, MEDIA_FILES, MEDIA_IMAGES } from '../../fixtures/configs/media.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -224,7 +225,7 @@ test('lists the entries using an asset, and opens one', async ({ page }) => {
   await page.getByRole('row', { name: 'hero.png' }).click();
   await info.getByRole('link', { name: 'Posts › Hello' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Hello');
 });

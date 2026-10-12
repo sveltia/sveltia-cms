@@ -1,39 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createCollectors } from '$lib/test/config-parser';
+
 /**
  * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
  */
 
-/**
- * Mock translation function.
- * @param {string} key Message key.
- * @param {{ values?: Record<string, string> }} [options] Options.
- * @returns {string} Translated string.
- */
-function mockTranslate(key, options) {
-  let message = key;
+/** @type {Record<string, string>} */
+const mockI18nStrings = {
+  'config.error.invalid_list_variable_type': 'List variable type must be object, got {widget}',
+  'config.error.invalid_list_field': 'List field cannot have multiple options',
+};
 
-  if (key === 'config.error.invalid_list_variable_type') {
-    message = 'List variable type must be object, got {widget}';
-  } else if (key === 'config.error.invalid_list_field') {
-    message = 'List field cannot have multiple options';
-  }
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ strings: mockI18nStrings, locale: 'en-US' }),
+);
 
-  if (options?.values) {
-    Object.entries(options.values).forEach(([k, v]) => {
-      message = message.replace(`{${k}}`, v);
-    });
-  }
-
-  return message;
-}
-
-vi.mock('@sveltia/i18n', () => ({
-  _: mockTranslate,
-  locale: { current: 'en-US', set: vi.fn() },
-}));
-
-const mockGetStore = vi.fn();
 const mockAddMessage = vi.fn();
 
 vi.mock('$lib/services/config/parser/utils/validator', () => ({
@@ -50,19 +32,6 @@ vi.mock('$lib/services/config/parser/fields/registry', () => ({
 }));
 
 /**
- * Create a fresh collectors object for testing.
- * @returns {ConfigParserCollectors} Collectors instance.
- */
-function createCollectors() {
-  return {
-    errors: new Set(),
-    warnings: new Set(),
-    mediaFields: new Set(),
-    relationFields: new Set(),
-  };
-}
-
-/**
  * Create a fresh context object for testing.
  * @returns {ConfigParserContext} Context instance.
  */
@@ -77,8 +46,6 @@ function createContext() {
 describe('List Field Parser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockGetStore.mockImplementation((store) => store);
   });
 
   describe('checkFieldType', () => {

@@ -1,6 +1,7 @@
 import { createPNG } from '../fixtures/files.js';
 import { getBlobSHA } from '../fixtures/git.js';
 import { expect, GITEA_CONFIG, test } from '../fixtures/test.js';
+import { getEditor, openFirstPost } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -14,20 +15,6 @@ test.use({ config: GITEA_CONFIG });
 test.beforeEach(async ({ gitea }) => {
   gitea.commit({ [POST_PATH]: FIRST_POST }, { message: 'Add the first post' });
 });
-
-/**
- * Open the first post in the entry editor.
- * @param {Page} page Page.
- * @returns {Promise<Locator>} Editor.
- */
-const openFirstPost = async (page) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await page.getByRole('row', { name: /First Post/ }).click();
-  await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue('Hello, world!');
-
-  return editor;
-};
 
 /**
  * Decode the Base64 content of a file in a commit request.
@@ -160,7 +147,7 @@ test('creates an entry, then deletes it', async ({ cms, gitea, page }) => {
   await cms.open();
   await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
   await editor.getByRole('textbox', { name: 'Body' }).fill('Hello!');

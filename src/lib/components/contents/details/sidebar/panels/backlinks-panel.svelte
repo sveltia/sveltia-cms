@@ -3,9 +3,10 @@
   import { Button } from '@sveltia/ui';
 
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
-  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
+  import { goto } from '$lib/services/app/navigation';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getBacklinks } from '$lib/services/contents/entry/relations/backlinks';
+  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { EntryBacklink } from '$lib/types/private';
@@ -63,7 +64,9 @@
             variant="ghost"
             onclick={() => {
               goto(
-                encodeRoutePath(`/collections/${ref.collectionName}/entries/${ref.entry.subPath}`),
+                encodePathSegments(
+                  `/collections/${ref.collectionName}/entries/${ref.entry.subPath}`,
+                ),
                 { transitionType: 'forwards' },
               );
             }}

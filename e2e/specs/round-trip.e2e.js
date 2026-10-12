@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/test.js';
+import { getEditor, openEntry } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -101,24 +102,6 @@ const FILES = {
 
 test.use({ config: CONFIG });
 
-/**
- * Get the editor.
- * @param {Page} page Page.
- * @returns {Locator} Content editor.
- */
-const getEditor = (page) => page.getByRole('group', { name: 'Content Editor' });
-
-/**
- * Open an entry of the given collection.
- * @param {Page} page Page.
- * @param {string} collectionName Collection name.
- * @param {string} title Entry title.
- */
-const openEntry = async (page, collectionName, title) => {
-  await page.getByRole('treeitem', { name: new RegExp(`^${collectionName}\\b`) }).click();
-  await page.getByRole('row', { name: new RegExp(title) }).click();
-};
-
 test.describe('keys with a dot', () => {
   test.beforeEach(async ({ cms }) => {
     await cms.open();
@@ -130,7 +113,7 @@ test.describe('keys with a dot', () => {
     const extension = /** @type {string} */ (path.split('.').pop());
 
     test(`are kept as they are in a ${extension.toUpperCase()} file`, async ({ cms, page }) => {
-      await openEntry(page, extension, 'Home');
+      await openEntry(page, 'Home', { collection: extension, checkTitle: false });
 
       const editor = getEditor(page);
 
@@ -150,7 +133,7 @@ test.describe('keys with a dot', () => {
   });
 
   test('are kept as they are when added in the editor', async ({ cms, page }) => {
-    await openEntry(page, 'yml', 'Home');
+    await openEntry(page, 'Home', { collection: 'yml', checkTitle: false });
 
     const editor = getEditor(page);
     const redirects = editor.getByRole('group', { name: /Redirects.*Field/ });
@@ -201,7 +184,7 @@ test.describe('TOML front matter', () => {
       [path]: '+++\ntitle = "Dated"\ndate = 2024-01-02T03:04:05.000Z\n+++\n\nHello.\n',
     });
     await cms.signIn();
-    await openEntry(page, 'posts', 'Dated');
+    await openEntry(page, 'Dated', { collection: 'posts', checkTitle: false });
 
     const editor = getEditor(page);
 
@@ -219,7 +202,7 @@ test.describe('TOML front matter', () => {
     await cms.open();
     await cms.seed({ [path]: '+++\ntitle = "Undated"\ndate = "TBD"\n+++\n\nHello.\n' });
     await cms.signIn();
-    await openEntry(page, 'posts', 'Undated');
+    await openEntry(page, 'Undated', { collection: 'posts', checkTitle: false });
 
     const editor = getEditor(page);
 
@@ -243,7 +226,7 @@ test.describe('leading whitespace', () => {
     await cms.open();
     await cms.seed({ [path]: file });
     await cms.signIn();
-    await openEntry(page, 'posts', 'Indented');
+    await openEntry(page, 'Indented', { collection: 'posts', checkTitle: false });
 
     const editor = getEditor(page);
 
@@ -310,7 +293,7 @@ test.describe('keys that look like list indexes', () => {
     const extension = /** @type {string} */ (path.split('.').pop());
 
     test(`are kept as object keys in a ${extension.toUpperCase()} file`, async ({ cms, page }) => {
-      await openEntry(page, extension, 'Stats');
+      await openEntry(page, 'Stats', { collection: extension, checkTitle: false });
 
       const editor = getEditor(page);
 
@@ -344,7 +327,7 @@ test.describe('integers a number can’t represent exactly', () => {
     const extension = /** @type {string} */ (path.split('.').pop());
 
     test(`are kept as they are in a ${extension.toUpperCase()} file`, async ({ cms, page }) => {
-      await openEntry(page, extension, 'Big');
+      await openEntry(page, 'Big', { collection: extension, checkTitle: false });
 
       const editor = getEditor(page);
 
@@ -405,7 +388,7 @@ test.describe('names of `Object.prototype` members', () => {
     // The fields are missing, and the file holds a key that no field configuration describes
     await cms.seed({ [path]: '---\ntitle: Old\nvalueOf: kept\n---\n' });
     await cms.signIn();
-    await openEntry(page, 'Notes', 'Old');
+    await openEntry(page, 'Old', { collection: 'Notes', checkTitle: false });
 
     const editor = getEditor(page);
 

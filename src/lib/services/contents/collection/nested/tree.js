@@ -329,3 +329,62 @@ export const findNestedTreeNode = (nodes, path) =>
       found ?? (node.path === path ? node : findNestedTreeNode(node.children, path)),
     undefined,
   );
+
+/**
+ * Get the name of the folder an entry occupies, which travels with it when the entry is filed
+ * elsewhere with the parent folder picker. Only an entry that’s already saved in a collection where
+ * every entry shares one file name has one: a new entry’s folder is named after its slug at save
+ * time, and in the other modes an entry is a file rather than a folder.
+ * @param {object} args Arguments.
+ * @param {InternalCollection | undefined} args.collection Collection.
+ * @param {string | undefined} args.subPath Entry’s sub path, e.g. `docs/guides/_index`.
+ * @param {boolean} [args.isNew] Whether the entry is new.
+ * @returns {string | undefined} Folder name, e.g. `guides`, or `undefined` if the entry doesn’t
+ * occupy a folder, including the collection’s own index file.
+ */
+export const getMovableFolderName = ({ collection, subPath, isNew = false }) => {
+  if (isNew || !subPath || !collection || !getSharedEntryFileName(collection)) {
+    return undefined;
+  }
+
+  const dirPath = getEntryDirPath(subPath);
+
+  return dirPath ? dirPath.slice(dirPath.lastIndexOf('/') + 1) : undefined;
+};
+
+/**
+ * Get the tree the parent folder picker offers: the collection folder, with the folders an entry
+ * can be filed in below it, along with the folders created with the picker that hold no entry yet.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection.
+ * @param {string} args.label Label of the collection folder.
+ * @param {Entry[]} args.entries Entries in the collection, including the unpublished ones, so a
+ * folder that only exists as a draft can be chosen too.
+ * @param {string[]} args.newFolderPaths Paths of the folders created with the picker.
+ * @param {string} [args.excludePath] Folder of the entry being moved, which is left out.
+ * @param {InternalLocaleCode} [args.locale] Locale to label the folders in.
+ * @returns {NestedTreeNode} Root node, standing for the collection folder.
+ */
+export const getParentFolderPickerTree = ({
+  collection,
+  label,
+  entries,
+  newFolderPaths,
+  excludePath,
+  locale,
+}) => ({
+  path: '',
+  label,
+  children: newFolderPaths.reduce(
+    (nodes, path) => addFolderToTree({ nodes, path }),
+    getParentFolderTree({ collection, entries, excludePath, locale }),
+  ),
+});
+
+/**
+ * Get the names of the folders directly within the given one, which a new folder there can’t take.
+ * @param {NestedTreeNode | undefined} node Folder.
+ * @returns {string[]} Folder names.
+ */
+export const getChildFolderNames = (node) =>
+  (node?.children ?? []).map(({ path }) => path.slice(path.lastIndexOf('/') + 1));

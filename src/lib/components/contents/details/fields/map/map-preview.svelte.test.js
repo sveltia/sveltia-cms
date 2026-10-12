@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import MapPreview from './map-preview.svelte';
 
@@ -15,17 +16,8 @@ const fieldConfig = { name: 'location', widget: 'map' };
  * @param {string | undefined} currentValue Field value.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (currentValue) => {
-  const { container } = await render(MapPreview, {
-    locale: 'en',
-    keyPath: 'location',
-    typedKeyPath: 'location',
-    fieldConfig,
-    currentValue,
-  });
-
-  return container;
-};
+const renderPreview = async (currentValue) =>
+  (await renderFieldPreview(MapPreview, { fieldConfig, currentValue })).container;
 
 describe('MapPreview', () => {
   test('shows the raw GeoJSON', async () => {

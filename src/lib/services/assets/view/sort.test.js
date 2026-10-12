@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createMockAssetFolder } from '$lib/test/factories';
+
 import { getValue, sortAssets } from './sort';
 
 // Mock dependencies
@@ -35,13 +37,7 @@ describe('assets/view/sort', () => {
         sha: 'sha1',
         size: 1024000,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
         commitAuthor: { name: 'Alice', login: 'alice', email: 'alice@example.com' },
         commitDate: new Date('2023-01-01'),
       },
@@ -51,13 +47,7 @@ describe('assets/view/sort', () => {
         sha: 'sha2',
         size: 2048000,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
         commitAuthor: { name: 'Bob', login: 'bob', email: 'bob@example.com' },
         commitDate: new Date('2023-01-02'),
       },
@@ -67,13 +57,7 @@ describe('assets/view/sort', () => {
         sha: 'sha3',
         size: 512000,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
         commitAuthor: { name: 'Charlie', login: 'charlie', email: 'charlie@example.com' },
         commitDate: new Date('2023-01-03'),
       },
@@ -83,13 +67,7 @@ describe('assets/view/sort', () => {
         sha: 'sha4',
         size: 256000,
         kind: 'document',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/docs',
-          publicPath: '/docs',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/docs', publicPath: '/docs' }),
         commitAuthor: { name: '', email: 'david@example.com' },
         commitDate: new Date('2023-01-04'),
       },
@@ -237,13 +215,7 @@ describe('assets/view/sort', () => {
           sha: 'sha1',
           size: 1000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           customField: 'value',
         },
         {
@@ -252,13 +224,7 @@ describe('assets/view/sort', () => {
           sha: 'sha2',
           size: 2000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           // customField is undefined
         },
       ]);
@@ -346,13 +312,7 @@ describe('assets/view/sort', () => {
           sha: 'sha1',
           size: 1000,
           kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/test',
-            publicPath: '/test',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
+          folder: createMockAssetFolder({ internalPath: '/test', publicPath: '/test' }),
           // No commitAuthor property
         },
       ]);
@@ -373,13 +333,7 @@ describe('assets/view/sort', () => {
         sha: 'sha123',
         size: 1024,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
       };
 
       const result = getValue(asset, 'commit_author');
@@ -396,13 +350,7 @@ describe('assets/view/sort', () => {
         sha: 'sha123',
         size: 1024,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
       };
 
       const result = getValue(asset, 'commit_author');
@@ -419,13 +367,7 @@ describe('assets/view/sort', () => {
         sha: 'sha123',
         size: 1024,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
       };
 
       const result = getValue(asset, 'commit_author');
@@ -441,13 +383,7 @@ describe('assets/view/sort', () => {
         sha: 'sha123',
         size: 1024,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
       };
 
       const result = getValue(asset, 'commit_author');
@@ -466,13 +402,7 @@ describe('assets/view/sort', () => {
         sha: 'sha123',
         size: 1024,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
       };
 
       const result = getValue(asset, 'commit_date');
@@ -488,13 +418,7 @@ describe('assets/view/sort', () => {
         sha: 'sha123',
         size: 1024,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
       };
 
       const result = getValue(asset, 'name');
@@ -510,13 +434,7 @@ describe('assets/view/sort', () => {
         sha: 'sha123',
         size: 1024,
         kind: 'document',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/files',
-          publicPath: '/files',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/files', publicPath: '/files' }),
       };
 
       const result = getValue(asset, 'name');
@@ -532,13 +450,7 @@ describe('assets/view/sort', () => {
         sha: 'sha123',
         size: 1024,
         kind: 'document',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/files',
-          publicPath: '/files',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/files', publicPath: '/files' }),
       };
 
       const result = getValue(asset, 'name');
@@ -554,13 +466,7 @@ describe('assets/view/sort', () => {
         size: 1024,
         kind: 'image',
         sha: 'abc123',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
       };
 
       expect(getValue(asset, 'size')).toBe(1024);
@@ -576,13 +482,7 @@ describe('assets/view/sort', () => {
         sha: 'sha123',
         size: 1024,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
       };
 
       const result = getValue(asset, 'nonexistent');
@@ -598,13 +498,7 @@ describe('assets/view/sort', () => {
         size: null,
         sha: 'sha123',
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/images',
-          publicPath: '/images',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/images', publicPath: '/images' }),
       };
 
       const result = getValue(asset, 'size');
@@ -622,13 +516,7 @@ describe('sort key function null fallbacks (line 58)', () => {
       sha: 'sha1',
       size: 100,
       kind: 'image',
-      folder: {
-        collectionName: undefined,
-        internalPath: '/a',
-        publicPath: '/a',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      folder: createMockAssetFolder({ internalPath: '/a', publicPath: '/a' }),
       // commitDate intentionally absent → getValue returns undefined → Number(undefined ?? 0) = 0
     });
 
@@ -638,13 +526,7 @@ describe('sort key function null fallbacks (line 58)', () => {
       sha: 'sha2',
       size: 200,
       kind: 'image',
-      folder: {
-        collectionName: undefined,
-        internalPath: '/b',
-        publicPath: '/b',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      folder: createMockAssetFolder({ internalPath: '/b', publicPath: '/b' }),
       commitDate: new Date('2023-06-01'),
     });
 
@@ -662,13 +544,7 @@ describe('sort key function null fallbacks (line 58)', () => {
       sha: 'sha1',
       size: 100,
       kind: 'image',
-      folder: {
-        collectionName: undefined,
-        internalPath: '/a',
-        publicPath: '/a',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      folder: createMockAssetFolder({ internalPath: '/a', publicPath: '/a' }),
       // commitAuthor absent → getValue destructures to {} → name/login/email all undefined
       // → name || login || email = undefined → v ?? '' = ''
     });
@@ -679,13 +555,7 @@ describe('sort key function null fallbacks (line 58)', () => {
       sha: 'sha2',
       size: 200,
       kind: 'image',
-      folder: {
-        collectionName: undefined,
-        internalPath: '/b',
-        publicPath: '/b',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      folder: createMockAssetFolder({ internalPath: '/b', publicPath: '/b' }),
     });
 
     // Both have undefined author → both map to '' → sort is stable

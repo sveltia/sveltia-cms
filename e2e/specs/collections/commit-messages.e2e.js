@@ -4,8 +4,7 @@ import {
 } from '../../fixtures/configs/collection-options.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
-
-import { openCollection } from './helpers.js';
+import { getEditor, openCollection } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -47,7 +46,7 @@ const getHeadlines = (github) => github.received.map(({ message }) => message.he
  * @returns {Promise<Locator>} Editor.
  */
 const openFAQ = async (page, question) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await page.getByRole('row', { name: question }).click();
   await expect(editor.getByRole('textbox', { name: 'Question' })).toHaveValue(question);
@@ -58,7 +57,7 @@ const openFAQ = async (page, question) => {
 test('fills the templates for a new entry', async ({ github, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Question' }).fill('Is there parking?');
   await editor.getByRole('textbox', { name: 'Answer' }).fill('On the street.');

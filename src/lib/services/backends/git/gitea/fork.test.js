@@ -29,7 +29,7 @@ import {
   openAuthoringInitialized,
 } from '$lib/services/workflow/open-authoring';
 
-vi.mock('@sveltia/i18n', () => ({ _: vi.fn((key) => key) }));
+vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 vi.mock('$lib/services/backends/git/gitea/instance', () => ({ instance: { isForgejo: false } }));
 vi.mock('$lib/services/backends/git/gitea/repository', () => ({
   repository: { owner: 'owner', repo: 'repo', branch: 'main' },

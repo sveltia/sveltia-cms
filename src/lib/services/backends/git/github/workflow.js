@@ -21,13 +21,15 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
-import { encodePath } from '$lib/services/backends/git/shared/url';
 import {
+  getMovedHeadMergeState,
   getParentDirs,
+  isPullRequestMerged,
   isSquashMergeEnabled,
   openWorkflowPullRequest,
   toChangedFilesWithModes,
 } from '$lib/services/backends/git/shared/workflow';
+import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -281,7 +283,7 @@ const fetchOpenPullRequests = async (branch) => {
 const resetBranch = async (branch, sha) => {
   const { owner, repo } = repository;
 
-  await fetchAPI(`/repos/${owner}/${repo}/git/refs/heads/${encodePath(branch)}`, {
+  await fetchAPI(`/repos/${owner}/${repo}/git/refs/heads/${encodePathSegments(branch)}`, {
     method: 'PATCH',
     body: { sha, force: true },
   });
@@ -549,10 +551,16 @@ export const fetchMergeState = async (pullRequest) => {
     return { headSHA, onConfiguredBranches: false, files: [], complete: false };
   }
 
+  const movedHeadState = getMovedHeadMergeState(pullRequest, headSHA);
+
+  if (movedHeadState) {
+    return movedHeadState;
+  }
+
+  const encodedBranch = encodePathSegments(/** @type {string} */ (branch));
+
   const { files = [] } = /** @type {{ files?: Record<string, any>[] }} */ (
-    await fetchAPI(
-      `/repos/${owner}/${repo}/compare/${encodePath(/** @type {string} */ (branch))}...${headSHA}`,
-    )
+    await fetchAPI(`/repos/${owner}/${repo}/compare/${encodedBranch}...${headSHA}`)
   );
 
   return {
@@ -607,16 +615,31 @@ export const publish = async (pullRequest) => {
   checkPublishAllowed();
 
   const { owner, repo } = repository;
+  const { number } = pullRequest;
   const squash = isSquashMergeEnabled();
 
-  await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}/merge`, {
-    method: 'PUT',
-    body: {
-      merge_method: squash ? 'squash' : 'merge',
-      commit_title: pullRequest.title,
-      sha: pullRequest.headSHA,
-    },
-  });
+  try {
+    await fetchAPI(`/repos/${owner}/${repo}/pulls/${number}/merge`, {
+      method: 'PUT',
+      body: {
+        merge_method: squash ? 'squash' : 'merge',
+        commit_title: pullRequest.title,
+        sha: pullRequest.headSHA,
+      },
+    });
+  } catch (/** @type {any} */ ex) {
+    // GitHub answers `405 Method Not Allowed` whenever the pull request can’t be merged, including
+    // when it has been merged already — by a maintainer on GitHub while this board was open, say.
+    // That’s the outcome the user asked for, so it’s the branch cleanup below that’s left to do
+    // rather than an error to report. Anything else the status covers, such as a failing required
+    // check or a conflict, is a real refusal
+    if (
+      ex.cause?.status !== 405 ||
+      !(await isPullRequestMerged(repository, /** @type {number} */ (number)))
+    ) {
+      throw ex;
+    }
+  }
 
   await deleteBranch(pullRequest.branch);
 };

@@ -4,12 +4,7 @@ import { _, locale as appLocale } from '@sveltia/i18n';
 import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import {
-  announcedPageStatus,
-  encodeRoutePath,
-  goto,
-  parseLocation,
-} from '$lib/services/app/navigation';
+import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
 import {
   enabledCloudServices,
   getCloudService,
@@ -38,6 +33,7 @@ import {
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { isSearchRoute } from '$lib/services/search/navigation';
 import { env } from '$lib/services/user/env.svelte';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * Resolvers of the pending `sleep()` calls, in order.
@@ -50,7 +46,6 @@ vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
 
 vi.mock('$lib/services/app/navigation', () => ({
   announcedPageStatus: { current: '' },
-  encodeRoutePath: vi.fn(),
   goto: vi.fn(),
   parseLocation: vi.fn(),
 }));
@@ -93,6 +88,10 @@ vi.mock('$lib/services/assets/view', () => ({
 vi.mock('$lib/services/backends/git/shared/config', () => ({ gitConfigFiles: { current: [] } }));
 vi.mock('$lib/services/search/navigation', () => ({ isSearchRoute: vi.fn() }));
 vi.mock('$lib/services/user/env.svelte', () => ({ env: { isSmallScreen: false } }));
+vi.mock('$lib/services/utils/url', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
+  encodePathSegments: vi.fn(),
+}));
 
 const allFolder = /** @type {any} */ ({ internalPath: undefined, label: 'All' });
 const postsFolder = /** @type {any} */ ({ internalPath: 'static/posts', collectionName: 'posts' });
@@ -129,7 +128,7 @@ beforeEach(async () => {
         pendingSleeps.push(() => resolve(undefined));
       }),
   );
-  vi.mocked(encodeRoutePath).mockImplementation((path) => `encoded:${path}`);
+  vi.mocked(encodePathSegments).mockImplementation((path) => `encoded:${path}`);
   vi.mocked(getFolderLabelByCollection).mockImplementation((folder) => folder.label ?? 'Folder');
   vi.mocked(getCloudServicePath).mockImplementation(({ serviceId }) => `/assets/-/${serviceId}`);
   /** @type {any} */ (appLocale).current = 'en';

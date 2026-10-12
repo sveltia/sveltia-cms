@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
-import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import CodePreview from './code-preview.svelte';
 
@@ -16,22 +17,16 @@ import CodePreview from './code-preview.svelte';
  * @param {Record<string, any>} [args.values] Flattened entry values in the current locale.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async ({ config = {}, currentValue = undefined, values = {} }) => {
-  const { container } = await renderWithDraft(CodePreview, {
-    draft: createMockDraft({ values: { _default: values } }),
-    props: {
-      locale: '_default',
-      keyPath: 'snippet',
-      typedKeyPath: 'snippet',
-      fieldId: 'snippet',
-      fieldLabel: 'Snippet',
+const renderPreview = async ({ config = {}, currentValue = undefined, values = {} }) =>
+  (
+    await renderFieldPreview(CodePreview, {
       fieldConfig: { name: 'snippet', widget: 'code', ...config },
+      locale: '_default',
       currentValue,
-    },
-  });
-
-  return container;
-};
+      props: { fieldId: 'snippet', fieldLabel: 'Snippet' },
+      draft: createMockDraft({ values: { _default: values } }),
+    })
+  ).container;
 
 describe('CodePreview', () => {
   test('shows the code and language stored under the default keys', async () => {

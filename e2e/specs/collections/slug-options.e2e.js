@@ -1,6 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
-
-import { getEntryList, openCollection } from './helpers.js';
+import { getEditor, getEntryList, openCollection } from '../../fixtures/ui.js';
 
 /**
  * @import { Page } from '@playwright/test';
@@ -39,7 +38,7 @@ const makeConfig = (slug, collection = {}) => ({
 const createPost = async (page, title) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title', exact: true }).fill(title);
   await editor.getByRole('button', { name: 'Save' }).click();
@@ -70,7 +69,7 @@ const expectPosts = async (cms, paths) => {
 const reopenPost = async (page, title) => {
   await getEntryList(page).getByRole('row', { name: title, exact: true }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue(title);
 };
@@ -310,7 +309,7 @@ test.describe('`lowercase: false`', () => {
     await start(cms);
     await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Title', exact: true }).fill('Hello World');
     await editor.getByRole('radio', { name: 'tips' }).click();
@@ -340,7 +339,7 @@ test.describe('slug template', () => {
     await page.clock.install({ time: new Date('2026-05-10T07:08:00Z') });
     await start(cms);
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await page.getByRole('button', { name: 'Create New Entry' }).first().click();
     await editor.getByRole('textbox', { name: 'Title', exact: true }).fill('Café Ölé!');

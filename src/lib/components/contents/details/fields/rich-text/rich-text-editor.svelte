@@ -15,7 +15,6 @@
   import { getContext, tick } from 'svelte';
 
   import { EditorComponent } from '$lib/components/contents/details/fields/rich-text/custom-node-features';
-  import { customComponentRegistry } from '$lib/services/api/registries';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
@@ -27,20 +26,23 @@
   } from '$lib/services/contents/fields/file/helpers';
   import { processResource } from '$lib/services/contents/fields/file/process';
   import {
-    BUILTIN_COMPONENTS,
-    BUTTON_NAME_MAP,
-    COMPONENT_NAME_PREFIX_REGEX,
     DEFAULT_BUTTONS,
     DEFAULT_MODES,
     getValueFormat,
     NODE_NAME_MAP,
   } from '$lib/services/contents/fields/rich-text';
-  import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
-  import { supportsHTML } from '$lib/services/contents/fields/rich-text/components/utils';
   import {
     getDroppedImages,
     getPastedImages,
   } from '$lib/services/contents/fields/rich-text/images';
+  import {
+    getAvailableComponentDefs,
+    getEditorComponentNames,
+    getRootFieldName,
+    getStaleExtraValueKeys,
+    getToolbarButtons,
+    resolveAllowNestedComponents,
+  } from '$lib/services/contents/fields/rich-text/options';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { syncValues, watch } from '$lib/services/utils/state.svelte';
@@ -101,11 +103,6 @@
     // Field type-specific options
     modes: _modes = defaultConfig.modes ?? [...DEFAULT_MODES],
     buttons: _buttons = defaultConfig.buttons ?? [...DEFAULT_BUTTONS],
-    editor_components: _editorComponents = defaultConfig.editor_components ??
-      // Include all built-in and custom components by default
-      [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
-    allow_nested_components: _allowNestedComponents,
-    linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
     use_emoji_autocomplete: useEmojiAutocomplete = defaultConfig.use_emoji_autocomplete ?? true,
     use_markdown_shortcuts: useMarkdownShortcuts = defaultConfig.use_markdown_shortcuts ?? true,
     minimal = defaultConfig.minimal ?? false,
@@ -118,60 +115,35 @@
   /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
-  const buttons = $derived(
-    [
-      ..._buttons,
-      // Include `code-block` implemented as a block type
-      ...(_editorComponents.includes('code-block') ? ['code-block'] : []),
-    ]
-      // @ts-ignore
-      .map((name) => BUTTON_NAME_MAP[name])
-      .filter(Boolean),
+  const componentNames = $derived(getEditorComponentNames(fieldConfig));
+  const buttons = $derived(getToolbarButtons(_buttons, componentNames));
+  const allowNestedComponents = $derived(
+    resolveAllowNestedComponents(
+      inEditorComponent
+        ? // Retrieve the parent Markdown or RichText field config
+          /** @type {MarkdownField | RichTextField | undefined} */ (
+            getField({
+              collectionName,
+              fileName,
+              isIndexFile,
+              valueMap,
+              keyPath: getRootFieldName(keyPath),
+            })
+          )
+        : fieldConfig,
+    ),
   );
-  const allowNestedComponents = $derived.by(() => {
-    let nested = _allowNestedComponents;
-
-    if (inEditorComponent) {
-      // Retrieve the parent Markdown or RichText field config
-      nested = /** @type {MarkdownField | RichTextField} */ (
-        getField({
-          collectionName,
-          fileName,
-          isIndexFile,
-          valueMap,
-          // Extract the parent field name, e.g. `body:c55:content` -> `body`
-          keyPath: /** @type {string} */ (keyPath.match(/^[^:]+/)?.[0]),
-        })
-      )?.allow_nested_components;
-    }
-
-    return nested ?? defaultConfig.allow_nested_components ?? true;
-  });
-  const components = $derived.by(() => {
-    if (inEditorComponent && !allowNestedComponents) {
-      return [];
-    }
-
-    return (
-      _editorComponents
-        .map((name) =>
-          getComponentDef(name === 'image' && linkedImagesEnabled ? 'linked-image' : name),
-        )
-        .filter((def) => !!def)
-        // Only the components with HTML syntax can be used in HTML
-        .filter((def) => format !== 'html' || supportsHTML(def))
-        // Compare the definition IDs, because the parent component names are the IDs, which are
-        // prefixed for custom components, e.g. `x-youtube`
-        .filter(
-          (def) =>
-            allowNestedComponents !== 'exclude_self' || !parentComponentNames.includes(def.id),
-        )
-        .map(
-          (def) =>
-            /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
-        )
-    );
-  });
+  const components = $derived(
+    getAvailableComponentDefs({
+      fieldConfig,
+      format,
+      allowNestedComponents,
+      inEditorComponent,
+      parentComponentNames,
+    }).map(
+      (def) => /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
+    ),
+  );
   const imageComponent = $derived(
     components.find(({ id }) => id === 'image' || id === 'linked-image'),
   );
@@ -285,15 +257,12 @@
     // Remove values that are not present in the editor anymore. Otherwise, they will trigger
     // validation errors when the entry is saved.
     cleanupTimeout = window.setTimeout(() => {
-      Object.keys(draft.extraValues[locale]).forEach((key) => {
-        const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
-
-        if (
-          prefix?.startsWith(`${keyPath}:`) &&
-          !wrapper?.querySelector(`[data-key-path-prefix="${prefix}"]`)
-        ) {
-          delete draft.extraValues[locale][key];
-        }
+      getStaleExtraValueKeys(
+        draft.extraValues[locale],
+        keyPath,
+        (prefix) => !!wrapper?.querySelector(`[data-key-path-prefix="${prefix}"]`),
+      ).forEach((key) => {
+        delete draft.extraValues[locale][key];
       });
     }, 500);
   };

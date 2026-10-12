@@ -59,6 +59,14 @@ export const hasTags = (folder) =>
   folder.includes('{{media_folder}}') || folder.includes('{{public_folder}}');
 
 /**
+ * Remove the leading slash from a public folder starting with `@`, like `/@assets/images`. Some
+ * frameworks expect asset paths starting with `@`, like `@assets/images/...`.
+ * @param {string} folder Folder path.
+ * @returns {string} Folder path without the extra leading slash.
+ */
+const removeSlashBeforeAtSign = (folder) => folder.replace(/^\/@/, '@');
+
+/**
  * Replace `{{media_folder}}` and `{{public_folder}}` template tags.
  * @param {string} folder Original folder path.
  * @param {object} context Context for replacement.
@@ -130,7 +138,7 @@ export const normalizeAssetFolder = ({
 
     // The tag is replaced with a leading slash, which has to be removed again from a global public
     // folder starting with `@`, like `@assets/images`, the same way as the global folder itself
-    publicFolder = replaceTags(publicFolder, globalFolders).replace(/^\/@/, '@');
+    publicFolder = removeSlashBeforeAtSign(replaceTags(publicFolder, globalFolders));
   }
 
   // Normalize `./` prefix: `./images` → `images`, `./` → ``, `.` → ``
@@ -355,66 +363,44 @@ const isAssetFolderReadonly = ({ config, folder, validCollections }) => {
 };
 
 /**
- * Get all asset folders.
+ * Resolve the global `media_folder` and `public_folder` options.
  * @param {InternalCmsConfig} config CMS configuration.
- * @param {CollectedMediaField[]} [fieldMediaFolders] Collected field-level media folders.
- * @returns {AssetFolderInfo[]} Asset folders.
+ * @returns {GlobalFolders | undefined} Normalized global folders, or `undefined` if the global
+ * `media_folder` option is not configured.
  */
-export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
-  /**
-   * Collection-level and file-level asset folders.
-   * @type {AssetFolderInfo[]}
-   * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
-   * @see https://sveltiacms.app/en/docs/media/internal
-   */
-  const assetFolders = [];
+export const resolveGlobalFolders = (config) => {
+  const { media_folder: _globalMediaFolder, public_folder: _globalPublicFolder } = config;
 
-  const {
-    media_folder: _globalMediaFolder,
-    public_folder: _globalPublicFolder,
-    collections,
-    singletons,
-    asset_collections: assetCollections,
-  } = config;
-
-  const isGlobalFolderConfigured = _globalMediaFolder !== undefined;
+  if (_globalMediaFolder === undefined) {
+    return undefined;
+  }
 
   // Normalize the media folder: an empty string, `/` and `.` are all considered as the root folder
-  const globalMediaFolder = isGlobalFolderConfigured
-    ? stripSlashes(_globalMediaFolder).replace(/^\.$/, '')
-    : '';
+  const globalMediaFolder = stripSlashes(_globalMediaFolder).replace(/^\.$/, '');
 
   // Some frameworks expect asset paths starting with `@`, like `@assets/images/...`. Remove an
   // extra leading slash in that case. A trailing slash should always be removed internally.
-  const globalPublicFolder = isGlobalFolderConfigured
-    ? _globalPublicFolder
-      ? `/${stripSlashes(_globalPublicFolder)}`.replace(/^\/@/, '@')
-      : `/${globalMediaFolder}`
-    : '';
+  const globalPublicFolder = _globalPublicFolder
+    ? removeSlashBeforeAtSign(`/${stripSlashes(_globalPublicFolder)}`)
+    : `/${globalMediaFolder}`;
 
-  /** @type {AssetFolderInfo} */
-  const allAssetsFolder = {
-    collectionName: undefined,
-    internalPath: undefined,
-    internalSubPath: undefined,
-    publicPath: undefined,
-    entryRelative: false,
-    hasTemplateTags: false,
-    label: undefined,
-    icon: undefined,
-    isAssetCollection: false,
-  };
+  return { globalMediaFolder, globalPublicFolder };
+};
 
-  /** @type {AssetFolderInfo | undefined} */
-  const globalAssetFolder = isGlobalFolderConfigured
-    ? { ...allAssetsFolder, internalPath: globalMediaFolder, publicPath: globalPublicFolder }
-    : undefined;
-
-  const globalFolders = isGlobalFolderConfigured
-    ? { globalMediaFolder, globalPublicFolder }
-    : undefined;
-
-  const validCollections = getValidCollections({ collections });
+/**
+ * Add the collection-level and file-level asset folders of the given collections, as well as the
+ * file-level asset folders of the singletons.
+ * @param {AssetFolderInfo[]} folders List to add the folders to.
+ * @param {object} args Arguments.
+ * @param {Collection[]} args.validCollections Valid collections.
+ * @param {InternalCmsConfig['singletons']} [args.singletons] Singletons.
+ * @param {GlobalFolders | undefined} args.globalFolders Global folders information.
+ */
+export const collectCollectionAssetFolders = (
+  folders,
+  { validCollections, singletons, globalFolders },
+) => {
+  const isGlobalFolderConfigured = globalFolders !== undefined;
 
   validCollections.forEach((collection) => {
     const {
@@ -446,7 +432,7 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
       !mediaFolder.startsWith('/');
 
     if (!isRelativeFileCollectionFolder) {
-      addFolderIfNeeded(assetFolders, {
+      addFolderIfNeeded(folders, {
         collectionName,
         // @ts-ignore
         mediaFolder,
@@ -458,7 +444,7 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
     }
 
     if (collectionFiles?.length) {
-      iterateFiles(assetFolders, {
+      iterateFiles(folders, {
         collectionName,
         files: collectionFiles,
         globalFolders,
@@ -469,9 +455,82 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
 
   if (singletons?.length) {
     // Singleton collection is always at the end
-    iterateFiles(assetFolders, { collectionName: '_singletons', files: singletons, globalFolders });
+    iterateFiles(folders, { collectionName: '_singletons', files: singletons, globalFolders });
   }
+};
 
+/**
+ * Get the names of the locale folders an entry-relative asset folder of each collection can sit in.
+ * The `multiple_root_folders` i18n structure stores each locale’s copy of the whole site below a
+ * folder named after it, so an entry-relative folder’s own files can sit one level deeper than the
+ * collection `folder` option says. The same goes for a `folder` with the `{{locale}}` placeholder,
+ * which names the locale folder in the middle of the path. Record the locale names so the asset
+ * paths can be matched there too; the entry folders already carry the same information in their
+ * `folderPathMap`. The locales are read per collection rather than from the site configuration,
+ * because a collection can define its own, and only the structures that put the locale in front
+ * matter.
+ * @param {InternalCmsConfig} config CMS configuration.
+ * @param {Collection[]} validCollections Valid collections.
+ * @returns {Map<string, string[]>} Map of collection names to locale folder names, which is empty
+ * for a collection without locale folders.
+ */
+export const getLocaleFolderNameMap = (config, validCollections) =>
+  new Map(
+    validCollections.map((collection) => {
+      const i18n = mergeI18nConfigs({ cmsConfig: config, collection });
+
+      const hasLocaleFolder =
+        ('folder' in collection &&
+          typeof collection.folder === 'string' &&
+          hasLocalePlaceholder(collection.folder)) ||
+        (!!i18n?.structure && LOCALE_ROOT_FOLDER_STRUCTURES.includes(i18n.structure));
+
+      return [collection.name, hasLocaleFolder ? (i18n?.locales ?? []) : []];
+    }),
+  );
+
+/**
+ * Get all asset folders.
+ * @param {InternalCmsConfig} config CMS configuration.
+ * @param {CollectedMediaField[]} [fieldMediaFolders] Collected field-level media folders.
+ * @returns {AssetFolderInfo[]} Asset folders.
+ */
+export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
+  /**
+   * Collection-level and file-level asset folders.
+   * @type {AssetFolderInfo[]}
+   * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
+   * @see https://sveltiacms.app/en/docs/media/internal
+   */
+  const assetFolders = [];
+  const { collections, singletons, asset_collections: assetCollections } = config;
+  const globalFolders = resolveGlobalFolders(config);
+
+  /** @type {AssetFolderInfo} */
+  const allAssetsFolder = {
+    collectionName: undefined,
+    internalPath: undefined,
+    internalSubPath: undefined,
+    publicPath: undefined,
+    entryRelative: false,
+    hasTemplateTags: false,
+    label: undefined,
+    icon: undefined,
+    isAssetCollection: false,
+  };
+
+  /** @type {AssetFolderInfo | undefined} */
+  const globalAssetFolder = globalFolders
+    ? {
+        ...allAssetsFolder,
+        internalPath: globalFolders.globalMediaFolder,
+        publicPath: globalFolders.globalPublicFolder,
+      }
+    : undefined;
+
+  const validCollections = getValidCollections({ collections });
+
+  collectCollectionAssetFolders(assetFolders, { validCollections, singletons, globalFolders });
   handleFieldMediaFolders(assetFolders, { fieldMediaFolders, validCollections, globalFolders });
 
   // `internalPath` is always set to a string via `stripSlashes()` in the folder construction above.
@@ -495,27 +554,7 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
     allFolders.unshift(allAssetsFolder);
   }
 
-  // The `multiple_root_folders` i18n structure stores each locale’s copy of the whole site below a
-  // folder named after it, so an entry-relative folder’s own files can sit one level deeper than
-  // the collection `folder` option says. The same goes for a `folder` with the `{{locale}}`
-  // placeholder, which names the locale folder in the middle of the path. Record the locale names
-  // so the asset paths can be matched there too; the entry folders already carry the same
-  // information in their `folderPathMap`. The locales are read per collection rather than from the
-  // site configuration, because a collection can define its own, and only the structures that put
-  // the locale in front matter
-  const localeFolderNameMap = new Map(
-    validCollections.map((collection) => {
-      const i18n = mergeI18nConfigs({ cmsConfig: config, collection });
-
-      const hasLocaleFolder =
-        ('folder' in collection &&
-          typeof collection.folder === 'string' &&
-          hasLocalePlaceholder(collection.folder)) ||
-        (!!i18n?.structure && LOCALE_ROOT_FOLDER_STRUCTURES.includes(i18n.structure));
-
-      return [collection.name, hasLocaleFolder ? (i18n?.locales ?? []) : []];
-    }),
-  );
+  const localeFolderNameMap = getLocaleFolderNameMap(config, validCollections);
 
   return allFolders.map((folder) => {
     const localeFolderNames = folder.entryRelative

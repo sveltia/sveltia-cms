@@ -3,8 +3,7 @@ import {
   COLLECTION_OPTIONS_FILES,
 } from '../../fixtures/configs/collection-options.js';
 import { expect, test } from '../../fixtures/test.js';
-
-import { openCollection } from './helpers.js';
+import { getEditor, openCollection } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -21,13 +20,6 @@ test.beforeEach(async ({ cms, page }) => {
   await cms.signIn();
   await openCollection(page, 'Journal');
 });
-
-/**
- * Get the content editor.
- * @param {Page} page Page.
- * @returns {Locator} Editor.
- */
-const getEditor = (page) => page.getByRole('group', { name: 'Content Editor' });
 
 test('saves a new post under the path and slug templates', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).click();

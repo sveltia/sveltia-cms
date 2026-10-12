@@ -2,6 +2,8 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { createMockEntry } from '$lib/test/factories';
+
 /**
  * @import { Entry } from '$lib/types/private';
  */
@@ -69,7 +71,9 @@ const postsCollection = {
   _file: { format: 'yaml-frontmatter', extension: 'md' },
 };
 
-vi.mock('@sveltia/i18n', () => ({ _: vi.fn((key) => key), locale: { current: 'en' } }));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ locale: 'en' }),
+);
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: {} },
@@ -107,12 +111,8 @@ const { planCascadeDelete } = await import('$lib/services/contents/entry/relatio
  * @param {Record<string, any>} content Flattened content.
  * @returns {Entry} Entry.
  */
-const createEntry = ({ folder }, slug, content) => ({
-  id: `${folder}/${slug}`,
-  slug,
-  subPath: slug,
-  locales: { _default: { slug, path: `${folder}/${slug}.md`, content } },
-});
+const createEntry = ({ folder }, slug, content) =>
+  createMockEntry({ slug, folder, content: { _default: content } });
 
 /**
  * Build a post entry.

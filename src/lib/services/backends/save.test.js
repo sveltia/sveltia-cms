@@ -6,6 +6,7 @@ import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { checkForRemoteChanges, suspendChecksWhile } from '$lib/services/backends/refresh';
 import { allEntries } from '$lib/services/contents';
 import { combineArrayFileChanges, createArrayFileEntries } from '$lib/services/contents/file/array';
+import { createMockAssetFolder } from '$lib/test/factories';
 
 import { getCommitAuthor, saveChanges, updateCache, updateStores } from './save.js';
 
@@ -1006,13 +1007,9 @@ describe('save', () => {
           size: 1024,
           sha: 'test-sha',
           kind: /** @type {AssetKind} */ ('image'),
-          folder: /** @type {AssetFolderInfo} */ ({
-            collectionName: undefined,
-            internalPath: 'images',
-            publicPath: '/images',
-            entryRelative: false,
-            hasTemplateTags: false,
-          }),
+          folder: /** @type {AssetFolderInfo} */ (
+            createMockAssetFolder({ internalPath: 'images', publicPath: '/images' })
+          ),
         },
       ];
 
@@ -1175,13 +1172,9 @@ describe('save', () => {
           size: 2048,
           sha: 'test-sha-2',
           kind: /** @type {AssetKind} */ ('image'),
-          folder: /** @type {AssetFolderInfo} */ ({
-            collectionName: undefined,
-            internalPath: 'images',
-            publicPath: '/images',
-            entryRelative: false,
-            hasTemplateTags: false,
-          }),
+          folder: /** @type {AssetFolderInfo} */ (
+            createMockAssetFolder({ internalPath: 'images', publicPath: '/images' })
+          ),
         },
       ];
 
@@ -1234,13 +1227,9 @@ describe('save', () => {
           size: 3072,
           sha: 'test-sha-3',
           kind: /** @type {AssetKind} */ ('image'),
-          folder: /** @type {AssetFolderInfo} */ ({
-            collectionName: undefined,
-            internalPath: 'images',
-            publicPath: '/images',
-            entryRelative: false,
-            hasTemplateTags: false,
-          }),
+          folder: /** @type {AssetFolderInfo} */ (
+            createMockAssetFolder({ internalPath: 'images', publicPath: '/images' })
+          ),
         },
       ];
 

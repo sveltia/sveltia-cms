@@ -35,11 +35,13 @@
     getInitialListExpanderStates,
   } from '$lib/services/contents/fields/list/items';
   import {
+    getTypedSubKeyPath,
     resolveVariableType,
     warnUnknownType,
   } from '$lib/services/contents/fields/object/helpers';
-  import { getObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
+  import { getDraftObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
   import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
+  import { focusAfterRemoval } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
 
   /**
@@ -318,11 +320,21 @@
     await sleep(50);
     // Move focus to the expander button of the item now at the same position, the previous item if
     // the last one was removed, or the list’s own button if no item is left
-    (
-      getItem(index)?.querySelector('button') ??
-      getItem(index - 1)?.querySelector('button') ??
-      itemList?.closest('[role="group"]')?.querySelector('button')
-    )?.focus();
+    focusAfterRemoval({
+      index,
+      /**
+       * Get the expander button of an item.
+       * @param {number} _index Item index.
+       * @returns {HTMLButtonElement | null | undefined} Button.
+       */
+      getTarget: (_index) => getItem(_index)?.querySelector('button'),
+      /**
+       * Focus the list’s own button.
+       */
+      fallback: () => {
+        itemList?.closest('[role="group"]')?.querySelector('button')?.focus();
+      },
+    });
   };
 
   /**
@@ -345,25 +357,6 @@
     });
   };
 
-  const sorter = createDragSorter({
-    /**
-     * Get the number of items in the list.
-     * @returns {number} Item count.
-     */
-    getItemCount: () => items.length,
-    /**
-     * Get the list element.
-     * @returns {HTMLElement | undefined} Element.
-     */
-    getListElement: () => itemList,
-    onMove: moveItem,
-    /**
-     * Wait for the moved item to be rendered in its new position.
-     * @returns {Promise<void>} Promise.
-     */
-    settle: () => sleep(50),
-  });
-
   /**
    * Format the summary template.
    * @param {number} index List index.
@@ -383,6 +376,35 @@
       isIndexFile,
     });
 
+  const sorter = createDragSorter({
+    /**
+     * Get the number of items in the list.
+     * @returns {number} Item count.
+     */
+    getItemCount: () => items.length,
+    /**
+     * Get the list element.
+     * @returns {HTMLElement | undefined} Element.
+     */
+    getListElement: () => itemList,
+    onMove: moveItem,
+    /**
+     * Get the summary of an item, to be attached to its drag.
+     * @param {number} index List index.
+     * @returns {string} Summary.
+     */
+    getItemData: (index) =>
+      _formatSummary(
+        index,
+        resolveType(hasVariableTypes ? items[index][typeKey] : undefined).summaryTemplate,
+      ),
+    /**
+     * Wait for the moved item to be rendered in its new position.
+     * @returns {Promise<void>} Promise.
+     */
+    settle: () => sleep(50),
+  });
+
   /**
    * Get the thumbnail of a collapsed list item.
    * @param {number} index List index.
@@ -390,18 +412,15 @@
    * @returns {MediaFieldSource | undefined} Thumbnail.
    */
   const getThumbnail = (index, type) =>
-    getObjectThumbnail({
+    getDraftObjectThumbnail({
+      draft: entryDraft.current,
       thumbnailFieldName,
       keyPath: `${keyPath}.${index}`,
-      typedKeyPath: type ? `${typedKeyPath}.*<${type}>` : `${typedKeyPath}.*`,
+      typedKeyPath: `${typedKeyPath}.*`,
+      type,
       hasSingleSubField,
-      collectionName,
-      fileName,
       componentName,
       valueMap,
-      isIndexFile,
-      entry: entryDraft.current?.originalEntry,
-      files: entryDraft.current?.files,
       locale,
     });
 
@@ -528,18 +547,10 @@
           class="item"
           class:unknown-type={unknownType}
           class:dragging={sorter.dragIndex === index}
-          draggable={sorter.grabbedIndex === index}
-          ondragstart={(event) => {
+          {...sorter.itemProps(index, {
             // A nested sortable list starts its own drag; the event just bubbles through here
-            if (event.target === event.currentTarget) {
-              sorter.onDragStart(index, event, _formatSummary(index, summaryTemplate));
-            }
-          }}
-          ondragend={(event) => {
-            if (event.target === event.currentTarget) {
-              sorter.onDragEnd();
-            }
-          }}
+            ownEventsOnly: true,
+          })}
         >
           <ObjectHeader
             label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
@@ -602,9 +613,11 @@
               {subFields}
               getSubFieldProps={(subField) => ({
                 keyPath: hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`,
-                typedKeyPath: hasVariableTypes
-                  ? `${typedKeyPath}.*<${type}>.${subField.name}`
-                  : `${typedKeyPath}.*.${subField.name}`,
+                typedKeyPath: getTypedSubKeyPath({
+                  typedKeyPath: `${typedKeyPath}.*`,
+                  type,
+                  subFieldName: subField.name,
+                }),
                 context: hasSingleSubField ? 'single-subfield-list-field' : undefined,
               })}
               {expanded}

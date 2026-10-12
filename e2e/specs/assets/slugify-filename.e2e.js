@@ -1,6 +1,7 @@
 import { MEDIA_CONFIG, MEDIA_FILES, MEDIA_IMAGES } from '../../fixtures/configs/media.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * {@link MEDIA_CONFIG} with the `slugify_filename` option enabled for the whole site.
@@ -76,7 +77,7 @@ test('slugifies the new name of an unsaved upload renamed in a field', async ({ 
 
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const cover = editor.getByRole('group', { name: '“\u2068Cover\u2069” Field' });
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Kite');

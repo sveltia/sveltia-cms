@@ -1,7 +1,7 @@
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
-import { encodePath } from '$lib/services/backends/git/shared/url';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import { RepositoryBaseURLs, RepositoryInfo } from '$lib/types/private';
@@ -73,8 +73,8 @@ const getScopedBaseURLs = (getBaseURLs, repoURL, branch) => {
 
   return {
     ...urls,
-    treeBaseURL: `${urls.treeBaseURL}/${encodePath(rootDir)}`,
-    blobBaseURL: `${urls.blobBaseURL}/${encodePath(rootDir)}`,
+    treeBaseURL: `${urls.treeBaseURL}/${encodePathSegments(rootDir)}`,
+    blobBaseURL: `${urls.blobBaseURL}/${encodePathSegments(rootDir)}`,
   };
 };
 

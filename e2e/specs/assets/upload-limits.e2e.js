@@ -1,6 +1,7 @@
 import { MEDIA_CONFIG, MEDIA_FILES } from '../../fixtures/configs/media.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -65,7 +66,7 @@ const createEntry = async (page, collection, label) => {
   await page.getByRole('treeitem', { name: collection }).click();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Trip');
 
@@ -132,9 +133,7 @@ test('refuses an oversized and a broken image in a field, saying why', async ({ 
   await expect(field).toContainText('Drop an image file here');
 
   // A multiple image field takes several files at once, and tells both reasons in one dialog
-  const gallery = page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('group', { name: '“\u2068Gallery\u2069” Field' });
+  const gallery = getEditor(page).getByRole('group', { name: '“\u2068Gallery\u2069” Field' });
 
   await uploadFiles(gallery, [SMALL, LARGE, BROKEN]);
 
@@ -154,7 +153,7 @@ test('refuses an oversized and a broken image in a field, saying why', async ({ 
 test('keeps the image of a field when the file replacing it is refused', async ({ page }) => {
   await page.getByRole('row', { name: 'Evening' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const cover = editor.getByRole('group', { name: '“\u2068Cover\u2069” Field' });
 
   await expect(cover.getByRole('textbox', { name: 'Cover' })).toHaveText('/uploads/sunset.png');

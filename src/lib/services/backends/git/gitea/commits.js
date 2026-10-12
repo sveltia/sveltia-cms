@@ -11,8 +11,8 @@ import {
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
-import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import { CommitOptions, CommitResults, FileChange, FileCommit, User } from '$lib/types/private';
@@ -87,10 +87,10 @@ const getKnownSha = async ({ action, path, previousPath, previousSha }, workflow
     throw new Error(`The last known version of ${knownPath} could not be determined.`);
   }
 
+  const filePath = encodePathSegments(knownPath);
+
   const { sha } = /** @type {{ sha: string }} */ (
-    await fetchAPI(
-      `/repos/${owner}/${repo}/contents/${encodePath(knownPath)}?ref=${encodeURIComponent(ref)}`,
-    )
+    await fetchAPI(`/repos/${owner}/${repo}/contents/${filePath}?ref=${encodeURIComponent(ref)}`)
   );
 
   return sha;

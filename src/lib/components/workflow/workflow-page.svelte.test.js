@@ -19,7 +19,12 @@ import {
   updateWorkflowStatus,
 } from '$lib/services/workflow/save';
 import { canMoveToStatus, canPublish } from '$lib/services/workflow/validate';
-import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
+import {
+  createMockEntry,
+  createMockWorkflowEntry,
+  initTestConfig,
+  setEntries,
+} from '$lib/test/config';
 
 import WorkflowPage from './workflow-page.svelte';
 
@@ -52,14 +57,13 @@ vi.mock('$lib/services/workflow/validate', () => ({
  * @param {string} status Workflow status.
  * @returns {any} Entry.
  */
-const createEntry = (slug, status) => ({
-  ...createMockEntry({ slug, content: { _default: { title: slug } } }),
-  workflow: {
+const createEntry = (slug, status) =>
+  createMockWorkflowEntry({
+    slug,
     status,
-    collectionName: 'posts',
-    pullRequest: { number: 1, branch: `cms/posts/${slug}`, updatedDate: new Date() },
-  },
-});
+    content: { _default: { title: slug } },
+    pullRequest: { updatedDate: new Date() },
+  });
 
 /**
  * Simulate dragging a card to a column.

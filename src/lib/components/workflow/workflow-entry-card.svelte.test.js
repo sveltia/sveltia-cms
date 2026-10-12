@@ -5,7 +5,13 @@ import { render } from 'vitest-browser-svelte';
 import { mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { deployments, productionSHA } from '$lib/services/deployments';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
-import { createMockEntry, initTestConfig, setEntries, TEST_IMAGE_URL } from '$lib/test/config';
+import {
+  createMockEntry,
+  createMockWorkflowEntry,
+  initTestConfig,
+  setEntries,
+  TEST_IMAGE_URL,
+} from '$lib/test/config';
 
 import WorkflowEntryCard from './workflow-entry-card.svelte';
 
@@ -17,22 +23,17 @@ const fields = [{ name: 'title', widget: 'string' }];
  * @param {Record<string, any>} [entry] Entry properties to override.
  * @returns {any} Entry.
  */
-const createEntry = (workflow = {}, entry = {}) => ({
-  ...createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello' } } }),
-  ...entry,
-  workflow: {
-    status: 'draft',
-    collectionName: 'posts',
+const createEntry = (workflow = {}, entry = {}) =>
+  createMockWorkflowEntry({
+    content: { _default: { title: 'Hello' } },
     pullRequest: {
-      number: 1,
-      branch: 'cms/posts/hello',
       headSHA: 'abc',
       author: { name: 'Melvin' },
       updatedDate: new Date('2024-01-15T10:00:00Z'),
     },
-    ...workflow,
-  },
-});
+    workflow,
+    entry,
+  });
 
 describe('WorkflowEntryCard', () => {
   beforeEach(async () => {

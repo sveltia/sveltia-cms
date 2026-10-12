@@ -5,7 +5,8 @@ import {
   awaitPendingFieldUpdates,
   fieldUpdatePending,
 } from '$lib/services/contents/editor/pending';
-import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import CodeEditor from './code-editor.svelte';
 
@@ -26,17 +27,13 @@ const renderEditor = async ({ config = {}, currentValue = undefined, values = {}
   const fieldConfig = { name: 'snippet', widget: 'code', ...config };
   const draft = createMockDraft({ fields: [fieldConfig], values: { _default: values } });
 
-  const props = $state({
-    locale: '_default',
-    keyPath: 'snippet',
-    typedKeyPath: 'snippet',
-    fieldId: 'snippet',
-    fieldLabel: 'Snippet',
+  const { props } = await renderFieldEditor(CodeEditor, {
     fieldConfig,
+    fieldLabel: 'Snippet',
+    locale: '_default',
     currentValue,
+    draft,
   });
-
-  await renderWithDraft(CodeEditor, { draft, props });
 
   return { draft, props };
 };

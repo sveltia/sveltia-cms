@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
-import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import FilePreview from './file-preview.svelte';
 
@@ -15,20 +16,15 @@ import FilePreview from './file-preview.svelte';
  * @param {string | string[] | undefined} currentValue Field value.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (fieldConfig, currentValue) => {
-  const { container } = await renderWithDraft(FilePreview, {
-    draft: createMockDraft({ fields: [fieldConfig] }),
-    props: {
-      locale: '_default',
-      keyPath: fieldConfig.name,
-      typedKeyPath: fieldConfig.name,
+const renderPreview = async (fieldConfig, currentValue) =>
+  (
+    await renderFieldPreview(FilePreview, {
       fieldConfig,
+      locale: '_default',
       currentValue,
-    },
-  });
-
-  return container;
-};
+      draft: createMockDraft({ fields: [fieldConfig] }),
+    })
+  ).container;
 
 describe('FilePreview', () => {
   beforeEach(() => {

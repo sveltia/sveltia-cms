@@ -194,6 +194,19 @@ export class CMS {
   }
 
   /**
+   * Change the Editorial Workflow status of the entry open in the editor with its status menu.
+   * @param {RegExp} current Name of the status menu button, showing the current status, e.g.
+   * `/Status: .*Draft/`.
+   * @param {string} status New status, e.g. `In Review`.
+   */
+  async changeStatus(current, status) {
+    await this.chooseMenuItem(
+      this.page.getByRole('button', { name: current }),
+      this.page.getByRole('menuitemradio', { name: status }),
+    );
+  }
+
+  /**
    * Start dragging files from the file manager over an element: the files are written to disk, as
    * a drag dispatched from the page carries no files that can be read as file system entries, and
    * the browser drags them in.

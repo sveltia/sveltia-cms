@@ -1,6 +1,7 @@
 import { openEntryPullRequest, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, getEditPane, showLocale } from '../multilingual/helpers.js';
+import { getEditor } from '../../fixtures/ui.js';
+import { getEditPane, showLocale } from '../multilingual/helpers.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';

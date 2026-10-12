@@ -8,7 +8,7 @@ import {
   formatTOML,
   formatYAML,
 } from '$lib/services/contents/file/format';
-import { clearUnsafeIntegerSources, toNumber } from '$lib/services/contents/file/integers';
+import { _resetUnsafeIntegerSources, toNumber } from '$lib/services/contents/file/integers';
 
 /**
  * @import { FileConfig } from '$lib/types/private';
@@ -117,11 +117,11 @@ describe('Test formatting integers a number can’t represent exactly', () => {
   const content = { big: 12345678901234567000, list: [12345678901234567000, 1.5], small: 3 };
 
   afterEach(() => {
-    clearUnsafeIntegerSources();
+    _resetUnsafeIntegerSources();
   });
 
   test('writes them as they were read', () => {
-    clearUnsafeIntegerSources();
+    _resetUnsafeIntegerSources();
     // The number the integer is read as, which `formatJSON()` writes as the number
     expect(formatJSON(content)).toContain('"big": 12345678901234567000,');
 

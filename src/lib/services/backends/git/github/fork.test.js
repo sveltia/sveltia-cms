@@ -30,7 +30,7 @@ vi.mock('$lib/services/backends/git/github/repository', async (importOriginal) =
   fetchDefaultBranchName: vi.fn(),
 }));
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('@sveltia/i18n', () => ({ _: vi.fn((key) => key) }));
+vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
 vi.mock('$lib/services/workflow/open-authoring', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),

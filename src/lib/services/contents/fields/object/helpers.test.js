@@ -2,6 +2,8 @@ import { describe, expect, test, vi } from 'vitest';
 
 import {
   formatSummary,
+  getTypedKeyPath,
+  getTypedSubKeyPath,
   getUnknownTypeMessage,
   resolveVariableType,
   warnUnknownType,
@@ -649,5 +651,21 @@ describe('resolveVariableType()', () => {
       expected,
     );
     expect(resolveVariableType({ types, fields, summary: 'default' })).toEqual(expected);
+  });
+});
+
+describe('getTypedKeyPath()', () => {
+  test('adds the type, if any', () => {
+    expect(getTypedKeyPath('sections.*', 'banner')).toBe('sections.*<banner>');
+    expect(getTypedKeyPath('hero', undefined)).toBe('hero');
+  });
+});
+
+describe('getTypedSubKeyPath()', () => {
+  test('appends the subfield name to the typed key path', () => {
+    expect(
+      getTypedSubKeyPath({ typedKeyPath: 'sections.*', type: 'banner', subFieldName: 'title' }),
+    ).toBe('sections.*<banner>.title');
+    expect(getTypedSubKeyPath({ typedKeyPath: 'hero', subFieldName: 'title' })).toBe('hero.title');
   });
 });

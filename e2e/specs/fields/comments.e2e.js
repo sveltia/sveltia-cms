@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * A blog whose fields carry the `comment` option, which Netlify/Decap CMS writes to the file as a
@@ -56,7 +57,7 @@ test('writes the field comments to the front matter without showing them', async
 }) => {
   await page.getByRole('row', { name: /Hello/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Hello');
   // The comments are meant for developers reading the file, not for editors

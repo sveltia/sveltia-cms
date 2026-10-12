@@ -186,8 +186,11 @@ export const watch = (getDependencies, fn) => {
  * @param {() => Promise<T> | undefined} fn Function to run. It can return `undefined` instead of a
  * `Promise` to skip the run, e.g. while a required value is missing.
  * @param {(result: T) => void} onResult Function receiving the result of the latest run.
+ * @param {(error: unknown) => void} [onError] Function receiving the error the latest run has been
+ * rejected with. An error of a run that has been superseded is ignored. Without this, the error is
+ * left unhandled.
  */
-export const watchAsync = (fn, onResult) => {
+export const watchAsync = (fn, onResult, onError) => {
   $effect(() => {
     const promise = fn();
 
@@ -197,11 +200,19 @@ export const watchAsync = (fn, onResult) => {
 
     let stale = false;
 
-    promise.then((result) => {
-      if (!stale) {
-        onResult(result);
-      }
-    });
+    promise.then(
+      (result) => {
+        if (!stale) {
+          onResult(result);
+        }
+      },
+      onError &&
+        ((error) => {
+          if (!stale) {
+            onError(error);
+          }
+        }),
+    );
 
     return () => {
       stale = true;

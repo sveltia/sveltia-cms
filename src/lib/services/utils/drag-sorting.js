@@ -138,6 +138,27 @@ export const focusReorderControl = ({ listElement, index, action = 'reorder' }) 
 };
 
 /**
+ * Move the focus to where it belongs once a list item has been removed, as the focused control is
+ * gone along with the item: the matching element on the item now at the same position, or on the
+ * previous item if the last one was removed, or else the given fallback, typically the control
+ * that adds an item.
+ * @param {object} args Arguments.
+ * @param {number} args.index Index of the removed item.
+ * @param {(index: number) => HTMLElement | null | undefined} args.getTarget Function returning the
+ * element to focus on the item at the given index, if there is one. It may be called with `-1`.
+ * @param {() => void} [args.fallback] Function moving the focus elsewhere if no item is left.
+ */
+export const focusAfterRemoval = ({ index, getTarget, fallback }) => {
+  const target = getTarget(index) ?? getTarget(index - 1);
+
+  if (target) {
+    target.focus();
+  } else {
+    fallback?.();
+  }
+};
+
+/**
  * Distance in pixels from a scroll container’s top or bottom edge where the auto-scroll kicks in.
  */
 const AUTO_SCROLL_THRESHOLD = 64;

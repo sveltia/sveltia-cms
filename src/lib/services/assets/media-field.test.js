@@ -10,6 +10,7 @@ import {
 } from '$lib/services/assets/media-field';
 import * as cloudStorageModule from '$lib/services/integrations/media-libraries/cloud';
 import * as cloudinaryModule from '$lib/services/integrations/media-libraries/cloud/cloudinary';
+import { createMockAssetFolder } from '$lib/test/factories';
 
 import { _resetAssetMetadataCache } from './details';
 
@@ -31,12 +32,12 @@ const mockAllAssets = vi.hoisted(() => ({ current: [] }));
 /** @type {{ current: any[] }} */
 const mockAllAssetFolders = vi.hoisted(() => ({ current: [] }));
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key) => key),
-  addMessages: vi.fn(),
-  locale: { current: 'en', set: vi.fn() },
-  dictionary: {},
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({
+    locale: 'en',
+    exports: { addMessages: vi.fn(), dictionary: {} },
+  }),
+);
 vi.mock('$lib/services/assets', () => ({
   getAssetByPath: vi.fn(),
   isRelativePath: vi.fn((path) => !/^[/@]/.test(path)),
@@ -103,13 +104,10 @@ describe('assets/media-field', () => {
       kind: 'image',
       sha: 'abc123',
       size: 1024,
-      folder: {
+      folder: createMockAssetFolder({
         internalPath: 'assets/images',
         publicPath: '/assets/images',
-        collectionName: undefined,
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     };
 
     // Create mock blob

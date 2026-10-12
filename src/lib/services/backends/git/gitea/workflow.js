@@ -1,9 +1,9 @@
+import { fetchAllPages } from '$lib/services/backends/git/gitea/api';
 import { commitChanges } from '$lib/services/backends/git/gitea/commits';
 import { getWorkflowRepository } from '$lib/services/backends/git/gitea/fork';
 import {
   createPullRequest,
   deleteBranch,
-  fetchAllPages,
   fetchBranchHead,
   fetchChangedFiles,
   fetchFileSHA,
@@ -23,15 +23,17 @@ import {
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
-import { encodePath } from '$lib/services/backends/git/shared/url';
 import {
   assertBranchAtHead,
   commitToNewWorkflowBranch,
+  getMovedHeadMergeState,
   getParentDirs,
+  isPullRequestMerged,
   isSquashMergeEnabled,
   saveWorkflowBranch,
   toChangedFilesWithModes,
 } from '$lib/services/backends/git/shared/workflow';
+import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -292,7 +294,7 @@ const fetchFileModes = async ({ headSHA, paths }) => {
   await runConcurrently(getParentDirs(paths), async (dir) => {
     const entries = /** @type {Record<string, any>[]} */ (
       await fetchAPI(
-        `/repos/${owner}/${repo}/contents${dir ? `/${encodePath(dir)}` : ''}` +
+        `/repos/${owner}/${repo}/contents${dir ? `/${encodePathSegments(dir)}` : ''}` +
           `?ref=${encodeURIComponent(headSHA)}`,
       )
     );
@@ -336,11 +338,10 @@ export const fetchMergeState = async (pullRequest) => {
     return { headSHA, onConfiguredBranches: false, files: [], complete: false };
   }
 
-  // The branch has moved on from the commit on record, which the check refuses outright, so there’s
-  // no point in waiting for the file list of a commit that won’t be merged. The list is reported as
-  // complete, or the check would put the refusal down to changes it can’t show instead
-  if (headSHA !== pullRequest.headSHA) {
-    return { headSHA, onConfiguredBranches, files: [], complete: true };
+  const movedHeadState = getMovedHeadMergeState(pullRequest, headSHA);
+
+  if (movedHeadState) {
+    return movedHeadState;
   }
 
   const { files, complete } = await fetchChangedFiles(number, headSHA);
@@ -386,23 +387,6 @@ export const fetchUnchangedPaths = async ({ headSHA, paths }) => {
 };
 
 /**
- * Check whether the given pull request has been merged. The endpoint answers with a status rather
- * than a body: `204 No Content` when it has, `404 Not Found` when it hasn’t.
- * @param {number} number Pull request number.
- * @returns {Promise<boolean>} `true` if the pull request has been merged.
- * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoPullRequestIsMerged
- */
-const isPullRequestMerged = async (number) => {
-  const { owner, repo } = repository;
-
-  const response = /** @type {Response} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/pulls/${number}/merge`, { responseType: 'raw' })
-  );
-
-  return response.ok;
-};
-
-/**
  * Merge the pull request and delete the workflow branch. The merge is pinned to the commit the
  * entry was loaded or saved at, so a commit pushed to the branch since — after the entry has been
  * reviewed — makes the instance refuse the merge rather than take it along unseen.
@@ -440,7 +424,10 @@ export const publish = async (pullRequest) => {
   // was open, say. That’s the outcome the user asked for, so it’s the branch cleanup below that’s
   // left to do rather than an error to report. Anything else the status covers, such as a failing
   // check or a conflict, is a real refusal
-  if (response.status === 405 && (await isPullRequestMerged(/** @type {number} */ (number)))) {
+  if (
+    response.status === 405 &&
+    (await isPullRequestMerged(repository, /** @type {number} */ (number)))
+  ) {
     await deleteBranch(pullRequest.branch);
 
     return;

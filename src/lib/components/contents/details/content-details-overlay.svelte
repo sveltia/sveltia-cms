@@ -55,6 +55,7 @@
   import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
+  import { createLatestGuard } from '$lib/services/utils/scheduling';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
@@ -87,10 +88,10 @@
   let restoring = false;
   let switching = false;
   /**
-   * Number of field highlight requests so far, so a request still looking for its field can tell
-   * whether a newer one has come in.
+   * Guard for field highlight requests, so a request still looking for its field can tell whether a
+   * newer one has come in.
    */
-  let highlightRequestCount = 0;
+  const highlightRequestGuard = createLatestGuard();
   /**
    * Width of the first pane in pixels, used to place the pane swap button over the gutter between
    * the panes. The button sits next to the resize handle rather than inside it: the handle is a
@@ -269,9 +270,7 @@
    * @param {FieldKeyPath} args.keyPath Key path of the field.
    */
   const revealRequestedField = async ({ locale, keyPath }) => {
-    highlightRequestCount += 1;
-
-    const request = highlightRequestCount;
+    const isLatest = highlightRequestGuard.next();
 
     await ensureEditPaneVisible(locale);
 
@@ -287,7 +286,7 @@
      * Check whether a newer request has come in.
      * @returns {boolean} Result.
      */
-    const isOutdated = () => request !== highlightRequestCount;
+    const isOutdated = () => !isLatest();
 
     await revealEditorField({ draft, locale, keyPath, isOutdated });
   };

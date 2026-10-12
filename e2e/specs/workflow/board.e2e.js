@@ -1,5 +1,6 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -153,7 +154,7 @@ test('opens an entry from its card', async ({ cms, github, page }) => {
 
   await board.getByRole('button', { name: 'Second Post' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Second Post');
   await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue('Coming soon.');

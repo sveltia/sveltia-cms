@@ -148,6 +148,201 @@ const isOpaqueField = (field) =>
   OPAQUE_FIELD_TYPES.includes(String(field.widget)) || getFieldKind(field) === 'custom';
 
 /**
+ * Shared state of a {@link finalizeContent} run, passed to the helpers that copy the fields.
+ * @typedef {object} FinalizeContext
+ * @property {InternalLocaleCode} locale Locale code.
+ * @property {InternalLocaleCode} defaultLocale Default locale code, or `_default` if i18n is not
+ * enabled.
+ * @property {{ collectionName: string, fileName?: string, valueMap: FlattenedEntryContent,
+ * isIndexFile: boolean }} getFieldArgs Arguments for `getField()`, without the key path.
+ * @property {FlattenedEntryContent} unsortedMap Unsorted property map.
+ * @property {FlattenedEntryContent} sortedMap Sorted property map.
+ * @property {{ locale: InternalLocaleCode, unsortedMap: FlattenedEntryContent, sortedMap:
+ * FlattenedEntryContent, isTomlOutput: boolean, omitEmptyOptionalFields: boolean }} copyArgs
+ * Arguments for {@link copyProperty}, without the key and the field.
+ */
+
+/**
+ * Check whether the field at the given key path belongs in the locale’s content. Every field does
+ * in the default locale, but in another locale, only one that is localized along with all of its
+ * ancestors, as the others are left out of that locale’s content.
+ * @param {FinalizeContext} ctx Context.
+ * @param {string} keyPath Concrete key path of the field.
+ * @returns {boolean} Result.
+ */
+const isFieldInLocale = ({ locale, defaultLocale, getFieldArgs }, keyPath) => {
+  if (locale === defaultLocale) {
+    return true;
+  }
+
+  const segments = keyPath.split('.');
+
+  // Skip the list item indexes, which aren’t fields of their own, e.g. `items.0` in `items.0.kv`
+  return segments.every((segment, index) => {
+    if (index < segments.length - 1 && /^\d+$/.test(segment)) {
+      return true;
+    }
+
+    const args = { ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') };
+    const fieldConfig = getField(args);
+
+    return (
+      !!fieldConfig && isFieldLocalized(getInheritedI18nOption({ fieldConfig, getFieldArgs: args }))
+    );
+  });
+};
+
+/**
+ * Copy a KeyValue field’s key-value pairs to the sorted property map.
+ * @param {FinalizeContext} ctx Context.
+ * @param {string} keyPath Concrete key path of the field.
+ * @param {Field} field Field configuration.
+ */
+const copyKeyValueField = (ctx, keyPath, field) => {
+  const { unsortedMap, sortedMap, copyArgs } = ctx;
+  const prefix = `${keyPath}.`;
+
+  const pairKeyPaths = Object.keys(unsortedMap).filter((_keyPath) => {
+    if (!_keyPath.startsWith(prefix)) {
+      return false;
+    }
+
+    // A blank pair, like the one a required field gets as its default value, isn’t saved.
+    // Validation doesn’t count it either, so it can only be left in an optional field. A pair with
+    // an empty key but a value, which a file can hold, is kept as is
+    if (!_keyPath.slice(prefix.length).trim() && !unsortedMap[_keyPath]) {
+      delete unsortedMap[_keyPath];
+
+      return false;
+    }
+
+    return true;
+  });
+
+  // A field without pairs is saved as an empty object, just like a List field without items is
+  // saved as an empty array, whether or not it holds the `null` placeholder the editor stores to
+  // have the field validated. Whether it does depends on whether its editor has been shown, so it
+  // can’t make a difference to the output. `copyProperty()` still omits the empty object if the
+  // field is optional and the `omit_empty_optional_fields` output option is enabled
+  if (!pairKeyPaths.length) {
+    // A field that isn’t in the locale’s content, e.g. one that isn’t translatable in a locale
+    // other than the default, doesn’t get the empty object either
+    if (Object.hasOwn(unsortedMap, keyPath) || isFieldInLocale(ctx, keyPath)) {
+      // Any other value, such as a string where the file doesn’t hold an object, is left as is
+      unsortedMap[keyPath] ??= {};
+      copyProperty({ ...copyArgs, key: keyPath, field });
+    }
+
+    return;
+  }
+
+  // Work around a bug in the flat library where numeric property keys used for KeyValue fields
+  // trigger a wrong conversion to an array instead of an object
+  // @see https://github.com/hughsk/flat/issues/103
+  sortedMap[keyPath] = {};
+  delete unsortedMap[keyPath];
+
+  pairKeyPaths.forEach((_keyPath) => {
+    copyProperty({ ...copyArgs, key: _keyPath, field });
+  });
+};
+
+/**
+ * Copy the value of a custom or Hidden field to the sorted property map. An object or array value
+ * is flattened into the key paths below the field’s own, which aren’t listed in the configured
+ * fields. Copy them right away, in the order the control or the file gave the properties, rather
+ * than leaving them to be sorted with the remainder at the end of the output.
+ * @param {FinalizeContext} ctx Context.
+ * @param {string} keyPath Concrete key path of the field.
+ * @param {Field} field Field configuration.
+ */
+const copyOpaqueField = ({ unsortedMap, copyArgs }, keyPath, field) => {
+  if (Object.hasOwn(unsortedMap, keyPath)) {
+    copyProperty({ ...copyArgs, key: keyPath, field });
+  }
+
+  const prefix = `${keyPath}.`;
+
+  Object.keys(unsortedMap)
+    .filter((_keyPath) => _keyPath.startsWith(prefix))
+    .forEach((_keyPath) => {
+      copyProperty({ ...copyArgs, key: _keyPath });
+    });
+};
+
+/**
+ * Add an empty object as a placeholder for an Object field whose subfields include one named like a
+ * list index, e.g. `2024`, so it’s not unflattened into an array. A value read from a file already
+ * has one, but a new entry or a newly added object doesn’t.
+ * @param {FinalizeContext} ctx Context.
+ * @param {string} keyPath Concrete key path of the field.
+ * @param {Field} [field] Field configuration.
+ */
+const addObjectPlaceholder = ({ unsortedMap, sortedMap }, keyPath, field) => {
+  if (field?.widget === 'object' && hasIndexLikeChildKey(unsortedMap, keyPath)) {
+    sortedMap[keyPath] = {};
+  }
+};
+
+/**
+ * Copy the value of a field to the sorted property map, dispatching a KeyValue field and an opaque
+ * field to their own handlers. A KeyValue field is handled on its own, even if it holds a value at
+ * its own key path, which is the placeholder of an empty field. A key path with wildcards is never
+ * dispatched, as it has to be resolved to the concrete key paths of the list items first.
+ * @param {FinalizeContext} ctx Context.
+ * @param {string} keyPath Key path of the field.
+ * @param {Field | undefined} field Field configuration.
+ * @returns {boolean} Whether the field has been handled. `false` if the key path holds no value,
+ * leaving it to the caller to resolve its wildcards or add a placeholder.
+ */
+const copyField = (ctx, keyPath, field) => {
+  const isConcrete = !keyPath.includes('*');
+
+  if (field?.widget === 'keyvalue' && isConcrete) {
+    copyKeyValueField(ctx, keyPath, field);
+  } else if (field && isConcrete && isOpaqueField(field)) {
+    copyOpaqueField(ctx, keyPath, field);
+  } else if (Object.hasOwn(ctx.unsortedMap, keyPath)) {
+    copyProperty({ ...ctx.copyArgs, key: keyPath, field });
+  } else {
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Copy the values of a wildcard key path’s concrete key paths to the sorted property map, resolving
+ * the wildcards to the list items, e.g. `list.*.title` → `list.0.title`, `list.1.title`. A KeyValue
+ * field has no value at its own key path when it holds pairs, so look for the key paths below it as
+ * well.
+ * @param {FinalizeContext} ctx Context.
+ * @param {string} keyPath Key path that may contain wildcards.
+ * @param {Field | undefined} field Field configuration.
+ */
+const copyWildcardField = (ctx, keyPath, field) => {
+  const regex = getWildcardKeyPathRegex(keyPath);
+
+  const concreteKeyPaths = new Set(
+    Object.keys(ctx.unsortedMap)
+      .map((_keyPath) => _keyPath.match(regex)?.[1])
+      .filter((_keyPath) => _keyPath !== undefined),
+  );
+
+  [...concreteKeyPaths]
+    .sort((a, b) => compare(a, b))
+    .forEach((concreteKeyPath) => {
+      // When the wildcard path couldn’t resolve a typed list field, resolve with the concrete key
+      // path so that field metadata (e.g. `required`) is available to `copyProperty`
+      const resolvedField = field ?? getField({ ...ctx.getFieldArgs, keyPath: concreteKeyPath });
+
+      if (!copyField(ctx, concreteKeyPath, resolvedField)) {
+        addObjectPlaceholder(ctx, concreteKeyPath, resolvedField);
+      }
+    });
+};
+
+/**
  * Finalize the content by sorting the entry draft content’s object properties by the order of the
  * configured collection fields. The result can be formatted as expected with `JSON.stringify()`, as
  * the built-in method uses insertion order for string key ordering.
@@ -193,36 +388,8 @@ const finalizeContent = ({
 
   const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
   const copyArgs = { locale, unsortedMap, sortedMap, isTomlOutput, omitEmptyOptionalFields };
-
-  /**
-   * Check whether the field at the given key path belongs in the locale’s content. Every field does
-   * in the default locale, but in another locale, only one that is localized along with all of its
-   * ancestors, as the others are left out of that locale’s content.
-   * @param {string} keyPath Concrete key path of the field.
-   * @returns {boolean} Result.
-   */
-  const isFieldInLocale = (keyPath) => {
-    if (locale === defaultLocale) {
-      return true;
-    }
-
-    const segments = keyPath.split('.');
-
-    // Skip the list item indexes, which aren’t fields of their own, e.g. `items.0` in `items.0.kv`
-    return segments.every((segment, index) => {
-      if (index < segments.length - 1 && /^\d+$/.test(segment)) {
-        return true;
-      }
-
-      const args = { ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') };
-      const fieldConfig = getField(args);
-
-      return (
-        !!fieldConfig &&
-        isFieldLocalized(getInheritedI18nOption({ fieldConfig, getFieldArgs: args }))
-      );
-    });
-  };
+  /** @type {FinalizeContext} */
+  const ctx = { locale, defaultLocale, getFieldArgs, unsortedMap, sortedMap, copyArgs };
 
   // Add the slug first
   if (canonicalSlugKey && Object.hasOwn(unsortedMap, canonicalSlugKey)) {
@@ -247,135 +414,12 @@ const finalizeContent = ({
     copyProperty({ ...copyArgs, key: orderKey });
   }
 
-  /**
-   * Copy a KeyValue field’s key-value pairs to the sorted property map.
-   * @param {string} keyPath Concrete key path of the field.
-   * @param {Field} field Field configuration.
-   */
-  const copyKeyValueField = (keyPath, field) => {
-    const prefix = `${keyPath}.`;
-
-    const pairKeyPaths = Object.keys(unsortedMap).filter((_keyPath) => {
-      if (!_keyPath.startsWith(prefix)) {
-        return false;
-      }
-
-      // A blank pair, like the one a required field gets as its default value, isn’t saved.
-      // Validation doesn’t count it either, so it can only be left in an optional field. A pair
-      // with an empty key but a value, which a file can hold, is kept as is
-      if (!_keyPath.slice(prefix.length).trim() && !unsortedMap[_keyPath]) {
-        delete unsortedMap[_keyPath];
-
-        return false;
-      }
-
-      return true;
-    });
-
-    // A field without pairs is saved as an empty object, just like a List field without items is
-    // saved as an empty array, whether or not it holds the `null` placeholder the editor stores to
-    // have the field validated. Whether it does depends on whether its editor has been shown, so
-    // it can’t make a difference to the output. `copyProperty()` still omits the empty object if
-    // the field is optional and the `omit_empty_optional_fields` output option is enabled
-    if (!pairKeyPaths.length) {
-      // A field that isn’t in the locale’s content, e.g. one that isn’t translatable in a locale
-      // other than the default, doesn’t get the empty object either
-      if (Object.hasOwn(unsortedMap, keyPath) || isFieldInLocale(keyPath)) {
-        // Any other value, such as a string where the file doesn’t hold an object, is left as is
-        unsortedMap[keyPath] ??= {};
-        copyProperty({ ...copyArgs, key: keyPath, field });
-      }
-
-      return;
-    }
-
-    // Work around a bug in the flat library where numeric property keys used for KeyValue fields
-    // trigger a wrong conversion to an array instead of an object
-    // @see https://github.com/hughsk/flat/issues/103
-    sortedMap[keyPath] = {};
-    delete unsortedMap[keyPath];
-
-    pairKeyPaths.forEach((_keyPath) => {
-      copyProperty({ ...copyArgs, key: _keyPath, field });
-    });
-  };
-
-  /**
-   * Copy the value of a custom or Hidden field to the sorted property map. An object or array value
-   * is flattened into the key paths below the field’s own, which aren’t listed in the configured
-   * fields. Copy them right away, in the order the control or the file gave the properties, rather
-   * than leaving them to be sorted with the remainder at the end of the output.
-   * @param {string} keyPath Concrete key path of the field.
-   * @param {Field} field Field configuration.
-   */
-  const copyOpaqueField = (keyPath, field) => {
-    if (Object.hasOwn(unsortedMap, keyPath)) {
-      copyProperty({ ...copyArgs, key: keyPath, field });
-    }
-
-    const prefix = `${keyPath}.`;
-
-    Object.keys(unsortedMap)
-      .filter((_keyPath) => _keyPath.startsWith(prefix))
-      .forEach((_keyPath) => {
-        copyProperty({ ...copyArgs, key: _keyPath });
-      });
-  };
-
-  /**
-   * Add an empty object as a placeholder for an Object field whose subfields include one named like
-   * a list index, e.g. `2024`, so it’s not unflattened into an array. A value read from a file
-   * already has one, but a new entry or a newly added object doesn’t.
-   * @param {string} keyPath Concrete key path of the field.
-   * @param {Field} [field] Field configuration.
-   */
-  const addObjectPlaceholder = (keyPath, field) => {
-    if (field?.widget === 'object' && hasIndexLikeChildKey(unsortedMap, keyPath)) {
-      sortedMap[keyPath] = {};
-    }
-  };
-
   // Move the listed properties to a new object
   createKeyPathList(fields).forEach((keyPath) => {
     const field = getField({ ...getFieldArgs, keyPath });
 
-    // A KeyValue field is handled on its own, even if it holds a value at its own key path, which
-    // is the placeholder of an empty field
-    if (field?.widget === 'keyvalue' && !keyPath.includes('*')) {
-      copyKeyValueField(keyPath, field);
-    } else if (field && !keyPath.includes('*') && isOpaqueField(field)) {
-      copyOpaqueField(keyPath, field);
-    } else if (Object.hasOwn(unsortedMap, keyPath)) {
-      copyProperty({ ...copyArgs, key: keyPath, field });
-    } else {
-      // Resolve the wildcards in the key path to the concrete key paths of the list items, e.g.
-      // `list.*.title` → `list.0.title`, `list.1.title`. A KeyValue field has no value at its own
-      // key path when it holds pairs, so look for the key paths below it as well
-      const regex = getWildcardKeyPathRegex(keyPath);
-
-      const concreteKeyPaths = new Set(
-        Object.keys(unsortedMap)
-          .map((_keyPath) => _keyPath.match(regex)?.[1])
-          .filter((_keyPath) => _keyPath !== undefined),
-      );
-
-      [...concreteKeyPaths]
-        .sort((a, b) => compare(a, b))
-        .forEach((concreteKeyPath) => {
-          // When the wildcard path couldn’t resolve a typed list field, resolve with the concrete
-          // key path so that field metadata (e.g. `required`) is available to `copyProperty`
-          const resolvedField = field ?? getField({ ...getFieldArgs, keyPath: concreteKeyPath });
-
-          if (resolvedField?.widget === 'keyvalue') {
-            copyKeyValueField(concreteKeyPath, resolvedField);
-          } else if (resolvedField && isOpaqueField(resolvedField)) {
-            copyOpaqueField(concreteKeyPath, resolvedField);
-          } else if (Object.hasOwn(unsortedMap, concreteKeyPath)) {
-            copyProperty({ ...copyArgs, key: concreteKeyPath, field: resolvedField });
-          } else {
-            addObjectPlaceholder(concreteKeyPath, resolvedField);
-          }
-        });
+    if (!copyField(ctx, keyPath, field)) {
+      copyWildcardField(ctx, keyPath, field);
     }
   });
 

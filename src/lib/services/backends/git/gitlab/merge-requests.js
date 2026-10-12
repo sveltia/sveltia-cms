@@ -8,7 +8,10 @@ import {
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { PULL_REQUEST_DESCRIPTION } from '$lib/services/backends/git/shared/pull-requests';
+import {
+  createDraftTitleCodec,
+  PULL_REQUEST_DESCRIPTION,
+} from '$lib/services/backends/git/shared/pull-requests';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { splitIntoChunks } from '$lib/services/utils/array';
 import {
@@ -50,25 +53,11 @@ export const MAX_ITEMS = {
 const DRAFT_TITLE_REGEX = /^\s*(?:\[draft\]|\(draft\)|draft:)\s*/i;
 
 /**
- * Prefix added to a merge request title to mark it as a draft.
+ * Helpers to remove the draft indicators from a merge request title, and to add the `Draft:` prefix
+ * to the title of a draft. GitLab tolerates combinations such as `Draft: [Draft] Title`, which are
+ * all removed.
  */
-export const DRAFT_TITLE_PREFIX = 'Draft: ';
-
-/**
- * Remove any draft indicator from the given merge request title.
- * @param {string} title Raw title.
- * @returns {string} Title without a draft prefix.
- */
-export const stripDraftPrefix = (title) => {
-  let result = title;
-
-  // Repeat, because GitLab tolerates combinations such as `Draft: [Draft] Title`
-  while (DRAFT_TITLE_REGEX.test(result)) {
-    result = result.replace(DRAFT_TITLE_REGEX, '');
-  }
-
-  return result;
-};
+export const draftTitle = createDraftTitleCodec({ regex: DRAFT_TITLE_REGEX, prefix: 'Draft: ' });
 
 /**
  * Get whether the signed-in user can merge the given merge request. A single merge request, like
@@ -92,7 +81,7 @@ export const toMergeRequest = (item, status) => {
   return {
     number: item.iid,
     nodeId: String(item.id),
-    title: stripDraftPrefix(item.title),
+    title: draftTitle.strip(item.title),
     url: item.web_url,
     branch: item.source_branch,
     headSHA: item.sha,
@@ -407,7 +396,7 @@ export const createPullRequest = async ({ branch, title, status }) => {
     await fetchAPI(`/projects/${getProjectId(fork)}/merge_requests`, {
       method: 'POST',
       body: {
-        title: isDraft ? `${DRAFT_TITLE_PREFIX}${title}` : title,
+        title: draftTitle.format(title, isDraft),
         source_branch: branch,
         target_branch: repository.branch,
         description: PULL_REQUEST_DESCRIPTION,

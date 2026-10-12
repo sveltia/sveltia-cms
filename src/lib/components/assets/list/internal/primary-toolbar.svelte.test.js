@@ -11,6 +11,7 @@ import { lockedBranch } from '$lib/services/backends/branch-access';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
+import { createMockAssetFolder } from '$lib/test/factories';
 import { waitForToastsToHide } from '$lib/test/toast';
 
 import PrimaryToolbar from './primary-toolbar.svelte';
@@ -97,13 +98,7 @@ describe('PrimaryToolbar', () => {
   });
 
   test('shows the folder name and deletes the selected assets', async () => {
-    selectedAssetFolder.current = /** @type {any} */ ({
-      collectionName: undefined,
-      internalPath: 'static/uploads',
-      publicPath: '/uploads',
-      entryRelative: false,
-      hasTemplateTags: false,
-    });
+    selectedAssetFolder.current = /** @type {any} */ (createMockAssetFolder());
 
     const { container } = await render(PrimaryToolbar);
 

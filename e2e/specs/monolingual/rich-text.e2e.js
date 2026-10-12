@@ -2,6 +2,7 @@ import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/mo
 import { createPNG } from '../../fixtures/files.js';
 import { selectText } from '../../fixtures/rich-text.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -101,7 +102,7 @@ test.describe('editing', () => {
   });
 
   test('formats the selected text with the toolbar', async ({ cms, page }) => {
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const field = editor.getByRole('group', { name: /Body.*Field/ });
     const body = field.getByRole('textbox', { name: 'Body' });
 
@@ -134,7 +135,7 @@ test.describe('editing', () => {
   });
 
   test('changes the block style with the text style menu', async ({ cms, page }) => {
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const field = editor.getByRole('group', { name: /Body.*Field/ });
 
     await field
@@ -162,7 +163,7 @@ test.describe('editing', () => {
   });
 
   test('turns Markdown typed in the editor into formatting', async ({ cms, page }) => {
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     const body = editor.getByRole('group', { name: /Body.*Field/ }).getByRole('textbox', {
       name: 'Body',
@@ -188,7 +189,7 @@ test.describe('editing', () => {
   });
 
   test('edits the Markdown source and switches back', async ({ cms, page }) => {
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const field = editor.getByRole('group', { name: /Body.*Field/ });
     const markdownButton = field.getByRole('button', { name: 'Edit in Markdown' });
 
@@ -221,7 +222,7 @@ test.describe('editing', () => {
 
   test('inserts an image with the image component', async ({ cms, page }) => {
     const image = createPNG({ color: [200, 180, 40] });
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const field = editor.getByRole('group', { name: /Body.*Field/ });
 
     // Start a new paragraph, as an image is inserted inline at the caret
@@ -253,7 +254,7 @@ test.describe('existing Markdown', () => {
     await cms.signIn();
     await page.getByRole('row', { name: /Rich Post/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const title = editor.getByRole('textbox', { name: 'Title' }).first();
 
     await expect(editor.getByRole('textbox', { name: 'Body' })).toContainText('The end.');
@@ -290,7 +291,7 @@ test.describe('existing Markdown', () => {
       await cms.signIn();
       await page.getByRole('row', { name: /Rich Post/ }).click();
 
-      const editor = page.getByRole('group', { name: 'Content Editor' });
+      const editor = getEditor(page);
 
       await expect(editor.getByRole('textbox', { name: 'Title' }).first()).toHaveValue('Rich Post');
       // Loading the body in the editor doesn’t count as a change, although the editor writes the
@@ -318,7 +319,7 @@ test.describe('existing Markdown', () => {
     await cms.signIn();
     await page.getByRole('row', { name: /Rich Post/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const body = editor.getByRole('textbox', { name: 'Body' });
 
     await expect(body).toContainText('Some italic text.');
@@ -343,7 +344,7 @@ test.describe('existing Markdown', () => {
     await cms.signIn();
     await page.getByRole('row', { name: /Rich Post/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const body = editor.getByRole('textbox', { name: 'Body' });
     const save = editor.getByRole('button', { name: 'Save' });
     const preview = editor.getByRole('document', { name: 'Content Preview' });
@@ -378,10 +379,7 @@ test.describe('existing Markdown', () => {
     await cms.signIn();
     await page.getByRole('row', { name: /Rich Post/ }).click();
 
-    const field = page
-      .getByRole('group', { name: 'Content Editor' })
-      .getByRole('group', { name: /Body.*Field/ });
-
+    const field = getEditor(page).getByRole('group', { name: /Body.*Field/ });
     const body = field.getByRole('textbox', { name: 'Body' });
     const language = field.getByRole('combobox', { name: 'Language' });
 
@@ -406,7 +404,7 @@ test.describe('existing Markdown', () => {
     await cms.signIn();
     await openFirstLight(page);
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     const body = editor.getByRole('group', { name: /Body.*Field/ }).getByRole('textbox', {
       name: 'Body',

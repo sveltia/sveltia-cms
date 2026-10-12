@@ -1,6 +1,7 @@
 import { parse } from 'marked';
 import { SvelteSet } from 'svelte/reactivity';
 
+import { createLazyModule } from '$lib/services/api/lazy-module';
 import { loadModule } from '$lib/services/app/dependencies';
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
 import { getField } from '$lib/services/contents/entry/fields';
@@ -70,32 +71,18 @@ export const isTranslationPending = ({ draft, targetLanguage, keyPath = '' }) =>
   );
 
 /**
- * Turndown service instance, created on first use.
- * @type {Promise<import('turndown')> | undefined}
+ * Loader for a Turndown service instance, created on first use. A failed load isn’t remembered, so
+ * a later call can try again, e.g. once the network is back.
  */
-let turndownServicePromise;
-
-/**
- * Get a Turndown service instance for converting HTML to Markdown. The library is only needed when
- * a translator without Markdown support hands HTML back, so it’s loaded from the CDN on demand
- * rather than shipped in the bundle.
- * @returns {Promise<import('turndown')>} Service instance.
- * @see https://github.com/mixmark-io/turndown
- */
-export const getTurndownService = async () => {
-  turndownServicePromise ??= (async () => {
-    /** @type {{ default: typeof import('turndown') }} */
-    let module;
-
-    try {
-      module = await loadModule('turndown', 'lib/turndown.browser.es.js');
-    } catch (error) {
-      // Let a later call try again, e.g. once the network is back
-      turndownServicePromise = undefined;
-      throw error;
-    }
-
-    const { default: TurndownService } = module;
+const turndownLoader = createLazyModule({
+  /**
+   * Fetch the library from the CDN and create a service instance.
+   * @returns {Promise<import('turndown')>} Service instance.
+   */
+  loader: async () => {
+    const { default: TurndownService } = /** @type {{ default: typeof import('turndown') }} */ (
+      await loadModule('turndown', 'lib/turndown.browser.es.js')
+    );
 
     const service = new TurndownService({
       headingStyle: 'atx',
@@ -107,10 +94,18 @@ export const getTurndownService = async () => {
     service.keep(['span', 'div']);
 
     return service;
-  })();
+  },
+  notLoadedMessage: 'Turndown is not loaded yet. Call `getTurndownService()` first.',
+});
 
-  return turndownServicePromise;
-};
+/**
+ * Get a Turndown service instance for converting HTML to Markdown. The library is only needed when
+ * a translator without Markdown support hands HTML back, so it’s loaded from the CDN on demand
+ * rather than shipped in the bundle.
+ * @returns {Promise<import('turndown')>} Service instance.
+ * @see https://github.com/mixmark-io/turndown
+ */
+export const getTurndownService = turndownLoader.load;
 
 /**
  * Named HTML character references a translator may return, besides numeric ones.

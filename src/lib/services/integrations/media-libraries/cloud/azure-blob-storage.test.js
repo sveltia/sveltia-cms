@@ -9,15 +9,12 @@ import azureBlobStorage, {
   buildContainerUrl,
   buildRequestUrl,
   createEmptyFolder,
-  createFolder,
   deleteFiles,
-  deleteFolder,
   getLibraryOptions,
   isAssetURL,
   isEnabled,
   list,
   move,
-  moveBlob,
   parseBlobResults,
   removeFolder,
   rename,
@@ -34,6 +31,9 @@ const {
   delete: deleteBlobs,
   rename: renameBlob,
   replace: replaceBlob,
+  move: moveBlob,
+  createFolder,
+  deleteFolder,
 } = azureBlobStorage.operations;
 
 // Mock dependencies
@@ -926,7 +926,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
 
       vi.mocked(fetch).mockResolvedValue(new Response('AuthorizationFailure', { status: 403 }));
       await expect(deleteFolder('2024', prefixedConfig, options)).rejects.toThrow(
-        'Failed to delete folder uploads/2024/: AuthorizationFailure',
+        'Failed to delete blob uploads/2024/: AuthorizationFailure',
       );
       await expect(deleteFolder('2024', prefixedConfig, { apiKey: '' })).rejects.toThrow(
         'Azure Blob Storage SAS token is required',

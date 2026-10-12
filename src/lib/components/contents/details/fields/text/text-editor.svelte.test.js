@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
-import { render } from 'vitest-browser-svelte';
 
 import { createRawState } from '$lib/services/utils/state.svelte';
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import CharacterCounter from '../string/character-counter.svelte';
 
@@ -22,21 +22,14 @@ const fieldConfig = { name: 'body', widget: 'text' };
  * @returns {Promise<{ props: { currentValue: any } }>} Props, whose `currentValue` follows the
  * editor.
  */
-const renderEditor = async (currentValue, context = undefined) => {
-  const props = $state({
-    locale: 'ar',
-    keyPath: 'body',
-    typedKeyPath: 'body',
-    fieldId: 'body',
-    fieldLabel: 'Body',
+const renderEditor = async (currentValue, context = undefined) =>
+  renderFieldEditor(TextEditor, {
     fieldConfig,
+    fieldLabel: 'Body',
+    locale: 'ar',
     currentValue,
+    context,
   });
-
-  await render(TextEditor, context ? { context, props } : props);
-
-  return { props };
-};
 
 describe('TextEditor', () => {
   test('reflects the value in a labelled text area', async () => {

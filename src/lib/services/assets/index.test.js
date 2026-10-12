@@ -33,6 +33,7 @@ import {
   selectedOrFocusedAssets,
   uploadingAssets,
 } from '$lib/services/assets/state';
+import { createMockAssetFolder } from '$lib/test/factories';
 
 // Mock all dependencies
 vi.mock('@sveltia/utils/file', async (importOriginal) => {
@@ -698,13 +699,7 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
-          internalPath: 'assets',
-          publicPath: '/assets',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'assets', publicPath: '/assets' }),
       };
 
       allAssets.current = [mockAsset];
@@ -749,13 +744,11 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts',
           publicPath: '/posts',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       allAssets.current = [mockAsset];
@@ -793,13 +786,7 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
-          internalPath: 'assets',
-          publicPath: '/assets',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'assets', publicPath: '/assets' }),
       };
 
       allAssets.current = [mockAsset];
@@ -824,13 +811,7 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
-          internalPath: 'assets',
-          publicPath: '/assets',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'assets', publicPath: '/assets' }),
       };
 
       allAssets.current = [mockAsset];
@@ -874,13 +855,11 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts',
           publicPath: '/posts',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       allAssets.current = [mockAsset];
@@ -909,13 +888,7 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
-          internalPath: 'assets',
-          publicPath: '/@assets',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'assets', publicPath: '/@assets' }),
       };
 
       allAssets.current = [mockAsset];
@@ -929,13 +902,10 @@ describe('assets/index', () => {
     });
 
     describe('with special characters in the file name', () => {
-      const globalFolder = {
+      const globalFolder = createMockAssetFolder({
         internalPath: 'static/images',
         publicPath: '/images',
-        collectionName: undefined,
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       /**
        * Create an asset in the global media folder.
@@ -1016,13 +986,7 @@ describe('assets/index', () => {
 
   describe('getAssetsByFolder', () => {
     it('should return assets matching the folder', () => {
-      const folder = {
-        internalPath: 'assets',
-        publicPath: '/assets',
-        collectionName: undefined,
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      const folder = createMockAssetFolder({ internalPath: 'assets', publicPath: '/assets' });
 
       const matchingAsset = {
         path: 'assets/image.jpg',
@@ -1039,13 +1003,11 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'def456',
         size: 2048,
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content',
           publicPath: '/content',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       allAssets.current = [matchingAsset, nonMatchingAsset];
@@ -1056,13 +1018,7 @@ describe('assets/index', () => {
     });
 
     it('should return assets with equivalent folder info', () => {
-      const folder = {
-        internalPath: 'assets',
-        publicPath: '/assets',
-        collectionName: undefined,
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      const folder = createMockAssetFolder({ internalPath: 'assets', publicPath: '/assets' });
 
       const matchingAsset = {
         path: 'assets/image.jpg',
@@ -1080,13 +1036,10 @@ describe('assets/index', () => {
     });
 
     it('should return empty array when no assets match', () => {
-      const folder = {
+      const folder = createMockAssetFolder({
         internalPath: 'nonexistent',
         publicPath: '/nonexistent',
-        collectionName: undefined,
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       const asset = {
         path: 'assets/image.jpg',
@@ -1094,13 +1047,7 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
-          internalPath: 'assets',
-          publicPath: '/assets',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'assets', publicPath: '/assets' }),
       };
 
       allAssets.current = [asset];
@@ -1128,13 +1075,10 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
+        folder: createMockAssetFolder({
           internalPath: 'assets/images',
           publicPath: '/assets/images',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       const asset2 = {
@@ -1143,13 +1087,10 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'def456',
         size: 512,
-        folder: {
+        folder: createMockAssetFolder({
           internalPath: 'assets/images',
           publicPath: '/assets/images',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       const asset3 = {
@@ -1158,13 +1099,11 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('document'),
         sha: 'ghi789',
         size: 2048,
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'docs',
           internalPath: 'content/docs',
           publicPath: '/docs',
-          collectionName: 'docs',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       allAssets.current = [asset1, asset2, asset3];
@@ -1202,13 +1141,10 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
+        folder: createMockAssetFolder({
           internalPath: 'assets/images',
           publicPath: '/assets/images',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       allAssets.current = [asset];
@@ -1231,13 +1167,7 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
-          internalPath: 'assets',
-          publicPath: '/assets',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'assets', publicPath: '/assets' }),
       };
 
       // Set focusedAsset to a value
@@ -1285,13 +1215,11 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/images',
           publicPath: '/images',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       const mockEntry = /** @type {any} */ ({
@@ -1383,13 +1311,11 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/assets',
           publicPath: '/assets',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       const mockEntry = /** @type {any} */ ({
@@ -2308,13 +2234,11 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'blog',
           internalPath: 'src/assets/blog',
           publicPath: '../../../assets/blog',
-          collectionName: 'blog',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       // Entry in i18n locale subfolder
@@ -2368,13 +2292,11 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'blog',
           internalPath: 'src/assets/blog',
           publicPath: '../../../assets/blog',
-          collectionName: 'blog',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       const mockEntry = /** @type {any} */ ({
@@ -2654,22 +2576,13 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
-          internalPath: 'uploads',
-          publicPath: '/uploads',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ collectionName: 'posts', internalPath: 'uploads' }),
       };
 
-      const mockFolder = {
-        internalPath: 'uploads',
-        publicPath: '/uploads',
+      const mockFolder = createMockAssetFolder({
         collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+        internalPath: 'uploads',
+      });
 
       vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
       vi.mocked(createPath).mockReturnValue('uploads/photo.jpg');
@@ -2695,22 +2608,18 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'uploads/custom',
           publicPath: '/custom',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
-      const mockFolder = {
+      const mockFolder = createMockAssetFolder({
+        collectionName: 'posts',
         internalPath: 'uploads/custom',
         publicPath: '/custom',
-        collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
       vi.mocked(createPath).mockReturnValue('uploads/custom/photo.jpg');
@@ -2789,22 +2698,13 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
-          internalPath: 'uploads',
-          publicPath: '/uploads',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ collectionName: 'posts', internalPath: 'uploads' }),
       };
 
-      const mockFolder = {
-        internalPath: 'uploads',
-        publicPath: '/uploads',
+      const mockFolder = createMockAssetFolder({
         collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+        internalPath: 'uploads',
+      });
 
       vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
       vi.mocked(createPath).mockReturnValue('uploads/photo.jpg');
@@ -2908,13 +2808,7 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
-          internalPath: 'static',
-          publicPath: '/',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'static', publicPath: '/' }),
       };
 
       vi.mocked(getAssetFolder).mockReturnValue(undefined);
@@ -2987,13 +2881,7 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
-          internalPath: '',
-          publicPath: '',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '', publicPath: '' }),
       };
 
       const mockEntry = /** @type {any} */ ({
@@ -3145,13 +3033,10 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
           internalPath: 'assets/images',
           publicPath: '/assets/images',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       vi.mocked(stripSlashes).mockReturnValue('/assets/images/photo.jpg');
@@ -3178,22 +3063,18 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/images',
           publicPath: '/posts/images',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
-      const mockFolder = {
+      const mockFolder = createMockAssetFolder({
+        collectionName: 'posts',
         internalPath: 'content/posts/images',
         publicPath: '/posts/images',
-        collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(stripSlashes).mockReturnValue('/posts/images/photo.jpg');
       vi.mocked(getPathInfo).mockReturnValue({
@@ -3262,22 +3143,18 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/images',
           publicPath: '/posts/images',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
-      const mockFolder = {
+      const mockFolder = createMockAssetFolder({
+        collectionName: 'posts',
         internalPath: 'content/posts/images',
         publicPath: '/posts/images',
-        collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       // Setup mocks for the subfolder scenario
       vi.mocked(stripSlashes).mockReturnValue('/posts/images/subfolder/photo.jpg');
@@ -3324,22 +3201,18 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/images',
           publicPath: '/posts/images',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
-      const mockFolder = {
+      const mockFolder = createMockAssetFolder({
+        collectionName: 'posts',
         internalPath: 'content/posts/images',
         publicPath: '/posts/images',
-        collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       // Setup for a different directory that doesn't start with publicPath
       vi.mocked(stripSlashes).mockReturnValue('/other/directory/photo.jpg');
@@ -3369,13 +3242,10 @@ describe('assets/index', () => {
     });
 
     describe('with a global media folder', () => {
-      const globalFolder = {
+      const globalFolder = createMockAssetFolder({
         internalPath: 'static/images',
         publicPath: '/images',
-        collectionName: undefined,
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       const logoAsset = {
         path: 'static/images/logo.png',
@@ -3437,13 +3307,11 @@ describe('assets/index', () => {
       it('should still try a collection folder when the global one doesn’t match', async () => {
         const { getAssetFolder } = await import('$lib/services/assets/folders');
 
-        const collectionFolder = {
+        const collectionFolder = createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'static/files',
           publicPath: '/files',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        };
+        });
 
         const fileAsset = { ...logoAsset, path: 'static/files/logo.png', folder: collectionFolder };
 
@@ -3527,13 +3395,11 @@ describe('assets/index', () => {
         extension: '.jpg',
       });
 
-      const mockFolder = {
+      const mockFolder = createMockAssetFolder({
+        collectionName: 'posts',
         internalPath: 'content/posts/images',
         publicPath: '/posts/images',
-        collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
       vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
@@ -3561,13 +3427,11 @@ describe('assets/index', () => {
       // Test case 2: no publicPath
       vi.clearAllMocks();
 
-      const mockFolderNoPublicPath = {
+      const mockFolderNoPublicPath = createMockAssetFolder({
+        collectionName: 'posts',
         internalPath: 'content/posts/images',
         publicPath: undefined,
-        collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(stripSlashes).mockReturnValue('/posts/images/subfolder/photo.jpg');
       vi.mocked(getPathInfo).mockReturnValue({
@@ -3591,13 +3455,11 @@ describe('assets/index', () => {
       // Test case 3: no internalPath
       vi.clearAllMocks();
 
-      const mockFolderNoInternalPath = {
+      const mockFolderNoInternalPath = createMockAssetFolder({
+        collectionName: 'posts',
         internalPath: undefined,
         publicPath: '/posts/images',
-        collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(stripSlashes).mockReturnValue('/posts/images/subfolder/photo.jpg');
       vi.mocked(getPathInfo).mockReturnValue({
@@ -3631,22 +3493,18 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/images',
           publicPath: '/posts/images',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
-      const mockFolder = {
+      const mockFolder = createMockAssetFolder({
+        collectionName: 'posts',
         internalPath: 'content/posts/images',
         publicPath: '/posts/images',
-        collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       // Test case where dirName is exactly publicPath (no trailing slash)
       // This should NOT trigger the path modification
@@ -3683,13 +3541,11 @@ describe('assets/index', () => {
       const { getAssetFolder } = await import('$lib/services/assets/folders');
       const { createPath } = await import('$lib/services/utils/file');
 
-      const mockFolder = {
+      const mockFolder = createMockAssetFolder({
+        collectionName: 'posts',
         internalPath: 'content/posts/images',
         publicPath: '/posts/images',
-        collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       // Test case where dirName starts with publicPath but is actually a different path
       // like `/posts/images-backup` - this should NOT trigger the path modification
@@ -3713,13 +3569,11 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/images-backup',
           publicPath: '/posts/images-backup',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       allAssets.current = [differentMockAsset];
@@ -3749,22 +3603,18 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/images',
           publicPath: '/posts/images',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
-      const mockFolder = {
+      const mockFolder = createMockAssetFolder({
+        collectionName: 'posts',
         internalPath: 'content/posts/images',
         publicPath: '/posts/images',
-        collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       // Test case where dirName properly starts with publicPath + '/'
       // This SHOULD trigger the path modification
@@ -3988,22 +3838,10 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
-          internalPath: 'assets',
-          publicPath: '/',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'assets', publicPath: '/' }),
       };
 
-      const mockFolder = {
-        internalPath: 'assets',
-        publicPath: '/',
-        collectionName: undefined,
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      const mockFolder = createMockAssetFolder({ internalPath: 'assets', publicPath: '/' });
 
       // When publicPath is '/', dirName like '/subfolder' should be appended
       // to internalPath as 'assets/subfolder' (not '/subfolder' + 'assets')
@@ -4051,22 +3889,18 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/media',
           publicPath: '/media',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
-      const mockFolder = {
+      const mockFolder = createMockAssetFolder({
+        collectionName: 'posts',
         internalPath: 'content/posts/media',
         publicPath: '/media',
-        collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       // Request path includes nested folders: /media/album/2024/photo.jpg
       vi.mocked(stripSlashes).mockReturnValue('/media/album/2024/photo.jpg');
@@ -4109,22 +3943,10 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
-          internalPath: 'static',
-          publicPath: '/',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'static', publicPath: '/' }),
       };
 
-      const mockFolder = {
-        internalPath: 'static',
-        publicPath: '/',
-        collectionName: undefined,
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      const mockFolder = createMockAssetFolder({ internalPath: 'static', publicPath: '/' });
 
       // Request path with deeply nested structure
       vi.mocked(stripSlashes).mockReturnValue('/images/gallery/albums/2024/march/photo.jpg');
@@ -4165,13 +3987,11 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/custom',
           publicPath: '/custom',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       const mockFieldFolder = {
@@ -4222,13 +4042,11 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/custom',
           publicPath: '/custom',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       const mockFieldFolder = {
@@ -4331,21 +4149,15 @@ describe('assets/index', () => {
 
   describe('additional edge cases and scenarios', () => {
     it('should handle getAssetsByFolder with multiple matching folders', () => {
-      const folder1 = {
+      const folder1 = createMockAssetFolder({
         internalPath: 'assets/images',
         publicPath: '/assets/images',
-        collectionName: undefined,
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
-      const folder2 = {
+      const folder2 = createMockAssetFolder({
         internalPath: 'assets/documents',
         publicPath: '/assets/documents',
-        collectionName: undefined,
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       const asset1 = {
         path: 'assets/images/photo.jpg',
@@ -4392,13 +4204,10 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
+        folder: createMockAssetFolder({
           internalPath: 'assets/nested/deep/folder',
           publicPath: '/assets/nested/deep/folder',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       const asset2 = {
@@ -4407,13 +4216,10 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'def456',
         size: 2048,
-        folder: {
+        folder: createMockAssetFolder({
           internalPath: 'assets/nested/deep',
           publicPath: '/assets/nested/deep',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       allAssets.current = [asset1, asset2];
@@ -4454,13 +4260,11 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'blog',
           internalPath: 'content/blog/2024/01/post/media',
           publicPath: '/media',
-          collectionName: 'blog',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       const mockEntry = /** @type {any} */ ({
@@ -4528,13 +4332,11 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/2024/complex-entry/images',
           publicPath: '/posts/images',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       allAssets.current = [mockAsset];
@@ -4602,13 +4404,7 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
-          internalPath: 'assets/global',
-          publicPath: '/assets',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'assets/global', publicPath: '/assets' }),
       };
 
       vi.mocked(stripSlashes).mockReturnValue('/assets/photo.jpg');
@@ -4673,13 +4469,7 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
-          internalPath: 'assets',
-          publicPath: '/@assets',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'assets', publicPath: '/@assets' }),
       };
 
       stripSlashesMock.mockReturnValue('@assets/image.jpg');
@@ -4725,13 +4515,11 @@ describe('assets/index', () => {
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
         sha: 'abc123',
         size: 1024,
-        folder: {
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content',
           publicPath: '/content',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       };
 
       allAssets.current = [mockAsset];
@@ -4761,13 +4549,7 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
-          internalPath: 'dynamic/media',
-          publicPath: '/media',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'dynamic/media', publicPath: '/media' }),
       };
 
       vi.mocked(stripSlashes).mockReturnValue('/media/photo.jpg');
@@ -4815,20 +4597,16 @@ describe('assets/index', () => {
       // The folder without publicPath (undefined) also covers line 242 idx 1:
       // `folder.publicPath ?? ''` — the nullish coalescing fallback to ''.
       allAssetFolders.current = /** @type {any} */ ([
-        {
+        createMockAssetFolder({
+          collectionName: 'posts',
           internalPath: 'content/posts/images',
           publicPath: '/posts/images',
-          collectionName: 'posts',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
-        {
+        }),
+        createMockAssetFolder({
+          collectionName: 'other',
           internalPath: 'content/other',
           publicPath: undefined,
-          collectionName: 'other',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        }),
       ]);
       allAssets.current = [];
 
@@ -4873,13 +4651,7 @@ describe('assets/index', () => {
         sha: 'abc123',
         size: 1024,
         kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
-        folder: {
-          internalPath: 'uploads/(a+)+',
-          publicPath: '/(a+)+',
-          collectionName: undefined,
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: 'uploads/(a+)+', publicPath: '/(a+)+' }),
       };
 
       // Set up folder with regex metacharacters in publicPath

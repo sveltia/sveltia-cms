@@ -2,6 +2,7 @@
 
 import { decodeBase64, getPathInfo } from '@sveltia/utils/file';
 
+import { getApiSettings } from '$lib/services/backends/git/gitea/api';
 import { fetchLastCommit } from '$lib/services/backends/git/gitea/commits';
 import {
   getWorkflowRepository,
@@ -20,9 +21,9 @@ import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optio
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
-import { encodePath } from '$lib/services/backends/git/shared/url';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { dataLoadedProgress } from '$lib/services/contents';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import {
@@ -46,18 +47,6 @@ import { dataLoadedProgress } from '$lib/services/contents';
  * content?: string | null,
  * encoding?: 'base64' | null,
  * } | null} PartialContentsListItem
- */
-
-/**
- * The limits an instance applies to an API response, which it enforces by silently returning less
- * than what was asked for.
- * @typedef {object} ApiSettings
- * @property {number} [default_paging_num] Default number of items per page.
- * @property {number} [max_response_items] Maximum number of items in a response.
- * @property {number} [default_max_blob_size] Maximum size of a single blob whose content is
- * returned.
- * @property {number} [default_max_response_size] Maximum combined size of the contents in one
- * response. Gitea only; Forgejo has no such limit.
  */
 
 /**
@@ -93,7 +82,7 @@ export const _resetDirLookup = () => {
 const lookUpDirSHA = async (ref, dirPath) => {
   const { owner, repo } = repository;
   const { dirname, basename } = getPathInfo(dirPath);
-  const parentPath = dirname ? `/${encodePath(dirname)}` : '';
+  const parentPath = dirname ? `/${encodePathSegments(dirname)}` : '';
 
   // Missing when the parent directory doesn’t exist either
   const entries = /** @type {{ type: string, name: string, sha: string }[] | undefined} */ (
@@ -160,7 +149,8 @@ export const fetchFileList = async (lastHash) => {
     return [];
   }
 
-  const requestPath = `/repos/${owner}/${repo}/git/trees/${encodePath(treeSHA)}?recursive=1`;
+  const treePath = encodePathSegments(treeSHA);
+  const requestPath = `/repos/${owner}/${repo}/git/trees/${treePath}?recursive=1`;
   const prefix = rootDir ? `${rootDir}/` : '';
   /** @type {PartialGitEntry[]} */
   const gitEntries = [];
@@ -234,9 +224,12 @@ export const parseFileContents = async (fetchingFiles, results) => {
  */
 const requestRawFile = async ({ owner, repo, path, ref }) =>
   /** @type {Promise<string>} */ (
-    fetchAPI(`/repos/${owner}/${repo}/raw/${encodePath(path)}?ref=${encodeURIComponent(ref)}`, {
-      responseType: 'text',
-    })
+    fetchAPI(
+      `/repos/${owner}/${repo}/raw/${encodePathSegments(path)}?ref=${encodeURIComponent(ref)}`,
+      {
+        responseType: 'text',
+      },
+    )
   );
 
 /**
@@ -344,7 +337,7 @@ export const fetchFileContents = async (fetchingFiles, lastHash) => {
       max_response_items: maxResponseItems = Infinity,
       default_max_blob_size: maxBlobSize,
       default_max_response_size: maxResponseSize = Infinity,
-    } = /** @type {ApiSettings} */ (await fetchAPI('/settings/api'));
+    } = await getApiSettings();
 
     // A blob this large comes back with no content at all, so it has to be read separately
     const blobSizeLimit = Number(maxBlobSize) || DEFAULT_MAX_BLOB_SIZE;
@@ -429,11 +422,11 @@ const checkAccess = async () => {
 };
 
 /**
- * Set up Open Authoring for the signed-in user. The set-up asks the instance for what only a
- * supported version offers, so the version is checked first here rather than alongside the
- * repository, as {@link checkAccess} does.
+ * Check the instance version, then set up Open Authoring for the signed-in user. The set-up asks
+ * the instance for what only a supported version offers, so the version is checked first here
+ * rather than alongside the repository, as {@link checkAccess} does.
  */
-const setUpOpenAuthoring = async () => {
+const checkVersionAndInitOpenAuthoring = async () => {
   await checkInstanceVersion();
   await initOpenAuthoring();
 };
@@ -448,7 +441,7 @@ const setUpOpenAuthoring = async () => {
 export const fetchFiles = async ({ lastCommit } = {}) => {
   await fetchRepositoryFiles({
     isOpenAuthoringConfigured,
-    initOpenAuthoring: setUpOpenAuthoring,
+    initOpenAuthoring: checkVersionAndInitOpenAuthoring,
     repository,
     checkAccess,
     checkBranchAccess,
@@ -472,9 +465,10 @@ export const fetchBlob = async (asset) => {
   // it has to be read from — in the contributor’s fork with Open Authoring
   const { owner, repo } = asset.workflow ? getWorkflowRepository() : repository;
   const ref = asset.workflow?.branch ?? repository.branch;
+  const refAndPath = `${encodePathSegments(String(ref))}/${encodePathSegments(path)}`;
 
   return /** @type {Promise<Blob>} */ (
-    fetchAPI(`/repos/${owner}/${repo}/media/${encodePath(String(ref))}/${encodePath(path)}`, {
+    fetchAPI(`/repos/${owner}/${repo}/media/${refAndPath}`, {
       responseType: 'blob',
     })
   );

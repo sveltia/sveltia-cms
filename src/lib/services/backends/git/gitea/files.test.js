@@ -3,6 +3,7 @@
 import { decodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { _resetApiSettings } from '$lib/services/backends/git/gitea/api';
 import { fetchLastCommit } from '$lib/services/backends/git/gitea/commits';
 import {
   getWorkflowRepository,
@@ -105,6 +106,7 @@ vi.mock('$lib/services/contents', () => ({
 describe('Gitea Files Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    _resetApiSettings();
     progressValues.length = 0;
     // Reset instance to default state
     vi.mocked(instance).isForgejo = false;

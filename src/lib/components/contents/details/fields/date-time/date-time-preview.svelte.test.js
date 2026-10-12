@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import DateTimePreview from './date-time-preview.svelte';
 
@@ -14,17 +15,14 @@ import DateTimePreview from './date-time-preview.svelte';
  * @param {string} [locale] Locale code.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (currentValue, config = {}, locale = 'en') => {
-  const { container } = await render(DateTimePreview, {
-    locale,
-    keyPath: 'date',
-    typedKeyPath: 'date',
-    fieldConfig: { name: 'date', widget: 'datetime', ...config },
-    currentValue,
-  });
-
-  return container;
-};
+const renderPreview = async (currentValue, config = {}, locale = 'en') =>
+  (
+    await renderFieldPreview(DateTimePreview, {
+      fieldConfig: { name: 'date', widget: 'datetime', ...config },
+      locale,
+      currentValue,
+    })
+  ).container;
 
 describe('DateTimePreview', () => {
   test('shows a date-only value for the locale', async () => {

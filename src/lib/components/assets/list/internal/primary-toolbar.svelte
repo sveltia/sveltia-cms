@@ -10,7 +10,7 @@
   import UploadAssetsButton from '$lib/components/assets/list/internal/upload-assets-button.svelte';
   import PreviewAssetButton from '$lib/components/assets/list/preview-asset-button.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
-  import { encodeRoutePath, goBack, goto } from '$lib/services/app/navigation';
+  import { goBack, goto } from '$lib/services/app/navigation';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import {
@@ -30,6 +30,7 @@
   import { getReadonlyMessage } from '$lib/services/config/readonly';
   import { env } from '$lib/services/user/env.svelte';
   import { createPath } from '$lib/services/utils/file';
+  import { encodePathSegments } from '$lib/services/utils/url';
 
   let deletingFailed = $state(false);
 
@@ -66,7 +67,7 @@
    * as the back button on small screens does.
    */
   const browseAncestor = (depth, back) => {
-    const path = encodeRoutePath(
+    const path = encodePathSegments(
       `/assets/${createPath([folder?.internalPath, ...subfolderNames.slice(0, depth)])}`,
     );
 
@@ -92,7 +93,7 @@
 <PrimaryToolbar rootLabel={folderLabel} {subfolderNames} onBrowse={browseAncestor}>
   {#snippet actions()}
     <PreviewAssetButton
-      path={asset ? encodeRoutePath(`/assets/${asset.path}`) : undefined}
+      path={asset ? encodePathSegments(`/assets/${asset.path}`) : undefined}
       disabled={!asset || !canPreviewAsset(asset)}
       state={getAssetFolderHistoryState()}
     />

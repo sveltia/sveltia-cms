@@ -3,8 +3,7 @@ import {
   COLLECTION_OPTIONS_FILES,
 } from '../../fixtures/configs/collection-options.js';
 import { expect, test } from '../../fixtures/test.js';
-
-import { openCollection } from './helpers.js';
+import { getEditor, openCollection } from '../../fixtures/ui.js';
 
 test.use({ config: COLLECTION_OPTIONS_CONFIG });
 
@@ -48,7 +47,7 @@ test.describe('with creation and deletion turned off', () => {
     await openCollection(page, 'Announcements');
     await page.getByRole('row', { name: /Opening Day/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue(
       'The gates open at nine.',
@@ -75,7 +74,7 @@ test.describe('with creation and deletion turned off', () => {
       window.location.hash = '#/collections/announcements/new';
     });
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await expect(editor).toContainText(
       'Creating new entries in this collection is disabled by the administrator.',
@@ -96,7 +95,7 @@ test.describe('with a limit on the number of entries', () => {
     );
     await createButton.click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Question' }).fill('Is there parking?');
     await editor.getByRole('textbox', { name: 'Answer' }).fill('On the street.');
@@ -130,7 +129,7 @@ test.describe('hidden collection', () => {
     await openCollection(page, 'Journal');
     await page.getByRole('row', { name: /First Sowing/ }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const plot = editor.getByRole('radiogroup', { name: 'Plot' });
 
     await expect(plot.getByRole('radio', { name: 'North Bed' })).toBeChecked();

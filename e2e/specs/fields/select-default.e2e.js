@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * Talks whose Select fields have their `default` given as `{ label, value }` option objects, as
@@ -55,7 +56,7 @@ test('selects the default options given as option objects, saving their values',
   await cms.signIn();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('radio', { name: 'Online' })).toBeChecked();
   await expect(editor.getByRole('radio', { name: 'In Person' })).not.toBeChecked();
@@ -103,7 +104,7 @@ test.describe('empty default', () => {
     await cms.signIn();
     await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await expect(editor.getByRole('radio', { name: 'online' })).toBeVisible();
     await expect(editor.getByRole('radio', { name: 'online' })).not.toBeChecked();

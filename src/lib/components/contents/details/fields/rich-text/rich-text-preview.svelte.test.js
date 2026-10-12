@@ -8,6 +8,7 @@ import { allAssets } from '$lib/services/assets/state';
 import { cmsConfig } from '$lib/services/config';
 import { sanitizeRichTextHTML } from '$lib/services/contents/fields/rich-text/sanitize';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import RichTextPreview from './rich-text-preview.svelte';
 
@@ -44,17 +45,11 @@ const renderPreviewWithProps = async (currentValue, config = {}) => {
   /** @type {RichTextField} */
   const fieldConfig = { name: 'body', widget: 'richtext', ...config };
 
-  const props = $state({
-    locale: '_default',
-    keyPath: 'body',
-    typedKeyPath: 'body',
+  const { container, props, unmount } = await renderFieldPreview(RichTextPreview, {
     fieldConfig,
+    locale: '_default',
     currentValue,
-  });
-
-  const { container, unmount } = await renderWithDraft(RichTextPreview, {
     draft: createMockDraft({ fields: [fieldConfig] }),
-    props,
   });
 
   return {

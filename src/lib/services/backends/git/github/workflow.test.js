@@ -17,9 +17,9 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key, { values } = {}) => (values ? `${key} ${JSON.stringify(values)}` : key)),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
 vi.mock('$lib/services/backends/git/github/commits');
 vi.mock('$lib/services/backends/git/github/files');
 vi.mock('$lib/services/backends/git/github/repository', () => ({
@@ -342,7 +342,7 @@ describe('GitHub Editorial Workflow service', () => {
 
       const error = await createBranch('cms/posts/hello').catch((ex) => ex);
 
-      expect(error.cause.message).toBe('workflow.branch_in_use {"number":"#7"}');
+      expect(error.cause.message).toBe('workflow.branch_in_use:{"number":"#7"}');
     });
 
     test('refuses to reuse an existing reference with a pull request to another branch', async () => {
@@ -648,7 +648,11 @@ describe('GitHub Editorial Workflow service', () => {
   });
 
   describe('fetchMergeState', () => {
-    const pullRequest = /** @type {any} */ ({ number: 1, branch: 'cms/posts/hello' });
+    const pullRequest = /** @type {any} */ ({
+      number: 1,
+      branch: 'cms/posts/hello',
+      headSHA: 'abc123',
+    });
 
     /**
      * Create a pull request as returned by the REST API.
@@ -743,6 +747,22 @@ describe('GitHub Editorial Workflow service', () => {
         });
 
       await expect(fetchMergeState(pullRequest)).resolves.toMatchObject({ complete: false });
+    });
+
+    test('lists nothing when the branch has moved on from the commit on record', async () => {
+      // The check refuses a moved branch outright, so a commit that won’t be merged isn’t compared,
+      // which could otherwise be cut short and have the refusal put down to changes it can’t show
+      vi.mocked(fetchAPI).mockResolvedValueOnce(createRestPullRequest());
+
+      await expect(fetchMergeState({ ...pullRequest, headSHA: 'old456' })).resolves.toEqual({
+        headSHA: 'abc123',
+        onConfiguredBranches: true,
+        files: [],
+        complete: true,
+      });
+
+      expect(fetchAPI).toHaveBeenCalledOnce();
+      expect(fetchGraphQL).not.toHaveBeenCalled();
     });
 
     test('handles a comparison without files', async () => {
@@ -852,6 +872,61 @@ describe('GitHub Editorial Workflow service', () => {
         '/repos/owner/repo/pulls/1/merge',
         expect.objectContaining({ body: expect.objectContaining({ merge_method: 'merge' }) }),
       );
+    });
+
+    describe('when GitHub refuses the merge', () => {
+      const pullRequest = /** @type {any} */ ({
+        number: 1,
+        branch: 'cms/posts/hello',
+        title: 'Create Post',
+        headSHA: 'abc123',
+      });
+
+      /**
+       * Create the error `fetchAPI` throws for a failed request.
+       * @param {number} status HTTP status code.
+       * @returns {Error} Error.
+       */
+      const createError = (status) =>
+        new Error('Server responded with an error', {
+          cause: { status, message: 'Pull Request is not mergeable' },
+        });
+
+      test('takes a pull request merged on GitHub meanwhile as published', async () => {
+        // Everything that stops a merge, this one included, comes back as a 405
+        vi.mocked(fetchAPI)
+          .mockRejectedValueOnce(createError(405))
+          .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+        await publish(pullRequest);
+
+        expect(fetchAPI).toHaveBeenNthCalledWith(2, '/repos/owner/repo/pulls/1/merge', {
+          responseType: 'raw',
+        });
+        // The branch is tidied up as after a merge made here
+        expect(fetchAPI).toHaveBeenNthCalledWith(
+          3,
+          '/repos/owner/repo/git/refs/heads/cms/posts/hello',
+          expect.objectContaining({ method: 'DELETE' }),
+        );
+      });
+
+      test('reports a 405 that isn’t about the pull request being merged', async () => {
+        vi.mocked(fetchAPI)
+          .mockRejectedValueOnce(createError(405))
+          .mockResolvedValueOnce(new Response(null, { status: 404 }));
+
+        await expect(publish(pullRequest)).rejects.toThrow('Server responded with an error');
+        // The branch is left alone
+        expect(fetchAPI).toHaveBeenCalledTimes(2);
+      });
+
+      test('reports any other refusal without checking the merge', async () => {
+        vi.mocked(fetchAPI).mockRejectedValueOnce(createError(409));
+
+        await expect(publish(pullRequest)).rejects.toThrow('Server responded with an error');
+        expect(fetchAPI).toHaveBeenCalledOnce();
+      });
     });
   });
 

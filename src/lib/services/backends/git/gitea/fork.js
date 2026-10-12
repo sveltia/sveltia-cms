@@ -10,14 +10,13 @@ import {
   NOT_COLLABORATOR_ERROR_MESSAGE,
 } from '$lib/services/backends/git/shared/errors';
 import {
-  ensureForkPermission,
   isOpenAuthoringConfiguredFor,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
+  setUpForkFor,
 } from '$lib/services/backends/git/shared/fork';
-import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
-import { forkedRepository } from '$lib/services/workflow/open-authoring';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import { RepositoryPath, User } from '$lib/types/private';
@@ -273,7 +272,7 @@ const fetchForgejoSyncState = async ({ owner, repo }, branch) => {
     fork_commit: forkCommit,
     base_commit: baseCommit,
   } = /** @type {{ allowed?: boolean, fork_commit?: string, base_commit?: string }} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/sync_fork/${encodePath(branch)}`)
+    await fetchAPI(`/repos/${owner}/${repo}/sync_fork/${encodePathSegments(branch)}`)
   );
 
   if (forkCommit && forkCommit === baseCommit) {
@@ -324,7 +323,7 @@ export const syncFork = async (fork) => {
     response = /** @type {Response} */ (
       await fetchAPI(
         instance.isForgejo
-          ? `/repos/${owner}/${repo}/sync_fork/${encodePath(branch)}`
+          ? `/repos/${owner}/${repo}/sync_fork/${encodePathSegments(branch)}`
           : `/repos/${owner}/${repo}/merge-upstream`,
         {
           method: 'POST',
@@ -364,7 +363,7 @@ export const checkForkBranch = async ({ owner, repo }) => {
   const { branch } = /** @type {{ branch: string }} */ (repository);
 
   const response = /** @type {Response} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePath(branch)}`, {
+    await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePathSegments(branch)}`, {
       responseType: 'raw',
     })
   );
@@ -387,36 +386,32 @@ export const checkForkBranch = async ({ owner, repo }) => {
  * @see https://sveltiacms.app/en/docs/workflows/open
  */
 const setUpOpenAuthoring = async () => {
-  const { canWrite } = await fetchRepositoryAccess();
-
-  // A maintainer keeps working on the configured repository, as if Open Authoring was off
-  if (canWrite) {
-    return;
-  }
-
   const { owner, repo } = repository;
 
-  // Syncing the fork needs the branch name, which is otherwise resolved later in the data load
-  if (!repository.branch) {
-    await fetchDefaultBranchName();
-  }
-
-  const existingFork = await fetchFork();
-
-  if (existingFork) {
-    await syncFork(existingFork);
-    await checkForkBranch(existingFork);
-    forkedRepository.current = existingFork;
-
-    return;
-  }
-
-  await ensureForkPermission({
+  await setUpForkFor({
     repoPath: `${owner}/${repo}`,
-    allowForking: await fetchForkingAllowed(),
+    fetchAccess: fetchRepositoryAccess,
+    /**
+     * Resolve the branch name, which syncing the fork needs. It’s otherwise resolved later in the
+     * data load.
+     */
+    prepare: async () => {
+      if (!repository.branch) {
+        await fetchDefaultBranchName();
+      }
+    },
+    fetchFork,
+    /**
+     * Bring the existing fork up to date, and make sure it has the configured branch.
+     * @param {RepositoryPath} fork Fork.
+     */
+    prepareFork: async (fork) => {
+      await syncFork(fork);
+      await checkForkBranch(fork);
+    },
+    fetchForkingAllowed,
+    createFork,
   });
-
-  forkedRepository.current = await createFork();
 };
 
 /**

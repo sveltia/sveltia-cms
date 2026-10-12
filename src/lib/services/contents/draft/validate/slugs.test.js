@@ -12,7 +12,7 @@ import {
   validateSlug,
 } from './slugs';
 
-vi.mock('@sveltia/i18n', () => ({ _: vi.fn((key) => key) }));
+vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesInCollectionFolder: vi.fn(() => []),
 }));

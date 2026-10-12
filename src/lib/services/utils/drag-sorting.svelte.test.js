@@ -137,6 +137,54 @@ describe('createDragSorter()', () => {
     expect(() => sorter.onDragStart(1, createEvent({ withDataTransfer: false }))).not.toThrow();
   });
 
+  test('gives the props of a draggable item element', () => {
+    const event = createEvent();
+
+    expect(sorter.itemProps(1).draggable).toBe(false);
+    sorter.grab(1);
+    expect(sorter.itemProps(1).draggable).toBe(true);
+    expect(sorter.itemProps(0).draggable).toBe(false);
+
+    sorter.itemProps(1).ondragstart(event);
+    expect(sorter.dragIndex).toBe(1);
+    expect(event.dataTransfer.setData).toHaveBeenCalledWith('text/plain', '');
+
+    sorter.itemProps(1).ondragend(createEvent());
+    expect(sorter.dragIndex).toBeUndefined();
+    expect(sorter.grabbedIndex).toBeUndefined();
+  });
+
+  test('attaches the item data to a drag started on the item element', () => {
+    const event = createEvent();
+
+    const dataSorter = createDragSorter({
+      getItemCount: vi.fn(() => 3),
+      getListElement: vi.fn(() => list.listElement),
+      onMove,
+      getItemData: vi.fn((index) => `item ${index}`),
+    });
+
+    dataSorter.itemProps(2).ondragstart(event);
+    expect(event.dataTransfer.setData).toHaveBeenCalledWith('text/plain', 'item 2');
+  });
+
+  test('ignores the drag events bubbling up from a nested list if asked', () => {
+    const { ondragstart, ondragend } = sorter.itemProps(1, { ownEventsOnly: true });
+    const item = list.items[1];
+
+    ondragstart(/** @type {any} */ ({ ...createEvent(), target: null, currentTarget: item }));
+    expect(sorter.dragIndex).toBeUndefined();
+
+    ondragstart(/** @type {any} */ ({ ...createEvent(), target: item, currentTarget: item }));
+    expect(sorter.dragIndex).toBe(1);
+
+    ondragend(/** @type {any} */ ({ target: null, currentTarget: item }));
+    expect(sorter.dragIndex).toBe(1);
+
+    ondragend(/** @type {any} */ ({ target: item, currentTarget: item }));
+    expect(sorter.dragIndex).toBeUndefined();
+  });
+
   test('passes `dragover` through while nothing is being dragged', () => {
     const event = createEvent({ target: list.items[0] });
 

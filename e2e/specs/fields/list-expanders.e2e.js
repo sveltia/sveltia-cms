@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * A list of authors, each with a collapsed Object field of details, whose expander states are
@@ -61,10 +62,7 @@ test.beforeEach(async ({ cms, page }) => {
 test('keeps the state of an object in an item when the items are added or removed', async ({
   page,
 }) => {
-  const authors = page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('group', { name: /Authors.*Field/ });
-
+  const authors = getEditor(page).getByRole('group', { name: /Authors.*Field/ });
   const bios = authors.getByRole('textbox', { name: 'Bio' });
 
   await expect(authors.getByRole('textbox', { name: 'Name' })).toHaveCount(2);

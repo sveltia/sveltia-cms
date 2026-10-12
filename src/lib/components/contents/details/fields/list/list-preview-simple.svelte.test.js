@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import ListPreviewSimple from './list-preview-simple.svelte';
 
@@ -16,17 +17,8 @@ const fieldConfig = { name: 'tags', widget: 'list' };
  * @param {string} [locale] Locale code.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (currentValue, locale = 'en') => {
-  const { container } = await render(ListPreviewSimple, {
-    locale,
-    keyPath: 'tags',
-    typedKeyPath: 'tags',
-    fieldConfig,
-    currentValue,
-  });
-
-  return container;
-};
+const renderPreview = async (currentValue, locale = 'en') =>
+  (await renderFieldPreview(ListPreviewSimple, { fieldConfig, locale, currentValue })).container;
 
 describe('ListPreviewSimple', () => {
   test('lists the items in order, including duplicates', async () => {

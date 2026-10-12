@@ -1,6 +1,7 @@
 import { OPEN_AUTHORING_CONFIG, post, saveForkDraft } from '../../fixtures/configs/workflow.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -19,28 +20,13 @@ test.beforeEach(async ({ github }) => {
 const SECOND_POST_BRANCH = 'cms/mona/e2e-site/posts/second-post';
 
 /**
- * Open an entry in the editor.
- * @param {Page} page Page.
- * @param {string} title Entry title.
- * @returns {Promise<Locator>} Editor.
- */
-const openEntry = async (page, title) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await page.getByRole('row', { name: new RegExp(`^${title}`) }).click();
-  await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue(title);
-
-  return editor;
-};
-
-/**
  * Create the second post and save it, leaving it a draft.
  * @param {Page} page Page.
  */
 const saveSecondPost = async (page) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
   await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
@@ -51,15 +37,6 @@ const saveSecondPost = async (page) => {
     .click();
 };
 
-/**
- * Get the names of the branches in the repository or in the fork that hold Editorial Workflow
- * entries.
- * @param {MockGitHub} github GitHub mock.
- * @returns {string[]} Branch keys, as {@link MockGitHub.refs} has them.
- */
-const getWorkflowBranches = (github) =>
-  [...github.refs.keys()].filter((key) => /^(\w+:)?cms\//.test(key));
-
 test('keeps a maintainer working on the repository', async ({ cms, github, page }) => {
   await cms.open();
   await saveSecondPost(page);
@@ -68,7 +45,7 @@ test('keeps a maintainer working on the repository', async ({ cms, github, page 
     .poll(() => github.pullRequests)
     .toMatchObject([{ head: 'cms/posts/second-post', draft: true, labels: ['sveltia-cms/draft'] }]);
   expect(github.fork).toBeUndefined();
-  expect(getWorkflowBranches(github)).toEqual(['cms/posts/second-post']);
+  expect(github.getWorkflowBranches({ includeFork: true })).toEqual(['cms/posts/second-post']);
   await expect(page.getByText(/Your changes are saved to your fork/)).toHaveCount(0);
 });
 
@@ -152,7 +129,7 @@ test.describe('as a contributor', () => {
     await saveSecondPost(page);
 
     await expect
-      .poll(() => getWorkflowBranches(github))
+      .poll(() => github.getWorkflowBranches({ includeFork: true }))
       .toEqual([github.forkBranch('cms/mona/e2e-site-fork/posts/second-post')]);
     await expect(page.getByRole('alertdialog', { name: 'Fork Repository' })).toHaveCount(0);
   });
@@ -246,7 +223,7 @@ test.describe('as a contributor', () => {
         await cms.open();
         await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-        const editor = page.getByRole('group', { name: 'Content Editor' });
+        const editor = getEditor(page);
 
         await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
         await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
@@ -328,7 +305,9 @@ test.describe('as a contributor', () => {
         )
         .toBe(post('Second Post', 'Coming soon.'));
       // Nothing reaches the repository, and the maintainers aren’t bothered with a draft
-      expect(getWorkflowBranches(github)).toEqual([github.forkBranch(SECOND_POST_BRANCH)]);
+      expect(github.getWorkflowBranches({ includeFork: true })).toEqual([
+        github.forkBranch(SECOND_POST_BRANCH),
+      ]);
       expect(github.head.oid).toBe(mainBefore);
       expect(github.pullRequests).toEqual([]);
       await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
@@ -393,7 +372,7 @@ test.describe('as a contributor', () => {
       await expect
         .poll(() => github.readFile('content/posts/second-post.md', branch))
         .toBe(post('Second Post', 'Almost there.'));
-      expect(getWorkflowBranches(github)).toEqual([branch]);
+      expect(github.getWorkflowBranches({ includeFork: true })).toEqual([branch]);
       expect(github.pullRequests).toEqual([]);
     });
 
@@ -444,7 +423,7 @@ test.describe('as a contributor', () => {
       await cms.open();
       await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-      const editor = page.getByRole('group', { name: 'Content Editor' });
+      const editor = getEditor(page);
 
       await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
       await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
@@ -622,7 +601,7 @@ test.describe('as a contributor', () => {
       expect(github.pullRequests.map(({ state }) => state)).toEqual(['merged']);
       await expect.poll(() => github.refs.has(branch)).toBe(false);
       // The editor closes onto the entry list, where the entry is published rather than a draft
-      await expect(page.getByRole('group', { name: 'Content Editor' })).toBeHidden();
+      await expect(getEditor(page)).toBeHidden();
       await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
         /First Post/,
         /^\s*Second Post\s*$/,

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import BooleanPreview from './boolean-preview.svelte';
 
@@ -15,17 +16,8 @@ const fieldConfig = { name: 'published', widget: 'boolean' };
  * @param {boolean | undefined} currentValue Field value.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (currentValue) => {
-  const { container } = await render(BooleanPreview, {
-    locale: 'en',
-    keyPath: 'published',
-    typedKeyPath: 'published',
-    fieldConfig,
-    currentValue,
-  });
-
-  return container;
-};
+const renderPreview = async (currentValue) =>
+  (await renderFieldPreview(BooleanPreview, { fieldConfig, currentValue })).container;
 
 describe('BooleanPreview', () => {
   test('shows “Yes” for `true`', async () => {

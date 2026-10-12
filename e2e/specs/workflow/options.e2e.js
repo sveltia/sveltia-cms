@@ -1,5 +1,6 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
+import { getEditor, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -8,21 +9,6 @@ import { expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
 test.beforeEach(async ({ github }) => {
   github.commit({ 'content/posts/first-post.md': post('First Post', 'Hello, world!') });
 });
-
-/**
- * Open an entry in the editor.
- * @param {Page} page Page.
- * @param {string} title Entry title.
- * @returns {Promise<Locator>} Editor.
- */
-const openEntry = async (page, title) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await page.getByRole('row', { name: new RegExp(`^${title}`) }).click();
-  await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue(title);
-
-  return editor;
-};
 
 /**
  * Create an entry in the collection shown and save it, leaving it a draft if the collection uses
@@ -37,7 +23,7 @@ const openEntry = async (page, title) => {
 const createEntry = async (page, { title, body, workflow = true }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill(title);
   await editor.getByRole('textbox', { name: 'Body' }).fill(body);

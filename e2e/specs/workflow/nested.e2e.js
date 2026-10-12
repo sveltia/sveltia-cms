@@ -1,6 +1,7 @@
 import { NESTED_CONFIG } from '../../fixtures/configs/nested.js';
 import { WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Page } from '@playwright/test';
@@ -32,7 +33,7 @@ test.beforeEach(async ({ github }) => {
  * @param {Page} page Page.
  */
 const createTeamPage = async (page) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await page.getByRole('button', { name: 'Create New Entry' }).click();
   await editor.getByRole('textbox', { name: 'Title' }).fill('Team');

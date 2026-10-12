@@ -1,8 +1,8 @@
 import { _ } from '@sveltia/i18n';
-import { getPathInfo } from '@sveltia/utils/file';
 
 import { isInCmsFolder } from '$lib/services/assets/reserved';
 import { getErrorMessage } from '$lib/services/backends/git/shared/errors';
+import { toFileListItem } from '$lib/services/backends/git/shared/tree';
 import { createFileList } from '$lib/services/backends/process';
 import { findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
@@ -82,9 +82,7 @@ const getPathChanges = (files) =>
  * Git config files, which the CMS never commits to a workflow branch.
  */
 const classifyPath = (path) => {
-  const { entryFiles, assetFiles } = createFileList([
-    { path, name: getPathInfo(path).basename, sha: '', size: 0 },
-  ]);
+  const { entryFiles, assetFiles } = createFileList([toFileListItem(path)]);
 
   if (entryFiles.length) {
     return { type: 'entry', collectionName: entryFiles[0].folder.collectionName };

@@ -1,21 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
+import { createCollectors } from '$lib/test/config-parser';
+
 import { parseCustomFieldConfig } from './custom';
 
 /**
- * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
+ * @import { ConfigParserContext } from '$lib/types/private';
  */
-
-/**
- * Create a fresh collectors object for testing.
- * @returns {ConfigParserCollectors} Collectors instance.
- */
-const createCollectors = () => ({
-  errors: new Set(),
-  warnings: new Set(),
-  mediaFields: new Set(),
-  relationFields: new Set(),
-});
 
 /** @type {ConfigParserContext} */
 const context = {

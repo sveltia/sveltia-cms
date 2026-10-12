@@ -2,9 +2,11 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { getFolderPublicPath } from '$lib/services/assets/info';
 import { getStockAssetMediaLibraryOptions } from '$lib/services/integrations/media-libraries/stock';
+import { createMockAssetFolder } from '$lib/test/factories';
 
 import {
   getFirstDefaultLibraryName,
+  getInitialLibraryName,
   getInsertedResources,
   getLocationResources,
   getPickedFolderPublicPaths,
@@ -34,17 +36,19 @@ vi.mock('$lib/services/integrations/media-libraries/stock', () => ({
 }));
 
 /**
- * @import { Asset, AssetFolderInfo, AssetLibraryFolderMap } from '$lib/types/private';
+ * @import {
+ * Asset,
+ * AssetFolderInfo,
+ * AssetLibraryFolderMap,
+ * MediaLibraryService,
+ * } from '$lib/types/private';
  */
 
 /** @type {AssetFolderInfo} */
-const browsableFolder = {
-  collectionName: undefined,
+const browsableFolder = createMockAssetFolder({
   internalPath: 'static/images',
   publicPath: '/images',
-  entryRelative: false,
-  hasTemplateTags: false,
-};
+});
 
 /** @type {AssetFolderInfo} */
 const entryRelativeFolder = { ...browsableFolder, collectionName: 'posts', entryRelative: true };
@@ -114,6 +118,61 @@ describe('getFirstDefaultLibraryName()', () => {
         selectFolder: false,
       }),
     ).toBeUndefined();
+  });
+});
+
+describe('getInitialLibraryName()', () => {
+  /** @type {AssetLibraryFolderMap} */
+  const assetLibraryFolderMap = {
+    field: { folder: undefined, enabled: false },
+    entry: { folder: undefined, enabled: false },
+    global: { folder: browsableFolder, enabled: true },
+  };
+
+  const cloud = /** @type {[string, MediaLibraryService]} */ (['cloudinary', {}]);
+  const stock = /** @type {[string, MediaLibraryService]} */ (['pexels', {}]);
+
+  const args = {
+    assetLibraryFolderMap,
+    isDefaultLibraryEnabled: true,
+    selectFolder: false,
+    hasPendingFiles: false,
+    cloudServiceEntries: [cloud],
+    externalServiceEntries: [cloud, stock].reverse(),
+  };
+
+  test('selects the first repository folder offered', () => {
+    expect(getInitialLibraryName({ ...args, hasPendingFiles: true })).toBe('default-global');
+  });
+
+  test('selects the first cloud storage service for pending files', () => {
+    expect(
+      getInitialLibraryName({ ...args, isDefaultLibraryEnabled: false, hasPendingFiles: true }),
+    ).toBe('cloudinary');
+    // Without a cloud storage service, the first external service is selected
+    expect(
+      getInitialLibraryName({
+        ...args,
+        isDefaultLibraryEnabled: false,
+        hasPendingFiles: true,
+        cloudServiceEntries: [],
+      }),
+    ).toBe('pexels');
+  });
+
+  test('selects the first external service otherwise', () => {
+    expect(getInitialLibraryName({ ...args, isDefaultLibraryEnabled: false })).toBe('pexels');
+  });
+
+  test('selects nothing without any location', () => {
+    expect(
+      getInitialLibraryName({
+        ...args,
+        isDefaultLibraryEnabled: false,
+        cloudServiceEntries: [],
+        externalServiceEntries: [],
+      }),
+    ).toBe('');
   });
 });
 

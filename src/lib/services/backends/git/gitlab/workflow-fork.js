@@ -2,13 +2,12 @@ import { getWorkflowRepository, projectIds } from '$lib/services/backends/git/gi
 import {
   createPullRequest,
   deleteBranch,
-  DRAFT_TITLE_PREFIX,
+  draftTitle,
   fetchBranchHead,
   fetchMergeRequest,
   fetchMergeRequestFileContents,
   MAX_ITEMS,
   parseDiff,
-  stripDraftPrefix,
   toMergeRequest,
 } from '$lib/services/backends/git/gitlab/merge-requests';
 import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
@@ -168,7 +167,7 @@ export const parseForkBranch = (branchInfo, mergeRequest) => {
     nodeId: current ? String(current.id) : undefined,
     // Without a merge request there’s no title to show, so the head commit’s message stands in.
     // It’s the message the merge request would be opened with anyway
-    title: current ? stripDraftPrefix(current.title) : (message ?? ''),
+    title: current ? draftTitle.strip(current.title) : (message ?? ''),
     url: current?.web_url,
     branch,
     // The branch head, rather than the merge request’s: a save compares it with the branch to find
@@ -256,7 +255,7 @@ const getStatusChange = ({ status, title, state, draft }) => {
   if (status === 'draft') {
     // Marking the merge request as a draft keeps it — and the discussion on it — in place while
     // taking it out of the maintainers’ review queue
-    return state === 'opened' && !draft ? { title: `${DRAFT_TITLE_PREFIX}${title}` } : {};
+    return state === 'opened' && !draft ? { title: draftTitle.format(title, true) } : {};
   }
 
   return {

@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { createMockAssetFolder } from '$lib/test/factories';
+
 import { searchAssets } from './assets';
 import { hasAllMatches, hasMatch, normalize, tokenize } from './util';
 
@@ -29,13 +31,7 @@ describe('searchAssets integration', () => {
       sha: 'mock-sha',
       size: 1024,
       kind: 'image',
-      folder: {
-        collectionName: undefined,
-        internalPath: '/assets',
-        publicPath: '/assets',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      folder: createMockAssetFolder({ internalPath: '/assets', publicPath: '/assets' }),
       // RepositoryFileMetadata properties
       commitAuthor: undefined,
       commitDate: undefined,
@@ -185,13 +181,7 @@ describe('assetSearchResults derived store', () => {
         sha: 'mock-sha',
         size: 1024,
         kind: 'image',
-        folder: {
-          collectionName: undefined,
-          internalPath: '/assets',
-          publicPath: '/assets',
-          entryRelative: false,
-          hasTemplateTags: false,
-        },
+        folder: createMockAssetFolder({ internalPath: '/assets', publicPath: '/assets' }),
       }),
     ];
     searchTerms.current = 'profile';

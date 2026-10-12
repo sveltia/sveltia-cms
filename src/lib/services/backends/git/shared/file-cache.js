@@ -1,9 +1,9 @@
-import { getPathInfo } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
 
 import { deferRejection } from '$lib/services/backends/git/shared/defer';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { applyFileMetadata } from '$lib/services/backends/git/shared/parse-files';
+import { toFileListItem } from '$lib/services/backends/git/shared/tree';
 import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { cmsConfigVersion } from '$lib/services/config';
 
@@ -64,11 +64,7 @@ export const getFileList = async ({
     cachedFileEntries.length
   ) {
     const fileList = createFileList(
-      cachedFileEntries.map(([path, data]) => ({
-        path,
-        name: getPathInfo(path).basename,
-        ...data,
-      })),
+      cachedFileEntries.map(([path, data]) => toFileListItem(path, data)),
     );
 
     log(`Restored the file list from the cache: ${describeFileList(fileList)}`);

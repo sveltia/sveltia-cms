@@ -5,7 +5,7 @@
 -->
 <script>
   import SubfolderListItem from '$lib/components/assets/list/subfolder-list-item.svelte';
-  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
+  import { goto } from '$lib/services/app/navigation';
   import { assetsLocked, selectedAssetFolder } from '$lib/services/assets/folders';
   import { isCmsFolderPath } from '$lib/services/assets/reserved';
   import { focusedAsset } from '$lib/services/assets/state';
@@ -15,6 +15,7 @@
     renamingSubfolder,
   } from '$lib/services/assets/subfolders';
   import { env } from '$lib/services/user/env.svelte';
+  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { AssetSubfolder, ViewType } from '$lib/types/private';
@@ -41,7 +42,7 @@
    * from the sidebar, so the page can tell it from another folder sharing its path.
    */
   const open = () => {
-    goto(encodeRoutePath(`/assets/${subfolder.path}`), {
+    goto(encodePathSegments(`/assets/${subfolder.path}`), {
       transitionType: 'forwards',
       state: { folder: selectedAssetFolder.current },
     });

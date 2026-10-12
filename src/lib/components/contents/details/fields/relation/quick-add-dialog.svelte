@@ -12,6 +12,7 @@
 
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import SlugEditor from '$lib/components/contents/details/editor/slug-editor.svelte';
+  import ValidationErrorsToast from '$lib/components/contents/details/editor/validation-errors-toast.svelte';
   import LocaleSwitcher from '$lib/components/contents/details/locale-switcher.svelte';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { revokeDraftFileURLs } from '$lib/services/contents/draft';
@@ -238,11 +239,7 @@
   {/snippet}
 </Dialog>
 
-<Toast bind:show={showValidationToast}>
-  <Alert status="error">
-    {_('entry_validation_errors', { values: { count: errorCount } })}
-  </Alert>
-</Toast>
+<ValidationErrorsToast bind:show={showValidationToast} count={errorCount} />
 
 <Toast bind:show={showErrorToast}>
   <Alert status="error">

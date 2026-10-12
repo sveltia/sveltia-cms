@@ -21,6 +21,7 @@ import {
 } from '$lib/services/assets/info';
 import { getMediaFieldURL } from '$lib/services/assets/media-field';
 import * as cloudStorageModule from '$lib/services/integrations/media-libraries/cloud';
+import { createMockAssetFolder } from '$lib/test/factories';
 
 import {
   _resetAssetMetadataCache,
@@ -45,12 +46,12 @@ const mockGlobalAssetFolder = vi.hoisted(() => ({ current: undefined }));
 /** @type {{ current: any[] }} */
 const mockAllAssets = vi.hoisted(() => ({ current: [] }));
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key) => key),
-  addMessages: vi.fn(),
-  locale: { current: 'en', set: vi.fn() },
-  dictionary: {},
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({
+    locale: 'en',
+    exports: { addMessages: vi.fn(), dictionary: {} },
+  }),
+);
 vi.mock('$lib/services/assets', () => ({
   getAssetByPath: vi.fn(),
   isRelativePath: vi.fn((path) => !/^[/@]/.test(path)),
@@ -118,13 +119,10 @@ describe('assets/info', () => {
       kind: 'image',
       sha: 'abc123',
       size: 1024,
-      folder: {
+      folder: createMockAssetFolder({
         internalPath: 'assets/images',
         publicPath: '/assets/images',
-        collectionName: undefined,
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     };
 
     // Create mock blob
@@ -1379,13 +1377,11 @@ describe('assets/info', () => {
     it('should search for asset folder by collection when collectionName is defined (line 166)', async () => {
       const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
 
-      const collectionFolder = {
+      const collectionFolder = createMockAssetFolder({
+        collectionName: 'posts',
         internalPath: 'posts/media',
         publicPath: '/posts/media',
-        collectionName: 'posts',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       vi.mocked(getAssetFoldersByPath).mockReturnValue([collectionFolder]);
 
@@ -1978,13 +1974,11 @@ describe('assets/info', () => {
     it('should handle asset with collection name from folder', async () => {
       const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
 
-      const collectionFolder = {
+      const collectionFolder = createMockAssetFolder({
+        collectionName: 'blog',
         internalPath: 'blog/media',
         publicPath: '/blog/media',
-        collectionName: 'blog',
-        entryRelative: false,
-        hasTemplateTags: false,
-      };
+      });
 
       // Mock to find a folder with collectionName
       vi.mocked(getAssetFoldersByPath).mockReturnValue([collectionFolder]);

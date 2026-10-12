@@ -1,17 +1,15 @@
-/* eslint-disable jsdoc/require-jsdoc */
-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createCollectors } from '$lib/test/config-parser';
+
 /**
- * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
+ * @import { ConfigParserContext } from '$lib/types/private';
  */
 
-vi.mock('@sveltia/i18n', () => ({
-  _: (/** @type {string} */ key) => key,
-  locale: { current: 'en-US', set: vi.fn() },
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ locale: 'en-US' }),
+);
 
-const mockGetStore = vi.fn();
 const mockAddMessage = vi.fn();
 const mockCheckUnsupportedOptions = vi.fn();
 
@@ -19,19 +17,6 @@ vi.mock('$lib/services/config/parser/utils/validator', () => ({
   addMessage: mockAddMessage,
   checkUnsupportedOptions: mockCheckUnsupportedOptions,
 }));
-
-/**
- * Create a fresh collectors object for testing.
- * @returns {ConfigParserCollectors} Collectors instance.
- */
-function createCollectors() {
-  return {
-    errors: new Set(),
-    warnings: new Set(),
-    mediaFields: new Set(),
-    relationFields: new Set(),
-  };
-}
 
 /**
  * Create a fresh context object for testing.
@@ -48,8 +33,6 @@ function createContext() {
 describe('File Field Parser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockGetStore.mockImplementation((store) => store);
   });
 
   describe('parseFileFieldConfig', () => {

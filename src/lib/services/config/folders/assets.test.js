@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   addFolderIfNeeded,
+  collectCollectionAssetFolders,
   getAllAssetFolders,
   getCollectionBaseFolder,
+  getLocaleFolderNameMap,
   hasTags,
   iterateFiles,
   normalizeAssetFolder,
   replaceTags,
+  resolveGlobalFolders,
 } from './assets.js';
 
 // Mock external dependencies
@@ -2679,6 +2682,100 @@ describe('config/folders/assets', () => {
 
       expect(fieldFolder).toBeDefined();
       expect(fieldFolder?.internalPath).toBe('uploads/featured');
+    });
+  });
+
+  describe('resolveGlobalFolders', () => {
+    it('returns `undefined` without a global media folder', () => {
+      expect(resolveGlobalFolders(/** @type {any} */ ({ public_folder: '/images' }))).toBe(
+        undefined,
+      );
+    });
+
+    it('normalizes the global media and public folders', () => {
+      expect(
+        resolveGlobalFolders(/** @type {any} */ ({ media_folder: '/static/images/' })),
+      ).toEqual({ globalMediaFolder: 'static/images', globalPublicFolder: '/static/images' });
+      expect(resolveGlobalFolders(/** @type {any} */ ({ media_folder: '.' }))).toEqual({
+        globalMediaFolder: '',
+        globalPublicFolder: '/',
+      });
+      expect(
+        resolveGlobalFolders(
+          /** @type {any} */ ({ media_folder: 'src/assets', public_folder: '@assets/' }),
+        ),
+      ).toEqual({ globalMediaFolder: 'src/assets', globalPublicFolder: '@assets' });
+    });
+  });
+
+  describe('collectCollectionAssetFolders', () => {
+    it('adds the collection, file and singleton folders', () => {
+      vi.mocked(getValidCollectionFiles).mockImplementation((files) => /** @type {any} */ (files));
+
+      /** @type {any[]} */
+      const folders = [];
+
+      collectCollectionAssetFolders(folders, {
+        validCollections: /** @type {any} */ ([
+          { name: 'posts', folder: 'content/posts', path: '{{slug}}/index' },
+          {
+            name: 'pages',
+            media_folder: 'images',
+            files: [{ name: 'about', file: 'content/about.md' }],
+          },
+        ]),
+        singletons: /** @type {any} */ ([
+          { name: 'home', file: 'content/home.md', media_folder: '/static/home' },
+        ]),
+        globalFolders: { globalMediaFolder: 'static/images', globalPublicFolder: '/images' },
+      });
+
+      expect(
+        folders.map(({ collectionName, fileName, internalPath, internalSubPath }) => ({
+          collectionName,
+          fileName,
+          internalPath,
+          internalSubPath,
+        })),
+      ).toEqual([
+        {
+          collectionName: 'posts',
+          fileName: undefined,
+          internalPath: 'content/posts',
+          internalSubPath: '',
+        },
+        {
+          collectionName: 'pages',
+          fileName: 'about',
+          internalPath: 'content',
+          internalSubPath: 'images',
+        },
+        {
+          collectionName: '_singletons',
+          fileName: 'home',
+          internalPath: 'static/home',
+          internalSubPath: undefined,
+        },
+      ]);
+    });
+  });
+
+  describe('getLocaleFolderNameMap', () => {
+    it('maps each collection to the locales of its locale folders', () => {
+      const map = getLocaleFolderNameMap(
+        /** @type {any} */ ({ i18n: { structure: 'multiple_files', locales: ['en', 'de'] } }),
+        /** @type {any} */ ([
+          { name: 'posts', folder: 'content/{{locale}}/posts', i18n: true },
+          { name: 'pages', folder: 'content/pages', i18n: true },
+          { name: 'docs', folder: 'content/docs', i18n: { structure: 'multiple_root_folders' } },
+        ]),
+      );
+
+      expect([...map]).toEqual([
+        ['posts', ['en', 'de']],
+        ['pages', []],
+        ['docs', ['en', 'de']],
+      ]);
     });
   });
 });

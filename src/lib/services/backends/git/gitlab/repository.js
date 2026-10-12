@@ -3,6 +3,7 @@ import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/
 import {
   createLocalizedError,
   NOT_COLLABORATOR_ERROR_MESSAGE,
+  toRepositoryAccessError,
 } from '$lib/services/backends/git/shared/errors';
 import {
   applyDefaultBranch,
@@ -104,12 +105,24 @@ export const fetchProjectPermissions = async () => {
 
 /**
  * Check if the user has write access to the current repository.
- * @throws {Error} If the user can’t push to the repository.
+ * @throws {Error} If the user can’t push to the repository, or the access couldn’t be checked.
  */
 export const checkRepositoryAccess = async () => {
   const { repo } = repository;
+  /** @type {{ found: boolean, canPush: boolean }} */
+  let permissions;
 
-  if (!(await fetchProjectPermissions()).canPush) {
+  try {
+    permissions = await fetchProjectPermissions();
+  } catch (/** @type {any} */ ex) {
+    const status = ex?.cause?.status;
+
+    // A project the user can’t see comes back as `null` rather than a 404, so a 404 means the
+    // GraphQL endpoint itself is missing, e.g. a misconfigured API root, which is a failed check
+    throw toRepositoryAccessError(repository, status === 404 ? undefined : status);
+  }
+
+  if (!permissions.canPush) {
     throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });
   }
 };

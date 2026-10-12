@@ -12,6 +12,7 @@
   } from '$lib/services/assets/info';
   import { hasPDFThumbnail, THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
   import { requestFlushSync } from '$lib/services/utils/render';
+  import { createLatestGuard } from '$lib/services/utils/scheduling';
   import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
@@ -110,10 +111,10 @@
   );
 
   /**
-   * The number of {@link updateSrc} calls so far. A call that finds a later one has started on the
-   * way leaves the result to that one, so that the latest asset wins when the focus moves quickly.
+   * Guard for {@link updateSrc}. A call that finds a later one has started on the way leaves the
+   * result to that one, so that the latest asset wins when the focus moves quickly.
    */
-  let srcRequestCount = 0;
+  const srcRequestGuard = createLatestGuard();
   /**
    * The URL the last {@link updateSrc} call has looked up, to be released once it’s been replaced.
    * Kept outside the reactive graph, as {@link resolvedSrc} is reset when the asset changes.
@@ -180,9 +181,7 @@
       return;
     }
 
-    srcRequestCount += 1;
-
-    const request = srcRequestCount;
+    const isLatest = srcRequestGuard.next();
     // Read up front, as a derived can’t be read once the component has been destroyed
     const requestedAsset = asset;
     const thumbnail = isThumbnail;
@@ -213,7 +212,7 @@
 
     // Another asset has come in the meantime. Release a thumbnail made for this one, which nothing
     // displays; the full-size URL is shared on the asset itself, so leave that alone
-    if (request !== srcRequestCount) {
+    if (!isLatest()) {
       if (thumbnail) {
         revokeBlobURLIfNeeded(url);
       }

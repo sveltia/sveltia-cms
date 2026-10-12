@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
-import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import ListPreview from './list-preview.svelte';
 
@@ -14,20 +15,15 @@ import ListPreview from './list-preview.svelte';
  * @param {Record<string, any>} values Flattened values.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (fieldConfig, values) => {
-  const { container } = await renderWithDraft(ListPreview, {
-    draft: createMockDraft({ fields: [fieldConfig], values: { _default: values } }),
-    props: {
-      locale: '_default',
-      keyPath: fieldConfig.name,
-      typedKeyPath: fieldConfig.name,
+const renderPreview = async (fieldConfig, values) =>
+  (
+    await renderFieldPreview(ListPreview, {
       fieldConfig,
+      locale: '_default',
       currentValue: Object.values(values),
-    },
-  });
-
-  return container;
-};
+      draft: createMockDraft({ fields: [fieldConfig], values: { _default: values } }),
+    })
+  ).container;
 
 describe('ListPreview', () => {
   test('renders a simple list as a bulleted list', async () => {

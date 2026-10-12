@@ -4,6 +4,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import sanitize from 'sanitize-filename';
 
 import { getOrCreateAsync } from '$lib/services/utils/cache';
+import { encodePathSegments, encodeRFC3986 } from '$lib/services/utils/url';
 
 /**
  * Create a regular expression that matches the given path.
@@ -15,13 +16,12 @@ export const createPathRegEx = (path, replacer) =>
   new RegExp(`^${path.split('/').map(replacer).join('\\/')}(?=\\/|$)`);
 
 /**
- * Encode the given (partial) file path or file name. Since {@link encodeURIComponent} encodes
- * slashes, we need to split and join. Also, encode some more characters, including `!`, `(` and
- * `)`, which affect the Markdown syntax like images and links. The `@` prefix is an exception; it
- * shouldn’t be encoded.
+ * Encode the given (partial) file path or file name segment by segment, keeping the slashes. Some
+ * more characters than `encodeURIComponent()` does are encoded, including `!`, `(` and `)`, which
+ * affect the Markdown syntax like images and links. The `@` prefix is an exception; it shouldn’t be
+ * encoded.
  * @param {string} path Original path.
  * @returns {string} Encoded path.
- * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent#encoding_for_rfc3986
  */
 export const encodeFilePath = (path) => {
   const hasAtPrefix = path.startsWith('@');
@@ -30,15 +30,7 @@ export const encodeFilePath = (path) => {
     path = path.slice(1);
   }
 
-  path = path
-    .split('/')
-    .map((str) =>
-      encodeURIComponent(str).replace(
-        /[!'()*]/g,
-        (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
-      ),
-    )
-    .join('/');
+  path = encodePathSegments(path, encodeRFC3986);
 
   if (hasAtPrefix) {
     return `@${path}`;

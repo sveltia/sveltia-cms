@@ -1,4 +1,5 @@
 import { expect, GITHUB_CONFIG, GITLAB_CONFIG, test } from '../fixtures/test.js';
+import { getEditor } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page, Route } from '@playwright/test';
@@ -14,7 +15,7 @@ const SAVED_POST = '---\ntitle: First Post\n---\n\nHello from Mona!\n';
  * @returns {Promise<Locator>} Editor.
  */
 const editFirstPost = async (page) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const body = editor.getByRole('textbox', { name: 'Body' });
 
   await page.getByRole('row', { name: /First Post/ }).click();

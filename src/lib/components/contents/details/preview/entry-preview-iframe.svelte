@@ -17,8 +17,8 @@
     getEntryDraftContext,
   } from '$lib/services/contents/draft/state.svelte';
   import { highlightPreviewTemplateField } from '$lib/services/contents/editor/fields';
+  import { buildPreviewFrameHTML } from '$lib/services/contents/editor/preview-frame';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
-  import { escapeAttr } from '$lib/services/utils/string';
 
   /**
    * @import { ComponentType } from 'react';
@@ -83,22 +83,6 @@
    * document right-to-left whenever its first text is in a right-to-left script.
    */
   const dir = $derived(locale === '_default' ? undefined : getDirection(locale));
-
-  /**
-   * Generate the HTML content for the iframe.
-   * @returns {string} The HTML string.
-   */
-  const generateHTML = () => `
-    <!DOCTYPE html>
-    <html${lang ? ` lang="${escapeAttr(lang)}"` : ''}${dir ? ` dir="${dir}"` : ''}>
-    <head>
-      <meta charset="UTF-8">
-      <base href="${escapeAttr(window.location.origin)}" target="_blank">
-      ${styleURLs.map((url) => `<link rel="stylesheet" href="${escapeAttr(url)}">`).join('\n')}
-    </head>
-    <body></body>
-    </html>
-  `;
 
   /**
    * Mount the Svelte placeholder component into the iframe’s body. This way, the iframe content
@@ -198,7 +182,8 @@
     }
 
     const mountComponent = reactComponent ? mountReactComponent : mountPlaceholder;
-    const blobURL = URL.createObjectURL(new Blob([generateHTML()], { type: 'text/html' }));
+    const html = buildPreviewFrameHTML({ lang, dir, styleURLs, origin: window.location.origin });
+    const blobURL = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
 
     /**
      * Callback function to be called when the iframe has loaded its content. It mounts either the

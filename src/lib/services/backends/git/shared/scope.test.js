@@ -15,9 +15,9 @@ import { cmsConfig } from '$lib/services/config';
  */
 
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key, { values } = {}) => `${key}:${JSON.stringify(values)}`),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
 
 const repository = /** @type {RepositoryInfo} */ ({ owner: 'owner', repo: 'repo' });
 

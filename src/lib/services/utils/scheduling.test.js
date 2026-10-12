@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { runInChunks, yieldToMain } from './scheduling';
+import { createLatestGuard, runInChunks, yieldToMain } from './scheduling';
 
 describe('yieldToMain()', () => {
   afterEach(() => {
@@ -82,5 +82,28 @@ describe('runInChunks()', () => {
     await runInChunks([], task);
 
     expect(task).not.toHaveBeenCalled();
+  });
+});
+
+describe('createLatestGuard()', () => {
+  test('tells whether a call is still the latest one', () => {
+    const guard = createLatestGuard();
+    const isFirstLatest = guard.next();
+
+    expect(isFirstLatest()).toBe(true);
+
+    const isSecondLatest = guard.next();
+
+    expect(isFirstLatest()).toBe(false);
+    expect(isSecondLatest()).toBe(true);
+  });
+
+  test('keeps the calls of each guard apart', () => {
+    const guard = createLatestGuard();
+    const isLatest = guard.next();
+
+    createLatestGuard().next();
+
+    expect(isLatest()).toBe(true);
   });
 });

@@ -1,4 +1,5 @@
 import { BASE_CONFIG, expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 const ORDINALS = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'];
 
@@ -64,7 +65,7 @@ test.beforeEach(async ({ cms, page }) => {
 });
 
 test('focuses a field in a collapsed item below the rendered fields', async ({ page }) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const preview = editor.getByRole('document', { name: 'Content Preview' });
   const value = preview.getByText('Fifth section, fourth card title', { exact: true });
 
@@ -87,7 +88,7 @@ test('focuses a field in a collapsed item below the rendered fields', async ({ p
 });
 
 test('focuses a field in a collapsed item near the top', async ({ page }) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor
     .getByRole('document', { name: 'Content Preview' })

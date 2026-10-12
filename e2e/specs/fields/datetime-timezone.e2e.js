@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor, getField } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator } from '@playwright/test';
@@ -71,15 +72,6 @@ const LABELS = [
   'Formatted',
   'Tokyo Formatted',
 ];
-
-/**
- * Get the group of a field in the editor.
- * @param {Locator} editor Content editor.
- * @param {string} label Field label.
- * @returns {Locator} Field group.
- */
-const getField = (editor, label) =>
-  editor.getByRole('group', { name: new RegExp(`^“.${label}.” Field$`) });
 
 /**
  * Get the values of the DateTime inputs.
@@ -166,24 +158,28 @@ test.beforeEach(async ({ cms, page }) => {
 test('shows each stored value in the time zone of its field', async ({ page }) => {
   await page.getByRole('row', { name: /NRT/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect.poll(() => getInputValues(editor)).toEqual(LABELS.map(() => '2026-01-15T10:30'));
 
   // A field in another time zone than the browser’s names it below the input
   await Promise.all(
     ['Local', 'Local to UTC', 'Formatted'].map((label) =>
-      expect(getField(editor, label).getByText(/^UTC$|^\(.+\) /)).toHaveCount(0),
+      expect(getField(editor, label, { exact: true }).getByText(/^UTC$|^\(.+\) /)).toHaveCount(0),
     ),
   );
 
   // The label and the time zone
-  await expect(getField(editor, 'UTC').getByText('UTC', { exact: true })).toHaveCount(2);
-  await expect(getField(editor, 'Picker UTC').getByText('UTC', { exact: true })).toBeVisible();
+  await expect(
+    getField(editor, 'UTC', { exact: true }).getByText('UTC', { exact: true }),
+  ).toHaveCount(2);
+  await expect(
+    getField(editor, 'Picker UTC', { exact: true }).getByText('UTC', { exact: true }),
+  ).toBeVisible();
 
   await Promise.all(
     ['Tokyo', 'Tokyo to UTC', 'Tokyo Formatted'].map((label) =>
-      expect(getField(editor, label).getByText('(+09:00) Tokyo')).toBeVisible(),
+      expect(getField(editor, label, { exact: true }).getByText('(+09:00) Tokyo')).toBeVisible(),
     ),
   );
 
@@ -194,7 +190,7 @@ test('shows each stored value in the time zone of its field', async ({ page }) =
 test('stores a typed value in the time zone of its field', async ({ cms, page }) => {
   await page.getByRole('row', { name: /NRT/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await forEachField((label) =>
     editor.getByRole('textbox', { name: label, exact: true }).fill('2026-07-15T14:45'),
@@ -221,10 +217,10 @@ test('stores a typed value in the time zone of its field', async ({ cms, page })
 test('sets the current time in the time zone of each field with Now', async ({ cms, page }) => {
   await page.getByRole('row', { name: /NRT/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await forEachField((label) =>
-    getField(editor, label).getByRole('button', { name: 'Now' }).click(),
+    getField(editor, label, { exact: true }).getByRole('button', { name: 'Now' }).click(),
   );
 
   await expect(editor.getByRole('textbox', { name: 'Local', exact: true })).toHaveValue(
@@ -260,7 +256,7 @@ test('fills in the current time for a new entry in the time zone of each field',
 }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('HND');
   await expect(editor.getByRole('textbox', { name: 'Tokyo', exact: true })).toHaveValue(
@@ -287,7 +283,7 @@ test('fills in the current time for a new entry in the time zone of each field',
 test('converts a value stored at another offset, leaving it unmodified', async ({ page }) => {
   await page.getByRole('row', { name: /KIX/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect.poll(() => getInputValues(editor)).toEqual(LABELS.map(() => '2026-01-15T10:30'));
 
@@ -299,7 +295,7 @@ test('reads a value without an offset in the time zone of its field', async ({ p
   // that one, as the fields in a custom format do
   await page.getByRole('row', { name: /ITM/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect.poll(() => getInputValues(editor)).toEqual(LABELS.map(() => '2026-01-15T10:30'));
 
@@ -313,7 +309,7 @@ test('stores a typed value without an offset in the form the field writes', asyn
 }) => {
   await page.getByRole('row', { name: /ITM/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await forEachField((label) =>
     editor.getByRole('textbox', { name: label, exact: true }).fill('2026-07-15T14:45'),

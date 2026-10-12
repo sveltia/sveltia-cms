@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor, getField } from '../../fixtures/ui.js';
 
 /**
  * A page whose List fields each turn off or change one of the list controls: adding, removing,
@@ -186,31 +187,15 @@ test.beforeEach(async ({ cms, page }) => {
   await cms.seed({ [HOME_PATH]: HOME });
   await cms.signIn();
   await page.getByRole('row', { name: /Home/ }).click();
-  await expect(
-    page.getByRole('group', { name: 'Content Editor' }).getByRole('group', { name: /Address/ }),
-  ).toBeVisible();
+  await expect(getEditor(page).getByRole('group', { name: /Address/ })).toBeVisible();
 });
-
-/**
- * Get the group of a field in the editor.
- * @param {import('@playwright/test').Page} page Page.
- * @param {string} label Field label.
- * @returns {import('@playwright/test').Locator} Field group.
- */
-const getField = (page, label) =>
-  page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('group', { name: new RegExp(`${label}.*Field`) });
 
 /**
  * Save the entry.
  * @param {import('@playwright/test').Page} page Page.
  */
 const save = async (page) => {
-  await page
-    .getByRole('group', { name: 'Content Editor' })
-    .getByRole('button', { name: 'Save' })
-    .click();
+  await getEditor(page).getByRole('button', { name: 'Save' }).click();
 };
 
 /**

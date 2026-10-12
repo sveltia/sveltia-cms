@@ -126,6 +126,40 @@ describe('GitLab repository service', () => {
 
       await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
     });
+
+    test('reports a failed check rather than a raw error when the request fails', async () => {
+      vi.mocked(fetchGraphQL).mockRejectedValue(
+        new Error('Server responded with an error', { cause: { status: 500 } }),
+      );
+
+      await expect(checkRepositoryAccess()).rejects.toThrow(
+        'Failed to check the repository permission.',
+      );
+
+      vi.mocked(fetchGraphQL).mockRejectedValue(new Error('Failed to send the request'));
+
+      await expect(checkRepositoryAccess()).rejects.toThrow(
+        'Failed to check the repository permission.',
+      );
+    });
+
+    test('reports a failed check when the GraphQL endpoint is missing', async () => {
+      vi.mocked(fetchGraphQL).mockRejectedValue(
+        new Error('Server responded with an error', { cause: { status: 404 } }),
+      );
+
+      await expect(checkRepositoryAccess()).rejects.toThrow(
+        'Failed to check the repository permission.',
+      );
+    });
+
+    test('treats an expired token as no access', async () => {
+      vi.mocked(fetchGraphQL).mockRejectedValue(
+        new Error('Server responded with an error', { cause: { status: 401 } }),
+      );
+
+      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+    });
   });
 
   describe('checkBranchAccess', () => {

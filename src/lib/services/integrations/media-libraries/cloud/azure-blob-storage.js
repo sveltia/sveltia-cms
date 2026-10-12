@@ -1,15 +1,11 @@
 import { getAssetKind } from '$lib/services/assets/kinds';
-import {
-  encodeKey,
-  getFileKey,
-  getFolderKey,
-  getRelativeKey,
-} from '$lib/services/integrations/media-libraries/cloud/shared/keys';
+import { getRelativeKey } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
 import {
   assertResponseOK,
   createObjectStorageOperations,
 } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
 import { ObjectStorageService } from '$lib/services/integrations/media-libraries/cloud/shared/service';
+import { encodePathSegments, trimTrailingSlashes } from '$lib/services/utils/url';
 import { parseXml, toArray } from '$lib/services/utils/xml';
 
 /**
@@ -39,12 +35,6 @@ const DEFAULT_ENDPOINT_SUFFIX = 'blob.core.windows.net';
  * Number of blobs to request per `List Blobs` call. The service caps the value at 5000.
  */
 const MAX_RESULTS = 1000;
-/**
- * Remove any trailing slashes from the given URL.
- * @param {string} url URL.
- * @returns {string} Trimmed URL.
- */
-const trimSlashes = (url) => url.replace(/\/+$/, '');
 
 /**
  * Build the base URL of the container on the Blob service.
@@ -53,7 +43,7 @@ const trimSlashes = (url) => url.replace(/\/+$/, '');
  */
 export const buildContainerUrl = ({ account_name: accountName, container, endpoint }) => {
   const base = endpoint
-    ? trimSlashes(endpoint)
+    ? trimTrailingSlashes(endpoint)
     : `https://${accountName}.${DEFAULT_ENDPOINT_SUFFIX}`;
 
   return `${base}/${container}`;
@@ -85,7 +75,7 @@ export const buildRequestUrl = ({ url, token, searchParams }) => {
  * @returns {string} Authorized blob URL.
  */
 const buildBlobRequestUrl = (config, key, token) =>
-  buildRequestUrl({ url: `${buildContainerUrl(config)}/${encodeKey(key)}`, token });
+  buildRequestUrl({ url: `${buildContainerUrl(config)}/${encodePathSegments(key)}`, token });
 
 /**
  * Get the SAS token from the given fetch options.
@@ -115,12 +105,12 @@ export const parseBlobResults = (blobs, config, token) => {
   return blobs.map(({ Name: key, Properties: properties = {} }) => {
     const fileName = key.split('/').pop() || key;
     const displayKey = getRelativeKey(config, key);
-    const encodedKey = encodeKey(key);
+    const encodedKey = encodePathSegments(key);
     const blobUrl = `${containerUrl}/${encodedKey}`;
     // Assets are hotlinked, so the URL stored in entries must not contain the SAS token, which
     // expires. A private container therefore requires the `public_url` option; the token is only
     // added to the preview URL, which is used within the CMS
-    const downloadURL = publicUrl ? `${trimSlashes(publicUrl)}/${encodedKey}` : blobUrl;
+    const downloadURL = publicUrl ? `${trimTrailingSlashes(publicUrl)}/${encodedKey}` : blobUrl;
     const lastModified = properties['Last-Modified'];
     const size = properties['Content-Length'];
 
@@ -213,50 +203,30 @@ const putBlob = async ({ key, file, config, credential: token }) => {
  * @param {string} params.key Blob name.
  * @param {AzureMediaLibrary} params.config Azure Blob Storage configuration.
  * @param {string} params.credential SAS token.
+ * @param {boolean} [params.allowNotFound] Whether a blob that doesn’t exist counts as deleted.
  * @returns {Promise<void>}
  * @see https://learn.microsoft.com/en-us/rest/api/storageservices/delete-blob
  */
-const deleteBlob = async ({ key, config, credential: token }) => {
+const deleteBlob = async ({ key, config, credential: token, allowNotFound = false }) => {
   const response = await fetch(buildBlobRequestUrl(config, key, token), { method: 'DELETE' });
 
-  await assertResponseOK(response, `Failed to delete blob ${key}`);
+  await assertResponseOK(response, `Failed to delete blob ${key}`, { allowNotFound });
 };
 
 /**
- * Blob service calls for the operations shared with the other object storage services.
- * @type {ObjectStorageProvider<AzureBlob, AzureMediaLibrary>}
- */
-const provider = {
-  requireCredential: requireToken,
-  listPage: listBlobPage,
-  /**
-   * Get the name of a blob.
-   * @param {AzureBlob} blob Blob.
-   * @returns {string} Blob name.
-   */
-  getKey: ({ Name }) => Name,
-  parseResults: parseBlobResults,
-  putObject: putBlob,
-  deleteObject: deleteBlob,
-};
-
-/**
- * Move a blob in the configured container to another path. The Blob service has no move operation,
- * so the blob is copied to the new name with the synchronous `Put Blob From URL` operation, and
- * then the original is deleted. The account’s CORS rules must allow the `PUT` and `DELETE` methods
- * as well as the `x-ms-copy-source` header, in addition to `x-ms-blob-type`; otherwise the browser
- * blocks the request at the preflight stage.
- * @param {ExternalAsset} asset Asset to move. Its `id` is the blob name.
- * @param {string} newPath New path relative to the configured prefix.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
- * @returns {Promise<ExternalAsset>} Moved asset.
+ * Copy a blob in the configured container to another name with the synchronous `Put Blob From
+ * URL` operation. The account’s CORS rules must allow the `x-ms-copy-source` header, in addition
+ * to `x-ms-blob-type`; otherwise the browser blocks the request at the preflight stage.
+ * @param {object} params Parameters.
+ * @param {ExternalAsset} params.asset Asset to copy. Its `id` is the blob name.
+ * @param {string} params.key New blob name.
+ * @param {AzureMediaLibrary} params.config Azure Blob Storage configuration.
+ * @param {string} params.credential SAS token.
+ * @returns {Promise<AzureBlob>} Copied blob.
  * @see https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob-from-url
  */
-export const moveBlob = async (asset, newPath, config, options) => {
-  const token = requireToken(options);
+const copyBlob = async ({ asset, key: newKey, config, credential: token }) => {
   const { id: key, size, lastModified } = asset;
-  const newKey = getFileKey(config, newPath);
 
   const response = await fetch(buildBlobRequestUrl(config, newKey, token), {
     method: 'PUT',
@@ -276,61 +246,51 @@ export const moveBlob = async (asset, newPath, config, options) => {
     throw new Error(`Failed to copy blob ${key}: the copy operation is still pending`);
   }
 
-  await deleteBlob({ key, config, credential: token });
-
-  return parseBlobResults(
-    [
-      {
-        Name: newKey,
-        Properties: {
-          ...(lastModified && { 'Last-Modified': lastModified.toUTCString() }),
-          ...(size && { 'Content-Length': String(size) }),
-        },
-      },
-    ],
-    config,
-    token,
-  )[0];
+  return {
+    Name: newKey,
+    Properties: {
+      ...(lastModified && { 'Last-Modified': lastModified.toUTCString() }),
+      ...(size && { 'Content-Length': String(size) }),
+    },
+  };
 };
 
 /**
- * Create an empty folder in the configured container by putting a zero-byte placeholder blob at
- * the folder name, the way Azure Storage Explorer creates a virtual directory.
- * @param {string} dirPath Folder path relative to the configured prefix.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
+ * Put a zero-byte placeholder blob at the given folder name, the way Azure Storage Explorer creates
+ * a virtual directory.
+ * @param {object} params Parameters.
+ * @param {string} params.key Folder blob name, ending with a slash.
+ * @param {AzureMediaLibrary} params.config Azure Blob Storage configuration.
+ * @param {string} params.credential SAS token.
  * @returns {Promise<void>}
  */
-export const createFolder = async (dirPath, config, options) => {
-  const token = requireToken(options);
-  const key = getFolderKey(config, dirPath);
-
+const putFolderBlob = async ({ key, config, credential: token }) => {
   const response = await fetch(buildBlobRequestUrl(config, key, token), {
     method: 'PUT',
     headers: { 'x-ms-blob-type': 'BlockBlob', 'Content-Type': 'application/x-directory' },
   });
 
   await assertResponseOK(response, `Failed to create folder ${key}`);
-
-  return undefined;
 };
 
 /**
- * Remove the placeholder blob of a folder in the configured container. A folder that has no
- * placeholder, because it only ever held files, is as good as removed.
- * @param {string} dirPath Folder path relative to the configured prefix.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
- * @returns {Promise<void>}
+ * Blob service calls for the operations shared with the other object storage services.
+ * @type {ObjectStorageProvider<AzureBlob, AzureMediaLibrary>}
  */
-export const deleteFolder = async (dirPath, config, options) => {
-  const token = requireToken(options);
-  const key = getFolderKey(config, dirPath);
-  const response = await fetch(buildBlobRequestUrl(config, key, token), { method: 'DELETE' });
-
-  await assertResponseOK(response, `Failed to delete folder ${key}`, { allowNotFound: true });
-
-  return undefined;
+const provider = {
+  requireCredential: requireToken,
+  listPage: listBlobPage,
+  /**
+   * Get the name of a blob.
+   * @param {AzureBlob} blob Blob.
+   * @returns {string} Blob name.
+   */
+  getKey: ({ Name }) => Name,
+  parseResults: parseBlobResults,
+  putObject: putBlob,
+  copyObject: copyBlob,
+  deleteObject: deleteBlob,
+  putFolderObject: putFolderBlob,
 };
 
 /**
@@ -345,7 +305,7 @@ const isBlobUrl = (config, url) => {
 
   return [
     `${buildContainerUrl(config)}/`,
-    ...(publicUrl ? [`${trimSlashes(publicUrl)}/`] : []),
+    ...(publicUrl ? [`${trimTrailingSlashes(publicUrl)}/`] : []),
   ].some((base) => url.startsWith(base));
 };
 
@@ -368,11 +328,7 @@ const azureBlobStorage = new ObjectStorageService({
   isConfigured: ({ container, account_name: accountName, endpoint }) =>
     !!(container && (accountName || endpoint)),
   isConfigURL: isBlobUrl,
-  operations: createObjectStorageOperations(provider, {
-    move: moveBlob,
-    createFolder,
-    deleteFolder,
-  }),
+  operations: createObjectStorageOperations(provider),
 });
 
 /**

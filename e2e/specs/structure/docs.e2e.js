@@ -1,5 +1,6 @@
 import { NESTED_CONFIG, NESTED_FILES } from '../../fixtures/configs/nested.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 test.use({ config: NESTED_CONFIG });
 
@@ -28,7 +29,7 @@ test('creates an entry in the folder being browsed', async ({ cms, page }) => {
   await page.getByRole('tree', { name: 'Collection List' }).getByText('reference').click();
   await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('button', { name: 'Parent Folder' })).toContainText('reference');
   await editor.getByRole('textbox', { name: 'Title' }).fill('Errors');
@@ -46,7 +47,7 @@ test('creates an entry named like another one in the folder under a new name', a
   await page.getByRole('tree', { name: 'Collection List' }).getByText('guide').click();
   await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(editor.getByRole('button', { name: 'Parent Folder' })).toContainText('guide');
   await editor.getByRole('textbox', { name: 'Title' }).fill('Usage');
@@ -70,7 +71,7 @@ test('duplicates an entry in a folder under a new name', async ({ cms, page }) =
     page.getByRole('menuitem', { name: 'Duplicate Entry' }),
   );
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await expect(page.getByRole('status').filter({ hasText: 'Entry duplicated' })).toBeVisible();
   await editor.getByRole('textbox', { name: 'Body' }).fill('Copy');
@@ -88,7 +89,7 @@ test('duplicates an entry in a folder under a new name', async ({ cms, page }) =
 test('creates an entry in a new folder', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('button', { name: 'New Folder' }).click();
 
@@ -121,7 +122,7 @@ test.describe('with a maximum slug length', () => {
   }) => {
     await page.getByRole('button', { name: 'Create New Entry' }).click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('button', { name: 'New Folder' }).click();
 
@@ -143,7 +144,7 @@ test.describe('with a maximum slug length', () => {
 test('moves an entry to another folder', async ({ cms, page }) => {
   await page.getByRole('row', { name: /FAQ/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const tree = page.locator('dialog:not([inert])').getByRole('tree', { name: 'Parent Folder' });
 
   await editor.getByRole('button', { name: 'Parent Folder' }).click();
@@ -172,7 +173,7 @@ test('creates the index file with the New button’s menu', async ({ cms, page }
     page.getByRole('menuitem', { name: 'Section Page' }),
   );
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Documentation');
   await editor.getByRole('button', { name: 'Save' }).click();

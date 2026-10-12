@@ -1,5 +1,6 @@
 import { createPNG } from '../fixtures/files.js';
 import { BASE_CONFIG, expect, test } from '../fixtures/test.js';
+import { getEditor } from '../fixtures/ui.js';
 
 test.use({
   config: {
@@ -23,7 +24,7 @@ test('uploads an image with an entry', async ({ cms, page }) => {
   await cms.signIn();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const imageField = editor.getByRole('group', { name: /Image/ });
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Photo Post');

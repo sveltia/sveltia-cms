@@ -1,6 +1,8 @@
 import mime from 'mime';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createMockAssetFolder } from '$lib/test/factories';
+
 import {
   ASSET_KINDS,
   canCreateThumbnail,
@@ -196,13 +198,11 @@ describe('assets/kinds', () => {
       name: path.split('/').pop() || '',
       sha: 'abc123',
       size: 1024,
-      folder: {
+      folder: createMockAssetFolder({
+        collectionName: 'test',
         internalPath: 'test',
         publicPath: 'test',
-        collectionName: 'test',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     });
 
     it('should return true for media assets', () => {
@@ -466,13 +466,11 @@ describe('assets/kinds', () => {
       name: path.split('/').pop() || '',
       sha: 'abc123',
       size: 1024,
-      folder: {
+      folder: createMockAssetFolder({
+        collectionName: 'test',
         internalPath: 'test',
         publicPath: 'test',
-        collectionName: 'test',
-        entryRelative: false,
-        hasTemplateTags: false,
-      },
+      }),
     });
 
     it('should return true for text files', () => {

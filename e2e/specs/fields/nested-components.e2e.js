@@ -1,4 +1,5 @@
 import { BASE_CONFIG, expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -67,9 +68,7 @@ test.beforeEach(async ({ cms, page }) => {
  * @param {Page} page Page.
  * @returns {Locator} Field.
  */
-const getBody = (page) =>
-  page.getByRole('group', { name: 'Content Editor' }).getByRole('group', { name: /Body.*Field/ });
-
+const getBody = (page) => getEditor(page).getByRole('group', { name: /Body.*Field/ });
 /**
  * Get the toolbar of a rich text field’s own editor, which comes before those of the components
  * inserted in it.
@@ -170,7 +169,7 @@ test.describe('with `allow_nested_components: exclude_self`', () => {
   test.use({ config: getConfig('exclude_self') });
 
   test('offers the components other than those it’s in', async ({ cms, page }) => {
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
     const body = getBody(page);
 
     await editor.getByRole('textbox', { name: 'Title' }).fill('Nested');
@@ -216,7 +215,7 @@ test.describe('with a component in the dialog of another', () => {
   test.use({ config: getConfig() });
 
   test('shows the fields of a component in a dialog, and saves it', async ({ cms, page }) => {
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Title' }).fill('Nested');
 

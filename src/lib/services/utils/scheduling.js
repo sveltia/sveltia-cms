@@ -39,3 +39,42 @@ export const runInChunks = async (items, task, { chunkSize = 200 } = {}) => {
     await Promise.all(items.slice(index, index + chunkSize).map((item) => task(item)));
   }
 };
+
+/**
+ * Create a guard telling whether an async call is still the latest one. A slow call made earlier,
+ * e.g. a lookup for an asset focused before, can finish after a later one, and its result must not
+ * replace the later one’s. Call `next()` at the start of each call, and check the function it
+ * returns after every `await`.
+ * @returns {{ next: () => () => boolean }} Guard. `next()` starts a new call and returns a function
+ * telling whether no call has been started since.
+ * @example
+ * const guard = createLatestGuard();
+ *
+ * const update = async () => {
+ *   const isLatest = guard.next();
+ *   const result = await fetchSomething();
+ *
+ *   if (!isLatest()) {
+ *     return;
+ *   }
+ *
+ *   // Use the result
+ * };
+ */
+export const createLatestGuard = () => {
+  let count = 0;
+
+  return {
+    /**
+     * Start a new call.
+     * @returns {() => boolean} Function telling whether no call has been started since.
+     */
+    next: () => {
+      count += 1;
+
+      const call = count;
+
+      return () => call === count;
+    },
+  };
+};

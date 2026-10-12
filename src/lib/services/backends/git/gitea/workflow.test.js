@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { _resetApiSettings } from '$lib/services/backends/git/gitea/api';
 import { commitChanges } from '$lib/services/backends/git/gitea/commits';
-import { resetPageSize } from '$lib/services/backends/git/gitea/pull-requests';
 import giteaWorkflow, {
   discard,
   fetchLabelledPullRequests,
@@ -20,9 +20,9 @@ import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key, { values } = {}) => (values ? `${key} ${JSON.stringify(values)}` : key)),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
 vi.mock('$lib/services/backends/git/gitea/commits');
 vi.mock('$lib/services/backends/git/gitea/files');
 vi.mock('$lib/services/backends/git/gitea/repository', () => ({
@@ -68,7 +68,7 @@ const createItem = (overrides = {}) => ({
 describe('Gitea Editorial Workflow service', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    resetPageSize();
+    _resetApiSettings();
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitea' } });
     forkedRepository.current = undefined;
     vi.mocked(fetchAPI).mockResolvedValue({});
@@ -350,7 +350,7 @@ describe('Gitea Editorial Workflow service', () => {
 
         expect(error.message).toBe('Failed to save the changes.');
         expect(error.cause.message).toBe(
-          'branch_not_found {"repo":"repo","branch":"cms/posts/hello"}',
+          'branch_not_found:{"repo":"repo","branch":"cms/posts/hello"}',
         );
         expect(commitChanges).not.toHaveBeenCalled();
       });
@@ -480,7 +480,7 @@ describe('Gitea Editorial Workflow service', () => {
       const error = await savePullRequest(args).catch((ex) => ex);
 
       expect(error.message).toBe('The workflow branch is in use by another pull request.');
-      expect(error.cause.message).toBe('workflow.branch_in_use {"number":"#7"}');
+      expect(error.cause.message).toBe('workflow.branch_in_use:{"number":"#7"}');
 
       expect(fetchAPI).not.toHaveBeenCalledWith(
         expect.anything(),

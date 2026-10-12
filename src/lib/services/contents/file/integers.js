@@ -158,8 +158,8 @@ export const restoreBigInts = (value) => {
 };
 
 /**
- * Clear the source text of the integers read so far. For tests.
+ * Clear the source text of the integers read so far. Used in tests.
  */
-export const clearUnsafeIntegerSources = () => {
+export const _resetUnsafeIntegerSources = () => {
   unsafeIntegerSources.clear();
 };

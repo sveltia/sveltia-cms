@@ -1,6 +1,7 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
-import { getEditor, getEditPane } from './helpers.js';
+import { getEditPane } from './helpers.js';
 
 /**
  * A multilingual blog whose posts are stored in a folder for each locale, under a localized slug,

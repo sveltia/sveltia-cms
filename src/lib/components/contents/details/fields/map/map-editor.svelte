@@ -12,20 +12,18 @@
   import { onDestroy, tick, untrack } from 'svelte';
 
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
-  import { loadModule } from '$lib/services/app/dependencies';
+  import { createMapDrawController } from '$lib/services/contents/fields/map/draw';
   import { searchLocations } from '$lib/services/contents/fields/map/geocoding';
   import {
-    getGeometryBounds,
-    isValidGeoJSON,
-    parseGeoJSON,
-    roundCoordinates,
-  } from '$lib/services/contents/fields/map/helpers';
-  import { toFixed } from '$lib/services/utils/number';
+    GeolocationUnsupportedError,
+    getCurrentPosition,
+  } from '$lib/services/contents/fields/map/geolocation';
+  import { isValidGeoJSON, parseGeoJSON } from '$lib/services/contents/fields/map/helpers';
   import { watch, watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
    * @import Leaflet from 'leaflet';
-   * @import { GeoJSONStoreGeometries, TerraDraw } from 'terra-draw';
+   * @import { MapDrawController } from '$lib/services/contents/fields/map/draw';
    * @import { LocationSearchResult } from '$lib/services/contents/fields/map/geocoding';
    * @import { FieldEditorProps, GeoCoordinates } from '$lib/types/private';
    * @import { MapField } from '$lib/types/public';
@@ -49,14 +47,13 @@
   } = $props();
 
   const { decimals = 7, type: geometryType = 'Point', center, zoom } = $derived(fieldConfig);
-  const drawMode = $derived(geometryType.toLowerCase());
 
   /** @type {HTMLElement | undefined} */
   let mapElement = $state();
   /** @type {HTMLElement | undefined} */
   let toolbar = $state();
-  /** @type {TerraDraw | undefined} */
-  let draw = $state(undefined);
+  /** @type {MapDrawController | undefined} */
+  let draw = $state.raw(undefined);
   /** @type {string} */
   let inputValue = $state('');
   /** @type {string} */
@@ -70,124 +67,46 @@
   /** @type {string} */
   let errorMessage = $state('');
 
-  /** @type {Leaflet.Map | undefined} */
-  let map = undefined;
   /** Whether the component has been destroyed, possibly before the drawing tools are loaded. */
   let destroyed = false;
 
   /**
-   * Load the Terra Draw libraries and initialize the draw instance once the Leaflet map is ready.
-   * We don’t bundle the libraries because of the bundle size: a Map field may not be used often and
-   * multiple services/adapters may be supported in the future.
+   * Start the drawing tools once the Leaflet map is ready.
    * @param {object} args Arguments.
    * @param {Leaflet} args.leaflet Leaflet library.
    * @param {Leaflet.Map} args.map Leaflet map instance.
    */
-  const onReady = async ({ leaflet, map: mapInstance }) => {
-    map = mapInstance;
-
-    /** @type {import('terra-draw')} */
-    const { TerraDraw, TerraDrawLineStringMode, TerraDrawPointMode, TerraDrawPolygonMode } =
-      await loadModule('terra-draw', 'dist/terra-draw.module.js');
-
-    /** @type {import('terra-draw-leaflet-adapter')} */
-    const { TerraDrawLeafletAdapter } = await loadModule(
-      'terra-draw-leaflet-adapter',
-      'dist/terra-draw-leaflet-adapter.module.js?module',
-    );
+  const onReady = async ({ leaflet, map }) => {
+    const controller = await createMapDrawController({
+      leaflet,
+      map,
+      geometryType,
+      decimals,
+      /**
+       * Take the value of a feature the user has drawn.
+       * @param {string} value Stringified GeoJSON geometry.
+       */
+      onChange: (value) => {
+        inputValue = value;
+      },
+      /**
+       * Check whether the component has been destroyed while the libraries were loading.
+       * @returns {boolean} Result.
+       */
+      isCancelled: () => destroyed,
+    });
 
     // The component may have been destroyed, and the map removed, while the libraries were loading
-    if (destroyed) {
+    if (!controller) {
       return;
     }
 
-    /** @type {Record<string, any>} */
-    const constructors = {
-      Point: TerraDrawPointMode,
-      LineString: TerraDrawLineStringMode,
-      Polygon: TerraDrawPolygonMode,
-    };
+    draw = controller;
 
-    const _draw = new TerraDraw({
-      adapter: new TerraDrawLeafletAdapter({ lib: leaflet, map }),
-      modes: [new constructors[geometryType]()],
-    });
-
-    _draw.start();
-    _draw.setMode(drawMode);
-
-    _draw.on('change', (_ids, changeType, context) => {
-      // Ignore the features added or removed by the editor itself, e.g. the stored value: rounding
-      // it would modify the entry as soon as it’s opened
-      if (context && 'origin' in context) {
-        return;
-      }
-
-      // eslint-disable-next-line no-use-before-define
-      onDrawChange(changeType);
-    });
-
-    draw = _draw;
-
-    // The $effect below will handle fitting the map to an existing valid value. Apply the
-    // configured center/zoom defaults here for the case where there is no valid value. Leaflet uses
-    // `[latitude, longitude]` format for coordinates, while GeoJSON uses `[longitude, latitude]`.
-    // We need to reverse the order of the coordinates when setting the view of the map.
+    // The watcher below will handle fitting the map to an existing valid value. Apply the
+    // configured center/zoom defaults here for the case where there is no valid value
     if (!currentValue || !isValidGeoJSON(currentValue, geometryType)) {
-      map.setView(center ? [center[1], center[0]] : [0, 0], zoom ?? 2);
-    }
-  };
-
-  /**
-   * Handle the change event of the Terra Draw instance. Update the input value based on the drawn
-   * feature. This function is called when a feature is created, modified, or deleted.
-   * @param {string} changeType Type of change that occurred in the draw instance.
-   */
-  const onDrawChange = (changeType) => {
-    /* v8 ignore next 3 -- the listener is added to the draw instance itself */
-    if (!draw) {
-      return;
-    }
-
-    const snapshot = draw.getSnapshot();
-    const feature = snapshot[snapshot.length - 1];
-
-    if (!feature || changeType !== (geometryType === 'Point' ? 'create' : 'delete')) {
-      return;
-    }
-
-    inputValue = JSON.stringify({
-      type: geometryType,
-      coordinates: roundCoordinates(feature.geometry.coordinates, decimals),
-    });
-
-    // Allow to have only one feature
-    if (snapshot.length > 1) {
-      draw.removeFeatures(
-        snapshot.filter((f) => f.id !== feature.id).map((f) => /** @type {string} */ (f.id)),
-      );
-    }
-  };
-
-  /**
-   * Fit the map view to the given geometry. For a Point, the map is centered on the coordinates at
-   * zoom level 15. For a LineString or Polygon, the map is fitted to the bounding box of all
-   * coordinate pairs.
-   * @param {GeoJSONStoreGeometries} geometry GeoJSON geometry object.
-   */
-  const fitMapToGeometry = (geometry) => {
-    if (geometry.type === 'Point') {
-      const [longitude, latitude] = geometry.coordinates;
-
-      if (typeof longitude === 'number' && typeof latitude === 'number') {
-        map?.setView([latitude, longitude], 15);
-      }
-    } else {
-      const bounds = getGeometryBounds(geometry);
-
-      if (bounds) {
-        map?.fitBounds(bounds);
-      }
+      controller.showDefaultView({ center, zoom });
     }
   };
 
@@ -208,13 +127,7 @@
     }
 
     inputValue = newValue;
-
-    draw.clear();
-
-    if (geometry) {
-      draw.addFeatures([{ type: 'Feature', geometry, properties: { mode: drawMode } }]);
-      fitMapToGeometry(geometry);
-    }
+    draw.showGeometry(geometry);
   };
 
   /**
@@ -237,27 +150,17 @@
    * Set the location on the map editor.
    * @param {GeoCoordinates} coordinates GeoCoordinates of the location to set.
    */
-  const setLocation = ({ latitude, longitude }) => {
+  const setLocation = (coordinates) => {
     /* v8 ignore next 3 -- the drawing tools are loaded right after the map, before any input */
     if (!draw) {
       return;
     }
 
-    latitude = toFixed(latitude, decimals);
-    longitude = toFixed(longitude, decimals);
+    const value = draw.setLocation(coordinates);
 
-    map?.setView([latitude, longitude], 15);
-
-    if (geometryType !== 'Point') {
-      return;
+    if (value !== undefined) {
+      inputValue = value;
     }
-
-    /** @type {GeoJSONStoreGeometries} */
-    const feature = { type: 'Point', coordinates: [longitude, latitude] };
-
-    draw.clear();
-    draw.addFeatures([{ type: 'Feature', geometry: feature, properties: { mode: 'point' } }]);
-    inputValue = JSON.stringify(feature);
   };
 
   /**
@@ -276,25 +179,27 @@
    * the user’s location.
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API
    */
-  const useCurrentLocation = () => {
-    if (!navigator.geolocation) {
+  const useCurrentLocation = async () => {
+    /** @type {GeoCoordinates} */
+    let coordinates;
+
+    try {
+      coordinates = await getCurrentPosition();
+    } catch (error) {
       showAlertDialog = true;
-      errorMessage = _('geolocation_unsupported');
+
+      if (error instanceof GeolocationUnsupportedError) {
+        errorMessage = _('geolocation_unsupported');
+      } else {
+        errorMessage = _('geolocation_error_body');
+        // eslint-disable-next-line no-console
+        console.error('Error getting current location:', error);
+      }
 
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      ({ coords: { latitude, longitude } }) => {
-        setLocation({ latitude, longitude });
-      },
-      (error) => {
-        showAlertDialog = true;
-        errorMessage = _('geolocation_error_body');
-        // eslint-disable-next-line no-console
-        console.error('Error getting current location:', error);
-      },
-    );
+    setLocation(coordinates);
   };
 
   /**

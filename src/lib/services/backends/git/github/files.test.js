@@ -53,9 +53,9 @@ vi.mock('mime', () => ({ default: { getType: vi.fn() } }));
 const mockGetRootDir = vi.hoisted(() => vi.fn(() => ''));
 
 vi.mock('$lib/services/backends/root-dir', () => ({ getRootDir: mockGetRootDir }));
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key, { values } = {}) => `${key}:${JSON.stringify(values)}`),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
 
 describe('GitHub files service', () => {
   beforeEach(() => {

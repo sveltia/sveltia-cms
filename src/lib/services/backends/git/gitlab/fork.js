@@ -10,14 +10,13 @@ import {
   NOT_COLLABORATOR_ERROR_MESSAGE,
 } from '$lib/services/backends/git/shared/errors';
 import {
-  ensureForkPermission,
   isOpenAuthoringConfiguredFor,
   pollForFork,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
+  setUpForkFor,
 } from '$lib/services/backends/git/shared/fork';
 import { user } from '$lib/services/user/account.svelte';
-import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { RepositoryPath } from '$lib/types/private';
@@ -347,25 +346,31 @@ export const createFork = async () => {
  * @see https://sveltiacms.app/en/docs/workflows/open
  */
 const setUpOpenAuthoring = async () => {
-  const { canWrite } = await fetchRepositoryAccess();
-
-  // A maintainer keeps working on the configured project, as if Open Authoring was off
-  if (canWrite) {
-    return;
-  }
-
   const { owner, repo } = repository;
-  const [{ allowForking }, existingFork] = await Promise.all([fetchProjectDetails(), fetchFork()]);
+  let allowForking = false;
 
-  if (existingFork) {
-    forkedRepository.current = existingFork;
+  await setUpForkFor({
+    repoPath: `${owner}/${repo}`,
+    fetchAccess: fetchRepositoryAccess,
+    /**
+     * Look up the fork, along with the project details, which are needed whether or not there’s a
+     * fork, for the project ID they record.
+     * @returns {Promise<RepositoryPath | undefined>} Fork.
+     */
+    fetchFork: async () => {
+      const [details, fork] = await Promise.all([fetchProjectDetails(), fetchFork()]);
 
-    return;
-  }
+      ({ allowForking } = details);
 
-  await ensureForkPermission({ repoPath: `${owner}/${repo}`, allowForking });
-
-  forkedRepository.current = await createFork();
+      return fork;
+    },
+    /**
+     * Tell whether the project can be forked, which the project details have said.
+     * @returns {boolean} Result.
+     */
+    fetchForkingAllowed: () => allowForking,
+    createFork,
+  });
 };
 
 /**

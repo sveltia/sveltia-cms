@@ -50,9 +50,9 @@ vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
 }));
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key, { values } = {}) => `${key}:${JSON.stringify(values)}`),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
 
 vi.mock('$lib/services/backends/git/services', () => ({
   gitBackendServices: {

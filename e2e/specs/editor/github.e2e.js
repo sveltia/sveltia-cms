@@ -1,4 +1,5 @@
 import { expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
+import { getEditor, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -57,27 +58,13 @@ test.beforeEach(async ({ github }) => {
   github.commit({ [POST_PATH]: FIRST_POST }, { message: 'Add the first post' });
 });
 
-/**
- * Open the first post in the entry editor.
- * @param {Page} page Page.
- * @returns {Promise<Locator>} Editor.
- */
-const openFirstPost = async (page) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await page.getByRole('row', { name: /First Post/ }).click();
-  await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('First Post');
-
-  return editor;
-};
-
 test.describe('History panel', () => {
   test('lists the commits of the entry, the latest first', async ({ cms, github, page }) => {
     github.commit({ [POST_PATH]: FIRST_POST.replace('Hello', 'Hi') }, { author: github.user });
     // A commit to another file isn’t listed
     github.commit({ 'content/posts/second-post.md': '---\ntitle: Second Post\n---\n' });
     await cms.open();
-    await openFirstPost(page);
+    await openEntry(page, 'First Post');
     await page
       .getByRole('radiogroup', { name: 'Sidebar Panels' })
       .getByRole('radio', { name: 'History' })
@@ -117,7 +104,7 @@ test.describe('draft backup', () => {
    * @param {(editor: Locator) => Promise<void>} edit Function making the changes.
    */
   const editAndLeave = async (page, edit) => {
-    const editor = await openFirstPost(page);
+    const editor = await openEntry(page, 'First Post');
 
     await edit(editor);
     // The draft is backed up 500 ms after the last change
@@ -146,7 +133,7 @@ test.describe('draft backup', () => {
     await dialog.getByRole('button', { name: answer }).click();
     await expect(dialog).toBeHidden();
 
-    return page.getByRole('group', { name: 'Content Editor' });
+    return getEditor(page);
   };
 
   /**
@@ -231,7 +218,7 @@ test.describe('draft backup', () => {
   test('restores the changes after the page is reloaded', async ({ cms, page }) => {
     await cms.open();
 
-    const editor = await openFirstPost(page);
+    const editor = await openEntry(page, 'First Post');
 
     await typeIn(editor.getByRole('textbox', { name: 'Title' }), 'Backed-up Post');
     await page.waitForTimeout(1000);
@@ -256,7 +243,7 @@ test.describe('draft backup', () => {
 
     // The backup is gone, so the entry opens without the prompt next time
     await editor.getByRole('button', { name: 'Cancel Editing' }).click();
-    await openFirstPost(page);
+    await openEntry(page, 'First Post');
     await page.waitForTimeout(500);
     await expect(page.getByRole('alertdialog', { name: 'Restore Draft' })).toBeHidden();
   });
@@ -300,7 +287,7 @@ test.describe('draft backup', () => {
       await cms.open();
       await page.getByRole('row', { name: /About/ }).click();
 
-      const editor = page.getByRole('group', { name: 'Content Editor' });
+      const editor = getEditor(page);
 
       await typeIn(editor.getByRole('textbox', { name: 'Title' }), 'About Us');
       // The draft is backed up 500 ms after the last change
@@ -315,7 +302,7 @@ test.describe('draft backup', () => {
   test('doesn’t back up an entry that was only opened', async ({ cms, page }) => {
     await cms.open();
     await editAndLeave(page, async () => {});
-    await openFirstPost(page);
+    await openEntry(page, 'First Post');
     await page.waitForTimeout(500);
     await expect(page.getByRole('alertdialog', { name: 'Restore Draft' })).toBeHidden();
   });
@@ -326,7 +313,7 @@ test.describe('draft backup', () => {
   }) => {
     await cms.open();
 
-    const editor = await openFirstPost(page);
+    const editor = await openEntry(page, 'First Post');
 
     await typeIn(editor.getByRole('textbox', { name: 'Body' }), 'Edited before the deletion.');
     await expect.poll(() => getBackupKeys(page)).toEqual([['posts', 'first-post']]);
@@ -351,7 +338,7 @@ test.describe('draft backup', () => {
     await editor.getByRole('textbox', { name: 'URL' }).fill('https://example.com/');
     await editor.getByRole('textbox', { name: 'Body' }).fill('A new post.');
     await editor.getByRole('button', { name: 'Save' }).click();
-    await openFirstPost(page);
+    await openEntry(page, 'First Post');
     // The prompt can take more than a second to show up after a save
     await page.waitForTimeout(2000);
     await expect(page.getByRole('alertdialog', { name: 'Restore Draft' })).toBeHidden();

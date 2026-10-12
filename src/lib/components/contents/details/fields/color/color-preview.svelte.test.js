@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import ColorPreview from './color-preview.svelte';
 
@@ -13,17 +14,13 @@ import ColorPreview from './color-preview.svelte';
  * @param {Partial<ColorField>} [config] Field options.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (currentValue, config = {}) => {
-  const { container } = await render(ColorPreview, {
-    locale: 'en',
-    keyPath: 'color',
-    typedKeyPath: 'color',
-    fieldConfig: { name: 'color', widget: 'color', ...config },
-    currentValue,
-  });
-
-  return container;
-};
+const renderPreview = async (currentValue, config = {}) =>
+  (
+    await renderFieldPreview(ColorPreview, {
+      fieldConfig: { name: 'color', widget: 'color', ...config },
+      currentValue,
+    })
+  ).container;
 
 describe('ColorPreview', () => {
   test('shows a swatch, the hex value and the RGB value', async () => {

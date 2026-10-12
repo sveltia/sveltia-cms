@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * Conference talks whose fields each carry a rule that a list or an object can break: an item
@@ -110,7 +111,7 @@ const openAndTrySaving = async ({ cms, page, file }) => {
   await cms.signIn();
   await page.getByRole('row', { name: /Runes/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Runes in Depth');
   await editor.getByRole('button', { name: 'Save' }).click();

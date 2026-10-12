@@ -5,8 +5,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   addFolderToTree,
   findNestedTreeNode,
+  getChildFolderNames,
   getMaxParentFolderDepth,
+  getMovableFolderName,
   getNestedTree,
+  getParentFolderPickerTree,
   getParentFolderTree,
 } from '$lib/services/contents/collection/nested/tree';
 import { isEntryCollection } from '$lib/services/contents/collection/predicates';
@@ -444,5 +447,82 @@ describe('addFolderToTree()', () => {
 
     expect(addFolderToTree({ nodes, path: '' })).toBe(nodes);
     expect(addFolderToTree({ nodes, path: '/' })).toBe(nodes);
+  });
+});
+
+describe('getMovableFolderName()', () => {
+  const collection = {
+    name: 'pages',
+    folder: 'content/pages',
+    nested: {},
+    meta: { path: { index_file: '_index' } },
+  };
+
+  test('returns the name of the folder a saved entry occupies', () => {
+    expect(getMovableFolderName({ collection, subPath: 'docs/guides/_index' })).toBe('guides');
+    expect(getMovableFolderName({ collection, subPath: 'about/_index' })).toBe('about');
+  });
+
+  test('returns nothing for the collection’s own index file', () => {
+    expect(getMovableFolderName({ collection, subPath: '_index' })).toBeUndefined();
+  });
+
+  test('returns nothing for a new entry or one without a folder of its own', () => {
+    expect(
+      getMovableFolderName({ collection, subPath: 'about/_index', isNew: true }),
+    ).toBeUndefined();
+    expect(getMovableFolderName({ collection, subPath: undefined })).toBeUndefined();
+    expect(
+      getMovableFolderName({ collection: undefined, subPath: 'about/_index' }),
+    ).toBeUndefined();
+    expect(
+      getMovableFolderName({
+        collection: { ...collection, nested: { subfolders: false } },
+        subPath: 'about/_index',
+      }),
+    ).toBeUndefined();
+  });
+});
+
+describe('getParentFolderPickerTree()', () => {
+  const collection = { name: 'pages', folder: 'content/pages', nested: {} };
+
+  test('adds the new folders to the parent folder tree below the collection folder', () => {
+    expect(
+      getParentFolderPickerTree({
+        collection,
+        label: 'Pages',
+        entries: [entry('about/_index', 'About'), entry('docs/_index', 'Docs')],
+        newFolderPaths: ['about/team'],
+        excludePath: 'docs',
+        locale: 'en',
+      }),
+    ).toEqual({
+      path: '',
+      label: 'Pages',
+      children: [
+        {
+          path: 'about',
+          label: 'About',
+          children: [{ path: 'about/team', label: 'team', children: [] }],
+        },
+      ],
+    });
+  });
+});
+
+describe('getChildFolderNames()', () => {
+  test('returns the names of the folders within the given one', () => {
+    expect(
+      getChildFolderNames({
+        path: 'about',
+        label: 'About',
+        children: [
+          { path: 'about/team', label: 'Team', children: [] },
+          { path: 'about/history', label: 'History', children: [] },
+        ],
+      }),
+    ).toEqual(['team', 'history']);
+    expect(getChildFolderNames(undefined)).toEqual([]);
   });
 });

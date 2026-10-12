@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/test.js';
+import { getEditor } from '../fixtures/ui.js';
 
 /**
  * A file in the `raw` format, edited as a whole in a single optional field. Leaving the field empty
@@ -33,7 +34,7 @@ test('empties a raw file', async ({ cms, page }) => {
   await cms.signIn();
   await page.getByRole('row', { name: 'Robots' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const body = editor.getByRole('textbox', { name: 'Body' });
 
   await expect(body).toHaveValue('User-agent: *');

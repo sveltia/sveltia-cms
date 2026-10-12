@@ -8,14 +8,13 @@ import {
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import {
-  ensureForkPermission,
   isOpenAuthoringConfiguredFor,
   pollForFork,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
+  setUpForkFor,
 } from '$lib/services/backends/git/shared/fork';
 import { user } from '$lib/services/user/account.svelte';
-import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { RepositoryPath } from '$lib/types/private';
@@ -364,34 +363,31 @@ export const syncFork = async ({ owner, repo }) => {
  * @see https://sveltiacms.app/en/docs/workflows/open
  */
 const setUpOpenAuthoring = async () => {
-  const { canWrite, allowForking } = await fetchRepositoryAccess();
-
-  // A maintainer keeps working on the configured repository, as if Open Authoring was off
-  if (canWrite) {
-    return;
-  }
-
   const { owner, repo } = repository;
-  const repoPath = `${owner}/${repo}`;
 
-  // Syncing the fork needs the branch name, which is otherwise resolved later in the data load
-  if (!repository.branch) {
-    await fetchDefaultBranchName();
-  }
-
-  const existingFork = await fetchFork();
-
-  if (existingFork) {
-    await syncFork(existingFork);
-    forkedRepository.current = existingFork;
-
-    return;
-  }
-
-  // Forking is turned off by default on a private repository, and can be turned off on a public one
-  await ensureForkPermission({ repoPath, allowForking });
-
-  forkedRepository.current = await createFork();
+  await setUpForkFor({
+    repoPath: `${owner}/${repo}`,
+    fetchAccess: fetchRepositoryAccess,
+    /**
+     * Resolve the branch name, which syncing the fork needs. It’s otherwise resolved later in the
+     * data load.
+     */
+    prepare: async () => {
+      if (!repository.branch) {
+        await fetchDefaultBranchName();
+      }
+    },
+    fetchFork,
+    prepareFork: syncFork,
+    /**
+     * Tell whether the repository can be forked, which the access check has read already. Forking
+     * is turned off by default on a private repository, and can be turned off on a public one.
+     * @param {{ allowForking: boolean }} access Repository access.
+     * @returns {boolean} Result.
+     */
+    fetchForkingAllowed: ({ allowForking }) => allowForking,
+    createFork,
+  });
 };
 
 /**

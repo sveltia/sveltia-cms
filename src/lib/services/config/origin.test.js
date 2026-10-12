@@ -57,10 +57,9 @@ vi.mock('$lib/services/backends/git/services', () => ({
   gitBackendServices: { github: {} },
 }));
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key) => key),
-  locale: { current: 'en', set: vi.fn() },
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ locale: 'en' }),
+);
 
 describe('initCmsConfig with an opaque page origin', () => {
   beforeAll(() => {

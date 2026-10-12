@@ -94,12 +94,6 @@ export class MockGitLab extends MockGitRepository {
   allowForking = true;
 
   /**
-   * The signed-in user’s fork of the project, once {@link createFork} has made it.
-   * @type {{ owner: string, repo: string } | undefined}
-   */
-  fork = undefined;
-
-  /**
    * How many times a newly requested fork reports an unfinished import before it’s ready, as GitLab
    * copies the repository in the background.
    */
@@ -173,22 +167,6 @@ export class MockGitLab extends MockGitRepository {
   }
 
   /**
-   * Fork the project onto the signed-in user’s namespace, with a copy of the default branch. Like a
-   * fork on GitLab, it shares the commits and blobs of the project, and only its branches are its
-   * own.
-   * @param {object} [options] Options.
-   * @param {string} [options.repo] Name of the fork, the project’s own by default. A fork has
-   * another name when the contributor renamed it.
-   * @returns {{ owner: string, repo: string }} Fork.
-   */
-  createFork({ repo = this.repo } = {}) {
-    this.fork = { owner: this.user.login, repo };
-    this.refs.set(this.forkBranch(this.branch), this.head.oid);
-
-    return this.fork;
-  }
-
-  /**
    * Find a project the way GitLab does for a project parameter in a request body, such as a
    * commit’s `start_project`: by its numeric ID, or by its full path as is. A path URL-encoded the
    * way it is in a request path names no project.
@@ -204,15 +182,6 @@ export class MockGitLab extends MockGitRepository {
     }
 
     return projects.find(([id, path]) => String(idOrPath) === String(id) || idOrPath === path)?.[0];
-  }
-
-  /**
-   * Get the key of a branch in the fork, for {@link refs}, {@link commit} and {@link readFile}.
-   * @param {string} branch Branch name.
-   * @returns {string} Key, e.g. `mona:main`.
-   */
-  forkBranch(branch) {
-    return `${this.user.login}:${branch}`;
   }
 
   /**

@@ -1,6 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
-
-import { openCollection } from './helpers.js';
+import { getEditor, openCollection, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -98,11 +97,12 @@ const start = async (cms, files) => {
  * @param {string} body Expected body.
  * @returns {Promise<Locator>} Content editor.
  */
-const openEntry = async (page, collectionName, title, body) => {
-  await openCollection(page, collectionName);
-  await page.getByRole('row', { name: title, exact: true }).click();
-
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+const openEntryWithBody = async (page, collectionName, title, body) => {
+  const editor = await openEntry(page, title, {
+    collection: collectionName,
+    exact: true,
+    checkTitle: false,
+  });
 
   await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue(body);
 
@@ -128,7 +128,7 @@ const createEntry = async (page, collectionName) => {
   await openCollection(page, collectionName);
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title', exact: true }).fill('Night Sky');
   await editor.getByRole('textbox', { name: 'Body' }).fill('Look up.');
@@ -152,7 +152,7 @@ test.describe('`key`', () => {
     page,
   }) => {
     await start(cms, { 'content/posts/old.md': '---\ntitle: Old\n---\n\nHello.\n' });
-    await editBody(await openEntry(page, 'posts', 'Old', 'Hello.'));
+    await editBody(await openEntryWithBody(page, 'posts', 'Old', 'Hello.'));
     await expectFile(cms, 'content/posts/old.md', '---\ntitle: Old\n---\n\nEdited.\n');
   });
 
@@ -166,7 +166,7 @@ test.describe('`key`', () => {
     await start(cms, {
       'content/posts/old.md': '---\ntitle: Old\nbody: Summary\n---\n\nHello.\n',
     });
-    await editBody(await openEntry(page, 'posts', 'Old', 'Hello.'));
+    await editBody(await openEntryWithBody(page, 'posts', 'Old', 'Hello.'));
     await expectFile(
       cms,
       'content/posts/old.md',
@@ -179,13 +179,13 @@ test.describe('`key`', () => {
     await start(cms, {
       'content/posts/old.md': '---\ntitle: Old\ncontent: Hello.\n---\n\nIgnored.\n',
     });
-    await editBody(await openEntry(page, 'posts', 'Old', 'Hello.'));
+    await editBody(await openEntryWithBody(page, 'posts', 'Old', 'Hello.'));
     await expectFile(cms, 'content/posts/old.md', '---\ntitle: Old\n---\n\nEdited.\n');
   });
 
   test('works with TOML front matter', async ({ cms, page }) => {
     await start(cms, { 'content/hugo/old.md': '+++\ntitle = "Old"\n+++\n\nHello.\n' });
-    await editBody(await openEntry(page, 'hugo', 'Old', 'Hello.'));
+    await editBody(await openEntryWithBody(page, 'hugo', 'Old', 'Hello.'));
     await expectFile(cms, 'content/hugo/old.md', '+++\ntitle = "Old"\n+++\n\nEdited.\n');
     await createEntry(page, 'hugo');
     await expectFile(
@@ -199,7 +199,7 @@ test.describe('`key`', () => {
 test.describe('`inline: true`', () => {
   test('reads and saves the body in the front matter', async ({ cms, page }) => {
     await start(cms, { 'content/notes/old.md': '---\ntitle: Old\nbody: Hello.\n---\n' });
-    await editBody(await openEntry(page, 'notes', 'Old', 'Hello.'));
+    await editBody(await openEntryWithBody(page, 'notes', 'Old', 'Hello.'));
     await expectFile(cms, 'content/notes/old.md', '---\ntitle: Old\nbody: Edited.\n---\n');
   });
 
@@ -215,7 +215,7 @@ test.describe('`inline: true`', () => {
 
   test('moves the text below the front matter into it', async ({ cms, page }) => {
     await start(cms, { 'content/notes/old.md': '---\ntitle: Old\n---\n\nHello.\n' });
-    await editBody(await openEntry(page, 'notes', 'Old', 'Hello.'));
+    await editBody(await openEntryWithBody(page, 'notes', 'Old', 'Hello.'));
     await expectFile(cms, 'content/notes/old.md', '---\ntitle: Old\nbody: Edited.\n---\n');
   });
 
@@ -224,7 +224,7 @@ test.describe('`inline: true`', () => {
     await start(cms, {
       'content/notes/old.md': '---\ntitle: Old\nbody: Hello.\n---\n\nIgnored.\n',
     });
-    await editBody(await openEntry(page, 'notes', 'Old', 'Hello.'));
+    await editBody(await openEntryWithBody(page, 'notes', 'Old', 'Hello.'));
     await expectFile(cms, 'content/notes/old.md', '---\ntitle: Old\nbody: Edited.\n---\n');
   });
 });
@@ -235,11 +235,11 @@ test.describe('file collection', () => {
       'content/pages/about.md': '---\ntitle: About\n---\n\nHello.\n',
       'content/pages/contact.md': '---\ntitle: Contact\nbody: Write to us.\n---\n',
     });
-    await editBody(await openEntry(page, 'pages', 'About', 'Hello.'));
+    await editBody(await openEntryWithBody(page, 'pages', 'About', 'Hello.'));
     await expectFile(cms, 'content/pages/about.md', '---\ntitle: About\n---\n\nEdited.\n');
 
     // The other file uses the collection’s option
-    await editBody(await openEntry(page, 'pages', 'Contact', 'Write to us.'));
+    await editBody(await openEntryWithBody(page, 'pages', 'Contact', 'Write to us.'));
     await expectFile(cms, 'content/pages/contact.md', '---\ntitle: Contact\nbody: Edited.\n---\n');
   });
 });

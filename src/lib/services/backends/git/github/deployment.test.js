@@ -8,6 +8,7 @@ import {
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { createMockDeployTarget } from '$lib/test/factories';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/github/repository');
@@ -87,18 +88,6 @@ describe('GitHub deployment service', () => {
 
   describe('fetchDeployments', () => {
     /**
-     * Create a deploy target.
-     * @param {object} [overrides] Properties to override.
-     * @returns {any} Target.
-     */
-    const createTarget = (overrides = {}) => ({
-      sha: 'abc123',
-      branch: 'cms/posts/hello',
-      kind: 'preview',
-      ...overrides,
-    });
-
-    /**
      * Answer every request with one commit carrying whichever sources the test supplies. All three
      * are asked for together, so a single response covers them.
      * @param {Record<string, any>} commit Commit node.
@@ -113,14 +102,14 @@ describe('GitHub deployment service', () => {
     });
 
     test('skips a target without a commit SHA', async () => {
-      await expect(fetchDeployments([createTarget({ sha: '' })])).resolves.toEqual({});
+      await expect(fetchDeployments([createMockDeployTarget({ sha: '' })])).resolves.toEqual({});
       expect(fetchGraphQL).not.toHaveBeenCalled();
     });
 
     test('asks for every source in a single request', async () => {
       respondWith({});
 
-      await fetchDeployments([createTarget()]);
+      await fetchDeployments([createMockDeployTarget()]);
 
       expect(fetchGraphQL).toHaveBeenCalledTimes(1);
 
@@ -144,7 +133,7 @@ describe('GitHub deployment service', () => {
         },
       });
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual({
         state: 'ready',
@@ -166,7 +155,7 @@ describe('GitHub deployment service', () => {
         },
       });
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual(
         expect.objectContaining({ state: 'ready', url: 'https://preview.vercel.app' }),
@@ -185,7 +174,7 @@ describe('GitHub deployment service', () => {
         },
       });
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual({ state: 'unknown', checkedTime: expect.any(Number) });
     });
@@ -203,7 +192,7 @@ describe('GitHub deployment service', () => {
         deployments: { nodes: [{ environment: null, latestStatus: null }] },
       });
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual({
         state: 'pending',
@@ -218,7 +207,7 @@ describe('GitHub deployment service', () => {
         deployments: { nodes: [{ environment: null, latestStatus: { state: 'QUEUED' } }] },
       });
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual(
         expect.objectContaining({ state: 'pending', url: undefined, context: '' }),
@@ -228,7 +217,7 @@ describe('GitHub deployment service', () => {
     test('returns unknown when no source reports anything', async () => {
       respondWith({});
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual({ state: 'unknown', checkedTime: expect.any(Number) });
     });
@@ -260,7 +249,7 @@ describe('GitHub deployment service', () => {
         },
       });
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual(
         expect.objectContaining({
@@ -292,7 +281,7 @@ describe('GitHub deployment service', () => {
         },
       });
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       // The build state is still worth reporting; a dashboard link is not somewhere to send anyone
       expect(result.abc123).toEqual(expect.objectContaining({ state: 'ready', url: undefined }));
@@ -318,7 +307,7 @@ describe('GitHub deployment service', () => {
         },
       });
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual(
         expect.objectContaining({
@@ -349,7 +338,7 @@ describe('GitHub deployment service', () => {
         },
       });
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual(expect.objectContaining({ state: 'pending', url: undefined }));
     });
@@ -383,7 +372,7 @@ describe('GitHub deployment service', () => {
         },
       });
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual(
         expect.objectContaining({ state: 'ready', url: undefined, context: '' }),
@@ -412,7 +401,7 @@ describe('GitHub deployment service', () => {
         },
       });
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123.url).toBe('https://ready.example.com');
     });
@@ -425,8 +414,8 @@ describe('GitHub deployment service', () => {
       });
 
       const result = await fetchDeployments([
-        createTarget({ branch: 'cms/posts/a' }),
-        createTarget({ branch: 'cms/posts/b' }),
+        createMockDeployTarget({ branch: 'cms/posts/a' }),
+        createMockDeployTarget({ branch: 'cms/posts/b' }),
       ]);
 
       const [query] = vi.mocked(fetchGraphQL).mock.calls[0];
@@ -440,7 +429,7 @@ describe('GitHub deployment service', () => {
       vi.mocked(fetchGraphQL).mockResolvedValue({ repository: {} });
 
       const targets = Array.from({ length: 21 }, (_, index) =>
-        createTarget({ sha: `sha${index}` }),
+        createMockDeployTarget({ sha: `sha${index}` }),
       );
 
       await fetchDeployments(targets);
@@ -499,7 +488,7 @@ describe('GitHub deployment service', () => {
           ]);
         });
 
-        const result = await run([createTarget()]);
+        const result = await run([createMockDeployTarget()]);
 
         expect(result.abc123).toEqual(
           expect.objectContaining({ state: 'ready', url: 'https://preview.netlify.app' }),
@@ -521,12 +510,12 @@ describe('GitHub deployment service', () => {
           return createCommitResponse([{}]);
         });
 
-        await run([createTarget()]);
+        await run([createMockDeployTarget()]);
 
         const firstRound = vi.mocked(request).mock.calls.length;
 
         vi.mocked(request).mockClear();
-        await run([createTarget({ sha: 'def456' })]);
+        await run([createMockDeployTarget({ sha: 'def456' })]);
 
         // The first round paid for the failed combined attempt; the next goes straight to three
         expect(firstRound).toBe(4);

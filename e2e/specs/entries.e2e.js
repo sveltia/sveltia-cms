@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/test.js';
+import { getEditor } from '../fixtures/ui.js';
 
 test.beforeEach(async ({ cms }) => {
   await cms.open();
@@ -20,7 +21,7 @@ test('lists the entries in the repository', async ({ page }) => {
 test('creates an entry', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Third Post');
   await editor.getByRole('textbox', { name: 'Body' }).fill('A new post.');
@@ -35,7 +36,7 @@ test('creates an entry', async ({ cms, page }) => {
 test('updates an entry', async ({ cms, page }) => {
   await page.getByRole('row', { name: /First Post/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
   const body = editor.getByRole('textbox', { name: 'Body' });
 
   await expect(body).toHaveValue('Hello, world!');

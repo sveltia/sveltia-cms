@@ -9,7 +9,8 @@ import {
   validateCustomField,
 } from '$lib/services/contents/draft/validate/custom-fields';
 import { buildControlProps } from '$lib/services/contents/fields/custom/editor';
-import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import CustomEditor from './custom-editor.svelte';
 
@@ -55,18 +56,14 @@ const renderEditor = async (currentValue, control = RatingControl) => {
     values: { _default: { stars: currentValue } },
   });
 
-  const props = $state({
-    locale: '_default',
-    keyPath: 'stars',
-    typedKeyPath: 'stars',
-    fieldId: 'stars',
-    fieldLabel: 'Stars',
+  const { props, entryDraft, unmount } = await renderFieldEditor(CustomEditor, {
     fieldConfig,
+    fieldLabel: 'Stars',
+    locale: '_default',
     currentValue,
-    control,
+    props: { control },
+    draft,
   });
-
-  const { entryDraft, unmount } = await renderWithDraft(CustomEditor, { draft, props });
 
   return { draft, props, entryDraft, unmount };
 };

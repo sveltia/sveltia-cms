@@ -2,12 +2,7 @@ import { _, locale as appLocale } from '@sveltia/i18n';
 import { sleep } from '@sveltia/utils/misc';
 import equal from 'fast-deep-equal';
 
-import {
-  announcedPageStatus,
-  encodeRoutePath,
-  goto,
-  parseLocation,
-} from '$lib/services/app/navigation';
+import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
 import {
   enabledCloudServices,
   EXTERNAL_LOCATION_PATH_PREFIX,
@@ -29,6 +24,7 @@ import {
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { isSearchRoute } from '$lib/services/search/navigation';
 import { env } from '$lib/services/user/env.svelte';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import { ViewTransitionType } from '$lib/services/app/navigation';
@@ -100,7 +96,7 @@ export const showAssetDetails = (
   { path },
   { transitionType = 'forwards', replaceState = false } = {},
 ) => {
-  goto(encodeRoutePath(`/assets/${path}`), {
+  goto(encodePathSegments(`/assets/${path}`), {
     transitionType,
     replaceState,
     state: getAssetFolderHistoryState(),

@@ -4,6 +4,7 @@ import { fetchBranchHeadSHA, fetchDeployments } from '$lib/services/backends/git
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { createMockDeployTarget } from '$lib/test/factories';
 
 vi.mock('$lib/services/backends/git/gitea/repository', () => ({
   repository: {
@@ -15,18 +16,6 @@ vi.mock('$lib/services/backends/git/gitea/repository', () => ({
 }));
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
-
-/**
- * Create a deploy target.
- * @param {object} [overrides] Properties to override.
- * @returns {any} Target.
- */
-const createTarget = (overrides = {}) => ({
-  sha: 'abc123',
-  branch: 'cms/posts/hello',
-  kind: 'preview',
-  ...overrides,
-});
 
 /**
  * Create a commit status as Gitea/Forgejo returns it.
@@ -97,14 +86,14 @@ describe('Gitea deployment service', () => {
 
     test('sends no request without a usable target', async () => {
       await expect(fetchDeployments([])).resolves.toEqual({});
-      await expect(fetchDeployments([createTarget({ sha: '' })])).resolves.toEqual({});
+      await expect(fetchDeployments([createMockDeployTarget({ sha: '' })])).resolves.toEqual({});
       expect(fetchAPI).not.toHaveBeenCalled();
     });
 
     test('requests the combined status, which only has the latest status of each context', async () => {
       mockStatuses([]);
 
-      await fetchDeployments([createTarget()]);
+      await fetchDeployments([createMockDeployTarget()]);
 
       expect(fetchAPI).toHaveBeenCalledWith('/repos/org/site/commits/abc123/status?limit=50');
     });
@@ -112,7 +101,7 @@ describe('Gitea deployment service', () => {
     test('reads a preview URL from a commit status', async () => {
       mockStatuses([createStatus()]);
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual({
         state: 'ready',
@@ -126,7 +115,7 @@ describe('Gitea deployment service', () => {
       // The job finishes after posting the preview status, so it’s the newer of the two
       mockStatuses([createJobStatus({ updated_at: '2026-10-11T00:01:00Z' }), createStatus()]);
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual(
         expect.objectContaining({
@@ -140,7 +129,7 @@ describe('Gitea deployment service', () => {
     test('reports the Actions job as pending until the preview status is posted', async () => {
       mockStatuses([createJobStatus({ status: 'pending', description: 'In progress' })]);
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual(
         expect.objectContaining({
@@ -154,7 +143,7 @@ describe('Gitea deployment service', () => {
     test('never takes a job log on the instance for the site', async () => {
       mockStatuses([createJobStatus()]);
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual(expect.objectContaining({ state: 'ready', url: undefined }));
     });
@@ -166,7 +155,7 @@ describe('Gitea deployment service', () => {
 
       mockStatuses([createJobStatus({ status: 'pending' })]);
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual({ state: 'unknown', checkedTime: expect.any(Number) });
     });
@@ -180,7 +169,7 @@ describe('Gitea deployment service', () => {
     ])('maps the `%s` status to `%s`', async (status, state) => {
       mockStatuses([createStatus({ status })]);
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123.state).toBe(state);
     });
@@ -191,7 +180,7 @@ describe('Gitea deployment service', () => {
         createStatus({ status: 'whatever' }),
       ]);
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual({ state: 'unknown', checkedTime: expect.any(Number) });
     });
@@ -201,7 +190,7 @@ describe('Gitea deployment service', () => {
       async (description) => {
         mockStatuses([createJobStatus({ status: 'failure', description })]);
 
-        const result = await fetchDeployments([createTarget()]);
+        const result = await fetchDeployments([createMockDeployTarget()]);
 
         expect(result.abc123).toEqual({ state: 'unknown', checkedTime: expect.any(Number) });
       },
@@ -221,7 +210,7 @@ describe('Gitea deployment service', () => {
         }),
       ]);
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual(
         expect.objectContaining({ context: 'deploy/b', url: 'https://b.example.org' }),
@@ -243,7 +232,7 @@ describe('Gitea deployment service', () => {
         }),
       ]);
 
-      const result = await fetchDeployments([createTarget()]);
+      const result = await fetchDeployments([createMockDeployTarget()]);
 
       expect(result.abc123).toEqual(expect.objectContaining({ context: 'deploy/b' }));
     });
@@ -256,8 +245,8 @@ describe('Gitea deployment service', () => {
       );
 
       const result = await fetchDeployments([
-        createTarget(),
-        createTarget({ sha: 'def456', branch: 'main', kind: 'production' }),
+        createMockDeployTarget(),
+        createMockDeployTarget({ sha: 'def456', branch: 'main', kind: 'production' }),
       ]);
 
       expect(result).toEqual({
@@ -278,8 +267,8 @@ describe('Gitea deployment service', () => {
       });
 
       const result = await fetchDeployments([
-        createTarget(),
-        createTarget({ sha: 'def456', branch: 'main', kind: 'production' }),
+        createMockDeployTarget(),
+        createMockDeployTarget({ sha: 'def456', branch: 'main', kind: 'production' }),
       ]);
 
       expect(result.abc123).toEqual({ state: 'unknown', checkedTime: expect.any(Number) });

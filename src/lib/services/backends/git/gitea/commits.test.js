@@ -17,9 +17,7 @@ const fetchAPIMock = vi.hoisted(() => vi.fn());
 const encodeBase64Mock = vi.hoisted(() => vi.fn());
 const createCommitMessageMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key) => key),
-}));
+vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 
 vi.mock('$lib/services/backends/git/shared/api', () => ({
   fetchAPI: fetchAPIMock,

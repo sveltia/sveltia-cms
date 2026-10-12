@@ -4,17 +4,18 @@ import { allEntries } from '$lib/services/contents';
 import { collectionCacheMap } from '$lib/services/contents/collection';
 import { fieldConfigCacheMap } from '$lib/services/contents/entry/fields';
 
+export {
+  createMockAsset,
+  createMockAssetFolder,
+  createMockCloudService,
+  createMockEntry,
+  createMockExternalAsset,
+  createMockWorkflowEntry,
+  TEST_IMAGE_URL,
+} from '$lib/test/factories';
+
 /**
- * @import {
- * Asset,
- * AssetKind,
- * Entry,
- * ExternalAsset,
- * FlattenedEntryContent,
- * InternalLocaleCode,
- * MediaLibraryService,
- * UnpublishedEntry,
- * } from '$lib/types/private';
+ * @import { Asset, Entry } from '$lib/types/private';
  * @import { CmsConfig } from '$lib/types/public';
  */
 
@@ -23,7 +24,7 @@ import { fieldConfigCacheMap } from '$lib/services/contents/entry/fields';
  * folders and asset folders are all set up from it. The `test-repo` backend needs no network.
  * @param {Partial<CmsConfig>} [config] Configuration. The `backend`, `media_folder` and
  * `collections` options have defaults: the collections are a `posts` entry collection with a
- * `title` field, which entries from {@link createMockEntry} belong to.
+ * `title` field, which entries from `createMockEntry()` belong to.
  * @returns {Promise<void>}
  * @throws {Error} If the configuration is invalid.
  */
@@ -52,81 +53,11 @@ export const initTestConfig = async (config = {}) => {
 };
 
 /**
- * Build an entry of an entry collection.
- * @param {object} args Arguments.
- * @param {string} args.slug Entry slug.
- * @param {string} [args.folder] Folder path of the collection, without the trailing slash.
- * @param {string} [args.extension] File extension.
- * @param {Record<InternalLocaleCode, FlattenedEntryContent>} [args.content] Flattened content in
- * each locale. Defaults to an empty default locale.
- * @param {Partial<UnpublishedEntry>} [args.entry] Any other entry property, including the
- * `workflow` of an unpublished entry.
- * @returns {Entry} Entry.
- */
-export const createMockEntry = ({
-  slug,
-  folder = 'content/posts',
-  extension = 'md',
-  content = { _default: {} },
-  entry = {},
-}) => ({
-  id: `${folder}/${slug}`,
-  slug,
-  subPath: slug,
-  locales: Object.fromEntries(
-    Object.entries(content).map(([locale, localizedContent]) => [
-      locale,
-      { slug, path: `${folder}/${slug}.${extension}`, content: localizedContent },
-    ]),
-  ),
-  ...entry,
-});
-
-/**
  * Replace the entries loaded in the app.
  * @param {Entry[]} entries Entries.
  */
 export const setEntries = (entries) => {
   allEntries.current = entries;
-};
-
-/**
- * Build an asset in the global asset folder, holding the given file.
- * @param {object} args Arguments.
- * @param {string} args.name File name, e.g. `photo.png`.
- * @param {string} [args.folderPath] Internal path of the asset folder.
- * @param {File | Blob} [args.file] File content. Defaults to an empty file of the kind the name
- * suggests.
- * @param {Partial<Asset>} [args.asset] Any other asset property.
- * @returns {Asset} Asset.
- */
-export const createMockAsset = ({
-  name,
-  folderPath = 'static/uploads',
-  file = undefined,
-  asset = {},
-}) => {
-  const kind = /** @type {AssetKind} */ (
-    { png: 'image', jpg: 'image', mp4: 'video', mp3: 'audio' }[name.split('.').pop() ?? ''] ??
-      'document'
-  );
-
-  return {
-    name,
-    path: `${folderPath}/${name}`,
-    sha: name,
-    size: file?.size ?? 0,
-    kind,
-    file: file instanceof File ? file : undefined,
-    folder: {
-      collectionName: undefined,
-      internalPath: folderPath,
-      publicPath: `/${folderPath.replace(/^static\//, '')}`,
-      entryRelative: false,
-      hasTemplateTags: false,
-    },
-    ...asset,
-  };
 };
 
 /**
@@ -154,57 +85,4 @@ export const createMockImageFile = async ({ name = 'photo.png', width = 4, heigh
   return new File([await canvas.convertToBlob({ type: 'image/png' })], name, {
     type: 'image/png',
   });
-};
-
-/**
- * URL of an image that loads without any network access: a transparent 1×1 PNG. A thumbnail or
- * preview test uses this rather than an `https:` URL, which fails to load — or loads something else
- * — on a runner with network access, upon which the image is replaced by a fallback icon.
- */
-export const TEST_IMAGE_URL =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-
-/**
- * Build a cloud storage service that works without any network access or credentials.
- * @param {Partial<MediaLibraryService>} [service] Any service property to override or add, e.g.
- * `upload`, `delete`, `rename` and `replace` functions. None of the operations is supported by
- * default.
- * @returns {MediaLibraryService} Service.
- */
-export const createMockCloudService = (service = {}) => ({
-  serviceType: 'cloud_storage',
-  serviceId: 'test_cloud',
-  serviceLabel: 'Test Cloud',
-  serviceURL: 'https://cloud.example.com/',
-  showServiceLink: false,
-  hotlinking: true,
-  authType: 'none',
-  ...service,
-});
-
-/**
- * Build an asset on a cloud storage service.
- * @param {object} args Arguments.
- * @param {string} args.fileName File name, e.g. `photo.png`.
- * @param {string} [args.folder] Folder path on the service, without the trailing slash.
- * @param {Partial<ExternalAsset>} [args.asset] Any other asset property.
- * @returns {ExternalAsset} Asset.
- */
-export const createMockExternalAsset = ({ fileName, folder = 'images', asset = {} }) => {
-  const id = `${folder}/${fileName}`;
-
-  const kind = /** @type {AssetKind} */ (
-    { png: 'image', jpg: 'image', mp4: 'video', mp3: 'audio' }[fileName.split('.').pop() ?? ''] ??
-      'document'
-  );
-
-  return {
-    id,
-    description: id,
-    previewURL: `https://cdn.example.com/${id}`,
-    downloadURL: `https://cdn.example.com/${id}`,
-    fileName,
-    kind,
-    ...asset,
-  };
 };

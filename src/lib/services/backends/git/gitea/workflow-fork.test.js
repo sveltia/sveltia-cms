@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { fetchAllPages } from '$lib/services/backends/git/gitea/api';
 import {
   createPullRequest,
   deleteBranch,
-  fetchAllPages,
   fetchBranchHead,
   fetchPullRequestFileContents,
   fetchPullRequestFileList,
@@ -24,8 +24,9 @@ import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
-vi.mock('@sveltia/i18n', () => ({ _: vi.fn((key) => key) }));
-// Only the requests are stubbed; `stripWipPrefix` is a pure helper the parsing relies on
+vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
+vi.mock('$lib/services/backends/git/gitea/api', () => ({ fetchAllPages: vi.fn() }));
+// Only the requests are stubbed; `wipTitle` is a pure helper the parsing relies on
 vi.mock('$lib/services/backends/git/gitea/pull-requests', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
   createPullRequest: vi.fn(),

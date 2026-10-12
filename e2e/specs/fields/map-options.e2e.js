@@ -2,6 +2,7 @@ import { readFile } from 'fs/promises';
 
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -193,7 +194,7 @@ test('starts each map at the configured centre and zoom level', async ({ page })
 test('saves a point placed on the map with the configured precision', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Marunouchi');
   // The centre of the map is Tokyo Station, at 139.7671° E, 35.6812° N
@@ -220,7 +221,7 @@ test('saves a point placed on the map with the configured precision', async ({ c
 test('saves a line and a polygon drawn on the map', async ({ cms, page }) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Walk');
 
@@ -310,7 +311,7 @@ test.describe('current location', () => {
   test('rounds the current location to the configured precision', async ({ cms, page }) => {
     await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Title' }).fill('Here');
     await getMap(page, 'Meeting Point');
@@ -361,7 +362,7 @@ test('leaves the stored geometries as they are, until a field is cleared', async
   await page.reload();
   await page.getByRole('row', { name: /Tower/ }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await getMap(page, 'Meeting Point');
   await getMap(page, 'Route');

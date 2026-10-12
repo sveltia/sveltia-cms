@@ -12,7 +12,7 @@
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import EntryThumbnail from '$lib/components/contents/shared/entry-thumbnail.svelte';
   import DeployStatusBadge from '$lib/components/workflow/deploy-status-badge.svelte';
-  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
+  import { goto } from '$lib/services/app/navigation';
   import { isReadonly } from '$lib/services/config/readonly';
   import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
   import {
@@ -21,6 +21,7 @@
   } from '$lib/services/contents/collection/files';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { deployments, productionSHA } from '$lib/services/deployments';
+  import { encodePathSegments } from '$lib/services/utils/url';
   import { checkPublishedVersion, isPublishAllowed } from '$lib/services/workflow';
 
   /**
@@ -136,9 +137,12 @@ a merged or read-only one -->
     disabled={gone}
     onclick={() => {
       // A collection file is addressed by its name, while its `subPath` is the whole file path
-      goto(encodeRoutePath(`/collections/${collectionName}/entries/${fileName ?? entry.subPath}`), {
-        transitionType: 'forwards',
-      });
+      goto(
+        encodePathSegments(`/collections/${collectionName}/entries/${fileName ?? entry.subPath}`),
+        {
+          transitionType: 'forwards',
+        },
+      );
     }}
   >
     {#if collection?._type === 'entry'}

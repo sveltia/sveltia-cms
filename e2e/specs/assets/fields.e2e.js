@@ -1,6 +1,7 @@
 import { MEDIA_CONFIG, MEDIA_FILES, MEDIA_IMAGES } from '../../fixtures/configs/media.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor, getField } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -23,21 +24,12 @@ test.beforeEach(async ({ cms }) => {
 const createNote = async (page, title) => {
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill(title);
 
   return editor;
 };
-
-/**
- * Get a field group in the editor.
- * @param {Locator} editor Content editor.
- * @param {string} label Field label.
- * @returns {Locator} Field group.
- */
-const getField = (editor, label) =>
-  editor.getByRole('group', { name: `“\u2068${label}\u2069” Field` });
 
 /**
  * Select an option in a list box of the Select File dialog.
@@ -62,7 +54,7 @@ const uploadFiles = async (field, files) => {
 
 test('picks an existing image with the Browse button', async ({ cms, page }) => {
   const editor = await createNote(page, 'Walk');
-  const cover = getField(editor, 'Cover');
+  const cover = getField(editor, 'Cover', { exact: true });
 
   await cover.getByRole('button', { name: 'Browse' }).click();
 
@@ -90,7 +82,7 @@ test('picks an existing image with the Browse button', async ({ cms, page }) => 
 
 test('picks a text file for a file field', async ({ cms, page }) => {
   const editor = await createNote(page, 'Manual');
-  const attachment = getField(editor, 'Attachment');
+  const attachment = getField(editor, 'Attachment', { exact: true });
 
   await attachment.getByRole('button', { name: 'Browse' }).click();
 
@@ -115,7 +107,7 @@ test('picks a text file for a file field', async ({ cms, page }) => {
 
 test('enters an external URL', async ({ cms, page }) => {
   const editor = await createNote(page, 'Linked');
-  const cover = getField(editor, 'Cover');
+  const cover = getField(editor, 'Cover', { exact: true });
 
   await cover.getByRole('button', { name: 'Browse' }).click();
 
@@ -141,7 +133,7 @@ test('enters an external URL', async ({ cms, page }) => {
 test('writes an uploaded image only when the entry is saved', async ({ cms, page }) => {
   const kite = createPNG({ color: [255, 255, 0] });
   const editor = await createNote(page, 'Kite');
-  const cover = getField(editor, 'Cover');
+  const cover = getField(editor, 'Cover', { exact: true });
 
   await uploadFiles(cover, [{ name: 'kite.png', buffer: kite }]);
   await expect(cover.getByRole('button', { name: 'Replace Image' })).toBeVisible();
@@ -159,11 +151,11 @@ test('writes an uploaded image only when the entry is saved', async ({ cms, page
 test('leaves nothing behind when an upload is cancelled with the entry', async ({ cms, page }) => {
   const editor = await createNote(page, 'Kite');
 
-  await uploadFiles(getField(editor, 'Cover'), [
+  await uploadFiles(getField(editor, 'Cover', { exact: true }), [
     { name: 'kite.png', buffer: createPNG({ color: [255, 255, 0] }) },
   ]);
   await expect(
-    getField(editor, 'Cover').getByRole('button', { name: 'Replace Image' }),
+    getField(editor, 'Cover', { exact: true }).getByRole('button', { name: 'Replace Image' }),
   ).toBeVisible();
   await editor.getByRole('button', { name: 'Cancel Editing' }).click();
   await expect(editor).toBeHidden();
@@ -183,7 +175,7 @@ test('uploads several images to a multiple image field', async ({ cms, page }) =
   const map = createPNG({ color: [0, 255, 255] });
   const moon = createPNG({ color: [200, 200, 200] });
   const editor = await createNote(page, 'Trip');
-  const gallery = getField(editor, 'Gallery');
+  const gallery = getField(editor, 'Gallery', { exact: true });
 
   await uploadFiles(gallery, [
     { name: 'kite.png', buffer: kite },
@@ -221,7 +213,7 @@ test('uploads several images to a multiple image field', async ({ cms, page }) =
 test('renames an unsaved upload before saving', async ({ cms, page }) => {
   const kite = createPNG({ color: [255, 255, 0] });
   const editor = await createNote(page, 'Kite');
-  const cover = getField(editor, 'Cover');
+  const cover = getField(editor, 'Cover', { exact: true });
 
   await uploadFiles(cover, [{ name: 'kite.png', buffer: kite }]);
   await cover.getByRole('button', { name: 'Rename' }).click();
@@ -243,8 +235,8 @@ test('replaces and removes the image of a saved entry', async ({ cms, page }) =>
 
   await page.getByRole('row', { name: 'Evening' }).click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-  const cover = getField(editor, 'Cover');
+  const editor = getEditor(page);
+  const cover = getField(editor, 'Cover', { exact: true });
 
   await expect(cover.getByRole('textbox', { name: 'Cover' })).toHaveText('/uploads/sunset.png');
 
@@ -295,7 +287,9 @@ test('uploads to the media folder of the collection', async ({ cms, page }) => {
 
   const editor = await createNote(page, 'Tower');
 
-  await uploadFiles(getField(editor, 'Image'), [{ name: 'tower.png', buffer: tower }]);
+  await uploadFiles(getField(editor, 'Image', { exact: true }), [
+    { name: 'tower.png', buffer: tower },
+  ]);
   await editor.getByRole('button', { name: 'Save' }).click();
 
   await expect
@@ -311,7 +305,9 @@ test('uploads next to the entry in an entry-relative media folder', async ({ cms
 
   const editor = await createNote(page, 'Dawn');
 
-  await uploadFiles(getField(editor, 'Cover'), [{ name: 'dawn.png', buffer: dawn }]);
+  await uploadFiles(getField(editor, 'Cover', { exact: true }), [
+    { name: 'dawn.png', buffer: dawn },
+  ]);
   await editor.getByRole('button', { name: 'Save' }).click();
 
   await expect
@@ -322,7 +318,9 @@ test('uploads next to the entry in an entry-relative media folder', async ({ cms
   // The Select Image dialog offers the images of this entry only
   await expect(editor).toBeHidden();
   await page.getByRole('row', { name: 'Hello' }).click();
-  await getField(editor, 'Cover').getByRole('button', { name: 'Replace Image' }).click();
+  await getField(editor, 'Cover', { exact: true })
+    .getByRole('button', { name: 'Replace Image' })
+    .click();
 
   const dialog = page.getByRole('dialog', { name: 'Select Image' });
 
@@ -339,7 +337,7 @@ test('uploads next to the entry in an entry-relative media folder', async ({ cms
 
 test('leaves nothing behind when the Select Image dialog is cancelled', async ({ cms, page }) => {
   const editor = await createNote(page, 'Nothing');
-  const cover = getField(editor, 'Cover');
+  const cover = getField(editor, 'Cover', { exact: true });
 
   await cover.getByRole('button', { name: 'Browse' }).click();
 

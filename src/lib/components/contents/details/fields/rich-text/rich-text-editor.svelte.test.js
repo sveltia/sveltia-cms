@@ -6,7 +6,8 @@ import { globalAssetFolder } from '$lib/services/assets/folders';
 import { cmsConfig } from '$lib/services/config';
 import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
 import { createMockImageFile, initTestConfig } from '$lib/test/config';
-import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { createMockDraft } from '$lib/test/draft';
+import { renderFieldEditor } from '$lib/test/field.svelte';
 
 import RichTextEditor from './rich-text-editor.svelte';
 
@@ -39,17 +40,6 @@ const renderEditor = async (
   /** @type {RichTextField} */
   const fieldConfig = { name: 'body', widget: 'richtext', ...config };
 
-  const props = $state({
-    locale: 'en',
-    keyPath: 'body',
-    typedKeyPath: 'body',
-    fieldId: 'body',
-    fieldLabel: 'Body',
-    fieldConfig,
-    currentValue,
-    ...extra,
-  });
-
   const draft = createMockDraft({
     collectionName,
     fields: [fieldConfig],
@@ -57,9 +47,12 @@ const renderEditor = async (
     values: { en: { body: currentValue } },
   });
 
-  const { container } = await renderWithDraft(RichTextEditor, {
+  const { props, container } = await renderFieldEditor(RichTextEditor, {
+    fieldConfig,
+    fieldLabel: 'Body',
+    currentValue,
+    props: extra,
     draft,
-    props,
     // The editor is always rendered within a field editor
     context: {
       'field-editor': { parentComponentNames: [], valueStoreKey: 'currentValues', ...context },

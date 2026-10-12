@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { render } from 'vitest-browser-svelte';
+
+import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import TextPreview from './text-preview.svelte';
 
@@ -16,17 +17,8 @@ const fieldConfig = { name: 'body', widget: 'text' };
  * @param {string} [locale] Locale code.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (currentValue, locale = 'en') => {
-  const { container } = await render(TextPreview, {
-    locale,
-    keyPath: 'body',
-    typedKeyPath: 'body',
-    fieldConfig,
-    currentValue,
-  });
-
-  return container;
-};
+const renderPreview = async (currentValue, locale = 'en') =>
+  (await renderFieldPreview(TextPreview, { fieldConfig, locale, currentValue })).container;
 
 describe('TextPreview', () => {
   test('shows the text, preserving line breaks', async () => {

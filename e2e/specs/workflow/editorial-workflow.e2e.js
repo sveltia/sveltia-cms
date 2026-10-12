@@ -1,6 +1,7 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEditor, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -22,29 +23,6 @@ test.beforeEach(async ({ github }) => {
 const getEntryGroup = (page, name) =>
   page.getByRole('grid', { name: 'Entries' }).getByRole('rowgroup', { name, exact: true });
 
-/**
- * Get the names of the Editorial Workflow branches.
- * @param {MockGitHub} github GitHub mock.
- * @returns {string[]} Branch names.
- */
-const getWorkflowBranches = (github) =>
-  [...github.refs.keys()].filter((branch) => branch.startsWith('cms/'));
-
-/**
- * Open an entry in the editor.
- * @param {Page} page Page.
- * @param {string} title Entry title.
- * @returns {Promise<Locator>} Editor.
- */
-const openEntry = async (page, title) => {
-  const editor = page.getByRole('group', { name: 'Content Editor' });
-
-  await page.getByRole('row', { name: new RegExp(title) }).click();
-  await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue(title);
-
-  return editor;
-};
-
 test('saves a new entry to a branch and opens a draft pull request', async ({
   cms,
   github,
@@ -55,7 +33,7 @@ test('saves a new entry to a branch and opens a draft pull request', async ({
   await cms.open();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
   await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
@@ -131,31 +109,19 @@ test('moves an entry through the review stages', async ({ cms, github, page }) =
   await cms.open();
   await openEntry(page, 'Second Post');
 
-  /**
-   * Change the status with the editor’s status menu.
-   * @param {RegExp} current Current status.
-   * @param {string} status New status.
-   */
-  const changeStatus = async (current, status) => {
-    await cms.chooseMenuItem(
-      page.getByRole('button', { name: current }),
-      page.getByRole('menuitemradio', { name: status }),
-    );
-  };
-
-  await changeStatus(/Status: .*Draft/, 'In Review');
+  await cms.changeStatus(/Status: .*Draft/, 'In Review');
   // The labels are updated first, then the draft state
   await expect
     .poll(() => ({ labels: pullRequest.labels, draft: pullRequest.draft }))
     .toEqual({ labels: ['sveltia-cms/pending_review'], draft: false });
 
-  await changeStatus(/Status: .*In Review/, 'Ready');
+  await cms.changeStatus(/Status: .*In Review/, 'Ready');
   // The labels are updated first, then the draft state
   await expect
     .poll(() => ({ labels: pullRequest.labels, draft: pullRequest.draft }))
     .toEqual({ labels: ['sveltia-cms/pending_publish'], draft: false });
 
-  await changeStatus(/Status: .*Ready/, 'Draft');
+  await cms.changeStatus(/Status: .*Ready/, 'Draft');
   // The labels are updated first, then the draft state
   await expect
     .poll(() => ({ labels: pullRequest.labels, draft: pullRequest.draft }))
@@ -527,7 +493,7 @@ test('saves a draft with a required field left empty, but keeps it from review',
   await cms.open();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
   await editor.getByRole('button', { name: 'Save' }).click();
@@ -594,7 +560,7 @@ test('resets a branch left over from an earlier pull request', async ({ cms, git
   await cms.open();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
   await editor.getByRole('textbox', { name: 'Body' }).fill('A new idea.');
@@ -674,7 +640,7 @@ test('refuses to save onto a workflow branch with a pull request to another bran
   await cms.open();
   await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
   await editor.getByRole('textbox', { name: 'Body' }).fill('A new idea.');
@@ -740,7 +706,7 @@ test('deletes several unpublished entries at once', async ({ cms, github, page }
   await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
 
   await expect.poll(() => pullRequests.map(({ state }) => state)).toEqual(['closed', 'closed']);
-  expect(getWorkflowBranches(github)).toEqual([]);
+  expect(github.getWorkflowBranches()).toEqual([]);
   await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
     /First Post/,
   ]);
@@ -772,7 +738,7 @@ test.describe('with an image field', () => {
     await cms.open();
     await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
-    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const editor = getEditor(page);
 
     await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
     await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
