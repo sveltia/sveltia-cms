@@ -11,6 +11,7 @@
   import TranslatorApiKeyDialog from '$lib/components/contents/details/editor/translator-api-key-dialog.svelte';
   import ContentUpdatesToast from '$lib/components/contents/shared/content-updates-toast.svelte';
   import EntryParseErrorsToast from '$lib/components/contents/shared/entry-parse-errors-toast.svelte';
+  import LiveReloadInfobar from '$lib/components/global/infobars/live-reload-infobar.svelte';
   import MobilePromoInfobar from '$lib/components/global/infobars/mobile-promo-infobar.svelte';
   import NewLanguageInfobar from '$lib/components/global/infobars/new-language-infobar.svelte';
   import NotFoundPage from '$lib/components/global/not-found-page.svelte';
@@ -105,6 +106,7 @@
   }}
 />
 
+<LiveReloadInfobar />
 <NewLanguageInfobar />
 
 {#if canShowMobileSignInDialog.current}

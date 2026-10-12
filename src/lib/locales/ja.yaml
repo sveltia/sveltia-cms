@@ -249,6 +249,10 @@ mobile_promo_button: 試してみる
 new_language_available: Sveltia CMS が {$locale} に対応しました！
 change_language: 言語を変更
 
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: 開発サーバーはファイルが変更されるたびにこのページを再読み込みするため、保存が中断されてファイルが壊れることがあります。代わりに静的な HTML ファイルから CMS を読み込んでください。<a>詳細</a>
+
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: '{$locale} に切り替え中…'
