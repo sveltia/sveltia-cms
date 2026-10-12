@@ -23,6 +23,9 @@
   },
   "type": "module",
   "scripts": {
+    "bench": "playwright test -c bench/playwright.config.js",
+    "bench:compare": "node bench/compare.js",
+    "bench:profile": "node bench/summarize-profile.js",
     "build": "vite build",
     "build:watch": "vite build --watch",
     "check": "pnpm run --no-bail '/^check:.*/'",

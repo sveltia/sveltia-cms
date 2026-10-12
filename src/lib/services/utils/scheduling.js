@@ -19,24 +19,32 @@ export const yieldToMain = async () => {
 };
 
 /**
- * Run the given task for each item, a chunk at a time, yielding to the browser between chunks. Use
- * this for a large batch of synchronous work that would otherwise block the main thread for the
- * whole batch. Within a chunk, the tasks run concurrently, so they may be asynchronous as well.
+ * Run the given task for each item, one after another, yielding to the browser whenever the tasks
+ * have kept the main thread busy for a while. Use this for a large batch of synchronous work that
+ * would otherwise block the main thread for the whole batch. The work is split by time rather than
+ * by a number of items, as items can take very different times: a large file takes much longer to
+ * parse than a small one. The tasks may be asynchronous as well.
  * @template T
  * @param {T[]} items Items to process.
  * @param {(item: T) => Promise<void> | void} task Task to be performed for each item.
  * @param {object} [options] Options.
- * @param {number} [options.chunkSize] Number of items to process before yielding.
+ * @param {number} [options.budget] How long to keep the main thread busy before yielding, in
+ * milliseconds. The default is the threshold of a long task: yielding more often would slow the
+ * work down where `scheduler.yield()` isn’t supported, as a timeout takes a few milliseconds.
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/PerformanceLongTaskTiming
  */
-export const runInChunks = async (items, task, { chunkSize = 200 } = {}) => {
-  for (let index = 0; index < items.length; index += chunkSize) {
-    if (index) {
+export const runInChunks = async (items, task, { budget = 50 } = {}) => {
+  let start = performance.now();
+
+  for (let index = 0; index < items.length; index += 1) {
+    if (performance.now() - start >= budget) {
       // eslint-disable-next-line no-await-in-loop
       await yieldToMain();
+      start = performance.now();
     }
 
     // eslint-disable-next-line no-await-in-loop
-    await Promise.all(items.slice(index, index + chunkSize).map((item) => task(item)));
+    await task(items[index]);
   }
 };
 
@@ -76,5 +84,43 @@ export const createLatestGuard = () => {
 
       return () => call === count;
     },
+  };
+};
+
+/**
+ * Create a function that runs the tasks given to it with at most a certain number of them in flight
+ * at the same time, starting each queued task as soon as an earlier one has settled. Use this for
+ * memory-heavy work requested from many places at once, such as decoding full-size images, which
+ * would otherwise all be held in memory together.
+ * @param {number} concurrency Maximum number of tasks in flight.
+ * @returns {<T>(task: () => Promise<T>) => Promise<T>} Function running a task when there is room,
+ * and resolving or rejecting with its outcome.
+ */
+export const createConcurrencyLimiter = (concurrency) => {
+  let running = 0;
+  /** @type {(() => void)[]} */
+  const queue = [];
+
+  return async (task) => {
+    if (running >= concurrency) {
+      await new Promise((resolve) => {
+        queue.push(() => resolve(undefined));
+      });
+    } else {
+      running += 1;
+    }
+
+    try {
+      return await task();
+    } finally {
+      // Hand the slot straight to the next task in the queue, if any, so the count stays the same
+      const next = queue.shift();
+
+      if (next) {
+        next();
+      } else {
+        running -= 1;
+      }
+    }
   };
 };

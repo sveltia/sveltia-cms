@@ -5,6 +5,7 @@ import { allAssets } from '$lib/services/assets/state';
 import { getAllFiles } from '$lib/services/backends/fs/shared/scan';
 import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
+import { deferRejection } from '$lib/services/backends/git/shared/defer';
 import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
@@ -188,6 +189,22 @@ export const loadFiles = async (rootDirHandle, { hashCacheDB = null } = {}) => {
 
   log(`Scanned the directory: ${describeFileList(fileList)}`);
 
+  /** @type {Map<string, AssetHashCacheRecord>} */
+  const newHashes = new Map();
+
+  // Each asset file is read in full to hash it, so this can take a while with large media, unless
+  // the hash is still cached from a previous load. It’s started now, so it goes on while the entry
+  // files are read and parsed rather than after
+  const assetsPromise = deferRejection(
+    cachedHashesPromise.then((cachedHashes) =>
+      mapConcurrently(
+        assetFiles,
+        (fileInfo) => parseAssetFileInfo(fileInfo, { cachedHashes, newHashes }),
+        { concurrency: FILE_PROCESS_CONCURRENCY },
+      ),
+    ),
+  );
+
   const entryFileItems = /** @type {BaseEntryListItem[]} */ (
     await mapConcurrently(entryFiles, parseTextFileInfo, { concurrency: FILE_PROCESS_CONCURRENCY })
   );
@@ -204,19 +221,10 @@ export const loadFiles = async (rootDirHandle, { hashCacheDB = null } = {}) => {
 
   log(`Parsed ${entries.length} entries (${errors.length} errors)`);
 
-  const cachedHashes = await cachedHashesPromise;
-  /** @type {Map<string, AssetHashCacheRecord>} */
-  const newHashes = new Map();
-
   /** @type {Asset[]} */
-  const assets = await mapConcurrently(
-    assetFiles,
-    (fileInfo) => parseAssetFileInfo(fileInfo, { cachedHashes, newHashes }),
-    { concurrency: FILE_PROCESS_CONCURRENCY },
-  );
+  const assets = await assetsPromise;
+  const cachedHashes = await cachedHashesPromise;
 
-  // Each asset file is read in full to hash it, so this can take a while with large media, unless
-  // the hash is still cached from a previous load
   log(`Hashed ${newHashes.size} of ${assets.length} asset files (${cachedHashes.size} cached)`);
 
   allEntries.current = entries;

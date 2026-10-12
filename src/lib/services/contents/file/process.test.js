@@ -2,10 +2,15 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { version } from '$lib/services/app';
+import { cmsConfigVersion } from '$lib/services/config';
+import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
+import { hasCustomParser } from '$lib/services/contents/file/parse';
 import {
   arrayFileItems,
   createArrayItemEntry,
   extractPathInfo,
+  getParsedContentKey,
   getSlug,
   hasCircularReference,
   isIndexFile,
@@ -43,6 +48,7 @@ vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
 }));
 
 vi.mock('$lib/services/contents/file/parse', () => ({
+  hasCustomParser: vi.fn(() => false),
   parseEntryFile: vi.fn(),
 }));
 
@@ -357,6 +363,153 @@ describe('Test parseFileContent()', () => {
     );
 
     consoleSpy.mockRestore();
+  });
+});
+
+describe('Test parseFileContent() with cached content', () => {
+  /** @type {any} */
+  let parseEntryFile;
+
+  /**
+   * Create an entry file.
+   * @param {Record<string, any>} [props] Other properties.
+   * @returns {BaseEntryListItem} File.
+   */
+  const createFile = (props = {}) =>
+    /** @type {BaseEntryListItem} */ ({
+      name: 'a.md',
+      path: 'posts/a.md',
+      text: '---\\ntitle: Parsed\\n---',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+      ...props,
+    });
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    detectedFrontMatterFormats.clear();
+    cmsConfigVersion.current = 'config-hash';
+    parseEntryFile = (await import('$lib/services/contents/file/parse')).parseEntryFile;
+    parseEntryFile.mockResolvedValue({ title: 'Parsed' });
+  });
+
+  test('keys the content on the CMS version and configuration', () => {
+    expect(getParsedContentKey()).toBe(`${version}\nconfig-hash`);
+  });
+
+  test('uses the content parsed for the same CMS version and configuration', async () => {
+    const file = createFile({
+      parsed: {
+        key: getParsedContentKey(),
+        content: { title: 'Cached' },
+        format: 'toml-frontmatter',
+      },
+    });
+
+    const parsedFileMap = new Map();
+
+    expect(await parseFileContent(file, [], parsedFileMap)).toEqual({ title: 'Cached' });
+    expect(parseEntryFile).not.toHaveBeenCalled();
+    // The detected format is remembered, as when the file was parsed
+    expect(detectedFrontMatterFormats.get('posts/a.md')).toBe('toml-frontmatter');
+    // It’s cached already
+    expect(parsedFileMap.size).toBe(0);
+  });
+
+  test('uses cached content without a detected format, as for a YAML file', async () => {
+    const file = createFile({
+      parsed: { key: getParsedContentKey(), content: { title: 'Cached' } },
+    });
+
+    expect(await parseFileContent(file, [])).toEqual({ title: 'Cached' });
+    expect(parseEntryFile).not.toHaveBeenCalled();
+    expect(detectedFrontMatterFormats.has('posts/a.md')).toBe(false);
+  });
+
+  test('parses the file again for another CMS version or configuration', async () => {
+    const file = createFile({
+      parsed: { key: `${version}\nold-config-hash`, content: { title: 'Cached' } },
+    });
+
+    expect(await parseFileContent(file, [])).toEqual({ title: 'Parsed' });
+    expect(parseEntryFile).toHaveBeenCalledOnce();
+  });
+
+  test('parses the file again when it’s read with a custom parser', async () => {
+    vi.mocked(hasCustomParser).mockReturnValue(true);
+
+    const file = createFile({ parsed: { key: getParsedContentKey(), content: { title: 'X' } } });
+    const parsedFileMap = new Map();
+
+    expect(await parseFileContent(file, [], parsedFileMap)).toEqual({ title: 'Parsed' });
+    // Nor is what a custom parser returns cached
+    expect(parsedFileMap.size).toBe(0);
+
+    vi.mocked(hasCustomParser).mockReturnValue(false);
+  });
+
+  test('collects a copy of the parsed content, along with the detected format', async () => {
+    const parsedFileMap = new Map();
+
+    parseEntryFile.mockImplementation(async () => {
+      detectedFrontMatterFormats.set('posts/a.md', 'yaml-frontmatter');
+
+      return { title: 'Parsed', tags: ['a'] };
+    });
+
+    const content = /** @type {any} */ (await parseFileContent(createFile(), [], parsedFileMap));
+
+    // Processing the content further doesn’t change what’s cached
+    content.tags.push('b');
+
+    expect(parsedFileMap.get('posts/a.md')).toEqual({
+      key: getParsedContentKey(),
+      content: { title: 'Parsed', tags: ['a'] },
+      format: 'yaml-frontmatter',
+    });
+  });
+
+  test('collects nothing for content that can’t be copied, but still uses it', async () => {
+    const parsedFileMap = new Map();
+    const content = { title: 'Parsed', render: () => '' };
+
+    parseEntryFile.mockResolvedValue(content);
+
+    expect(await parseFileContent(createFile(), [], parsedFileMap)).toBe(content);
+    expect(parsedFileMap.size).toBe(0);
+  });
+
+  test('collects nothing for a file that may hold an integer too large for a number', async () => {
+    const parsedFileMap = new Map();
+
+    parseEntryFile.mockResolvedValue({ id: 12345678901234567000 });
+
+    // Parsing it remembers the integer’s source text, which saving it depends on
+    await parseFileContent(createFile({ text: 'id: 12345678901234567890' }), [], parsedFileMap);
+
+    expect(parsedFileMap.size).toBe(0);
+  });
+
+  test('collects nothing for a file that couldn’t be parsed', async () => {
+    const parsedFileMap = new Map();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    parseEntryFile.mockRejectedValue(new Error('Parsing failed'));
+
+    expect(await parseFileContent(createFile(), [], parsedFileMap)).toBeUndefined();
+    expect(parsedFileMap.size).toBe(0);
+
+    consoleSpy.mockRestore();
+  });
+
+  test('is passed the map by prepareEntries()', async () => {
+    const parsedFileMap = new Map();
+
+    await prepareEntries([createFile()], { parsedFileMap });
+
+    expect(parsedFileMap.has('posts/a.md')).toBe(true);
   });
 });
 
@@ -2745,10 +2898,16 @@ describe('Test prepareEntries()', () => {
     });
 
     const yieldFn = vi.fn(async () => undefined);
+    let now = 0;
 
     vi.stubGlobal('scheduler', { yield: yieldFn });
+    // Each file takes a millisecond to parse, so the parser has to yield along the way
+    vi.spyOn(performance, 'now').mockImplementation(() => {
+      now += 1;
 
-    // More files than fit in one chunk, so the parser has to yield at least once
+      return now;
+    });
+
     const files = Array.from(
       { length: 450 },
       (_, index) =>
@@ -2765,6 +2924,7 @@ describe('Test prepareEntries()', () => {
 
     const result = await prepareEntries(files);
 
+    vi.mocked(performance.now).mockRestore();
     vi.unstubAllGlobals();
 
     expect(yieldFn).toHaveBeenCalled();

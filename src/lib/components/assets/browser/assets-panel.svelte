@@ -1,7 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { EmptyState, InfiniteScroll } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
   import { stripSlashes } from '@sveltia/utils/string';
 
   import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
@@ -172,38 +171,30 @@
       >
         <InfiniteScroll items={filteredItems} itemKey="key">
           {#snippet renderItem(/** @type {{ asset: Asset, relPath: string, key: string }} */ item)}
-            {#await sleep() then}
-              {@const { asset, key, relPath } = item}
-              {@const { kind: assetKind, unsaved } = asset}
-              <SimpleImageGridItem
-                value={key}
-                ariaLabel={relPath}
-                {viewType}
-                {multiple}
-                selected={isSelected(asset)}
-                onChange={({ detail: { selected } }) => {
-                  onSelectionChange(asset, selected);
-                }}
-              >
-                {#if viewType === 'grid' && unsaved}
-                  <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
-                {/if}
-                <AssetPreview
-                  kind={assetKind}
-                  {asset}
-                  alt={relPath}
-                  variant="tile"
-                  {checkerboard}
-                />
-                {#if !env.isSmallScreen || viewType === 'list'}
-                  <AssetPath path={relPath}>
-                    {#if viewType === 'list' && unsaved}
-                      <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
-                    {/if}
-                  </AssetPath>
-                {/if}
-              </SimpleImageGridItem>
-            {/await}
+            {@const { asset, key, relPath } = item}
+            {@const { kind: assetKind, unsaved } = asset}
+            <SimpleImageGridItem
+              value={key}
+              ariaLabel={relPath}
+              {viewType}
+              {multiple}
+              selected={isSelected(asset)}
+              onChange={({ detail: { selected } }) => {
+                onSelectionChange(asset, selected);
+              }}
+            >
+              {#if viewType === 'grid' && unsaved}
+                <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
+              {/if}
+              <AssetPreview kind={assetKind} {asset} alt={relPath} variant="tile" {checkerboard} />
+              {#if !env.isSmallScreen || viewType === 'list'}
+                <AssetPath path={relPath}>
+                  {#if viewType === 'list' && unsaved}
+                    <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
+                  {/if}
+                </AssetPath>
+              {/if}
+            </SimpleImageGridItem>
           {/snippet}
         </InfiniteScroll>
       </SimpleImageGrid>

@@ -10,7 +10,7 @@ import { sniffRasterImageFormat } from '$lib/services/utils/media/image/sniff';
 
 /**
  * Options for transforming an image to a thumbnail, which is a WebP image with a maximum width and
- * height of 512 pixels, and a quality of 85.
+ * height of 512 pixels, and a quality of 85, or a JPEG or PNG image where WebP can’t be encoded.
  * @type {InternalImageTransformationOptions}
  */
 export const THUMBNAIL_TRANSFORM_OPTIONS = {
@@ -19,6 +19,9 @@ export const THUMBNAIL_TRANSFORM_OPTIONS = {
   width: 512,
   height: 512,
   fit: 'contain',
+  // A thumbnail is only shown in the CMS, so where WebP can’t be encoded natively, another format
+  // will do, rather than loading an encoder for every thumbnail
+  nativeOnly: true,
 };
 
 /**
@@ -164,7 +167,14 @@ const createFallbackImageBitmap = async (blob) => {
  */
 export const transformImage = async (
   blob,
-  { format = 'png', quality = 85, width = undefined, height = undefined, fit = 'scale-down' } = {},
+  {
+    format = 'png',
+    quality = 85,
+    width = undefined,
+    height = undefined,
+    fit = 'scale-down',
+    nativeOnly = false,
+  } = {},
 ) => {
   /** @type {CanvasImageSource | undefined} */
   let source;
@@ -205,7 +215,7 @@ export const transformImage = async (
     source.close();
   }
 
-  return exportCanvasAsBlob(canvas, { format, quality });
+  return exportCanvasAsBlob(canvas, { format, quality, nativeOnly });
 };
 
 /**

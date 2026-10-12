@@ -1,5 +1,6 @@
 import { resolveCollectionAndFile } from '$lib/services/contents/collection/files';
 import { isAutoDuplicationEnabled } from '$lib/services/contents/draft';
+import { createValueMap } from '$lib/services/contents/draft/create/versioned-map.svelte';
 import { revalidateField } from '$lib/services/contents/draft/validate/fields';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
@@ -10,20 +11,6 @@ import { getLocalizedRelationValue } from '$lib/services/contents/fields/relatio
  */
 
 const PATH_MATCH_REGEX = /(?<path>.+?)\.[^.]*$/;
-/**
- * Property key on a value map proxy that yields the map’s version. See {@link getValueMapVersion}.
- */
-const VERSION_KEY = Symbol('valueMapVersion');
-
-/**
- * Get the version of the given value map, a counter that goes up whenever a value is written to or
- * deleted from the map through the proxy created with {@link createProxy}. Reading it in a reactive
- * context makes that context depend on the whole map at the cost of a single dependency, which is
- * how the shared value map snapshot is kept fresh without every reader walking all the values.
- * @param {FlattenedEntryContent | undefined} valueMap Value map.
- * @returns {number | undefined} Version, or `undefined` if the map is not a proxy.
- */
-export const getValueMapVersion = (valueMap) => /** @type {any} */ (valueMap)?.[VERSION_KEY];
 
 /**
  * Get the `i18n` option that applies to the given field: its own, or, if the field has none, that
@@ -125,9 +112,7 @@ export const copyDefaultLocaleValue = ({
  * or deleted, and automatically copies the value to the other locales if the field’s i18n strategy
  * is `duplicate`.
  *
- * The values live in a deeply reactive `$state` object behind the proxy, so a component reading a
- * single value only depends on that value. The proxy also counts its writes; see
- * {@link getValueMapVersion}.
+ * The values are held in a value map created with {@link createValueMap}.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft the values belong to. The draft is read as fields are
  * written, e.g. to find the other locales’ values and update the validities, so it has to be the
@@ -181,47 +166,12 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
     return { valueMap, getFieldArgs, fieldConfig };
   };
 
-  /** @type {FlattenedEntryContent} */
-  const values = $state(target);
-  let version = $state(0);
-  /**
-   * Key paths in insertion order. Svelte’s `$state` proxy keeps a deleted key in its target, so a
-   * key deleted and written again would otherwise be listed in its old position. That reorders the
-   * pairs of a KeyValue field as soon as one of them is renamed, because the editor rewrites all of
-   * them, and the order is what the entry file ends up with.
-   * This is intentionally a plain `Set`, not a `SvelteSet`: a caller enumerating the keys already
-   * depends on the `$state` proxy, which is read in the `ownKeys` trap below.
-   * @type {Set<string | symbol>}
-   */
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity
-  const keys = new Set(Object.keys(target));
-
-  return new Proxy(/** @type {any} */ (values), {
+  return createValueMap(target, {
     // eslint-disable-next-line jsdoc/require-jsdoc
-    get: (obj, key) => (key === VERSION_KEY ? version : obj[key]),
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    ownKeys: (obj) => {
-      // Read the keys through the `$state` proxy, so that a caller enumerating them depends on
-      // them; only the order comes from our own list
-      // eslint-disable-next-line svelte/prefer-svelte-reactivity
-      const ownKeys = new Set(Reflect.ownKeys(obj));
-
-      return [
-        ...[...keys].filter((key) => ownKeys.has(key)),
-        ...[...ownKeys].filter((key) => !keys.has(key)),
-      ];
-    },
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    set: (obj, /** @type {FieldKeyPath} */ keyPath, value) => {
-      if (obj[keyPath] !== value) {
-        obj[keyPath] = value;
-        keys.add(keyPath);
-        version += 1;
-      }
-
+    onSet: (obj, /** @type {FieldKeyPath} */ keyPath, value) => {
       // Skip the rest in some cases
       if ([canonicalSlugKey].includes(keyPath)) {
-        return true;
+        return;
       }
 
       const { fieldConfig, getFieldArgs, valueMap } = getFieldInfo(obj, keyPath);
@@ -231,25 +181,13 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
       // as part of its field, so that’s left to `revalidateField()` to tell
       revalidateField({ draft, locale: sourceLanguage, keyPath, value, valueMap });
 
-      if (!fieldConfig) {
-        return true;
-      }
-
       // Copy value to other locales
-      if (shouldAutoDuplicate(fieldConfig, getFieldArgs)) {
+      if (fieldConfig && shouldAutoDuplicate(fieldConfig, getFieldArgs)) {
         copyDefaultLocaleValue({ draft, getFieldArgs, fieldConfig, sourceLanguage, value });
       }
-
-      return true;
     },
     // eslint-disable-next-line jsdoc/require-jsdoc
-    deleteProperty: (obj, /** @type {FieldKeyPath} */ keyPath) => {
-      if (keyPath in obj) {
-        delete obj[keyPath];
-        keys.delete(keyPath);
-        version += 1;
-      }
-
+    onDelete: (obj, /** @type {FieldKeyPath} */ keyPath) => {
       const { fieldConfig, getFieldArgs, valueMap } = getFieldInfo(obj, keyPath);
 
       // Update the validity and validation message in real time as well, e.g. when the last item of
@@ -258,20 +196,14 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
         revalidateField({ draft, locale: sourceLanguage, keyPath, value: undefined, valueMap });
       }
 
-      if (!fieldConfig) {
-        return true;
-      }
-
       // Remove the property from other locales
-      if (shouldAutoDuplicate(fieldConfig, getFieldArgs)) {
+      if (fieldConfig && shouldAutoDuplicate(fieldConfig, getFieldArgs)) {
         Object.entries(draft.currentValues).forEach(([targetLanguage, content]) => {
           if (targetLanguage !== sourceLanguage && keyPath in content) {
             delete content[keyPath];
           }
         });
       }
-
-      return true;
     },
   });
 };

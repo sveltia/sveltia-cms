@@ -1,3 +1,5 @@
+import { getOrCreate } from '$lib/services/utils/cache';
+
 import { parseDateTimeConfig } from './config.js';
 
 /**
@@ -13,6 +15,12 @@ const TIMEZONE_OFFSET_REGEX =
  * @returns {string} Formatted string.
  */
 const formatPart = (str) => String(Math.abs(Number(str))).padStart(2, '0');
+/**
+ * Formatters telling the offset of a time zone, keyed by the time zone. A field with the
+ * `input_time_zone` option looks the offset up whenever its value is read.
+ * @type {Map<string, Intl.DateTimeFormat>}
+ */
+const offsetFormatterCache = new Map();
 
 /**
  * Find the configured IANA timezone whose offset matches the stored value’s explicit offset. This
@@ -52,7 +60,12 @@ export const getTimeZoneForStoredValue = (currentValue, fieldConfig) => {
       : `${hours.startsWith('-') ? '-' : '+'}${formatPart(hours)}:${formatPart(minutes)}`;
 
   const offset =
-    new Intl.DateTimeFormat('en-US', { timeZone: inputTimeZone, timeZoneName: 'longOffset' })
+    getOrCreate(
+      offsetFormatterCache,
+      inputTimeZone,
+      () =>
+        new Intl.DateTimeFormat('en-US', { timeZone: inputTimeZone, timeZoneName: 'longOffset' }),
+    )
       .formatToParts(date)
       .find((part) => part.type === 'timeZoneName')?.value ?? '';
 

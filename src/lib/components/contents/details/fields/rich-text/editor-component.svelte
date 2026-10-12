@@ -231,6 +231,11 @@
    * @type {RawEntryContent | undefined}
    */
   let previousValues = undefined;
+  /**
+   * Whether the component has been unmounted, after which a deferred write must not put its values
+   * back into the draft. A plain variable, as it’s read outside of any reactive context.
+   */
+  let unmounted = false;
 
   /**
    * Current values for the editor component. These values are stored in the {@link entryDraft}
@@ -421,6 +426,8 @@
     return () => {
       const draft = entryDraft?.current;
 
+      unmounted = true;
+
       // Remove the values and validities from the draft when the component is unmounted
       if (draft) {
         deleteKeysByPrefix(draft[valueStoreKey][locale], keyPathPrefix);
@@ -447,10 +454,31 @@
         }
 
         if (!equal(values, currentValues)) {
-          Object.assign(
-            entryDraft.current[valueStoreKey][locale],
-            flattenWithPrefix(/** @type {Record<string, any>} */ (values), keyPathPrefix),
+          const draftState = /** @type {EntryDraftState} */ (entryDraft);
+
+          const flatValues = flattenWithPrefix(
+            /** @type {Record<string, any>} */ (values),
+            keyPathPrefix,
           );
+
+          // Write outside the effect: Svelte walks every reaction of a source an effect writes to,
+          // even within `untrack()`, which costs exponentially more with each level of nesting.
+          // The draft is looked up again, as it may have been replaced by then, e.g. reset after a
+          // save
+          queueMicrotask(() => {
+            const draft = draftState.current;
+
+            // Lexical unmounts the component on its own schedule, which may come after the draft
+            // has been closed
+            /* v8 ignore next 3 -- the editor is closed between the effect and this microtask */
+            if (!draft) {
+              return;
+            }
+
+            if (!unmounted) {
+              Object.assign(draft[valueStoreKey][locale], flatValues);
+            }
+          });
         }
 
         // A new component without fields skips the dialog, so it’s inserted right away (dialog mode

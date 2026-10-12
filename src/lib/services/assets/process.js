@@ -11,6 +11,7 @@ import { getGitHash } from '$lib/services/utils/file';
 import { RASTER_IMAGE_TYPES } from '$lib/services/utils/media/image';
 import { sniffRasterImageFormat } from '$lib/services/utils/media/image/sniff';
 import { isValidImage } from '$lib/services/utils/media/image/validate';
+import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
 import { createRawState, createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
@@ -142,6 +143,12 @@ export const partitionProcessedFiles = (results) => ({
 });
 
 /**
+ * Limit the files being processed at the same time. Validating or transforming an image decodes it
+ * at full size, so a large batch of photos processed all at once could run the tab out of memory.
+ */
+const limitFileProcessing = createConcurrencyLimiter(4);
+
+/**
  * Get the initial state of {@link processedAssets}, before any file is processed.
  * @returns {ProcessedAssets} State.
  */
@@ -179,19 +186,27 @@ createRootEffect(() => {
       ? undefined
       : config.filename_template;
 
+    // A file still waiting for its turn when a newer selection comes in is skipped, so it doesn’t
+    // hold up the files of that selection
     const results = await Promise.all(
-      originalFiles.map((file) => processFile(file, config, { nameTemplate })),
+      originalFiles.map((file) =>
+        limitFileProcessing(async () =>
+          superseded ? undefined : processFile(file, config, { nameTemplate }),
+        ),
+      ),
     );
 
     if (superseded) {
       return;
     }
 
+    const processedResults = /** @type {ProcessFileResult[]} */ (results);
+
     processedAssets.current = {
       processing: false,
-      ...partitionProcessedFiles(results),
+      ...partitionProcessedFiles(processedResults),
       transformedFileMap: new WeakMap(
-        results
+        processedResults
           .filter(({ originalFile }) => originalFile !== undefined)
           .map(({ file, originalFile }) => [file, /** @type {File} */ (originalFile)]),
       ),

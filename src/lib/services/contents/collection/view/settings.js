@@ -31,6 +31,18 @@ export const currentView = createRawState({ type: 'list' });
 export const viewBeforeReorder = { current: undefined };
 
 /**
+ * Get a key that changes whenever the given view would put the entries in another order or pick
+ * other entries: its sorting, filtering or grouping conditions. The entry list starts again from
+ * the top when it changes, rather than keeping every row rendered so far, which after a long scroll
+ * can be thousands of rows for the new order to render all at once. The view type and the
+ * collapsed groups are left out, as they leave the entries where they are.
+ * @param {EntryListView} view View.
+ * @returns {string} Key.
+ */
+export const getEntryOrderKey = ({ sort, filter, filters, group }) =>
+  JSON.stringify([sort, filter, filters, group]);
+
+/**
  * Initialize {@link entryListSettings} and relevant effects.
  * @param {BackendService} _backend Backend service.
  */

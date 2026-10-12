@@ -94,6 +94,18 @@ describe('contents/fields/custom/helpers', () => {
       expect(buildPreviewData).toHaveBeenCalledTimes(2);
     });
 
+    it('builds the data from snapshots of the values, not from the value maps', () => {
+      getPreviewData({ draft, locale: 'en' });
+
+      const [{ draft: passedDraft }] = /** @type {any[]} */ (
+        vi.mocked(buildPreviewData).mock.lastCall
+      );
+
+      expect(passedDraft.collectionName).toBe('posts');
+      expect(passedDraft.currentValues).toEqual({ en: { title: 'Hello' } });
+      expect(passedDraft.currentValues.en).not.toBe(draft.currentValues.en);
+    });
+
     it('does not share the data between locales', () => {
       getPreviewData({ draft, locale: 'en' });
       getPreviewData({ draft, locale: 'fr' });

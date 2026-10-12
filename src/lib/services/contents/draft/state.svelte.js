@@ -1,6 +1,7 @@
 import { getContext, setContext } from 'svelte';
 
 import { isDraftModified } from '$lib/services/contents/draft';
+import { getValueMapSnapshots } from '$lib/services/contents/draft/value-map.svelte';
 
 /**
  * @import { EntryDraft } from '$lib/types/private';
@@ -19,6 +20,17 @@ const ROOT_ATTRIBUTE = 'data-entry-draft-root';
  * @type {WeakMap<Element, EntryDraftState>}
  */
 const rootElementMap = new WeakMap();
+
+/**
+ * Get a copy of the given draft for {@link isDraftModified} to compare, holding the shared value
+ * map snapshots rather than the value map proxies. The check is recomputed on every keystroke, and
+ * reading the values through the proxies would make it depend on every value of every locale, and
+ * pay for each read.
+ * @param {EntryDraft | null | undefined} draft Entry draft.
+ * @returns {EntryDraft | null | undefined} Copy of the draft, or the draft itself if there is none.
+ */
+const getComparedDraft = (draft) =>
+  draft && { ...draft, currentValues: getValueMapSnapshots(draft) };
 
 /**
  * Reactive container for the entry draft open in an editor. The draft itself is a deeply reactive
@@ -40,7 +52,7 @@ export class EntryDraftState {
   /**
    * Whether the current draft has been modified.
    */
-  modified = $derived(isDraftModified(this.current));
+  modified = $derived(isDraftModified(getComparedDraft(this.current)));
 }
 
 /**

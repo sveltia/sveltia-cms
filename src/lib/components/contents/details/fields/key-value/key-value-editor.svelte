@@ -18,7 +18,7 @@
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getPairs,
     getPairsToSave,
@@ -27,11 +27,12 @@
     shouldStorePlaceholder,
     validatePairs,
   } from '$lib/services/contents/fields/key-value/helpers';
+  import { getPairsFromContent } from '$lib/services/contents/fields/key-value/pairs';
   import { getDirection } from '$lib/services/contents/i18n';
   import { focusAfterRemoval, moveListItem } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { createKeyedRows } from '$lib/services/utils/keyed-rows.svelte';
-  import { watch } from '$lib/services/utils/state.svelte';
+  import { createStableDerivedState, watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -262,8 +263,20 @@
     });
   };
 
+  /**
+   * The pairs stored in the draft and the value at the field’s key path, which is all
+   * {@link updatePairs} reads. It only changes when the field does, rather than whenever anything
+   * else in the entry is changed, e.g. on every keystroke in another field.
+   */
+  const storedField = createStableDerivedState(() => {
+    const valueMap = getFieldValueMapSnapshot(entryDraft.current, locale, keyPath, valueStoreKey);
+
+    // A snapshot isn’t mutated, so its key paths are read from the index kept for it
+    return [getPairsFromContent(valueMap, keyPath, { live: false }), valueMap[keyPath]];
+  });
+
   watch(
-    () => [getValueMapSnapshot(entryDraft.current, locale, valueStoreKey)],
+    () => [storedField.current],
     () => {
       updatePairs();
     },

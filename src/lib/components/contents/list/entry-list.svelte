@@ -16,7 +16,7 @@
     listedUnpublishedEntries,
     reordering,
   } from '$lib/services/contents/collection/view';
-  import { currentView } from '$lib/services/contents/collection/view/settings';
+  import { currentView, getEntryOrderKey } from '$lib/services/contents/collection/view/settings';
 
   /**
    * @import { Entry, InternalEntryCollection } from '$lib/types/private';
@@ -27,6 +27,10 @@
   );
   const viewType = $derived(reordering.current ? 'list' : currentView.current.type);
   const allEntries = $derived(entryGroups.current.flatMap(({ entries }) => entries));
+  // Changes when the entries are sorted, filtered or grouped differently, which starts the list
+  // again from the top: the rows are rendered anew a chunk at a time, rather than every row loaded
+  // so far being rendered at once in the new order, and the list is scrolled back to the top
+  const orderKey = $derived(getEntryOrderKey(currentView.current));
 </script>
 
 <ListContainer aria-label={_('entry_list')}>
@@ -37,6 +41,7 @@
         {viewType}
         id="entry-list"
         aria-label={_('entries')}
+        scrollKey={orderKey}
         aria-rowcount={listedEntries.current.length + listedUnpublishedEntries.current.length}
       >
         <!-- @todo Implement custom table column option that can replace summary template -->
@@ -50,36 +55,36 @@
               {/each}
             </GridBody>
           {/if}
-          {#each entryGroups.current as { name, entries } (name)}
-            {#await sleep() then}
-              <GridBody
-                label={name !== '*'
-                  ? getGroupLabel(name)
-                  : listedUnpublishedEntries.current.length
-                    ? _('workflow.published_entries')
-                    : undefined}
-                collapsible={name !== '*'}
-                expanded={!isGroupCollapsed(currentView.current, name)}
-                onChange={({ detail: { expanded } }) => {
-                  currentView.current = setGroupCollapsed(currentView.current, name, !expanded);
-                }}
-              >
-                <InfiniteScroll
-                  items={entries.filter(
-                    ({ locales }) =>
-                      !!(locales[defaultLocale] ?? Object.values(locales)[0])?.content,
-                  )}
-                  itemKey="id"
+          {#key orderKey}
+            {#each entryGroups.current as { name, entries } (name)}
+              {#await sleep() then}
+                <GridBody
+                  label={name !== '*'
+                    ? getGroupLabel(name)
+                    : listedUnpublishedEntries.current.length
+                      ? _('workflow.published_entries')
+                      : undefined}
+                  collapsible={name !== '*'}
+                  expanded={!isGroupCollapsed(currentView.current, name)}
+                  onChange={({ detail: { expanded } }) => {
+                    currentView.current = setGroupCollapsed(currentView.current, name, !expanded);
+                  }}
                 >
-                  {#snippet renderItem(/** @type {Entry} */ entry)}
-                    {#await sleep() then}
+                  <InfiniteScroll
+                    items={entries.filter(
+                      ({ locales }) =>
+                        !!(locales[defaultLocale] ?? Object.values(locales)[0])?.content,
+                    )}
+                    itemKey="id"
+                  >
+                    {#snippet renderItem(/** @type {Entry} */ entry)}
                       <EntryListItem {collection} {entry} {viewType} />
-                    {/await}
-                  {/snippet}
-                </InfiniteScroll>
-              </GridBody>
-            {/await}
-          {/each}
+                    {/snippet}
+                  </InfiniteScroll>
+                </GridBody>
+              {/await}
+            {/each}
+          {/key}
         {/if}
       </ListingGrid>
     {:else if listedEntries.current.length}

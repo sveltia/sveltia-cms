@@ -12,6 +12,7 @@ import {
 } from '$lib/services/contents/file/integers';
 import {
   detectFrontMatterFormat,
+  hasCustomParser,
   parseEntryFile,
   parseFrontMatter,
   parseJSON,
@@ -1050,6 +1051,23 @@ describe('Test parseEntryFile()', () => {
 
     expect(customParser).toHaveBeenCalledWith('custom content');
     expect(result).toEqual({ custom: 'result' });
+  });
+
+  test('tells whether a file is read with a custom parser', () => {
+    customFileFormatRegistry.set('customFormat', { parser: vi.fn() });
+    getCollection.mockReturnValue({ _file: { format: 'customFormat' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'customFormat' } });
+    expect(hasCustomParser(entryBase)).toBe(true);
+
+    getCollection.mockReturnValue({ _file: { format: 'yaml' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'yaml' } });
+    expect(hasCustomParser(entryBase)).toBe(false);
+
+    // A file whose collection can’t be found isn’t parsed at all
+    getCollection.mockReturnValue(undefined);
+    expect(hasCustomParser(entryBase)).toBe(false);
+
+    customFileFormatRegistry.delete('customFormat');
   });
 
   test('parses raw format and returns content as-is', async () => {

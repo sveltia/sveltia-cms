@@ -42,7 +42,14 @@ let pdfjs;
  */
 export const renderPDF = async (
   blob,
-  { format = 'png', quality = 85, width = undefined, height = undefined, fit = 'scale-down' } = {},
+  {
+    format = 'png',
+    quality = 85,
+    width = undefined,
+    height = undefined,
+    fit = 'scale-down',
+    nativeOnly = false,
+  } = {},
 ) => {
   // Lazily load the PDF.js library
   if (!pdfjs) {
@@ -95,5 +102,5 @@ export const renderPDF = async (
     }
   }
 
-  return exportCanvasAsBlob(canvas, { format, quality });
+  return exportCanvasAsBlob(canvas, { format, quality, nativeOnly });
 };

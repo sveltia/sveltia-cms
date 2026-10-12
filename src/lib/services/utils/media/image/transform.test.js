@@ -391,6 +391,7 @@ describe('Image Transform Functions', () => {
     expect(exportCanvasAsBlob).toHaveBeenCalledWith(expect.any(Object), {
       format: 'jpeg',
       quality: 90,
+      nativeOnly: false,
     });
     expect(result).toBe(mockResultBlob);
   });
@@ -513,6 +514,7 @@ describe('Image Transform Functions', () => {
     expect(exportCanvasAsBlob).toHaveBeenCalledWith(expect.any(Object), {
       format: 'png',
       quality: 85,
+      nativeOnly: false,
     });
     expect(result).toBe(mockResultBlob);
   });

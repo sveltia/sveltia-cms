@@ -283,6 +283,100 @@ describe('assets/index', () => {
       expect(processedAssets.current.invalidFiles).toEqual([badFile]);
     });
 
+    it('should process at most four files at the same time', async () => {
+      const { isValidImage } = await import('$lib/services/utils/media/image/validate');
+
+      const files = [...Array(6).keys()].map(
+        (index) => new File(['data'], `photo-${index}.jpg`, { type: 'image/jpeg' }),
+      );
+
+      /** @type {(() => void)[]} */
+      const pendingDecodes = [];
+
+      // Hold every decode until released, so the files in flight can be counted
+      vi.mocked(isValidImage).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            pendingDecodes.push(() => resolve(true));
+          }),
+      );
+
+      uploadingAssets.current = { folder: undefined, files };
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+
+      expect(pendingDecodes).toHaveLength(4);
+
+      pendingDecodes.splice(0).forEach((release) => release());
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+
+      expect(pendingDecodes).toHaveLength(2);
+
+      pendingDecodes.splice(0).forEach((release) => release());
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+
+      vi.mocked(isValidImage).mockResolvedValue(true);
+
+      expect(processedAssets.current.validFiles).toEqual(files);
+    });
+
+    it('should skip the files of a superseded selection still waiting their turn', async () => {
+      const { isValidImage } = await import('$lib/services/utils/media/image/validate');
+
+      const staleFiles = [...Array(6).keys()].map(
+        (index) => new File(['data'], `stale-${index}.jpg`, { type: 'image/jpeg' }),
+      );
+
+      const newFile = new File(['data'], 'new.jpg', { type: 'image/jpeg' });
+      /** @type {(() => void)[]} */
+      const pendingDecodes = [];
+
+      vi.mocked(isValidImage).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            pendingDecodes.push(() => resolve(true));
+          }),
+      );
+
+      uploadingAssets.current = { folder: undefined, files: staleFiles };
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+
+      uploadingAssets.current = { folder: undefined, files: [newFile] };
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+
+      // Only the four stale files already being decoded are let finish
+      pendingDecodes.splice(0).forEach((release) => release());
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+
+      expect(pendingDecodes).toHaveLength(1);
+      pendingDecodes.splice(0).forEach((release) => release());
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+
+      vi.mocked(isValidImage).mockResolvedValue(true);
+
+      expect(processedAssets.current.validFiles).toEqual([newFile]);
+    });
+
     it('should handle file transformations', async () => {
       const originalFile = new File(['content'], 'original.jpg', { type: 'image/jpeg' });
       const transformedFile = new File(['transformed'], 'transformed.jpg', { type: 'image/jpeg' });

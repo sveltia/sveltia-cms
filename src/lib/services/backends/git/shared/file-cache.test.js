@@ -11,6 +11,7 @@ import { prepareEntries } from '$lib/services/contents/file/process';
 
 import {
   advanceRepositoryHead,
+  attachParsedContents,
   getFileList,
   restoreCachedFileData,
   updateCache,
@@ -281,6 +282,34 @@ describe('git/shared/file-cache', () => {
     });
   });
 
+  describe('attachParsedContents', () => {
+    it('should add the parsed content to the fetched and cached files', () => {
+      const parsedA = { key: 'key', content: { title: 'A' } };
+      const parsedB = { key: 'key', content: { title: 'B' } };
+      const fetchedFileMap = { 'a.md': { sha: 'sha-a', size: 1, text: 'A' } };
+      const cachedFiles = { 'b.md': { sha: 'sha-b', size: 1, text: 'B' } };
+
+      const reparsedFileMap = attachParsedContents({
+        parsedFileMap: new Map([
+          ['a.md', parsedA],
+          ['b.md', parsedB],
+          // Neither fetched nor cached, which can’t happen, but there’s nothing to add it to
+          ['c.md', parsedB],
+        ]),
+        fetchedFileMap,
+        cachedFiles,
+      });
+
+      // A fetched file is cached anyway, so the content is added to it in place
+      expect(fetchedFileMap['a.md']).toEqual({ sha: 'sha-a', size: 1, text: 'A', parsed: parsedA });
+      // A cached one has to be cached again
+      expect(reparsedFileMap).toEqual({
+        'b.md': { sha: 'sha-b', size: 1, text: 'B', parsed: parsedB },
+      });
+      expect(cachedFiles['b.md']).not.toHaveProperty('parsed');
+    });
+  });
+
   describe('updateCache', () => {
     it('should save new entries and delete unused ones', async () => {
       const allFiles = [{ path: 'file1.md' }, { path: 'file2.md' }, { path: 'file3.md' }];
@@ -310,6 +339,21 @@ describe('git/shared/file-cache', () => {
       ]);
 
       expect(mockCacheDB.deleteEntries).toHaveBeenCalledWith(['old-file.md']);
+    });
+
+    it('should save the cached files whose content has been parsed again', async () => {
+      const parsed = { key: 'key', content: { title: 'A' } };
+
+      await updateCache({
+        cacheDB: mockCacheDB,
+        allFiles: [{ path: 'a.md' }],
+        cachedFiles: { 'a.md': { sha: 'abc123' } },
+        fetchingFiles: [],
+        fetchedFileMap: {},
+        reparsedFileMap: { 'a.md': { sha: 'abc123', parsed } },
+      });
+
+      expect(mockCacheDB.saveEntries).toHaveBeenCalledWith([['a.md', { sha: 'abc123', parsed }]]);
     });
 
     it('should not save entries when no files are being fetched', async () => {

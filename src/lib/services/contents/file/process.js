@@ -2,11 +2,15 @@ import { generateUUID } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 
+import { version } from '$lib/services/app';
+import { cmsConfigVersion } from '$lib/services/config';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { resolveCollectionAndFile } from '$lib/services/contents/collection/files';
 import { getNestedIndexFileName } from '$lib/services/contents/collection/nested';
 import { hasRootField } from '$lib/services/contents/entry/fields';
-import { parseEntryFile } from '$lib/services/contents/file/parse';
+import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
+import { mayHaveUnsafeInteger } from '$lib/services/contents/file/integers';
+import { hasCustomParser, parseEntryFile } from '$lib/services/contents/file/parse';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { flattenKeys } from '$lib/services/utils/object';
 import { runInChunks } from '$lib/services/utils/scheduling';
@@ -18,6 +22,7 @@ import { runInChunks } from '$lib/services/utils/scheduling';
  * InternalCollection,
  * InternalEntryCollection,
  * InternalLocaleCode,
+ * ParsedFileContent,
  * RepositoryFileMetadata,
  * } from '$lib/types/private';
  * @import { Field, RawEntryContent } from '$lib/types/public';
@@ -105,23 +110,79 @@ export const hasCircularReference = (value, ancestors = new Set()) => {
 };
 
 /**
- * Parse the raw content from the file and handle any errors.
+ * Map of entry file paths to the content parsed from them, collected while the files are parsed so
+ * it can be cached along with the files.
+ * @typedef {Map<string, ParsedFileContent>} ParsedFileMap
+ */
+
+/**
+ * Get the key identifying what a file’s content is parsed for: the CMS version, as a new version
+ * may parse a file differently, and the CMS configuration, which sets the format of each file.
+ * @returns {string} Key.
+ */
+export const getParsedContentKey = () => `${version}\n${cmsConfigVersion.current}`;
+
+/**
+ * Add the content parsed from a file to the given map, so it can be cached.
+ * @param {object} args Arguments.
+ * @param {ParsedFileMap} args.parsedFileMap Map to add the content to.
+ * @param {string} args.path File path.
+ * @param {string} args.key What the content was parsed for. See {@link getParsedContentKey}.
+ * @param {RawEntryContent} args.content Parsed content.
+ */
+const cacheParsedContent = ({ parsedFileMap, path, key, content }) => {
+  try {
+    parsedFileMap.set(path, {
+      key,
+      // Copied, as the content is processed further, and the copy has to be cached as parsed
+      content: structuredClone(content),
+      format: detectedFrontMatterFormats.get(path),
+    });
+  } catch {
+    // Content the database can’t store either; the file is just parsed again next time
+  }
+};
+
+/**
+ * Parse the raw content from the file and handle any errors. Content cached from a previous load
+ * is used instead if it was parsed for the same CMS version and configuration, as parsing every
+ * file is the bulk of the work of loading the site data.
  * @param {BaseEntryListItem} file Entry file list item.
  * @param {Error[]} errors List of parse errors.
+ * @param {ParsedFileMap} [parsedFileMap] Map to add the content parsed from the file to, so it can
+ * be cached. A file whose content comes from the cache isn’t added.
  * @returns {Promise<RawEntryContent | undefined>} Parsed content or undefined if parsing failed.
  */
-export const parseFileContent = async (file, errors) => {
+export const parseFileContent = async (file, errors, parsedFileMap) => {
+  const { path, parsed } = file;
+  const key = getParsedContentKey();
+
+  if (parsed?.key === key && !hasCustomParser(file)) {
+    if (parsed.format) {
+      // Remembered, so the file is saved back in the same format, as when it was parsed
+      detectedFrontMatterFormats.set(path, parsed.format);
+    }
+
+    return parsed.content;
+  }
+
   try {
     // A file whose content couldn’t be read, e.g. because it’s too large, has no text. Parsing it
     // as an empty file would load an empty entry, and saving that would wipe the file
     if (file.text === undefined) {
-      throw new Error(`${file.path} could not be read.`);
+      throw new Error(`${path} could not be read.`);
     }
 
     const content = await parseEntryFile(file);
 
     if (hasCircularReference(content)) {
-      throw new Error(`${file.path} could not be parsed, as it contains a circular reference.`);
+      throw new Error(`${path} could not be parsed, as it contains a circular reference.`);
+    }
+
+    // Parsing a file remembers the source text of any integer a `number` can’t represent exactly,
+    // which is what the integer is saved as, so such a file has to be parsed every time
+    if (parsedFileMap && !hasCustomParser(file) && !mayHaveUnsafeInteger(file.text)) {
+      cacheParsedContent({ parsedFileMap, path, key, content });
     }
 
     return content;
@@ -534,9 +595,11 @@ export const prepareArrayFileEntries = ({ collection, file, rawContent, entries,
  * @param {Map<string, Entry>} args.entryMap Prepared entries keyed by their temporary ID, used to
  * merge the localized files of a multi-file i18n entry.
  * @param {Error[]} args.errors List of parse errors.
+ * @param {ParsedFileMap} [args.parsedFileMap] Map to add the content parsed from the file to. See
+ * {@link parseFileContent}.
  */
-export const prepareEntry = async ({ file, entries, entryMap, errors }) => {
-  const rawContent = await parseFileContent(file, errors);
+export const prepareEntry = async ({ file, entries, entryMap, errors, parsedFileMap }) => {
+  const rawContent = await parseFileContent(file, errors, parsedFileMap);
 
   const {
     path,
@@ -671,9 +734,12 @@ export const prepareEntry = async ({ file, entries, entryMap, errors }) => {
 /**
  * Parse the given entry files to create a complete, serialized entry list.
  * @param {BaseEntryListItem[]} entryFiles Entry file list.
+ * @param {object} [options] Options.
+ * @param {ParsedFileMap} [options.parsedFileMap] Map to add the content parsed from each file to,
+ * so it can be cached. See {@link parseFileContent}.
  * @returns {Promise<{ entries: Entry[], errors: Error[] }>} Entry list and error list.
  */
-export const prepareEntries = async (entryFiles) => {
+export const prepareEntries = async (entryFiles, { parsedFileMap } = {}) => {
   /** @type {Entry[]} */
   const entries = [];
   /** @type {Map<string, Entry>} */
@@ -687,7 +753,7 @@ export const prepareEntries = async (entryFiles) => {
     // A file that can’t be processed is reported like a parse error, rather than stopping the whole
     // list from loading
     try {
-      await prepareEntry({ file, entries, entryMap, errors });
+      await prepareEntry({ file, entries, entryMap, errors, parsedFileMap });
     } catch (/** @type {any} */ ex) {
       // eslint-disable-next-line no-console
       console.error(ex);

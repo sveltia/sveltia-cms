@@ -1,7 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { EmptyState } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
 
   import CloudinaryPanel from '$lib/components/assets/browser/cloudinary-panel.svelte';
   import AssetListContainer from '$lib/components/assets/list/asset-list-container.svelte';
@@ -101,9 +100,7 @@
       {/each}
     {/snippet}
     {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
-      {#await sleep() then}
-        <AssetListItem {asset} index={getRowIndex(asset)} {viewType} />
-      {/await}
+      <AssetListItem {asset} index={getRowIndex(asset)} {viewType} />
     {/snippet}
     {#snippet emptyAction()}
       <UploadAssetsButton label={_('upload_assets')} />

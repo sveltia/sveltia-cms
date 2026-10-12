@@ -8,7 +8,7 @@
   import { _ } from '@sveltia/i18n';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getPairsFromContent } from '$lib/services/contents/fields/key-value/pairs';
 
   /**
@@ -44,7 +44,9 @@
   // The shared snapshot of the locale’s values is only taken once per change, and its key paths are
   // indexed, so the pairs are looked up without going through all the values
   const pairs = $derived(
-    getPairsFromContent(getValueMapSnapshot(entryDraft.current, locale), keyPath, { live: false }),
+    getPairsFromContent(getFieldValueMapSnapshot(entryDraft.current, locale, keyPath), keyPath, {
+      live: false,
+    }),
   );
 </script>
 

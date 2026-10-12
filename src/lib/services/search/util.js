@@ -36,6 +36,12 @@ const ACCENT_REGEX = new RegExp(
 );
 
 /**
+ * Match a string made of ASCII characters only.
+ */
+// eslint-disable-next-line no-control-regex
+const ASCII_REGEX = /^[\x00-\x7F]*$/;
+
+/**
  * Normalize the given string for search value comparison: fold accents like `é` to `e` and
  * lowercase it. Since `transliterate` is slow, we only apply basic normalization. The accents are
  * stripped from the decomposed (NFD) string, then the result is composed (NFC) again, so that a
@@ -49,6 +55,12 @@ export const normalize = (value) => {
 
   if (!value) {
     return '';
+  }
+
+  // ASCII text has nothing to decompose or strip, so it only has to be lowercased, which saves most
+  // of the work for the bulk of the content of many sites
+  if (ASCII_REGEX.test(value)) {
+    return value.toLocaleLowerCase();
   }
 
   return value.normalize('NFD').replace(ACCENT_REGEX, '').toLocaleLowerCase().normalize('NFC');

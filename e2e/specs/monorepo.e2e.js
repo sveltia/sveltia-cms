@@ -172,8 +172,9 @@ const testRemoteChanges = async ({ cms, page, repository, isFileListRequest }) =
     })
     .toBe(2);
   await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
-  // Only the commit to the blog had the files fetched again
-  expect(fileListRequests).toBe(initialRequests + 1);
+  // Only the commit to the blog had the files listed again, which takes as many requests as the
+  // first listing did: GitLab lists each folder the CMS manages separately
+  expect(fileListRequests).toBe(initialRequests * 2);
 };
 
 test.describe('with a media folder outside the root directory', () => {

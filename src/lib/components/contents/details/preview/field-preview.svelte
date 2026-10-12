@@ -2,7 +2,7 @@
   import { CustomPreview, previews } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { highlightEditorField } from '$lib/services/contents/editor/fields';
   import { getFieldLocaleAccess } from '$lib/services/contents/editor/locale';
   import { getCurrentValue, isFieldMultiple } from '$lib/services/contents/entry/fields';
@@ -38,7 +38,7 @@
   const { label = '', preview = true } = $derived(/** @type {VisibleField} */ (fieldConfig));
   const multiple = $derived(isFieldMultiple(fieldConfig));
   const isList = $derived(fieldType === 'list' || multiple);
-  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
+  const valueMap = $derived(getFieldValueMapSnapshot(entryDraft.current, locale, keyPath));
   // A field duplicated along with an ancestor is shown in the other locales like in `FieldEditor`
   const { isShown } = $derived(
     getFieldLocaleAccess({ draft: entryDraft.current, fieldConfig, keyPath, locale, valueMap }),

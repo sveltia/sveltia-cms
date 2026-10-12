@@ -18,6 +18,7 @@ import { prepareEntries } from '$lib/services/contents/file/process';
  * RepositoryContentsMap,
  * } from '$lib/types/private';
  * @import { RepositoryMetadataMap } from '$lib/services/backends/git/shared/fetch';
+ * @import { ParsedFileMap } from '$lib/services/contents/file/process';
  */
 
 /**
@@ -159,18 +160,20 @@ export const applyFileMetadata = ({ fetchedFileMap, metadataMap }) => {
  * @param {BaseEntryListItem[]} args.entryFiles Entry files, completed with their text.
  * @param {Set<string>} [args.changedPaths] Paths of the files whose content differs from what was
  * fetched last time. Every file is parsed if omitted.
+ * @param {ParsedFileMap} [args.parsedFileMap] Map to add the content parsed from each file to, so
+ * it can be cached.
  * @returns {Promise<{ entries: Entry[], errors: Error[] }>} Parsed entries, and errors encountered
  * while parsing them.
  */
-const parseEntryFiles = async ({ entryFiles, changedPaths }) => {
+const parseEntryFiles = async ({ entryFiles, changedPaths, parsedFileMap }) => {
   const previous = allEntries.current;
 
   if (!changedPaths || !previous.length) {
-    return prepareEntries(entryFiles);
+    return prepareEntries(entryFiles, { parsedFileMap });
   }
 
   const { reusedEntries, dirtyFiles } = planEntryReparse({ entryFiles, previous, changedPaths });
-  const { entries: parsedEntries, errors } = await prepareEntries(dirtyFiles);
+  const { entries: parsedEntries, errors } = await prepareEntries(dirtyFiles, { parsedFileMap });
 
   return { entries: mergeEntries({ entryFiles, reusedEntries, parsedEntries }), errors };
 };
@@ -182,6 +185,8 @@ const parseEntryFiles = async ({ entryFiles, changedPaths }) => {
  * @param {RepositoryContentsMap} args.fetchedFileMap Map of fetched file metadata and content.
  * @param {Set<string>} [args.changedPaths] Paths of the files whose content differs from what was
  * fetched last time, given to parse only those entry files again. Every file is parsed if omitted.
+ * @param {ParsedFileMap} [args.parsedFileMap] Map to add the content parsed from each entry file
+ * to, so it can be cached. A file whose content comes from the cache isn’t added.
  * @returns {Promise<{ entries: Entry[], errors: Error[], assets: Asset[], configFiles:
  * BaseConfigListItem[] }>} Parsed entries, errors encountered while parsing them, assets and config
  * files.
@@ -190,12 +195,14 @@ export const parseFiles = async ({
   fileList: { entryFiles, assetFiles, configFiles },
   fetchedFileMap,
   changedPaths,
+  parsedFileMap,
 }) => {
   const { entries, errors } = await parseEntryFiles({
     entryFiles: entryFiles.map(
       (fileInfo) => /** @type {BaseEntryListItem} */ (parseFileInfo({ fileInfo, fetchedFileMap })),
     ),
     changedPaths,
+    parsedFileMap,
   });
 
   const assets = assetFiles.map((fileInfo) =>

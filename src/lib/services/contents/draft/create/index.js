@@ -16,10 +16,11 @@ import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { normalizeContentMap } from '$lib/services/contents/draft/create/normalize';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { fillUuidValues } from '$lib/services/contents/draft/create/uuid';
+import { createValueMap } from '$lib/services/contents/draft/create/versioned-map.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { resetCustomFieldValidation } from '$lib/services/contents/draft/validate/custom-fields';
-import { createState } from '$lib/services/utils/state.svelte';
+import { createState, getSnapshot } from '$lib/services/utils/state.svelte';
 import { isPendingDeletion } from '$lib/services/workflow';
 
 /**
@@ -290,7 +291,14 @@ export const buildDraft = ({
       // The value proxies are created below, as they need a reference to the reactive draft
       currentValues: {},
       files: {},
-      extraValues: extraValues ?? Object.fromEntries(allLocales.map((locale) => [locale, {}])),
+      // Versioned like `currentValues`, so the component editors can share a value map snapshot
+      // rather than each taking its own on every change
+      extraValues: Object.fromEntries(
+        allLocales.map((locale) => [
+          locale,
+          createValueMap(extraValues?.[locale] ? getSnapshot(extraValues[locale]) : {}),
+        ]),
+      ),
       validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
       validationMessages: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
       // Any locale-agnostic view states will be put under the `_` key

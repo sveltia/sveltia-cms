@@ -98,6 +98,33 @@ describe('createDragSorter()', () => {
     expect(sorter.displayOrder).toEqual([0, 1, 2]);
   });
 
+  test('keeps the same display order while the item count is the same', () => {
+    // The items are rebuilt whenever a value in them changes, e.g. on every keystroke
+    const items = createRawState(['a', 'b', 'c']);
+
+    const itemSorter = createDragSorter({
+      /**
+       * Get the item count.
+       * @returns {number} Count.
+       */
+      getItemCount: () => items.current.length,
+      /**
+       * Get the list element.
+       * @returns {HTMLElement} Element.
+       */
+      getListElement: () => list.listElement,
+      onMove,
+    });
+
+    const order = itemSorter.displayOrder;
+
+    items.current = ['a', 'b', 'c!'];
+    expect(itemSorter.displayOrder).toBe(order);
+
+    items.current = ['a', 'b', 'c', 'd'];
+    expect(itemSorter.displayOrder).toEqual([0, 1, 2, 3]);
+  });
+
   test('tracks the grabbed item', () => {
     sorter.grab(1);
     expect(sorter.grabbedIndex).toBe(1);

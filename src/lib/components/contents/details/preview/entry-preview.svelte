@@ -10,6 +10,7 @@
     customPreviewTemplateRegistry,
   } from '$lib/services/api/registries';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { getValueMapSnapshots } from '$lib/services/contents/draft/value-map.svelte';
   import { preparePreviewTemplateProps } from '$lib/services/contents/editor/preview-templates';
 
   /**
@@ -45,11 +46,9 @@
           // Only the values have to be detached from the draft. Snapshotting the whole draft on
           // every keystroke would also copy the collection configuration, the original entry and
           // values and the validation state, and re-render the template whenever any of them
-          // changed, e.g. when a list item is expanded
-          draft: {
-            ...entryDraft.current,
-            currentValues: $state.snapshot(entryDraft.current.currentValues),
-          },
+          // changed, e.g. when a list item is expanded. The shared snapshots are used, so a locale
+          // that hasn’t changed isn’t copied again
+          draft: { ...entryDraft.current, currentValues: getValueMapSnapshots(entryDraft.current) },
           locale,
         })
       : undefined,

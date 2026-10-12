@@ -20,6 +20,7 @@ import {
   transformImage,
 } from '$lib/services/utils/media/image/transform';
 import { renderPDF } from '$lib/services/utils/media/pdf';
+import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
@@ -303,6 +304,12 @@ const initThumbnailDB = () => {
 };
 
 /**
+ * Limit the thumbnails being generated at the same time. Each one decodes the full-size image, so a
+ * folder of photos shown for the first time would otherwise hold all of them in memory at once.
+ */
+const limitThumbnailGeneration = createConcurrencyLimiter(4);
+
+/**
  * Get a thumbnail blob for the given asset, generating it from the original file if it’s not in the
  * cache database yet.
  * @param {Asset} asset Asset.
@@ -314,10 +321,11 @@ const resolveThumbnailBlob = async (asset, isPDF) => {
   let thumbnailBlob = await thumbnailDB?.get(asset.sha);
 
   if (!thumbnailBlob) {
-    const blob = await getThumbnailSourceBlob(asset);
     const transform = isPDF ? renderPDF : transformImage;
 
-    thumbnailBlob = await transform(blob, THUMBNAIL_TRANSFORM_OPTIONS);
+    thumbnailBlob = await limitThumbnailGeneration(async () =>
+      transform(await getThumbnailSourceBlob(asset), THUMBNAIL_TRANSFORM_OPTIONS),
+    );
 
     await thumbnailDB?.set(asset.sha, thumbnailBlob);
   }

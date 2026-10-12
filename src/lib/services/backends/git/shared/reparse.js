@@ -1,6 +1,7 @@
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { BaseEntryListItem, Entry, EntryFolderInfo } from '$lib/types/private';
@@ -155,7 +156,9 @@ export const mergeEntries = ({ entryFiles, reusedEntries, parsedEntries }) => {
   // A file storing all the entries of an entry collection makes more than one entry
   parsedEntries.forEach((entry) => {
     getEntryPaths(entry).forEach((path) => {
-      parsedByPath.set(path, [...(parsedByPath.get(path) ?? []), entry]);
+      // Appended in place: a file holding every entry of a collection has thousands of them, and
+      // copying the list for each one would take quadratic time
+      getOrCreate(parsedByPath, path, () => /** @type {Entry[]} */ ([])).push(entry);
     });
   });
 

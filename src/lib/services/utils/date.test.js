@@ -96,6 +96,12 @@ describe('Date format options', () => {
 });
 
 describe('formatDate', () => {
+  test('formats an invalid date the way `toLocaleString()` does, rather than throwing', () => {
+    const date = new Date('invalid');
+
+    expect(formatDate(date, 'en-US')).toBe(date.toLocaleString('en-US'));
+  });
+
   test('formats date using DATE_TIME_FORMAT_OPTIONS with given locale', () => {
     const date = new Date('2024-06-15T14:30:00Z');
 

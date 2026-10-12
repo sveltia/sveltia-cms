@@ -1,7 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { EmptyState, GridCell, GridRow, Icon, InfiniteScroll, TruncatedText } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
 
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
@@ -43,34 +42,32 @@
     <ListingGrid viewType="list" aria-label={_('files')} aria-rowcount={files.length}>
       <InfiniteScroll items={files} itemKey="name">
         {#snippet renderItem(/** @type {CollectionFile} */ { name, label, icon })}
-          {#await sleep() then}
-            <GridRow
-              onclick={() => {
-                goto(
-                  encodePathSegments(
-                    `/collections/${selectedCollection.current?.name}/entries/${name}`,
-                  ),
-                  { transitionType: 'forwards' },
-                );
-              }}
-            >
-              <GridCell class="title">
-                <div role="none" class="label">
-                  {#if icon}
-                    <Icon name={icon} />
-                  {/if}
-                  <TruncatedText lines={2}>
-                    {label || name}
-                  </TruncatedText>
-                </div>
-              </GridCell>
-              <GridCell class="status">
-                {#if statuses[name]}
-                  <StatusBadge status={statuses[name]} />
+          <GridRow
+            onclick={() => {
+              goto(
+                encodePathSegments(
+                  `/collections/${selectedCollection.current?.name}/entries/${name}`,
+                ),
+                { transitionType: 'forwards' },
+              );
+            }}
+          >
+            <GridCell class="title">
+              <div role="none" class="label">
+                {#if icon}
+                  <Icon name={icon} />
                 {/if}
-              </GridCell>
-            </GridRow>
-          {/await}
+                <TruncatedText lines={2}>
+                  {label || name}
+                </TruncatedText>
+              </div>
+            </GridCell>
+            <GridCell class="status">
+              {#if statuses[name]}
+                <StatusBadge status={statuses[name]} />
+              {/if}
+            </GridCell>
+          </GridRow>
         {/snippet}
       </InfiniteScroll>
     </ListingGrid>

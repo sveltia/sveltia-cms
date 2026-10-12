@@ -587,6 +587,7 @@ describe('assets/info', () => {
         width: 512,
         height: 512,
         fit: 'contain',
+        nativeOnly: true,
       });
       expect(mockIndexedDB.set).toHaveBeenCalledWith('abc123', thumbnailBlob);
       expect(result).toBe('blob:mock-url');
@@ -631,6 +632,7 @@ describe('assets/info', () => {
         width: 512,
         height: 512,
         fit: 'contain',
+        nativeOnly: true,
       });
       expect(result).toBe('blob:mock-url');
     });
@@ -704,6 +706,40 @@ describe('assets/info', () => {
       // The in-flight entry is released once settled, so a later request starts a fresh resolution
       await getAssetThumbnailURL(assetWithFile);
       expect(transformImageMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('should generate at most four thumbnails at the same time', async () => {
+      mockIndexedDB.get.mockResolvedValue(undefined);
+
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+      const thumbnailBlob = new Blob(['thumbnail'], { type: 'image/webp' });
+      /** @type {(() => void)[]} */
+      const pendingTransforms = [];
+
+      // Hold every transformation until released, so the thumbnails in flight can be counted
+      vi.mocked(transformImage).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            pendingTransforms.push(() => resolve(thumbnailBlob));
+          }),
+      );
+
+      const results = Promise.all(
+        [...Array(6).keys()].map((index) =>
+          getAssetThumbnailURL({
+            ...mockAsset,
+            sha: `sha-${index}`,
+            file: new File(['content'], `test-${index}.jpg`, { type: 'image/jpeg' }),
+          }),
+        ),
+      );
+
+      await vi.waitFor(() => expect(pendingTransforms).toHaveLength(4));
+      pendingTransforms.splice(0).forEach((release) => release());
+      await vi.waitFor(() => expect(pendingTransforms).toHaveLength(2));
+      pendingTransforms.splice(0).forEach((release) => release());
+
+      expect(await results).toEqual(Array(6).fill('blob:mock-url'));
     });
 
     it('should return undefined when the thumbnail cannot be generated', async () => {

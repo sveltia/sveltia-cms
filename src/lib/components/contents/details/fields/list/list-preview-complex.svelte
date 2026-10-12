@@ -10,11 +10,12 @@
   import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { getSubtree } from '$lib/services/contents/entry/subtree';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getMemoizedSubtree } from '$lib/services/contents/entry/subtree';
   import { getListFieldInfo, getListItemKey } from '$lib/services/contents/fields/list/helpers';
 
   /**
+   * @import { SubtreeMemo } from '$lib/services/contents/entry/subtree';
    * @import { FieldPreviewProps } from '$lib/types/private';
    * @import {
    * ComplexListField,
@@ -50,9 +51,19 @@
   /* v8 ignore start -- a list field has either subfields or a single subfield */
   const singleSubFields = $derived(fields ?? (field ? [field] : []));
   /* v8 ignore stop */
+  /**
+   * What the items were last assembled from, so they’re only assembled again once they’ve changed.
+   * A plain object, as it’s only a memo.
+   * @type {SubtreeMemo}
+   */
+  const itemsMemo = {};
   /** @type {Record<string, any>[]} */
   const items = $derived(
-    getSubtree(getValueMapSnapshot(entryDraft.current, locale), keyPath) ?? [],
+    getMemoizedSubtree(
+      itemsMemo,
+      getFieldValueMapSnapshot(entryDraft.current, locale, keyPath),
+      keyPath,
+    ) ?? [],
   );
   /**
    * The variable type of each item, or `undefined` for a list without variable types. The `each`

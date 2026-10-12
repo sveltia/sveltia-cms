@@ -862,9 +862,10 @@ describe('git/shared/fetch', () => {
         expect(mockFetchFileContents).not.toHaveBeenCalled();
         // The metadata is requested for both
         expect(fetchFileMetadata).toHaveBeenCalledWith([entryFile, assetFile]);
-        expect(prepareEntries).toHaveBeenCalledWith([
-          expect.objectContaining({ path: 'posts/a.md', text: 'cached text' }),
-        ]);
+        expect(prepareEntries).toHaveBeenCalledWith(
+          [expect.objectContaining({ path: 'posts/a.md', text: 'cached text' })],
+          { parsedFileMap: expect.any(Map) },
+        );
         expect(mockCacheDB.saveEntries).toHaveBeenLastCalledWith([
           ['posts/a.md', { sha: 'sha1', size: 10, text: 'cached text', meta }],
           ['img/a.png', { sha: 'sha2', size: 20, text: undefined, meta }],
@@ -1140,6 +1141,61 @@ describe('git/shared/fetch', () => {
         expect.arrayContaining([expect.objectContaining({ path: 'posts/post2.md' })]),
         'abc123',
       );
+    });
+
+    it('should cache the content parsed from the fetched and cached files', async () => {
+      const mockEntryFiles = [
+        { path: 'posts/post1.md', name: 'post1.md', sha: 'entry1', size: 1024 },
+        { path: 'posts/post2.md', name: 'post2.md', sha: 'entry2', size: 2048 },
+      ];
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 2,
+        entryFiles: mockEntryFiles,
+        assetFiles: [],
+        configFiles: [],
+        allFiles: mockEntryFiles.map((file) => ({ ...file })),
+      });
+
+      const parsed1 = { key: 'key', content: { title: 'Post 1' } };
+      const parsed2 = { key: 'key', content: { title: 'Post 2' } };
+
+      // Both files are parsed: post1 has been cached without its parsed content
+      vi.mocked(prepareEntries).mockImplementation(async (_files, { parsedFileMap } = {}) => {
+        parsedFileMap?.set('posts/post1.md', parsed1);
+        parsedFileMap?.set('posts/post2.md', parsed2);
+
+        return { entries: [], errors: [] };
+      });
+
+      const meta = { commitAuthor: undefined, commitDate: undefined };
+
+      mockCacheDB.entries.mockResolvedValue([
+        ['posts/post1.md', { sha: 'entry1', size: 1024, text: 'cached content', meta }],
+      ]);
+      mockMetaDB.entries.mockResolvedValue([]);
+      mockFetchFileContents.mockResolvedValue({
+        'posts/post2.md': { sha: 'entry2', size: 2048, text: 'new content', meta },
+      });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockCacheDB.saveEntries).toHaveBeenCalledWith([
+        [
+          'posts/post2.md',
+          { sha: 'entry2', size: 2048, text: 'new content', meta, parsed: parsed2 },
+        ],
+        [
+          'posts/post1.md',
+          { sha: 'entry1', size: 1024, text: 'cached content', meta, parsed: parsed1 },
+        ],
+      ]);
     });
 
     it('should record the publish hint as true when the commit carries no skip marker', async () => {

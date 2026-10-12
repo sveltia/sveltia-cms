@@ -18,9 +18,10 @@ import {
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
+import { getManagedPaths } from '$lib/services/backends/git/shared/managed-paths';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
-import { getRootDir } from '$lib/services/backends/root-dir';
+import { getRootDir, toRepoPath } from '$lib/services/backends/root-dir';
 import { splitIntoChunks } from '$lib/services/utils/array';
 
 /**
@@ -96,57 +97,6 @@ const getFetchFileListQuery = ({ scoped }) => `
     }
   }
 `;
-
-/**
- * Fetch the repository’s complete file list, and return it in the canonical format. With the
- * `root_dir` backend option, only the files in that directory are listed, which saves listing the
- * whole of a big monorepo; the paths are still relative to the repository root.
- * @param {string} [lastHash] The last commit’s SHA-1 hash. The tree is listed at that commit
- * rather than at the tip of the branch, which may have moved on since, so the file list matches the
- * commit the file cache is keyed on. Default: the branch.
- * @returns {Promise<BaseFileListItemProps[]>} File list.
- * @see https://docs.gitlab.com/api/graphql/reference/index.html#repositorytree
- * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
- */
-export const fetchFileList = async (lastHash) => {
-  const rootDir = getRootDir();
-  const query = getFetchFileListQuery({ scoped: !!rootDir });
-  /** @type {{ type: string, path: string, sha: string }[]} */
-  const blobs = [];
-  let cursor = '';
-
-  // Since GitLab has a limit of 100 records per query, use pagination to fetch all the files
-  for (;;) {
-    const result = /** @type {FetchFileListResponse} */ (
-      await fetchGraphQL(query, {
-        cursor,
-        // The `$branch` variable takes a commit SHA as well as a branch name
-        ...(lastHash && { branch: lastHash }),
-        ...(rootDir && { path: rootDir }),
-      })
-    );
-
-    // A directory that doesn’t exist comes back without blobs, while a missing tree is guarded
-    // against as well; either leaves the list empty, which the caller reports
-    const {
-      nodes,
-      pageInfo: { endCursor, hasNextPage },
-    } = result.project.repository.tree?.blobs ?? {
-      nodes: [],
-      pageInfo: { endCursor: '', hasNextPage: false },
-    };
-
-    blobs.push(...nodes);
-    cursor = endCursor;
-
-    if (!hasNextPage) {
-      break;
-    }
-  }
-
-  // The `size` is not available from the GitLab API in bulk, so it’s left as `0`
-  return toFileListItems(blobs);
-};
 
 const FETCH_SUBTREES_QUERY = `
   query($fullPath: ID!, $ref: String!, $path: String!, $cursor: String!) {
@@ -318,6 +268,118 @@ export const fetchBlobNodes = async (paths, query, variables = {}) => {
 
   // Keep the order of the given paths, although callers match a blob to its file by path
   return results.flat();
+};
+
+/**
+ * Fetch the files in a directory and its subdirectories, a page at a time.
+ * @param {object} args Arguments.
+ * @param {string} [args.ref] Commit SHA or branch name. Default: the branch.
+ * @param {string} [args.path] Directory path relative to the repository root. Default: the root.
+ * @returns {Promise<{ type: string, path: string, sha: string }[]>} Blobs, with paths relative to
+ * the repository root.
+ */
+const fetchTreeBlobs = async ({ ref, path }) => {
+  const query = getFetchFileListQuery({ scoped: !!path });
+  /** @type {{ type: string, path: string, sha: string }[]} */
+  const blobs = [];
+  let cursor = '';
+
+  // Since GitLab has a limit of 100 records per query, use pagination to fetch all the files
+  for (;;) {
+    const result = /** @type {FetchFileListResponse} */ (
+      await fetchGraphQL(query, {
+        cursor,
+        // The `$branch` variable takes a commit SHA as well as a branch name
+        ...(ref && { branch: ref }),
+        ...(path && { path }),
+      })
+    );
+
+    // A directory that doesn’t exist comes back without blobs, while a missing tree is guarded
+    // against as well; either leaves the list empty, which the caller reports
+    const {
+      nodes,
+      pageInfo: { endCursor, hasNextPage },
+    } = result.project.repository.tree?.blobs ?? {
+      nodes: [],
+      pageInfo: { endCursor: '', hasNextPage: false },
+    };
+
+    blobs.push(...nodes);
+    cursor = endCursor;
+
+    if (!hasNextPage) {
+      break;
+    }
+  }
+
+  return blobs;
+};
+
+const FETCH_BLOB_IDS_QUERY = `
+  query($fullPath: ID!, $branch: String!, $paths: [String!]!) {
+    project(fullPath: $fullPath) {
+      repository {
+        blobs(ref: $branch, paths: $paths) {
+          nodes {
+            path
+            oid
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Fetch the repository’s file list, and return it in the canonical format. Only the folders and
+ * files the CMS manages are listed, rather than the whole repository: GitLab lists a tree 100 files
+ * at a time, one page after another, so listing a big repository takes hundreds of requests in a
+ * row, while the folders can be listed at the same time. With the `root_dir` backend option, only
+ * the files in that directory are listed; the paths are still relative to the repository root.
+ * @param {string} [lastHash] The last commit’s SHA-1 hash. The tree is listed at that commit
+ * rather than at the tip of the branch, which may have moved on since, so the file list matches the
+ * commit the file cache is keyed on. Default: the branch.
+ * @returns {Promise<BaseFileListItemProps[]>} File list.
+ * @see https://docs.gitlab.com/api/graphql/reference/index.html#repositorytree
+ * @see https://stackoverflow.com/questions/18952935/how-to-get-subfolders-and-files-using-gitlab-api
+ */
+export const fetchFileList = async (lastHash) => {
+  const rootDir = getRootDir();
+  const managedPaths = getManagedPaths();
+
+  if (managedPaths) {
+    const { dirs, files } = managedPaths;
+
+    const [dirBlobs, fileBlobs] = await Promise.all([
+      mapConcurrently(dirs, (dir) => fetchTreeBlobs({ ref: lastHash, path: toRepoPath(dir) })),
+      // A file collection’s file is looked up by its path, which is quicker than listing its
+      // folder; one that doesn’t exist is left out
+      fetchBlobNodes(
+        files.map((path) => toRepoPath(path)),
+        FETCH_BLOB_IDS_QUERY,
+        lastHash ? { branch: lastHash } : {},
+      ),
+    ]);
+
+    const blobs = [
+      ...dirBlobs.flat(),
+      ...fileBlobs.map(({ path, oid }) => ({
+        type: 'blob',
+        path: /** @type {string} */ (path),
+        sha: /** @type {string} */ (oid),
+      })),
+    ];
+
+    // A site with no content yet has nothing to list there. The whole root directory is listed
+    // then, so a root directory that does exist isn’t reported as missing
+    if (blobs.length) {
+      return toFileListItems(blobs);
+    }
+  }
+
+  // The `size` is not available from the GitLab API in bulk, so it’s left as `0`
+  return toFileListItems(await fetchTreeBlobs({ ref: lastHash, path: rootDir }));
 };
 
 /**

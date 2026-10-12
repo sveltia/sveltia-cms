@@ -35,6 +35,9 @@ vi.mock('$lib/services/contents/draft', async () => ({
 vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
   createProxy: vi.fn(({ target }) => target),
 }));
+vi.mock('$lib/services/contents/draft/create/versioned-map.svelte', () => ({
+  createValueMap: vi.fn((target) => target),
+}));
 vi.mock('$lib/services/contents/collection/entries/reorder/config', () => ({
   getOrderFieldKey: vi.fn(() => undefined),
 }));

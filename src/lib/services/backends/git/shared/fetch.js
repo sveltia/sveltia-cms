@@ -3,6 +3,7 @@ import { IndexedDB } from '@sveltia/utils/storage';
 import { hasSkipCIMarker } from '$lib/services/backends/git/shared/commits';
 import { deferRejection } from '$lib/services/backends/git/shared/defer';
 import {
+  attachParsedContents,
   cacheFiles,
   completeMetadata,
   getFileList,
@@ -27,6 +28,7 @@ import { createDebugLogger } from '$lib/services/utils/logging';
  * RepositoryInfo,
  * } from '$lib/types/private';
  * @import { DebugLogger } from '$lib/services/utils/logging';
+ * @import { ParsedFileMap } from '$lib/services/contents/file/process';
  */
 
 /**
@@ -367,11 +369,18 @@ export const fetchAndParseFiles = async ({
     log,
   });
 
+  /** @type {ParsedFileMap} */
+  const parsedFileMap = new Map();
+
   const { entries, errors, assets, configFiles } = await parseFiles({
     fileList,
     fetchedFileMap,
     changedPaths: incremental ? changedPaths : undefined,
+    parsedFileMap,
   });
+
+  // Cached along with the files, so the next load can skip parsing them
+  const reparsedFileMap = attachParsedContents({ parsedFileMap, fetchedFileMap, cachedFiles });
 
   log(`Parsed ${entries.length} entries (${errors.length} errors)`);
 
@@ -390,6 +399,7 @@ export const fetchAndParseFiles = async ({
         cachedFiles,
         fetchingFiles,
         fetchedFileMap,
+        reparsedFileMap,
         fetchFileMetadata,
         log,
       }),

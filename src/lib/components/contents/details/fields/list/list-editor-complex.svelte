@@ -20,9 +20,9 @@
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { isExpanded, syncExpanderStates } from '$lib/services/contents/editor/fields';
-  import { getSubtree } from '$lib/services/contents/entry/subtree';
+  import { getMemoizedSubtree } from '$lib/services/contents/entry/subtree';
   import {
     formatSummary,
     getListFieldInfo,
@@ -43,8 +43,10 @@
   import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
   import { focusAfterRemoval } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
+  import { createStableDerivedState } from '$lib/services/utils/state.svelte';
 
   /**
+   * @import { SubtreeMemo } from '$lib/services/contents/entry/subtree';
    * @import {
    * ExpanderStateList,
    * FieldEditorContext,
@@ -142,10 +144,18 @@
   // duplicated from the default locale, whether with its own `duplicate` strategy or along with an
   // ancestor’s, in another locale. Changing them there would change the default locale as well
   const isLocked = $derived(readonly || (locale !== defaultLocale && i18n === 'duplicate'));
-  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
+  const valueMap = $derived(
+    getFieldValueMapSnapshot(entryDraft.current, locale, keyPath, valueStoreKey),
+  );
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
+  /**
+   * What the items were last assembled from, so they’re only assembled again once they’ve changed.
+   * A plain object, as it’s only a memo.
+   * @type {SubtreeMemo}
+   */
+  const itemsMemo = {};
   /** @type {Record<string, any>[]} */
-  const items = $derived(getSubtree(valueMap, keyPath) ?? []);
+  const items = $derived(getMemoizedSubtree(itemsMemo, valueMap, keyPath) ?? []);
   // A list limited to one item is shown like an Object field: no item count, list toggle or reorder
   // controls, and no way to remove the item if it’s required. A list with variable types keeps the
   // Remove button though, as that’s the only way to choose another type for the item
@@ -161,6 +171,15 @@
 
       return [key, isExpanded(entryDraft.current, key)];
     }),
+  );
+  /**
+   * The key of each item. The items are rebuilt whenever any of their values changes, e.g. on every
+   * keystroke in an item, while the keys only change when an item is added, removed or moved.
+   * Reading them through this keeps the keyed `each` block below from running again, which with its
+   * `animate:` directive would measure the position of every item and force a layout each time.
+   */
+  const itemKeys = createStableDerivedState(() =>
+    items.map((_item, index) => getListItemKey(items, index)),
   );
   const hasMaxItems = $derived(items.length >= max);
   /** The subfields of every item, regardless of its type. */
@@ -530,7 +549,7 @@
   ondragovercapture={sorter.onDragOver}
   ondropcapture={sorter.onDrop}
 >
-  {#each sorter.displayOrder as index (getListItemKey(items, index))}
+  {#each sorter.displayOrder as index (itemKeys.current[index])}
     {@const item = items[index]}
     <!--
       The wrapper is what the `flip` animation moves: `animate:` only works on an element at the top

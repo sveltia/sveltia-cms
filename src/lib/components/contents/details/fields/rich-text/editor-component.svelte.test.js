@@ -1,9 +1,14 @@
+import { flushSync } from 'svelte';
 import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
 import { globalAssetFolder } from '$lib/services/assets/folders';
+import {
+  createValueMap,
+  getValueMapVersion,
+} from '$lib/services/contents/draft/create/versioned-map.svelte';
 import {
   EntryDraftState,
   getEntryDraftByElement,
@@ -378,6 +383,133 @@ describe('EditorComponent', () => {
       await expect
         .poll(() => getStoredValues(draft))
         .toEqual({ title: 'Hello', url: '1', __sc_component_name: 'card' });
+    });
+    test('doesn’t put the values back into the draft once unmounted', async () => {
+      const draft = createMockDraft({
+        fields: [{ name: 'body', widget: 'markdown' }],
+        values: { _default: { body: '' } },
+      });
+
+      const entryDraft = new EntryDraftState();
+      const wrapper = document.createElement('div');
+
+      const props = $state({
+        componentName: 'card',
+        label: 'Card',
+        fields,
+        summary: '{{title}}',
+        onChange: vi.fn(),
+        values: { title: 'Hello' },
+      });
+
+      entryDraft.current = draft;
+      wrapper.dataset.locale = '_default';
+      wrapper.dataset.keyPath = 'body';
+      document.body.appendChild(wrapper);
+      wrappers.push(wrapper);
+      setEntryDraftRoot(wrapper, entryDraft);
+
+      const { unmount } = await render(EditorComponent, { target: wrapper, props });
+
+      await expect.poll(() => getStoredValues(draft).title).toBe('Hello');
+
+      // The changed values are written to the draft in a microtask, by which time the component
+      // has removed its values on its way out
+      props.values = { title: 'Hi' };
+      flushSync();
+      await unmount();
+
+      expect(getStoredValues(draft)).toEqual({});
+    });
+
+    test('doesn’t write the values the draft already holds', async () => {
+      const draft = createMockDraft({
+        fields: [{ name: 'body', widget: 'markdown' }],
+        values: { _default: { body: '' } },
+      });
+
+      const entryDraft = new EntryDraftState();
+      const wrapper = document.createElement('div');
+
+      const props = $state({
+        componentName: 'card',
+        label: 'Card',
+        fields,
+        summary: '{{title}}',
+        onChange: vi.fn(),
+        values: { title: 'Hello' },
+      });
+
+      entryDraft.current = draft;
+      wrapper.dataset.locale = '_default';
+      wrapper.dataset.keyPath = 'body';
+      document.body.appendChild(wrapper);
+      wrappers.push(wrapper);
+      setEntryDraftRoot(wrapper, entryDraft);
+
+      await render(EditorComponent, { target: wrapper, props });
+      await expect.poll(() => getStoredValues(draft).title).toBe('Hello');
+
+      // Count the writes from here on, the way the app’s value maps do
+      const valueMap = createValueMap($state.snapshot(draft.extraValues._default));
+
+      draft.extraValues._default = valueMap;
+      flushSync();
+
+      const version = getValueMapVersion(valueMap);
+
+      // The rich text editor hands the reported values back, e.g. after re-rendering the node
+      props.values = /** @type {any} */ (getStoredValues(draft));
+      flushSync();
+      await new Promise((resolve) => {
+        setTimeout(resolve);
+      });
+
+      expect(getValueMapVersion(valueMap)).toBe(version);
+    });
+
+    test('writes the values to the draft that replaced the previous one in the meantime', async () => {
+      /**
+       * Create a draft holding no component values.
+       * @returns {any} Draft.
+       */
+      const createDraft = () =>
+        createMockDraft({
+          fields: [{ name: 'body', widget: 'markdown' }],
+          values: { _default: { body: '' } },
+        });
+
+      const draft = createDraft();
+      const entryDraft = new EntryDraftState();
+      const wrapper = document.createElement('div');
+
+      const props = $state({
+        componentName: 'card',
+        label: 'Card',
+        fields,
+        summary: '{{title}}',
+        onChange: vi.fn(),
+        values: { title: 'Hello' },
+      });
+
+      entryDraft.current = draft;
+      wrapper.dataset.locale = '_default';
+      wrapper.dataset.keyPath = 'body';
+      document.body.appendChild(wrapper);
+      wrappers.push(wrapper);
+      setEntryDraftRoot(wrapper, entryDraft);
+
+      await render(EditorComponent, { target: wrapper, props });
+      await expect.poll(() => getStoredValues(draft).title).toBe('Hello');
+
+      // The draft is replaced, e.g. reset after a save, before the changed values are written
+      const newDraft = createDraft();
+
+      props.values = { title: 'Hi' };
+      flushSync();
+      entryDraft.current = newDraft;
+
+      await expect.poll(() => getStoredValues(newDraft).title).toBe('Hi');
     });
   });
 

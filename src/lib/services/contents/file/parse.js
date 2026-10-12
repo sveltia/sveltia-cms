@@ -23,7 +23,7 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * InternalCollection,
  * InternalCollectionFile,
  * } from '$lib/types/private';
- * @import { FrontMatterFormat } from '$lib/types/public';
+ * @import { FileFormat, FrontMatterFormat } from '$lib/types/public';
  */
 
 /**
@@ -190,12 +190,14 @@ export const parseFrontMatter = ({ collection, collectionFile, isIndexFile, form
 };
 
 /**
- * Parse raw content with given file details.
- * @param {BaseEntryListItem} entry Entry file list item.
- * @returns {Promise<any>} Parsed content.
- * @throws {Error} When the content could not be parsed.
+ * Resolve the collection, collection file and format of the given entry file.
+ * @param {Pick<BaseEntryListItem, 'path' | 'folder'>} file Entry file list item.
+ * @returns {{ collection: InternalCollection, collectionFile: InternalCollectionFile | undefined,
+ * isIndexFile: boolean, format: FileFormat }} Collection, collection file, whether the file is the
+ * collection’s special index file, and the format.
+ * @throws {Error} When the collection or the collection file can’t be found.
  */
-export const parseEntryFile = async ({ text = '', path, folder: { collectionName, fileName } }) => {
+const resolveEntryFile = ({ path, folder: { collectionName, fileName } }) => {
   const collection = getCollection(collectionName);
 
   const collectionFile =
@@ -209,12 +211,43 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
     throw new Error('Collection file not found');
   }
 
+  // The collection’s special index file can have a format of its own
+  const isIndexFile = !collectionFile && isCollectionIndexFilePath(collection, path);
+  const { format } = resolveFileConfig({ collection, collectionFile, isIndexFile });
+
+  return { collection, collectionFile, isIndexFile, format };
+};
+
+/**
+ * Check whether the given entry file is read with a parser registered with
+ * `CMS.registerCustomFormat()`. What such a parser returns can change from one load to the next
+ * without the configuration changing, so its results are never cached.
+ * @param {Pick<BaseEntryListItem, 'path' | 'folder'>} file Entry file list item.
+ * @returns {boolean} Result. `false` if the file’s collection can’t be found, as it’s then not
+ * parsed at all.
+ */
+export const hasCustomParser = (file) => {
+  try {
+    return !!customFileFormatRegistry.get(resolveEntryFile(file).format)?.parser;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Parse raw content with given file details.
+ * @param {BaseEntryListItem} entry Entry file list item.
+ * @returns {Promise<any>} Parsed content.
+ * @throws {Error} When the content could not be parsed.
+ */
+export const parseEntryFile = async ({ text = '', path, folder }) => {
+  const resolved = resolveEntryFile({ path, folder });
+  const { collection, collectionFile, isIndexFile } = resolved;
+  let { format } = resolved;
+
   // Normalize line breaks
   text = text.trim().replace(/\r\n?/g, '\n');
 
-  // The collection’s special index file can have a format of its own
-  const isIndexFile = !collectionFile && isCollectionIndexFilePath(collection, path);
-  let { format } = resolveFileConfig({ collection, collectionFile, isIndexFile });
   const customParser = customFileFormatRegistry.get(format)?.parser;
 
   if (customParser) {

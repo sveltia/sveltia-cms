@@ -3,6 +3,8 @@
 import { flushSync } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 
+import { isDraftModified } from '$lib/services/contents/draft';
+
 import {
   createEntryDraftMountContext,
   EntryDraftState,
@@ -28,13 +30,15 @@ vi.mock('svelte', async (importOriginal) => ({
 }));
 
 vi.mock('$lib/services/contents/draft', () => ({
-  /**
-   * Compare the titles only.
-   * @param {any} draft Draft.
-   * @returns {boolean} Whether the title has been modified.
-   */
-  isDraftModified: (draft) =>
-    !!draft && draft.originalValues.en.title !== draft.currentValues.en.title,
+  // Compare the titles only
+  isDraftModified: vi.fn(
+    (draft) => !!draft && draft.originalValues.en.title !== draft.currentValues.en.title,
+  ),
+}));
+
+// A plain value map has no version, so its snapshot is taken afresh rather than shared
+vi.mock('$lib/services/contents/draft/create/versioned-map.svelte', () => ({
+  getValueMapVersion: vi.fn(() => undefined),
 }));
 
 /**
@@ -73,6 +77,21 @@ describe('contents/draft/state', () => {
       state.current = null;
       flushSync();
       expect(state.modified).toBe(false);
+    });
+
+    it('should compare the value map snapshots rather than the value map proxies', () => {
+      const state = new EntryDraftState();
+      const draft = createDraft('Changed');
+      const valueMap = draft.currentValues.en;
+
+      state.current = draft;
+      flushSync();
+      expect(state.modified).toBe(true);
+
+      const [comparedDraft] = /** @type {any[]} */ (vi.mocked(isDraftModified).mock.lastCall);
+
+      expect(comparedDraft.currentValues.en).not.toBe(valueMap);
+      expect(comparedDraft.currentValues.en).toEqual({ title: 'Changed' });
     });
   });
 

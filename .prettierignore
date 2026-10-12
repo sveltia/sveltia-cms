@@ -2,6 +2,7 @@ node_modules
 /package
 /playwright-report
 /test-results
+/bench-results
 /.vite
 /.vitest
 pnpm-lock.yaml

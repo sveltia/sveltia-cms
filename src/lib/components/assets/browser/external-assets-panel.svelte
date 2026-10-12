@@ -6,7 +6,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Alert, EmptyState, InfiniteScroll, Infobar, Toast } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
   import { onMount } from 'svelte';
 
   import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
@@ -496,35 +495,33 @@
       <SimpleImageGrid {viewType} {gridId} {multiple}>
         <InfiniteScroll items={panelAssets} itemKey="id">
           {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
-            {#await sleep() then}
-              {@const { id, previewURL, description, kind: _kind } = asset}
-              <SimpleImageGridItem
-                value={id}
-                ariaLabel={description}
-                {viewType}
-                {multiple}
-                selected={isSelected(asset)}
-                onChange={({ detail: { selected } }) => {
-                  onSelectionChange(asset, selected);
-                }}
-              >
-                <AssetPreview
-                  kind={_kind}
-                  src={previewURL}
-                  alt={description}
-                  variant="tile"
-                  crossorigin="anonymous"
+            {@const { id, previewURL, description, kind: _kind } = asset}
+            <SimpleImageGridItem
+              value={id}
+              ariaLabel={description}
+              {viewType}
+              {multiple}
+              selected={isSelected(asset)}
+              onChange={({ detail: { selected } }) => {
+                onSelectionChange(asset, selected);
+              }}
+            >
+              <AssetPreview
+                kind={_kind}
+                src={previewURL}
+                alt={description}
+                variant="tile"
+                crossorigin="anonymous"
+              />
+              {#if viewType === 'list' || (!env.isSmallScreen && !isStockAssets)}
+                <!-- The path is relative to the folder being browsed -->
+                <AssetPath
+                  {...isStockAssets
+                    ? { caption: description }
+                    : { path: browsing ? getRelativePath(description, dirPath) : description }}
                 />
-                {#if viewType === 'list' || (!env.isSmallScreen && !isStockAssets)}
-                  <!-- The path is relative to the folder being browsed -->
-                  <AssetPath
-                    {...isStockAssets
-                      ? { caption: description }
-                      : { path: browsing ? getRelativePath(description, dirPath) : description }}
-                  />
-                {/if}
-              </SimpleImageGridItem>
-            {/await}
+              {/if}
+            </SimpleImageGridItem>
           {/snippet}
         </InfiniteScroll>
       </SimpleImageGrid>

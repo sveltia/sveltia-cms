@@ -10,7 +10,7 @@
   import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
 
   /**
@@ -42,7 +42,7 @@
 
   const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));
-  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
+  const valueMap = $derived(getFieldValueMapSnapshot(entryDraft.current, locale, keyPath));
   // Ask the shared key path index rather than scanning the whole value map; see the same check in
   // the Object field editor
   const hasValues = $derived(

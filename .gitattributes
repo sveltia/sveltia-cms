@@ -1,3 +1,4 @@
 * text=auto eol=lf
 *.test.js linguist-generated
+bench/** linguist-generated
 e2e/** linguist-generated

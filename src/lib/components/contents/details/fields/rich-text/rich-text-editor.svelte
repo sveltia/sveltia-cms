@@ -17,7 +17,7 @@
   import { EditorComponent } from '$lib/components/contents/details/fields/rich-text/custom-node-features';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
   import { getField } from '$lib/services/contents/entry/fields';
   import {
@@ -114,7 +114,9 @@
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
   /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
-  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
+  const valueMap = $derived(
+    getFieldValueMapSnapshot(entryDraft.current, locale, keyPath, valueStoreKey),
+  );
   const componentNames = $derived(getEditorComponentNames(fieldConfig));
   const buttons = $derived(getToolbarButtons(_buttons, componentNames));
   const allowNestedComponents = $derived(

@@ -147,6 +147,7 @@ describe('renderPDF', () => {
     expect(exportCanvasAsBlob).toHaveBeenCalledWith(expect.any(Object), {
       format: 'jpeg',
       quality: 95,
+      nativeOnly: false,
     });
   });
 

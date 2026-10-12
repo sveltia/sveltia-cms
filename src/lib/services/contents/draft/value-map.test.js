@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getValueMapSnapshot } from './value-map.svelte.js';
+import {
+  getFieldValueMapSnapshot,
+  getValueMapSnapshot,
+  getValueMapSnapshots,
+} from './value-map.svelte.js';
 
 /**
  * @import { EntryDraft } from '$lib/types/private';
@@ -12,13 +16,19 @@ import { getValueMapSnapshot } from './value-map.svelte.js';
  */
 const { versions } = vi.hoisted(() => ({ versions: new WeakMap() }));
 
-vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
+vi.mock('$lib/services/contents/draft/create/versioned-map.svelte', () => ({
   /**
    * Get the fake version of the given value map.
    * @param {object} valueMap Value map.
    * @returns {number | undefined} Version.
    */
   getValueMapVersion: (valueMap) => versions.get(valueMap),
+  /**
+   * Get the fake version of a subtree, which is that of the whole map here.
+   * @param {object} valueMap Value map.
+   * @returns {number | undefined} Version.
+   */
+  getSubtreeVersion: (valueMap) => versions.get(valueMap),
 }));
 
 /**
@@ -47,6 +57,27 @@ const write = (valueMap, key, value) => {
 };
 
 describe('contents/draft/value-map', () => {
+  it('should snapshot every locale, keeping the snapshot of a locale that hasn’t changed', () => {
+    const en = { title: 'Hello' };
+    const ja = { title: 'こんにちは' };
+    const draft = createDraft({ en, ja });
+    const before = getValueMapSnapshots(draft);
+
+    expect(before).toEqual({ en, ja });
+    expect(before.en).not.toBe(en);
+
+    write(en, 'title', 'Hi');
+
+    const after = getValueMapSnapshots(draft);
+
+    expect(after.en).toEqual({ title: 'Hi' });
+    expect(after.ja).toBe(before.ja);
+  });
+
+  it('should snapshot nothing for a draft without values', () => {
+    expect(getValueMapSnapshots(/** @type {any} */ ({}))).toEqual({});
+  });
+
   it('should return an empty object when there is no draft', () => {
     expect(getValueMapSnapshot(undefined, 'en')).toEqual({});
     expect(getValueMapSnapshot(null, 'en')).toEqual({});
@@ -115,5 +146,20 @@ describe('contents/draft/value-map', () => {
     currentValues.en.title = 'Changed';
 
     expect(getValueMapSnapshot(draft, 'en')).toEqual({ title: 'Changed' });
+  });
+});
+
+describe('getFieldValueMapSnapshot()', () => {
+  it('should give the same snapshot as the whole value map', () => {
+    const en = { title: 'Hello', body: 'World' };
+    const draft = createDraft({ en });
+
+    expect(getFieldValueMapSnapshot(draft, 'en', 'title')).toBe(getValueMapSnapshot(draft, 'en'));
+  });
+
+  it('should take a snapshot of a value map without versions', () => {
+    const draft = /** @type {any} */ ({ currentValues: { en: { title: 'Hello' } } });
+
+    expect(getFieldValueMapSnapshot(draft, 'en', 'title')).toEqual({ title: 'Hello' });
   });
 });

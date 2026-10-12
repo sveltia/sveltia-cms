@@ -527,6 +527,35 @@ describe('loadFiles', () => {
     ]);
   });
 
+  test('should hash the assets while the entries are being parsed', async () => {
+    const { loadFiles, stores, getGitHash, rootDirHandle } = await setup();
+    const { prepareEntries } = await import('$lib/services/contents/file/process');
+    /**
+     * Let the entries be parsed.
+     * @type {(value: any) => void}
+     */
+    let finishParsing = () => {};
+
+    vi.mocked(prepareEntries).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishParsing = resolve;
+        }),
+    );
+
+    const loaded = loadFiles(rootDirHandle);
+
+    // The asset is hashed before the entries have been parsed
+    await vi.waitFor(() => expect(getGitHash).toHaveBeenCalledOnce());
+    expect(stores.dataLoaded.current).toBeUndefined();
+
+    finishParsing({ entries: [], errors: [] });
+    await loaded;
+
+    expect(stores.allAssets.current[0].sha).toBe('abc123');
+    expect(stores.dataLoaded.current).toBe(true);
+  });
+
   test('should cache the asset hashes for the next load', async () => {
     const assetFile = new File(['image'], 'image.png', { type: 'image/png', lastModified: 1000 });
     const { loadFiles, stores, getGitHash, rootDirHandle } = await setup({ assetFile });

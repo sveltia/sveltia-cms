@@ -18,11 +18,13 @@
  * FileFormat,
  * FileFormatter,
  * FileParser,
+ * FrontMatterFormat,
  * GitBackendName,
  * I18nFileStructure,
  * LocaleCode,
  * MediaField,
  * RasterImageFormat,
+ * RawEntryContent,
  * RelationField,
  * S3MediaLibrary,
  * SelectField,
@@ -723,6 +725,18 @@
  * @property {RepositoryFileMetadata} [meta] Metadata from the repository. Missing while it’s still
  * being fetched separately from the text, or if that fetch failed; such a file counts as not fully
  * fetched yet.
+ * @property {ParsedFileContent} [parsed] Content parsed from the text of an entry file, cached so
+ * the file doesn’t have to be parsed again on the next load.
+ */
+
+/**
+ * Content parsed from the text of an entry file, along with what it was parsed for.
+ * @typedef {object} ParsedFileContent
+ * @property {string} key What the content was parsed for: the CMS version and the CMS configuration
+ * hash, either of which can change how a file is parsed.
+ * @property {RawEntryContent} content Parsed content.
+ * @property {FrontMatterFormat} [format] Front matter format detected in the text, for a file whose
+ * format is `frontmatter`.
  */
 
 /**
@@ -765,6 +779,8 @@
  * @property {number} size File size in bytes.
  * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
  * @property {RepositoryFileMetadata} [meta] Metadata from the repository. Git backends only.
+ * @property {ParsedFileContent} [parsed] Content parsed from the text of an entry file, restored
+ * from the file cache. Git backends only.
  */
 
 /**
@@ -1767,6 +1783,10 @@
  * @property {number} [width] Width. Default: original width.
  * @property {number} [height] Height. Default: original height.
  * @property {ImageFitOption} [fit] Fit option. Default: `scale-down`.
+ * @property {boolean} [nativeOnly] Whether to use a format the browser encodes natively when it
+ * can’t encode the given `format`, such as WebP in Safari, rather than load an encoder for it:
+ * JPEG, or PNG for an image with transparency. For an image that’s only shown in the CMS, like a
+ * thumbnail. Default: `false`.
  * @see https://developers.cloudflare.com/images/transform-images/transform-via-url/
  * @see https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types
  */

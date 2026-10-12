@@ -19,6 +19,7 @@ import { cmsConfigVersion } from '$lib/services/config';
  * FetchFileListFunction,
  * FetchFileMetadataFunction,
  * } from '$lib/services/backends/git/shared/fetch';
+ * @import { ParsedFileMap } from '$lib/services/contents/file/process';
  */
 
 /**
@@ -139,6 +140,33 @@ export const restoreCachedFileData = ({ allFiles, cachedFiles }) => {
 };
 
 /**
+ * Add the content parsed from the entry files to their file data, so it’s cached along with them
+ * and the files don’t have to be parsed again on the next load. A fetched file is about to be
+ * cached anyway; a cached one has to be cached again, as its content was parsed for another CMS
+ * version or configuration, or not cached at all.
+ * @param {object} args Arguments.
+ * @param {ParsedFileMap} args.parsedFileMap Content parsed from the entry files.
+ * @param {RepositoryContentsMap} args.fetchedFileMap Map of newly fetched file data, updated in
+ * place.
+ * @param {RepositoryContentsMap} args.cachedFiles Cached files object.
+ * @returns {RepositoryContentsMap} Data of the cached files to cache again with their content.
+ */
+export const attachParsedContents = ({ parsedFileMap, fetchedFileMap, cachedFiles }) => {
+  /** @type {RepositoryContentsMap} */
+  const reparsedFileMap = {};
+
+  parsedFileMap.forEach((parsed, path) => {
+    if (fetchedFileMap[path]) {
+      fetchedFileMap[path].parsed = parsed;
+    } else if (cachedFiles[path]) {
+      reparsedFileMap[path] = { ...cachedFiles[path], parsed };
+    }
+  });
+
+  return reparsedFileMap;
+};
+
+/**
  * Update the file cache by saving new entries and deleting unused ones. Both are awaited, as the
  * cache is only recorded as reflecting the commit once it’s up to date: a file left in it would
  * come back with the file list restored from it.
@@ -148,6 +176,8 @@ export const restoreCachedFileData = ({ allFiles, cachedFiles }) => {
  * @param {RepositoryContentsMap} args.cachedFiles Cached files object.
  * @param {BaseFileListItem[]} args.fetchingFiles List of files being fetched.
  * @param {RepositoryContentsMap} args.fetchedFileMap Map of newly fetched file data.
+ * @param {RepositoryContentsMap} [args.reparsedFileMap] Data of the cached files whose content has
+ * been parsed again, from {@link attachParsedContents}.
  */
 export const updateCache = async ({
   cacheDB,
@@ -155,13 +185,19 @@ export const updateCache = async ({
   cachedFiles,
   fetchingFiles,
   fetchedFileMap,
+  reparsedFileMap = {},
 }) => {
   const usedPaths = new Set(allFiles.map(({ path }) => path));
   const unusedPaths = Object.keys(cachedFiles).filter((path) => !usedPaths.has(path));
 
+  const savedEntries = [
+    ...(fetchingFiles.length ? Object.entries(fetchedFileMap) : []),
+    ...Object.entries(reparsedFileMap),
+  ];
+
   await Promise.all([
     // Save new entry caches
-    fetchingFiles.length ? cacheDB.saveEntries(Object.entries(fetchedFileMap)) : undefined,
+    savedEntries.length ? cacheDB.saveEntries(savedEntries) : undefined,
     // Delete old entry caches
     unusedPaths.length ? cacheDB.deleteEntries(unusedPaths) : undefined,
   ]);
@@ -197,6 +233,8 @@ export const readDatabaseEntries = ({ metaDB, cacheDB }) =>
  * @param {RepositoryContentsMap} args.cachedFiles Cached files object.
  * @param {BaseFileListItem[]} args.fetchingFiles List of files being fetched.
  * @param {RepositoryContentsMap} args.fetchedFileMap Map of newly fetched file data.
+ * @param {RepositoryContentsMap} [args.reparsedFileMap] Data of the cached files whose content has
+ * been parsed again, from {@link attachParsedContents}.
  * @param {FetchFileMetadataFunction} [args.fetchFileMetadata] Function to fetch the commit metadata
  * of entry/asset files separately.
  * @param {DebugLogger} args.log Function to trace the loading in the console.
@@ -207,9 +245,19 @@ export const completeMetadata = async ({
   cachedFiles,
   fetchingFiles,
   fetchedFileMap,
+  reparsedFileMap,
   fetchFileMetadata,
   log,
 }) => {
+  const cacheArgs = {
+    cacheDB,
+    allFiles,
+    cachedFiles,
+    fetchingFiles,
+    fetchedFileMap,
+    reparsedFileMap,
+  };
+
   // Whether the cache written below is complete, or missing the metadata of the fetched files
   let metadataFetched = true;
 
@@ -218,7 +266,7 @@ export const completeMetadata = async ({
     // only costs that pass next time, not the contents again. A failure here doesn’t stop the
     // metadata from being filled in; the cache is written again below, which reports it
     try {
-      await updateCache({ cacheDB, allFiles, cachedFiles, fetchingFiles, fetchedFileMap });
+      await updateCache(cacheArgs);
       log(`Cached the contents of ${fetchingFiles.length} files`);
     } catch (/** @type {any} */ ex) {
       // eslint-disable-next-line no-console
@@ -240,7 +288,7 @@ export const completeMetadata = async ({
   }
 
   // Cached with the metadata, which is what marks a file as fetched
-  await updateCache({ cacheDB, allFiles, cachedFiles, fetchingFiles, fetchedFileMap });
+  await updateCache(cacheArgs);
 
   log(
     metadataFetched

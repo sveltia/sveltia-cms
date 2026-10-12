@@ -15,7 +15,7 @@
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { addObjectFields, removeObjectFields } from '$lib/services/contents/draft/update/object';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getInitialExpanderState,
     isExpanded,
@@ -98,7 +98,9 @@
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
   /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
-  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
+  const valueMap = $derived(
+    getFieldValueMapSnapshot(entryDraft.current, locale, keyPath, valueStoreKey),
+  );
   const getFieldArgs = $derived({ collectionName, fileName, valueMap, isIndexFile });
   // Ask the shared key path index rather than scanning the whole value map: the editor renders one
   // component per field, and a large entry would otherwise be walked once per Object field on

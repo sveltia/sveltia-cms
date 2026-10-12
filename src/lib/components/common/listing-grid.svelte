@@ -15,6 +15,8 @@
    * @typedef {object} Props
    * @property {ViewType} viewType View type.
    * @property {string} [aria-label] Accessible name of the grid.
+   * @property {any} [scrollKey] Value whose change scrolls the list back to the top, e.g. when the
+   * items are sorted differently.
    * @property {Snippet} [children] Slot content.
    */
 
@@ -24,13 +26,35 @@
     viewType,
     // The `Grid` component takes its accessible name as a prop; a spread `aria-label` is dropped
     'aria-label': ariaLabel = undefined,
+    scrollKey = undefined,
     children = undefined,
     ...rest
     /* eslint-enable prefer-const */
   } = $props();
+
+  /**
+   * Scrolling element. A plain variable, as nothing has to react to it.
+   * @type {HTMLElement | undefined}
+   */
+  let scroller;
+
+  $effect(() => {
+    void scrollKey;
+
+    /* v8 ignore next -- the element is attached before the effect runs */
+    if (scroller) {
+      scroller.scrollTop = 0;
+    }
+  });
 </script>
 
-<div role="none" class="{viewType}-view">
+<div
+  role="none"
+  class="{viewType}-view"
+  {@attach (element) => {
+    scroller = element;
+  }}
+>
   {#await sleep() then}
     <Grid multiple clickToSelect={false} {ariaLabel} {...rest}>
       {@render children?.()}

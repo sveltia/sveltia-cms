@@ -90,6 +90,63 @@ describe('EntryList', () => {
     await expect.poll(() => window.location.hash).toBe('#/collections/posts/entries/world');
   });
 
+  test('starts again from the top when the entries are sorted differently', async () => {
+    setEntries(
+      Array.from({ length: 80 }, (_, index) =>
+        createMockEntry({
+          slug: `post-${index}`,
+          content: { _default: { title: `Post ${String(index).padStart(2, '0')}` } },
+        }),
+      ),
+    );
+    selectCollection({ type: 'list', sort: { key: 'title', order: 'ascending' } });
+
+    // A short list container, so the rows are loaded a chunk at a time as it’s scrolled
+    const target = document.createElement('div');
+
+    // In view, as the rows are loaded once the end of the list is visible in the viewport
+    Object.assign(target.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '600px',
+      height: '300px',
+      display: 'flex',
+    });
+    document.body.appendChild(target);
+
+    try {
+      await render(EntryList, { target });
+
+      const grid = page.getByRole('grid', { name: 'Entries' });
+
+      await expect.poll(() => grid.getByRole('row').elements().length).toBe(25);
+
+      // The view around the grid is what scrolls
+      const container = /** @type {HTMLElement} */ (grid.element().closest('.list-view'));
+
+      // Scroll to the end until every row is loaded
+      await expect
+        .poll(() => {
+          container.scrollTop = container.scrollHeight;
+
+          return grid.getByRole('row').elements().length;
+        })
+        .toBe(80);
+
+      currentView.current = { ...currentView.current, sort: { key: 'title', order: 'descending' } };
+
+      // The first chunk of the new order is shown from the top, rather than every row loaded so far
+      await expect
+        .poll(() => grid.getByRole('row').elements()[0]?.textContent?.trim())
+        .toBe('Post 79');
+      expect(grid.getByRole('row').elements()).toHaveLength(25);
+      expect(container.scrollTop).toBe(0);
+    } finally {
+      target.remove();
+    }
+  });
+
   test('lists the unpublished entries ahead of the published ones', async () => {
     setEntries([createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello' } } })]);
     unpublishedEntries.current = [

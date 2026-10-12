@@ -32,6 +32,9 @@ vi.mock('$lib/services/contents/draft/create/duplicate-assets', () => ({
 vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
   createProxy: vi.fn(({ target }) => target),
 }));
+vi.mock('$lib/services/contents/draft/create/versioned-map.svelte', () => ({
+  createValueMap: vi.fn((target) => target),
+}));
 
 vi.mock('$lib/services/contents/editor', () => ({ showDuplicateToast: { current: false } }));
 

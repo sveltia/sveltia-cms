@@ -67,6 +67,60 @@ export const getSubtree = (valueMap, keyPath, { live = false } = {}) => {
 };
 
 /**
+ * What {@link getMemoizedSubtree} last built, and from what.
+ * @typedef {object} SubtreeMemo
+ * @property {FieldKeyPath} [keyPath] Key path of the field.
+ * @property {FieldKeyPath[]} [keys] Child key paths.
+ * @property {any[]} [values] Values of the child key paths and the field’s own key path, in that
+ * order, with an object or array replaced with its kind, as {@link getSubtree} fills a placeholder
+ * in place.
+ * @property {any} [subtree] Assembled value.
+ */
+
+/**
+ * Get a value of the given key path that can be compared across calls: an object or array, such as
+ * a placeholder, is replaced with its kind.
+ * @param {any} value Value.
+ * @returns {any} Comparable value.
+ */
+const getComparableValue = (value) =>
+  value !== null && typeof value === 'object' ? (Array.isArray(value) ? '\0[]' : '\0{}') : value;
+
+/**
+ * Same as {@link getSubtree}, but hands back the value assembled last time, as the same object, if
+ * nothing under the key path has changed since. A List field’s editor and preview read the items
+ * from the value map snapshot, which is replaced whenever any value in the entry changes, e.g. on
+ * every keystroke in another field; assembling the items again each time is the bulk of the work in
+ * a long entry, and a new object would make everything that reads them update as well.
+ * @param {SubtreeMemo} memo Object holding what was built last time, kept by the caller and updated
+ * in place.
+ * @param {FlattenedEntryContent} valueMap Flattened entry content. A snapshot, as with
+ * {@link getSubtree} without the `live` option.
+ * @param {FieldKeyPath} keyPath Key path of the field.
+ * @returns {any} Assembled value, or `undefined` if the key path has no children.
+ */
+export const getMemoizedSubtree = (memo, valueMap, keyPath) => {
+  const keys = getKeysByPrefix(valueMap, `${keyPath}.`);
+  const values = [...keys, keyPath].map((key) => getComparableValue(valueMap[key]));
+  // The key paths and values are set along with the key path
+  const lastKeys = /** @type {FieldKeyPath[]} */ (memo.keys);
+  const lastValues = /** @type {any[]} */ (memo.values);
+
+  if (
+    memo.keyPath === keyPath &&
+    lastKeys.length === keys.length &&
+    keys.every((key, index) => key === lastKeys[index]) &&
+    values.every((value, index) => value === lastValues[index])
+  ) {
+    return memo.subtree;
+  }
+
+  Object.assign(memo, { keyPath, keys, values, subtree: getSubtree(valueMap, keyPath) });
+
+  return memo.subtree;
+};
+
+/**
  * Delete the value stored at the given key path along with everything below it. The map is modified
  * in place.
  * @param {FlattenedEntryContent} valueMap Flattened entry content.

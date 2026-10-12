@@ -99,13 +99,14 @@ describe('getTimeZoneForStoredValue', () => {
       },
     );
 
+    // A time zone no other test uses, as the formatter is cached for it
     /** @type {DateTimeField} */
     const fieldConfig = {
       ...baseFieldConfig,
-      input_timezone: 'Asia/Tokyo',
+      input_timezone: 'Asia/Kathmandu',
     };
 
-    expect(getTimeZoneForStoredValue('2026-06-12T13:17:00+09:00', fieldConfig)).toBeUndefined();
+    expect(getTimeZoneForStoredValue('2026-06-12T13:17:00+05:45', fieldConfig)).toBeUndefined();
   });
 
   test('should return undefined when the stored value does not match the configured timezone offset', () => {

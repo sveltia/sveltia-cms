@@ -320,6 +320,90 @@ describe('Gitea Files Service', () => {
       expect(result).toHaveLength(2);
     });
 
+    test('should fetch the rest of the pages at the same time when the total is known', async () => {
+      /**
+       * Make a page of blobs.
+       * @param {number} start Index of the first blob.
+       * @param {number} count Number of blobs.
+       * @returns {any[]} Blobs.
+       */
+      const makeBlobs = (start, count) =>
+        Array.from({ length: count }, (_, index) => ({
+          type: 'blob',
+          path: `file${start + index}.md`,
+          sha: `sha${start + index}`,
+          size: 1,
+        }));
+
+      /** @type {((value: any) => void)[]} */
+      const pendingPages = [];
+
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({ tree: makeBlobs(0, 2), truncated: true, total_count: 5 })
+        .mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              pendingPages.push(resolve);
+            }),
+        );
+
+      vi.mocked(getPathInfo).mockImplementation((path) => ({
+        basename: path.split('/').pop() || '',
+        filename: path.split('/').pop() || '',
+      }));
+
+      const resultPromise = fetchFileList('commit-hash');
+
+      // Both of the remaining pages are requested before either has come back
+      await vi.waitFor(() => expect(pendingPages).toHaveLength(2));
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        2,
+        '/repos/test-owner/test-repo/git/trees/commit-hash?recursive=1&page=2',
+      );
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        3,
+        '/repos/test-owner/test-repo/git/trees/commit-hash?recursive=1&page=3',
+      );
+
+      pendingPages[1]({ tree: makeBlobs(4, 1), truncated: false, total_count: 5 });
+      pendingPages[0]({ tree: makeBlobs(2, 2), truncated: true, total_count: 5 });
+
+      // The pages come out in order, whichever came back first
+      expect((await resultPromise).map(({ path }) => path)).toEqual([
+        'file0.md',
+        'file1.md',
+        'file2.md',
+        'file3.md',
+        'file4.md',
+      ]);
+    });
+
+    test('should page through an instance that doesn’t report the total', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({
+          tree: [{ type: 'blob', path: 'a.md', sha: 'a', size: 1 }],
+          truncated: true,
+        })
+        .mockResolvedValueOnce({
+          tree: [{ type: 'blob', path: 'b.md', sha: 'b', size: 1 }],
+          truncated: true,
+        })
+        .mockResolvedValueOnce({
+          tree: [{ type: 'blob', path: 'c.md', sha: 'c', size: 1 }],
+          truncated: false,
+        });
+
+      vi.mocked(getPathInfo).mockImplementation((path) => ({
+        basename: path.split('/').pop() || '',
+        filename: path.split('/').pop() || '',
+      }));
+
+      const result = await fetchFileList('commit-hash');
+
+      expect(fetchAPI).toHaveBeenCalledTimes(3);
+      expect(result.map(({ path }) => path)).toEqual(['a.md', 'b.md', 'c.md']);
+    });
+
     test('should handle empty tree response', async () => {
       vi.mocked(fetchAPI).mockResolvedValue({
         tree: null,

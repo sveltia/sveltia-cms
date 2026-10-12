@@ -81,13 +81,27 @@ export const createDragSorter = ({
    * @type {{ index: number, previewOrder: number[] } | undefined}
    */
   let drag = $state.raw();
+  /**
+   * The order returned last by {@link displayOrder}. A plain variable, as it’s only a memo.
+   * @type {number[]}
+   */
+  let lastOrder = [];
 
   const displayOrder = $derived.by(() => {
     const itemCount = getItemCount();
 
-    return drag?.previewOrder.length === itemCount
-      ? drag.previewOrder
-      : [...Array(itemCount).keys()];
+    const order =
+      drag?.previewOrder.length === itemCount ? drag.previewOrder : [...Array(itemCount).keys()];
+
+    // Hand back the same array while the order is the same. The item count is read from the list,
+    // which is rebuilt whenever any of its values changes, e.g. on every keystroke in an item, and
+    // a new array would make the keyed `each` block over it run again. With an `animate:`
+    // directive, that measures the position of every item, which forces a layout on each keystroke
+    if (order.length !== lastOrder.length || order.some((index, i) => index !== lastOrder[i])) {
+      lastOrder = order;
+    }
+
+    return lastOrder;
   });
 
   /**

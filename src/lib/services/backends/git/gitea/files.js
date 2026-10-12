@@ -18,7 +18,7 @@ import {
 } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { mapConcurrently, runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { getRootDir } from '$lib/services/backends/root-dir';
@@ -36,6 +36,14 @@ import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @typedef {{ type: string, path: string, sha: string, size: number }} PartialGitEntry
+ */
+
+/**
+ * A page of a recursive tree listing.
+ * @typedef {object} TreePage
+ * @property {PartialGitEntry[] | null} tree Items on the page.
+ * @property {boolean} truncated Whether there are more pages.
+ * @property {number} [total_count] Number of items on all the pages.
  */
 
 /**
@@ -152,26 +160,52 @@ export const fetchFileList = async (lastHash) => {
   const treePath = encodePathSegments(treeSHA);
   const requestPath = `/repos/${owner}/${repo}/git/trees/${treePath}?recursive=1`;
   const prefix = rootDir ? `${rootDir}/` : '';
-  /** @type {PartialGitEntry[]} */
-  const gitEntries = [];
-  let page = 1;
 
-  for (;;) {
-    // 1000 items per page
-    const { tree, truncated } = /** @type {{ tree: PartialGitEntry[], truncated: boolean }} */ (
-      await fetchAPI(`${requestPath}&page=${page}`)
-    );
+  /**
+   * Fetch a page of the tree, 1000 items per page by default.
+   * @param {number} page Page number.
+   * @returns {Promise<TreePage>} Page.
+   */
+  const fetchPage = async (page) =>
+    /** @type {TreePage} */ (await fetchAPI(`${requestPath}&page=${page}`));
 
-    if (tree) {
-      gitEntries.push(...tree.map((entry) => ({ ...entry, path: `${prefix}${entry.path}` })));
-    }
+  const firstPage = await fetchPage(1);
+  const pages = [firstPage];
 
-    if (tree && truncated) {
-      page += 1;
+  if (firstPage.tree && firstPage.truncated) {
+    const {
+      tree: { length: pageSize },
+      total_count: totalCount,
+    } = firstPage;
+
+    if (totalCount && pageSize) {
+      // The tree is listed at a commit, so it can’t change between the requests: the number of
+      // pages is known from the first one, and the rest are fetched at the same time rather than
+      // one after the other
+      const pageNumbers = Array.from(
+        { length: Math.ceil(totalCount / pageSize) - 1 },
+        (_, index) => index + 2,
+      );
+
+      pages.push(...(await mapConcurrently(pageNumbers, fetchPage)));
     } else {
-      break;
+      // An instance that doesn’t report the total is paged through until the last page
+      for (let page = 2; ; page += 1) {
+        const nextPage = await fetchPage(page);
+
+        pages.push(nextPage);
+
+        if (!nextPage.tree || !nextPage.truncated) {
+          break;
+        }
+      }
     }
   }
+
+  /** @type {PartialGitEntry[]} */
+  const gitEntries = pages.flatMap(({ tree }) =>
+    (tree ?? []).map((entry) => ({ ...entry, path: `${prefix}${entry.path}` })),
+  );
 
   return toFileListItems(gitEntries);
 };

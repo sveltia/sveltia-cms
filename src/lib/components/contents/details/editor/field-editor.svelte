@@ -14,7 +14,7 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { canResetField, resetField } from '$lib/services/contents/draft/update/reset';
   import { isFieldChanged, revertChanges } from '$lib/services/contents/draft/update/revert';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getFieldLocaleAccess } from '$lib/services/contents/editor/locale';
   import { createResetMenuState } from '$lib/services/contents/editor/reset-menu.svelte';
   import {
@@ -171,7 +171,11 @@
     getDraftI18nConfig(entryDraft.current),
   );
   const otherLocales = $derived(i18nEnabled ? allLocales.filter((l) => l !== locale) : []);
-  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
+  // Only the field’s own values are depended on, so the editor isn’t updated whenever another
+  // field in the entry changes
+  const valueMap = $derived(
+    getFieldValueMapSnapshot(entryDraft.current, locale, keyPath, valueStoreKey),
+  );
   // Whether the field is shown, and whether it follows the default locale, in this locale
   const {
     canTranslate,

@@ -2,12 +2,9 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  copyDefaultLocaleValue,
-  createProxy,
-  getValueMapVersion,
-  isDuplicatedField,
-} from './proxy.svelte.js';
+import { getValueMapVersion } from '$lib/services/contents/draft/create/versioned-map.svelte';
+
+import { copyDefaultLocaleValue, createProxy, isDuplicatedField } from './proxy.svelte.js';
 
 const { resolveCollectionAndFile, getField, revalidateField, isAutoDuplicationEnabled } =
   vi.hoisted(() => ({

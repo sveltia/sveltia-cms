@@ -19,6 +19,7 @@ export default [
       '.claude/',
       'playwright-report/',
       'test-results/',
+      'bench-results/',
     ],
   },
 

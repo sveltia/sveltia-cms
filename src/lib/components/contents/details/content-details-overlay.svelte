@@ -28,7 +28,7 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { collectionState } from '$lib/services/contents/collection/view';
   import { resetBackupToastState, scheduleBackup } from '$lib/services/contents/draft/backup';
-  import { getValueMapVersion } from '$lib/services/contents/draft/create/proxy.svelte';
+  import { getValueMapVersion } from '$lib/services/contents/draft/create/versioned-map.svelte';
   import { initEntryDraftEditor } from '$lib/services/contents/draft/editor.svelte';
   import { setEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import {

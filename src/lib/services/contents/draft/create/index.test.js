@@ -23,6 +23,9 @@ vi.mock('$lib/services/contents/draft/backup', () => ({
 vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
   createProxy: vi.fn((args) => args.target),
 }));
+vi.mock('$lib/services/contents/draft/create/versioned-map.svelte', () => ({
+  createValueMap: vi.fn((target) => target),
+}));
 
 vi.mock('$lib/services/contents/draft/create/uuid', () => ({
   fillUuidValues: vi.fn(),
@@ -42,6 +45,7 @@ const { getIndexFile, isCollectionIndexFile } =
 const { revokeDraftFileURLs } = await import('$lib/services/contents/draft');
 const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/backup');
 const { createProxy } = await import('$lib/services/contents/draft/create/proxy.svelte');
+const { createValueMap } = await import('$lib/services/contents/draft/create/versioned-map.svelte');
 const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
 const { fillUuidValues } = await import('$lib/services/contents/draft/create/uuid');
 const { cmsConfig } = await import('$lib/services/config');
@@ -1100,6 +1104,10 @@ describe('contents/draft/create/index', () => {
           extraValues,
         }),
       );
+      // Each locale gets a versioned value map of its own, holding a copy of the given values
+      expect(createValueMap).toHaveBeenCalledTimes(2);
+      expect(createValueMap).toHaveBeenCalledWith(extraValues.en);
+      expect(vi.mocked(createValueMap).mock.calls[0][0]).not.toBe(extraValues.en);
     });
 
     it('should use default extra values when not provided', () => {

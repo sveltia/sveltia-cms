@@ -6,7 +6,7 @@
 -->
 <script>
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';
@@ -36,7 +36,7 @@
     output_code_only: outputCodeOnly = false,
     keys: outputKeys = { code: 'code', lang: 'lang' },
   } = $derived(fieldConfig);
-  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
+  const valueMap = $derived(getFieldValueMapSnapshot(entryDraft.current, locale, keyPath));
   const codeKeyPath = $derived(`${keyPath}.${outputKeys.code}`);
   const langKeyPath = $derived(`${keyPath}.${outputKeys.lang}`);
   const code = $derived(outputCodeOnly ? currentValue : valueMap[codeKeyPath]);

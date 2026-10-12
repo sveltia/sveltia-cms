@@ -1,6 +1,5 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { sleep } from '@sveltia/utils/misc';
 
   import AssetListContainer from '$lib/components/assets/list/asset-list-container.svelte';
   import AssetListItem from '$lib/components/assets/list/internal/asset-list-item.svelte';
@@ -55,9 +54,7 @@
   {/snippet}
   {#snippet renderItem(/** @type {Asset} */ asset)}
     {#key asset.sha}
-      {#await sleep() then}
-        <AssetListItem {asset} {viewType} />
-      {/await}
+      <AssetListItem {asset} {viewType} />
     {/key}
   {/snippet}
   {#snippet emptyAction()}

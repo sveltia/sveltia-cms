@@ -5,7 +5,13 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { initViewSettingsStorage } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
 
-import { currentView, entryListSettings, initSettings, viewBeforeReorder } from './settings';
+import {
+  currentView,
+  entryListSettings,
+  getEntryOrderKey,
+  initSettings,
+  viewBeforeReorder,
+} from './settings';
 
 // Real reactive boxes are used for the mocked state, so that the effect created by `initSettings`
 // reacts to changes made by the tests
@@ -134,5 +140,33 @@ describe('Test entryListSettings', () => {
       'contents-view',
       entryListSettings,
     );
+  });
+});
+
+describe('Test getEntryOrderKey()', () => {
+  /** @type {any} */
+  const view = {
+    type: 'list',
+    sort: { key: 'title', order: 'ascending' },
+    filters: [{ field: 'draft', pattern: true }],
+    group: { field: 'tags', pattern: '' },
+    collapsedGroups: {},
+  };
+
+  test('changes with the sorting, filtering or grouping', () => {
+    const key = getEntryOrderKey(view);
+
+    expect(getEntryOrderKey({ ...view, sort: { key: 'date', order: 'descending' } })).not.toBe(key);
+    expect(getEntryOrderKey({ ...view, filters: [] })).not.toBe(key);
+    expect(getEntryOrderKey({ ...view, filter: { field: 'draft', pattern: true } })).not.toBe(key);
+    expect(getEntryOrderKey({ ...view, group: null })).not.toBe(key);
+  });
+
+  test('stays the same when the entries stay where they are', () => {
+    const key = getEntryOrderKey(view);
+
+    expect(getEntryOrderKey({ ...view, type: 'grid' })).toBe(key);
+    expect(getEntryOrderKey({ ...view, collapsedGroups: { tags: ['news'] } })).toBe(key);
+    expect(getEntryOrderKey({ ...view, showMedia: true })).toBe(key);
   });
 });

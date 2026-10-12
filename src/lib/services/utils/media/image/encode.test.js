@@ -169,6 +169,53 @@ describe('exportCanvasAsBlob', () => {
     expect(await result.arrayBuffer()).toEqual(mockEncodedBuffer.buffer);
   });
 
+  describe('with `nativeOnly`, for a format the browser can’t encode', () => {
+    beforeEach(() => {
+      /**
+       * Mock OffscreenCanvas class whose check canvas can’t encode the requested format.
+       */
+      class MockOffscreenCanvasWithoutJXL {
+        /**
+         * Constructor.
+         */
+        constructor() {
+          this.getContext = vi.fn(() => mockContext);
+          this.convertToBlob = vi.fn(() => Promise.resolve(new Blob([''], { type: 'image/png' })));
+        }
+      }
+
+      // @ts-ignore - Assigning mock class to global
+      global.OffscreenCanvas = MockOffscreenCanvasWithoutJXL;
+    });
+
+    /**
+     * Fill the canvas with pixels of the given alpha.
+     * @param {number[]} alphas Alpha of each pixel.
+     */
+    const setPixels = (alphas) => {
+      mockContext.getImageData.mockReturnValue({
+        data: new Uint8ClampedArray(alphas.flatMap((alpha) => [0, 0, 0, alpha])),
+      });
+    };
+
+    test('should encode an opaque image as JPEG, without loading an encoder', async () => {
+      const { loadModule } = await import('$lib/services/app/dependencies');
+
+      setPixels([255, 255]);
+      await exportCanvasAsBlob(mockCanvas, { format: 'jxl', quality: 80, nativeOnly: true });
+
+      expect(mockCanvas.convertToBlob).toHaveBeenCalledWith({ type: 'image/jpeg', quality: 0.8 });
+      expect(loadModule).not.toHaveBeenCalled();
+    });
+
+    test('should encode an image with transparency as PNG', async () => {
+      setPixels([255, 0]);
+      await exportCanvasAsBlob(mockCanvas, { format: 'jxl', quality: 80, nativeOnly: true });
+
+      expect(mockCanvas.convertToBlob).toHaveBeenCalledWith({ type: 'image/png', quality: 0.8 });
+    });
+  });
+
   test('should handle jSquash fallback scenario', async () => {
     const mockLoadModule = vi.fn(() => Promise.reject(new Error('jSquash load failed')));
     const mockBlob = new Blob(['fallback'], { type: 'image/png' });
