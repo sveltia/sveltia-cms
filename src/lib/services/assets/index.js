@@ -530,14 +530,26 @@ export const getAssetByPath = ({ value, ...rest }) => {
 };
 
 /**
- * Check if an asset belongs to the given asset folder.
+ * Check if an asset belongs to the given asset folder. An asset is assigned to one folder only, but
+ * a folder with a fixed path also holds the assets assigned to another folder with the same path,
+ * so that the folders sharing a path, like an asset collection and a collection or field-level
+ * folder, all list the same assets. An entry-relative folder has to be the asset’s own, as its path
+ * is that of the collection, which the assets are stored somewhere below.
  * @param {Asset} asset Asset.
  * @param {AssetFolderInfo} folder Folder info.
  * @returns {boolean} Result.
  */
-export const isAssetInFolder = ({ folder: assetFolder }, folder) =>
-  assetFolder === folder ||
-  (assetFolder.collectionName === folder.collectionName &&
+export const isAssetInFolder = ({ folder: assetFolder }, folder) => {
+  if (assetFolder === folder) {
+    return true;
+  }
+
+  if (!folder.entryRelative) {
+    return !assetFolder.entryRelative && assetFolder.internalPath === folder.internalPath;
+  }
+
+  return (
+    assetFolder.collectionName === folder.collectionName &&
     assetFolder.fileName === folder.fileName &&
     assetFolder.typedKeyPath === folder.typedKeyPath &&
     assetFolder.isIndexFile === folder.isIndexFile &&
@@ -545,7 +557,9 @@ export const isAssetInFolder = ({ folder: assetFolder }, folder) =>
     assetFolder.internalSubPath === folder.internalSubPath &&
     assetFolder.publicPath === folder.publicPath &&
     assetFolder.entryRelative === folder.entryRelative &&
-    assetFolder.hasTemplateTags === folder.hasTemplateTags);
+    assetFolder.hasTemplateTags === folder.hasTemplateTags
+  );
+};
 
 /**
  * Get a list of assets stored in the given collection defined folder.

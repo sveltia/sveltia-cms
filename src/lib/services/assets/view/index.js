@@ -2,6 +2,7 @@ import { _, locale as appLocale } from '@sveltia/i18n';
 import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
 
+import { isAssetInFolder } from '$lib/services/assets';
 import { selectedAssetFolder } from '$lib/services/assets/folders';
 import {
   focusedAsset,
@@ -95,12 +96,9 @@ export const selectedFolderAssets = createDerivedState(() => {
   const { current: _selectedAssetFolder } = selectedAssetFolder;
 
   if (_allAssets && _selectedAssetFolder && _selectedAssetFolder.internalPath !== undefined) {
-    // An asset’s folder is usually the very object the selection was made from, so identity
-    // settles it without walking the folder; the deep comparison is the fallback for a folder
-    // restored from `window.history.state`, which is an equal but separate object.
-    return _allAssets.filter(
-      ({ folder }) => folder === _selectedAssetFolder || equal(folder, _selectedAssetFolder),
-    );
+    // A folder restored from `window.history.state` is an equal but separate object, and the
+    // assets of another folder with the same path are listed as well
+    return _allAssets.filter((asset) => isAssetInFolder(asset, _selectedAssetFolder));
   }
 
   return _allAssets ? [..._allAssets] : [];

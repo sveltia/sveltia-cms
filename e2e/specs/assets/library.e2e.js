@@ -3,7 +3,7 @@ import { readFile } from 'fs/promises';
 import { MEDIA_CONFIG, MEDIA_FILES, MEDIA_IMAGES } from '../../fixtures/configs/media.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor } from '../../fixtures/ui.js';
+import { getEditor, listedAssets, openFolder } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -17,27 +17,6 @@ test.beforeEach(async ({ cms, page }) => {
   await cms.signIn();
   await page.getByRole('radio', { name: 'Assets' }).click();
 });
-
-/**
- * Get the names of the assets listed, in order.
- * @param {Page} page Page.
- * @returns {Promise<string[]>} File names.
- */
-const listedAssets = (page) =>
-  page
-    .getByRole('grid', { name: 'Assets' })
-    .getByRole('row')
-    .evaluateAll((rows) => rows.map((row) => row.getAttribute('aria-label') ?? ''));
-
-/**
- * Open an asset folder from the folder list.
- * @param {Page} page Page.
- * @param {RegExp} name Folder name, followed by the number of assets.
- */
-const openFolder = async (page, name) => {
-  await page.getByRole('option', { name }).click();
-  await expect(page.getByRole('option', { name })).toHaveAttribute('aria-selected', 'true');
-};
 
 test('lists the assets of each folder', async ({ page }) => {
   await expect(page.getByRole('listbox', { name: 'Asset Folder List' })).toMatchAriaSnapshot(`

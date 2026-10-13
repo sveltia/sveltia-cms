@@ -124,3 +124,28 @@ export const getOpenedURL = async (page, control) => {
 
   return url;
 };
+
+/**
+ * Get the names of the assets listed in the Asset Library, in order.
+ * @param {Page} page Page.
+ * @returns {Promise<string[]>} File names.
+ */
+export const listedAssets = (page) =>
+  page
+    .getByRole('grid', { name: 'Assets' })
+    .getByRole('row')
+    .evaluateAll((rows) => rows.map((row) => row.getAttribute('aria-label') ?? ''));
+
+/**
+ * Open an asset folder from the folder list in the Asset Library.
+ * @param {Page} page Page.
+ * @param {RegExp} name Folder name, followed by the number of assets.
+ */
+export const openFolder = async (page, name) => {
+  const option = page.getByRole('listbox', { name: 'Asset Folder List' }).getByRole('option', {
+    name,
+  });
+
+  await option.click();
+  await expect(option).toHaveAttribute('aria-selected', 'true');
+};

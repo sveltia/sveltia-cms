@@ -1150,6 +1150,88 @@ describe('assets/index', () => {
 
       expect(result).toEqual([]);
     });
+
+    it('should return the assets of another folder with the same path', () => {
+      const assetCollectionFolder = createMockAssetFolder({
+        collectionName: 'assets:downloads',
+        internalPath: 'static/files',
+        publicPath: '/files',
+        isAssetCollection: true,
+      });
+
+      const fieldFolder = createMockAssetFolder({
+        collectionName: 'examples',
+        typedKeyPath: 'file',
+        internalPath: 'static/files',
+        publicPath: '/downloads',
+      });
+
+      const collectionFolder = createMockAssetFolder({
+        collectionName: 'guides',
+        internalPath: 'static/files',
+        publicPath: '/files',
+      });
+
+      const nestedFolder = createMockAssetFolder({
+        collectionName: 'posts',
+        internalPath: 'static/files/posts',
+        publicPath: '/files/posts',
+      });
+
+      const asset = {
+        path: 'static/files/report.pdf',
+        name: 'report.pdf',
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('document'),
+        sha: 'abc123',
+        size: 1024,
+        folder: fieldFolder,
+      };
+
+      const nestedAsset = { ...asset, path: 'static/files/posts/a.pdf', folder: nestedFolder };
+
+      allAssets.current = [asset, nestedAsset];
+
+      // The asset is assigned to the field-level folder, but every folder with its path lists it,
+      // while a folder nested in it keeps its own assets
+      expect(getAssetsByFolder(assetCollectionFolder)).toEqual([asset]);
+      expect(getAssetsByFolder(collectionFolder)).toEqual([asset]);
+      expect(getAssetsByFolder(nestedFolder)).toEqual([nestedAsset]);
+    });
+
+    it('should only return the assets of the same entry-relative folder', () => {
+      const postsFolder = createMockAssetFolder({
+        collectionName: 'posts',
+        internalPath: 'content',
+        internalSubPath: 'images',
+        publicPath: 'images',
+        entryRelative: true,
+      });
+
+      const pagesFolder = { ...postsFolder, collectionName: 'pages' };
+
+      const fixedFolder = createMockAssetFolder({
+        internalPath: 'content',
+        publicPath: '/content',
+      });
+
+      const asset = {
+        path: 'content/hello/images/photo.jpg',
+        name: 'photo.jpg',
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        sha: 'abc123',
+        size: 1024,
+        folder: postsFolder,
+      };
+
+      const fixedAsset = { ...asset, path: 'content/logo.png', folder: fixedFolder };
+
+      allAssets.current = [asset, fixedAsset];
+
+      // An entry-relative folder’s path is the collection’s, so it isn’t shared by path
+      expect(getAssetsByFolder({ ...postsFolder })).toEqual([asset]);
+      expect(getAssetsByFolder(pagesFolder)).toEqual([]);
+      expect(getAssetsByFolder(fixedFolder)).toEqual([fixedAsset]);
+    });
   });
 
   describe('getAssetsByDirName', () => {

@@ -253,11 +253,34 @@ export const assetsLocked = createDerivedState(
 );
 
 /**
+ * Paths of the read-only asset folders with a fixed path, rebuilt when the store is replaced.
+ * @type {() => Set<string>}
+ */
+const getReadonlyFolderPaths = memoizeOnSource(
+  () => allAssetFolders.current,
+  (_allAssetFolders) =>
+    new Set(
+      _allAssetFolders
+        .filter(({ readonly, entryRelative }) => readonly && !entryRelative)
+        .map(({ internalPath }) => /** @type {string} */ (internalPath)),
+    ),
+);
+
+/**
  * Check if any of the given assets is stored in a read-only folder, in which case none of them can
- * be changed, renamed, replaced or deleted along with the others. A file in a folder the CMS itself
- * is served from, such as `admin`, is read-only as well, wherever the media folder is.
+ * be changed, renamed, replaced or deleted along with the others. An asset is assigned to one
+ * folder only, but it’s also listed in the other folders with the same path, so it’s read-only when
+ * any of them is, e.g. a read-only asset collection sharing a collection’s folder. A file in a
+ * folder the CMS itself is served from, such as `admin`, is read-only as well, wherever the media
+ * folder is.
  * @param {Asset[]} assets Assets.
  * @returns {boolean} Result.
  */
 export const hasReadonlyAsset = (assets) =>
-  assets.some(({ folder, path }) => !!folder?.readonly || isInCmsFolder(path));
+  assets.some(
+    ({ folder, path }) =>
+      !!folder?.readonly ||
+      (!folder?.entryRelative &&
+        getReadonlyFolderPaths().has(/** @type {string} */ (folder?.internalPath))) ||
+      isInCmsFolder(path),
+  );

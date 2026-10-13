@@ -1,6 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor } from '../../fixtures/ui.js';
+import { getEditor, listedAssets, openFolder } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -90,31 +90,6 @@ test.beforeEach(async ({ cms }) => {
   await cms.seed(FILES);
   await cms.signIn();
 });
-
-/**
- * Get the names of the assets listed, in order.
- * @param {Page} page Page.
- * @returns {Promise<string[]>} File names.
- */
-const listedAssets = (page) =>
-  page
-    .getByRole('grid', { name: 'Assets' })
-    .getByRole('row')
-    .evaluateAll((rows) => rows.map((row) => row.getAttribute('aria-label') ?? ''));
-
-/**
- * Open an asset folder from the folder list in the Asset Library.
- * @param {Page} page Page.
- * @param {RegExp} name Folder name, followed by the number of assets.
- */
-const openFolder = async (page, name) => {
-  const option = page.getByRole('listbox', { name: 'Asset Folder List' }).getByRole('option', {
-    name,
-  });
-
-  await option.click();
-  await expect(option).toHaveAttribute('aria-selected', 'true');
-};
 
 /**
  * Start a new note, fill in its title and open the Select Image dialog of its Cover field.

@@ -1854,6 +1854,44 @@ describe('assets/folders', () => {
     });
   });
 
+  describe('hasReadonlyAsset in a folder sharing its path with a read-only one', () => {
+    it('should take an asset as read-only when a folder with the same path is', () => {
+      allAssetFolders.current = [
+        createMockAssetFolder({ collectionName: 'posts', internalPath: 'static/archive' }),
+        createMockAssetFolder({
+          collectionName: 'assets:archive',
+          internalPath: 'static/archive',
+          isAssetCollection: true,
+          readonly: true,
+        }),
+        createMockAssetFolder({
+          collectionName: 'pages',
+          internalPath: 'content/pages',
+          internalSubPath: 'images',
+          entryRelative: true,
+          readonly: true,
+        }),
+      ];
+
+      const [postsFolder] = allAssetFolders.current;
+      const archived = { path: 'static/archive/old.png', folder: postsFolder };
+      const other = { path: 'static/images/new.png', folder: { internalPath: 'static/images' } };
+
+      // An entry-relative folder isn’t shared by path, even with a fixed folder at its collection
+      const relative = {
+        path: 'content/pages/a.png',
+        folder: { internalPath: 'content/pages', entryRelative: true },
+      };
+
+      const fixed = { path: 'content/pages/b.png', folder: { internalPath: 'content/pages' } };
+
+      expect(hasReadonlyAsset([/** @type {any} */ (archived)])).toBe(true);
+      expect(hasReadonlyAsset([/** @type {any} */ (other)])).toBe(false);
+      expect(hasReadonlyAsset([/** @type {any} */ (relative)])).toBe(false);
+      expect(hasReadonlyAsset([/** @type {any} */ (fixed)])).toBe(false);
+    });
+  });
+
   describe('hasReadonlyAsset in a folder the CMS is served from', () => {
     it('should take a file in such a folder as read-only, whatever its folder says', () => {
       // With a media folder at the root of the public folder, the admin page is listed as an asset
