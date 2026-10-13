@@ -5,6 +5,7 @@ import { getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getKeyValueField } from '$lib/services/contents/fields/key-value/pairs';
+import { getPairedListKeyPaths } from '$lib/services/contents/fields/list/helpers';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -137,8 +138,10 @@ export const revertFields = ({
  * @param {FieldKeyPath} args.keyPath Field key path to revert. If empty, all the fields will be
  * reverted.
  * @param {InternalLocaleCode} args.locale Locale code.
+ * @param {boolean} [args.revertAll] Whether to revert every field in another locale as well, not
+ * just the translatable ones, like in the default locale.
  */
-export const revertLocale = ({ draft, keyPath, locale }) => {
+export const revertLocale = ({ draft, keyPath, locale, revertAll = false }) => {
   const {
     collection,
     collectionName,
@@ -150,7 +153,7 @@ export const revertLocale = ({ draft, keyPath, locale }) => {
   } = draft;
 
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
-  const isDefaultLocale = locale === defaultLocale;
+  const isDefaultLocale = revertAll || locale === defaultLocale;
   /** @type {GetFieldArgs} */
   const getFieldArgs = { collectionName, fileName, keyPath: '', isIndexFile };
   // Resolve original key path for fields inside reordered list items
@@ -180,6 +183,38 @@ export const revertLocale = ({ draft, keyPath, locale }) => {
     currentValues,
     remapPrefix,
   });
+};
+
+/**
+ * Get the key paths of the paired List fields that reverting the given field reverts: the field
+ * itself or those nested in it, or every one if all the fields are reverted. See
+ * {@link getPairedListKeyPaths}.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {FieldKeyPath} args.keyPath Field key path to revert, or an empty string for every field.
+ * @returns {FieldKeyPath[]} Key paths.
+ */
+const getRevertedPairedListKeyPaths = ({ draft, keyPath }) => {
+  if (!keyPath) {
+    return getPairedListKeyPaths(draft.fields);
+  }
+
+  const { collectionName, fileName, isIndexFile, currentValues, collection, collectionFile } =
+    draft;
+
+  const { defaultLocale } = (collectionFile ?? collection)._i18n;
+
+  const fieldConfig = getField({
+    collectionName,
+    fileName,
+    isIndexFile,
+    keyPath,
+    valueMap: currentValues[defaultLocale],
+  });
+
+  return fieldConfig
+    ? getPairedListKeyPaths([fieldConfig], keyPath.split('.').slice(0, -1).join('.'))
+    : [];
 };
 
 /**
@@ -215,6 +250,18 @@ export const revertChanges = ({ draft, locale: targetLanguage = '', keyPath = ''
   locales.forEach((locale) => {
     revertLocale({ draft, keyPath, locale });
   });
+
+  // The items of a paired List field are added, removed and moved in every locale at once, so
+  // reverting them in the default locale alone would leave them out of line with the other locales
+  if (targetLanguage === defaultLocale) {
+    getRevertedPairedListKeyPaths({ draft, keyPath }).forEach((pairedKeyPath) => {
+      allLocales.forEach((locale) => {
+        if (locale !== defaultLocale && currentValues[locale]) {
+          revertLocale({ draft, keyPath: pairedKeyPath, locale, revertAll: true });
+        }
+      });
+    });
+  }
 
   // Keys reverted in the default locale have to reach the other locales, and pairs reverted in
   // another locale have to line up with the default locale again

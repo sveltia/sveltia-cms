@@ -113,6 +113,13 @@ describe('createListItem()', () => {
     expect(duplicate).toEqual({ name: 'Bob', __sc_item_id: expect.any(String) });
   });
 
+  test('creates a new item if there is no item to duplicate', () => {
+    // e.g. another locale of a list with paired items, which lacks the item being duplicated
+    expect(createListItem({ ...args, valueList: [{ name: 'Alice' }], dupIndex: 1 })).toEqual(
+      expect.objectContaining({ name: 'Anonymous', __sc_item_id: expect.any(String) }),
+    );
+  });
+
   describe('renews the unique values of a duplicated item', () => {
     const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
     const OLD_ID = 'de305d54-75b4-431b-adb2-eb6b9e546014';

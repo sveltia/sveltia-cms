@@ -283,6 +283,42 @@ describe('draft/update/list', () => {
       expect(mockEntryDraft.expanderStates._).toEqual({ 'tags.0': false, 'tags.1': true });
     });
 
+    // https://github.com/sveltia/sveltia-cms/issues/1065
+    it('should update every locale for paired items edited in the default locale', () => {
+      const manipulate = vi.fn(({ valueList, expanderStateList }) => {
+        valueList.splice(0, 1);
+        expanderStateList.splice(0, 1);
+      });
+
+      updateListFieldForLocales({
+        locale: 'en',
+        i18n: true,
+        pairedItems: true,
+        keyPath: 'tags',
+        manipulate,
+      });
+
+      expect(mockEntryDraft.currentValues.en).toEqual({ 'tags.0': 'tag2', 'tags.1': 'tag3' });
+      expect(mockEntryDraft.currentValues.ja).toEqual({ tags: [] });
+      // The manipulation is told which locale the values are for
+      expect(manipulate.mock.calls.map(([{ locale }]) => locale)).toEqual(['en', 'ja']);
+    });
+
+    it('should only update the given locale for paired items edited in another locale', () => {
+      updateListFieldForLocales({
+        locale: 'ja',
+        i18n: true,
+        pairedItems: true,
+        keyPath: 'tags',
+        manipulate: ({ valueList }) => {
+          valueList.push('タグ2');
+        },
+      });
+
+      expect(mockEntryDraft.currentValues.ja).toEqual({ 'tags.0': 'タグ1', 'tags.1': 'タグ2' });
+      expect(mockEntryDraft.currentValues.en['tags.3']).toBeUndefined();
+    });
+
     it('should use the given value store', () => {
       mockEntryDraft.extraValues = { en: { 'tags.0': 'extra' } };
 

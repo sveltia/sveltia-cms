@@ -1,10 +1,11 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { formatSummary as formatObjectSummary } from '$lib/services/contents/fields/object/helpers';
+import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 
 /**
  * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
- * @import { FieldKeyPath, ListField } from '$lib/types/public';
+ * @import { Field, FieldKeyPath, ListField } from '$lib/types/public';
  */
 
 /**
@@ -32,6 +33,64 @@ export const getListFieldInfo = (field) => {
     hasSubFields: hasSingleSubField || hasMultiSubFields || hasVariableTypes,
   };
 };
+
+/**
+ * Check whether any subfield of the given List or Object field, at any depth, has the `duplicate`
+ * i18n strategy. The items of a translatable List field with such a subfield are paired across the
+ * locales by their position, as the subfield value is copied to the item at the same position in
+ * every other locale.
+ * @param {Field} fieldConfig Field configuration.
+ * @returns {boolean} Result.
+ */
+export const hasDuplicatedSubField = (fieldConfig) => {
+  const {
+    fields = [],
+    field,
+    types = [],
+  } = /** @type {{ fields?: Field[], field?: Field, types?: { fields?: Field[] }[] }} */ (
+    fieldConfig
+  );
+
+  return [...fields, ...(field ? [field] : []), ...types.flatMap((type) => type.fields ?? [])].some(
+    (subField) => subField.i18n === 'duplicate' || hasDuplicatedSubField(subField),
+  );
+};
+
+/**
+ * Check whether the given field is a translatable List field whose items are paired across the
+ * locales by their position, because it has a subfield with the `duplicate` i18n strategy. Such
+ * items are added, removed and moved in every locale at once.
+ * @param {Field} fieldConfig Field configuration.
+ * @returns {boolean} Result.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1065
+ */
+export const isPairedList = (fieldConfig) =>
+  fieldConfig.widget === 'list' &&
+  isFieldTranslatable(fieldConfig.i18n) &&
+  hasDuplicatedSubField(fieldConfig);
+
+/**
+ * Get the key paths of the paired List fields among the given fields, including those nested in an
+ * Object field, but not those in a List field’s items, which are numbered. See
+ * {@link isPairedList}.
+ * @param {Field[]} fields Fields.
+ * @param {FieldKeyPath} [prefix] Key path of the parent field, if any.
+ * @returns {FieldKeyPath[]} Key paths.
+ */
+export const getPairedListKeyPaths = (fields, prefix = '') =>
+  fields.flatMap((fieldConfig) => {
+    const keyPath = prefix ? `${prefix}.${fieldConfig.name}` : fieldConfig.name;
+
+    if (isPairedList(fieldConfig)) {
+      return [keyPath];
+    }
+
+    const { fields: subFields } = /** @type {{ fields?: Field[] }} */ (fieldConfig);
+
+    return fieldConfig.widget === 'object' && subFields
+      ? getPairedListKeyPaths(subFields, keyPath)
+      : [];
+  });
 
 /**
  * Check whether the editor should show a List field as a single item rather than as a list. That’s

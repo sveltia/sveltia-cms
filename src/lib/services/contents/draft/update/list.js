@@ -141,23 +141,34 @@ export const updateListField = ({
  * Update the value in a list field for every locale the update has to be written to: the given
  * locale, or every locale if the field has the `duplicate` i18n strategy. See
  * {@link forEachTargetLocale} and {@link updateListField}.
+ *
+ * The items of a translatable list with a subfield using the `duplicate` strategy are paired across
+ * the locales by their position, so an item added, removed or moved in the default locale is added,
+ * removed or moved in every other locale as well. Otherwise the remaining items would no longer
+ * line up, and a duplicated value would be copied to the wrong item.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {InternalLocaleCode} args.locale Locale being edited.
  * @param {Field['i18n']} args.i18n Field-level `i18n` option.
+ * @param {boolean} [args.pairedItems] Whether the list’s items are paired across the locales,
+ * because the list has a subfield with the `duplicate` strategy.
  * @param {Field} [args.fieldConfig] Field configuration. If given, the values of another locale are
  * localized for the manipulation, which works with the values of the locale being edited. This is
  * for a Relation field whose `value_field` option has a locale prefix, e.g. `{{locale}}/{{slug}}`,
  * so that its value is stored as `fr/foo` rather than `en/foo` in the French content.
  * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
  * @param {FieldKeyPath} args.keyPath Dot-notated field name.
- * @param {(arg: { valueList: any[], expanderStateList: ExpanderStateList }) => void }
- * args.manipulate A function to manipulate the list. See {@link updateListField}.
+ * @param {(arg: {
+ * valueList: any[], expanderStateList: ExpanderStateList, locale: InternalLocaleCode
+ * }) => void } args.manipulate A function to manipulate the list, which also takes the locale the
+ * values are for, so that an item added to every locale can be created for each. See
+ * {@link updateListField}.
  */
 export const updateListFieldForLocales = ({
   draft,
   locale,
   i18n,
+  pairedItems = false,
   fieldConfig,
   valueStoreKey = 'currentValues',
   keyPath,
@@ -180,8 +191,18 @@ export const updateListFieldForLocales = ({
       }),
     );
 
+  const { defaultLocale } = (draft.collectionFile ?? draft.collection)._i18n;
+
   forEachTargetLocale(
-    { valueStore: draft[valueStoreKey], locale, i18n, draft, keyPath },
+    {
+      valueStore: draft[valueStoreKey],
+      locale,
+      // The structure of a list with paired items is duplicated from the default locale, even
+      // though the list itself is translatable (https://github.com/sveltia/sveltia-cms/issues/1065)
+      i18n: pairedItems && locale === defaultLocale ? 'duplicate' : i18n,
+      draft,
+      keyPath,
+    },
     (_valueMap, _locale) => {
       updateListField({
         draft,
@@ -190,13 +211,14 @@ export const updateListFieldForLocales = ({
         keyPath,
         manipulate:
           !fieldConfig || _locale === locale
-            ? manipulate
+            ? ({ valueList, expanderStateList }) =>
+                manipulate({ valueList, expanderStateList, locale: _locale })
             : ({ valueList, expanderStateList }) => {
                 // Manipulate the values as they would be in the locale being edited, as the
                 // manipulation compares and adds values of that locale, then localize them back
                 const sourceList = localize(valueList, _locale, locale);
 
-                manipulate({ valueList: sourceList, expanderStateList });
+                manipulate({ valueList: sourceList, expanderStateList, locale });
                 valueList.splice(0, valueList.length, ...localize(sourceList, locale, _locale));
               },
       });

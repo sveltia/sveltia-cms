@@ -743,6 +743,95 @@ describe('ListEditorComplex (more)', () => {
     expect(draft.currentValues.fr['authors.0.name']).toBeUndefined();
   });
 
+  describe('a translatable list with a duplicated subfield', () => {
+    // https://github.com/sveltia/sveltia-cms/issues/1065
+    /** @type {ComplexListField} */
+    const residencesField = {
+      name: 'residences',
+      widget: 'list',
+      label_singular: 'Residence',
+      i18n: true,
+      fields: [
+        { name: 'name', widget: 'string', i18n: 'duplicate' },
+        { name: 'description', widget: 'text', i18n: true },
+      ],
+    };
+
+    /**
+     * Render the editor for the given locale of an entry with two residences in both locales.
+     * @param {string} locale Locale.
+     * @returns {Promise<any>} Draft.
+     */
+    const renderResidences = async (locale) => {
+      const draft = createMockDraft({
+        fields: [residencesField],
+        i18n: {
+          i18nEnabled: true,
+          allLocales: ['fr', 'en'],
+          initialLocales: ['fr', 'en'],
+          defaultLocale: 'fr',
+          structure: /** @type {const} */ ('single_file'),
+        },
+        values: {
+          fr: {
+            'residences.0.name': 'A',
+            'residences.0.description': 'A (fr)',
+            'residences.1.name': 'B',
+            'residences.1.description': 'B (fr)',
+          },
+          en: {
+            'residences.0.name': 'A',
+            'residences.0.description': 'A (en)',
+            'residences.1.name': 'B',
+            'residences.1.description': 'B (en)',
+          },
+        },
+      });
+
+      await renderWithDraft(ListEditorComplex, {
+        draft,
+        props: {
+          locale,
+          keyPath: 'residences',
+          typedKeyPath: 'residences',
+          fieldId: 'residences',
+          fieldLabel: 'Residences',
+          fieldConfig: residencesField,
+        },
+      });
+
+      return draft;
+    };
+
+    test('removes an item from every locale', async () => {
+      const draft = await renderResidences('fr');
+
+      await page.getByRole('button', { name: 'Remove' }).nth(0).click();
+      await expect.poll(() => draft.currentValues.fr['residences.1.name']).toBeUndefined();
+      expect(draft.currentValues.fr['residences.0.description']).toBe('B (fr)');
+      // The translation follows its item rather than staying at its position
+      expect(draft.currentValues.en['residences.0.name']).toBe('B');
+      expect(draft.currentValues.en['residences.0.description']).toBe('B (en)');
+      expect(draft.currentValues.en['residences.1.name']).toBeUndefined();
+    });
+
+    test('adds an item to every locale', async () => {
+      const draft = await renderResidences('fr');
+
+      await page.getByRole('button', { name: /Add\W+Residence/ }).click();
+      await expect.poll(() => draft.currentValues.fr['residences.2.name']).toBe('');
+      expect(draft.currentValues.en['residences.2.name']).toBe('');
+      expect(draft.currentValues.en['residences.1.description']).toBe('B (en)');
+    });
+
+    test('locks the items in another locale', async () => {
+      await renderResidences('en');
+
+      await expect.element(page.getByRole('button', { name: /Add\W+Residence/ })).toBeDisabled();
+      await expect.element(page.getByRole('button', { name: 'Remove' }).nth(0)).toBeDisabled();
+    });
+  });
+
   test('does nothing once the draft is gone', async () => {
     const { entryDraft } = await renderEditor(authorsField, { 'authors.0.name': 'Melvin' });
 

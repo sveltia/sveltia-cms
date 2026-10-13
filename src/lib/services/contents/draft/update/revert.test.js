@@ -36,6 +36,7 @@ describe('draft/update/revert', () => {
       collectionName: 'posts',
       fileName: undefined,
       isIndexFile: false,
+      fields: [],
       currentValues: {
         en: {
           title: 'Modified Title',
@@ -303,6 +304,129 @@ describe('draft/update/revert', () => {
         revertChanges();
 
         expect(mockEntryDraft.currentValues).toEqual(mockEntryDraft.originalValues);
+      });
+    });
+    // https://github.com/sveltia/sveltia-cms/issues/1065
+    describe('with a paired List field', () => {
+      const residencesField = {
+        name: 'residences',
+        widget: 'list',
+        i18n: true,
+        fields: [
+          { name: 'name', widget: 'string', i18n: 'duplicate' },
+          { name: 'description', widget: 'text', i18n: true },
+        ],
+      };
+
+      const [nameField, descriptionField] = residencesField.fields;
+
+      beforeEach(() => {
+        mockEntryDraft.fields = [
+          { name: 'title', widget: 'string', i18n: true },
+          { name: 'details', widget: 'object', fields: [residencesField] },
+        ];
+
+        vi.mocked(getField).mockImplementation(({ keyPath }) => {
+          if (keyPath === 'title') {
+            return { name: 'title', widget: 'string', i18n: true };
+          }
+
+          if (keyPath === 'details') {
+            return mockEntryDraft.fields[1];
+          }
+
+          if (keyPath === 'details.residences') {
+            return residencesField;
+          }
+
+          if (/^details\.residences\.\d+\.name$/.test(keyPath)) {
+            return nameField;
+          }
+
+          if (/^details\.residences\.\d+\.description$/.test(keyPath)) {
+            return descriptionField;
+          }
+
+          return undefined;
+        });
+
+        // The first item has been removed in the default locale, and thus in the other locale
+        mockEntryDraft.currentValues = {
+          en: {
+            title: 'Title 2',
+            'details.residences.0.name': 'B',
+            'details.residences.0.description': 'B (en)',
+          },
+          ja: {
+            title: 'タイトル 2',
+            'details.residences.0.name': 'B',
+            'details.residences.0.description': 'B (ja)',
+          },
+        };
+
+        mockEntryDraft.originalValues = {
+          en: {
+            title: 'Title',
+            'details.residences.0.name': 'A',
+            'details.residences.0.description': 'A (en)',
+            'details.residences.1.name': 'B',
+            'details.residences.1.description': 'B (en)',
+          },
+          ja: {
+            title: 'タイトル',
+            'details.residences.0.name': 'A',
+            'details.residences.0.description': 'A (ja)',
+            'details.residences.1.name': 'B',
+            'details.residences.1.description': 'B (ja)',
+          },
+        };
+      });
+
+      it('should revert the items in every locale when reverted in the default locale', () => {
+        revertChanges({ locale: 'en', keyPath: 'details.residences' });
+
+        expect(mockEntryDraft.currentValues.en).toEqual({
+          ...mockEntryDraft.originalValues.en,
+          title: 'Title 2',
+        });
+        expect(mockEntryDraft.currentValues.ja).toEqual({
+          ...mockEntryDraft.originalValues.ja,
+          title: 'タイトル 2',
+        });
+      });
+
+      it('should revert the items nested in the field reverted in the default locale', () => {
+        revertChanges({ locale: 'en', keyPath: 'details' });
+
+        expect(mockEntryDraft.currentValues.ja).toEqual({
+          ...mockEntryDraft.originalValues.ja,
+          title: 'タイトル 2',
+        });
+      });
+
+      it('should revert the items but not the other fields in the other locales', () => {
+        revertChanges({ locale: 'en' });
+
+        expect(mockEntryDraft.currentValues.en).toEqual(mockEntryDraft.originalValues.en);
+        expect(mockEntryDraft.currentValues.ja).toEqual({
+          ...mockEntryDraft.originalValues.ja,
+          title: 'タイトル 2',
+        });
+      });
+
+      it('should leave the other locales alone for another field', () => {
+        revertChanges({ locale: 'en', keyPath: 'title' });
+        revertChanges({ locale: 'en', keyPath: 'unknown' });
+
+        expect(mockEntryDraft.currentValues.ja['details.residences.1.name']).toBeUndefined();
+      });
+
+      it('should skip a locale without content', () => {
+        delete mockEntryDraft.currentValues.ja;
+
+        revertChanges({ locale: 'en', keyPath: 'details.residences' });
+
+        expect(mockEntryDraft.currentValues.ja).toBeUndefined();
       });
     });
   });

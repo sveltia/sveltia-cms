@@ -155,7 +155,9 @@ export const getInitialListExpanderStates = ({
  * @param {any[]} args.valueList Current items of the list. Unless the list has a single subfield,
  * the items are tagged with their original key paths in place, as they’re about to shift.
  * @param {FieldKeyPath} args.keyPath Key path of the list.
- * @param {number} [args.dupIndex] List index of the item to be duplicated, if any.
+ * @param {number} [args.dupIndex] List index of the item to be duplicated, if any. If the list has
+ * no item there, e.g. in another locale whose items don’t line up with the default locale’s, a new
+ * item is created instead.
  * @param {Field[]} args.subFields Subfields of the new item, used to fill in the default values.
  * @param {boolean} args.hasSingleSubField Whether the list has a single subfield, in which case the
  * items are the subfield values themselves rather than objects.
@@ -188,7 +190,7 @@ export const createListItem = ({
   defaultLocale,
 }) => {
   const newItem = (() => {
-    if (typeof dupIndex === 'number') {
+    if (typeof dupIndex === 'number' && dupIndex in valueList) {
       const item = structuredClone(valueList[dupIndex]);
 
       if (hasSingleSubField && field) {

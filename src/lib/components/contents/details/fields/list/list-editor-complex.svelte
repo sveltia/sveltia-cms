@@ -27,6 +27,7 @@
     formatSummary,
     getListFieldInfo,
     getListItemKey,
+    isPairedList,
     isSingleItemList,
     tagListItems,
   } from '$lib/services/contents/fields/list/helpers';
@@ -51,6 +52,7 @@
    * ExpanderStateList,
    * FieldEditorContext,
    * FieldEditorProps,
+   * InternalLocaleCode,
    * MediaFieldSource,
    * } from '$lib/types/private';
    * @import {
@@ -140,10 +142,16 @@
   // A rich text editor component’s values live in the document of the locale they’re edited in,
   // so its items can be added in any locale, with the subfields getting their defaults there
   const inEditorComponent = valueStoreKey === 'extraValues';
+  // The items of a translatable list with a duplicated subfield are paired across the locales by
+  // their position, so they’re added, removed and moved in the default locale for every locale
+  const pairedItems = $derived(!inEditorComponent && isPairedList(fieldConfig));
   // The items can’t be added, removed or reordered in a read-only field, which includes a field
   // duplicated from the default locale, whether with its own `duplicate` strategy or along with an
-  // ancestor’s, in another locale. Changing them there would change the default locale as well
-  const isLocked = $derived(readonly || (locale !== defaultLocale && i18n === 'duplicate'));
+  // ancestor’s, in another locale. Changing them there would change the default locale as well. The
+  // same goes for paired items, which would no longer line up with those of the default locale
+  const isLocked = $derived(
+    readonly || (locale !== defaultLocale && (i18n === 'duplicate' || pairedItems)),
+  );
   const valueMap = $derived(
     getFieldValueMapSnapshot(entryDraft.current, locale, keyPath, valueStoreKey),
   );
@@ -241,8 +249,9 @@
 
   /**
    * Update the value for the List field with subfield(s).
-   * @param {(arg: { valueList: any[], expanderStateList: ExpanderStateList }) => void} manipulate
-   * See {@link updateListFieldForLocales}.
+   * @param {(arg: {
+   * valueList: any[], expanderStateList: ExpanderStateList, locale: InternalLocaleCode
+   * }) => void} manipulate See {@link updateListFieldForLocales}.
    */
   const updateComplexList = (manipulate) => {
     const draft = entryDraft.current;
@@ -253,7 +262,15 @@
       return;
     }
 
-    updateListFieldForLocales({ draft, locale, i18n, valueStoreKey, keyPath, manipulate });
+    updateListFieldForLocales({
+      draft,
+      locale,
+      i18n,
+      pairedItems,
+      valueStoreKey,
+      keyPath,
+      manipulate,
+    });
   };
 
   /**
@@ -285,7 +302,7 @@
     /** @type {Map<string, string>} */
     const renewedUuids = new Map();
 
-    updateComplexList(({ valueList, expanderStateList }) => {
+    updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
       const { subFields } = resolveType(type);
 
       const newItem = createListItem({
@@ -299,8 +316,8 @@
         types,
         typeKey,
         renewedUuids,
-        locale,
-        defaultLocale: inEditorComponent ? locale : draft.defaultLocale,
+        locale: targetLocale,
+        defaultLocale: inEditorComponent ? targetLocale : draft.defaultLocale,
       });
 
       valueList.splice(index, 0, newItem);

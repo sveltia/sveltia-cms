@@ -4,6 +4,9 @@ import {
   formatSummary,
   getListFieldInfo,
   getListItemKey,
+  getPairedListKeyPaths,
+  hasDuplicatedSubField,
+  isPairedList,
   isSingleItemList,
   tagListItems,
 } from './helpers';
@@ -738,6 +741,75 @@ describe('Test getListFieldInfo()', () => {
       hasVariableTypes: true,
       hasSubFields: true,
     });
+  });
+});
+
+describe('Test hasDuplicatedSubField()', () => {
+  /** @type {any} */
+  const duplicated = { name: 'name', widget: 'string', i18n: 'duplicate' };
+  /** @type {any} */
+  const translatable = { name: 'description', widget: 'text', i18n: true };
+
+  test('should find a duplicated subfield', () => {
+    expect(hasDuplicatedSubField(/** @type {any} */ ({ fields: [translatable, duplicated] }))).toBe(
+      true,
+    );
+    expect(hasDuplicatedSubField(/** @type {any} */ ({ field: duplicated }))).toBe(true);
+    expect(
+      hasDuplicatedSubField(
+        /** @type {any} */ ({ types: [{ name: 'a' }, { name: 'b', fields: [duplicated] }] }),
+      ),
+    ).toBe(true);
+  });
+
+  test('should find a duplicated subfield nested in another subfield', () => {
+    expect(
+      hasDuplicatedSubField(
+        /** @type {any} */ ({
+          fields: [{ name: 'details', widget: 'object', fields: [duplicated] }],
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  test('should return false without a duplicated subfield', () => {
+    expect(hasDuplicatedSubField(/** @type {any} */ ({ fields: [translatable] }))).toBe(false);
+    expect(hasDuplicatedSubField(/** @type {any} */ ({ field: translatable }))).toBe(false);
+    expect(hasDuplicatedSubField(/** @type {any} */ ({ name: 'tags', widget: 'list' }))).toBe(
+      false,
+    );
+  });
+});
+
+describe('Test isPairedList() and getPairedListKeyPaths()', () => {
+  /** @type {any} */
+  const pairedList = {
+    name: 'residences',
+    widget: 'list',
+    i18n: true,
+    fields: [{ name: 'name', widget: 'string', i18n: 'duplicate' }],
+  };
+
+  test('should only accept a translatable List field with a duplicated subfield', () => {
+    expect(isPairedList(pairedList)).toBe(true);
+    expect(isPairedList({ ...pairedList, i18n: 'duplicate' })).toBe(false);
+    expect(isPairedList({ ...pairedList, fields: [{ name: 'name', widget: 'string' }] })).toBe(
+      false,
+    );
+    expect(isPairedList({ ...pairedList, widget: 'object' })).toBe(false);
+  });
+
+  test('should find the paired List fields, including those in an Object field', () => {
+    /** @type {any[]} */
+    const fields = [
+      { name: 'title', widget: 'string' },
+      pairedList,
+      { name: 'details', widget: 'object', fields: [pairedList] },
+      { name: 'blocks', widget: 'object', types: [{ name: 'a', fields: [pairedList] }] },
+    ];
+
+    expect(getPairedListKeyPaths(fields)).toEqual(['residences', 'details.residences']);
+    expect(getPairedListKeyPaths([pairedList], 'details')).toEqual(['details.residences']);
   });
 });
 
