@@ -1,12 +1,16 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
+import {
+  getEntriesByCollection,
+  getEntriesInCollectionFolder,
+} from '$lib/services/contents/collection/entries';
 import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 import {
   validateSlugs as _validateSlugs,
+  getOtherEntries,
   getSlugValidationMessage,
   getTakenSlugs,
   validateSlug,
@@ -14,6 +18,7 @@ import {
 
 vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 vi.mock('$lib/services/contents/collection/entries', () => ({
+  getEntriesByCollection: vi.fn(() => []),
   getEntriesInCollectionFolder: vi.fn(() => []),
 }));
 vi.mock('$lib/services/workflow', () => ({
@@ -55,6 +60,7 @@ describe('draft/validate/slugs', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
+    vi.mocked(getEntriesByCollection).mockReturnValue([]);
     vi.mocked(getEntriesInCollectionFolder).mockReturnValue([]);
     vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue([]);
     vi.mocked(getSharedEntryFileName).mockReturnValue(undefined);
@@ -69,6 +75,43 @@ describe('draft/validate/slugs', () => {
       currentSlugs: { en: 'test-post' },
       slugEditor: { en: false },
     };
+  });
+
+  describe('getOtherEntries', () => {
+    it('should include every entry in the collection folder by default', () => {
+      const listed = createEntry('a', { en: 'a' });
+      const unlisted = createEntry('b', { en: 'b' });
+      const unpublished = createEntry('c', { en: 'c' });
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([listed]);
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue([listed, unlisted]);
+      vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue([unpublished]);
+
+      expect(getOtherEntries(mockEntryDraft)).toEqual([listed, unlisted, unpublished]);
+    });
+
+    it('should include only the entries the collection lists with `inFolder: false`', () => {
+      const listed = createEntry('a', { en: 'a' });
+      const unlisted = createEntry('b', { en: 'b' });
+      const unpublished = createEntry('c', { en: 'c' });
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([listed]);
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue([listed, unlisted]);
+      vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue([unpublished]);
+
+      expect(getOtherEntries(mockEntryDraft, { inFolder: false })).toEqual([listed, unpublished]);
+      expect(getEntriesByCollection).toHaveBeenCalledWith('posts');
+    });
+
+    it('should leave out the entry being edited', () => {
+      const own = createEntry('a', { en: 'a' });
+      const other = createEntry('b', { en: 'b' });
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([own, other]);
+      mockEntryDraft.originalEntry = own;
+
+      expect(getOtherEntries(mockEntryDraft, { inFolder: false })).toEqual([other]);
+    });
   });
 
   describe('validateSlugs', () => {

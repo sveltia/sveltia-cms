@@ -1429,6 +1429,9 @@ validation:
     email: Please enter a valid email.
     url: Please enter a valid URL.
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: This value is used for another entry.
+
   # Custom field validation error
   invalid_value: Invalid value.
   unexpected_error: Unexpected error occurred.

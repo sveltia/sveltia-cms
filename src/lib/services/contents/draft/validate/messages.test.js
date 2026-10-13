@@ -282,6 +282,19 @@ describe('getFieldValidationMessages', () => {
     });
   });
 
+  describe('duplicateError', () => {
+    it('returns value_not_unique message', () => {
+      const messages = getFieldValidationMessages(
+        args({
+          validity: { duplicateError: true },
+          fieldConfig: { name: 'f', widget: 'string', unique: true },
+        }),
+      );
+
+      expect(messages).toEqual(['validation.value_not_unique']);
+    });
+  });
+
   describe('customError', () => {
     it('falls back to the default custom error message when no custom message is provided', () => {
       const messages = getFieldValidationMessages(

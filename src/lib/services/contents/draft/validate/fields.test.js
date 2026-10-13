@@ -19,6 +19,8 @@ import {
   getPairsFromContent,
 } from '$lib/services/contents/fields/key-value/pairs';
 
+import { isValueTaken } from './unique';
+
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/fields/key-value/pairs');
 vi.mock('$lib/services/contents/fields/list/helpers');
@@ -29,6 +31,10 @@ vi.mock('$lib/services/contents/draft/validate/messages', () => ({
 }));
 vi.mock('$lib/services/contents/draft/validate/required', () => ({
   isRequiredEnforced: vi.fn(() => true),
+}));
+vi.mock('$lib/services/contents/draft/validate/unique', async (importOriginal) => ({
+  ...(await importOriginal()),
+  isValueTaken: vi.fn(() => false),
 }));
 vi.mock('$lib/services/common/template');
 vi.mock('$lib/services/config');
@@ -1200,6 +1206,81 @@ describe('draft/validate/fields', () => {
     });
 
     describe('validateAnyField', () => {
+      describe('unique option', () => {
+        /**
+         * Validate a field with the given configuration and value.
+         * @param {object} fieldConfig Field configuration.
+         * @param {any} value Field value.
+         * @param {string} [keyPath] Field key path.
+         * @returns {object | undefined} Validity.
+         */
+        const validate = (fieldConfig, value, keyPath = 'title') => {
+          vi.mocked(getField).mockReturnValue(fieldConfig);
+
+          return validateAnyField({
+            draft: mockEntryDraft,
+            validities: { en: {} },
+            locale: 'en',
+            keyPath,
+            valueMap: { [keyPath]: value },
+            value,
+          });
+        };
+
+        it('should mark a value taken by another entry as a duplicate', () => {
+          vi.mocked(isValueTaken).mockReturnValue(true);
+
+          const validity = validate({ name: 'title', widget: 'string', unique: true }, 'Hello');
+
+          expect(validity).toMatchObject({ duplicateError: true, valid: false });
+          expect(isValueTaken).toHaveBeenCalledWith({
+            draft: mockEntryDraft,
+            locale: 'en',
+            keyPath: 'title',
+            value: 'Hello',
+            fieldType: 'string',
+          });
+        });
+
+        it('should accept a value no other entry has', () => {
+          vi.mocked(isValueTaken).mockReturnValue(false);
+
+          const validity = validate({ name: 'order', widget: 'number', unique: true }, 3, 'order');
+
+          expect(validity).toMatchObject({ duplicateError: false, valid: true });
+          expect(isValueTaken).toHaveBeenCalledOnce();
+        });
+
+        it('should not look at other entries for an empty value', () => {
+          const validity = validate({ name: 'title', widget: 'text', unique: true }, '  ');
+
+          expect(validity).toMatchObject({ duplicateError: false, valid: true });
+          expect(isValueTaken).not.toHaveBeenCalled();
+        });
+
+        it('should not look at other entries without the option', () => {
+          validate({ name: 'title', widget: 'string' }, 'Hello');
+
+          expect(isValueTaken).not.toHaveBeenCalled();
+        });
+
+        it('should compare a file just uploaded by its stored blob URL, not its name', () => {
+          mockEntryDraft.files = { 'blob:x': { file: new File([''], 'a.jpg') } };
+
+          validate({ name: 'cover', widget: 'image', unique: true }, 'blob:x', 'cover');
+
+          expect(isValueTaken).toHaveBeenCalledWith(
+            expect.objectContaining({ value: 'blob:x', fieldType: 'image' }),
+          );
+        });
+
+        it('should not look at other entries for a field in a List field', () => {
+          validate({ name: 'name', widget: 'string', unique: true }, 'Hello', 'speakers.0.name');
+
+          expect(isValueTaken).not.toHaveBeenCalled();
+        });
+      });
+
       it('should skip validation for non-editable fields in non-default locales', () => {
         const validities = { fr: {} };
 

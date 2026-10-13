@@ -1349,6 +1349,9 @@ validation:
     email: 正しいメールアドレスを入力してください。
     url: 正しい URL を入力してください。
 
+  # Value used for the same field in another entry of the collection
+  value_not_unique: この値は他のエントリーに使われています。
+
   # Custom field validation error
   invalid_value: 無効な値です。
   unexpected_error: 予期せぬエラーが発生しました。

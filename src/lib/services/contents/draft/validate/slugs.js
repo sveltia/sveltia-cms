@@ -1,7 +1,10 @@
 import { _ } from '@sveltia/i18n';
 
 import { slugify } from '$lib/services/common/slug';
-import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
+import {
+  getEntriesByCollection,
+  getEntriesInCollectionFolder,
+} from '$lib/services/contents/collection/entries';
 import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { getSlugOptions } from '$lib/services/contents/collection/slug';
 import { getNewEntryDirPath } from '$lib/services/contents/draft/slugs';
@@ -38,9 +41,13 @@ import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
  * versions, because a draft that renamed an entry leaves the published file behind, so both slugs
  * are still in use.
  * @param {EntryDraft} draft Entry draft.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.inFolder] Whether to include every published entry stored in the
+ * collection folder. When `false`, only the published entries the collection lists, which pass its
+ * `filter` option, are included.
  * @returns {(Entry | UnpublishedEntry)[]} Entries.
  */
-export const getOtherEntries = (draft) => {
+export const getOtherEntries = (draft, { inFolder = true } = {}) => {
   // An entry in the Editorial Workflow has previous paths
   const { collectionName, originalEntry } =
     /** @type {EntryDraft & { originalEntry?: UnpublishedEntry }} */ (draft);
@@ -51,7 +58,7 @@ export const getOtherEntries = (draft) => {
   );
 
   return [
-    ...getEntriesInCollectionFolder(collectionName),
+    ...(inFolder ? getEntriesInCollectionFolder : getEntriesByCollection)(collectionName),
     ...getUnpublishedEntriesByCollection(collectionName),
   ].filter((entry) => !Object.values(entry.locales).some(({ path }) => ownPaths.has(path)));
 };

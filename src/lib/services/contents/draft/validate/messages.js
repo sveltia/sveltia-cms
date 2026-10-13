@@ -150,6 +150,10 @@ export const getFieldValidationMessages = ({ validity, fieldConfig }) => {
     messages.push(_(`validation.type_mismatch.${type}`));
   }
 
+  if (validity.duplicateError) {
+    messages.push(_('validation.value_not_unique'));
+  }
+
   if (validity.customError) {
     messages.push(validity.customErrorMessage ?? _('validation.invalid_value'));
   }

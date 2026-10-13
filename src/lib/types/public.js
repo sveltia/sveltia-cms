@@ -525,6 +525,19 @@
  */
 
 /**
+ * Options for a field whose value can be required to be unique within the collection.
+ * @typedef {object} UniqueValueProps
+ * @property {boolean} [unique] Whether the value must be different from the value of the same
+ * field in every other entry of the collection, like a `UNIQUE` constraint in a relational
+ * database. An empty value is not checked; combine it with `required: true` to make sure every
+ * entry has a distinct value. Only available in an entry collection, and ignored for a field that
+ * takes multiple values, or a field in a List field or a rich text editor component. A Color field
+ * value is compared regardless of case, a Number field value by its numeric value, and a File or
+ * Image field value just uploaded isn’t compared, as it’s a new file. Default: `false`.
+ * @see https://github.com/decaporg/decap-cms/issues/1069
+ */
+
+/**
  * Boolean field properties.
  * @typedef {object} BooleanFieldProps
  * @property {'boolean'} widget Field type.
@@ -579,8 +592,8 @@
 
 /**
  * Color field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & ColorFieldProps}
- * ColorField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & ColorFieldProps &
+ * UniqueValueProps} ColorField
  */
 
 /**
@@ -683,8 +696,8 @@
 
 /**
  * DateTime field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & DateTimeFieldProps}
- * DateTimeField
+ * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & DateTimeFieldProps &
+ * UniqueValueProps} DateTimeField
  */
 
 /**
@@ -702,7 +715,7 @@
 /**
  * File field definition.
  * @typedef {CommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
- * MediaFieldProps & FileFieldProps} FileField
+ * MediaFieldProps & FileFieldProps & UniqueValueProps} FileField
  */
 
 /**
@@ -733,7 +746,7 @@
 /**
  * Image field definition.
  * @typedef {CommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
- * MediaFieldProps & ImageFieldProps} ImageField
+ * MediaFieldProps & ImageFieldProps & UniqueValueProps} ImageField
  */
 
 /**
@@ -987,7 +1000,7 @@
 /**
  * RichText field definition.
  * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & RichTextFieldBaseProps &
- * RichTextFieldFormatProps & RichTextFieldProps} RichTextField
+ * RichTextFieldFormatProps & RichTextFieldProps & UniqueValueProps} RichTextField
  */
 
 /**
@@ -1005,7 +1018,7 @@
 /**
  * Markdown field definition.
  * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & RichTextFieldBaseProps &
- * MarkdownFieldProps} MarkdownField
+ * MarkdownFieldProps & UniqueValueProps} MarkdownField
  */
 
 /**
@@ -1032,7 +1045,7 @@
 /**
  * Number field definition.
  * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & NumberFieldProps &
- * AdjacentLabelProps} NumberField
+ * AdjacentLabelProps & UniqueValueProps} NumberField
  */
 
 /**
@@ -1118,7 +1131,7 @@
 /**
  * Relation field definition.
  * @typedef {CommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
- * RelationFieldProps & MultiOptionFieldProps} RelationField
+ * RelationFieldProps & MultiOptionFieldProps & UniqueValueProps} RelationField
  */
 
 /**
@@ -1151,7 +1164,7 @@
 /**
  * Select field definition.
  * @typedef {CommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
- * SelectFieldProps & MultiOptionFieldProps} SelectField
+ * SelectFieldProps & MultiOptionFieldProps & UniqueValueProps} SelectField
  */
 
 /**
@@ -1175,7 +1188,7 @@
 /**
  * String field definition.
  * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & StringFieldProps &
- * AdjacentLabelProps & CharCountProps} StringField
+ * AdjacentLabelProps & CharCountProps & UniqueValueProps} StringField
  */
 
 /**
@@ -1193,7 +1206,7 @@
 /**
  * Text field definition.
  * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & TextFieldProps &
- * CharCountProps} TextField
+ * CharCountProps & UniqueValueProps} TextField
  */
 
 /**

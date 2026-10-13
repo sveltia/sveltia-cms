@@ -11,6 +11,7 @@ import {
   VALIDATE_FIELD_FUNCTIONS,
   validateScalarField,
 } from '$lib/services/contents/draft/validate/scalar';
+import { isUniqueField, isValueTaken } from '$lib/services/contents/draft/validate/unique';
 import { DEFAULT_VALIDITY, finalizeValidity } from '$lib/services/contents/draft/validate/validity';
 import {
   getField,
@@ -198,6 +199,9 @@ export const validateAnyField = (args) => {
     ({ keyPath, value, empty } = result);
   }
 
+  // A just uploaded file is validated by its name, but only the stored value tells it’s a new file
+  const storedValue = value;
+
   value = resolveMediaValue({ fieldType, value, files });
 
   if (!(['object', 'list', 'hidden', 'compute', 'keyvalue'].includes(fieldType) || multiple)) {
@@ -212,6 +216,17 @@ export const validateAnyField = (args) => {
 
   if (validateFieldFn) {
     Object.assign(validity, validateFieldFn({ fieldConfig, locale, value }).validity);
+  }
+
+  // An empty value is never a duplicate, so other entries are only looked at when there is a value
+  if (!empty && isUniqueField({ draft, fieldConfig, keyPath, componentName })) {
+    validity.duplicateError = isValueTaken({
+      draft,
+      locale,
+      keyPath,
+      value: storedValue,
+      fieldType,
+    });
   }
 
   // Validate custom field if applicable (uses cached result)
