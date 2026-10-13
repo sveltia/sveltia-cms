@@ -52,10 +52,20 @@ const serveSeed = async (page) => {
   return counter;
 };
 
+/**
+ * Sign in with the test backend, whose button offers to start the demo when the repository is
+ * seeded, and wait for the main UI.
+ * @param {Page} page Page.
+ */
+const startDemo = async (page) => {
+  await page.getByRole('button', { name: 'Start Demo' }).click();
+  await expect(page.getByRole('button', { name: 'Show Account Menu' })).toBeVisible();
+};
+
 test('seeds an empty repository on the first sign-in', async ({ cms, page }) => {
   await serveSeed(page);
   await cms.open();
-  await cms.signIn();
+  await startDemo(page);
 
   const list = page.getByRole('group', { name: 'Entry List' });
 
@@ -77,7 +87,7 @@ test('keeps the changes to a seeded repository after a reload', async ({ cms, pa
   const counter = await serveSeed(page);
 
   await cms.open();
-  await cms.signIn();
+  await startDemo(page);
   await page.getByRole('row', { name: /First Post/ }).click();
 
   const editor = getEditor(page);
@@ -99,7 +109,7 @@ test('seeds the repository again after all the data is erased', async ({ cms, pa
 
   await cms.open();
   await cms.seed({ 'content/posts/existing-post.md': '---\ntitle: Existing Post\n---\n' });
-  await cms.signIn();
+  await startDemo(page);
 
   // An existing repository is not seeded
   await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveCount(1);
@@ -118,7 +128,7 @@ test('seeds the repository again after all the data is erased', async ({ cms, pa
     .getByRole('button', { name: 'Erase' })
     .click();
 
-  await cms.signIn();
+  await startDemo(page);
   await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveCount(2);
   await expect(page.getByRole('row', { name: /Existing Post/ })).toBeHidden();
   expect(counter.manifestRequests).toBe(1);

@@ -25,6 +25,14 @@ export const getSeedManifestURL = () =>
   undefined;
 
 /**
+ * Check if the CMS runs as a demo: the test backend is used with a seed manifest, so the user
+ * starts with sample content rather than an empty repository.
+ * @param {string | undefined} backendName Name of the configured backend.
+ * @returns {boolean} Whether the CMS runs as a demo.
+ */
+export const isDemoSite = (backendName) => backendName === 'test-repo' && !!getSeedManifestURL();
+
+/**
  * Check if a path in the seed manifest can be written to the repository: a relative path without
  * empty, `.` or `..` segments, so a file can’t end up outside the repository.
  * @param {unknown} path Path.

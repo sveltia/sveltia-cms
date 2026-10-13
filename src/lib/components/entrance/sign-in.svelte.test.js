@@ -134,6 +134,24 @@ describe('SignIn', () => {
     expect(page.getByRole('button').elements()).toHaveLength(1);
   });
 
+  test('offers to start the demo when the test repository is seeded', async () => {
+    const link = Object.assign(document.createElement('link'), {
+      rel: 'cms-seed-url',
+      href: '/seed/manifest.json',
+    });
+
+    document.head.append(link);
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'test-repo' } });
+
+    try {
+      await render(SignIn, {});
+      await expect.element(page.getByRole('button', { name: 'Start Demo' })).toBeVisible();
+      expect(page.getByRole('button').elements()).toHaveLength(1);
+    } finally {
+      link.remove();
+    }
+  });
+
   test('offers nothing for an unknown backend', async () => {
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'unknown' } });
 

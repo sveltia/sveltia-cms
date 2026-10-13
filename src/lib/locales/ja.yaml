@@ -152,6 +152,8 @@ work_with_local_repo_description: ダイアログが表示されたら、「{$re
 work_with_local_repo_description_no_repo: ダイアログが表示されたら、Git リポジトリのルートディレクトリを選択してください。
 # Button label for demo/test repository
 work_with_test_repo: テストリポジトリで作業
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: デモを開始
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -222,6 +224,7 @@ sign_in_with_link_confirmation: このリンクを使うと {$service} に {$acc
 signed_in_as_x: '{$name} としてログイン中'
 working_with_local_repo: ローカルリポジトリで作業中
 working_with_test_repo: テストリポジトリで作業中
+working_in_demo_mode: デモモード
 
 # Account menu: action items for sign-out and app installation
 sign_out: ログアウト

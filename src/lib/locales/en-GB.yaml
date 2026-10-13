@@ -152,6 +152,8 @@ work_with_local_repo_description: Once prompted, select the root directory of th
 work_with_local_repo_description_no_repo: Once prompted, select the root directory of your Git repository.
 # Button label for demo/test repository
 work_with_test_repo: Work with Test Repository
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: Start Demo
 
 # Authentication errors
 # Error messages shown during sign-in failures
@@ -225,6 +227,7 @@ sign_in_with_link_confirmation: This link signs you in as {$account} on {$servic
 signed_in_as_x: Signed In as {$name}
 working_with_local_repo: Working with Local Repository
 working_with_test_repo: Working with Test Repository
+working_in_demo_mode: Demo Mode
 
 # Account menu: action items for sign-out and app installation
 sign_out: Sign Out

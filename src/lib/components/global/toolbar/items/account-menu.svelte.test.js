@@ -95,6 +95,25 @@ describe('AccountMenu', () => {
       .toHaveAttribute('aria-disabled', 'true');
   });
 
+  test('names the demo mode when the test repository is seeded', async () => {
+    const link = Object.assign(document.createElement('link'), {
+      rel: 'cms-seed-url',
+      href: '/seed/manifest.json',
+    });
+
+    document.head.append(link);
+    backendName.current = 'test-repo';
+
+    try {
+      await render(AccountMenu, {});
+      await expect
+        .element(page.getByRole('menuitem', { name: 'Demo Mode' }))
+        .toHaveAttribute('aria-disabled', 'true');
+    } finally {
+      link.remove();
+    }
+  });
+
   test('opens the settings dialog on a large screen', async () => {
     const menuButton = document.createElement('button');
 

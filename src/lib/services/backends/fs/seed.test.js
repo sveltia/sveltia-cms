@@ -8,6 +8,7 @@ import {
   fetchSeedFile,
   fetchSeedManifest,
   getSeedManifestURL,
+  isDemoSite,
   isValidSeedPath,
   seedTestRepository,
   writeSeedFile,
@@ -106,6 +107,25 @@ describe('getSeedManifestURL()', () => {
     document.head.append(link);
 
     expect(getSeedManifestURL()).toBeUndefined();
+  });
+});
+
+describe('isDemoSite()', () => {
+  test('returns true for the test backend with a seed manifest', () => {
+    addSeedLink(MANIFEST_URL);
+
+    expect(isDemoSite('test-repo')).toBe(true);
+  });
+
+  test('returns false for another backend', () => {
+    addSeedLink(MANIFEST_URL);
+
+    expect(isDemoSite('github')).toBe(false);
+    expect(isDemoSite(undefined)).toBe(false);
+  });
+
+  test('returns false without a seed manifest', () => {
+    expect(isDemoSite('test-repo')).toBe(false);
   });
 });
 
