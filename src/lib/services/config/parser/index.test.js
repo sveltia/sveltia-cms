@@ -22,6 +22,8 @@ const mockI18nStrings = vi.hoisted(() => ({
   'config.error_locator.collection': 'Collection: {collection}',
   'config.error_locator.file': 'File: {file}',
   'config.error_locator.field': 'Field: {field}',
+  'config.error_locator.component': 'Component: {component}',
+  'config.error.invalid_inline_component_fields': 'Invalid inline fields',
 }));
 
 vi.mock('@sveltia/i18n', async () =>
@@ -269,6 +271,35 @@ describe('Config Parser', () => {
         { cmsConfig: config, componentName: 'custom-component' },
         collectors,
       );
+    });
+
+    it('should check the options of custom editor components', () => {
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: { name: 'github', repo: 'user/repo' },
+        media_folder: '/media',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      mockCustomComponentRegistry.set('inline-component', {
+        mode: 'inline',
+        fields: [{ name: 'body', widget: 'text' }],
+      });
+
+      parseCmsConfig(config, collectors);
+
+      expect([...collectors.errors]).toEqual([
+        'Component: inline-component: Invalid inline fields',
+      ]);
     });
 
     it('should collect errors for missing backend', () => {

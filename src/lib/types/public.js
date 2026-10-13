@@ -2302,7 +2302,7 @@
 
 /**
  * Custom editor component mode.
- * @typedef {'block' | 'dialog'} EditorComponentMode
+ * @typedef {'block' | 'dialog' | 'inline'} EditorComponentMode
  */
 
 /**
@@ -2319,7 +2319,12 @@
  * Default: `false`.
  * @property {EditorComponentMode} [mode] Editing mode for the component. `block` (default) renders
  * the component within the rich text editor with an expandable field list. `dialog` renders a
- * compact placeholder that opens a dialog when clicked.
+ * compact placeholder that opens a dialog when clicked. `inline` renders the field’s own control,
+ * like a date picker, right within the text, without a label or dialog; the component can be
+ * removed with the Backspace key like a character. The `inline` mode requires the `fields` option
+ * to have a single Boolean, Color, DateTime, Number, Relation, Select or String field, and a
+ * Relation or Select field can’t have the `multiple` option enabled. Use a `pattern` matching a
+ * single line, so the component is inline in Markdown as well.
  * @property {string} [summary] Template for the placeholder text when `mode` is `dialog`, e.g.
  * `{{title}} - {{videoId}}`. Like the Object field’s `summary` option, it supports nested field
  * names and transformations. Text without placeholders is shown as is. If the summary is empty,

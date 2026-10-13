@@ -1928,6 +1928,8 @@ config:
     option_field_not_found: The `{$option}` option refers to `{$name}`, but no such field is defined.
     # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
     thumbnail_field_not_media: The `thumbnail` option refers to `{$name}`, but it must be an Image or File field, not a `{$widget}` field.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: The `inline` mode requires a single Boolean, Color, DateTime, Number, Relation, Select or String field. A Relation or Select field can’t have the `multiple` option enabled.
     # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
     invalid_regex: The `{$option}` option contains an invalid regular expression `{$pattern}`, which is ignored.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`

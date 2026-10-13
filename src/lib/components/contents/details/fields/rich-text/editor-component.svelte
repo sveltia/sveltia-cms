@@ -9,6 +9,7 @@
   import RemoveButton from '$lib/components/common/remove-button.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
+  import { isInlineComponentFieldList } from '$lib/services/config/parser/editor-components';
   import {
     getEntryDraftByElement,
     setEntryDraftContext,
@@ -171,6 +172,12 @@
    * in dialog mode.
    */
   const hasFields = $derived(fields.length > 0);
+  /**
+   * Whether the field’s control is rendered within the text (inline mode). The fields are checked
+   * when the configuration is parsed, but a component registered later isn’t, so one with fields
+   * the mode can’t have falls back to the block mode.
+   */
+  const inlineControl = $derived(mode === 'inline' && isInlineComponentFieldList(fields));
   /**
    * Names of this component and those it’s nested in, which the components nested in its fields
    * read with {@link getParentComponentNames}.
@@ -511,8 +518,9 @@
    * @type {{
    * typedPrefix: string,
    * observe: boolean,
+   * inline?: boolean,
    * }}
-   */ { typedPrefix, observe },
+   */ { typedPrefix, observe, inline: inlineField = false },
 )}
   {#each fields as fieldConfig (fieldConfig.name)}
     {#snippet fieldEditor()}
@@ -524,6 +532,7 @@
         context="rich-text-editor-component"
         {componentName}
         {valueStoreKey}
+        inline={inlineField}
       />
     {/snippet}
     {#if observe}
@@ -637,6 +646,26 @@
       {/snippet}
     </Dialog>
   {/if}
+{:else if inlineControl}
+  <!-- Inline mode: the control of the only field, right within the text -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+  <span
+    role="group"
+    class="component inline-field"
+    bind:this={wrapper}
+    contenteditable="false"
+    tabindex="0"
+    aria-label={label}
+    title={label}
+    data-key-path-prefix={keyPathPrefix}
+    data-component-name={componentName}
+    data-component-path={componentPath}
+    {@attach (element) => on(element, 'keydown', handleBlockKeyDown)}
+  >
+    {#if locale && keyPath}
+      {@render fieldEditors({ typedPrefix: typedKeyPathPrefix, observe: false, inline: true })}
+    {/if}
+  </span>
 {:else}
   <!-- Block mode: expandable block with ObjectHeader -->
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -743,6 +772,40 @@
         button {
           margin: var(--sui-focus-ring-width);
         }
+      }
+    }
+  }
+
+  .inline-field {
+    /* Make the controls as compact as the text around them allows */
+    --sui-textbox-singleline-min-width: 8em;
+    --sui-combobox-min-width: 6em;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin-inline: 2px;
+    border-radius: var(--sui-control-medium-border-radius);
+    padding: 2px;
+    background-color: var(--sui-secondary-background-color);
+    white-space: normal;
+    -webkit-user-select: none;
+    user-select: none;
+
+    &:focus {
+      outline: 2px solid var(--sui-primary-accent-color-translucent);
+      outline-offset: 1px;
+    }
+
+    :global {
+      .field.inline {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      /* Only the control itself, not the text box within a number input */
+      .field.inline > .sui:is(.text-input, .number-input, .combobox) {
+        margin: 0;
+        width: auto;
       }
     }
   }

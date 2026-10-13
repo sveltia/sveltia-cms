@@ -4,6 +4,7 @@ import { customComponentRegistry } from '$lib/services/api/registries';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { parseBackendConfig } from '$lib/services/config/parser/backend';
 import { parseCollections } from '$lib/services/config/parser/collections';
+import { parseEditorComponent } from '$lib/services/config/parser/editor-components';
 import { parseFields } from '$lib/services/config/parser/fields';
 import { parseI18nConfig } from '$lib/services/config/parser/i18n';
 import { parseMediaConfig } from '$lib/services/config/parser/media';
@@ -86,7 +87,8 @@ export const parseCmsConfig = (cmsConfig, collectors) => {
 
   // Parse fields in custom editor components registered with `CMS.registerEditorComponent()`.
   // @todo Figure out how to handle lazy-loaded components, as they may not be parsed here.
-  customComponentRegistry.forEach(({ fields }, componentName) => {
-    parseFields(fields, { cmsConfig, componentName }, collectors);
+  customComponentRegistry.forEach((definition, componentName) => {
+    parseEditorComponent({ definition, componentName, cmsConfig, collectors });
+    parseFields(definition.fields, { cmsConfig, componentName }, collectors);
   });
 };

@@ -1829,6 +1829,8 @@ config:
     option_field_not_found: '`{$option}` オプションで `{$name}` が参照されていますが、そのフィールドは定義されていません。'
     # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
     thumbnail_field_not_media: '`thumbnail` オプションに `{$name}` が指定されていますが、`{$widget}` フィールドではなく Image または File フィールドでなければなりません。'
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: '`inline` モードでは、Boolean、Color、DateTime、Number、Relation、Select、String のいずれか 1 つのフィールドだけを定義する必要があります。Relation と Select フィールドでは `multiple` オプションを有効にできません。'
     # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
     invalid_regex: '`{$option}` オプションに無効な正規表現 `{$pattern}` が含まれているため、無視されます。'
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`

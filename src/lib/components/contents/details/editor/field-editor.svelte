@@ -63,6 +63,10 @@
    * @property {FieldContext} [context] Where the field is rendered.
    * @property {string} [componentName] Name of the parent rich text editor component, if any.
    * @property {DraftValueStoreKey} [valueStoreKey] Key to store the values in {@link EntryDraft}.
+   * @property {boolean} [inline] Whether to render only the field’s control, without the label,
+   * the hint or the validation message, to be placed within a line of text, as an editor component
+   * in the `inline` mode does. A Select or Relation field then always shows a dropdown list, as
+   * radio buttons wouldn’t fit.
    */
 
   const entryDraft = getEntryDraftContext();
@@ -77,6 +81,7 @@
     context: fieldContext = parent.fieldContext ?? undefined,
     componentName,
     valueStoreKey = parent.valueStoreKey ?? 'currentValues',
+    inline = false,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -264,7 +269,11 @@
     typedKeyPath,
     fieldId,
     fieldLabel,
-    fieldConfig,
+    fieldConfig: /** @type {Field} */ (
+      inline && ['select', 'relation'].includes(fieldType)
+        ? { ...fieldConfig, dropdown_threshold: 0 }
+        : fieldConfig
+    ),
     readonly,
     required,
     invalid,
@@ -289,7 +298,22 @@
   {/if}
 {/snippet}
 
-{#if entryDraft.current && canEdit && fieldType !== 'hidden'}
+{#if entryDraft.current && canEdit && fieldType !== 'hidden' && inline}
+  <!-- Only the field types with a compact control can be inline, which excludes a custom one; see
+  `isInlineComponentFieldList()` -->
+  {@const Editor = editors[fieldType]}
+  <span
+    role="none"
+    class="field inline"
+    data-field-type={fieldType}
+    data-key-path={keyPath}
+    data-typed-key-path={typedKeyPath}
+  >
+    <!-- The control is labelled with this, as it is with the heading otherwise -->
+    <span id="{fieldId}-label" hidden>{fieldLabel}</span>
+    <Editor {...editorProps} bind:currentValue={() => currentValue, (value) => writeValue(value)} />
+  </span>
+{:else if entryDraft.current && canEdit && fieldType !== 'hidden'}
   <FieldEditorGroup
     aria-label={_('x_field', { values: { field: fieldLabel } })}
     data-field-type={fieldType}

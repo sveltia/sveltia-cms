@@ -258,6 +258,111 @@ test.describe('CMS.registerEditorComponent()', () => {
   });
 });
 
+test.describe('an editor component in the inline mode', () => {
+  test.use({ config: CONFIG });
+
+  /**
+   * Register a status component, rendered as a select box within the text.
+   * @param {Page} page Page.
+   * @param {string} [fields] Fields option, as a script.
+   */
+  const registerStatus = async (page, fields) => {
+    await addScripts(page, {
+      after: `
+        CMS.registerEditorComponent({
+          id: 'status',
+          label: 'Status',
+          mode: 'inline',
+          fields: ${fields ?? "[{ name: 'value', label: 'Value', widget: 'select', options: ['draft', 'done'] }]"},
+          pattern: /\\[status:(\\w+)\\]/,
+          fromBlock: (match) => ({ value: match[1] }),
+          toBlock: ({ value }) => '[status:' + value + ']',
+          toPreview: ({ value }) => '<span>' + value + '</span>',
+        });
+      `,
+    });
+  };
+
+  test('renders the control within the text, which updates the component', async ({
+    cms,
+    page,
+  }) => {
+    await registerStatus(page);
+    await cms.open();
+    await cms.seed({
+      'content/posts/launch-day.md':
+        '---\ntitle: Launch Day\n---\n\nThe post is [status:draft] now.\n',
+    });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Launch Day/ }).click();
+
+    const editor = getEditor(page);
+    const body = editor.getByRole('textbox', { name: 'Body' });
+    const component = body.getByRole('group', { name: 'Status', exact: true });
+
+    // The control sits within the paragraph, without a label or a dialog
+    await expect(body.locator('p').getByRole('group', { name: 'Status' })).toBeVisible();
+    await expect(component.getByRole('combobox', { name: 'Value' })).toHaveText(/draft/);
+    await expect(component.getByRole('heading')).toHaveCount(0);
+
+    await cms.chooseMenuItem(
+      component.getByRole('combobox', { name: 'Value' }),
+      page.getByRole('option', { name: 'done' }),
+    );
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect
+      .poll(async () => (await cms.readRepo())['content/posts/launch-day.md'])
+      .toBe('---\ntitle: Launch Day\n---\n\nThe post is [status:done] now.\n');
+  });
+
+  test('removes the component with the Backspace key', async ({ cms, page }) => {
+    await registerStatus(page);
+    await cms.open();
+    await cms.seed({
+      'content/posts/launch-day.md':
+        '---\ntitle: Launch Day\n---\n\nThe post is [status:draft] now\n',
+    });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Launch Day/ }).click();
+
+    const editor = getEditor(page);
+    const body = editor.getByRole('textbox', { name: 'Body' });
+
+    await expect(body.getByRole('group', { name: 'Status' })).toBeVisible();
+    // Place the caret right after the component, at the start of the text following it
+    await body.getByText('now').click();
+    await body.evaluate((element) => {
+      const text = [...element.querySelectorAll('[data-lexical-text]')].find((span) =>
+        span.textContent?.includes('now'),
+      )?.firstChild;
+
+      const range = document.createRange();
+
+      range.setStart(/** @type {Node} */ (text), 0);
+      window.getSelection()?.removeAllRanges();
+      window.getSelection()?.addRange(range);
+    });
+    await page.keyboard.press('Backspace');
+    await expect(body.getByRole('group', { name: 'Status' })).toHaveCount(0);
+    await expect(body.locator('p')).toHaveText('The post is  now');
+
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect
+      .poll(async () => (await cms.readRepo())['content/posts/launch-day.md'])
+      .toBe('---\ntitle: Launch Day\n---\n\nThe post is  now\n');
+  });
+
+  test('reports a config error for a field the mode can’t have', async ({ cms, page }) => {
+    await registerStatus(page, "[{ name: 'value', label: 'Value', widget: 'text' }]");
+    await cms.open();
+    await expect(
+      // The component name is wrapped in bidi isolates
+      page.getByText(/component: The inline mode requires a single Boolean/),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Work with Test Repository' })).toBeHidden();
+  });
+});
+
 test.describe('toPreview() arguments', () => {
   test.use({ config: CONFIG });
 

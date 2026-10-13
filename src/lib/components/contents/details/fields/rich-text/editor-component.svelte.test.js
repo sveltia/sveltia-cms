@@ -513,6 +513,119 @@ describe('EditorComponent', () => {
     });
   });
 
+  describe('inline mode', () => {
+    const statusFields = [
+      { name: 'value', label: 'Value', widget: 'select', options: ['draft', 'done'] },
+    ];
+
+    beforeAll(() => {
+      customComponentRegistry.set(
+        'status',
+        /** @type {any} */ ({
+          id: 'status',
+          label: 'Status',
+          mode: 'inline',
+          fields: statusFields,
+        }),
+      );
+    });
+
+    afterAll(() => {
+      customComponentRegistry.delete('status');
+    });
+
+    test('renders only the control of the field, which updates the component', async () => {
+      const { draft, onChange, wrapper } = await renderComponent({
+        componentName: 'status',
+        label: 'Status',
+        mode: 'inline',
+        inline: true,
+        fields: statusFields,
+        summary: undefined,
+        values: { value: 'draft' },
+      });
+
+      const group = page.getByRole('group', { name: 'Status' });
+      // Even with a few options, which would otherwise be radio buttons
+      const select = group.getByRole('combobox', { name: 'Value' });
+
+      await expect.element(select).toHaveTextContent('draft');
+      await expect.element(group).toHaveAttribute('data-component-name', 'status');
+      await expect.element(group).toHaveAttribute('contenteditable', 'false');
+      expect(wrapper.querySelector('.component')).toHaveClass('inline-field');
+      // No label, hint, menu or dialog
+      expect(wrapper.querySelector('h4, header, .hint, dialog')).toBeNull();
+      expect(wrapper.querySelector('.field.inline')).toHaveAttribute('data-field-type', 'select');
+
+      await expect
+        .poll(() => getStoredValues(draft))
+        .toEqual({ value: 'draft', __sc_component_name: 'status' });
+
+      await select.click();
+      await page.getByRole('option', { name: 'done' }).click();
+      await vi.waitFor(() =>
+        expect(onChange).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            type: 'update',
+            detail: expect.objectContaining({ value: 'done' }),
+          }),
+        ),
+      );
+    });
+
+    test('is removed with the Backspace key while focused', async () => {
+      const { onChange, wrapper } = await renderComponent({
+        componentName: 'status',
+        label: 'Status',
+        mode: 'inline',
+        inline: true,
+        fields: statusFields,
+        values: { value: 'draft' },
+      });
+
+      await expect.element(page.getByRole('combobox', { name: 'Value' })).toBeInTheDocument();
+
+      const chip = /** @type {HTMLElement} */ (wrapper.querySelector('.component'));
+
+      chip.focus();
+      await userEvent.keyboard('{Backspace}');
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ type: 'remove' }));
+    });
+
+    test('falls back to the block mode for fields the mode can’t have', async () => {
+      // A component registered after the configuration was checked, e.g. by a late script
+      const { wrapper } = await renderComponent({
+        mode: 'inline',
+        inline: true,
+        values: { title: 'Hello' },
+      });
+
+      await expect.element(page.getByRole('textbox', { name: 'Title' })).toHaveValue('Hello');
+      expect(wrapper.querySelector('.component')).toHaveClass('wrapper');
+      expect(wrapper.querySelector('.inline-field')).toBeNull();
+    });
+
+    test('has no control outside an entry editor pane', async () => {
+      const { wrapper } = await renderComponent(
+        {
+          componentName: 'status',
+          label: 'Status',
+          mode: 'inline',
+          inline: true,
+          fields: statusFields,
+          values: { value: 'draft' },
+        },
+        { contained: false },
+      );
+
+      await expect.element(page.getByRole('group', { name: 'Status' })).toBeInTheDocument();
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      expect(wrapper.querySelector('.field')).toBeNull();
+    });
+  });
+
   describe('dialog mode', () => {
     test('shows a summary, and edits the fields in a dialog', async () => {
       const { onChange } = await renderComponent({
