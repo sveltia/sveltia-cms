@@ -210,6 +210,35 @@ describe('ListEditorComplex', () => {
       .toEqual(['b', 'c', 'a']);
   });
 
+  test('shows the position of each item, following a move', async () => {
+    const { container } = await renderEditor(authorsField, {
+      'authors.0.name': 'a',
+      'authors.1.name': 'b',
+      'authors.2.name': 'c',
+    });
+
+    /**
+     * Get the positions shown in the item headers, in the order on screen.
+     * @returns {string[]} Positions.
+     */
+    const getPositions = () =>
+      [...container.querySelectorAll('.item .position')].map((el) => el.textContent.trim());
+
+    await expect.poll(getPositions).toEqual(['1', '2', '3']);
+
+    const first = page.getByRole('group', { name: 'Item 1 of 3' });
+
+    await expect.element(first.getByRole('textbox').first()).toHaveValue('a');
+
+    await page.getByRole('button', { name: 'Reorder Item' }).nth(0).element().focus();
+    await userEvent.keyboard('{End}');
+
+    await expect.poll(getPositions).toEqual(['1', '2', '3']);
+    await expect
+      .element(page.getByRole('group', { name: 'Item 3 of 3' }).getByRole('textbox').first())
+      .toHaveValue('a');
+  });
+
   test('collapses the items to their summaries', async () => {
     const { draft, container } = await renderEditor(authorsField, {
       'authors.0.name': 'Melvin',
@@ -248,7 +277,7 @@ describe('ListEditorComplex', () => {
       .toEqual([{ type: 'hero', heading: '' }]);
     await expect
       .element(page.getByRole('button', { name: 'Collapse' }).nth(1))
-      .toHaveTextContent('expand_more Hero');
+      .toHaveTextContent('expand_more 1 Hero');
   });
 
   test('warns about an item of an unknown type', async () => {
@@ -583,6 +612,11 @@ describe('ListEditorComplex (more)', () => {
         clientY: bottom - 1,
       }),
     );
+
+    // The positions follow the drag preview before the item is dropped
+    await expect.poll(() => first.querySelector('.position')?.textContent.trim()).toBe('2');
+    expect(first).toHaveAttribute('aria-label', 'Item 2 of 2');
+
     second.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
     first.dispatchEvent(new DragEvent('dragend', { bubbles: true }));
 
@@ -931,6 +965,9 @@ describe('ListEditorComplex (single item)', () => {
     expect(page.getByRole('button', { name: 'Collapse' }).elements()).toHaveLength(1);
     expect(page.getByRole('button', { name: 'Reorder Item' }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: 'Remove' }).elements()).toHaveLength(0);
+    // Nor a position, which would always be 1
+    expect(container.querySelector('.position')).toBeNull();
+    expect(container.querySelector('.item')).not.toHaveAttribute('aria-label');
     // The list is labelled with the field name instead of the item count
     expect(container.querySelector('[hidden]')?.textContent).toBe('Author');
   });

@@ -549,7 +549,8 @@
   ondragovercapture={sorter.onDragOver}
   ondropcapture={sorter.onDrop}
 >
-  {#each sorter.displayOrder as index (itemKeys.current[index])}
+  <!-- The display index is the position on screen, which follows a drag preview as well -->
+  {#each sorter.displayOrder as index, displayIndex (itemKeys.current[index])}
     {@const item = items[index]}
     <!--
       The wrapper is what the `flip` animation moves: `animate:` only works on an element at the top
@@ -563,6 +564,11 @@
         {@const expanded = isExpanded(entryDraft.current, itemKeyPath)}
         <div
           role="group"
+          aria-label={singleItem
+            ? undefined
+            : _('list_item_position', {
+                values: { position: displayIndex + 1, count: items.length },
+              })}
           class="item"
           class:unknown-type={unknownType}
           class:dragging={sorter.dragIndex === index}
@@ -573,6 +579,7 @@
         >
           <ObjectHeader
             label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
+            position={singleItem ? undefined : displayIndex + 1}
             controlId="list-{fieldId}-item-{index}-body"
             {expanded}
             toggleExpanded={subFields.length
