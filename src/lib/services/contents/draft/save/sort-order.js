@@ -3,8 +3,30 @@ import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reor
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
- * @import { EntryDraft } from '$lib/types/private';
+ * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
+ * @import { FieldKeyPath } from '$lib/types/public';
  */
+
+/**
+ * Get the highest number stored under the given key path by the entries of a collection, in the
+ * given locale. The entries still in a pull request count too, as a new entry saved with
+ * Editorial Workflow has taken its number as well. A value that isn’t a finite number is ignored,
+ * and so is a negative one, as the result is never below zero.
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Entry collection name.
+ * @param {FieldKeyPath} args.keyPath Key path of the value.
+ * @param {InternalLocaleCode} args.locale Locale of the values, usually the default locale.
+ * @returns {number} Highest number, or `0` if no entry has a positive one.
+ */
+export const getMaxEntryNumber = ({ collectionName, keyPath, locale }) =>
+  [
+    ...getEntriesByCollection(collectionName),
+    ...getUnpublishedEntriesByCollection(collectionName),
+  ].reduce((max, entry) => {
+    const value = Number(entry.locales[locale]?.content?.[keyPath]);
+
+    return Number.isFinite(value) && value > max ? value : max;
+  }, 0);
 
 /**
  * For new entries in reorder-enabled entry collections, assign a fresh manual sort order to the
@@ -28,15 +50,11 @@ export const assignManualSortOrder = (draft, offset = 0) => {
 
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
 
-  // With Editorial Workflow, a new entry still in a pull request has taken an order as well
-  const maxOrder = [
-    ...getEntriesByCollection(collection.name),
-    ...getUnpublishedEntriesByCollection(collection.name),
-  ].reduce((max, entry) => {
-    const value = Number(entry.locales[defaultLocale]?.content?.[orderKey]);
-
-    return Number.isFinite(value) && value > max ? value : max;
-  }, 0);
+  const maxOrder = getMaxEntryNumber({
+    collectionName: collection.name,
+    keyPath: orderKey,
+    locale: defaultLocale,
+  });
 
   const nextOrder = maxOrder + offset + 1;
 

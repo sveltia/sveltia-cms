@@ -4,7 +4,7 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
-import { assignManualSortOrder } from './sort-order';
+import { assignManualSortOrder, getMaxEntryNumber } from './sort-order';
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
@@ -91,6 +91,42 @@ describe('assignManualSortOrder', () => {
 
     assignManualSortOrder(draft);
     expect(draft.currentValues.en.order).toBe(4);
+    expect(getUnpublishedEntriesByCollection).toHaveBeenCalledWith('tags');
+  });
+});
+
+describe('getMaxEntryNumber', () => {
+  beforeEach(() => {
+    vi.mocked(getEntriesByCollection).mockReturnValue([]);
+    vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue([]);
+  });
+
+  it('returns 0 when no entry has a positive number', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue(
+      /** @type {any} */ ([{ locales: { en: { content: { id: -3 } } } }]),
+    );
+
+    expect(getMaxEntryNumber({ collectionName: 'tags', keyPath: 'id', locale: 'en' })).toBe(0);
+  });
+
+  it('returns the highest number in the given locale, including the unpublished entries', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue(
+      /** @type {any} */ ([
+        { locales: { en: { content: { id: '4' } }, fr: { content: { id: 99 } } } },
+        { locales: { en: { content: { id: 'abc' } } } },
+        { locales: { en: { content: { 'meta.id': 50 } } } },
+      ]),
+    );
+    vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue(
+      /** @type {any} */ ([{ locales: { en: { content: { id: 6 } } } }]),
+    );
+
+    expect(getMaxEntryNumber({ collectionName: 'tags', keyPath: 'id', locale: 'en' })).toBe(6);
+    expect(getMaxEntryNumber({ collectionName: 'tags', keyPath: 'id', locale: 'fr' })).toBe(99);
+    expect(getMaxEntryNumber({ collectionName: 'tags', keyPath: 'meta.id', locale: 'en' })).toBe(
+      50,
+    );
+    expect(getEntriesByCollection).toHaveBeenCalledWith('tags');
     expect(getUnpublishedEntriesByCollection).toHaveBeenCalledWith('tags');
   });
 });

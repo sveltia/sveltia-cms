@@ -6,6 +6,7 @@ import { getReferencedPendingEntries } from '$lib/services/contents/draft/pendin
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
+import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
 import { isWorkflowDraft, isWorkflowEnabled, unpublishedEntries } from '$lib/services/workflow';
 
@@ -50,6 +51,10 @@ vi.mock('$lib/services/contents/draft/save/changes', async (importOriginal) => (
 
 vi.mock('$lib/services/contents/draft/save/sort-order', () => ({
   assignManualSortOrder: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/fields/number/auto-increment', () => ({
+  assignAutoIncrementValues: vi.fn(),
 }));
 
 vi.mock('$lib/services/contents/draft/slugs', () => ({
@@ -423,6 +428,7 @@ describe('createPendingEntry', () => {
     const result = await createPendingEntry({ draft, parentDraft, fieldConfig });
 
     expect(assignManualSortOrder).toHaveBeenCalledWith(draft, 1);
+    expect(assignAutoIncrementValues).toHaveBeenCalledWith(draft, 1);
     // The `preSave` event hooks are held back until the entry is committed with the parent
     expect(createSavingEntryData).toHaveBeenCalledWith({ draft, slugs, runPreSave: false });
     expect(getEntryOptions).toHaveBeenCalledWith({

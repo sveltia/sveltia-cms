@@ -24,6 +24,7 @@
     isFieldRequired,
   } from '$lib/services/contents/entry/fields';
   import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now';
+  import { isAutoIncrementField } from '$lib/services/contents/fields/number/auto-increment';
   import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
   import { createRawState } from '$lib/services/utils/state.svelte';
   import { sanitizeInlineMarkdown } from '$lib/services/utils/string';
@@ -218,11 +219,27 @@
   // hidden while the entry is being created because it has no meaningful value until then. The
   // option is ignored in a rich text editor component, whose values aren’t set on save
   const autoNow = $derived(!inEditorComponent && isAutoNowField(fieldConfig));
-  const hidden = $derived(fieldType === 'compute' || (autoNow && !!entryDraft.current?.isNew));
+  // A Number field with the `auto_increment` option is numbered on save, the same way. It only
+  // applies to a field holding one value per entry of an entry collection
+  /* v8 ignore start -- The field is only rendered along with a draft, but the draft can be gone
+  while the editor is torn down */
+  const autoIncrement = $derived(
+    !!entryDraft.current &&
+      isAutoIncrementField({
+        fieldConfig,
+        collection: entryDraft.current.collection,
+        isIndexFile: entryDraft.current.isIndexFile,
+        keyPath,
+        inEditorComponent,
+      }),
+  );
+  /* v8 ignore stop */
+  const autoSet = $derived(autoNow || autoIncrement);
+  const hidden = $derived(fieldType === 'compute' || (autoSet && !!entryDraft.current?.isNew));
   const readonly = $derived(
     // The `readonly` option defaults to `true` for the UUID field type, which can be unlocked
     (readonlyOption ?? fieldType === 'uuid') ||
-      autoNow ||
+      autoSet ||
       locked ||
       isDuplicated ||
       fieldType === 'compute',

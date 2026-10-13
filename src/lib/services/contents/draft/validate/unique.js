@@ -1,6 +1,7 @@
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getOtherEntries } from '$lib/services/contents/draft/validate/slugs';
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { isPerEntryField } from '$lib/services/contents/entry/per-entry';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 
 /**
@@ -25,12 +26,6 @@ export const UNIQUE_FIELD_TYPES = [
   'string',
   'text',
 ];
-
-/**
- * Regular expression matching the item index of a List field within a key path, e.g. `.0` in
- * `speakers.0.name` and `.3` in `tags.3`.
- */
-const LIST_ITEM_INDEX_REGEX = /\.\d+(?=\.|$)/;
 
 /**
  * Normalize a field value so that values meaning the same thing compare equal: a number is compared
@@ -72,11 +67,9 @@ export const normalizeUniqueValue = (value, fieldType) => {
 };
 
 /**
- * Check whether the `unique` option applies to the given field. It’s only meaningful in an entry
- * collection, where every entry has the same fields, and for a field that holds one value per
- * entry: a field that takes multiple values holds a list, a field in a List field or a rich text
- * editor component can appear any number of times in an entry, and the special index file has
- * fields of its own.
+ * Check whether the `unique` option applies to the given field. It’s only meaningful for a field
+ * that holds one value per entry of an entry collection. A field that takes multiple values doesn’t
+ * qualify either, as it holds a list.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {Field} args.fieldConfig Field configuration.
@@ -91,10 +84,12 @@ export const isUniqueField = ({ draft, fieldConfig, keyPath, componentName }) =>
     UNIQUE_FIELD_TYPES.includes(fieldType) &&
     /** @type {UniqueValueProps} */ (fieldConfig).unique === true &&
     !isFieldMultiple(fieldConfig) &&
-    draft.collection._type === 'entry' &&
-    !draft.isIndexFile &&
-    !componentName &&
-    !LIST_ITEM_INDEX_REGEX.test(keyPath)
+    isPerEntryField({
+      collection: draft.collection,
+      isIndexFile: draft.isIndexFile,
+      keyPath,
+      inEditorComponent: !!componentName,
+    })
   );
 };
 

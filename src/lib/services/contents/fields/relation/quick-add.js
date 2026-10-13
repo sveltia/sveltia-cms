@@ -12,6 +12,7 @@ import {
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
+import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
 import { renameIfNeeded } from '$lib/services/utils/file';
 import { isWorkflowDraft, isWorkflowEnabled } from '$lib/services/workflow';
@@ -199,9 +200,11 @@ export const getPendingEntrySlugs = ({ draft, parentDraft }) => {
  */
 export const createPendingEntry = async ({ draft, parentDraft, fieldConfig }) => {
   const { collectionName } = draft;
+  // Each entry added takes the next order and number, the same way an entry saved on its own would
+  const pendingEntryCount = getPendingEntriesByCollection(parentDraft, collectionName).length;
 
-  // Each entry added takes the next order, the same way an entry saved on its own would
-  assignManualSortOrder(draft, getPendingEntriesByCollection(parentDraft, collectionName).length);
+  assignManualSortOrder(draft, pendingEntryCount);
+  assignAutoIncrementValues(draft, pendingEntryCount);
 
   const slugs = getPendingEntrySlugs({ draft, parentDraft });
   // The `preSave` event hooks are called when the entry is actually saved, along with the parent

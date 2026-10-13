@@ -28,6 +28,7 @@ import {
   PAIR_KEY_PATH_REGEX,
 } from '$lib/services/contents/fields/key-value/pairs';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
+import { isAutoIncrementField } from '$lib/services/contents/fields/number/auto-increment';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 import { isOptionValue } from '$lib/services/contents/fields/select/helpers';
 import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
@@ -166,6 +167,19 @@ export const validateAnyField = (args) => {
   // A DateTime field set automatically on save can’t be edited, and may be empty until then. The
   // option is ignored in a rich text editor component, whose values aren’t set on save
   if (!componentName && isAutoNowField(fieldConfig)) {
+    return undefined;
+  }
+
+  // The same goes for a Number field numbered automatically on save
+  if (
+    isAutoIncrementField({
+      fieldConfig,
+      collection,
+      isIndexFile,
+      keyPath,
+      inEditorComponent: !!componentName,
+    })
+  ) {
     return undefined;
   }
 

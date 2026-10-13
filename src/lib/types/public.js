@@ -1038,6 +1038,14 @@
  * @property {number} [step] Number to increase/decrease with the arrow key/button. Default: `1`.
  * Set to `-1` to hide the buttons and disable stepping with the arrow keys, for a number that isn’t
  * meant to be stepped, like an ID.
+ * @property {boolean} [auto_increment] Whether to number the entries automatically, like an
+ * `AUTO_INCREMENT` column in a relational database. A new entry is given the integer after the
+ * highest one any entry of the collection has, or the `min` option if it’s higher, starting from
+ * `1`, when it’s saved, so the number can be used in the `slug` template. An existing entry without
+ * a number gets one the next time it’s saved. The field is read-only, and hidden while the entry
+ * is being created. Only available in an entry collection, and ignored for a field in a List field
+ * or a rich text editor component. Default: `false`.
+ * @see https://github.com/decaporg/decap-cms/issues/2367
  * @see https://decapcms.org/docs/widgets/#Number
  * @see https://sveltiacms.app/en/docs/fields/number
  */

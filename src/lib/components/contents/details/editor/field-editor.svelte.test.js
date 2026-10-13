@@ -398,6 +398,59 @@ describe('FieldEditor', () => {
     expect(container.querySelector('.required')).toBeNull();
   });
 
+  test('hides a Number field numbered automatically on save while the entry is new', async () => {
+    const { container } = await renderEditor({
+      fieldConfig: { name: 'number', widget: 'number', auto_increment: true },
+      values: { number: null },
+    });
+
+    expect(container.querySelector('section')).toHaveAttribute('hidden');
+  });
+
+  test('shows a Number field numbered automatically on save as read-only once saved', async () => {
+    const { container } = await renderEditor({
+      fieldConfig: {
+        name: 'number',
+        label: 'Number',
+        widget: 'number',
+        required: true,
+        auto_increment: true,
+      },
+      values: { number: 42 },
+      draft: { isNew: false },
+    });
+
+    const group = page.getByRole('group', { name: /“.Number.” Field/ });
+
+    await expect.element(group).toBeVisible();
+    await expect.element(group.getByRole('spinbutton')).toHaveValue('42');
+    await expect.element(group.getByRole('spinbutton')).toHaveAttribute('aria-readonly', 'true');
+    // Nothing to fill in, so it isn’t marked as required
+    expect(container.querySelector('.required')).toBeNull();
+  });
+
+  test('ignores `auto_increment` on a Number field in a rich text editor component', async () => {
+    const draft = createMockDraft({
+      fields: [{ name: 'body', widget: 'richtext' }],
+      i18n: { i18nEnabled: false, defaultLocale: 'en', allLocales: ['en'] },
+      values: { en: {} },
+    });
+
+    await renderWithDraft(FieldEditor, {
+      draft,
+      props: {
+        locale: 'en',
+        keyPath: 'number',
+        typedKeyPath: 'number',
+        fieldConfig: { name: 'number', label: 'Number', widget: 'number', auto_increment: true },
+        context: 'rich-text-editor-component',
+      },
+    });
+
+    await expect.element(page.getByRole('spinbutton')).toBeVisible();
+    await expect.element(page.getByRole('spinbutton')).not.toHaveAttribute('aria-readonly', 'true');
+  });
+
   test('ignores `auto_now` on a DateTime field in a rich text editor component', async () => {
     const draft = createMockDraft({
       fields: [{ name: 'body', widget: 'richtext' }],

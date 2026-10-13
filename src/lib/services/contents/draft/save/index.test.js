@@ -22,6 +22,7 @@ import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
+import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { setLastCommitPublishHint } from '$lib/services/deployments';
 import { isWorkflowDraft, unpublishedEntries } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
@@ -75,6 +76,7 @@ vi.mock('$lib/services/contents/editor/fields');
 vi.mock('$lib/services/contents/editor/pending');
 vi.mock('$lib/services/contents/entry/history');
 vi.mock('$lib/services/contents/fields/date-time/auto-now');
+vi.mock('$lib/services/contents/fields/number/auto-increment');
 vi.mock('$lib/services/deployments');
 vi.mock('$lib/services/workflow', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
@@ -336,6 +338,30 @@ describe('draft/save/index', () => {
 
       expect(assignAutoNowValues).toHaveBeenCalledWith(mockDraft);
       expect(order).toEqual(['autoNow', 'slugs']);
+    });
+
+    it('should number the auto-increment Number fields before creating the slugs', async () => {
+      const order = [];
+
+      mockDraft.collection = { name: 'posts', _type: 'entry', _i18n: { defaultLocale: 'en' } };
+      // Entries added to the same collection from a Relation field took the next numbers
+      mockDraft.pendingEntries = [
+        { collectionName: 'posts', values: [] },
+        { collectionName: 'tags', values: [] },
+      ];
+      vi.mocked(assignAutoIncrementValues).mockImplementation(() => {
+        order.push('autoIncrement');
+      });
+      vi.mocked(getSlugs).mockImplementation(() => {
+        order.push('slugs');
+
+        return { defaultLocaleSlug: 'test-post' };
+      });
+
+      await saveEntry();
+
+      expect(assignAutoIncrementValues).toHaveBeenCalledWith(mockDraft, 1);
+      expect(order).toEqual(['autoIncrement', 'slugs']);
     });
 
     it('should not set the auto-now DateTime fields when refusing to save over a change', async () => {

@@ -24,6 +24,7 @@ import { validateAndRevealErrors } from '$lib/services/contents/draft/validate/r
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade/update';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
+import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { setLastCommitPublishHint } from '$lib/services/deployments';
 import { isWorkflowDraft } from '$lib/services/workflow';
 import { detectWorkflowConflict } from '$lib/services/workflow/conflict';
@@ -191,15 +192,19 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
     throw new Error('save_conflict', { cause: conflict });
   }
 
+  // The entries added to the same collection from a Relation field have already taken the orders
+  // and numbers after the highest ones, so the new entry comes after them
+  const pendingEntryCount = draft.pendingEntries.filter(
+    (pendingEntry) => pendingEntry.collectionName === collectionName,
+  ).length;
+
   if (isNew && collection._type === 'entry') {
-    // The entries added to the same collection from a Relation field have already taken the orders
-    // after the highest one, so the new entry comes after them
-    assignManualSortOrder(
-      draft,
-      draft.pendingEntries.filter((pendingEntry) => pendingEntry.collectionName === collectionName)
-        .length,
-    );
+    assignManualSortOrder(draft, pendingEntryCount);
   }
+
+  // Number the auto-increment Number fields at save time for the same reason, before the slugs are
+  // created, so a slug template can use the number
+  assignAutoIncrementValues(draft, pendingEntryCount);
 
   // Set the DateTime fields with the `auto_now` option at save time rather than when the draft was
   // created, so the value tells when the entry was actually saved

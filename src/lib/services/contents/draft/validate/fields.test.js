@@ -1206,6 +1206,35 @@ describe('draft/validate/fields', () => {
     });
 
     describe('validateAnyField', () => {
+      it('should skip validation for a Number field numbered automatically on save', () => {
+        vi.mocked(getField).mockReturnValue({
+          name: 'number',
+          widget: 'number',
+          required: true,
+          auto_increment: true,
+        });
+        vi.mocked(isFieldRequired).mockReturnValue(true);
+
+        /**
+         * Validate the field, left empty, under the given key path.
+         * @param {string} keyPath Field key path.
+         * @returns {object | undefined} Validity.
+         */
+        const validate = (keyPath) =>
+          validateAnyField({
+            draft: mockEntryDraft,
+            validities: { en: {} },
+            locale: 'en',
+            keyPath,
+            valueMap: { [keyPath]: null },
+            value: null,
+          });
+
+        expect(validate('number')).toBeUndefined();
+        // The option is ignored in a List field, so the field is validated there
+        expect(validate('lines.0.number')).toMatchObject({ valueMissing: true, valid: false });
+      });
+
       describe('unique option', () => {
         /**
          * Validate a field with the given configuration and value.
