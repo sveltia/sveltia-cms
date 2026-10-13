@@ -30,8 +30,8 @@ importers:
         specifier: ^1.4.1
         version: 1.4.1(svelte@5.57.2(@typescript-eslint/types@8.71.1))
       '@sveltia/ui':
-        specifier: ^0.81.0
-        version: 0.81.0(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)
+        specifier: ^0.81.1
+        version: 0.81.1(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.4
         version: 0.12.4
@@ -172,8 +172,8 @@ importers:
         specifier: ^17.13.0
         version: 17.13.0
       happy-dom:
-        specifier: ^20.14.6
-        version: 20.14.6
+        specifier: ^21.0.1
+        version: 21.0.1
       messageformat:
         specifier: ^4.0.0
         version: 4.0.0
@@ -218,7 +218,7 @@ importers:
         version: 8.3.4(@types/node@26.6.5)(yaml@2.9.1)
       vitest:
         specifier: ^5.0.3
-        version: 5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@20.14.6)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
+        version: 5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@21.0.1)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
       vitest-browser-svelte:
         specifier: ^3.1.0
         version: 3.1.0(svelte@5.57.2(@typescript-eslint/types@8.71.1))(vitest@5.0.3)
@@ -1254,8 +1254,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.81.0':
-    resolution: {integrity: sha512-3Aih+wdK/h+qbJRoNMGAji30wutu+i9H98p7q7jd3ekF63dvx+4Gnx8n8nzj8n4dCdJWWoFyMlnVAOoLKPRNag==}
+  '@sveltia/ui@0.81.1':
+    resolution: {integrity: sha512-3valk7x5hGqc3V/IOaneXD4PvpDZeXMv0vkyjjXMwqQ0HE0xTfjKNvFN/LdzwRnNF+ioyGffQX9dKZOnHvXvqg==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -2547,8 +2547,8 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
-  happy-dom@20.14.6:
-    resolution: {integrity: sha512-5DDsf4QmEIlRL6NkCv/fxSjYHHkZceL/IaYQdJc2h3G7DRTEai++VTjbfL0LB9geW2VrA3+vrjF3Efx+OTtX0Q==}
+  happy-dom@21.0.1:
+    resolution: {integrity: sha512-pRBs/u9fhrncyByOl58DMex0R2uAj6ZPKWIjV5j5yNGZBqLw3P6BTRhlc0DD5b/Ht4/6JYTMuE2LJhUWRC6SGw==}
     engines: {node: '>=20.0.0'}
 
   has-bigints@1.1.0:
@@ -4088,8 +4088,8 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
-  zod@4.6.5:
-    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
+  zod@4.6.6:
+    resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
 snapshots:
 
@@ -5012,7 +5012,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.57.2(@typescript-eslint/types@8.71.1)
 
-  '@sveltia/ui@0.81.0(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)':
+  '@sveltia/ui@0.81.1(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.52.0(typescript@6.0.3)
       '@lexical/dragon': 0.52.0(typescript@6.0.3)
@@ -5264,7 +5264,7 @@ snapshots:
       '@vitest/mocker': 5.0.3(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
       playwright: 1.64.0
       tinyrainbow: 3.2.0
-      vitest: 5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@20.14.6)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
+      vitest: 5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@21.0.1)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -5281,7 +5281,7 @@ snapshots:
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.2.0
-      vitest: 5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@20.14.6)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
+      vitest: 5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@21.0.1)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
       ws: 8.22.0
     transitivePeerDependencies:
       - bufferutil
@@ -5299,7 +5299,7 @@ snapshots:
       obug: 2.2.1
       std-env: 4.3.0
       tinyrainbow: 3.2.0
-      vitest: 5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@20.14.6)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
+      vitest: 5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@21.0.1)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
     optionalDependencies:
       '@vitest/browser': 5.0.3(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))(vitest@5.0.3)
 
@@ -5332,7 +5332,7 @@ snapshots:
       pathe: 2.0.3
       sirv: 3.0.2
       tinyrainbow: 3.2.0
-      vitest: 5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@20.14.6)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
+      vitest: 5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@21.0.1)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
 
   '@vitest/utils@5.0.3':
     dependencies:
@@ -6210,8 +6210,8 @@ snapshots:
       '@babel/parser': 7.29.9
       eslint: 9.39.5(supports-color@10.2.2)
       hermes-parser: 0.25.1
-      zod: 4.6.5
-      zod-validation-error: 4.0.2(zod@4.6.5)
+      zod: 4.6.6
+      zod-validation-error: 4.0.2(zod@4.6.6)
     transitivePeerDependencies:
       - supports-color
 
@@ -6550,7 +6550,7 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  happy-dom@20.14.6:
+  happy-dom@21.0.1:
     dependencies:
       '@types/node': 26.6.5
       '@types/whatwg-mimetype': 3.0.2
@@ -7981,9 +7981,9 @@ snapshots:
     dependencies:
       '@testing-library/svelte-core': 1.1.3(svelte@5.57.2(@typescript-eslint/types@8.71.1))
       svelte: 5.57.2(@typescript-eslint/types@8.71.1)
-      vitest: 5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@20.14.6)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
+      vitest: 5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@21.0.1)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
 
-  vitest@5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@20.14.6)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1)):
+  vitest@5.0.3(@types/node@26.6.5)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(happy-dom@21.0.1)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1)):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/mocker': 5.0.3(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))
@@ -8004,7 +8004,7 @@ snapshots:
       '@vitest/browser-playwright': 5.0.3(playwright@1.64.0)(vite@8.3.4(@types/node@26.6.5)(yaml@2.9.1))(vitest@5.0.3)
       '@vitest/coverage-v8': 5.0.3(@vitest/browser@5.0.3)(vitest@5.0.3)
       '@vitest/ui': 5.0.3(vitest@5.0.3)
-      happy-dom: 20.14.6
+      happy-dom: 21.0.1
       jsdom: 30.1.2
     transitivePeerDependencies:
       - msw
@@ -8137,8 +8137,8 @@ snapshots:
 
   zimmerframe@1.1.5: {}
 
-  zod-validation-error@4.0.2(zod@4.6.5):
+  zod-validation-error@4.0.2(zod@4.6.6):
     dependencies:
-      zod: 4.6.5
+      zod: 4.6.6
 
-  zod@4.6.5: {}
+  zod@4.6.6: {}
