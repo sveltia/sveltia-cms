@@ -390,7 +390,7 @@ test('takes a pull request merged on the instance as published', async ({ cms, g
   await publish(page, editor);
 
   // The entry is live, so publishing carries on rather than reporting a failure: the branch is
-  // tidied up and the entry is listed as published rather than kept on the board
+  // tidied up and the entry is listed as published rather than kept in a stage on the board
   await expect.poll(() => gitea.refs.has('cms/posts/second-post')).toBe(false);
   await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
     /First Post/,
@@ -398,7 +398,13 @@ test('takes a pull request merged on the instance as published', async ({ cms, g
   ]);
   await expect(page.getByRole('radio', { name: 'Editorial Workflow' })).toBeVisible();
   await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
-  await expect(page.getByRole('button', { name: /Second Post/ })).toHaveCount(0);
+
+  const board = page.getByRole('group', { name: 'Editorial Workflow' });
+
+  // The merge is on its way to the site, which nothing reports a build of here, so the entry waits
+  // in the Deploying tray until the grace period for a first status is over, and nowhere else
+  await expect(board.getByRole('list', { name: 'Deploying' })).toContainText('Second Post');
+  await expect(board.getByRole('listitem')).toHaveCount(1);
 });
 
 test('deletes an unpublished entry by closing its pull request', async ({ cms, gitea, page }) => {
@@ -518,6 +524,11 @@ test('leaves a pull request from a fork off the board', async ({ cms, gitea, pag
   ]);
   await expect(page.getByRole('radio', { name: 'Editorial Workflow' })).toBeVisible();
   await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
+
+  const board = page.getByRole('group', { name: 'Editorial Workflow' });
+
+  // Wait for the board itself, or an empty column would read as one that hasn’t rendered yet
+  await expect(board.getByRole('list', { name: 'Drafts' })).toBeVisible();
   await expect(page.getByText('Second Post')).toHaveCount(0);
 });
 
