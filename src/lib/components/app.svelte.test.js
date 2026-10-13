@@ -3,10 +3,11 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { appIconURLs } from '$lib/services/app/branding';
+import { missingBrowserFeatures } from '$lib/services/app/browser-support';
 import { installPrompt } from '$lib/services/app/install';
 import { announcedPageStatus, mainAreaTitle, overlayTitle } from '$lib/services/app/navigation';
 import { backendName } from '$lib/services/backends';
-import { cmsConfigLoaded } from '$lib/services/config';
+import { cmsConfig, cmsConfigLoaded } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
 import { user } from '$lib/services/user/account.svelte';
 import { auth } from '$lib/services/user/auth.svelte';
@@ -71,6 +72,28 @@ describe('App', () => {
     appIconURLs.current = undefined;
     await expect.poll(() => document.querySelector('link[rel="apple-touch-icon"]')).toBeNull();
     expect(document.querySelector('link[rel="manifest"]')).toBeNull();
+  });
+
+  test('doesn’t load the configuration in an unsupported browser', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    missingBrowserFeatures.current = ['Iterator helpers'];
+    cmsConfig.current = undefined;
+
+    try {
+      await render(App, { config });
+
+      await expect
+        .element(page.getByRole('alert'))
+        .toMatchTextContent('Your browser is not supported.');
+      expect(cmsConfigLoaded.current).toBe(false);
+      expect(consoleError).toHaveBeenCalledWith('Unsupported browser. Missing features:', [
+        'Iterator helpers',
+      ]);
+    } finally {
+      missingBrowserFeatures.current = [];
+      consoleError.mockRestore();
+    }
   });
 
   test('shows the app once signed in and the data is loaded', async () => {

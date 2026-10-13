@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { missingBrowserFeatures } from '$lib/services/app/browser-support';
 import { announcedPageStatus } from '$lib/services/app/navigation';
 import { inAuthPopup } from '$lib/services/backends/git/shared/auth';
 import { cmsConfig, cmsConfigErrors } from '$lib/services/config';
@@ -35,6 +36,7 @@ vi.mock('$lib/services/user/auth.svelte', async () => {
 
 describe('EntrancePage', () => {
   beforeEach(() => {
+    missingBrowserFeatures.current = [];
     cmsConfig.current = /** @type {any} */ ({
       backend: { name: 'github', repo: 'acme/site' },
       app_title: 'Acme CMS',
@@ -59,6 +61,26 @@ describe('EntrancePage', () => {
       .toBeVisible();
     await expect.element(page.getByText('Powered by \u2068Sveltia CMS\u2069')).toBeVisible();
     expect(announcedPageStatus.current).toBe('Welcome to \u2068Acme CMS\u2069');
+  });
+
+  test('asks the user to update an unsupported browser', async () => {
+    missingBrowserFeatures.current = ['Iterator helpers'];
+    cmsConfig.current = undefined;
+
+    await render(EntrancePage, {});
+
+    await expect.element(page.getByRole('heading', { name: 'Sveltia CMS' })).toBeVisible();
+    expect(document.querySelector('.logo')).toHaveAttribute(
+      'src',
+      expect.stringMatching(/^data:image\/svg\+xml;base64,/),
+    );
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'Your browser is not supported. Please update it to the latest version or use another ' +
+          'browser.',
+      );
+    expect(page.getByRole('button').elements()).toHaveLength(0);
   });
 
   test('lists the configuration errors', async () => {

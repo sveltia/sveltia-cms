@@ -119,6 +119,7 @@ welcome_message: Welcome to {$name}
 powered_by: Powered by {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: Your browser is not supported. Please update it to the latest version or use another browser.
 loading_cms_config: Loading CMS Configuration…
 loading_site_data: Loading Site Data…
 loading_site_data_error: There was an error while loading site data.

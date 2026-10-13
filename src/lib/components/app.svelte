@@ -16,6 +16,7 @@
     appManifestURL,
     appTitle,
   } from '$lib/services/app/branding';
+  import { missingBrowserFeatures } from '$lib/services/app/browser-support';
   import { initAppLocale } from '$lib/services/app/i18n';
   import { initAppInstallDetection } from '$lib/services/app/install';
   import {
@@ -56,6 +57,15 @@
   });
 
   onMount(() => {
+    // An outdated browser would fail while loading the configuration; the entrance page asks the
+    // user to update it instead
+    if (missingBrowserFeatures.current.length) {
+      // eslint-disable-next-line no-console
+      console.error('Unsupported browser. Missing features:', missingBrowserFeatures.current);
+
+      return;
+    }
+
     initCmsConfig(config);
   });
 

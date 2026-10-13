@@ -119,6 +119,7 @@ welcome_message: '{$name} へようこそ'
 powered_by: Powered by {$name}
 
 # Shown during initial configuration and data loading
+unsupported_browser_error: お使いのブラウザーはサポートされていません。最新バージョンに更新するか、別のブラウザーを使ってください。
 loading_cms_config: CMS 設定を読み込んでいます…
 loading_site_data: サイトデータを読み込んでいます…
 loading_site_data_error: サイトデータの読み込み中にエラーが発生しました。
