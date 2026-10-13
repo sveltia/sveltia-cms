@@ -378,7 +378,7 @@ test('deletes an unpublished entry by closing its pull request', async ({ cms, g
     .click();
 
   await expect.poll(() => pullRequest.state).toBe('closed');
-  expect(github.refs.has('cms/posts/second-post')).toBe(false);
+  await expect.poll(() => github.refs.has('cms/posts/second-post')).toBe(false);
   expect(github.head.oid).toBe(mainBefore);
   await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
     /First Post/,
@@ -450,7 +450,7 @@ test.describe('on the Editorial Workflow page', () => {
       .click();
 
     await expect.poll(() => github.pullRequests[0].state).toBe('closed');
-    expect(github.refs.has('cms/posts/first-post')).toBe(false);
+    await expect.poll(() => github.refs.has('cms/posts/first-post')).toBe(false);
     expect(github.readFile('content/posts/first-post.md')).toBe(
       post('First Post', 'Hello, world!'),
     );
@@ -477,7 +477,7 @@ test('discards the changes to a published entry', async ({ cms, github, page }) 
     .click();
 
   await expect.poll(() => pullRequest.state).toBe('closed');
-  expect(github.refs.has('cms/posts/first-post')).toBe(false);
+  await expect.poll(() => github.refs.has('cms/posts/first-post')).toBe(false);
   expect(github.readFile('content/posts/first-post.md')).toBe(post('First Post', 'Hello, world!'));
   // The published version is shown again
   await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([

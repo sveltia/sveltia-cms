@@ -115,7 +115,7 @@ test('discards the changes to a published entry from its card', async ({ cms, gi
     .click();
 
   await expect.poll(() => pullRequest.state).toBe('closed');
-  expect(github.refs.has('cms/posts/first-post')).toBe(false);
+  await expect.poll(() => github.refs.has('cms/posts/first-post')).toBe(false);
   expect(github.readFile('content/posts/first-post.md')).toBe(post('First Post', 'Hello, world!'));
   await expect(getCard(board, 'First Post')).toHaveCount(0);
 });
@@ -137,7 +137,7 @@ test('deletes an unpublished entry from its card', async ({ cms, github, page })
     .click();
 
   await expect.poll(() => pullRequest.state).toBe('closed');
-  expect(github.refs.has('cms/posts/second-post')).toBe(false);
+  await expect.poll(() => github.refs.has('cms/posts/second-post')).toBe(false);
   expect(github.readFile('content/posts/second-post.md')).toBeUndefined();
   await expect(getCard(board, 'Second Post')).toHaveCount(0);
 });
