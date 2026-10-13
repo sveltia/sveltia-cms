@@ -1,6 +1,7 @@
 // @ts-nocheck
 /* eslint-disable jsdoc/require-jsdoc */
 
+import { IMPORT_UPDATE_TAG } from '@sveltia/ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createCustomNodeClass } from '$lib/components/contents/details/fields/rich-text/custom-node';
@@ -142,12 +143,18 @@ vi.mock('lexical', () => {
   };
 
   return {
+    $hasUpdateTag: vi.fn(() => false),
     DecoratorNode: MockDecoratorNode,
+    HISTORY_MERGE_TAG: 'history-merge',
     getNearestEditorFromDOMNode: vi.fn(() => ({
       getKey: () => 'test-key',
     })),
   };
 });
+
+vi.mock('@sveltia/ui', () => ({
+  IMPORT_UPDATE_TAG: 'sui-import',
+}));
 
 vi.mock('svelte', () => ({
   flushSync: vi.fn(),
@@ -1417,66 +1424,20 @@ describe('createCustomNodeClass', () => {
   });
 
   describe('Wrapper focus behavior', () => {
-    it('should focus the wrapper when parent field is editable', async () => {
+    const editable = '[role="textbox"][aria-readonly="false"]';
+
+    /**
+     * Create a node whose wrapper is rendered in a field.
+     * @param {object} [options] Options.
+     * @param {boolean} [options.editable] Whether the parent field is editable.
+     * @returns {Promise<{ node: any, mockWrapper: any }>} Node and its wrapper.
+     */
+    const createNode = async ({ editable: isEditable = true } = {}) => {
       const { mount } = await import('svelte');
+      const { $hasUpdateTag } = await import('lexical');
 
       vi.clearAllMocks();
-
-      const mockParentField = {
-        getAttribute: vi.fn(),
-        className: 'field',
-        addEventListener: vi.fn(),
-      };
-
-      const mockWrapper = {
-        closest: vi.fn((selector) => {
-          if (selector === '[role="textbox"][aria-readonly="false"]') {
-            return mockParentField; // Return matching parent
-          }
-
-          if (selector === '.field') {
-            return mockParentField;
-          }
-
-          if (selector === '[data-lexical-editor]') {
-            return { nodeType: 1 };
-          }
-
-          return null;
-        }),
-        addEventListener: vi.fn(),
-        parentElement: { nodeType: 1 },
-        isConnected: true,
-        focus: vi.fn(),
-      };
-
-      vi.mocked(mount).mockImplementation(() => ({
-        getElement: vi.fn(() => mockWrapper),
-        destroy: vi.fn(),
-      }));
-
-      // eslint-disable-next-line no-unused-vars
-      let observerCallback;
-
-      globalThis.MutationObserver = vi.fn(function MockMutationObserver(callback) {
-        observerCallback = callback;
-        this.observe = vi.fn();
-        this.disconnect = vi.fn();
-      });
-
-      const CustomNode = createCustomNodeClass(mockComponentDef);
-      const node = new CustomNode({ title: 'Test' });
-
-      node.createDOM();
-
-      // Verify wrapper.focus() was called when closest returned a matching parent
-      expect(mockWrapper.focus).toHaveBeenCalled();
-    });
-
-    it('should not focus the wrapper when parent field is not editable', async () => {
-      const { mount } = await import('svelte');
-
-      vi.clearAllMocks();
+      vi.mocked($hasUpdateTag).mockReturnValue(false);
 
       const mockField = {
         addEventListener: vi.fn(),
@@ -1484,12 +1445,12 @@ describe('createCustomNodeClass', () => {
 
       const mockWrapper = {
         closest: vi.fn((selector) => {
-          if (selector === '[role="textbox"][aria-readonly="false"]') {
-            return null; // No matching editable parent
+          if (selector === editable) {
+            return isEditable ? mockField : null;
           }
 
           if (selector === '.field') {
-            return mockField; // Return field for cleanup listener
+            return mockField;
           }
 
           if (selector === '[data-lexical-editor]') {
@@ -1509,21 +1470,61 @@ describe('createCustomNodeClass', () => {
         destroy: vi.fn(),
       }));
 
-      // eslint-disable-next-line no-unused-vars
-      let observerCallback;
-
-      globalThis.MutationObserver = vi.fn(function MockMutationObserver(callback) {
-        observerCallback = callback;
+      globalThis.MutationObserver = vi.fn(function MockMutationObserver() {
         this.observe = vi.fn();
         this.disconnect = vi.fn();
       });
 
       const CustomNode = createCustomNodeClass(mockComponentDef);
-      const node = new CustomNode({ title: 'Test' });
+
+      return { node: new CustomNode({ title: 'Test' }), mockWrapper };
+    };
+
+    it('should focus the wrapper of a node added by the user when parent field is editable', async () => {
+      const { node, mockWrapper } = await createNode();
+
+      node.createDOM({}, {});
+
+      expect(mockWrapper.focus).toHaveBeenCalled();
+    });
+
+    it('should not focus the wrapper when parent field is not editable', async () => {
+      const { node, mockWrapper } = await createNode({ editable: false });
+
+      node.createDOM({}, {});
+
+      expect(mockWrapper.focus).not.toHaveBeenCalled();
+    });
+
+    it('should not focus the wrapper of a node loaded with the value', async () => {
+      const { $hasUpdateTag } = await import('lexical');
+      const { node, mockWrapper } = await createNode();
+
+      vi.mocked($hasUpdateTag).mockImplementation((tag) => tag === IMPORT_UPDATE_TAG);
+      node.createDOM({}, {});
+
+      expect($hasUpdateTag).toHaveBeenCalledWith(IMPORT_UPDATE_TAG);
+      expect(mockWrapper.focus).not.toHaveBeenCalled();
+    });
+
+    it('should not focus the wrapper of a node rendered again when the editor is attached', async () => {
+      const { $hasUpdateTag } = await import('lexical');
+      const { node, mockWrapper } = await createNode();
+
+      vi.mocked($hasUpdateTag).mockImplementation((tag) => tag === 'history-merge');
+      node.createDOM({}, {});
+
+      expect($hasUpdateTag).toHaveBeenCalledWith('history-merge');
+      expect(mockWrapper.focus).not.toHaveBeenCalled();
+    });
+
+    it('should not focus the wrapper of a node created outside the reconciler', async () => {
+      const { $hasUpdateTag } = await import('lexical');
+      const { node, mockWrapper } = await createNode();
 
       node.createDOM();
 
-      // Verify wrapper.focus() was NOT called when closest returned null
+      expect($hasUpdateTag).not.toHaveBeenCalled();
       expect(mockWrapper.focus).not.toHaveBeenCalled();
     });
   });

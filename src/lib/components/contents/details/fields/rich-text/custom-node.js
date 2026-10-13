@@ -1,4 +1,10 @@
-import { DecoratorNode, getNearestEditorFromDOMNode } from 'lexical';
+import { IMPORT_UPDATE_TAG } from '@sveltia/ui';
+import {
+  $hasUpdateTag,
+  DecoratorNode,
+  getNearestEditorFromDOMNode,
+  HISTORY_MERGE_TAG,
+} from 'lexical';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
 import EditorComponent from '$lib/components/contents/details/fields/rich-text/editor-component.svelte';
@@ -19,6 +25,7 @@ import {
  * DOMConversionMap,
  * DOMConversionOutput,
  * DOMExportOutput,
+ * EditorConfig,
  * LexicalEditor,
  * NodeKey,
  * SerializedLexicalNode,
@@ -198,9 +205,21 @@ export const createCustomNodeClass = (componentDef) => {
 
     /**
      * Create a DOM node.
+     * @param {EditorConfig} [_config] Editor configuration.
+     * @param {LexicalEditor} [lexicalEditor] Editor rendering the node. The reconciler passes it,
+     * but {@link exportDOM} doesn’t.
      * @returns {HTMLElement} New element.
      */
-    createDOM() {
+    createDOM(_config, lexicalEditor) {
+      // Only a node the user has just added, e.g. with the toolbar or a paste, takes the focus. A
+      // node rendered when the editor loads a value, or when the editor is attached to its root
+      // element and renders the existing content again, doesn’t, as the focus would move away from
+      // where the user is and the editor would scroll to the component. The former update is
+      // tagged as an import, the latter as a history merge. The update tags can only be read now,
+      // while the reconciler is running
+      const isAddedByUser =
+        !!lexicalEditor && !$hasUpdateTag(IMPORT_UPDATE_TAG) && !$hasUpdateTag(HISTORY_MERGE_TAG);
+
       /** @type {HTMLElement} */
       let wrapper;
       /** @type {LexicalEditor | null} */
@@ -312,10 +331,10 @@ export const createCustomNodeClass = (componentDef) => {
           return;
         }
 
-        // Focus the wrapper if the parent field is editable. This is necessary because `i18n:
-        // duplicate` field is rendered as a read-only textbox in non-default locales, which may
-        // steal focus from the wrapper of the default locale
-        if (wrapper.closest('[role="textbox"][aria-readonly="false"]')) {
+        // Focus the wrapper of a new component if the parent field is editable. This is necessary
+        // because `i18n: duplicate` field is rendered as a read-only textbox in non-default
+        // locales, which may steal focus from the wrapper of the default locale
+        if (isAddedByUser && wrapper.closest('[role="textbox"][aria-readonly="false"]')) {
           wrapper.focus();
         }
 
