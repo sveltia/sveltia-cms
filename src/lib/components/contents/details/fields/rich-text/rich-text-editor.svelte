@@ -351,6 +351,11 @@
         ondrop={(/** @type {DragEvent} */ event) => {
           onDrop(event);
         }}
+        oncompositionend={() => {
+          if (wrapper?.querySelector('.lexical-root')) {
+            getNearestEditorFromDOMNode(wrapper.querySelector('.lexical-root'))?.update(() => {});
+          }
+        }}
       />
     {/key}
   {/await}
