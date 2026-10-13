@@ -222,7 +222,7 @@ describe('FieldPreview', () => {
         values: { stars: 5 },
       });
 
-      await vi.waitFor(() => expect(container).toHaveTextContent('stars Custom: 5'));
+      await expect.poll(() => container.textContent?.trim()).toMatch(/^stars\s*Custom: 5$/);
 
       // A custom field type without a preview shows nothing
       customFieldTypeRegistry.set('rating', /** @type {any} */ ({}));

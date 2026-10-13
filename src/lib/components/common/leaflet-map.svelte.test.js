@@ -76,7 +76,7 @@ describe('LeafletMap', () => {
     await expect
       .element(page.getByRole('application'))
       .toHaveAccessibleName('Map showing latitude 51.507, longitude -0.128');
-    await vi.waitFor(() => expect(map.getCenter().lat).toBeCloseTo(51.5074, 3));
+    await expect.poll(() => map.getCenter().lat).toBeCloseTo(51.5074, 3);
     expect(map.getCenter().lng).toBeCloseTo(-0.1278, 3);
     expect(element.querySelectorAll('.leaflet-marker-icon')).toHaveLength(1);
 
@@ -86,7 +86,7 @@ describe('LeafletMap', () => {
     expect(map.getZoom()).toBe(5);
 
     await rerender({ coordinates: undefined });
-    await vi.waitFor(() => expect(element.querySelector('.leaflet-marker-icon')).toBeNull());
+    await expect.poll(() => element.querySelector('.leaflet-marker-icon')).toBeNull();
   });
 
   test('removes the map when destroyed', async () => {
