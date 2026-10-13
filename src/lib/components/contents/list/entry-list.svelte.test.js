@@ -125,10 +125,12 @@ describe('EntryList', () => {
       // The view around the grid is what scrolls
       const container = /** @type {HTMLElement} */ (grid.element().closest('.list-view'));
 
-      // Scroll to the end until every row is loaded
+      // Scroll to the end until every row is loaded. The jump is instant: with the smooth scrolling
+      // Sveltia UI gives every element, Chrome would finish the last scroll after the list has been
+      // scrolled back to the top below, moving it down again
       await expect
         .poll(() => {
-          container.scrollTop = container.scrollHeight;
+          container.scrollTo({ top: container.scrollHeight, behavior: 'instant' });
 
           return grid.getByRole('row').elements().length;
         })
