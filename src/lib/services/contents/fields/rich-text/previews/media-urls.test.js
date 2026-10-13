@@ -1,15 +1,61 @@
+// @vitest-environment happy-dom
 /* eslint-disable jsdoc/require-jsdoc */
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { MEDIA_QUERY_SELECTOR, parseSrcset, resolveMediaURLs } from './media-urls.js';
+import {
+  deferMediaURLs,
+  MEDIA_QUERY_SELECTOR,
+  parseSrcset,
+  resolveMediaURLs,
+} from './media-urls.js';
 
 describe('MEDIA_QUERY_SELECTOR', () => {
   it('should match the URL attributes of images, videos and audio not processed yet', () => {
     expect(MEDIA_QUERY_SELECTOR).toBe(
-      ':is(img[src], img[srcset], source[src], source[srcset], video[src], video[poster], ' +
-        'audio[src]):not([data-processed])',
+      ':is(img[src], img[data-deferred-src], img[srcset], img[data-deferred-srcset], ' +
+        'source[src], source[data-deferred-src], source[srcset], source[data-deferred-srcset], ' +
+        'video[src], video[data-deferred-src], video[poster], video[data-deferred-poster], ' +
+        'audio[src], audio[data-deferred-src]):not([data-processed])',
     );
+  });
+});
+
+describe('deferMediaURLs', () => {
+  it('should move the URL attributes of media elements to inert attributes', () => {
+    expect(
+      deferMediaURLs(
+        '<p><img src="/images/a.jpg" srcset="/images/a.jpg 1x, /images/b.jpg 2x" alt="A"></p>' +
+          '<picture><source srcset="/images/c.webp" type="image/webp"><img src=""></picture>' +
+          '<video src="/clip.mp4" poster="/poster.jpg" controls></video>' +
+          '<audio controls><source src="/song.mp3"></audio>' +
+          '<a href="/images/a.jpg">link</a><iframe src="https://example.com/"></iframe>',
+      ),
+    ).toBe(
+      '<p><img alt="A" data-deferred-src="/images/a.jpg" ' +
+        'data-deferred-srcset="/images/a.jpg 1x, /images/b.jpg 2x"></p>' +
+        '<picture><source type="image/webp" data-deferred-srcset="/images/c.webp">' +
+        '<img data-deferred-src=""></picture>' +
+        '<video controls="" data-deferred-src="/clip.mp4" data-deferred-poster="/poster.jpg">' +
+        '</video><audio controls=""><source data-deferred-src="/song.mp3"></audio>' +
+        '<a href="/images/a.jpg">link</a><iframe src="https://example.com/"></iframe>',
+    );
+  });
+
+  it('should remove a deferred attribute already in the HTML', () => {
+    expect(deferMediaURLs('<img data-deferred-src="javascript:alert(1)" alt="">')).toBe(
+      '<img alt="">',
+    );
+    expect(deferMediaURLs('<IMG data-deferred-src="/x.jpg" src="/a.jpg">')).toBe(
+      '<img data-deferred-src="/a.jpg">',
+    );
+  });
+
+  it('should return HTML without media elements as is', () => {
+    const html = '<p>An <code>&lt;imgs&gt;</code> tag</p><imgs src="/a.jpg">';
+
+    expect(deferMediaURLs(html)).toBe(html);
+    expect(deferMediaURLs('')).toBe('');
   });
 });
 
@@ -47,8 +93,14 @@ describe('resolveMediaURLs', () => {
     localName,
     parentElement,
     attributes: { ...attributes },
+    hasAttribute(/** @type {string} */ name) {
+      return name in this.attributes;
+    },
     getAttribute(/** @type {string} */ name) {
       return this.attributes[name] ?? null;
+    },
+    removeAttribute(/** @type {string} */ name) {
+      delete this.attributes[name];
     },
     setAttribute(/** @type {string} */ name, /** @type {string} */ value) {
       this.attributes[name] = value;
@@ -132,6 +184,71 @@ describe('resolveMediaURLs', () => {
       src: '/broken.jpg',
       srcset: '/broken.jpg 1x, blob:/a.jpg 2x',
     });
+  });
+
+  it('should set the deferred attributes again, resolved or as written', async () => {
+    const img = createElement('img', {
+      alt: '',
+      'data-deferred-src': 'https://example.com/a.jpg',
+      'data-deferred-srcset': '/a.jpg 1x, /missing.jpg 2x',
+    });
+
+    await resolveMediaURLs(img, resolve);
+
+    expect(img.attributes).toEqual({
+      alt: '',
+      src: 'blob:https://example.com/a.jpg',
+      srcset: 'blob:/a.jpg 1x, /missing.jpg 2x',
+    });
+
+    // A path that can’t be resolved, or an empty value, is set as written
+    const unresolved = createElement('img', {
+      'data-deferred-src': '/missing.jpg',
+      'data-deferred-srcset': '/missing.jpg 2x',
+    });
+
+    await resolveMediaURLs(unresolved, resolve);
+    expect(unresolved.attributes).toEqual({ src: '/missing.jpg', srcset: '/missing.jpg 2x' });
+
+    const empty = createElement('img', { 'data-deferred-src': '' });
+
+    await resolveMediaURLs(empty, resolve);
+    expect(empty.attributes).toEqual({ src: '' });
+  });
+
+  it('should not set any attribute before all the URLs are resolved', async () => {
+    /** @type {(() => void)[]} */
+    const pending = [];
+
+    const img = createElement('img', {
+      'data-deferred-src': '/a.jpg',
+      'data-deferred-srcset': '/b.jpg 2x',
+    });
+
+    const promise = resolveMediaURLs(
+      img,
+      (value) =>
+        new Promise((resolveURL) => {
+          pending.push(() => resolveURL(`blob:${value}`));
+        }),
+    );
+
+    await vi.waitFor(() => expect(pending).toHaveLength(2));
+    pending[0]();
+    await Promise.resolve();
+    expect(img.attributes.src).toBeUndefined();
+    pending[1]();
+    await promise;
+    expect(img.attributes).toEqual({ src: 'blob:/a.jpg', srcset: 'blob:/b.jpg 2x' });
+  });
+
+  it('should load the media again once a deferred source is set, even as written', async () => {
+    const audio = { localName: 'audio', load: vi.fn() };
+    const source = createElement('source', { 'data-deferred-src': '/missing.mp3' }, audio);
+
+    await resolveMediaURLs(source, resolve);
+    expect(source.attributes).toEqual({ src: '/missing.mp3' });
+    expect(audio.load).toHaveBeenCalledOnce();
   });
 
   it('should ignore an element without URL attributes', async () => {
