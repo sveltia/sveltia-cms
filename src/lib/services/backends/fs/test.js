@@ -1,3 +1,4 @@
+import { seedTestRepository } from '$lib/services/backends/fs/seed';
 import {
   getDirectoryHandle,
   getScopedRootDirHandle,
@@ -34,17 +35,21 @@ const init = () => undefined;
 
 /**
  * Sign in with the test backend. There is no actual sign-in; just get the root directory handle in
- * the origin private file system (OPFS), so we can read/write files.
+ * the origin private file system (OPFS), so we can read/write files. On the first sign-in, the
+ * repository is seeded with the files listed in the `<link rel="cms-seed-url">` manifest, if any.
  * @returns {Promise<User>} User info. Since we don’t have any details for the local user, just
  * return the backend name.
  * @see https://web.dev/articles/origin-private-file-system
- * @todo Preload entry files on the demo site.
  */
 const signIn = async () => {
   try {
+    const storageDirHandle = await navigator.storage.getDirectory();
+
+    await seedTestRepository(storageDirHandle, TEST_BACKEND_ROOT_DIR_NAME);
+
     // The configured root directory is created if needed, like the backend’s own directory
     rootDirHandle = await getScopedRootDirHandle(
-      await getDirectoryHandle(await navigator.storage.getDirectory(), TEST_BACKEND_ROOT_DIR_NAME),
+      await getDirectoryHandle(storageDirHandle, TEST_BACKEND_ROOT_DIR_NAME),
       { create: true },
     );
   } catch {
