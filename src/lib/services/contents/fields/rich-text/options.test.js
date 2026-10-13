@@ -33,7 +33,14 @@ afterEach(() => {
 describe('getEditorComponentNames()', () => {
   test('includes the built-in and custom components by default', () => {
     customComponentRegistry.set('youtube', /** @type {any} */ ({}));
+    // `table` has to be enabled explicitly
     expect(getEditorComponentNames(fieldConfig)).toEqual(['code-block', 'linked-image', 'youtube']);
+  });
+
+  test('includes `table` when listed', () => {
+    expect(
+      getEditorComponentNames({ ...fieldConfig, editor_components: ['image', 'table'] }),
+    ).toEqual(['linked-image', 'table']);
   });
 
   test('uses the field defaults', () => {
@@ -77,6 +84,15 @@ describe('getToolbarButtons()', () => {
       'code-block',
     ]);
     expect(getToolbarButtons(['heading-one'], ['linked-image'])).toEqual(['heading-1']);
+  });
+
+  test('adds `table` when the component is enabled', () => {
+    expect(getToolbarButtons(['bold'], ['table', 'linked-image'])).toEqual(['bold', 'table']);
+    expect(getToolbarButtons(['bold'], ['table', 'code-block'])).toEqual([
+      'bold',
+      'code-block',
+      'table',
+    ]);
   });
 });
 

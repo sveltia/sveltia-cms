@@ -9,7 +9,7 @@ import { getComponentDef } from '$lib/services/contents/fields/rich-text/compone
 import { supportsHTML } from '$lib/services/contents/fields/rich-text/components/utils';
 
 /**
- * @import { TextEditorBlockType, TextEditorInlineType } from '@sveltia/ui';
+ * @import { TextEditorNodeType } from '@sveltia/ui';
  * @import {
  * EditorComponentDefinition,
  * MarkdownField,
@@ -57,14 +57,20 @@ export const getEditorComponentDefs = (fieldConfig) =>
   );
 
 /**
- * Get the toolbar buttons of a rich text editor. `code-block` is implemented as a block type, so
- * its button is added when the component is enabled. Unknown button names are left out.
+ * Built-in editor components implemented as buttons in Sveltia UI rather than as editor components.
+ */
+const BUTTON_COMPONENTS = ['code-block', 'table'];
+
+/**
+ * Get the toolbar buttons of a rich text editor. The `code-block` and `table` components are
+ * implemented as buttons, which are added when the components are enabled. Unknown button names
+ * are left out.
  * @param {RichTextEditorButtonName[]} buttonNames Names of the buttons in the `buttons` option.
  * @param {string[]} componentNames Names of the enabled editor components.
- * @returns {(TextEditorBlockType | TextEditorInlineType)[]} Sveltia UI button names.
+ * @returns {TextEditorNodeType[]} Sveltia UI button names.
  */
 export const getToolbarButtons = (buttonNames, componentNames) =>
-  [...buttonNames, ...(componentNames.includes('code-block') ? ['code-block'] : [])]
+  [...buttonNames, ...BUTTON_COMPONENTS.filter((name) => componentNames.includes(name))]
     // @ts-ignore
     .map((name) => BUTTON_NAME_MAP[name])
     .filter(Boolean);

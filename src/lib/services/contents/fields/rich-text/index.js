@@ -1,7 +1,7 @@
 import { cmsConfig } from '$lib/services/config';
 
 /**
- * @import { TextEditorBlockType, TextEditorInlineType, TextEditorMode } from '@sveltia/ui';
+ * @import { TextEditorMode, TextEditorNodeType } from '@sveltia/ui';
  * @import {
  * MarkdownField,
  * RichTextEditorButtonName,
@@ -55,9 +55,9 @@ export const DEFAULT_BUTTONS = [
 ];
 
 /**
- * Key is a name used in Netlify/Decap CMS, value is a name used in Sveltia UI.
- * @type {Record<RichTextEditorButtonName | 'code-block', TextEditorInlineType |
- * TextEditorBlockType>}
+ * Key is a name used in Netlify/Decap CMS, value is a name used in Sveltia UI. The built-in
+ * `code-block` and `table` components are implemented as buttons in Sveltia UI.
+ * @type {Record<RichTextEditorButtonName | 'code-block' | 'table', TextEditorNodeType>}
  */
 export const BUTTON_NAME_MAP = {
   bold: 'bold',
@@ -75,11 +75,13 @@ export const BUTTON_NAME_MAP = {
   'numbered-list': 'numbered-list',
   quote: 'blockquote',
   'code-block': 'code-block',
+  table: 'table',
 };
 
 /**
- * Built-in editor component names. `code-block` is a button in Sveltia CMS, but it’s included here
- * for consistency with the Netlify/Decap CMS API.
+ * Built-in editor component names enabled by default. `code-block` is a button in Sveltia CMS, but
+ * it’s included here for consistency with the Netlify/Decap CMS API. The `table` component, also a
+ * button, is left out: it has to be enabled with the `editor_components` option.
  * @type {RichTextEditorComponentName[]}
  */
 export const BUILTIN_COMPONENTS = ['code-block', 'image'];

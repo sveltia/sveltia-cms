@@ -235,10 +235,11 @@ test.describe('editor components', () => {
   test.describe('default', () => {
     test.use({ config: noteConfig({}) });
 
-    test('offers the image and the code block', async ({ cms, page }) => {
+    test('offers the image and the code block, but not the table', async ({ cms, page }) => {
       const { field } = await openNote({ cms, page, body: 'The dome opens.' });
 
       await expect(field.getByRole('button', { name: 'Image', exact: true })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Insert Table' })).toHaveCount(0);
 
       const menu = await openBlockTypes(cms, page, field);
 
@@ -298,6 +299,74 @@ test.describe('editor components', () => {
 
       await expect(menu.getByRole('menuitemcheckbox', { name: 'Heading 2' })).toBeVisible();
       await expect(menu.getByRole('menuitemcheckbox', { name: 'Code Block' })).toHaveCount(0);
+    });
+  });
+});
+
+test.describe('tables', () => {
+  test.use({ config: noteConfig({ editor_components: ['image', 'table'] }) });
+
+  test('inserts a table, which is saved as Markdown', async ({ cms, page }) => {
+    const { editor, field, body } = await openNote({ cms, page, body: 'Opening hours' });
+
+    await moveCaretToEnd(body);
+    await page.keyboard.press('Enter');
+    await field.getByRole('button', { name: 'Insert Table' }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'Insert Table' });
+
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('spinbutton', { name: 'Rows' }).fill('2');
+    await dialog.getByRole('spinbutton', { name: 'Columns' }).fill('2');
+    await dialog.getByRole('button', { name: 'Insert' }).click();
+    await expect(dialog).toBeHidden();
+
+    // The caret is in the first cell, and the Tab key moves to the next one
+    await expect(body.locator('th')).toHaveCount(2);
+    await page.keyboard.type('Day');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('Hours');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('Monday');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('9–5');
+
+    await saveAndExpect({
+      cms,
+      editor,
+      body: 'Opening hours\n\n| Day | Hours |\n| --- | --- |\n| Monday | 9–5 |',
+    });
+  });
+
+  test('edits the rows and columns of a table from its menus', async ({ cms, page }) => {
+    const { editor, field, body } = await openNote({
+      cms,
+      page,
+      body: '| Day | Hours |\n| --- | --- |\n| Monday | 9–5 |',
+    });
+
+    // The menu button on the cell
+    await body.getByText('Monday').click();
+    await cms.chooseMenuItem(
+      field.locator('.table-cell-menu-button').getByRole('button', { name: 'Show Table Options' }),
+      page.getByRole('menuitem', { name: 'Insert Row Below' }),
+    );
+    await expect(body.locator('tr')).toHaveCount(3);
+    await body.locator('tr').nth(2).locator('td').first().click();
+    await page.keyboard.type('Tuesday');
+
+    // The same menu on the toolbar
+    await body.getByText('Hours').click();
+    await cms.chooseMenuItem(
+      field.getByRole('toolbar').getByRole('button', { name: 'Show Table Options' }),
+      page.getByRole('menuitem', { name: 'Delete Column' }),
+    );
+    await expect(body.locator('th')).toHaveCount(1);
+
+    await saveAndExpect({
+      cms,
+      editor,
+      body: '| Day |\n| --- |\n| Monday |\n| Tuesday |',
     });
   });
 });
