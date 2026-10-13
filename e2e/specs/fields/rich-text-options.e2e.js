@@ -425,6 +425,36 @@ test.describe('text alignment', () => {
   });
 });
 
+test.describe('link targets', () => {
+  test.use({ config: noteConfig({ format: 'html' }) });
+
+  test('sets a link to open in a new tab, which is saved as `target`', async ({ cms, page }) => {
+    const { editor, body } = await openNote({
+      cms,
+      page,
+      body: '<p>See <a href="https://example.com/">Example</a></p>',
+    });
+
+    await body.getByText('Example').click();
+
+    const popup = page.getByRole('group', { name: 'Link' });
+
+    await popup.getByRole('button', { name: 'Edit Link' }).click();
+    await popup.getByRole('button', { name: 'Open in New Tab' }).click();
+    await expect(popup.getByRole('button', { name: 'Open in New Tab' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await popup.getByRole('button', { name: 'Update' }).click();
+
+    await saveAndExpect({
+      cms,
+      editor,
+      body: '<p>See <a href="https://example.com/" target="_blank">Example</a></p>',
+    });
+  });
+});
+
 test.describe('linked images', () => {
   test.describe('default', () => {
     test.use({ config: noteConfig({}) });
