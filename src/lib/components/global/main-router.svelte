@@ -14,6 +14,7 @@
   import LiveReloadInfobar from '$lib/components/global/infobars/live-reload-infobar.svelte';
   import MobilePromoInfobar from '$lib/components/global/infobars/mobile-promo-infobar.svelte';
   import NewLanguageInfobar from '$lib/components/global/infobars/new-language-infobar.svelte';
+  import LocalGitNoticeToast from '$lib/components/global/local-git-notice-toast.svelte';
   import NotFoundPage from '$lib/components/global/not-found-page.svelte';
   import BottomNavigation from '$lib/components/global/toolbar/bottom-navigation.svelte';
   import GlobalToolbar from '$lib/components/global/toolbar/global-toolbar.svelte';
@@ -132,6 +133,7 @@
 <ContentUpdatesToast />
 <TranslatorApiKeyDialog />
 <EntryParseErrorsToast />
+<LocalGitNoticeToast />
 <CloudinaryIframe />
 
 <style>

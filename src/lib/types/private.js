@@ -97,6 +97,9 @@
  * @property {string} [deployHookAuthHeader] Webhook `Authorization` request header value, including
  * the scheme and token, e.g. `Bearer <token>`.
  * @property {string} [defaultTranslationService] Default translation service ID, e.g. `google`.
+ * @property {boolean} [localGitCommits] Whether the local backend commits the saved changes to the
+ * current branch of the local Git repository, like the `MODE=git` option of Netlify/Decap CMS’s
+ * local proxy server. Default: `false`.
  */
 
 /**
@@ -1268,6 +1271,211 @@
  * @property {LocalizedEntryMap} [locales] Content of the item as the user has seen it. The change
  * is refused if the item at the position has been changed since, e.g. by someone else, so that it
  * doesn’t overwrite another item. `undefined` to skip the check.
+ */
+
+/**
+ * Subset of the promise-based API of Node’s `fs` module that isomorphic-git uses, implemented on
+ * top of the File System Access API for the local backend’s Git commits. The paths are relative to
+ * the repository root.
+ * @typedef {object} GitFileSystem
+ * @property {(path: string, options?: string | { encoding?: string }) => Promise<any>} readFile
+ * Read a file, as a `Buffer`, or a string if the `utf8` encoding is given.
+ * @property {(path: string, data: string | Uint8Array) => Promise<void>} writeFile Write a file.
+ * The parent directory must exist.
+ * @property {(path: string, data: string) => Promise<void>} appendFile Add to the end of a file.
+ * Not used by isomorphic-git.
+ * @property {(path: string) => Promise<void>} mkdir Create a directory. The parent directory must
+ * exist.
+ * @property {(path: string) => Promise<void>} rmdir Remove an empty directory.
+ * @property {(path: string) => Promise<void>} unlink Remove a file.
+ * @property {(path: string) => Promise<string[]>} readdir List the names in a directory.
+ * @property {(path: string) => Promise<GitFileStats>} stat Get the stats of a file or directory.
+ * @property {(path: string) => Promise<GitFileStats>} lstat Same as `stat`, as there are no
+ * symbolic links.
+ * @property {(path: string) => Promise<never>} readlink Not supported.
+ * @property {(target: string, path: string) => Promise<never>} symlink Not supported.
+ */
+
+/**
+ * Stats of a file or directory in a {@link GitFileSystem}.
+ * @typedef {object} GitFileStats
+ * @property {number} mode File mode.
+ * @property {number} size Size in bytes.
+ * @property {number} mtimeMs Last modified time.
+ * @property {number} ctimeMs Same as `mtimeMs`, as the File System API doesn’t tell.
+ * @property {number} ino Always `0`.
+ * @property {number} uid Always `0`.
+ * @property {number} gid Always `0`.
+ * @property {number} dev Always `0`.
+ * @property {() => boolean} isFile Whether it’s a file.
+ * @property {() => boolean} isDirectory Whether it’s a directory.
+ * @property {() => boolean} isSymbolicLink Always `false`.
+ */
+
+/**
+ * Type of a Git object.
+ * @typedef {'commit' | 'tree' | 'blob' | 'tag'} GitObjectType
+ */
+
+/**
+ * Git object read from a repository.
+ * @typedef {object} GitObject
+ * @property {GitObjectType} type Type.
+ * @property {Uint8Array} content Content, without the header.
+ */
+
+/**
+ * Parsed Git pack index file.
+ * @typedef {object} GitPackIndex
+ * @property {number[]} fanout Number of objects whose ID starts with a byte up to each value.
+ * @property {Uint8Array} oids Sorted object IDs, 20 bytes each.
+ * @property {Float64Array} offsets Offset of each object in the pack file, in the order of `oids`.
+ */
+
+/**
+ * Git pack file along with its index.
+ * @typedef {object} GitPack
+ * @property {GitPackIndex} index Index.
+ * @property {File} file Pack file.
+ * @property {Float64Array} [sortedOffsets] Offsets of the objects in the order they appear in the
+ * file, to find where an object ends.
+ */
+
+/**
+ * Entry in a Git index file.
+ * @typedef {object} GitIndexEntry
+ * @property {string} path File path, relative to the repository root.
+ * @property {number} mode File mode, e.g. `0o100644`.
+ * @property {string} oid Object ID of the file content.
+ * @property {number} stage Merge stage: `0` normally, or `1` to `3` for a file with a conflict.
+ * @property {Uint8Array} raw The entry as stored in the file, including its stats and padding.
+ */
+
+/**
+ * Parsed Git index file.
+ * @typedef {object} GitIndex
+ * @property {number} version Format version.
+ * @property {GitIndexEntry[]} entries Entries. Empty if the version isn’t 2.
+ * @property {string[]} extensions Signatures of the extensions.
+ * @property {Map<string, string>} [cacheTree] Object IDs of the trees Git has cached in the
+ * index, keyed by directory path, which is an empty string for the root. Only the trees still
+ * valid are included.
+ */
+
+/**
+ * Entry in a Git tree object.
+ * @typedef {object} GitTreeEntry
+ * @property {string} mode Mode, e.g. `100644`, or `40000` for a subtree.
+ * @property {string} path Name.
+ * @property {string} oid Object ID.
+ * @property {'blob' | 'tree' | 'commit'} type Object type.
+ */
+
+/**
+ * Directory in the tree that index entries make up, before the tree objects are built.
+ * @typedef {object} GitTreeDirectory
+ * @property {GitTreeEntry[]} files Entries for the files in the directory.
+ * @property {Map<string, GitTreeDirectory>} dirs Subdirectories, keyed by name.
+ */
+
+/**
+ * Rule in a `.gitattributes` file that sets or unsets the `filter` attribute, which Git LFS uses
+ * with the `lfs` value.
+ * @typedef {object} GitFilterRule
+ * @property {RegExp} regex Regular expression matching the paths the rule applies to, relative to
+ * the directory of the file.
+ * @property {boolean} lfs Whether the rule makes the files tracked with Git LFS.
+ */
+
+/**
+ * Git tree built from index entries.
+ * @typedef {object} GitTreeNode
+ * @property {string} oid Object ID.
+ * @property {GitTreeEntry[]} entries Entries, in Git’s order.
+ * @property {Map<string, GitTreeNode>} subtrees Subtrees, keyed by name.
+ */
+
+/**
+ * Reason the local backend can’t commit the user’s changes to Git.
+ * - `unsupported_repository`: The repository uses a format the CMS doesn’t support, e.g. a linked
+ * worktree, SHA-256 object IDs, the reftable format, or an index version other than 2.
+ * - `missing_identity`: The repository’s configuration doesn’t have `user.name` and `user.email`.
+ * - `locked`: Another Git process is using the index.
+ * - `operation_in_progress`: An operation that has to be finished or aborted is in progress, or a
+ * file has a conflict; the detail is the {@link LocalGitOperation}.
+ * - `detached_head`: No branch is checked out.
+ * - `staged_changes`: The user has staged changes of their own.
+ * - `lfs`: A saved file is tracked with Git LFS.
+ * - `error`: An unexpected error occurred.
+ * @typedef {'unsupported_repository' | 'missing_identity' | 'locked' | 'operation_in_progress' |
+ * 'detached_head' | 'staged_changes' | 'lfs' | 'error'} LocalGitSkipReason
+ */
+
+/**
+ * Git operation in progress that keeps the local backend from committing: `merge`, `rebase`,
+ * `cherry_pick`, `revert`, `am` (`git am`), or `conflict` for files with a conflict left by any of
+ * them.
+ * @typedef {'merge' | 'rebase' | 'cherry_pick' | 'revert' | 'am' | 'conflict'} LocalGitOperation
+ */
+
+/**
+ * Git author identity.
+ * @typedef {object} LocalGitAuthor
+ * @property {string} name Name.
+ * @property {string} email Email address.
+ */
+
+/**
+ * Author and time of a Git commit, in the shape isomorphic-git takes.
+ * @typedef {object} LocalGitSignature
+ * @property {string} name Name.
+ * @property {string} email Email address.
+ * @property {number} timestamp Time in seconds since the epoch.
+ * @property {number} timezoneOffset Time zone offset in minutes, as returned by
+ * `Date.prototype.getTimezoneOffset()`.
+ */
+
+/**
+ * Whether the local backend can commit the user’s changes to Git right now.
+ * @typedef {object} LocalGitStatus
+ * @property {boolean} ready Whether the changes can be committed.
+ * @property {LocalGitSkipReason} [reason] Why they can’t be.
+ * @property {string} [detail] Details on the reason, e.g. the path of a file tracked with Git LFS,
+ * or an error message.
+ * @property {LocalGitAuthor} [author] Author of the commits, if known.
+ * @property {string} [branch] Full name of the current branch, e.g. `refs/heads/main`, if known.
+ */
+
+/**
+ * Repository the local backend commits to, as inspected before the changes are saved.
+ * @typedef {object} LocalGitRepository
+ * @property {any} git Isomorphic-git module, from the `git` chunk.
+ * @property {GitFileSystem} fs File system.
+ * @property {FileSystemDirectoryHandle} gitDirHandle Handle of the `.git` directory.
+ * @property {{ readObject: (oid: string) => Promise<GitObject | undefined> }} reader Object
+ * reader.
+ * @property {string} branch Full name of the current branch.
+ * @property {LocalGitAuthor} author Author of the commit.
+ * @property {string} [headOid] ID of the current commit. `undefined` if the branch has no commits.
+ * @property {string} [headTreeOid] ID of the current commit’s tree.
+ * @property {GitIndex} index Index as inspected.
+ * @property {ArrayBuffer} [indexBuffer] Content of the index file as inspected, to put it back if
+ * the commit fails. `undefined` if the repository had no index.
+ * @property {GitTreeNode} indexTree Tree built from the index as inspected.
+ * @property {boolean} autocrlf Whether `core.autocrlf` is `true` or `input`, which makes Git store
+ * text with LF line endings.
+ */
+
+/**
+ * Result of inspecting a repository the local backend commits to.
+ * @typedef {LocalGitStatus & { repository?: LocalGitRepository }} LocalGitInspection
+ */
+
+/**
+ * Notice for the user when their changes have been saved but not committed.
+ * @typedef {object} LocalGitNotice
+ * @property {LocalGitSkipReason} reason Reason.
+ * @property {string} [detail] Details on the reason.
  */
 
 /**

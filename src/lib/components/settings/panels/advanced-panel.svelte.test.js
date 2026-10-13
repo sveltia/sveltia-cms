@@ -11,25 +11,20 @@ import AdvancedPanel from './advanced-panel.svelte';
 describe('AdvancedPanel', () => {
   beforeEach(() => {
     prefs.beta = false;
-    prefs.devModeEnabled = false;
     prefs.deployHookURL = '';
     prefs.deployHookAuthHeader = '';
     backendName.current = 'github';
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
   });
 
-  test('toggles the beta and developer mode preferences', async () => {
+  test('toggles the beta preference', async () => {
     await render(AdvancedPanel, {});
 
     const beta = page.getByRole('switch', { name: 'Join Beta Program' });
-    const dev = page.getByRole('switch', { name: 'Enable Developer Mode' });
 
     await expect.element(beta).not.toBeChecked();
-    await expect.element(dev).not.toBeChecked();
-
-    await dev.click();
-    await expect.poll(() => prefs.devModeEnabled).toBe(true);
-    prefs.devModeEnabled = false;
+    await beta.click();
+    await expect.poll(() => prefs.beta).toBe(true);
   });
 
   test('offers the deploy hook settings only when skipping CI is configured', async () => {

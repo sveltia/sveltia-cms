@@ -1952,10 +1952,6 @@ prefs:
       title: Tính năng thử nghiệm
       description: Bật một số tính năng thử nghiệm có thể chưa ổn định hoặc chưa được dịch đầy đủ.
       switch_label: Bật tính năng thử nghiệm
-    developer_mode:
-      title: Chế độ nhà phát triển
-      description: Bật các tính năng dành cho nhà phát triển, bao gồm thông tin chi tiết trong nhật ký bảng điều khiển và trình đơn chuột phải mặc định.
-      switch_label: Bật chế độ nhà phát triển
     deploy_hook:
       title: Webhook triển khai
       description: Nhập URL webhook sẽ được gọi khi bạn kích hoạt triển khai theo cách thủ công bằng cách chọn Xuất bản thay đổi. Phần này có thể để trống nếu bạn đang sử dụng Tác vụ GitHub.
@@ -1981,6 +1977,13 @@ prefs:
         description: Xóa mọi thứ mà CMS lưu trong trình duyệt này, bao gồm các tệp trong bộ nhớ đệm, bản nháp chưa lưu và cài đặt. Những gì đã lưu vào kho mã nguồn của bạn sẽ không bị ảnh hưởng.
         button_label: Xóa toàn bộ dữ liệu
         confirmation: Thao tác này sẽ xóa bộ nhớ đệm, bản nháp chưa lưu, cài đặt và trạng thái đăng nhập trong trình duyệt. Dữ liệu trong kho mã nguồn vẫn được giữ nguyên. CMS sẽ tải lại và bạn cần đăng nhập lại.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Chế độ nhà phát triển
+      description: Bật các tính năng dành cho nhà phát triển, bao gồm thông tin chi tiết trong nhật ký bảng điều khiển và trình đơn chuột phải mặc định.
+      switch_label: Bật chế độ nhà phát triển
 
 # ==============================================================================
 # Keyboard Shortcuts

@@ -79,6 +79,8 @@ const devChunkLoaders =
   import.meta.env.DEV || import.meta.env.NPM_BUILD
     ? {
         // eslint-disable-next-line jsdoc/require-jsdoc
+        git: () => import('$lib/chunks/git.js'),
+        // eslint-disable-next-line jsdoc/require-jsdoc
         qrcode: () => import('$lib/chunks/qrcode.js'),
         // eslint-disable-next-line jsdoc/require-jsdoc
         'react-dom': () => import('$lib/chunks/react-dom.js'),
@@ -87,8 +89,8 @@ const devChunkLoaders =
 
 /**
  * Load a chunk of the CMS bundle: a part of the app that’s built separately and only fetched when
- * it’s needed, such as `react-dom` for the Netlify/Decap CMS-compatible API, or `qrcode` for the
- * mobile sign-in dialog.
+ * it’s needed, such as `react-dom` for the Netlify/Decap CMS-compatible API, `qrcode` for the
+ * mobile sign-in dialog, or `git` for the local backend’s Git commits.
  * @param {string} name Chunk name, e.g. `react-dom`.
  * @returns {Promise<any>} Module.
  * @throws {Error} If the chunk can’t be loaded from any location.

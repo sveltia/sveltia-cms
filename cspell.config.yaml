@@ -58,12 +58,14 @@ words:
   - deepmerge
   - DeepSeek
   - dialogs
+  - DIRC
   - dompurify
   - embeddable
   - esbuild
   - esrap
   - exif
   - exifr
+  - fanout
   - FedRAMP
   - filechooser
   - Flavored
@@ -74,6 +76,7 @@ words:
   - Ghsas
   - gitdir
   - Gitea
+  - gitlink
   - goldmark
   - groupable
   - heim
@@ -112,6 +115,8 @@ words:
   - Mtei
   - Mullvad
   - notranslate
+  - objectformat
+  - oids
   - onclickcapture
   - ondragovercapture
   - ondropcapture
@@ -143,6 +148,10 @@ words:
   - rearchitect
   - rebranded
   - recentupdate
+  - reflog
+  - reflogs
+  - refstorage
+  - reftable
   - reimagined
   - reparsed
   - rescanning
@@ -151,6 +160,7 @@ words:
   - safesearch
   - sandboxing
   - Scaleway
+  - sdir
   - sebousan
   - Shiki
   - shikijs
@@ -181,6 +191,7 @@ words:
   - unproxify
   - unreviewed
   - unrs
+  - unsets
   - unsubscribers
   - Uploadcare
   - videoseries

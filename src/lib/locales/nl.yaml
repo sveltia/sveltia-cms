@@ -1986,10 +1986,6 @@ prefs:
       title: Bètafuncties
       description: Schakel bètafuncties in die mogelijk instabiel of nog niet vertaald zijn.
       switch_label: Deelnemen aan het bètaprogramma
-    developer_mode:
-      title: Ontwikkelaarsmodus
-      description: Schakel functies voor ontwikkelaars in, waaronder gedetailleerde consolelogs en native contextmenu’s.
-      switch_label: Ontwikkelaarsmodus inschakelen
     deploy_hook:
       title: Deploy hook
       description: Voer een webhook-URL in die wordt aangeroepen wanneer je handmatig een deployment start via Wijzigingen publiceren. Dit kan leeg blijven als je GitHub Actions gebruikt.
@@ -2015,6 +2011,13 @@ prefs:
         description: Verwijder alles wat het CMS in deze browser bewaart, inclusief gecachte bestanden, niet-opgeslagen concepten en instellingen. Alles wat al in je repository is opgeslagen, blijft ongewijzigd.
         button_label: Alle gegevens wissen
         confirmation: Alle gegevens die in deze browser zijn opgeslagen, worden verwijderd, inclusief gecachte bestandsinhoud, afbeeldingsminiaturen, niet-opgeslagen concepten, instellingen en de inlogstatus. Je repository blijft ongewijzigd, maar wijzigingen die je niet hebt opgeslagen gaan verloren en je moet opnieuw inloggen. Het CMS wordt daarna opnieuw geladen.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Ontwikkelaarsmodus
+      description: Schakel functies voor ontwikkelaars in, waaronder gedetailleerde consolelogs en native contextmenu’s.
+      switch_label: Ontwikkelaarsmodus inschakelen
 
 # ==============================================================================
 # Keyboard Shortcuts

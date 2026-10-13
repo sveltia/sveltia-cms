@@ -1986,10 +1986,6 @@ prefs:
       title: Funzionalità Beta
       description: Abilita alcune funzionalità beta che potrebbero essere instabili o non tradotte.
       switch_label: Partecipa al Programma Beta
-    developer_mode:
-      title: Modalità Sviluppatore
-      description: Abilita alcune funzionalità orientate agli sviluppatori, inclusi log della console dettagliati e menu contestuali nativi.
-      switch_label: Abilita Modalità Sviluppatore
     deploy_hook:
       title: Deploy Hook
       description: Inserisci un URL webhook da chiamare quando attivi manualmente una pubblicazione selezionando Pubblica Modifiche. Può essere lasciato vuoto se usi GitHub Actions.
@@ -2015,6 +2011,13 @@ prefs:
         description: Elimina tutto ciò che il CMS conserva in questo browser, inclusi i file memorizzati nella cache, le bozze non salvate e le impostazioni. Tutto ciò che è già stato salvato nel tuo repository non verrà interessato.
         button_label: Cancella Tutti i Dati
         confirmation: Tutti i dati memorizzati in questo browser verranno eliminati, inclusi i contenuti dei file nella cache, le miniature, le bozze non salvate, le impostazioni e lo stato di accesso. Il tuo repository non verrà interessato, ma qualsiasi modifica non salvata andrà persa e dovrai accedere di nuovo. Il CMS verrà ricaricato al termine dell’operazione.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Modalità Sviluppatore
+      description: Abilita alcune funzionalità orientate agli sviluppatori, inclusi log della console dettagliati e menu contestuali nativi.
+      switch_label: Abilita Modalità Sviluppatore
 
 # ==============================================================================
 # Keyboard Shortcuts

@@ -1947,10 +1947,6 @@ prefs:
       title: Beta Özellikleri
       description: Kararsız veya henüz yerelleştirilmemiş bazı beta özelliklerini etkinleştirin.
       switch_label: Beta Programına Katıl
-    developer_mode:
-      title: Geliştirici Modu
-      description: Ayrıntılı konsol günlükleri ve yerel bağlam menüleri dahil geliştiricilere yönelik bazı özellikleri etkinleştirin.
-      switch_label: Geliştirici Modunu Etkinleştir
     deploy_hook:
       title: Dağıtım Webhook’u
       description: Değişiklikleri Yayınla seçeneği ile manuel bir dağıtım tetiklediğinizde çağrılacak bir webhook URL’i girin. GitHub Actions kullanıyorsanız bu alan boş bırakılabilir.
@@ -1976,6 +1972,13 @@ prefs:
         description: Önbelleğe alınan dosyalar, kaydedilmemiş taslaklar ve ayarlar dahil CMS’in bu tarayıcıda tuttuğu her şeyi silin. Reponuza zaten kaydedilmiş olanlar etkilenmez.
         button_label: Tüm Verileri Sil
         confirmation: Önbelleğe alınan dosya içerikleri, görsel küçük resimleri, kaydedilmemiş taslaklar, ayarlar ve giriş durumu dahil bu tarayıcıda depolanan tüm veriler silinecek. Reponuz etkilenmeyecek, ancak kaydetmediğiniz tüm değişiklikler kaybolacak ve yeniden giriş yapmanız gerekecek. İşlem tamamlandığında CMS yeniden yüklenecek.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Geliştirici Modu
+      description: Ayrıntılı konsol günlükleri ve yerel bağlam menüleri dahil geliştiricilere yönelik bazı özellikleri etkinleştirin.
+      switch_label: Geliştirici Modunu Etkinleştir
 
 # ==============================================================================
 # Keyboard Shortcuts

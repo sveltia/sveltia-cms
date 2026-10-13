@@ -1986,10 +1986,6 @@ prefs:
       title: Beta-funktioner
       description: Aktivera vissa beta-funktioner som kan vara instabila eller oöversatta.
       switch_label: Gå med i beta-programmet
-    developer_mode:
-      title: Utvecklarläge
-      description: Aktivera vissa utvecklarinriktade funktioner, inklusive detaljerade konsolloggar och inbyggda kontextmenyer.
-      switch_label: Aktivera utvecklarläge
     deploy_hook:
       title: Deploy Hook
       description: Ange en webhook-URL som ska anropas när du manuellt utlöser en distribution genom att välja Publicera ändringar. Detta kan lämnas tomt om du använder GitHub Actions.
@@ -2015,6 +2011,13 @@ prefs:
         description: Radera allt som CMS:et lagrar i den här webbläsaren, inklusive cachelagrade filer, osparade utkast och inställningar. Det som redan sparats i ditt repo påverkas inte.
         button_label: Radera alla data
         confirmation: Alla data som lagras i den här webbläsaren raderas, inklusive cachelagrat filinnehåll, miniatyrbilder, osparade utkast, inställningar och inloggningsstatus. Ditt repo påverkas inte, men alla ändringar som du inte har sparat går förlorade, och du måste logga in igen. CMS:et laddas om när det är klart.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Utvecklarläge
+      description: Aktivera vissa utvecklarinriktade funktioner, inklusive detaljerade konsolloggar och inbyggda kontextmenyer.
+      switch_label: Aktivera utvecklarläge
 
 # ==============================================================================
 # Keyboard Shortcuts

@@ -1912,10 +1912,6 @@ prefs:
       title: Beta 功能
       description: 启用一些可能不稳定或未完全本地化的 Beta 功能。
       switch_label: 加入 Beta 计划
-    developer_mode:
-      title: 开发者模式
-      description: 启用一些面向开发者的功能，包括详细的控制台日志和原生上下文菜单。
-      switch_label: 启用开发者模式
     deploy_hook:
       title: 部署钩子
       description: 手动部署时（选择「发布更改」）会调用此 URL。使用 GitHub Actions 可留空。
@@ -1941,6 +1937,13 @@ prefs:
         description: 删除 CMS 在此浏览器中保存的所有内容，包括缓存文件、未保存的草稿和设置。已保存到仓库的内容不受影响。
         button_label: 清除所有数据
         confirmation: 此浏览器中存储的所有数据将被删除，包括缓存的文件内容、图片缩略图、未保存的草稿、设置和登录状态。您的仓库不受影响，但任何未保存的更改都将丢失，并且您需要重新登录。完成后 CMS 将重新加载。
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: 开发者模式
+      description: 启用一些面向开发者的功能，包括详细的控制台日志和原生上下文菜单。
+      switch_label: 启用开发者模式
 
 # ==============================================================================
 # Keyboard Shortcuts

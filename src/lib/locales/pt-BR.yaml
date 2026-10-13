@@ -1986,10 +1986,6 @@ prefs:
       title: Recursos Beta
       description: Ativa alguns recursos beta que podem estar instáveis ou não localizados.
       switch_label: Participar do Programa Beta
-    developer_mode:
-      title: Modo Desenvolvedor
-      description: Ativa alguns recursos voltados para desenvolvedores, incluindo logs detalhados no console e menus de contexto nativos.
-      switch_label: Ativar Modo Desenvolvedor
     deploy_hook:
       title: Deploy Hook
       description: Insira uma URL de webhook para ser chamada quando você acionar manualmente uma implantação selecionando Publicar Alterações. Isso pode ficar em branco se você estiver usando o GitHub Actions.
@@ -2015,6 +2011,13 @@ prefs:
         description: Exclui tudo o que o CMS mantém neste navegador, incluindo os arquivos em cache, rascunhos não salvos e configurações. O que já estiver salvo no seu repositório não será afetado.
         button_label: Apagar Todos os Dados
         confirmation: Todos os dados armazenados neste navegador serão excluídos, incluindo o conteúdo de arquivos em cache, miniaturas de imagens, rascunhos não salvos, configurações e estado de login. Seu repositório não será afetado, mas qualquer alteração que você não tenha salvo será perdida e você precisará entrar novamente. O CMS será recarregado ao concluir.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Modo Desenvolvedor
+      description: Ativa alguns recursos voltados para desenvolvedores, incluindo logs detalhados no console e menus de contexto nativos.
+      switch_label: Ativar Modo Desenvolvedor
 
 # ==============================================================================
 # Keyboard Shortcuts

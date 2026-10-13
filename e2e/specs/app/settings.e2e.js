@@ -64,6 +64,7 @@ test('opens and closes the Settings dialog', async ({ cms, page }) => {
     /Contents/,
     /Media/,
     /Accessibility/,
+    /Developer/,
     /Advanced/,
   ]);
   // The Appearance panel is shown first
@@ -216,7 +217,7 @@ test('shows the developer tools once Developer Mode is on', async ({ cms, page }
   await expect(page.getByRole('menuitem', { name: 'CMS Configuration' })).toBeHidden();
   await page.keyboard.press('Escape');
 
-  const dialog = await openSettings(cms, page, 'Advanced');
+  const dialog = await openSettings(cms, page, 'Developer');
   const devMode = dialog.getByRole('switch', { name: 'Enable Developer Mode' });
 
   await devMode.click();

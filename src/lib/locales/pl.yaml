@@ -2082,10 +2082,6 @@ prefs:
       title: Funkcje beta
       description: Włącz niektóre funkcje beta, które mogą być niestabilne lub nieprzetłumaczone.
       switch_label: Dołącz do programu beta
-    developer_mode:
-      title: Tryb programisty
-      description: Włącz niektóre funkcje skierowane do programistów, w tym szczegółowe logi w konsoli i natywne menu kontekstowe.
-      switch_label: Włącz tryb programisty
     deploy_hook:
       title: Webhook wdrożeniowy
       description: Wprowadź adres URL webhooka, który zostanie wywołany po ręcznym uruchomieniu wdrożenia poprzez wybranie Opublikuj zmiany. Można pozostawić puste, jeśli używasz GitHub Actions.
@@ -2111,6 +2107,13 @@ prefs:
         description: Usuń wszystko, co CMS przechowuje w tej przeglądarce, w tym pliki w pamięci podręcznej, niezapisane szkice i ustawienia. Nie wpłynie to na nic, co zostało już zapisane w repozytorium.
         button_label: Wymaż wszystkie dane
         confirmation: Wszystkie dane przechowywane w tej przeglądarce zostaną usunięte, w tym zawartość plików w pamięci podręcznej, miniatury obrazów, niezapisane szkice, ustawienia i stan logowania. Nie wpłynie to na repozytorium, ale wszystkie niezapisane zmiany zostaną utracone i konieczne będzie ponowne zalogowanie. Po zakończeniu CMS zostanie przeładowany.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Tryb programisty
+      description: Włącz niektóre funkcje skierowane do programistów, w tym szczegółowe logi w konsoli i natywne menu kontekstowe.
+      switch_label: Włącz tryb programisty
 
 # ==============================================================================
 # Keyboard Shortcuts

@@ -1986,10 +1986,6 @@ prefs:
       title: Funcionalidades beta
       description: Ativar algumas funcionalidades beta que podem estar instáveis ou não traduzidas.
       switch_label: Aderir ao programa beta
-    developer_mode:
-      title: Modo de programador
-      description: Ativar algumas funcionalidades orientadas para programadores, incluindo registos detalhados na consola e menus de contexto nativos.
-      switch_label: Ativar o modo de programador
     deploy_hook:
       title: Hook de implementação
       description: Introduza o URL de um webhook a chamar quando acionar manualmente uma implementação ao selecionar Publicar alterações. Pode deixar em branco se estiver a utilizar o GitHub Actions.
@@ -2015,6 +2011,13 @@ prefs:
         description: Eliminar tudo o que o CMS guarda neste navegador, incluindo os ficheiros em cache, os rascunhos não guardados e as definições. O que já estiver guardado no seu repositório não será afetado.
         button_label: Apagar todos os dados
         confirmation: Todos os dados guardados neste navegador serão eliminados, incluindo o conteúdo dos ficheiros em cache, as miniaturas de imagens, os rascunhos não guardados, as definições e o estado de início de sessão. O seu repositório não será afetado, mas qualquer alteração que não tenha guardado será perdida e terá de iniciar sessão novamente. O CMS será recarregado quando terminar.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Modo de programador
+      description: Ativar algumas funcionalidades orientadas para programadores, incluindo registos detalhados na consola e menus de contexto nativos.
+      switch_label: Ativar o modo de programador
 
 # ==============================================================================
 # Keyboard Shortcuts

@@ -2363,10 +2363,6 @@ prefs:
       title: Beta funkcie
       description: Povoliť niektoré beta funkcie, ktoré môžu byť nestabilné alebo nepreložené.
       switch_label: Zapojiť sa do beta programu
-    developer_mode:
-      title: Režim pre vývojárov
-      description: Povoliť niektoré funkcie určené pre vývojárov vrátane podrobných záznamov v konzole a natívnych kontextových menu.
-      switch_label: Zapnúť režim pre vývojárov
     deploy_hook:
       title: Webhook pre nasadenie (Deploy Hook)
       description: Zadajte URL webhooku, ktorý sa zavolá, keď ručne spustíte nasadenie výberom možnosti Publikovať zmeny. Ak používate GitHub Actions, môžete toto pole nechať prázdne.
@@ -2392,6 +2388,13 @@ prefs:
         description: Odstrániť všetko, čo CMS uchováva v tomto prehliadači, vrátane súborov v cache, neuložených konceptov a nastavení. Nič, čo je už uložené vo vašom repozitári, nebude ovplyvnené.
         button_label: Vymazať všetky údaje
         confirmation: Všetky údaje uložené v tomto prehliadači sa odstránia vrátane obsahu súborov v cache, miniatúr obrázkov, neuložených konceptov, nastavení a stavu prihlásenia. Váš repozitár nebude ovplyvnený, ale všetky neuložené zmeny sa stratia a budete sa musieť znova prihlásiť. Po dokončení sa CMS znova načíta.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Režim pre vývojárov
+      description: Povoliť niektoré funkcie určené pre vývojárov vrátane podrobných záznamov v konzole a natívnych kontextových menu.
+      switch_label: Zapnúť režim pre vývojárov
 
 # ==============================================================================
 # Keyboard Shortcuts

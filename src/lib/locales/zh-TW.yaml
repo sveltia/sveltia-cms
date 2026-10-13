@@ -1916,10 +1916,6 @@ prefs:
       title: Beta 功能
       description: 啟用一些可能不穩定或尚未完整翻譯的 Beta 功能。
       switch_label: 加入 Beta 計畫
-    developer_mode:
-      title: 開發者模式
-      description: 啟用一些給開發者用的功能，包括詳細的主控台記錄和原生快顯選單。
-      switch_label: 啟用開發者模式
     deploy_hook:
       title: 部署 Hook
       description: 手動部署時（選擇「發布變更」）會呼叫此 URL。使用 GitHub Actions 可留空。
@@ -1945,6 +1941,13 @@ prefs:
         description: 刪除 CMS 在此瀏覽器中儲存的所有內容，包括快取檔案、未儲存的草稿和設定。已儲存到倉庫的內容不受影響。
         button_label: 清除所有資料
         confirmation: 此瀏覽器中儲存的所有資料將被刪除，包括快取的檔案內容、圖片縮圖、未儲存的草稿、設定和登入狀態。您的倉庫不受影響，但任何未儲存的變更都將遺失，並且您需要重新登入。完成後 CMS 將重新載入。
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: 開發者模式
+      description: 啟用一些給開發者用的功能，包括詳細的主控台記錄和原生快顯選單。
+      switch_label: 啟用開發者模式
 
 # ==============================================================================
 # Keyboard Shortcuts

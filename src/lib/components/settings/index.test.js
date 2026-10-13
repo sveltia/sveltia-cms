@@ -18,6 +18,9 @@ vi.mock('$lib/components/settings/panels/appearance-panel.svelte', () => ({
 vi.mock('$lib/components/settings/panels/contents-panel.svelte', () => ({
   default: {},
 }));
+vi.mock('$lib/components/settings/panels/developer-panel.svelte', () => ({
+  default: {},
+}));
 vi.mock('$lib/components/settings/panels/i18n-panel.svelte', () => ({
   default: {},
 }));
@@ -92,8 +95,16 @@ describe('Settings panels', () => {
     const advancedPanel = panelList.find((panel) => panel.key === 'advanced');
 
     expect(advancedPanel).toBeDefined();
-    expect(advancedPanel?.icon).toBe('build');
+    expect(advancedPanel?.icon).toBe('labs');
     expect(advancedPanel?.component).toBeDefined();
+  });
+
+  test('should have developer panel', () => {
+    const developerPanel = panels.current.find((panel) => panel.key === 'developer');
+
+    expect(developerPanel).toBeDefined();
+    expect(developerPanel?.icon).toBe('code_xml');
+    expect(developerPanel?.component).toBeDefined();
   });
 
   test('should enable i18n panel when multiple locales configured', () => {

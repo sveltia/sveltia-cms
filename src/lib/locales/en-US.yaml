@@ -265,6 +265,28 @@ live_reload_warning: Your development server reloads this page whenever a file c
 switching_language: Switching to {$locale}…
 locale_load_failed: Couldn’t load the {$locale} translation. Please try again later.
 
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: Your changes have been saved but not committed to Git. {$reason} To only save the files, turn off Git commits under Settings > Developer.
+local_git_skip_reasons:
+  unsupported_repository: Your repository uses a Git feature the CMS doesn’t support, such as a linked worktree, SHA-256 object names, the reftable format, a sparse index, or an index in version 3 or 4, which the feature.manyFiles option and git add -N use.
+  missing_identity: Your name and email address aren’t set in the repository’s Git configuration, and the CMS can’t read your global one. Set them in the repository with git config --local user.name "Your Name" and git config --local user.email "you@example.com".
+  locked: Another Git process is using the repository. If none is running, delete the .git/index.lock file.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: A merge is in progress. Finish it with git commit, or cancel it with git merge --abort.
+    rebase: A rebase is in progress. Finish it with git rebase --continue, or cancel it with git rebase --abort. If you’ve moved on, git rebase --quit drops it without changing your files.
+    cherry_pick: A cherry-pick is in progress. Finish it with git cherry-pick --continue, or cancel it with git cherry-pick --abort.
+    revert: A revert is in progress. Finish it with git revert --continue, or cancel it with git revert --abort.
+    am: Applying patches with git am is in progress. Finish it with git am --continue, or cancel it with git am --abort.
+    conflict: Some files have conflicts. Resolve them and stage the results first.
+  detached_head: No branch is checked out.
+  staged_changes: You have other changes staged for commit. Commit or unstage them first.
+  # {$path} is the file path
+  lfs: '{$path} is tracked with Git LFS, which the CMS can’t commit to.'
+  # {$message} is the error message
+  error: An unexpected error occurred. {$message}
+
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
 visit_live_site: Visit Live Site
@@ -2413,10 +2435,6 @@ prefs:
       title: Beta Features
       description: Enable some beta features that may be unstable or unlocalized.
       switch_label: Join Beta Program
-    developer_mode:
-      title: Developer Mode
-      description: Enable some developer-oriented features, including detailed console logs and native context menus.
-      switch_label: Enable Developer Mode
     deploy_hook:
       title: Deploy Hook
       description: Enter a webhook URL to be called when you manually trigger a deployment by selecting Publish Changes. This can be left blank if you’re using GitHub Actions.
@@ -2442,6 +2460,23 @@ prefs:
         description: Delete everything the CMS keeps in this browser, including the cached files, unsaved drafts and settings. Anything already saved to your repository won’t be affected.
         button_label: Erase All Data
         confirmation: All the data stored in this browser will be deleted, including the cached file contents, image thumbnails, unsaved drafts, settings and sign-in state. Your repository won’t be affected, but any change you haven’t saved will be lost, and you’ll have to sign in again. The CMS will be reloaded once done.
+
+  # Developer panel
+  developer:
+    title: Developer
+    developer_mode:
+      title: Developer Mode
+      description: Enable some developer-oriented features, including detailed console logs and native context menus.
+      switch_label: Enable Developer Mode
+    local_git:
+      title: Git Commits
+      description: Commit your changes to the current branch of your local repository whenever you save them, as the CMS does when you work with a remote repository. You can then review and push the commits with your usual Git tools.
+      switch_label: Commit Changes to Git
+      checking: Checking the repository…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: Changes will be committed to the {$branch} branch as {$name} ({$email}).
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: Changes can’t be committed right now. {$reason}
 
 # ==============================================================================
 # Keyboard Shortcuts

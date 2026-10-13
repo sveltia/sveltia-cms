@@ -1986,10 +1986,6 @@ prefs:
       title: Betafunktioner
       description: Slå betafunktioner til. De kan være ustabile eller mangle oversættelse.
       switch_label: Deltag i betaprogrammet
-    developer_mode:
-      title: Udviklertilstand
-      description: Slå udviklerorienterede funktioner til, herunder detaljerede konsollogs og systemets egne kontekstmenuer.
-      switch_label: Slå udviklertilstand til
     deploy_hook:
       title: Deploy-hook
       description: Indtast en webhook-URL der skal kaldes når du manuelt udløser en udrulning ved at vælge Udgiv ændringer. Feltet kan stå tomt hvis du bruger GitHub Actions.
@@ -2015,6 +2011,13 @@ prefs:
         description: Slet alt hvad CMS’et gemmer i denne browser, herunder cachelagrede filer, ikke-gemte kladder og indstillinger. Det der allerede er gemt i dit repositorium, bliver ikke påvirket.
         button_label: Slet alle data
         confirmation: Alle data der er gemt i denne browser, bliver slettet, herunder cachelagret filindhold, miniaturebilleder, ikke-gemte kladder, indstillinger og loginstatus. Dit repositorium bliver ikke påvirket, men alle ændringer du ikke har gemt, går tabt, og du skal logge ind igen. CMS’et genindlæses når det er færdigt.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Udviklertilstand
+      description: Slå udviklerorienterede funktioner til, herunder detaljerede konsollogs og systemets egne kontekstmenuer.
+      switch_label: Slå udviklertilstand til
 
 # ==============================================================================
 # Keyboard Shortcuts

@@ -22,7 +22,8 @@ describe('SettingsDialog', () => {
       'library_books Contents',
       'photo_library Media',
       'accessibility_new Accessibility',
-      'build Advanced',
+      'code_xml Developer',
+      'labs Advanced',
     ]);
     await expect.element(tabs.nth(0)).toHaveAttribute('aria-selected', 'true');
     await expect.element(dialog.getByRole('heading', { name: 'Theme' })).toBeVisible();
@@ -67,7 +68,7 @@ describe('SettingsDialog', () => {
     await advanced.click();
     await expect.element(advanced).toHaveAttribute('aria-selected', 'true');
     await expect.element(appearance).toHaveAttribute('aria-selected', 'false');
-    await expect.element(dialog.getByRole('heading', { name: 'Developer Mode' })).toBeVisible();
+    await expect.element(dialog.getByRole('heading', { name: 'Beta Features' })).toBeVisible();
   });
 
   test('opens with the bound prop, and closes without a handler', async () => {

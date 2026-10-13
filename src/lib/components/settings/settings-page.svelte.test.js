@@ -30,7 +30,8 @@ describe('SettingsPage', () => {
       'library_books Contents',
       'photo_library Media',
       'accessibility_new Accessibility',
-      'build Advanced',
+      'code_xml Developer',
+      'labs Advanced',
     ]);
 
     await menu.getByRole('menuitem', { name: 'Contents' }).click();

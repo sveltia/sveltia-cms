@@ -58,6 +58,7 @@ $effect.root(() => {
       _prefs.underlineLinks ??= true;
       _prefs.beta ??= false;
       _prefs.devModeEnabled ??= false;
+      _prefs.localGitCommits ??= false;
       _prefs.defaultTranslationService ??= 'google';
       _prefs.locale ??= AUTO_PREF_VALUE;
 

@@ -56,21 +56,6 @@
     <PrefSwitch key="beta" label={_('prefs.advanced.beta.switch_label')} defaultValue={false} />
   </div>
 </section>
-<section>
-  <h3>
-    {_('prefs.advanced.developer_mode.title')}
-  </h3>
-  <p>
-    {_('prefs.advanced.developer_mode.description')}
-  </p>
-  <div role="none">
-    <PrefSwitch
-      key="devModeEnabled"
-      label={_('prefs.advanced.developer_mode.switch_label')}
-      defaultValue={false}
-    />
-  </div>
-</section>
 {#if skipCIConfigured.current}
   <section>
     <h3>

@@ -1987,10 +1987,6 @@ prefs:
       title: Beta-Funktionen
       description: Einige Beta-Funktionen aktivieren, die instabil oder noch nicht übersetzt sein können.
       switch_label: Am Beta-Programm teilnehmen
-    developer_mode:
-      title: Entwicklermodus
-      description: Einige Funktionen für die Entwicklung aktivieren, darunter ausführliche Konsolenausgaben und native Kontextmenüs.
-      switch_label: Entwicklermodus aktivieren
     deploy_hook:
       title: Deploy-Hook
       description: Geben Sie eine Webhook-URL ein, die aufgerufen wird, wenn Sie über „Änderungen veröffentlichen“ manuell eine Bereitstellung auslösen. Bei Verwendung von GitHub Actions kann das Feld leer bleiben.
@@ -2016,6 +2012,13 @@ prefs:
         description: Alles löschen, was das CMS in diesem Browser speichert, einschließlich zwischengespeicherter Dateien, ungespeicherter Entwürfe und Einstellungen. Bereits im Repository Gespeichertes ist nicht betroffen.
         button_label: Alle Daten löschen
         confirmation: Alle in diesem Browser gespeicherten Daten werden gelöscht, einschließlich zwischengespeicherter Dateiinhalte, Bildvorschauen, ungespeicherter Entwürfe, Einstellungen und Anmeldestatus. Das Repository ist nicht betroffen, aber alle nicht gespeicherten Änderungen gehen verloren, und Sie müssen sich erneut anmelden. Das CMS wird danach neu geladen.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Entwicklermodus
+      description: Einige Funktionen für die Entwicklung aktivieren, darunter ausführliche Konsolenausgaben und native Kontextmenüs.
+      switch_label: Entwicklermodus aktivieren
 
 # ==============================================================================
 # Keyboard Shortcuts

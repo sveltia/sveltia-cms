@@ -1986,10 +1986,6 @@ prefs:
       title: Funcionalitats beta
       description: Habilita algunes funcionalitats beta que poden ser inestables o no localitzades.
       switch_label: Uneix-te al programa beta
-    developer_mode:
-      title: Mode de desenvolupador
-      description: Habilita algunes funcionalitats orientades al desenvolupador, inclosos els registres detallats de la consola i els menús de context nadius.
-      switch_label: Habilita el mode de desenvolupador
     deploy_hook:
       title: Ganxo de desplegament
       description: Introduïu un URL de webhook que es cridarà quan activeu manualment un desplegament seleccionant Publica els canvis. Es pot deixar en blanc si useu GitHub Actions.
@@ -2015,6 +2011,13 @@ prefs:
         description: Suprimeix tot el que el CMS guarda en aquest navegador, inclosos els fitxers a la memòria cau, els esborranys no desats i la configuració. El que ja estigui desat al repositori no es veurà afectat.
         button_label: Esborra totes les dades
         confirmation: Se suprimiran totes les dades emmagatzemades en aquest navegador, inclosos el contingut dels fitxers a la memòria cau, les miniatures d’imatges, els esborranys no desats, la configuració i l’estat de la sessió. El repositori no es veurà afectat, però es perdrà qualsevol canvi que no hàgiu desat i haureu de tornar a iniciar la sessió. El CMS es tornarà a carregar quan acabi.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Mode de desenvolupador
+      description: Habilita algunes funcionalitats orientades al desenvolupador, inclosos els registres detallats de la consola i els menús de context nadius.
+      switch_label: Habilita el mode de desenvolupador
 
 # ==============================================================================
 # Keyboard Shortcuts

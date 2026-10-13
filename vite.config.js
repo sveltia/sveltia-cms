@@ -353,6 +353,7 @@ const generateSchema = async () => {
  * files for what each chunk is for.
  */
 const CHUNKS = {
+  git: 'src/lib/chunks/git.js',
   qrcode: 'src/lib/chunks/qrcode.js',
   'react-dom': 'src/lib/chunks/react-dom.js',
 };

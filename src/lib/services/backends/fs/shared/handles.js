@@ -5,6 +5,13 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { getRootDir } from '$lib/services/backends/root-dir';
 
 /**
+ * Check if the given error says a file or directory doesn’t exist.
+ * @param {unknown} ex Error.
+ * @returns {boolean} `true` for a `NotFoundError`.
+ */
+export const isNotFoundError = (ex) => /** @type {DOMException} */ (ex)?.name === 'NotFoundError';
+
+/**
  * Get a file or directory handle at the given path.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  * @param {string | undefined} path Path to the file/directory.

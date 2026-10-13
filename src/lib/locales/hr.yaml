@@ -2046,10 +2046,6 @@ prefs:
       title: Beta značajke
       description: Omogućite neke beta značajke koje mogu biti nestabilne ili neprevedene.
       switch_label: Pridruži se beta programu
-    developer_mode:
-      title: Razvojni način rada
-      description: Omogućite neke značajke namijenjene razvojnim programerima, uključujući detaljne zapise u konzoli i izvorne kontekstne izbornike.
-      switch_label: Omogući razvojni način rada
     deploy_hook:
       title: Deploy Hook
       description: Unesite URL webhooka koji će se pozvati kada ručno pokrenete objavu odabirom stavke Objavi promjene. Možete ga ostaviti praznim ako koristite GitHub Actions.
@@ -2075,6 +2071,13 @@ prefs:
         description: Izbrišite sve što CMS čuva u ovom pregledniku, uključujući predmemorirane datoteke, nespremljene skice i postavke. Ono što je već spremljeno u vašem repozitoriju neće biti zahvaćeno.
         button_label: Izbriši sve podatke
         confirmation: Svi podaci pohranjeni u ovom pregledniku bit će izbrisani, uključujući predmemorirani sadržaj datoteka, sličice slika, nespremljene skice, postavke i stanje prijave. Vaš repozitorij neće biti zahvaćen, ali sve nespremljene promjene bit će izgubljene i morat ćete se ponovno prijaviti. CMS će se po završetku ponovno učitati.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Razvojni način rada
+      description: Omogućite neke značajke namijenjene razvojnim programerima, uključujući detaljne zapise u konzoli i izvorne kontekstne izbornike.
+      switch_label: Omogući razvojni način rada
 
 # ==============================================================================
 # Keyboard Shortcuts

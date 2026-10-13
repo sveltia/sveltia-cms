@@ -2,6 +2,7 @@ import AccessibilityPanel from '$lib/components/settings/panels/accessibility-pa
 import AdvancedPanel from '$lib/components/settings/panels/advanced-panel.svelte';
 import AppearancePanel from '$lib/components/settings/panels/appearance-panel.svelte';
 import ContentsPanel from '$lib/components/settings/panels/contents-panel.svelte';
+import DeveloperPanel from '$lib/components/settings/panels/developer-panel.svelte';
 import I18nPanel from '$lib/components/settings/panels/i18n-panel.svelte';
 import LanguagePanel from '$lib/components/settings/panels/language-panel.svelte';
 import MediaPanel from '$lib/components/settings/panels/media-panel.svelte';
@@ -29,5 +30,6 @@ export const panels = createDerivedState(() => [
   },
   { key: 'media', icon: 'photo_library', component: MediaPanel },
   { key: 'accessibility', icon: 'accessibility_new', component: AccessibilityPanel },
-  { key: 'advanced', icon: 'build', component: AdvancedPanel },
+  { key: 'developer', icon: 'code_xml', component: DeveloperPanel },
+  { key: 'advanced', icon: 'labs', component: AdvancedPanel },
 ]);

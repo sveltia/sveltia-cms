@@ -1986,10 +1986,6 @@ prefs:
       title: Beta-ominaisuudet
       description: Ota käyttöön beta-ominaisuuksia, jotka voivat olla epävakaita tai kääntämättömiä.
       switch_label: Liity beta-ohjelmaan
-    developer_mode:
-      title: Kehittäjätila
-      description: Ota käyttöön kehittäjille suunnattuja ominaisuuksia, kuten yksityiskohtaiset konsolilokit ja natiivit kontekstivalikot.
-      switch_label: Ota kehittäjätila käyttöön
     deploy_hook:
       title: Julkaisu-webhook
       description: Anna webhook-URL-osoite, jota kutsutaan, kun käynnistät julkaisun manuaalisesti valitsemalla Julkaise muutokset. Voit jättää tämän tyhjäksi, jos käytät GitHub Actionsia.
@@ -2015,6 +2011,13 @@ prefs:
         description: Poista kaikki, mitä CMS säilyttää tässä selaimessa, mukaan lukien välimuistiin tallennetut tiedostot, tallentamattomat luonnokset ja asetukset. Tämä ei vaikuta repositorioosi jo tallennettuihin tietoihin.
         button_label: Poista kaikki tiedot
         confirmation: Kaikki tähän selaimeen tallennetut tiedot poistetaan, mukaan lukien välimuistiin tallennettu tiedostosisältö, kuvien pikkukuvat, tallentamattomat luonnokset, asetukset ja kirjautumistila. Tämä ei vaikuta repositorioosi, mutta kaikki tallentamattomat muutokset menetetään, ja sinun on kirjauduttava uudelleen sisään. CMS ladataan uudelleen, kun toiminto on valmis.
+
+  # Developer panel
+  developer:
+    developer_mode:
+      title: Kehittäjätila
+      description: Ota käyttöön kehittäjille suunnattuja ominaisuuksia, kuten yksityiskohtaiset konsolilokit ja natiivit kontekstivalikot.
+      switch_label: Ota kehittäjätila käyttöön
 
 # ==============================================================================
 # Keyboard Shortcuts

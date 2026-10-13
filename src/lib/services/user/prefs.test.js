@@ -110,6 +110,7 @@ describe('prefs service', () => {
     expect(prefs.underlineLinks).toBe(true);
     expect(prefs.beta).toBe(false);
     expect(prefs.devModeEnabled).toBe(false);
+    expect(prefs.localGitCommits).toBe(false);
     expect(prefs.defaultTranslationService).toBe('google');
     expect(prefs.apiKeys).toEqual({});
     expect(prefs.locale).toBe('auto');

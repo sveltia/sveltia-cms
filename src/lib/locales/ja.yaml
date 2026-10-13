@@ -262,6 +262,28 @@ live_reload_warning: 開発サーバーはファイルが変更されるたび�
 switching_language: '{$locale} に切り替え中…'
 locale_load_failed: '{$locale} の翻訳を読み込めませんでした。後で再度お試しください。'
 
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: 変更は保存されましたが、Git にはコミットされていません。{$reason} ファイルの保存だけを行うには、設定 > 開発者 で Git コミットをオフにしてください。
+local_git_skip_reasons:
+  unsupported_repository: このリポジトリでは、リンクされたワークツリー、SHA-256 オブジェクト名、reftable 形式、スパースインデックス、feature.manyFiles オプションや git add -N で使われるバージョン 3 または 4 のインデックスなど、CMS が対応していない Git の機能が使われています。
+  missing_identity: リポジトリの Git 設定に名前とメールアドレスが設定されておらず、CMS はグローバル設定を読み込めません。リポジトリ内で git config --local user.name "Your Name" と git config --local user.email "you@example.com" を実行して設定してください。
+  locked: 別の Git プロセスがリポジトリを使用しています。実行中のプロセスがない場合は、.git/index.lock ファイルを削除してください。
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: マージが進行中です。git commit で完了するか、git merge --abort で取り消してください。
+    rebase: リベースが進行中です。git rebase --continue で完了するか、git rebase --abort で取り消してください。すでに別の作業に移っている場合は、git rebase --quit でファイルを変更せずに中断できます。
+    cherry_pick: チェリーピックが進行中です。git cherry-pick --continue で完了するか、git cherry-pick --abort で取り消してください。
+    revert: リバートが進行中です。git revert --continue で完了するか、git revert --abort で取り消してください。
+    am: git am によるパッチの適用が進行中です。git am --continue で完了するか、git am --abort で取り消してください。
+    conflict: 一部のファイルにコンフリクトがあります。先に解決して結果をステージしてください。
+  detached_head: ブランチがチェックアウトされていません。
+  staged_changes: コミット対象としてステージされた他の変更があります。先にそれらをコミットするか、ステージを解除してください。
+  # {$path} is the file path
+  lfs: '{$path} は Git LFS で管理されているため、CMS ではコミットできません。'
+  # {$message} is the error message
+  error: 予期しないエラーが発生しました。{$message}
+
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
 visit_live_site: 管理対象サイトを開く
@@ -2303,10 +2325,6 @@ prefs:
       title: ベータ機能
       description: 不安定あるいは未ローカライズの可能性がある、いくつかのベータ機能を有効化します。
       switch_label: ベータプログラムに参加する
-    developer_mode:
-      title: 開発者モード
-      description: 詳細なコンソールログやネイティブコンテキストメニューなど、いくつかの開発者向け機能を有効化します。
-      switch_label: 開発者モードを有効にする
     deploy_hook:
       title: デプロイフック
       description: 「変更を公開」を選択して手動でデプロイを実行する際に呼び出すウェブフック URL を入力してください。GitHub Actions を使用する場合は空欄のままで構いません。
@@ -2332,6 +2350,23 @@ prefs:
         description: キャッシュされたファイル、未保存の下書き、設定など、CMS がこのブラウザーに保存しているすべてのデータを削除します。リポジトリに保存済みのデータは影響を受けません。
         button_label: すべてのデータを消去
         confirmation: キャッシュされたファイルの内容、画像のサムネイル、未保存の下書き、設定、サインイン状態など、このブラウザーに保存されているすべてのデータが削除されます。リポジトリは影響を受けませんが、未保存の変更は失われ、再度サインインする必要があります。完了後、CMS が再読み込みされます。
+
+  # Developer panel
+  developer:
+    title: 開発者
+    developer_mode:
+      title: 開発者モード
+      description: 詳細なコンソールログやネイティブコンテキストメニューなど、いくつかの開発者向け機能を有効化します。
+      switch_label: 開発者モードを有効にする
+    local_git:
+      title: Git コミット
+      description: 変更を保存するたびに、ローカルリポジトリの現在のブランチにコミットします。リモートリポジトリで作業する場合と同じです。コミットは普段お使いの Git ツールで確認してプッシュできます。
+      switch_label: 変更を Git にコミットする
+      checking: リポジトリを確認しています…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: 変更は {$name} ({$email}) として {$branch} ブランチにコミットされます。
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: 現在、変更をコミットできません。{$reason}
 
 # ==============================================================================
 # Keyboard Shortcuts
