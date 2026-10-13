@@ -59,10 +59,10 @@ export const getEditorComponentDefs = (fieldConfig) =>
 /**
  * Built-in editor components implemented as buttons in Sveltia UI rather than as editor components.
  */
-const BUTTON_COMPONENTS = ['code-block', 'table'];
+const BUTTON_COMPONENTS = ['code-block', 'table', 'hr'];
 
 /**
- * Get the toolbar buttons of a rich text editor. The `code-block` and `table` components are
+ * Get the toolbar buttons of a rich text editor. The `code-block`, `table` and `hr` components are
  * implemented as buttons, which are added when the components are enabled. Unknown button names
  * are left out.
  * @param {RichTextEditorButtonName[]} buttonNames Names of the buttons in the `buttons` option.

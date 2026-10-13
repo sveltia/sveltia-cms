@@ -33,7 +33,7 @@ afterEach(() => {
 describe('getEditorComponentNames()', () => {
   test('includes the built-in and custom components by default', () => {
     customComponentRegistry.set('youtube', /** @type {any} */ ({}));
-    // `table` has to be enabled explicitly
+    // `table` and `hr` have to be enabled explicitly
     expect(getEditorComponentNames(fieldConfig)).toEqual(['code-block', 'linked-image', 'youtube']);
   });
 
@@ -84,6 +84,10 @@ describe('getToolbarButtons()', () => {
       'code-block',
     ]);
     expect(getToolbarButtons(['heading-one'], ['linked-image'])).toEqual(['heading-1']);
+  });
+
+  test('adds `horizontal-rule` when the `hr` component is enabled', () => {
+    expect(getToolbarButtons(['bold'], ['hr'])).toEqual(['bold', 'horizontal-rule']);
   });
 
   test('adds `table` when the component is enabled', () => {

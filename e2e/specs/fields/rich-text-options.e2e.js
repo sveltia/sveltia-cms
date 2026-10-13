@@ -235,11 +235,15 @@ test.describe('editor components', () => {
   test.describe('default', () => {
     test.use({ config: noteConfig({}) });
 
-    test('offers the image and the code block, but not the table', async ({ cms, page }) => {
+    test('offers the image and the code block, but not the table or the rule', async ({
+      cms,
+      page,
+    }) => {
       const { field } = await openNote({ cms, page, body: 'The dome opens.' });
 
       await expect(field.getByRole('button', { name: 'Image', exact: true })).toBeVisible();
       await expect(field.getByRole('button', { name: 'Insert Table' })).toHaveCount(0);
+      await expect(field.getByRole('button', { name: 'Insert Horizontal Rule' })).toHaveCount(0);
 
       const menu = await openBlockTypes(cms, page, field);
 
@@ -368,6 +372,22 @@ test.describe('tables', () => {
       editor,
       body: '| Day |\n| --- |\n| Monday |\n| Tuesday |',
     });
+  });
+});
+
+test.describe('horizontal rules', () => {
+  test.use({ config: noteConfig({ editor_components: ['image', 'hr'] }) });
+
+  test('inserts a horizontal rule, which is saved as Markdown', async ({ cms, page }) => {
+    const { editor, field, body } = await openNote({ cms, page, body: 'Part one' });
+
+    await moveCaretToEnd(body);
+    await field.getByRole('button', { name: 'Insert Horizontal Rule' }).click();
+    await expect(body.locator('hr')).toHaveCount(1);
+    // The caret is below the rule
+    await page.keyboard.type('Part two');
+
+    await saveAndExpect({ cms, editor, body: 'Part one\n\n***\n\nPart two' });
   });
 });
 

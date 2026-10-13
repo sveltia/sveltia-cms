@@ -921,9 +921,9 @@
  */
 
 /**
- * Built-in editor component name for the rich text editor. `table` is not enabled by default; add
- * it to the `editor_components` option to enable it.
- * @typedef {'code-block' | 'image' | 'table'} RichTextEditorComponentName
+ * Built-in editor component name for the rich text editor. `table` and `hr` (horizontal rule) are
+ * not enabled by default; add them to the `editor_components` option to enable them.
+ * @typedef {'code-block' | 'image' | 'table' | 'hr'} RichTextEditorComponentName
  * @see https://decapcms.org/docs/widgets/#Markdown
  * @see https://sveltiacms.app/en/docs/fields/richtext
  */
@@ -951,7 +951,8 @@
  * enabled in the editor UI. Default: all the supported button names.
  * @property {(RichTextEditorComponentName | string)[]} [editor_components] Names of components to
  * be enabled in the editor UI. This may include custom component names. Default: all the built-in
- * and registered custom component names, except `table`, which has to be listed to enable it.
+ * and registered custom component names, except `table` and `hr`, which have to be listed to
+ * enable them.
  * @property {boolean | 'exclude_self'} [allow_nested_components] Whether to allow nested rich text
  * editor components in the editor UI. If set to `'exclude_self'`, nested components are disabled if
  * the parent components include the current component; this is useful to prevent unexpected
@@ -985,8 +986,8 @@
  * @property {RichTextValueFormat} [format] Format of the field value: `markdown` or `html`.
  * Default: `markdown`. With `html`, the value is saved as HTML, and the raw mode shows the HTML
  * source. Only the editor components that support HTML with the `htmlSelector`, `fromBlockHTML`
- * and `toBlockHTML` options are available, including the built-in `code-block`, `image` and
- * `table` components. HTML with an element the rich text mode cannot handle, like `<video>`
+ * and `toBlockHTML` options are available, including the built-in `code-block`, `image`, `table`
+ * and `hr` components. HTML with an element the rich text mode cannot handle, like `<video>`
  * without a component for it, can only be edited in the raw mode. Attributes the editor doesn’t
  * use, like `class`, are dropped once the content is changed in the rich text mode.
  * @see https://sveltiacms.app/en/docs/fields/richtext
