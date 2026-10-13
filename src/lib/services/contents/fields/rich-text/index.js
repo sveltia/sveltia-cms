@@ -34,7 +34,8 @@ export const NODE_NAME_MAP = {
 };
 
 /**
- * The default `buttons` property options.
+ * The default `buttons` property options. `align` is left out: it has to be enabled with the
+ * `buttons` option.
  * @type {RichTextEditorButtonName[]}
  */
 export const DEFAULT_BUTTONS = [
@@ -74,6 +75,7 @@ export const BUTTON_NAME_MAP = {
   'bulleted-list': 'bulleted-list',
   'numbered-list': 'numbered-list',
   quote: 'blockquote',
+  align: 'align',
   'code-block': 'code-block',
   table: 'table',
   hr: 'horizontal-rule',

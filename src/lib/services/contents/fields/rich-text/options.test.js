@@ -86,6 +86,10 @@ describe('getToolbarButtons()', () => {
     expect(getToolbarButtons(['heading-one'], ['linked-image'])).toEqual(['heading-1']);
   });
 
+  test('maps the `align` button', () => {
+    expect(getToolbarButtons(['bold', 'align'], [])).toEqual(['bold', 'align']);
+  });
+
   test('adds `horizontal-rule` when the `hr` component is enabled', () => {
     expect(getToolbarButtons(['bold'], ['hr'])).toEqual(['bold', 'horizontal-rule']);
   });

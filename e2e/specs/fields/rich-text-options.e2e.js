@@ -391,6 +391,40 @@ test.describe('horizontal rules', () => {
   });
 });
 
+test.describe('text alignment', () => {
+  test.describe('HTML', () => {
+    test.use({ config: noteConfig({ format: 'html', buttons: ['bold', 'align'] }) });
+
+    test('aligns the paragraph, which is saved with the style', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: '<p>Opening hours</p>' });
+
+      await body.getByText('Opening hours').click();
+      await cms.chooseMenuItem(
+        field.getByRole('button', { name: 'Show Alignment Options' }),
+        page.getByRole('menuitemradio', { name: 'Center Align' }),
+      );
+      await expect(body.locator('p')).toHaveCSS('text-align', 'center');
+
+      await saveAndExpect({
+        cms,
+        editor,
+        body: '<p style="text-align: center;">Opening hours</p>',
+      });
+    });
+  });
+
+  test.describe('Markdown', () => {
+    test.use({ config: noteConfig({ buttons: ['bold', 'align'] }) });
+
+    test('offers no alignment, which Markdown can’t hold', async ({ cms, page }) => {
+      const { field } = await openNote({ cms, page, body: 'Opening hours' });
+
+      await expect(field.getByRole('button', { name: 'Bold' })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Show Alignment Options' })).toHaveCount(0);
+    });
+  });
+});
+
 test.describe('linked images', () => {
   test.describe('default', () => {
     test.use({ config: noteConfig({}) });

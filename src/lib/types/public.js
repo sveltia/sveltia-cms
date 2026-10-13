@@ -912,10 +912,12 @@
  */
 
 /**
- * Supported button name for the rich text editor.
+ * Supported button name for the rich text editor. `align` shows the text alignment menu, which is
+ * only available with the `html` format, as Markdown has no syntax for alignment. It’s not enabled
+ * by default; add it to the `buttons` option to enable it.
  * @typedef {'bold' | 'italic' | 'strikethrough' | 'code' | 'link' | 'heading-one' | 'heading-two' |
  * 'heading-three' | 'heading-four' | 'heading-five' | 'heading-six' | 'quote' | 'bulleted-list' |
- * 'numbered-list'} RichTextEditorButtonName
+ * 'numbered-list' | 'align'} RichTextEditorButtonName
  * @see https://decapcms.org/docs/widgets/#Markdown
  * @see https://sveltiacms.app/en/docs/fields/richtext
  */
@@ -948,7 +950,7 @@
  * @property {boolean} [minimal] Whether to limit the editor height to 240 pixels, making the
  * content scrollable. Default: `false`.
  * @property {RichTextEditorButtonName[]} [buttons] Names of formatting buttons and menu items to be
- * enabled in the editor UI. Default: all the supported button names.
+ * enabled in the editor UI. Default: all the supported button names except `align`.
  * @property {(RichTextEditorComponentName | string)[]} [editor_components] Names of components to
  * be enabled in the editor UI. This may include custom component names. Default: all the built-in
  * and registered custom component names, except `table` and `hr`, which have to be listed to
