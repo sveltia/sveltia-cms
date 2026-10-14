@@ -237,6 +237,7 @@ export const fetchFileCommits = async (paths) => {
       ),
     (commit) => ({
       sha: commit.id,
+      message: commit.title ?? '',
       authorName: commit.author_name,
       authorEmail: commit.author_email,
       authorAvatarURL: undefined,

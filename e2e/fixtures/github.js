@@ -1433,8 +1433,9 @@ export class MockGitHub extends MockGitRepository {
     return this.getAncestors(this.getHead(branch).oid)
       .filter(({ paths, parents }) => paths.has(path) && parents.length < 2)
       .slice(0, first)
-      .map(({ oid, author, date }) => ({
+      .map(({ oid, message, author, date }) => ({
         oid,
+        messageHeadline: message.split('\n')[0],
         author: {
           name: author.name,
           email: author.email,

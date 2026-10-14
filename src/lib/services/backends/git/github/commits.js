@@ -368,6 +368,7 @@ export const fetchFileCommits = async (paths) => {
             history(first: 100, path: ${JSON.stringify(path)}) {
               nodes {
                 oid
+                messageHeadline
                 author {
                   name
                   email
@@ -388,6 +389,7 @@ export const fetchFileCommits = async (paths) => {
     results.flatMap((result) =>
       (result?.target?.history?.nodes ?? []).map((/** @type {any} */ node) => ({
         sha: node.oid,
+        message: node.messageHeadline ?? '',
         // The author can be `null` when the commit has no valid author info
         authorName: node.author?.name ?? '',
         authorEmail: node.author?.email,

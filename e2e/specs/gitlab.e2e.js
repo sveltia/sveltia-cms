@@ -281,7 +281,10 @@ test('saves a change while a colleague changes another file', async ({ cms, gitl
 });
 
 test('lists the commits of an entry in the History panel', async ({ cms, gitlab, page }) => {
-  gitlab.commit({ [POST_PATH]: FIRST_POST.replace('Hello', 'Hi') }, { author: gitlab.user });
+  gitlab.commit(
+    { [POST_PATH]: FIRST_POST.replace('Hello', 'Hi') },
+    { author: gitlab.user, message: 'Say hi\n\nThe greeting was too formal.' },
+  );
   // A commit to another file isn’t listed
   gitlab.commit({ 'content/posts/second-post.md': '---\ntitle: Second Post\n---\n' });
   await cms.open();
@@ -294,7 +297,11 @@ test('lists the commits of an entry in the History panel', async ({ cms, gitlab,
   const commits = page.getByRole('group', { name: 'History', exact: true }).getByRole('link');
 
   await expect(commits).toHaveCount(2);
+  // Each commit is shown with the headline of its message
+  await expect(commits.first()).toContainText('Say hi');
+  await expect(commits.first()).not.toContainText('too formal');
   await expect(commits.first()).toContainText(gitlab.user.name);
+  await expect(commits.last()).toContainText('Add the first post');
   await expect(commits.last()).toContainText(gitlab.colleague.name);
 
   // A commit opens on GitLab in a new tab

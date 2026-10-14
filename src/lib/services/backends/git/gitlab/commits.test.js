@@ -593,6 +593,8 @@ describe('GitLab commits service', () => {
         .mockResolvedValueOnce([
           {
             id: 'abc123',
+            title: 'Update Post “hello”',
+            message: 'Update Post “hello”\n\nWith a body',
             author_name: 'Alice',
             author_email: 'alice@example.com',
             committed_date: '2024-06-01T12:00:00Z',
@@ -613,6 +615,7 @@ describe('GitLab commits service', () => {
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         sha: 'abc123',
+        message: 'Update Post “hello”',
         authorName: 'Alice',
         authorEmail: 'alice@example.com',
         authorAvatarURL: 'https://example.com/alice.png',
@@ -620,6 +623,7 @@ describe('GitLab commits service', () => {
       });
       expect(result[1]).toEqual({
         sha: 'def456',
+        message: '',
         authorName: 'Bob',
         authorEmail: 'bob@example.com',
         authorAvatarURL: 'https://example.com/bob.png',

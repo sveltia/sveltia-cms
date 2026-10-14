@@ -60,7 +60,10 @@ test.beforeEach(async ({ github }) => {
 
 test.describe('History panel', () => {
   test('lists the commits of the entry, the latest first', async ({ cms, github, page }) => {
-    github.commit({ [POST_PATH]: FIRST_POST.replace('Hello', 'Hi') }, { author: github.user });
+    github.commit(
+      { [POST_PATH]: FIRST_POST.replace('Hello', 'Hi') },
+      { author: github.user, message: 'Say hi\n\nThe greeting was too formal.' },
+    );
     // A commit to another file isn’t listed
     github.commit({ 'content/posts/second-post.md': '---\ntitle: Second Post\n---\n' });
     await cms.open();
@@ -73,7 +76,11 @@ test.describe('History panel', () => {
     const commits = page.getByRole('group', { name: 'History', exact: true }).getByRole('link');
 
     await expect(commits).toHaveCount(2);
+    // Each commit is shown with the headline of its message
+    await expect(commits.first()).toContainText('Say hi');
+    await expect(commits.first()).not.toContainText('too formal');
     await expect(commits.first()).toContainText(github.user.name);
+    await expect(commits.last()).toContainText('Add the first post');
     await expect(commits.last()).toContainText(github.colleague.name);
 
     // A commit opens on GitHub in a new tab

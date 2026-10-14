@@ -282,7 +282,10 @@ test('warns before saving over a colleague’s change', async ({ cms, gitea, pag
 });
 
 test('lists the commits of an entry in the History panel', async ({ cms, gitea, page }) => {
-  gitea.commit({ [POST_PATH]: FIRST_POST.replace('Hello', 'Hi') }, { author: gitea.user });
+  gitea.commit(
+    { [POST_PATH]: FIRST_POST.replace('Hello', 'Hi') },
+    { author: gitea.user, message: 'Say hi\n\nThe greeting was too formal.' },
+  );
   // A commit to another file isn’t listed
   gitea.commit({ 'content/posts/second-post.md': '---\ntitle: Second Post\n---\n' });
   await cms.open();
@@ -295,7 +298,11 @@ test('lists the commits of an entry in the History panel', async ({ cms, gitea, 
   const commits = page.getByRole('group', { name: 'History', exact: true }).getByRole('link');
 
   await expect(commits).toHaveCount(2);
+  // Each commit is shown with the headline of its message
+  await expect(commits.first()).toContainText('Say hi');
+  await expect(commits.first()).not.toContainText('too formal');
   await expect(commits.first()).toContainText(gitea.user.name);
+  await expect(commits.last()).toContainText('Add the first post');
   await expect(commits.last()).toContainText(gitea.colleague.name);
 
   // A commit opens on Gitea in a new tab

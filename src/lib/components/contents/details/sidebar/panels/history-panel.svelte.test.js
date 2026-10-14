@@ -48,11 +48,13 @@ describe('HistoryPanel', () => {
       commits: [
         {
           sha: 'abc',
+          message: 'Update “Hello”',
           authorName: 'Melvin',
           authorAvatarURL: 'data:,',
           date: new Date('2024-01-15T10:00:00Z'),
         },
-        { sha: 'def', authorName: 'Elsie', date: new Date('2024-01-14T10:00:00Z') },
+        // A backend that returns no message
+        { sha: 'def', message: '', authorName: 'Elsie', date: new Date('2024-01-14T10:00:00Z') },
       ],
       error: false,
     });
@@ -61,9 +63,21 @@ describe('HistoryPanel', () => {
 
     await expect.poll(() => links.elements().length).toBe(2);
     expect(links.elements().map((el) => el.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
-      'Melvin Jan 15, 2024, 10:00 AM',
+      'Update “Hello” Melvin Jan 15, 2024, 10:00 AM',
       'Elsie Jan 14, 2024, 10:00 AM',
     ]);
+
+    // The message headline comes first, with the full text in a tooltip
+    const message = links.nth(0).element().querySelector('.message');
+
+    expect(message).toHaveTextContent('Update “Hello”');
+    expect(message).toHaveAttribute('title', 'Update “Hello”');
+    expect(message?.querySelector('bdi')).not.toBeNull();
+    expect(message?.nextElementSibling).toHaveClass('meta', 'secondary');
+    expect(message?.nextElementSibling).toHaveTextContent('Melvin Jan 15, 2024, 10:00 AM');
+    // Without a message, the author and the date are shown as before
+    expect(links.nth(1).element().querySelector('.message')).toBeNull();
+    expect(links.nth(1).element().querySelector('.meta')).not.toHaveClass('secondary');
     expect(links.nth(0).element().querySelector('img')).toHaveAttribute('src', 'data:,');
     expect(links.nth(1).element().querySelector('.placeholder')).not.toBeNull();
     // The test backend has no repository to link to
@@ -80,7 +94,7 @@ describe('HistoryPanel', () => {
     repository.commitBaseURL = 'https://github.com/me/site/commit';
 
     vi.mocked(fetchEntryHistory).mockResolvedValue({
-      commits: [{ sha: 'abc', authorName: 'Melvin', date: new Date() }],
+      commits: [{ sha: 'abc', message: 'Add a post', authorName: 'Melvin', date: new Date() }],
       loading: false,
       error: false,
     });

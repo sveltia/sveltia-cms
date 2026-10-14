@@ -557,6 +557,8 @@
  * A single commit associated with one or more files.
  * @typedef {object} FileCommit
  * @property {string} sha Commit SHA hash.
+ * @property {string} message Headline of the commit message: its first line. GitHub shortens a
+ * long one with an ellipsis.
  * @property {string} authorName Author’s display name.
  * @property {string} [authorEmail] Author’s email address.
  * @property {string} [authorAvatarURL] Author’s avatar URL.

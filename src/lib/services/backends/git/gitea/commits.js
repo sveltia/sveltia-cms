@@ -211,6 +211,8 @@ export const fetchFileCommits = async (paths) => {
       ),
     (commit) => ({
       sha: commit.sha,
+      // A message written on Windows can have CRLF line breaks
+      message: (commit.commit?.message ?? '').split(/\r?\n/)[0],
       authorName: commit.commit?.author?.name ?? '',
       authorEmail: commit.commit?.author?.email,
       authorAvatarURL: commit.author?.avatar_url,

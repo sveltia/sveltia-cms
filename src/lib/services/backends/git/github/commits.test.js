@@ -939,6 +939,7 @@ describe('GitHub commits service', () => {
                 nodes: [
                   {
                     oid: 'abc123',
+                    messageHeadline: 'Update Post “hello”',
                     author: {
                       name: 'Alice',
                       email: 'alice@example.com',
@@ -969,6 +970,7 @@ describe('GitHub commits service', () => {
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         sha: 'abc123',
+        message: 'Update Post “hello”',
         authorName: 'Alice',
         authorEmail: 'alice@example.com',
         authorAvatarURL: 'https://example.com/alice.png',
@@ -977,6 +979,8 @@ describe('GitHub commits service', () => {
       });
       expect(result[1]).toEqual({
         sha: 'def456',
+        // The headline is missing from an incomplete response
+        message: '',
         authorName: 'Bob',
         authorEmail: 'bob@example.com',
         authorAvatarURL: 'https://example.com/bob.png',
@@ -1109,6 +1113,7 @@ describe('GitHub commits service', () => {
       expect(result).toEqual([
         {
           sha: 'no-author',
+          message: '',
           authorName: '',
           authorEmail: undefined,
           authorAvatarURL: undefined,
@@ -1117,6 +1122,7 @@ describe('GitHub commits service', () => {
         },
         {
           sha: 'with-author',
+          message: '',
           authorName: 'Alice',
           authorEmail: 'alice@example.com',
           authorAvatarURL: undefined,

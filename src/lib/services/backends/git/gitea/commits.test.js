@@ -839,6 +839,7 @@ describe('Gitea Commits Service', () => {
         {
           sha: 'abc123',
           commit: {
+            message: 'Update Post “hello”\r\n\r\nWith a body\r\n',
             author: { name: 'Alice', email: 'alice@example.com', date: '2024-06-01T12:00:00Z' },
           },
           author: { avatar_url: 'https://example.com/alice.png', login: 'alice' },
@@ -857,6 +858,7 @@ describe('Gitea Commits Service', () => {
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         sha: 'abc123',
+        message: 'Update Post “hello”',
         authorName: 'Alice',
         authorEmail: 'alice@example.com',
         authorAvatarURL: 'https://example.com/alice.png',
@@ -865,6 +867,7 @@ describe('Gitea Commits Service', () => {
       });
       expect(result[1]).toEqual({
         sha: 'def456',
+        message: '',
         authorName: 'Bob',
         authorEmail: 'bob@example.com',
         authorAvatarURL: 'https://example.com/bob.png',
@@ -940,6 +943,7 @@ describe('Gitea Commits Service', () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         sha: 'no-author',
+        message: '',
         authorName: '',
         authorEmail: undefined,
         authorAvatarURL: undefined,

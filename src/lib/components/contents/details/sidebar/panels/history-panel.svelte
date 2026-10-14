@@ -77,8 +77,13 @@
               <span class="avatar placeholder" aria-hidden="true"></span>
             {/if}
             <span class="details">
-              <span class="author"><bdi>{commit.authorName}</bdi></span>
-              <span class="date">{formatDate(commit.date, appLocale.current)}</span>
+              {#if commit.message}
+                <span class="message" title={commit.message}><bdi>{commit.message}</bdi></span>
+              {/if}
+              <span class="meta" class:secondary={!!commit.message}>
+                <span class="author"><bdi>{commit.authorName}</bdi></span>
+                <span class="date">{formatDate(commit.date, appLocale.current)}</span>
+              </span>
             </span>
           </Button>
         </div>
@@ -110,13 +115,29 @@
     font-size: var(--sui-font-size-small);
   }
 
+  .message,
   .author {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
+  .meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+
+    &.secondary {
+      flex-direction: row;
+      gap: 8px;
+      color: var(--sui-tertiary-foreground-color);
+      font-size: var(--sui-font-size-x-small);
+    }
+  }
+
   .date {
+    flex: none;
     color: var(--sui-tertiary-foreground-color);
   }
 </style>
