@@ -1,8 +1,12 @@
-import { describe, expect, test } from 'vitest';
+// @vitest-environment happy-dom
+
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  findFieldElement,
   getFieldAlignedScrollTop,
   getProportionalScrollTop,
+  getRevealingScrollTop,
 } from '$lib/services/contents/editor/scroll';
 
 describe('getProportionalScrollTop()', () => {
@@ -92,5 +96,93 @@ describe('getFieldAlignedScrollTop()', () => {
         targetHeight: 400,
       }),
     ).toBeUndefined();
+  });
+});
+
+describe('findFieldElement()', () => {
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  /**
+   * Render the given HTML in a container.
+   * @param {string} html HTML.
+   * @returns {HTMLElement} Container.
+   */
+  const render = (html) => {
+    const container = document.createElement('div');
+
+    container.innerHTML = html;
+    document.body.append(container);
+
+    return container;
+  };
+
+  test('finds the element showing the field', () => {
+    const container = render(
+      '<section data-key-path="items"><p data-key-path="items.0.title">A</p></section>',
+    );
+
+    expect(findFieldElement(container, 'items.0.title')?.textContent).toBe('A');
+  });
+
+  test('falls back to the element showing the nearest parent', () => {
+    const container = render('<section data-key-path="items"><p>A</p></section>');
+
+    expect(findFieldElement(container, 'items.0.title')?.dataset.keyPath).toBe('items');
+  });
+
+  test('skips an element that isn’t rendered', () => {
+    const container = render(
+      '<section data-key-path="items"><p data-key-path="items.0" hidden>A</p></section>',
+    );
+
+    // happy-dom doesn’t lay out the document, so it gives a hidden element a box too
+    vi.spyOn(
+      /** @type {HTMLElement} */ (container.querySelector('p')),
+      'getClientRects',
+    ).mockReturnValue(/** @type {DOMRectList} */ (/** @type {unknown} */ ([])));
+
+    expect(findFieldElement(container, 'items.0')?.dataset.keyPath).toBe('items');
+  });
+
+  test('gives up when no element shows the field or a parent', () => {
+    const container = render('<p data-key-path="other">A</p>');
+
+    expect(findFieldElement(container, 'items.0')).toBeUndefined();
+  });
+});
+
+describe('getRevealingScrollTop()', () => {
+  const view = { viewTop: 100, viewHeight: 500, scrollTop: 1000 };
+
+  test('leaves an entirely visible element alone', () => {
+    expect(getRevealingScrollTop({ ...view, top: 100, height: 500 })).toBeUndefined();
+    expect(getRevealingScrollTop({ ...view, top: 300, height: 100 })).toBeUndefined();
+  });
+
+  test('centers an element below or above the visible area', () => {
+    expect(getRevealingScrollTop({ ...view, top: 900, height: 100 })).toBe(1600);
+    expect(getRevealingScrollTop({ ...view, top: -300, height: 100 })).toBe(400);
+  });
+
+  test('centers a partly visible element', () => {
+    expect(getRevealingScrollTop({ ...view, top: 550, height: 100 })).toBe(1250);
+  });
+
+  test('doesn’t scroll past the top', () => {
+    expect(getRevealingScrollTop({ ...view, top: -900, height: 100 })).toBe(0);
+    expect(getRevealingScrollTop({ ...view, top: -1900, height: 1000 })).toBe(0);
+  });
+
+  test('leaves a partly visible element taller than the pane alone', () => {
+    expect(getRevealingScrollTop({ ...view, top: -200, height: 1000 })).toBeUndefined();
+    expect(getRevealingScrollTop({ ...view, top: 500, height: 1000 })).toBeUndefined();
+  });
+
+  test('aligns an element taller than the pane to the top', () => {
+    expect(getRevealingScrollTop({ ...view, top: 600, height: 1000 })).toBe(1500);
+    expect(getRevealingScrollTop({ ...view, top: -1000, height: 1000 })).toBe(0);
+    expect(getRevealingScrollTop({ ...view, top: -800, height: 600 })).toBe(100);
   });
 });

@@ -276,6 +276,116 @@ describe('PaneBody', () => {
     }
   });
 
+  test('scrolls the other pane to the focused field', async () => {
+    entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: true };
+
+    const thatPane = createThatPane();
+    const { props, thisPane } = await renderPane({ mode: 'edit', locale: 'en' });
+
+    try {
+      await expect.poll(() => props.thisPaneContentArea).toBeDefined();
+
+      const area = /** @type {HTMLElement} */ (props.thisPaneContentArea);
+      const input = page.getByRole('textbox', { name: 'Title' });
+
+      props.thatPaneContentArea = thatPane;
+
+      // The Title field is below the visible area of the other pane, so it’s brought to the middle
+      await input.click();
+      await expect.poll(() => thatPane.scrollTop).toBe(200);
+
+      // Already visible, if not in the middle
+      input.element().blur();
+      /** @type {HTMLElement} */ (thatPane.children[1]).style.height = '50px';
+      thatPane.scrollTo({ top: 190, behavior: 'instant' });
+      await input.click();
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      expect(thatPane.scrollTop).toBe(190);
+
+      // Focusing something that isn’t a field does nothing
+      input.element().blur();
+      thatPane.scrollTo({ top: 0, behavior: 'instant' });
+      area.insertAdjacentHTML('beforeend', '<button type="button">Other</button>');
+      /** @type {HTMLElement} */ (area.querySelector('button:last-child')).focus();
+
+      // Syncing can be turned off
+      entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: false };
+      await input.click();
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      expect(thatPane.scrollTop).toBe(0);
+      input.element().blur();
+      entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: true };
+
+      // A field the other pane doesn’t show
+      thatPane.querySelector('[data-key-path]')?.removeAttribute('data-key-path');
+      await input.click();
+      input.element().blur();
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      expect(thatPane.scrollTop).toBe(0);
+
+      // A field removed before the other pane is scrolled
+      thatPane.children[1].setAttribute('data-key-path', 'title');
+      await input.click();
+      area.querySelector('[data-key-path="title"]')?.remove();
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      expect(thatPane.scrollTop).toBe(0);
+
+      // A preview pane doesn’t scroll the other pane, even if a field preview looks like a field
+      thisPane.current = { mode: 'preview', locale: 'en' };
+      await expect.poll(() => area.querySelector('[role="document"]')).not.toBeNull();
+      area.insertAdjacentHTML(
+        'beforeend',
+        '<div class="field" data-key-path="title" tabindex="-1"></div>',
+      );
+      /** @type {HTMLElement} */ (area.querySelector('.field[data-key-path="title"]')).focus();
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      expect(thatPane.scrollTop).toBe(0);
+    } finally {
+      thatPane.remove();
+      entryEditorSettings.current = undefined;
+    }
+  });
+
+  test('scrolls the preview iframe to the focused field', async () => {
+    entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: true };
+
+    const iframe = document.createElement('iframe');
+
+    iframe.style.cssText = 'height: 100px; border: 0';
+    iframe.srcdoc =
+      '<body style="margin: 0"><div style="height: 200px"></div>' +
+      '<div data-key-path="title" style="height: 100px"></div>' +
+      '<div style="height: 500px"></div></body>';
+    document.body.append(iframe);
+
+    try {
+      await new Promise((resolve) => {
+        iframe.addEventListener('load', resolve, { once: true });
+      });
+
+      const thatPane = /** @type {HTMLElement} */ (iframe.contentDocument?.documentElement);
+      const { props } = await renderPane({ mode: 'edit', locale: 'en' });
+
+      await expect.poll(() => props.thisPaneContentArea).toBeDefined();
+      props.thatPaneContentArea = thatPane;
+      await page.getByRole('textbox', { name: 'Title' }).click();
+      await expect.poll(() => thatPane.scrollTop).toBe(200);
+    } finally {
+      iframe.remove();
+      entryEditorSettings.current = undefined;
+    }
+  });
+
   test('listens to the preview itself when the custom template is for another collection', async () => {
     customPreviewTemplateRegistry.set('pages', () => null);
 

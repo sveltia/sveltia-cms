@@ -23,8 +23,10 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
   import {
+    findFieldElement,
     getFieldAlignedScrollTop,
     getProportionalScrollTop,
+    getRevealingScrollTop,
   } from '$lib/services/contents/editor/scroll';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
@@ -146,6 +148,72 @@
   };
 
   /**
+   * Scroll the other pane to the given field if it’s not visible there.
+   * @param {HTMLElement} field Field element in this pane.
+   */
+  const revealField = (field) => {
+    if (!syncScrolling || !thisPaneContentArea || !thatPaneContentArea || !field.isConnected) {
+      return;
+    }
+
+    // The field was found by that very attribute, so the key path is there
+    const { keyPath } = /** @type {{ keyPath: string }} */ (field.dataset);
+    const element = findFieldElement(thatPaneContentArea, keyPath);
+
+    if (!element) {
+      return;
+    }
+
+    // The preview iframe’s root element is its viewport, while the content area of the main
+    // document is an element in it
+    const isRoot = thatPaneContentArea === thatPaneContentArea.ownerDocument.documentElement;
+    const { top, height } = element.getBoundingClientRect();
+    const { scrollTop, clientHeight } = thatPaneContentArea;
+
+    const thatScrollTop = getRevealingScrollTop({
+      viewTop: isRoot ? 0 : thatPaneContentArea.getBoundingClientRect().top,
+      viewHeight: clientHeight,
+      scrollTop,
+      top,
+      height,
+    });
+
+    if (thatScrollTop === undefined) {
+      return;
+    }
+
+    // Make this pane the scroll source, so that the other pane being scrolled doesn’t scroll this
+    // one in turn
+    scrollSource = thisPaneContentArea;
+    thatPaneContentArea.scrollTo({ top: thatScrollTop, behavior: 'smooth' });
+  };
+
+  /**
+   * Scroll the other pane to the field focused in this edit pane, so the user can see the field
+   * they’re editing in the preview. Scroll Synchronization follows scrolling only.
+   * @param {FocusEvent} event `focusin` event.
+   * @see https://github.com/sveltia/sveltia-cms/issues/1069
+   */
+  const onFocusIn = (event) => {
+    const field = /** @type {HTMLElement | null} */ (
+      /** @type {HTMLElement} */ (event.target).closest('.field[data-key-path]')
+    );
+
+    if (mode !== 'edit' || !field) {
+      return;
+    }
+
+    // Focusing the field may scroll this pane to it, and the scroll event that follows syncs the
+    // other pane in an animation frame of its own. Wait for that frame, so that the sync doesn’t
+    // undo the scrolling
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        revealField(field);
+      });
+    });
+  };
+
+  /**
    * Element receiving the scroll events of this pane’s content area: the area itself, or the
    * preview iframe’s document, whose root element doesn’t get the events of its own scrolling.
    * @type {HTMLElement | Document | undefined}
@@ -261,7 +329,7 @@
 
 <div role="none" {id} class="wrapper">
   {#if locale && entryDraft.current?.currentLocales[locale]}
-    <div role="none" class="content" bind:this={contentArea}>
+    <div role="none" class="content" bind:this={contentArea} onfocusin={onFocusIn}>
       <MainContent {locale} />
     </div>
   {:else if mode === 'edit'}

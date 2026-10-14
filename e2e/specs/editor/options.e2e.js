@@ -279,6 +279,23 @@ test.describe('sync scrolling', () => {
     await expect.poll(() => previewArea.evaluate((element) => element.scrollTop)).toBe(0);
   });
 
+  test('scrolls the preview to the focused field', async ({ page }) => {
+    const { editArea, previewArea } = await openLongNight(page);
+    const title = getEditor(page).getByRole('textbox', { name: 'Title' });
+
+    // Scroll the preview to the bottom, which takes the editor along
+    await previewArea.hover();
+    await page.mouse.wheel(0, 5000);
+    await expect.poll(() => editArea.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    await expect(previewArea.locator('[data-key-path="title"]')).not.toBeInViewport();
+
+    // Focusing the Title field brings it into view in both panes, and they stay there
+    await title.focus();
+    await expect(previewArea.locator('[data-key-path="title"]')).toBeInViewport();
+    await page.waitForTimeout(500);
+    await expect(title).toBeInViewport();
+  });
+
   test('leaves the preview alone once turned off', async ({ cms, page }) => {
     const { editArea, previewArea } = await openLongNight(page);
 
