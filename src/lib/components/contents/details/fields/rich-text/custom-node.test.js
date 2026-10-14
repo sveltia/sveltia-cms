@@ -146,6 +146,7 @@ vi.mock('lexical', () => {
     $hasUpdateTag: vi.fn(() => false),
     DecoratorNode: MockDecoratorNode,
     HISTORY_MERGE_TAG: 'history-merge',
+    SKIP_DOM_SELECTION_TAG: 'skip-dom-selection',
     getNearestEditorFromDOMNode: vi.fn(() => ({
       getKey: () => 'test-key',
     })),
@@ -999,6 +1000,8 @@ describe('createCustomNodeClass', () => {
       expect(mockEditor.update).toHaveBeenCalled();
       expect(unmount).toHaveBeenCalledWith(capturedComponent);
       expect(node.remove).toHaveBeenCalled();
+      // Lexical may move the selection away from the removed node
+      expect(mockEditor.update.mock.calls[0][1].tag).toBeUndefined();
     });
 
     describe('Focus and selection preservation', () => {
@@ -1046,6 +1049,8 @@ describe('createCustomNodeClass', () => {
         expect(mockEditor.update).toHaveBeenCalled();
         expect(updateOptions).toBeDefined();
         expect(updateOptions.discrete).toBe(true);
+        // The parent editor doesn’t move the selection, or scroll to it
+        expect(updateOptions.tag).toBe('skip-dom-selection');
         expect(typeof updateOptions.onUpdate).toBe('function');
       });
 
@@ -1114,8 +1119,8 @@ describe('createCustomNodeClass', () => {
         expect(onUpdateCallback).toBeDefined();
         onUpdateCallback();
 
-        // Verify focus was called on the active element
-        expect(mockActiveElement.focus).toHaveBeenCalled();
+        // Verify focus was called on the active element, without scrolling to it
+        expect(mockActiveElement.focus).toHaveBeenCalledWith({ preventScroll: true });
       });
 
       it('should restore selection range when onUpdate is called', async () => {

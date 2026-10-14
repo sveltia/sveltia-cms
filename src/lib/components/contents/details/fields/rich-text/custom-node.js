@@ -4,6 +4,7 @@ import {
   DecoratorNode,
   getNearestEditorFromDOMNode,
   HISTORY_MERGE_TAG,
+  SKIP_DOM_SELECTION_TAG,
 } from 'lexical';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
@@ -250,8 +251,8 @@ export const createCustomNodeClass = (componentDef) => {
 
         editor ??= getNearestEditorFromDOMNode(wrapper);
 
-        // Save the currently focused element and selection to restore after the update.
-        // This prevents the parent Lexical editor from stealing focus when updating node props.
+        // Save the currently focused element and selection to restore after the update, in case
+        // the parent Lexical editor takes the focus while updating the node.
         const { activeElement } = document;
         const activeEl = /** @type {HTMLElement | null} */ (activeElement);
 
@@ -279,12 +280,18 @@ export const createCustomNodeClass = (componentDef) => {
           },
           {
             discrete: true,
+            // Leave the DOM selection alone while the component is edited. The parent editor
+            // would otherwise move it back to its own selection, if the user selected something in
+            // the parent before, and scroll to it
+            tag: type === 'update' ? SKIP_DOM_SELECTION_TAG : undefined,
             /**
              * Restore focus and selection after the Lexical update completes.
              */
             onUpdate: () => {
               if (activeEl && document.body.contains(activeEl)) {
-                activeEl.focus();
+                // Don’t scroll to the element, e.g. a nested rich text editor taller than the
+                // pane, whose top would be brought into view whenever the user pauses typing
+                activeEl.focus({ preventScroll: true });
 
                 if (selectionRange && selection) {
                   selection.removeAllRanges();
