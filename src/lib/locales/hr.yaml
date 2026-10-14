@@ -2039,26 +2039,8 @@ prefs:
       description: Prikaži podcrtavanje poveznica u pretpregledu unosa i oznakama korisničkog sučelja.
       switch_label: Uvijek podcrtaj poveznice
 
-  # Advanced panel
-  advanced:
-    title: Napredno
-    beta:
-      title: Beta značajke
-      description: Omogućite neke beta značajke koje mogu biti nestabilne ili neprevedene.
-      switch_label: Pridruži se beta programu
-    deploy_hook:
-      title: Deploy Hook
-      description: Unesite URL webhooka koji će se pozvati kada ručno pokrenete objavu odabirom stavke Objavi promjene. Možete ga ostaviti praznim ako koristite GitHub Actions.
-      # Hook URL input
-      url:
-        field_label: URL hooka
-        saved: URL hooka je spremljen.
-        removed: URL hooka je uklonjen.
-      # Authorization header input
-      auth:
-        field_label: Zaglavlje Authorization (npr. Bearer <token>) (neobavezno)
-        saved: Zaglavlje Authorization je spremljeno.
-        removed: Zaglavlje Authorization je uklonjeno.
+  # Data Management panel
+  data:
     clear_data:
       title: Očisti podatke
       # Clear File Cache button
@@ -2078,6 +2060,19 @@ prefs:
       title: Razvojni način rada
       description: Omogućite neke značajke namijenjene razvojnim programerima, uključujući detaljne zapise u konzoli i izvorne kontekstne izbornike.
       switch_label: Omogući razvojni način rada
+    deploy_hook:
+      title: Deploy Hook
+      description: Unesite URL webhooka koji će se pozvati kada ručno pokrenete objavu odabirom stavke Objavi promjene. Možete ga ostaviti praznim ako koristite GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: URL hooka
+        saved: URL hooka je spremljen.
+        removed: URL hooka je uklonjen.
+      # Authorization header input
+      auth:
+        field_label: Zaglavlje Authorization (npr. Bearer <token>) (neobavezno)
+        saved: Zaglavlje Authorization je spremljeno.
+        removed: Zaglavlje Authorization je uklonjeno.
 
 # ==============================================================================
 # Keyboard Shortcuts

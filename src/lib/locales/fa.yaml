@@ -1972,26 +1972,8 @@ prefs:
       description: نمایش زیرخط برای لینک‌ها در پیش‌نمایش ورودی و برچسب‌های رابط کاربری.
       switch_label: همیشه لینک‌ها زیرخط‌دار باشند
 
-  # Advanced panel
-  advanced:
-    title: پیشرفته
-    beta:
-      title: ویژگی‌های بتا
-      description: فعال‌سازی برخی ویژگی‌های بتا که ممکن است ناپایدار یا ترجمه‌نشده باشند.
-      switch_label: پیوستن به برنامه بتا
-    deploy_hook:
-      title: هوک انتشار (Deploy Hook)
-      description: آدرس وب‌هوک را وارد کنید تا هنگام فراخوانی دستی انتشار با انتخاب «انتشار تغییرات»، فراخوانی شود. اگر از GitHub Actions استفاده می‌کنید می‌توانید این را خالی بگذارید.
-      # Hook URL input
-      url:
-        field_label: آدرس URL هوک
-        saved: آدرس URL هوک ذخیره شد.
-        removed: آدرس URL هوک حذف شد.
-      # Authorization header input
-      auth:
-        field_label: هدر احراز هویت (مثلاً Bearer <token>) (اختیاری)
-        saved: هدر احراز هویت ذخیره شد.
-        removed: هدر احراز هویت حذف شد.
+  # Data Management panel
+  data:
     clear_data:
       title: پاک‌سازی داده‌ها
       # Clear File Cache button
@@ -2011,6 +1993,19 @@ prefs:
       title: حالت توسعه‌دهنده
       description: فعال‌سازی برخی ویژگی‌های مخصوص توسعه‌دهندگان، از جمله لوگ‌های تفصیلی کنسول و منوهای زمینه بومی.
       switch_label: فعال‌سازی حالت توسعه‌دهنده
+    deploy_hook:
+      title: هوک انتشار (Deploy Hook)
+      description: آدرس وب‌هوک را وارد کنید تا هنگام فراخوانی دستی انتشار با انتخاب «انتشار تغییرات»، فراخوانی شود. اگر از GitHub Actions استفاده می‌کنید می‌توانید این را خالی بگذارید.
+      # Hook URL input
+      url:
+        field_label: آدرس URL هوک
+        saved: آدرس URL هوک ذخیره شد.
+        removed: آدرس URL هوک حذف شد.
+      # Authorization header input
+      auth:
+        field_label: هدر احراز هویت (مثلاً Bearer <token>) (اختیاری)
+        saved: هدر احراز هویت ذخیره شد.
+        removed: هدر احراز هویت حذف شد.
 
 # ==============================================================================
 # Keyboard Shortcuts

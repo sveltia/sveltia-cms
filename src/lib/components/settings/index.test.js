@@ -9,13 +9,13 @@ import { panels } from '.';
 vi.mock('$lib/components/settings/panels/accessibility-panel.svelte', () => ({
   default: {},
 }));
-vi.mock('$lib/components/settings/panels/advanced-panel.svelte', () => ({
-  default: {},
-}));
 vi.mock('$lib/components/settings/panels/appearance-panel.svelte', () => ({
   default: {},
 }));
 vi.mock('$lib/components/settings/panels/contents-panel.svelte', () => ({
+  default: {},
+}));
+vi.mock('$lib/components/settings/panels/data-panel.svelte', () => ({
   default: {},
 }));
 vi.mock('$lib/components/settings/panels/developer-panel.svelte', () => ({
@@ -90,13 +90,13 @@ describe('Settings panels', () => {
     expect(accessibilityPanel?.component).toBeDefined();
   });
 
-  test('should have advanced panel', () => {
+  test('should have data management panel', () => {
     const panelList = panels.current;
-    const advancedPanel = panelList.find((panel) => panel.key === 'advanced');
+    const dataPanel = panelList.find((panel) => panel.key === 'data');
 
-    expect(advancedPanel).toBeDefined();
-    expect(advancedPanel?.icon).toBe('labs');
-    expect(advancedPanel?.component).toBeDefined();
+    expect(dataPanel).toBeDefined();
+    expect(dataPanel?.icon).toBe('database');
+    expect(dataPanel?.component).toBeDefined();
   });
 
   test('should have developer panel', () => {

@@ -1979,26 +1979,8 @@ prefs:
       description: Afficher un soulignement pour les liens dans l’aperçu de l’entrée et les libellés de l’interface utilisateur.
       switch_label: Toujours souligner les liens
 
-  # Advanced panel
-  advanced:
-    title: Avancé
-    beta:
-      title: Fonctionnalités bêta
-      description: Activer certaines fonctionnalités bêta susceptibles d’être instables ou non localisées.
-      switch_label: Rejoindre le programme bêta
-    deploy_hook:
-      title: Hook de déploiement
-      description: Saisissez l’URL du webhook à appeler lorsque vous déclenchez manuellement un déploiement en sélectionnant Publier les modifications. Ce champ peut rester vide si vous utilisez GitHub Actions.
-      # Hook URL input
-      url:
-        field_label: URL du hook
-        saved: URL du hook enregistrée.
-        removed: URL du hook supprimée.
-      # Authorization header input
-      auth:
-        field_label: En-tête d’autorisation (par exemple, Bearer <token>) (facultatif)
-        saved: En-tête d’autorisation enregistré.
-        removed: En-tête d’autorisation supprimé.
+  # Data Management panel
+  data:
     clear_data:
       title: Effacer les données
       # Clear File Cache button
@@ -2018,6 +2000,19 @@ prefs:
       title: Mode développeur
       description: Activer certaines fonctionnalités destinées aux développeurs, notamment des journaux de console détaillés et des menus contextuels natifs.
       switch_label: Activer le mode développeur
+    deploy_hook:
+      title: Hook de déploiement
+      description: Saisissez l’URL du webhook à appeler lorsque vous déclenchez manuellement un déploiement en sélectionnant Publier les modifications. Ce champ peut rester vide si vous utilisez GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: URL du hook
+        saved: URL du hook enregistrée.
+        removed: URL du hook supprimée.
+      # Authorization header input
+      auth:
+        field_label: En-tête d’autorisation (par exemple, Bearer <token>) (facultatif)
+        saved: En-tête d’autorisation enregistré.
+        removed: En-tête d’autorisation supprimé.
 
 # ==============================================================================
 # Keyboard Shortcuts

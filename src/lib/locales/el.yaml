@@ -1979,26 +1979,8 @@ prefs:
       description: Εμφάνιση υπογράμμισης για συνδέσμους στην προεπισκόπηση και στις ετικέτες του περιβάλλοντος χρήστη.
       switch_label: Πάντα υπογράμμιση συνδέσμων
 
-  # Advanced panel
-  advanced:
-    title: Για προχωρημένους
-    beta:
-      title: Δυνατότητες Beta
-      description: Ενεργοποίηση ορισμένων δυνατοτήτων beta που μπορεί να είναι ασταθείς ή μη μεταφρασμένες.
-      switch_label: Συμμετοχή στο πρόγραμμα Beta
-    deploy_hook:
-      title: Deploy Hook
-      description: Εισαγάγετε ένα webhook URL που θα καλείται όταν ενεργοποιείτε χειροκίνητα μια δημοσίευση επιλέγοντας Δημοσίευση Αλλαγών. Μπορεί να μείνει κενό εάν χρησιμοποιείτε GitHub Actions.
-      # Hook URL input
-      url:
-        field_label: Hook URL
-        saved: Το URL του Hook αποθηκεύτηκε.
-        removed: Το URL του Hook αφαιρέθηκε.
-      # Authorization header input
-      auth:
-        field_label: Κεφαλίδα εξουσιοδότησης (π.χ. Bearer <token>) (προαιρετικό)
-        saved: Η κεφαλίδα εξουσιοδότησης αποθηκεύτηκε.
-        removed: Η κεφαλίδα εξουσιοδότησης αφαιρέθηκε.
+  # Data Management panel
+  data:
     clear_data:
       title: Εκκαθάριση δεδομένων
       # Clear File Cache button
@@ -2018,6 +2000,19 @@ prefs:
       title: Λειτουργία Developer
       description: Ενεργοποίηση δυνατοτήτων για προγραμματιστές, συμπεριλαμβανομένων λεπτομερών καταγραφών κονσόλας και εγγενών μενού πλαισίου.
       switch_label: Ενεργοποίηση λειτουργίας developer
+    deploy_hook:
+      title: Deploy Hook
+      description: Εισαγάγετε ένα webhook URL που θα καλείται όταν ενεργοποιείτε χειροκίνητα μια δημοσίευση επιλέγοντας Δημοσίευση Αλλαγών. Μπορεί να μείνει κενό εάν χρησιμοποιείτε GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: Hook URL
+        saved: Το URL του Hook αποθηκεύτηκε.
+        removed: Το URL του Hook αφαιρέθηκε.
+      # Authorization header input
+      auth:
+        field_label: Κεφαλίδα εξουσιοδότησης (π.χ. Bearer <token>) (προαιρετικό)
+        saved: Η κεφαλίδα εξουσιοδότησης αποθηκεύτηκε.
+        removed: Η κεφαλίδα εξουσιοδότησης αφαιρέθηκε.
 
 # ==============================================================================
 # Keyboard Shortcuts

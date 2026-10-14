@@ -2218,26 +2218,8 @@ prefs:
       description: إظهار خط تحت الروابط في معاينة العنصر وتسميات واجهة المستخدم.
       switch_label: وضع خط تحت الروابط دائماً
 
-  # Advanced panel
-  advanced:
-    title: خيارات متقدمة
-    beta:
-      title: الميزات التجريبية (Beta)
-      description: تمكين بعض الميزات التجريبية التي قد تكون غير مستقرة أو غير مترجمة.
-      switch_label: الانضمام إلى البرنامج التجريبي
-    deploy_hook:
-      title: خطاف النشر (Deploy Hook)
-      description: أدخل رابط Webhook ليتم تنفيذه عند تشغيل النشر يدوياً من خلال تحديد نشر التغييرات. يمكن ترك هذا الحقل فارغاً إذا كنت تستخدم GitHub Actions.
-      # Hook URL input
-      url:
-        field_label: رابط الـ Hook
-        saved: تم حفظ رابط الـ Hook.
-        removed: تم إزالة رابط الـ Hook.
-      # Authorization header input
-      auth:
-        field_label: ترويسة التفويض (Authorization header) (مثل Bearer <token>) (اختياري)
-        saved: تم حفظ ترويسة التفويض.
-        removed: تم إزالة ترويسة التفويض.
+  # Data Management panel
+  data:
     clear_data:
       title: مسح البيانات
       # Clear File Cache button
@@ -2257,6 +2239,19 @@ prefs:
       title: وضع المطور
       description: تمكين بعض الميزات الموجهة للمطورين، بما في ذلك سجلات Console التفصيلية وقوائم الـ Context.
       switch_label: تمكين وضع المطور
+    deploy_hook:
+      title: خطاف النشر (Deploy Hook)
+      description: أدخل رابط Webhook ليتم تنفيذه عند تشغيل النشر يدوياً من خلال تحديد نشر التغييرات. يمكن ترك هذا الحقل فارغاً إذا كنت تستخدم GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: رابط الـ Hook
+        saved: تم حفظ رابط الـ Hook.
+        removed: تم إزالة رابط الـ Hook.
+      # Authorization header input
+      auth:
+        field_label: ترويسة التفويض (Authorization header) (مثل Bearer <token>) (اختياري)
+        saved: تم حفظ ترويسة التفويض.
+        removed: تم إزالة ترويسة التفويض.
 
 # ==============================================================================
 # Keyboard Shortcuts

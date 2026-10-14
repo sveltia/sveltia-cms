@@ -2495,26 +2495,9 @@ prefs:
       description: Show underline for links in the entry preview and user interface labels.
       switch_label: Always Underline Links
 
-  # Advanced panel
-  advanced:
-    title: Advanced
-    beta:
-      title: Beta Features
-      description: Enable some beta features that may be unstable or unlocalised.
-      switch_label: Join Beta Programme
-    deploy_hook:
-      title: Deploy Hook
-      description: Enter a webhook URL to be called when you manually trigger a deployment by selecting Publish Changes. This can be left blank if you’re using GitHub Actions.
-      # Hook URL input
-      url:
-        field_label: Hook URL
-        saved: Hook URL saved.
-        removed: Hook URL removed.
-      # Authorization header input
-      auth:
-        field_label: Authorization header (e.g., Bearer <token>) (optional)
-        saved: Authorization header saved.
-        removed: Authorization header removed.
+  # Data Management panel
+  data:
+    title: Data Management
     clear_data:
       title: Clear Data
       # Clear File Cache button
@@ -2544,6 +2527,19 @@ prefs:
       ready: Changes will be committed to the {$branch} branch as {$name} ({$email}).
       # {$reason} is one of the `local_git_skip_reasons` strings
       not_ready: Changes can’t be committed right now. {$reason}
+    deploy_hook:
+      title: Deploy Hook
+      description: Enter a webhook URL to be called when you manually trigger a deployment by selecting Publish Changes. This can be left blank if you’re using GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: Hook URL
+        saved: Hook URL saved.
+        removed: Hook URL removed.
+      # Authorization header input
+      auth:
+        field_label: Authorization header (e.g., Bearer <token>) (optional)
+        saved: Authorization header saved.
+        removed: Authorization header removed.
 
 # ==============================================================================
 # Keyboard Shortcuts

@@ -2391,26 +2391,9 @@ prefs:
       description: エントリープレビューやユーザーインターフェイスラベル内のリンクに下線を表示します。
       switch_label: 常に下線を付ける
 
-  # Advanced panel
-  advanced:
-    title: 詳細
-    beta:
-      title: ベータ機能
-      description: 不安定あるいは未ローカライズの可能性がある、いくつかのベータ機能を有効化します。
-      switch_label: ベータプログラムに参加する
-    deploy_hook:
-      title: デプロイフック
-      description: 「変更を公開」を選択して手動でデプロイを実行する際に呼び出すウェブフック URL を入力してください。GitHub Actions を使用する場合は空欄のままで構いません。
-      # Hook URL input
-      url:
-        field_label: フック URL
-        saved: フック URL が保存されました。
-        removed: フック URL が削除されました。
-      # Authorization header input
-      auth:
-        field_label: '認証ヘッダー (例: Bearer <token>) (オプション)'
-        saved: 認証ヘッダーが保存されました。
-        removed: 認証ヘッダーが削除されました。
+  # Data Management panel
+  data:
+    title: データ管理
     clear_data:
       title: データの削除
       # Clear File Cache button
@@ -2440,6 +2423,19 @@ prefs:
       ready: 変更は {$name} ({$email}) として {$branch} ブランチにコミットされます。
       # {$reason} is one of the `local_git_skip_reasons` strings
       not_ready: 現在、変更をコミットできません。{$reason}
+    deploy_hook:
+      title: デプロイフック
+      description: 「変更を公開」を選択して手動でデプロイを実行する際に呼び出すウェブフック URL を入力してください。GitHub Actions を使用する場合は空欄のままで構いません。
+      # Hook URL input
+      url:
+        field_label: フック URL
+        saved: フック URL が保存されました。
+        removed: フック URL が削除されました。
+      # Authorization header input
+      auth:
+        field_label: '認証ヘッダー (例: Bearer <token>) (オプション)'
+        saved: 認証ヘッダーが保存されました。
+        removed: 認証ヘッダーが削除されました。
 
 # ==============================================================================
 # Keyboard Shortcuts

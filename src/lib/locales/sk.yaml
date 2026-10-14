@@ -2356,26 +2356,8 @@ prefs:
       description: Zobrazovať podčiarknutie odkazov v náhľade položky a v textoch používateľského rozhrania.
       switch_label: Vždy podčiarkovať odkazy
 
-  # Advanced panel
-  advanced:
-    title: Rozšírené
-    beta:
-      title: Beta funkcie
-      description: Povoliť niektoré beta funkcie, ktoré môžu byť nestabilné alebo nepreložené.
-      switch_label: Zapojiť sa do beta programu
-    deploy_hook:
-      title: Webhook pre nasadenie (Deploy Hook)
-      description: Zadajte URL webhooku, ktorý sa zavolá, keď ručne spustíte nasadenie výberom možnosti Publikovať zmeny. Ak používate GitHub Actions, môžete toto pole nechať prázdne.
-      # Hook URL input
-      url:
-        field_label: URL webhooku
-        saved: URL webhooku bola uložená.
-        removed: URL webhooku bola odobraná.
-      # Authorization header input
-      auth:
-        field_label: Autorizačná hlavička (napr. Bearer <token>) (voliteľné)
-        saved: Autorizačná hlavička bola uložená.
-        removed: Autorizačná hlavička bola odobraná.
+  # Data Management panel
+  data:
     clear_data:
       title: Vymazať údaje
       # Clear File Cache button
@@ -2395,6 +2377,19 @@ prefs:
       title: Režim pre vývojárov
       description: Povoliť niektoré funkcie určené pre vývojárov vrátane podrobných záznamov v konzole a natívnych kontextových menu.
       switch_label: Zapnúť režim pre vývojárov
+    deploy_hook:
+      title: Webhook pre nasadenie (Deploy Hook)
+      description: Zadajte URL webhooku, ktorý sa zavolá, keď ručne spustíte nasadenie výberom možnosti Publikovať zmeny. Ak používate GitHub Actions, môžete toto pole nechať prázdne.
+      # Hook URL input
+      url:
+        field_label: URL webhooku
+        saved: URL webhooku bola uložená.
+        removed: URL webhooku bola odobraná.
+      # Authorization header input
+      auth:
+        field_label: Autorizačná hlavička (napr. Bearer <token>) (voliteľné)
+        saved: Autorizačná hlavička bola uložená.
+        removed: Autorizačná hlavička bola odobraná.
 
 # ==============================================================================
 # Keyboard Shortcuts

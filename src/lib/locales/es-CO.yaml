@@ -1979,26 +1979,8 @@ prefs:
       description: Mostrar el subrayado de los enlaces en la vista previa de la entrada y en las etiquetas de la interfaz de usuario.
       switch_label: Subrayar siempre los enlaces
 
-  # Advanced panel
-  advanced:
-    title: Avanzado
-    beta:
-      title: Funciones beta
-      description: Habilitar algunas funciones beta que pueden ser inestables o no estar traducidas.
-      switch_label: Unirse al programa beta
-    deploy_hook:
-      title: Hook de despliegue
-      description: Ingresa una URL de webhook que se llamará cuando actives manualmente un despliegue seleccionando Publicar cambios. Puedes dejarlo en blanco si usas GitHub Actions.
-      # Hook URL input
-      url:
-        field_label: URL del hook
-        saved: URL del hook guardada.
-        removed: URL del hook eliminada.
-      # Authorization header input
-      auth:
-        field_label: Encabezado de autorización (p. ej., Bearer <token>) (opcional)
-        saved: Encabezado de autorización guardado.
-        removed: Encabezado de autorización eliminado.
+  # Data Management panel
+  data:
     clear_data:
       title: Borrar datos
       # Clear File Cache button
@@ -2018,6 +2000,19 @@ prefs:
       title: Modo de desarrollador
       description: Habilitar algunas funciones orientadas a desarrolladores, incluidos registros detallados en la consola y menús contextuales nativos.
       switch_label: Habilitar el modo de desarrollador
+    deploy_hook:
+      title: Hook de despliegue
+      description: Ingresa una URL de webhook que se llamará cuando actives manualmente un despliegue seleccionando Publicar cambios. Puedes dejarlo en blanco si usas GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: URL del hook
+        saved: URL del hook guardada.
+        removed: URL del hook eliminada.
+      # Authorization header input
+      auth:
+        field_label: Encabezado de autorización (p. ej., Bearer <token>) (opcional)
+        saved: Encabezado de autorización guardado.
+        removed: Encabezado de autorización eliminado.
 
 # ==============================================================================
 # Keyboard Shortcuts

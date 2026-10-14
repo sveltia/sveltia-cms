@@ -91,7 +91,6 @@
  * @property {boolean} [closeWithEscape] Whether to close the entry editor by pressing the Escape
  * key.
  * @property {boolean} [underlineLinks] Whether to always underline links.
- * @property {boolean} [beta] Whether to enable beta features.
  * @property {boolean} [devModeEnabled] Whether to enable the developer mode.
  * @property {string} [deployHookURL] Webhook URL to manually trigger a new deployment on any
  * connected CI/CD provider.

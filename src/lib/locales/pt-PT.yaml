@@ -1979,26 +1979,8 @@ prefs:
       description: Mostrar o sublinhado nas ligações da pré-visualização da entrada e nas etiquetas da interface.
       switch_label: Sublinhar sempre as ligações
 
-  # Advanced panel
-  advanced:
-    title: Avançado
-    beta:
-      title: Funcionalidades beta
-      description: Ativar algumas funcionalidades beta que podem estar instáveis ou não traduzidas.
-      switch_label: Aderir ao programa beta
-    deploy_hook:
-      title: Hook de implementação
-      description: Introduza o URL de um webhook a chamar quando acionar manualmente uma implementação ao selecionar Publicar alterações. Pode deixar em branco se estiver a utilizar o GitHub Actions.
-      # Hook URL input
-      url:
-        field_label: URL do hook
-        saved: URL do hook guardado.
-        removed: URL do hook removido.
-      # Authorization header input
-      auth:
-        field_label: Cabeçalho de autorização (por exemplo, Bearer <token>) (opcional)
-        saved: Cabeçalho de autorização guardado.
-        removed: Cabeçalho de autorização removido.
+  # Data Management panel
+  data:
     clear_data:
       title: Limpar dados
       # Clear File Cache button
@@ -2018,6 +2000,19 @@ prefs:
       title: Modo de programador
       description: Ativar algumas funcionalidades orientadas para programadores, incluindo registos detalhados na consola e menus de contexto nativos.
       switch_label: Ativar o modo de programador
+    deploy_hook:
+      title: Hook de implementação
+      description: Introduza o URL de um webhook a chamar quando acionar manualmente uma implementação ao selecionar Publicar alterações. Pode deixar em branco se estiver a utilizar o GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: URL do hook
+        saved: URL do hook guardado.
+        removed: URL do hook removido.
+      # Authorization header input
+      auth:
+        field_label: Cabeçalho de autorização (por exemplo, Bearer <token>) (opcional)
+        saved: Cabeçalho de autorização guardado.
+        removed: Cabeçalho de autorização removido.
 
 # ==============================================================================
 # Keyboard Shortcuts

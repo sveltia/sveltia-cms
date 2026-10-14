@@ -1980,26 +1980,8 @@ prefs:
       description: Links in der Eintragsvorschau und in Beschriftungen der Benutzeroberfläche unterstrichen darstellen.
       switch_label: Links immer unterstreichen
 
-  # Advanced panel
-  advanced:
-    title: Erweitert
-    beta:
-      title: Beta-Funktionen
-      description: Einige Beta-Funktionen aktivieren, die instabil oder noch nicht übersetzt sein können.
-      switch_label: Am Beta-Programm teilnehmen
-    deploy_hook:
-      title: Deploy-Hook
-      description: Geben Sie eine Webhook-URL ein, die aufgerufen wird, wenn Sie über „Änderungen veröffentlichen“ manuell eine Bereitstellung auslösen. Bei Verwendung von GitHub Actions kann das Feld leer bleiben.
-      # Hook URL input
-      url:
-        field_label: Hook-URL
-        saved: Hook-URL gespeichert.
-        removed: Hook-URL entfernt.
-      # Authorization header input
-      auth:
-        field_label: Authorization-Header (z. B. Bearer <token>) (optional)
-        saved: Authorization-Header gespeichert.
-        removed: Authorization-Header entfernt.
+  # Data Management panel
+  data:
     clear_data:
       title: Daten löschen
       # Clear File Cache button
@@ -2019,6 +2001,19 @@ prefs:
       title: Entwicklermodus
       description: Einige Funktionen für die Entwicklung aktivieren, darunter ausführliche Konsolenausgaben und native Kontextmenüs.
       switch_label: Entwicklermodus aktivieren
+    deploy_hook:
+      title: Deploy-Hook
+      description: Geben Sie eine Webhook-URL ein, die aufgerufen wird, wenn Sie über „Änderungen veröffentlichen“ manuell eine Bereitstellung auslösen. Bei Verwendung von GitHub Actions kann das Feld leer bleiben.
+      # Hook URL input
+      url:
+        field_label: Hook-URL
+        saved: Hook-URL gespeichert.
+        removed: Hook-URL entfernt.
+      # Authorization header input
+      auth:
+        field_label: Authorization-Header (z. B. Bearer <token>) (optional)
+        saved: Authorization-Header gespeichert.
+        removed: Authorization-Header entfernt.
 
 # ==============================================================================
 # Keyboard Shortcuts

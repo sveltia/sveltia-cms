@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-svelte';
 
 import { backendName } from '$lib/services/backends';
 import { checkLocalGitStatus } from '$lib/services/backends/fs/local';
+import { cmsConfig } from '$lib/services/config';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 import DeveloperPanel from './developer-panel.svelte';
@@ -18,7 +19,10 @@ describe('DeveloperPanel', () => {
     prefs.devModeEnabled = false;
     // Turned on, unless a test says otherwise
     prefs.localGitCommits = true;
+    prefs.deployHookURL = '';
+    prefs.deployHookAuthHeader = '';
     backendName.current = 'github';
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
     // A signed-in user always gets a status
     vi.mocked(checkLocalGitStatus).mockResolvedValue({
       ready: true,
@@ -108,5 +112,55 @@ describe('DeveloperPanel', () => {
       .not.toBeChecked();
     expect(page.getByText('Checking the repository…').elements()).toHaveLength(0);
     expect(checkLocalGitStatus).not.toHaveBeenCalled();
+  });
+
+  test('offers the deploy hook settings only when skipping CI is configured', async () => {
+    const onChange = vi.fn();
+
+    await render(DeveloperPanel, { onChange });
+    expect(page.getByRole('textbox').elements()).toHaveLength(0);
+
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github', skip_ci: true } });
+
+    const url = page.getByRole('textbox', { name: 'Hook URL' });
+
+    await expect.element(url).toBeVisible();
+    await url.fill('https://example.com/hook');
+    await url.element().blur();
+
+    await expect.poll(() => prefs.deployHookURL).toBe('https://example.com/hook');
+    expect(onChange).toHaveBeenCalledWith({ message: 'Hook URL saved.' });
+
+    await url.fill('');
+    await url.element().blur();
+    await expect.poll(() => prefs.deployHookURL).toBe('');
+    expect(onChange).toHaveBeenLastCalledWith({ message: 'Hook URL removed.' });
+
+    const auth = page.getByRole('textbox', { name: /^Authorization header/ });
+
+    await auth.fill('Bearer abc');
+    await auth.element().blur();
+    await expect.poll(() => prefs.deployHookAuthHeader).toBe('Bearer abc');
+    expect(onChange).toHaveBeenLastCalledWith({ message: 'Authorization header saved.' });
+
+    await auth.fill('');
+    await auth.element().blur();
+    await expect.poll(() => prefs.deployHookAuthHeader).toBe('');
+    expect(onChange).toHaveBeenLastCalledWith({ message: 'Authorization header removed.' });
+  });
+
+  test('shows the saved deploy hook settings', async () => {
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github', skip_ci: true } });
+    prefs.deployHookURL = 'https://example.com/hook';
+    prefs.deployHookAuthHeader = 'Bearer abc';
+
+    await render(DeveloperPanel, {});
+
+    await expect
+      .element(page.getByRole('textbox', { name: 'Hook URL' }))
+      .toHaveValue('https://example.com/hook');
+    await expect
+      .element(page.getByRole('textbox', { name: /^Authorization header/ }))
+      .toHaveValue('Bearer abc');
   });
 });

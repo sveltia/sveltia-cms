@@ -1979,26 +1979,8 @@ prefs:
       description: Vis understregning af links i forhåndsvisningen af dokumenter og i brugerfladens tekster.
       switch_label: Understreg altid links
 
-  # Advanced panel
-  advanced:
-    title: Avanceret
-    beta:
-      title: Betafunktioner
-      description: Slå betafunktioner til. De kan være ustabile eller mangle oversættelse.
-      switch_label: Deltag i betaprogrammet
-    deploy_hook:
-      title: Deploy-hook
-      description: Indtast en webhook-URL der skal kaldes når du manuelt udløser en udrulning ved at vælge Udgiv ændringer. Feltet kan stå tomt hvis du bruger GitHub Actions.
-      # Hook URL input
-      url:
-        field_label: Hook-URL
-        saved: Hook-URL’en er gemt.
-        removed: Hook-URL’en er fjernet.
-      # Authorization header input
-      auth:
-        field_label: Authorization-header (fx Bearer <token>) (valgfri)
-        saved: Authorization-headeren er gemt.
-        removed: Authorization-headeren er fjernet.
+  # Data Management panel
+  data:
     clear_data:
       title: Ryd data
       # Clear File Cache button
@@ -2018,6 +2000,19 @@ prefs:
       title: Udviklertilstand
       description: Slå udviklerorienterede funktioner til, herunder detaljerede konsollogs og systemets egne kontekstmenuer.
       switch_label: Slå udviklertilstand til
+    deploy_hook:
+      title: Deploy-hook
+      description: Indtast en webhook-URL der skal kaldes når du manuelt udløser en udrulning ved at vælge Udgiv ændringer. Feltet kan stå tomt hvis du bruger GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: Hook-URL
+        saved: Hook-URL’en er gemt.
+        removed: Hook-URL’en er fjernet.
+      # Authorization header input
+      auth:
+        field_label: Authorization-header (fx Bearer <token>) (valgfri)
+        saved: Authorization-headeren er gemt.
+        removed: Authorization-headeren er fjernet.
 
 # ==============================================================================
 # Keyboard Shortcuts

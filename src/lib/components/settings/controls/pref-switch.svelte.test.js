@@ -43,8 +43,12 @@ describe('PrefSwitch', () => {
 
     resetPrefs();
 
-    await render(PrefSwitch, { key: 'beta', label: 'Beta', defaultValue: false });
-    await expect.element(page.getByRole('switch', { name: 'Beta' })).not.toBeChecked();
+    await render(PrefSwitch, {
+      key: 'devModeEnabled',
+      label: 'Developer mode',
+      defaultValue: false,
+    });
+    await expect.element(page.getByRole('switch', { name: 'Developer mode' })).not.toBeChecked();
   });
 
   test('updates the preference when toggled', async () => {

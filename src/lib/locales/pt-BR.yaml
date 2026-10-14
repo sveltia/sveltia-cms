@@ -1979,26 +1979,8 @@ prefs:
       description: Mostrar sublinhado para links na pré-visualização da entrada e nos rótulos da interface do usuário.
       switch_label: Sempre Sublinhar Links
 
-  # Advanced panel
-  advanced:
-    title: Avançado
-    beta:
-      title: Recursos Beta
-      description: Ativa alguns recursos beta que podem estar instáveis ou não localizados.
-      switch_label: Participar do Programa Beta
-    deploy_hook:
-      title: Deploy Hook
-      description: Insira uma URL de webhook para ser chamada quando você acionar manualmente uma implantação selecionando Publicar Alterações. Isso pode ficar em branco se você estiver usando o GitHub Actions.
-      # Hook URL input
-      url:
-        field_label: URL do Hook
-        saved: URL do hook salva.
-        removed: URL do hook removida.
-      # Authorization header input
-      auth:
-        field_label: Cabeçalho de autorização (ex., Bearer <token>) (opcional)
-        saved: Cabeçalho de autorização salvo.
-        removed: Cabeçalho de autorização removido.
+  # Data Management panel
+  data:
     clear_data:
       title: Limpar Dados
       # Clear File Cache button
@@ -2018,6 +2000,19 @@ prefs:
       title: Modo Desenvolvedor
       description: Ativa alguns recursos voltados para desenvolvedores, incluindo logs detalhados no console e menus de contexto nativos.
       switch_label: Ativar Modo Desenvolvedor
+    deploy_hook:
+      title: Deploy Hook
+      description: Insira uma URL de webhook para ser chamada quando você acionar manualmente uma implantação selecionando Publicar Alterações. Isso pode ficar em branco se você estiver usando o GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: URL do Hook
+        saved: URL do hook salva.
+        removed: URL do hook removida.
+      # Authorization header input
+      auth:
+        field_label: Cabeçalho de autorização (ex., Bearer <token>) (opcional)
+        saved: Cabeçalho de autorização salvo.
+        removed: Cabeçalho de autorização removido.
 
 # ==============================================================================
 # Keyboard Shortcuts

@@ -1945,26 +1945,8 @@ prefs:
       description: Hiển thị gạch chân dưới các liên kết trong bản xem trước nội dung và trên giao diện.
       switch_label: Luôn gạch chân các liên kết
 
-  # Advanced panel
-  advanced:
-    title: Cài đặt nâng cao
-    beta:
-      title: Tính năng thử nghiệm
-      description: Bật một số tính năng thử nghiệm có thể chưa ổn định hoặc chưa được dịch đầy đủ.
-      switch_label: Bật tính năng thử nghiệm
-    deploy_hook:
-      title: Webhook triển khai
-      description: Nhập URL webhook sẽ được gọi khi bạn kích hoạt triển khai theo cách thủ công bằng cách chọn Xuất bản thay đổi. Phần này có thể để trống nếu bạn đang sử dụng Tác vụ GitHub.
-      # Hook URL input
-      url:
-        field_label: URL webhook
-        saved: Đã lưu URL webhook.
-        removed: Đã xóa URL webhook.
-      # Authorization header input
-      auth:
-        field_label: 'Header xác thực (ví dụ: Bearer <token>) (không bắt buộc)'
-        saved: Đã lưu header xác thực.
-        removed: Đã xóa header xác thực.
+  # Data Management panel
+  data:
     clear_data:
       title: Xóa dữ liệu
       # Clear File Cache button
@@ -1984,6 +1966,19 @@ prefs:
       title: Chế độ nhà phát triển
       description: Bật các tính năng dành cho nhà phát triển, bao gồm thông tin chi tiết trong nhật ký bảng điều khiển và trình đơn chuột phải mặc định.
       switch_label: Bật chế độ nhà phát triển
+    deploy_hook:
+      title: Webhook triển khai
+      description: Nhập URL webhook sẽ được gọi khi bạn kích hoạt triển khai theo cách thủ công bằng cách chọn Xuất bản thay đổi. Phần này có thể để trống nếu bạn đang sử dụng Tác vụ GitHub.
+      # Hook URL input
+      url:
+        field_label: URL webhook
+        saved: Đã lưu URL webhook.
+        removed: Đã xóa URL webhook.
+      # Authorization header input
+      auth:
+        field_label: 'Header xác thực (ví dụ: Bearer <token>) (không bắt buộc)'
+        saved: Đã lưu header xác thực.
+        removed: Đã xóa header xác thực.
 
 # ==============================================================================
 # Keyboard Shortcuts

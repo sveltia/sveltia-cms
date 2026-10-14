@@ -1905,26 +1905,8 @@ prefs:
       description: 在条目预览和界面标签中显示链接下划线。
       switch_label: 始终显示链接下划线
 
-  # Advanced panel
-  advanced:
-    title: 高级
-    beta:
-      title: Beta 功能
-      description: 启用一些可能不稳定或未完全本地化的 Beta 功能。
-      switch_label: 加入 Beta 计划
-    deploy_hook:
-      title: 部署钩子
-      description: 手动部署时（选择「发布更改」）会调用此 URL。使用 GitHub Actions 可留空。
-      # Hook URL input
-      url:
-        field_label: Hook URL
-        saved: Hook URL 已保存。
-        removed: Hook URL 已移除。
-      # Authorization header input
-      auth:
-        field_label: Authorization 标头（例如 Bearer &lt;token&gt;）（可选）
-        saved: Authorization 标头已保存。
-        removed: Authorization 标头已移除。
+  # Data Management panel
+  data:
     clear_data:
       title: 清除数据
       # Clear File Cache button
@@ -1944,6 +1926,19 @@ prefs:
       title: 开发者模式
       description: 启用一些面向开发者的功能，包括详细的控制台日志和原生上下文菜单。
       switch_label: 启用开发者模式
+    deploy_hook:
+      title: 部署钩子
+      description: 手动部署时（选择「发布更改」）会调用此 URL。使用 GitHub Actions 可留空。
+      # Hook URL input
+      url:
+        field_label: Hook URL
+        saved: Hook URL 已保存。
+        removed: Hook URL 已移除。
+      # Authorization header input
+      auth:
+        field_label: Authorization 标头（例如 Bearer &lt;token&gt;）（可选）
+        saved: Authorization 标头已保存。
+        removed: Authorization 标头已移除。
 
 # ==============================================================================
 # Keyboard Shortcuts

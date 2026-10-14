@@ -1979,26 +1979,8 @@ prefs:
       description: Mostra el subratllat dels enllaços a la previsualització de l’entrada i a les etiquetes de la interfície d’usuari.
       switch_label: Subratlla sempre els enllaços
 
-  # Advanced panel
-  advanced:
-    title: Avançat
-    beta:
-      title: Funcionalitats beta
-      description: Habilita algunes funcionalitats beta que poden ser inestables o no localitzades.
-      switch_label: Uneix-te al programa beta
-    deploy_hook:
-      title: Ganxo de desplegament
-      description: Introduïu un URL de webhook que es cridarà quan activeu manualment un desplegament seleccionant Publica els canvis. Es pot deixar en blanc si useu GitHub Actions.
-      # Hook URL input
-      url:
-        field_label: URL del ganxo
-        saved: URL del ganxo desat.
-        removed: URL del ganxo suprimit.
-      # Authorization header input
-      auth:
-        field_label: Capçalera d’autorització (p. ex., Bearer <testimoni>) (opcional)
-        saved: Capçalera d’autorització desada.
-        removed: Capçalera d’autorització suprimida.
+  # Data Management panel
+  data:
     clear_data:
       title: Esborra les dades
       # Clear File Cache button
@@ -2018,6 +2000,19 @@ prefs:
       title: Mode de desenvolupador
       description: Habilita algunes funcionalitats orientades al desenvolupador, inclosos els registres detallats de la consola i els menús de context nadius.
       switch_label: Habilita el mode de desenvolupador
+    deploy_hook:
+      title: Ganxo de desplegament
+      description: Introduïu un URL de webhook que es cridarà quan activeu manualment un desplegament seleccionant Publica els canvis. Es pot deixar en blanc si useu GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: URL del ganxo
+        saved: URL del ganxo desat.
+        removed: URL del ganxo suprimit.
+      # Authorization header input
+      auth:
+        field_label: Capçalera d’autorització (p. ex., Bearer <testimoni>) (opcional)
+        saved: Capçalera d’autorització desada.
+        removed: Capçalera d’autorització suprimida.
 
 # ==============================================================================
 # Keyboard Shortcuts

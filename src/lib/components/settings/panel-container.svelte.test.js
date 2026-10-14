@@ -9,7 +9,7 @@ import { waitForToastsToHide } from '$lib/test/toast';
 
 import PanelContainer from './panel-container.svelte';
 import AccessibilityPanel from './panels/accessibility-panel.svelte';
-import AdvancedPanel from './panels/advanced-panel.svelte';
+import DeveloperPanel from './panels/developer-panel.svelte';
 import I18nPanel from './panels/i18n-panel.svelte';
 
 describe('PanelContainer', () => {
@@ -39,7 +39,7 @@ describe('PanelContainer', () => {
     backendName.current = 'github';
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github', skip_ci: true } });
 
-    await render(PanelContainer, { Panel: AdvancedPanel });
+    await render(PanelContainer, { Panel: DeveloperPanel });
 
     const input = page.getByRole('textbox', { name: 'Hook URL' });
 

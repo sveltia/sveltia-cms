@@ -1940,26 +1940,8 @@ prefs:
       description: İçerik önizlemesinde ve kullanıcı arayüzü etiketlerinde bağlantıların altını göster.
       switch_label: Bağlantıların Altını Her Zaman Çiz
 
-  # Advanced panel
-  advanced:
-    title: Gelişmiş
-    beta:
-      title: Beta Özellikleri
-      description: Kararsız veya henüz yerelleştirilmemiş bazı beta özelliklerini etkinleştirin.
-      switch_label: Beta Programına Katıl
-    deploy_hook:
-      title: Dağıtım Webhook’u
-      description: Değişiklikleri Yayınla seçeneği ile manuel bir dağıtım tetiklediğinizde çağrılacak bir webhook URL’i girin. GitHub Actions kullanıyorsanız bu alan boş bırakılabilir.
-      # Hook URL input
-      url:
-        field_label: Webhook URL’i
-        saved: Webhook URL’i kaydedildi.
-        removed: Webhook URL’i kaldırıldı.
-      # Authorization header input
-      auth:
-        field_label: Yetkilendirme Başlığı (ör. Bearer <token>) (isteğe bağlı)
-        saved: Yetkilendirme başlığı kaydedildi.
-        removed: Yetkilendirme başlığı kaldırıldı.
+  # Data Management panel
+  data:
     clear_data:
       title: Verileri Temizle
       # Clear File Cache button
@@ -1979,6 +1961,19 @@ prefs:
       title: Geliştirici Modu
       description: Ayrıntılı konsol günlükleri ve yerel bağlam menüleri dahil geliştiricilere yönelik bazı özellikleri etkinleştirin.
       switch_label: Geliştirici Modunu Etkinleştir
+    deploy_hook:
+      title: Dağıtım Webhook’u
+      description: Değişiklikleri Yayınla seçeneği ile manuel bir dağıtım tetiklediğinizde çağrılacak bir webhook URL’i girin. GitHub Actions kullanıyorsanız bu alan boş bırakılabilir.
+      # Hook URL input
+      url:
+        field_label: Webhook URL’i
+        saved: Webhook URL’i kaydedildi.
+        removed: Webhook URL’i kaldırıldı.
+      # Authorization header input
+      auth:
+        field_label: Yetkilendirme Başlığı (ör. Bearer <token>) (isteğe bağlı)
+        saved: Yetkilendirme başlığı kaydedildi.
+        removed: Yetkilendirme başlığı kaldırıldı.
 
 # ==============================================================================
 # Keyboard Shortcuts

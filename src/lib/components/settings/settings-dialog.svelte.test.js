@@ -23,7 +23,7 @@ describe('SettingsDialog', () => {
       'photo_library Media',
       'accessibility_new Accessibility',
       'code_xml Developer',
-      'labs Advanced',
+      'database Data Management',
     ]);
     await expect.element(tabs.nth(0)).toHaveAttribute('aria-selected', 'true');
     await expect.element(dialog.getByRole('heading', { name: 'Theme' })).toBeVisible();
@@ -57,18 +57,18 @@ describe('SettingsDialog', () => {
 
     const dialog = page.getByRole('dialog', { name: 'Settings' });
     const appearance = dialog.getByRole('tab', { name: 'Appearance' });
-    const advanced = dialog.getByRole('tab', { name: 'Advanced' });
+    const data = dialog.getByRole('tab', { name: 'Data Management' });
 
     await expect.element(appearance).toHaveAttribute('aria-controls', 'prefs-tab-appearance');
-    await expect.element(advanced).toHaveAttribute('aria-controls', 'prefs-tab-advanced');
+    await expect.element(data).toHaveAttribute('aria-controls', 'prefs-tab-data');
     await expect
       .element(dialog.getByRole('tablist'))
       .toHaveAttribute('aria-orientation', 'vertical');
 
-    await advanced.click();
-    await expect.element(advanced).toHaveAttribute('aria-selected', 'true');
+    await data.click();
+    await expect.element(data).toHaveAttribute('aria-selected', 'true');
     await expect.element(appearance).toHaveAttribute('aria-selected', 'false');
-    await expect.element(dialog.getByRole('heading', { name: 'Beta Features' })).toBeVisible();
+    await expect.element(dialog.getByRole('heading', { name: 'Clear Data' })).toBeVisible();
   });
 
   test('opens with the bound prop, and closes without a handler', async () => {

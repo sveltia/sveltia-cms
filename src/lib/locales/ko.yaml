@@ -1878,26 +1878,8 @@ prefs:
       description: 엔트리 미리 보기와 사용자 인터페이스 레이블의 링크에 밑줄을 표시합니다.
       switch_label: 항상 링크에 밑줄 표시
 
-  # Advanced panel
-  advanced:
-    title: 고급
-    beta:
-      title: 베타 기능
-      description: 불안정하거나 현지화되지 않았을 수 있는 일부 베타 기능을 활성화합니다.
-      switch_label: 베타 프로그램 참여
-    deploy_hook:
-      title: 배포 훅
-      description: 변경 사항 게시를 선택하여 배포를 수동으로 실행할 때 호출할 웹훅 URL을 입력하십시오. GitHub Actions를 사용하시는 경우 비워 두셔도 됩니다.
-      # Hook URL input
-      url:
-        field_label: 훅 URL
-        saved: 훅 URL이 저장되었습니다.
-        removed: 훅 URL이 제거되었습니다.
-      # Authorization header input
-      auth:
-        field_label: 'Authorization 헤더(예: Bearer <token>)(선택 사항)'
-        saved: Authorization 헤더가 저장되었습니다.
-        removed: Authorization 헤더가 제거되었습니다.
+  # Data Management panel
+  data:
     clear_data:
       title: 데이터 지우기
       # Clear File Cache button
@@ -1917,6 +1899,19 @@ prefs:
       title: 개발자 모드
       description: 자세한 콘솔 로그와 네이티브 컨텍스트 메뉴 등 개발자용 기능을 활성화합니다.
       switch_label: 개발자 모드 활성화
+    deploy_hook:
+      title: 배포 훅
+      description: 변경 사항 게시를 선택하여 배포를 수동으로 실행할 때 호출할 웹훅 URL을 입력하십시오. GitHub Actions를 사용하시는 경우 비워 두셔도 됩니다.
+      # Hook URL input
+      url:
+        field_label: 훅 URL
+        saved: 훅 URL이 저장되었습니다.
+        removed: 훅 URL이 제거되었습니다.
+      # Authorization header input
+      auth:
+        field_label: 'Authorization 헤더(예: Bearer <token>)(선택 사항)'
+        saved: Authorization 헤더가 저장되었습니다.
+        removed: Authorization 헤더가 제거되었습니다.
 
 # ==============================================================================
 # Keyboard Shortcuts

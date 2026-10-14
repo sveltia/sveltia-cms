@@ -1909,26 +1909,8 @@ prefs:
       description: 在項目預覽和介面標籤中顯示連結底線。
       switch_label: 一律顯示連結底線
 
-  # Advanced panel
-  advanced:
-    title: 進階
-    beta:
-      title: Beta 功能
-      description: 啟用一些可能不穩定或尚未完整翻譯的 Beta 功能。
-      switch_label: 加入 Beta 計畫
-    deploy_hook:
-      title: 部署 Hook
-      description: 手動部署時（選擇「發布變更」）會呼叫此 URL。使用 GitHub Actions 可留空。
-      # Hook URL input
-      url:
-        field_label: Hook URL
-        saved: Hook URL 已儲存。
-        removed: Hook URL 已移除。
-      # Authorization header input
-      auth:
-        field_label: Authorization 標頭（例如 Bearer <token>）（選填）
-        saved: Authorization 標頭已儲存。
-        removed: Authorization 標頭已移除。
+  # Data Management panel
+  data:
     clear_data:
       title: 清除資料
       # Clear File Cache button
@@ -1948,6 +1930,19 @@ prefs:
       title: 開發者模式
       description: 啟用一些給開發者用的功能，包括詳細的主控台記錄和原生快顯選單。
       switch_label: 啟用開發者模式
+    deploy_hook:
+      title: 部署 Hook
+      description: 手動部署時（選擇「發布變更」）會呼叫此 URL。使用 GitHub Actions 可留空。
+      # Hook URL input
+      url:
+        field_label: Hook URL
+        saved: Hook URL 已儲存。
+        removed: Hook URL 已移除。
+      # Authorization header input
+      auth:
+        field_label: Authorization 標頭（例如 Bearer <token>）（選填）
+        saved: Authorization 標頭已儲存。
+        removed: Authorization 標頭已移除。
 
 # ==============================================================================
 # Keyboard Shortcuts

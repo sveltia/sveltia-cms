@@ -31,7 +31,7 @@ describe('SettingsPage', () => {
       'photo_library Media',
       'accessibility_new Accessibility',
       'code_xml Developer',
-      'labs Advanced',
+      'database Data Management',
     ]);
 
     await menu.getByRole('menuitem', { name: 'Contents' }).click();

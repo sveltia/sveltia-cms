@@ -56,7 +56,6 @@ $effect.root(() => {
       _prefs.closeOnSave ??= true;
       _prefs.closeWithEscape ??= true;
       _prefs.underlineLinks ??= true;
-      _prefs.beta ??= false;
       _prefs.devModeEnabled ??= false;
       _prefs.localGitCommits ??= false;
       _prefs.defaultTranslationService ??= 'google';
@@ -67,6 +66,9 @@ $effect.root(() => {
       if (_prefs.locale === 'en') {
         _prefs.locale = AUTO_PREF_VALUE;
       }
+
+      // Drop the legacy `beta` value, which was used by the removed Beta Features setting
+      delete _prefs.beta;
 
       Object.assign(prefs, _prefs);
     } catch {
@@ -91,7 +93,7 @@ $effect.root(() => {
       }
     })();
 
-    const { theme, underlineLinks = true, beta = false, devModeEnabled: devMode = false } = prefs;
+    const { theme, underlineLinks = true, devModeEnabled: devMode = false } = prefs;
     const autoTheming = !theme || theme === AUTO_PREF_VALUE;
     const autoTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
@@ -99,7 +101,6 @@ $effect.root(() => {
       theme: autoTheming ? autoTheme : theme,
       autoTheming,
       underlineLinks,
-      beta,
       devMode,
     });
   });

@@ -1979,26 +1979,8 @@ prefs:
       description: Visa understrykning för länkar i förhandsgranskningen av inlägg och användargränssnittets etiketter.
       switch_label: Understryk alltid länkar
 
-  # Advanced panel
-  advanced:
-    title: Avancerat
-    beta:
-      title: Beta-funktioner
-      description: Aktivera vissa beta-funktioner som kan vara instabila eller oöversatta.
-      switch_label: Gå med i beta-programmet
-    deploy_hook:
-      title: Deploy Hook
-      description: Ange en webhook-URL som ska anropas när du manuellt utlöser en distribution genom att välja Publicera ändringar. Detta kan lämnas tomt om du använder GitHub Actions.
-      # Hook URL input
-      url:
-        field_label: Hook-URL
-        saved: Hook-URL sparad.
-        removed: Hook-URL borttagen.
-      # Authorization header input
-      auth:
-        field_label: Auktoriseringshuvud (t.ex. Bearer <token>) (valfritt)
-        saved: Auktoriseringshuvud sparat.
-        removed: Auktoriseringshuvud borttaget.
+  # Data Management panel
+  data:
     clear_data:
       title: Rensa data
       # Clear File Cache button
@@ -2018,6 +2000,19 @@ prefs:
       title: Utvecklarläge
       description: Aktivera vissa utvecklarinriktade funktioner, inklusive detaljerade konsolloggar och inbyggda kontextmenyer.
       switch_label: Aktivera utvecklarläge
+    deploy_hook:
+      title: Deploy Hook
+      description: Ange en webhook-URL som ska anropas när du manuellt utlöser en distribution genom att välja Publicera ändringar. Detta kan lämnas tomt om du använder GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: Hook-URL
+        saved: Hook-URL sparad.
+        removed: Hook-URL borttagen.
+      # Authorization header input
+      auth:
+        field_label: Auktoriseringshuvud (t.ex. Bearer <token>) (valfritt)
+        saved: Auktoriseringshuvud sparat.
+        removed: Auktoriseringshuvud borttaget.
 
 # ==============================================================================
 # Keyboard Shortcuts

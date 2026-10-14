@@ -1979,26 +1979,8 @@ prefs:
       description: Näytä alleviivaus linkeille sisällön esikatselussa ja käyttöliittymän teksteissä.
       switch_label: Alleviivaa linkit aina
 
-  # Advanced panel
-  advanced:
-    title: Lisäasetukset
-    beta:
-      title: Beta-ominaisuudet
-      description: Ota käyttöön beta-ominaisuuksia, jotka voivat olla epävakaita tai kääntämättömiä.
-      switch_label: Liity beta-ohjelmaan
-    deploy_hook:
-      title: Julkaisu-webhook
-      description: Anna webhook-URL-osoite, jota kutsutaan, kun käynnistät julkaisun manuaalisesti valitsemalla Julkaise muutokset. Voit jättää tämän tyhjäksi, jos käytät GitHub Actionsia.
-      # Hook URL input
-      url:
-        field_label: Hookin URL-osoite
-        saved: Hookin URL-osoite tallennettu.
-        removed: Hookin URL-osoite poistettu.
-      # Authorization header input
-      auth:
-        field_label: Authorization-otsikko (esim. Bearer <token>) (valinnainen)
-        saved: Authorization-otsikko tallennettu.
-        removed: Authorization-otsikko poistettu.
+  # Data Management panel
+  data:
     clear_data:
       title: Tyhjennä tiedot
       # Clear File Cache button
@@ -2018,6 +2000,19 @@ prefs:
       title: Kehittäjätila
       description: Ota käyttöön kehittäjille suunnattuja ominaisuuksia, kuten yksityiskohtaiset konsolilokit ja natiivit kontekstivalikot.
       switch_label: Ota kehittäjätila käyttöön
+    deploy_hook:
+      title: Julkaisu-webhook
+      description: Anna webhook-URL-osoite, jota kutsutaan, kun käynnistät julkaisun manuaalisesti valitsemalla Julkaise muutokset. Voit jättää tämän tyhjäksi, jos käytät GitHub Actionsia.
+      # Hook URL input
+      url:
+        field_label: Hookin URL-osoite
+        saved: Hookin URL-osoite tallennettu.
+        removed: Hookin URL-osoite poistettu.
+      # Authorization header input
+      auth:
+        field_label: Authorization-otsikko (esim. Bearer <token>) (valinnainen)
+        saved: Authorization-otsikko tallennettu.
+        removed: Authorization-otsikko poistettu.
 
 # ==============================================================================
 # Keyboard Shortcuts

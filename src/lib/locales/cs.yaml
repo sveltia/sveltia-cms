@@ -2026,26 +2026,8 @@ prefs:
       description: Zobrazovat podtržení odkazů v náhledu položky a v rozhraní.
       switch_label: Vždy podtrhávat odkazy
 
-  # Advanced panel
-  advanced:
-    title: Pokročilé
-    beta:
-      title: Beta funkce
-      description: Povolit některé beta funkce, které mohou být nestabilní nebo nepřeložené do češtiny.
-      switch_label: Zapojit se do programu Beta
-    deploy_hook:
-      title: Webhook pro nasazení (Deploy Hook)
-      description: Zadejte URL adresu webhooku, který má být zavolán při ručním spuštění nasazení výběrem možnosti Publikovat změny. Pokud používáte GitHub Actions, můžete pole nechat prázdné.
-      # Hook URL input
-      url:
-        field_label: URL adresa webhooku
-        saved: URL adresa webhooku byla uložena.
-        removed: URL adresa webhooku byla odebrána.
-      # Authorization header input
-      auth:
-        field_label: Autorizační hlavička (např. Bearer <token>) (volitelné)
-        saved: Autorizační hlavička byla uložena.
-        removed: Autorizační hlavička byla odebrána.
+  # Data Management panel
+  data:
     clear_data:
       title: Vymazat data
       # Clear File Cache button
@@ -2065,6 +2047,19 @@ prefs:
       title: Vývojářský režim
       description: Povolit funkce určené pro vývojáře, včetně podrobných protokolů konzole a nativních kontextových nabídek.
       switch_label: Povolit vývojářský režim
+    deploy_hook:
+      title: Webhook pro nasazení (Deploy Hook)
+      description: Zadejte URL adresu webhooku, který má být zavolán při ručním spuštění nasazení výběrem možnosti Publikovat změny. Pokud používáte GitHub Actions, můžete pole nechat prázdné.
+      # Hook URL input
+      url:
+        field_label: URL adresa webhooku
+        saved: URL adresa webhooku byla uložena.
+        removed: URL adresa webhooku byla odebrána.
+      # Authorization header input
+      auth:
+        field_label: Autorizační hlavička (např. Bearer <token>) (volitelné)
+        saved: Autorizační hlavička byla uložena.
+        removed: Autorizační hlavička byla odebrána.
 
 # ==============================================================================
 # Keyboard Shortcuts

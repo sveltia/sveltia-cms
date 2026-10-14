@@ -1979,26 +1979,8 @@ prefs:
       description: Mostra la sottolineatura per i link nell’anteprima della voce e nelle etichette dell’interfaccia utente.
       switch_label: Sottolinea Sempre i Link
 
-  # Advanced panel
-  advanced:
-    title: Avanzate
-    beta:
-      title: Funzionalità Beta
-      description: Abilita alcune funzionalità beta che potrebbero essere instabili o non tradotte.
-      switch_label: Partecipa al Programma Beta
-    deploy_hook:
-      title: Deploy Hook
-      description: Inserisci un URL webhook da chiamare quando attivi manualmente una pubblicazione selezionando Pubblica Modifiche. Può essere lasciato vuoto se usi GitHub Actions.
-      # Hook URL input
-      url:
-        field_label: URL Hook
-        saved: URL Hook salvato.
-        removed: URL Hook rimosso.
-      # Authorization header input
-      auth:
-        field_label: Header di autorizzazione (es., Bearer <token>) (opzionale)
-        saved: Header di autorizzazione salvato.
-        removed: Header di autorizzazione rimosso.
+  # Data Management panel
+  data:
     clear_data:
       title: Cancella Dati
       # Clear File Cache button
@@ -2018,6 +2000,19 @@ prefs:
       title: Modalità Sviluppatore
       description: Abilita alcune funzionalità orientate agli sviluppatori, inclusi log della console dettagliati e menu contestuali nativi.
       switch_label: Abilita Modalità Sviluppatore
+    deploy_hook:
+      title: Deploy Hook
+      description: Inserisci un URL webhook da chiamare quando attivi manualmente una pubblicazione selezionando Pubblica Modifiche. Può essere lasciato vuoto se usi GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: URL Hook
+        saved: URL Hook salvato.
+        removed: URL Hook rimosso.
+      # Authorization header input
+      auth:
+        field_label: Header di autorizzazione (es., Bearer <token>) (opzionale)
+        saved: Header di autorizzazione salvato.
+        removed: Header di autorizzazione rimosso.
 
 # ==============================================================================
 # Keyboard Shortcuts
