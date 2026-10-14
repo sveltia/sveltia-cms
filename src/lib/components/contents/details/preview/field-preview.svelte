@@ -125,7 +125,8 @@
   }
 
   @media (width < 768px) {
-    :global([role='document']) {
+    /* A top-level field, which is wrapped for the Edit Pane to find it before it’s rendered */
+    :global([role='document'] > [data-lazy-key-path]) {
       & > section:is([data-field-type='file'], [data-field-type='image']):has(:global(img)),
       & > section:is([data-field-type='string']):has(:global(iframe)) {
         overflow: visible;

@@ -56,6 +56,8 @@ describe('ObjectPreview', () => {
 
     expect(sections).toHaveLength(2);
     expect(sections[0]).toHaveAttribute('data-key-path', 'author.name');
+    // Each subfield is marked outside its lazily rendered preview, for the Edit Pane to scroll to
+    expect(sections[1].parentElement).toHaveAttribute('data-lazy-key-path', 'author.email');
     expect(sections[0]).toHaveTextContent('name Melvin Lucas');
     expect(sections[1].querySelector('a')).toHaveAttribute('href', 'mailto:melvin@example.com');
     // No type label

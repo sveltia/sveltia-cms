@@ -66,6 +66,27 @@ describe('EntryPreview', () => {
     await expect.element(document.getByText('World')).toBeInTheDocument();
   });
 
+  test('marks each field outside its lazily rendered preview', async () => {
+    await renderPreview();
+
+    const document = page.getByRole('document', { name: 'Content Preview' });
+
+    await expect.element(document.getByText('World')).toBeInTheDocument();
+
+    const wrappers = [...document.element().children];
+
+    // For the Edit Pane to scroll to a field before it’s rendered. The wrapper isn’t padded like
+    // the document, and doesn’t take the key path Scroll Sync and Click-to-Highlight look for
+    expect(wrappers.map((el) => el.getAttribute('data-lazy-key-path'))).toEqual(['title', 'body']);
+    expect(wrappers.map((el) => el.querySelector('section')?.dataset.keyPath)).toEqual([
+      'title',
+      'body',
+    ]);
+    expect(wrappers.every((el) => !el.hasAttribute('data-key-path'))).toBe(true);
+    expect(getComputedStyle(wrappers[0]).padding).toBe('0px');
+    expect(getComputedStyle(document.element()).padding).toBe('8px 16px');
+  });
+
   test('confines the field previews to the preview box', async () => {
     await renderPreview();
 
@@ -95,6 +116,12 @@ describe('EntryPreview', () => {
         () => iframe.contentDocument?.body.querySelector('[data-key-path="title"]')?.textContent,
       )
       .toContain('Hello');
+    // The fields are marked in the frame too, for the Edit Pane to scroll to them
+    expect(
+      [...(iframe.contentDocument?.querySelectorAll('[data-lazy-key-path]') ?? [])].map((el) =>
+        el.getAttribute('data-lazy-key-path'),
+      ),
+    ).toEqual(['title', 'body']);
   });
 
   test('renders a custom preview template', async () => {

@@ -52,11 +52,12 @@ export const getFieldAlignedScrollTop = ({ y, top, height, targetOffsetTop, targ
 
 /**
  * Find the element in another pane that shows the given field, or the one that shows its nearest
- * parent, e.g. the section for a field that isn’t shown on its own. A List item in the default
- * preview is marked with the `data-list-item-key-path` attribute, which Scroll Synchronization and
- * Click-to-Highlight don’t use, so its subfields not rendered yet fall back to the item rather than
- * the whole list. An element that isn’t rendered, e.g. one with `display: none`, can’t be scrolled
- * to, so it’s skipped.
+ * parent, e.g. the section for a field that isn’t shown on its own. The default preview renders its
+ * fields lazily, and marks the element around each of them with the `data-lazy-key-path` attribute,
+ * which Scroll Synchronization and Click-to-Highlight don’t use, so a field not rendered yet falls
+ * back to that wrapper rather than its parent or nothing at all. An element that isn’t rendered,
+ * e.g. one with `display: none`, can’t be scrolled to, so it’s skipped, and so is a wrapper with
+ * neither a placeholder nor the field in it, as the field isn’t shown in the preview.
  * @param {HTMLElement} container Content area of the other pane.
  * @param {string} keyPath Key path of the field.
  * @returns {HTMLElement | undefined} Element, if any.
@@ -67,17 +68,29 @@ export const findFieldElement = (container, keyPath) => {
   for (let depth = parts.length; depth > 0; depth -= 1) {
     const path = CSS.escape(parts.slice(0, depth).join('.'));
 
-    // Prefer the field’s own element to the List item around it, e.g. for a single subfield
-    let element = /** @type {HTMLElement | null} */ (
+    // Prefer the field’s own element to the wrapper around it
+    const element = /** @type {HTMLElement | null} */ (
       container.querySelector(`[data-key-path="${path}"]`)
     );
 
-    if (!element?.getClientRects().length) {
-      element = container.querySelector(`[data-list-item-key-path="${path}"]`);
-    }
-
     if (element?.getClientRects().length) {
       return element;
+    }
+
+    // Prefer the innermost wrapper, e.g. the one around the single subfield of a List item to the
+    // one around the item, which have the same key path. A wrapper around the field’s own element,
+    // which was skipped above, has rendered it already, so it has nothing more to show
+    const wrapper = /** @type {HTMLElement[]} */ ([
+      ...container.querySelectorAll(`[data-lazy-key-path="${path}"]`),
+    ]).findLast(
+      (_wrapper) =>
+        _wrapper.childElementCount &&
+        _wrapper.getClientRects().length &&
+        !(element && _wrapper.contains(element)),
+    );
+
+    if (wrapper) {
+      return wrapper;
     }
   }
 
@@ -86,11 +99,11 @@ export const findFieldElement = (container, keyPath) => {
 
 /**
  * Find the element in another pane that shows the given field, like `findFieldElement()`, in a pane
- * that renders its fields lazily as they scroll into view, e.g. the List items in the default
- * preview. While only a List item is found, scroll the pane to its last rendered field, or to the
- * item itself, and look again once the fields that came into view are rendered, until the field
- * is found or scrolling makes no more progress. Scrolling past the placeholders above the field
- * renders them, which moves the field, so it can take a few rounds.
+ * that renders its fields lazily as they scroll into view: the default preview. While only the
+ * wrapper of a field or one of its parents is found, scroll the pane to it and look again once the
+ * fields that came into view are rendered, until the field is found or scrolling makes no more
+ * progress. Scrolling past the placeholders above the field renders them, which moves the field,
+ * and a parent renders the wrappers of its subfields in turn, so it can take a few rounds.
  * @param {object} args Arguments.
  * @param {HTMLElement} args.container Content area of the other pane.
  * @param {string} args.keyPath Key path of the field.
@@ -102,7 +115,7 @@ export const findFieldElement = (container, keyPath) => {
  * @param {number} [args.interval] How long to wait for fields to render after scrolling, in
  * milliseconds.
  * @returns {Promise<HTMLElement | undefined>} Element showing the field or, if it couldn’t be
- * rendered, its nearest parent. `undefined` if there’s neither or the request is outdated.
+ * rendered, its nearest parent or wrapper. `undefined` if there’s none or the request is outdated.
  * @see https://github.com/sveltia/sveltia-cms/issues/1073
  */
 export const findLazyFieldElement = async ({
@@ -114,31 +127,25 @@ export const findLazyFieldElement = async ({
   interval = 100,
 }) => {
   /** @type {HTMLElement | undefined} */
-  let previousTarget;
+  let previousElement;
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const element = findFieldElement(container, keyPath);
-    const parentKeyPath = element?.dataset.listItemKeyPath;
 
-    // Only a List item renders its content lazily. Any other element found is the field’s own or
-    // a parent that has rendered everything in it, so there’s nothing more to look for
-    if (!element || parentKeyPath === undefined) {
+    // Only a wrapper renders its content lazily. Any other element found is the field’s own or a
+    // parent that has rendered everything in it, so there’s nothing more to look for
+    if (element?.dataset.lazyKeyPath === undefined) {
       return element;
     }
 
-    const target =
-      [
-        ...element.querySelectorAll(`[data-key-path^="${CSS.escape(`${parentKeyPath}.`)}"]`),
-      ].findLast((field) => field.getClientRects().length) ?? element;
-
-    const scrolled = scrollTo(/** @type {HTMLElement} */ (target));
+    const scrolled = scrollTo(element);
 
     // Stop if the pane can’t get any closer to the field, e.g. when it isn’t shown in the preview
-    if (!scrolled && target === previousTarget) {
+    if (!scrolled && element === previousElement) {
       return element;
     }
 
-    previousTarget = /** @type {HTMLElement} */ (target);
+    previousElement = element;
 
     // eslint-disable-next-line no-await-in-loop
     await sleep(interval);

@@ -153,21 +153,96 @@ describe('findFieldElement()', () => {
     expect(findFieldElement(container, 'items.0')).toBeUndefined();
   });
 
-  test('prefers the field’s own element to the List item of the same key path', () => {
+  test('prefers the field’s own element to the wrapper of the same key path', () => {
     const container = render(
-      '<div data-list-item-key-path="items.1"><p data-key-path="items.1">B</p></div>',
+      '<div data-lazy-key-path="title"><p data-key-path="title">A</p></div>',
     );
 
-    expect(findFieldElement(container, 'items.1')?.textContent).toBe('B');
+    expect(findFieldElement(container, 'title')?.textContent).toBe('A');
   });
 
-  test('falls back to the List item before the whole list', () => {
+  test('falls back to the wrapper of a field not rendered yet', () => {
     const container = render(
-      '<section data-key-path="items"><div data-list-item-key-path="items.1"></div></section>',
+      [
+        '<div data-lazy-key-path="title"><p data-key-path="title">A</p></div>',
+        '<div data-lazy-key-path="body"><div class="placeholder"></div></div>',
+      ].join(''),
     );
 
-    expect(findFieldElement(container, 'items.1.title')?.dataset.listItemKeyPath).toBe('items.1');
+    expect(findFieldElement(container, 'body')?.dataset.lazyKeyPath).toBe('body');
+  });
+
+  test('falls back to the wrapper of a List item before the whole list', () => {
+    const container = render(
+      [
+        '<section data-key-path="items">',
+        '<div data-lazy-key-path="items.1"><div class="placeholder"></div></div>',
+        '</section>',
+      ].join(''),
+    );
+
+    expect(findFieldElement(container, 'items.1.title')?.dataset.lazyKeyPath).toBe('items.1');
     expect(findFieldElement(container, 'items.2.title')?.dataset.keyPath).toBe('items');
+  });
+
+  test('prefers the innermost wrapper of the same key path', () => {
+    const container = render(
+      [
+        '<div data-lazy-key-path="items.1" id="item">',
+        '<div data-lazy-key-path="items.1" id="field"><div class="placeholder"></div></div>',
+        '</div>',
+      ].join(''),
+    );
+
+    expect(findFieldElement(container, 'items.1')?.id).toBe('field');
+  });
+
+  test('skips the wrapper of a field that isn’t shown in the preview', () => {
+    const container = render(
+      [
+        '<section data-key-path="author">',
+        '<div data-lazy-key-path="author.name"><!----></div>',
+        '</section>',
+        '<div data-lazy-key-path="hidden"><!----></div>',
+      ].join(''),
+    );
+
+    expect(findFieldElement(container, 'author.name')?.dataset.keyPath).toBe('author');
+    expect(findFieldElement(container, 'hidden')).toBeUndefined();
+  });
+
+  test('skips the wrapper of a field rendered but hidden', () => {
+    const container = render(
+      [
+        '<section data-key-path="author">',
+        '<div data-lazy-key-path="author.name"><p data-key-path="author.name" hidden>A</p></div>',
+        '</section>',
+      ].join(''),
+    );
+
+    vi.spyOn(
+      /** @type {HTMLElement} */ (container.querySelector('p')),
+      'getClientRects',
+    ).mockReturnValue(/** @type {DOMRectList} */ (/** @type {unknown} */ ([])));
+
+    expect(findFieldElement(container, 'author.name')?.dataset.keyPath).toBe('author');
+  });
+
+  test('skips a wrapper that isn’t rendered', () => {
+    const container = render(
+      [
+        '<section data-key-path="author">',
+        '<div data-lazy-key-path="author.name" hidden><div class="placeholder"></div></div>',
+        '</section>',
+      ].join(''),
+    );
+
+    vi.spyOn(
+      /** @type {HTMLElement} */ (container.querySelector('[data-lazy-key-path]')),
+      'getClientRects',
+    ).mockReturnValue(/** @type {DOMRectList} */ (/** @type {unknown} */ ([])));
+
+    expect(findFieldElement(container, 'author.name')?.dataset.keyPath).toBe('author');
   });
 });
 
@@ -177,29 +252,33 @@ describe('findLazyFieldElement()', () => {
   });
 
   /**
-   * Render a list of three items, of which only the first is rendered, like the default preview.
+   * Render a list of three items, of which only the first is rendered, like the default preview,
+   * after a top-level field not rendered yet.
    * @returns {HTMLElement} Container.
    */
   const renderList = () =>
     render(
       [
-        '<section data-key-path="items">',
-        '<div data-list-item-key-path="items.0"><p data-key-path="items.0.title">A</p></div>',
-        '<div data-list-item-key-path="items.1"><div class="placeholder"></div></div>',
-        '<div data-list-item-key-path="items.2"><div class="placeholder"></div></div>',
-        '</section>',
+        '<div data-lazy-key-path="body"><div class="placeholder"></div></div>',
+        '<div data-lazy-key-path="items"><section data-key-path="items">',
+        '<div data-lazy-key-path="items.0">',
+        '<div data-lazy-key-path="items.0.title"><p data-key-path="items.0.title">A</p></div>',
+        '</div>',
+        '<div data-lazy-key-path="items.1"><div class="placeholder"></div></div>',
+        '<div data-lazy-key-path="items.2"><div class="placeholder"></div></div>',
+        '</section></div>',
       ].join(''),
     );
 
   /**
-   * Render the given List item, like the preview does once it’s scrolled into view.
+   * Render the content of the given wrapper, like the preview does once it’s scrolled into view.
    * @param {HTMLElement} container Container.
-   * @param {number} index Item index.
-   * @param {string} html Item content.
+   * @param {string} keyPath Key path of the wrapper.
+   * @param {string} html Content.
    */
-  const renderItem = (container, index, html) => {
+  const renderWrapper = (container, keyPath, html) => {
     /** @type {HTMLElement} */ (
-      container.querySelector(`[data-list-item-key-path="items.${index}"]`)
+      container.querySelector(`[data-lazy-key-path="${keyPath}"]`)
     ).innerHTML = html;
   };
 
@@ -228,7 +307,7 @@ describe('findLazyFieldElement()', () => {
     expect(scrollTo).not.toHaveBeenCalled();
   });
 
-  test('settles for a parent other than a List item without scrolling', async () => {
+  test('settles for a rendered parent without scrolling', async () => {
     const container = renderList();
     const scrollTo = vi.fn(() => true);
 
@@ -243,45 +322,43 @@ describe('findLazyFieldElement()', () => {
     expect(scrollTo).not.toHaveBeenCalled();
   });
 
-  test('scrolls to the List item until its field is rendered', async () => {
+  test('scrolls to a top-level field until it’s rendered', async () => {
     const container = renderList();
 
     const scrollTo = vi.fn((/** @type {HTMLElement} */ _target) => {
-      renderItem(container, 2, '<p data-key-path="items.2.title">C</p>');
+      renderWrapper(container, 'body', '<p data-key-path="body">Body</p>');
 
       return true;
     });
 
     const element = await findLazyFieldElement({
       container,
-      keyPath: 'items.2.title',
+      keyPath: 'body',
       scrollTo,
       interval: 0,
     });
 
-    expect(element?.textContent).toBe('C');
+    expect(element?.textContent).toBe('Body');
     expect(scrollTo).toHaveBeenCalledOnce();
-    expect(scrollTo.mock.calls[0][0].dataset.listItemKeyPath).toBe('items.2');
+    expect(scrollTo.mock.calls[0][0].dataset.lazyKeyPath).toBe('body');
   });
 
-  test('scrolls to the last rendered field of the item, then further', async () => {
+  test('scrolls to the List item, then to its subfield, until the field is rendered', async () => {
     const container = renderList();
 
-    renderItem(
-      container,
-      1,
-      '<p data-key-path="items.1.title">B</p><p data-key-path="items.1.body">Body</p><div></div>',
-    );
-
-    const scrollTo = vi.fn((/** @type {HTMLElement} */ _target) => {
-      // The body’s neighbour is only rendered once the pane has been scrolled to it twice
-      if (scrollTo.mock.calls.length === 2) {
-        renderItem(
+    const scrollTo = vi.fn((/** @type {HTMLElement} */ target) => {
+      // The item renders the wrappers of its subfields, which render the subfields in turn
+      if (target.dataset.lazyKeyPath === 'items.2') {
+        renderWrapper(
           container,
-          1,
-          '<p data-key-path="items.1.title">B</p><p data-key-path="items.1.body">Body</p>' +
-            '<p data-key-path="items.1.image">Image</p>',
+          'items.2',
+          [
+            '<div data-lazy-key-path="items.2.title"><p data-key-path="items.2.title">C</p></div>',
+            '<div data-lazy-key-path="items.2.body"><div class="placeholder"></div></div>',
+          ].join(''),
         );
+      } else {
+        renderWrapper(container, 'items.2.body', '<p data-key-path="items.2.body">Body</p>');
       }
 
       return true;
@@ -289,19 +366,19 @@ describe('findLazyFieldElement()', () => {
 
     const element = await findLazyFieldElement({
       container,
-      keyPath: 'items.1.image',
+      keyPath: 'items.2.body',
       scrollTo,
       interval: 0,
     });
 
-    expect(element?.textContent).toBe('Image');
-    expect(scrollTo.mock.calls.map(([target]) => target.dataset.keyPath)).toEqual([
-      'items.1.body',
-      'items.1.body',
+    expect(element?.textContent).toBe('Body');
+    expect(scrollTo.mock.calls.map(([target]) => target.dataset.lazyKeyPath)).toEqual([
+      'items.2',
+      'items.2.body',
     ]);
   });
 
-  test('settles for the parent once the pane can’t get any closer', async () => {
+  test('settles for the wrapper once the pane can’t get any closer', async () => {
     const container = renderList();
     const scrollTo = vi.fn(() => scrollTo.mock.calls.length === 1);
 
@@ -312,18 +389,22 @@ describe('findLazyFieldElement()', () => {
       interval: 0,
     });
 
-    expect(element?.dataset.listItemKeyPath).toBe('items.2');
+    expect(element?.dataset.lazyKeyPath).toBe('items.2');
     expect(scrollTo).toHaveBeenCalledTimes(2);
   });
 
-  test('keeps going while the target changes, even without scrolling', async () => {
+  test('keeps going while the wrapper changes, even without scrolling', async () => {
     const container = renderList();
 
     const scrollTo = vi.fn(() => {
-      if (scrollTo.mock.calls.length === 2) {
-        renderItem(container, 2, '<p data-key-path="items.2.title">C</p>');
+      if (scrollTo.mock.calls.length === 1) {
+        renderWrapper(
+          container,
+          'items.2',
+          '<div data-lazy-key-path="items.2.title"><div class="placeholder"></div></div>',
+        );
       } else {
-        renderItem(container, 2, '<p data-key-path="items.2.other">D</p>');
+        renderWrapper(container, 'items.2.title', '<p data-key-path="items.2.title">C</p>');
       }
 
       return false;
@@ -367,14 +448,14 @@ describe('findLazyFieldElement()', () => {
       interval: 0,
     });
 
-    expect(element?.dataset.listItemKeyPath).toBe('items.2');
+    expect(element?.dataset.lazyKeyPath).toBe('items.2');
     expect(scrollTo).toHaveBeenCalledTimes(3);
   });
 
   test('uses the default options', async () => {
     const container = renderList();
 
-    renderItem(container, 2, '<p data-key-path="items.2.title">C</p>');
+    renderWrapper(container, 'items.2', '<p data-key-path="items.2.title">C</p>');
 
     expect(
       (

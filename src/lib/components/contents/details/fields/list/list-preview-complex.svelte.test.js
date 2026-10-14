@@ -60,10 +60,15 @@ describe('ListPreviewComplex', () => {
       'data-typed-key-path',
       'authors.*.name',
     );
-    // Each item is marked outside its lazily rendered content, for the Edit Pane to scroll to it
-    expect(groups[1].closest('[data-list-item-key-path]')).toHaveAttribute(
-      'data-list-item-key-path',
+    // Each item and subfield is marked outside its lazily rendered content, for the Edit Pane to
+    // scroll to it
+    expect(groups[1].closest('[data-lazy-key-path]')).toHaveAttribute(
+      'data-lazy-key-path',
       'authors.1',
+    );
+    expect(groups[1].querySelector('section')?.parentElement).toHaveAttribute(
+      'data-lazy-key-path',
+      'authors.1.name',
     );
   });
 
@@ -77,6 +82,8 @@ describe('ListPreviewComplex', () => {
 
     expect(sections).toHaveLength(2);
     expect(sections[0]).toHaveAttribute('data-key-path', 'links.0');
+    // The subfield’s wrapper has the item’s key path, like the item’s own
+    expect(sections[0].parentElement).toHaveAttribute('data-lazy-key-path', 'links.0');
     expect(sections[0].querySelector('a')).toHaveAttribute('href', 'https://example.com/');
   });
 

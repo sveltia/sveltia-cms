@@ -29,4 +29,38 @@ describe('Subsection', () => {
     expect(container.querySelector('.header')).toBeNull();
     expect(container.querySelector('[role="group"]')).not.toHaveAttribute('aria-labelledby');
   });
+
+  test('hides the items when no subfield is shown', async () => {
+    const { container } = await render(Subsection, {
+      label: 'Author',
+      children: createRawSnippet(() => ({
+        /**
+         * Render the wrapper of a subfield that isn’t shown in the preview.
+         * @returns {string} HTML.
+         */
+        render: () => '<div data-lazy-key-path="a"><!----></div>',
+      })),
+    });
+
+    expect(
+      getComputedStyle(/** @type {Element} */ (container.querySelector('.items'))).display,
+    ).toBe('none');
+  });
+
+  test('shows the items while a subfield is waiting to be rendered', async () => {
+    const { container } = await render(Subsection, {
+      label: 'Author',
+      children: createRawSnippet(() => ({
+        /**
+         * Render the wrapper of a subfield not rendered yet.
+         * @returns {string} HTML.
+         */
+        render: () => '<div data-lazy-key-path="a"><div class="placeholder"></div></div>',
+      })),
+    });
+
+    expect(
+      getComputedStyle(/** @type {Element} */ (container.querySelector('.items'))).display,
+    ).not.toBe('none');
+  });
 });

@@ -182,7 +182,7 @@
 
   /**
    * Scroll the other pane to the given field if it’s not visible there. The default preview renders
-   * List items lazily, so the pane may have to be scrolled towards the field until it’s rendered.
+   * fields lazily, so the pane may have to be scrolled towards the field until it’s rendered.
    * @param {HTMLElement} field Field element in this pane.
    */
   const revealField = async (field) => {
@@ -192,6 +192,7 @@
 
     const isLatest = revealGuard.next();
     const pane = thatPaneContentArea;
+    const { scrollTop: originalScrollTop } = pane;
     // The field was found by that very attribute, so the key path is there
     const { keyPath } = /** @type {{ keyPath: string }} */ (field.dataset);
 
@@ -228,6 +229,13 @@
     });
 
     if (!element) {
+      // Put the pane back if it was scrolled towards a field that turned out not to be shown in
+      // it, unless the search was abandoned
+      if (isLatest() && syncScrolling && pane.scrollTop !== originalScrollTop) {
+        scrollSource = thisPaneContentArea;
+        pane.scrollTo({ top: originalScrollTop, behavior: 'instant' });
+      }
+
       return;
     }
 

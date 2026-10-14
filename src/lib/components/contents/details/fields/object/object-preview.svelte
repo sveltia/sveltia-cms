@@ -65,16 +65,20 @@
     <Subsection {label}>
       {#each subFields as subField (subField.name)}
         {@const subFieldKeyPath = `${keyPath}.${subField.name}`}
-        <VisibilityObserver>
-          <FieldPreview
-            keyPath={subFieldKeyPath}
-            typedKeyPath={hasVariableTypes && typeConfig?.name
-              ? `${typedKeyPath}<${typeConfig.name}>.${subField.name}`
-              : `${typedKeyPath}.${subField.name}`}
-            {locale}
-            fieldConfig={subField}
-          />
-        </VisibilityObserver>
+        <!-- Mark the subfield outside its observer, so that focusing it can scroll the preview to
+          it even before it’s rendered -->
+        <div role="none" data-lazy-key-path={subFieldKeyPath}>
+          <VisibilityObserver>
+            <FieldPreview
+              keyPath={subFieldKeyPath}
+              typedKeyPath={hasVariableTypes && typeConfig?.name
+                ? `${typedKeyPath}<${typeConfig.name}>.${subField.name}`
+                : `${typedKeyPath}.${subField.name}`}
+              {locale}
+              fieldConfig={subField}
+            />
+          </VisibilityObserver>
+        </div>
       {/each}
     </Subsection>
   {/if}

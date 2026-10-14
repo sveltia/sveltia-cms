@@ -79,7 +79,7 @@
   {@const itemKeyPath = `${keyPath}.${index}`}
   <!-- Mark the item outside its observer, so that focusing a field in it can scroll the preview to
     the item even before it’s rendered -->
-  <div role="none" data-list-item-key-path={itemKeyPath}>
+  <div role="none" data-lazy-key-path={itemKeyPath}>
     <VisibilityObserver>
       {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
       {#if hasVariableTypes && !typeConfig}
@@ -91,16 +91,21 @@
           : singleSubFields}
         <Subsection {label}>
           {#each subFields as subField (subField.name)}
-            <VisibilityObserver>
-              <FieldPreview
-                keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
-                typedKeyPath={hasVariableTypes
-                  ? `${typedKeyPath}.*<${type}>.${subField.name}`
-                  : `${typedKeyPath}.*.${subField.name}`}
-                {locale}
-                fieldConfig={subField}
-              />
-            </VisibilityObserver>
+            {@const subFieldKeyPath = hasSingleSubField
+              ? itemKeyPath
+              : `${itemKeyPath}.${subField.name}`}
+            <div role="none" data-lazy-key-path={subFieldKeyPath}>
+              <VisibilityObserver>
+                <FieldPreview
+                  keyPath={subFieldKeyPath}
+                  typedKeyPath={hasVariableTypes
+                    ? `${typedKeyPath}.*<${type}>.${subField.name}`
+                    : `${typedKeyPath}.*.${subField.name}`}
+                  {locale}
+                  fieldConfig={subField}
+                />
+              </VisibilityObserver>
+            </div>
           {/each}
         </Subsection>
       {/if}

@@ -68,14 +68,18 @@
 
 {#snippet children()}
   {#each fields as fieldConfig (fieldConfig.name)}
-    <VisibilityObserver>
-      <FieldPreview
-        keyPath={fieldConfig.name}
-        typedKeyPath={fieldConfig.name}
-        {locale}
-        {fieldConfig}
-      />
-    </VisibilityObserver>
+    <!-- Mark the field outside its observer, so that focusing it in the Edit Pane can scroll the
+      preview to it even before it’s rendered -->
+    <div role="none" data-lazy-key-path={fieldConfig.name}>
+      <VisibilityObserver>
+        <FieldPreview
+          keyPath={fieldConfig.name}
+          typedKeyPath={fieldConfig.name}
+          {locale}
+          {fieldConfig}
+        />
+      </VisibilityObserver>
+    </div>
   {/each}
 {/snippet}
 
@@ -92,7 +96,7 @@
 </VisibilityObserver>
 
 <style>
-  div {
+  [role='document'] {
     --entry-preview-padding-block: 8px;
     --entry-preview-padding-inline: 16px;
     padding-block: var(--entry-preview-padding-block);

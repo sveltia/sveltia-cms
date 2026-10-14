@@ -58,7 +58,8 @@
   .items {
     padding: 8px 16px;
 
-    &:empty {
+    /* Hide when no subfield is shown, leaving only the empty wrappers marking the subfields */
+    &:not(:has(> :not(:empty))) {
       display: none;
     }
   }

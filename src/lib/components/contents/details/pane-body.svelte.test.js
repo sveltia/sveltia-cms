@@ -369,10 +369,11 @@ describe('PaneBody', () => {
     const thatPane = createThatPane();
     const [above, item] = /** @type {HTMLElement[]} */ ([...thatPane.children]);
 
-    // A List item whose field is only rendered once the item is scrolled into view, along with the
-    // content above it, which moves the field down
+    // A field only rendered once its placeholder is scrolled into view, along with the content
+    // above it, which moves the field down
     item.removeAttribute('data-key-path');
-    item.dataset.listItemKeyPath = 'title';
+    item.dataset.lazyKeyPath = 'title';
+    item.innerHTML = '<div class="placeholder"></div>';
     thatPane.addEventListener(
       'scroll',
       () => {
@@ -403,10 +404,11 @@ describe('PaneBody', () => {
     const thatPane = createThatPane();
     const [above, item] = /** @type {HTMLElement[]} */ ([...thatPane.children]);
 
-    // A List item whose field never renders, while the content above it keeps growing, so the
-    // other pane would keep being scrolled towards it
+    // A field that never renders, while the content above it keeps growing, so the other pane would
+    // keep being scrolled towards it
     item.removeAttribute('data-key-path');
-    item.dataset.listItemKeyPath = 'title';
+    item.dataset.lazyKeyPath = 'title';
+    item.innerHTML = '<div class="placeholder"></div>';
     thatPane.addEventListener('scroll', () => {
       above.style.height = `${above.offsetHeight + 100}px`;
     });
@@ -429,6 +431,37 @@ describe('PaneBody', () => {
         setTimeout(resolve, 300);
       });
       expect(thatPane.scrollTop).toBe(0);
+    } finally {
+      thatPane.remove();
+      entryEditorSettings.current = undefined;
+    }
+  });
+
+  test('puts the other pane back when the focused field turns out not to be shown', async () => {
+    entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: true };
+
+    const thatPane = createThatPane();
+    const [, item] = /** @type {HTMLElement[]} */ ([...thatPane.children]);
+    /** @type {number[]} */
+    const positions = [];
+
+    // A field whose wrapper is left empty once its placeholder is scrolled into view
+    item.removeAttribute('data-key-path');
+    item.dataset.lazyKeyPath = 'title';
+    item.innerHTML = '<div class="placeholder"></div>';
+    thatPane.addEventListener('scroll', () => {
+      positions.push(thatPane.scrollTop);
+      item.innerHTML = '<!---->';
+    });
+
+    const { props } = await renderPane({ mode: 'edit', locale: 'en' });
+
+    try {
+      await expect.poll(() => props.thisPaneContentArea).toBeDefined();
+      props.thatPaneContentArea = thatPane;
+      await page.getByRole('textbox', { name: 'Title' }).click();
+      // Scrolled towards the placeholder, then back to the top
+      await expect.poll(() => positions).toEqual([200, 0]);
     } finally {
       thatPane.remove();
       entryEditorSettings.current = undefined;
