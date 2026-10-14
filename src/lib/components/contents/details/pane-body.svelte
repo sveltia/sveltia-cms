@@ -23,12 +23,10 @@
 
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
-  import {
-    customPreviewStyleRegistry,
-    customPreviewTemplateRegistry,
-  } from '$lib/services/api/registries';
+  import { customPreviewTemplateRegistry } from '$lib/services/api/registries';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
+  import { getPreviewStyleURLs } from '$lib/services/contents/editor/preview-styles';
   import {
     findLazyFieldElement,
     getFieldAlignedScrollTop,
@@ -335,7 +333,8 @@
     // The preview is only rendered in an iframe with a custom preview stylesheet or template. Don’t
     // wait for one otherwise, as the other pane can’t follow this one until it’s set up
     const iframe =
-      mode === 'preview' && (customPreviewStyleRegistry.size || customPreviewTemplateRegistry.size)
+      mode === 'preview' &&
+      (getPreviewStyleURLs(entryDraft.current ?? {}).length || customPreviewTemplateRegistry.size)
         ? await findPreviewIframe()
         : null;
 

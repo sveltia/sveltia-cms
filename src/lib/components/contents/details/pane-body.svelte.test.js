@@ -511,7 +511,7 @@ describe('PaneBody', () => {
 
   test('listens to the preview iframe when a custom stylesheet is used', async () => {
     entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: true };
-    customPreviewStyleRegistry.add('https://example.com/preview.css');
+    customPreviewStyleRegistry.add({ url: 'https://example.com/preview.css' });
 
     const thatPane = createThatPane();
     const { props, thisPane } = await renderPane({ mode: 'edit', locale: 'en' });

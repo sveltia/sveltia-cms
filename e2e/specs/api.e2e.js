@@ -721,6 +721,58 @@ test.describe('CMS.registerPreviewStyle()', () => {
   });
 });
 
+test.describe('CMS.registerPreviewStyle() with a collection or file', () => {
+  test.use({
+    config: {
+      ...CONFIG,
+      singletons: [
+        {
+          name: 'about',
+          label: 'About',
+          file: 'content/about.md',
+          fields: [
+            { name: 'title', label: 'Title' },
+            { name: 'body', label: 'Body', widget: 'markdown' },
+          ],
+        },
+      ],
+    },
+  });
+
+  test('styles the preview of the given collection or singleton only', async ({ cms, page }) => {
+    await addScripts(page, {
+      after: `
+        CMS.registerPreviewStyle('h1 { color: rgb(200, 0, 0); }', {
+          raw: true,
+          collection: 'posts',
+        });
+        CMS.registerPreviewStyle('h1 { color: rgb(0, 0, 200); }', {
+          raw: true,
+          collection: '_singletons',
+          file: 'about',
+        });
+      `,
+    });
+    await cms.open();
+    await cms.seed({
+      'content/posts/styled.md': '---\ntitle: Styled\n---\n\n# Big News\n',
+      'content/about.md': '---\ntitle: About\n---\n\n# About Us\n',
+    });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Styled/ }).click();
+
+    const frame = page.getByRole('group', { name: 'Preview Content' }).frameLocator('iframe');
+
+    await expect(frame.locator('h1', { hasText: 'Big News' })).toHaveCSS('color', 'rgb(200, 0, 0)');
+
+    await page.evaluate(() => {
+      window.location.hash = '#/collections/_singletons/entries/about';
+    });
+
+    await expect(frame.locator('h1', { hasText: 'About Us' })).toHaveCSS('color', 'rgb(0, 0, 200)');
+  });
+});
+
 test.describe('CMS.registerStringTransformation()', () => {
   test.use({
     config: {

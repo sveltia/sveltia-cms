@@ -5,12 +5,10 @@
   import EntryPreviewIframe from '$lib/components/contents/details/preview/entry-preview-iframe.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
-  import {
-    customPreviewStyleRegistry,
-    customPreviewTemplateRegistry,
-  } from '$lib/services/api/registries';
+  import { customPreviewTemplateRegistry } from '$lib/services/api/registries';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshots } from '$lib/services/contents/draft/value-map.svelte';
+  import { getPreviewStyleURLs } from '$lib/services/contents/editor/preview-styles';
   import { preparePreviewTemplateProps } from '$lib/services/contents/editor/preview-templates';
 
   /**
@@ -36,7 +34,7 @@
     fileName,
     fields = [],
   } = $derived(/** @type {EntryDraft} */ (entryDraft.current ?? {}));
-  const styleURLs = $derived([...customPreviewStyleRegistry]);
+  const styleURLs = $derived(getPreviewStyleURLs({ collectionName, fileName }));
   const reactComponent = $derived(customPreviewTemplateRegistry.get(fileName ?? collectionName));
   // The template receives Immutable Maps, so the props can only be built once the library is loaded
   const reactProps = $derived(

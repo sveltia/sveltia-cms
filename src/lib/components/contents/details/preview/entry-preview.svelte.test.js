@@ -98,7 +98,7 @@ describe('EntryPreview', () => {
   });
 
   test('renders the preview in a frame with the custom styles', async () => {
-    customPreviewStyleRegistry.add('https://example.com/preview.css');
+    customPreviewStyleRegistry.add({ url: 'https://example.com/preview.css' });
 
     const { container } = await renderPreview();
     const iframe = /** @type {HTMLIFrameElement} */ (container.querySelector('iframe.preview'));
@@ -122,6 +122,33 @@ describe('EntryPreview', () => {
         el.getAttribute('data-lazy-key-path'),
       ),
     ).toEqual(['title', 'body']);
+  });
+
+  test('renders the preview in a frame with the styles for the entry’s collection only', async () => {
+    customPreviewStyleRegistry.add({ url: 'https://example.com/posts.css', collection: 'posts' });
+    customPreviewStyleRegistry.add({ url: 'https://example.com/pages.css', collection: 'pages' });
+
+    const { container } = await renderPreview();
+    const iframe = /** @type {HTMLIFrameElement} */ (container.querySelector('iframe.preview'));
+
+    await expect
+      .poll(() =>
+        [...(iframe.contentDocument?.querySelectorAll('link[rel="stylesheet"]') ?? [])].map(
+          (link) => link.getAttribute('href'),
+        ),
+      )
+      .toEqual(['https://example.com/posts.css']);
+  });
+
+  test('doesn’t use a frame when the custom styles are for other collections', async () => {
+    customPreviewStyleRegistry.add({ url: 'https://example.com/pages.css', collection: 'pages' });
+
+    const { container } = await renderPreview();
+
+    await expect
+      .element(page.getByRole('document', { name: 'Content Preview' }).getByText('Hello'))
+      .toBeInTheDocument();
+    expect(container.querySelector('iframe')).toBeNull();
   });
 
   test('renders a custom preview template', async () => {

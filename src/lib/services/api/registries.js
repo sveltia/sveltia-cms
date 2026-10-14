@@ -49,8 +49,9 @@ export const customFieldTypeRegistry = new Map();
 export const customFileFormatRegistry = new Map();
 
 /**
- * Custom entry preview stylesheet URLs registered with the `CMS.registerPreviewStyle` API.
- * @type {Set<string>}
+ * Custom entry preview stylesheets registered with the `CMS.registerPreviewStyle` API, each with
+ * the collection and file it’s limited to, if any.
+ * @type {Set<{ url: string, collection?: string, file?: string }>}
  * @see https://decapcms.org/docs/customization/#registerpreviewstyle
  * @see https://sveltiacms.app/en/docs/api/preview-styles
  */

@@ -792,18 +792,22 @@ describe('CMS.registerPreviewStyle()', () => {
 
   test('registers stylesheet URL', () => {
     expect(() => CMS.registerPreviewStyle('https://example.com/style.css')).not.toThrow();
-    expect(customPreviewStyleRegistry).toContain('https://example.com/style.css');
+    expect([...customPreviewStyleRegistry].map(({ url }) => url)).toContain(
+      'https://example.com/style.css',
+    );
   });
 
   test('registers stylesheet file path', () => {
     expect(() => CMS.registerPreviewStyle('/assets/style.css')).not.toThrow();
-    expect(customPreviewStyleRegistry).toContain('https://sveltia.dev/assets/style.css');
+    expect([...customPreviewStyleRegistry].map(({ url }) => url)).toContain(
+      'https://sveltia.dev/assets/style.css',
+    );
   });
 
   test('registers raw CSS string', () => {
     expect(() => CMS.registerPreviewStyle('body { color: red; }', { raw: true })).not.toThrow();
     expect(customPreviewStyleRegistry.size).toBe(1);
-    expect([...customPreviewStyleRegistry][0]).toMatch(/^blob:/);
+    expect([...customPreviewStyleRegistry][0].url).toMatch(/^blob:/);
   });
 
   test('throws TypeError if non-raw style is not a valid URL or file path', () => {
@@ -850,6 +854,72 @@ describe('CMS.registerPreviewStyle()', () => {
 
   test('defaults raw option to false', () => {
     expect(() => CMS.registerPreviewStyle('https://example.com/style.css')).not.toThrow();
+  });
+
+  test('registers stylesheet for all collections by default', () => {
+    CMS.registerPreviewStyle('https://example.com/style.css');
+    expect([...customPreviewStyleRegistry]).toEqual([
+      { url: 'https://example.com/style.css', collection: undefined, file: undefined },
+    ]);
+  });
+
+  test('registers stylesheet for a collection', () => {
+    CMS.registerPreviewStyle('https://example.com/style.css', { collection: 'posts' });
+    expect([...customPreviewStyleRegistry]).toEqual([
+      { url: 'https://example.com/style.css', collection: 'posts', file: undefined },
+    ]);
+  });
+
+  test('registers stylesheet for a file in a file/singleton collection', () => {
+    CMS.registerPreviewStyle('https://example.com/style.css', {
+      collection: '_singletons',
+      file: 'about',
+    });
+    expect([...customPreviewStyleRegistry]).toEqual([
+      { url: 'https://example.com/style.css', collection: '_singletons', file: 'about' },
+    ]);
+  });
+
+  test('registers the same stylesheet once per scope', () => {
+    CMS.registerPreviewStyle('https://example.com/style.css');
+    CMS.registerPreviewStyle('https://example.com/style.css');
+    CMS.registerPreviewStyle('https://example.com/style.css', { collection: 'posts' });
+    CMS.registerPreviewStyle('https://example.com/style.css', { collection: 'posts' });
+    CMS.registerPreviewStyle('https://example.com/style.css', { collection: 'pages' });
+    CMS.registerPreviewStyle('https://example.com/style.css', {
+      collection: 'pages',
+      file: 'about',
+    });
+    expect(customPreviewStyleRegistry.size).toBe(4);
+  });
+
+  test('throws TypeError if collection option is not a non-empty string', () => {
+    // @ts-ignore
+    expect(() => CMS.registerPreviewStyle('body {}', { raw: true, collection: 1 })).toThrow(
+      'The `collection` option for `CMS.registerPreviewStyle()` must be a non-empty string',
+    );
+    expect(() => CMS.registerPreviewStyle('body {}', { raw: true, collection: ' ' })).toThrow(
+      TypeError,
+    );
+    expect(customPreviewStyleRegistry.size).toBe(0);
+  });
+
+  test('throws TypeError if file option is not a non-empty string', () => {
+    expect(() =>
+      // @ts-ignore
+      CMS.registerPreviewStyle('body {}', { raw: true, collection: 'pages', file: 1 }),
+    ).toThrow('The `file` option for `CMS.registerPreviewStyle()` must be a non-empty string');
+    expect(() =>
+      CMS.registerPreviewStyle('body {}', { raw: true, collection: 'pages', file: '' }),
+    ).toThrow(TypeError);
+    expect(customPreviewStyleRegistry.size).toBe(0);
+  });
+
+  test('throws TypeError if file option is given without collection option', () => {
+    expect(() => CMS.registerPreviewStyle('body {}', { raw: true, file: 'about' })).toThrow(
+      'The `file` option for `CMS.registerPreviewStyle()` requires the `collection` option',
+    );
+    expect(customPreviewStyleRegistry.size).toBe(0);
   });
 });
 
