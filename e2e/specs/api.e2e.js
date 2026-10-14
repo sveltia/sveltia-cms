@@ -760,6 +760,69 @@ test.describe('CMS.registerPreviewStyle()', () => {
   });
 });
 
+test.describe('CMS.registerStringTransformation()', () => {
+  test.use({
+    config: {
+      ...BASE_CONFIG,
+      collections: [
+        {
+          ...BASE_CONFIG.collections[0],
+          summary: "{{title | wrap('[', ' {{fields.body}}]') | upper}}",
+          fields: [
+            { name: 'title', label: 'Title' },
+            { name: 'body', label: 'Body', widget: 'text' },
+            {
+              name: 'initials',
+              label: 'Initials',
+              widget: 'compute',
+              value: '{{fields.title | initials}}',
+            },
+          ],
+        },
+      ],
+    },
+  });
+
+  test('applies a custom transformation to a summary and a Compute field', async ({
+    cms,
+    page,
+  }) => {
+    await addScripts(page, {
+      after: `
+        CMS.registerStringTransformation('wrap', (value, { args: [before, after] }) =>
+          before + value + after,
+        );
+        CMS.registerStringTransformation('initials', (value) =>
+          String(value).split(' ').map((word) => word[0]).join(''),
+        );
+      `,
+    });
+    await cms.open();
+    await cms.seed({ 'content/posts/hello.md': '---\ntitle: Hello\n---\n\nWorld\n' });
+    await cms.signIn();
+
+    // The nested template in the argument is resolved before the transformation runs, and the
+    // output is chained to the built-in `upper`
+    await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveText([
+      /\[HELLO WORLD\]/,
+    ]);
+
+    const editor = await createPost(page, 'Launch Day Party');
+
+    await editor.getByRole('textbox', { name: 'Body' }).fill('Join us!');
+
+    // A Compute field has no control of its own, but its value shows in the preview
+    await expect(
+      editor.getByRole('document', { name: 'Content Preview' }).getByText('LDP'),
+    ).toBeVisible();
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/posts/launch-day-party.md'])
+      .toBe('---\ntitle: Launch Day Party\ninitials: LDP\n---\n\nJoin us!\n');
+  });
+});
+
 test.describe('CMS.registerEventListener()', () => {
   test.use({ config: CONFIG });
 

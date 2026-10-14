@@ -2227,7 +2227,10 @@
  * Parsed transformation descriptor used by template placeholders and summary rendering.
  * @typedef {object} StringTransformation
  * @property {string} method The transformation name.
- * @property {Record<string, string>} args Transformation arguments.
+ * @property {Record<string, string>} args Named arguments of a built-in transformation.
+ * @property {readonly (string | number)[]} [customArgs] Arguments of a transformation that isn’t
+ * built-in, which may be a custom one registered with `CMS.registerStringTransformation()`. Only
+ * present if the arguments are given in parentheses and can be parsed.
  */
 
 export {};

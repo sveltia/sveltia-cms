@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { customStringTransformationRegistry } from '$lib/services/api/registries';
 import { cmsConfig } from '$lib/services/config';
 import { getField } from '$lib/services/contents/entry/fields';
 
@@ -373,6 +374,59 @@ describe('replaceTemplatePlaceholder()', () => {
     expect(() => replaceTemplatePlaceholder('missing', context)).toThrow(
       'Unresolvable template tag in preview path: missing',
     );
+  });
+
+  describe('with a custom transformation for a missing value', () => {
+    beforeEach(() => {
+      customStringTransformationRegistry.clear();
+      customStringTransformationRegistry.set('fallback', (value, { args: [fallback] }) =>
+        value === undefined ? fallback : value,
+      );
+      customStringTransformationRegistry.set('nothing', () => '');
+    });
+
+    test('lets the transformation give the value, like `default`', () => {
+      expect(replaceTemplatePlaceholder("missing | fallback('Untitled')", createContext())).toBe(
+        'untitled',
+      );
+      expect(
+        replaceTemplatePlaceholder(
+          "missing | fallback('drafts/new')",
+          createContext({ type: 'preview_path', entryFilePath: 'content/posts/a.md' }),
+        ),
+      ).toBe('drafts/new');
+    });
+
+    test('falls back to a random ID if the transformation gives nothing', () => {
+      expect(replaceTemplatePlaceholder('missing | nothing', createContext())).toMatch(
+        SHORT_ID_REGEX,
+      );
+      expect(() =>
+        replaceTemplatePlaceholder(
+          'missing | nothing',
+          createContext({ type: 'preview_path', entryFilePath: 'content/posts/a.md' }),
+        ),
+      ).toThrow('Unresolvable template tag in preview path: missing');
+    });
+
+    test('keeps an empty `default` result as is, even with a custom transformation', () => {
+      expect(
+        replaceTemplatePlaceholder(
+          "missing | nothing | default('{{empty}}')",
+          createContext({
+            type: 'preview_path',
+            content: { empty: '' },
+            entryFilePath: 'content/posts/a.md',
+          }),
+        ),
+      ).toBe('');
+    });
+
+    test('falls back to a random ID for a transformation that is not registered', () => {
+      expect(replaceTemplatePlaceholder("missing | unknown('a')", createContext())).toMatch(
+        SHORT_ID_REGEX,
+      );
+    });
   });
 
   test('falls back to a random ID for a value that slugifies to nothing', () => {

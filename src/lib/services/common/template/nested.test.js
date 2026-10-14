@@ -173,4 +173,28 @@ describe('processNestedTemplates()', () => {
     expect(result[1]).toBe(transformations[1]);
     expect(resolver.mock.calls).toEqual([['a'], ['b'], ['c']]);
   });
+
+  test('resolves nested templates in the string arguments of a custom transformation', () => {
+    /** @type {StringTransformation[]} */
+    const transformations = [
+      { method: 'wrap', args: {}, customArgs: ['{{a}} and {{b}}', 3, 'plain'] },
+    ];
+
+    expect(processNestedTemplates(transformations, resolveTag)).toEqual([
+      { method: 'wrap', args: {}, customArgs: ['[a] and [b]', 3, 'plain'] },
+    ]);
+  });
+
+  test('keeps a custom transformation without nested templates as is', () => {
+    /** @type {StringTransformation[]} */
+    const transformations = [
+      { method: 'wrap', args: {}, customArgs: ['[', 3] },
+      { method: 'reverse', args: {} },
+    ];
+
+    const result = processNestedTemplates(transformations, resolveTag);
+
+    expect(result[0]).toBe(transformations[0]);
+    expect(result[1]).toBe(transformations[1]);
+  });
 });

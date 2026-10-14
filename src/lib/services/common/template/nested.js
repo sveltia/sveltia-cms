@@ -1,4 +1,7 @@
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import {
+  TEMPLATE_TAG_REGEX,
+  TEMPLATE_TAG_REPLACE_REGEX,
+} from '$lib/services/common/template/constants';
 
 /**
  * @import { StringTransformation } from '$lib/types/private';
@@ -18,7 +21,7 @@ const resolveNestedTemplateValues = (value, resolveTag) =>
 
 /**
  * Process nested template tags in transformation arguments (e.g., `default('{{fields.title}}')`).
- * This handles nested templates in `default`, `ternary`, and other transformations that accept
+ * This handles nested templates in `default`, `ternary`, and custom transformations that accept
  * string arguments which may contain template tags.
  * @param {StringTransformation[]} transformations Transformation entries.
  * @param {(tag: string) => string} resolveTag Function to resolve a tag to its value.
@@ -59,5 +62,20 @@ export const processNestedTemplates = (transformations, resolveTag) =>
       }
     }
 
-    return hasChanges ? { ...tf, args: newArgs } : tf;
+    // Handle nested templates in the string arguments of a custom transformation
+    const { customArgs } = tf;
+    /** @type {(string | number)[] | undefined} */
+    let newCustomArgs;
+
+    if (customArgs?.some((arg) => typeof arg === 'string' && TEMPLATE_TAG_REGEX.test(arg))) {
+      newCustomArgs = customArgs.map((arg) =>
+        typeof arg === 'string' ? resolveNestedTemplateValues(arg, resolveTag) : arg,
+      );
+    }
+
+    if (!hasChanges && !newCustomArgs) {
+      return tf;
+    }
+
+    return { ...tf, args: newArgs, ...(newCustomArgs ? { customArgs: newCustomArgs } : {}) };
   });

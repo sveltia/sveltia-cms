@@ -2308,6 +2308,29 @@
  */
 
 /**
+ * Context passed to a custom string transformation function.
+ * @typedef {object} StringTransformerContext
+ * @property {(string | number)[]} args Arguments given to the transformation in the template, e.g.
+ * `[10, '…']` for `{{title | shorten(10, '…')}}`. A quoted argument is a string; an unquoted one
+ * is a number. Empty if the transformation is used without arguments. Like with the `default` and
+ * `ternary` transformations, template tags in a string argument, like `'{{fields.title}}'`, are
+ * replaced with the field values.
+ * @property {string | undefined} locale Locale code of the entry content being processed, e.g.
+ * `en`, or `undefined` if i18n isn’t enabled for the collection.
+ */
+
+/**
+ * Custom string transformation function registered with `CMS.registerStringTransformation()`. It
+ * receives the value of the template tag, or the output of the previous transformation in a chain,
+ * and returns the transformed string. The value is the field’s display value in most cases, such
+ * as the label of a Select or Relation field option, but it may be of another type, e.g. a boolean
+ * in a Compute field’s `value` template. The function must be synchronous; a return value other
+ * than a string is converted to one, with `null` and `undefined` resulting in an empty string.
+ * @typedef {(value: any, context: StringTransformerContext) => unknown} StringTransformer
+ * @see https://sveltiacms.app/en/docs/api/string-transformations
+ */
+
+/**
  * Custom editor component mode.
  * @typedef {'block' | 'dialog' | 'inline'} EditorComponentMode
  */

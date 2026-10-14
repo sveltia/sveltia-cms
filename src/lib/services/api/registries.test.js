@@ -8,6 +8,7 @@ import {
   customPageRegistry,
   customPreviewStyleRegistry,
   customPreviewTemplateRegistry,
+  customStringTransformationRegistry,
   eventHookRegistry,
 } from '$lib/services/api/registries';
 
@@ -18,6 +19,7 @@ describe('API registries', () => {
       customFieldTypeRegistry,
       customFileFormatRegistry,
       customPreviewTemplateRegistry,
+      customStringTransformationRegistry,
     ].forEach((registry) => {
       expect(registry).toBeInstanceOf(Map);
       expect(registry.size).toBe(0);
@@ -44,6 +46,7 @@ describe('API registries', () => {
       customPageRegistry,
       customPreviewStyleRegistry,
       customPreviewTemplateRegistry,
+      customStringTransformationRegistry,
       eventHookRegistry,
     ];
 

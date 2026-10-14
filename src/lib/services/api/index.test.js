@@ -76,6 +76,7 @@ vi.mock('$lib/services/api/registries', () => ({
   customPageRegistry: new Map(),
   customPreviewStyleRegistry: new Set(),
   customPreviewTemplateRegistry: new Map(),
+  customStringTransformationRegistry: new Map(),
   eventHookRegistry: new Set(),
 }));
 // Don't mock compatibility.js - import the real module to get proper coverage
@@ -100,7 +101,7 @@ vi.mock('./rich-text', () => ({
 // Now import after all setup
 const CMS = (await import('.')).default;
 
-const { customPageRegistry, customPreviewStyleRegistry } =
+const { customPageRegistry, customPreviewStyleRegistry, customStringTransformationRegistry } =
   await import('$lib/services/api/registries');
 
 const { getFieldTypeDefinition } = await import('$lib/services/api/field-types');
@@ -851,6 +852,71 @@ describe('CMS.registerPreviewStyle()', () => {
   });
 });
 
+describe('CMS.registerStringTransformation()', () => {
+  beforeEach(() => {
+    customStringTransformationRegistry.clear();
+  });
+
+  test('registers a transformation', () => {
+    const transform = vi.fn((value) => String(value));
+
+    CMS.registerStringTransformation('reverse', transform);
+    CMS.registerStringTransformation('_with_digits_123', transform);
+
+    expect(customStringTransformationRegistry.get('reverse')).toBe(transform);
+    expect(customStringTransformationRegistry.get('_with_digits_123')).toBe(transform);
+  });
+
+  test('replaces a transformation registered with the same name', () => {
+    const first = vi.fn();
+    const second = vi.fn();
+
+    CMS.registerStringTransformation('reverse', first);
+    CMS.registerStringTransformation('reverse', second);
+
+    expect(customStringTransformationRegistry.size).toBe(1);
+    expect(customStringTransformationRegistry.get('reverse')).toBe(second);
+  });
+
+  test('throws TypeError if name is not a valid transformation name', () => {
+    [undefined, 123, '', ' ', '1abc', 'my-transform', 'wrap()', 'a b'].forEach((name) => {
+      // @ts-ignore
+      expect(() => CMS.registerStringTransformation(name, () => '')).toThrow(
+        'The `name` option for `CMS.registerStringTransformation()` must be a string consisting ' +
+          'of letters, digits and underscores, not starting with a digit',
+      );
+    });
+
+    expect(customStringTransformationRegistry.size).toBe(0);
+  });
+
+  test('throws Error if name is the name of a built-in transformation', () => {
+    ['upper', 'lower', 'slugify', 'date', 'default', 'ternary', 'truncate', 'localize'].forEach(
+      (name) => {
+        expect(() => CMS.registerStringTransformation(name, () => '')).toThrow(
+          `The string transformation name "${name}" is reserved for a built-in transformation. ` +
+            'Choose a different name for your custom transformation.',
+        );
+      },
+    );
+
+    expect(customStringTransformationRegistry.size).toBe(0);
+  });
+
+  test('throws TypeError if transform is not a function', () => {
+    [undefined, null, 'reverse', {}].forEach((transform) => {
+      // @ts-ignore
+      expect(() => CMS.registerStringTransformation('reverse', transform)).toThrow(
+        new TypeError(
+          'The `transform` option for `CMS.registerStringTransformation()` must be a function',
+        ),
+      );
+    });
+
+    expect(customStringTransformationRegistry.size).toBe(0);
+  });
+});
+
 describe('CMS.registerEventListener()', () => {
   test('registers valid event listener', () => {
     // @ts-ignore
@@ -1436,6 +1502,10 @@ describe('CMS - supported methods', () => {
 
   test('registerPreviewTemplate method is accessible', () => {
     expect(typeof CMS.registerPreviewTemplate).toBe('function');
+  });
+
+  test('registerStringTransformation method is accessible', () => {
+    expect(typeof CMS.registerStringTransformation).toBe('function');
   });
 
   test('registerFieldType method is accessible', () => {

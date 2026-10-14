@@ -9,6 +9,7 @@ import { SvelteMap } from 'svelte/reactivity';
  * CustomFieldSchema,
  * CustomPreviewTemplate,
  * EditorComponentDefinition,
+ * StringTransformer,
  * } from '$lib/types/public';
  */
 
@@ -61,6 +62,13 @@ export const customPreviewStyleRegistry = new Set();
  * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
 export const customPreviewTemplateRegistry = new Map();
+
+/**
+ * Custom string transformations registered with the `CMS.registerStringTransformation` API.
+ * @type {Map<string, StringTransformer>}
+ * @see https://sveltiacms.app/en/docs/api/string-transformations
+ */
+export const customStringTransformationRegistry = new Map();
 
 /**
  * Custom event listeners registered with the `CMS.registerEventListener` API.
