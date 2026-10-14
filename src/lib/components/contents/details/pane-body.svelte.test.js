@@ -329,10 +329,17 @@ describe('PaneBody', () => {
       });
       expect(thatPane.scrollTop).toBe(0);
 
-      // A field removed before the other pane is scrolled
+      // A field removed before the other pane is scrolled. It’s removed on focus, as a click on a
+      // loaded runner may only resolve after the frames the pane waits for
       thatPane.children[1].setAttribute('data-key-path', 'title');
-      await input.click();
-      area.querySelector('[data-key-path="title"]')?.remove();
+      area.addEventListener(
+        'focusin',
+        () => {
+          area.querySelector('[data-key-path="title"]')?.remove();
+        },
+        { once: true },
+      );
+      input.element().focus();
       await new Promise((resolve) => {
         setTimeout(resolve, 100);
       });
