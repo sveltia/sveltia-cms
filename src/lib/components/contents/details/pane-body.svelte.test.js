@@ -1,4 +1,5 @@
-import { afterEach, beforeAll, describe, expect, test } from 'vitest';
+import { tick } from 'svelte';
+import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import {
@@ -11,6 +12,14 @@ import { initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import PaneBody from './pane-body.svelte';
+
+// A preview template is only rendered once Immutable.js has loaded, which these tests hold back, so
+// the template’s iframe never appears. A stylesheet’s iframe doesn’t depend on it
+vi.mock('$lib/services/api/immutable', async (importOriginal) => ({
+  ...(await importOriginal()),
+  immutableLoaded: { current: false },
+  loadImmutable: vi.fn(() => new Promise(() => {})),
+}));
 
 const fields = [{ name: 'title', label: 'Title', widget: 'string', i18n: true }];
 
@@ -503,7 +512,22 @@ describe('PaneBody', () => {
 
     const { props } = await renderPane({ mode: 'preview', locale: 'en' });
 
-    // The preview isn’t rendered in an iframe, which is looked for in vain for a moment
+    // The preview isn’t rendered in an iframe, so it’s listened to right away rather than after
+    // looking for an iframe in vain
+    await tick();
+    expect(props.thisPaneContentArea).toBeDefined();
+    expect(props.thisPaneContentArea?.ownerDocument).toBe(document);
+    expect(props.thisPaneContentArea?.querySelector('iframe')).toBeNull();
+  });
+
+  test('listens to the preview itself when the custom template’s iframe doesn’t appear', async () => {
+    customPreviewTemplateRegistry.set('posts', () => null);
+
+    const { props } = await renderPane({ mode: 'preview', locale: 'en' });
+
+    // The iframe is looked for in vain for a moment, then the preview area is listened to instead
+    await tick();
+    expect(props.thisPaneContentArea).toBeUndefined();
     await expect.poll(() => props.thisPaneContentArea).toBeDefined();
     expect(props.thisPaneContentArea?.ownerDocument).toBe(document);
     expect(props.thisPaneContentArea?.querySelector('iframe')).toBeNull();
