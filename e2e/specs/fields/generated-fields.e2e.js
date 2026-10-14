@@ -561,6 +561,42 @@ test.describe('Compute field', () => {
   });
 });
 
+test.describe('Compute field with a template tag in a transformation argument', () => {
+  test.use({
+    config: config([
+      { name: 'nickname', label: 'Nickname', required: false },
+      {
+        name: 'display',
+        label: 'Display Name',
+        widget: 'compute',
+        value: "{{fields.nickname | default('{{fields.title | upper}} #{{fields.number}}')}}",
+      },
+      { name: 'number', label: 'Number', widget: 'number', value_type: 'int' },
+    ]),
+  });
+
+  test.beforeEach(async ({ cms }) => {
+    await cms.open();
+    await cms.signIn();
+  });
+
+  test('resolves the tag in the argument like the tag itself', async ({ cms, page }) => {
+    const editor = await createNote(page, 'Hello World');
+    const preview = editor.getByRole('document', { name: 'Content Preview' });
+
+    await editor.getByRole('spinbutton', { name: 'Number' }).fill('1200');
+    await expect(preview.getByText('HELLO WORLD #1200')).toBeVisible();
+    await editor.getByRole('textbox', { name: 'Nickname' }).fill('Hi');
+    await expect(preview.getByText('HELLO WORLD #1200')).toBeHidden();
+    await editor.getByRole('textbox', { name: 'Nickname' }).fill('');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/notes/hello-world.yml'])
+      .toBe("title: Hello World\nnickname: ''\ndisplay: 'HELLO WORLD #1200'\nnumber: 1200\n");
+  });
+});
+
 test.describe('Code field', () => {
   const SAVED = 'content/notes/saved.yml';
 

@@ -597,6 +597,22 @@ describe('Test getDefaultValueMap()', () => {
       expect(result).toEqual({ email_with_default: 'john@example.com' });
     });
 
+    test('should resolve the template tags in transformation arguments', () => {
+      user.account = { backendName: 'github', login: 'johndoe', name: '', email: '' };
+
+      /** @type {HiddenField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        default: "{{author-name | default('{{author-login | upper}} ({{locale}})')}}",
+      };
+
+      const keyPath = 'author';
+      const locale = 'en';
+      const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+      expect(result).toEqual({ author: 'JOHNDOE (en)' });
+    });
+
     test('should handle transformation with whitespace in placeholder', () => {
       /** @type {HiddenField} */
       const fieldConfig = {

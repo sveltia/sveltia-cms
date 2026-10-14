@@ -53,6 +53,11 @@ describe('parseHiddenFieldConfig', () => {
     expect(addMessage).toHaveBeenCalledOnce();
   });
 
+  test('reports the locale tag in a transformation argument', () => {
+    check("{{author-name | default('lang-{{locale | upper}}')}}");
+    expect(addMessage).toHaveBeenCalledOnce();
+  });
+
   test('reports the locale tag in a collection that turns i18n off', () => {
     check('{{locale}}', {
       cmsConfig: { i18n: I18N },
@@ -76,6 +81,7 @@ describe('parseHiddenFieldConfig', () => {
 
   test('accepts other tags and values', () => {
     check('{{uuid}}-{{datetime}}');
+    check("{{author-name | default('{{author-login}}')}}");
     check('locale');
     check(['{{locale}}']);
     check(undefined);

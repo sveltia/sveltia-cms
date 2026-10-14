@@ -2,6 +2,7 @@ import { generateUUID } from '@sveltia/utils/crypto';
 import { escapeRegExp } from '@sveltia/utils/string';
 
 import { FIELD_TAG_PREFIX_REGEX } from '$lib/services/common/template/constants';
+import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
@@ -295,12 +296,25 @@ export const getComputedValue = ({
     return { valueMap: entryValueMap };
   };
 
-  return replaceTemplateTags(valueTemplate, (_match, placeholder) => {
-    const { value: tagName, transformations } = parseTransformations(placeholder);
+  /**
+   * Resolve a template tag of the value template.
+   * @param {string} placeholder Tag content, e.g. `fields.title | upper`.
+   * @returns {string} Resolved value.
+   */
+  const resolvePlaceholder = (placeholder) => {
+    const { value: tagName, transformations: parsedTransformations } =
+      parseTransformations(placeholder);
 
     if (tagName === 'index') {
       return String(getListIndex(keyPath) ?? '');
     }
+
+    // Resolve the tags in the transformation arguments like the tag itself, e.g. `{{fields.title}}`
+    // in `default('{{fields.title}}')`. A UUID tag there resolves to nothing, as the UUIDs are
+    // counted only in the template itself and one there would shift the others
+    const transformations = processNestedTemplates(parsedTransformations, (innerTag) =>
+      isUuidTag(parseTransformations(innerTag).value) ? '' : resolvePlaceholder(innerTag),
+    );
 
     /** @type {string} */
     let value;
@@ -373,5 +387,9 @@ export const getComputedValue = ({
     }
 
     return value;
-  });
+  };
+
+  return replaceTemplateTags(valueTemplate, (_match, placeholder) =>
+    resolvePlaceholder(placeholder),
+  );
 };

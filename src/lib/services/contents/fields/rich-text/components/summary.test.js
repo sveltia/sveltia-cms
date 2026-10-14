@@ -56,6 +56,25 @@ describe('formatComponentSummary()', () => {
     ).toBe('2026');
   });
 
+  test('resolves the placeholders in transformation arguments', () => {
+    const template = "{{title | ternary('{{link.url | upper}}', 'none')}}";
+
+    expect(
+      formatComponentSummary({
+        template,
+        values: { title: 'Hi', link: { url: 'https://x.y' } },
+        fields,
+      }),
+    ).toBe('HTTPS://X.Y');
+    expect(
+      formatComponentSummary({
+        template: "{{title | ternary('{{link.url}}', 'none')}}",
+        values: { title: 'Hi' },
+        fields,
+      }),
+    ).toBeNull();
+  });
+
   test('treats missing values as empty', () => {
     expect(
       formatComponentSummary({

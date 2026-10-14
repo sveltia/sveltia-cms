@@ -140,6 +140,53 @@ describe('getComputedValue()', () => {
     expect(getComputedValue(getArgs("{{fields.title | default('Untitled')}}"))).toBe('Untitled');
   });
 
+  test('should resolve the template tags in transformation arguments', () => {
+    vi.mocked(getFieldDisplayValue).mockImplementation(
+      ({ valueMap = {}, keyPath, transformations }) =>
+        transformations?.length
+          ? String(
+              applyTransformations({ value: valueMap[keyPath], transformations, locale: 'en' }),
+            )
+          : String(valueMap[keyPath] ?? ''),
+    );
+
+    const valueMap = { title: 'Hello', first: 'Jane', last: 'Doe', draft: true };
+
+    expect(
+      getComputedValue({
+        ...getArgs("{{fields.slug_override | default('{{fields.title | upper}}')}}"),
+        valueMap,
+      }),
+    ).toBe('HELLO');
+    expect(
+      getComputedValue({
+        ...getArgs("{{fields.name | default('{{fields.first}} {{fields.last}}')}}"),
+        valueMap,
+      }),
+    ).toBe('Jane Doe');
+    expect(
+      getComputedValue({
+        ...getArgs("{{fields.name | default('item-{{index}}')}}", 'authors.2.slug'),
+        valueMap,
+      }),
+    ).toBe('item-2');
+    expect(
+      getComputedValue({
+        ...getArgs("{{fields.draft | ternary('{{fields.first}}', '{{fields.last}}')}}"),
+        valueMap,
+      }),
+    ).toBe('Jane');
+  });
+
+  test('should resolve a UUID tag in a transformation argument to nothing', () => {
+    vi.mocked(getFieldDisplayValue).mockReturnValue('');
+
+    // The UUID tag of the template itself still gets its UUID
+    expect(getComputedValue(getArgs("{{fields.title | default('{{uuid}}')}}-{{uuid}}"))).toMatch(
+      /^-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+  });
+
   test('should return a stable empty slug for an empty source field', () => {
     // A random fallback would make the field recompute forever
     // @see https://github.com/sveltia/sveltia-cms/issues/946
@@ -279,6 +326,23 @@ describe('getComputedValue()', () => {
           valueMap: { title: 'Hello', heading: 'Entry heading' },
         }),
       );
+    });
+
+    test('should resolve the template tags in transformation arguments the same way', () => {
+      vi.mocked(getField).mockImplementation(({ componentName, keyPath }) =>
+        componentName === 'section'
+          ? componentFields.find(({ name }) => name === keyPath)
+          : undefined,
+      );
+      vi.mocked(getFieldDisplayValue).mockImplementation(
+        ({ valueMap = {}, keyPath }) => valueMap[keyPath] ?? '',
+      );
+
+      expect(
+        getComputedValue(
+          getComponentArgs("{{fields.anchor | default('{{fields.heading}}-{{fields.title}}')}}"),
+        ),
+      ).toBe('Intro-Hello');
     });
 
     test('should insert a number of the component as stored', () => {

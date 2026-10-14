@@ -1,3 +1,4 @@
+import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
@@ -39,14 +40,24 @@ export const formatComponentSummary = ({ template, values, fields, locale }) => 
   /** @type {Record<string, any>} */
   const flatValues = flattenKeys(values);
 
-  const result = replaceTemplateTags(template, (__, placeholder) => {
-    const { value: tag, transformations } = parseTransformations(placeholder);
+  /**
+   * Resolve a template tag of the summary template.
+   * @param {string} placeholder Tag content, e.g. `title | upper`.
+   * @returns {string} Resolved value.
+   */
+  const resolvePlaceholder = (placeholder) => {
+    const { value: tag, transformations: parsedTransformations } =
+      parseTransformations(placeholder);
+
     const fieldName = stripFieldTagPrefix(tag);
     let value = flatValues[fieldName];
 
     if (value === undefined || value === null) {
       return '';
     }
+
+    // Resolve the tags in the transformation arguments, e.g. `ternary('{{url}}', '{{title}}')`
+    const transformations = processNestedTemplates(parsedTransformations, resolvePlaceholder);
 
     if (transformations.length) {
       value = applyTransformations({
@@ -58,7 +69,11 @@ export const formatComponentSummary = ({ template, values, fields, locale }) => 
     }
 
     return String(value);
-  });
+  };
+
+  const result = replaceTemplateTags(template, (__, placeholder) =>
+    resolvePlaceholder(placeholder),
+  );
 
   // Return `null` if the result (after stripping all placeholder-based content) is empty. This
   // handles the case where all field values are empty but literal text (e.g. ' — ') remains.
