@@ -27,5 +27,6 @@ patchedDependencies:
   # editor nested in an editor component for its own: it looks up the nested table in the parent
   # editor and throws, and the recovery moves the selection back to the parent and scrolls to it.
   # Leave a click whose nearest editor is another one to that editor, like
-  # `isSelectionWithinEditor()` does.
+  # `isSelectionWithinEditor()` does. Remove once the upstream fix lands.
+  # https://github.com/facebook/lexical/issues/9355
   '@lexical/table@0.52.0': patches/@lexical__table@0.52.0.patch
