@@ -12,7 +12,7 @@ vi.mock('$lib/components/contents/details/fields/rich-text/rich-text-preview.sve
   default: { name: 'RichTextPreview' },
 }));
 
-const { renderRichText } = await import('$lib/services/api/rich-text');
+const { renderRichText } = await import('$lib/services/api/methods/render-rich-text');
 
 describe('renderRichText()', () => {
   /** @type {HTMLElement} */

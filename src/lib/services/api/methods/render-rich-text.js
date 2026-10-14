@@ -4,7 +4,7 @@ import { mount, unmount } from 'svelte';
 import RichTextPreview from '$lib/components/contents/details/fields/rich-text/rich-text-preview.svelte';
 
 /**
- * @import { RenderRichTextOptions } from '../../types/public';
+ * @import { RenderRichTextOptions } from '../../../types/public';
  */
 // Don’t use `$lib` in `from` above, or type declarations will not be exported
 
@@ -63,5 +63,5 @@ const renderRichText = (target, value, { fieldConfig } = {}) => {
 };
 
 // Export the function this way instead of `export const` to prevent the annotations from being
-// stripped in the generated `rich-text.d.ts` file
+// stripped in the generated `render-rich-text.d.ts` file
 export { renderRichText };
