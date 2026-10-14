@@ -2771,6 +2771,20 @@
  */
 
 /**
+ * Custom field summary React component, which draws the summary of a collapsed List field item
+ * when the List field has a single subfield of the custom field type, given with the `field`
+ * option. It takes the place of the text made from the `summary` option, but not of the thumbnail
+ * made from the `thumbnail` option, which is still shown beside it. The text is still used where
+ * plain text is needed, such as the label of a dragged item. It receives the same props as a
+ * {@link CustomFieldPreview}, with `value` being the value of the item.
+ * Hooks such as `useState` work when taken from the React instance bundled with the CMS, which is
+ * available as `CMS.React` or the `React` export of the npm package, not from another copy of
+ * React.
+ * @typedef {ComponentType<CustomFieldPreviewProps>} CustomFieldSummary
+ * @see https://sveltiacms.app/en/docs/api/field-types
+ */
+
+/**
  * Custom field schema definition, which is a [JSON Schema](https://json-schema.org/) (draft-07)
  * object used to validate the field type’s configuration options in the CMS configuration. Other
  * keywords, such as `required`, can also be used. Options not described in the schema are always
@@ -2797,8 +2811,30 @@
  * @property {CustomFieldPreview | undefined} preview React component for the preview pane. It’s
  * `undefined` if the field type has been registered without a preview. For a built-in field type,
  * it accepts the `value` and `field` props, plus the optional `locale` and `keyPath` props.
+ * @property {CustomFieldSummary} [summary] React component for the summary of a collapsed List
+ * field item, if the field type has been registered with one. Built-in field types don’t provide
+ * a summary component.
  * @property {CustomFieldSchema} [schema] Field schema, if the field type has been registered with
  * one. Built-in field types don’t provide a schema.
+ * @see https://sveltiacms.app/en/docs/api/field-types
+ */
+
+/**
+ * Definition of a custom field type, which can be given to the `CMS.registerFieldType()` API in
+ * place of the positional arguments. The same format is accepted by Netlify/Decap CMS’s
+ * `CMS.registerWidget()`, except for the `summaryComponent` option.
+ * @typedef {object} CustomFieldTypeDefinition
+ * @property {string} name Field type name, which cannot be the name of a built-in field type.
+ * @property {CustomFieldControl | string} controlComponent React component for the edit pane, or
+ * the name of another custom field type whose control is reused.
+ * @property {CustomFieldPreview} [previewComponent] React component for the preview pane. If
+ * omitted, no preview is rendered for the field.
+ * @property {CustomFieldSummary} [summaryComponent] React component for the summary of a collapsed
+ * List field item, when the List field has a single subfield of this field type. If omitted, the
+ * summary is the text made from the List field’s `summary` option.
+ * @property {CustomFieldSchema} [schema] JSON schema to validate the field type’s options in the
+ * CMS configuration.
+ * @see https://decapcms.org/docs/custom-widgets/
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
 

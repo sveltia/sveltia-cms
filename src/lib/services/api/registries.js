@@ -7,6 +7,7 @@ import { SvelteMap } from 'svelte/reactivity';
  * CustomFieldControl,
  * CustomFieldPreview,
  * CustomFieldSchema,
+ * CustomFieldSummary,
  * CustomPreviewTemplate,
  * EditorComponentDefinition,
  * StringTransformer,
@@ -32,8 +33,8 @@ export const customPageRegistry = new SvelteMap();
 
 /**
  * Custom field types registered using the `CMS.registerField` API.
- * @type {Map<string, { control: CustomFieldControl | string, preview?: CustomFieldPreview, schema?:
- * CustomFieldSchema }>}
+ * @type {Map<string, { control: CustomFieldControl | string, preview?: CustomFieldPreview,
+ * summary?: CustomFieldSummary, schema?: CustomFieldSchema }>}
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  * @see https://sveltiacms.app/en/docs/api/field-types
  */

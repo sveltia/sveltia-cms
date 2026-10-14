@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { preloadImmutable } from '$lib/services/api/immutable';
 import { preloadReactDom } from '$lib/services/api/react-dom';
+import { customFieldTypeRegistry } from '$lib/services/api/registries';
 
 // Set up window and document objects BEFORE any imports
 // @ts-ignore
@@ -1343,6 +1344,126 @@ describe('CMS.registerFieldType()', () => {
 
     // @ts-ignore
     expect(() => CMS.registerFieldType('test', control, preview)).not.toThrow();
+  });
+
+  test('registers the components given as positional arguments', () => {
+    const control = () => null;
+    const preview = () => null;
+    const schema = { properties: {} };
+
+    // @ts-ignore
+    CMS.registerFieldType('positional', control, preview, schema);
+
+    expect(customFieldTypeRegistry.get('positional')).toEqual({
+      control,
+      preview,
+      summary: undefined,
+      schema,
+    });
+  });
+
+  describe('with a definition object', () => {
+    test('registers the components, including a summary', () => {
+      const controlComponent = () => null;
+      const previewComponent = () => null;
+      const summaryComponent = () => null;
+      const schema = { properties: {} };
+
+      expect(() =>
+        CMS.registerFieldType({
+          name: 'definition',
+          // @ts-ignore
+          controlComponent,
+          // @ts-ignore
+          previewComponent,
+          // @ts-ignore
+          summaryComponent,
+          schema,
+        }),
+      ).not.toThrow();
+      expect(customFieldTypeRegistry.get('definition')).toEqual({
+        control: controlComponent,
+        preview: previewComponent,
+        summary: summaryComponent,
+        schema,
+      });
+      expect(preloadImmutable).toHaveBeenCalled();
+      expect(preloadReactDom).toHaveBeenCalled();
+    });
+
+    test('registers a control reused from another field type by name', () => {
+      CMS.registerFieldType({ name: 'definition-string', controlComponent: 'StringControl' });
+
+      expect(customFieldTypeRegistry.get('definition-string')).toEqual({
+        control: 'StringControl',
+        preview: undefined,
+        summary: undefined,
+        schema: undefined,
+      });
+    });
+
+    test('ignores the other arguments', () => {
+      const controlComponent = () => null;
+      const preview = () => null;
+
+      // @ts-ignore
+      CMS.registerFieldType({ name: 'definition-only', controlComponent }, 'x', preview);
+
+      expect(customFieldTypeRegistry.get('definition-only')?.control).toBe(controlComponent);
+      expect(customFieldTypeRegistry.get('definition-only')?.preview).toBeUndefined();
+    });
+
+    test('throws if the name is missing, invalid or reserved', () => {
+      const controlComponent = () => null;
+
+      // @ts-ignore
+      expect(() => CMS.registerFieldType({ controlComponent })).toThrow(
+        'The `name` option for `CMS.registerFieldType()` must be a non-empty string',
+      );
+      // @ts-ignore
+      expect(() => CMS.registerFieldType({ name: '', controlComponent })).toThrow(TypeError);
+      // @ts-ignore
+      expect(() => CMS.registerFieldType({ name: 'string', controlComponent })).toThrow(
+        'The field type name "string" is reserved for a built-in field type.',
+      );
+    });
+
+    test('throws if a component is invalid, naming the option as given', () => {
+      const controlComponent = () => null;
+
+      // @ts-ignore
+      expect(() => CMS.registerFieldType({ name: 'bad' })).toThrow(
+        'The `controlComponent` option for `CMS.registerFieldType()` must be a React component ' +
+          'or a string',
+      );
+      expect(() =>
+        // @ts-ignore
+        CMS.registerFieldType({ name: 'bad', controlComponent, previewComponent: 'x' }),
+      ).toThrow(
+        'The `previewComponent` option for `CMS.registerFieldType()` must be a React component',
+      );
+      expect(() =>
+        // @ts-ignore
+        CMS.registerFieldType({ name: 'bad', controlComponent, summaryComponent: {} }),
+      ).toThrow(
+        'The `summaryComponent` option for `CMS.registerFieldType()` must be a React component',
+      );
+      // @ts-ignore
+      expect(() => CMS.registerFieldType({ name: 'bad', controlComponent, schema: [] })).toThrow(
+        'The `schema` option for `CMS.registerFieldType()` must be an object',
+      );
+      expect(customFieldTypeRegistry.has('bad')).toBe(false);
+    });
+
+    test('accepts a wrapped summary component', () => {
+      const controlComponent = () => null;
+      const summaryComponent = { $$typeof: Symbol.for('react.memo'), type: () => null };
+
+      expect(() =>
+        // @ts-ignore
+        CMS.registerFieldType({ name: 'wrapped-summary', controlComponent, summaryComponent }),
+      ).not.toThrow();
+    });
   });
 
   test('registerWidget is an alias for registerFieldType', () => {

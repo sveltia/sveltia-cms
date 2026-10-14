@@ -1,6 +1,7 @@
 <!--
   @component
-  Render a custom field preview registered via `CMS.registerFieldType()`.
+  Render a custom field preview registered via `CMS.registerFieldType()`, or the summary component
+  of a custom field type for a collapsed List field item, which receives the same props.
   @see https://decapcms.org/docs/custom-widgets/
   @see https://sveltiacms.app/en/docs/api/field-types
 -->
@@ -26,7 +27,7 @@
    * @typedef {object} Props
    * @property {CustomField} fieldConfig Field configuration.
    * @property {any} currentValue Current field value.
-   * @property {CustomFieldPreview} preview React component for preview.
+   * @property {CustomFieldPreview} preview React component for preview, or a summary component.
    */
 
   const entryDraft = getEntryDraftContext();
@@ -119,7 +120,9 @@
 
 <style>
   div {
-    /* Allow the React component to use the full width */
+    /* Allow the React component to use the full width, but let it shrink beside a list item
+      thumbnail rather than overflow */
     width: 100%;
+    min-width: 0;
   }
 </style>

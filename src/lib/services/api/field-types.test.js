@@ -138,6 +138,19 @@ describe('getFieldTypeDefinition()', () => {
     expect(getFieldTypeDefinition('my-field')).toEqual({ control, preview, schema });
   });
 
+  test('returns the summary component of a custom field type', () => {
+    const control = () => null;
+    const summary = () => null;
+
+    // @ts-ignore
+    customFieldTypeRegistry.set('my-field', { control, summary });
+    // @ts-ignore
+    customFieldTypeRegistry.set('derived-field', { control: 'my-field', summary });
+
+    expect(getFieldTypeDefinition('my-field')?.summary).toBe(summary);
+    expect(getFieldTypeDefinition('derived-field')?.summary).toBe(summary);
+  });
+
   test('resolves a control referencing another custom field type by name', () => {
     const control = () => null;
 

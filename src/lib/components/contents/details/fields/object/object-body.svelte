@@ -12,6 +12,7 @@
   import { env } from '$lib/services/user/env.svelte';
 
   /**
+   * @import { Snippet } from 'svelte';
    * @import {
    * FieldContext,
    * InternalLocaleCode,
@@ -40,6 +41,8 @@
    * @property {() => string} getSummary Function returning the summary shown while collapsed.
    * @property {() => MediaFieldSource | undefined} getThumbnail Function returning the thumbnail
    * shown along with the summary.
+   * @property {Snippet} [summaryContent] Content drawn in place of the summary text while
+   * collapsed, e.g. by a custom field type’s summary component.
    * @property {string} [summaryId] `id` of the summary, so the value can be labelled by it.
    */
 
@@ -53,6 +56,7 @@
     unknownType,
     getSummary,
     getThumbnail,
+    summaryContent = undefined,
     summaryId = undefined,
     /* eslint-enable prefer-const */
   } = $props();
@@ -67,17 +71,21 @@
     </VisibilityObserver>
   {/each}
 {:else}
-  <!-- The summary is only worked out while it’s shown -->
-  {@const summary = getSummary()}
+  <!-- The summary is only worked out while it’s shown, and only if it’s not drawn otherwise -->
+  {@const summary = summaryContent ? '' : getSummary()}
   {@const thumbnail = getThumbnail()}
-  {#if summary || thumbnail}
+  {#if summaryContent || summary || thumbnail}
     <div role="none" class="summary" id={summaryId}>
       {#if thumbnail}
         <Image asset={thumbnail.asset} src={thumbnail.url} variant="icon" cover />
       {/if}
-      <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
-        {summary}
-      </TruncatedText>
+      {#if summaryContent}
+        {@render summaryContent()}
+      {:else}
+        <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
+          {summary}
+        </TruncatedText>
+      {/if}
     </div>
   {/if}
 {/if}

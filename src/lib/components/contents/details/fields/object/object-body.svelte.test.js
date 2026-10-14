@@ -1,3 +1,4 @@
+import { createRawSnippet } from 'svelte';
 import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -54,5 +55,31 @@ describe('ObjectBody', () => {
     const { container } = await render(ObjectBody, getProps({ getSummary: vi.fn(() => '') }));
 
     expect(container.querySelector('.summary')).toBeNull();
+  });
+
+  test('draws the given content in place of the summary text', async () => {
+    const getSummary = vi.fn(() => 'Hello');
+    const url = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+
+    const summaryContent = createRawSnippet(() => ({
+      /**
+       * Render the content.
+       * @returns {string} HTML.
+       */
+      render: () => '<strong class="custom">Custom summary</strong>',
+    }));
+
+    const { container } = await render(
+      ObjectBody,
+      getProps({ getSummary, getThumbnail: vi.fn(() => ({ url })), summaryContent }),
+    );
+
+    const summary = /** @type {HTMLElement} */ (container.querySelector('.summary'));
+
+    await expect.element(summary).toHaveTextContent('Custom summary');
+    expect(summary.querySelector('.custom')).not.toBeNull();
+    // The thumbnail is still shown beside it
+    await expect.poll(() => summary.querySelector('img')?.getAttribute('src')).toBe(url);
+    expect(getSummary).not.toHaveBeenCalled();
   });
 });

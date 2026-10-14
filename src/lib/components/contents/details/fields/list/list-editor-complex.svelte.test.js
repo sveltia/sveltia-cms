@@ -1,6 +1,8 @@
-import { beforeAll, describe, expect, test, vi } from 'vitest';
+import { createElement } from 'react';
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
+import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { env } from '$lib/services/user/env.svelte';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
@@ -13,6 +15,12 @@ import ListEditorComplex from './list-editor-complex.svelte';
  * @import { ComplexListField } from '$lib/types/public';
  */
 
+// The custom field type components are rendered with React and receive Immutable Maps
+vi.mock('$lib/services/app/dependencies', async (importOriginal) => ({
+  ...(await importOriginal()),
+  loadModule: vi.fn(() => import('immutable')),
+  loadChunk: vi.fn(() => import('$lib/chunks/react-dom.js')),
+}));
 vi.mock('$lib/services/user/env.svelte', async () => {
   const { createState } = await import('$lib/services/utils/state.svelte');
 
@@ -1124,5 +1132,81 @@ describe('ListEditorComplex (single item)', () => {
     await expect.element(page.getByText('2 Authors')).toBeVisible();
     expect(page.getByRole('button', { name: 'Remove' }).elements()).toHaveLength(2);
     expect(page.getByRole('button', { name: 'Reorder Item' }).elements()).toHaveLength(2);
+  });
+});
+
+describe('ListEditorComplex with a custom field type', () => {
+  /** @type {ComplexListField} */
+  const photosField = {
+    name: 'photos',
+    widget: 'list',
+    label: 'Photos',
+    label_singular: 'Photo',
+    collapsed: true,
+    field: { name: 'photo', widget: 'photo-picker', default: 'c/3.jpg' },
+  };
+
+  /**
+   * Get the text of the collapsed items’ summaries.
+   * @param {HTMLElement} container Container.
+   * @returns {(string | undefined)[]} Summaries.
+   */
+  const getSummaries = (container) =>
+    [...container.querySelectorAll('.item-body .summary')].map((el) => el.textContent?.trim());
+
+  /**
+   * A custom field control.
+   * @returns {any} React element.
+   */
+  const PickerControl = () => createElement('span', null, 'Picker');
+
+  /**
+   * A custom field summary.
+   * @param {any} props Props.
+   * @returns {any} React element.
+   */
+  const PhotoSummary = ({ value, field }) =>
+    createElement('strong', { className: 'photo-summary' }, `${field.get('name')}: ${value}`);
+
+  beforeAll(() => {
+    customFieldTypeRegistry.set('photo-picker', { control: PickerControl, summary: PhotoSummary });
+    customFieldTypeRegistry.set('plain-picker', { control: PickerControl });
+  });
+
+  afterAll(() => {
+    customFieldTypeRegistry.delete('photo-picker');
+    customFieldTypeRegistry.delete('plain-picker');
+  });
+
+  test('draws collapsed items with the summary component of the type', async () => {
+    const { draft, container } = await renderEditor(photosField, {
+      'photos.0': 'a/1.jpg',
+      'photos.1': 'b/2.jpg',
+    });
+
+    await expect.poll(() => getSummaries(container)).toEqual(['photo: a/1.jpg', 'photo: b/2.jpg']);
+    expect(container.querySelectorAll('.item-body .summary .photo-summary')).toHaveLength(2);
+
+    // After a reorder
+    await page.getByRole('button', { name: 'Reorder Item' }).nth(0).element().focus();
+    await userEvent.keyboard('{End}');
+    await expect.poll(() => getSummaries(container)).toEqual(['photo: b/2.jpg', 'photo: a/1.jpg']);
+
+    // After an item is added and everything collapsed again
+    await page.getByRole('button', { name: /Add\W+Photo/ }).click();
+    await expect.poll(() => draft.currentValues._default['photos.2']).toBe('c/3.jpg');
+    await page.getByRole('button', { name: 'Collapse All' }).click();
+    await expect
+      .poll(() => getSummaries(container))
+      .toEqual(['photo: b/2.jpg', 'photo: a/1.jpg', 'photo: c/3.jpg']);
+  });
+
+  test('draws the summary text for a type without a summary component', async () => {
+    const { container } = await renderEditor(
+      { ...photosField, field: { name: 'photo', widget: 'plain-picker' } },
+      { 'photos.0': 'a/1.jpg' },
+    );
+
+    await expect.poll(() => getSummaries(container)).toEqual(['a/1.jpg']);
   });
 });

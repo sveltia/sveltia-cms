@@ -15,6 +15,7 @@
   import ExpandIcon from '$lib/components/common/expand-icon.svelte';
   import RemoveButton from '$lib/components/common/remove-button.svelte';
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
+  import CustomPreview from '$lib/components/contents/details/fields/custom/custom-preview.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import ObjectBody from '$lib/components/contents/details/fields/object/object-body.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
@@ -23,6 +24,7 @@
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { isExpanded, syncExpanderStates } from '$lib/services/contents/editor/fields';
   import { getMemoizedSubtree } from '$lib/services/contents/entry/subtree';
+  import { getCustomFieldSummary } from '$lib/services/contents/fields/custom/preview';
   import {
     formatSummary,
     getListFieldInfo,
@@ -57,6 +59,8 @@
    * } from '$lib/types/private';
    * @import {
    * ComplexListField,
+   * CustomField,
+   * CustomFieldSummary,
    * ListFieldWithSubField,
    * ListFieldWithSubFields,
    * ListFieldWithTypes,
@@ -119,6 +123,8 @@
   /** The subfields of an item in a list without variable types. */
   const singleSubFields = $derived(fields ?? (field ? [field] : []));
   /* v8 ignore stop */
+  /** The summary component of the single subfield’s custom field type, if any. */
+  const customSummary = $derived(hasSingleSubField ? getCustomFieldSummary(field) : undefined);
 
   /**
    * Resolve the type of an item, along with the subfields and the summary template for it.
@@ -651,6 +657,18 @@
             {/snippet}
           </ObjectHeader>
           <div role="none" class="item-body" id="list-{fieldId}-item-{index}-body">
+            {#snippet customSummaryContent()}
+              <CustomPreview
+                {locale}
+                keyPath={itemKeyPath}
+                typedKeyPath="{typedKeyPath}.*"
+                currentValue={item}
+                {...{
+                  fieldConfig: /** @type {CustomField} */ (field),
+                  preview: /** @type {CustomFieldSummary} */ (customSummary),
+                }}
+              />
+            {/snippet}
             <ObjectBody
               {locale}
               {subFields}
@@ -667,6 +685,7 @@
               {unknownType}
               getSummary={() => _formatSummary(index, summaryTemplate)}
               getThumbnail={() => getThumbnail(index, type)}
+              summaryContent={customSummary ? customSummaryContent : undefined}
             />
           </div>
         </div>
