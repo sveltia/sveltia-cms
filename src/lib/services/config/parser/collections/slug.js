@@ -60,7 +60,16 @@ export const checkSlugOptions = ({ collection, context, collectors }) => {
     return;
   }
 
-  const { pattern, i18n } = /** @type {CollectionSlugOptions} */ (slug);
+  const {
+    pattern,
+    i18n,
+    auto_increment: autoIncrement,
+  } = /** @type {CollectionSlugOptions} */ (slug);
+
+  // A numbered slug isn’t made from a template
+  if (autoIncrement === true && template !== undefined) {
+    addMessage({ type: 'warning', strKey: 'slug_template_ignored', context, collectors });
+  }
 
   // The `pattern` option is a `[regex, message]` pair; anything else is reported against the JSON
   // schema

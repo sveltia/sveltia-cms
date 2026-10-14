@@ -317,6 +317,20 @@ describe('getPendingEntrySlugs', () => {
     expect(getCanonicalSlug).not.toHaveBeenCalled();
   });
 
+  it('numbers the slug after the entries pending on the parent draft', () => {
+    const pendingEntries = [createPending('react')];
+
+    vi.mocked(getSlugs).mockReturnValue({
+      defaultLocaleSlug: '1',
+      localizedSlugs: undefined,
+      canonicalSlug: undefined,
+    });
+
+    getPendingEntrySlugs({ draft, parentDraft: createParentDraft({ pendingEntries }) });
+
+    expect(getSlugs).toHaveBeenCalledWith({ draft, pendingEntries });
+  });
+
   it('renames the slug taken by a pending entry', () => {
     vi.mocked(getSlugs).mockReturnValue({
       defaultLocaleSlug: 'svelte',

@@ -101,6 +101,25 @@ describe('checkSlugOptions', () => {
     });
   });
 
+  describe('auto_increment', () => {
+    test('warns that a template is ignored', () => {
+      const context = check({ slug: { auto_increment: true, template: '{{title}}' } });
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith({
+        type: 'warning',
+        strKey: 'slug_template_ignored',
+        context,
+        collectors,
+      });
+    });
+
+    test('says nothing without a template or the option', () => {
+      check({ slug: { auto_increment: true, editable: true } });
+      check({ slug: { auto_increment: false, template: '{{title}}' } });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+  });
+
   describe('i18n', () => {
     test('says nothing when each locale has a file of its own', () => {
       check({ i18n: true, slug: { i18n: true } }, i18nSite);

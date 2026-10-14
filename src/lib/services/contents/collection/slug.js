@@ -71,6 +71,7 @@ const getEditableStages = (editable = true) => {
  * slug options; for another collection, the defaults are returned.
  * @returns {InternalSlugOptions} Normalized options.
  * @see https://github.com/sveltia/sveltia-cms/issues/999
+ * @see https://github.com/sveltia/sveltia-cms/issues/1072
  */
 export const getSlugOptions = (collection) => {
   const {
@@ -85,6 +86,24 @@ export const getSlugOptions = (collection) => {
   // An entry stored in a file with the other entries of the collection is told by its position, so
   // there’s no slug to edit
   const stages = typeof file === 'string' ? [] : getEditableStages(options.editable);
+  const update = stages.includes('update');
+
+  // A numbered slug isn’t made from a template, so a configured one is ignored, and the slug editor
+  // is prefilled with the number rather than having to be filled in. An entry stored in a file with
+  // the other entries has no slug to number
+  if (options.auto_increment === true && typeof file !== 'string') {
+    return {
+      template: '',
+      editorRequired: false,
+      editorValueIsSlug: true,
+      editable: { create: stages.includes('create'), update },
+      localized: options.i18n === true,
+      autoIncrement: true,
+      hint: options.hint,
+      pattern: options.pattern,
+    };
+  }
+
   const legacyLocalized = !!configuredTemplate?.includes(LEGACY_LOCALIZED_SLUG_EDITOR_TAG);
   const legacy = hasLegacySlugEditorTag(configuredTemplate);
   const create = legacy || stages.includes('create');
@@ -114,8 +133,9 @@ export const getSlugOptions = (collection) => {
     editorValueIsSlug:
       !editorRequired ||
       [LEGACY_SLUG_EDITOR_TAG, LEGACY_LOCALIZED_SLUG_EDITOR_TAG].includes(template),
-    editable: { create, update: stages.includes('update') },
+    editable: { create, update },
     localized,
+    autoIncrement: false,
     hint: options.hint,
     pattern: options.pattern,
   };

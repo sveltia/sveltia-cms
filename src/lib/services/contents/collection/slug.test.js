@@ -48,9 +48,47 @@ describe('contents/collection/slug', () => {
         editorValueIsSlug: true,
         editable: { create: true, update: true },
         localized: false,
+        autoIncrement: false,
         hint: undefined,
         pattern: undefined,
       });
+    });
+
+    it('should number the slug with the auto_increment option, ignoring the template', () => {
+      expect(
+        getSlugOptions({
+          slug: {
+            template: '{{fields._slug}}',
+            auto_increment: true,
+            editable: true,
+            i18n: true,
+            hint: 'A number',
+            pattern: ['^[0-9]+$', 'Numbers only'],
+          },
+        }),
+      ).toEqual({
+        template: '',
+        editorRequired: false,
+        editorValueIsSlug: true,
+        editable: { create: true, update: true },
+        localized: true,
+        autoIncrement: true,
+        hint: 'A number',
+        pattern: ['^[0-9]+$', 'Numbers only'],
+      });
+      expect(getSlugOptions({ slug: { auto_increment: true, editable: ['update'] } })).toEqual(
+        expect.objectContaining({
+          editable: { create: false, update: true },
+          localized: false,
+          autoIncrement: true,
+        }),
+      );
+    });
+
+    it('should ignore the auto_increment option for entries stored in one file', () => {
+      expect(
+        getSlugOptions({ file: 'data/posts.json', slug: { auto_increment: true } }).autoIncrement,
+      ).toBe(false);
     });
 
     it('should use the identifier field for the default template', () => {

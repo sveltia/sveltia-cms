@@ -156,6 +156,12 @@ describe('checkIdentifierField', () => {
       expect(addMessage).not.toHaveBeenCalled();
     });
 
+    test('says nothing when the slug is numbered', () => {
+      check({ fields: withoutTitle, slug: { auto_increment: true } });
+      check({ fields: withoutTitle, slug: { auto_increment: true, editable: false } });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
     test('warns when the object form of the slug option relies on the default', () => {
       check({ fields: withoutTitle, slug: { editable: ['update'], hint: 'Hint' } });
       expectMissing();

@@ -152,7 +152,8 @@ export const getRefEntriesWithPending = ({ draft, fieldConfig }) => {
  * @returns {EntrySlugVariants} Slugs.
  */
 export const getPendingEntrySlugs = ({ draft, parentDraft }) => {
-  const slugs = getSlugs({ draft });
+  // A numbered slug comes after the ones the entries pending on the parent draft have taken
+  const slugs = getSlugs({ draft, pendingEntries: parentDraft.pendingEntries });
   const { defaultLocaleSlug, localizedSlugs } = slugs;
 
   const pendingSlugs = getPendingEntriesByCollection(parentDraft, draft.collectionName).map(

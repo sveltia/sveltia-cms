@@ -958,7 +958,7 @@
  * @typedef {object} InternalSlugOptions
  * @property {string} template Slug template to fill for a new entry. It’s the configured template,
  * the legacy `{{fields._slug}}` tag when the slug is only given with the slug editor, or the
- * identifier field tag by default.
+ * identifier field tag by default. An empty string when the slug is numbered automatically.
  * @property {boolean} editorRequired Whether the template takes the slug from the slug editor, in
  * which case the slug editor must be filled in. Otherwise, a filled-in slug editor takes over from
  * the template.
@@ -969,6 +969,8 @@
  * entry is created, and once it has been saved.
  * @property {boolean} localized Whether each locale has a slug editor of its own, and every field
  * tag in the template is filled with the locale’s own value.
+ * @property {boolean} autoIncrement Whether a new entry’s slug is the number after the highest one
+ * among the entries of the collection, instead of a filled template.
  * @property {string} [hint] Short description shown with the slug editor.
  * @property {[string | RegExp, string]} [pattern] Validation format of the slug.
  */

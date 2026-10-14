@@ -2061,6 +2061,8 @@ config:
     missing_identifier_field: コレクションに新しいエントリーの名前となる `{$name}` フィールドがないため、新しいエントリーにはランダムなスラッグが付けられます。`{$name}` フィールドを追加するか、`identifier_field` または `slug` オプションを設定してください。
     # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
     slug_i18n_ineffective: コレクションが各ロケールのファイルを個別に持つ `multiple_files`、`multiple_folders`、`multiple_root_folders` のいずれの i18n 構造も使用していないため、`slug` の `i18n` オプションは効果がありません。
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: スラッグは `auto_increment` オプションによって連番になるため、`slug` の `template` オプションは無視されます。
     # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
     # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
     # are escaped with backslashes for MessageFormat 2

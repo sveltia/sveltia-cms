@@ -1892,11 +1892,17 @@
  * own value. `duplicate` (default) and `false` share the default locale’s slug with the other
  * locales. It only has an effect with the `multiple_files`, `multiple_folders` or
  * `multiple_root_folders` i18n structure, or the `{{locale}}` placeholder in the `folder` option.
+ * @property {boolean} [auto_increment] Whether to number the entries automatically, like an
+ * `AUTO_INCREMENT` column in a relational database. A new entry’s slug is the integer after the
+ * highest one among the slugs of the collection’s entries, starting from `1`, when it’s saved. The
+ * `template` option is ignored. When the slug is editable on creation, the slug field is prefilled
+ * with the next number, and a slug typed in takes over from it. Default: `false`.
  * @property {string} [hint] Short description shown at the top of the entry sidebar’s Slug panel.
  * @property {[string | RegExp, string]} [pattern] Validation format of the slug. The first argument
  * is a regular expression matching pattern for a valid slug, and the second argument is an error
  * message to be displayed when the slug does not match the pattern.
  * @see https://github.com/sveltia/sveltia-cms/issues/999
+ * @see https://github.com/sveltia/sveltia-cms/issues/1072
  */
 
 /**
