@@ -2,6 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Alert, EmptyState, Toast } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
+  import { onDestroy, untrack } from 'svelte';
 
   import DeleteAssetsButton from '$lib/components/assets/list/delete-assets-button.svelte';
   import DetailsOverlay from '$lib/components/assets/list/details-overlay.svelte';
@@ -20,7 +21,7 @@
     hasReadonlyAsset,
     selectedAssetFolder,
   } from '$lib/services/assets/folders';
-  import { getAssetBlob } from '$lib/services/assets/info';
+  import { getAssetBlob, preloadAssets } from '$lib/services/assets/info';
   import { canPreviewAsset, isMediaKind } from '$lib/services/assets/kinds';
   import { getAssetFolderHistoryState, showAssetDetails } from '$lib/services/assets/navigation';
   import { overlaidAsset } from '$lib/services/assets/state';
@@ -78,6 +79,20 @@
   const showAsset = (target, transitionType) => {
     showAssetDetails(target, { replaceState: true, transitionType });
   };
+
+  // Load the adjacent images ahead of time, so moving to one of them is instant. Other kinds aren’t
+  // worth downloading in full on the off chance, e.g. a video. The shown asset is kept as well, so
+  // the one just moved to isn’t released before its preview displays it
+  $effect(() => {
+    const targets = /** @type {Asset[]} */ ([previous, next].filter((a) => a?.kind === 'image'));
+    const keep = asset ? [asset] : [];
+
+    untrack(() => preloadAssets(targets, { keep }));
+  });
+
+  onDestroy(() => {
+    preloadAssets([]);
+  });
 
   $effect(() => {
     // Hold on to the asset, as the derived value follows the overlay while the blob is being read
@@ -156,6 +171,9 @@
         checkerboard={kind === 'image'}
         alt={kind === 'image' ? name : undefined}
         controls={['audio', 'video'].includes(kind)}
+        loading="eager"
+        dissolve={false}
+        holdTransition={true}
       />
     {:else if blob?.type === 'application/pdf'}
       <iframe src={blobURL} title={name} sandbox="allow-scripts"></iframe>

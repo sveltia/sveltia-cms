@@ -10,12 +10,14 @@ import {
   goBack,
   goto,
   hasOverlay,
+  holdViewTransition,
   openProductionSite,
   parseLocation,
   redirectLegacyEntryLink,
   resolveRoute,
   startViewTransition,
   updateContentFromHashChange,
+  VIEW_TRANSITION_HOLD_LIMIT,
 } from './navigation';
 
 // The module listens to `keydown` as it’s loaded, before the tests can set anything up
@@ -1390,6 +1392,183 @@ describe('navigation', () => {
       startViewTransition('forwards', mockUpdateContent);
 
       expect(mockUpdateContent).toHaveBeenCalled();
+    });
+  });
+
+  describe('holdViewTransition', () => {
+    /**
+     * Start a transition whose `update` callback the test runs itself, and make `sleep` resolve at
+     * once, except for the hold time limit, which resolves when the test says so.
+     * @param {() => void} updateContent Function to update the content.
+     * @returns {Promise<{ update: () => Promise<void>, expireLimit: () => void, finish: () =>
+     * Promise<void>, sleep: any }>} Controls.
+     */
+    const setUp = async (updateContent) => {
+      const { sleep } = await import('@sveltia/utils/misc');
+      const { flushSync } = await import('svelte');
+      const limit = Promise.withResolvers();
+      const finished = Promise.withResolvers();
+      /** @type {any} */
+      let options;
+
+      vi.mocked(sleep).mockImplementation((ms) =>
+        ms === VIEW_TRANSITION_HOLD_LIMIT ? limit.promise : Promise.resolve(),
+      );
+      vi.mocked(flushSync).mockImplementation((fn) => {
+        if (fn) fn();
+      });
+
+      // @ts-ignore - Simplified mock for testing
+      document.startViewTransition = vi.fn((config) => {
+        options = config;
+
+        return { ready: Promise.resolve(), finished: finished.promise, skipTransition: vi.fn() };
+      });
+
+      startViewTransition('next', updateContent);
+
+      return {
+        /**
+         * Run the `update` callback of the transition.
+         * @returns {Promise<void>} Result.
+         */
+        update: () => options.update(),
+        /**
+         * Let the hold time limit pass.
+         * @returns {void}
+         */
+        expireLimit: () => limit.resolve(undefined),
+        /**
+         * Finish the transition.
+         */
+        finish: async () => {
+          finished.resolve(undefined);
+          await finished.promise;
+          await Promise.resolve();
+        },
+        sleep,
+      };
+    };
+
+    /**
+     * Check whether the given promise has settled after the pending microtasks have run.
+     * @param {Promise<any>} promise Promise.
+     * @returns {Promise<boolean>} Result.
+     */
+    const hasSettled = async (promise) => {
+      let settled = false;
+
+      promise.then(() => {
+        settled = true;
+      });
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+
+      return settled;
+    };
+
+    it('should make the transition wait for the hold before capturing the new state', async () => {
+      const hold = Promise.withResolvers();
+      const { update, finish } = await setUp(() => holdViewTransition(hold.promise));
+      const updating = update();
+
+      expect(await hasSettled(updating)).toBe(false);
+
+      hold.resolve(undefined);
+
+      expect(await hasSettled(updating)).toBe(true);
+
+      await finish();
+    });
+
+    it('should count a rejected hold as settled', async () => {
+      const hold = Promise.withResolvers();
+      const { update, finish } = await setUp(() => holdViewTransition(hold.promise));
+      const updating = update();
+
+      hold.reject(new Error('Failed'));
+
+      expect(await hasSettled(updating)).toBe(true);
+
+      await finish();
+    });
+
+    it('should stop waiting for the hold once the time limit has passed', async () => {
+      const { update, expireLimit, finish } = await setUp(() =>
+        holdViewTransition(new Promise(() => {})),
+      );
+
+      const updating = update();
+
+      expect(await hasSettled(updating)).toBe(false);
+
+      expireLimit();
+
+      expect(await hasSettled(updating)).toBe(true);
+
+      await finish();
+    });
+
+    it('should stop waiting for the hold once the transition is skipped with a key', async () => {
+      const { update, finish } = await setUp(() => holdViewTransition(new Promise(() => {})));
+      const updating = update();
+
+      expect(await hasSettled(updating)).toBe(false);
+
+      pressKey();
+
+      expect(await hasSettled(updating)).toBe(true);
+
+      // Nothing is left to stop once the wait is over
+      pressKey();
+      await finish();
+    });
+
+    it('should not wait for the hold once the transition has been skipped before', async () => {
+      const { update, finish } = await setUp(() => {
+        holdViewTransition(new Promise(() => {}));
+        // Pressed while the content is still being updated, before the wait has started
+        pressKey();
+      });
+
+      expect(await hasSettled(update())).toBe(true);
+
+      await finish();
+    });
+
+    it('should not wait without a hold', async () => {
+      const { update, finish, sleep } = await setUp(vi.fn());
+
+      expect(await hasSettled(update())).toBe(true);
+      expect(sleep).not.toHaveBeenCalledWith(VIEW_TRANSITION_HOLD_LIMIT);
+
+      await finish();
+    });
+
+    it('should ignore a hold added while no transition is running', async () => {
+      holdViewTransition(new Promise(() => {}));
+
+      const { update, finish } = await setUp(vi.fn());
+
+      expect(await hasSettled(update())).toBe(true);
+
+      await finish();
+    });
+
+    it('should drop a hold added once the transition has captured the new state', async () => {
+      const first = await setUp(vi.fn());
+
+      await first.update();
+      holdViewTransition(new Promise(() => {}));
+      await first.finish();
+
+      const second = await setUp(vi.fn());
+
+      expect(await hasSettled(second.update())).toBe(true);
+
+      await second.finish();
     });
   });
 

@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-svelte';
 
 import { deleteAssets } from '$lib/services/assets/data/delete';
 import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/folders';
+import { preloadAssets } from '$lib/services/assets/info';
 import { overlaidAsset } from '$lib/services/assets/state';
 import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { showAssetOverlay } from '$lib/services/assets/view';
@@ -18,6 +19,11 @@ import {
 import { waitForToastsToHide } from '$lib/test/toast';
 
 import DetailsOverlay from './details-overlay.svelte';
+
+vi.mock('$lib/services/assets/info', async (importOriginal) => ({
+  ...(await importOriginal()),
+  preloadAssets: vi.fn(),
+}));
 
 vi.mock('$lib/services/assets/data/delete', () => ({
   deleteAssets: vi.fn(),
@@ -81,6 +87,22 @@ describe('DetailsOverlay', () => {
 
     await page.getByRole('button', { name: 'Previous Asset' }).click();
     await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/a.png');
+  });
+
+  test('preloads the shown asset and the images around it, and releases them once closed', async () => {
+    overlaidAsset.current = textAsset;
+
+    const { unmount } = await render(DetailsOverlay);
+
+    // The next asset is a PDF, which isn’t preloaded
+    await vi.waitFor(() =>
+      expect(preloadAssets).toHaveBeenLastCalledWith([expect.objectContaining({ name: 'a.png' })], {
+        keep: [expect.objectContaining({ name: 'notes.txt' })],
+      }),
+    );
+
+    unmount();
+    expect(preloadAssets).toHaveBeenLastCalledWith([]);
   });
 
   test('keeps the selected folder, e.g. All Assets, while moving between the listed assets', async () => {

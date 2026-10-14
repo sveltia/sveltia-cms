@@ -393,6 +393,22 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
  * @type {Set<string>}
  */
 const pendingRevocations = new Set();
+/**
+ * Blob URLs of the assets preloaded with {@link preloadAssets}, which a revocation leaves alone
+ * until they’re no longer preloaded, although no element displays them yet.
+ * @type {Set<string>}
+ */
+const preloadedURLs = new Set();
+/**
+ * Assets most recently passed to {@link preloadAssets}, including the ones to keep.
+ * @type {Asset[]}
+ */
+let preloadedAssets = [];
+/**
+ * Assets most recently passed to {@link preloadAssets} to be loaded, excluding the ones to keep.
+ * @type {Asset[]}
+ */
+let loadedAssets = [];
 
 /* v8 ignore next */
 /**
@@ -401,6 +417,9 @@ const pendingRevocations = new Set();
  */
 export const _resetRevocationQueue = () => {
   pendingRevocations.clear();
+  preloadedURLs.clear();
+  preloadedAssets = [];
+  loadedAssets = [];
 };
 
 /**
@@ -414,6 +433,10 @@ const flushRevocations = () => {
   // One query for every blob URL on the page, rather than one per asset
   document.querySelectorAll('[src^="blob:"]').forEach((element) => {
     urls.delete(/** @type {string} */ (element.getAttribute('src')));
+  });
+
+  preloadedURLs.forEach((url) => {
+    urls.delete(url);
   });
 
   if (!urls.size) {
@@ -669,4 +692,68 @@ export const getFolderPublicPath = ({ folder, subfolderPath }) => {
   const path = (subfolderPath ? `${basePath}/${subfolderPath}` : basePath) || '/';
 
   return encodingEnabled ? encodeFilePath(path) : path;
+};
+
+/**
+ * Load the given assets ahead of time, so they can be shown at once when the user moves to them,
+ * e.g. the assets right before and after the one shown in the details overlay. An image is decoded
+ * as well, and an asset already passed to the previous call isn’t loaded again. The assets passed
+ * to the previous call that aren’t passed again are released: their
+ * blob URLs are revoked unless an element displays them. Pass an empty array to release them all.
+ * @param {Asset[]} assets Assets to preload.
+ * @param {object} [options] Options.
+ * @param {Asset[]} [options.keep] Assets that are being loaded elsewhere, e.g. the one shown in the
+ * overlay, whose blob URLs are kept like those of the preloaded assets but which aren’t loaded
+ * here. This keeps a preloaded asset the user has just moved to from being released before its
+ * preview displays it.
+ */
+export const preloadAssets = (assets, { keep = [] } = {}) => {
+  const retained = [...assets, ...keep];
+  const released = preloadedAssets.filter((asset) => !retained.includes(asset));
+  const added = assets.filter((asset) => !loadedAssets.includes(asset));
+
+  preloadedAssets = retained;
+  loadedAssets = assets;
+
+  keep.forEach((asset) => {
+    if (asset.blobURL) {
+      preloadedURLs.add(asset.blobURL);
+    }
+  });
+
+  released.forEach((asset) => {
+    if (asset.blobURL) {
+      preloadedURLs.delete(asset.blobURL);
+    }
+
+    revokeAssetBlobURLIfNeeded(asset);
+  });
+
+  added.forEach(async (asset) => {
+    try {
+      const url = await getAssetBlobURL(asset);
+
+      if (!url) {
+        return;
+      }
+
+      // The asset may have been released while its blob was being read
+      if (!preloadedAssets.includes(asset)) {
+        revokeAssetBlobURLIfNeeded(asset);
+
+        return;
+      }
+
+      preloadedURLs.add(url);
+
+      if (asset.kind === 'image') {
+        const image = new Image();
+
+        image.src = url;
+        await image.decode();
+      }
+    } catch {
+      // The preview will try again and show the error, if any, once the asset is shown
+    }
+  });
 };

@@ -16,6 +16,7 @@ import {
   getDisplayBlob,
   getFolderPublicPath,
   hasCachedThumbnail,
+  preloadAssets,
   revokeAssetBlobURLIfNeeded,
   revokeBlobURLIfNeeded,
 } from '$lib/services/assets/info';
@@ -2817,6 +2818,172 @@ describe('assets/info', () => {
         revokeBlobURLIfNeeded('blob:thumbnail-1');
 
         expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('preloadAssets', () => {
+      /** @type {any[]} */
+      let images;
+      /** @type {any} */
+      let decode;
+
+      /**
+       * Wait for the preloading started in the background to finish.
+       * @returns {Promise<void>} Result.
+       */
+      const settle = () =>
+        new Promise((resolve) => {
+          setTimeout(resolve, 0);
+        });
+
+      beforeEach(() => {
+        images = [];
+        decode = vi.fn().mockResolvedValue(undefined);
+
+        // @ts-ignore
+        global.Image = class {
+          constructor() {
+            this.src = '';
+            this.decode = decode;
+            images.push(this);
+          }
+        };
+      });
+
+      afterEach(() => {
+        preloadAssets([]);
+        // @ts-ignore
+        delete global.Image;
+      });
+
+      it('should decode a preloaded image and keep its URL until it’s released', async () => {
+        const [asset] = mockAssets;
+
+        asset.kind = 'image';
+        preloadAssets([asset]);
+        await settle();
+
+        expect(images).toHaveLength(1);
+        expect(images[0].src).toBe('blob:url-1');
+        expect(decode).toHaveBeenCalledOnce();
+
+        // Nothing displays the URL, yet a revocation leaves it alone while it’s preloaded
+        revokeAssetBlobURLIfNeeded(asset);
+        expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
+        expect(asset.blobURL).toBe('blob:url-1');
+
+        preloadAssets([]);
+        expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:url-1');
+        expect(asset.blobURL).toBeUndefined();
+      });
+
+      it('should only release the assets that aren’t preloaded any more', async () => {
+        const [first, second, third] = mockAssets;
+
+        preloadAssets([first, second]);
+        await settle();
+        preloadAssets([second, third]);
+        await settle();
+
+        expect(global.URL.revokeObjectURL).toHaveBeenCalledOnce();
+        expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:url-1');
+      });
+
+      it('should keep the URL of an asset to keep without loading it', async () => {
+        const [first, second] = mockAssets;
+
+        first.kind = 'image';
+        second.kind = 'image';
+        preloadAssets([first], { keep: [second] });
+        await settle();
+
+        expect(images).toHaveLength(1);
+        expect(images[0].src).toBe('blob:url-1');
+
+        // The kept URL survives a revocation, until the asset is no longer kept
+        revokeAssetBlobURLIfNeeded(second);
+        expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
+
+        preloadAssets([first]);
+        expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:url-2');
+      });
+
+      it('should keep an asset whose URL hasn’t been created yet', async () => {
+        const asset = /** @type {any} */ ({ path: 'assets/new.jpg', name: 'new.jpg' });
+
+        mockAssets = [asset];
+        preloadAssets([], { keep: [asset] });
+        await settle();
+        preloadAssets([]);
+
+        expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
+      });
+
+      it('should not load an asset again while it stays preloaded', async () => {
+        const [first, second] = mockAssets;
+
+        first.kind = 'image';
+        second.kind = 'image';
+        preloadAssets([first]);
+        await settle();
+        preloadAssets([first, second]);
+        await settle();
+
+        expect(images.map(({ src }) => src)).toEqual(['blob:url-1', 'blob:url-2']);
+      });
+
+      it('should not decode an asset other than an image', async () => {
+        const [asset] = mockAssets;
+
+        asset.kind = 'video';
+        preloadAssets([asset]);
+        await settle();
+
+        expect(images).toHaveLength(0);
+      });
+
+      it('should release an asset that is no longer wanted once its blob has been read', async () => {
+        const asset = /** @type {any} */ ({
+          path: 'assets/new.jpg',
+          name: 'new.jpg',
+          kind: 'image',
+          file: new Blob(['x'], { type: 'image/jpeg' }),
+        });
+
+        mockAssets = [asset];
+        global.URL.createObjectURL = vi.fn().mockReturnValue('blob:new');
+        preloadAssets([asset]);
+        preloadAssets([]);
+        await settle();
+
+        expect(images).toHaveLength(0);
+        expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:new');
+      });
+
+      it('should skip an asset whose URL can’t be created', async () => {
+        const asset = /** @type {any} */ ({
+          path: 'assets/new.jpg',
+          name: 'new.jpg',
+          kind: 'image',
+          file: new Blob(['x'], { type: 'image/jpeg' }),
+        });
+
+        global.URL.createObjectURL = vi.fn().mockReturnValue(undefined);
+        preloadAssets([asset]);
+        await settle();
+
+        expect(images).toHaveLength(0);
+      });
+
+      it('should ignore an image that fails to decode', async () => {
+        const [asset] = mockAssets;
+
+        asset.kind = 'image';
+        decode.mockRejectedValue(new Error('EncodingError'));
+        preloadAssets([asset]);
+        await settle();
+
+        expect(decode).toHaveBeenCalledOnce();
       });
     });
   });

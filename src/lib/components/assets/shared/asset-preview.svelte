@@ -4,6 +4,7 @@
   import { removeVisibilityResolver, waitForVisibility } from '@sveltia/utils/element';
   import { onMount, untrack } from 'svelte';
 
+  import { holdViewTransition } from '$lib/services/app/navigation';
   import {
     getAssetBlobURL,
     getAssetThumbnailURL,
@@ -36,6 +37,9 @@
    * @property {string} [alt] Alt text for the image.
    * @property {boolean} [controls] Whether to show controls for audio/video. If this is `false` and
    * {@link kind} is `audio`, an icon will be displayed instead.
+   * @property {boolean} [holdTransition] Whether to make the running view transition wait for the
+   * media to be loaded, so that it’s part of the animation rather than popping in once it’s over.
+   * Only for a single, prominent preview, such as the one in the asset details overlay.
    * @property {() => void} [onError] Function called once the preview falls back to an icon because
    * the media can’t be loaded, either as its URL lookup has failed or as the element has failed to
    * load it.
@@ -55,6 +59,7 @@
     dissolve = true,
     alt = '',
     controls = false,
+    holdTransition = false,
     onError = () => undefined,
     ...rest
     /* eslint-enable prefer-const */
@@ -148,6 +153,20 @@
    * it created, as the cleanup below has already run, and reads nothing reactive.
    */
   let destroyed = false;
+
+  /**
+   * Function to release the view transition held until the media is loaded, if any.
+   * @type {(() => void) | undefined}
+   */
+  let releaseTransition = undefined;
+
+  /**
+   * Release the view transition held until the media is loaded, if any.
+   */
+  const releaseHeldTransition = () => {
+    releaseTransition?.();
+    releaseTransition = undefined;
+  };
 
   /**
    * Remember an object URL this preview created, so that it can be released later.
@@ -298,6 +317,9 @@
       }
     }
 
+    // The media is ready to be shown, so the view transition can capture it
+    releaseHeldTransition();
+
     // The preview may have been removed while the media was loading
     /* v8 ignore next 3 */
     if (!mediaElement) {
@@ -327,8 +349,12 @@
           return;
         }
 
-        blurImageURL = url;
-        ownURL(blurImageURL);
+        // Without a cached thumbnail, the media itself doubles as the backdrop once its URL has
+        // been looked up in `updateSrc`, which may well have finished first, so don’t clear it
+        if (url) {
+          blurImageURL = url;
+          ownURL(url);
+        }
       })();
     }
   });
@@ -345,9 +371,23 @@
     currentAsset = asset;
   });
 
+  $effect(() => {
+    if (holdTransition && source) {
+      releaseHeldTransition();
+
+      const { promise, resolve } = /** @type {PromiseWithResolvers<void>} */ (
+        Promise.withResolvers()
+      );
+
+      releaseTransition = resolve;
+      holdViewTransition(promise);
+    }
+  });
+
   // Notify the parent of a failure, whether the URL lookup or the media element has failed
   $effect(() => {
     if (hasError) {
+      releaseHeldTransition();
       untrack(() => onError());
     }
   });
@@ -398,6 +438,7 @@
     // Clean up
     return () => {
       destroyed = true;
+      releaseHeldTransition();
 
       if (currentAsset) {
         revokeAssetBlobURLIfNeeded(currentAsset);

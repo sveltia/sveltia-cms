@@ -119,6 +119,9 @@
         checkerboard={kind === 'image'}
         alt={kind === 'image' ? fileName : undefined}
         controls={['audio', 'video'].includes(kind)}
+        loading="eager"
+        dissolve={false}
+        holdTransition={true}
       />
     {:else if type === 'application/pdf'}
       <iframe src={downloadURL} title={fileName} sandbox="allow-scripts"></iframe>
