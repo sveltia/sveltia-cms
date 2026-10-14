@@ -1,4 +1,6 @@
 <script module>
+  import { createLatestGuard } from '$lib/services/utils/scheduling';
+
   /**
    * Content area the user is scrolling, with the mouse wheel or a touch. Only its scroll events
    * are synced to the other pane: the other pane’s own scroll events come from being synced, and
@@ -6,6 +8,11 @@
    * @type {HTMLElement | undefined}
    */
   let scrollSource;
+  /**
+   * Guard to leave the other pane alone once another field has been focused or either pane has
+   * been scrolled by the user.
+   */
+  const revealGuard = createLatestGuard();
 </script>
 
 <script>
@@ -23,14 +30,13 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
   import {
-    findFieldElement,
+    findLazyFieldElement,
     getFieldAlignedScrollTop,
     getProportionalScrollTop,
     getRevealingScrollTop,
   } from '$lib/services/contents/editor/scroll';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
-  import { createLatestGuard } from '$lib/services/utils/scheduling';
 
   /**
    * @import { EntryEditorPane } from '$lib/types/private';
@@ -136,6 +142,8 @@
    */
   const markScrollSource = () => {
     scrollSource = thisPaneContentArea;
+    // Stop revealing a focused field, which would undo the user’s scrolling
+    revealGuard.next();
   };
 
   /**
@@ -148,44 +156,89 @@
   };
 
   /**
-   * Scroll the other pane to the given field if it’s not visible there.
+   * Get the scroll position of the other pane that reveals the given element in it.
+   * @param {HTMLElement} pane The other pane’s content area.
+   * @param {HTMLElement} element Element in the pane.
+   * @param {boolean} [always] Whether to get the position even if the element is already visible.
+   * @returns {number | undefined} Scroll position, or `undefined` if the element is already
+   * visible.
+   */
+  const getThatScrollTop = (pane, element, always = false) => {
+    // The preview iframe’s root element is its viewport, while the content area of the main
+    // document is an element in it
+    const isRoot = pane === pane.ownerDocument.documentElement;
+    const { top, height } = element.getBoundingClientRect();
+    const { scrollTop, clientHeight } = pane;
+
+    return getRevealingScrollTop({
+      viewTop: isRoot ? 0 : pane.getBoundingClientRect().top,
+      viewHeight: clientHeight,
+      scrollTop,
+      top,
+      height,
+      always,
+    });
+  };
+
+  /**
+   * Scroll the other pane to the given field if it’s not visible there. The default preview renders
+   * List items lazily, so the pane may have to be scrolled towards the field until it’s rendered.
    * @param {HTMLElement} field Field element in this pane.
    */
-  const revealField = (field) => {
+  const revealField = async (field) => {
     if (!syncScrolling || !thisPaneContentArea || !thatPaneContentArea || !field.isConnected) {
       return;
     }
 
+    const isLatest = revealGuard.next();
+    const pane = thatPaneContentArea;
     // The field was found by that very attribute, so the key path is there
     const { keyPath } = /** @type {{ keyPath: string }} */ (field.dataset);
-    const element = findFieldElement(thatPaneContentArea, keyPath);
+
+    const element = await findLazyFieldElement({
+      container: pane,
+      keyPath,
+      /**
+       * Scroll the other pane to an element instantly, so it renders what comes into view.
+       * @param {HTMLElement} target Element.
+       * @returns {boolean} Whether the pane has been scrolled.
+       */
+      scrollTo: (target) => {
+        const { scrollTop } = pane;
+
+        // Make this pane the scroll source, so that the other pane being scrolled doesn’t scroll
+        // this one in turn
+        scrollSource = thisPaneContentArea;
+        pane.scrollTo({
+          // A position is always given when asked for one even if the element is visible
+          top: /** @type {number} */ (getThatScrollTop(pane, target, true)),
+          behavior: 'instant',
+        });
+
+        // Ignore a subpixel difference, which the browser may make when scrolling to where the
+        // pane already is
+        return Math.abs(pane.scrollTop - scrollTop) >= 1;
+      },
+      /**
+       * Tell whether another field has been focused, either pane has been scrolled by the user, or
+       * Sync Scrolling has been turned off since.
+       * @returns {boolean} Result.
+       */
+      isOutdated: () => !isLatest() || !syncScrolling,
+    });
 
     if (!element) {
       return;
     }
 
-    // The preview iframe’s root element is its viewport, while the content area of the main
-    // document is an element in it
-    const isRoot = thatPaneContentArea === thatPaneContentArea.ownerDocument.documentElement;
-    const { top, height } = element.getBoundingClientRect();
-    const { scrollTop, clientHeight } = thatPaneContentArea;
-
-    const thatScrollTop = getRevealingScrollTop({
-      viewTop: isRoot ? 0 : thatPaneContentArea.getBoundingClientRect().top,
-      viewHeight: clientHeight,
-      scrollTop,
-      top,
-      height,
-    });
+    const thatScrollTop = getThatScrollTop(pane, element);
 
     if (thatScrollTop === undefined) {
       return;
     }
 
-    // Make this pane the scroll source, so that the other pane being scrolled doesn’t scroll this
-    // one in turn
     scrollSource = thisPaneContentArea;
-    thatPaneContentArea.scrollTo({ top: thatScrollTop, behavior: 'smooth' });
+    pane.scrollTo({ top: thatScrollTop, behavior: 'smooth' });
   };
 
   /**

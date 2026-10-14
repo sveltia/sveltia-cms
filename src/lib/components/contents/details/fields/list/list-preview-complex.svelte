@@ -76,30 +76,34 @@
 </script>
 
 {#each itemTypes as type, index (getListItemKey(items, index))}
-  <VisibilityObserver>
-    {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
-    {#if hasVariableTypes && !typeConfig}
-      <!-- Unknown type: a warning is displayed in the editor -->
-    {:else}
-      {@const itemKeyPath = `${keyPath}.${index}`}
-      {@const label = typeConfig ? typeConfig.label || typeConfig.name : undefined}
-      {@const subFields = hasVariableTypes
-        ? /** @type {VariableFieldType} */ (typeConfig).fields
-        : singleSubFields}
-      <Subsection {label}>
-        {#each subFields as subField (subField.name)}
-          <VisibilityObserver>
-            <FieldPreview
-              keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
-              typedKeyPath={hasVariableTypes
-                ? `${typedKeyPath}.*<${type}>.${subField.name}`
-                : `${typedKeyPath}.*.${subField.name}`}
-              {locale}
-              fieldConfig={subField}
-            />
-          </VisibilityObserver>
-        {/each}
-      </Subsection>
-    {/if}
-  </VisibilityObserver>
+  {@const itemKeyPath = `${keyPath}.${index}`}
+  <!-- Mark the item outside its observer, so that focusing a field in it can scroll the preview to
+    the item even before it’s rendered -->
+  <div role="none" data-list-item-key-path={itemKeyPath}>
+    <VisibilityObserver>
+      {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
+      {#if hasVariableTypes && !typeConfig}
+        <!-- Unknown type: a warning is displayed in the editor -->
+      {:else}
+        {@const label = typeConfig ? typeConfig.label || typeConfig.name : undefined}
+        {@const subFields = hasVariableTypes
+          ? /** @type {VariableFieldType} */ (typeConfig).fields
+          : singleSubFields}
+        <Subsection {label}>
+          {#each subFields as subField (subField.name)}
+            <VisibilityObserver>
+              <FieldPreview
+                keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
+                typedKeyPath={hasVariableTypes
+                  ? `${typedKeyPath}.*<${type}>.${subField.name}`
+                  : `${typedKeyPath}.*.${subField.name}`}
+                {locale}
+                fieldConfig={subField}
+              />
+            </VisibilityObserver>
+          {/each}
+        </Subsection>
+      {/if}
+    </VisibilityObserver>
+  </div>
 {/each}

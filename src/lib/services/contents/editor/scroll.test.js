@@ -4,10 +4,25 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
   findFieldElement,
+  findLazyFieldElement,
   getFieldAlignedScrollTop,
   getProportionalScrollTop,
   getRevealingScrollTop,
 } from '$lib/services/contents/editor/scroll';
+
+/**
+ * Render the given HTML in a container.
+ * @param {string} html HTML.
+ * @returns {HTMLElement} Container.
+ */
+const render = (html) => {
+  const container = document.createElement('div');
+
+  container.innerHTML = html;
+  document.body.append(container);
+
+  return container;
+};
 
 describe('getProportionalScrollTop()', () => {
   test('scrolls the other pane in proportion to its own scrollable range', () => {
@@ -104,20 +119,6 @@ describe('findFieldElement()', () => {
     document.body.replaceChildren();
   });
 
-  /**
-   * Render the given HTML in a container.
-   * @param {string} html HTML.
-   * @returns {HTMLElement} Container.
-   */
-  const render = (html) => {
-    const container = document.createElement('div');
-
-    container.innerHTML = html;
-    document.body.append(container);
-
-    return container;
-  };
-
   test('finds the element showing the field', () => {
     const container = render(
       '<section data-key-path="items"><p data-key-path="items.0.title">A</p></section>',
@@ -151,6 +152,240 @@ describe('findFieldElement()', () => {
 
     expect(findFieldElement(container, 'items.0')).toBeUndefined();
   });
+
+  test('prefers the field’s own element to the List item of the same key path', () => {
+    const container = render(
+      '<div data-list-item-key-path="items.1"><p data-key-path="items.1">B</p></div>',
+    );
+
+    expect(findFieldElement(container, 'items.1')?.textContent).toBe('B');
+  });
+
+  test('falls back to the List item before the whole list', () => {
+    const container = render(
+      '<section data-key-path="items"><div data-list-item-key-path="items.1"></div></section>',
+    );
+
+    expect(findFieldElement(container, 'items.1.title')?.dataset.listItemKeyPath).toBe('items.1');
+    expect(findFieldElement(container, 'items.2.title')?.dataset.keyPath).toBe('items');
+  });
+});
+
+describe('findLazyFieldElement()', () => {
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  /**
+   * Render a list of three items, of which only the first is rendered, like the default preview.
+   * @returns {HTMLElement} Container.
+   */
+  const renderList = () =>
+    render(
+      [
+        '<section data-key-path="items">',
+        '<div data-list-item-key-path="items.0"><p data-key-path="items.0.title">A</p></div>',
+        '<div data-list-item-key-path="items.1"><div class="placeholder"></div></div>',
+        '<div data-list-item-key-path="items.2"><div class="placeholder"></div></div>',
+        '</section>',
+      ].join(''),
+    );
+
+  /**
+   * Render the given List item, like the preview does once it’s scrolled into view.
+   * @param {HTMLElement} container Container.
+   * @param {number} index Item index.
+   * @param {string} html Item content.
+   */
+  const renderItem = (container, index, html) => {
+    /** @type {HTMLElement} */ (
+      container.querySelector(`[data-list-item-key-path="items.${index}"]`)
+    ).innerHTML = html;
+  };
+
+  test('finds a rendered field without scrolling', async () => {
+    const container = renderList();
+    const scrollTo = vi.fn(() => true);
+
+    const element = await findLazyFieldElement({
+      container,
+      keyPath: 'items.0.title',
+      scrollTo,
+      interval: 0,
+    });
+
+    expect(element?.textContent).toBe('A');
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  test('gives up when no element shows the field or a parent', async () => {
+    const container = renderList();
+    const scrollTo = vi.fn(() => true);
+
+    expect(
+      await findLazyFieldElement({ container, keyPath: 'other', scrollTo, interval: 0 }),
+    ).toBeUndefined();
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  test('settles for a parent other than a List item without scrolling', async () => {
+    const container = renderList();
+    const scrollTo = vi.fn(() => true);
+
+    const element = await findLazyFieldElement({
+      container,
+      keyPath: 'items.3.title',
+      scrollTo,
+      interval: 0,
+    });
+
+    expect(element?.dataset.keyPath).toBe('items');
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  test('scrolls to the List item until its field is rendered', async () => {
+    const container = renderList();
+
+    const scrollTo = vi.fn((/** @type {HTMLElement} */ _target) => {
+      renderItem(container, 2, '<p data-key-path="items.2.title">C</p>');
+
+      return true;
+    });
+
+    const element = await findLazyFieldElement({
+      container,
+      keyPath: 'items.2.title',
+      scrollTo,
+      interval: 0,
+    });
+
+    expect(element?.textContent).toBe('C');
+    expect(scrollTo).toHaveBeenCalledOnce();
+    expect(scrollTo.mock.calls[0][0].dataset.listItemKeyPath).toBe('items.2');
+  });
+
+  test('scrolls to the last rendered field of the item, then further', async () => {
+    const container = renderList();
+
+    renderItem(
+      container,
+      1,
+      '<p data-key-path="items.1.title">B</p><p data-key-path="items.1.body">Body</p><div></div>',
+    );
+
+    const scrollTo = vi.fn((/** @type {HTMLElement} */ _target) => {
+      // The body’s neighbour is only rendered once the pane has been scrolled to it twice
+      if (scrollTo.mock.calls.length === 2) {
+        renderItem(
+          container,
+          1,
+          '<p data-key-path="items.1.title">B</p><p data-key-path="items.1.body">Body</p>' +
+            '<p data-key-path="items.1.image">Image</p>',
+        );
+      }
+
+      return true;
+    });
+
+    const element = await findLazyFieldElement({
+      container,
+      keyPath: 'items.1.image',
+      scrollTo,
+      interval: 0,
+    });
+
+    expect(element?.textContent).toBe('Image');
+    expect(scrollTo.mock.calls.map(([target]) => target.dataset.keyPath)).toEqual([
+      'items.1.body',
+      'items.1.body',
+    ]);
+  });
+
+  test('settles for the parent once the pane can’t get any closer', async () => {
+    const container = renderList();
+    const scrollTo = vi.fn(() => scrollTo.mock.calls.length === 1);
+
+    const element = await findLazyFieldElement({
+      container,
+      keyPath: 'items.2.title',
+      scrollTo,
+      interval: 0,
+    });
+
+    expect(element?.dataset.listItemKeyPath).toBe('items.2');
+    expect(scrollTo).toHaveBeenCalledTimes(2);
+  });
+
+  test('keeps going while the target changes, even without scrolling', async () => {
+    const container = renderList();
+
+    const scrollTo = vi.fn(() => {
+      if (scrollTo.mock.calls.length === 2) {
+        renderItem(container, 2, '<p data-key-path="items.2.title">C</p>');
+      } else {
+        renderItem(container, 2, '<p data-key-path="items.2.other">D</p>');
+      }
+
+      return false;
+    });
+
+    const element = await findLazyFieldElement({
+      container,
+      keyPath: 'items.2.title',
+      scrollTo,
+      interval: 0,
+    });
+
+    expect(element?.textContent).toBe('C');
+  });
+
+  test('abandons an outdated request', async () => {
+    const container = renderList();
+    const scrollTo = vi.fn(() => true);
+
+    expect(
+      await findLazyFieldElement({
+        container,
+        keyPath: 'items.2.title',
+        scrollTo,
+        isOutdated: vi.fn(() => true),
+        interval: 0,
+      }),
+    ).toBeUndefined();
+    expect(scrollTo).toHaveBeenCalledOnce();
+  });
+
+  test('gives up after the given number of attempts', async () => {
+    const container = renderList();
+    const scrollTo = vi.fn(() => true);
+
+    const element = await findLazyFieldElement({
+      container,
+      keyPath: 'items.2.title',
+      scrollTo,
+      maxAttempts: 3,
+      interval: 0,
+    });
+
+    expect(element?.dataset.listItemKeyPath).toBe('items.2');
+    expect(scrollTo).toHaveBeenCalledTimes(3);
+  });
+
+  test('uses the default options', async () => {
+    const container = renderList();
+
+    renderItem(container, 2, '<p data-key-path="items.2.title">C</p>');
+
+    expect(
+      (
+        await findLazyFieldElement({
+          container,
+          keyPath: 'items.2.title',
+          scrollTo: vi.fn(() => true),
+        })
+      )?.textContent,
+    ).toBe('C');
+  });
 });
 
 describe('getRevealingScrollTop()', () => {
@@ -178,6 +413,11 @@ describe('getRevealingScrollTop()', () => {
   test('leaves a partly visible element taller than the pane alone', () => {
     expect(getRevealingScrollTop({ ...view, top: -200, height: 1000 })).toBeUndefined();
     expect(getRevealingScrollTop({ ...view, top: 500, height: 1000 })).toBeUndefined();
+  });
+
+  test('gets the position of a visible element when asked to', () => {
+    expect(getRevealingScrollTop({ ...view, top: 300, height: 100, always: true })).toBe(1000);
+    expect(getRevealingScrollTop({ ...view, top: -200, height: 1000, always: true })).toBe(700);
   });
 
   test('aligns an element taller than the pane to the top', () => {

@@ -363,6 +363,78 @@ describe('PaneBody', () => {
     }
   });
 
+  test('scrolls the other pane to a focused field it hasn’t rendered yet', async () => {
+    entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: true };
+
+    const thatPane = createThatPane();
+    const [above, item] = /** @type {HTMLElement[]} */ ([...thatPane.children]);
+
+    // A List item whose field is only rendered once the item is scrolled into view, along with the
+    // content above it, which moves the field down
+    item.removeAttribute('data-key-path');
+    item.dataset.listItemKeyPath = 'title';
+    thatPane.addEventListener(
+      'scroll',
+      () => {
+        above.style.height = '400px';
+        item.style.height = '';
+        item.innerHTML = '<div data-key-path="title" style="height: 50px"></div>';
+      },
+      { once: true },
+    );
+
+    const { props } = await renderPane({ mode: 'edit', locale: 'en' });
+
+    try {
+      await expect.poll(() => props.thisPaneContentArea).toBeDefined();
+      props.thatPaneContentArea = thatPane;
+      await page.getByRole('textbox', { name: 'Title' }).click();
+      // The rendered field is brought to the middle
+      await expect.poll(() => thatPane.scrollTop).toBe(375);
+    } finally {
+      thatPane.remove();
+      entryEditorSettings.current = undefined;
+    }
+  });
+
+  test('stops scrolling the other pane to a focused field once the user scrolls', async () => {
+    entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: true };
+
+    const thatPane = createThatPane();
+    const [above, item] = /** @type {HTMLElement[]} */ ([...thatPane.children]);
+
+    // A List item whose field never renders, while the content above it keeps growing, so the
+    // other pane would keep being scrolled towards it
+    item.removeAttribute('data-key-path');
+    item.dataset.listItemKeyPath = 'title';
+    thatPane.addEventListener('scroll', () => {
+      above.style.height = `${above.offsetHeight + 100}px`;
+    });
+
+    const { props } = await renderPane({ mode: 'edit', locale: 'en' });
+
+    try {
+      await expect.poll(() => props.thisPaneContentArea).toBeDefined();
+
+      const area = /** @type {HTMLElement} */ (props.thisPaneContentArea);
+
+      props.thatPaneContentArea = thatPane;
+      await page.getByRole('textbox', { name: 'Title' }).click();
+      await expect.poll(() => thatPane.scrollTop).toBeGreaterThan(0);
+
+      // The user scrolls, and the other pane is left where they take it
+      area.dispatchEvent(new WheelEvent('wheel', { bubbles: true }));
+      thatPane.scrollTo({ top: 0, behavior: 'instant' });
+      await new Promise((resolve) => {
+        setTimeout(resolve, 300);
+      });
+      expect(thatPane.scrollTop).toBe(0);
+    } finally {
+      thatPane.remove();
+      entryEditorSettings.current = undefined;
+    }
+  });
+
   test('scrolls the preview iframe to the focused field', async () => {
     entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: true };
 

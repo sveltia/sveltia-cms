@@ -60,6 +60,11 @@ describe('ListPreviewComplex', () => {
       'data-typed-key-path',
       'authors.*.name',
     );
+    // Each item is marked outside its lazily rendered content, for the Edit Pane to scroll to it
+    expect(groups[1].closest('[data-list-item-key-path]')).toHaveAttribute(
+      'data-list-item-key-path',
+      'authors.1',
+    );
   });
 
   test('previews a single subfield stored as the item itself', async () => {
