@@ -3,11 +3,10 @@
   Implement the editor for a Color field.
   @see https://decapcms.org/docs/widgets/#color
   @see https://sveltiacms.app/en/docs/fields/color
-  @todo Replace the native `<input>` with a custom component.
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Slider, TextInput } from '@sveltia/ui';
+  import { Button, ColorInput, Slider, TextInput } from '@sveltia/ui';
 
   import {
     getColorFieldInputValues,
@@ -110,14 +109,12 @@
 </script>
 
 <div role="none">
-  <input
+  <ColorInput
     id="{id}-picker"
-    type="color"
     bind:value={inputValue}
-    disabled={readonly}
-    aria-invalid={invalid}
-    aria-readonly={readonly}
-    aria-required={required}
+    {readonly}
+    {required}
+    {invalid}
     aria-labelledby="{fieldId}-label"
     aria-errormessage="{fieldId}-error"
   />
@@ -185,9 +182,5 @@
         }
       }
     }
-  }
-
-  input {
-    font-family: var(--sui-textbox-font-family);
   }
 </style>

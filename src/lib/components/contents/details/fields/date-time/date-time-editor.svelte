@@ -3,11 +3,10 @@
   Implement the editor for a DateTime field.
   @see https://decapcms.org/docs/widgets/#Datetime
   @see https://sveltiacms.app/en/docs/fields/datetime
-  @todo Replace the native `<input>` with a custom component.
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button } from '@sveltia/ui';
+  import { Button, DateTimeInput } from '@sveltia/ui';
 
   import DateTimePreview from '$lib/components/contents/details/fields/date-time/date-time-preview.svelte';
   import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now';
@@ -147,13 +146,15 @@
   <DateTimePreview {locale} {keyPath} {typedKeyPath} {fieldConfig} {currentValue} />
 {:else}
   <div role="none">
-    <input
-      {...{ type, min, max, step }}
+    <DateTimeInput
+      {type}
+      {min}
+      {max}
+      {step}
       bind:value={inputValue}
       {readonly}
-      aria-readonly={readonly}
-      aria-required={required}
-      aria-invalid={invalid}
+      {required}
+      {invalid}
       aria-labelledby="{fieldId}-label"
       aria-errormessage="{fieldId}-error"
       onfocus={handleFocus}

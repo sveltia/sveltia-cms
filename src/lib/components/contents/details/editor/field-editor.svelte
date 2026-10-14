@@ -431,7 +431,11 @@
         width: 100%;
       }
 
-      input:is([type='color'], [type='number']) {
+      /* A native color, date or time input is still styled for a custom field type that renders one.
+        The built-in editors use Sveltia UI components instead, which have the `sui` class and styles
+        of their own, so they’re left out */
+
+      input:is([type='color']:not(.sui), [type='number']) {
         border-width: 1px;
         border-color: var(--sui-primary-border-color);
         border-radius: var(--sui-control-medium-border-radius);
@@ -448,7 +452,7 @@
         color: inherit;
       }
 
-      input:is([type='date'], [type='datetime-local'], [type='time']) {
+      input:is([type='date'], [type='datetime-local'], [type='time']):not(.sui) {
         margin: var(--sui-focus-ring-width);
         border-width: var(--sui-textbox-border-width, 1px);
         border-color: var(--sui-primary-border-color);
@@ -472,7 +476,7 @@
           [type='date'],
           [type='datetime-local'],
           [type='time']
-        ) {
+        ):not(.sui) {
         border-color: var(--sui-error-border-color);
       }
 

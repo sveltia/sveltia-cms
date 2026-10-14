@@ -173,7 +173,14 @@ describe('ColorEditor', () => {
 
     const slider = page.getByRole('slider', { name: 'Opacity' });
 
-    expect(getPicker(container)).toBeDisabled();
+    // The picker stays focusable, so the color can still be reached and read, but it doesn’t open
+    expect(getPicker(container)).not.toBeDisabled();
+    expect(getPicker(container)).toHaveAttribute('aria-readonly', 'true');
+    expect(
+      getPicker(container).dispatchEvent(
+        new MouseEvent('click', { bubbles: true, cancelable: true }),
+      ),
+    ).toBe(false);
     await expect.element(slider).toHaveAttribute('aria-readonly', 'true');
     expect(container.querySelector('input[type="text"]')).toHaveAttribute('readonly');
     expect(page.getByRole('button', { name: 'Clear' }).elements()).toHaveLength(0);
