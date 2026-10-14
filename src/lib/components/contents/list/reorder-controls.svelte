@@ -9,6 +9,7 @@
   import { Alert, Button, Toast } from '@sveltia/ui';
   import { tick } from 'svelte';
 
+  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { reorderEntries } from '$lib/services/contents/collection/entries/reorder';
   import {
@@ -72,9 +73,13 @@
       saving = false;
       exit();
     } catch (/** @type {any} */ ex) {
-      // eslint-disable-next-line no-console
-      console.error(ex);
-      errorToast = true;
+      // The user has cancelled the commit at the commit message prompt, which isn’t a failure
+      if (!isCommitCancelled(ex)) {
+        // eslint-disable-next-line no-console
+        console.error(ex);
+        errorToast = true;
+      }
+
       saving = false;
       // The button lost the focus while it was disabled during the save, so give it back
       await tick();

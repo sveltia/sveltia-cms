@@ -101,4 +101,26 @@ describe('CreateSubfolderDialog', () => {
       error.mockRestore();
     }
   }, 15000);
+
+  test('says nothing when the commit is cancelled', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(createSubfolder).mockRejectedValue(new Error('commit_cancelled'));
+
+    try {
+      await render(CreateSubfolderDialog, { open: true, dirPath: '', takenNames: [] });
+
+      const dialog = page.getByRole('dialog', { name: 'New Folder' });
+
+      await dialog.getByRole('textbox', { name: 'Folder Name' }).fill('new');
+      await dialog.getByRole('button', { name: 'Create' }).click();
+
+      await vi.waitFor(() => expect(createSubfolder).toHaveBeenCalledWith('new'));
+      await expect.poll(() => getShownAlert('info')).toBeUndefined();
+      expect(getShownAlert('error')).toBeUndefined();
+      expect(error).not.toHaveBeenCalled();
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
 });

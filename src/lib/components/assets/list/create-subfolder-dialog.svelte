@@ -10,6 +10,7 @@
 
   import SubfolderNameDialog from '$lib/components/assets/list/subfolder-name-dialog.svelte';
   import { createSubfolder } from '$lib/services/assets/data/subfolder';
+  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
   import { createPath } from '$lib/services/utils/file';
 
   /**
@@ -44,9 +45,12 @@
     try {
       await createSubfolder(createPath([dirPath, name]));
     } catch (/** @type {any} */ ex) {
-      creationFailed = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
+      // The user has cancelled the commit at the commit message prompt, which isn’t a failure
+      if (!isCommitCancelled(ex)) {
+        creationFailed = true;
+        // eslint-disable-next-line no-console
+        console.error(ex);
+      }
     } finally {
       creating = false;
     }

@@ -115,6 +115,36 @@ describe('EditAssetDialog', () => {
     }
   }, 15000);
 
+  test('reopens with the edited text when the commit is cancelled, without reporting a failure', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(saveAssets).mockRejectedValueOnce(new Error('commit_cancelled'));
+
+    try {
+      await render(EditAssetDialog);
+
+      editingAsset.current = asset;
+
+      const dialog = page.getByRole('dialog');
+      const textarea = dialog.getByRole('textbox');
+
+      await expect.element(textarea).toHaveValue('Hello');
+      await textarea.fill('Hello, world!');
+      await dialog.getByRole('button', { name: 'Save' }).click();
+
+      await vi.waitFor(() => expect(saveAssets).toHaveBeenCalledOnce());
+      // The dialog is back with the edited text, so saving can be retried
+      await expect.element(textarea).toHaveValue('Hello, world!');
+      expect(editingAsset.current).toBe(asset);
+      expect(
+        document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
+      ).toBeNull();
+      expect(error).not.toHaveBeenCalled();
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
+
   test('lets go of the asset when saving fails after the asset details overlay has closed', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     /**

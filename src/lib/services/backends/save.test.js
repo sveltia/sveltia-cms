@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
+import { promptCommitMessage } from '$lib/services/backends/commit-prompt';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { checkForRemoteChanges, suspendChecksWhile } from '$lib/services/backends/refresh';
 import { allEntries } from '$lib/services/contents';
@@ -45,6 +46,10 @@ vi.mock('$lib/services/assets/info', () => ({
 
 vi.mock('$lib/services/backends', () => ({
   backend: { current: undefined },
+}));
+
+vi.mock('$lib/services/backends/commit-prompt', () => ({
+  promptCommitMessage: vi.fn(async (_changes, options) => options),
 }));
 
 vi.mock('$lib/services/backends/git/shared/head', () => ({
@@ -96,6 +101,7 @@ describe('save', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(suspendChecksWhile).mockImplementation((commit) => commit());
+    vi.mocked(promptCommitMessage).mockImplementation(async (_changes, options) => options);
     vi.mocked(combineArrayFileChanges).mockImplementation(async (changes) => ({
       changes,
       arrayFileUpdates: [],
@@ -723,6 +729,44 @@ describe('save', () => {
       await saveChanges({ changes: simpleChanges, options: simpleOptions });
 
       expect(order).toEqual(['check', 'commit']);
+    });
+
+    test('should ask for a commit message before checking, and commit with the answer', async () => {
+      /** @type {string[]} */
+      const order = [];
+
+      vi.mocked(promptCommitMessage).mockImplementation(async (_changes, options) => {
+        order.push('prompt');
+
+        return { ...options, userMessage: 'JIRA-1' };
+      });
+
+      vi.mocked(checkForRemoteChanges).mockImplementation(async () => {
+        order.push('check');
+
+        return undefined;
+      });
+
+      await saveChanges({ changes: simpleChanges, options: simpleOptions });
+
+      expect(order).toEqual(['prompt', 'check']);
+      expect(promptCommitMessage).toHaveBeenCalledWith(simpleChanges, simpleOptions);
+      expect(mockCommitChanges).toHaveBeenCalledWith(simpleChanges, {
+        ...simpleOptions,
+        userMessage: 'JIRA-1',
+      });
+    });
+
+    test('should neither check nor commit when the user cancels the commit', async () => {
+      const error = new Error('commit_cancelled');
+
+      vi.mocked(promptCommitMessage).mockRejectedValue(error);
+
+      await expect(saveChanges({ changes: simpleChanges, options: simpleOptions })).rejects.toBe(
+        error,
+      );
+      expect(checkForRemoteChanges).not.toHaveBeenCalled();
+      expect(mockCommitChanges).not.toHaveBeenCalled();
     });
 
     test('should commit anyway when the check fails, reporting the failure', async () => {

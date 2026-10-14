@@ -1,3 +1,4 @@
+import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
 import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
 import { saveEntry } from '$lib/services/contents/draft/save';
 import { validateDraft } from '$lib/services/contents/draft/validate';
@@ -20,7 +21,8 @@ import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
  * { type: 'saved', savedEntry: Entry, statusError?: string, path?: string,
  * next?: 'close' | 'reset' } | { type: 'invalid', errorCount: number } |
  * { type: 'error', message: string }} SaveOutcome
- * - `skipped`: nothing was saved, because the draft was closed or turned out to be unchanged.
+ * - `skipped`: nothing was saved, because the draft was closed or turned out to be unchanged, or
+ * the user cancelled the commit when asked for a commit message.
  * - `saved`: the entry was saved. `statusError` is the message to show when it couldn’t be sent
  * for review. `path` is the URL to replace the `new` route with, for a new entry. `next` says
  * whether to close the editor or reset the draft; neither is done when another draft is now open.
@@ -126,6 +128,11 @@ export const saveEntryDraftFlow = async ({
 
     return { type: 'saved', savedEntry, statusError, path, next };
   } catch (/** @type {any} */ ex) {
+    // The user has dismissed the commit message prompt; the draft is left as it is to save again
+    if (isCommitCancelled(ex)) {
+      return { type: 'skipped' };
+    }
+
     const failure = getSaveFailure(ex);
 
     if (failure.type === 'validation') {

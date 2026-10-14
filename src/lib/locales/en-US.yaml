@@ -2288,6 +2288,22 @@ workflow:
   # the site rather than published to it
   deploying_deletion: Deletion
 
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: Commit Message
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: Describe your changes. The message is recorded in the history along with them.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: Add a note to the message recorded in the history along with your changes, such as an issue number. It can be left empty.
+  # Accessible name of the text box when the user writes the whole message
+  message: Commit message
+  # Accessible name of the text box when the text is added before or after the message
+  addition: Note
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'Message: {$message}'
+
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
 open_authoring:

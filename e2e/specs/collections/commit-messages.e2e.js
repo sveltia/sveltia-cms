@@ -174,3 +174,96 @@ test.describe('with `skip_ci` on', () => {
       .toEqual(['[skip ci] Update FAQ “who-can-join”', 'Delete FAQ “who-can-join” +1']);
   });
 });
+
+test.describe('with `prompt_commit_messages` set to `prefix`', () => {
+  test.use({
+    config: {
+      ...COLLECTION_OPTIONS_CONFIG,
+      backend: { ...GITHUB_CONFIG.backend, prompt_commit_messages: 'prefix' },
+    },
+  });
+
+  test('adds the note the user enters before the message', async ({ github, page }) => {
+    const editor = await openFAQ(page, /Who can join\?/);
+
+    await editor.getByRole('textbox', { name: 'Answer' }).fill('Anyone in the neighborhood.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Commit Message' });
+
+    await dialog.getByRole('textbox', { name: 'Note' }).fill('JIRA-7:');
+    await expect(dialog).toContainText('Message: \u2068JIRA-7: Update FAQ “who-can-join”\u2069');
+    await dialog.getByRole('button', { name: 'OK' }).click();
+
+    await expect.poll(() => getHeadlines(github)).toEqual(['JIRA-7: Update FAQ “who-can-join”']);
+
+    // The note is offered again for the next commit, which usually belongs to the same issue
+    await openFAQ(page, /Who can join\?/);
+    await editor.getByRole('textbox', { name: 'Answer' }).fill('Anyone nearby.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect(dialog.getByRole('textbox', { name: 'Note' })).toHaveValue('JIRA-7:');
+    await dialog.getByRole('textbox', { name: 'Note' }).press('Enter');
+
+    await expect
+      .poll(() => getHeadlines(github))
+      .toEqual(['JIRA-7: Update FAQ “who-can-join”', 'JIRA-7: Update FAQ “who-can-join”']);
+  });
+
+  test('saves nothing when the user cancels, and uses the template for an empty note', async ({
+    github,
+    page,
+  }) => {
+    const editor = await openFAQ(page, /Who can join\?/);
+    const dialog = page.getByRole('alertdialog', { name: 'Commit Message' });
+
+    await editor.getByRole('textbox', { name: 'Answer' }).fill('Anyone in the neighborhood.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toBeHidden();
+
+    // The editor stays open with the changes, and no error is shown
+    await expect(editor.getByRole('textbox', { name: 'Answer' })).toHaveValue(
+      'Anyone in the neighborhood.',
+    );
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    expect(github.received).toHaveLength(0);
+
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await dialog.getByRole('button', { name: 'OK' }).click();
+
+    await expect.poll(() => getHeadlines(github)).toEqual(['Update FAQ “who-can-join”']);
+  });
+});
+
+test.describe('with `prompt_commit_messages` set to `true`', () => {
+  test.use({
+    config: {
+      ...COLLECTION_OPTIONS_CONFIG,
+      backend: { ...GITHUB_CONFIG.backend, prompt_commit_messages: true },
+    },
+  });
+
+  test('replaces the message with the one the user writes', async ({ cms, github, page }) => {
+    await openFAQ(page, /Are tools provided\?/);
+    await cms.chooseMenuItem(
+      page.getByRole('button', { name: 'Show Editor Options' }),
+      page.getByRole('menuitem', { name: 'Delete Entry' }),
+    );
+    await page
+      .getByRole('alertdialog', { name: 'Delete Entry' })
+      .getByRole('button', { name: 'Delete' })
+      .click();
+
+    const textbox = page
+      .getByRole('alertdialog', { name: 'Commit Message' })
+      .getByRole('textbox', { name: 'Commit message' });
+
+    // The message made from the template is there to edit
+    await expect(textbox).toHaveValue('Delete FAQ “are-tools-provided”');
+    await textbox.fill('Retire the tools FAQ');
+    await textbox.press('Enter');
+
+    await expect.poll(() => getHeadlines(github)).toEqual(['Retire the tools FAQ']);
+    expect(github.readFile('content/faqs/are-tools-provided.md')).toBeUndefined();
+  });
+});

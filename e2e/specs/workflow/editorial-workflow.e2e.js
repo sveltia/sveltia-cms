@@ -64,6 +64,40 @@ test('saves a new entry to a branch and opens a draft pull request', async ({
   ]);
 });
 
+test.describe('with `prompt_commit_messages` set to `suffix`', () => {
+  test.use({
+    config: {
+      ...WORKFLOW_CONFIG,
+      backend: { ...WORKFLOW_CONFIG.backend, prompt_commit_messages: 'suffix' },
+    },
+  });
+
+  test('adds the note to the commit and the pull request title', async ({ cms, github, page }) => {
+    await cms.open();
+    await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+
+    const editor = getEditor(page);
+    const dialog = page.getByRole('alertdialog', { name: 'Commit Message' });
+
+    await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
+    await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await dialog.getByRole('textbox', { name: 'Note' }).fill('(#12)');
+    await dialog.getByRole('button', { name: 'OK' }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Send for Review' })
+      .getByRole('button', { name: 'Later' })
+      .click();
+
+    await expect
+      .poll(() => github.pullRequests)
+      .toMatchObject([{ title: 'Create Post “second-post” (#12)', head: 'cms/posts/second-post' }]);
+    expect(github.received.map(({ message }) => message.headline)).toEqual([
+      'Create Post “second-post” (#12)',
+    ]);
+  });
+});
+
 test('saves a change to a published entry to a pull request', async ({ cms, github, page }) => {
   await cms.open();
 

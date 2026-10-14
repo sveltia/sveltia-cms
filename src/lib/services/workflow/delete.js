@@ -68,10 +68,16 @@ export const deleteOrDiscardEntries = async ({
   collectionFile = undefined,
   useWorkflow,
 }) => {
-  if (drafts.length) {
-    await discardWorkflowEntries(drafts);
-    await deleteBackups({ entries: drafts, collection, collectionFile });
-  }
+  /**
+   * Discard the drafts. It’s done after the published entries are deleted, which may ask the user
+   * for a commit message: cancelling it then leaves the whole selection as it was.
+   */
+  const discardDrafts = async () => {
+    if (drafts.length) {
+      await discardWorkflowEntries(drafts);
+      await deleteBackups({ entries: drafts, collection, collectionFile });
+    }
+  };
 
   if (items.length) {
     const entries = items.map(({ entry }) => entry);
@@ -85,6 +91,7 @@ export const deleteOrDiscardEntries = async ({
       );
       // The deletion asked for drops the unsaved changes as well
       await deleteBackups({ entries, collection, collectionFile });
+      await discardDrafts();
 
       // The entries stay on the site until the deletion is published
       return { deleted: true, deletionPending: true, count: items.length };
@@ -96,9 +103,12 @@ export const deleteOrDiscardEntries = async ({
       items.flatMap(({ assets }) => assets),
     );
     await deleteBackups({ entries, collection, collectionFile });
+    await discardDrafts();
 
     return undefined;
   }
+
+  await discardDrafts();
 
   // Nothing was published, so the entries really are gone
   return drafts.length ? { deleted: true, count: drafts.length } : undefined;

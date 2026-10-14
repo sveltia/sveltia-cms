@@ -11,6 +11,7 @@
   import { getAssetFolderHistoryState } from '$lib/services/assets/navigation';
   import { renamingAsset } from '$lib/services/assets/state';
   import { getFolderNamesInDir } from '$lib/services/assets/subfolders';
+  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
   import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { watchAsync } from '$lib/services/utils/state.svelte';
@@ -66,9 +67,12 @@
     try {
       await moveAssets('rename', [{ asset, path: newPath }]);
     } catch (/** @type {any} */ ex) {
-      renamingFailed = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
+      // The user has cancelled the commit at the commit message prompt, which isn’t a failure
+      if (!isCommitCancelled(ex)) {
+        renamingFailed = true;
+        // eslint-disable-next-line no-console
+        console.error(ex);
+      }
 
       return;
     }

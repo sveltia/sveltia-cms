@@ -3,6 +3,7 @@ import { unique } from '@sveltia/utils/array';
 import { callEventHooks } from '$lib/services/api/events';
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
+import { promptCommitMessage } from '$lib/services/backends/commit-prompt';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
@@ -269,6 +270,8 @@ export const saveWorkflowChanges = async ({
   originalEntry,
 }) => {
   const workflow = getWorkflowService();
+  // The message the user enters goes into the title of a new pull request as well as the commit
+  const commitOptions = await promptCommitMessage(changes, options);
 
   const { existingEntry, branch } = resolveWorkflowBranch({
     collectionName,
@@ -278,11 +281,11 @@ export const saveWorkflowChanges = async ({
 
   const { commit, pullRequest } = await workflow.savePullRequest({
     changes,
-    options,
+    options: commitOptions,
     branch,
     // The commit message the backend writes names the paths relative to the repository root, so
     // the title does as well
-    title: createCommitMessage(toRepoChanges(changes), options),
+    title: createCommitMessage(toRepoChanges(changes), commitOptions),
     status: 'draft',
     pullRequest: existingEntry?.workflow.pullRequest,
   });
@@ -518,7 +521,10 @@ export const discardWorkflowEntry = async (entry) => {
  * @param {CascadeTarget[]} [options.targets] Referencing entries to rewrite, already worked out
  * by {@link deleteWorkflowEntries} for a whole selection. Worked out for the entry alone if
  * omitted.
+ * @param {string} [options.userMessage] Commit message the user has entered, already asked for by
+ * {@link deleteWorkflowEntries} for a whole selection. Asked for if omitted and configured.
  * @returns {Promise<UnpublishedEntry>} Entry with the pull request attached.
+ * @throws {Error} When the user has cancelled the commit when asked for a commit message.
  * @throws {Error} When removing the references would leave another entry invalid. The dialogs
  * report this before the deletion is confirmed, so this is only a safeguard.
  * @see https://github.com/sveltia/sveltia-cms/issues/770
@@ -528,7 +534,7 @@ export const deleteWorkflowEntry = async (
   collection,
   collectionFile,
   assets = [],
-  { targets = undefined } = {},
+  { targets = undefined, userMessage = undefined } = {},
 ) => {
   // Taking a published entry off the site is a maintainer’s call. A contributor can discard their
   // own draft, which leaves the published version alone, but not propose a removal
@@ -552,6 +558,15 @@ export const deleteWorkflowEntry = async (
   // staged the deletion of the old paths there, so removing the new ones leaves nothing behind once
   // the merge lands
   const paths = getEntryPaths(entry);
+  /** @type {FileChange[]} */
+  const titleChanges = [{ action: 'delete', slug, path: paths[0] }];
+
+  const options = await promptCommitMessage(titleChanges, {
+    commitType: 'delete',
+    collection,
+    userMessage,
+  });
+
   // An entry-relative asset lives with the entry, so it goes in the same pull request rather than
   // being left behind once the removal lands
   const assetPaths = unique(assets.map(({ path }) => path));
@@ -568,12 +583,9 @@ export const deleteWorkflowEntry = async (
       ),
       ...cascadeChanges,
     ],
-    options: { commitType: 'delete', collection },
+    options,
     branch,
-    title: createCommitMessage(toRepoChanges([{ action: 'delete', slug, path: paths[0] }]), {
-      commitType: 'delete',
-      collection,
-    }),
+    title: createCommitMessage(toRepoChanges(titleChanges), options),
     // The removal is complete as committed, so it skips the review stages entirely. Opening it at
     // this status avoids the churn of creating a draft and relabelling it a moment later
     status: 'pending_deletion',
@@ -664,11 +676,22 @@ export const deleteWorkflowEntries = async (items) => {
     );
   });
 
+  // Ask for a commit message once for the whole selection rather than for each pull request. Each
+  // pull request is titled after its own entry, so the first one stands for the rest
+  const [{ entry: firstEntry, collection: firstCollection }] = items;
+
+  const { userMessage } = await promptCommitMessage(
+    [{ action: 'delete', slug: firstEntry.slug, path: getEntryPaths(firstEntry)[0] }],
+    { commitType: 'delete', collection: firstCollection },
+  );
+
   await runConcurrently(items, async (item) => {
     const { entry, collection, collectionFile, assets } = item;
 
     await deleteWorkflowEntry(entry, collection, collectionFile, assets, {
       targets: targetMap.get(getKey(item)),
+      // A string, even an empty one, tells the user has been asked already
+      userMessage,
     });
   });
 };

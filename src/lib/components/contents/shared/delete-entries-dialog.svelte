@@ -3,6 +3,7 @@
   import { Alert, ConfirmationDialog, Toast } from '@sveltia/ui';
 
   import CascadeDeleteNote from '$lib/components/common/cascade-delete-note.svelte';
+  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
   import { getErrorMessage } from '$lib/services/backends/git/shared/errors';
   import { selectedCollection } from '$lib/services/contents/collection';
   import {
@@ -87,10 +88,13 @@
         contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, ...toastState };
       }
     } catch (/** @type {any} */ ex) {
-      errorMessage = getErrorMessage(ex, 'deleting_entry_failed');
-      showErrorToast = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
+      // The user has cancelled the commit at the commit message prompt, which isn’t a failure
+      if (!isCommitCancelled(ex)) {
+        errorMessage = getErrorMessage(ex, 'deleting_entry_failed');
+        showErrorToast = true;
+        // eslint-disable-next-line no-console
+        console.error(ex);
+      }
 
       return;
     }

@@ -26,6 +26,7 @@
   import { overlaidAsset } from '$lib/services/assets/state';
   import { browsedDirPath } from '$lib/services/assets/subfolders';
   import { assetGroups, getAdjacentAssets } from '$lib/services/assets/view';
+  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
   import { isSearchResultsPath } from '$lib/services/search/navigation';
   import { encodePathSegments } from '$lib/services/utils/url';
 
@@ -119,9 +120,12 @@
         try {
           await deleteAssets(_assets);
         } catch (/** @type {any} */ ex) {
-          deletingFailed = true;
-          // eslint-disable-next-line no-console
-          console.error(ex);
+          // The user has cancelled the commit at the commit message prompt, which isn’t a failure
+          if (!isCommitCancelled(ex)) {
+            deletingFailed = true;
+            // eslint-disable-next-line no-console
+            console.error(ex);
+          }
 
           // Stay on the asset, which is still there
           return false;

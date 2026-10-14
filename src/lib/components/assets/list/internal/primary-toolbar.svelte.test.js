@@ -152,6 +152,31 @@ describe('PrimaryToolbar', () => {
     }
   }, 15000);
 
+  test('says nothing when the commit is cancelled', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(deleteAssets).mockRejectedValueOnce(new Error('commit_cancelled'));
+
+    try {
+      await render(PrimaryToolbar);
+
+      // The selection is reset whenever the listed assets change, so select the assets afterwards
+      await tick();
+      selectedAssets.current = [...assets];
+
+      await page.getByRole('button', { name: 'Delete Selected Assets' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+      await vi.waitFor(() => expect(deleteAssets).toHaveBeenCalledWith(assets));
+      await expect.element(page.getByRole('alertdialog')).not.toBeInTheDocument();
+      expect(
+        document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
+      ).toBeNull();
+      expect(error).not.toHaveBeenCalled();
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
+
   test('disables uploading and deleting while contributing via a fork', async () => {
     forkedRepository.current = /** @type {any} */ ({ owner: 'me', repo: 'site' });
     focusedAsset.current = firstAsset;

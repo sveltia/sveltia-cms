@@ -107,7 +107,31 @@ describe('deleteOrDiscardEntries', () => {
         useWorkflow: false,
       }),
     ).rejects.toThrow('Boom');
-    expect(deleteEntries).not.toHaveBeenCalled();
+  });
+
+  test('discards no draft when the user cancels the commit of the deletion', async () => {
+    vi.mocked(deleteEntries).mockRejectedValue(new Error('commit_cancelled'));
+
+    await expect(
+      deleteOrDiscardEntries({
+        drafts: [draft],
+        items: [{ entry: entryA, assets: [] }],
+        useWorkflow: false,
+      }),
+    ).rejects.toThrow('commit_cancelled');
+    expect(discardWorkflowEntries).not.toHaveBeenCalled();
+
+    vi.mocked(deleteWorkflowEntries).mockRejectedValue(new Error('commit_cancelled'));
+
+    await expect(
+      deleteOrDiscardEntries({
+        drafts: [draft],
+        items: [{ entry: entryA, assets: [] }],
+        collection,
+        useWorkflow: true,
+      }),
+    ).rejects.toThrow('commit_cancelled');
+    expect(discardWorkflowEntries).not.toHaveBeenCalled();
   });
 
   test('deletes the draft backups of the discarded and deleted entries', async () => {

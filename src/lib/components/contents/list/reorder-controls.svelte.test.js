@@ -92,6 +92,33 @@ describe('ReorderControls', () => {
     await waitForToastsToHide();
   });
 
+  test('stays in the reorder mode quietly when the commit is cancelled', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Take long enough for the browser to drop the focus of the button disabled meanwhile
+    vi.mocked(reorderEntries).mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          setTimeout(() => reject(new Error('commit_cancelled')), 200);
+        }),
+    );
+    reorderDirty.current = true;
+
+    await render(ReorderControls, {});
+    await page.getByRole('button', { name: 'Done Reordering Entries' }).click();
+
+    // The button lost the focus while it was disabled during the save, and gets it back
+    await expect
+      .element(page.getByRole('button', { name: 'Done Reordering Entries' }))
+      .toHaveFocus();
+    await expect
+      .element(page.getByRole('button', { name: 'Done Reordering Entries' }))
+      .toBeEnabled();
+    expect(reordering.current).toBe(true);
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
+    expect(error).not.toHaveBeenCalled();
+  });
+
   test('takes the focus on the Done button once something has moved', async () => {
     const { component } = await render(ReorderControls, {});
 

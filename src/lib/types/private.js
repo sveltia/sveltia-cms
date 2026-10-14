@@ -156,6 +156,25 @@
  */
 
 /**
+ * How the user is asked for a commit message, as the `prompt_commit_messages` backend option sets
+ * it: `true` to write the whole message, `prefix` or `suffix` to add text before or after the
+ * message made from the template.
+ * @typedef {true | 'prefix' | 'suffix'} CommitMessagePromptMode
+ */
+
+/**
+ * An outstanding request for a commit message, which the UI turns into a prompt dialog.
+ * @typedef {object} CommitMessageRequest
+ * @property {CommitMessagePromptMode} mode How the text the user enters is used.
+ * @property {string} defaultMessage Message made from the template, shown as the initial value of
+ * the text box with the `true` mode, or around the text in the preview otherwise.
+ * @property {string} initialValue Initial value of the text box.
+ * @property {(message: string | null) => void} respond Function to answer the request with the
+ * text entered, or `null` if the user has cancelled the commit, which resolves the promise the
+ * save is waiting on.
+ */
+
+/**
  * API endpoint configuration.
  * @typedef {object} ApiEndpointConfig
  * @property {string} clientId OAuth client ID.
@@ -199,6 +218,10 @@
  * @property {string} [startBranch] Branch to create the `branch` from as part of the commit, which
  * saves the round trip of creating it beforehand. The commit is rejected if the branch already
  * exists. Used only for Git backends with Editorial Workflow enabled.
+ * @property {string} [userMessage] Text the user has entered when asked for a commit message, which
+ * replaces the message made from the template, or goes before or after it, depending on the
+ * `prompt_commit_messages` backend option. An empty string means the user has been asked and left
+ * it empty, so the message made from the template is used as is. Used only for Git backends.
  */
 
 /**

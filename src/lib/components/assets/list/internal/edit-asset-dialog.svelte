@@ -6,6 +6,7 @@
   import { getAssetBlob } from '$lib/services/assets/info';
   import { editingAsset } from '$lib/services/assets/state';
   import { showAssetOverlay } from '$lib/services/assets/view';
+  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
 
   /**
    * @import { Asset } from '$lib/types/private';
@@ -67,9 +68,12 @@
         { commitType: 'uploadMedia' },
       );
     } catch (/** @type {any} */ ex) {
-      savingFailed = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
+      // The user has cancelled the commit at the commit message prompt, which isn’t a failure
+      if (!isCommitCancelled(ex)) {
+        savingFailed = true;
+        // eslint-disable-next-line no-console
+        console.error(ex);
+      }
 
       // The asset details overlay may have been closed in the meantime
       if (showAssetOverlay.current) {

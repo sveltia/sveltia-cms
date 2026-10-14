@@ -61,28 +61,34 @@ const fillTemplate = (template, values) =>
   );
 
 /**
- * Create a Git commit message.
+ * Get the values of the author placeholders in a commit message template.
+ * @returns {Record<string, string>} Values keyed by placeholder name.
+ */
+const getAuthorValues = () => {
+  const { email = '', login = '', name = '' } = /** @type {User} */ (user.account);
+
+  return { 'author-email': email, 'author-login': login, 'author-name': name };
+};
+
+/**
+ * Create the part of a Git commit message that comes from the `commit_messages` template: the
+ * template filled in, followed by the number of the other files changed, if any. It’s what the
+ * user is shown when asked for a commit message.
  * @param {FileChange[]} changes File changes to be saved.
  * @param {CommitOptions} options Commit options.
  * @returns {string} Formatted message.
  */
-export const createCommitMessage = (
-  changes,
-  { commitType = 'update', collection, skipCI = undefined },
-) => {
-  const {
-    commit_messages: customCommitMessages = {},
-    skip_ci: skipCIEnabled,
-    automatic_deployments: autoDeploy,
-  } = /** @type {GitBackend} */ (cmsConfig.current?.backend ?? {});
+export const createBaseCommitMessage = (changes, { commitType = 'update', collection }) => {
+  const { commit_messages: customCommitMessages = {} } = /** @type {GitBackend} */ (
+    cmsConfig.current?.backend ?? {}
+  );
 
-  const { email = '', login = '', name = '' } = /** @type {User} */ (user.account);
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);
   const collectionLabel = collection ? getCollectionLabel(collection, { useSingular: true }) : '';
   // @ts-ignore
   let message = customCommitMessages[commitType] || DEFAULT_COMMIT_MESSAGES[commitType] || '';
-  const authorValues = { 'author-email': email, 'author-login': login, 'author-name': name };
+  const authorValues = getAuthorValues();
 
   if (['create', 'update', 'delete'].includes(commitType)) {
     message = fillTemplate(message, {
@@ -101,12 +107,65 @@ export const createCommitMessage = (
     message += ` +${remainingPaths.length}`;
   }
 
+  return message;
+};
+
+/**
+ * Combine the message made from the template with the text the user has entered when asked for a
+ * commit message, as the `prompt_commit_messages` backend option says.
+ * @param {string} message Message made from the template.
+ * @param {string} [userMessage] Text the user has entered.
+ * @returns {string} Combined message.
+ */
+const applyUserMessage = (message, userMessage) => {
+  const { prompt_commit_messages: mode } = /** @type {GitBackend} */ (
+    cmsConfig.current?.backend ?? {}
+  );
+
+  const text = userMessage?.trim();
+
+  if (!text) {
+    return message;
+  }
+
+  if (mode === true) {
+    return text;
+  }
+
+  if (mode === 'prefix') {
+    return `${text} ${message}`;
+  }
+
+  if (mode === 'suffix') {
+    return `${message} ${text}`;
+  }
+
+  return message;
+};
+
+/**
+ * Create a Git commit message.
+ * @param {FileChange[]} changes File changes to be saved.
+ * @param {CommitOptions} options Commit options.
+ * @returns {string} Formatted message.
+ */
+export const createCommitMessage = (changes, options) => {
+  const { commitType = 'update', skipCI = undefined, userMessage } = options;
+
+  const {
+    commit_messages: customCommitMessages = {},
+    skip_ci: skipCIEnabled,
+    automatic_deployments: autoDeploy,
+  } = /** @type {GitBackend} */ (cmsConfig.current?.backend ?? {});
+
+  let message = applyUserMessage(createBaseCommitMessage(changes, options), userMessage);
+
   // With Open Authoring the commit is made by an outside contributor, so the message can be wrapped
   // to record who wrote it. The default template is the message on its own, which changes nothing
   if (openAuthoring.current) {
     message = fillTemplate(
       customCommitMessages.openAuthoring || DEFAULT_COMMIT_MESSAGES.openAuthoring,
-      { message, ...authorValues },
+      { message, ...getAuthorValues() },
     );
   }
 

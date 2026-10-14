@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
 
   import EntrancePage from '$lib/components/entrance/entrance-page.svelte';
+  import CommitMessageDialog from '$lib/components/global/commit-message-dialog.svelte';
   import BackendStatusIndicator from '$lib/components/global/infobars/backend-status-indicator.svelte';
   import UpdateNotification from '$lib/components/global/infobars/update-notification.svelte';
   import LocaleLoadErrorToast from '$lib/components/global/locale-load-error-toast.svelte';
@@ -156,6 +157,7 @@
     <LocaleLoadErrorToast />
     <UpdateNotification />
     <ForkPermissionDialog />
+    <CommitMessageDialog />
     {#if backend.current}
       <BackendStatusIndicator />
     {/if}

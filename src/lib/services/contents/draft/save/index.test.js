@@ -728,6 +728,21 @@ describe('draft/save/index', () => {
       }
     });
 
+    it('should pass on a cancelled commit as it is, keeping the backup', async () => {
+      const cancelled = new Error('commit_cancelled');
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      vi.mocked(saveChanges).mockRejectedValue(cancelled);
+
+      try {
+        await expect(saveEntry()).rejects.toBe(cancelled);
+        expect(consoleError).not.toHaveBeenCalled();
+        expect(deleteBackup).not.toHaveBeenCalled();
+      } finally {
+        consoleError.mockRestore();
+      }
+    });
+
     it('should keep backup if save fails', async () => {
       vi.mocked(saveChanges).mockRejectedValue(new Error('Save failed'));
 

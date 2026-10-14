@@ -2178,6 +2178,22 @@ workflow:
   # the site rather than published to it
   deploying_deletion: 削除
 
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: コミットメッセージ
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: 変更内容を説明してください。このメッセージは変更とともに履歴に記録されます。
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: 変更とともに履歴に記録されるメッセージに、課題番号などの注記を追加できます。空欄のままでも構いません。
+  # Accessible name of the text box when the user writes the whole message
+  message: コミットメッセージ
+  # Accessible name of the text box when the text is added before or after the message
+  addition: 注記
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'メッセージ: {$message}'
+
 # Open Authoring: a contributor without write access to the configured repository works in a fork
 # of it, and their changes reach the site through a pull request a maintainer merges
 open_authoring:

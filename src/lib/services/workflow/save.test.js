@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { callEventHooks } from '$lib/services/api/events';
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
+import { promptCommitMessage } from '$lib/services/backends/commit-prompt';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { getCommitAuthor } from '$lib/services/backends/save';
 import { cmsConfig } from '$lib/services/config';
@@ -66,6 +67,9 @@ vi.mock('$lib/services/contents/entry/relations/cascade/delete', () => {
     buildCascadeDeleteChanges: vi.fn(async () => ({ changes: [], savingEntries: [] })),
   };
 });
+vi.mock('$lib/services/backends/commit-prompt', () => ({
+  promptCommitMessage: vi.fn(async (_changes, options) => options),
+}));
 vi.mock('$lib/services/backends/git/shared/commits');
 vi.mock('$lib/services/backends/save');
 vi.mock('$lib/services/deployments/resolve');
@@ -110,6 +114,7 @@ const createEntry = (branch, status = 'draft') => ({
 describe('workflow/save', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(promptCommitMessage).mockImplementation(async (_changes, options) => options);
     unpublishedEntries.current = [];
     publishingBranches.current = [];
     allEntries.current = [];
@@ -188,6 +193,35 @@ describe('workflow/save', () => {
       expect(workflowService.savePullRequest).toHaveBeenCalledWith(
         expect.objectContaining({ changes: args.changes }),
       );
+    });
+
+    test('commits and titles the pull request with the commit message the user enters', async () => {
+      vi.mocked(promptCommitMessage).mockImplementation(async (_changes, options) => ({
+        ...options,
+        userMessage: 'JIRA-1',
+      }));
+      workflowService.savePullRequest.mockResolvedValue({
+        commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
+        pullRequest: { branch: 'cms/posts/hello', number: 1, status: 'draft' },
+      });
+
+      await saveWorkflowChanges(args);
+
+      expect(promptCommitMessage).toHaveBeenCalledWith(args.changes, { commitType: 'create' });
+      expect(createCommitMessage).toHaveBeenCalledWith(expect.any(Array), {
+        commitType: 'create',
+        userMessage: 'JIRA-1',
+      });
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ options: { commitType: 'create', userMessage: 'JIRA-1' } }),
+      );
+    });
+
+    test('saves nothing when the user cancels the commit', async () => {
+      vi.mocked(promptCommitMessage).mockRejectedValue(new Error('commit_cancelled'));
+
+      await expect(saveWorkflowChanges(args)).rejects.toThrow('commit_cancelled');
+      expect(workflowService.savePullRequest).not.toHaveBeenCalled();
     });
 
     test('registers the committed assets so they can be previewed right away', async () => {
@@ -850,6 +884,35 @@ describe('workflow/save', () => {
       );
     });
 
+    test('asks for a commit message, unless one is given, and uses it', async () => {
+      vi.mocked(promptCommitMessage).mockImplementation(async (_changes, options) => ({
+        ...options,
+        userMessage: options.userMessage ?? 'Asked',
+      }));
+
+      await deleteWorkflowEntry(createPublishedEntry(), collection, undefined);
+
+      expect(promptCommitMessage).toHaveBeenCalledWith(
+        [{ action: 'delete', slug: 'hello', path: 'content/posts/hello.md' }],
+        { commitType: 'delete', collection, userMessage: undefined },
+      );
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: { commitType: 'delete', collection, userMessage: 'Asked' },
+        }),
+      );
+
+      await deleteWorkflowEntry(createPublishedEntry(), collection, undefined, [], {
+        userMessage: 'Given',
+      });
+
+      expect(workflowService.savePullRequest).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          options: { commitType: 'delete', collection, userMessage: 'Given' },
+        }),
+      );
+    });
+
     test('opens a pull request that deletes every locale file', async () => {
       const entry = createPublishedEntry();
       const unpublishedEntry = await deleteWorkflowEntry(entry, collection, undefined);
@@ -1252,6 +1315,46 @@ describe('workflow/save', () => {
       expect(planCascadeDelete).toHaveBeenCalledWith(
         expect.objectContaining({ collection: otherCollection, entries: [second] }),
       );
+    });
+
+    test('asks for a commit message once for the whole selection', async () => {
+      const first = createPublishedEntry();
+      const second = createPublishedEntry();
+
+      second.id = 'published-2';
+      second.slug = 'world';
+      second.locales = {
+        _default: { slug: 'world', path: 'content/posts/world.md', content: {} },
+      };
+
+      vi.mocked(promptCommitMessage).mockImplementation(async (_changes, options) => ({
+        ...options,
+        userMessage: options.userMessage ?? 'JIRA-2',
+      }));
+
+      await deleteWorkflowEntries([
+        { entry: first, collection },
+        { entry: second, collection },
+      ]);
+
+      expect(promptCommitMessage).toHaveBeenNthCalledWith(
+        1,
+        [{ action: 'delete', slug: 'hello', path: 'content/posts/hello.md' }],
+        { commitType: 'delete', collection },
+      );
+      expect(workflowService.savePullRequest).toHaveBeenCalledTimes(2);
+      workflowService.savePullRequest.mock.calls.forEach(([{ options }]) => {
+        expect(options.userMessage).toBe('JIRA-2');
+      });
+    });
+
+    test('deletes nothing when the user cancels the commit', async () => {
+      vi.mocked(promptCommitMessage).mockRejectedValue(new Error('commit_cancelled'));
+
+      await expect(
+        deleteWorkflowEntries([{ entry: createPublishedEntry(), collection }]),
+      ).rejects.toThrow('commit_cancelled');
+      expect(workflowService.savePullRequest).not.toHaveBeenCalled();
     });
 
     test('refuses a selection that other entries require', async () => {

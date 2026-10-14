@@ -180,4 +180,27 @@ describe('EntryRemoval', () => {
 
     await waitForToastsToHide();
   });
+
+  test('leaves the editor open quietly when the commit is cancelled', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(deleteOrDiscardEntries).mockRejectedValue(new Error('commit_cancelled'));
+
+    const { component, props } = await renderRemoval();
+
+    component.confirmDelete();
+    await page
+      .getByRole('alertdialog', { name: 'Delete Entry' })
+      .getByRole('button', { name: 'Delete' })
+      .click();
+
+    await vi.waitFor(() => expect(deleteOrDiscardEntries).toHaveBeenCalledOnce());
+    await expect.poll(() => props.deleting).toBe(false);
+    expect(
+      page.getByRole('alert').filter({ hasText: 'Couldn’t delete the entry' }).elements(),
+    ).toHaveLength(0);
+    expect(error).not.toHaveBeenCalled();
+    expect(props.onDone).not.toHaveBeenCalled();
+    expect(contentUpdatesToast.current).toEqual(UPDATE_TOAST_DEFAULT_STATE);
+  });
 });

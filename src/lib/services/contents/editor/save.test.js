@@ -215,6 +215,15 @@ describe('saveEntryDraftFlow()', () => {
     expect(await saveEntryDraftFlow(getArgs(entryDraft))).toEqual({ type: 'error', message: '' });
   });
 
+  test('skips the save when the user cancels the commit', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(saveEntry).mockRejectedValue(new Error('commit_cancelled'));
+    expect(await saveEntryDraftFlow(getArgs(createState()))).toEqual({ type: 'skipped' });
+    expect(error).not.toHaveBeenCalled();
+    error.mockRestore();
+  });
+
   test('reports other errors, logging unexpected ones', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 

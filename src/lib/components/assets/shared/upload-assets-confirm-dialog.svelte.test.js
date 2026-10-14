@@ -289,6 +289,27 @@ describe('UploadAssetsConfirmDialog', () => {
     await waitForToastsToHide();
   });
 
+  test('says nothing when the commit is cancelled', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(saveAssets).mockRejectedValue(new Error('commit_cancelled'));
+
+    await render(UploadAssetsConfirmDialog, {});
+
+    uploadingAssets.current = { folder: globalAssetFolder.current, files: [image] };
+
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Upload' }).click();
+
+    await vi.waitFor(() => expect(saveAssets).toHaveBeenCalled());
+    await expect
+      .poll(() => document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert'))
+      .toBeNull();
+    expect(
+      document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
+    ).toBeNull();
+    expect(error).not.toHaveBeenCalled();
+  });
+
   test('asks about files dropped while an upload is in flight, and keeps them', async () => {
     const { promise, resolve } = Promise.withResolvers();
     const folder = globalAssetFolder.current;

@@ -171,4 +171,31 @@ describe('RenameFolderDialog', () => {
       error.mockRestore();
     }
   }, 15000);
+
+  test('says nothing when the commit is cancelled', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(renameSubfolder).mockRejectedValue(new Error('commit_cancelled'));
+    renamingSubfolder.current = { name: 'empty', path: 'static/uploads/empty' };
+
+    try {
+      await render(RenameFolderDialog);
+
+      const dialog = page.getByRole('dialog');
+
+      await dialog.getByRole('textbox', { name: 'Folder Name' }).fill('void');
+      await dialog.getByRole('button', { name: 'Rename' }).click();
+
+      await vi.waitFor(() => expect(renameSubfolder).toHaveBeenCalledOnce());
+      await expect
+        .poll(() => document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert'))
+        .toBeNull();
+      expect(
+        document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
+      ).toBeNull();
+      expect(error).not.toHaveBeenCalled();
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
 });

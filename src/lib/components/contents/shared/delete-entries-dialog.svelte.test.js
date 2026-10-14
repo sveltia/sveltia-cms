@@ -181,6 +181,27 @@ describe('DeleteEntriesDialog', () => {
       .toBe('true');
   });
 
+  test('says nothing and keeps the selection when the commit is cancelled', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(deleteEntries).mockRejectedValue(new Error('commit_cancelled'));
+    selectedEntries.current = [entries[0]];
+
+    await render(DeleteEntriesDialog, { open: true });
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+
+    await vi.waitFor(() => expect(deleteEntries).toHaveBeenCalledOnce());
+    // Let the rejection settle
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+    expect(
+      document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
+    ).toBeNull();
+    expect(error).not.toHaveBeenCalled();
+    expect(selectedEntries.current).toEqual([entries[0]]);
+  });
+
   describe('with entry-relative assets', () => {
     beforeEach(async () => {
       // The assets are stored alongside the entries

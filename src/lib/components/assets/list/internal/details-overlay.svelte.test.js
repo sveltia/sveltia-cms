@@ -241,6 +241,28 @@ describe('DetailsOverlay', () => {
     }
   }, 15000);
 
+  test('stays on the asset when the commit is cancelled, without reporting a failure', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(deleteAssets).mockRejectedValue(new Error('commit_cancelled'));
+    overlaidAsset.current = textAsset;
+
+    try {
+      await render(DetailsOverlay);
+      await page.getByRole('button', { name: 'Delete Asset' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+      await vi.waitFor(() => expect(deleteAssets).toHaveBeenCalledWith([textAsset]));
+      await expect.element(page.getByRole('alertdialog')).not.toBeInTheDocument();
+      expect(
+        document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
+      ).toBeNull();
+      expect(error).not.toHaveBeenCalled();
+      expect(window.location.hash).toBe('#/assets/static/uploads/notes.txt');
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
+
   test('can’t delete an asset in a read-only folder', async () => {
     overlaidAsset.current = { ...zipAsset, folder: { ...zipAsset.folder, readonly: true } };
 

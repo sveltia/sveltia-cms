@@ -1,6 +1,7 @@
 import { cacheAssetBlob } from '$lib/services/assets/info';
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
+import { promptCommitMessage } from '$lib/services/backends/commit-prompt';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { checkForRemoteChanges, suspendChecksWhile } from '$lib/services/backends/refresh';
 import { allEntries } from '$lib/services/contents';
@@ -158,6 +159,9 @@ export const updateStores = ({ changes, savedEntries, savedAssets, arrayFileEntr
  */
 export const saveChanges = async ({ changes, savingEntries = [], savingAssets = [], options }) => {
   const { commitChanges, fetchLastCommit } = /** @type {BackendService} */ (backend.current);
+  // Ask for a commit message first if configured, so the repository is checked for changes once
+  // the user is done, however long that takes. Cancelling it throws, leaving everything as it was
+  const commitOptions = await promptCommitMessage(changes, options);
 
   try {
     await checkForRemoteChanges();
@@ -178,7 +182,7 @@ export const saveChanges = async ({ changes, savingEntries = [], savingAssets = 
 
     /** @type {CommitResults} */
     const commit = {
-      ...(await commitChanges(combinedChanges, options)),
+      ...(await commitChanges(combinedChanges, commitOptions)),
       author: getCommitAuthor(),
     };
 

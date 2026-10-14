@@ -1,4 +1,5 @@
 import { callEventHooks } from '$lib/services/api/events';
+import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
 import { getReadonlyMessage, isDraftReadonly } from '$lib/services/config/readonly';
@@ -263,6 +264,11 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
           options,
         });
   } catch (/** @type {any} */ ex) {
+    // Nothing has been saved if the user has cancelled the commit, which is not a failure
+    if (isCommitCancelled(ex)) {
+      throw ex;
+    }
+
     // eslint-disable-next-line no-console
     console.error(ex.cause ?? ex);
 

@@ -1958,6 +1958,13 @@
  * Default: `undefined`. See the
  * [documentation](https://sveltiacms.app/en/docs/deployments#disabling-automatic-deployments) for
  * details.
+ * @property {boolean | 'prefix' | 'suffix'} [prompt_commit_messages] Whether to ask the user for a
+ * commit message every time changes are committed. If `true`, the user can replace the message
+ * made from the `commit_messages` template, which the text box is filled in with. If `prefix` or
+ * `suffix`, the text the user enters, e.g. an issue number, is added before or after that message,
+ * with a space in between. The message made from the template is used as is if the text box is
+ * left empty. Default: `false`. See the
+ * [documentation](https://sveltiacms.app/en/docs/backends#commit-messages) for details.
  * @property {AuthMethodName[]} [auth_methods] Allowed authentication methods. Default: both `oauth`
  * and `token` are allowed. To restrict sign-in options, specify only the methods you want to
  * enable, e.g. `[oauth]` to disable access token sign-in, or `[token]` to disable OAuth sign-in. An

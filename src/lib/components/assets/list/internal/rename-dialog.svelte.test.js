@@ -264,4 +264,36 @@ describe('RenameDialog', () => {
       error.mockRestore();
     }
   }, 15000);
+
+  test('leaves the URL alone when the commit is cancelled, without reporting a failure', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    window.location.hash = '#/assets/static/uploads/a.png';
+    vi.mocked(moveAssets).mockRejectedValueOnce(new Error('commit_cancelled'));
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = firstAsset;
+
+      const dialog = page.getByRole('dialog');
+
+      await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
+      await dialog.getByRole('textbox').fill('c.png');
+      await dialog.getByRole('button', { name: 'Rename' }).click();
+
+      await vi.waitFor(() => expect(moveAssets).toHaveBeenCalledOnce());
+      // Let the rejection settle
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      expect(
+        document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'),
+      ).toBeNull();
+      expect(error).not.toHaveBeenCalled();
+      expect(window.location.hash).toBe('#/assets/static/uploads/a.png');
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
 });
