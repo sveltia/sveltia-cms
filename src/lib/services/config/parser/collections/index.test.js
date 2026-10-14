@@ -781,6 +781,73 @@ describe('Collections Parser', () => {
       );
     });
 
+    it('should report the bulk_edit fields that are missing or can’t be edited in bulk', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'articles',
+          folder: 'content/articles',
+          fields: [
+            { name: 'title', widget: 'string' },
+            { name: 'body', widget: 'markdown' },
+          ],
+          bulk_edit: { fields: ['title', 'body', 'missing'] },
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'unsupported_bulk_edit_field',
+          values: { name: 'body' },
+          context,
+          collectors,
+        }),
+      );
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'invalid_bulk_edit_field',
+          values: { name: 'missing' },
+          context,
+          collectors,
+        }),
+      );
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ values: { name: 'title' } }),
+      );
+    });
+
+    it('should skip bulk_edit field validation without a field list', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      parseEntryCollection(
+        /** @type {any} */ ({
+          cmsConfig: {},
+          collection: {
+            name: 'articles',
+            folder: 'content/articles',
+            fields: [{ name: 'body', widget: 'markdown' }],
+            bulk_edit: true,
+          },
+        }),
+        collectors,
+      );
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: expect.stringMatching(/bulk_edit/),
+        }),
+      );
+    });
+
     it('should validate the fields referenced from the view options', async () => {
       const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();

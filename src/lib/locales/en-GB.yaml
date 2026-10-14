@@ -916,6 +916,40 @@ cancel_reordering_entries: Cancel Reordering Entries
 saving_reorder_failed: Failed to save new entry order. Please try again.
 
 # ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: Edit Entries in Bulk
+save_bulk_edits: Save Bulk Edits
+cancel_bulk_edits: Cancel Bulk Edits
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: Entry
+
+# Bulk edit table: label of the table
+bulk_edit_table: Bulk Editor
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$field} of {$entry}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0   {{ No changes }}
+    one {{ 1 change }}
+    *   {{ {$count} changes }}
+
+# Bulk edit error messages
+bulk_edit_invalid: Some of the values aren’t valid. Fix the highlighted fields and try again.
+saving_bulk_edits_failed: Failed to save the changes. Please try again.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: Discard the changes made to the entries?
+
+# ==============================================================================
 # File Upload and Processing
 # ==============================================================================
 # Strings for file upload dialogs, progress indicators, and validation.
@@ -1936,6 +1970,10 @@ config:
     invalid_regex: The `{$option}` option contains an invalid regular expression `{$pattern}`, which is ignored.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: The `reorder` option refers to a view group named `{$name}`, but no such group is defined in the `view_groups` option.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: The `fields` list of the `bulk_edit` option refers to a field named `{$name}`, but no such top-level field is defined in the collection.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: The `{$name}` field in the `fields` list of the `bulk_edit` option can’t be edited in bulk. Only a Boolean, Color, DateTime, Number, Relation, Select or String field that isn’t read-only, doesn’t have the `multiple` option enabled and isn’t set automatically on save is supported.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: The `sortable_fields` option refers to a field named `{$name}`, but no such field is defined in the collection.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`

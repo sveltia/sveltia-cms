@@ -8,6 +8,7 @@ import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
+import { getBulkEditableFields } from '$lib/services/contents/collection/entries/bulk-edit/config';
 import { countQuotaEntries } from '$lib/services/contents/collection/entries/count';
 import { isManuallyOrdered } from '$lib/services/contents/collection/entries/reorder/config';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
@@ -39,6 +40,10 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
+ * BulkEditErrors,
+ * BulkEdits,
+ * } from '$lib/services/contents/collection/entries/bulk-edit';
+ * @import {
  * Entry,
  * EntryListView,
  * GroupingConditions,
@@ -56,6 +61,7 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
  * the same way rather than being a quota to reach.
  * @property {boolean} canDelete Whether entries can be deleted from the selected collection.
  * @property {boolean} canReorder Whether entries in the selected collection can be reordered.
+ * @property {boolean} canBulkEdit Whether entries in the selected collection can be edited in bulk.
  * @property {number} quota The maximum number of entries allowed in the selected collection.
  * @property {number} remaining The number of additional entries that can be added to the selected
  * collection before reaching the quota.
@@ -86,6 +92,42 @@ export const reorderedEntries = createRawState([]);
  * doesn’t cause a no-op commit.
  */
 export const reorderDirty = createRawState(false);
+
+/**
+ * Whether the entry collection is in bulk edit mode, which shows the listed entries in a table
+ * where their simple fields can be edited at once. Use {@link setBulkEditMode} to change it, so the
+ * pending edits are reset at the same time.
+ */
+export const bulkEditing = createRawState(false);
+
+/**
+ * Pending edits made in bulk edit mode, keyed by entry ID, then by field name. Only the values that
+ * differ from the stored ones are kept, so the mode has unsaved changes if this isn’t empty.
+ * @type {{ current: BulkEdits }}
+ */
+export const bulkEdits = createRawState({});
+
+/**
+ * Whether the pending edits made in bulk edit mode are being saved. The cells are read-only then,
+ * as the mode is left once the commit is made, which would discard an edit made in the meantime.
+ */
+export const bulkEditSaving = createRawState(false);
+
+/**
+ * Entries shown in bulk edit mode, published by the bulk editor when it’s opened so the toolbar
+ * Save button can read them. The list is a snapshot, so a background refresh doesn’t pull the rows
+ * from under the user.
+ * @type {{ current: Entry[] }}
+ */
+export const bulkEditedEntries = createRawState([]);
+
+/**
+ * Validation messages of the pending edits made in bulk edit mode, keyed by entry ID, then by field
+ * name. Empty until the user tries to save invalid edits; it’s then kept up to date as the edits
+ * change, so a fixed field stops being reported.
+ * @type {{ current: BulkEditErrors }}
+ */
+export const bulkEditErrors = createRawState({});
 
 /**
  * How often {@link viewTime} is updated while a time-based view filter or group is applied. A
@@ -153,9 +195,9 @@ export const listedEntries = createDerivedState(() => {
 
   const entries = getEntriesByCollection(_collection.name);
 
-  // Don’t swap while reordering, because the reorder UI persists an order field on the published
-  // entries, and the draft version must not leak into that commit
-  if (reordering.current) {
+  // Don’t swap while reordering or bulk editing, because these modes rewrite the published entries,
+  // and the draft version must not leak into that commit
+  if (reordering.current || bulkEditing.current) {
     return filterNested(entries);
   }
 
@@ -181,7 +223,7 @@ export const listedEntries = createDerivedState(() => {
 export const listedUnpublishedEntries = createDerivedState(() => {
   const { current: _collection } = selectedCollection;
 
-  if (_collection?._type !== 'entry' || reordering.current) {
+  if (_collection?._type !== 'entry' || reordering.current || bulkEditing.current) {
     return [];
   }
 
@@ -258,6 +300,13 @@ export const collectionState = createDerivedState(() => {
       !openAuthoring.current &&
       !lockedBranch.current;
 
+    // Bulk editing writes straight to the configured branch as well, for the same reasons
+    const canBulkEdit =
+      !readonly &&
+      !!getBulkEditableFields(_selectedCollection).length &&
+      !openAuthoring.current &&
+      !lockedBranch.current;
+
     const quota = _selectedCollection?.limit ?? Infinity;
     // The quota applies to the whole collection, including the entries that only exist in a pull
     // request, so it agrees with the count shown next to the collection in the sidebar
@@ -270,6 +319,7 @@ export const collectionState = createDerivedState(() => {
       canCreate,
       canDelete,
       canReorder,
+      canBulkEdit,
       quota,
       remaining,
       nearingQuota: remaining > 0 && remaining <= QUOTA_WARNING_THRESHOLD,
@@ -283,6 +333,7 @@ export const collectionState = createDerivedState(() => {
     canCreate: false,
     canDelete: false,
     canReorder: false,
+    canBulkEdit: false,
     quota: Infinity,
     remaining: Infinity,
     nearingQuota: false,
@@ -469,6 +520,20 @@ export const setReorderMode = (value) => {
   reordering.current = true;
 };
 
+/**
+ * Enter or exit bulk edit mode. The pending edits are discarded either way: on entering, so the
+ * mode starts afresh, and on exiting, whether they have been saved or cancelled. Unlike reorder
+ * mode, the view is kept as it is, so the user can pick the entries to edit by filtering the list
+ * first.
+ * @param {boolean} value Whether to enter bulk edit mode.
+ */
+export const setBulkEditMode = (value) => {
+  bulkEdits.current = {};
+  bulkEditErrors.current = {};
+  bulkEditedEntries.current = [];
+  bulkEditing.current = value;
+};
+
 // Restore the view settings when a different entry collection is selected. The entries are also
 // tracked, because the available sort keys depend on them
 createRootEffect(() => {
@@ -525,15 +590,20 @@ createRootEffect(() => {
 createRootEffect(() => {
   const collection = selectedCollection.current;
 
-  // Reset the reorder state when switching collections, to avoid accidentally reordering entries in
-  // the wrong collection or leaving the UI in a broken state if the new collection doesn’t support
-  // reordering. Discard any view snapshot first so it isn’t restored against the wrong collection,
-  // which would otherwise corrupt the new collection’s persisted view via `entryListSettings`.
+  // Reset the reorder and bulk edit states when switching collections, to avoid accidentally saving
+  // entries in the wrong collection or leaving the UI in a broken state if the new collection
+  // doesn’t support the mode. Discard any view snapshot first so it isn’t restored against the
+  // wrong collection, which would otherwise corrupt the new collection’s persisted view via
+  // `entryListSettings`.
   untrack(() => {
     viewBeforeReorder.current = undefined;
 
     if (reordering.current) {
       setReorderMode(false);
+    }
+
+    if (bulkEditing.current) {
+      setBulkEditMode(false);
     }
   });
 

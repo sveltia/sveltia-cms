@@ -18,6 +18,10 @@ import { getSortConfig } from '$lib/services/contents/collection/view/sort-keys'
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 import {
+  bulkEditedEntries,
+  bulkEditErrors,
+  bulkEditing,
+  bulkEdits,
   collectionState,
   entryGroups,
   listedEntries,
@@ -26,6 +30,7 @@ import {
   reorderDirty,
   reorderedEntries,
   reordering,
+  setBulkEditMode,
   setReorderMode,
   viewTime,
   viewUsesTime,
@@ -180,6 +185,7 @@ describe('collection/view/index', () => {
     _unpublishedEntries.current = [];
     await wait();
     reordering.current = false;
+    bulkEditing.current = false;
     await wait();
     currentView.current = { type: 'list' };
     // `clearAllMocks()` only clears recorded calls, so reset the return value set by reorder tests
@@ -667,6 +673,16 @@ describe('collection/view/index', () => {
       expect(read(listedEntries)).toBe(publishedEntries);
     });
 
+    test('listedEntries doesn’t swap while bulk editing', async () => {
+      _unpublishedEntries.current = [createDraft('needed')];
+      await wait();
+      bulkEditing.current = true;
+      await wait();
+
+      // The bulk editor rewrites the published entries, so the draft version must not be listed
+      expect(read(listedEntries)).toBe(publishedEntries);
+    });
+
     test('listedEntries matches a draft that renamed the entry', async () => {
       const draft = createDraft('renamed');
 
@@ -712,6 +728,15 @@ describe('collection/view/index', () => {
       _unpublishedEntries.current = [createDraft('brand-new')];
       await wait();
       reordering.current = true;
+      await wait();
+
+      expect(read(listedUnpublishedEntries)).toEqual([]);
+    });
+
+    test('listedUnpublishedEntries is empty while bulk editing', async () => {
+      _unpublishedEntries.current = [createDraft('brand-new')];
+      await wait();
+      bulkEditing.current = true;
       await wait();
 
       expect(read(listedUnpublishedEntries)).toEqual([]);
@@ -1096,6 +1121,7 @@ describe('collection/view/index', () => {
         canCreate: false,
         canDelete: false,
         canReorder: false,
+        canBulkEdit: false,
         quota: Infinity,
         remaining: Infinity,
         nearingQuota: false,
@@ -1115,6 +1141,7 @@ describe('collection/view/index', () => {
         canCreate: false,
         canDelete: false,
         canReorder: false,
+        canBulkEdit: false,
         quota: Infinity,
         remaining: Infinity,
         nearingQuota: false,
@@ -1211,6 +1238,87 @@ describe('collection/view/index', () => {
       expect(collectionState.current.canReorder).toBe(false);
 
       lockedBranch.current = undefined;
+    });
+
+    test('allows bulk editing when the collection is configured for it', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        bulk_edit: true,
+        fields: [{ name: 'title', widget: 'string' }],
+      });
+      await wait();
+
+      expect(collectionState.current.canBulkEdit).toBe(true);
+    });
+
+    test('blocks bulk editing when the option is not enabled', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        fields: [{ name: 'title', widget: 'string' }],
+      });
+      await wait();
+
+      expect(collectionState.current.canBulkEdit).toBe(false);
+    });
+
+    test('blocks bulk editing when no field can be edited in bulk', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        bulk_edit: true,
+        fields: [{ name: 'body', widget: 'markdown' }],
+      });
+      await wait();
+
+      expect(collectionState.current.canBulkEdit).toBe(false);
+    });
+
+    test('blocks bulk editing for an Open Authoring contributor', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        bulk_edit: true,
+        fields: [{ name: 'title', widget: 'string' }],
+      });
+      await wait();
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
+
+      // Bulk editing commits straight to the configured branch, which a contributor can’t do
+      expect(collectionState.current.canBulkEdit).toBe(false);
+
+      forkedRepository.current = undefined;
+    });
+
+    test('blocks bulk editing when the user can’t push to the branch', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        bulk_edit: true,
+        publish_mode: 'editorial_workflow',
+        fields: [{ name: 'title', widget: 'string' }],
+      });
+      await wait();
+      lockedBranch.current = 'main';
+
+      expect(collectionState.current.canCreate).toBe(true);
+      expect(collectionState.current.canBulkEdit).toBe(false);
+
+      lockedBranch.current = undefined;
+    });
+
+    test('blocks bulk editing in a read-only collection', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        bulk_edit: true,
+        readonly: true,
+        fields: [{ name: 'title', widget: 'string' }],
+      });
+      await wait();
+
+      expect(collectionState.current.canBulkEdit).toBe(false);
     });
 
     test('blocks creating, deleting and reordering in a read-only collection', async () => {
@@ -1919,6 +2027,51 @@ describe('collection/view/index', () => {
     expect(currentView.current).not.toBe(view);
     expect(currentView.current.group).toBeNull();
     expect(_viewBeforeReorder.current).toBeUndefined();
+  });
+
+  test('entering and exiting bulk edit mode resets the pending edits', () => {
+    const view = { type: /** @type {const} */ ('list'), sort: { key: 'title' } };
+
+    currentView.current = view;
+    bulkEdits.current = { a: { title: 'stale' } };
+    bulkEditErrors.current = { a: { title: ['stale'] } };
+    bulkEditedEntries.current = [/** @type {any} */ ({ id: 'stale' })];
+    setBulkEditMode(true);
+
+    expect(bulkEditing.current).toBe(true);
+    expect(bulkEdits.current).toEqual({});
+    expect(bulkEditErrors.current).toEqual({});
+    expect(bulkEditedEntries.current).toEqual([]);
+    // Unlike reorder mode, the view is kept as it is
+    expect(currentView.current).toBe(view);
+
+    bulkEdits.current = { a: { title: 'pending' } };
+    bulkEditErrors.current = { a: { title: ['error'] } };
+    bulkEditedEntries.current = [/** @type {any} */ ({ id: 'a' })];
+    setBulkEditMode(false);
+
+    expect(bulkEditing.current).toBe(false);
+    expect(bulkEdits.current).toEqual({});
+    expect(bulkEditErrors.current).toEqual({});
+    expect(bulkEditedEntries.current).toEqual([]);
+    expect(currentView.current).toBe(view);
+  });
+
+  test('switching collections exits bulk edit mode and discards the pending edits', async () => {
+    _selectedCollection.current = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
+    await wait();
+    setBulkEditMode(true);
+    bulkEdits.current = { a: { title: 'pending' } };
+    bulkEditErrors.current = { a: { title: ['error'] } };
+    bulkEditedEntries.current = [/** @type {any} */ ({ id: 'a' })];
+
+    _selectedCollection.current = /** @type {any} */ ({ name: 'other', _type: 'entry' });
+    await wait();
+
+    expect(bulkEditing.current).toBe(false);
+    expect(bulkEdits.current).toEqual({});
+    expect(bulkEditErrors.current).toEqual({});
+    expect(bulkEditedEntries.current).toEqual([]);
   });
 
   test('entering reorder mode shares the view snapshot with the collection name', () => {

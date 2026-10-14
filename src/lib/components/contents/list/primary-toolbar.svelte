@@ -11,6 +11,7 @@
   import { tick } from 'svelte';
 
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
+  import BulkEditControls from '$lib/components/contents/list/bulk-edit-controls.svelte';
   import ReorderControls from '$lib/components/contents/list/reorder-controls.svelte';
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
@@ -20,10 +21,12 @@
   import { getCollectionLabel, selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import {
+    bulkEditing,
     collectionState,
     listedEntries,
     listedUnpublishedEntries,
     reordering,
+    setBulkEditMode,
     setReorderMode,
   } from '$lib/services/contents/collection/view';
   import { env } from '$lib/services/user/env.svelte';
@@ -37,6 +40,10 @@
   let reorderButton = $state();
   /** @type {ReorderControls | undefined} */
   let reorderControls = $state();
+  /** @type {HTMLButtonElement | undefined} */
+  let bulkEditButton = $state();
+  /** @type {BulkEditControls | undefined} */
+  let bulkEditControls = $state();
 
   /* v8 ignore start -- only read while a collection is selected, once the app locale is loaded */
   const name = $derived(selectedCollection.current?.name ?? '');
@@ -54,6 +61,7 @@
     canCreate,
     canDelete,
     canReorder,
+    canBulkEdit,
     quota,
     remaining,
     nearingQuota,
@@ -129,6 +137,15 @@
           /** @type {HTMLButtonElement} */ (reorderButton).focus();
         }}
       />
+    {:else if isEntryCollection && bulkEditing.current}
+      <BulkEditControls
+        bind:this={bulkEditControls}
+        onExit={async () => {
+          // The Edit button takes the place of the focused button
+          await tick();
+          /** @type {HTMLButtonElement} */ (bulkEditButton).focus();
+        }}
+      />
     {:else if isEntryCollection}
       <!-- Taking a published entry off the site is a maintainer’s call, and the entry list has no
       other bulk action, so a contributor has nothing to select entries for -->
@@ -143,6 +160,22 @@
           disabled={deleteDisabled}
           onclick={() => {
             showDeleteDialog = true;
+          }}
+        />
+      {/if}
+      <!-- A table of controls doesn’t fit on a small screen -->
+      {#if canBulkEdit && !env.isSmallScreen}
+        <Button
+          bind:element={bulkEditButton}
+          variant="ghost"
+          label={_('edit')}
+          aria-label={_('bulk_edit_entries')}
+          disabled={!listedEntries.current.length}
+          onclick={async () => {
+            setBulkEditMode(true);
+            // The Save and Cancel buttons take the place of this one
+            await tick();
+            /** @type {BulkEditControls} */ (bulkEditControls).focus();
           }}
         />
       {/if}

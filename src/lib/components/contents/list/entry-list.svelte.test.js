@@ -5,7 +5,7 @@ import { render } from 'vitest-browser-svelte';
 
 import { OTHER_GROUP_NAME } from '$lib/services/common/view';
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
-import { setReorderMode } from '$lib/services/contents/collection/view';
+import { setBulkEditMode, setReorderMode } from '$lib/services/contents/collection/view';
 import { currentView, entryListSettings } from '$lib/services/contents/collection/view/settings';
 import { env } from '$lib/services/user/env.svelte';
 import { unpublishedEntries } from '$lib/services/workflow';
@@ -51,6 +51,7 @@ describe('EntryList', () => {
     selectedCollection.current = undefined;
     unpublishedEntries.current = [];
     setReorderMode(false);
+    setBulkEditMode(false);
     window.location.hash = '#/collections/posts';
   });
 
@@ -245,6 +246,37 @@ describe('EntryList', () => {
         ],
       });
     }
+  });
+
+  test('shows the bulk editor while bulk editing', async () => {
+    setEntries([
+      createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello' } } }),
+      createMockEntry({ slug: 'world', content: { _default: { title: 'World' } } }),
+    ]);
+    selectCollection();
+    // Selecting a collection leaves the bulk edit mode, so enter it once that has settled
+    flushSync();
+    setBulkEditMode(true);
+
+    await render(EntryList, {});
+
+    const table = page.getByRole('table', { name: 'Bulk Editor' });
+
+    await expect.element(table).toHaveAttribute('aria-rowcount', '3');
+    expect(page.getByRole('grid').elements()).toHaveLength(0);
+    await expect
+      .poll(() =>
+        table
+          .getByRole('rowheader')
+          .elements()
+          .map((el) => el.textContent?.trim()),
+      )
+      .toEqual(['Hello', 'World']);
+
+    // Leaving the mode brings the entry list back
+    setBulkEditMode(false);
+    await expect.element(page.getByRole('grid', { name: 'Entries' })).toBeVisible();
+    expect(page.getByRole('table').elements()).toHaveLength(0);
   });
 
   test('groups the entries as configured in the view', async () => {

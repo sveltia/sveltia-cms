@@ -1588,6 +1588,16 @@
  */
 
 /**
+ * A collection’s advanced bulk editing options.
+ * @typedef {object} BulkEditOptions
+ * @property {FieldKeyPath[]} [fields] Names of the top-level fields to show as columns in the bulk
+ * editor, in that order. Only a Boolean, Color, DateTime, Number, Relation, Select or String field
+ * can be edited in bulk, as long as it isn’t read-only, doesn’t have the `multiple` option enabled
+ * and isn’t set automatically on save. Default: every such field, in the configured order.
+ * @see https://sveltiacms.app/en/docs/collections/entries/operations#bulk-editing-entries
+ */
+
+/**
  * Editor options.
  * @typedef {object} EditorOptions
  * @property {boolean} [preview] Whether to show the preview pane. Default: `true`.
@@ -1777,6 +1787,11 @@
  * and the numeric order starting from 1 is saved in an automatically generated `order` field. An
  * object can be provided instead to customize the behavior, e.g. `{ key: 'weight', group:
  * 'categories' }`.
+ * @property {boolean | BulkEditOptions} [bulk_edit] Whether to allow users to edit the simple
+ * top-level fields of many entries at once in a spreadsheet-like table, saving the changes in a
+ * single commit. Default: `false`. Like reordering, it writes to the configured branch directly,
+ * even if the Editorial Workflow is enabled. An object can be provided instead to choose the
+ * fields, e.g. `{ fields: [title, draft] }`.
  * @property {FileExtension} [extension] File extension. Default: derived from the `format` option
  * value, e.g. `yml` for `yaml` and `txt` for `raw`, or `md` otherwise.
  * @property {FieldKeyPath} [identifier_field] Field name to be used as the title and slug of an

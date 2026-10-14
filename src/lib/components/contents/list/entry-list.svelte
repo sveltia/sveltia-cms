@@ -5,12 +5,14 @@
 
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
+  import EntryBulkEditList from '$lib/components/contents/list/entry-bulk-edit-list.svelte';
   import EntryListItem from '$lib/components/contents/list/entry-list-item.svelte';
   import EntryReorderList from '$lib/components/contents/list/entry-reorder-list.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
   import { getGroupLabel, isGroupCollapsed, setGroupCollapsed } from '$lib/services/common/view';
   import { selectedCollection } from '$lib/services/contents/collection';
   import {
+    bulkEditing,
     entryGroups,
     listedEntries,
     listedUnpublishedEntries,
@@ -35,7 +37,9 @@
 
 <ListContainer aria-label={_('entry_list')}>
   {#if collection}
-    {#if allEntries.length || listedUnpublishedEntries.current.length}
+    {#if bulkEditing.current}
+      <EntryBulkEditList {collection} />
+    {:else if allEntries.length || listedUnpublishedEntries.current.length}
       {@const { defaultLocale } = collection._i18n}
       <ListingGrid
         {viewType}

@@ -3,7 +3,7 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
-import { setReorderMode } from '$lib/services/contents/collection/view';
+import { setBulkEditMode, setReorderMode } from '$lib/services/contents/collection/view';
 import { currentView } from '$lib/services/contents/collection/view/settings';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
@@ -42,6 +42,7 @@ describe('SecondaryToolbar', () => {
     env.isLargeScreen = true;
     forkedRepository.current = undefined;
     setReorderMode(false);
+    setBulkEditMode(false);
     setEntries([
       createMockEntry({ slug: 'a', content: { _default: { title: 'A', draft: true } } }),
       createMockEntry({ slug: 'b', content: { _default: { title: 'B', draft: false } } }),
@@ -96,5 +97,15 @@ describe('SecondaryToolbar', () => {
     await expect.element(page.getByRole('toolbar')).toBeVisible();
     setReorderMode(true);
     await expect.poll(() => reorder.container.querySelector('[role="toolbar"]')).toBeNull();
+  });
+
+  test('is hidden while bulk editing', async () => {
+    const { container } = await render(SecondaryToolbar, {});
+
+    await expect.element(page.getByRole('toolbar')).toBeVisible();
+    setBulkEditMode(true);
+    await expect.poll(() => container.querySelector('[role="toolbar"]')).toBeNull();
+    setBulkEditMode(false);
+    await expect.element(page.getByRole('toolbar')).toBeVisible();
   });
 });

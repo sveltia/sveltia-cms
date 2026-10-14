@@ -864,6 +864,39 @@ cancel_reordering_entries: エントリーの並び替えをキャンセル
 saving_reorder_failed: エントリーの並び替えを保存できませんでした。再度お試しください。
 
 # ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: エントリーを一括編集
+save_bulk_edits: 一括編集を保存
+cancel_bulk_edits: 一括編集をキャンセル
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: エントリー
+
+# Bulk edit table: label of the table
+bulk_edit_table: 一括エディター
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$entry} の {$field}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0 {{ 変更なし }}
+    * {{ {$count} 件の変更 }}
+
+# Bulk edit error messages
+bulk_edit_invalid: 無効な値があります。強調表示されたフィールドを修正して、もう一度お試しください。
+saving_bulk_edits_failed: 変更を保存できませんでした。もう一度お試しください。
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: エントリーに加えた変更を破棄しますか？
+
+# ==============================================================================
 # File Upload and Processing
 # ==============================================================================
 # Strings for file upload dialogs, progress indicators, and validation.
@@ -1837,6 +1870,10 @@ config:
     invalid_regex: '`{$option}` オプションに無効な正規表現 `{$pattern}` が含まれているため、無視されます。'
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: '`reorder` オプションで指定された `{$name}` グループは、`view_groups` オプションに定義されていません。'
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: '`bulk_edit` オプションの `fields` リストで指定された `{$name}` フィールドは、コレクションのトップレベルに定義されていません。'
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: '`bulk_edit` オプションの `fields` リストで指定された `{$name}` フィールドは一括編集できません。対応しているのは、読み取り専用でなく、`multiple` オプションが無効で、保存時に自動設定されない Boolean、Color、DateTime、Number、Relation、Select、String フィールドのみです。'
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: '`sortable_fields` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
     # {$name} is the field name from the configuration; Don’t localize `view_groups`

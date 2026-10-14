@@ -11,6 +11,7 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import {
+    bulkEditing,
     entryGroups,
     listedEntries,
     listedUnpublishedEntries,
@@ -45,7 +46,7 @@
   const hasMultipleEntries = $derived(listedEntryCount > 1);
 </script>
 
-{#if entryCollection && !reordering.current}
+{#if entryCollection && !reordering.current && !bulkEditing.current}
   <Toolbar variant="secondary" ariaLabel={_('entry_list')}>
     {#if !(env.isSmallScreen || env.isMediumScreen) && !openAuthoring.current}
       <ItemSelector
