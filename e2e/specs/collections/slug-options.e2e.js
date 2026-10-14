@@ -1,5 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, getEntryList, openCollection } from '../../fixtures/ui.js';
+import { getEditor, getEntryList, getEntryRows, openCollection } from '../../fixtures/ui.js';
 
 /**
  * @import { Page } from '@playwright/test';
@@ -121,7 +121,7 @@ test.describe('default options', () => {
       'hello-world-3.md',
       'hello-world.md',
     ]);
-    await expect(getEntryList(page).getByRole('row')).toHaveCount(4);
+    await expect(getEntryRows(page)).toHaveCount(4);
     await reopenPost(page, 'Hello, World!');
   });
 

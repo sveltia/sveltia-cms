@@ -1,6 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
-import { getEditor, getEntryList, openCollection } from '../../fixtures/ui.js';
+import { getEditor, getEntryList, getEntryRows, openCollection } from '../../fixtures/ui.js';
 import { showLocale } from '../multilingual/helpers.js';
 
 /**
@@ -125,7 +125,7 @@ test.describe('test repository', () => {
     await expect
       .poll(async () => (await cms.readRepo())[MEMBERS])
       .toBe(format([ALICE, 'TBD', BOB, CAROL, { name: 'Dave', role: '' }]));
-    await expect(getEntryList(page).getByRole('row').last()).toHaveAccessibleName(/Dave/);
+    await expect(getEntryRows(page).last()).toHaveAccessibleName(/Dave/);
   });
 
   test('saves an entry twice without reloading', async ({ cms, page }) => {

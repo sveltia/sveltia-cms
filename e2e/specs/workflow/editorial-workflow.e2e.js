@@ -1,7 +1,7 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, openEntry } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -115,9 +115,7 @@ test('saves a change to a published entry to a pull request', async ({ cms, gith
     .toBe(post('First Post', 'Hello again!'));
   expect(github.readFile('content/posts/first-post.md')).toBe(post('First Post', 'Hello, world!'));
   // The draft stands in for the published entry, rather than being listed twice
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /First Post.*Draft/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/First Post.*Draft/]);
 
   // Another save goes to the same branch and pull request
   await openEntry(page, 'First Post');
@@ -204,10 +202,7 @@ test('publishes an entry by merging its pull request', async ({ cms, github, pag
   expect(github.head.parents).toHaveLength(2);
   // The branch is deleted after the merge
   await expect.poll(() => github.refs.has('cms/posts/second-post')).toBe(false);
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /First Post/,
-    /Second Post/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
 });
 
 test('refuses to publish an entry whose branch holds other work', async ({ cms, github, page }) => {
@@ -414,9 +409,7 @@ test('deletes an unpublished entry by closing its pull request', async ({ cms, g
   await expect.poll(() => pullRequest.state).toBe('closed');
   await expect.poll(() => github.refs.has('cms/posts/second-post')).toBe(false);
   expect(github.head.oid).toBe(mainBefore);
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /First Post/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/First Post/]);
 });
 
 test('marks a published entry for deletion with a pull request', async ({ cms, github, page }) => {
@@ -513,10 +506,9 @@ test('discards the changes to a published entry', async ({ cms, github, page }) 
   await expect.poll(() => pullRequest.state).toBe('closed');
   await expect.poll(() => github.refs.has('cms/posts/first-post')).toBe(false);
   expect(github.readFile('content/posts/first-post.md')).toBe(post('First Post', 'Hello, world!'));
-  // The published version is shown again
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /^\s*First Post\s*$/,
-  ]);
+  // The published version is shown again, without a status
+  await expect(getEntryRows(page)).toHaveText([/First Post/]);
+  await expect(getEntryRows(page).locator('.status-badge')).toHaveCount(0);
 });
 
 test('saves a draft with a required field left empty, but keeps it from review', async ({
@@ -633,9 +625,7 @@ test('drops a labelled pull request moved to another base branch from the board'
   await cms.open();
 
   // The entry isn’t listed as unpublished, and the board has nothing on it
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /First Post/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/First Post/]);
   await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
 
   const board = page.getByRole('group', { name: 'Editorial Workflow' });
@@ -741,9 +731,7 @@ test('deletes several unpublished entries at once', async ({ cms, github, page }
 
   await expect.poll(() => pullRequests.map(({ state }) => state)).toEqual(['closed', 'closed']);
   expect(github.getWorkflowBranches()).toEqual([]);
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /First Post/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/First Post/]);
 });
 
 test.describe('with an image field', () => {
@@ -842,7 +830,7 @@ test.describe('without a configured branch', () => {
     await cms.open();
 
     // The pull requests can only be told apart from someone else’s once the default branch is known
-    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+    await expect(getEntryRows(page)).toHaveText([
       /Unpublished Entries/,
       /Second Post.*Draft/,
       /Published Entries/,

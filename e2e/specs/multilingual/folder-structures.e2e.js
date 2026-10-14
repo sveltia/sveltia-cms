@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEntryRows } from '../../fixtures/ui.js';
 
 import { getEditPane, openEntry, save, showLocale } from './helpers.js';
 
@@ -97,7 +98,7 @@ STRUCTURES.forEach(({ title, label, path, defaultLocalePath = path }) => {
       page,
     }) => {
       await page.getByRole('treeitem', { name: label }).click();
-      await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveCount(1);
+      await expect(getEntryRows(page)).toHaveCount(1);
       await openEntry(page, label, /Harbour/);
 
       const english = getEditPane(page, 'English');

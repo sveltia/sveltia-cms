@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEntryRows } from '../../fixtures/ui.js';
 
 /**
  * Products whose Select field has a number and a string option that stringify alike, each with a
@@ -41,7 +42,7 @@ test('shows the label of each option in the entry summary', async ({ cms, page }
   });
   await cms.signIn();
 
-  const rows = page.getByRole('grid', { name: 'Entries' }).getByRole('row');
+  const rows = getEntryRows(page);
 
   await expect(rows.filter({ hasText: 'Cup' })).toContainText('Cup: Small');
   await expect(rows.filter({ hasText: 'Mug' })).toContainText('Mug: Custom');

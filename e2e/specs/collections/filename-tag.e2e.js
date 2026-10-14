@@ -1,6 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows } from '../../fixtures/ui.js';
 
 /**
  * Config whose collections use the `{{filename}}` template tag for the summary and the media
@@ -54,7 +54,7 @@ test.beforeEach(async ({ cms }) => {
 });
 
 test('strips only the last extension, and the locale code, in the summary', async ({ page }) => {
-  const rows = page.getByRole('grid', { name: 'Entries' }).getByRole('row');
+  const rows = getEntryRows(page);
 
   await expect(rows).toHaveText(['my.post']);
 
@@ -64,7 +64,7 @@ test('strips only the last extension, and the locale code, in the summary', asyn
 
 test('strips only the last extension in the media folder', async ({ cms, page }) => {
   // Open the only post, `my.post.md`
-  await page.getByRole('grid', { name: 'Entries' }).getByRole('row').click();
+  await getEntryRows(page).click();
 
   const editor = getEditor(page);
   const cover = editor.getByRole('group', { name: '“\u2068Cover\u2069” Field' });

@@ -263,8 +263,13 @@
   .table-view {
     :global {
       [role='grid'] {
-        .grid-head .grid-row:hover {
-          background-color: transparent;
+        /* The header row can be focused, but it doesn’t open anything */
+        .grid-head .grid-row {
+          cursor: default;
+
+          &:hover {
+            background-color: transparent;
+          }
         }
 
         .grid-col-header {

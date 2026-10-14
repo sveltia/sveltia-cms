@@ -1,6 +1,6 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, test } from '../../fixtures/test.js';
-import { openEntry } from '../../fixtures/ui.js';
+import { getEntryRows, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -83,10 +83,7 @@ test('takes a pull request merged on GitHub as published', async ({ cms, github,
   // The entry is live, so publishing carries on rather than reporting a failure: the branch is
   // tidied up and the entry is listed as published rather than kept on the board
   await expect.poll(() => github.refs.has('cms/posts/second-post')).toBe(false);
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /First Post/,
-    /Second Post/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
   expect(github.readFile('content/posts/second-post.md')).toBe(post('Second Post', 'Coming soon.'));
 });
 
@@ -190,9 +187,7 @@ test('lists a colleague’s pull request only after a reload (known issue)', asy
   await page.clock.fastForward('01:01');
   // Give the check time to finish, to show that it doesn’t change the list
   await page.waitForTimeout(1000);
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /First Post/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/First Post/]);
 
   await page.reload();
   await expect(page.getByRole('row', { name: /Second Post/ })).toBeVisible();
@@ -226,9 +221,7 @@ test('keeps showing pull requests merged or closed on GitHub (known issue)', asy
   github.deleteBranch('cms/posts/third-post');
   await page.clock.fastForward('01:01');
 
-  const grid = page.getByRole('grid', { name: 'Entries' });
-
-  await expect(grid.getByRole('row')).toHaveText([
+  await expect(getEntryRows(page)).toHaveText([
     /Unpublished Entries/,
     /Third Post.*Draft/,
     /Published Entries/,

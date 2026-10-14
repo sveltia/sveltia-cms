@@ -1,6 +1,6 @@
 import { NESTED_CONFIG, NESTED_FILES } from '../../fixtures/configs/nested.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows } from '../../fixtures/ui.js';
 
 /**
  * @import { Page } from '@playwright/test';
@@ -30,7 +30,7 @@ const chooseParentFolder = async (page, label) => {
 test('shows the folders in the sidebar and lists the entries in each', async ({ page }) => {
   const collections = page.getByRole('tree', { name: 'Collection List' });
   const pages = collections.getByRole('treeitem', { name: 'Pages', exact: true });
-  const rows = page.getByRole('grid', { name: 'Entries' }).getByRole('row');
+  const rows = getEntryRows(page);
 
   // A page that holds no other page is an entry, not a folder. The alumni page is deeper than the
   // collection’s `depth`, so it isn’t part of the collection at all
@@ -50,7 +50,7 @@ test('shows the folders in the sidebar and lists the entries in each', async ({ 
 });
 
 test('shows the summary and the thumbnail of each entry', async ({ page }) => {
-  const rows = page.getByRole('grid', { name: 'Entries' }).getByRole('row');
+  const rows = getEntryRows(page);
 
   await expect(rows).toHaveText([
     /About Us – Who we are/,

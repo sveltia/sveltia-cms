@@ -1,6 +1,6 @@
 import { NESTED_CONFIG, NESTED_FILES } from '../../fixtures/configs/nested.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows } from '../../fixtures/ui.js';
 
 test.use({ config: NESTED_CONFIG });
 
@@ -16,7 +16,7 @@ test('shows the folders by name and lists the files in each', async ({ page }) =
     .getByRole('tree', { name: 'Collection List' })
     .getByRole('treeitem', { name: 'Docs', exact: true });
 
-  const rows = page.getByRole('grid', { name: 'Entries' }).getByRole('row');
+  const rows = getEntryRows(page);
 
   await expect(docs.getByRole('treeitem', { level: 2 })).toHaveText([/guide/, /reference/]);
   await expect(rows).toHaveText([/FAQ/]);
@@ -186,8 +186,5 @@ test('creates the index file with the New button’s menu', async ({ cms, page }
   await expect(page.getByRole('button', { name: 'Create New Entry' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'More Options' })).toHaveCount(0);
   // The index file is listed with its label rather than its title, first
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /Section Page/,
-    /FAQ/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/Section Page/, /FAQ/]);
 });

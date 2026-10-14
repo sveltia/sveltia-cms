@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/test.js';
+import { getEntryRows } from '../fixtures/ui.js';
 
 test('skips an entry file too large to read rather than loading it as an empty entry', async ({
   cms,
@@ -21,5 +22,5 @@ test('skips an entry file too large to read rather than loading it as an empty e
 
   await expect(list.getByRole('row', { name: /First Post/ })).toBeVisible();
   // An empty entry would wipe the file when saved
-  await expect(list.getByRole('row')).toHaveCount(1);
+  await expect(getEntryRows(page)).toHaveCount(1);
 });

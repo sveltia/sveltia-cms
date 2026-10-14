@@ -1,5 +1,6 @@
 import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/monolingual.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEntryGroups, getEntryRows } from '../../fixtures/ui.js';
 
 test.use({ config: MONOLINGUAL_CONFIG });
 
@@ -10,7 +11,7 @@ test.beforeEach(async ({ cms }) => {
 });
 
 test('shows the entries with the summary template', async ({ page }) => {
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+  await expect(getEntryRows(page)).toHaveText([
     /A Quiet Review \(Review\)/,
     /First Light \(News\)/,
     /Talking to Jane \(Interview\)/,
@@ -18,7 +19,7 @@ test('shows the entries with the summary template', async ({ page }) => {
 });
 
 test('sorts the entries by a sortable field', async ({ cms, page }) => {
-  const rows = page.getByRole('grid', { name: 'Entries' }).getByRole('row');
+  const rows = getEntryRows(page);
 
   await cms.chooseMenuItem(
     page.getByRole('button', { name: 'Sort', exact: true }),
@@ -34,7 +35,7 @@ test('sorts the entries by a sortable field', async ({ cms, page }) => {
 });
 
 test('filters the entries with a view filter', async ({ cms, page }) => {
-  const rows = page.getByRole('grid', { name: 'Entries' }).getByRole('row');
+  const rows = getEntryRows(page);
   const filterButton = page.getByRole('button', { name: 'Filter', exact: true });
 
   await cms.chooseMenuItem(filterButton, page.getByRole('menuitemcheckbox', { name: 'Drafts' }));
@@ -55,7 +56,7 @@ test('groups the entries with a view group', async ({ cms, page }) => {
   const grid = page.getByRole('grid', { name: 'Entries' });
 
   // A group is named after the field value
-  await expect(grid.getByRole('rowgroup')).toHaveCount(3);
+  await expect(getEntryGroups(page)).toHaveCount(3);
   await expect(grid.getByRole('rowgroup', { name: /^interview$/i }).getByRole('row')).toHaveText([
     /interview/i,
     /Talking to Jane/,

@@ -56,6 +56,29 @@ export const getEntryList = (page) =>
   page.getByRole('group', { name: 'Entry List' }).getByRole('grid');
 
 /**
+ * Get the rows of a collection’s entry list, leaving out the header row of the table view. The
+ * captions of the row groups, such as “Unpublished Entries”, are rows too, and included.
+ * @param {Page | Locator} scope Page, to look in the entry list, or an element to look in, such as
+ * the collection or a row group.
+ * @returns {Locator} Rows.
+ */
+export const getEntryRows = (scope) => {
+  const page = 'goto' in scope ? scope : scope.page();
+
+  return ('goto' in scope ? getEntryList(scope) : scope)
+    .getByRole('row')
+    .and(page.locator(':not(.grid-head) > [role="row"]'));
+};
+
+/**
+ * Get the row groups of a collection’s entry list, leaving out the header of the table view.
+ * @param {Page} page Page.
+ * @returns {Locator} Row groups.
+ */
+export const getEntryGroups = (page) =>
+  getEntryList(page).getByRole('rowgroup').and(page.locator(':not(.grid-head)'));
+
+/**
  * Open an entry in the editor by clicking its row, and wait until its title is shown.
  * @param {Page} page Page.
  * @param {string} title Entry title.

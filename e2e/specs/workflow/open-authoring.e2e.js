@@ -1,7 +1,7 @@
 import { OPEN_AUTHORING_CONFIG, post, saveForkDraft } from '../../fixtures/configs/workflow.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, openEntry } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -65,9 +65,7 @@ test.describe('as a contributor', () => {
     await expect(
       page.getByText(/Your changes are saved to your fork .*mona\/e2e-site/),
     ).toBeVisible();
-    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-      /First Post/,
-    ]);
+    await expect(getEntryRows(page)).toHaveText([/First Post/]);
     expect(github.fork).toEqual({ owner: 'mona', repo: 'e2e-site' });
   });
 
@@ -84,9 +82,7 @@ test.describe('as a contributor', () => {
     await expect(page.getByText(/Your changes are saved to your fork/)).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-      /First Post/,
-    ]);
+    await expect(getEntryRows(page)).toHaveText([/First Post/]);
     expect(github.forkPendingRequests).toBe(0);
   });
 
@@ -281,10 +277,7 @@ test.describe('as a contributor', () => {
 
       await cms.open();
 
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /Third Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Third Post/]);
       await expect.poll(() => github.refs.get('mona:main')).toBe(github.head.oid);
       await expect(page.getByRole('alertdialog', { name: 'Fork Repository' })).toHaveCount(0);
     });
@@ -310,7 +303,7 @@ test.describe('as a contributor', () => {
       ]);
       expect(github.head.oid).toBe(mainBefore);
       expect(github.pullRequests).toEqual([]);
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      await expect(getEntryRows(page)).toHaveText([
         /Unpublished Entries/,
         /Second Post.*Draft/,
         /Published Entries/,
@@ -329,10 +322,7 @@ test.describe('as a contributor', () => {
 
       await cms.open();
 
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /Third Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Third Post/]);
       expect(github.readFile('content/posts/third-post.md', github.forkBranch('main'))).toBe(
         undefined,
       );
@@ -438,7 +428,7 @@ test.describe('as a contributor', () => {
         .toMatchObject([
           { head: github.forkBranch(SECOND_POST_BRANCH), state: 'open', draft: false, labels: [] },
         ]);
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      await expect(getEntryRows(page)).toHaveText([
         /Unpublished Entries/,
         /Second Post.*In Review/,
         /Published Entries/,
@@ -545,10 +535,7 @@ test.describe('as a contributor', () => {
       await cms.open();
 
       // The published entry has a draft again, which stands in for it
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /Second Post.*Draft/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post.*Draft/]);
       await openEntry(page, 'Second Post');
       await cms.chooseMenuItem(
         page.getByRole('button', { name: /Status: .*Draft/ }),
@@ -602,10 +589,10 @@ test.describe('as a contributor', () => {
       await expect.poll(() => github.refs.has(branch)).toBe(false);
       // The editor closes onto the entry list, where the entry is published rather than a draft
       await expect(getEditor(page)).toBeHidden();
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /^\s*Second Post\s*$/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
+      await expect(
+        page.getByRole('row', { name: /^Second Post/ }).locator('.status-badge'),
+      ).toHaveCount(0);
     });
 
     test('keeps unsaved changes to an entry published since the board was loaded', async ({
@@ -723,7 +710,7 @@ test.describe('as a contributor', () => {
       await cms.open();
 
       // The entry is still a draft, rather than being taken for one in review
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      await expect(getEntryRows(page)).toHaveText([
         /Unpublished Entries/,
         /Second Post.*Draft/,
         /Published Entries/,
@@ -830,9 +817,7 @@ test.describe('as a contributor', () => {
       await expect.poll(() => pullRequest.state).toBe('closed');
       await expect.poll(() => github.refs.has(branch)).toBe(false);
       expect(github.head.oid).toBe(mainBefore);
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/]);
     });
 
     test('deletes the branch of a pull request a maintainer has merged', async ({
@@ -855,10 +840,7 @@ test.describe('as a contributor', () => {
 
       await cms.open();
 
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /Second Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
       await expect.poll(() => github.refs.has(branch)).toBe(false);
     });
   });

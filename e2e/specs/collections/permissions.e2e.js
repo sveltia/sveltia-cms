@@ -3,7 +3,7 @@ import {
   COLLECTION_OPTIONS_FILES,
 } from '../../fixtures/configs/collection-options.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, openCollection } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows, openCollection } from '../../fixtures/ui.js';
 
 test.use({ config: COLLECTION_OPTIONS_CONFIG });
 
@@ -103,7 +103,7 @@ test.describe('with a limit on the number of entries', () => {
     await expect
       .poll(async () => Object.keys(await cms.readRepo()))
       .toContain('content/faqs/is-there-parking.md');
-    await expect(collection.getByRole('row')).toHaveCount(4);
+    await expect(getEntryRows(collection)).toHaveCount(4);
     await expect(createButton).toBeDisabled();
     await expect(collection.getByRole('status')).toHaveText(
       /You cannot add new entries to this collection because it has reached its limit of 4 entries\./,

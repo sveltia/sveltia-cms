@@ -2,7 +2,7 @@ import { post } from '../../fixtures/configs/workflow.js';
 import { createPNG } from '../../fixtures/files.js';
 import { FORK_REPO_ID } from '../../fixtures/gitea.js';
 import { expect, GITEA_CONFIG, test } from '../../fixtures/test.js';
-import { getEditor, openEntry } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -118,9 +118,7 @@ test.describe('as a contributor', () => {
     await expect(
       page.getByText(/Your changes are saved to your fork .*mona\/e2e-site/),
     ).toBeVisible();
-    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-      /First Post/,
-    ]);
+    await expect(getEntryRows(page)).toHaveText([/First Post/]);
     expect(gitea.fork).toEqual({ owner: 'mona', repo: 'e2e-site' });
   });
 
@@ -207,10 +205,7 @@ test.describe('as a contributor', () => {
 
       await cms.open();
 
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /Third Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Third Post/]);
       await expect.poll(() => gitea.refs.get(gitea.forkBranch('main'))).toBe(gitea.head.oid);
     });
 
@@ -226,10 +221,7 @@ test.describe('as a contributor', () => {
 
       await cms.open();
 
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /Third Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Third Post/]);
       await expect.poll(() => gitea.refs.get(gitea.forkBranch('main'))).toBe(gitea.head.oid);
     });
 
@@ -247,10 +239,7 @@ test.describe('as a contributor', () => {
       gitea.commit({ 'content/posts/third-post.md': post('Third Post', 'From Alex.') });
 
       await cms.open();
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /Third Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Third Post/]);
       await saveSecondPost(page);
 
       const branch = gitea.forkBranch(SECOND_POST_BRANCH);
@@ -282,10 +271,7 @@ test.describe('as a contributor', () => {
       await cms.open();
 
       // The entries still come from the repository, not from the fork
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /Third Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Third Post/]);
       expect(gitea.refs.get(gitea.forkBranch('main'))).toBe(forkMainBefore);
 
       await saveSecondPost(page);
@@ -373,7 +359,7 @@ test.describe('as a contributor', () => {
       expect(gitea.getWorkflowBranches({ includeFork: true })).toEqual([branch]);
       expect(gitea.head.oid).toBe(mainBefore);
       expect(gitea.pullRequests).toEqual([]);
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      await expect(getEntryRows(page)).toHaveText([
         /Unpublished Entries/,
         /Second Post.*Draft/,
         /Published Entries/,
@@ -533,10 +519,7 @@ test.describe('as a contributor', () => {
         await cms.open();
 
         // The published entry has a draft again, which stands in for it
-        await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-          /First Post/,
-          /Second Post.*Draft/,
-        ]);
+        await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post.*Draft/]);
         await openEntry(page, 'Second Post');
         await cms.changeStatus(/Status: .*Draft/, 'In Review');
 
@@ -583,10 +566,10 @@ test.describe('as a contributor', () => {
       await expect.poll(() => gitea.refs.has(gitea.forkBranch(branch))).toBe(false);
       // The editor closes onto the entry list, where the entry is published rather than a draft
       await expect(getEditor(page)).toBeHidden();
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /^\s*Second Post\s*$/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
+      await expect(
+        page.getByRole('row', { name: /^Second Post/ }).locator('.status-badge'),
+      ).toHaveCount(0);
     });
 
     test('opens a new pull request when the known one was aimed elsewhere since', async ({
@@ -643,7 +626,7 @@ test.describe('as a contributor', () => {
 
       // The entry is a draft without a pull request, rather than one in review under the title of
       // a request the CMS doesn’t manage
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      await expect(getEntryRows(page)).toHaveText([
         /Unpublished Entries/,
         /Second Post.*Draft/,
         /Published Entries/,
@@ -708,10 +691,7 @@ test.describe('as a contributor', () => {
 
       await cms.open();
 
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /Second Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
       await expect.poll(() => gitea.refs.has(gitea.forkBranch(branch))).toBe(false);
     });
 
@@ -742,9 +722,7 @@ test.describe('as a contributor', () => {
       await expect.poll(() => pullRequest.state).toBe('closed');
       await expect.poll(() => gitea.refs.has(gitea.forkBranch(branch))).toBe(false);
       expect(gitea.head.oid).toBe(mainBefore);
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/]);
     });
 
     test('doesn’t let a contributor publish or delete a published entry', async ({

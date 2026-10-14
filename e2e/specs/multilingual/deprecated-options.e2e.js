@@ -1,4 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
+import { getEntryRows } from '../../fixtures/ui.js';
 
 import { getEditPane, save, showLocale } from './helpers.js';
 
@@ -154,7 +155,7 @@ const fillNewEntry = async (page) => {
       await cms.signIn();
 
       // The existing entry is read from the same files
-      await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveCount(1);
+      await expect(getEntryRows(page)).toHaveCount(1);
       await fillNewEntry(page);
       await save(page);
 

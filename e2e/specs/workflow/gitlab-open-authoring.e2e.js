@@ -1,7 +1,7 @@
 import { post } from '../../fixtures/configs/workflow.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, GITLAB_CONFIG, test } from '../../fixtures/test.js';
-import { getEditor, openEntry } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -106,9 +106,7 @@ test.describe('as a contributor', () => {
     await expect(
       page.getByText(/Your changes are saved to your fork .*mona\/e2e-site/),
     ).toBeVisible();
-    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-      /First Post/,
-    ]);
+    await expect(getEntryRows(page)).toHaveText([/First Post/]);
     expect(gitlab.fork).toEqual({ owner: 'mona', repo: 'e2e-site' });
   });
 
@@ -125,9 +123,7 @@ test.describe('as a contributor', () => {
     await expect(page.getByText(/Your changes are saved to your fork/)).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-      /First Post/,
-    ]);
+    await expect(getEntryRows(page)).toHaveText([/First Post/]);
     expect(gitlab.forkPendingRequests).toBe(0);
   });
 
@@ -249,7 +245,7 @@ test.describe('as a contributor', () => {
       expect(gitlab.getWorkflowBranches({ includeFork: true })).toEqual([branch]);
       expect(gitlab.head.oid).toBe(mainBefore);
       expect(gitlab.mergeRequests).toEqual([]);
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      await expect(getEntryRows(page)).toHaveText([
         /Unpublished Entries/,
         /Second Post.*Draft/,
         /Published Entries/,
@@ -268,10 +264,7 @@ test.describe('as a contributor', () => {
 
       await cms.open();
 
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /Third Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Third Post/]);
 
       await saveSecondPost(page);
 
@@ -508,10 +501,10 @@ test.describe('as a contributor', () => {
       await expect.poll(() => gitlab.refs.has(branch)).toBe(false);
       // The editor closes onto the entry list, where the entry is published rather than a draft
       await expect(getEditor(page)).toBeHidden();
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /^\s*Second Post\s*$/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
+      await expect(
+        page.getByRole('row', { name: /^Second Post/ }).locator('.status-badge'),
+      ).toHaveCount(0);
     });
 
     test('lists the entries in progress on the fork', async ({ cms, gitlab, page }) => {
@@ -614,7 +607,7 @@ test.describe('as a contributor', () => {
       await cms.open();
 
       // Still a draft, as the branch has no merge request of its own
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      await expect(getEntryRows(page)).toHaveText([
         /Unpublished Entries/,
         /Second Post.*Draft/,
         /Published Entries/,
@@ -665,7 +658,7 @@ test.describe('as a contributor', () => {
       await cms.open();
 
       // The entry is still a draft, rather than being taken for one in review
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      await expect(getEntryRows(page)).toHaveText([
         /Unpublished Entries/,
         /Second Post.*Draft/,
         /Published Entries/,
@@ -709,7 +702,7 @@ test.describe('as a contributor', () => {
       await cms.open();
 
       // It’s not the contributor’s, so the entry is still a draft
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      await expect(getEntryRows(page)).toHaveText([
         /Unpublished Entries/,
         /Second Post.*Draft/,
         /Published Entries/,
@@ -762,9 +755,7 @@ test.describe('as a contributor', () => {
       // The branch goes from the fork, not from the configured project
       await expect.poll(() => gitlab.refs.has(branch)).toBe(false);
       expect(gitlab.head.oid).toBe(mainBefore);
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/]);
     });
 
     test('doesn’t let a contributor delete a published entry', async ({ cms, gitlab, page }) => {
@@ -811,10 +802,7 @@ test.describe('as a contributor', () => {
 
       await cms.open();
 
-      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-        /First Post/,
-        /Second Post/,
-      ]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
       await expect.poll(() => gitlab.refs.has(branch)).toBe(false);
     });
 

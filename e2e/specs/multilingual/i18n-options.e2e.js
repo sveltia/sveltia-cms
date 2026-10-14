@@ -1,5 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
-import { getOpenedURL } from '../../fixtures/ui.js';
+import { getEntryRows, getOpenedURL } from '../../fixtures/ui.js';
 
 import { getEditPane, save, showLocale } from './helpers.js';
 
@@ -88,7 +88,7 @@ test('opens the translations linked by their canonical slug as one entry', async
   cms,
   page,
 }) => {
-  await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveCount(1);
+  await expect(getEntryRows(page)).toHaveCount(1);
   await page.getByRole('row', { name: /Lisbon/ }).click();
 
   const french = await showLocale(page, 1, 'French');

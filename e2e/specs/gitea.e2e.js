@@ -1,7 +1,7 @@
 import { createPNG } from '../fixtures/files.js';
 import { getBlobSHA } from '../fixtures/git.js';
 import { expect, GITEA_CONFIG, test } from '../fixtures/test.js';
-import { getEditor, openFirstPost } from '../fixtures/ui.js';
+import { getEditor, getEntryRows, openFirstPost } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -83,7 +83,7 @@ test('lists the entries of a repository whose file tree spans several pages', as
   gitea.treePageSize = 2;
   await cms.open();
 
-  await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveCount(3);
+  await expect(getEntryRows(page)).toHaveCount(3);
 });
 
 test('refuses a user who can only read the repository', async ({ cms, gitea, page }) => {
@@ -174,7 +174,7 @@ test('creates an entry, then deletes it', async ({ cms, gitea, page }) => {
     message: 'Delete Post “second-post”',
     files: [{ operation: 'delete', path: 'content/posts/second-post.md' }],
   });
-  await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveCount(1);
+  await expect(getEntryRows(page)).toHaveCount(1);
 });
 
 test('shows an image from the repository', async ({ cms, gitea, page }) => {

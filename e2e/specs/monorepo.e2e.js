@@ -8,7 +8,7 @@ import {
   GITLAB_CONFIG,
   test,
 } from '../fixtures/test.js';
-import { getEditor } from '../fixtures/ui.js';
+import { getEditor, getEntryRows } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page, Request } from '@playwright/test';
@@ -29,19 +29,6 @@ const MONOREPO_FILES = {
   'apps/blog/content/posts/first-post.md': post('First Post', 'Hello, world!'),
   'apps/docs/content/posts/first-post.md': post('Docs Post', 'Read the docs.'),
 };
-
-/**
- * Get the rows of the entry list.
- * @param {Page} page Page.
- * @returns {Locator} Rows.
- */
-const getEntryRows = (page) => page.getByRole('group', { name: 'Entry List' }).getByRole('row');
-/**
- * Get the rows of the entry list in Editorial Workflow, which groups the entries.
- * @param {Page} page Page.
- * @returns {Locator} Rows.
- */
-const getWorkflowEntryRows = (page) => page.getByRole('grid', { name: 'Entries' }).getByRole('row');
 
 /**
  * Edit the body of the first post and save it.
@@ -359,9 +346,7 @@ test.describe('GitHub backend with Editorial Workflow', () => {
     });
 
     await cms.open();
-    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-      /First Post/,
-    ]);
+    await expect(getEntryRows(page)).toHaveText([/First Post/]);
   });
 
   test('refuses to publish an entry whose pull request changes a file outside the root directory', async ({
@@ -402,7 +387,7 @@ test.describe('GitHub backend with Editorial Workflow', () => {
     );
 
     await cms.open();
-    await expect(getWorkflowEntryRows(page)).toHaveText([
+    await expect(getEntryRows(page)).toHaveText([
       /Unpublished Entries/,
       /Second Post/,
       /Published Entries/,
@@ -560,7 +545,7 @@ test.describe('GitLab backend', () => {
       );
 
       await cms.open();
-      await expect(getWorkflowEntryRows(page)).toHaveText([/First Post/]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/]);
     });
 
     test('refuses to publish an entry whose merge request changes a file outside the root directory', async ({
@@ -728,7 +713,7 @@ test.describe('Gitea backend', () => {
       );
 
       await cms.open();
-      await expect(getWorkflowEntryRows(page)).toHaveText([/First Post/]);
+      await expect(getEntryRows(page)).toHaveText([/First Post/]);
     });
 
     test('refuses to publish an entry whose pull request changes a file outside the root directory', async ({

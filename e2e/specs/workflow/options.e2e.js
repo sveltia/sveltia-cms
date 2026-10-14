@@ -1,6 +1,6 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
-import { getEditor, openEntry } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -90,7 +90,7 @@ test.describe('with a pull request from Decap CMS', () => {
     pullRequest.labels = ['decap-cms/pending_review'];
 
     await cms.open();
-    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+    await expect(getEntryRows(page)).toHaveText([
       /Unpublished Entries/,
       /Second Post.*In Review/,
       /Published Entries/,

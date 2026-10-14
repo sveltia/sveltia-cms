@@ -1,7 +1,7 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../fixtures/configs/workflow.js';
 import { createPNG } from '../fixtures/files.js';
 import { BASE_CONFIG, expect, test } from '../fixtures/test.js';
-import { getEditor } from '../fixtures/ui.js';
+import { getEditor, getEntryRows } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -803,9 +803,7 @@ test.describe('CMS.registerStringTransformation()', () => {
 
     // The nested template in the argument is resolved before the transformation runs, and the
     // output is chained to the built-in `upper`
-    await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveText([
-      /\[HELLO WORLD\]/,
-    ]);
+    await expect(getEntryRows(page)).toHaveText([/\[HELLO WORLD\]/]);
 
     const editor = await createPost(page, 'Launch Day Party');
 

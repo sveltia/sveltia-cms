@@ -1,5 +1,5 @@
 import { expect, test } from '../fixtures/test.js';
-import { getEditor } from '../fixtures/ui.js';
+import { getEditor, getEntryRows } from '../fixtures/ui.js';
 
 test.beforeEach(async ({ cms }) => {
   await cms.open();
@@ -13,7 +13,7 @@ test.beforeEach(async ({ cms }) => {
 test('lists the entries in the repository', async ({ page }) => {
   const list = page.getByRole('group', { name: 'Entry List' });
 
-  await expect(list.getByRole('row')).toHaveCount(2);
+  await expect(getEntryRows(page)).toHaveCount(2);
   await expect(list.getByRole('row', { name: /First Post/ })).toBeVisible();
   await expect(list.getByRole('row', { name: /Second Post/ })).toBeVisible();
 });
@@ -30,7 +30,7 @@ test('creates an entry', async ({ cms, page }) => {
   await expect
     .poll(async () => (await cms.readRepo())['content/posts/third-post.md'])
     .toBe('---\ntitle: Third Post\n---\n\nA new post.\n');
-  await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveCount(3);
+  await expect(getEntryRows(page)).toHaveCount(3);
 });
 
 test('updates an entry', async ({ cms, page }) => {
@@ -60,5 +60,5 @@ test('deletes an entry', async ({ cms, page }) => {
   await expect
     .poll(async () => Object.keys(await cms.readRepo()))
     .toEqual(['content/posts/second-post.md']);
-  await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveCount(1);
+  await expect(getEntryRows(page)).toHaveCount(1);
 });

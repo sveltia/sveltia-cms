@@ -1,6 +1,6 @@
 import { openEntryPullRequest, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows } from '../../fixtures/ui.js';
 import { getEditPane, showLocale } from '../multilingual/helpers.js';
 
 /**
@@ -54,9 +54,7 @@ test('loads a pull request deleting a turned-off locale’s file as an edit', as
   openEntryPullRequest(github, { slug: 'first-post', files: { [JA_PATH]: null } });
   await cms.open();
 
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /First Post.*Draft/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/First Post.*Draft/]);
   await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
   await expect(page.getByRole('group', { name: 'Draft' })).toContainText('First Post');
   await expect(page.getByRole('group', { name: 'Pending Deletion' })).toHaveCount(0);

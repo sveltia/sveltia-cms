@@ -1,5 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
-import { getEntryList, openCollection } from '../../fixtures/ui.js';
+import { getEntryGroups, getEntryList, openCollection } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -269,9 +269,9 @@ test.describe('with comparison options', () => {
     const groupButton = page.getByRole('button', { name: 'Group', exact: true });
 
     await cms.chooseMenuItem(groupButton, page.getByRole('menuitemradio', { name: 'Coming Up' }));
-    await expect(grid.getByRole('rowgroup')).toHaveCount(2);
+    await expect(getEntryGroups(page)).toHaveCount(2);
     // The matching entries come first
-    await expect(grid.getByRole('rowgroup').first()).toHaveAccessibleName('Coming Up');
+    await expect(getEntryGroups(page).first()).toHaveAccessibleName('Coming Up');
     await expect(getRows(page, 'Coming Up')).toHaveText([
       /Evening Talk/,
       /Garden Tour/,
@@ -286,7 +286,7 @@ test.describe('with comparison options', () => {
     // With no entry left for “Other”, the group isn’t shown
     await cms.chooseMenuItem(groupButton, page.getByRole('menuitemradio', { name: 'Coming Up' }));
     await toggleFilter(cms, page, 'Upcoming');
-    await expect(grid.getByRole('rowgroup')).toHaveCount(1);
+    await expect(getEntryGroups(page)).toHaveCount(1);
     await expect(getRows(page, 'Coming Up')).toHaveCount(3);
     await expect(grid.getByRole('rowgroup', { name: 'Other' })).toHaveCount(0);
   });
@@ -299,7 +299,7 @@ test.describe('with the object forms of the view options', () => {
     await openCollection(page, 'Agenda');
 
     // Only the upcoming events, grouped by status, the most expensive first
-    await expect(grid.getByRole('rowgroup')).toHaveCount(3);
+    await expect(getEntryGroups(page)).toHaveCount(3);
     await expect(getRows(page)).toHaveText([/Summer Fair/, /Evening Talk/, /Garden Tour/]);
     await expect(getRows(page, 'published')).toHaveText([/Garden Tour/]);
 

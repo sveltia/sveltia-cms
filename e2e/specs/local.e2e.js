@@ -5,7 +5,7 @@ import { dirname, join, relative } from 'node:path';
 
 import { createPNG } from '../fixtures/files.js';
 import { expect, GITHUB_CONFIG, test, TEST_REPO_DIR_NAME } from '../fixtures/test.js';
-import { getEditor, openFirstPost } from '../fixtures/ui.js';
+import { getEditor, getEntryRows, openFirstPost } from '../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -231,9 +231,7 @@ test.describe('with a root directory', () => {
       [`apps/docs/${POST_PATH}`]: '---\ntitle: Docs Post\n---\n\nRead the docs.\n',
     });
     await page.getByRole('button', { name: 'Work with Local Repository' }).click();
-    await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveText([
-      /First Post/,
-    ]);
+    await expect(getEntryRows(page)).toHaveText([/First Post/]);
 
     const editor = await openFirstPost(page);
 

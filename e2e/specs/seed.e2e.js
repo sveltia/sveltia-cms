@@ -1,6 +1,6 @@
 import { createPNG } from '../fixtures/files.js';
 import { expect, test } from '../fixtures/test.js';
-import { getEditor } from '../fixtures/ui.js';
+import { getEditor, getEntryRows } from '../fixtures/ui.js';
 
 /**
  * @import { Page } from '@playwright/test';
@@ -69,7 +69,7 @@ test('seeds an empty repository on the first sign-in', async ({ cms, page }) => 
 
   const list = page.getByRole('group', { name: 'Entry List' });
 
-  await expect(list.getByRole('row')).toHaveCount(2);
+  await expect(getEntryRows(page)).toHaveCount(2);
   await expect(list.getByRole('row', { name: /First Post/ })).toBeVisible();
   await expect(list.getByRole('row', { name: /Second Post/ })).toBeVisible();
 
@@ -112,7 +112,7 @@ test('seeds the repository again after all the data is erased', async ({ cms, pa
   await startDemo(page);
 
   // An existing repository is not seeded
-  await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveCount(1);
+  await expect(getEntryRows(page)).toHaveCount(1);
   expect(counter.manifestRequests).toBe(0);
 
   const dialog = page.getByRole('dialog', { name: 'Settings' });
@@ -129,7 +129,7 @@ test('seeds the repository again after all the data is erased', async ({ cms, pa
     .click();
 
   await startDemo(page);
-  await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveCount(2);
+  await expect(getEntryRows(page)).toHaveCount(2);
   await expect(page.getByRole('row', { name: /Existing Post/ })).toBeHidden();
   expect(counter.manifestRequests).toBe(1);
 });

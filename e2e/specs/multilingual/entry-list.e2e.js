@@ -1,5 +1,6 @@
 import { MULTILINGUAL_CONFIG, MULTILINGUAL_FILES } from '../../fixtures/configs/multilingual.js';
 import { expect, test } from '../../fixtures/test.js';
+import { getEntryRows } from '../../fixtures/ui.js';
 
 test.use({ config: MULTILINGUAL_CONFIG });
 
@@ -10,7 +11,7 @@ test.beforeEach(async ({ cms }) => {
 });
 
 test('lists the entries in the default locale', async ({ page }) => {
-  const rows = page.getByRole('grid', { name: 'Entries' }).getByRole('row');
+  const rows = getEntryRows(page);
 
   // English is the default locale, although French comes first in the list of locales
   await expect(rows).toHaveText([/A Weekend in Lyon/, /Walking to Petra/]);

@@ -1,6 +1,6 @@
 import { createPNG } from '../../fixtures/files.js';
 import { BASE_CONFIG, expect, test } from '../../fixtures/test.js';
-import { getEditor } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows } from '../../fixtures/ui.js';
 
 /**
  * Entries and collections sharing a folder: what one of them owns, and where each is listed.
@@ -239,9 +239,7 @@ test.describe('with a file collection’s file in an entry collection’s folder
 
   test('lists the file in the file collection only', async ({ page }) => {
     await expect(page).toHaveURL(/#\/collections\/blog$/);
-    await expect(
-      page.getByRole('group', { name: 'Entry List' }).getByRole('grid').getByRole('row'),
-    ).toHaveText([/First/]);
+    await expect(getEntryRows(page)).toHaveText([/First/]);
 
     await page
       .getByRole('tree', { name: 'Collection List' })

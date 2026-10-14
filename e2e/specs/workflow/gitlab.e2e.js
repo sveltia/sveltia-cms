@@ -1,6 +1,6 @@
 import { post } from '../../fixtures/configs/workflow.js';
 import { expect, GITLAB_CONFIG, test } from '../../fixtures/test.js';
-import { getEditor, openEntry } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows, openEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -108,9 +108,7 @@ test('saves a new entry to a branch and opens a draft merge request', async ({
   );
   // Nothing is published yet
   expect(gitlab.head.oid).toBe(mainBefore);
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toContainText([
-    /Second Post.*Draft/,
-  ]);
+  await expect(getEntryRows(page)).toContainText([/Second Post.*Draft/]);
 });
 
 test('saves changes to a published entry to one merge request', async ({ cms, gitlab, page }) => {
@@ -218,10 +216,7 @@ test('publishes an entry by merging its merge request', async ({ cms, gitlab, pa
   expect(gitlab.head.parents).toHaveLength(2);
   // The branch is deleted along with the merge
   expect(gitlab.refs.has('cms/posts/second-post')).toBe(false);
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /First Post/,
-    /Second Post/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
 });
 
 test.describe('while a merge request trails a push to its branch', () => {
@@ -369,10 +364,7 @@ test('publishes an entry once the pipeline of its merge request succeeds', async
   gitlab.finishPipeline();
   await page.clock.fastForward('00:11');
 
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /First Post/,
-    /Second Post/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
   expect(mergeRequest.state).toBe('merged');
   expect(gitlab.readFile('content/posts/second-post.md')).toBe(post('Second Post', 'Coming soon.'));
   // GitLab removed the branch along with the merge
@@ -452,9 +444,7 @@ test('drops a labelled merge request moved to another target branch from the boa
   await cms.open();
 
   // The entry isn’t listed as unpublished, and the board has nothing on it
-  await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
-    /First Post/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/First Post/]);
   await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
 
   const board = page.getByRole('group', { name: 'Editorial Workflow' });
@@ -589,7 +579,7 @@ test.describe('without a configured branch', () => {
     await cms.open();
 
     // The pull requests can only be told apart from someone else’s once the default branch is known
-    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+    await expect(getEntryRows(page)).toHaveText([
       /Unpublished Entries/,
       /Second Post.*Draft/,
       /Published Entries/,
