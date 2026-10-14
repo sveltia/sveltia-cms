@@ -247,6 +247,91 @@ test.describe('editing', () => {
   });
 });
 
+test.describe('editor components in a table', () => {
+  /**
+   * Seed a post whose body is the given Markdown, and open it.
+   * @param {object} fixtures Fixtures.
+   * @param {any} fixtures.cms CMS fixture.
+   * @param {Page} fixtures.page Page.
+   * @param {string} body Body Markdown.
+   */
+  const openRichPost = async ({ cms, page }, body) => {
+    await cms.open();
+    await cms.seed({ ...MONOLINGUAL_FILES, [RICH_POST_PATH]: `${FRONT_MATTER}${body}\n` });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Rich Post/ }).click();
+  };
+
+  test('inserts an image into a table cell', async ({ cms, page }) => {
+    const image = createPNG({ color: [40, 120, 200] });
+
+    await openRichPost({ cms, page }, '| Name | Photo |\n| --- | --- |\n| Dome | Here |');
+
+    const editor = getEditor(page);
+    const field = editor.getByRole('group', { name: /Body.*Field/ });
+    const body = field.getByRole('textbox', { name: 'Body' });
+
+    // Place the caret at the end of a cell
+    await body.getByRole('cell', { name: 'Here' }).click();
+    await body.getByRole('cell', { name: 'Here' }).evaluate((cell) => {
+      window.getSelection()?.selectAllChildren(cell);
+      window.getSelection()?.collapseToEnd();
+    });
+    // The image component is inline, so it’s offered in a cell
+    await field.getByRole('button', { name: 'Image', exact: true }).click();
+
+    const component = body
+      .getByRole('cell', { name: /^Here/ })
+      .getByRole('group', { name: 'Image', exact: true });
+
+    await component
+      .getByRole('group', { name: /Source/ })
+      .locator('input[type="file"]')
+      .first()
+      .setInputFiles({ name: 'dome.png', mimeType: 'image/png', buffer: image });
+    await component.getByRole('textbox', { name: 'Alt Text' }).fill('The dome | at night');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    // A pipe in the component’s Markdown is escaped, so it doesn’t end the cell
+    await expect
+      .poll(async () => (await cms.readRepo())[RICH_POST_PATH])
+      .toBe(
+        [
+          `${FRONT_MATTER}| Name | Photo |`,
+          '| --- | --- |',
+          '| Dome | Here![The dome \\| at night](/uploads/dome.png) |',
+          '',
+        ].join('\n'),
+      );
+    expect(await cms.readRepoFile('static/uploads/dome.png')).toEqual(image);
+  });
+
+  test('loads an image in a table cell as a component, keeping it unchanged', async ({
+    cms,
+    page,
+  }) => {
+    const markdown = '| Name | Photo |\n| --- | --- |\n| Dome | ![The dome](/uploads/dome.png) |';
+
+    await openRichPost({ cms, page }, markdown);
+
+    const editor = getEditor(page);
+    const body = editor.getByRole('textbox', { name: 'Body' });
+
+    await expect(
+      body.getByRole('cell').getByRole('group', { name: 'Image', exact: true }),
+    ).toBeVisible();
+    await page.waitForTimeout(1000);
+    await expect(editor.getByRole('button', { name: 'Save' })).toBeDisabled();
+
+    await editor.getByRole('textbox', { name: 'Title' }).first().fill('Rich Post, Revised');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())[RICH_POST_PATH])
+      .toBe(`${FRONT_MATTER.replace('Rich Post', 'Rich Post, Revised')}${markdown}\n`);
+  });
+});
+
 test.describe('existing Markdown', () => {
   test('keeps Markdown in the editor’s style unchanged', async ({ cms, page }) => {
     await cms.open();
