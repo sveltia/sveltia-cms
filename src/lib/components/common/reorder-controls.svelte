@@ -11,6 +11,9 @@
 
   A touch screen gets Move Up/Down buttons instead, because HTML drag and drop is mouse-only: a
   touch gesture never fires `dragstart`, so a handle would do nothing at all there.
+
+  A list with room for both can render the two parts separately with `part`: the handle, shown only
+  with a fine pointer, and the buttons, shown on any device.
 -->
 <script>
   import { _ } from '@sveltia/i18n';
@@ -26,6 +29,10 @@
    * @property {boolean} [disabled] Whether to disable reordering.
    * @property {'small' | 'medium'} [size] Button size.
    * @property {string} [icon] Name of the icon to use for the drag handle.
+   * @property {'auto' | 'handle' | 'buttons'} [part] Which control(s) to render: `auto` renders
+   * the drag handle with a fine pointer and the Move Up/Down buttons otherwise, `handle` renders
+   * only the drag handle, and only with a fine pointer, and `buttons` renders the Move Up/Down
+   * buttons on any device, side by side without a spacer.
    * @property {() => void} [onGrab] Called when the drag handle is pressed, so the list can make
    * the item draggable. Never called on a touch screen.
    * @property {() => void} [onRelease] Called when the press ends without starting a drag.
@@ -41,6 +48,7 @@
     disabled = false,
     size = 'small',
     icon = 'drag_indicator',
+    part = 'auto',
     onGrab = undefined,
     onRelease = undefined,
     onMove = undefined,
@@ -57,9 +65,12 @@
     globalThis.removeEventListener('pointercancel', release);
     onRelease?.();
   };
+
+  const showHandle = $derived(env.hasMouse && part !== 'buttons');
+  const showButtons = $derived(part === 'buttons' || (part === 'auto' && !env.hasMouse));
 </script>
 
-{#if env.hasMouse}
+{#if showHandle}
   <Button
     {size}
     {disabled}
@@ -89,7 +100,8 @@
       <Icon name={icon} />
     {/snippet}
   </Button>
-{:else}
+{/if}
+{#if showButtons}
   <Button
     {size}
     iconic
@@ -102,7 +114,9 @@
       <Icon name="arrow_upward" />
     {/snippet}
   </Button>
-  <Spacer />
+  {#if part !== 'buttons'}
+    <Spacer />
+  {/if}
   <Button
     {size}
     iconic

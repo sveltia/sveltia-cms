@@ -218,6 +218,78 @@ describe('ListEditorComplex', () => {
       .toEqual(['b', 'c', 'a']);
   });
 
+  test('reorders an item with the Move Up/Down buttons beside the drag handle', async () => {
+    const { draft } = await renderEditor(authorsField, {
+      'authors.0.name': 'a',
+      'authors.1.name': 'b',
+      'authors.2.name': 'c',
+    });
+
+    const first = page.getByRole('group', { name: 'Item 1 of 3' });
+
+    // The buttons are there with a mouse, along with the handle
+    await expect.element(first.getByRole('button', { name: 'Reorder Item' })).toBeVisible();
+    await expect.element(first.getByRole('button', { name: 'Move Up' })).toBeDisabled();
+    await first.getByRole('button', { name: 'Move Down' }).click();
+
+    await expect
+      .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
+      .toEqual(['b', 'a', 'c']);
+    // The focus follows the item to its new position
+    await expect
+      .element(
+        page.getByRole('group', { name: 'Item 2 of 3' }).getByRole('button', { name: 'Move Down' }),
+      )
+      .toHaveFocus();
+  });
+
+  test('hides the header end buttons until the item is hovered or has focus', async () => {
+    await renderEditor(authorsField, { 'authors.0.name': 'a', 'authors.1.name': 'b' });
+
+    // Without hover, there’s no rule hiding the buttons for the test to check
+    expect(matchMedia('(hover: hover)').matches).toBe(true);
+
+    const first = page.getByRole('group', { name: 'Item 1 of 2' });
+    const names = ['Move Up', 'Move Down', 'List Item Options', 'Remove'];
+
+    /**
+     * Get the opacity of the buttons at the end of the first item’s header.
+     * @returns {string[]} Opacities.
+     */
+    const getOpacities = () =>
+      names.map(
+        (name) => getComputedStyle(first.getByRole('button', { name }).first().element()).opacity,
+      );
+
+    await userEvent.unhover(first);
+    await expect.poll(getOpacities).toEqual(['0', '0', '0', '0']);
+    await userEvent.hover(first);
+    await expect.poll(getOpacities).toEqual(['1', '1', '1', '1']);
+    await userEvent.unhover(first);
+    await expect.poll(getOpacities).toEqual(['0', '0', '0', '0']);
+    // A keyboard user in the item can see the buttons
+    first.getByRole('textbox').first().element().focus();
+    await expect.poll(getOpacities).toEqual(['1', '1', '1', '1']);
+    // The handle stays visible
+    await expect
+      .element(
+        page
+          .getByRole('group', { name: 'Item 2 of 2' })
+          .getByRole('button', { name: 'Reorder Item' }),
+      )
+      .toHaveStyle({ opacity: '1' });
+
+    // The options button stays visible while its menu is open, wherever the pointer and focus are
+    const options = first.getByRole('button', { name: 'List Item Options' });
+
+    await options.click();
+    await expect.element(options).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.unhover(first);
+    await expect.element(options).toHaveStyle({ opacity: '1' });
+    await userEvent.keyboard('{Escape}');
+    await expect.element(options).toHaveAttribute('aria-expanded', 'false');
+  });
+
   test('shows the position of each item, following a move', async () => {
     const { container } = await renderEditor(authorsField, {
       'authors.0.name': 'a',

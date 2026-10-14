@@ -162,4 +162,34 @@ describe('ReorderControls', () => {
       .element(page.getByRole('button', { name: 'Move Down' }))
       .toHaveAttribute('aria-disabled', 'true');
   });
+
+  test('renders only the drag handle, and only with a mouse, for the `handle` part', async () => {
+    env.hasMouse = true;
+
+    await render(ReorderControls, { index: 1, itemCount: 3, part: 'handle' });
+
+    await expect.element(page.getByRole('button', { name: 'Reorder Item' })).toBeVisible();
+    expect(page.getByRole('button', { name: 'Move Up' }).elements()).toHaveLength(0);
+
+    env.hasMouse = false;
+
+    await expect.poll(() => page.getByRole('button').elements()).toHaveLength(0);
+  });
+
+  test('renders the up/down buttons on any device for the `buttons` part', async () => {
+    env.hasMouse = true;
+
+    const onMove = vi.fn();
+
+    await render(ReorderControls, { index: 1, itemCount: 3, part: 'buttons', onMove });
+
+    expect(page.getByRole('button', { name: 'Reorder Item' }).elements()).toHaveLength(0);
+    await page.getByRole('button', { name: 'Move Up' }).click();
+    expect(onMove).toHaveBeenCalledWith(0, 'move-up');
+
+    env.hasMouse = false;
+
+    await page.getByRole('button', { name: 'Move Down' }).click();
+    expect(onMove).toHaveBeenCalledWith(2, 'move-down');
+  });
 });

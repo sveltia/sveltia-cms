@@ -616,6 +616,7 @@
                   itemCount={items.length}
                   disabled={isLocked || items.length < 2}
                   icon="drag_handle"
+                  part="handle"
                   onGrab={() => sorter.grab(index)}
                   onRelease={sorter.release}
                   onMove={(to, action) => sorter.move(index, to, action)}
@@ -623,6 +624,15 @@
               {/if}
             {/snippet}
             {#snippet endContent()}
+              {#if allowReorder && !singleItem}
+                <ReorderControls
+                  {index}
+                  itemCount={items.length}
+                  disabled={isLocked || items.length < 2}
+                  part="buttons"
+                  onMove={(to, action) => sorter.move(index, to, action)}
+                />
+              {/if}
               {#if allowAdd && !hasMaxItems}
                 <MenuButton
                   variant="ghost"
@@ -769,6 +779,15 @@
 
     &.dragging {
       opacity: 0.25;
+    }
+
+    /* Like the field menus, the buttons at the end of the header (Move Up/Down, options and
+      remove) are shown on hover, and kept visible while a keyboard user is in the item, so the
+      focused one isn’t invisible, or while the options menu is open */
+    @media (hover: hover) {
+      &:not(:hover, :focus-within) > :global(.header > .end button:not([aria-expanded='true'])) {
+        opacity: 0;
+      }
     }
   }
 </style>
