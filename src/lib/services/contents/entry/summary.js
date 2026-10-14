@@ -112,6 +112,9 @@ const getBodyHeader = (markdown) =>
 /**
  * Parse the given entry summary as Markdown and sanitize HTML with a few exceptions if the Markdown
  * option is enabled. Also, parse HTML character references (entities).
+ * Without the Markdown option, the references are decoded after sanitizing, so the result can
+ * contain markup, e.g. `&lt;img&gt;` becomes `<img>`: it’s only safe as text, never with Svelte’s
+ * `@html` tag or `innerHTML`.
  * @param {string} str Original string.
  * @param {object} [options] Options.
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.

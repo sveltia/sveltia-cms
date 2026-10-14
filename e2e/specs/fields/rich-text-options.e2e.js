@@ -658,6 +658,83 @@ test.describe('preview sanitization', () => {
       await expect(preview).toContainText('to start.');
       await expect(preview.getByRole('button', { name: 'Go' })).toBeVisible();
     });
+
+    test('shows HTML given as a new entry’s body in the URL as text, without script links', async ({
+      cms,
+      page,
+    }) => {
+      // Character references, which a plain tag stripper decodes back into a tag
+      const html = '<img src="x" onerror="document.body.dataset.injected = 1">';
+      const body = html.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+
+      await cms.open();
+      await cms.signIn();
+      await page.evaluate(
+        (query) => {
+          window.location.hash = `/collections/notes/new?body=${query}`;
+        },
+        encodeURIComponent(`${body} [Click me](javascript:document.body.dataset.injected=1) Done.`),
+      );
+
+      const editor = getEditor(page);
+      const preview = editor.getByRole('document', { name: 'Content Preview' });
+
+      await expect(preview).toContainText(`${html} Click me Done.`);
+      await expect(preview.locator('img')).toHaveCount(0);
+      await expect(preview.getByText('Click me')).not.toHaveAttribute('href');
+      await preview.getByText('Click me').click();
+      expect(await page.evaluate(() => document.body.dataset.injected)).toBeUndefined();
+    });
+  });
+
+  test.describe('turned off for the items of a list', () => {
+    test.use({
+      config: {
+        ...noteConfig({}),
+        collections: [
+          {
+            name: 'notes',
+            label: 'Notes',
+            folder: 'content/notes',
+            create: true,
+            fields: [
+              { name: 'title', label: 'Title' },
+              {
+                name: 'blocks',
+                label: 'Blocks',
+                widget: 'list',
+                field: { name: 'body', label: 'Body', widget: 'richtext', sanitize_preview: false },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    test('shows HTML given as a new entry’s list items in the URL as text', async ({
+      cms,
+      page,
+    }) => {
+      const html = '<img src="x" onerror="document.body.dataset.injected = 1">';
+      const encoded = html.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+
+      await cms.open();
+      await cms.signIn();
+      await page.evaluate(
+        (query) => {
+          window.location.hash = `/collections/notes/new?blocks=${query}`;
+        },
+        // A raw tag in one item, which is removed, and character references in another
+        encodeURIComponent(`${html}Raw, ${encoded} Done.`),
+      );
+
+      const preview = getEditor(page).getByRole('document', { name: 'Content Preview' });
+
+      await expect(preview).toContainText('Raw');
+      await expect(preview).toContainText(`${html} Done.`);
+      await expect(preview.locator('img')).toHaveCount(0);
+      expect(await page.evaluate(() => document.body.dataset.injected)).toBeUndefined();
+    });
   });
 });
 

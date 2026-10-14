@@ -3,6 +3,8 @@ import { isObject } from '@sveltia/utils/object';
 import { isFieldRequired } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { getSubtreeEntries } from '$lib/services/contents/entry/subtree';
+import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
+import { sanitizeDynamicValue } from '$lib/services/contents/fields/rich-text/defaults';
 
 /**
  * @import { GetDefaultValueMapFuncArgs, InternalLocaleCode } from '$lib/types/private';
@@ -81,10 +83,14 @@ export const getDefaultValueMap = (args) => {
   let value;
 
   if (dynamicValue !== undefined) {
+    // Items of a RichText subfield are sanitized like the value of a RichText field, as the preview
+    // may not be sanitized
+    const isRichText = RICH_TEXT_FIELD_TYPES.includes(/** @type {string} */ (subfield?.widget));
+
     // Filter out empty strings (this handles the case where `dynamicValue` is '')
     value = dynamicValue
       .split(/,\s*/)
-      .map((val) => val.trim())
+      .map((val) => (isRichText ? sanitizeDynamicValue(val) : val).trim())
       .filter((val) => val !== '');
   } else {
     value = Array.isArray(defaultValue) ? defaultValue : [];

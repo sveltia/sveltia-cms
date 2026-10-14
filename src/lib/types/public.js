@@ -964,7 +964,8 @@
  * @property {boolean} [sanitize_preview] Whether to sanitize the preview HTML. Default: `true`.
  * Note that Sveltia CMS has changed the default value from `false` to `true` to enhance security,
  * whereas Netlify/Decap CMS keeps it as `false`. We recommend keeping this option enabled unless
- * disabling it fixes a broken preview and you fully trust all users of your CMS.
+ * disabling it fixes a broken preview and you fully trust all users of your CMS. `javascript:`
+ * URLs, e.g. in links, are removed from the preview either way.
  * @property {boolean} [linked_images] Whether to enable the linked images feature for the built-in
  * `image` component. Default: `true`. When enabled, the image component provides an additional text
  * field for specifying a URL to wrap the image as a link. The resulting Markdown output will be in

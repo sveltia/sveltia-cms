@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { describe, expect, test, vi } from 'vitest';
 
 import { getDefaultValueMap, hasRequiredSingleItem } from './defaults';
@@ -81,6 +82,46 @@ describe('Test getDefaultValueMap()', () => {
       'items.1': 'dynamic2',
       'items.2': 'dynamic3',
     });
+  });
+
+  test('should sanitize dynamicValue items of a RichText subfield', () => {
+    /** @type {ListField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      field: { name: 'body', widget: 'richtext', sanitize_preview: false },
+    };
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath: 'items',
+      locale: '_default',
+      defaultLocale: '_default',
+      dynamicValue: '<img src=x onerror=alert(1)>, &lt;svg onload=alert(1)&gt;, **Bold** `1 < 2`',
+    });
+
+    expect(result).toEqual({
+      items: [],
+      'items.0': '&lt;svg onload=alert(1)>',
+      'items.1': '**Bold** `1 < 2`',
+    });
+  });
+
+  test('should keep dynamicValue items of another subfield as is', () => {
+    /** @type {ListField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      field: { name: 'tag', widget: 'string' },
+    };
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath: 'items',
+      locale: '_default',
+      defaultLocale: '_default',
+      dynamicValue: '<b>, a < b',
+    });
+
+    expect(result).toEqual({ items: [], 'items.0': '<b>', 'items.1': 'a < b' });
   });
 
   test('should handle empty dynamicValue', () => {

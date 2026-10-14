@@ -36,6 +36,7 @@
     MEDIA_QUERY_SELECTOR,
     resolveMediaURLs,
   } from '$lib/services/contents/fields/rich-text/previews/media-urls';
+  import { removeScriptURLs } from '$lib/services/contents/fields/rich-text/previews/script-urls';
   import { sanitizeRichTextHTML } from '$lib/services/contents/fields/rich-text/sanitize';
 
   /**
@@ -441,8 +442,9 @@
 
   /**
    * Parse a block of markdown into HTML, replacing component placeholders with their previews and
-   * sanitizing the result if needed. An HTML value is only sanitized. The media URLs are deferred,
-   * so the browser doesn’t request a file path before `replaceMediaURLs()` resolves it.
+   * sanitizing the result if needed, or else removing `javascript:` URLs, which could come from a
+   * new entry’s body given in the URL. An HTML value is only sanitized. The media URLs are
+   * deferred, so the browser doesn’t request a file path before `replaceMediaURLs()` resolves it.
    * @param {string} block The markdown block to parse, or the whole HTML value.
    * @returns {string} The parsed (and possibly sanitized) HTML string.
    */
@@ -452,7 +454,7 @@
 
     const rawHTML = isHTML ? block : /** @type {string} */ (parse(block, { breaks: true }));
 
-    return deferMediaURLs(doSanitize ? sanitizeRichTextHTML(rawHTML) : rawHTML);
+    return deferMediaURLs(doSanitize ? sanitizeRichTextHTML(rawHTML) : removeScriptURLs(rawHTML));
   };
 
   $effect(() => {

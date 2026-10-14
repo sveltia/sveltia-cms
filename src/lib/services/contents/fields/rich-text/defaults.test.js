@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { stripTags } from '@sveltia/utils/string';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -175,6 +176,24 @@ describe('Test getDefaultValueMap()', () => {
       expect(result.content).toContain('Safe text');
     });
 
+    test('should not turn character references into HTML tags', () => {
+      /** @type {RichTextField} */
+      const fieldConfig = { ...baseFieldConfig };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'content',
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValue:
+          '&lt;svg&gt;&lt;animate onbegin="alert(1)" attributeName=x dur=1s&gt;&lt;/svg&gt; `1 < 2`',
+      });
+
+      expect(result.content).toBe(
+        '&lt;svg>&lt;animate onbegin="alert(1)" attributeName=x dur=1s>&lt;/svg> `1 < 2`',
+      );
+    });
+
     test('should handle empty dynamicValue', () => {
       /** @type {RichTextField} */
       const fieldConfig = {
@@ -254,6 +273,25 @@ describe('Test getDefaultValueMap()', () => {
 
       // The catch-block regex fallback should strip tags
       expect(result.content).toBe('Bold text with emphasis');
+    });
+
+    test('should escape an unclosed tag in the regex fallback', () => {
+      vi.mocked(stripTags).mockImplementationOnce(() => {
+        throw new Error('DOMParser not available');
+      });
+
+      /** @type {RichTextField} */
+      const fieldConfig = { ...baseFieldConfig };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'content',
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValue: '<b>Bold</b> 1 < 2 <img src=x onerror=alert(1)',
+      });
+
+      expect(result.content).toBe('Bold 1 < 2 &lt;img src=x onerror=alert(1)');
     });
 
     test('should handle undefined dynamicValue', () => {

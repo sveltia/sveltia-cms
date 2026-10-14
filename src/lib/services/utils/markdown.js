@@ -53,6 +53,8 @@ const HTML_BLOCK_BOUNDARY_REGEX = new RegExp(
 /**
  * Convert the given Markdown or HTML string to plain text by removing the Markdown syntax and HTML
  * tags, e.g. to show a Rich Text field value in a summary. Line breaks are collapsed into spaces.
+ * Character references are decoded, so the result can contain markup, e.g. `&lt;img&gt;` becomes
+ * `<img>`: it’s only safe as text, never with Svelte’s `@html` tag or `innerHTML`.
  * @param {string} str Original string.
  * @returns {string} Plain text.
  */
