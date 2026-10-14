@@ -13,9 +13,10 @@
    * @property {boolean} [disabled] Whether to disable the buttons.
    * @property {{ current: EntryListView | AssetListView | SelectAssetsView }} currentView Current
    * view details.
-   * @property {ViewType[]} [types] View types to offer, in the order of the buttons, the first one
-   * being the default. Default: list and grid. The table view is only offered on a large screen,
-   * where it fits.
+   * @property {ViewType[]} [types] View types to offer, in the order of the buttons. Default: list
+   * and grid. The table view is only offered on a large screen, where it fits.
+   * @property {ViewType} [defaultType] View type selected until the user picks one. Default: the
+   * first of `types`, which is also used if the given type isn’t offered.
    */
 
   /** @type {Props & Record<string, any>} */
@@ -24,6 +25,7 @@
     disabled = false,
     currentView,
     types = ['list', 'grid'],
+    defaultType = types[0],
     ...rest
     /* eslint-enable prefer-const */
   } = $props();
@@ -34,12 +36,14 @@
    */
   const ICONS = { table: 'table', list: 'format_list_bulleted', grid: 'grid_view' };
 
-  // The first type is the default one, which applies until the user picks a view, and also to a
-  // saved view that isn’t offered anymore, e.g. the grid view of a collection without thumbnails
+  // The default type applies until the user picks a view, and also to a saved view that isn’t
+  // offered anymore, e.g. the grid view of a collection without thumbnails
   const selectedType = $derived(
     currentView.current.type && types.includes(currentView.current.type)
       ? currentView.current.type
-      : types[0],
+      : types.includes(defaultType)
+        ? defaultType
+        : types[0],
   );
   const isGridView = $derived(selectedType === 'grid');
   // A smaller screen only switches between the list and grid views; the table view is shown as a

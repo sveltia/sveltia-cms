@@ -34,9 +34,19 @@ const POSTS = {
   view_groups: [{ label: 'Category', field: 'category' }],
 };
 
+/**
+ * Configuration of a collection without the table view columns configured.
+ */
+const NOTES = {
+  name: 'notes',
+  label: 'Notes',
+  folder: 'content/notes',
+  fields: [{ name: 'title', label: 'Title', widget: 'string' }],
+};
+
 describe('EntryList', () => {
   beforeAll(async () => {
-    await initTestConfig({ collections: [structuredClone(POSTS)] });
+    await initTestConfig({ collections: [structuredClone(POSTS), structuredClone(NOTES)] });
   });
 
   /**
@@ -226,6 +236,26 @@ describe('EntryList', () => {
     } finally {
       forkedRepository.current = undefined;
     }
+  });
+
+  test('shows the list view by default without the table columns configured', async () => {
+    setEntries([
+      createMockEntry({
+        slug: 'hello',
+        folder: 'content/notes',
+        content: { _default: { title: 'Hello' } },
+      }),
+    ]);
+    entryListSettings.current = {};
+    selectedCollection.current = getCollection('notes');
+
+    const { container } = await render(EntryList, {});
+    const grid = page.getByRole('grid', { name: 'Entries' });
+
+    await expect.element(grid).toHaveAttribute('aria-rowcount', '1');
+    expect(container.querySelector('.list-view')).not.toBeNull();
+    expect(container.querySelector('.table-view')).toBeNull();
+    expect(grid.getByRole('columnheader').elements()).toHaveLength(0);
   });
 
   test('shows the table view as a list on a smaller screen', async () => {

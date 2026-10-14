@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -32,6 +33,7 @@ describe('SecondaryToolbar', () => {
           name: 'notes',
           folder: 'content/notes',
           fields: [{ name: 'title', widget: 'string' }],
+          table_columns: ['title'],
         },
         {
           name: 'settings',
@@ -142,5 +144,33 @@ describe('SecondaryToolbar', () => {
 
     await render(SecondaryToolbar, {});
     await expect.poll(getViewNames).toEqual(['Table View', 'List View']);
+  });
+
+  test('selects the table view by default only with the table columns configured', async () => {
+    const group = page.getByRole('radiogroup', { name: 'Switch View' });
+
+    flushSync();
+    currentView.current = {};
+
+    const posts = await render(SecondaryToolbar, {});
+
+    await expect.element(group.getByRole('radio', { name: 'List View' })).toBeChecked();
+    await expect.element(group.getByRole('radio', { name: 'Table View' })).not.toBeChecked();
+    await posts.unmount();
+
+    setEntries([
+      createMockEntry({
+        slug: 'a',
+        folder: 'content/notes',
+        content: { _default: { title: 'A' } },
+      }),
+    ]);
+    selectedCollection.current = getCollection('notes');
+    flushSync();
+    currentView.current = {};
+
+    await render(SecondaryToolbar, {});
+    await expect.element(group.getByRole('radio', { name: 'Table View' })).toBeChecked();
+    await expect.element(group.getByRole('radio', { name: 'List View' })).not.toBeChecked();
   });
 });

@@ -55,6 +55,15 @@ export const getConfiguredTableColumns = (collection) => {
 };
 
 /**
+ * Check whether a collection has the columns of its table view configured with the `table_columns`
+ * option, or its alias `summary_fields`. The table view is the default view of such a collection.
+ * @param {InternalEntryCollection} collection Entry collection.
+ * @returns {boolean} Result.
+ */
+export const hasConfiguredTableColumns = (collection) =>
+  !!getConfiguredTableColumns(collection)?.length;
+
+/**
  * Check whether a column key can be shown in a collection’s table view: a special key, a template,
  * the key path of a field defined in the collection, or the canonical slug key, e.g.
  * `translationKey`, which is part of the content of each localized entry without being a field.

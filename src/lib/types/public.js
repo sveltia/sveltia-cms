@@ -1805,7 +1805,8 @@
  * field: author.name, label: Author }]`. A field name can also be one of the special keys:
  * `_summary` for the entry summary, `slug`, `commit_author` and `commit_date`, or a template like
  * the `summary` option’s, e.g. `{{locales}}`. Default: the entry summary, followed by the sortable
- * fields.
+ * fields. If at least one column is given, the table view is the default view of the entry list;
+ * otherwise, it’s the list view.
  * @property {FieldKeyPath[]} [summary_fields] An alias of the `table_columns` option for Static CMS
  * compatibility, where `summary` stands for the entry summary. Ignored if `table_columns` is
  * defined.

@@ -22,6 +22,7 @@
   } from '$lib/services/contents/collection/view';
   import {
     currentView,
+    getDefaultEntryViewType,
     getEntryOrderKey,
     getEntryViewType,
   } from '$lib/services/contents/collection/view/settings';
@@ -41,6 +42,7 @@
     getEntryViewType({
       type: currentView.current.type,
       hasThumbnails: !!collection?._thumbnailFieldNames.length,
+      defaultType: getDefaultEntryViewType(collection),
       isLargeScreen: env.isLargeScreen,
       reordering: reordering.current,
     }),

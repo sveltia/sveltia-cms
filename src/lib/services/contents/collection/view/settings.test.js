@@ -8,6 +8,7 @@ import { selectedCollection } from '$lib/services/contents/collection';
 import {
   currentView,
   entryListSettings,
+  getDefaultEntryViewType,
   getEntryOrderKey,
   getEntryViewType,
   initSettings,
@@ -46,12 +47,35 @@ describe('Test currentView', () => {
   });
 });
 
-describe('Test getEntryViewType()', () => {
-  const large = { hasThumbnails: true, isLargeScreen: true };
+describe('Test getDefaultEntryViewType()', () => {
+  test('defaults to the table view only with the table columns configured', () => {
+    expect(getDefaultEntryViewType(/** @type {any} */ ({ table_columns: ['title'] }))).toBe(
+      'table',
+    );
+    expect(getDefaultEntryViewType(/** @type {any} */ ({}))).toBe('list');
+    expect(getDefaultEntryViewType(undefined)).toBe('list');
+  });
+});
 
-  test('defaults to the table view', () => {
+describe('Test getEntryViewType()', () => {
+  const large = {
+    hasThumbnails: true,
+    defaultType: /** @type {const} */ ('table'),
+    isLargeScreen: true,
+  };
+
+  test('uses the default view until the user picks one', () => {
     expect(getEntryViewType({ ...large })).toBe('table');
     expect(getEntryViewType({ ...large, type: undefined })).toBe('table');
+  });
+
+  test('uses a list view default without the table columns configured', () => {
+    const listDefault = { ...large, defaultType: /** @type {const} */ ('list') };
+
+    expect(getEntryViewType({ ...listDefault })).toBe('list');
+    expect(getEntryViewType({ ...listDefault, type: 'grid', hasThumbnails: false })).toBe('list');
+    // The table view can still be picked
+    expect(getEntryViewType({ ...listDefault, type: 'table' })).toBe('table');
   });
 
   test('uses the view the user has picked', () => {
@@ -65,7 +89,11 @@ describe('Test getEntryViewType()', () => {
   });
 
   test('uses the list view for the table view on a smaller screen', () => {
-    const small = { hasThumbnails: true, isLargeScreen: false };
+    const small = {
+      hasThumbnails: true,
+      defaultType: /** @type {const} */ ('table'),
+      isLargeScreen: false,
+    };
 
     expect(getEntryViewType({ ...small })).toBe('list');
     expect(getEntryViewType({ ...small, type: 'table' })).toBe('list');

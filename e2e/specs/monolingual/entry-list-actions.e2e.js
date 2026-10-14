@@ -174,13 +174,13 @@ test.describe('with the magazine’s files', () => {
     expect(Object.keys(await cms.readRepo())).toContain('content/authors/jane-doe.json');
   });
 
-  test('switches the table to a grid for the collection only', async ({ page }) => {
+  test('switches the list to a grid for the collection only', async ({ page }) => {
     const tableView = page.getByRole('radio', { name: 'Table View' });
     const listView = page.getByRole('radio', { name: 'List View' });
     const gridView = page.getByRole('radio', { name: 'Grid View' });
 
-    // The table is the default on a large screen
-    await expect(tableView).toBeChecked();
+    // The list is the default without the table columns configured
+    await expect(listView).toBeChecked();
     await gridView.click();
     await expect(gridView).toBeChecked();
     await expect(getEntryRows(page)).toHaveCount(3);
@@ -190,7 +190,7 @@ test.describe('with the magazine’s files', () => {
     await page.getByRole('treeitem', { name: 'Authors' }).click();
     await expect(getEntryRows(page)).toHaveText([/Jane Doe/, /John Smith/]);
     await expect(gridView).toBeHidden();
-    await expect(tableView).toBeChecked();
+    await expect(listView).toBeChecked();
     await page.getByRole('treeitem', { name: 'Posts' }).click();
     await expect(gridView).toBeChecked();
 

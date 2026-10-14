@@ -129,4 +129,32 @@ describe('ViewSwitcher', () => {
     await page.getByRole('button', { name: 'Switch to List View' }).click();
     expect(currentView.current.type).toBe('list');
   });
+
+  test('selects the given default type until the user picks one', async () => {
+    env.isLargeScreen = true;
+
+    const currentView = createRawState(/** @type {any} */ ({}));
+
+    await render(ViewSwitcher, { currentView, types: ['table', 'list'], defaultType: 'list' });
+
+    const group = page.getByRole('radiogroup', { name: 'Switch View' });
+
+    await expect.element(group.getByRole('radio', { name: 'List View' })).toBeChecked();
+    await expect.element(group.getByRole('radio', { name: 'Table View' })).not.toBeChecked();
+
+    currentView.current = { type: 'table' };
+    await expect.element(group.getByRole('radio', { name: 'Table View' })).toBeChecked();
+  });
+
+  test('selects the first type for a default type not offered', async () => {
+    env.isLargeScreen = true;
+
+    const currentView = createRawState(/** @type {any} */ ({}));
+
+    await render(ViewSwitcher, { currentView, types: ['table', 'list'], defaultType: 'grid' });
+
+    const group = page.getByRole('radiogroup', { name: 'Switch View' });
+
+    await expect.element(group.getByRole('radio', { name: 'Table View' })).toBeChecked();
+  });
 });

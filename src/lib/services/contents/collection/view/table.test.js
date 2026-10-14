@@ -12,6 +12,7 @@ import {
   getConfiguredTableColumns,
   getTableCellValue,
   getTableColumns,
+  hasConfiguredTableColumns,
   isTableColumnKey,
 } from './table';
 
@@ -97,6 +98,18 @@ beforeEach(() => {
   vi.mocked(getField).mockImplementation(({ collectionName, keyPath }) =>
     collectionName === 'posts' ? fieldMap[keyPath] : undefined,
   );
+});
+
+describe('Test hasConfiguredTableColumns()', () => {
+  test('returns `true` with `table_columns` or `summary_fields` defined', () => {
+    expect(hasConfiguredTableColumns(createCollection({ table_columns: ['title'] }))).toBe(true);
+    expect(hasConfiguredTableColumns(createCollection({ summary_fields: ['summary'] }))).toBe(true);
+  });
+
+  test('returns `false` without any columns configured', () => {
+    expect(hasConfiguredTableColumns(createCollection({}))).toBe(false);
+    expect(hasConfiguredTableColumns(createCollection({ table_columns: [] }))).toBe(false);
+  });
 });
 
 describe('Test getConfiguredTableColumns()', () => {
