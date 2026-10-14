@@ -31,10 +31,14 @@ import {
 } from '$lib/services/backends/fs/git/objects';
 import { createNodeDirectoryHandle } from '$lib/test/node-fs-handles';
 
+// Auto maintenance is turned off so a detached `git maintenance` doesn’t run alongside the tests
 const GIT_ENV = {
   ...process.env,
   GIT_CONFIG_GLOBAL: '/dev/null',
   GIT_CONFIG_NOSYSTEM: '1',
+  GIT_CONFIG_COUNT: '1',
+  GIT_CONFIG_KEY_0: 'maintenance.auto',
+  GIT_CONFIG_VALUE_0: 'false',
   GIT_AUTHOR_NAME: 'Jane Doe',
   GIT_AUTHOR_EMAIL: 'jane@example.com',
   GIT_COMMITTER_NAME: 'Jane Doe',

@@ -269,7 +269,15 @@ test.describe('Git commits', () => {
   const git = (cwd, ...args) =>
     execFileSync('git', args, {
       cwd,
-      env: { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' },
+      env: {
+        ...process.env,
+        GIT_CONFIG_GLOBAL: '/dev/null',
+        GIT_CONFIG_NOSYSTEM: '1',
+        // No detached `git maintenance` after a commit
+        GIT_CONFIG_COUNT: '1',
+        GIT_CONFIG_KEY_0: 'maintenance.auto',
+        GIT_CONFIG_VALUE_0: 'false',
+      },
       stdio: 'pipe',
     })
       .toString()

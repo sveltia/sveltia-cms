@@ -45,12 +45,18 @@ vi.mock('$lib/services/backends/git/shared/commits', () => ({
 }));
 
 /**
- * Environment for the `git` command, isolated from the user’s and system configuration.
+ * Environment for the `git` command, isolated from the user’s and system configuration. Auto
+ * maintenance is turned off: `git commit` would otherwise start a detached `git maintenance` that
+ * deletes its lock file in `.git` while a test removes the folder, and on Linux `rmSync()` then
+ * returns without an error, leaving the rest of the folder, `.git/config` included, behind.
  */
 const GIT_ENV = {
   ...process.env,
   GIT_CONFIG_GLOBAL: '/dev/null',
   GIT_CONFIG_NOSYSTEM: '1',
+  GIT_CONFIG_COUNT: '1',
+  GIT_CONFIG_KEY_0: 'maintenance.auto',
+  GIT_CONFIG_VALUE_0: 'false',
   GIT_AUTHOR_NAME: 'Native',
   GIT_AUTHOR_EMAIL: 'native@example.com',
   GIT_COMMITTER_NAME: 'Native',
