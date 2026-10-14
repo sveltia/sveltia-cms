@@ -74,6 +74,7 @@ Build output: `package/dist/sveltia-cms.js` (IIFE), `package/dist/sveltia-cms.mj
 - Before running tests, review the change with `/code-review --fix` and repeat until it reports no findings.
 - Run the end-to-end tests on a port of your own, e.g. `E2E_PORT=4181 pnpm test:e2e`, when another worktree may be running them: the run fails rather than share a busy port.
 - Do not add a `Co-Authored-By` trailer to commit messages.
+- When an issue ID is given, add `Fix #(ISSUE_ID)` to the commit description.
 
 ## Localization PRs
 
