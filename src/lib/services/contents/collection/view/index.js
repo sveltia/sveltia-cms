@@ -401,7 +401,7 @@ const restoreView = (collection, _allEntries) => {
   /** @type {EntryListView} */
   // The view type is only set once the user picks one; until then, the default applies. See
   // `getEntryViewType()`
-  const view = { ...(entryListSettings.current?.[collection.name] ?? {}) };
+  const view = { ...entryListSettings.current?.[collection.name] };
 
   const { default: defaultSort } = getSortConfig({
     collection,

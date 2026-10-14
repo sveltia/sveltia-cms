@@ -431,9 +431,9 @@
         width: 100%;
       }
 
-      /* A native color, date or time input is still styled for a custom field type that renders one.
-        The built-in editors use Sveltia UI components instead, which have the `sui` class and styles
-        of their own, so they’re left out */
+      /* A native color, date or time input is still styled for a custom field type that renders
+        one. The built-in editors use Sveltia UI components instead, which have the `sui` class and
+        styles of their own, so they’re left out */
 
       input:is([type='color']:not(.sui), [type='number']) {
         border-width: 1px;
