@@ -100,7 +100,8 @@ const getSignInLink = async (page, github) => {
     /** @type {string} */ (await page.evaluate(() => localStorage.getItem('sveltia-cms.prefs'))),
   );
 
-  const data = Buffer.from(JSON.stringify({ token: github.token, prefs })).toString('base64');
+  // Encoded like `encodeMagicLinkData()` does: URL-safe Base64 without padding
+  const data = Buffer.from(JSON.stringify({ token: github.token, prefs })).toString('base64url');
   const link = `${SITE_ORIGIN}/admin/#/signin/${data}`;
   const { modules } = QRCode.create(link);
 
