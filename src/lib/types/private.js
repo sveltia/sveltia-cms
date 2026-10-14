@@ -1757,14 +1757,15 @@
  */
 
 /**
- * Entry/Asset list view type.
- * @typedef {'grid' | 'list'} ViewType
+ * Entry/Asset list view type. The `table` view is only available in the entry list.
+ * @typedef {'grid' | 'list' | 'table'} ViewType
  */
 
 /**
  * Entry list view settings.
  * @typedef {object} EntryListView
- * @property {ViewType} type View type.
+ * @property {ViewType} [type] View type the user has picked. Not set until then, so the default
+ * applies.
  * @property {SortingConditions} [sort] Sorting conditions.
  * @property {FilteringConditions} [filter] Filtering conditions. Deprecated in favour of `filters`.
  * @property {FilteringConditions[]} [filters] One or more filtering conditions.
@@ -1781,6 +1782,15 @@
  * @property {InternalLocaleCode} locale Locale.
  * @property {number} [width] Percentage width of the pane in the editor layout. The sum of the
  * widths of all panes should be 100.
+ */
+
+/**
+ * Column of the entry list’s table view, resolved from the `table_columns` collection option.
+ * @typedef {object} EntryTableColumn
+ * @property {string} key Field key path, or one of the special keys: `_summary`, `slug`,
+ * `commit_author` and `commit_date`.
+ * @property {string} label Column header.
+ * @property {Field} [fieldConfig] Field configuration, if the key is a field key path.
  */
 
 /**

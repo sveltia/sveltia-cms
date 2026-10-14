@@ -83,9 +83,13 @@
         aria-controls="entry-list"
       />
     {/if}
-    {#if thumbnailFieldNames.length}
-      <ViewSwitcher disabled={!hasListedEntries} {currentView} aria-controls="entry-list" />
-    {/if}
+    <!-- The grid view needs thumbnails to show -->
+    <ViewSwitcher
+      disabled={!hasListedEntries}
+      {currentView}
+      types={thumbnailFieldNames.length ? ['table', 'list', 'grid'] : ['table', 'list']}
+      aria-controls="entry-list"
+    />
     {#if !(env.isSmallScreen || env.isMediumScreen)}
       <Divider orientation="vertical" />
       <Button

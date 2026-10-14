@@ -2206,8 +2206,8 @@ describe('collection/view/index', () => {
       _selectedCollection.current = collection;
       await wait();
 
+      // The view type is left unset until the user picks one, so the default applies
       expect(currentView.current).toEqual({
-        type: 'list',
         sort: { key: 'title', order: 'ascending' },
         filters: [{ field: 'draft', pattern: false }],
         group: { field: 'category' },

@@ -1,16 +1,19 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { hasComparison } from '$lib/services/common/view';
+import { SUMMARY_SPECIAL_TAGS } from '$lib/services/config/parser/collections/templates';
 import {
   getCanonicalSlugKey,
   hasField,
   METADATA_KEYS,
 } from '$lib/services/config/parser/utils/fields';
+import { checkFieldReferences } from '$lib/services/config/parser/utils/references';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 import {
   parseCustomSortableFields,
   parseViewOptions,
 } from '$lib/services/contents/collection/view/options';
+import { isTemplateColumnKey } from '$lib/services/contents/collection/view/table-keys';
 
 /**
  * @import { ConfigParserCollectors } from '$lib/types/private';
@@ -138,6 +141,8 @@ export const checkViewOptions = (context, collectors) => {
   const {
     fields,
     sortable_fields: sortableFields,
+    table_columns: tableColumns,
+    summary_fields: summaryFields,
     view_groups: viewGroups,
     view_filters: viewFilters,
   } = context.collection;
@@ -166,6 +171,56 @@ export const checkViewOptions = (context, collectors) => {
         addMessage({
           strKey: 'invalid_sortable_field',
           values: { name: key },
+          context,
+          collectors,
+        });
+      }
+    });
+  }
+
+  // The columns of the table view, given with `table_columns` or its Static CMS alias
+  // `summary_fields`. The entry summary is `_summary`, the same as its sort key, or `summary` in
+  // the alias. A column naming no field would be silently left out of the table. The option types
+  // are checked against the JSON schema
+  const columnOption = Array.isArray(tableColumns)
+    ? 'table_columns'
+    : Array.isArray(summaryFields)
+      ? 'summary_fields'
+      : undefined;
+
+  if (columnOption) {
+    const columnKeys =
+      columnOption === 'table_columns'
+        ? /** @type {any[]} */ (tableColumns).map((column) =>
+            isObject(column) ? column.field : column,
+          )
+        : /** @type {any[]} */ (summaryFields).filter((name) => name !== 'summary');
+
+    columnKeys.forEach((key) => {
+      // A template, e.g. `{{dirname}}/{{filename}}`, can use the same tags as a summary template
+      if (typeof key === 'string' && isTemplateColumnKey(key)) {
+        checkFieldReferences({
+          option: columnOption,
+          template: key,
+          specialTags: SUMMARY_SPECIAL_TAGS,
+          fields,
+          context,
+          collectors,
+        });
+
+        return;
+      }
+
+      if (
+        typeof key === 'string' &&
+        key &&
+        key !== '_summary' &&
+        !specialKeys.includes(key) &&
+        !hasField(fields, key)
+      ) {
+        addMessage({
+          strKey: 'invalid_table_column_field',
+          values: { option: columnOption, name: key },
           context,
           collectors,
         });

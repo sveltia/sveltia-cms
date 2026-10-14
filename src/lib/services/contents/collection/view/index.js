@@ -399,7 +399,9 @@ export const entryGroups = createDerivedState(() => {
 const restoreView = (collection, _allEntries) => {
   const { view_filters: viewFilters, view_groups: viewGroups } = collection;
   /** @type {EntryListView} */
-  const view = { ...(entryListSettings.current?.[collection.name] ?? { type: 'list' }) };
+  // The view type is only set once the user picks one; until then, the default applies. See
+  // `getEntryViewType()`
+  const view = { ...(entryListSettings.current?.[collection.name] ?? {}) };
 
   const { default: defaultSort } = getSortConfig({
     collection,

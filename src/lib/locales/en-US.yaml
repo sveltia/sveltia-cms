@@ -433,6 +433,7 @@ x_of_x_selected: '{$selected} of {$total} selected'
 
 # View switcher: toggle between list and grid views
 switch_view: Switch View
+table_view: Table View
 list_view: List View
 grid_view: Grid View
 switch_to_list_view: Switch to List View
@@ -446,6 +447,16 @@ switch_to_grid_view: Switch to Grid View
 # Sort menu: button labels and options
 sort: Sort
 sorting_options: Sorting Options
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: Folder
+  # The entry file name without the extension
+  filename: File Name
+  # The entry file extension
+  extension: Extension
+  # The enabled locales of the entry
+  locales: Languages
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -1983,6 +1994,8 @@ config:
     unsupported_bulk_edit_field: The `{$name}` field in the `fields` list of the `bulk_edit` option can’t be edited in bulk. Only a Boolean, Color, DateTime, Number, Relation, Select or String field that isn’t read-only, doesn’t have the `multiple` option enabled and isn’t set automatically on save is supported.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: The `sortable_fields` option refers to a field named `{$name}`, but no such field is defined in the collection.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: The `{$option}` option refers to a field named `{$name}`, but no such field is defined in the collection.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: The `view_groups` option refers to a field named `{$name}`, but no such field is defined in the collection.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`

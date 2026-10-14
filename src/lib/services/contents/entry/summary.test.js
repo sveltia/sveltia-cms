@@ -423,6 +423,33 @@ describe('Test getEntrySummary()', () => {
     expect(result).toBe('Category Index');
   });
 
+  test('formats the index file like any other entry with `useIndexFileLabel: false`', () => {
+    const indexFileCollection = {
+      ...collection,
+      index_file: { label: 'Category Index' },
+      _file: {
+        ...collection._file,
+        fullPathRegEx: /^content\/tags\/(?<subPath>[^/]+?\/index|_index)\.(?<locale>en|de)\.md$/,
+      },
+    };
+
+    const indexFileEntry = {
+      ...entry,
+      slug: '_index',
+      subPath: '_index',
+      locales: { de: { ...entry.locales.de, path: 'content/tags/_index.de.md' } },
+    };
+
+    const result = getEntrySummary(indexFileCollection, indexFileEntry, {
+      locale: 'de',
+      useTemplate: true,
+      template: '{{slug}}',
+      useIndexFileLabel: false,
+    });
+
+    expect(result).toBe('_index');
+  });
+
   test('handles missing locales fallback (lines 210-211)', () => {
     // Entry with missing requested locale should fall back to first available
     const entryWithSingleLocale = {

@@ -1,7 +1,7 @@
 <!--
   @component
   Shared cells (checkbox, thumbnail image, title) used by both the read-only entry list row and the
-  reorder list row.
+  reorder list row. In the table view, the title is replaced by a cell for each column.
 -->
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
@@ -14,12 +14,14 @@
     getIndexFile,
     isCollectionIndexFile,
   } from '$lib/services/contents/collection/entries/index-file';
+  import { getTableCellValue } from '$lib/services/contents/collection/view/table';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @import {
    * Entry,
+   * EntryTableColumn,
    * InternalEntryCollection,
    * UnpublishedEntry,
    * ViewType,
@@ -34,6 +36,8 @@
    * @property {boolean} [showCheckbox] Whether to render the selection checkbox cell. Defaults to
    * `false`; the read-only list row passes `true`, while the reorder row leaves it off.
    * @property {(selected: boolean) => void} [onSelect] Selection change handler.
+   * @property {EntryTableColumn[]} [columns] Columns of the table view, which take the place of the
+   * title. Only used when `viewType` is `table`.
    */
 
   /** @type {Props} */
@@ -44,6 +48,7 @@
     viewType,
     showCheckbox = false,
     onSelect = undefined,
+    columns = [],
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -56,6 +61,23 @@
   const summary = $derived(appLocale.current ? getEntrySummary(collection, entry) : '');
   /* v8 ignore stop */
 </script>
+
+{#snippet title()}
+  <GridCell class="title">
+    <div role="none" class="label">
+      <TruncatedText lines={2}>
+        {#key appLocale.current}
+          <bdi>
+            {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
+          </bdi>
+        {/key}
+        {#if isCollectionIndexFile(collection, entry)}
+          <Icon name={getIndexFile(collection)?.icon} class="home" />
+        {/if}
+      </TruncatedText>
+    </div>
+  </GridCell>
+{/snippet}
 
 {#if showCheckbox && !(env.isSmallScreen || env.isMediumScreen)}
   <GridCell class="checkbox">
@@ -71,23 +93,31 @@
 {/if}
 {#if collection._thumbnailFieldNames.length}
   <GridCell class="image">
-    <EntryThumbnail {collection} {entry} variant={viewType === 'list' ? 'icon' : 'tile'} />
+    <EntryThumbnail {collection} {entry} variant={viewType === 'grid' ? 'tile' : 'icon'} />
   </GridCell>
 {/if}
-<GridCell class="title">
-  <div role="none" class="label">
-    <TruncatedText lines={2}>
-      {#key appLocale.current}
-        <bdi>
-          {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
-        </bdi>
-      {/key}
-      {#if isCollectionIndexFile(collection, entry)}
-        <Icon name={getIndexFile(collection)?.icon} class="home" />
-      {/if}
-    </TruncatedText>
-  </div>
-</GridCell>
+{#if viewType === 'table'}
+  {#each columns as column (column.key)}
+    {#if column.key === '_summary'}
+      {@render title()}
+    {:else}
+      {@const { type, value } = getTableCellValue({ collection, entry, column })}
+      <GridCell class="column" data-key={column.key}>
+        {#if type === 'boolean'}
+          {#if value}
+            <Icon name="check" role="img" aria-label={_('boolean.true')} />
+          {/if}
+        {:else}
+          <div role="none" class="label">
+            <TruncatedText><bdi>{value}</bdi></TruncatedText>
+          </div>
+        {/if}
+      </GridCell>
+    {/if}
+  {/each}
+{:else}
+  {@render title()}
+{/if}
 <GridCell class="status">
   {#if workflow}
     <StatusBadge status={workflow.status} />

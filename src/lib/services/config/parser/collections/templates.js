@@ -27,7 +27,7 @@ const SLUG_SPECIAL_TAGS = [
  * entry’s summary whether or not a `title` field is defined.
  * @type {string[]}
  */
-const SUMMARY_SPECIAL_TAGS = [
+export const SUMMARY_SPECIAL_TAGS = [
   'slug',
   'locales',
   'dirname',

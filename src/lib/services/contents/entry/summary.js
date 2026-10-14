@@ -341,14 +341,16 @@ const getEntriesGeneration = () => {
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
  * @param {string} [options.template] Summary template that overrides the collection’s `summary`
  * option.
+ * @param {boolean} [options.useIndexFileLabel] Whether to use the label of the collection’s index
+ * file as its summary. Default: `true`.
  * @returns {string} Formatted entry summary.
  */
 const formatEntrySummary = (
   collection,
   entry,
-  { locale, useTemplate = false, allowMarkdown = false, template } = {},
+  { locale, useTemplate = false, allowMarkdown = false, template, useIndexFileLabel = true } = {},
 ) => {
-  if (isCollectionIndexFile(collection, entry)) {
+  if (useIndexFileLabel && isCollectionIndexFile(collection, entry)) {
     return /** @type {string} */ (getIndexFile(collection)?.label);
   }
 
@@ -420,13 +422,22 @@ const formatEntrySummary = (
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
  * @param {string} [options.template] Summary template that overrides the collection’s `summary`
  * option. Used for the folder labels in a nested collection’s tree, which have their own
- * `nested.summary` option.
+ * `nested.summary` option, and the template columns of the entry list’s table view.
+ * @param {boolean} [options.useIndexFileLabel] Whether to use the label of the collection’s index
+ * file as its summary, instead of formatting it. Default: `true`. A table view column showing a
+ * template, such as `{{filename}}`, formats it for the index file too.
  * @returns {string} Formatted entry summary.
  * @see https://decapcms.org/docs/configuration-options/#summary
  * @see https://sveltiacms.app/en/docs/collections/entries/listings#summaries
  */
 export const getEntrySummary = (collection, entry, options = {}) => {
-  const { locale, useTemplate = false, allowMarkdown = false, template } = options;
+  const {
+    locale,
+    useTemplate = false,
+    allowMarkdown = false,
+    template,
+    useIndexFileLabel = true,
+  } = options;
 
   const optionCache = getOrCreate(
     getOrCreate(summaryCacheMap, entry, () => new WeakMap()),
@@ -441,6 +452,7 @@ export const getEntrySummary = (collection, entry, options = {}) => {
     useTemplate ? '1' : '0',
     allowMarkdown ? '1' : '0',
     template ?? '',
+    useIndexFileLabel ? '1' : '0',
     // `Array.join()` turns an unset locale into an empty string
     appLocale.current,
   ].join('\n');

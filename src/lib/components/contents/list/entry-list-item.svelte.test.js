@@ -62,4 +62,42 @@ describe('EntryListItem', () => {
       forkedRepository.current = undefined;
     }
   });
+
+  test('passes the columns to the cells, and counts the header row in the table view', async () => {
+    env.isSmallScreen = false;
+    env.isMediumScreen = false;
+    forkedRepository.current = undefined;
+
+    const entry = createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello' } } });
+
+    setEntries([entry]);
+    selectedCollection.current = /** @type {any} */ (getCollection('posts'));
+
+    const { container } = await render(EntryListItem, {
+      collection: /** @type {any} */ (getCollection('posts')),
+      entry,
+      viewType: 'table',
+      columns: [
+        { key: '_summary', label: 'Title' },
+        { key: 'slug', label: 'Slug' },
+      ],
+    });
+
+    // The header row comes first
+    await expect.element(page.getByRole('row')).toHaveAttribute('aria-rowindex', '2');
+    expect(container.querySelector('.title')).toHaveTextContent('Hello');
+    expect(container.querySelector('[data-key="slug"]')).toHaveTextContent('hello');
+  });
+
+  test('has no row index for an entry that isn’t listed', async () => {
+    setEntries([]);
+
+    await render(EntryListItem, {
+      collection: /** @type {any} */ (getCollection('posts')),
+      entry: createMockEntry({ slug: 'a', content: { _default: { title: 'A' } } }),
+      viewType: 'table',
+    });
+
+    await expect.element(page.getByRole('row')).not.toHaveAttribute('aria-rowindex');
+  });
 });

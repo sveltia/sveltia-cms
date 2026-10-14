@@ -63,7 +63,7 @@
 </div>
 
 <style>
-  :is(.grid-view, .list-view) {
+  :is(.grid-view, .list-view, .table-view) {
     display: block;
     padding: 0 16px 16px;
     height: 100%;
@@ -151,7 +151,7 @@
     }
   }
 
-  .list-view {
+  :is(.list-view, .table-view) {
     @media (width < 768px) {
       padding: 0;
     }
@@ -254,6 +254,60 @@
               content: '';
             }
           }
+        }
+      }
+    }
+  }
+
+  /* The table view is a list view with more columns, only shown on a large screen */
+  .table-view {
+    :global {
+      [role='grid'] {
+        .grid-head .grid-row:hover {
+          background-color: transparent;
+        }
+
+        .grid-col-header {
+          position: sticky;
+          inset-block-start: 0;
+          z-index: 1;
+          border-bottom: 1px solid var(--sui-secondary-border-color);
+          padding: 0 16px 0 0;
+          height: 40px;
+          background-color: var(--sui-primary-background-color);
+          color: var(--sui-secondary-foreground-color);
+          font-size: var(--sui-font-size-small);
+          font-weight: var(--sui-font-weight-bold);
+          text-align: start;
+          white-space: nowrap;
+          vertical-align: middle;
+
+          &:first-child {
+            padding-inline-start: 16px;
+          }
+        }
+
+        /* Each column is as wide as its content, up to a limit; the text is truncated beyond */
+        .grid-cell.title {
+          width: auto;
+
+          .label {
+            width: max-content;
+            min-width: 160px;
+            max-width: 400px;
+          }
+        }
+
+        .grid-cell.column .label {
+          width: max-content;
+          max-width: 320px;
+        }
+
+        /* The last column takes up the rest of the width, so the others are as wide as their
+          content */
+
+        :is(.grid-cell, .grid-col-header).status {
+          width: 100%;
         }
       }
     }

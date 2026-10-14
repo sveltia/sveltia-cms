@@ -29,6 +29,11 @@ describe('SecondaryToolbar', () => {
           view_groups: [{ label: 'Draft', field: 'draft' }],
         },
         {
+          name: 'notes',
+          folder: 'content/notes',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+        {
           name: 'settings',
           files: [{ name: 'general', file: 'data/general.yml', fields: [{ name: 'x' }] }],
         },
@@ -107,5 +112,35 @@ describe('SecondaryToolbar', () => {
     await expect.poll(() => container.querySelector('[role="toolbar"]')).toBeNull();
     setBulkEditMode(false);
     await expect.element(page.getByRole('toolbar')).toBeVisible();
+  });
+
+  test('offers the table, list and grid views, the last only with thumbnails', async () => {
+    /**
+     * Get the names of the view buttons.
+     * @returns {(string | null)[]} Names.
+     */
+    const getViewNames = () =>
+      page
+        .getByRole('radiogroup', { name: 'Switch View' })
+        .getByRole('radio')
+        .elements()
+        .map((el) => el.getAttribute('aria-label'));
+
+    const posts = await render(SecondaryToolbar, {});
+
+    await expect.poll(getViewNames).toEqual(['Table View', 'List View', 'Grid View']);
+    await posts.unmount();
+
+    setEntries([
+      createMockEntry({
+        slug: 'a',
+        folder: 'content/notes',
+        content: { _default: { title: 'A' } },
+      }),
+    ]);
+    selectedCollection.current = getCollection('notes');
+
+    await render(SecondaryToolbar, {});
+    await expect.poll(getViewNames).toEqual(['Table View', 'List View']);
   });
 });

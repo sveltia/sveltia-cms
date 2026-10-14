@@ -9,6 +9,7 @@ import {
   currentView,
   entryListSettings,
   getEntryOrderKey,
+  getEntryViewType,
   initSettings,
   viewBeforeReorder,
 } from './settings';
@@ -38,6 +39,45 @@ const wait = () =>
 
 /** @type {any} */
 const backendService = { repository: { databaseName: 'test-db' } };
+
+describe('Test currentView', () => {
+  test('leaves the view type unset until the user picks one', () => {
+    expect(currentView.current).toEqual({});
+  });
+});
+
+describe('Test getEntryViewType()', () => {
+  const large = { hasThumbnails: true, isLargeScreen: true };
+
+  test('defaults to the table view', () => {
+    expect(getEntryViewType({ ...large })).toBe('table');
+    expect(getEntryViewType({ ...large, type: undefined })).toBe('table');
+  });
+
+  test('uses the view the user has picked', () => {
+    expect(getEntryViewType({ ...large, type: 'table' })).toBe('table');
+    expect(getEntryViewType({ ...large, type: 'list' })).toBe('list');
+    expect(getEntryViewType({ ...large, type: 'grid' })).toBe('grid');
+  });
+
+  test('falls back to the default from a grid view without thumbnails', () => {
+    expect(getEntryViewType({ ...large, type: 'grid', hasThumbnails: false })).toBe('table');
+  });
+
+  test('uses the list view for the table view on a smaller screen', () => {
+    const small = { hasThumbnails: true, isLargeScreen: false };
+
+    expect(getEntryViewType({ ...small })).toBe('list');
+    expect(getEntryViewType({ ...small, type: 'table' })).toBe('list');
+    expect(getEntryViewType({ ...small, type: 'grid' })).toBe('grid');
+    expect(getEntryViewType({ ...small, type: 'grid', hasThumbnails: false })).toBe('list');
+  });
+
+  test('always uses the list view in reorder mode', () => {
+    expect(getEntryViewType({ ...large, type: 'grid', reordering: true })).toBe('list');
+    expect(getEntryViewType({ ...large, type: 'table', reordering: true })).toBe('list');
+  });
+});
 
 describe('Test entryListSettings', () => {
   beforeEach(async () => {

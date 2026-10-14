@@ -189,6 +189,94 @@ describe('Test checkViewOptions()', () => {
     });
   });
 
+  it('should accept table columns defined in the collection', () => {
+    check({
+      fields,
+      table_columns: ['title', 'author.name', { field: 'images.0.src', label: 'Image' }],
+    });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should add an error for an undefined table column field', () => {
+    check({ fields, table_columns: ['title', 'category', { field: 'tags', label: 'Tags' }] });
+
+    expect(mockAddMessage).toHaveBeenCalledTimes(2);
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'invalid_table_column_field',
+        values: { option: 'table_columns', name: 'category' },
+      }),
+    );
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'invalid_table_column_field',
+        values: { option: 'table_columns', name: 'tags' },
+      }),
+    );
+  });
+
+  it('should add an error for an undefined summary field', () => {
+    check({ fields, summary_fields: ['summary', 'title', 'category'] });
+
+    expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        strKey: 'invalid_table_column_field',
+        values: { option: 'summary_fields', name: 'category' },
+      }),
+    );
+  });
+
+  it('should accept entry metadata keys and the canonical slug key as table columns', () => {
+    check(
+      {
+        fields,
+        i18n: true,
+        table_columns: ['slug', { field: 'commit_author' }, 'commit_date', 'translationKey'],
+        summary_fields: ['category'],
+      },
+      { i18n: { locales: ['en', 'fr'] } },
+    );
+
+    check({ fields, summary_fields: ['summary', 'slug', 'commit_author', 'commit_date'] });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should check the field references in a template column like a summary template', () => {
+    check({
+      fields,
+      table_columns: [
+        '{{locales}}',
+        '{{dirname}}/{{filename}}.{{extension}}',
+        '{{fields.author.name}} ({{commit_date}})',
+        { field: '{{missing | upper}}', label: 'Missing' },
+      ],
+    });
+
+    expect(mockAddMessage).toHaveBeenCalledOnce();
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'option_field_not_found',
+        values: { option: 'table_columns', name: 'missing' },
+      }),
+    );
+  });
+
+  it('should accept the entry summary column in `table_columns`', () => {
+    check({ fields, table_columns: ['_summary', { field: '_summary', label: 'Summary' }] });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should ignore table columns that are not non-empty strings', () => {
+    check({ fields, table_columns: ['', 1, null, { label: 'No Field' }, { field: '' }] });
+    check({ fields, summary_fields: ['', 1] });
+    check({ fields, table_columns: 'title', summary_fields: 'title' });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
   it('should ignore an invalid sortable fields configuration', () => {
     check({ fields, sortable_fields: 'title' });
     check({ fields, sortable_fields: [''] });

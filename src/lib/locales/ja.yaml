@@ -430,6 +430,7 @@ x_of_x_selected: '{$total} 個のうち {$selected} 個を選択中'
 
 # View switcher: toggle between list and grid views
 switch_view: ビューを切り替え
+table_view: テーブルビュー
 list_view: リストビュー
 grid_view: グリッドビュー
 switch_to_list_view: リストビューに切り替え
@@ -443,6 +444,16 @@ switch_to_grid_view: グリッドビューに切り替え
 # Sort menu: button labels and options
 sort: 表示順
 sorting_options: 表示順オプション
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: フォルダー
+  # The entry file name without the extension
+  filename: ファイル名
+  # The entry file extension
+  extension: 拡張子
+  # The enabled locales of the entry
+  locales: 言語
 # Sort key option labels
 sort_keys:
   # No sorting; entries appear in their natural repository order
@@ -1876,6 +1887,8 @@ config:
     unsupported_bulk_edit_field: '`bulk_edit` オプションの `fields` リストで指定された `{$name}` フィールドは一括編集できません。対応しているのは、読み取り専用でなく、`multiple` オプションが無効で、保存時に自動設定されない Boolean、Color、DateTime、Number、Relation、Select、String フィールドのみです。'
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: '`sortable_fields` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: '`{$option}` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
     invalid_view_group_field: '`view_groups` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
     # {$name} is the field name from the configuration; Don’t localize `view_filters`

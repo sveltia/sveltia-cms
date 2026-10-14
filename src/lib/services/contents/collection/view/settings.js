@@ -6,7 +6,7 @@ import { selectedCollection } from '$lib/services/contents/collection';
 import { createRawState, createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { BackendService, EntryListView } from '$lib/types/private';
+ * @import { BackendService, EntryListView, ViewType } from '$lib/types/private';
  */
 
 /**
@@ -16,10 +16,34 @@ import { createRawState, createRootEffect } from '$lib/services/utils/state.svel
 export const entryListSettings = createRawState();
 
 /**
- * View settings for the selected entry collection.
+ * View settings for the selected entry collection. The view type is left out until the user picks
+ * one, so the default applies, and isn’t saved as if the user had chosen it. See
+ * {@link getEntryViewType}.
  * @type {{ current: EntryListView }}
  */
-export const currentView = createRawState({ type: 'list' });
+export const currentView = createRawState({});
+
+/**
+ * Get the view type the entry list is shown in. The table view is the default, until the user picks
+ * another one. The list view is used instead of the table view on a screen too small for it, and
+ * always in reorder mode. A grid view saved for a collection that no longer has thumbnails falls
+ * back to the default.
+ * @param {object} args Arguments.
+ * @param {ViewType} [args.type] View type the user has picked, if any.
+ * @param {boolean} args.hasThumbnails Whether the collection’s entries have thumbnails.
+ * @param {boolean} args.isLargeScreen Whether the screen is large enough for the table view.
+ * @param {boolean} [args.reordering] Whether the entry list is in reorder mode.
+ * @returns {ViewType} View type.
+ */
+export const getEntryViewType = ({ type, hasThumbnails, isLargeScreen, reordering = false }) => {
+  if (reordering) {
+    return 'list';
+  }
+
+  const resolved = !type || (type === 'grid' && !hasThumbnails) ? 'table' : type;
+
+  return resolved === 'table' && !isLargeScreen ? 'list' : resolved;
+};
 
 /**
  * View of an entry collection as it was when reorder mode was entered, restored when the mode is
