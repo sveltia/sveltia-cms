@@ -86,7 +86,7 @@ const routeDeployHook = async (page, { status = 200 } = {}) => {
 };
 
 /**
- * Set the deploy hook in the Advanced panel of the Settings dialog.
+ * Set the deploy hook in the Developer panel of the Settings dialog.
  * @param {CMS} cms CMS.
  * @param {Page} page Page.
  * @param {object} hook Hook.
@@ -101,7 +101,7 @@ const setDeployHook = async (cms, page, { url, auth }) => {
     page.getByRole('button', { name: 'Show Account Menu' }),
     page.getByRole('menuitem', { name: 'Settings' }),
   );
-  await settings.getByRole('tab', { name: 'Advanced' }).click();
+  await settings.getByRole('tab', { name: 'Developer' }).click();
   await settings.getByRole('textbox', { name: 'Hook URL' }).fill(url);
   await authInput.fill(auth);
   // The settings are stored when the input loses the focus

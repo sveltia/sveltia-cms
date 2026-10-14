@@ -65,7 +65,7 @@ test('opens and closes the Settings dialog', async ({ cms, page }) => {
     /Media/,
     /Accessibility/,
     /Developer/,
-    /Advanced/,
+    /Data Management/,
   ]);
   // The Appearance panel is shown first
   await expect(dialog.getByRole('tab', { name: 'Appearance' })).toHaveAttribute(

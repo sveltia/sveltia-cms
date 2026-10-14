@@ -121,7 +121,7 @@ test('seeds the repository again after all the data is erased', async ({ cms, pa
     page.getByRole('button', { name: 'Show Account Menu' }),
     page.getByRole('menuitem', { name: 'Settings' }),
   );
-  await dialog.getByRole('tab', { name: 'Advanced' }).click();
+  await dialog.getByRole('tab', { name: 'Data Management' }).click();
   await dialog.getByRole('button', { name: 'Erase All Data' }).click();
   await page
     .getByRole('alertdialog', { name: 'Erase All Data' })
