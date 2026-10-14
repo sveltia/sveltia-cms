@@ -229,10 +229,13 @@ export const highlightEditorField = ({ locale, keyPath }) => {
 };
 
 /**
- * Get the last rendered field of the deepest rendered parent of the given field in an edit pane.
+ * Get the last rendered field of the deepest rendered parent of the given field in an edit pane,
+ * or the parent field itself if none of its subfields are rendered, e.g. a List field whose
+ * collapsed items have none.
  * @param {HTMLElement} pane Edit pane element.
  * @param {FieldKeyPath} keyPath Key path of the field.
  * @returns {HTMLElement | undefined} Field element.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1070
  */
 const getLastRenderedParentField = (pane, keyPath) => {
   const parts = keyPath.split('.');
@@ -251,6 +254,17 @@ const getLastRenderedParentField = (pane, keyPath) => {
     if (fields.length) {
       return fields[fields.length - 1];
     }
+
+    // Moving up to the grandparent would scroll to its last subfield, which may be well past the
+    // field, e.g. a field below the List field the field is in
+    /** @type {HTMLElement | null} */
+    const parentField = parentKeyPath
+      ? pane.querySelector(`.field[data-key-path="${CSS.escape(parentKeyPath)}"]`)
+      : null;
+
+    if (parentField) {
+      return parentField;
+    }
   }
 
   return undefined;
@@ -260,8 +274,8 @@ const getLastRenderedParentField = (pane, keyPath) => {
  * Find the field with the given key path in the edit pane for the given locale. The pane renders
  * fields lazily as they scroll into view, so a field just revealed by expanding its parents may not
  * be rendered yet, especially near the bottom of the pane. In that case, scroll the pane towards
- * the field, to the last rendered field of its deepest rendered parent, until it’s rendered or no
- * more fields are rendered.
+ * the field, to the last rendered field of its deepest rendered parent or to that parent itself,
+ * until it’s rendered or no more fields are rendered.
  * @param {object} args Arguments.
  * @param {InternalLocaleCode} args.locale Locale of the edit pane.
  * @param {FieldKeyPath} args.keyPath Key path of the field. The path editor isn’t a field, so it’s

@@ -204,6 +204,47 @@ describe('findEditorField', () => {
     ]);
   });
 
+  it('scrolls to a parent field none of whose subfields are rendered', async () => {
+    addField('title');
+
+    const sections = addField('sections');
+
+    addField('sections.1.heading', sections);
+
+    const sliders = addField('sections.1.sliders', sections);
+
+    // A field below the collapsed slider items, which used to be scrolled to instead
+    addField('sections.1.footer', sections);
+
+    /** @type {HTMLElement | undefined} */
+    let target;
+    /** @type {HTMLElement[]} */
+    const scrolled = [];
+
+    vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(
+      /**
+       * Render the slider fields once the Sliders list is scrolled to.
+       * @this {HTMLElement}
+       */
+      function scroll() {
+        scrolled.push(this);
+
+        if (this === sliders) {
+          target = addField('sections.1.sliders.4.label', sliders);
+        }
+      },
+    );
+
+    const field = await findEditorField({
+      locale: 'en',
+      keyPath: 'sections.1.sliders.4.label',
+      interval: 0,
+    });
+
+    expect(field).toBe(target);
+    expect(scrolled.map((element) => element.dataset.keyPath)).toEqual(['sections.1.sliders']);
+  });
+
   it('scrolls to the last rendered field of the pane for a top-level field', async () => {
     addField('title');
 
