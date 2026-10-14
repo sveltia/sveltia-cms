@@ -7,6 +7,9 @@ settings:
 overrides:
   esrap: 2.3.2
 
+patchedDependencies:
+  '@lexical/table@0.52.0': 50330bf06b38876efdb211a068381fd8d9779887cb537a5bd577a147e5edafe4
+
 importers:
 
   .:
@@ -4849,7 +4852,7 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  '@lexical/table@0.52.0(typescript@6.0.3)':
+  '@lexical/table@0.52.0(patch_hash=50330bf06b38876efdb211a068381fd8d9779887cb537a5bd577a147e5edafe4)(typescript@6.0.3)':
     dependencies:
       '@lexical/clipboard': 0.52.0(typescript@6.0.3)
       '@lexical/extension': 0.52.0(typescript@6.0.3)
@@ -5130,7 +5133,7 @@ snapshots:
       '@lexical/markdown': 0.52.0(typescript@6.0.3)
       '@lexical/rich-text': 0.52.0(typescript@6.0.3)
       '@lexical/selection': 0.52.0(typescript@6.0.3)
-      '@lexical/table': 0.52.0(typescript@6.0.3)
+      '@lexical/table': 0.52.0(patch_hash=50330bf06b38876efdb211a068381fd8d9779887cb537a5bd577a147e5edafe4)(typescript@6.0.3)
       '@lexical/utils': 0.52.0(typescript@6.0.3)
       '@shikijs/langs': 4.5.0
       '@shikijs/themes': 4.5.0

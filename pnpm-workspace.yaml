@@ -21,3 +21,11 @@ overrides:
   # breaks the build and tests. Pin to the last good release until the upstream fix lands.
   # https://github.com/sveltejs/svelte/issues/18643
   esrap: 2.3.2
+
+patchedDependencies:
+  # The table plugin’s `pointerdown` handler, on the window, also takes a click in a rich text
+  # editor nested in an editor component for its own: it looks up the nested table in the parent
+  # editor and throws, and the recovery moves the selection back to the parent and scrolls to it.
+  # Leave a click whose nearest editor is another one to that editor, like
+  # `isSelectionWithinEditor()` does.
+  '@lexical/table@0.52.0': patches/@lexical__table@0.52.0.patch
