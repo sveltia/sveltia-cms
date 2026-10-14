@@ -280,38 +280,51 @@ test('saves a change while a colleague changes another file', async ({ cms, gitl
   await expect(page.getByRole('row', { name: /Second Post/ })).toBeVisible();
 });
 
-test('lists the commits of an entry in the History panel', async ({ cms, gitlab, page }) => {
-  gitlab.commit(
-    { [POST_PATH]: FIRST_POST.replace('Hello', 'Hi') },
-    { author: gitlab.user, message: 'Say hi\n\nThe greeting was too formal.' },
-  );
-  // A commit to another file isn’t listed
-  gitlab.commit({ 'content/posts/second-post.md': '---\ntitle: Second Post\n---\n' });
-  await cms.open();
-  await page.getByRole('row', { name: /First Post/ }).click();
-  await page
-    .getByRole('radiogroup', { name: 'Sidebar Panels' })
-    .getByRole('radio', { name: 'History' })
-    .click();
+test.describe('with `prompt_commit_messages` on', () => {
+  test.use({
+    config: {
+      ...GITLAB_CONFIG,
+      backend: { ...GITLAB_CONFIG.backend, prompt_commit_messages: 'prefix' },
+    },
+  });
 
-  const commits = page.getByRole('group', { name: 'History', exact: true }).getByRole('link');
+  test('lists the commits of an entry with their messages in the History panel', async ({
+    cms,
+    gitlab,
+    page,
+  }) => {
+    gitlab.commit(
+      { [POST_PATH]: FIRST_POST.replace('Hello', 'Hi') },
+      { author: gitlab.user, message: 'Say hi\n\nThe greeting was too formal.' },
+    );
+    // A commit to another file isn’t listed
+    gitlab.commit({ 'content/posts/second-post.md': '---\ntitle: Second Post\n---\n' });
+    await cms.open();
+    await page.getByRole('row', { name: /First Post/ }).click();
+    await page
+      .getByRole('radiogroup', { name: 'Sidebar Panels' })
+      .getByRole('radio', { name: 'History' })
+      .click();
 
-  await expect(commits).toHaveCount(2);
-  // Each commit is shown with the headline of its message
-  await expect(commits.first()).toContainText('Say hi');
-  await expect(commits.first()).not.toContainText('too formal');
-  await expect(commits.first()).toContainText(gitlab.user.name);
-  await expect(commits.last()).toContainText('Add the first post');
-  await expect(commits.last()).toContainText(gitlab.colleague.name);
+    const commits = page.getByRole('group', { name: 'History', exact: true }).getByRole('link');
 
-  // A commit opens on GitLab in a new tab
-  await page
-    .context()
-    .route('https://gitlab.com/sveltia/**', (route) => route.fulfill({ body: '' }));
+    await expect(commits).toHaveCount(2);
+    // Each commit is shown with the headline of its message
+    await expect(commits.first()).toContainText('Say hi');
+    await expect(commits.first()).not.toContainText('too formal');
+    await expect(commits.first()).toContainText(gitlab.user.name);
+    await expect(commits.last()).toContainText('Add the first post');
+    await expect(commits.last()).toContainText(gitlab.colleague.name);
 
-  const [popup] = await Promise.all([page.waitForEvent('popup'), commits.last().click()]);
+    // A commit opens on GitLab in a new tab
+    await page
+      .context()
+      .route('https://gitlab.com/sveltia/**', (route) => route.fulfill({ body: '' }));
 
-  expect(popup.url()).toBe(
-    `https://gitlab.com/sveltia/e2e-site/-/commit/${gitlab.commits.at(-3)?.oid}`,
-  );
+    const [popup] = await Promise.all([page.waitForEvent('popup'), commits.last().click()]);
+
+    expect(popup.url()).toBe(
+      `https://gitlab.com/sveltia/e2e-site/-/commit/${gitlab.commits.at(-3)?.oid}`,
+    );
+  });
 });

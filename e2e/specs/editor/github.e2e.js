@@ -76,12 +76,12 @@ test.describe('History panel', () => {
     const commits = page.getByRole('group', { name: 'History', exact: true }).getByRole('link');
 
     await expect(commits).toHaveCount(2);
-    // Each commit is shown with the headline of its message
-    await expect(commits.first()).toContainText('Say hi');
-    await expect(commits.first()).not.toContainText('too formal');
     await expect(commits.first()).toContainText(github.user.name);
-    await expect(commits.last()).toContainText('Add the first post');
     await expect(commits.last()).toContainText(github.colleague.name);
+    // The messages are only shown with `prompt_commit_messages`: without it, the ones the CMS
+    // writes for an entry are all the same
+    await expect(commits.first()).not.toContainText('Say hi');
+    await expect(commits.last()).not.toContainText('Add the first post');
 
     // A commit opens on GitHub in a new tab
     await page.context().route('https://github.com/**', (route) => route.fulfill({ body: '' }));

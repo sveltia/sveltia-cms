@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { backend, backendName } from '$lib/services/backends';
+import { getCommitMessagePromptMode } from '$lib/services/backends/commit-prompt';
 import { fetchEntryHistory } from '$lib/services/contents/entry/history';
 import { openNewTab } from '$lib/services/utils/window';
 import { createMockEntry } from '$lib/test/config';
@@ -14,6 +15,11 @@ vi.mock('$lib/services/contents/entry/history', () => ({
   clearEntryHistoryCache: vi.fn(),
 }));
 vi.mock('$lib/services/utils/window', () => ({ openNewTab: vi.fn() }));
+
+vi.mock('$lib/services/backends/commit-prompt', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
+  getCommitMessagePromptMode: vi.fn(),
+}));
 
 const entry = createMockEntry({ slug: 'hello' });
 
@@ -30,6 +36,8 @@ const renderPanel = async () => {
 describe('HistoryPanel', () => {
   beforeEach(() => {
     backendName.current = undefined;
+    // The commit messages are only shown with the `prompt_commit_messages` option
+    vi.mocked(getCommitMessagePromptMode).mockReturnValue('prefix');
   });
 
   test('lists the commits', async () => {
@@ -82,6 +90,34 @@ describe('HistoryPanel', () => {
     expect(links.nth(1).element().querySelector('.placeholder')).not.toBeNull();
     // The test backend has no repository to link to
     await expect.element(links.nth(0)).toBeDisabled();
+  });
+
+  test('hides the commit messages without the commit message prompt', async () => {
+    vi.mocked(getCommitMessagePromptMode).mockReturnValue(undefined);
+
+    vi.mocked(fetchEntryHistory).mockResolvedValue({
+      commits: [
+        {
+          sha: 'abc',
+          message: 'Update “Hello”',
+          authorName: 'Melvin',
+          date: new Date('2024-01-15T10:00:00Z'),
+        },
+      ],
+      loading: false,
+      error: false,
+    });
+
+    await renderPanel();
+
+    const link = page.getByRole('link');
+
+    await expect.element(link).toBeInTheDocument();
+    expect(link.element().textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      'Melvin Jan 15, 2024, 10:00 AM',
+    );
+    expect(link.element().querySelector('.message')).toBeNull();
+    expect(link.element().querySelector('.meta')).not.toHaveClass('secondary');
   });
 
   test('links to the commits on the repository', async () => {
