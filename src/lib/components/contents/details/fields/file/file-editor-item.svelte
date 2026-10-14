@@ -473,10 +473,8 @@
     justify-content: center;
     align-items: center;
     gap: 4px;
+    align-self: stretch;
     width: 28px;
-    height: -moz-available;
-    height: -webkit-fill-available;
-    height: stretch;
     background-color: var(--sui-secondary-border-color);
   }
 </style>
