@@ -336,7 +336,7 @@ test.describe('slug template', () => {
     page,
   }) => {
     // The date tags come from the time of saving, in UTC by default
-    await page.clock.install({ time: new Date('2026-05-10T07:08:00Z') });
+    await page.clock.setFixedTime(new Date('2026-05-10T07:08:00Z'));
     await start(cms);
 
     const editor = getEditor(page);

@@ -281,7 +281,9 @@ test.describe('Hidden field', () => {
   });
 
   test.beforeEach(async ({ cms, github, page }) => {
-    await page.clock.install({ time: new Date('2026-09-28T12:34:56.789Z') });
+    // Pin the time rather than install a clock that keeps running: signing in takes long enough to
+    // pass the minute, which `{{datetime}}` would then show
+    await page.clock.setFixedTime(new Date('2026-09-28T12:34:56.789Z'));
     github.commit({
       [SAVED]: [
         'title: Saved',
@@ -359,7 +361,7 @@ test.describe('Hidden field', () => {
   test('fills in the defaults again for a duplicate', async ({ cms, github, page }) => {
     const editor = await openNote(page, 'Saved');
 
-    await page.clock.setSystemTime(new Date('2026-10-01T08:00:00Z'));
+    await page.clock.setFixedTime(new Date('2026-10-01T08:00:00Z'));
     await duplicate(cms, page);
     await editor.getByRole('textbox', { name: 'Title' }).fill('Copy');
     await editor.getByRole('button', { name: 'Save' }).click();
