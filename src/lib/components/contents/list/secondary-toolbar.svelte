@@ -19,10 +19,7 @@
   } from '$lib/services/contents/collection/view';
   import { viewFilters } from '$lib/services/contents/collection/view/filter';
   import { viewGroups } from '$lib/services/contents/collection/view/group';
-  import {
-    currentView,
-    getDefaultEntryViewType,
-  } from '$lib/services/contents/collection/view/settings';
+  import { currentView, getEntryViewTypes } from '$lib/services/contents/collection/view/settings';
   import { sortKeys } from '$lib/services/contents/collection/view/sort-keys';
   import { env } from '$lib/services/user/env.svelte';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -37,10 +34,6 @@
       : undefined,
   );
   const collectionName = $derived(entryCollection?.name);
-  /* v8 ignore start -- only read for an entry collection */
-  const thumbnailFieldNames = $derived(entryCollection?._thumbnailFieldNames ?? []);
-  /* v8 ignore stop */
-  const defaultViewType = $derived(getDefaultEntryViewType(entryCollection));
   // The unpublished entries are listed in their own group above the published ones, so they count
   // towards the list total as well
   const listedEntryCount = $derived(
@@ -87,12 +80,10 @@
         aria-controls="entry-list"
       />
     {/if}
-    <!-- The grid view needs thumbnails to show -->
     <ViewSwitcher
       disabled={!hasListedEntries}
       {currentView}
-      types={thumbnailFieldNames.length ? ['table', 'list', 'grid'] : ['table', 'list']}
-      defaultType={defaultViewType}
+      types={getEntryViewTypes(entryCollection)}
       aria-controls="entry-list"
     />
     {#if !(env.isSmallScreen || env.isMediumScreen)}

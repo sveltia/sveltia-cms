@@ -8,12 +8,16 @@ import { selectedCollection } from '$lib/services/contents/collection';
 import {
   currentView,
   entryListSettings,
-  getDefaultEntryViewType,
   getEntryOrderKey,
   getEntryViewType,
+  getEntryViewTypes,
   initSettings,
   viewBeforeReorder,
 } from './settings';
+
+/**
+ * @import { ViewType } from '$lib/types/private';
+ */
 
 // Real reactive boxes are used for the mocked state, so that the effect created by `initSettings`
 // reacts to changes made by the tests
@@ -47,35 +51,42 @@ describe('Test currentView', () => {
   });
 });
 
-describe('Test getDefaultEntryViewType()', () => {
-  test('defaults to the table view only with the table columns configured', () => {
-    expect(getDefaultEntryViewType(/** @type {any} */ ({ table_columns: ['title'] }))).toBe(
-      'table',
-    );
-    expect(getDefaultEntryViewType(/** @type {any} */ ({}))).toBe('list');
-    expect(getDefaultEntryViewType(undefined)).toBe('list');
+describe('Test getEntryViewTypes()', () => {
+  test('offers the table view only with the table columns configured', () => {
+    expect(
+      getEntryViewTypes(
+        /** @type {any} */ ({ table_columns: ['title'], _thumbnailFieldNames: [] }),
+      ),
+    ).toEqual(['table', 'list']);
+    expect(getEntryViewTypes(/** @type {any} */ ({ _thumbnailFieldNames: [] }))).toEqual(['list']);
+  });
+
+  test('offers the grid view only with thumbnails', () => {
+    expect(
+      getEntryViewTypes(
+        /** @type {any} */ ({ summary_fields: ['summary'], _thumbnailFieldNames: ['image'] }),
+      ),
+    ).toEqual(['table', 'list', 'grid']);
+    expect(getEntryViewTypes(/** @type {any} */ ({ _thumbnailFieldNames: ['image'] }))).toEqual([
+      'list',
+      'grid',
+    ]);
+  });
+
+  test('offers the list view only without a collection', () => {
+    expect(getEntryViewTypes(undefined)).toEqual(['list']);
   });
 });
 
 describe('Test getEntryViewType()', () => {
-  const large = {
-    hasThumbnails: true,
-    defaultType: /** @type {const} */ ('table'),
-    isLargeScreen: true,
-  };
+  /** @type {ViewType[]} */
+  const types = ['table', 'list', 'grid'];
+  const large = { types, isLargeScreen: true };
 
-  test('uses the default view until the user picks one', () => {
+  test('uses the first view type until the user picks one', () => {
     expect(getEntryViewType({ ...large })).toBe('table');
     expect(getEntryViewType({ ...large, type: undefined })).toBe('table');
-  });
-
-  test('uses a list view default without the table columns configured', () => {
-    const listDefault = { ...large, defaultType: /** @type {const} */ ('list') };
-
-    expect(getEntryViewType({ ...listDefault })).toBe('list');
-    expect(getEntryViewType({ ...listDefault, type: 'grid', hasThumbnails: false })).toBe('list');
-    // The table view can still be picked
-    expect(getEntryViewType({ ...listDefault, type: 'table' })).toBe('table');
+    expect(getEntryViewType({ ...large, types: ['list', 'grid'] })).toBe('list');
   });
 
   test('uses the view the user has picked', () => {
@@ -84,21 +95,20 @@ describe('Test getEntryViewType()', () => {
     expect(getEntryViewType({ ...large, type: 'grid' })).toBe('grid');
   });
 
-  test('falls back to the default from a grid view without thumbnails', () => {
-    expect(getEntryViewType({ ...large, type: 'grid', hasThumbnails: false })).toBe('table');
+  test('falls back to the default from a view not offered anymore', () => {
+    // The collection no longer has thumbnails
+    expect(getEntryViewType({ ...large, type: 'grid', types: ['table', 'list'] })).toBe('table');
+    // The collection no longer has the table columns configured
+    expect(getEntryViewType({ ...large, type: 'table', types: ['list', 'grid'] })).toBe('list');
   });
 
   test('uses the list view for the table view on a smaller screen', () => {
-    const small = {
-      hasThumbnails: true,
-      defaultType: /** @type {const} */ ('table'),
-      isLargeScreen: false,
-    };
+    const small = { types, isLargeScreen: false };
 
     expect(getEntryViewType({ ...small })).toBe('list');
     expect(getEntryViewType({ ...small, type: 'table' })).toBe('list');
     expect(getEntryViewType({ ...small, type: 'grid' })).toBe('grid');
-    expect(getEntryViewType({ ...small, type: 'grid', hasThumbnails: false })).toBe('list');
+    expect(getEntryViewType({ ...small, type: 'grid', types: ['table', 'list'] })).toBe('list');
   });
 
   test('always uses the list view in reorder mode', () => {

@@ -30,39 +30,37 @@ export const entryListSettings = createRawState();
 export const currentView = createRawState({});
 
 /**
- * Get the default view type of an entry list, which applies until the user picks one: the table
- * view if the collection has its columns configured with the `table_columns` option, or its alias
- * `summary_fields`, the list view otherwise.
+ * Get the view types offered for an entry collection, the first one being the default, which
+ * applies until the user picks one. The table view is only offered if the collection has its
+ * columns configured with the `table_columns` option, or its alias `summary_fields`, and the grid
+ * view if its entries have thumbnails.
  * @param {InternalEntryCollection | undefined} collection Entry collection.
- * @returns {ViewType} View type.
+ * @returns {ViewType[]} View types.
  */
-export const getDefaultEntryViewType = (collection) =>
-  collection && hasConfiguredTableColumns(collection) ? 'table' : 'list';
+export const getEntryViewTypes = (collection) => [
+  ...(collection && hasConfiguredTableColumns(collection) ? /** @type {const} */ (['table']) : []),
+  'list',
+  ...(collection?._thumbnailFieldNames.length ? /** @type {const} */ (['grid']) : []),
+];
 
 /**
- * Get the view type the entry list is shown in. The default applies until the user picks one. The
- * list view is used instead of the table view on a screen too small for it, and always in reorder
- * mode. A grid view saved for a collection that no longer has thumbnails falls back to the default.
+ * Get the view type the entry list is shown in. The default applies until the user picks one, and
+ * also to a saved view that isn’t offered anymore, e.g. the grid view of a collection that no
+ * longer has thumbnails. The list view is used instead of the table view on a screen too small for
+ * it, and always in reorder mode.
  * @param {object} args Arguments.
  * @param {ViewType} [args.type] View type the user has picked, if any.
- * @param {boolean} args.hasThumbnails Whether the collection’s entries have thumbnails.
- * @param {ViewType} args.defaultType Default view type. See {@link getDefaultEntryViewType}.
+ * @param {ViewType[]} args.types View types offered. See {@link getEntryViewTypes}.
  * @param {boolean} args.isLargeScreen Whether the screen is large enough for the table view.
  * @param {boolean} [args.reordering] Whether the entry list is in reorder mode.
  * @returns {ViewType} View type.
  */
-export const getEntryViewType = ({
-  type,
-  hasThumbnails,
-  defaultType,
-  isLargeScreen,
-  reordering = false,
-}) => {
+export const getEntryViewType = ({ type, types, isLargeScreen, reordering = false }) => {
   if (reordering) {
     return 'list';
   }
 
-  const resolved = !type || (type === 'grid' && !hasThumbnails) ? defaultType : type;
+  const resolved = type && types.includes(type) ? type : types[0];
 
   return resolved === 'table' && !isLargeScreen ? 'list' : resolved;
 };

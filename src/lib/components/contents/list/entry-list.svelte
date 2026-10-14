@@ -22,9 +22,9 @@
   } from '$lib/services/contents/collection/view';
   import {
     currentView,
-    getDefaultEntryViewType,
     getEntryOrderKey,
     getEntryViewType,
+    getEntryViewTypes,
   } from '$lib/services/contents/collection/view/settings';
   import { sortKeys } from '$lib/services/contents/collection/view/sort-keys';
   import { getTableColumns } from '$lib/services/contents/collection/view/table';
@@ -41,8 +41,7 @@
   const viewType = $derived(
     getEntryViewType({
       type: currentView.current.type,
-      hasThumbnails: !!collection?._thumbnailFieldNames.length,
-      defaultType: getDefaultEntryViewType(collection),
+      types: getEntryViewTypes(collection),
       isLargeScreen: env.isLargeScreen,
       reordering: reordering.current,
     }),

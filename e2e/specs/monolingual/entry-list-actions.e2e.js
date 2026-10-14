@@ -175,33 +175,27 @@ test.describe('with the magazine’s files', () => {
   });
 
   test('switches the list to a grid for the collection only', async ({ page }) => {
-    const tableView = page.getByRole('radio', { name: 'Table View' });
     const listView = page.getByRole('radio', { name: 'List View' });
     const gridView = page.getByRole('radio', { name: 'Grid View' });
 
-    // The list is the default without the table columns configured
+    // The list is the default, and the table isn’t offered without its columns configured
     await expect(listView).toBeChecked();
+    await expect(page.getByRole('radio', { name: 'Table View' })).toBeHidden();
     await gridView.click();
     await expect(gridView).toBeChecked();
     await expect(getEntryRows(page)).toHaveCount(3);
 
-    // The authors have no image field to show as a thumbnail, hence no grid view, and the posts
-    // keep theirs on the way back
+    // The authors have no image field to show as a thumbnail, hence no view to switch to, and the
+    // posts keep theirs on the way back
     await page.getByRole('treeitem', { name: 'Authors' }).click();
     await expect(getEntryRows(page)).toHaveText([/Jane Doe/, /John Smith/]);
-    await expect(gridView).toBeHidden();
-    await expect(listView).toBeChecked();
+    await expect(page.getByRole('radiogroup', { name: 'Switch View' })).toBeHidden();
     await page.getByRole('treeitem', { name: 'Posts' }).click();
     await expect(gridView).toBeChecked();
 
     await listView.click();
     await expect(listView).toBeChecked();
     await expect(getEntryRows(page)).toHaveCount(3);
-    await tableView.click();
-    await expect(tableView).toBeChecked();
-    await expect(
-      page.getByRole('grid', { name: 'Entries' }).getByRole('columnheader'),
-    ).not.toHaveCount(0);
   });
 
   test('keeps the sort order of each collection', async ({ cms, page }) => {
@@ -464,5 +458,41 @@ test.describe('with an optional relation field', () => {
     expect(files['content/posts/2026-02-a-quiet-review.md']).toBe(
       MONOLINGUAL_FILES['content/posts/2026-02-a-quiet-review.md'],
     );
+  });
+});
+
+test.describe('with the table columns configured', () => {
+  test.use({
+    config: {
+      ...MONOLINGUAL_CONFIG,
+      collections: MONOLINGUAL_CONFIG.collections.map((collection) =>
+        collection.name === 'posts'
+          ? { ...collection, table_columns: ['title', 'date'] }
+          : collection,
+      ),
+    },
+  });
+
+  test.beforeEach(async ({ cms }) => {
+    await cms.open();
+    await cms.seed(MONOLINGUAL_FILES);
+    await cms.signIn();
+  });
+
+  test('shows the entries in the table view by default', async ({ page }) => {
+    const tableView = page.getByRole('radio', { name: 'Table View' });
+    const listView = page.getByRole('radio', { name: 'List View' });
+    const headers = page.getByRole('grid', { name: 'Entries' }).getByRole('columnheader');
+
+    await expect(tableView).toBeChecked();
+    await expect(headers).not.toHaveCount(0);
+    await expect(getEntryRows(page)).toHaveCount(3);
+
+    await listView.click();
+    await expect(listView).toBeChecked();
+    await expect(headers).toHaveCount(0);
+    await tableView.click();
+    await expect(tableView).toBeChecked();
+    await expect(headers).not.toHaveCount(0);
   });
 });

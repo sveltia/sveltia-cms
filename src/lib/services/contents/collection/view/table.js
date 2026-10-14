@@ -56,7 +56,7 @@ export const getConfiguredTableColumns = (collection) => {
 
 /**
  * Check whether a collection has the columns of its table view configured with the `table_columns`
- * option, or its alias `summary_fields`. The table view is the default view of such a collection.
+ * option, or its alias `summary_fields`. Only such a collection offers the table view.
  * @param {InternalEntryCollection} collection Entry collection.
  * @returns {boolean} Result.
  */
@@ -186,9 +186,10 @@ const resolveTableColumns = (collection, columns) => {
 };
 
 /**
- * Get the columns of a collection’s table view. The configured columns are used if any; otherwise,
- * or if none of them can be shown, e.g. with an empty list, the default columns, as a row needs
- * something to tell which entry it is.
+ * Get the columns of a collection’s table view, which is only offered with the columns configured.
+ * The configured columns are used, unless none of them can be shown, e.g. all naming a field the
+ * collection doesn’t have; then the default columns, as a row needs something to tell which entry
+ * it is.
  * @param {object} args Arguments.
  * @param {InternalEntryCollection} args.collection Entry collection.
  * @param {string[]} args.sortKeys Keys the Sort menu offers for the collection.

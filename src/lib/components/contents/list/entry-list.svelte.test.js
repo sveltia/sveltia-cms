@@ -256,6 +256,12 @@ describe('EntryList', () => {
     expect(container.querySelector('.list-view')).not.toBeNull();
     expect(container.querySelector('.table-view')).toBeNull();
     expect(grid.getByRole('columnheader').elements()).toHaveLength(0);
+
+    // A table view saved before the columns were removed from the configuration isn’t offered
+    currentView.current = { ...currentView.current, type: 'table' };
+    flushSync();
+    expect(container.querySelector('.list-view')).not.toBeNull();
+    expect(container.querySelector('.table-view')).toBeNull();
   });
 
   test('shows the table view as a list on a smaller screen', async () => {

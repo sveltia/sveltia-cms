@@ -36,6 +36,11 @@ describe('SecondaryToolbar', () => {
           table_columns: ['title'],
         },
         {
+          name: 'pages',
+          folder: 'content/pages',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+        {
           name: 'settings',
           files: [{ name: 'general', file: 'data/general.yml', fields: [{ name: 'x' }] }],
         },
@@ -116,7 +121,7 @@ describe('SecondaryToolbar', () => {
     await expect.element(page.getByRole('toolbar')).toBeVisible();
   });
 
-  test('offers the table, list and grid views, the last only with thumbnails', async () => {
+  test('offers the table view only with columns and the grid view only with thumbnails', async () => {
     /**
      * Get the names of the view buttons.
      * @returns {(string | null)[]} Names.
@@ -128,49 +133,45 @@ describe('SecondaryToolbar', () => {
         .elements()
         .map((el) => el.getAttribute('aria-label'));
 
-    const posts = await render(SecondaryToolbar, {});
+    /**
+     * Select a collection with an entry, and render the toolbar for it.
+     * @param {string} name Collection name.
+     * @returns {Promise<any>} Rendered component.
+     */
+    const renderFor = async (name) => {
+      setEntries([
+        createMockEntry({
+          slug: 'a',
+          folder: `content/${name}`,
+          content: { _default: { title: 'A' } },
+        }),
+      ]);
+      selectedCollection.current = getCollection(name);
+      flushSync();
+      currentView.current = {};
 
-    await expect.poll(getViewNames).toEqual(['Table View', 'List View', 'Grid View']);
+      return render(SecondaryToolbar, {});
+    };
+
+    // The posts have thumbnails but no columns: the list view is the default
+    const posts = await renderFor('posts');
+
+    await expect.poll(getViewNames).toEqual(['List View', 'Grid View']);
+    await expect.element(page.getByRole('radio', { name: 'List View' })).toBeChecked();
     await posts.unmount();
 
-    setEntries([
-      createMockEntry({
-        slug: 'a',
-        folder: 'content/notes',
-        content: { _default: { title: 'A' } },
-      }),
-    ]);
-    selectedCollection.current = getCollection('notes');
+    // The notes have columns but no thumbnails: the table view is the default
+    const notes = await renderFor('notes');
 
-    await render(SecondaryToolbar, {});
     await expect.poll(getViewNames).toEqual(['Table View', 'List View']);
-  });
+    await expect.element(page.getByRole('radio', { name: 'Table View' })).toBeChecked();
+    await notes.unmount();
 
-  test('selects the table view by default only with the table columns configured', async () => {
-    const group = page.getByRole('radiogroup', { name: 'Switch View' });
+    // The pages have neither, so there is no view to switch to
+    const { container } = await renderFor('pages');
 
-    flushSync();
-    currentView.current = {};
-
-    const posts = await render(SecondaryToolbar, {});
-
-    await expect.element(group.getByRole('radio', { name: 'List View' })).toBeChecked();
-    await expect.element(group.getByRole('radio', { name: 'Table View' })).not.toBeChecked();
-    await posts.unmount();
-
-    setEntries([
-      createMockEntry({
-        slug: 'a',
-        folder: 'content/notes',
-        content: { _default: { title: 'A' } },
-      }),
-    ]);
-    selectedCollection.current = getCollection('notes');
-    flushSync();
-    currentView.current = {};
-
-    await render(SecondaryToolbar, {});
-    await expect.element(group.getByRole('radio', { name: 'Table View' })).toBeChecked();
-    await expect.element(group.getByRole('radio', { name: 'List View' })).not.toBeChecked();
+    await expect.element(page.getByRole('toolbar')).toBeVisible();
+    expect(page.getByRole('radiogroup', { name: 'Switch View' }).elements()).toHaveLength(0);
+    expect(container.querySelector('.wrapper')).not.toBeNull();
   });
 });
