@@ -2743,4 +2743,62 @@
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
 
+/**
+ * Options shared by all the custom page definitions.
+ * @typedef {object} CustomPageBaseDefinition
+ * @property {string} id Unique identifier for the page, consisting of alphanumeric characters,
+ * hyphens and underscores. The page is opened at `#/pages/{id}`.
+ * @property {string} label Label of the page, displayed as the page title and the tooltip of the
+ * page’s button.
+ * @property {string} [icon] Name of a [Material Symbols
+ * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed on the page’s
+ * button. Default: `extension`.
+ * @see https://sveltiacms.app/en/docs/api/custom-pages
+ */
+
+/**
+ * Options of a custom page rendered with a React component. The component receives no props.
+ * Hooks such as `useState` work when taken from the React instance bundled with the CMS, which is
+ * available as `CMS.React` or the `React` export of the npm package, not from another copy of
+ * React.
+ * @typedef {object} CustomComponentPageOptions
+ * @property {ComponentType} component React component rendering the page content: a function
+ * or class component, or a component wrapped with `memo()` or `forwardRef()`.
+ * @property {never} [url] Not available with `component`.
+ * @property {never} [newTab] Not available with `component`.
+ */
+
+/**
+ * Custom page rendered with a React component.
+ * @typedef {CustomPageBaseDefinition & CustomComponentPageOptions} CustomComponentPageDefinition
+ * @see https://sveltiacms.app/en/docs/api/custom-pages
+ */
+
+/**
+ * Options of a custom page showing a web page.
+ * @typedef {object} CustomURLPageOptions
+ * @property {string} url URL of the web page. A relative URL is resolved against the current page
+ * URL. Only `http` and `https` URLs are supported. To embed a page from another site, the site must
+ * allow it, as many sites prevent their pages from being embedded with the `X-Frame-Options` or
+ * `Content-Security-Policy` response header.
+ * @property {boolean} [newTab] Whether to open the web page in a new browser tab instead of
+ * embedding it in the CMS. Default: `false`.
+ * @property {never} [component] Not available with `url`.
+ */
+
+/**
+ * Custom page showing a web page, either embedded in an iframe or opened in a new browser tab. A
+ * page embedded from the same origin as the CMS has full access to it, including the signed-in
+ * user’s access token, so only embed a page you trust.
+ * @typedef {CustomPageBaseDefinition & CustomURLPageOptions} CustomURLPageDefinition
+ * @see https://sveltiacms.app/en/docs/api/custom-pages
+ */
+
+/**
+ * Custom page definition for the `CMS.registerCustomPage()` API. Either `component` or `url` has to
+ * be given.
+ * @typedef {CustomComponentPageDefinition | CustomURLPageDefinition} CustomPageDefinition
+ * @see https://sveltiacms.app/en/docs/api/custom-pages
+ */
+
 export {};

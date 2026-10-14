@@ -1,7 +1,9 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { customPageRegistry } from '$lib/services/api/registries';
+import { selectedCustomPageId } from '$lib/services/app/custom-pages';
 import { selectedPageName } from '$lib/services/app/navigation';
 import { selectedCloudService } from '$lib/services/assets/external';
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
@@ -37,7 +39,12 @@ describe('PageSwitcher', () => {
     allAssetFolders.current = /** @type {any} */ ([{ internalPath: 'static', publicPath: '/' }]);
     selectedAssetFolder.current = undefined;
     selectedCloudService.current = undefined;
+    selectedCustomPageId.current = '';
     setEntries([]);
+  });
+
+  afterEach(() => {
+    customPageRegistry.clear();
   });
 
   test('switches between the contents and assets pages', async () => {
@@ -144,5 +151,91 @@ describe('PageSwitcher', () => {
 
     await render(PageSwitcher, {});
     await expect.element(page.getByRole('radio', { name: 'Assets' })).toBeChecked();
+  });
+
+  test('lists the custom pages after the built-in ones, and the links after the page buttons', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+
+    customPageRegistry.set('analytics', {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: 'monitoring',
+      url: 'https://example.com/analytics',
+      newTab: false,
+    });
+    customPageRegistry.set('docs', {
+      id: 'docs',
+      label: 'Docs',
+      icon: 'help',
+      url: 'https://example.com/docs',
+      newTab: true,
+    });
+
+    try {
+      await render(PageSwitcher, {});
+      expect(getPageLabels()).toEqual(['Contents', 'Assets', 'Analytics']);
+
+      const analytics = page.getByRole('radio', { name: 'Analytics' });
+
+      await expect.element(analytics).toHaveAttribute('aria-keyshortcuts', 'Alt+3');
+      await analytics.click();
+      await expect.poll(() => window.location.hash).toBe('#/pages/analytics');
+
+      // The router selects the page as the URL changes
+      selectedPageName.current = 'pages';
+      selectedCustomPageId.current = 'analytics';
+      await expect.element(analytics).toBeChecked();
+      await expect.element(page.getByRole('radio', { name: 'Contents' })).not.toBeChecked();
+
+      // A link opens in a new tab, without leaving the page
+      await page.getByRole('button', { name: 'Docs' }).click();
+      expect(openSpy).toHaveBeenCalledWith(
+        'https://example.com/docs',
+        '_blank',
+        'noopener,noreferrer',
+      );
+      expect(window.location.hash).toBe('#/pages/analytics');
+
+      // A page registered after the toolbar has been rendered shows up too
+      customPageRegistry.set('stats', {
+        id: 'stats',
+        label: 'Stats',
+        icon: 'bar_chart',
+        url: 'https://example.com/stats',
+        newTab: false,
+      });
+      await expect.poll(getPageLabels).toEqual(['Contents', 'Assets', 'Analytics', 'Stats']);
+    } finally {
+      openSpy.mockRestore();
+    }
+  });
+
+  test('gives keyboard shortcuts to the first nine pages only', async () => {
+    Array.from({ length: 8 }, (_, index) => `page${index}`).forEach((id) => {
+      customPageRegistry.set(id, { id, label: id, icon: 'extension', url: '/', newTab: false });
+    });
+
+    await render(PageSwitcher, {});
+    await expect
+      .element(page.getByRole('radio', { name: 'page6' }))
+      .toHaveAttribute('aria-keyshortcuts', 'Alt+9');
+    await expect
+      .element(page.getByRole('radio', { name: 'page7' }))
+      .not.toHaveAttribute('aria-keyshortcuts');
+  });
+
+  test('leaves the custom pages to the menu page on a small screen', async () => {
+    env.isSmallScreen = true;
+    customPageRegistry.set('analytics', {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: 'monitoring',
+      url: 'https://example.com/analytics',
+      newTab: false,
+    });
+
+    await render(PageSwitcher, {});
+    expect(getPageLabels()).toEqual(['Contents', 'Assets', 'Menu']);
+    expect(page.getByRole('button', { name: 'Analytics' }).elements()).toHaveLength(0);
   });
 });

@@ -1,4 +1,5 @@
 /**
+ * @import { ComponentType } from 'react';
  * @import { Component } from 'svelte';
  * @import {
  * BackendName,
@@ -1823,6 +1824,18 @@
  * @property {string} extension File extension.
  * @property {FileParser} [parser] Parser method.
  * @property {FileFormatter} [formatter] Formatter method.
+ */
+
+/**
+ * Custom page registered with the `CMS.registerCustomPage()` API, normalized for the UI.
+ * @typedef {object} CustomPage
+ * @property {string} id Page ID, used in the page’s URL path.
+ * @property {string} label Page label.
+ * @property {string} icon Material Symbols icon name.
+ * @property {ComponentType} [component] React component rendering the page content.
+ * @property {string} [url] Absolute URL of the web page to show, embedded in an iframe unless
+ * `newTab` is `true`.
+ * @property {boolean} newTab Whether the page is a link opening `url` in a new browser tab.
  */
 
 /**

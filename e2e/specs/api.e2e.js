@@ -839,3 +839,71 @@ test.describe('CMS.registerEventListener()', () => {
     });
   });
 });
+
+test.describe('CMS.registerCustomPage()', () => {
+  test.use({ config: CONFIG });
+
+  test('adds a React page, an embedded page and a link to the toolbar', async ({
+    cms,
+    context,
+    page,
+  }) => {
+    await page.route('**/stats.html', (route) =>
+      route.fulfill({ contentType: 'text/html', body: '<h1>Visitor Stats</h1>' }),
+    );
+    await context.route('https://example.com/**', (route) =>
+      route.fulfill({ contentType: 'text/html', body: '<h1>Docs</h1>' }),
+    );
+    await addScripts(page, {
+      after: `
+        const Counter = () => {
+          const [count, setCount] = CMS.React.useState(0);
+
+          return h('button', { onClick: () => setCount(count + 1) }, 'Clicked ' + count);
+        };
+
+        CMS.registerCustomPage({ id: 'counter', label: 'Counter', component: Counter });
+        CMS.registerCustomPage({ id: 'stats', label: 'Stats', url: 'stats.html' });
+        CMS.registerCustomPage({
+          id: 'docs',
+          label: 'Docs',
+          icon: 'help',
+          url: 'https://example.com/docs',
+          newTab: true,
+        });
+      `,
+    });
+    await cms.open();
+    await cms.signIn();
+
+    const pages = page.getByRole('radiogroup', { name: 'Switch Page' });
+
+    await pages.getByRole('radio', { name: 'Counter' }).click();
+    await expect(page).toHaveURL(/#\/pages\/counter$/);
+    await expect(pages.getByRole('radio', { name: 'Counter' })).toBeChecked();
+    await expect(page).toHaveTitle(/^Counter – /);
+
+    // The component is a live React component, with working hooks
+    await page.getByRole('button', { name: 'Clicked 0' }).click();
+    await expect(page.getByRole('button', { name: 'Clicked 1' })).toBeVisible();
+
+    await pages.getByRole('radio', { name: 'Stats' }).click();
+    await expect(page).toHaveURL(/#\/pages\/stats$/);
+    await expect(
+      page.frameLocator('iframe[title="Stats"]').getByRole('heading', { name: 'Visitor Stats' }),
+    ).toBeVisible();
+
+    // A link opens in a new tab and leaves the CMS where it was
+    const popupPromise = context.waitForEvent('page');
+
+    await page.getByRole('button', { name: 'Docs' }).click();
+    await expect(await popupPromise).toHaveURL('https://example.com/docs');
+    await expect(page).toHaveURL(/#\/pages\/stats$/);
+
+    // The pages can be opened directly, and back to the content library
+    await page.goto(page.url().replace(/#.*/, '#/pages/counter'));
+    await expect(page.getByRole('button', { name: 'Clicked 0' })).toBeVisible();
+    await pages.getByRole('radio', { name: 'Contents' }).click();
+    await expect(page.getByRole('button', { name: 'Clicked 0' })).toBeHidden();
+  });
+});

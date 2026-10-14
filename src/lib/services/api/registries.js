@@ -1,5 +1,7 @@
+import { SvelteMap } from 'svelte/reactivity';
+
 /**
- * @import { CustomFileFormat } from '$lib/types/private';
+ * @import { CustomFileFormat, CustomPage } from '$lib/types/private';
  * @import {
  * AppEventListener,
  * CustomFieldControl,
@@ -17,6 +19,15 @@
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
 export const customComponentRegistry = new Map();
+
+/**
+ * Custom pages registered with the `CMS.registerCustomPage` API. Unlike the other registries, it’s
+ * reactive, as the global toolbar lists the pages, and a page can be registered after the app has
+ * been mounted.
+ * @type {SvelteMap<string, CustomPage>}
+ * @see https://sveltiacms.app/en/docs/api/custom-pages
+ */
+export const customPageRegistry = new SvelteMap();
 
 /**
  * Custom field types registered using the `CMS.registerField` API.

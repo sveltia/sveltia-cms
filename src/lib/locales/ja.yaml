@@ -243,6 +243,8 @@ editorial_workflow: 編集ワークフロー
 cms_config: CMS 設定
 # Mobile menu page title (shown only on small screens)
 menu: メニュー
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: ページ
 
 # Mobile promo infobar: encouraging users to try the mobile version
 mobile_promo_title: Sveltia CMS がモバイルに対応しました！

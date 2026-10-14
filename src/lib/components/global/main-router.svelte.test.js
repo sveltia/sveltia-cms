@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { customPageRegistry } from '$lib/services/api/registries';
+import { selectedCustomPageId } from '$lib/services/app/custom-pages';
 import { selectedPageName } from '$lib/services/app/navigation';
 import { backendName } from '$lib/services/backends';
 import {
@@ -92,6 +94,36 @@ describe('MainRouter', () => {
     // Nor does a page name with a suffix
     window.location.hash = '#/collections-foo';
     await expect.poll(() => selectedPageName.current).toBe('not-found');
+  });
+
+  test('shows a custom page', async () => {
+    customPageRegistry.set('stats', {
+      id: 'stats',
+      label: 'Stats',
+      icon: 'bar_chart',
+      url: 'https://example.com/stats',
+      newTab: false,
+    });
+    window.location.hash = '#/pages/stats';
+
+    try {
+      await render(MainRouter);
+      await expect.element(page.getByTitle('Stats')).toBeVisible();
+      expect(selectedPageName.current).toBe('pages');
+      expect(selectedCustomPageId.current).toBe('stats');
+      expect(searchMode.current).toBeNull();
+
+      // Leaving the page clears the selection
+      window.location.hash = '#/collections';
+      await expect.poll(() => selectedCustomPageId.current).toBe('');
+
+      // An unregistered page is a dead link
+      window.location.hash = '#/pages/unknown';
+      await expect.element(page.getByRole('main', { name: 'Page not found.' })).toBeVisible();
+      expect(selectedPageName.current).toBe('pages');
+    } finally {
+      customPageRegistry.clear();
+    }
   });
 
   test('searches the contents or assets, depending on the mode', async () => {
