@@ -163,7 +163,7 @@ signing_in: מתחבר…
 # Button label and description for working with a local Git repository
 work_with_local_repo: עבודה עם מאגר מקומי
 # {$repo} is the configured repository name shown when it is available
-work_with_local_repo_description: כשתתבקשו, בחרו את תיקיית השורש של המאגר "{$repo}".
+work_with_local_repo_description: כשתתבקשו, בחרו את תיקיית השורש של המאגר „{$repo}”.
 work_with_local_repo_description_no_repo: כשתתבקשו, בחרו את תיקיית השורש של מאגר ה-Git שלכם.
 # Button label for demo/test repository
 work_with_test_repo: עבודה עם מאגר לבדיקה
@@ -192,13 +192,13 @@ sign_in_error:
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
 backend_unsupported_version: ממשק {$name} דורש את {$name} בגרסה {$version} ומעלה.
 # {$repo} is the repository identifier, typically in owner/repo format
-repository_no_access: אין לכם גישה למאגר "{$repo}".
-repository_not_found: המאגר "{$repo}" אינו קיים.
-repository_empty: למאגר "{$repo}" אין ענפים.
+repository_no_access: אין לכם גישה למאגר „{$repo}”.
+repository_not_found: המאגר „{$repo}” אינו קיים.
+repository_empty: למאגר „{$repo}” אין ענפים.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
-branch_not_found: למאגר "{$repo}" אין ענף בשם "{$branch}".
+branch_not_found: למאגר „{$repo}” אין ענף בשם „{$branch}”.
 # {$repo} is the repository identifier, and {$dir} is the configured root directory
-root_dir_not_found: תיקיית השורש "{$dir}" אינה קיימת במאגר "{$repo}".
+root_dir_not_found: תיקיית השורש „{$dir}” אינה קיימת במאגר „{$repo}”.
 
 # General errors
 # Fallback error dialog title for unexpected errors
@@ -415,9 +415,9 @@ asset_list: רשימת קובצי המדיה
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
-x_collection: אוסף "{$collection}"
+x_collection: אוסף „{$collection}”
 # {$folder} is the current asset folder label
-x_asset_folder: תיקיית מדיה "{$folder}"
+x_asset_folder: תיקיית מדיה „{$folder}”
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users
@@ -428,26 +428,26 @@ viewing_asset_folder_list: זוהי רשימת תיקיות המדיה.
 viewing_x_collection: |
   .input {$count :integer}
   .match $count
-    0   {{ אתם צופים באוסף "{$collection}", שאין בו עדיין פריטים. }}
-    one {{ אתם צופים באוסף "{$collection}", שיש בו פריט אחד. }}
-    two {{ אתם צופים באוסף "{$collection}", שיש בו שני פריטים. }}
-    *   {{ אתם צופים באוסף "{$collection}", שיש בו {$count} פריטים. }}
+    0   {{ אתם צופים באוסף „{$collection}”, שאין בו עדיין פריטים. }}
+    one {{ אתם צופים באוסף „{$collection}”, שיש בו פריט אחד. }}
+    two {{ אתם צופים באוסף „{$collection}”, שיש בו שני פריטים. }}
+    *   {{ אתם צופים באוסף „{$collection}”, שיש בו {$count} פריטים. }}
 # Asset folder view announcements with asset counts
 # {$folder} is the folder label and {$count} is the number of assets in it
 viewing_x_asset_folder: |
   .input {$count :integer}
   .match $count
-    0   {{ אתם צופים בתיקיית המדיה "{$folder}", שאין בה עדיין קבצים. }}
-    one {{ אתם צופים בתיקיית המדיה "{$folder}", שיש בה קובץ אחד. }}
-    two {{ אתם צופים בתיקיית המדיה "{$folder}", שיש בה שני קבצים. }}
-    *   {{ אתם צופים בתיקיית המדיה "{$folder}", שיש בה {$count} קבצים. }}
+    0   {{ אתם צופים בתיקיית המדיה „{$folder}”, שאין בה עדיין קבצים. }}
+    one {{ אתם צופים בתיקיית המדיה „{$folder}”, שיש בה קובץ אחד. }}
+    two {{ אתם צופים בתיקיית המדיה „{$folder}”, שיש בה שני קבצים. }}
+    *   {{ אתם צופים בתיקיית המדיה „{$folder}”, שיש בה {$count} קבצים. }}
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: אלה קובצי המדיה ב{$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
-singleton_selected_announcement: הקישו Enter כדי לערוך את הקובץ "{$file}".
+singleton_selected_announcement: הקישו Enter כדי לערוך את הקובץ „{$file}”.
 
 # Error messages: page, collection, folder or file not found
 page_not_found: העמוד לא נמצא.
@@ -593,7 +593,7 @@ readonly_cms: המערכת במצב קריאה בלבד. אפשר לצפות ב�
 readonly_collection: האוסף הזה לקריאה בלבד. אפשר לצפות בתוכן שלו אך לא לבצע שינויים.
 readonly_entry: הפריט הזה לקריאה בלבד. אפשר לצפות בו אך לא לבצע שינויים.
 readonly_asset_folder: התיקייה הזו לקריאה בלבד. אפשר לצפות בקובצי המדיה שבה אך לא לבצע שינויים.
-readonly_branch: אין לכם הרשאה לדחוף לענף "{$branch}". אפשר לצפות בתוכן אך לא לבצע שינויים.
+readonly_branch: אין לכם הרשאה לדחוף לענף „{$branch}”. אפשר לצפות בתוכן אך לא לבצע שינויים.
 readonly_reference: הפריט לקריאה בלבד, ולכן לא ניתן להסיר את ההפניה.
 # {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
 cannot_rename_referenced_entry: 'לא ניתן לשנות את שם הפריט, מפני שהפריטים הבאים, שהם לקריאה בלבד, מפנים אליו בשמו הנוכחי: {$entries}.'
@@ -617,7 +617,7 @@ back_to_parent_folder: חזרה לתיקיית האב
 # Search page: headings and aria-labels
 search_results: תוצאות חיפוש
 # {$terms} is the current search query text
-search_results_for_x: תוצאות חיפוש עבור "{$terms}"
+search_results_for_x: תוצאות חיפוש עבור „{$terms}”
 
 # Search result announcements (ARIA live regions)
 # Entry search results with counts
@@ -625,19 +625,19 @@ search_results_for_x: תוצאות חיפוש עבור "{$terms}"
 viewing_entry_search_results: |
   .input {$count :integer}
   .match $count
-    0   {{ אלה תוצאות החיפוש עבור "{$terms}". לא נמצאו פריטים. }}
-    one {{ אלה תוצאות החיפוש עבור "{$terms}". נמצא פריט אחד. }}
-    two {{ אלה תוצאות החיפוש עבור "{$terms}". נמצאו שני פריטים. }}
-    *   {{ אלה תוצאות החיפוש עבור "{$terms}". נמצאו {$count} פריטים. }}
+    0   {{ אלה תוצאות החיפוש עבור „{$terms}”. לא נמצאו פריטים. }}
+    one {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצא פריט אחד. }}
+    two {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצאו שני פריטים. }}
+    *   {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצאו {$count} פריטים. }}
 # Asset search results with counts
 # {$terms} is the search query and {$count} is the number of matching assets
 viewing_asset_search_results: |
   .input {$count :integer}
   .match $count
-    0   {{ אלה תוצאות החיפוש עבור "{$terms}". לא נמצאו קבצים. }}
-    one {{ אלה תוצאות החיפוש עבור "{$terms}". נמצא קובץ אחד. }}
-    two {{ אלה תוצאות החיפוש עבור "{$terms}". נמצאו שני קבצים. }}
-    *   {{ אלה תוצאות החיפוש עבור "{$terms}". נמצאו {$count} קבצים. }}
+    0   {{ אלה תוצאות החיפוש עבור „{$terms}”. לא נמצאו קבצים. }}
+    one {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצא קובץ אחד. }}
+    two {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצאו שני קבצים. }}
+    *   {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצאו {$count} קבצים. }}
 # Result count labels
 # Used in search result headings to show counts
 # {$count} is the number of matching entries
@@ -673,7 +673,7 @@ new_folder: תיקייה חדשה
 new_folder_name: שם התיקייה
 new_folder_create: יצירה
 # {$folder} is the path of the folder the new one will be created in, starting with a slash
-new_folder_description: התיקייה החדשה תיווצר בתוך "{$folder}".
+new_folder_description: התיקייה החדשה תיווצר בתוך „{$folder}”.
 # Validation errors for the new folder name
 new_folder_error:
   empty: שם התיקייה אינו יכול להיות ריק.
@@ -721,10 +721,10 @@ renaming_external_folder_breaks_links: |
 confirm_deleting_folder: |
   .input {$count :integer}
   .match $count
-    0   {{ למחוק את התיקייה הריקה "{$name}"? }}
-    one {{ למחוק את התיקייה "{$name}" ואת קובץ המדיה שבתוכה? }}
-    two {{ למחוק את התיקייה "{$name}" ואת שני קובצי המדיה שבתוכה? }}
-    *   {{ למחוק את התיקייה "{$name}" ואת {$count} קובצי המדיה שבתוכה? }}
+    0   {{ למחוק את התיקייה הריקה „{$name}”? }}
+    one {{ למחוק את התיקייה „{$name}” ואת קובץ המדיה שבתוכה? }}
+    two {{ למחוק את התיקייה „{$name}” ואת שני קובצי המדיה שבתוכה? }}
+    *   {{ למחוק את התיקייה „{$name}” ואת {$count} קובצי המדיה שבתוכה? }}
 # Progress and error messages while the folder is being renamed or deleted
 renaming_folder: משנה את שם התיקייה…
 renaming_folder_failed: לא ניתן לשנות את שם התיקייה.
@@ -779,14 +779,14 @@ enter_new_name_for_asset_error:
   folder_duplicate: תיקייה בשם הזה כבר קיימת כאן.
 # Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
 # media library option
-file_will_be_saved_as: הקובץ יישמר בשם "{$name}".
+file_will_be_saved_as: הקובץ יישמר בשם „{$name}”.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: שינוי סיומת הקובץ
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
 confirm_file_extension_change:
-  change: לשנות את הסיומת מ־".{$oldExtension}" ל־".{$newExtension}"?
-  add: להוסיף את הסיומת ".{$newExtension}"?
-  remove: להסיר את הסיומת ".{$oldExtension}"?
+  change: לשנות את הסיומת מ-„.{$oldExtension}” ל-„.{$newExtension}”?
+  add: להוסיף את הסיומת „.{$newExtension}”?
+  remove: להסיר את הסיומת „.{$oldExtension}”?
 file_extension_change_warning: ייתכן שהקובץ לא יוצג או לא יטופל כראוי אם הסיומת אינה תואמת לפורמט שלו בפועל.
 
 # Replace asset: menu item and dialog title
@@ -1025,16 +1025,16 @@ uploading_files: מעלה קבצים
 # Replace file confirmation
 # Dialog body when replacing an existing file
 # {$name} is the existing file name that will be replaced
-confirm_replacing_file: '"{$name}" יוחלף בקובץ הזה:'
+confirm_replacing_file: '„{$name}” יוחלף בקובץ הזה:'
 
 # Upload confirmation with destination folder
 # {$folder} is the destination folder label and {$count} is the number of files being uploaded
 confirm_uploading_files: |
   .input {$count :integer}
   .match $count
-    one {{ הקובץ הזה יישמר בתיקייה "{$folder}": }}
-    two {{ שני הקבצים האלה יישמרו בתיקייה "{$folder}": }}
-    *   {{ {$count} הקבצים האלה יישמרו בתיקייה "{$folder}": }}
+    one {{ הקובץ הזה יישמר בתיקייה „{$folder}”: }}
+    two {{ שני הקבצים האלה יישמרו בתיקייה „{$folder}”: }}
+    *   {{ {$count} הקבצים האלה יישמרו בתיקייה „{$folder}”: }}
 # File size validation
 # Warning section for files exceeding size limits
 oversized_files: קבצים גדולים מדי
@@ -1074,8 +1074,8 @@ mismatched_files: קבצים שאינם תואמים
 warning_mismatched_files: |
   .input {$count :integer}
   .match $count
-    one {{ הקובץ הזה אינו יכול להחליף את "{$name}" מפני שהוא בפורמט אחר. המירו אותו לאותו פורמט ונסו שוב. }}
-    *   {{ הקבצים האלה אינם יכולים להחליף את "{$name}" מפני שהם בפורמט אחר. המירו אותם לאותו פורמט ונסו שוב. }}
+    one {{ הקובץ הזה אינו יכול להחליף את „{$name}” מפני שהוא בפורמט אחר. המירו אותו לאותו פורמט ונסו שוב. }}
+    *   {{ הקבצים האלה אינם יכולים להחליף את „{$name}” מפני שהם בפורמט אחר. המירו אותם לאותו פורמט ונסו שוב. }}
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -1089,7 +1089,7 @@ file_name_conflict_confirmation_with_name: |
   .input {$count :integer}
   .input {$name :string}
   .match $count
-    one {{ קובץ בשם "{$name}" כבר קיים בתיקייה. להחליף אותו? }}
+    one {{ קובץ בשם „{$name}” כבר קיים בתיקייה. להחליף אותו? }}
     two {{ שני קבצים בשמות האלה כבר קיימים בתיקייה. להחליף אותם? }}
     *   {{ {$count} קבצים בשמות האלה כבר קיימים בתיקייה. להחליף אותם? }}
 file_name_conflict_resolution: טיפול בהתנגשות שמות קבצים
@@ -1273,14 +1273,14 @@ cancel_editing: ביטול העריכה
 # {$name} is the singular label of the collection being created in
 create_entry_title: יצירת {$name}
 # {$collection} is the collection label
-create_entry_announcement: אתם יוצרים פריט חדש באוסף "{$collection}".
+create_entry_announcement: אתם יוצרים פריט חדש באוסף „{$collection}”.
 # Editing an existing entry
 # {$entry} is the current entry label and {$collection} is the collection label
-edit_entry_announcement: אתם עורכים את הפריט "{$entry}" באוסף "{$collection}".
+edit_entry_announcement: אתם עורכים את הפריט „{$entry}” באוסף „{$collection}”.
 # {$file} is the file name and {$collection} is the collection label
-edit_file_announcement: אתם עורכים את הקובץ "{$file}" באוסף "{$collection}".
+edit_file_announcement: אתם עורכים את הקובץ „{$file}” באוסף „{$collection}”.
 # {$file} is the singleton file name
-edit_singleton_announcement: אתם עורכים את הקובץ "{$file}".
+edit_singleton_announcement: אתם עורכים את הקובץ „{$file}”.
 
 # Save button variants
 # Shown when CI skip is enabled/disabled
@@ -1331,7 +1331,7 @@ content_options: אפשרויות התוכן
 
 # Field container labels
 # {$field} is the field’s display label
-x_field: שדה "{$field}"
+x_field: שדה „{$field}”
 
 # Field options menu
 show_field_options: הצגת אפשרויות השדה
@@ -1430,13 +1430,13 @@ new_parent_folder: תיקייה חדשה
 new_parent_folder_create: יצירה
 new_parent_folder_name: שם התיקייה
 # {$folder} is the name of the folder the new one will be created in
-new_parent_folder_description: התיקייה החדשה תיווצר בתוך "{$folder}".
+new_parent_folder_description: התיקייה החדשה תיווצר בתוך „{$folder}”.
 new_parent_folder_error:
   empty: שם התיקייה אינו יכול להיות ריק.
   invalid: שם התיקייה אינו יכול להכיל לוכסנים או להתחיל בנקודה, וחייב לכלול אותיות או ספרות.
   duplicate: תיקייה בשם הזה כבר קיימת כאן.
 edit_path_error:
-  invalid: הנתיב אינו יכול להכיל מקטעים יחסיים כגון "..".
+  invalid: הנתיב אינו יכול להכיל מקטעים יחסיים כגון „..”.
   recursive: לא ניתן להעביר את הפריט לאחת מתיקיות המשנה שלו עצמו.
   duplicate: הנתיב הזה כבר משמש פריט אחר.
 
@@ -1619,7 +1619,7 @@ remote_change:
 
 # Asset details announcement
 # {$name} is the selected asset name
-viewing_x_asset_details: אלה פרטי קובץ המדיה "{$name}".
+viewing_x_asset_details: אלה פרטי קובץ המדיה „{$name}”.
 
 # Asset editor container aria-label
 asset_editor: עורך המדיה
@@ -1946,7 +1946,7 @@ config:
     # {$status} is the HTTP status code returned while fetching the config file
     fetch_failed_not_ok: תגובת ה-HTTP חזרה עם קוד {$status}.
     # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
-    fetch_failed_with_manual_init: 'לא ניתן היה לאחזר את קובץ התצורה. כדי למנוע את טעינת הקובץ `config.yml`, הוסיפו <a>`load_config_file: false`</a> לאובייקט התצורה המועבר ל־`CMS.init()`.'
+    fetch_failed_with_manual_init: 'לא ניתן היה לאחזר את קובץ התצורה. כדי למנוע את טעינת הקובץ `config.yml`, הוסיפו <a>`load_config_file: false`</a> לאובייקט התצורה המועבר ל-`CMS.init()`.'
     parse_failed: לא ניתן היה לפענח את קובץ התצורה.
     parse_failed_invalid_object: קובץ התצורה אינו אובייקט JavaScript תקין.
     parse_failed_unsupported_type: קובץ התצורה אינו מסוג נתמך. נתמכים YAML, TOML ו-JSON בלבד.
@@ -1962,10 +1962,10 @@ config:
     unsupported_custom_backend: שירותי Git מותאמים אישית <a>אינם נתמכים</a> ב-Sveltia CMS.
     unsupported_backend_suggestion: השתמשו באחד <a>השירותים הנתמכים</a> במקום זאת.
     missing_repository: לא הוגדר מאגר.
-    invalid_repository: המאגר שהוגדר אינו תקין. עליו להיות בתבנית "owner/repo".
-    invalid_root_dir: תיקיית השורש אינה תקינה. עליה להיות נתיב בתוך המאגר, בלי "..".
-    invalid_root_dir_branch: לא ניתן להשתמש בתיקיית השורש בשמות הענפים של מצבי הפרסום `editorial_workflow` ו־`preview`. אף חלק בנתיב שלה אינו יכול להתחיל בנקודה, להסתיים ב־".lock" או להכיל רווח או תו מיוחד כגון נקודתיים או כוכבית.
-    path_outside_root_dir: הנתיב "{$path}" מוביל אל מחוץ לתיקיית השורש, שם המערכת אינה יכולה להציג קבצים.
+    invalid_repository: המאגר שהוגדר אינו תקין. עליו להיות בתבנית „owner/repo”.
+    invalid_root_dir: תיקיית השורש אינה תקינה. עליה להיות נתיב בתוך המאגר, בלי „..”.
+    invalid_root_dir_branch: לא ניתן להשתמש בתיקיית השורש בשמות הענפים של מצבי הפרסום `editorial_workflow` ו-`preview`. אף חלק בנתיב שלה אינו יכול להתחיל בנקודה, להסתיים ב-„.lock” או להכיל רווח או תו מיוחד כגון נקודתיים או כוכבית.
+    path_outside_root_dir: הנתיב „{$path}” מוביל אל מחוץ לתיקיית השורש, שם המערכת אינה יכולה להציג קבצים.
     oauth_implicit_flow: שיטת האימות שהוגדרה (implicit flow) אינה נתמכת ב-Sveltia CMS. השתמשו ב<a>שיטת אימות</a> אחרת במקום זאת.
     github_pkce_unsupported: הרשאת PKCE אינה נתמכת עדיין בשל מגבלות של GitHub. השתמשו ב<a>שיטת אימות</a> אחרת במקום זאת.
     oauth_no_app_id: לא הוגדר מזהה יישום OAuth.
@@ -1974,24 +1974,24 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: האפשרות `auth_methods` חייבת לכלול שיטה אחת לפחות.
     missing_media_folder: לא הוגדרה תיקיית מדיה.
-    public_folder_relative_path: התיקייה הציבורית שהוגדרה אינה תקינה. עליה להיות נתיב מוחלט המתחיל ב־"/".
+    public_folder_relative_path: התיקייה הציבורית שהוגדרה אינה תקינה. עליה להיות נתיב מוחלט המתחיל ב-„/”.
     public_folder_absolute_url: כתובת מוחלטת עבור אפשרות התיקייה הציבורית אינה נתמכת ב-Sveltia CMS.
     # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
-    unsupported_folder_template_tag: האפשרות `{$option}` מכילה את תג התבנית `{$tag}`, שאינו נתמך שם. ניתן להשתמש רק בתגי תבנית של מזהה בכתובת, כגון `\{\{slug\}\}` ו־`\{\{year\}\}`, ובתגים `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` ו־`\{\{public_folder\}\}`.
+    unsupported_folder_template_tag: האפשרות `{$option}` מכילה את תג התבנית `{$tag}`, שאינו נתמך שם. ניתן להשתמש רק בתגי תבנית של מזהה בכתובת, כגון `\{\{slug\}\}` ו-`\{\{year\}\}`, ובתגים `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` ו-`\{\{public_folder\}\}`.
     # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
     global_folder_template_tag: האפשרות `{$option}` מכילה את תג התבנית `{$tag}`, שניתן להשתמש בו רק באפשרות של אוסף, של קובץ באוסף או של שדה, שבהם יש פריט למלא ממנו.
     # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
-    invalid_sanitize_replacement: האפשרות `sanitize_replacement` מוגדרת כ־`{$replacement}`, אך היא מכילה תו שלא ניתן להשתמש בו במזהה בכתובת, ולכן אינה יכולה לשמש כתחליף.
+    invalid_sanitize_replacement: האפשרות `sanitize_replacement` מוגדרת כ-`{$replacement}`, אך היא מכילה תו שלא ניתן להשתמש בו במזהה בכתובת, ולכן אינה יכולה לשמש כתחליף.
     # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
-    invalid_url_option: האפשרות `{$option}` מוגדרת כ־`{$url}`, אך עליה להיות כתובת מוחלטת המתחילה ב־`https://` או ב־`http://`.
+    invalid_url_option: האפשרות `{$option}` מוגדרת כ-`{$url}`, אך עליה להיות כתובת מוחלטת המתחילה ב-`https://` או ב-`http://`.
     # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
-    invalid_publish_mode_stages: האפשרות `stages` של `publish_mode` חייבת להתחיל ב־`draft` ולמנות את השלבים בסדר `draft`, `pending_review`, `pending_publish`, בלי לחזור על אף אחד מהם.
+    invalid_publish_mode_stages: האפשרות `stages` של `publish_mode` חייבת להתחיל ב-`draft` ולמנות את השלבים בסדר `draft`, `pending_review`, `pending_publish`, בלי לחזור על אף אחד מהם.
     # Don’t localize `i18n` and `locales`
     i18n_no_locales: האפשרות `i18n.locales` חייבת למנות שפה אחת לפחות.
     # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
-    i18n_invalid_default_locale: האפשרות `default_locale` מוגדרת כ־`{$locale}`, אך היא אינה אחת מ־`locales`.
+    i18n_invalid_default_locale: האפשרות `default_locale` מוגדרת כ-`{$locale}`, אך היא אינה אחת מ-`locales`.
     # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
-    i18n_invalid_initial_locale: האפשרות `initial_locales` מכילה את `{$locale}`, אך היא אינה אחת מ־`locales`.
+    i18n_invalid_initial_locale: האפשרות `initial_locales` מכילה את `{$locale}`, אך היא אינה אחת מ-`locales`.
     # Don’t localize `i18n`
     i18n_no_collections: 'האפשרות `i18n` מוגדרת ברמה העליונה, אך לאף אחד מהאוספים או מהקבצים הבודדים אין את האפשרות `i18n`, ולכן אין תוכן שניתן לתרגם. הוסיפו `i18n: true` לאוספים ולקבצים הבודדים שברצונכם לתרגם.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
@@ -2009,7 +2009,7 @@ config:
     # Don’t localize `folder`, `file`, `files`, and `divider`
     invalid_collection_no_options: לאוסף חייבת להיות מוגדרת אחת מהאפשרויות `folder`, `file`, `files` או `divider`.
     # Don’t localize `folder`, `file`, `files`, and `divider`
-    invalid_collection_multiple_options: לאוסף אסור שתהיה יותר מאחת מהאפשרויות `folder`, `file`, `files` ו־`divider`.
+    invalid_collection_multiple_options: לאוסף אסור שתהיה יותר מאחת מהאפשרויות `folder`, `file`, `files` ו-`divider`.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: הסיומת `{$extension}` אינה תואמת לפורמט `{$format}`.
     # {$name} is the field name from the configuration and {$widget} is its field type
@@ -2020,12 +2020,12 @@ config:
     # {$prop} is the option name; Don’t localize `file`
     unsupported_collection_data_file_option: האפשרות `{$prop}` אינה נתמכת באוסף שיש בו האפשרות `file`.
     # Don’t localize `file`, `publish_mode` and `simple`
-    collection_data_file_workflow: תהליך העריכה ותהליך התצוגה המקדימה, לרבות Open Authoring, אינם נתמכים באוסף שיש בו האפשרות `file`. הגדירו את האפשרות `publish_mode` של האוסף כ־`simple`.
+    collection_data_file_workflow: תהליך העריכה ותהליך התצוגה המקדימה, לרבות Open Authoring, אינם נתמכים באוסף שיש בו האפשרות `file`. הגדירו את האפשרות `publish_mode` של האוסף כ-`simple`.
     # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
     # with backslashes for MessageFormat 2
     collection_data_file_slug_tag: האפשרות `{$prop}` אינה יכולה להכיל את התג `\{\{slug\}\}` באוסף שיש בו האפשרות `file`, מפני שהמזהה של פריט הוא מיקומו, והוא משתנה כשמסדרים את הפריטים מחדש או מוחקים אותם. השתמשו בשדה בעל ערך ייחודי במקום זאת.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
-    invalid_slug_slash: תבנית המזהה `{$slug}` אינה תקינה מפני שאינה יכולה להכיל לוכסנים. כדי לארגן פריטים בתיקיות משנה, השתמשו באפשרות `path` במקום ב־`slug`.
+    invalid_slug_slash: תבנית המזהה `{$slug}` אינה תקינה מפני שאינה יכולה להכיל לוכסנים. כדי לארגן פריטים בתיקיות משנה, השתמשו באפשרות `path` במקום ב-`slug`.
     # {$name} is the field name from the configuration; Don’t localize `identifier_field`
     invalid_identifier_field: האפשרות `identifier_field` מפנה אל `{$name}`, אך שדה כזה אינו מוגדר באוסף.
     # {$name} is the field name from the configuration; Don’t localize `filter`
@@ -2067,9 +2067,9 @@ config:
     invalid_view_filter_name: שם מסנן התצוגה `{$name}` אינו תקין. אסור שיכיל תווים מיוחדים.
     duplicate_view_filter_name: שמות מסנני תצוגה חייבים להיות ייחודיים, אך `{$name}` מופיע יותר מפעם אחת.
     # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
-    invalid_view_group_default: האפשרות `default` של `view_groups` מוגדרת כ־`{$name}`, אך אין קבוצת תצוגה בשם הזה.
+    invalid_view_group_default: האפשרות `default` של `view_groups` מוגדרת כ-`{$name}`, אך אין קבוצת תצוגה בשם הזה.
     # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
-    invalid_view_filter_default: האפשרות `default` של `view_filters` מוגדרת כ־`{$name}`, אך אין מסנן תצוגה בשם הזה.
+    invalid_view_filter_default: האפשרות `default` של `view_filters` מוגדרת כ-`{$name}`, אך אין מסנן תצוגה בשם הזה.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: לאוסף {$count} חייבת להיות אפשרות `name` המוגדרת כמחרוזת שאינה ריקה.
     # {$name} is the invalid or duplicate collection name
@@ -2088,7 +2088,7 @@ config:
     collection_folder_i18n_required: לאוסף חייבת להיות אפשרות `i18n` מוגדרת אם משתמשים במציין המיקום `locale` בנתיב `folder`.
     # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
     # curly brackets in the example are escaped with backslashes for MessageFormat 2
-    invalid_collection_folder_locale: נתיב ה־`folder` בערך `{$folder}` אינו תקין. מציין המיקום `locale` חייב לשמש פעם אחת בלבד כשם תיקייה שלם, כמו `content/\{\{locale\}\}/posts`.
+    invalid_collection_folder_locale: נתיב ה-`folder` בערך `{$folder}` אינו תקין. מציין המיקום `locale` חייב לשמש פעם אחת בלבד כשם תיקייה שלם, כמו `content/\{\{locale\}\}/posts`.
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: לקובץ באוסף חייבת להיות אפשרות `i18n` מוגדרת אם משתמשים במציין המיקום `locale` בנתיב `file`.
     # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
@@ -2117,21 +2117,21 @@ config:
     # Don’t localize `allow_multiple`, `multiple`, and `false`
     allow_multiple: האפשרות `allow_multiple` אינה נתמכת ב-Sveltia CMS. השתמשו באפשרות `multiple` במקום זאת, שברירת המחדל שלה היא `false`.
     # Don’t localize `field`, `fields`, and `types`
-    invalid_list_field: לשדה List אסור שיהיו האפשרויות `field`, `fields` ו־`types` יחד.
+    invalid_list_field: לשדה List אסור שיהיו האפשרויות `field`, `fields` ו-`types` יחד.
     # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
-    invalid_list_variable_type: סוג המשתנה של שדה List אינו תקין. האפשרות `widget` מוגדרת כ־`{$widget}` אך עליה להיות `object`.
+    invalid_list_variable_type: סוג המשתנה של שדה List אינו תקין. האפשרות `widget` מוגדרת כ-`{$widget}` אך עליה להיות `object`.
     # Don’t localize `fields`, and `types`
-    invalid_object_field: לשדה Object אסור שיהיו האפשרויות `fields` ו־`types` יחד.
+    invalid_object_field: לשדה Object אסור שיהיו האפשרויות `fields` ו-`types` יחד.
     # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
     invalid_range_options: האפשרות `{$min}` אינה יכולה להיות גדולה מהאפשרות `{$max}`.
     # {$step} is the configured value; Don’t localize `step`
-    invalid_step: האפשרות `step` מוגדרת כ־`{$step}`, אך עליה להיות גדולה מאפס, או `-1` כדי לכבות את הקפיצות.
+    invalid_step: האפשרות `step` מוגדרת כ-`{$step}`, אך עליה להיות גדולה מאפס, או `-1` כדי לכבות את הקפיצות.
     # Don’t localize `options`
     select_field_no_options: לשדה Select חייב להיות פריט אחד לפחות באפשרות `options`.
     # {$value} is the option value from the configuration; Don’t localize `options`
     select_field_duplicate_option: ערכי `options` של שדה Select חייבים להיות ייחודיים, אך `{$value}` מופיע יותר מפעם אחת.
     # {$value} is the default value from the configuration; Don’t localize `default` and `options`
-    select_field_invalid_default: האפשרות `default` של שדה Select מוגדרת כ־`{$value}`, אך היא אינה אחת מ־`options`.
+    select_field_invalid_default: האפשרות `default` של שדה Select מוגדרת כ-`{$value}`, אך היא אינה אחת מ-`options`.
     # Don’t localize `fields` and `types`
     list_field_no_subfields: לאפשרות `fields` או `types` של שדה List חייב להיות פריט אחד לפחות. השמיטו את האפשרות כדי לקבל רשימה של ערכים פשוטים.
     # Don’t localize `default`, `fields` and `types`
@@ -2141,25 +2141,25 @@ config:
     # {$key} is a property name of the default item from the configuration; Don’t localize `default`
     list_field_invalid_default_key: האפשרות `default` של שדה List מכילה פריט עם המאפיין `{$key}`, אך אין תת־שדה בשם הזה.
     # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
-    list_field_default_missing_type: האפשרות `default` של שדה List מכילה פריט ללא המאפיין `{$typeKey}`, שמזהה אחד מ־`types`.
+    list_field_default_missing_type: האפשרות `default` של שדה List מכילה פריט ללא המאפיין `{$typeKey}`, שמזהה אחד מ-`types`.
     # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
-    list_field_invalid_default_type: האפשרות `default` של שדה List מכילה פריט שהמאפיין `{$typeKey}` שלו הוא `{$value}`, אך הוא אינו אחד מ־`types`.
+    list_field_invalid_default_type: האפשרות `default` של שדה List מכילה פריט שהמאפיין `{$typeKey}` שלו הוא `{$value}`, אך הוא אינו אחד מ-`types`.
     # Don’t localize `default` and `multiple`
     invalid_default_multiple: האפשרות `default` חייבת להיות מערך מפני שהאפשרות `multiple` היא `true`.
     invalid_default_single: האפשרות `default` חייבת להיות ערך יחיד ולא מערך, מפני שהאפשרות `multiple` אינה `true`.
     # {$key} is a property name of the default object from the configuration; Don’t localize `default`
     object_field_invalid_default_key: לאפשרות `default` של שדה Object יש את המאפיין `{$key}`, אך אין תת־שדה בשם הזה.
     # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
-    object_field_default_missing_type: לאפשרות `default` של שדה Object אין את המאפיין `{$typeKey}`, שמזהה אחד מ־`types`.
+    object_field_default_missing_type: לאפשרות `default` של שדה Object אין את המאפיין `{$typeKey}`, שמזהה אחד מ-`types`.
     # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
-    object_field_invalid_default_type: המאפיין `{$typeKey}` של האפשרות `default` בשדה Object הוא `{$value}`, אך הוא אינו אחד מ־`types`.
+    object_field_invalid_default_type: המאפיין `{$typeKey}` של האפשרות `default` בשדה Object הוא `{$value}`, אך הוא אינו אחד מ-`types`.
     # Don’t localize `default` and `output_code_only`
     code_field_invalid_default_object: האפשרות `default` של שדה Code חייבת להיות מחרוזת מפני שהאפשרות `output_code_only` היא `true`.
     # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
     code_field_invalid_default_key: לאפשרות `default` של שדה Code יש את המאפיין `{$key}`, אך האפשרות `keys` מתירה רק את `{$code}` ואת `{$lang}`.
     # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
-    number_field_default_not_integer: האפשרות `default` של שדה Number מוגדרת כ־`{$value}`, אך עליה להיות מספר שלם מפני שהאפשרות `value_type` היא `{$valueType}`.
-    number_field_default_not_number: האפשרות `default` של שדה Number מוגדרת כ־`{$value}`, אך עליה להיות מספר מפני שהאפשרות `value_type` היא `{$valueType}`.
+    number_field_default_not_integer: האפשרות `default` של שדה Number מוגדרת כ-`{$value}`, אך עליה להיות מספר שלם מפני שהאפשרות `value_type` היא `{$valueType}`.
+    number_field_default_not_number: האפשרות `default` של שדה Number מוגדרת כ-`{$value}`, אך עליה להיות מספר מפני שהאפשרות `value_type` היא `{$valueType}`.
     # Don’t localize `fields` and `types`
     object_field_no_subfields: לאפשרות `fields` או `types` של שדה Object חייב להיות פריט אחד לפחות.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
@@ -2223,17 +2223,17 @@ config:
     # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
     missing_identifier_field: לאוסף אין שדה `{$name}` שישמש לשמות של פריטים חדשים, ולכן כל פריט חדש מקבל מזהה אקראי. הוסיפו שדה `{$name}`, או הגדירו את האפשרות `identifier_field` או `slug`.
     # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
-    slug_i18n_ineffective: לאפשרות `i18n` של `slug` אין השפעה, מפני שהאוסף אינו משתמש במבנה ה-i18n‏ `multiple_files`, `multiple_folders` או `multiple_root_folders`, שבהם לכל שפה יש קובץ משלה.
+    slug_i18n_ineffective: לאפשרות `i18n` של `slug` אין השפעה, מפני שהאוסף אינו משתמש במבנה ה-i18n `multiple_files`, `multiple_folders` או `multiple_root_folders`, שבהם לכל שפה יש קובץ משלה.
     # Don’t localize `slug`, `template` and `auto_increment`
     slug_template_ignored: המערכת מתעלמת מהאפשרות `template` של `slug`, מפני שהאפשרות `auto_increment` ממספרת את המזהים במקום זאת.
     # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
     # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
     # are escaped with backslashes for MessageFormat 2
-    locale_not_omitted_from_file_path: לא ניתן להסיר את מציין המיקום `locale` מנתיב ה־`file` בערך `{$file}`, ולכן שפת ברירת המחדל נשארת בו למרות אפשרות ה-i18n‏ `omit_default_locale_from_file_path`. כדי להשמיט את השפה, השתמשו במציין המיקום כשם תיקייה שלם, כמו `\{\{locale\}\}/about.md`, או בין שם הקובץ לסיומת, כמו `about.\{\{locale\}\}.md`. כדי להשאיר אותה, הגדירו את האפשרות כ־`false` באפשרות ה־`i18n` של הקובץ.
+    locale_not_omitted_from_file_path: לא ניתן להסיר את מציין המיקום `locale` מנתיב ה-`file` בערך `{$file}`, ולכן שפת ברירת המחדל נשארת בו למרות אפשרות ה-i18n `omit_default_locale_from_file_path`. כדי להשמיט את השפה, השתמשו במציין המיקום כשם תיקייה שלם, כמו `\{\{locale\}\}/about.md`, או בין שם הקובץ לסיומת, כמו `about.\{\{locale\}\}.md`. כדי להשאיר אותה, הגדירו את האפשרות כ-`false` באפשרות ה-`i18n` של הקובץ.
     # Don’t localize `i18n`
     i18n_not_configured: האפשרות `i18n` מופעלת, אך i18n אינו מוגדר ברמה העליונה של התצורה או באוסף, ולכן לאפשרות אין השפעה.
     # Don’t localize `public_folder` and `media_folder`
-    empty_public_folder: האפשרות `public_folder` היא מחרוזת ריקה, ולכן נתיב ה־`media_folder` משמש לנתיבי קובצי המדיה הנשמרים בפריטים במקום זאת. הסירו את האפשרות, או הגדירו אותה לנתיב שברצונכם להשתמש בו, כגון `/images`.
+    empty_public_folder: האפשרות `public_folder` היא מחרוזת ריקה, ולכן נתיב ה-`media_folder` משמש לנתיבי קובצי המדיה הנשמרים בפריטים במקום זאת. הסירו את האפשרות, או הגדירו אותה לנתיב שברצונכם להשתמש בו, כגון `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: האפשרות `{$option}` אינה מוגדרת בסכמת התצורה של Sveltia CMS. המערכת תתעלם ממנה. בדקו אם יש שגיאת כתיב או שגיאת תחביר.
 
@@ -2301,10 +2301,18 @@ workflow:
   # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
   # explained that it stays until the deletion is published, so this doesn’t repeat it
   deletion_pending: |
-    .input {$count :integer} .match $count one {{הפריט סומן למחיקה.}} * {{{$count} פריטים סומנו למחיקה.}}
+    .input {$count :integer}
+    .match $count
+      one {{ הפריט סומן למחיקה. }}
+      two {{ שני פריטים סומנו למחיקה. }}
+      *   {{ {$count} פריטים סומנו למחיקה. }}
   # Toast notification shown after the unpublished changes to an entry have been thrown away
   changes_discarded: |
-    .input {$count :integer} .match $count one {{השינויים בוטלו.}} * {{השינויים ב-{$count} פריטים בוטלו.}}
+    .input {$count :integer}
+    .match $count
+      one {{ השינויים בוטלו. }}
+      two {{ השינויים בשני פריטים בוטלו. }}
+      *   {{ השינויים ב-{$count} פריטים בוטלו. }}
   # Toast notifications shown while a deletion is being called off, and once that has completed
   cancelling_deletion: מבטל מחיקה…
   deletion_cancelled: המחיקה בוטלה.
@@ -2359,7 +2367,11 @@ workflow:
   # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
   # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
   deleting_unpublished_note_all: |
-    .input {$count :integer} .match $count one {{הוא טרם פורסם, ולכן השינויים שלא פורסמו יבוטלו. גרסה מפורסמת, אם קיימת, תישאר.}} * {{הם טרם פורסמו, ולכן השינויים שלא פורסמו יבוטלו. גרסאות מפורסמות, אם קיימות, יישארו.}}
+    .input {$count :integer}
+    .match $count
+      one {{ הוא טרם פורסם, ולכן השינויים שלא פורסמו יבוטלו. גרסה מפורסמת, אם קיימת, תישאר. }}
+      two {{ הם טרם פורסמו, ולכן השינויים שלא פורסמו יבוטלו. גרסאות מפורסמות, אם קיימות, יישארו. }}
+      *   {{ הם טרם פורסמו, ולכן השינויים שלא פורסמו יבוטלו. גרסאות מפורסמות, אם קיימות, יישארו. }}
   # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
   # the number of selected entries that are unpublished.
   deleting_unpublished_note_some: |
@@ -2423,27 +2435,27 @@ open_authoring:
   # label on its OK button. {$repo} is the repository identifier in owner/repo format
   fork_repository: יצירת עותק של המאגר
   fork: עותק
-  confirm_forking_repository: כדי להציע שינויים ל־"{$repo}", יש ליצור עותק של המאגר בחשבון שלכם. השינויים שלכם נשמרים באותו עותק, ומתחזק בודק אותם לפני שהם עולים לאוויר.
+  confirm_forking_repository: כדי להציע שינויים ל-„{$repo}”, יש ליצור עותק של המאגר בחשבון שלכם. השינויים שלכם נשמרים באותו עותק, ומתחזק בודק אותם לפני שהם עולים לאוויר.
   # Error shown when the user declined the dialog above
   fork_declined: נדרש עותק של המאגר בחשבון שלכם כדי להציע שינויים.
   # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
-  fork_failed: לא ניתן היה ליצור עותק של המאגר "{$repo}" בחשבון שלכם.
+  fork_failed: לא ניתן היה ליצור עותק של המאגר „{$repo}” בחשבון שלכם.
   # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
   # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
   # owner/repo format, {$branch} is the branch name
-  fork_branch_missing: לעותק "{$fork}" שלכם אין את הענף "{$branch}". עדכנו את העותק מהמאגר "{$repo}" והתחברו שוב.
+  fork_branch_missing: לעותק „{$fork}” שלכם אין את הענף „{$branch}”. עדכנו את העותק מהמאגר „{$repo}” והתחברו שוב.
   # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
   # because the API rate limit is exhausted. {$repo} is the repository identifier
-  permission_check_failed: לא ניתן היה לבדוק את ההרשאות שלכם למאגר "{$repo}". נסו שוב בעוד רגע.
+  permission_check_failed: לא ניתן היה לבדוק את ההרשאות שלכם למאגר „{$repo}”. נסו שוב בעוד רגע.
   # Error shown when the repository can’t be forked, which is the default for a private
   # repository. {$repo} is the repository identifier
-  forking_disabled: המאגר "{$repo}" אינו מאפשר יצירת עותקים. בקשו ממתחזק להפעיל זאת.
+  forking_disabled: המאגר „{$repo}” אינו מאפשר יצירת עותקים. בקשו ממתחזק להפעיל זאת.
   # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
   # have no access. {$repo} is the repository identifier
-  invitation_pending: יש לכם הזמנה ממתינה למאגר "{$repo}". אשרו אותה ב-GitHub והתחברו שוב.
+  invitation_pending: יש לכם הזמנה ממתינה למאגר „{$repo}”. אשרו אותה ב-GitHub והתחברו שוב.
   # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
   # {$repo} is the repository identifier
-  private_repo_scope_required: הכניסה שלכם אינה כוללת גישה למאגרים פרטיים, ולכן לא ניתן לקרוא את המאגר "{$repo}". בקשו ממתחזק לבדוק את הגדרות האימות של המערכת.
+  private_repo_scope_required: הכניסה שלכם אינה כוללת גישה למאגרים פרטיים, ולכן לא ניתן לקרוא את המאגר „{$repo}”. בקשו ממתחזק לבדוק את הגדרות האימות של המערכת.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
   publish_unsupported: רק מתחזק יכול לפרסם שינויים באתר הזה. סמנו את הפריט שלכם כ״בבדיקה״ במקום זאת, ומישהו יבדוק אותו.
   # Error shown when a contributor changes the status of an entry whose request a maintainer has
@@ -2454,7 +2466,7 @@ open_authoring:
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: לא ניתן לבצע את השינוי הזה ישירות. אפשר להציע לבדיקה רק עריכות של פריטים.
   # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
-  contributing_via_fork: השינויים שלכם נשמרים בעותק שלכם מהמאגר הזה ב־"{$repo}" ונבדקים לפני שהם עולים לאוויר.
+  contributing_via_fork: השינויים שלכם נשמרים בעותק שלכם מהמאגר הזה ב-„{$repo}” ונבדקים לפני שהם עולים לאוויר.
   view_fork: הצגת העותק
 
 # ==============================================================================
@@ -2525,7 +2537,7 @@ prefs:
       field_label: מפתח {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
-      description: הירשמו ל־<a {$homeHref}>{$service}</a> והזינו כאן את <a {$apiKeyHref}>מפתח ה-API שלכם</a> כדי לאפשר תרגום מהיר של שדות טקסט.
+      description: הירשמו ל-<a {$homeHref}>{$service}</a> והזינו כאן את <a {$apiKeyHref}>מפתח ה-API שלכם</a> כדי לאפשר תרגום מהיר של שדות טקסט.
 
   # Media panel
   media:
@@ -2539,7 +2551,7 @@ prefs:
       field_label: מפתח API של {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
-      description: הירשמו ל־<a {$homeHref}>API של {$service}</a> והזינו כאן את <a {$apiKeyHref}>מפתח ה-API שלכם</a> כדי להוסיף תמונות מלאי חינמיות לשדות תמונה.
+      description: הירשמו ל-<a {$homeHref}>API של {$service}</a> והזינו כאן את <a {$apiKeyHref}>מפתח ה-API שלכם</a> כדי להוסיף תמונות מלאי חינמיות לשדות תמונה.
       # Photo credit attribution
       # {$service} is the stock photo service name
       credit: התמונות באדיבות {$service}
