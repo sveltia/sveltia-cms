@@ -1,0 +1,2699 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# --- NOTES ---
+# Follows the conventions set in the Hebrew locale of @sveltia/ui, so the two
+# read as one product:
+# 1. Prefer verbal nouns (like שמירה) over imperatives (like שמור)
+# 2. Prefer neologisms (like סמלון) over loanwords (like אימוג'י)
+# 3. Add a hyphen between Hebrew prefixes and English words (like ב-Markdown)
+#
+# Plus two of its own:
+# 4. Hebrew has three plural categories — one, two, other (CLDR). The `two`
+#    variant is only spelled out where the wording actually differs, e.g.
+#    שני פריטים rather than 2 פריטים; where it would read the same as `*`
+#    it is left out, so the count falls through.
+# 5. Terms that collide in English are kept apart: Collection is אוסף,
+#    Content is תוכן, Asset is קובץ מדיה, File is קובץ, Entry is פריט.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: חדש
+select: בחירה
+select_all: בחירת הכל
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: בחירת {$name}
+upload: העלאה
+copy: העתקה
+download: הורדה
+duplicate: שכפול
+delete: מחיקה
+reorder: שינוי סדר
+
+# Dialog and form actions: confirmation and cancellation
+cancel: ביטול
+done: סיום
+save: שמירה
+# Progress indicator shown on the save button while a save operation is in progress
+saving: שומר…
+
+# Publishing actions: used when committing changes to the repository
+publish: פרסום
+# Progress indicator shown on the publish button during publishing
+publishing: מפרסם…
+
+# Modification actions: editing and updating content
+rename: שינוי שם
+update: עדכון
+replace: החלפה
+
+# List and collection actions: adding and removing items
+add: הוספה
+remove: הסרה
+clear: ניקוי
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: הרחבה
+expand_all: הרחבת הכל
+collapse: כיווץ
+collapse_all: כיווץ הכל
+
+# Content manipulation: inserting, restoring, and discarding
+insert: הוספה
+restore: שחזור
+discard: ביטול השינויים
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: מחפש…
+no_results: לא נמצאו תוצאות.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: כללי
+primary: ראשי
+secondary: משני
+collection: אוסף
+folder: תיקייה
+# Label of the subfolder list in the asset picker
+folders: תיקיות
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: תיקיות נוספות
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: מפתח API
+details: פרטים
+back: חזרה
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: אוטומטי
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: טוען…
+# Dismiss button for temporary notifications and infobars
+later: אחר כך
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: מזהה בכתובת
+# Fallback labels for singleton collections when names aren’t configured
+singleton: פריט בודד
+singletons: פריטים בודדים
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: ההעתקה ללוח נכשלה.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: ברוכים הבאים ל-{$name}
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: מופעל על ידי {$name}
+
+# Shown during initial configuration and data loading
+unsupported_browser_error: הדפדפן שלכם אינו נתמך. עדכנו אותו לגרסה האחרונה או השתמשו בדפדפן אחר.
+loading_cms_config: טוען את הגדרות המערכת…
+loading_site_data: טוען את נתוני האתר…
+loading_site_data_error: אירעה שגיאה בטעינת נתוני האתר.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: התחברות באמצעות {$service}
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: התחברות באמצעות אסימון גישה
+sign_in_using_access_token_description: הזינו את האסימון. נדרשת הרשאת קריאה וכתיבה לתוכן המאגר.
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: מאחר שתהליך העריכה מופעל, נדרשת גם הרשאת קריאה וכתיבה לבקשות משיכה.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: אפשר ליצור אסימון ב<a>עמוד הגדרות המשתמש של {$service}</a>.
+# Input field label for personal access token
+personal_access_token: אסימון גישה אישי
+
+# Authentication progress indicators
+authorizing: מאשר הרשאה…
+signing_in: מתחבר…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: עבודה עם מאגר מקומי
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: כשתתבקשו, בחרו את תיקיית השורש של המאגר "{$repo}".
+work_with_local_repo_description_no_repo: כשתתבקשו, בחרו את תיקיית השורש של מאגר ה-Git שלכם.
+# Button label for demo/test repository
+work_with_test_repo: עבודה עם מאגר לבדיקה
+# Button label for the test repository when sample content is seeded, e.g. on a demo site
+start_demo: הפעלת הדגמה
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: התיקייה שנבחרה אינה תיקיית השורש של מאגר. נסו שוב.
+  picker_dismissed: לא נבחרה תיקיית שורש של מאגר. נסו שוב.
+  authentication_aborted: האימות בוטל. נסו שוב.
+  invalid_token: האסימון שהוזן אינו תקין. בדקו אותו ונסו שוב.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: שירות ה-Git שלכם אינו נתמך על ידי מנגנון האימות.
+  UNSUPPORTED_DOMAIN: הדומיין שלכם אינו מורשה להשתמש במנגנון האימות.
+  MISCONFIGURED_CLIENT: מזהה הלקוח או הסוד של יישום ה-OAuth אינם מוגדרים.
+  AUTH_CODE_REQUEST_FAILED: קבלת קוד ההרשאה נכשלה. נסו שוב מאוחר יותר.
+  CSRF_DETECTED: זוהתה מתקפת CSRF אפשרית. תהליך האימות בוטל.
+  TOKEN_REQUEST_FAILED: בקשת אסימון הגישה נכשלה. נסו שוב מאוחר יותר.
+  TOKEN_REFRESH_FAILED: רענון אסימון הגישה נכשל. נסו שוב מאוחר יותר.
+  MALFORMED_RESPONSE: השרת החזיר נתונים פגומים. נסו שוב מאוחר יותר.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: ממשק {$name} דורש את {$name} בגרסה {$version} ומעלה.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: אין לכם גישה למאגר "{$repo}".
+repository_not_found: המאגר "{$repo}" אינו קיים.
+repository_empty: למאגר "{$repo}" אין ענפים.
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: למאגר "{$repo}" אין ענף בשם "{$branch}".
+# {$repo} is the repository identifier, and {$dir} is the configured root directory
+root_dir_not_found: תיקיית השורש "{$dir}" אינה קיימת במאגר "{$repo}".
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: שגיאה בלתי צפויה
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: משהו השתבש, ולא ניתן להציג את העמוד הזה. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: משהו השתבש, ולא ניתן להציג את השדה הזה. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: ניסיון נוסף
+# Button label for reloading the CMS after an unexpected error
+reload_cms: טעינת המערכת מחדש
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ אירעה שגיאה בפענוח קובץ של פריט. בדקו את מסוף הדפדפן לפרטים. }}
+    *   {{ אירעו שגיאות בפענוח קובצי פריטים. בדקו את מסוף הדפדפן לפרטים. }}
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: שם משתמש
+password: סיסמה
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: התחברות
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: כניסה מהנייד
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: סרקו את הקוד שלמטה בטלפון או בטאבלט לכניסה ללא סיסמה. ההגדרות שלכם יועתקו אוטומטית.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: כניסה באמצעות קישור
+sign_in_with_link_confirmation: הקישור הזה מחבר אתכם כ-{$account} ב{$service} ומעתיק את ההגדרות מהמכשיר שבו נוצר. המשיכו רק אם יצרתם אותו בעצמכם.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: מחוברים כ-{$name}
+working_with_local_repo: עובדים עם מאגר מקומי
+working_with_test_repo: עובדים עם מאגר לבדיקה
+working_in_demo_mode: מצב הדגמה
+
+# Account menu: action items for sign-out and app installation
+sign_out: התנתקות
+install_as_app: התקנה כאפליקציה
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: תכנים
+assets: קובצי מדיה
+editorial_workflow: תהליך עריכה
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: טיוטות
+cms_config: הגדרות המערכת
+# Mobile menu page title (shown only on small screens)
+menu: תפריט
+# Mobile menu page section heading listing the custom pages registered by the site
+custom_pages: עמודים
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS זמינה עכשיו גם בנייד!
+mobile_promo_button: נסו עכשיו
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS זמינה עכשיו ב{$locale}!
+change_language: שינוי שפה
+
+# Live reload infobar: shown when the CMS runs on a page that a framework’s development server (e.g.
+# Astro) reloads on every file change, instead of a static HTML file
+live_reload_warning: שרת הפיתוח טוען את העמוד הזה מחדש בכל שינוי בקובץ, מה שעלול לקטוע שמירה ולהשאיר את הקבצים פגומים. הגישו את המערכת מקובץ HTML סטטי במקום זאת. <a>מידע נוסף</a>
+
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: מחליף ל{$locale}…
+locale_load_failed: לא ניתן לטעון את התרגום ל{$locale}. נסו שוב מאוחר יותר.
+
+# Toast notification shown when changes saved with the local backend couldn’t be committed to Git
+# {$reason} is one of the `local_git_skip_reasons` strings below
+local_git_not_committed: השינויים נשמרו אך לא נשלחו ל-Git. {$reason} כדי לשמור את הקבצים בלבד, כבו את שליחת השינויים ל-Git בהגדרות, בלשונית מפתחים.
+local_git_skip_reasons:
+  unsupported_repository: המאגר שלכם משתמש ביכולת של Git שהמערכת אינה תומכת בה, כגון עץ עבודה מקושר, שמות אובייקטים בתקן SHA-256, תבנית reftable, אינדקס דליל, או אינדקס בגרסה 3 או 4 שבהן משתמשות האפשרות feature.manyFiles והפקודה git add -N.
+  missing_identity: השם וכתובת הדוא״ל שלכם אינם מוגדרים בתצורת ה-Git של המאגר, והמערכת אינה יכולה לקרוא את ההגדרה הגלובלית. הגדירו אותם במאגר באמצעות git config --local user.name "השם שלכם" ו-git config --local user.email "you@example.com".
+  locked: תהליך Git אחר משתמש במאגר. אם אף תהליך אינו פעיל, מחקו את הקובץ .git/index.lock.
+  # The operation in progress, with how to finish or cancel it
+  operation_in_progress:
+    merge: מיזוג נמצא בעיצומו. סיימו אותו עם git commit, או בטלו אותו עם git merge --abort.
+    rebase: פעולת rebase נמצאת בעיצומה. סיימו אותה עם git rebase --continue, או בטלו אותה עם git rebase --abort. אם כבר המשכתם הלאה, git rebase --quit מבטל אותה בלי לשנות את הקבצים שלכם.
+    cherry_pick: פעולת cherry-pick נמצאת בעיצומה. סיימו אותה עם git cherry-pick --continue, או בטלו אותה עם git cherry-pick --abort.
+    revert: פעולת revert נמצאת בעיצומה. סיימו אותה עם git revert --continue, או בטלו אותה עם git revert --abort.
+    am: החלת תיקונים עם git am נמצאת בעיצומה. סיימו אותה עם git am --continue, או בטלו אותה עם git am --abort.
+    conflict: בחלק מהקבצים יש התנגשויות. פתרו אותן והוסיפו את התוצאות ל-staging קודם.
+  detached_head: לא נבחר ענף.
+  staged_changes: יש לכם שינויים אחרים שממתינים ב-staging. בצעו עליהם commit או הוציאו אותם משם קודם.
+  # {$path} is the file path
+  lfs: '{$path} מנוהל באמצעות Git LFS, והמערכת אינה יכולה לבצע אליו commit.'
+  # {$message} is the error message
+  error: אירעה שגיאה בלתי צפויה. {$message}
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: מעבר לאתר
+# Page switcher button group aria-label for switching between main sections
+switch_page: מעבר לעמוד
+
+# Search input placeholders
+search_placeholder_contents: חיפוש בתכנים…
+search_placeholder_assets: חיפוש בקובצי מדיה…
+search_placeholder_all: חיפוש בתכנים ובקובצי מדיה…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: יצירת פריט או העלאת קובצי מדיה
+
+# Publishing actions: button labels and progress indicators
+publish_changes: פרסום השינויים
+publishing_changes: מפרסם את השינויים…
+# Error notification when publishing fails
+publishing_changes_failed: הפרסום נכשל. אפשר לנסות שוב.
+
+# Notifications: button aria-labels and section headings
+show_notifications: הצגת התראות
+notifications: התראות
+
+# Account menu: button aria-labels and section headings
+show_account_menu: הצגת תפריט החשבון
+# Account section heading in the account menu and mobile menu page
+account: חשבון
+
+# Account menu items: links to external resources
+live_site: האתר החי
+git_repository: מאגר Git
+settings: הגדרות
+
+# Help menu: button aria-labels and section headings
+show_help_menu: הצגת תפריט העזרה
+# Help section heading in dropdowns and mobile menu
+help: עזרה
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: קיצורי מקלדת
+documentation: תיעוד
+release_notes: מה חדש
+announcements: הודעות
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: גרסה {$version}
+# Additional help menu items
+report_issue: דיווח על תקלה
+share_feedback: משוב
+get_help: קבלת עזרה
+donate: תרומה
+join_discord: הצטרפו אלינו ב-Discord
+bluesky: עקבו אחרינו ב-Bluesky
+
+# Update notification: infobar message and button
+update_available: קיימת גרסה חדשה של Sveltia CMS.
+update_now: עדכון עכשיו
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: ב{$service} יש תקלה קלה. ייתכן שהעבודה שלכם תושפע.
+  major_incident: ב{$service} יש תקלה חמורה. ייתכן שכדאי להמתין עד שהמצב ישתפר.
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: ספריית התוכן
+asset_library: ספריית המדיה
+
+# Primary sidebar section headings and list aria-labels
+collections: אוספים
+entries: פריטים
+files: קבצים
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: האתר שלכם
+  external: מיקומים חיצוניים
+  stock_photos: תמונות מלאי
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: קובצי המדיה של האוסף
+# List aria-labels for different list types
+entry_list: רשימת פריטים
+file_list: רשימת הקבצים
+asset_list: רשימת קובצי המדיה
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: אוסף "{$collection}"
+# {$folder} is the current asset folder label
+x_asset_folder: תיקיית מדיה "{$folder}"
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: זוהי רשימת האוספים.
+viewing_asset_folder_list: זוהי רשימת תיקיות המדיה.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ אתם צופים באוסף "{$collection}", שאין בו עדיין פריטים. }}
+    one {{ אתם צופים באוסף "{$collection}", שיש בו פריט אחד. }}
+    two {{ אתם צופים באוסף "{$collection}", שיש בו שני פריטים. }}
+    *   {{ אתם צופים באוסף "{$collection}", שיש בו {$count} פריטים. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ אתם צופים בתיקיית המדיה "{$folder}", שאין בה עדיין קבצים. }}
+    one {{ אתם צופים בתיקיית המדיה "{$folder}", שיש בה קובץ אחד. }}
+    two {{ אתם צופים בתיקיית המדיה "{$folder}", שיש בה שני קבצים. }}
+    *   {{ אתם צופים בתיקיית המדיה "{$folder}", שיש בה {$count} קבצים. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: אלה קובצי המדיה ב{$service}.
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: הקישו Enter כדי לערוך את הקובץ "{$file}".
+
+# Error messages: page, collection, folder or file not found
+page_not_found: העמוד לא נמצא.
+collection_not_found: האוסף לא נמצא.
+asset_folder_not_found: תיקיית המדיה לא נמצאה.
+file_not_found: הקובץ לא נמצא.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$selected} מתוך {$total} נבחרו'
+
+# View switcher: toggle between list and grid views
+switch_view: החלפת תצוגה
+table_view: תצוגת טבלה
+list_view: תצוגת רשימה
+grid_view: תצוגת רשת
+switch_to_list_view: מעבר לתצוגת רשימה
+switch_to_grid_view: מעבר לתצוגת רשת
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: מיון
+sorting_options: אפשרויות מיון
+# Table view column labels for the entry metadata used as `{{…}}` template tags
+table_column_keys:
+  # The folder containing the entry file
+  dirname: תיקייה
+  # The entry file name without the extension
+  filename: שם הקובץ
+  # The entry file extension
+  extension: סיומת
+  # The enabled locales of the entry
+  locales: שפות
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: ללא
+  name: שם
+  slug: מזהה בכתובת
+  # Sort by the last commit’s author name
+  commit_author: עורך אחרון
+  # Sort by the last commit date
+  commit_date: תאריך עדכון
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: תאריך שינוי
+  # Sort by file size
+  size: גודל
+  # Sort by the entry’s computed summary text
+  _summary: תקציר
+  # Manual order defined by the user via drag-and-drop
+  _manual: ידני
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, מא׳ עד ת׳'
+ascending_date: '{$label}, מהישן לחדש'
+descending: '{$label}, מת׳ עד א׳'
+descending_date: '{$label}, מהחדש לישן'
+ascending_number: '{$label}, מהקטן לגדול'
+descending_number: '{$label}, מהגדול לקטן'
+
+# Filter menu: button labels and options
+filter: סינון
+filtering_options: אפשרויות סינון
+
+# Group menu: button labels and options
+group: קיבוץ
+grouping_options: אפשרויות קיבוץ
+
+# Asset type filter and group labels
+type: סוג
+all: הכל
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: דומיין
+# Asset type labels
+image: תמונה
+video: וידאו
+audio: שמע
+document: מסמך
+other: אחר
+
+# Toolbar toggles: show/hide panels
+show_assets: הצגת קובצי מדיה
+hide_assets: הסתרת קובצי מדיה
+show_info: הצגת מידע
+hide_info: הסתרת מידע
+
+# Folder display labels when no specific path is configured
+all_assets: כל קובצי המדיה
+global_assets: קובצי מדיה כלליים
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: קבצים מקושרים
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: לא זמין
+file_unavailable_description: לא ניתן לטעון את הקובץ. ייתכן שהוא הועבר או נמחק.
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ טוען פריט… }}
+    *   {{ טוען פריטים… }}
+# Error message when entry cannot be found
+entry_not_found: הפריט לא נמצא.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: יצירת פריטים חדשים באוסף הזה חסומה על ידי מנהל המערכת.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ לא ניתן להוסיף פריטים חדשים לאוסף הזה, מפני שהוא הגיע למכסה של פריט אחד. }}
+    two {{ לא ניתן להוסיף פריטים חדשים לאוסף הזה, מפני שהוא הגיע למכסה של שני פריטים. }}
+    *   {{ לא ניתן להוסיף פריטים חדשים לאוסף הזה, מפני שהוא הגיע למכסה של {$quota} פריטים. }}
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$quota :integer}
+  .input {$remaining :integer}
+  .match $quota $remaining
+    one one {{ האוסף הזה מתקרב למכסה של פריט אחד. אפשר ליצור עוד פריט אחד בלבד. }}
+    one two {{ האוסף הזה מתקרב למכסה של פריט אחד. אפשר ליצור עוד שני פריטים בלבד. }}
+    one *   {{ האוסף הזה מתקרב למכסה של פריט אחד. אפשר ליצור עוד {$remaining} פריטים בלבד. }}
+    two one {{ האוסף הזה מתקרב למכסה של שני פריטים. אפשר ליצור עוד פריט אחד בלבד. }}
+    two two {{ האוסף הזה מתקרב למכסה של שני פריטים. אפשר ליצור עוד שני פריטים בלבד. }}
+    two *   {{ האוסף הזה מתקרב למכסה של שני פריטים. אפשר ליצור עוד {$remaining} פריטים בלבד. }}
+    *   one {{ האוסף הזה מתקרב למכסה של {$quota} פריטים. אפשר ליצור עוד פריט אחד בלבד. }}
+    *   two {{ האוסף הזה מתקרב למכסה של {$quota} פריטים. אפשר ליצור עוד שני פריטים בלבד. }}
+    *   *   {{ האוסף הזה מתקרב למכסה של {$quota} פריטים. אפשר ליצור עוד {$remaining} פריטים בלבד. }}
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: המערכת במצב קריאה בלבד. אפשר לצפות בתוכן ובקובצי המדיה אך לא לבצע שינויים.
+readonly_collection: האוסף הזה לקריאה בלבד. אפשר לצפות בתוכן שלו אך לא לבצע שינויים.
+readonly_entry: הפריט הזה לקריאה בלבד. אפשר לצפות בו אך לא לבצע שינויים.
+readonly_asset_folder: התיקייה הזו לקריאה בלבד. אפשר לצפות בקובצי המדיה שבה אך לא לבצע שינויים.
+readonly_branch: אין לכם הרשאה לדחוף לענף "{$branch}". אפשר לצפות בתוכן אך לא לבצע שינויים.
+readonly_reference: הפריט לקריאה בלבד, ולכן לא ניתן להסיר את ההפניה.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'לא ניתן לשנות את שם הפריט, מפני שהפריטים הבאים, שהם לקריאה בלבד, מפנים אליו בשמו הנוכחי: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'לא ניתן להעביר את קובץ המדיה או לשנות את שמו, מפני שהפריטים הבאים, שהם לקריאה בלבד, משתמשים בו: {$entries}.'
+
+# Navigation: back links and list labels
+back_to_collection: חזרה לאוסף
+collection_list: רשימת האוספים
+back_to_collection_list: חזרה לרשימת האוספים
+asset_folder_list: רשימת תיקיות המדיה
+back_to_asset_folder_list: חזרה לרשימת תיקיות המדיה
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: חזרה לתיקיית האב
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: תוצאות חיפוש
+# {$terms} is the current search query text
+search_results_for_x: תוצאות חיפוש עבור "{$terms}"
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ אלה תוצאות החיפוש עבור "{$terms}". לא נמצאו פריטים. }}
+    one {{ אלה תוצאות החיפוש עבור "{$terms}". נמצא פריט אחד. }}
+    two {{ אלה תוצאות החיפוש עבור "{$terms}". נמצאו שני פריטים. }}
+    *   {{ אלה תוצאות החיפוש עבור "{$terms}". נמצאו {$count} פריטים. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ אלה תוצאות החיפוש עבור "{$terms}". לא נמצאו קבצים. }}
+    one {{ אלה תוצאות החיפוש עבור "{$terms}". נמצא קובץ אחד. }}
+    two {{ אלה תוצאות החיפוש עבור "{$terms}". נמצאו שני קבצים. }}
+    *   {{ אלה תוצאות החיפוש עבור "{$terms}". נמצאו {$count} קבצים. }}
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ אין פריטים }}
+    one {{ פריט אחד }}
+    two {{ שני פריטים }}
+    *   {{ {$count} פריטים }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ אין קבצים }}
+    one {{ קובץ אחד }}
+    two {{ שני קבצים }}
+    *   {{ {$count} קבצים }}
+# Empty state messages
+no_files_found: לא נמצאו קבצים.
+no_entries_found: לא נמצאו פריטים.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: העלאת קובצי מדיה חדשים
+
+# New Folder button and dialog in the Asset Library
+new_folder: תיקייה חדשה
+new_folder_name: שם התיקייה
+new_folder_create: יצירה
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: התיקייה החדשה תיווצר בתוך "{$folder}".
+# Validation errors for the new folder name
+new_folder_error:
+  empty: שם התיקייה אינו יכול להיות ריק.
+  invalid: שם התיקייה אינו יכול להכיל לוכסנים או להתחיל בנקודה.
+  # A name the CMS itself is usually served from, e.g. `admin` or `cms`
+  reserved: הקבצים בתיקייה בשם הזה הם לקריאה בלבד, מפני שהמערכת עצמה מוגשת ממנה בדרך כלל.
+  duplicate: תיקייה או קובץ בשם הזה כבר קיימים כאן.
+# Progress and error messages while the folder is being created
+creating_folder: יוצר את התיקייה…
+creating_folder_failed: לא ניתן ליצור את התיקייה.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: אפשרויות התיקייה
+show_folder_options: הצגת אפשרויות התיקייה
+rename_folder: שינוי שם התיקייה
+delete_folder: מחיקת התיקייה
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ הזינו שם חדש למטה. }}
+    one {{ הזינו שם חדש למטה. קובץ המדיה שבתיקייה יועבר יחד איתה, וכל פריט שמשתמש בו יתעדכן. }}
+    two {{ הזינו שם חדש למטה. שני קובצי המדיה שבתיקייה יועברו יחד איתה, וכל פריט שמשתמש בהם יתעדכן. }}
+    *   {{ הזינו שם חדש למטה. {$count} קובצי המדיה שבתיקייה יועברו יחד איתה, וכל פריט שמשתמש בהם יתעדכן. }}
+# Rename Folder dialog body text for a cloud storage service, whose files are hotlinked from the
+# entries, so a move changes the URLs and the entries aren’t updated
+enter_new_name_for_external_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ הזינו שם חדש למטה. }}
+    one {{ הזינו שם חדש למטה. הקובץ שבתיקייה יועבר יחד איתה וכתובתו תשתנה, לכן עדכנו כל פריט שמשתמש בו. }}
+    two {{ הזינו שם חדש למטה. שני הקבצים שבתיקייה יועברו יחד איתה וכתובותיהם ישתנו, לכן עדכנו כל פריט שמשתמש בהם. }}
+    *   {{ הזינו שם חדש למטה. {$count} הקבצים שבתיקייה יועברו יחד איתה וכתובותיהם ישתנו, לכן עדכנו כל פריט שמשתמש בהם. }}
+# Rename Folder dialog for a cloud storage service: warning shown when entries link to files in the
+# folder, which aren’t updated. {$count} is the number of entries
+renaming_external_folder_breaks_links: |
+  .input {$count :integer}
+  .match $count
+    one {{ פריט אחד מקשר לקובץ בתיקייה הזו. הפריט לא יתעדכן, ולכן הקישור יישבר לאחר שינוי שם התיקייה. }}
+    two {{ שני פריטים מקשרים לקבצים בתיקייה הזו. הפריטים לא יתעדכנו, ולכן הקישורים יישברו לאחר שינוי שם התיקייה. }}
+    *   {{ {$count} פריטים מקשרים לקבצים בתיקייה הזו. הפריטים לא יתעדכנו, ולכן הקישורים יישברו לאחר שינוי שם התיקייה. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ למחוק את התיקייה הריקה "{$name}"? }}
+    one {{ למחוק את התיקייה "{$name}" ואת קובץ המדיה שבתוכה? }}
+    two {{ למחוק את התיקייה "{$name}" ואת שני קובצי המדיה שבתוכה? }}
+    *   {{ למחוק את התיקייה "{$name}" ואת {$count} קובצי המדיה שבתוכה? }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: משנה את שם התיקייה…
+renaming_folder_failed: לא ניתן לשנות את שם התיקייה.
+deleting_folder: מוחק את התיקייה…
+deleting_folder_failed: לא ניתן למחוק את התיקייה.
+# Asset Library and asset picker: notice shown when a cloud storage service holds more files than
+# are listed at once
+external_assets_truncated: יש בשירות יותר מדי קבצים מכדי להציג את כולם, ולכן חלקם הושמטו.
+
+# Edit options menu: button and item labels
+edit_options: אפשרויות עריכה
+show_edit_options: הצגת אפשרויות עריכה
+# Copy menu aria-label
+copy_options: אפשרויות העתקה
+# Edit menu items with specific asset names
+edit_asset: עריכת קובץ מדיה
+# {$name} is the selected asset name
+edit_x: עריכת {$name}
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: גלישת שורות ארוכות
+
+# Rename asset: dialog and validation
+rename_asset: שינוי שם קובץ המדיה
+# {$name} is the current asset name
+rename_x: שינוי שם — {$name}
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ הזינו שם חדש למטה. }}
+    one {{ הזינו שם חדש למטה. גם פריט אחד שמשתמש בקובץ המדיה יתעדכן. }}
+    two {{ הזינו שם חדש למטה. גם שני פריטים שמשתמשים בקובץ המדיה יתעדכנו. }}
+    *   {{ הזינו שם חדש למטה. גם {$count} פריטים שמשתמשים בקובץ המדיה יתעדכנו. }}
+# Rename Asset dialog for a file on a cloud storage service: warning shown when entries link to the
+# file, which aren’t updated. {$count} is the number of entries
+renaming_external_asset_breaks_links: |
+  .input {$count :integer}
+  .match $count
+    one {{ פריט אחד מקשר לקובץ הזה. הפריט לא יתעדכן, ולכן הקישור יישבר לאחר שינוי שם הקובץ. }}
+    two {{ שני פריטים מקשרים לקובץ הזה. הפריטים לא יתעדכנו, ולכן הקישורים יישברו לאחר שינוי שם הקובץ. }}
+    *   {{ {$count} פריטים מקשרים לקובץ הזה. הפריטים לא יתעדכנו, ולכן הקישורים יישברו לאחר שינוי שם הקובץ. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: שם הקובץ אינו יכול להיות ריק.
+  character: שם הקובץ אינו יכול להכיל תווים מיוחדים.
+  duplicate: שם הקובץ הזה כבר משמש קובץ מדיה אחר.
+  # A name starting with a dot hides the file, which the CMS wouldn’t list any more
+  leading_dot: שם הקובץ אינו יכול להתחיל בנקודה.
+  # The name of a folder next to the file
+  folder_duplicate: תיקייה בשם הזה כבר קיימת כאן.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: הקובץ יישמר בשם "{$name}".
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: שינוי סיומת הקובץ
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: לשנות את הסיומת מ־".{$oldExtension}" ל־".{$newExtension}"?
+  add: להוסיף את הסיומת ".{$newExtension}"?
+  remove: להסיר את הסיומת ".{$oldExtension}"?
+file_extension_change_warning: ייתכן שהקובץ לא יוצג או לא יטופל כראוי אם הסיומת אינה תואמת לפורמט שלו בפועל.
+
+# Replace asset: menu item and dialog title
+replace_asset: החלפת קובץ המדיה
+# {$name} is the asset being replaced
+replace_x: החלפת {$name}
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: החלפת הקובץ
+replace_image: החלפת התמונה
+remove_file: הסרת הקובץ
+remove_image: הסרת התמונה
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: לחצו לבחירת קובץ…
+# Browse prompt shown on touch devices
+tap_to_browse: הקישו לבחירת קובץ…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ גררו קובץ לכאן או לחצו לבחירה… }}
+    *   {{ גררו קבצים לכאן או לחצו לבחירה… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ גררו קובץ לכאן או }}
+    *   {{ גררו קבצים לכאן או }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ גררו קובץ תמונה לכאן או }}
+    *   {{ גררו קובצי תמונה לכאן או }}
+# File picker and clipboard actions used by upload controls
+browse: עיון
+# Generic clipboard paste action used by non-image file fields
+paste: הדבקה
+# Clipboard paste action used by image fields
+paste_image: הדבקת תמונה
+
+# Clipboard paste errors
+no_image_in_clipboard: לא נמצאה תמונה בלוח.
+clipboard_access_denied: הגישה ללוח נדחתה.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ גררו קובץ לכאן }}
+    *   {{ גררו קבצים לכאן }}
+# File type validation errors
+unsupported_file_type: סוג קובץ שאינו נתמך
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'הקובץ שנגרר אינו מאחד הסוגים הבאים: {$types}. נסו שוב.'
+dropped_image_type_mismatch: 'הקובץ שנגרר אינו נתמך. מתקבלת רק תמונה מהסוגים הבאים: {$types}. נסו שוב.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ בחירת קובץ }}
+    *   {{ בחירת קבצים }}
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ מחיקת קובץ מדיה }}
+    *   {{ מחיקת קובצי מדיה }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ מחיקת קובץ המדיה הנבחר }}
+    *   {{ מחיקת קובצי המדיה הנבחרים }}
+confirm_deleting_this_asset: למחוק את קובץ המדיה הזה?
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ למחוק את קובץ המדיה הנבחר? }}
+    two {{ למחוק את שני קובצי המדיה הנבחרים? }}
+    *   {{ למחוק את {$count} קובצי המדיה הנבחרים? }}
+confirm_deleting_all_assets: למחוק את כל קובצי המדיה?
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ גם ההפניה אליו בפריט אחד תוסר. }}
+    two {{ גם ההפניות אליו בשני פריטים יוסרו. }}
+    *   {{ גם ההפניות אליו ב-{$count} פריטים יוסרו. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ לא ניתן למחוק את קובץ המדיה הזה, מפני שהשדות הבאים בפריטים שמשתמשים בו לא יהיו תקינים בלעדיו. עדכנו קודם את הפריטים האלה. }}
+    *   {{ לא ניתן למחוק את קובצי המדיה האלה, מפני שהשדות הבאים בפריטים שמשתמשים בהם לא יהיו תקינים בלעדיהם. עדכנו קודם את הפריטים האלה. }}
+# Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
+# so the deletion can’t go ahead. {$count} is the number of assets being deleted
+checking_asset_references_failed: |
+  .input {$count :integer}
+  .match $count
+    one {{ לא ניתן לבדוק אילו פריטים משתמשים בקובץ המדיה הזה. סגרו את החלון ונסו שוב. }}
+    *   {{ לא ניתן לבדוק אילו פריטים משתמשים בקובצי המדיה האלה. סגרו את החלון ונסו שוב. }}
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ מחיקת פריט }}
+    *   {{ מחיקת פריטים }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ מחיקת הפריט הנבחר }}
+    *   {{ מחיקת הפריטים הנבחרים }}
+confirm_deleting_this_entry: למחוק את הפריט הזה?
+confirm_deleting_this_entry_with_assets: למחוק את הפריט הזה ואת קובצי המדיה המשויכים אליו?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: מחיקת הפריט נכשלה. נסו שוב.
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ למחוק את הפריט הנבחר? }}
+    two {{ למחוק את שני הפריטים הנבחרים? }}
+    *   {{ למחוק את {$count} הפריטים הנבחרים? }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ למחוק את הפריט הנבחר ואת קובצי המדיה המשויכים אליו? }}
+    two {{ למחוק את שני הפריטים הנבחרים ואת קובצי המדיה המשויכים אליהם? }}
+    *   {{ למחוק את {$count} הפריטים הנבחרים ואת קובצי המדיה המשויכים אליהם? }}
+confirm_deleting_all_entries: למחוק את כל הפריטים?
+confirm_deleting_all_entries_with_assets: למחוק את כל הפריטים ואת קובצי המדיה המשויכים אליהם?
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ גם ההפניה אליו בפריט אחר תוסר. }}
+    two {{ גם ההפניות אליו בשני פריטים אחרים יוסרו. }}
+    *   {{ גם ההפניות אליו ב-{$count} פריטים אחרים יוסרו. }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ לא ניתן למחוק את הפריט הזה, מפני שהשדות הבאים בפריטים אחרים לא יהיו תקינים בלעדיו. עדכנו קודם את הפריטים האלה. }}
+    *   {{ לא ניתן למחוק את הפריטים האלה, מפני שהשדות הבאים בפריטים אחרים לא יהיו תקינים בלעדיהם. עדכנו קודם את הפריטים האלה. }}
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: שינוי סדר הפריטים
+done_reordering_entries: סיום שינוי הסדר
+cancel_reordering_entries: ביטול שינוי הסדר
+
+# Reorder error message
+saving_reorder_failed: שמירת הסדר החדש נכשלה. נסו שוב.
+
+# ==============================================================================
+# Bulk Entry Editing
+# ==============================================================================
+# Strings for editing the fields of many entries at once in a table.
+
+# Bulk edit mode: toggle buttons
+bulk_edit_entries: עריכה מרוכזת של פריטים
+save_bulk_edits: שמירת העריכה המרוכזת
+cancel_bulk_edits: ביטול העריכה המרוכזת
+
+# Bulk edit table: column header of the entry titles
+bulk_edit_entry: פריט
+
+# Bulk edit table: label of the table
+bulk_edit_table: עורך מרוכז
+
+# Bulk edit table: label of a cell input; {$field} is the field label, {$entry} is the entry title
+bulk_edit_cell: '{$field} של {$entry}'
+
+# Bulk edit status: number of changed fields
+bulk_edit_count: |
+  .input {$count :integer}
+  .match $count
+    0   {{ אין שינויים }}
+    one {{ שינוי אחד }}
+    two {{ שני שינויים }}
+    *   {{ {$count} שינויים }}
+# Bulk edit error messages
+bulk_edit_invalid: חלק מהערכים אינם תקינים. תקנו את השדות המסומנים ונסו שוב.
+saving_bulk_edits_failed: שמירת השינויים נכשלה. נסו שוב.
+
+# Bulk edit: confirmation shown when leaving the mode with unsaved changes
+discard_bulk_edits_confirm: לבטל את השינויים שבוצעו בפריטים?
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ מעבד קובץ. זה עשוי לקחת זמן. }}
+    *   {{ מעבד קבצים. זה עשוי לקחת זמן. }}
+# Uploading section aria-label
+uploading_files: מעלה קבצים
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: '"{$name}" יוחלף בקובץ הזה:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ הקובץ הזה יישמר בתיקייה "{$folder}": }}
+    two {{ שני הקבצים האלה יישמרו בתיקייה "{$folder}": }}
+    *   {{ {$count} הקבצים האלה יישמרו בתיקייה "{$folder}": }}
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: קבצים גדולים מדי
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ לא ניתן להעלות את הקובץ הזה מפני שהוא חורג מהגודל המרבי, {$size}. הקטינו אותו או בחרו קובץ אחר. }}
+    *   {{ לא ניתן להעלות את הקבצים האלה מפני שהם חורגים מהגודל המרבי, {$size}. הקטינו אותם או בחרו קבצים אחרים. }}
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: קבצים לא תקינים
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ לא ניתן להעלות את הקובץ הזה מפני שהוא פגום, או שתוכנו אינו תואם לסיומת שלו. זה קורה לעיתים קרובות כששם התמונה שונה במקום שהיא הומרה, למשל תמונת HEIC שנשמרה כקובץ JPEG. המירו את הקובץ ונסו שוב. }}
+    *   {{ לא ניתן להעלות את הקבצים האלה מפני שהם פגומים, או שתוכנם אינו תואם לסיומות שלהם. זה קורה לעיתים קרובות כששמות התמונות שונו במקום שהן הומרו, למשל תמונות HEIC שנשמרו כקובצי JPEG. המירו את הקבצים ונסו שוב. }}
+# {$count} is the number of files that are not of a type the field accepts, even once transformed
+# {$types} is the list of accepted file types, such as “.pdf or .txt”
+warning_unsupported_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ לא ניתן להעלות את הקובץ הזה מפני שאינו מאחד הסוגים הבאים: {$types}. }}
+    *   {{ לא ניתן להעלות את הקבצים האלה מפני שאינם מאחד הסוגים הבאים: {$types}. }}
+# {$count} is the number of files that are not of an image type the field accepts
+# {$types} is the list of accepted image formats, such as “PNG or WebP”
+warning_unsupported_image_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ לא ניתן להעלות את הקובץ הזה מפני שמתקבלת רק תמונה מהסוגים הבאים: {$types}. }}
+    *   {{ לא ניתן להעלות את הקבצים האלה מפני שמתקבלות רק תמונות מהסוגים הבאים: {$types}. }}
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: קבצים שאינם תואמים
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ הקובץ הזה אינו יכול להחליף את "{$name}" מפני שהוא בפורמט אחר. המירו אותו לאותו פורמט ונסו שוב. }}
+    *   {{ הקבצים האלה אינם יכולים להחליף את "{$name}" מפני שהם בפורמט אחר. המירו אותם לאותו פורמט ונסו שוב. }}
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ קובץ בשם הזה כבר קיים בתיקייה. להחליף אותו? }}
+    two {{ שני קבצים בשמות האלה כבר קיימים בתיקייה. להחליף אותם? }}
+    *   {{ {$count} קבצים בשמות האלה כבר קיימים בתיקייה. להחליף אותם? }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ קובץ בשם "{$name}" כבר קיים בתיקייה. להחליף אותו? }}
+    two {{ שני קבצים בשמות האלה כבר קיימים בתיקייה. להחליף אותם? }}
+    *   {{ {$count} קבצים בשמות האלה כבר קיימים בתיקייה. להחליף אותם? }}
+file_name_conflict_resolution: טיפול בהתנגשות שמות קבצים
+# Option to keep both files (rename the new one)
+keep_both: שמירת שניהם
+
+# Upload progress and error messages
+uploading_files_progress: מעלה…
+uploading_files_failed: ההעלאה נכשלה.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: המחיקה נכשלה.
+renaming_asset_failed: שינוי השם נכשל.
+# Error shown when an edited text file in the Asset Library could not be saved
+saving_asset_failed: השמירה נכשלה.
+
+# File metadata display
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (הומר מ-{$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: אין עדיין פריטים באוסף הזה.
+# Button to create first entry
+create_new_entry: יצירת פריט חדש
+# “Entry” option label in the create button menu
+entry: פריט
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: קובץ ראשי
+
+# Empty state for file collections
+no_files_in_collection: אין קבצים זמינים באוסף הזה.
+
+# Entry duplication
+duplicate_entry: שכפול הפריט
+entry_duplicated: הפריט שוכפל כטיוטה חדשה.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ בשדה אחד יש שגיאה. תקנו אותה כדי לשמור את הפריט. }}
+    two {{ בשני שדות יש שגיאות. תקנו אותן כדי לשמור את הפריט. }}
+    *   {{ ב-{$count} שדות יש שגיאות. תקנו אותן כדי לשמור את הפריט. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: הצגת השגיאות
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ הפריט נשמר. }}
+    two {{ שני פריטים נשמרו. }}
+    *   {{ {$count} פריטים נשמרו. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ הפריט נשמר ופורסם. }}
+    two {{ שני פריטים נשמרו ופורסמו. }}
+    *   {{ {$count} פריטים נשמרו ופורסמו. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ הפריט נמחק. }}
+    two {{ שני פריטים נמחקו. }}
+    *   {{ {$count} פריטים נמחקו. }}
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ קובץ המדיה נשמר. }}
+    two {{ שני קובצי מדיה נשמרו. }}
+    *   {{ {$count} קובצי מדיה נשמרו. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ קובץ המדיה נשמר ופורסם. }}
+    two {{ שני קובצי מדיה נשמרו ופורסמו. }}
+    *   {{ {$count} קובצי מדיה נשמרו ופורסמו. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ הכתובת הועתקה. }}
+    two {{ שתי כתובות הועתקו. }}
+    *   {{ {$count} כתובות הועתקו. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ נתיב הקובץ הועתק. }}
+    two {{ שני נתיבי קבצים הועתקו. }}
+    *   {{ {$count} נתיבי קבצים הועתקו. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ מזהה הקובץ הועתק. }}
+    two {{ שני מזהי קבצים הועתקו. }}
+    *   {{ {$count} מזהי קבצים הועתקו. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ נתוני הקובץ הועתקו. }}
+    two {{ נתוני שני קבצים הועתקו. }}
+    *   {{ נתוני {$count} קבצים הועתקו. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one {{ קובץ המדיה הורד. }}
+    two {{ שני קובצי מדיה הורדו. }}
+    *   {{ {$count} קובצי מדיה הורדו. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one {{ קובץ המדיה הועבר. }}
+    two {{ שני קובצי מדיה הועברו. }}
+    *   {{ {$count} קובצי מדיה הועברו. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one {{ שם קובץ המדיה שונה. }}
+    two {{ שמות שני קובצי מדיה שונו. }}
+    *   {{ שמות {$count} קובצי מדיה שונו. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ קובץ המדיה נמחק. }}
+    two {{ שני קובצי מדיה נמחקו. }}
+    *   {{ {$count} קובצי מדיה נמחקו. }}
+folder_created: התיקייה נוצרה.
+# Folder info panel in the Asset Library sidebar
+folder_path: נתיב התיקייה
+folder_contents: תכולה
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ אין תיקיות }}
+    one {{ תיקייה אחת }}
+    two {{ שתי תיקיות }}
+    *   {{ {$count} תיקיות }}
+folder_renamed: שם התיקייה שונה.
+folder_deleted: התיקייה נמחקה.
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: עורך התוכן
+
+# Draft backup: restore dialog
+restore_backup_title: שחזור טיוטה
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: לפריט הזה יש גיבוי מ-{$datetime}. לשחזר את הטיוטה?
+
+# Draft backup notifications
+draft_backup_saved: גיבוי הטיוטה נשמר.
+draft_backup_restored: הטיוטה שוחזרה.
+draft_backup_deleted: גיבוי הטיוטה נמחק.
+
+# Editor toolbar actions
+cancel_editing: ביטול העריכה
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: יצירת {$name}
+# {$collection} is the collection label
+create_entry_announcement: אתם יוצרים פריט חדש באוסף "{$collection}".
+# Editing an existing entry
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: אתם עורכים את הפריט "{$entry}" באוסף "{$collection}".
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: אתם עורכים את הקובץ "{$file}" באוסף "{$collection}".
+# {$file} is the singleton file name
+edit_singleton_announcement: אתם עורכים את הקובץ "{$file}".
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: שמירה ופרסום
+save_without_publishing: שמירה בלי לפרסם
+
+# Editor options menu
+show_editor_options: הצגת אפשרויות העורך
+editor_options: אפשרויות העורך
+
+# Preview controls
+show_second_pane: הצגת חלונית שנייה
+show_preview: הצגת תצוגה מקדימה
+
+# Editor settings
+sync_scrolling: גלילה מסונכרנת
+
+# Locale controls
+switch_locale: החלפת שפה
+# Short status indicators appended to locale names
+locale_content_disabled_short: (מושבת)
+locale_content_error_short: (שגיאה)
+
+# Pane labels
+edit: עריכה
+preview: תצוגה מקדימה
+
+# Pane controls; not to be confused with pages
+swap_panes: החלפת צד בין החלוניות
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: עריכת התוכן ב{$locale}
+preview_x_locale: תצוגה מקדימה ב{$locale}
+# The content of a monolingual entry, which has no locale to name
+edit_content: עריכת התוכן
+preview_content: תצוגה מקדימה של התוכן
+
+# Preview iframe labels
+content_preview: תצוגה מקדימה של התוכן
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: הצגת אפשרויות התוכן ב{$locale}
+content_options_x_locale: אפשרויות התוכן ב{$locale}
+show_content_options: הצגת אפשרויות התוכן
+content_options: אפשרויות התוכן
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: שדה "{$field}"
+
+# Field options menu
+show_field_options: הצגת אפשרויות השדה
+field_options: אפשרויות השדה
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'סוג שדה שאינו נתמך: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: הפעלת {$locale}
+reenable_x_locale: הפעלה מחדש של {$locale}
+disable_x_locale: השבתת {$locale}
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: התוכן ב{$locale} הושבת.
+locale_x_now_disabled: התוכן ב{$locale} מושבת כעת. הוא יימחק בשמירת הפריט.
+
+# Repository and site links
+view_in_repository: צפייה במאגר
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: צפייה ב-{$service}
+view_on_live_site: צפייה באתר החי
+
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: צפייה בתצוגה מקדימה
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: התצוגה המקדימה עדיין נבנית.
+  # Shown when the build failed, so no preview is available
+  failed: בניית התצוגה המקדימה נכשלה.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: מחפש תצוגה מקדימה…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: בדיקה שוב
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: ממתין לתצוגה מקדימה
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: בבנייה…
+    failed: הבנייה נכשלה
+
+# Content copying from other locales
+copy_from: העתקה מ…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: העתקה מ{$locale}
+
+# Translation features
+translation_options: אפשרויות תרגום
+translate: תרגום
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ תרגום שדה }}
+    *   {{ תרגום שדות }}
+translate_from: תרגום מ…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: תרגום מ{$locale}
+
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
+revert_changes: ביטול השינויים
+revert_all_changes: ביטול כל השינויים
+restore_default: שחזור ברירת המחדל
+clear_all: ניקוי הכול
+confirm_reverting_changes: לבטל את כל השינויים שבוצעו בפריט הזה?
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: לבטל את כל השינויים שבוצעו בתוכן ב{$locale}?
+confirm_restoring_defaults: לשחזר את ערכי ברירת המחדל של כל השדות בפריט הזה? השינויים שלכם יאבדו.
+confirm_restoring_defaults_x_locale: לשחזר את ערכי ברירת המחדל של כל השדות בתוכן ב{$locale}? השינויים שלכם יאבדו.
+confirm_clearing_fields: לנקות את כל השדות בפריט הזה? השינויים שלכם יאבדו.
+confirm_clearing_fields_x_locale: לנקות את כל השדות בתוכן ב{$locale}? השינויים שלכם יאבדו.
+
+# Slug editing
+edit_slug: עריכת המזהה בכתובת
+edit_slug_error:
+  empty: המזהה בכתובת אינו יכול להיות ריק.
+  invalid: המזהה בכתובת אינו יכול להכיל תווים מיוחדים, ובכללם לוכסנים ורווחים.
+  duplicate: המזהה הזה כבר משמש פריט אחר.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: תיקיית האב
+new_parent_folder: תיקייה חדשה
+new_parent_folder_create: יצירה
+new_parent_folder_name: שם התיקייה
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: התיקייה החדשה תיווצר בתוך "{$folder}".
+new_parent_folder_error:
+  empty: שם התיקייה אינו יכול להיות ריק.
+  invalid: שם התיקייה אינו יכול להכיל לוכסנים או להתחיל בנקודה, וחייב לכלול אותיות או ספרות.
+  duplicate: תיקייה בשם הזה כבר קיימת כאן.
+edit_path_error:
+  invalid: הנתיב אינו יכול להכיל מקטעים יחסיים כגון "..".
+  recursive: לא ניתן להעביר את הפריט לאחת מתיקיות המשנה שלו עצמו.
+  duplicate: הנתיב הזה כבר משמש פריט אחר.
+
+# Required field indicator
+required: חובה
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: אין מה לתרגם.
+    started: מתרגם…
+    error: התרגום נכשל.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ לא תורגמו שדות מ{$source}. }}
+        one {{ שדה אחד תורגם מ{$source}. }}
+        two {{ שני שדות תורגמו מ{$source}. }}
+        *   {{ {$count} שדות תורגמו מ{$source}. }}
+  copy:
+    none: אין מה להעתיק.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ לא הועתקו שדות מ{$source}. }}
+        one {{ שדה אחד הועתק מ{$source}. }}
+        two {{ שני שדות הועתקו מ{$source}. }}
+        *   {{ {$count} שדות הועתקו מ{$source}. }}
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: יש למלא את השדה הזה.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: התאריך והשעה חייבים להיות {$min} או אחרי כן.
+    date: התאריך חייב להיות {$min} או אחרי כן.
+    time: השעה חייבת להיות {$min} או אחרי כן.
+    number: הערך חייב להיות גדול מ-{$min} או שווה לו.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one {{ יש לבחור אפשרות אחת לפחות. }}
+        two {{ יש לבחור שתי אפשרויות לפחות. }}
+        *   {{ יש לבחור {$min} אפשרויות לפחות. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one {{ יש להוסיף פריט אחד לפחות. }}
+        two {{ יש להוסיף שני פריטים לפחות. }}
+        *   {{ יש להוסיף {$min} פריטים לפחות. }}
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: התאריך והשעה חייבים להיות {$max} או לפני כן.
+    date: התאריך חייב להיות {$max} או לפני כן.
+    time: השעה חייבת להיות {$max} או לפני כן.
+    number: הערך חייב להיות קטן מ-{$max} או שווה לו.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one {{ אי אפשר לבחור יותר מאפשרות אחת. }}
+        two {{ אי אפשר לבחור יותר משתי אפשרויות. }}
+        *   {{ אי אפשר לבחור יותר מ-{$max} אפשרויות. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one {{ אי אפשר להוסיף יותר מפריט אחד. }}
+        two {{ אי אפשר להוסיף יותר משני פריטים. }}
+        *   {{ אי אפשר להוסיף יותר מ-{$max} פריטים. }}
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    יש להזין לפחות {$min} תווים.
+  too_long: |
+    אפשר להזין עד {$max} תווים.
+  # Type validation errors
+  type_mismatch:
+    number: הזינו מספר.
+    email: הזינו כתובת דוא״ל תקינה.
+    url: הזינו כתובת אינטרנט תקינה.
+
+  # Value used for the same field in another entry of the collection
+  value_not_unique: הערך הזה כבר משמש פריט אחר.
+
+  # Custom field validation error
+  invalid_value: ערך לא תקין.
+  unexpected_error: אירעה שגיאה בלתי צפויה.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: לוחות הצד
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: בדיקת תקינות
+    placeholder: תוצאות בדיקת התקינות יוצגו כאן.
+    no_errors_found: לא נמצאו שגיאות.
+    # Button in the panel header that validates the entry on demand
+    validate: בדיקה
+
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: מזהה בכתובת
+    generated_on_save: המזהה נוצר מתוכן הפריט בעת השמירה. כל תאריך ושעה שבו יהיו אלה של השמירה.
+    unavailable: לפריט הזה אין מזהה בכתובת.
+
+  # History panel: shows entry commit history
+  history:
+    title: היסטוריה
+    fetch_failed: טעינת ההיסטוריה נכשלה.
+    no_history: לא נמצאה היסטוריה.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: הפניות נכנסות
+    no_entries: אף פריט אינו מפנה לפריט הזה.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: שגיאה
+    description: אירעה שגיאה בשמירת הפריט. נסו שוב מאוחר יותר.
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: הפריט שונה בידי מישהו אחר
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} שינה את הפריט הזה ב-{$date}, אחרי שפתחתם אותו.'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: הפריט הזה שונה במאגר אחרי שפתחתם אותו.
+  deleted: הפריט הזה נמחק מהמאגר אחרי שפתחתם אותו.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: אם תשמרו עכשיו, השינויים שלהם יאבדו.
+  # Follows `deleted`
+  recreate_warning: אם תשמרו עכשיו, הפריט ייווצר מחדש.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: מאחר שהפריט שמור באותו קובץ עם פריטים אחרים, לא ניתן לשמור אותו על גבי השינוי. בטלו את העריכה, פתחו את הפריט מחדש מהרשימה ובצעו את השינויים שוב.
+  # OK button label
+  save_anyway: שמירה בכל זאת
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: המאגר עודכן בידי מישהו אחר במהלך השמירה. נסו שוב.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: פריט השמור באותו קובץ שונה בידי מישהו אחר. נסו שוב.
+  # {$path} is the file path
+  array_file_invalid: לא ניתן לעדכן את הקובץ {$path}, מפני שאינו מכיל רשימת פריטים תקינה.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: טעינת הפריט מחדש
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: לטעון את הפריט מחדש? השינויים שלא נשמרו יאבדו.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: אלה פרטי קובץ המדיה "{$name}".
+
+# Asset editor container aria-label
+asset_editor: עורך המדיה
+
+# Buttons to move between the listed assets in the asset editor
+previous_asset: קובץ המדיה הקודם
+next_asset: קובץ המדיה הבא
+
+# Preview unavailable message
+preview_unavailable: אין תצוגה מקדימה.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ כתובת ציבורית }}
+    *   {{ כתובות ציבוריות }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ נתיב הקובץ }}
+    *   {{ נתיבי הקבצים }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ מזהה הקובץ }}
+    *   {{ מזהי הקבצים }}
+file_data: נתוני הקובץ
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: פרטי קובץ המדיה
+select_asset_show_info: בחרו קובץ מדיה כדי לראות את פרטיו.
+
+kind: סוג
+size: גודל
+dimensions: מידות
+duration: משך
+# Short heading for a list of entries using the selected asset
+used_in: בשימוש ב
+created_date: תאריך יצירה
+location: מיקום
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: מפה המציגה קו רוחב {$latitude}, קו אורך {$longitude}
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: הסרת הפריט
+move_up: העברה למעלה
+move_down: העברה למטה
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: שינוי מיקום הפריט
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: ערך הפריט
+# aria-label for each item of a List field, giving its position in the list
+# {$position} is the 1-based position of the item, {$count} is the number of items
+list_item_position: פריט {$position} מתוך {$count}
+
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: הוספת {$name}
+
+# List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: אפשרויות פריט הרשימה
+add_item_above: הוספת פריט מעל
+add_item_below: הוספת פריט מתחת
+
+# Variable-type list selector
+select_list_type: בחירת סוג הפריט
+
+# Variable-type mismatch
+unknown_variable_type: לא ניתן להציג את הפריט הזה בגלל סוג לא מוכר. בדקו את מסוף הדפדפן לפרטים.
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: אטימות
+
+# Select field: empty option placeholder
+unselected_option: (ללא)
+
+# Relation field: creating a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: ה{$name} החדש יישמר יחד עם הפריט שאתם עורכים.
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: לא ניתן היה להוסיף את ה{$name}. בדקו את מסוף הדפדפן לפרטים.
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: בחירת קובץ
+    image: בחירת תמונה
+    folder: בחירת תיקייה
+
+  # Search input labels
+  search_for_file: חיפוש קבצים
+  search_for_image: חיפוש תמונות
+
+  # Locations panel aria-label
+  locations: מיקומים
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'התיקייה שנבחרה: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      one {{ תיקייה אחת נבחרה }}
+      two {{ שתי תיקיות נבחרו }}
+      *   {{ {$count} תיקיות נבחרו }}
+  no_subfolders: אין תיקיות משנה בתיקייה הזו.
+
+  # Asset folder options
+  folder:
+    field: קובצי המדיה של השדה
+    entry: קובצי המדיה של הפריט
+    file: קובצי המדיה של הקובץ
+    collection: קובצי המדיה של האוסף
+    global: קובצי מדיה כלליים
+
+  # Error messages
+  error:
+    invalid_key: מפתח ה-API שלכם אינו תקין או שתוקפו פג. בדקו אותו ונסו שוב.
+    search_fetch_failed: אירעה שגיאה בחיפוש קובצי מדיה. נסו שוב מאוחר יותר.
+    image_fetch_failed: אירעה שגיאה בהורדת קובץ המדיה שנבחר. נסו שוב מאוחר יותר.
+
+  # Stock photo panels
+  available_images: תמונות זמינות
+  available_files: קבצים זמינים
+
+  # URL entry option
+  enter_url: הזנת כתובת
+  enter_file_url: 'הזינו את כתובת הקובץ:'
+  enter_image_url: 'הזינו את כתובת התמונה:'
+
+  # Large file warning dialog
+  large_file:
+    title: קובץ גדול
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: קובץ לא תקין
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: לא ניתן להעלות את הקבצים
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: קרדיט לתמונה
+    description: 'השתמשו בקרדיט הבא אם אפשר:'
+
+  # Unsaved asset badge
+  unsaved: לא נשמר
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ לא הוזנו תווים. מינימום: {$min}. מקסימום: {$max}. }}
+      one {{ הוזן תו אחד. מינימום: {$min}. מקסימום: {$max}. }}
+      two {{ הוזנו שני תווים. מינימום: {$min}. מקסימום: {$max}. }}
+      *   {{ הוזנו {$count} תווים. מינימום: {$min}. מקסימום: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ לא הוזנו תווים. מינימום: {$min}. }}
+      one {{ הוזן תו אחד. מינימום: {$min}. }}
+      two {{ הוזנו שני תווים. מינימום: {$min}. }}
+      *   {{ הוזנו {$count} תווים. מינימום: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ לא הוזנו תווים. מקסימום: {$max}. }}
+      one {{ הוזן תו אחד. מקסימום: {$max}. }}
+      two {{ הוזנו שני תווים. מקסימום: {$max}. }}
+      *   {{ הוזנו {$count} תווים. מקסימום: {$max}. }}
+# YouTube video player iframe title
+youtube_video_player: נגן הווידאו של YouTube
+
+# Date/time field: quick action buttons
+today: היום
+now: עכשיו
+
+# Rich-text editor: component field labels
+editor_components:
+  image: תמונה
+  src: מקור
+  alt: טקסט חלופי
+  title: כותרת
+  link: קישור
+
+# Key-Value field: column headers and validation
+key_value:
+  key: מפתח
+  value: ערך
+  action: פעולה
+  empty_key: חובה להזין מפתח.
+  duplicate_key: המפתח חייב להיות ייחודי.
+
+# Map field: location search and geolocation
+find_place: חיפוש מקום
+use_your_location: שימוש במיקום שלי
+
+# Geolocation error dialog
+geolocation_error_title: שגיאת איכון
+geolocation_error_body: אירעה שגיאה בעת איתור המיקום שלכם.
+geolocation_unsupported: ממשק האיכון אינו נתמך בדפדפן הזה.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': כן
+  'false': לא
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: השירות אינו מוגדר כראוי.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: מפתח API
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: הזינו את ה{$key} שלכם עבור {$service}.
+      requested: מאמת…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: ה{$key} שהוזן אינו תקין. בדקו אותו ונסו שוב.
+    password:
+      # {$service} is the cloud service name
+      initial: הזינו את הסיסמה שלכם עבור {$service}.
+      requested: מתחבר…
+      error: שם המשתמש או הסיסמה שגויים. בדקו אותם ונסו שוב.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: ספריית המדיה של Cloudinary
+    activate:
+      button_label: הפעלת Cloudinary
+      description: לאחר ההתחברות, לחצו שוב על כפתור הכניסה כדי להמשיך.
+    auth_key_label: סוד API
+    open_library: פתיחת Cloudinary
+
+  uploadcare:
+    auth_key_label: מפתח סוד API
+
+  aws_s3:
+    auth_key_label: מפתח גישה סודי
+
+  bunny_storage:
+    auth_key_label: סיסמת אזור האחסון
+
+  cloudflare_r2:
+    auth_key_label: מפתח גישה סודי
+
+  digitalocean_spaces:
+    auth_key_label: מפתח גישה סודי
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ יש שגיאה בתצורת המערכת. פתרו את הבעיה ונסו שוב. }}
+      *   {{ יש שגיאות בתצורת המערכת. פתרו את הבעיות ונסו שוב. }}
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: אוסף {$collection}
+    file: קובץ {$file}
+    component: רכיב {$component}
+    # Don’t localize `{$field}`
+    field: שדה `{$field}`
+
+  # Configuration error messages
+  error:
+    no_secure_context: Sveltia CMS פועלת רק בכתובות HTTPS או localhost.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ כתובת קובץ התצורה חייבת להשתמש בפרוטוקול HTTPS או בכתובת localhost. }}
+        *   {{ כתובות קובצי התצורה חייבות להשתמש בפרוטוקול HTTPS או בכתובות localhost. }}
+    fetch_failed: לא ניתן היה לאחזר את קובץ התצורה.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: תגובת ה-HTTP חזרה עם קוד {$status}.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'לא ניתן היה לאחזר את קובץ התצורה. כדי למנוע את טעינת הקובץ `config.yml`, הוסיפו <a>`load_config_file: false`</a> לאובייקט התצורה המועבר ל־`CMS.init()`.'
+    parse_failed: לא ניתן היה לפענח את קובץ התצורה.
+    parse_failed_invalid_object: קובץ התצורה אינו אובייקט JavaScript תקין.
+    parse_failed_unsupported_type: קובץ התצורה אינו מסוג נתמך. נתמכים YAML, TOML ו-JSON בלבד.
+    no_collection: לא הוגדרו אוספים.
+    # Don’t localize `hide`
+    no_visible_collection: לפחות אוסף אחד חייב להיות גלוי. בדקו את האפשרות `hide`.
+    missing_backend: לא הוגדר שירות Git.
+    missing_backend_name: לא הוגדר שם שירות ה-Git.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: שירות {$name} <a>אינו נתמך</a> ב-Sveltia CMS.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: שירות {$name} המיושן <a>אינו נתמך</a> ב-Sveltia CMS.
+    unsupported_custom_backend: שירותי Git מותאמים אישית <a>אינם נתמכים</a> ב-Sveltia CMS.
+    unsupported_backend_suggestion: השתמשו באחד <a>השירותים הנתמכים</a> במקום זאת.
+    missing_repository: לא הוגדר מאגר.
+    invalid_repository: המאגר שהוגדר אינו תקין. עליו להיות בתבנית "owner/repo".
+    invalid_root_dir: תיקיית השורש אינה תקינה. עליה להיות נתיב בתוך המאגר, בלי "..".
+    invalid_root_dir_branch: לא ניתן להשתמש בתיקיית השורש בשמות הענפים של מצבי הפרסום `editorial_workflow` ו־`preview`. אף חלק בנתיב שלה אינו יכול להתחיל בנקודה, להסתיים ב־".lock" או להכיל רווח או תו מיוחד כגון נקודתיים או כוכבית.
+    path_outside_root_dir: הנתיב "{$path}" מוביל אל מחוץ לתיקיית השורש, שם המערכת אינה יכולה להציג קבצים.
+    oauth_implicit_flow: שיטת האימות שהוגדרה (implicit flow) אינה נתמכת ב-Sveltia CMS. השתמשו ב<a>שיטת אימות</a> אחרת במקום זאת.
+    github_pkce_unsupported: הרשאת PKCE אינה נתמכת עדיין בשל מגבלות של GitHub. השתמשו ב<a>שיטת אימות</a> אחרת במקום זאת.
+    oauth_no_app_id: לא הוגדר מזהה יישום OAuth.
+    # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
+    open_authoring_no_workflow: האפשרות `open_authoring` מחייבת את מצב הפרסום `editorial_workflow` או `preview`. ראו <a>תיעוד</a> לפרטים.
+    # Don’t localize `auth_methods`
+    no_auth_methods: האפשרות `auth_methods` חייבת לכלול שיטה אחת לפחות.
+    missing_media_folder: לא הוגדרה תיקיית מדיה.
+    public_folder_relative_path: התיקייה הציבורית שהוגדרה אינה תקינה. עליה להיות נתיב מוחלט המתחיל ב־"/".
+    public_folder_absolute_url: כתובת מוחלטת עבור אפשרות התיקייה הציבורית אינה נתמכת ב-Sveltia CMS.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    unsupported_folder_template_tag: האפשרות `{$option}` מכילה את תג התבנית `{$tag}`, שאינו נתמך שם. ניתן להשתמש רק בתגי תבנית של מזהה בכתובת, כגון `\{\{slug\}\}` ו־`\{\{year\}\}`, ובתגים `\{\{dirname\}\}`, `\{\{filename\}\}`, `\{\{extension\}\}`, `\{\{media_folder\}\}` ו־`\{\{public_folder\}\}`.
+    # {$option} is `media_folder` or `public_folder` and {$tag} is the template tag from the configuration; Don’t localize the template tags. The curly brackets are escaped with backslashes for MessageFormat 2
+    global_folder_template_tag: האפשרות `{$option}` מכילה את תג התבנית `{$tag}`, שניתן להשתמש בו רק באפשרות של אוסף, של קובץ באוסף או של שדה, שבהם יש פריט למלא ממנו.
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: האפשרות `sanitize_replacement` מוגדרת כ־`{$replacement}`, אך היא מכילה תו שלא ניתן להשתמש בו במזהה בכתובת, ולכן אינה יכולה לשמש כתחליף.
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: האפשרות `{$option}` מוגדרת כ־`{$url}`, אך עליה להיות כתובת מוחלטת המתחילה ב־`https://` או ב־`http://`.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: האפשרות `stages` של `publish_mode` חייבת להתחיל ב־`draft` ולמנות את השלבים בסדר `draft`, `pending_review`, `pending_publish`, בלי לחזור על אף אחד מהם.
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: האפשרות `i18n.locales` חייבת למנות שפה אחת לפחות.
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: האפשרות `default_locale` מוגדרת כ־`{$locale}`, אך היא אינה אחת מ־`locales`.
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: האפשרות `initial_locales` מכילה את `{$locale}`, אך היא אינה אחת מ־`locales`.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'האפשרות `i18n` מוגדרת ברמה העליונה, אך לאף אחד מהאוספים או מהקבצים הבודדים אין את האפשרות `i18n`, ולכן אין תוכן שניתן לתרגם. הוסיפו `i18n: true` לאוספים ולקבצים הבודדים שברצונכם לתרגם.'
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: האפשרות `transformations` מכילה מפתח `{$key}` שאינו נתמך. עליו להיות `raster_image`, `svg` או פורמט תמונה רסטרית נתמך.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: האפשרות `quality` של ההמרה `{$key}` אינה תקינה. עליה להיות מספר שלם בין 0 ל-100.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: האפשרות `{$prop}` של ההמרה `{$key}` אינה תקינה. עליה להיות מספר שלם חיובי.
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: לאוסף המדיה {$count} חייבת להיות אפשרות `name` המוגדרת כמחרוזת שאינה ריקה.
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: שם אוסף המדיה `{$name}` אינו תקין. אסור שיכיל תווים מיוחדים.
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: שמות אוספי מדיה חייבים להיות ייחודיים, אך `{$name}` מופיע יותר מפעם אחת.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: לאוסף חייבת להיות מוגדרת אחת מהאפשרויות `folder`, `file`, `files` או `divider`.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: לאוסף אסור שתהיה יותר מאחת מהאפשרויות `folder`, `file`, `files` ו־`divider`.
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: הסיומת `{$extension}` אינה תואמת לפורמט `{$format}`.
+    # {$name} is the field name from the configuration and {$widget} is its field type
+    front_matter_body_field_not_text: השדה `{$name}` נשמר כגוף המסמך מתחת ל-front matter, שיכול להכיל טקסט בלבד — לא מספר, ערך בוליאני, רשימה או אובייקט כפי ששדה `{$widget}` מכיל. השתמשו בסוג שדה שמכיל טקסט, או שנו את שם השדה.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: האפשרות `file` בערך `{$file}` אינה תקינה. עליה להיות נתיב לקובץ JSON, בלי מציין המיקום `\{\{locale\}\}`.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: האפשרות `{$prop}` אינה נתמכת באוסף שיש בו האפשרות `file`.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: תהליך העריכה ותהליך התצוגה המקדימה, לרבות Open Authoring, אינם נתמכים באוסף שיש בו האפשרות `file`. הגדירו את האפשרות `publish_mode` של האוסף כ־`simple`.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: האפשרות `{$prop}` אינה יכולה להכיל את התג `\{\{slug\}\}` באוסף שיש בו האפשרות `file`, מפני שהמזהה של פריט הוא מיקומו, והוא משתנה כשמסדרים את הפריטים מחדש או מוחקים אותם. השתמשו בשדה בעל ערך ייחודי במקום זאת.
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: תבנית המזהה `{$slug}` אינה תקינה מפני שאינה יכולה להכיל לוכסנים. כדי לארגן פריטים בתיקיות משנה, השתמשו באפשרות `path` במקום ב־`slug`.
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: האפשרות `identifier_field` מפנה אל `{$name}`, אך שדה כזה אינו מוגדר באוסף.
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: האפשרות `filter` מפנה אל `{$name}`, אך שדה כזה אינו מוגדר באוסף.
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: לאפשרות `filter` חייבת להיות האפשרות `value` או `pattern` שמולה ייבדקו הפריטים.
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: האפשרות `{$option}` מפנה אל `{$name}`, אך שדה כזה אינו מוגדר.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: האפשרות `thumbnail` מפנה אל `{$name}`, אך עליו להיות שדה תמונה או קובץ, ולא שדה `{$widget}`.
+    # Don’t localize `inline` or `multiple`
+    invalid_inline_component_fields: מצב `inline` מחייב שדה בודד מסוג בוליאני, צבע, תאריך ושעה, מספר, קשר, בחירה או מחרוזת. בשדה קשר או בחירה אסור שהאפשרות `multiple` תהיה מופעלת.
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: האפשרות `{$option}` מכילה ביטוי רגולרי לא תקין `{$pattern}`, והוא מתעלם.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: האפשרות `reorder` מפנה לקבוצת תצוגה בשם `{$name}`, אך קבוצה כזו אינה מוגדרת באפשרות `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
+    invalid_bulk_edit_field: רשימת `fields` של האפשרות `bulk_edit` מפנה לשדה בשם `{$name}`, אך שדה כזה ברמה העליונה אינו מוגדר באוסף.
+    # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
+    unsupported_bulk_edit_field: לא ניתן לערוך בצורה מרוכזת את השדה `{$name}` שברשימת `fields` של האפשרות `bulk_edit`. נתמך רק שדה מסוג בוליאני, צבע, תאריך ושעה, מספר, קשר, בחירה או מחרוזת, שאינו לקריאה בלבד, שהאפשרות `multiple` אינה מופעלת בו, ושאינו נקבע אוטומטית בשמירה.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: האפשרות `sortable_fields` מפנה לשדה בשם `{$name}`, אך שדה כזה אינו מוגדר באוסף.
+    # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
+    invalid_table_column_field: האפשרות `{$option}` מפנה לשדה בשם `{$name}`, אך שדה כזה אינו מוגדר באוסף.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: האפשרות `view_groups` מפנה לשדה בשם `{$name}`, אך שדה כזה אינו מוגדר באוסף.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: האפשרות `view_filters` מפנה לשדה בשם `{$name}`, אך שדה כזה אינו מוגדר באוסף.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: לקבוצת התצוגה {$count} חייבת להיות אפשרות `name` המוגדרת כמחרוזת שאינה ריקה.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: שם קבוצת התצוגה `{$name}` אינו תקין. אסור שיכיל תווים מיוחדים.
+    duplicate_view_group_name: שמות קבוצות תצוגה חייבים להיות ייחודיים, אך `{$name}` מופיע יותר מפעם אחת.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: למסנן התצוגה {$count} חייבת להיות אפשרות `name` המוגדרת כמחרוזת שאינה ריקה.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: למסנן התצוגה {$count} חייבת להיות האפשרות `pattern` או אפשרות השוואה כגון `eq` או `gte` שמולה ייבדקו הפריטים.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: שם מסנן התצוגה `{$name}` אינו תקין. אסור שיכיל תווים מיוחדים.
+    duplicate_view_filter_name: שמות מסנני תצוגה חייבים להיות ייחודיים, אך `{$name}` מופיע יותר מפעם אחת.
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: האפשרות `default` של `view_groups` מוגדרת כ־`{$name}`, אך אין קבוצת תצוגה בשם הזה.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: האפשרות `default` של `view_filters` מוגדרת כ־`{$name}`, אך אין מסנן תצוגה בשם הזה.
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: לאוסף {$count} חייבת להיות אפשרות `name` המוגדרת כמחרוזת שאינה ריקה.
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: שם האוסף `{$name}` אינו תקין. אסור שיכיל תווים מיוחדים.
+    duplicate_collection_name: שמות אוספים חייבים להיות ייחודיים, אך `{$name}` מופיע יותר מפעם אחת.
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: לקובץ באוסף {$count} חייבת להיות אפשרות `name` המוגדרת כמחרוזת שאינה ריקה.
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: שם הקובץ באוסף `{$name}` אינו תקין. אסור שיכיל תווים מיוחדים.
+    duplicate_collection_file_name: שמות קבצים באוסף חייבים להיות ייחודיים, אך `{$name}` מופיע יותר מפעם אחת.
+    # Don’t localize `fields`
+    collection_no_fields: לאוסף חייבת להיות אפשרות `fields` מוגדרת עם שדה אחד לפחות.
+    # Don’t localize `fields`
+    collection_file_no_fields: לקובץ באוסף חייבת להיות אפשרות `fields` מוגדרת עם שדה אחד לפחות.
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: לאוסף חייבת להיות אפשרות `i18n` מוגדרת אם משתמשים במציין המיקום `locale` בנתיב `folder`.
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: נתיב ה־`folder` בערך `{$folder}` אינו תקין. מציין המיקום `locale` חייב לשמש פעם אחת בלבד כשם תיקייה שלם, כמו `content/\{\{locale\}\}/posts`.
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: לקובץ באוסף חייבת להיות אפשרות `i18n` מוגדרת אם משתמשים במציין המיקום `locale` בנתיב `file`.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'לאוסף יש את האפשרות `i18n`, אך לאף אחד מהשדות שלו אין את האפשרות `i18n`, ולכן אין שדה שניתן לתרגם. הוסיפו `i18n: true` או `i18n: duplicate` לשדות שברצונכם לתרגם.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'לאוסף יש את האפשרות `i18n`, אך לאף אחד מהקבצים שלו אין את האפשרות `i18n`, ולכן אין קובץ שניתן לתרגם. הוסיפו `i18n: true` לקבצים שברצונכם לתרגם.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'לקובץ באוסף יש את האפשרות `i18n`, אך לאף אחד מהשדות שלו אין את האפשרות `i18n`, ולכן אין שדה שניתן לתרגם. הוסיפו `i18n: true` או `i18n: duplicate` לשדות שברצונכם לתרגם.'
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: לשדה {$count} חייבת להיות אפשרות `name` המוגדרת כמחרוזת שאינה ריקה.
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: שם השדה `{$name}` אינו תקין. אסור שיכיל תווים מיוחדים. אם ברצונכם לקנן שדות, <a>השתמשו בשדות Object במקום בסימון נקודה</a>.
+    duplicate_field_name: שמות שדות חייבים להיות ייחודיים, אך `{$name}` מופיע יותר מפעם אחת.
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: לסוג המשתנה {$count} חייבת להיות אפשרות `name` המוגדרת כמחרוזת שאינה ריקה.
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: שם סוג המשתנה `{$name}` אינו תקין. אסור שיכיל תווים מיוחדים.
+    duplicate_variable_type: שמות סוגי משתנים חייבים להיות ייחודיים, אך `{$name}` מופיע יותר מפעם אחת.
+    date_field_type: 'סוג השדה Date המיושן אינו נתמך ב-Sveltia CMS. השתמשו בסוג השדה DateTime עם האפשרות `type: date` במקום זאת.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: האפשרות `default` של שדה מוסתר משתמשת במציין המיקום `\{\{locale\}\}`, אך i18n אינו מופעל באוסף, ולכן אין לתוכן שפה למלא בה.
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'אזור זמן לא תקין: {$timeZone}. עליו להיות מזהה אזור זמן תקין של IANA, כגון `America/New_York` או `Asia/Tokyo`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: האפשרות המיושנת `{$prop}` אינה נתמכת ב-Sveltia CMS. השתמשו באפשרות `{$newProp}` במקום זאת.
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: האפשרות `allow_multiple` אינה נתמכת ב-Sveltia CMS. השתמשו באפשרות `multiple` במקום זאת, שברירת המחדל שלה היא `false`.
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: לשדה List אסור שיהיו האפשרויות `field`, `fields` ו־`types` יחד.
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: סוג המשתנה של שדה List אינו תקין. האפשרות `widget` מוגדרת כ־`{$widget}` אך עליה להיות `object`.
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: לשדה Object אסור שיהיו האפשרויות `fields` ו־`types` יחד.
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: האפשרות `{$min}` אינה יכולה להיות גדולה מהאפשרות `{$max}`.
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: האפשרות `step` מוגדרת כ־`{$step}`, אך עליה להיות גדולה מאפס, או `-1` כדי לכבות את הקפיצות.
+    # Don’t localize `options`
+    select_field_no_options: לשדה Select חייב להיות פריט אחד לפחות באפשרות `options`.
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: ערכי `options` של שדה Select חייבים להיות ייחודיים, אך `{$value}` מופיע יותר מפעם אחת.
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: האפשרות `default` של שדה Select מוגדרת כ־`{$value}`, אך היא אינה אחת מ־`options`.
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: לאפשרות `fields` או `types` של שדה List חייב להיות פריט אחד לפחות. השמיטו את האפשרות כדי לקבל רשימה של ערכים פשוטים.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: האפשרות `default` של שדה List מכילה אובייקט, אך כל פריט חייב להיות ערך פשוט מפני שלשדה אין `fields` או `types`.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: האפשרות `default` של שדה List מכילה את `{$value}`, אך כל פריט חייב להיות אובייקט מפני שלשדה יש `fields` או `types`.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: האפשרות `default` של שדה List מכילה פריט עם המאפיין `{$key}`, אך אין תת־שדה בשם הזה.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: האפשרות `default` של שדה List מכילה פריט ללא המאפיין `{$typeKey}`, שמזהה אחד מ־`types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: האפשרות `default` של שדה List מכילה פריט שהמאפיין `{$typeKey}` שלו הוא `{$value}`, אך הוא אינו אחד מ־`types`.
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: האפשרות `default` חייבת להיות מערך מפני שהאפשרות `multiple` היא `true`.
+    invalid_default_single: האפשרות `default` חייבת להיות ערך יחיד ולא מערך, מפני שהאפשרות `multiple` אינה `true`.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: לאפשרות `default` של שדה Object יש את המאפיין `{$key}`, אך אין תת־שדה בשם הזה.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: לאפשרות `default` של שדה Object אין את המאפיין `{$typeKey}`, שמזהה אחד מ־`types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: המאפיין `{$typeKey}` של האפשרות `default` בשדה Object הוא `{$value}`, אך הוא אינו אחד מ־`types`.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: האפשרות `default` של שדה Code חייבת להיות מחרוזת מפני שהאפשרות `output_code_only` היא `true`.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: לאפשרות `default` של שדה Code יש את המאפיין `{$key}`, אך האפשרות `keys` מתירה רק את `{$code}` ואת `{$lang}`.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: האפשרות `default` של שדה Number מוגדרת כ־`{$value}`, אך עליה להיות מספר שלם מפני שהאפשרות `value_type` היא `{$valueType}`.
+    number_field_default_not_number: האפשרות `default` של שדה Number מוגדרת כ־`{$value}`, אך עליה להיות מספר מפני שהאפשרות `value_type` היא `{$valueType}`.
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: לאפשרות `fields` או `types` של שדה Object חייב להיות פריט אחד לפחות.
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: האוסף `{$collection}` שאליו מפנים אינו תקין או שאינו מוגדר.
+    relation_field_invalid_collection_file: הקובץ `{$file}` שאליו מפנים אינו תקין או שאינו מוגדר.
+    # Don’t localize `file`
+    relation_field_missing_file_name: חובה להגדיר את האפשרות `file` עבור קשר לאוסף קבצים.
+    relation_field_invalid_value_field: שדה הערך `{$field}` שאליו מפנים אינו תקין או שאינו מוגדר.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: הקשר לאוסף `{$collection}` אינו יכול לשמור את הערך `\{\{slug\}\}`, מפני שהמזהה של פריט באוסף שיש בו האפשרות `file` הוא מיקומו, והוא משתנה כשמסדרים את הפריטים מחדש או מוחקים אותם. הגדירו את האפשרות `value_field` לשדה בעל ערך ייחודי במקום זאת.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: לאוסף שיש בו האפשרות `file` אינו יכול להיות קשר לאוסף `{$collection}`, שמשתמש בתהליך העריכה או בתהליך התצוגה המקדימה, מפני שלא ניתן לעדכן בקובץ את ההפניות לפריט ששמו שונה או שנמחק שם.
+    relation_field_invalid_display_field: שדה התצוגה `{$field}` שאליו מפנים אינו תקין או שאינו מוגדר.
+    relation_field_invalid_search_field: שדה החיפוש `{$field}` שאליו מפנים אינו תקין או שאינו מוגדר.
+    relation_field_invalid_filter_field: שדה הסינון `{$field}` שאליו מפנים אינו תקין או שאינו מוגדר.
+    unexpected: שגיאה בלתי צפויה
+
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: האפשרות `{$option}` חייבת להיות {$type}.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'האפשרות `{$option}` חייבת להיות אחד מהערכים האלה: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: האפשרות `{$option}` חייבת להיות `{$value}`.
+    schema_invalid_empty_value: האפשרות `{$option}` חייבת להיות מחרוזת ריקה.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: האפשרות `{$option}` חייבת להיות מערך של {$count} פריטים.
+    schema_invalid_value: לאפשרות `{$option}` יש ערך לא תקין.
+    schema_missing_option: האפשרות `{$option}` נדרשת.
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'אחת מהאפשרויות האלה נדרשת: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: מחרוזת
+      number: מספר
+      integer: מספר שלם
+      boolean: ערך בוליאני
+      array: מערך
+      object: אובייקט
+      'null': ריק
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: לא הוגדר מזהה יישום OAuth. המשתמשים יידרשו לספק אסימון גישה כדי להתחבר.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: האפשרות `{$prop}` אינה נתמכת ב-Sveltia CMS. המערכת תתעלם ממנה.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: האפשרות `stages` של `publish_mode` חלה רק על מצב הפרסום `editorial_workflow`, ולכן המערכת מתעלמת ממנה עם `{$type}`.
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: גם `picker_utc` וגם אפשרויות אזור הזמן החדשות (`input_timezone` או `output_utc`) מוגדרות. לאפשרויות החדשות יש עדיפות. שקלו להסיר את `picker_utc` מהתצורה שלכם.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: האפשרות `preview_path` משתמשת בתגי תאריך ושעה, אך לאוסף אין שדה DateTime לקרוא מהם, ולכן קישור התצוגה המקדימה לא יוצג.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: האפשרות `preview_path_date_field` מפנה לשדה בשם `{$name}`, אך לא מוגדר שדה DateTime בשם הזה, ולכן קישור התצוגה המקדימה לא יוצג.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: האפשרות `preview_path` מפנה אל `{$name}`, אך שדה כזה אינו מוגדר באוסף, ולכן קישור התצוגה המקדימה לא יוצג.
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: לאוסף אין שדה `{$name}` שישמש לשמות של פריטים חדשים, ולכן כל פריט חדש מקבל מזהה אקראי. הוסיפו שדה `{$name}`, או הגדירו את האפשרות `identifier_field` או `slug`.
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: לאפשרות `i18n` של `slug` אין השפעה, מפני שהאוסף אינו משתמש במבנה ה-i18n‏ `multiple_files`, `multiple_folders` או `multiple_root_folders`, שבהם לכל שפה יש קובץ משלה.
+    # Don’t localize `slug`, `template` and `auto_increment`
+    slug_template_ignored: המערכת מתעלמת מהאפשרות `template` של `slug`, מפני שהאפשרות `auto_increment` ממספרת את המזהים במקום זאת.
+    # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
+    # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
+    # are escaped with backslashes for MessageFormat 2
+    locale_not_omitted_from_file_path: לא ניתן להסיר את מציין המיקום `locale` מנתיב ה־`file` בערך `{$file}`, ולכן שפת ברירת המחדל נשארת בו למרות אפשרות ה-i18n‏ `omit_default_locale_from_file_path`. כדי להשמיט את השפה, השתמשו במציין המיקום כשם תיקייה שלם, כמו `\{\{locale\}\}/about.md`, או בין שם הקובץ לסיומת, כמו `about.\{\{locale\}\}.md`. כדי להשאיר אותה, הגדירו את האפשרות כ־`false` באפשרות ה־`i18n` של הקובץ.
+    # Don’t localize `i18n`
+    i18n_not_configured: האפשרות `i18n` מופעלת, אך i18n אינו מוגדר ברמה העליונה של התצורה או באוסף, ולכן לאפשרות אין השפעה.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: האפשרות `public_folder` היא מחרוזת ריקה, ולכן נתיב ה־`media_folder` משמש לנתיבי קובצי המדיה הנשמרים בפריטים במקום זאת. הסירו את האפשרות, או הגדירו אותה לנתיב שברצונכם להשתמש בו, כגון `/images`.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: האפשרות `{$option}` אינה מוגדרת בסכמת התצורה של Sveltia CMS. המערכת תתעלם ממנה. בדקו אם יש שגיאת כתיב או שגיאת תחביר.
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'ראו את הערות התאימות לפרטים: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: לחוויית פיתוח טובה יותר, אפשר לבדוק את קובץ התצורה שלכם מול סכמת ה-JSON של Sveltia CMS. ראו {$link} לפרטים.
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: מקומי
+  # Browser compatibility warnings
+  unsupported_browser: תהליך העבודה המקומי אינו נתמך בדפדפן שלכם. השתמשו ב-Chrome או ב-Edge במקום זאת.
+  disabled: תהליך העבודה המקומי מושבת בדפדפן שלכם. <a>כך מפעילים אותו</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'זהו לוח תהליך העריכה. טיוטות: {$draft}. בבדיקה: {$review}. מוכנים: {$ready}. ממתינים למחיקה: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'זהו לוח תהליך העריכה. טיוטות: {$draft}. בבדיקה: {$review}. ממתינים למחיקה: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'זהו לוח תהליך העריכה. טיוטות: {$draft}. מוכנים: {$ready}. ממתינים למחיקה: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'זהו עמוד הטיוטות. טיוטות: {$draft}. ממתינים למחיקה: {$deletion}.'
+
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
+status:
+  draft: טיוטה
+  drafts: טיוטות
+  in_review: בבדיקה
+  ready: מוכן
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: ממתין למחיקה
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: בפרסום
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: ביטול המחיקה
+  confirm_cancelling_deletion: לבטל את המחיקה? הפריט יישאר מפורסם.
+  confirm_completing_deletion: למחוק את הפריט? הוא יוסר מיד.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer} .match $count one {{הפריט סומן למחיקה.}} * {{{$count} פריטים סומנו למחיקה.}}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer} .match $count one {{השינויים בוטלו.}} * {{השינויים ב-{$count} פריטים בוטלו.}}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: מבטל מחיקה…
+  deletion_cancelled: המחיקה בוטלה.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: ביטול המחיקה נכשל. אפשר לנסות שוב.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: ממתינים לפרסום
+  published_entries: פורסמו
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'סטטוס: {$status}'
+  change_entry_status: שינוי סטטוס
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: משנה סטטוס…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: מעדכן סטטוס…
+  status_updated: הסטטוס עודכן.
+  # Error notification when the status could not be changed
+  status_change_failed: שינוי הסטטוס נכשל. אפשר לנסות שוב.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: יש שגיאות בפריט. צריך לתקן אותן לפני שינוי הסטטוס.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: יש שגיאות בפריט. צריך לתקן אותן לפני הפרסום.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: שליחה לבדיקה
+  confirm_sending_for_review: השינויים נשמרו כטיוטה. לשלוח לבדיקה? זה פותח ענף נפרד ובונה כתובת תצוגה מקדימה, שבה אפשר לראות את השינוי באתר אמיתי לפני שהוא עולה לאוויר. הפרסום נשאר בידיך.
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: סימון כמוכן
+  confirm_marking_as_ready: השינויים שלכם נשמרו כטיוטה. לסמן את הפריט כמוכן כדי שניתן יהיה לפרסם אותו?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: פרסום הפריט
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: ביטול השינויים
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: למחוק את הפריט? הוא לא יוסר מהאתר עד שהמחיקה תפורסם. עד אז הוא עדיין יופיע ברשימת הממתינים לפרסום.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: הפריט הזה טרם פורסם, ולכן מחיקתו תבטל אותו לגמרי.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: לפריט הזה יש שינויים שטרם פורסמו. ביטולם יחזיר את הגרסה המפורסמת. הפריט עצמו לא יימחק.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer} .match $count one {{הוא טרם פורסם, ולכן השינויים שלא פורסמו יבוטלו. גרסה מפורסמת, אם קיימת, תישאר.}} * {{הם טרם פורסמו, ולכן השינויים שלא פורסמו יבוטלו. גרסאות מפורסמות, אם קיימות, יישארו.}}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ אחד מהם טרם פורסם, ולכן השינויים שלא פורסמו בו יבוטלו. כל גרסה שפורסמה תישאר מפורסמת. }}
+      two {{ שניים מהם טרם פורסמו, ולכן השינויים שלא פורסמו בהם יבוטלו. כל גרסה שפורסמה תישאר מפורסמת. }}
+      *   {{ {$count} מהם טרם פורסמו, ולכן השינויים שלא פורסמו בהם יבוטלו. כל גרסה שפורסמה תישאר מפורסמת. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: לפרסם את הפריט הזה? השינויים שלכם יעלו לאוויר לאחר בנייה מחדש של האתר.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: מפרסם…
+  entry_published: הפריט פורסם.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: מוחק פריט…
+  discarding_changes: מבטל שינויים…
+  entry_deleted: הפריט נמחק.
+  # Error notification when publishing fails
+  publishing_entry_failed: הפרסום נכשל. אפשר לנסות שוב.
+  # Error notification when an entry can’t be published from the CMS, because its request also
+  # changes files that aren’t part of the entry and that the CMS doesn’t show, goes somewhere other
+  # than the site’s branch, or is too large to check. Keep the wording free of Git jargon
+  publish_refused_other_changes: לא ניתן לפרסם כאן את הפריט הזה, מפני שנלווים אליו שינויים נוספים שהמערכת אינה יכולה להציג לכם. בקשו ממפתח לבדוק אותו.
+  # Error notification when an entry can’t be published because its branch has been committed to
+  # since the entry was opened, so what would be published isn’t what was reviewed
+  publish_refused_entry_changed: הפריט שונה מאז שפתחתם אותו. טענו מחדש את העמוד כדי לבדוק את הגרסה האחרונה לפני הפרסום.
+  # Error shown in the save error dialog when an entry can’t be saved for review, because a request
+  # the CMS doesn’t show is already open from the branch the entry would be saved to. `{$number}` is
+  # the request number, e.g. `#12` on GitHub or `!12` on GitLab. Keep the wording free of Git jargon
+  branch_in_use: בקשה אחרת ({$number}) כבר פתוחה עבור הפריט הזה מחוץ למערכת. בקשו ממפתח לסגור אותה קודם.
+  # Workflow page: empty column message
+  no_entries: אין פריטים.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: אפשר לגרור כדי לשנות סטטוס
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: מחיקה
+
+# Dialog asking the user for a commit message every time changes are saved, when the site is
+# configured to. The message is recorded in the repository’s history along with the changes
+commit_message:
+  # Dialog title
+  title: תיאור השינוי
+  # Description when the user writes the whole message, which the text box is filled in with
+  description_replace: תארו את השינוי שביצעתם. התיאור נרשם בהיסטוריה יחד איתו.
+  # Description when the text the user enters is added before or after a message the CMS writes
+  description_addition: הוסיפו הערה לתיאור שנרשם בהיסטוריה יחד עם השינוי, למשל מספר פנייה. אפשר להשאיר ריק.
+  # Accessible name of the text box when the user writes the whole message
+  message: תיאור השינוי
+  # Accessible name of the text box when the text is added before or after the message
+  addition: הערה
+  # Preview of the message as it will be recorded. {$message} is the message
+  preview: 'תיאור: {$message}'
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: יצירת עותק של המאגר
+  fork: עותק
+  confirm_forking_repository: כדי להציע שינויים ל־"{$repo}", יש ליצור עותק של המאגר בחשבון שלכם. השינויים שלכם נשמרים באותו עותק, ומתחזק בודק אותם לפני שהם עולים לאוויר.
+  # Error shown when the user declined the dialog above
+  fork_declined: נדרש עותק של המאגר בחשבון שלכם כדי להציע שינויים.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: לא ניתן היה ליצור עותק של המאגר "{$repo}" בחשבון שלכם.
+  # Error shown when the user’s fork doesn’t have the branch the CMS is configured with, so there’s
+  # nothing to start their changes from. {$fork} and {$repo} are repository identifiers in
+  # owner/repo format, {$branch} is the branch name
+  fork_branch_missing: לעותק "{$fork}" שלכם אין את הענף "{$branch}". עדכנו את העותק מהמאגר "{$repo}" והתחברו שוב.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: לא ניתן היה לבדוק את ההרשאות שלכם למאגר "{$repo}". נסו שוב בעוד רגע.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: המאגר "{$repo}" אינו מאפשר יצירת עותקים. בקשו ממתחזק להפעיל זאת.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: יש לכם הזמנה ממתינה למאגר "{$repo}". אשרו אותה ב-GitHub והתחברו שוב.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: הכניסה שלכם אינה כוללת גישה למאגרים פרטיים, ולכן לא ניתן לקרוא את המאגר "{$repo}". בקשו ממתחזק לבדוק את הגדרות האימות של המערכת.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: רק מתחזק יכול לפרסם שינויים באתר הזה. סמנו את הפריט שלכם כ״בבדיקה״ במקום זאת, ומישהו יבדוק אותו.
+  # Error shown when a contributor changes the status of an entry whose request a maintainer has
+  # published since the page was loaded, leaving nothing to review. The entry then leaves the
+  # Editorial Workflow board and the editor closes. Keep the wording free of Git jargon
+  entry_already_published: מתחזק כבר פרסם את הפריט הזה, ולכן לא נותר מה לבדוק.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: לא ניתן לבצע את השינוי הזה ישירות. אפשר להציע לבדיקה רק עריכות של פריטים.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: השינויים שלכם נשמרים בעותק שלכם מהמאגר הזה ב־"{$repo}" ונבדקים לפני שהם עולים לאוויר.
+  view_fork: הצגת העותק
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: קטגוריות
+
+# Site Configuration Editor
+site_configuration_editor: עורך הגדרות האתר
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: מפתח ה-API נשמר.
+    api_key_removed: מפתח ה-API הוסר.
+    api_key_invalid: מפתח ה-API שהוזן אינו תקין. בדקו אותו ונסו שוב.
+
+  # Preferences operation errors
+  error:
+    permission_denied: הגישה לאחסון העוגיות נדחתה. בדקו את הרשאות הדפדפן שלכם ונסו שוב.
+
+  # Appearance panel
+  appearance:
+    title: מראה
+    theme: ערכת נושא
+    select_theme: בחירת ערכת נושא
+
+  # Theme options
+  theme:
+    dark: כהה
+    light: בהיר
+
+  # Language panel
+  language:
+    title: שפה
+    ui_language:
+      title: שפת הממשק
+      select_language: בחירת שפה
+
+  # Contents panel
+  contents:
+    title: תכנים
+    editor:
+      title: עורך
+      use_draft_backup:
+        switch_label: גיבוי אוטומטי של טיוטות פריטים
+      close_on_save:
+        switch_label: סגירת העורך לאחר שמירת טיוטה
+      close_with_escape:
+        switch_label: סגירת העורך במקש Escape
+
+  # Internationalization panel
+  i18n:
+    title: שפות ותרגום
+    translators:
+      default:
+        title: שירות התרגום המוגדר כברירת מחדל
+        select_service: בחירת שירות
+      api_keys:
+        title: מפתחות API לשירותי תרגום
+        description: ניהול מפתחות API עבור <a>שירותי תרגום</a>.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: מפתח {$service}
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: הירשמו ל־<a {$homeHref}>{$service}</a> והזינו כאן את <a {$apiKeyHref}>מפתח ה-API שלכם</a> כדי לאפשר תרגום מהיר של שדות טקסט.
+
+  # Media panel
+  media:
+    title: מדיה
+    stock_photos:
+      api_keys:
+        title: מפתחות API לשירותי תמונות מלאי
+        description: ניהול מפתחות API עבור <a>שירותי תמונות מלאי</a>.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: מפתח API של {$service}
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: הירשמו ל־<a {$homeHref}>API של {$service}</a> והזינו כאן את <a {$apiKeyHref}>מפתח ה-API שלכם</a> כדי להוסיף תמונות מלאי חינמיות לשדות תמונה.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: התמונות באדיבות {$service}
+      no_services: לא הוגדרו <a>שירותי תמונות מלאי</a>.
+    cloud_storage:
+      api_keys:
+        title: מפתחות API לשירותי אחסון בענן
+        description: ניהול מפתחות API עבור <a>שירותי אחסון בענן</a>.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: מפתח API של {$service}
+      no_services: לא הוגדרו <a>שירותי אחסון בענן</a>.
+
+  # Accessibility panel
+  accessibility:
+    title: נגישות
+    underline_links:
+      title: קו תחתון בקישורים
+      description: הצגת קו תחתון בקישורים בתצוגה המקדימה של הפריט ובתוויות הממשק.
+      switch_label: תמיד להציג קו תחתון בקישורים
+
+  # Data Management panel
+  data:
+    title: ניהול נתונים
+    clear_data:
+      title: מחיקת נתונים
+      # Clear File Cache button
+      file_cache:
+        description: מחיקת תוכן הקבצים והתמונות הממוזערות השמורים במטמון המקומי, כדי לפנות מקום או לפתור תקלות שנגרמות מנתונים ישנים.
+        button_label: ניקוי מטמון הקבצים
+        confirmation: תוכן הקבצים והתמונות הממוזערות השמורים במטמון המקומי יימחקו. הטיוטות שלא נשמרו וההגדרות יישמרו, וכל נתון שיימחק יורד או ייווצר מחדש לפי הצורך. המערכת תיטען מחדש בסיום.
+      # Erase All Data button
+      all_data:
+        description: מחיקת כל מה שהמערכת שומרת בדפדפן הזה, לרבות הקבצים במטמון, הטיוטות שלא נשמרו וההגדרות. כל מה שכבר נשמר במאגר שלכם לא יושפע.
+        button_label: מחיקת כל הנתונים
+        confirmation: כל הנתונים השמורים בדפדפן הזה יימחקו, לרבות תוכן הקבצים במטמון, התמונות הממוזערות, הטיוטות שלא נשמרו, ההגדרות ומצב ההתחברות. המאגר שלכם לא יושפע, אבל כל שינוי שלא שמרתם יאבד, ותידרשו להתחבר מחדש. המערכת תיטען מחדש בסיום.
+
+  # Developer panel
+  developer:
+    title: מפתחים
+    developer_mode:
+      title: מצב מפתחים
+      description: הפעלת יכולות המיועדות למפתחים, ובהן רישום מפורט במסוף ותפריטי הקשר של הדפדפן.
+      switch_label: הפעלת מצב מפתחים
+    local_git:
+      title: שליחת שינויים ל-Git
+      description: שליחת השינויים שלכם לענף הנוכחי של המאגר המקומי בכל שמירה, כפי שהמערכת עושה בעבודה מול מאגר מרוחק. אפשר לבדוק ולדחוף את השינויים בכלי ה-Git הרגילים שלכם.
+      switch_label: שליחת שינויים ל-Git
+      checking: בודק את המאגר…
+      # {$branch} is the branch name, {$name} and {$email} are the commit author’s name and email address
+      ready: השינויים יישלחו לענף {$branch} בשם {$name} ({$email}).
+      # {$reason} is one of the `local_git_skip_reasons` strings
+      not_ready: לא ניתן לשלוח שינויים כרגע. {$reason}
+    deploy_hook:
+      title: הוק פרסום
+      description: הזינו כתובת webhook שתיקרא כשתפעילו פרסום ידנית באמצעות ״פרסום השינויים״. אפשר להשאיר ריק אם אתם משתמשים ב-GitHub Actions.
+      # Hook URL input
+      url:
+        field_label: כתובת ההוק
+        saved: כתובת ההוק נשמרה.
+        removed: כתובת ההוק הוסרה.
+      # Authorization header input
+      auth:
+        field_label: כותרת Authorization (למשל Bearer <token>) (רשות)
+        saved: כותרת ה-Authorization נשמרה.
+        removed: כותרת ה-Authorization הוסרה.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: מעבר לספריית התוכן
+  view_asset_library: מעבר לספריית המדיה
+  search: חיפוש פריטים וקובצי מדיה
+  create_entry: יצירת פריט חדש
+  save_entry: שמירת פריט
+  cancel_editing: ביטול עריכת הפריט
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: תמונת AVIF
+  bmp: תמונת Bitmap
+  gif: תמונת GIF
+  heic: תמונת HEIC
+  heif: תמונת HEIF
+  ico: סמל
+  jpeg: תמונת JPEG
+  jpg: תמונת JPEG
+  png: תמונת PNG
+  svg: תמונת SVG
+  tif: תמונת TIFF
+  tiff: תמונת TIFF
+  webp: תמונת WebP
+  # Video formats
+  avi: וידאו AVI
+  m4v: וידאו MP4
+  mov: וידאו QuickTime
+  mp4: וידאו MP4
+  mpeg: וידאו MPEG
+  mpg: וידאו MPEG
+  ogg: וידאו Ogg
+  ogv: וידאו Ogg
+  ts: וידאו MPEG
+  webm: וידאו WebM
+  3gp: וידאו 3GPP
+  3g2: וידאו 3GPP2
+  # Audio formats
+  aac: שמע AAC
+  mid: MIDI
+  midi: MIDI
+  m4a: שמע MP4
+  mp3: שמע MP3
+  oga: שמע Ogg
+  opus: שמע OPUS
+  wav: שמע WAV
+  weba: שמע WebM
+  # Document formats
+  csv: גיליון CSV
+  doc: מסמך Word
+  docx: מסמך Word
+  odp: מצגת OpenDocument
+  ods: גיליון OpenDocument
+  odt: מסמך OpenDocument
+  pdf: מסמך PDF
+  ppt: מצגת PowerPoint
+  pptx: מצגת PowerPoint
+  rtf: מסמך טקסט עשיר
+  xls: גיליון Excel
+  xlsx: גיליון Excel
+  # Text formats
+  html: טקסט HTML
+  js: JavaScript
+  json: טקסט JSON
+  md: טקסט Markdown
+  toml: טקסט TOML
+  yaml: טקסט YAML
+  yml: טקסט YAML
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} בתים'
+  kb: '{$size} ק״ב'
+  mb: '{$size} מ״ב'
+  gb: '{$size} ג״ב'
+  tb: '{$size} ט״ב'
