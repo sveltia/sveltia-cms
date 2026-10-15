@@ -71,7 +71,7 @@ Build output: `package/dist/sveltia-cms.js` (IIFE), `package/dist/sveltia-cms.mj
 ## Workflow
 
 - Fix a bug a test turns up, and cover it with a test that fails without the fix; don’t work around it in the test. When the fix needs a product decision, pin the current behaviour with a “(known issue)” test (see `e2e/README.md`) and raise it instead.
-- Before running tests, review the change with `/code-review --fix` and repeat until it reports no findings.
+- Before running tests, review the change with `/code-review --fix` repeatedly until it reports no findings.
 - Run the end-to-end tests on a port of your own, e.g. `E2E_PORT=4181 pnpm test:e2e`, when another worktree may be running them: the run fails rather than share a busy port.
 - Do not add a `Co-Authored-By` trailer to commit messages.
 - When an issue ID is given, add `Fix #(ISSUE_ID)` to the commit description.
