@@ -2,7 +2,7 @@
 
 ## Bug reports
 
-Since Sveltia CMS is still its early stages, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) so we can make the product better for everyone.
+Since Sveltia CMS is still in its early stages, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) so we can make the product better for everyone.
 
 We usually fix bugs within 12 hours of them being reported, but it can take longer if the issue is complex or we’re really busy. We appreciate your patience and understanding.
 

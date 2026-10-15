@@ -307,7 +307,7 @@ export const updateContentFromHashChange = (event, updateContent, routeRegex) =>
   const { isTrusted, oldURL, newURL } = event;
 
   // If `isTrusted` is `true`, it’s the browser’s back/forward navigation, so we need to start
-  // transitioning. If `false`, the event is trigged by the `goto` method below and transition has
+  // transitioning. If `false`, the event is triggered by the `goto` method below and transition has
   // already started; in that case, just finish updating the content.
   if (!isTrusted) {
     updateContent();
