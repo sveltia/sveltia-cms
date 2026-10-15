@@ -2223,13 +2223,13 @@ config:
     # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
     missing_identifier_field: לאוסף אין שדה `{$name}` שישמש לשמות של פריטים חדשים, ולכן כל פריט חדש מקבל מזהה אקראי. הוסיפו שדה `{$name}`, או הגדירו את האפשרות `identifier_field` או `slug`.
     # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
-    slug_i18n_ineffective: לאפשרות `i18n` של `slug` אין השפעה, מפני שהאוסף אינו משתמש במבנה ה-i18n `multiple_files`, `multiple_folders` או `multiple_root_folders`, שבהם לכל שפה יש קובץ משלה.
+    slug_i18n_ineffective: לאפשרות `i18n` של `slug` אין השפעה, מפני שהאוסף אינו משתמש במבנה ה-i18n מסוג `multiple_files`, `multiple_folders` או `multiple_root_folders`, שבהם לכל שפה יש קובץ משלה.
     # Don’t localize `slug`, `template` and `auto_increment`
     slug_template_ignored: המערכת מתעלמת מהאפשרות `template` של `slug`, מפני שהאפשרות `auto_increment` ממספרת את המזהים במקום זאת.
     # {$file} is the file path; Don’t localize `file`, `locale`, `i18n`, `false`,
     # `omit_default_locale_from_file_path` and the example paths. The curly brackets in the examples
     # are escaped with backslashes for MessageFormat 2
-    locale_not_omitted_from_file_path: לא ניתן להסיר את מציין המיקום `locale` מנתיב ה-`file` בערך `{$file}`, ולכן שפת ברירת המחדל נשארת בו למרות אפשרות ה-i18n `omit_default_locale_from_file_path`. כדי להשמיט את השפה, השתמשו במציין המיקום כשם תיקייה שלם, כמו `\{\{locale\}\}/about.md`, או בין שם הקובץ לסיומת, כמו `about.\{\{locale\}\}.md`. כדי להשאיר אותה, הגדירו את האפשרות כ-`false` באפשרות ה-`i18n` של הקובץ.
+    locale_not_omitted_from_file_path: לא ניתן להסיר את מציין המיקום `locale` מנתיב ה-`file` בערך `{$file}`, ולכן שפת ברירת המחדל נשארת בו למרות אפשרות ה-i18n בשם `omit_default_locale_from_file_path`. כדי להשמיט את השפה, השתמשו במציין המיקום כשם תיקייה שלם, כמו `\{\{locale\}\}/about.md`, או בין שם הקובץ לסיומת, כמו `about.\{\{locale\}\}.md`. כדי להשאיר אותה, הגדירו את האפשרות כ-`false` באפשרות ה-`i18n` של הקובץ.
     # Don’t localize `i18n`
     i18n_not_configured: האפשרות `i18n` מופעלת, אך i18n אינו מוגדר ברמה העליונה של התצורה או באוסף, ולכן לאפשרות אין השפעה.
     # Don’t localize `public_folder` and `media_folder`
@@ -2370,7 +2370,6 @@ workflow:
     .input {$count :integer}
     .match $count
       one {{ הוא טרם פורסם, ולכן השינויים שלא פורסמו יבוטלו. גרסה מפורסמת, אם קיימת, תישאר. }}
-      two {{ הם טרם פורסמו, ולכן השינויים שלא פורסמו יבוטלו. גרסאות מפורסמות, אם קיימות, יישארו. }}
       *   {{ הם טרם פורסמו, ולכן השינויים שלא פורסמו יבוטלו. גרסאות מפורסמות, אם קיימות, יישארו. }}
   # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
   # the number of selected entries that are unpublished.
