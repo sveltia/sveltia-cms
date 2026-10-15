@@ -2516,7 +2516,7 @@ prefs:
 
   # Internationalization panel
   i18n:
-    title: Internationalization
+    title: Internationalisation
     translators:
       default:
         title: Default Translation Service
