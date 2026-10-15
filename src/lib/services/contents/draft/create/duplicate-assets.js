@@ -1,7 +1,7 @@
 import { getAssetByPath } from '$lib/services/assets';
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { createDisplayBlobURL, getAssetBlob } from '$lib/services/assets/info';
-import { MARKDOWN_IMAGE_REGEX } from '$lib/services/assets/references';
+import { MARKDOWN_IMAGE_REGEX, replaceMarkdownImageSources } from '$lib/services/assets/references';
 import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getDraftFieldArgs, getField, getTypedKeyPath } from '$lib/services/contents/entry/fields';
 import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
@@ -185,21 +185,8 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
       ),
     );
 
-    // Replace the source within each image only, once every copy is ready. A plain text replacement
-    // would also hit a source whose name contains another’s, e.g. `hero-image.png` for `image.png`,
-    // as well as the file name mentioned anywhere else in the text
-    valueMap[keyPath] = value.replace(MARKDOWN_IMAGE_REGEX, (image, src) => {
-      const blobURL = blobURLs.get(src);
-
-      if (!blobURL) {
-        return image;
-      }
-
-      // The source comes right after the first `](`, as the alt text is matched lazily
-      const start = image.indexOf('](') + 2;
-
-      return `${image.slice(0, start)}${blobURL}${image.slice(start + src.length)}`;
-    });
+    // Replace the sources once every copy is ready
+    valueMap[keyPath] = replaceMarkdownImageSources(value, blobURLs);
   };
 
   await Promise.all(

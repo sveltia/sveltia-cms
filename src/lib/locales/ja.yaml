@@ -1578,6 +1578,29 @@ add_x: '{$name} を追加'
 # List item context menu
 add_item_above: 上にアイテムを追加
 add_item_below: 下にアイテムを追加
+paste_item_above: 上にアイテムを貼り付け
+paste_item_below: 下にアイテムを貼り付け
+paste_item_to_replace: 置き換えて貼り付け
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: アイテムを貼り付け
+list_item_copied: アイテムをコピーしました。
+no_list_item_to_paste: 貼り付けるアイテムがありません。先にリストアイテムのオプションメニューからコピーしてください。
+list_item_not_compatible: コピーしたアイテムはこのリストに合いません。
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    1   {{ アイテムを貼り付けました。このリストで使えない値が 1 個除外されました。 }}
+    *   {{ アイテムを貼り付けました。このリストで使えない値が {$count} 個除外されました。 }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ アイテムを貼り付けましたが、使われているファイルが見つかりませんでした。アイテム内のファイルフィールドを確認してください。 }}
+    *   {{ アイテムを貼り付けましたが、使われているファイルが {$count} 個見つかりませんでした。アイテム内のファイルフィールドを確認してください。 }}
 
 # Variable-type list selector
 select_list_type: リストタイプを選択

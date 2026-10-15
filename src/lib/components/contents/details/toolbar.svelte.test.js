@@ -13,7 +13,7 @@ import { deleteEntries } from '$lib/services/contents/collection/data/delete';
 import { nestedFilterPath } from '$lib/services/contents/collection/nested';
 import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
 import { saveEntry } from '$lib/services/contents/draft/save';
-import { copyFromLocaleToast } from '$lib/services/contents/editor';
+import { copyFromLocaleToast, listItemClipboardToast } from '$lib/services/contents/editor';
 import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { sidebarSheetPanel } from '$lib/services/contents/editor/sidebar';
@@ -1117,6 +1117,15 @@ describe('Toolbar', () => {
     } finally {
       setAssets([]);
     }
+  });
+
+  test('shows the toast of the list item clipboard', async () => {
+    await renderExisting();
+
+    listItemClipboardToast.current = { id: 1, show: true, status: 'success', message: 'Copied.' };
+    await expect.poll(getShownToastText).toBe('check_circle Success Copied.');
+    await waitForToastsToHide();
+    expect(listItemClipboardToast.current.show).toBe(false);
   });
 
   test('reports a copy without a source language', async () => {

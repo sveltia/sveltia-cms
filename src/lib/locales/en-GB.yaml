@@ -1668,6 +1668,29 @@ add_x: Add {$name}
 # List item context menu
 add_item_above: Add Item Above
 add_item_below: Add Item Below
+paste_item_above: Paste Item Above
+paste_item_below: Paste Item Below
+paste_item_to_replace: Paste to Replace
+
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: Paste Item
+list_item_copied: Item copied.
+no_list_item_to_paste: There’s no copied item to paste. Copy one from the List Item Options menu first.
+list_item_not_compatible: The copied item doesn’t fit in this list.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    one {{ Item pasted. A value this list doesn’t take was left out. }}
+    *   {{ Item pasted. {$count} values this list doesn’t take were left out. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Item pasted, but a file it uses couldn’t be found. Check the file fields in the item. }}
+    *   {{ Item pasted, but {$count} files it uses couldn’t be found. Check the file fields in the item. }}
 
 # Variable-type list selector
 select_list_type: Select List Type

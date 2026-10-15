@@ -57,6 +57,24 @@ export const copyFromLocaleToast = createDeepState({
 });
 
 /**
+ * State of the toast shown once a list item is copied or pasted. It’s shared by every List field,
+ * so the editor only has one toast for them. The ID changes each time the toast is shown, so the
+ * same message shown again stays for the full duration.
+ * @type {{ current: {
+ * id: number,
+ * show: boolean,
+ * status: 'success' | 'info' | 'warning' | 'error',
+ * message: string,
+ * } }}
+ */
+export const listItemClipboardToast = createDeepState({
+  id: 0,
+  show: false,
+  status: 'success',
+  message: '',
+});
+
+/**
  * @type {{ current: ?EntryEditorPane }}
  */
 export const editorFirstPane = createRawState(null);

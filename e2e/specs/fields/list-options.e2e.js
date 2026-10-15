@@ -228,8 +228,10 @@ test('hides the Add buttons and the item options of a list that doesn’t allow 
 
   await expect(links.getByRole('textbox', { name: 'Text' })).toHaveCount(2);
   await expect(links.getByRole('button', { name: /Add/ })).toHaveCount(0);
-  // The item options only add items: duplicate, add above and add below
-  await expect(links.getByRole('button', { name: 'List Item Options' })).toHaveCount(0);
+  // The item options only offer to copy an item, not to add one
+  await links.getByRole('button', { name: 'List Item Options' }).first().click();
+  await expect(page.getByRole('menuitem')).toHaveText(['Copy']);
+  await page.keyboard.press('Escape');
   // The items can still be removed and reordered
   await expect(links.getByRole('button', { name: 'Reorder Item' })).toHaveCount(2);
   await links.getByRole('button', { name: 'Remove' }).nth(1).click();
@@ -343,7 +345,10 @@ test('keeps the items of a list with types that allows no changes to them', asyn
 
   await expect(cards.getByText('2 Cards')).toBeVisible();
   await expect(cards.getByRole('button', { name: /Add/ })).toHaveCount(0);
-  await expect(cards.getByRole('button', { name: 'List Item Options' })).toHaveCount(0);
+  // An item can only be copied
+  await cards.getByRole('button', { name: 'List Item Options' }).first().click();
+  await expect(page.getByRole('menuitem')).toHaveText(['Copy']);
+  await page.keyboard.press('Escape');
   await expect(cards.getByRole('button', { name: 'Remove' })).toHaveCount(0);
   await expect(cards.getByRole('button', { name: 'Reorder Item' })).toHaveCount(0);
   // The items are still collapsible and editable

@@ -39,6 +39,29 @@ export const MARKDOWN_IMAGE_REGEX =
   /!\[(?:[^\]\n!]|!(?!\[)|\](?!\())*\]\(((?:[^\n!)]|!(?!\[))+?)(?:(?<!\s)\s+"(?:[^"\\\n]|\\.)*")?\)/g;
 
 /**
+ * Replace the sources of the images in a Markdown body. Only the source within each image is
+ * replaced, so the same file name mentioned anywhere else in the text, or a source whose name
+ * contains another’s, e.g. `hero-image.png` for `image.png`, isn’t hit.
+ * @param {string} value Markdown body.
+ * @param {Map<string, string | undefined>} newSources New sources keyed by the current ones. An
+ * image whose source is missing or mapped to `undefined` is left as is.
+ * @returns {string} New body.
+ */
+export const replaceMarkdownImageSources = (value, newSources) =>
+  value.replace(MARKDOWN_IMAGE_REGEX, (image, /** @type {string} */ src) => {
+    const newSource = newSources.get(src);
+
+    if (newSource === undefined) {
+      return image;
+    }
+
+    // The source comes right after the first `](`, as the alt text is matched lazily
+    const start = image.indexOf('](') + 2;
+
+    return `${image.slice(0, start)}${newSource}${image.slice(start + src.length)}`;
+  });
+
+/**
  * @typedef {object} AssetReferenceTarget
  * @property {string} [url] Asset’s public, external or blob URL. A value holding the URL as is
  * refers to the asset, except for a blob URL, which a value can only refer to through the asset it

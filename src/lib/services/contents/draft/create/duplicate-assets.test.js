@@ -40,10 +40,6 @@ vi.mock('$lib/services/assets/info', () => ({
   createDisplayBlobURL: vi.fn(async (/** @type {Blob} */ blob) => URL.createObjectURL(blob)),
 }));
 
-vi.mock('$lib/services/assets/references', () => ({
-  MARKDOWN_IMAGE_REGEX: /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g,
-}));
-
 vi.mock('$lib/services/contents/draft/save/assets', () => ({
   getOwnedEntryFolderPath: mockGetOwnedEntryFolderPath,
 }));

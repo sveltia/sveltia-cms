@@ -1,9 +1,11 @@
 import { createElement } from 'react';
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { globalAssetFolder } from '$lib/services/assets/folders';
+import { listItemClipboardToast } from '$lib/services/contents/editor';
+import { resetCopiedListItem } from '$lib/services/contents/fields/list/clipboard';
 import { env } from '$lib/services/user/env.svelte';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
@@ -549,8 +551,14 @@ describe('ListEditorComplex', () => {
 
     expect(page.getByRole('button', { name: /Add\W+Author/ }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: 'Remove' }).elements()).toHaveLength(0);
-    expect(page.getByRole('button', { name: 'List Item Options' }).elements()).toHaveLength(0);
+    expect(page.getByRole('button', { name: 'Paste Item' }).elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: 'Reorder Item' }).elements()).toHaveLength(0);
+
+    // The item can still be copied
+    await page.getByRole('button', { name: 'List Item Options' }).click();
+    await expect.element(page.getByRole('menuitem', { name: 'Copy' })).toBeEnabled();
+    expect(page.getByRole('menuitem').elements()).toHaveLength(1);
+    await userEvent.keyboard('{Escape}');
   });
 });
 
@@ -675,11 +683,20 @@ describe('ListEditorComplex (more)', () => {
       .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
       .toEqual(['Anonymous', 'Melvin']);
 
-    // The limit is reached, so the add button and the item options are gone
+    // The limit is reached, so the add button and the options to add an item are gone
     await expect
       .poll(() => page.getByRole('button', { name: /Add\W+Author/ }).elements())
       .toHaveLength(0);
-    expect(page.getByRole('button', { name: 'List Item Options' }).elements()).toHaveLength(0);
+    expect(page.getByRole('button', { name: 'Paste Item' }).elements()).toHaveLength(0);
+    await page.getByRole('button', { name: 'List Item Options' }).nth(0).click();
+    expect(
+      page
+        .getByRole('menuitem')
+        .elements()
+        .map((item) => item.textContent?.trim()),
+      // An item can still be replaced, which doesn’t add one
+    ).toEqual(['Copy', 'Paste to Replace']);
+    await userEvent.keyboard('{Escape}');
   });
 
   test('starts minimized when configured, expanding once an item is added', async () => {
@@ -957,7 +974,15 @@ describe('ListEditorComplex (more)', () => {
     });
 
     await expect.element(page.getByRole('button', { name: /Add\W+Author/ })).toBeDisabled();
-    await expect.element(page.getByRole('button', { name: 'List Item Options' })).toBeDisabled();
+    await expect.element(page.getByRole('button', { name: 'Paste Item' })).toBeDisabled();
+    // The item can only be copied
+    await page.getByRole('button', { name: 'List Item Options' }).click();
+    await expect.element(page.getByRole('menuitem', { name: 'Copy' })).toBeEnabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Paste to Replace' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Paste Item Below' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Duplicate' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Add Item Below' })).toBeDisabled();
+    await userEvent.keyboard('{Escape}');
     // Removing the item would remove it from the default locale as well
     await expect.element(page.getByRole('button', { name: 'Remove' })).toBeDisabled();
   });
@@ -1535,5 +1560,164 @@ describe('ListEditorComplex with a custom field type', () => {
     );
 
     await expect.poll(() => getSummaries(container)).toEqual(['a/1.jpg']);
+  });
+});
+
+describe('ListEditorComplex clipboard', () => {
+  let clipboardText = '';
+
+  /**
+   * Put a list item copied elsewhere to the clipboard.
+   * @param {Record<string, any>} data Clipboard data to override.
+   */
+  const setClipboardItem = (data) => {
+    clipboardText = JSON.stringify({
+      format: 'sveltia-cms/list-item',
+      version: 1,
+      id: 'elsewhere',
+      locale: 'en',
+      assets: {},
+      ...data,
+    });
+  };
+
+  beforeEach(() => {
+    resetCopiedListItem();
+    listItemClipboardToast.current = { id: 0, show: false, status: 'success', message: '' };
+    clipboardText = '';
+    vi.spyOn(navigator.clipboard, 'writeText').mockImplementation(async (text) => {
+      clipboardText = text;
+    });
+    vi.spyOn(navigator.clipboard, 'readText').mockImplementation(async () => clipboardText);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /**
+   * Wait for the editor’s toast to show a message.
+   * @param {string} message Message.
+   */
+  const expectToast = async (message) => {
+    await expect
+      .poll(() => listItemClipboardToast.current)
+      .toEqual(expect.objectContaining({ show: true, message }));
+  };
+
+  test('copies an item, and pastes it above or below another item', async () => {
+    const { draft } = await renderEditor(authorsField, {
+      'authors.0.name': 'Melvin',
+      'authors.0.role': 'Editor',
+      'authors.1.name': 'Elsie',
+    });
+
+    await page.getByRole('button', { name: 'List Item Options' }).nth(0).click();
+    await page.getByRole('menuitem', { name: 'Copy' }).click();
+    await expectToast('Item copied.');
+    expect(JSON.parse(clipboardText).values).toEqual({
+      _default: { name: 'Melvin', role: 'Editor' },
+    });
+
+    await page.getByRole('button', { name: 'List Item Options' }).nth(1).click();
+    await page.getByRole('menuitem', { name: 'Paste Item Below' }).click();
+    await expect
+      .poll(() => getStoredItems(draft, 'authors'))
+      .toEqual([
+        { name: 'Melvin', role: 'Editor' },
+        { name: 'Elsie' },
+        { name: 'Melvin', role: 'Editor' },
+      ]);
+
+    await page.getByRole('button', { name: 'List Item Options' }).nth(1).click();
+    await page.getByRole('menuitem', { name: 'Paste Item Above' }).click();
+    await expect
+      .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
+      .toEqual(['Melvin', 'Melvin', 'Elsie', 'Melvin']);
+  });
+
+  test('replaces an item with a copied one, even in a full list', async () => {
+    const { draft } = await renderEditor(
+      { ...authorsField, max: 2 },
+      { 'authors.0.name': 'Melvin', 'authors.0.role': 'Editor', 'authors.1.name': 'Elsie' },
+    );
+
+    await page.getByRole('button', { name: 'List Item Options' }).nth(0).click();
+    await page.getByRole('menuitem', { name: 'Copy' }).click();
+    await page.getByRole('button', { name: 'List Item Options' }).nth(1).click();
+    await page.getByRole('menuitem', { name: 'Paste to Replace' }).click();
+    await expect
+      .poll(() => getStoredItems(draft, 'authors'))
+      .toEqual([
+        { name: 'Melvin', role: 'Editor' },
+        { name: 'Melvin', role: 'Editor' },
+      ]);
+  });
+
+  test('pastes an item copied in another list, leaving out the values it doesn’t take', async () => {
+    setClipboardItem({ values: { en: { name: 'Ada', email: 'ada@example.com' } } });
+
+    const { draft } = await renderEditor(authorsField, {});
+
+    await page.getByRole('button', { name: 'Paste Item' }).click();
+    await expect.poll(() => getStoredItems(draft, 'authors')).toEqual([{ name: 'Ada', role: '' }]);
+    await expectToast('Item pasted. A value this list doesn’t take was left out.');
+  });
+
+  test('pastes an item at the top with `add_to_top`, until the list is full', async () => {
+    setClipboardItem({ values: { en: { name: 'Ada', role: 'Writer' } } });
+
+    const { draft } = await renderEditor(
+      { ...authorsField, add_to_top: true, max: 2 },
+      { 'authors.0.name': 'Melvin' },
+    );
+
+    await page.getByRole('button', { name: 'Paste Item' }).click();
+    await expect
+      .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
+      .toEqual(['Ada', 'Melvin']);
+    await expect
+      .poll(() => page.getByRole('button', { name: 'Paste Item' }).elements())
+      .toHaveLength(0);
+  });
+
+  test('pastes an item of a variable type, reporting the files that can’t be found', async () => {
+    setClipboardItem({
+      type: 'photo',
+      values: { en: { src: 'photo.jpg' } },
+      assets: { en: { 'photo.jpg': 'content/posts/gone/photo.jpg' } },
+    });
+
+    const { draft } = await renderEditor(
+      {
+        name: 'blocks',
+        widget: 'list',
+        types: [{ name: 'photo', fields: [{ name: 'src', widget: 'image' }] }],
+      },
+      {},
+    );
+
+    await page.getByRole('button', { name: 'Paste Item' }).click();
+    await expect
+      .poll(() => getStoredItems(draft, 'blocks'))
+      .toEqual([{ type: 'photo', src: 'photo.jpg' }]);
+    await expectToast(
+      'Item pasted, but a file it uses couldn’t be found. Check the file fields in the item.',
+    );
+  });
+
+  test('reports an item that doesn’t fit, or nothing to paste', async () => {
+    const { draft } = await renderEditor(sectionsField, {});
+
+    setClipboardItem({ type: 'gallery', values: { en: { images: [] } } });
+    await page.getByRole('button', { name: 'Paste Item' }).click();
+    await expectToast('The copied item doesn’t fit in this list.');
+
+    vi.mocked(navigator.clipboard.readText).mockRejectedValue(new Error('Denied'));
+    await page.getByRole('button', { name: 'Paste Item' }).click();
+    await expectToast(
+      'There’s no copied item to paste. Copy one from the List Item Options menu first.',
+    );
+    expect(getStoredItems(draft, 'sections')).toEqual([]);
   });
 });

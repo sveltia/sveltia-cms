@@ -8,6 +8,7 @@ import {
   getEntriesByAssets,
   getEntriesByAssetURL,
   MARKDOWN_IMAGE_REGEX,
+  replaceMarkdownImageSources,
 } from '$lib/services/assets/references';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
@@ -151,6 +152,22 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
     expect(matches).toHaveLength(0);
     // The previous pattern took well over a minute with some of these inputs
     expect(duration).toBeLessThan(200);
+  });
+});
+
+describe('replaceMarkdownImageSources()', () => {
+  test('replaces the sources within the images only', () => {
+    const value = 'image.png ![image.png](image.png "image.png") ![a](hero-image.png) ![b](c.png)';
+
+    expect(
+      replaceMarkdownImageSources(
+        value,
+        new Map([
+          ['image.png', 'blob:1'],
+          ['c.png', undefined],
+        ]),
+      ),
+    ).toBe('image.png ![image.png](blob:1 "image.png") ![a](hero-image.png) ![b](c.png)');
   });
 });
 

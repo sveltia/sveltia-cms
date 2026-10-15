@@ -7,7 +7,16 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Menu, MenuButton, MenuItem, Spacer, VisibilityObserver } from '@sveltia/ui';
+  import {
+    Button,
+    Divider,
+    Icon,
+    Menu,
+    MenuButton,
+    MenuItem,
+    Spacer,
+    VisibilityObserver,
+  } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
   import { getContext, onMount } from 'svelte';
@@ -24,10 +33,16 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { listItemClipboardToast } from '$lib/services/contents/editor';
   import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
   import { isExpanded, syncExpanderStates } from '$lib/services/contents/editor/fields';
   import { getMemoizedSubtree } from '$lib/services/contents/entry/subtree';
   import { getCustomFieldSummary } from '$lib/services/contents/fields/custom/preview';
+  import {
+    copyListItem,
+    prepareListItemPaste,
+    readListItem,
+  } from '$lib/services/contents/fields/list/clipboard';
   import {
     formatSummary,
     getListFieldInfo,
@@ -250,6 +265,19 @@
    * @type {HTMLElement | undefined}
    */
   let topToolbar = $state();
+  /**
+   * Show a notification once an item is copied or pasted.
+   * @param {typeof listItemClipboardToast.current.status} status Status.
+   * @param {string} message Message.
+   */
+  const showClipboardToast = (status, message) => {
+    listItemClipboardToast.current = {
+      id: listItemClipboardToast.current.id + 1,
+      show: true,
+      status,
+      message,
+    };
+  };
 
   /**
    * Update the expander states of the list and its items.
@@ -348,8 +376,16 @@
    * @param {number} [args.dupIndex] List index of an item to be duplicated.
    * @param {string} [args.type] Variable type name. If the field doesn’t have variable types, it
    * will be `undefined`.
+   * @param {Record<InternalLocaleCode, any>} [args.sourceItems] Pasted item in each locale.
+   * @param {boolean} [args.replace] Whether to replace the item at the index with the new one.
    */
-  const addItem = async ({ index = addToTop ? 0 : items.length, dupIndex, type } = {}) => {
+  const addItem = async ({
+    index = addToTop ? 0 : items.length,
+    dupIndex,
+    type,
+    sourceItems,
+    replace = false,
+  } = {}) => {
     const draft = entryDraft.current;
 
     // The controls are disabled once the draft is gone, so this is only a race with the editor
@@ -363,7 +399,10 @@
     /** @type {Map<string, string>} */
     const renewedUuids = new Map();
 
-    removedItems = shiftRemovedItems(shownRemovedItems, index);
+    // A replaced item keeps its position, so the removed items shown around it stay where they are
+    if (!replace) {
+      removedItems = shiftRemovedItems(shownRemovedItems, index);
+    }
 
     updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
       const { subFields } = resolveType(type);
@@ -372,6 +411,7 @@
         valueList,
         keyPath,
         dupIndex,
+        sourceItem: sourceItems?.[targetLocale],
         subFields,
         hasSingleSubField,
         field,
@@ -383,8 +423,8 @@
         defaultLocale: inEditorComponent ? targetLocale : draft.defaultLocale,
       });
 
-      valueList.splice(index, 0, newItem);
-      expanderStateList.splice(index, 0, true);
+      valueList.splice(index, replace ? 1 : 0, newItem);
+      expanderStateList.splice(index, replace ? 1 : 0, true);
       rememberListState(valueList, targetLocale);
     });
 
@@ -407,6 +447,99 @@
     itemList?.closest('.content')?.scrollBy({ top: -toolbarBottom, behavior: 'instant' });
     // Move focus to the expander button
     getItem(index)?.querySelector('button')?.focus();
+  };
+
+  /**
+   * Copy an item to the clipboard, so it can be pasted into this list or another one that takes it,
+   * in any entry.
+   * @param {number} index List index of the item.
+   */
+  const copyItem = async (index) => {
+    const draft = entryDraft.current;
+
+    // The menu is closed along with the editor, so this is only a race with the editor closing
+    /* v8 ignore next 3 */
+    if (!draft) {
+      return;
+    }
+
+    await copyListItem({
+      draft,
+      valueStoreKey,
+      fieldConfig,
+      keyPath,
+      typedKeyPath,
+      index,
+      locale,
+      pairedItems,
+      componentName,
+    });
+
+    showClipboardToast('success', _('list_item_copied'));
+  };
+
+  /**
+   * Paste a copied item into the list. The values that don’t fit the list are left out, and the
+   * references to the files the item uses are rewritten for the entry.
+   * @param {number} index List index where the item will be inserted.
+   * @param {object} [options] Options.
+   * @param {boolean} [options.replace] Whether to replace the item at the index.
+   */
+  const pasteItem = async (index, { replace = false } = {}) => {
+    const draft = entryDraft.current;
+
+    // The controls are disabled once the draft is gone, so this is only a race with the editor
+    // closing
+    /* v8 ignore next 3 */
+    if (!draft) {
+      return;
+    }
+
+    const copied = await readListItem();
+
+    if (!copied) {
+      showClipboardToast('info', _('no_list_item_to_paste'));
+
+      return;
+    }
+
+    const result = await prepareListItemPaste({
+      draft,
+      valueStoreKey,
+      copied,
+      fieldConfig,
+      typedKeyPath,
+      componentName,
+      inEditorComponent,
+    });
+
+    // Another entry may have been opened while the files were being copied
+    /* v8 ignore next 3 */
+    if (entryDraft.current !== draft) {
+      return;
+    }
+
+    if (!result) {
+      showClipboardToast('error', _('list_item_not_compatible'));
+
+      return;
+    }
+
+    const { type, items: sourceItems, droppedCount, missingFileCount } = result;
+
+    await addItem({ index, type, sourceItems, replace });
+
+    if (missingFileCount) {
+      showClipboardToast(
+        'warning',
+        _('list_item_pasted_without_files', { values: { count: missingFileCount } }),
+      );
+    } else if (droppedCount) {
+      showClipboardToast(
+        'info',
+        _('list_item_pasted_without_values', { values: { count: droppedCount } }),
+      );
+    }
   };
 
   /**
@@ -621,7 +754,7 @@
 
 {#snippet addPositionItems(/** @type {number} */ insertIndex, /** @type {string} */ position)}
   {#if hasVariableTypes}
-    <MenuItem label={_(`add_item_${position}`)}>
+    <MenuItem label={_(`add_item_${position}`)} disabled={isAddDisabled}>
       <!-- eslint-disable-next-line no-shadow -->
       {#snippet items()}
         {#each variableTypes as { name, label: itemLabel } (name)}
@@ -633,7 +766,28 @@
       {/snippet}
     </MenuItem>
   {:else}
-    <MenuItem label={_(`add_item_${position}`)} onclick={() => addItem({ index: insertIndex })} />
+    <MenuItem
+      label={_(`add_item_${position}`)}
+      disabled={isAddDisabled}
+      onclick={() => addItem({ index: insertIndex })}
+    />
+  {/if}
+{/snippet}
+
+{#snippet pasteButton()}
+  {#if !hasMaxItems}
+    <Button
+      variant="tertiary"
+      size="small"
+      iconic
+      aria-label={_('paste_item')}
+      disabled={isAddDisabled}
+      onclick={() => pasteItem(addToTop ? 0 : items.length)}
+    >
+      {#snippet startIcon()}
+        <Icon name="content_paste" />
+      {/snippet}
+    </Button>
   {/if}
 {/snippet}
 
@@ -678,6 +832,7 @@
     <div role="none" class="actions">
       {#if allowAdd && (addToTop || !items.length || !parentExpanded)}
         <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
+        {@render pasteButton()}
       {/if}
       {#if parentExpanded && items.length > 1}
         {#each [true, false] as expanded (expanded)}
@@ -769,30 +924,54 @@
                   onMove={(to, action) => sorter.move(index, to, action)}
                 />
               {/if}
-              {#if allowAdd && !hasMaxItems}
-                <MenuButton
-                  variant="ghost"
-                  size="small"
-                  iconic
-                  popupPosition="bottom-right"
-                  aria-label={_('list_item_options')}
-                  disabled={isAddDisabled}
-                >
-                  {#snippet popup()}
-                    <Menu ariaLabel={_('list_item_options')}>
+              <MenuButton
+                variant="ghost"
+                size="small"
+                iconic
+                popupPosition="bottom-right"
+                aria-label={_('list_item_options')}
+              >
+                {#snippet popup()}
+                  <Menu ariaLabel={_('list_item_options')}>
+                    <!-- An item can be copied from a read-only list as well -->
+                    <MenuItem
+                      label={_('copy')}
+                      disabled={unknownType}
+                      onclick={() => copyItem(index)}
+                    />
+                    {#if allowAdd && allowRemove}
+                      <!-- Replacing an item doesn’t change the number of items -->
+                      <MenuItem
+                        label={_('paste_item_to_replace')}
+                        disabled={isAddDisabled}
+                        onclick={() => pasteItem(index, { replace: true })}
+                      />
+                    {/if}
+                    {#if allowAdd && !hasMaxItems}
+                      <MenuItem
+                        label={_('paste_item_above')}
+                        disabled={isAddDisabled}
+                        onclick={() => pasteItem(index)}
+                      />
+                      <MenuItem
+                        label={_('paste_item_below')}
+                        disabled={isAddDisabled}
+                        onclick={() => pasteItem(index + 1)}
+                      />
+                      <Divider />
                       {#if allowDuplicate}
                         <MenuItem
                           label={_('duplicate')}
-                          disabled={unknownType}
+                          disabled={isAddDisabled || unknownType}
                           onclick={() => addItem({ index: index + 1, dupIndex: index })}
                         />
                       {/if}
                       {@render addPositionItems(index, 'above')}
                       {@render addPositionItems(index + 1, 'below')}
-                    </Menu>
-                  {/snippet}
-                </MenuButton>
-              {/if}
+                    {/if}
+                  </Menu>
+                {/snippet}
+              </MenuButton>
               {#if canRemoveItem}
                 <RemoveButton
                   variant="ghost"
@@ -850,6 +1029,7 @@
   <div role="none" class="toolbar bottom add">
     <Spacer flex />
     <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
+    {@render pasteButton()}
   </div>
 {/if}
 

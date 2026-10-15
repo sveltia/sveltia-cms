@@ -113,6 +113,42 @@ describe('createListItem()', () => {
     expect(duplicate).toEqual({ name: 'Bob', __sc_item_id: expect.any(String) });
   });
 
+  test('copies a pasted item as a new one', () => {
+    const OLD_ID = 'de305d54-75b4-431b-adb2-eb6b9e546014';
+    const sourceItem = { name: 'Alice', links: { url: 'https://example.com' }, id: OLD_ID };
+
+    const item = createListItem({
+      ...args,
+      subFields: [...subFields, { name: 'id', widget: 'uuid' }],
+      valueList: [],
+      sourceItem,
+    });
+
+    expect(item).toEqual({
+      name: 'Alice',
+      links: { url: 'https://example.com' },
+      id: expect.any(String),
+      __sc_item_id: expect.any(String),
+    });
+    expect(item.id).not.toBe(OLD_ID);
+    expect(item.links).not.toBe(sourceItem.links);
+    // The pasted item isn’t modified
+    expect(sourceItem.id).toBe(OLD_ID);
+  });
+
+  test('copies a pasted value into a list with a single subfield', () => {
+    expect(
+      createListItem({
+        ...args,
+        valueList: [],
+        sourceItem: '',
+        subFields: [{ name: 'tag', widget: 'string' }],
+        hasSingleSubField: true,
+        field: { name: 'tag', widget: 'string', default: 'news' },
+      }),
+    ).toBe('');
+  });
+
   test('creates a new item if there is no item to duplicate', () => {
     // e.g. another locale of a list with paired items, which lacks the item being duplicated
     expect(createListItem({ ...args, valueList: [{ name: 'Alice' }], dupIndex: 1 })).toEqual(

@@ -36,7 +36,11 @@
   import { createDraft } from '$lib/services/contents/draft/create';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { canResetEntry } from '$lib/services/contents/draft/update/reset';
-  import { activeInlineEditors, copyFromLocaleToast } from '$lib/services/contents/editor';
+  import {
+    activeInlineEditors,
+    copyFromLocaleToast,
+    listItemClipboardToast,
+  } from '$lib/services/contents/editor';
   import { fieldUpdatePending } from '$lib/services/contents/editor/pending';
   import { createResetMenuState } from '$lib/services/contents/editor/reset-menu.svelte';
   import { duplicateEntryDraft, saveEntryDraftFlow } from '$lib/services/contents/editor/save';
@@ -575,6 +579,12 @@
         source: sourceLanguage ? (getLocaleLabel(sourceLanguage) ?? sourceLanguage) : '',
       },
     })}
+  </Alert>
+</Toast>
+
+<Toast id={listItemClipboardToast.current.id} bind:show={listItemClipboardToast.current.show}>
+  <Alert status={listItemClipboardToast.current.status}>
+    {listItemClipboardToast.current.message}
   </Alert>
 </Toast>
 
