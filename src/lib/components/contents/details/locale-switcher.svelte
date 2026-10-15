@@ -20,6 +20,8 @@
    * @property {string} id The wrapper element’s `id` attribute.
    * @property {{ current: ?EntryEditorPane }} thisPane This pane’s mode and locale.
    * @property {{ current: ?EntryEditorPane }} [thatPane] Another pane’s mode and locale.
+   * @property {boolean} [previewInThisPane] Whether to offer the preview in this pane, which takes
+   * turns with the editor when there’s no other pane to hold it.
    */
 
   const entryDraft = getEntryDraftContext();
@@ -30,10 +32,13 @@
     id,
     thisPane,
     thatPane = createRawState(null),
+    previewInThisPane = false,
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { allLocales } = $derived(getDraftI18nConfig(entryDraft.current));
+  const { i18nEnabled, allLocales } = $derived(getDraftI18nConfig(entryDraft.current));
+  // With a single locale, the only option is the editor, which takes turns with the preview
+  const hasMultipleLocales = $derived(i18nEnabled && allLocales.length > 1);
   /* v8 ignore start -- the switcher is only rendered while the draft is there */
   const validities = $derived(entryDraft.current?.validities ?? {});
   const canPreview = $derived(entryDraft.current?.canPreview ?? true);
@@ -44,6 +49,13 @@
       : allLocales.filter(
           (locale) => !(thatPane.current?.mode === 'edit' && thatPane.current.locale === locale),
         ),
+  );
+  // The preview can take this pane’s place when the other pane edits a locale
+  const previewOffered = $derived(
+    previewInThisPane ||
+      (thatPane.current?.mode === 'edit' &&
+        canPreview &&
+        !!entryEditorSettings.current?.showPreview),
   );
   const hasAnyError = $derived(
     Object.entries(validities).some(
@@ -68,13 +80,13 @@
   <SelectComponent
     value={currentValue}
     class={hasAnyError && useDropDown ? 'error' : undefined}
-    ariaLabel={_('switch_locale')}
+    ariaLabel={_(hasMultipleLocales ? 'switch_locale' : 'switch_view')}
     aria-controls={id.replace('-header', '-body')}
   >
     <!-- Need an inner to style elements inside the <dialog> -->
     <div role="none" class="inner">
       {#each listedLocales as locale (locale)}
-        {@const label = getLocaleLabel(locale) ?? locale}
+        {@const label = hasMultipleLocales ? (getLocaleLabel(locale) ?? locale) : _('edit')}
         {@const disabled = !entryDraft.current?.currentLocales[locale]}
         <!-- A locale without content, e.g. a disabled one, is left out of the validation -->
         {@const hasError = hasInvalidFields(validities[locale])}
@@ -110,7 +122,7 @@
           {/snippet}
         </OptionComponent>
       {/each}
-      {#if thatPane.current?.mode === 'edit' && canPreview && entryEditorSettings.current?.showPreview}
+      {#if previewOffered}
         {#if useDropDown}
           <Divider />
         {/if}
@@ -122,8 +134,11 @@
           selected={thisPane.current?.mode === 'preview'}
           data-mode="preview"
           onSelect={() => {
-            // Read the locale now: the other pane may change while the updates land
-            const { locale } = /** @type {EntryEditorPane} */ (thatPane.current);
+            // Read the locale now: the other pane may change while the updates land. Without one,
+            // this pane previews the locale it edits
+            const { locale } = /** @type {EntryEditorPane} */ (
+              thatPane.current ?? thisPane.current
+            );
 
             afterPendingFieldUpdates(() => {
               thisPane.current = { mode: 'preview', locale };

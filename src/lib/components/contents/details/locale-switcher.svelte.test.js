@@ -28,6 +28,7 @@ const renderSwitcher = async ({
   thisPane = createRawState(/** @type {any} */ ({ mode: 'edit', locale: 'en' })),
   thatPane = createRawState(/** @type {any} */ ({ mode: 'preview', locale: 'en' })),
   draftProps = {},
+  previewInThisPane = false,
 } = {}) => {
   const draft = createMockDraft({
     i18n: i18nConfig,
@@ -39,7 +40,7 @@ const renderSwitcher = async ({
 
   await renderWithDraft(LocaleSwitcher, {
     draft,
-    props: { id: 'pane-1-header', thisPane, thatPane },
+    props: { id: 'pane-1-header', thisPane, thatPane, previewInThisPane },
   });
 
   return { draft, thisPane, thatPane };
@@ -191,6 +192,87 @@ describe('LocaleSwitcher', () => {
 
     await expect.element(page.getByRole('radio', { name: 'fr_CA' })).toBeVisible();
     expect(page.getByRole('radio', { checked: true }).elements()).toHaveLength(0);
+  });
+
+  test('offers the preview in place of the editor without another pane', async () => {
+    const { thisPane } = await renderSwitcher({
+      thisPane: createRawState({ mode: 'edit', locale: 'fr' }),
+      thatPane: createRawState(null),
+      previewInThisPane: true,
+    });
+
+    const group = page.getByRole('radiogroup', { name: 'Switch Locale' });
+
+    expect(
+      group
+        .getByRole('radio')
+        .elements()
+        .map((el) => el.textContent?.trim()),
+    ).toEqual(['English', 'French', 'German', 'Preview']);
+
+    // The pane previews the locale it was editing
+    await group.getByRole('radio', { name: 'Preview' }).click();
+    expect(thisPane.current).toEqual({ mode: 'preview', locale: 'fr' });
+    await expect.element(group.getByRole('radio', { name: 'Preview' })).toBeChecked();
+
+    await group.getByRole('radio', { name: 'German' }).click();
+    expect(thisPane.current).toEqual({ mode: 'edit', locale: 'de' });
+  });
+
+  test('offers no preview without another pane unless asked to', async () => {
+    // The quick-add dialog of a Relation field has nowhere to show the preview
+    await renderSwitcher({ thatPane: createRawState(null) });
+
+    await expect.element(page.getByRole('radio', { name: 'German' })).toBeVisible();
+    expect(page.getByRole('radio', { name: 'Preview' }).elements()).toHaveLength(0);
+  });
+
+  test('switches between the editor and the preview without i18n', async () => {
+    const { thisPane } = await renderSwitcher({
+      i18nConfig: {
+        i18nEnabled: false,
+        allLocales: ['_default'],
+        initialLocales: ['_default'],
+        defaultLocale: '_default',
+        structure: 'single_file',
+      },
+      thisPane: createRawState({ mode: 'edit', locale: '_default' }),
+      thatPane: createRawState(null),
+      previewInThisPane: true,
+    });
+
+    const group = page.getByRole('radiogroup', { name: 'Switch View' });
+
+    expect(
+      group
+        .getByRole('radio')
+        .elements()
+        .map((el) => el.textContent?.trim()),
+    ).toEqual(['Edit', 'Preview']);
+    await expect.element(group.getByRole('radio', { name: 'Edit' })).toBeChecked();
+
+    await group.getByRole('radio', { name: 'Preview' }).click();
+    expect(thisPane.current).toEqual({ mode: 'preview', locale: '_default' });
+
+    await group.getByRole('radio', { name: 'Edit' }).click();
+    expect(thisPane.current).toEqual({ mode: 'edit', locale: '_default' });
+  });
+
+  test('switches between the editor and the preview with a single locale', async () => {
+    await renderSwitcher({
+      i18nConfig: { ...i18n, allLocales: ['en'], initialLocales: ['en'] },
+      thatPane: createRawState(null),
+      previewInThisPane: true,
+    });
+
+    const group = page.getByRole('radiogroup', { name: 'Switch View' });
+
+    expect(
+      group
+        .getByRole('radio')
+        .elements()
+        .map((el) => el.textContent?.trim()),
+    ).toEqual(['Edit', 'Preview']);
   });
 
   test('works without another pane', async () => {

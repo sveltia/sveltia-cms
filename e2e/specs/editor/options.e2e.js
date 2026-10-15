@@ -154,12 +154,23 @@ test.describe('panes', () => {
     await expect(previewPane).toBeHidden();
     await expect(swapButton).toBeHidden();
     await expect(editor.getByRole('group', { name: 'Edit Content' })).toBeVisible();
-    // The preview is shown in the second pane, so its options are unavailable meanwhile
+    // The preview takes turns with the editor in the only pane, so there’s nothing to sync
     await menuButton.click();
     await expect(showSecondPane).not.toBeChecked();
-    await expect(showPreview).toBeDisabled();
+    await expect(showPreview).toBeEnabled();
     await expect(syncScrolling).toBeDisabled();
     await page.keyboard.press('Escape');
+
+    const viewSwitcher = editor.getByRole('radiogroup', { name: 'Switch View' });
+
+    await viewSwitcher.getByRole('radio', { name: 'Preview' }).click();
+    await expect(previewPane.getByRole('document', { name: 'Content Preview' })).toContainText(
+      'The observatory opens its doors.',
+    );
+    await expect(editor.getByRole('group', { name: 'Edit Content' })).toBeHidden();
+    await viewSwitcher.getByRole('radio', { name: 'Edit' }).click();
+    await expect(editor.getByRole('group', { name: 'Edit Content' })).toBeVisible();
+    await expect(previewPane).toBeHidden();
 
     await cms.chooseMenuItem(menuButton, showSecondPane);
     await expect(previewPane).toBeVisible();

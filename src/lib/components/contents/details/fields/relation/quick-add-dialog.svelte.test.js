@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { getCollection } from '$lib/services/contents/collection';
+import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { createPendingEntry } from '$lib/services/contents/fields/relation/quick-add';
 import { initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
@@ -312,12 +313,15 @@ describe('QuickAddDialog', () => {
   });
 
   test('switches between the locales of a localized collection', async () => {
+    entryEditorSettings.current = { showPreview: true };
     await renderDialog({ collectionName: 'categories' });
 
     const dialog = page.getByRole('dialog', { name: /Creating.*Category/ });
     const title = dialog.getByRole('textbox', { name: 'Title' });
 
     await title.fill('Travel');
+    // The dialog has nowhere to show a preview
+    expect(dialog.getByRole('radio', { name: 'Preview' }).elements()).toHaveLength(0);
     await dialog.getByRole('radio', { name: 'French' }).click();
     await expect.element(title).toHaveValue('');
     await title.fill('Voyage');

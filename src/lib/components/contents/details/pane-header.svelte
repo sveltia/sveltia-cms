@@ -18,6 +18,7 @@
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getLocaleContentLabel } from '$lib/services/contents/editor/panes';
   import { createResetMenuState } from '$lib/services/contents/editor/reset-menu.svelte';
+  import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
@@ -109,6 +110,14 @@
 
   /* v8 ignore next -- the header is only rendered for a pane while the draft is there */
   const canPreview = $derived(entryDraft.current?.canPreview ?? true);
+  // Without another pane on a large screen, the switcher offers the preview in this pane, even when
+  // there’s only one locale to switch between
+  const previewInThisPane = $derived(
+    !(env.isSmallScreen || env.isMediumScreen) &&
+      !thatPane.current &&
+      canPreview &&
+      !!entryEditorSettings.current?.showPreview,
+  );
   // Look the entry up in the store rather than reading the draft, so the preview link follows the
   // head commit as it moves with each save, the same way the entry toolbar does
   const pullRequest = $derived(
@@ -144,8 +153,8 @@
 
 <div role="none" {id} class="header">
   <Toolbar variant="secondary" ariaLabel={_('secondary')}>
-    {#if i18nEnabled && allLocales.length > 1}
-      <LocaleSwitcher {id} {thisPane} {thatPane} />
+    {#if (i18nEnabled && allLocales.length > 1) || previewInThisPane}
+      <LocaleSwitcher {id} {thisPane} {thatPane} {previewInThisPane} />
       {#if (env.isSmallScreen || env.isMediumScreen) && canPreview}
         <PreviewButton {thisPane} />
       {/if}

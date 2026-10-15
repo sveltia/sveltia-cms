@@ -4,6 +4,7 @@ import { page } from 'vitest/browser';
 import { backendName } from '$lib/services/backends';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { getCollection } from '$lib/services/contents/collection';
+import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { deployPollTimedOut } from '$lib/services/deployments';
 import { recheckDeployments } from '$lib/services/deployments/poll';
 import { env } from '$lib/services/user/env.svelte';
@@ -108,6 +109,7 @@ describe('PaneHeader', () => {
     backendName.current = undefined;
     unpublishedEntries.current = [];
     deployPollTimedOut.current = false;
+    entryEditorSettings.current = undefined;
   });
 
   test('offers the locale switcher and content options', async () => {
@@ -348,6 +350,9 @@ describe('PaneHeader', () => {
   });
 
   test('shows the mode without i18n on a large screen', async () => {
+    // Without the preview, there’s nothing to switch to in a single pane
+    entryEditorSettings.current = { showPreview: false };
+
     const { container } = await renderWithDraft(PaneHeader, {
       draft: createMockDraft({
         collectionName: 'pages',
@@ -391,6 +396,39 @@ describe('PaneHeader', () => {
     ).toEqual(['Revert Changes', 'Restore Default', 'Clear All']);
     // Nothing comes before them to separate them from
     expect(menu.element().querySelectorAll('[role="separator"]')).toHaveLength(0);
+  });
+
+  test('switches a single pane between the editor and the preview without i18n', async () => {
+    entryEditorSettings.current = { showPreview: true };
+
+    const thisPane = createRawState({ mode: 'edit', locale: '_default' });
+
+    const { container } = await renderWithDraft(PaneHeader, {
+      draft: createMockDraft({
+        collectionName: 'pages',
+        fields,
+        values: { _default: { title: 'Hello' } },
+        draft: { collection: getCollection('pages') },
+      }),
+      props: { id: 'pane-1-header', thisPane, thatPane: createRawState(null) },
+    });
+
+    expect(container.querySelector('h3')).toBeNull();
+
+    await page.getByRole('radio', { name: 'Preview' }).click();
+    expect(thisPane.current).toEqual({ mode: 'preview', locale: '_default' });
+  });
+
+  test('offers the preview in a single pane with i18n once the preview is shown', async () => {
+    entryEditorSettings.current = { showPreview: false };
+
+    await renderHeader({ thatPane: createRawState(null) });
+
+    await expect.element(page.getByRole('radio', { name: 'French' })).toBeVisible();
+    expect(page.getByRole('radio', { name: 'Preview' }).elements()).toHaveLength(0);
+
+    entryEditorSettings.current = { showPreview: true };
+    await expect.element(page.getByRole('radio', { name: 'Preview' })).toBeVisible();
   });
 
   test('offers the preview toggle with i18n on a medium screen', async () => {

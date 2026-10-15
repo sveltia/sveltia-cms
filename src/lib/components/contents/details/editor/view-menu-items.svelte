@@ -41,11 +41,11 @@
     toggleEntryEditorSetting('showSecondPane', true);
   }}
 />
-<!-- The preview is rendered in the second pane, so it’s unavailable while hidden -->
+<!-- Without the second pane, the preview takes turns with the editor in the first one -->
 <MenuItemCheckbox
   label={_('show_preview')}
   checked={entryEditorSettings.current?.showPreview}
-  disabled={!showSecondPane || !canPreview}
+  disabled={!canPreview}
   onChange={() => {
     toggleEntryEditorSetting('showPreview');
   }}
