@@ -34,6 +34,7 @@ vi.mock('$lib/services/utils/file', async (importOriginal) => ({
 
 vi.mock('$lib/services/assets/file-name', () => ({
   formatFileName: vi.fn((name) => name.toLowerCase()),
+  isSameFileName: vi.fn((name1, name2) => name1.toLowerCase() === name2.toLowerCase()),
 }));
 vi.mock('$lib/services/contents/draft/slugs', () => ({
   getFillSlugOptions: vi.fn(() => ({ content: {}, collection: {} })),
@@ -2810,6 +2811,59 @@ describe('Test replaceBlobURL()', () => {
     expect(content.body).toBe('![](/images/image.png) ![](/images/image-1.png)');
 
     vi.mocked(formatFileName).mockImplementation((name) => name.toLowerCase());
+  });
+
+  test('should not save a replacing file under the name of an identical file in the same save', async () => {
+    const { getAssetsByDirName } = await import('$lib/services/assets');
+    const { getGitHash } = await import('$lib/services/utils/file');
+    const tinyFile = new File(['same'], 'tiny.webp', { type: 'image/webp' });
+    const thumbFile = new File(['same'], 'thumb.webp', { type: 'image/webp' });
+
+    vi.mocked(getAssetsByDirName).mockReturnValue(/** @type {any} */ ([{ name: 'thumb.webp' }]));
+    vi.mocked(getGitHash).mockResolvedValue('sha-same');
+
+    /** @type {any} */
+    const draft = {
+      collection: {
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'posts' },
+        _assetFolder: { fields: [] },
+      },
+      collectionName: 'posts',
+      isIndexFile: false,
+      currentValues: { en: { title: 'Test' } },
+      currentSlugs: { en: 'test-post' },
+    };
+
+    const content = { tiny: 'blob:tiny', thumb: 'blob:thumb' };
+    /** @type {any[]} */
+    const changes = [];
+
+    const args = {
+      folder: createMockAssetFolder({
+        collectionName: 'posts',
+        internalPath: 'static/images',
+        publicPath: '/images',
+      }),
+      replace: true,
+      draft,
+      defaultLocaleSlug: 'test-post',
+      content,
+      changes,
+      savingAssets: [],
+      encodingEnabled: false,
+    };
+
+    await replaceBlobURL({ ...args, file: tinyFile, blobURL: 'blob:tiny', keyPath: 'tiny' });
+    await replaceBlobURL({ ...args, file: thumbFile, blobURL: 'blob:thumb', keyPath: 'thumb' });
+
+    // Each file keeps the fixed name it was given, even though the contents are the same
+    expect(changes.map(({ action, path }) => ({ action, path }))).toEqual([
+      { action: 'create', path: 'static/images/tiny.webp' },
+      { action: 'update', path: 'static/images/thumb.webp' },
+    ]);
+    expect(content).toEqual({ tiny: '/images/tiny.webp', thumb: '/images/thumb.webp' });
   });
 
   test('should only replace an existing file with the first of the same-named files in the same save', async () => {

@@ -53,6 +53,13 @@ vi.mock('$lib/services/assets/file-name', () => ({
    * @returns {string} File name.
    */
   formatFileName: (name) => name.replace(/[:/]/g, ''),
+  /**
+   * Compare two file names, ignoring case, as the real function does.
+   * @param {string} name1 File name.
+   * @param {string} name2 Another file name.
+   * @returns {boolean} Result.
+   */
+  isSameFileName: (name1, name2) => name1.toLowerCase() === name2.toLowerCase(),
 }));
 
 vi.mock('$lib/services/utils/media/image/validate', () => ({
@@ -1273,6 +1280,87 @@ describe('Test processResource()', () => {
       file: mockFile,
       folder: { name: 'uploads' },
       replace: true,
+    });
+  });
+
+  describe('with a replacing file', () => {
+    const folder = { name: 'uploads' };
+
+    test('should not reuse an identical asset saved under another name', async () => {
+      const mockFile = new File(['content'], 'thumb.webp', { type: 'image/webp' });
+      /** @type {any} */
+      const draft = { files: {} };
+
+      getGitHashMock.mockResolvedValue('git-hash');
+      allAssets.current = /** @type {any} */ ([
+        { sha: 'git-hash', folder, name: 'other.webp', path: 'uploads/other.webp' },
+      ]);
+      equalMock.mockReturnValue(true);
+
+      const result = await processResource({
+        draft,
+        resource: /** @type {any} */ ({ file: mockFile, folder, replace: true }),
+        libraryConfig: {},
+      });
+
+      // The file keeps its own name, so it’s saved rather than pointing to the other asset
+      expect(result.value).toBe('blob:mock-url');
+      expect(draft.files['blob:mock-url']).toEqual({ file: mockFile, folder, replace: true });
+    });
+
+    test('should reuse an identical asset saved under the same name', async () => {
+      const mockFile = new File(['content'], 'thumb.webp', { type: 'image/webp' });
+      /** @type {any} */
+      const draft = { files: {} };
+
+      getGitHashMock.mockResolvedValue('git-hash');
+      allAssets.current = /** @type {any} */ ([
+        { sha: 'git-hash', folder, name: 'Thumb.webp', path: 'uploads/Thumb.webp' },
+      ]);
+      equalMock.mockReturnValue(true);
+      getAssetPublicURLMock.mockReturnValue('/uploads/Thumb.webp');
+
+      const result = await processResource({
+        draft,
+        resource: /** @type {any} */ ({ file: mockFile, folder, replace: true }),
+        libraryConfig: {},
+      });
+
+      // Nothing has changed, so there’s nothing to save
+      expect(result.value).toBe('/uploads/Thumb.webp');
+      expect(Object.keys(draft.files)).toHaveLength(0);
+    });
+
+    test('should only reuse an identical pending file replacing one under the same name', async () => {
+      const mockFile = new File(['content'], 'thumb.webp', { type: 'image/webp' });
+
+      /** @type {any} */
+      const draft = {
+        files: {
+          // Would be saved with a unique name, e.g. `thumb-1.webp`
+          'blob:plain': { file: new File(['content'], 'thumb.webp'), folder, replace: false },
+          'blob:other': { file: new File(['content'], 'other.webp'), folder, replace: true },
+        },
+      };
+
+      getGitHashMock.mockResolvedValue('git-hash');
+      allAssets.current = /** @type {any} */ ([]);
+      equalMock.mockReturnValue(true);
+
+      const resource = /** @type {any} */ ({ file: mockFile, folder, replace: true });
+
+      await expect(processResource({ draft, resource, libraryConfig: {} })).resolves.toEqual(
+        expect.objectContaining({ value: 'blob:mock-url' }),
+      );
+
+      draft.files = {
+        'blob:same': { file: new File(['content'], 'Thumb.webp'), folder, replace: true },
+      };
+
+      await expect(processResource({ draft, resource, libraryConfig: {} })).resolves.toEqual(
+        expect.objectContaining({ value: 'blob:same' }),
+      );
+      expect(Object.keys(draft.files)).toEqual(['blob:same']);
     });
   });
 });

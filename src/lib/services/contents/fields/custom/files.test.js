@@ -69,7 +69,7 @@ const libraryConfig = { max_file_size: 1024, transformations: undefined };
 /**
  * Call `addFileToDraft()` with the common arguments.
  * @param {File | Blob} file File to be added.
- * @param {{ name?: string }} [options] Options.
+ * @param {import('$lib/types/public').CustomFieldAddFileOptions} [options] Options.
  * @returns {Promise<string>} Blob URL.
  */
 const addFile = (file, options) =>
@@ -116,7 +116,7 @@ describe('contents/fields/custom/files', () => {
     expect(getDefaultMediaLibraryOptions).toHaveBeenCalledWith({ fieldConfig });
     expect(processResource).toHaveBeenCalledWith({
       draft,
-      resource: { file, folder },
+      resource: { file, folder, replace: false },
       libraryConfig,
     });
   });
@@ -128,7 +128,7 @@ describe('contents/fields/custom/files', () => {
 
     expect(processResource).toHaveBeenCalledWith({
       draft,
-      resource: { file, folder },
+      resource: { file, folder, replace: false },
       libraryConfig,
       locale: 'fr',
     });
@@ -173,6 +173,14 @@ describe('contents/fields/custom/files', () => {
     expect(file).not.toBe(original);
     expect(file?.name).toBe('optimized.webp');
     expect(file?.type).toBe('image/webp');
+  });
+
+  it('passes the replace option on, so the file overwrites an asset with the same name', async () => {
+    const blob = new Blob(['x'], { type: 'image/webp' });
+
+    await addFile(blob, { name: 'thumb.webp', replace: true });
+
+    expect(vi.mocked(processResource).mock.calls[0][0].resource.replace).toBe(true);
   });
 
   it('rejects a Blob given without a name', async () => {

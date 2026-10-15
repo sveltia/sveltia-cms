@@ -1,6 +1,7 @@
 import equal from 'fast-deep-equal';
 import { sanitize } from 'isomorphic-dompurify';
 
+import { isSameFileName } from '$lib/services/assets/file-name';
 import { createDisplayBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { createAssetNameTemplate, getPendingFileName } from '$lib/services/assets/name';
@@ -46,9 +47,18 @@ import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
  * entry-relative, only files in the same folder are considered a match.
  * @param {string} [args.subfolderPath] Subfolder the file is saved to. The same file pending for
  * another subfolder is a different upload.
+ * @param {boolean} [args.replace] Whether the file replaces an existing asset with the same name.
+ * Such a file must be saved under its own name, so only a pending file replacing one under the same
+ * name is a match.
  * @returns {Promise<string | undefined>} Blob URL.
  */
-export const getExistingBlobURL = async ({ draft, file, folder, subfolderPath = '' }) => {
+export const getExistingBlobURL = async ({
+  draft,
+  file,
+  folder,
+  subfolderPath = '',
+  replace = false,
+}) => {
   // The Git hash is memoized per file, so the files already in the draft aren’t read again
   const hash = await getGitHash(file);
   /** @type {string | undefined} */
@@ -60,7 +70,8 @@ export const getExistingBlobURL = async ({ draft, file, folder, subfolderPath = 
         !foundURL &&
         (await getGitHash(f.file)) === hash &&
         (!folder?.entryRelative || equal(f.folder, folder)) &&
-        (f.subfolderPath ?? '') === subfolderPath
+        (f.subfolderPath ?? '') === subfolderPath &&
+        (!replace || (!!f.replace && isSameFileName(f.file.name, file.name)))
       ) {
         foundURL = blobURL;
       }
@@ -236,7 +247,7 @@ export const processResource = async ({ draft, resource, libraryConfig, accept, 
     let existingBlobURL;
 
     try {
-      existingBlobURL = await getExistingBlobURL({ draft, file, folder, subfolderPath });
+      existingBlobURL = await getExistingBlobURL({ draft, file, folder, subfolderPath, replace });
     } catch {
       // The file can’t be read any more, e.g. it was moved or deleted after being picked. It can’t
       // be uploaded either way, so it’s reported along with the corrupt files rather than failing
@@ -281,13 +292,20 @@ export const processResource = async ({ draft, resource, libraryConfig, accept, 
       }
 
       const sha = await getGitHash(file);
+      const { name } = file;
 
       // Check if the selected file has already been uploaded or is pending upload, otherwise
-      // duplicate files lead to an `each_key_duplicate` error in Svelte
+      // duplicate files lead to an `each_key_duplicate` error in Svelte. A file replacing an
+      // existing one must keep its name, so an identical file under another name doesn’t count
       const existingAsset = [
         ...getSavedAssetsForEntry(draft, folder, locale),
         ...(await getUnsavedAssets({ draft })),
-      ].find((a) => a.sha === sha && equal(a.folder, folder));
+      ].find(
+        (a) =>
+          a.sha === sha &&
+          equal(a.folder, folder) &&
+          (!replace || ((!a.unsaved || a.replace) && isSameFileName(a.name, name))),
+      );
 
       if (existingAsset) {
         // If the selected file has already been uploaded, use the existing asset instead of

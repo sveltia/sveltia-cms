@@ -33,6 +33,17 @@ export const formatFileName = (
 };
 
 /**
+ * Check whether two file names refer to the same file once formatted for uploading. The comparison
+ * ignores case, as files whose names only differ in case clash on a case-insensitive file system.
+ * @param {string} name1 File name.
+ * @param {string} name2 Another file name.
+ * @returns {boolean} Result.
+ */
+export const isSameFileName = (name1, name2) =>
+  formatFileName(name1).normalize().toLowerCase() ===
+  formatFileName(name2).normalize().toLowerCase();
+
+/**
  * Check whether an asset can be renamed to the given name.
  * @param {object} args Arguments.
  * @param {string} args.name Name as typed, trimmed.

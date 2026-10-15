@@ -2,7 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import equal from 'fast-deep-equal';
 
 import { getAssetsByDirName } from '$lib/services/assets';
-import { formatFileName } from '$lib/services/assets/file-name';
+import { formatFileName, isSameFileName } from '$lib/services/assets/file-name';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { getPendingFileName } from '$lib/services/assets/name';
 import { assertOutsideCmsFolders } from '$lib/services/assets/reserved';
@@ -441,9 +441,13 @@ export const replaceBlobURL = async ({
   );
 
   // The same file picked for another field or locale is saved once, as long as it goes to the same
-  // place: the same folder, and the same subfolder in it
+  // place: the same folder, and the same subfolder in it. A file replacing an existing one must
+  // keep its name, so an identical file saved under another name doesn’t count
   const dupFile = savingAssetsInSameFolder.find(
-    (f) => f.sha === sha && (!folder.entryRelative || equal(f.folder, folder)),
+    (f) =>
+      f.sha === sha &&
+      (!folder.entryRelative || equal(f.folder, folder)) &&
+      (!replace || isSameFileName(f.name, file.name)),
   );
 
   let fileName = '';

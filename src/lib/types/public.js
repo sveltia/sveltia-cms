@@ -2643,7 +2643,14 @@
  * @typedef {object} CustomFieldAddFileOptions
  * @property {string} [name] File name, including the extension. Required when a `Blob` is given
  * instead of a `File`; otherwise it overrides the file’s own name. The name is sanitized and, if
- * another asset in the target folder already has it, made unique when the entry is saved.
+ * another asset in the target folder already has it, made unique when the entry is saved, unless
+ * `replace` is enabled.
+ * @property {boolean} [replace] Whether the file replaces an existing asset with the same name in
+ * the target folder, instead of being saved with a unique name next to it. This suits a file a
+ * control regenerates under a fixed name, such as a thumbnail, so that each change doesn’t leave
+ * the previous version behind. The file is saved under its own name, without applying the
+ * `filename_template` option. If no asset has the name, the file is created as usual. Default:
+ * `false`.
  */
 
 /**

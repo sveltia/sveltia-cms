@@ -1,12 +1,28 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { formatFileName, validateAssetName } from '$lib/services/assets/file-name';
+import { formatFileName, isSameFileName, validateAssetName } from '$lib/services/assets/file-name';
 
 // Mock i18n dependencies
 vi.mock('@sveltia/i18n', () => ({
   locale: { current: 'en', set: vi.fn() },
   _: vi.fn((key, options) => `${key}(${options?.values?.size || ''})`),
 }));
+
+describe('Test isSameFileName()', () => {
+  test('Names formatted the same way match', () => {
+    expect(isSameFileName('thumb.webp', 'thumb.webp')).toBe(true);
+    // Case and Unicode normalization are ignored
+    expect(isSameFileName('Photo.JPG', 'photo.jpg')).toBe(true);
+    expect(isSameFileName('café.png'.normalize('NFD'), 'café.png')).toBe(true);
+    // A leading dot is dropped when uploading
+    expect(isSameFileName('.thumb.webp', 'thumb.webp')).toBe(true);
+  });
+
+  test('Different names do not match', () => {
+    expect(isSameFileName('thumb.webp', 'thumb-1.webp')).toBe(false);
+    expect(isSameFileName('thumb.webp', 'thumb.png')).toBe(false);
+  });
+});
 
 describe('Test formatFileName()', () => {
   test('Leading dots are dropped', () => {

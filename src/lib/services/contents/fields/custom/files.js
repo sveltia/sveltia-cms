@@ -72,6 +72,8 @@ export const getCustomFieldAssetOptions = ({ draft, fieldConfig, typedKeyPath, c
  * downstream — the target folder, file naming, deduplication, the backup and the editorial workflow
  * — works the same way. The target folder is the one a File/Image field in the same place would
  * upload to: the field’s own `media_folder` if any, otherwise the collection’s or the global one.
+ * With the `replace` option, the file keeps its name and overwrites an existing asset with the same
+ * name, like a file the user chose to replace in the Select Assets dialog.
  * @param {CustomFieldArgs & { file: File | Blob, options?: CustomFieldAddFileOptions }} args
  * Arguments, including the file to be added and the options.
  * @returns {Promise<string>} Blob URL to be stored in the field value. It’s replaced with the
@@ -114,7 +116,7 @@ export const addFileToDraft = async ({
 
   const { value, oversizedFileName, invalidFileName } = await processResource({
     draft,
-    resource: { file: namedFile, folder },
+    resource: { file: namedFile, folder, replace: !!options.replace },
     libraryConfig,
     locale,
   });
