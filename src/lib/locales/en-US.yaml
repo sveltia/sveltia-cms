@@ -2142,7 +2142,11 @@ config:
     # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
     list_field_map_key_missing_in_type: The List field’s `map_key_field` option refers to `{$name}`, but the `{$type}` type has no subfield with that name.
     # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
-    list_field_map_key_not_string: The List field’s `map_key_field` option refers to `{$name}`, but it must be a String field, not a `{$widget}` field.
+    list_field_map_key_invalid_type: The List field’s `map_key_field` option refers to `{$name}`, but it must be a String, Relation or Select field, not a `{$widget}` field.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: The List field’s `map_key_field` option refers to `{$name}`, but the subfield can’t take multiple values, as each item needs a single key. Remove its `multiple` option.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: The List field’s `map_key_field` option refers to `{$name}`, but the subfield’s options must have string values, as each key is stored as a string.
     # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
     list_field_map_key_not_required: The List field’s `map_key_field` option refers to `{$name}`, but the subfield can’t be optional, as each item needs a key. Remove its `required` option.
     # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`

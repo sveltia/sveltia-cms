@@ -15,6 +15,8 @@ import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
  * ListFieldWithSubField,
  * ListFieldWithSubFields,
  * ListFieldWithTypes,
+ * RelationField,
+ * SelectField,
  * StringField,
  * } from '$lib/types/public';
  * @import {
@@ -23,6 +25,12 @@ import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
  * FieldParserArgs,
  * } from '$lib/types/private';
  */
+
+/**
+ * Field types that can hold the key of a List field item stored as a map, as each of them has a
+ * single string value.
+ */
+const MAP_KEY_FIELD_TYPES = ['string', 'relation', 'select'];
 
 /**
  * Check if the field type is valid for a List field’s variable type.
@@ -114,11 +122,15 @@ export const checkDefaultValue = ({ config, context, collectors }) => {
 
 /**
  * Check the `map_key_field` option, which names the subfield whose value becomes the key of each
- * item when the list is stored as a map. The subfield has to be a required String field that
- * exists in every locale, and with variable types, every type has to have it, or some items would
- * have no key. A list of plain values or with a single `field` has no subfields to take a key from.
+ * item when the list is stored as a map. The subfield has to be a required String, Relation or
+ * Select field that exists in every locale, and with variable types, every type has to have it, or
+ * some items would have no key. A Relation or Select field can’t take multiple values, which can’t
+ * make a single key, and a Select field’s options must have string values, as a key read back from
+ * a file is always a string. A list of plain values or with a single `field` has no subfields to
+ * take a key from.
  * @param {FieldParserArgs} args Arguments.
  * @see https://github.com/sveltia/sveltia-cms/issues/1077
+ * @see https://github.com/sveltia/sveltia-cms/issues/1082
  */
 export const checkMapKeyField = ({ config, context, collectors }) => {
   const { fields: subfields } = /** @type {ListFieldWithSubFields} */ (config);
@@ -161,10 +173,35 @@ export const checkMapKeyField = ({ config, context, collectors }) => {
     const { widget: fieldType = 'string', i18n } = subfield;
     const { required = true } = /** @type {StringField} */ (subfield);
 
-    if (fieldType !== 'string') {
+    if (!MAP_KEY_FIELD_TYPES.includes(fieldType)) {
       addMessage({
-        strKey: 'list_field_map_key_not_string',
+        strKey: 'list_field_map_key_invalid_type',
         values: { name, widget: fieldType },
+        context,
+        collectors,
+      });
+    }
+
+    if (/** @type {RelationField | SelectField} */ (subfield).multiple === true) {
+      addMessage({
+        strKey: 'list_field_map_key_multiple',
+        values: { name },
+        context,
+        collectors,
+      });
+    }
+
+    const { options } = /** @type {SelectField} */ (subfield);
+
+    // Options of another type are reported against the JSON schema
+    if (
+      fieldType === 'select' &&
+      Array.isArray(options) &&
+      options.some((option) => typeof (isObject(option) ? option.value : option) !== 'string')
+    ) {
+      addMessage({
+        strKey: 'list_field_map_key_option_not_string',
+        values: { name },
         context,
         collectors,
       });

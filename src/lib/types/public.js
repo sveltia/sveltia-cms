@@ -878,12 +878,14 @@
  * @property {string} [map_key_field] Name of the subfield whose value becomes the key of each
  * item, so the list is stored as a map of the keys to the items, without the subfield, rather than
  * as an array, e.g. `{ harry: { title: … }, ron: { title: … } }`. The subfield must be a String
- * field that is required in every locale, and with variable types, every type must have it. Its
+ * field, a Relation field or a Select field with string option values, without the `multiple`
+ * option, that is required in every locale, and with variable types, every type must have it. Its
  * value must be unique within the list, and can’t be a whole number such as `1` or `2024`, as such
  * keys don’t keep their order. The items are kept in the order of the map. An existing array is
  * still loaded, and saved as a map. Default: none. See the
  * [documentation](https://sveltiacms.app/en/docs/fields/list#keyed-list) for details.
  * @see https://github.com/sveltia/sveltia-cms/issues/1077
+ * @see https://github.com/sveltia/sveltia-cms/issues/1082
  */
 
 /**

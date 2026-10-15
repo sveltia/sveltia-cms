@@ -2035,7 +2035,11 @@ config:
     # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
     list_field_map_key_missing_in_type: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、`{$type}` タイプにはその名前のサブフィールドがありません。
     # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
-    list_field_map_key_not_string: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、`{$widget}` フィールドではなく String フィールドである必要があります。
+    list_field_map_key_invalid_type: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、`{$widget}` フィールドではなく String、Relation、Select のいずれかのフィールドである必要があります。
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、各項目には単一のキーが必要なため、そのサブフィールドで複数の値を選択することはできません。`multiple` オプションを削除してください。
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、各キーは文字列として保存されるため、そのサブフィールドの選択肢の値は文字列である必要があります。
     # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
     list_field_map_key_not_required: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、各項目にはキーが必要なため、そのサブフィールドを任意にすることはできません。`required` オプションを削除してください。
     # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`

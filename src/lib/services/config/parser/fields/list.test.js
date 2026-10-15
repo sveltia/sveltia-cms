@@ -767,18 +767,105 @@ describe('List Field Parser', () => {
       });
     });
 
-    it('should error on a subfield that is not a String field', async () => {
+    it('should accept a single-value Relation or Select subfield', async () => {
+      await check({
+        map_key_field: 'page',
+        fields: [
+          { name: 'page', widget: 'relation', collection: 'pages', value_field: '{{slug}}' },
+          { name: 'xyz' },
+        ],
+      });
+      await check({
+        map_key_field: 'size',
+        fields: [
+          { name: 'size', widget: 'select', options: ['small', { label: 'L', value: 'large' }] },
+        ],
+      });
+      await check({
+        map_key_field: 'key',
+        types: [
+          {
+            name: 'link',
+            fields: [{ name: 'key', widget: 'relation', collection: 'pages', multiple: false }],
+          },
+          { name: 'custom', fields: [{ name: 'key' }] },
+        ],
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should error on a subfield of another type', async () => {
       const { context, collectors } = await check({
         map_key_field: 'key',
         fields: [{ name: 'key', widget: 'number' }],
       });
 
       expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
-        strKey: 'list_field_map_key_not_string',
+        strKey: 'list_field_map_key_invalid_type',
         values: { name: 'key', widget: 'number' },
         context,
         collectors,
       });
+    });
+
+    it('should error on a Relation or Select subfield taking multiple values', async () => {
+      const { context, collectors } = await check({
+        map_key_field: 'key',
+        fields: [{ name: 'key', widget: 'relation', collection: 'pages', multiple: true }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_map_key_multiple',
+        values: { name: 'key' },
+        context,
+        collectors,
+      });
+
+      mockAddMessage.mockClear();
+
+      await check({
+        map_key_field: 'key',
+        fields: [{ name: 'key', widget: 'select', options: ['a', 'b'], multiple: true }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ strKey: 'list_field_map_key_multiple' }),
+      );
+    });
+
+    it('should error on a Select subfield with an option value other than a string', async () => {
+      const { context, collectors } = await check({
+        map_key_field: 'key',
+        fields: [{ name: 'key', widget: 'select', options: ['a', { label: 'B', value: 1.5 }] }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_map_key_option_not_string',
+        values: { name: 'key' },
+        context,
+        collectors,
+      });
+
+      mockAddMessage.mockClear();
+
+      await check({
+        map_key_field: 'key',
+        fields: [{ name: 'key', widget: 'select', options: [2] }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledOnce();
+
+      mockAddMessage.mockClear();
+
+      // Missing or invalid options are reported by the Select field parser
+      await check({ map_key_field: 'key', fields: [{ name: 'key', widget: 'select' }] });
+      await check({
+        map_key_field: 'key',
+        fields: [{ name: 'key', widget: 'select', options: 'a' }],
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
     });
 
     it('should error on a subfield that is optional in any locale', async () => {

@@ -52,6 +52,14 @@ const sectionTagField = {
   collection: 'tags',
 };
 
+/** Key of an item of a List field stored as a map. */
+const noteTagField = {
+  name: 'tag',
+  label: 'Note Tag',
+  widget: 'relation',
+  collection: 'tags',
+};
+
 const postsCollection = {
   name: 'posts',
   label: 'Posts',
@@ -65,6 +73,13 @@ const postsCollection = {
       widget: 'list',
       required: false,
       fields: [{ name: 'heading', widget: 'string' }, sectionTagField],
+    },
+    {
+      name: 'notes',
+      widget: 'list',
+      required: false,
+      map_key_field: 'tag',
+      fields: [noteTagField, { name: 'text', widget: 'string', required: false }],
     },
   ],
   _i18n: i18n,
@@ -151,6 +166,10 @@ describe('planCascadeDelete() (integration)', () => {
       {
         fieldConfig: sectionTagField,
         context: { collection: postsCollection, typedKeyPath: 'sections.*.tag' },
+      },
+      {
+        fieldConfig: noteTagField,
+        context: { collection: postsCollection, typedKeyPath: 'notes.*.tag' },
       },
     ]);
   });
@@ -271,6 +290,29 @@ describe('planCascadeDelete() (integration)', () => {
 
     expect(blockers).toEqual([
       expect.objectContaining({ fieldLabel: 'Section Tag', keyPath: 'sections.1.tag' }),
+    ]);
+  });
+
+  test('blocks the deletion when the key of a keyed list item would be left empty', () => {
+    setPosts([
+      createPost('my-trip', {
+        title: 'My Trip',
+        category: 'food',
+        'notes.0.tag': 'food',
+        'notes.0.text': 'Yum',
+        'notes.1.tag': 'travel',
+        'notes.1.text': 'Far',
+      }),
+    ]);
+
+    const { blockers } = planCascadeDelete({ collection: tagsCollection, entries: [travelTag] });
+
+    expect(blockers).toEqual([
+      expect.objectContaining({
+        fieldLabel: 'Note Tag',
+        keyPath: 'notes.1.tag',
+        messages: ['validation.value_missing'],
+      }),
     ]);
   });
 

@@ -1,5 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, getField } from '../../fixtures/ui.js';
+import { getEditor, getField, openCollection } from '../../fixtures/ui.js';
 
 /**
  * A bibliography in the Hayagriva format, a map of citation keys to references, edited with a
@@ -144,4 +144,171 @@ test('saves references still stored as an array as a map', async ({ cms, page })
   await expect
     .poll(async () => (await cms.readRepo())[PATH])
     .toBe('harry:\n  type: Book\n  title: Harry\nron:\n  type: Book\n  title: Ronald\n');
+});
+
+/**
+ * Site settings holding a map of page slugs to page settings, keyed with a Relation field, and a
+ * map of sizes to prices, keyed with a Select field.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1082
+ */
+test.describe('keys picked from options', () => {
+  const SETTINGS_PATH = 'data/settings.yml';
+
+  test.use({
+    config: {
+      backend: { name: 'test-repo' },
+      media_folder: 'static/uploads',
+      collections: [
+        {
+          name: 'pages',
+          label: 'Pages',
+          folder: 'content/pages',
+          extension: 'yml',
+          identifier_field: 'title',
+          fields: [{ name: 'title', label: 'Title' }],
+        },
+        {
+          name: 'data',
+          label: 'Data',
+          files: [
+            {
+              name: 'settings',
+              label: 'Settings',
+              file: SETTINGS_PATH,
+              fields: [
+                {
+                  name: 'pages',
+                  label: 'Page Settings',
+                  label_singular: 'Page Setting',
+                  widget: 'list',
+                  map_key_field: 'page',
+                  fields: [
+                    {
+                      name: 'page',
+                      label: 'Page',
+                      widget: 'relation',
+                      collection: 'pages',
+                      value_field: '{{slug}}',
+                      search_fields: ['title'],
+                      display_fields: ['title'],
+                      // Show the options as radio buttons
+                      dropdown_threshold: 10,
+                    },
+                    { name: 'xyz', label: 'XYZ' },
+                  ],
+                },
+                {
+                  name: 'sizes',
+                  label: 'Sizes',
+                  label_singular: 'Size',
+                  widget: 'list',
+                  map_key_field: 'size',
+                  fields: [
+                    {
+                      name: 'size',
+                      label: 'Size',
+                      widget: 'select',
+                      options: [
+                        { label: 'Small', value: 'small' },
+                        { label: 'Large', value: 'large' },
+                      ],
+                    },
+                    { name: 'price', label: 'Price' },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  });
+
+  const SETTINGS = `pages:
+  page1:
+    xyz: test
+  page2:
+    xyz: test2
+sizes:
+  small:
+    price: '10'
+`;
+
+  /**
+   * Sign in with the pages and the settings, and open the settings.
+   * @param {object} args Arguments.
+   * @param {import('../../fixtures/test.js').CMS} args.cms CMS.
+   * @param {import('@playwright/test').Page} args.page Page.
+   * @returns {Promise<{ pages: import('@playwright/test').Locator, sizes:
+   * import('@playwright/test').Locator }>} Page Settings and Sizes fields.
+   */
+  const openSettings = async ({ cms, page }) => {
+    await cms.open();
+    await cms.seed({
+      'content/pages/page1.yml': 'title: Home\n',
+      'content/pages/page2.yml': 'title: About\n',
+      'content/pages/page3.yml': 'title: Contact\n',
+      [SETTINGS_PATH]: SETTINGS,
+    });
+    await cms.signIn();
+    await (await openCollection(page, 'Data')).getByRole('row', { name: /Settings/ }).click();
+
+    return { pages: getField(page, 'Page Settings'), sizes: getField(page, 'Sizes') };
+  };
+
+  /**
+   * Get the radio button of an option in the given item of a field.
+   * @param {import('@playwright/test').Locator} field List field.
+   * @param {string} label Key subfield label.
+   * @param {number} index Item index.
+   * @param {string} name Option label.
+   * @returns {import('@playwright/test').Locator} Radio button.
+   */
+  const getOption = (field, label, index, name) =>
+    field
+      .getByRole('radiogroup', { name: label, exact: true })
+      .nth(index)
+      .getByRole('radio', { name, exact: true });
+
+  test('loads and saves the keys picked with Relation and Select fields', async ({ cms, page }) => {
+    const { pages, sizes } = await openSettings({ cms, page });
+
+    await expect(getOption(pages, 'Page', 0, 'Home')).toBeChecked();
+    await expect(getOption(pages, 'Page', 1, 'About')).toBeChecked();
+    await expect(getOption(sizes, 'Size', 0, 'Small')).toBeChecked();
+
+    await getOption(pages, 'Page', 1, 'Contact').click();
+    await pages.getByRole('button', { name: /Add.*Page Setting/ }).click();
+    await getOption(pages, 'Page', 2, 'About').click();
+    await pages.getByRole('textbox', { name: 'XYZ' }).nth(2).fill('test3');
+    await sizes.getByRole('button', { name: /Add.*Size/ }).click();
+    await getOption(sizes, 'Size', 1, 'Large').click();
+    await sizes.getByRole('textbox', { name: 'Price' }).nth(1).fill('15');
+    await getEditor(page).getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())[SETTINGS_PATH])
+      .toBe(
+        'pages:\n  page1:\n    xyz: test\n  page3:\n    xyz: test2\n  page2:\n    xyz: test3\n' +
+          "sizes:\n  small:\n    price: '10'\n  large:\n    price: '15'\n",
+      );
+  });
+
+  test('refuses a page picked for another item', async ({ cms, page }) => {
+    const { pages } = await openSettings({ cms, page });
+    const keys = pages.getByRole('group', { name: /Page.*Field/ });
+
+    await getOption(pages, 'Page', 1, 'Home').click();
+    await getEditor(page).getByRole('button', { name: 'Save' }).click();
+
+    await expect(keys.nth(0).getByRole('alert')).toContainText(
+      'This key is used for another item.',
+    );
+    await expect(keys.nth(1).getByRole('alert')).toContainText(
+      'This key is used for another item.',
+    );
+
+    await getOption(pages, 'Page', 1, 'Contact').click();
+    await expect(keys.nth(1).getByRole('alert')).toHaveCount(0);
+  });
 });
