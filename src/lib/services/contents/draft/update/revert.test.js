@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getField } from '$lib/services/contents/entry/fields';
+import { useActualDraftFieldArgs } from '$lib/test/fields';
 
 import {
   revertChanges as _revertChanges,
@@ -12,6 +13,8 @@ import {
 } from './revert';
 
 vi.mock('$lib/services/contents/entry/fields');
+
+await useActualDraftFieldArgs();
 
 describe('draft/update/revert', () => {
   let mockEntryDraft;

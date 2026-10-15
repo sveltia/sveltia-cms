@@ -13,10 +13,20 @@ import { cmsConfig } from '$lib/services/config';
  */
 
 /**
- * Regular expression to match the component name prefix in the key path, e.g. `body:c12:image:`.
+ * Regular expression to match the component name prefix in the key path, e.g. `body:c12:`.
  * @type {RegExp}
  */
 export const COMPONENT_NAME_PREFIX_REGEX = /^.+?:\w+:/;
+
+/**
+ * Remove the component name prefix from a key path, e.g. `body:c12:src` → `src`, to look up
+ * a rich text editor component’s field in the component definition. A key path without the prefix
+ * is returned as is.
+ * @param {string} keyPath Key path.
+ * @returns {string} Key path without the prefix.
+ */
+export const stripComponentNamePrefix = (keyPath) =>
+  keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, '');
 
 /**
  * The default `modes` property options.

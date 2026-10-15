@@ -17,7 +17,10 @@ vi.mock('$lib/services/contents/editor', () => ({
   showDuplicateToast: { current: undefined },
 }));
 
-vi.mock('$lib/services/contents/entry/fields', () => ({
+vi.mock('$lib/services/contents/entry/fields', async (importOriginal) => ({
+  getDraftFieldArgs: /** @type {typeof import('$lib/services/contents/entry/fields')} */ (
+    await importOriginal()
+  ).getDraftFieldArgs,
   getField: vi.fn(),
 }));
 

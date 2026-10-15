@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
 
-import { getValueFormat } from '.';
+import { getValueFormat, stripComponentNamePrefix } from '.';
 
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 
@@ -42,5 +42,17 @@ describe('Test getValueFormat()', () => {
     );
     // The Markdown field type ignores the default
     expect(getValueFormat({ name: 'body', widget: 'markdown' })).toBe('markdown');
+  });
+});
+
+describe('Test stripComponentNamePrefix()', () => {
+  test('removes the component name prefix', () => {
+    expect(stripComponentNamePrefix('body:c12:src')).toBe('src');
+    expect(stripComponentNamePrefix('body:c12:items.0.title')).toBe('items.0.title');
+  });
+
+  test('keeps a key path without the prefix as is', () => {
+    expect(stripComponentNamePrefix('items.0.title')).toBe('items.0.title');
+    expect(stripComponentNamePrefix('')).toBe('');
   });
 });

@@ -21,7 +21,10 @@ vi.mock('@sveltia/i18n', () => ({
   _: t,
 }));
 
-vi.mock('$lib/services/contents/entry/fields', () => ({
+vi.mock('$lib/services/contents/entry/fields', async (importOriginal) => ({
+  getDraftFieldArgs: /** @type {typeof import('$lib/services/contents/entry/fields')} */ (
+    await importOriginal()
+  ).getDraftFieldArgs,
   getField: vi.fn(),
   isFieldMultiple: vi.fn((fieldConfig) => !!fieldConfig.multiple),
 }));

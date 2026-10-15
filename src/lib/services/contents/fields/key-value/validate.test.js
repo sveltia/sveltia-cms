@@ -11,7 +11,9 @@ const mockGetField = vi.hoisted(() => vi.fn());
 vi.mock('$lib/services/contents/entry/fields', () => ({ getField: mockGetField }));
 
 vi.mock('$lib/services/contents/fields/rich-text', () => ({
-  COMPONENT_NAME_PREFIX_REGEX: /^__component__\./,
+  stripComponentNamePrefix: vi.fn((/** @type {string} */ keyPath) =>
+    keyPath.replace(/^__component__\./, ''),
+  ),
 }));
 
 /**

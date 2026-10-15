@@ -1,6 +1,6 @@
 import { getField } from '$lib/services/contents/entry/fields';
 import { getPairsFromContent } from '$lib/services/contents/fields/key-value/pairs';
-import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
+import { stripComponentNamePrefix } from '$lib/services/contents/fields/rich-text';
 
 /**
  * @import {
@@ -44,7 +44,7 @@ export const validateKeyValueField = ({
   const isKeyValueField = (_keyPath) =>
     getField({
       ...getFieldArgs,
-      keyPath: _keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
+      keyPath: stripComponentNamePrefix(_keyPath),
     })?.widget === 'keyvalue';
 
   // Given that values for a KeyValue field are flatten into `field.key1`, `field.key2` ...

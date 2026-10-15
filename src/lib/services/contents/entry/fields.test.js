@@ -7,6 +7,7 @@ import { isEntryCollection } from '$lib/services/contents/collection/predicates'
 import {
   fieldConfigCacheMap,
   getCurrentValue,
+  getDraftFieldArgs,
   getField,
   getFieldKind,
   getTypedKeyPath,
@@ -3936,6 +3937,41 @@ describe('Test getCurrentValue()', () => {
         // Cleanup
         customFieldTypeRegistry.delete('CustomWidget');
       });
+    });
+  });
+});
+
+describe('Test getDraftFieldArgs()', () => {
+  const draft = { collectionName: 'pages', fileName: 'about', isIndexFile: false };
+
+  test('takes the collection, file and index file flag from the draft', () => {
+    expect(getDraftFieldArgs(draft)).toEqual({
+      collectionName: 'pages',
+      fileName: 'about',
+      isIndexFile: false,
+    });
+    expect(getDraftFieldArgs(draft)).not.toHaveProperty('keyPath');
+  });
+
+  test('adds the other arguments', () => {
+    const valueMap = { title: 'Hello' };
+
+    expect(getDraftFieldArgs(draft, { keyPath: 'title', valueMap })).toEqual({
+      collectionName: 'pages',
+      fileName: 'about',
+      isIndexFile: false,
+      keyPath: 'title',
+      valueMap,
+    });
+  });
+
+  test('leaves the key path as given', () => {
+    expect(getDraftFieldArgs(draft, { keyPath: 'body:c12:src', componentName: 'image' })).toEqual({
+      collectionName: 'pages',
+      fileName: 'about',
+      isIndexFile: false,
+      keyPath: 'body:c12:src',
+      componentName: 'image',
     });
   });
 });

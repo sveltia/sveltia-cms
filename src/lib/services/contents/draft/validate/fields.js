@@ -14,6 +14,7 @@ import {
 import { isUniqueField, isValueTaken } from '$lib/services/contents/draft/validate/unique';
 import { DEFAULT_VALIDITY, finalizeValidity } from '$lib/services/contents/draft/validate/validity';
 import {
+  getDraftFieldArgs,
   getField,
   getFieldKind,
   isFieldMultiple,
@@ -29,7 +30,10 @@ import {
 } from '$lib/services/contents/fields/key-value/pairs';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { isAutoIncrementField } from '$lib/services/contents/fields/number/auto-increment';
-import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
+import {
+  COMPONENT_NAME_PREFIX_REGEX,
+  stripComponentNamePrefix,
+} from '$lib/services/contents/fields/rich-text';
 import { isOptionValue } from '$lib/services/contents/fields/select/helpers';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
@@ -118,18 +122,14 @@ const recordValidationMessages = ({
  */
 export const validateAnyField = (args) => {
   const { draft, locale, valueMap, componentName, validities, enforceRequired = true } = args;
-  const { collection, collectionName, fileName, files, isIndexFile } = draft;
+  const { collection, files, isIndexFile } = draft;
   let { keyPath, value } = args;
 
-  /** @type {GetFieldArgs} */
-  const getFieldArgs = {
-    collectionName,
-    fileName,
-    componentName,
+  const getFieldArgs = getDraftFieldArgs(draft, {
+    keyPath: stripComponentNamePrefix(keyPath),
     valueMap,
-    keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
-    isIndexFile,
-  };
+    componentName,
+  });
 
   const fieldConfig =
     getField({ ...getFieldArgs }) ??
@@ -293,8 +293,8 @@ export const validateField = (args) => {
  * @param {FlattenedEntryContent} args.valueMap Entry values for the locale.
  */
 const revalidateSingleField = ({ draft, locale, keyPath, value, valueMap }) => {
-  const { collectionName, fileName, isIndexFile, validities, validationMessages } = draft;
-  const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath, valueMap };
+  const { validities, validationMessages } = draft;
+  const getFieldArgs = getDraftFieldArgs(draft, { keyPath, valueMap });
   // A KeyValue pair is validated as part of its field, whose state is kept under the field’s own
   // key path, where the editor shows it. See `validateFields()`
   const keyValueField = getField(getFieldArgs) ? undefined : getKeyValueField(getFieldArgs);
@@ -353,13 +353,11 @@ const revalidateSingleField = ({ draft, locale, keyPath, value, valueMap }) => {
  * @param {FlattenedEntryContent} args.valueMap Entry values for the locale.
  */
 export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => {
-  const { collectionName, fileName, isIndexFile } = draft;
-
   revalidateSingleField({ draft, locale, keyPath, value, valueMap });
 
   [...keyPath.matchAll(LIST_ITEM_INDEX_REGEX)].forEach(({ index }) => {
     const listKeyPath = keyPath.slice(0, index);
-    const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath: listKeyPath, valueMap };
+    const getFieldArgs = getDraftFieldArgs(draft, { keyPath: listKeyPath, valueMap });
     const listFieldConfig = getField(getFieldArgs);
 
     // A multiple-value Select or Relation field stores its values like a List field without
@@ -426,7 +424,7 @@ export const validateList = ({ fieldConfig, validateArgs }) => {
 const getConfig = ({ getFieldArgs }, keyPath) =>
   getField({
     ...getFieldArgs,
-    keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
+    keyPath: stripComponentNamePrefix(keyPath),
   });
 
 /**
@@ -544,7 +542,6 @@ const validateValueEntry = ({
   validationMessages,
   enforceRequired,
 }) => {
-  const { collectionName, fileName, isIndexFile } = draft;
   const [prefix] = keyPath.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
   const componentName = prefix ? valueMap[`${prefix}__sc_component_name`] : undefined;
 
@@ -562,14 +559,11 @@ const validateValueEntry = ({
   const context = {
     validateArgs: { draft, locale, valueMap, validities, enforceRequired, componentName },
     validationMessages,
-    getFieldArgs: {
-      collectionName,
-      fileName,
-      isIndexFile,
-      keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
+    getFieldArgs: getDraftFieldArgs(draft, {
+      keyPath: stripComponentNamePrefix(keyPath),
       valueMap,
       componentName,
-    },
+    }),
   };
 
   // The items of a List field with subfields or types are flattened to their own subfields,

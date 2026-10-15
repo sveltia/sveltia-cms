@@ -48,7 +48,10 @@ vi.mock('$lib/services/contents/draft/save/assets', () => ({
   getOwnedEntryFolderPath: mockGetOwnedEntryFolderPath,
 }));
 
-vi.mock('$lib/services/contents/entry/fields', () => ({
+vi.mock('$lib/services/contents/entry/fields', async (importOriginal) => ({
+  getDraftFieldArgs: /** @type {typeof import('$lib/services/contents/entry/fields')} */ (
+    await importOriginal()
+  ).getDraftFieldArgs,
   getField: mockGetField,
   getTypedKeyPath: mockGetTypedKeyPath,
 }));

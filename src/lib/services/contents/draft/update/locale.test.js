@@ -4,6 +4,7 @@ import { isDraftModified } from '$lib/services/contents/draft';
 import { createProxy, isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
+import { useActualDraftFieldArgs } from '$lib/test/fields';
 
 import {
   copyDefaultLocaleValues as _copyDefaultLocaleValues,
@@ -14,6 +15,8 @@ import {
 vi.mock('$lib/services/contents/draft/create/proxy.svelte');
 vi.mock('$lib/services/contents/draft/defaults');
 vi.mock('$lib/services/contents/entry/fields');
+
+await useActualDraftFieldArgs();
 
 describe('draft/update/locale', () => {
   /** @type {any} */

@@ -8,6 +8,7 @@ import {
 } from '$lib/services/contents/draft';
 import { getInheritedI18nOption } from '$lib/services/contents/draft/create/proxy.svelte';
 import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
+import { getDraftFieldArgs } from '$lib/services/contents/entry/fields';
 import { deleteSubtree } from '$lib/services/contents/entry/subtree';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
@@ -234,8 +235,8 @@ export const canResetField = ({ valueMap, restore = false, ...args }) => {
  * @param {boolean} [args.restore] Whether to restore the default values rather than clearing them.
  */
 export const resetField = ({ draft, fieldConfig, keyPath, locale, restore = false }) => {
-  const { collectionName, fileName, isIndexFile, currentValues, defaultLocale } = draft;
-  const getFieldArgs = { collectionName, fileName, isIndexFile };
+  const { currentValues, defaultLocale } = draft;
+  const getFieldArgs = getDraftFieldArgs(draft);
 
   // The other locales are reset here rather than by the value proxy, which copies a value to them
   // as it’s written, as the proxy can’t tell which field a List item or a KeyValue pair belongs to
@@ -341,7 +342,7 @@ export const canResetEntry = ({ draft, locale, restore = false }) => {
  * @param {boolean} [args.restore] Whether to restore the default values rather than clearing them.
  */
 export const resetEntry = ({ draft, locale, restore = false }) => {
-  const { collectionName, fileName, isIndexFile, fields, currentValues, defaultLocale } = draft;
+  const { fields, currentValues, defaultLocale } = draft;
   const locales = getTargetLocales(draft, locale);
 
   suspendAutoDuplication(() => {
@@ -351,7 +352,7 @@ export const resetEntry = ({ draft, locale, restore = false }) => {
       syncAllDuplicateKeys({
         valueStore: currentValues,
         defaultLocale,
-        getFieldArgs: { collectionName, fileName, isIndexFile },
+        getFieldArgs: getDraftFieldArgs(draft),
       });
     }
   });

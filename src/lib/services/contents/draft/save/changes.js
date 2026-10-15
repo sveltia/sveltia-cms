@@ -17,7 +17,7 @@ import {
   resolveCacheDB,
 } from '$lib/services/contents/draft/save/file-changes';
 import { getCanonicalSlug, getFillSlugOptions } from '$lib/services/contents/draft/slugs';
-import { getField } from '$lib/services/contents/entry/fields';
+import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 
@@ -285,17 +285,7 @@ const normalizeLocaleContent = async ({ path, canonicalSlug, canonicalSlugKey, .
 export const createBaseSavingEntryData = async ({ draft, slugs }) => {
   const { defaultLocaleSlug, localizedSlugs } = slugs;
   const _globalAssetFolder = globalAssetFolder.current;
-
-  const {
-    collection,
-    collectionName,
-    collectionFile,
-    fileName,
-    isIndexFile,
-    currentLocales,
-    currentValues,
-    files,
-  } = draft;
+  const { collection, collectionFile, currentLocales, currentValues, files } = draft;
 
   const {
     _i18n: {
@@ -308,8 +298,7 @@ export const createBaseSavingEntryData = async ({ draft, slugs }) => {
   /** @type {Asset[]} */
   const savingAssets = [];
   const { encode_file_path: encodingEnabled = false } = cmsConfig.current?.output ?? {};
-  /** @type {GetFieldArgs} */
-  const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap: {}, isIndexFile };
+  const getFieldArgs = getDraftFieldArgs(draft, { keyPath: '', valueMap: {} });
   const canonicalSlug = getNestedCanonicalSlug({ draft, slugs }) ?? slugs.canonicalSlug;
 
   /** @type {NormalizeContentArgs} */

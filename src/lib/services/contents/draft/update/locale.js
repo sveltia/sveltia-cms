@@ -3,7 +3,7 @@ import { toRaw } from '@sveltia/utils/object';
 import { suspendAutoDuplication } from '$lib/services/contents/draft';
 import { createProxy, isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
-import { getField } from '$lib/services/contents/entry/fields';
+import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
@@ -53,13 +53,10 @@ export const forEachTargetLocale = ({ valueStore, locale, i18n, draft, keyPath }
    * @returns {boolean} Result.
    */
   const isNestedInDuplicatedField = (_draft, _keyPath) => {
-    const getFieldArgs = {
-      collectionName: _draft.collectionName,
-      fileName: _draft.fileName,
-      isIndexFile: _draft.isIndexFile,
+    const getFieldArgs = getDraftFieldArgs(_draft, {
       keyPath: _keyPath,
       valueMap: valueStore?.[locale],
-    };
+    });
 
     // Look up the configuration rather than relying on the given `i18n`, which the caller may have
     // defaulted to `false` for a field without the option, which would hide the ancestor’s strategy
@@ -101,12 +98,12 @@ export const forEachTargetLocale = ({ valueStore, locale, i18n, draft, keyPath }
  * @returns {FlattenedEntryContent} Updated content.
  */
 export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPathPrefix }) => {
-  const { collectionName, fileName, currentValues, isIndexFile } = draft;
+  const { currentValues } = draft;
   const { defaultLocale } = getDraftI18nConfig(draft);
   /** @type {FlattenedEntryContent} */
   const defaultLocaleContent = toRaw(currentValues[defaultLocale]);
   const newContent = { ...toRaw(content), ...defaultLocaleContent };
-  const getFieldArgs = { collectionName, fileName, valueMap: newContent, isIndexFile };
+  const getFieldArgs = getDraftFieldArgs(draft, { valueMap: newContent });
   /** @type {string[]} */
   const noI18nFieldKeys = [];
 

@@ -18,6 +18,8 @@ import {
   getKeyValueField,
   getPairsFromContent,
 } from '$lib/services/contents/fields/key-value/pairs';
+import { stripComponentNamePrefix } from '$lib/services/contents/fields/rich-text';
+import { useActualDraftFieldArgs } from '$lib/test/fields';
 
 import { isValueTaken } from './unique';
 
@@ -38,6 +40,11 @@ vi.mock('$lib/services/contents/draft/validate/unique', async (importOriginal) =
 }));
 vi.mock('$lib/services/common/template');
 vi.mock('$lib/services/config');
+
+await useActualDraftFieldArgs();
+vi.mocked(stripComponentNamePrefix).mockImplementation(
+  (await vi.importActual('$lib/services/contents/fields/rich-text')).stripComponentNamePrefix,
+);
 vi.mock('$lib/services/utils/regex');
 vi.mock('$lib/components/contents/details/fields', () => {
   const editors = {};

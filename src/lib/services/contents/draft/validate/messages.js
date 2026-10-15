@@ -1,10 +1,13 @@
 import { _ } from '@sveltia/i18n';
 
-import { getField, isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { getDraftFieldArgs, getField, isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getFormattedDateTime } from '$lib/services/contents/fields/date-time/validate';
-import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
+import {
+  COMPONENT_NAME_PREFIX_REGEX,
+  stripComponentNamePrefix,
+} from '$lib/services/contents/fields/rich-text';
 
 /**
  * @import { EntryDraft, EntryValidityState, InternalLocaleCode } from '$lib/types/private';
@@ -200,7 +203,7 @@ export const getPathValidationMessages = (validity) => {
  * cannot be found.
  */
 export const getInvalidFields = ({ draft, locale }) => {
-  const { collectionName, fileName, isIndexFile, currentValues, extraValues } = draft;
+  const { currentValues, extraValues } = draft;
   const currentValueMap = currentValues[locale] ?? {};
   const extraValueMap = extraValues[locale] ?? {};
 
@@ -221,15 +224,14 @@ export const getInvalidFields = ({ draft, locale }) => {
           keyPath in valueMap || Object.keys(valueMap).some((key) => key.startsWith(`${keyPath}.`)),
       )
       .map(({ keyPath, messages, prefix, valueMap }) => {
-        const field = getField({
-          collectionName,
-          fileName,
-          isIndexFile,
-          // A rich text editor component field is looked up in the component definition
-          componentName: prefix ? extraValueMap[`${prefix}__sc_component_name`] : undefined,
-          keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
-          valueMap,
-        });
+        const field = getField(
+          getDraftFieldArgs(draft, {
+            keyPath: stripComponentNamePrefix(keyPath),
+            valueMap,
+            // A rich text editor component field is looked up in the component definition
+            componentName: prefix ? extraValueMap[`${prefix}__sc_component_name`] : undefined,
+          }),
+        );
 
         return {
           keyPath,

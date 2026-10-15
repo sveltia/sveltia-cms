@@ -45,7 +45,10 @@ vi.mock('$lib/services/user/env.svelte', () => ({
   initUserEnvDetection: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/entry/fields', () => ({
+vi.mock('$lib/services/contents/entry/fields', async (importOriginal) => ({
+  getDraftFieldArgs: /** @type {typeof import('$lib/services/contents/entry/fields')} */ (
+    await importOriginal()
+  ).getDraftFieldArgs,
   LIST_KEY_PATH_REGEX: /\.\d+$/,
   getField: vi.fn(),
   getFieldKind: vi.fn(() => 'builtin'),

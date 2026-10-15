@@ -4,7 +4,7 @@ import { SvelteSet } from 'svelte/reactivity';
 import { createLazyModule } from '$lib/services/api/lazy-module';
 import { loadModule } from '$lib/services/app/dependencies';
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
-import { getField } from '$lib/services/contents/entry/fields';
+import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { RICH_TEXT_FIELD_TYPES, TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
@@ -172,10 +172,10 @@ const getCopyI18nOption = ({ field, getFieldArgs }) => {
  * @returns {CopyingFieldMap} Copied or translated field values.
  */
 export const getCopyingFieldMap = ({ draft, options }) => {
-  const { collectionName, fileName, currentValues, isIndexFile } = draft;
+  const { currentValues } = draft;
   const { sourceLanguage, targetLanguage, keyPath = '', translate = false } = options;
   const valueMap = currentValues[sourceLanguage];
-  const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
+  const getFieldArgs = getDraftFieldArgs(draft, { valueMap });
 
   return Object.fromEntries(
     Object.entries(valueMap)
