@@ -1,7 +1,11 @@
 import { toRaw } from '@sveltia/utils/object';
 
 import { suspendAutoDuplication } from '$lib/services/contents/draft';
-import { createProxy, isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
+import {
+  createProxy,
+  getListItemMatcher,
+  isDuplicatedField,
+} from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
@@ -46,38 +50,34 @@ import {
  * to run for each target locale, taking that locale’s content and the locale code.
  */
 export const forEachTargetLocale = ({ valueStore, locale, i18n, draft, keyPath }, callback) => {
-  /**
-   * Check if the field is nested in a duplicated List or Object field.
-   * @param {EntryDraft} _draft Entry draft.
-   * @param {FieldKeyPath} _keyPath Key path of the field.
-   * @returns {boolean} Result.
-   */
-  const isNestedInDuplicatedField = (_draft, _keyPath) => {
-    const getFieldArgs = getDraftFieldArgs(_draft, {
-      keyPath: _keyPath,
-      valueMap: valueStore?.[locale],
-    });
+  // The field configuration can only be looked up for the entry’s own values, not for those of a
+  // rich text editor component, which live in another value store
+  const getFieldArgs =
+    draft && keyPath && valueStore === draft.currentValues
+      ? getDraftFieldArgs(draft, { keyPath, valueMap: valueStore[locale] })
+      : undefined;
 
-    // Look up the configuration rather than relying on the given `i18n`, which the caller may have
-    // defaulted to `false` for a field without the option, which would hide the ancestor’s strategy
-    return isDuplicatedField({
-      fieldConfig: getField(getFieldArgs) ?? /** @type {Field} */ ({ i18n }),
-      getFieldArgs,
-    });
-  };
+  // Resolve the field before any callback changes the values it’s resolved from. Look up the
+  // configuration rather than relying on the given `i18n`, which the caller may have defaulted to
+  // `false` for a field without the option, which would hide the ancestor’s strategy
+  const fieldConfig = getFieldArgs ? getField(getFieldArgs) : undefined;
 
   const duplicated =
     i18n === 'duplicate' ||
-    // The field configuration can only be looked up for the entry’s own values, not for those of a
-    // rich text editor component, which live in another value store
-    (!!draft &&
-      !!keyPath &&
-      valueStore === draft.currentValues &&
-      isNestedInDuplicatedField(draft, keyPath));
+    (!!getFieldArgs &&
+      isDuplicatedField({
+        fieldConfig: fieldConfig ?? /** @type {Field} */ ({ i18n }),
+        getFieldArgs,
+      }));
+
+  // A field in an item of a translatable List field is only written to the locales that have the
+  // same item
+  const matchesListItems =
+    duplicated && getFieldArgs ? getListItemMatcher({ fieldConfig, getFieldArgs }) : () => true;
 
   suspendAutoDuplication(() => {
     Object.entries(valueStore ?? {}).forEach(([_locale, valueMap]) => {
-      if (_locale === locale || duplicated) {
+      if (_locale === locale || (duplicated && matchesListItems(valueMap))) {
         callback(valueMap, _locale);
       }
     });

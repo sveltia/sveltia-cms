@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { isDraftModified } from '$lib/services/contents/draft';
-import { createProxy, isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
+import {
+  createProxy,
+  getListItemMatcher,
+  isDuplicatedField,
+} from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
 import { useActualDraftFieldArgs } from '$lib/test/fields';
@@ -153,6 +157,7 @@ describe('draft/update/locale', () => {
       };
 
       vi.mocked(isDuplicatedField).mockReturnValue(true);
+      vi.mocked(getListItemMatcher).mockReturnValue(() => true);
 
       // The field configuration is looked up, so the `false` the caller defaulted to is ignored
       const tagsField = { name: 'tags', widget: 'list' };
@@ -183,6 +188,52 @@ describe('draft/update/locale', () => {
       run({ store: { en: {}, ja: {} } });
       expect(visited).toEqual(['en']);
       expect(isDuplicatedField).not.toHaveBeenCalled();
+      vi.mocked(isDuplicatedField).mockReset();
+    });
+
+    it('should skip a locale without the list item the field belongs to', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/1075
+      const draft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        currentValues: valueStore,
+      };
+
+      const limitField = { name: 'limit', widget: 'number', i18n: 'duplicate' };
+      /** @type {string[]} */
+      const visited = [];
+
+      vi.mocked(getField).mockReturnValue(/** @type {any} */ (limitField));
+      vi.mocked(isDuplicatedField).mockReturnValue(true);
+      vi.mocked(getListItemMatcher).mockReturnValue((content) => content === valueStore.fr);
+
+      forEachTargetLocale(
+        {
+          valueStore,
+          locale: 'en',
+          i18n: 'duplicate',
+          draft: /** @type {any} */ (draft),
+          keyPath: 'blocks.1.limit',
+        },
+        (_valueMap, _locale) => {
+          visited.push(_locale);
+        },
+      );
+
+      expect(visited).toEqual(['en', 'fr']);
+      expect(getListItemMatcher).toHaveBeenCalledOnce();
+      expect(getListItemMatcher).toHaveBeenCalledWith({
+        fieldConfig: limitField,
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          isIndexFile: false,
+          keyPath: 'blocks.1.limit',
+          valueMap: valueStore.en,
+        },
+      });
+      vi.mocked(getListItemMatcher).mockReset();
       vi.mocked(isDuplicatedField).mockReset();
     });
 

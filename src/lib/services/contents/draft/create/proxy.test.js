@@ -4,7 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getValueMapVersion } from '$lib/services/contents/draft/create/versioned-map.svelte';
 
-import { copyDefaultLocaleValue, createProxy, isDuplicatedField } from './proxy.svelte.js';
+import {
+  copyDefaultLocaleValue,
+  createProxy,
+  getListItemMatcher,
+  isDuplicatedField,
+} from './proxy.svelte.js';
 
 const { resolveCollectionAndFile, getField, revalidateField, isAutoDuplicationEnabled } =
   vi.hoisted(() => ({
@@ -578,6 +583,75 @@ describe('contents/draft/create/proxy.svelte', () => {
       expect(check('meta.tags.0.label')).toBe(true);
       expect(check('blocks.0.text')).toBe(false);
       expect(getField).not.toHaveBeenCalledWith(expect.objectContaining({ keyPath: 'blocks.0' }));
+    });
+  });
+
+  describe('getListItemMatcher', () => {
+    // https://github.com/sveltia/sveltia-cms/issues/1075
+    const latestType = { name: 'latest', fields: [{ name: 'limit', widget: 'number' }] };
+    const quoteType = { name: 'quote', fields: [{ name: 'limit', widget: 'number' }] };
+    const [limitField] = latestType.fields;
+    const [quoteLimitField] = quoteType.fields;
+    const tagField = { name: 'tag', widget: 'string', i18n: 'duplicate' };
+
+    /** @type {Record<string, any>} */
+    const fields = {
+      date: { name: 'date', widget: 'datetime', i18n: 'duplicate' },
+      blocks: { name: 'blocks', widget: 'list', i18n: true, types: [latestType, quoteType] },
+      links: { name: 'links', widget: 'list', i18n: 'duplicate' },
+      'links.0.url': { name: 'url', widget: 'string' },
+      images: { name: 'images', widget: 'image', multiple: true, i18n: 'duplicate' },
+      tags: { name: 'tags', widget: 'list', i18n: true, field: tagField },
+    };
+
+    beforeEach(() => {
+      getField.mockImplementation(({ keyPath, valueMap = {} }) => {
+        if (keyPath === 'blocks.0.limit') {
+          return { latest: limitField, quote: quoteLimitField }[valueMap['blocks.0.type']];
+        }
+
+        if (keyPath === 'tags.0') {
+          return tagField;
+        }
+
+        return fields[keyPath];
+      });
+    });
+
+    /**
+     * Check the field at the given key path against the given content.
+     * @param {string} keyPath Key path.
+     * @param {object} content Content of the other locale.
+     * @returns {boolean} Result.
+     */
+    const check = (keyPath, content) =>
+      getListItemMatcher({
+        fieldConfig: getField({ keyPath, valueMap: { 'blocks.0.type': 'latest' } }),
+        getFieldArgs: { collectionName: 'posts', keyPath, valueMap: { 'blocks.0.type': 'latest' } },
+      })(content);
+
+    it('should allow a field outside a list item, or in a duplicated list item', () => {
+      expect(check('date', {})).toBe(true);
+      expect(check('links.0.url', {})).toBe(true);
+      expect(check('images.0', {})).toBe(true);
+      expect(check('0.date', {})).toBe(true);
+    });
+
+    it('should require the list item in the other locale', () => {
+      expect(check('blocks.0.limit', {})).toBe(false);
+      expect(check('blocks.0.limit', { 'blocks.1.type': 'latest' })).toBe(false);
+      expect(check('blocks.0.limit', { 'blocks.0.type': 'latest' })).toBe(true);
+      expect(check('blocks.0.limit', { 'blocks.0.type': 'latest', 'blocks.0.limit': 1 })).toBe(
+        true,
+      );
+      expect(check('tags.0', {})).toBe(false);
+      expect(check('tags.0', { 'tags.0': 'a' })).toBe(true);
+    });
+
+    it('should require the list item to be of the same type', () => {
+      expect(check('blocks.0.limit', { 'blocks.0.type': 'quote', 'blocks.0.limit': 1 })).toBe(
+        false,
+      );
     });
   });
 });

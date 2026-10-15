@@ -4,6 +4,7 @@ import { createValueMap } from '$lib/services/contents/draft/create/versioned-ma
 import { revalidateField } from '$lib/services/contents/draft/validate/fields';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
+import { isNumeric } from '$lib/services/utils/number';
 
 /**
  * @import { EntryDraft, FlattenedEntryContent, GetFieldArgs } from '$lib/types/private';
@@ -60,6 +61,74 @@ export const getInheritedI18nOption = ({ fieldConfig, getFieldArgs }) => {
 export const isDuplicatedField = (args) => getInheritedI18nOption(args) === 'duplicate';
 
 /**
+ * Get a function to check if a duplicated field can be copied to, or deleted from, another locale
+ * at the same key path. That depends on the items of the List fields the field belongs to: the
+ * items of a List field that isn’t duplicated itself are translatable, so the other locale may have
+ * fewer items, or an item of another type at the same position. The value is then only copied to
+ * the locales that have the item, of the same type, so that no stray item is created there or a
+ * value written into an unrelated item. The items of a duplicated List field are the same in every
+ * locale.
+ * @param {object} args Arguments.
+ * @param {Field | undefined} args.fieldConfig Field configuration, as resolved for the source
+ * locale.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
+ * path of the field.
+ * @returns {(content: FlattenedEntryContent) => boolean} Function taking the content of the other
+ * locale and returning whether the field can be written there.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1075
+ */
+export const getListItemMatcher = ({ fieldConfig, getFieldArgs }) => {
+  const { keyPath } = getFieldArgs;
+  const segments = keyPath.split('.');
+
+  const itemKeyPaths = segments
+    .map((segment, index) => {
+      if (index === 0 || !isNumeric(segment)) {
+        return undefined;
+      }
+
+      const listKeyPath = segments.slice(0, index).join('.');
+      const listGetFieldArgs = { ...getFieldArgs, keyPath: listKeyPath };
+      const listField = getField(listGetFieldArgs);
+
+      // An index of a multi-value field such as `images.0` is not an item of its own
+      if (
+        listField?.widget !== 'list' ||
+        isDuplicatedField({ fieldConfig: listField, getFieldArgs: listGetFieldArgs })
+      ) {
+        return undefined;
+      }
+
+      return `${listKeyPath}.${segment}`;
+    })
+    .filter((itemKeyPath) => itemKeyPath !== undefined);
+
+  if (!itemKeyPaths.length) {
+    return () => true;
+  }
+
+  return (content) => {
+    /**
+     * Check if the other locale has the given list item. The key path itself is looked up first, so
+     * the key scan through the `$state` proxy only runs when the value is missing there.
+     * @param {string} itemKeyPath Key path of the list item, e.g. `blocks.1`.
+     * @returns {boolean} Result.
+     */
+    const hasItem = (itemKeyPath) =>
+      keyPath in content ||
+      itemKeyPath in content ||
+      Object.keys(content).some((_keyPath) => _keyPath.startsWith(`${itemKeyPath}.`));
+
+    // A variable type resolves to the same field only if the item has the same type in both
+    // locales. That’s checked first, as it rules out a missing variable type item without the scan
+    return (
+      getField({ ...getFieldArgs, valueMap: content }) === fieldConfig &&
+      itemKeyPaths.every(hasItem)
+    );
+  };
+};
+
+/**
  * Copy the default locale value to other locales if the field’s i18n strategy is `duplicate`.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -76,8 +145,13 @@ export const copyDefaultLocaleValue = ({
   value,
 }) => {
   const { keyPath } = getFieldArgs;
+  const matchesListItems = getListItemMatcher({ fieldConfig, getFieldArgs });
 
   Object.entries(draft.currentValues).forEach(([targetLanguage, content]) => {
+    if (targetLanguage === sourceLanguage) {
+      return;
+    }
+
     // Don’t duplicate the value if the parent object doesn’t exist
     if (keyPath.includes('.')) {
       // The regex always matches since keyPath is guaranteed to contain a dot (checked above).
@@ -93,6 +167,12 @@ export const copyDefaultLocaleValue = ({
       }
     }
 
+    // Don’t duplicate the value to a list item that doesn’t exist in the target locale, or that is
+    // of another type there
+    if (!matchesListItems(content)) {
+      return;
+    }
+
     // Keep the source `value` intact, as it’s used for the remaining target locales
     const localizedValue = getLocalizedRelationValue({
       fieldConfig,
@@ -101,7 +181,7 @@ export const copyDefaultLocaleValue = ({
       targetLocale: targetLanguage,
     });
 
-    if (targetLanguage !== sourceLanguage && content[keyPath] !== localizedValue) {
+    if (content[keyPath] !== localizedValue) {
       content[keyPath] = localizedValue;
     }
   });
@@ -198,8 +278,14 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
 
       // Remove the property from other locales
       if (fieldConfig && shouldAutoDuplicate(fieldConfig, getFieldArgs)) {
+        const matchesListItems = getListItemMatcher({ fieldConfig, getFieldArgs });
+
         Object.entries(draft.currentValues).forEach(([targetLanguage, content]) => {
-          if (targetLanguage !== sourceLanguage && keyPath in content) {
+          if (
+            targetLanguage !== sourceLanguage &&
+            keyPath in content &&
+            matchesListItems(content)
+          ) {
             delete content[keyPath];
           }
         });
