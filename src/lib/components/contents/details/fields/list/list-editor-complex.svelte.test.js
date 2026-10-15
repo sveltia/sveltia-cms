@@ -150,35 +150,193 @@ describe('ListEditorComplex', () => {
       .toEqual([{ name: 'Melvin', role: 'Editor' }]);
   });
 
-  test('moves focus to the next item, or the previous one, after removing an item', async () => {
-    const { draft, container } = await renderEditor(authorsField, {
-      'authors.0.name': 'Melvin',
-      'authors.1.name': 'Elsie',
-      'authors.2.name': 'Sarah',
-    });
+  describe('restoring a removed item', () => {
+    /**
+     * Get the names of the items stored in the draft.
+     * @param {any} draft Draft.
+     * @returns {string[]} Names.
+     */
+    const getNames = (draft) => getStoredItems(draft, 'authors').map(({ name }) => name);
 
     /**
-     * Get the expander button of the item at the given position.
-     * @param {number} index Item index.
-     * @returns {HTMLButtonElement | null | undefined} Button.
+     * Get what the list shows, in order: the name of each item, or `removed` for a removed item.
+     * @param {HTMLElement} container Container.
+     * @returns {string[]} Names and removed items.
      */
-    const getExpander = (index) =>
-      container.querySelectorAll('.item-wrapper')[index]?.querySelector('button');
+    const getShownItems = (container) =>
+      [...container.querySelectorAll('.item, [role="status"]')].map((element) =>
+        element.matches('.item')
+          ? /** @type {HTMLInputElement} */ (element.querySelector('input')).value
+          : 'removed',
+      );
 
-    // Removing the middle item focuses the one that takes its place
-    await page.getByRole('button', { name: 'Remove' }).nth(1).click();
-    await expect
-      .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
-      .toEqual(['Melvin', 'Sarah']);
-    await expect.poll(() => document.activeElement).toBe(getExpander(1));
+    const restoreButtons = page.getByRole('button', { name: 'Restore' });
 
-    // Removing the last item focuses the previous one
-    await page.getByRole('button', { name: 'Remove' }).nth(1).click();
-    await expect
-      .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
-      .toEqual(['Melvin']);
-    await expect.poll(() => document.activeElement).toBe(getExpander(0));
-    expect(getExpander(0)).toBeInstanceOf(HTMLButtonElement);
+    test('shows a removed item with a Restore button that puts it back in place', async () => {
+      const { draft, container } = await renderEditor(authorsField, {
+        'authors.0.name': 'Melvin',
+        'authors.1.name': 'Elsie',
+        'authors.2.name': 'Sarah',
+      });
+
+      await page.getByRole('button', { name: 'Remove' }).nth(1).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Melvin', 'Sarah']);
+      await expect.element(page.getByRole('status')).toMatchTextContent('Item removed.');
+      expect(getShownItems(container)).toEqual(['Melvin', 'removed', 'Sarah']);
+      // The focus moves to the Restore button, so the item can be restored right away
+      await expect.element(restoreButtons).toHaveFocus();
+
+      await restoreButtons.click();
+      await expect.poll(() => getNames(draft)).toEqual(['Melvin', 'Elsie', 'Sarah']);
+      expect(page.getByRole('status').elements()).toHaveLength(0);
+      // The focus moves to the expander button of the restored item
+      await expect
+        .poll(() => document.activeElement)
+        .toBe(container.querySelectorAll('.item')[1].querySelector('button'));
+    });
+
+    test('keeps the removed items in the order they were in', async () => {
+      const { draft, container } = await renderEditor(authorsField, {
+        'authors.0.name': 'Melvin',
+        'authors.1.name': 'Elsie',
+        'authors.2.name': 'Sarah',
+      });
+
+      // Remove the first two items, the second one after the first
+      await page.getByRole('button', { name: 'Remove' }).nth(0).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Elsie', 'Sarah']);
+      await page.getByRole('button', { name: 'Remove' }).nth(0).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Sarah']);
+      expect(getShownItems(container)).toEqual(['removed', 'removed', 'Sarah']);
+
+      // Restoring the second one puts it before the remaining item, after the first removed one
+      await restoreButtons.nth(1).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Elsie', 'Sarah']);
+      expect(getShownItems(container)).toEqual(['removed', 'Elsie', 'Sarah']);
+
+      await restoreButtons.click();
+      await expect.poll(() => getNames(draft)).toEqual(['Melvin', 'Elsie', 'Sarah']);
+
+      // An item removed after a removed one goes after it
+      await page.getByRole('button', { name: 'Remove' }).nth(2).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Melvin', 'Elsie']);
+      await page.getByRole('button', { name: 'Remove' }).nth(0).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Elsie']);
+      expect(getShownItems(container)).toEqual(['removed', 'Elsie', 'removed']);
+      await restoreButtons.nth(1).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Elsie', 'Sarah']);
+      await restoreButtons.click();
+      await expect.poll(() => getNames(draft)).toEqual(['Melvin', 'Elsie', 'Sarah']);
+    });
+
+    test('keeps the removed items in place while the items are moved', async () => {
+      const { draft, container } = await renderEditor(authorsField, {
+        'authors.0.name': 'Melvin',
+        'authors.1.name': 'Elsie',
+        'authors.2.name': 'Sarah',
+      });
+
+      await page.getByRole('button', { name: 'Remove' }).nth(1).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Melvin', 'Sarah']);
+      await page.getByRole('button', { name: 'Move Down' }).nth(0).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Sarah', 'Melvin']);
+      expect(getShownItems(container)).toEqual(['Sarah', 'removed', 'Melvin']);
+
+      await restoreButtons.click();
+      await expect.poll(() => getNames(draft)).toEqual(['Sarah', 'Elsie', 'Melvin']);
+    });
+
+    test('shows the items removed from the end after the list', async () => {
+      const { draft, container } = await renderEditor(authorsField, {
+        'authors.0.name': 'Melvin',
+        'authors.1.name': 'Elsie',
+      });
+
+      await page.getByRole('button', { name: 'Remove' }).nth(1).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Melvin']);
+      expect(getShownItems(container)).toEqual(['Melvin', 'removed']);
+
+      // It’s hidden along with the items while the list is collapsed
+      await page.getByRole('button', { name: 'Collapse' }).first().click();
+      await expect.poll(() => page.getByRole('status').elements()).toHaveLength(0);
+      await page.getByRole('button', { name: 'Expand' }).first().click();
+
+      // An item added at the end goes after it
+      await page.getByRole('button', { name: /Add\W+Author/ }).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Melvin', 'Anonymous']);
+      expect(getShownItems(container)).toEqual(['Melvin', 'removed', 'Anonymous']);
+
+      await restoreButtons.click();
+      await expect.poll(() => getNames(draft)).toEqual(['Melvin', 'Elsie', 'Anonymous']);
+    });
+
+    test('shows the removed items while no item is left', async () => {
+      const { draft } = await renderEditor(authorsField, { 'authors.0.name': 'Melvin' });
+
+      await page.getByRole('button', { name: 'Remove' }).click();
+      await expect.poll(() => getNames(draft)).toEqual([]);
+      await expect.element(page.getByText('0 Authors')).toBeInTheDocument();
+      await restoreButtons.click();
+      await expect.poll(() => getNames(draft)).toEqual(['Melvin']);
+    });
+
+    test('keeps the expander states of the item', async () => {
+      const { draft } = await renderEditor(authorsField, {
+        'authors.0.name': 'Melvin',
+        'authors.1.name': 'Elsie',
+      });
+
+      draft.expanderStates._['authors.1'] = false;
+      draft.expanderStates._['authors.1.details#'] = false;
+      await page.getByRole('button', { name: 'Remove' }).nth(1).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Melvin']);
+      expect(draft.expanderStates._['authors.1.details#']).toBeUndefined();
+
+      await restoreButtons.click();
+      await expect.poll(() => draft.expanderStates._['authors.1.details#']).toBe(false);
+      expect(draft.expanderStates._['authors.1']).toBe(false);
+    });
+
+    test('can’t restore an item once the list is full', async () => {
+      const { draft } = await renderEditor(
+        { ...authorsField, max: 2 },
+        { 'authors.0.name': 'Melvin', 'authors.1.name': 'Elsie' },
+      );
+
+      await page.getByRole('button', { name: 'Remove' }).nth(0).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Elsie']);
+      await expect.element(restoreButtons).toBeEnabled();
+      await page.getByRole('button', { name: /Add\W+Author/ }).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Elsie', 'Anonymous']);
+      await expect.element(restoreButtons).toBeDisabled();
+    });
+
+    test('drops the removed items once the list is changed elsewhere', async () => {
+      const { draft } = await renderEditor(authorsField, {
+        'authors.0.name': 'Melvin',
+        'authors.1.name': 'Elsie',
+      });
+
+      await page.getByRole('button', { name: 'Remove' }).nth(0).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Elsie']);
+      await page.getByRole('button', { name: /Add\W+Author/ }).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Elsie', 'Anonymous']);
+      await expect.element(restoreButtons).toBeInTheDocument();
+
+      // The list is reverted, so the removed item is back, while the item count stays the same
+      const values = draft.currentValues._default;
+
+      Object.keys(values).forEach((key) => {
+        delete values[key];
+      });
+      Object.assign(values, { 'authors.0.name': 'Melvin', 'authors.1.name': 'Elsie' });
+      await expect.poll(() => restoreButtons.elements()).toHaveLength(0);
+
+      // Another removal doesn’t bring the removed item back either
+      await page.getByRole('button', { name: 'Remove' }).nth(1).click();
+      await expect.poll(() => getNames(draft)).toEqual(['Melvin']);
+      expect(restoreButtons.elements()).toHaveLength(1);
+    });
   });
 
   test('doesn’t take the original position of the item it duplicates', async () => {
@@ -446,7 +604,7 @@ describe('ListEditorComplex (more)', () => {
     expect(draft.currentValues._default['pairs.0.foo']).toBe('bar');
   });
 
-  test('removes and reorders the items of a list with a single subfield', async () => {
+  test('removes, restores and reorders the items of a list with a single subfield', async () => {
     const { draft } = await renderEditor(tagsField, {
       'tags.0': 'a',
       'tags.1': 'b',
@@ -461,6 +619,10 @@ describe('ListEditorComplex (more)', () => {
     await page.getByRole('button', { name: 'Remove' }).nth(0).click();
     await expect.poll(() => draft.currentValues._default['tags.2']).toBeUndefined();
     expect(draft.currentValues._default['tags.0']).toBe('a');
+
+    await page.getByRole('button', { name: 'Restore' }).click();
+    await expect.poll(() => draft.currentValues._default['tags.0']).toBe('c');
+    expect(draft.currentValues._default['tags.2']).toBe('b');
   });
 
   test('can’t add items in another locale to a single-subfield list that isn’t translated', async () => {
@@ -918,6 +1080,74 @@ describe('ListEditorComplex (more)', () => {
       expect(draft.currentValues.en['residences.0.name']).toBe('B');
       expect(draft.currentValues.en['residences.0.description']).toBe('B (en)');
       expect(draft.currentValues.en['residences.1.name']).toBeUndefined();
+    });
+
+    test('restores a removed item to every locale', async () => {
+      const draft = await renderResidences('fr');
+
+      await page.getByRole('button', { name: 'Remove' }).nth(0).click();
+      await expect.poll(() => draft.currentValues.fr['residences.1.name']).toBeUndefined();
+      await page.getByRole('button', { name: 'Restore' }).click();
+      await expect.poll(() => draft.currentValues.fr['residences.1.name']).toBe('B');
+      expect(draft.currentValues.fr['residences.0.description']).toBe('A (fr)');
+      expect(draft.currentValues.en['residences.0.name']).toBe('A');
+      expect(draft.currentValues.en['residences.0.description']).toBe('A (en)');
+      expect(draft.currentValues.en['residences.1.description']).toBe('B (en)');
+    });
+
+    test('hides the removed items once the editor is switched to another locale', async () => {
+      const draft = createMockDraft({
+        fields: [{ ...residencesField, fields: [{ name: 'name', widget: 'string', i18n: true }] }],
+        i18n: {
+          i18nEnabled: true,
+          allLocales: ['fr', 'en'],
+          initialLocales: ['fr', 'en'],
+          defaultLocale: 'fr',
+          structure: /** @type {const} */ ('single_file'),
+        },
+        values: {
+          fr: { 'residences.0.name': 'A (fr)', 'residences.1.name': 'B (fr)' },
+          en: { 'residences.0.name': 'A (en)' },
+        },
+      });
+
+      const props = {
+        locale: 'fr',
+        keyPath: 'residences',
+        typedKeyPath: 'residences',
+        fieldId: 'residences',
+        fieldLabel: 'Residences',
+        fieldConfig: {
+          ...residencesField,
+          fields: [{ name: 'name', widget: 'string', i18n: true }],
+        },
+      };
+
+      const { rerender } = await renderWithDraft(ListEditorComplex, { draft, props });
+
+      await page.getByRole('button', { name: 'Remove' }).nth(0).click();
+      await expect.poll(() => draft.currentValues.fr['residences.1.name']).toBeUndefined();
+      await expect.element(page.getByRole('button', { name: 'Restore' })).toBeInTheDocument();
+
+      // The English list has as many items, but the removed item isn’t from there
+      await rerender({ ...props, locale: 'en' });
+      await expect
+        .poll(() => page.getByRole('button', { name: 'Restore' }).elements())
+        .toHaveLength(0);
+    });
+
+    test('restores an item only to the locales it was removed from', async () => {
+      const draft = await renderResidences('fr');
+
+      // The English content lacks the second item
+      delete draft.currentValues.en['residences.1.name'];
+      delete draft.currentValues.en['residences.1.description'];
+      await page.getByRole('button', { name: 'Remove' }).nth(1).click();
+      await expect.poll(() => draft.currentValues.fr['residences.1.name']).toBeUndefined();
+      await page.getByRole('button', { name: 'Restore' }).click();
+      await expect.poll(() => draft.currentValues.fr['residences.1.description']).toBe('B (fr)');
+      expect(draft.currentValues.en['residences.1.name']).toBeUndefined();
+      expect(draft.currentValues.en['residences.0.description']).toBe('A (en)');
     });
 
     test('adds an item to every locale', async () => {

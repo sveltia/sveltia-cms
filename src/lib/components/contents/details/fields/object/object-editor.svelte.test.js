@@ -55,7 +55,8 @@ const blockField = {
  * @param {string} [options.locale] Locale to edit. Any other locale than `_default` enables i18n.
  * @param {Record<string, any>} [options.props] Props to override.
  * @param {Record<string, any>} [options.context] Any other Svelte context.
- * @returns {Promise<{ draft: any, container: HTMLElement }>} Draft and container.
+ * @returns {Promise<{ draft: any, container: HTMLElement, props: Record<string, any> }>} Draft,
+ * container and props, a `$state` that can be changed.
  */
 const renderEditor = async (
   fieldConfig,
@@ -73,7 +74,7 @@ const renderEditor = async (
     values: i18n ? { en: { ...values }, fr: { ...values } } : { _default: values },
   });
 
-  const { container } = await renderFieldEditor(ObjectEditor, {
+  const { container, props: editorProps } = await renderFieldEditor(ObjectEditor, {
     fieldConfig,
     locale,
     props: { required: fieldConfig.required ?? true, ...props },
@@ -81,7 +82,7 @@ const renderEditor = async (
     context,
   });
 
-  return { draft, container };
+  return { draft, container, props: editorProps };
 };
 
 /**
@@ -253,9 +254,122 @@ describe('ObjectEditor', () => {
     await expect.poll(() => document.querySelector('[role="menu"]')).toBeNull();
     await expect.element(page.getByRole('button', { name: 'Collapse' })).toHaveFocus();
 
-    // The Remove button is gone along with the object, so the Add button takes the focus
+    // The Remove button is gone along with the object, so the Restore button takes the focus
     await page.getByRole('button', { name: 'Remove' }).click();
-    await expect.element(page.getByRole('button', { name: /Add\W+block/ })).toHaveFocus();
+    await expect.element(page.getByRole('button', { name: 'Restore' })).toHaveFocus();
+
+    // The Restore button is gone along with the notice, so the expander takes the focus again
+    await page.getByRole('button', { name: 'Restore' }).click();
+    await expect.element(page.getByRole('button', { name: 'Collapse' })).toHaveFocus();
+  });
+
+  test('restores an object with variable types', async () => {
+    const { draft } = await renderEditor(blockField, {
+      'block.type': 'hero',
+      'block.heading': 'Welcome',
+    });
+
+    await page.getByRole('button', { name: 'Remove' }).click();
+    await expect.poll(() => getStoredValues(draft, 'block')).toEqual({});
+    await expect.element(page.getByRole('status')).toMatchTextContent('Item removed.');
+    // Another type can be picked instead
+    await expect.element(page.getByRole('button', { name: /Add\W+block/ })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Restore' }).click();
+    await expect
+      .poll(() => getStoredValues(draft, 'block'))
+      .toEqual({ 'block.type': 'hero', 'block.heading': 'Welcome' });
+    // The placeholder enabling validation is gone along with the notice
+    expect('block' in draft.currentValues._default).toBe(false);
+    expect(page.getByRole('status').elements()).toHaveLength(0);
+  });
+
+  test('restores an optional object removed with the checkbox', async () => {
+    const { draft } = await renderEditor(
+      { ...authorField, required: false },
+      { 'author.name': 'Melvin', 'author.email': 'melvin@example.com' },
+    );
+
+    const checkbox = page.getByRole('checkbox', { name: /Add\W+Author/ });
+    const restoreButton = page.getByRole('button', { name: 'Restore' });
+
+    await checkbox.click();
+    await expect.poll(() => getStoredValues(draft, 'author')).toEqual({});
+    await expect.element(restoreButton).toBeVisible();
+
+    await restoreButton.click();
+    await expect
+      .poll(() => getStoredValues(draft, 'author'))
+      .toEqual({ 'author.name': 'Melvin', 'author.email': 'melvin@example.com' });
+    await expect.element(checkbox).toBeChecked();
+    await expect.element(page.getByRole('button', { name: 'Collapse' })).toHaveFocus();
+    expect(restoreButton.elements()).toHaveLength(0);
+
+    // Once the object is added again, only what was removed after that can be restored
+    await checkbox.click();
+    await expect.element(restoreButton).toBeVisible();
+    await checkbox.click();
+    await expect.poll(() => restoreButton.elements()).toHaveLength(0);
+    await page.getByRole('group', { name: /name/ }).getByRole('textbox').fill('Elsie');
+    await checkbox.click();
+    await restoreButton.click();
+    await expect
+      .poll(() => getStoredValues(draft, 'author'))
+      .toEqual({ 'author.name': 'Elsie', 'author.email': '' });
+  });
+
+  test('restores an object to where it has moved, e.g. along with a list item', async () => {
+    const { draft, props } = await renderEditor(
+      { ...authorField, required: false },
+      { 'author.name': 'Melvin' },
+    );
+
+    await page.getByRole('checkbox', { name: /Add\W+Author/ }).click();
+    await expect.poll(() => getStoredValues(draft, 'author')).toEqual({});
+
+    // The list item holding the object has moved up
+    props.keyPath = 'writer';
+    await page.getByRole('button', { name: 'Restore' }).click();
+    await expect.poll(() => getStoredValues(draft, 'writer')).toEqual({ 'writer.name': 'Melvin' });
+    expect(getStoredValues(draft, 'author')).toEqual({});
+  });
+
+  test('restores an optional object without a header within a single-subfield list', async () => {
+    const { draft } = await renderEditor(
+      { ...authorField, required: false },
+      { 'author.name': 'Melvin' },
+      {
+        context: {
+          'field-editor': { fieldContext: 'single-subfield-list-field', parentComponentNames: [] },
+        },
+      },
+    );
+
+    await page.getByRole('checkbox', { name: /Add\W+Author/ }).click();
+    await page.getByRole('button', { name: 'Restore' }).click();
+    await expect.poll(() => getStoredValues(draft, 'author')).toEqual({ 'author.name': 'Melvin' });
+  });
+
+  test('can’t restore an object once read-only, or in another locale', async () => {
+    const { draft, props } = await renderEditor(
+      { ...authorField, required: false },
+      { 'author.name': 'Melvin' },
+      { locale: 'en' },
+    );
+
+    await page.getByRole('checkbox', { name: /Add\W+Author/ }).click();
+    await expect.poll(() => draft.currentValues.en['author.name']).toBeUndefined();
+
+    props.readonly = true;
+    await expect.element(page.getByRole('button', { name: 'Restore' })).toBeDisabled();
+    props.readonly = false;
+
+    // The French object is gone as well, but it wasn’t removed here
+    delete draft.currentValues.fr['author.name'];
+    props.locale = 'fr';
+    await expect
+      .poll(() => page.getByRole('button', { name: 'Restore' }).elements())
+      .toHaveLength(0);
   });
 
   test('picks a type without a header within a single-subfield list', async () => {

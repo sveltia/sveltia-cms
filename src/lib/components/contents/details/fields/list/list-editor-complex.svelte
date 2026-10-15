@@ -9,6 +9,7 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Menu, MenuButton, MenuItem, Spacer, VisibilityObserver } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
+  import equal from 'fast-deep-equal';
   import { getContext, onMount } from 'svelte';
   import { flip } from 'svelte/animate';
 
@@ -19,6 +20,7 @@
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import ObjectBody from '$lib/components/contents/details/fields/object/object-body.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
+  import RemovedItemNotice from '$lib/components/contents/details/fields/object/removed-item-notice.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
@@ -39,13 +41,18 @@
     getInitialListExpanderStates,
   } from '$lib/services/contents/fields/list/items';
   import {
+    addRemovedItem,
+    dropRestoredItem,
+    getNestedExpanderStates,
+    shiftRemovedItems,
+  } from '$lib/services/contents/fields/list/removed-items';
+  import {
     getTypedSubKeyPath,
     resolveVariableType,
     warnUnknownType,
   } from '$lib/services/contents/fields/object/helpers';
   import { getDraftObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
   import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
-  import { focusAfterRemoval } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { createStableDerivedState } from '$lib/services/utils/state.svelte';
 
@@ -57,6 +64,7 @@
    * FieldEditorProps,
    * InternalLocaleCode,
    * MediaFieldSource,
+   * RemovedListItem,
    * } from '$lib/types/private';
    * @import {
    * ComplexListField,
@@ -211,6 +219,30 @@
   const isAddDisabled = $derived(isLocked || !hasEditableSubFields);
 
   /**
+   * Items removed since the editor was opened, which are shown in their place with a button to
+   * restore them.
+   * @type {RemovedListItem[]}
+   */
+  let removedItems = $state.raw([]);
+  /**
+   * Locale and item keys after the last item was removed, restored or added here, to tell whether
+   * the editor has since been switched to another locale, or the list changed elsewhere, e.g.
+   * reverted, which leaves the removed items out of place. The object items are given an ID as one
+   * is removed, so a revert, which brings back the original items without the IDs, changes the keys
+   * even if the item count stays the same.
+   * @type {{ locale: InternalLocaleCode, keys: (string | number)[] } | undefined}
+   */
+  let expectedListState = $state.raw();
+  /** The removed items to show, unless they’re out of place. */
+  const shownRemovedItems = $derived(
+    expectedListState?.locale === locale && equal(expectedListState.keys, itemKeys.current)
+      ? removedItems
+      : [],
+  );
+  /** The removed items grouped by the position they’re shown at. */
+  const removedItemMap = $derived(Map.groupBy(shownRemovedItems, ({ index }) => index));
+
+  /**
    * @type {HTMLElement | undefined}
    */
   let itemList = $state();
@@ -287,9 +319,27 @@
   /**
    * Get the list item element at the specified index.
    * @param {number} index Target index.
-   * @returns {HTMLElement | undefined} List item element.
+   * @returns {HTMLElement | null | undefined} List item element.
    */
-  const getItem = (index) => /** @type {HTMLElement} */ (itemList?.children[index]);
+  const getItem = (index) =>
+    /** @type {HTMLElement | null | undefined} */ (
+      itemList?.children[index]?.querySelector('.item')
+    );
+
+  /**
+   * Remember the item keys of the list in the locale being edited, once it’s been manipulated here.
+   * See {@link expectedListState}.
+   * @param {any[]} valueList Manipulated list.
+   * @param {InternalLocaleCode} targetLocale Locale the list is for.
+   */
+  const rememberListState = (valueList, targetLocale) => {
+    if (targetLocale === locale) {
+      expectedListState = {
+        locale,
+        keys: valueList.map((_item, index) => getListItemKey(valueList, index)),
+      };
+    }
+  };
 
   /**
    * Add a new subfield to the list.
@@ -313,6 +363,8 @@
     /** @type {Map<string, string>} */
     const renewedUuids = new Map();
 
+    removedItems = shiftRemovedItems(shownRemovedItems, index);
+
     updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
       const { subFields } = resolveType(type);
 
@@ -333,6 +385,7 @@
 
       valueList.splice(index, 0, newItem);
       expanderStateList.splice(index, 0, true);
+      rememberListState(valueList, targetLocale);
     });
 
     // Expand the parent if it is collapsed to show the newly added item
@@ -361,34 +414,84 @@
    * @param {number} index Target index.
    */
   const removeItem = async (index) => {
-    updateComplexList(({ valueList, expanderStateList }) => {
+    const draft = entryDraft.current;
+
+    // The controls are disabled once the draft is gone, so this is only a race with the editor
+    // closing
+    /* v8 ignore next 3 */
+    if (!draft) {
+      return;
+    }
+
+    const id = crypto.randomUUID();
+    /** @type {RemovedListItem['values']} */
+    const values = {};
+
+    const removedItem = {
+      id,
+      index,
+      values,
+      expanded: isExpanded(draft, `${keyPath}.${index}`),
+      nestedExpanderStates: getNestedExpanderStates(draft.expanderStates._, keyPath, index),
+    };
+
+    removedItems = addRemovedItem(shownRemovedItems, removedItem);
+
+    updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
       if (!hasSingleSubField) {
-        // Track original key paths for existing items before they shift due to the removal
-        tagListItems(valueList, keyPath);
+        // Track original key paths for existing items before they shift due to the removal, and
+        // give them an ID to tell whether they’re replaced later. See `expectedListState`
+        tagListItems(valueList, keyPath, { assignIds: true });
       }
 
-      valueList.splice(index, 1);
+      const [value] = valueList.splice(index, 1);
+
+      // Keep the value, so the item can be restored
+      if (value !== undefined) {
+        values[targetLocale] = value;
+      }
+
       expanderStateList.splice(index, 1);
+      rememberListState(valueList, targetLocale);
     });
 
     await sleep(50);
-    // Move focus to the expander button of the item now at the same position, the previous item if
-    // the last one was removed, or the list’s own button if no item is left
-    focusAfterRemoval({
-      index,
-      /**
-       * Get the expander button of an item.
-       * @param {number} _index Item index.
-       * @returns {HTMLButtonElement | null | undefined} Button.
-       */
-      getTarget: (_index) => getItem(_index)?.querySelector('button'),
-      /**
-       * Focus the list’s own button.
-       */
-      fallback: () => {
-        itemList?.closest('[role="group"]')?.querySelector('button')?.focus();
-      },
+    // Move focus to the Restore button shown in place of the item, so it can be restored right away
+    document.getElementById(`list-${fieldId}-restore-${id}`)?.focus();
+  };
+
+  /**
+   * Restore a removed item to the position it’s shown at.
+   * @param {RemovedListItem} removedItem Removed item.
+   */
+  const restoreItem = async ({ id, index, values, expanded, nestedExpanderStates }) => {
+    removedItems = dropRestoredItem(shownRemovedItems, id);
+
+    updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
+      if (!(targetLocale in values)) {
+        return;
+      }
+
+      if (!hasSingleSubField) {
+        // Track original key paths for existing items before they shift due to the restoration
+        tagListItems(valueList, keyPath);
+      }
+
+      valueList.splice(index, 0, values[targetLocale]);
+      expanderStateList.splice(index, 0, expanded);
+      rememberListState(valueList, targetLocale);
     });
+
+    // Put back the expander states of the objects and lists nested in the item
+    updateExpanderStates(
+      Object.fromEntries(
+        nestedExpanderStates.map(([suffix, state]) => [`${keyPath}.${index}${suffix}`, state]),
+      ),
+    );
+
+    await sleep(50);
+    // Move focus to the expander button of the restored item
+    getItem(index)?.querySelector('button')?.focus();
   };
 
   /**
@@ -397,7 +500,7 @@
    * @param {number} to Destination index.
    */
   const moveItem = (from, to) => {
-    updateComplexList(({ valueList, expanderStateList }) => {
+    updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
       if (!hasSingleSubField) {
         // Ensure the IDs are unique before reordering, so that the `each` block below keeps
         // following each item rather than its position, and track original key paths for correct
@@ -408,6 +511,7 @@
       valueList.splice(to, 0, ...valueList.splice(from, 1));
       // The expander states are only manipulated with the default locale, so this list may be empty
       expanderStateList.splice(to, 0, ...expanderStateList.splice(from, 1));
+      rememberListState(valueList, targetLocale);
     });
   };
 
@@ -457,6 +561,14 @@
      * @returns {Promise<void>} Promise.
      */
     settle: () => sleep(50),
+    /**
+     * Get the bounding rectangle of the item in a wrapper, leaving out the removed items shown
+     * before it.
+     * @param {HTMLElement} element Item wrapper.
+     * @returns {DOMRect} Rectangle.
+     */
+    getItemRect: (element) =>
+      /** @type {Element} */ (element.lastElementChild).getBoundingClientRect(),
   });
 
   /**
@@ -523,6 +635,16 @@
   {:else}
     <MenuItem label={_(`add_item_${position}`)} onclick={() => addItem({ index: insertIndex })} />
   {/if}
+{/snippet}
+
+{#snippet removedItemNotices(/** @type {number} */ index)}
+  {#each removedItemMap.get(index) ?? [] as removedItem (removedItem.id)}
+    <RemovedItemNotice
+      id="list-{fieldId}-restore-{removedItem.id}"
+      disabled={isLocked || hasMaxItems}
+      onRestore={() => restoreItem(removedItem)}
+    />
+  {/each}
 {/snippet}
 
 {#if singleItem}
@@ -592,6 +714,8 @@
       level of a keyed `each` block, and the item itself sits inside `VisibilityObserver`.
     -->
     <div role="none" class="item-wrapper" animate:flip={{ duration: 200 }}>
+      <!-- The items removed from this position are shown before the item now there -->
+      {@render removedItemNotices(displayIndex)}
       <VisibilityObserver>
         {@const itemKeyPath = `${keyPath}.${index}`}
         {@const type = hasVariableTypes ? item[typeKey] : undefined}
@@ -716,6 +840,12 @@
     </div>
   {/each}
 </div>
+{#if removedItemMap.has(items.length) && (parentExpanded || !items.length)}
+  <!-- The items removed from the end of the list -->
+  <div role="none" class="removed-item-list">
+    {@render removedItemNotices(items.length)}
+  </div>
+{/if}
 {#if allowAdd && !addToTop && items.length && parentExpanded && !hasMaxItems}
   <div role="none" class="toolbar bottom add">
     <Spacer flex />
@@ -768,6 +898,17 @@
     &.collapsed {
       display: none;
     }
+  }
+
+  .item-wrapper,
+  .removed-item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .removed-item-list {
+    margin-block-start: 16px;
   }
 
   .item {

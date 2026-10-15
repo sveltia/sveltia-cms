@@ -239,6 +239,37 @@ describe('createDragSorter()', () => {
     expect(onMove).not.toHaveBeenCalled();
   });
 
+  test('measures the item with the given function', () => {
+    // The item under the pointer holds more than the item itself, which only takes its lower half
+    const getItemRect = vi.fn(() => /** @type {DOMRect} */ ({ top: 60, height: 20, bottom: 80 }));
+
+    const rectSorter = createDragSorter({
+      /**
+       * Get the item count.
+       * @returns {number} Count.
+       */
+      getItemCount: () => itemCount.current,
+      /**
+       * Get the list element.
+       * @returns {HTMLElement} Element.
+       */
+      getListElement: () => list.listElement,
+      onMove,
+      getItemRect,
+    });
+
+    rectSorter.onDragStart(0);
+    // The lower half of the whole element, but the upper half of the item itself
+    rectSorter.onDragOver(createEvent({ target: list.items[1], clientY: 65 }));
+    expect(getItemRect).toHaveBeenCalledWith(list.items[1]);
+    expect(rectSorter.displayOrder).toEqual([0, 1, 2]);
+
+    // The default measurement would move the item
+    sorter.onDragStart(0);
+    sorter.onDragOver(createEvent({ target: list.items[1], clientY: 65 }));
+    expect(sorter.displayOrder).toEqual([1, 0, 2]);
+  });
+
   test('keeps the preview while the pointer is over a gap between items', () => {
     sorter.onDragStart(0);
     sorter.onDragOver(createEvent({ target: list.items[2], clientY: 110 }));

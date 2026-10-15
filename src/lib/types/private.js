@@ -1179,6 +1179,27 @@
  */
 
 /**
+ * Values of an Object field removed from an entry draft, in each locale they were removed from,
+ * keyed by their key path relative to the object’s, e.g. `.title` for `seo.title`, so they can be
+ * put back even if the object has moved since.
+ * @typedef {Record<InternalLocaleCode, Record<string, any>>} RemovedObjectValues
+ */
+
+/**
+ * Item removed from a List field with subfields, which is shown in its place with a button to
+ * restore it until the editor is closed.
+ * @typedef {object} RemovedListItem
+ * @property {string} id Unique ID, to key the item with.
+ * @property {number} index Position in the list the item is restored to: the index of the item
+ * it’s shown before, or the item count if it’s shown after every item.
+ * @property {Record<InternalLocaleCode, any>} values Item value in each locale it was removed
+ * from.
+ * @property {boolean} expanded Whether the item was expanded.
+ * @property {[suffix: string, state: boolean][]} nestedExpanderStates Expander states of the
+ * objects and lists nested in the item, as returned by `getNestedExpanderStates()`.
+ */
+
+/**
  * Entry draft.
  * @typedef {object} EntryDraft
  * @property {string} id Unique draft ID. For a new entry, it’s a randomly-generated UUID. For an

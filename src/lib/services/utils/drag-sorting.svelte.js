@@ -64,6 +64,10 @@ import {
  * the item at the given index, to be attached to a drag started with {@link DragSorter.itemProps}.
  * @param {() => Promise<void>} [args.settle] Function waiting for the moved item to be rendered in
  * its new position, before its reorder control gets the focus. Defaults to Svelte’s `tick`.
+ * @param {(element: HTMLElement) => DOMRect} [args.getItemRect] Function returning the bounding
+ * rectangle of the item element under the pointer, whose vertical midpoint decides whether the
+ * dragged item goes above or below it. Defaults to the element’s own rectangle; give it for an
+ * element that holds more than the item itself.
  * @returns {DragSorter} Reactive state and event handlers.
  */
 export const createDragSorter = ({
@@ -72,6 +76,7 @@ export const createDragSorter = ({
   onMove,
   getItemData,
   settle = tick,
+  getItemRect = (element) => element.getBoundingClientRect(),
 }) => {
   /** @type {number | undefined} */
   let grabbedIndex = $state();
@@ -225,7 +230,7 @@ export const createDragSorter = ({
         dropIndex: getDropIndex({
           index: item.index,
           clientY: event.clientY,
-          rect: item.element.getBoundingClientRect(),
+          rect: getItemRect(item.element),
         }),
       });
 

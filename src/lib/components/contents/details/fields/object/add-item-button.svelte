@@ -39,23 +39,12 @@
   const hasMaxItems = $derived(items.length >= max);
 
   const menuId = $props.id();
-
-  /** @type {MenuButton | undefined} */
-  let menuButton = $state();
-
-  /**
-   * Move the focus to the menu button of a field with variable types, e.g. once the object that
-   * took its place has been removed.
-   */
-  export const focus = () => {
-    /** @type {MenuButton} */ (menuButton).focus();
-  };
 </script>
 
 {#if hasMaxItems}
   <!-- The list is full -->
 {:else if Array.isArray(types)}
-  <MenuButton bind:this={menuButton} variant="tertiary" size="small" {label} {disabled}>
+  <MenuButton variant="tertiary" size="small" {label} {disabled}>
     {#snippet startIcon()}
       <Icon name="add" />
     {/snippet}

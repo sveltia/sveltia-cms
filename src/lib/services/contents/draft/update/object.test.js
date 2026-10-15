@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { addObjectFields, removeObjectFields } from './object';
+import { addObjectFields, removeObjectFields, restoreObjectFields } from './object';
 
 const { suspendAutoDuplication, copyDefaultLocaleValues, forEachTargetLocale } = vi.hoisted(() => ({
   suspendAutoDuplication: vi.fn((fn) => fn()),
@@ -186,7 +186,7 @@ describe('draft/update/object', () => {
     });
 
     it('removes the subfields, enabling validation', () => {
-      removeObjectFields({
+      const removedValues = removeObjectFields({
         draft,
         locale: 'en',
         keyPath: 'obj',
@@ -195,10 +195,12 @@ describe('draft/update/object', () => {
 
       expect(draft.currentValues.en).toEqual({ objective: 'kept', obj: null });
       expect(draft.currentValues.fr).toEqual({ 'obj.title': 'Bonjour' });
+      // The removed values are returned, so they can be restored
+      expect(removedValues).toEqual({ en: { '.title': 'Hello', '.nested.a': 1 } });
     });
 
     it('removes them from every locale with the duplicate strategy', () => {
-      removeObjectFields({
+      const removedValues = removeObjectFields({
         draft,
         locale: 'en',
         keyPath: 'obj',
@@ -206,6 +208,10 @@ describe('draft/update/object', () => {
       });
 
       expect(draft.currentValues.fr).toEqual({ obj: null });
+      expect(removedValues).toEqual({
+        en: { '.title': 'Hello', '.nested.a': 1 },
+        fr: { '.title': 'Bonjour' },
+      });
     });
 
     it('removes them from another value store', () => {
@@ -221,6 +227,54 @@ describe('draft/update/object', () => {
 
       expect(draft.extraValues.en).toEqual({ obj: null });
       expect(draft.currentValues.en['obj.title']).toBe('Hello');
+    });
+  });
+
+  describe('restoreObjectFields', () => {
+    it('puts the values back in each locale they were removed from, disabling validation', () => {
+      draft.currentValues = {
+        en: { obj: null, objective: 'kept' },
+        fr: { obj: null },
+      };
+
+      restoreObjectFields({
+        draft,
+        keyPath: 'obj',
+        removedValues: { en: { '.title': 'Hello', '.nested.a': 1 }, fr: {} },
+      });
+
+      expect(suspendAutoDuplication).toHaveBeenCalled();
+      expect(draft.currentValues.en).toEqual({
+        objective: 'kept',
+        'obj.title': 'Hello',
+        'obj.nested.a': 1,
+      });
+      expect(draft.currentValues.fr).toEqual({});
+    });
+
+    it('puts them back under the object’s current key path', () => {
+      draft.currentValues = { en: { 'list.0.obj': null } };
+
+      restoreObjectFields({
+        draft,
+        keyPath: 'list.0.obj',
+        removedValues: { en: { '.title': 'Hello' } },
+      });
+
+      expect(draft.currentValues.en).toEqual({ 'list.0.obj.title': 'Hello' });
+    });
+
+    it('puts them back in another value store, skipping a locale that is gone', () => {
+      draft.extraValues = { en: { obj: null } };
+
+      restoreObjectFields({
+        draft,
+        valueStoreKey: 'extraValues',
+        keyPath: 'obj',
+        removedValues: { en: { '.title': 'Hello' }, fr: { '.title': 'Bonjour' } },
+      });
+
+      expect(draft.extraValues).toEqual({ en: { 'obj.title': 'Hello' } });
     });
   });
 });
