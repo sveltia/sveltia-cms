@@ -7,9 +7,9 @@ import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import {
   assertBranchNotMoved,
   createCommitMessage,
+  createLastCommitError,
   dedupeFileCommits,
 } from '$lib/services/backends/git/shared/commits';
-import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { getByteSize } from '$lib/services/utils/file';
@@ -65,16 +65,11 @@ export const fetchLastCommit = async (branchName) => {
   );
 
   if (!result.repository) {
-    throw createLocalizedError('Failed to retrieve the last commit hash.', 'repository_not_found', {
-      repo,
-    });
+    throw createLastCommitError('repository_not_found', { repo });
   }
 
   if (!result.repository.ref) {
-    throw createLocalizedError('Failed to retrieve the last commit hash.', 'branch_not_found', {
-      repo,
-      branch,
-    });
+    throw createLastCommitError('branch_not_found', { repo, branch });
   }
 
   const { oid: hash, message } = result.repository.ref.target.history.nodes[0];

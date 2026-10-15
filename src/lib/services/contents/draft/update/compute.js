@@ -4,6 +4,7 @@ import { getComputedValue } from '$lib/services/contents/fields/compute/helpers'
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
+import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
 
 /**
@@ -259,8 +260,8 @@ const isLocaleTarget = ({ fieldConfig, locale, defaultLocale, i18nEnabled }) =>
  * @returns {boolean} Whether any value has changed.
  */
 const updateLocaleComputedValues = ({ draft, valueStoreKey, locale, valueMap, target }) => {
-  const { collectionName, fileName, collection, collectionFile, fields, isIndexFile } = draft;
-  const { i18nEnabled, defaultLocale } = (collectionFile ?? collection)._i18n;
+  const { collectionName, fileName, fields, isIndexFile } = draft;
+  const { i18nEnabled, defaultLocale } = getDraftI18nConfig(draft);
   /** @type {ListItemIndex | undefined} */
   let index;
 

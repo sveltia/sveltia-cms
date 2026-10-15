@@ -8,6 +8,7 @@ import {
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import {
+  createForkError,
   isOpenAuthoringConfiguredFor,
   pollForFork,
   resolveWorkflowRepository,
@@ -300,12 +301,7 @@ export const createFork = async () => {
       await fetchAPI(`/repos/${owner}/${repo}/forks`, { method: 'POST' })
     );
   } catch (/** @type {any} */ ex) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to fork the repository.', ex);
-
-    throw createLocalizedError('Failed to fork the repository.', 'open_authoring.fork_failed', {
-      repo: `${owner}/${repo}`,
-    });
+    throw createForkError(`${owner}/${repo}`, ex);
   }
 
   const [forkOwner, forkRepo] = result.full_name.split('/');

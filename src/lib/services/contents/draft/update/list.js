@@ -3,6 +3,7 @@ import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale'
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { getSubtree } from '$lib/services/contents/entry/subtree';
 import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
+import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { flattenKeys } from '$lib/services/utils/object';
 
 /**
@@ -112,8 +113,7 @@ export const updateListField = ({
   keyPath,
   manipulate,
 }) => {
-  const { collection, collectionFile } = draft;
-  const { defaultLocale } = (collectionFile ?? collection)._i18n;
+  const { defaultLocale } = getDraftI18nConfig(draft);
   const [valueList, valueListRemainder] = getItemList(draft[valueStoreKey][locale], keyPath);
   const isDefaultLocale = locale === defaultLocale;
   // Manipulation should only happen once with the default locale

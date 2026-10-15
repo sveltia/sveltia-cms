@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  collectSafely,
   findURLInSummary,
   getPreviewContext,
   normalizeURL,
@@ -692,5 +693,23 @@ describe('resolveDeployments()', () => {
     });
 
     expect(result.abc.url).toBeUndefined();
+  });
+});
+
+describe('collectSafely()', () => {
+  test('runs the task', async () => {
+    const task = vi.fn().mockResolvedValue(undefined);
+
+    await collectSafely(task);
+
+    expect(task).toHaveBeenCalledOnce();
+  });
+
+  test('reports a failure instead of throwing it', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const ex = new Error('Not Found');
+
+    await expect(collectSafely(vi.fn().mockRejectedValue(ex))).resolves.toBeUndefined();
+    expect(warn).toHaveBeenCalledWith('Failed to fetch the deployment info.', ex);
   });
 });

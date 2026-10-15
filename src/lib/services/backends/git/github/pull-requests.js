@@ -7,7 +7,7 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { PULL_REQUEST_DESCRIPTION } from '$lib/services/backends/git/shared/pull-requests';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
-import { getAllStatusLabels, getStatusLabel } from '$lib/services/workflow/labels';
+import { getStatusLabel, replaceStatusLabel } from '$lib/services/workflow/labels';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
@@ -227,7 +227,6 @@ export const deleteBranch = async (branch) => {
  */
 export const updateLabels = async (pullRequest, status) => {
   const { owner, repo } = repository;
-  const cmsLabels = getAllStatusLabels();
 
   // Read the labels from the pulls endpoint: the issues endpoint's `GET` needs issue access, which
   // a fine-grained token created from the token page doesn't have, while its `PATCH` also accepts
@@ -236,10 +235,10 @@ export const updateLabels = async (pullRequest, status) => {
     await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}`)
   );
 
-  const newLabels = [
-    ...labels.map(({ name }) => name).filter((name) => !cmsLabels.includes(name)),
-    getStatusLabel(status),
-  ];
+  const newLabels = replaceStatusLabel(
+    labels.map(({ name }) => name),
+    status,
+  );
 
   await fetchAPI(`/repos/${owner}/${repo}/issues/${pullRequest.number}`, {
     method: 'PATCH',
@@ -328,18 +327,4 @@ export const createPullRequest = async ({ branch, title, status }) => {
   }
 
   return pullRequest;
-};
-
-/**
- * Reopen a pull request that was closed earlier.
- * @param {WorkflowPullRequest} pullRequest Pull request.
- * @see https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request
- */
-export const reopenPullRequest = async (pullRequest) => {
-  const { owner, repo } = repository;
-
-  await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}`, {
-    method: 'PATCH',
-    body: { state: 'open' },
-  });
 };

@@ -11,6 +11,7 @@ import { getField } from '$lib/services/contents/entry/fields';
 import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
 import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/fields/hidden/defaults';
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
+import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldLocalized, isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { createState, getSnapshot } from '$lib/services/utils/state.svelte';
 
@@ -265,12 +266,12 @@ export const createDuplicateDraftState = ({ draft, currentValues, files }) => {
  */
 export const duplicateDraft = async (entryDraft) => {
   const draft = /** @type {EntryDraft} */ (entryDraft.current);
-  const { collectionName, fileName, collection, collectionFile, fields, isIndexFile } = draft;
+  const { collectionName, fileName, collection, fields, isIndexFile } = draft;
 
   const {
     defaultLocale,
     canonicalSlug: { key: canonicalSlugKey },
-  } = (collectionFile ?? collection)._i18n;
+  } = getDraftI18nConfig(draft);
 
   const getFieldArgs = { collectionName, fileName, isIndexFile };
   const orderFieldKey = getOrderFieldKey(collection);

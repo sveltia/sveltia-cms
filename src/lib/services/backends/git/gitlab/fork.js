@@ -12,6 +12,7 @@ import {
 import {
   isOpenAuthoringConfiguredFor,
   pollForFork,
+  requestForkWithFallbackName,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
   setUpForkFor,
@@ -284,44 +285,27 @@ const isForkPathTaken = async () => {
 export const createFork = async () => {
   const { owner, repo } = repository;
   const endpoint = `/projects/${getProjectId()}/fork`;
-  /** @type {Record<string, any>} */
-  let result;
+  // A path can’t hold a slash, which a project in a subgroup has in its namespace
+  const name = `${owner.replaceAll('/', '-')}-${repo}`;
 
-  /**
-   * Log the given failure and create an error that tells the user the fork couldn’t be made.
-   * @param {Error} ex Failure.
-   * @returns {Error} Error to throw.
-   */
-  const createForkError = (ex) => {
-    // eslint-disable-next-line no-console
-    console.error('Failed to fork the repository.', ex);
-
-    return createLocalizedError('Failed to fork the repository.', 'open_authoring.fork_failed', {
-      repo: `${owner}/${repo}`,
-    });
-  };
-
-  try {
-    result = /** @type {Record<string, any>} */ (await fetchAPI(endpoint, { method: 'POST' }));
-  } catch (/** @type {any} */ ex) {
+  const result = await requestForkWithFallbackName({
+    repoPath: `${owner}/${repo}`,
+    /**
+     * Request a fork at the default path.
+     * @returns {Promise<any>} New fork.
+     */
+    requestFork: () => fetchAPI(endpoint, { method: 'POST' }),
+    /**
+     * Request a fork named after the configured project’s namespace and name.
+     * @returns {Promise<any>} New fork.
+     */
+    requestRenamedFork: () => fetchAPI(endpoint, { method: 'POST', body: { name, path: name } }),
     // GitLab refuses a name or path that has already been taken in the namespace with 409 Conflict,
     // or with 400 Bad Request on some versions. The lookup tells that from any other failure, such
     // as forking being turned off
-    if (![400, 409].includes(ex.cause?.status) || !(await isForkPathTaken())) {
-      throw createForkError(ex);
-    }
-
-    // A path can’t hold a slash, which a project in a subgroup has in its namespace
-    const name = `${owner.replaceAll('/', '-')}-${repo}`;
-
-    try {
-      result = /** @type {Record<string, any>} */ (
-        await fetchAPI(endpoint, { method: 'POST', body: { name, path: name } })
-      );
-    } catch (/** @type {any} */ retryEx) {
-      throw createForkError(retryEx);
-    }
-  }
+    conflictStatuses: [400, 409],
+    isNameTaken: isForkPathTaken,
+  });
 
   const fork = parseProjectPath(result.path_with_namespace);
 

@@ -4,6 +4,7 @@ import { loadImmutable } from '$lib/services/api/immutable';
 import { createEntryMap } from '$lib/services/api/preview-data';
 import { eventHookRegistry } from '$lib/services/api/registries';
 import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
+import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import { user } from '$lib/services/user/account.svelte';
 import { flattenKeys } from '$lib/services/utils/object';
 
@@ -12,6 +13,7 @@ import { flattenKeys } from '$lib/services/utils/object';
  * Entry,
  * InternalCollection,
  * InternalCollectionFile,
+ * LocalizedEntry,
  * User,
  * } from '$lib/types/private';
  * @import { AppEventType } from '$lib/types/public';
@@ -105,7 +107,10 @@ export const callEventHooks = async ({
     // Read the content on every iteration, so a hook sees the changes made by the previous ones. A
     // multi-file i18n entry can be missing its default locale file, in which case any locale stands
     // in rather than the destructuring throwing
-    const { content, path } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {};
+    const { content, path } = /** @type {LocalizedEntry} */ (
+      getEntryLocaleFile(entry, { defaultLocale }) ?? {}
+    );
+
     let updatedMap;
 
     try {

@@ -11,6 +11,7 @@ import {
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
 import { getSlugOptions, LEGACY_SLUG_EDITOR_TAG } from '$lib/services/contents/collection/slug';
+import { usesSingleFileStructure } from '$lib/services/contents/i18n/config';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
@@ -327,17 +328,13 @@ const getLocalizingKeyPaths = (collection) => {
  */
 export const hasLocalizedSlugs = (collection) => {
   const {
-    _i18n: {
-      i18nEnabled,
-      structureMap: { i18nSingleFile, i18nSingleFileDefaultRoot },
-    },
+    _i18n: { i18nEnabled, structureMap },
   } = collection;
 
   return (
     // A monolingual collection has only one locale, so there’s nothing to localize
     i18nEnabled &&
-    !i18nSingleFile &&
-    !i18nSingleFileDefaultRoot &&
+    !usesSingleFileStructure(structureMap) &&
     collection._type === 'entry' &&
     (getSlugOptions(collection).localized || !!getLocalizingKeyPaths(collection).length)
   );

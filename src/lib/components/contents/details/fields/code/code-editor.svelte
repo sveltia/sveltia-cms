@@ -11,6 +11,7 @@
   import { getContext, tick } from 'svelte';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { deferDraftWrite } from '$lib/services/contents/draft/update/deferred';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
   import { watch } from '$lib/services/utils/state.svelte';
@@ -131,10 +132,8 @@
 
     const valueStore = draft[valueStoreKey][locale];
 
-    // This runs from an effect, so defer the write to the draft like `<FieldEditor>` does: a write
-    // made while an effect is running makes Svelte walk the derived graph below the value map
-    // without memoizing, which takes exponentially longer with each level of nesting
-    queueMicrotask(() => {
+    // This runs from an effect, so the write to the draft is deferred
+    deferDraftWrite(() => {
       Object.assign(valueStore, updates);
     });
   };

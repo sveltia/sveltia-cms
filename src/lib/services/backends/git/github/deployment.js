@@ -2,7 +2,11 @@ import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { findURLInSummary, resolveDeployments } from '$lib/services/backends/git/shared/deployment';
+import {
+  collectSafely,
+  findURLInSummary,
+  resolveDeployments,
+} from '$lib/services/backends/git/shared/deployment';
 import { splitIntoChunks } from '$lib/services/utils/array';
 
 /**
@@ -306,17 +310,14 @@ const collectTogether = async (shas, candidateMap) => {
  */
 const collectOneByOne = async (shas, candidateMap) => {
   await Promise.all(
-    Object.values(SOURCES).map(async ({ selection, parse }) => {
-      try {
+    // A missing or restricted field shouldn’t take the other sources down with it
+    Object.values(SOURCES).map(({ selection, parse }) =>
+      collectSafely(async () => {
         const commits = await fetchCommits(shas, selection);
 
         shas.forEach((sha, index) => parse(commits[index], sha, candidateMap));
-      } catch (ex) {
-        // A missing or restricted field shouldn’t take the other sources down with it
-        // eslint-disable-next-line no-console
-        console.warn('Failed to fetch the deployment info.', ex);
-      }
-    }),
+      }),
+    ),
   );
 };
 

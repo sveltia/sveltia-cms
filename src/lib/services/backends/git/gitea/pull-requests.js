@@ -17,9 +17,9 @@ import {
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
 import {
-  getAllStatusLabels,
   getStatusFromLabels,
   getStatusLabel,
+  replaceStatusLabel,
 } from '$lib/services/workflow/labels';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
@@ -430,16 +430,15 @@ export const applyLabels = async (number, labels, status, method) => {
 export const updateLabels = async (pullRequest, status) => {
   const { owner, repo } = repository;
   const { number } = pullRequest;
-  const cmsLabels = getAllStatusLabels();
 
   const labels = /** @type {Record<string, any>[]} */ (
     await fetchAPI(`/repos/${owner}/${repo}/issues/${number}/labels`)
   );
 
-  const newLabels = [
-    ...labels.map(({ name }) => name).filter((name) => !cmsLabels.includes(name)),
-    getStatusLabel(status),
-  ];
+  const newLabels = replaceStatusLabel(
+    labels.map(({ name }) => name),
+    status,
+  );
 
   await applyLabels(/** @type {number} */ (number), newLabels, status, 'PUT');
 };

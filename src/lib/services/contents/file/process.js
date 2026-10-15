@@ -11,6 +11,10 @@ import { hasRootField } from '$lib/services/contents/entry/fields';
 import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
 import { mayHaveUnsafeInteger } from '$lib/services/contents/file/integers';
 import { hasCustomParser, parseEntryFile } from '$lib/services/contents/file/parse';
+import {
+  usesMultiFileStructure,
+  usesSingleFileStructure,
+} from '$lib/services/contents/i18n/config';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { flattenKeys } from '$lib/services/utils/object';
 import { runInChunks } from '$lib/services/utils/scheduling';
@@ -639,20 +643,14 @@ export const prepareEntry = async ({ file, entries, entryMap, errors, parsedFile
       i18nEnabled,
       allLocales,
       defaultLocale,
-      structureMap: {
-        i18nSingleFile,
-        i18nSingleFileDefaultRoot,
-        i18nMultiFile,
-        i18nMultiFolder,
-        i18nMultiRootFolder,
-      },
+      structureMap,
       canonicalSlug: { key: canonicalSlugKey },
     },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   // Normalize `single_file_default_root` content into the standard locale-keyed format so that the
   // rest of the processing pipeline can treat it identically to `single_file`.
-  const effectiveRawContent = i18nSingleFileDefaultRoot
+  const effectiveRawContent = structureMap.i18nSingleFileDefaultRoot
     ? normalizeDefaultRootContent(rawContent, allLocales, defaultLocale)
     : rawContent;
 
@@ -660,7 +658,7 @@ export const prepareEntry = async ({ file, entries, entryMap, errors, parsedFile
     return;
   }
 
-  const isI18nSingleFile = i18nSingleFile || i18nSingleFileDefaultRoot;
+  const isI18nSingleFile = usesSingleFileStructure(structureMap);
   const transformedContent = transformRawContent(effectiveRawContent, fields, isI18nSingleFile);
 
   if (!transformedContent) {
@@ -671,7 +669,7 @@ export const prepareEntry = async ({ file, entries, entryMap, errors, parsedFile
     return;
   }
 
-  const isMultiFileStructure = i18nMultiFile || i18nMultiFolder || i18nMultiRootFolder;
+  const isMultiFileStructure = usesMultiFileStructure(structureMap);
 
   const { subPath, locale } = extractPathInfo({
     file,

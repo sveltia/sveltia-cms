@@ -1,5 +1,6 @@
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
+import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
@@ -41,14 +42,14 @@ export const getMaxEntryNumber = ({ collectionName, keyPath, locale }) =>
  * edited. Each of them takes the next order, so the new one comes after them.
  */
 export const assignManualSortOrder = (draft, offset = 0) => {
-  const { collection, collectionFile, currentValues } = draft;
+  const { collection, currentValues } = draft;
   const orderKey = getOrderFieldKey(collection);
 
   if (!orderKey) {
     return;
   }
 
-  const { defaultLocale } = (collectionFile ?? collection)._i18n;
+  const { defaultLocale } = getDraftI18nConfig(draft);
 
   const maxOrder = getMaxEntryNumber({
     collectionName: collection.name,

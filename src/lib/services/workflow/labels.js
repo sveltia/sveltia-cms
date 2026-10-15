@@ -51,6 +51,20 @@ export const getAllStatusLabels = () =>
   );
 
 /**
+ * Replace the CMS-managed status label among the given pull request labels with the one for the
+ * given status, preserving any other label. Status labels with another known prefix, including the
+ * legacy ones, are dropped too.
+ * @param {string[]} labels Label names on a pull request.
+ * @param {WorkflowStatus} status New status.
+ * @returns {string[]} New label names.
+ */
+export const replaceStatusLabel = (labels, status) => {
+  const cmsLabels = getAllStatusLabels();
+
+  return [...labels.filter((name) => !cmsLabels.includes(name)), getStatusLabel(status)];
+};
+
+/**
  * Determine the Editorial Workflow status from the given pull request labels. Labels with a legacy
  * prefix are recognized as well, but the configured prefix takes precedence in the unlikely case
  * that a pull request carries labels with multiple prefixes.

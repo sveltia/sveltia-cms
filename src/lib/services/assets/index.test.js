@@ -53,7 +53,6 @@ vi.mock('@sveltia/utils/string', async () => {
     stripSlashes: vi.fn(),
   };
 });
-vi.mock('flat');
 vi.mock('$lib/services/assets/name', () => ({
   createAssetNameTemplate: vi.fn((template) => ({ template })),
   fillAssetNameTemplate: vi.fn(() => 'renamed.jpg'),
@@ -3865,7 +3864,6 @@ describe('assets/index', () => {
       const { getAssetFolder, globalAssetFolder } = await import('$lib/services/assets/folders');
       const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { fillTemplate } = await import('$lib/services/common/template');
-      const { flatten } = await import('flat');
       const { createPath } = await import('$lib/services/utils/file');
 
       const mockEntry = /** @type {any} */ ({
@@ -3924,7 +3922,6 @@ describe('assets/index', () => {
       // Setup mocks for template resolution
       vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
       vi.mocked(fillTemplate).mockReturnValue('content/posts/my-post/media');
-      vi.mocked(flatten).mockReturnValue({ slug: 'my-post' });
       vi.mocked(createPath).mockReturnValue('content/posts/my-post/media/photo.jpg');
 
       allAssets.current = [mockAsset];
@@ -5029,13 +5026,11 @@ describe('assets/index', () => {
     it('should fill all the template tags using the collection and entry', async () => {
       const { getCollection } = await import('$lib/services/contents/collection');
       const { fillTemplate } = await import('$lib/services/common/template');
-      const { flatten } = await import('flat');
 
       const { isCollectionIndexFile } =
         await import('$lib/services/contents/collection/entries/index-file');
 
       vi.mocked(getCollection).mockReturnValue(mockCollection);
-      vi.mocked(flatten).mockReturnValue({ title: 'My Post' });
       vi.mocked(isCollectionIndexFile).mockReturnValue(false);
       vi.mocked(fillTemplate).mockReturnValue('content/posts/2024/my-post/media');
 

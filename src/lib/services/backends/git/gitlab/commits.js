@@ -6,10 +6,10 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import {
   assertBranchNotMoved,
   createCommitMessage,
+  createLastCommitError,
   fetchPerPathCommits,
 } from '$lib/services/backends/git/shared/commits';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
@@ -66,18 +66,13 @@ export const fetchLastCommit = async () => {
   );
 
   if (!result.project) {
-    throw createLocalizedError('Failed to retrieve the last commit hash.', 'repository_not_found', {
-      repo,
-    });
+    throw createLastCommitError('repository_not_found', { repo });
   }
 
   const { lastCommit } = result.project.repository.tree ?? {};
 
   if (!lastCommit) {
-    throw createLocalizedError('Failed to retrieve the last commit hash.', 'branch_not_found', {
-      repo,
-      branch,
-    });
+    throw createLastCommitError('branch_not_found', { repo, branch });
   }
 
   const { sha: hash, message } = lastCommit;

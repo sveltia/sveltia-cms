@@ -15,6 +15,7 @@
     setEntryDraftContext,
     setEntryDraftRoot,
   } from '$lib/services/contents/draft/state.svelte';
+  import { deferDraftWrite } from '$lib/services/contents/draft/update/deferred';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
   import {
@@ -468,11 +469,9 @@
             keyPathPrefix,
           );
 
-          // Write outside the effect: Svelte walks every reaction of a source an effect writes to,
-          // even within `untrack()`, which costs exponentially more with each level of nesting.
-          // The draft is looked up again, as it may have been replaced by then, e.g. reset after a
-          // save
-          queueMicrotask(() => {
+          // This runs from an effect, so the write to the draft is deferred. The draft is looked up
+          // again, as it may have been replaced by then, e.g. reset after a save
+          deferDraftWrite(() => {
             const draft = draftState.current;
 
             // Lexical unmounts the component on its own schedule, which may come after the draft

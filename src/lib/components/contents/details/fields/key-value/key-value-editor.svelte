@@ -18,6 +18,7 @@
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { deferDraftWrite } from '$lib/services/contents/draft/update/deferred';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getPairs,
@@ -131,9 +132,8 @@
     if (shouldStorePlaceholder({ storedPairs: updatedPairs, storedValue: valueStore[keyPath] })) {
       const _keyPath = keyPath;
 
-      // Enable validation. This runs from an effect, so the write is deferred like the one in
-      // `updateStore()`
-      queueMicrotask(() => {
+      // Enable validation. This runs from an effect, so the write is deferred
+      deferDraftWrite(() => {
         valueStore[_keyPath] = null;
       });
     }
@@ -255,10 +255,8 @@
       pairs: $state.snapshot(pairs),
     };
 
-    // This runs from an effect, so defer the write to the draft like `<FieldEditor>` does: a write
-    // made while an effect is running makes Svelte walk the derived graph below the value map
-    // without memoizing, which takes exponentially longer with each level of nesting
-    queueMicrotask(() => {
+    // This runs from an effect, so the write to the draft is deferred
+    deferDraftWrite(() => {
       savePairs(args);
     });
   };

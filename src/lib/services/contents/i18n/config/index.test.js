@@ -9,6 +9,8 @@ import {
   determineStructure,
   getDraftI18nConfig,
   normalizeI18nConfig,
+  usesMultiFileStructure,
+  usesSingleFileStructure,
 } from '.';
 
 /**
@@ -1462,6 +1464,29 @@ describe('Test internal helper functions', () => {
       const file = { name: 'about', file: 'content/about.md', fields: [] }; // no {{locale}}
 
       expect(determineOmitDefaultLocale(true, structureMap, file)).toBe(false);
+    });
+  });
+
+  describe('usesSingleFileStructure', () => {
+    test('should detect the single file structures', () => {
+      expect(usesSingleFileStructure(createStructureMap(true, 'single_file'))).toBe(true);
+      expect(usesSingleFileStructure(createStructureMap(true, 'single_file_default_root'))).toBe(
+        true,
+      );
+      expect(usesSingleFileStructure(createStructureMap(true, 'multiple_files'))).toBe(false);
+      expect(usesSingleFileStructure(createStructureMap(false, 'single_file'))).toBe(false);
+      expect(usesSingleFileStructure({})).toBe(false);
+    });
+  });
+
+  describe('usesMultiFileStructure', () => {
+    test('should detect the multiple file structures', () => {
+      expect(usesMultiFileStructure(createStructureMap(true, 'multiple_files'))).toBe(true);
+      expect(usesMultiFileStructure(createStructureMap(true, 'multiple_folders'))).toBe(true);
+      expect(usesMultiFileStructure(createStructureMap(true, 'multiple_root_folders'))).toBe(true);
+      expect(usesMultiFileStructure(createStructureMap(true, 'single_file'))).toBe(false);
+      expect(usesMultiFileStructure(createStructureMap(false, 'multiple_files'))).toBe(false);
+      expect(usesMultiFileStructure({})).toBe(false);
     });
   });
 });

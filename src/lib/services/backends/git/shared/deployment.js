@@ -261,6 +261,21 @@ export const pickDeployment = (candidates, { kind, selfURL }) => {
 };
 
 /**
+ * Run a collector, reporting a failure without failing the batch, so one source or commit whose
+ * info can’t be read — a commit whose statuses are gone after a force push, say — doesn’t take the
+ * others down with it.
+ * @param {() => Promise<void>} task Task to run.
+ */
+export const collectSafely = async (task) => {
+  try {
+    await task();
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.warn('Failed to fetch the deployment info.', ex);
+  }
+};
+
+/**
  * Fetch the deployment status and URL for the given commits with a backend’s own collector, then
  * pick the best candidate for each commit.
  * @param {DeployTarget[]} targets Commits to look up.

@@ -206,6 +206,17 @@ export const dedupeFileCommits = (commits) => {
 };
 
 /**
+ * Create the error to throw when the last commit on the configured branch can’t be retrieved,
+ * because the repository or the branch can’t be found.
+ * @param {'repository_not_found' | 'branch_not_found'} key I18n key of the message to show.
+ * @param {{ repo: string, branch?: string }} values Repository name, and the branch name for a
+ * missing branch, to show in the message.
+ * @returns {Error} Error.
+ */
+export const createLastCommitError = (key, values) =>
+  createLocalizedError('Failed to retrieve the last commit hash.', key, values);
+
+/**
  * Throw an error telling the user that the branch has moved, if its head is no longer the one a
  * refused commit was based on. This tells a commit refused over a moved head from any other
  * failure, so the user is told what happened and to try again, which picks up the other change

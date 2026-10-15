@@ -1,7 +1,7 @@
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { resolveDeployments } from '$lib/services/backends/git/shared/deployment';
+import { collectSafely, resolveDeployments } from '$lib/services/backends/git/shared/deployment';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
@@ -102,14 +102,9 @@ const collectStatusCandidates = async (sha, candidateMap) => {
  * @param {Record<string, DeployCandidate[]>} candidateMap Candidates keyed by commit SHA.
  */
 const collectCandidates = async (shas, candidateMap) => {
-  await runConcurrently(shas, async (sha) => {
-    try {
-      await collectStatusCandidates(sha, candidateMap);
-    } catch (ex) {
-      // eslint-disable-next-line no-console
-      console.warn('Failed to fetch the deployment info.', ex);
-    }
-  });
+  await runConcurrently(shas, (sha) =>
+    collectSafely(() => collectStatusCandidates(sha, candidateMap)),
+  );
 };
 
 /**

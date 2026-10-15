@@ -11,6 +11,7 @@ import {
 } from '$lib/services/backends/git/shared/errors';
 import {
   isOpenAuthoringConfiguredFor,
+  requestForkWithFallbackName,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
   setUpForkFor,
@@ -217,41 +218,31 @@ const isRepositoryNameTaken = async (name) => {
  */
 export const createFork = async () => {
   const { owner, repo } = repository;
-  const repoPath = `${owner}/${repo}`;
   const endpoint = `/repos/${owner}/${repo}/forks`;
-  /** @type {Record<string, any>} */
-  let result;
 
-  try {
-    result = /** @type {Record<string, any>} */ (
-      await fetchAPI(endpoint, { method: 'POST', body: {} })
-    );
-  } catch (/** @type {any} */ ex) {
+  const result = await requestForkWithFallbackName({
+    repoPath: `${owner}/${repo}`,
+    /**
+     * Request a fork at the default name.
+     * @returns {Promise<any>} New fork.
+     */
+    requestFork: () => fetchAPI(endpoint, { method: 'POST', body: {} }),
+    /**
+     * Request a fork named after the configured repository’s owner and name.
+     * @returns {Promise<any>} New fork.
+     */
+    requestRenamedFork: () =>
+      fetchAPI(endpoint, { method: 'POST', body: { name: `${owner}-${repo}` } }),
     // The instance doesn’t pick another name when the contributor already has an unrelated
     // repository of the same name, the way GitHub does, so give it one. Any other failure is real:
     // a fork of the repository already exists, or forking is turned off on the instance
-    if (ex.cause?.status !== 409 || !(await isRepositoryNameTaken(repo))) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to fork the repository.', ex);
-
-      throw createLocalizedError('Failed to fork the repository.', 'open_authoring.fork_failed', {
-        repo: repoPath,
-      });
-    }
-
-    try {
-      result = /** @type {Record<string, any>} */ (
-        await fetchAPI(endpoint, { method: 'POST', body: { name: `${owner}-${repo}` } })
-      );
-    } catch (/** @type {any} */ retryEx) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to fork the repository.', retryEx);
-
-      throw createLocalizedError('Failed to fork the repository.', 'open_authoring.fork_failed', {
-        repo: repoPath,
-      });
-    }
-  }
+    conflictStatuses: [409],
+    /**
+     * Check whether the contributor has a repository at the default name.
+     * @returns {Promise<boolean>} `true` if the name is taken.
+     */
+    isNameTaken: () => isRepositoryNameTaken(repo),
+  });
 
   return toRepositoryPath(result);
 };

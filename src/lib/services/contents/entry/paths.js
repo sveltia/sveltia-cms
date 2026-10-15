@@ -7,8 +7,31 @@ import {
 import { getDirName, stripPathPrefix } from '$lib/services/utils/file';
 
 /**
- * @import { Entry, FileConfig, InternalLocaleCode, UnpublishedEntry } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * FileConfig,
+ * InternalLocaleCode,
+ * LocalizedEntry,
+ * UnpublishedEntry,
+ * } from '$lib/types/private';
  */
+
+/**
+ * Get the given locale’s file of an entry. Falls back to the default locale’s file if a default
+ * locale is given, then to the first file, when no locale is given or the entry doesn’t have the
+ * locale yet. A multi-file i18n entry can be missing its default locale file, e.g. when only
+ * `hello.fr.md` exists, in which case another locale stands in for it.
+ * @param {Entry | UnpublishedEntry} entry Entry.
+ * @param {object} [options] Options.
+ * @param {InternalLocaleCode} [options.locale] Locale.
+ * @param {InternalLocaleCode} [options.defaultLocale] Default locale of the entry’s collection.
+ * @returns {LocalizedEntry | undefined} Localized entry, including the file path and content, or
+ * `undefined` if the entry has no files at all.
+ */
+export const getEntryLocaleFile = (entry, { locale, defaultLocale } = {}) =>
+  (locale ? entry.locales[locale] : undefined) ??
+  (defaultLocale ? entry.locales[defaultLocale] : undefined) ??
+  Object.values(entry.locales)[0];
 
 /**
  * List the distinct paths of the files an entry is made of. A single-file i18n entry lists the same
@@ -36,9 +59,7 @@ export const getEntryPaths = (entry, { includePrevious = false } = {}) => [
  * @returns {string} Folder path, or an empty string if the entry is at the repository root.
  */
 export const getEntryFolderPath = (entry, locale) =>
-  getDirName(
-    ((locale ? entry.locales[locale] : undefined) ?? Object.values(entry.locales)[0]).path,
-  );
+  getDirName(/** @type {LocalizedEntry} */ (getEntryLocaleFile(entry, { locale })).path);
 
 /**
  * Get the folder an entry file is stored in, relative to the collection folder, which is what the

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getEntryDirName,
   getEntryFolderPath,
+  getEntryLocaleFile,
   getEntryPaths,
 } from '$lib/services/contents/entry/paths';
 import { getEntryPathRegEx } from '$lib/services/contents/file/config';
@@ -56,6 +57,34 @@ describe('getEntryPaths()', () => {
 
     expect(getEntryPaths(published, { includePrevious: true })).toEqual(['posts/a.md']);
     expect(getEntryPaths(noPrevious, { includePrevious: true })).toEqual(['posts/a.md']);
+  });
+});
+
+describe('getEntryLocaleFile()', () => {
+  const en = { slug: 'hello', path: 'posts/en/hello.md', content: { title: 'Hello' } };
+  const fr = { slug: 'bonjour', path: 'posts/fr/hello.md', content: { title: 'Bonjour' } };
+  const de = { slug: 'hallo', path: 'posts/de/hello.md', content: { title: 'Hallo' } };
+  const entry = /** @type {Entry} */ (/** @type {unknown} */ ({ locales: { de, en, fr } }));
+
+  it('returns the given locale’s file', () => {
+    expect(getEntryLocaleFile(entry, { locale: 'fr', defaultLocale: 'en' })).toBe(fr);
+  });
+
+  it('falls back to the default locale’s file', () => {
+    expect(getEntryLocaleFile(entry, { locale: 'ja', defaultLocale: 'en' })).toBe(en);
+    expect(getEntryLocaleFile(entry, { defaultLocale: 'en' })).toBe(en);
+  });
+
+  it('falls back to the first file', () => {
+    expect(getEntryLocaleFile(entry, { locale: 'ja', defaultLocale: 'ko' })).toBe(de);
+    expect(getEntryLocaleFile(entry, { locale: 'ja' })).toBe(de);
+    expect(getEntryLocaleFile(entry)).toBe(de);
+  });
+
+  it('returns `undefined` for an entry without files', () => {
+    const empty = /** @type {Entry} */ (/** @type {unknown} */ ({ locales: {} }));
+
+    expect(getEntryLocaleFile(empty, { defaultLocale: 'en' })).toBeUndefined();
   });
 });
 

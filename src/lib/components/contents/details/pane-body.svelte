@@ -313,7 +313,7 @@
   /**
    * Initialize the scroll synchronization by setting up event listeners and ensuring the content
    * area is ready. The content area is either the main content area or the iframe’s content area.
-   * An iframe is used only when a custom preview stylesheet is provided.
+   * An iframe is used only when a custom preview stylesheet or template applies to the entry.
    */
   const initializeScrollSync = async () => {
     if (!contentArea) {
@@ -370,7 +370,7 @@
   $effect(() => {
     // Initialize the scroll synchronization when the content area is ready. The pane mode is also a
     // dependency because the edit mode always uses the main content area, while the preview mode
-    // may use an iframe if a custom preview stylesheet is provided.
+    // may use an iframe if a custom preview stylesheet or template applies.
     void [thisPane.current?.mode, contentArea];
     // The initialization writes `thisPaneContentArea`, which it also reads, so it’s left out of
     // the dependencies to keep the effect from running again on its own account

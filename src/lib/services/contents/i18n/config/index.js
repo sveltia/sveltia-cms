@@ -104,6 +104,26 @@ export const createStructureMap = (i18nEnabled, structure) => ({
 });
 
 /**
+ * Check if the given i18n structure stores all the locales of an entry in one file: the
+ * `single_file` or `single_file_default_root` structure.
+ * @param {Partial<I18nFileStructureMap>} structureMap Structure map of the normalized i18n
+ * configuration.
+ * @returns {boolean} Result.
+ */
+export const usesSingleFileStructure = ({ i18nSingleFile, i18nSingleFileDefaultRoot }) =>
+  !!i18nSingleFile || !!i18nSingleFileDefaultRoot;
+
+/**
+ * Check if the given i18n structure stores each locale of an entry in a file of its own: the
+ * `multiple_files`, `multiple_folders` or `multiple_root_folders` structure.
+ * @param {Partial<I18nFileStructureMap>} structureMap Structure map of the normalized i18n
+ * configuration.
+ * @returns {boolean} Result.
+ */
+export const usesMultiFileStructure = ({ i18nMultiFile, i18nMultiFolder, i18nMultiRootFolder }) =>
+  !!i18nMultiFile || !!i18nMultiFolder || !!i18nMultiRootFolder;
+
+/**
  * Determines the default locale from the available locales.
  * @param {boolean} i18nEnabled Whether i18n is enabled.
  * @param {string[]} allLocales All available locales.
@@ -162,9 +182,7 @@ export const determineOmitDefaultLocale = (omitDefaultLocale, structureMap, file
     return canOmitLocalePlaceholder(file.file);
   }
 
-  return (
-    structureMap.i18nMultiFile || structureMap.i18nMultiFolder || structureMap.i18nMultiRootFolder
-  );
+  return usesMultiFileStructure(structureMap);
 };
 
 /**

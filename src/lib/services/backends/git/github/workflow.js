@@ -28,6 +28,7 @@ import {
   isSquashMergeEnabled,
   openWorkflowPullRequest,
   toChangedFilesWithModes,
+  updateLabelledStatus,
 } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
@@ -384,23 +385,8 @@ export const createBranch = async (branch) => {
  * @param {WorkflowStatus} status New status.
  * @returns {Promise<WorkflowPullRequest>} Updated pull request.
  */
-export const updateStatus = async (pullRequest, status) => {
-  if (openAuthoring.current) {
-    return updateForkStatus(pullRequest, status);
-  }
-
-  const isDraft = status === 'draft';
-
-  await updateLabels(pullRequest, status);
-
-  // Only the transitions into and out of the `draft` status change the draft state, so moving
-  // between the review and ready stages needs no mutation at all
-  if (isDraft !== (pullRequest.status === 'draft')) {
-    await updateDraftState(pullRequest, isDraft);
-  }
-
-  return { ...pullRequest, status, updatedDate: new Date() };
-};
+export const updateStatus = (pullRequest, status) =>
+  updateLabelledStatus(pullRequest, status, { updateForkStatus, updateLabels, updateDraftState });
 
 /**
  * Commit the given changes on the workflow branch, creating the branch and the pull request if they

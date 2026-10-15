@@ -49,7 +49,6 @@ const LIST_KEY_PATH_MATCH_REGEX = /\.(\d+)$/;
  */
 export const analyzeListFields = (allFieldNames, getFieldArgs) => {
   const listFieldConfigs = new Map();
-  const baseFieldGroups = new Map();
 
   // Analyze all list fields and get their configurations
   allFieldNames
@@ -66,17 +65,7 @@ export const analyzeListFields = (allFieldNames, getFieldArgs) => {
     });
 
   // Group entries by base field name
-  [...listFieldConfigs.entries()].forEach(([fieldName, config]) => {
-    const { baseFieldName } = config;
-
-    if (!baseFieldGroups.has(baseFieldName)) {
-      baseFieldGroups.set(baseFieldName, []);
-    }
-
-    baseFieldGroups.get(baseFieldName).push([fieldName, config]);
-  });
-
-  return baseFieldGroups;
+  return Map.groupBy(listFieldConfigs.entries(), ([, { baseFieldName }]) => baseFieldName);
 };
 
 /**

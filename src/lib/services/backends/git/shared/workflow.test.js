@@ -6,6 +6,7 @@ import { cmsConfig } from '$lib/services/config';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 import {
+  applyForkPullRequestStatus,
   assertBranchAtHead,
   commitToNewWorkflowBranch,
   deleteRemoteBranch,
@@ -14,8 +15,10 @@ import {
   isPullRequestMerged,
   isSquashMergeEnabled,
   openWorkflowPullRequest,
+  reopenPullRequest,
   saveWorkflowBranch,
   toChangedFilesWithModes,
+  updateLabelledStatus,
 } from './workflow';
 
 vi.mock('@sveltia/i18n', async () =>
@@ -356,6 +359,69 @@ describe('assertBranchAtHead()', () => {
   });
 });
 
+describe('updateLabelledStatus()', () => {
+  const pullRequest = { number: 1, title: 'Hello', status: 'draft' };
+
+  /**
+   * Create the mocked service-specific functions.
+   * @returns {any} Functions.
+   */
+  const createService = () => ({
+    updateForkStatus: vi.fn().mockResolvedValue({ ...pullRequest, status: 'pending_review' }),
+    updateLabels: vi.fn().mockResolvedValue(undefined),
+    updateDraftState: vi.fn().mockResolvedValue(undefined),
+  });
+
+  test('replaces the label and marks the pull request ready when leaving the draft status', async () => {
+    const service = createService();
+    const result = await updateLabelledStatus(pullRequest, 'pending_review', service);
+
+    expect(service.updateLabels).toHaveBeenCalledWith(pullRequest, 'pending_review');
+    expect(service.updateDraftState).toHaveBeenCalledWith(pullRequest, false);
+    expect(service.updateForkStatus).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      ...pullRequest,
+      status: 'pending_review',
+      updatedDate: expect.any(Date),
+    });
+  });
+
+  test('marks the pull request as a draft when going back to the draft status', async () => {
+    const service = createService();
+
+    await updateLabelledStatus({ ...pullRequest, status: 'pending_review' }, 'draft', service);
+
+    expect(service.updateDraftState).toHaveBeenCalledWith(
+      { ...pullRequest, status: 'pending_review' },
+      true,
+    );
+  });
+
+  test('leaves the draft state alone between the review and ready stages', async () => {
+    const service = createService();
+    const current = { ...pullRequest, status: 'pending_review' };
+    const result = await updateLabelledStatus(current, 'pending_publish', service);
+
+    expect(service.updateLabels).toHaveBeenCalledWith(current, 'pending_publish');
+    expect(service.updateDraftState).not.toHaveBeenCalled();
+    expect(result.status).toBe('pending_publish');
+  });
+
+  test('takes the fork flow with Open Authoring', async () => {
+    const service = createService();
+
+    forkedRepository.current = FORK;
+
+    await expect(updateLabelledStatus(pullRequest, 'pending_review', service)).resolves.toEqual({
+      ...pullRequest,
+      status: 'pending_review',
+    });
+    expect(service.updateForkStatus).toHaveBeenCalledWith(pullRequest, 'pending_review');
+    expect(service.updateLabels).not.toHaveBeenCalled();
+    expect(service.updateDraftState).not.toHaveBeenCalled();
+  });
+});
+
 describe('getParentDirs()', () => {
   test('lists each folder holding the files once, the root as an empty string', () => {
     expect(getParentDirs(['a.md', 'posts/b.md', 'posts/c.md', 'posts/2026/d.md', 'e.md'])).toEqual([
@@ -431,5 +497,79 @@ describe('isPullRequestMerged()', () => {
 
     vi.mocked(fetchAPI).mockResolvedValueOnce(new Response(null, { status: 404 }));
     await expect(isPullRequestMerged({ owner: 'owner', repo: 'repo' }, 1)).resolves.toBe(false);
+  });
+});
+
+describe('reopenPullRequest()', () => {
+  beforeEach(() => {
+    vi.mocked(fetchAPI).mockResolvedValue({});
+  });
+
+  test('reopens the pull request on the given repository', async () => {
+    await reopenPullRequest({ owner: 'owner', repo: 'repo' }, 7);
+
+    expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls/7', {
+      method: 'PATCH',
+      body: { state: 'open' },
+    });
+  });
+});
+
+describe('applyForkPullRequestStatus()', () => {
+  beforeEach(() => {
+    vi.mocked(fetchAPI).mockResolvedValue({});
+  });
+
+  const pullRequest = { number: 7, branch: 'cms/posts/hello', title: 'Hello' };
+  const repository = { owner: 'owner', repo: 'repo' };
+
+  /**
+   * Bring the pull request in line with the given status and state.
+   * @param {string} status New status.
+   * @param {object} request Pull request state and draft flag.
+   * @returns {Promise<any>} Mocked `updateDraftState`.
+   */
+  const apply = async (status, request) => {
+    const updateDraftState = vi.fn().mockResolvedValue(undefined);
+
+    await applyForkPullRequestStatus(
+      { pullRequest, status, ...request },
+      { repository, updateDraftState },
+    );
+
+    return updateDraftState;
+  };
+
+  test.each(['open', 'OPEN'])('makes an %s pull request a draft', async (state) => {
+    const updateDraftState = await apply('draft', { state, draft: false });
+
+    expect(updateDraftState).toHaveBeenCalledWith(pullRequest, true);
+    expect(fetchAPI).not.toHaveBeenCalled();
+  });
+
+  test('leaves a closed or already draft pull request as is when taken back to draft', async () => {
+    expect(await apply('draft', { state: 'closed', draft: false })).not.toHaveBeenCalled();
+    expect(await apply('draft', { state: 'open', draft: true })).not.toHaveBeenCalled();
+    expect(await apply('draft', {})).not.toHaveBeenCalled();
+  });
+
+  test.each(['closed', 'CLOSED'])(
+    'reopens a %s draft sent for review and marks it ready',
+    async (state) => {
+      const updateDraftState = await apply('pending_review', { state, draft: true });
+
+      expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls/7', {
+        method: 'PATCH',
+        body: { state: 'open' },
+      });
+      expect(updateDraftState).toHaveBeenCalledWith(pullRequest, false);
+    },
+  );
+
+  test('leaves an open, ready pull request sent for review as is', async () => {
+    const updateDraftState = await apply('pending_review', { state: 'OPEN', draft: false });
+
+    expect(fetchAPI).not.toHaveBeenCalled();
+    expect(updateDraftState).not.toHaveBeenCalled();
   });
 });

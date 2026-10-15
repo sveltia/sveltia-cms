@@ -5,7 +5,7 @@ import {
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { resolveDeployments } from '$lib/services/backends/git/shared/deployment';
+import { collectSafely, resolveDeployments } from '$lib/services/backends/git/shared/deployment';
 
 /**
  * @import { DeployState, DeployStatus, DeployTarget } from '$lib/types/private';
@@ -147,19 +147,6 @@ const collectStatusCandidates = async ({ sha }, candidateMap) => {
 };
 
 /**
- * Run a collector, reporting a failure without failing the batch.
- * @param {() => Promise<void>} task Task to run.
- */
-const collectSafely = async (task) => {
-  try {
-    await task();
-  } catch (ex) {
-    // eslint-disable-next-line no-console
-    console.warn('Failed to fetch the deployment info.', ex);
-  }
-};
-
-/**
  * Collect deploy candidates for the given commits from the project’s deployments and from each
  * commit’s statuses.
  * @param {string[]} shas Commit SHAs.
@@ -168,7 +155,7 @@ const collectSafely = async (task) => {
 const collectCandidates = async (shas, candidateMap) => {
   await Promise.all([
     collectSafely(() => collectDeploymentCandidates(candidateMap)),
-    runConcurrently(shas, async (sha) =>
+    runConcurrently(shas, (sha) =>
       collectSafely(() =>
         collectStatusCandidates({ sha, branch: '', kind: 'preview' }, candidateMap),
       ),

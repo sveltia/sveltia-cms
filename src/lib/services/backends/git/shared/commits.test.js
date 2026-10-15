@@ -1,10 +1,12 @@
 // @ts-nocheck
+import { _ as translate } from '@sveltia/i18n';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   assertBranchNotMoved,
   createBaseCommitMessage,
   createCommitMessage,
+  createLastCommitError,
   dedupeFileCommits,
   fetchPerPathCommits,
   hasSkipCIMarker,
@@ -883,6 +885,18 @@ describe('git/shared/commits', () => {
         },
       );
     });
+  });
+});
+
+describe('createLastCommitError()', () => {
+  it.each([
+    ['repository_not_found', { repo: 'repo' }],
+    ['branch_not_found', { repo: 'repo', branch: 'main' }],
+  ])('creates an error with the localized %s message', (key, values) => {
+    const error = createLastCommitError(key, values);
+
+    expect(error.message).toBe('Failed to retrieve the last commit hash.');
+    expect(error.cause.message).toBe(translate(key, { values }));
   });
 });
 

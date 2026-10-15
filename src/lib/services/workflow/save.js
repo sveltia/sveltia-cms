@@ -20,6 +20,7 @@ import {
 } from '$lib/services/contents/entry/relations/cascade/delete';
 import { forgetDeployments } from '$lib/services/deployments';
 import { refreshProductionSHA } from '$lib/services/deployments/resolve';
+import { shareInFlight } from '$lib/services/utils/cache';
 import {
   getUnpublishedEntryByBranch,
   getUnpublishedEntryBySlug,
@@ -476,21 +477,16 @@ const mergeWorkflowEntry = async (entry) => {
  */
 export const publishWorkflowEntry = async (entry) => {
   const { branch } = entry.workflow.pullRequest;
-  const pending = pendingPublishes.get(branch);
 
-  if (pending) {
-    return pending;
-  }
+  return shareInFlight(pendingPublishes, branch, () => {
+    const promise = mergeWorkflowEntry(entry).finally(() => {
+      publishingBranches.current = publishingBranches.current.filter((b) => b !== branch);
+    });
 
-  const promise = mergeWorkflowEntry(entry).finally(() => {
-    pendingPublishes.delete(branch);
-    publishingBranches.current = publishingBranches.current.filter((b) => b !== branch);
+    publishingBranches.current = [...publishingBranches.current, branch];
+
+    return promise;
   });
-
-  pendingPublishes.set(branch, promise);
-  publishingBranches.current = [...publishingBranches.current, branch];
-
-  return promise;
 };
 
 /**

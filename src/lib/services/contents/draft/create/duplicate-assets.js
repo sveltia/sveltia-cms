@@ -4,6 +4,7 @@ import { createDisplayBlobURL, getAssetBlob } from '$lib/services/assets/info';
 import { MARKDOWN_IMAGE_REGEX } from '$lib/services/assets/references';
 import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getField, getTypedKeyPath } from '$lib/services/contents/entry/fields';
+import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import {
   getAssetLibraryFolderMap,
@@ -55,7 +56,7 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
   }
 
   const { defaultLocale } = draft;
-  const entryFilePath = (entry.locales[defaultLocale] ?? Object.values(entry.locales)[0])?.path;
+  const entryFilePath = getEntryLocaleFile(entry, { defaultLocale })?.path;
   const ownsFolder = !!entryFilePath && !!getOwnedEntryFolderPath(collection, entryFilePath);
   /**
    * Copies in progress, keyed by asset path, so an asset referenced more than once, from another

@@ -10,6 +10,7 @@ import { fillTemplate } from '$lib/services/common/template';
 import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { getFillSlugOptions } from '$lib/services/contents/draft/slugs';
+import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import {
   createPath,
   encodeFilePath,
@@ -348,7 +349,7 @@ export const getAssetSavingInfo = ({
   folder,
   subfolderPath = '',
 }) => {
-  const { collection, collectionFile, collectionName } = draft;
+  const { collectionName } = draft;
   let assetFolderPaths = getAssetFolderPaths({ draft, locale, slug, defaultLocaleSlug, folder });
 
   if (subfolderPath) {
@@ -362,7 +363,7 @@ export const getAssetSavingInfo = ({
   }
 
   const { resolvedInternalPath } = assetFolderPaths;
-  const _locale = locale ?? (collectionFile ?? collection)._i18n.defaultLocale;
+  const _locale = locale ?? getDraftI18nConfig(draft).defaultLocale;
 
   const vacatedFolderPath = folder.entryRelative
     ? getVacatedAssetFolderPath({

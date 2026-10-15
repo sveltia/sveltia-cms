@@ -31,6 +31,7 @@ import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { isAutoIncrementField } from '$lib/services/contents/fields/number/auto-increment';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 import { isOptionValue } from '$lib/services/contents/fields/select/helpers';
+import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
 
 /**
@@ -117,7 +118,7 @@ const recordValidationMessages = ({
  */
 export const validateAnyField = (args) => {
   const { draft, locale, valueMap, componentName, validities, enforceRequired = true } = args;
-  const { collection, collectionName, fileName, collectionFile, files, isIndexFile } = draft;
+  const { collection, collectionName, fileName, files, isIndexFile } = draft;
   let { keyPath, value } = args;
 
   /** @type {GetFieldArgs} */
@@ -153,7 +154,7 @@ export const validateAnyField = (args) => {
     MIN_MAX_VALUE_FIELD_TYPES.includes(fieldType) ? fieldConfig : {}
   );
 
-  const { i18nEnabled, defaultLocale } = (collectionFile ?? collection)._i18n;
+  const { i18nEnabled, defaultLocale } = getDraftI18nConfig(draft);
 
   // Skip validation on non-editable fields
   if (

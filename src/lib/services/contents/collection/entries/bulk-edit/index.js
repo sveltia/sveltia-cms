@@ -21,6 +21,7 @@ import {
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
+import { getOrCreate } from '$lib/services/utils/cache';
 import { isValueEmpty } from '$lib/services/utils/object';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
@@ -289,19 +290,15 @@ export const validateBulkEdits = ({ collection, entries, edits }) => {
         const fieldType = fieldConfig.widget ?? 'string';
         const normalized = normalizeUniqueValue(value, fieldType);
 
-        if (!uniqueValueCounts.has(keyPath)) {
-          uniqueValueCounts.set(
-            keyPath,
-            countUniqueValues({ collection, keyPath, fieldType, edits }),
-          );
-        }
+        const valueCounts = getOrCreate(uniqueValueCounts, keyPath, () =>
+          countUniqueValues({ collection, keyPath, fieldType, edits }),
+        );
 
         const updated = { ...validity };
 
         delete updated.valid;
         updated.duplicateError =
-          normalized !== undefined &&
-          /** @type {number} */ (uniqueValueCounts.get(keyPath)?.get(normalized)) > 1;
+          normalized !== undefined && /** @type {number} */ (valueCounts.get(normalized)) > 1;
         validity = finalizeValidity(updated);
       }
 

@@ -9,7 +9,6 @@ import {
   fetchPullRequestFiles,
   parseFileNodes,
   parseRestFiles,
-  reopenPullRequest,
   updateDraftState,
   updateLabels,
 } from '$lib/services/backends/git/github/pull-requests';
@@ -516,17 +515,6 @@ describe('GitHub pull request helpers', () => {
 
         // Labelling needs write access to the configured repository, which a contributor lacks
         expect(fetchAPI).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    describe('reopenPullRequest', () => {
-      test('reopens the pull request on the configured repository', async () => {
-        await reopenPullRequest(/** @type {any} */ ({ number: 7 }));
-
-        expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls/7', {
-          method: 'PATCH',
-          body: { state: 'open' },
-        });
       });
     });
   });

@@ -32,6 +32,7 @@ import {
   isSquashMergeEnabled,
   saveWorkflowBranch,
   toChangedFilesWithModes,
+  updateLabelledStatus,
 } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels } from '$lib/services/workflow/labels';
@@ -233,23 +234,8 @@ export const savePullRequest = async (args) =>
  * @param {WorkflowStatus} status New status.
  * @returns {Promise<WorkflowPullRequest>} Updated pull request.
  */
-export const updateStatus = async (pullRequest, status) => {
-  if (openAuthoring.current) {
-    return updateForkStatus(pullRequest, status);
-  }
-
-  const isDraft = status === 'draft';
-
-  await updateLabels(pullRequest, status);
-
-  // Only the transitions into and out of the `draft` status change the title, so moving between the
-  // review and ready stages needs no further request
-  if (isDraft !== (pullRequest.status === 'draft')) {
-    await updateDraftState(pullRequest, isDraft);
-  }
-
-  return { ...pullRequest, status, updatedDate: new Date() };
-};
+export const updateStatus = (pullRequest, status) =>
+  updateLabelledStatus(pullRequest, status, { updateForkStatus, updateLabels, updateDraftState });
 
 /**
  * Map of the file statuses the REST API reports to {@link WorkflowChangedFile} ones. A copy adds a

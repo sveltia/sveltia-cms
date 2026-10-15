@@ -10,6 +10,7 @@ import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
 import { getDuplicateKeysFieldKeyPaths } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getPairsFromContent, setPairs } from '$lib/services/contents/fields/key-value/pairs';
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
+import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import {
   isFieldI18nDisabled,
   isFieldLocalized,
@@ -100,10 +101,8 @@ export const forEachTargetLocale = ({ valueStore, locale, i18n, draft, keyPath }
  * @returns {FlattenedEntryContent} Updated content.
  */
 export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPathPrefix }) => {
-  const { collectionName, fileName, collection, collectionFile, currentValues, isIndexFile } =
-    draft;
-
-  const { defaultLocale } = (collectionFile ?? collection)._i18n;
+  const { collectionName, fileName, currentValues, isIndexFile } = draft;
+  const { defaultLocale } = getDraftI18nConfig(draft);
   /** @type {FlattenedEntryContent} */
   const defaultLocaleContent = toRaw(currentValues[defaultLocale]);
   const newContent = { ...toRaw(content), ...defaultLocaleContent };

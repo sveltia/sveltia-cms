@@ -1,5 +1,6 @@
 import { getValueMapVersion } from '$lib/services/contents/draft/create/versioned-map.svelte';
 import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
+import { deferDraftWrite } from '$lib/services/contents/draft/update/deferred';
 
 /**
  * @import { EntryDraft } from '$lib/types/private';
@@ -19,10 +20,8 @@ const pendingDrafts = new WeakSet();
  * which only run while they are rendered — a collapsed or off-screen list item renders none of its
  * fields.
  *
- * The fields are resolved in a microtask, outside the effect. Svelte walks every reaction of a
- * source an effect writes to, even within `untrack()`, without remembering what it has visited, so
- * writing a computed value from the effect would cost exponentially more with each level of field
- * nesting, on every keystroke.
+ * The fields are resolved outside the effect, as computed values are written to the draft; see
+ * {@link deferDraftWrite}.
  * @param {EntryDraft} draft Entry draft.
  */
 export const trackComputedValues = (draft) => {
@@ -39,7 +38,7 @@ export const trackComputedValues = (draft) => {
 
   pendingDrafts.add(draft);
 
-  queueMicrotask(() => {
+  deferDraftWrite(() => {
     pendingDrafts.delete(draft);
     updateComputedValues(draft);
   });

@@ -1,6 +1,7 @@
 import { compare } from '@sveltia/utils/string';
 
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import {
   getEntryRelationValues,
   getReferencingRelationFields,
@@ -52,8 +53,7 @@ export const getBacklinks = ({ collectionName, fileName, entry }) => {
             (!sourceFileName || sourceEntry.slug === sourceFileName),
         )
         .map((sourceEntry) => {
-          const content =
-            sourceEntry.locales[locale]?.content ?? Object.values(sourceEntry.locales)[0]?.content;
+          const content = getEntryLocaleFile(sourceEntry, { locale })?.content;
 
           if (
             !content ||

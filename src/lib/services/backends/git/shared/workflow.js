@@ -234,6 +234,45 @@ export const assertBranchAtHead = async ({
 };
 
 /**
+ * Update the status of a pull request whose status is kept in a label, as on GitHub and
+ * Gitea/Forgejo, along with its draft state, so a pull request in the `draft` status can’t be
+ * merged accidentally. With Open Authoring the fork flow takes over, as a contributor can’t label a
+ * pull request on the upstream repository.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {WorkflowStatus} status New status.
+ * @param {object} service Service-specific functions.
+ * @param {(pullRequest: WorkflowPullRequest, status: WorkflowStatus) =>
+ * Promise<WorkflowPullRequest>} service.updateForkStatus Function to update the status of a pull
+ * request with Open Authoring.
+ * @param {(pullRequest: WorkflowPullRequest, status: WorkflowStatus) => Promise<void>}
+ * service.updateLabels Function to replace the status label of the pull request.
+ * @param {(pullRequest: WorkflowPullRequest, isDraft: boolean) => Promise<void>}
+ * service.updateDraftState Function to mark the pull request as a draft or ready for review.
+ * @returns {Promise<WorkflowPullRequest>} Updated pull request.
+ */
+export const updateLabelledStatus = async (
+  pullRequest,
+  status,
+  { updateForkStatus, updateLabels, updateDraftState },
+) => {
+  if (openAuthoring.current) {
+    return updateForkStatus(pullRequest, status);
+  }
+
+  const isDraft = status === 'draft';
+
+  await updateLabels(pullRequest, status);
+
+  // Only the transitions into and out of the `draft` status change the draft state, so moving
+  // between the review and ready stages needs no further request
+  if (isDraft !== (pullRequest.status === 'draft')) {
+    await updateDraftState(pullRequest, isDraft);
+  }
+
+  return { ...pullRequest, status, updatedDate: new Date() };
+};
+
+/**
  * Get the folders holding the given files, each listed once. A file at the repository root is held
  * by the root, given as an empty string.
  * @param {string[]} paths File paths.
@@ -303,4 +342,58 @@ export const isPullRequestMerged = async ({ owner, repo }, number) => {
   );
 
   return response.ok;
+};
+
+/**
+ * Reopen a pull request that was closed earlier, on GitHub or Gitea/Forgejo, whose REST APIs share
+ * the endpoint. The author of a pull request is allowed to do this, so a contributor doesn’t need
+ * write access to the configured repository for it.
+ * @param {RepositoryPath} repository Repository holding the pull request.
+ * @param {number} number Pull request number.
+ * @see https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoEditPullRequest
+ */
+export const reopenPullRequest = async ({ owner, repo }, number) => {
+  await fetchAPI(`/repos/${owner}/${repo}/pulls/${number}`, {
+    method: 'PATCH',
+    body: { state: 'open' },
+  });
+};
+
+/**
+ * Bring an Open Authoring pull request on GitHub or Gitea/Forgejo in line with the given status,
+ * for `updateForkStatusWith`. Moving it back to the drafting stage makes it a draft, or a work in
+ * progress on Gitea/Forgejo, which keeps it — and the discussion on it — in place while taking it
+ * out of the maintainers’ review queue; sending it for review reopens it if it was closed and marks
+ * it ready.
+ * @param {object} args Arguments.
+ * @param {WorkflowPullRequest} args.pullRequest Pull request.
+ * @param {WorkflowStatus} args.status New status.
+ * @param {string} [args.state] Pull request state, e.g. `open`. GitHub’s GraphQL API reports it in
+ * upper case, which makes no difference.
+ * @param {boolean} [args.draft] Whether the pull request is a draft.
+ * @param {object} service Service-specific values.
+ * @param {RepositoryPath} service.repository Repository holding the pull request.
+ * @param {(pullRequest: WorkflowPullRequest, isDraft: boolean) => Promise<void>}
+ * service.updateDraftState Function to mark the pull request as a draft or ready for review.
+ */
+export const applyForkPullRequestStatus = async (
+  { pullRequest, status, state, draft },
+  { repository, updateDraftState },
+) => {
+  const normalizedState = state?.toLowerCase();
+
+  if (status === 'draft') {
+    if (normalizedState === 'open' && !draft) {
+      await updateDraftState(pullRequest, true);
+    }
+  } else {
+    if (normalizedState === 'closed') {
+      await reopenPullRequest(repository, /** @type {number} */ (pullRequest.number));
+    }
+
+    if (draft) {
+      await updateDraftState(pullRequest, false);
+    }
+  }
 };

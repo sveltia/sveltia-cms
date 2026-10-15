@@ -17,7 +17,6 @@ import {
   fetchForkPullRequests,
   isForkPullRequest,
   parseForkBranch,
-  reopenPullRequest,
   updateForkStatus,
 } from '$lib/services/backends/git/gitea/workflow-fork';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
@@ -390,17 +389,6 @@ describe('Gitea Open Authoring workflow service', () => {
       });
 
       await expect(fetchForkPullRequests()).resolves.toEqual([]);
-    });
-  });
-
-  describe('reopenPullRequest', () => {
-    test('reopens the pull request', async () => {
-      await reopenPullRequest(/** @type {any} */ ({ number: 7 }));
-
-      expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls/7', {
-        method: 'PATCH',
-        body: { state: 'open' },
-      });
     });
   });
 

@@ -1,3 +1,4 @@
+import { _ } from '@sveltia/i18n';
 import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -7,10 +8,12 @@ import {
   checkPublishAllowed,
   checkStatusAllowed,
   createDraftPullRequest,
+  createForkError,
   ensureForkPermission,
   isOpenAuthoringConfiguredFor,
   pollForFork,
   pruneForkBranches,
+  requestForkWithFallbackName,
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
   setUpForkFor,
@@ -103,6 +106,104 @@ describe('shared fork service', () => {
       await expect(
         ensureForkPermission({ repoPath: 'owner/repo', allowForking: true }),
       ).rejects.toThrow('Permission to fork the repository was declined');
+    });
+  });
+
+  describe('createForkError', () => {
+    test('logs the failure and creates an error naming the repository', () => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const ex = new Error('Forbidden');
+      const result = createForkError('owner/repo', ex);
+
+      expect(result.message).toBe('Failed to fork the repository.');
+      expect(result.cause).toEqual(
+        expect.objectContaining({ message: 'open_authoring.fork_failed' }),
+      );
+      expect(_).toHaveBeenCalledWith('open_authoring.fork_failed', {
+        values: { repo: 'owner/repo' },
+      });
+      expect(error).toHaveBeenCalledWith('Failed to fork the repository.', ex);
+    });
+  });
+
+  describe('requestForkWithFallbackName', () => {
+    const fork = { full_name: 'me/repo' };
+    const renamedFork = { full_name: 'me/owner-repo' };
+    /**
+     * Create an error carrying the given HTTP status, as `fetchAPI` throws.
+     * @param {number} status HTTP status code.
+     * @returns {Error} Error.
+     */
+    const createError = (status) => new Error('Request failed', { cause: { status } });
+
+    /**
+     * Build the arguments, with mocked functions.
+     * @param {object} [overrides] Properties to override.
+     * @returns {any} Arguments.
+     */
+    const createArgs = (overrides = {}) => ({
+      repoPath: 'owner/repo',
+      requestFork: vi.fn().mockResolvedValue(fork),
+      requestRenamedFork: vi.fn().mockResolvedValue(renamedFork),
+      conflictStatuses: [400, 409],
+      isNameTaken: vi.fn().mockResolvedValue(true),
+      ...overrides,
+    });
+
+    beforeEach(() => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    test('returns the fork created at the default name', async () => {
+      const args = createArgs();
+
+      await expect(requestForkWithFallbackName(args)).resolves.toBe(fork);
+      expect(args.isNameTaken).not.toHaveBeenCalled();
+      expect(args.requestRenamedFork).not.toHaveBeenCalled();
+    });
+
+    test.each([400, 409])('falls back to another name on a %i name conflict', async (status) => {
+      const args = createArgs({ requestFork: vi.fn().mockRejectedValue(createError(status)) });
+
+      await expect(requestForkWithFallbackName(args)).resolves.toBe(renamedFork);
+      expect(args.isNameTaken).toHaveBeenCalledOnce();
+    });
+
+    test('throws on any other failure without retrying', async () => {
+      const args = createArgs({ requestFork: vi.fn().mockRejectedValue(createError(403)) });
+
+      await expect(requestForkWithFallbackName(args)).rejects.toThrow(
+        'Failed to fork the repository.',
+      );
+      expect(args.isNameTaken).not.toHaveBeenCalled();
+      expect(args.requestRenamedFork).not.toHaveBeenCalled();
+    });
+
+    test('throws on a conflict when the default name is free', async () => {
+      const args = createArgs({
+        requestFork: vi.fn().mockRejectedValue(createError(409)),
+        isNameTaken: vi.fn().mockResolvedValue(false),
+      });
+
+      await expect(requestForkWithFallbackName(args)).rejects.toThrow(
+        'Failed to fork the repository.',
+      );
+      expect(args.requestRenamedFork).not.toHaveBeenCalled();
+    });
+
+    test('throws when the fork at the fallback name fails too', async () => {
+      const retryError = createError(422);
+
+      const args = createArgs({
+        requestFork: vi.fn().mockRejectedValue(createError(409)),
+        requestRenamedFork: vi.fn().mockRejectedValue(retryError),
+      });
+
+      await expect(requestForkWithFallbackName(args)).rejects.toThrow(
+        'Failed to fork the repository.',
+      );
+      // eslint-disable-next-line no-console
+      expect(console.error).toHaveBeenCalledWith('Failed to fork the repository.', retryError);
     });
   });
 

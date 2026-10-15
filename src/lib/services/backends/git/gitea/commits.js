@@ -6,9 +6,9 @@ import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import {
   assertBranchNotMoved,
   createCommitMessage,
+  createLastCommitError,
   fetchPerPathCommits,
 } from '$lib/services/backends/git/shared/commits';
-import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { user } from '$lib/services/user/account.svelte';
@@ -50,10 +50,7 @@ export const fetchLastCommit = async () => {
       throw ex;
     }
 
-    throw createLocalizedError('Failed to retrieve the last commit hash.', 'branch_not_found', {
-      repo,
-      branch,
-    });
+    throw createLastCommitError('branch_not_found', { repo, branch });
   }
 };
 

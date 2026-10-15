@@ -12,9 +12,15 @@
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
   import { isDraftReadonly } from '$lib/services/config/readonly';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { deferDraftWrite } from '$lib/services/contents/draft/update/deferred';
   import { canResetField, resetField } from '$lib/services/contents/draft/update/reset';
   import { isFieldChanged, revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import {
+    getEditorFieldConfig,
+    getFieldEditorFlags,
+    getFieldInputLabels,
+  } from '$lib/services/contents/editor/field-flags';
   import { getFieldLocaleAccess } from '$lib/services/contents/editor/locale';
   import { createResetMenuState } from '$lib/services/contents/editor/reset-menu.svelte';
   import {
@@ -41,12 +47,9 @@
    * TypedFieldKeyPath,
    * } from '$lib/types/private';
    * @import {
-   * BooleanField,
    * CustomField,
    * Field,
    * FieldKeyPath,
-   * NumberField,
-   * StringField,
    * VisibleField,
    * } from '$lib/types/public';
    */
@@ -99,13 +102,9 @@
     });
 
   /**
-   * Write a value coming from the widget editor back to the entry draft.
-   *
-   * The write is deferred to a microtask so that it happens outside Svelte’s update cycle. Widget
-   * editors sync their local state to this binding from an `$effect`, and Svelte can only memoize
-   * its dirty-marking traversal for writes made outside a running reaction. Without the deferral,
-   * marking re-walks the derived graph once per path that reaches it, which is exponential in the
-   * depth of the editor tree — tens of seconds per keystroke on a deeply nested entry.
+   * Write a value coming from the widget editor back to the entry draft. Widget editors sync their
+   * local state to this binding from an `$effect`, so the write is deferred; see
+   * {@link deferDraftWrite}.
    * @param {any} value New value.
    */
   const writeValue = (value) => {
@@ -121,7 +120,7 @@
     const _locale = locale;
     const _keyPath = keyPath;
 
-    queueMicrotask(() => {
+    deferDraftWrite(() => {
       /* v8 ignore next 3 -- the editor may have been closed in the meantime */
       if (draft) {
         draft[store][_locale][_keyPath] = value;
@@ -145,32 +144,12 @@
 
   const inEditorComponent = $derived(fieldContext === 'rich-text-editor-component');
   const { name: fieldName, widget: fieldType = 'string' } = $derived(fieldConfig);
-  const {
-    label = '',
-    hint = '',
-    readonly: readonlyOption,
-  } = $derived(/** @type {VisibleField} */ (fieldConfig));
+  const { label = '', hint = '' } = $derived(/** @type {VisibleField} */ (fieldConfig));
   const required = $derived(isFieldRequired({ fieldConfig, locale }));
   const multiple = $derived(isFieldMultiple(fieldConfig));
-  const allowPrefix = $derived(['string'].includes(fieldType));
-  const prefix = $derived(
-    allowPrefix ? /** @type {StringField} */ (fieldConfig).prefix : undefined,
+  const { prefix, suffix, beforeInputLabel, afterInputLabel, hasExtraLabels } = $derived(
+    getFieldInputLabels(fieldConfig),
   );
-  const suffix = $derived(
-    allowPrefix ? /** @type {StringField} */ (fieldConfig).suffix : undefined,
-  );
-  const allowExtraLabels = $derived(['boolean', 'number', 'string'].includes(fieldType));
-  const beforeInputLabel = $derived(
-    allowExtraLabels
-      ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).before_input
-      : undefined,
-  );
-  const afterInputLabel = $derived(
-    allowExtraLabels
-      ? /** @type {BooleanField | NumberField | StringField} */ (fieldConfig).after_input
-      : undefined,
-  );
-  const hasExtraLabels = $derived(!!(prefix || suffix || beforeInputLabel || afterInputLabel));
   const isList = $derived(fieldType === 'list' || multiple);
   const originalValues = $derived(entryDraft.current?.originalValues);
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
@@ -240,14 +219,14 @@
   );
   /* v8 ignore stop */
   const autoSet = $derived(autoNow || autoIncrement);
-  const hidden = $derived(fieldType === 'compute' || (autoSet && !!entryDraft.current?.isNew));
-  const readonly = $derived(
-    // The `readonly` option defaults to `true` for the UUID field type, which can be unlocked
-    (readonlyOption ?? fieldType === 'uuid') ||
-      autoSet ||
-      locked ||
-      isDuplicated ||
-      fieldType === 'compute',
+  const { hidden, readonly } = $derived(
+    getFieldEditorFlags({
+      fieldConfig,
+      autoSet,
+      locked,
+      isDuplicated,
+      isNew: !!entryDraft.current?.isNew,
+    }),
   );
   // A field can be restored to its default value or cleared, unless it can’t be edited or its keys
   // follow the default locale, as with a KeyValue field using the `duplicate_keys` i18n strategy
@@ -263,17 +242,14 @@
     };
   });
   const invalid = $derived(validity?.valid === false);
+  const editorFieldConfig = $derived(getEditorFieldConfig({ fieldConfig, inline }));
   const editorProps = $derived({
     locale,
     keyPath,
     typedKeyPath,
     fieldId,
     fieldLabel,
-    fieldConfig: /** @type {Field} */ (
-      inline && ['select', 'relation'].includes(fieldType)
-        ? { ...fieldConfig, dropdown_threshold: 0 }
-        : fieldConfig
-    ),
+    fieldConfig: editorFieldConfig,
     readonly,
     required,
     invalid,
