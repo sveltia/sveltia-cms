@@ -119,3 +119,25 @@ test('scrolls a new item of a List field in a component below the sticky toolbar
   // Allow for subpixel rounding of the scroll position
   expect(itemBox.y).toBeGreaterThanOrEqual(headerBottom - 1);
 });
+
+test('disables the editor toolbar while a field in a component has focus', async ({ page }) => {
+  const editor = getEditor(page);
+  const toolbar = editor.getByRole('toolbar', { name: 'Text Editor' });
+  const item = editor.getByRole('group', { name: 'Item 1 of 30' });
+
+  await expect(toolbar).toHaveAttribute('aria-disabled', 'false');
+  await item.getByRole('button', { name: 'Expand' }).click();
+  await item.getByRole('textbox', { name: 'Title' }).click();
+  // The buttons only apply to the body field’s own text, not to the component’s fields
+  await expect(toolbar).toHaveAttribute('aria-disabled', 'true');
+
+  // Including a menu opened from the component
+  await item.getByRole('button', { name: 'List Item Options' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Add Item Below' })).toBeVisible();
+  await expect(toolbar).toHaveAttribute('aria-disabled', 'true');
+  await page.keyboard.press('Escape');
+
+  // Back in the body field’s own text
+  await editor.getByRole('textbox', { name: 'Body' }).getByText('Intro.').click();
+  await expect(toolbar).toHaveAttribute('aria-disabled', 'false');
+});
