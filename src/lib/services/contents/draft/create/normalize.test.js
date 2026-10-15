@@ -746,6 +746,125 @@ describe('contents/draft/create/normalize', () => {
       });
     });
 
+    it('should copy a duplicate-i18n subfield only from a list item of the same type', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/1075
+      const fields = [
+        {
+          name: 'blocks',
+          widget: 'list',
+          i18n: true,
+          types: [
+            {
+              name: 'latest',
+              fields: [{ name: 'limit', widget: 'number', i18n: 'duplicate', default: 3 }],
+            },
+            {
+              name: 'featured',
+              fields: [{ name: 'limit', widget: 'number', i18n: 'duplicate', default: 1 }],
+            },
+          ],
+        },
+      ];
+
+      const content = normalizeContent({
+        fields,
+        content: {
+          'blocks.0.type': 'latest',
+          'blocks.1.type': 'latest',
+          'blocks.2.type': 'latest',
+        },
+        locale: 'en',
+        defaultLocale: 'fr',
+        defaultLocaleContent: {
+          'blocks.0.type': 'latest',
+          'blocks.0.limit': 5,
+          'blocks.1.type': 'featured',
+          'blocks.1.limit': 10,
+        },
+      });
+
+      // The item of the same type mirrors the default locale’s value, while the item of another
+      // type there, and the item missing there, get the configured default
+      expect(content).toEqual({
+        'blocks.0.type': 'latest',
+        'blocks.0.limit': 5,
+        'blocks.1.type': 'latest',
+        'blocks.1.limit': 3,
+        'blocks.2.type': 'latest',
+        'blocks.2.limit': 3,
+      });
+    });
+
+    it('should copy a duplicate-i18n subfield only from an object of the same type', () => {
+      const fields = [
+        {
+          name: 'hero',
+          widget: 'object',
+          i18n: true,
+          typeKey: 'kind',
+          types: [
+            { name: 'image', fields: [{ name: 'src', i18n: 'duplicate', default: 'a.png' }] },
+            { name: 'video', fields: [{ name: 'src', i18n: 'duplicate', default: 'a.mp4' }] },
+          ],
+        },
+      ];
+
+      expect(
+        normalizeContent({
+          fields,
+          content: { 'hero.kind': 'image' },
+          locale: 'en',
+          defaultLocale: 'fr',
+          defaultLocaleContent: { 'hero.kind': 'video', 'hero.src': 'b.mp4' },
+        }),
+      ).toEqual({ 'hero.kind': 'image', 'hero.src': 'a.png' });
+    });
+
+    it('should leave a duplicated KeyValue field alone in a list item of another type', () => {
+      const keyValueFields = [
+        { name: 'attrs', widget: 'keyvalue', i18n: 'duplicate_keys' },
+        { name: 'meta', widget: 'keyvalue', i18n: 'duplicate' },
+      ];
+
+      const fields = [
+        {
+          name: 'blocks',
+          widget: 'list',
+          i18n: true,
+          types: [
+            { name: 'a', fields: keyValueFields },
+            { name: 'b', fields: keyValueFields },
+          ],
+        },
+      ];
+
+      const content = normalizeContent({
+        fields,
+        content: {
+          'blocks.0.type': 'a',
+          'blocks.0.attrs.y': 'Y',
+          'blocks.0.meta.e': 'E',
+          'blocks.0.meta.c': 'C',
+        },
+        locale: 'en',
+        defaultLocale: 'fr',
+        defaultLocaleContent: {
+          'blocks.0.type': 'b',
+          'blocks.0.attrs.x': 'X',
+          'blocks.0.meta.c': 'C',
+          'blocks.0.meta.e': 'E',
+        },
+      });
+
+      // Neither the keys nor the order of the other type’s pairs are taken over
+      expect(Object.entries(content)).toEqual([
+        ['blocks.0.type', 'a'],
+        ['blocks.0.attrs.y', 'Y'],
+        ['blocks.0.meta.e', 'E'],
+        ['blocks.0.meta.c', 'C'],
+      ]);
+    });
+
     it('should fall back to the default value when the default locale has nothing to copy', () => {
       const fields = [{ name: 'draft', widget: 'boolean', i18n: 'duplicate', default: true }];
 
