@@ -1,4 +1,4 @@
-import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
+import { WORKFLOW_STAGES, WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
 
 /**
  * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -68,15 +68,32 @@ export const getPublishMessages = (pendingDeletion) =>
 /**
  * Sort the unpublished entries into the columns of the Editorial Workflow board. A pending deletion
  * has a status of its own, so it never lands in a stage column; such entries are listed separately.
+ * An entry is placed by the stage it’s in, which may differ from its status: see `resolveStage()`
+ * in the stages module. A stage that isn’t configured for the board still gets a column while it
+ * holds an entry, e.g. one left in a pull request of a collection that no longer uses a workflow,
+ * so no entry goes missing.
  * @param {WorkflowStatus[]} stages Statuses of the stage columns, in order.
  * @param {UnpublishedEntry[]} entries Unpublished entries.
+ * @param {(entry: UnpublishedEntry) => WorkflowStatus} [getStage] Function to get the stage an
+ * entry is in. Default: the entry’s status.
  * @returns {{ columns: { status: WorkflowStatus, entries: UnpublishedEntry[] }[],
  * pendingDeletions: UnpublishedEntry[] }} Stage columns and pending deletions.
  */
-export const groupEntriesByStatus = (stages, entries) => ({
-  columns: stages.map((status) => ({
-    status,
-    entries: entries.filter((entry) => entry.workflow.status === status),
-  })),
-  pendingDeletions: entries.filter(({ workflow }) => workflow.status === 'pending_deletion'),
-});
+export const groupEntriesByStatus = (
+  stages,
+  entries,
+  getStage = (entry) => entry.workflow.status,
+) => {
+  const entryStages = new Map(entries.map((entry) => [entry, getStage(entry)]));
+  const occupied = new Set(entryStages.values());
+
+  return {
+    columns: WORKFLOW_STAGES.filter(
+      (status) => stages.includes(status) || occupied.has(status),
+    ).map((status) => ({
+      status,
+      entries: entries.filter((entry) => entryStages.get(entry) === status),
+    })),
+    pendingDeletions: entries.filter((entry) => entryStages.get(entry) === 'pending_deletion'),
+  };
+};

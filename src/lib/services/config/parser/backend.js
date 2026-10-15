@@ -7,7 +7,11 @@ import { normalizeRootDir } from '$lib/services/backends/root-dir';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 import { isHttpURL, makeLink } from '$lib/services/utils/string';
-import { isWorkflowConfigured } from '$lib/services/workflow/config';
+import {
+  getPublishMode,
+  isWorkflowConfigured,
+  isWorkflowMode,
+} from '$lib/services/workflow/config';
 
 /**
  * @import { CmsConfig, GitBackend } from '$lib/types/public';
@@ -159,10 +163,11 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
 
     if (openAuthoring) {
       // Open Authoring turns each change into a pull request from the contributor’s fork, so it
-      // only makes sense on top of Editorial Workflow. The site-level option is what counts here: a
-      // collection can opt out with its own `publish_mode`, but that only affects maintainers, who
-      // write to the configured repository; a contributor’s fork always goes through pull requests
-      if (cmsConfig.publish_mode !== 'editorial_workflow') {
+      // only makes sense on top of Editorial Workflow or Preview Workflow. The site-level option is
+      // what counts here: a collection can opt out with its own `publish_mode`, but that only
+      // affects maintainers, who write to the configured repository; a contributor’s fork always
+      // goes through pull requests
+      if (!isWorkflowMode(getPublishMode({ cmsConfig }))) {
         errors.add(makeLink(_('config.error.open_authoring_no_workflow'), OPEN_AUTHORING_DOC_URL));
       }
 

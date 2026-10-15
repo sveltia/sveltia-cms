@@ -1526,7 +1526,7 @@ config:
     oauth_implicit_flow: Yapılandırılan kimlik doğrulama yöntemi (implicit flow) Sveltia CMS’te desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.
     github_pkce_unsupported: GitHub kısıtlamaları nedeniyle PKCE yetkilendirmesi henüz desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.
     oauth_no_app_id: OAuth uygulama kimliği (App ID) tanımlanmamış.
-    # Don’t localize `open_authoring` and `editorial_workflow`
+    # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
     open_authoring_no_workflow: '`open_authoring` seçeneği `editorial_workflow` yayın modunu gerektirir. Ayrıntılar için <a>belgelere</a> bakın.'
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` seçeneği en az bir yöntem içermelidir.'

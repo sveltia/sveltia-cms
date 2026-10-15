@@ -27,7 +27,7 @@ import { buildCascadeChanges } from '$lib/services/contents/entry/relations/casc
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { setLastCommitPublishHint } from '$lib/services/deployments';
-import { isWorkflowDraft } from '$lib/services/workflow';
+import { getUnpublishedEntryByDraft, isWorkflowDraft } from '$lib/services/workflow';
 import { detectWorkflowConflict } from '$lib/services/workflow/conflict';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
@@ -153,11 +153,13 @@ const buildChanges = async ({ draft, slugs, recreate }) => {
  * @param {boolean} args.useWorkflow Whether the changes go to a pull request rather than the
  * configured branch.
  * @param {boolean} args.overwrite Whether to save even if someone else has changed the entry.
+ * @param {boolean} args.publish Whether the entry is published along with the save, in which case
+ * its required fields have to be filled in, even if it’s a workflow draft.
  * @returns {Promise<EntryConflict | undefined>} Conflict found, if any, which the save overwrites.
  * @throws {Error} When the entry is read-only, could not be validated, or would overwrite someone
  * else’s change.
  */
-const checkSavable = async ({ draft, useWorkflow, overwrite }) => {
+const checkSavable = async ({ draft, useWorkflow, overwrite, publish }) => {
   // The editor offers no way to save a read-only entry, but make sure nothing is written anyway
   if (isDraftReadonly(draft)) {
     const { collection, collectionFile } = draft;
@@ -170,7 +172,9 @@ const checkSavable = async ({ draft, useWorkflow, overwrite }) => {
   // Wait for what was just typed to reach the draft first. Otherwise a save right after typing
   // would validate the field’s previous value, e.g. an empty required field, and the error would
   // clear itself moments later
-  if (!(await validateAndRevealErrors({ draft, enforceRequired: isRequiredEnforced(draft) }))) {
+  const enforceRequired = publish || isRequiredEnforced(draft);
+
+  if (!(await validateAndRevealErrors({ draft, enforceRequired }))) {
     throw new Error('validation_failed');
   }
 
@@ -364,15 +368,24 @@ const finishSave = async ({ draft, savingEntry, pendingEntries, useWorkflow, ski
  * An entry stored in a file with the other entries of the collection is still refused if its item
  * has changed, as it’s told by its position, and the item at the position may now be another entry
  * that has moved there.
+ * @param {boolean} [args.publish] Whether to publish the entry along with the save, bypassing the
+ * review: see the `direct_publish` publish mode option. A workflow draft without a pull request is
+ * then committed straight to the configured branch. One with a pull request is still saved to it,
+ * as the pull request may hold earlier changes too, and it’s up to the caller to merge it.
  * @returns {Promise<Entry>} Saved entry.
  * @throws {Error} When the entry is read-only, could not be validated or saved, or would overwrite
  * someone else’s change.
  */
-export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }) => {
+export const saveEntry = async ({
+  draft,
+  skipCI = undefined,
+  overwrite = false,
+  publish = false,
+}) => {
   // A collection can opt in or out of Editorial Workflow on its own, but an entry that already has
   // a pull request stays in it
-  const useWorkflow = isWorkflowDraft(draft);
-  const conflict = await checkSavable({ draft, useWorkflow, overwrite });
+  const useWorkflow = publish ? !!getUnpublishedEntryByDraft(draft) : isWorkflowDraft(draft);
+  const conflict = await checkSavable({ draft, useWorkflow, overwrite, publish });
 
   assignSaveTimeValues(draft);
 

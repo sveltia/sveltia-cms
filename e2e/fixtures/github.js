@@ -964,6 +964,11 @@ export class MockGitHub extends MockGitRepository {
     }
 
     if (request === 'PUT pulls/merge') {
+      // Like GitHub, refuse to merge a draft pull request
+      if (pullRequest.draft) {
+        return { status: 405, json: { message: 'Pull Request is still a draft' } };
+      }
+
       // Like GitHub, refuse a merge pinned to a commit the branch no longer points at
       if (body.sha && body.sha !== this.getPullRequestHead(pullRequest).oid) {
         return {

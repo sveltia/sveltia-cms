@@ -127,6 +127,17 @@ describe('PageSwitcher', () => {
     },
   );
 
+  test('names the workflow page after the drafts with Preview Workflow', async () => {
+    backendName.current = 'github';
+    cmsConfig.current = /** @type {any} */ ({
+      backend: { name: 'github' },
+      publish_mode: 'preview',
+    });
+
+    await render(PageSwitcher, {});
+    expect(getPageLabels()).toEqual(['Contents', 'Assets', 'Drafts']);
+  });
+
   test('leaves the workflow page out when the backend doesn’t implement the feature', async () => {
     backendName.current = 'test-repo';
     cmsConfig.current = /** @type {any} */ ({

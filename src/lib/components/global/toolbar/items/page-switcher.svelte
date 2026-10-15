@@ -20,6 +20,7 @@
   import { env } from '$lib/services/user/env.svelte';
   import { encodePathSegments } from '$lib/services/utils/url';
   import { workflowEnabled } from '$lib/services/workflow';
+  import { workflowPageLabelKey } from '$lib/services/workflow/stages';
 
   /**
    * Link to the Asset Library: the folder list on small screens, otherwise the location shown
@@ -84,7 +85,7 @@
     if (workflowEnabled.current) {
       _pages.push({
         key: 'workflow',
-        label: _('editorial_workflow'),
+        label: _(workflowPageLabelKey.current),
         icon: 'rebase_edit',
         link: '/workflow',
         selected: selectedPageName.current === 'workflow',

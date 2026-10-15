@@ -1723,15 +1723,16 @@
  * @property {string} [public_folder] Public media folder path for the collection. This overrides
  * the global `public_folder` option. Default: `media_folder` option value.
  * @property {boolean} [hide] Whether to hide the collection in the UI. Default: `false`.
- * @property {'simple' | 'editorial_workflow'} [publish_mode] Publish mode for the collection. This
- * overrides the global `publish_mode` option, so Editorial Workflow can be enabled for some
- * collections only, or turned off for a collection when it’s enabled globally. Default: global
- * `publish_mode` option value. Note that a contributor working on a fork with Open Authoring always
- * goes through Editorial Workflow, regardless of this option.
- * @property {boolean} [publish] Whether to show the publishing control UI for Editorial Workflow.
- * Default: `true`. Set this to `false` to let editors move an entry through the review stages
- * without being able to publish it themselves. It has no effect unless the `editorial_workflow`
- * publish mode is enabled.
+ * @property {PublishModeType | PublishModeOptions} [publish_mode] Publish mode for the collection.
+ * This overrides the global `publish_mode` option, so Editorial Workflow can be enabled for some
+ * collections only, or turned off for a collection when it’s enabled globally. In the object form,
+ * each option overrides the global one of the same name, and the others are inherited. Default:
+ * global `publish_mode` option value. Note that a contributor working on a fork with Open Authoring
+ * always goes through Editorial Workflow, regardless of this option.
+ * @property {boolean} [publish] Whether to show the publishing control UI for Editorial Workflow
+ * and Preview Workflow. Default: `true`. Set this to `false` to let editors move an entry through
+ * the review stages without being able to publish it themselves. It has no effect unless the
+ * `editorial_workflow` or `preview` publish mode is enabled.
  * @property {FileFormat} [format] File format. It should match the file extension. Default:
  * detected from the file extension: `frontmatter` for Markdown files like `.md`, which reads
  * YAML, TOML or JSON front matter and writes YAML front matter, `yaml` for `.yml`/`.yaml`, `toml`
@@ -2271,16 +2272,53 @@
  */
 
 /**
+ * Publish mode. `simple` commits each change to the configured branch right away. `preview` saves
+ * each change to a pull request, so it can be previewed on a deploy preview before it’s published,
+ * without any review stages. `editorial_workflow` saves each change to a pull request that moves
+ * through review stages before it can be published.
+ * @typedef {'simple' | 'preview' | 'editorial_workflow'} PublishModeType
+ * @see https://sveltiacms.app/en/docs/workflows
+ */
+
+/**
+ * Editorial Workflow review stage.
+ * @typedef {'draft' | 'pending_review' | 'pending_publish'} PublishModeStage
+ */
+
+/**
+ * Publish mode options, the object form of the `publish_mode` option.
+ * @typedef {object} PublishModeOptions
+ * @property {PublishModeType} [type] Publish mode. Default: `simple` at the global level, and the
+ * global publish mode at the collection level.
+ * @property {PublishModeStage[]} [stages] Review stages an unpublished entry moves through, in
+ * order. The list must start with `draft`. An entry can be published once it reaches the last
+ * stage, so `[draft, pending_publish]` drops the In Review stage. Default: `[draft,
+ * pending_review, pending_publish]`. It only applies to the `editorial_workflow` publish mode.
+ * @property {boolean} [direct_publish] Whether to let users save and publish an entry in one go,
+ * bypassing the review: the change is committed straight to the configured branch, or the entry’s
+ * pull request is merged once the change is saved to it. The option is not offered for a collection
+ * with `publish: false`, or to an Open Authoring contributor. Default: `false`. It only applies to
+ * the `editorial_workflow` and `preview` publish modes.
+ * @property {boolean} [allow_incomplete_drafts] Whether an entry in the `draft` stage can be saved
+ * with its required fields left empty. The fields have to be filled in before the entry moves on
+ * or is published. Default: `true`. It only applies to the `editorial_workflow` and `preview`
+ * publish modes.
+ * @see https://sveltiacms.app/en/docs/workflows
+ */
+
+/**
  * CMS configuration.
  * @typedef {object} CmsConfig
  * @property {boolean} [load_config_file] Whether to load YAML/JSON CMS configuration file(s) when
  * [manually initializing the CMS](https://sveltiacms.app/en/docs/api/initialization). This works
  * only in the `CMS.init()` method’s `config` option. Default: `true`.
  * @property {Backend} backend Backend options.
- * @property {'' | 'simple' | 'editorial_workflow'} [publish_mode] Publish mode. An empty string is
- * the same as `simple`. Default: `simple`. It can be overridden for each collection with the
- * collection-level `publish_mode` option. Note that Editorial Workflow is currently supported with
- * the GitHub and GitLab backends only.
+ * @property {'' | PublishModeType | PublishModeOptions} [publish_mode] Publish mode, or an object
+ * with the publish mode and its options. An empty string is the same as `simple`. Default:
+ * `simple`. It can be overridden for each collection with the collection-level `publish_mode`
+ * option. Note that Editorial Workflow and Preview Workflow are currently supported with the
+ * GitHub, GitLab and Gitea/Forgejo backends only. See the
+ * [documentation](https://sveltiacms.app/en/docs/workflows) for details.
  * @property {string} [media_folder] Global internal media folder path, relative to the project’s
  * root directory. Required unless a cloud media storage is configured.
  * @property {string} [public_folder] Global public media folder path, relative to the project’s

@@ -50,4 +50,24 @@ describe('groupEntriesByStatus()', () => {
       pendingDeletions: [entries[1]],
     });
   });
+
+  test('places entries by the stage they’re in, adding a column for a stage that isn’t shown', () => {
+    /** @type {any[]} */
+    const entries = [
+      { id: 1, workflow: { status: 'pending_review' } },
+      { id: 2, workflow: { status: 'pending_publish' } },
+    ];
+
+    expect(
+      groupEntriesByStatus(['draft'], entries, ({ workflow: { status } }) =>
+        status === 'pending_review' ? 'draft' : status,
+      ),
+    ).toEqual({
+      columns: [
+        { status: 'draft', entries: [entries[0]] },
+        { status: 'pending_publish', entries: [entries[1]] },
+      ],
+      pendingDeletions: [],
+    });
+  });
 });

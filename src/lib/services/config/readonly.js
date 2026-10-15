@@ -2,7 +2,7 @@ import { _ } from '@sveltia/i18n';
 
 import { lockedBranch } from '$lib/services/backends/branch-access';
 import { cmsConfig } from '$lib/services/config/state';
-import { getPublishMode } from '$lib/services/workflow/config';
+import { getPublishMode, isWorkflowMode } from '$lib/services/workflow/config';
 
 /**
  * @import { AssetFolderInfo, EntryDraft, InternalCmsConfig } from '$lib/types/private';
@@ -26,14 +26,14 @@ export const isConfigReadonly = ({ config = cmsConfig.current, collection, colle
 /**
  * Check whether a collection is read-only because the signed-in user can’t push to the configured
  * branch. A collection with the simple publish mode commits to the branch directly, while one with
- * Editorial Workflow commits to a branch of its own and still works.
+ * Editorial Workflow or Preview Workflow commits to a branch of its own and still works.
  * @param {Collection} [collection] Collection.
  * @returns {boolean} Result.
  */
 export const isLockedByBranch = (collection) =>
   !!lockedBranch.current &&
   !!collection &&
-  getPublishMode({ cmsConfig: cmsConfig.current, collection }) !== 'editorial_workflow';
+  !isWorkflowMode(getPublishMode({ cmsConfig: cmsConfig.current, collection }));
 
 /**
  * Check whether a collection, a collection file or the whole CMS is read-only, either with the

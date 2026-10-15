@@ -7,6 +7,7 @@ import { parseFields } from '$lib/services/config/parser/fields';
 import { parseI18nConfig } from '$lib/services/config/parser/i18n';
 import { parseMediaConfig } from '$lib/services/config/parser/media';
 import { parseMediaLibraries } from '$lib/services/config/parser/media-libraries';
+import { parsePublishMode } from '$lib/services/config/parser/publish-mode';
 import { parseSlugConfig } from '$lib/services/config/parser/slug';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 import { isHttpURL, isNonEmptyString } from '$lib/services/utils/string';
@@ -70,6 +71,7 @@ export const parseCmsConfig = (cmsConfig, collectors) => {
     warnDeprecation('logo_url');
   }
 
+  parsePublishMode({ value: cmsConfig.publish_mode, context: { cmsConfig }, collectors });
   parseMediaConfig(cmsConfig, collectors);
   parseMediaLibraries({ config: cmsConfig, context: { cmsConfig }, collectors });
   parseSlugConfig(cmsConfig, collectors);

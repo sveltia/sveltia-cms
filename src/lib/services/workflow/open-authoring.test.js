@@ -9,7 +9,6 @@ import {
   isEntryAlreadyPublished,
   openAuthoring,
   requestForkPermission,
-  workflowStages,
 } from '$lib/services/workflow/open-authoring';
 
 describe('workflow/open-authoring', () => {
@@ -27,17 +26,6 @@ describe('workflow/open-authoring', () => {
 
       forkedRepository.current = undefined;
       expect(openAuthoring.current).toBe(false);
-    });
-  });
-
-  describe('workflowStages', () => {
-    test('offers every stage to a maintainer', () => {
-      expect(workflowStages.current).toEqual(['draft', 'pending_review', 'pending_publish']);
-    });
-
-    test('leaves out the publishing stage for a contributor', () => {
-      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
-      expect(workflowStages.current).toEqual(['draft', 'pending_review']);
     });
   });
 

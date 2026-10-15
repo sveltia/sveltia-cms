@@ -17,6 +17,7 @@ import { checkViewOptions } from '$lib/services/config/parser/collections/views'
 import { parseFields } from '$lib/services/config/parser/fields';
 import { checkI18nOverrides } from '$lib/services/config/parser/i18n';
 import { checkFolderTemplateTags } from '$lib/services/config/parser/media';
+import { parsePublishMode } from '$lib/services/config/parser/publish-mode';
 import {
   addMessage,
   checkName,
@@ -274,6 +275,12 @@ export const parseCollection = ({ cmsConfig, collection }, collectors) => {
 
   checkFolderTemplateTags({
     config: collection,
+    context: { cmsConfig, collection: /** @type {Collection} */ (collection) },
+    collectors,
+  });
+
+  parsePublishMode({
+    value: /** @type {Collection} */ (collection).publish_mode,
     context: { cmsConfig, collection: /** @type {Collection} */ (collection) },
     collectors,
   });

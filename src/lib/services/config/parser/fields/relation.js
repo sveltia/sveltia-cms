@@ -6,7 +6,7 @@ import { hasSlugTag } from '$lib/services/config/parser/collections/array-file';
 import { checkMultipleDefault } from '$lib/services/config/parser/utils/defaults';
 import { getCanonicalSlugKey, hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
-import { getPublishMode } from '$lib/services/workflow/config';
+import { getPublishMode, isWorkflowMode } from '$lib/services/workflow/config';
 
 /**
  * @import {
@@ -199,7 +199,7 @@ const checkArrayFileWorkflowRelation = ({ collection, context, collectors }) => 
     // A file/singleton collection’s entry can’t be renamed or deleted
     'divider' in collection ||
     'files' in collection ||
-    getPublishMode({ cmsConfig, collection }) !== 'editorial_workflow'
+    !isWorkflowMode(getPublishMode({ cmsConfig, collection }))
   ) {
     return;
   }

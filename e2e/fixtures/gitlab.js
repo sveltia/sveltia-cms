@@ -570,6 +570,11 @@ export class MockGitLab extends MockGitRepository {
       return { status: 405, json: { message: '405 Method Not Allowed' } };
     }
 
+    // Like GitLab, refuse to merge a draft merge request
+    if (/^\s*(?:\[draft\]|\(draft\)|draft:)/i.test(mergeRequest.title)) {
+      return { status: 405, json: { message: '405 Method Not Allowed' } };
+    }
+
     // GitLab checks the commit against the head the merge request reports, which can trail the
     // branch for a moment after a push
     const { oid: headOid } = this.getMergeRequestHead(mergeRequest);

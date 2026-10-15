@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
@@ -10,6 +10,7 @@ import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { updateWorkflowStatus } from '$lib/services/workflow/save';
 import { canMoveToStatus } from '$lib/services/workflow/validate';
+import { initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 import { waitForToastsToHide } from '$lib/test/toast';
 
@@ -159,5 +160,42 @@ describe('EntryStatusMenu', () => {
     // The global toast says why, as this menu goes away with the entry
     expect(contentUpdatesToast.current.alreadyPublished).toBe(true);
     contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE };
+  });
+
+  describe('with configured stages', () => {
+    afterEach(async () => {
+      await initTestConfig();
+    });
+
+    test('offers the stages the collection is configured with', async () => {
+      await initTestConfig({
+        publish_mode: { type: 'editorial_workflow', stages: ['draft', 'pending_publish'] },
+      });
+
+      // A pull request labelled with a stage that isn’t configured is shown in the earlier one
+      const reviewed = { ...entry, workflow: { ...entry.workflow, status: 'pending_review' } };
+
+      await renderWithDraft(EntryStatusMenu, {
+        draft: createMockDraft(),
+        props: { entry: reviewed },
+      });
+      await page.getByRole('button', { name: 'Status: \u2068Draft\u2069' }).click();
+
+      expect(
+        page
+          .getByRole('menuitemradio')
+          .elements()
+          .map((el) => el.textContent?.replace(/\s+/g, ' ').trim()),
+      ).toEqual(['Draft check', 'Ready']);
+    });
+
+    test('shows a badge rather than a menu with Preview Workflow', async () => {
+      await initTestConfig({ publish_mode: 'preview' });
+
+      await renderWithDraft(EntryStatusMenu, { draft: createMockDraft(), props: { entry } });
+
+      await expect.element(page.getByText('Draft', { exact: true })).toBeInTheDocument();
+      expect(page.getByRole('button').elements()).toHaveLength(0);
+    });
   });
 });

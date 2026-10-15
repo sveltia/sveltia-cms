@@ -1,12 +1,18 @@
 import { backend } from '$lib/services/backends';
-import { mergeLockedBranch } from '$lib/services/backends/branch-access';
+import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 import { isEntryBranch } from '$lib/services/workflow/branch';
-import { getPublishMode, isWorkflowConfigured } from '$lib/services/workflow/config';
+import {
+  getPublishMode,
+  getPublishModeOptions,
+  isWorkflowConfigured,
+  isWorkflowMode,
+} from '$lib/services/workflow/config';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
+import { isLastStage } from '$lib/services/workflow/stages';
 
 /**
  * @import {
@@ -43,7 +49,7 @@ export const workflowEnabled = createDerivedState(
 export const isWorkflowEnabled = (collection) =>
   !!backend.current?.workflow &&
   (openAuthoring.current ||
-    getPublishMode({ cmsConfig: cmsConfig.current, collection }) === 'editorial_workflow');
+    isWorkflowMode(getPublishMode({ cmsConfig: cmsConfig.current, collection })));
 
 /**
  * List of unpublished entries retrieved from the backend’s open pull requests.
@@ -222,20 +228,44 @@ export const canMergePullRequest = (pullRequest) =>
 
 /**
  * Check whether the signed-in user gets the control to publish the given unpublished entry, or to
- * carry out its pending deletion. The entry can only be published from the last stage, and the
- * collection’s `publish` option can hide the control altogether, so an editor can move an entry
- * through the review stages but leave the actual publishing to someone else. An Open Authoring
- * contributor can’t merge a pull request on the configured repository, and neither can a user who
- * can push to the entry’s branch but not merge into the configured branch.
+ * carry out its pending deletion. The entry can only be published from the last stage — the
+ * drafting stage with Preview Workflow — unless the `direct_publish` publish mode option lets it
+ * skip the review. The collection’s `publish` option can hide the control altogether, so an editor
+ * can move an entry through the review stages but leave the actual publishing to someone else. An
+ * Open Authoring contributor can’t merge a pull request on the configured repository, and neither
+ * can a user who can push to the entry’s branch but not merge into the configured branch.
  * @param {UnpublishedEntry} entry Unpublished entry.
  * @param {InternalCollection | undefined} collection Collection the entry belongs to.
  * @returns {boolean} Result.
  */
-export const isPublishAllowed = ({ workflow: { status, pullRequest } }, collection) =>
+export const isPublishAllowed = (entry, collection) =>
   !openAuthoring.current &&
-  canMergePullRequest(pullRequest) &&
-  (status === 'pending_publish' || status === 'pending_deletion') &&
+  canMergePullRequest(entry.workflow.pullRequest) &&
+  (isPendingDeletion(entry) ||
+    isLastStage(entry, collection) ||
+    // Direct publishing bypasses the review, so an entry can be published from any stage
+    getPublishModeOptions({ cmsConfig: cmsConfig.current, collection }).directPublish) &&
   collection?.publish !== false;
+
+/**
+ * Check whether the signed-in user gets the option to save the entry being edited and publish it in
+ * one go, bypassing the review, as enabled with the `direct_publish` publish mode option. The
+ * collection’s `publish` option hides it just like the Publish button, and an Open Authoring
+ * contributor can’t publish anything. Without a pull request, the change is committed straight to
+ * the configured branch, so the user has to be able to push there; with one, the pull request is
+ * merged, so the user has to be able to merge it.
+ * @param {InternalCollection | undefined} collection Collection the entry belongs to.
+ * @param {UnpublishedEntry | undefined} entry Unpublished entry, if the entry has a pull request.
+ * @returns {boolean} Result.
+ * @see https://github.com/sveltia/sveltia-cms/issues/980
+ * @see https://github.com/decaporg/decap-cms/issues/4054
+ */
+export const isDirectPublishAllowed = (collection, entry) =>
+  !!collection &&
+  !openAuthoring.current &&
+  collection.publish !== false &&
+  getPublishModeOptions({ cmsConfig: cmsConfig.current, collection }).directPublish &&
+  (entry ? canMergePullRequest(entry.workflow.pullRequest) : !lockedBranch.current);
 
 /**
  * Replace each published entry that has an open pull request with its unpublished version, so a

@@ -1499,7 +1499,7 @@ config:
     oauth_implicit_flow: Sveltia CMS 不支援設定的認證方法（隱式授權）。請改用其他<a>認證方法</a>。
     github_pkce_unsupported: 由於 GitHub 的限制，暫不支援 PKCE 授權。請改用其他<a>認證方法</a>。
     oauth_no_app_id: 未定義 OAuth 應用程式 ID。
-    # Don’t localize `open_authoring` and `editorial_workflow`
+    # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
     open_authoring_no_workflow: '`open_authoring` 選項需要搭配 `editorial_workflow` 發布模式。詳見<a>說明文件</a>。'
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` 選項必須至少包含一種方法。'

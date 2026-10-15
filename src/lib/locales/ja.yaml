@@ -250,6 +250,9 @@ install_as_app: アプリとしてインストール
 contents: コンテンツ
 assets: アセット
 editorial_workflow: 編集ワークフロー
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: 下書き
 cms_config: CMS 設定
 # Mobile menu page title (shown only on small screens)
 menu: メニュー
@@ -1815,13 +1818,13 @@ config:
     missing_repository: リポジトリが定義されていません。
     invalid_repository: 設定されているリポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。
     invalid_root_dir: 設定されているルートディレクトリが正しくありません。この設定は「..」を含まない、リポジトリ内のパスでなければなりません。
-    invalid_root_dir_branch: '設定されているルートディレクトリは `editorial_workflow` 公開モードのブランチ名に使用できません。パスの各部分は、ドットで始まったり「.lock」で終わったりせず、スペースやコロン、アスタリスクなどの特殊文字を含まないようにしてください。'
+    invalid_root_dir_branch: '設定されているルートディレクトリは `editorial_workflow` および `preview` 公開モードのブランチ名に使用できません。パスの各部分は、ドットで始まったり「.lock」で終わったりせず、スペースやコロン、アスタリスクなどの特殊文字を含まないようにしてください。'
     path_outside_root_dir: パス「{$path}」はルートディレクトリの外を指しています。CMS はルートディレクトリの外のファイルを一覧表示できません。
     oauth_implicit_flow: 設定されている認証方式 (暗黙的フロー) は Sveltia CMS では非対応です。代わりに他の <a>認証方法</a> を使用してください。
     github_pkce_unsupported: GitHub の制約により PKCE 認証はまだサポートされていません。代わりに他の <a>認証方法</a> を使用してください。
     oauth_no_app_id: ' OAuth アプリケーション ID が定義されていません。'
-    # Don’t localize `open_authoring` and `editorial_workflow`
-    open_authoring_no_workflow: '`open_authoring` オプションには `editorial_workflow` 公開モードが必要です。詳しくは <a>ドキュメント</a> を参照してください。'
+    # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
+    open_authoring_no_workflow: '`open_authoring` オプションには `editorial_workflow` または `preview` 公開モードが必要です。詳しくは <a>ドキュメント</a> を参照してください。'
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` オプションには少なくとも 1 つの認証方法を含める必要があります。'
     missing_media_folder: メディアフォルダーが定義されていません。
@@ -1835,6 +1838,8 @@ config:
     invalid_sanitize_replacement: '`sanitize_replacement` オプションに `{$replacement}` が指定されていますが、スラッグに使用できない文字が含まれているため、置換文字として使用できません。'
     # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
     invalid_url_option: '`{$option}` オプションに `{$url}` が指定されていますが、`https://` または `http://` で始まる絶対 URL を指定する必要があります。'
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: '`publish_mode` の `stages` オプションは `draft` で始まり、`draft`、`pending_review`、`pending_publish` の順に、重複なく指定する必要があります。'
     # Don’t localize `i18n` and `locales`
     i18n_no_locales: '`i18n.locales` オプションには少なくとも 1 つのロケールを指定する必要があります。'
     # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
@@ -1869,7 +1874,7 @@ config:
     # {$prop} is the option name; Don’t localize `file`
     unsupported_collection_data_file_option: '`file` オプションを持つコレクションでは `{$prop}` オプションはサポートされていません。'
     # Don’t localize `file`, `publish_mode` and `simple`
-    collection_data_file_workflow: '`file` オプションを持つコレクションでは、オープンオーサリングを含む編集ワークフローはサポートされていません。コレクションの `publish_mode` オプションを `simple` に設定してください。'
+    collection_data_file_workflow: '`file` オプションを持つコレクションでは、オープンオーサリングを含む編集ワークフローおよびプレビューワークフローはサポートされていません。コレクションの `publish_mode` オプションを `simple` に設定してください。'
     # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
     # with backslashes for MessageFormat 2
     collection_data_file_slug_tag: '`file` オプションを持つコレクションでは、`{$prop}` オプションに `\{\{slug\}\}` タグを含めることはできません。エントリーのスラッグはその位置であり、エントリーの並べ替えや削除で変わるためです。代わりに一意の値を持つフィールドを使用してください。'
@@ -2021,7 +2026,7 @@ config:
     # The curly brackets are escaped with backslashes for MessageFormat 2
     relation_field_array_file_slug: '`{$collection}` コレクションへの参照では `\{\{slug\}\}` の値を保存できません。`file` オプションを持つコレクションのエントリーのスラッグはその位置であり、エントリーの並べ替えや削除で変わるためです。代わりに `value_field` オプションに一意の値を持つフィールドを指定してください。'
     # {$collection} is the referenced collection name; Don’t localize `file`
-    relation_field_array_file_workflow: '`file` オプションを持つコレクションは、編集ワークフローを使用する `{$collection}` コレクションへの参照を持つことができません。そのコレクションで名前が変更または削除されたエントリーへの参照を、ファイル内で更新できないためです。'
+    relation_field_array_file_workflow: '`file` オプションを持つコレクションは、編集ワークフローまたはプレビューワークフローを使用する `{$collection}` コレクションへの参照を持つことができません。そのコレクションで名前が変更または削除されたエントリーへの参照を、ファイル内で更新できないためです。'
     relation_field_invalid_display_field: 参照されている表示フィールド `{$field}` は無効であるか定義されていません。
     relation_field_invalid_search_field: 参照されている検索フィールド `{$field}` は無効であるか定義されていません。
     relation_field_invalid_filter_field: 参照されているフィルターフィールド `{$field}` は無効であるか定義されていません。
@@ -2059,6 +2064,8 @@ config:
     oauth_no_app_id: OAuth アプリケーション ID が定義されていません。ユーザーがログインするにはアクセストークンを入力する必要があります。
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}` オプションは Sveltia CMS ではサポートされていません。このオプションは無視されます。'
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: '`publish_mode` の `stages` オプションは `editorial_workflow` 公開モードでのみ有効なため、`{$type}` では無視されます。'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: '`picker_utc` と新しいタイムゾーンオプション (`input_timezone` または `output_utc`) の両方が設定されています。新しいオプションが優先されます。設定から `picker_utc` を削除することを検討してください。'
     # Don’t localize `preview_path`
@@ -2115,6 +2122,11 @@ viewing_editorial_workflow: 'エディトリアルワークフローボードを
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'エディトリアルワークフローボードを表示しています。下書き: {$draft} 件。レビュー中: {$review} 件。削除待ち: {$deletion} 件。'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'エディトリアルワークフローボードを表示しています。下書き: {$draft} 件。公開可: {$ready} 件。削除待ち: {$deletion} 件。'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: '下書きページを表示しています。下書き: {$draft} 件。削除待ち: {$deletion} 件。'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -2183,6 +2195,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: レビューを依頼
   confirm_sending_for_review: 変更を下書きとして保存しました。誰かが確認して公開できるよう、このエントリーのレビューを依頼しますか？
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: 公開可にする
+  confirm_marking_as_ready: 変更を下書きとして保存しました。公開できるよう、このエントリーを公開可にしますか？
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: エントリーを公開
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the

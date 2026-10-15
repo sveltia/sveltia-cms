@@ -402,7 +402,8 @@ const pendingPublishes = new Map();
  */
 const mergeWorkflowEntry = async (entry) => {
   const workflow = getWorkflowService();
-  const { pullRequest, status } = entry.workflow;
+  const { status } = entry.workflow;
+  let { pullRequest } = entry.workflow;
   const deletion = status === 'pending_deletion';
   const hookArgs = getEventHookArgs(entry);
 
@@ -421,6 +422,14 @@ const mergeWorkflowEntry = async (entry) => {
 
   if (hookArgs) {
     await callEventHooks({ ...hookArgs, type: preType });
+  }
+
+  // An entry in the drafting stage is kept as a draft pull request, which the Git service refuses
+  // to merge. It’s published from there with Preview Workflow or direct publishing, so it’s marked
+  // ready first, which also takes the draft marker off the pull request. This is left until the
+  // hooks have let the publish go ahead, so an entry isn’t marked ready for nothing
+  if (status === 'draft') {
+    ({ pullRequest } = (await updateWorkflowStatus(entry, 'pending_publish')).workflow);
   }
 
   await workflow.publish(pullRequest);

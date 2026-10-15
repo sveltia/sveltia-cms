@@ -1565,7 +1565,7 @@ config:
     oauth_implicit_flow: Den konfigurerade autentiseringsmetoden (implicit flow) stöds inte i Sveltia CMS. Använd en annan <a>autentiseringsmetod</a> istället.
     github_pkce_unsupported: PKCE-auktorisering stöds ännu inte på grund av GitHubs begränsningar. Använd en annan <a>autentiseringsmetod</a> istället.
     oauth_no_app_id: OAuth-applikations-ID är inte definierat.
-    # Don’t localize `open_authoring` and `editorial_workflow`
+    # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
     open_authoring_no_workflow: '`open_authoring`-alternativet kräver publiceringsläget `editorial_workflow`. Se <a>dokumentationen</a> för mer information.'
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods`-alternativet måste innehålla minst en metod.'

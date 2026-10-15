@@ -1609,7 +1609,7 @@ config:
     oauth_implicit_flow: Nakonfigurovaná metoda ověření (implicit flow) není ve Sveltia CMS podporována. Použijte jinou <a>metodu ověření</a>.
     github_pkce_unsupported: Autorizace PKCE zatím není podporována kvůli omezením služby GitHub. Použijte jinou <a>metodu ověření</a>.
     oauth_no_app_id: ID aplikace OAuth není definováno.
-    # Don’t localize `open_authoring` and `editorial_workflow`
+    # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
     open_authoring_no_workflow: Možnost `open_authoring` vyžaduje režim publikování `editorial_workflow`. Podrobnosti najdete v <a>dokumentaci</a>.
     # Don’t localize `auth_methods`
     no_auth_methods: Možnost `auth_methods` musí obsahovat alespoň jednu metodu.

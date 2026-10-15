@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 
-import { getPublishMode, isWorkflowConfigured } from '$lib/services/workflow/config';
+import {
+  getPublishMode,
+  getPublishModeOptions,
+  isWorkflowConfigured,
+  isWorkflowMode,
+} from '$lib/services/workflow/config';
 
 /** @type {any} */
 const posts = { name: 'posts', folder: 'content/posts', fields: [] };
@@ -59,7 +64,111 @@ describe('workflow/config', () => {
     });
   });
 
+  describe('getPublishModeOptions', () => {
+    test('fills in the defaults', () => {
+      expect(getPublishModeOptions({ cmsConfig: undefined })).toEqual({
+        type: 'simple',
+        stages: ['draft', 'pending_review', 'pending_publish'],
+        directPublish: false,
+        allowIncompleteDrafts: true,
+      });
+    });
+
+    test('reads the object form', () => {
+      expect(
+        getPublishModeOptions({
+          cmsConfig: /** @type {any} */ ({
+            publish_mode: {
+              type: 'editorial_workflow',
+              stages: ['draft', 'pending_publish'],
+              direct_publish: true,
+              allow_incomplete_drafts: false,
+            },
+          }),
+        }),
+      ).toEqual({
+        type: 'editorial_workflow',
+        stages: ['draft', 'pending_publish'],
+        directPublish: true,
+        allowIncompleteDrafts: false,
+      });
+    });
+
+    test('gives Preview Workflow the drafting stage only', () => {
+      expect(
+        getPublishModeOptions({
+          cmsConfig: /** @type {any} */ ({
+            publish_mode: { type: 'preview', stages: ['draft', 'pending_review'] },
+          }),
+        }).stages,
+      ).toEqual(['draft']);
+    });
+
+    test('keeps the stages in order with the drafting stage, dropping unknown ones', () => {
+      expect(
+        getPublishModeOptions({
+          cmsConfig: /** @type {any} */ ({
+            publish_mode: { type: 'editorial_workflow', stages: ['pending_publish', 'foo'] },
+          }),
+        }).stages,
+      ).toEqual(['draft', 'pending_publish']);
+    });
+
+    test('ignores direct publishing with the simple publish mode', () => {
+      expect(
+        getPublishModeOptions({
+          cmsConfig: /** @type {any} */ ({ publish_mode: { direct_publish: true } }),
+        }).directPublish,
+      ).toBe(false);
+    });
+
+    test('treats an unknown publish mode or option value as simple', () => {
+      expect(
+        getPublishModeOptions({ cmsConfig: /** @type {any} */ ({ publish_mode: 'unknown' }) }).type,
+      ).toBe('simple');
+      expect(
+        getPublishModeOptions({ cmsConfig: /** @type {any} */ ({ publish_mode: 1 }) }).type,
+      ).toBe('simple');
+    });
+
+    test('lets a collection override the site-level options one by one', () => {
+      const cmsConfig = /** @type {any} */ ({
+        publish_mode: { type: 'editorial_workflow', direct_publish: true },
+      });
+
+      expect(
+        getPublishModeOptions({
+          cmsConfig,
+          collection: /** @type {any} */ ({ name: 'posts', publish_mode: { stages: ['draft'] } }),
+        }),
+      ).toMatchObject({ type: 'editorial_workflow', stages: ['draft'], directPublish: true });
+      expect(
+        getPublishModeOptions({
+          cmsConfig,
+          collection: /** @type {any} */ ({ name: 'posts', publish_mode: 'preview' }),
+        }),
+      ).toMatchObject({ type: 'preview', directPublish: true });
+    });
+  });
+
+  describe('isWorkflowMode', () => {
+    test('tells the publish modes that use pull requests', () => {
+      expect(isWorkflowMode('simple')).toBe(false);
+      expect(isWorkflowMode('preview')).toBe(true);
+      expect(isWorkflowMode('editorial_workflow')).toBe(true);
+    });
+  });
+
   describe('isWorkflowConfigured', () => {
+    test('counts Preview Workflow', () => {
+      expect(isWorkflowConfigured(/** @type {any} */ ({ publish_mode: 'preview' }))).toBe(true);
+      expect(
+        isWorkflowConfigured(
+          /** @type {any} */ ({ collections: [{ name: 'a', publish_mode: { type: 'preview' } }] }),
+        ),
+      ).toBe(true);
+    });
+
     test('is false without any editorial_workflow publish mode', () => {
       expect(isWorkflowConfigured(undefined)).toBe(false);
       expect(isWorkflowConfigured(/** @type {any} */ ({}))).toBe(false);

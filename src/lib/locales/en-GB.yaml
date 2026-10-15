@@ -253,6 +253,9 @@ install_as_app: Install as App
 contents: Contents
 assets: Assets
 editorial_workflow: Editorial Workflow
+# Name of the Editorial Workflow page when all the content uses Preview Workflow, which has no
+# review stages, so the page only lists the drafts
+drafts: Drafts
 cms_config: CMS Configuration
 # Mobile menu page title (shown only on small screens)
 menu: Menu
@@ -1915,13 +1918,13 @@ config:
     missing_repository: The repository is not defined.
     invalid_repository: The configured repository is invalid. It must be in “owner/repo” format.
     invalid_root_dir: The root directory is invalid. It must be a path within the repository, without “..”.
-    invalid_root_dir_branch: The root directory can’t be used in the branch names of the `editorial_workflow` publish mode. No part of its path can start with a dot, end with “.lock” or contain a space or a special character such as a colon or an asterisk.
+    invalid_root_dir_branch: The root directory can’t be used in the branch names of the `editorial_workflow` and `preview` publish modes. No part of its path can start with a dot, end with “.lock” or contain a space or a special character such as a colon or an asterisk.
     path_outside_root_dir: The path “{$path}” leads outside the root directory, where the CMS can’t list files.
     oauth_implicit_flow: The configured authentication method (implicit flow) is not supported in Sveltia CMS. Use a different <a>authentication method</a> instead.
     github_pkce_unsupported: PKCE authorisation is not yet supported due to GitHub’s limitations. Use a different <a>authentication method</a> instead.
     oauth_no_app_id: OAuth application ID is not defined.
-    # Don’t localize `open_authoring` and `editorial_workflow`
-    open_authoring_no_workflow: The `open_authoring` option requires the `editorial_workflow` publish mode. See the <a>documentation</a> for details.
+    # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
+    open_authoring_no_workflow: The `open_authoring` option requires the `editorial_workflow` or `preview` publish mode. See the <a>documentation</a> for details.
     # Don’t localize `auth_methods`
     no_auth_methods: The `auth_methods` option must contain at least one method.
     missing_media_folder: The media folder is not defined.
@@ -1935,6 +1938,8 @@ config:
     invalid_sanitize_replacement: The `sanitize_replacement` option is set to `{$replacement}`, but it contains a character that can’t be used in a slug, so it can’t stand in for one.
     # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
     invalid_url_option: The `{$option}` option is set to `{$url}`, but it must be an absolute URL starting with `https://` or `http://`.
+    # Don’t localize `publish_mode`, `stages`, `draft`, `pending_review` and `pending_publish`
+    invalid_publish_mode_stages: The `stages` option of `publish_mode` must start with `draft` and list the stages in the order `draft`, `pending_review`, `pending_publish`, without repeating any.
     # Don’t localize `i18n` and `locales`
     i18n_no_locales: The `i18n.locales` option must list at least one locale.
     # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
@@ -1969,7 +1974,7 @@ config:
     # {$prop} is the option name; Don’t localize `file`
     unsupported_collection_data_file_option: The `{$prop}` option is not supported in a collection with the `file` option.
     # Don’t localize `file`, `publish_mode` and `simple`
-    collection_data_file_workflow: Editorial Workflow, including Open Authoring, is not supported in a collection with the `file` option. Set the collection’s `publish_mode` option to `simple`.
+    collection_data_file_workflow: Editorial Workflow and Preview Workflow, including Open Authoring, are not supported in a collection with the `file` option. Set the collection’s `publish_mode` option to `simple`.
     # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
     # with backslashes for MessageFormat 2
     collection_data_file_slug_tag: The `{$prop}` option can’t contain the `\{\{slug\}\}` tag in a collection with the `file` option, as an entry’s slug is its position, which changes when the entries are reordered or deleted. Use a field with a unique value instead.
@@ -2121,7 +2126,7 @@ config:
     # The curly brackets are escaped with backslashes for MessageFormat 2
     relation_field_array_file_slug: The relation to the `{$collection}` collection can’t store the `\{\{slug\}\}` value, as an entry’s slug in a collection with the `file` option is its position, which changes when the entries are reordered or deleted. Set the `value_field` option to a field with a unique value instead.
     # {$collection} is the referenced collection name; Don’t localize `file`
-    relation_field_array_file_workflow: A collection with the `file` option can’t have a relation to the `{$collection}` collection, which uses Editorial Workflow, as the references to an entry renamed or deleted there can’t be updated in the file.
+    relation_field_array_file_workflow: A collection with the `file` option can’t have a relation to the `{$collection}` collection, which uses Editorial Workflow or Preview Workflow, as the references to an entry renamed or deleted there can’t be updated in the file.
     relation_field_invalid_display_field: The referenced display field `{$field}` is invalid or not defined.
     relation_field_invalid_search_field: The referenced search field `{$field}` is invalid or not defined.
     relation_field_invalid_filter_field: The referenced filter field `{$field}` is invalid or not defined.
@@ -2159,6 +2164,8 @@ config:
     oauth_no_app_id: OAuth application ID is not defined. Users are required to provide an access token to sign in.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: The `{$prop}` option is not supported in Sveltia CMS. It will be ignored.
+    # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
+    publish_mode_stages_ignored: The `stages` option of `publish_mode` only applies to the `editorial_workflow` publish mode, so it’s ignored with `{$type}`.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Both `picker_utc` and newer timezone options (`input_timezone` or `output_utc`) are set. The new options take precedence. Consider removing `picker_utc` from your configuration.
     # Don’t localize `preview_path`
@@ -2215,6 +2222,11 @@ viewing_editorial_workflow: 'You’re now viewing the Editorial Workflow board. 
 # Same as above, for an Open Authoring contributor: their board has no Ready column, because only
 # a maintainer can publish
 viewing_open_authoring_workflow: 'You’re now viewing the Editorial Workflow board. Drafts: {$draft}. In Review: {$review}. Pending Deletion: {$deletion}.'
+# Same as above, when the In Review stage is left out with the `stages` publish mode option
+viewing_editorial_workflow_without_review: 'You’re now viewing the Editorial Workflow board. Drafts: {$draft}. Ready: {$ready}. Pending Deletion: {$deletion}.'
+# Same as above, when all the content uses Preview Workflow, which has no review stages, so the
+# page only lists the drafts
+viewing_preview_workflow: 'You’re now viewing the Drafts page. Drafts: {$draft}. Pending Deletion: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -2283,6 +2295,10 @@ workflow:
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: Send for Review
   confirm_sending_for_review: Your changes have been saved as a draft. Send the entry for review so someone can look at it and publish it?
+  # Same as above, when the In Review stage is left out with the `stages` publish mode option, so
+  # the next step is to mark the entry as ready to be published
+  mark_as_ready: Mark as Ready
+  confirm_marking_as_ready: Your changes have been saved as a draft. Mark the entry as ready so it can be published?
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: Publish Entry
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the

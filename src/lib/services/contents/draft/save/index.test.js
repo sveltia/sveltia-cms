@@ -24,7 +24,11 @@ import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { setLastCommitPublishHint } from '$lib/services/deployments';
-import { isWorkflowDraft, unpublishedEntries } from '$lib/services/workflow';
+import {
+  getUnpublishedEntryByDraft,
+  isWorkflowDraft,
+  unpublishedEntries,
+} from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
 import { saveEntry as _saveEntry } from '.';
@@ -80,6 +84,7 @@ vi.mock('$lib/services/contents/fields/number/auto-increment');
 vi.mock('$lib/services/deployments');
 vi.mock('$lib/services/workflow', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
+  getUnpublishedEntryByDraft: vi.fn(),
   isWorkflowDraft: vi.fn(),
   unpublishedEntries: { current: undefined },
 }));
@@ -119,6 +124,7 @@ describe('draft/save/index', () => {
     /** @type {any} */ (skipCIConfigured).current = true;
     /** @type {any} */ (skipCIEnabled).current = false;
     vi.mocked(isWorkflowDraft).mockReturnValue(false);
+    vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(undefined);
     unpublishedEntries.current = [];
 
     vi.mocked(validateEntry).mockReturnValue(true);
@@ -290,6 +296,47 @@ describe('draft/save/index', () => {
         await saveEntry();
 
         expect(validateEntry).toHaveBeenCalledWith({ draft: mockDraft, enforceRequired: true });
+      });
+
+      it('should enforce required fields for a draft being published', async () => {
+        enableWorkflow();
+        await saveEntry({ publish: true });
+
+        expect(validateEntry).toHaveBeenCalledWith({ draft: mockDraft, enforceRequired: true });
+      });
+    });
+
+    describe('direct publishing', () => {
+      it('should commit a draft without a pull request straight to the branch', async () => {
+        vi.mocked(isWorkflowDraft).mockReturnValue(true);
+        unpublishedEntries.current = [];
+
+        await saveEntry({ publish: true });
+
+        expect(saveChanges).toHaveBeenCalled();
+        expect(saveWorkflowChanges).not.toHaveBeenCalled();
+      });
+
+      it('should save a draft with a pull request to it, for the caller to merge', async () => {
+        vi.mocked(isWorkflowDraft).mockReturnValue(true);
+        mockDraft.isNew = false;
+        mockDraft.originalEntry = {
+          id: 'test-id',
+          slug: 'test-post',
+          locales: { _default: { path: 'content/posts/test-post.md' } },
+          workflow: { status: 'draft', pullRequest: { branch: 'cms/posts/test-post' } },
+        };
+        vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(mockDraft.originalEntry);
+        vi.mocked(saveWorkflowChanges).mockResolvedValue({
+          commit: { sha: 'abc', files: {} },
+          savedEntries: [mockDraft.originalEntry],
+          savedAssets: [],
+        });
+
+        await saveEntry({ publish: true });
+
+        expect(saveWorkflowChanges).toHaveBeenCalled();
+        expect(saveChanges).not.toHaveBeenCalled();
       });
     });
 

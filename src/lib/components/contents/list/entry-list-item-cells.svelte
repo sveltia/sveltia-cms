@@ -17,6 +17,7 @@
   import { getTableCellValue } from '$lib/services/contents/collection/view/table';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { env } from '$lib/services/user/env.svelte';
+  import { getEntryStage } from '$lib/services/workflow/stages';
 
   /**
    * @import {
@@ -120,7 +121,7 @@
 {/if}
 <GridCell class="status">
   {#if workflow}
-    <StatusBadge status={workflow.status} />
+    <StatusBadge status={getEntryStage(/** @type {UnpublishedEntry} */ (entry), collection)} />
   {/if}
 </GridCell>
 

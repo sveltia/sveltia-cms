@@ -1619,7 +1619,7 @@ config:
     oauth_implicit_flow: Konfigurirana metoda autentifikacije (implicit flow) nije podržana u Sveltia CMS-u. Umjesto nje upotrijebite drugu <a>metodu autentifikacije</a>.
     github_pkce_unsupported: PKCE autorizacija još nije podržana zbog ograničenja GitHuba. Umjesto nje upotrijebite drugu <a>metodu autentifikacije</a>.
     oauth_no_app_id: ID OAuth aplikacije nije definiran.
-    # Don’t localize `open_authoring` and `editorial_workflow`
+    # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
     open_authoring_no_workflow: Opcija `open_authoring` zahtijeva način objave `editorial_workflow`. Pojedinosti potražite u <a>dokumentaciji</a>.
     # Don’t localize `auth_methods`
     no_auth_methods: Opcija `auth_methods` mora sadržavati barem jednu metodu.

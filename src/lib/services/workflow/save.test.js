@@ -651,6 +651,32 @@ describe('workflow/save', () => {
       expect(trackDeployingEntry).toHaveBeenCalledWith(entry);
     });
 
+    test('marks a draft pull request ready before merging it', async () => {
+      // An entry is published from the drafting stage with Preview Workflow or direct publishing,
+      // and the Git service refuses to merge a draft pull request
+      const entry = createEntry('cms/posts/hello', 'draft');
+
+      upsertUnpublishedEntry(entry);
+      vi.mocked(workflowService.updateStatus).mockImplementation(async (pullRequest, status) => ({
+        ...pullRequest,
+        status,
+      }));
+
+      await publishWorkflowEntry(entry);
+
+      expect(workflowService.updateStatus).toHaveBeenCalledWith(
+        entry.workflow.pullRequest,
+        'pending_publish',
+      );
+      expect(workflowService.updateStatus).toHaveBeenCalledBefore(
+        vi.mocked(workflowService.publish),
+      );
+      expect(workflowService.publish).toHaveBeenCalledWith(
+        expect.objectContaining({ branch: 'cms/posts/hello', status: 'pending_publish' }),
+      );
+      expect(unpublishedEntries.current).toEqual([]);
+    });
+
     test('takes the assets a renaming pull request moved away off the asset list', async () => {
       const entry = createEntry('cms/posts/hello', 'pending_publish');
 

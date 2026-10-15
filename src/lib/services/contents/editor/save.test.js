@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { cmsConfig } from '$lib/services/config';
 import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
 import { saveEntry } from '$lib/services/contents/draft/save';
 import { validateDraft } from '$lib/services/contents/draft/validate';
 import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
 import { duplicateEntryDraft, saveEntryDraftFlow } from '$lib/services/contents/editor/save';
-import { updateWorkflowStatus } from '$lib/services/workflow/save';
+import { publishWorkflowEntry, updateWorkflowStatus } from '$lib/services/workflow/save';
 
 vi.mock('$lib/services/contents/draft/create/duplicate', () => ({ duplicateDraft: vi.fn() }));
 vi.mock('$lib/services/contents/draft/save', () => ({ saveEntry: vi.fn() }));
@@ -16,7 +17,10 @@ vi.mock('$lib/services/contents/draft/validate/reveal', () => ({
 vi.mock('$lib/services/contents/editor/pending', () => ({
   awaitPendingFieldUpdates: vi.fn(async () => {}),
 }));
-vi.mock('$lib/services/workflow/save', () => ({ updateWorkflowStatus: vi.fn() }));
+vi.mock('$lib/services/workflow/save', () => ({
+  publishWorkflowEntry: vi.fn(),
+  updateWorkflowStatus: vi.fn(),
+}));
 vi.mock('$lib/services/workflow/verify', () => ({
   getWorkflowErrorMessage: vi.fn((ex, fallback) => `${fallback}: ${ex.message}`),
 }));
@@ -72,6 +76,7 @@ describe('saveEntryDraftFlow()', () => {
       draft: entryDraft.current,
       skipCI: true,
       overwrite: false,
+      publish: false,
     });
   });
 
@@ -135,12 +140,100 @@ describe('saveEntryDraftFlow()', () => {
     expect(updateWorkflowStatus).toHaveBeenCalledWith(savedEntry, 'pending_review');
   });
 
+  test('offers the next configured stage', async () => {
+    const savedEntry = { workflow: { status: 'draft' } };
+    const args = { ...getArgs(createState()), useWorkflow: vi.fn(() => true) };
+
+    cmsConfig.current = /** @type {any} */ ({
+      publish_mode: { type: 'editorial_workflow', stages: ['draft', 'pending_publish'] },
+    });
+    vi.mocked(saveEntry).mockResolvedValue(/** @type {any} */ (savedEntry));
+
+    try {
+      await saveEntryDraftFlow(args);
+      expect(args.askForReview).toHaveBeenCalledWith('pending_publish');
+      expect(updateWorkflowStatus).toHaveBeenCalledWith(savedEntry, 'pending_publish');
+
+      // Preview Workflow has no stage to move on to
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'preview' });
+      args.askForReview.mockClear();
+      await saveEntryDraftFlow(args);
+      expect(args.askForReview).not.toHaveBeenCalled();
+    } finally {
+      cmsConfig.current = undefined;
+    }
+  });
+
+  test('publishes an entry with a pull request after saving it', async () => {
+    const savedEntry = { id: 'a', workflow: { status: 'draft' } };
+    const args = { ...getArgs(createState()), useWorkflow: vi.fn(() => true), publish: true };
+
+    vi.mocked(saveEntry).mockResolvedValue(/** @type {any} */ (savedEntry));
+
+    // The editor is reset to the published entry, without the pull request
+    expect(await saveEntryDraftFlow(args)).toMatchObject({
+      type: 'saved',
+      savedEntry: { id: 'a' },
+      statusError: undefined,
+      next: 'close',
+    });
+    expect(saveEntry).toHaveBeenCalledWith(expect.objectContaining({ publish: true }));
+    expect(publishWorkflowEntry).toHaveBeenCalledWith(savedEntry);
+    expect(args.askForReview).not.toHaveBeenCalled();
+  });
+
+  test('publishes an entry without a pull request with the save alone', async () => {
+    const args = { ...getArgs(createState()), publish: true };
+
+    vi.mocked(saveEntry).mockResolvedValue(/** @type {any} */ ({ id: 'a' }));
+
+    expect(await saveEntryDraftFlow(args)).toMatchObject({ type: 'saved', next: 'close' });
+    expect(publishWorkflowEntry).not.toHaveBeenCalled();
+  });
+
+  test('keeps the draft saved when publishing it fails', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const savedEntry = { id: 'a', workflow: { status: 'draft' } };
+    const entryDraft = createState();
+
+    vi.mocked(saveEntry).mockResolvedValue(/** @type {any} */ (savedEntry));
+    vi.mocked(publishWorkflowEntry).mockRejectedValue(new Error('boom'));
+
+    expect(
+      await saveEntryDraftFlow({
+        ...getArgs(entryDraft),
+        useWorkflow: vi.fn(() => true),
+        publish: true,
+      }),
+    ).toMatchObject({
+      type: 'saved',
+      savedEntry,
+      statusError: 'workflow.publishing_entry_failed: boom',
+      next: 'reset',
+    });
+    expect(error).toHaveBeenCalled();
+
+    // Publishing goes ahead even if the editor has been closed meanwhile
+    vi.mocked(publishWorkflowEntry).mockImplementation(async () => {
+      entryDraft.current = /** @type {any} */ ({});
+    });
+    expect(
+      await saveEntryDraftFlow({
+        ...getArgs(entryDraft),
+        useWorkflow: vi.fn(() => true),
+        publish: true,
+      }),
+    ).toEqual({ type: 'saved', savedEntry: { id: 'a' }, statusError: undefined });
+  });
+
   test('doesn’t offer review when it doesn’t apply', async () => {
     const args = getArgs(createState());
 
     vi.mocked(saveEntry).mockResolvedValue(/** @type {any} */ ({ workflow: { status: 'draft' } }));
     await saveEntryDraftFlow(args);
-    vi.mocked(saveEntry).mockResolvedValue(/** @type {any} */ ({ workflow: { status: 'x' } }));
+    vi.mocked(saveEntry).mockResolvedValue(
+      /** @type {any} */ ({ workflow: { status: 'pending_review' } }),
+    );
     await saveEntryDraftFlow({ ...args, useWorkflow: vi.fn(() => true) });
     vi.mocked(saveEntry).mockResolvedValue(/** @type {any} */ ({}));
     await saveEntryDraftFlow({ ...args, useWorkflow: vi.fn(() => true) });

@@ -1,12 +1,10 @@
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
-import { OPEN_AUTHORING_STAGES, WORKFLOW_STAGES } from '$lib/services/workflow/constants';
 
 /**
  * @import {
  * ForkPermissionRequest,
  * RepositoryInfo,
  * RepositoryPath,
- * WorkflowStatus,
  * } from '$lib/types/private';
  */
 
@@ -32,16 +30,6 @@ export const openAuthoring = createDerivedState(() => !!forkedRepository.current
  * @type {{ current: boolean }}
  */
 export const openAuthoringInitialized = createRawState(false);
-
-/**
- * The review stages an unpublished entry can move through, which are the board columns and the
- * options in the editor’s status menu. An Open Authoring contributor can’t merge a pull request, so
- * the stage that says an entry is ready to be published is left out.
- * @type {{ readonly current: WorkflowStatus[] }}
- */
-export const workflowStages = createDerivedState(() =>
-  openAuthoring.current ? OPEN_AUTHORING_STAGES : WORKFLOW_STAGES,
-);
 
 /**
  * Message of the error thrown when an Open Authoring contributor moves an entry whose request a

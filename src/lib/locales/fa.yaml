@@ -1558,7 +1558,7 @@ config:
     oauth_implicit_flow: روش احراز هویت پیکربندی‌شده (implicit flow) در Sveltia CMS پشتیبانی نمی‌شود. از یک <a>روش احراز هویت</a> دیگر استفاده کنید.
     github_pkce_unsupported: احراز هویت PKCE به دلیل محدودیت‌های GitHub هنوز پشتیبانی نمی‌شود. از یک <a>روش احراز هویت</a> دیگر استفاده کنید.
     oauth_no_app_id: شناسه برنامه OAuth تعریف نشده است.
-    # Don’t localize `open_authoring` and `editorial_workflow`
+    # Don’t localize `open_authoring`, `editorial_workflow` and `preview`
     open_authoring_no_workflow: گزینه `open_authoring` نیازمند حالت انتشار `editorial_workflow` است. برای جزئیات <a>مستندات</a> را ببینید.
     # Don’t localize `auth_methods`
     no_auth_methods: گزینه `auth_methods` باید حداقل شامل یک روش باشد.

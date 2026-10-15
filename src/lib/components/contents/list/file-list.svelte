@@ -10,6 +10,7 @@
   import { isValidCollectionFile } from '$lib/services/contents/collection/predicates';
   import { encodePathSegments } from '$lib/services/utils/url';
   import { unpublishedEntries } from '$lib/services/workflow';
+  import { getEntryStage } from '$lib/services/workflow/stages';
 
   /**
    * @import { CollectionFile } from '$lib/types/public';
@@ -23,7 +24,7 @@
   );
 
   /**
-   * Editorial Workflow status of each file that has an open pull request, keyed by file name. A
+   * Editorial Workflow stage of each file that has an open pull request, keyed by file name. A
    * file collection needs no Unpublished/Published sections like an entry collection, because every
    * file is published from the start and can only be updated, never added or removed.
    * @type {Record<string, WorkflowStatus>}
@@ -32,7 +33,10 @@
     Object.fromEntries(
       unpublishedEntries.current
         .filter(({ workflow }) => workflow.collectionName === selectedCollection.current?.name)
-        .map(({ workflow }) => [workflow.fileName, workflow.status]),
+        .map((entry) => [
+          entry.workflow.fileName,
+          getEntryStage(entry, selectedCollection.current),
+        ]),
     ),
   );
 </script>

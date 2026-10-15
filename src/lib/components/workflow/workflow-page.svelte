@@ -5,6 +5,7 @@
   import PageContainer from '$lib/components/common/page-container.svelte';
   import WorkflowEntryCard from '$lib/components/workflow/workflow-entry-card.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';
+  import { getCollection } from '$lib/services/contents/collection';
   import { retainDeployPolling } from '$lib/services/deployments/poll';
   import {
     checkPublishedVersion,
@@ -21,12 +22,17 @@
   } from '$lib/services/workflow/board';
   import { deployingEntries } from '$lib/services/workflow/deploy';
   import { getDiscardDialogStrings, getPublishDialogStrings } from '$lib/services/workflow/dialogs';
-  import { openAuthoring, workflowStages } from '$lib/services/workflow/open-authoring';
   import {
     discardWorkflowEntry,
     publishWorkflowEntry,
     updateWorkflowStatus,
   } from '$lib/services/workflow/save';
+  import {
+    boardStages,
+    getEntryStage,
+    getWorkflowStages,
+    workflowPageLabelKey,
+  } from '$lib/services/workflow/stages';
   import { canMoveToStatus, canPublish } from '$lib/services/workflow/validate';
   import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
@@ -84,10 +90,27 @@
   );
   const publishDialogStrings = $derived(getPublishDialogStrings({ deletion: targetIsDeletion }));
 
+  /**
+   * Get the stage the given entry is in, which decides the column it’s placed in.
+   * @param {UnpublishedEntry} entry Entry.
+   * @returns {WorkflowStatus} Stage.
+   */
+  const getStage = (entry) => getEntryStage(entry, getCollection(entry.workflow.collectionName));
+
+  /**
+   * Check whether the given entry can be moved to the given stage. The collections can be
+   * configured with different stages, and an entry can only go to one of its own collection’s.
+   * @param {UnpublishedEntry} entry Entry.
+   * @param {WorkflowStatus} status Stage.
+   * @returns {boolean} Result.
+   */
+  const isStageAvailable = (entry, status) =>
+    getWorkflowStages(getCollection(entry.workflow.collectionName)).includes(status);
+
   // A pending deletion has a status of its own, so it never lands in a stage column. It’s listed
   // below the board instead, and its cards don’t drag: there are no stages to move it through
   const { columns, pendingDeletions } = $derived(
-    groupEntriesByStatus(workflowStages.current, unpublishedEntries.current),
+    groupEntriesByStatus(boardStages.current, unpublishedEntries.current, getStage),
   );
 
   // Keep the deploy state fresh while the board is open, so a preview link turns live as soon as
@@ -176,7 +199,7 @@
     draggedEntry = undefined;
     dropTarget = undefined;
 
-    if (!entry || entry.workflow.status === status) {
+    if (!entry || getStage(entry) === status || !isStageAvailable(entry, status)) {
       return;
     }
 
@@ -198,18 +221,32 @@
 
     announced = true;
 
-    const [draft, review, ready = 0] = columns.map(({ entries }) => entries.length);
+    /**
+     * Get the number of entries in the given column.
+     * @param {WorkflowStatus} status Column status.
+     * @returns {number | undefined} Count, or `undefined` if the board has no such column.
+     */
+    const count = (status) => columns.find((column) => column.status === status)?.entries.length;
+    // The board always has a Drafts column
+    const draft = /** @type {number} */ (count('draft'));
+    const [review, ready] = [count('pending_review'), count('pending_publish')];
     const deletion = pendingDeletions.length;
 
-    // The board has no Ready column for an Open Authoring contributor, so its count is left out of
-    // the announcement rather than reported as zero
-    announcedPageStatus.current = openAuthoring.current
-      ? _('viewing_open_authoring_workflow', { values: { draft, review, deletion } })
-      : _('viewing_editorial_workflow', { values: { draft, review, ready, deletion } });
+    // A column the board doesn’t have is left out of the announcement rather than reported as
+    // zero: there’s no Ready column for an Open Authoring contributor, no In Review column when the
+    // review stage is left out, and no column but the drafts with Preview Workflow
+    announcedPageStatus.current =
+      review === undefined
+        ? ready === undefined
+          ? _('viewing_preview_workflow', { values: { draft, deletion } })
+          : _('viewing_editorial_workflow_without_review', { values: { draft, ready, deletion } })
+        : ready === undefined
+          ? _('viewing_open_authoring_workflow', { values: { draft, review, deletion } })
+          : _('viewing_editorial_workflow', { values: { draft, review, ready, deletion } });
   });
 </script>
 
-<PageContainer aria-label={_('editorial_workflow')}>
+<PageContainer aria-label={_(workflowPageLabelKey.current)}>
   {#snippet main()}
     {#if !workflowDataReady.current}
       <EmptyState>
@@ -220,7 +257,12 @@
       need a column wrapper of their own -->
       <!-- The column count varies: an Open Authoring contributor can’t publish, so the board
       leaves out the stage that says an entry is ready to go live -->
-      <div role="none" class="board" style:--column-count={columns.length}>
+      <div
+        role="none"
+        class="board"
+        class:single={columns.length === 1}
+        style:--column-count={columns.length}
+      >
         <div role="none" class="columns">
           {#each columns as { status, entries } (status)}
             <Group class="column" aria-labelledby="{status}-column-title">
@@ -233,7 +275,7 @@
                 class:drop-target={dropTarget === status}
                 aria-label={_(COLUMN_LABELS[status])}
                 ondragover={(/** @type {DragEvent} */ event) => {
-                  if (!draggedEntry) {
+                  if (!draggedEntry || !isStageAvailable(draggedEntry, status)) {
                     return;
                   }
 
@@ -379,6 +421,17 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+
+  /*
+   * With a single column, as with Preview Workflow, the cards would be stretched across the page,
+   * so they’re laid out in a grid instead, both in the column and in the trays below it
+   */
+
+  .board.single .entries {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    align-content: start;
   }
 
   .tray {
