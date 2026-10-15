@@ -38,6 +38,8 @@
   // users, especially when `max` is `1`
   const hasMaxItems = $derived(items.length >= max);
 
+  const menuId = $props.id();
+
   /** @type {MenuButton | undefined} */
   let menuButton = $state();
 
@@ -60,8 +62,22 @@
     {#snippet endIcon()}{/snippet}
     {#snippet popup()}
       <Menu ariaLabel={_('select_list_type')}>
-        {#each types as { name, label: itemLabel } (name)}
-          <MenuItem label={itemLabel || name} onclick={() => addItem({ type: name })} />
+        {#each types as { name, label: itemLabel, description }, index (name)}
+          {#if description}
+            {@const descriptionId = `${menuId}-type-${index}-description`}
+            <!-- The description isn’t part of the item’s name, but describes it -->
+            <MenuItem
+              class="variable-type-described"
+              aria-label={itemLabel || name}
+              aria-describedby={descriptionId}
+              onclick={() => addItem({ type: name })}
+            >
+              <span role="none" class="type-label">{itemLabel || name}</span>
+              <span role="none" class="type-description" id={descriptionId}>{description}</span>
+            </MenuItem>
+          {:else}
+            <MenuItem label={itemLabel || name} onclick={() => addItem({ type: name })} />
+          {/if}
         {/each}
       </Menu>
     {/snippet}
@@ -73,3 +89,29 @@
     {/snippet}
   </Button>
 {/if}
+
+<style>
+  :global(.sui.menuitem.variable-type-described) {
+    --sui-menuitem-height: auto;
+    --sui-menuitem-padding: 8px 16px;
+
+    :global(.content) {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+  }
+
+  .type-description {
+    max-width: 320px;
+    white-space: normal;
+    text-align: start;
+    font-size: var(--sui-font-size-small);
+    line-height: var(--sui-line-height-compact);
+    color: var(--sui-tertiary-foreground-color);
+  }
+
+  :global(button:hover) .type-description {
+    color: inherit;
+  }
+</style>

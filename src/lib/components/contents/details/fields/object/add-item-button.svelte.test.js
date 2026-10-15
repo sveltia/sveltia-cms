@@ -98,4 +98,38 @@ describe('AddItemButton', () => {
 
     expect(addItem).toHaveBeenCalledWith({ type: 'gallery' });
   });
+
+  test('describes a type in the menu with its description', async () => {
+    const addItem = vi.fn();
+
+    await render(AddItemButton, {
+      fieldConfig: {
+        name: 'sections',
+        widget: 'list',
+        types: [
+          { name: 'hero', label: 'Hero', description: 'A large banner', fields: [] },
+          { name: 'gallery', description: 'A grid of images', fields: [] },
+          { name: 'quote', label: 'Quote', fields: [] },
+        ],
+      },
+      addItem,
+    });
+
+    await page.getByRole('button', { name: /Add\W+sections/ }).click();
+
+    const menu = page.getByRole('menu', { name: 'Select List Type' });
+    // The description isn’t part of the item’s name
+    const hero = menu.getByRole('menuitem', { name: 'Hero', exact: true });
+    const gallery = menu.getByRole('menuitem', { name: 'gallery', exact: true });
+    const quote = menu.getByRole('menuitem', { name: 'Quote', exact: true });
+
+    await expect.element(hero).toHaveAccessibleDescription('A large banner');
+    await expect.element(hero).toMatchTextContent(/^Hero\s*A large banner$/);
+    await expect.element(gallery).toHaveAccessibleDescription('A grid of images');
+    await expect.element(quote).not.toHaveAttribute('aria-describedby');
+
+    await gallery.click();
+
+    expect(addItem).toHaveBeenCalledWith({ type: 'gallery' });
+  });
 });

@@ -35,7 +35,7 @@
   import { isAutoIncrementField } from '$lib/services/contents/fields/number/auto-increment';
   import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
   import { createRawState } from '$lib/services/utils/state.svelte';
-  import { sanitizeInlineMarkdown } from '$lib/services/utils/string';
+  import { sanitizeHelpText } from '$lib/services/utils/string';
   import { isPendingDeletion } from '$lib/services/workflow';
 
   /**
@@ -91,17 +91,6 @@
   } = $props();
 
   const fieldId = $props.id();
-
-  /**
-   * Parse the given string as Markdown and sanitize the result to only allow certain tags. A
-   * literal `\n` is turned into a line break.
-   * @param {string} str Original string.
-   * @returns {string} Sanitized string.
-   */
-  const _sanitize = (str) =>
-    sanitizeInlineMarkdown(str.replaceAll('\\n', '<br>'), {
-      allowedTags: ['strong', 'em', 'del', 'code', 'a', 'br'],
-    });
 
   /**
    * Write a value coming from the widget editor back to the entry draft. Widget editors sync their
@@ -260,7 +249,7 @@
 
 {#snippet beforeInput()}
   {#if beforeInputLabel}
-    <div role="none" class="before-input">{@html _sanitize(beforeInputLabel)}</div>
+    <div role="none" class="before-input">{@html sanitizeHelpText(beforeInputLabel)}</div>
   {/if}
   {#if prefix}
     <div role="none" class="prefix">{prefix}</div>
@@ -272,7 +261,7 @@
     <div role="none" class="suffix">{suffix}</div>
   {/if}
   {#if afterInputLabel}
-    <div role="none" class="after-input">{@html _sanitize(afterInputLabel)}</div>
+    <div role="none" class="after-input">{@html sanitizeHelpText(afterInputLabel)}</div>
   {/if}
 {/snippet}
 
@@ -394,7 +383,7 @@
       {@const ExtraHint = extraHint.current}
       <div role="none" class="footer">
         {#if hint}
-          <p class="hint">{@html _sanitize(hint)}</p>
+          <p class="hint">{@html sanitizeHelpText(hint)}</p>
         {/if}
         <ExtraHint {fieldConfig} {locale} {currentValue} />
       </div>

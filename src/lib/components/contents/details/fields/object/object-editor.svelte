@@ -302,6 +302,7 @@
         })}
         expanded={parentExpanded}
         {unknownType}
+        hint={readonly ? undefined : typeConfig?.hint}
         getSummary={() => summaryText}
         getThumbnail={() => thumbnailSource}
         {summaryId}

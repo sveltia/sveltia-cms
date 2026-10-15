@@ -487,6 +487,11 @@
  * field value.
  * @property {'object'} [widget] Field type. Only `object` is supported: another value is a
  * configuration error.
+ * @property {string} [description] Short description of the type to be displayed below its label
+ * in the menu of the Add button.
+ * @property {string} [hint] Help message to be displayed above the subfields of an object of the
+ * type. Limited Markdown formatting is supported, as with a field’s `hint` option. The hint is not
+ * displayed while the field is read-only.
  * @property {string} [summary] Template of a label to be displayed on a collapsed object.
  * @property {Field[]} [fields] Set of subfields. This option can be omitted; in that case, only the
  * `type` property will be saved.

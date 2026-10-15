@@ -637,6 +637,31 @@ describe('ListEditorComplex (more)', () => {
     }
   });
 
+  test('shows the hint of each item’s type unless read-only', async () => {
+    /** @type {ComplexListField} */
+    const fieldConfig = {
+      ...sectionsField,
+      types: [{ ...sectionsField.types[0], hint: 'Keep it **short**.' }, sectionsField.types[1]],
+    };
+
+    const values = {
+      'sections.0.type': 'hero',
+      'sections.0.heading': '',
+      'sections.1.type': 'quote',
+      'sections.1.text': '',
+    };
+
+    const { container } = await renderEditor(fieldConfig, values);
+
+    await expect
+      .poll(() => [...container.querySelectorAll('.type-hint')].map((hint) => hint.textContent))
+      .toEqual(['Keep it short.']);
+
+    const { container: readonly } = await renderEditor(fieldConfig, values, { readonly: true });
+
+    expect(readonly.querySelector('.type-hint')).toBeNull();
+  });
+
   test('has nothing to expand for an item of a type without subfields', async () => {
     const { draft, container } = await renderEditor(
       { ...sectionsField, types: [{ name: 'divider', label: 'Divider' }] },

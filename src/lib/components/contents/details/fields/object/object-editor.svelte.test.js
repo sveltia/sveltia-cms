@@ -216,6 +216,31 @@ describe('ObjectEditor', () => {
     await expect.poll(() => getStoredValues(draft, 'block')).toEqual({});
   });
 
+  test('shows the hint of the picked type unless read-only', async () => {
+    /** @type {ObjectField} */
+    const fieldConfig = {
+      ...blockField,
+      types: [{ ...blockField.types[0], hint: 'Keep it **short**.' }, blockField.types[1]],
+    };
+
+    const { container } = await renderEditor(fieldConfig, {
+      'block.type': 'hero',
+      'block.heading': '',
+    });
+
+    await expect
+      .poll(() => container.querySelector('.type-hint')?.textContent)
+      .toBe('Keep it short.');
+
+    const { container: readonly } = await renderEditor(
+      fieldConfig,
+      { 'block.type': 'hero', 'block.heading': '' },
+      { props: { readonly: true } },
+    );
+
+    expect(readonly.querySelector('.type-hint')).toBeNull();
+  });
+
   test('keeps the focus in the field as a type is picked and removed', async () => {
     await renderEditor(blockField, {});
 

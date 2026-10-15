@@ -31,6 +31,34 @@ describe('ObjectBody', () => {
     expect(getSummary).not.toHaveBeenCalled();
   });
 
+  test('shows the type’s hint above the subfields while expanded', async () => {
+    const hint = 'Use a **landscape** image.\\nSee [docs](https://example.com).';
+
+    const { container } = await render(
+      ObjectBody,
+      getProps({ subFields: [], expanded: true, hint }),
+    );
+
+    const element = /** @type {HTMLElement} */ (container.querySelector('.type-hint'));
+
+    expect(element.innerHTML).toBe(
+      'Use a <strong>landscape</strong> image.<br>See <a href="https://example.com">docs</a>.',
+    );
+  });
+
+  test('shows no hint while collapsed, or without one', async () => {
+    const { container } = await render(ObjectBody, getProps({ hint: 'Hint' }));
+
+    expect(container.querySelector('.type-hint')).toBeNull();
+
+    const { container: expanded } = await render(
+      ObjectBody,
+      getProps({ subFields: [], expanded: true }),
+    );
+
+    expect(expanded.querySelector('.type-hint')).toBeNull();
+  });
+
   test('shows the summary while collapsed', async () => {
     const { container } = await render(ObjectBody, getProps({ summaryId: 'object-1-summary' }));
     const summary = /** @type {HTMLElement} */ (container.querySelector('.summary'));

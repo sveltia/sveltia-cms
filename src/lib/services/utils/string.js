@@ -80,3 +80,14 @@ export const sanitizeInlineMarkdown = (
     ALLOWED_TAGS: allowedTags,
     ALLOWED_ATTR: allowedAttr,
   });
+
+/**
+ * Parse the given help text from the configuration, such as a field’s `hint`, as inline Markdown
+ * and sanitize the result to only allow certain tags. A literal `\n` is turned into a line break.
+ * @param {string} str Original string.
+ * @returns {string} Sanitized HTML string.
+ */
+export const sanitizeHelpText = (str) =>
+  sanitizeInlineMarkdown(str.replaceAll('\\n', '<br>'), {
+    allowedTags: ['strong', 'em', 'del', 'code', 'a', 'br'],
+  });

@@ -705,6 +705,7 @@
               })}
               {expanded}
               {unknownType}
+              hint={readonly ? undefined : typeConfig?.hint}
               getSummary={() => _formatSummary(index, summaryTemplate)}
               getThumbnail={() => getThumbnail(index, type)}
               summaryContent={customSummary ? customSummaryContent : undefined}
