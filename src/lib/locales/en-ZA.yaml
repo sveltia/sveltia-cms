@@ -2028,7 +2028,7 @@ config:
     # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
     thumbnail_field_not_media: The `thumbnail` option refers to `{$name}`, but it must be an Image or File field, not a `{$widget}` field.
     # Don’t localize `inline` or `multiple`
-    invalid_inline_component_fields: The `inline` mode requires a single Boolean, Color, DateTime, Number, Relation, Select or String field. A Relation or Select field can’t have the `multiple` option enabled.
+    invalid_inline_component_fields: The `inline` mode requires a single Boolean, Colour, DateTime, Number, Relation, Select or String field. A Relation or Select field can’t have the `multiple` option enabled.
     # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
     invalid_regex: The `{$option}` option contains an invalid regular expression `{$pattern}`, which is ignored.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
@@ -2036,7 +2036,7 @@ config:
     # {$name} is the field name from the configuration; Don’t localize `bulk_edit` and `fields`
     invalid_bulk_edit_field: The `fields` list of the `bulk_edit` option refers to a field named `{$name}`, but no such top-level field is defined in the collection.
     # {$name} is the field name from the configuration; Don’t localize `bulk_edit`, `fields` and `multiple`
-    unsupported_bulk_edit_field: The `{$name}` field in the `fields` list of the `bulk_edit` option can’t be edited in bulk. Only a Boolean, Color, DateTime, Number, Relation, Select or String field that isn’t read-only, doesn’t have the `multiple` option enabled and isn’t set automatically on save is supported.
+    unsupported_bulk_edit_field: The `{$name}` field in the `fields` list of the `bulk_edit` option can’t be edited in bulk. Only a Boolean, Colour, DateTime, Number, Relation, Select or String field that isn’t read-only, doesn’t have the `multiple` option enabled and isn’t set automatically on save is supported.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: The `sortable_fields` option refers to a field named `{$name}`, but no such field is defined in the collection.
     # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
