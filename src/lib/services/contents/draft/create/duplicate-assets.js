@@ -2,8 +2,8 @@ import { getAssetByPath } from '$lib/services/assets';
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { createDisplayBlobURL, getAssetBlob } from '$lib/services/assets/info';
 import {
-  getRichTextImageSources,
-  replaceRichTextImageSources,
+  getRichTextMediaSources,
+  replaceRichTextMediaSources,
 } from '$lib/services/assets/references';
 import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getDraftFieldArgs, getField, getTypedKeyPath } from '$lib/services/contents/entry/fields';
@@ -175,9 +175,9 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
       return;
     }
 
-    // Images embedded in a Markdown or HTML body
+    // Images and other media embedded in a Markdown or HTML body
     const format = getValueFormat(/** @type {MarkdownField | RichTextField} */ (field));
-    const sources = getRichTextImageSources(value, format);
+    const sources = getRichTextMediaSources(value, format);
 
     const blobURLs = new Map(
       await Promise.all(
@@ -192,7 +192,7 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
     );
 
     // Replace the sources once every copy is ready
-    valueMap[keyPath] = replaceRichTextImageSources(value, blobURLs, format);
+    valueMap[keyPath] = replaceRichTextMediaSources(value, blobURLs, format);
   };
 
   await Promise.all(

@@ -8,6 +8,7 @@ import {
   MEDIA_QUERY_SELECTOR,
   parseSrcset,
   resolveMediaURLs,
+  stringifySrcset,
 } from './media-urls.js';
 
 describe('MEDIA_QUERY_SELECTOR', () => {
@@ -78,6 +79,18 @@ describe('parseSrcset', () => {
       { url: 'data:image/png;base64,AAAA', descriptor: '1x' },
       { url: '/b.png', descriptor: '2x' },
     ]);
+  });
+});
+
+describe('stringifySrcset', () => {
+  it('should serialize the candidates, encoding whitespace in a URL', () => {
+    expect(
+      stringifySrcset([
+        { url: 'a.jpg', descriptor: '1x' },
+        { url: 'my photo.jpg', descriptor: '' },
+      ]),
+    ).toBe('a.jpg 1x, my%20photo.jpg');
+    expect(stringifySrcset([])).toBe('');
   });
 });
 

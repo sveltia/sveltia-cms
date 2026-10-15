@@ -3,8 +3,8 @@ import { isObject } from '@sveltia/utils/object';
 import { getAssetByInternalPath, getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { createDisplayBlobURL, getAssetBlob, getAssetPublicURL } from '$lib/services/assets/info';
 import {
-  getRichTextImageSources,
-  replaceRichTextImageSources,
+  getRichTextMediaSources,
+  replaceRichTextMediaSources,
 } from '$lib/services/assets/references';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getItemList } from '$lib/services/contents/draft/update/list';
@@ -226,13 +226,13 @@ const walkObject = ({ obj, fields, typedKeyPath, callback }) => {
 
 /**
  * Get the asset references in a field value: the value itself for a File or Image field, or the
- * image sources in a Markdown or HTML body.
+ * media URLs in a Markdown or HTML body.
  * @param {string} value Field value.
  * @param {RichTextValueFormat} [format] Format of a Markdown or RichText field value.
  * @returns {string[]} References.
  */
 const getAssetReferences = (value, format) =>
-  format ? getRichTextImageSources(value, format) : [value];
+  format ? getRichTextMediaSources(value, format) : [value];
 
 /**
  * Check if the given asset reference is a path relative to the entry, which has to be rewritten
@@ -982,7 +982,7 @@ export const prepareListItemPaste = async ({
               return;
             }
 
-            set(replaceRichTextImageSources(fieldValue, newSources, format));
+            set(replaceRichTextMediaSources(fieldValue, newSources, format));
           })(),
         );
       },

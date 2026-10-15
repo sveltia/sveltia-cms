@@ -9,6 +9,14 @@ import { getCollectionFilesByEntry } from '$lib/services/contents/collection/fil
 import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 import { getField } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getValueFormat } from '$lib/services/contents/fields/rich-text';
+import {
+  MEDIA_TAG_REGEX,
+  MEDIA_TAG_SELECTOR,
+  MEDIA_URL_ATTRIBUTES,
+  parseSrcset,
+  stringifySrcset,
+} from '$lib/services/contents/fields/rich-text/previews/media-urls';
 
 /**
  * @import {
@@ -20,7 +28,13 @@ import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents
  * InternalCollectionFile,
  * InternalLocaleCode,
  * } from '$lib/types/private';
- * @import { Field, FieldKeyPath, RichTextValueFormat } from '$lib/types/public';
+ * @import {
+ * Field,
+ * FieldKeyPath,
+ * MarkdownField,
+ * RichTextField,
+ * RichTextValueFormat,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -39,53 +53,46 @@ export const MARKDOWN_IMAGE_REGEX =
   /!\[(?:[^\]\n!]|!(?!\[)|\](?!\())*\]\(((?:[^\n!)]|!(?!\[))+?)(?:(?<!\s)\s+"(?:[^"\\\n]|\\.)*")?\)/g;
 
 /**
- * Replace the sources of the images in a Markdown body. Only the source within each image is
- * replaced, so the same file name mentioned anywhere else in the text, or a source whose name
- * contains another’s, e.g. `hero-image.png` for `image.png`, isn’t hit.
- * @param {string} value Markdown body.
- * @param {Map<string, string | undefined>} newSources New sources keyed by the current ones. An
- * image whose source is missing or mapped to `undefined` is left as is.
- * @returns {string} New body.
+ * Pattern matching the start tag of a media element, e.g. `<img src="a.png">` or `<video
+ * poster="a.jpg">`, written as raw HTML in a Markdown body. Attribute values can be quoted with
+ * either kind of quotes, and contain `>` when quoted.
+ *
+ * The pattern runs on untrusted Markdown, so it’s written to match in linear time: neither an
+ * attribute value nor anything else in the tag can contain `<`, so a failed match at one `<`
+ * doesn’t read the text after the next one again. A tag with `<` in an attribute value, as in
+ * `alt="a<b"`, is missed, which is rare enough.
  */
-export const replaceMarkdownImageSources = (value, newSources) =>
-  value.replace(MARKDOWN_IMAGE_REGEX, (image, /** @type {string} */ src) => {
-    const newSource = newSources.get(src);
-
-    if (newSource === undefined) {
-      return image;
-    }
-
-    // The source comes right after the first `](`, as the alt text is matched lazily
-    const start = image.indexOf('](') + 2;
-
-    return `${image.slice(0, start)}${newSource}${image.slice(start + src.length)}`;
-  });
+const MEDIA_START_TAG_PATTERN = `<(?:${Object.keys(MEDIA_URL_ATTRIBUTES).join('|')})(?=[\\s/>])(?:[^<>"']|"[^"<]*"|'[^'<]*')*>`;
 
 /**
- * Get the sources of the images in a Markdown body, without duplicates.
- * @param {string} value Markdown body.
- * @returns {string[]} Sources, in the order found.
+ * Regular expression to match either a Markdown image, capturing its source as the first group, or
+ * the start tag of a media element written as raw HTML, which Markdown allows, captured as the
+ * second group. Both kinds are displayed in the preview, so both refer to the files.
  */
-export const getMarkdownImageSources = (value) => [
-  ...new Set([...value.matchAll(MARKDOWN_IMAGE_REGEX)].map(([, src]) => src)),
-];
+export const MARKDOWN_MEDIA_REGEX = new RegExp(
+  `${MARKDOWN_IMAGE_REGEX.source}|(${MEDIA_START_TAG_PATTERN})`,
+  'gi',
+);
 
 /**
- * Check if the given HTML may contain an image, to skip parsing a value that can’t. Tag names are
- * case-insensitive in HTML.
- * @param {string} value HTML.
- * @returns {boolean} Result.
+ * Global version of `MEDIA_TAG_REGEX`, to count the media tags in a value.
  */
-const mayHaveHTMLImage = (value) => /<img[\s/>]/i.test(value);
+const GLOBAL_MEDIA_TAG_REGEX = new RegExp(MEDIA_TAG_REGEX, 'gi');
+
+/**
+ * Function called for each media URL found in a value, returning a new URL to replace it with,
+ * `null` to remove it, or `undefined` to leave it as is.
+ * @typedef {(url: string) => string | null | undefined} MediaURLCallback
+ */
 
 /**
  * Parse an HTML fragment into the content of a `<template>` element, which is inert: unlike an
- * element in the document, it doesn’t load the images or run the scripts and event handlers found
- * in the HTML, which comes from untrusted field values.
+ * element in the document, it doesn’t load the media or run the scripts and event handlers found in
+ * the HTML, which comes from untrusted field values.
  * @param {string} value HTML.
  * @returns {HTMLTemplateElement} Template holding the parsed nodes.
  */
-const parseHTMLFragment = (value) => {
+export const parseHTMLFragment = (value) => {
   const template = document.createElement('template');
 
   template.innerHTML = value;
@@ -94,88 +101,242 @@ const parseHTMLFragment = (value) => {
 };
 
 /**
- * Get the `<img>` elements with a source in a parsed HTML fragment.
+ * Get the media elements in a parsed HTML fragment, in document order.
  * @param {HTMLTemplateElement} template Template holding the parsed nodes.
  * @returns {Element[]} Elements.
  */
-const getHTMLImageElements = (template) => [...template.content.querySelectorAll('img[src]')];
+export const getMediaElements = (template) => [
+  ...template.content.querySelectorAll(MEDIA_TAG_SELECTOR),
+];
 
 /**
- * Get the sources of the images in an HTML body, without duplicates. The HTML is parsed rather than
- * matched with a regular expression, so an `<img>` tag in a comment, an attribute value or a
- * `<script>` element isn’t taken for an image, and the sources come with the character references
- * decoded, e.g. `a&amp;b.jpg` as `a&b.jpg`, the same as the file name they refer to.
- * @param {string} value HTML body.
- * @returns {string[]} Sources, in the order found. An empty source is left out.
+ * Pass each URL in the URL attributes of a media element to the given callback, e.g. an image
+ * `src`, a video `poster` or each URL in a `srcset`, and update the attributes with the result. An
+ * attribute left with no URL is removed. The attributes are read with the character references
+ * decoded, e.g. `a&amp;b.jpg` as `a&b.jpg`, the same as the file name they refer to. An empty URL
+ * is skipped.
+ * @param {Element} element Media element.
+ * @param {MediaURLCallback} callback Callback.
+ * @returns {boolean} Whether any attribute has been changed.
  */
-export const getHTMLImageSources = (value) => {
-  if (!mayHaveHTMLImage(value)) {
-    return [];
-  }
+export const updateMediaElementURLs = (element, callback) => {
+  let updated = false;
 
-  const sources = getHTMLImageElements(parseHTMLFragment(value)).map(
-    (img) => /** @type {string} */ (img.getAttribute('src')),
-  );
+  MEDIA_URL_ATTRIBUTES[element.localName].forEach((name) => {
+    const value = element.getAttribute(name);
 
-  return [...new Set(sources.filter(Boolean))];
+    if (!value) {
+      return;
+    }
+
+    if (name !== 'srcset') {
+      const url = callback(value);
+
+      if (url === null) {
+        element.removeAttribute(name);
+        updated = true;
+      } else if (url !== undefined && url !== value) {
+        element.setAttribute(name, url);
+        updated = true;
+      }
+
+      return;
+    }
+
+    let changed = false;
+
+    const candidates = parseSrcset(value).flatMap((candidate) => {
+      const url = callback(candidate.url);
+
+      if (url === null) {
+        changed = true;
+
+        return [];
+      }
+
+      if (url !== undefined && url !== candidate.url) {
+        changed = true;
+
+        return [{ ...candidate, url }];
+      }
+
+      return [candidate];
+    });
+
+    if (changed) {
+      if (candidates.length) {
+        element.setAttribute(name, stringifySrcset(candidates));
+      } else {
+        element.removeAttribute(name);
+      }
+
+      updated = true;
+    }
+  });
+
+  return updated;
 };
 
 /**
- * Replace the sources of the images in an HTML body. The HTML is parsed, the `src` attributes are
- * updated, and the result is serialized again, so a new source is escaped as needed, and the same
- * file name mentioned anywhere else in the HTML, e.g. in a link, isn’t hit. The serialization may
- * differ from the original in formatting, e.g. the quotes around attribute values, so the original
- * is returned as is if no source is replaced.
- * @param {string} value HTML body.
- * @param {Map<string, string | undefined>} newSources New sources keyed by the current ones, as
- * returned by {@link getHTMLImageSources}. An image whose source is missing or mapped to
- * `undefined` is left as is.
+ * Parse the start tag of a media element, as matched by {@link MARKDOWN_MEDIA_REGEX}.
+ * @param {string} tag Start tag.
+ * @returns {Element} Element, without content.
+ */
+export const parseMediaStartTag = (tag) =>
+  /** @type {Element} */ (parseHTMLFragment(tag).content.firstElementChild);
+
+/**
+ * Serialize the start tag of an element parsed with {@link parseMediaStartTag}. The serialization
+ * escapes the attribute values as needed, but may differ from the original tag in formatting, e.g.
+ * the quotes around attribute values.
+ * @param {Element} element Element, without content.
+ * @returns {string} Start tag.
+ */
+export const serializeStartTag = (element) => {
+  const { outerHTML } = element;
+  const endTag = `</${element.localName}>`;
+
+  // A void element like `<img>` has no end tag
+  return outerHTML.endsWith(endTag) ? outerHTML.slice(0, -endTag.length) : outerHTML;
+};
+
+/**
+ * Check if a media start tag matched by {@link MARKDOWN_MEDIA_REGEX} in Markdown sits inside
+ * another tag, e.g. in an attribute value as in `<a title='<img src="a.png">'>`, where it’s text
+ * rather than an element. Such a tag isn’t a reference, and must not be serialized again either, as
+ * that may change its quotes and break out of the attribute value it’s in.
+ * @param {string} value Markdown.
+ * @param {number} index Position of the tag.
+ * @returns {boolean} Result.
+ */
+export const isInsideTag = (value, index) => {
+  const start = value.lastIndexOf('<', index - 1);
+
+  // A `<` not followed by a letter, as in `a < b`, doesn’t start a tag
+  return (
+    index > 0 && start > value.lastIndexOf('>', index - 1) && /[a-z]/i.test(value[start + 1] ?? '')
+  );
+};
+
+/**
+ * Pass each media URL in a Markdown body to the given callback, and replace it with the result: the
+ * source of a Markdown image, or a URL attribute of a media element written as raw HTML. Only the
+ * URL within each image or tag is replaced, so the same file name mentioned anywhere else in the
+ * text, or a source whose name contains another’s, e.g. `hero-image.png` for `image.png`, isn’t
+ * hit. A tag is serialized again only if one of its URLs is replaced.
+ * @param {string} value Markdown body.
+ * @param {MediaURLCallback} callback Callback. Removing a URL isn’t supported here, so `null`
+ * leaves it as is.
  * @returns {string} New body.
  */
-export const replaceHTMLImageSources = (value, newSources) => {
-  if (
-    !mayHaveHTMLImage(value) ||
-    ![...newSources.values()].some((newSource) => newSource !== undefined)
-  ) {
+const updateMarkdownMediaURLs = (value, callback) =>
+  value.replace(
+    MARKDOWN_MEDIA_REGEX,
+    (
+      markup,
+      /** @type {string | undefined} */ src,
+      /** @type {string | undefined} */ tag,
+      /** @type {number} */ offset,
+    ) => {
+      if (tag !== undefined) {
+        if (isInsideTag(value, offset)) {
+          return markup;
+        }
+
+        const element = parseMediaStartTag(tag);
+
+        return updateMediaElementURLs(element, (url) => callback(url) ?? undefined)
+          ? serializeStartTag(element)
+          : markup;
+      }
+
+      const source = /** @type {string} */ (src);
+      const url = callback(source);
+
+      if (typeof url !== 'string') {
+        return markup;
+      }
+
+      // The source comes right after the first `](`, as the alt text is matched lazily
+      const start = markup.indexOf('](') + 2;
+
+      return `${markup.slice(0, start)}${url}${markup.slice(start + source.length)}`;
+    },
+  );
+
+/**
+ * Pass each media URL in an HTML body to the given callback, and replace it with the result. The
+ * HTML is parsed rather than matched with a regular expression, so a tag in a comment, an attribute
+ * value or a `<script>` element isn’t taken for a media element. The result is serialized again,
+ * so a new URL is escaped as needed, and the same file name mentioned anywhere else in the HTML,
+ * e.g. in a link, isn’t hit. The serialization may differ from the original in formatting, e.g. the
+ * quotes around attribute values, so the original is returned as is if no URL is replaced.
+ * @param {string} value HTML body.
+ * @param {MediaURLCallback} callback Callback. A URL can also be removed.
+ * @returns {string} New body.
+ */
+const updateHTMLMediaURLs = (value, callback) => {
+  // Avoid parsing the HTML if there’s no media element
+  if (!MEDIA_TAG_REGEX.test(value)) {
     return value;
   }
 
   const template = parseHTMLFragment(value);
-  let replaced = false;
+  let updated = false;
 
-  getHTMLImageElements(template).forEach((img) => {
-    const newSource = newSources.get(/** @type {string} */ (img.getAttribute('src')));
-
-    if (newSource !== undefined) {
-      img.setAttribute('src', newSource);
-      replaced = true;
-    }
+  getMediaElements(template).forEach((element) => {
+    updated = updateMediaElementURLs(element, callback) || updated;
   });
 
-  return replaced ? template.innerHTML : value;
+  return updated ? template.innerHTML : value;
 };
 
 /**
- * Get the sources of the images in a Markdown or RichText field value, without duplicates.
+ * Pass each media URL in a Markdown or RichText field value to the given callback, and replace it
+ * with the result. See {@link MARKDOWN_MEDIA_REGEX} and `MEDIA_URL_ATTRIBUTES` for what’s a media
+ * URL.
  * @param {string} value Field value.
  * @param {RichTextValueFormat} format Value format, as returned by `getValueFormat()`.
- * @returns {string[]} Sources, in the order found.
+ * @param {MediaURLCallback} callback Callback.
+ * @returns {string} New value, or the original one if nothing is replaced.
  */
-export const getRichTextImageSources = (value, format) =>
-  format === 'html' ? getHTMLImageSources(value) : getMarkdownImageSources(value);
+export const updateRichTextMediaURLs = (value, format, callback) =>
+  format === 'html'
+    ? updateHTMLMediaURLs(value, callback)
+    : updateMarkdownMediaURLs(value, callback);
 
 /**
- * Replace the sources of the images in a Markdown or RichText field value.
+ * Get the media URLs in a Markdown or RichText field value, without duplicates.
  * @param {string} value Field value.
- * @param {Map<string, string | undefined>} newSources New sources keyed by the current ones. An
- * image whose source is missing or mapped to `undefined` is left as is.
+ * @param {RichTextValueFormat} format Value format, as returned by `getValueFormat()`.
+ * @returns {string[]} URLs, in the order found.
+ */
+export const getRichTextMediaSources = (value, format) => {
+  /** @type {Set<string>} */
+  const sources = new Set();
+
+  updateRichTextMediaURLs(value, format, (url) => {
+    sources.add(url);
+
+    return undefined;
+  });
+
+  return [...sources];
+};
+
+/**
+ * Replace the media URLs in a Markdown or RichText field value.
+ * @param {string} value Field value.
+ * @param {Map<string, string | undefined>} newSources New URLs keyed by the current ones, as
+ * returned by {@link getRichTextMediaSources}. A URL that’s missing or mapped to `undefined` is
+ * left as is.
  * @param {RichTextValueFormat} format Value format, as returned by `getValueFormat()`.
  * @returns {string} New value.
  */
-export const replaceRichTextImageSources = (value, newSources, format) =>
-  format === 'html'
-    ? replaceHTMLImageSources(value, newSources)
-    : replaceMarkdownImageSources(value, newSources);
+export const replaceRichTextMediaSources = (value, newSources, format) =>
+  [...newSources.values()].some((newSource) => newSource !== undefined)
+    ? updateRichTextMediaURLs(value, format, (url) => newSources.get(url))
+    : value;
 
 /**
  * @typedef {object} AssetReferenceTarget
@@ -297,16 +458,41 @@ const getNewURL = (matcher, indexes, src) =>
 
 /**
  * Check if the given value may refer to any of the targets, from its text alone. A value refers to
- * a target either as a whole, in a media field, or as the source of an image in Markdown, so a
- * value that’s neither can be skipped before the costly field lookup.
+ * a target either as a whole, in a media field, or as a media URL in a Markdown or HTML body, so a
+ * value that’s neither can be skipped before the costly field lookup. The format of a body isn’t
+ * known until the field is, so it’s read as Markdown, which finds the media tags of HTML as well,
+ * and only parsed as HTML if a tag is missed, e.g. with `<` in an attribute value.
  * @param {AssetReferenceMatcher} matcher Matcher, which must not need to resolve values.
  * @param {string} value Field value.
  * @returns {boolean} Result.
  */
-const mayReferToTargets = (matcher, value) =>
-  matcher.byURL.has(value) ||
-  (value.includes('![') &&
-    [...value.matchAll(MARKDOWN_IMAGE_REGEX)].some(([, src]) => matcher.byURL.has(src)));
+const mayReferToTargets = (matcher, value) => {
+  if (matcher.byURL.has(value)) {
+    return true;
+  }
+
+  if (!value.includes('![') && !MEDIA_TAG_REGEX.test(value)) {
+    return false;
+  }
+
+  /**
+   * Check if any of the given media URLs refers to a target.
+   * @param {string[]} sources URLs.
+   * @returns {boolean} Result.
+   */
+  const hasTarget = (sources) => sources.some((src) => matcher.byURL.has(src));
+
+  if (hasTarget(getRichTextMediaSources(value, 'markdown'))) {
+    return true;
+  }
+
+  const tagCount = [...value.matchAll(MARKDOWN_MEDIA_REGEX)].filter(([, , tag]) => tag).length;
+
+  return (
+    (value.match(GLOBAL_MEDIA_TAG_REGEX)?.length ?? 0) > tagCount &&
+    hasTarget(getRichTextMediaSources(value, 'html'))
+  );
+};
 
 /**
  * Find the targets the given field refers to, and replace the references if the targets have a new
@@ -362,31 +548,32 @@ const matchField = ({
     return { indexes, field };
   }
 
-  // Search images in markdown body
+  // Search media in a Markdown or HTML body
   if (RICH_TEXT_FIELD_TYPES.includes(fieldType)) {
     let replacing = false;
 
-    // Swap the URL within each matched image only, rather than its first occurrence in the text,
-    // which can be a link to the same file, the alt text, or the new URL written by a previous
-    // replacement. The new value is built from the original one, so doing this again, once for
-    // each collection the entry belongs to, gives the same result
-    const replaced = value.replace(MARKDOWN_IMAGE_REGEX, (image, /** @type {string} */ src) => {
-      const matched = getMatchingTargets(matcher, src, context);
+    // Swap the URL within each matched image or tag only, rather than its first occurrence in the
+    // text, which can be a link to the same file, the alt text, or the new URL written by a
+    // previous replacement. The new value is built from the original one, so doing this again,
+    // once for each collection the entry belongs to, gives the same result
+    const replaced = updateRichTextMediaURLs(
+      value,
+      getValueFormat(/** @type {MarkdownField | RichTextField} */ (field)),
+      (src) => {
+        const matched = getMatchingTargets(matcher, src, context);
 
-      if (!matched.length) {
-        return image;
-      }
+        if (!matched.length) {
+          return undefined;
+        }
 
-      const newURL = getNewURL(matcher, matched, src);
+        const newURL = getNewURL(matcher, matched, src);
 
-      matched.forEach((index) => indexes.add(index));
-      replacing ||= !!newURL;
+        matched.forEach((index) => indexes.add(index));
+        replacing ||= !!newURL;
 
-      // The source follows the first `](`, as the alt text is matched lazily
-      const index = image.indexOf('](') + 2;
-
-      return `${image.slice(0, index)}${newURL || src}${image.slice(index + src.length)}`;
-    });
+        return newURL || undefined;
+      },
+    );
 
     if (replacing) {
       content[keyPath] = replaced;

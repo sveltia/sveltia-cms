@@ -3,7 +3,7 @@
  * URL in the preview, keyed by the tag name. `srcset` holds a list of URLs with descriptors.
  * @type {Record<string, string[]>}
  */
-const MEDIA_URL_ATTRIBUTES = {
+export const MEDIA_URL_ATTRIBUTES = {
   img: ['src', 'srcset'],
   source: ['src', 'srcset'],
   video: ['src', 'poster'],
@@ -13,12 +13,12 @@ const MEDIA_URL_ATTRIBUTES = {
 /**
  * Selector for the media elements, regardless of their attributes.
  */
-const MEDIA_TAG_SELECTOR = Object.keys(MEDIA_URL_ATTRIBUTES).join(', ');
+export const MEDIA_TAG_SELECTOR = Object.keys(MEDIA_URL_ATTRIBUTES).join(', ');
 
 /**
  * Regular expression testing if an HTML string may contain a media element.
  */
-const MEDIA_TAG_REGEX = new RegExp(
+export const MEDIA_TAG_REGEX = new RegExp(
   `<(?:${Object.keys(MEDIA_URL_ATTRIBUTES).join('|')})[\\s/>]`,
   'i',
 );
@@ -133,6 +133,19 @@ export const parseSrcset = (srcset) => {
 };
 
 /**
+ * Serialize image candidates into the value of a `srcset` attribute, the reverse of
+ * {@link parseSrcset}. Whitespace in a URL is percent-encoded, as it would otherwise end the URL.
+ * @param {{ url: string, descriptor: string }[]} candidates Candidates.
+ * @returns {string} Attribute value.
+ */
+export const stringifySrcset = (candidates) =>
+  candidates
+    .map(({ url, descriptor }) =>
+      [url.replace(/\s/g, encodeURIComponent), descriptor].filter(Boolean).join(' '),
+    )
+    .join(', ');
+
+/**
  * Resolve the file paths in the URL attributes of the given media element, e.g. an image `src`, a
  * video `poster` or each URL in a `srcset`, so that a file that hasn’t been published or saved yet
  * is displayed in the preview. A path that can’t be resolved is left as is. An attribute deferred
@@ -185,9 +198,9 @@ export const resolveMediaURLs = async (element, resolve) => {
       return value;
     }
 
-    return candidates
-      .map(({ descriptor }, index) => [urls[index], descriptor].filter(Boolean).join(' '))
-      .join(', ');
+    return stringifySrcset(
+      candidates.map(({ descriptor }, index) => ({ url: urls[index], descriptor })),
+    );
   };
 
   const updates = await Promise.all(

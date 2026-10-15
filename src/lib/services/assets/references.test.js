@@ -8,13 +8,11 @@ import {
   getComparableAssetURL,
   getEntriesByAssets,
   getEntriesByAssetURL,
-  getHTMLImageSources,
-  getMarkdownImageSources,
-  getRichTextImageSources,
+  getRichTextMediaSources,
+  isInsideTag,
   MARKDOWN_IMAGE_REGEX,
-  replaceHTMLImageSources,
-  replaceMarkdownImageSources,
-  replaceRichTextImageSources,
+  MARKDOWN_MEDIA_REGEX,
+  replaceRichTextMediaSources,
 } from '$lib/services/assets/references';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
@@ -161,142 +159,263 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
   });
 });
 
-describe('replaceMarkdownImageSources()', () => {
-  test('replaces the sources within the images only', () => {
-    const value = 'image.png ![image.png](image.png "image.png") ![a](hero-image.png) ![b](c.png)';
+describe('MARKDOWN_MEDIA_REGEX', () => {
+  test('matches Markdown images and the start tags of media elements', () => {
+    const text = [
+      '![a](a.png) <IMG SRC="b.png" alt=\'a > b\'> <video poster=c.jpg>',
+      '<source\nsrcset="d.png 2x"/> <audio src="e.mp3"></audio> <img/src=f.png>',
+      '<imgur-embed src="g.png"> <p>Text</p> <img src="h.png"',
+    ].join('');
 
-    expect(
-      replaceMarkdownImageSources(
-        value,
-        new Map([
-          ['image.png', 'blob:1'],
-          ['c.png', undefined],
-        ]),
-      ),
-    ).toBe('image.png ![image.png](blob:1 "image.png") ![a](hero-image.png) ![b](c.png)');
-  });
-});
-
-describe('getMarkdownImageSources()', () => {
-  test('gets the sources without duplicates', () => {
-    expect(getMarkdownImageSources('![a](a.png) a.png ![b](b.png "Title") ![c](a.png)')).toEqual([
-      'a.png',
-      'b.png',
+    expect([...text.matchAll(MARKDOWN_MEDIA_REGEX)].map(([markup]) => markup)).toEqual([
+      '![a](a.png)',
+      '<IMG SRC="b.png" alt=\'a > b\'>',
+      '<video poster=c.jpg>',
+      '<source\nsrcset="d.png 2x"/>',
+      '<audio src="e.mp3">',
+      '<img/src=f.png>',
     ]);
   });
 
-  test('returns an empty array for a body without images', () => {
-    expect(getMarkdownImageSources('[a](a.png)')).toEqual([]);
+  test('doesn’t match a tag with `<` in an attribute value', () => {
+    expect([...'<img alt="a<b" src="a.png">'.matchAll(MARKDOWN_MEDIA_REGEX)]).toEqual([]);
+  });
+
+  test('matches in linear time', () => {
+    const text = `${'<img src="a.png" '.repeat(20000)}${'<video '.repeat(20000)}`;
+    const start = performance.now();
+
+    // None of the tags is closed
+    expect([...text.matchAll(MARKDOWN_MEDIA_REGEX)]).toEqual([]);
+
+    expect(performance.now() - start).toBeLessThan(200);
   });
 });
 
-describe('getHTMLImageSources()', () => {
-  test('gets the sources without duplicates, decoding character references', () => {
+describe('getRichTextMediaSources()', () => {
+  test('gets the Markdown image sources without duplicates', () => {
+    expect(
+      getRichTextMediaSources('![a](a.png) a.png ![b](b.png "Title") ![c](a.png)', 'markdown'),
+    ).toEqual(['a.png', 'b.png']);
+  });
+
+  test('gets the URLs of the media elements written as raw HTML in Markdown', () => {
+    const value = [
+      '![a](a.png)\n\n<img src="a.png" srcset="b.png 2x, c&amp;d.png 3x">\n\n',
+      '<video src="e.mp4" poster="f.jpg">\n<source src="g.webm">\n</video>\n',
+      '<audio src="h.mp3"></audio> <img src=""> [i](i.png)',
+    ].join('');
+
+    expect(getRichTextMediaSources(value, 'markdown')).toEqual([
+      'a.png',
+      'b.png',
+      'c&d.png',
+      'e.mp4',
+      'f.jpg',
+      'g.webm',
+      'h.mp3',
+    ]);
+  });
+
+  test('gets the media URLs in HTML without duplicates, decoding character references', () => {
     const value = [
       '<p>Text <IMG SRC="a&amp;b.png" alt="a"><br/>',
       "<img src='c.png'><img src=d.png>",
       '<img src="a&amp;b.png"></p>',
+      '<picture><source srcset="e.avif, f.avif 2x"><img src="c.png" srcset="g.png 800w"></picture>',
+      '<video src="h.mp4" poster="i.jpg"><source src="j.webm"></video>',
+      '<audio src="k.mp3"><source src="l.ogg"></audio>',
     ].join('');
 
-    expect(getHTMLImageSources(value)).toEqual(['a&b.png', 'c.png', 'd.png']);
+    expect(getRichTextMediaSources(value, 'html')).toEqual([
+      'a&b.png',
+      'c.png',
+      'd.png',
+      'e.avif',
+      'f.avif',
+      'g.png',
+      'h.mp4',
+      'i.jpg',
+      'j.webm',
+      'k.mp3',
+      'l.ogg',
+    ]);
   });
 
-  test('ignores an image tag that is not an element', () => {
+  test('ignores a media tag in HTML that is not an element', () => {
     const value = [
       '<!-- <img src="comment.png"> -->',
       '<a title=\'<img src="attribute.png">\' href="link.png">Link</a>',
       '<script>document.write(\'<img src="script.png">\');</script>',
-      '<img alt="No source"><img src="">',
+      '<img alt="No source"><img src=""><video poster="">',
       '<img src="real.png">',
     ].join('');
 
-    expect(getHTMLImageSources(value)).toEqual(['real.png']);
+    expect(getRichTextMediaSources(value, 'html')).toEqual(['real.png']);
   });
 
-  test('finds an image in a table cell', () => {
-    expect(getHTMLImageSources('<tr><td><img src="cell.png"></td></tr>')).toEqual(['cell.png']);
+  test('finds an image in an HTML table cell', () => {
+    expect(getRichTextMediaSources('<tr><td><img src="cell.png"></td></tr>', 'html')).toEqual([
+      'cell.png',
+    ]);
   });
 
-  test('returns an empty array for a body without images', () => {
-    expect(getHTMLImageSources('<p>Text</p>')).toEqual([]);
-    expect(getHTMLImageSources('<imgur-embed src="a.png"></imgur-embed>')).toEqual([]);
-    expect(getHTMLImageSources('')).toEqual([]);
+  test('returns an empty array for a body without media', () => {
+    expect(getRichTextMediaSources('[a](a.png)', 'markdown')).toEqual([]);
+    expect(getRichTextMediaSources('<p>Text</p>', 'html')).toEqual([]);
+    expect(getRichTextMediaSources('<imgur-embed src="a.png"></imgur-embed>', 'html')).toEqual([]);
+    expect(getRichTextMediaSources('', 'html')).toEqual([]);
+  });
+
+  test('ignores a raw tag inside another tag in Markdown', () => {
+    const value = '<a title=\'<img src="a.png" alt="it&#39;s">\'>x</a> <img src="b.png">';
+
+    expect(getRichTextMediaSources(value, 'markdown')).toEqual(['b.png']);
+    // Not serialized again, which would break out of the title
+    expect(replaceRichTextMediaSources(value, new Map([['a.png', 'c.png']]), 'markdown')).toBe(
+      value,
+    );
+  });
+
+  test('reads only the Markdown images and raw tags in Markdown, and only the tags in HTML', () => {
+    const value = '![a](a.png) <img src="b.png">';
+
+    expect(getRichTextMediaSources(value, 'markdown')).toEqual(['a.png', 'b.png']);
+    expect(getRichTextMediaSources(value, 'html')).toEqual(['b.png']);
   });
 
   test('doesn’t run the scripts or event handlers in the HTML', () => {
     window.htmlImageTest = vi.fn();
 
-    getHTMLImageSources(
+    const value =
       '<img src="x.png" onerror="htmlImageTest()" onload="htmlImageTest()">' +
-        '<script>htmlImageTest()</script>',
-    );
+      '<video src="y.mp4" onerror="htmlImageTest()"></video><script>htmlImageTest()</script>';
+
+    getRichTextMediaSources(value, 'html');
+    getRichTextMediaSources(value, 'markdown');
+    replaceRichTextMediaSources(value, new Map([['x.png', 'z.png']]), 'html');
+    replaceRichTextMediaSources(value, new Map([['x.png', 'z.png']]), 'markdown');
 
     expect(window.htmlImageTest).not.toHaveBeenCalled();
     delete window.htmlImageTest;
   });
 });
 
-describe('replaceHTMLImageSources()', () => {
-  test('replaces the sources of the images only, escaping the new ones', () => {
+describe('isInsideTag()', () => {
+  test('tells a tag in another tag’s attribute value from an element', () => {
+    const value = '<a title=\'<img src="a.png">\'>x</a> a < b <img src="b.png">';
+
+    expect(isInsideTag(value, value.indexOf('<img'))).toBe(true);
+    expect(isInsideTag(value, value.lastIndexOf('<img'))).toBe(false);
+    expect(isInsideTag('<img src="a.png">', 0)).toBe(false);
+    expect(isInsideTag('text <', 6)).toBe(false);
+  });
+});
+
+describe('replaceRichTextMediaSources()', () => {
+  test('replaces the Markdown image sources within the images only', () => {
+    const value = 'image.png ![image.png](image.png "image.png") ![a](hero-image.png) ![b](c.png)';
+
+    expect(
+      replaceRichTextMediaSources(
+        value,
+        new Map([
+          ['image.png', 'blob:1'],
+          ['c.png', undefined],
+        ]),
+        'markdown',
+      ),
+    ).toBe('image.png ![image.png](blob:1 "image.png") ![a](hero-image.png) ![b](c.png)');
+  });
+
+  test('replaces the URLs of the media elements written as raw HTML in Markdown', () => {
+    const value = [
+      'a.png ![a](a.png)\n\n<img alt="a.png" src="a.png" srcset="b.png 2x, a.png 3x" />\n\n',
+      '<video poster=\'a.png\' controls>\n<source src="c.webm">\n</video>\n\n',
+      "<audio src='d.mp3'></audio> <img src='e.png'>",
+    ].join('');
+
+    expect(
+      replaceRichTextMediaSources(
+        value,
+        new Map([
+          ['a.png', 'blob:a"b&c'],
+          ['c.webm', 'f.webm'],
+          ['e.png', undefined],
+        ]),
+        'markdown',
+      ),
+    ).toBe(
+      [
+        'a.png ![a](blob:a"b&c)\n\n',
+        '<img alt="a.png" src="blob:a&quot;b&amp;c" srcset="b.png 2x, blob:a&quot;b&amp;c 3x">\n\n',
+        '<video poster="blob:a&quot;b&amp;c" controls="">\n<source src="f.webm">\n</video>\n\n',
+        "<audio src='d.mp3'></audio> <img src='e.png'>",
+      ].join(''),
+    );
+  });
+
+  test('replaces the media URLs in HTML only, escaping the new ones', () => {
     const value = [
       '<p>image.png <a href="image.png">image.png</a>',
       '<img src="image.png" alt="image.png"><img src="hero-image.png">',
       '<!-- <img src="image.png"> --><img src="c.png"></p>',
+      '<picture><source srcset="image.png 1x, d.png 2x"></picture>',
+      '<video src="image.png" poster="image.png"></video><audio src="image.png"></audio>',
     ].join('');
 
     expect(
-      replaceHTMLImageSources(
+      replaceRichTextMediaSources(
         value,
         new Map([
           ['image.png', 'blob:a"b&c'],
           ['c.png', undefined],
         ]),
+        'html',
       ),
     ).toBe(
       [
         '<p>image.png <a href="image.png">image.png</a>',
         '<img src="blob:a&quot;b&amp;c" alt="image.png"><img src="hero-image.png">',
         '<!-- <img src="image.png"> --><img src="c.png"></p>',
+        '<picture><source srcset="blob:a&quot;b&amp;c 1x, d.png 2x"></picture>',
+        '<video src="blob:a&quot;b&amp;c" poster="blob:a&quot;b&amp;c"></video>',
+        '<audio src="blob:a&quot;b&amp;c"></audio>',
       ].join(''),
     );
   });
 
-  test('matches a source with character references decoded', () => {
+  test('encodes whitespace in a new URL in a `srcset`', () => {
     expect(
-      replaceHTMLImageSources('<img src="a&amp;b.png">', new Map([['a&b.png', 'c.png']])),
+      replaceRichTextMediaSources(
+        '<img srcset="a.png 2x">',
+        new Map([['a.png', 'my photo.png']]),
+        'html',
+      ),
+    ).toBe('<img srcset="my%20photo.png 2x">');
+  });
+
+  test('matches a URL with character references decoded', () => {
+    expect(
+      replaceRichTextMediaSources(
+        '<img src="a&amp;b.png">',
+        new Map([['a&b.png', 'c.png']]),
+        'html',
+      ),
     ).toBe('<img src="c.png">');
   });
 
-  test('returns the original HTML as is if no source is replaced', () => {
-    const value = "<p class='a'>Text<br/><img src='a.png'></p>";
+  test('returns the original value as is if no URL is replaced', () => {
+    const value = "<p class='a'>Text<br/><img src='a.png' srcset='a.png 2x'></p>";
 
-    expect(replaceHTMLImageSources(value, new Map([['b.png', 'c.png']]))).toBe(value);
-    expect(replaceHTMLImageSources(value, new Map([['a.png', undefined]]))).toBe(value);
-    expect(replaceHTMLImageSources('<p>Text</p>', new Map([['a.png', 'c.png']]))).toBe(
+    expect(replaceRichTextMediaSources(value, new Map([['b.png', 'c.png']]), 'html')).toBe(value);
+    expect(replaceRichTextMediaSources(value, new Map([['a.png', 'a.png']]), 'html')).toBe(value);
+    expect(replaceRichTextMediaSources(value, new Map([['a.png', undefined]]), 'html')).toBe(value);
+    expect(replaceRichTextMediaSources(value, new Map([['b.png', 'c.png']]), 'markdown')).toBe(
+      value,
+    );
+    expect(replaceRichTextMediaSources('<p>Text</p>', new Map([['a.png', 'c.png']]), 'html')).toBe(
       '<p>Text</p>',
-    );
-  });
-});
-
-describe('getRichTextImageSources()', () => {
-  test('gets the sources in the given format', () => {
-    const value = '![a](a.png) <img src="b.png">';
-
-    expect(getRichTextImageSources(value, 'markdown')).toEqual(['a.png']);
-    expect(getRichTextImageSources(value, 'html')).toEqual(['b.png']);
-  });
-});
-
-describe('replaceRichTextImageSources()', () => {
-  test('replaces the sources in the given format', () => {
-    const value = '![a](a.png) <img src="a.png">';
-    const newSources = new Map([['a.png', 'c.png']]);
-
-    expect(replaceRichTextImageSources(value, newSources, 'markdown')).toBe(
-      '![a](c.png) <img src="a.png">',
-    );
-    expect(replaceRichTextImageSources(value, newSources, 'html')).toBe(
-      '![a](a.png) <img src="c.png">',
     );
   });
 });
@@ -957,7 +1076,7 @@ describe('getComparableAssetURL()', () => {
 describe('getEntriesByAssets()', () => {
   /**
    * Set the mocks up for a `posts` entry collection whose fields are Image fields, except `body`,
-   * which is a Markdown field.
+   * which is a Markdown field, and `html`, which is a RichText field in the HTML format.
    * @returns {Promise<{ getField: any, getMediaFieldSource: any }>} Mocks.
    */
   const setup = async () => {
@@ -974,10 +1093,11 @@ describe('getEntriesByAssets()', () => {
     vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts', _type: 'entry' }]);
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-    vi.mocked(getField).mockImplementation(({ keyPath }) => ({
-      name: keyPath,
-      widget: keyPath === 'body' ? 'markdown' : 'image',
-    }));
+    vi.mocked(getField).mockImplementation(({ keyPath }) =>
+      keyPath === 'html'
+        ? { name: keyPath, widget: 'richtext', format: 'html' }
+        : { name: keyPath, widget: keyPath === 'body' ? 'markdown' : 'image' },
+    );
 
     return { getField, getMediaFieldSource };
   };
@@ -1157,6 +1277,58 @@ describe('getEntriesByAssets()', () => {
       cover: '/uploads/1.jpg',
       body: '![one](/uploads/1.jpg) ![two](/media/2.jpg)',
     });
+  });
+
+  test('finds and replaces the media URLs in HTML and the raw HTML in Markdown', async () => {
+    const { getField } = await setup();
+
+    const content = {
+      body: '![a](/uploads/1.jpg)\n\n<video src="/uploads/2.mp4" poster="/uploads/1.jpg"></video>',
+      html: [
+        '<p><a href="/uploads/1.jpg">/uploads/1.jpg</a>',
+        '<img src="/uploads/9.jpg" srcset="/uploads/1.jpg 2x"></p>',
+        '<audio><source src="/uploads/2.mp4"></audio>',
+      ].join(''),
+      other: '<p><img src="/uploads/9.jpg"></p>',
+      note: '![x](/uploads/9.jpg)',
+    };
+
+    const a = createEntry('a', content);
+
+    const results = await getEntriesByAssets(
+      [
+        { url: '/uploads/1.jpg', newURL: '/media/1.jpg' },
+        { url: '/uploads/2.mp4', newURL: '/media/2.mp4' },
+      ],
+      { entries: [a] },
+    );
+
+    expect(results).toEqual([[a], [a]]);
+    expect(content).toEqual({
+      body: '![a](/media/1.jpg)\n\n<video src="/media/2.mp4" poster="/media/1.jpg"></video>',
+      html: [
+        '<p><a href="/uploads/1.jpg">/uploads/1.jpg</a>',
+        '<img src="/uploads/9.jpg" srcset="/media/1.jpg 2x"></p>',
+        '<audio><source src="/media/2.mp4"></audio>',
+      ].join(''),
+      other: '<p><img src="/uploads/9.jpg"></p>',
+      note: '![x](/uploads/9.jpg)',
+    });
+    // A value whose media URLs can’t refer to the targets is skipped before the field lookup
+    expect(getField).toHaveBeenCalledTimes(2);
+  });
+
+  test('reads an HTML value as HTML when looking for references', async () => {
+    const { getField } = await setup();
+    // In Markdown, the tag would be missed, as the attribute value contains `<`
+    const a = createEntry('a', { html: '<img alt="a<b" src="/uploads/1.jpg">' });
+    const b = createEntry('b', { html: '<img alt="a<b" src="/uploads/2.jpg">' });
+
+    expect(await getEntriesByAssets([{ url: '/uploads/1.jpg' }], { entries: [a, b] })).toEqual([
+      [a],
+    ]);
+    // The field is only looked up for the value referring to the target
+    expect(getField).toHaveBeenCalledTimes(1);
   });
 
   test('searches the loaded entries by default', async () => {

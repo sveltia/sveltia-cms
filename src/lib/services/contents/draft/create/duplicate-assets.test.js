@@ -365,6 +365,34 @@ describe('copyEntryRelativeAssets()', () => {
     );
   });
 
+  test('copies the other media embedded in an HTML or Markdown body', async () => {
+    currentValues = {
+      en: {
+        html: [
+          '<picture><source srcset="./one.png 2x, https://example.com/a.png 3x"></picture>',
+          '<video src="./one.png" poster="./one.png"><source src="./one.png"></video>',
+          '<audio src="./one.png"></audio>',
+        ].join(''),
+        body: '![a](./one.png)\n\n<img src="./one.png" alt="Raw">',
+      },
+    };
+
+    const files = await copyEntryRelativeAssets({ draft, currentValues });
+    const [blobURL] = Object.keys(files);
+
+    // The file is copied once, however many references to it there are
+    expect(Object.keys(files)).toEqual([blobURL]);
+    expect(files[blobURL].file.name).toBe('one.png');
+    expect(currentValues.en.html).toBe(
+      [
+        `<picture><source srcset="${blobURL} 2x, https://example.com/a.png 3x"></picture>`,
+        `<video src="${blobURL}" poster="${blobURL}"><source src="${blobURL}"></video>`,
+        `<audio src="${blobURL}"></audio>`,
+      ].join(''),
+    );
+    expect(currentValues.en.body).toBe(`![a](${blobURL})\n\n<img src="${blobURL}" alt="Raw">`);
+  });
+
   test('leaves an HTML body without an entry-relative image as is', async () => {
     const html = "<p class='a'>Text<br/><img src='/images/a.png'></p>";
 

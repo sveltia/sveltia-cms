@@ -762,6 +762,31 @@ describe('prepareListItemPaste()', () => {
       expect(result?.missingFileCount).toBe(0);
     });
 
+    test('copies a video embedded in an HTML body, and raw HTML in Markdown', async () => {
+      mockGetAssetBlob.mockResolvedValue(new Blob(['a'], { type: 'image/jpeg' }));
+
+      const result = await paste({
+        type: 'hero',
+        values: {
+          en: {
+            html: '<video src="hero.jpg" poster="hero.jpg"></video>',
+            body: '<img srcset="hero.jpg 2x">',
+          },
+        },
+        assets: { en: { 'hero.jpg': asset.path } },
+      });
+
+      const [blobURL] = Object.keys(draft.files);
+
+      expect(Object.keys(draft.files)).toHaveLength(1);
+      expect(result?.items.en).toEqual(
+        expect.objectContaining({
+          html: `<video src="${blobURL}" poster="${blobURL}"></video>`,
+          body: `<img srcset="${blobURL} 2x">`,
+        }),
+      );
+    });
+
     test('counts the assets that can’t be found or copied', async () => {
       mockGetAssetBlob.mockRejectedValue(new Error('Not found'));
 
