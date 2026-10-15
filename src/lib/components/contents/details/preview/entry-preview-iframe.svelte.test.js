@@ -62,6 +62,19 @@ describe('EntryPreviewIframe', () => {
     ).toEqual(['https://example.com/a.css', 'https://example.com/b.css']);
   });
 
+  test('reports the frame once its content has been mounted', async () => {
+    const onLoad = vi.fn();
+
+    const { container } = await renderWithDraft(EntryPreviewIframe, {
+      draft: createMockDraft(),
+      props: { locale: 'en', styleURLs: [], children, onLoad },
+    });
+
+    await expect.poll(() => onLoad.mock.calls.length).toBe(1);
+    expect(onLoad).toHaveBeenCalledWith(container.querySelector('iframe.preview'));
+    expect(getDocument(container)?.querySelector('.preview-content')?.textContent).toBe('Hello');
+  });
+
   test('sets the language and direction of the locale, and updates them with the locale', async () => {
     const props = $state({ locale: 'ar', styleURLs: [], children });
 

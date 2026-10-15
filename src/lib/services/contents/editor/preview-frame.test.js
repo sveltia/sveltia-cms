@@ -1,17 +1,12 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import {
-  customPreviewStyleRegistry,
-  customPreviewTemplateRegistry,
-} from '$lib/services/api/registries';
+import { customPreviewTemplateRegistry } from '$lib/services/api/registries';
 import {
   buildPreviewFrameHTML,
   getPreviewTemplate,
-  usesPreviewFrame,
 } from '$lib/services/contents/editor/preview-frame';
 
 afterEach(() => {
-  customPreviewStyleRegistry.clear();
   customPreviewTemplateRegistry.clear();
 });
 
@@ -27,30 +22,6 @@ describe('getPreviewTemplate()', () => {
     expect(getPreviewTemplate({ collectionName: 'pages', fileName: 'about' })).toBe(aboutTemplate);
     expect(getPreviewTemplate({ collectionName: 'pages', fileName: 'contact' })).toBeUndefined();
     expect(getPreviewTemplate({ collectionName: 'pages' })).toBeUndefined();
-  });
-});
-
-describe('usesPreviewFrame()', () => {
-  test('returns false without a matching stylesheet or template', () => {
-    expect(usesPreviewFrame({ collectionName: 'posts' })).toBe(false);
-
-    customPreviewTemplateRegistry.set('pages', () => null);
-    customPreviewStyleRegistry.add({ url: '/pages.css', collection: 'pages' });
-
-    // A template or stylesheet for another collection doesn’t count
-    expect(usesPreviewFrame({ collectionName: 'posts' })).toBe(false);
-  });
-
-  test('returns true with a matching template', () => {
-    customPreviewTemplateRegistry.set('posts', () => null);
-
-    expect(usesPreviewFrame({ collectionName: 'posts' })).toBe(true);
-  });
-
-  test('returns true with a matching stylesheet', () => {
-    customPreviewStyleRegistry.add({ url: '/posts.css', collection: 'posts' });
-
-    expect(usesPreviewFrame({ collectionName: 'posts' })).toBe(true);
   });
 });
 

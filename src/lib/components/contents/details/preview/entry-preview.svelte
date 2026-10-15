@@ -18,6 +18,8 @@
   /**
    * @typedef {object} Props
    * @property {InternalLocaleCode} locale Current pane’s locale.
+   * @property {(iframe: HTMLIFrameElement) => void} [onFrameLoad] Function called with the preview
+   * iframe once its content has been loaded, if a custom preview stylesheet or template is used.
    */
 
   const entryDraft = getEntryDraftContext();
@@ -26,6 +28,7 @@
   let {
     /* eslint-disable prefer-const */
     locale,
+    onFrameLoad,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -83,9 +86,9 @@
 
 <VisibilityObserver>
   {#if reactComponent && reactProps}
-    <EntryPreviewIframe {locale} {styleURLs} {reactComponent} {reactProps} />
+    <EntryPreviewIframe {locale} {styleURLs} {reactComponent} {reactProps} onLoad={onFrameLoad} />
   {:else if styleURLs.length}
-    <EntryPreviewIframe {locale} {styleURLs} {children} />
+    <EntryPreviewIframe {locale} {styleURLs} {children} onLoad={onFrameLoad} />
   {:else}
     <div role="document" aria-label={_('content_preview')}>
       {@render children()}

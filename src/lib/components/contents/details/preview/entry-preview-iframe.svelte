@@ -38,6 +38,8 @@
    * @property {Omit<CustomPreviewTemplateProps, 'document' | 'window'>} [reactProps] Props for the
    * React component, except for the `document` and `window` props, which will be automatically
    * provided by the iframe.
+   * @property {(iframe: HTMLIFrameElement) => void} [onLoad] Function called with the iframe once
+   * its content has been loaded and mounted.
    */
 
   const entryDraft = getEntryDraftContext();
@@ -50,6 +52,7 @@
     children,
     reactComponent,
     reactProps,
+    onLoad,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -200,6 +203,7 @@
 
       URL.revokeObjectURL(blobURL);
       initialized = true;
+      onLoad?.(/** @type {HTMLIFrameElement} */ (iframe));
     };
 
     iframe.addEventListener('load', listener, { once: true });

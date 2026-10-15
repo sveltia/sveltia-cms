@@ -2,6 +2,7 @@ import { tick } from 'svelte';
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
+import { immutableLoaded } from '$lib/services/api/immutable';
 import {
   customPreviewStyleRegistry,
   customPreviewTemplateRegistry,
@@ -14,12 +15,23 @@ import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 import PaneBody from './pane-body.svelte';
 
 // A preview template is only rendered once Immutable.js has loaded, which these tests hold back, so
-// the template’s iframe never appears. A stylesheet’s iframe doesn’t depend on it
-vi.mock('$lib/services/api/immutable', async (importOriginal) => ({
-  ...(await importOriginal()),
-  immutableLoaded: { current: false },
-  loadImmutable: vi.fn(() => new Promise(() => {})),
-}));
+// the template’s iframe doesn’t appear until a test sets `immutableLoaded`. A stylesheet’s iframe
+// doesn’t depend on it
+vi.mock('$lib/services/api/immutable', async (importOriginal) => {
+  const { createRawState: createState } = await import('$lib/services/utils/state.svelte');
+  const immutable = await vi.importActual('immutable');
+
+  return {
+    ...(await importOriginal()),
+    immutableLoaded: createState(false),
+    loadImmutable: vi.fn(() => new Promise(() => {})),
+    /**
+     * Get the library, which the tests import rather than load from the CDN.
+     * @returns {any} Module.
+     */
+    getImmutable: () => immutable,
+  };
+});
 
 const fields = [{ name: 'title', label: 'Title', widget: 'string', i18n: true }];
 
@@ -131,6 +143,7 @@ describe('PaneBody', () => {
   afterEach(() => {
     customPreviewStyleRegistry.clear();
     customPreviewTemplateRegistry.clear();
+    immutableLoaded.current = false;
   });
 
   test('shows the editor for the locale', async () => {
@@ -512,25 +525,74 @@ describe('PaneBody', () => {
 
     const { props } = await renderPane({ mode: 'preview', locale: 'en' });
 
-    // The preview isn’t rendered in an iframe, so it’s listened to right away rather than after
-    // looking for an iframe in vain
+    // The preview isn’t rendered in an iframe, so it’s listened to right away
     await tick();
     expect(props.thisPaneContentArea).toBeDefined();
     expect(props.thisPaneContentArea?.ownerDocument).toBe(document);
     expect(props.thisPaneContentArea?.querySelector('iframe')).toBeNull();
   });
 
-  test('listens to the preview itself when the custom template’s iframe doesn’t appear', async () => {
+  test('listens to the custom template’s iframe once it appears', async () => {
+    entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: true };
+    customPreviewTemplateRegistry.set('posts', () => null);
+
+    const thatPane = createThatPane();
+    const { props } = await renderPane({ mode: 'preview', locale: 'en' });
+
+    try {
+      // The template isn’t rendered until Immutable.js has loaded, so the preview area is listened
+      // to in the meantime
+      await expect.poll(() => props.thisPaneContentArea).toBeDefined();
+
+      const previewArea = /** @type {HTMLElement} */ (props.thisPaneContentArea);
+
+      expect(previewArea.ownerDocument).toBe(document);
+      expect(previewArea.querySelector('iframe')).toBeNull();
+      // Long after the iframe would have been looked for
+      await new Promise((resolve) => {
+        setTimeout(resolve, 600);
+      });
+      immutableLoaded.current = true;
+
+      // The iframe’s document is listened to once the frame has loaded
+      await expect.poll(() => props.thisPaneContentArea?.ownerDocument !== document).toBe(true);
+
+      const iframe = /** @type {HTMLIFrameElement} */ (previewArea.querySelector('iframe.preview'));
+      const area = /** @type {HTMLElement} */ (props.thisPaneContentArea);
+
+      expect(area).toBe(iframe.contentDocument?.documentElement);
+      props.thatPaneContentArea = thatPane;
+      thatPane.scrollTop = 50;
+      await wheel(area);
+      // The preview is scrolled to the top, so the other pane is too
+      await expect.poll(() => thatPane.scrollTop).toBe(0);
+
+      // The preview area itself is no longer listened to
+      thatPane.scrollTop = 50;
+      await wheel(previewArea);
+      expect(thatPane.scrollTop).toBe(50);
+    } finally {
+      thatPane.remove();
+    }
+  });
+
+  test('listens to the custom template’s iframe replacing the stylesheet’s', async () => {
+    customPreviewStyleRegistry.add({ url: 'https://example.com/preview.css' });
     customPreviewTemplateRegistry.set('posts', () => null);
 
     const { props } = await renderPane({ mode: 'preview', locale: 'en' });
 
-    // The iframe is looked for in vain for a moment, then the preview area is listened to instead
-    await tick();
-    expect(props.thisPaneContentArea).toBeUndefined();
-    await expect.poll(() => props.thisPaneContentArea).toBeDefined();
-    expect(props.thisPaneContentArea?.ownerDocument).toBe(document);
-    expect(props.thisPaneContentArea?.querySelector('iframe')).toBeNull();
+    // The stylesheet’s iframe is rendered until Immutable.js has loaded for the template
+    await expect.poll(() => props.thisPaneContentArea?.ownerDocument !== document).toBe(true);
+
+    const styleFrameArea = props.thisPaneContentArea;
+
+    immutableLoaded.current = true;
+    await expect
+      .poll(() => props.thisPaneContentArea !== styleFrameArea && props.thisPaneContentArea)
+      .toBeTruthy();
+    expect(props.thisPaneContentArea?.ownerDocument).not.toBe(document);
+    expect(props.thisPaneContentArea?.isConnected).toBe(true);
   });
 
   test('listens to the preview iframe when a custom stylesheet is used', async () => {
@@ -545,33 +607,26 @@ describe('PaneBody', () => {
 
       const editorArea = /** @type {HTMLElement} */ (props.thisPaneContentArea);
 
-      // Switching to the preview mode replaces the listened element with the iframe’s
+      // Switching to the preview mode replaces the listened element with the iframe’s, once the
+      // frame has loaded its content
       thisPane.current = { mode: 'preview', locale: 'en' };
       await expect.poll(() => props.thisPaneContentArea?.ownerDocument !== document).toBe(true);
-
-      // The frame loads its content in the meantime, replacing its initial document
-      await new Promise((resolve) => {
-        setTimeout(resolve, 500);
-      });
 
       const area = /** @type {HTMLElement} */ (props.thisPaneContentArea);
 
       expect(area).not.toBe(editorArea);
+      expect(area.isConnected).toBe(true);
       props.thatPaneContentArea = thatPane;
       thatPane.scrollTop = 50;
       await wheel(area);
       // The preview is scrolled to the top, so the other pane is too
       await expect.poll(() => thatPane.scrollTop).toBe(0);
 
-      // Switching the mode back and forth quickly discards the outdated initialization
+      // Switching back to the edit mode before the frame has loaded leaves the editor listened to
       thisPane.current = { mode: 'edit', locale: 'en' };
-      await new Promise((resolve) => {
-        setTimeout(resolve, 20);
-      });
+      await expect.poll(() => props.thisPaneContentArea).toBe(editorArea);
       thisPane.current = { mode: 'preview', locale: 'en' };
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100);
-      });
+      await tick();
       thisPane.current = { mode: 'edit', locale: 'en' };
       await expect.poll(() => props.thisPaneContentArea).toBe(editorArea);
       await new Promise((resolve) => {

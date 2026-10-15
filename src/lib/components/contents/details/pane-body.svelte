@@ -18,14 +18,12 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, EmptyState } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
   import { untrack } from 'svelte';
 
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
-  import { usesPreviewFrame } from '$lib/services/contents/editor/preview-frame';
   import {
     findLazyFieldElement,
     getFieldAlignedScrollTop,
@@ -68,7 +66,6 @@
     values: { locale: locale ? (getLocaleLabel(locale) ?? locale) : '' },
   });
   /* v8 ignore stop */
-  const MainContent = $derived(mode === 'preview' ? EntryPreview : EntryEditor);
 
   /** @type {HTMLElement | undefined} */
   let contentArea = $state();
@@ -286,41 +283,24 @@
    * @type {AddEventListenerOptions}
    */
   const scrollEventOptions = { passive: true };
-  /** Guard to ignore an outdated initialization once a newer one has started. */
-  const initGuard = createLatestGuard();
+  /**
+   * Preview iframe, which is used in the preview mode only when a custom preview stylesheet or
+   * template applies to the entry. It’s set once the frame has loaded its content, which may take
+   * a while: the preview is rendered lazily once it’s visible, and a template waits for
+   * Immutable.js to be loaded.
+   * @type {HTMLIFrameElement | undefined}
+   */
+  let previewFrame;
 
   /**
-   * Find the preview iframe, which is used in the preview mode only when a custom preview
-   * stylesheet or template is provided. The preview is rendered lazily once it’s visible, so the
-   * iframe may not be in the DOM yet when the pane mode changes.
-   * @returns {Promise<HTMLIFrameElement | null>} Iframe, if any.
+   * Initialize the scroll synchronization by setting up event listeners on this pane’s content
+   * area: the preview iframe’s root element once the frame has loaded, or the main content area.
+   * Until the frame has loaded, the main content area is listened to.
    */
-  const findPreviewIframe = async () => {
-    for (let i = 0; i < 10; i += 1) {
-      const iframe = contentArea?.querySelector('iframe.preview');
-
-      if (iframe) {
-        return /** @type {HTMLIFrameElement} */ (iframe);
-      }
-
-      // eslint-disable-next-line no-await-in-loop
-      await sleep(50);
-    }
-
-    return null;
-  };
-
-  /**
-   * Initialize the scroll synchronization by setting up event listeners and ensuring the content
-   * area is ready. The content area is either the main content area or the iframe’s content area.
-   * An iframe is used only when a custom preview stylesheet or template applies to the entry.
-   */
-  const initializeScrollSync = async () => {
+  const initializeScrollSync = () => {
     if (!contentArea) {
       return;
     }
-
-    const isLatest = initGuard.next();
 
     if (thisPaneContentArea) {
       // Remove previous event listeners if they exist
@@ -329,37 +309,18 @@
       scrollEventTarget?.removeEventListener('scroll', onScroll, scrollEventOptions);
     }
 
-    // The preview is only rendered in an iframe with a custom preview stylesheet or template for
-    // this entry. Don’t wait for one otherwise, as the other pane can’t follow this one until it’s
-    // set up
-    const iframe =
-      mode === 'preview' && usesPreviewFrame(entryDraft.current ?? {})
-        ? await findPreviewIframe()
-        : null;
-
-    if (iframe) {
-      // Wait for the content to be loaded in the iframe
-      await sleep(250);
+    // Forget the frame of a previous preview, which is gone once the pane has switched to the edit
+    // mode, so it doesn’t keep the frame’s document from being garbage-collected
+    if (previewFrame && !contentArea.contains(previewFrame)) {
+      previewFrame = undefined;
     }
 
-    if (!isLatest()) {
-      // The mode has changed in the meantime, and a newer initialization has taken over
-      return;
-    }
+    const frameRoot = previewFrame
+      ? /** @type {Document} */ (previewFrame.contentDocument).documentElement
+      : undefined;
 
-    if (iframe) {
-      thisPaneContentArea = /** @type {HTMLElement} */ (iframe.contentDocument?.firstElementChild);
-    } else {
-      thisPaneContentArea = contentArea;
-    }
-
-    // A preview frame removed while its content was loading has no document left to listen to
-    /* v8 ignore next 3 -- a test can’t detach the frame within that moment */
-    if (!thisPaneContentArea) {
-      return;
-    }
-
-    scrollEventTarget = iframe ? thisPaneContentArea.ownerDocument : thisPaneContentArea;
+    thisPaneContentArea = frameRoot ?? contentArea;
+    scrollEventTarget = frameRoot ? frameRoot.ownerDocument : contentArea;
     thisPaneContentArea.scrollTop = 0;
     // Add event listeners manually to use passive mode
     thisPaneContentArea.addEventListener('wheel', markScrollSource, eventOptions);
@@ -370,7 +331,8 @@
   $effect(() => {
     // Initialize the scroll synchronization when the content area is ready. The pane mode is also a
     // dependency because the edit mode always uses the main content area, while the preview mode
-    // may use an iframe if a custom preview stylesheet or template applies.
+    // uses an iframe if a custom preview stylesheet or template applies. The iframe is only there
+    // once it has loaded, so it initializes the sync again then.
     void [thisPane.current?.mode, contentArea];
     // The initialization writes `thisPaneContentArea`, which it also reads, so it’s left out of
     // the dependencies to keep the effect from running again on its own account
@@ -389,7 +351,17 @@
 <div role="none" {id} class="wrapper">
   {#if locale && entryDraft.current?.currentLocales[locale]}
     <div role="none" class="content" bind:this={contentArea} onfocusin={onFocusIn}>
-      <MainContent {locale} />
+      {#if mode === 'preview'}
+        <EntryPreview
+          {locale}
+          onFrameLoad={(iframe) => {
+            previewFrame = iframe;
+            initializeScrollSync();
+          }}
+        />
+      {:else}
+        <EntryEditor {locale} />
+      {/if}
     </div>
   {:else if mode === 'edit'}
     <EmptyState>
