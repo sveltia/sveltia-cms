@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 /**
@@ -43,6 +45,9 @@ vi.mock('$lib/services/assets/info', () => ({
   createDisplayBlobURL: vi.fn(async () => `blob:copy-${Math.random()}`),
 }));
 
+// Imported along the way; its initialization would run against the happy-dom globals
+vi.mock('$lib/services/user/env.svelte', () => ({ env: {} }));
+
 vi.mock('$lib/services/contents/fields/file/helpers', () => ({
   getAssetLibraryFolderMap: vi.fn(() => ({})),
   getDefaultAssetFolder: mockGetDefaultAssetFolder,
@@ -73,6 +78,7 @@ const blocksField = {
         { name: 'image', widget: 'image' },
         { name: 'gallery', widget: 'image', multiple: true },
         { name: 'body', widget: 'markdown' },
+        { name: 'html', widget: 'richtext', format: 'html' },
         {
           name: 'cta',
           widget: 'object',
@@ -153,6 +159,7 @@ describe('createListItemClipboardData()', () => {
       'blocks.0.gallery.1': 'blob:gone',
       'blocks.0.gallery.2': '/images/absolute.jpg',
       'blocks.0.body': '![a](inline.png) ![b](https://example.com/b.png) ![c](inline.png)',
+      'blocks.0.html': '<p><img src="figure.png"><!-- <img src="comment.png"> --></p>',
       'blocks.0.cta.label': 'Go',
       'blocks.0.cta.file': 'unknown.pdf',
       'blocks.0.media.type': 'photo',
@@ -190,6 +197,7 @@ describe('createListItemClipboardData()', () => {
           image: 'hero.jpg',
           gallery: ['blob:pending', 'blob:gone', '/images/absolute.jpg'],
           body: '![a](inline.png) ![b](https://example.com/b.png) ![c](inline.png)',
+          html: '<p><img src="figure.png"><!-- <img src="comment.png"> --></p>',
           cta: { label: 'Go', file: 'unknown.pdf' },
           media: { type: 'photo', src: 'media.jpg' },
           photos: ['photo.jpg', ''],
@@ -198,6 +206,7 @@ describe('createListItemClipboardData()', () => {
       },
       assets: {
         en: {
+          'figure.png': 'content/pages/figure.png',
           'hero.jpg': 'content/pages/hero.jpg',
           'inline.png': 'content/pages/inline.png',
           'media.jpg': 'content/pages/media.jpg',
@@ -470,6 +479,7 @@ describe('prepareListItemPaste()', () => {
         image: '/a.jpg',
         gallery: ['/b.jpg'],
         body: null,
+        html: '',
         cta: { label: '', file: '' },
         media: null,
         photos: ['/d.jpg'],
@@ -729,19 +739,55 @@ describe('prepareListItemPaste()', () => {
       expect(second?.items.en.image).toBe(first?.items.en.image);
     });
 
+    test('copies an asset embedded in an HTML body as a pending file', async () => {
+      mockGetAssetBlob.mockResolvedValue(new Blob(['a'], { type: 'image/jpeg' }));
+
+      const result = await paste({
+        type: 'hero',
+        values: {
+          en: { html: '<p><a href="hero.jpg">hero.jpg</a> <img src="hero.jpg" alt="a"></p>' },
+        },
+        assets: { en: { 'hero.jpg': asset.path } },
+      });
+
+      const [blobURL] = Object.keys(draft.files);
+
+      expect(result?.items.en).toEqual(
+        expect.objectContaining({
+          // The link to the same file is left alone
+          html: `<p><a href="hero.jpg">hero.jpg</a> <img src="${blobURL}" alt="a"></p>`,
+        }),
+      );
+      expect(draft.files[blobURL].file.name).toBe('hero.jpg');
+      expect(result?.missingFileCount).toBe(0);
+    });
+
     test('counts the assets that can’t be found or copied', async () => {
       mockGetAssetBlob.mockRejectedValue(new Error('Not found'));
 
       const result = await paste({
         type: 'hero',
-        values: { en: { image: 'hero.jpg', body: '![a](gone.jpg)' } },
-        assets: { en: { 'hero.jpg': asset.path, 'gone.jpg': 'content/pages/home/gone.jpg' } },
+        values: {
+          en: { image: 'hero.jpg', body: '![a](gone.jpg)', html: "<img src='lost.jpg'>" },
+        },
+        assets: {
+          en: {
+            'hero.jpg': asset.path,
+            'gone.jpg': 'content/pages/home/gone.jpg',
+            'lost.jpg': 'content/pages/home/lost.jpg',
+          },
+        },
       });
 
       expect(result?.items.en).toEqual(
-        expect.objectContaining({ image: 'hero.jpg', body: '![a](gone.jpg)' }),
+        expect.objectContaining({
+          image: 'hero.jpg',
+          body: '![a](gone.jpg)',
+          // Not even serialized again
+          html: "<img src='lost.jpg'>",
+        }),
       );
-      expect(result?.missingFileCount).toBe(2);
+      expect(result?.missingFileCount).toBe(3);
       expect(draft.files).toEqual({});
     });
 

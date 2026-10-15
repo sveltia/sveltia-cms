@@ -20,7 +20,7 @@ import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents
  * InternalCollectionFile,
  * InternalLocaleCode,
  * } from '$lib/types/private';
- * @import { Field, FieldKeyPath } from '$lib/types/public';
+ * @import { Field, FieldKeyPath, RichTextValueFormat } from '$lib/types/public';
  */
 
 /**
@@ -60,6 +60,122 @@ export const replaceMarkdownImageSources = (value, newSources) =>
 
     return `${image.slice(0, start)}${newSource}${image.slice(start + src.length)}`;
   });
+
+/**
+ * Get the sources of the images in a Markdown body, without duplicates.
+ * @param {string} value Markdown body.
+ * @returns {string[]} Sources, in the order found.
+ */
+export const getMarkdownImageSources = (value) => [
+  ...new Set([...value.matchAll(MARKDOWN_IMAGE_REGEX)].map(([, src]) => src)),
+];
+
+/**
+ * Check if the given HTML may contain an image, to skip parsing a value that can’t. Tag names are
+ * case-insensitive in HTML.
+ * @param {string} value HTML.
+ * @returns {boolean} Result.
+ */
+const mayHaveHTMLImage = (value) => /<img[\s/>]/i.test(value);
+
+/**
+ * Parse an HTML fragment into the content of a `<template>` element, which is inert: unlike an
+ * element in the document, it doesn’t load the images or run the scripts and event handlers found
+ * in the HTML, which comes from untrusted field values.
+ * @param {string} value HTML.
+ * @returns {HTMLTemplateElement} Template holding the parsed nodes.
+ */
+const parseHTMLFragment = (value) => {
+  const template = document.createElement('template');
+
+  template.innerHTML = value;
+
+  return template;
+};
+
+/**
+ * Get the `<img>` elements with a source in a parsed HTML fragment.
+ * @param {HTMLTemplateElement} template Template holding the parsed nodes.
+ * @returns {Element[]} Elements.
+ */
+const getHTMLImageElements = (template) => [...template.content.querySelectorAll('img[src]')];
+
+/**
+ * Get the sources of the images in an HTML body, without duplicates. The HTML is parsed rather than
+ * matched with a regular expression, so an `<img>` tag in a comment, an attribute value or a
+ * `<script>` element isn’t taken for an image, and the sources come with the character references
+ * decoded, e.g. `a&amp;b.jpg` as `a&b.jpg`, the same as the file name they refer to.
+ * @param {string} value HTML body.
+ * @returns {string[]} Sources, in the order found. An empty source is left out.
+ */
+export const getHTMLImageSources = (value) => {
+  if (!mayHaveHTMLImage(value)) {
+    return [];
+  }
+
+  const sources = getHTMLImageElements(parseHTMLFragment(value)).map(
+    (img) => /** @type {string} */ (img.getAttribute('src')),
+  );
+
+  return [...new Set(sources.filter(Boolean))];
+};
+
+/**
+ * Replace the sources of the images in an HTML body. The HTML is parsed, the `src` attributes are
+ * updated, and the result is serialized again, so a new source is escaped as needed, and the same
+ * file name mentioned anywhere else in the HTML, e.g. in a link, isn’t hit. The serialization may
+ * differ from the original in formatting, e.g. the quotes around attribute values, so the original
+ * is returned as is if no source is replaced.
+ * @param {string} value HTML body.
+ * @param {Map<string, string | undefined>} newSources New sources keyed by the current ones, as
+ * returned by {@link getHTMLImageSources}. An image whose source is missing or mapped to
+ * `undefined` is left as is.
+ * @returns {string} New body.
+ */
+export const replaceHTMLImageSources = (value, newSources) => {
+  if (
+    !mayHaveHTMLImage(value) ||
+    ![...newSources.values()].some((newSource) => newSource !== undefined)
+  ) {
+    return value;
+  }
+
+  const template = parseHTMLFragment(value);
+  let replaced = false;
+
+  getHTMLImageElements(template).forEach((img) => {
+    const newSource = newSources.get(/** @type {string} */ (img.getAttribute('src')));
+
+    if (newSource !== undefined) {
+      img.setAttribute('src', newSource);
+      replaced = true;
+    }
+  });
+
+  return replaced ? template.innerHTML : value;
+};
+
+/**
+ * Get the sources of the images in a Markdown or RichText field value, without duplicates.
+ * @param {string} value Field value.
+ * @param {RichTextValueFormat} format Value format, as returned by `getValueFormat()`.
+ * @returns {string[]} Sources, in the order found.
+ */
+export const getRichTextImageSources = (value, format) =>
+  format === 'html' ? getHTMLImageSources(value) : getMarkdownImageSources(value);
+
+/**
+ * Replace the sources of the images in a Markdown or RichText field value.
+ * @param {string} value Field value.
+ * @param {Map<string, string | undefined>} newSources New sources keyed by the current ones. An
+ * image whose source is missing or mapped to `undefined` is left as is.
+ * @param {RichTextValueFormat} format Value format, as returned by `getValueFormat()`.
+ * @returns {string} New value.
+ */
+export const replaceRichTextImageSources = (value, newSources, format) =>
+  format === 'html'
+    ? replaceHTMLImageSources(value, newSources)
+    : replaceMarkdownImageSources(value, newSources);
 
 /**
  * @typedef {object} AssetReferenceTarget

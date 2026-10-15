@@ -1,7 +1,10 @@
 import { getAssetByPath } from '$lib/services/assets';
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { createDisplayBlobURL, getAssetBlob } from '$lib/services/assets/info';
-import { MARKDOWN_IMAGE_REGEX, replaceMarkdownImageSources } from '$lib/services/assets/references';
+import {
+  getRichTextImageSources,
+  replaceRichTextImageSources,
+} from '$lib/services/assets/references';
 import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getDraftFieldArgs, getField, getTypedKeyPath } from '$lib/services/contents/entry/fields';
 import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
@@ -10,6 +13,7 @@ import {
   getAssetLibraryFolderMap,
   getDefaultAssetFolder,
 } from '$lib/services/contents/fields/file/helpers';
+import { getValueFormat } from '$lib/services/contents/fields/rich-text';
 import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
 /**
@@ -22,7 +26,7 @@ import { getEntryAssetVersion } from '$lib/services/workflow/assets';
  * LocaleContentMap,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
- * @import { FieldKeyPath } from '$lib/types/public';
+ * @import { FieldKeyPath, MarkdownField, RichTextField } from '$lib/types/public';
  */
 
 /**
@@ -140,7 +144,8 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
     }
 
     const getFieldArgs = getDraftFieldArgs(draft, { valueMap, keyPath });
-    const { widget: fieldType = 'string' } = getField(getFieldArgs) ?? {};
+    const field = getField(getFieldArgs);
+    const { widget: fieldType = 'string' } = field ?? {};
 
     if (!ASSET_FIELD_TYPES.includes(fieldType)) {
       return;
@@ -170,8 +175,9 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
       return;
     }
 
-    // Images embedded in a Markdown body
-    const sources = [...new Set([...value.matchAll(MARKDOWN_IMAGE_REGEX)].map(([, src]) => src))];
+    // Images embedded in a Markdown or HTML body
+    const format = getValueFormat(/** @type {MarkdownField | RichTextField} */ (field));
+    const sources = getRichTextImageSources(value, format);
 
     const blobURLs = new Map(
       await Promise.all(
@@ -186,7 +192,7 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
     );
 
     // Replace the sources once every copy is ready
-    valueMap[keyPath] = replaceMarkdownImageSources(value, blobURLs);
+    valueMap[keyPath] = replaceRichTextImageSources(value, blobURLs, format);
   };
 
   await Promise.all(

@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 // @ts-nocheck
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -7,8 +8,13 @@ import {
   getComparableAssetURL,
   getEntriesByAssets,
   getEntriesByAssetURL,
+  getHTMLImageSources,
+  getMarkdownImageSources,
+  getRichTextImageSources,
   MARKDOWN_IMAGE_REGEX,
+  replaceHTMLImageSources,
   replaceMarkdownImageSources,
+  replaceRichTextImageSources,
 } from '$lib/services/assets/references';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
@@ -168,6 +174,130 @@ describe('replaceMarkdownImageSources()', () => {
         ]),
       ),
     ).toBe('image.png ![image.png](blob:1 "image.png") ![a](hero-image.png) ![b](c.png)');
+  });
+});
+
+describe('getMarkdownImageSources()', () => {
+  test('gets the sources without duplicates', () => {
+    expect(getMarkdownImageSources('![a](a.png) a.png ![b](b.png "Title") ![c](a.png)')).toEqual([
+      'a.png',
+      'b.png',
+    ]);
+  });
+
+  test('returns an empty array for a body without images', () => {
+    expect(getMarkdownImageSources('[a](a.png)')).toEqual([]);
+  });
+});
+
+describe('getHTMLImageSources()', () => {
+  test('gets the sources without duplicates, decoding character references', () => {
+    const value = [
+      '<p>Text <IMG SRC="a&amp;b.png" alt="a"><br/>',
+      "<img src='c.png'><img src=d.png>",
+      '<img src="a&amp;b.png"></p>',
+    ].join('');
+
+    expect(getHTMLImageSources(value)).toEqual(['a&b.png', 'c.png', 'd.png']);
+  });
+
+  test('ignores an image tag that is not an element', () => {
+    const value = [
+      '<!-- <img src="comment.png"> -->',
+      '<a title=\'<img src="attribute.png">\' href="link.png">Link</a>',
+      '<script>document.write(\'<img src="script.png">\');</script>',
+      '<img alt="No source"><img src="">',
+      '<img src="real.png">',
+    ].join('');
+
+    expect(getHTMLImageSources(value)).toEqual(['real.png']);
+  });
+
+  test('finds an image in a table cell', () => {
+    expect(getHTMLImageSources('<tr><td><img src="cell.png"></td></tr>')).toEqual(['cell.png']);
+  });
+
+  test('returns an empty array for a body without images', () => {
+    expect(getHTMLImageSources('<p>Text</p>')).toEqual([]);
+    expect(getHTMLImageSources('<imgur-embed src="a.png"></imgur-embed>')).toEqual([]);
+    expect(getHTMLImageSources('')).toEqual([]);
+  });
+
+  test('doesn’t run the scripts or event handlers in the HTML', () => {
+    window.htmlImageTest = vi.fn();
+
+    getHTMLImageSources(
+      '<img src="x.png" onerror="htmlImageTest()" onload="htmlImageTest()">' +
+        '<script>htmlImageTest()</script>',
+    );
+
+    expect(window.htmlImageTest).not.toHaveBeenCalled();
+    delete window.htmlImageTest;
+  });
+});
+
+describe('replaceHTMLImageSources()', () => {
+  test('replaces the sources of the images only, escaping the new ones', () => {
+    const value = [
+      '<p>image.png <a href="image.png">image.png</a>',
+      '<img src="image.png" alt="image.png"><img src="hero-image.png">',
+      '<!-- <img src="image.png"> --><img src="c.png"></p>',
+    ].join('');
+
+    expect(
+      replaceHTMLImageSources(
+        value,
+        new Map([
+          ['image.png', 'blob:a"b&c'],
+          ['c.png', undefined],
+        ]),
+      ),
+    ).toBe(
+      [
+        '<p>image.png <a href="image.png">image.png</a>',
+        '<img src="blob:a&quot;b&amp;c" alt="image.png"><img src="hero-image.png">',
+        '<!-- <img src="image.png"> --><img src="c.png"></p>',
+      ].join(''),
+    );
+  });
+
+  test('matches a source with character references decoded', () => {
+    expect(
+      replaceHTMLImageSources('<img src="a&amp;b.png">', new Map([['a&b.png', 'c.png']])),
+    ).toBe('<img src="c.png">');
+  });
+
+  test('returns the original HTML as is if no source is replaced', () => {
+    const value = "<p class='a'>Text<br/><img src='a.png'></p>";
+
+    expect(replaceHTMLImageSources(value, new Map([['b.png', 'c.png']]))).toBe(value);
+    expect(replaceHTMLImageSources(value, new Map([['a.png', undefined]]))).toBe(value);
+    expect(replaceHTMLImageSources('<p>Text</p>', new Map([['a.png', 'c.png']]))).toBe(
+      '<p>Text</p>',
+    );
+  });
+});
+
+describe('getRichTextImageSources()', () => {
+  test('gets the sources in the given format', () => {
+    const value = '![a](a.png) <img src="b.png">';
+
+    expect(getRichTextImageSources(value, 'markdown')).toEqual(['a.png']);
+    expect(getRichTextImageSources(value, 'html')).toEqual(['b.png']);
+  });
+});
+
+describe('replaceRichTextImageSources()', () => {
+  test('replaces the sources in the given format', () => {
+    const value = '![a](a.png) <img src="a.png">';
+    const newSources = new Map([['a.png', 'c.png']]);
+
+    expect(replaceRichTextImageSources(value, newSources, 'markdown')).toBe(
+      '![a](c.png) <img src="a.png">',
+    );
+    expect(replaceRichTextImageSources(value, newSources, 'html')).toBe(
+      '![a](a.png) <img src="c.png">',
+    );
   });
 });
 

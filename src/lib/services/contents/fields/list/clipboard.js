@@ -2,7 +2,10 @@ import { isObject } from '@sveltia/utils/object';
 
 import { getAssetByInternalPath, getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { createDisplayBlobURL, getAssetBlob, getAssetPublicURL } from '$lib/services/assets/info';
-import { MARKDOWN_IMAGE_REGEX, replaceMarkdownImageSources } from '$lib/services/assets/references';
+import {
+  getRichTextImageSources,
+  replaceRichTextImageSources,
+} from '$lib/services/assets/references';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getItemList } from '$lib/services/contents/draft/update/list';
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
@@ -18,6 +21,7 @@ import {
 import { getExistingBlobURL } from '$lib/services/contents/fields/file/process';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { getValueSubFields } from '$lib/services/contents/fields/list/items';
+import { getValueFormat } from '$lib/services/contents/fields/rich-text';
 import { unflattenKeys } from '$lib/services/utils/object';
 
 /**
@@ -35,7 +39,10 @@ import { unflattenKeys } from '$lib/services/utils/object';
  * ListFieldWithSubField,
  * ListFieldWithSubFields,
  * ListFieldWithTypes,
+ * MarkdownField,
  * ObjectField,
+ * RichTextField,
+ * RichTextValueFormat,
  * } from '$lib/types/public';
  */
 
@@ -79,10 +86,11 @@ export const LIST_ITEM_CLIPBOARD_VERSION = 1;
 let lastCopied;
 
 /**
- * Callback for each asset reference found in a field value.
+ * Callback for each value that can reference an asset. `format` is the format of a Markdown or
+ * RichText field value, and `undefined` for a File or Image field value.
  * @typedef {(args: {
  * value: string,
- * isRichText: boolean,
+ * format?: RichTextValueFormat,
  * typedKeyPath: TypedFieldKeyPath,
  * set: (newValue: string) => void,
  * }) => void} AssetValueCallback
@@ -135,7 +143,9 @@ const walkFieldValue = ({ container, key, fieldConfig, typedKeyPath, callback })
       if (typeof _value === 'string' && _value) {
         callback({
           value: _value,
-          isRichText,
+          format: isRichText
+            ? getValueFormat(/** @type {MarkdownField | RichTextField} */ (fieldConfig))
+            : undefined,
           typedKeyPath,
           /**
            * Replace the value.
@@ -216,15 +226,13 @@ const walkObject = ({ obj, fields, typedKeyPath, callback }) => {
 
 /**
  * Get the asset references in a field value: the value itself for a File or Image field, or the
- * image sources in a Markdown body.
+ * image sources in a Markdown or HTML body.
  * @param {string} value Field value.
- * @param {boolean} isRichText Whether the field is a Markdown or RichText field.
+ * @param {RichTextValueFormat} [format] Format of a Markdown or RichText field value.
  * @returns {string[]} References.
  */
-const getAssetReferences = (value, isRichText) =>
-  isRichText
-    ? [...new Set([...value.matchAll(MARKDOWN_IMAGE_REGEX)].map(([, src]) => src))]
-    : [value];
+const getAssetReferences = (value, format) =>
+  format ? getRichTextImageSources(value, format) : [value];
 
 /**
  * Check if the given asset reference is a path relative to the entry, which has to be rewritten
@@ -353,8 +361,8 @@ export const createListItemClipboardData = ({
        * files the value references.
        * @param {Parameters<AssetValueCallback>[0]} args Arguments.
        */
-      callback: ({ value: fieldValue, isRichText, typedKeyPath: fieldTypedKeyPath }) => {
-        getAssetReferences(fieldValue, isRichText).forEach((src) => {
+      callback: ({ value: fieldValue, format, typedKeyPath: fieldTypedKeyPath }) => {
+        getAssetReferences(fieldValue, format).forEach((src) => {
           if (src.startsWith('blob:')) {
             const file = draft.files[src]?.file;
 
@@ -943,8 +951,8 @@ export const prepareListItemPaste = async ({
        * Rewrite the asset references in the field value for the entry.
        * @param {Parameters<AssetValueCallback>[0]} args Arguments.
        */
-      callback: ({ value: fieldValue, isRichText, typedKeyPath: fieldTypedKeyPath, set }) => {
-        const sources = getAssetReferences(fieldValue, isRichText);
+      callback: ({ value: fieldValue, format, typedKeyPath: fieldTypedKeyPath, set }) => {
+        const sources = getAssetReferences(fieldValue, format);
 
         tasks.push(
           (async () => {
@@ -960,7 +968,7 @@ export const prepareListItemPaste = async ({
               ),
             );
 
-            if (!isRichText) {
+            if (!format) {
               const newSource = newSources.get(fieldValue);
 
               if (newSource !== undefined) {
@@ -974,7 +982,7 @@ export const prepareListItemPaste = async ({
               return;
             }
 
-            set(replaceMarkdownImageSources(fieldValue, newSources));
+            set(replaceRichTextImageSources(fieldValue, newSources, format));
           })(),
         );
       },
