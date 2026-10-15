@@ -5,8 +5,8 @@ import { unsupportedBackends, validBackendNames } from '$lib/services/backends';
 import { gitBackendServices } from '$lib/services/backends/git/services';
 import { normalizeRootDir } from '$lib/services/backends/root-dir';
 import { warnDeprecation } from '$lib/services/config/deprecations';
-import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
-import { makeLink } from '$lib/services/utils/string';
+import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
+import { isHttpURL, makeLink } from '$lib/services/utils/string';
 import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
 /**
@@ -36,6 +36,12 @@ const AUTH_DOC_URL = 'https://sveltiacms.app/en/docs/backends/BACKEND_NAME#authe
  */
 const BACKEND_DOC_SLUGS = { gitea: 'gitea-forgejo' };
 const OPEN_AUTHORING_DOC_URL = 'https://sveltiacms.app/en/docs/workflows/open';
+/**
+ * Backend options that hold the URL of an API or authentication server and have to be absolute. A
+ * relative or scheme-less URL would either make the backend throw while it’s being set up, leaving
+ * the user unable to sign in without any explanation, or send the requests to the CMS origin.
+ */
+const URL_OPTIONS = ['api_root', 'graphql_api_root', 'base_url'];
 /**
  * Regular expression matching a path segment Git doesn’t allow in a branch name: one starting with
  * a dot or ending with `.lock`, or one containing a control character, a space, any of `~^:?*[\`
@@ -191,6 +197,20 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
         errors.add(_('config.error.oauth_no_app_id'));
       }
     }
+
+    URL_OPTIONS.forEach((option) => {
+      const url = /** @type {Record<string, any>} */ (backend)[option];
+
+      // A value of another type is reported against the JSON schema
+      if (typeof url === 'string' && !isHttpURL(url)) {
+        addMessage({
+          strKey: 'invalid_url_option',
+          values: { option, url },
+          context: { cmsConfig },
+          collectors,
+        });
+      }
+    });
 
     // @todo Remove the option prior to the 1.0 release.
     if (autoDeploy !== undefined) {

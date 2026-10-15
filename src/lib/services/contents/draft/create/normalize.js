@@ -9,7 +9,7 @@ import {
 import { getFieldKind, isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { deleteSubtree, isPlaceholder } from '$lib/services/contents/entry/subtree';
-import { STRING_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
+import { MEDIA_FIELD_TYPES, STRING_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { syncDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { alignPairOrder } from '$lib/services/contents/fields/key-value/pairs';
 import { hasRequiredSingleItem } from '$lib/services/contents/fields/list/defaults';
@@ -198,6 +198,37 @@ const reconcileListValue = ({ keyPath, content, index, hasSubFields }) => {
   deleteSubtree(content, keyPath);
 
   return false;
+};
+
+/**
+ * Types of the scalar values, other than strings and `null`, a file can hold.
+ */
+const SCALAR_TYPES = ['number', 'boolean', 'bigint'];
+
+/**
+ * Stringify the scalar items of a list whose items are always strings: a simple List field, or a
+ * File or Image field with `multiple`. A number, boolean or `null` read from the file would
+ * otherwise reach an editor calling string methods on it. An item that isn’t a scalar is left
+ * alone, as it’s not stored at the item key path itself and so never makes it to the editor.
+ * @param {FlattenedEntryContent} content Flattened entry content, modified in place.
+ * @param {FieldKeyPath} keyPath Key path of the list.
+ * @param {ContentIndex} index Index of the content as it was before normalization.
+ */
+const stringifyListItems = (content, keyPath, index) => {
+  const itemIndexes = getItemIndexes(index, keyPath);
+
+  // A single value turned into the sole item by `reconcileListValue()` isn’t in the index
+  (itemIndexes.length ? itemIndexes : [0]).forEach((itemIndex) => {
+    const itemKeyPath = `${keyPath}.${itemIndex}`;
+    const value = content[itemKeyPath];
+
+    if (
+      Object.hasOwn(content, itemKeyPath) &&
+      (value === null || SCALAR_TYPES.includes(typeof value))
+    ) {
+      content[itemKeyPath] = String(value ?? '');
+    }
+  });
 };
 
 /**
@@ -396,6 +427,12 @@ const normalizeField = (args) => {
 
   const { widget: fieldType = 'string' } = field;
 
+  if (MEDIA_FIELD_TYPES.includes(fieldType) && isFieldMultiple(field)) {
+    stringifyListItems(content, keyPath, index);
+
+    return;
+  }
+
   // A duplicated KeyValue field holds the default locale’s pairs, and its editor writes them to the
   // other locales in that order as soon as it’s rendered. Put them in that order now, so merely
   // opening an entry whose locales list the pairs in different orders doesn’t count as a change
@@ -436,8 +473,10 @@ const normalizeField = (args) => {
   const { fields: subFields } = /** @type {FieldWithSubFields} */ (field);
   const { types } = /** @type {FieldWithTypes} */ (field);
 
-  // A simple List field holds scalars only, so there is nothing to recurse into
+  // A simple List field holds strings only, so there is nothing to recurse into
   if (!subField && !subFields && !types) {
+    stringifyListItems(content, keyPath, index);
+
     return;
   }
 

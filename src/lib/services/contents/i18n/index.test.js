@@ -559,6 +559,12 @@ describe('Test getListFormatter()', () => {
 
     expect(formatter1).not.toBe(formatter2);
   });
+
+  test('should format items that aren’t strings', () => {
+    expect(getListFormatter('en').format(['a', 1, true, null, undefined, 2n])).toBe(
+      'a, 1, true, 2',
+    );
+  });
 });
 
 describe('Test getLocaleLabel() null/undefined appLocale.current', () => {

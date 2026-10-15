@@ -2,6 +2,7 @@ import { _ } from '@sveltia/i18n';
 
 import { user } from '$lib/services/user/account.svelte';
 import { isSecureURL, sendRequest } from '$lib/services/utils/networking';
+import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
  * @import { ApiEndpointConfig, AuthTokens, FetchApiOptions } from '$lib/types/private';
@@ -78,8 +79,6 @@ const pendingRefreshes = new Map();
  * @returns {Promise<AuthTokens>} New access token and refresh token.
  */
 const requestTokenRefresh = async ({ clientId, tokenURL, refreshToken }) => {
-  let token = '';
-
   const response = await requestAccessToken(
     tokenURL,
     { grant_type: 'refresh_token', client_id: clientId, refresh_token: refreshToken },
@@ -90,7 +89,27 @@ const requestTokenRefresh = async ({ clientId, tokenURL, refreshToken }) => {
     throw new Error(_('sign_in_error.TOKEN_REFRESH_FAILED'));
   }
 
-  ({ access_token: token, refresh_token: refreshToken } = await response.json());
+  /** @type {Record<string, any> | undefined} */
+  let result;
+
+  try {
+    result = await response.json();
+  } catch {
+    //
+  }
+
+  // Some services, e.g. GitHub, report a failed refresh with `200 OK` and an `error` property, so
+  // the session mustn’t be overwritten unless a new access token came back
+  if (!isNonEmptyString(result?.access_token)) {
+    throw new Error(_('sign_in_error.TOKEN_REFRESH_FAILED'));
+  }
+
+  const token = /** @type {string} */ (result?.access_token);
+
+  // A service that doesn’t rotate refresh tokens doesn’t return a new one
+  if (isNonEmptyString(result?.refresh_token)) {
+    refreshToken = result?.refresh_token;
+  }
 
   // Update the user store with the new token and refresh token
   user.account = user.account ? { ...user.account, token, refreshToken } : user.account;

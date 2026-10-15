@@ -1,3 +1,4 @@
+import { isURL } from '@sveltia/utils/string';
 import { sanitize } from 'isomorphic-dompurify';
 import { parseInline } from 'marked';
 
@@ -7,6 +8,16 @@ import { parseInline } from 'marked';
  * @returns {value is string} Whether the value is a non-empty string.
  */
 export const isNonEmptyString = (value) => typeof value === 'string' && !!value.trim();
+
+/**
+ * Check if a value is an absolute URL starting with `https://` or `http://`, ignoring surrounding
+ * whitespace. `isURL()` alone accepts any scheme, so `localhost:8080/api` would pass as a URL with
+ * the `localhost:` scheme.
+ * @param {any} value Value to check.
+ * @returns {boolean} Result.
+ */
+export const isHttpURL = (value) =>
+  typeof value === 'string' && /^https?:\/\//i.test(value.trim()) && isURL(value.trim());
 
 /**
  * Escape a string for safe use as an HTML attribute value inside double quotes. Bare `&` characters

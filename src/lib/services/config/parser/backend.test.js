@@ -58,8 +58,10 @@ vi.mock('$lib/services/backends/git/services', () => ({
 }));
 
 const mockCheckUnsupportedOptions = vi.fn();
+const mockAddMessage = vi.fn();
 
 vi.mock('$lib/services/config/parser/utils/validator', () => ({
+  addMessage: mockAddMessage,
   checkUnsupportedOptions: mockCheckUnsupportedOptions,
 }));
 
@@ -419,6 +421,63 @@ describe('parseBackendConfig', () => {
       const [error] = [...collectors.errors];
 
       expect(error).toBe('Invalid repository format');
+    });
+  });
+
+  describe('URL options', () => {
+    it('should accept absolute URLs', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: {
+          name: 'github',
+          repo: 'owner/repo',
+          api_root: 'https://github.example.com/api/v3',
+          graphql_api_root: 'https://github.example.com/api/graphql',
+          base_url: 'https://auth.example.com',
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should report URLs without a scheme and empty ones', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: {
+          name: 'github',
+          repo: 'owner/repo',
+          api_root: 'github.example.com/api/v3',
+          graphql_api_root: 'localhost:8080/api/graphql',
+          base_url: ' ',
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect(mockAddMessage.mock.calls.map(([{ strKey, values }]) => [strKey, values])).toEqual([
+        ['invalid_url_option', { option: 'api_root', url: 'github.example.com/api/v3' }],
+        ['invalid_url_option', { option: 'graphql_api_root', url: 'localhost:8080/api/graphql' }],
+        ['invalid_url_option', { option: 'base_url', url: ' ' }],
+      ]);
+    });
+
+    it('should leave values of another type to the JSON schema', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+      /** @type {any} */
+      const config = { backend: { name: 'gitlab', repo: 'owner/repo', api_root: 42 } };
+
+      parseBackendConfig(config, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
     });
   });
 

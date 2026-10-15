@@ -204,7 +204,9 @@ export const updateCache = async ({
 };
 
 /**
- * Start reading the meta and file cache databases.
+ * Start reading the meta and file cache databases. The cache is optional, so if IndexedDB is
+ * unavailable or broken, e.g. Chrome failing to open its backing store, the failure is only logged
+ * and the files are fetched as if the cache were empty.
  * @param {object} args Arguments.
  * @param {IndexedDB} args.metaDB The meta database instance.
  * @param {IndexedDB} args.cacheDB The cache database instance.
@@ -217,10 +219,17 @@ export const readDatabaseEntries = ({ metaDB, cacheDB }) =>
   // leaves one of them with a connection missing its store
   deferRejection(
     (async () => {
-      const cachedFileEntries = await cacheDB.entries();
-      const metaEntries = await metaDB.entries();
+      try {
+        const cachedFileEntries = await cacheDB.entries();
+        const metaEntries = await metaDB.entries();
 
-      return { metaEntries, cachedFileEntries };
+        return { metaEntries, cachedFileEntries };
+      } catch (/** @type {any} */ ex) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to read the file cache.', ex);
+
+        return { metaEntries: [], cachedFileEntries: [] };
+      }
     })(),
   );
 
@@ -313,13 +322,10 @@ export const completeMetadata = async ({
 export const cacheFiles = async ({ metaDB, lastConfigHash, lastCommitHash, cacheUpdate }) => {
   try {
     await cacheUpdate;
+    // Only now that the cache holds the files of this commit can the file list be restored from it
+    await saveFileListMeta({ metaDB, lastConfigHash, lastCommitHash });
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error('Failed to update the file cache.', ex);
-
-    return;
   }
-
-  // Only now that the cache holds the files of this commit can the file list be restored from it
-  await saveFileListMeta({ metaDB, lastConfigHash, lastCommitHash });
 };

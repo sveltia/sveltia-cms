@@ -1,4 +1,5 @@
 import { _ } from '@sveltia/i18n';
+import { isObject } from '@sveltia/utils/object';
 import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
@@ -324,12 +325,23 @@ export const initViewSettingsStorage = async (
   { defaults = {} } = {},
 ) => {
   const settingsDB = getRepositoryDatabase(repository, 'ui-settings');
-  const initial = { ...defaults, ...(await settingsDB?.get(storageKey)) };
+  /** @type {any} */
+  let saved;
+
+  // The saved settings are optional, so an IndexedDB failure mustn’t leave the view unset
+  try {
+    saved = await settingsDB?.get(storageKey);
+  } catch {
+    //
+  }
+
+  const initial = { ...defaults, ...(isObject(saved) ? saved : {}) };
 
   settingsState.current = initial;
 
   // Track the last persisted value in memory so we can skip redundant IndexedDB reads and writes
   // every time the state changes (list views update this state frequently as users sort/filter).
+  /** @type {Record<string, any> | undefined} */
   let lastSaved = initial;
 
   return createRootEffect(() => {

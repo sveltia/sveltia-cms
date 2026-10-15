@@ -55,8 +55,19 @@ export const getUISettingsDB = () => {
  * @param {string} key UI settings key of the page, e.g. `contents-page`.
  * @returns {Promise<number>} Width in pixels, or {@link DEFAULT_SIDEBAR_WIDTH} if none is saved.
  */
-export const getSidebarWidth = async (key) =>
-  (await getUISettingsDB()?.get(key))?.sidebarWidth ?? DEFAULT_SIDEBAR_WIDTH;
+export const getSidebarWidth = async (key) => {
+  try {
+    const width = (await getUISettingsDB()?.get(key))?.sidebarWidth;
+
+    if (typeof width === 'number' && Number.isFinite(width)) {
+      return width;
+    }
+  } catch {
+    // The sidebar is only shown once its width is known, so an IndexedDB failure mustn’t hide it
+  }
+
+  return DEFAULT_SIDEBAR_WIDTH;
+};
 
 /**
  * Save the width of a page’s primary sidebar, along with the other UI settings of the page.
@@ -70,5 +81,9 @@ export const saveSidebarWidth = async (key, width) => {
     return;
   }
 
-  await db.set(key, { ...(await db.get(key)), sidebarWidth: width });
+  try {
+    await db.set(key, { ...(await db.get(key)), sidebarWidth: width });
+  } catch {
+    // The width is only a convenience, so an IndexedDB failure is ignored
+  }
 };

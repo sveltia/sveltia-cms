@@ -1,4 +1,5 @@
 import { locale as appLocale, locales as appLocales, dictionary, waitLocale } from '@sveltia/i18n';
+import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
@@ -49,7 +50,9 @@ $effect.root(() => {
     prefsError.current = undefined;
 
     try {
-      const _prefs = (await LocalStorage.get(PREFS_STORAGE_KEY)) ?? {};
+      const stored = await LocalStorage.get(PREFS_STORAGE_KEY);
+      // Corrupt or foreign data under the key is as good as none
+      const _prefs = isObject(stored) ? stored : {};
 
       _prefs.apiKeys ??= {};
       _prefs.useDraftBackup ??= true;

@@ -24,8 +24,10 @@ export const getPreviewLabels = ({ fieldConfig, currentValue, options }) => {
   const { multiple = false, value_field: valueField = '{{slug}}' } = fieldConfig;
   const values = multiple ? (currentValue ?? []) : [currentValue];
 
-  return /** @type {string[]} */ (values)
-    .filter((value) => value !== undefined)
+  // A value read from a file may be a number or `null`, while the option values are always strings
+  return /** @type {any[]} */ (values)
+    .filter((value) => value !== undefined && value !== null && value !== '')
+    .map((value) => String(value))
     .map((value) => {
       const label = options.find((option) => option.value === value)?.label;
 

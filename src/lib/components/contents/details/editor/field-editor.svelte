@@ -3,6 +3,7 @@
   import { Alert, Menu, MenuButton, Spacer } from '@sveltia/ui';
   import { getContext, setContext } from 'svelte';
 
+  import ErrorBoundary from '$lib/components/common/error-boundary.svelte';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import FieldEditorGroup from '$lib/components/contents/details/editor/field-editor-group.svelte';
   import ResetMenuItems from '$lib/components/contents/details/editor/reset-menu-items.svelte';
@@ -288,7 +289,12 @@
   >
     <!-- The control is labelled with this, as it is with the heading otherwise -->
     <span id="{fieldId}-label" hidden>{fieldLabel}</span>
-    <Editor {...editorProps} bind:currentValue={() => currentValue, (value) => writeValue(value)} />
+    <ErrorBoundary>
+      <Editor
+        {...editorProps}
+        bind:currentValue={() => currentValue, (value) => writeValue(value)}
+      />
+    </ErrorBoundary>
   </span>
 {:else if entryDraft.current && canEdit && fieldType !== 'hidden'}
   <FieldEditorGroup
@@ -360,27 +366,29 @@
       </ValidationError>
     {/if}
     <div role="none" class="field-wrapper" class:has-extra-labels={hasExtraLabels}>
-      {#if customFieldType}
-        {@render beforeInput()}
-        <CustomEditor
-          {...{ ...editorProps, fieldConfig: /** @type {CustomField} */ (fieldConfig) }}
-          control={customFieldType.control}
-          {currentValue}
-        />
-        {@render afterInput()}
-      {:else if getFieldKind(fieldConfig) === 'unknown'}
-        <Alert status="warning">
-          {_('unsupported_field_type_x', { values: { name: fieldType } })}
-        </Alert>
-      {:else}
-        {@const Editor = editors[fieldType]}
-        {@render beforeInput()}
-        <Editor
-          {...editorProps}
-          bind:currentValue={() => currentValue, (value) => writeValue(value)}
-        />
-        {@render afterInput()}
-      {/if}
+      <ErrorBoundary>
+        {#if customFieldType}
+          {@render beforeInput()}
+          <CustomEditor
+            {...{ ...editorProps, fieldConfig: /** @type {CustomField} */ (fieldConfig) }}
+            control={customFieldType.control}
+            {currentValue}
+          />
+          {@render afterInput()}
+        {:else if getFieldKind(fieldConfig) === 'unknown'}
+          <Alert status="warning">
+            {_('unsupported_field_type_x', { values: { name: fieldType } })}
+          </Alert>
+        {:else}
+          {@const Editor = editors[fieldType]}
+          {@render beforeInput()}
+          <Editor
+            {...editorProps}
+            bind:currentValue={() => currentValue, (value) => writeValue(value)}
+          />
+          {@render afterInput()}
+        {/if}
+      </ErrorBoundary>
     </div>
     {#if !readonly && (hint || extraHint.current)}
       {@const ExtraHint = extraHint.current}

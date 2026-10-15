@@ -222,7 +222,8 @@ export const getUnsavedFileDisplayPath = ({ draft, blobURL, fileName }) => {
  * the file name. It’s empty for an empty value or a blob URL not referring to an unsaved file.
  */
 export const getFileDisplayPath = ({ draft, value, unsavedFileName }) => {
-  if (!value) {
+  // A value read from a file may be a number or another non-string value
+  if (!value || typeof value !== 'string') {
     return '';
   }
 

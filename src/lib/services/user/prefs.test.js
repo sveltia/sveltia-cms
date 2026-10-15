@@ -115,6 +115,18 @@ describe('prefs service', () => {
     expect(prefs.locale).toBe('auto');
   });
 
+  it('should apply default values when the stored value isn’t an object', async () => {
+    mockLocalStorage.get.mockResolvedValue('corrupt');
+
+    const { prefs, prefsError } = await import('./prefs.svelte.js');
+
+    await wait();
+
+    expect(prefsError.current).toBeUndefined();
+    expect(prefs.apiKeys).toEqual({});
+    expect(prefs.locale).toBe('auto');
+  });
+
   it('should drop the legacy beta value', async () => {
     mockLocalStorage.get.mockResolvedValue({ beta: true });
 

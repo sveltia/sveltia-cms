@@ -83,6 +83,14 @@ describe('getCollectionFile()', () => {
     expect(getCollection).not.toHaveBeenCalled();
   });
 
+  test('returns undefined for the name of an `Object.prototype` member', () => {
+    const mockCollection = { name: 'test-collection', _type: 'file', _fileMap: {} };
+
+    ['constructor', 'toString', '__proto__'].forEach((name) => {
+      expect(getCollectionFile(/** @type {any} */ (mockCollection), name)).toBeUndefined();
+    });
+  });
+
   test('returns undefined for non-existent collection', () => {
     vi.mocked(getCollection).mockReturnValue(undefined);
 

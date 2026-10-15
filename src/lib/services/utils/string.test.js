@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   escapeAttr,
   escapeHTML,
+  isHttpURL,
   isNonEmptyString,
   makeLink,
   sanitizeInlineMarkdown,
@@ -16,6 +17,22 @@ vi.mock('@sveltia/i18n', () => ({
       `<a \u2068${values.apiKeyHref}\u2069 onclick="x()">key</a><img src="x">`,
   ),
 }));
+
+describe('isHttpURL', () => {
+  it('accepts an absolute HTTP(S) URL', () => {
+    expect(isHttpURL('https://example.com/api')).toBe(true);
+    expect(isHttpURL(' HTTP://localhost:8080 ')).toBe(true);
+  });
+
+  it('rejects anything else', () => {
+    expect(isHttpURL('example.com')).toBe(false);
+    expect(isHttpURL('localhost:8080/api')).toBe(false);
+    expect(isHttpURL('mailto:user@example.com')).toBe(false);
+    expect(isHttpURL('https://exa mple.com')).toBe(false);
+    expect(isHttpURL('')).toBe(false);
+    expect(isHttpURL(42)).toBe(false);
+  });
+});
 
 describe('isNonEmptyString', () => {
   it('returns true for non-empty strings', () => {

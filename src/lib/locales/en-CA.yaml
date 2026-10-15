@@ -188,6 +188,16 @@ root_dir_not_found: The root directory “{$dir}” doesn’t exist in the “{$
 # General errors
 # Fallback error dialog title for unexpected errors
 unexpected_error: Unexpected Error
+# Shown in place of the page when an unexpected error stops it from being displayed
+# {$message} is the error message
+page_crashed: Something went wrong, and this page can’t be displayed. {$message}
+# Shown in place of a field editor or preview when an unexpected error stops it from being displayed
+# {$message} is the error message
+field_crashed: Something went wrong, and this field can’t be displayed. {$message}
+# Button label for displaying a part of the page again after an unexpected error
+try_again: Try Again
+# Button label for reloading the CMS after an unexpected error
+reload_cms: Reload CMS
 
 # Entry file parsing errors
 # Toast notification when entry files fail to parse on initial load

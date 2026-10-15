@@ -23,7 +23,12 @@ export const getCollectionFile = (collection, fileName) => {
   /** @type {InternalCollection | undefined} */
   const _collection = typeof collection === 'string' ? getCollection(collection) : collection;
 
-  if (!_collection || !('_fileMap' in _collection)) {
+  // The file name may come from the URL, so it may be the name of an `Object.prototype` member
+  if (
+    !_collection ||
+    !('_fileMap' in _collection) ||
+    !Object.hasOwn(_collection._fileMap, fileName)
+  ) {
     return undefined;
   }
 

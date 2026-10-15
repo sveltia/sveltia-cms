@@ -64,8 +64,14 @@ export const overlayTitle = createRawState('');
  * @returns {{ path: string, params: Record<string, string> }} Path and search params.
  */
 export const parseLocation = (href = window.location.href) => {
-  const { origin, hash } = new URL(href);
-  const { pathname, searchParams } = new URL(`${origin}${hash.substring(1)}`);
+  const hashPath = new URL(href).hash.substring(1);
+
+  // Parse the hash as the path of a URL of its own. It’s given a leading slash if it lacks one,
+  // e.g. a link with the slashes percent-encoded, as the URL would be invalid otherwise. A fixed
+  // origin is used as the page’s may be `null`, e.g. on a `file:` URL
+  const { pathname, searchParams } = new URL(
+    `http://localhost${hashPath.startsWith('/') ? '' : '/'}${hashPath}`,
+  );
 
   return {
     // Drop any trailing slash before decoding, so a hand-typed `#/collections/` resolves the same

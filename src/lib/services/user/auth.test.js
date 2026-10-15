@@ -1426,6 +1426,20 @@ describe('auth service', () => {
       expect(mockResetDeployingEntries).toHaveBeenCalled();
     });
 
+    it('should sign out even if the backend fails to', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      mockBackend.signOut.mockRejectedValue(new Error('IndexedDB error'));
+
+      await expect(authModule.signOut()).resolves.toBeUndefined();
+
+      expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
+      expect(mockUser.account).toBeUndefined();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
+
+      consoleErrorSpy.mockRestore();
+    });
+
     it('should redirect to logout URL when configured', async () => {
       const mockCmsConfigWithLogout = {
         backend: { name: 'github' },

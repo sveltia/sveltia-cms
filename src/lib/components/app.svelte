@@ -2,6 +2,7 @@
   import { AppShell } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
+  import ErrorBoundary from '$lib/components/common/error-boundary.svelte';
   import EntrancePage from '$lib/components/entrance/entrance-page.svelte';
   import CommitMessageDialog from '$lib/components/global/commit-message-dialog.svelte';
   import BackendStatusIndicator from '$lib/components/global/infobars/backend-status-indicator.svelte';
@@ -154,23 +155,29 @@
 
 <AppShell>
   <div role="none" class="outer">
-    <LocaleLoadErrorToast />
-    <UpdateNotification />
-    <ForkPermissionDialog />
-    <CommitMessageDialog />
-    {#if backend.current}
-      <BackendStatusIndicator />
-    {/if}
-    {#if user.account && dataLoaded.current}
-      <OpenAuthoringIndicator />
-    {/if}
-    <div role="none" class="main">
-      {#if user.account && dataLoaded.current && transitioned}
-        <MainRouter />
-      {:else}
-        <EntrancePage />
+    <!-- The page has a boundary of its own, so a failing page leaves the infobars and dialogs
+    around it working; this one catches a failure in those -->
+    <ErrorBoundary scope="page">
+      <LocaleLoadErrorToast />
+      <UpdateNotification />
+      <ForkPermissionDialog />
+      <CommitMessageDialog />
+      {#if backend.current}
+        <BackendStatusIndicator />
       {/if}
-    </div>
+      {#if user.account && dataLoaded.current}
+        <OpenAuthoringIndicator />
+      {/if}
+      <div role="none" class="main">
+        <ErrorBoundary scope="page">
+          {#if user.account && dataLoaded.current && transitioned}
+            <MainRouter />
+          {:else}
+            <EntrancePage />
+          {/if}
+        </ErrorBoundary>
+      </div>
+    </ErrorBoundary>
   </div>
   <div role="status">{announcedPageStatus.current}</div>
 </AppShell>

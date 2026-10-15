@@ -213,7 +213,8 @@ const resolveFileRoute = ({
     return clearEditor(state, entryDraft, 'file_not_found');
   }
 
-  const collectionFile = fileMap[subPath];
+  // The file name comes from the URL, so it may be the name of an `Object.prototype` member
+  const collectionFile = Object.hasOwn(fileMap, subPath) ? fileMap[subPath] : undefined;
 
   if (!collectionFile) {
     // The URL names a file that isn’t part of this collection

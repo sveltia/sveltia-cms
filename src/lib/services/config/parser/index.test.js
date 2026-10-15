@@ -171,6 +171,13 @@ describe('Config Parser', () => {
 
       // A relative `display_url` opens fine in a new tab, so only `site_url` is checked
       expect([...collectors.errors]).toEqual(['Invalid URL in site_url: example.com']);
+
+      // A host with a port parses as a URL with the host as its scheme, which isn’t one either
+      const moreCollectors = createCollectors();
+
+      parseCmsConfig({ ...config, site_url: 'localhost:4321' }, moreCollectors);
+
+      expect([...moreCollectors.errors]).toEqual(['Invalid URL in site_url: localhost:4321']);
     });
 
     it('should warn about the deprecated `logo_url` option', () => {

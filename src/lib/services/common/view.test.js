@@ -663,6 +663,26 @@ describe('Test initViewSettingsStorage()', () => {
     expect(settings.current).toEqual({ posts: { type: 'grid' } });
   });
 
+  test('starts with the defaults if the settings can’t be read or aren’t an object', async () => {
+    /** @type {{ current: Record<string, any> | undefined }} */
+    const settings = createRawState();
+    const defaults = { showPreview: true };
+
+    mockDB.get.mockRejectedValueOnce(new Error('Internal error'));
+    await initViewSettingsStorage({ databaseName: 'test-db' }, 'entry-view', settings, {
+      defaults,
+    });
+
+    expect(settings.current).toEqual(defaults);
+
+    mockDB.get.mockResolvedValueOnce('corrupt');
+    await initViewSettingsStorage({ databaseName: 'test-db' }, 'entry-view', settings, {
+      defaults,
+    });
+
+    expect(settings.current).toEqual(defaults);
+  });
+
   test('starts with empty settings without a database', async () => {
     /** @type {{ current: Record<string, any> | undefined }} */
     const settings = createRawState();

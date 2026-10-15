@@ -1405,6 +1405,39 @@ describe('git/shared/fetch', () => {
         consoleErrorSpy.mockRestore();
       });
 
+      it('should still load if the commit fails to be recorded', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        mockMetaDB.saveEntries.mockRejectedValue(new Error('Quota exceeded'));
+
+        await expect(runFetch()).resolves.toBeUndefined();
+
+        expect(dataLoaded.current).toBe(true);
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Failed to update the file cache.',
+          expect.any(Error),
+        );
+
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should load without the cache if it can’t be read', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        mockCacheDB.entries.mockRejectedValue(new Error('Internal error opening backing store'));
+
+        await expect(runFetch()).resolves.toBeUndefined();
+
+        expect(repositoryHead.current).toBe('abc123');
+        expect(dataLoaded.current).toBe(true);
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Failed to read the file cache.',
+          expect.any(Error),
+        );
+
+        consoleErrorSpy.mockRestore();
+      });
+
       it('should clear the cache before recording the commit when no files are left', async () => {
         vi.mocked(createFileList).mockReturnValue({
           count: 0,

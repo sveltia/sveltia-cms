@@ -1,4 +1,5 @@
 <script>
+  import ErrorBoundary from '$lib/components/common/error-boundary.svelte';
   import { CustomPreview, previews } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
@@ -75,15 +76,17 @@
     {#if showLabel}
       <h4>{label || fieldName}</h4>
     {/if}
-    {#if customFieldType?.preview}
-      <CustomPreview
-        {...{ ...previewProps, fieldConfig: /** @type {CustomField} */ (fieldConfig) }}
-        preview={customFieldType.preview}
-      />
-    {:else if fieldType in previews}
-      {@const Preview = previews[fieldType]}
-      <Preview {...previewProps} />
-    {/if}
+    <ErrorBoundary>
+      {#if customFieldType?.preview}
+        <CustomPreview
+          {...{ ...previewProps, fieldConfig: /** @type {CustomField} */ (fieldConfig) }}
+          preview={customFieldType.preview}
+        />
+      {:else if fieldType in previews}
+        {@const Preview = previews[fieldType]}
+        <Preview {...previewProps} />
+      {/if}
+    </ErrorBoundary>
   </section>
 {/if}
 

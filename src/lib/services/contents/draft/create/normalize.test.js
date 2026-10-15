@@ -353,6 +353,38 @@ describe('contents/draft/create/normalize', () => {
         });
       });
 
+      it('should stringify the scalar items of a simple List field', () => {
+        const fields = [{ name: 'years', widget: 'list' }];
+        const content = { 'years.0': 2023, 'years.1': true, 'years.2': null, 'years.3': 'x' };
+
+        expect(normalize(fields, content)).toEqual({
+          'years.0': '2023',
+          'years.1': 'true',
+          'years.2': '',
+          'years.3': 'x',
+        });
+        // A single value turned into the sole item
+        expect(normalize(fields, { years: 2024 })).toEqual({ 'years.0': '2024' });
+      });
+
+      it('should stringify the scalar items of a multiple File or Image field', () => {
+        const fields = [
+          { name: 'images', widget: 'image', multiple: true },
+          { name: 'files', widget: 'file', multiple: true },
+          { name: 'tags', widget: 'select', multiple: true, options: [1, 2] },
+        ];
+
+        const content = { 'images.0': null, 'images.1': 'a.jpg', 'files.0': 123, 'tags.0': 1 };
+
+        // A Select field accepts numeric values, so its items are kept as they are
+        expect(normalize(fields, content)).toEqual({
+          'images.0': '',
+          'images.1': 'a.jpg',
+          'files.0': '123',
+          'tags.0': 1,
+        });
+      });
+
       it('should discard an object stored in a string field', () => {
         const fields = [{ name: 'title', widget: 'string' }];
 

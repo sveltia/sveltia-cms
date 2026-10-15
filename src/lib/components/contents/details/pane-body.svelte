@@ -315,9 +315,9 @@
       previewFrame = undefined;
     }
 
-    const frameRoot = previewFrame
-      ? /** @type {Document} */ (previewFrame.contentDocument).documentElement
-      : undefined;
+    // A frame that has navigated to another origin, e.g. after a link in a preview template was
+    // followed, has no document within reach, so the main content area is listened to instead
+    const frameRoot = previewFrame?.contentDocument?.documentElement ?? undefined;
 
     thisPaneContentArea = frameRoot ?? contentArea;
     scrollEventTarget = frameRoot ? frameRoot.ownerDocument : contentArea;

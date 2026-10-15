@@ -637,4 +637,25 @@ describe('PaneBody', () => {
       thatPane.remove();
     }
   });
+
+  test('listens to the preview itself once the iframe has navigated away', async () => {
+    entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: true };
+    customPreviewStyleRegistry.add({ url: 'https://example.com/preview.css' });
+
+    const { props, thisPane } = await renderPane({ mode: 'preview', locale: 'en' });
+
+    await expect.poll(() => props.thisPaneContentArea?.ownerDocument !== document).toBe(true);
+
+    const iframe = /** @type {HTMLIFrameElement} */ (document.querySelector('iframe.preview'));
+
+    // A link followed in the preview loads a page from another origin, whose document is out of
+    // reach
+    Object.defineProperty(iframe, 'contentDocument', { value: null, configurable: true });
+    // Resizing the panes, for example, sets the pane again without changing its mode
+    thisPane.current = { mode: 'preview', locale: 'en' };
+
+    await expect
+      .poll(() => props.thisPaneContentArea)
+      .toBe(iframe.closest('.content') ?? undefined);
+  });
 });

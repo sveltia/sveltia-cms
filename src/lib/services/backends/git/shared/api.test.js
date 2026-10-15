@@ -200,6 +200,43 @@ describe('api.js', () => {
       ).rejects.toThrow('Token refresh failed');
     });
 
+    it('should keep the session when a failed refresh comes back with 200 OK', async () => {
+      mockUserState.account = { token: 'old-token', refreshToken: 'old-refresh' };
+
+      await Promise.all(
+        [JSON.stringify({ error: 'bad_refresh_token' }), '<html></html>'].map(async (body) => {
+          vi.mocked(fetch).mockResolvedValueOnce(new Response(body, { status: 200 }));
+
+          await expect(
+            refreshAccessToken({
+              clientId: 'test-client-id',
+              tokenURL: 'https://api.github.com/oauth/token',
+              refreshToken: `old-refresh-${body.length}`,
+            }),
+          ).rejects.toThrow('Token refresh failed');
+        }),
+      );
+
+      expect(mockUserState.account).toEqual({ token: 'old-token', refreshToken: 'old-refresh' });
+    });
+
+    it('should keep the refresh token when the service doesn’t return a new one', async () => {
+      mockUserState.account = { token: 'old-token', refreshToken: 'old-refresh' };
+
+      vi.mocked(fetch).mockResolvedValue(
+        new Response(JSON.stringify({ access_token: 'new-access-token' }), { status: 200 }),
+      );
+
+      const result = await refreshAccessToken({
+        clientId: 'test-client-id',
+        tokenURL: 'https://api.github.com/oauth/token',
+        refreshToken: 'old-refresh',
+      });
+
+      expect(result).toEqual({ token: 'new-access-token', refreshToken: 'old-refresh' });
+      expect(mockUserState.account).toEqual(result);
+    });
+
     it('should reject insecure token refresh URLs', async () => {
       await expect(
         refreshAccessToken({

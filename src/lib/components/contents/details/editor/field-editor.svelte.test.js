@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
+import { editors } from '$lib/components/contents/details/fields';
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
@@ -49,7 +50,38 @@ const renderEditor = async ({
   return { container, draft };
 };
 
+/**
+ * Component that throws while it’s rendered, standing in for a field editor or preview with a bug.
+ * @throws {TypeError} Always.
+ */
+const BrokenComponent = () => {
+  throw new TypeError('boom');
+};
+
 describe('FieldEditor', () => {
+  test('shows a message in place of an editor that fails, keeping the header', async () => {
+    const { string } = editors;
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    editors.string = /** @type {any} */ (BrokenComponent);
+
+    try {
+      const { container } = await renderEditor({
+        fieldConfig: { name: 'title', widget: 'string', label: 'Title' },
+      });
+
+      const group = page.getByRole('group', { name: /“.Title.” Field/ });
+
+      await expect
+        .element(group.getByRole('alert'))
+        .toMatchTextContent(/this field can’t be displayed\. .*boom/);
+      expect(container.querySelector('h4')).toHaveTextContent('Title');
+    } finally {
+      editors.string = string;
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
   test('renders the editor for the field type under a labelled header', async () => {
     const { container } = await renderEditor({
       fieldConfig: { name: 'title', widget: 'string', label: 'Title', hint: 'Keep it *short*' },

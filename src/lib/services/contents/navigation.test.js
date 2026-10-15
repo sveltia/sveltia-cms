@@ -512,6 +512,15 @@ describe('resolveContentsRoute()', () => {
       expect(createDraft).not.toHaveBeenCalled();
     });
 
+    test('reports a file named after an `Object.prototype` member', () => {
+      entryDraft.current = {};
+      visit('/collections/settings/entries/constructor');
+
+      expect(resolve()).toEqual(initial);
+      expect(announcedPageStatus.current).toBe('file_not_found');
+      expect(createDraft).not.toHaveBeenCalled();
+    });
+
     test('reports a route a file collection doesn’t have', () => {
       entryDraft.current = {};
       visit('/collections/settings/new');

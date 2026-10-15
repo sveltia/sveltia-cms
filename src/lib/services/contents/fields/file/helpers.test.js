@@ -1156,6 +1156,7 @@ describe('contents/fields/file/helpers', () => {
 
     it('should return an empty string for an empty value', () => {
       expect(getFileDisplayPath({ draft, value: '' })).toBe('');
+      expect(getFileDisplayPath({ draft, value: /** @type {any} */ (123) })).toBe('');
     });
 
     it('should return the path an unsaved file will be stored at, with the name decoded', () => {

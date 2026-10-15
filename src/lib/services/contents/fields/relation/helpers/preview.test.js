@@ -88,4 +88,20 @@ describe('getPreviewLabels()', () => {
       }),
     ).toEqual(['Elsie Dean', 'Melvin Lucas', 'deleted-entry']);
   });
+
+  test('copes with a value read from a file that isn’t a string', () => {
+    /** @type {RelationOption[]} */
+    const numericOptions = [{ label: 'Elsie Dean', value: '5', searchValue: 'Elsie Dean' }];
+
+    expect(
+      getPreviewLabels({ fieldConfig, currentValue: /** @type {any} */ (null), options }),
+    ).toEqual([]);
+    expect(
+      getPreviewLabels({
+        fieldConfig: { ...fieldConfig, multiple: true },
+        currentValue: /** @type {any} */ ([5, null, 7]),
+        options: numericOptions,
+      }),
+    ).toEqual(['Elsie Dean', '7']);
+  });
 });

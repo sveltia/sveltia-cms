@@ -424,7 +424,15 @@ export const signOut = async () => {
   // A check for remote changes, or a load, still on its way belongs to this session, so it mustn’t
   // put its results back into the stores once they have been reset below
   dataGeneration.current += 1;
-  await backend.current?.signOut();
+
+  // A failure, e.g. an IndexedDB error, mustn’t keep the user signed in
+  try {
+    await backend.current?.signOut();
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+  }
+
   await clearUserCache();
   clearIntegrationCredentials();
 

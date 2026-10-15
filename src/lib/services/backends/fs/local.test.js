@@ -735,6 +735,17 @@ describe('Local Backend Service', () => {
       expect(mockClearLocalGitCache).toHaveBeenCalled();
     });
 
+    it('should forget the Git index even if the directory handle can’t be deleted', async () => {
+      const service = localBackend.default;
+
+      service.init();
+      mockDBDelete.mockRejectedValueOnce(new Error('IndexedDB error'));
+
+      await expect(service.signOut()).resolves.toBeUndefined();
+
+      expect(mockClearLocalGitCache).toHaveBeenCalled();
+    });
+
     it('should handle signOut when no DB is initialized', async () => {
       cmsConfig.current = /** @type {any} */ ({
         backend: { name: 'github' },

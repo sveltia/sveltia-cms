@@ -203,8 +203,16 @@ export const getEntryPathRegEx = ({
     structureMap: { i18nMultiFile, i18nMultiFolder, i18nMultiRootFolder },
   } = _i18n;
 
-  const localeMatcher = `(?<locale>${allLocales.join('|')})`;
-  const joinedNonDefaultLocales = allLocales.filter((locale) => locale !== defaultLocale).join('|');
+  // Locale codes aren’t validated, so one with a character special to regular expressions, like
+  // `zh+`, mustn’t break the pattern
+  const joinedLocales = allLocales.map(escapeRegExp).join('|');
+
+  const joinedNonDefaultLocales = allLocales
+    .filter((locale) => locale !== defaultLocale)
+    .map(escapeRegExp)
+    .join('|');
+
+  const localeMatcher = `(?<locale>${joinedLocales})`;
 
   const localeFolderMatcher = omitDefaultLocaleFromFilePath
     ? `(?:(?<locale>${joinedNonDefaultLocales})\\/)?`
@@ -243,7 +251,7 @@ export const getEntryPathRegEx = ({
   const getSuffixMatcher = (ext) => {
     const localeMatcherCopy = omitDefaultLocaleFromFilePath
       ? `(?:\\.(?:${joinedNonDefaultLocales}))?`
-      : `\\.(?:${allLocales.join('|')})`;
+      : `\\.(?:${joinedLocales})`;
 
     return `(?=${i18nMultiFile ? localeMatcherCopy : ''}\\.${escapeRegExp(ext)}$)`;
   };

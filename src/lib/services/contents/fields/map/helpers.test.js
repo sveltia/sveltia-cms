@@ -27,6 +27,13 @@ describe('Test parseGeoJSON()', () => {
     expect(parseGeoJSON('not json')).toBeUndefined();
     expect(parseGeoJSON('null')).toBeUndefined();
     expect(parseGeoJSON('{"type":"Point","coordinates":"invalid"}')).toBeUndefined();
+    expect(parseGeoJSON('{"type":"Point","coordinates":[1,null]}')).toBeUndefined();
+    expect(parseGeoJSON('{"type":"LineString","coordinates":[null]}', 'LineString')).toBe(
+      undefined,
+    );
+    expect(parseGeoJSON('{"type":"Polygon","coordinates":[[[1,2],"x"]]}', 'Polygon')).toBe(
+      undefined,
+    );
     expect(parseGeoJSON('{"type":"Point","coordinates":[-122.4194,37.7749]}', 'Polygon')).toBe(
       undefined,
     );
@@ -201,6 +208,9 @@ describe('Test getGeometryBounds()', () => {
           [-73.9857, 40.7484],
         ]),
       }),
+    ).toBeNull();
+    expect(
+      getGeometryBounds({ type: 'LineString', coordinates: /** @type {any} */ ([null]) }),
     ).toBeNull();
   });
 });

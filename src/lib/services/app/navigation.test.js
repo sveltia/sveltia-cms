@@ -231,6 +231,19 @@ describe('navigation', () => {
       });
     });
 
+    it('should handle a hash that doesn’t start with a slash', () => {
+      expect(parseLocation('https://example.com/#%2Fcollections%2Fposts')).toEqual({
+        path: '//collections/posts',
+        params: {},
+      });
+      expect(parseLocation('https://example.com/#:abc?x=1').params).toEqual({ x: '1' });
+      expect(parseLocation('https://example.com/#[x]').path).toBe('/[x]');
+    });
+
+    it('should keep a hash starting with two slashes in the path', () => {
+      expect(parseLocation('https://example.com/#//example.org/a').path).toBe('//example.org/a');
+    });
+
     it('should handle complex query parameters', () => {
       const result = parseLocation('https://example.com/#/search?q=test&sort=date&tags=tag1,tag2');
 

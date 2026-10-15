@@ -71,6 +71,23 @@ describe('app/ui-settings', () => {
     expect(await getSidebarWidth('assets-page')).toBe(DEFAULT_SIDEBAR_WIDTH);
   });
 
+  test('uses the default width if the saved one can’t be read or isn’t a number', async () => {
+    stores.set(
+      'github:owner/repo/ui-settings',
+      new Map([['contents-page', { sidebarWidth: 'x' }]]),
+    );
+
+    expect(await getSidebarWidth('contents-page')).toBe(DEFAULT_SIDEBAR_WIDTH);
+
+    const db = vi.mocked(IndexedDB).mock.instances[0];
+
+    vi.mocked(db.get).mockRejectedValue(new Error('Internal error'));
+
+    expect(await getSidebarWidth('contents-page')).toBe(DEFAULT_SIDEBAR_WIDTH);
+    // Nor does saving the width fail
+    await expect(saveSidebarWidth('contents-page', 300)).resolves.toBeUndefined();
+  });
+
   test('reuses the store for the same repository, and opens another for a new one', async () => {
     await getSidebarWidth('contents-page');
     await saveSidebarWidth('contents-page', 300);

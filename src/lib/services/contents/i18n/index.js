@@ -107,16 +107,23 @@ export const getLocaleLabel = (
 };
 
 /**
- * Cache of {@link Intl.ListFormat} instances, keyed by `"${locale}|${serializedOptions}"`.
- * @type {Map<string, Intl.ListFormat>}
+ * List formatter that, unlike {@link Intl.ListFormat}, accepts items of any type.
+ * @typedef {{ format: (list: Iterable<any>) => string }} ListFormatter
+ */
+
+/**
+ * Cache of list formatters, keyed by `"${locale}|${serializedOptions}"`.
+ * @type {Map<string, ListFormatter>}
  */
 const listFormatterCache = new Map();
 
 /**
- * Get a simple list formatter.
+ * Get a simple list formatter. `Intl.ListFormat` throws on any item that isn’t a string, while a
+ * value read from a file, e.g. a Select or Relation field value, may be a number or `null`, so the
+ * items are stringified, and `null` and `undefined` dropped, before they are formatted.
  * @param {InternalLocaleCode} locale Locale code.
  * @param {Partial<Intl.ListFormatOptions>} options Format options.
- * @returns {Intl.ListFormat} Formatter.
+ * @returns {ListFormatter} Formatter.
  */
 export const getListFormatter = (locale, options = {}) => {
   const effectiveOptions = /** @type {Intl.ListFormatOptions} */ ({
@@ -127,11 +134,21 @@ export const getListFormatter = (locale, options = {}) => {
 
   const cacheKey = `${locale}|${effectiveOptions.style}|${effectiveOptions.type}`;
 
-  return getOrCreate(
-    listFormatterCache,
-    cacheKey,
-    () => new Intl.ListFormat(getCanonicalLocale(locale), effectiveOptions),
-  );
+  return getOrCreate(listFormatterCache, cacheKey, () => {
+    const formatter = new Intl.ListFormat(getCanonicalLocale(locale), effectiveOptions);
+
+    return {
+      /**
+       * Format the given list.
+       * @param {Iterable<any>} list List items.
+       * @returns {string} Formatted list.
+       */
+      format: (list) =>
+        formatter.format(
+          [...list].filter((item) => item !== null && item !== undefined).map((item) => `${item}`),
+        ),
+    };
+  });
 };
 
 /**

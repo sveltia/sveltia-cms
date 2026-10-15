@@ -145,6 +145,38 @@ describe('Test getEntryPathRegEx()', () => {
     expect('content/posts/my-post.md'.match(regex)?.groups?.subPath).toBe('my-post');
   });
 
+  test('escapes locale codes with characters special to regular expressions', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      allLocales: ['en', 'zh+', 'fr)'],
+      structure: /** @type {'multiple_files'} */ ('multiple_files'),
+      structureMap: {
+        i18nSingleFile: false,
+        i18nSingleFileDefaultRoot: false,
+        i18nMultiFile: true,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: false,
+      },
+    };
+
+    const args = { extension: 'md', format: /** @type {const} */ ('frontmatter') };
+    const regex = getEntryPathRegEx({ ...args, basePath: 'content', _i18n });
+
+    expect('content/post.zh+.md'.match(regex)?.groups?.locale).toBe('zh+');
+    expect('content/post.zhh.md'.match(regex)).toBeNull();
+
+    const omitted = getEntryPathRegEx({
+      ...args,
+      basePath: 'content',
+      indexFileName: '_index',
+      indexFileExtension: 'json',
+      _i18n: { ..._i18n, omitDefaultLocaleFromFilePath: true },
+    });
+
+    expect('content/post.fr).md'.match(omitted)?.groups?.locale).toBe('fr)');
+    expect('content/post.md'.match(omitted)?.groups?.subPath).toBe('post');
+  });
+
   test('generates regex for a nested collection with an unlimited depth', () => {
     const _i18n = {
       ...baseI18nOptions,

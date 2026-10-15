@@ -190,7 +190,12 @@ const signIn = async ({ auto = false }) => {
  * directory handle.
  */
 const signOut = async () => {
-  await rootDirHandleDB?.delete(ROOT_DIR_HANDLE_KEY);
+  try {
+    await rootDirHandleDB?.delete(ROOT_DIR_HANDLE_KEY);
+  } catch {
+    // The handle is only a convenience for the next sign-in, so an IndexedDB failure is ignored
+  }
+
   // Free the memory the Git index takes in a large repository
   clearLocalGitCache();
 };
