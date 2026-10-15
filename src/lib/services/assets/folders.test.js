@@ -10,6 +10,7 @@ import {
   assetsLocked,
   canCreateAsset,
   getAssetFolder,
+  getAssetFolderKey,
   getAssetFoldersByPath,
   globalAssetFolder,
   hasReadonlyAsset,
@@ -1898,6 +1899,45 @@ describe('assets/folders', () => {
       const adminPage = { path: 'static/admin/index.html', folder: { internalPath: 'static' } };
 
       expect(hasReadonlyAsset([/** @type {any} */ (adminPage)])).toBe(true);
+    });
+  });
+
+  describe('getAssetFolderKey', () => {
+    it('should tell the All Assets folder apart from a Global Assets folder at the root', () => {
+      const allAssets = createMockAssetFolder({ internalPath: undefined, publicPath: undefined });
+      const globalAssets = createMockAssetFolder({ internalPath: '', publicPath: '/' });
+
+      expect(getAssetFolderKey(allAssets)).not.toBe(getAssetFolderKey(globalAssets));
+    });
+
+    it('should tell apart folders that only differ in a component or public path', () => {
+      const globalAssets = createMockAssetFolder({
+        internalPath: 'static/uploads',
+        publicPath: '/uploads',
+      });
+
+      const componentAssets = createMockAssetFolder({
+        componentName: 'youtube',
+        internalPath: 'static/uploads',
+        publicPath: '/uploads',
+      });
+
+      const otherPublicPath = createMockAssetFolder({
+        internalPath: 'static/uploads',
+        publicPath: '/media',
+      });
+
+      const keys = [globalAssets, componentAssets, otherPublicPath].map(getAssetFolderKey);
+
+      expect(new Set(keys).size).toBe(3);
+    });
+
+    it('should return the same key for equal folders', () => {
+      const props = { collectionName: 'posts', internalPath: 'content/posts', publicPath: '' };
+
+      expect(getAssetFolderKey(createMockAssetFolder(props))).toBe(
+        getAssetFolderKey(createMockAssetFolder(props)),
+      );
     });
   });
 

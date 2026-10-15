@@ -230,6 +230,37 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = true } = {}) => 
 };
 
 /**
+ * Get a key that identifies an asset folder in a list. The All Assets folder has no internal path,
+ * while the Global Assets folder has an empty one when the global `media_folder` is the root
+ * folder, so the values are serialized as JSON, which tells `undefined` and `''` apart. Every
+ * property that can tell two folders apart is included, e.g. a custom editor component’s folder
+ * can share the internal path of the Global Assets folder with a different public path.
+ * @param {AssetFolderInfo} assetFolder Asset folder.
+ * @returns {string} Key.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1078
+ */
+export const getAssetFolderKey = ({
+  collectionName,
+  fileName,
+  componentName,
+  typedKeyPath,
+  isIndexFile,
+  internalPath,
+  internalSubPath,
+  publicPath,
+}) =>
+  JSON.stringify([
+    collectionName,
+    fileName,
+    componentName,
+    typedKeyPath,
+    isIndexFile,
+    internalPath,
+    internalSubPath,
+    publicPath,
+  ]);
+
+/**
  * Check if asset creation is allowed in the folder. Can’t upload assets if collection assets are
  * saved at entry-relative paths, the asset folder contains template tags, or the folder is
  * read-only.

@@ -18,6 +18,7 @@
   import {
     allAssetFolders,
     canCreateAsset,
+    getAssetFolderKey,
     selectedAssetFolder,
   } from '$lib/services/assets/folders';
   import { allAssets } from '$lib/services/assets/state';
@@ -102,7 +103,7 @@
   <Listbox ariaLabel={_('asset_folder_list')} aria-controls="assets-container">
     {#if folders.length}
       <OptionGroup label={_('asset_location.repository')}>
-        {#each folders as folder, index ([folder.collectionName, folder.fileName, folder.internalPath].join(':'))}
+        {#each folders as folder, index (getAssetFolderKey(folder))}
           {#await sleep() then}
             {@const { collectionName, fileName, internalPath } = folder}
             {@const collection = collectionName ? getCollection(collectionName) : undefined}

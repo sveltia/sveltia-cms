@@ -149,6 +149,26 @@ describe('PrimarySidebar', () => {
     }
   });
 
+  test('lists the Global Assets folder at the repository root', async () => {
+    const folders = allAssetFolders.current;
+    const [allAssets] = folders;
+
+    // The global `media_folder` option is an empty string, which only differs from the All Assets
+    // folder in the internal and public paths
+    allAssetFolders.current = [allAssets, { ...allAssets, internalPath: '', publicPath: '/' }];
+
+    try {
+      await render(PrimarySidebar);
+
+      const listbox = page.getByRole('listbox', { name: 'Asset Folder List' });
+
+      await expect.element(listbox.getByRole('option', { name: /^All Assets/ })).toBeVisible();
+      await expect.element(listbox.getByRole('option', { name: /^Global Assets/ })).toBeVisible();
+    } finally {
+      allAssetFolders.current = folders;
+    }
+  });
+
   test('hides the external locations without a cloud service or linked file', async () => {
     const config = cmsConfig.current;
     const entries = allEntries.current;
