@@ -70,6 +70,7 @@ export const createMockDraft = ({
       isNew: true,
       isIndexFile: false,
       canPreview: true,
+      canShowSecondPane: true,
       collectionName,
       collection,
       fields,

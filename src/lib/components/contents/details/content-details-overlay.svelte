@@ -112,13 +112,18 @@
   const {
     isNew = true,
     canPreview = true,
+    canShowSecondPane = true,
     collection,
     collectionName,
     collectionFile,
     fileName,
     isIndexFile,
   } = $derived(/** @type {EntryDraft} */ (entryDraft.current ?? {}));
-  const { showPreview, showSecondPane = true } = $derived(entryEditorSettings.current ?? {});
+  const { showPreview, showSecondPane: secondPaneShown = true } = $derived(
+    entryEditorSettings.current ?? {},
+  );
+  // The user’s choice only applies where the `editor.second_pane` option allows the second pane
+  const showSecondPane = $derived(canShowSecondPane && secondPaneShown);
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     getDraftI18nConfig(entryDraft.current),
   );

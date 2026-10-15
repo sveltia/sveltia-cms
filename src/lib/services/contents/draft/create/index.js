@@ -209,6 +209,13 @@ export const buildDraft = ({
     cmsConfig.current?.editor?.preview ??
     true;
 
+  const canShowSecondPane =
+    indexFile?.editor?.second_pane ??
+    collectionFile?.editor?.second_pane ??
+    collection.editor?.second_pane ??
+    cmsConfig.current?.editor?.second_pane ??
+    true;
+
   const {
     allLocales,
     initialLocales,
@@ -271,6 +278,7 @@ export const buildDraft = ({
       isNew,
       isIndexFile,
       canPreview,
+      canShowSecondPane,
       collectionName,
       collection,
       fileName,

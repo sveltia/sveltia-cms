@@ -67,6 +67,22 @@ describe('ViewMenuItems', () => {
       .toBeDisabled();
   });
 
+  test('turns the second pane off when the configuration disallows it', async () => {
+    await renderItems({ canShowSecondPane: false }, { locales: ['en', 'fr'] });
+
+    const showSecondPane = page.getByRole('menuitemcheckbox', { name: 'Show Second Pane' });
+
+    await expect.element(showSecondPane).toBeDisabled();
+    await expect.element(showSecondPane).not.toBeChecked();
+    // The preview is still available in the only pane, but there’s nothing to sync it with
+    await expect
+      .element(page.getByRole('menuitemcheckbox', { name: 'Show Preview' }))
+      .toBeEnabled();
+    await expect
+      .element(page.getByRole('menuitemcheckbox', { name: 'Sync Scrolling' }))
+      .toBeDisabled();
+  });
+
   test('disables the second pane when there’s nothing to show in it', async () => {
     await renderItems({ canPreview: false });
 

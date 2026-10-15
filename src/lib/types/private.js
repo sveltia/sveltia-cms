@@ -1209,6 +1209,7 @@
  * @property {boolean} isIndexFile Whether the corresponding entry is the collection’s special index
  * file used specifically in Hugo.
  * @property {boolean} canPreview Whether the entry draft can show the preview pane.
+ * @property {boolean} canShowSecondPane Whether the entry draft can show the second pane.
  * @property {string} collectionName Collection name, or `_singletons` for a singleton file.
  * @property {InternalCollection} collection Collection details, or pseudo-collection for a
  * singleton file.

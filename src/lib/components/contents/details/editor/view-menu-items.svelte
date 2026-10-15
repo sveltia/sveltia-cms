@@ -18,10 +18,16 @@
 
   const { i18nEnabled, allLocales } = $derived(getDraftI18nConfig(entryDraft.current));
   const canPreview = $derived(entryDraft.current?.canPreview ?? true);
-  const showSecondPane = $derived(entryEditorSettings.current?.showSecondPane ?? true);
+  // The `editor.second_pane` option can turn the second pane off for good
+  const secondPaneAllowed = $derived(entryDraft.current?.canShowSecondPane ?? true);
+  const showSecondPane = $derived(
+    secondPaneAllowed && (entryEditorSettings.current?.showSecondPane ?? true),
+  );
   // There’s only something to put in the second pane when another locale can be edited alongside
   // the first one, or when the entry has a preview
-  const canShowSecondPane = $derived((i18nEnabled && allLocales.length > 1) || canPreview);
+  const secondPaneAvailable = $derived(
+    secondPaneAllowed && ((i18nEnabled && allLocales.length > 1) || canPreview),
+  );
   // Whether the preview is shown in the second pane, which is all the pane shows for an entry with
   // a single locale, so there’s nothing to sync the scrolling with otherwise
   const previewShown = $derived(canPreview && !!entryEditorSettings.current?.showPreview);
@@ -36,7 +42,7 @@
 <MenuItemCheckbox
   label={_('show_second_pane')}
   checked={showSecondPane}
-  disabled={!canShowSecondPane}
+  disabled={!secondPaneAvailable}
   onChange={() => {
     toggleEntryEditorSetting('showSecondPane', true);
   }}

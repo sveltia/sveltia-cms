@@ -170,6 +170,24 @@ describe('ContentDetailsOverlay', () => {
       .toHaveValue('Bonjour');
   });
 
+  test('shows a single pane when the configuration turns the second pane off', async () => {
+    await renderOverlay(createDraft({ canShowSecondPane: false }));
+
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+
+    await expect
+      .element(editor.getByRole('group', { name: 'Edit \u2068English\u2069 Content' }))
+      .toBeInTheDocument();
+    expect(editorSecondPane.current).toBeNull();
+    expect(editor.getByRole('button', { name: 'Swap Panes' }).elements()).toHaveLength(0);
+
+    // The preview takes turns with the editor in the only pane
+    await editor.getByRole('radio', { name: 'Preview' }).click();
+    await expect
+      .element(editor.getByRole('group', { name: 'Preview \u2068English\u2069 Content' }))
+      .toBeInTheDocument();
+  });
+
   test('shows a single pane on a small screen, with the sidebar panels in a sheet', async () => {
     env.isSmallScreen = true;
     env.isLargeScreen = false;

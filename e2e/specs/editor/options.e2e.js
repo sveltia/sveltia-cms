@@ -224,6 +224,41 @@ test.describe('panes', () => {
   });
 });
 
+test.describe('with `editor.second_pane: false`', () => {
+  test.use({ config: { ...MONOLINGUAL_CONFIG, editor: { second_pane: false } } });
+
+  test('keeps a single pane, where the preview takes turns with the editor', async ({
+    cms,
+    page,
+  }) => {
+    const editor = await openFirstLight(page);
+    const editPane = editor.getByRole('group', { name: 'Edit Content' });
+    const previewPane = editor.getByRole('group', { name: 'Preview Content' });
+    const viewSwitcher = editor.getByRole('radiogroup', { name: 'Switch View' });
+
+    await expect(editPane).toBeVisible();
+    await expect(previewPane).toBeHidden();
+    await expect(editor.getByRole('button', { name: 'Swap Panes' })).toHaveCount(0);
+
+    await cms.openPopup(
+      page.getByRole('button', { name: 'Show Editor Options' }),
+      page.getByRole('menuitemcheckbox', { name: 'Show Second Pane' }),
+    );
+    await expect(page.getByRole('menuitemcheckbox', { name: 'Show Second Pane' })).toBeDisabled();
+    await expect(
+      page.getByRole('menuitemcheckbox', { name: 'Show Second Pane' }),
+    ).not.toBeChecked();
+    await expect(page.getByRole('menuitemcheckbox', { name: 'Show Preview' })).toBeEnabled();
+    await page.keyboard.press('Escape');
+
+    await viewSwitcher.getByRole('radio', { name: 'Preview' }).click();
+    await expect(previewPane.getByRole('document', { name: 'Content Preview' })).toContainText(
+      'The observatory opens its doors.',
+    );
+    await expect(editPane).toBeHidden();
+  });
+});
+
 test.describe('sync scrolling', () => {
   // A post long enough to scroll, with every paragraph numbered so the panes can be compared
   const LONG_POST = [

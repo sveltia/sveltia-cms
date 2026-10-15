@@ -1637,6 +1637,9 @@
  * Editor options.
  * @typedef {object} EditorOptions
  * @property {boolean} [preview] Whether to show the preview pane. Default: `true`.
+ * @property {boolean} [second_pane] Whether to show the second pane, which holds the preview or
+ * another locale’s editor next to the first pane. If `false`, the editor has a single pane, where
+ * the preview, if enabled, takes turns with the editor. Default: `true`.
  * @see https://decapcms.org/docs/configuration-options/#editor
  * @see https://sveltiacms.app/en/docs/ui/content-editor#disabling-previews
  */
