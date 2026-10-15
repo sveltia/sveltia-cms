@@ -723,7 +723,8 @@
     min-height: var(--sui-secondary-toolbar-size);
 
     &.top {
-      top: 0;
+      /* Below the sticky toolbars of the rich text editors the field is in, if any */
+      top: var(--sui-text-editor-inner-toolbar-top, 0);
     }
 
     &.bottom {
