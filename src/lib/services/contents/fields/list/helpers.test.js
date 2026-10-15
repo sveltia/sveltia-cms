@@ -762,6 +762,16 @@ describe('Test hasDuplicatedSubField()', () => {
     ).toBe(true);
   });
 
+  test('should find a subfield using the `duplicate_if_empty` strategy', () => {
+    expect(
+      hasDuplicatedSubField(
+        /** @type {any} */ ({
+          fields: [translatable, { name: 'caption', widget: 'string', i18n: 'duplicate_if_empty' }],
+        }),
+      ),
+    ).toBe(true);
+  });
+
   test('should find a duplicated subfield nested in another subfield', () => {
     expect(
       hasDuplicatedSubField(

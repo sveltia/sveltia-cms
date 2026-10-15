@@ -44,8 +44,9 @@ describe('contents/draft/create/versioned-map', () => {
     valueMap.title = 'B';
     delete valueMap.title;
 
-    expect(onSet).toHaveBeenCalledWith(expect.any(Object), 'title', 'B');
-    expect(onDelete).toHaveBeenCalledWith(expect.any(Object), 'title');
+    // The value held before the write is passed along
+    expect(onSet).toHaveBeenCalledWith(expect.any(Object), 'title', 'B', 'A');
+    expect(onDelete).toHaveBeenCalledWith(expect.any(Object), 'title', 'B');
   });
 
   test('lists the keys in the order they were last written in', () => {

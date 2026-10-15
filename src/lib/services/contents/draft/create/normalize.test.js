@@ -697,6 +697,51 @@ describe('contents/draft/create/normalize', () => {
       expect(content).toEqual({ 'author.name': 'Me' });
     });
 
+    it('should fill in a `duplicate_if_empty` field missing or empty in another locale', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/120
+      const fields = [
+        { name: 'title', widget: 'string', i18n: 'duplicate_if_empty', default: 'Untitled' },
+        { name: 'summary', widget: 'text', i18n: 'duplicate_if_empty' },
+        { name: 'body', widget: 'markdown', i18n: 'duplicate_if_empty' },
+        { name: 'image', widget: 'image', i18n: 'duplicate_if_empty' },
+        { name: 'code', widget: 'code', i18n: 'duplicate_if_empty' },
+        { name: 'note', widget: 'string', i18n: 'duplicate_if_empty', default: 'n/a' },
+        { name: 'caption', widget: 'string', i18n: true },
+      ];
+
+      const content = normalizeContent({
+        fields,
+        content: { title: '', summary: 'Résumé', image: null, 'code.code': '', caption: '' },
+        locale: 'fr',
+        defaultLocale: 'en',
+        defaultLocaleContent: {
+          title: 'Hello',
+          summary: 'Summary',
+          body: 'Body',
+          image: '/a.png',
+          code: {},
+          'code.code': 'x = 1',
+          'code.lang': 'python',
+          note: '',
+          caption: 'Caption',
+        },
+      });
+
+      expect(content).toEqual({
+        title: 'Hello',
+        // A value of its own is kept
+        summary: 'Résumé',
+        body: 'Body',
+        image: '/a.png',
+        code: {},
+        'code.code': 'x = 1',
+        'code.lang': 'python',
+        // The default locale value is empty too, so the configured default is filled in
+        note: 'n/a',
+        caption: '',
+      });
+    });
+
     it('should localize a copied Relation value with a {{locale}} prefix', () => {
       // https://github.com/sveltia/sveltia-cms/issues/900
       const fields = [

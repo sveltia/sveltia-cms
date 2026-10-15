@@ -239,7 +239,9 @@ export const canResetField = ({ valueMap, restore = false, ...args }) => {
  * Clear the value of the given field in the entry draft, or restore its default value, so the
  * user can start over. See {@link resetContent} for what that means for each field type. Resetting
  * a field in the default locale resets it in the other locales as well where it’s duplicated,
- * whether with its own `duplicate` strategy or along with an ancestor’s.
+ * whether with its own `duplicate` strategy or along with an ancestor’s. A field using the
+ * `duplicate_if_empty` strategy is left alone in the other locales, which take the default locale’s
+ * value again as soon as it’s next edited.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {Field} args.fieldConfig Field configuration.

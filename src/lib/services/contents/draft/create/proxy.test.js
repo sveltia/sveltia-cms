@@ -3,9 +3,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getValueMapVersion } from '$lib/services/contents/draft/create/versioned-map.svelte';
+import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
 
 import {
   copyDefaultLocaleValue,
+  copyDefaultLocaleValueIfEmpty,
   createProxy,
   getListItemMatcher,
   isDuplicatedField,
@@ -21,8 +23,21 @@ const { resolveCollectionAndFile, getField, revalidateField, isAutoDuplicationEn
 
 vi.mock('$lib/services/contents/collection/files', () => ({ resolveCollectionAndFile }));
 vi.mock('$lib/services/contents/draft', () => ({ isAutoDuplicationEnabled }));
-vi.mock('$lib/services/contents/entry/fields', () => ({ getField }));
+vi.mock('$lib/services/contents/entry/fields', () => ({
+  getField,
+  /**
+   * Check if the field takes multiple values, as told by its `multiple` option only.
+   * @param {any} fieldConfig Field configuration.
+   * @returns {boolean} Result.
+   */
+  isFieldMultiple: (fieldConfig) => !!fieldConfig.multiple,
+}));
 vi.mock('$lib/services/contents/draft/validate/fields', () => ({ revalidateField }));
+vi.mock('$lib/services/contents/fields/locale', async (importOriginal) => {
+  const actual = await importOriginal();
+
+  return { getLocalizedFieldValue: vi.fn(actual.getLocalizedFieldValue) };
+});
 
 /**
  * Create a minimal draft with the given locales, each holding a value proxy.
@@ -219,6 +234,185 @@ describe('contents/draft/create/proxy.svelte', () => {
     });
   });
 
+  describe('copyDefaultLocaleValueIfEmpty', () => {
+    const fieldConfig = { name: 'title', widget: 'string', i18n: 'duplicate_if_empty' };
+
+    it('should copy the value to the locales where the field is empty or still in sync', () => {
+      const currentValues = {
+        en: { title: 'Hello' },
+        fr: { title: '' },
+        de: {},
+        ja: { title: 'Hi' },
+        ko: { title: 'Bonjour' },
+      };
+
+      copyDefaultLocaleValueIfEmpty({
+        draft: { currentValues },
+        getFieldArgs: { keyPath: 'title', valueMap: currentValues.en },
+        fieldConfig,
+        fieldKeyPath: 'title',
+        sourceLanguage: 'en',
+        value: 'Hello',
+        previousValue: 'Hi',
+      });
+
+      expect(currentValues.fr.title).toBe('Hello');
+      expect(currentValues.de.title).toBe('Hello');
+      // The locale held the previous default locale value, so it follows
+      expect(currentValues.ja.title).toBe('Hello');
+      // The locale has a value of its own
+      expect(currentValues.ko.title).toBe('Bonjour');
+    });
+
+    it('should delete the value from the locales following the default locale', () => {
+      const currentValues = {
+        en: {},
+        fr: { title: 'Hello' },
+        de: { title: '' },
+        ja: { title: 'Konnichiwa' },
+        ko: {},
+      };
+
+      copyDefaultLocaleValueIfEmpty({
+        draft: { currentValues },
+        getFieldArgs: { keyPath: 'title', valueMap: currentValues.en },
+        fieldConfig,
+        fieldKeyPath: 'title',
+        sourceLanguage: 'en',
+        previousValue: 'Hello',
+        deleted: true,
+      });
+
+      expect(currentValues).toEqual({
+        en: {},
+        fr: {},
+        de: {},
+        ja: { title: 'Konnichiwa' },
+        ko: {},
+      });
+    });
+
+    it('should copy and compare the values localized for each locale', () => {
+      const original = getLocalizedFieldValue.getMockImplementation();
+
+      // e.g. a DateTime field with the `localize_format` option
+      getLocalizedFieldValue.mockImplementation(({ value, targetLocale }) =>
+        value ? `${value} (${targetLocale})` : value,
+      );
+
+      const currentValues = {
+        en: { date: 'May 1' },
+        fr: { date: 'April 1 (fr)' },
+        de: { date: 'April 1' },
+      };
+
+      copyDefaultLocaleValueIfEmpty({
+        draft: { currentValues },
+        getFieldArgs: { keyPath: 'date', valueMap: currentValues.en },
+        fieldConfig: { ...fieldConfig, name: 'date', widget: 'datetime' },
+        fieldKeyPath: 'date',
+        sourceLanguage: 'en',
+        value: 'May 1',
+        previousValue: 'April 1',
+      });
+
+      getLocalizedFieldValue.mockImplementation(original);
+
+      // The locale held the previous value written in the locale, so it follows
+      expect(currentValues.fr.date).toBe('May 1 (fr)');
+      // The value isn’t the previous one as written in the locale, so it’s one of the locale’s own
+      expect(currentValues.de.date).toBe('April 1');
+    });
+
+    it('should not copy the value to a list item that does not exist in the other locale', () => {
+      const listField = { name: 'items', widget: 'list', i18n: true };
+      const subField = { ...fieldConfig, name: 'name' };
+
+      getField.mockImplementation(({ keyPath }) =>
+        keyPath === 'items' ? listField : keyPath === 'items.1.name' ? subField : undefined,
+      );
+
+      const currentValues = {
+        en: { 'items.0.name': 'a', 'items.1.name': 'b' },
+        fr: { 'items.0.name': '' },
+      };
+
+      copyDefaultLocaleValueIfEmpty({
+        draft: { currentValues },
+        getFieldArgs: { keyPath: 'items.1.name', valueMap: currentValues.en },
+        fieldConfig: subField,
+        fieldKeyPath: 'items.1.name',
+        sourceLanguage: 'en',
+        value: 'b',
+        previousValue: '',
+      });
+
+      expect(currentValues.fr).toEqual({ 'items.0.name': '' });
+    });
+
+    it('should not copy the value if the parent object does not exist', () => {
+      const currentValues = { en: { 'parent.title': 'a' }, fr: {} };
+
+      copyDefaultLocaleValueIfEmpty({
+        draft: { currentValues },
+        getFieldArgs: { keyPath: 'parent.title', valueMap: currentValues.en },
+        fieldConfig,
+        fieldKeyPath: 'parent.title',
+        sourceLanguage: 'en',
+        value: 'a',
+        previousValue: '',
+      });
+
+      expect(currentValues.fr).toEqual({});
+    });
+
+    it('should judge a Code field by its code', () => {
+      const codeField = { name: 'code', widget: 'code', i18n: 'duplicate_if_empty' };
+
+      getField.mockImplementation(({ keyPath }) => (keyPath === 'code' ? codeField : undefined));
+
+      const objectValue = {};
+
+      const currentValues = {
+        en: { code: objectValue, 'code.code': 'x = 1', 'code.lang': 'python' },
+        fr: { code: {}, 'code.code': 'x = 1', 'code.lang': 'js' },
+        de: { code: {}, 'code.code': 'y = 2', 'code.lang': 'js' },
+        ja: {},
+      };
+
+      const frObject = currentValues.fr.code;
+
+      // The language follows where the code is the same
+      copyDefaultLocaleValueIfEmpty({
+        draft: { currentValues },
+        getFieldArgs: { keyPath: 'code.lang', valueMap: currentValues.en },
+        fieldConfig: codeField,
+        fieldKeyPath: 'code',
+        sourceLanguage: 'en',
+        value: 'python',
+        previousValue: 'js',
+      });
+
+      expect(currentValues.fr['code.lang']).toBe('python');
+      expect(currentValues.de['code.lang']).toBe('js');
+      expect(currentValues.ja['code.lang']).toBe('python');
+
+      // The object value is only written where there is none
+      copyDefaultLocaleValueIfEmpty({
+        draft: { currentValues },
+        getFieldArgs: { keyPath: 'code', valueMap: currentValues.en },
+        fieldConfig: codeField,
+        fieldKeyPath: 'code',
+        sourceLanguage: 'en',
+        value: objectValue,
+        previousValue: undefined,
+      });
+
+      expect(currentValues.fr.code).toBe(frObject);
+      expect(currentValues.ja.code).toBe(objectValue);
+    });
+  });
+
   describe('createProxy', () => {
     it('should return undefined if collection not found', () => {
       resolveCollectionAndFile.mockReturnValue(undefined);
@@ -296,6 +490,85 @@ describe('contents/draft/create/proxy.svelte', () => {
       // Deleting a key that is not there is not a change either
       delete proxy.title;
       expect(getValueMapVersion(proxy)).toBe(2);
+    });
+
+    it('should fill in the other locales as the default locale value of a `duplicate_if_empty` field changes', () => {
+      getField.mockImplementation(({ keyPath }) =>
+        keyPath === 'title'
+          ? { name: 'title', widget: 'string', i18n: 'duplicate_if_empty' }
+          : undefined,
+      );
+
+      const draft = createDraft({
+        locales: ['en', 'fr', 'ja'],
+        values: { ja: { title: 'Konnichiwa' } },
+      });
+
+      draft.currentValues.en.title = 'H';
+      draft.currentValues.en.title = 'Hello';
+
+      expect(draft.currentValues.fr.title).toBe('Hello');
+      expect(draft.currentValues.ja.title).toBe('Konnichiwa');
+
+      // A value entered in another locale is kept
+      draft.currentValues.fr.title = 'Bonjour';
+      draft.currentValues.en.title = 'Hello!';
+
+      expect(draft.currentValues.fr.title).toBe('Bonjour');
+
+      // A value entered in another locale isn’t copied anywhere
+      draft.currentValues.fr.title = '';
+      draft.currentValues.ja.title = 'Hi';
+
+      expect(draft.currentValues.en.title).toBe('Hello!');
+      expect(draft.currentValues.fr.title).toBe('');
+
+      // Nothing is copied while auto-duplication is suspended
+      isAutoDuplicationEnabled.mockReturnValue(false);
+      draft.currentValues.en.title = 'Hey';
+
+      expect(draft.currentValues.fr.title).toBe('');
+
+      isAutoDuplicationEnabled.mockReturnValue(true);
+      draft.currentValues.en.title = 'Hey';
+
+      expect(draft.currentValues.fr.title).toBe('Hey');
+
+      // A revert deletes the value before restoring the original one, which the locales that
+      // followed the edit get back
+      draft.currentValues.en.title = 'Hey you';
+      delete draft.currentValues.en.title;
+
+      expect(draft.currentValues.fr.title).toBeUndefined();
+      expect(draft.currentValues.ja.title).toBe('Hi');
+
+      draft.currentValues.en.title = 'Hey';
+
+      expect(draft.currentValues.fr.title).toBe('Hey');
+
+      // Nothing is deleted from another locale, or the default locale
+      delete draft.currentValues.fr.title;
+
+      expect(draft.currentValues.en.title).toBe('Hey');
+    });
+
+    it('should fill in the code of a `duplicate_if_empty` Code field', () => {
+      getField.mockImplementation(({ keyPath }) =>
+        keyPath === 'code'
+          ? { name: 'code', widget: 'code', i18n: 'duplicate_if_empty' }
+          : undefined,
+      );
+
+      const draft = createDraft({ values: { ja: { code: {}, 'code.code': '', 'code.lang': '' } } });
+
+      draft.currentValues.en['code.code'] = 'x';
+
+      expect(draft.currentValues.ja['code.code']).toBe('x');
+
+      // Any other value without a field is left alone
+      draft.currentValues.en.other = 'y';
+
+      expect(draft.currentValues.ja.other).toBeUndefined();
     });
 
     it('should duplicate values to other locales when i18n is duplicate', () => {

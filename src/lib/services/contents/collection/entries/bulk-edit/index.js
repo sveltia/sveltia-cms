@@ -22,6 +22,7 @@ import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
+import { isDuplicateIfEmptyField } from '$lib/services/contents/i18n/duplicate-if-empty';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { isValueEmpty } from '$lib/services/utils/object';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
@@ -146,9 +147,10 @@ export const countBulkEdits = (edits) =>
 /**
  * Apply the pending edits to a copy of an entry. A field with the `duplicate` i18n option gets the
  * same value in every locale that has content, localized for each the way the entry editor copies
- * it, e.g. a DateTime field value written in the locale; any other field is only changed in the
- * default locale. The DateTime fields with the `auto_now` option are updated
- * too, as a save in the entry editor would.
+ * it, e.g. a DateTime field value written in the locale, and one with the `duplicate_if_empty`
+ * option gets it in the locales where it’s empty or still holds the default locale’s value; any
+ * other field is only changed in the default locale. The DateTime fields with the `auto_now` option
+ * are updated too, as a save in the entry editor would.
  * @param {object} args Arguments.
  * @param {InternalEntryCollection} args.collection Entry collection.
  * @param {Entry} args.entry Entry, which is not modified.
@@ -167,17 +169,37 @@ export const applyBulkEdits = ({ collection, entry, entryEdits }) => {
 
   Object.entries(entryEdits).forEach(([keyPath, value]) => {
     const fieldConfig = collection.fields.find(({ name }) => name === keyPath);
+    // A `duplicate_if_empty` field is updated in the other locales where it’s empty or still holds
+    // the default locale’s value
+    const fillEmpty = !!fieldConfig && isDuplicateIfEmptyField(fieldConfig);
+    const previousValue = currentValues[defaultLocale][keyPath];
 
     Object.entries(currentValues).forEach(([locale, content]) => {
       if (locale === defaultLocale) {
         content[keyPath] = value;
-      } else if (fieldConfig?.i18n === 'duplicate') {
-        content[keyPath] = getLocalizedFieldValue({
-          fieldConfig,
-          value,
+
+        return;
+      }
+
+      /**
+       * Localize a value of the default locale for the locale.
+       * @param {any} _value Value.
+       * @returns {any} Localized value.
+       */
+      const localize = (_value) =>
+        getLocalizedFieldValue({
+          fieldConfig: /** @type {Field} */ (fieldConfig),
+          value: _value,
           sourceLocale: defaultLocale,
           targetLocale: locale,
         });
+
+      if (
+        fieldConfig?.i18n === 'duplicate' ||
+        (fillEmpty &&
+          (isValueEmpty(content[keyPath]) || content[keyPath] === localize(previousValue)))
+      ) {
+        content[keyPath] = localize(value);
       }
     });
   });

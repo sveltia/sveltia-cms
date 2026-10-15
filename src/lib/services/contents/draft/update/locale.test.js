@@ -283,6 +283,16 @@ describe('draft/update/locale', () => {
       expect(result.title).toBe('');
     });
 
+    it('keeps the default locale’s value of a `duplicate_if_empty` text field', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) =>
+        keyPath === 'title'
+          ? { name: 'title', widget: 'string', i18n: 'duplicate_if_empty' }
+          : undefined,
+      );
+
+      expect(copyDefaultLocaleValues({ title: '' }, 'fr').title).toBe('English Title');
+    });
+
     it('should not copy non-translatable fields to other locales', () => {
       const content = {};
       const result = copyDefaultLocaleValues(content, 'en');

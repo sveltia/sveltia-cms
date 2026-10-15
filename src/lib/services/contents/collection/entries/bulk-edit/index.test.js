@@ -12,6 +12,7 @@ import { DEFAULT_VALIDITY, finalizeValidity } from '$lib/services/contents/draft
 import { buildEntryUpdateChanges } from '$lib/services/contents/entry/changes';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
+import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 import {
@@ -83,6 +84,12 @@ vi.mock('$lib/services/contents/entry/changes', () => ({
 vi.mock('$lib/services/contents/entry/readonly', () => ({
   isEntryReadonly: vi.fn(() => false),
 }));
+
+vi.mock('$lib/services/contents/fields/locale', async (importOriginal) => {
+  const actual = /** @type {any} */ (await importOriginal());
+
+  return { getLocalizedFieldValue: vi.fn(actual.getLocalizedFieldValue) };
+});
 
 vi.mock('$lib/services/contents/fields/date-time/auto-now', () => ({
   // Stand in for the real one, which looks the field up by the collection name: set the `updated`
@@ -396,6 +403,72 @@ describe('applyBulkEdits()', () => {
     });
     expect(updated.locales.de).not.toBe(entry.locales.de);
     expect(entry.locales.fr.content).toEqual({ title: 'Á', draft: false });
+  });
+
+  test('writes a `duplicate_if_empty` field to the locales where it’s empty or still in sync', () => {
+    const collection = makeCollection({
+      fields: [{ name: 'title', widget: 'string', i18n: 'duplicate_if_empty' }],
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr', 'de', 'ja'],
+        defaultLocale: 'en',
+        structureMap: {},
+      },
+    });
+
+    const entry = makeEntry(
+      'a',
+      {},
+      {
+        locales: {
+          en: { slug: 'a', path: 'a.en.md', content: { title: 'A' } },
+          fr: { slug: 'a', path: 'a.fr.md', content: { title: 'A' } },
+          de: { slug: 'a', path: 'a.de.md', content: {} },
+          ja: { slug: 'a', path: 'a.ja.md', content: { title: 'エー' } },
+        },
+      },
+    );
+
+    const updated = applyBulkEdits({ collection, entry, entryEdits: { title: 'B' } });
+
+    expect(updated.locales.en.content).toEqual({ title: 'B' });
+    expect(updated.locales.fr.content).toEqual({ title: 'B' });
+    expect(updated.locales.de.content).toEqual({ title: 'B' });
+    expect(updated.locales.ja.content).toEqual({ title: 'エー' });
+  });
+
+  test('compares and writes a `duplicate_if_empty` value localized for each locale', () => {
+    const original = vi.mocked(getLocalizedFieldValue).getMockImplementation();
+
+    // e.g. a DateTime field with the `localize_format` option
+    vi.mocked(getLocalizedFieldValue).mockImplementation(({ value, targetLocale }) =>
+      value ? `${value} (${targetLocale})` : value,
+    );
+
+    const collection = makeCollection({
+      fields: [{ name: 'date', widget: 'datetime', i18n: 'duplicate_if_empty' }],
+      _i18n: { i18nEnabled: true, allLocales: ['en', 'fr', 'de'], defaultLocale: 'en' },
+    });
+
+    const entry = makeEntry(
+      'a',
+      {},
+      {
+        locales: {
+          en: { slug: 'a', path: 'a.en.md', content: { date: 'May 1' } },
+          fr: { slug: 'a', path: 'a.fr.md', content: { date: 'May 1 (fr)' } },
+          de: { slug: 'a', path: 'a.de.md', content: { date: 'May 1' } },
+        },
+      },
+    );
+
+    const updated = applyBulkEdits({ collection, entry, entryEdits: { date: 'June 1' } });
+
+    vi.mocked(getLocalizedFieldValue).mockImplementation(/** @type {any} */ (original));
+
+    expect(updated.locales.fr.content).toEqual({ date: 'June 1 (fr)' });
+    // The value isn’t the previous one as written in the locale
+    expect(updated.locales.de.content).toEqual({ date: 'May 1' });
   });
 });
 

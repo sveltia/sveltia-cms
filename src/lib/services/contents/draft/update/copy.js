@@ -199,8 +199,13 @@ export const getCopyingFieldMap = ({ draft, options }) => {
           (fieldType === 'list' &&
           getListFieldInfo(/** @type {ListField} */ (field)).hasSubFields) ||
           (!translate && value === targetLocaleValue) ||
-          // Skip populated fields when translating all the fields
-          (!keyPath && translate && !!targetLocaleValue)
+          // Skip populated fields when translating all the fields, except for a field using the
+          // `duplicate_if_empty` strategy that still holds the source locale’s value, which hasn’t
+          // been translated yet
+          (!keyPath &&
+            translate &&
+            !!targetLocaleValue &&
+            !(field?.i18n === 'duplicate_if_empty' && value === targetLocaleValue))
         ) {
           return null;
         }

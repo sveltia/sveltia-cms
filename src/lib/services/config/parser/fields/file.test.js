@@ -52,6 +52,39 @@ describe('File Field Parser', () => {
       });
     });
 
+    it('should warn about the `duplicate_if_empty` i18n strategy with multiple files', async () => {
+      const { parseFileFieldConfig } = await import('./file.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      [
+        { multiple: false, i18n: 'duplicate_if_empty' },
+        { i18n: 'duplicate_if_empty' },
+        { multiple: true, i18n: true },
+      ].forEach((options) => {
+        parseFileFieldConfig({
+          config: /** @type {any} */ ({ name: 'images', widget: 'image', ...options }),
+          context,
+          collectors,
+        });
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+
+      parseFileFieldConfig({
+        config: { name: 'images', widget: 'image', multiple: true, i18n: 'duplicate_if_empty' },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        type: 'warning',
+        strKey: 'duplicate_if_empty_multiple',
+        context,
+        collectors,
+      });
+    });
+
     it('should parse file field', async () => {
       const { parseFileFieldConfig } = await import('./file.js');
       const context = createContext();

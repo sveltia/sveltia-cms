@@ -66,10 +66,13 @@ export const getSubtreeVersion = (valueMap, keyPath) => {
  * @param {FlattenedEntryContent} [target] Plain object holding the initial values.
  * @param {object} [hooks] Functions called after a value is written or deleted through the proxy,
  * whether or not it has actually changed.
- * @param {(obj: FlattenedEntryContent, keyPath: FieldKeyPath, value: any) => void} [hooks.onSet]
- * Function called after a value is written.
- * @param {(obj: FlattenedEntryContent, keyPath: FieldKeyPath) => void} [hooks.onDelete] Function
- * called after a value is deleted.
+ * @param {(
+ * obj: FlattenedEntryContent, keyPath: FieldKeyPath, value: any, previousValue: any
+ * ) => void} [hooks.onSet] Function called after a value is written, also taking the value the key
+ * path held before.
+ * @param {(obj: FlattenedEntryContent, keyPath: FieldKeyPath, previousValue: any) => void}
+ * [hooks.onDelete] Function called after a value is deleted, also taking the value the key path
+ * held before.
  * @returns {any} Created proxy.
  */
 export const createValueMap = (target = {}, { onSet, onDelete } = {}) => {
@@ -155,26 +158,30 @@ export const createValueMap = (target = {}, { onSet, onDelete } = {}) => {
     },
     // eslint-disable-next-line jsdoc/require-jsdoc
     set: (obj, /** @type {FieldKeyPath} */ keyPath, value) => {
-      if (obj[keyPath] !== value) {
+      const previousValue = obj[keyPath];
+
+      if (previousValue !== value) {
         obj[keyPath] = value;
         keys.add(keyPath);
         addSubtreeVersions(keyPath);
         countWrite(keyPath);
       }
 
-      onSet?.(obj, keyPath, value);
+      onSet?.(obj, keyPath, value, previousValue);
 
       return true;
     },
     // eslint-disable-next-line jsdoc/require-jsdoc
     deleteProperty: (obj, /** @type {FieldKeyPath} */ keyPath) => {
+      const previousValue = obj[keyPath];
+
       if (keyPath in obj) {
         delete obj[keyPath];
         keys.delete(keyPath);
         countWrite(keyPath);
       }
 
-      onDelete?.(obj, keyPath);
+      onDelete?.(obj, keyPath, previousValue);
 
       return true;
     },

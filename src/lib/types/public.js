@@ -377,8 +377,30 @@
  */
 
 /**
+ * Field-level i18n option for the fields holding a single, simple value, which support the
+ * `duplicate_if_empty` strategy in addition to the common ones.
+ * @typedef {object} SimpleFieldI18nProps
+ * @property {boolean | 'duplicate' | 'duplicate_if_empty' | 'translate' | 'none'} [i18n] Whether
+ * to enable the editor UI in locales other than the default locale. Default: `false`, or
+ * `duplicate` for a subfield of a field using `duplicate`. `duplicate` makes the field read-only in
+ * non-default locales and automatically copies the default locale’s value to them.
+ * `duplicate_if_empty` copies the default locale’s value to non-default locales only where the
+ * value is empty, or still the same as the default locale’s value, while the field can be edited
+ * in every locale. It’s not supported for a File or Image field that accepts multiple files.
+ * `translate` and `none` are aliases of `true` and `false`, respectively. This option only works
+ * when i18n is set up with the global and collection-level `i18n` option. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#field-level-configuration) for
+ * details.
+ */
+
+/**
  * Common field properties that are shared among all field types.
  * @typedef {BaseFieldProps & FieldI18nProps} CommonFieldProps
+ */
+
+/**
+ * Common field properties that are shared among the fields holding a single, simple value.
+ * @typedef {BaseFieldProps & SimpleFieldI18nProps} SimpleCommonFieldProps
  */
 
 /**
@@ -602,7 +624,8 @@
 
 /**
  * Code field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & CodeFieldProps} CodeField
+ * @typedef {SimpleCommonFieldProps & VisibleFieldProps & FieldValidationProps & CodeFieldProps}
+ * CodeField
  */
 
 /**
@@ -741,8 +764,8 @@
 
 /**
  * DateTime field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & DateTimeFieldProps &
- * UniqueValueProps} DateTimeField
+ * @typedef {SimpleCommonFieldProps & VisibleFieldProps & FieldValidationProps &
+ * DateTimeFieldProps & UniqueValueProps} DateTimeField
  */
 
 /**
@@ -759,7 +782,7 @@
 
 /**
  * File field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
+ * @typedef {SimpleCommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
  * MediaFieldProps & FileFieldProps & UniqueValueProps} FileField
  */
 
@@ -794,7 +817,7 @@
 
 /**
  * Image field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
+ * @typedef {SimpleCommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
  * MediaFieldProps & ImageFieldProps & UniqueValueProps} ImageField
  */
 
@@ -1093,8 +1116,9 @@
 
 /**
  * RichText field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & RichTextFieldBaseProps &
- * RichTextFieldFormatProps & RichTextFieldProps & UniqueValueProps} RichTextField
+ * @typedef {SimpleCommonFieldProps & VisibleFieldProps & FieldValidationProps &
+ * RichTextFieldBaseProps & RichTextFieldFormatProps & RichTextFieldProps & UniqueValueProps}
+ * RichTextField
  */
 
 /**
@@ -1111,8 +1135,8 @@
 
 /**
  * Markdown field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & RichTextFieldBaseProps &
- * MarkdownFieldProps & UniqueValueProps} MarkdownField
+ * @typedef {SimpleCommonFieldProps & VisibleFieldProps & FieldValidationProps &
+ * RichTextFieldBaseProps & MarkdownFieldProps & UniqueValueProps} MarkdownField
  */
 
 /**
@@ -1150,7 +1174,7 @@
 
 /**
  * Number field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & NumberFieldProps &
+ * @typedef {SimpleCommonFieldProps & VisibleFieldProps & FieldValidationProps & NumberFieldProps &
  * AdjacentLabelProps & UniqueValueProps} NumberField
  */
 
@@ -1309,7 +1333,7 @@
 
 /**
  * String field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & StringFieldProps &
+ * @typedef {SimpleCommonFieldProps & VisibleFieldProps & FieldValidationProps & StringFieldProps &
  * AdjacentLabelProps & CharCountProps & UniqueValueProps} StringField
  */
 
@@ -1331,7 +1355,7 @@
 
 /**
  * Text field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & TextFieldProps &
+ * @typedef {SimpleCommonFieldProps & VisibleFieldProps & FieldValidationProps & TextFieldProps &
  * CharCountProps & UniqueValueProps} TextField
  */
 

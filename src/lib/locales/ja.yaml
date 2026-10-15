@@ -2044,6 +2044,8 @@ config:
     list_field_map_key_not_required: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、各項目にはキーが必要なため、そのサブフィールドを任意にすることはできません。`required` オプションを削除してください。
     # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
     list_field_map_key_not_localized: 'List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、項目にはすべてのロケールでキーが必要なため、そのサブフィールドに `i18n: false` は指定できません。`i18n: duplicate` を使うか、オプションを削除してください。'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: '`i18n: duplicate_if_empty` オプションは `multiple` オプションを持つフィールドではサポートされていないため、このフィールドは `i18n: true` と同様に動作します。'
     # Don’t localize `default` and `multiple`
     invalid_default_multiple: '`multiple` オプションが `true` のため、`default` オプションは配列でなければなりません。'
     invalid_default_single: '`multiple` オプションが `true` ではないため、`default` オプションは配列ではなく単一の値でなければなりません。'

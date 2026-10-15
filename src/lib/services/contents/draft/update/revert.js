@@ -7,6 +7,7 @@ import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/du
 import { getKeyValueField } from '$lib/services/contents/fields/key-value/pairs';
 import { getPairedListKeyPaths } from '$lib/services/contents/fields/list/helpers';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
+import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -116,7 +117,8 @@ export const revertFields = ({
 
       if (
         isDefaultLocale ||
-        [true, 'translate', 'duplicate_keys'].includes(fieldConfig?.i18n ?? false)
+        isFieldTranslatable(fieldConfig?.i18n) ||
+        fieldConfig?.i18n === 'duplicate_keys'
       ) {
         if (reset) {
           delete currentValues[locale][_keyPath];

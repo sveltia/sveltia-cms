@@ -2151,6 +2151,8 @@ config:
     list_field_map_key_not_required: The List field’s `map_key_field` option refers to `{$name}`, but the subfield can’t be optional, as each item needs a key. Remove its `required` option.
     # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
     list_field_map_key_not_localized: 'The List field’s `map_key_field` option refers to `{$name}`, but the subfield can’t have `i18n: false`, as the items need a key in every locale. Use `i18n: duplicate` or remove the option.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'The `i18n: duplicate_if_empty` option is not supported for a field with the `multiple` option, so the field works like one with `i18n: true`.'
     # Don’t localize `default` and `multiple`
     invalid_default_multiple: The `default` option must be an array because the `multiple` option is `true`.
     invalid_default_single: The `default` option must be a single value, not an array, because the `multiple` option is not `true`.

@@ -15,6 +15,10 @@ import { alignPairOrder } from '$lib/services/contents/fields/key-value/pairs';
 import { hasRequiredSingleItem } from '$lib/services/contents/fields/list/defaults';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
+import {
+  isDuplicateIfEmptyField,
+  isFieldEmpty,
+} from '$lib/services/contents/i18n/duplicate-if-empty';
 
 /**
  * @import {
@@ -417,6 +421,26 @@ const normalizeField = (args) => {
       valueStore: { [defaultLocale]: sourceContent, [locale]: content },
       defaultLocale,
       keyPath,
+    });
+
+    return;
+  }
+
+  // A `duplicate_if_empty` field takes the default locale’s value where it’s missing or empty
+  if (
+    fillDefaults &&
+    sourceContent &&
+    isDuplicateIfEmptyField(field) &&
+    isFieldEmpty({ content, fieldConfig: field, keyPath }) &&
+    !isFieldEmpty({ content: sourceContent, fieldConfig: field, keyPath })
+  ) {
+    copyFromDefaultLocale({
+      content,
+      defaultLocaleContent: sourceContent,
+      field,
+      keyPath,
+      locale,
+      defaultLocale,
     });
 
     return;

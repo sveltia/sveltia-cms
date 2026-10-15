@@ -3,7 +3,7 @@
 import { checkFolderTemplateTags } from '$lib/services/config/parser/media';
 import { parseMediaLibraries } from '$lib/services/config/parser/media-libraries';
 import { checkMultipleDefault } from '$lib/services/config/parser/utils/defaults';
-import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
+import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import { FileField } from '$lib/types/public';
@@ -25,13 +25,19 @@ const UNSUPPORTED_OPTIONS = [
  */
 export const parseFileFieldConfig = (args) => {
   const { config, context, collectors } = args;
-  const { media_folder, default: defaultValue, multiple } = /** @type {FileField} */ (config);
+  const { media_folder, default: defaultValue, multiple, i18n } = /** @type {FileField} */ (config);
 
   // Without the field’s own `multiple` option, whether the field takes several files depends on
   // the media library options, which are resolved at runtime, so the default is only checked
   // against an explicit option
   if (multiple !== undefined) {
     checkMultipleDefault({ defaultValue, multiple, context, collectors });
+  }
+
+  // The `duplicate_if_empty` i18n strategy only supports a single file, so a field taking several
+  // works like a translatable one
+  if (multiple === true && i18n === 'duplicate_if_empty') {
+    addMessage({ type: 'warning', strKey: 'duplicate_if_empty_multiple', context, collectors });
   }
 
   // Collect media folder information for later processing

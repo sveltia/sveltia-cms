@@ -128,8 +128,13 @@ export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPat
 
     // Reset the field value to the default value or an empty string if the field is a text-like
     // field type and i18n is enabled, because the content would likely be translated by the user.
-    // Otherwise, the content would be copied from the default locale.
-    if (TEXT_FIELD_TYPES.includes(fieldType) && isFieldTranslatable(i18n)) {
+    // Otherwise, the content would be copied from the default locale. A `duplicate_if_empty` field
+    // keeps the default locale’s value until the user enters one of their own
+    if (
+      TEXT_FIELD_TYPES.includes(fieldType) &&
+      isFieldTranslatable(i18n) &&
+      i18n !== 'duplicate_if_empty'
+    ) {
       newContent[keyPath] = content[keyPath] ?? '';
     }
 
