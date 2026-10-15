@@ -36,6 +36,7 @@
   import { listItemClipboardToast } from '$lib/services/contents/editor';
   import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
   import { isExpanded, syncExpanderStates } from '$lib/services/contents/editor/fields';
+  import { scrollToAddedListItem } from '$lib/services/contents/editor/scroll';
   import { getMemoizedSubtree } from '$lib/services/contents/entry/subtree';
   import { getCustomFieldSummary } from '$lib/services/contents/fields/custom/preview';
   import {
@@ -266,6 +267,17 @@
    */
   let topToolbar = $state();
   /**
+   * The index of the item being added, which is rendered right away rather than once it comes into
+   * view, so it can be scrolled into view and focused at once.
+   * @type {number | undefined}
+   */
+  let addedItemIndex = $state();
+  /**
+   * The item added last, which is followed until it stays in view.
+   * @type {HTMLElement | undefined}
+   */
+  let latestAddedItem;
+  /**
    * Show a notification once an item is copied or pasted.
    * @param {typeof listItemClipboardToast.current.status} status Status.
    * @param {string} message Message.
@@ -399,6 +411,8 @@
     /** @type {Map<string, string>} */
     const renewedUuids = new Map();
 
+    addedItemIndex = index;
+
     // A replaced item keeps its position, so the removed items shown around it stay where they are
     if (!replace) {
       removedItems = shiftRemovedItems(shownRemovedItems, index);
@@ -432,21 +446,36 @@
     updateExpanderStates({ [parentExpandedKeyPath]: true });
 
     await sleep(50);
-    // Move the placeholder into view
-    getItem(index)?.scrollIntoView();
-    // Wait until the placeholder is replaced with the actual content
-    await sleep(100);
+    addedItemIndex = undefined;
 
-    // Scroll again for the sticky toolbar, which sticks below the toolbars of the rich text editors
-    // the field is in, if any
+    const item = getItem(index);
+
+    // The item is rendered right away, so this is only a race with the editor closing
+    /* v8 ignore next 3 */
+    if (!item) {
+      return;
+    }
+
+    // Leave room for the sticky toolbar, which sticks below the toolbars of the rich text editors
+    // the field is in, if any, rather than scroll back for it, which shows as a bump
     const toolbarBottom = topToolbar
       ? Number.parseFloat(getComputedStyle(topToolbar).top) +
         topToolbar.getBoundingClientRect().height
       : 0;
 
-    itemList?.closest('.content')?.scrollBy({ top: -toolbarBottom, behavior: 'instant' });
-    // Move focus to the expander button
-    getItem(index)?.querySelector('button')?.focus();
+    latestAddedItem = item;
+    item.style.scrollMarginTop = `${toolbarBottom}px`;
+    // Move focus to the expander button, without scrolling for it
+    item.querySelector('button')?.focus({ preventScroll: true });
+    await scrollToAddedListItem({
+      item,
+      list: /** @type {HTMLElement} */ (itemList),
+      /**
+       * Tell whether another item has been added since.
+       * @returns {boolean} Result.
+       */
+      isOutdated: () => item !== latestAddedItem,
+    });
   };
 
   /**
@@ -871,7 +900,7 @@
     <div role="none" class="item-wrapper" animate:flip={{ duration: 200 }}>
       <!-- The items removed from this position are shown before the item now there -->
       {@render removedItemNotices(displayIndex)}
-      <VisibilityObserver>
+      <VisibilityObserver eager={index === addedItemIndex}>
         {@const itemKeyPath = `${keyPath}.${index}`}
         {@const type = hasVariableTypes ? item[typeKey] : undefined}
         {@const { typeConfig, unknownType, subFields, summaryTemplate } = resolveType(type)}

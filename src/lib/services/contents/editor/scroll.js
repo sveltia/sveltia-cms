@@ -196,3 +196,49 @@ export const getRevealingScrollTop = ({
 
   return Math.max(0, scrollTop + offset - (viewHeight - height) / 2);
 };
+
+/**
+ * Scroll a newly added List field item into view. The fields above it are only rendered once the
+ * scroll brings them into view, which can push the item out of view again, so it’s followed until
+ * it stays in place. It’s not followed otherwise, as the editor pane doesn’t scroll smoothly, so
+ * every scroll shows as a jump, nor once the list is scrolled elsewhere.
+ * @param {object} args Arguments.
+ * @param {HTMLElement} args.item List item element, whose first child is its header.
+ * @param {HTMLElement} args.list Element containing the items.
+ * @param {() => boolean} [args.isOutdated] Function telling whether another item has been added
+ * since, in which case this one is no longer followed.
+ * @param {number} [args.maxAttempts] How many times to scroll to the item at most.
+ * @param {number} [args.interval] How long to wait for fields to render after scrolling, in
+ * milliseconds.
+ */
+export const scrollToAddedListItem = async ({
+  item,
+  list,
+  isOutdated = () => false,
+  maxAttempts = 5,
+  interval = 100,
+}) => {
+  const header = /** @type {Element} */ (item.firstElementChild);
+  /**
+   * Get the position of the item in the list, which changes as the items above it grow.
+   * @returns {number} Offset in pixels.
+   */
+  const getOffset = () => item.getBoundingClientRect().top - list.getBoundingClientRect().top;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    item.scrollIntoView();
+
+    const offset = getOffset();
+
+    // eslint-disable-next-line no-await-in-loop
+    await sleep(interval);
+
+    if (
+      isOutdated() ||
+      getOffset() === offset ||
+      header.getBoundingClientRect().bottom <= window.innerHeight
+    ) {
+      return;
+    }
+  }
+};

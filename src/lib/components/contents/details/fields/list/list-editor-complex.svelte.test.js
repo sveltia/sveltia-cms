@@ -1,5 +1,15 @@
 import { createElement } from 'react';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  onTestFinished,
+  test,
+  vi,
+} from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
@@ -129,6 +139,33 @@ describe('ListEditorComplex', () => {
       // The existing item's unset `role` is left alone by its editor, while the new item gets the
       // subfield defaults
       .toEqual([{ name: 'Melvin' }, { name: 'Anonymous', role: '' }]);
+  });
+
+  test('scrolls an item added out of view into view, moving focus to it', async () => {
+    await renderEditor(
+      authorsField,
+      Object.fromEntries(Array.from({ length: 30 }, (_, index) => [`authors.${index}.name`, 'a'])),
+    );
+
+    // Scroll instantly like the editor pane, which the item is followed in as the items above it
+    // grow, once their fields come into view
+    document.documentElement.style.scrollBehavior = 'auto';
+    onTestFinished(() => {
+      document.documentElement.style.scrollBehavior = '';
+    });
+    // Click the button without scrolling to it, as a sticky one is clicked, so the item is added
+    // far below the fold, past the items that aren’t rendered yet either
+    window.scrollTo({ top: 0 });
+    /** @type {HTMLElement} */ (
+      page.getByRole('button', { name: /Add\W+Author/ }).element()
+    ).click();
+
+    const expander = page
+      .getByRole('group', { name: 'Item 31 of 31' })
+      .getByRole('button', { name: 'Collapse' });
+
+    await expect.element(expander).toHaveFocus();
+    await expect.element(expander).toBeInViewport();
   });
 
   test('duplicates and removes an item', async () => {
