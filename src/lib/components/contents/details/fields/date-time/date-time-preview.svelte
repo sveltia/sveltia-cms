@@ -41,7 +41,7 @@
   <p lang={getCanonicalLocale(locale)} dir={getDirection(locale)}>
     {displayValue}
     {#if singleCustomTimeZone}
-      — {getTimeZoneLabel(singleCustomTimeZone, getDate(currentValue, fieldConfig))}
+      — {getTimeZoneLabel(singleCustomTimeZone, getDate(currentValue, fieldConfig, locale))}
     {:else if utc}
       — UTC
     {/if}

@@ -63,7 +63,7 @@ export const filterEntries = (entries, collection, filters, now = new Date()) =>
 
     return {
       field: conditions.field,
-      conditions: prepareConditions(conditions, { dateFieldConfig, now }),
+      conditions: prepareConditions(conditions, { dateFieldConfig, now, locale }),
     };
   });
 

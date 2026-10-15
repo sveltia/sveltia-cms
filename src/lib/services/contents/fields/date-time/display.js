@@ -14,6 +14,7 @@ import {
 } from '$lib/services/utils/date';
 
 import { parseDateTimeConfig } from './config.js';
+import { getFormatLocale } from './locales.js';
 import { getDate, isValidDate, parseWithFormatFallback } from './parse.js';
 
 /**
@@ -82,7 +83,12 @@ export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue
   }
 
   if (format) {
-    const parsed = parseWithFormatFallback({ value: currentValue, format, parseAsUTC: utc });
+    const parsed = parseWithFormatFallback({
+      value: currentValue,
+      format,
+      parseAsUTC: utc,
+      localeKey: getFormatLocale(fieldConfig, locale),
+    });
 
     if (parsed.isValid()) {
       return parsed.format(format);
@@ -94,7 +100,7 @@ export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue
     return '';
   }
 
-  const date = getDate(currentValue, fieldConfig);
+  const date = getDate(currentValue, fieldConfig, locale);
   const canonicalLocale = getCanonicalLocale(locale);
 
   if (!isValidDate(date)) {

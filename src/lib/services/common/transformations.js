@@ -7,11 +7,16 @@ import dayjsUTC from 'dayjs/plugin/utc';
 import { customStringTransformationRegistry } from '$lib/services/api/registries';
 import { slugify } from '$lib/services/common/slug';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
-import { getParser, parseWithFormatFallback } from '$lib/services/contents/fields/date-time/parse';
+import { getFormatLocale } from '$lib/services/contents/fields/date-time/locales';
+import {
+  formatInLocale,
+  getParser,
+  parseWithFormatFallback,
+} from '$lib/services/contents/fields/date-time/parse';
 import { getOrCreate, getOrCreateBounded } from '$lib/services/utils/cache';
 
 /**
- * @import { StringTransformation } from '$lib/types/private';
+ * @import { InternalLocaleCode, StringTransformation } from '$lib/types/private';
  * @import { DateTimeField, Field, StringTransformer } from '$lib/types/public';
  */
 
@@ -257,15 +262,18 @@ export const applyLowerCaseTransformation = (value) => String(value).toLowerCase
 /**
  * Transform the input value to a formatted string based on the provided format and time zone
  * options. A value other than a `Date` is parsed in the field’s own `format` if it has one,
- * falling back to the default parsing if the value doesn’t match the format.
+ * falling back to the default parsing if the value doesn’t match the format. With the field’s
+ * `localize_format` option, the value is parsed and formatted in the locale the field writes it in.
  * @param {any} value The input value to be transformed into a date string.
  * @param {DateTimeTransformationArgs} args Transformation arguments.
  * @param {DateTimeField} fieldConfig Field configuration containing date and time settings.
+ * @param {InternalLocaleCode} [locale] Locale of the content the value belongs to.
  * @returns {string} The formatted date string if valid, otherwise an empty string.
  */
-export const applyDateTransformation = (value, { format, timeZone }, fieldConfig) => {
+export const applyDateTransformation = (value, { format, timeZone }, fieldConfig, locale) => {
   const sValue = String(value);
   const { format: storedFormat, dateOnly, utc } = parseDateTimeConfig(fieldConfig);
+  const localeKey = storedFormat ? getFormatLocale(fieldConfig, locale) : undefined;
 
   const useUTC =
     timeZone === 'utc' ||
@@ -276,11 +284,16 @@ export const applyDateTransformation = (value, { format, timeZone }, fieldConfig
   const date =
     // A value in a format like `X` (Unix timestamp) can come as a number from the front matter
     storedFormat && !(value instanceof Date)
-      ? parseWithFormatFallback({ value: sValue, format: storedFormat, parseAsUTC: useUTC })
+      ? parseWithFormatFallback({
+          value: sValue,
+          format: storedFormat,
+          parseAsUTC: useUTC,
+          localeKey,
+        })
       : getParser(useUTC)(sValue);
 
   if (date.isValid()) {
-    return date.format(format);
+    return formatInLocale(date, format, localeKey);
   }
 
   return '';
@@ -396,6 +409,7 @@ export const applyTransformation = ({ fieldConfig, value, transformation, locale
         value,
         /** @type {DateTimeTransformationArgs} */ (args),
         /** @type {DateTimeField} */ (fieldConfig ?? {}),
+        locale,
       );
     case 'default':
       return applyDefaultTransformation(value, /** @type {DefaultTransformationArgs} */ (args));

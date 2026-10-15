@@ -11,6 +11,7 @@ import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
+import { getLocalizedDateTimeValue } from '$lib/services/contents/fields/date-time/value';
 import { getDuplicateKeysFieldKeyPaths } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getPairsFromContent, setPairs } from '$lib/services/contents/fields/key-value/pairs';
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
@@ -154,6 +155,17 @@ export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPat
       if (defaultValue === '{{locale}}') {
         newContent[keyPath] = targetLanguage;
       }
+    }
+
+    // A DateTime field value copied from the default locale may be written in its language with the
+    // `localize_format` option, so write it in the target locale’s
+    if (fieldType === 'datetime' && keyPath in defaultLocaleContent) {
+      newContent[keyPath] = getLocalizedDateTimeValue({
+        fieldConfig: field,
+        value: newContent[keyPath],
+        sourceLocale: defaultLocale,
+        targetLocale: targetLanguage,
+      });
     }
 
     // Remove `null` values for object fields if i18n is enabled and the field is enabled in the

@@ -49,4 +49,5 @@ export const collectors = {
   warnings: new Set(),
   mediaFields: new Set(),
   relationFields: new Set(),
+  formatLocales: new Set(),
 };

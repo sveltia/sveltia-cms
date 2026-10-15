@@ -1,5 +1,10 @@
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
-import { isCustomTimeZone } from '$lib/services/contents/fields/date-time/config';
+import {
+  isCustomTimeZone,
+  parseDateTimeConfig,
+} from '$lib/services/contents/fields/date-time/config';
+import { getDayjsLocaleKey } from '$lib/services/contents/fields/date-time/locales';
+import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 
 /**
  * @import { FieldParserArgs, UnsupportedOption } from '$lib/types/private';
@@ -67,10 +72,67 @@ const validateTimeZoneOptions = (args) => {
 };
 
 /**
+ * Validate the `localize_format` option in the DateTime field configuration, and collect the
+ * locales the field writes its values in, so their Day.js locales can be loaded.
+ * @param {FieldParserArgs} args Arguments.
+ */
+const parseLocalizeFormatOption = (args) => {
+  const { config, context, collectors } = args;
+  const fieldConfig = /** @type {DateTimeField} */ (config);
+  const { localize_format: localizeFormat } = fieldConfig;
+
+  if (!localizeFormat) {
+    return;
+  }
+
+  if (!parseDateTimeConfig(fieldConfig).format) {
+    addMessage({ type: 'warning', strKey: 'localize_format_without_format', context, collectors });
+
+    return;
+  }
+
+  if (typeof localizeFormat === 'string') {
+    if (!getDayjsLocaleKey(localizeFormat)) {
+      addMessage({
+        type: 'warning',
+        strKey: 'localize_format_unsupported_locale',
+        values: { locale: localizeFormat },
+        context,
+        collectors,
+      });
+
+      return;
+    }
+
+    collectors.formatLocales.add(localizeFormat);
+
+    return;
+  }
+
+  const { cmsConfig, collection, collectionFile: file } = context;
+
+  // An editor component’s content can be in any of the site’s locales
+  const locales = collection
+    ? (mergeI18nConfigs({ cmsConfig, collection, file })?.locales ?? [])
+    : (cmsConfig?.i18n?.locales ?? []);
+
+  if (!locales.length) {
+    addMessage({ type: 'warning', strKey: 'localize_format_without_i18n', context, collectors });
+
+    return;
+  }
+
+  locales.forEach((locale) => {
+    collectors.formatLocales.add(locale);
+  });
+};
+
+/**
  * Parse and validate a DateTime field configuration.
  * @param {FieldParserArgs} args Arguments.
  */
 export const parseDateTimeFieldConfig = (args) => {
   checkUnsupportedOptions({ ...args, UNSUPPORTED_OPTIONS });
   validateTimeZoneOptions(args);
+  parseLocalizeFormatOption(args);
 };

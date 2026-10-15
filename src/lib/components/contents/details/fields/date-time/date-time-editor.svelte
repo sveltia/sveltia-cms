@@ -76,7 +76,7 @@
       return;
     }
 
-    const _inputValue = getInputValue({ currentValue, fieldConfig, timeZone });
+    const _inputValue = getInputValue({ currentValue, fieldConfig, timeZone, locale });
 
     // Avoid a cycle dependency & infinite loop
     if (_inputValue !== undefined && _inputValue !== inputValue) {
@@ -99,10 +99,10 @@
     // value it had when it was focused would be ignored
     syncedInputValue = inputValue;
 
-    const newValue = getCurrentValue({ inputValue, currentValue, fieldConfig, timeZone });
+    const newValue = getCurrentValue({ inputValue, currentValue, fieldConfig, timeZone, locale });
 
     // Avoid a cycle dependency & infinite loop
-    if (shouldUpdateValue({ newValue, currentValue, fieldConfig })) {
+    if (shouldUpdateValue({ newValue, currentValue, fieldConfig, locale })) {
       currentValue = /** @type {string} */ (newValue);
     }
   };
@@ -183,7 +183,7 @@
 
   {#if singleCustomTimeZone}
     <div role="none" class="timezone">
-      {getTimeZoneLabel(singleCustomTimeZone, getDate(currentValue, fieldConfig))}
+      {getTimeZoneLabel(singleCustomTimeZone, getDate(currentValue, fieldConfig, locale))}
     </div>
   {:else if utc}
     <div role="none" class="timezone">UTC</div>

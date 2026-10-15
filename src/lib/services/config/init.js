@@ -21,6 +21,7 @@ import { parseCmsConfig } from '$lib/services/config/parser';
 import { checkRootDirPaths } from '$lib/services/config/parser/root-dir';
 import { getConfigSchemas, validateConfigSchema } from '$lib/services/config/schema';
 import { allEntryFolders } from '$lib/services/contents';
+import { loadDayjsLocales } from '$lib/services/contents/fields/date-time/locales';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
@@ -65,6 +66,7 @@ export const initCmsConfig = async (manualConfig) => {
     warnings: new Set(),
     mediaFields: new Set(),
     relationFields: new Set(),
+    formatLocales: new Set(),
   });
 
   try {
@@ -128,6 +130,10 @@ export const initCmsConfig = async (manualConfig) => {
         collection.folder = '';
       }
     });
+
+    // DateTime field values are parsed and formatted synchronously, so the locales they’re written
+    // in have to be ready before the content is loaded
+    await loadDayjsLocales(collectors.formatLocales);
 
     cmsConfig.current = config;
     updateFolders(config);

@@ -14,7 +14,7 @@ import { syncDuplicateKeys } from '$lib/services/contents/fields/key-value/dupli
 import { alignPairOrder } from '$lib/services/contents/fields/key-value/pairs';
 import { hasRequiredSingleItem } from '$lib/services/contents/fields/list/defaults';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
-import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
+import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
 
 /**
  * @import {
@@ -326,9 +326,10 @@ const copyFromDefaultLocale = ({
 
   keys.forEach((key) => {
     // The copied value may be a Relation field value holding the source locale as a prefix, which
-    // has to be replaced with the target locale. A `multiple` Relation field stores each value
-    // under a numbered key path, so every copied key is localized the same way
-    content[key] = getLocalizedRelationValue({
+    // has to be replaced with the target locale, or a DateTime field value written in the source
+    // locale. A `multiple` Relation field stores each value under a numbered key path, so every
+    // copied key is localized the same way
+    content[key] = getLocalizedFieldValue({
       fieldConfig: field,
       value: defaultLocaleContent[key],
       sourceLocale: defaultLocale,

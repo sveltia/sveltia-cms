@@ -39,9 +39,10 @@ dayjs.extend(dayjsUTC);
  * @param {string} [args.dateFieldName] Date field name.
  * @param {Field[]} args.fields Fields.
  * @param {FlattenedEntryContent} args.content Entry content.
+ * @param {InternalLocaleCode} [args.locale] Locale of the content.
  * @returns {Record<string, string> | undefined} Date and time parts.
  */
-export const extractDateTime = ({ dateFieldName, fields, content }) => {
+export const extractDateTime = ({ dateFieldName, fields, content, locale }) => {
   const fieldConfig = dateFieldName
     ? fields.find(({ widget, name }) => widget === 'datetime' && name === dateFieldName)
     : fields.find(({ widget }) => widget === 'datetime');
@@ -53,7 +54,7 @@ export const extractDateTime = ({ dateFieldName, fields, content }) => {
   }
 
   const config = /** @type {DateTimeField} */ (fieldConfig);
-  const date = getDate(fieldValue, config);
+  const date = getDate(fieldValue, config, locale);
 
   if (!isValidDate(date)) {
     return undefined;
@@ -104,7 +105,7 @@ export const fillEntryPathTemplate = ({
   let dateTimeParts;
 
   if (DATE_TIME_TEMPLATE_REGEX.test(pathTemplate)) {
-    dateTimeParts = extractDateTime({ dateFieldName, fields, content });
+    dateTimeParts = extractDateTime({ dateFieldName, fields, content, locale });
 
     // Cannot generate a path if the date and time parts are not available
     if (!dateTimeParts) {

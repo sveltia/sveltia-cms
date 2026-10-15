@@ -663,6 +663,15 @@
  * option is not defined. If `true`, ISO 8601 format is used unless the `format` option is defined.
  * If `false`, time input/output is disabled. This option is available for backward compatibility
  * with Netlify CMS; use the `format` or `type` option instead.
+ * @property {boolean | LocaleCode} [localize_format] Whether to write the month and weekday names,
+ * the AM/PM marker and other locale-dependent parts of the `format` in a language other than
+ * English. If `true`, the locale of the content the value belongs to is used, so each locale of an
+ * i18n-enabled entry gets the value in its own language, and a value copied to another locale, as
+ * with the `duplicate` i18n strategy, is written again in that locale. A locale code like `de` or
+ * `pt-BR` uses that locale for every value, which also works without i18n. The value is parsed in
+ * the same locale. The locale data is loaded from a CDN, or bundled with the npm package; a locale
+ * Day.js doesn’t support falls back to English. Ignored without a custom format, as an ISO 8601
+ * value doesn’t depend on the locale. Default: `false`.
  * @property {boolean} [picker_utc] Whether to make the date input/output UTC. Default: `false`.
  * This option is available for backward compatibility with Netlify/Decap CMS. The newer
  * `input_timezone` and `output_utc` options provide more flexibility and supersede this option when
@@ -687,7 +696,7 @@
  * added to an existing entry. `[create]` suits a creation date, and `true` a last modified date.
  * The value is formatted like the `{{now}}` default value, with seconds, but set at save time
  * rather than when a draft is created. The field is shown as text, isn’t validated, and is hidden
- * while an entry is being created. The value is shared by all locales. The option is ignored in a
+ * while an entry is being created. The time is shared by all locales. The option is ignored in a
  * rich text editor component. Default: `false`.
  * @see https://decapcms.org/docs/widgets/#Datetime
  * @see https://sveltiacms.app/en/docs/fields/datetime

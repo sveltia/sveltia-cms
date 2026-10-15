@@ -286,4 +286,119 @@ describe('DateTime Field Parser', () => {
       );
     });
   });
+
+  describe('localize_format option', () => {
+    /**
+     * Parse a DateTime field with the given options.
+     * @param {Record<string, any>} options Field options.
+     * @param {object} [contextOverrides] Context overrides.
+     * @returns {Promise<ReturnType<typeof createCollectors>>} Collectors.
+     */
+    const parse = async (options, contextOverrides = {}) => {
+      const { parseDateTimeFieldConfig } = await import('./datetime.js');
+      const collectors = createCollectors();
+
+      parseDateTimeFieldConfig({
+        config: { name: 'date', widget: 'datetime', ...options },
+        context: createContext(contextOverrides),
+        collectors,
+      });
+
+      return collectors;
+    };
+
+    const i18nContext = {
+      cmsConfig: { i18n: { structure: 'multiple_files', locales: ['en', 'de', 'ja'] } },
+      collection: { name: 'posts', label: 'Posts', i18n: true },
+    };
+
+    it('does nothing without the option', async () => {
+      const collectors = await parse({ format: 'D MMMM YYYY', localize_format: false });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+      expect([...collectors.formatLocales]).toEqual([]);
+    });
+
+    it('collects a locale given as the option', async () => {
+      const collectors = await parse({ format: 'D MMMM YYYY', localize_format: 'pt-BR' });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+      expect([...collectors.formatLocales]).toEqual(['pt-BR']);
+    });
+
+    it('also takes the date format', async () => {
+      const collectors = await parse({ date_format: 'D MMMM YYYY', localize_format: 'de' });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+      expect([...collectors.formatLocales]).toEqual(['de']);
+    });
+
+    it('warns about a locale Day.js doesn’t support', async () => {
+      const collectors = await parse({ format: 'D MMMM YYYY', localize_format: 'xx' });
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'warning',
+          strKey: 'localize_format_unsupported_locale',
+          values: { locale: 'xx' },
+        }),
+      );
+      expect([...collectors.formatLocales]).toEqual([]);
+    });
+
+    it('warns about the option without a custom format', async () => {
+      const collectors = await parse({ localize_format: true }, i18nContext);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'warning', strKey: 'localize_format_without_format' }),
+      );
+      expect([...collectors.formatLocales]).toEqual([]);
+    });
+
+    it('collects the locales of the collection with `true`', async () => {
+      const collectors = await parse(
+        { format: 'D MMMM YYYY', localize_format: true },
+        {
+          ...i18nContext,
+          collection: { ...i18nContext.collection, i18n: { locales: ['en', 'de'] } },
+        },
+      );
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+      expect([...collectors.formatLocales]).toEqual(['en', 'de']);
+    });
+
+    it('collects the locales of the site for an editor component with `true`', async () => {
+      const collectors = await parse(
+        { format: 'D MMMM YYYY', localize_format: true },
+        { cmsConfig: i18nContext.cmsConfig, collection: undefined, componentName: 'event' },
+      );
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+      expect([...collectors.formatLocales]).toEqual(['en', 'de', 'ja']);
+    });
+
+    it('warns about `true` in a collection without i18n', async () => {
+      const collectors = await parse(
+        { format: 'D MMMM YYYY', localize_format: true },
+        { cmsConfig: i18nContext.cmsConfig },
+      );
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'warning', strKey: 'localize_format_without_i18n' }),
+      );
+      expect([...collectors.formatLocales]).toEqual([]);
+    });
+
+    it('warns about `true` in an editor component on a site without i18n', async () => {
+      await parse(
+        { format: 'D MMMM YYYY', localize_format: true },
+        { collection: undefined, componentName: 'event' },
+      );
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'warning', strKey: 'localize_format_without_i18n' }),
+      );
+    });
+  });
 });

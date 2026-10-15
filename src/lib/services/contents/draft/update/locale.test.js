@@ -8,6 +8,7 @@ import {
 } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getLocalizedDateTimeValue } from '$lib/services/contents/fields/date-time/value';
 import { useActualDraftFieldArgs } from '$lib/test/fields';
 
 import {
@@ -19,6 +20,10 @@ import {
 vi.mock('$lib/services/contents/draft/create/proxy.svelte');
 vi.mock('$lib/services/contents/draft/defaults');
 vi.mock('$lib/services/contents/entry/fields');
+vi.mock('$lib/services/contents/fields/date-time/value', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
+  getLocalizedDateTimeValue: vi.fn(({ value, targetLocale }) => `${value} (${targetLocale})`),
+}));
 
 await useActualDraftFieldArgs();
 
@@ -332,6 +337,28 @@ describe('draft/update/locale', () => {
       // A Compute field generating UUIDs is cleared to be resolved again, but not any other one
       expect(result.key).toBe('');
       expect(result.label).toBe('English Title');
+    });
+
+    it('writes a DateTime field value copied from the default locale in the target locale', () => {
+      /** @type {Record<string, any>} */
+      const fieldMap = {
+        date: { name: 'date', widget: 'datetime', i18n: 'duplicate', localize_format: true },
+        title: { name: 'title', widget: 'string', i18n: true },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fieldMap[keyPath]);
+      mockEntryDraft.currentValues.en = { date: '1 March 2026', title: 'Launch' };
+
+      const result = copyDefaultLocaleValues({}, 'fr');
+
+      expect(result.date).toBe('1 March 2026 (fr)');
+      expect(getLocalizedDateTimeValue).toHaveBeenCalledOnce();
+      expect(getLocalizedDateTimeValue).toHaveBeenCalledWith({
+        fieldConfig: fieldMap.date,
+        value: '1 March 2026',
+        sourceLocale: 'en',
+        targetLocale: 'fr',
+      });
     });
 
     it('should remove i18n disabled fields', () => {

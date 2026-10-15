@@ -93,7 +93,7 @@ const groupEntriesByComparison = (entries, collection, conditions, now) => {
   const dateFieldConfig =
     fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
 
-  const prepared = prepareConditions(conditions, { dateFieldConfig, now });
+  const prepared = prepareConditions(conditions, { dateFieldConfig, now, locale });
 
   // The conditions are what the view holds, so the label has to be looked up. It can be missing
   // from a group that has been removed from the configuration since the view was saved

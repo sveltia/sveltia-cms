@@ -510,7 +510,7 @@ describe('Test getEntrySummary()', () => {
 
   test('covers locales fallback when requested locale is undefined (line 211)', () => {
     // Create entry where first locale doesn't match requested locale
-    // Force the ternary: locales[undefined ?? defaultLocale] ?? Object.values(locales)[0] ?? {}
+    // Force the ternary: the requested locale, or the first one the entry has
     const entryWithMultipleLocales = {
       ...entry,
       slug: 'test-slug',
@@ -529,7 +529,7 @@ describe('Test getEntrySummary()', () => {
     });
 
     // With defaultLocale='de', tries to find 'de' locale
-    // Doesn't exist, so falls back to Object.values(locales)[0] which is 'fr' locale
+    // Doesn't exist, so falls back to the first locale the entry has, which is 'fr'
     expect(result).toContain('French');
   });
 });
@@ -1195,7 +1195,7 @@ describe('Test replace()', () => {
         email: 'john@example.com',
       },
     },
-    defaultLocale: 'en',
+    locale: 'en',
   };
 
   test('should replace slug placeholder', () => {
@@ -1379,7 +1379,7 @@ describe('Test replace()', () => {
         ...context.replaceSubContext,
         locales: ['en'],
       },
-      defaultLocale: 'en',
+      locale: 'en',
     };
 
     // 'missingField' doesn't exist in replaceSub (returns undefined)
@@ -1666,7 +1666,7 @@ describe('Additional comprehensive tests for edge cases', () => {
         commitDate: undefined,
         commitAuthor: { name: '', login: '', email: '' },
       },
-      defaultLocale: 'en',
+      locale: 'en',
     };
 
     const result = replace('commit_author', context);
@@ -1701,7 +1701,7 @@ describe('Additional comprehensive tests for edge cases', () => {
         commitDate: undefined,
         commitAuthor: undefined,
       },
-      defaultLocale: 'en',
+      locale: 'en',
     };
 
     // Note: This depends on how transformations are applied
@@ -1782,7 +1782,7 @@ describe('Additional comprehensive tests for edge cases', () => {
           email: 'john@example.com',
         },
       },
-      defaultLocale: 'en',
+      locale: 'en',
     };
 
     // Regular field with no special transformation, not in replaceSub
@@ -1834,7 +1834,7 @@ describe('Additional comprehensive tests for edge cases', () => {
           email: 'john@example.com',
         },
       },
-      defaultLocale: 'en',
+      locale: 'en',
     };
 
     // With ternary transformation on falsy value, should use valueMap

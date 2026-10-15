@@ -3,7 +3,7 @@ import { isAutoDuplicationEnabled } from '$lib/services/contents/draft';
 import { createValueMap } from '$lib/services/contents/draft/create/versioned-map.svelte';
 import { revalidateField } from '$lib/services/contents/draft/validate/fields';
 import { getField } from '$lib/services/contents/entry/fields';
-import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
+import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -174,7 +174,7 @@ export const copyDefaultLocaleValue = ({
     }
 
     // Keep the source `value` intact, as it’s used for the remaining target locales
-    const localizedValue = getLocalizedRelationValue({
+    const localizedValue = getLocalizedFieldValue({
       fieldConfig,
       value,
       sourceLocale: sourceLanguage,

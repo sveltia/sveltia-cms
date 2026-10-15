@@ -2221,6 +2221,12 @@ config:
     publish_mode_stages_ignored: The `stages` option of `publish_mode` only applies to the `editorial_workflow` publish mode, so it’s ignored with `{$type}`.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Both `picker_utc` and newer timezone options (`input_timezone` or `output_utc`) are set. The new options take precedence. Consider removing `picker_utc` from your configuration.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: The `localize_format` option has no effect, because the field has no `format` option and its value is stored in the ISO 8601 format.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: The `localize_format` option is `true`, but i18n isn’t enabled for the collection, so the value is written in English. Set the option to a locale code like `de` instead.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: The `localize_format` option is set to `{$locale}`, which isn’t a supported locale, so the value is written in English.
     # Don’t localize `preview_path`
     preview_path_no_date_field: The `preview_path` option uses date and time tags, but the collection has no DateTime field to read them from, so the preview link won’t be shown.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`

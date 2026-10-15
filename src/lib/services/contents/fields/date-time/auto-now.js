@@ -54,23 +54,25 @@ const isAutoNowDue = ({ stages, isNew, value }) =>
 
 /**
  * Set the DateTime fields with the `auto_now` option to the current date/time in the draft’s
- * current values, if the option covers the stage being saved. The value isn’t localized, so every
- * locale gets the same one. A field in a rich text editor component isn’t covered, because its
- * value is stored in the Markdown rather than in the draft’s values; the option is ignored there.
+ * current values, if the option covers the stage being saved. Every locale gets the same time,
+ * written in the locale with the `localize_format` option. A field in a rich text editor component
+ * isn’t covered, because its value is stored in the Markdown rather than in the draft’s values; the
+ * option is ignored there.
  * @param {EntryDraft} draft Draft to mutate in place.
  */
 export const assignAutoNowValues = (draft) => {
   const { isNew, collectionName, fileName, isIndexFile, currentValues } = draft;
   // Take the time once, so every field, locale and list item saved together gets the same one
   const date = new Date();
-  /**
-   * Values keyed by field configuration, so a field shared by locales and list items is only
-   * formatted once.
-   * @type {Map<Field, string>}
-   */
-  const valueCache = new Map();
 
-  Object.values(currentValues).forEach((valueMap) => {
+  Object.entries(currentValues).forEach(([locale, valueMap]) => {
+    /**
+     * Values keyed by field configuration, so a field shared by list items is only formatted once
+     * per locale.
+     * @type {Map<Field, string>}
+     */
+    const valueCache = new Map();
+
     Object.entries(valueMap).forEach(([keyPath, value]) => {
       const fieldConfig = getField({ collectionName, fileName, keyPath, valueMap, isIndexFile });
 
@@ -79,6 +81,7 @@ export const assignAutoNowValues = (draft) => {
           getCurrentStorableValue(/** @type {DateTimeField} */ (fieldConfig), {
             date,
             includeSeconds: true,
+            locale,
           }),
         );
       }

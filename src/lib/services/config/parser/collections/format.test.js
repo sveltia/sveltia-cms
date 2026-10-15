@@ -630,6 +630,7 @@ describe('checkBodyField', () => {
     warnings: new Set(),
     mediaFields: new Set(),
     relationFields: new Set(),
+    formatLocales: new Set(),
   };
 
   const context = { collection: /** @type {any} */ ({ name: 'posts' }) };

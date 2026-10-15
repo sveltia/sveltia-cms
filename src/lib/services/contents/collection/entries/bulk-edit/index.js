@@ -21,6 +21,7 @@ import {
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
+import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { isValueEmpty } from '$lib/services/utils/object';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
@@ -144,8 +145,9 @@ export const countBulkEdits = (edits) =>
 
 /**
  * Apply the pending edits to a copy of an entry. A field with the `duplicate` i18n option gets the
- * same value in every locale that has content, as it does in the entry editor; any other field is
- * only changed in the default locale. The DateTime fields with the `auto_now` option are updated
+ * same value in every locale that has content, localized for each the way the entry editor copies
+ * it, e.g. a DateTime field value written in the locale; any other field is only changed in the
+ * default locale. The DateTime fields with the `auto_now` option are updated
  * too, as a save in the entry editor would.
  * @param {object} args Arguments.
  * @param {InternalEntryCollection} args.collection Entry collection.
@@ -167,8 +169,15 @@ export const applyBulkEdits = ({ collection, entry, entryEdits }) => {
     const fieldConfig = collection.fields.find(({ name }) => name === keyPath);
 
     Object.entries(currentValues).forEach(([locale, content]) => {
-      if (locale === defaultLocale || fieldConfig?.i18n === 'duplicate') {
+      if (locale === defaultLocale) {
         content[keyPath] = value;
+      } else if (fieldConfig?.i18n === 'duplicate') {
+        content[keyPath] = getLocalizedFieldValue({
+          fieldConfig,
+          value,
+          sourceLocale: defaultLocale,
+          targetLocale: locale,
+        });
       }
     });
   });

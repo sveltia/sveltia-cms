@@ -10,7 +10,7 @@ import { getCurrentStorableValue } from '$lib/services/contents/fields/date-time
  * @param {GetDefaultValueMapFuncArgs} args Arguments.
  * @returns {string} Default value.
  */
-const getDefaultValue = ({ fieldConfig, dynamicValue }) => {
+const getDefaultValue = ({ fieldConfig, dynamicValue, locale }) => {
   const config = /** @type {DateTimeField} */ (fieldConfig);
   const defaultValue = config.default;
   const value = dynamicValue ?? defaultValue;
@@ -24,7 +24,7 @@ const getDefaultValue = ({ fieldConfig, dynamicValue }) => {
   // @see https://github.com/decaporg/decap-cms/releases/tag/decap-cms%403.3.0
   // @see https://github.com/decaporg/decap-website/commit/01e54d8392e368e5d7b9fec307f50af584b12c91
   if (value === '{{now}}') {
-    return getCurrentStorableValue(config);
+    return getCurrentStorableValue(config, { locale });
   }
 
   return value;

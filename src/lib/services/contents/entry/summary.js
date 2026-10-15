@@ -52,7 +52,8 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * @property {FlattenedEntryContent} content Entry content.
  * @property {string} collectionName Collection name.
  * @property {ReplacerSubContext} replaceSubContext Context for the `replaceSub` function.
- * @property {InternalLocaleCode} defaultLocale Default locale.
+ * @property {InternalLocaleCode} locale Locale of the content, which a field value is displayed
+ * and transformed in: a DateTime field value may be written in it.
  * @property {string | undefined} [fallbackSummary] Fallback summary for the entry.
  */
 
@@ -232,14 +233,7 @@ let relationLabelResolved = false;
  * @returns {string} Replaced string.
  */
 export const replace = (placeholder, context) => {
-  const {
-    content: valueMap,
-    collectionName,
-    replaceSubContext,
-    defaultLocale,
-    fallbackSummary,
-  } = context;
-
+  const { content: valueMap, collectionName, replaceSubContext, locale, fallbackSummary } = context;
   const { value: tag, transformations: parsedTransformations } = parseTransformations(placeholder);
   const keyPath = stripFieldTagPrefix(tag);
   const getFieldArgs = { collectionName, valueMap, keyPath };
@@ -263,7 +257,7 @@ export const replace = (placeholder, context) => {
         relationLabelResolved = true;
       }
 
-      value = getFieldDisplayValue({ ...getFieldArgs, locale: defaultLocale });
+      value = getFieldDisplayValue({ ...getFieldArgs, locale });
     }
 
     // If the field is `title` and the value is empty, use the fallback summary if available
@@ -287,7 +281,7 @@ export const replace = (placeholder, context) => {
       fieldConfig: getField({ ...getFieldArgs }),
       value,
       transformations,
-      locale: defaultLocale,
+      locale,
     });
   }
 
@@ -371,9 +365,14 @@ const formatEntrySummary = (
 
   const summaryTemplate = template ?? collectionSummaryTemplate;
   const { locales, slug, commitDate, commitAuthor } = entry;
+  const requestedLocale = locale ?? defaultLocale;
 
-  const { content = {}, path: entryPath = '' } =
-    locales[locale ?? defaultLocale] ?? Object.values(locales)[0] ?? {};
+  // An entry may lack the locale, e.g. one only written in another locale
+  const contentLocale = Object.hasOwn(locales, requestedLocale)
+    ? requestedLocale
+    : (Object.keys(locales)[0] ?? requestedLocale);
+
+  const { content = {}, path: entryPath = '' } = locales[contentLocale] ?? {};
 
   const fallbackSummary =
     getEntrySummaryFromContent(content, { identifierField }) || slug.replaceAll('-', ' ');
@@ -396,7 +395,7 @@ const formatEntrySummary = (
       commitDate,
       commitAuthor,
     },
-    defaultLocale,
+    locale: contentLocale,
     fallbackSummary,
   };
 

@@ -345,6 +345,13 @@ describe('applyBulkEdits()', () => {
         { name: 'title', widget: 'string', i18n: true },
         { name: 'draft', widget: 'boolean', i18n: 'duplicate' },
         { name: 'rank', widget: 'number' },
+        {
+          name: 'tag',
+          widget: 'relation',
+          collection: 'tags',
+          value_field: '{{locale}}/{{slug}}',
+          i18n: 'duplicate',
+        },
       ],
       _i18n: {
         i18nEnabled: true,
@@ -369,11 +376,18 @@ describe('applyBulkEdits()', () => {
     const updated = applyBulkEdits({
       collection,
       entry,
-      entryEdits: { title: 'B', draft: true, rank: 2, unknown: 'x' },
+      entryEdits: { title: 'B', draft: true, rank: 2, tag: 'en/food', unknown: 'x' },
     });
 
-    expect(updated.locales.en.content).toEqual({ title: 'B', draft: true, rank: 2, unknown: 'x' });
-    expect(updated.locales.fr.content).toEqual({ title: 'Á', draft: true });
+    expect(updated.locales.en.content).toEqual({
+      title: 'B',
+      draft: true,
+      rank: 2,
+      tag: 'en/food',
+      unknown: 'x',
+    });
+    // A duplicated value is localized for the locale
+    expect(updated.locales.fr.content).toEqual({ title: 'Á', draft: true, tag: 'fr/food' });
     // A locale without content is kept as is
     expect(updated.locales.de).toEqual({
       slug: 'a',

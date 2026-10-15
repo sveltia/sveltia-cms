@@ -5,8 +5,10 @@ import dayjsTimeZone from 'dayjs/plugin/timezone';
 import dayjsUTC from 'dayjs/plugin/utc';
 
 import { parseDateTimeConfig } from './config.js';
+import { getFormatLocale } from './locales.js';
 
 /**
+ * @import { InternalLocaleCode } from '$lib/types/private';
  * @import { DateTimeField } from '$lib/types/public';
  */
 
@@ -35,14 +37,28 @@ export const getParser = (utc) => (utc ? dayjs.utc : dayjs);
  * @param {string} args.value Value to parse.
  * @param {string} args.format Format string.
  * @param {boolean} args.parseAsUTC Whether to parse as UTC.
+ * @param {string} [args.localeKey] Day.js locale the value is written in, as returned by
+ * `getFormatLocale()`. English if omitted. The parsed instance formats in the same locale.
  * @returns {dayjs.Dayjs} Parsed dayjs instance.
  */
-export const parseWithFormatFallback = ({ value, format, parseAsUTC }) => {
+export const parseWithFormatFallback = ({ value, format, parseAsUTC, localeKey }) => {
   const parse = getParser(parseAsUTC);
-  const parsed = parse(value, format);
+  // The UTC parser takes a locale like `dayjs()` does, though its type doesn’t say so
+  const parsed = /** @type {typeof dayjs} */ (parse)(value, format, localeKey);
 
   return parsed.isValid() ? parsed : parse(value);
 };
+
+/**
+ * Format a Day.js instance in the given locale.
+ * @param {dayjs.Dayjs} instance Day.js instance.
+ * @param {string} format Format string.
+ * @param {string} [localeKey] Day.js locale, as returned by `getFormatLocale()`. If omitted, the
+ * instance’s own locale is used, which is English unless it was parsed in another.
+ * @returns {string} Formatted value.
+ */
+export const formatInLocale = (instance, format, localeKey) =>
+  (localeKey ? instance.locale(localeKey) : instance).format(format);
 
 /**
  * Match a value ending in a time followed by a UTC offset, like `10:30:00Z` or `10:30+09:00`. A
@@ -91,9 +107,11 @@ const parseISODate = (value, timeZone) => {
  * `input_timezone` set to one; and the browser’s otherwise. A date without a time is read as is.
  * @param {string | undefined} currentValue Value in the entry draft datastore.
  * @param {DateTimeField} fieldConfig Field configuration.
+ * @param {InternalLocaleCode} [locale] Locale of the content the value belongs to, which a value in
+ * a custom format is written in with `localize_format: true`.
  * @returns {Date | undefined} Date or `undefined` if invalid.
  */
-export const getDate = (currentValue, fieldConfig) => {
+export const getDate = (currentValue, fieldConfig, locale) => {
   const { format, dateOnly, timeOnly, utc, outputUTC, singleCustomTimeZone } =
     parseDateTimeConfig(fieldConfig);
 
@@ -108,6 +126,8 @@ export const getDate = (currentValue, fieldConfig) => {
   let date;
 
   if (format) {
+    const localeKey = getFormatLocale(fieldConfig, locale);
+
     if (timeZone === 'UTC' || !timeZone) {
       // A value stored in the custom format carries no time zone, so it has to be parsed in the
       // field’s explicitly — otherwise the browser’s local offset is applied and the epoch is wrong
@@ -115,11 +135,12 @@ export const getDate = (currentValue, fieldConfig) => {
         value: currentValue,
         format,
         parseAsUTC: timeZone === 'UTC',
+        localeKey,
       });
 
       date = parsed.isValid() ? parsed.toDate() : undefined;
     } else {
-      const wallTime = dayjs.utc(currentValue, format);
+      const wallTime = /** @type {typeof dayjs} */ (dayjs.utc)(currentValue, format, localeKey);
 
       date = !wallTime.isValid()
         ? // The value isn’t in the custom format, e.g. an ISO 8601 value written before the format

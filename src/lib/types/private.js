@@ -2201,6 +2201,8 @@
  * @property {Set<string>} warnings Collected warning messages.
  * @property {Set<CollectedMediaField>} mediaFields Collected media fields.
  * @property {Set<CollectedRelationField>} relationFields Collected relation fields.
+ * @property {Set<string>} formatLocales Locale codes DateTime fields write their values in with the
+ * `localize_format` option, whose Day.js locales are loaded before the content is.
  */
 
 /**

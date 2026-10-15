@@ -76,7 +76,7 @@ export const getSortKeyGetter = ({
   if (dateFieldConfig) {
     return (/** @type {Entry} */ entry) => {
       const raw = getPropertyValue({ entry, locale, collectionName, key });
-      const time = getDate(raw, dateFieldConfig)?.getTime() ?? NaN;
+      const time = getDate(raw, dateFieldConfig, locale)?.getTime() ?? NaN;
 
       // A date that can’t be parsed is no better than a missing one
       return Number.isNaN(time) ? undefined : time;

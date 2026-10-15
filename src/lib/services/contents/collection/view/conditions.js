@@ -13,6 +13,7 @@ import { getRegex } from '$lib/services/utils/regex';
 
 /**
  * @import { ViewConditions } from '$lib/services/common/view';
+ * @import { InternalLocaleCode } from '$lib/types/private';
  * @import { DateTimeField, ViewComparisonValue } from '$lib/types/public';
  */
 
@@ -40,6 +41,8 @@ import { getRegex } from '$lib/services/utils/regex';
  * @property {PreparedComparison[]} comparisons Comparisons to be satisfied.
  * @property {DateTimeField | undefined} dateFieldConfig DateTime field configuration, if the
  * target field is a DateTime field.
+ * @property {InternalLocaleCode | undefined} locale Locale of the entry values the conditions are
+ * tested against, which a DateTime field value may be written in.
  */
 
 /**
@@ -128,9 +131,10 @@ const isLocalDateTime = (dateFieldConfig) => {
  * Parse a value as a date the way the target field’s value is parsed.
  * @param {any} value Field value or resolved comparison value.
  * @param {DateTimeField | undefined} dateFieldConfig DateTime field configuration, if any.
+ * @param {InternalLocaleCode} [locale] Locale the value may be written in.
  * @returns {Date | undefined} Date, or `undefined` if the value can’t be parsed.
  */
-const toDate = (value, dateFieldConfig) => {
+const toDate = (value, dateFieldConfig, locale) => {
   if (value instanceof Date) {
     return isValidDate(value) ? value : undefined;
   }
@@ -154,7 +158,7 @@ const toDate = (value, dateFieldConfig) => {
   }
 
   if (dateFieldConfig) {
-    return getDate(String(value), dateFieldConfig);
+    return getDate(String(value), dateFieldConfig, locale);
   }
 
   const date = new Date(value);
@@ -178,20 +182,21 @@ const isNumberLike = (value) =>
  * @param {any} args.target Prepared target value.
  * @param {DateTimeField | undefined} args.dateFieldConfig DateTime field configuration, if the
  * target field is a DateTime field.
+ * @param {InternalLocaleCode} [args.locale] Locale the DateTime field value may be written in.
  * @returns {number | undefined} Negative if the value is less than the target, positive if
  * greater, zero if equal, or `undefined` if the two can’t be compared, which never satisfies the
  * operator. The two are compared as dates if the field is a DateTime field or either side is a
  * `Date`, such as an entry’s `commit_date` or the `{{now}}` tag, as numbers if both are numeric,
  * and as strings otherwise.
  */
-const compareValues = ({ value, target, dateFieldConfig }) => {
+const compareValues = ({ value, target, dateFieldConfig, locale }) => {
   if (value === undefined || value === null || target === undefined || target === null) {
     return undefined;
   }
 
   if (dateFieldConfig || value instanceof Date || target instanceof Date) {
-    const date = toDate(value, dateFieldConfig);
-    const targetDate = toDate(target, dateFieldConfig);
+    const date = toDate(value, dateFieldConfig, locale);
+    const targetDate = toDate(target, dateFieldConfig, locale);
 
     return date && targetDate ? date.getTime() - targetDate.getTime() : undefined;
   }
@@ -229,9 +234,14 @@ const isEqual = (value, target) =>
  * field is a DateTime field. The target of an ordinal comparison is then parsed as a date once,
  * rather than for every entry.
  * @param {Date} [options.now] Current date and time, which the template tags resolve to.
+ * @param {InternalLocaleCode} [options.locale] Locale of the entry values the conditions are tested
+ * against, which a DateTime field value may be written in with the `localize_format` option.
  * @returns {PreparedConditions} Prepared conditions.
  */
-export const prepareConditions = (conditions, { dateFieldConfig, now = new Date() } = {}) => {
+export const prepareConditions = (
+  conditions,
+  { dateFieldConfig, now = new Date(), locale = undefined } = {},
+) => {
   const pattern = resolveComparisonValue(conditions.pattern, now);
 
   const comparisons = COMPARISON_OPERATORS.filter(
@@ -255,13 +265,13 @@ export const prepareConditions = (conditions, { dateFieldConfig, now = new Date(
     const target = resolveComparisonValue(value, now);
 
     if (dateFieldConfig && operator !== 'eq' && operator !== 'ne') {
-      return { operator, target: toDate(target, dateFieldConfig) };
+      return { operator, target: toDate(target, dateFieldConfig, locale) };
     }
 
     return { operator, target };
   });
 
-  return { pattern, regex: getRegex(pattern), comparisons, dateFieldConfig };
+  return { pattern, regex: getRegex(pattern), comparisons, dateFieldConfig, locale };
 };
 
 /**
@@ -282,7 +292,7 @@ export const prepareConditions = (conditions, { dateFieldConfig, now = new Date(
  * @see https://github.com/sveltia/sveltia-cms/issues/1004
  */
 export const matchesConditions = ({ rawValue, refValue, conditions }) => {
-  const { pattern, regex, comparisons, dateFieldConfig } = conditions;
+  const { pattern, regex, comparisons, dateFieldConfig, locale } = conditions;
   const rawValues = [rawValue].flat().filter((value) => value !== undefined);
 
   // A label that can’t be resolved falls back to the stored value, so the two lists can overlap
@@ -310,7 +320,7 @@ export const matchesConditions = ({ rawValue, refValue, conditions }) => {
 
       default:
         return rawValues.some((value) => {
-          const result = compareValues({ value, target, dateFieldConfig });
+          const result = compareValues({ value, target, dateFieldConfig, locale });
 
           if (result === undefined) {
             return false;

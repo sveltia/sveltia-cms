@@ -422,6 +422,20 @@ export const serveSite = async (context, { config, siteOrigin, baseURL }) => {
       });
     },
   );
+  // A DateTime field with the `localize_format` option loads its Day.js locale from the CDN; serve
+  // the installed copy. A locale module imports Day.js by a relative path without the extension,
+  // which the CDN resolves to the `.js` file
+  await context.route(/^https:\/\/unpkg\.com\/dayjs@[^/]+\/esm\//, async (route) => {
+    const path = new URL(route.request().url()).pathname
+      .replace(/^\/dayjs@[^/]+\//, '')
+      .replace(/(?<!\.js)$/, '.js');
+
+    await route.fulfill({
+      contentType: 'text/javascript',
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: await readFile(new URL(`../../node_modules/dayjs/${path}`, import.meta.url)),
+    });
+  });
   // The CMS adds a cache-busting query to the URL, hence the trailing wildcard. A sign-in popup
   // opens the CMS as well, so the config is served to every page of the browser context. Routes
   // added later take precedence, so this one is answered rather than passed on to the server
