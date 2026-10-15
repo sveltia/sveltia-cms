@@ -214,6 +214,10 @@
    * @type {HTMLElement | undefined}
    */
   let itemList = $state();
+  /**
+   * @type {HTMLElement | undefined}
+   */
+  let topToolbar = $state();
 
   /**
    * Update the expander states of the list and its items.
@@ -339,8 +343,15 @@
     getItem(index)?.scrollIntoView();
     // Wait until the placeholder is replaced with the actual content
     await sleep(100);
-    // Scroll again for the sticky toolbar
-    itemList?.closest('.content')?.scrollBy({ top: -50, behavior: 'instant' });
+
+    // Scroll again for the sticky toolbar, which sticks below the toolbars of the rich text editors
+    // the field is in, if any
+    const toolbarBottom = topToolbar
+      ? Number.parseFloat(getComputedStyle(topToolbar).top) +
+        topToolbar.getBoundingClientRect().height
+      : 0;
+
+    itemList?.closest('.content')?.scrollBy({ top: -toolbarBottom, behavior: 'instant' });
     // Move focus to the expander button
     getItem(index)?.querySelector('button')?.focus();
   };
@@ -519,7 +530,7 @@
   <div role="none" id={summaryId} hidden>{labelSingular || label || fieldName}</div>
 {/if}
 {#if !singleItem || !items.length}
-  <div role="none" class="toolbar top" class:single={singleItem}>
+  <div role="none" class="toolbar top" class:single={singleItem} bind:this={topToolbar}>
     {#if !singleItem}
       <div role="none" class="label">
         <Button

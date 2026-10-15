@@ -87,3 +87,35 @@ test('keeps the sticky header of a List field in a component below the editor to
 
   await expect(header).toBeInViewport();
 });
+
+test('scrolls a new item of a List field in a component below the sticky toolbars', async ({
+  page,
+}) => {
+  const editor = getEditor(page);
+  const list = editor.getByRole('group', { name: /3[01] Steps/ });
+  // The expander button in the header of the List field
+  const header = list.getByRole('button', { name: 'Collapse', exact: true }).first();
+
+  await page.addStyleTag({ content: '* { scroll-behavior: auto !important; }' });
+  await list
+    .getByRole('group', { name: 'Item 1 of 30' })
+    .getByRole('button', { name: 'List Item Options' })
+    .click();
+  await page.getByRole('menuitem', { name: 'Add Item Below' }).click();
+
+  const newItem = list.getByRole('group', { name: 'Item 2 of 31' });
+
+  // The expander button of the new item gets the focus once it’s scrolled into view
+  await expect(newItem.getByRole('button', { name: 'Collapse', exact: true })).toBeFocused();
+
+  // The new item used to be scrolled back only 50 pixels, which left it behind the toolbars
+  const headerBottom = await header.evaluate(
+    (element) =>
+      /** @type {HTMLElement} */ (element.closest('.toolbar')).getBoundingClientRect().bottom,
+  );
+
+  const itemBox = /** @type {{ y: number }} */ (await newItem.boundingBox());
+
+  // Allow for subpixel rounding of the scroll position
+  expect(itemBox.y).toBeGreaterThanOrEqual(headerBottom - 1);
+});
