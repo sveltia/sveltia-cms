@@ -34,6 +34,36 @@ const getStaticPrefix = (path) => {
 const isWithin = (path, dir) => path === dir || path.startsWith(`${dir}/`);
 
 /**
+ * Collect the paths of the files and folders the CMS manages, as the collections and the asset
+ * folders configure them. The paths are not normalized and may have template tags.
+ * @returns {{ filePaths: string[], folderPaths: string[] }} Paths of the files of file
+ * collections, and of the folders holding entries and assets.
+ */
+export const collectConfiguredPaths = () => {
+  /** @type {string[]} */
+  const filePaths = [];
+  /** @type {string[]} */
+  const folderPaths = [];
+
+  allEntryFolders.current.forEach(({ filePathMap, folderPathMap }) => {
+    if (filePathMap) {
+      filePaths.push(...Object.values(filePathMap));
+    } else {
+      folderPaths.push(...Object.values(folderPathMap ?? {}));
+    }
+  });
+
+  allAssetFolders.current.forEach(({ internalPath }) => {
+    // The All Assets folder has no path of its own
+    if (internalPath !== undefined) {
+      folderPaths.push(internalPath);
+    }
+  });
+
+  return { filePaths, folderPaths };
+};
+
+/**
  * Work out which parts of the repository hold what the CMS manages, so a backend that lists files
  * a page at a time can list just those rather than the whole repository. Everything else, such as
  * the site’s templates, source code or dependencies, is left out of the file list anyway. This is
@@ -42,29 +72,10 @@ const isWithin = (path, dir) => path === dir || path.startsWith(`${dir}/`);
  * folders is the root directory itself, in which case the whole of it has to be listed.
  */
 export const getManagedPaths = () => {
-  /** @type {string[]} */
-  const dirPaths = [];
-  /** @type {string[]} */
-  const filePaths = [];
-
-  allEntryFolders.current.forEach(({ filePathMap, folderPathMap }) => {
-    if (filePathMap) {
-      Object.values(filePathMap).forEach((path) => {
-        // A file path with a template tag left in it stands for files in more than one folder
-        (path.includes('{{') ? dirPaths : filePaths).push(path);
-      });
-    } else {
-      dirPaths.push(...Object.values(folderPathMap ?? {}));
-    }
-  });
-
-  allAssetFolders.current.forEach(({ internalPath }) => {
-    // The All Assets folder has no path of its own
-    if (internalPath !== undefined) {
-      dirPaths.push(internalPath);
-    }
-  });
-
+  const { filePaths: configuredFilePaths, folderPaths } = collectConfiguredPaths();
+  // A file path with a template tag left in it stands for files in more than one folder
+  const filePaths = configuredFilePaths.filter((path) => !path.includes('{{'));
+  const dirPaths = [...configuredFilePaths.filter((path) => path.includes('{{')), ...folderPaths];
   const prefixes = dirPaths.map((path) => getStaticPrefix(stripSlashes(path)));
 
   if (prefixes.some((prefix) => !prefix)) {

@@ -9,7 +9,7 @@ const URL_ATTRIBUTE_NAMES = ['href', 'src', 'action', 'formaction', 'data', 'fro
  * Regular expression testing if an HTML string may contain one of the {@link URL_ATTRIBUTE_NAMES}.
  * An attribute name can’t be written with character references, unlike its value.
  */
-const URL_ATTRIBUTE_REGEX = /(?:href|src|action|data|from|to|values)\s*=/i;
+const URL_ATTRIBUTE_REGEX = new RegExp(`(?:${URL_ATTRIBUTE_NAMES.join('|')})\\s*=`, 'i');
 /**
  * Regular expression matching the characters a browser removes from a URL before reading its
  * scheme: leading C0 control characters and spaces, and ASCII tabs and newlines anywhere, so

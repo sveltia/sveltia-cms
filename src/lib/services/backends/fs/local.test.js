@@ -56,7 +56,8 @@ vi.mock('$lib/services/backends/fs/shared/load', () => ({
   loadFiles: mockLoadFiles,
 }));
 
-vi.mock('$lib/services/backends/fs/shared/handles', () => ({
+vi.mock('$lib/services/backends/fs/shared/handles', async (importOriginal) => ({
+  ...(await importOriginal()),
   readFile: mockReadFile,
   getScopedRootDirHandle: mockGetScopedRootDirHandle,
 }));

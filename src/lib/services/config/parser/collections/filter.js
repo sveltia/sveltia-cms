@@ -1,11 +1,8 @@
 import { isObject } from '@sveltia/utils/object';
 
-import {
-  getCanonicalSlugKey,
-  hasField,
-  METADATA_KEYS,
-} from '$lib/services/config/parser/utils/fields';
+import { getCanonicalSlugKey, hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkRegex } from '$lib/services/config/parser/utils/validator';
+import { METADATA_KEYS } from '$lib/services/contents/collection/view/table-keys';
 
 /**
  * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';

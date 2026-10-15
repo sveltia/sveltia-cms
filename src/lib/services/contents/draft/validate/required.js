@@ -1,7 +1,5 @@
-import { cmsConfig } from '$lib/services/config';
 import { getUnpublishedEntryByDraft, isWorkflowDraft } from '$lib/services/workflow';
-import { getPublishModeOptions } from '$lib/services/workflow/config';
-import { getEntryStage } from '$lib/services/workflow/stages';
+import { getCollectionPublishModeOptions, getEntryStage } from '$lib/services/workflow/stages';
 
 /**
  * @import { EntryDraft, UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -36,6 +34,5 @@ const getWorkflowStage = (draft) => {
  */
 export const isRequiredEnforced = (draft) =>
   !isWorkflowDraft(draft) ||
-  !getPublishModeOptions({ cmsConfig: cmsConfig.current, collection: draft.collection })
-    .allowIncompleteDrafts ||
+  !getCollectionPublishModeOptions(draft.collection).allowIncompleteDrafts ||
   getWorkflowStage(draft) !== 'draft';

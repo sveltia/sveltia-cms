@@ -1,5 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
+
 /**
  * @import { InternalCollection, InternalSlugOptions } from '$lib/types/private';
  * @import {
@@ -74,12 +76,8 @@ const getEditableStages = (editable = true) => {
  * @see https://github.com/sveltia/sveltia-cms/issues/1072
  */
 export const getSlugOptions = (collection) => {
-  const {
-    slug,
-    identifier_field: identifierField = 'title',
-    file,
-  } = /** @type {EntryCollection} */ (collection);
-
+  const { slug, file } = /** @type {EntryCollection} */ (collection);
+  const identifierField = getIdentifierFieldName(/** @type {EntryCollection} */ (collection));
   /** @type {CollectionSlugOptions} */
   const options = isObject(slug) ? /** @type {CollectionSlugOptions} */ (slug) : {};
   const configuredTemplate = getConfiguredSlugTemplate(/** @type {EntryCollection} */ (collection));

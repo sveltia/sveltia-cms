@@ -608,9 +608,8 @@ describe('ObjectEditor', () => {
       expect(container.querySelector('.wrapper')).toHaveClass('unknown-type');
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('“video” type is not defined'));
 
-      // There are no subfields to collapse
-      await page.getByRole('button', { name: 'Collapse' }).click();
-      await expect.element(page.getByRole('alert')).toBeVisible();
+      // There are no subfields to collapse, so the header has no expander
+      expect(page.getByRole('button', { name: /^(Collapse|Expand)$/ }).elements()).toHaveLength(0);
       expect(draft.expanderStates._['block#']).toBe(true);
     } finally {
       warn.mockRestore();

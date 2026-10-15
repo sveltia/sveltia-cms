@@ -569,6 +569,8 @@ describe('ListEditorComplex', () => {
           'warning Warning This item can’t be displayed due to an unknown type. Check the browser console for details.',
         );
       expect(warn).toHaveBeenCalledOnce();
+      // There are no subfields to collapse, so only the list has an expander, not the item
+      expect(page.getByRole('button', { name: /^(Collapse|Expand)$/ }).elements()).toHaveLength(1);
     } finally {
       warn.mockRestore();
     }
@@ -925,11 +927,11 @@ describe('ListEditorComplex (more)', () => {
     expect(container.querySelector('.item-body')).toHaveTextContent('');
     expect(draft.expanderStates._['sections.0']).toBe(true);
 
-    await page.getByRole('button', { name: 'Collapse' }).nth(1).click();
-    // The item’s state isn’t tracked, unlike the list’s own
-    expect(draft.expanderStates._['sections.0']).toBe(true);
+    // The item header has no expander, unlike the list
+    expect(page.getByRole('button', { name: 'Collapse' }).elements()).toHaveLength(1);
+    await expect.element(page.getByText('Divider', { exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Collapse' }).nth(0).click();
+    await page.getByRole('button', { name: 'Collapse' }).click();
     await expect.poll(() => draft.expanderStates._['sections#']).toBe(false);
   });
 

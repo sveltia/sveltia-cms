@@ -1,17 +1,12 @@
 import { hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
+import { DEFAULT_IDENTIFIER_FIELD } from '$lib/services/contents/collection/identifier';
 import { getConfiguredSlugTemplate, getSlugOptions } from '$lib/services/contents/collection/slug';
 
 /**
  * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
  * @import { EntryCollection } from '$lib/types/public';
  */
-
-/**
- * Name of the field an entry is identified by when the `identifier_field` option isn’t set. The
- * default slug template is `{{title}}` accordingly.
- */
-const DEFAULT_IDENTIFIER_FIELD = 'title';
 
 /**
  * Check the field an entry collection identifies its entries by. The field names the entry in the

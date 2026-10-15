@@ -4,11 +4,10 @@
 import { unique } from '@sveltia/utils/array';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 
-import { allAssetFolders } from '$lib/services/assets/folders';
 import { TEMP_FILE_PREFIX } from '$lib/services/backends/fs/shared/constants';
 import { GIT_CONFIG_FILE_REGEX } from '$lib/services/backends/git/shared/config';
+import { collectConfiguredPaths } from '$lib/services/backends/git/shared/managed-paths';
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
-import { allEntryFolders } from '$lib/services/contents';
 import { createPathRegEx } from '$lib/services/utils/file';
 import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
 
@@ -167,18 +166,9 @@ export const scanDir = async (dirHandle, context, currentPath = '') => {
  * @returns {string[]} Unique list of normalized scanning paths.
  */
 export const collectScanningPaths = () => {
-  const entryPaths = allEntryFolders.current.flatMap(({ filePathMap, folderPathMap }) =>
-    filePathMap ? Object.values(filePathMap) : Object.values(folderPathMap ?? {}),
-  );
+  const { filePaths, folderPaths } = collectConfiguredPaths();
 
-  const assetPaths = allAssetFolders.current
-    .filter(({ internalPath }) => internalPath !== undefined)
-    .map(({ internalPath }) => internalPath);
-
-  return unique(
-    /* v8 ignore next */
-    [...entryPaths, ...assetPaths].map((path) => stripSlashes(path ?? '')),
-  );
+  return unique([...filePaths, ...folderPaths].map((path) => stripSlashes(path)));
 };
 
 /**

@@ -26,6 +26,18 @@ vi.mock('$lib/services/contents/draft', () => ({ isAutoDuplicationEnabled }));
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField,
   /**
+   * Get the `getField` arguments for a draft.
+   * @param {any} draft Draft.
+   * @param {any} [args] Other arguments.
+   * @returns {any} Arguments.
+   */
+  getDraftFieldArgs: (draft, args = {}) => ({
+    collectionName: draft.collectionName,
+    fileName: draft.fileName,
+    isIndexFile: draft.isIndexFile,
+    ...args,
+  }),
+  /**
    * Check if the field takes multiple values, as told by its `multiple` option only.
    * @param {any} fieldConfig Field configuration.
    * @returns {boolean} Result.

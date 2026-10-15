@@ -1,6 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { getField } from '$lib/services/contents/entry/fields';
+import { getValueSubFields, someSubField } from '$lib/services/contents/fields/list/subfields';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -11,7 +12,6 @@ import { isNumeric } from '$lib/services/utils/number';
  * ListFieldWithSubFields,
  * ListFieldWithTypes,
  * RawEntryContent,
- * VariableFieldType,
  * } from '$lib/types/public';
  */
 
@@ -95,29 +95,6 @@ export const itemsToMap = (value, keyField) => {
 };
 
 /**
- * Get the subfields of an Object field value or a List field item, which depend on the variable
- * type of the value if the field has the `types` option.
- * @param {any} value Value.
- * @param {Field} fieldConfig Field configuration.
- * @returns {Field[]} Subfields.
- */
-const getValueSubFields = (value, fieldConfig) => {
-  const {
-    fields,
-    types,
-    typeKey = 'type',
-  } = /** @type {{ fields?: Field[], types?: VariableFieldType[], typeKey?: string }} */ (
-    fieldConfig
-  );
-
-  if (fields) {
-    return fields;
-  }
-
-  return types?.find(({ name }) => name === value?.[typeKey])?.fields ?? [];
-};
-
-/**
  * Cache of whether a field is, or contains at any depth, a List field stored as a map.
  * @type {WeakMap<Field, boolean>}
  */
@@ -129,29 +106,8 @@ const mapListCache = new WeakMap();
  * @param {Field} fieldConfig Field configuration.
  * @returns {boolean} Result.
  */
-const hasMapList = (fieldConfig) => {
-  let result = mapListCache.get(fieldConfig);
-
-  if (result === undefined) {
-    const {
-      field,
-      fields = [],
-      types = [],
-    } = /** @type {{ field?: Field, fields?: Field[], types?: VariableFieldType[] }} */ (
-      fieldConfig
-    );
-
-    result =
-      !!getMapKeyField(fieldConfig) ||
-      [...(field ? [field] : []), ...fields, ...types.flatMap((type) => type.fields ?? [])].some(
-        hasMapList,
-      );
-
-    mapListCache.set(fieldConfig, result);
-  }
-
-  return result;
-};
+const hasMapList = (fieldConfig) =>
+  someSubField(fieldConfig, (field) => !!getMapKeyField(field), mapListCache);
 
 /**
  * Convert the keyed List fields in the given value of a field, at any depth.
@@ -164,13 +120,24 @@ const hasMapList = (fieldConfig) => {
 const convertValue = (value, fieldConfig, toItems) => {
   const { widget: fieldType = 'string' } = fieldConfig;
 
+  const { fields, types, typeKey } = /** @type {ListFieldWithSubFields & ListFieldWithTypes} */ (
+    fieldConfig
+  );
+
+  /**
+   * Get the subfields of the given value.
+   * @param {any} subValue Object value or list item.
+   * @returns {Field[]} Subfields.
+   */
+  const getSubFields = (subValue) => getValueSubFields({ value: subValue, fields, types, typeKey });
+
   if (!hasMapList(fieldConfig)) {
     return value;
   }
 
   if (fieldType === 'object') {
     // eslint-disable-next-line no-use-before-define
-    return convertMapLists(value, getValueSubFields(value, fieldConfig), toItems);
+    return convertMapLists(value, getSubFields(value), toItems);
   }
 
   if (fieldType !== 'list') {
@@ -186,7 +153,7 @@ const convertValue = (value, fieldConfig, toItems) => {
       subField
         ? convertValue(item, subField, toItems)
         : // eslint-disable-next-line no-use-before-define
-          convertMapLists(item, getValueSubFields(item, fieldConfig), toItems),
+          convertMapLists(item, getSubFields(item), toItems),
     );
 
     if (items.some((item, index) => item !== /** @type {any[]} */ (converted)[index])) {

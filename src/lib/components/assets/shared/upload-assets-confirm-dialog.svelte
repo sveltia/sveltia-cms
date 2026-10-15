@@ -11,7 +11,7 @@
   import { uploadingAssets } from '$lib/services/assets/state';
   import { getUploadDirPath } from '$lib/services/assets/subfolders';
   import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
-  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
+  import { runCommit } from '$lib/services/backends/commit-prompt';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { isEquivalentFileExtension } from '$lib/services/utils/file';
 
@@ -91,17 +91,15 @@
     uploadingAssets.current = { folder: undefined, files: [] };
     uploading = true;
 
-    try {
-      await saveAssets(request, { commitType: 'uploadMedia' });
-    } catch (/** @type {any} */ ex) {
-      // The user has cancelled the commit at the commit message prompt, which isn’t a failure
-      if (!isCommitCancelled(ex)) {
-        uploadFailed = true;
-        // eslint-disable-next-line no-console
-        console.error(ex);
-      }
-    } finally {
-      uploading = false;
+    const { ok, cancelled } = await runCommit(() =>
+      saveAssets(request, { commitType: 'uploadMedia' }),
+    );
+
+    uploading = false;
+
+    // A cancellation at the commit message prompt isn’t a failure
+    if (!ok && !cancelled) {
+      uploadFailed = true;
     }
   }}
   onCancel={() => {

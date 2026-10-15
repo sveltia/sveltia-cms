@@ -3,12 +3,13 @@ import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
 import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
+import { INTERNAL_PROP_PREFIX } from '$lib/services/contents/fields/internal-props';
 import { isPairOrderModified } from '$lib/services/contents/fields/key-value/order';
 
 /**
  * Regex to match internal properties added to list items, which should be excluded from output.
  */
-export const INTERNAL_PROP_REGEX = /\.__sc_\w+$/;
+export const INTERNAL_PROP_REGEX = new RegExp(`\\.${INTERNAL_PROP_PREFIX}\\w+$`);
 
 /**
  * Draft properties holding the collection configuration and the entry being edited, which are fixed

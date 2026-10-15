@@ -512,6 +512,16 @@ export const discardWorkflowEntry = async (entry) => {
 };
 
 /**
+ * Get the changes that stand for the deletion of an entry in the commit message prompt and the
+ * pull request title: a single change naming the entry’s first file.
+ * @param {Entry} entry Entry to be deleted.
+ * @returns {FileChange[]} Changes.
+ */
+const getDeletionTitleChanges = (entry) => [
+  { action: 'delete', slug: entry.slug, path: getEntryPaths(entry)[0] },
+];
+
+/**
  * Delete the given published entry through Editorial Workflow: instead of committing the removal
  * straight to the configured branch, open a pull request that removes it, so taking an entry off
  * the site is reviewed and released like any other change. The entry stays on the site until that
@@ -563,8 +573,7 @@ export const deleteWorkflowEntry = async (
   // staged the deletion of the old paths there, so removing the new ones leaves nothing behind once
   // the merge lands
   const paths = getEntryPaths(entry);
-  /** @type {FileChange[]} */
-  const titleChanges = [{ action: 'delete', slug, path: paths[0] }];
+  const titleChanges = getDeletionTitleChanges(entry);
 
   const options = await promptCommitMessage(titleChanges, {
     commitType: 'delete',
@@ -685,10 +694,10 @@ export const deleteWorkflowEntries = async (items) => {
   // pull request is titled after its own entry, so the first one stands for the rest
   const [{ entry: firstEntry, collection: firstCollection }] = items;
 
-  const { userMessage } = await promptCommitMessage(
-    [{ action: 'delete', slug: firstEntry.slug, path: getEntryPaths(firstEntry)[0] }],
-    { commitType: 'delete', collection: firstCollection },
-  );
+  const { userMessage } = await promptCommitMessage(getDeletionTitleChanges(firstEntry), {
+    commitType: 'delete',
+    collection: firstCollection,
+  });
 
   await runConcurrently(items, async (item) => {
     const { entry, collection, collectionFile, assets } = item;

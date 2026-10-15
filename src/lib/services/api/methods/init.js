@@ -2,6 +2,7 @@ import { isObject } from '@sveltia/utils/object';
 import { mount } from 'svelte';
 
 import App from '$lib/components/app.svelte';
+import { assertOption } from '$lib/services/api/validate';
 import { prefetchCmsConfig } from '$lib/services/config/loader';
 
 /**
@@ -31,9 +32,7 @@ let initialized = false;
  * @see https://sveltiacms.app/en/docs/api/initialization
  */
 const init = async ({ config } = {}) => {
-  if (config !== undefined && !isObject(config)) {
-    throw new TypeError('The `config` option for `CMS.init()` must be an object');
-  }
+  assertOption(config === undefined || isObject(config), 'init', 'config', 'an object');
 
   if (initialized) {
     return;

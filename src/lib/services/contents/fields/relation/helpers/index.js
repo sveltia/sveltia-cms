@@ -5,6 +5,7 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import { isManuallyOrdered } from '$lib/services/contents/collection/entries/reorder/config';
 import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder/sort';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
+import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
 import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
 import {
   getObjectId,
@@ -138,7 +139,7 @@ const buildOptions = ({
     _i18n: { defaultLocale },
   } = collection;
 
-  const { identifier_field: identifierField = 'title' } = _type === 'entry' ? collection : {};
+  const identifierField = getIdentifierFieldName(_type === 'entry' ? collection : undefined);
   const templates = prepareFieldTemplates(fieldConfig, identifierField);
 
   const filteredEntries = filterAndPrepareEntries({

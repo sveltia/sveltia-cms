@@ -17,10 +17,12 @@ import {
   getIndexFile,
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
+import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getEntryDirName } from '$lib/services/contents/entry/paths';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { getCommitAuthorName } from '$lib/services/utils/commit-author';
 
 /**
  * @import {
@@ -213,7 +215,7 @@ export const replaceSub = (tag, context) => {
   }
 
   if (tag === 'commit_author') {
-    return commitAuthor?.name || commitAuthor?.login || commitAuthor?.email;
+    return getCommitAuthorName(commitAuthor);
   }
 
   return undefined;
@@ -357,12 +359,10 @@ const formatEntrySummary = (
     _i18n: { defaultLocale },
   } = collection;
 
-  const {
-    _file: { basePath, fullPathRegEx } = {},
-    identifier_field: identifierField = 'title',
-    summary: collectionSummaryTemplate,
-  } = _type === 'entry' ? collection : {};
+  const { _file: { basePath, fullPathRegEx } = {}, summary: collectionSummaryTemplate } =
+    _type === 'entry' ? collection : {};
 
+  const identifierField = getIdentifierFieldName(_type === 'entry' ? collection : undefined);
   const summaryTemplate = template ?? collectionSummaryTemplate;
   const { locales, slug, commitDate, commitAuthor } = entry;
   const requestedLocale = locale ?? defaultLocale;

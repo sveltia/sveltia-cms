@@ -1,4 +1,5 @@
 import { getFieldTypeDefinition } from '$lib/services/api/field-types';
+import { assertOption } from '$lib/services/api/validate';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
@@ -20,9 +21,7 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
 const getFieldType = (name) => {
-  if (!isNonEmptyString(name)) {
-    throw new TypeError('The `name` option for `CMS.getFieldType()` must be a non-empty string');
-  }
+  assertOption(isNonEmptyString(name), 'getFieldType', 'name', 'a non-empty string');
 
   return getFieldTypeDefinition(name);
 };

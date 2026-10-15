@@ -2,6 +2,7 @@ import { preloadImmutable } from '$lib/services/api/immutable';
 import { isReactComponent } from '$lib/services/api/react';
 import { preloadReactDom } from '$lib/services/api/react-dom';
 import { customPreviewTemplateRegistry } from '$lib/services/api/registries';
+import { assertOption } from '$lib/services/api/validate';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
@@ -20,17 +21,13 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
 const registerPreviewTemplate = (name, component) => {
-  if (!isNonEmptyString(name)) {
-    throw new TypeError(
-      'The `name` option for `CMS.registerPreviewTemplate()` must be a non-empty string',
-    );
-  }
-
-  if (!isReactComponent(component)) {
-    throw new TypeError(
-      'The `component` option for `CMS.registerPreviewTemplate()` must be a React component',
-    );
-  }
+  assertOption(isNonEmptyString(name), 'registerPreviewTemplate', 'name', 'a non-empty string');
+  assertOption(
+    isReactComponent(component),
+    'registerPreviewTemplate',
+    'component',
+    'a React component',
+  );
 
   customPreviewTemplateRegistry.set(name, component);
   // The template is a React component receiving Immutable Maps, so start loading the libraries

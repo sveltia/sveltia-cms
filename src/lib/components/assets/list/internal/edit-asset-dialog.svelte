@@ -6,7 +6,7 @@
   import { getAssetBlob } from '$lib/services/assets/info';
   import { editingAsset } from '$lib/services/assets/state';
   import { showAssetOverlay } from '$lib/services/assets/view';
-  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
+  import { runCommit } from '$lib/services/backends/commit-prompt';
 
   /**
    * @import { Asset } from '$lib/types/private';
@@ -58,21 +58,27 @@
 
     saving = true;
 
-    try {
-      await saveAssets(
+    const { folder, name } = asset;
+    const text = currentValue;
+    const { type } = blob;
+
+    const { ok, cancelled } = await runCommit(() =>
+      saveAssets(
         {
-          folder: asset.folder,
-          files: [new File([currentValue], asset.name, { type: blob.type })],
+          folder,
+          files: [new File([text], name, { type })],
           originalAssets: [asset],
         },
         { commitType: 'uploadMedia' },
-      );
-    } catch (/** @type {any} */ ex) {
-      // The user has cancelled the commit at the commit message prompt, which isn’t a failure
-      if (!isCommitCancelled(ex)) {
+      ),
+    );
+
+    saving = false;
+
+    if (!ok) {
+      // A cancellation at the commit message prompt isn’t a failure
+      if (!cancelled) {
         savingFailed = true;
-        // eslint-disable-next-line no-console
-        console.error(ex);
       }
 
       // The asset details overlay may have been closed in the meantime
@@ -81,8 +87,6 @@
 
         return;
       }
-    } finally {
-      saving = false;
     }
 
     resetState();

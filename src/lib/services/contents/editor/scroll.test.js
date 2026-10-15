@@ -8,6 +8,7 @@ import {
   getFieldAlignedScrollTop,
   getProportionalScrollTop,
   getRevealingScrollTop,
+  getStickyToolbarBottom,
   scrollToAddedListItem,
 } from '$lib/services/contents/editor/scroll';
 
@@ -506,6 +507,24 @@ describe('getRevealingScrollTop()', () => {
     expect(getRevealingScrollTop({ ...view, top: 600, height: 1000 })).toBe(1500);
     expect(getRevealingScrollTop({ ...view, top: -1000, height: 1000 })).toBe(0);
     expect(getRevealingScrollTop({ ...view, top: -800, height: 600 })).toBe(100);
+  });
+});
+
+describe('getStickyToolbarBottom()', () => {
+  test('is 0 without a toolbar', () => {
+    expect(getStickyToolbarBottom(undefined)).toBe(0);
+  });
+
+  test('adds the height of the toolbar to the offset it sticks at', () => {
+    const toolbar = document.createElement('div');
+
+    toolbar.style.top = '48px';
+    vi.spyOn(toolbar, 'getBoundingClientRect').mockReturnValue(
+      /** @type {DOMRect} */ ({ height: 36 }),
+    );
+    document.body.append(toolbar);
+
+    expect(getStickyToolbarBottom(toolbar)).toBe(84);
   });
 });
 

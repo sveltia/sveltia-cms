@@ -6,10 +6,8 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, Button, Toast } from '@sveltia/ui';
-  import { tick } from 'svelte';
 
-  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
+  import ListModeControls from '$lib/components/contents/list/list-mode-controls.svelte';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { reorderEntries } from '$lib/services/contents/collection/entries/reorder';
   import {
@@ -31,75 +29,30 @@
   /** @type {Props} */
   const { onExit = undefined } = $props();
 
-  let saving = $state(false);
-  let errorToast = $state(false);
-  /** @type {HTMLButtonElement | undefined} */
-  let doneButton = $state();
-  /** @type {HTMLButtonElement | undefined} */
-  let cancelButton = $state();
+  /** @type {ListModeControls | undefined} */
+  let controls = $state();
 
   /**
    * Move the focus to the Done button, or the Cancel button while there is nothing to save, e.g.
    * once the reorder mode has been entered with the button these take the place of.
    */
   export const focus = () => {
-    const done = /** @type {HTMLButtonElement} */ (doneButton);
-
-    /** @type {HTMLButtonElement} */ (done.disabled ? cancelButton : done).focus();
-  };
-
-  /**
-   * Leave the reorder mode.
-   */
-  const exit = () => {
-    setReorderMode(false);
-    onExit?.();
+    /** @type {ListModeControls} */ (controls).focus();
   };
 </script>
 
-<Button
-  bind:element={doneButton}
-  variant="primary"
-  label={_('done')}
-  aria-label={_('done_reordering_entries')}
-  disabled={saving || !reorderDirty.current}
-  onclick={async () => {
-    const collection = /** @type {InternalEntryCollection} */ (selectedCollection.current);
-
-    saving = true;
-
-    try {
-      await reorderEntries(collection, reorderedEntries.current);
-      saving = false;
-      exit();
-    } catch (/** @type {any} */ ex) {
-      // The user has cancelled the commit at the commit message prompt, which isn’t a failure
-      if (!isCommitCancelled(ex)) {
-        // eslint-disable-next-line no-console
-        console.error(ex);
-        errorToast = true;
-      }
-
-      saving = false;
-      // The button lost the focus while it was disabled during the save, so give it back
-      await tick();
-      /** @type {HTMLButtonElement} */ (doneButton).focus();
-    }
-  }}
+<ListModeControls
+  bind:this={controls}
+  saveLabel={_('done')}
+  saveAriaLabel={_('done_reordering_entries')}
+  cancelAriaLabel={_('cancel_reordering_entries')}
+  savingFailedMessage={_('saving_reorder_failed')}
+  canSave={reorderDirty.current}
+  commit={() =>
+    reorderEntries(
+      /** @type {InternalEntryCollection} */ (selectedCollection.current),
+      reorderedEntries.current,
+    )}
+  exitMode={() => setReorderMode(false)}
+  {onExit}
 />
-<Button
-  bind:element={cancelButton}
-  variant="secondary"
-  label={_('cancel')}
-  aria-label={_('cancel_reordering_entries')}
-  disabled={saving}
-  onclick={() => {
-    exit();
-  }}
-/>
-
-<Toast bind:show={errorToast}>
-  <Alert status="error">
-    {_('saving_reorder_failed')}
-  </Alert>
-</Toast>

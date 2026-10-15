@@ -2,7 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Dialog, Spacer, VisibilityObserver } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { onMount, setContext, untrack } from 'svelte';
+  import { onMount, setContext } from 'svelte';
   import { on } from 'svelte/events';
 
   import Image from '$lib/components/assets/shared/image.svelte';
@@ -498,18 +498,15 @@
   );
 
   // Block mode: forward onChange whenever currentValues change
-  $effect(() => {
-    if (mode === 'dialog') return;
-
-    void [currentValues];
-
-    untrack(() => {
-      if (!equal(previousValues, currentValues)) {
+  watch(
+    () => [mode, currentValues],
+    () => {
+      if (mode !== 'dialog' && !equal(previousValues, currentValues)) {
         onChange(new CustomEvent('update', { detail: currentValues }));
         previousValues = currentValues;
       }
-    });
-  });
+    },
+  );
 </script>
 
 {#snippet fieldEditors(

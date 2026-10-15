@@ -1,5 +1,6 @@
 import { getUnpkgURL } from '$lib/services/app/dependencies';
 import { exportCanvasAsBlob } from '$lib/services/utils/media/image/encode';
+import { resolveTransformOptions } from '$lib/services/utils/media/image/options';
 import { resizeCanvas } from '$lib/services/utils/media/image/resize';
 
 /**
@@ -40,17 +41,9 @@ let pdfjs;
  * @see https://github.com/mozilla/pdf.js/blob/master/examples/webpack/main.mjs
  * @see https://github.com/mozilla/pdf.js/issues/10478
  */
-export const renderPDF = async (
-  blob,
-  {
-    format = 'png',
-    quality = 85,
-    width = undefined,
-    height = undefined,
-    fit = 'scale-down',
-    nativeOnly = false,
-  } = {},
-) => {
+export const renderPDF = async (blob, options = {}) => {
+  const { format, quality, width, height, fit, nativeOnly } = resolveTransformOptions(options);
+
   // Lazily load the PDF.js library
   if (!pdfjs) {
     try {

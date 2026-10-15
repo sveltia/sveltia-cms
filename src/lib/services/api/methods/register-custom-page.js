@@ -3,6 +3,12 @@ import { isObject } from '@sveltia/utils/object';
 import { isReactComponent } from '$lib/services/api/react';
 import { preloadReactDom } from '$lib/services/api/react-dom';
 import { customPageRegistry } from '$lib/services/api/registries';
+import {
+  assertDefinition,
+  assertOption,
+  assertValid,
+  parseURLFromPage,
+} from '$lib/services/api/validate';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
@@ -24,55 +30,52 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * @see https://sveltiacms.app/en/docs/api/custom-pages
  */
 const registerCustomPage = (definition) => {
-  if (!isObject(definition)) {
-    throw new TypeError('The `definition` option for `CMS.registerCustomPage()` must be an object');
-  }
+  assertOption(isObject(definition), 'registerCustomPage', 'definition', 'an object');
 
   const { id, label, icon, component, url, newTab } = definition;
 
   // The ID goes into the page’s URL path as is, so keep it to characters that need no encoding
-  if (typeof id !== 'string' || !/^[\w-]+$/.test(id)) {
-    throw new TypeError(
-      'The `definition.id` must be a non-empty string of alphanumeric characters, hyphens and ' +
-        'underscores',
-    );
-  }
+  assertDefinition(
+    typeof id === 'string' && /^[\w-]+$/.test(id),
+    'id',
+    'a non-empty string of alphanumeric characters, hyphens and underscores',
+  );
 
-  if (!isNonEmptyString(label)) {
-    throw new TypeError('The `definition.label` must be a non-empty string');
-  }
+  assertDefinition(isNonEmptyString(label), 'label', 'a non-empty string');
+  assertDefinition(icon === undefined || isNonEmptyString(icon), 'icon', 'a non-empty string');
 
-  if (icon !== undefined && !isNonEmptyString(icon)) {
-    throw new TypeError('The `definition.icon` must be a non-empty string');
-  }
+  assertValid(
+    (component === undefined) !== (url === undefined),
+    'Either `definition.component` or `definition.url` must be given',
+  );
 
-  if ((component === undefined) === (url === undefined)) {
-    throw new TypeError('Either `definition.component` or `definition.url` must be given');
-  }
+  assertDefinition(
+    component === undefined || isReactComponent(component),
+    'component',
+    'a React component',
+  );
 
-  if (component !== undefined && !isReactComponent(component)) {
-    throw new TypeError('The `definition.component` must be a React component');
-  }
-
-  if (newTab !== undefined && (typeof newTab !== 'boolean' || component !== undefined)) {
-    throw new TypeError('The `definition.newTab` must be a boolean given along with `url`');
-  }
+  assertDefinition(
+    newTab === undefined || (typeof newTab === 'boolean' && component === undefined),
+    'newTab',
+    'a boolean given along with `url`',
+  );
 
   /** @type {string | undefined} */
   let resolvedURL = undefined;
 
   if (url !== undefined) {
-    // Resolve a relative URL now, as the CMS URL hash changes as the user navigates. Other schemes
-    // are rejected, so that a `javascript:` URL can’t run in the CMS
-    const parsedURL = isNonEmptyString(url) ? URL.parse(url, window.location.href) : null;
+    // Resolve a relative URL now. Other schemes are rejected, so that a `javascript:` URL can’t run
+    // in the CMS
+    const parsedURL = isNonEmptyString(url) ? parseURLFromPage(url) : null;
 
-    if (!parsedURL || !['http:', 'https:'].includes(parsedURL.protocol)) {
-      throw new TypeError(
-        'The `definition.url` must be a valid `http` or `https` URL or file path',
-      );
-    }
+    assertDefinition(
+      !!parsedURL && ['http:', 'https:'].includes(parsedURL.protocol),
+      'url',
+      'a valid `http` or `https` URL or file path',
+    );
 
-    resolvedURL = parsedURL.href;
+    resolvedURL = /** @type {URL} */ (parsedURL).href;
   }
 
   customPageRegistry.set(id, {

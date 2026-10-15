@@ -3,6 +3,7 @@ import { isCollectionIndexFile } from '$lib/services/contents/collection/entries
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder/sort';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
+import { SUMMARY_COLUMN_KEY } from '$lib/services/contents/collection/view/table-keys';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getPropertyValue } from '$lib/services/contents/entry/values';
@@ -68,7 +69,7 @@ export const getSortKeyGetter = ({
   isMarkdownField,
 }) => {
   // Special handling for summary, which uses a generated value instead of a raw field value
-  if (key === '_summary') {
+  if (key === SUMMARY_COLUMN_KEY) {
     return (/** @type {Entry} */ entry) =>
       getEntrySummary(collection, entry, { locale, useTemplate: true });
   }

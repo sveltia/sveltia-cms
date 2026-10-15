@@ -13,7 +13,7 @@ import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
  * Field types that support the `unique` option. Each of them holds a single string or number,
  * unless it takes multiple values, which the option doesn’t support.
  */
-export const UNIQUE_FIELD_TYPES = [
+const UNIQUE_FIELD_TYPES = [
   'color',
   'datetime',
   'file',

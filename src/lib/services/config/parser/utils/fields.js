@@ -19,14 +19,6 @@ import { isNumeric } from '$lib/services/utils/number';
  */
 
 /**
- * Entry metadata property keys that can be used in the `filter`, `sortable_fields`, `view_groups`
- * and `view_filters` options in place of a field key path. These are resolved by
- * `getPropertyValue()` from the entry itself rather than the collection’s `fields`.
- * @type {string[]}
- */
-export const METADATA_KEYS = ['slug', 'commit_author', 'commit_date'];
-
-/**
  * Get the canonical slug key of the given collection or file. When i18n is enabled, the key —
  * `translationKey` by default — is added to the content of each localized entry, allowing entries
  * to be matched across locales. It can therefore be used wherever a field key path is expected,

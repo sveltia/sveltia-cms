@@ -3,6 +3,7 @@ import { commitSavedChanges, getAddedPaths } from '$lib/services/backends/fs/git
 import { INDEX_LOCK_PATH } from '$lib/services/backends/fs/git/constants';
 import { inspectRepository } from '$lib/services/backends/fs/git/repository';
 import { toRepoChanges } from '$lib/services/backends/root-dir';
+import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -27,25 +28,10 @@ export { clearLocalGitCache } from '$lib/services/backends/fs/git/repository';
 export const localGitNotice = createRawState();
 
 /**
- * Promise of the last operation in the queue. The operations run one at a time, so a commit doesn’t
- * find the changes another one has just staged.
- * @type {Promise<unknown>}
+ * Add an operation to the queue. The operations run one at a time, so a commit doesn’t find the
+ * changes another one has just staged.
  */
-let queue = Promise.resolve();
-
-/**
- * Add an operation to the queue.
- * @template T
- * @param {() => Promise<T>} operation Operation.
- * @returns {Promise<T>} Result of the operation.
- */
-const enqueue = (operation) => {
-  const result = queue.then(operation);
-
-  queue = result.catch(() => undefined);
-
-  return result;
-};
+const enqueue = createConcurrencyLimiter(1);
 
 /**
  * Get the message of an error.

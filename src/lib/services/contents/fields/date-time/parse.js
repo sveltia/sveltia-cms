@@ -32,6 +32,18 @@ export const isValidDate = (input) => input instanceof Date && !Number.isNaN(inp
 export const getParser = (utc) => (utc ? dayjs.utc : dayjs);
 
 /**
+ * Parse a value in the given format with a Day.js parser.
+ * @param {dayjs.utc | dayjs} parse Day.js parser, as returned by {@link getParser}.
+ * @param {string} value Value to parse.
+ * @param {string} format Format string.
+ * @param {string} [localeKey] Day.js locale the value is written in.
+ * @returns {dayjs.Dayjs} Parsed dayjs instance.
+ */
+const parseWithFormat = (parse, value, format, localeKey) =>
+  // The UTC parser takes a locale like `dayjs()` does, though its type doesn’t say so
+  /** @type {typeof dayjs} */ (parse)(value, format, localeKey);
+
+/**
  * Parse a value with Day.js, falling back to the default parser when the supplied format fails.
  * @param {object} args Arguments.
  * @param {string} args.value Value to parse.
@@ -43,8 +55,7 @@ export const getParser = (utc) => (utc ? dayjs.utc : dayjs);
  */
 export const parseWithFormatFallback = ({ value, format, parseAsUTC, localeKey }) => {
   const parse = getParser(parseAsUTC);
-  // The UTC parser takes a locale like `dayjs()` does, though its type doesn’t say so
-  const parsed = /** @type {typeof dayjs} */ (parse)(value, format, localeKey);
+  const parsed = parseWithFormat(parse, value, format, localeKey);
 
   return parsed.isValid() ? parsed : parse(value);
 };
@@ -140,7 +151,7 @@ export const getDate = (currentValue, fieldConfig, locale) => {
 
       date = parsed.isValid() ? parsed.toDate() : undefined;
     } else {
-      const wallTime = /** @type {typeof dayjs} */ (dayjs.utc)(currentValue, format, localeKey);
+      const wallTime = parseWithFormat(getParser(true), currentValue, format, localeKey);
 
       date = !wallTime.isValid()
         ? // The value isn’t in the custom format, e.g. an ISO 8601 value written before the format

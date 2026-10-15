@@ -9,6 +9,7 @@ import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { RICH_TEXT_FIELD_TYPES, TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { getValueFormat } from '$lib/services/contents/fields/rich-text';
+import { isDuplicateIfEmptyField } from '$lib/services/contents/i18n/duplicate-if-empty';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -205,7 +206,7 @@ export const getCopyingFieldMap = ({ draft, options }) => {
           (!keyPath &&
             translate &&
             !!targetLocaleValue &&
-            !(field?.i18n === 'duplicate_if_empty' && value === targetLocaleValue))
+            !(!!field && isDuplicateIfEmptyField(field) && value === targetLocaleValue))
         ) {
           return null;
         }

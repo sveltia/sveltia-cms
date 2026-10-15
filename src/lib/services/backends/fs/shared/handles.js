@@ -12,6 +12,15 @@ import { getRootDir } from '$lib/services/backends/root-dir';
 export const isNotFoundError = (ex) => /** @type {DOMException} */ (ex)?.name === 'NotFoundError';
 
 /**
+ * Check if the given error says a file was expected where there’s a directory, or the other way
+ * round.
+ * @param {unknown} ex Error.
+ * @returns {boolean} `true` for a `TypeMismatchError`.
+ */
+export const isTypeMismatchError = (ex) =>
+  /** @type {DOMException} */ (ex)?.name === 'TypeMismatchError';
+
+/**
  * Get a file or directory handle at the given path.
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  * @param {string | undefined} path Path to the file/directory.
@@ -94,6 +103,25 @@ export const readFile = async (rootDirHandle, path) => {
   );
 
   return handle.getFile();
+};
+
+/**
+ * Read a file at the given path, if it exists.
+ * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
+ * @param {string} path Path to the file.
+ * @returns {Promise<File | undefined>} File, or `undefined` if it doesn’t exist.
+ * @throws {Error} If the file can’t be read for any other reason.
+ */
+export const readFileIfExists = async (rootDirHandle, path) => {
+  try {
+    return await readFile(rootDirHandle, path);
+  } catch (ex) {
+    if (isNotFoundError(ex)) {
+      return undefined;
+    }
+
+    throw ex;
+  }
 };
 
 /**

@@ -3,7 +3,7 @@
   import { Alert, ConfirmationDialog, Toast } from '@sveltia/ui';
 
   import CascadeDeleteNote from '$lib/components/common/cascade-delete-note.svelte';
-  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
+  import { runCommit } from '$lib/services/backends/commit-prompt';
   import { getErrorMessage } from '$lib/services/backends/git/shared/errors';
   import { selectedCollection } from '$lib/services/contents/collection';
   import {
@@ -74,29 +74,29 @@
    * for it.
    */
   const deleteSelectedEntries = async () => {
-    try {
-      const collection = selectedCollection.current;
+    const collection = selectedCollection.current;
 
-      const toastState = await deleteOrDiscardEntries({
+    const { ok, cancelled, result, error } = await runCommit(() =>
+      deleteOrDiscardEntries({
         drafts: draftEntries,
         items: publishedEntryAssets,
         collection,
         useWorkflow: isWorkflowEnabled(collection),
-      });
+      }),
+    );
 
-      if (toastState) {
-        contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, ...toastState };
-      }
-    } catch (/** @type {any} */ ex) {
+    if (!ok) {
       // The user has cancelled the commit at the commit message prompt, which isn’t a failure
-      if (!isCommitCancelled(ex)) {
-        errorMessage = getErrorMessage(ex, 'deleting_entry_failed');
+      if (!cancelled) {
+        errorMessage = getErrorMessage(error, 'deleting_entry_failed');
         showErrorToast = true;
-        // eslint-disable-next-line no-console
-        console.error(ex);
       }
 
       return;
+    }
+
+    if (result) {
+      contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, ...result };
     }
 
     // Discarding a draft doesn’t change `listedEntries`, which is what normally resets the

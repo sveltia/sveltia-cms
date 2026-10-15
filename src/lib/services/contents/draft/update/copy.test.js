@@ -418,6 +418,21 @@ describe('draft/update/copy', () => {
       expect(getCopyingFieldMap({ draft: mockEntryDraft, options })).not.toHaveProperty('title');
     });
 
+    it('should skip a populated List field with the `duplicate_if_empty` option', () => {
+      // A List field doesn’t support the strategy, so it works like a translatable field
+      vi.mocked(getField).mockImplementation(({ keyPath }) =>
+        keyPath === 'title'
+          ? { name: 'title', i18n: 'duplicate_if_empty', widget: 'list' }
+          : undefined,
+      );
+
+      mockEntryDraft.currentValues.ja.title = mockEntryDraft.currentValues.en.title;
+
+      const options = { sourceLanguage: 'en', targetLanguage: 'ja', translate: true };
+
+      expect(getCopyingFieldMap({ draft: mockEntryDraft, options })).not.toHaveProperty('title');
+    });
+
     it('should mark richtext fields as markdown', () => {
       const draft = mockEntryDraft;
 

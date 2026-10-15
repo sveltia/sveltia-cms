@@ -1,43 +1,14 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
 
-import { fromHex, hashObject } from '$lib/services/backends/fs/git/objects';
-import { toHex } from '$lib/services/utils/crypto';
+import { GITLINK_MODE, OID_SIZE, TREE_MODE } from '$lib/services/backends/fs/git/constants';
+import { hashObject } from '$lib/services/backends/fs/git/objects';
+import { compareBytes, concatBytes, textDecoder, textEncoder } from '$lib/services/utils/bytes';
+import { fromHex, toHex } from '$lib/services/utils/crypto';
 
 /**
  * @import { GitIndexEntry, GitTreeDirectory, GitTreeEntry, GitTreeNode } from '$lib/types/private';
  */
-
-/**
- * Mode of a tree entry for a subtree, as Git writes it, without a leading zero.
- */
-export const TREE_MODE = '40000';
-
-/**
- * Mode of an index entry for a submodule, whose object ID is a commit in another repository.
- */
-const GITLINK_MODE = 0o160000;
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
-
-/**
- * Compare two byte arrays.
- * @param {Uint8Array} a One.
- * @param {Uint8Array} b The other.
- * @returns {number} A negative number if `a` comes first, a positive number if `b` comes first, or
- * zero if they’re equal.
- */
-const compareBytes = (a, b) => {
-  const length = Math.min(a.length, b.length);
-
-  for (let index = 0; index < length; index += 1) {
-    if (a[index] !== b[index]) {
-      return a[index] - b[index];
-    }
-  }
-
-  return a.length - b.length;
-};
 
 /**
  * Sort tree entries in the order Git requires: by the UTF-8 bytes of the name, where the name of a
@@ -64,22 +35,13 @@ const sortTreeEntries = (entries) => {
  * @returns {Uint8Array} Content.
  * @see https://git-scm.com/book/en/v2/Git-Internals-Git-Objects#_tree_objects
  */
-export const serializeTree = (entries) => {
-  const parts = entries.flatMap(({ mode, path, oid }) => [
-    textEncoder.encode(`${mode} ${path}\0`),
-    fromHex(oid),
-  ]);
-
-  const content = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
-  let position = 0;
-
-  parts.forEach((part) => {
-    content.set(part, position);
-    position += part.length;
-  });
-
-  return content;
-};
+export const serializeTree = (entries) =>
+  concatBytes(
+    entries.flatMap(({ mode, path, oid }) => [
+      textEncoder.encode(`${mode} ${path}\0`),
+      fromHex(oid),
+    ]),
+  );
 
 /**
  * Parse the content of a tree object.
@@ -97,10 +59,10 @@ export const parseTree = (content) => {
 
     entries.set(textDecoder.decode(content.subarray(spaceIndex + 1, nullIndex)), {
       mode: textDecoder.decode(content.subarray(position, spaceIndex)),
-      oid: toHex(content.subarray(nullIndex + 1, nullIndex + 21)),
+      oid: toHex(content.subarray(nullIndex + 1, nullIndex + 1 + OID_SIZE)),
     });
 
-    position = nullIndex + 21;
+    position = nullIndex + 1 + OID_SIZE;
   }
 
   return entries;

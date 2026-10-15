@@ -2,6 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
 
+  import { pickOfferedViewType } from '$lib/services/contents/collection/view/settings';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -36,11 +37,7 @@
 
   // The first type is the default one, which applies until the user picks a view, and also to a
   // saved view that isn’t offered anymore, e.g. the grid view of a collection without thumbnails
-  const selectedType = $derived(
-    currentView.current.type && types.includes(currentView.current.type)
-      ? currentView.current.type
-      : types[0],
-  );
+  const selectedType = $derived(pickOfferedViewType(currentView.current.type, types));
   const isGridView = $derived(selectedType === 'grid');
   // A smaller screen only switches between the list and grid views; the table view is shown as a
   // list there

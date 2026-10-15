@@ -5,6 +5,7 @@ import { createMockAssetFolder } from '$lib/test/factories';
 import {
   getAssetLibraryFolderMap,
   getDefaultAssetFolder,
+  getFieldAssetFolder,
   getFileDisplayPath,
   getTargetFolderPath,
   getUnsavedFileDisplayPath,
@@ -740,6 +741,29 @@ describe('contents/fields/file/helpers', () => {
       });
 
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('getFieldAssetFolder', () => {
+    it('should return the default folder of the library folder map for the field', () => {
+      const fieldFolder = createMockAssetFolder({
+        collectionName: 'posts',
+        internalPath: 'content/posts/images/banner',
+        publicPath: '/images/banner',
+      });
+
+      vi.mocked(getAssetFolder).mockImplementation((args) =>
+        'typedKeyPath' in args && 'isIndexFile' in args ? fieldFolder : undefined,
+      );
+
+      const result = getFieldAssetFolder({
+        collectionName: 'posts',
+        fileName: undefined,
+        typedKeyPath: 'banner',
+        isIndexFile: false,
+      });
+
+      expect(result).toBe(fieldFolder);
     });
   });
 

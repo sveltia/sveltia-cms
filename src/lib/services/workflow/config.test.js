@@ -195,6 +195,9 @@ describe('workflow/config', () => {
       // The parser sees the raw configuration, which the schema validation reports separately
       expect(isWorkflowConfigured(/** @type {any} */ ({ collections: {} }))).toBe(false);
       expect(isWorkflowConfigured(/** @type {any} */ ({ collections: 'posts' }))).toBe(false);
+      expect(isWorkflowConfigured(/** @type {any} */ ({ collections: [null, 'posts'] }))).toBe(
+        false,
+      );
     });
 
     test('is true when a collection opts in on its own', () => {

@@ -1,17 +1,8 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
 import { execFileSync } from 'node:child_process';
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  unlinkSync,
-  writeFileSync,
-} from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -25,6 +16,7 @@ import {
 import { formatTimezoneOffset } from '$lib/services/backends/fs/git/commit';
 import { parseIndex } from '$lib/services/backends/fs/git/index-file';
 import { cmsConfig } from '$lib/services/config';
+import { createGitEnv, createTempDir, runGitRaw, writeRepoFile } from '$lib/test/git-repo';
 import { createNodeDirectoryHandle } from '$lib/test/node-fs-handles';
 
 /**
@@ -44,35 +36,16 @@ vi.mock('$lib/services/backends/git/shared/commits', () => ({
   ),
 }));
 
-/**
- * Environment for the `git` command, isolated from the user’s and system configuration. Auto
- * maintenance is turned off: `git commit` would otherwise start a detached `git maintenance` that
- * deletes its lock file in `.git` while a test removes the folder, and on Linux `rmSync()` then
- * returns without an error, leaving the rest of the folder, `.git/config` included, behind.
- */
-const GIT_ENV = {
-  ...process.env,
-  GIT_CONFIG_GLOBAL: '/dev/null',
-  GIT_CONFIG_NOSYSTEM: '1',
-  GIT_CONFIG_COUNT: '1',
-  GIT_CONFIG_KEY_0: 'maintenance.auto',
-  GIT_CONFIG_VALUE_0: 'false',
-  GIT_AUTHOR_NAME: 'Native',
-  GIT_AUTHOR_EMAIL: 'native@example.com',
-  GIT_COMMITTER_NAME: 'Native',
-  GIT_COMMITTER_EMAIL: 'native@example.com',
-};
-
+// Commits made with the native Git are by a different author from the ones the CMS makes
+const NATIVE_GIT_ENV = createGitEnv({ name: 'Native', email: 'native@example.com' });
 /** @type {string} */
 let repoDir;
-
 /**
  * Run a Git command in the test repository.
  * @param {...string} args Arguments.
  * @returns {string} Output, trimmed.
  */
-const git = (...args) =>
-  execFileSync('git', args, { cwd: repoDir, env: GIT_ENV, stdio: 'pipe' }).toString().trim();
+const git = (...args) => runGitRaw(repoDir, args, NATIVE_GIT_ENV).toString().trim();
 
 /**
  * Write a file in the test repository.
@@ -80,8 +53,7 @@ const git = (...args) =>
  * @param {string} content Content.
  */
 const write = (path, content) => {
-  mkdirSync(dirname(join(repoDir, path)), { recursive: true });
-  writeFileSync(join(repoDir, path), content);
+  writeRepoFile(repoDir, path, content);
 };
 
 /**
@@ -131,7 +103,7 @@ const expectCleanRepository = () => {
 };
 
 beforeEach(() => {
-  repoDir = mkdtempSync(join(tmpdir(), 'sveltia-git-'));
+  repoDir = createTempDir('sveltia-git-');
   git('init', '--initial-branch=main');
   git('config', 'user.name', 'Jane Doe');
   git('config', 'user.email', 'jane@example.com');
@@ -454,7 +426,7 @@ describe('saveAndCommitChanges()', () => {
     git('add', 'content/notes/a.md');
     git('commit', '-qm', 'Native');
 
-    const env = { ...GIT_ENV, GIT_INDEX_FILE: join(repoDir, '.git/fresh-index') };
+    const env = { ...NATIVE_GIT_ENV, GIT_INDEX_FILE: join(repoDir, '.git/fresh-index') };
 
     execFileSync('git', ['add', '-A'], { cwd: repoDir, env });
     expect(git('rev-parse', 'HEAD^{tree}')).toBe(
@@ -705,6 +677,28 @@ describe('saveAndCommitChanges()', () => {
     });
     expect(consoleError).toHaveBeenCalled();
     expect(existsSync(join(repoDir, '.git/index.lock'))).toBe(false);
+    consoleError.mockRestore();
+  });
+
+  test('reports a branch that can’t be read before the commit as such', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const head = git('rev-parse', 'HEAD');
+    /** @type {any} */
+    const realGit = await loadChunk('git');
+
+    const resolveRef = vi
+      .fn(realGit.resolveRef)
+      .mockImplementationOnce(realGit.resolveRef)
+      .mockRejectedValueOnce(new Error('Disk failure'));
+
+    vi.mocked(loadChunk).mockResolvedValueOnce({ ...realGit, resolveRef });
+
+    const results = await saveAndCommit([{ action: 'update', path: 'README.md', data: 'Hi\n' }]);
+
+    expect(results.sha).toBe('pseudo');
+    expect(git('rev-parse', 'HEAD')).toBe(head);
+    expect(resolveRef).toHaveBeenCalledTimes(2);
+    expect(localGitNotice.current).toEqual({ reason: 'error', detail: 'Disk failure' });
     consoleError.mockRestore();
   });
 

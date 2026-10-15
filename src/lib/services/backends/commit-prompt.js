@@ -41,6 +41,30 @@ let lastAddition = '';
 export const isCommitCancelled = (ex) => ex?.message === COMMIT_CANCELLED;
 
 /**
+ * Run an action that commits changes, and sort out how it ended. A cancellation at the commit
+ * message prompt isn’t a failure, so it’s not logged. Any other error is logged to the console.
+ * @template T
+ * @param {() => Promise<T>} action Action to run.
+ * @returns {Promise<{ ok: true, cancelled: false, result: T, error: undefined }
+ * | { ok: false, cancelled: boolean, result: undefined, error: any }>} Outcome. `error` is what
+ * the action threw, whether it was a cancellation or a failure.
+ */
+export const runCommit = async (action) => {
+  try {
+    return { ok: true, cancelled: false, result: await action(), error: undefined };
+  } catch (/** @type {any} */ ex) {
+    const cancelled = isCommitCancelled(ex);
+
+    if (!cancelled) {
+      // eslint-disable-next-line no-console
+      console.error(ex);
+    }
+
+    return { ok: false, cancelled, result: undefined, error: ex };
+  }
+};
+
+/**
  * Get how the user is asked for a commit message. The user is only asked when the changes are
  * actually committed: by a Git backend, or by the local backend with local Git commits turned on.
  * @returns {CommitMessagePromptMode | undefined} Mode, or `undefined` if the user isn’t asked.

@@ -2,6 +2,7 @@ import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svel
 import { getListItemIndexes, indexListItems } from '$lib/services/contents/entry/content-index';
 import { getComputedValue } from '$lib/services/contents/fields/compute/helpers';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
+import { someSubField } from '$lib/services/contents/fields/list/subfields';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
@@ -78,32 +79,8 @@ const computeFieldCacheMap = new WeakMap();
  * @param {Field} field Field configuration.
  * @returns {boolean} Result.
  */
-const containsComputeField = (field) => {
-  const cached = computeFieldCacheMap.get(field);
-
-  if (cached !== undefined) {
-    return cached;
-  }
-
-  const { widget: fieldType = 'string' } = field;
-  let result = false;
-
-  if (fieldType === 'compute') {
-    result = true;
-  } else if (fieldType === 'object' || fieldType === 'list') {
-    const { field: subField } = /** @type {ListFieldWithSubField} */ (field);
-    const { fields = [] } = /** @type {FieldWithSubFields} */ (field);
-    const { types = [] } = /** @type {FieldWithTypes} */ (field);
-
-    result = [subField, ...fields, ...types.flatMap(({ fields: typeFields = [] }) => typeFields)]
-      .filter(Boolean)
-      .some(containsComputeField);
-  }
-
-  computeFieldCacheMap.set(field, result);
-
-  return result;
-};
+const containsComputeField = (field) =>
+  someSubField(field, ({ widget }) => widget === 'compute', computeFieldCacheMap);
 
 /**
  * Collect the Compute fields in the given field, which may be one itself or hold some below it.

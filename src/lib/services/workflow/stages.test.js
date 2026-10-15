@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
@@ -6,11 +6,20 @@ import {
   boardStages,
   getEntryStage,
   getNextStage,
+  getStageOfEntry,
+  getStagesOfEntry,
   getWorkflowStages,
   isLastStage,
+  isStageAvailable,
   resolveStage,
   workflowPageLabelKey,
 } from '$lib/services/workflow/stages';
+
+vi.mock('$lib/services/contents/collection', () => ({
+  getCollection: vi.fn((/** @type {string} */ name) =>
+    name === 'preview' ? { name, publish_mode: 'preview' } : undefined,
+  ),
+}));
 
 /**
  * Create an unpublished entry with the given status.
@@ -31,6 +40,28 @@ describe('workflow/stages', () => {
   afterEach(() => {
     cmsConfig.current = undefined;
     forkedRepository.current = undefined;
+  });
+
+  describe('entry stages by collection name', () => {
+    /** @type {any} */
+    const entry = { workflow: { status: 'pending_publish', collectionName: 'preview' } };
+    /** @type {any} */
+    const otherEntry = { workflow: { status: 'pending_publish', collectionName: 'other' } };
+
+    test('gives the stages of the entry’s collection', () => {
+      expect(getStagesOfEntry(entry)).toEqual(['draft']);
+      expect(getStagesOfEntry(otherEntry)).toEqual(['draft', 'pending_review', 'pending_publish']);
+    });
+
+    test('gives the stage the entry is in', () => {
+      expect(getStageOfEntry(entry)).toBe('draft');
+      expect(getStageOfEntry(otherEntry)).toBe('pending_publish');
+    });
+
+    test('tells if the entry can be moved to a stage', () => {
+      expect(isStageAvailable(entry, 'pending_review')).toBe(false);
+      expect(isStageAvailable(otherEntry, 'pending_review')).toBe(true);
+    });
   });
 
   describe('getWorkflowStages', () => {

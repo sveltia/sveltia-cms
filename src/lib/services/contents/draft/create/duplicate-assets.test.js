@@ -60,8 +60,9 @@ vi.mock('$lib/services/contents/fields', () => ({
 }));
 
 vi.mock('$lib/services/contents/fields/file/helpers', () => ({
-  getAssetLibraryFolderMap: mockGetAssetLibraryFolderMap,
-  getDefaultAssetFolder: mockGetDefaultAssetFolder,
+  getFieldAssetFolder: vi.fn((args) =>
+    mockGetDefaultAssetFolder(mockGetAssetLibraryFolderMap(args)),
+  ),
 }));
 
 const { copyEntryRelativeAssets } = await import('./duplicate-assets');

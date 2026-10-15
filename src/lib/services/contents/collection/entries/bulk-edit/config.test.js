@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 
-import { getBulkEditableFields, isBulkEditableField, isBulkEditEnabled } from './config';
+import {
+  findFieldByName,
+  getBulkEditableFields,
+  isBulkEditableField,
+  isBulkEditEnabled,
+} from './config';
 
 describe('isBulkEditableField()', () => {
   test.each(['boolean', 'color', 'datetime', 'number', 'relation', 'select', 'string'])(
@@ -142,5 +147,14 @@ describe('getBulkEditableFields()', () => {
 
   test('returns no fields for an empty list', () => {
     expect(names(makeCollection({ fields: [] }))).toEqual([]);
+  });
+});
+
+describe('findFieldByName()', () => {
+  test('finds a field by name', () => {
+    const fields = [{ name: 'a' }, { name: 'b' }];
+
+    expect(findFieldByName(fields, 'b')).toBe(fields[1]);
+    expect(findFieldByName(fields, 'c')).toBeUndefined();
   });
 });

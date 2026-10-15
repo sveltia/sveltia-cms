@@ -8,13 +8,12 @@
   import { Alert, Menu, MenuButton, MenuItemRadio, Toast } from '@sveltia/ui';
 
   import StatusBadge from '$lib/components/workflow/status-badge.svelte';
-  import { getCollection } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { env } from '$lib/services/user/env.svelte';
   import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
   import { handleEntryAlreadyPublished } from '$lib/services/workflow/editor';
   import { updateWorkflowStatus } from '$lib/services/workflow/save';
-  import { getEntryStage, getWorkflowStages } from '$lib/services/workflow/stages';
+  import { getStageOfEntry, getStagesOfEntry } from '$lib/services/workflow/stages';
   import { canMoveToStatus } from '$lib/services/workflow/validate';
   import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
@@ -43,11 +42,10 @@
   let errorMessage = $state('');
   let showValidationToast = $state(false);
 
-  const collection = $derived(getCollection(entry.workflow.collectionName));
   // The stages the collection is configured with, and the one the entry is in. A pull request whose
   // label isn’t among the stages is shown in the nearest earlier one
-  const stages = $derived(getWorkflowStages(collection));
-  const status = $derived(getEntryStage(entry, collection));
+  const stages = $derived(getStagesOfEntry(entry));
+  const status = $derived(getStageOfEntry(entry));
   const statusName = $derived(_(WORKFLOW_STATUS_LABELS[status]));
   // The status name alone doesn’t say what it refers to, so spell it out where there’s room. A
   // small screen only gets the name, but the accessible name keeps the prefix for context

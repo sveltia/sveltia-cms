@@ -12,13 +12,12 @@
   import { assetURLUpdates } from '$lib/services/api/asset-proxy';
   import { fieldStateContext } from '$lib/services/api/field-state';
   import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
-  import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
+  import { createReactRoot, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { buildPreviewProps } from '$lib/services/contents/fields/custom/preview';
 
   /**
-   * @import { Root } from 'react-dom/client';
    * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { CustomField, CustomFieldPreview } from '$lib/types/public';
    */
@@ -48,7 +47,7 @@
   /**
    * React root, created on the first render. Not reactive, as the effect rendering the component
    * assigns it, and would otherwise run again right away.
-   * @type {Root | undefined}
+   * @type {ReturnType<typeof createReactRoot> | undefined}
    */
   let reactRoot;
 
@@ -71,7 +70,7 @@
     });
 
     if (props) {
-      reactRoot ??= getReactDom().createRoot(container);
+      reactRoot ??= createReactRoot(container);
 
       // Provide the state of this field to any built-in field preview reused within the custom
       // preview, which is typically given an ad hoc field configuration that doesn’t describe it

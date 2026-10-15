@@ -5,6 +5,7 @@ import { formatFileName } from '$lib/services/assets/file-name';
 import { replaceTemplatePlaceholder } from '$lib/services/common/template/replacers';
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { cmsConfig } from '$lib/services/config';
+import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
 
 /**
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';
@@ -62,8 +63,9 @@ export const fillAssetNameTemplate = ({
 }) => {
   const { extension } = getPathInfo(originalName);
 
-  const identifierField =
-    collection?._type === 'entry' ? (collection.identifier_field ?? 'title') : 'title';
+  const identifierField = getIdentifierFieldName(
+    collection?._type === 'entry' ? collection : undefined,
+  );
 
   /** @type {ReplaceContext} */
   const context = {

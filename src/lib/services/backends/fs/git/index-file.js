@@ -2,8 +2,9 @@
 
 import { getHash } from '@sveltia/utils/crypto';
 
-import { fromHex } from '$lib/services/backends/fs/git/objects';
-import { toHex } from '$lib/services/utils/crypto';
+import { OID_SIZE } from '$lib/services/backends/fs/git/constants';
+import { compareBytes, concatBytes, textDecoder, textEncoder } from '$lib/services/utils/bytes';
+import { fromHex, toHex } from '$lib/services/utils/crypto';
 
 /**
  * @import { GitIndex, GitIndexEntry, GitTreeNode } from '$lib/types/private';
@@ -14,12 +15,6 @@ import { toHex } from '$lib/services/utils/crypto';
  * 16-bit flags.
  */
 const ENTRY_HEADER_SIZE = 62;
-/**
- * Size of the checksum at the end of the index file.
- */
-const CHECKSUM_SIZE = 20;
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
 
 /**
  * Parse the cache tree extension of an index, where Git keeps the object IDs of the trees the
@@ -61,8 +56,8 @@ export const parseCacheTree = (bytes) => {
     const [entryCount, subtreeCount] = readUntil(0x0a).split(' ').map(Number);
 
     if (entryCount >= 0) {
-      trees.set(path, toHex(bytes.subarray(position, position + 20)));
-      position += 20;
+      trees.set(path, toHex(bytes.subarray(position, position + OID_SIZE)));
+      position += OID_SIZE;
     }
 
     for (let index = 0; index < subtreeCount; index += 1) {
@@ -122,7 +117,7 @@ export const parseIndex = (buffer) => {
     entries.push({
       path: textDecoder.decode(bytes.subarray(pathStart, pathStart + pathLength)),
       mode: view.getUint32(position + 24),
-      oid: toHex(bytes.subarray(position + 40, position + 60)),
+      oid: toHex(bytes.subarray(position + 40, position + 40 + OID_SIZE)),
       stage: (flags >> 12) & 0x3,
       raw: bytes.subarray(position, end),
     });
@@ -134,7 +129,7 @@ export const parseIndex = (buffer) => {
   let cacheTree;
 
   // Each extension has a 4-byte signature and a 32-bit size, followed by the data
-  while (position < bytes.length - CHECKSUM_SIZE) {
+  while (position < bytes.length - OID_SIZE) {
     const signature = textDecoder.decode(bytes.subarray(position, position + 4));
     const size = view.getUint32(position + 4);
 
@@ -163,19 +158,10 @@ export const hasRequiredExtension = ({ extensions }) =>
   extensions.some((signature) => /^[a-z]/.test(signature));
 
 /**
- * Mode of an index entry for a regular file.
- */
-export const REGULAR_FILE_MODE = 0o100644;
-/**
- * Mode of an index entry for an executable file.
- */
-export const EXECUTABLE_FILE_MODE = 0o100755;
-
-/**
  * Create an index entry for a file, in the shape Git writes it in a version 2 index.
  * @param {object} args Arguments.
  * @param {string} args.path File path, relative to the repository root.
- * @param {number} args.mode File mode, e.g. {@link REGULAR_FILE_MODE}.
+ * @param {number} args.mode File mode, e.g. `REGULAR_FILE_MODE`.
  * @param {string} args.oid Object ID of the file content.
  * @param {number} args.size File size in bytes.
  * @param {number} args.mtimeMs Last modified time. It also stands in for the time the file’s
@@ -217,19 +203,7 @@ export const createIndexEntry = ({ path, mode, oid, size, mtimeMs }) => {
  * @returns {number} A negative number if `a` comes first, a positive number if `b` comes first, or
  * zero if they’re equal.
  */
-const comparePaths = (a, b) => {
-  const x = textEncoder.encode(a);
-  const y = textEncoder.encode(b);
-  const length = Math.min(x.length, y.length);
-
-  for (let index = 0; index < length; index += 1) {
-    if (x[index] !== y[index]) {
-      return x[index] - y[index];
-    }
-  }
-
-  return x.length - y.length;
-};
+const comparePaths = (a, b) => compareBytes(textEncoder.encode(a), textEncoder.encode(b));
 
 /**
  * Find where an entry for a path is, or would be, among the sorted entries of an index.
@@ -332,15 +306,7 @@ export const serializeCacheTree = (tree) => {
   count(tree);
   write(tree, '');
 
-  const data = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
-  let position = 0;
-
-  parts.forEach((part) => {
-    data.set(part, position);
-    position += part.length;
-  });
-
-  return data;
+  return concatBytes(parts);
 };
 
 /**
@@ -358,7 +324,7 @@ export const serializeIndex = async (entries, { tree } = {}) => {
   const cacheTree = tree ? serializeCacheTree(tree) : undefined;
   const entriesSize = entries.reduce((total, { raw }) => total + raw.length, 12);
   const size = entriesSize + (cacheTree ? 8 + cacheTree.length : 0);
-  const bytes = new Uint8Array(size + CHECKSUM_SIZE);
+  const bytes = new Uint8Array(size + OID_SIZE);
   const view = new DataView(bytes.buffer);
   let position = 12;
 

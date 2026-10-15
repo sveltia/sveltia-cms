@@ -316,7 +316,10 @@ const fetchTreeBlobs = async ({ ref, path }) => {
   return blobs;
 };
 
-const FETCH_BLOB_IDS_QUERY = `
+/**
+ * Query to fetch the Git object IDs of the blobs at the given paths on a branch or commit.
+ */
+export const FETCH_BLOB_IDS_QUERY = `
   query($fullPath: ID!, $branch: String!, $paths: [String!]!) {
     project(fullPath: $fullPath) {
       repository {

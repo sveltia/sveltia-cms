@@ -4,14 +4,14 @@ import { resolveCollectionAndFile } from '$lib/services/contents/collection/file
 import { isAutoDuplicationEnabled } from '$lib/services/contents/draft';
 import { createValueMap } from '$lib/services/contents/draft/create/versioned-map.svelte';
 import { revalidateField } from '$lib/services/contents/draft/validate/fields';
-import { getField } from '$lib/services/contents/entry/fields';
+import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
 import {
   findDuplicateIfEmptyField,
+  followsDefaultLocale,
   getMainValueKeyPath,
 } from '$lib/services/contents/i18n/duplicate-if-empty';
 import { isNumeric } from '$lib/services/utils/number';
-import { isValueEmpty } from '$lib/services/utils/object';
 
 /**
  * @import { EntryDraft, FlattenedEntryContent, GetFieldArgs } from '$lib/types/private';
@@ -163,6 +163,36 @@ const hasParentInLocale = ({ getFieldArgs, content }) => {
 };
 
 /**
+ * Call a function for each locale other than the source locale where a value can be copied to, i.e.
+ * The parent object exists and the list items match.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
+ * path of the value.
+ * @param {LocaleCode} args.sourceLanguage Source locale.
+ * @param {(content: FlattenedEntryContent) => boolean} args.matchesListItems Function returned by
+ * {@link getListItemMatcher}.
+ * @param {(content: FlattenedEntryContent, targetLanguage: LocaleCode) => void} callback Function
+ * called with the content and code of the target locale.
+ */
+const forEachTargetLocale = (
+  { draft, getFieldArgs, sourceLanguage, matchesListItems },
+  callback,
+) => {
+  Object.entries(draft.currentValues).forEach(([targetLanguage, content]) => {
+    // Don’t copy the value if the parent object doesn’t exist, or to a list item that doesn’t exist
+    // in the target locale, or that is of another type there
+    if (
+      targetLanguage !== sourceLanguage &&
+      hasParentInLocale({ getFieldArgs, content }) &&
+      matchesListItems(content)
+    ) {
+      callback(content, targetLanguage);
+    }
+  });
+};
+
+/**
  * Copy the default locale value to other locales if the field’s i18n strategy is `duplicate`.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -181,29 +211,22 @@ export const copyDefaultLocaleValue = ({
   const { keyPath } = getFieldArgs;
   const matchesListItems = getListItemMatcher({ fieldConfig, getFieldArgs });
 
-  Object.entries(draft.currentValues).forEach(([targetLanguage, content]) => {
-    if (targetLanguage === sourceLanguage) {
-      return;
-    }
+  forEachTargetLocale(
+    { draft, getFieldArgs, sourceLanguage, matchesListItems },
+    (content, targetLanguage) => {
+      // Keep the source `value` intact, as it’s used for the remaining target locales
+      const localizedValue = getLocalizedFieldValue({
+        fieldConfig,
+        value,
+        sourceLocale: sourceLanguage,
+        targetLocale: targetLanguage,
+      });
 
-    // Don’t duplicate the value if the parent object doesn’t exist, or to a list item that doesn’t
-    // exist in the target locale, or that is of another type there
-    if (!hasParentInLocale({ getFieldArgs, content }) || !matchesListItems(content)) {
-      return;
-    }
-
-    // Keep the source `value` intact, as it’s used for the remaining target locales
-    const localizedValue = getLocalizedFieldValue({
-      fieldConfig,
-      value,
-      sourceLocale: sourceLanguage,
-      targetLocale: targetLanguage,
-    });
-
-    if (content[keyPath] !== localizedValue) {
-      content[keyPath] = localizedValue;
-    }
-  });
+      if (content[keyPath] !== localizedValue) {
+        content[keyPath] = localizedValue;
+      }
+    },
+  );
 };
 
 /**
@@ -250,54 +273,45 @@ export const copyDefaultLocaleValueIfEmpty = ({
     getFieldArgs: { ...getFieldArgs, keyPath: fieldKeyPath },
   });
 
-  Object.entries(draft.currentValues).forEach(([targetLanguage, content]) => {
-    if (
-      targetLanguage === sourceLanguage ||
-      !hasParentInLocale({ getFieldArgs, content }) ||
-      !matchesListItems(content)
-    ) {
-      return;
-    }
+  forEachTargetLocale(
+    { draft, getFieldArgs, sourceLanguage, matchesListItems },
+    (content, targetLanguage) => {
+      const targetMainValue = content[mainKeyPath];
 
-    /**
-     * Localize a value of the default locale for the target locale, e.g. a DateTime field value
-     * written in the locale.
-     * @param {any} _value Value.
-     * @returns {any} Localized value.
-     */
-    const localize = (_value) =>
-      getLocalizedFieldValue({
+      const follows = followsDefaultLocale({
         fieldConfig,
-        value: _value,
+        targetValue: targetMainValue,
+        previousValue: previousMainValue,
         sourceLocale: sourceLanguage,
         targetLocale: targetLanguage,
       });
 
-    const targetMainValue = content[mainKeyPath];
+      if (deleted) {
+        if (follows && keyPath in content) {
+          delete content[keyPath];
+        }
 
-    const follows =
-      isValueEmpty(targetMainValue) || targetMainValue === localize(previousMainValue);
-
-    if (deleted) {
-      if (follows && keyPath in content) {
-        delete content[keyPath];
+        return;
       }
 
-      return;
-    }
+      const localizedValue = getLocalizedFieldValue({
+        fieldConfig,
+        value,
+        sourceLocale: sourceLanguage,
+        targetLocale: targetLanguage,
+      });
 
-    const localizedValue = localize(value);
-
-    if (
-      follows &&
-      // A Code field’s object value is replaced with an empty object of the same shape, so leave
-      // the one the locale already has
-      !(isObject(value) && isObject(content[keyPath])) &&
-      content[keyPath] !== localizedValue
-    ) {
-      content[keyPath] = localizedValue;
-    }
-  });
+      if (
+        follows &&
+        // A Code field’s object value is replaced with an empty object of the same shape, so leave
+        // the one the locale already has
+        !(isObject(value) && isObject(content[keyPath])) &&
+        content[keyPath] !== localizedValue
+      ) {
+        content[keyPath] = localizedValue;
+      }
+    },
+  );
 };
 
 /**
@@ -319,6 +333,7 @@ export const copyDefaultLocaleValueIfEmpty = ({
  */
 export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getValueMap }) => {
   const { collectionName, fileName, isIndexFile } = draft;
+  const draftFieldArgs = { collectionName, fileName, isIndexFile };
   const resolved = resolveCollectionAndFile(collectionName, fileName);
 
   if (!resolved) {
@@ -333,15 +348,21 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
   } = (collectionFile ?? collection)._i18n;
 
   /**
+   * Check if the value is written in the default locale with auto-duplication enabled, in which
+   * case it can be copied to the other locales.
+   * @returns {boolean} Result.
+   */
+  const isDefaultLocaleSource = () =>
+    isAutoDuplicationEnabled() && sourceLanguage === defaultLocale;
+
+  /**
    * Check if auto-duplication should be performed for the given field.
    * @param {Field} fieldConfig Field configuration.
    * @param {GetFieldArgs} getFieldArgs Arguments for the `getField` function.
    * @returns {boolean} True if auto-duplication should be performed.
    */
   const shouldAutoDuplicate = (fieldConfig, getFieldArgs) =>
-    isAutoDuplicationEnabled() &&
-    sourceLanguage === defaultLocale &&
-    isDuplicatedField({ fieldConfig, getFieldArgs });
+    isDefaultLocaleSource() && isDuplicatedField({ fieldConfig, getFieldArgs });
 
   /**
    * Get field configuration for the given key path.
@@ -352,8 +373,7 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
    */
   const getFieldInfo = (obj, keyPath) => {
     const valueMap = typeof getValueMap === 'function' ? getValueMap() : obj;
-    /** @type {GetFieldArgs} */
-    const getFieldArgs = { collectionName, fileName, keyPath, valueMap, isIndexFile };
+    const getFieldArgs = getDraftFieldArgs(draftFieldArgs, { keyPath, valueMap });
     const fieldConfig = getField({ ...getFieldArgs });
 
     return { valueMap, getFieldArgs, fieldConfig };
@@ -372,7 +392,7 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
    * @param {boolean} [args.deleted] Whether the value was deleted.
    */
   const followDefaultLocale = ({ fieldConfig, getFieldArgs, value, previousValue, deleted }) => {
-    if (!isAutoDuplicationEnabled() || sourceLanguage !== defaultLocale) {
+    if (!isDefaultLocaleSource()) {
       return;
     }
 

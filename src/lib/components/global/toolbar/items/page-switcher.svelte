@@ -4,11 +4,11 @@
 
   import {
     customPages,
-    getCustomPagePath,
     openCustomPage,
     selectedCustomPageId,
   } from '$lib/services/app/custom-pages';
   import { goto, selectedPageName } from '$lib/services/app/navigation';
+  import { getToolbarPages } from '$lib/services/app/toolbar-pages';
   import {
     enabledCloudServices,
     getCloudServicePath,
@@ -54,68 +54,25 @@
    */
   const customLinks = $derived(listedCustomPages.filter(({ newTab }) => newTab));
 
-  const pages = $derived.by(() => {
-    /** @type {{ key: string, label: string, icon: string, link: string, selected: boolean }[]} */
-    const _pages = [
-      {
-        key: 'collections',
-        label: _('contents'),
-        icon: 'article',
-        link: '/collections',
-        selected: selectedPageName.current === 'collections' || searchMode.current === 'contents',
-      },
-    ];
-
-    // Hide the Assets page if there is nothing to show: no asset folder, no external location and
-    // no linked file
-    if (
-      allAssetFolders.current.length ||
-      enabledCloudServices.current.length ||
-      linkedAssets.current.length
-    ) {
-      _pages.push({
-        key: 'assets',
-        label: _('assets'),
-        icon: 'photo',
-        link: assetsLink,
-        selected: selectedPageName.current === 'assets' || searchMode.current === 'assets',
-      });
-    }
-
-    if (workflowEnabled.current) {
-      _pages.push({
-        key: 'workflow',
-        label: _(workflowPageLabelKey.current),
-        icon: 'rebase_edit',
-        link: '/workflow',
-        selected: selectedPageName.current === 'workflow',
-      });
-    }
-
-    listedCustomPages
-      .filter(({ newTab }) => !newTab)
-      .forEach((page) => {
-        _pages.push({
-          key: `pages/${page.id}`,
-          label: page.label,
-          icon: page.icon,
-          link: getCustomPagePath(page),
-          selected: selectedCustomPageId.current === page.id,
-        });
-      });
-
-    if (env.isSmallScreen) {
-      _pages.push({
-        key: 'menu',
-        label: _('menu'),
-        icon: 'menu',
-        link: '/menu',
-        selected: selectedPageName.current === 'menu',
-      });
-    }
-
-    return _pages;
-  });
+  const pages = $derived(
+    getToolbarPages({
+      selectedPageName: selectedPageName.current,
+      searchMode: searchMode.current,
+      // Hide the Assets page if there is nothing to show: no asset folder, no external location and
+      // no linked file
+      hasAssets: !!(
+        allAssetFolders.current.length ||
+        enabledCloudServices.current.length ||
+        linkedAssets.current.length
+      ),
+      assetsLink,
+      workflowEnabled: workflowEnabled.current,
+      workflowLabelKey: workflowPageLabelKey.current,
+      customPages: listedCustomPages.filter(({ newTab }) => !newTab),
+      selectedCustomPageId: selectedCustomPageId.current,
+      isSmallScreen: env.isSmallScreen,
+    }),
+  );
 </script>
 
 <div role="none" class="wrapper">

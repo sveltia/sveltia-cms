@@ -1,9 +1,10 @@
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
 import { isValueEmpty } from '$lib/services/utils/object';
 
 /**
  * @import { CodeField, Field, FieldKeyPath } from '$lib/types/public';
- * @import { FlattenedEntryContent } from '$lib/types/private';
+ * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
  */
 
 /**
@@ -101,3 +102,26 @@ export const findDuplicateIfEmptyField = (keyPath, getFieldConfig) => {
     ? { fieldConfig: parentFieldConfig, fieldKeyPath }
     : undefined;
 };
+
+/**
+ * Check if a locale follows the default locale for a `duplicate_if_empty` field, i.e. Its value is
+ * empty or still the one copied from the default locale before the value was changed there. Such a
+ * locale gets the new value of the default locale, while a value of its own is left alone.
+ * @param {object} args Arguments.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {any} args.targetValue Current main value in the target locale.
+ * @param {any} args.previousValue Main value in the default locale before the change.
+ * @param {InternalLocaleCode} args.sourceLocale Default locale.
+ * @param {InternalLocaleCode} args.targetLocale Target locale.
+ * @returns {boolean} Result.
+ */
+export const followsDefaultLocale = ({
+  fieldConfig,
+  targetValue,
+  previousValue,
+  sourceLocale,
+  targetLocale,
+}) =>
+  isValueEmpty(targetValue) ||
+  targetValue ===
+    getLocalizedFieldValue({ fieldConfig, value: previousValue, sourceLocale, targetLocale });

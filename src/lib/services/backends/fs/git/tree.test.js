@@ -1,46 +1,30 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync, rmSync, symlinkSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
+import { TREE_MODE } from '$lib/services/backends/fs/git/constants';
 import { parseIndex } from '$lib/services/backends/fs/git/index-file';
 import {
   buildTree,
   getCommitTree,
   parseTree,
   serializeTree,
-  TREE_MODE,
   writeChangedTrees,
 } from '$lib/services/backends/fs/git/tree';
+import { createTempDir, runGit, runGitRaw, writeRepoFile } from '$lib/test/git-repo';
 
 /** @type {string} */
 let repoDir;
-
 /**
  * Run a Git command in the test repository.
  * @param {...string} args Arguments.
  * @returns {string} Output, trimmed.
  */
-const git = (...args) =>
-  execFileSync('git', args, {
-    cwd: repoDir,
-    env: {
-      ...process.env,
-      GIT_CONFIG_GLOBAL: '/dev/null',
-      GIT_CONFIG_NOSYSTEM: '1',
-      GIT_AUTHOR_NAME: 'Jane',
-      GIT_AUTHOR_EMAIL: 'jane@example.com',
-      GIT_COMMITTER_NAME: 'Jane',
-      GIT_COMMITTER_EMAIL: 'jane@example.com',
-    },
-    stdio: 'pipe',
-  })
-    .toString()
-    .trim();
+const git = (...args) => runGit(repoDir, ...args);
 
 /**
  * Write a file in the test repository.
@@ -48,8 +32,7 @@ const git = (...args) =>
  * @param {string} [content] Content.
  */
 const write = (path, content = `${path}\n`) => {
-  mkdirSync(join(repoDir, path, '..'), { recursive: true });
-  writeFileSync(join(repoDir, path), content);
+  writeRepoFile(repoDir, path, content);
 };
 
 /**
@@ -69,14 +52,12 @@ const readObject = async (oid) => {
 
   return {
     type,
-    content: new Uint8Array(
-      execFileSync('git', ['cat-file', type, oid], { cwd: repoDir, stdio: 'pipe' }),
-    ),
+    content: new Uint8Array(runGitRaw(repoDir, ['cat-file', type, oid])),
   };
 };
 
 beforeEach(() => {
-  repoDir = mkdtempSync(join(tmpdir(), 'sveltia-git-tree-'));
+  repoDir = createTempDir('sveltia-git-tree-');
   git('init', '--initial-branch=main');
 });
 

@@ -339,9 +339,11 @@ describe('applyBulkEdits()', () => {
     expect(entry.locales._default.content).toEqual({ title: 'A', draft: false, updated: 'THEN' });
 
     expect(assignAutoNowValues).toHaveBeenCalledExactlyOnceWith({
-      isNew: false,
+      collection,
       collectionName: 'posts',
+      fields: collection.fields,
       isIndexFile: false,
+      isNew: false,
       currentValues: { _default: { title: 'B', draft: true, updated: 'NOW' } },
     });
   });

@@ -1,16 +1,6 @@
-import { getAssetPublicURL } from '$lib/services/assets/info';
 import { getMediaFieldSource } from '$lib/services/assets/media-field';
-import {
-  getAssetReferences,
-  getComparableAssetURL,
-  getMediaElements,
-  isInsideTag,
-  MARKDOWN_MEDIA_REGEX,
-  parseHTMLFragment,
-  parseMediaStartTag,
-  serializeStartTag,
-  updateMediaElementURLs,
-} from '$lib/services/assets/references';
+import { getAssetReferenceTarget } from '$lib/services/assets/reference-target';
+import { getAssetReferences, getComparableAssetURL } from '$lib/services/assets/references';
 import { allAssets } from '$lib/services/assets/state';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
@@ -25,6 +15,13 @@ import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getValueFormat } from '$lib/services/contents/fields/rich-text';
+import {
+  MARKDOWN_MEDIA_REGEX,
+  rewriteMediaStartTag,
+  updateMediaElementURLs,
+} from '$lib/services/contents/fields/rich-text/previews/media-sources';
+import { getMediaElements } from '$lib/services/contents/fields/rich-text/previews/media-urls';
+import { parseHTMLFragment, serializeStartTag } from '$lib/services/utils/html';
 
 /**
  * @import {
@@ -48,10 +45,8 @@ import { getValueFormat } from '$lib/services/contents/fields/rich-text';
  */
 
 /**
- * Get what the references to the given assets are matched by: the public path of an asset that has
- * one, in the form it’s stored in a field value — without the site’s base URL — or else the asset
- * itself, as in an entry-relative folder, which a value refers to when it resolves to the asset.
- * The asset is matched without being loaded, unlike by its blob URL.
+ * Get what the references to the given assets are matched by, see {@link getAssetReferenceTarget},
+ * with the URLs in the form they’re stored in a field value — without the site’s base URL.
  * @param {Asset[]} assets Assets.
  * @returns {AssetReferenceTarget[]} Targets, without duplicate URLs.
  */
@@ -62,14 +57,10 @@ export const getReferenceTargets = (assets) => {
   const urls = new Set();
 
   assets.forEach((asset) => {
-    // A path relative to the entry, like `images/photo.jpg`, refers to a different file in each
-    // entry’s folder, so it can’t be compared as text across entries
-    const url = asset.folder.entryRelative
-      ? undefined
-      : getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true });
+    const { url, asset: target } = getAssetReferenceTarget(asset);
 
     if (url === undefined) {
-      targets.push({ asset });
+      targets.push({ asset: /** @type {Asset} */ (target) });
 
       return;
     }
@@ -238,13 +229,19 @@ const removeMarkdownMedia = (value, isStale) =>
       return isStale(src) ? cutMarkup(text, index, markup.length) : text;
     }
 
-    if (isInsideTag(value, index)) {
-      return text;
-    }
+    const element = rewriteMediaStartTag({
+      value,
+      tag,
+      index,
+      /**
+       * Remove a URL pointing at a deleted asset.
+       * @param {string} url URL.
+       * @returns {null | undefined} `null` to remove the URL, or `undefined` to leave it as is.
+       */
+      callback: (url) => (isStale(url) ? null : undefined),
+    });
 
-    const element = parseMediaStartTag(tag);
-
-    if (!updateMediaElementURLs(element, (url) => (isStale(url) ? null : undefined))) {
+    if (!element) {
       return text;
     }
 

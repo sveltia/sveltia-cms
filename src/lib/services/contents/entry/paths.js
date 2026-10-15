@@ -34,6 +34,17 @@ export const getEntryLocaleFile = (entry, { locale, defaultLocale } = {}) =>
   Object.values(entry.locales)[0];
 
 /**
+ * Get the locale to show an entry in when no locale is asked for: the default locale, or the first
+ * locale the entry has if it doesn’t have the default one. A multi-file i18n entry can be missing
+ * its default locale file, e.g. when only `hello.fr.md` exists.
+ * @param {Record<InternalLocaleCode, any>} locales Locales of the entry, keyed by locale code.
+ * @param {InternalLocaleCode} defaultLocale Default locale of the entry’s collection.
+ * @returns {InternalLocaleCode | undefined} Locale, or `undefined` if there are no locales.
+ */
+export const getEntryDisplayLocale = (locales, defaultLocale) =>
+  locales[defaultLocale] ? defaultLocale : Object.keys(locales)[0];
+
+/**
  * List the distinct paths of the files an entry is made of. A single-file i18n entry lists the same
  * path under every locale.
  * @param {Entry | UnpublishedEntry} entry Entry.

@@ -1,5 +1,6 @@
 import { getAssetBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
 import { isMediaKind } from '$lib/services/assets/kinds';
+import { getAssetReferenceTarget } from '$lib/services/assets/reference-target';
 import { getEntriesByAssets, getEntriesByAssetURL } from '$lib/services/assets/references';
 import { backend } from '$lib/services/backends';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
@@ -105,9 +106,7 @@ export const getAssetDetails = async (asset) => {
  * @returns {Promise<Entry[]>} List of entries using the asset.
  */
 export const getAssetUsedEntries = async (asset) => {
-  const url = asset.folder.entryRelative
-    ? undefined
-    : getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true });
+  const { url } = getAssetReferenceTarget(asset);
 
   if (url) {
     return getEntriesByAssetURL(url);

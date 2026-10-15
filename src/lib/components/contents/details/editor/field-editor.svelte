@@ -22,6 +22,7 @@
     getEditorFieldConfig,
     getFieldEditorFlags,
     getFieldInputLabels,
+    TRANSLATABLE_FIELD_TYPES,
   } from '$lib/services/contents/editor/field-flags';
   import { getFieldLocaleAccess } from '$lib/services/contents/editor/locale';
   import { createResetMenuState } from '$lib/services/contents/editor/reset-menu.svelte';
@@ -295,7 +296,7 @@
         <span class="required" aria-hidden="true">*</span>
       {/if}
       <Spacer flex />
-      {#if canCopy && !draftReadonly && ['richtext', 'markdown', 'string', 'text', 'list', 'object'].includes(fieldType)}
+      {#if canCopy && !draftReadonly && TRANSLATABLE_FIELD_TYPES.includes(fieldType)}
         <TranslateButton size="small" {locale} {otherLocales} {keyPath} />
       {/if}
       <!-- Every option in the menu edits the content, which a read-only entry doesn’t allow -->

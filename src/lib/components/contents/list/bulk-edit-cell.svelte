@@ -8,6 +8,7 @@
   import { _ } from '@sveltia/i18n';
 
   import { editors } from '$lib/components/contents/details/fields';
+  import { getEditorFieldConfig } from '$lib/services/contents/editor/field-flags';
   import { isFieldRequired } from '$lib/services/contents/entry/fields';
   import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
@@ -49,13 +50,7 @@
   const invalid = $derived(!!errors.length);
   // A Select or Relation field always shows a dropdown list, as radio buttons wouldn’t fit in a
   // cell
-  const editorFieldConfig = $derived(
-    /** @type {Field} */ (
-      ['select', 'relation'].includes(fieldType)
-        ? { ...fieldConfig, dropdown_threshold: 0 }
-        : fieldConfig
-    ),
-  );
+  const editorFieldConfig = $derived(getEditorFieldConfig({ fieldConfig, inline: true }));
 </script>
 
 <div role="none" class="cell" class:edited class:invalid data-field-type={fieldType}>

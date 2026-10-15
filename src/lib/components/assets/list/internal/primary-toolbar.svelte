@@ -27,7 +27,7 @@
   import { browsingCmsFolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { lockedBranch } from '$lib/services/backends/branch-access';
-  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
+  import { runCommit } from '$lib/services/backends/commit-prompt';
   import { getReadonlyMessage } from '$lib/services/config/readonly';
   import { env } from '$lib/services/user/env.svelte';
   import { createPath } from '$lib/services/utils/file';
@@ -109,15 +109,11 @@
       {assets}
       disabled={assetsLocked.current || hasReadonlyAsset(assets)}
       deleteAssets={async (_assets) => {
-        try {
-          await deleteAssets(_assets);
-        } catch (/** @type {any} */ ex) {
-          // The user has cancelled the commit at the commit message prompt, which isn’t a failure
-          if (!isCommitCancelled(ex)) {
-            deletingFailed = true;
-            // eslint-disable-next-line no-console
-            console.error(ex);
-          }
+        const { ok, cancelled } = await runCommit(() => deleteAssets(_assets));
+
+        // A cancellation at the commit message prompt isn’t a failure
+        if (!ok && !cancelled) {
+          deletingFailed = true;
         }
       }}
       planDeletion={planAssetDeletion}

@@ -328,13 +328,12 @@
         label={hasVariableTypes ? typeLabel : ''}
         controlId="object-{fieldId}-item-list"
         expanded={parentExpanded}
-        toggleExpanded={subFields.length
-          ? () =>
-              syncExpanderStates({
-                draft: /** @type {EntryDraft} */ (entryDraft.current),
-                stateMap: { [parentExpandedKeyPath]: !parentExpanded },
-              })
-          : undefined}
+        expandable={subFields.length > 0}
+        toggleExpanded={() =>
+          syncExpanderStates({
+            draft: /** @type {EntryDraft} */ (entryDraft.current),
+            stateMap: { [parentExpandedKeyPath]: !parentExpanded },
+          })}
       >
         {#snippet endContent()}
           {#if hasVariableTypes}

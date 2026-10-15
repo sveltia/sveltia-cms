@@ -6,6 +6,7 @@ import { selectedCollection } from '$lib/services/contents/collection';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { parseCustomSortableFields } from '$lib/services/contents/collection/view/options';
+import { SUMMARY_COLUMN_KEY } from '$lib/services/contents/collection/view/table-keys';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getLocalizedOption } from '$lib/services/contents/i18n/options';
 import { isNumeric } from '$lib/services/utils/number';
@@ -50,7 +51,7 @@ export const SPECIAL_SORT_KEY_TYPES = {
   slug: String,
   commit_author: String,
   commit_date: Date,
-  _summary: String,
+  [SUMMARY_COLUMN_KEY]: String,
   _manual: String,
 };
 
@@ -111,7 +112,7 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
   // Special handling for summary field: if the collection has a summary template defined, we add
   // `_summary` as a special sort key, which uses the generated summary value
   if (summaryTemplate) {
-    keys.unshift('_summary');
+    keys.unshift(SUMMARY_COLUMN_KEY);
   }
 
   // Make sure the keys are valid field keys or special keys. The canonical slug key,

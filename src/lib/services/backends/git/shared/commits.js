@@ -61,6 +61,12 @@ const fillTemplate = (template, values) =>
   );
 
 /**
+ * Get the backend options of the current configuration.
+ * @returns {GitBackend} Options, which are empty if there is no configuration.
+ */
+const getBackendOptions = () => /** @type {GitBackend} */ (cmsConfig.current?.backend ?? {});
+
+/**
  * Get the values of the author placeholders in a commit message template.
  * @returns {Record<string, string>} Values keyed by placeholder name.
  */
@@ -76,13 +82,16 @@ const getAuthorValues = () => {
  * user is shown when asked for a commit message.
  * @param {FileChange[]} changes File changes to be saved.
  * @param {CommitOptions} options Commit options.
+ * @param {GitBackend} [backendOptions] Backend options. Default: those of the current
+ * configuration.
  * @returns {string} Formatted message.
  */
-export const createBaseCommitMessage = (changes, { commitType = 'update', collection }) => {
-  const { commit_messages: customCommitMessages = {} } = /** @type {GitBackend} */ (
-    cmsConfig.current?.backend ?? {}
-  );
-
+export const createBaseCommitMessage = (
+  changes,
+  { commitType = 'update', collection },
+  backendOptions = getBackendOptions(),
+) => {
+  const { commit_messages: customCommitMessages = {} } = backendOptions;
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
   const [firstPath, ...remainingPaths] = changes.map(({ path }) => path);
   const collectionLabel = collection ? getCollectionLabel(collection, { useSingular: true }) : '';
@@ -114,14 +123,11 @@ export const createBaseCommitMessage = (changes, { commitType = 'update', collec
  * Combine the message made from the template with the text the user has entered when asked for a
  * commit message, as the `prompt_commit_messages` backend option says.
  * @param {string} message Message made from the template.
- * @param {string} [userMessage] Text the user has entered.
+ * @param {string | undefined} userMessage Text the user has entered.
+ * @param {GitBackend['prompt_commit_messages']} mode Value of the `prompt_commit_messages` option.
  * @returns {string} Combined message.
  */
-const applyUserMessage = (message, userMessage) => {
-  const { prompt_commit_messages: mode } = /** @type {GitBackend} */ (
-    cmsConfig.current?.backend ?? {}
-  );
-
+const applyUserMessage = (message, userMessage, mode) => {
   const text = userMessage?.trim();
 
   if (!text) {
@@ -151,14 +157,20 @@ const applyUserMessage = (message, userMessage) => {
  */
 export const createCommitMessage = (changes, options) => {
   const { commitType = 'update', skipCI = undefined, userMessage } = options;
+  const backendOptions = getBackendOptions();
 
   const {
     commit_messages: customCommitMessages = {},
     skip_ci: skipCIEnabled,
     automatic_deployments: autoDeploy,
-  } = /** @type {GitBackend} */ (cmsConfig.current?.backend ?? {});
+    prompt_commit_messages: promptMode,
+  } = backendOptions;
 
-  let message = applyUserMessage(createBaseCommitMessage(changes, options), userMessage);
+  let message = applyUserMessage(
+    createBaseCommitMessage(changes, options, backendOptions),
+    userMessage,
+    promptMode,
+  );
 
   // With Open Authoring the commit is made by an outside contributor, so the message can be wrapped
   // to record who wrote it. The default template is the message on its own, which changes nothing

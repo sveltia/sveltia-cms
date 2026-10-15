@@ -7,6 +7,14 @@ export const toHex = (bytes) =>
   Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, '0')).join('');
 
 /**
+ * Convert a hexadecimal string to bytes.
+ * @param {string} hex Hexadecimal string.
+ * @returns {Uint8Array} Bytes.
+ */
+export const fromHex = (hex) =>
+  Uint8Array.from(hex.match(/../g) ?? [], (pair) => Number.parseInt(pair, 16));
+
+/**
  * Create an HMAC-SHA256 signature.
  * @param {string | Uint8Array} key Secret key.
  * @param {string} data Data to sign.

@@ -9,7 +9,7 @@
   import { Alert, ConfirmationDialog, Toast } from '@sveltia/ui';
 
   import DeleteEntryDialog from '$lib/components/contents/details/delete-entry-dialog.svelte';
-  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
+  import { runCommit } from '$lib/services/backends/commit-prompt';
   import { getErrorMessage } from '$lib/services/backends/git/shared/errors';
   import {
     contentUpdatesToast,
@@ -109,30 +109,26 @@
    */
   const runDeletion = async (action, progressKey) => {
     const draft = entryDraft.current;
-    /** @type {Partial<UpdateToastState> | undefined} */
-    let toastState;
 
     progressMessage = progressKey;
     deleting = true;
 
-    try {
-      toastState = await action();
-    } catch (/** @type {any} */ ex) {
+    const { ok, cancelled, result, error } = await runCommit(action);
+
+    deleting = false;
+
+    if (!ok) {
       // The user has cancelled the commit at the commit message prompt, which isn’t a failure
-      if (!isCommitCancelled(ex)) {
-        deleteErrorMessage = getErrorMessage(ex, 'deleting_entry_failed');
+      if (!cancelled) {
+        deleteErrorMessage = getErrorMessage(error, 'deleting_entry_failed');
         showDeleteErrorToast = true;
-        // eslint-disable-next-line no-console
-        console.error(ex);
       }
 
       return;
-    } finally {
-      deleting = false;
     }
 
-    if (toastState) {
-      contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, count: 1, ...toastState };
+    if (result) {
+      contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, count: 1, ...result };
     }
 
     // The Back button stays available while the request is in flight; if the user has moved on,

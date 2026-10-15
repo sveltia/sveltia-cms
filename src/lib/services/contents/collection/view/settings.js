@@ -44,6 +44,17 @@ export const getEntryViewTypes = (collection) => [
 ];
 
 /**
+ * Pick the view type to show among those offered: the one the user has picked, or the first one,
+ * which is the default, if there is none or it isn’t offered anymore, e.g. the grid view of a
+ * collection that no longer has thumbnails.
+ * @param {ViewType | undefined} type View type the user has picked, if any.
+ * @param {ViewType[]} types View types offered, the first one being the default.
+ * @returns {ViewType} View type.
+ */
+export const pickOfferedViewType = (type, types) =>
+  type && types.includes(type) ? type : types[0];
+
+/**
  * Get the view type the entry list is shown in. The default applies until the user picks one, and
  * also to a saved view that isn’t offered anymore, e.g. the grid view of a collection that no
  * longer has thumbnails. The list view is used instead of the table view on a screen too small for
@@ -60,7 +71,7 @@ export const getEntryViewType = ({ type, types, isLargeScreen, reordering = fals
     return 'list';
   }
 
-  const resolved = type && types.includes(type) ? type : types[0];
+  const resolved = pickOfferedViewType(type, types);
 
   return resolved === 'table' && !isLargeScreen ? 'list' : resolved;
 };

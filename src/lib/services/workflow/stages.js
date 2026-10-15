@@ -1,13 +1,29 @@
 import { cmsConfig } from '$lib/services/config';
+import { getCollection } from '$lib/services/contents/collection';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
-import { getPublishModeOptions, isWorkflowMode } from '$lib/services/workflow/config';
+import {
+  getPublishModeOptions,
+  getPublishModeScopes,
+  isWorkflowMode,
+} from '$lib/services/workflow/config';
 import { OPEN_AUTHORING_STAGES, WORKFLOW_STAGES } from '$lib/services/workflow/constants';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
+ * @import { ResolvedPublishMode } from '$lib/services/workflow/config';
  * @import { Collection } from '$lib/types/public';
  */
+
+/**
+ * Get the publish mode options of the given collection with the current site configuration. See
+ * {@link getPublishModeOptions} for details.
+ * @param {Collection | undefined} collection Collection. `undefined` falls back to the site-level
+ * publish mode.
+ * @returns {ResolvedPublishMode} Resolved options.
+ */
+export const getCollectionPublishModeOptions = (collection) =>
+  getPublishModeOptions({ cmsConfig: cmsConfig.current, collection });
 
 /**
  * Get the review stages an unpublished entry in the given collection moves through, which are the
@@ -22,7 +38,7 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
 export const getWorkflowStages = (collection) =>
   openAuthoring.current
     ? OPEN_AUTHORING_STAGES
-    : getPublishModeOptions({ cmsConfig: cmsConfig.current, collection }).stages;
+    : getCollectionPublishModeOptions(collection).stages;
 
 /**
  * Get the stage the given status stands for among the given stages. A pull request labelled with a
@@ -52,6 +68,32 @@ export const resolveStage = (status, stages) => {
  */
 export const getEntryStage = (entry, collection) =>
   resolveStage(entry.workflow.status, getWorkflowStages(collection));
+
+/**
+ * Get the stages configured for the collection the given unpublished entry belongs to.
+ * @param {UnpublishedEntry} entry Unpublished entry.
+ * @returns {WorkflowStatus[]} Stages. See {@link getWorkflowStages}.
+ */
+export const getStagesOfEntry = (entry) =>
+  getWorkflowStages(getCollection(entry.workflow.collectionName));
+
+/**
+ * Get the stage the given unpublished entry is in, which decides the column it’s placed in on the
+ * Editorial Workflow board.
+ * @param {UnpublishedEntry} entry Unpublished entry.
+ * @returns {WorkflowStatus} Stage. See {@link getEntryStage}.
+ */
+export const getStageOfEntry = (entry) =>
+  getEntryStage(entry, getCollection(entry.workflow.collectionName));
+
+/**
+ * Check whether the given unpublished entry can be moved to the given stage. The collections can be
+ * configured with different stages, and an entry can only go to one of its own collection’s.
+ * @param {UnpublishedEntry} entry Unpublished entry.
+ * @param {WorkflowStatus} status Stage.
+ * @returns {boolean} Result.
+ */
+export const isStageAvailable = (entry, status) => getStagesOfEntry(entry).includes(status);
 
 /**
  * Get the stage that comes after the one the given unpublished entry is in.
@@ -95,11 +137,7 @@ export const boardStages = createDerivedState(() => {
   /** @type {Set<WorkflowStatus>} */
   const stages = new Set(['draft']);
 
-  [undefined, ...(config?.collections ?? [])].forEach((collection) => {
-    if (collection && 'divider' in collection) {
-      return;
-    }
-
+  getPublishModeScopes(config).forEach((collection) => {
     const options = getPublishModeOptions({ cmsConfig: config, collection });
 
     if (isWorkflowMode(options.type)) {

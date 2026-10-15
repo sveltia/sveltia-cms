@@ -3,6 +3,7 @@
   import { Divider, Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
 
   import { DATE_FIELDS, SORT_ORDERS } from '$lib/services/contents/collection/view/sort-keys';
+  import { SUMMARY_COLUMN_KEY } from '$lib/services/contents/collection/view/table-keys';
   import { getField } from '$lib/services/contents/entry/fields';
 
   /**
@@ -64,7 +65,7 @@
             }}
           />
         {/each}
-        {#if key === '_summary' && sortKeys.length > 1}
+        {#if key === SUMMARY_COLUMN_KEY && sortKeys.length > 1}
           <Divider />
         {/if}
       {/each}

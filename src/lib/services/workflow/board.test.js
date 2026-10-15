@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import {
   COLUMN_LABELS,
+  getBoardAnnouncement,
   getDiscardMessages,
   getPublishMessages,
   groupEntriesByStatus,
@@ -68,6 +69,45 @@ describe('groupEntriesByStatus()', () => {
         { status: 'pending_publish', entries: [entries[1]] },
       ],
       pendingDeletions: [],
+    });
+  });
+});
+
+describe('getBoardAnnouncement()', () => {
+  /**
+   * Create columns with the given statuses, each holding as many entries as its position.
+   * @param {...string} statuses Statuses.
+   * @returns {any[]} Columns.
+   */
+  const createColumns = (...statuses) =>
+    statuses.map((status, index) => ({ status, entries: Array(index + 1).fill({}) }));
+
+  /** @type {any[]} */
+  const deletions = [{}];
+
+  test('announces every column of the Editorial Workflow board', () => {
+    expect(
+      getBoardAnnouncement(createColumns('draft', 'pending_review', 'pending_publish'), deletions),
+    ).toEqual({
+      key: 'viewing_editorial_workflow',
+      values: { draft: 1, review: 2, ready: 3, deletion: 1 },
+    });
+  });
+
+  test('leaves out the columns the board does not have', () => {
+    expect(getBoardAnnouncement(createColumns('draft', 'pending_publish'), [])).toEqual({
+      key: 'viewing_editorial_workflow_without_review',
+      values: { draft: 1, ready: 2, deletion: 0 },
+    });
+
+    expect(getBoardAnnouncement(createColumns('draft', 'pending_review'), [])).toEqual({
+      key: 'viewing_open_authoring_workflow',
+      values: { draft: 1, review: 2, deletion: 0 },
+    });
+
+    expect(getBoardAnnouncement(createColumns('draft'), [])).toEqual({
+      key: 'viewing_preview_workflow',
+      values: { draft: 1, deletion: 0 },
     });
   });
 });

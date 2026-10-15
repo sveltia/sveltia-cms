@@ -1,4 +1,5 @@
 import { customPreviewStyleRegistry } from '$lib/services/api/registries';
+import { assertOption, assertValid, parseURLFromPage } from '$lib/services/api/validate';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
@@ -20,49 +21,43 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * @see https://sveltiacms.app/en/docs/api/preview-styles
  */
 const registerPreviewStyle = (style, { raw = false, collection, file } = {}) => {
-  if (!isNonEmptyString(style)) {
-    throw new TypeError(
-      'The `style` option for `CMS.registerPreviewStyle()` must be a non-empty string',
-    );
-  }
+  assertOption(isNonEmptyString(style), 'registerPreviewStyle', 'style', 'a non-empty string');
+  assertOption(typeof raw === 'boolean', 'registerPreviewStyle', 'raw', 'a boolean');
 
-  if (typeof raw !== 'boolean') {
-    throw new TypeError('The `raw` option for `CMS.registerPreviewStyle()` must be a boolean');
-  }
+  assertOption(
+    collection === undefined || isNonEmptyString(collection),
+    'registerPreviewStyle',
+    'collection',
+    'a non-empty string',
+  );
 
-  if (collection !== undefined && !isNonEmptyString(collection)) {
-    throw new TypeError(
-      'The `collection` option for `CMS.registerPreviewStyle()` must be a non-empty string',
-    );
-  }
+  assertOption(
+    file === undefined || isNonEmptyString(file),
+    'registerPreviewStyle',
+    'file',
+    'a non-empty string',
+  );
 
-  if (file !== undefined && !isNonEmptyString(file)) {
-    throw new TypeError(
-      'The `file` option for `CMS.registerPreviewStyle()` must be a non-empty string',
-    );
-  }
+  assertValid(
+    file === undefined || collection !== undefined,
+    'The `file` option for `CMS.registerPreviewStyle()` requires the `collection` option',
+  );
 
-  if (file !== undefined && collection === undefined) {
-    throw new TypeError(
-      'The `file` option for `CMS.registerPreviewStyle()` requires the `collection` option',
-    );
-  }
+  // Convert a relative URL to absolute to ensure it works in the preview iframe, which has a
+  // unique blob URL as its origin
+  const parsedURL = raw ? null : parseURLFromPage(style);
 
-  const base = window.location.href;
-
-  if (!raw && !URL.canParse(style, base)) {
-    throw new TypeError(
-      'The `style` option for `CMS.registerPreviewStyle()` must be a valid URL or file path ' +
-        'when `raw` is false',
-    );
-  }
+  assertOption(
+    raw || !!parsedURL,
+    'registerPreviewStyle',
+    'style',
+    'a valid URL or file path when `raw` is false',
+  );
 
   const url = raw
     ? // Create a blob URL for the raw CSS string
       URL.createObjectURL(new Blob([style], { type: 'text/css' }))
-    : // Convert relative URLs to absolute to ensure they work in the preview iframe, which has a
-      // unique blob URL as its origin
-      new URL(style, base).href;
+    : /** @type {URL} */ (parsedURL).href;
 
   const registered = [...customPreviewStyleRegistry].some(
     (entry) => entry.url === url && entry.collection === collection && entry.file === file,

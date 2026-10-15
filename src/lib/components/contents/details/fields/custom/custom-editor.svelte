@@ -44,7 +44,7 @@
   import { assetURLUpdates } from '$lib/services/api/asset-proxy';
   import { fieldStateContext } from '$lib/services/api/field-state';
   import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
-  import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
+  import { createReactRoot, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
   import {
@@ -58,7 +58,6 @@
   import { addFileToDraft } from '$lib/services/contents/fields/custom/files';
 
   /**
-   * @import { Root } from 'react-dom/client';
    * @import { FieldEditorContext, FieldEditorProps, InternalLocaleCode } from '$lib/types/private';
    * @import {
    * CustomField,
@@ -105,7 +104,7 @@
   /**
    * React root, created on the first render. Not reactive, as the effect rendering the component
    * assigns it, and would otherwise run again right away.
-   * @type {Root | undefined}
+   * @type {ReturnType<typeof createReactRoot> | undefined}
    */
   let reactRoot;
   /**
@@ -216,7 +215,7 @@
       return;
     }
 
-    reactRoot ??= getReactDom().createRoot(container);
+    reactRoot ??= createReactRoot(container);
 
     const props = buildControlProps({
       fieldId,

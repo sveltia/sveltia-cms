@@ -15,6 +15,7 @@
     isCollectionIndexFile,
   } from '$lib/services/contents/collection/entries/index-file';
   import { getTableCellValue } from '$lib/services/contents/collection/view/table';
+  import { SUMMARY_COLUMN_KEY } from '$lib/services/contents/collection/view/table-keys';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { env } from '$lib/services/user/env.svelte';
   import { getEntryStage } from '$lib/services/workflow/stages';
@@ -99,7 +100,7 @@
 {/if}
 {#if viewType === 'table'}
   {#each columns as column (column.key)}
-    {#if column.key === '_summary'}
+    {#if column.key === SUMMARY_COLUMN_KEY}
       {@render title()}
     {:else}
       {@const { type, value } = getTableCellValue({ collection, entry, column })}

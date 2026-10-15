@@ -1,5 +1,8 @@
+import { isObject } from '@sveltia/utils/object';
+
 import { preloadImmutable } from '$lib/services/api/immutable';
 import { customComponentRegistry } from '$lib/services/api/registries';
+import { assertDefinition, assertOption, assertValid } from '$lib/services/api/validate';
 import {
   getSelectorTagNames,
   isValidSelector,
@@ -24,64 +27,49 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
 const registerEditorComponent = (definition) => {
-  if (!definition || typeof definition !== 'object') {
-    throw new TypeError(
-      'The `definition` option for `CMS.registerEditorComponent()` must be an object',
-    );
-  }
+  assertOption(isObject(definition), 'registerEditorComponent', 'definition', 'an object');
+  assertDefinition(isNonEmptyString(definition.id), 'id', 'a non-empty string');
 
-  if (!isNonEmptyString(definition.id)) {
-    throw new TypeError('The `definition.id` must be a non-empty string');
-  }
+  assertDefinition(
+    definition.label === undefined || isNonEmptyString(definition.label),
+    'label',
+    'a non-empty string',
+  );
 
-  if (definition.label !== undefined && !isNonEmptyString(definition.label)) {
-    throw new TypeError('The `definition.label` must be a non-empty string');
-  }
+  assertDefinition(definition.pattern instanceof RegExp, 'pattern', 'a RegExp');
+  assertDefinition(typeof definition.toBlock === 'function', 'toBlock', 'a function');
 
-  if (typeof definition.pattern !== 'object' || !(definition.pattern instanceof RegExp)) {
-    throw new TypeError('The `definition.pattern` must be a RegExp');
-  }
+  assertDefinition(
+    definition.toPreview === undefined || typeof definition.toPreview === 'function',
+    'toPreview',
+    'a function',
+  );
 
-  if (typeof definition.toBlock !== 'function') {
-    throw new TypeError('The `definition.toBlock` must be a function');
-  }
-
-  if (definition.toPreview !== undefined && typeof definition.toPreview !== 'function') {
-    throw new TypeError('The `definition.toPreview` must be a function');
-  }
-
-  if (!Array.isArray(definition.fields)) {
-    throw new TypeError('The `definition.fields` must be an array');
-  }
+  assertDefinition(Array.isArray(definition.fields), 'fields', 'an array');
 
   const { htmlSelector, fromBlockHTML, toBlockHTML } = definition;
   const htmlOptions = [htmlSelector, fromBlockHTML, toBlockHTML];
 
   if (htmlOptions.some((option) => option !== undefined)) {
-    if (htmlOptions.includes(undefined)) {
-      throw new TypeError(
-        'The `definition.htmlSelector`, `definition.fromBlockHTML` and `definition.toBlockHTML` ' +
-          'must be given together',
-      );
-    }
+    assertValid(
+      !htmlOptions.includes(undefined),
+      'The `definition.htmlSelector`, `definition.fromBlockHTML` and `definition.toBlockHTML` ' +
+        'must be given together',
+    );
 
-    if (!isNonEmptyString(htmlSelector) || !isValidSelector(htmlSelector)) {
-      throw new TypeError('The `definition.htmlSelector` must be a valid CSS selector');
-    }
+    assertDefinition(
+      isNonEmptyString(htmlSelector) && isValidSelector(htmlSelector),
+      'htmlSelector',
+      'a valid CSS selector',
+    );
 
-    if (!getSelectorTagNames(htmlSelector)) {
-      throw new TypeError(
-        'Each selector in the `definition.htmlSelector` must name the element type it matches',
-      );
-    }
+    assertValid(
+      !!getSelectorTagNames(/** @type {string} */ (htmlSelector)),
+      'Each selector in the `definition.htmlSelector` must name the element type it matches',
+    );
 
-    if (typeof fromBlockHTML !== 'function') {
-      throw new TypeError('The `definition.fromBlockHTML` must be a function');
-    }
-
-    if (typeof toBlockHTML !== 'function') {
-      throw new TypeError('The `definition.toBlockHTML` must be a function');
-    }
+    assertDefinition(typeof fromBlockHTML === 'function', 'fromBlockHTML', 'a function');
+    assertDefinition(typeof toBlockHTML === 'function', 'toBlockHTML', 'a function');
   }
 
   customComponentRegistry.set(definition.id, definition);

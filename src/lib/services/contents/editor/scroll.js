@@ -198,6 +198,18 @@ export const getRevealingScrollTop = ({
 };
 
 /**
+ * Get how far down the bottom of a sticky toolbar is in the viewport, so that an item scrolled to
+ * can leave room for it, rather than scroll back for it, which shows as a bump. The toolbar sticks
+ * below the toolbars of the rich text editors the field is in, if any.
+ * @param {HTMLElement | undefined} toolbar Sticky toolbar, if it is rendered.
+ * @returns {number} Offset in pixels, or 0 without a toolbar.
+ */
+export const getStickyToolbarBottom = (toolbar) =>
+  toolbar
+    ? Number.parseFloat(getComputedStyle(toolbar).top) + toolbar.getBoundingClientRect().height
+    : 0;
+
+/**
  * Scroll a newly added List field item into view. The fields above it are only rendered once the
  * scroll brings them into view, which can push the item out of view again, so it’s followed until
  * it stays in place. It’s not followed otherwise, as the editor pane doesn’t scroll smoothly, so

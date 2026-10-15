@@ -4,6 +4,7 @@ import { preloadImmutable } from '$lib/services/api/immutable';
 import { isReactComponent } from '$lib/services/api/react';
 import { preloadReactDom } from '$lib/services/api/react-dom';
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
+import { assertNotReserved, assertOption } from '$lib/services/api/validate';
 import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
@@ -60,44 +61,46 @@ const registerFieldType = (name, control, preview, schema) => {
     schema: typeSchema,
   } = definition;
 
-  if (!isNonEmptyString(typeName)) {
-    throw new TypeError(
-      'The `name` option for `CMS.registerFieldType()` must be a non-empty string',
-    );
-  }
+  assertOption(isNonEmptyString(typeName), 'registerFieldType', 'name', 'a non-empty string');
 
-  if (/** @type {string[]} */ (BUILTIN_FIELD_TYPES).includes(typeName)) {
-    throw new Error(
-      `The field type name "${typeName}" is reserved for a built-in field type. ` +
-        'Choose a different name for your custom field type.',
-    );
-  }
+  assertNotReserved({
+    name: /** @type {string} */ (typeName),
+    reserved: BUILTIN_FIELD_TYPES,
+    subject: 'field type',
+    builtin: 'built-in field type',
+    custom: 'custom field type',
+  });
 
-  if (!isReactComponent(controlComponent) && typeof controlComponent !== 'string') {
-    throw new TypeError(
-      `The \`${controlOption}\` option for \`CMS.registerFieldType()\` must be a React component ` +
-        'or a string',
-    );
-  }
+  assertOption(
+    isReactComponent(controlComponent) || typeof controlComponent === 'string',
+    'registerFieldType',
+    controlOption,
+    'a React component or a string',
+  );
 
-  if (previewComponent !== undefined && !isReactComponent(previewComponent)) {
-    throw new TypeError(
-      `The \`${previewOption}\` option for \`CMS.registerFieldType()\` must be a React component`,
-    );
-  }
+  assertOption(
+    previewComponent === undefined || isReactComponent(previewComponent),
+    'registerFieldType',
+    previewOption,
+    'a React component',
+  );
 
-  if (summaryComponent !== undefined && !isReactComponent(summaryComponent)) {
-    throw new TypeError(
-      'The `summaryComponent` option for `CMS.registerFieldType()` must be a React component',
-    );
-  }
+  assertOption(
+    summaryComponent === undefined || isReactComponent(summaryComponent),
+    'registerFieldType',
+    'summaryComponent',
+    'a React component',
+  );
 
-  if (typeSchema !== undefined && !isObject(typeSchema)) {
-    throw new TypeError('The `schema` option for `CMS.registerFieldType()` must be an object');
-  }
+  assertOption(
+    typeSchema === undefined || isObject(typeSchema),
+    'registerFieldType',
+    'schema',
+    'an object',
+  );
 
-  customFieldTypeRegistry.set(typeName, {
-    control: controlComponent,
+  customFieldTypeRegistry.set(/** @type {string} */ (typeName), {
+    control: /** @type {NonNullable<typeof controlComponent>} */ (controlComponent),
     preview: previewComponent,
     summary: summaryComponent,
     schema: typeSchema,

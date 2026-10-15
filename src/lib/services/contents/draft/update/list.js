@@ -191,7 +191,7 @@ export const updateListFieldForLocales = ({
       }),
     );
 
-  const { defaultLocale } = (draft.collectionFile ?? draft.collection)._i18n;
+  const { defaultLocale } = getDraftI18nConfig(draft);
 
   forEachTargetLocale(
     {

@@ -49,8 +49,7 @@ vi.mock('$lib/services/assets/info', () => ({
 vi.mock('$lib/services/user/env.svelte', () => ({ env: {} }));
 
 vi.mock('$lib/services/contents/fields/file/helpers', () => ({
-  getAssetLibraryFolderMap: vi.fn(() => ({})),
-  getDefaultAssetFolder: mockGetDefaultAssetFolder,
+  getFieldAssetFolder: mockGetDefaultAssetFolder,
 }));
 
 const {
@@ -61,7 +60,7 @@ const {
   prepareListItemPaste,
   readListItem,
   resetCopiedListItem,
-} = await import('./clipboard');
+} = await import('$lib/services/contents/fields/list/clipboard');
 
 const folder = { internalPath: 'content/pages', publicPath: '', entryRelative: true };
 

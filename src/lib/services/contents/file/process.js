@@ -164,8 +164,9 @@ const cacheParsedContent = ({ parsedFileMap, path, key, content }) => {
 export const parseFileContent = async (file, errors, parsedFileMap) => {
   const { path, parsed } = file;
   const key = getParsedContentKey();
+  const customParser = hasCustomParser(file);
 
-  if (parsed?.key === key && !hasCustomParser(file)) {
+  if (parsed?.key === key && !customParser) {
     if (parsed.format) {
       // Remembered, so the file is saved back in the same format, as when it was parsed
       detectedFrontMatterFormats.set(path, parsed.format);
@@ -189,7 +190,7 @@ export const parseFileContent = async (file, errors, parsedFileMap) => {
 
     // Parsing a file remembers the source text of any integer a `number` can’t represent exactly,
     // which is what the integer is saved as, so such a file has to be parsed every time
-    if (parsedFileMap && !hasCustomParser(file) && !mayHaveUnsafeInteger(file.text)) {
+    if (parsedFileMap && !customParser && !mayHaveUnsafeInteger(file.text)) {
       cacheParsedContent({ parsedFileMap, path, key, content });
     }
 

@@ -1,3 +1,4 @@
+import { isInternalPropKey } from '$lib/services/contents/fields/internal-props';
 import { flattenKeys, unflattenKeys } from '$lib/services/utils/object';
 
 /**
@@ -122,7 +123,7 @@ export const normalizeProps = (props) =>
   unflattenKeys(
     Object.fromEntries(
       Object.entries(flattenKeys(props)).filter(
-        ([key]) => !key.split('.').pop()?.startsWith('__sc_'),
+        ([key]) => !isInternalPropKey(/** @type {string} */ (key.split('.').pop())),
       ),
     ),
   );

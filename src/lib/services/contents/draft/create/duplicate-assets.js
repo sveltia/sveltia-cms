@@ -1,18 +1,15 @@
 import { getAssetByPath } from '$lib/services/assets';
-import { getAssetFoldersByPath } from '$lib/services/assets/folders';
-import { createDisplayBlobURL, getAssetBlob } from '$lib/services/assets/info';
 import {
-  getRichTextMediaSources,
-  replaceRichTextMediaSources,
-} from '$lib/services/assets/references';
+  createPendingFileAdder,
+  getAssetFile,
+  rewriteAssetReferences,
+} from '$lib/services/assets/copy';
+import { getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getDraftFieldArgs, getField, getTypedKeyPath } from '$lib/services/contents/entry/fields';
 import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
-import {
-  getAssetLibraryFolderMap,
-  getDefaultAssetFolder,
-} from '$lib/services/contents/fields/file/helpers';
+import { getFieldAssetFolder } from '$lib/services/contents/fields/file/helpers';
 import { getValueFormat } from '$lib/services/contents/fields/rich-text';
 import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
@@ -62,12 +59,9 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
   const { defaultLocale } = draft;
   const entryFilePath = getEntryLocaleFile(entry, { defaultLocale })?.path;
   const ownsFolder = !!entryFilePath && !!getOwnedEntryFolderPath(collection, entryFilePath);
-  /**
-   * Copies in progress, keyed by asset path, so an asset referenced more than once, from another
-   * locale or field, is copied once and shares the blob URL.
-   * @type {Map<string, Promise<string | undefined>>}
-   */
-  const copies = new Map();
+  // Copies are keyed by asset path, so an asset referenced more than once, from another locale or
+  // field, is copied once and shares the blob URL
+  const addPendingFile = createPendingFileAdder({ files });
 
   /**
    * Copy the asset referenced by the given value, if it’s the entry’s own.
@@ -99,34 +93,19 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
       return undefined;
     }
 
-    let copy = copies.get(asset.path);
-
-    if (!copy) {
-      copy = (async () => {
-        /** @type {Blob} */
-        let blob;
-
+    return addPendingFile(
+      asset.path,
+      async () => {
         try {
-          blob = await getAssetBlob(asset);
+          return await getAssetFile(asset);
         } catch {
           // The reference is left as is, pointing at the original’s file, rather than failing the
           // whole duplication
           return undefined;
         }
-
-        const file = new File([blob], asset.name, { type: blob.type });
-        // The file comes from the repository, so its URL must not let an SVG image run script
-        const blobURL = await createDisplayBlobURL(file);
-
-        files[blobURL] = { file, folder, replace: false };
-
-        return blobURL;
-      })();
-
-      copies.set(asset.path, copy);
-    }
-
-    return copy;
+      },
+      folder,
+    );
   };
 
   /**
@@ -152,11 +131,8 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
     }
 
     const typedKeyPath = getTypedKeyPath(getFieldArgs);
-
     // Where the field editor puts a newly picked file, so the copy ends up in the same place
-    const folder = getDefaultAssetFolder(
-      getAssetLibraryFolderMap({ collectionName, fileName, typedKeyPath, isIndexFile }),
-    );
+    const folder = getFieldAssetFolder({ collectionName, fileName, typedKeyPath, isIndexFile });
 
     // The asset location is the entry’s own only if the entry has a folder of its own, or the
     // folder is named after the entry with a template tag like `{{slug}}`. Otherwise the folder is
@@ -165,34 +141,26 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
       return;
     }
 
-    if (MEDIA_FIELD_TYPES.includes(fieldType)) {
-      const blobURL = await copyAsset({ value, folder, typedKeyPath, locale });
+    // The format is that of the Markdown or HTML body, where images and other media are embedded
+    const format = MEDIA_FIELD_TYPES.includes(fieldType)
+      ? undefined
+      : getValueFormat(/** @type {MarkdownField | RichTextField} */ (field));
 
-      if (blobURL) {
-        valueMap[keyPath] = blobURL;
-      }
+    // The value is replaced once every copy is ready
+    const newValue = await rewriteAssetReferences({
+      value,
+      format,
+      /**
+       * Copy the asset the reference points at.
+       * @param {string} src Reference.
+       * @returns {Promise<string | undefined>} Blob URL of the copy.
+       */
+      rewrite: (src) => copyAsset({ value: src, folder, typedKeyPath, locale }),
+    });
 
-      return;
+    if (newValue !== undefined) {
+      valueMap[keyPath] = newValue;
     }
-
-    // Images and other media embedded in a Markdown or HTML body
-    const format = getValueFormat(/** @type {MarkdownField | RichTextField} */ (field));
-    const sources = getRichTextMediaSources(value, format);
-
-    const blobURLs = new Map(
-      await Promise.all(
-        sources.map(
-          async (src) =>
-            /** @type {[string, string | undefined]} */ ([
-              src,
-              await copyAsset({ value: src, folder, typedKeyPath, locale }),
-            ]),
-        ),
-      ),
-    );
-
-    // Replace the sources once every copy is ready
-    valueMap[keyPath] = replaceRichTextMediaSources(value, blobURLs, format);
   };
 
   await Promise.all(

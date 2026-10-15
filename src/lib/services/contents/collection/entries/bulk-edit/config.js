@@ -9,6 +9,14 @@ import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now
  */
 
 /**
+ * Find a top-level field by name.
+ * @param {Field[]} fields Fields.
+ * @param {string} name Field name.
+ * @returns {Field | undefined} Field configuration.
+ */
+export const findFieldByName = (fields, name) => fields.find((field) => field.name === name);
+
+/**
  * Check whether a top-level field of an entry collection can be edited in the bulk editor. Only a
  * field holding a single simple value edited with a compact control fits in a table cell: the same
  * field types as a rich text editor component in the `inline` mode, without the `multiple` option.
@@ -48,7 +56,7 @@ export const getBulkEditableFields = (collection) => {
   const names = isObject(options) && Array.isArray(options.fields) ? options.fields : undefined;
 
   const fields = names
-    ? names.map((name) => collection.fields.find((field) => field.name === name))
+    ? names.map((name) => findFieldByName(collection.fields, name))
     : collection.fields;
 
   return /** @type {Field[]} */ (fields.filter((field) => !!field && isBulkEditableField(field)));

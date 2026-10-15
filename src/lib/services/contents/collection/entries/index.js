@@ -6,6 +6,7 @@ import {
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
 import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
+import { getEntryDisplayLocale } from '$lib/services/contents/entry/paths';
 import { getPropertyValue } from '$lib/services/contents/entry/values';
 import { getSlug } from '$lib/services/contents/file/process';
 import { getOrCreate } from '$lib/services/utils/cache';
@@ -304,7 +305,7 @@ const getForeignEntriesInFolder = (collection, ownEntries) => {
 
     // The default locale’s file may not be in the folder, e.g. with the `multiple_root_folders`
     // i18n structure
-    const locale = locales[defaultLocale] ? defaultLocale : Object.keys(locales)[0];
+    const locale = getEntryDisplayLocale(locales, defaultLocale);
 
     if (!locale) {
       return [];

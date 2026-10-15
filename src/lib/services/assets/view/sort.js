@@ -1,4 +1,5 @@
 import { sortItemsByKey } from '$lib/services/common/view';
+import { getCommitAuthorName } from '$lib/services/utils/commit-author';
 
 /**
  * @import { Asset, SortingConditions } from '$lib/types/private';
@@ -12,10 +13,10 @@ import { sortItemsByKey } from '$lib/services/common/view';
  * @returns {any} Value.
  */
 export const getValue = (asset, key) => {
-  const { commitAuthor: { name, login, email } = {}, commitDate } = asset;
+  const { commitAuthor, commitDate } = asset;
 
   if (key === 'commit_author') {
-    return name || login || email;
+    return getCommitAuthorName(commitAuthor);
   }
 
   if (key === 'commit_date') {

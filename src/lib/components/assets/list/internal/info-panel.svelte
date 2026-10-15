@@ -12,6 +12,7 @@
     getAssetUsedEntries,
   } from '$lib/services/assets/details';
   import { isMediaKind, isPDF } from '$lib/services/assets/kinds';
+  import { getCommitAuthorName } from '$lib/services/utils/commit-author';
   import { formatDate } from '$lib/services/utils/date';
   import { createLatestGuard } from '$lib/services/utils/scheduling';
 
@@ -131,7 +132,7 @@
   {#if commitAuthor}
     <section>
       <h4>{_('sort_keys.commit_author')}</h4>
-      <p>{commitAuthor.name || commitAuthor.login || commitAuthor.email}</p>
+      <p>{getCommitAuthorName(commitAuthor)}</p>
     </section>
   {/if}
   {#if commitDate}

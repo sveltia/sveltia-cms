@@ -3,6 +3,7 @@ import equal from 'fast-deep-equal';
 
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { allEntries } from '$lib/services/contents';
+import { getCommitAuthorName } from '$lib/services/utils/commit-author';
 import { formatDate } from '$lib/services/utils/date';
 
 /**
@@ -90,7 +91,7 @@ export const describeConflict = ({ type, entry, canOverwrite }, locale) => {
 
   // A modified entry always comes with its current version
   const { commitAuthor, commitDate } = /** @type {Entry} */ (entry);
-  const name = commitAuthor?.name || commitAuthor?.login || commitAuthor?.email;
+  const name = getCommitAuthorName(commitAuthor);
 
   return {
     // Not every backend reports who made a commit along with the file

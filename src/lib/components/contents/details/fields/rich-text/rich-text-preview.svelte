@@ -14,7 +14,7 @@
 
   import { waitForAssetURL } from '$lib/services/api/asset-proxy';
   import { createGetAsset } from '$lib/services/api/preview-data';
-  import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
+  import { createReactRoot, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
   import { getRichTextMediaURL } from '$lib/services/assets/media-field';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
@@ -73,7 +73,7 @@
   });
 
   const defaultConfig = cmsConfig.current?.field_defaults?.richtext ?? {};
-  /** @type {SvelteMap<HTMLElement, import('react-dom/client').Root>} */
+  /** @type {SvelteMap<HTMLElement, ReturnType<typeof createReactRoot>>} */
   const reactRoots = new SvelteMap();
   /**
    * DOM element previews currently inserted in the preview pane. Used to notify each element with
@@ -236,7 +236,7 @@
    * @param {ReactElement} preview React element to be rendered.
    */
   const mountReactPreview = (element, preview) => {
-    const root = getReactDom().createRoot(element);
+    const root = createReactRoot(element);
 
     reactRoots.set(element, root);
     root.render(preview);

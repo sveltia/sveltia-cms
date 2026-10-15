@@ -9,7 +9,6 @@ import { formatDate } from '$lib/services/utils/date';
 
 import {
   getColumnSortKey,
-  getConfiguredTableColumns,
   getTableCellValue,
   getTableColumns,
   hasConfiguredTableColumns,
@@ -109,43 +108,6 @@ describe('Test hasConfiguredTableColumns()', () => {
   test('returns `false` without any columns configured', () => {
     expect(hasConfiguredTableColumns(createCollection({}))).toBe(false);
     expect(hasConfiguredTableColumns(createCollection({ table_columns: [] }))).toBe(false);
-  });
-});
-
-describe('Test getConfiguredTableColumns()', () => {
-  test('reads `table_columns` given as strings and objects', () => {
-    expect(
-      getConfiguredTableColumns(
-        createCollection({
-          table_columns: ['title', { field: 'date', label: 'Published' }, { field: 'draft' }],
-        }),
-      ),
-    ).toEqual([
-      { key: 'title' },
-      { key: 'date', label: 'Published' },
-      { key: 'draft', label: undefined },
-    ]);
-  });
-
-  test('reads `summary_fields`, where `summary` stands for the entry summary', () => {
-    expect(
-      getConfiguredTableColumns(createCollection({ summary_fields: ['summary', 'title', 'date'] })),
-    ).toEqual([{ key: '_summary' }, { key: 'title' }, { key: 'date' }]);
-  });
-
-  test('prefers `table_columns` over `summary_fields`', () => {
-    expect(
-      getConfiguredTableColumns(
-        createCollection({ table_columns: ['date'], summary_fields: ['summary', 'title'] }),
-      ),
-    ).toEqual([{ key: 'date' }]);
-  });
-
-  test('returns `undefined` if neither option is defined', () => {
-    expect(getConfiguredTableColumns(createCollection())).toBeUndefined();
-    expect(
-      getConfiguredTableColumns(createCollection({ table_columns: 'title', summary_fields: 'x' })),
-    ).toBeUndefined();
   });
 });
 

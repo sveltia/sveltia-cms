@@ -115,6 +115,25 @@ export const getPublishMode = ({ cmsConfig, collection }) =>
 export const isWorkflowMode = (mode) => WORKFLOW_MODES.includes(mode);
 
 /**
+ * Get the scopes a publish mode can be configured for: the whole site, represented by `undefined`,
+ * followed by each collection. A divider has no publish mode, so it’s left out.
+ * @param {CmsConfig | undefined} cmsConfig Site configuration.
+ * @returns {(Collection | undefined)[]} Scopes, to pass as `collection` to
+ * {@link getPublishModeOptions}.
+ */
+export const getPublishModeScopes = (cmsConfig) => [
+  undefined,
+  // The parser runs on the raw configuration, where the collections may not be a list of objects
+  ...(Array.isArray(cmsConfig?.collections)
+    ? /** @type {Collection[]} */ (
+        cmsConfig.collections.filter(
+          (collection) => isObject(collection) && !('divider' in collection),
+        )
+      )
+    : []),
+];
+
+/**
  * Check whether a workflow is configured anywhere: for the whole site, or for at least one
  * collection. This is about the configuration alone; whether the backend implements the feature is
  * a separate matter.
@@ -122,11 +141,6 @@ export const isWorkflowMode = (mode) => WORKFLOW_MODES.includes(mode);
  * @returns {boolean} `true` if some content goes through Editorial Workflow or Preview Workflow.
  */
 export const isWorkflowConfigured = (cmsConfig) =>
-  isWorkflowMode(getPublishMode({ cmsConfig })) ||
-  // The parser runs on the raw configuration, where the collections may not be a list at all
-  (Array.isArray(cmsConfig?.collections) &&
-    cmsConfig.collections.some(
-      (collection) =>
-        // A divider has no publish mode
-        !('divider' in collection) && isWorkflowMode(getPublishMode({ cmsConfig, collection })),
-    ));
+  getPublishModeScopes(cmsConfig).some((collection) =>
+    isWorkflowMode(getPublishMode({ cmsConfig, collection })),
+  );

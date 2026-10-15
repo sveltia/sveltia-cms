@@ -4,9 +4,11 @@
 
 import { getHash } from '@sveltia/utils/crypto';
 
+import { OID_SIZE } from '$lib/services/backends/fs/git/constants';
 import { isMissingError } from '$lib/services/backends/fs/git/file-system';
-import { isNotFoundError, readFile } from '$lib/services/backends/fs/shared/handles';
-import { toHex } from '$lib/services/utils/crypto';
+import { readFileIfExists } from '$lib/services/backends/fs/shared/handles';
+import { concatBytes, textDecoder, textEncoder } from '$lib/services/utils/bytes';
+import { fromHex, toHex } from '$lib/services/utils/crypto';
 
 /**
  * @import {
@@ -32,20 +34,6 @@ const REF_DELTA = 7;
  * and `git gc --aggressive` uses 50 as well, so a longer chain is unlikely to be legitimate.
  */
 const MAX_DELTA_DEPTH = 1000;
-/**
- * Size of the checksum at the end of a pack file.
- */
-const PACK_TRAILER_SIZE = 20;
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
-
-/**
- * Convert a hexadecimal string to bytes.
- * @param {string} hex Hexadecimal string.
- * @returns {Uint8Array} Bytes.
- */
-export const fromHex = (hex) =>
-  Uint8Array.from(hex.match(/../g) ?? [], (pair) => Number.parseInt(pair, 16));
 
 /**
  * Prefix the content of an object with its header, as Git hashes and stores it.
@@ -53,15 +41,8 @@ export const fromHex = (hex) =>
  * @param {Uint8Array} content Object content.
  * @returns {Uint8Array} Header and content.
  */
-const encodeObject = (type, content) => {
-  const header = textEncoder.encode(`${type} ${content.length}\0`);
-  const bytes = new Uint8Array(header.length + content.length);
-
-  bytes.set(header);
-  bytes.set(content, header.length);
-
-  return bytes;
-};
+const encodeObject = (type, content) =>
+  concatBytes([textEncoder.encode(`${type} ${content.length}\0`), content]);
 
 /**
  * Calculate the Git object ID of an object.
@@ -262,7 +243,7 @@ export const parsePackIndex = (buffer) => {
   const fanoutStart = 8;
   const count = view.getUint32(fanoutStart + 255 * 4);
   const oidsStart = fanoutStart + 256 * 4;
-  const offsetsStart = oidsStart + count * 20 + count * 4;
+  const offsetsStart = oidsStart + count * OID_SIZE + count * 4;
   const largeOffsetsStart = offsetsStart + count * 4;
   const fanout = Array.from({ length: 256 }, (_, index) => view.getUint32(fanoutStart + index * 4));
   const offsets = new Float64Array(count);
@@ -278,7 +259,7 @@ export const parsePackIndex = (buffer) => {
         : value;
   }
 
-  return { fanout, oids: new Uint8Array(buffer, oidsStart, count * 20), offsets };
+  return { fanout, oids: new Uint8Array(buffer, oidsStart, count * OID_SIZE), offsets };
 };
 
 /**
@@ -297,8 +278,8 @@ export const findPackedObject = ({ fanout, oids, offsets }, oid) => {
     const middle = (low + high) >>> 1;
     let comparison = 0;
 
-    for (let byteIndex = 0; byteIndex < 20 && !comparison; byteIndex += 1) {
-      comparison = oids[middle * 20 + byteIndex] - oid[byteIndex];
+    for (let byteIndex = 0; byteIndex < OID_SIZE && !comparison; byteIndex += 1) {
+      comparison = oids[middle * OID_SIZE + byteIndex] - oid[byteIndex];
     }
 
     if (!comparison) {
@@ -340,7 +321,7 @@ const getPackedObjectEnd = (pack, offset) => {
     }
   }
 
-  return low < sortedOffsets.length ? sortedOffsets[low] : pack.file.size - PACK_TRAILER_SIZE;
+  return low < sortedOffsets.length ? sortedOffsets[low] : pack.file.size - OID_SIZE;
 };
 
 /**
@@ -420,17 +401,10 @@ export const createObjectReader = (gitDirHandle) => {
    * @returns {Promise<GitObject | undefined>} Object, or `undefined` if it’s not a loose object.
    */
   const readLooseObject = async (oid) => {
-    /** @type {File} */
-    let file;
+    const file = await readFileIfExists(gitDirHandle, `objects/${oid.slice(0, 2)}/${oid.slice(2)}`);
 
-    try {
-      file = await readFile(gitDirHandle, `objects/${oid.slice(0, 2)}/${oid.slice(2)}`);
-    } catch (ex) {
-      if (isNotFoundError(ex)) {
-        return undefined;
-      }
-
-      throw ex;
+    if (!file) {
+      return undefined;
     }
 
     return parseLooseObject(await inflate(new Uint8Array(await file.arrayBuffer())));
@@ -482,9 +456,9 @@ export const createObjectReader = (gitDirHandle) => {
 
       base = await readPackedObject(pack, offset - distance, depth + 1);
     } else if (typeNumber === REF_DELTA) {
-      const baseOid = toHex(bytes.subarray(position, position + 20));
+      const baseOid = toHex(bytes.subarray(position, position + OID_SIZE));
 
-      position += 20;
+      position += OID_SIZE;
       // eslint-disable-next-line no-use-before-define
       base = await readObjectAtDepth(baseOid, depth + 1);
 

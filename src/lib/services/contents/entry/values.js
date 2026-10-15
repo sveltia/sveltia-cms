@@ -9,6 +9,7 @@ import { getNumberFormatter } from '$lib/services/contents/fields/number/helpers
 import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helpers';
 import { getOptionLabel } from '$lib/services/contents/fields/select/helpers';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
+import { getCommitAuthorName } from '$lib/services/utils/commit-author';
 import { stripMarkdown } from '$lib/services/utils/markdown';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
@@ -251,14 +252,14 @@ export const getVisibleFieldDisplayValue = ({
  * own key path.
  */
 export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRef = true }) => {
-  const { slug, locales, commitAuthor: { name, login, email } = {}, commitDate } = entry;
+  const { slug, locales, commitAuthor, commitDate } = entry;
 
   if (key === 'slug') {
     return slug;
   }
 
   if (key === 'commit_author') {
-    return name || login || email;
+    return getCommitAuthorName(commitAuthor);
   }
 
   if (key === 'commit_date') {

@@ -5,7 +5,6 @@
   import PageContainer from '$lib/components/common/page-container.svelte';
   import WorkflowEntryCard from '$lib/components/workflow/workflow-entry-card.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';
-  import { getCollection } from '$lib/services/contents/collection';
   import { retainDeployPolling } from '$lib/services/deployments/poll';
   import {
     checkPublishedVersion,
@@ -15,6 +14,7 @@
   } from '$lib/services/workflow';
   import {
     COLUMN_LABELS,
+    getBoardAnnouncement,
     getDiscardMessages,
     getPublishMessages,
     groupEntriesByStatus,
@@ -29,8 +29,8 @@
   } from '$lib/services/workflow/save';
   import {
     boardStages,
-    getEntryStage,
-    getWorkflowStages,
+    getStageOfEntry,
+    isStageAvailable,
     workflowPageLabelKey,
   } from '$lib/services/workflow/stages';
   import { canMoveToStatus, canPublish } from '$lib/services/workflow/validate';
@@ -90,27 +90,10 @@
   );
   const publishDialogStrings = $derived(getPublishDialogStrings({ deletion: targetIsDeletion }));
 
-  /**
-   * Get the stage the given entry is in, which decides the column it’s placed in.
-   * @param {UnpublishedEntry} entry Entry.
-   * @returns {WorkflowStatus} Stage.
-   */
-  const getStage = (entry) => getEntryStage(entry, getCollection(entry.workflow.collectionName));
-
-  /**
-   * Check whether the given entry can be moved to the given stage. The collections can be
-   * configured with different stages, and an entry can only go to one of its own collection’s.
-   * @param {UnpublishedEntry} entry Entry.
-   * @param {WorkflowStatus} status Stage.
-   * @returns {boolean} Result.
-   */
-  const isStageAvailable = (entry, status) =>
-    getWorkflowStages(getCollection(entry.workflow.collectionName)).includes(status);
-
   // A pending deletion has a status of its own, so it never lands in a stage column. It’s listed
   // below the board instead, and its cards don’t drag: there are no stages to move it through
   const { columns, pendingDeletions } = $derived(
-    groupEntriesByStatus(boardStages.current, unpublishedEntries.current, getStage),
+    groupEntriesByStatus(boardStages.current, unpublishedEntries.current, getStageOfEntry),
   );
 
   // Keep the deploy state fresh while the board is open, so a preview link turns live as soon as
@@ -199,7 +182,7 @@
     draggedEntry = undefined;
     dropTarget = undefined;
 
-    if (!entry || getStage(entry) === status || !isStageAvailable(entry, status)) {
+    if (!entry || getStageOfEntry(entry) === status || !isStageAvailable(entry, status)) {
       return;
     }
 
@@ -221,28 +204,9 @@
 
     announced = true;
 
-    /**
-     * Get the number of entries in the given column.
-     * @param {WorkflowStatus} status Column status.
-     * @returns {number | undefined} Count, or `undefined` if the board has no such column.
-     */
-    const count = (status) => columns.find((column) => column.status === status)?.entries.length;
-    // The board always has a Drafts column
-    const draft = /** @type {number} */ (count('draft'));
-    const [review, ready] = [count('pending_review'), count('pending_publish')];
-    const deletion = pendingDeletions.length;
+    const { key, values } = getBoardAnnouncement(columns, pendingDeletions);
 
-    // A column the board doesn’t have is left out of the announcement rather than reported as
-    // zero: there’s no Ready column for an Open Authoring contributor, no In Review column when the
-    // review stage is left out, and no column but the drafts with Preview Workflow
-    announcedPageStatus.current =
-      review === undefined
-        ? ready === undefined
-          ? _('viewing_preview_workflow', { values: { draft, deletion } })
-          : _('viewing_editorial_workflow_without_review', { values: { draft, ready, deletion } })
-        : ready === undefined
-          ? _('viewing_open_authoring_workflow', { values: { draft, review, deletion } })
-          : _('viewing_editorial_workflow', { values: { draft, review, ready, deletion } });
+    announcedPageStatus.current = _(key, { values });
   });
 </script>
 

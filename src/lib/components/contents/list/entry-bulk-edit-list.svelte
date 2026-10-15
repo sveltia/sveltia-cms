@@ -15,19 +15,17 @@
 
   import BulkEditCell from '$lib/components/contents/list/bulk-edit-cell.svelte';
   import { getGroupLabel } from '$lib/services/common/view';
-  import {
-    getBulkEditValue,
-    isBulkEditableEntry,
-    setBulkEditValue,
-    validateBulkEdits,
-  } from '$lib/services/contents/collection/entries/bulk-edit';
+  import { getBulkEditValue } from '$lib/services/contents/collection/entries/bulk-edit';
   import { getBulkEditableFields } from '$lib/services/contents/collection/entries/bulk-edit/config';
+  import {
+    snapshotBulkEditGroups,
+    updateBulkEditValue,
+  } from '$lib/services/contents/collection/entries/bulk-edit/session';
   import {
     bulkEditedEntries,
     bulkEditErrors,
     bulkEdits,
     bulkEditSaving,
-    entryGroups,
   } from '$lib/services/contents/collection/view';
   import { setEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
@@ -62,28 +60,13 @@
   let groups = $state.raw([]);
 
   /**
-   * Record a new value of a field, and validate the edits again if the user has been told some of
-   * them are invalid, so a fixed field stops being reported.
+   * Record a new value of a field.
    * @param {Entry} entry Entry.
    * @param {FieldKeyPath} keyPath Field name.
    * @param {any} value New value.
    */
   const updateValue = (entry, keyPath, value) => {
-    bulkEdits.current = setBulkEditValue({
-      collection,
-      entry,
-      keyPath,
-      value,
-      edits: bulkEdits.current,
-    });
-
-    if (Object.keys(bulkEditErrors.current).length) {
-      bulkEditErrors.current = validateBulkEdits({
-        collection,
-        entries: bulkEditedEntries.current,
-        edits: bulkEdits.current,
-      });
-    }
+    updateBulkEditValue({ collection, entry, keyPath, value });
   };
 
   /* v8 ignore start -- the app locale is always set once the UI strings are loaded */
@@ -105,14 +88,7 @@
 
   // Snapshot the entry groups once, when the mode is entered. See the component description
   onMount(() => {
-    groups = entryGroups.current
-      .map(({ name, entries }) => ({
-        name,
-        entries: entries.filter((entry) => isBulkEditableEntry(collection, entry)),
-      }))
-      .filter(({ entries }) => entries.length);
-
-    bulkEditedEntries.current = groups.flatMap(({ entries }) => entries);
+    groups = snapshotBulkEditGroups(collection);
   });
 </script>
 

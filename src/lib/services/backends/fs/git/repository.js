@@ -1,10 +1,15 @@
 import { loadChunk } from '$lib/services/app/dependencies';
-import { DIR, INDEX_LOCK_PATH, OPERATION_MARKERS } from '$lib/services/backends/fs/git/constants';
+import {
+  DIR,
+  INDEX_LOCK_PATH,
+  OID_SIZE,
+  OPERATION_MARKERS,
+} from '$lib/services/backends/fs/git/constants';
 import { createGitFileSystem, exists } from '$lib/services/backends/fs/git/file-system';
 import { hasRequiredExtension, parseIndex } from '$lib/services/backends/fs/git/index-file';
 import { createObjectReader } from '$lib/services/backends/fs/git/objects';
 import { buildTree, getCommitTree } from '$lib/services/backends/fs/git/tree';
-import { isNotFoundError, readFile } from '$lib/services/backends/fs/shared/handles';
+import { isTypeMismatchError, readFileIfExists } from '$lib/services/backends/fs/shared/handles';
 import { toHex } from '$lib/services/utils/crypto';
 
 /**
@@ -49,7 +54,28 @@ export const setIndexCache = (cache) => {
  * @param {Uint8Array} bytes Content of the index file.
  * @returns {string} Checksum.
  */
-export const getIndexChecksum = (bytes) => toHex(bytes.subarray(-20));
+export const getIndexChecksum = (bytes) => toHex(bytes.subarray(-OID_SIZE));
+
+/**
+ * Get the commit a branch points to.
+ * @param {any} git Isomorphic-git module.
+ * @param {GitFileSystem} fs File system.
+ * @param {string} branch Full name of the branch.
+ * @returns {Promise<string | undefined>} Object ID of the commit, or `undefined` if the branch has
+ * no commits yet.
+ * @throws {Error} If the branch couldn’t be read.
+ */
+export const resolveBranchHead = async (git, fs, branch) => {
+  try {
+    return await git.resolveRef({ fs, dir: DIR, ref: branch });
+  } catch (ex) {
+    if (/** @type {any} */ (ex)?.code === 'NotFoundError') {
+      return undefined;
+    }
+
+    throw ex;
+  }
+};
 
 /**
  * Build the tree of an index, reusing the cached one if the index hasn’t changed, and cache it.
@@ -79,17 +105,7 @@ const getIndexTree = async (index, checksum) => {
  * @throws {Error} If the file exists but can’t be read.
  */
 const readIndex = async (gitDirHandle) => {
-  /** @type {ArrayBuffer | undefined} */
-  let buffer;
-
-  try {
-    buffer = await (await readFile(gitDirHandle, 'index')).arrayBuffer();
-  } catch (ex) {
-    if (!isNotFoundError(ex)) {
-      throw ex;
-    }
-  }
-
+  const buffer = await (await readFileIfExists(gitDirHandle, 'index'))?.arrayBuffer();
   const checksum = buffer ? getIndexChecksum(new Uint8Array(buffer)) : '';
 
   if (indexCache?.checksum === checksum) {
@@ -152,7 +168,7 @@ export const inspectRepository = async (repoRootDirHandle, { onLock } = {}) => {
   } catch (ex) {
     // `.git` is a file in a linked worktree or a submodule, pointing to a directory elsewhere, out
     // of reach of the browser
-    if (/** @type {DOMException} */ (ex)?.name === 'TypeMismatchError') {
+    if (isTypeMismatchError(ex)) {
       return { ready: false, reason: 'unsupported_repository' };
     }
 
@@ -232,19 +248,9 @@ export const inspectRepository = async (repoRootDirHandle, { onLock } = {}) => {
   }
 
   const reader = createObjectReader(gitDirHandle);
-  /** @type {string | undefined} */
-  let headOid;
+  const headOid = await resolveBranchHead(git, fs, branch);
   /** @type {string | undefined} */
   let headTreeOid;
-
-  try {
-    headOid = await git.resolveRef({ fs, dir: DIR, ref: branch });
-  } catch (ex) {
-    // The branch has no commits yet
-    if (/** @type {any} */ (ex)?.code !== 'NotFoundError') {
-      throw ex;
-    }
-  }
 
   if (headOid) {
     const commit = await reader.readObject(headOid);

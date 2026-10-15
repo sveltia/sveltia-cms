@@ -1,6 +1,7 @@
 import { loadModule } from '$lib/services/app/dependencies';
 import { exportCanvasAsBlob } from '$lib/services/utils/media/image/encode';
 import { decodeHEIC } from '$lib/services/utils/media/image/heic';
+import { resolveTransformOptions } from '$lib/services/utils/media/image/options';
 import { resizeCanvas } from '$lib/services/utils/media/image/resize';
 import { sniffRasterImageFormat } from '$lib/services/utils/media/image/sniff';
 
@@ -165,17 +166,16 @@ const createFallbackImageBitmap = async (blob) => {
  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob
  * @see https://stackoverflow.com/q/62909538
  */
-export const transformImage = async (
-  blob,
-  {
-    format = 'png',
-    quality = 85,
-    width = undefined,
-    height = undefined,
-    fit = 'scale-down',
-    nativeOnly = false,
-  } = {},
-) => {
+export const transformImage = async (blob, options = {}) => {
+  const {
+    format,
+    quality,
+    width: requestedWidth,
+    height: requestedHeight,
+    fit,
+    nativeOnly,
+  } = resolveTransformOptions(options);
+
   /** @type {CanvasImageSource | undefined} */
   let source;
   /** @type {number} */
@@ -197,9 +197,8 @@ export const transformImage = async (
     ({ source, naturalWidth, naturalHeight } = await createSource(blob));
   }
 
-  width ??= naturalWidth;
-  height ??= naturalHeight;
-
+  const width = requestedWidth ?? naturalWidth;
+  const height = requestedHeight ?? naturalHeight;
   const canvas = new OffscreenCanvas(512, 512);
   const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
 

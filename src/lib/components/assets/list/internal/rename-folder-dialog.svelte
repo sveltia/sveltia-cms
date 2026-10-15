@@ -15,7 +15,7 @@
     renamingSubfolder,
   } from '$lib/services/assets/subfolders';
   import { listedAssets, listedSubfolders } from '$lib/services/assets/view';
-  import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
+  import { runCommit } from '$lib/services/backends/commit-prompt';
   import { createPath, getDirName } from '$lib/services/utils/file';
 
   // Committing to a remote repository takes a few seconds, and the dialog is gone by then, so the
@@ -59,20 +59,18 @@
 
     renaming = true;
 
-    try {
-      await renameSubfolder({
+    const { ok, cancelled } = await runCommit(() =>
+      renameSubfolder({
         dirPath: path,
         newDirPath: createPath([getDirName(path), newName]),
-      });
-    } catch (/** @type {any} */ ex) {
-      // The user has cancelled the commit at the commit message prompt, which isn’t a failure
-      if (!isCommitCancelled(ex)) {
-        renamingFailed = true;
-        // eslint-disable-next-line no-console
-        console.error(ex);
-      }
-    } finally {
-      renaming = false;
+      }),
+    );
+
+    renaming = false;
+
+    // A cancellation at the commit message prompt isn’t a failure
+    if (!ok && !cancelled) {
+      renamingFailed = true;
     }
   };
 </script>

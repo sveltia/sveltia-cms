@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 
-import { getEditorFieldConfig, getFieldEditorFlags, getFieldInputLabels } from './field-flags';
+import {
+  getEditorFieldConfig,
+  getFieldEditorFlags,
+  getFieldInputLabels,
+  TRANSLATABLE_FIELD_TYPES,
+} from './field-flags';
 
 /**
  * @import { Field } from '$lib/types/public';
@@ -158,4 +163,17 @@ describe('Test getEditorFieldConfig()', () => {
       expect(getEditorFieldConfig({ fieldConfig, inline: true })).toBe(fieldConfig);
     },
   );
+});
+
+describe('Test TRANSLATABLE_FIELD_TYPES', () => {
+  test('lists the field types the Translate button supports', () => {
+    expect(TRANSLATABLE_FIELD_TYPES).toEqual([
+      'richtext',
+      'markdown',
+      'string',
+      'text',
+      'list',
+      'object',
+    ]);
+  });
 });

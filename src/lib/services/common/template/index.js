@@ -5,6 +5,7 @@ import { replaceTemplatePlaceholder } from '$lib/services/common/template/replac
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { cmsConfig } from '$lib/services/config';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
+import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
 import { renameIfNeeded } from '$lib/services/utils/file';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
@@ -71,12 +72,10 @@ export const fillTemplate = (template, options) => {
   } = options;
 
   const { _type, name: collectionName } = collection;
+  const identifierField = getIdentifierFieldName(_type === 'entry' ? collection : undefined);
 
-  const {
-    identifier_field: identifierField = 'title',
-    slug_length: legacySlugLength = undefined,
-    _file: { basePath, fullPathRegEx } = {},
-  } = _type === 'entry' ? collection : {};
+  const { slug_length: legacySlugLength = undefined, _file: { basePath, fullPathRegEx } = {} } =
+    _type === 'entry' ? collection : {};
 
   const slugOptions = cmsConfig.current?.slug;
   // @todo Remove the legacy option prior to the 1.0 release.

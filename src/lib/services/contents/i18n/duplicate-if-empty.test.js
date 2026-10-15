@@ -4,6 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 import {
   DUPLICATE_IF_EMPTY_FIELD_TYPES,
   findDuplicateIfEmptyField,
+  followsDefaultLocale,
   getMainValueKeyPath,
   isDuplicateIfEmptyField,
   isFieldEmpty,
@@ -137,5 +138,19 @@ describe('Test findDuplicateIfEmptyField()', () => {
     expect(findDuplicateIfEmptyField('unknown', getFieldConfig)).toBeUndefined();
     expect(findDuplicateIfEmptyField('body.x', getFieldConfig)).toBeUndefined();
     expect(findDuplicateIfEmptyField('obj.codeOnly.code', getFieldConfig)).toBeUndefined();
+  });
+});
+
+describe('followsDefaultLocale()', () => {
+  const fieldConfig = { name: 'title', widget: 'string' };
+  const args = { fieldConfig, sourceLocale: 'en', targetLocale: 'fr' };
+
+  test('follows when the target value is empty or the default locale’s previous value', () => {
+    expect(followsDefaultLocale({ ...args, targetValue: '', previousValue: 'A' })).toBe(true);
+    expect(followsDefaultLocale({ ...args, targetValue: 'A', previousValue: 'A' })).toBe(true);
+  });
+
+  test('does not follow when the target has a value of its own', () => {
+    expect(followsDefaultLocale({ ...args, targetValue: 'B', previousValue: 'A' })).toBe(false);
   });
 });

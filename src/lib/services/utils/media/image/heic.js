@@ -1,5 +1,6 @@
 import { getUnpkgURL, loadModule } from '$lib/services/app/dependencies';
 import { createModuleWorker } from '$lib/services/utils/media/image/heic-worker-factory';
+import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
 
 /**
  * How long the worker is kept after its last job. Decoding a photo grows the WebAssembly heap to
@@ -15,11 +16,10 @@ let workerUnavailable = false;
 /** @type {ReturnType<typeof setTimeout> | undefined} */
 let idleTimer;
 /**
- * The pending decode jobs. Jobs are run one at a time: a decode blocks the worker anyway, and
- * running them serially means at most one photo’s pixels are held at once.
- * @type {Promise<any>}
+ * Runs the decode jobs one at a time: a decode blocks the worker anyway, and running them serially
+ * means at most one photo’s pixels are held at once.
  */
-let queue = Promise.resolve();
+const enqueue = createConcurrencyLimiter(1);
 
 /**
  * Get the source of the module worker. The decoder is imported from UNPKG inside the worker, which
@@ -266,11 +266,6 @@ const decodeBuffer = async (buffer) => {
  * @see https://github.com/discourse/jSquash
  * @see https://github.com/jamsinclair/jSquash/pull/101
  */
-export const decodeHEIC = (blob) => {
+export const decodeHEIC = (blob) =>
   // Read the file within the queue, so only one photo is held in memory at a time
-  const job = queue.then(async () => decodeBuffer(await blob.arrayBuffer()));
-
-  queue = job.catch(() => undefined);
-
-  return job;
-};
+  enqueue(async () => decodeBuffer(await blob.arrayBuffer()));

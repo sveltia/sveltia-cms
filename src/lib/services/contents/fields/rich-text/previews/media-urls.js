@@ -1,3 +1,5 @@
+import { parseHTMLFragment } from '$lib/services/utils/html';
+
 /**
  * Attributes of a media element that can refer to a file, which may have to be resolved to a blob
  * URL in the preview, keyed by the tag name. `srcset` holds a list of URLs with descriptors.
@@ -11,17 +13,35 @@ export const MEDIA_URL_ATTRIBUTES = {
 };
 
 /**
+ * Names of the media elements, regardless of their attributes.
+ */
+const MEDIA_TAG_NAMES = Object.keys(MEDIA_URL_ATTRIBUTES);
+
+/**
  * Selector for the media elements, regardless of their attributes.
  */
-export const MEDIA_TAG_SELECTOR = Object.keys(MEDIA_URL_ATTRIBUTES).join(', ');
+export const MEDIA_TAG_SELECTOR = MEDIA_TAG_NAMES.join(', ');
+
+/**
+ * Regular expression pattern matching the name of a media element, to be used in a pattern
+ * matching its tag.
+ */
+export const MEDIA_TAG_NAME_PATTERN = MEDIA_TAG_NAMES.join('|');
+
+/**
+ * Regular expression pattern matching the start of a media tag in an HTML string.
+ */
+const MEDIA_TAG_PATTERN = `<(?:${MEDIA_TAG_NAME_PATTERN})[\\s/>]`;
 
 /**
  * Regular expression testing if an HTML string may contain a media element.
  */
-export const MEDIA_TAG_REGEX = new RegExp(
-  `<(?:${Object.keys(MEDIA_URL_ATTRIBUTES).join('|')})[\\s/>]`,
-  'i',
-);
+export const MEDIA_TAG_REGEX = new RegExp(MEDIA_TAG_PATTERN, 'i');
+
+/**
+ * Global version of {@link MEDIA_TAG_REGEX}, to count the media tags in a value.
+ */
+export const GLOBAL_MEDIA_TAG_REGEX = new RegExp(MEDIA_TAG_PATTERN, 'gi');
 
 /**
  * Prefix of the inert attribute a media URL attribute is moved to by {@link deferMediaURLs}, e.g.
@@ -52,6 +72,16 @@ const MEDIA_ELEMENT_SELECTOR = Object.entries(MEDIA_URL_ATTRIBUTES)
 export const MEDIA_QUERY_SELECTOR = `:is(${MEDIA_ELEMENT_SELECTOR}):not([data-processed])`;
 
 /**
+ * Get the media elements in a parsed HTML fragment, in document order.
+ * @param {HTMLTemplateElement} template Template holding the parsed nodes, as returned by
+ * {@link parseHTMLFragment}.
+ * @returns {Element[]} Elements.
+ */
+export const getMediaElements = (template) => [
+  ...template.content.querySelectorAll(MEDIA_TAG_SELECTOR),
+];
+
+/**
  * Move the URL attributes of the media elements in the given HTML, e.g. an image `src`, to inert
  * attributes like `data-deferred-src`, so the browser doesn’t load a file as soon as the HTML is
  * inserted into the document. A path like `/images/photo.jpg` refers to the file in the repository,
@@ -69,12 +99,10 @@ export const deferMediaURLs = (html) => {
     return html;
   }
 
-  const template = document.createElement('template');
-
   // The content of a template is inert, so nothing is loaded here
-  template.innerHTML = html;
+  const template = parseHTMLFragment(html);
 
-  template.content.querySelectorAll(MEDIA_TAG_SELECTOR).forEach((element) => {
+  getMediaElements(template).forEach((element) => {
     MEDIA_URL_ATTRIBUTES[element.localName].forEach((name) => {
       const value = element.getAttribute(name);
 
@@ -146,6 +174,44 @@ export const stringifySrcset = (candidates) =>
     .join(', ');
 
 /**
+ * Replace the URLs in the candidates of a `srcset` attribute.
+ * @param {{ url: string, descriptor: string }[]} candidates Candidates, as returned by
+ * {@link parseSrcset}.
+ * @param {(url: string, index: number) => string | null | undefined} getNewURL Function to get the
+ * new URL for the URL of the candidate at the given index: a new URL to replace it with, `null` to
+ * remove the candidate, or `undefined` to leave it as is.
+ * @returns {string | null | undefined} New attribute value; `null` if all the candidates are
+ * removed, so is the attribute; `undefined` if nothing is replaced.
+ */
+export const mapSrcset = (candidates, getNewURL) => {
+  let changed = false;
+
+  const newCandidates = candidates.flatMap((candidate, index) => {
+    const url = getNewURL(candidate.url, index);
+
+    if (url === null) {
+      changed = true;
+
+      return [];
+    }
+
+    if (url !== undefined && url !== candidate.url) {
+      changed = true;
+
+      return [{ ...candidate, url }];
+    }
+
+    return [candidate];
+  });
+
+  if (!changed) {
+    return undefined;
+  }
+
+  return newCandidates.length ? stringifySrcset(newCandidates) : null;
+};
+
+/**
  * Resolve the file paths in the URL attributes of the given media element, e.g. an image `src`, a
  * video `poster` or each URL in a `srcset`, so that a file that hasn’t been published or saved yet
  * is displayed in the preview. A path that can’t be resolved is left as is. An attribute deferred
@@ -194,13 +260,7 @@ export const resolveMediaURLs = async (element, resolve) => {
     const urls = await Promise.all(candidates.map(({ url }) => resolveURL(url)));
 
     // Leave the attribute as written unless a URL has been resolved
-    if (urls.every((url, index) => url === candidates[index].url)) {
-      return value;
-    }
-
-    return stringifySrcset(
-      candidates.map(({ descriptor }, index) => ({ url: urls[index], descriptor })),
-    );
+    return mapSrcset(candidates, (_url, index) => urls[index]) ?? value;
   };
 
   const updates = await Promise.all(

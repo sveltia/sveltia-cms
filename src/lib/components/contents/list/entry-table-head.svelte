@@ -9,6 +9,7 @@
   import { currentView } from '$lib/services/contents/collection/view/settings';
   import { sortKeys } from '$lib/services/contents/collection/view/sort-keys';
   import { getColumnSortKey } from '$lib/services/contents/collection/view/table';
+  import { SUMMARY_COLUMN_KEY } from '$lib/services/contents/collection/view/table-keys';
 
   /**
    * @import { EntryTableColumn, InternalEntryCollection } from '$lib/types/private';
@@ -40,7 +41,7 @@
       {@const { sort } = currentView.current}
       {#if sortKey}
         <GridColHeader
-          class={column.key === '_summary' ? 'title' : 'column'}
+          class={column.key === SUMMARY_COLUMN_KEY ? 'title' : 'column'}
           sortOrder={sort?.key === sortKey ? sort.order : 'none'}
           onSort={(/** @type {CustomEvent} */ event) => {
             currentView.current = {
@@ -52,7 +53,7 @@
           {column.label}
         </GridColHeader>
       {:else}
-        <GridColHeader class={column.key === '_summary' ? 'title' : 'column'}>
+        <GridColHeader class={column.key === SUMMARY_COLUMN_KEY ? 'title' : 'column'}>
           {column.label}
         </GridColHeader>
       {/if}

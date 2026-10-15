@@ -1,6 +1,13 @@
 import { describe, expect, test } from 'vitest';
 
-import { hmacSha256, toHex } from '$lib/services/utils/crypto';
+import { fromHex, hmacSha256, toHex } from '$lib/services/utils/crypto';
+
+describe('fromHex()', () => {
+  test('converts hexadecimal to bytes', () => {
+    expect([...fromHex('000fff')]).toEqual([0, 15, 255]);
+    expect([...fromHex('')]).toEqual([]);
+  });
+});
 
 describe('toHex()', () => {
   test('encodes a Uint8Array', () => {

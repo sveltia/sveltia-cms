@@ -130,6 +130,12 @@ export const bulkEditedEntries = createRawState([]);
 export const bulkEditErrors = createRawState({});
 
 /**
+ * Check whether the entry collection is in reorder or bulk edit mode, which rewrite the published
+ * entries.
+ * @returns {boolean} Result.
+ */
+const isRewriting = () => reordering.current || bulkEditing.current;
+/**
  * How often {@link viewTime} is updated while a time-based view filter or group is applied. A
  * minute keeps the list close to the clock without recomputing it for nothing.
  */
@@ -197,7 +203,7 @@ export const listedEntries = createDerivedState(() => {
 
   // Don’t swap while reordering or bulk editing, because these modes rewrite the published entries,
   // and the draft version must not leak into that commit
-  if (reordering.current || bulkEditing.current) {
+  if (isRewriting()) {
     return filterNested(entries);
   }
 
@@ -223,7 +229,7 @@ export const listedEntries = createDerivedState(() => {
 export const listedUnpublishedEntries = createDerivedState(() => {
   const { current: _collection } = selectedCollection;
 
-  if (_collection?._type !== 'entry' || reordering.current || bulkEditing.current) {
+  if (_collection?._type !== 'entry' || isRewriting()) {
     return [];
   }
 
@@ -289,24 +295,14 @@ export const collectionState = createDerivedState(() => {
     // `limit: 0` means no entries can ever be created, so it’s treated like `create: false`
     const canCreate = (_selectedCollection.create ?? true) && _selectedCollection.limit !== 0;
     const canDelete = !readonly && (_selectedCollection.delete ?? true);
-
     // Reordering writes the new order straight to the configured branch rather than going through
     // review, even in a collection using Editorial Workflow, so it’s not something an Open
     // Authoring contributor or a user who can’t push to the branch can do. An entry collection
     // storing all the entries in one file can always be reordered
-    const canReorder =
-      !readonly &&
-      isManuallyOrdered(_selectedCollection) &&
-      !openAuthoring.current &&
-      !lockedBranch.current;
-
+    const canWriteToBranch = !readonly && !openAuthoring.current && !lockedBranch.current;
+    const canReorder = canWriteToBranch && isManuallyOrdered(_selectedCollection);
     // Bulk editing writes straight to the configured branch as well, for the same reasons
-    const canBulkEdit =
-      !readonly &&
-      !!getBulkEditableFields(_selectedCollection).length &&
-      !openAuthoring.current &&
-      !lockedBranch.current;
-
+    const canBulkEdit = canWriteToBranch && !!getBulkEditableFields(_selectedCollection).length;
     const quota = _selectedCollection?.limit ?? Infinity;
     // The quota applies to the whole collection, including the entries that only exist in a pull
     // request, so it agrees with the count shown next to the collection in the sidebar

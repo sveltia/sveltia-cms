@@ -1,20 +1,24 @@
 import { _, locale as appLocale } from '@sveltia/i18n';
-import { isObject } from '@sveltia/utils/object';
 
 import { allEntries } from '$lib/services/contents';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
 import { getSortKeyLabel } from '$lib/services/contents/collection/view/sort-keys';
 import {
+  getConfiguredTableColumns,
   isTemplateColumnKey,
+  METADATA_KEYS,
   METADATA_TEMPLATE_TAGS,
   SINGLE_TAG_REGEX,
-  SPECIAL_COLUMN_KEYS,
   SUMMARY_COLUMN_KEY,
 } from '$lib/services/contents/collection/view/table-keys';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getEntryDisplayLocale } from '$lib/services/contents/entry/paths';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import { getLocalizedOption } from '$lib/services/contents/i18n/options';
+import { getOrCreate } from '$lib/services/utils/cache';
+import { getCommitAuthorName } from '$lib/services/utils/commit-author';
 import { formatDate } from '$lib/services/utils/date';
 
 /**
@@ -31,31 +35,6 @@ import { formatDate } from '$lib/services/utils/date';
 const getSingleTagName = (key) => key.match(SINGLE_TAG_REGEX)?.[1];
 
 /**
- * Get the columns configured for a collection’s table view with the `table_columns` option, or its
- * Static CMS alias `summary_fields`, where `summary` stands for the entry summary.
- * @param {InternalEntryCollection} collection Entry collection.
- * @returns {{ key: string, label?: string }[] | undefined} Columns, as configured. `undefined` if
- * neither option is defined.
- */
-export const getConfiguredTableColumns = (collection) => {
-  const { table_columns: tableColumns, summary_fields: summaryFields } = collection;
-
-  if (Array.isArray(tableColumns)) {
-    return tableColumns.map((column) =>
-      isObject(column)
-        ? { key: /** @type {any} */ (column).field, label: /** @type {any} */ (column).label }
-        : { key: column },
-    );
-  }
-
-  if (Array.isArray(summaryFields)) {
-    return summaryFields.map((name) => ({ key: name === 'summary' ? SUMMARY_COLUMN_KEY : name }));
-  }
-
-  return undefined;
-};
-
-/**
  * Check whether a collection has the columns of its table view configured with the `table_columns`
  * option, or its alias `summary_fields`. Only such a collection offers the table view.
  * @param {InternalEntryCollection} collection Entry collection.
@@ -65,6 +44,37 @@ export const hasConfiguredTableColumns = (collection) =>
   !!getConfiguredTableColumns(collection)?.length;
 
 /**
+ * Classify a column key: whether it can be shown in a collection’s table view, and if so, the field
+ * it names. A column key is a special key, a template, the key path of a field defined in the
+ * collection, or the canonical slug key, e.g. `translationKey`, which is part of the content of
+ * each localized entry without being a field.
+ * @param {InternalEntryCollection} collection Entry collection.
+ * @param {any} key Column key.
+ * @returns {{ fieldConfig?: Field } | undefined} `undefined` if the key can’t be shown. Otherwise,
+ * the field configuration if the key is the key path of a field, which is read from the content of
+ * the entry; a key without one is shown some other way.
+ */
+const classifyColumnKey = (collection, key) => {
+  if (typeof key !== 'string' || !key) {
+    return undefined;
+  }
+
+  if (key === SUMMARY_COLUMN_KEY || METADATA_KEYS.includes(key) || isTemplateColumnKey(key)) {
+    return {};
+  }
+
+  const fieldConfig = getField({ collectionName: collection.name, keyPath: key });
+
+  if (fieldConfig) {
+    return { fieldConfig };
+  }
+
+  const { i18nEnabled, canonicalSlug } = collection._i18n;
+
+  return i18nEnabled && key === canonicalSlug.key ? {} : undefined;
+};
+
+/**
  * Check whether a column key can be shown in a collection’s table view: a special key, a template,
  * the key path of a field defined in the collection, or the canonical slug key, e.g.
  * `translationKey`, which is part of the content of each localized entry without being a field.
@@ -72,21 +82,7 @@ export const hasConfiguredTableColumns = (collection) =>
  * @param {any} key Column key.
  * @returns {boolean} Result.
  */
-export const isTableColumnKey = (collection, key) => {
-  if (typeof key !== 'string' || !key) {
-    return false;
-  }
-
-  const { i18nEnabled, canonicalSlug } = collection._i18n;
-
-  return (
-    key === SUMMARY_COLUMN_KEY ||
-    SPECIAL_COLUMN_KEYS.includes(key) ||
-    isTemplateColumnKey(key) ||
-    (i18nEnabled && key === canonicalSlug.key) ||
-    !!getField({ collectionName: collection.name, keyPath: key })
-  );
-};
+export const isTableColumnKey = (collection, key) => !!classifyColumnKey(collection, key);
 
 /**
  * Get the default columns of a collection’s table view: the entry summary, followed by the keys the
@@ -97,12 +93,8 @@ export const isTableColumnKey = (collection, key) => {
  * @returns {{ key: string, label?: string }[]} Columns.
  */
 const getDefaultTableColumns = (collection, sortKeys) => {
-  const {
-    identifier_field: identifierField = 'title',
-    _i18n: { i18nEnabled, canonicalSlug },
-  } = collection;
-
-  const excludedKeys = [SUMMARY_COLUMN_KEY, '_manual', identifierField];
+  const { i18nEnabled, canonicalSlug } = collection._i18n;
+  const excludedKeys = [SUMMARY_COLUMN_KEY, '_manual', getIdentifierFieldName(collection)];
 
   if (i18nEnabled) {
     excludedKeys.push(canonicalSlug.key);
@@ -122,7 +114,8 @@ const getDefaultTableColumns = (collection, sortKeys) => {
  */
 const getColumnLabel = (collection, key) => {
   if (key === SUMMARY_COLUMN_KEY) {
-    const { identifier_field: identifierField = 'title', summary } = collection;
+    const { summary } = collection;
+    const identifierField = getIdentifierFieldName(collection);
 
     // Without a summary template, the summary is the identifier field’s value
     const field = summary
@@ -163,24 +156,16 @@ const resolveTableColumns = (collection, columns) => {
   const seenKeys = new Set();
 
   return columns.flatMap(({ key, label }) => {
-    if (!isTableColumnKey(collection, key) || seenKeys.has(key)) {
+    const classified = classifyColumnKey(collection, key);
+
+    if (!classified || seenKeys.has(key)) {
       return [];
     }
 
     seenKeys.add(key);
 
     /** @type {EntryTableColumn} */
-    const column = { key, label: label || getColumnLabel(collection, key) };
-    const fieldConfig = getField({ collectionName: collection.name, keyPath: key });
-
-    if (
-      fieldConfig &&
-      !SPECIAL_COLUMN_KEYS.includes(key) &&
-      key !== SUMMARY_COLUMN_KEY &&
-      !isTemplateColumnKey(key)
-    ) {
-      column.fieldConfig = fieldConfig;
-    }
+    const column = { key, label: label || getColumnLabel(collection, key), ...classified };
 
     return [column];
   });
@@ -234,7 +219,7 @@ export const getTableCellValue = ({ collection, entry, column }) => {
   const { fieldConfig } = column;
   // A template made of a special key’s tag, e.g. `{{commit_date}}`, shows the same as the key
   const tagName = isTemplateColumnKey(column.key) ? getSingleTagName(column.key) : undefined;
-  const key = tagName && SPECIAL_COLUMN_KEYS.includes(tagName) ? tagName : column.key;
+  const key = tagName && METADATA_KEYS.includes(tagName) ? tagName : column.key;
 
   if (key === SUMMARY_COLUMN_KEY) {
     return { type: 'text', value: getEntrySummary(collection, entry, { useTemplate: true }) };
@@ -257,9 +242,7 @@ export const getTableCellValue = ({ collection, entry, column }) => {
   }
 
   if (key === 'commit_author') {
-    const { name, login, email } = entry.commitAuthor ?? {};
-
-    return { type: 'text', value: name || login || email || '' };
+    return { type: 'text', value: getCommitAuthorName(entry.commitAuthor) || '' };
   }
 
   if (key === 'commit_date') {
@@ -272,7 +255,7 @@ export const getTableCellValue = ({ collection, entry, column }) => {
   }
 
   const { defaultLocale } = collection._i18n;
-  const locale = entry.locales[defaultLocale] ? defaultLocale : Object.keys(entry.locales)[0];
+  const locale = /** @type {string} */ (getEntryDisplayLocale(entry.locales, defaultLocale));
   const valueMap = entry.locales[locale]?.content ?? {};
 
   if (/** @type {Field} */ (fieldConfig)?.widget === 'boolean') {
@@ -300,19 +283,14 @@ export const getTableCellValue = ({ collection, entry, column }) => {
   if (/** @type {Field} */ (fieldConfig)?.widget === 'relation') {
     const { current: entries } = allEntries;
     const cacheKey = `${key}\0${locale}`;
-    let entryCache = relationCellCache.get(entry);
-    const cached = entryCache?.get(cacheKey);
+    const entryCache = getOrCreate(relationCellCache, entry, () => new Map());
+    const cached = entryCache.get(cacheKey);
 
     if (cached && cached.entries === entries) {
       return cached.value;
     }
 
     const value = getValue();
-
-    if (!entryCache) {
-      entryCache = new Map();
-      relationCellCache.set(entry, entryCache);
-    }
 
     entryCache.set(cacheKey, { entries, value });
 
@@ -334,7 +312,7 @@ export const getTableCellValue = ({ collection, entry, column }) => {
  */
 export const getColumnSortKey = ({ collection, column: { key }, sortKeys }) => {
   if (key === SUMMARY_COLUMN_KEY && !sortKeys.includes(key)) {
-    const { identifier_field: identifierField = 'title' } = collection;
+    const identifierField = getIdentifierFieldName(collection);
 
     return sortKeys.includes(identifierField) ? identifierField : undefined;
   }

@@ -1,4 +1,5 @@
 import { customFileFormatRegistry } from '$lib/services/api/registries';
+import { assertOption } from '$lib/services/api/validate';
 import { BUILTIN_FILE_FORMATS } from '$lib/services/contents/file/constants';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
@@ -28,29 +29,29 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * @see https://sveltiacms.app/en/docs/api/file-formats
  */
 const registerCustomFormat = (name, extension, { fromFile, toFile } = {}) => {
-  if (!isNonEmptyString(name)) {
-    throw new TypeError(
-      'The `name` option for `CMS.registerCustomFormat()` must be a non-empty string',
-    );
-  }
-
-  if (!isNonEmptyString(extension)) {
-    throw new TypeError(
-      'The `extension` option for `CMS.registerCustomFormat()` must be a non-empty string',
-    );
-  }
+  assertOption(isNonEmptyString(name), 'registerCustomFormat', 'name', 'a non-empty string');
+  assertOption(
+    isNonEmptyString(extension),
+    'registerCustomFormat',
+    'extension',
+    'a non-empty string',
+  );
 
   // Check the types first, so a method given by mistake as a non-function is reported as such
   // rather than as a missing method
-  if (typeof fromFile !== 'undefined' && typeof fromFile !== 'function') {
-    throw new TypeError(
-      'The `fromFile` option for `CMS.registerCustomFormat()` must be a function',
-    );
-  }
+  assertOption(
+    fromFile === undefined || typeof fromFile === 'function',
+    'registerCustomFormat',
+    'fromFile',
+    'a function',
+  );
 
-  if (typeof toFile !== 'undefined' && typeof toFile !== 'function') {
-    throw new TypeError('The `toFile` option for `CMS.registerCustomFormat()` must be a function');
-  }
+  assertOption(
+    toFile === undefined || typeof toFile === 'function',
+    'registerCustomFormat',
+    'toFile',
+    'a function',
+  );
 
   if (typeof fromFile !== 'function' && typeof toFile !== 'function') {
     throw new Error(

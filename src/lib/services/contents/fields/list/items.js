@@ -4,6 +4,7 @@ import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getInitialExpanderState } from '$lib/services/contents/editor/fields';
 import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
 import { tagListItems } from '$lib/services/contents/fields/list/helpers';
+import { getValueSubFields } from '$lib/services/contents/fields/list/subfields';
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { unflattenKeys } from '$lib/services/utils/object';
@@ -21,19 +22,6 @@ import { unflattenKeys } from '$lib/services/utils/object';
  * VariableFieldType,
  * } from '$lib/types/public';
  */
-
-/**
- * Get the subfields of an Object field value or a list item, resolving the variable type against
- * the type name stored in the value.
- * @param {object} args Arguments.
- * @param {Record<string, any>} args.value Object value.
- * @param {Field[]} [args.fields] Subfields, if the field has them.
- * @param {VariableFieldType[]} [args.types] Variable types, if the field has them.
- * @param {string} [args.typeKey] Property name holding the variable type name.
- * @returns {Field[]} Subfields.
- */
-export const getValueSubFields = ({ value, fields, types, typeKey = 'type' }) =>
-  fields ?? types?.find(({ name }) => name === value[typeKey])?.fields ?? [];
 
 /**
  * Renew the unique values in the given field value of a duplicated list item, so the duplicate

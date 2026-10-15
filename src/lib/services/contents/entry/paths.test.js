@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getEntryDirName,
+  getEntryDisplayLocale,
   getEntryFolderPath,
   getEntryLocaleFile,
   getEntryPaths,
@@ -275,5 +276,19 @@ describe('getEntryDirName()', () => {
     expect(getEntryDirName('content/posts/foo.md')).toBe('content/posts');
     expect(getEntryDirName('content/posts/foo.md', { basePath: '' })).toBe('content/posts');
     expect(getEntryDirName('foo.md')).toBe('');
+  });
+});
+
+describe('getEntryDisplayLocale()', () => {
+  it('should return the default locale if the entry has it', () => {
+    expect(getEntryDisplayLocale({ fr: {}, en: {} }, 'en')).toBe('en');
+  });
+
+  it('should fall back to the first locale', () => {
+    expect(getEntryDisplayLocale({ fr: {}, de: {} }, 'en')).toBe('fr');
+  });
+
+  it('should return `undefined` without locales', () => {
+    expect(getEntryDisplayLocale({}, 'en')).toBeUndefined();
   });
 });

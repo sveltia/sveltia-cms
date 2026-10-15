@@ -61,6 +61,43 @@ describe('backends/commit-prompt', () => {
     });
   });
 
+  describe('runCommit()', () => {
+    it('should return the result of a successful action', async () => {
+      await expect(service.runCommit(async () => 42)).resolves.toEqual({
+        ok: true,
+        cancelled: false,
+        result: 42,
+        error: undefined,
+      });
+    });
+
+    it('should report a cancellation without logging it', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const error = new Error('commit_cancelled');
+
+      await expect(
+        service.runCommit(async () => {
+          throw error;
+        }),
+      ).resolves.toEqual({ ok: false, cancelled: true, result: undefined, error });
+
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should report and log a failure', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const error = new Error('saving_failed');
+
+      await expect(
+        service.runCommit(async () => {
+          throw error;
+        }),
+      ).resolves.toEqual({ ok: false, cancelled: false, result: undefined, error });
+
+      expect(spy).toHaveBeenCalledWith(error);
+    });
+  });
+
   describe('getCommitMessagePromptMode()', () => {
     it('should return undefined without a config or a backend', () => {
       expect(service.getCommitMessagePromptMode()).toBeUndefined();

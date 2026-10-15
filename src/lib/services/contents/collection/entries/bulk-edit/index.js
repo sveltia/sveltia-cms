@@ -8,6 +8,7 @@ import {
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { findFieldByName } from '$lib/services/contents/collection/entries/bulk-edit/config';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import { validateAnyField } from '$lib/services/contents/draft/validate/fields';
@@ -22,7 +23,10 @@ import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
-import { isDuplicateIfEmptyField } from '$lib/services/contents/i18n/duplicate-if-empty';
+import {
+  followsDefaultLocale,
+  isDuplicateIfEmptyField,
+} from '$lib/services/contents/i18n/duplicate-if-empty';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { isValueEmpty } from '$lib/services/utils/object';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
@@ -30,7 +34,6 @@ import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 /**
  * @import {
  * Entry,
- * EntryDraft,
  * FileChange,
  * InternalEntryCollection,
  * } from '$lib/types/private';
@@ -123,7 +126,7 @@ export const setBulkEditValue = ({ collection, entry, keyPath, value, edits }) =
   const { [keyPath]: _previous, ...otherFieldEdits } = edits[entry.id] ?? {};
   const { [entry.id]: _entryEdits, ...otherEntryEdits } = edits;
   const storedValue = getStoredValue(collection, entry, keyPath);
-  const fieldConfig = collection.fields.find(({ name }) => name === keyPath);
+  const fieldConfig = findFieldByName(collection.fields, keyPath);
   // A Boolean field without a value is shown as off, so turning it off isn’t a change
   const shownValue = fieldConfig?.widget === 'boolean' ? (storedValue ?? false) : storedValue;
 
@@ -168,7 +171,7 @@ export const applyBulkEdits = ({ collection, entry, entryEdits }) => {
   );
 
   Object.entries(entryEdits).forEach(([keyPath, value]) => {
-    const fieldConfig = collection.fields.find(({ name }) => name === keyPath);
+    const fieldConfig = findFieldByName(collection.fields, keyPath);
     // A `duplicate_if_empty` field is updated in the other locales where it’s empty or still holds
     // the default locale’s value
     const fillEmpty = !!fieldConfig && isDuplicateIfEmptyField(fieldConfig);
@@ -181,39 +184,28 @@ export const applyBulkEdits = ({ collection, entry, entryEdits }) => {
         return;
       }
 
-      /**
-       * Localize a value of the default locale for the locale.
-       * @param {any} _value Value.
-       * @returns {any} Localized value.
-       */
-      const localize = (_value) =>
-        getLocalizedFieldValue({
-          fieldConfig: /** @type {Field} */ (fieldConfig),
-          value: _value,
-          sourceLocale: defaultLocale,
-          targetLocale: locale,
-        });
-
       if (
         fieldConfig?.i18n === 'duplicate' ||
         (fillEmpty &&
-          (isValueEmpty(content[keyPath]) || content[keyPath] === localize(previousValue)))
+          followsDefaultLocale({
+            fieldConfig: /** @type {Field} */ (fieldConfig),
+            targetValue: content[keyPath],
+            previousValue,
+            sourceLocale: defaultLocale,
+            targetLocale: locale,
+          }))
       ) {
-        content[keyPath] = localize(value);
+        content[keyPath] = getLocalizedFieldValue({
+          fieldConfig: /** @type {Field} */ (fieldConfig),
+          value,
+          sourceLocale: defaultLocale,
+          targetLocale: locale,
+        });
       }
     });
   });
 
-  assignAutoNowValues(
-    /** @type {EntryDraft} */ (
-      /** @type {unknown} */ ({
-        isNew: false,
-        collectionName: collection.name,
-        isIndexFile: false,
-        currentValues,
-      })
-    ),
-  );
+  assignAutoNowValues({ ...createSyntheticDraft({ collection }), isNew: false, currentValues });
 
   return {
     ...entry,
@@ -302,9 +294,7 @@ export const validateBulkEdits = ({ collection, entries, edits }) => {
     const content = { ...entry.locales[defaultLocale]?.content, ...entryEdits };
 
     Object.entries(entryEdits).forEach(([keyPath, value]) => {
-      const fieldConfig = /** @type {Field} */ (
-        collection.fields.find(({ name }) => name === keyPath)
-      );
+      const fieldConfig = /** @type {Field} */ (findFieldByName(collection.fields, keyPath));
 
       let validity = validateAnyField({
         draft: { ...draft, originalEntry: entry },

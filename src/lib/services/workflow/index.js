@@ -7,12 +7,11 @@ import { createDerivedState, createRawState } from '$lib/services/utils/state.sv
 import { isEntryBranch } from '$lib/services/workflow/branch';
 import {
   getPublishMode,
-  getPublishModeOptions,
   isWorkflowConfigured,
   isWorkflowMode,
 } from '$lib/services/workflow/config';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
-import { isLastStage } from '$lib/services/workflow/stages';
+import { getCollectionPublishModeOptions, isLastStage } from '$lib/services/workflow/stages';
 
 /**
  * @import {
@@ -227,6 +226,14 @@ export const canMergePullRequest = (pullRequest) =>
   pullRequest.canMerge !== false && !mergeLockedBranch.current;
 
 /**
+ * Check whether the publish controls are offered at all: an Open Authoring contributor can’t
+ * publish anything, and the collection’s `publish` option can hide them.
+ * @param {InternalCollection | undefined} collection Collection the entry belongs to.
+ * @returns {boolean} Result.
+ */
+const isPublishVisible = (collection) => !openAuthoring.current && collection?.publish !== false;
+
+/**
  * Check whether the signed-in user gets the control to publish the given unpublished entry, or to
  * carry out its pending deletion. The entry can only be published from the last stage — the
  * drafting stage with Preview Workflow — unless the `direct_publish` publish mode option lets it
@@ -239,13 +246,12 @@ export const canMergePullRequest = (pullRequest) =>
  * @returns {boolean} Result.
  */
 export const isPublishAllowed = (entry, collection) =>
-  !openAuthoring.current &&
+  isPublishVisible(collection) &&
   canMergePullRequest(entry.workflow.pullRequest) &&
   (isPendingDeletion(entry) ||
     isLastStage(entry, collection) ||
     // Direct publishing bypasses the review, so an entry can be published from any stage
-    getPublishModeOptions({ cmsConfig: cmsConfig.current, collection }).directPublish) &&
-  collection?.publish !== false;
+    getCollectionPublishModeOptions(collection).directPublish);
 
 /**
  * Check whether the signed-in user gets the option to save the entry being edited and publish it in
@@ -262,9 +268,8 @@ export const isPublishAllowed = (entry, collection) =>
  */
 export const isDirectPublishAllowed = (collection, entry) =>
   !!collection &&
-  !openAuthoring.current &&
-  collection.publish !== false &&
-  getPublishModeOptions({ cmsConfig: cmsConfig.current, collection }).directPublish &&
+  isPublishVisible(collection) &&
+  getCollectionPublishModeOptions(collection).directPublish &&
   (entry ? canMergePullRequest(entry.workflow.pullRequest) : !lockedBranch.current);
 
 /**

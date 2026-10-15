@@ -13,7 +13,7 @@
   import PageContainer from '$lib/components/common/page-container.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import NotFound from '$lib/components/global/not-found.svelte';
-  import { getReactDom, loadReactDom } from '$lib/services/api/react-dom';
+  import { mountReactNode } from '$lib/services/api/react-dom';
   import { selectedCustomPage } from '$lib/services/app/custom-pages';
   import { announcedPageStatus, goBack } from '$lib/services/app/navigation';
   import { env } from '$lib/services/user/env.svelte';
@@ -37,31 +37,8 @@
    * @param {ComponentType} component React component.
    * @returns {Attachment<HTMLElement>} Attachment.
    */
-  const renderComponent = (component) => (element) => {
-    /** @type {import('react-dom/client').Root | undefined} */
-    let root;
-    let detached = false;
-
-    // `CMS.registerCustomPage()` starts loading the library, so it’s normally there by now
-    loadReactDom().then(
-      () => {
-        if (!detached) {
-          root = getReactDom().createRoot(element);
-          root.render(createElement(component));
-        }
-      },
-      /* v8 ignore next 4 -- the library is bundled with the tests, so loading can’t fail */
-      (/** @type {Error} */ error) => {
-        // eslint-disable-next-line no-console
-        console.error(error);
-      },
-    );
-
-    return () => {
-      detached = true;
-      root?.unmount();
-    };
-  };
+  const renderComponent = (component) => (element) =>
+    mountReactNode(element, createElement(component));
 
   $effect(() => {
     if (!shownPage) {

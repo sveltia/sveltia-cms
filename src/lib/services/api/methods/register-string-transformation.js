@@ -1,4 +1,5 @@
 import { customStringTransformationRegistry } from '$lib/services/api/registries';
+import { assertNotReserved, assertOption } from '$lib/services/api/validate';
 import {
   BUILTIN_STRING_TRANSFORMATIONS,
   STRING_TRANSFORMATION_NAME_REGEX,
@@ -29,25 +30,27 @@ import {
  * @see https://sveltiacms.app/en/docs/api/string-transformations
  */
 const registerStringTransformation = (name, transform) => {
-  if (typeof name !== 'string' || !STRING_TRANSFORMATION_NAME_REGEX.test(name)) {
-    throw new TypeError(
-      'The `name` option for `CMS.registerStringTransformation()` must be a string consisting of ' +
-        'letters, digits and underscores, not starting with a digit',
-    );
-  }
+  assertOption(
+    typeof name === 'string' && STRING_TRANSFORMATION_NAME_REGEX.test(name),
+    'registerStringTransformation',
+    'name',
+    'a string consisting of letters, digits and underscores, not starting with a digit',
+  );
 
-  if (BUILTIN_STRING_TRANSFORMATIONS.includes(name)) {
-    throw new Error(
-      `The string transformation name "${name}" is reserved for a built-in transformation. ` +
-        'Choose a different name for your custom transformation.',
-    );
-  }
+  assertNotReserved({
+    name,
+    reserved: BUILTIN_STRING_TRANSFORMATIONS,
+    subject: 'string transformation',
+    builtin: 'built-in transformation',
+    custom: 'custom transformation',
+  });
 
-  if (typeof transform !== 'function') {
-    throw new TypeError(
-      'The `transform` option for `CMS.registerStringTransformation()` must be a function',
-    );
-  }
+  assertOption(
+    typeof transform === 'function',
+    'registerStringTransformation',
+    'transform',
+    'a function',
+  );
 
   customStringTransformationRegistry.set(name, transform);
 };

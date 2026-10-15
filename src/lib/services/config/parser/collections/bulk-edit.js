@@ -1,7 +1,10 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { addMessage } from '$lib/services/config/parser/utils/validator';
-import { isBulkEditableField } from '$lib/services/contents/collection/entries/bulk-edit/config';
+import {
+  findFieldByName,
+  isBulkEditableField,
+} from '$lib/services/contents/collection/entries/bulk-edit/config';
 
 /**
  * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
@@ -25,7 +28,7 @@ export const checkBulkEditFields = ({ bulkEdit, fields = [], context, collectors
   }
 
   bulkEdit.fields.forEach((name) => {
-    const fieldConfig = fields.find((field) => field.name === name);
+    const fieldConfig = findFieldByName(fields, name);
 
     if (!fieldConfig) {
       addMessage({

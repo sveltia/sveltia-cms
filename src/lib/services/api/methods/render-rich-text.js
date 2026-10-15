@@ -2,6 +2,7 @@ import { isObject } from '@sveltia/utils/object';
 import { mount, unmount } from 'svelte';
 
 import RichTextPreview from '$lib/components/contents/details/fields/rich-text/rich-text-preview.svelte';
+import { assertOption } from '$lib/services/api/validate';
 
 /**
  * @import { RenderRichTextOptions } from '../../../types/public';
@@ -26,17 +27,15 @@ import RichTextPreview from '$lib/components/contents/details/fields/rich-text/r
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
 const renderRichText = (target, value, { fieldConfig } = {}) => {
-  if (!(target instanceof Element)) {
-    throw new TypeError('The `target` option for `CMS.renderRichText()` must be an element');
-  }
+  assertOption(target instanceof Element, 'renderRichText', 'target', 'an element');
+  assertOption(typeof value === 'string', 'renderRichText', 'value', 'a string');
 
-  if (typeof value !== 'string') {
-    throw new TypeError('The `value` option for `CMS.renderRichText()` must be a string');
-  }
-
-  if (fieldConfig !== undefined && !isObject(fieldConfig)) {
-    throw new TypeError('The `fieldConfig` option for `CMS.renderRichText()` must be an object');
-  }
+  assertOption(
+    fieldConfig === undefined || isObject(fieldConfig),
+    'renderRichText',
+    'fieldConfig',
+    'an object',
+  );
 
   const component = mount(RichTextPreview, {
     target,

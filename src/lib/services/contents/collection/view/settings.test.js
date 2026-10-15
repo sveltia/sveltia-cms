@@ -12,6 +12,7 @@ import {
   getEntryViewType,
   getEntryViewTypes,
   initSettings,
+  pickOfferedViewType,
   viewBeforeReorder,
 } from './settings';
 
@@ -246,5 +247,16 @@ describe('Test getEntryOrderKey()', () => {
     expect(getEntryOrderKey({ ...view, type: 'grid' })).toBe(key);
     expect(getEntryOrderKey({ ...view, collapsedGroups: { tags: ['news'] } })).toBe(key);
     expect(getEntryOrderKey({ ...view, showMedia: true })).toBe(key);
+  });
+});
+
+describe('Test pickOfferedViewType()', () => {
+  test('returns the picked type if it is offered', () => {
+    expect(pickOfferedViewType('grid', ['list', 'grid'])).toBe('grid');
+  });
+
+  test('falls back to the first type', () => {
+    expect(pickOfferedViewType(undefined, ['list', 'grid'])).toBe('list');
+    expect(pickOfferedViewType('table', ['list', 'grid'])).toBe('list');
   });
 });

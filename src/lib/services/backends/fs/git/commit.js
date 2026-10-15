@@ -1,21 +1,30 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
 
-import { DIR, INDEX_PATH, ZERO_OID } from '$lib/services/backends/fs/git/constants';
+import {
+  DIR,
+  EXECUTABLE_FILE_MODE,
+  INDEX_PATH,
+  REGULAR_FILE_MODE,
+  ZERO_OID,
+} from '$lib/services/backends/fs/git/constants';
 import { exists } from '$lib/services/backends/fs/git/file-system';
 import {
   createIndexEntry,
-  EXECUTABLE_FILE_MODE,
   findIndexEntry,
-  REGULAR_FILE_MODE,
   serializeIndex,
   updateIndexEntries,
 } from '$lib/services/backends/fs/git/index-file';
 import { writeLooseObject } from '$lib/services/backends/fs/git/objects';
-import { getIndexChecksum, setIndexCache } from '$lib/services/backends/fs/git/repository';
+import {
+  getIndexChecksum,
+  resolveBranchHead,
+  setIndexCache,
+} from '$lib/services/backends/fs/git/repository';
 import { buildTree, serializeTree, writeChangedTrees } from '$lib/services/backends/fs/git/tree';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { textEncoder } from '$lib/services/utils/bytes';
 
 /**
  * @import {
@@ -126,7 +135,7 @@ export const convertToLF = (content) => {
     return content;
   }
 
-  return new TextEncoder().encode(text.replaceAll('\r\n', '\n'));
+  return textEncoder.encode(text.replaceAll('\r\n', '\n'));
 };
 
 /**
@@ -267,14 +276,7 @@ const stageAndCommit = async (repository, changes, options) => {
     writeTree: (treeEntries) => writeLooseObject(fs, 'tree', serializeTree(treeEntries)),
   });
 
-  /** @type {string | undefined} */
-  let currentHeadOid;
-
-  try {
-    currentHeadOid = await git.resolveRef({ fs, dir: DIR, ref: branch });
-  } catch {
-    //
-  }
+  const currentHeadOid = await resolveBranchHead(git, fs, branch);
 
   // Git can’t update the branch while the index is locked, but a tool that doesn’t check the lock
   // could have, and the new commit would undo its commit

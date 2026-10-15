@@ -7,36 +7,28 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import {
-    Button,
-    Divider,
-    Icon,
-    Menu,
-    MenuButton,
-    MenuItem,
-    Spacer,
-    VisibilityObserver,
-  } from '@sveltia/ui';
+  import { VisibilityObserver } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import equal from 'fast-deep-equal';
   import { getContext, onMount } from 'svelte';
   import { flip } from 'svelte/animate';
 
-  import ExpandIcon from '$lib/components/common/expand-icon.svelte';
   import RemoveButton from '$lib/components/common/remove-button.svelte';
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import CustomPreview from '$lib/components/contents/details/fields/custom/custom-preview.svelte';
-  import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
+  import ListItemMenu from '$lib/components/contents/details/fields/list/list-item-menu.svelte';
+  import ListToolbar from '$lib/components/contents/details/fields/list/list-toolbar.svelte';
   import ObjectBody from '$lib/components/contents/details/fields/object/object-body.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
   import RemovedItemNotice from '$lib/components/contents/details/fields/object/removed-item-notice.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { listItemClipboardToast } from '$lib/services/contents/editor';
   import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
   import { isExpanded, syncExpanderStates } from '$lib/services/contents/editor/fields';
-  import { scrollToAddedListItem } from '$lib/services/contents/editor/scroll';
+  import {
+    getStickyToolbarBottom,
+    scrollToAddedListItem,
+  } from '$lib/services/contents/editor/scroll';
   import { getMemoizedSubtree } from '$lib/services/contents/entry/subtree';
   import { getCustomFieldSummary } from '$lib/services/contents/fields/custom/preview';
   import {
@@ -57,11 +49,11 @@
     getInitialListExpanderStates,
   } from '$lib/services/contents/fields/list/items';
   import {
-    addRemovedItem,
-    dropRestoredItem,
-    getNestedExpanderStates,
-    shiftRemovedItems,
-  } from '$lib/services/contents/fields/list/removed-items';
+    getPastedItemToast,
+    showListItemClipboardToast,
+  } from '$lib/services/contents/fields/list/paste-toast';
+  import { getNestedExpanderStates } from '$lib/services/contents/fields/list/removed-items';
+  import { createRemovedItemsState } from '$lib/services/contents/fields/list/removed-items-state.svelte';
   import {
     getTypedSubKeyPath,
     resolveVariableType,
@@ -211,7 +203,7 @@
     items.map((_item, index) => {
       const key = `${keyPath}.${index}`;
 
-      return [key, isExpanded(entryDraft.current, key)];
+      return /** @type {[string, boolean]} */ ([key, isExpanded(entryDraft.current, key)]);
     }),
   );
   /**
@@ -237,29 +229,12 @@
   );
   const isAddDisabled = $derived(isLocked || !hasEditableSubFields);
 
-  /**
-   * Items removed since the editor was opened, which are shown in their place with a button to
-   * restore them.
-   * @type {RemovedListItem[]}
-   */
-  let removedItems = $state.raw([]);
-  /**
-   * Locale and item keys after the last item was removed, restored or added here, to tell whether
-   * the editor has since been switched to another locale, or the list changed elsewhere, e.g.
-   * reverted, which leaves the removed items out of place. The object items are given an ID as one
-   * is removed, so a revert, which brings back the original items without the IDs, changes the keys
-   * even if the item count stays the same.
-   * @type {{ locale: InternalLocaleCode, keys: (string | number)[] } | undefined}
-   */
-  let expectedListState = $state.raw();
-  /** The removed items to show, unless they’re out of place. */
-  const shownRemovedItems = $derived(
-    expectedListState?.locale === locale && equal(expectedListState.keys, itemKeys.current)
-      ? removedItems
-      : [],
-  );
-  /** The removed items grouped by the position they’re shown at. */
-  const removedItemMap = $derived(Map.groupBy(shownRemovedItems, ({ index }) => index));
+  /* eslint-disable jsdoc/require-jsdoc */
+  const removedItems = createRemovedItemsState({
+    getLocale: () => locale,
+    getItemKeys: () => itemKeys.current,
+  });
+  /* eslint-enable jsdoc/require-jsdoc */
 
   /**
    * @type {HTMLElement | undefined}
@@ -280,20 +255,6 @@
    * @type {HTMLElement | undefined}
    */
   let latestAddedItem;
-  /**
-   * Show a notification once an item is copied or pasted.
-   * @param {typeof listItemClipboardToast.current.status} status Status.
-   * @param {string} message Message.
-   */
-  const showClipboardToast = (status, message) => {
-    listItemClipboardToast.current = {
-      id: listItemClipboardToast.current.id + 1,
-      show: true,
-      status,
-      message,
-    };
-  };
-
   /**
    * Update the expander states of the list and its items.
    * @param {Record<string, boolean>} stateMap Map of key path and state.
@@ -370,21 +331,6 @@
     );
 
   /**
-   * Remember the item keys of the list in the locale being edited, once it’s been manipulated here.
-   * See {@link expectedListState}.
-   * @param {any[]} valueList Manipulated list.
-   * @param {InternalLocaleCode} targetLocale Locale the list is for.
-   */
-  const rememberListState = (valueList, targetLocale) => {
-    if (targetLocale === locale) {
-      expectedListState = {
-        locale,
-        keys: valueList.map((_item, index) => getListItemKey(valueList, index)),
-      };
-    }
-  };
-
-  /**
    * Add a new subfield to the list.
    * @param {object} [args] Arguments.
    * @param {number} [args.index] List index where a new item will be inserted.
@@ -418,7 +364,7 @@
 
     // A replaced item keeps its position, so the removed items shown around it stay where they are
     if (!replace) {
-      removedItems = shiftRemovedItems(shownRemovedItems, index);
+      removedItems.shift(index);
     }
 
     updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
@@ -442,7 +388,7 @@
 
       valueList.splice(index, replace ? 1 : 0, newItem);
       expanderStateList.splice(index, replace ? 1 : 0, true);
-      rememberListState(valueList, targetLocale);
+      removedItems.remember(valueList, targetLocale);
     });
 
     // Expand the parent if it is collapsed to show the newly added item
@@ -461,10 +407,7 @@
 
     // Leave room for the sticky toolbar, which sticks below the toolbars of the rich text editors
     // the field is in, if any, rather than scroll back for it, which shows as a bump
-    const toolbarBottom = topToolbar
-      ? Number.parseFloat(getComputedStyle(topToolbar).top) +
-        topToolbar.getBoundingClientRect().height
-      : 0;
+    const toolbarBottom = getStickyToolbarBottom(topToolbar);
 
     latestAddedItem = item;
     item.style.scrollMarginTop = `${toolbarBottom}px`;
@@ -507,7 +450,7 @@
       componentName,
     });
 
-    showClipboardToast('success', _('list_item_copied'));
+    showListItemClipboardToast('success', _('list_item_copied'));
   };
 
   /**
@@ -530,7 +473,7 @@
     const copied = await readListItem();
 
     if (!copied) {
-      showClipboardToast('info', _('no_list_item_to_paste'));
+      showListItemClipboardToast('info', _('no_list_item_to_paste'));
 
       return;
     }
@@ -552,7 +495,7 @@
     }
 
     if (!result) {
-      showClipboardToast('error', _('list_item_not_compatible'));
+      showListItemClipboardToast('error', _('list_item_not_compatible'));
 
       return;
     }
@@ -561,16 +504,10 @@
 
     await addItem({ index, type, sourceItems, replace });
 
-    if (missingFileCount) {
-      showClipboardToast(
-        'warning',
-        _('list_item_pasted_without_files', { values: { count: missingFileCount } }),
-      );
-    } else if (droppedCount) {
-      showClipboardToast(
-        'info',
-        _('list_item_pasted_without_values', { values: { count: droppedCount } }),
-      );
+    const toast = getPastedItemToast({ droppedCount, missingFileCount });
+
+    if (toast) {
+      showListItemClipboardToast(toast.status, toast.message);
     }
   };
 
@@ -600,7 +537,7 @@
       nestedExpanderStates: getNestedExpanderStates(draft.expanderStates._, keyPath, index),
     };
 
-    removedItems = addRemovedItem(shownRemovedItems, removedItem);
+    removedItems.add(removedItem);
 
     updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
       if (!hasSingleSubField) {
@@ -617,7 +554,7 @@
       }
 
       expanderStateList.splice(index, 1);
-      rememberListState(valueList, targetLocale);
+      removedItems.remember(valueList, targetLocale);
     });
 
     await sleep(50);
@@ -630,7 +567,7 @@
    * @param {RemovedListItem} removedItem Removed item.
    */
   const restoreItem = async ({ id, index, values, expanded, nestedExpanderStates }) => {
-    removedItems = dropRestoredItem(shownRemovedItems, id);
+    removedItems.drop(id);
 
     updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
       if (!(targetLocale in values)) {
@@ -644,7 +581,7 @@
 
       valueList.splice(index, 0, values[targetLocale]);
       expanderStateList.splice(index, 0, expanded);
-      rememberListState(valueList, targetLocale);
+      removedItems.remember(valueList, targetLocale);
     });
 
     // Put back the expander states of the objects and lists nested in the item
@@ -676,7 +613,7 @@
       valueList.splice(to, 0, ...valueList.splice(from, 1));
       // The expander states are only manipulated with the default locale, so this list may be empty
       expanderStateList.splice(to, 0, ...expanderStateList.splice(from, 1));
-      rememberListState(valueList, targetLocale);
+      removedItems.remember(valueList, targetLocale);
     });
   };
 
@@ -778,53 +715,37 @@
     });
   };
 
+  /** The props the top and bottom toolbars share. */
+  const toolbarProps = $derived({
+    fieldId,
+    summaryId,
+    fieldConfig,
+    locale,
+    items,
+    fieldName,
+    label,
+    labelSingular,
+    singleItem,
+    parentExpanded,
+    parentExpandedKeyPath,
+    itemExpanderStates,
+    allowAdd,
+    addToTop,
+    isAddDisabled,
+    hasMaxItems,
+    addItem,
+    pasteItem,
+    updateExpanderStates,
+  });
+
   onMount(() => {
     initializeExpanderState();
     warnUnknownTypes();
   });
 </script>
 
-{#snippet addPositionItems(/** @type {number} */ insertIndex, /** @type {string} */ position)}
-  {#if hasVariableTypes}
-    <MenuItem label={_(`add_item_${position}`)} disabled={isAddDisabled}>
-      <!-- eslint-disable-next-line no-shadow -->
-      {#snippet items()}
-        {#each variableTypes as type (type.name)}
-          <MenuItem
-            label={getFieldLabel({ config: type, locale })}
-            onclick={() => addItem({ index: insertIndex, type: type.name })}
-          />
-        {/each}
-      {/snippet}
-    </MenuItem>
-  {:else}
-    <MenuItem
-      label={_(`add_item_${position}`)}
-      disabled={isAddDisabled}
-      onclick={() => addItem({ index: insertIndex })}
-    />
-  {/if}
-{/snippet}
-
-{#snippet pasteButton()}
-  {#if !hasMaxItems}
-    <Button
-      variant="tertiary"
-      size="small"
-      iconic
-      aria-label={_('paste_item')}
-      disabled={isAddDisabled}
-      onclick={() => pasteItem(addToTop ? 0 : items.length)}
-    >
-      {#snippet startIcon()}
-        <Icon name="content_paste" />
-      {/snippet}
-    </Button>
-  {/if}
-{/snippet}
-
 {#snippet removedItemNotices(/** @type {number} */ index)}
-  {#each removedItemMap.get(index) ?? [] as removedItem (removedItem.id)}
+  {#each removedItems.byIndex.get(index) ?? [] as removedItem (removedItem.id)}
     <RemovedItemNotice
       id="list-{fieldId}-restore-{removedItem.id}"
       disabled={isLocked || hasMaxItems}
@@ -838,51 +759,7 @@
   <div role="none" id={summaryId} hidden>{labelSingular || label || fieldName}</div>
 {/if}
 {#if !singleItem || !items.length}
-  <div role="none" class="toolbar top" class:single={singleItem} bind:this={topToolbar}>
-    {#if !singleItem}
-      <div role="none" class="label">
-        <Button
-          iconic
-          disabled={!items.length}
-          aria-label={parentExpanded ? _('collapse') : _('expand')}
-          aria-expanded={parentExpanded}
-          aria-controls="list-{fieldId}-item-list"
-          onclick={() => {
-            updateExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
-          }}
-        >
-          {#snippet startIcon()}
-            <ExpandIcon expanded={parentExpanded} />
-          {/snippet}
-        </Button>
-        <div role="none" class="summary" id={summaryId}>
-          {items.length}
-          {(items.length === 1 ? labelSingular : undefined) || label || fieldName}
-        </div>
-      </div>
-    {/if}
-    <div role="none" class="actions">
-      {#if allowAdd && (addToTop || !items.length || !parentExpanded)}
-        <AddItemButton disabled={isAddDisabled} {fieldConfig} {locale} {items} {addItem} />
-        {@render pasteButton()}
-      {/if}
-      {#if parentExpanded && items.length > 1}
-        {#each [true, false] as expanded (expanded)}
-          <Button
-            variant="tertiary"
-            size="small"
-            label={_(expanded ? 'expand_all' : 'collapse_all')}
-            disabled={itemExpanderStates.every(([, value]) => value === expanded)}
-            onclick={() => {
-              updateExpanderStates(
-                Object.fromEntries(itemExpanderStates.map(([key]) => [key, expanded])),
-              );
-            }}
-          />
-        {/each}
-      {/if}
-    </div>
-  </div>
+  <ListToolbar position="top" bind:element={topToolbar} {...toolbarProps} />
 {/if}
 <div
   role="none"
@@ -930,9 +807,8 @@
             position={singleItem ? undefined : displayIndex + 1}
             controlId="list-{fieldId}-item-{index}-body"
             {expanded}
-            toggleExpanded={subFields.length
-              ? () => updateExpanderStates({ [itemKeyPath]: !expanded })
-              : undefined}
+            expandable={subFields.length > 0}
+            toggleExpanded={() => updateExpanderStates({ [itemKeyPath]: !expanded })}
           >
             {#snippet centerContent()}
               {#if allowReorder && !singleItem}
@@ -958,54 +834,20 @@
                   onMove={(to, action) => sorter.move(index, to, action)}
                 />
               {/if}
-              <MenuButton
-                variant="ghost"
-                size="small"
-                iconic
-                popupPosition="bottom-right"
-                aria-label={_('list_item_options')}
-              >
-                {#snippet popup()}
-                  <Menu ariaLabel={_('list_item_options')}>
-                    <!-- An item can be copied from a read-only list as well -->
-                    <MenuItem
-                      label={_('copy')}
-                      disabled={unknownType}
-                      onclick={() => copyItem(index)}
-                    />
-                    {#if allowAdd && allowRemove}
-                      <!-- Replacing an item doesn’t change the number of items -->
-                      <MenuItem
-                        label={_('paste_item_to_replace')}
-                        disabled={isAddDisabled}
-                        onclick={() => pasteItem(index, { replace: true })}
-                      />
-                    {/if}
-                    {#if allowAdd && !hasMaxItems}
-                      <MenuItem
-                        label={_('paste_item_above')}
-                        disabled={isAddDisabled}
-                        onclick={() => pasteItem(index)}
-                      />
-                      <MenuItem
-                        label={_('paste_item_below')}
-                        disabled={isAddDisabled}
-                        onclick={() => pasteItem(index + 1)}
-                      />
-                      <Divider />
-                      {#if allowDuplicate}
-                        <MenuItem
-                          label={_('duplicate')}
-                          disabled={isAddDisabled || unknownType}
-                          onclick={() => addItem({ index: index + 1, dupIndex: index })}
-                        />
-                      {/if}
-                      {@render addPositionItems(index, 'above')}
-                      {@render addPositionItems(index + 1, 'below')}
-                    {/if}
-                  </Menu>
-                {/snippet}
-              </MenuButton>
+              <ListItemMenu
+                {index}
+                {locale}
+                variableTypes={hasVariableTypes ? variableTypes : undefined}
+                {unknownType}
+                {allowAdd}
+                {allowRemove}
+                {allowDuplicate}
+                {hasMaxItems}
+                {isAddDisabled}
+                {copyItem}
+                {pasteItem}
+                {addItem}
+              />
               {#if canRemoveItem}
                 <RemoveButton
                   variant="ghost"
@@ -1055,57 +897,17 @@
     </div>
   {/each}
 </div>
-{#if removedItemMap.has(items.length) && (parentExpanded || !items.length)}
+{#if removedItems.byIndex.has(items.length) && (parentExpanded || !items.length)}
   <!-- The items removed from the end of the list -->
   <div role="none" class="removed-item-list">
     {@render removedItemNotices(items.length)}
   </div>
 {/if}
 {#if allowAdd && !addToTop && items.length && parentExpanded && !hasMaxItems}
-  <div role="none" class="toolbar bottom add">
-    <Spacer flex />
-    <AddItemButton disabled={isAddDisabled} {fieldConfig} {locale} {items} {addItem} />
-    {@render pasteButton()}
-  </div>
+  <ListToolbar position="bottom" {...toolbarProps} />
 {/if}
 
 <style>
-  .toolbar {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0 8px;
-    position: sticky;
-    z-index: 10;
-    background-color: var(--sui-primary-background-color);
-    min-height: var(--sui-secondary-toolbar-size);
-
-    &.top {
-      /* Below the sticky toolbars of the rich text editors the field is in, if any */
-      top: var(--sui-text-editor-inner-toolbar-top, 0);
-    }
-
-    &.bottom {
-      bottom: 0;
-    }
-
-    & > div {
-      display: flex;
-      align-items: center;
-
-      &.actions {
-        flex-wrap: wrap;
-        margin-block: 8px;
-        margin-inline-start: auto;
-      }
-    }
-
-    &.single > div.actions {
-      /* With no item count on the left, the Add button goes where the item would be */
-      margin-inline-start: 0;
-    }
-  }
-
   .item-list {
     display: flex;
     flex-direction: column;

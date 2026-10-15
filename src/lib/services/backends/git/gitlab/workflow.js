@@ -1,7 +1,7 @@
 import { sleep } from '@sveltia/utils/misc';
 
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
-import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
+import { FETCH_BLOB_IDS_QUERY, fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
 import { getWorkflowRepository } from '$lib/services/backends/git/gitlab/fork';
 import {
   createPullRequest,
@@ -447,24 +447,6 @@ export const fetchMergeState = async (pullRequest) => {
     complete,
   };
 };
-
-/**
- * Query to fetch the Git object IDs of the blobs at the given paths on a branch or commit.
- */
-const FETCH_BLOB_IDS_QUERY = `
-  query($fullPath: ID!, $branch: String!, $paths: [String!]!) {
-    project(fullPath: $fullPath) {
-      repository {
-        blobs(ref: $branch, paths: $paths) {
-          nodes {
-            path
-            oid
-          }
-        }
-      }
-    }
-  }
-`;
 
 /**
  * Find which of the given files are the same at the given commit as on the configured branch, by

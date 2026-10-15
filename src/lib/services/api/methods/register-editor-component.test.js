@@ -41,6 +41,10 @@ describe('CMS.registerEditorComponent()', () => {
     expect(() => registerEditorComponent('invalid')).toThrow(TypeError);
     // @ts-ignore
     expect(() => registerEditorComponent(123)).toThrow(TypeError);
+    // @ts-ignore
+    expect(() => registerEditorComponent([])).toThrow(
+      'The `definition` option for `CMS.registerEditorComponent()` must be an object',
+    );
   });
 
   test('throws with proper error message for non-object definition', () => {

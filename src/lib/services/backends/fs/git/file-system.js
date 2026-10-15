@@ -1,6 +1,9 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
 
+import { DIRECTORY_MODE, REGULAR_FILE_MODE } from '$lib/services/backends/fs/git/constants';
+import { isTypeMismatchError } from '$lib/services/backends/fs/shared/handles';
+
 /**
  * @import { GitFileSystem, GitFileStats } from '$lib/types/private';
  */
@@ -79,7 +82,7 @@ const getEntry = async (rootDirHandle, segments) => {
   try {
     return await parentHandle.getFileHandle(name);
   } catch (ex) {
-    if (/** @type {DOMException} */ (ex)?.name !== 'TypeMismatchError') {
+    if (!isTypeMismatchError(ex)) {
       throw ex;
     }
 
@@ -121,7 +124,7 @@ const getStats = async (handle) => {
     : await /** @type {FileSystemFileHandle} */ (handle).getFile();
 
   return {
-    mode: isDirectory ? 0o40000 : 0o100644,
+    mode: isDirectory ? DIRECTORY_MODE : REGULAR_FILE_MODE,
     size,
     mtimeMs: lastModified,
     ctimeMs: lastModified,
@@ -185,6 +188,35 @@ export const createGitFileSystem = (rootDirHandle, { Buffer }) => {
     name: /** @type {string} */ (segments.at(-1)),
   });
 
+  /**
+   * Open a writable stream to a file, write to it and close it, aborting the stream on a failure.
+   * @param {FileSystemFileHandle} handle File handle.
+   * @param {string} path File path, for the error.
+   * @param {FileSystemCreateWritableOptions | undefined} options Options for the stream.
+   * @param {(writable: FileSystemWritableFileStream) => Promise<void>} write Writer.
+   * @returns {Promise<void>} Nothing.
+   */
+  const writeThrough = async (handle, path, options, write) => {
+    const writable = await openWritable(handle, path, options);
+
+    try {
+      await write(writable);
+      await writable.close();
+    } catch (ex) {
+      // The stream may be unusable already, which mustn’t hide the actual error
+      await writable.abort().catch(() => undefined);
+      throw ex;
+    }
+  };
+
+  /**
+   * Get the stats of a file or directory.
+   * @param {string} path Path.
+   * @returns {Promise<GitFileStats>} Stats.
+   */
+  const stat = (path) =>
+    run(path, async (segments) => getStats(await getEntry(rootDirHandle, segments)));
+
   return {
     /**
      * Read a file.
@@ -215,18 +247,12 @@ export const createGitFileSystem = (rootDirHandle, { Buffer }) => {
       run(path, async (segments) => {
         const { parentHandle, name } = await getParent(segments);
         const handle = await parentHandle.getFileHandle(name, { create: true });
+
         // The new content replaces the file only once the stream is closed, so a failed write
         // leaves the file as it was
-        const writable = await openWritable(handle, path);
-
-        try {
+        await writeThrough(handle, path, undefined, async (writable) => {
           await writable.write(/** @type {FileSystemWriteChunkType} */ (data));
-          await writable.close();
-        } catch (ex) {
-          // The stream may be unusable already, which mustn’t hide the actual error
-          await writable.abort().catch(() => undefined);
-          throw ex;
-        }
+        });
       }),
     /**
      * Add to the end of a file, creating it if needed. The parent directory must exist.
@@ -239,16 +265,10 @@ export const createGitFileSystem = (rootDirHandle, { Buffer }) => {
         const { parentHandle, name } = await getParent(segments);
         const handle = await parentHandle.getFileHandle(name, { create: true });
         const { size } = await handle.getFile();
-        const writable = await openWritable(handle, path, { keepExistingData: true });
 
-        try {
+        await writeThrough(handle, path, { keepExistingData: true }, async (writable) => {
           await writable.write({ type: 'write', position: size, data });
-          await writable.close();
-        } catch (ex) {
-          // The stream may be unusable already, which mustn’t hide the actual error
-          await writable.abort().catch(() => undefined);
-          throw ex;
-        }
+        });
       }),
     /**
      * Create a directory, unless it exists. The parent directory must exist.
@@ -309,20 +329,9 @@ export const createGitFileSystem = (rootDirHandle, { Buffer }) => {
 
         return names;
       }),
-    /**
-     * Get the stats of a file or directory.
-     * @param {string} path Path.
-     * @returns {Promise<GitFileStats>} Stats.
-     */
-    stat: (path) =>
-      run(path, async (segments) => getStats(await getEntry(rootDirHandle, segments))),
-    /**
-     * Get the stats of a file or directory, the same as `stat`, as there are no symbolic links.
-     * @param {string} path Path.
-     * @returns {Promise<GitFileStats>} Stats.
-     */
-    lstat: (path) =>
-      run(path, async (segments) => getStats(await getEntry(rootDirHandle, segments))),
+    stat,
+    // The same as `stat`, as there are no symbolic links
+    lstat: stat,
     /**
      * Read a symbolic link, which isn’t supported.
      * @param {string} path Path.

@@ -1,6 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
@@ -12,32 +11,16 @@ import {
   serializeIndex,
 } from '$lib/services/backends/fs/git/index-file';
 import { buildTree } from '$lib/services/backends/fs/git/tree';
+import { createTempDir, runGit } from '$lib/test/git-repo';
 
 /** @type {string} */
 let repoDir;
-
 /**
  * Run a Git command in the test repository.
  * @param {...string} args Arguments.
  * @returns {string} Output, trimmed.
  */
-const git = (...args) =>
-  execFileSync('git', args, {
-    cwd: repoDir,
-    env: {
-      ...process.env,
-      GIT_CONFIG_GLOBAL: '/dev/null',
-      GIT_CONFIG_NOSYSTEM: '1',
-      // No detached `git maintenance` after a commit
-      GIT_CONFIG_COUNT: '1',
-      GIT_CONFIG_KEY_0: 'maintenance.auto',
-      GIT_CONFIG_VALUE_0: 'false',
-    },
-    stdio: 'pipe',
-  })
-    .toString()
-    .trim();
-
+const git = (...args) => runGit(repoDir, ...args);
 /**
  * Read the index of the test repository.
  * @returns {ArrayBuffer} Content.
@@ -45,7 +28,7 @@ const git = (...args) =>
 const readIndex = () => new Uint8Array(readFileSync(join(repoDir, '.git/index'))).buffer;
 
 beforeEach(() => {
-  repoDir = mkdtempSync(join(tmpdir(), 'sveltia-git-index-'));
+  repoDir = createTempDir('sveltia-git-index-');
   git('init', '--initial-branch=main');
   mkdirSync(join(repoDir, 'content/日本語'), { recursive: true });
   writeFileSync(join(repoDir, 'README.md'), 'Readme\n');

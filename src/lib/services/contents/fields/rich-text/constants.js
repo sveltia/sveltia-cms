@@ -5,7 +5,7 @@
  * supports escaped characters like `![alt](image\(1\).jpg)` and titles with escaped quotes.
  *
  * The pattern runs on untrusted Markdown, so it’s written to match in linear time, like
- * `MARKDOWN_IMAGE_REGEX` in `$lib/services/assets/references`. Every part can only be matched one
+ * `MARKDOWN_IMAGE_REGEX` in `rich-text/previews/media-sources`. Every part can only be matched one
  * way, and none of the alt text, source, parenthesized or quoted parts of the source, or title can
  * contain `![`, so a failed match at one `![` doesn’t read the text after the next one again. A
  * title is only looked for at the start of a run of whitespace after the source, so the run isn’t

@@ -18,6 +18,20 @@
  */
 
 /**
+ * Field types that the Translate button in the field header supports: the ones holding text, or
+ * subfields that hold text.
+ * @type {string[]}
+ */
+export const TRANSLATABLE_FIELD_TYPES = [
+  'richtext',
+  'markdown',
+  'string',
+  'text',
+  'list',
+  'object',
+];
+
+/**
  * Get the extra labels shown around a field’s input. The `prefix` and `suffix` options apply to
  * the String field type only, and the `before_input` and `after_input` options to the Boolean,
  * Number and String field types.

@@ -115,6 +115,15 @@ export const getDefaultAssetFolder = (folderMap) =>
   /** @type {AssetFolderInfo} */ (Object.values(folderMap).find(({ enabled }) => enabled)?.folder);
 
 /**
+ * Get the folder the field editor puts a newly picked file in, i.e. The default asset library
+ * folder of a File/Image field, so a copy of a file ends up in the same place.
+ * @param {Parameters<typeof getAssetLibraryFolderMap>[0]} args Arguments. See
+ * {@link getAssetLibraryFolderMap}.
+ * @returns {AssetFolderInfo} Folder.
+ */
+export const getFieldAssetFolder = (args) => getDefaultAssetFolder(getAssetLibraryFolderMap(args));
+
+/**
  * Get the target folder path for a File/Image field.
  * @param {object} args Arguments.
  * @param {Entry | undefined} args.entry Original entry.

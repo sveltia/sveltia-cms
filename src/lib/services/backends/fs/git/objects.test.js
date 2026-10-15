@@ -2,16 +2,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import {
-  cpSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from 'node:fs';
-import { tmpdir } from 'node:os';
+import { cpSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
 
@@ -22,28 +13,15 @@ import {
   applyDelta,
   createObjectReader,
   findPackedObject,
-  fromHex,
   hashObject,
   inflate,
   parseLooseObject,
   parsePackIndex,
   writeLooseObject,
 } from '$lib/services/backends/fs/git/objects';
+import { fromHex } from '$lib/services/utils/crypto';
+import { createTempDir, runGitRaw } from '$lib/test/git-repo';
 import { createNodeDirectoryHandle } from '$lib/test/node-fs-handles';
-
-// Auto maintenance is turned off so a detached `git maintenance` doesn’t run alongside the tests
-const GIT_ENV = {
-  ...process.env,
-  GIT_CONFIG_GLOBAL: '/dev/null',
-  GIT_CONFIG_NOSYSTEM: '1',
-  GIT_CONFIG_COUNT: '1',
-  GIT_CONFIG_KEY_0: 'maintenance.auto',
-  GIT_CONFIG_VALUE_0: 'false',
-  GIT_AUTHOR_NAME: 'Jane Doe',
-  GIT_AUTHOR_EMAIL: 'jane@example.com',
-  GIT_COMMITTER_NAME: 'Jane Doe',
-  GIT_COMMITTER_EMAIL: 'jane@example.com',
-};
 
 /**
  * Repository the test repository is copied from, created once, as it takes a while.
@@ -57,7 +35,7 @@ let repoDir;
  * @param {string[]} args Arguments.
  * @returns {Buffer} Output.
  */
-const gitRaw = (args) => execFileSync('git', args, { cwd: repoDir, env: GIT_ENV, stdio: 'pipe' });
+const gitRaw = (args) => runGitRaw(repoDir, args);
 /**
  * Run a Git command in the test repository.
  * @param {...string} args Arguments.
@@ -181,7 +159,7 @@ const expectAllObjectsReadable = async () => {
 };
 
 beforeAll(() => {
-  templateDir = mkdtempSync(join(tmpdir(), 'sveltia-git-objects-'));
+  templateDir = createTempDir('sveltia-git-objects-');
   repoDir = templateDir;
   git('init', '--initial-branch=main');
 
@@ -198,7 +176,7 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  repoDir = mkdtempSync(join(tmpdir(), 'sveltia-git-objects-'));
+  repoDir = createTempDir('sveltia-git-objects-');
   cpSync(templateDir, repoDir, { recursive: true });
 });
 
@@ -405,13 +383,6 @@ describe('hashObject()', () => {
     expect(await hashObject('blob', new TextEncoder().encode('Hello\n'))).toBe(
       git('hash-object', 'hello.txt'),
     );
-  });
-});
-
-describe('fromHex()', () => {
-  test('converts hexadecimal to bytes', () => {
-    expect([...fromHex('000fff')]).toEqual([0, 15, 255]);
-    expect([...fromHex('')]).toEqual([]);
   });
 });
 

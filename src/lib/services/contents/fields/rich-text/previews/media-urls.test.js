@@ -3,9 +3,15 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
+import { parseHTMLFragment } from '$lib/services/utils/html';
+
 import {
   deferMediaURLs,
+  getMediaElements,
+  GLOBAL_MEDIA_TAG_REGEX,
+  mapSrcset,
   MEDIA_QUERY_SELECTOR,
+  MEDIA_TAG_REGEX,
   parseSrcset,
   resolveMediaURLs,
   stringifySrcset,
@@ -272,5 +278,51 @@ describe('resolveMediaURLs', () => {
     await resolveMediaURLs(other, resolve);
     expect(audio.attributes).toEqual({});
     expect(other.attributes).toEqual({ src: '/a.jpg' });
+  });
+});
+
+describe('mapSrcset', () => {
+  const candidates = parseSrcset('/a.jpg 1x, /b.jpg 2x');
+
+  it('should return undefined if nothing is replaced', () => {
+    expect(mapSrcset(candidates, () => undefined)).toBeUndefined();
+    expect(mapSrcset(candidates, (url) => url)).toBeUndefined();
+  });
+
+  it('should replace the URLs, keeping the descriptors', () => {
+    expect(mapSrcset(candidates, (url) => (url === '/b.jpg' ? '/c.jpg' : undefined))).toBe(
+      '/a.jpg 1x, /c.jpg 2x',
+    );
+    expect(mapSrcset(candidates, (_url, index) => `/${index}.jpg`)).toBe('/0.jpg 1x, /1.jpg 2x');
+  });
+
+  it('should remove the candidates mapped to null', () => {
+    expect(mapSrcset(candidates, (url) => (url === '/a.jpg' ? null : undefined))).toBe('/b.jpg 2x');
+  });
+
+  it('should return null if all the candidates are removed', () => {
+    expect(mapSrcset(candidates, () => null)).toBeNull();
+  });
+});
+
+describe('getMediaElements', () => {
+  it('should return the media elements in document order', () => {
+    const template = parseHTMLFragment(
+      '<p><img src="a.jpg"></p><video src="b.mp4"><source src="c.webm"></video><a href="d">x</a>',
+    );
+
+    expect(getMediaElements(template).map(({ localName }) => localName)).toEqual([
+      'img',
+      'video',
+      'source',
+    ]);
+  });
+});
+
+describe('MEDIA_TAG_REGEX and GLOBAL_MEDIA_TAG_REGEX', () => {
+  it('should match the start of a media tag, the latter globally', () => {
+    expect(MEDIA_TAG_REGEX.test('<IMG src="a.jpg">')).toBe(true);
+    expect(MEDIA_TAG_REGEX.test('<a href="a.jpg">')).toBe(false);
+    expect('<img src="a"><audio src="b"></audio>'.match(GLOBAL_MEDIA_TAG_REGEX)).toHaveLength(2);
   });
 });

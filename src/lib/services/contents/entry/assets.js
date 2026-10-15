@@ -15,6 +15,7 @@ import { isArrayFileCollection } from '$lib/services/contents/collection/predica
 import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { fillEntryPathTemplate } from '$lib/services/contents/entry';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getEntryDisplayLocale } from '$lib/services/contents/entry/paths';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 import { getEntryAssetVersion } from '$lib/services/workflow/assets';
@@ -72,7 +73,7 @@ export const getEntryThumbnail = async (collection, entry) => {
   } = collection;
 
   const { locales } = entry;
-  const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
+  const locale = /** @type {string} */ (getEntryDisplayLocale(locales, defaultLocale));
   const { content, slug, path: entryFilePath } = locales[locale] ?? {};
 
   if (!content) {

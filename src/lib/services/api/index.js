@@ -54,16 +54,14 @@ const CMS = new Proxy(
         return obj[key];
       }
 
-      let message = '';
-
       if (UNSUPPORTED_FUNC_NAMES.includes(key)) {
-        message =
-          'CMS.%s() is not supported in Sveltia CMS, and we don’t have any plans to implement it.';
-      }
-
-      if (message) {
         // eslint-disable-next-line no-console
-        console.warn(`${message} See %s for compatibility information.`, key, COMPATIBILITY_URL);
+        console.warn(
+          'CMS.%s() is not supported in Sveltia CMS, and we don’t have any plans to implement it. ' +
+            'See %s for compatibility information.',
+          key,
+          COMPATIBILITY_URL,
+        );
 
         // eslint-disable-next-line jsdoc/require-description
         /** @returns {void} */

@@ -28,6 +28,7 @@
   } from '$lib/services/contents/collection/view/settings';
   import { sortKeys } from '$lib/services/contents/collection/view/sort-keys';
   import { getTableColumns } from '$lib/services/contents/collection/view/table';
+  import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
   import { env } from '$lib/services/user/env.svelte';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -89,9 +90,7 @@
     }}
   >
     <InfiniteScroll
-      items={entries.filter(
-        ({ locales }) => !!(locales[defaultLocale] ?? Object.values(locales)[0])?.content,
-      )}
+      items={entries.filter((entry) => !!getEntryLocaleFile(entry, { defaultLocale })?.content)}
       itemKey="id"
     >
       {#snippet renderItem(/** @type {Entry} */ entry)}
