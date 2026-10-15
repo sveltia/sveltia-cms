@@ -343,32 +343,43 @@ describe('RichTextEditor', () => {
     await expect.poll(() => props.currentValue).not.toContain('plain');
   });
 
-  test('offers no components when nested ones are disabled by the parent field', async () => {
-    await initTestConfig({
-      collections: [
+  // A List with a single subfield gives it a context of its own, which mustn’t hide the component
+  test.each([
+    ['rich-text-editor-component', 'nested-off', 'body:c1:content', 'body:c1:content'],
+    ['single-subfield-list-field', 'nested-off-list', 'body:c1:notes.0', 'body:c1:notes.*'],
+  ])(
+    'offers no components when nested ones are disabled by the parent field (%s)',
+    async (fieldContext, collectionName, keyPath, typedKeyPath) => {
+      await initTestConfig({
+        collections: [
+          {
+            name: collectionName,
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'body', widget: 'richtext', allow_nested_components: false }],
+          },
+        ],
+      });
+
+      await renderEditor(
+        'Hi',
+        {},
         {
-          name: 'nested-off',
-          label: 'Posts',
-          folder: 'content/posts',
-          fields: [{ name: 'body', widget: 'richtext', allow_nested_components: false }],
+          // The field config is cached per collection, so each test uses its own one
+          collectionName,
+          context: {
+            fieldContext,
+            parentComponentNames: ['card'],
+            valueStoreKey: 'extraValues',
+          },
+          props: { keyPath, typedKeyPath },
         },
-      ],
-    });
+      );
 
-    await renderEditor(
-      'Hi',
-      {},
-      {
-        // The field config is cached per collection, so each test uses its own one
-        collectionName: 'nested-off',
-        context: { fieldContext: 'rich-text-editor-component', parentComponentNames: ['card'] },
-        props: { keyPath: 'body:c1:content', typedKeyPath: 'body:c1:content' },
-      },
-    );
-
-    await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
-    expect(page.getByRole('button', { name: /Insert/ }).elements()).toHaveLength(0);
-  });
+      await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
+      expect(page.getByRole('button', { name: /Insert|Image/ }).elements()).toHaveLength(0);
+    },
+  );
 
   test('leaves the current component out of the nested ones', async () => {
     await initTestConfig({
@@ -392,6 +403,7 @@ describe('RichTextEditor', () => {
         context: {
           fieldContext: 'rich-text-editor-component',
           parentComponentNames: ['linked-image'],
+          valueStoreKey: 'extraValues',
         },
         props: { keyPath: 'body:c1:content', typedKeyPath: 'body:c1:content' },
       },
@@ -451,6 +463,7 @@ describe('RichTextEditor', () => {
           context: {
             fieldContext: 'rich-text-editor-component',
             parentComponentNames: ['x-youtube'],
+            valueStoreKey: 'extraValues',
           },
           props: { keyPath: 'body:c1:content', typedKeyPath: 'body:c1:content' },
         },

@@ -18,6 +18,7 @@
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
   import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
   import { getField } from '$lib/services/contents/entry/fields';
   import {
@@ -69,9 +70,9 @@
   const defaultConfig = cmsConfig.current?.field_defaults?.richtext ?? {};
   /* v8 ignore start -- the editor is always rendered within a field editor */
   /** @type {FieldEditorContext} */
-  const { fieldContext, parentComponentNames, valueStoreKey } = getContext('field-editor') ?? {};
+  const { parentComponentNames, valueStoreKey } = getContext('field-editor') ?? {};
   /* v8 ignore stop */
-  const inEditorComponent = fieldContext === 'rich-text-editor-component';
+  const inEditorComponent = isInEditorComponent(valueStoreKey);
   const componentName = parentComponentNames.at(-1);
 
   /** @type {FieldEditorProps & Props} */

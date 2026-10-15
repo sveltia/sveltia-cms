@@ -451,47 +451,51 @@ describe('FileEditor', () => {
     expect(props.currentValue).toBeUndefined();
   });
 
-  test('encodes spaces in the path within the rich text editor', async () => {
-    setAssets([
-      createMockAsset({
-        name: 'my photo.png',
-        file: await createMockImageFile(),
-        asset: { folder: globalAssetFolder.current },
-      }),
-    ]);
+  // A List with a single subfield gives it a context of its own, which mustn’t hide the component
+  test.each(['rich-text-editor-component', 'single-subfield-list-field'])(
+    'encodes spaces in the path within the rich text editor (%s)',
+    async (fieldContext) => {
+      setAssets([
+        createMockAsset({
+          name: 'my photo.png',
+          file: await createMockImageFile(),
+          asset: { folder: globalAssetFolder.current },
+        }),
+      ]);
 
-    const { props } = await renderEditor(
-      {},
-      '/static/uploads/my photo.png',
-      {},
-      {},
-      {
-        fieldContext: 'rich-text-editor-component',
-      },
-    );
+      const { props } = await renderEditor(
+        {},
+        '/static/uploads/my photo.png',
+        {},
+        {},
+        { fieldContext, valueStoreKey: 'extraValues' },
+      );
 
-    // The component has its own way to remove the image
-    await expect
-      .element(page.getByRole('textbox'))
-      .toHaveTextContent('/static/uploads/my photo.png');
-    expect(page.getByRole('button', { name: 'Remove Image' }).elements()).toHaveLength(0);
+      // The component has its own way to remove the image
+      await expect
+        .element(page.getByRole('textbox'))
+        .toHaveTextContent('/static/uploads/my photo.png');
+      expect(page.getByRole('button', { name: 'Remove Image' }).elements()).toHaveLength(0);
 
-    await page.getByRole('button', { name: 'Replace Image' }).click();
+      await page.getByRole('button', { name: 'Replace Image' }).click();
 
-    const dialog = page.getByRole('dialog', { name: 'Select Image' });
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
 
-    await expect
-      .poll(() => document.querySelectorAll('#select-assets-grid [role="option"]').length)
-      .toBe(1);
-    await page
-      .elementLocator(
-        /** @type {HTMLElement} */ (document.querySelector('#select-assets-grid [role="option"]')),
-      )
-      .click();
-    await dialog.getByRole('button', { name: 'Insert' }).click();
+      await expect
+        .poll(() => document.querySelectorAll('#select-assets-grid [role="option"]').length)
+        .toBe(1);
+      await page
+        .elementLocator(
+          /** @type {HTMLElement} */ (
+            document.querySelector('#select-assets-grid [role="option"]')
+          ),
+        )
+        .click();
+      await dialog.getByRole('button', { name: 'Insert' }).click();
 
-    await expect.poll(() => props.currentValue).toBe('/static/uploads/my%20photo.png');
-  });
+      await expect.poll(() => props.currentValue).toBe('/static/uploads/my%20photo.png');
+    },
+  );
 
   test('stops offering uploads at the limit', async () => {
     await renderEditor(

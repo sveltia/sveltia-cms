@@ -22,6 +22,7 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
   import { isExpanded, syncExpanderStates } from '$lib/services/contents/editor/fields';
   import { getMemoizedSubtree } from '$lib/services/contents/entry/subtree';
   import { getCustomFieldSummary } from '$lib/services/contents/fields/custom/preview';
@@ -147,7 +148,7 @@
   const defaultLocale = $derived(entryDraft.current?.defaultLocale);
   // A rich text editor component’s values live in the document of the locale they’re edited in,
   // so its items can be added in any locale, with the subfields getting their defaults there
-  const inEditorComponent = valueStoreKey === 'extraValues';
+  const inEditorComponent = isInEditorComponent(valueStoreKey);
   // The items of a translatable list with a duplicated subfield are paired across the locales by
   // their position, so they’re added, removed and moved in the default locale for every locale
   const pairedItems = $derived(!inEditorComponent && isPairedList(fieldConfig));

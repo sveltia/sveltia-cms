@@ -53,6 +53,7 @@
     unregisterCustomFieldInstance,
   } from '$lib/services/contents/draft/validate/custom-fields';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
   import { buildControlProps, resolveControl } from '$lib/services/contents/fields/custom/editor';
   import { addFileToDraft } from '$lib/services/contents/fields/custom/files';
 
@@ -79,12 +80,9 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorContext} */
-  const {
-    valueStoreKey = 'currentValues',
-    fieldContext = undefined,
-    parentComponentNames = [],
-  } = getContext('field-editor') ?? {};
-  const inEditorComponent = fieldContext === 'rich-text-editor-component';
+  const { valueStoreKey = 'currentValues', parentComponentNames = [] } =
+    getContext('field-editor') ?? {};
+  const inEditorComponent = isInEditorComponent(valueStoreKey);
 
   /** @type {FieldEditorProps & Props} */
   let {

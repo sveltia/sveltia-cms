@@ -47,10 +47,11 @@ const RatingControl = ({ forID, value, field, onChange, classNameWrapper }) =>
  * Render the editor within a draft.
  * @param {any} currentValue Field value.
  * @param {any} [control] Control component.
+ * @param {Record<string, any>} [context] Field editor context.
  * @returns {Promise<{ draft: any, props: any, entryDraft: any, unmount: () => void }>} Draft,
  * props, draft state and unmount function.
  */
-const renderEditor = async (currentValue, control = RatingControl) => {
+const renderEditor = async (currentValue, control = RatingControl, context = undefined) => {
   const draft = createMockDraft({
     fields: [fieldConfig],
     values: { _default: { stars: currentValue } },
@@ -63,6 +64,7 @@ const renderEditor = async (currentValue, control = RatingControl) => {
     currentValue,
     props: { control },
     draft,
+    context: context ? { 'field-editor': context } : undefined,
   });
 
   return { draft, props, entryDraft, unmount };
@@ -269,6 +271,28 @@ describe('CustomEditor', () => {
     expect(reports[1].message).toBe('addFile() can only be called while an entry is being edited');
     expect(reports[2].message).toBe('pickFile() can only be called while an entry is being edited');
   });
+
+  // A List with a single subfield gives it a context of its own, which mustn’t hide the component
+  test.each(['rich-text-editor-component', 'single-subfield-list-field'])(
+    'encodes spaces in a picked URL within a rich text editor component (%s)',
+    async (fieldContext) => {
+      reports.length = 0;
+
+      await renderEditor(undefined, FileControl, { fieldContext, valueStoreKey: 'extraValues' });
+
+      await page.getByRole('button', { name: 'Pick' }).click();
+
+      const dialog = page.getByRole('dialog', { name: 'Select File' });
+
+      await dialog.getByRole('option', { name: 'Enter URL' }).click();
+      await dialog.getByRole('textbox').fill('https://example.com/my doc.pdf');
+      await dialog.getByRole('button', { name: 'Insert' }).click();
+
+      await expect
+        .poll(() => reports)
+        .toEqual([expect.objectContaining({ value: 'https://example.com/my%20doc.pdf' })]);
+    },
+  );
 
   test('registers the control instance for validation', async () => {
     const isValid = vi.fn(() => true);

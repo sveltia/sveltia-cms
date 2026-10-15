@@ -444,6 +444,7 @@ describe('FieldEditor', () => {
         typedKeyPath: 'number',
         fieldConfig: { name: 'number', label: 'Number', widget: 'number', auto_increment: true },
         context: 'rich-text-editor-component',
+        valueStoreKey: 'extraValues',
       },
     });
 
@@ -466,10 +467,41 @@ describe('FieldEditor', () => {
         typedKeyPath: 'published',
         fieldConfig: { name: 'published', label: 'Published', widget: 'datetime', auto_now: true },
         context: 'rich-text-editor-component',
+        valueStoreKey: 'extraValues',
       },
     });
 
     // The field isn’t set on save there, so it stays an editable input, shown even in a new entry
+    await expect.element(page.getByRole('textbox')).toBeVisible();
+    await expect.element(page.getByRole('textbox')).not.toHaveAttribute('aria-readonly', 'true');
+  });
+
+  test('ignores `auto_now` under a single-subfield List in a rich text editor component', async () => {
+    const draft = createMockDraft({
+      fields: [{ name: 'body', widget: 'richtext' }],
+      i18n: { i18nEnabled: false, defaultLocale: 'en', allLocales: ['en'] },
+      values: { en: {} },
+      draft: { extraValues: { en: { 'body:c1:dates.0': '' } } },
+    });
+
+    // The List gives its only subfield a context of its own, which mustn’t hide the component
+    await renderWithDraft(FieldEditor, {
+      draft,
+      props: {
+        locale: 'en',
+        keyPath: 'body:c1:dates',
+        typedKeyPath: 'body:c1:dates',
+        fieldConfig: {
+          name: 'dates',
+          label: 'Dates',
+          widget: 'list',
+          field: { name: 'date', label: 'Date', widget: 'datetime', auto_now: true },
+        },
+        context: 'rich-text-editor-component',
+        valueStoreKey: 'extraValues',
+      },
+    });
+
     await expect.element(page.getByRole('textbox')).toBeVisible();
     await expect.element(page.getByRole('textbox')).not.toHaveAttribute('aria-readonly', 'true');
   });
@@ -695,6 +727,7 @@ describe('FieldEditor (nested in a duplicated field)', () => {
         typedKeyPath: 'caption',
         fieldConfig: { name: 'caption', widget: 'string', i18n: 'duplicate' },
         context: 'rich-text-editor-component',
+        valueStoreKey: 'extraValues',
       },
     });
 

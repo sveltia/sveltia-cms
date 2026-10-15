@@ -16,6 +16,7 @@
   import { canResetField, resetField } from '$lib/services/contents/draft/update/reset';
   import { isFieldChanged, revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
   import {
     getEditorFieldConfig,
     getFieldEditorFlags,
@@ -142,7 +143,7 @@
     }),
   );
 
-  const inEditorComponent = $derived(fieldContext === 'rich-text-editor-component');
+  const inEditorComponent = $derived(isInEditorComponent(valueStoreKey));
   const { name: fieldName, widget: fieldType = 'string' } = $derived(fieldConfig);
   const { label = '', hint = '' } = $derived(/** @type {VisibleField} */ (fieldConfig));
   const required = $derived(isFieldRequired({ fieldConfig, locale }));

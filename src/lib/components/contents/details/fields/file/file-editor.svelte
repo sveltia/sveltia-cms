@@ -25,6 +25,7 @@
     moveMultiValueItem,
     removeMultiValueItem,
   } from '$lib/services/contents/draft/update/list';
+  import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
   import { createFolderAssetListing } from '$lib/services/contents/fields/file/listing.svelte';
   import {
@@ -64,7 +65,7 @@
     fieldContext = undefined,
     parentComponentNames = [],
   } = getContext('field-editor') ?? {};
-  const inEditorComponent = fieldContext === 'rich-text-editor-component';
+  const inEditorComponent = isInEditorComponent(valueStoreKey);
   const componentName = parentComponentNames.at(-1);
 
   /** @type {FieldEditorProps & Props} */
