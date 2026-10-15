@@ -336,6 +336,10 @@
  * contain spaces, periods, asterisks, colons or angle brackets.
  * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
  * field value.
+ * @property {Record<LocaleCode, string>} [label_localized] Labels for specific locales, keyed by
+ * locale code, taking precedence over `label`. The editor shows the label for the locale being
+ * edited; elsewhere, the label for the UI locale is used. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @property {string} [comment] Comment to be written before the field in a YAML file or YAML front
  * matter, for developers reading the file. It’s not displayed in the editor UI; use `hint` for
  * that. A line break can be given as `\n`. The comment on a subfield of an Object field is written
@@ -385,6 +389,9 @@
  * given as a literal backslash followed by `n`, e.g. `\n` in a plain or single-quoted YAML string;
  * in JSON or a double-quoted string, the backslash itself has to be escaped. The hint is not
  * displayed while the field is read-only.
+ * @property {Record<LocaleCode, string>} [hint_localized] Help messages for specific locales, keyed
+ * by locale code, taking precedence over `hint`. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @property {boolean} [preview] Whether to show the preview of the field. Default: `true`.
  * @property {boolean | LocaleCode[]} [required] Whether to make data input on the field required.
  * Default: `true`. This option also affects data output if the `omit_empty_optional_fields` global
@@ -417,6 +424,10 @@
  * @typedef {object} MediaFieldProps
  * @property {string | string[]} [default] Default value. Accepts a file path or complete URL. If
  * the `multiple` option is set to `true`, it accepts an array of file paths or URLs.
+ * @property {Record<LocaleCode, string | string[]>} [default_localized] Default values for specific
+ * locales, keyed by locale code. A value given for a locale takes precedence over `default` in that
+ * locale. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @property {boolean} [multiple] Whether to allow multiple file selection for the field. Default:
  * `false`, unless the `multiple` option is enabled in a media library’s `config`.
  * @property {number} [min] Minimum number of files that can be selected. Ignored unless the
@@ -485,6 +496,8 @@
  * @property {string} name Unique identifier for the type.
  * @property {string} [label] Label of the type to be displayed in the editor UI. Default: `name`
  * field value.
+ * @property {Record<LocaleCode, string>} [label_localized] Labels of the type for specific
+ * locales, keyed by locale code, taking precedence over `label`.
  * @property {'object'} [widget] Field type. Only `object` is supported: another value is a
  * configuration error.
  * @property {string} [description] Short description of the type to be displayed below its label
@@ -492,6 +505,8 @@
  * @property {string} [hint] Help message to be displayed above the subfields of an object of the
  * type. Limited Markdown formatting is supported, as with a field’s `hint` option. The hint is not
  * displayed while the field is read-only.
+ * @property {Record<LocaleCode, string>} [hint_localized] Help messages of the type for specific
+ * locales, keyed by locale code, taking precedence over `hint`.
  * @property {string} [summary] Template of a label to be displayed on a collapsed object.
  * @property {Field[]} [fields] Set of subfields. This option can be omitted; in that case, only the
  * `type` property will be saved.
@@ -547,6 +562,10 @@
  * @typedef {object} BooleanFieldProps
  * @property {'boolean'} widget Field type.
  * @property {boolean} [default] Default value. Accepts `true` or `false`. Default: `false`.
+ * @property {Record<LocaleCode, boolean>} [default_localized] Default values for specific locales,
+ * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
+ * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * details.
  * @see https://decapcms.org/docs/widgets/#Boolean
  * @see https://sveltiacms.app/en/docs/fields/boolean
  */
@@ -564,6 +583,10 @@
  * @property {string | Record<string, string>} [default] Default value. It must be a string if
  * `output_code_only` is `true`. Otherwise it should be an object that matches the `keys` option,
  * like `{ code: 'let x = 1;', lang: 'js' }`; a string is used as the code.
+ * @property {Record<LocaleCode, string | Record<string, string>>} [default_localized] Default
+ * values for specific locales, keyed by locale code. A value given for a locale takes precedence
+ * over `default` in that locale. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @property {string} [default_language] Default language to be selected, like `js`. See the [Shiki
  * documentation](https://shiki.style/languages) for a list of supported languages. Default: empty
  * string, which is plaintext.
@@ -588,6 +611,10 @@
  * @property {'color'} widget Field type.
  * @property {string} [default] Default value. Accepts a Hex color code in the six-value (`#RRGGBB`)
  * or eight-value (`#RRGGBBAA`) syntax.
+ * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
+ * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
+ * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * details.
  * @property {boolean} [allowInput] Whether to show a textbox that allows users to manually edit the
  * value. Default: `false`.
  * @property {boolean} [enableAlpha] Whether to edit/save the alpha channel value. Default: `false`.
@@ -630,6 +657,10 @@
  * @property {'datetime'} widget Field type.
  * @property {string} [default] Default value. Accepts a date/time string that matches the `format`,
  * or `{{now}}` to populate the current date/time. Default: empty string.
+ * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
+ * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
+ * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * details.
  * @property {DateTimeInputType} [type] The
  * [`type`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input#input_types)
  * HTML attribute value for the date/time input. If `type` is set to `date`, the input will only
@@ -740,6 +771,10 @@
  * configured file format. A string can contain the `{{locale}}`, `{{datetime}}`, `{{uuid}}`,
  * `{{uuid_short}}`, `{{uuid_shorter}}`, `{{author-email}}`, `{{author-login}}` and
  * `{{author-name}}` tags, which are filled when a new entry draft is created.
+ * @property {Record<LocaleCode, any>} [default_localized] Default values for specific locales,
+ * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
+ * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * details.
  * @see https://decapcms.org/docs/widgets/#Hidden
  * @see https://sveltiacms.app/en/docs/fields/hidden
  */
@@ -768,11 +803,18 @@
  * @typedef {object} KeyValueFieldProps
  * @property {'keyvalue'} widget Field type.
  * @property {Record<string, string>} [default] Default key-value pairs.
+ * @property {Record<LocaleCode, Record<string, string>>} [default_localized] Default values for
+ * specific locales, keyed by locale code. A value given for a locale takes precedence over
+ * `default` in that locale. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @property {string} [key_label] Label for the key column. Default: Key or its localized version.
  * @property {string} [value_label] Label for the value column. Default: Value or its localized
  * version.
  * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`
  * field value.
+ * @property {Record<LocaleCode, string>} [label_singular_localized] Singular labels for specific
+ * locales, keyed by locale code, taking precedence over `label_singular`. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @property {boolean} [root] Whether to save the field value at the top-level of the data file
  * without the field name. It only works if the field is the only field in the collection or file.
  * If the `single_file` i18n structure is enabled, the key-value pairs will still be saved under
@@ -796,8 +838,15 @@
  * @property {string[] | Record<string, any>[]} [default] Default value. The format depends on how
  * the field is configured, with or without `field`, `fields` or `types`. See the
  * [documentation](https://sveltiacms.app/en/docs/fields/list) for details.
+ * @property {Record<LocaleCode, string[] | Record<string, any>[]>} [default_localized] Default
+ * values for specific locales, keyed by locale code. A value given for a locale takes precedence
+ * over `default` in that locale. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`
  * field value.
+ * @property {Record<LocaleCode, string>} [label_singular_localized] Singular labels for specific
+ * locales, keyed by locale code, taking precedence over `label_singular`. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @see https://decapcms.org/docs/widgets/#List
  * @see https://sveltiacms.app/en/docs/fields/list
  */
@@ -929,6 +978,10 @@
  * @property {string} [default] Default value. Accepts a stringified single
  * [GeoJSON](https://geojson.org/) geometry object that contains `type` and `coordinates`
  * properties.
+ * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
+ * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
+ * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * details.
  * @property {number} [decimals] Precision of coordinates to be saved. Default: `7`.
  * @property {'Point' | 'LineString' | 'Polygon'} [type] Geometry type. Default: `Point`.
  * @property {[number, number]} [center] Default center coordinates as `[longitude, latitude]`.
@@ -979,6 +1032,10 @@
  * RichText field base properties.
  * @typedef {object} RichTextFieldBaseProps
  * @property {string} [default] Default value.
+ * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
+ * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
+ * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * details.
  * @property {boolean} [minimal] Whether to limit the editor height to 240 pixels, making the
  * content scrollable. Default: `false`.
  * @property {RichTextEditorButtonName[]} [buttons] Names of formatting buttons and menu items to be
@@ -1063,6 +1120,10 @@
  * @typedef {object} NumberFieldProps
  * @property {'number'} widget Field type.
  * @property {number | string} [default] Default value.
+ * @property {Record<LocaleCode, number | string>} [default_localized] Default values for specific
+ * locales, keyed by locale code. A value given for a locale takes precedence over `default` in that
+ * locale. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @property {'int' | 'float' | 'int/string' | 'float/string'} [value_type] Type of the value. `int`
  * makes the input accept only an integer value and saves it as a number. `float` makes the input
  * accept only a floating-point value and saves it as a number. `int/string` and `float/string` make
@@ -1098,6 +1159,10 @@
  * @typedef {object} ObjectFieldProps
  * @property {'object'} widget Field type.
  * @property {Record<string, any>} [default] Default values.
+ * @property {Record<LocaleCode, Record<string, any>>} [default_localized] Default values for
+ * specific locales, keyed by locale code. A value given for a locale takes precedence over
+ * `default` in that locale. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @property {boolean | 'auto'} [collapsed] Whether to collapse the object by default. Default:
  * `false`. If set to `auto`, the UI is collapsed if the object has any filled subfields and
  * expanded if all the subfields are empty.
@@ -1154,6 +1219,10 @@
  * @property {'relation'} widget Field type.
  * @property {any | any[]} [default] Default value(s), which should match the options. When
  * `multiple` is `false`, it should be a single value that matches the `value_field` option.
+ * @property {Record<LocaleCode, any | any[]>} [default_localized] Default values for specific
+ * locales, keyed by locale code. A value given for a locale takes precedence over `default` in that
+ * locale. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @property {string} collection Referenced collection name. Use `_singletons` for the singleton
  * collection.
  * @property {string} [file] Referenced file identifier for a file/singleton collection. Required if
@@ -1199,6 +1268,10 @@
  * [default] Default value that matches one of the options. An option object with the `label` and
  * `value` properties can also be given, in which case its `value` is used. When `multiple` is
  * `true`, it should be an array of valid values.
+ * @property {Record<LocaleCode, SelectFieldValue | SelectFieldOption | (SelectFieldValue |
+ * SelectFieldOption)[]>} [default_localized] Default values for specific locales, keyed by locale
+ * code. A value given for a locale takes precedence over `default` in that locale. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @property {SelectFieldValue[] | SelectFieldOption[]} options Options to choose from, given as a
  * list of values, or a list of objects with the `label` and `value` properties. The list cannot be
  * empty or contain duplicate values.
@@ -1217,6 +1290,10 @@
  * @typedef {object} StringFieldProps
  * @property {'string'} [widget] Field type.
  * @property {string} [default] Default value.
+ * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
+ * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
+ * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * details.
  * @property {'text' | 'url' | 'email'} [type] Data type. It’s useful when the input value needs a
  * validation. Default: `text`.
  * @property {string} [prefix] A string to be prepended to the value unless it’s empty. Default:
@@ -1241,6 +1318,10 @@
  * @typedef {object} TextFieldProps
  * @property {'text'} widget Field type.
  * @property {string} [default] Default value.
+ * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
+ * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
+ * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * details.
  * @property {boolean} [use_emoji_autocomplete] Whether to enable emoji autocomplete in the text
  * area. Default: `true`. When enabled, typing `:` followed by a few letters will show a list of
  * matching emojis that can be selected to insert into the text.
@@ -1259,6 +1340,10 @@
  * @typedef {object} UuidFieldProps
  * @property {'uuid'} widget Field type.
  * @property {string} [default] Default value.
+ * @property {Record<LocaleCode, string>} [default_localized] Default values for specific locales,
+ * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
+ * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
+ * details.
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {boolean} [use_b32_encoding] Whether to encode the value with Base32, which makes a
  * 26-character lowercase ID instead of a 36-character UUID. Default: `false`.

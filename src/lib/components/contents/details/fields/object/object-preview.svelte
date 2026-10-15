@@ -12,6 +12,7 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
+  import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
@@ -52,7 +53,7 @@
   const typeKeyPath = $derived(`${keyPath}.${typeKey}`);
   const type = $derived(hasVariableTypes ? valueMap[typeKeyPath] : undefined);
   const typeConfig = $derived(type ? types?.find(({ name }) => name === type) : undefined);
-  const label = $derived(typeConfig ? typeConfig.label || typeConfig.name : undefined);
+  const label = $derived(typeConfig ? getFieldLabel({ config: typeConfig, locale }) : undefined);
   /* v8 ignore start -- only read for a known type, which has its subfields */
   const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
   /* v8 ignore stop */

@@ -114,6 +114,23 @@ describe('FieldPreview', () => {
     ).toBeNull();
   });
 
+  test('shows the label in the locale of the pane', async () => {
+    const container = await renderPreview({
+      fieldConfig: {
+        name: 'title',
+        widget: 'string',
+        i18n: true,
+        label: 'Title',
+        label_localized: { ja: 'タイトル' },
+      },
+      values: { title: 'Hello' },
+      locale: 'ja',
+      i18nEnabled: true,
+    });
+
+    expect(container.querySelector('h4')).toHaveTextContent('タイトル');
+  });
+
   test('passes the items of a multi-value field', async () => {
     const container = await renderPreview({
       fieldConfig: { name: 'tags', widget: 'list' },

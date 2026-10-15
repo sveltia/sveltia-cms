@@ -7,6 +7,7 @@ import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reor
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { parseCustomSortableFields } from '$lib/services/contents/collection/view/options';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getLocalizedOption } from '$lib/services/contents/i18n/options';
 import { isNumeric } from '$lib/services/utils/number';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 
@@ -226,16 +227,17 @@ export const getSortKeyLabel = ({ collection, key }) => {
         }
 
         const keyPath = arr.slice(0, index + 1).join('.');
+        const field = getField({ collectionName: collection.name, keyPath });
 
-        // @ts-ignore Hidden field doesn’t have `label` property
-        return getField({ collectionName: collection.name, keyPath })?.label || _key;
+        return getLocalizedOption({ config: field, option: 'label' }) || _key;
       })
       .filter(Boolean)
       .join(' – ');
   }
 
-  // @ts-ignore Hidden field doesn’t have `label` property
-  return collection.fields?.find(({ name }) => name === key)?.label || key;
+  const field = collection.fields?.find(({ name }) => name === key);
+
+  return getLocalizedOption({ config: field, option: 'label' }) || key;
 };
 
 /**

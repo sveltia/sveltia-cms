@@ -34,6 +34,7 @@
   import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now';
   import { isAutoIncrementField } from '$lib/services/contents/fields/number/auto-increment';
   import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
+  import { getFieldLabel, getLocalizedOption } from '$lib/services/contents/i18n/options';
   import { createRawState } from '$lib/services/utils/state.svelte';
   import { sanitizeHelpText } from '$lib/services/utils/string';
   import { isPendingDeletion } from '$lib/services/workflow';
@@ -48,12 +49,7 @@
    * InternalLocaleCode,
    * TypedFieldKeyPath,
    * } from '$lib/types/private';
-   * @import {
-   * CustomField,
-   * Field,
-   * FieldKeyPath,
-   * VisibleField,
-   * } from '$lib/types/public';
+   * @import { CustomField, Field, FieldKeyPath } from '$lib/types/public';
    */
 
   /** @type {FieldEditorContext} */
@@ -134,8 +130,8 @@
   );
 
   const inEditorComponent = $derived(isInEditorComponent(valueStoreKey));
-  const { name: fieldName, widget: fieldType = 'string' } = $derived(fieldConfig);
-  const { label = '', hint = '' } = $derived(/** @type {VisibleField} */ (fieldConfig));
+  const { widget: fieldType = 'string' } = $derived(fieldConfig);
+  const hint = $derived(getLocalizedOption({ config: fieldConfig, option: 'hint', locale }) ?? '');
   const required = $derived(isFieldRequired({ fieldConfig, locale }));
   const multiple = $derived(isFieldMultiple(fieldConfig));
   const { prefix, suffix, beforeInputLabel, afterInputLabel, hasExtraLabels } = $derived(
@@ -182,7 +178,7 @@
     }),
   );
   const validity = $derived(entryDraft.current?.validities[locale][keyPath]);
-  const fieldLabel = $derived(label || fieldName);
+  const fieldLabel = $derived(getFieldLabel({ config: fieldConfig, locale }));
   // An entry awaiting deletion is shown for reference only. Unlike `readonly`, which is also set
   // for a duplicated locale, this hides the options that would change the content
   const pendingDeletion = $derived(isPendingDeletion(entryDraft.current?.originalEntry));

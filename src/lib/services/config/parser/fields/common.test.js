@@ -93,3 +93,64 @@ describe('checkCommonFieldOptions', () => {
     expect(addMessage).not.toHaveBeenCalled();
   });
 });
+
+describe('checkCommonFieldOptions with localized default values', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  /**
+   * Run the check on a field with the `default_localized` option in the given context.
+   * @param {any} localizedDefault The `default_localized` option.
+   * @param {any} ctx Context.
+   * @returns {void}
+   */
+  const checkLocalized = (localizedDefault, ctx) =>
+    checkCommonFieldOptions({
+      config: /** @type {any} */ ({ name: 'title', default_localized: localizedDefault }),
+      context: ctx,
+      collectors,
+    });
+
+  const i18nContext = {
+    cmsConfig: { i18n: { locales: ['en', 'de'], default_locale: 'en' } },
+    collection: { name: 'posts', i18n: true },
+    typedKeyPath: 'title',
+  };
+
+  test('says nothing about values for the collection’s locales', () => {
+    checkLocalized({ en: 'Untitled', de: 'Ohne Titel' }, i18nContext);
+    expect(addMessage).not.toHaveBeenCalled();
+  });
+
+  test('warns about a value for a locale the collection doesn’t have', () => {
+    checkLocalized({ de: 'Ohne Titel', fr: 'Sans titre' }, i18nContext);
+
+    expect(addMessage).toHaveBeenCalledExactlyOnceWith({
+      type: 'warning',
+      strKey: 'default_localized_unknown_locale',
+      values: { locale: 'fr' },
+      context: i18nContext,
+      collectors,
+    });
+  });
+
+  test('warns about the option without i18n', () => {
+    const ctx = { ...i18nContext, collection: { name: 'posts' } };
+
+    checkLocalized({ de: 'Ohne Titel' }, ctx);
+
+    expect(addMessage).toHaveBeenCalledExactlyOnceWith({
+      type: 'warning',
+      strKey: 'default_localized_without_i18n',
+      context: ctx,
+      collectors,
+    });
+  });
+
+  test('skips an editor component’s field and an option that isn’t an object', () => {
+    checkLocalized({ de: 'Ohne Titel' }, { componentName: 'youtube', typedKeyPath: 'title' });
+    checkLocalized('Ohne Titel', i18nContext);
+    expect(addMessage).not.toHaveBeenCalled();
+  });
+});

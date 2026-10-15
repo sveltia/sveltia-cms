@@ -8,6 +8,7 @@ import {
   getRelationValues,
 } from '$lib/services/contents/entry/relations';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
+import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
 /**
  * @import { Entry, EntryBacklink } from '$lib/types/private';
@@ -69,7 +70,7 @@ export const getBacklinks = ({ collectionName, fileName, entry }) => {
           return /** @type {EntryBacklink} */ ({
             collectionName: sourceCollectionName,
             collectionLabel: sourceCollection.label || sourceCollectionName,
-            fieldLabel: fieldConfig.label || fieldConfig.name,
+            fieldLabel: getFieldLabel({ config: fieldConfig }),
             entry: sourceEntry,
             summary: getEntrySummary(sourceCollection, sourceEntry),
           });

@@ -421,6 +421,62 @@ describe('Test resetField() for restoring', () => {
     expect(draft.currentValues.en).toEqual({ 'venue.name': 'Hall', 'venue.city': 'Toronto' });
   });
 
+  test('should restore the localized default values of the locale', () => {
+    /** @type {Field} */
+    const fieldConfig = {
+      name: 'venue',
+      widget: 'object',
+      i18n: true,
+      default: { name: 'Hall' },
+      default_localized: { de: { name: 'Halle' } },
+      fields: [
+        {
+          name: 'name',
+          widget: 'string',
+          i18n: true,
+          default_localized: { de: 'Raum', fr: 'Salle' },
+        },
+        {
+          name: 'city',
+          widget: 'string',
+          i18n: true,
+          default: 'Toronto',
+          default_localized: { de: 'Köln' },
+        },
+      ],
+    };
+
+    const draft = createDraft({
+      en: { 'venue.name': 'Arena', 'venue.city': 'Ottawa' },
+      de: { 'venue.name': 'Arena', 'venue.city': 'Ottawa' },
+      fr: { 'venue.name': 'Arena', 'venue.city': 'Ottawa' },
+    });
+
+    resetField({ draft, fieldConfig, keyPath: 'venue', locale: 'de', restore: true });
+    resetField({ draft, fieldConfig, keyPath: 'venue', locale: 'fr', restore: true });
+
+    // The Object field’s default value, localized or not, takes precedence over the subfield’s own
+    expect(draft.currentValues.de).toEqual({ 'venue.name': 'Halle', 'venue.city': 'Köln' });
+    expect(draft.currentValues.fr).toEqual({ 'venue.name': 'Hall', 'venue.city': 'Toronto' });
+  });
+
+  test('should clear a field with a localized default value', () => {
+    /** @type {Field} */
+    const fieldConfig = {
+      name: 'title',
+      widget: 'string',
+      i18n: true,
+      default: 'Untitled',
+      default_localized: { de: 'Ohne Titel' },
+    };
+
+    const draft = createDraft({ en: { title: 'Hello' }, de: { title: 'Hallo' } });
+
+    resetField({ draft, fieldConfig, keyPath: 'title', locale: 'de' });
+
+    expect(draft.currentValues.de).toEqual({ title: '' });
+  });
+
   test('should not take an `Object.prototype` member for a subfield default value', () => {
     /** @type {Field} */
     const fieldConfig = {

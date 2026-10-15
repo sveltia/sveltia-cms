@@ -853,6 +853,43 @@ describe('ListEditorComplex (more)', () => {
     }
   });
 
+  test('localizes the labels and hints in the UI locale without a content locale', async () => {
+    /** @type {ComplexListField} */
+    const fieldConfig = {
+      ...sectionsField,
+      label: 'Sections',
+      label_localized: { en: 'Blocks' },
+      label_singular: 'Section',
+      label_singular_localized: { en: 'Block' },
+      types: [
+        {
+          ...sectionsField.types[0],
+          label_localized: { en: 'Banner' },
+          hint: 'Keep it short.',
+          hint_localized: { en: 'Keep it brief.' },
+        },
+        sectionsField.types[1],
+      ],
+    };
+
+    const { container } = await renderEditor(fieldConfig, {
+      'sections.0.type': 'hero',
+      'sections.0.heading': '',
+    });
+
+    await expect.element(page.getByRole('button', { name: /Add\W+Block\W*$/ })).toBeVisible();
+    await expect
+      .poll(() => container.querySelector('.type-hint')?.textContent)
+      .toBe('Keep it brief.');
+    // The list with one item is labelled with the singular label, and the item with its type
+    expect(container.querySelector('.toolbar .label')).toMatchTextContent(/Block/);
+    await expect.element(page.getByText('Banner', { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: 'List Item Options' }).click();
+    await page.getByRole('menuitem', { name: 'Add Item Below' }).click();
+    await expect.element(page.getByRole('menuitem', { name: 'Banner' })).toBeVisible();
+  });
+
   test('shows the hint of each item’s type unless read-only', async () => {
     /** @type {ComplexListField} */
     const fieldConfig = {

@@ -13,6 +13,7 @@
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getMemoizedSubtree } from '$lib/services/contents/entry/subtree';
   import { getListFieldInfo, getListItemKey } from '$lib/services/contents/fields/list/helpers';
+  import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
   /**
    * @import { SubtreeMemo } from '$lib/services/contents/entry/subtree';
@@ -85,7 +86,7 @@
       {#if hasVariableTypes && !typeConfig}
         <!-- Unknown type: a warning is displayed in the editor -->
       {:else}
-        {@const label = typeConfig ? typeConfig.label || typeConfig.name : undefined}
+        {@const label = typeConfig ? getFieldLabel({ config: typeConfig, locale }) : undefined}
         {@const subFields = hasVariableTypes
           ? /** @type {VariableFieldType} */ (typeConfig).fields
           : singleSubFields}

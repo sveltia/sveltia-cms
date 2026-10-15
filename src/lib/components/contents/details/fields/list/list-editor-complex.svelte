@@ -69,6 +69,7 @@
   } from '$lib/services/contents/fields/object/helpers';
   import { getDraftObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
   import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
+  import { getFieldLabel, getLocalizedOption } from '$lib/services/contents/i18n/options';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { createStableDerivedState } from '$lib/services/utils/state.svelte';
 
@@ -123,7 +124,6 @@
 
   const {
     name: fieldName,
-    label,
     i18n,
     // Field type-specific options
     allow_add: allowAdd = true,
@@ -134,10 +134,13 @@
     summary,
     thumbnail: thumbnailFieldName,
     minimize_collapsed: minimizeCollapsed = false,
-    label_singular: labelSingular,
     max = Infinity,
     add_to_top: addToTop = false,
   } = $derived(/** @type {ComplexListField} */ (fieldConfig));
+  const label = $derived(getLocalizedOption({ config: fieldConfig, option: 'label', locale }));
+  const labelSingular = $derived(
+    getLocalizedOption({ config: fieldConfig, option: 'label_singular', locale }),
+  );
   const { field } = $derived(/** @type {ListFieldWithSubField} */ (fieldConfig));
   const { fields } = $derived(/** @type {ListFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ListFieldWithTypes} */ (fieldConfig));
@@ -786,10 +789,10 @@
     <MenuItem label={_(`add_item_${position}`)} disabled={isAddDisabled}>
       <!-- eslint-disable-next-line no-shadow -->
       {#snippet items()}
-        {#each variableTypes as { name, label: itemLabel } (name)}
+        {#each variableTypes as type (type.name)}
           <MenuItem
-            label={itemLabel || name}
-            onclick={() => addItem({ index: insertIndex, type: name })}
+            label={getFieldLabel({ config: type, locale })}
+            onclick={() => addItem({ index: insertIndex, type: type.name })}
           />
         {/each}
       {/snippet}
@@ -860,7 +863,7 @@
     {/if}
     <div role="none" class="actions">
       {#if allowAdd && (addToTop || !items.length || !parentExpanded)}
-        <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
+        <AddItemButton disabled={isAddDisabled} {fieldConfig} {locale} {items} {addItem} />
         {@render pasteButton()}
       {/if}
       {#if parentExpanded && items.length > 1}
@@ -921,7 +924,9 @@
           })}
         >
           <ObjectHeader
-            label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
+            label={hasVariableTypes && typeConfig
+              ? getFieldLabel({ config: typeConfig, locale })
+              : ''}
             position={singleItem ? undefined : displayIndex + 1}
             controlId="list-{fieldId}-item-{index}-body"
             {expanded}
@@ -1037,7 +1042,9 @@
               })}
               {expanded}
               {unknownType}
-              hint={readonly ? undefined : typeConfig?.hint}
+              hint={readonly || !typeConfig
+                ? undefined
+                : getLocalizedOption({ config: typeConfig, option: 'hint', locale })}
               getSummary={() => _formatSummary(index, summaryTemplate)}
               getThumbnail={() => getThumbnail(index, type)}
               summaryContent={customSummary ? customSummaryContent : undefined}
@@ -1057,7 +1064,7 @@
 {#if allowAdd && !addToTop && items.length && parentExpanded && !hasMaxItems}
   <div role="none" class="toolbar bottom add">
     <Spacer flex />
-    <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
+    <AddItemButton disabled={isAddDisabled} {fieldConfig} {locale} {items} {addItem} />
     {@render pasteButton()}
   </div>
 {/if}

@@ -13,6 +13,7 @@ import { deleteSubtree } from '$lib/services/contents/entry/subtree';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
+import { localizeDefaultValue } from '$lib/services/contents/i18n/options';
 
 /**
  * @import {
@@ -109,15 +110,27 @@ const resetContent = (args) => {
 
     const { fields } = /** @type {FieldWithSubFields} */ (fieldConfig);
     const { types, typeKey = 'type' } = /** @type {FieldWithTypes} */ (fieldConfig);
-    const { default: objectDefault } = /** @type {ObjectField} */ (fieldConfig);
+    // With the `i18n` option that applies to the field, so a duplicated field takes the default
+    // locale’s localized default
+    const objectConfig = /** @type {ObjectField} */ ({ ...fieldConfig, i18n });
+
+    const { default: objectDefault } = /** @type {ObjectField} */ (
+      localizeDefaultValue({ fieldConfig: objectConfig, locale, defaultLocale })
+    );
+
     const type = content[`${keyPath}.${typeKey}`];
     const subFields = fields ?? types?.find(({ name }) => name === type)?.fields ?? [];
 
     subFields.forEach((subField) => {
-      // The default value of the Object field as a whole takes precedence over the subfield’s own
+      // The default value of the Object field as a whole takes precedence over the subfield’s own,
+      // including its localized one
       const subFieldConfig =
         restore && isObject(objectDefault) && Object.hasOwn(objectDefault, subField.name)
-          ? /** @type {Field} */ ({ ...subField, default: objectDefault[subField.name] })
+          ? /** @type {Field} */ ({
+              ...subField,
+              default: objectDefault[subField.name],
+              default_localized: undefined,
+            })
           : subField;
 
       resetContent({
@@ -170,7 +183,7 @@ const resetContent = (args) => {
     fieldConfig: /** @type {Field} */ ({
       ...fieldConfig,
       i18n,
-      ...(restore ? {} : { default: undefined }),
+      ...(restore ? {} : { default: undefined, default_localized: undefined }),
     }),
     locale,
     defaultLocale,

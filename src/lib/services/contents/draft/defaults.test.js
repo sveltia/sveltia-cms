@@ -953,3 +953,72 @@ describe('Test getDefaultValues()', () => {
     });
   });
 });
+
+describe('Test localized default values', () => {
+  /** @type {Field[]} */
+  const fields = [
+    {
+      name: 'title',
+      widget: 'string',
+      i18n: true,
+      default: 'Untitled',
+      default_localized: { de: 'Ohne Titel' },
+    },
+    {
+      name: 'categories',
+      widget: 'list',
+      i18n: true,
+      default: ['car repair', 'tuning'],
+      default_localized: { de: ['autoreparatur', 'tuning'] },
+    },
+    {
+      name: 'date',
+      widget: 'string',
+      i18n: 'duplicate',
+      default: 'today',
+      default_localized: { en: 'Today', de: 'Heute' },
+    },
+  ];
+
+  test('should use the localized default value of the locale', () => {
+    expect(getDefaultValues({ fields, locale: 'de', defaultLocale: 'en' })).toEqual({
+      title: 'Ohne Titel',
+      categories: ['autoreparatur', 'tuning'],
+      date: 'Today',
+    });
+  });
+
+  test('should fall back to the default value without a localized one', () => {
+    expect(getDefaultValues({ fields, locale: 'en', defaultLocale: 'en' })).toEqual({
+      title: 'Untitled',
+      categories: ['car repair', 'tuning'],
+      date: 'Today',
+    });
+    expect(getDefaultValues({ fields, locale: 'fr', defaultLocale: 'en' })).toEqual({
+      title: 'Untitled',
+      categories: ['car repair', 'tuning'],
+      date: 'Today',
+    });
+  });
+
+  test('should prefer a dynamic value over the localized default value', () => {
+    expect(
+      getDefaultValues({
+        fields: [fields[0]],
+        locale: 'de',
+        defaultLocale: 'en',
+        dynamicValues: { title: 'Dynamisch' },
+      }),
+    ).toEqual({ title: 'Dynamisch' });
+  });
+
+  test('should not pass the localized default values on to the field type', async () => {
+    const { getDefaultValueMap } = await import('$lib/services/contents/fields/list/defaults');
+
+    getDefaultValues({ fields: [fields[1]], locale: 'de', defaultLocale: 'en' });
+
+    expect(vi.mocked(getDefaultValueMap).mock.calls[0][0].fieldConfig).not.toHaveProperty(
+      'default_localized',
+    );
+  });
+});

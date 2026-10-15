@@ -9,6 +9,7 @@
 
   import { editors } from '$lib/components/contents/details/fields';
   import { isFieldRequired } from '$lib/services/contents/entry/fields';
+  import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
   /**
    * @import { InternalLocaleCode } from '$lib/types/private';
@@ -42,8 +43,8 @@
   } = $props();
 
   const fieldId = $props.id();
-  const { name: keyPath, label, widget: fieldType = 'string' } = $derived(fieldConfig);
-  const fieldLabel = $derived(label || keyPath);
+  const { name: keyPath, widget: fieldType = 'string' } = $derived(fieldConfig);
+  const fieldLabel = $derived(getFieldLabel({ config: fieldConfig, locale }));
   const Editor = $derived(editors[fieldType]);
   const invalid = $derived(!!errors.length);
   // A Select or Relation field always shows a dropdown list, as radio buttons wouldn’t fit in a

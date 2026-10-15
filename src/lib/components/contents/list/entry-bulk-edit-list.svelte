@@ -31,6 +31,7 @@
   } from '$lib/services/contents/collection/view';
   import { setEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
+  import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
   /**
    * @import { Entry, InternalEntryCollection } from '$lib/types/private';
@@ -125,8 +126,8 @@
   >
     <div role="row" class="row header" aria-rowindex={1}>
       <div role="columnheader" class="cell title">{_('bulk_edit_entry')}</div>
-      {#each fields as { name, label } (name)}
-        <div role="columnheader" class="cell">{label || name}</div>
+      {#each fields as field (field.name)}
+        <div role="columnheader" class="cell">{getFieldLabel({ config: field, locale })}</div>
       {/each}
       <div role="none" class="cell filler"></div>
     </div>

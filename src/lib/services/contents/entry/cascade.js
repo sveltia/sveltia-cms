@@ -12,6 +12,7 @@ import {
 import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
+import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
@@ -127,7 +128,7 @@ export const getFieldBlockers = ({
       /** @type {CascadeDeleteBlocker} */ ({
         collectionName,
         collectionLabel: collection.label || collectionName,
-        fieldLabel: fieldConfig.label || fieldConfig.name,
+        fieldLabel: getFieldLabel({ config: fieldConfig }),
         entry,
         summary: getEntrySummary(collection, entry),
         locale,

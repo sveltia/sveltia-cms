@@ -1,4 +1,7 @@
+import { isObject } from '@sveltia/utils/object';
+
 import { addMessage, checkRegex } from '$lib/services/config/parser/utils/validator';
+import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 
 /**
  * @import { FieldParserArgs } from '$lib/types/private';
@@ -16,9 +19,44 @@ const RANGE_OPTIONS = [
 ];
 
 /**
+ * Check the `default_localized` option. Its values are matched against the content locales only, so
+ * a value for a locale the collection doesn’t have is never used, and none of them is without i18n.
+ * The locales of an editor component’s content aren’t known here, so its fields aren’t checked.
+ * @param {FieldParserArgs} args Arguments.
+ */
+const checkLocalizedDefault = ({ config, context, collectors }) => {
+  const { default_localized: localizedDefault } = /** @type {Record<string, any>} */ (config);
+  const { cmsConfig, collection, collectionFile: file } = context;
+
+  if (!isObject(localizedDefault) || !collection) {
+    return;
+  }
+
+  const locales = mergeI18nConfigs({ cmsConfig, collection, file })?.locales ?? [];
+
+  if (!locales.length) {
+    addMessage({ type: 'warning', strKey: 'default_localized_without_i18n', context, collectors });
+
+    return;
+  }
+
+  Object.keys(localizedDefault)
+    .filter((locale) => !locales.includes(locale))
+    .forEach((locale) => {
+      addMessage({
+        type: 'warning',
+        strKey: 'default_localized_unknown_locale',
+        values: { locale },
+        context,
+        collectors,
+      });
+    });
+};
+
+/**
  * Check the options that any field type can have. A `pattern` that can’t be compiled makes the
  * field skip its validation, and a range whose lower bound is above its upper bound can’t be
- * satisfied, but neither is reported at runtime.
+ * satisfied, but neither is reported at runtime, nor is a localized default value that’s unused.
  * @param {FieldParserArgs} args Arguments.
  */
 export const checkCommonFieldOptions = ({ config, context, collectors }) => {
@@ -42,4 +80,6 @@ export const checkCommonFieldOptions = ({ config, context, collectors }) => {
       });
     }
   });
+
+  checkLocalizedDefault({ config, context, collectors });
 };

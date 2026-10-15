@@ -1,5 +1,6 @@
 import { render } from 'vitest-browser-svelte';
 
+import { getFieldLabel } from '$lib/services/contents/i18n/options';
 import { renderWithDraft } from '$lib/test/draft';
 
 /**
@@ -72,8 +73,8 @@ const renderField = async (Component, props, { draft, context }) => {
  * fieldConfig: Field | Record<string, any>,
  * fieldId?: string,
  * fieldLabel?: string,
- * }} options Options. `fieldId` defaults to the key path, and `fieldLabel` to the field’s `label`
- * or `name`.
+ * }} options Options. `fieldId` defaults to the key path, and `fieldLabel` to the field’s label
+ * in the locale, as `FieldEditor` gives it.
  * @returns {Promise<RenderResult & { props: FieldProps }>} Render result along with the props, a
  * `$state` whose `currentValue` follows the editor and can be changed to test a new value.
  */
@@ -86,7 +87,7 @@ export const renderFieldEditor = async (
     keyPath = fieldConfig.name,
     typedKeyPath = keyPath,
     fieldId = keyPath,
-    fieldLabel = fieldConfig.label ?? fieldConfig.name,
+    fieldLabel = getFieldLabel({ config: fieldConfig, locale }),
     props: otherProps = {},
     draft = undefined,
     context = undefined,

@@ -242,6 +242,34 @@ describe('ObjectEditor', () => {
     expect(readonly.querySelector('.type-hint')).toBeNull();
   });
 
+  test('shows the label and hint of the type in the locale of the pane', async () => {
+    /** @type {ObjectField} */
+    const fieldConfig = {
+      ...blockField,
+      i18n: true,
+      types: [
+        {
+          ...blockField.types[0],
+          label_localized: { fr: 'Bannière' },
+          hint: 'Keep it short.',
+          hint_localized: { fr: 'Soyez bref.' },
+        },
+        blockField.types[1],
+      ],
+    };
+
+    const { container } = await renderEditor(
+      fieldConfig,
+      { 'block.type': 'hero', 'block.heading': '' },
+      { locale: 'fr' },
+    );
+
+    await expect
+      .element(page.getByRole('button', { name: 'Collapse' }))
+      .toHaveTextContent('expand_more Bannière');
+    expect(container.querySelector('.type-hint')).toHaveTextContent('Soyez bref.');
+  });
+
   test('keeps the focus in the field as a type is picked and removed', async () => {
     await renderEditor(blockField, {});
 

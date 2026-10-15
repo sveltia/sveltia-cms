@@ -249,7 +249,12 @@
 </div>
 {#if canEdit && rows.values.length < max}
   <div role="none" class="toolbar">
-    <AddItemButton {fieldConfig} items={rows.values} addItem={() => addItem(rows.values.length)} />
+    <AddItemButton
+      {fieldConfig}
+      {locale}
+      items={rows.values}
+      addItem={() => addItem(rows.values.length)}
+    />
   </div>
 {/if}
 

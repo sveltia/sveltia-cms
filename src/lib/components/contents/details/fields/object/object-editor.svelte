@@ -34,6 +34,7 @@
     warnUnknownType,
   } from '$lib/services/contents/fields/object/helpers';
   import { getDraftObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
+  import { getFieldLabel, getLocalizedOption } from '$lib/services/contents/i18n/options';
 
   /**
    * @import {
@@ -132,6 +133,8 @@
   const { typeConfig, unknownType, subFields, summaryTemplate } = $derived(
     resolveVariableType({ types: hasVariableTypes ? types : undefined, fields, summary, type }),
   );
+  // An unknown type is labelled with its name
+  const typeLabel = $derived(typeConfig ? getFieldLabel({ config: typeConfig, locale }) : type);
 
   /**
    * Initialize the expander state.
@@ -296,6 +299,7 @@
   <AddItemButton
     disabled={readonly}
     {fieldConfig}
+    {locale}
     addItem={(args) => addTypedFields(/** @type {{ type: string }} */ (args))}
   />
 {/if}
@@ -321,7 +325,7 @@
   >
     {#if !hideHeader}
       <ObjectHeader
-        label={hasVariableTypes ? typeConfig?.label || type : ''}
+        label={hasVariableTypes ? typeLabel : ''}
         controlId="object-{fieldId}-item-list"
         expanded={parentExpanded}
         toggleExpanded={subFields.length
@@ -354,7 +358,9 @@
         })}
         expanded={parentExpanded}
         {unknownType}
-        hint={readonly ? undefined : typeConfig?.hint}
+        hint={readonly || !typeConfig
+          ? undefined
+          : getLocalizedOption({ config: typeConfig, option: 'hint', locale })}
         getSummary={() => summaryText}
         getThumbnail={() => thumbnailSource}
         {summaryId}

@@ -119,6 +119,28 @@ describe('ListPreviewComplex', () => {
     );
   });
 
+  test('labels the types in the UI locale without a content locale', async () => {
+    await renderPreview(
+      {
+        name: 'sections',
+        widget: 'list',
+        types: [
+          {
+            name: 'hero',
+            label: 'Hero',
+            label_localized: { 'en-GB': 'Banner' },
+            fields: [{ name: 'heading', widget: 'string' }],
+          },
+        ],
+      },
+      { 'sections.0.type': 'hero', 'sections.0.heading': 'Welcome' },
+    );
+
+    await expect
+      .element(page.getByRole('group', { name: 'Banner' }).getByText('Welcome'))
+      .toBeVisible();
+  });
+
   test('shows nothing when the list is empty', async () => {
     expect(
       (await renderPreview({ name: 'authors', widget: 'list', fields: [] }, {})).children,

@@ -101,6 +101,30 @@ describe('FieldEditor', () => {
     expect(container.querySelector('.hint')?.innerHTML).toBe('Keep it <em>short</em>');
   });
 
+  test('shows the label and hint in the locale of the pane', async () => {
+    /** @type {Field} */
+    const fieldConfig = {
+      name: 'title',
+      widget: 'string',
+      i18n: true,
+      label: 'Title',
+      label_localized: { ja: 'タイトル' },
+      hint: 'Keep it short',
+      hint_localized: { ja: '短くしてください' },
+    };
+
+    const { container } = await renderEditor({ fieldConfig, locale: 'ja', i18nEnabled: true });
+
+    await expect.element(page.getByRole('group', { name: /“.タイトル.” Field/ })).toBeVisible();
+    expect(container.querySelector('.hint')).toHaveTextContent('短くしてください');
+
+    // The default locale has no localized values, so the options themselves are used
+    const { container: container2 } = await renderEditor({ fieldConfig, i18nEnabled: true });
+
+    expect(container2.querySelector('h4')).toHaveTextContent('Title');
+    expect(container2.querySelector('.hint')).toHaveTextContent('Keep it short');
+  });
+
   test('writes an edited value to the draft', async () => {
     const { draft } = await renderEditor({
       fieldConfig: { name: 'title', widget: 'string' },

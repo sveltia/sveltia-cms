@@ -407,6 +407,7 @@
     <AddItemButton
       disabled={keysReadonly}
       {fieldConfig}
+      {locale}
       items={rows.values}
       addItem={() => {
         addPair();

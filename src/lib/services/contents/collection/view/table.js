@@ -14,6 +14,7 @@ import {
 import { getField } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
+import { getLocalizedOption } from '$lib/services/contents/i18n/options';
 import { formatDate } from '$lib/services/utils/date';
 
 /**
@@ -128,7 +129,7 @@ const getColumnLabel = (collection, key) => {
       ? undefined
       : getField({ collectionName: collection.name, keyPath: identifierField });
 
-    return /** @type {{ label?: string } | undefined} */ (field)?.label || _('sort_keys._summary');
+    return getLocalizedOption({ config: field, option: 'label' }) || _('sort_keys._summary');
   }
 
   if (isTemplateColumnKey(key)) {

@@ -7,6 +7,7 @@
   import { highlightEditorField } from '$lib/services/contents/editor/fields';
   import { getFieldLocaleAccess } from '$lib/services/contents/editor/locale';
   import { getCurrentValue, isFieldMultiple } from '$lib/services/contents/entry/fields';
+  import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
   /**
    * @import { InternalLocaleCode, TypedFieldKeyPath } from '$lib/types/private';
@@ -35,8 +36,9 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { name: fieldName, widget: fieldType = 'string' } = $derived(fieldConfig);
-  const { label = '', preview = true } = $derived(/** @type {VisibleField} */ (fieldConfig));
+  const { widget: fieldType = 'string' } = $derived(fieldConfig);
+  const { preview = true } = $derived(/** @type {VisibleField} */ (fieldConfig));
+  const fieldLabel = $derived(getFieldLabel({ config: fieldConfig, locale }));
   const multiple = $derived(isFieldMultiple(fieldConfig));
   const isList = $derived(fieldType === 'list' || multiple);
   const valueMap = $derived(getFieldValueMapSnapshot(entryDraft.current, locale, keyPath));
@@ -74,7 +76,7 @@
     }}
   >
     {#if showLabel}
-      <h4>{label || fieldName}</h4>
+      <h4>{fieldLabel}</h4>
     {/if}
     <ErrorBoundary>
       {#if customFieldType?.preview}

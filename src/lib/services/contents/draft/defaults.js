@@ -1,5 +1,6 @@
 import { GET_DEFAULT_VALUE_MAP_FUNCTIONS } from '$lib/services/contents/fields/defaults';
 import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
+import { localizeDefaultValue } from '$lib/services/contents/i18n/options';
 
 /**
  * @import {
@@ -12,18 +13,19 @@ import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
 
 /**
  * Populate the default value for the given field. Check if a dynamic default value is specified,
- * then look for the field configuration’s `default` property.
+ * then look for the field configuration’s `default_localized` and `default` properties.
  * @param {PopulateDefaultValueArgs} args Arguments.
  * @returns {void} The `content` object is modified in place.
  */
 export const populateDefaultValue = ({
   content,
   keyPath,
-  fieldConfig,
+  fieldConfig: _fieldConfig,
   locale,
   defaultLocale,
   dynamicValues,
 }) => {
+  const fieldConfig = localizeDefaultValue({ fieldConfig: _fieldConfig, locale, defaultLocale });
   // @ts-ignore `default` is not defined in the Compute and custom field types
   const { widget: fieldType = 'string', default: defaultValue, i18n = false } = fieldConfig;
 

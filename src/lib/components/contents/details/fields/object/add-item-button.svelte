@@ -2,7 +2,10 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
 
+  import { getFieldLabel, getLocalizedOption } from '$lib/services/contents/i18n/options';
+
   /**
+   * @import { InternalLocaleCode } from '$lib/types/private';
    * @import { FieldWithTypes, KeyValueField, ListField, ObjectField } from '$lib/types/public';
    */
 
@@ -10,6 +13,7 @@
    * @typedef {object} Props
    * @property {boolean} [disabled] Whether to disable the button.
    * @property {ListField | ObjectField | KeyValueField} fieldConfig Field configuration.
+   * @property {InternalLocaleCode} [locale] Current pane’s locale, used to localize the labels.
    * @property {unknown[]} [items] List items or key-value pairs. `<ListEditor>` and
    * `<KeyValueEditor>` only.
    * @property {(args?: { type?: string }) => void} [addItem] Function to add a new item.
@@ -20,19 +24,25 @@
     /* eslint-disable prefer-const */
     disabled = false,
     fieldConfig,
+    locale = undefined,
     items = [],
     addItem = () => undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { name: fieldName, label: labelPlural } = $derived(fieldConfig);
   const { types } = $derived(/** @type {FieldWithTypes} */ (fieldConfig));
   // A List or KeyValue field can be given a singular label and a maximum number of items
   const multiValueField = $derived(fieldConfig.widget === 'object' ? undefined : fieldConfig);
-  const labelSingular = $derived(multiValueField?.label_singular ?? '');
+  const labelSingular = $derived(
+    multiValueField
+      ? getLocalizedOption({ config: multiValueField, option: 'label_singular', locale })
+      : undefined,
+  );
   const max = $derived(multiValueField?.max ?? Infinity);
   const label = $derived(
-    _('add_x', { values: { name: labelSingular || labelPlural || fieldName } }),
+    _('add_x', {
+      values: { name: labelSingular || getFieldLabel({ config: fieldConfig, locale }) },
+    }),
   );
   // Hide the button instead of disabling it once the list is full, as a disabled button confuses
   // users, especially when `max` is `1`
@@ -51,21 +61,23 @@
     {#snippet endIcon()}{/snippet}
     {#snippet popup()}
       <Menu ariaLabel={_('select_list_type')}>
-        {#each types as { name, label: itemLabel, description }, index (name)}
+        {#each types as type, index (type.name)}
+          {@const { name, description } = type}
+          {@const itemLabel = getFieldLabel({ config: type, locale })}
           {#if description}
             {@const descriptionId = `${menuId}-type-${index}-description`}
             <!-- The description isn’t part of the item’s name, but describes it -->
             <MenuItem
               class="variable-type-described"
-              aria-label={itemLabel || name}
+              aria-label={itemLabel}
               aria-describedby={descriptionId}
               onclick={() => addItem({ type: name })}
             >
-              <span role="none" class="type-label">{itemLabel || name}</span>
+              <span role="none" class="type-label">{itemLabel}</span>
               <span role="none" class="type-description" id={descriptionId}>{description}</span>
             </MenuItem>
           {:else}
-            <MenuItem label={itemLabel || name} onclick={() => addItem({ type: name })} />
+            <MenuItem label={itemLabel} onclick={() => addItem({ type: name })} />
           {/if}
         {/each}
       </Menu>

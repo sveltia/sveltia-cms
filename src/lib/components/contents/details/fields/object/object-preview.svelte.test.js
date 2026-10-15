@@ -98,6 +98,17 @@ describe('ObjectPreview', () => {
     );
   });
 
+  test('labels the type in the UI locale without a content locale', async () => {
+    /** @type {ObjectField} */
+    const fieldConfig = {
+      ...blockField,
+      types: [{ ...blockField.types[0], label_localized: { en: 'Banner' } }, blockField.types[1]],
+    };
+
+    await renderPreview(fieldConfig, { 'block.type': 'hero', 'block.heading': 'Welcome' });
+    await expect.element(page.getByRole('group', { name: 'Banner' })).toBeVisible();
+  });
+
   test('falls back to the type name as the label', async () => {
     await renderPreview(blockField, { 'block.type': 'quote', 'block.text': 'Hi' });
     await expect.element(page.getByRole('group', { name: 'quote' })).toBeVisible();
