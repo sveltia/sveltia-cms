@@ -1410,6 +1410,10 @@ validation:
 
   # Value used for the same field in another entry of the collection
   value_not_unique: この値は他のエントリーに使われています。
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: このキーは他の項目に使われています。
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: 項目の順序が失われるため、キーを整数のみにすることはできません。
 
   # Custom field validation error
   invalid_value: 無効な値です。
@@ -1998,6 +2002,18 @@ config:
     list_field_default_missing_type: List フィールドの `default` オプションの項目に、`types` のいずれかを識別する `{$typeKey}` プロパティがありません。
     # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
     list_field_invalid_default_type: List フィールドの `default` オプションの項目の `{$typeKey}` プロパティが `{$value}` ですが、`types` に含まれていません。
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: 各キーはサブフィールドから取得されるため、List フィールドの `map_key_field` オプションには `fields` または `types` オプションが必要です。
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、その名前のサブフィールドはありません。
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、`{$type}` タイプにはその名前のサブフィールドがありません。
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_not_string: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、`{$widget}` フィールドではなく String フィールドである必要があります。
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、各項目にはキーが必要なため、そのサブフィールドを任意にすることはできません。`required` オプションを削除してください。
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'List フィールドの `map_key_field` オプションが `{$name}` を参照していますが、項目にはすべてのロケールでキーが必要なため、そのサブフィールドに `i18n: false` は指定できません。`i18n: duplicate` を使うか、オプションを削除してください。'
     # Don’t localize `default` and `multiple`
     invalid_default_multiple: '`multiple` オプションが `true` のため、`default` オプションは配列でなければなりません。'
     invalid_default_single: '`multiple` オプションが `true` ではないため、`default` オプションは配列ではなく単一の値でなければなりません。'

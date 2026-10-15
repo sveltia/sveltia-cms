@@ -656,4 +656,185 @@ describe('List Field Parser', () => {
       });
     });
   });
+
+  describe('checkMapKeyField', () => {
+    /**
+     * Run the check against a List field with the given options.
+     * @param {Record<string, any>} options List field options.
+     * @returns {Promise<{ context: ConfigParserContext, collectors: ConfigParserCollectors }>}
+     * Arguments passed to the check, to match a reported message against.
+     */
+    const check = async (options) => {
+      const { checkMapKeyField } = await import('./list.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      checkMapKeyField({
+        config: { name: 'items', widget: 'list', ...options },
+        context,
+        collectors,
+      });
+
+      return { context, collectors };
+    };
+
+    it('should skip a missing option, an empty name and a value of another type', async () => {
+      await check({});
+      await check({ map_key_field: '' });
+      await check({ map_key_field: 1 });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should accept a String subfield, explicit or by default', async () => {
+      await check({
+        map_key_field: 'key',
+        fields: [{ name: 'key', widget: 'string', i18n: 'duplicate' }, { name: 'title' }],
+      });
+      await check({ map_key_field: 'key', fields: [{ name: 'key' }] });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should accept a String subfield in every variable type', async () => {
+      await check({
+        map_key_field: 'key',
+        types: [
+          { name: 'book', fields: [{ name: 'key', widget: 'string' }] },
+          { name: 'web', fields: [{ name: 'key' }, { name: 'url' }] },
+        ],
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should error on a list without subfields or variable types', async () => {
+      const { context, collectors } = await check({ map_key_field: 'key' });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_map_key_no_subfields',
+        context,
+        collectors,
+      });
+
+      mockAddMessage.mockClear();
+
+      const result = await check({ map_key_field: 'key', field: { name: 'key' } });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_map_key_no_subfields',
+        context: result.context,
+        collectors: result.collectors,
+      });
+    });
+
+    it('should error on a missing subfield', async () => {
+      const { context, collectors } = await check({
+        map_key_field: 'key',
+        fields: [{ name: 'title' }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_map_key_not_found',
+        values: { name: 'key', type: undefined },
+        context,
+        collectors,
+      });
+    });
+
+    it('should error on each variable type missing the subfield', async () => {
+      const { context, collectors } = await check({
+        map_key_field: 'key',
+        types: [
+          { name: 'book', fields: [{ name: 'key' }] },
+          { name: 'web', fields: [{ name: 'url' }] },
+          { name: 'empty' },
+        ],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledTimes(2);
+      expect(mockAddMessage).toHaveBeenCalledWith({
+        strKey: 'list_field_map_key_missing_in_type',
+        values: { name: 'key', type: 'web' },
+        context,
+        collectors,
+      });
+      expect(mockAddMessage).toHaveBeenCalledWith({
+        strKey: 'list_field_map_key_missing_in_type',
+        values: { name: 'key', type: 'empty' },
+        context,
+        collectors,
+      });
+    });
+
+    it('should error on a subfield that is not a String field', async () => {
+      const { context, collectors } = await check({
+        map_key_field: 'key',
+        fields: [{ name: 'key', widget: 'number' }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_map_key_not_string',
+        values: { name: 'key', widget: 'number' },
+        context,
+        collectors,
+      });
+    });
+
+    it('should error on a subfield that is optional in any locale', async () => {
+      const { context, collectors } = await check({
+        map_key_field: 'key',
+        fields: [{ name: 'key', required: false }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_map_key_not_required',
+        values: { name: 'key' },
+        context,
+        collectors,
+      });
+
+      mockAddMessage.mockClear();
+
+      await check({ map_key_field: 'key', fields: [{ name: 'key', required: ['en'] }] });
+
+      expect(mockAddMessage).toHaveBeenCalledOnce();
+    });
+
+    it('should error on a subfield that only exists in the default locale', async () => {
+      const { context, collectors } = await check({
+        map_key_field: 'key',
+        fields: [{ name: 'key', i18n: false }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_map_key_not_localized',
+        values: { name: 'key' },
+        context,
+        collectors,
+      });
+
+      mockAddMessage.mockClear();
+
+      await check({ map_key_field: 'key', fields: [{ name: 'key', i18n: 'none' }] });
+
+      expect(mockAddMessage).toHaveBeenCalledOnce();
+    });
+
+    it('should be run by parseListFieldConfig', async () => {
+      const { parseListFieldConfig } = await import('./list.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      parseListFieldConfig({
+        config: { name: 'items', widget: 'list', map_key_field: 'key', fields: [{ name: 'a' }] },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'list_field_map_key_not_found' }),
+      );
+    });
+  });
 });

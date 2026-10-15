@@ -131,6 +131,27 @@ describe('buildSingleFileContent()', () => {
 });
 
 describe('getFieldComments()', () => {
+  test('leaves out the comment of a top-level List or KeyValue field, which has no key', () => {
+    expect(
+      getFieldComments([{ name: 'references', widget: 'list', root: true, comment: 'References' }]),
+    ).toEqual({});
+    expect(
+      getFieldComments([
+        { name: 'redirects', widget: 'keyvalue', root: true, comment: 'Redirects' },
+      ]),
+    ).toEqual({});
+    // The option means nothing below the top level
+    expect(
+      getFieldComments([
+        {
+          name: 'seo',
+          widget: 'object',
+          fields: [{ name: 'tags', widget: 'list', root: true, comment: 'Tags' }],
+        },
+      ]),
+    ).toEqual({ 'seo.tags': 'Tags' });
+  });
+
   test('collects the comments of the fields and the subfields of Object fields', () => {
     expect(
       getFieldComments([

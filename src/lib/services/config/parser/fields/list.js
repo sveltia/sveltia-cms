@@ -10,10 +10,12 @@ import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
 /**
  * @import {
  * ComplexListFieldBaseProps,
+ * Field,
  * ListField,
  * ListFieldWithSubField,
  * ListFieldWithSubFields,
  * ListFieldWithTypes,
+ * StringField,
  * } from '$lib/types/public';
  * @import {
  * ConfigParserCollectors,
@@ -111,6 +113,93 @@ export const checkDefaultValue = ({ config, context, collectors }) => {
 };
 
 /**
+ * Check the `map_key_field` option, which names the subfield whose value becomes the key of each
+ * item when the list is stored as a map. The subfield has to be a required String field that
+ * exists in every locale, and with variable types, every type has to have it, or some items would
+ * have no key. A list of plain values or with a single `field` has no subfields to take a key from.
+ * @param {FieldParserArgs} args Arguments.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1077
+ */
+export const checkMapKeyField = ({ config, context, collectors }) => {
+  const { fields: subfields } = /** @type {ListFieldWithSubFields} */ (config);
+  const { types } = /** @type {ListFieldWithTypes} */ (config);
+
+  const { map_key_field: name } = /** @type {ListFieldWithSubFields | ListFieldWithTypes} */ (
+    config
+  );
+
+  // A value of another type is reported against the JSON schema
+  if (typeof name !== 'string' || !name) {
+    return;
+  }
+
+  if (!subfields && !types) {
+    addMessage({ strKey: 'list_field_map_key_no_subfields', context, collectors });
+
+    return;
+  }
+
+  /**
+   * Check the key subfield among the given fields.
+   * @param {Field[]} fields Subfields of the list, or of one of its types.
+   * @param {string} [type] Name of the variable type, if any.
+   */
+  const checkSubFields = (fields, type) => {
+    const subfield = fields.find((field) => field.name === name);
+
+    if (!subfield) {
+      addMessage({
+        strKey: type ? 'list_field_map_key_missing_in_type' : 'list_field_map_key_not_found',
+        values: { name, type },
+        context,
+        collectors,
+      });
+
+      return;
+    }
+
+    const { widget: fieldType = 'string', i18n } = subfield;
+    const { required = true } = /** @type {StringField} */ (subfield);
+
+    if (fieldType !== 'string') {
+      addMessage({
+        strKey: 'list_field_map_key_not_string',
+        values: { name, widget: fieldType },
+        context,
+        collectors,
+      });
+    }
+
+    // An item can’t be saved without a key, so the subfield can’t be optional in any locale
+    if (required !== true) {
+      addMessage({
+        strKey: 'list_field_map_key_not_required',
+        values: { name },
+        context,
+        collectors,
+      });
+    }
+
+    // A subfield that only exists in the default locale would leave the items in the other locales
+    // without a key
+    if (i18n === false || i18n === 'none') {
+      addMessage({
+        strKey: 'list_field_map_key_not_localized',
+        values: { name },
+        context,
+        collectors,
+      });
+    }
+  };
+
+  if (subfields) {
+    checkSubFields(subfields);
+  } else {
+    types.forEach(({ name: type, fields = [] }) => checkSubFields(fields, type));
+  }
+};
+
+/**
  * Parse and validate a List field configuration.
  * @param {FieldParserArgs} args Arguments.
  */
@@ -143,6 +232,7 @@ export const parseListFieldConfig = (args) => {
   }
 
   checkDefaultValue(args);
+  checkMapKeyField(args);
 
   // The `thumbnail` option names a subfield of an item, or the single subfield
   checkThumbnailField({ thumbnail, fields: getSubFields(config), context, collectors });

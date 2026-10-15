@@ -16,6 +16,7 @@ import {
 } from '$lib/services/contents/entry/fields';
 import { getWildcardKeyPathPattern } from '$lib/services/contents/entry/key-paths';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
+import { convertMapLists, getMapKeyField } from '$lib/services/contents/fields/list/map';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { TOML_FORMATS } from '$lib/services/contents/file/constants';
 import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
@@ -459,7 +460,7 @@ export const serializeContent = ({ draft, locale, valueMap, format }) => {
     format ?? resolveFileConfig({ collection, collectionFile, isIndexFile }).format,
   );
 
-  const content = finalizeContent({
+  const finalizedContent = finalizeContent({
     collectionName,
     fileName: collectionFile?.name,
     fields,
@@ -473,10 +474,17 @@ export const serializeContent = ({ draft, locale, valueMap, format }) => {
     isTomlOutput,
   });
 
+  // Store the List fields with the `map_key_field` option as maps
+  const content = convertMapLists(finalizedContent, fields, false);
+
   // Handle a special case: top-level List field. TOML doesn’t support top-level arrays, so we
-  // ignore the `root` option for such cases.
-  if (!isTomlOutput && hasRootField(fields, 'list')) {
-    return content[fields[0].name] ?? [];
+  // ignore the `root` option for such cases, unless the list is stored as a map
+  if (hasRootField(fields, 'list')) {
+    const isMap = !!getMapKeyField(fields[0]);
+
+    if (isMap || !isTomlOutput) {
+      return content[fields[0].name] ?? (isMap ? {} : []);
+    }
   }
 
   // Handle a special case: top-level KeyValue field

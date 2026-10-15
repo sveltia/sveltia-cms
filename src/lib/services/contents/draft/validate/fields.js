@@ -29,6 +29,12 @@ import {
   PAIR_KEY_PATH_REGEX,
 } from '$lib/services/contents/fields/key-value/pairs';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
+import {
+  getMapKeyInfo,
+  getMapKeyPaths,
+  isArrayIndexKey,
+  isMapKeyTaken,
+} from '$lib/services/contents/fields/list/map';
 import { isAutoIncrementField } from '$lib/services/contents/fields/number/auto-increment';
 import {
   COMPONENT_NAME_PREFIX_REGEX,
@@ -185,6 +191,8 @@ export const validateAnyField = (args) => {
   }
 
   const required = isFieldRequired({ fieldConfig, locale });
+  // The key of an item of a List field stored as a map, which the configuration requires
+  const mapKeyInfo = getMapKeyInfo(getFieldArgs);
   /** @type {EntryValidityState} */
   const validity = { ...DEFAULT_VALIDITY };
   /** Whether the field holds no value at all, which each widget decides its own way. */
@@ -244,6 +252,13 @@ export const validateAnyField = (args) => {
     });
   }
 
+  // The key also has to be unique within the list, and can’t be a whole number, which a map moves
+  // to the front, so the items wouldn’t keep their order
+  if (!empty && mapKeyInfo) {
+    validity.mapKeyDuplicate = isMapKeyTaken({ ...mapKeyInfo, valueMap, keyPath, value });
+    validity.mapKeyNumeric = isArrayIndexKey(String(value));
+  }
+
   // Validate custom field if applicable (uses cached result)
   validateCustomField({ locale, keyPath, validity });
 
@@ -255,7 +270,9 @@ export const validateAnyField = (args) => {
   // `tooLong` and `rangeOverflow` are left alone — an empty field can’t trigger them — and
   // `customError` is a custom field component’s own call to make
   if (empty) {
-    relaxEmptyFieldValidity(validity, enforceRequired);
+    // A keyed list item without a key can’t be saved even as an Editorial Workflow draft, so the
+    // key is always enforced
+    relaxEmptyFieldValidity(validity, enforceRequired || !!mapKeyInfo);
   }
 
   return finalizeValidity(validity);
@@ -354,6 +371,29 @@ const revalidateSingleField = ({ draft, locale, keyPath, value, valueMap }) => {
  */
 export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => {
   revalidateSingleField({ draft, locale, keyPath, value, valueMap });
+
+  const mapKeyInfo = getMapKeyInfo(getDraftFieldArgs(draft, { keyPath, valueMap }));
+
+  // Changing the key of a keyed list item may make or break a duplicate with the other items. Only
+  // the items marked as a duplicate, or now having the same key, can be affected, so the others,
+  // which can be many in a large list, aren’t validated again on every keystroke
+  if (mapKeyInfo) {
+    getMapKeyPaths({ ...mapKeyInfo, valueMap }).forEach((otherKeyPath) => {
+      if (
+        otherKeyPath !== keyPath &&
+        (draft.validities?.[locale]?.[otherKeyPath]?.mapKeyDuplicate ||
+          String(valueMap[otherKeyPath]) === String(value))
+      ) {
+        revalidateSingleField({
+          draft,
+          locale,
+          keyPath: otherKeyPath,
+          value: valueMap[otherKeyPath],
+          valueMap,
+        });
+      }
+    });
+  }
 
   [...keyPath.matchAll(LIST_ITEM_INDEX_REGEX)].forEach(({ index }) => {
     const listKeyPath = keyPath.slice(0, index);

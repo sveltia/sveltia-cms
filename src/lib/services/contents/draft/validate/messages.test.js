@@ -298,6 +298,19 @@ describe('getFieldValidationMessages', () => {
     });
   });
 
+  describe('map key errors', () => {
+    it('returns the messages for a key of a List field stored as a map', () => {
+      const fieldConfig = { name: 'key', widget: 'string' };
+
+      expect(
+        getFieldValidationMessages(args({ validity: { mapKeyDuplicate: true }, fieldConfig })),
+      ).toEqual(['validation.key_not_unique']);
+      expect(
+        getFieldValidationMessages(args({ validity: { mapKeyNumeric: true }, fieldConfig })),
+      ).toEqual(['validation.key_numeric']);
+    });
+  });
+
   describe('customError', () => {
     it('falls back to the default custom error message when no custom message is provided', () => {
       const messages = getFieldValidationMessages(

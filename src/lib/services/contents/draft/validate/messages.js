@@ -157,6 +157,14 @@ export const getFieldValidationMessages = ({ validity, fieldConfig }) => {
     messages.push(_('validation.value_not_unique'));
   }
 
+  if (validity.mapKeyDuplicate) {
+    messages.push(_('validation.key_not_unique'));
+  }
+
+  if (validity.mapKeyNumeric) {
+    messages.push(_('validation.key_numeric'));
+  }
+
   if (validity.customError) {
     messages.push(validity.customErrorMessage ?? _('validation.invalid_value'));
   }

@@ -45,6 +45,7 @@ vi.mock('$lib/services/contents/collection/predicates', () => ({
 
 vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(),
+  isCollectionIndexFilePath: vi.fn(() => false),
 }));
 
 vi.mock('$lib/services/contents/file/parse', () => ({
@@ -622,6 +623,89 @@ describe('Test transformRawContent()', () => {
     expect(result).toEqual({
       en: { keyValues: { key1: 'value1' } },
       fr: { keyValues: { clé1: 'valeur1' } },
+    });
+  });
+
+  test('converts a List field stored as a map to list items', () => {
+    const fields = [
+      { name: 'title', widget: 'string' },
+      {
+        name: 'references',
+        widget: 'list',
+        map_key_field: 'key',
+        fields: [
+          { name: 'key', widget: 'string' },
+          { name: 'title', widget: 'string' },
+        ],
+      },
+    ];
+
+    const rawContent = {
+      title: 'Test',
+      references: { harry: { title: 'Harry' }, ron: { title: 'Ron' } },
+    };
+
+    expect(transformRawContent(rawContent, fields, false)).toEqual({
+      title: 'Test',
+      references: [
+        { key: 'harry', title: 'Harry' },
+        { key: 'ron', title: 'Ron' },
+      ],
+    });
+
+    // The parsed content may be cached, so it’s left alone
+    expect(rawContent.references).toEqual({ harry: { title: 'Harry' }, ron: { title: 'Ron' } });
+  });
+
+  test('converts a List field stored as a map in each locale of a single file', () => {
+    const fields = [
+      {
+        name: 'references',
+        widget: 'list',
+        i18n: true,
+        map_key_field: 'key',
+        fields: [{ name: 'key', widget: 'string' }],
+      },
+    ];
+
+    const rawContent = {
+      en: { references: { harry: {} } },
+      fr: { references: { henri: {} } },
+    };
+
+    expect(transformRawContent(rawContent, fields, true)).toEqual({
+      en: { references: [{ key: 'harry' }] },
+      fr: { references: [{ key: 'henri' }] },
+    });
+  });
+
+  test('converts a top-level List field stored as a map, or still stored as an array', () => {
+    const fields = [
+      {
+        name: 'references',
+        widget: 'list',
+        root: true,
+        map_key_field: 'key',
+        fields: [
+          { name: 'key', widget: 'string' },
+          { name: 'title', widget: 'string' },
+        ],
+      },
+    ];
+
+    expect(transformRawContent({ harry: { title: 'Harry' } }, fields, false)).toEqual({
+      references: [{ key: 'harry', title: 'Harry' }],
+    });
+
+    expect(
+      transformRawContent(/** @type {any} */ ([{ key: 'harry', title: 'Harry' }]), fields, false),
+    ).toEqual({ references: [{ key: 'harry', title: 'Harry' }] });
+
+    expect(transformRawContent(/** @type {any} */ ('harry'), fields, false)).toBeUndefined();
+
+    expect(transformRawContent({ en: { harry: {} }, fr: { henri: {} } }, fields, true)).toEqual({
+      en: { references: [{ key: 'harry' }] },
+      fr: { references: [{ key: 'henri' }] },
     });
   });
 
@@ -2255,6 +2339,75 @@ describe('Test prepareEntry()', () => {
     expect(entries).toHaveLength(1);
     expect(entries[0].slug).toBe('my-post');
     expect(entries[0].locales._default).toBeDefined();
+  });
+
+  test('reads the special index file with its own fields', async () => {
+    const { getIndexFile, isCollectionIndexFilePath } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    const keyedList = {
+      name: 'references',
+      widget: 'list',
+      map_key_field: 'key',
+      fields: [{ name: 'key', widget: 'string' }],
+    };
+
+    parseEntryFile.mockResolvedValue({ references: { harry: {} } });
+    vi.mocked(getIndexFile).mockReturnValue(
+      /** @type {any} */ ({ name: '_index', fields: [keyedList] }),
+    );
+    vi.mocked(isCollectionIndexFilePath).mockImplementation((_collection, path) =>
+      path.endsWith('/_index.md'),
+    );
+    getCollection.mockReturnValue({
+      name: 'posts',
+      // The regular entries store the list as an array
+      fields: [{ ...keyedList, map_key_field: undefined }],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: false,
+        allLocales: ['en'],
+        defaultLocale: 'en',
+        structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    /**
+     * Load the file at the given path.
+     * @param {string} path File path.
+     * @returns {Promise<Entry[]>} Entries.
+     */
+    const load = async (path) => {
+      const entries = /** @type {Entry[]} */ ([]);
+
+      await prepareEntry({
+        file: /** @type {BaseEntryListItem} */ ({
+          name: path.split('/').pop(),
+          path,
+          text: '',
+          sha: 'abc123',
+          size: 100,
+          type: 'entry',
+          folder: { collectionName: 'posts' },
+        }),
+        entries,
+        entryMap: new Map(),
+        errors: [],
+      });
+
+      return entries;
+    };
+
+    const [indexEntry] = await load('/posts/_index.md');
+    const [regularEntry] = await load('/posts/my-post.md');
+
+    expect(indexEntry.locales._default.content).toEqual({ 'references.0.key': 'harry' });
+    expect(regularEntry.locales._default.content).toEqual({ 'references.harry': {} });
   });
 
   test('processes i18n single file entry successfully', async () => {

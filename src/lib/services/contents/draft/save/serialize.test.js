@@ -2450,3 +2450,83 @@ describe('wildcardKeyPathRegexCache (within serializeContent)', () => {
     expect(result1).toEqual(result2);
   });
 });
+
+describe('List field stored as a map (within serializeContent)', () => {
+  /**
+   * Create a draft with the given fields.
+   * @param {any[]} fields Fields.
+   * @param {string} [format] File format.
+   * @returns {any} Draft.
+   */
+  const createDraft = (fields, format = 'yaml') => ({
+    collectionName: 'references',
+    collection: { _file: { format }, _i18n: { canonicalSlug: { key: '' } } },
+    fields,
+    isIndexFile: false,
+  });
+
+  const listField = {
+    name: 'references',
+    widget: 'list',
+    map_key_field: 'key',
+    fields: [
+      { name: 'key', widget: 'string' },
+      { name: 'title', widget: 'string' },
+    ],
+  };
+
+  const valueMap = {
+    'references.0.key': 'harry',
+    'references.0.title': 'Harry',
+    'references.1.key': 'ron',
+    'references.1.title': 'Ron',
+  };
+
+  test('saves the items as a map in the list order', () => {
+    const result = serializeContent({
+      draft: createDraft([{ name: 'title', widget: 'string' }, listField]),
+      locale: 'en',
+      valueMap: { title: 'Hello', ...valueMap },
+    });
+
+    expect(result).toEqual({
+      title: 'Hello',
+      references: { harry: { title: 'Harry' }, ron: { title: 'Ron' } },
+    });
+    expect(Object.keys(result.references)).toEqual(['harry', 'ron']);
+  });
+
+  test('saves a top-level list as a map, even in a TOML file', () => {
+    const fields = [{ ...listField, root: true }];
+    const expected = { harry: { title: 'Harry' }, ron: { title: 'Ron' } };
+
+    expect(serializeContent({ draft: createDraft(fields), locale: 'en', valueMap })).toEqual(
+      expected,
+    );
+    expect(
+      serializeContent({ draft: createDraft(fields, 'toml'), locale: 'en', valueMap }),
+    ).toEqual(expected);
+  });
+
+  test('still ignores the `root` option of a list not stored as a map in a TOML file', () => {
+    const { map_key_field: _, ...arrayListField } = listField;
+    const fields = [{ ...arrayListField, root: true }];
+
+    expect(
+      serializeContent({ draft: createDraft(fields, 'toml'), locale: 'en', valueMap }),
+    ).toEqual({
+      references: [
+        { key: 'harry', title: 'Harry' },
+        { key: 'ron', title: 'Ron' },
+      ],
+    });
+  });
+
+  test('saves an empty top-level list as an empty map', () => {
+    const fields = [{ ...listField, root: true }];
+
+    expect(serializeContent({ draft: createDraft(fields), locale: 'en', valueMap: {} })).toEqual(
+      {},
+    );
+  });
+});

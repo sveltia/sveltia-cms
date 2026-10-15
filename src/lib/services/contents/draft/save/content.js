@@ -1,4 +1,5 @@
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
+import { hasRootField } from '$lib/services/contents/entry/fields';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
@@ -7,15 +8,12 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  */
 
 /**
- * Collect the `comment` option of the given fields, and of the subfields of Object fields, to be
- * written before the keys in a YAML file, like Netlify/Decap CMS does. The subfields of a List
- * field are left out, as the comment would have to be repeated on every item.
- * @param {Field[]} [fields] Fields.
- * @param {string} [prefix] Key path prefix, e.g. a locale key followed by a period.
+ * Collect the `comment` option of the given fields, and of the subfields of Object fields.
+ * @param {Field[]} fields Fields.
+ * @param {string} prefix Key path prefix.
  * @returns {Record<FieldKeyPath, string>} Comments keyed by field key path.
- * @see https://decapcms.org/docs/configuration-options/#fields
  */
-export const getFieldComments = (fields = [], prefix = '') =>
+const collectFieldComments = (fields, prefix) =>
   Object.fromEntries(
     fields.flatMap((field) => {
       const { name, widget = 'string', comment } = field;
@@ -24,12 +22,28 @@ export const getFieldComments = (fields = [], prefix = '') =>
       const entries = isNonEmptyString(comment) ? [[keyPath, comment]] : [];
 
       if (widget === 'object' && 'fields' in field && Array.isArray(field.fields)) {
-        entries.push(...Object.entries(getFieldComments(field.fields, `${keyPath}.`)));
+        entries.push(...Object.entries(collectFieldComments(field.fields, `${keyPath}.`)));
       }
 
       return entries;
     }),
   );
+
+/**
+ * Collect the `comment` option of the given fields, and of the subfields of Object fields, to be
+ * written before the keys in a YAML file, like Netlify/Decap CMS does. The subfields of a List
+ * field are left out, as the comment would have to be repeated on every item. A top-level List or
+ * KeyValue field is saved without its own key, so its comment has nowhere to go, and could
+ * otherwise land on a list item or pair of the same name.
+ * @param {Field[]} [fields] Fields.
+ * @param {string} [prefix] Key path prefix, e.g. a locale key followed by a period.
+ * @returns {Record<FieldKeyPath, string>} Comments keyed by field key path.
+ * @see https://decapcms.org/docs/configuration-options/#fields
+ */
+export const getFieldComments = (fields = [], prefix = '') =>
+  hasRootField(fields, 'list') || hasRootField(fields, 'keyvalue')
+    ? {}
+    : collectFieldComments(fields, prefix);
 
 /**
  * Collect the field comments for a single-file entry, taking i18n single-file structures into

@@ -844,8 +844,9 @@
  * empty.
  * @property {boolean} [root] Whether to save the field value at the top-level of the data file
  * without the field name. It only works if the field is the only field in the collection or file,
- * and the file format is not TOML. If the `single_file` i18n structure is enabled, the lists will
- * still be saved under locale keys. Default: `false`. See the
+ * and the file format is not TOML, unless the `map_key_field` option stores the list as a map. If
+ * the `single_file` i18n structure is enabled, the lists will still be saved under locale keys.
+ * Default: `false`. See the
  * [documentation](https://sveltiacms.app/en/docs/fields/list#top-level-list) for details.
  */
 
@@ -872,13 +873,28 @@
  */
 
 /**
+ * Properties for a List field whose items can be stored as a map rather than an array.
+ * @typedef {object} MapListFieldProps
+ * @property {string} [map_key_field] Name of the subfield whose value becomes the key of each
+ * item, so the list is stored as a map of the keys to the items, without the subfield, rather than
+ * as an array, e.g. `{ harry: { title: … }, ron: { title: … } }`. The subfield must be a String
+ * field that is required in every locale, and with variable types, every type must have it. Its
+ * value must be unique within the list, and can’t be a whole number such as `1` or `2024`, as such
+ * keys don’t keep their order. The items are kept in the order of the map. An existing array is
+ * still loaded, and saved as a map. Default: none. See the
+ * [documentation](https://sveltiacms.app/en/docs/fields/list#keyed-list) for details.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1077
+ */
+
+/**
  * List field definition with multiple subfields.
- * @typedef {ComplexListFieldProps & ListFieldSubFieldsProps} ListFieldWithSubFields
+ * @typedef {ComplexListFieldProps & ListFieldSubFieldsProps & MapListFieldProps}
+ * ListFieldWithSubFields
  */
 
 /**
  * List field definition with variable types.
- * @typedef {ComplexListFieldProps & VariableFieldProps} ListFieldWithTypes
+ * @typedef {ComplexListFieldProps & VariableFieldProps & MapListFieldProps} ListFieldWithTypes
  */
 
 /**
