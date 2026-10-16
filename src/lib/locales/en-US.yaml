@@ -239,6 +239,14 @@ working_with_local_repo: Working with Local Repository
 working_with_test_repo: Working with Test Repository
 working_in_demo_mode: Demo Mode
 
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: Welcome to Sveltia CMS Demo
+  description: Feel free to explore the CMS and edit the sample content. Your changes are only saved in this browser. Nothing is published online, and no one else can see them.
+  reset_hint: To start over with the original content, select Erase All Data under Settings > Data Management.
+  button_label: Get Started
+
 # Account menu: action items for sign-out and app installation
 sign_out: Sign Out
 install_as_app: Install as App

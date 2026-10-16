@@ -12,6 +12,7 @@
   import ContentUpdatesToast from '$lib/components/contents/shared/content-updates-toast.svelte';
   import EntryParseErrorsToast from '$lib/components/contents/shared/entry-parse-errors-toast.svelte';
   import CustomPage from '$lib/components/custom-pages/custom-page.svelte';
+  import DemoWelcomeDialog from '$lib/components/global/demo-welcome-dialog.svelte';
   import LiveReloadInfobar from '$lib/components/global/infobars/live-reload-infobar.svelte';
   import MobilePromoInfobar from '$lib/components/global/infobars/mobile-promo-infobar.svelte';
   import NewLanguageInfobar from '$lib/components/global/infobars/new-language-infobar.svelte';
@@ -142,6 +143,7 @@
 <TranslatorApiKeyDialog />
 <EntryParseErrorsToast />
 <LocalGitNoticeToast />
+<DemoWelcomeDialog />
 <CloudinaryIframe />
 
 <style>

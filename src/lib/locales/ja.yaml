@@ -236,6 +236,14 @@ working_with_local_repo: ローカルリポジトリで作業中
 working_with_test_repo: テストリポジトリで作業中
 working_in_demo_mode: デモモード
 
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: Sveltia CMS デモへようこそ
+  description: CMS を自由に操作して、サンプルコンテンツを編集してみてください。変更内容はこのブラウザーにのみ保存されます。オンラインで公開されることはなく、他のユーザーに見られることもありません。
+  reset_hint: 元のコンテンツからやり直すには、設定 > データ管理 で「すべてのデータを消去」を選択してください。
+  button_label: はじめる
+
 # Account menu: action items for sign-out and app installation
 sign_out: ログアウト
 install_as_app: アプリとしてインストール

@@ -1,5 +1,8 @@
+import { LocalStorage } from '@sveltia/utils/storage';
+
 import { getUISettingsDB } from '$lib/services/app/ui-settings';
 import { backend } from '$lib/services/backends';
+import { isDemoSite } from '$lib/services/backends/fs/seed';
 import { user } from '$lib/services/user/account.svelte';
 import { env } from '$lib/services/user/env.svelte';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
@@ -88,4 +91,47 @@ export const createOneOffNotice = (name) => {
       setState(name, true);
     },
   };
+};
+
+/**
+ * Local storage key remembering that the user has seen the demo welcome dialog. The test backend
+ * has no repository database to keep it in, unlike the notices above. The Erase All Data option
+ * deletes it along with the demo repository, so the dialog greets the user again when the demo
+ * starts over.
+ */
+export const DEMO_WELCOME_STORAGE_KEY = 'sveltia-cms.demo-welcome-seen';
+
+/**
+ * Whether to show the dialog welcoming the user to the demo.
+ */
+export const showDemoWelcomeDialog = createRawState(false);
+
+/**
+ * Show the demo welcome dialog if the CMS runs as a demo and the user hasn’t seen it yet.
+ * @returns {Promise<void>}
+ */
+export const showDemoWelcomeDialogIfNeeded = async () => {
+  if (!isDemoSite(backend.current?.name)) {
+    return;
+  }
+
+  try {
+    showDemoWelcomeDialog.current = !(await LocalStorage.get(DEMO_WELCOME_STORAGE_KEY));
+  } catch {
+    // Storage access may be denied, e.g. when third-party cookies are blocked. Better to show the
+    // dialog on every visit than never
+    showDemoWelcomeDialog.current = true;
+  }
+};
+
+/**
+ * Remember that the user has seen the demo welcome dialog, so it doesn’t come back.
+ * @returns {Promise<void>}
+ */
+export const dismissDemoWelcomeDialog = async () => {
+  try {
+    await LocalStorage.set(DEMO_WELCOME_STORAGE_KEY, true);
+  } catch {
+    //
+  }
 };
