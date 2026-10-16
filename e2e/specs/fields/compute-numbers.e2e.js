@@ -102,3 +102,100 @@ test('leaves the result empty while an operand is empty', async ({ cms, page }) 
     .poll(async () => (await cms.readRepo())['content/orders/tea.yml'])
     .toBe('title: Tea\nprice: null\nquantity: 2\ntotal: null\nlines: []\n');
 });
+
+test.describe('list items', () => {
+  /**
+   * Invoices whose lines have an amount computed from the line’s own price and quantity, and whose
+   * total adds up the amounts. The total comes before the list, so it’s resolved before the amounts
+   * it adds up and has to catch up with them.
+   */
+  const INVOICE_CONFIG = {
+    ...CONFIG,
+    collections: [
+      {
+        ...CONFIG.collections[0],
+        name: 'invoices',
+        label: 'Invoices',
+        label_singular: 'Invoice',
+        folder: 'content/invoices',
+        fields: [
+          { name: 'title', label: 'Title' },
+          {
+            name: 'total',
+            label: 'Total',
+            widget: 'compute',
+            value_type: 'float',
+            value: 'sum({{fields.lines.*.amount}})',
+          },
+          {
+            name: 'lines',
+            label: 'Lines',
+            widget: 'list',
+            fields: [
+              { name: 'name', label: 'Name' },
+              { name: 'price', label: 'Price', widget: 'number', value_type: 'float' },
+              { name: 'quantity', label: 'Quantity', widget: 'number' },
+              {
+                name: 'amount',
+                label: 'Amount',
+                widget: 'compute',
+                value_type: 'float',
+                value: '{{fields.lines.*.price}} * {{fields.lines.*.quantity}}',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  test.use({ config: INVOICE_CONFIG });
+
+  test('computes each item from its own fields and adds up the items', async ({ cms, page }) => {
+    await cms.open();
+    await cms.signIn();
+    await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+
+    const editor = getEditor(page);
+    const lines = editor.getByRole('group', { name: /Lines/ });
+
+    await editor.getByRole('textbox', { name: 'Title' }).fill('March');
+
+    /**
+     * Add a line to the invoice.
+     * @param {number} index Index of the line.
+     * @param {string} name Name.
+     * @param {string} price Price.
+     * @param {string} quantity Quantity.
+     */
+    const addLine = async (index, name, price, quantity) => {
+      const prices = lines.getByRole('spinbutton', { name: 'Price' });
+
+      await lines.getByRole('button', { name: /^Add/ }).click();
+      // The number inputs of the new item render after its text input
+      await expect(prices).toHaveCount(index + 1);
+      await lines.getByRole('textbox', { name: 'Name' }).nth(index).fill(name);
+      await prices.nth(index).fill(price);
+      await lines.getByRole('spinbutton', { name: 'Quantity' }).nth(index).fill(quantity);
+    };
+
+    await addLine(0, 'Beans', '12.5', '2');
+    await addLine(1, 'Filters', '4.25', '3');
+
+    const total = editor
+      .getByRole('document', { name: 'Content Preview' })
+      .getByRole('group')
+      .filter({ has: page.getByRole('heading', { name: 'Total' }) });
+
+    await expect(total.getByRole('paragraph')).toHaveText('37.75');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/invoices/march.yml'])
+      .toBe(
+        'title: March\ntotal: 37.75\nlines:\n' +
+          '  - name: Beans\n    price: 12.5\n    quantity: 2\n    amount: 25\n' +
+          '  - name: Filters\n    price: 4.25\n    quantity: 3\n    amount: 12.75\n',
+      );
+  });
+});

@@ -11,7 +11,14 @@ const collectors = { errors: new Set(), warnings: new Set() };
 /** @type {any[]} */
 const fields = [
   { name: 'title', widget: 'string' },
-  { name: 'items', widget: 'list', fields: [{ name: 'id', widget: 'compute', value: '' }] },
+  {
+    name: 'items',
+    widget: 'list',
+    fields: [
+      { name: 'name', widget: 'string' },
+      { name: 'id', widget: 'compute', value: '' },
+    ],
+  },
 ];
 
 /**
@@ -44,7 +51,7 @@ describe('parseComputeFieldConfig', () => {
   });
 
   test('accepts prefixed tags that name fields of the entry', () => {
-    check('posts-{{fields.title}}-{{fields.items.*.id}}');
+    check('posts-{{fields.title}}-{{fields.items.*.name}}');
     expect(addMessage).not.toHaveBeenCalled();
   });
 
@@ -147,6 +154,80 @@ describe('parseComputeFieldConfig', () => {
     test('leaves a `value` that isn’t a string to the JSON schema', () => {
       check(42, {}, { value_type: 'int' });
       expect(addMessage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('wildcards', () => {
+    test('accepts a `*` standing for an item the field is in', () => {
+      check('{{fields.items.*.id}}-{{fields.title}}', { typedKeyPath: 'items.*.slug' });
+      check('{{fields.items.*.id}}', { typedKeyPath: 'items.*<product>.slug' });
+      check('{{fields.items.*.id}} + 1', { typedKeyPath: 'items.*.slug' }, { value_type: 'int' });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('accepts a `*` passed to an aggregate function', () => {
+      check('sum({{fields.items.*.id}})', { typedKeyPath: 'total' }, { value_type: 'int' });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('warns about a `*` standing for no item the field is in', () => {
+      const context = check('{{fields.items.*.id}}', { typedKeyPath: 'total' });
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith({
+        type: 'warning',
+        strKey: 'compute_field_wildcard_without_item',
+        values: { name: 'fields.items.*.id' },
+        context,
+        collectors,
+      });
+    });
+
+    test('warns about a `*` outside an aggregate function in an arithmetic expression', () => {
+      check('{{fields.items.*.id}} + 1', { typedKeyPath: 'total' }, { value_type: 'int' });
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ strKey: 'compute_field_wildcard_without_item' }),
+      );
+    });
+
+    test('checks no wildcard of a field of a custom editor component', () => {
+      check('{{fields.items.*.id}}', { collection: undefined, componentName: 'my-component' });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('checks no wildcard of an invalid arithmetic expression, which is reported instead', () => {
+      check('{{fields.items.*.id}} +', { typedKeyPath: 'total' }, { value_type: 'int' });
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ strKey: 'compute_field_invalid_expression' }),
+      );
+    });
+
+    test('ignores the tags other than field references', () => {
+      check('{{index}}-{{uuid}}', { typedKeyPath: undefined });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('self-references', () => {
+    test('warns about a field referring to itself', () => {
+      const context = check('{{fields.items.*.id}}-1');
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith({
+        type: 'warning',
+        strKey: 'compute_field_self_reference',
+        values: { name: 'fields.items.*.id' },
+        context,
+        collectors,
+      });
+    });
+
+    test('warns about a field adding itself up', () => {
+      check('sum({{fields.items.*.id}})', {}, { value_type: 'int' });
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ strKey: 'compute_field_self_reference' }),
+      );
     });
   });
 });

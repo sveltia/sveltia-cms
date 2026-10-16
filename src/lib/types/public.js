@@ -659,10 +659,14 @@
  * tags, which support transformations like `{{fields.title | upper}}`, `{{index}}` is the position
  * of the item in a list, which is saved as a number when used alone, and `{{uuid}}`,
  * `{{uuid_short}}` and `{{uuid_shorter}}` generate a UUID, which is kept once the value is saved.
- * With a numeric `value_type`, it’s an arithmetic expression instead, like `{{fields.price}} *
+ * In a list item, a `*` in a `fields.*` tag stands for the current item, so
+ * `{{fields.lines.*.price}}` is the price of the item the field is in. With a numeric
+ * `value_type`, it’s an arithmetic expression instead, like `{{fields.price}} *
  * {{fields.quantity}}`, which can have numbers, template tags other than the UUID tags, the `+`,
- * `-`, `*`, `/` and `%` operators, parentheses and the `abs`, `ceil`, `floor`, `max`, `min` and
- * `round` functions. The field is always hidden in the editor, and its value can’t be edited.
+ * `-`, `*`, `/` and `%` operators, parentheses, the `abs`, `ceil`, `floor` and `round` functions
+ * and the `avg`, `count`, `max`, `min` and `sum` aggregate functions, in which the last `*` of a
+ * tag stands for every item of the list, like `sum({{fields.lines.*.amount}})`, and empty values
+ * are left out. The field is always hidden in the editor, and its value can’t be edited.
  * @property {'string' | 'int' | 'float' | 'int/string' | 'float/string'} [value_type] Type of the
  * value. `string` makes the `value` option a template and saves the result as a string. The other
  * types make it an arithmetic expression: `int` and `float` save the result as an integer or a

@@ -1,9 +1,10 @@
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { applyTransformations } from '$lib/services/common/transformations';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import {
+  expandWildcards,
   formatComputedValue,
   getComputedValue,
   getListIndex,
@@ -364,6 +365,7 @@ describe('getComputedValue()', () => {
 
     test('should not generate a UUID', () => {
       expect(getComputedValue(getNumericArgs('{{uuid}}', 'float', {}))).toBeNull();
+      expect(getComputedValue(getNumericArgs('count({{uuid}})', 'int', {}))).toBe(0);
     });
 
     test('should leave the value empty for an invalid expression or an unknown tag', () => {
@@ -373,6 +375,123 @@ describe('getComputedValue()', () => {
 
     test('should treat the `string` value type as a template', () => {
       expect(getComputedValue(getNumericArgs('1 + 1', 'string', {}))).toBe('1 + 1');
+    });
+  });
+
+  describe('List items', () => {
+    /** @type {Record<string, any>} */
+    const fieldMap = {
+      'lines.*.name': { name: 'name', widget: 'string' },
+      'lines.*.price': { name: 'price', widget: 'number', value_type: 'float' },
+      'lines.*.qty': { name: 'qty', widget: 'number' },
+      'lines.*.amount': { name: 'amount', widget: 'compute', value_type: 'float', value: '' },
+      'orders.*.lines.*.amount': { name: 'amount', widget: 'number' },
+    };
+
+    const valueMap = {
+      'lines.0.name': 'Beans',
+      'lines.0.price': 12.5,
+      'lines.0.qty': 2,
+      'lines.0.amount': 25,
+      'lines.1.name': 'Filters',
+      'lines.1.price': 4,
+      'lines.1.qty': null,
+      'lines.1.amount': null,
+      'lines.2.name': '',
+      'lines.2.price': 0.5,
+      'lines.2.qty': 3,
+      'lines.2.amount': 1.5,
+      'orders.0.lines.0.amount': 1,
+      'orders.0.lines.1.amount': 2,
+      'orders.1.lines.0.amount': 10,
+    };
+
+    /**
+     * Get the arguments for a Compute field.
+     * @param {string} value Value template or arithmetic expression.
+     * @param {string} keyPath Key path of the field.
+     * @param {string} [valueType] Value type.
+     * @returns {any} Arguments.
+     */
+    const getListArgs = (value, keyPath, valueType) => ({
+      ...getArgs(value, keyPath),
+      fieldConfig: { name: 'x', widget: 'compute', value, value_type: valueType },
+      valueMap,
+    });
+
+    afterEach(() => {
+      vi.mocked(getField).mockReset();
+    });
+
+    beforeEach(() => {
+      vi.mocked(getField).mockImplementation(
+        ({ keyPath }) => fieldMap[keyPath.replace(/\.\d+(?=\.|$)/g, '.*')],
+      );
+      vi.mocked(getFieldDisplayValue).mockImplementation(({ valueMap: map = {}, keyPath }) =>
+        String(map[keyPath] ?? ''),
+      );
+    });
+
+    test('should resolve a field of the current item in a template', () => {
+      expect(getComputedValue(getListArgs('{{fields.lines.*.name}}!', 'lines.1.slug'))).toBe(
+        'Filters!',
+      );
+    });
+
+    test('should resolve a field of the current item in an arithmetic expression', () => {
+      const expression = '{{fields.lines.*.price}} * {{fields.lines.*.qty}}';
+
+      expect(getComputedValue(getListArgs(expression, 'lines.0.amount', 'float'))).toBe(25);
+      expect(getComputedValue(getListArgs(expression, 'lines.1.amount', 'float'))).toBeNull();
+    });
+
+    test('should resolve a `*` without a current item to nothing', () => {
+      expect(getComputedValue(getListArgs('[{{fields.lines.*.name}}]', 'title'))).toBe('[]');
+      expect(
+        getComputedValue(getListArgs('{{fields.lines.*.price}}', 'total', 'float')),
+      ).toBeNull();
+    });
+
+    test('should aggregate every item of a list', () => {
+      expect(
+        getComputedValue(getListArgs('sum({{fields.lines.*.amount}})', 'total', 'float')),
+      ).toBe(26.5);
+      expect(getComputedValue(getListArgs('count({{fields.lines.*.name}})', 'total', 'int'))).toBe(
+        2,
+      );
+      expect(
+        getComputedValue(getListArgs("sum({{fields.lines.*.qty | default('1')}})", 'total', 'int')),
+      ).toBe(6);
+      expect(getComputedValue(getListArgs('max({{fields.lines.*.price}})', 'total', 'float'))).toBe(
+        12.5,
+      );
+    });
+
+    test('should aggregate every item from within an item', () => {
+      const expression = 'round({{fields.lines.*.amount}} / sum({{fields.lines.*.amount}}) * 100)';
+
+      expect(getComputedValue(getListArgs(expression, 'lines.2.share', 'int'))).toBe(6);
+    });
+
+    test('should aggregate the items of the current item of an outer list', () => {
+      const expression = 'sum({{fields.orders.*.lines.*.amount}})';
+
+      expect(getComputedValue(getListArgs(expression, 'orders.0.subtotal', 'int'))).toBe(3);
+      expect(getComputedValue(getListArgs(expression, 'orders.1.subtotal', 'int'))).toBe(10);
+      expect(getComputedValue(getListArgs(expression, 'total', 'int'))).toBe(13);
+    });
+
+    test('should aggregate the index and a field without a `*`', () => {
+      expect(getComputedValue(getListArgs('sum({{index}}, 1)', 'lines.2.x', 'int'))).toBe(3);
+      expect(
+        getComputedValue(getListArgs('sum({{fields.lines.0.price}}, {{title}})', 'x', 'float')),
+      ).toBe(12.5);
+    });
+
+    test('should aggregate an empty list', () => {
+      expect(getComputedValue(getListArgs('sum({{fields.items.*.amount}})', 'total', 'int'))).toBe(
+        0,
+      );
     });
   });
 
@@ -473,6 +592,34 @@ describe('getComputedValue()', () => {
       args.valueMap['body:c1:count'] = 1500;
 
       expect(getComputedValue(args)).toBe('n-1500');
+    });
+
+    test('should resolve a field of the current item of the component or the entry', () => {
+      vi.mocked(getField).mockImplementation(({ componentName, keyPath }) =>
+        componentName
+          ? keyPath.startsWith('slides.')
+            ? { name: 'caption' }
+            : undefined
+          : { name: 'name' },
+      );
+      vi.mocked(getFieldDisplayValue).mockImplementation(
+        ({ valueMap = {}, keyPath }) => valueMap[keyPath],
+      );
+
+      const args = {
+        ...getArgs(
+          '{{fields.slides.*.caption}}/{{fields.lines.*.name}}',
+          'lines.1.body:c1:slides.0.id',
+        ),
+        keyPathPrefix: 'lines.1.body:c1:',
+        valueMap: {
+          'lines.1.body:c1:__sc_component_name': 'section',
+          'lines.1.body:c1:slides.0.caption': 'Hello',
+        },
+        entryValueMap: { 'lines.0.name': 'Beans', 'lines.1.name': 'Filters' },
+      };
+
+      expect(getComputedValue(args)).toBe('Hello/Filters');
     });
 
     test('should look up the entry’s fields for a component without a name', () => {
@@ -786,5 +933,64 @@ describe('formatComputedValue()', () => {
     expect(
       formatComputedValue({ value: undefined, fieldConfig: stringConfig, canonicalLocale: 'en' }),
     ).toBe('');
+  });
+});
+
+describe('expandWildcards()', () => {
+  const valueMap = {
+    'a.0.b': 1,
+    'a.2.b': 2,
+    'a.1.c.0.d': 3,
+    'a.1.c.1.d': 4,
+    'a.2.c.0.d': 5,
+  };
+
+  test('should return a key path without a wildcard as is', () => {
+    expect(
+      expandWildcards({ fieldKeyPath: 'a.0.b', ownKeyPath: 'x', allItems: false, valueMap }),
+    ).toEqual(['a.0.b']);
+  });
+
+  test('should resolve a wildcard to the current item', () => {
+    expect(
+      expandWildcards({ fieldKeyPath: 'a.*.b', ownKeyPath: 'a.2.x', allItems: false, valueMap }),
+    ).toEqual(['a.2.b']);
+    expect(
+      expandWildcards({
+        fieldKeyPath: 'a.*.c.*.d',
+        ownKeyPath: 'a.1.c.0.e',
+        allItems: false,
+        valueMap,
+      }),
+    ).toEqual(['a.1.c.0.d']);
+  });
+
+  test('should return nothing for a wildcard without a current item', () => {
+    [
+      ['a.*.b', 'x'],
+      ['a.*.b', 'b.0.x'],
+      ['a.*.b', 'a.x'],
+      ['a.*.c.*.d', 'a.1.x'],
+    ].forEach(([fieldKeyPath, ownKeyPath]) => {
+      expect(expandWildcards({ fieldKeyPath, ownKeyPath, allItems: false, valueMap })).toEqual([]);
+    });
+  });
+
+  test('should expand the last wildcard to every item for an aggregate function', () => {
+    expect(
+      expandWildcards({ fieldKeyPath: 'a.*.b', ownKeyPath: 'x', allItems: true, valueMap }),
+    ).toEqual(['a.0.b', 'a.1.b', 'a.2.b']);
+    expect(
+      expandWildcards({ fieldKeyPath: 'a.*.b', ownKeyPath: 'a.0.x', allItems: true, valueMap }),
+    ).toEqual(['a.0.b', 'a.1.b', 'a.2.b']);
+    expect(
+      expandWildcards({ fieldKeyPath: 'a.*.c.*.d', ownKeyPath: 'a.1.x', allItems: true, valueMap }),
+    ).toEqual(['a.1.c.0.d', 'a.1.c.1.d']);
+    expect(
+      expandWildcards({ fieldKeyPath: 'a.*.c.*.d', ownKeyPath: 'x', allItems: true, valueMap }),
+    ).toEqual(['a.1.c.0.d', 'a.1.c.1.d', 'a.2.c.0.d']);
+    expect(
+      expandWildcards({ fieldKeyPath: 'z.*.b', ownKeyPath: 'x', allItems: true, valueMap }),
+    ).toEqual([]);
   });
 });

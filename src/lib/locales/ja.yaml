@@ -2125,6 +2125,10 @@ config:
     conflicting_timezone_options: '`picker_utc` と新しいタイムゾーンオプション (`input_timezone` または `output_utc`) の両方が設定されています。新しいオプションが優先されます。設定から `picker_utc` を削除することを検討してください。'
     # Don’t localize `localize_format` and `format`
     localize_format_without_format: 'フィールドに `format` オプションがなく、値が ISO 8601 形式で保存されるため、`localize_format` オプションは効果がありません。'
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: Compute フィールドの `value` オプションで `{$name}` が参照されていますが、このフィールドは `*` が表すリストの項目内にないため、空の値になります。リストのすべての項目を使えるのは `sum()` などの集計関数だけです。
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: Compute フィールドの `value` オプションで `{$name}` としてフィールド自身が参照されているため、計算のたびに値が変わり、確定しません。
     # Don’t localize `localize_format`, `true` and `de`
     localize_format_without_i18n: '`localize_format` オプションが `true` に設定されていますが、コレクションで i18n が有効になっていないため、値は英語で書き込まれます。代わりに `de` のようなロケールコードを指定してください。'
     # {$locale} is the locale code from the configuration; Don’t localize `localize_format`

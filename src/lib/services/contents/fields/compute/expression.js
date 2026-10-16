@@ -12,11 +12,37 @@ import { toFixed } from '$lib/services/utils/number';
  */
 
 /**
+ * A template tag in an arithmetic expression.
+ * @typedef {object} ExpressionTag
+ * @property {string} content Content of the tag, e.g. `fields.price` for `{{fields.price}}`.
+ * @property {boolean} allItems Whether the tag is an argument of an aggregate function, like
+ * `{{fields.lines.*.amount}}` in `sum({{fields.lines.*.amount}})`. It then resolves to a list of
+ * values, one for each item the last `*` in the tag stands for.
+ */
+
+/**
  * A parsed arithmetic expression.
  * @typedef {object} ParsedExpression
  * @property {ExpressionNode} [tree] Syntax tree. `undefined` if the expression is invalid.
- * @property {string[]} tags Content of the template tags in the expression, e.g. `fields.price`
- * for `{{fields.price}}`, in the order they appear. A `tag` node refers to one by its index.
+ * @property {ExpressionTag[]} tags Template tags in the expression, in the order they appear. A
+ * `tag` node refers to one by its index.
+ */
+
+/**
+ * Value of a template tag in an arithmetic expression: a number, `undefined` for an empty value or
+ * something other than a number, or the resolved values of a tag that covers every item.
+ * @typedef {number | undefined | unknown[]} ExpressionOperand
+ */
+
+/**
+ * Function resolving a template tag of an arithmetic expression.
+ * @callback ExpressionTagResolver
+ * @param {string} content Content of the tag, e.g. `fields.price | default('0')` for
+ * `{{fields.price | default('0')}}`.
+ * @param {{ allItems: boolean }} options Options. With `allItems`, the tag is an argument of an
+ * aggregate function, and the function returns a list of values, one for each item the last `*` in
+ * the tag stands for, or a list with the single value of a tag without a `*`.
+ * @returns {any} Resolved value, or values with `allItems`.
  */
 
 /**
@@ -47,15 +73,14 @@ const TOKEN_REGEX =
 const OPERAND_REGEX = /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[-+]?\d+)?$/i;
 
 /**
- * Functions available in an expression, with the number of arguments each one accepts.
+ * Functions available in an expression that take numbers, with the number of arguments each one
+ * accepts.
  * @type {Record<string, { minArgs: number, maxArgs: number, fn: (...args: number[]) => number }>}
  */
 const FUNCTIONS = {
   abs: { minArgs: 1, maxArgs: 1, fn: Math.abs },
   ceil: { minArgs: 1, maxArgs: 1, fn: Math.ceil },
   floor: { minArgs: 1, maxArgs: 1, fn: Math.floor },
-  max: { minArgs: 1, maxArgs: Infinity, fn: Math.max },
-  min: { minArgs: 1, maxArgs: Infinity, fn: Math.min },
   round: {
     minArgs: 1,
     maxArgs: 2,
@@ -70,6 +95,14 @@ const FUNCTIONS = {
   },
 };
 
+/**
+ * Aggregate functions available in an expression, which take any number of arguments: `avg`,
+ * `count`, `max`, `min` and `sum`. A template tag passed directly to one covers every item of a
+ * list, like `{{fields.lines.*.amount}}`, and its empty values are left out, so an item that has
+ * yet to be filled in doesn’t empty the result. `count` counts the values, whatever they are; the
+ * others compute from numbers.
+ */
+const AGGREGATE_FUNCTIONS = ['avg', 'count', 'max', 'min', 'sum'];
 /**
  * Cache of parsed expressions, keyed by the expression. A Compute field is resolved whenever
  * anything in the draft changes, while its expression only changes with the configuration.
@@ -119,11 +152,14 @@ const tokenize = (expression) => {
  * division and remainder bind tighter than addition and subtraction, and operators of the same
  * precedence are evaluated from left to right.
  * @param {ExpressionToken[]} tokens Tokens.
- * @returns {ExpressionNode | undefined} Syntax tree, or `undefined` if the tokens don’t form a
- * valid expression.
+ * @returns {{ tree: ExpressionNode | undefined, allItemsTagIndexes: Set<number> }} Syntax tree,
+ * `undefined` if the tokens don’t form a valid expression, and the indexes of the template tags
+ * passed directly to an aggregate function.
  */
 const buildTree = (tokens) => {
   let position = 0;
+  /** @type {Set<number>} */
+  const allItemsTagIndexes = new Set();
 
   /**
    * Consume the next token if it’s the given punctuator.
@@ -216,12 +252,28 @@ const buildTree = (tokens) => {
       position += 1;
 
       const { name } = token;
-      const { minArgs, maxArgs } = FUNCTIONS[name] ?? {};
-      const args = Object.hasOwn(FUNCTIONS, name) && accept('(') ? parseArgs() : undefined;
+      const aggregate = AGGREGATE_FUNCTIONS.includes(name);
 
-      return args && args.length >= minArgs && args.length <= maxArgs
-        ? { type: 'call', name, args }
-        : undefined;
+      const { minArgs, maxArgs } = aggregate
+        ? { minArgs: 1, maxArgs: Infinity }
+        : (FUNCTIONS[name] ?? {});
+
+      const args =
+        (aggregate || Object.hasOwn(FUNCTIONS, name)) && accept('(') ? parseArgs() : undefined;
+
+      if (!args || args.length < minArgs || args.length > maxArgs) {
+        return undefined;
+      }
+
+      if (aggregate) {
+        args.forEach((arg) => {
+          if (arg.type === 'tag') {
+            allItemsTagIndexes.add(arg.index);
+          }
+        });
+      }
+
+      return { type: 'call', name, args };
     }
 
     if (accept('(')) {
@@ -264,14 +316,14 @@ const buildTree = (tokens) => {
   const tree = parseAdditive();
 
   // Any token left over, like the second number in `1 2`, makes the expression invalid
-  return position === tokens.length ? tree : undefined;
+  return { tree: position === tokens.length ? tree : undefined, allItemsTagIndexes };
 };
 
 /**
  * Parse the given arithmetic expression, such as `{{fields.price}} * {{fields.quantity}}`. It can
- * have numbers, template tags, the `+`, `-`, `*`, `/` and `%` operators, parentheses and the
- * `abs`, `ceil`, `floor`, `max`, `min` and `round` functions. The result is cached and shared
- * between callers.
+ * have numbers, template tags, the `+`, `-`, `*`, `/` and `%` operators, parentheses, the `abs`,
+ * `ceil`, `floor` and `round` functions and the `avg`, `count`, `max`, `min` and `sum` aggregate
+ * functions. The result is cached and shared between callers.
  * @param {string} expression Expression.
  * @returns {ParsedExpression} Parsed expression.
  */
@@ -281,17 +333,27 @@ export const parseExpression = (expression) =>
     expression,
     () => {
       /** @type {string[]} */
-      const tags = [];
+      const contents = [];
 
       const tokens = tokenize(
         replaceTemplateTags(expression, (_match, placeholder) => {
-          tags.push(placeholder);
+          contents.push(placeholder);
 
           return TAG_PLACEHOLDER;
         }),
       );
 
-      return { tree: tokens ? buildTree(tokens) : undefined, tags };
+      const { tree, allItemsTagIndexes } = tokens
+        ? buildTree(tokens)
+        : { tree: undefined, allItemsTagIndexes: new Set() };
+
+      return {
+        tree,
+        tags: contents.map((content, index) => ({
+          content,
+          allItems: allItemsTagIndexes.has(index),
+        })),
+      };
     },
     100,
   );
@@ -315,9 +377,78 @@ const toOperand = (value) => {
 };
 
 /**
+ * Check whether the given resolved value is empty.
+ * @param {unknown} value Value.
+ * @returns {boolean} Result.
+ */
+const isEmptyValue = (value) => !String(value ?? '').trim();
+
+/**
+ * Evaluate a call of an aggregate function.
+ * @param {string} name Function name.
+ * @param {ExpressionNode[]} args Arguments.
+ * @param {ExpressionOperand[]} operands Values of the template tags, by index.
+ * @param {(node: ExpressionNode) => number | undefined} evaluate Function evaluating an argument
+ * other than a template tag covering every item.
+ * @returns {number | undefined} Result, or `undefined` if a value isn’t a number, or there is no
+ * value to compute the average, the maximum or the minimum of.
+ */
+const evaluateAggregate = (name, args, operands, evaluate) => {
+  /** @type {number[]} */
+  const values = [];
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const arg of args) {
+    const operand = arg.type === 'tag' ? operands[arg.index] : undefined;
+
+    if (Array.isArray(operand)) {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const value of operand.filter((_value) => !isEmptyValue(_value))) {
+        // Anything counts, while the others need a number
+        const number = name === 'count' ? 0 : toOperand(value);
+
+        if (number === undefined) {
+          return undefined;
+        }
+
+        values.push(number);
+      }
+    } else {
+      const value = evaluate(arg);
+
+      if (value === undefined) {
+        return undefined;
+      }
+
+      values.push(value);
+    }
+  }
+
+  if (name === 'count') {
+    return values.length;
+  }
+
+  const sum = values.reduce((total, value) => total + value, 0);
+
+  if (name === 'sum') {
+    return sum;
+  }
+
+  if (!values.length) {
+    return undefined;
+  }
+
+  if (name === 'avg') {
+    return sum / values.length;
+  }
+
+  return name === 'max' ? Math.max(...values) : Math.min(...values);
+};
+
+/**
  * Evaluate the given syntax tree.
  * @param {ExpressionNode} node Node.
- * @param {(number | undefined)[]} operands Values of the template tags, by index.
+ * @param {ExpressionOperand[]} operands Values of the template tags, by index.
  * @returns {number | undefined} Result, or `undefined` if an operand is missing.
  */
 const evaluateNode = (node, operands) => {
@@ -326,7 +457,8 @@ const evaluateNode = (node, operands) => {
   }
 
   if (node.type === 'tag') {
-    return operands[node.index];
+    // A tag covering every item is only passed to an aggregate function, which reads it itself
+    return /** @type {number | undefined} */ (operands[node.index]);
   }
 
   if (node.type === 'unary') {
@@ -340,6 +472,12 @@ const evaluateNode = (node, operands) => {
   }
 
   if (node.type === 'call') {
+    if (AGGREGATE_FUNCTIONS.includes(node.name)) {
+      return evaluateAggregate(node.name, node.args, operands, (arg) =>
+        evaluateNode(arg, operands),
+      );
+    }
+
     const args = node.args.map((arg) => evaluateNode(arg, operands));
 
     return args.includes(undefined)
@@ -372,8 +510,7 @@ const evaluateNode = (node, operands) => {
  * Evaluate the given arithmetic expression. Each template tag in it is resolved with the given
  * function, and the value it resolves to is used as a number.
  * @param {string} expression Expression. See {@link parseExpression} for the syntax.
- * @param {(placeholder: string) => any} resolveTag Function resolving a template tag, given its
- * content, e.g. `fields.price | default('0')` for `{{fields.price | default('0')}}`.
+ * @param {ExpressionTagResolver} resolveTag Function resolving a template tag.
  * @returns {number | undefined} Result. `undefined` if the expression is invalid, a tag resolves to
  * an empty value or something other than a number, or the result isn’t a finite number, as with a
  * division by zero.
@@ -387,7 +524,11 @@ export const evaluateExpression = (expression, resolveTag) => {
 
   const result = evaluateNode(
     tree,
-    tags.map((tag) => toOperand(resolveTag(tag))),
+    tags.map(({ content, allItems }) =>
+      allItems
+        ? [resolveTag(content, { allItems })].flat()
+        : toOperand(resolveTag(content, { allItems })),
+    ),
   );
 
   return result !== undefined && Number.isFinite(result) ? result : undefined;
