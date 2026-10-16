@@ -230,4 +230,177 @@ describe('parseComputeFieldConfig', () => {
       );
     });
   });
+
+  describe('reference cycles', () => {
+    /**
+     * Get a Compute field configuration.
+     * @param {string} name Field name.
+     * @param {string} value The `value` option.
+     * @param {string} [valueType] The `value_type` option.
+     * @returns {any} Field configuration.
+     */
+    const compute = (name, value, valueType) => ({
+      name,
+      widget: 'compute',
+      value,
+      ...(valueType ? { value_type: valueType } : {}),
+    });
+
+    /**
+     * Check a Compute field of a collection with the given fields.
+     * @param {any[]} collectionFields Fields of the collection.
+     * @param {string} typedKeyPath Typed key path of the field to check.
+     * @returns {any} The context the check ran with.
+     */
+    const checkIn = (collectionFields, typedKeyPath) =>
+      // The `value` of the checked field doesn’t matter: the cycles are found from the collection
+      check('', {
+        collection: { name: 'invoices', folder: 'content/invoices', fields: collectionFields },
+        typedKeyPath,
+      });
+
+    /**
+     * Get the cycle warnings reported so far.
+     * @returns {any[]} `addMessage` arguments.
+     */
+    const getCycleWarnings = () =>
+      vi
+        .mocked(addMessage)
+        .mock.calls.map(([args]) => args)
+        .filter(({ strKey }) => strKey === 'compute_field_reference_cycle');
+
+    test('reports a cycle of two fields once', () => {
+      const cycleFields = [compute('a', '{{fields.b}}-a'), compute('b', '{{fields.a}}-b')];
+      const context = checkIn(cycleFields, 'a');
+
+      checkIn(cycleFields, 'b');
+
+      expect(getCycleWarnings()).toEqual([
+        {
+          type: 'warning',
+          strKey: 'compute_field_reference_cycle',
+          values: { name: 'fields.b' },
+          context,
+          collectors,
+        },
+      ]);
+    });
+
+    test('reports a cycle of three fields once', () => {
+      const cycleFields = [
+        compute('c', '{{fields.a}} + 1', 'int'),
+        compute('b', '{{fields.c}} + 1', 'int'),
+        compute('a', '{{fields.b}} + 1', 'int'),
+      ];
+
+      ['a', 'b', 'c'].forEach((name) => checkIn(cycleFields, name));
+
+      expect(getCycleWarnings()).toEqual([
+        expect.objectContaining({ values: { name: 'fields.b' } }),
+      ]);
+      expect(getCycleWarnings()[0].context.typedKeyPath).toBe('a');
+    });
+
+    test('reports a cycle between a list item and the entry', () => {
+      const cycleFields = [
+        compute('total', 'sum({{fields.lines.*.amount}})', 'float'),
+        {
+          name: 'lines',
+          widget: 'list',
+          fields: [compute('amount', '{{fields.total}} / 2', 'float')],
+        },
+      ];
+
+      checkIn(cycleFields, 'total');
+      checkIn(cycleFields, 'lines.*.amount');
+
+      expect(getCycleWarnings()).toEqual([
+        expect.objectContaining({ values: { name: 'fields.total' } }),
+      ]);
+      expect(getCycleWarnings()[0].context.typedKeyPath).toBe('lines.*.amount');
+    });
+
+    test('finds the fields in objects, variable types and single-subfield lists', () => {
+      const cycleFields = [
+        compute('total', '{{fields.lines.0.amount}}-{{fields.meta.x}}-{{fields.tags.*}}'),
+        {
+          name: 'lines',
+          widget: 'list',
+          types: [{ name: 'product', fields: [compute('amount', '{{fields.total}}')] }],
+        },
+        {
+          name: 'meta',
+          widget: 'object',
+          fields: [compute('x', '{{fields.meta.y}}')],
+          types: [{ name: 'other', fields: [compute('y', '{{fields.meta.x}}')] }],
+        },
+        { name: 'tags', widget: 'list', field: compute('tag', '{{fields.total}}') },
+        { name: 'notes', widget: 'list', fields: 'invalid' },
+        null,
+      ];
+
+      ['total', 'lines.*<product>.amount', 'meta.x', 'meta<other>.y', 'tags.*'].forEach(
+        (typedKeyPath) => checkIn(cycleFields, typedKeyPath),
+      );
+
+      expect(getCycleWarnings().map(({ context: { typedKeyPath } }) => typedKeyPath)).toEqual([
+        'lines.*<product>.amount',
+        'meta.x',
+      ]);
+    });
+
+    test('follows a reference in a transformation argument', () => {
+      const cycleFields = [
+        compute('a', "{{fields.x | default('{{fields.b | upper}}')}}-a"),
+        compute('b', '{{fields.a}}-b'),
+      ];
+
+      checkIn(cycleFields, 'a');
+
+      expect(getCycleWarnings()).toEqual([
+        expect.objectContaining({ values: { name: 'fields.b' } }),
+      ]);
+    });
+
+    test('leaves a field adding up its own key path in every type to the self-reference check', () => {
+      const typedFields = [
+        {
+          name: 'lines',
+          widget: 'list',
+          types: ['a', 'b'].map((name) => ({
+            name,
+            fields: [compute('amount', 'sum({{fields.lines.*.amount}})', 'int')],
+          })),
+        },
+      ];
+
+      checkIn(typedFields, 'lines.*<a>.amount');
+      checkIn(typedFields, 'lines.*<b>.amount');
+
+      expect(getCycleWarnings()).toEqual([]);
+    });
+
+    test('reports nothing for references without a cycle', () => {
+      const chainFields = [
+        compute('a', '{{fields.b}}'),
+        compute('b', '{{fields.c}}'),
+        compute('c', '{{fields.title}}-{{index}}'),
+        compute('total', "sum({{fields.lines.*.amount}}) + {{fields.c | default('0')}}", 'int'),
+        {
+          name: 'lines',
+          widget: 'list',
+          fields: [compute('amount', '{{fields.lines.*.price}}', 'int'), { name: 'price' }],
+        },
+        compute('self', '{{fields.self}}-1'),
+        compute('invalid', '{{fields.a}} +', 'int'),
+        { name: 'other', widget: 'compute', value: 42 },
+      ];
+
+      ['a', 'b', 'c', 'total', 'lines.*.amount', 'self', 'invalid', 'other'].forEach(
+        (typedKeyPath) => checkIn(chainFields, typedKeyPath),
+      );
+
+      expect(getCycleWarnings()).toEqual([]);
+    });
+  });
 });

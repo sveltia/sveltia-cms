@@ -2234,6 +2234,8 @@ config:
     compute_field_wildcard_without_item: The Compute field’s `value` option refers to `{$name}`, but the field isn’t in an item of the list that `*` stands for, so it resolves to nothing. Only an aggregate function like `sum()` can use every item of a list.
     # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
     compute_field_self_reference: The Compute field’s `value` option refers to the field itself as `{$name}`, so its value changes every time it’s computed and never settles.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: The Compute field’s `value` option refers to `{$name}`, another Compute field that refers back to this field, directly or through other fields, so their values never settle.
     # Don’t localize `localize_format`, `true` and `de`
     localize_format_without_i18n: The `localize_format` option is `true`, but i18n isn’t enabled for the collection, so the value is written in English. Set the option to a locale code like `de` instead.
     # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
