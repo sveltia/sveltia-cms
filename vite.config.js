@@ -615,6 +615,15 @@ export default defineConfig({
       // Keep exports in the ES module
       // https://stackoverflow.com/q/71500190
       preserveEntrySignatures: 'strict',
+      // Inline every imported constant, not only those in conditions, which saves about 1 KB of
+      // the compressed bundle though the raw size grows slightly
+      optimization: {
+        inlineConst: { mode: 'all', pass: 2 },
+      },
+      experimental: {
+        // Skip compiling the unused modules a barrel file re-exports
+        lazyBarrel: true,
+      },
       // Silence some warnings that are not relevant to our use case
       checks: {
         // `import.meta` becomes `{}` in the IIFE build. The only use of ours, `import.meta.url` in
