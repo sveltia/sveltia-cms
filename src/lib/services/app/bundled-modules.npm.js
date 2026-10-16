@@ -22,6 +22,8 @@ export const BUNDLED_MODULE_LOADERS = {
   // eslint-disable-next-line jsdoc/require-jsdoc
   leaflet: () => import('leaflet/dist/leaflet-src.esm.js'),
   // eslint-disable-next-line jsdoc/require-jsdoc
+  'pdfjs-dist': () => import('pdfjs-dist'),
+  // eslint-disable-next-line jsdoc/require-jsdoc
   svgo: () => import('svgo/browser'),
   // eslint-disable-next-line jsdoc/require-jsdoc
   'terra-draw': () => import('terra-draw'),

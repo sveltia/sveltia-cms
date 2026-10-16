@@ -1,30 +1,12 @@
-import { getUnpkgURL } from '$lib/services/app/dependencies';
+import { loadModule } from '$lib/services/app/dependencies';
 import { exportCanvasAsBlob } from '$lib/services/utils/media/image/encode';
 import { resolveTransformOptions } from '$lib/services/utils/media/image/options';
 import { resizeCanvas } from '$lib/services/utils/media/image/resize';
+import { createLoadingOptions } from '$lib/services/utils/media/pdf-options';
 
 /**
  * @import { InternalImageTransformationOptions } from '$lib/types/private';
  */
-
-/**
- * PDF.js distribution URL. We don’t bundle the library due to the large size and multiple files.
- * However, having it as a dependency in `package.json` allows us to include the latest version in
- * the UNPKG URL, making it faster to load the script without waiting for a redirect.
- * @see https://github.com/mozilla/pdf.js
- */
-const PDFJS_DIST_URL = getUnpkgURL('pdfjs-dist');
-const PDFJS_MODULE_URL = `${PDFJS_DIST_URL}/build/pdf.min.mjs`;
-const PDFJS_WORKER_URL = `${PDFJS_DIST_URL}/build/pdf.worker.min.mjs`;
-
-const PDFJS_GET_DOC_OPTIONS = {
-  isEvalSupported: false,
-  disableAutoFetch: true,
-  cMapUrl: `${PDFJS_DIST_URL}/cmaps/`,
-  iccUrl: `${PDFJS_DIST_URL}/iccs/`,
-  standardFontDataUrl: `${PDFJS_DIST_URL}/standard_fonts/`,
-  wasmUrl: `${PDFJS_DIST_URL}/wasm/`,
-};
 
 /**
  * Placeholder for the PDF.js module.
@@ -47,8 +29,7 @@ export const renderPDF = async (blob, options = {}) => {
   // Lazily load the PDF.js library
   if (!pdfjs) {
     try {
-      pdfjs = await import(/* @vite-ignore */ PDFJS_MODULE_URL);
-      pdfjs.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+      pdfjs = await loadModule('pdfjs-dist', 'build/pdf.min.mjs');
     } catch {
       throw new Error('Failed to load PDF.js library');
     }
@@ -60,12 +41,16 @@ export const renderPDF = async (blob, options = {}) => {
   // Without a `worker` option, every document gets a Web Worker of its own, which is only
   // terminated when the loading task is destroyed. A thumbnail is rendered once, so the task has to
   // be destroyed right after, or each PDF would leave a worker thread running for the rest of the
-  // session, holding the parsed document in memory
+  // session, holding the parsed document in memory. A worker passed in the options is ended by
+  // `dispose()` instead
   /** @type {import('pdfjs-dist').PDFDocumentLoadingTask | undefined} */
   let loadingTask;
+  /** @type {ReturnType<typeof createLoadingOptions> | undefined} */
+  let loadingOptions;
 
   try {
-    loadingTask = pdfjs.getDocument({ ...PDFJS_GET_DOC_OPTIONS, url });
+    loadingOptions = createLoadingOptions(pdfjs);
+    loadingTask = pdfjs.getDocument({ disableAutoFetch: true, ...loadingOptions.options, url });
 
     const pdfDocument = await loadingTask.promise;
     const pdfPage = await pdfDocument.getPage(1);
@@ -93,6 +78,8 @@ export const renderPDF = async (blob, options = {}) => {
       // The page has been rendered onto the canvas, or the rendering has already failed, so a
       // failure to clean up changes nothing for the caller
     }
+
+    loadingOptions?.dispose?.();
   }
 
   return exportCanvasAsBlob(canvas, { format, quality, nativeOnly });

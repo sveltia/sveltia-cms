@@ -11,7 +11,7 @@
     revokeAssetBlobURLIfNeeded,
     revokeBlobURLIfNeeded,
   } from '$lib/services/assets/info';
-  import { hasPDFThumbnail, THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
+  import { isPDF, THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
   import { requestFlushSync } from '$lib/services/utils/render';
   import { createLatestGuard } from '$lib/services/utils/scheduling';
   import { watchAsync } from '$lib/services/utils/state.svelte';
@@ -111,7 +111,7 @@
   const isThumbnail = $derived(!!asset && !!variant && !controls);
   const isImage = $derived(
     kind === 'image' ||
-      (!!asset && hasPDFThumbnail(asset.name)) ||
+      (!!asset && isPDF(asset.name)) ||
       (isThumbnail && THUMBNAIL_KINDS.includes(kind)),
   );
 

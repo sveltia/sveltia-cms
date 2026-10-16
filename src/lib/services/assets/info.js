@@ -2,7 +2,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import mime from 'mime';
 
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
-import { canCreateThumbnail, hasPDFThumbnail } from '$lib/services/assets/kinds';
+import { canCreateThumbnail, isPDF } from '$lib/services/assets/kinds';
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
 import {
@@ -313,15 +313,14 @@ const limitThumbnailGeneration = createConcurrencyLimiter(4);
  * Get a thumbnail blob for the given asset, generating it from the original file if it’s not in the
  * cache database yet.
  * @param {Asset} asset Asset.
- * @param {boolean} isPDF Whether the asset is a PDF file.
  * @returns {Promise<Blob | undefined>} Thumbnail blob.
  */
-const resolveThumbnailBlob = async (asset, isPDF) => {
+const resolveThumbnailBlob = async (asset) => {
   /** @type {Blob | undefined} */
   let thumbnailBlob = await thumbnailDB?.get(asset.sha);
 
   if (!thumbnailBlob) {
-    const transform = isPDF ? renderPDF : transformImage;
+    const transform = isPDF(asset.name) ? renderPDF : transformImage;
 
     thumbnailBlob = await limitThumbnailGeneration(async () =>
       transform(await getThumbnailSourceBlob(asset), THUMBNAIL_TRANSFORM_OPTIONS),
@@ -366,8 +365,6 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
     return undefined;
   }
 
-  const isPDF = hasPDFThumbnail(asset.name);
-
   initThumbnailDB();
 
   const { sha } = asset;
@@ -382,7 +379,7 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
   // A `cacheOnly` caller joins an in-flight resolution rather than reading the database again: the
   // work is already happening, so waiting for it costs nothing extra
   const thumbnailBlob = await shareInFlight(pendingThumbnailBlobs, sha, () =>
-    resolveThumbnailBlob(asset, isPDF),
+    resolveThumbnailBlob(asset),
   );
 
   return thumbnailBlob ? URL.createObjectURL(thumbnailBlob) : undefined;

@@ -11,6 +11,7 @@ describe('bundled modules in the npm build', () => {
     ['exifr', 'parse'],
     ['immutable', 'Map'],
     ['leaflet', 'map'],
+    ['pdfjs-dist', 'getDocument'],
     ['svgo', 'optimize'],
     ['terra-draw', 'TerraDraw'],
     ['terra-draw-leaflet-adapter', 'TerraDrawLeafletAdapter'],

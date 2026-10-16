@@ -14,7 +14,6 @@ import {
   getMediaKind,
   getMediaKindFromPath,
   getMediaKindFromType,
-  hasPDFThumbnail,
   isMediaKind,
   isPDF,
   MEDIA_KINDS,
@@ -62,10 +61,6 @@ describe('assets/kinds', () => {
   });
 
   describe('canCreateThumbnail', () => {
-    afterEach(() => {
-      vi.unstubAllEnvs();
-    });
-
     it('should create a thumbnail for an image, a video or a PDF document', () => {
       expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.jpg', kind: 'image' }))).toBe(true);
       expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.mp4', kind: 'video' }))).toBe(true);
@@ -74,15 +69,9 @@ describe('assets/kinds', () => {
       );
     });
 
-    it('should not for any other file, or a PDF document in the npm build', () => {
+    it('should not for any other file', () => {
       expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.mp3', kind: 'audio' }))).toBe(false);
       expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.docx', kind: 'document' }))).toBe(
-        false,
-      );
-
-      vi.stubEnv('NPM_BUILD', 'true');
-
-      expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.pdf', kind: 'document' }))).toBe(
         false,
       );
     });
@@ -94,29 +83,6 @@ describe('assets/kinds', () => {
       expect(isPDF('Brochure.PDF')).toBe(true);
       expect(isPDF('brochure.pdf.zip')).toBe(false);
       expect(isPDF('pdf')).toBe(false);
-    });
-  });
-
-  describe('hasPDFThumbnail', () => {
-    afterEach(() => {
-      vi.unstubAllEnvs();
-    });
-
-    it('should generate a thumbnail for a PDF document', () => {
-      expect(hasPDFThumbnail('files/brochure.pdf')).toBe(true);
-      expect(hasPDFThumbnail('files/brochure.docx')).toBe(false);
-    });
-
-    it('should match the extension case-insensitively', () => {
-      expect(hasPDFThumbnail('files/Brochure.PDF')).toBe(true);
-      expect(hasPDFThumbnail('files/Brochure.Pdf')).toBe(true);
-      expect(hasPDFThumbnail('files/brochure.pdf.zip')).toBe(false);
-    });
-
-    it('should not in the npm build, which doesn’t include PDF.js', () => {
-      vi.stubEnv('NPM_BUILD', 'true');
-
-      expect(hasPDFThumbnail('files/brochure.pdf')).toBe(false);
     });
   });
 

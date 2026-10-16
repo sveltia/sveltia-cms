@@ -25,11 +25,14 @@ const SHIKI_PACKAGES = ['@shikijs/langs', '@shikijs/themes'];
  * version ranges the CMS depends on, so a site that uses one of them too can share a single copy.
  * The jSquash and HEIC codecs are bundled instead, as `stripImportMetaAssignment()` has to fix them
  * for webpack, and so is React DOM, which has to share the bundled React with custom components.
+ * So are the PDF.js worker and WebAssembly decoders, which are loaded with URLs a consumer’s
+ * bundler only rewrites for files of the package itself, see `pdf-options.npm.js`.
  */
 const LIBRARY_PACKAGES = [
   'exifr',
   'immutable',
   'leaflet',
+  'pdfjs-dist',
   'svgo',
   'terra-draw',
   'terra-draw-leaflet-adapter',
@@ -279,8 +282,7 @@ const useNpmVariants = () => ({
  * it’s code-split, and doesn’t load anything from UNPKG or jsDelivr: it bundles the libraries,
  * fonts and workers as separate chunks and assets the consumer’s bundler picks up, and leaves the
  * locale files published with the package and the Shiki grammars and themes to that bundler, see
- * {@link publishedLocales} and {@link NPM_EXTERNAL_PACKAGES}. PDF thumbnails are left out, as
- * PDF.js comes with hundreds of files.
+ * {@link publishedLocales} and {@link NPM_EXTERNAL_PACKAGES}.
  * @param {object} args Settings shared with the main build.
  * @param {import('vite').UserConfig['resolve']} args.resolve Module resolution options.
  * @param {Record<string, string>} args.define Global constants.

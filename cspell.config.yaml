@@ -96,6 +96,7 @@ words:
   - indexeddb
   - infobar
   - infobars
+  - jbig
   - jfif
   - jsdoc
   - jSquash
@@ -123,6 +124,7 @@ words:
   - onkeydowncapture
   - onpastecapture
   - onwheelcapture
+  - openjpeg
   - OPFS
   - oxlint
   - parseable
@@ -143,6 +145,7 @@ words:
   - programmatically
   - proxified
   - proxify
+  - qcms
   - qrcode
   - Ragdoll
   - rearchitect
