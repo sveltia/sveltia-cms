@@ -1576,6 +1576,8 @@ item_removed: アイテムが削除されました。
 add_x: '{$name} を追加'
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: リストアイテムオプション
 add_item_above: 上にアイテムを追加
 add_item_below: 下にアイテムを追加
 paste_item_above: 上にアイテムを貼り付け
@@ -1587,7 +1589,8 @@ paste_item_to_replace: 置き換えて貼り付け
 # list, or at the start with the `add_to_top` option
 paste_item: アイテムを貼り付け
 list_item_copied: アイテムをコピーしました。
-no_list_item_to_paste: 貼り付けるアイテムがありません。先にリストアイテムのオプションメニューからコピーしてください。
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: 貼り付けるアイテムがありません。先にアイテムの ⋮（リストアイテムオプション）メニューで「コピー」を選択してください。
 list_item_not_compatible: コピーしたアイテムはこのリストに合いません。
 # {$count} is the number of the values left out, as the list doesn’t have the fields
 list_item_pasted_without_values: |

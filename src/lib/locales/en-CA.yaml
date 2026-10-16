@@ -1677,7 +1677,8 @@ paste_item_to_replace: Paste to Replace
 # list, or at the start with the `add_to_top` option
 paste_item: Paste Item
 list_item_copied: Item copied.
-no_list_item_to_paste: There’s no copied item to paste. Copy one from the List Item Options menu first.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: There’s no copied item to paste. To copy one, open an item’s ⋮ (List Item Options) menu and select Copy.
 list_item_not_compatible: The copied item doesn’t fit in this list.
 # {$count} is the number of the values left out, as the list doesn’t have the fields
 list_item_pasted_without_values: |

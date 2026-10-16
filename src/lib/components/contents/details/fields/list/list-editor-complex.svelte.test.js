@@ -1792,7 +1792,7 @@ describe('ListEditorComplex clipboard', () => {
     vi.mocked(navigator.clipboard.readText).mockRejectedValue(new Error('Denied'));
     await page.getByRole('button', { name: 'Paste Item' }).click();
     await expectToast(
-      'There’s no copied item to paste. Copy one from the List Item Options menu first.',
+      'There’s no copied item to paste. To copy one, open an item’s ⋮ (List Item Options) menu and select Copy.',
     );
     expect(getStoredItems(draft, 'sections')).toEqual([]);
   });
