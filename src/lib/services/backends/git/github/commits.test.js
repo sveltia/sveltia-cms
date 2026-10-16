@@ -1,12 +1,17 @@
 import { encodeBase64 } from '@sveltia/utils/file';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
   commitChanges,
   fetchFileCommits,
   fetchLastCommit,
+  getNextPayloadSize,
+  INITIAL_COMMIT_PAYLOAD_SIZE,
+  isUploadFailure,
   MAX_COMMIT_PAYLOAD_SIZE,
-  splitAdditions,
+  MIN_COMMIT_PAYLOAD_SIZE,
+  sortAdditions,
+  takeAdditions,
 } from '$lib/services/backends/git/github/commits';
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
@@ -684,62 +689,102 @@ describe('GitHub commits service', () => {
     });
   });
 
-  describe('splitAdditions', () => {
+  describe('sortAdditions', () => {
+    /**
+     * Create a file addition.
+     * @param {number} index Index.
+     * @param {boolean} [isText] Whether the file is a text file, like an entry.
+     * @returns {any} File addition.
+     */
+    const addition = (index, isText = false) => ({
+      index,
+      path: `file-${index}`,
+      contents: 'a',
+      data: isText ? 'text' : new Blob(['x']),
+    });
+
+    test('puts text files last', () => {
+      const entry = addition(0, true);
+      const image1 = addition(1);
+      const image2 = addition(2);
+
+      expect(sortAdditions([entry, image1, image2])).toEqual({
+        queue: [image1, image2, entry],
+        addedAgain: [],
+      });
+    });
+
+    test('sets aside a file deleted and added again at the same path', () => {
+      const addedAgain = addition(0);
+      const image = addition(1);
+
+      expect(sortAdditions([addedAgain, image], new Set(['file-0']))).toEqual({
+        queue: [image],
+        addedAgain: [addedAgain],
+      });
+    });
+  });
+
+  describe('takeAdditions', () => {
     /**
      * Create a file addition.
      * @param {number} index Index.
      * @param {number} size Size of the encoded contents.
-     * @param {boolean} [isText] Whether the file is a text file, like an entry.
      * @returns {any} File addition.
      */
-    const addition = (index, size, isText = false) => ({
+    const addition = (index, size) => ({
       index,
       path: `file-${index}`,
       contents: 'a'.repeat(size),
-      data: isText ? 'text' : new Blob(['x']),
     });
 
-    test('keeps everything in one group when it fits', () => {
-      const additions = [addition(0, 10), addition(1, 20)];
+    test('takes as many additions as fit', () => {
+      const queue = [addition(0, 40), addition(1, 60), addition(2, 1)];
 
-      expect(splitAdditions(additions)).toEqual([additions]);
+      expect(takeAdditions(queue, 100)).toEqual([addition(0, 40), addition(1, 60)]);
+      expect(queue).toEqual([addition(2, 1)]);
     });
 
-    test('returns an empty group when there is nothing to add', () => {
-      expect(splitAdditions([])).toEqual([[]]);
+    test('takes a single addition over the size on its own', () => {
+      const queue = [addition(0, 200), addition(1, 1)];
+
+      expect(takeAdditions(queue, 100)).toEqual([addition(0, 200)]);
+      expect(queue).toEqual([addition(1, 1)]);
     });
 
-    test('splits additions over the payload limit, with text files last', () => {
-      const half = MAX_COMMIT_PAYLOAD_SIZE / 2;
-      const entry = addition(0, 100, true);
-      const image1 = addition(1, half);
-      const image2 = addition(2, half);
-      const image3 = addition(3, half);
+    test('takes nothing from an empty queue', () => {
+      expect(takeAdditions([], 100)).toEqual([]);
+    });
+  });
 
-      expect(splitAdditions([entry, image1, image2, image3])).toEqual([
-        [image1, image2],
-        [image3, entry],
-      ]);
+  describe('getNextPayloadSize', () => {
+    test('targets five seconds of upload at the measured speed', () => {
+      // 6 MB in 12 seconds is 0.5 MB a second
+      expect(getNextPayloadSize(6 * 1024 * 1024, 12000)).toBe(2.5 * 1024 * 1024);
     });
 
-    test('keeps a file deleted and added again at the same path in the last group', () => {
-      const half = MAX_COMMIT_PAYLOAD_SIZE / 2;
-      const readded = addition(0, half);
-      const image1 = addition(1, half);
-      const image2 = addition(2, half);
-      const entry = addition(3, 100, true);
-
-      expect(splitAdditions([readded, image1, image2, entry], new Set(['file-0']))).toEqual([
-        [image1, image2],
-        [entry, readded],
-      ]);
+    test('stays within the limits', () => {
+      expect(getNextPayloadSize(1024, 10000)).toBe(MIN_COMMIT_PAYLOAD_SIZE);
+      expect(getNextPayloadSize(MAX_COMMIT_PAYLOAD_SIZE, 1000)).toBe(MAX_COMMIT_PAYLOAD_SIZE);
+      expect(getNextPayloadSize(1024 * 1024, 0)).toBe(MAX_COMMIT_PAYLOAD_SIZE);
     });
+  });
 
-    test('puts a file over the limit in a group of its own', () => {
-      const huge = addition(0, MAX_COMMIT_PAYLOAD_SIZE + 1);
-      const small = addition(1, 10);
+  describe('isUploadFailure', () => {
+    test('tells a request that took too long from other failures', () => {
+      expect(isUploadFailure(new Error('Failed to send the request'))).toBe(true);
 
-      expect(splitAdditions([small, huge])).toEqual([[small], [huge]]);
+      [408, 413, 499, 502, 504].forEach((status) => {
+        expect(
+          isUploadFailure(new Error('Server responded with an error', { cause: { status } })),
+        ).toBe(true);
+      });
+
+      expect(
+        isUploadFailure(new Error('Server responded with an error', { cause: { status: 422 } })),
+      ).toBe(false);
+      expect(isUploadFailure(new Error('Failed to fetch'))).toBe(false);
+      expect(isUploadFailure(undefined)).toBe(false);
     });
   });
 
@@ -926,6 +971,228 @@ describe('GitHub commits service', () => {
         ),
       ).rejects.toBe(apiError);
       expect(repositoryHead.current).toBe('loaded-head-sha');
+    });
+  });
+
+  describe('commitChanges on a slow connection', () => {
+    const MB = 1024 * 1024;
+    const uploadFailure = new Error('Failed to send the request');
+
+    /**
+     * Create changes adding images, whose encoded contents are 1 MB each, and an entry.
+     * @param {number} count Number of images.
+     * @returns {any[]} File changes.
+     */
+    const createChanges = (count) => [
+      { action: 'update', path: 'content/entry.json', data: '{}' },
+      ...Array.from({ length: count }, (_, index) => ({
+        action: 'create',
+        path: `images/${index}.webp`,
+        data: new File([String(index)], `${index}.webp`),
+      })),
+    ];
+
+    /**
+     * Get the size of the encoded contents added by a commit mutation.
+     * @param {any} input Mutation input.
+     * @returns {number} Size.
+     */
+    const getPayloadSize = ({ fileChanges }) =>
+      fileChanges.additions.reduce(
+        (/** @type {number} */ total, /** @type {any} */ { contents }) => total + contents.length,
+        0,
+      );
+
+    /**
+     * Mock the API. Every commit uploads at the given speed, and the head lookup finds the last
+     * commit made, or the loaded head before any.
+     * @param {object} args Arguments.
+     * @param {number} [args.speed] Upload speed, in MB per second.
+     * @param {number} [args.failAbove] Payload size above which a commit times out.
+     * @param {number} [args.failAt] Number of the commit that fails, counting from 1.
+     * @param {Error} [args.error] Error the commit fails with.
+     * @param {string} [args.head] Head the lookup finds instead.
+     * @returns {any[]} Inputs of the commit mutations sent, including those that failed.
+     */
+    const mockAPI = ({
+      speed = 1,
+      failAbove = Infinity,
+      failAt = 0,
+      error = uploadFailure,
+      head = undefined,
+    } = {}) => {
+      /** @type {any[]} */
+      const inputs = [];
+      let now = 0;
+      let lastOid = 'loaded-head-sha';
+
+      vi.spyOn(performance, 'now').mockImplementation(() => now);
+
+      vi.mocked(fetchGraphQL).mockImplementation(async (query, variables) => {
+        if (!query.includes('createCommitOnBranch')) {
+          return {
+            repository: {
+              ref: { target: { history: { nodes: [{ oid: head ?? lastOid, message: '' }] } } },
+            },
+          };
+        }
+
+        const { input } = /** @type {any} */ (variables);
+
+        inputs.push(input);
+        now += (getPayloadSize(input) / (speed * MB)) * 1000;
+
+        if (getPayloadSize(input) > failAbove || inputs.length === failAt) {
+          throw error;
+        }
+
+        lastOid = `sha-${inputs.length}`;
+
+        return { createCommitOnBranch: { commit: { oid: lastOid, committedDate: '2023-01-01' } } };
+      });
+
+      return inputs;
+    };
+
+    /**
+     * Get the paths added by each commit mutation.
+     * @param {any[]} inputs Inputs of the commit mutations.
+     * @returns {string[][]} Paths.
+     */
+    const getPaths = (inputs) =>
+      inputs.map(({ fileChanges }) =>
+        fileChanges.additions.map((/** @type {any} */ { path }) => path),
+      );
+
+    beforeEach(() => {
+      repositoryHead.current = 'loaded-head-sha';
+      vi.mocked(encodeBase64).mockImplementation(async (data) =>
+        typeof data === 'string' ? 'entry' : 'a'.repeat(MB),
+      );
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    test('commits a changeset under the initial size at once', async () => {
+      const inputs = mockAPI();
+
+      await commitChanges(createChanges(1), /** @type {any} */ ({ commitType: 'update' }));
+
+      expect(INITIAL_COMMIT_PAYLOAD_SIZE).toBe(2 * MB);
+      expect(getPaths(inputs)).toEqual([['images/0.webp', 'content/entry.json']]);
+    });
+
+    test('sizes each commit after the speed of the previous one', async () => {
+      // 2 MB in 8 seconds makes the next commit 1.25 MB, which takes a single image
+      const inputs = mockAPI({ speed: 0.25 });
+
+      const result = await commitChanges(
+        createChanges(4),
+        /** @type {any} */ ({ commitType: 'update' }),
+      );
+
+      expect(getPaths(inputs)).toEqual([
+        ['images/0.webp', 'images/1.webp'],
+        ['images/2.webp'],
+        ['images/3.webp', 'content/entry.json'],
+      ]);
+      expect(inputs.map(({ expectedHeadOid }) => expectedHeadOid)).toEqual([
+        'loaded-head-sha',
+        'sha-1',
+        'sha-2',
+      ]);
+      expect(inputs.at(-1).fileChanges.deletions).toEqual([]);
+      expect(result.sha).toBe('sha-3');
+    });
+
+    test('retries a commit that has timed out with half of the files', async () => {
+      const inputs = mockAPI({
+        failAbove: 1.5 * MB,
+      });
+
+      const result = await commitChanges(
+        createChanges(2),
+        /** @type {any} */ ({
+          commitType: 'update',
+          branch: 'cms/posts/a',
+          headOid: 'loaded-head-sha',
+        }),
+      );
+
+      expect(getPaths(inputs)).toEqual([
+        ['images/0.webp', 'images/1.webp'],
+        ['images/0.webp'],
+        ['images/1.webp', 'content/entry.json'],
+      ]);
+      expect(inputs.map(({ expectedHeadOid }) => expectedHeadOid)).toEqual([
+        'loaded-head-sha',
+        'loaded-head-sha',
+        'sha-2',
+      ]);
+      expect(result.sha).toBe('sha-3');
+    });
+
+    test('doesn’t retry when the branch has moved after a timed-out commit', async () => {
+      const inputs = mockAPI({ failAt: 1, head: 'other-sha' });
+
+      await expect(
+        commitChanges(
+          createChanges(2),
+          /** @type {any} */ ({
+            commitType: 'update',
+            branch: 'cms/posts/a',
+            headOid: 'loaded-head-sha',
+          }),
+        ),
+      ).rejects.toBe(uploadFailure);
+      expect(inputs).toHaveLength(1);
+    });
+
+    test('doesn’t retry when the branch can’t be looked up after a timed-out commit', async () => {
+      const inputs = mockAPI({ failAt: 1 });
+      const mockCommit = vi.mocked(fetchGraphQL).getMockImplementation();
+
+      vi.mocked(fetchGraphQL).mockImplementation(async (query, variables) => {
+        if (!query.includes('createCommitOnBranch')) {
+          throw new Error('Failed to send the request');
+        }
+
+        return /** @type {any} */ (mockCommit)(query, variables);
+      });
+
+      await expect(
+        commitChanges(createChanges(2), /** @type {any} */ ({ commitType: 'update' })),
+      ).rejects.toBe(uploadFailure);
+      expect(inputs).toHaveLength(1);
+    });
+
+    test('doesn’t retry a timed-out commit of a single file', async () => {
+      const inputs = mockAPI({ failAt: 1 });
+
+      await expect(
+        commitChanges(createChanges(0), /** @type {any} */ ({ commitType: 'update' })),
+      ).rejects.toBe(uploadFailure);
+      expect(inputs).toHaveLength(1);
+    });
+
+    test('keeps the assets committed before a later failure on the configured branch', async () => {
+      const apiError = new Error('Failed to fetch');
+
+      // The second of three commits fails
+      const inputs = mockAPI({
+        speed: 0.25,
+        failAt: 2,
+        error: apiError,
+      });
+
+      await expect(
+        commitChanges(createChanges(4), /** @type {any} */ ({ commitType: 'update' })),
+      ).rejects.toBe(apiError);
+      expect(getPaths(inputs)).toEqual([['images/0.webp', 'images/1.webp'], ['images/2.webp']]);
+      // The retry of the save goes on top of the first commit
+      expect(repositoryHead.current).toBe('sha-1');
     });
   });
 

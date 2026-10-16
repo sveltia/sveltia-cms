@@ -152,23 +152,30 @@ const replaceBlobURLs = async ({
         nameTemplate,
       } = files[blobURL] ?? {};
 
-      if (file) {
-        // A file can only be cached without a folder, and there is no global folder either, when
-        // only a cloud media library is configured. The file has nowhere to go in the repository
-        if (!folder) {
-          throw new Error(`There is no asset folder to save the file "${file.name}" to`);
-        }
-
-        await replaceBlobURL({
-          ...replaceBlobArgs,
-          file,
-          folder,
-          replace,
-          subfolderPath,
-          nameTemplate,
-          blobURL,
-        });
+      // A blob URL only lives as long as the page, so one without the file it was made for, e.g.
+      // left by a backup whose file couldn’t be stored, would be saved as a broken link
+      if (!file) {
+        throw new Error(
+          `The file referenced in the "${field?.label ?? keyPath}" field is no longer available. ` +
+            'Select the file again.',
+        );
       }
+
+      // A file can only be cached without a folder, and there is no global folder either, when
+      // only a cloud media library is configured. The file has nowhere to go in the repository
+      if (!folder) {
+        throw new Error(`There is no asset folder to save the file "${file.name}" to`);
+      }
+
+      await replaceBlobURL({
+        ...replaceBlobArgs,
+        file,
+        folder,
+        replace,
+        subfolderPath,
+        nameTemplate,
+        blobURL,
+      });
     }),
   );
 };

@@ -94,6 +94,11 @@ describe('draft/save/changes', () => {
     const { toRaw } = await import('@sveltia/utils/object');
 
     vi.mocked(toRaw).mockImplementation((value) => value);
+
+    // The automock returns `undefined`, with which `matchAll()` matches an empty string everywhere
+    const { getBlobRegex } = await import('@sveltia/utils/file');
+
+    vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
   });
 
   describe('createSavingEntryData', () => {
@@ -1739,6 +1744,48 @@ describe('draft/save/changes', () => {
 
       await expect(createBaseSavingEntryData({ draft, slugs })).rejects.toThrow(
         'There is no asset folder to save the file "image.jpg" to',
+      );
+      expect(vi.mocked(replaceBlobURL)).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      [{ widget: 'image', label: 'Photo' }, 'Photo'],
+      [undefined, 'image'],
+    ])('should refuse to save a blob URL whose file is gone (%#)', async (field, name) => {
+      const { createEntryPath } = await import('./entry-path');
+      const { replaceBlobURL } = await import('$lib/services/contents/draft/save/assets');
+      const { getField } = await import('$lib/services/contents/entry/fields');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(getField).mockReturnValue(field);
+
+      // The URL would otherwise be committed as is, which no site can load
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: {
+          en: { title: 'Test', image: 'blob:http://localhost:5000/abc123' },
+        },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      await expect(createBaseSavingEntryData({ draft, slugs })).rejects.toThrow(
+        `The file referenced in the "${name}" field is no longer available.`,
       );
       expect(vi.mocked(replaceBlobURL)).not.toHaveBeenCalled();
     });
