@@ -141,6 +141,9 @@ describe('Test getFieldDisplayValue()', () => {
       { name: 'floatNumber', widget: 'number', value_type: 'float' },
       { name: 'defaultNumber', widget: 'number' }, // Defaults to 'int'
       { name: 'customTypeNumber', widget: 'number', value_type: 'custom' },
+      // Compute fields for testing
+      { name: 'floatTotal', widget: 'compute', value: '1 + 1', value_type: 'float' },
+      { name: 'stringTotal', widget: 'compute', value: '{{index}}' },
     ],
   };
 
@@ -959,6 +962,28 @@ describe('Test getFieldDisplayValue()', () => {
       });
 
       expect(result).toBe('5,678');
+    });
+
+    test('should format the number of a numeric Compute field', () => {
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap: { floatTotal: 1234.5 },
+          keyPath: 'floatTotal',
+          locale: 'en',
+        }),
+      ).toBe('1,234.5');
+    });
+
+    test('should not format the number of a string Compute field', () => {
+      expect(
+        getFieldDisplayValue({
+          collectionName: 'posts',
+          valueMap: { stringTotal: 1234 },
+          keyPath: 'stringTotal',
+          locale: 'en',
+        }),
+      ).toBe('1234');
     });
 
     test('should not format numbers for custom value_type', () => {

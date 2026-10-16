@@ -4,9 +4,12 @@ import { applyTransformations } from '$lib/services/common/transformations';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import {
+  formatComputedValue,
   getComputedValue,
   getListIndex,
+  getNumericValue,
   hasUuidTag,
+  isNumericComputeField,
 } from '$lib/services/contents/fields/compute/helpers';
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
@@ -253,6 +256,123 @@ describe('getComputedValue()', () => {
       expect(getComputedValue({ ...getArgs('{{fields.cat}}'), valueMap: { cat: 'b' } })).toBe(
         'Books',
       );
+    });
+  });
+
+  describe('Numeric value types', () => {
+    /** @type {Record<string, any>} */
+    const fieldMap = {
+      price: { name: 'price', widget: 'number', value_type: 'float' },
+      quantity: { name: 'quantity', widget: 'number' },
+      title: { name: 'title', widget: 'string' },
+      subtotal: { name: 'subtotal', widget: 'compute', value_type: 'float', value: '' },
+      code: { name: 'code', widget: 'compute', value: '' },
+    };
+
+    /**
+     * Get the arguments for a numeric Compute field.
+     * @param {string} value Arithmetic expression.
+     * @param {string} valueType Value type.
+     * @param {Record<string, any>} valueMap Entry content.
+     * @param {string} [keyPath] Key path of the field.
+     * @returns {any} Arguments.
+     */
+    const getNumericArgs = (value, valueType, valueMap, keyPath = 'total') => ({
+      ...getArgs(value, keyPath),
+      fieldConfig: { name: 'total', widget: 'compute', value, value_type: valueType },
+      valueMap,
+    });
+
+    afterEach(() => {
+      vi.mocked(getField).mockReset();
+    });
+
+    test('should evaluate an arithmetic expression with the stored numbers', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fieldMap[keyPath]);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('1,234.5');
+
+      const valueMap = { price: 1234.5, quantity: 3 };
+      const expression = '{{fields.price}} * {{fields.quantity}}';
+
+      expect(getComputedValue(getNumericArgs(expression, 'float', valueMap))).toBe(3703.5);
+      expect(getComputedValue(getNumericArgs(expression, 'float/string', valueMap))).toBe('3703.5');
+      expect(getComputedValue(getNumericArgs(expression, 'int', valueMap))).toBe(3704);
+      expect(getComputedValue(getNumericArgs(expression, 'int/string', valueMap))).toBe('3704');
+      expect(getFieldDisplayValue).not.toHaveBeenCalled();
+    });
+
+    test('should leave the value empty if an operand is empty', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fieldMap[keyPath]);
+
+      const valueMap = { price: 10, quantity: null };
+      const expression = '{{fields.price}} * {{fields.quantity}}';
+
+      expect(getComputedValue(getNumericArgs(expression, 'int', valueMap))).toBeNull();
+      expect(getComputedValue(getNumericArgs(expression, 'int/string', valueMap))).toBe('');
+      expect(getComputedValue(getNumericArgs(expression, 'int', { price: 10 }))).toBeNull();
+    });
+
+    test('should let a transformation supply a value for an empty operand', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fieldMap[keyPath]);
+
+      const expression = "{{fields.price}} * {{fields.quantity | default('1')}}";
+
+      expect(
+        getComputedValue(getNumericArgs(expression, 'float', { price: 10, quantity: null })),
+      ).toBe(10);
+      expect(
+        getComputedValue(getNumericArgs(expression, 'float', { price: 10, quantity: 0 })),
+      ).toBe(0);
+    });
+
+    test('should use the stored number of another numeric Compute field', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fieldMap[keyPath]);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('1,000');
+
+      expect(
+        getComputedValue(getNumericArgs('{{fields.subtotal}} * 1.1', 'float', { subtotal: 1000 })),
+      ).toBe(1100);
+      expect(getFieldDisplayValue).not.toHaveBeenCalled();
+    });
+
+    test('should use the display value of a string Compute field', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fieldMap[keyPath]);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('42');
+
+      expect(getComputedValue(getNumericArgs('{{fields.code}} + 1', 'int', { code: '42' }))).toBe(
+        43,
+      );
+      expect(getFieldDisplayValue).toHaveBeenCalledOnce();
+    });
+
+    test('should leave the value empty for a field that isn’t a number', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fieldMap[keyPath]);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('Hello');
+
+      expect(
+        getComputedValue(getNumericArgs('{{fields.title}} + 1', 'int', { title: 'Hello' })),
+      ).toBeNull();
+    });
+
+    test('should use the index as a number', () => {
+      expect(getComputedValue(getNumericArgs('{{index}} + 1', 'int', {}, 'items.2.total'))).toBe(3);
+      expect(getComputedValue(getNumericArgs('{{index}}', 'int/string', {}, 'items.2.total'))).toBe(
+        '2',
+      );
+      expect(getComputedValue(getNumericArgs('{{index}} + 1', 'int', {}))).toBeNull();
+    });
+
+    test('should not generate a UUID', () => {
+      expect(getComputedValue(getNumericArgs('{{uuid}}', 'float', {}))).toBeNull();
+    });
+
+    test('should leave the value empty for an invalid expression or an unknown tag', () => {
+      expect(getComputedValue(getNumericArgs('1 +', 'float', {}))).toBeNull();
+      expect(getComputedValue(getNumericArgs('{{title}} + 1', 'float', {}))).toBeNull();
+    });
+
+    test('should treat the `string` value type as a template', () => {
+      expect(getComputedValue(getNumericArgs('1 + 1', 'string', {}))).toBe('1 + 1');
     });
   });
 
@@ -558,5 +678,113 @@ describe('getComputedValue()', () => {
         UUID_REGEX,
       );
     });
+  });
+});
+
+describe('isNumericComputeField()', () => {
+  test('should tell whether the field yields a number', () => {
+    expect(isNumericComputeField(/** @type {any} */ ({ widget: 'compute', value: '' }))).toBe(
+      false,
+    );
+    expect(
+      isNumericComputeField(/** @type {any} */ ({ widget: 'compute', value_type: 'string' })),
+    ).toBe(false);
+    expect(
+      isNumericComputeField(/** @type {any} */ ({ widget: 'compute', value_type: 'int' })),
+    ).toBe(true);
+    expect(
+      isNumericComputeField(/** @type {any} */ ({ widget: 'compute', value_type: 'float/string' })),
+    ).toBe(true);
+  });
+});
+
+describe('getNumericValue()', () => {
+  /**
+   * Get a Compute field configuration with the given value type.
+   * @param {string} valueType Value type.
+   * @returns {any} Field configuration.
+   */
+  const config = (valueType) => ({
+    name: 'total',
+    widget: 'compute',
+    value: '',
+    value_type: valueType,
+  });
+
+  test('should round a floating-point result to 15 significant digits', () => {
+    expect(getNumericValue(0.1 * 3, config('float'))).toBe(0.3);
+    expect(getNumericValue(0.1 + 0.2, config('float/string'))).toBe('0.3');
+    expect(getNumericValue(1 / 3, config('float'))).toBe(0.333333333333333);
+  });
+
+  test('should round an integer result to the nearest integer', () => {
+    expect(getNumericValue(2.5, config('int'))).toBe(3);
+    expect(getNumericValue(2.4, config('int/string'))).toBe('2');
+  });
+
+  test('should turn negative zero into zero', () => {
+    expect(Object.is(getNumericValue(-0, config('float')), 0)).toBe(true);
+    expect(Object.is(getNumericValue(-0.4, config('int')), 0)).toBe(true);
+    expect(getNumericValue(-0, config('float/string'))).toBe('0');
+  });
+
+  test('should leave a missing result empty', () => {
+    expect(getNumericValue(undefined, config('float'))).toBeNull();
+    expect(getNumericValue(undefined, config('int'))).toBeNull();
+    expect(getNumericValue(undefined, config('float/string'))).toBe('');
+    expect(getNumericValue(undefined, config('int/string'))).toBe('');
+  });
+
+  test('should leave an integer beyond the safe range empty', () => {
+    expect(getNumericValue(2 ** 53, config('int'))).toBeNull();
+    expect(getNumericValue(2 ** 53, config('int/string'))).toBe('');
+    expect(getNumericValue(2 ** 53, config('float'))).toBe(2 ** 53);
+  });
+
+  test('should treat a custom value type like `int/string`, as a Number field does', () => {
+    expect(getNumericValue(2.5, config('custom'))).toBe('3');
+    expect(getNumericValue(undefined, config('custom'))).toBe('');
+  });
+
+  test('should keep every digit of a large integer result of a floating-point type', () => {
+    expect(getNumericValue(1234567890123456, config('float'))).toBe(1234567890123456);
+    expect(getNumericValue(1e21, config('float/string'))).toBe('1e+21');
+  });
+});
+
+describe('formatComputedValue()', () => {
+  const numericConfig = /** @type {any} */ ({ widget: 'compute', value: '', value_type: 'float' });
+  const stringConfig = /** @type {any} */ ({ widget: 'compute', value: '' });
+
+  test('should format a number like a Number field value', () => {
+    expect(
+      formatComputedValue({ value: 1234.5, fieldConfig: numericConfig, canonicalLocale: 'en' }),
+    ).toBe('1,234.5');
+    expect(
+      formatComputedValue({ value: '1234.5', fieldConfig: numericConfig, canonicalLocale: 'de' }),
+    ).toBe('1.234,5');
+  });
+
+  test('should leave an empty value empty', () => {
+    [null, undefined, '', ' '].forEach((value) => {
+      expect(
+        formatComputedValue({ value, fieldConfig: numericConfig, canonicalLocale: 'en' }).trim(),
+      ).toBe('');
+    });
+  });
+
+  test('should return a value that isn’t a number as is', () => {
+    expect(
+      formatComputedValue({ value: 'abc', fieldConfig: numericConfig, canonicalLocale: 'en' }),
+    ).toBe('abc');
+  });
+
+  test('should not format the value of a string Compute field', () => {
+    expect(
+      formatComputedValue({ value: 1234, fieldConfig: stringConfig, canonicalLocale: 'en' }),
+    ).toBe('1234');
+    expect(
+      formatComputedValue({ value: undefined, fieldConfig: stringConfig, canonicalLocale: 'en' }),
+    ).toBe('');
   });
 });

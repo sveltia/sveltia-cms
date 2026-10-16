@@ -2062,6 +2062,10 @@ config:
     code_field_invalid_default_object: '`output_code_only` オプションが `true` のため、Code フィールドの `default` オプションは文字列でなければなりません。'
     # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
     code_field_invalid_default_key: Code フィールドの `default` オプションに `{$key}` プロパティが含まれていますが、`keys` オプションで許可されているのは `{$code}` と `{$lang}` のみです。
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: '`value_type` オプションが `{$valueType}` のため、Compute フィールドの `value` オプションは `\{\{fields.price\}\} * \{\{fields.quantity\}\}` のような有効な計算式でなければなりません。'
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: '`value_type` オプションが `{$valueType}` で `value` オプションが計算式として扱われるため、Compute フィールドの `value` オプションでは `\{\{uuid\}\}` などの UUID タグを使用できません。'
     # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
     number_field_default_not_integer: Number フィールドの `default` オプションに `{$value}` が指定されていますが、`value_type` オプションが `{$valueType}` のため、整数でなければなりません。
     number_field_default_not_number: Number フィールドの `default` オプションに `{$value}` が指定されていますが、`value_type` オプションが `{$valueType}` のため、数値でなければなりません。

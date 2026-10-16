@@ -2167,6 +2167,10 @@ config:
     code_field_invalid_default_object: The Code field’s `default` option must be a string because the `output_code_only` option is `true`.
     # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
     code_field_invalid_default_key: The Code field’s `default` option has the `{$key}` property, but the `keys` option only allows `{$code}` and `{$lang}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: The Compute field’s `value` option must be a valid arithmetic expression, like `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, because the `value_type` option is `{$valueType}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: The Compute field’s `value` option can’t use a UUID tag like `\{\{uuid\}\}` because the `value_type` option is `{$valueType}`, which makes it an arithmetic expression.
     # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
     number_field_default_not_integer: The Number field’s `default` option is set to `{$value}`, but it must be an integer because the `value_type` option is `{$valueType}`.
     number_field_default_not_number: The Number field’s `default` option is set to `{$value}`, but it must be a number because the `value_type` option is `{$valueType}`.

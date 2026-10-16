@@ -37,7 +37,8 @@ export const isFloatType = ({ value_type: valueType = 'int' }) =>
  * @param {NumberField} fieldConfig Field configuration.
  * @returns {boolean} `true` if the stored value is a string.
  */
-const isStringOutput = ({ value_type: valueType = 'int' }) => !['int', 'float'].includes(valueType);
+export const isStringOutput = ({ value_type: valueType = 'int' }) =>
+  !['int', 'float'].includes(valueType);
 
 /**
  * Cast the given number according to the field’s `value_type`: an integer type drops the fraction.

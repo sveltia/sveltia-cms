@@ -16,11 +16,12 @@ const fields = [
 
 /**
  * Parse a Compute field with the given value template in the given context.
- * @param {string} value The `value` option.
+ * @param {any} value The `value` option.
  * @param {object} [contextOverrides] Context to override the collection context with.
+ * @param {object} [configOverrides] Options to add to the field configuration.
  * @returns {any} The context the check ran with.
  */
-const check = (value, contextOverrides = {}) => {
+const check = (value, contextOverrides = {}, configOverrides = {}) => {
   const context = {
     cmsConfig: {},
     collection: { name: 'posts', folder: 'content/posts', fields },
@@ -29,7 +30,7 @@ const check = (value, contextOverrides = {}) => {
   };
 
   parseComputeFieldConfig({
-    config: /** @type {any} */ ({ name: 'id', widget: 'compute', value }),
+    config: /** @type {any} */ ({ name: 'id', widget: 'compute', value, ...configOverrides }),
     context: /** @type {any} */ (context),
     collectors,
   });
@@ -100,5 +101,52 @@ describe('parseComputeFieldConfig', () => {
       collection: { name: 'posts', folder: 'content/posts', fields: [] },
     });
     expect(addMessage).not.toHaveBeenCalled();
+  });
+
+  describe('numeric value types', () => {
+    test('accepts a valid arithmetic expression', () => {
+      check('{{fields.title}} * 2 + {{index}}', {}, { value_type: 'float' });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('reports an invalid arithmetic expression', () => {
+      const context = check('posts-{{fields.title}}', {}, { value_type: 'int' });
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'compute_field_invalid_expression',
+        values: { valueType: 'int' },
+        context,
+        collectors,
+      });
+    });
+
+    test('reports a UUID tag in an arithmetic expression', () => {
+      const context = check('{{uuid_short | upper}} + 1', {}, { value_type: 'float/string' });
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'compute_field_uuid_in_expression',
+        values: { valueType: 'float/string' },
+        context,
+        collectors,
+      });
+    });
+
+    test('still checks the field references', () => {
+      check('{{fields.slug}} + 1', {}, { value_type: 'int' });
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ strKey: 'option_field_not_found' }),
+      );
+    });
+
+    test('checks no expression for the `string` value type', () => {
+      check('posts-{{fields.title}}', {}, { value_type: 'string' });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('leaves a `value` that isn’t a string to the JSON schema', () => {
+      check(42, {}, { value_type: 'int' });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
   });
 });

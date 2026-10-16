@@ -8,13 +8,19 @@ import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
+import { evaluateExpression } from '$lib/services/contents/fields/compute/expression';
+import {
+  getNumberFormatter,
+  isFloatType,
+  isStringOutput,
+} from '$lib/services/contents/fields/number/helpers';
 import { getListFormatter } from '$lib/services/contents/i18n';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
  * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
- * @import { ComputeField, FieldKeyPath } from '$lib/types/public';
+ * @import { ComputeField, FieldKeyPath, LocaleCode, NumberField } from '$lib/types/public';
  */
 
 /**
@@ -209,6 +215,68 @@ const getUuids = ({ valueTemplate, keyPath, valueMap }) => {
 };
 
 /**
+ * Check whether the given Compute field yields a number, which is the case when its `value_type`
+ * option is anything but `string`. Its `value` is then an arithmetic expression.
+ * @param {ComputeField} fieldConfig Field configuration.
+ * @returns {boolean} Result.
+ */
+export const isNumericComputeField = ({ value_type: valueType = 'string' }) =>
+  valueType !== 'string';
+
+/**
+ * Convert the result of a Compute field’s arithmetic expression into the value to be stored,
+ * according to the field’s `value_type`. A result with a fraction is rounded to 15 significant
+ * digits, so the error of binary floating-point arithmetic doesn’t end up in the file, e.g. `0.3`
+ * rather than `0.30000000000000004` for `0.1 * 3`, while an integer is kept as is, as rounding
+ * would change a large one. With an integer type, the result is rounded to the nearest integer.
+ * @param {number | undefined} result Result of the expression. `undefined` if it can’t be computed.
+ * @param {ComputeField} fieldConfig Field configuration.
+ * @returns {string | number | null} Value to be stored. A result that can’t be computed, or an
+ * integer beyond the range JavaScript can represent exactly, is stored like an empty Number field:
+ * `null` for the number types, or an empty string for the string types.
+ */
+export const getNumericValue = (result, fieldConfig) => {
+  // The value type means the same as a Number field’s, including a custom one, which is treated
+  // like `int/string`
+  const numberFieldConfig = /** @type {NumberField} */ (/** @type {unknown} */ (fieldConfig));
+  const stringOutput = isStringOutput(numberFieldConfig);
+  const integer = !isFloatType(numberFieldConfig);
+
+  // Adding zero turns `-0` into `0`
+  const number =
+    result === undefined
+      ? undefined
+      : (integer || Number.isInteger(result)
+          ? Math.round(result)
+          : Number(result.toPrecision(15))) + 0;
+
+  if (number === undefined || (integer && !Number.isSafeInteger(number))) {
+    return stringOutput ? '' : null;
+  }
+
+  return stringOutput ? String(number) : number;
+};
+
+/**
+ * Format the given value of a Compute field for display. A number the field yields is formatted
+ * like a Number field value, e.g. `1,234.5` for `1234.5` in English.
+ * @param {object} args Arguments.
+ * @param {string | number | null | undefined} args.value Field value.
+ * @param {ComputeField} args.fieldConfig Field configuration.
+ * @param {LocaleCode | undefined} args.canonicalLocale Canonical locale code.
+ * @returns {string} Formatted value. Empty if the value is empty. A value that isn’t a number, like
+ * one saved before the `value_type` option was changed, is returned as is.
+ */
+export const formatComputedValue = ({ value, fieldConfig, canonicalLocale }) => {
+  const string = String(value ?? '');
+  const number = Number(value);
+
+  return isNumericComputeField(fieldConfig) && string.trim() && Number.isFinite(number)
+    ? getNumberFormatter(canonicalLocale).format(number)
+    : string;
+};
+
+/**
  * Where a `{{fields.*}}` tag of a Compute field is resolved: the content and the rich text editor
  * component, if any, the key path refers to.
  * @typedef {object} FieldTagSource
@@ -247,7 +315,8 @@ const getComponentValues = (valueMap, keyPathPrefix) =>
  * component has no such field, to a field of the entry.
  * @param {FlattenedEntryContent} [args.entryValueMap] Flattened entry content, for a field of a
  * rich text editor component to refer to a field of the entry.
- * @returns {string | number} Computed value.
+ * @returns {string | number | null} Computed value. With a numeric `value_type`, see
+ * {@link getNumericValue}.
  */
 export const getComputedValue = ({
   fieldConfig,
@@ -261,15 +330,18 @@ export const getComputedValue = ({
   entryValueMap = {},
 }) => {
   const { value: valueTemplate = '' } = fieldConfig;
+  const numeric = isNumericComputeField(fieldConfig);
 
   // A lone `{{index}}` yields the number itself rather than its string representation, so that the
-  // value is written to the file as a number
-  if (valueTemplate === '{{index}}') {
+  // value is written to the file as a number. A numeric `value_type` decides the type itself
+  if (!numeric && valueTemplate === '{{index}}') {
     return getListIndex(keyPath) ?? '';
   }
 
   const listFormatter = getListFormatter(locale);
-  const uuids = getUuids({ valueTemplate, keyPath, valueMap });
+  // A UUID can’t be an operand of an arithmetic expression, and the configuration parser reports
+  // one used there, so none is generated
+  const uuids = numeric ? [] : getUuids({ valueTemplate, keyPath, valueMap });
   const componentName = keyPathPrefix ? valueMap[`${keyPathPrefix}__sc_component_name`] : undefined;
   /** @type {FlattenedEntryContent | undefined} */
   let componentValues;
@@ -347,11 +419,16 @@ export const getComputedValue = ({
       const hasRawValue = rawValue !== undefined;
 
       // A number is inserted as stored rather than formatted for display, so a template like
-      // `/p/{{fields.sku}}` doesn’t give `/p/123,456`
+      // `/p/{{fields.sku}}` doesn’t give `/p/123,456`, and an arithmetic expression can use it.
+      // That includes the value of a Compute field that yields a number
       if (hasRawValue) {
         const sourceFieldConfig = getField(getFieldArgs);
 
-        if (sourceFieldConfig?.widget === 'number') {
+        if (
+          sourceFieldConfig?.widget === 'number' ||
+          (sourceFieldConfig?.widget === 'compute' &&
+            isNumericComputeField(/** @type {ComputeField} */ (sourceFieldConfig)))
+        ) {
           // The transformations get a string as they would get the display value, so `0` isn’t
           // taken as empty by `default`
           value = String(rawValue ?? '');
@@ -388,6 +465,10 @@ export const getComputedValue = ({
 
     return value;
   };
+
+  if (numeric) {
+    return getNumericValue(evaluateExpression(valueTemplate, resolvePlaceholder), fieldConfig);
+  }
 
   return replaceTemplateTags(valueTemplate, (_match, placeholder) =>
     resolvePlaceholder(placeholder),

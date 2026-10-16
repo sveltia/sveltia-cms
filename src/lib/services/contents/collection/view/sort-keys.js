@@ -19,7 +19,7 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
  * SortKey,
  * SortOrder,
  * } from '$lib/types/private';
- * @import { Field, FieldKeyPath, NumberField } from '$lib/types/public';
+ * @import { ComputeField, Field, FieldKeyPath, NumberField } from '$lib/types/public';
  */
 
 /**
@@ -195,8 +195,10 @@ export const getSortKeyType = ({ key, fieldConfig }) => {
     return Boolean;
   }
 
-  if (fieldConfig?.widget === 'number') {
-    const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
+  // A Compute field yielding a number has the same `value_type` option, but defaults to `string`
+  if (fieldConfig?.widget === 'number' || fieldConfig?.widget === 'compute') {
+    const { value_type: valueType = fieldConfig.widget === 'number' ? 'int' : 'string' } =
+      /** @type {NumberField | ComputeField} */ (fieldConfig);
 
     if (valueType === 'int' || valueType === 'float') {
       return Number;

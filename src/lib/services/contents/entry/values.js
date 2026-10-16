@@ -23,6 +23,7 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * StringTransformation,
  * } from '$lib/types/private';
  * @import {
+ * ComputeField,
  * DateTimeField,
  * Field,
  * FieldKeyPath,
@@ -144,8 +145,10 @@ export const getFieldDisplayValue = ({
     }
   }
 
-  if (fieldConfig?.widget === 'number') {
-    const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
+  // A Compute field yielding a number has the same `value_type` option, but defaults to `string`
+  if (fieldConfig?.widget === 'number' || fieldConfig?.widget === 'compute') {
+    const { value_type: valueType = fieldConfig.widget === 'number' ? 'int' : 'string' } =
+      /** @type {NumberField | ComputeField} */ (fieldConfig);
 
     // An empty field, stored as `null` or an empty string, or missing, is left empty rather than
     // formatted as `0` or `NaN`

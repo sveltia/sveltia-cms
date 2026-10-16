@@ -7,6 +7,7 @@ import { EXTENSION_FORMAT_MAP, MARKDOWN_EXTENSIONS } from '$lib/services/content
 /**
  * @import {
  * BodyFieldOptions,
+ * ComputeField,
  * Field,
  * FileExtension,
  * FileFormat,
@@ -113,6 +114,13 @@ const isNonTextField = (field) => {
   if (widget === 'number') {
     // prettier-ignore
     return !(/** @type {NumberField} */ (field).value_type ?? '').endsWith('/string');
+  }
+
+  // A Compute field holds a number with the `int` and `float` value types, and a string otherwise
+  if (widget === 'compute') {
+    const { value_type: valueType } = /** @type {ComputeField} */ (field);
+
+    return valueType === 'int' || valueType === 'float';
   }
 
   return NON_TEXT_FIELD_TYPES.includes(widget) || isFieldMultiple(field);

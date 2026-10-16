@@ -1097,6 +1097,25 @@ describe('Test getSortKeyType()', () => {
     expect(getSortKeyType({ key: 'price', fieldConfig: defaultNumberField })).toBe(Number);
   });
 
+  test('returns Number for a Compute field yielding a number', () => {
+    /**
+     * Get a Compute field configuration with the given value type.
+     * @param {any} [valueType] Value type.
+     * @returns {any} Field configuration.
+     */
+    const compute = (valueType) => ({
+      name: 'total',
+      widget: 'compute',
+      value: '',
+      value_type: valueType,
+    });
+
+    expect(getSortKeyType({ key: 'total', fieldConfig: compute('int') })).toBe(Number);
+    expect(getSortKeyType({ key: 'total', fieldConfig: compute('float') })).toBe(Number);
+    expect(getSortKeyType({ key: 'total', fieldConfig: compute('float/string') })).toBe(String);
+    expect(getSortKeyType({ key: 'total', fieldConfig: compute() })).toBe(String);
+  });
+
   test('returns String for string fields and unknown fields', () => {
     const stringField = { name: 'title', widget: 'string' };
 

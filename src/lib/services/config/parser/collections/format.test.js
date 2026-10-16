@@ -657,6 +657,10 @@ describe('checkBodyField', () => {
       });
     });
 
+    // A Compute field yielding a number
+    expect(
+      check({ fields: [{ name: 'body', widget: 'compute', value: '1', value_type: 'float' }] }),
+    ).toMatchObject({ values: { name: 'body', widget: 'compute' } });
     // A field holding a list of values
     expect(
       check({ fields: [{ name: 'body', widget: 'select', options: ['a'], multiple: true }] }),
@@ -685,6 +689,12 @@ describe('checkBodyField', () => {
     expect(check({ fields: [{ name: 'body' }] })).toBeUndefined();
     expect(
       check({ fields: [{ name: 'body', widget: 'number', value_type: 'int/string' }] }),
+    ).toBeUndefined();
+    expect(check({ fields: [{ name: 'body', widget: 'compute', value: '' }] })).toBeUndefined();
+    expect(
+      check({
+        fields: [{ name: 'body', widget: 'compute', value: '1', value_type: 'int/string' }],
+      }),
     ).toBeUndefined();
     // The body is stored in the front matter along with the other fields
     expect(

@@ -659,9 +659,19 @@
  * tags, which support transformations like `{{fields.title | upper}}`, `{{index}}` is the position
  * of the item in a list, which is saved as a number when used alone, and `{{uuid}}`,
  * `{{uuid_short}}` and `{{uuid_shorter}}` generate a UUID, which is kept once the value is saved.
- * The field is always hidden in the editor, and its value can’t be edited.
+ * With a numeric `value_type`, it’s an arithmetic expression instead, like `{{fields.price}} *
+ * {{fields.quantity}}`, which can have numbers, template tags other than the UUID tags, the `+`,
+ * `-`, `*`, `/` and `%` operators, parentheses and the `abs`, `ceil`, `floor`, `max`, `min` and
+ * `round` functions. The field is always hidden in the editor, and its value can’t be edited.
+ * @property {'string' | 'int' | 'float' | 'int/string' | 'float/string'} [value_type] Type of the
+ * value. `string` makes the `value` option a template and saves the result as a string. The other
+ * types make it an arithmetic expression: `int` and `float` save the result as an integer or a
+ * floating-point number, respectively, and `int/string` and `float/string` save it as a string.
+ * An integer is rounded to the nearest one, and the result is left empty if a template tag resolves
+ * to an empty value or something other than a number. Default: `string`.
  * @see https://github.com/sveltia/sveltia-cms/issues/111
  * @see https://github.com/sveltia/sveltia-cms/issues/122
+ * @see https://github.com/sveltia/sveltia-cms/discussions/1086
  */
 
 /**
