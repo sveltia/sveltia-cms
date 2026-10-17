@@ -7,7 +7,7 @@ import {
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import {
   createLocalizedError,
-  NOT_COLLABORATOR_ERROR_MESSAGE,
+  createNoAccessError,
 } from '$lib/services/backends/git/shared/errors';
 import {
   isOpenAuthoringConfiguredFor,
@@ -88,9 +88,7 @@ export const fetchRepositoryAccess = async () => {
   // the sign-in flow looks for to drop the cached credentials, the same as the regular access check
   // does, so the user gets the sign-in form rather than the same error on every reload
   if (!permissions.found) {
-    throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', {
-      repo: repoPath,
-    });
+    throw createNoAccessError(repoPath);
   }
 
   return { canWrite: permissions.canPush };

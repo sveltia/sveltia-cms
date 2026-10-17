@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   createLocalizedError,
+  createNoAccessError,
   getErrorMessage,
   NOT_COLLABORATOR_ERROR_MESSAGE,
   toRepositoryAccessError,
@@ -74,6 +75,15 @@ describe('getErrorMessage', () => {
     ).toBe('fallback');
     expect(getErrorMessage(new Error('Something failed'), 'fallback')).toBe('fallback');
     expect(getErrorMessage(undefined, 'fallback')).toBe('fallback');
+  });
+});
+
+describe('createNoAccessError', () => {
+  it('should carry the shared message and say there is no access', () => {
+    const error = createNoAccessError('repo');
+
+    expect(error.message).toBe(NOT_COLLABORATOR_ERROR_MESSAGE);
+    expect(getErrorMessage(error, 'fallback')).toBe('repository_no_access:{"repo":"repo"}');
   });
 });
 

@@ -954,7 +954,9 @@ export class MockGitLab extends MockGitRepository {
     }
 
     if (query.includes('userPermissions')) {
-      return { data: { project: { userPermissions: { pushCode: this.canWrite } } } };
+      return {
+        data: { project: { userPermissions: { downloadCode: true, pushCode: this.canWrite } } },
+      };
     }
 
     if (query.includes('mergeRequests(iids:')) {

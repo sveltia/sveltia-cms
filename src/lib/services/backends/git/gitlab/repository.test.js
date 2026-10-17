@@ -12,16 +12,18 @@ import {
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { readonlyRepository } from '$lib/services/backends/repository-access';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn(() => 'Translation message'),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
 
 describe('GitLab repository service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    readonlyRepository.current = undefined;
   });
 
   describe('repository object', () => {
@@ -105,26 +107,43 @@ describe('GitLab repository service', () => {
     });
 
     test('succeeds when the user can push to the repository', async () => {
+      readonlyRepository.current = 'test-repo';
       vi.mocked(fetchGraphQL).mockResolvedValue({
-        project: { userPermissions: { pushCode: true } },
+        project: { userPermissions: { downloadCode: true, pushCode: true } },
       });
 
       await expect(checkRepositoryAccess()).resolves.toBeUndefined();
-      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('pushCode'));
+      expect(readonlyRepository.current).toBeUndefined();
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('downloadCode'));
     });
 
-    test('throws error when the user has a role lower than Developer', async () => {
+    test('signs in a Reporter in read-only mode', async () => {
       vi.mocked(fetchGraphQL).mockResolvedValue({
-        project: { userPermissions: { pushCode: false } },
+        project: { userPermissions: { downloadCode: true, pushCode: false } },
       });
 
-      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+      await expect(checkRepositoryAccess()).resolves.toBeUndefined();
+      expect(readonlyRepository.current).toBe('test-repo');
     });
 
-    test('throws error when the project is not visible to the user', async () => {
+    test('says there is no access when the user can’t read the repository', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        project: { userPermissions: { downloadCode: false, pushCode: false } },
+      });
+
+      await expect(checkRepositoryAccess()).rejects.toMatchObject({
+        message: 'Not a collaborator of the repository',
+        cause: { message: 'repository_no_access:{"repo":"test-repo"}' },
+      });
+    });
+
+    test('says there is no access when the project is not visible to the user', async () => {
       vi.mocked(fetchGraphQL).mockResolvedValue({ project: null });
 
-      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+      await expect(checkRepositoryAccess()).rejects.toMatchObject({
+        message: 'Not a collaborator of the repository',
+        cause: { message: 'repository_no_access:{"repo":"test-repo"}' },
+      });
     });
 
     test('reports a failed check rather than a raw error when the request fails', async () => {

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
 import { lockedBranch } from '$lib/services/backends/branch-access';
+import { readonlyRepository } from '$lib/services/backends/repository-access';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockAssetFolder } from '$lib/test/factories';
 
@@ -1823,6 +1824,7 @@ describe('assets/folders', () => {
     afterEach(() => {
       forkedRepository.current = undefined;
       lockedBranch.current = undefined;
+      readonlyRepository.current = undefined;
     });
 
     it('should be false when the user can change the media library', () => {
@@ -1837,6 +1839,12 @@ describe('assets/folders', () => {
 
     it('should be true when the user can’t push to the branch', () => {
       lockedBranch.current = 'main';
+
+      expect(assetsLocked.current).toBe(true);
+    });
+
+    it('should be true when the user can’t push to the repository', () => {
+      readonlyRepository.current = 'site';
 
       expect(assetsLocked.current).toBe(true);
     });

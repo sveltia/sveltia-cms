@@ -119,8 +119,29 @@ test('tells the user about an incident on GitHub until it’s over', async ({
   await expect(infobar).toBeHidden();
 });
 
-test('refuses a user who can only read the repository', async ({ cms, github, page }) => {
+test('signs in a user who can only read the repository in read-only mode', async ({
+  cms,
+  github,
+  page,
+}) => {
   github.canWrite = false;
+
+  await cms.open();
+  // Nothing can be created, so the global Create menu isn’t offered
+  await expect(page.getByRole('button', { name: 'Create Entry or Assets' })).toBeDisabled();
+  await expect(page.getByRole('status').filter({ hasText: 'write access' })).toHaveText(
+    /You don’t have write access to the .*e2e-site.* repository\. You can view content and assets/,
+  );
+  await expect(page.getByRole('button', { name: 'Create New Entry' })).toBeDisabled();
+
+  const editor = await openFirstPost(page);
+
+  await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveAttribute('readonly');
+  await expect(editor.getByRole('button', { name: 'Save' })).toHaveCount(0);
+});
+
+test('refuses a user who can’t see the repository', async ({ cms, github, page }) => {
+  github.canRead = false;
 
   await cms.open();
   await expect(page.getByRole('alert')).toContainText(

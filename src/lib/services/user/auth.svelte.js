@@ -8,6 +8,7 @@ import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-a
 import { NOT_COLLABORATOR_ERROR_MESSAGE } from '$lib/services/backends/git/shared/errors';
 import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
 import { startRemoteChangePolling, stopRemoteChangePolling } from '$lib/services/backends/poll';
+import { readonlyRepository } from '$lib/services/backends/repository-access';
 import { cmsConfig } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
 import { arrayFileItems } from '$lib/services/contents/file/process';
@@ -441,6 +442,7 @@ export const signOut = async () => {
   // The items of the files storing all the entries of a collection belong to this repository
   arrayFileItems.clear();
   repositoryHead.current = '';
+  readonlyRepository.current = undefined;
   lockedBranch.current = undefined;
   mergeLockedBranch.current = undefined;
   unpublishedEntries.current = [];

@@ -1,14 +1,11 @@
 import { recordBranchAccess } from '$lib/services/backends/branch-access';
 import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
-import {
-  createLocalizedError,
-  NOT_COLLABORATOR_ERROR_MESSAGE,
-  toRepositoryAccessError,
-} from '$lib/services/backends/git/shared/errors';
+import { toRepositoryAccessError } from '$lib/services/backends/git/shared/errors';
 import {
   applyDefaultBranch,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
+import { recordRepositoryAccess } from '$lib/services/backends/repository-access';
 
 /**
  * @import { RepositoryBaseURLs, RepositoryInfo } from '$lib/types/private';
@@ -48,11 +45,12 @@ export const isRateLimited = ({ status, headers }) =>
   headers.get('x-ratelimit-remaining') === '0';
 
 /**
- * Check if the user has write access to the current repository, which takes the write, maintain or
- * admin role, like Netlify/Decap CMS requires. The repository reports the authenticated user’s own
- * permissions, however they’re granted, including through an organization team. Asking the
- * collaborator endpoint instead would let a read-only collaborator in.
- * @throws {Error} If the user can’t push to the repository, or the access couldn’t be checked.
+ * Check what the user can do with the current repository, and record it in
+ * {@link readonlyRepository}. Editing takes the write, maintain or admin role, like Netlify/Decap
+ * CMS requires, while a collaborator with the read or triage role gets the CMS in read-only mode.
+ * The repository reports the authenticated user’s own permissions, however they’re granted,
+ * including through an organization team.
+ * @throws {Error} If the user can’t read the repository, or the access couldn’t be checked.
  * @see https://docs.github.com/en/rest/repos/repos#get-a-repository
  */
 export const checkRepositoryAccess = async () => {
@@ -75,13 +73,11 @@ export const checkRepositoryAccess = async () => {
     );
   }
 
-  const { permissions } = /** @type {{ permissions?: { push?: boolean } }} */ (
+  const { permissions } = /** @type {{ permissions?: { pull?: boolean, push?: boolean } }} */ (
     await response.json()
   );
 
-  if (!permissions?.push) {
-    throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });
-  }
+  recordRepositoryAccess(repo, { canRead: !!permissions?.pull, canPush: !!permissions?.push });
 };
 
 const FETCH_BRANCH_ACCESS_QUERY = `

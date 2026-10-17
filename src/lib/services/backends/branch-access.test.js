@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { readonlyRepository } from '$lib/services/backends/repository-access';
+
 import { lockedBranch, mergeLockedBranch, recordBranchAccess } from './branch-access';
 
 describe('recordBranchAccess()', () => {
@@ -16,6 +18,22 @@ describe('recordBranchAccess()', () => {
     expect(fetchAccess).toHaveBeenCalledWith('main');
     expect(lockedBranch.current).toBe('main');
     expect(mergeLockedBranch.current).toBe('main');
+  });
+
+  it('doesn’t ask about the branch when the user can’t push to the repository', async () => {
+    const fetchAccess = vi.fn().mockResolvedValue({ canPush: false, canMerge: false });
+
+    readonlyRepository.current = 'site';
+
+    try {
+      await recordBranchAccess('main', fetchAccess);
+    } finally {
+      readonlyRepository.current = undefined;
+    }
+
+    expect(fetchAccess).not.toHaveBeenCalled();
+    expect(lockedBranch.current).toBeUndefined();
+    expect(mergeLockedBranch.current).toBeUndefined();
   });
 
   it('unlocks the branch the user can push to and merge into', async () => {

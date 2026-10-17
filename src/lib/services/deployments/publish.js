@@ -1,4 +1,5 @@
 import { backend } from '$lib/services/backends';
+import { readonlyRepository } from '$lib/services/backends/repository-access';
 import {
   deployments,
   lastCommitPublishHint,
@@ -46,10 +47,11 @@ export const isLastCommitPublished = createDerivedState(() => {
 /**
  * Whether a deployment can be triggered by hand: there has to be a way to do it — a deploy hook
  * URL configured by the user, or a backend that can trigger a build itself — and the last commit
- * has to be out of date.
+ * has to be out of date. A user who can’t push to the repository can’t change anything to deploy.
  */
 export const canTriggerDeployment = createDerivedState(
   () =>
+    !readonlyRepository.current &&
     (!!prefs.deployHookURL || typeof backend.current?.triggerDeployment === 'function') &&
     !isLastCommitPublished.current,
 );

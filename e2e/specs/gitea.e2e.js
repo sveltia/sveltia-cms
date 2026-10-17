@@ -86,13 +86,18 @@ test('lists the entries of a repository whose file tree spans several pages', as
   await expect(getEntryRows(page)).toHaveCount(3);
 });
 
-test('refuses a user who can only read the repository', async ({ cms, gitea, page }) => {
+test('signs in a user who can only read the repository in read-only mode', async ({
+  cms,
+  gitea,
+  page,
+}) => {
   gitea.canWrite = false;
 
   await cms.open();
-  await expect(page.getByRole('alert')).toContainText(
-    /You don’t have access to the .*e2e-site.* repository/,
-  );
+  await expect(
+    page.getByText(/You don’t have write access to the .*e2e-site.* repository/),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Create New Entry' })).toBeDisabled();
 });
 
 test('refuses an instance older than the supported version', async ({ cms, gitea, page }) => {

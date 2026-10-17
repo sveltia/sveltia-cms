@@ -10,16 +10,18 @@ import {
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { readonlyRepository } from '$lib/services/backends/repository-access';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn(() => 'Translation message'),
-}));
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({ values: true }),
+);
 
 describe('GitHub repository service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    readonlyRepository.current = undefined;
   });
 
   describe('repository object', () => {
@@ -85,12 +87,14 @@ describe('GitHub repository service', () => {
     });
 
     test('succeeds when the user can push to the repository', async () => {
+      readonlyRepository.current = 'test-repo';
       vi.mocked(fetchAPI).mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue({ permissions: { pull: true, push: true } }),
       });
 
       await expect(checkRepositoryAccess()).resolves.toBeUndefined();
+      expect(readonlyRepository.current).toBeUndefined();
       expect(fetchAPI).toHaveBeenCalledWith(
         '/repos/test-owner/test-repo',
         expect.objectContaining({
@@ -100,22 +104,26 @@ describe('GitHub repository service', () => {
       );
     });
 
-    test('throws error when the user can only read the repository', async () => {
+    test('signs in a user who can only read the repository in read-only mode', async () => {
       vi.mocked(fetchAPI).mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue({ permissions: { pull: true, push: false } }),
       });
 
-      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+      await expect(checkRepositoryAccess()).resolves.toBeUndefined();
+      expect(readonlyRepository.current).toBe('test-repo');
     });
 
-    test('throws error when the repository reports no permissions', async () => {
+    test('says there is no access when the repository reports no permissions', async () => {
       vi.mocked(fetchAPI).mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue({}),
       });
 
-      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+      await expect(checkRepositoryAccess()).rejects.toMatchObject({
+        message: 'Not a collaborator of the repository',
+        cause: { message: 'repository_no_access:{"repo":"test-repo"}' },
+      });
     });
 
     test.each([401, 403, 404])(
@@ -125,9 +133,10 @@ describe('GitHub repository service', () => {
 
         vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
 
-        await expect(checkRepositoryAccess()).rejects.toThrow(
-          'Not a collaborator of the repository',
-        );
+        await expect(checkRepositoryAccess()).rejects.toMatchObject({
+          message: 'Not a collaborator of the repository',
+          cause: { message: 'repository_no_access:{"repo":"test-repo"}' },
+        });
         expect(mockResponse.json).not.toHaveBeenCalled();
       },
     );

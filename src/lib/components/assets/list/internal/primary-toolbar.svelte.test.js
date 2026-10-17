@@ -8,6 +8,7 @@ import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/fol
 import { focusedAsset, selectedAssets } from '$lib/services/assets/state';
 import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { lockedBranch } from '$lib/services/backends/branch-access';
+import { readonlyRepository } from '$lib/services/backends/repository-access';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
@@ -38,6 +39,7 @@ describe('PrimaryToolbar', () => {
     selectedSubfolderPath.current = '';
     forkedRepository.current = undefined;
     lockedBranch.current = undefined;
+    readonlyRepository.current = undefined;
     focusedAsset.current = undefined;
     selectedAssets.current = [];
   });
@@ -237,6 +239,25 @@ describe('PrimaryToolbar', () => {
       );
     await expect.element(page.getByRole('button', { name: 'Upload New Assets' })).toBeDisabled();
     await expect.element(page.getByRole('button', { name: 'Copy' })).toBeEnabled();
+    await expect
+      .element(page.getByRole('button', { name: 'Delete Selected Asset' }))
+      .toBeDisabled();
+  });
+
+  test('explains a repository the user can’t push to, and disables uploading and deleting', async () => {
+    selectedAssetFolder.current = globalAssetFolder.current;
+    readonlyRepository.current = 'site';
+
+    await render(PrimaryToolbar);
+    focusedAsset.current = firstAsset;
+
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent(
+        'info Information You don’t have write access to the “\u2068site\u2069” repository. ' +
+          'You can view content and assets but cannot make any changes.',
+      );
+    await expect.element(page.getByRole('button', { name: 'Upload New Assets' })).toBeDisabled();
     await expect
       .element(page.getByRole('button', { name: 'Delete Selected Asset' }))
       .toBeDisabled();

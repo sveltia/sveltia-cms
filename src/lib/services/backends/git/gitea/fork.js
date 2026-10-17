@@ -7,7 +7,7 @@ import {
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import {
   createLocalizedError,
-  NOT_COLLABORATOR_ERROR_MESSAGE,
+  createNoAccessError,
 } from '$lib/services/backends/git/shared/errors';
 import {
   isOpenAuthoringConfiguredFor,
@@ -79,9 +79,7 @@ export const fetchRepositoryAccess = async () => {
     // same as the regular access check does, so the user gets the sign-in form rather than the
     // same error on every reload
     if ([403, 404].includes(ex.cause?.status)) {
-      throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', {
-        repo: repoPath,
-      });
+      throw createNoAccessError(repoPath);
     }
 
     // A rate limit or an outage leaves the question unanswered. Reading that as “no write access”

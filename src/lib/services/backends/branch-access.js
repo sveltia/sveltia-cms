@@ -1,3 +1,4 @@
+import { readonlyRepository } from '$lib/services/backends/repository-access';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -27,7 +28,8 @@ export const mergeLockedBranch = createRawState();
 /**
  * Check what the user can do on the configured branch, and record it in {@link lockedBranch} and
  * {@link mergeLockedBranch}. A failed request leaves the branch writable and mergeable, as the
- * backend still refuses a push or merge the user isn’t allowed to make.
+ * backend still refuses a push or merge the user isn’t allowed to make. A user who can’t push to
+ * the repository at all has the whole CMS read-only already, so the branch isn’t asked about.
  * @param {string | undefined} branch Configured branch.
  * @param {(branch: string) => Promise<{ canPush?: boolean, canMerge?: boolean }>} fetchAccess
  * Function to fetch the user’s access to the branch. A permission it doesn’t tell is assumed.
@@ -36,7 +38,7 @@ export const recordBranchAccess = async (branch, fetchAccess) => {
   /** @type {{ canPush?: boolean, canMerge?: boolean }} */
   let access = {};
 
-  if (branch) {
+  if (branch && !readonlyRepository.current) {
     try {
       access = await fetchAccess(branch);
     } catch {

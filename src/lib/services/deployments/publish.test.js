@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { backend } from '$lib/services/backends';
+import { readonlyRepository } from '$lib/services/backends/repository-access';
 import {
   deployments,
   lastCommitPublishHint,
@@ -156,6 +157,17 @@ describe('Publish state', () => {
       setPrefs({ deployHookURL: 'https://example.com/hook' });
       setLastCommitPublishHint(true);
       expect(canTriggerDeployment.current).toBe(false);
+    });
+
+    test('is false when the user can’t push to the repository', () => {
+      setPrefs({ deployHookURL: 'https://example.com/hook' });
+      readonlyRepository.current = 'site';
+
+      try {
+        expect(canTriggerDeployment.current).toBe(false);
+      } finally {
+        readonlyRepository.current = undefined;
+      }
     });
   });
 
