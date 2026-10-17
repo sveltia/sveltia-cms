@@ -403,6 +403,22 @@ describe('draft/validate/slugs', () => {
       expect(validateSlug({ slug: 'ab ' })).toBe('invalid');
     });
 
+    // @see https://github.com/sveltia/sveltia-cms/issues/1093
+    it('should allow a plain space when the replacement has one', async () => {
+      const { cmsConfig } = await import('$lib/services/config');
+
+      cmsConfig.current = { slug: { sanitize_replacement: ' ' } };
+
+      try {
+        expect(validateSlug({ slug: 'Sourdough focaccia' })).toBeUndefined();
+        expect(validateSlug({ slug: 'a/b' })).toBe('invalid');
+        expect(validateSlug({ slug: 'a\tb' })).toBe('invalid');
+        expect(validateSlug({ slug: 'a\u00A0b' })).toBe('invalid');
+      } finally {
+        cmsConfig.current = undefined;
+      }
+    });
+
     it('should check the pattern', () => {
       const pattern = ['^[a-z]{2}$', 'Two letters'];
 

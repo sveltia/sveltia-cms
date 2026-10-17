@@ -1,6 +1,7 @@
 import { _ } from '@sveltia/i18n';
 
 import { slugify } from '$lib/services/common/slug';
+import { cmsConfig } from '$lib/services/config';
 import {
   getEntriesByCollection,
   getEntriesInCollectionFolder,
@@ -24,8 +25,9 @@ import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
  */
 
 /**
- * What stops a slug from being used: it’s empty, contains a slash or whitespace, doesn’t match the
- * collection’s `pattern` slug option, or is taken by another entry.
+ * What stops a slug from being used: it’s empty, contains a slash or whitespace (other than a plain
+ * space, if the slug is meant to have them), doesn’t match the collection’s `pattern` slug option,
+ * or is taken by another entry.
  * @typedef {'empty' | 'invalid' | 'pattern' | 'duplicate'} SlugValidationError
  */
 
@@ -123,6 +125,15 @@ export const getTakenSlugs = (draft, locales = Object.keys(draft.currentSlugs)) 
 };
 
 /**
+ * Check whether a slug is meant to contain spaces, because the global `sanitize_replacement` slug
+ * option contains one.
+ * @returns {boolean} Result.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1093
+ */
+const slugCanHaveSpaces = () =>
+  cmsConfig.current?.slug?.sanitize_replacement?.includes(' ') ?? false;
+
+/**
  * Check whether the given slug can be used.
  * @param {object} args Arguments.
  * @param {string | undefined} args.slug Slug to check, as typed.
@@ -142,8 +153,9 @@ export const validateSlug = ({ slug, required = true, pattern, takenSlugs = [], 
     return required ? 'empty' : undefined;
   }
 
-  // A slash or whitespace would break the file path and URL structure
-  if (/[/\s]/.test(/** @type {string} */ (slug))) {
+  // A slash or whitespace would break the file path and URL structure. A plain space is fine if the
+  // slug is meant to have them; `slugify` turns any run of them into the replacement on save
+  if ((slugCanHaveSpaces() ? /[/]|[^\S ]/ : /[/\s]/).test(/** @type {string} */ (slug))) {
     return 'invalid';
   }
 

@@ -20,8 +20,11 @@ export const parseSlugConfig = (cmsConfig, collectors) => {
 
   // The replacement stands in for the characters a slug can’t contain, so it can’t contain one of
   // them itself: the slug would still end up with the very character the option was meant to
-  // remove, e.g. a space, and a slash would even turn the slug into a path. An empty string is
-  // fine; it just joins the words together
+  // remove, and a slash would even turn the slug into a path. An empty string is fine; it just
+  // joins the words together. So is a plain space, for file names read by people and tools rather
+  // than used as URLs, e.g. an Obsidian vault resolving `[[Sourdough focaccia]]` by file name;
+  // `slugify` still collapses and trims it like any other replacement
+  // @see https://github.com/sveltia/sveltia-cms/issues/1093
   if (typeof replacement !== 'string' || !replacement) {
     return;
   }
@@ -29,7 +32,7 @@ export const parseSlugConfig = (cmsConfig, collectors) => {
   const unsafeCharsRegex =
     encoding === 'ascii' ? UNSAFE_ASCII_SLUG_CHARS_REGEX : UNSAFE_UNICODE_SLUG_CHARS_REGEX;
 
-  if (unsafeCharsRegex.test(replacement)) {
+  if (unsafeCharsRegex.test(replacement.replaceAll(' ', ''))) {
     addMessage({
       strKey: 'invalid_sanitize_replacement',
       values: { replacement },

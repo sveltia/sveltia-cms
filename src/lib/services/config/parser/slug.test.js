@@ -62,9 +62,22 @@ describe('parseSlugConfig', () => {
     expect(addMessage).not.toHaveBeenCalled();
   });
 
-  test('reports a space, which the slug is meant to be rid of', () => {
+  // @see https://github.com/sveltia/sveltia-cms/issues/1093
+  test('accepts a plain space, which keeps the words of a file name apart', () => {
     check({ sanitize_replacement: ' ' });
-    expectReported(' ');
+    check({ sanitize_replacement: ' - ' });
+    check({ encoding: 'ascii', sanitize_replacement: ' ' });
+    expect(addMessage).not.toHaveBeenCalled();
+  });
+
+  test('reports any other kind of space', () => {
+    check({ sanitize_replacement: '\u00A0' });
+    expectReported('\u00A0');
+  });
+
+  test('reports an unsafe character next to a space', () => {
+    check({ sanitize_replacement: ' / ' });
+    expectReported(' / ');
   });
 
   test('reports a slash, which would turn the slug into a path', () => {
