@@ -2108,6 +2108,9 @@ config:
     relation_field_invalid_display_field: 参照されている表示フィールド `{$field}` は無効であるか定義されていません。
     relation_field_invalid_search_field: 参照されている検索フィールド `{$field}` は無効であるか定義されていません。
     relation_field_invalid_filter_field: 参照されているフィルターフィールド `{$field}` は無効であるか定義されていません。
+    relation_field_invalid_sort_field: 参照されている並べ替えフィールド `{$field}` は無効であるか定義されていません。
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: '`sort_by` オプションはファイルへの参照には適用されません。オプションはリスト項目の順序に従います。このオプションは無視されます。'
     unexpected: 予期せぬ問題
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON

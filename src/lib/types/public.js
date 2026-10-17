@@ -1252,6 +1252,15 @@
  */
 
 /**
+ * Sort options for a Relation field, which define the order of the options.
+ * @typedef {object} RelationFieldSortOptions
+ * @property {FieldKeyPath} field Field name in the referenced collection to sort the entries by. It
+ * can also be `slug`, `commit_author`, `commit_date` or `_manual` (the manual order of a collection
+ * with the `reorder` option).
+ * @property {'ascending' | 'descending'} [direction] Sort direction. Default: `ascending`.
+ */
+
+/**
  * Relation field properties.
  * @typedef {object} RelationFieldProps
  * @property {'relation'} widget Field type.
@@ -1276,6 +1285,10 @@
  * @property {(FieldKeyPath | string)[]} [search_fields] Name of fields to be searched. It can
  * contain string templates. Default: `display_fields` field value.
  * @property {RelationFieldFilterOptions[]} [filters] Entry filter options.
+ * @property {RelationFieldSortOptions} [sort_by] Sort options for the referenced entries. Default:
+ * the manual order for a collection with the `reorder` option, the order of the list items for a
+ * referenced file, and the alphabetical order of the labels otherwise. Not applicable to a
+ * referenced file.
  * @see https://decapcms.org/docs/widgets/#Relation
  * @see https://sveltiacms.app/en/docs/fields/relation
  */

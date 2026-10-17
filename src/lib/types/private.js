@@ -2235,6 +2235,14 @@
  */
 
 /**
+ * Relation field options generated from a referenced entry, which can be more than one if the
+ * templates refer to a List subfield.
+ * @typedef {object} RelationOptionGroup
+ * @property {Entry} refEntry Referenced entry.
+ * @property {RelationOption[]} options Options generated from the entry.
+ */
+
+/**
  * Arguments for a field parser function.
  * @typedef {object} FieldParserArgs
  * @property {Field} config Field configuration.

@@ -45,6 +45,7 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
 
 vi.mock('$lib/services/contents/entry/values', () => ({
   getFieldDisplayValue: vi.fn(),
+  getPropertyValue: vi.fn(),
 }));
 vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummaryFromContent: vi.fn(),
@@ -70,7 +71,10 @@ describe('Test getOptions()', async () => {
     await import('$lib/services/contents/collection/entries/index-file');
 
   const { getField } = await import('$lib/services/contents/entry/fields');
-  const { getFieldDisplayValue } = await import('$lib/services/contents/entry/values');
+
+  const { getFieldDisplayValue, getPropertyValue } =
+    await import('$lib/services/contents/entry/values');
+
   const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
   const locale = '_default';
   /** @type {LocalizedEntry} */
@@ -853,6 +857,89 @@ describe('Test getOptions()', async () => {
         expect(result.map((o) => o.label)).toEqual(['Zoe', 'Bob', 'Alice']);
       });
 
+      describe('With the `sort_by` option', () => {
+        /**
+         * Build a member entry.
+         * @param {string} name First name.
+         * @param {Record<string, any>} [content] Other content.
+         * @returns {Entry} Entry.
+         */
+        const makeMember = (name, content = {}) => ({
+          id: name,
+          slug: name.toLowerCase(),
+          subPath: name.toLowerCase(),
+          locales: {
+            _default: { ...localizedEntryProps, content: { 'name.first': name, ...content } },
+          },
+        });
+
+        const refEntries = [
+          makeMember('Alice', { followerCount: 2, weight: 1 }),
+          makeMember('Zoe', { followerCount: 10, weight: 3 }),
+          makeMember('Bob', { weight: 2 }),
+        ];
+
+        beforeEach(() => {
+          vi.mocked(getPropertyValue).mockImplementation(
+            ({ entry, locale: _locale, key }) => entry.locales[_locale]?.content[key],
+          );
+          vi.mocked(getField).mockImplementation(({ keyPath }) =>
+            keyPath === 'followerCount' ? { name: keyPath, widget: 'number' } : undefined,
+          );
+        });
+
+        test('should sort the options by the given field and direction', () => {
+          /** @type {RelationField} */
+          const fieldConfig = {
+            ...baseFieldConfig,
+            collection: 'members',
+            display_fields: ['name.first'],
+            sort_by: { field: 'followerCount', direction: 'descending' },
+          };
+
+          const result = getOptions({ locale, fieldConfig, refEntries });
+
+          // An entry without a value comes last
+          expect(result.map((o) => o.label)).toEqual(['Zoe', 'Alice', 'Bob']);
+        });
+
+        test('should take precedence over the manual order', () => {
+          vi.mocked(getCollection).mockReturnValue({
+            ...mockCollection,
+            // @ts-ignore - Using simplified mock collection for testing
+            reorder: { key: 'weight' },
+          });
+
+          /** @type {RelationField} */
+          const fieldConfig = {
+            ...baseFieldConfig,
+            collection: 'members',
+            display_fields: ['name.first'],
+            sort_by: { field: 'followerCount' },
+          };
+
+          const result = getOptions({ locale, fieldConfig, refEntries });
+
+          expect(result.map((o) => o.label)).toEqual(['Alice', 'Zoe', 'Bob']);
+        });
+
+        test('should be ignored without a field', () => {
+          /** @type {RelationField} */
+          const fieldConfig = {
+            ...baseFieldConfig,
+            collection: 'members',
+            display_fields: ['name.first'],
+            // @ts-expect-error - Testing an invalid configuration
+            sort_by: { direction: 'descending' },
+          };
+
+          const result = getOptions({ locale, fieldConfig, refEntries });
+
+          expect(result.map((o) => o.label)).toEqual(['Alice', 'Bob', 'Zoe']);
+          expect(getPropertyValue).not.toHaveBeenCalled();
+        });
+      });
+
       test('should follow the order of an entry collection stored in one file', () => {
         vi.mocked(getCollection).mockReturnValue({
           ...mockCollection,
@@ -1120,6 +1207,23 @@ describe('Test getOptions()', async () => {
           'Los Angeles',
           'Chicago',
         ]);
+        expect(result.map((r) => r.value)).toEqual(['nyc', 'bos', 'sf', 'la', 'chi']);
+      });
+
+      test('should ignore the `sort_by` option, keeping the order of the list items', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          widget: 'relation',
+          name: 'city',
+          collection: 'relation_files',
+          file: 'cities',
+          display_fields: ['cities.*.name'],
+          value_field: 'cities.*.id',
+          sort_by: { field: 'cities.*.name' },
+        };
+
+        const result = getOptions({ locale, fieldConfig, refEntries: citiesFileCollectionEntries });
+
         expect(result.map((r) => r.value)).toEqual(['nyc', 'bos', 'sf', 'la', 'chi']);
       });
 

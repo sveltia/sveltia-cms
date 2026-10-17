@@ -6,6 +6,8 @@ import { hasSlugTag } from '$lib/services/config/parser/collections/array-file';
 import { checkMultipleDefault } from '$lib/services/config/parser/utils/defaults';
 import { getCanonicalSlugKey, hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
+import { METADATA_KEYS } from '$lib/services/contents/collection/view/table-keys';
 import { getPublishMode, isWorkflowMode } from '$lib/services/workflow/config';
 
 /**
@@ -33,6 +35,12 @@ import { getPublishMode, isWorkflowMode } from '$lib/services/workflow/config';
  * @type {string[]}
  */
 const SPECIAL_TEMPLATE_TAGS = ['slug', 'locale'];
+/**
+ * Keys that the `field` of the `sort_by` option can have without referring to a field: the entry
+ * metadata keys like `slug`, and `_manual` for the manual order, the same as `sortable_fields`.
+ * @type {string[]}
+ */
+const SPECIAL_SORT_KEYS = [...METADATA_KEYS, '_manual'];
 
 /**
  * Unsupported options for Relation fields.
@@ -109,11 +117,20 @@ const checkFieldReference = ({
  * @param {Field[]} args.fields Fields defined in the referenced collection or file.
  * @param {string | undefined} args.canonicalSlugKey The canonical slug key of the referenced
  * collection or file, if i18n is enabled.
+ * @param {string | undefined} args.orderFieldKey The reorder field key of the referenced
+ * collection, if any. It can be a sort key without being defined as a field.
  * @param {ConfigParserContext} args.context Context.
  * @param {ConfigParserCollectors} args.collectors Collectors.
  */
-const checkFieldReferences = ({ fieldConfig, fields, canonicalSlugKey, context, collectors }) => {
-  const { filters } = fieldConfig;
+const checkFieldReferences = ({
+  fieldConfig,
+  fields,
+  canonicalSlugKey,
+  orderFieldKey,
+  context,
+  collectors,
+}) => {
+  const { file: fileName, filters, sort_by: sortBy } = fieldConfig;
 
   // A filter’s `field` is a single key path, where `slug` is the entry slug and the `fields.`
   // prefix marks a field, the same as in a template. A filter on an unknown field matches no
@@ -134,6 +151,28 @@ const checkFieldReferences = ({ fieldConfig, fields, canonicalSlugKey, context, 
           });
         }
       }
+    });
+  }
+
+  // The sort field is a single key path like a `sortable_fields` key, where `slug` is the entry
+  // slug. An unknown field leaves every entry without a value, so the options aren’t sorted. The
+  // option is ignored for a referenced file, which is reported separately
+  const sortField = isObject(sortBy) ? sortBy.field : undefined;
+
+  if (
+    !fileName &&
+    typeof sortField === 'string' &&
+    sortField &&
+    !SPECIAL_SORT_KEYS.includes(sortField) &&
+    sortField !== canonicalSlugKey &&
+    sortField !== orderFieldKey &&
+    !hasField(fields, sortField)
+  ) {
+    addMessage({
+      strKey: 'relation_field_invalid_sort_field',
+      context,
+      collectors,
+      values: { field: sortField },
     });
   }
 
@@ -296,6 +335,16 @@ export const parseRelationFieldConfig = (args) => {
     });
   }
 
+  // The options taken from a list in a single file follow the order of the list items
+  if (fileName && fieldConfig.sort_by !== undefined) {
+    addMessage({
+      type: 'warning',
+      strKey: 'relation_field_sort_by_file_ignored',
+      context,
+      collectors,
+    });
+  }
+
   // Check if the referenced fields exist in the target collection/file. A collection or file
   // without fields is reported separately, so skip the check in that case to avoid a duplicate
   // error
@@ -308,6 +357,7 @@ export const parseRelationFieldConfig = (args) => {
       fieldConfig,
       fields: targetFields,
       canonicalSlugKey,
+      orderFieldKey: getOrderFieldKey(collection),
       context,
       collectors,
     });

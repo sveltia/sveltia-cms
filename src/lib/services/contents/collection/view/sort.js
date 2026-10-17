@@ -118,6 +118,43 @@ export const getSortKeyGetter = ({
 };
 
 /**
+ * Get a function that computes the sort key of an entry for the given field, along with how the
+ * keys are compared. It doesn’t support the `_manual` key, which sorts by the reorder field.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection that the entries belong to.
+ * @param {string} args.key Sort key field path, or one of the special sort keys like `slug`.
+ * @param {string} args.locale Locale of the content to read the values from.
+ * @returns {{ getSortKey: (entry: Entry) => string | number | undefined, isStringType: boolean }}
+ * Sort key getter, and whether the keys are strings to be compared in a locale-aware manner rather
+ * than numbers.
+ */
+export const getEntrySortKeyGetter = ({ collection, key, locale }) => {
+  const { name: collectionName } = collection;
+  const fieldConfig = getField({ collectionName, keyPath: key });
+  const type = getSortKeyType({ key, fieldConfig });
+
+  const dateFieldConfig =
+    fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
+
+  // Check if the field is a Markdown-enabled field: we use both the field config and a hardcoded
+  // key list to determine this, as some fields may be text fields that contain Markdown syntax.
+  const isMarkdownField =
+    RICH_TEXT_FIELD_TYPES.includes(fieldConfig?.widget ?? '') || MARKDOWN_FIELD_KEYS.includes(key);
+
+  const getSortKey = getSortKeyGetter({
+    key,
+    type,
+    collection,
+    locale,
+    collectionName,
+    dateFieldConfig,
+    isMarkdownField,
+  });
+
+  return { getSortKey, isStringType: !dateFieldConfig && type === String };
+};
+
+/**
  * Move the collection’s index file to the top of the sorted entries, where it should always be.
  * It’s told by its path rather than by its slug, because another collection’s index file within
  * this collection’s folder carries the same slug.
@@ -152,7 +189,6 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
   }
 
   const {
-    name: collectionName,
     _i18n: { defaultLocale: locale },
   } = collection;
 
@@ -174,29 +210,10 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
     return moveIndexFileToTop(sorted, collection);
   }
 
-  const fieldConfig = getField({ collectionName, keyPath: key });
-  const type = getSortKeyType({ key, fieldConfig });
-
-  const dateFieldConfig =
-    fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
-
-  // Check if the field is a Markdown-enabled field: we use both the field config and a hardcoded
-  // key list to determine this, as some fields may be text fields that contain Markdown syntax.
-  const isMarkdownField =
-    RICH_TEXT_FIELD_TYPES.includes(fieldConfig?.widget ?? '') || MARKDOWN_FIELD_KEYS.includes(key);
-
-  const getSortKey = getSortKeyGetter({
-    key,
-    type,
-    collection,
-    locale,
-    collectionName,
-    dateFieldConfig,
-    isMarkdownField,
-  });
+  const { getSortKey, isStringType } = getEntrySortKeyGetter({ collection, key, locale });
 
   // `sortItemsByKey()` computes the key once per entry, so there’s no need for a lookup table here
-  sortItemsByKey(_entries, getSortKey, !dateFieldConfig && type === String, order);
+  sortItemsByKey(_entries, getSortKey, isStringType, order);
 
   return moveIndexFileToTop(_entries, collection);
 };

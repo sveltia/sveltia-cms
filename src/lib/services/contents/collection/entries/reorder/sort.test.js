@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { sortEntriesByOrderField } from './sort';
+import { getOrderValueGetter, sortEntriesByOrderField } from './sort';
 
 /**
  * Build a minimal entry collection mock for tests.
@@ -119,5 +119,37 @@ describe('sortEntriesByOrderField()', () => {
       five,
       unordered,
     ]);
+  });
+});
+
+describe('getOrderValueGetter', () => {
+  test('returns the numeric value of the order field', () => {
+    const getOrderValue = getOrderValueGetter(makeCollection());
+
+    expect(getOrderValue(makeEntry('a', { order: 3 }))).toBe(3);
+    expect(getOrderValue(makeEntry('b', { order: ' 2 ' }))).toBe(2);
+  });
+
+  test('returns `undefined` for a missing or invalid value', () => {
+    const getOrderValue = getOrderValueGetter(makeCollection());
+
+    expect(getOrderValue(makeEntry('a', {}))).toBeUndefined();
+    expect(getOrderValue(makeEntry('b', { order: null }))).toBeUndefined();
+    expect(getOrderValue(makeEntry('c', { order: ' ' }))).toBeUndefined();
+    expect(getOrderValue(makeEntry('d', { order: 'abc' }))).toBeUndefined();
+    expect(getOrderValue(makeEntry('e', { order: Infinity }))).toBeUndefined();
+  });
+
+  test('returns `undefined` for every entry if the collection can’t be reordered', () => {
+    const getOrderValue = getOrderValueGetter(makeCollection({ reorder: undefined }));
+
+    expect(getOrderValue(makeEntry('a', { order: 3 }))).toBeUndefined();
+  });
+
+  test('returns the position in the array for a collection stored in one file', () => {
+    const getOrderValue = getOrderValueGetter(makeArrayFileCollection());
+
+    expect(getOrderValue(makeArrayEntry('a', 5))).toBe(5);
+    expect(getOrderValue(makeArrayEntry('b', undefined))).toBe(0);
   });
 });

@@ -16,6 +16,7 @@ import {
   filterAndPrepareEntries,
   resolveFilterValues,
 } from '$lib/services/contents/fields/relation/helpers/filters';
+import { sortOptions } from '$lib/services/contents/fields/relation/helpers/sort';
 import { prepareFieldTemplates } from '$lib/services/contents/fields/relation/helpers/templates';
 import { getOrCreateBounded } from '$lib/services/utils/cache';
 
@@ -23,9 +24,11 @@ import { getOrCreateBounded } from '$lib/services/utils/cache';
  * @import {
  * Entry,
  * FlattenedEntryContent,
+ * InternalEntryCollection,
  * InternalLocaleCode,
  * PendingEntry,
  * RelationOption,
+ * RelationOptionGroup,
  * } from '$lib/types/private';
  * @import { FieldKeyPath, RelationField, RelationFieldFilterOptions } from '$lib/types/public';
  */
@@ -107,8 +110,8 @@ const withPendingEntries = (entries, collectionName, pendingEntries = []) => {
 };
 
 /**
- * Build the option list for a Relation field from the given referenced entries. This is the
- * uncached core shared by {@link getOptions} and {@link getEntryOptions}.
+ * Build the options for a Relation field from the given referenced entries, grouped by entry. This
+ * is the uncached core shared by {@link getOptions} and {@link getEntryOptions}.
  * @param {object} args Arguments.
  * @param {InternalLocaleCode} args.locale Current locale.
  * @param {RelationField} args.fieldConfig Field configuration.
@@ -118,9 +121,9 @@ const withPendingEntries = (entries, collectionName, pendingEntries = []) => {
  * @param {PendingEntry[]} [args.pendingEntries] Entries created from a Relation field of the draft
  * being edited. A label template can refer to another Relation field of the referenced entry, and
  * the entry that one points at may be pending too.
- * @returns {RelationOption[]} Options, unsorted.
+ * @returns {RelationOptionGroup[]} Options grouped by referenced entry, unsorted.
  */
-const buildOptions = ({
+const buildOptionGroups = ({
   locale,
   fieldConfig,
   refEntries,
@@ -151,8 +154,9 @@ const buildOptions = ({
     defaultLocale,
   });
 
-  return filteredEntries.flatMap(({ refEntry, content }) =>
-    processEntry({
+  return filteredEntries.map(({ refEntry, content }) => ({
+    refEntry,
+    options: processEntry({
       refEntry,
       content,
       collection,
@@ -162,8 +166,15 @@ const buildOptions = ({
       identifierField,
       pendingEntries,
     }),
-  );
+  }));
 };
+
+/**
+ * Build the option list for a Relation field from the given referenced entries.
+ * @param {Parameters<typeof buildOptionGroups>[0]} args Arguments. See {@link buildOptionGroups}.
+ * @returns {RelationOption[]} Options, unsorted.
+ */
+const buildOptions = (args) => buildOptionGroups(args).flatMap(({ options }) => options);
 
 /**
  * Get the entries a Relation field can reference: the entries of the referenced collection, or the
@@ -195,8 +206,8 @@ export const getRefEntries = ({ collection: collectionName, file: fileName }) =>
  * templates are ignored.
  * @param {PendingEntry[]} [args.pendingEntries] Entries created from a Relation field of the draft
  * being edited, so the labels referring to one of them through another Relation field resolve.
- * @returns {RelationOption[]} Options, sorted by label unless the field references a file or a
- * collection kept in a manual order.
+ * @returns {RelationOption[]} Options, sorted as the `sort_by` option defines, or by label unless
+ * the field references a file or a collection kept in a manual order.
  */
 export const getOptions = ({
   locale,
@@ -206,7 +217,7 @@ export const getOptions = ({
   currentSlug = undefined,
   pendingEntries = undefined,
 }) => {
-  const { collection: collectionName, file: fileName, filters } = fieldConfig;
+  const { collection: collectionName, file: fileName, filters, sort_by: sortBy } = fieldConfig;
   // Resolve template strings in filter values against the current entry’s locale content and slug.
   // The resolved values are also baked into the cache key so stale options are not returned when
   // the relevant field value changes while the user is editing.
@@ -236,9 +247,26 @@ export const getOptions = ({
 
       try {
         const collection = getCollection(collectionName);
-        // The options taken from a list in a single file follow the order of the list items, and
-        // those from the entries of a collection the user can reorder follow the manual order;
-        // the others are sorted by label
+
+        // The options taken from a list in a single file follow the order of the list items, so
+        // the `sort_by` option doesn’t apply to them
+        if (collection && !fileName && sortBy?.field) {
+          return sortOptions({
+            groups: buildOptionGroups({
+              locale,
+              fieldConfig,
+              refEntries,
+              entryFilters: resolvedFilters,
+              pendingEntries,
+            }),
+            collection: /** @type {InternalEntryCollection} */ (collection),
+            sortBy,
+            locale,
+          });
+        }
+
+        // Without the `sort_by` option, the options from the entries of a collection the user can
+        // reorder follow the manual order; the others are sorted by label
         const manuallyOrdered = !fileName && isManuallyOrdered(collection);
 
         const options = buildOptions({

@@ -2,7 +2,7 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { getSortKeyGetter, MARKDOWN_FIELD_KEYS, sortEntries } from './sort';
+import { getEntrySortKeyGetter, getSortKeyGetter, MARKDOWN_FIELD_KEYS, sortEntries } from './sort';
 
 /**
  * @import { Entry, InternalCollection } from '$lib/types/private';
@@ -1836,5 +1836,55 @@ describe('getSortKeyGetter', () => {
     const result = getter(mockEntry);
 
     expect(result).toBeUndefined();
+  });
+});
+
+describe('getEntrySortKeyGetter', () => {
+  /** @type {InternalCollection} */
+  const collection = /** @type {any} */ ({
+    name: 'posts',
+    _i18n: { defaultLocale: 'en' },
+  });
+
+  /** @type {Entry} */
+  const entry = /** @type {any} */ ({ slug: 'a', locales: { fr: { content: {} } } });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('should read the value in the given locale and compare strings as strings', () => {
+    vi.mocked(getField).mockReturnValue(undefined);
+    vi.mocked(getSortKeyType).mockReturnValue(String);
+    vi.mocked(getPropertyValue).mockReturnValue('Nom');
+
+    const { getSortKey, isStringType } = getEntrySortKeyGetter({
+      collection,
+      key: 'name',
+      locale: 'fr',
+    });
+
+    expect(isStringType).toBe(true);
+    expect(getSortKey(entry)).toBe('Nom');
+    expect(getField).toHaveBeenCalledWith({ collectionName: 'posts', keyPath: 'name' });
+    expect(getPropertyValue).toHaveBeenCalledWith(
+      expect.objectContaining({ entry, locale: 'fr', collectionName: 'posts', key: 'name' }),
+    );
+  });
+
+  test('should compare dates as numbers', () => {
+    vi.mocked(getField).mockReturnValue(/** @type {any} */ ({ name: 'date', widget: 'datetime' }));
+    vi.mocked(getSortKeyType).mockReturnValue(String);
+    vi.mocked(getPropertyValue).mockReturnValue('2026-01-01');
+    vi.mocked(getDate).mockReturnValue(new Date(1000));
+
+    const { getSortKey, isStringType } = getEntrySortKeyGetter({
+      collection,
+      key: 'date',
+      locale: 'fr',
+    });
+
+    expect(isStringType).toBe(false);
+    expect(getSortKey(entry)).toBe(1000);
   });
 });

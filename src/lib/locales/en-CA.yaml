@@ -2209,6 +2209,9 @@ config:
     relation_field_invalid_display_field: The referenced display field `{$field}` is invalid or not defined.
     relation_field_invalid_search_field: The referenced search field `{$field}` is invalid or not defined.
     relation_field_invalid_filter_field: The referenced filter field `{$field}` is invalid or not defined.
+    relation_field_invalid_sort_field: The referenced sort field `{$field}` is invalid or not defined.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: The `sort_by` option doesn’t apply to a relation to a file, whose options follow the order of the list items. It will be ignored.
     unexpected: Unexpected error
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
