@@ -84,6 +84,29 @@ export const getKeyboardMoveTarget = ({ key, index, itemCount }) => {
 };
 
 /**
+ * Minimum number of items for a list to offer Move to Top, Move to Bottom and Move To. With fewer,
+ * Move Up and Move Down already reach every position in a single step.
+ */
+export const MOVE_TO_EDGE_MIN_ITEMS = 3;
+
+/**
+ * Get the destination index for a position entered in the Move To dialog.
+ * @param {object} args Arguments.
+ * @param {number | undefined} args.position Entered position. Positions are 1-based, like the
+ * numbers shown on the items.
+ * @param {number} args.itemCount Total number of items in the list.
+ * @returns {number | undefined} Zero-based destination index, or `undefined` if the position isn’t
+ * a whole number between 1 and the number of items.
+ */
+export const parseMovePosition = ({ position, itemCount }) => {
+  if (position === undefined || !Number.isInteger(position)) {
+    return undefined;
+  }
+
+  return position >= 1 && position <= itemCount ? position - 1 : undefined;
+};
+
+/**
  * Find the list item that contains the given drag event target.
  *
  * The list-level drag handlers run in the capture phase so that a nested drop zone or sortable list

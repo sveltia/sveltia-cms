@@ -1570,6 +1570,15 @@ map_lat_lng: 緯度 {$latitude}、経度 {$longitude} の地図
 remove_this_item: このアイテムを削除
 move_up: 上へ移動
 move_down: 下へ移動
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: 並べ替えオプション
+move_to_top: 先頭へ移動
+move_to_bottom: 末尾へ移動
+# Opens a dialog asking for the position to move a list item to
+move_to: 指定した位置へ移動…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: 1 から {$count} までの位置を入力してください。
+move_to_position: 位置
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: アイテムを並び替え

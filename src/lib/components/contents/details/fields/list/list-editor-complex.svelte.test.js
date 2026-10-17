@@ -440,6 +440,63 @@ describe('ListEditorComplex', () => {
       .toHaveFocus();
   });
 
+  test('moves an item to the bottom from its options menu, which has no second menu', async () => {
+    const { draft } = await renderEditor(authorsField, {
+      'authors.0.name': 'a',
+      'authors.1.name': 'b',
+      'authors.2.name': 'c',
+    });
+
+    const first = page.getByRole('group', { name: 'Item 1 of 3' });
+
+    await expect
+      .element(first.getByRole('button', { name: 'Reorder Options' }))
+      .not.toBeInTheDocument();
+    await first.getByRole('button', { name: 'List Item Options' }).click();
+    await expect.element(page.getByRole('menuitem', { name: 'Move to Top' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Move to…' })).toBeInTheDocument();
+    await page.getByRole('menuitem', { name: 'Move to Bottom' }).click();
+
+    await expect
+      .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
+      .toEqual(['b', 'c', 'a']);
+    // The focus follows the item to the options button
+    await expect
+      .element(
+        page
+          .getByRole('group', { name: 'Item 3 of 3' })
+          .getByRole('button', { name: 'List Item Options' }),
+      )
+      .toHaveFocus();
+  });
+
+  test('moves an item to a typed position from its options menu', async () => {
+    const { draft } = await renderEditor(
+      authorsField,
+      Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`authors.${i}.name`, `n${i}`])),
+    );
+
+    await page
+      .getByRole('group', { name: 'Item 1 of 20' })
+      .getByRole('button', { name: 'List Item Options' })
+      .click();
+    await page.getByRole('menuitem', { name: 'Move to…' }).click();
+
+    const position = page.getByRole('spinbutton', { name: 'Position' });
+
+    await expect.element(position).toHaveValue('1');
+    await position.fill('4');
+    await page.getByRole('button', { name: 'OK' }).click();
+
+    await expect
+      .poll(() =>
+        getStoredItems(draft, 'authors')
+          .map(({ name }) => name)
+          .slice(0, 5),
+      )
+      .toEqual(['n1', 'n2', 'n3', 'n0', 'n4']);
+  });
+
   test('hides the header end buttons until the item is hovered or has focus', async () => {
     await renderEditor(authorsField, { 'authors.0.name': 'a', 'authors.1.name': 'b' });
 

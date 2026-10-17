@@ -831,6 +831,7 @@
                   itemCount={items.length}
                   disabled={isLocked || items.length < 2}
                   part="buttons"
+                  menu={false}
                   onMove={(to, action) => sorter.move(index, to, action)}
                 />
               {/if}
@@ -844,6 +845,9 @@
                 {allowDuplicate}
                 {hasMaxItems}
                 {isAddDisabled}
+                itemCount={items.length}
+                canReorder={allowReorder && !singleItem && !isLocked}
+                moveItem={(to, action) => sorter.move(index, to, action)}
                 {copyItem}
                 {pasteItem}
                 {addItem}

@@ -1663,6 +1663,15 @@ map_lat_lng: Map showing latitude {$latitude}, longitude {$longitude}
 remove_this_item: Remove This Item
 move_up: Move Up
 move_down: Move Down
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: Reorder Options
+move_to_top: Move to Top
+move_to_bottom: Move to Bottom
+# Opens a dialog asking for the position to move a list item to
+move_to: Move to…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: Enter a position from 1 to {$count}.
+move_to_position: Position
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: Reorder Item

@@ -12,6 +12,7 @@ import {
   getMoveTarget,
   getScrollContainer,
   moveListItem,
+  parseMovePosition,
   startAutoScroll,
   stopAutoScroll,
 } from '$lib/services/utils/drag-sorting';
@@ -535,5 +536,31 @@ describe('focusAfterRemoval', () => {
 
     // Without a fallback, the focus is left alone
     expect(() => focusAfterRemoval({ index: 0, getTarget: vi.fn(() => null) })).not.toThrow();
+  });
+});
+
+describe('parseMovePosition', () => {
+  test('converts a 1-based position to an index', () => {
+    expect(parseMovePosition({ position: 1, itemCount: 100 })).toBe(0);
+    expect(parseMovePosition({ position: 12, itemCount: 100 })).toBe(11);
+    expect(parseMovePosition({ position: 100, itemCount: 100 })).toBe(99);
+  });
+
+  test('refuses anything but a whole number within range', () => {
+    expect(parseMovePosition({ position: 0, itemCount: 100 })).toBeUndefined();
+    expect(parseMovePosition({ position: 101, itemCount: 100 })).toBeUndefined();
+    expect(parseMovePosition({ position: -3, itemCount: 100 })).toBeUndefined();
+    expect(parseMovePosition({ position: 2.5, itemCount: 100 })).toBeUndefined();
+    expect(parseMovePosition({ position: undefined, itemCount: 100 })).toBeUndefined();
+  });
+
+  test('moves the item to the requested position', () => {
+    const list = Array.from({ length: 100 }, (_, i) => i + 1);
+    const to = /** @type {number} */ (parseMovePosition({ position: 12, itemCount: 100 }));
+    const result = moveListItem(list, 86, to);
+
+    expect(result[11]).toBe(87);
+    expect(result[12]).toBe(12);
+    expect(result).toHaveLength(100);
   });
 });
