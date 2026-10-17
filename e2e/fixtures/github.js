@@ -24,6 +24,8 @@ import { MockGitRepository } from './git.js';
  * @property {string} [mergeCommit] SHA of the commit that merged the pull request.
  * @property {string} [lastHead] SHA of the head commit when the pull request was closed or merged,
  * which stays known after its branch is deleted.
+ * @property {{ method: 'merge' | 'squash', title?: string }} [autoMerge] The merge options, once
+ * the pull request is set to be merged when its required checks pass.
  */
 
 /**
@@ -100,6 +102,13 @@ export class MockGitHub extends MockGitRepository {
    * @type {{ viewerCanPush: boolean } | null}
    */
   branchRule = null;
+
+  /**
+   * Whether a required status check is running on the pull requests. Until it passes, a pull
+   * request can’t be merged, but it can be set to auto-merge then; {@link finishChecks} lets it
+   * pass.
+   */
+  checksRunning = false;
 
   /**
    * Whether the API rate limit is exhausted, so the repository can’t be read for now.
@@ -312,6 +321,101 @@ export class MockGitHub extends MockGitRepository {
     this.pullRequests.push(pullRequest);
 
     return pullRequest;
+  }
+
+  /**
+   * Get the merge state of a pull request as the GraphQL API reports it.
+   * @param {number} number Pull request number.
+   * @returns {Record<string, any> | null} Pull request node, or `null` if there is no such pull
+   * request.
+   */
+  toMergeReadinessNode(number) {
+    const pullRequest = this.pullRequests.find((pr) => pr.number === number);
+
+    if (!pullRequest) {
+      return null;
+    }
+
+    const open = pullRequest.state === 'open';
+
+    return {
+      id: pullRequest.nodeId,
+      state: pullRequest.state.toUpperCase(),
+      merged: pullRequest.state === 'merged',
+      mergeStateStatus: !open ? 'UNKNOWN' : this.checksRunning ? 'BLOCKED' : 'CLEAN',
+      reviewDecision: null,
+      // Like GitHub, only offer auto-merge on a pull request that can’t be merged right away
+      viewerCanEnableAutoMerge: open && this.checksRunning && !pullRequest.autoMerge,
+      autoMergeRequest: pullRequest.autoMerge ? { enabledAt: new Date().toISOString() } : null,
+      commits: {
+        nodes: [
+          {
+            commit: {
+              statusCheckRollup: { state: this.checksRunning ? 'PENDING' : 'SUCCESS' },
+            },
+          },
+        ],
+      },
+    };
+  }
+
+  /**
+   * Handle the `enablePullRequestAutoMerge` and `disablePullRequestAutoMerge` mutations. Like
+   * GitHub, refuse to enable auto-merge pinned to a commit the branch no longer points at.
+   * @param {string} mutation Mutation name.
+   * @param {Record<string, any>} input Mutation input.
+   * @returns {Record<string, any>} Response body.
+   */
+  handleAutoMerge(mutation, input) {
+    const pullRequest = this.pullRequests.find(({ nodeId }) => nodeId === input.pullRequestId);
+
+    if (!pullRequest || pullRequest.state !== 'open') {
+      return {
+        data: { [mutation]: null },
+        errors: [{ type: 'UNPROCESSABLE', message: 'Pull request is not open' }],
+      };
+    }
+
+    if (mutation === 'disablePullRequestAutoMerge') {
+      delete pullRequest.autoMerge;
+
+      return { data: { [mutation]: { clientMutationId: null } } };
+    }
+
+    if (
+      input.expectedHeadOid &&
+      input.expectedHeadOid !== this.getPullRequestHead(pullRequest).oid
+    ) {
+      return {
+        data: { [mutation]: null },
+        errors: [{ type: 'UNPROCESSABLE', message: 'Head branch was modified' }],
+      };
+    }
+
+    pullRequest.autoMerge = {
+      method: input.mergeMethod === 'SQUASH' ? 'squash' : 'merge',
+      title: input.commitHeadline,
+    };
+
+    return { data: { [mutation]: { clientMutationId: null } } };
+  }
+
+  /**
+   * Let the running required check pass, which merges the pull requests set to auto-merge, as the
+   * user who set them.
+   */
+  finishChecks() {
+    this.checksRunning = false;
+    this.pullRequests
+      .filter(({ state, autoMerge }) => state === 'open' && autoMerge)
+      .forEach((pullRequest) => {
+        const { method, title } = /** @type {NonNullable<MockPullRequest['autoMerge']>} */ (
+          pullRequest.autoMerge
+        );
+
+        delete pullRequest.autoMerge;
+        this.mergePullRequest(pullRequest, { method, title, author: this.user });
+      });
   }
 
   /**
@@ -977,6 +1081,14 @@ export class MockGitHub extends MockGitRepository {
         };
       }
 
+      // Like GitHub, refuse to merge while a required check is running
+      if (this.checksRunning) {
+        return {
+          status: 405,
+          json: { message: 'Required status check "check" is in progress.' },
+        };
+      }
+
       const commit = this.mergePullRequest(pullRequest, {
         method: body.merge_method,
         title: body.commit_title,
@@ -1103,6 +1215,18 @@ export class MockGitHub extends MockGitRepository {
       pullRequest.updatedAt = new Date();
 
       return { data: { [mutation]: { pullRequest: { isDraft: pullRequest.draft } } } };
+    }
+
+    if (query.includes('mergeStateStatus')) {
+      return { data: { repository: { pullRequest: this.toMergeReadinessNode(variables.number) } } };
+    }
+
+    const autoMergeMutation = query.match(
+      /(enablePullRequestAutoMerge|disablePullRequestAutoMerge)\(/,
+    );
+
+    if (autoMergeMutation) {
+      return this.handleAutoMerge(autoMergeMutation[1], variables.input);
     }
 
     // The state of a pull request, read before an Open Authoring contributor changes it, along with
