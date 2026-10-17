@@ -1,5 +1,5 @@
 import { createPNG } from '../../fixtures/files.js';
-import { BASE_CONFIG, expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
+import { addScripts, BASE_CONFIG, expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
 import { getEditor } from '../../fixtures/ui.js';
 
 /**
@@ -44,15 +44,7 @@ const REGISTRATION_SCRIPT = `
  * @param {string} [script] Script registering the template.
  */
 const registerTemplate = async (page, script = REGISTRATION_SCRIPT) => {
-  await page.route('**/admin/', async (route) => {
-    const response = await route.fetch();
-    const html = await response.text();
-
-    await route.fulfill({
-      response,
-      body: html.replace('</body>', `<script>${script}</script></body>`),
-    });
-  });
+  await addScripts(page, { after: script });
 };
 
 test.describe('saved image', () => {

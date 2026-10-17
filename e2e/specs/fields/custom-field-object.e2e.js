@@ -1,5 +1,5 @@
 import { createPNG } from '../../fixtures/files.js';
-import { BASE_CONFIG, expect, test } from '../../fixtures/test.js';
+import { addScripts, BASE_CONFIG, expect, test } from '../../fixtures/test.js';
 import { getEditor } from '../../fixtures/ui.js';
 
 test.use({
@@ -47,15 +47,7 @@ const REGISTRATION_SCRIPT = `
 `;
 
 test.beforeEach(async ({ cms, page }) => {
-  await page.route('**/admin/', async (route) => {
-    const response = await route.fetch();
-    const html = await response.text();
-
-    await route.fulfill({
-      response,
-      body: html.replace('</body>', `<script>${REGISTRATION_SCRIPT}</script></body>`),
-    });
-  });
+  await addScripts(page, { after: REGISTRATION_SCRIPT });
 
   await cms.open();
   await cms.seed({ 'static/images/lake.png': createPNG() });

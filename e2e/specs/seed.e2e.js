@@ -23,18 +23,22 @@ const SEED_FILES = {
  */
 const serveSeed = async (page) => {
   const counter = { manifestRequests: 0 };
+  const { adminPath } = /** @type {{ adminPath: string }} */ (test.info().project.use);
 
-  await page.route('**/admin/', async (route) => {
-    const response = await route.fetch();
+  await page.route(
+    (url) => url.pathname === adminPath,
+    async (route) => {
+      const response = await route.fetch();
 
-    await route.fulfill({
-      response,
-      body: (await response.text()).replace(
-        '</head>',
-        '<link rel="cms-seed-url" href="/seed/manifest.json" /></head>',
-      ),
-    });
-  });
+      await route.fulfill({
+        response,
+        body: (await response.text()).replace(
+          '</head>',
+          '<link rel="cms-seed-url" href="/seed/manifest.json" /></head>',
+        ),
+      });
+    },
+  );
 
   await page.route('**/seed/**', async (route) => {
     const path = decodeURIComponent(new URL(route.request().url()).pathname.slice(6));
