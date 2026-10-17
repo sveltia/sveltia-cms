@@ -1547,6 +1547,13 @@ entry_sidebar:
     title: Backlinks
     no_entries: No entries are referencing this entry.
 
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'Preparing files: {$done} of {$total}'
+  committing: 'Saving to GitHub: {$done} of about {$total} commits'
+
 # Entry save error dialog
 saving_entry:
   error:

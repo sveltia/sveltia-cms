@@ -3,6 +3,7 @@ import { page, userEvent } from 'vitest/browser';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { backendName } from '$lib/services/backends';
+import { reportCommits } from '$lib/services/backends/commit-progress';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { getCollection } from '$lib/services/contents/collection';
 import {
@@ -203,6 +204,31 @@ describe('Toolbar', () => {
     await expect.element(save).toBeDisabled();
     draft.currentValues._default.title = 'Hi';
     await expect.element(save).toBeEnabled();
+  });
+
+  test('reports the progress of a long save, and keeps the button disabled until it ends', async () => {
+    const { draft } = await renderExisting();
+    const save = page.getByRole('button', { name: 'Save' });
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(saveEntry).mockImplementation(async () => {
+      reportCommits(12, 26);
+      await promise;
+
+      return /** @type {any} */ (helloEntry);
+    });
+
+    draft.currentValues._default.title = 'Hi';
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    const status = /** @type {HTMLElement} */ (document.querySelector('.save-progress'));
+
+    await expect.element(status).toMatchTextContent('Saving to GitHub: 12 of about 26 commits');
+    expect(status.getAttribute('aria-live')).toBe('polite');
+    await expect.element(page.getByRole('button', { name: 'Saving…' })).toBeDisabled();
+    resolve(undefined);
+    await expect.element(page.getByText('Saving to GitHub')).not.toBeInTheDocument();
   });
 
   test('can be saved while a change is on its way to the draft', async () => {

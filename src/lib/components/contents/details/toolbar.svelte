@@ -27,6 +27,7 @@
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
   import { getEntryEditorBackPath, goBack, goto, overlayTitle } from '$lib/services/app/navigation';
+  import { saveProgress } from '$lib/services/backends/commit-progress';
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
   import { isDraftReadonly } from '$lib/services/config/readonly';
   import { getCollectionLabel } from '$lib/services/contents/collection';
@@ -381,6 +382,14 @@
   {#if unpublishedEntry && !locked}
     <EntryStatusMenu entry={unpublishedEntry} disabled={controlsDisabled} />
   {/if}
+  <!-- Announced politely as the count changes, for a save that takes a while -->
+  <span class="save-progress" aria-live="polite">
+    {#if saving && saveProgress.current}
+      {_(`save_progress.${saveProgress.current.phase}`, {
+        values: { done: saveProgress.current.done, total: saveProgress.current.total },
+      })}
+    {/if}
+  </span>
   {#if locked}
     <!-- Nothing to save: the entry is read-only, or shown for reference until the deletion is
     carried out -->
@@ -664,6 +673,15 @@
 </AlertDialog>
 
 <style>
+  .save-progress {
+    color: var(--sui-secondary-foreground-color);
+    font-size: var(--sui-font-size-small);
+    white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .error {
     margin-top: 8px;
     border-radius: var(--sui-control-medium-border-radius);

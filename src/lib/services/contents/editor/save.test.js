@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { saveProgress } from '$lib/services/backends/commit-progress';
 import { cmsConfig } from '$lib/services/config';
 import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
 import { saveEntry } from '$lib/services/contents/draft/save';
@@ -78,6 +79,33 @@ describe('saveEntryDraftFlow()', () => {
       overwrite: false,
       publish: false,
     });
+  });
+
+  test('reports the files to prepare while saving, and clears the report afterwards', async () => {
+    const files = { 'blob:1': {}, 'blob:2': {}, 'blob:3': {} };
+    /** @type {any} */
+    let reported;
+
+    vi.mocked(saveEntry).mockImplementation(async () => {
+      reported = saveProgress.current;
+
+      return /** @type {any} */ ({});
+    });
+
+    await saveEntryDraftFlow(getArgs(createState({ files })));
+
+    expect(reported).toMatchObject({ phase: 'preparing', done: 0, total: 3 });
+    expect(saveProgress.current).toBeUndefined();
+  });
+
+  test('clears the progress when the save fails', async () => {
+    vi.mocked(saveEntry).mockImplementation(async () => {
+      throw new Error('Failed');
+    });
+
+    await saveEntryDraftFlow(getArgs(createState({ files: { 'blob:1': {}, 'blob:2': {} } })));
+
+    expect(saveProgress.current).toBeUndefined();
   });
 
   test('resets the draft when the editor stays open', async () => {

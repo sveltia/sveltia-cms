@@ -1782,6 +1782,49 @@ describe('Test replaceBlobURL()', () => {
     expect(savingAssets).toHaveLength(1);
   });
 
+  test('should count the file as prepared', async () => {
+    const { saveProgress, startPreparing, clearSaveProgress } =
+      await import('$lib/services/backends/commit-progress');
+
+    const blobURL = 'blob:http://localhost:5173/abc-123';
+
+    startPreparing(2);
+
+    await replaceBlobURL(
+      /** @type {any} */ ({
+        file: new File(['test content'], 'photo.jpg', { type: 'image/jpeg' }),
+        folder: createMockAssetFolder({
+          collectionName: 'posts',
+          internalPath: 'static/images',
+          publicPath: '/images',
+        }),
+        replace: false,
+        blobURL,
+        draft: {
+          collection: {
+            _type: 'entry',
+            _i18n: { defaultLocale: 'en' },
+            _file: { basePath: 'posts' },
+            _assetFolder: { fields: [] },
+          },
+          collectionName: 'posts',
+          isIndexFile: false,
+          currentValues: { en: { title: 'Test' } },
+          currentSlugs: { en: 'test-post' },
+        },
+        defaultLocaleSlug: 'test-post',
+        keyPath: 'image',
+        content: { image: blobURL },
+        changes: [],
+        savingAssets: [],
+        encodingEnabled: false,
+      }),
+    );
+
+    expect(saveProgress.current).toMatchObject({ phase: 'preparing', done: 1, total: 2 });
+    clearSaveProgress();
+  });
+
   test('should insert a public URL containing `$` patterns verbatim', async () => {
     const blobURL = 'blob:http://localhost:5173/abc-123';
     const content = { body: `![](${blobURL})` };

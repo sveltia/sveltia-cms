@@ -1,3 +1,4 @@
+import { clearSaveProgress, startPreparing } from '$lib/services/backends/commit-progress';
 import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
 import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
 import { saveEntry } from '$lib/services/contents/draft/save';
@@ -82,6 +83,8 @@ export const saveEntryDraftFlow = async ({
     if (!isDraftOpen() || (!isNew && !entryDraft.modified)) {
       return { type: 'skipped' };
     }
+
+    startPreparing(Object.keys(draft.files ?? {}).length);
 
     let savedEntry = await saveEntry({ draft, skipCI, overwrite, publish });
     const savedDraft = /** @type {UnpublishedEntry} */ (savedEntry);
@@ -187,6 +190,8 @@ export const saveEntryDraftFlow = async ({
     }
 
     return { type: 'error', message: failure.message };
+  } finally {
+    clearSaveProgress();
   }
 };
 

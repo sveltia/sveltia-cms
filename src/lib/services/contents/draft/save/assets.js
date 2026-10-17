@@ -6,6 +6,7 @@ import { formatFileName, isSameFileName } from '$lib/services/assets/file-name';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { getPendingFileName } from '$lib/services/assets/name';
 import { assertOutsideCmsFolders } from '$lib/services/assets/reserved';
+import { advancePreparing } from '$lib/services/backends/commit-progress';
 import { fillTemplate } from '$lib/services/common/template';
 import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
@@ -427,6 +428,8 @@ export const replaceBlobURL = async ({
   encodingEnabled,
 }) => {
   const sha = await getGitHash(file);
+
+  advancePreparing();
 
   const {
     savingAssetProps,

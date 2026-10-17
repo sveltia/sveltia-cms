@@ -1,5 +1,6 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 
+import { clearSaveProgress, reportCommits } from '$lib/services/backends/commit-progress';
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
@@ -352,6 +353,19 @@ export const commitChanges = async (changes, options) => {
   // so a file isn’t removed before the entry stops referring to it. There is always at least one
   // commit, which can have no additions, so a changeset with only deletions is still committed
   do {
+    // The files still waiting, at the current commit size, make up the commits yet to be made. The
+    // last commit is always made, even when it only has the entry files or deletions
+    reportCommits(
+      commitCount,
+      commitCount +
+        Math.max(
+          1,
+          Math.ceil(
+            queue.reduce((total, { contents }) => total + contents.length, 0) / payloadSize,
+          ),
+        ),
+    );
+
     const group = takeAdditions(queue, payloadSize);
     const isLast = !queue.length;
     const groupSize = group.reduce((total, { contents }) => total + contents.length, 0);
@@ -393,6 +407,8 @@ export const commitChanges = async (changes, options) => {
         repositoryHead.current = expectedHeadOid;
       }
 
+      clearSaveProgress();
+
       throw ex;
     }
 
@@ -401,6 +417,8 @@ export const commitChanges = async (changes, options) => {
     Object.assign(fileShas, commit);
     expectedHeadOid = commit.oid;
   } while (queue.length);
+
+  clearSaveProgress();
 
   return {
     sha: commit.oid,

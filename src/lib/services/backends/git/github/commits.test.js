@@ -1,6 +1,7 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { saveProgress } from '$lib/services/backends/commit-progress';
 import {
   commitChanges,
   fetchFileCommits,
@@ -863,6 +864,67 @@ describe('GitHub commits service', () => {
           'images/image2.webp': { sha: 'i2' },
         },
       });
+    });
+
+    test('reports the commits made until the save ends', async () => {
+      repositoryHead.current = 'loaded-head-sha';
+
+      const half = 'a'.repeat(MAX_COMMIT_PAYLOAD_SIZE / 2 + 1);
+
+      vi.mocked(encodeBase64).mockImplementation(async (data) =>
+        typeof data === 'string' ? 'entry' : half,
+      );
+
+      /** @type {any[]} */
+      const reported = [];
+      let count = 0;
+
+      vi.mocked(fetchGraphQL).mockImplementation(async () => {
+        reported.push(saveProgress.current);
+        count += 1;
+
+        return {
+          createCommitOnBranch: {
+            commit: { oid: `sha-${count}`, committedDate: '2023-01-01T00:00:00Z' },
+          },
+        };
+      });
+
+      await commitChanges(
+        /** @type {any[]} */ ([
+          { action: 'update', path: 'content/entry.json', data: '{}' },
+          { action: 'create', path: 'images/image1.webp', data: new File(['1'], 'image1.webp') },
+          { action: 'create', path: 'images/image2.webp', data: new File(['2'], 'image2.webp') },
+        ]),
+        /** @type {any} */ ({ commitType: 'update' }),
+      );
+
+      expect(reported).toHaveLength(2);
+      expect(reported[0]).toMatchObject({ phase: 'committing', done: 0, approximate: true });
+      expect(reported[0].total).toBeGreaterThanOrEqual(2);
+      expect(reported[1]).toMatchObject({ phase: 'committing', done: 1, total: 2 });
+      expect(saveProgress.current).toBeUndefined();
+    });
+
+    test('clears the progress when a commit fails', async () => {
+      repositoryHead.current = 'loaded-head-sha';
+
+      const half = 'a'.repeat(MAX_COMMIT_PAYLOAD_SIZE / 2 + 1);
+
+      vi.mocked(encodeBase64).mockResolvedValue(half);
+      vi.mocked(fetchGraphQL).mockRejectedValue(new Error('Bad request'));
+
+      await expect(
+        commitChanges(
+          /** @type {any[]} */ ([
+            { action: 'create', path: 'images/image1.webp', data: new File(['1'], 'image1.webp') },
+            { action: 'create', path: 'images/image2.webp', data: new File(['2'], 'image2.webp') },
+          ]),
+          /** @type {any} */ ({ commitType: 'update' }),
+        ),
+      ).rejects.toThrow('Bad request');
+
+      expect(saveProgress.current).toBeUndefined();
     });
 
     test('stops at the first commit that fails, before the entry is committed', async () => {
