@@ -40,18 +40,13 @@ test('lists the entries of a project with more files than a page of the file lis
   await expect(getEntryRows(page)).toHaveCount(3);
 });
 
-test('signs in a user who can’t push code to the project in read-only mode', async ({
-  cms,
-  gitlab,
-  page,
-}) => {
+test('refuses a user who can’t push code to the project', async ({ cms, gitlab, page }) => {
   gitlab.canWrite = false;
 
   await cms.open();
-  await expect(
-    page.getByText(/You don’t have write access to the .*e2e-site.* repository/),
-  ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Create New Entry' })).toBeDisabled();
+  await expect(page.getByRole('alert')).toContainText(
+    /You don’t have write access to the .*e2e-site.* repository/,
+  );
 });
 
 test('makes the content read-only when the user can’t push to the branch', async ({

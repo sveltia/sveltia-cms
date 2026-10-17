@@ -10,7 +10,6 @@ import {
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { readonlyRepository } from '$lib/services/backends/repository-access';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/shared/api');
@@ -21,7 +20,6 @@ vi.mock('@sveltia/i18n', async () =>
 describe('GitHub repository service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    readonlyRepository.current = undefined;
   });
 
   describe('repository object', () => {
@@ -87,14 +85,12 @@ describe('GitHub repository service', () => {
     });
 
     test('succeeds when the user can push to the repository', async () => {
-      readonlyRepository.current = 'test-repo';
       vi.mocked(fetchAPI).mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue({ permissions: { pull: true, push: true } }),
       });
 
       await expect(checkRepositoryAccess()).resolves.toBeUndefined();
-      expect(readonlyRepository.current).toBeUndefined();
       expect(fetchAPI).toHaveBeenCalledWith(
         '/repos/test-owner/test-repo',
         expect.objectContaining({
@@ -104,14 +100,16 @@ describe('GitHub repository service', () => {
       );
     });
 
-    test('signs in a user who can only read the repository in read-only mode', async () => {
+    test('says write access is missing when the user can only read the repository', async () => {
       vi.mocked(fetchAPI).mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue({ permissions: { pull: true, push: false } }),
       });
 
-      await expect(checkRepositoryAccess()).resolves.toBeUndefined();
-      expect(readonlyRepository.current).toBe('test-repo');
+      await expect(checkRepositoryAccess()).rejects.toMatchObject({
+        message: 'Not a collaborator of the repository',
+        cause: { message: 'repository_no_write_access:{"repo":"test-repo"}' },
+      });
     });
 
     test('says there is no access when the repository reports no permissions', async () => {

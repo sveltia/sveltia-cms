@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   createLocalizedError,
   createNoAccessError,
+  createNoWriteAccessError,
   getErrorMessage,
   NOT_COLLABORATOR_ERROR_MESSAGE,
   toRepositoryAccessError,
@@ -84,6 +85,18 @@ describe('createNoAccessError', () => {
 
     expect(error.message).toBe(NOT_COLLABORATOR_ERROR_MESSAGE);
     expect(getErrorMessage(error, 'fallback')).toBe('repository_no_access:{"repo":"repo"}');
+  });
+});
+
+describe('createNoWriteAccessError', () => {
+  it('should carry the shared message and say write access is missing', () => {
+    const error = createNoWriteAccessError('repo');
+
+    expect(error.message).toBe(NOT_COLLABORATOR_ERROR_MESSAGE);
+    expect(/** @type {Error} */ (error.cause).message).toBe(
+      'repository_no_write_access:{"repo":"repo"}',
+    );
+    expect(getErrorMessage(error, 'fallback')).toBe('repository_no_write_access:{"repo":"repo"}');
   });
 });
 

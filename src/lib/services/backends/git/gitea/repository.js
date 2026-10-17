@@ -1,11 +1,14 @@
 import { recordBranchAccess } from '$lib/services/backends/branch-access';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { toRepositoryAccessError } from '$lib/services/backends/git/shared/errors';
+import {
+  createNoAccessError,
+  createNoWriteAccessError,
+  toRepositoryAccessError,
+} from '$lib/services/backends/git/shared/errors';
 import {
   applyDefaultBranch,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
-import { recordRepositoryAccess } from '$lib/services/backends/repository-access';
 import { user } from '$lib/services/user/account.svelte';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { encodePathSegments } from '$lib/services/utils/url';
@@ -103,10 +106,8 @@ export const fetchBranch = async () => {
 };
 
 /**
- * Check what the user can do with the current repository, and record it in
- * {@link readonlyRepository}. Editing takes write access, like Netlify/Decap CMS requires, while a
- * user who can only read the repository gets the CMS in read-only mode.
- * @throws {Error} If the user can’t read the repository, the repository doesn’t exist, or the
+ * Check if the user has write access to the current repository, like Netlify/Decap CMS requires.
+ * @throws {Error} If the user can’t push to the repository, the repository doesn’t exist, or the
  * access couldn’t be checked.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
@@ -121,10 +122,11 @@ export const checkRepositoryAccess = async () => {
     throw toRepositoryAccessError(repository, ex?.cause?.status, { reportNotFound: true });
   }
 
-  recordRepositoryAccess(repo, {
-    canRead: !!result.permissions?.pull,
-    canPush: !!result.permissions?.push,
-  });
+  if (!result.permissions?.push) {
+    // A repository that comes back without read permission, e.g. one with limited visibility, isn’t
+    // one the user can work with at all, so it’s no access rather than missing write access
+    throw result.permissions?.pull ? createNoWriteAccessError(repo) : createNoAccessError(repo);
+  }
 };
 
 /**

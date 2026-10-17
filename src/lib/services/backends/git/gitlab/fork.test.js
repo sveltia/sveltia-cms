@@ -81,7 +81,7 @@ const createForkProject = (overrides = {}) => ({
  * @param {boolean} [args.canPush] Whether the user can push to the project.
  */
 const grantAccess = ({ found = true, canPush = false } = {}) => {
-  vi.mocked(fetchProjectPermissions).mockResolvedValue({ found, canRead: found, canPush });
+  vi.mocked(fetchProjectPermissions).mockResolvedValue({ found, canPush });
 };
 
 describe('GitLab Open Authoring service', () => {

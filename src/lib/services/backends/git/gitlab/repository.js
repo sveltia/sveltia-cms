@@ -1,11 +1,14 @@
 import { recordBranchAccess } from '$lib/services/backends/branch-access';
 import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
-import { toRepositoryAccessError } from '$lib/services/backends/git/shared/errors';
+import {
+  createNoAccessError,
+  createNoWriteAccessError,
+  toRepositoryAccessError,
+} from '$lib/services/backends/git/shared/errors';
 import {
   applyDefaultBranch,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
-import { recordRepositoryAccess } from '$lib/services/backends/repository-access';
 
 /**
  * @import { RepositoryBaseURLs, RepositoryInfo, RepositoryPath } from '$lib/types/private';
@@ -74,7 +77,6 @@ const FETCH_USER_PERMISSIONS_QUERY = `
   query($fullPath: ID!) {
     project(fullPath: $fullPath) {
       userPermissions {
-        downloadCode
         pushCode
       }
     }
@@ -83,41 +85,31 @@ const FETCH_USER_PERMISSIONS_QUERY = `
 
 /**
  * Ask what the signed-in user may do with the configured project: whether they can see it at all,
- * whether they can read its repository, which a Guest of a private project can’t, and whether they
- * can push to it, which takes the Developer role or higher, like Netlify/Decap CMS requires. The
- * permissions reflect the user’s effective role, however it’s granted: direct membership, a parent
- * group, or a group invited to the project or to a parent group. They also work for service
- * accounts, which the members API doesn’t return.
- * @returns {Promise<{ found: boolean, canRead: boolean, canPush: boolean }>} Whether the
- * project is visible to the user, whether they can read its repository, and whether they can push
- * to it. Open Authoring tells being able to see the project apart from being able to push to it,
- * while the regular access check signs in a user who can only read the repository in read-only
- * mode.
+ * and whether they can push to it, which takes the Developer role or higher, like Netlify/Decap CMS
+ * requires. The permission reflects the user’s effective role, however it’s granted: direct
+ * membership, a parent group, or a group invited to the project or to a parent group. It also works
+ * for service accounts, which the members API doesn’t return.
+ * @returns {Promise<{ found: boolean, canPush: boolean }>} Whether the project is visible to the
+ * user, and whether they can push to it. Open Authoring tells the two apart — a contributor can
+ * read the project but not push to it — while the regular access check needs both.
  * @see https://docs.gitlab.com/api/graphql/reference/#projectpermissions
  * @see https://docs.gitlab.com/user/permissions/
  */
 export const fetchProjectPermissions = async () => {
-  const { project } =
-    /** @type {{ project: { userPermissions: Record<string, boolean> } | null }} */ (
-      await fetchGraphQL(FETCH_USER_PERMISSIONS_QUERY)
-    );
+  const result = /** @type {{ project: { userPermissions: { pushCode: boolean } } | null }} */ (
+    await fetchGraphQL(FETCH_USER_PERMISSIONS_QUERY)
+  );
 
-  return {
-    found: !!project,
-    canRead: !!project?.userPermissions.downloadCode,
-    canPush: !!project?.userPermissions.pushCode,
-  };
+  return { found: !!result.project, canPush: !!result.project?.userPermissions.pushCode };
 };
 
 /**
- * Check what the user can do with the current repository, and record it in
- * {@link readonlyRepository}. A user who can read the repository but not push to it, e.g. a
- * Reporter, gets the CMS in read-only mode.
- * @throws {Error} If the user can’t read the repository, or the access couldn’t be checked.
+ * Check if the user has write access to the current repository.
+ * @throws {Error} If the user can’t push to the repository, or the access couldn’t be checked.
  */
 export const checkRepositoryAccess = async () => {
   const { repo } = repository;
-  /** @type {{ found: boolean, canRead: boolean, canPush: boolean }} */
+  /** @type {{ found: boolean, canPush: boolean }} */
   let permissions;
 
   try {
@@ -130,7 +122,13 @@ export const checkRepositoryAccess = async () => {
     throw toRepositoryAccessError(repository, status === 404 ? undefined : status);
   }
 
-  recordRepositoryAccess(repo, permissions);
+  if (!permissions.found) {
+    throw createNoAccessError(repo);
+  }
+
+  if (!permissions.canPush) {
+    throw createNoWriteAccessError(repo);
+  }
 };
 
 /**

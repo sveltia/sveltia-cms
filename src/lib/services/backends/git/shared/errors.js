@@ -53,6 +53,17 @@ export const createNoAccessError = (repo) =>
   createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });
 
 /**
+ * Create the error to throw when the signed-in user can read the configured repository but can’t
+ * push to it, e.g. a collaborator with the read or triage role on GitHub, or the Reporter role on
+ * GitLab. It carries the shared message, so the sign-in flow drops the cached credentials just like
+ * it does when the user has no access at all, but tells the user it’s write access that’s missing.
+ * @param {string} repo Repository name.
+ * @returns {Error} Error to throw.
+ */
+export const createNoWriteAccessError = (repo) =>
+  createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_write_access', { repo });
+
+/**
  * Create the error to throw when the configured repository couldn’t be read while checking the
  * signed-in user’s access to it. A refusal means the user has no access, and the shared message is
  * what the sign-in flow looks for to drop the cached credentials, so the user gets the sign-in form

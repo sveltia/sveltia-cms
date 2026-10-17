@@ -1,7 +1,6 @@
 import { _ } from '@sveltia/i18n';
 
 import { lockedBranch } from '$lib/services/backends/branch-access';
-import { readonlyRepository } from '$lib/services/backends/repository-access';
 import { cmsConfig } from '$lib/services/config/state';
 import { getPublishMode, isWorkflowMode } from '$lib/services/workflow/config';
 
@@ -38,18 +37,15 @@ export const isLockedByBranch = (collection) =>
 
 /**
  * Check whether a collection, a collection file or the whole CMS is read-only, either with the
- * `readonly` option (see {@link isConfigReadonly}), because the signed-in user can’t push to the
- * repository at all (see {@link readonlyRepository}), or because they can’t push to the configured
- * branch (see {@link isLockedByBranch}).
+ * `readonly` option (see {@link isConfigReadonly}) or because the signed-in user can’t push to the
+ * configured branch (see {@link isLockedByBranch}).
  * @param {object} [args] Arguments.
  * @param {Collection} [args.collection] Entry or file collection.
  * @param {CollectionFile} [args.collectionFile] Collection file. File/singleton collection only.
  * @returns {boolean} Result.
  */
 export const isReadonly = ({ collection, collectionFile } = {}) =>
-  isConfigReadonly({ collection, collectionFile }) ||
-  !!readonlyRepository.current ||
-  isLockedByBranch(collection);
+  isConfigReadonly({ collection, collectionFile }) || isLockedByBranch(collection);
 
 /**
  * Check whether an entry draft is read-only, which is when its collection or collection file is,
@@ -62,10 +58,9 @@ export const isDraftReadonly = (draft) =>
 
 /**
  * Get the message that says something is read-only. The whole CMS being read-only is what users
- * most need to know, e.g. during maintenance, so that message takes precedence, followed by the
- * user not being able to push to the repository at all, which also covers everything. Otherwise a
- * target made read-only with the `readonly` option gets the message for its scope, and one that is
- * only read-only because the user can’t push to the branch gets a message naming the branch.
+ * most need to know, e.g. during maintenance, so that message takes precedence. Otherwise a target
+ * made read-only with the `readonly` option gets the message for its scope, and one that is only
+ * read-only because the user can’t push to the branch gets a message naming the branch.
  * @param {'collection' | 'entry' | 'asset_folder'} scope What is read-only.
  * @param {object} [target] What is read-only.
  * @param {Collection} [target.collection] Collection of the collection or entry.
@@ -76,10 +71,6 @@ export const isDraftReadonly = (draft) =>
 export const getReadonlyMessage = (scope, { collection, collectionFile, folder } = {}) => {
   if (cmsConfig.current?.readonly) {
     return _('readonly_cms');
-  }
-
-  if (readonlyRepository.current) {
-    return _('readonly_repository', { values: { repo: readonlyRepository.current } });
   }
 
   const configReadonly =

@@ -28,7 +28,6 @@
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { lockedBranch } from '$lib/services/backends/branch-access';
   import { runCommit } from '$lib/services/backends/commit-prompt';
-  import { readonlyRepository } from '$lib/services/backends/repository-access';
   import { getReadonlyMessage } from '$lib/services/config/readonly';
   import { env } from '$lib/services/user/env.svelte';
   import { createPath } from '$lib/services/utils/file';
@@ -49,10 +48,8 @@
 
   const assets = $derived(selectedOrFocusedAssets.current);
   // The folder is read-only with the `readonly` option, or all the assets are because the user
-  // can’t push to the repository or the configured branch
-  const readonly = $derived(
-    !!folder?.readonly || !!readonlyRepository.current || !!lockedBranch.current,
-  );
+  // can’t push to the configured branch
+  const readonly = $derived(!!folder?.readonly || !!lockedBranch.current);
 
   // Uploading to the media library commits straight to the configured branch rather than going
   // through review, so it’s not something an Open Authoring contributor or a user who can’t push to

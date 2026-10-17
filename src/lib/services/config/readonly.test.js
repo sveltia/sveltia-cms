@@ -2,7 +2,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { lockedBranch } from '$lib/services/backends/branch-access';
-import { readonlyRepository } from '$lib/services/backends/repository-access';
 
 import {
   getReadonlyMessage,
@@ -14,14 +13,11 @@ import {
 import { cmsConfig } from './state';
 
 vi.mock('@sveltia/i18n', () => ({
-  _: vi.fn((key, options) =>
-    options ? `${key}:${options.values.branch ?? options.values.repo}` : key,
-  ),
+  _: vi.fn((key, options) => (options ? `${key}:${options.values.branch}` : key)),
 }));
 
 afterEach(() => {
   lockedBranch.current = undefined;
-  readonlyRepository.current = undefined;
 });
 
 describe('Test isReadonly()', () => {
@@ -74,15 +70,6 @@ describe('Test isReadonly()', () => {
     expect(isReadonly()).toBe(false);
     expect(isReadonly({ collection: { name: 'posts' } })).toBe(true);
     expect(isReadonly({ collection: { publish_mode: 'editorial_workflow' } })).toBe(false);
-  });
-
-  test('returns true for everything when the user can’t push to the repository', () => {
-    cmsConfig.current = {};
-    readonlyRepository.current = 'site';
-
-    expect(isReadonly()).toBe(true);
-    expect(isReadonly({ collection: { name: 'posts' } })).toBe(true);
-    expect(isReadonly({ collection: { publish_mode: 'editorial_workflow' } })).toBe(true);
   });
 });
 
@@ -182,29 +169,6 @@ describe('Test getReadonlyMessage()', () => {
 
     expect(getReadonlyMessage('collection')).toBe('readonly_cms');
     expect(getReadonlyMessage('entry')).toBe('readonly_cms');
-  });
-
-  test('names the repository the user can’t push to', () => {
-    cmsConfig.current = {};
-    readonlyRepository.current = 'site';
-    lockedBranch.current = 'main';
-
-    expect(getReadonlyMessage('collection', { collection: { readonly: true } })).toBe(
-      'readonly_repository:site',
-    );
-    expect(getReadonlyMessage('entry', { collection: {}, collectionFile: {} })).toBe(
-      'readonly_repository:site',
-    );
-    expect(getReadonlyMessage('asset_folder', { folder: { readonly: true } })).toBe(
-      'readonly_repository:site',
-    );
-  });
-
-  test('prefers the CMS-wide message to the repository one', () => {
-    cmsConfig.current = { readonly: true };
-    readonlyRepository.current = 'site';
-
-    expect(getReadonlyMessage('collection')).toBe('readonly_cms');
   });
 
   test('names the branch the user can’t push to', () => {

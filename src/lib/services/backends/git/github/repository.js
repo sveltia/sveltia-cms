@@ -1,11 +1,14 @@
 import { recordBranchAccess } from '$lib/services/backends/branch-access';
 import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
-import { toRepositoryAccessError } from '$lib/services/backends/git/shared/errors';
+import {
+  createNoAccessError,
+  createNoWriteAccessError,
+  toRepositoryAccessError,
+} from '$lib/services/backends/git/shared/errors';
 import {
   applyDefaultBranch,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
-import { recordRepositoryAccess } from '$lib/services/backends/repository-access';
 
 /**
  * @import { RepositoryBaseURLs, RepositoryInfo } from '$lib/types/private';
@@ -45,12 +48,11 @@ export const isRateLimited = ({ status, headers }) =>
   headers.get('x-ratelimit-remaining') === '0';
 
 /**
- * Check what the user can do with the current repository, and record it in
- * {@link readonlyRepository}. Editing takes the write, maintain or admin role, like Netlify/Decap
- * CMS requires, while a collaborator with the read or triage role gets the CMS in read-only mode.
- * The repository reports the authenticated user’s own permissions, however they’re granted,
- * including through an organization team.
- * @throws {Error} If the user can’t read the repository, or the access couldn’t be checked.
+ * Check if the user has write access to the current repository, which takes the write, maintain or
+ * admin role, like Netlify/Decap CMS requires. The repository reports the authenticated user’s own
+ * permissions, however they’re granted, including through an organization team. Asking the
+ * collaborator endpoint instead would let a read-only collaborator in.
+ * @throws {Error} If the user can’t push to the repository, or the access couldn’t be checked.
  * @see https://docs.github.com/en/rest/repos/repos#get-a-repository
  */
 export const checkRepositoryAccess = async () => {
@@ -77,7 +79,11 @@ export const checkRepositoryAccess = async () => {
     await response.json()
   );
 
-  recordRepositoryAccess(repo, { canRead: !!permissions?.pull, canPush: !!permissions?.push });
+  if (!permissions?.push) {
+    // A read or triage collaborator can read the repository, but a response without the user’s
+    // permissions doesn’t say they can
+    throw permissions?.pull ? createNoWriteAccessError(repo) : createNoAccessError(repo);
+  }
 };
 
 const FETCH_BRANCH_ACCESS_QUERY = `

@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
-import { readonlyRepository } from '$lib/services/backends/repository-access';
 
 import {
   _resetRepositoryInfoCache,
@@ -40,7 +39,6 @@ describe('Gitea Repository Service', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    readonlyRepository.current = undefined;
 
     // Reset the repository info cache
     _resetRepositoryInfoCache();
@@ -112,8 +110,6 @@ describe('Gitea Repository Service', () => {
 
   describe('checkRepositoryAccess', () => {
     test('should pass when user has push permissions', async () => {
-      readonlyRepository.current = mockRepo;
-
       const mockRepoInfo = {
         permissions: {
           pull: true,
@@ -125,7 +121,6 @@ describe('Gitea Repository Service', () => {
 
       await expect(checkRepositoryAccess()).resolves.toBeUndefined();
       expect(fetchAPIMock).toHaveBeenCalledWith(`/repos/${mockOwner}/${mockRepo}`);
-      expect(readonlyRepository.current).toBeUndefined();
     });
 
     test('should report no access when user has no pull permissions', async () => {
@@ -144,11 +139,13 @@ describe('Gitea Repository Service', () => {
       });
     });
 
-    test('should sign in a user who can only read the repository in read-only mode', async () => {
+    test('should say write access is missing when user can only read the repository', async () => {
       fetchAPIMock.mockResolvedValue({ permissions: { pull: true, push: false } });
 
-      await expect(checkRepositoryAccess()).resolves.toBeUndefined();
-      expect(readonlyRepository.current).toBe(mockRepo);
+      await expect(checkRepositoryAccess()).rejects.toMatchObject({
+        message: 'Not a collaborator of the repository',
+        cause: { message: 'repository_no_write_access' },
+      });
     });
 
     test('should report no access when permissions are missing', async () => {
@@ -379,16 +376,14 @@ describe('Gitea Repository Service', () => {
     test('should fetch the permissions again for another user', async () => {
       fetchAPIMock.mockResolvedValueOnce({ permissions: { pull: true, push: false } });
 
-      // A read-only user gets the CMS in read-only mode
-      await checkRepositoryAccess();
-      expect(readonlyRepository.current).toBe(mockRepo);
+      // A read-only user is refused
+      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
 
       // Then a user with write access signs in on the same page
       mockUser.account = { id: 2 };
       fetchAPIMock.mockResolvedValueOnce({ permissions: { pull: true, push: true } });
 
       await expect(checkRepositoryAccess()).resolves.toBeUndefined();
-      expect(readonlyRepository.current).toBeUndefined();
       expect(fetchAPIMock).toHaveBeenCalledTimes(2);
     });
 
