@@ -341,7 +341,8 @@ export const syncFork = async ({ owner, repo }) => {
   }
 
   // The request answers with a conflict when the fork has commits of its own on the branch, which
-  // is a state the CMS can’t resolve on the contributor’s behalf
+  // is a state the CMS can’t resolve on the contributor’s behalf. It’s also refused when the update
+  // would change GitHub Actions workflow files and the OAuth token lacks the `workflow` scope
   if (!response.ok) {
     // eslint-disable-next-line no-console
     console.warn(

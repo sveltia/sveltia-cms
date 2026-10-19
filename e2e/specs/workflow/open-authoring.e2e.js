@@ -340,6 +340,55 @@ test.describe('as a contributor', () => {
       expect(github.readFile('notes.md', branch)).toBeUndefined();
     });
 
+    test('starts a branch from the fork when it lacks workflow files changed in the repository', async ({
+      cms,
+      github,
+      page,
+    }) => {
+      const { oid: forkHead } = github.head;
+
+      // GitHub refuses a sign-in without the `workflow` scope to bring the new workflow file into
+      // the fork, both when syncing it and when branching from the repository’s head
+      github.commit({ '.github/workflows/deploy.yml': 'on: push' });
+
+      await cms.open();
+      await expect(getEntryRows(page)).toHaveText([/First Post/]);
+      expect(github.refs.get(github.forkBranch('main'))).toBe(forkHead);
+
+      await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+
+      const editor = getEditor(page);
+
+      await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
+      await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
+      await editor.getByRole('button', { name: 'Save' }).click();
+      await page
+        .getByRole('alertdialog', { name: 'Send for Review' })
+        .getByRole('button', { name: 'Send for Review' })
+        .click();
+
+      const branch = github.forkBranch(SECOND_POST_BRANCH);
+
+      await expect
+        .poll(() => github.pullRequests)
+        .toMatchObject([{ head: branch, state: 'open', draft: false }]);
+      expect(github.readFile('content/posts/second-post.md', branch)).toBe(
+        post('Second Post', 'Coming soon.'),
+      );
+      expect(github.getHead(branch).parents).toEqual([forkHead]);
+      expect(github.readFile('.github/workflows/deploy.yml', branch)).toBeUndefined();
+      // The pull request only holds the entry, as the branch is behind rather than ahead
+      expect(github.getPullRequestFiles(github.pullRequests[0])).toEqual([
+        { path: 'content/posts/second-post.md', changeType: 'ADDED' },
+      ]);
+      await expect(getEntryRows(page)).toHaveText([
+        /Unpublished Entries/,
+        /Second Post.*In Review/,
+        /Published Entries/,
+        /First Post/,
+      ]);
+    });
+
     test('saves again to the same branch in the fork', async ({ cms, github, page }) => {
       await cms.open();
       await saveSecondPost(page);

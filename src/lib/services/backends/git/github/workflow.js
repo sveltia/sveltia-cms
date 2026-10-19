@@ -205,7 +205,8 @@ export const fetchPullRequests = async () =>
  * two different repositories — the contributor’s fork and the configured one — because a fork that
  * has drifted would otherwise pass its own commits on to everything branched from it. A fork shares
  * an object store with its parent, so a commit that only exists upstream can still be branched from
- * in the fork.
+ * in the fork. The fork’s own copy of the branch is fetched as well, for when GitHub refuses that:
+ * see {@link createBranch}.
  */
 const FETCH_BRANCH_BASE_QUERY = `
   query(
@@ -217,6 +218,11 @@ const FETCH_BRANCH_BASE_QUERY = `
   ) {
     fork: repository(owner: $forkOwner, name: $forkRepo) {
       id
+      ref(qualifiedName: $branch) {
+        target {
+          oid
+        }
+      }
     }
     base: repository(owner: $owner, name: $repo) {
       ref(qualifiedName: $branch) {
@@ -292,6 +298,32 @@ const resetBranch = async (branch, sha) => {
 };
 
 /**
+ * Get the message GitHub gave for a failed GraphQL request, which comes as the error’s cause.
+ * @param {any} error Error thrown by `fetchGraphQL`.
+ * @returns {string} Message, or an empty string if there is none.
+ */
+const getErrorMessage = (error) => error.cause?.message ?? '';
+
+/**
+ * Create a branch pointing at the given commit, without letting a failure propagate.
+ * @param {string} repositoryId Node ID of the repository to create the branch in.
+ * @param {string} branch Branch name.
+ * @param {string} oid Git object ID.
+ * @returns {Promise<any>} The error the mutation failed with, or `undefined` if it succeeded.
+ */
+const tryCreateRef = async (repositoryId, branch, oid) => {
+  try {
+    await fetchGraphQL(CREATE_REF_MUTATION, {
+      input: { repositoryId, name: `refs/heads/${branch}`, oid },
+    });
+
+    return undefined;
+  } catch (ex) {
+    return ex;
+  }
+};
+
+/**
  * Create a new branch pointing at the head of the configured branch. If the branch already exists,
  * which happens when an earlier pull request for the same entry left it behind, the error is
  * ignored. The GraphQL API is used rather than the REST one, because a failed mutation still
@@ -308,7 +340,8 @@ export const createBranch = async (branch) => {
   const { repo } = repository;
   // With Open Authoring the branch is created in the contributor’s fork, but starts from the head
   // of the configured repository rather than the fork’s own copy of it, so a fork that has fallen
-  // behind or gained commits of its own doesn’t pass them on to the pull request
+  // behind or gained commits of its own doesn’t pass them on to the pull request, unless GitHub
+  // refuses that, as explained below
   const { owner: forkOwner, repo: forkRepo } = getWorkflowRepository();
 
   const { fork, base } = /** @type {Record<string, any>} */ (
@@ -332,18 +365,35 @@ export const createBranch = async (branch) => {
     });
   }
 
-  const sha = base.ref.target.oid;
+  let sha = base.ref.target.oid;
+  let error = await tryCreateRef(fork.id, branch, sha);
+  const forkHead = fork.ref?.target.oid;
 
-  try {
-    await fetchGraphQL(CREATE_REF_MUTATION, {
-      input: { repositoryId: fork.id, name: `refs/heads/${branch}`, oid: sha },
-    });
-  } catch (/** @type {any} */ ex) {
-    const message = ex.cause?.message ?? '';
+  // An OAuth token without the `workflow` scope can’t bring changes to GitHub Actions workflow
+  // files into a repository, which a branch starting upstream does when a fork that has fallen
+  // behind lacks the latest ones. GitHub then refuses the mutation for lack of permission, and the
+  // sync on sign-in has been refused for the same reason. The branch starts from the fork’s own
+  // copy of the configured branch instead: one that is only behind adds nothing to the pull
+  // request, which is compared from where the two meet
+  if (
+    error &&
+    openAuthoring.current &&
+    /permission/i.test(getErrorMessage(error)) &&
+    forkHead &&
+    forkHead !== sha
+  ) {
+    sha = forkHead;
+    error = await tryCreateRef(fork.id, branch, sha);
+  }
+
+  if (error) {
+    const message = getErrorMessage(error);
 
     // “A ref named ... already exists in the repository.” Anything else is a real failure
     if (!message.includes('already exists')) {
-      throw new Error('Failed to create the branch.', { cause: new Error(message || ex.message) });
+      throw new Error('Failed to create the branch.', {
+        cause: new Error(message || error.message),
+      });
     }
 
     // With Open Authoring a draft is a branch without a pull request, so there’s no telling a

@@ -867,6 +867,13 @@ export class MockGitHub extends MockGitRepository {
         return { status: 409, json: { message: 'There are merge conflicts' } };
       }
 
+      if (this.isWorkflowChangeRefused(upstream)) {
+        return {
+          status: 422,
+          json: { message: 'Refusing to allow an OAuth App to create or update workflow' },
+        };
+      }
+
       this.refs.set(forkBranch, upstream);
 
       return {
@@ -1282,18 +1289,22 @@ export class MockGitHub extends MockGitRepository {
       return { data: { repository: { refs: { nodes: this.findForkBranches(variables) } } } };
     }
 
-    // The repository to create a workflow branch in, and the head of the branch to start it from
+    // The repository to create a workflow branch in, with its copy of the branch to start it from,
+    // and the head of that branch in the repository
     if (/fork:\s*repository\(/.test(query)) {
-      const { forkOwner, forkRepo } = variables;
+      const { forkOwner, forkRepo, branch } = variables;
       const isFork = forkOwner === this.fork?.owner && forkRepo === this.fork?.repo;
 
       return {
         data: {
           fork:
             forkOwner === this.owner && forkRepo === this.repo
-              ? { id: this.repositoryId }
+              ? { id: this.repositoryId, ref: this.getRefNode(branch, { oid: true }) }
               : isFork
-                ? { id: this.forkId }
+                ? {
+                    id: this.forkId,
+                    ref: this.getRefNode(this.forkBranch(branch), { oid: true }),
+                  }
                 : null,
           base: { ref: this.getRefNode(variables.branch, { oid: true }) },
         },
@@ -1576,7 +1587,33 @@ export class MockGitHub extends MockGitRepository {
   }
 
   /**
-   * Handle the `createRef` mutation. Like GitHub, refuse to create a branch that already exists.
+   * Tell whether GitHub would refuse to bring the given commit into the fork, as it does for an
+   * OAuth token without the `workflow` scope when the commit holds a GitHub Actions workflow file
+   * that none of the fork’s branches has at the same path with the same contents. Set
+   * {@link scopes} to a list including `workflow` to allow it.
+   * @param {string} oid Commit SHA.
+   * @returns {boolean} Whether it’s refused.
+   */
+  isWorkflowChangeRefused(oid) {
+    if (this.scopes?.split(/,\s*/).includes('workflow')) {
+      return false;
+    }
+
+    const prefix = `${this.user.login}:`;
+
+    const forkTrees = [...this.refs.keys()]
+      .filter((key) => key.startsWith(prefix))
+      .map((key) => this.getHead(key).tree);
+
+    return [.../** @type {MockCommit} */ (this.getCommit(oid)).tree].some(
+      ([path, blob]) =>
+        path.startsWith('.github/workflows/') && !forkTrees.some((tree) => tree.get(path) === blob),
+    );
+  }
+
+  /**
+   * Handle the `createRef` mutation. Like GitHub, refuse to create a branch that already exists,
+   * and one in the fork that {@link isWorkflowChangeRefused}.
    * @param {Record<string, any>} input Mutation input.
    * @returns {Record<string, any>} Response body.
    */
@@ -1588,6 +1625,20 @@ export class MockGitHub extends MockGitRepository {
       return {
         data: { createRef: null },
         errors: [{ type: 'UNPROCESSABLE', message: 'Object does not exist' }],
+      };
+    }
+
+    if (repositoryId === this.forkId && this.isWorkflowChangeRefused(oid)) {
+      return {
+        data: { createRef: null },
+        errors: [
+          {
+            type: 'FORBIDDEN',
+            message:
+              `${this.user.login} does not have the correct permissions to execute ` +
+              '`CreateRef`',
+          },
+        ],
       };
     }
 
