@@ -12,6 +12,7 @@ import {
   hasUuidTag,
   isNumericComputeField,
 } from '$lib/services/contents/fields/compute/helpers';
+import { expectLinearTime } from '$lib/test/complexity';
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
@@ -859,15 +860,19 @@ describe('getComputedValue()', () => {
     });
 
     test('should reject a long value that doesn’t match in linear time', () => {
-      // A wildcard per tag would make this take minutes
+      // A wildcard per tag would make the time grow with the cube of the length
       vi.mocked(getFieldDisplayValue).mockReturnValue('x');
 
-      const valueMap = { slug: 'ab-'.repeat(10_000) };
       const args = getArgs('{{fields.a}}-{{fields.b}}-{{fields.c}}-{{uuid_shorter}}');
-      const start = performance.now();
 
-      expect(getComputedValue({ ...args, valueMap })).toMatch(/^x-x-x-[0-9a-f]{8}$/);
-      expect(performance.now() - start).toBeLessThan(1000);
+      expect(getComputedValue({ ...args, valueMap: { slug: 'ab-'.repeat(100) } })).toMatch(
+        /^x-x-x-[0-9a-f]{8}$/,
+      );
+      expectLinearTime(
+        (n) => ({ slug: 'ab-'.repeat(n) }),
+        (valueMap) => getComputedValue({ ...args, valueMap }),
+        200,
+      );
     });
 
     test('should ignore a non-string current value', () => {
