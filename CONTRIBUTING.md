@@ -4,7 +4,7 @@
 
 Maintainer [@kyoshino](https://github.com/kyoshino) is accepting donations to support the project. If you’d like to chip in financially, you can do so through [GitHub Sponsors](https://github.com/sponsors/kyoshino). Your support will help us maintain and improve Sveltia CMS, and we really appreciate it!
 
-Donations are primarily used to cover the monthly cost of the Claude Max subscription, which is US$100 or CA$150.
+Donations are primarily used to cover the monthly cost of the Claude Max subscription, which is US$100.
 
 ## Bug reports
 
