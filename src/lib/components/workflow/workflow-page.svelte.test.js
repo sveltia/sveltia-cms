@@ -523,7 +523,8 @@ describe('WorkflowPage', () => {
     const button = page.getByRole('button', { name: 'Refresh' });
 
     await button.click();
-    expect(reloadUnpublishedEntries).toHaveBeenCalledOnce();
+    // A reload already in flight may have started before the click, so it isn’t joined
+    expect(reloadUnpublishedEntries).toHaveBeenCalledExactlyOnceWith({ fresh: true });
     await expect.element(page.getByRole('status')).toMatchTextContent('Refreshing…');
     // Not asked again while the request is on its way
     await expect.element(button).toBeDisabled();

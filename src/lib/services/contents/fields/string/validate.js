@@ -27,7 +27,9 @@ export const validateStringField = ({ fieldConfig, value }) => {
     Number.isInteger(maxlength) && (minlength ?? 0) <= /** @type {number} */ (maxlength);
 
   const { type = 'text', prefix, suffix } = /** @type {StringField} */ (config);
-  let trimValue = value ?? '';
+  // A number or boolean that hasn’t been converted to a string is counted as the text it’s written
+  // as rather than throwing
+  let trimValue = typeof value === 'string' ? value : String(value ?? '');
 
   // Remove the prefix and suffix, which the user doesn’t type, before counting and validating
   if (fieldType === 'string') {

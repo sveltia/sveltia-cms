@@ -144,6 +144,39 @@ export const getParentComponentNames = (element) => {
 };
 
 /**
+ * Follow whether the rich text editor the given component is in can’t be edited, which its textbox
+ * tells with the `aria-readonly` attribute. Lexical mounts each component outside the Svelte
+ * component tree, so the state can’t come from the context. Lexical also keeps applying updates
+ * while the editor isn’t editable, so the component has to hold back the changes itself.
+ * @param {Element | undefined} element Element of a component.
+ * @param {(readonly: boolean) => void} callback Function called with the state right away, and
+ * again whenever it changes.
+ * @returns {MutationObserver | undefined} Observer to disconnect once the component is gone, or
+ * `undefined` if the component isn’t in an editor.
+ */
+export const observeReadonly = (element, callback) => {
+  const textbox = element?.closest('[role="textbox"]');
+
+  if (!textbox) {
+    return undefined;
+  }
+
+  /**
+   * Call the function with the current state.
+   */
+  const update = () => {
+    callback(textbox.getAttribute('aria-readonly') === 'true');
+  };
+
+  const observer = new MutationObserver(update);
+
+  update();
+  observer.observe(textbox, { attributes: true, attributeFilter: ['aria-readonly'] });
+
+  return observer;
+};
+
+/**
  * Unescape the title of a Markdown image, like `T \"q\"` in `![a](/a.png "T \"q\"")`, so the
  * field shows `T "q"`. A backslash before an ASCII punctuation character escapes it, as anywhere
  * else in Markdown, while one before any other character is a literal backslash.

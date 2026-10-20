@@ -438,6 +438,36 @@ describe('config/init', () => {
       expect(config?.collections?.[2].folder).toBe('docs');
     });
 
+    it('should remove a leading `./` from a collection folder', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      fetchcmsConfigMock.mockResolvedValue({
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          ...['./', './content/posts', '.hidden'].map((folder, index) => ({
+            name: `posts${index}`,
+            folder,
+            fields: [{ name: 'title', widget: 'string' }],
+          })),
+          {
+            name: 'settings',
+            files: [
+              { name: 'site', file: 'site.yml', fields: [{ name: 'title', widget: 'string' }] },
+            ],
+          },
+        ],
+      });
+
+      await initCmsConfig();
+
+      expect(
+        /** @type {any} */ (cmsConfig.current)?.collections?.map(
+          (/** @type {any} */ { folder }) => folder,
+        ),
+      ).toEqual(['', 'content/posts', '.hidden', undefined]);
+    });
+
     it('should refuse a config with a path outside the root directory', async () => {
       const { initCmsConfig } = await import('./init');
       const { checkRootDirPaths } = await import('$lib/services/config/parser/root-dir');

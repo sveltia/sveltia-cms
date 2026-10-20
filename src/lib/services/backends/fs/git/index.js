@@ -106,10 +106,8 @@ export const saveAndCommitChanges = ({ repoRootDirHandle, changes, options, save
         });
 
         if (inspection.repository) {
-          const lfsPath = await findLfsTrackedPath(
-            inspection.repository.fs,
-            getAddedPaths(repoChanges),
-          );
+          const { fs, ignoreCase } = inspection.repository;
+          const lfsPath = await findLfsTrackedPath(fs, getAddedPaths(repoChanges), { ignoreCase });
 
           if (lfsPath) {
             inspection = { ready: false, reason: 'lfs', detail: lfsPath };

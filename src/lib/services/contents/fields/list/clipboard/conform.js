@@ -2,13 +2,19 @@ import { isObject } from '@sveltia/utils/object';
 
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
-import { MULTI_VALUE_FIELD_TYPES, SIMPLE_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
+import {
+  MEDIA_FIELD_TYPES,
+  MULTI_VALUE_FIELD_TYPES,
+  SIMPLE_VALUE_FIELD_TYPES,
+  STRING_VALUE_FIELD_TYPES,
+} from '$lib/services/contents/fields';
 import { getTypeSubFields } from '$lib/services/contents/fields/list/subfields';
+import { getNumberFieldValue } from '$lib/services/contents/fields/number/helpers';
 import { unflattenKeys } from '$lib/services/utils/object';
 
 /**
  * @import { InternalLocaleCode } from '$lib/types/private';
- * @import { Field, ObjectField } from '$lib/types/public';
+ * @import { Field, NumberField, ObjectField } from '$lib/types/public';
  */
 
 /**
@@ -19,34 +25,68 @@ import { unflattenKeys } from '$lib/services/utils/object';
 const isStringOrNumber = (value) => typeof value === 'string' || typeof value === 'number';
 
 /**
- * Check if a pasted value fits a field that doesn’t have subfields.
- * @param {any} value Value.
- * @param {string} fieldType Field type.
- * @returns {boolean} Result.
+ * Conform a pasted value to a Number field: a number or text that is one is cast like the editor
+ * does with its input, while other text is left out.
+ * @param {string | number} value Value.
+ * @param {NumberField} fieldConfig Field configuration.
+ * @returns {string | number | null | undefined} Conformed value, or `undefined` if the field
+ * doesn’t take the value.
  */
-const isPrimitiveValueCompatible = (value, fieldType) => {
+const conformNumberValue = (value, fieldConfig) => {
+  const number = typeof value === 'number' ? value : value.trim() ? Number(value) : Number.NaN;
+
+  return Number.isNaN(number)
+    ? undefined
+    : getNumberFieldValue({ inputValue: number, fieldConfig });
+};
+
+/**
+ * Conform a pasted value to a field that doesn’t have subfields. A number is converted to the type
+ * the field takes, like `normalizeContent()` does with a value read from a file: a field holding a
+ * string, like a String, DateTime or Image field, calls string methods on its value.
+ * @param {any} value Value.
+ * @param {Field} fieldConfig Field configuration.
+ * @returns {any} Conformed value, or `undefined` if the field doesn’t take the value.
+ */
+const conformPrimitiveValue = (value, fieldConfig) => {
+  const { widget: fieldType = 'string' } = fieldConfig;
+
   if (value === null) {
-    return true;
+    return null;
   }
 
   if (fieldType === 'boolean') {
-    return typeof value === 'boolean';
+    return typeof value === 'boolean' ? value : undefined;
   }
 
   if (fieldType === 'code') {
-    return typeof value === 'string' || isObject(value);
+    return typeof value === 'string' || isObject(value) ? value : undefined;
   }
 
   if (fieldType === 'keyvalue') {
-    return isObject(value);
+    return isObject(value) ? value : undefined;
   }
 
-  if (SIMPLE_VALUE_FIELD_TYPES.includes(fieldType) || MULTI_VALUE_FIELD_TYPES.includes(fieldType)) {
-    return isStringOrNumber(value);
+  if (
+    !SIMPLE_VALUE_FIELD_TYPES.includes(fieldType) &&
+    !MULTI_VALUE_FIELD_TYPES.includes(fieldType)
+  ) {
+    // Hidden field and custom field types, which can take anything
+    return value;
   }
 
-  // Hidden field and custom field types, which can take anything
-  return true;
+  if (!isStringOrNumber(value)) {
+    return undefined;
+  }
+
+  if (fieldType === 'number') {
+    return conformNumberValue(value, /** @type {NumberField} */ (fieldConfig));
+  }
+
+  // A Relation or Select field can hold a number, which an option value can be
+  return STRING_VALUE_FIELD_TYPES.includes(fieldType) || MEDIA_FIELD_TYPES.includes(fieldType)
+    ? String(value)
+    : value;
 };
 
 /**
@@ -81,9 +121,11 @@ const conformValue = (value, fieldConfig, options) => {
   }
 
   if (isFieldMultiple(fieldConfig) && value !== null) {
-    const values = Array.isArray(value) ? value : [value];
+    const values = (Array.isArray(value) ? value : [value]).map((v) =>
+      conformPrimitiveValue(v, fieldConfig),
+    );
 
-    return values.every((v) => isPrimitiveValueCompatible(v, fieldType)) ? values : undefined;
+    return values.includes(undefined) ? undefined : values;
   }
 
   // A single value can be taken from a multiple-value field holding one value
@@ -92,7 +134,7 @@ const conformValue = (value, fieldConfig, options) => {
       ? value[0]
       : value;
 
-  return isPrimitiveValueCompatible(_value, fieldType) ? _value : undefined;
+  return conformPrimitiveValue(_value, fieldConfig);
 };
 
 /**
@@ -205,13 +247,13 @@ const conformList = (list, fieldConfig, options) => {
   }
 
   // A simple list of strings
-  return list.filter((item) => {
-    const compatible = isStringOrNumber(item);
-
-    if (!compatible) {
+  return list.flatMap((item) => {
+    if (!isStringOrNumber(item)) {
       options.stats.dropped += 1;
+
+      return [];
     }
 
-    return compatible;
+    return [String(item)];
   });
 };

@@ -1,6 +1,23 @@
 import { TEMPLATE_TAG_REGEX } from '$lib/services/common/template/constants';
 
 /**
+ * Get the closest character before or after the given position that isn’t whitespace.
+ * @param {string} str String.
+ * @param {number} index Position to start from, excluded.
+ * @param {-1 | 1} step `-1` to look backward, `1` to look forward.
+ * @returns {string} Character, or an empty string if there is none.
+ */
+const getAdjacentChar = (str, index, step) => {
+  let cursor = index + step;
+
+  while (/\s/.test(str[cursor] ?? '')) {
+    cursor += step;
+  }
+
+  return str[cursor] ?? '';
+};
+
+/**
  * Replace template tags in a string while leaving nested template tags inside transformation
  * arguments untouched. For example, this keeps `default('{{title}}')` from being treated as a
  * separate replacement target when the outer template is processed.
@@ -29,10 +46,15 @@ export const replaceTemplateTags = (str, replacer) => {
       const char = str[cursor];
       const nextChar = str[cursor + 1];
 
-      if (char === "'" && !quoteState) {
-        quoteState = true;
-      } else if (char === "'" && quoteState) {
-        quoteState = false;
+      // Like `splitTransformations()`, a quote only opens a transformation argument after `(` or
+      // `,`, and only closes it before `,` or `)`, so an apostrophe, as in `default('Don't')`,
+      // doesn’t throw off the parsing
+      if (char === "'") {
+        if (!quoteState && ['(', ','].includes(getAdjacentChar(str, cursor, -1))) {
+          quoteState = true;
+        } else if (quoteState && [',', ')'].includes(getAdjacentChar(str, cursor, 1))) {
+          quoteState = false;
+        }
       }
 
       if (!quoteState && char === '}' && nextChar === '}') {

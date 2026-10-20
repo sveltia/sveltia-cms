@@ -10,6 +10,7 @@ import {
   isSingleFileEntry,
   resolveCacheDB,
 } from '$lib/services/contents/draft/save/file-changes';
+import { valueSources } from '$lib/services/contents/file/value-sources';
 
 vi.mock('$lib/services/backends', () => ({ backend: { current: null } }));
 
@@ -191,6 +192,56 @@ describe('buildEntryFileChanges()', () => {
     });
   });
 
+  test('passes the source text of the values read from the file being overwritten', async () => {
+    const sourceMap = { price: { value: 10, source: '10.0' } };
+
+    /**
+     * Plan a file rename.
+     * @returns {any} Planned change.
+     */
+    const planChange = () => ({
+      action: 'move',
+      slug: 'new',
+      path: 'posts/new.md',
+      previousPath: 'posts/old.md',
+      currentPath: 'posts/old.md',
+    });
+
+    valueSources.clear();
+    valueSources.set('posts/old.md', sourceMap);
+
+    await buildEntryFileChanges({
+      draft,
+      config: singleFileConfig,
+      _file,
+      entry,
+      cacheDB: undefined,
+      planChange,
+    });
+
+    expect(formatEntryData).toHaveBeenLastCalledWith(
+      expect.objectContaining({ valueSources: sourceMap }),
+    );
+    // The renamed file takes them over
+    expect(valueSources.get('posts/new.md')).toBe(sourceMap);
+
+    // Not for an item of a file storing all the entries, as the source map is for the whole file
+    await buildEntryFileChanges({
+      draft,
+      config: singleFileConfig,
+      _file: { format: 'json', arrayFile: true },
+      entry,
+      cacheDB: undefined,
+      planChange,
+    });
+
+    expect(formatEntryData).toHaveBeenLastCalledWith(
+      expect.objectContaining({ valueSources: undefined }),
+    );
+
+    valueSources.clear();
+  });
+
   test.each([[{ i18nSingleFile: true }], [{ i18nSingleFileDefaultRoot: true }]])(
     'plans a single file for the single file i18n structure %o',
     async (structureMap) => {
@@ -281,6 +332,34 @@ describe('buildEntryFileChanges()', () => {
     expect(changes.map(({ path }) => path)).toEqual(['en/a.md', 'de/a.md']);
     expect(formatEntryData).toHaveBeenCalledTimes(2);
     expect(formatEntryData).not.toHaveBeenCalledWith(expect.objectContaining({ locale: 'fr' }));
+  });
+
+  test('formats a file with the source text of the TOML dates read from it', async () => {
+    const sourceMap = { date: { value: '1979-05-27', source: '1979-05-27' } };
+
+    valueSources.set('posts/old.toml', sourceMap);
+
+    await buildEntryFileChanges({
+      draft,
+      config: singleFileConfig,
+      _file: { format: 'toml' },
+      entry,
+      cacheDB: undefined,
+      planChange: vi.fn(() => ({
+        action: 'move',
+        slug: 'new',
+        path: 'posts/new.toml',
+        previousPath: 'posts/old.toml',
+        currentPath: 'posts/old.toml',
+      })),
+    });
+
+    expect(formatEntryData).toHaveBeenCalledWith(
+      expect.objectContaining({ valueSources: sourceMap }),
+    );
+    // The renamed file takes them over
+    expect(valueSources.get('posts/new.toml')).toBe(sourceMap);
+    valueSources.clear();
   });
 
   test('returns no changes when nothing is planned', async () => {

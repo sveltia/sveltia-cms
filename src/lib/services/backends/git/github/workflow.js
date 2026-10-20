@@ -685,6 +685,19 @@ const BLOCKING_REVIEW_DECISIONS = ['REVIEW_REQUIRED', 'CHANGES_REQUESTED'];
  * net for a merge that never lands, e.g. one waiting for a check that never reports.
  */
 const AUTO_MERGE_POLL = { interval: 10000, maxDuration: 60 * 60 * 1000 };
+/**
+ * Merge states under which GitHub merges a pull request right away. `UNSTABLE` means a check that
+ * isn’t required has failed, which doesn’t stop the merge.
+ * @see https://docs.github.com/en/graphql/reference/enums#mergestatestatus
+ */
+const MERGEABLE_STATES = ['CLEAN', 'HAS_HOOKS', 'UNSTABLE'];
+/**
+ * How many times, and how often, the pull request is read while GitHub works out whether it can be
+ * merged. GitHub does that in the background after a push, which usually takes a second or two,
+ * and reports `UNKNOWN` meanwhile.
+ * @see https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request
+ */
+const MERGE_STATE_POLL = { attempts: 10, interval: 1000 };
 
 /**
  * Query to fetch what tells a pull request GitHub can merge once its required checks pass from one
@@ -755,6 +768,38 @@ const fetchMergeReadiness = async (pullRequest) => {
   }
 
   return { ...node, checkState: node.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state };
+};
+
+/**
+ * Check whether GitHub is still working out if an open pull request can be merged.
+ * @param {Record<string, any> | undefined} node Pull request node from {@link fetchMergeReadiness}.
+ * @returns {boolean} Result.
+ */
+const isCheckingMergeability = (node) =>
+  node?.state === 'OPEN' && node.mergeStateStatus === 'UNKNOWN';
+
+/**
+ * Read the pull request’s merge state with {@link fetchMergeReadiness}, again and again while
+ * GitHub is still working out whether it can be merged, until that settles or the attempts run
+ * out, in which case the unsettled state is returned as is.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {number} [attemptsLeft] Remaining reads, including this one.
+ * @returns {Promise<Record<string, any> | undefined>} Pull request node, or `undefined` if it’s not
+ * found.
+ */
+const fetchSettledMergeReadiness = async (
+  pullRequest,
+  attemptsLeft = MERGE_STATE_POLL.attempts,
+) => {
+  const node = await fetchMergeReadiness(pullRequest);
+
+  if (!isCheckingMergeability(node) || attemptsLeft <= 1) {
+    return node;
+  }
+
+  await sleep(MERGE_STATE_POLL.interval);
+
+  return fetchSettledMergeReadiness(pullRequest, attemptsLeft - 1);
 };
 
 /**
@@ -923,7 +968,10 @@ const scheduleAutoMerge = async ({ pullRequest, node, squash, merge }) => {
  * immediate merge while they’re running, which is likely right after the entry is saved. In that
  * case, the pull request is set to auto-merge instead, pinned to the same commit, and GitHub merges
  * it once the checks have passed. Scheduling the merge is not the same as making it: a check can
- * still fail, so this resolves only once the merge has landed.
+ * still fail, so this resolves only once the merge has landed. GitHub also refuses the merge while
+ * it’s still working out whether the pull request can be merged, which it does in the background
+ * after a push, so the pull request is read again until that settles, and merged or set to
+ * auto-merge then.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @see https://docs.github.com/en/rest/pulls/pulls#merge-a-pull-request
  * @see https://docs.github.com/en/graphql/reference/mutations#enablepullrequestautomerge
@@ -955,18 +1003,30 @@ export const publish = async (pullRequest) => {
       throw ex;
     }
 
-    const node = await fetchMergeReadiness(pullRequest);
+    const node = await fetchSettledMergeReadiness(pullRequest);
 
     // It has been merged already — by a maintainer on GitHub while this board was open, say.
     // That’s the outcome the user asked for, so it’s the branch cleanup below that’s left to do
     // rather than an error to report
     if (!node?.merged) {
-      if (!node || !isWaitingForChecks(node)) {
-        throw ex;
+      if (isCheckingMergeability(node)) {
+        throw new Error(
+          `Timed out waiting for GitHub to check whether pull request #${number} can be merged`,
+          { cause: ex },
+        );
       }
 
-      if (await scheduleAutoMerge({ pullRequest, node, squash, merge })) {
-        await waitForAutoMerge(pullRequest, node.id);
+      // What held the merge back may have passed by the time the state settles, such as the
+      // mergeability check GitHub runs after a push. The merge is then made once more, pinned to
+      // the same commit, so a push made since can’t slip in
+      if (MERGEABLE_STATES.includes(node?.mergeStateStatus)) {
+        await merge();
+      } else if (node && isWaitingForChecks(node)) {
+        if (await scheduleAutoMerge({ pullRequest, node, squash, merge })) {
+          await waitForAutoMerge(pullRequest, node.id);
+        }
+      } else {
+        throw ex;
       }
     }
   }

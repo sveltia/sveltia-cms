@@ -63,16 +63,18 @@ const TAG_PLACEHOLDER = '\0';
 const generatedUuidMap = new WeakMap();
 
 /**
- * Get the list index found in the given key path, which is the second-to-last segment, e.g. `2` for
- * `authors.2.slug`.
+ * Get the index of the list item the field is in, which is the last numeric segment of the given
+ * key path: `2` for `authors.2.slug`, for `lines.2.meta.n` in an Object field of a list item, and
+ * for `lines.2`, the item itself of a list with a single subfield. In a nested list, it’s the index
+ * of the innermost item, e.g. `3` for `sections.1.authors.3.slug`.
  * @param {FieldKeyPath} keyPath Key path of the field.
  * @returns {number | undefined} Index, or `undefined` if the field is not in a list item.
  * @see https://github.com/sveltia/sveltia-cms/issues/172
  */
 export const getListIndex = (keyPath) => {
-  const [index] = keyPath.split('.').splice(-2, 1);
+  const index = keyPath.split('.').findLast(isNumeric);
 
-  return index && isNumeric(index) ? Number(index) : undefined;
+  return index === undefined ? undefined : Number(index);
 };
 
 /**
@@ -484,14 +486,18 @@ export const getComputedValue = ({
 
     // A number is inserted as stored rather than formatted for display, so a template like
     // `/p/{{fields.sku}}` doesn’t give `/p/123,456`, and an arithmetic expression can use it. That
-    // includes the value of a Compute field that yields a number
+    // includes the value of a Compute field that yields a number. An arithmetic expression also
+    // gets the stored value of a Select or Relation field, e.g. `5` rather than its label
+    // `Express (5)`, including that of an item of a multiple one, which has no display value
     if (hasRawValue) {
       const sourceFieldConfig = getField(getFieldArgs);
+      const sourceWidget = sourceFieldConfig?.widget;
 
       if (
-        sourceFieldConfig?.widget === 'number' ||
-        (sourceFieldConfig?.widget === 'compute' &&
-          isNumericComputeField(/** @type {ComputeField} */ (sourceFieldConfig)))
+        sourceWidget === 'number' ||
+        (sourceWidget === 'compute' &&
+          isNumericComputeField(/** @type {ComputeField} */ (sourceFieldConfig))) ||
+        (numeric && (sourceWidget === 'select' || sourceWidget === 'relation'))
       ) {
         // The transformations get a string as they would get the display value, so `0` isn’t
         // taken as empty by `default`

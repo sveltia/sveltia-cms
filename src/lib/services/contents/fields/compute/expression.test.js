@@ -143,6 +143,9 @@ describe('evaluateExpression()', () => {
     expect(evaluate('round(1.23456, 2)')).toBe(1.23);
     expect(evaluate('round(1.23456, 2.9)')).toBe(1.23);
     expect(evaluate('round(1234, -2)')).toBe(1200);
+    expect(evaluate('round(1.005, 2)')).toBe(1.01);
+    expect(evaluate('round(8.7 * 1.15, 2)')).toBe(10.01);
+    expect(evaluate('round(-2.5)')).toBe(-3);
   });
 
   test('evaluates the aggregate functions over every item', () => {

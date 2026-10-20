@@ -170,6 +170,20 @@ describe('Test validateStringField()', () => {
     });
   });
 
+  test('should count a value that isn’t a string as the text it’s written as', () => {
+    /** @type {StringField} */
+    const fieldConfig = { ...baseFieldConfig, minlength: 3, prefix: '1' };
+
+    expect(validateStringField({ fieldConfig, locale: 'en', value: 12345 }).detail).toEqual({
+      count: 4,
+      hasMin: true,
+      hasMax: false,
+      invalid: false,
+    });
+    expect(validateStringField({ fieldConfig, locale: 'en', value: true }).detail.count).toBe(4);
+    expect(validateStringField({ fieldConfig, locale: 'en', value: null }).detail.count).toBe(0);
+  });
+
   test('should handle empty string', () => {
     /** @type {StringField} */
     const fieldConfig = {

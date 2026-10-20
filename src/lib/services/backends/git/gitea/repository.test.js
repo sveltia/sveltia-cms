@@ -86,6 +86,14 @@ describe('Gitea Repository Service', () => {
       });
     });
 
+    test('should encode a branch name with a character that ends a URL path', () => {
+      const repoURL = 'https://gitea.example.com/owner/repo';
+      const result = getBaseURLs(repoURL, 'cms/posts/c#');
+
+      expect(result.treeBaseURL).toBe(`${repoURL}/src/branch/cms/posts/c%23`);
+      expect(result.blobBaseURL).toBe(`${repoURL}/src/branch/cms/posts/c%23`);
+    });
+
     test('should generate correct URLs without branch', () => {
       const repoURL = 'https://gitea.example.com/owner/repo';
       const result = getBaseURLs(repoURL);

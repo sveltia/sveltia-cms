@@ -57,9 +57,24 @@ const LANGUAGE_ALIASES = {
 };
 
 /**
+ * Get the script a locale is most likely written in, e.g. `Arab` for `pa-PK` and `Guru` for `pa`.
+ * @param {string} locale Locale code.
+ * @returns {string | undefined} Script code, or `undefined` if the locale code is invalid or its
+ * script is unknown.
+ */
+const getLikelyScript = (locale) => {
+  try {
+    return new Intl.Locale(locale).maximize().script;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
  * Normalize a locale code to a supported language code. A locale can have a script code, like
  * `zh-Hant` or `pa-Arab`, and a region code, like `fr-FR`, in either case and separated with a
- * hyphen or an underscore.
+ * hyphen or an underscore. Without a script code, the script is the one the region implies, e.g.
+ * the Arabic script for `pa-PK`.
  * @param {string} locale Locale code, e.g., 'en', 'fr-FR', 'zh-CN', 'zh-Hant'.
  * @returns {string | undefined} Normalized language code, e.g., 'en', 'fr-FR', 'zh-CN', 'zh-TW'.
  */
@@ -68,38 +83,31 @@ export const normalizeLanguage = (locale) => {
   const lang = language.toLowerCase();
   const scriptTag = parts.find((tag) => /^[a-z]{4}$/i.test(tag));
   const regionTag = parts.find((tag) => /^(?:[a-z]{2}|\d{3})$/i.test(tag));
+  const region = regionTag?.toUpperCase();
 
   const script = scriptTag
     ? `${scriptTag[0].toUpperCase()}${scriptTag.slice(1).toLowerCase()}`
-    : undefined;
-
-  const region = regionTag?.toUpperCase();
+    : region && getLikelyScript(`${lang}-${region}`);
 
   // Chinese: We should not fall back to `zh` for Traditional Chinese, because it’s Simplified
   if (lang === 'zh') {
-    if (script === 'Hant' || (!script && ['TW', 'HK', 'MO'].includes(region ?? ''))) {
+    if (script === 'Hant') {
       return 'zh-TW';
     }
 
-    if (script === 'Hans' || (!script && ['CN', 'SG'].includes(region ?? ''))) {
+    if (script === 'Hans') {
       return 'zh-CN';
     }
   }
 
-  if (script && !SUPPORTED_LANGUAGES.includes(`${lang}-${script}`)) {
-    let defaultScript;
-
-    try {
-      defaultScript = new Intl.Locale(lang).maximize().script;
-    } catch {
-      // Invalid language code
-    }
-
-    // The bare language code gives the text in the language’s usual script, so don’t fall back to
-    // it for another script, e.g. `sr` for `sr-Latn`, which Google writes in Cyrillic
-    if (script !== defaultScript) {
-      return undefined;
-    }
+  // The bare language code gives the text in the language’s usual script, so don’t fall back to it
+  // for another script, e.g. `sr` for `sr-Latn` or `sr-ME`, which Google writes in Cyrillic
+  if (
+    script &&
+    !SUPPORTED_LANGUAGES.includes(`${lang}-${script}`) &&
+    script !== getLikelyScript(lang)
+  ) {
+    return undefined;
   }
 
   const candidates = [

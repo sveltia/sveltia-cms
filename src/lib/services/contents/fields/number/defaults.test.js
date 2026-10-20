@@ -605,6 +605,37 @@ describe('Test getDefaultValueMap()', () => {
       expect(result).toEqual({});
     });
 
+    test('should parse the whole string of a dynamicValue like the editor does', () => {
+      /**
+       * Get the default value of a field with the given value type for a dynamic value.
+       * @param {NumberField['value_type']} valueType Value type.
+       * @param {any} dynamicValue Dynamic value.
+       * @returns {Record<string, any>} Default value map.
+       */
+      const getValue = (valueType, dynamicValue) =>
+        getDefaultValueMap({
+          fieldConfig: { ...baseFieldConfig, value_type: valueType },
+          keyPath: 'count',
+          locale: '_default',
+          defaultLocale: '_default',
+          dynamicValue,
+        });
+
+      expect(getValue('int', '12abc')).toEqual({});
+      expect(getValue('float', '1.5abc')).toEqual({});
+      expect(getValue('int', '1e3')).toEqual({ count: 1000 });
+      expect(getValue('float', '1e3')).toEqual({ count: 1000 });
+      expect(getValue('int/string', '1e3')).toEqual({ count: '1000' });
+      expect(getValue('int', ' 12 ')).toEqual({ count: 12 });
+      // An integer type drops the fraction, like the editor does
+      expect(getValue('int', '12.7')).toEqual({ count: 12 });
+      // Neither a non-finite number nor an integer beyond the safe range can be stored
+      expect(getValue('float', 'Infinity')).toEqual({});
+      expect(getValue('int', '1e21')).toEqual({});
+      expect(getValue('int', ' ')).toEqual({});
+      expect(getValue('int', true)).toEqual({});
+    });
+
     test('should handle all valid value_type variants', () => {
       /**
        * @typedef {object} TestCase

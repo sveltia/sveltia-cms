@@ -1,6 +1,12 @@
 import { getImmutable, immutableLoaded } from '$lib/services/api/immutable';
 import { supportsHTML } from '$lib/services/contents/fields/rich-text/components/utils';
-import { GLOBAL_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
+import { IMAGE_OR_LINKED_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
+import {
+  getCodeRanges,
+  isWithinHTMLBlock,
+  isWithinRanges,
+  startsHTMLBlock,
+} from '$lib/services/contents/fields/rich-text/previews/syntax';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -80,19 +86,37 @@ const hashString = (str) => {
 };
 
 /**
- * Encode image URLs in Markdown to ensure spaces are properly handled.
- * E.g. `![alt](my image.png)` -> `![alt](my%20image.png)`.
- * @param {...any} args Arguments from the regex match.
+ * Encode image URLs in Markdown to ensure spaces are properly handled, including the link of a
+ * linked image. E.g. `![alt](my image.png)` -> `![alt](my%20image.png)`.
+ * @param {...any} args Arguments from a match of `IMAGE_OR_LINKED_IMAGE_REGEX` or `IMAGE_REGEX`.
  * @returns {string} The encoded image Markdown string.
  * @see https://github.com/markedjs/marked/issues/1639
  */
 export const encodeImageSrc = (...args) => {
-  const { alt, src, title } = args.at(-1);
+  const { alt, src, title, alt2, src2, title2, link } = args.at(-1);
+
+  if (src2 !== undefined) {
+    // A link with a quote may have a title, which has to be kept apart
+    const eLink = /["']/.test(link) ? link : link.replaceAll(' ', '%20');
+
+    return `[${encodeImageSrc({ alt: alt2, src: src2, title: title2 })}](${eLink})`;
+  }
+
   const eSrc = src.replaceAll(' ', '%20');
 
   return title ? `![${alt}](${eSrc} "${title}")` : `![${alt}](${eSrc})`;
 };
 
+/**
+ * Global version of `IMAGE_OR_LINKED_IMAGE_REGEX`.
+ */
+const GLOBAL_IMAGE_OR_LINKED_IMAGE_REGEX = new RegExp(IMAGE_OR_LINKED_IMAGE_REGEX, 'g');
+/**
+ * IDs of the built-in image components, whose Markdown is left to Marked in the preview. Their
+ * previews are `<img>` HTML, which would show as text within code, and start an HTML block that
+ * leaves the following lines unparsed when the image is alone on a line, e.g. above a caption.
+ */
+const MARKDOWN_IMAGE_COMPONENT_IDS = ['image', 'linked-image'];
 /**
  * Cache for global-flag versions of component definition patterns. Keyed by
  * `${pattern.source}|${pattern.flags}` so the same logical pattern always resolves to the same
@@ -184,11 +208,14 @@ const isMatchWithinPreviewValues = ({ match, index, end }, regions) =>
  * @param {PreviewRegion[]} [regions] Regions of the string previews substituted on the previous
  * pass, if any. On a later pass, only a match within one of these regions that comes from a
  * field value is kept; the rest of the string has already been scanned.
- * @returns {ComponentMatch[]} Non-overlapping matches sorted by position.
+ * @returns {ComponentMatch[]} Non-overlapping matches sorted by position. A match starting within a
+ * code span or fenced code block is left out, as the syntax is literal text there; one starting
+ * with the code, e.g. a component made of a fenced code block, is kept.
  */
 const findOutermostMatches = (string, componentDefs, regions) => {
   /** @type {ComponentMatch[]} */
   const candidates = [];
+  const codeRanges = getCodeRanges(string);
 
   componentDefs.forEach((def, order) => {
     string.matchAll(getGlobalPattern(def.pattern)).forEach((match) => {
@@ -201,7 +228,11 @@ const findOutermostMatches = (string, componentDefs, regions) => {
       };
 
       // A zero-length match cannot be a component and would be re-substituted on every pass
-      if (match[0] && (!regions || isMatchWithinPreviewValues(candidate, regions))) {
+      if (
+        match[0] &&
+        !isWithinRanges(match.index, codeRanges) &&
+        (!regions || isMatchWithinPreviewValues(candidate, regions))
+      ) {
         candidates.push(candidate);
       }
     });
@@ -297,6 +328,67 @@ const addComponentPreview = (context, { def, fieldProps, source }) => {
 };
 
 /**
+ * Get the line break at the end of the line the given index is on, if the following line has any
+ * text.
+ * @param {string} string String.
+ * @param {number} index Index.
+ * @returns {number | undefined} Index of the line break, or `undefined` if there is no following
+ * line with text.
+ */
+const getLineEndBeforeText = (string, index) => {
+  const lineEnd = string.indexOf('\n', index);
+
+  return lineEnd >= 0 &&
+    string
+      .slice(lineEnd + 1)
+      .split('\n', 1)[0]
+      .trim()
+    ? lineEnd
+    : undefined;
+};
+
+/**
+ * Get the end of the line of an HTML block that a string preview substituted at the given range
+ * starts, if the block would otherwise run on to the following lines, which would then be left
+ * unparsed. That is when the preview starts a line with a block-level tag, or an opening or closing
+ * tag alone on the line, the line is not within an HTML block already, and the following line has
+ * any text. A blank line has to be added there to end the block.
+ * @param {string} string String the preview is substituted in.
+ * @param {object} args Arguments.
+ * @param {string} args.preview String preview.
+ * @param {number} args.index Start index of the match.
+ * @param {number} args.end End index of the match (exclusive).
+ * @returns {number | undefined} Index of the line break at the end of the line, or `undefined` if
+ * no blank line is needed.
+ */
+const getHTMLBlockEnd = (string, { preview, index, end }) => {
+  const lineStart = string.lastIndexOf('\n', index - 1) + 1;
+  const indent = string.slice(lineStart, index);
+
+  if (!/^ {0,3}$/.test(indent) || preview.includes('\n\n')) {
+    return undefined;
+  }
+
+  const [firstLine] = preview.split('\n');
+  const lineEnd = getLineEndBeforeText(string, end);
+
+  const line =
+    indent +
+    firstLine +
+    (firstLine === preview ? string.slice(end, lineEnd ?? string.indexOf('\n', end)) : '');
+
+  const previousLine = lineStart
+    ? string.slice(string.lastIndexOf('\n', lineStart - 2) + 1, lineStart - 1)
+    : '';
+
+  return lineEnd !== undefined &&
+    startsHTMLBlock(line, { afterParagraph: !!previousLine.trim() }) &&
+    !isWithinHTMLBlock(string, lineStart)
+    ? lineEnd
+    : undefined;
+};
+
+/**
  * Substitute the given component matches in the string with their previews.
  * @param {PreviewContext} context Preview context.
  * @param {object} args Arguments.
@@ -312,13 +404,34 @@ const substituteMatches = (context, { string, matches }) => {
   const regions = [];
   let cursor = 0;
   let length = 0;
+  /**
+   * Index of the line break to be doubled to end the HTML block a string preview has started. See
+   * {@link getHTMLBlockEnd}.
+   * @type {number | undefined}
+   */
+  let blockEnd;
+
+  /**
+   * Add the text from the cursor to the given index, with a blank line at {@link blockEnd}.
+   * @param {number} index End index (exclusive).
+   */
+  const addText = (index) => {
+    let text = string.slice(cursor, index);
+
+    if (blockEnd !== undefined && blockEnd < index) {
+      text = `${string.slice(cursor, blockEnd)}\n${string.slice(blockEnd, index)}`;
+      blockEnd = undefined;
+    }
+
+    chunks.push(text);
+    length += text.length;
+  };
 
   matches.forEach(({ def, match, index, end }) => {
     const fieldProps = def.fromBlock?.(match) ?? match.groups ?? {};
     const { key, preview } = addComponentPreview(context, { def, fieldProps, source: match[0] });
 
-    chunks.push(string.slice(cursor, index));
-    length += index - cursor;
+    addText(index);
 
     // Replace the component syntax with a direct preview string or placeholder, depending on the
     // type of the preview value. This allows simple text previews to be rendered directly without
@@ -332,19 +445,26 @@ const substituteMatches = (context, { string, matches }) => {
       });
       chunks.push(preview);
       length += preview.length;
+      blockEnd = getHTMLBlockEnd(string, { preview, index, end }) ?? blockEnd;
     } else {
       // Return a placeholder element with a unique key that can be used by the `MutationObserver`
-      // to find the correct location to render the React element preview.
+      // to find the correct location to render the React element preview. A `<span>` with its
+      // closing tag doesn’t start an HTML block.
       const placeholder = `<span data-component-key="${key}"></span>`;
 
       chunks.push(placeholder);
       length += placeholder.length;
     }
 
+    // A block still open past this match ends at the end of the line the match ends on
+    if (blockEnd !== undefined && blockEnd < end) {
+      blockEnd = getLineEndBeforeText(string, end);
+    }
+
     cursor = end;
   });
 
-  chunks.push(string.slice(cursor));
+  addText(string.length);
 
   return { string: chunks.join(''), regions };
 };
@@ -436,7 +556,8 @@ const buildHTMLWithPreviews = (html, componentDefs, previousPreviewMap, getAsset
 
 /**
  * Process a Markdown string by extracting editor component instances, computing their previews and
- * replacing each match with a placeholder `<span>` keyed to the preview map.
+ * replacing each match with a placeholder `<span>` keyed to the preview map. The built-in image
+ * components are left to Marked, and component syntax within code is left as is.
  *
  * Components are matched outermost-first, so `toPreview()` always receives the raw block content.
  * Since a string preview may itself contain component syntax (typically the verbatim value of a
@@ -476,12 +597,20 @@ export const buildMarkdownWithPreviews = (
 
   const context = createPreviewContext(previousPreviewMap, getAsset);
   const { previewMap, assetMap } = context;
-  let string = (currentValue ?? '').replace(GLOBAL_IMAGE_REGEX, encodeImageSrc);
+  const value = currentValue ?? '';
+  const codeRanges = getCodeRanges(value);
+  const defs = componentDefs.filter(({ id }) => !MARKDOWN_IMAGE_COMPONENT_IDS.includes(id));
+
+  let string = value.replace(GLOBAL_IMAGE_OR_LINKED_IMAGE_REGEX, (...args) =>
+    // The offset comes before the whole string and the named groups
+    isWithinRanges(args.at(-3), codeRanges) ? args[0] : encodeImageSrc(...args),
+  );
+
   /** @type {PreviewRegion[] | undefined} */
   let regions;
 
-  for (let pass = 0; pass < MAX_SUBSTITUTION_PASSES && componentDefs.length; pass += 1) {
-    const matches = findOutermostMatches(string, componentDefs, regions);
+  for (let pass = 0; pass < MAX_SUBSTITUTION_PASSES && defs.length; pass += 1) {
+    const matches = findOutermostMatches(string, defs, regions);
 
     if (!matches.length) {
       break;

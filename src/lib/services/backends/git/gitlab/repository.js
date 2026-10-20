@@ -9,6 +9,7 @@ import {
   applyDefaultBranch,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
+import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import { RepositoryBaseURLs, RepositoryInfo, RepositoryPath } from '$lib/types/private';
@@ -68,8 +69,9 @@ export const getBranchPath = (branch, repoPath) =>
  * blob base URL for accessing file contents.
  */
 export const getBaseURLs = (repoURL, branch) => ({
-  treeBaseURL: branch ? `${repoURL}/-/tree/${branch}` : repoURL,
-  blobBaseURL: branch ? `${repoURL}/-/blob/${branch}` : '',
+  // A branch name may contain a character that ends a URL path, like `#` in `cms/posts/c#`
+  treeBaseURL: branch ? `${repoURL}/-/tree/${encodePathSegments(branch)}` : repoURL,
+  blobBaseURL: branch ? `${repoURL}/-/blob/${encodePathSegments(branch)}` : '',
   commitBaseURL: `${repoURL}/-/commit`,
 });
 

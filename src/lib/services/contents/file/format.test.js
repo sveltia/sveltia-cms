@@ -9,9 +9,10 @@ import {
   formatYAML,
 } from '$lib/services/contents/file/format';
 import { _resetUnsafeIntegerSources, toNumber } from '$lib/services/contents/file/integers';
+import { SourcedValue } from '$lib/services/contents/file/value-sources';
 
 /**
- * @import { FileConfig } from '$lib/types/private';
+ * @import { FileConfig, ValueSourceMap } from '$lib/types/private';
  */
 
 // Mock the cmsConfig store
@@ -150,6 +151,47 @@ describe('Test formatting integers a number can’t represent exactly', () => {
 
     try {
       expect(formatJSON(content)).toContain('"big": 12345678901234567000,');
+    } finally {
+      json.rawJSON = rawJSON;
+    }
+  });
+});
+
+describe('Test formatting values with their source text', () => {
+  const content = { a: new SourcedValue(10, '10.0'), b: [new SourcedValue(1000, '1e3'), 10] };
+
+  test('writes them as they were read', () => {
+    expect(formatJSON(content)).toBe('{\n  "a": 10.0,\n  "b": [\n    1e3,\n    10\n  ]\n}');
+    expect(formatYAML(content)).toBe('a: 10.0\nb:\n  - 1e3\n  - 10');
+  });
+
+  test('writes them along with an integer a number can’t represent exactly', () => {
+    toNumber(12345678901234567890n);
+
+    try {
+      expect(formatJSON({ ...content, big: 12345678901234567000 })).toBe(
+        '{\n  "a": 10.0,\n  "b": [\n    1e3,\n    10\n  ],\n  "big": 12345678901234567890\n}',
+      );
+    } finally {
+      _resetUnsafeIntegerSources();
+    }
+  });
+
+  test('writes the source text in JSON only if it’s a JSON float', () => {
+    expect(formatJSON({ a: new SourcedValue(10, '10.'), b: new SourcedValue(1, '+1.0') })).toBe(
+      '{\n  "a": 10,\n  "b": 1\n}',
+    );
+  });
+
+  test('writes the number in a browser without `JSON.rawJSON()`', () => {
+    // TypeScript doesn’t know `JSON.rawJSON()` yet
+    const json = /** @type {any} */ (JSON);
+    const { rawJSON } = json;
+
+    delete json.rawJSON;
+
+    try {
+      expect(formatJSON(content)).toBe('{\n  "a": 10,\n  "b": [\n    1000,\n    10\n  ]\n}');
     } finally {
       json.rawJSON = rawJSON;
     }
@@ -686,6 +728,38 @@ This is the body content of the post.
     const result = formatFrontMatter({ content, _file });
 
     expect(result).toBe('Just body content without frontmatter.\n');
+  });
+
+  test('body starting with a delimiter line gets an empty front matter block', () => {
+    /** @type {import('$lib/types/private').FileConfig} */
+    const _file = { format: 'frontmatter', extension: '.md' };
+
+    expect(formatFrontMatter({ content: { body: '---\nfoo: bar\n---\nText' }, _file })).toBe(
+      '---\n\n---\n\n---\nfoo: bar\n---\nText\n',
+    );
+    // Trailing whitespace on the delimiter line
+    expect(formatFrontMatter({ content: { body: '--- \nText' }, _file })).toBe(
+      '---\n\n---\n\n--- \nText\n',
+    );
+    // The `frontmatter` format is detected from the first line, so other delimiters count too
+    expect(formatFrontMatter({ content: { body: '+++\nText' }, _file })).toBe(
+      '---\n\n---\n\n+++\nText\n',
+    );
+    // Other text on the first line
+    expect(formatFrontMatter({ content: { body: '--- Text' }, _file })).toBe('--- Text\n');
+  });
+
+  test('body starting with a TOML delimiter line gets an empty TOML front matter block', () => {
+    /** @type {import('$lib/types/private').FileConfig} */
+    const _file = {
+      format: 'toml-frontmatter',
+      extension: '.md',
+      fmDelimiters: ['+++', '+++'],
+    };
+
+    expect(formatFrontMatter({ content: { body: '+++\nfoo = 1\n+++\nText' }, _file })).toBe(
+      '+++\n\n+++\n\n+++\nfoo = 1\n+++\nText\n',
+    );
   });
 
   test('content without body', () => {
@@ -1243,6 +1317,115 @@ title: Test Post
 description: This stays inline.
 ---
 `,
+    );
+  });
+});
+
+describe('Test formatEntryFile() with value sources', () => {
+  const valueSources = {
+    price: { value: 10, source: '10.0' },
+    'sizes.0': { value: -3, source: '-3.0' },
+    'sizes.1': { value: 1000, source: '1e3' },
+  };
+
+  /**
+   * Create a file configuration.
+   * @param {string} format File format.
+   * @returns {FileConfig} File configuration.
+   */
+  const createFileConfig = (format) =>
+    /** @type {FileConfig} */ ({
+      format: /** @type {any} */ (format),
+      extension: format.startsWith('json') ? 'json' : 'md',
+      fmDelimiters: format.startsWith('json')
+        ? ['{', '}']
+        : format.startsWith('toml')
+          ? ['+++', '+++']
+          : undefined,
+    });
+
+  /**
+   * Format the content with the value sources.
+   * @param {string} format File format.
+   * @param {Record<string, any>} [content] Content.
+   * @returns {Promise<string>} Formatted content.
+   */
+  const formatAs = (format, content = { price: 10, sizes: [-3, 1000, 7], count: 10, body: 'Hi' }) =>
+    formatEntryFile({ content, _file: createFileConfig(format), valueSources });
+
+  test('writes the floats that are whole numbers as they were read', async () => {
+    expect(await formatAs('yaml')).toBe(
+      'price: 10.0\nsizes:\n  - -3.0\n  - 1e3\n  - 7\ncount: 10\nbody: Hi\n',
+    );
+    expect(await formatAs('json')).toBe(
+      '{\n  "price": 10.0,\n  "sizes": [\n    -3.0,\n    1e3,\n    7\n  ],\n  "count": 10,\n' +
+        '  "body": "Hi"\n}\n',
+    );
+    expect(await formatAs('yaml-frontmatter')).toBe(
+      '---\nprice: 10.0\nsizes:\n  - -3.0\n  - 1e3\n  - 7\ncount: 10\n---\n\nHi\n',
+    );
+    expect(await formatAs('frontmatter')).toBe(
+      '---\nprice: 10.0\nsizes:\n  - -3.0\n  - 1e3\n  - 7\ncount: 10\n---\n\nHi\n',
+    );
+    expect(await formatAs('json-frontmatter')).toBe(
+      '{\n  "price": 10.0,\n  "sizes": [\n    -3.0,\n    1e3,\n    7\n  ],\n  "count": 10\n}\n\nHi\n',
+    );
+  });
+
+  test('writes an edited value as it is', async () => {
+    const content = { price: 12, sizes: [-3.5, 1000], count: 10 };
+
+    expect(await formatAs('yaml', content)).toBe(
+      'price: 12\nsizes:\n  - -3.5\n  - 1e3\ncount: 10\n',
+    );
+    expect(await formatAs('json', { price: 12 })).toBe('{\n  "price": 12\n}\n');
+  });
+
+  test('writes the floats that are whole numbers as they were read in TOML', async () => {
+    expect(await formatAs('toml')).toBe(
+      'price = 10.0\nsizes = [ -3.0, 1e3, 7 ]\ncount = 10\nbody = "Hi"\n',
+    );
+    expect(await formatAs('toml-frontmatter')).toBe(
+      '+++\nprice = 10.0\nsizes = [ -3.0, 1e3, 7 ]\ncount = 10\n+++\n\nHi\n',
+    );
+    expect(await formatAs('toml', { price: 12 })).toBe('price = 12\n');
+  });
+});
+
+describe('Test formatEntryFile() with the source text of TOML dates', () => {
+  /** @type {ValueSourceMap} */
+  const sourceMap = {
+    date: { value: '2024-01-01T10:00:00.000Z', source: '2024-01-01T10:00:00Z' },
+    time: { value: '12:30:00.000', source: '12:30:00' },
+  };
+
+  const content = { date: '2024-01-01T10:00:00.000Z', time: '12:45:00.000', body: 'Hello.' };
+
+  test('writes the dates that haven’t changed as they were read in a TOML file', async () => {
+    const _file = /** @type {FileConfig} */ ({ format: 'toml', extension: 'toml' });
+
+    expect(await formatEntryFile({ content: { ...content }, _file, valueSources: sourceMap })).toBe(
+      'date = 2024-01-01T10:00:00Z\ntime = "12:45:00.000"\nbody = "Hello."\n',
+    );
+  });
+
+  test('writes the dates that haven’t changed as they were read in TOML front matter', async () => {
+    const _file = /** @type {FileConfig} */ ({
+      format: 'toml-frontmatter',
+      extension: 'md',
+      fmDelimiters: ['+++', '+++'],
+    });
+
+    expect(await formatEntryFile({ content: { ...content }, _file, valueSources: sourceMap })).toBe(
+      '+++\ndate = 2024-01-01T10:00:00Z\ntime = "12:45:00.000"\n+++\n\nHello.\n',
+    );
+  });
+
+  test('ignores the source map in another format', async () => {
+    const _file = /** @type {FileConfig} */ ({ format: 'json', extension: 'json' });
+
+    expect(await formatEntryFile({ content: { ...content }, _file, valueSources: sourceMap })).toBe(
+      '{\n  "date": "2024-01-01T10:00:00.000Z",\n  "time": "12:45:00.000",\n  "body": "Hello."\n}\n',
     );
   });
 });

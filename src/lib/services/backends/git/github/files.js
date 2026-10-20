@@ -1,5 +1,3 @@
-import mime from 'mime';
-
 import { fetchLastCommit } from '$lib/services/backends/git/github/commits';
 import {
   getWorkflowRepository,
@@ -380,7 +378,7 @@ export const fetchBlob = async (asset) => {
   // An asset attached to an unpublished entry is committed to a workflow branch, which lives in the
   // contributor’s fork with Open Authoring, so the blob has to be read from there
   const { owner, repo } = asset.workflow ? getWorkflowRepository() : repository;
-  const { sha, path } = asset;
+  const { sha } = asset;
 
   const response = /** @type {Response} */ (
     await requestBlob({ owner, repo, sha, responseType: 'raw' })
@@ -392,10 +390,9 @@ export const fetchBlob = async (asset) => {
     throw new Error('Failed to fetch the blob', { cause: { status: response.status } });
   }
 
-  // Handle SVG and other non-binary files
-  if (response.headers.get('Content-Type') !== 'application/octet-stream') {
-    return new Blob([await response.text()], { type: mime.getType(path) ?? 'text/plain' });
-  }
-
+  // Keep the bytes as they are, even for a text file: decoding it would strip a UTF-8 BOM and
+  // transcode a file GitHub serves in another encoding, e.g. `charset=iso-8859-1`, and moving or
+  // renaming the asset would then commit the altered bytes. The caller sets the MIME type from the
+  // file name, as GitHub serves an SVG or any other text file as `text/plain`
   return response.blob();
 };

@@ -13,6 +13,7 @@ import {
 } from '$lib/services/contents/collection/data';
 import { deleteEntries } from '$lib/services/contents/collection/data/delete';
 import { selectedEntries } from '$lib/services/contents/collection/entries';
+import { unpublishedEntries } from '$lib/services/workflow';
 import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
 import {
   createMockAsset,
@@ -66,6 +67,7 @@ describe('DeleteEntriesDialog', () => {
   beforeEach(() => {
     backendName.current = undefined;
     setEntries(entries);
+    unpublishedEntries.current = [];
     selectedCollection.current = getCollection('posts');
   });
 
@@ -113,6 +115,10 @@ describe('DeleteEntriesDialog', () => {
       entry: { workflow: /** @type {any} */ ({ status: 'draft', collectionName: 'posts' }) },
     });
 
+    // A selected entry must be listed, or it’s dropped from the selection. Listing it clears the
+    // selection, so it’s selected afterwards
+    unpublishedEntries.current = [/** @type {any} */ (draft)];
+    flushSync();
     selectedEntries.current = [draft];
 
     await render(DeleteEntriesDialog, { open: true });
@@ -132,6 +138,10 @@ describe('DeleteEntriesDialog', () => {
       entry: { workflow: /** @type {any} */ ({ status: 'draft', collectionName: 'posts' }) },
     });
 
+    // A selected entry must be listed, or it’s dropped from the selection. Listing it clears the
+    // selection, so it’s selected afterwards
+    unpublishedEntries.current = [/** @type {any} */ (draft)];
+    flushSync();
     selectedEntries.current = [entries[0], draft];
 
     await render(DeleteEntriesDialog, { open: true });

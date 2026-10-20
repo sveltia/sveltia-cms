@@ -1,6 +1,8 @@
+import { marked } from 'marked';
 import { createElement } from 'react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { renderRichText } from '$lib/services/api/methods/render-rich-text';
 import { loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
 import { customComponentRegistry } from '$lib/services/api/registries';
 import { allAssetFolders } from '$lib/services/assets/folders';
@@ -300,6 +302,75 @@ describe('RichTextPreview', () => {
     // A code block without a language is left alone
     expect(preview.querySelectorAll('pre').length).toBe(3);
     expect(preview.querySelector('pre:not(.shiki)')).toHaveTextContent('plain');
+  });
+
+  test('adds the Marked extensions only once, however many previews are rendered', async () => {
+    (await renderPreviewWithProps('One')).unmount();
+
+    // Every `marked.use()` call wraps the renderer methods in another layer, each falling back to
+    // the previous one
+    const { code, paragraph } = /** @type {any} */ (marked.defaults.renderer);
+
+    (await renderPreviewWithProps('Two')).unmount();
+    await renderPreview('Three');
+
+    expect(marked.defaults.renderer).toMatchObject({ code, paragraph });
+    expect(marked.parse('Hello')).toBe('<p dir="auto">Hello</p>\n');
+  });
+
+  test('renders without an entry draft, as `CMS.renderRichText()` does from a timer', async () => {
+    const target = document.createElement('div');
+
+    document.body.append(target);
+
+    // Called outside any component, like a React effect, so there is no context to inherit
+    const destroy = await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(renderRichText(target, '**Hello**\n\n![Missing](missing.png)'));
+      });
+    });
+
+    await expect.poll(() => target.querySelector('strong')?.textContent).toBe('Hello');
+    await expect.poll(() => target.querySelector('img')?.dataset.processed).toBe('true');
+    expect(target.querySelector('img')).toHaveAttribute('src', 'missing.png');
+
+    destroy();
+    target.remove();
+  });
+
+  test('renders the image syntax in code as is, and the Markdown after an image', async () => {
+    const preview = await renderPreview(
+      'Use `![a](b.png)` here\n\n```\n![c](d.png)\n```\n\n![e](f.png)\nSome **bold** caption',
+    );
+
+    await expect.poll(() => preview.querySelector('strong')?.textContent).toBe('bold');
+    expect(preview.querySelector('p code')).toHaveTextContent('![a](b.png)');
+    expect(preview.querySelector('pre')).toHaveTextContent('![c](d.png)');
+    expect(preview.querySelectorAll('img')).toHaveLength(1);
+    expect(preview.querySelector('p:has(img)')).toMatchTextContent(/Some bold caption/);
+  });
+
+  test('renders the constructs that span blank lines as a whole', async () => {
+    const preview = await renderPreview(
+      [
+        'See [the docs][1].',
+        '<!-- A comment\n\nwith a blank line -->',
+        '- One\n\n  More of one\n\n- Two',
+        '[1]: https://example.com/docs',
+        '~~~js\nconst a = 1;\n~~~',
+      ].join('\n\n'),
+    );
+
+    await expect
+      .poll(() => preview.querySelector('a')?.getAttribute('href'))
+      .toBe('https://example.com/docs');
+    expect(preview).not.toMatchTextContent(/blank line|\[1\]/);
+    expect(preview.querySelectorAll('ul')).toHaveLength(1);
+    expect([...preview.querySelectorAll('li')].map((li) => li.textContent?.trim())).toEqual([
+      'One\nMore of one',
+      'Two',
+    ]);
+    await expect.poll(() => preview.querySelectorAll('pre.shiki').length).toBe(1);
   });
 
   test('leaves an image that can’t be resolved as is', async () => {

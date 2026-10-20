@@ -68,8 +68,8 @@ export const populateDefaultValue = ({
   }
 
   // Handle simple string-type fields, including the built-in `color`, `uuid`, `string` and `text`
-  // field types as well as custom field types
-  content[keyPath] = dynamicValue || defaultValue || '';
+  // field types as well as custom field types. A falsy default like `0` or `false` is kept
+  content[keyPath] = dynamicValue ?? defaultValue ?? '';
 };
 
 /**

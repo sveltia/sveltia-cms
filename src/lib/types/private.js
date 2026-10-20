@@ -765,6 +765,23 @@
  * @property {RawEntryContent} content Parsed content.
  * @property {FrontMatterFormat} [format] Front matter format detected in the text, for a file whose
  * format is `frontmatter`.
+ * @property {ValueSourceMap} [valueSources] Source text of the values that the parsed content
+ * can’t tell apart from others, e.g. a float that is a whole number.
+ */
+
+/**
+ * Source text of a value that the parsed content can’t tell apart from others, so it can be saved
+ * as it was read as long as it hasn’t been edited. A float that is a whole number, e.g. `10.0`, is
+ * held as the same `number` as an integer.
+ * @typedef {object} ValueSource
+ * @property {any} value Value in the parsed content, e.g. `10`.
+ * @property {string} source Source text of the value, e.g. `10.0`.
+ */
+
+/**
+ * Source text of the values in a file that the parsed content can’t tell apart from others, keyed
+ * by the key path of the value in the file, e.g. `price` or `items.0.price`.
+ * @typedef {Record<string, ValueSource>} ValueSourceMap
  */
 
 /**
@@ -1274,14 +1291,20 @@
  * @property {string} cmsConfigVersion The SHA-1 hash of the CMS configuration file, which is used
  * to verify that the backup can be safely restored.
  * @property {string} collectionName Collection name.
- * @property {string} slug Entry slug. An empty string for a new entry.
+ * @property {string} slug Entry slug. The index file name for a new index file, or an empty string
+ * for any other new entry.
  * @property {LocaleStateMap} currentLocales Current locale state.
  * @property {LocaleSlugMap} currentSlugs Key is a locale code, value is the current slug.
+ * @property {string} [currentPath] Folder the entry will be stored in, relative to the collection
+ * folder, as edited with the path editor. Only set when the collection’s `meta.path` option is
+ * enabled. Missing from a backup taken before it was introduced.
  * @property {LocaleContentMap} currentValues Key is a locale code, value is a flattened object
  * containing all the current field values while editing.
  * @property {EntryFileMap} files Files to be uploaded.
  * @property {PendingEntry[]} [pendingEntries] Entries created from a Relation field, to be saved
  * along with the entry. Missing from a backup taken before they were introduced.
+ * @property {Entry} [baseEntry] Existing entry the edits were made to, as it was when the draft was
+ * opened. Missing from a backup of a new entry, and from one taken before it was introduced.
  */
 
 /**
@@ -1513,6 +1536,8 @@
  * @property {GitTreeNode} indexTree Tree built from the index as inspected.
  * @property {boolean} autocrlf Whether `core.autocrlf` is `true` or `input`, which makes Git store
  * text with LF line endings.
+ * @property {boolean} ignoreCase Whether `core.ignorecase` is `true`, which makes Git match the
+ * patterns in `.gitattributes` case-insensitively.
  */
 
 /**
@@ -1892,6 +1917,8 @@
  * @property {DraftValueStoreKey} valueStoreKey Key to store the values in {@link EntryDraft}.
  * @property {{ current: Component | undefined }} [extraHint] Component to render an extra hint in
  * the field editor.
+ * @property {boolean} [readonly] Whether the subfields can’t be edited, as the List or Object
+ * field, or the rich text editor component, they belong to can’t be.
  */
 
 /**

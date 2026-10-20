@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
 import { copyProperty, serializeContent } from '$lib/services/contents/draft/save/serialize';
+import { formatEntryFile } from '$lib/services/contents/file/format';
 
 vi.mock('$lib/services/assets');
 vi.mock('$lib/services/config', () => ({
@@ -2528,5 +2529,126 @@ describe('List field stored as a map (within serializeContent)', () => {
     expect(serializeContent({ draft: createDraft(fields), locale: 'en', valueMap: {} })).toEqual(
       {},
     );
+  });
+});
+
+describe('Null values in TOML output (within serializeContent)', () => {
+  /**
+   * Create a draft with the given fields.
+   * @param {any[]} fields Fields.
+   * @param {string} format File format.
+   * @returns {any} Draft.
+   */
+  const createDraft = (fields, format) => ({
+    collectionName: 'posts',
+    collection: { _file: { format }, _i18n: { canonicalSlug: { key: '' } } },
+    fields,
+    isIndexFile: false,
+  });
+
+  /**
+   * Serialize the given content and format it as the file is saved.
+   * @param {any[]} fields Fields.
+   * @param {Record<string, any>} valueMap Flattened entry content.
+   * @param {string} format File format.
+   * @returns {Promise<string>} File data.
+   */
+  const save = (fields, valueMap, format) =>
+    formatEntryFile({
+      content: serializeContent({ draft: createDraft(fields, format), locale: 'en', valueMap }),
+      _file: /** @type {any} */ ({
+        format,
+        fmDelimiters: format === 'toml-frontmatter' ? ['+++', '+++'] : undefined,
+      }),
+    });
+
+  const fields = [
+    { name: 'title', widget: 'string' },
+    // An empty optional integer field stores `null`
+    { name: 'numbers', widget: 'list', field: { widget: 'number', value_type: 'int' } },
+  ];
+
+  const valueMap = { title: 'Hello', 'numbers.0': 1, 'numbers.1': null, 'numbers.2': 3 };
+
+  test('drops a null list item in a TOML file', async () => {
+    expect(
+      serializeContent({ draft: createDraft(fields, 'toml'), locale: 'en', valueMap }),
+    ).toEqual({ title: 'Hello', numbers: [1, 3] });
+    await expect(save(fields, valueMap, 'toml')).resolves.toBe(
+      'title = "Hello"\nnumbers = [ 1, 3 ]\n',
+    );
+  });
+
+  test('drops a null list item in TOML front matter', async () => {
+    await expect(save(fields, valueMap, 'toml-frontmatter')).resolves.toBe(
+      '+++\ntitle = "Hello"\nnumbers = [ 1, 3 ]\n+++\n',
+    );
+  });
+
+  test('keeps a null list item in YAML and JSON', async () => {
+    await expect(save(fields, valueMap, 'yaml')).resolves.toBe(
+      'title: Hello\nnumbers:\n  - 1\n  - null\n  - 3\n',
+    );
+    await expect(save(fields, valueMap, 'json')).resolves.toBe(
+      '{\n  "title": "Hello",\n  "numbers": [\n    1,\n    null,\n    3\n  ]\n}\n',
+    );
+  });
+
+  test('drops a null object property in TOML as before', async () => {
+    await expect(save(fields, { title: null, 'numbers.0': 1 }, 'toml')).resolves.toBe(
+      'numbers = [ 1 ]\n',
+    );
+  });
+
+  test('drops null values in nested lists and in objects in a list', async () => {
+    const nestedFields = [{ name: 'items', widget: 'list' }];
+
+    await expect(
+      save(
+        nestedFields,
+        {
+          'items.0.tags.0': 'a',
+          'items.0.tags.1': null,
+          'items.0.tags.2': 'b',
+          // An object in a nested list is written as an inline table
+          'items.0.grid.0.0.x': null,
+          'items.0.grid.0.0.y': 1,
+          'items.0.grid.0.1': undefined,
+          'items.0.note': null,
+          'items.1': null,
+        },
+        'toml',
+      ),
+    ).resolves.toBe('[[items]]\ngrid = [ [ { y = 1 } ] ]\ntags = [ "a", "b" ]\n');
+  });
+
+  test('drops an empty item of a list of dates in TOML', async () => {
+    const { TomlDate: TomlDateClass } = await vi.importActual('smol-toml');
+
+    getField.mockImplementation(({ keyPath }) => ({
+      name: keyPath,
+      widget: keyPath.startsWith('dates.') ? 'datetime' : 'string',
+    }));
+
+    // A wildcard key path stands for the list items, which an empty date field saves as nothing
+    const dateFields = [{ name: 'dates.*', widget: 'datetime', required: false }];
+    const dateValueMap = { 'dates.0': '2024-01-02', 'dates.1': '', 'dates.2': '2024-03-04' };
+
+    try {
+      const content = serializeContent({
+        draft: createDraft(dateFields, 'toml'),
+        locale: 'en',
+        valueMap: { ...dateValueMap },
+      });
+
+      // A date is still a native TOML date
+      expect(content.dates).toHaveLength(2);
+      expect(content.dates[0]).toBeInstanceOf(TomlDateClass);
+      await expect(save(dateFields, { ...dateValueMap }, 'toml')).resolves.toBe(
+        'dates = [ 2024-01-02, 2024-03-04 ]\n',
+      );
+    } finally {
+      getField.mockImplementation(({ keyPath }) => ({ name: keyPath, widget: 'string' }));
+    }
   });
 });

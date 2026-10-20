@@ -7,7 +7,9 @@ import { getAssetFolder, getAssetFoldersByPath } from '$lib/services/assets/fold
 import { revokeBlobURLIfNeeded } from '$lib/services/assets/info';
 import { canCreateThumbnail } from '$lib/services/assets/kinds';
 import { getMediaFieldSource, getMediaFieldURL } from '$lib/services/assets/media-field';
+import { findEntriesByAssets } from '$lib/services/assets/references';
 import { allAssets } from '$lib/services/assets/state';
+import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
@@ -21,7 +23,7 @@ import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
 /**
- * @import { Asset, Entry, InternalEntryCollection } from '$lib/types/private';
+ * @import { Asset, Entry, InternalCollection, InternalEntryCollection } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
 
@@ -282,6 +284,33 @@ const getAssetsByFolder = memoizeOnSource(
 const getAssetsBelowFolder = (folderPath) => getAssetsByFolder().get(folderPath) ?? [];
 
 /**
+ * Get the folders the given entry occupies by itself. With the `multiple_folders` and
+ * `multiple_root_folders` i18n structures, each locale has a folder of its own. When entries are
+ * files sharing a folder, there is none.
+ * @param {InternalCollection} collection Collection the entry belongs to.
+ * @param {Entry} entry Entry.
+ * @returns {string[]} Folder paths.
+ */
+const getOwnedEntryFolderPaths = (collection, entry) =>
+  /** @type {string[]} */ (
+    Object.values(entry.locales)
+      .map(({ path }) => getOwnedEntryFolderPath(collection, path))
+      .filter((dirPath) => dirPath !== undefined)
+  );
+
+/**
+ * Get the folders the given entry’s files are stored in.
+ * @param {Entry} entry Entry.
+ * @returns {string[]} Folder paths.
+ */
+const getEntryFolderPaths = ({ locales }) =>
+  /** @type {string[]} */ (
+    Object.values(locales)
+      .map(({ path }) => getPathInfo(path).dirname)
+      .filter((dirPath) => dirPath !== undefined)
+  );
+
+/**
  * Get a list of assets associated with the given entry.
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry.
@@ -341,14 +370,7 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
     // folder of its own, so the entry’s assets are spread across all of them. Only a folder the
     // entry occupies by itself counts: when entries are files sharing a folder, the other files in
     // it can belong to any of them, so none of those is this entry’s to move or delete
-    const entryFolderPaths = new Set(
-      /** @type {string[]} */ (
-        Object.values(entry.locales)
-          .map(({ path }) => getOwnedEntryFolderPath(collection, path))
-          .filter((dirPath) => dirPath !== undefined)
-      ),
-    );
-
+    const entryFolderPaths = new Set(getOwnedEntryFolderPaths(collection, entry));
     const existingPaths = new Set(assets.map(({ path }) => path));
     const entryIdsByFolder = getEntryIdsByFolder(collectionName);
 
@@ -392,27 +414,101 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
 };
 
 /**
- * Get the assets stored alongside the given entry, which are moved or removed with it. Only a
+ * Get the assets stored alongside each of the given entries, which are removed with it. Only a
  * collection whose asset folder is entry-relative stores assets with its entries.
+ *
+ * An asset outside the folders an entry occupies by itself, as when the entries are files sharing a
+ * folder, is left out if another entry of the collection refers to it too: a duplicated entry keeps
+ * referring to the original’s files there, and would be left with broken links. That includes
+ * another of the given entries, so a file shared by two entries deleted together stays behind
+ * rather than being deleted with either, which the other may still need, e.g. while its deletion
+ * awaits review.
  * @param {object} args Arguments.
- * @param {Entry} args.entry Entry.
- * @param {string} args.collectionName Name of a collection that the entry belongs to.
+ * @param {Entry[]} args.entries Entries.
+ * @param {string} args.collectionName Name of a collection that the entries belong to.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
- * @returns {Asset[]} Assets, or an empty list unless the collection stores them with the entry.
- * The entries of a collection storing all of them in one file share the folder of the file, and an
- * asset there can be used by any of them, so none of the assets belongs to one entry alone. Only
- * the versions the entry has are returned: a file another pull request put at the same path isn’t
- * the entry’s to remove.
+ * @returns {Asset[][]} Assets of each entry, in the order of the entries, or empty lists unless the
+ * collection stores them with the entries. The entries of a collection storing all of them in one
+ * file share the folder of the file, and an asset there can be used by any of them, so none of the
+ * assets belongs to one entry alone. Only the versions an entry has are returned: a file another
+ * pull request put at the same path isn’t the entry’s to remove.
  */
-export const getEntryRelativeAssets = ({ entry, collectionName, fileName }) =>
-  getAssetFolder({ collectionName, fileName })?.entryRelative &&
-  !isArrayFileCollection(getCollection(collectionName))
-    ? /** @type {Asset[]} */ ([
+export const getEntriesRelativeAssets = ({ entries, collectionName, fileName }) => {
+  const collection = getAssetFolder({ collectionName, fileName })?.entryRelative
+    ? getCollection(collectionName)
+    : undefined;
+
+  if (!collection || isArrayFileCollection(collection)) {
+    return entries.map(() => []);
+  }
+
+  const assetLists = entries.map(
+    (entry) =>
+      /** @type {Asset[]} */ ([
         // Two versions of a file can map to the same asset, so the list is deduplicated again
         ...new Set(
           getAssociatedAssets({ entry, collectionName, fileName, relative: true })
             .map((asset) => getEntryAssetVersion(asset, entry))
             .filter(Boolean),
         ),
-      ])
-    : [];
+      ]),
+  );
+
+  /** @type {Map<string, Asset>} */
+  const sharedAssets = new Map();
+
+  entries.forEach((entry, index) => {
+    const folderPaths = getOwnedEntryFolderPaths(collection, entry);
+
+    assetLists[index].forEach((asset) => {
+      if (!folderPaths.some((folderPath) => asset.path.startsWith(`${folderPath}/`))) {
+        sharedAssets.set(asset.path, asset);
+      }
+    });
+  });
+
+  if (!sharedAssets.size) {
+    return assetLists;
+  }
+
+  // One pass for all the assets, however many entries are being deleted, over the collection and
+  // any other entry stored in the same folders, e.g. that of another collection filtering them
+  const assets = [...sharedAssets.values()];
+  const folderPaths = new Set(entries.flatMap(getEntryFolderPaths));
+
+  const referringEntries = findEntriesByAssets(
+    assets.map((asset) => ({ asset })),
+    {
+      entries: [
+        ...new Set([
+          ...getEntriesByCollection(collectionName),
+          ...allEntries.current.filter((entry) =>
+            getEntryFolderPaths(entry).some((dirPath) => folderPaths.has(dirPath)),
+          ),
+        ]),
+      ],
+    },
+  );
+
+  const referringIds = new Map(
+    assets.map((asset, index) => [asset.path, referringEntries[index].map(({ id }) => id)]),
+  );
+
+  return assetLists.map((list, index) =>
+    list.filter((asset) =>
+      (referringIds.get(asset.path) ?? []).every((id) => id === entries[index].id),
+    ),
+  );
+};
+
+/**
+ * Get the assets stored alongside the given entry, which are removed with it. See
+ * {@link getEntriesRelativeAssets} for which ones.
+ * @param {object} args Arguments.
+ * @param {Entry} args.entry Entry.
+ * @param {string} args.collectionName Name of a collection that the entry belongs to.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @returns {Asset[]} Assets, or an empty list unless the collection stores them with the entry.
+ */
+export const getEntryRelativeAssets = ({ entry, collectionName, fileName }) =>
+  getEntriesRelativeAssets({ entries: [entry], collectionName, fileName })[0];

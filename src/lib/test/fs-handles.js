@@ -51,7 +51,7 @@ export const createMockDirectoryHandle = (name = 'root', children = new Map()) =
       return newFileHandle;
     }
 
-    throw new Error(`File not found: ${fileName}`);
+    throw new DOMException(`File not found: ${fileName}`, 'NotFoundError');
   }),
   getDirectoryHandle: vi.fn(async (dirName, options = {}) => {
     const child = children.get(dirName);
@@ -68,12 +68,17 @@ export const createMockDirectoryHandle = (name = 'root', children = new Map()) =
       return newDirHandle;
     }
 
-    throw new Error(`Directory not found: ${dirName}`);
+    throw new DOMException(`Directory not found: ${dirName}`, 'NotFoundError');
   }),
   removeEntry: vi.fn(),
   resolve: vi.fn(async () => ['mocked', 'path', 'segments']),
   entries: vi.fn(),
-  keys: vi.fn(),
+  // Lists the children, so a name spelled in another Unicode normalization form can be looked up
+  keys: /** @type {any} */ (
+    vi.fn(async function* keys() {
+      yield* [...children.keys()];
+    })
+  ),
   values: vi.fn(),
   requestPermission: vi.fn(),
   isSameEntry: vi.fn(async () => false),

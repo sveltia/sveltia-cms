@@ -803,6 +803,47 @@ describe('GitLab Editorial Workflow service', () => {
         );
       });
 
+      test('merges again once a mergeability check that held the merge has passed', async () => {
+        vi.mocked(fetchAPI)
+          .mockRejectedValueOnce(createError(405))
+          .mockResolvedValueOnce({ state: 'opened', detailed_merge_status: 'checking' })
+          .mockResolvedValueOnce({ state: 'opened', detailed_merge_status: 'mergeable' })
+          .mockResolvedValueOnce({})
+          .mockResolvedValueOnce({});
+
+        await publish(pullRequest);
+
+        // The failed merge, two status reads, the merge made again with the same commit pinned,
+        // and the branch deletion, with no auto-merge
+        expect(fetchAPI).toHaveBeenCalledTimes(5);
+        expect(getRequestBody(3)).toEqual(getRequestBody(0));
+        expect(getRequestBody(3)).toEqual({
+          squash: false,
+          should_remove_source_branch: true,
+          sha: 'abc123',
+          merge_commit_message: 'Create Post',
+        });
+        expect(fetchAPI).toHaveBeenNthCalledWith(
+          5,
+          `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`,
+          expect.objectContaining({ method: 'DELETE' }),
+        );
+      });
+
+      test('keeps failing when the merge made again fails', async () => {
+        const error = createError(405);
+
+        vi.mocked(fetchAPI)
+          .mockRejectedValueOnce(createError(405))
+          .mockResolvedValueOnce({ state: 'opened', detailed_merge_status: 'mergeable' })
+          .mockRejectedValueOnce(error);
+
+        await expect(publish(pullRequest)).rejects.toBe(error);
+
+        // The merge is made again only once, and the branch is kept
+        expect(fetchAPI).toHaveBeenCalledTimes(3);
+      });
+
       test('sets the merge request to auto-merge while the pipeline is running', async () => {
         vi.mocked(fetchAPI)
           .mockRejectedValueOnce(createError(405))

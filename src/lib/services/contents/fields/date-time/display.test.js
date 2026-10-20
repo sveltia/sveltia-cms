@@ -243,6 +243,52 @@ describe('getDateTimeFieldDisplayValue', () => {
     expect(typeof result).toBe('string');
   });
 
+  test('shows an ISO 8601 value with an offset in the time zone of a field in a custom format', () => {
+    const { TZ } = process.env;
+
+    process.env.TZ = 'America/Los_Angeles';
+
+    try {
+      /** @type {DateTimeField} */
+      const fieldConfig = { ...baseFieldConfig, format: 'YYYY-MM-DD HH:mm' };
+
+      /**
+       * Get the display value of a value in the field with the given options.
+       * @param {string} currentValue Stored value.
+       * @param {Partial<DateTimeField>} [options] Field options.
+       * @returns {string} Display value.
+       */
+      const getValue = (currentValue, options = {}) =>
+        getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...fieldConfig, ...options },
+          currentValue,
+        });
+
+      expect(getValue('2026-01-15T01:30:00Z', { input_timezone: 'Asia/Tokyo' })).toBe(
+        '2026-01-15 10:30',
+      );
+      expect(getValue('2026-01-15T01:30:00Z', { input_timezone: 'utc' })).toBe('2026-01-15 01:30');
+      expect(getValue('2026-01-15T01:30:00Z', { output_utc: true })).toBe('2026-01-15 01:30');
+      expect(getValue('2026-01-15T01:30:00Z')).toBe('2026-01-14 17:30');
+      // A value in the format is shown as written
+      expect(getValue('2026-01-15 10:30', { input_timezone: 'Asia/Tokyo' })).toBe(
+        '2026-01-15 10:30',
+      );
+      expect(getValue('2026-01-15 10:30', { output_utc: true })).toBe('2026-01-15 10:30');
+      expect(getValue('2026-01-15 10:30')).toBe('2026-01-15 10:30');
+      // A value with an offset that can’t be parsed
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      expect(getValue('invalid 10:30Z')).toBe('');
+      // A date in a format without a time is read as written
+      expect(getValue('2026-01-15T00:00:00Z', { format: 'YYYY/MM/DD', time_format: false })).toBe(
+        '2026/01/15',
+      );
+    } finally {
+      process.env.TZ = TZ;
+    }
+  });
+
   test('shows the stored date of a date-only field with a custom input time zone', () => {
     const { TZ } = process.env;
 

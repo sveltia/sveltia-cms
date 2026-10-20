@@ -407,6 +407,18 @@ export const getEntriesByAssetURL = async (
 
 /**
  * Find the entries holding each of the given targets, and replace the references to the targets
+ * that have a new URL, in one pass over the entries. Synchronous, for a caller that can’t wait,
+ * like a derived state; see {@link getEntriesByAssets} otherwise.
+ * @param {AssetReferenceTarget[]} targets Targets.
+ * @param {object} [options] Options.
+ * @param {Entry[]} [options.entries] Entries to be searched.
+ * @returns {Entry[][]} Found (and replaced) entries for each target, in the order of the targets.
+ */
+export const findEntriesByAssets = (targets, { entries = allEntries.current } = {}) =>
+  findAssetReferences(targets, { entries });
+
+/**
+ * Find the entries holding each of the given targets, and replace the references to the targets
  * that have a new URL, in one pass over the entries.
  * @param {AssetReferenceTarget[]} targets Targets.
  * @param {object} [options] Options.
@@ -414,8 +426,7 @@ export const getEntriesByAssetURL = async (
  * @returns {Promise<Entry[][]>} Found (and replaced) entries for each target, in the order of the
  * targets.
  */
-export const getEntriesByAssets = async (targets, { entries = allEntries.current } = {}) =>
-  findAssetReferences(targets, { entries });
+export const getEntriesByAssets = async (targets, options) => findEntriesByAssets(targets, options);
 
 /**
  * Find every field holding any of the given targets in the given entries, in one pass over them.

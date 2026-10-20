@@ -216,6 +216,120 @@ test.describe('TOML front matter', () => {
   });
 });
 
+test.describe('TOML dates and times', () => {
+  /**
+   * Fields holding every kind of TOML date: Date & Time fields, a String field and a Hidden field.
+   */
+  const DATE_FIELDS = [
+    { name: 'title', label: 'Title' },
+    { name: 'offset', label: 'Offset', widget: 'datetime' },
+    { name: 'local', label: 'Local', widget: 'datetime' },
+    { name: 'day', label: 'Day', widget: 'datetime', time_format: false },
+    { name: 'time', label: 'Time', widget: 'datetime', date_format: false },
+    { name: 'precise', label: 'Precise', widget: 'datetime' },
+    { name: 'label', label: 'Label' },
+    { name: 'secret', widget: 'hidden' },
+  ];
+
+  test.use({
+    config: {
+      backend: { name: 'test-repo' },
+      media_folder: 'static/images',
+      collections: [
+        {
+          name: 'events',
+          label: 'Events',
+          folder: 'content/events',
+          extension: 'toml',
+          fields: DATE_FIELDS,
+        },
+        {
+          name: 'notes',
+          label: 'Notes',
+          folder: 'content/notes',
+          format: 'toml-frontmatter',
+          fields: [...DATE_FIELDS, { name: 'body', label: 'Body', widget: 'text' }],
+        },
+      ],
+    },
+  });
+
+  /**
+   * Every kind of TOML date: an offset date-time, a local date-time, a local date, a local time and
+   * a date-time with microseconds, in configured fields, followed by ones that no field describes.
+   */
+  const DATES = [
+    'title = "Dates"',
+    'offset = 2024-01-01T10:00:00Z',
+    'local = 1979-05-27 07:32:00',
+    'day = 1979-05-27',
+    'time = 12:30:00',
+    'precise = 1979-05-27T00:32:00.999999-07:00',
+    'label = 2024-02-03T04:05:06+09:00',
+    'secret = 07:32:00.5',
+    'lastmod = 2024-01-01T10:00:00Z',
+    'list = [ 1979-05-27, 12:30:00 ]',
+    'published = 2024-03-04',
+    '',
+    '[schedule]',
+    'start = 2024-05-06t07:08:09.123456z',
+  ];
+
+  const DATE_FILES = {
+    'content/events/dates.toml': [...DATES, ''].join('\n'),
+    'content/notes/dates.md': ['+++', ...DATES, '+++', '', 'Hello.', ''].join('\n'),
+  };
+
+  test.beforeEach(async ({ cms }) => {
+    await cms.open();
+    await cms.seed(DATE_FILES);
+    await cms.signIn();
+  });
+
+  Object.entries(DATE_FILES).forEach(([path, file], index) => {
+    const label = index ? 'Notes' : 'Events';
+
+    test(`are kept as they are in ${label.toLowerCase()}`, async ({ cms, page }) => {
+      await openEntry(page, 'Dates', { collection: label, checkTitle: false });
+
+      const editor = getEditor(page);
+
+      await editor.getByRole('textbox', { name: 'Title' }).fill('Times');
+      await editor.getByRole('button', { name: 'Save' }).click();
+
+      // Every date was saved as a string, or with milliseconds
+      await expect
+        .poll(async () => (await cms.readRepo())[path])
+        .toBe(file.replace('Dates', 'Times'));
+    });
+  });
+
+  test('are saved as native dates once edited', async ({ cms, page }) => {
+    const path = 'content/events/dates.toml';
+
+    await openEntry(page, 'Dates', { collection: 'Events', checkTitle: false });
+
+    const editor = getEditor(page);
+
+    await editor.getByRole('textbox', { name: 'Title' }).fill('Times');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect
+      .poll(async () => (await cms.readRepo())[path])
+      .toBe(DATE_FILES[path].replace('Dates', 'Times'));
+
+    // Saving again keeps the dates that haven’t been edited as they are
+    await openEntry(page, 'Times', { collection: 'Events', checkTitle: false });
+    await editor.getByRole('textbox', { name: 'Day' }).fill('2026-10-03');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())[path])
+      .toBe(
+        DATE_FILES[path].replace('Dates', 'Times').replace('day = 1979-05-27', 'day = 2026-10-03'),
+      );
+  });
+});
+
 test.describe('leading whitespace', () => {
   test('is kept in a text body', async ({ cms, page }) => {
     const path = 'content/posts/indented.md';
@@ -401,5 +515,112 @@ test.describe('names of `Object.prototype` members', () => {
     await expect
       .poll(async () => (await cms.readRepo())[path])
       .toBe("---\ntitle: Older\nconstructor: ''\ntoString: ''\nvalueOf: kept\n---\n");
+  });
+});
+
+test.describe('floats that are whole numbers', () => {
+  /**
+   * A collection of products in the given data format, with a float field and an integer field.
+   * @param {string} extension File extension, also the collection name.
+   * @returns {Record<string, any>} Collection.
+   */
+  const productCollection = (extension) => ({
+    name: extension,
+    label: extension,
+    folder: `content/${extension}`,
+    extension,
+    fields: [
+      { name: 'title', label: 'Title' },
+      { name: 'price', label: 'Price', widget: 'number', value_type: 'float' },
+      { name: 'count', label: 'Count', widget: 'number' },
+    ],
+  });
+
+  test.use({
+    config: {
+      backend: { name: 'test-repo' },
+      media_folder: 'static/images',
+      collections: ['yml', 'toml', 'json'].map(productCollection),
+    },
+  });
+
+  /**
+   * Files holding floats that are whole numbers, in configured fields and in keys that no field
+   * describes, which come after the fields in alphabetical order, along with integers.
+   */
+  const FLOAT_FILES = {
+    'content/yml/tea.yml': [
+      'title: Tea',
+      'price: 10.0',
+      'count: 3',
+      'grades:',
+      '  - 2.0',
+      '  - 4',
+      'size: 1e3',
+      'weight: -3.0',
+      '',
+    ].join('\n'),
+    'content/toml/tea.toml': [
+      'title = "Tea"',
+      'price = 10.0',
+      'count = 3',
+      'grades = [ 2.0, 4 ]',
+      'size = 1e3',
+      'weight = -3.0',
+      '',
+    ].join('\n'),
+    'content/json/tea.json': [
+      '{',
+      '  "title": "Tea",',
+      '  "price": 10.0,',
+      '  "count": 3,',
+      '  "grades": [',
+      '    2.0,',
+      '    4',
+      '  ],',
+      '  "size": 1e3,',
+      '  "weight": -3.0',
+      '}',
+      '',
+    ].join('\n'),
+  };
+
+  test.beforeEach(async ({ cms }) => {
+    await cms.open();
+    await cms.seed(FLOAT_FILES);
+    await cms.signIn();
+  });
+
+  Object.entries(FLOAT_FILES).forEach(([path, file]) => {
+    const extension = /** @type {string} */ (path.split('.').pop());
+
+    test(`are kept as floats in a ${extension.toUpperCase()} file`, async ({ cms, page }) => {
+      await openEntry(page, 'Tea', { collection: extension, checkTitle: false });
+
+      const editor = getEditor(page);
+
+      await editor.getByRole('textbox', { name: 'Title' }).fill('Coffee');
+      await editor.getByRole('button', { name: 'Save' }).click();
+
+      // The floats were saved as integers, e.g. `10.0` as `10`
+      await expect
+        .poll(async () => (await cms.readRepo())[path])
+        .toBe(file.replace('Tea', 'Coffee'));
+    });
+  });
+
+  test('are saved as edited', async ({ cms, page }) => {
+    const path = 'content/toml/tea.toml';
+
+    await openEntry(page, 'Tea', { collection: 'toml', checkTitle: false });
+
+    const editor = getEditor(page);
+
+    await editor.getByRole('spinbutton', { name: 'Price' }).fill('12');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())[path])
+      .toBe(FLOAT_FILES[path].replace('price = 10.0', 'price = 12'));
   });
 });

@@ -343,6 +343,79 @@ describe('RichTextEditor', () => {
     await expect.poll(() => props.currentValue).not.toContain('plain');
   });
 
+  test('inserts no dropped or pasted image into a read-only field', async () => {
+    await initTestConfig({
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          fields: [{ name: 'body', widget: 'richtext' }],
+        },
+      ],
+    });
+
+    const { props, draft } = await renderEditor('Hello', {}, { props: { readonly: true } });
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+
+    const dropped = new DataTransfer();
+
+    dropped.items.add(await createMockImageFile({ name: 'photo.png' }));
+    editor
+      .element()
+      .dispatchEvent(
+        new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dropped }),
+      );
+
+    const pasted = new DataTransfer();
+
+    pasted.items.add(await createMockImageFile({ name: 'pasted.png' }));
+    editor
+      .element()
+      .dispatchEvent(
+        new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: pasted }),
+      );
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(props.currentValue).toBe('Hello');
+    expect(Object.keys(draft.files)).toHaveLength(0);
+  });
+
+  test('locks the components in a read-only field', async () => {
+    await initTestConfig({
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          fields: [{ name: 'body', widget: 'richtext' }],
+        },
+      ],
+    });
+
+    const { props } = await renderEditor('![Cat](/cat.png)', {}, { props: { readonly: true } });
+    const component = page.getByRole('group', { name: 'Image', exact: true });
+
+    // The component learns that the field is read-only once it’s in place
+    await expect.element(component).toBeVisible();
+    await expect
+      .poll(() => component.getByRole('button', { name: 'Remove' }).elements())
+      .toEqual([]);
+
+    // The component isn’t removed with the Backspace key either
+    component
+      .element()
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(props.currentValue).toBe('![Cat](/cat.png)');
+  });
+
   // A List with a single subfield gives it a context of its own, which mustn’t hide the component
   test.each([
     ['rich-text-editor-component', 'nested-off', 'body:c1:content', 'body:c1:content'],

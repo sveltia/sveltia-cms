@@ -1079,7 +1079,8 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
         dirPath: '2024/summer',
       });
 
-      expect(fetch).toHaveBeenCalledExactlyOnceWith(
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(fetch).toHaveBeenLastCalledWith(
         'https://test-bucket.s3.us-east-1.amazonaws.com/uploads/2024/summer/photo.jpg',
         expect.objectContaining({ method: 'PUT' }),
       );
@@ -1157,7 +1158,9 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
     it('should handle upload errors', async () => {
       const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
 
-      vi.mocked(fetch).mockResolvedValue(new Response('Error', { status: 403 }));
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(new Response('<ListBucketResult />', { status: 200 }))
+        .mockResolvedValue(new Response('Error', { status: 403 }));
 
       await expect(
         uploadToS3([mockFile], mockConfig, { apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' }),
@@ -1183,7 +1186,8 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       });
 
       expect(results).toHaveLength(2);
-      expect(fetch).toHaveBeenCalledTimes(2);
+      // A listing of the folder, then an upload for each file
+      expect(fetch).toHaveBeenCalledTimes(3);
     });
 
     it('should build path-style upload URL when forcePathStyle is true', async () => {
@@ -1263,16 +1267,64 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       );
     });
 
-    it('should fall back to file.name when all path components are empty', async () => {
-      const mockFile = new File(['content'], '/', { type: 'image/jpeg' });
+    it('should reject a file name that has nothing left once sanitized', async () => {
+      const mockFile = new File(['content'], '..', { type: 'image/jpeg' });
 
-      vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
+      vi.mocked(fetch).mockResolvedValue(new Response('<ListBucketResult />', { status: 200 }));
 
-      const results = await uploadToS3([mockFile], mockConfig, {
-        apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-      });
+      await expect(
+        uploadToS3([mockFile], mockConfig, { apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' }),
+      ).rejects.toThrow('Invalid file name: ..');
+      expect(fetch).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ method: 'PUT' }),
+      );
+    });
 
-      expect(results[0].fileName).toBe('/');
+    it('should list the folder with a delimiter and rename a file whose name is taken', async () => {
+      // The service sums up a subfolder in a common prefix, which isn’t a file
+      const xmlResponse = `<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult>
+  <Contents>
+    <Key>uploads/2024/photo.webp</Key>
+    <LastModified>2025-01-01T00:00:00.000Z</LastModified>
+    <Size>1024</Size>
+  </Contents>
+  <CommonPrefixes>
+    <Prefix>uploads/2024/photo-1.webp/</Prefix>
+  </CommonPrefixes>
+  <IsTruncated>false</IsTruncated>
+</ListBucketResult>`;
+
+      vi.mocked(fetch).mockImplementation(async (_url, init) =>
+        init?.method === 'PUT'
+          ? new Response('', { status: 200 })
+          : new Response(xmlResponse, { status: 200 }),
+      );
+
+      // e.g. `photo.jpg` and `photo.png`, both converted to WebP
+      const results = await uploadToS3(
+        [
+          new File(['1'], 'photo.webp', { type: 'image/webp' }),
+          new File(['2'], 'photo.webp', { type: 'image/webp' }),
+        ],
+        { ...mockConfig, prefix: 'uploads' },
+        { apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY', dirPath: '2024' },
+      );
+
+      expect(results.map(({ id }) => id)).toEqual([
+        'uploads/2024/photo-1.webp',
+        'uploads/2024/photo-2.webp',
+      ]);
+
+      const listUrl = new URL(String(vi.mocked(fetch).mock.calls[0][0]));
+
+      expect(listUrl.searchParams.get('prefix')).toBe('uploads/2024/');
+      expect(listUrl.searchParams.get('delimiter')).toBe('/');
+      expect(fetch).not.toHaveBeenCalledWith(
+        expect.stringContaining('/uploads/2024/photo.webp'),
+        expect.anything(),
+      );
     });
   });
 

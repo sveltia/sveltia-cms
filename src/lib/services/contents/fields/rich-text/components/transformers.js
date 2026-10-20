@@ -79,7 +79,16 @@ export const createTransformer = ({ componentDef, CustomNode }) => {
         }
 
         const matchArray = matchString.match(nonGlobalPattern);
-        const endLineIndex = startLineIndex + matchString.split('\n').length - 1;
+        // A newline at the end of the match only ends its last line
+        const matchLines = matchString.replace(/\n$/, '').split('\n');
+        const endLineIndex = startLineIndex + matchLines.length - 1;
+
+        // The node replaces every line the match spans, so leave a match followed by any text on
+        // its last line as text, like one preceded by text on its first line, rather than drop that
+        // text, e.g. ` trailing` in `<aside>Note</aside> trailing`. The lines then round-trip as is
+        if (lines[endLineIndex].slice(/** @type {string} */ (matchLines.at(-1)).length).trim()) {
+          return null;
+        }
 
         if (!matchArray) {
           // this should not happen

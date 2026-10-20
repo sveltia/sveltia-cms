@@ -26,6 +26,7 @@ import {
   transformRawContent,
   transformRoot,
 } from '$lib/services/contents/file/process';
+import { valueSources } from '$lib/services/contents/file/value-sources';
 
 /**
  * @import { BaseEntryListItem, Entry, InternalCollection } from '$lib/types/private';
@@ -391,6 +392,7 @@ describe('Test parseFileContent() with cached content', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     detectedFrontMatterFormats.clear();
+    valueSources.clear();
     cmsConfigVersion.current = 'config-hash';
     parseEntryFile = (await import('$lib/services/contents/file/parse')).parseEntryFile;
     parseEntryFile.mockResolvedValue({ title: 'Parsed' });
@@ -424,9 +426,29 @@ describe('Test parseFileContent() with cached content', () => {
       parsed: { key: getParsedContentKey(), content: { title: 'Cached' } },
     });
 
+    // Remembered for an earlier version of the file
+    valueSources.set('posts/a.md', { date: { value: '2024-01-01', source: '2024-01-01' } });
+
     expect(await parseFileContent(file, [])).toEqual({ title: 'Cached' });
     expect(parseEntryFile).not.toHaveBeenCalled();
     expect(detectedFrontMatterFormats.has('posts/a.md')).toBe(false);
+    expect(valueSources.has('posts/a.md')).toBe(false);
+  });
+
+  test('remembers the source text of the TOML dates cached with the content', async () => {
+    const sourceMap = { date: { value: '12:30:00.000', source: '12:30:00' } };
+
+    const file = createFile({
+      parsed: {
+        key: getParsedContentKey(),
+        content: { date: '12:30:00.000' },
+        valueSources: sourceMap,
+      },
+    });
+
+    expect(await parseFileContent(file, [])).toEqual({ date: '12:30:00.000' });
+    expect(parseEntryFile).not.toHaveBeenCalled();
+    expect(valueSources.get('posts/a.md')).toBe(sourceMap);
   });
 
   test('parses the file again for another CMS version or configuration', async () => {
@@ -470,6 +492,46 @@ describe('Test parseFileContent() with cached content', () => {
       content: { title: 'Parsed', tags: ['a'] },
       format: 'yaml-frontmatter',
     });
+  });
+
+  test('collects the source text of the values along with the content', async () => {
+    const parsedFileMap = new Map();
+    const sourceMap = { price: { value: 10, source: '10.0' } };
+
+    parseEntryFile.mockImplementation(async () => {
+      valueSources.set('posts/a.md', sourceMap);
+
+      return { price: 10 };
+    });
+
+    await parseFileContent(createFile(), [], parsedFileMap);
+
+    expect(parsedFileMap.get('posts/a.md')).toEqual({
+      key: getParsedContentKey(),
+      content: { price: 10 },
+      valueSources: sourceMap,
+    });
+  });
+
+  test('restores the source text of the values from the cache', async () => {
+    const sourceMap = { price: { value: 10, source: '10.0' } };
+
+    await parseFileContent(
+      createFile({
+        parsed: { key: getParsedContentKey(), content: { price: 10 }, valueSources: sourceMap },
+      }),
+      [],
+    );
+
+    expect(valueSources.get('posts/a.md')).toEqual(sourceMap);
+
+    // Cached content without them forgets what was remembered before
+    await parseFileContent(
+      createFile({ parsed: { key: getParsedContentKey(), content: { price: 10 } } }),
+      [],
+    );
+
+    expect(valueSources.has('posts/a.md')).toBe(false);
   });
 
   test('collects nothing for content that can’t be copied, but still uses it', async () => {

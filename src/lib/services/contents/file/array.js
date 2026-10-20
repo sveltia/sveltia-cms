@@ -9,6 +9,7 @@ import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { arrayFileItems, createArrayItemEntry } from '$lib/services/contents/file/process';
+import { moveArrayItemSources, valueSources } from '$lib/services/contents/file/value-sources';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 
 /**
@@ -19,6 +20,7 @@ import { getEntryFoldersByPath } from '$lib/services/contents/folders';
  * InternalEntryCollection,
  * RepositoryFileInfo,
  * RepositoryFileMetadata,
+ * ValueSourceMap,
  * } from '$lib/types/private';
  */
 
@@ -37,6 +39,7 @@ import { getEntryFoldersByPath } from '$lib/services/contents/folders';
  * @property {string} path File path.
  * @property {ArrayFileSlot[]} slots Items of the file, as they will be saved.
  * @property {FileChange} change Change rewriting the whole file.
+ * @property {ValueSourceMap} [sourceMap] Source map of the file as it will be saved.
  */
 
 /**
@@ -239,6 +242,15 @@ export const combineArrayFileChanges = async (changes) => {
       });
 
       const cache = /** @type {RepositoryFileInfo | undefined} */ (await cacheDB?.get(path));
+      const previousSourceMap = valueSources.get(path);
+
+      // The source text of the values read from the file moves along with the items
+      const sourceMap = previousSourceMap
+        ? moveArrayItemSources(
+            previousSourceMap,
+            slots.map(({ from }) => from),
+          )
+        : undefined;
 
       /** @type {FileChange} */
       const change = {
@@ -251,10 +263,11 @@ export const combineArrayFileChanges = async (changes) => {
         data: await formatEntryFile({
           content: /** @type {any} */ (slots.map(({ item }) => item)),
           _file: collection._file,
+          valueSources: sourceMap,
         }),
       };
 
-      return { collection, path, slots, change };
+      return { collection, path, slots, change, sourceMap };
     }),
   );
 
@@ -284,7 +297,7 @@ export const createArrayFileEntries = ({ arrayFileUpdates, savingEntries, meta }
   /** @type {Map<Entry, Entry>} */
   const savedEntries = new Map();
 
-  arrayFileUpdates.forEach(({ collection, path, slots }) => {
+  arrayFileUpdates.forEach(({ collection, path, slots, sourceMap }) => {
     const { defaultLocale } = collection._i18n;
 
     /**
@@ -305,6 +318,10 @@ export const createArrayFileEntries = ({ arrayFileUpdates, savingEntries, meta }
       path,
       slots.map(({ item }) => item),
     );
+
+    if (sourceMap) {
+      valueSources.set(path, sourceMap);
+    }
 
     const fileSavingEntries = new Map(
       savingEntries.filter(isInFile).map((entry) => [entry.arrayIndex, entry]),

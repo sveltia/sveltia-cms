@@ -220,9 +220,14 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
   });
 
   describe('uploadObjects', () => {
+    beforeEach(() => {
+      pages = [[{ key: 'uploads/2024/' }, { key: 'uploads/2024/beach.png' }]];
+    });
+
     it('should return an empty array when there is no file', async () => {
       expect(await uploadObjects(provider, [], config, { apiKey: '' })).toEqual([]);
       expect(provider.requireCredential).not.toHaveBeenCalled();
+      expect(provider.listPage).not.toHaveBeenCalled();
     });
 
     it('should upload the files to the given folder, one by one', async () => {
@@ -250,10 +255,100 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
       expect(sleep).not.toHaveBeenCalled();
     });
 
-    it('should keep a file name that has no segment', async () => {
-      const assets = await uploadObjects(provider, [new File(['a'], '/')], config, options);
+    it('should list the files right in the folder, to the end of the listing', async () => {
+      pages = Array.from({ length: 12 }, (_, index) => [{ key: `uploads/2024/${index}.jpg` }]);
 
-      expect(assets.map(({ id }) => id)).toEqual(['uploads//']);
+      const assets = await uploadObjects(provider, [new File(['a'], '11.jpg')], config, {
+        ...options,
+        dirPath: '2024',
+      });
+
+      expect(provider.listPage).toHaveBeenCalledTimes(12);
+      expect(provider.listPage).toHaveBeenCalledWith(
+        expect.objectContaining({ prefix: 'uploads/2024/', delimiter: '/' }),
+      );
+      expect(assets.map(({ id }) => id)).toEqual(['uploads/2024/11-1.jpg']);
+    });
+
+    it('should rename a file whose name is taken in the folder', async () => {
+      pages = [
+        [
+          { key: 'uploads/' },
+          { key: 'uploads/photo.jpg' },
+          { key: 'uploads/photo-1.jpg' },
+          { key: 'uploads/Notes.TXT' },
+        ],
+      ];
+
+      const assets = await uploadObjects(
+        provider,
+        [new File(['a'], 'photo.jpg'), new File(['b'], 'notes.txt'), new File(['c'], 'new.jpg')],
+        config,
+        options,
+      );
+
+      expect(assets.map(({ id }) => id)).toEqual([
+        'uploads/photo-2.jpg',
+        'uploads/notes-1.txt',
+        'uploads/new.jpg',
+      ]);
+      expect(provider.putObject).not.toHaveBeenCalledWith(
+        expect.objectContaining({ key: 'uploads/photo.jpg' }),
+      );
+    });
+
+    it('should rename a file whose name is taken by an earlier file in the batch', async () => {
+      // e.g. `photo.jpg` and `photo.png` converted to WebP, or two files from a dropped folder
+      const assets = await uploadObjects(
+        provider,
+        [
+          new File(['a'], 'photo.webp'),
+          new File(['b'], 'b/photo.webp'),
+          new File(['c'], 'photo.webp'),
+        ],
+        config,
+        { ...options, dirPath: '2024' },
+      );
+
+      expect(assets.map(({ id }) => id)).toEqual([
+        'uploads/2024/photo.webp',
+        'uploads/2024/photo-1.webp',
+        'uploads/2024/photo-2.webp',
+      ]);
+    });
+
+    it('should not avoid the names of the files in a subfolder', async () => {
+      // A service that ignores the delimiter lists the files in the subfolders as well, like
+      // `uploads/2024/beach.png` here
+
+      const assets = await uploadObjects(provider, [new File(['a'], 'beach.png')], config, options);
+
+      expect(assets.map(({ id }) => id)).toEqual(['uploads/beach.png']);
+    });
+
+    it('should match the existing names regardless of the Unicode normalization', async () => {
+      pages = [[{ key: 'uploads/cafe\u0301.jpg' }]];
+
+      const assets = await uploadObjects(
+        provider,
+        [new File(['a'], 'caf\u00e9.jpg')],
+        config,
+        options,
+      );
+
+      expect(assets.map(({ id }) => id)).toEqual(['uploads/caf\u00e9-1.jpg']);
+    });
+
+    it('should reject a file name that has nothing left once sanitized', async () => {
+      const files = [new File(['a'], 'a.jpg'), new File(['b'], '..')];
+
+      await expect(uploadObjects(provider, files, config, options)).rejects.toThrow(
+        'Invalid file name: ..',
+      );
+      await expect(
+        uploadObjects(provider, [new File(['a'], '/')], config, options),
+      ).rejects.toThrow('Invalid file name: /');
+      expect(provider.putObject).not.toHaveBeenCalled();
     });
   });
 

@@ -77,7 +77,7 @@
   dir="ltr"
   bind:value={currentValue}
   flex
-  readonly={readonly && fieldConfig.read_only !== false}
+  {readonly}
   {required}
   {invalid}
   aria-labelledby="{fieldId}-label"

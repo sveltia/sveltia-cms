@@ -57,8 +57,9 @@ export const _resetRepositoryInfoCache = () => {
  * blob base URL for accessing file contents.
  */
 export const getBaseURLs = (repoURL, branch) => ({
-  treeBaseURL: branch ? `${repoURL}/src/branch/${branch}` : repoURL,
-  blobBaseURL: branch ? `${repoURL}/src/branch/${branch}` : '',
+  // A branch name may contain a character that ends a URL path, like `#` in `cms/posts/c#`
+  treeBaseURL: branch ? `${repoURL}/src/branch/${encodePathSegments(branch)}` : repoURL,
+  blobBaseURL: branch ? `${repoURL}/src/branch/${encodePathSegments(branch)}` : '',
   commitBaseURL: `${repoURL}/commit`,
 });
 

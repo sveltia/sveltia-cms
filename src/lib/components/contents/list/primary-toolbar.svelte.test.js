@@ -3,6 +3,7 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { lockedBranch } from '$lib/services/backends/branch-access';
+import { allEntries } from '$lib/services/contents';
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
 import { selectedEntries } from '$lib/services/contents/collection/entries';
 import {
@@ -102,6 +103,8 @@ describe('PrimaryToolbar', () => {
     selectedEntries.current = [];
     setReorderMode(false);
     setBulkEditMode(false);
+    // The tests select the first one, which is listed in Posts: an entry the list doesn’t show is
+    // dropped from the selection
     setEntries([
       createMockEntry({ slug: 'a', content: { _default: { title: 'A' } } }),
       createMockEntry({
@@ -143,7 +146,7 @@ describe('PrimaryToolbar', () => {
     await expect.element(toolbar.getByRole('button', { name: 'Create New Entry' })).toBeVisible();
     expect(toolbar.getByRole('button', { name: 'Reorder Entries' }).elements()).toHaveLength(0);
 
-    selectedEntries.current = [createMockEntry({ slug: 'a' })];
+    selectedEntries.current = [allEntries.current[0]];
     await expect
       .element(toolbar.getByRole('button', { name: 'Delete Selected Entry' }))
       .toHaveAttribute('aria-disabled', 'false');
@@ -279,7 +282,7 @@ describe('PrimaryToolbar', () => {
     });
 
     await render(PrimaryToolbar, {});
-    selectedEntries.current = [createMockEntry({ slug: 'a' })];
+    selectedEntries.current = [allEntries.current[0]];
 
     const deleteButton = page.getByRole('button', { name: 'Delete Selected Entry' });
 
@@ -290,7 +293,7 @@ describe('PrimaryToolbar', () => {
     await expect.element(page.getByRole('row')).toHaveFocus();
 
     // The focus is left alone when the button didn’t have it
-    selectedEntries.current = [createMockEntry({ slug: 'a' })];
+    selectedEntries.current = [allEntries.current[0]];
     await expect.element(deleteButton).toBeEnabled();
     selectedEntries.current = [];
     await expect.element(page.getByRole('button', { name: /^Delete/ })).toBeDisabled();

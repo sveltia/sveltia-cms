@@ -112,7 +112,10 @@ export const scanDir = async (dirHandle, context, currentPath = '') => {
       }
 
       const path = currentPath ? `${currentPath}/${name}` : name;
-      const hasMatchingPath = scanningPathsRegEx.some((regex) => regex.test(path));
+      // The configured paths are matched in Unicode normalization form C, so a file or folder whose
+      // name is in form D on the disk is found as well
+      const normalizedPath = path.normalize();
+      const hasMatchingPath = scanningPathsRegEx.some((regex) => regex.test(normalizedPath));
 
       if (handle.kind === 'file' && hasMatchingPath) {
         // Store only the handle and path. Metadata will be extracted later when needed, avoiding
@@ -125,11 +128,11 @@ export const scanDir = async (dirHandle, context, currentPath = '') => {
 
       if (handle.kind === 'directory') {
         // Cache regex creation to avoid recreating for the same path
-        let regex = pathRegexCache.get(path);
+        let regex = pathRegexCache.get(normalizedPath);
 
         if (!regex) {
-          regex = getPathRegex(path);
-          pathRegexCache.set(path, regex);
+          regex = getPathRegex(normalizedPath);
+          pathRegexCache.set(normalizedPath, regex);
         }
 
         if (hasMatchingPath || scanningPaths.some((p) => regex.test(p))) {
@@ -163,12 +166,13 @@ export const scanDir = async (dirHandle, context, currentPath = '') => {
 
 /**
  * Collect all scanning paths from entry and asset folders.
- * @returns {string[]} Unique list of normalized scanning paths.
+ * @returns {string[]} Unique list of scanning paths, without leading and trailing slashes, in
+ * Unicode normalization form C.
  */
 export const collectScanningPaths = () => {
   const { filePaths, folderPaths } = collectConfiguredPaths();
 
-  return unique([...filePaths, ...folderPaths].map((path) => stripSlashes(path)));
+  return unique([...filePaths, ...folderPaths].map((path) => stripSlashes(path).normalize()));
 };
 
 /**

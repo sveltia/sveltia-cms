@@ -46,9 +46,51 @@ export const getLeafletMarkerIconURL = async () =>
   BUNDLED_MARKER_ICON_URL ?? `${getUnpkgURL('leaflet')}/dist/images/marker-icon-2x.png`;
 
 /**
+ * Hosts of the npm CDNs the CMS is typically loaded from, which serve the latest release when a URL
+ * has no version.
+ */
+const NPM_CDN_HOSTS = ['unpkg.com', 'cdn.jsdelivr.net'];
+
+/**
+ * Pin the URL of the CMS script to the running version if it’s a CDN URL of the package without the
+ * exact version, e.g. `https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js` or
+ * `https://cdn.jsdelivr.net/npm/@sveltia/cms@0/dist/sveltia-cms.js`. Such a URL serves the latest
+ * matching release, so a chunk resolved against it could come from a newer release than the
+ * script, e.g. one cached in the browser from before the release. A version range or tag is pinned
+ * on any host, as only a CDN would serve one, but a URL without a version only on a known CDN, as
+ * a self-hosted copy can be anywhere, e.g. in `node_modules/@sveltia/cms/dist`.
+ * @param {string} url Script URL.
+ * @returns {string} Pinned URL, or the given one if it’s already pinned or not a CDN URL.
+ */
+const pinScriptURL = (url) => {
+  const pinnedURL = new URL(url);
+  const match = pinnedURL.pathname.match(/^(.*\/@sveltia\/cms)(?:@([^/]*))?(\/.*)$/);
+
+  if (!match) {
+    return url;
+  }
+
+  const [, packagePath, versionSpec, filePath] = match;
+
+  if (
+    versionSpec === version ||
+    (versionSpec === undefined && !NPM_CDN_HOSTS.includes(pinnedURL.host))
+  ) {
+    return url;
+  }
+
+  // Only replace the path, so that the host stays the same whatever the path looks like
+  pinnedURL.pathname = `${packagePath}@${version}${filePath}`;
+
+  return pinnedURL.href;
+};
+
+/**
  * Get the URLs a chunk of the CMS bundle can be loaded from, in order of preference: next to the
  * script the CMS itself was loaded from — which is where the npm package and the CDNs have it — and
- * failing that, the same release on UNPKG, for a site that only copied the main script.
+ * failing that, the same release on UNPKG, for a site that only copied the main script. A CDN URL
+ * without the exact version is pinned to the running version first, so that the chunk comes from
+ * the same release as the script.
  * @param {string} name Chunk name, e.g. `react-dom`.
  * @param {string} [base] URL of the CMS script, to resolve the sibling against. Defaults to the
  * running script’s URL, if known.
@@ -62,7 +104,7 @@ export const getChunkURLs = (name, base = scriptURL) => {
     return [fallback];
   }
 
-  const sibling = new URL(fileName, base).href;
+  const sibling = new URL(fileName, pinScriptURL(base)).href;
 
   // Loaded from UNPKG in the first place, the two are the same
   return sibling === fallback ? [fallback] : [sibling, fallback];

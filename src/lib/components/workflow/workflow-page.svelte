@@ -161,7 +161,9 @@
   /**
    * Read the pull requests again, to pick up what anyone else has changed since the board was
    * loaded, without waiting for the next scheduled check, and report the result with a toast
-   * notification.
+   * notification. A reload already in flight, such as a scheduled check, may have listed the pull
+   * requests before the button was clicked, so the board is reloaded again after it rather than
+   * joining it.
    */
   const refresh = async () => {
     refreshing = true;
@@ -170,7 +172,7 @@
     showToast = true;
 
     try {
-      await reloadUnpublishedEntries();
+      await reloadUnpublishedEntries({ fresh: true });
       toastStatus = 'success';
       toastMessage = _('workflow.refreshed');
     } catch (/** @type {any} */ ex) {

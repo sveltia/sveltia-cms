@@ -8,7 +8,7 @@ import {
   REGULAR_FILE_MODE,
   ZERO_OID,
 } from '$lib/services/backends/fs/git/constants';
-import { exists } from '$lib/services/backends/fs/git/file-system';
+import { exists, splitPath } from '$lib/services/backends/fs/git/file-system';
 import {
   createIndexEntry,
   findIndexEntry,
@@ -22,6 +22,7 @@ import {
   setIndexCache,
 } from '$lib/services/backends/fs/git/repository';
 import { buildTree, serializeTree, writeChangedTrees } from '$lib/services/backends/fs/git/tree';
+import { hasOtherSpellings } from '$lib/services/backends/fs/shared/handles';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { textEncoder } from '$lib/services/utils/bytes';
@@ -89,6 +90,43 @@ const getIndexPathResolver = (entries) => {
 
     return path;
   };
+};
+
+/**
+ * Get the path a saved file that isn’t in the index has in the working tree. The file the CMS has
+ * saved keeps the name it has on the disk, which can be in Unicode normalization form D, as can the
+ * name of a folder on its path, and a file system that compares names byte for byte, like ext4,
+ * doesn’t find it by the path in form C. Git adds a file with the name it has on the disk there.
+ * On macOS, which ignores the normalization, the path is kept as it is, the way Git adds it there
+ * by default.
+ * @param {GitFileSystem} fs File system.
+ * @param {GitIndexEntry[]} entries Index entries.
+ * @param {string} path Path, as spelled in the index if the file or a folder on its path is there.
+ * @returns {Promise<string>} Path in the working tree, or the given path if it can’t be found.
+ */
+const getWorkingTreePath = async (fs, entries, path) => {
+  if (!hasOtherSpellings(path) || findIndexEntry(entries, path).found || (await exists(fs, path))) {
+    return path;
+  }
+
+  /** @type {string[]} */
+  const names = [];
+
+  for (const segment of splitPath(path)) {
+    const entryNames = await fs.readdir(names.join('/'));
+
+    const name =
+      entryNames.find((entryName) => entryName === segment) ??
+      entryNames.find((entryName) => entryName.normalize() === segment.normalize());
+
+    if (!name) {
+      return path;
+    }
+
+    names.push(name);
+  }
+
+  return names.join('/');
 };
 
 /**
@@ -238,7 +276,13 @@ const stageAndCommit = async (repository, changes, options) => {
   let { index, indexTree: tree } = repository;
   const toIndexPath = getIndexPathResolver(index.entries);
   const removedPaths = new Set(getRemovedPaths(changes).map(toIndexPath));
-  const addedPaths = getAddedPaths(changes).map(toIndexPath);
+
+  const addedPaths = await mapConcurrently(
+    getAddedPaths(changes),
+    (path) => getWorkingTreePath(fs, index.entries, toIndexPath(path)),
+    { concurrency: STAGING_CONCURRENCY },
+  );
+
   const addedEntries = await stageFiles(repository, addedPaths);
 
   // The index is updated in memory and written once, rather than with `git.add()` and

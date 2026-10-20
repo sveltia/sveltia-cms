@@ -90,6 +90,31 @@ describe('EntryReorderList', () => {
     await expect.poll(getTitles).toEqual(['B', 'A', 'C']);
   });
 
+  test('keeps the focus on the moved entry, moving it to the other button at either end', async () => {
+    await render(EntryReorderList, {
+      collection: /** @type {any} */ (getCollection('posts')),
+      viewType: 'list',
+    });
+
+    await expect.poll(getTitles).toEqual(['A', 'B', 'C']);
+
+    const rows = page.getByRole('row');
+
+    await rows.nth(1).getByRole('button', { name: 'Move Up' }).click();
+    await expect.poll(getTitles).toEqual(['B', 'A', 'C']);
+    // The Move Up button is disabled at the top, so the focus goes to Move Down rather than being
+    // lost
+    await expect.element(rows.nth(0).getByRole('button', { name: 'Move Down' })).toHaveFocus();
+
+    await rows.nth(0).getByRole('button', { name: 'Move Down' }).click();
+    await expect.poll(getTitles).toEqual(['A', 'B', 'C']);
+    await expect.element(rows.nth(1).getByRole('button', { name: 'Move Down' })).toHaveFocus();
+
+    await rows.nth(1).getByRole('button', { name: 'Move Down' }).click();
+    await expect.poll(getTitles).toEqual(['A', 'C', 'B']);
+    await expect.element(rows.nth(2).getByRole('button', { name: 'Move Up' })).toHaveFocus();
+  });
+
   test('publishes the entries themselves rather than reactive proxies of them', async () => {
     await render(EntryReorderList, {
       collection: /** @type {any} */ (getCollection('posts')),

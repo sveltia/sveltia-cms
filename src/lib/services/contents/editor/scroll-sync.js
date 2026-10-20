@@ -32,6 +32,28 @@ const eventOptions = { capture: true, passive: true };
 const scrollEventOptions = { passive: true };
 
 /**
+ * Get the top of a pane’s visible area, in the viewport of the pane’s document.
+ * @param {HTMLElement} pane Pane’s content area, or the preview iframe’s root element.
+ * @returns {number} Top in pixels.
+ */
+const getViewTop = (pane) =>
+  // The preview iframe’s root element is its viewport, while the content area of the main document
+  // is an element in it
+  pane === pane.ownerDocument.documentElement ? 0 : pane.getBoundingClientRect().top;
+
+/**
+ * Get the top of an element in a pane’s scrollable content: the pane’s scroll position that would
+ * bring the element to the top of the pane. The element’s `offsetTop` can’t tell, as it’s
+ * relative to its offset parent, which is seldom the pane: the default preview’s root element, the
+ * area wrapping the edit pane’s fields, or the preview iframe’s `<body>`.
+ * @param {HTMLElement} pane Pane’s content area, or the preview iframe’s root element.
+ * @param {HTMLElement} element Element in the pane.
+ * @returns {number} Top in pixels.
+ */
+export const getContentTop = (pane, element) =>
+  element.getBoundingClientRect().top - getViewTop(pane) + pane.scrollTop;
+
+/**
  * Get the scroll position of the other pane that reveals the given element in it.
  * @param {HTMLElement} pane The other pane’s content area.
  * @param {HTMLElement} element Element in the pane.
@@ -39,14 +61,11 @@ const scrollEventOptions = { passive: true };
  * @returns {number | undefined} Scroll position, or `undefined` if the element is already visible.
  */
 export const getThatScrollTop = (pane, element, always = false) => {
-  // The preview iframe’s root element is its viewport, while the content area of the main document
-  // is an element in it
-  const isRoot = pane === pane.ownerDocument.documentElement;
   const { top, height } = element.getBoundingClientRect();
   const { scrollTop, clientHeight } = pane;
 
   return getRevealingScrollTop({
-    viewTop: isRoot ? 0 : pane.getBoundingClientRect().top,
+    viewTop: getViewTop(pane),
     viewHeight: clientHeight,
     scrollTop,
     top,
@@ -110,6 +129,15 @@ export const createScrollSync = (props) => {
       const { x, y } = isIframe ? { x: 0, y: 0 } : thisPaneContentArea.getBoundingClientRect();
       const { ownerDocument, scrollTop, scrollHeight, clientHeight } = thisPaneContentArea;
 
+      // At the top of this pane, the other one goes to its top as well, rather than bringing the
+      // field there to its top edge, which would scroll the padding and anything else above the
+      // field out of view
+      if (scrollTop <= 0) {
+        thatPaneContentArea.scrollTop = 0;
+
+        return;
+      }
+
       // Find the field section in the top left corner of the content area. Use `findLast` to
       // capture the topmost element; otherwise the List field sticky headers will interfere with
       // the positioning.
@@ -146,8 +174,8 @@ export const createScrollSync = (props) => {
             y,
             top,
             height,
-            targetOffsetTop: thatElement.offsetTop,
-            targetHeight: thatElement.clientHeight,
+            targetTop: getContentTop(thatPaneContentArea, thatElement),
+            targetHeight: thatElement.getBoundingClientRect().height,
           })
         : undefined;
 

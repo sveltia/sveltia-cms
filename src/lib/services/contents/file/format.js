@@ -3,16 +3,27 @@ import { Document, isMap, visit } from 'yaml';
 
 import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { cmsConfig } from '$lib/services/config';
-import { FRONTMATTER_FORMATS } from '$lib/services/contents/file/constants';
+import {
+  FRONTMATTER_DELIMITER_MAP,
+  FRONTMATTER_FORMATS,
+  TOML_FORMATS,
+} from '$lib/services/contents/file/constants';
 import {
   getUnsafeIntegerSource,
   hasUnsafeIntegerSources,
   restoreBigInts,
 } from '$lib/services/contents/file/integers';
+import { restoreTomlValueSources } from '$lib/services/contents/file/toml-sources';
+import {
+  getJSONSourceText,
+  restoreValueSources,
+  SourcedValue,
+  sourcedValueYAMLTag,
+} from '$lib/services/contents/file/value-sources';
 
 /**
  * @import { Scalar, ToStringOptions } from 'yaml';
- * @import { FileConfig, InternalLocaleCode } from '$lib/types/private';
+ * @import { FileConfig, InternalLocaleCode, ValueSourceMap } from '$lib/types/private';
  * @import {
  * FieldKeyPath,
  * JsonFormatOptions,
@@ -29,16 +40,24 @@ import {
 const getRawJSON = () => /** @type {{ rawJSON?: (text: string) => any }} */ (JSON).rawJSON;
 
 /**
- * Create a `JSON.stringify()` replacer that writes an integer read from a file, which a `number`
- * can’t represent exactly, as it was read.
+ * Create a `JSON.stringify()` replacer that writes a {@link SourcedValue} as its source text, and
+ * an integer read from a file, which a `number` can’t represent exactly, as it was read. The
+ * replacer is given what `toJSON()` returns, so a {@link SourcedValue} is looked up in the holder.
  * @param {(text: string) => any} rawJSON `JSON.rawJSON()`.
- * @returns {(key: string, value: any) => any} Replacer.
+ * @returns {(this: any, key: string, value: any) => any} Replacer.
  */
-const createUnsafeIntegerReplacer = (rawJSON) => (_key, value) => {
-  const source = getUnsafeIntegerSource(value);
+const createReplacer = (rawJSON) =>
+  // eslint-disable-next-line func-names
+  function (key, value) {
+    const original = this[key];
 
-  return source === undefined ? value : rawJSON(source);
-};
+    const source =
+      original instanceof SourcedValue
+        ? getJSONSourceText(original)
+        : getUnsafeIntegerSource(value);
+
+    return source === undefined ? value : rawJSON(source);
+  };
 
 /**
  * Format the given object as a JSON document using the built-in method.
@@ -57,9 +76,10 @@ export const formatJSON = (obj, options = cmsConfig.current?.output?.json ?? {})
 
   return JSON.stringify(
     obj,
-    // Write an integer that a `number` can’t represent exactly as it was read. A browser without
+    // Write a value that hasn’t changed since it was read, e.g. a float that is a whole number, as
+    // it was read, and so an integer that a `number` can’t represent exactly. A browser without
     // `JSON.rawJSON()` writes the number
-    hasUnsafeIntegerSources() && rawJSON ? createUnsafeIntegerReplacer(rawJSON) : undefined,
+    rawJSON ? createReplacer(rawJSON) : undefined,
     indentStyle === 'tab' ? '\t'.repeat(indentSize) : indentSize,
   ).trim();
 };
@@ -189,7 +209,9 @@ export const formatYAML = (
     singleQuote: !(legacyQuote || quote === 'double'),
   };
 
-  const doc = new Document(obj);
+  // Write a value that hasn’t changed since it was read, e.g. a float that is a whole number, as it
+  // was read
+  const doc = new Document(obj, { customTags: [sourcedValueYAMLTag] });
 
   // Quote the strings, including keys, that a YAML 1.1 parser would read as a boolean or a number,
   // which a YAML 1.2 parser doesn’t, so the `yaml` library writes them plain. Don’t use the
@@ -253,9 +275,15 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
     }
   }
 
-  // Support Markdown without a front matter block, particularly for VitePress
+  // Support Markdown without a front matter block, particularly for VitePress. A body starting with
+  // a delimiter line would be read back as front matter, though, so it gets an empty block above
+  // it. Any default delimiter counts, as the `frontmatter` format is detected from the first line.
+  // The blank line inside the block keeps the parser from taking the body’s delimiter as the end
   if (!Object.keys(content).length) {
-    return `${body}\n`;
+    const firstLine = body.split('\n', 1)[0].trimEnd();
+    const delimiters = [sd, ...Object.values(FRONTMATTER_DELIMITER_MAP).map(([d]) => d)];
+
+    return delimiters.includes(firstLine) ? `${sd}\n\n${ed}\n\n${body}\n` : `${body}\n`;
   }
 
   let head = '';
@@ -289,11 +317,13 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
  * @param {FileConfig} entry._file Entry file configuration.
  * @param {Record<FieldKeyPath, string>} [entry.comments] Comments to add before the keys, keyed by
  * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
+ * @param {ValueSourceMap} [entry.valueSources] Source text of the values read from the file being
+ * overwritten, to write the ones that haven’t changed as they were.
  * @returns {Promise<string>} Formatted string.
  * @throws {Error} When the format has no formatter, neither a custom one nor a built-in one, or the
  * content could not be formatted. Writing an empty file instead would wipe the entry’s content.
  */
-export const formatEntryFile = async ({ content, _file, comments }) => {
+export const formatEntryFile = async ({ content, _file, comments, valueSources }) => {
   const { format, yamlQuote = false } = _file;
   const customFormatter = customFileFormatRegistry.get(format)?.formatter;
 
@@ -325,6 +355,14 @@ export const formatEntryFile = async ({ content, _file, comments }) => {
             'registered for it with `CMS.registerCustomFormat()`'
         : `Entries in the unknown “${format}” format can’t be saved`,
     );
+  }
+
+  // Write the values that haven’t changed as they were, e.g. a float that is a whole number rather
+  // than as an integer, or a TOML date rather than as a string
+  if (valueSources) {
+    content = TOML_FORMATS.includes(format)
+      ? restoreTomlValueSources(content, valueSources)
+      : restoreValueSources(content, valueSources);
   }
 
   try {

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
   focusAfterRemoval,
+  focusItemReorderControl,
   focusReorderControl,
   getAutoScrollSpeed,
   getDropIndex,
@@ -496,6 +497,75 @@ describe('focusReorderControl', () => {
     expect(() => focusReorderControl({ listElement: list, index: 5 })).not.toThrow();
 
     list.remove();
+  });
+});
+
+describe('focusItemReorderControl', () => {
+  /**
+   * Create a list item holding the given reorder controls.
+   * @param {string} html Inner HTML.
+   * @returns {HTMLElement} Item element, attached to the document so its controls can be focused.
+   */
+  const createItem = (html) => {
+    const item = document.createElement('div');
+
+    item.innerHTML = html;
+    document.body.append(item);
+
+    return item;
+  };
+
+  /**
+   * Get a control on an item.
+   * @param {HTMLElement} item Item element.
+   * @param {string} action `data-action` of the control.
+   * @returns {Element | null} Control.
+   */
+  const getControl = (item, action) => item.querySelector(`[data-action="${action}"]`);
+
+  test('falls back to the Move Down button once Move Up is disabled at the top', () => {
+    const item = createItem(
+      '<button data-action="move-up" disabled></button><button data-action="move-down"></button>',
+    );
+
+    focusItemReorderControl({ item, action: 'move-up' });
+    expect(document.activeElement).toBe(getControl(item, 'move-down'));
+
+    item.remove();
+  });
+
+  test('falls back to the Move Up button once Move Down is disabled at the bottom', () => {
+    const item = createItem(
+      '<button data-action="move-up"></button><button data-action="move-down" disabled></button>',
+    );
+
+    focusItemReorderControl({ item, action: 'move-down' });
+    expect(document.activeElement).toBe(getControl(item, 'move-up'));
+
+    item.remove();
+  });
+
+  test('falls back to the drag handle when both buttons are disabled', () => {
+    const item = createItem(
+      '<button data-action="move-up" disabled></button>' +
+        '<button data-action="move-down" disabled></button>' +
+        '<button data-action="reorder"></button>',
+    );
+
+    focusItemReorderControl({ item, action: 'move-down' });
+    expect(document.activeElement).toBe(getControl(item, 'reorder'));
+
+    item.remove();
+  });
+
+  test('does nothing when no reorder control is enabled', () => {
+    const item = createItem('<button data-action="reorder" disabled></button>');
+
+    focusItemReorderControl({ item });
+    expect(document.activeElement).toBe(document.body);
+    expect(() => focusItemReorderControl({ item: undefined })).not.toThrow();
+
+    item.remove();
   });
 });
 

@@ -436,6 +436,84 @@ describe('draft/backup', () => {
       );
     });
 
+    it('should store the entry the edits were made to, if it exists', async () => {
+      vi.mocked(isDraftModified).mockReturnValue(true);
+
+      const originalEntry = {
+        id: 'posts/my-post',
+        slug: 'my-post',
+        locales: { en: { slug: 'my-post', path: 'posts/my-post.md', content: { title: 'A' } } },
+      };
+
+      const draft = {
+        collectionName: 'posts',
+        isNew: false,
+        originalEntry,
+        currentLocales: { en: true },
+        currentSlugs: {},
+        currentValues: { en: { title: 'B' } },
+        files: {},
+        interacted: true,
+      };
+
+      await saveBackup(draft);
+      await saveBackup({ ...draft, isNew: true, originalEntry: undefined });
+
+      const [[existing], [created]] = mockBackupDB.put.mock.calls;
+
+      expect(existing.baseEntry).toEqual(originalEntry);
+      // A copy, so that it isn’t tied to the draft
+      expect(existing.baseEntry).not.toBe(originalEntry);
+      expect(created).not.toHaveProperty('baseEntry');
+    });
+
+    it('should store the folder chosen with the path editor', async () => {
+      vi.mocked(isDraftModified).mockReturnValue(true);
+
+      const draft = {
+        collectionName: 'pages',
+        originalEntry: { slug: 'about' },
+        currentLocales: { en: true },
+        currentSlugs: {},
+        currentPath: 'company',
+        currentValues: { en: { title: 'About' } },
+        files: {},
+        interacted: true,
+      };
+
+      await saveBackup(draft);
+      // A collection without the `meta.path` option has no folder to store
+      await saveBackup({ ...draft, currentPath: undefined });
+
+      const [[moved], [unmoved]] = mockBackupDB.put.mock.calls;
+
+      expect(moved.currentPath).toBe('company');
+      expect(unmoved).not.toHaveProperty('currentPath');
+    });
+
+    it('should store a new index file’s backup apart from a new entry’s', async () => {
+      // The index file has fields of its own, so a new entry mustn’t be offered its backup, nor the
+      // other way round
+      vi.mocked(isDraftModified).mockReturnValue(true);
+
+      const draft = {
+        collection: { name: 'posts', fields: [], index_file: { name: '_home' } },
+        collectionName: 'posts',
+        isIndexFile: true,
+        originalEntry: undefined,
+        currentLocales: { en: true },
+        currentSlugs: {},
+        currentValues: { en: { title: 'Home' } },
+        files: {},
+        interacted: true,
+      };
+
+      await saveBackup(draft);
+      await saveBackup({ ...draft, isIndexFile: false });
+
+      expect(mockBackupDB.put.mock.calls.map(([{ slug }]) => slug)).toEqual(['_home', '']);
+    });
+
     it('should store plain objects that IndexedDB can clone, not `$state` proxies', async () => {
       const { toRaw: actualToRaw } = await vi.importActual('@sveltia/utils/object');
 
@@ -455,7 +533,11 @@ describe('draft/backup', () => {
       const draft = proxify({
         collectionName: 'posts',
         fileName: undefined,
-        originalEntry: { slug: 'my-post' },
+        originalEntry: proxify({
+          id: 'posts/my-post',
+          slug: 'my-post',
+          locales: proxify({ en: proxify({ slug: 'my-post', content: proxify({ title: 'A' }) }) }),
+        }),
         currentLocales: proxify({ en: true, fr: false }),
         currentSlugs: proxify({ en: 'my-post' }),
         currentValues: proxify({ en: proxify({ title: 'My Post' }) }),
@@ -497,6 +579,11 @@ describe('draft/backup', () => {
           Object.values(value).some(containsProxy));
 
       expect(containsProxy(backup)).toBe(false);
+      expect(backup.baseEntry).toEqual({
+        id: 'posts/my-post',
+        slug: 'my-post',
+        locales: { en: { slug: 'my-post', content: { title: 'A' } } },
+      });
       expect(backup.currentLocales).toEqual({ en: true, fr: false });
       expect(backup.currentValues).toEqual({ en: { title: 'My Post' } });
       expect(backup.files['blob:http://localhost/abc']).toEqual({
@@ -701,6 +788,118 @@ describe('draft/backup', () => {
       updatedDraft = createMockDraft({ pendingEntries: [] });
       await restoreBackup({ backup, draft: updatedDraft });
       expect(updatedDraft.pendingEntries).toEqual([]);
+    });
+
+    describe('base entry', () => {
+      const baseEntry = {
+        id: 'posts/my-post',
+        slug: 'my-post',
+        locales: { en: { slug: 'my-post', path: 'posts/my-post.md', content: { title: 'A' } } },
+      };
+
+      /**
+       * Create a backup made from {@link baseEntry}.
+       * @param {object} [override] Override properties for the backup.
+       * @returns {object} Backup.
+       */
+      const createBackup = (override = {}) => ({
+        timestamp: new Date(),
+        cmsConfigVersion: 'v1.0.0',
+        collectionName: 'posts',
+        slug: 'my-post',
+        currentLocales: { en: true, ja: false },
+        currentSlugs: {},
+        currentValues: { en: { title: 'Mine' } },
+        files: {},
+        baseEntry: structuredClone(baseEntry),
+        ...override,
+      });
+
+      it('puts the draft back on the version the backup was made from, if it has changed', async () => {
+        // Someone else has since changed the title and added a Japanese file. Saving the restored
+        // edits over the draft made from that version would silently undo the change, so the draft
+        // is put back on the backup’s version, which makes the editor report the change and the
+        // save ask before overwriting it
+        const newerEntry = {
+          ...baseEntry,
+          locales: {
+            en: { ...baseEntry.locales.en, content: { title: 'Theirs' } },
+            ja: { slug: 'my-post', path: 'posts/my-post.ja.md', content: { title: 'Ja' } },
+          },
+        };
+
+        const backup = createBackup();
+
+        updatedDraft = createMockDraft({
+          originalEntry: newerEntry,
+          originalLocales: { en: true, ja: true },
+          currentLocales: { en: true, ja: true },
+        });
+
+        await restoreBackup({ backup, draft: updatedDraft });
+
+        expect(updatedDraft.originalEntry).toBe(backup.baseEntry);
+        // The Japanese file wasn’t there when the backup was made, so a save leaves it alone
+        // rather than deleting it
+        expect(updatedDraft.originalLocales).toEqual({ en: true, ja: false });
+        expect(updatedDraft.currentLocales).toEqual({ en: true, ja: false });
+      });
+
+      it('leaves the draft on the entry if it hasn’t changed since', async () => {
+        const originalEntry = structuredClone(baseEntry);
+        const originalLocales = { en: true, ja: false };
+
+        updatedDraft = createMockDraft({ originalEntry, originalLocales });
+
+        await restoreBackup({ backup: createBackup(), draft: updatedDraft });
+
+        expect(updatedDraft.originalEntry).toBe(originalEntry);
+        expect(updatedDraft.originalLocales).toBe(originalLocales);
+      });
+
+      it('leaves the draft alone for a backup without a base entry', async () => {
+        // A backup of a new entry, or one taken before the base entry was stored
+        const originalEntry = { ...baseEntry, locales: {} };
+
+        updatedDraft = createMockDraft({ originalEntry, originalLocales: { en: true } });
+
+        await restoreBackup({
+          backup: createBackup({ baseEntry: undefined }),
+          draft: updatedDraft,
+        });
+
+        expect(updatedDraft.originalEntry).toBe(originalEntry);
+
+        // A new entry has nothing to compare
+        updatedDraft = createMockDraft({ originalEntry: undefined });
+
+        await restoreBackup({ backup: createBackup(), draft: updatedDraft });
+
+        expect(updatedDraft.originalEntry).toBeUndefined();
+      });
+    });
+
+    it('should restore the folder chosen with the path editor', async () => {
+      const backup = {
+        timestamp: new Date(),
+        cmsConfigVersion: 'v1.0.0',
+        collectionName: 'pages',
+        slug: 'about',
+        currentLocales: { en: true },
+        currentSlugs: {},
+        currentPath: 'company/archive',
+        currentValues: { en: { title: 'About' } },
+        files: {},
+      };
+
+      updatedDraft = createMockDraft({ originalPath: 'company', currentPath: 'company' });
+      await restoreBackup({ backup, draft: updatedDraft });
+      expect(updatedDraft.currentPath).toBe('company/archive');
+
+      // An older backup has no folder, so the entry stays where it is
+      updatedDraft = createMockDraft({ originalPath: 'company', currentPath: 'company' });
+      await restoreBackup({ backup: { ...backup, currentPath: undefined }, draft: updatedDraft });
+      expect(updatedDraft.currentPath).toBe('company');
     });
 
     it('should update currentLocales and currentSlugs from backup', async () => {

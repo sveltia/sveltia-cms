@@ -15,7 +15,14 @@ import {
 
 import { parseDateTimeConfig } from './config.js';
 import { getFormatLocale } from './locales.js';
-import { getDate, isValidDate, parseWithFormatFallback } from './parse.js';
+import {
+  formatInLocale,
+  getDate,
+  getStoredValueTimeZone,
+  hasOffsetOutsideFormat,
+  isValidDate,
+  parseWithFormatFallback,
+} from './parse.js';
 
 /**
  * @import { InternalLocaleCode } from '$lib/types/private';
@@ -83,11 +90,25 @@ export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue
   }
 
   if (format) {
+    const localeKey = getFormatLocale(fieldConfig, locale);
+
+    // A value with an offset the format can’t hold, like an ISO 8601 value written before the
+    // format was set, is an instant shown in the field’s time zone. Any other value is shown as
+    // written, which is also much faster than converting it to a time zone
+    if (hasOffsetOutsideFormat(currentValue, format)) {
+      const date = getDate(currentValue, fieldConfig, locale);
+      const timeZone = getStoredValueTimeZone(fieldConfig);
+
+      return date
+        ? formatInLocale(timeZone ? dayjs(date).tz(timeZone) : dayjs(date), format, localeKey)
+        : '';
+    }
+
     const parsed = parseWithFormatFallback({
       value: currentValue,
       format,
       parseAsUTC: utc,
-      localeKey: getFormatLocale(fieldConfig, locale),
+      localeKey,
     });
 
     if (parsed.isValid()) {

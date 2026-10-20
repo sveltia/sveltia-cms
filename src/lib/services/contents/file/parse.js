@@ -1,7 +1,7 @@
 import { toRaw } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { parse as libParseTOML } from 'smol-toml';
-import { parse as libParseYAML } from 'yaml';
+import { parse as libParseYAML, parseDocument } from 'yaml';
 
 import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { getCollection } from '$lib/services/contents/collection';
@@ -15,6 +15,15 @@ import {
   replaceBigInts,
   reviveUnsafeInteger,
 } from '$lib/services/contents/file/integers';
+import { rememberTomlValueSources } from '$lib/services/contents/file/toml-sources';
+import {
+  collectJSONFloatSources,
+  collectYAMLFloatSources,
+  mayHaveWholeNumberFloat,
+  rememberValueSources,
+  reviveWholeNumberFloat,
+  valueSources,
+} from '$lib/services/contents/file/value-sources';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -27,39 +36,107 @@ import { getOrCreate } from '$lib/services/utils/cache';
  */
 
 /**
+ * A `JSON.parse()` reviver combining {@link reviveUnsafeInteger} and
+ * {@link reviveWholeNumberFloat}.
+ * @param {string} key Property name.
+ * @param {any} value Parsed value.
+ * @param {{ source?: string }} [context] Context, which holds the source text of a primitive value.
+ * @returns {any} Value.
+ */
+const reviveNumber = (key, value, context) =>
+  reviveWholeNumberFloat(key, reviveUnsafeInteger(key, value, context), context);
+
+/**
  * Parse a JSON document using the built-in method. An integer that a `number` can’t represent
- * exactly is remembered, so it can be saved as it was.
+ * exactly is remembered, so it can be saved as it was. So is the source text of a float that is a
+ * whole number, e.g. `10.0`, if the document is read from a file.
  * @param {string} str JSON document.
+ * @param {string} [path] Path of the file the document is read from.
  * @returns {any} Parsed object.
  * @see {@link reviveUnsafeInteger}
+ * @see {@link reviveWholeNumberFloat}
  */
-export const parseJSON = (str) =>
-  mayHaveUnsafeInteger(str) ? JSON.parse(str, reviveUnsafeInteger) : JSON.parse(str);
+export const parseJSON = (str, path) => {
+  if (path === undefined || !mayHaveWholeNumberFloat(str)) {
+    return mayHaveUnsafeInteger(str) ? JSON.parse(str, reviveUnsafeInteger) : JSON.parse(str);
+  }
+
+  const { value, sourceMap } = collectJSONFloatSources(JSON.parse(str, reviveNumber));
+
+  rememberValueSources(path, sourceMap);
+
+  return value;
+};
 
 /**
  * Parse a TOML document using a library. The TOML parser returns date fields as `Date` objects, but
  * we need strings to match the JSON and YAML parsers, so we have to parse twice. An integer that a
  * `number` can’t represent exactly, which the parser would otherwise reject, is remembered, so it
- * can be saved as it was.
+ * can be saved as it was. So is the source text of a date, and of a float that is a whole number,
+ * e.g. `10.0`, if the document is read from a file.
  * @param {string} str TOML document.
+ * @param {string} [path] Path of the file the document is read from.
  * @returns {any} Parsed object.
  * @see {@link replaceBigInts}
+ * @see {@link rememberTomlValueSources}
  */
-export const parseTOML = (str) =>
-  toRaw(replaceBigInts(libParseTOML(str, { integersAsBigInt: 'asNeeded' })));
+export const parseTOML = (str, path) => {
+  const parsed = replaceBigInts(libParseTOML(str, { integersAsBigInt: 'asNeeded' }));
+
+  if (path !== undefined) {
+    rememberTomlValueSources({ path, str, parsed });
+  }
+
+  return toRaw(parsed);
+};
+
+/**
+ * Parse a YAML document using a library, like its `parse()` method, and remember the source text of
+ * the floats in it that are whole numbers.
+ * @param {string} str YAML document.
+ * @param {Record<string, any> | undefined} options Parsing options.
+ * @param {string} path Path of the file the document is read from.
+ * @returns {any} Parsed object.
+ * @throws {Error} When the document could not be parsed.
+ * @see https://github.com/eemeli/yaml/blob/main/src/public-api.ts
+ */
+const parseYAMLWithFloatSources = (str, options, path) => {
+  const doc = parseDocument(str, options);
+
+  // eslint-disable-next-line no-console
+  doc.warnings.forEach((warning) => console.warn(warning));
+
+  if (doc.errors.length) {
+    throw doc.errors[0];
+  }
+
+  rememberValueSources(path, collectYAMLFloatSources(doc));
+
+  return doc.toJS(options);
+};
 
 /**
  * Parse a YAML document using a library. An integer that a `number` can’t represent exactly is
- * remembered, so it can be saved as it was.
+ * remembered, so it can be saved as it was. So is the source text of a float that is a whole
+ * number, e.g. `10.0`, if the document is read from a file.
  * @param {string} str YAML document.
  * @param {object} [options] Parsing options.
+ * @param {string} [path] Path of the file the document is read from.
  * @returns {any} Parsed object.
  * @see {@link replaceBigInts}
+ * @see {@link collectYAMLFloatSources}
  */
-export const parseYAML = (str, options) =>
-  mayHaveUnsafeInteger(str)
-    ? replaceBigInts(libParseYAML(str, { ...options, intAsBigInt: true }))
-    : libParseYAML(str, options);
+export const parseYAML = (str, options, path) => {
+  const hasUnsafeInteger = mayHaveUnsafeInteger(str);
+  const _options = hasUnsafeInteger ? { ...options, intAsBigInt: true } : options;
+
+  const parsed =
+    path !== undefined && mayHaveWholeNumberFloat(str)
+      ? parseYAMLWithFloatSources(str, _options, path)
+      : libParseYAML(str, _options);
+
+  return hasUnsafeInteger ? replaceBigInts(parsed) : parsed;
+};
 
 /**
  * Detect the Markdown front matter serialization format by checking a delimiter in the content.
@@ -93,12 +170,13 @@ const DOUBLE_BRACE_JSON_FRONT_MATTER_REGEX =
  * braces of the object when they double as the delimiters, so add them back if they are missing. A
  * complete object, which can come within custom delimiters, is parsed as is.
  * @param {string} head Front matter head.
+ * @param {string} [path] Path of the file the front matter is read from.
  * @returns {any} Parsed object.
  */
-const parseJSONFrontMatterHead = (head) => {
+const parseJSONFrontMatterHead = (head, path) => {
   const trimmedHead = head.trim();
 
-  return parseJSON(trimmedHead.startsWith('{') ? trimmedHead : `{${trimmedHead}}`);
+  return parseJSON(trimmedHead.startsWith('{') ? trimmedHead : `{${trimmedHead}}`, path);
 };
 
 /**
@@ -119,10 +197,19 @@ const frontMatterRegexCache = new Map();
  * which can have a format of its own.
  * @param {FrontMatterFormat} args.format Front matter format.
  * @param {string} args.text File content.
+ * @param {string} [args.path] File path, given to remember the source text of the floats that are
+ * whole numbers.
  * @returns {Record<string, any>} Parsed front matter and body.
  * @throws {Error} When the front matter block could not be parsed.
  */
-export const parseFrontMatter = ({ collection, collectionFile, isIndexFile, format, text }) => {
+export const parseFrontMatter = ({
+  collection,
+  collectionFile,
+  isIndexFile,
+  format,
+  text,
+  path,
+}) => {
   const {
     format: _format,
     fmDelimiters,
@@ -138,11 +225,16 @@ export const parseFrontMatter = ({ collection, collectionFile, isIndexFile, form
   const cacheKey = `${sd}|${ed}`;
 
   // Front matter matching: allow an empty head, including no line at all between the delimiters
-  // (e.g. Jekyll’s `---\n---`), and only match a block at the start of the file.
+  // (e.g. Jekyll’s `---\n---`), and only match a block at the start of the file. Trailing spaces or
+  // tabs after a delimiter are ignored, as other front matter parsers do.
   const regex = getOrCreate(
     frontMatterRegexCache,
     cacheKey,
-    () => new RegExp(`^${sd}\n(?:(?<head>[\\s\\S]*?)\n)?${ed}(?:\n(?<body>[\\s\\S]*))?$`, 's'),
+    () =>
+      new RegExp(
+        `^${sd}[ \t]*\n(?:(?<head>[\\s\\S]*?)\n)?${ed}[ \t]*(?:\n(?<body>[\\s\\S]*))?$`,
+        's',
+      ),
   );
 
   const groups =
@@ -160,15 +252,15 @@ export const parseFrontMatter = ({ collection, collectionFile, isIndexFile, form
   let parsedHead = {};
 
   if (format === 'yaml-frontmatter') {
-    parsedHead = parseYAML(head);
+    parsedHead = parseYAML(head, undefined, path);
   }
 
   if (format === 'toml-frontmatter') {
-    parsedHead = parseTOML(head);
+    parsedHead = parseTOML(head, path);
   }
 
   if (format === 'json-frontmatter') {
-    parsedHead = parseJSONFrontMatterHead(head);
+    parsedHead = parseJSONFrontMatterHead(head, path);
   }
 
   if (!parsedHead || typeof parsedHead !== 'object' || Array.isArray(parsedHead)) {
@@ -245,6 +337,9 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
   const { collection, collectionFile, isIndexFile } = resolved;
   let { format } = resolved;
 
+  // Forget what was read from an earlier version of the file
+  valueSources.delete(path);
+
   // Normalize line breaks
   text = text.trim().replace(/\r\n?/g, '\n');
 
@@ -261,15 +356,15 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
 
   try {
     if (format === 'yaml' || format === 'yml') {
-      return parseYAML(text);
+      return parseYAML(text, undefined, path);
     }
 
     if (format === 'toml') {
-      return parseTOML(text);
+      return parseTOML(text, path);
     }
 
     if (format === 'json') {
-      return parseJSON(text);
+      return parseJSON(text, path);
     }
 
     if (format === 'frontmatter') {
@@ -287,6 +382,7 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
         isIndexFile,
         format: /** @type {FrontMatterFormat} */ (format),
         text,
+        path,
       });
     }
   } catch (/** @type {any} */ ex) {

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { collectScanningPaths, getPathRegex, scanDir } from '$lib/services/backends/fs/shared/scan';
 import { createMockAssetFolder } from '$lib/test/factories';
 import { createMockDirectoryHandle, createMockFileHandle } from '$lib/test/fs-handles';
+import { createMemoryDirectoryHandle, writeMemoryFile } from '$lib/test/memory-fs-handles';
 
 vi.mock('@sveltia/utils/misc', () => ({
   sleep: vi.fn(async () => {}),
@@ -631,6 +632,36 @@ describe('getAllFiles', () => {
     const result = await getAllFiles(rootDirHandle);
 
     expect(result).toEqual([]);
+  });
+  test('finds files and folders whose names are spelled in normalization form D', async () => {
+    const decomposed = 'cafe\u0301';
+    const composed = decomposed.normalize();
+
+    allEntryFolders.current = [
+      /** @type {any} */ ({ collectionName: 'posts', folderPathMap: { _: `${composed}/posts` } }),
+      /** @type {any} */ ({ collectionName: 'pages', filePathMap: { _: `pages/${composed}.md` } }),
+    ];
+    // A configured path in form D is matched too
+    allAssetFolders.current = [
+      createMockAssetFolder({ collectionName: undefined, internalPath: `media/${decomposed}` }),
+    ];
+
+    const rootDirHandle = createMemoryDirectoryHandle();
+
+    await writeMemoryFile(rootDirHandle, `${decomposed}/posts/${decomposed}.md`, '');
+    await writeMemoryFile(rootDirHandle, `pages/${decomposed}.md`, '');
+    await writeMemoryFile(rootDirHandle, `media/${composed}/${decomposed}.png`, '');
+    await writeMemoryFile(rootDirHandle, 'pages/other.md', '');
+
+    const { getAllFiles } = await import('$lib/services/backends/fs/shared/scan');
+    const result = await getAllFiles(rootDirHandle);
+
+    // The paths and names are in form C, while the handles keep the names on the disk
+    expect(result.map(({ path, name, handle }) => [path, name, handle?.name])).toEqual([
+      [`${composed}/posts/${composed}.md`, `${composed}.md`, `${decomposed}.md`],
+      [`pages/${composed}.md`, `${composed}.md`, `${decomposed}.md`],
+      [`media/${composed}/${composed}.png`, `${composed}.png`, `${decomposed}.png`],
+    ]);
   });
 });
 

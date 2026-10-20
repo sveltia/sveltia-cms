@@ -40,6 +40,8 @@ describe('draft/update/revert', () => {
       fileName: undefined,
       isIndexFile: false,
       fields: [],
+      originalLocales: { en: true, ja: true },
+      currentLocales: { en: true, ja: true },
       currentValues: {
         en: {
           title: 'Modified Title',
@@ -105,6 +107,29 @@ describe('draft/update/revert', () => {
       expect(currentSlugs).toEqual({ en: 'company', ja: 'kaisha' });
       // A copy, so that editing the slug again doesn’t alter the original
       expect(currentSlugs).not.toBe(mockEntryDraft.originalSlugs);
+    });
+
+    it('restores the locales the entry is output in', () => {
+      // A locale disabled with the locale switcher would otherwise stay disabled, and saving would
+      // delete its file
+      mockEntryDraft.currentLocales = { en: true, ja: false };
+
+      revertChanges();
+
+      const { currentLocales } = mockEntryDraft;
+
+      expect(currentLocales).toEqual({ en: true, ja: true });
+      // A copy, so that toggling a locale again doesn’t alter the original
+      expect(currentLocales).not.toBe(mockEntryDraft.originalLocales);
+    });
+
+    it('leaves the locales alone when only one locale or field is reverted', () => {
+      mockEntryDraft.currentLocales = { en: true, ja: false };
+
+      revertChanges({ locale: 'en' });
+      revertChanges({ keyPath: 'title' });
+
+      expect(mockEntryDraft.currentLocales).toEqual({ en: true, ja: false });
     });
 
     it('leaves the slugs alone when only one locale is reverted', () => {

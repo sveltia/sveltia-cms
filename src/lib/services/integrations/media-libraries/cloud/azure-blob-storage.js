@@ -136,16 +136,19 @@ export const parseBlobResults = (blobs, config, token) => {
  * @param {string} params.credential SAS token.
  * @param {string} params.prefix Blob name prefix.
  * @param {string} [params.cursor] Continuation marker of the page.
+ * @param {string} [params.delimiter] Delimiter to group the names with, leaving out the blobs in
+ * virtual directories, which are returned as blob prefixes instead.
  * @returns {Promise<{ items: AzureBlob[], cursor?: string }>} Blobs and the continuation marker of
  * the next page, if any.
  * @see https://learn.microsoft.com/en-us/rest/api/storageservices/list-blobs
  */
-const listBlobPage = async ({ config, credential: token, prefix, cursor: marker }) => {
+const listBlobPage = async ({ config, credential: token, prefix, cursor: marker, delimiter }) => {
   const searchParams = new URLSearchParams({
     restype: 'container',
     comp: 'list',
     maxresults: String(MAX_RESULTS),
     ...(prefix && { prefix }),
+    ...(delimiter && { delimiter }),
     ...(marker && { marker }),
   });
 

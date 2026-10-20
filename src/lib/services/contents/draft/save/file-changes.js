@@ -1,6 +1,7 @@
 import { backend } from '$lib/services/backends';
 import { formatEntryData } from '$lib/services/contents/draft/save/entry-file';
 import { getSavedFileConfig } from '$lib/services/contents/file/detected-formats';
+import { getSavedValueSources } from '$lib/services/contents/file/value-sources';
 import { usesSingleFileStructure } from '$lib/services/contents/i18n/config';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
@@ -119,6 +120,11 @@ export const buildEntryFileChanges = async ({
           _file: getSavedFileConfig({ _file, previousPath: currentPath, path: change.path }),
           entry,
           locale,
+          // The source map of a file storing all the entries of an entry collection is keyed by
+          // the position of the item, so it only applies when the whole file is formatted
+          valueSources: _file.arrayFile
+            ? undefined
+            : getSavedValueSources({ previousPath: currentPath, path: change.path }),
         }),
       ]);
 

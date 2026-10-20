@@ -254,6 +254,35 @@ describe('git/shared/repository', () => {
       expect(getBaseURLs).toHaveBeenCalledWith('https://github.com/owner/repo', 'main');
     });
 
+    it('should ignore a trailing slash in the REST API root URL', () => {
+      const github = initRepositoryInfo(
+        { ...REPOSITORY_INFO_PLACEHOLDER },
+        { ...args, restApiRoot: 'https://api.github.com/' },
+      );
+
+      expect(github).toMatchObject({
+        repoURL: 'https://github.com/owner/repo',
+        tokenPageURL: 'https://github.com/tokens',
+        isSelfHosted: false,
+      });
+
+      const gitlab = initRepositoryInfo(
+        { ...REPOSITORY_INFO_PLACEHOLDER },
+        {
+          ...args,
+          service: 'gitlab',
+          label: 'GitLab',
+          restApiRoot: 'https://gitlab.com/api/v4//',
+          defaultApiRoot: 'https://gitlab.com/api/v4',
+        },
+      );
+
+      expect(gitlab).toMatchObject({
+        repoURL: 'https://gitlab.com/owner/repo',
+        isSelfHosted: false,
+      });
+    });
+
     it('should scope the database and the base URLs to the root directory', () => {
       mockGetRootDir.mockReturnValue('apps/site');
 

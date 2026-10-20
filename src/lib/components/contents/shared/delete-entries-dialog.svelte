@@ -12,7 +12,7 @@
   } from '$lib/services/contents/collection/data';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries, listedUnpublishedEntries } from '$lib/services/contents/collection/view';
-  import { getEntryRelativeAssets } from '$lib/services/contents/entry/assets';
+  import { getEntriesRelativeAssets } from '$lib/services/contents/entry/assets';
   import {
     EMPTY_CASCADE_DELETE_PLAN,
     planCascadeDelete,
@@ -62,10 +62,13 @@
   const publishedEntryAssets = $derived.by(() => {
     const collectionName = selectedCollection.current?.name;
 
-    return publishedEntries.map((entry) => ({
-      entry,
-      assets: collectionName ? getEntryRelativeAssets({ entry, collectionName }) : [],
-    }));
+    // Looked up for all the entries at once, as finding the assets other entries use as well takes
+    // a pass over the collection
+    const assetLists = collectionName
+      ? getEntriesRelativeAssets({ entries: publishedEntries, collectionName })
+      : publishedEntries.map(() => []);
+
+    return publishedEntries.map((entry, index) => ({ entry, assets: assetLists[index] }));
   });
   const associatedAssets = $derived(publishedEntryAssets.flatMap(({ assets }) => assets));
 

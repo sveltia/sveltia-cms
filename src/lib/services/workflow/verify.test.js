@@ -182,6 +182,19 @@ describe('workflow/verify', () => {
       ]);
     });
 
+    test('flags the admin page or its configuration in a folder named like the CMS one', () => {
+      // Deeper down, only the files that would take over the CMS are flagged; other assets in a
+      // folder like a Hugo page bundle with the `cms` slug are the entry’s
+      expect(
+        findUnexpectedChanges(createEntry(), [
+          { path: 'static/docs/admin/index.html', status: 'added', mode: '100644' },
+          { path: 'static/docs/cms/config.yml', status: 'modified', mode: '100644' },
+          { path: 'static/docs/admin/logo.png', status: 'added', mode: '100644' },
+          { path: 'static/posts/cms/cover.jpg', status: 'added', mode: '100644' },
+        ]),
+      ).toEqual(['static/docs/admin/index.html', 'static/docs/cms/config.yml']);
+    });
+
     test('leaves deployment configuration edited as an entry to the entry rules', () => {
       // `_redirects` can be an entry of a file collection, edited in the CMS like any other
       expect(

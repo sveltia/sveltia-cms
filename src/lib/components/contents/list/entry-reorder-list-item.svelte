@@ -10,8 +10,10 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, GridCell, Icon } from '@sveltia/ui';
+  import { tick } from 'svelte';
 
   import EntryListItemCells from '$lib/components/contents/list/entry-list-item-cells.svelte';
+  import { focusItemReorderControl } from '$lib/services/utils/drag-sorting';
 
   /**
    * @import { Entry, InternalEntryCollection, ViewType } from '$lib/types/private';
@@ -40,6 +42,24 @@
     onMoveDown = undefined,
     /* eslint-enable prefer-const */
   } = $props();
+
+  /**
+   * Move the entry with one of the buttons, and keep the focus on the row once it has moved: the
+   * row element may be moved along with the button, which loses the focus, and the button may be
+   * disabled now that the entry has reached either end of the list.
+   * @param {MouseEvent} event `click` event.
+   * @param {string} action `data-action` of the button.
+   * @param {(() => void) | undefined} handler Move handler.
+   */
+  const move = async (event, action, handler) => {
+    event.stopPropagation();
+
+    const row = /** @type {HTMLElement} */ (event.currentTarget).closest('[role="row"]');
+
+    handler?.();
+    await tick();
+    focusItemReorderControl({ item: row, action });
+  };
 </script>
 
 <EntryListItemCells {collection} {entry} {viewType} />
@@ -48,11 +68,9 @@
     variant="ghost"
     iconic
     disabled={!canMoveUp}
+    data-action="move-up"
     aria-label={_('move_up')}
-    onclick={(event) => {
-      event.stopPropagation();
-      onMoveUp?.();
-    }}
+    onclick={(event) => move(event, 'move-up', onMoveUp)}
   >
     {#snippet startIcon()}
       <Icon name="arrow_upward" />
@@ -62,11 +80,9 @@
     variant="ghost"
     iconic
     disabled={!canMoveDown}
+    data-action="move-down"
     aria-label={_('move_down')}
-    onclick={(event) => {
-      event.stopPropagation();
-      onMoveDown?.();
-    }}
+    onclick={(event) => move(event, 'move-down', onMoveDown)}
   >
     {#snippet startIcon()}
       <Icon name="arrow_downward" />

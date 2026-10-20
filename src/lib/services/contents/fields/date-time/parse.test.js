@@ -373,6 +373,36 @@ describe('getDate in the time zone of the field', () => {
     });
   });
 
+  test('reads an ISO 8601 value with an offset as is in a custom format without one', () => {
+    withTimeZone('America/Los_Angeles', () => {
+      [
+        {},
+        { input_timezone: 'Asia/Tokyo' },
+        { output_utc: true },
+        { input_timezone: 'Asia/Tokyo', output_utc: true },
+      ].forEach((options) => {
+        /** @type {DateTimeField} */
+        const fieldConfig = { ...baseFieldConfig, format: 'YYYY-MM-DD HH:mm', ...options };
+
+        expect(getDate('2026-01-15T01:30:00Z', fieldConfig)?.toISOString()).toBe(
+          '2026-01-15T01:30:00.000Z',
+        );
+        expect(getDate('2026-01-15T10:30:00.000+09:00', fieldConfig)?.toISOString()).toBe(
+          '2026-01-15T01:30:00.000Z',
+        );
+      });
+
+      // A value written in the format exactly, with an escaped `Z`, is still read in the format
+      expect(
+        getDate('2026-01-15T10:30:00Z', {
+          ...baseFieldConfig,
+          format: 'YYYY-MM-DDTHH:mm:ss[Z]',
+          input_timezone: 'Asia/Tokyo',
+        })?.toISOString(),
+      ).toBe('2026-01-15T01:30:00.000Z');
+    });
+  });
+
   test('reads a value in a custom format with an offset as is', () => {
     withTimeZone('America/New_York', () => {
       /** @type {DateTimeField} */
@@ -535,6 +565,33 @@ describe('Test parseWithFormatFallback()', () => {
 
     expect(parsed.isValid()).toBe(true);
     expect(parsed.toISOString()).toBe('2024-12-31T23:30:00.000Z');
+  });
+
+  test('should read a value with an offset as an instant unless it’s in the format exactly', () => {
+    const { TZ } = process.env;
+
+    process.env.TZ = 'America/Los_Angeles';
+
+    try {
+      [true, false].forEach((parseAsUTC) => {
+        expect(
+          parseWithFormatFallback({
+            value: '2024-12-31T23:30:00+09:00',
+            format: 'YYYY-MM-DD HH:mm',
+            parseAsUTC,
+          }).toISOString(),
+        ).toBe('2024-12-31T14:30:00.000Z');
+        expect(
+          parseWithFormatFallback({
+            value: '2024-12-31 23:30Z',
+            format: 'YYYY-MM-DD HH:mm[Z]',
+            parseAsUTC,
+          }).toISOString(),
+        ).toBe(parseAsUTC ? '2024-12-31T23:30:00.000Z' : '2025-01-01T07:30:00.000Z');
+      });
+    } finally {
+      process.env.TZ = TZ;
+    }
   });
 
   test('should parse in local time unless UTC is requested', () => {

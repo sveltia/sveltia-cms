@@ -1,6 +1,7 @@
 import equal from 'fast-deep-equal';
 
 import { backend } from '$lib/services/backends';
+import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { cmsConfig } from '$lib/services/config';
@@ -121,20 +122,33 @@ export const loadUnpublishedEntries = async (pullRequests = startLoadingPullRequ
   }
 
   const head = repositoryHead.current;
+  // The site data may be discarded while the requests are on their way, e.g. by signing out; the
+  // results then belong to the previous session and must not be written back, nor mark the next
+  // session’s entries as loaded
+  const generation = dataGeneration.current;
+  /**
+   * Whether the site data has been discarded since the load was started.
+   * @returns {boolean} Result.
+   */
+  const isStale = () => generation !== dataGeneration.current;
 
   try {
     const { entries, assets } = await convertPullRequests(await pullRequests);
 
-    unpublishedEntries.current = entries;
-    mergeWorkflowAssets(assets);
-    recordLoad(head);
+    if (!isStale()) {
+      unpublishedEntries.current = entries;
+      mergeWorkflowAssets(assets);
+      recordLoad(head);
+    }
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
   } finally {
-    unpublishedEntriesLoading.current = false;
-    // Mark as loaded even on failure, so a deep link isn’t stuck on the loading state forever
-    unpublishedEntriesLoaded.current = true;
+    if (!isStale()) {
+      unpublishedEntriesLoading.current = false;
+      // Mark as loaded even on failure, so a deep link isn’t stuck on the loading state forever
+      unpublishedEntriesLoaded.current = true;
+    }
   }
 };
 
@@ -178,6 +192,56 @@ const carryOverEntries = (fetched, existing) => {
   });
 
   return isSameList(entries, existing) ? existing : entries;
+};
+
+/**
+ * Get the head commit the given entries of a branch were read at.
+ * @param {UnpublishedEntry[]} [entries] Entries of the branch.
+ * @returns {string | undefined} Git object ID, if any.
+ */
+const getHeadSHA = (entries) => entries?.[0]?.workflow.pullRequest.headSHA;
+
+/**
+ * Find the branches whose entries in the store are more recent than what the listing reports. A Git
+ * service can report a pull request as of an earlier commit for a moment after a push: Gitea and
+ * Forgejo work out the changed files from a reference they move to the branch head in the
+ * background, and the head GitHub reports for a pull request may trail its branch as well. Taking
+ * that snapshot would roll back the entry just saved in this tab, and the next save, made on top of
+ * the older head, would be refused as a conflict. So where the heads differ, the branch is read,
+ * which is a small request: if it still points at the head in the store, nothing has been committed
+ * since, and the listing is the one behind. Anything else it reports for the pull request, such as
+ * a label changed on the Git service, comes in with the next reload. A snapshot that yields no
+ * entry at all, with none of the files listed yet, is behind just the same. A branch that can’t be
+ * read leaves the listing to be taken as it is.
+ * @param {NonNullable<BackendService['workflow']>} workflow Workflow service.
+ * @param {Map<string, UnpublishedEntry[]>} stored Entries in the store, keyed by branch.
+ * @param {Map<string, UnpublishedEntry[]>} fetched Entries read from the pull requests, keyed by
+ * branch.
+ * @param {Set<string>} openBranches Branches of the pull requests listed.
+ * @returns {Promise<Set<string>>} Branches whose entries in the store are to be kept.
+ */
+const findUpToDateBranches = async (workflow, stored, fetched, openBranches) => {
+  /** @type {Set<string>} */
+  const branches = new Set();
+
+  const candidates = [...stored.keys()].filter((branch) => {
+    const head = getHeadSHA(stored.get(branch));
+
+    return openBranches.has(branch) && !!head && head !== getHeadSHA(fetched.get(branch));
+  });
+
+  await runConcurrently(candidates, async (branch) => {
+    try {
+      if ((await workflow.fetchBranchHead(branch)) === getHeadSHA(stored.get(branch))) {
+        branches.add(branch);
+      }
+    } catch (ex) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to check the workflow branch for changes.', ex);
+    }
+  });
+
+  return branches;
 };
 
 /**
@@ -231,6 +295,12 @@ const reload = async (workflow) => {
   }
 
   const fetched = groupByBranch(entries);
+  const upToDate = await findUpToDateBranches(workflow, before, fetched, openBranches);
+
+  if (isStale()) {
+    return false;
+  }
+
   const current = groupByBranch(unpublishedEntries.current);
   const publishing = new Set(publishingBranches.current);
   /** @type {Set<string>} */
@@ -245,8 +315,13 @@ const reload = async (workflow) => {
     const existing = current.get(branch) ?? [];
 
     // A change made in this tab while the request was on its way is more recent than what the
-    // request reports, and so is an entry being published, which leaves the store once merged
-    if (publishing.has(branch) || !isSameList(existing, before.get(branch))) {
+    // request reports, and so is an entry being published, which leaves the store once merged, and
+    // one whose branch hasn’t moved since it was stored
+    if (
+      publishing.has(branch) ||
+      upToDate.has(branch) ||
+      !isSameList(existing, before.get(branch))
+    ) {
       return existing;
     }
 

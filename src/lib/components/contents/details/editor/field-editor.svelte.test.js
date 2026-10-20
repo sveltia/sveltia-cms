@@ -364,6 +364,58 @@ describe('FieldEditor', () => {
       .not.toHaveAttribute('aria-readonly', 'true');
   });
 
+  test('lets the deprecated `read_only` option unlock a UUID field, but not a locked one', async () => {
+    /** @type {Field} */
+    const fieldConfig = { name: 'id', widget: 'uuid', read_only: false };
+    const { container } = await renderEditor({ fieldConfig, values: { id: 'abc' } });
+
+    await expect
+      .element(/** @type {HTMLElement} */ (container.querySelector('[role="textbox"], input')))
+      .not.toHaveAttribute('aria-readonly', 'true');
+
+    const draft = createMockDraft({
+      fields: [fieldConfig],
+      i18n: { i18nEnabled: false, defaultLocale: 'en', allLocales: ['en'] },
+      values: { en: { id: 'def' } },
+    });
+
+    /** @type {any} */ (draft.collection).readonly = true;
+
+    const { container: locked } = await renderWithDraft(FieldEditor, {
+      draft,
+      props: { locale: 'en', keyPath: 'id', typedKeyPath: 'id', fieldConfig },
+    });
+
+    await expect
+      .element(/** @type {HTMLElement} */ (locked.querySelector('[role="textbox"], input')))
+      .toHaveAttribute('aria-readonly', 'true');
+  });
+
+  test.each([
+    [
+      'List',
+      { name: 'items', widget: 'list', fields: [{ name: 'name', widget: 'string' }] },
+      { 'items.0.name': 'Hello' },
+    ],
+    [
+      'Object',
+      { name: 'author', widget: 'object', fields: [{ name: 'name', widget: 'string' }] },
+      { 'author.name': 'Hello' },
+    ],
+  ])('locks the subfields of a read-only %s field', async (_type, config, values) => {
+    // A subfield can’t opt out of it
+    const fieldConfig = /** @type {Field} */ ({
+      ...config,
+      readonly: true,
+      fields: [{ name: 'name', widget: 'string', readonly: false }],
+    });
+
+    await renderEditor({ fieldConfig, values });
+
+    await expect.element(page.getByRole('textbox')).toHaveValue('Hello');
+    await expect.element(page.getByRole('textbox')).toHaveAttribute('aria-readonly', 'true');
+  });
+
   test('compares against nothing in a locale that was enabled later', async () => {
     // The original values only cover the locales enabled when the draft was created
     const draft = { originalValues: { en: {} } };
@@ -794,6 +846,30 @@ describe('FieldEditor (nested in a duplicated field)', () => {
     await renderSubField(venueField.fields[2]);
 
     await expect.element(page.getByRole('checkbox', { name: /Add\W+address/ })).toBeDisabled();
+  });
+
+  // The parent is read-only there, but only because its value follows the default locale
+  test('lets a translatable subfield of a duplicated field be edited within it', async () => {
+    const draft = createMockDraft({
+      fields: [venueField],
+      i18n: { i18nEnabled: true, defaultLocale: 'en', allLocales: ['en', 'ja'] },
+      values: {
+        en: { 'venue.name': 'Hall', 'venue.note': 'Big' },
+        ja: { 'venue.name': 'Hall', 'venue.note': '大' },
+      },
+    });
+
+    await renderWithDraft(FieldEditor, {
+      draft,
+      props: { locale: 'ja', keyPath: 'venue', typedKeyPath: 'venue', fieldConfig: venueField },
+    });
+
+    const name = page.getByRole('group', { name: /“.name.” Field/ }).getByRole('textbox');
+    const note = page.getByRole('group', { name: /“.note.” Field/ }).getByRole('textbox');
+
+    await expect.element(name).toHaveAttribute('aria-readonly', 'true');
+    await expect.element(note).toHaveValue('大');
+    await expect.element(note).not.toHaveAttribute('aria-readonly', 'true');
   });
 
   test('lets a subfield with its own translatable option be edited in another locale', async () => {

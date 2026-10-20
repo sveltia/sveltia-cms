@@ -1,3 +1,5 @@
+import { stripSlashes } from '@sveltia/utils/string';
+
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -110,6 +112,10 @@ export const initRepositoryInfo = (
     getBaseURLs,
   },
 ) => {
+  // Drop any trailing slash from the configured URL, e.g. `https://gitlab.com/api/v4/`, so the
+  // hosted service isn’t taken for a self-hosted instance and the repository URL has no `//`
+  restApiRoot = stripSlashes(restApiRoot);
+
   const repoPath = `${owner}/${repo}`;
   const repoURL = getRepoURL(restApiRoot, repoPath);
   const rootDir = getRootDir();

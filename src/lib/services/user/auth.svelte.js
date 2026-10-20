@@ -269,6 +269,13 @@ export const copyMagicLinkPrefs = (copiedPrefs) => {
  * @param {BackendService} _backend Backend.
  */
 const loadRepositoryData = async (_backend) => {
+  // Signing out while the data is being loaded discards it, and stops the polling started below
+  const generation = dataGeneration.current;
+  /**
+   * Whether the user has signed out since the load was started.
+   * @returns {boolean} Result.
+   */
+  const isStale = () => generation !== dataGeneration.current;
   // The pull requests don’t depend on the files, so they’re requested at the same time. That needs
   // the branch they target, though: without one configured, the default branch is only known once
   // the files are being fetched, and every pull request would be dropped as targeting another
@@ -277,7 +284,18 @@ const loadRepositoryData = async (_backend) => {
   const pullRequests = branchKnown ? startLoadingPullRequests() : undefined;
 
   await _backend.fetchFiles();
+
+  // The pull requests requested early belong to the previous session as well, and are dropped
+  if (isStale()) {
+    return;
+  }
+
   await loadUnpublishedEntries(pullRequests);
+
+  if (isStale()) {
+    return;
+  }
+
   // The deploy state is a nicety, so it’s resolved in the background rather than delaying the UI.
   // The files were loaded from the branch head, which is the commit the production site is built
   // from, so it isn’t fetched again

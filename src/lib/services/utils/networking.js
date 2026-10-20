@@ -6,11 +6,20 @@ import { isObject } from '@sveltia/utils/object';
  */
 
 /**
- * Regular expression to match `localhost` and its subdomains like `mysite.localhost`, which
- * browsers treat as a secure context over HTTP.
+ * Regular expression to match `localhost` and its subdomains like `mysite.localhost`.
+ */
+const LOCALHOST_REGEX = /^(.+\.)?localhost$/;
+
+/**
+ * Check if a hostname refers to the local computer, which browsers treat as a secure context over
+ * HTTP: `localhost` and its subdomains like `mysite.localhost`, and the IPv4 and IPv6 loopback
+ * addresses, the latter written in brackets as `URL` and `location` give it.
+ * @param {string} hostname Hostname, e.g. `location.hostname`.
+ * @returns {boolean} Whether the hostname is local.
  * @see https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts
  */
-export const LOCALHOST_REGEX = /^(.+\.)?localhost$/;
+export const isLocalHostname = (hostname) =>
+  ['127.0.0.1', '[::1]'].includes(hostname) || LOCALHOST_REGEX.test(hostname);
 
 /**
  * Check if a URL can be requested without exposing credentials over an insecure transport.
@@ -27,11 +36,7 @@ export const isSecureURL = (
   try {
     const { hostname, protocol } = new URL(url, baseURL);
 
-    return (
-      protocol === 'https:' ||
-      ['127.0.0.1', '[::1]'].includes(hostname) ||
-      LOCALHOST_REGEX.test(hostname)
-    );
+    return protocol === 'https:' || isLocalHostname(hostname);
   } catch {
     return false;
   }

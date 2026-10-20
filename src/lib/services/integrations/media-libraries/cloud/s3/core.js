@@ -316,17 +316,20 @@ export const parseS3Results = (objects, config) => {
  * @param {string} params.credential Secret access key.
  * @param {string} params.prefix Key prefix.
  * @param {string} [params.cursor] Continuation token of the page.
+ * @param {string} [params.delimiter] Delimiter to group the keys with, leaving out the objects in
+ * subfolders, which are returned as common prefixes instead.
  * @returns {Promise<{ items: S3Object[], cursor?: string }>} Objects and the continuation token of
  * the next page, if any.
  * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html
  */
-const listS3Page = async ({ config, credential: secretAccessKey, prefix, cursor }) => {
+const listS3Page = async ({ config, credential: secretAccessKey, prefix, cursor, delimiter }) => {
   const { bucket, region, endpoint, force_path_style: forcePathStyle } = config;
 
   const params = new URLSearchParams({
     'list-type': '2',
     'max-keys': '1000',
     ...(prefix && { prefix }),
+    ...(delimiter && { delimiter }),
     ...(cursor && { 'continuation-token': cursor }),
   });
 

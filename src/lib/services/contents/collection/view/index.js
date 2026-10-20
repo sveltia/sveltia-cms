@@ -387,6 +387,19 @@ export const entryGroups = createDerivedState(() => {
 });
 
 /**
+ * Entries the entry list shows, the unpublished ones included, which the selection is limited to.
+ * The entries in a collapsed group count as shown, as Select All selects them too.
+ * @type {{ readonly current: Set<Entry> }}
+ */
+const shownEntries = createDerivedState(
+  () =>
+    new Set([
+      ...listedUnpublishedEntries.current,
+      ...entryGroups.current.flatMap(({ entries }) => entries),
+    ]),
+);
+
+/**
  * Restore the view settings of the given entry collection from {@link entryListSettings}, falling
  * back to the collection’s default sort, filter and grouping options where the saved view has none.
  * @param {InternalEntryCollection} collection Collection.
@@ -533,14 +546,19 @@ export const setBulkEditMode = (value) => {
 };
 
 // Restore the view settings when a different entry collection is selected. The entries are also
-// tracked, because the available sort keys depend on them
+// tracked, because the available sort keys depend on them. While the collection is being reordered,
+// the saved view is the one from before reordering, which exiting the mode restores, so a change to
+// the entries, like an asset upload or the commit metadata arriving, mustn’t restore it midway. The
+// snapshot is only there in reorder mode, and switching collections discards it after this runs
 createRootEffect(() => {
   const collection = selectedCollection.current;
   const { current: _allEntries } = allEntries;
 
   if (collection?._type === 'entry') {
     untrack(() => {
-      restoreView(collection, _allEntries);
+      if (viewBeforeReorder.current?.collectionName !== collection.name) {
+        restoreView(collection, _allEntries);
+      }
     });
   }
 });
@@ -582,6 +600,23 @@ createRootEffect(() => {
   if (untrack(() => prefs.devModeEnabled)) {
     // eslint-disable-next-line no-console
     console.info('listedEntries', entries);
+  }
+});
+
+// Drop the entries the view no longer shows from the selection, e.g. an event that a `{{now}}`
+// filter hides as time goes by, which doesn’t change the listed entries or the filters. The shown
+// entries are only computed while something is selected, as nothing else may need them
+createRootEffect(() => {
+  const selected = selectedEntries.current;
+
+  if (!selected.length) {
+    return;
+  }
+
+  const { current: shown } = shownEntries;
+
+  if (selected.some((entry) => !shown.has(entry))) {
+    selectedEntries.current = selected.filter((entry) => shown.has(entry));
   }
 });
 

@@ -440,6 +440,44 @@ describe('ListEditorComplex', () => {
       .toHaveFocus();
   });
 
+  test('moves the focus to the other button once an item has been moved to either end', async () => {
+    const { draft } = await renderEditor(authorsField, {
+      'authors.0.name': 'a',
+      'authors.1.name': 'b',
+      'authors.2.name': 'c',
+    });
+
+    await page
+      .getByRole('group', { name: 'Item 2 of 3' })
+      .getByRole('button', { name: 'Move Up' })
+      .click();
+
+    await expect
+      .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
+      .toEqual(['b', 'a', 'c']);
+
+    const first = page.getByRole('group', { name: 'Item 1 of 3' });
+
+    // The Move Up button is disabled at the top, so the focus goes to Move Down rather than being
+    // lost
+    await expect.element(first.getByRole('button', { name: 'Move Up' })).toBeDisabled();
+    await expect.element(first.getByRole('button', { name: 'Move Down' })).toHaveFocus();
+
+    await page
+      .getByRole('group', { name: 'Item 2 of 3' })
+      .getByRole('button', { name: 'Move Down' })
+      .click();
+
+    await expect
+      .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
+      .toEqual(['b', 'c', 'a']);
+    await expect
+      .element(
+        page.getByRole('group', { name: 'Item 3 of 3' }).getByRole('button', { name: 'Move Up' }),
+      )
+      .toHaveFocus();
+  });
+
   test('moves an item to the bottom from its options menu, which has no second menu', async () => {
     const { draft } = await renderEditor(authorsField, {
       'authors.0.name': 'a',

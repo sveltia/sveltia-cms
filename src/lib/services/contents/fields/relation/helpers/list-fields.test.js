@@ -464,6 +464,41 @@ describe('Test processComplexListField()', () => {
     expect(result[1].value).toBe('city2');
   });
 
+  test('should keep a list item value of `0` or `false`', () => {
+    const content = {
+      'levels.0.id': 0,
+      'levels.0.name': 'Beginner',
+      'levels.1.id': false,
+      'levels.1.name': 'None',
+    };
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{levels.*.name}}',
+      _valueField: '{{levels.*.id}}',
+      _searchField: '{{levels.*.name}}',
+      allFieldNames: ['levels.*.name', 'levels.*.id'],
+      hasListFields: true,
+    };
+
+    const result = processComplexListField({
+      groupEntries: [
+        ['levels.*.name', { baseFieldName: 'levels' }],
+        ['levels.*.id', { baseFieldName: 'levels' }],
+      ],
+      content,
+      templates,
+      allFieldNames: templates.allFieldNames,
+      context: { slug: 'test-slug', locale: 'en', getDisplayValue: vi.fn(() => '') },
+      fallbackContext: { content, locales: {}, defaultLocale: 'en', identifierField: 'title' },
+    });
+
+    expect(result.map(({ label, value }) => ({ label, value }))).toEqual([
+      { label: 'Beginner', value: '0' },
+      { label: 'None', value: 'false' },
+    ]);
+  });
+
   test('should return empty array when no valid pattern found', () => {
     const result = processComplexListField({
       groupEntries: [],

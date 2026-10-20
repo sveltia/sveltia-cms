@@ -269,7 +269,7 @@ export const processComplexListField = ({
           wildcardFieldName.match(COMPLEX_LIST_FIELD_REGEX) ?? [];
 
         return baseFieldName
-          ? [[wildcardFieldName, content[`${baseFieldName}.${index}.${subFieldKey}`] || '']]
+          ? [[wildcardFieldName, content[`${baseFieldName}.${index}.${subFieldKey}`] ?? '']]
           : [];
       }),
       staticFieldNames,

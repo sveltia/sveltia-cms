@@ -222,6 +222,12 @@
    * @param {ClipboardEvent} event `paste` event.
    */
   const onPaste = async (event) => {
+    // Lexical applies an update even while the editor isn’t editable, so nothing is inserted to a
+    // read-only field, nor is the file added to the draft
+    if (readonly) {
+      return;
+    }
+
     const { target } = event;
     const images = await getPastedImages(event);
 
@@ -235,6 +241,11 @@
    * @param {DragEvent} event `drop` event.
    */
   const onDrop = async (event) => {
+    // Same as above
+    if (readonly) {
+      return;
+    }
+
     const { target } = event;
     const images = await getDroppedImages(event);
 

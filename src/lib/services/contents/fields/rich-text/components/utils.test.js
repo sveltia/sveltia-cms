@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 /* eslint-disable jsdoc/require-jsdoc */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   escapeTitle,
@@ -10,6 +10,7 @@ import {
   isMultiLinePattern,
   isValidSelector,
   normalizeProps,
+  observeReadonly,
   supportsHTML,
   unescapeTitle,
 } from './utils.js';
@@ -286,5 +287,42 @@ describe('getParentComponentNames', () => {
     ]);
     expect(getParentComponentNames(document.querySelector('#top') ?? undefined)).toEqual([]);
     expect(getParentComponentNames(undefined)).toEqual([]);
+  });
+});
+
+describe('observeReadonly', () => {
+  it('should follow the read-only state of the editor the component is in', async () => {
+    document.body.innerHTML =
+      '<div role="textbox" aria-readonly="true"><p><span id="component"></span></p></div>';
+
+    const textbox = /** @type {HTMLElement} */ (document.querySelector('[role="textbox"]'));
+    const callback = vi.fn();
+    const observer = observeReadonly(document.querySelector('#component') ?? undefined, callback);
+
+    expect(callback).toHaveBeenLastCalledWith(true);
+
+    textbox.setAttribute('aria-readonly', 'false');
+    await vi.waitFor(() => {
+      expect(callback).toHaveBeenLastCalledWith(false);
+    });
+
+    observer?.disconnect();
+    textbox.setAttribute('aria-readonly', 'true');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 10);
+    });
+    expect(callback).toHaveBeenCalledTimes(2);
+  });
+
+  it('should do nothing outside an editor', () => {
+    document.body.innerHTML = '<span id="component"></span>';
+
+    const callback = vi.fn();
+
+    expect(observeReadonly(document.querySelector('#component') ?? undefined, callback)).toBe(
+      undefined,
+    );
+    expect(observeReadonly(undefined, callback)).toBe(undefined);
+    expect(callback).not.toHaveBeenCalled();
   });
 });

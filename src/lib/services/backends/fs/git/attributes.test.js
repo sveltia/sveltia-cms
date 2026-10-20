@@ -52,6 +52,17 @@ describe('globToRegExp()', () => {
   ])('%s matches %s: %s', (pattern, path, expected) => {
     expect(globToRegExp(pattern).test(path)).toBe(expected);
   });
+
+  test.each([
+    ['*.jpg', 'IMG_1234.JPG'],
+    ['*.jpg', 'sub/IMG.JPG'],
+    ['static/uploads/*.jpg', 'Static/Uploads/IMG.JPG'],
+    ['image[a-z].png', 'imageX.PNG'],
+  ])('%s matches %s only with `ignoreCase`', (pattern, path) => {
+    expect(globToRegExp(pattern).test(path)).toBe(false);
+    expect(globToRegExp(pattern, { ignoreCase: false }).test(path)).toBe(false);
+    expect(globToRegExp(pattern, { ignoreCase: true }).test(path)).toBe(true);
+  });
 });
 
 describe('parseFilterRules()', () => {
@@ -76,6 +87,15 @@ describe('parseFilterRules()', () => {
       { regex: globToRegExp('small.png'), lfs: false },
       { regex: globToRegExp('other.png'), lfs: false },
       { regex: globToRegExp('last.png'), lfs: true },
+    ]);
+  });
+
+  test('makes the rules case-insensitive with `ignoreCase`', () => {
+    const text = '*.png filter=lfs\n';
+
+    expect(parseFilterRules(text)).toEqual([{ regex: globToRegExp('*.png'), lfs: true }]);
+    expect(parseFilterRules(text, { ignoreCase: true })).toEqual([
+      { regex: globToRegExp('*.png', { ignoreCase: true }), lfs: true },
     ]);
   });
 });
@@ -103,6 +123,21 @@ describe('findLfsTrackedPath()', () => {
     expect(await findLfsTrackedPath(fs, ['static/icons/a.png'])).toBeUndefined();
     expect(await findLfsTrackedPath(fs, ['static/icons/large.png'])).toBe('static/icons/large.png');
     expect(await findLfsTrackedPath(fs, ['static/icons/huge.png'])).toBeUndefined();
+  });
+
+  test('matches the paths case-insensitively with `ignoreCase`', async () => {
+    const fs = createFileSystem({
+      '.gitattributes': '*.jpg filter=lfs\n',
+      'static/.gitattributes': 'uploads/*.png filter=lfs\n',
+    });
+
+    const paths = ['IMG_1234.JPG', 'static/Uploads/A.PNG'];
+
+    expect(await findLfsTrackedPath(fs, paths)).toBeUndefined();
+    expect(await findLfsTrackedPath(fs, paths, { ignoreCase: true })).toBe('IMG_1234.JPG');
+    expect(await findLfsTrackedPath(fs, paths.slice(1), { ignoreCase: true })).toBe(
+      'static/Uploads/A.PNG',
+    );
   });
 
   test('reads each file once', async () => {

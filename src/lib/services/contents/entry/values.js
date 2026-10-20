@@ -132,15 +132,28 @@ export const getFieldDisplayValue = ({
     if (fields || types) {
       // Ignore
     } else {
-      const stripItems = plainText && isRichTextField(field);
+      const itemKeys = getListItemKeys(valueMap, keyPath);
 
-      // Concat values of single field list or simple list
+      // Concat values of single field list or simple list. An item of the former is resolved like
+      // its subfield, which can hold a number, a boolean or the value of a Select option, while the
+      // latter holds strings
       value = getListFormatter(locale).format(
-        getListItemKeys(valueMap, keyPath)
-          .map((key) => valueMap[key])
-          .filter((val) => typeof val === 'string')
-          .map((val) => (stripItems ? stripMarkdown(val) : val))
-          .filter((val) => !!val),
+        (field
+          ? itemKeys.map((key) =>
+              getFieldDisplayValue({
+                collectionName,
+                fileName,
+                componentName,
+                valueMap,
+                keyPath: key,
+                locale,
+                isIndexFile,
+                pendingEntries,
+                plainText,
+              }),
+            )
+          : itemKeys.map((key) => valueMap[key]).filter((val) => typeof val === 'string')
+        ).filter((val) => !!val),
       );
     }
   }

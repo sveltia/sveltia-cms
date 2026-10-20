@@ -1000,6 +1000,153 @@ describe('GitHub Editorial Workflow service', () => {
         expect(fetchGraphQL).not.toHaveBeenCalled();
       });
 
+      describe('while GitHub is still checking whether it can be merged', () => {
+        const unknown = { mergeStateStatus: 'UNKNOWN' };
+
+        test('merges once the pull request turns out mergeable', async () => {
+          // GitHub works out mergeability in the background after a push, and refuses the merge
+          // until it’s done
+          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405)).mockResolvedValueOnce({});
+          vi.mocked(fetchGraphQL)
+            .mockResolvedValueOnce(createReadiness(unknown, 'SUCCESS'))
+            .mockResolvedValueOnce(createReadiness(unknown, 'SUCCESS'))
+            .mockResolvedValueOnce(createReadiness({ mergeStateStatus: 'CLEAN' }, 'SUCCESS'));
+
+          await publish(pullRequest);
+
+          expect(fetchGraphQL).toHaveBeenCalledTimes(3);
+          expect(sleep).toHaveBeenCalledTimes(2);
+          expect(sleep).toHaveBeenCalledWith(1000);
+          // Pinned to the same commit, so a push made since can’t slip in
+          expect(fetchAPI).toHaveBeenNthCalledWith(2, '/repos/owner/repo/pulls/1/merge', {
+            method: 'PUT',
+            body: { merge_method: 'merge', commit_title: 'Create Post', sha: 'abc123' },
+          });
+          expect(fetchAPI).toHaveBeenLastCalledWith(
+            '/repos/owner/repo/git/refs/heads/cms/posts/hello',
+            expect.objectContaining({ method: 'DELETE' }),
+          );
+        });
+
+        test.each([
+          ['CLEAN', 'SUCCESS'],
+          ['HAS_HOOKS', 'SUCCESS'],
+          ['UNSTABLE', 'FAILURE'],
+        ])('merges a pull request found %s straight away', async (mergeStateStatus, checkState) => {
+          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405)).mockResolvedValueOnce({});
+          vi.mocked(fetchGraphQL).mockResolvedValueOnce(
+            createReadiness({ mergeStateStatus }, checkState),
+          );
+
+          await publish(pullRequest);
+
+          expect(sleep).not.toHaveBeenCalled();
+          expect(fetchAPI).toHaveBeenCalledTimes(3);
+          expect(fetchAPI).toHaveBeenNthCalledWith(
+            2,
+            '/repos/owner/repo/pulls/1/merge',
+            expect.objectContaining({ method: 'PUT' }),
+          );
+        });
+
+        test('reports a refusal of the merge made once it turns out mergeable', async () => {
+          vi.mocked(fetchAPI)
+            .mockRejectedValueOnce(createError(405))
+            .mockRejectedValueOnce(new Error('Still not mergeable'));
+          vi.mocked(fetchGraphQL)
+            .mockResolvedValueOnce(createReadiness(unknown, 'SUCCESS'))
+            .mockResolvedValueOnce(createReadiness({ mergeStateStatus: 'CLEAN' }, 'SUCCESS'));
+
+          await expect(publish(pullRequest)).rejects.toThrow('Still not mergeable');
+          // The branch is left alone
+          expect(fetchAPI).toHaveBeenCalledTimes(2);
+        });
+
+        test('sets the pull request to auto-merge once a required check turns out running', async () => {
+          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
+          vi.mocked(fetchGraphQL)
+            .mockResolvedValueOnce(createReadiness(unknown))
+            .mockResolvedValueOnce(createReadiness())
+            .mockResolvedValueOnce({})
+            .mockResolvedValueOnce(createReadiness({ merged: true }, 'SUCCESS'));
+
+          await publish(pullRequest);
+
+          expect(fetchGraphQL).toHaveBeenNthCalledWith(
+            3,
+            expect.stringContaining('enablePullRequestAutoMerge'),
+            {
+              input: {
+                pullRequestId: 'PR_1',
+                mergeMethod: 'MERGE',
+                commitHeadline: 'Create Post',
+                expectedHeadOid: 'abc123',
+              },
+            },
+          );
+          // No merge is made here
+          expect(fetchAPI).toHaveBeenCalledTimes(2);
+          expect(fetchAPI).toHaveBeenLastCalledWith(
+            '/repos/owner/repo/git/refs/heads/cms/posts/hello',
+            expect.objectContaining({ method: 'DELETE' }),
+          );
+        });
+
+        test('reports a refusal once a conflict turns up', async () => {
+          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
+          vi.mocked(fetchGraphQL)
+            .mockResolvedValueOnce(createReadiness(unknown))
+            .mockResolvedValueOnce(createReadiness({ mergeStateStatus: 'DIRTY' }));
+
+          await expect(publish(pullRequest)).rejects.toThrow('Server responded with an error');
+          expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+          expect(fetchAPI).toHaveBeenCalledOnce();
+        });
+
+        test('takes a pull request merged on GitHub meanwhile as published', async () => {
+          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
+          vi.mocked(fetchGraphQL)
+            .mockResolvedValueOnce(createReadiness(unknown))
+            // GitHub doesn’t work out the mergeability of a merged pull request
+            .mockResolvedValueOnce(
+              createReadiness({ ...unknown, state: 'MERGED', merged: true }, 'SUCCESS'),
+            );
+
+          await publish(pullRequest);
+
+          expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+          expect(fetchAPI).toHaveBeenCalledTimes(2);
+          expect(fetchAPI).toHaveBeenLastCalledWith(
+            '/repos/owner/repo/git/refs/heads/cms/posts/hello',
+            expect.objectContaining({ method: 'DELETE' }),
+          );
+        });
+
+        test('reports a refusal for a pull request closed meanwhile', async () => {
+          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
+          vi.mocked(fetchGraphQL)
+            .mockResolvedValueOnce(createReadiness(unknown))
+            .mockResolvedValueOnce(createReadiness({ ...unknown, state: 'CLOSED' }));
+
+          await expect(publish(pullRequest)).rejects.toThrow('Server responded with an error');
+          expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+          expect(fetchAPI).toHaveBeenCalledOnce();
+        });
+
+        test('reports a failure once the check runs out of time', async () => {
+          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
+          vi.mocked(fetchGraphQL).mockResolvedValue(createReadiness(unknown, 'SUCCESS'));
+
+          await expect(publish(pullRequest)).rejects.toThrow(
+            'Timed out waiting for GitHub to check whether pull request #1 can be merged',
+          );
+          expect(fetchGraphQL).toHaveBeenCalledTimes(10);
+          expect(sleep).toHaveBeenCalledTimes(9);
+          // Neither a merge nor an auto-merge is attempted, and the branch is left alone
+          expect(fetchAPI).toHaveBeenCalledOnce();
+        });
+      });
+
       // @see https://github.com/sveltia/sveltia-cms/issues/1094
       describe('while a required check is running', () => {
         test('sets the pull request to auto-merge and waits for the merge', async () => {

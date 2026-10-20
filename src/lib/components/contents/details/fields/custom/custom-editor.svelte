@@ -36,7 +36,6 @@
 </script>
 
 <script>
-  import { isObject } from '@sveltia/utils/object';
   import { createElement } from 'react';
   import { getContext, onMount, untrack } from 'svelte';
 
@@ -46,7 +45,7 @@
   import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
   import { createReactRoot, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
+  import { updateFieldValue } from '$lib/services/contents/draft/update';
   import {
     registerCustomFieldInstance,
     triggerCustomFieldValidation,
@@ -140,11 +139,7 @@
       return;
     }
 
-    if (Array.isArray(value) || isObject(value)) {
-      updateNonPrimitiveValue({ draft, valueStoreKey, locale, keyPath, i18n, value });
-    } else {
-      draft[valueStoreKey][locale][keyPath] = value;
-    }
+    updateFieldValue({ draft, valueStoreKey, locale, keyPath, i18n, value });
   };
 
   /**

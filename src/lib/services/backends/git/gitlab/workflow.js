@@ -520,6 +520,16 @@ export const publish = async (pullRequest) => {
       return;
     }
 
+    // What held the merge back may have passed by the time the status settles, such as the
+    // mergeability check GitLab runs after a push, which locks the merge request meanwhile. The
+    // merge is then made once more, pinned to the same commit, so a push made since can’t slip in
+    if (status === 'mergeable') {
+      await fetchAPI(path, { method: 'PUT', body });
+      await deleteBranch(pullRequest.branch);
+
+      return;
+    }
+
     // The detailed status tells a running pipeline from a real blocker, such as a conflict.
     // Auto-merge would take a blocked merge request as well, but it would sit there unmerged while
     // the CMS reports the entry as published, so anything else stays an error

@@ -1,4 +1,4 @@
-import { toRaw } from '@sveltia/utils/object';
+import { isObject, toRaw } from '@sveltia/utils/object';
 import { compare } from '@sveltia/utils/string';
 import { TomlDate } from 'smol-toml';
 
@@ -436,6 +436,31 @@ const finalizeContent = ({
 };
 
 /**
+ * Remove `null` and `undefined` from the given value for TOML output, as TOML has no null. An item
+ * of a list, e.g. an empty optional Number field in a simple list, is dropped, as smol-toml throws
+ * on it. An object property is dropped too: smol-toml skips it in a table but writes an invalid
+ * inline table, e.g. for an object in a nested list.
+ * @param {any} value Value.
+ * @returns {any} Value without `null` and `undefined`. Arrays and plain objects are copied.
+ */
+const removeTomlNulls = (value) => {
+  if (Array.isArray(value)) {
+    return value.filter((item) => item !== null && item !== undefined).map(removeTomlNulls);
+  }
+
+  // Leave class instances, such as a `TomlDate`, as they are
+  if (isObject(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value))) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, val]) => val !== null && val !== undefined)
+        .map(([key, val]) => [key, removeTomlNulls(val)]),
+    );
+  }
+
+  return value;
+};
+
+/**
  * Serialize the content for the output.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -475,7 +500,8 @@ export const serializeContent = ({ draft, locale, valueMap, format }) => {
   });
 
   // Store the List fields with the `map_key_field` option as maps
-  const content = convertMapLists(finalizedContent, fields, false);
+  const mappedContent = convertMapLists(finalizedContent, fields, false);
+  const content = isTomlOutput ? removeTomlNulls(mappedContent) : mappedContent;
 
   // Handle a special case: top-level List field. TOML doesn’t support top-level arrays, so we
   // ignore the `root` option for such cases, unless the list is stored as a map

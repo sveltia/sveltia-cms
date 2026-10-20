@@ -11,7 +11,7 @@ import {
 } from '$lib/services/assets/subfolders';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
-import { initTestConfig } from '$lib/test/config';
+import { initTestConfig, serveMediaFolderAtSiteRoot } from '$lib/test/config';
 
 import SubfolderListItem from './subfolder-list-item.svelte';
 
@@ -162,6 +162,8 @@ describe('SubfolderListItem', () => {
   });
 
   test('withholds renaming and deleting a folder the CMS is served from', async () => {
+    serveMediaFolderAtSiteRoot();
+
     await render(SubfolderListItem, {
       subfolder: { name: 'admin', path: 'static/uploads/admin' },
       rowIndex: 0,

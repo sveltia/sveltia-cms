@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { hasTemplateTags } from './tags';
+import { hasTemplateTags, replaceTemplateTags } from './tags';
 
 describe('hasTemplateTags()', () => {
   test('should return true for simple template tag', () => {
@@ -150,5 +150,37 @@ describe('hasTemplateTags()', () => {
   test('should work with newlines and special whitespace', () => {
     expect(hasTemplateTags('line1\n{{title}}\nline2')).toBe(true);
     expect(hasTemplateTags('tab\t{{slug}}\ttab')).toBe(true);
+  });
+});
+
+describe('replaceTemplateTags()', () => {
+  /**
+   * Replace the template tags in the given string with markers.
+   * @param {string} str String.
+   * @returns {string} Result.
+   */
+  const replace = (str) => replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
+
+  test('should not take an apostrophe in a transformation argument as a quote', () => {
+    expect(replace("{{title | default('Don't')}} {{body}}")).toBe(
+      "<<title | default('Don't')>> <<body>>",
+    );
+    expect(replace("{{draft | ternary('It's a draft' , 'Isn't')}} {{body}}")).toBe(
+      "<<draft | ternary('It's a draft' , 'Isn't')>> <<body>>",
+    );
+  });
+
+  test('should not take an apostrophe outside a transformation argument as a quote', () => {
+    expect(replace("{{it's}} {{body}}")).toBe("<<it's>> <<body>>");
+  });
+
+  test('should keep closing braces in a quoted transformation argument', () => {
+    expect(replace("{{title | default( '}}' )}} {{body}}")).toBe(
+      "<<title | default( '}}' )>> <<body>>",
+    );
+  });
+
+  test('should leave an unterminated template tag unchanged', () => {
+    expect(replace("{{title | default('x'")).toBe("{{title | default('x'");
   });
 });

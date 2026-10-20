@@ -11,6 +11,10 @@ import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import EntryPreview from './entry-preview.svelte';
 
+/**
+ * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
+ */
+
 vi.mock('$lib/services/app/dependencies', () => ({
   getUnpkgURL: vi.fn((name) => `https://unpkg.com/${name}`),
   getLeafletMarkerIconURL: vi.fn(
@@ -28,7 +32,8 @@ const fields = [
 
 /**
  * Render the preview.
- * @returns {Promise<{ container: HTMLElement }>} Container.
+ * @returns {Promise<{ container: HTMLElement, entryDraft: EntryDraftState }>} Container and
+ * draft state.
  */
 const renderPreview = async () => {
   const draft = createMockDraft({
@@ -212,6 +217,52 @@ describe('EntryPreview', () => {
     await expect.poll(() => getBody()?.querySelector('h1')?.textContent).toBe('Hello');
     await expect.poll(() => getBody()?.querySelector('p')?.textContent).toBe('null');
     await expect.poll(() => getBody()?.querySelector('article')?.textContent).toContain('World');
+  });
+
+  test('keeps the field previews of a custom preview template mounted as the entry changes', async () => {
+    /**
+     * A template showing a field with `widgetFor()`.
+     * @param {any} props Props.
+     * @returns {any} React element.
+     */
+    const Template = ({ entry, widgetFor }) =>
+      createElement(
+        'article',
+        null,
+        createElement('h1', null, entry.getIn(['data', 'title'])),
+        widgetFor('body'),
+      );
+
+    customPreviewTemplateRegistry.set('posts', Template);
+
+    const { container, entryDraft } = await renderPreview();
+
+    /**
+     * Get the body of the frame, which appears once the Immutable library is loaded.
+     * @returns {HTMLElement | undefined} Body.
+     */
+    const getBody = () =>
+      /** @type {HTMLIFrameElement | null} */ (container.querySelector('iframe.preview'))
+        ?.contentDocument?.body;
+
+    /**
+     * Get the preview of the Body field in the frame.
+     * @returns {Element | null | undefined} Preview.
+     */
+    const getBodyPreview = () => getBody()?.querySelector('article [data-key-path="body"]');
+
+    await expect.poll(() => getBodyPreview()?.textContent).toContain('World');
+
+    const bodyPreview = getBodyPreview();
+
+    /** @type {any} */ (entryDraft.current).currentValues._default.title = 'Hi';
+    /** @type {any} */ (entryDraft.current).currentValues._default.body = 'Everyone';
+
+    // The template renders again, but the field preview follows the draft by itself, rather than
+    // being mounted again, which would make an image flash or a map reinitialize
+    await expect.poll(() => getBody()?.querySelector('h1')?.textContent).toBe('Hi');
+    await expect.poll(() => getBodyPreview()?.textContent).toContain('Everyone');
+    expect(getBodyPreview()).toBe(bodyPreview);
   });
 
   test('renders nothing without a draft', async () => {

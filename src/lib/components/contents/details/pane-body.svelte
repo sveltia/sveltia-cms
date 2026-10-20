@@ -5,11 +5,13 @@
 
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
+  import { isDraftReadonly } from '$lib/services/config/readonly';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
   import { createScrollSync } from '$lib/services/contents/editor/scroll-sync';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
+  import { isPendingDeletion } from '$lib/services/workflow';
 
   /**
    * @import { EntryEditorPane } from '$lib/types/private';
@@ -39,6 +41,11 @@
   const locale = $derived(thisPane.current?.locale);
   const mode = $derived(thisPane.current?.mode);
   const hasContent = $derived(!!locale && !!entryDraft.current?.currentValues[locale]);
+  // A read-only entry, or one awaiting deletion, is shown for reference only, so its locales can’t
+  // be enabled
+  const locked = $derived(
+    isDraftReadonly(entryDraft.current) || isPendingDeletion(entryDraft.current?.originalEntry),
+  );
   /* v8 ignore start -- only read for a disabled locale, which the pane always has */
   const labelOptions = $derived({
     values: { locale: locale ? (getLocaleLabel(locale) ?? locale) : '' },
@@ -109,16 +116,18 @@
       <span role="alert">
         {_(hasContent ? 'locale_x_now_disabled' : 'locale_x_has_been_disabled', labelOptions)}
       </span>
-      <Button
-        variant="tertiary"
-        label={_(hasContent ? 'reenable_x_locale' : 'enable_x_locale', labelOptions)}
-        onclick={() => {
-          /* v8 ignore next 3 -- the button is only offered for a disabled locale */
-          if (locale && entryDraft.current) {
-            toggleLocale({ draft: entryDraft.current, locale });
-          }
-        }}
-      />
+      {#if !locked}
+        <Button
+          variant="tertiary"
+          label={_(hasContent ? 'reenable_x_locale' : 'enable_x_locale', labelOptions)}
+          onclick={() => {
+            /* v8 ignore next 3 -- the button is only offered for a disabled locale */
+            if (locale && entryDraft.current) {
+              toggleLocale({ draft: entryDraft.current, locale });
+            }
+          }}
+        />
+      {/if}
     </EmptyState>
   {/if}
 </div>

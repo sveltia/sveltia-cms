@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isSecureURL, sendRequest } from './networking';
+import { isLocalHostname, isSecureURL, sendRequest } from './networking';
 
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn().mockResolvedValue(undefined) }));
 
@@ -8,6 +8,22 @@ vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn().mockResolvedValue(undefin
 const mockFetch = vi.fn();
 
 global.fetch = mockFetch;
+
+describe('isLocalHostname', () => {
+  test('should accept localhost, its subdomains and the loopback addresses', () => {
+    ['localhost', 'mysite.localhost', '127.0.0.1', '[::1]'].forEach((hostname) => {
+      expect(isLocalHostname(hostname)).toBe(true);
+    });
+  });
+
+  test('should reject other hostnames', () => {
+    ['example.com', 'localhost.example.com', 'notlocalhost', '192.168.0.1', '::1'].forEach(
+      (hostname) => {
+        expect(isLocalHostname(hostname)).toBe(false);
+      },
+    );
+  });
+});
 
 describe('isSecureURL', () => {
   test('should allow HTTPS URLs', () => {

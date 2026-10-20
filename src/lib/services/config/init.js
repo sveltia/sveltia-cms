@@ -124,10 +124,14 @@ export const initCmsConfig = async (manualConfig) => {
     // opaque `null` origin of a `file:` page or a sandboxed frame, which leaves no base for links
     config._baseURL = isURL(config._siteURL) ? new URL(config._siteURL).origin : '';
 
-    // Handle root collection folder variants, particularly for VitePress
+    // Handle root collection folder variants, particularly for VitePress: `.`, `./` and `/` all
+    // mean the root folder. A leading `./` is removed from any other folder, e.g. `./content`
     config.collections?.forEach((collection) => {
-      if ('folder' in collection && (collection.folder === '.' || collection.folder === '/')) {
-        collection.folder = '';
+      // The JSON schema has checked that `folder` is a string
+      if ('folder' in collection) {
+        collection.folder = /** @type {string} */ (collection.folder)
+          .replace(/^\.(?:\/|$)/, '')
+          .replace(/^\/$/, '');
       }
     });
 

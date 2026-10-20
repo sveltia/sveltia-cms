@@ -65,18 +65,19 @@ export const overlayTitle = createRawState('');
  */
 export const parseLocation = (href = window.location.href) => {
   const hashPath = new URL(href).hash.substring(1);
-
-  // Parse the hash as the path of a URL of its own. It’s given a leading slash if it lacks one,
-  // e.g. a link with the slashes percent-encoded, as the URL would be invalid otherwise. A fixed
-  // origin is used as the page’s may be `null`, e.g. on a `file:` URL
-  const { pathname, searchParams } = new URL(
-    `http://localhost${hashPath.startsWith('/') ? '' : '/'}${hashPath}`,
-  );
+  // Split the hash into a path and a query string by hand rather than parsing it as a URL of its
+  // own, which would resolve any `.` or `..` segment, even a percent-encoded one, so that searching
+  // for `..` would lead to the root path. A second `#` ends both
+  const [pathname, ...query] = hashPath.split('#')[0].split('?');
+  const searchParams = new URLSearchParams(query.join('?'));
 
   return {
+    // Give the path a leading slash if it lacks one, e.g. a link with the slashes percent-encoded.
     // Drop any trailing slash before decoding, so a hand-typed `#/collections/` resolves the same
     // way as `#/collections` rather than matching no route at all. The root path is left as is
-    path: decodeURIComponentSafely(pathname.replace(/(?!^)\/+$/, '')),
+    path: decodeURIComponentSafely(
+      `${pathname.startsWith('/') ? '' : '/'}${pathname}`.replace(/(?!^)\/+$/, ''),
+    ),
     params: Object.fromEntries(
       // Merge multiple values of the same key with a comma, e.g. `?a=1&a=2` becomes `{ a: '1,2' }`.
       // This is to support both `?tags=tag1,tag2` and `?tags=tag1&tags=tag2` formats for dynamic

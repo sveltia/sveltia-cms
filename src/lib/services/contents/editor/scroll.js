@@ -35,19 +35,20 @@ export const getProportionalScrollTop = ({
  * @param {number} args.y Top of the content area being scrolled, in the viewport.
  * @param {number} args.top Top of the field at the top of the content area, in the viewport.
  * @param {number} args.height Height of that field.
- * @param {number} args.targetOffsetTop Offset top of the matching field in the other pane.
- * @param {number} args.targetHeight Client height of the matching field.
+ * @param {number} args.targetTop Top of the matching field in the other pane’s scrollable content:
+ * the other pane’s scroll position that would bring it to the top of the pane.
+ * @param {number} args.targetHeight Height of the matching field.
  * @returns {number | undefined} Scroll position for the other pane, or `undefined` if the top of
  * the content area isn’t within the field.
  */
-export const getFieldAlignedScrollTop = ({ y, top, height, targetOffsetTop, targetHeight }) => {
+export const getFieldAlignedScrollTop = ({ y, top, height, targetTop, targetHeight }) => {
   const ratio = (y - top) / height;
 
   if (ratio < 0 || ratio > 1) {
     return undefined;
   }
 
-  return targetOffsetTop - y + targetHeight * ratio;
+  return targetTop + targetHeight * ratio;
 };
 
 /**

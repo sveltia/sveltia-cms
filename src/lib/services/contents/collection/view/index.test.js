@@ -511,6 +511,11 @@ describe('collection/view/index', () => {
     const mockEntries = [{ id: '1', slug: 'post-1', locales: {}, collectionName: 'posts' }];
 
     vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    // The entry stays shown, so only the filter change clears the selection
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(sortEntries).mockImplementation((entries) => entries);
+    vi.mocked(filterEntries).mockImplementation((entries) => entries);
+    vi.mocked(groupEntries).mockImplementation((entries) => [{ name: '*', entries }]);
     _allEntries.current = mockEntries;
     _selectedCollection.current = /** @type {any} */ ({ name: 'posts' });
     await wait();
@@ -2167,6 +2172,38 @@ describe('collection/view/index', () => {
       expect(viewTime.current).toEqual(tick);
     });
 
+    test('drops an entry from the selection once a time-based filter hides it', async () => {
+      const filters = [{ field: 'date', gte: '{{now}}' }];
+      /** @type {any} */
+      const later = { id: '2', slug: 'event-2', locales: {}, sha: 'def' };
+      /** @type {any} */
+      const draft = { id: 'draft-1', workflow: { collectionName: 'events' }, locales: {} };
+      const end = new Date(2026, 8, 17, 0, 0, 0);
+
+      // The first event starts at midnight, and is hidden from then on; the other ones aren’t
+      vi.mocked(getEntriesByCollection).mockReturnValue([...entries, later]);
+      vi.mocked(sortEntries).mockImplementation((_entries) => _entries);
+      vi.mocked(filterEntries).mockImplementation((_entries, _collection, _filters, time) =>
+        _entries.filter((entry) => entry !== entries[0] || /** @type {Date} */ (time) < end),
+      );
+      _allEntries.current = [...entries, later];
+      _unpublishedEntries.current = [draft];
+      await wait();
+      currentView.current = { type: 'list', filters };
+      await wait();
+      _selectedEntries.current = [entries[0], later, draft];
+      await wait();
+
+      expect(_selectedEntries.current).toEqual([entries[0], later, draft]);
+
+      vi.advanceTimersByTime(60000);
+      await wait();
+
+      // Neither the listed entries nor the filters have changed, so the selection isn’t cleared,
+      // but the hidden entry is no longer in it, where Delete would remove it
+      expect(_selectedEntries.current).toEqual([later, draft]);
+    });
+
     test('passes the time to the unpublished entry list', async () => {
       const filters = [{ field: 'date', gte: '{{today}}' }];
       const collection = _selectedCollection.current;
@@ -2289,6 +2326,58 @@ describe('collection/view/index', () => {
 
       expect(currentView.current.sort).toEqual({ key: 'commit_date', order: 'descending' });
       expect(currentView.current.group).toBeNull();
+    });
+
+    test('keeps the reorder view when the entries change while reordering', async () => {
+      _entryListSettings.current = {
+        posts: { type: 'list', sort: { key: 'title', order: 'descending' }, group: null },
+      };
+      _selectedCollection.current = collection;
+      await wait();
+      setReorderMode(true);
+
+      const reorderView = currentView.current;
+
+      expect(reorderView.sort).toEqual({ key: '_manual', order: 'ascending' });
+
+      // E.g. an asset upload or the commit metadata arriving reassigns all the entries, while the
+      // saved view is still the one from before reordering
+      _allEntries.current = [{ id: 'new' }];
+      await wait();
+
+      expect(currentView.current).toBe(reorderView);
+
+      setReorderMode(false);
+
+      expect(currentView.current.sort).toEqual({ key: 'title', order: 'descending' });
+
+      // Once the mode is exited, a change to the entries restores the view again
+      currentView.current = { type: 'grid' };
+      _allEntries.current = [];
+      await wait();
+
+      expect(currentView.current.sort).toEqual({ key: 'title', order: 'descending' });
+    });
+
+    test('restores the view of another entry collection selected while reordering', async () => {
+      _entryListSettings.current = {
+        drafts: { type: 'list', sort: { key: 'title', order: 'descending' }, group: null },
+      };
+      _selectedCollection.current = collection;
+      await wait();
+      setReorderMode(true);
+      _selectedCollection.current = { ...collection, name: 'drafts' };
+      await wait();
+
+      // The snapshot belongs to the collection being reordered, so it doesn’t keep the new one from
+      // getting its own view
+      expect(reordering.current).toBe(false);
+      expect(currentView.current).toEqual({
+        type: 'list',
+        sort: { key: 'title', order: 'descending' },
+        filters: [{ field: 'draft', pattern: false }],
+        group: null,
+      });
     });
 
     test('leaves the view alone for a file collection', async () => {
