@@ -166,8 +166,8 @@ importers:
         specifier: ^10.1.8
         version: 10.1.8(eslint@9.39.5(supports-color@10.2.2))
       eslint-plugin-jsdoc:
-        specifier: ^65.3.12
-        version: 65.3.12(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
+        specifier: ^65.3.15
+        version: 65.3.15(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
       eslint-plugin-package-json:
         specifier: ^1.10.1
         version: 1.10.1(eslint@9.39.5(supports-color@10.2.2))
@@ -194,7 +194,7 @@ importers:
         version: 1.64.1
       postcss-html:
         specifier: ^2.0.0
-        version: 2.0.0(postcss@8.5.30)
+        version: 2.0.0(postcss@8.5.31)
       prettier:
         specifier: ^3.9.10
         version: 3.9.10
@@ -1715,8 +1715,8 @@ packages:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
     engines: {node: '>=8'}
 
-  browserslist@4.29.3:
-    resolution: {integrity: sha512-1R4kiYKXGViqEN0CnoDrXc1StD9niAwu+j2dukWzrD4bJgsD4lDmEp0CRbc6E/vYJIfTHwPmwyaKtVSudICdPA==}
+  browserslist@4.29.4:
+    resolution: {integrity: sha512-2TcbbiwXEq+N0kD36tykpCfyyQigUXmuwNQbnPp4Xk4PX9JOqVIKjJlIDjpH7uY6tmRGoAd+apeT1p60T8wsdA==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
 
@@ -2245,8 +2245,8 @@ packages:
       '@typescript-eslint/parser':
         optional: true
 
-  eslint-plugin-jsdoc@65.3.12:
-    resolution: {integrity: sha512-oYzEwsNq5h3AsUmiEwaxdl5YMaINBudwepsplSKFxNOWKqJsb6FfRqNh6KEsMkMa7hrynHxw01/Y9Q5h/GeJxQ==}
+  eslint-plugin-jsdoc@65.3.15:
+    resolution: {integrity: sha512-cpU66X+daaX2X6cndE0grdLAIlodysI3KuUEdrJd6FvQHuuYOOvMRAdy8ToYjyJrsoUv0fXkMclA5RM5kaipMw==}
     engines: {node: ^22.22.2 || >=24.15.0}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0
@@ -3174,8 +3174,8 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  napi-postinstall@0.3.4:
-    resolution: {integrity: sha512-PHI5f1O0EP5xJ9gQmFGMS6IZcrVvTjpXjz7Na41gTE7eE2hK11lg04CECCYEEjdc17EV4DO+fkGEtt7TpTaTiQ==}
+  napi-postinstall@0.3.5:
+    resolution: {integrity: sha512-NFMjXXkyodBJnRrM0A6qxFO1OLUbrYLDhP1ZLetlXnyx41gKOAmVyROibq85j7I8dda4aZMs9L7kmRvvjNf7Cg==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
     hasBin: true
 
@@ -3411,8 +3411,8 @@ packages:
   postcss-value-parser@4.2.0:
     resolution: {integrity: sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==}
 
-  postcss@8.5.30:
-    resolution: {integrity: sha512-zkd+e9S1AQHhmaBKye9zlFHWjOwVgqXl1q3ECYy8561K7qxR2cREf/STLskulBFd78k6AOFeA+ff1TtEzk9bAA==}
+  postcss@8.5.31:
+    resolution: {integrity: sha512-YUbWYCgErwnMAVkjUnYa+KlMBzGpHwiIt/DE7f0G33AuX2LH9UcTk6KgWxd3zRU+pN3u/C+Xl3EnMLM4Hea7Sg==}
     engines: {node: ^10 || ^12 || >=14}
 
   prelude-ls@1.2.1:
@@ -3929,8 +3929,8 @@ packages:
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
-  undici@8.12.2:
-    resolution: {integrity: sha512-XtuDWVdqTLr3NAxm2ly9/hU6kUsJOgGh1RASzMBbsw6aWCOaQzHdW+QQDfdERjfJ2V5vL5pRPa4RetO9UfivDg==}
+  undici@8.12.3:
+    resolution: {integrity: sha512-+fdndUTwBP86cVjihTp21hZHo7d6oj1c/47XPA3lL8mM0XHs+C4EkcjmgRsFnFk2f/UONGDy9ItBItmXsLOQHw==}
     engines: {node: '>=22.19.0'}
 
   unicorn-magic@0.4.1:
@@ -4262,7 +4262,7 @@ snapshots:
     dependencies:
       '@babel/compat-data': 7.29.7
       '@babel/helper-validator-option': 7.29.7
-      browserslist: 4.29.3
+      browserslist: 4.29.4
       lru-cache: 5.1.1
       semver: 6.3.1
 
@@ -5614,13 +5614,13 @@ snapshots:
     dependencies:
       fill-range: 7.1.1
 
-  browserslist@4.29.3:
+  browserslist@4.29.4:
     dependencies:
       baseline-browser-mapping: 2.11.29
       caniuse-lite: 1.0.30001816
       electron-to-chromium: 1.5.459
       node-releases: 2.0.59
-      update-browserslist-db: 1.3.4(browserslist@4.29.3)
+      update-browserslist-db: 1.3.4(browserslist@4.29.4)
 
   buffer-image-size@0.6.4:
     dependencies:
@@ -6268,7 +6268,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-jsdoc@65.3.12(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3):
+  eslint-plugin-jsdoc@65.3.15(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3):
     dependencies:
       '@es-joy/jsdoccomment': 0.98.0
       '@es-joy/resolve.exports': 1.2.0
@@ -6382,9 +6382,9 @@ snapshots:
       esutils: 2.0.3
       globals: 16.5.0
       known-css-properties: 0.37.0
-      postcss: 8.5.30
-      postcss-load-config: 3.1.4(postcss@8.5.30)
-      postcss-safe-parser: 7.1.0(postcss@8.5.30)
+      postcss: 8.5.31
+      postcss-load-config: 3.1.4(postcss@8.5.31)
+      postcss-safe-parser: 7.1.0(postcss@8.5.31)
       semver: 7.8.5
       svelte-eslint-parser: 1.9.0(svelte@5.57.2(@typescript-eslint/types@8.71.2))
     optionalDependencies:
@@ -7008,7 +7008,7 @@ snapshots:
       parse5: 8.0.1
       saxes: 6.0.0
       tough-cookie: 6.0.2
-      undici: 8.12.2
+      undici: 8.12.3
       w3c-xmlserializer: 6.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -7223,7 +7223,7 @@ snapshots:
 
   nanoid@3.3.20: {}
 
-  napi-postinstall@0.3.4: {}
+  napi-postinstall@0.3.5: {}
 
   natural-compare@1.4.0: {}
 
@@ -7434,27 +7434,27 @@ snapshots:
 
   possible-typed-array-names@1.1.0: {}
 
-  postcss-html@2.0.0(postcss@8.5.30):
+  postcss-html@2.0.0(postcss@8.5.31):
     dependencies:
       htmlparser2: 9.1.0
       js-tokens: 9.0.1
-      postcss: 8.5.30
-      postcss-safe-parser: 7.1.0(postcss@8.5.30)
+      postcss: 8.5.31
+      postcss-safe-parser: 7.1.0(postcss@8.5.31)
 
-  postcss-load-config@3.1.4(postcss@8.5.30):
+  postcss-load-config@3.1.4(postcss@8.5.31):
     dependencies:
       lilconfig: 2.1.0
       yaml: 1.10.3
     optionalDependencies:
-      postcss: 8.5.30
+      postcss: 8.5.31
 
-  postcss-safe-parser@7.1.0(postcss@8.5.30):
+  postcss-safe-parser@7.1.0(postcss@8.5.31):
     dependencies:
-      postcss: 8.5.30
+      postcss: 8.5.31
 
-  postcss-scss@4.0.9(postcss@8.5.30):
+  postcss-scss@4.0.9(postcss@8.5.31):
     dependencies:
-      postcss: 8.5.30
+      postcss: 8.5.31
 
   postcss-selector-parser@7.1.6:
     dependencies:
@@ -7463,7 +7463,7 @@ snapshots:
 
   postcss-value-parser@4.2.0: {}
 
-  postcss@8.5.30:
+  postcss@8.5.31:
     dependencies:
       nanoid: 3.3.20
       picocolors: 1.1.1
@@ -7881,8 +7881,8 @@ snapshots:
       micromatch: 4.0.8
       normalize-path: 3.0.0
       picocolors: 1.1.1
-      postcss: 8.5.30
-      postcss-safe-parser: 7.1.0(postcss@8.5.30)
+      postcss: 8.5.31
+      postcss-safe-parser: 7.1.0(postcss@8.5.31)
       postcss-selector-parser: 7.1.6
       postcss-value-parser: 4.2.0
       string-width: 8.3.0
@@ -7925,8 +7925,8 @@ snapshots:
       eslint-scope: 8.4.0
       eslint-visitor-keys: 4.2.1
       espree: 10.4.0
-      postcss: 8.5.30
-      postcss-scss: 4.0.9(postcss@8.5.30)
+      postcss: 8.5.31
+      postcss-scss: 4.0.9(postcss@8.5.31)
       postcss-selector-parser: 7.1.6
       semver: 7.8.5
     optionalDependencies:
@@ -8117,13 +8117,13 @@ snapshots:
 
   undici-types@8.9.0: {}
 
-  undici@8.12.2: {}
+  undici@8.12.3: {}
 
   unicorn-magic@0.4.1: {}
 
   unrs-resolver@1.12.2:
     dependencies:
-      napi-postinstall: 0.3.4
+      napi-postinstall: 0.3.5
     optionalDependencies:
       '@unrs/resolver-binding-android-arm-eabi': 1.12.2
       '@unrs/resolver-binding-android-arm64': 1.12.2
@@ -8148,9 +8148,9 @@ snapshots:
       '@unrs/resolver-binding-win32-ia32-msvc': 1.12.2
       '@unrs/resolver-binding-win32-x64-msvc': 1.12.2
 
-  update-browserslist-db@1.3.4(browserslist@4.29.3):
+  update-browserslist-db@1.3.4(browserslist@4.29.4):
     dependencies:
-      browserslist: 4.29.3
+      browserslist: 4.29.4
       escalade: 3.2.0
       picocolors: 1.1.1
 
@@ -8175,7 +8175,7 @@ snapshots:
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
-      postcss: 8.5.30
+      postcss: 8.5.31
       rolldown: 1.2.14
       tinyglobby: 0.2.17
     optionalDependencies:
