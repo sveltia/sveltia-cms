@@ -795,6 +795,9 @@
  * @typedef {object} FileConfig
  * @property {FileExtension} extension File extension.
  * @property {FileFormat} format File format.
+ * @property {FileFormat} [configuredFormat] Format given in the configuration, when it differs from
+ * `format`: `frontmatter` for an existing file of a collection in that format, which is saved in
+ * the front matter format detected in the file. A custom formatter is looked up by this format.
  * @property {string} [basePath] Normalized `folder` collection option, relative to the project root
  * folder. Entry collection only.
  * @property {string} [subPath] Normalized `path` collection option, relative to `basePath`. Entry

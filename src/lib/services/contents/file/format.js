@@ -4,8 +4,8 @@ import { Document, isMap, visit } from 'yaml';
 import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { cmsConfig } from '$lib/services/config';
 import {
+  BUILTIN_FILE_FORMATS,
   FRONTMATTER_DELIMITER_MAP,
-  FRONTMATTER_FORMATS,
   TOML_FORMATS,
 } from '$lib/services/contents/file/constants';
 import {
@@ -26,6 +26,7 @@ import {
  * @import { FileConfig, InternalLocaleCode, ValueSourceMap } from '$lib/types/private';
  * @import {
  * FieldKeyPath,
+ * FileFormatterContext,
  * JsonFormatOptions,
  * RawEntryContent,
  * YamlFormatOptions,
@@ -309,7 +310,7 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
 };
 
 /**
- * Format raw entry content.
+ * Format raw entry content with the built-in formatter for its format.
  * @param {object} entry File entry.
  * @param {RawEntryContent | Record<InternalLocaleCode, RawEntryContent>} entry.content Content
  * object. Note that this method may modify the `content` (the `body` property will be removed if
@@ -319,36 +320,13 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
  * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
  * @param {ValueSourceMap} [entry.valueSources] Source text of the values read from the file being
  * overwritten, to write the ones that haven’t changed as they were.
- * @returns {Promise<string>} Formatted string.
- * @throws {Error} When the format has no formatter, neither a custom one nor a built-in one, or the
- * content could not be formatted. Writing an empty file instead would wipe the entry’s content.
+ * @returns {string} Formatted string.
+ * @throws {Error} When the format has no built-in formatter, or the content could not be formatted.
  */
-export const formatEntryFile = async ({ content, _file, comments, valueSources }) => {
+const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources }) => {
   const { format, yamlQuote = false } = _file;
-  const customFormatter = customFileFormatRegistry.get(format)?.formatter;
 
-  if (customFormatter) {
-    const output = await customFormatter(content);
-
-    if (typeof output !== 'string') {
-      throw new TypeError(
-        `The \`toFile\` method registered for the custom “${format}” format must return a string`,
-      );
-    }
-
-    return `${output.trim()}\n`;
-  }
-
-  if (format === 'raw') {
-    return typeof content.body === 'string' ? `${content.body}\n` : '';
-  }
-
-  const isYAML = /^ya?ml$/.test(format);
-
-  const isFrontMatter =
-    format === 'frontmatter' || FRONTMATTER_FORMATS.includes(/** @type {any} */ (format));
-
-  if (!isYAML && format !== 'toml' && format !== 'json' && !isFrontMatter) {
+  if (!BUILTIN_FILE_FORMATS.includes(format)) {
     throw new Error(
       customFileFormatRegistry.has(format)
         ? `Entries in the custom “${format}” format can’t be saved, as no \`toFile\` method was ` +
@@ -356,6 +334,12 @@ export const formatEntryFile = async ({ content, _file, comments, valueSources }
         : `Entries in the unknown “${format}” format can’t be saved`,
     );
   }
+
+  if (format === 'raw') {
+    return typeof content.body === 'string' ? `${content.body}\n` : '';
+  }
+
+  const isYAML = /^ya?ml$/.test(format);
 
   // Write the values that haven’t changed as they were, e.g. a float that is a whole number rather
   // than as an integer, or a TOML date rather than as a string
@@ -384,4 +368,81 @@ export const formatEntryFile = async ({ content, _file, comments, valueSources }
       cause: ex,
     });
   }
+};
+
+/**
+ * Format raw entry content, with the custom formatter registered for its format if any, or with the
+ * built-in one. A custom formatter can call the built-in one with the `serialize` function it’s
+ * given, e.g. to run the output through a code formatter.
+ * @param {object} entry File entry.
+ * @param {RawEntryContent | Record<InternalLocaleCode, RawEntryContent>} entry.content Content
+ * object. Note that this method may modify the `content` (the `body` property will be removed if
+ * exists) so it shouldn’t be a reference to an existing object.
+ * @param {FileConfig} entry._file Entry file configuration.
+ * @param {Record<FieldKeyPath, string>} [entry.comments] Comments to add before the keys, keyed by
+ * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
+ * @param {ValueSourceMap} [entry.valueSources] Source text of the values read from the file being
+ * overwritten, to write the ones that haven’t changed as they were.
+ * @returns {Promise<string>} Formatted string.
+ * @throws {Error} When the format has no formatter, neither a custom one nor a built-in one, or the
+ * content could not be formatted. Writing an empty file instead would wipe the entry’s content.
+ */
+export const formatEntryFile = async ({ content, _file, comments, valueSources }) => {
+  // An existing file of a collection in the `frontmatter` format is saved in the front matter
+  // format it was read in, but the custom formatter is registered under the configured format. Fall
+  // back to one registered for the detected format, which is what was used before
+  const { format, configuredFormat = format } = _file;
+
+  const customFormat = customFileFormatRegistry.get(configuredFormat)?.formatter
+    ? configuredFormat
+    : format;
+
+  const customFormatter = customFileFormatRegistry.get(customFormat)?.formatter;
+
+  if (!customFormatter) {
+    return formatWithBuiltInFormatter({ content, _file, comments, valueSources });
+  }
+
+  /** @type {FileFormatterContext} */
+  const context = {
+    /**
+     * Format the given content with the built-in formatter.
+     * @param {any} data Entry content.
+     * @returns {Promise<string>} Formatted string.
+     * @throws {Error} When the format has no built-in formatter, or the content could not be
+     * formatted.
+     */
+    serialize: async (data) => {
+      // Formatting an empty object instead would wipe the entry’s content
+      if (typeof data !== 'object' || data === null) {
+        throw new TypeError('The `serialize` function must be given the entry content');
+      }
+
+      if (!BUILTIN_FILE_FORMATS.includes(format)) {
+        throw new Error(
+          `Entries in the custom “${format}” format can’t be serialized, as there’s no built-in ` +
+            'formatter for it',
+        );
+      }
+
+      return formatWithBuiltInFormatter({
+        // Copy the content, as the built-in formatter takes the body out of it
+        content: Array.isArray(data) ? [...data] : { ...data },
+        _file,
+        comments,
+        valueSources,
+      });
+    },
+  };
+
+  const output = await customFormatter(content, context);
+
+  if (typeof output !== 'string') {
+    throw new TypeError(
+      `The \`toFile\` method registered for the custom “${customFormat}” format must return ` +
+        'a string',
+    );
+  }
+
+  return `${output.trim()}\n`;
 };

@@ -1049,7 +1049,7 @@ describe('Test formatEntryFile()', () => {
 
     const result = await formatEntryFile({ content, _file });
 
-    expect(customFormatter).toHaveBeenCalledWith(content);
+    expect(customFormatter).toHaveBeenCalledWith(content, { serialize: expect.any(Function) });
     expect(result).toBe('custom formatted content\n');
 
     // Clean up
@@ -1458,6 +1458,198 @@ describe('Test formatEntryFile() with comments', () => {
     );
     expect(await formatEntryFile({ content: { title: 'Hello' }, _file: json, comments })).toBe(
       '{\n  "title": "Hello"\n}\n',
+    );
+  });
+});
+
+describe('Test formatEntryFile() with the built-in formatter called from a custom one', () => {
+  /** @type {string[]} */
+  const registered = [];
+
+  /**
+   * Register a custom format for the test.
+   * @param {string} name Format name.
+   * @param {(value: any, context: any) => any} formatter Formatter.
+   */
+  const register = async (name, formatter) => {
+    const { customFileFormatRegistry } = await import('$lib/services/api/registries');
+
+    customFileFormatRegistry.set(name, { formatter, extension: 'md' });
+    registered.push(name);
+  };
+
+  afterEach(async () => {
+    const { customFileFormatRegistry } = await import('$lib/services/api/registries');
+
+    registered.splice(0).forEach((name) => customFileFormatRegistry.delete(name));
+  });
+
+  test('passes the output of the built-in formatter on to the custom one', async () => {
+    await register('yaml-frontmatter', async (data, { serialize }) =>
+      (await serialize(data)).toUpperCase(),
+    );
+
+    const _file = /** @type {FileConfig} */ ({
+      format: 'yaml-frontmatter',
+      extension: 'md',
+      fmDelimiters: ['---', '---'],
+    });
+
+    expect(
+      await formatEntryFile({
+        content: { title: 'Hello', body: 'Text' },
+        _file,
+        comments: { title: 'Page title' },
+      }),
+    ).toBe('---\n# PAGE TITLE\nTITLE: HELLO\n---\n\nTEXT\n');
+  });
+
+  test('writes the values that haven’t changed as they were', async () => {
+    await register('yaml', (data, { serialize }) => serialize(data));
+
+    const _file = /** @type {FileConfig} */ ({ format: 'yaml', extension: 'yml' });
+    /** @type {ValueSourceMap} */
+    const valueSources = { price: { source: '1.0', value: 1 } };
+
+    expect(await formatEntryFile({ content: { price: 1 }, _file, valueSources })).toBe(
+      'price: 1.0\n',
+    );
+  });
+
+  test('leaves the given content unchanged', async () => {
+    const content = { title: 'Hello', body: 'Text' };
+    /** @type {any} */
+    let received;
+
+    await register('yaml-frontmatter', async (data, { serialize }) => {
+      await serialize(data);
+      received = structuredClone(data);
+
+      return serialize(data);
+    });
+
+    const _file = /** @type {FileConfig} */ ({ format: 'yaml-frontmatter', extension: 'md' });
+
+    expect(await formatEntryFile({ content, _file })).toBe('---\ntitle: Hello\n---\n\nText\n');
+    expect(received).toEqual({ title: 'Hello', body: 'Text' });
+  });
+
+  test('serializes an array', async () => {
+    await register('json', (data, { serialize }) => serialize(data));
+
+    const _file = /** @type {FileConfig} */ ({ format: 'json', extension: 'json' });
+
+    expect(await formatEntryFile({ content: /** @type {any} */ ([{ a: 1 }]), _file })).toBe(
+      '[\n  {\n    "a": 1\n  }\n]\n',
+    );
+  });
+
+  test('passes on an error thrown by the built-in formatter', async () => {
+    await register('json', (data, { serialize }) => serialize(data));
+
+    const content = /** @type {any} */ ({ title: 'Test' });
+
+    content.self = content;
+
+    const _file = /** @type {FileConfig} */ ({ format: 'json', extension: 'json' });
+
+    await expect(formatEntryFile({ content, _file })).rejects.toThrow(
+      /^The entry could not be formatted due to TypeError/,
+    );
+  });
+
+  test('passes on an error thrown by the custom formatter', async () => {
+    await register('yaml', async (data, { serialize }) => {
+      await serialize(data);
+      throw new Error('Formatter failed');
+    });
+
+    const _file = /** @type {FileConfig} */ ({ format: 'yaml', extension: 'yml' });
+
+    await expect(formatEntryFile({ content: { title: 'Test' }, _file })).rejects.toThrow(
+      'Formatter failed',
+    );
+  });
+
+  test('throws for a custom format without a built-in formatter', async () => {
+    await register('json5', (data, { serialize }) => serialize(data));
+
+    const _file = /** @type {FileConfig} */ ({
+      format: /** @type {any} */ ('json5'),
+      extension: 'json5',
+    });
+
+    await expect(formatEntryFile({ content: { title: 'Test' }, _file })).rejects.toThrow(
+      'Entries in the custom “json5” format can’t be serialized, as there’s no built-in formatter ' +
+        'for it',
+    );
+  });
+
+  test('uses the formatter registered for the configured format of a front matter file', async () => {
+    await register(
+      'frontmatter',
+      async (data, { serialize }) => `${await serialize(data)}<!-- -->`,
+    );
+
+    // An existing TOML front matter file of a collection in the `frontmatter` format
+    const _file = /** @type {FileConfig} */ ({
+      format: 'toml-frontmatter',
+      configuredFormat: 'frontmatter',
+      extension: 'md',
+      fmDelimiters: ['+++', '+++'],
+    });
+
+    expect(await formatEntryFile({ content: { title: 'Hello', body: 'Text' }, _file })).toBe(
+      '+++\ntitle = "Hello"\n+++\n\nText\n<!-- -->\n',
+    );
+  });
+
+  test('prefers the formatter registered for the configured format to the detected one', async () => {
+    await register('frontmatter', () => 'configured');
+    await register('toml-frontmatter', () => 'detected');
+
+    const _file = /** @type {FileConfig} */ ({
+      format: 'toml-frontmatter',
+      configuredFormat: 'frontmatter',
+      extension: 'md',
+    });
+
+    expect(await formatEntryFile({ content: { title: 'Hello' }, _file })).toBe('configured\n');
+  });
+
+  test('falls back to the formatter registered for the detected format', async () => {
+    await register('toml-frontmatter', () => 'detected');
+
+    const _file = /** @type {FileConfig} */ ({
+      format: 'toml-frontmatter',
+      configuredFormat: 'frontmatter',
+      extension: 'md',
+    });
+
+    expect(await formatEntryFile({ content: { title: 'Hello' }, _file })).toBe('detected\n');
+  });
+
+  test('throws when the built-in formatter isn’t given the content', async () => {
+    await register('yaml-frontmatter', (_data, { serialize }) => serialize());
+
+    const _file = /** @type {FileConfig} */ ({ format: 'yaml-frontmatter', extension: 'md' });
+
+    await expect(formatEntryFile({ content: { title: 'Test' }, _file })).rejects.toThrow(
+      'The `serialize` function must be given the entry content',
+    );
+  });
+
+  test('names the configured format when the custom formatter returns a non-string', async () => {
+    await register('frontmatter', () => undefined);
+
+    const _file = /** @type {FileConfig} */ ({
+      format: 'yaml-frontmatter',
+      configuredFormat: 'frontmatter',
+      extension: 'md',
+    });
+
+    await expect(formatEntryFile({ content: { title: 'Test' }, _file })).rejects.toThrow(
+      'The `toFile` method registered for the custom “frontmatter” format must return a string',
     );
   });
 });

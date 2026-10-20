@@ -2558,9 +2558,19 @@
  */
 
 /**
+ * Context passed to a custom file formatter.
+ * @typedef {object} FileFormatterContext
+ * @property {(value: any) => Promise<string>} serialize Function to format the given entry content
+ * with the built-in formatter for the format, using the same options as when no custom formatter
+ * is registered, e.g. the front matter delimiters and the `output` options. The given content
+ * isn’t modified. Only available for a custom format registered under a built-in name, such as
+ * `yaml-frontmatter`; otherwise it throws an error.
+ */
+
+/**
  * Entry file formatter for a custom file format. It receives the entry content as an object and
  * returns the file content. The output is trimmed and a trailing line break is added.
- * @typedef {(value: any) => string | Promise<string>} FileFormatter
+ * @typedef {(value: any, context: FileFormatterContext) => string | Promise<string>} FileFormatter
  * @see https://decapcms.org/docs/custom-formatters/
  * @see https://sveltiacms.app/en/docs/api/file-formats
  */

@@ -54,7 +54,12 @@ describe('getSavedFileConfig()', () => {
         previousPath: 'content/a.md',
         path: 'content/a.md',
       }),
-    ).toEqual({ ...FRONTMATTER_FILE, format: 'toml-frontmatter', fmDelimiters: ['+++', '+++'] });
+    ).toEqual({
+      ...FRONTMATTER_FILE,
+      format: 'toml-frontmatter',
+      configuredFormat: 'frontmatter',
+      fmDelimiters: ['+++', '+++'],
+    });
   });
 
   test('keeps the delimiters the collection sets', () => {
@@ -66,7 +71,12 @@ describe('getSavedFileConfig()', () => {
         previousPath: 'content/a.md',
         path: 'content/a.md',
       }),
-    ).toEqual({ ...FRONTMATTER_FILE, format: 'json-frontmatter', fmDelimiters: ['~~~', '~~~'] });
+    ).toEqual({
+      ...FRONTMATTER_FILE,
+      format: 'json-frontmatter',
+      configuredFormat: 'frontmatter',
+      fmDelimiters: ['~~~', '~~~'],
+    });
   });
 
   test('passes the format on to the new path of a renamed file', () => {

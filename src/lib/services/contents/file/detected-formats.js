@@ -40,6 +40,7 @@ export const getSavedFileConfig = ({ _file, previousPath, path }) => {
   return {
     ..._file,
     format,
+    configuredFormat: _file.format,
     fmDelimiters: _file.fmDelimiters ?? FRONTMATTER_DELIMITER_MAP[format],
   };
 };
