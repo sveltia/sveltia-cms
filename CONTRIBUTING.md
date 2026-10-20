@@ -12,7 +12,7 @@ You can also [request new features](https://github.com/sveltia/sveltia-cms/issue
 
 ## Pull requests
 
-Due to limited review resources and ongoing technical upgrades across the codebase, pull requests will not be accepted for the time being, except for localization and trivial changes, such as fixing typos or style issues. Please file issues instead. We plan to reevaluate the UI framework, currently Svelte, and create contributor documents after the 2.0 release.
+For [various reasons](https://github.com/sveltia/sveltia-cms/issues/966#issuecomment-5645271030), pull requests will not be accepted for the time being, except for localization and trivial changes, such as fixing typos or style issues. Please file issues instead. We plan to reevaluate the UI framework, currently Svelte, and create contributor documents after the 2.0 release.
 
 We will block anyone who sends AI-generated poor-quality PRs. Please don’t waste your time or ours by doing so.
 
