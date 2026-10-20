@@ -389,6 +389,66 @@ test.describe('as a contributor', () => {
       ]);
     });
 
+    test.describe('with a configured branch the fork doesn’t have', () => {
+      test.use({
+        config: {
+          ...OPEN_AUTHORING_CONFIG,
+          backend: { ...OPEN_AUTHORING_CONFIG.backend, branch: 'preview' },
+        },
+      });
+
+      test('starts a branch from the fork’s default branch when the head upstream is refused', async ({
+        cms,
+        github,
+        page,
+      }) => {
+        const { oid: forkHead } = github.head;
+
+        // The branch was created upstream after the fork was made, e.g. for a deploy preview, and
+        // has a workflow file the fork lacks
+        github.createBranch('preview', github.head.oid);
+        github.commit({ '.github/workflows/deploy.yml': 'on: push' }, { branch: 'preview' });
+
+        await cms.open();
+        await expect(getEntryRows(page)).toHaveText([/First Post/]);
+        expect(github.refs.has(github.forkBranch('preview'))).toBe(false);
+
+        await saveSecondPost(page);
+
+        const branch = github.forkBranch(SECOND_POST_BRANCH);
+
+        await expect
+          .poll(() => github.readFile('content/posts/second-post.md', branch))
+          .toBe(post('Second Post', 'Coming soon.'));
+        expect(github.getHead(branch).parents).toEqual([forkHead]);
+      });
+
+      test('leaves out what the fork’s default branch has on top of where it meets the branch', async ({
+        cms,
+        github,
+        page,
+      }) => {
+        const { oid: mergeBase } = github.head;
+
+        github.createBranch('preview', github.head.oid);
+        github.commit({ '.github/workflows/deploy.yml': 'on: push' }, { branch: 'preview' });
+        // A commit the configured branch doesn’t have, as with a fork of its own or a default
+        // branch that has moved on from the configured one
+        github.commit({ 'notes.md': 'Mine.' }, { branch: github.forkBranch('main') });
+
+        await cms.open();
+        await saveSecondPost(page);
+
+        const branch = github.forkBranch(SECOND_POST_BRANCH);
+
+        await expect
+          .poll(() => github.readFile('content/posts/second-post.md', branch))
+          .toBe(post('Second Post', 'Coming soon.'));
+        expect(github.getHead(branch).parents).toEqual([mergeBase]);
+        expect(github.readFile('notes.md', branch)).toBeUndefined();
+      });
+    });
+
     test('saves again to the same branch in the fork', async ({ cms, github, page }) => {
       await cms.open();
       await saveSecondPost(page);

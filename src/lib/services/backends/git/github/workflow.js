@@ -205,8 +205,8 @@ export const fetchPullRequests = async () =>
  * two different repositories — the contributor’s fork and the configured one — because a fork that
  * has drifted would otherwise pass its own commits on to everything branched from it. A fork shares
  * an object store with its parent, so a commit that only exists upstream can still be branched from
- * in the fork. The fork’s own copy of the branch is fetched as well, for when GitHub refuses that:
- * see {@link createBranch}.
+ * in the fork. Whether the fork has its own copy of the branch, and the name of its default branch,
+ * are fetched as well, for when GitHub refuses that: see {@link createBranch}.
  */
 const FETCH_BRANCH_BASE_QUERY = `
   query(
@@ -219,9 +219,10 @@ const FETCH_BRANCH_BASE_QUERY = `
     fork: repository(owner: $forkOwner, name: $forkRepo) {
       id
       ref(qualifiedName: $branch) {
-        target {
-          oid
-        }
+        name
+      }
+      defaultBranchRef {
+        name
       }
     }
     base: repository(owner: $owner, name: $repo) {
@@ -324,6 +325,31 @@ const tryCreateRef = async (repositoryId, branch, oid) => {
 };
 
 /**
+ * Find the newest commit a branch of the Open Authoring fork has in common with the configured
+ * branch, which is where the two diverged, or the fork branch’s head if it’s only behind.
+ * @param {string} forkOwner Owner of the fork.
+ * @param {string} forkBranch Branch in the fork.
+ * @returns {Promise<string | undefined>} Git object ID, or `undefined` if it couldn’t be found.
+ * @see https://docs.github.com/en/rest/commits/commits#compare-two-commits
+ */
+const fetchForkMergeBase = async (forkOwner, forkBranch) => {
+  const { owner, repo, branch } = repository;
+  const base = encodePathSegments(/** @type {string} */ (branch));
+  // A comparison across repositories identifies the head branch by the fork’s owner
+  const head = `${encodeURIComponent(forkOwner)}:${encodePathSegments(forkBranch)}`;
+
+  try {
+    const { merge_base_commit: mergeBase } = /** @type {Record<string, any>} */ (
+      await fetchAPI(`/repos/${owner}/${repo}/compare/${base}...${head}?per_page=1`)
+    );
+
+    return mergeBase?.sha;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
  * Create a new branch pointing at the head of the configured branch. If the branch already exists,
  * which happens when an earlier pull request for the same entry left it behind, the error is
  * ignored. The GraphQL API is used rather than the REST one, because a failed mutation still
@@ -367,23 +393,23 @@ export const createBranch = async (branch) => {
 
   let sha = base.ref.target.oid;
   let error = await tryCreateRef(fork.id, branch, sha);
-  const forkHead = fork.ref?.target.oid;
 
   // An OAuth token without the `workflow` scope can’t bring changes to GitHub Actions workflow
   // files into a repository, which a branch starting upstream does when a fork that has fallen
   // behind lacks the latest ones. GitHub then refuses the mutation for lack of permission, and the
-  // sync on sign-in has been refused for the same reason. The branch starts from the fork’s own
-  // copy of the configured branch instead: one that is only behind adds nothing to the pull
-  // request, which is compared from where the two meet
-  if (
-    error &&
-    openAuthoring.current &&
-    /permission/i.test(getErrorMessage(error)) &&
-    forkHead &&
-    forkHead !== sha
-  ) {
-    sha = forkHead;
-    error = await tryCreateRef(fork.id, branch, sha);
+  // sync on sign-in has been refused for the same reason. The branch starts instead from where the
+  // fork’s own copy of the configured branch meets it, which the fork already has, so the pull
+  // request holds nothing but the entry. A fork has no copy of a branch created upstream after it
+  // was made, e.g. for a deploy preview, nor of any but the default branch if it was made with that
+  // alone, so its default branch stands in then
+  if (error && openAuthoring.current && /permission/i.test(getErrorMessage(error))) {
+    const forkBranch = fork.ref?.name ?? fork.defaultBranchRef?.name;
+    const mergeBase = forkBranch ? await fetchForkMergeBase(forkOwner, forkBranch) : undefined;
+
+    if (mergeBase && mergeBase !== sha) {
+      sha = mergeBase;
+      error = await tryCreateRef(fork.id, branch, sha);
+    }
   }
 
   if (error) {

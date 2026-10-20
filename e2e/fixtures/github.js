@@ -900,7 +900,8 @@ export class MockGitHub extends MockGitRepository {
 
   /**
    * Answer a request to compare two branches, possibly across repositories, or a branch with a
-   * commit, with the files the head changes since the merge base, like GitHub’s “Files changed”.
+   * commit, with the merge base and the files the head changes since then, like GitHub’s “Files
+   * changed”.
    * @param {string} range Encoded range, e.g. `main...mona:cms/mona/e2e-site/posts/hello` or
    * `main...<oid>`.
    * @returns {MockResponse} Response.
@@ -927,6 +928,7 @@ export class MockGitHub extends MockGitRepository {
 
     return {
       json: {
+        merge_base_commit: { sha: mergeBase.oid },
         files: MockGitHub.diffTrees(mergeBase.tree, headCommit.tree).map(
           ({ path, changeType }) => ({
             filename: path,
@@ -1259,7 +1261,8 @@ export class MockGitHub extends MockGitRepository {
       };
     }
 
-    if (query.includes('defaultBranchRef')) {
+    // The default branch name, which the query for a workflow branch’s base asks the fork for too
+    if (query.includes('defaultBranchRef') && !/fork:\s*repository\(/.test(query)) {
       return { data: { repository: { defaultBranchRef: { name: this.branch } } } };
     }
 
@@ -1289,8 +1292,8 @@ export class MockGitHub extends MockGitRepository {
       return { data: { repository: { refs: { nodes: this.findForkBranches(variables) } } } };
     }
 
-    // The repository to create a workflow branch in, with its copy of the branch to start it from,
-    // and the head of that branch in the repository
+    // The repository to create a workflow branch in, whether it has a copy of the branch and the
+    // name of its default branch, and the head of that branch in the repository
     if (/fork:\s*repository\(/.test(query)) {
       const { forkOwner, forkRepo, branch } = variables;
       const isFork = forkOwner === this.fork?.owner && forkRepo === this.fork?.repo;
@@ -1299,11 +1302,16 @@ export class MockGitHub extends MockGitRepository {
         data: {
           fork:
             forkOwner === this.owner && forkRepo === this.repo
-              ? { id: this.repositoryId, ref: this.getRefNode(branch, { oid: true }) }
+              ? {
+                  id: this.repositoryId,
+                  ref: this.refs.has(branch) ? { name: branch } : null,
+                  defaultBranchRef: { name: this.branch },
+                }
               : isFork
                 ? {
                     id: this.forkId,
-                    ref: this.getRefNode(this.forkBranch(branch), { oid: true }),
+                    ref: this.refs.has(this.forkBranch(branch)) ? { name: branch } : null,
+                    defaultBranchRef: { name: this.branch },
                   }
                 : null,
           base: { ref: this.getRefNode(variables.branch, { oid: true }) },
