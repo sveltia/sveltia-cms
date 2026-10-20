@@ -1,32 +1,32 @@
 # Contributing to Sveltia CMS
 
+## Donations
+
+Maintainer [@kyoshino](https://github.com/kyoshino) is accepting donations to support the project. If you’d like to chip in financially, you can do so through [GitHub Sponsors](https://github.com/sponsors/kyoshino). Your support will help us maintain and improve Sveltia CMS, and we really appreciate it!
+
+Donations are primarily used to cover the monthly cost of the Claude Max subscription, which is US$100 or CA$150.
+
 ## Bug reports
 
-Since Sveltia CMS is still in its early stages, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) so we can make the product better for everyone.
+Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) so we can make the product better for everyone.
 
-We usually fix bugs within 12 hours of them being reported, but it can take longer if the issue is complex or we’re really busy. We appreciate your patience and understanding.
+We usually fix bugs within 8 hours of them being reported, but it can take longer if the issue is complex or we’re busy. We appreciate your patience and understanding.
 
 ## Feature requests
 
-You can also [request new features](https://github.com/sveltia/sveltia-cms/issues/new?type=feature), but we may not be able to respond due to [heavy workload](https://sveltiacms.app/en/docs/roadmap) and limited resources. Keep in mind that even though there are only a handful of issues in [our repository](https://github.com/sveltia/sveltia-cms/issues?q=is%3Aissue%20state%3Aopen%20type%3AFeature), our main focus is on [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues?q=label%3A%22type%3A%20feature%22%20OR%20label%3A%22kind%3A%20feature%22), which means we have tons of things to do.
+You can [request new features](https://github.com/sveltia/sveltia-cms/issues/new?type=feature), but we may not be able to respond due to [heavy workload](https://sveltiacms.app/en/docs/roadmap) and limited resources. Keep in mind that even though there are only a handful of issues in [our repository](https://github.com/sveltia/sveltia-cms/issues?q=is%3Aissue%20state%3Aopen%20type%3AFeature), our main focus is on [Netlify/Decap CMS issues](https://github.com/decaporg/decap-cms/issues?q=label%3A%22type%3A%20feature%22%20OR%20label%3A%22kind%3A%20feature%22), which means we have tons of things to do.
 
 ## Pull requests
 
 For [various reasons](https://github.com/sveltia/sveltia-cms/issues/966#issuecomment-5645271030), pull requests will not be accepted for the time being, except for localization and trivial changes, such as fixing typos or style issues. Please file issues instead. We plan to reevaluate the UI framework, currently Svelte, and create contributor documents after the 2.0 release.
 
-We will block anyone who sends AI-generated poor-quality PRs. Please don’t waste your time or ours by doing so.
-
-## Localizations
+## Localization
 
 We’re now looking for volunteers to help us translate Sveltia CMS into different languages. If you’re interested in helping, please check out our [localization guide](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
 
 ## Discussions
 
-Sometimes developers and users ask questions in our [discussion forum](https://github.com/sveltia/sveltia-cms/discussions/categories/q-a). If you know the answer, feel free to participate by leaving a comment.
-
-## Donations
-
-Maintainer [@kyoshino](https://github.com/kyoshino) is accepting donations to support the project. If you’d like to chip in financially, you can do so through [GitHub Sponsors](https://github.com/sponsors/kyoshino). Your support will help us maintain and improve Sveltia CMS, and we really appreciate it!
+Sometimes developers and users ask questions in our [discussion forum](https://github.com/sveltia/sveltia-cms/discussions/categories/q-a) or [Discord](https://discord.com/invite/5hwCGqup5b). If you know the answer, feel free to participate by leaving a comment.
 
 ## Other things you can do
 
