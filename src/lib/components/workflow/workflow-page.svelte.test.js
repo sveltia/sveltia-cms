@@ -12,6 +12,7 @@ import {
   unpublishedEntriesLoaded,
 } from '$lib/services/workflow';
 import { resetDeployingEntries, trackDeployingEntry } from '$lib/services/workflow/deploy';
+import { reloadUnpublishedEntries } from '$lib/services/workflow/load';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import {
   discardWorkflowEntry,
@@ -25,6 +26,7 @@ import {
   initTestConfig,
   setEntries,
 } from '$lib/test/config';
+import { waitForToastsToHide } from '$lib/test/toast';
 
 import WorkflowPage from './workflow-page.svelte';
 
@@ -35,6 +37,7 @@ vi.mock('$lib/services/deployments/poll', () => ({
 vi.mock('$lib/services/deployments/resolve', () => ({
   canResolveDeployments: vi.fn(() => true),
 }));
+vi.mock('$lib/services/workflow/load', () => ({ reloadUnpublishedEntries: vi.fn() }));
 vi.mock('$lib/services/workflow/save', () => ({
   upsertUnpublishedEntry: vi.fn(),
   removeUnpublishedEntry: vi.fn(),
@@ -507,6 +510,122 @@ describe('WorkflowPage', () => {
     );
   });
 
+  test('refreshes the board on request, saying when it’s done', async () => {
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(reloadUnpublishedEntries).mockReturnValueOnce(/** @type {any} */ (promise));
+    await render(WorkflowPage);
+
+    await expect
+      .element(page.getByRole('main', { name: 'Editorial Workflow' }).getByRole('toolbar'))
+      .toMatchTextContent('Editorial Workflow');
+
+    const button = page.getByRole('button', { name: 'Refresh' });
+
+    await button.click();
+    expect(reloadUnpublishedEntries).toHaveBeenCalledOnce();
+    await expect.element(page.getByRole('status')).toMatchTextContent('Refreshing…');
+    // Not asked again while the request is on its way
+    await expect.element(button).toBeDisabled();
+
+    resolve(true);
+    await expect.element(page.getByRole('status')).toMatchTextContent('The board is up to date.');
+    await expect.element(button).toBeEnabled();
+    await waitForToastsToHide();
+  });
+
+  test('reports a failed refresh', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(reloadUnpublishedEntries).mockRejectedValueOnce(new Error('offline'));
+    await render(WorkflowPage);
+
+    await page.getByRole('button', { name: 'Refresh' }).click();
+    await expect
+      .element(page.getByRole('alert'))
+      .toMatchTextContent('Couldn’t refresh the board. Please try again.');
+    await expect.element(page.getByRole('button', { name: 'Refresh' })).toBeEnabled();
+    await waitForToastsToHide();
+  });
+
+  test('acts on an entry as it is once a reload has replaced it', async () => {
+    await render(WorkflowPage);
+
+    await page
+      .getByRole('list', { name: 'Ready' })
+      .getByRole('button', { name: 'Publish Entry' })
+      .click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Publish Entry' });
+
+    await expect.element(dialog).toBeVisible();
+
+    // The pull requests are read again while the dialog is open, and a colleague’s commit has
+    // changed the entry since; the reload keeps its ID
+    const [, , , ready, ...rest] = unpublishedEntries.current;
+    const { pullRequest } = ready.workflow;
+
+    const reloaded = {
+      ...ready,
+      slug: 'ready-1-reloaded',
+      workflow: { ...ready.workflow, pullRequest: { ...pullRequest, headSHA: 'pushed-since' } },
+    };
+
+    unpublishedEntries.current = [...unpublishedEntries.current.slice(0, 3), reloaded, ...rest];
+    await dialog.getByRole('button', { name: 'Publish' }).click();
+
+    // The entry is the one in the store, but the merge stays pinned to the commit the dialog was
+    // opened for, so the colleague’s commit isn’t published unseen
+    await vi.waitFor(() =>
+      expect(publishWorkflowEntry).toHaveBeenCalledWith({
+        ...reloaded,
+        workflow: { ...reloaded.workflow, pullRequest },
+      }),
+    );
+    await waitForToastsToHide();
+  });
+
+  test('leaves an entry alone once a reload has taken it off the board', async () => {
+    await render(WorkflowPage);
+
+    await page
+      .getByRole('list', { name: 'Ready' })
+      .getByRole('button', { name: 'Publish Entry' })
+      .click();
+    await expect.element(page.getByRole('alertdialog', { name: 'Publish Entry' })).toBeVisible();
+
+    // Its pull request has been merged or closed on the Git service in the meantime
+    unpublishedEntries.current = unpublishedEntries.current.filter(
+      ({ slug }) => slug !== 'ready-1',
+    );
+    await page
+      .getByRole('alertdialog', { name: 'Publish Entry' })
+      .getByRole('button', { name: 'Publish' })
+      .click();
+    await expect
+      .element(page.getByRole('alertdialog', { name: 'Publish Entry' }))
+      .not.toBeInTheDocument();
+
+    await page
+      .getByRole('list', { name: 'Drafts' })
+      .getByRole('button', { name: 'Delete Entry' })
+      .nth(0)
+      .click();
+    await expect.element(page.getByRole('alertdialog', { name: 'Delete Entry' })).toBeVisible();
+    unpublishedEntries.current = unpublishedEntries.current.filter(
+      ({ slug }) => slug !== 'draft-1',
+    );
+    await page
+      .getByRole('alertdialog', { name: 'Delete Entry' })
+      .getByRole('button', { name: 'Delete' })
+      .click();
+    await expect
+      .element(page.getByRole('alertdialog', { name: 'Delete Entry' }))
+      .not.toBeInTheDocument();
+
+    expect(publishWorkflowEntry).not.toHaveBeenCalled();
+    expect(discardWorkflowEntry).not.toHaveBeenCalled();
+  });
+
   test('shows a loading state until the pull requests are fetched', async () => {
     // The data is only awaited when the workflow is enabled, which takes a Git backend
     await initTestConfig({
@@ -520,6 +639,8 @@ describe('WorkflowPage', () => {
     await render(WorkflowPage);
 
     await expect.element(page.getByText('Loading entries…')).toBeInTheDocument();
+    // There’s nothing to refresh yet
+    await expect.element(page.getByRole('button', { name: 'Refresh' })).toBeDisabled();
 
     unpublishedEntriesLoaded.current = true;
     await expect

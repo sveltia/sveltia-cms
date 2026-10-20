@@ -92,6 +92,37 @@ describe('PublishEntryButton', () => {
     await expect.poll(() => window.location.hash).toBe('#/collections/posts');
   });
 
+  test('publishes the version the editor shows, not one a reload has brought in', async () => {
+    vi.mocked(publishWorkflowEntry).mockResolvedValue(undefined);
+
+    // The editor was opened at one commit, and the pull requests have been read again since a
+    // commit nobody has reviewed was pushed to the branch
+    const reviewed = createEntry('pending_publish', 'hello', { headSHA: 'reviewed' });
+    const reloaded = createEntry('pending_publish', 'hello', { headSHA: 'pushed-since' });
+
+    await renderWithDraft(PublishEntryButton, {
+      draft: createEntryDraft(reviewed),
+      props: { entry: reloaded },
+    });
+
+    await page.getByRole('button', { name: 'Publish Entry' }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Publish Entry' })
+      .getByRole('button', { name: 'Publish' })
+      .click();
+
+    // Pinned to the reviewed commit, so the merge is refused rather than taking the push along
+    await vi.waitFor(() =>
+      expect(publishWorkflowEntry).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workflow: expect.objectContaining({
+            pullRequest: expect.objectContaining({ headSHA: 'reviewed' }),
+          }),
+        }),
+      ),
+    );
+  });
+
   test('leaves another entry’s draft alone when the merge lands late', async () => {
     const { promise: merging, resolve: merge } = /** @type {PromiseWithResolvers<void>} */ (
       Promise.withResolvers()

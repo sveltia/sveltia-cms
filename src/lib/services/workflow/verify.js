@@ -349,6 +349,28 @@ export const verifyMergeState = async (entry, state, fetchUnchangedPaths) => {
 };
 
 /**
+ * Pin the publish of the given entry to the head commit the user has reviewed. The pull requests
+ * are read again from time to time, so the entry in the store can carry a commit pushed since the
+ * editor or the confirmation dialog was opened; merging that one would take content along that
+ * nobody has seen. With the reviewed head, {@link verifyMergeState} refuses the publish instead,
+ * and the user is asked to review the latest version first.
+ * @param {UnpublishedEntry} entry Entry from the store.
+ * @param {string | undefined} headSHA Head commit the user has reviewed. `undefined` if the user
+ * hasn’t seen any version of the pull request, e.g. when the editor was opened before it existed,
+ * which has the publish refused as well.
+ * @returns {UnpublishedEntry} Entry to publish; the same object if the head is the reviewed one.
+ */
+export const pinReviewedHead = (entry, headSHA) => {
+  const { workflow } = entry;
+
+  if (workflow.pullRequest.headSHA === headSHA) {
+    return entry;
+  }
+
+  return { ...entry, workflow: { ...workflow, pullRequest: { ...workflow.pullRequest, headSHA } } };
+};
+
+/**
  * Get the message to show when an Editorial Workflow action has failed. A refused publish says what
  * the pull request holds, and a localized error from the backend what stands in the way, e.g.
  * another request open from the workflow branch, neither of which trying again would change. See

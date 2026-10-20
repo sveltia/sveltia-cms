@@ -752,6 +752,42 @@ test.describe('as a contributor', () => {
       expect(github.readFile('content/posts/second-post.md', branch)).toContain('Now with more.');
     });
 
+    test('takes an entry published by a maintainer off the list on the next check', async ({
+      cms,
+      github,
+      page,
+    }) => {
+      const branch = saveForkDraft(github, {
+        slug: 'second-post',
+        files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+      });
+
+      const pullRequest = github.openPullRequest({
+        title: 'Create Post “second-post”',
+        head: branch,
+        author: github.user,
+      });
+
+      await page.clock.install();
+      await cms.open();
+      await expect(getEntryRows(page)).toHaveText([
+        /Unpublished Entries/,
+        /Second Post/,
+        /Published Entries/,
+        /First Post/,
+      ]);
+
+      // The merge moves the configured branch, which the next check notices, so the entries in the
+      // fork are listed again right away
+      github.mergePullRequest(pullRequest);
+      await page.clock.fastForward('01:01');
+
+      await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
+      await expect(
+        page.getByRole('row', { name: /^Second Post/ }).locator('.status-badge'),
+      ).toHaveCount(0);
+    });
+
     test('sends a draft for review with a pull request from the fork', async ({
       cms,
       github,

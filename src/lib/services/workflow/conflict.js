@@ -2,7 +2,7 @@ import equal from 'fast-deep-equal';
 
 import { backend } from '$lib/services/backends';
 import { getUnpublishedEntryByDraft } from '$lib/services/workflow';
-import { loadUnpublishedEntries } from '$lib/services/workflow/load';
+import { reloadUnpublishedEntries } from '$lib/services/workflow/load';
 
 /**
  * @import { EntryDraft, UnpublishedEntry } from '$lib/types/private';
@@ -52,20 +52,24 @@ export const detectWorkflowConflict = async (draft) => {
     return undefined;
   }
 
-  // The branch is gone, which is what a pull request merged or closed outside the CMS leaves
-  // behind. That’s a separate known issue — such a pull request stays on the board until the next
-  // reload, and saving it fails on the missing branch — so it’s left as it is rather than reported
-  // here as a change to save over
+  // The branch has moved, or gone, so read the pull requests again. A failure leaves the stores as
+  // they were, and the comparison below with nothing to report
+  try {
+    // A reload already in flight may have listed the pull requests before the branch moved
+    await reloadUnpublishedEntries({ fresh: true });
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to reload the unpublished entries.', ex);
+  }
+
+  // A branch that’s gone is what a pull request merged or closed outside the CMS leaves behind. The
+  // reload has taken the pull request off the store, so the save starts a new one rather than
+  // failing on the missing branch, and there’s nothing on the branch to save over
   if (!head) {
     return undefined;
   }
 
   const canOverwrite = originalEntry.arrayIndex === undefined;
-
-  // The branch has moved, so read the entry back from it. The reload swallows its own failures,
-  // which leaves the stores as they were and the comparison below with nothing to report
-  await loadUnpublishedEntries();
-
   const current = getUnpublishedEntryByDraft({ collectionName, fileName, originalEntry });
 
   if (!current) {

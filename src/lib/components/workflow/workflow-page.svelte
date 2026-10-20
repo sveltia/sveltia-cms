@@ -1,13 +1,25 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, ConfirmationDialog, EmptyState, Group, Toast } from '@sveltia/ui';
+  import {
+    Alert,
+    Button,
+    ConfirmationDialog,
+    EmptyState,
+    Group,
+    Icon,
+    Spacer,
+    Toast,
+    Toolbar,
+  } from '@sveltia/ui';
 
+  import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
   import WorkflowEntryCard from '$lib/components/workflow/workflow-entry-card.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { retainDeployPolling } from '$lib/services/deployments/poll';
   import {
     checkPublishedVersion,
+    isPendingDeletion,
     publishingBranches,
     unpublishedEntries,
     workflowDataReady,
@@ -22,6 +34,7 @@
   } from '$lib/services/workflow/board';
   import { deployingEntries } from '$lib/services/workflow/deploy';
   import { getDiscardDialogStrings, getPublishDialogStrings } from '$lib/services/workflow/dialogs';
+  import { reloadUnpublishedEntries } from '$lib/services/workflow/load';
   import {
     discardWorkflowEntry,
     publishWorkflowEntry,
@@ -34,7 +47,7 @@
     workflowPageLabelKey,
   } from '$lib/services/workflow/stages';
   import { canMoveToStatus, canPublish } from '$lib/services/workflow/validate';
-  import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
+  import { getWorkflowErrorMessage, pinReviewedHead } from '$lib/services/workflow/verify';
 
   /**
    * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -66,6 +79,8 @@
    * @type {string[]}
    */
   let busyBranches = $state.raw([]);
+  /** Whether the pull requests are being read again at the user’s request. */
+  let refreshing = $state(false);
 
   /**
    * Whether an action is in flight for the given entry. A publish is recorded by the service as
@@ -95,6 +110,7 @@
   const { columns, pendingDeletions } = $derived(
     groupEntriesByStatus(boardStages.current, unpublishedEntries.current, getStageOfEntry),
   );
+  const deploying = $derived(deployingEntries.current);
 
   // Keep the deploy state fresh while the board is open, so a preview link turns live as soon as
   // its build finishes. One hold covers every card, because the lookup batches across all the open
@@ -143,6 +159,34 @@
   };
 
   /**
+   * Read the pull requests again, to pick up what anyone else has changed since the board was
+   * loaded, without waiting for the next scheduled check, and report the result with a toast
+   * notification.
+   */
+  const refresh = async () => {
+    refreshing = true;
+    toastStatus = 'info';
+    toastMessage = _('workflow.refreshing');
+    showToast = true;
+
+    try {
+      await reloadUnpublishedEntries();
+      toastStatus = 'success';
+      toastMessage = _('workflow.refreshed');
+    } catch (/** @type {any} */ ex) {
+      toastStatus = 'error';
+      toastMessage = _('workflow.refresh_failed');
+      // eslint-disable-next-line no-console
+      console.error(ex);
+    } finally {
+      refreshing = false;
+    }
+
+    // Show the toast again in case it has already been dismissed while the request was in flight
+    showToast = true;
+  };
+
+  /**
    * Report that an action couldn’t be performed because the entry has validation errors. An entry
    * can be saved as a draft with its required fields left empty, so it has to be checked before it
    * moves towards being published.
@@ -173,11 +217,22 @@
   };
 
   /**
+   * Get the version of the given entry that’s in the store now. The pull requests are read again
+   * from time to time, which can replace the entry while a card is being dragged or a confirmation
+   * dialog is open, or take it off the board altogether if its pull request has been merged or
+   * closed in the meantime; acting on the copy held since then would put stale content back.
+   * @param {UnpublishedEntry | undefined} entry Entry as it was when the action started.
+   * @returns {UnpublishedEntry | undefined} Current entry, or `undefined` if it has left the board.
+   */
+  const getCurrentEntry = (entry) =>
+    entry ? unpublishedEntries.current.find(({ id }) => id === entry.id) : undefined;
+
+  /**
    * Move the dragged entry to the given column, which changes the label on the pull request.
    * @param {WorkflowStatus} status New status.
    */
   const moveEntry = async (status) => {
-    const entry = draggedEntry;
+    const entry = getCurrentEntry(draggedEntry);
 
     draggedEntry = undefined;
     dropTarget = undefined;
@@ -212,117 +267,138 @@
 
 <PageContainer aria-label={_(workflowPageLabelKey.current)}>
   {#snippet main()}
-    {#if !workflowDataReady.current}
-      <EmptyState>
-        <span role="none">{_('loading_entries', { values: { count: 2 } })}</span>
-      </EmptyState>
-    {:else}
-      <!-- The page container lays its children out in a row, so the board and the list below it
-      need a column wrapper of their own -->
-      <!-- The column count varies: an Open Authoring contributor can’t publish, so the board
-      leaves out the stage that says an entry is ready to go live -->
-      <div
-        role="none"
-        class="board"
-        class:single={columns.length === 1}
-        style:--column-count={columns.length}
-      >
-        <div role="none" class="columns">
-          {#each columns as { status, entries } (status)}
-            <Group class="column" aria-labelledby="{status}-column-title">
-              <header role="none">
-                <h3 role="none" id="{status}-column-title">{_(COLUMN_LABELS[status])}</h3>
-              </header>
-              <div
-                role="list"
-                class="entries"
-                class:drop-target={dropTarget === status}
-                aria-label={_(COLUMN_LABELS[status])}
-                ondragover={(/** @type {DragEvent} */ event) => {
-                  if (!draggedEntry || !isStageAvailable(draggedEntry, status)) {
-                    return;
-                  }
+    <PageContainerMainArea aria-label={_(workflowPageLabelKey.current)}>
+      {#snippet primaryToolbar()}
+        <Toolbar variant="primary">
+          <h2 role="none">{_(workflowPageLabelKey.current)}</h2>
+          <Spacer flex />
+          <Button
+            variant="ghost"
+            iconic
+            aria-label={_('workflow.refresh')}
+            disabled={!workflowDataReady.current || refreshing}
+            onclick={refresh}
+          >
+            {#snippet startIcon()}
+              <Icon name="refresh" />
+            {/snippet}
+          </Button>
+        </Toolbar>
+      {/snippet}
+      {#snippet mainContent()}
+        {#if !workflowDataReady.current}
+          <EmptyState>
+            <span role="none">{_('loading_entries', { values: { count: 2 } })}</span>
+          </EmptyState>
+        {:else}
+          <!-- The board and the trays below it share a wrapper carrying the column count, which
+          varies: an Open Authoring contributor can’t publish, so the board leaves out the stage
+          that says an entry is ready to go live -->
+          <div
+            role="none"
+            class="board"
+            class:single={columns.length === 1}
+            style:--column-count={columns.length}
+          >
+            <div role="none" class="columns">
+              {#each columns as { status, entries } (status)}
+                <Group class="column" aria-labelledby="{status}-column-title">
+                  <header role="none">
+                    <h3 role="none" id="{status}-column-title">{_(COLUMN_LABELS[status])}</h3>
+                  </header>
+                  <div
+                    role="list"
+                    class="entries"
+                    class:drop-target={dropTarget === status}
+                    aria-label={_(COLUMN_LABELS[status])}
+                    ondragover={(/** @type {DragEvent} */ event) => {
+                      if (!draggedEntry || !isStageAvailable(draggedEntry, status)) {
+                        return;
+                      }
 
-                  event.preventDefault();
+                      event.preventDefault();
 
-                  if (event.dataTransfer) {
-                    event.dataTransfer.dropEffect = 'move';
-                  }
+                      if (event.dataTransfer) {
+                        event.dataTransfer.dropEffect = 'move';
+                      }
 
-                  dropTarget = status;
-                }}
-                ondragleave={() => {
-                  if (dropTarget === status) {
-                    dropTarget = undefined;
-                  }
-                }}
-                ondrop={(/** @type {DragEvent} */ event) => {
-                  event.preventDefault();
-                  moveEntry(status);
-                }}
-              >
-                {#each entries as entry (entry.id)}
-                  <WorkflowEntryCard
-                    {entry}
-                    busy={isBusy(entry)}
-                    dragging={draggedEntry?.id === entry.id}
-                    onDragStart={() => {
-                      draggedEntry = entry;
+                      dropTarget = status;
                     }}
-                    onDragEnd={() => {
-                      draggedEntry = undefined;
-                      dropTarget = undefined;
+                    ondragleave={() => {
+                      if (dropTarget === status) {
+                        dropTarget = undefined;
+                      }
                     }}
-                    onDelete={() => confirmDelete(entry)}
-                    onPublish={() => confirmPublish(entry)}
-                  />
-                {:else}
-                  <EmptyState>
-                    <span role="none">{_('workflow.no_entries')}</span>
-                  </EmptyState>
-                {/each}
+                    ondrop={(/** @type {DragEvent} */ event) => {
+                      event.preventDefault();
+                      moveEntry(status);
+                    }}
+                  >
+                    {#each entries as entry (entry.id)}
+                      <WorkflowEntryCard
+                        {entry}
+                        busy={isBusy(entry)}
+                        dragging={draggedEntry?.id === entry.id}
+                        onDragStart={() => {
+                          draggedEntry = entry;
+                        }}
+                        onDragEnd={() => {
+                          draggedEntry = undefined;
+                          dropTarget = undefined;
+                        }}
+                        onDelete={() => confirmDelete(entry)}
+                        onPublish={() => confirmPublish(entry)}
+                      />
+                    {:else}
+                      <EmptyState>
+                        <span role="none">{_('workflow.no_entries')}</span>
+                      </EmptyState>
+                    {/each}
+                  </div>
+                </Group>
+              {/each}
+            </div>
+            <!-- Only rendered when something is pending, so the board keeps the height
+            otherwise -->
+            {#if pendingDeletions.length}
+              <div role="none" class="tray">
+                <Group class="group" aria-labelledby="deletions-title">
+                  <header role="none">
+                    <h3 role="none" id="deletions-title">{_('status.pending_deletion')}</h3>
+                  </header>
+                  <div role="list" class="entries" aria-label={_('status.pending_deletion')}>
+                    {#each pendingDeletions as entry (entry.id)}
+                      <WorkflowEntryCard
+                        {entry}
+                        busy={isBusy(entry)}
+                        onDelete={() => confirmDelete(entry)}
+                        onPublish={() => confirmPublish(entry)}
+                      />
+                    {/each}
+                  </div>
+                </Group>
               </div>
-            </Group>
-          {/each}
-        </div>
-        <!-- Only rendered when something is pending, so the board keeps the height otherwise -->
-        {#if pendingDeletions.length}
-          <div role="none" class="tray">
-            <Group class="group" aria-labelledby="deletions-title">
-              <header role="none">
-                <h3 role="none" id="deletions-title">{_('status.pending_deletion')}</h3>
-              </header>
-              <div role="list" class="entries" aria-label={_('status.pending_deletion')}>
-                {#each pendingDeletions as entry (entry.id)}
-                  <WorkflowEntryCard
-                    {entry}
-                    busy={isBusy(entry)}
-                    onDelete={() => confirmDelete(entry)}
-                    onPublish={() => confirmPublish(entry)}
-                  />
-                {/each}
+            {/if}
+            <!-- Merged changes the site hasn’t caught up with yet. A deletion is gone from the
+            entry list once merged, so this is the only place left to say the site still has it -->
+            {#if deploying.length}
+              <div role="none" class="tray">
+                <Group class="group" aria-labelledby="deploying-title">
+                  <header role="none">
+                    <h3 role="none" id="deploying-title">{_('status.deploying')}</h3>
+                  </header>
+                  <div role="list" class="entries" aria-label={_('status.deploying')}>
+                    {#each deploying as { entry } (entry.workflow.pullRequest.branch)}
+                      <WorkflowEntryCard {entry} deploying />
+                    {/each}
+                  </div>
+                </Group>
               </div>
-            </Group>
+            {/if}
           </div>
         {/if}
-        <!-- Merged changes the site hasn’t caught up with yet. A deletion is gone from the entry
-        list once merged, so this is the only place left to say the site still has it -->
-        {#if deployingEntries.current.length}
-          <div role="none" class="tray">
-            <Group class="group" aria-labelledby="deploying-title">
-              <header role="none">
-                <h3 role="none" id="deploying-title">{_('status.deploying')}</h3>
-              </header>
-              <div role="list" class="entries" aria-label={_('status.deploying')}>
-                {#each deployingEntries.current as { entry } (entry.workflow.pullRequest.branch)}
-                  <WorkflowEntryCard {entry} deploying />
-                {/each}
-              </div>
-            </Group>
-          </div>
-        {/if}
-      </div>
-    {/if}
+      {/snippet}
+    </PageContainerMainArea>
   {/snippet}
 </PageContainer>
 
@@ -331,11 +407,14 @@
   title={discardDialogStrings.title}
   okLabel={discardDialogStrings.label}
   onOk={async () => {
-    const entry = targetEntry;
+    const entry = getCurrentEntry(targetEntry);
 
-    /* v8 ignore next 7 -- the dialog is only opened for an entry */
     if (entry) {
-      await runAction(entry, discardWorkflowEntry(entry), getDiscardMessages(targetIsDeletion));
+      await runAction(
+        entry,
+        discardWorkflowEntry(entry),
+        getDiscardMessages(isPendingDeletion(entry)),
+      );
     }
   }}
 >
@@ -347,9 +426,8 @@
   title={publishDialogStrings.title}
   okLabel={publishDialogStrings.label}
   onOk={async () => {
-    const entry = targetEntry;
+    const entry = getCurrentEntry(targetEntry);
 
-    /* v8 ignore next 3 -- the dialog is only opened for an entry */
     if (!entry) {
       return;
     }
@@ -360,7 +438,13 @@
       return;
     }
 
-    await runAction(entry, publishWorkflowEntry(entry), getPublishMessages(targetIsDeletion));
+    await runAction(
+      entry,
+      // Pinned to the version the dialog was opened for, so a commit a reload has brought in since
+      // isn’t published unseen
+      publishWorkflowEntry(pinReviewedHead(entry, targetEntry?.workflow.pullRequest.headSHA)),
+      getPublishMessages(isPendingDeletion(entry)),
+    );
   }}
 >
   {publishDialogStrings.message}

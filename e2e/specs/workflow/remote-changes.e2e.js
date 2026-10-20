@@ -169,13 +169,9 @@ test('shows GitHub’s error when the workflow branch moves during a save (known
   );
 });
 
-test('lists a colleague’s pull request only after a reload (known issue)', async ({
-  cms,
-  github,
-  page,
-}) => {
-  // The unpublished entries are loaded once, at sign-in, and the remote check doesn’t update them.
-  // Once fixed, the new entry should show up on the next check
+test('lists a colleague’s pull request on a later check', async ({ cms, github, page }) => {
+  // Opening a pull request doesn’t move the configured branch, so it’s picked up when the pull
+  // requests are next listed, which is less often than the branch is checked
   await page.clock.install();
   await cms.open();
   await expect(page.getByRole('row', { name: /First Post/ })).toBeVisible();
@@ -185,22 +181,50 @@ test('lists a colleague’s pull request only after a reload (known issue)', asy
     files: { 'content/posts/second-post.md': post('Second Post', 'From Alex.') },
   });
   await page.clock.fastForward('01:01');
-  // Give the check time to finish, to show that it doesn’t change the list
+  // Give the check time to finish, to show that it doesn’t list the pull requests yet
   await page.waitForTimeout(1000);
   await expect(getEntryRows(page)).toHaveText([/First Post/]);
 
-  await page.reload();
-  await expect(page.getByRole('row', { name: /Second Post/ })).toBeVisible();
+  await page.clock.fastForward('04:00');
+  await expect(getEntryRows(page)).toHaveText([
+    /Unpublished Entries/,
+    /Second Post.*Draft/,
+    /Published Entries/,
+    /First Post/,
+  ]);
 });
 
-test('keeps showing pull requests merged or closed on GitHub (known issue)', async ({
+test('lists a colleague’s pull request once the board is refreshed', async ({
   cms,
   github,
   page,
 }) => {
-  // The remote check picks up the merged post, but not the fact that its pull request is gone, so
-  // the post is listed with a stale status. A pull request closed on GitHub stays listed too, and
-  // saving it fails, as its branch has gone. Once fixed, both should be dropped on the next check
+  await cms.open();
+  await page.getByRole('radio', { name: 'Editorial Workflow' }).click();
+
+  const drafts = page.getByRole('list', { name: 'Drafts' });
+
+  await expect(drafts).toHaveText('No entries.');
+
+  openEntryPullRequest(github, {
+    slug: 'second-post',
+    files: { 'content/posts/second-post.md': post('Second Post', 'From Alex.') },
+  });
+  await page.getByRole('button', { name: 'Refresh' }).click();
+
+  await expect(
+    page.getByRole('status').filter({ hasText: 'The board is up to date.' }),
+  ).toBeVisible();
+  await expect(drafts.getByRole('listitem')).toHaveText([/Second Post/]);
+});
+
+test('drops pull requests merged or closed on GitHub on the next check', async ({
+  cms,
+  github,
+  page,
+}) => {
+  // A merge moves the configured branch, which the next check notices, so the pull requests are
+  // listed again right away, after the merged post has been fetched
   const merged = openEntryPullRequest(github, {
     slug: 'second-post',
     files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
@@ -221,19 +245,74 @@ test('keeps showing pull requests merged or closed on GitHub (known issue)', asy
   github.deleteBranch('cms/posts/third-post');
   await page.clock.fastForward('01:01');
 
-  await expect(getEntryRows(page)).toHaveText([
-    /Unpublished Entries/,
-    /Third Post.*Draft/,
-    /Published Entries/,
-    /First Post/,
-    /Second Post.*Ready/,
-  ]);
+  await expect(getEntryRows(page)).toHaveText([/First Post/, /Second Post/]);
+  await expect(page.getByRole('row', { name: /Second Post/ })).not.toContainText('Ready');
+});
 
-  const editor = await openEntry(page, 'Third Post');
+test('starts a new pull request when saving an entry whose request was closed on GitHub', async ({
+  cms,
+  github,
+  page,
+}) => {
+  const closed = openEntryPullRequest(github, {
+    slug: 'second-post',
+    files: { 'content/posts/second-post.md': post('Second Post', 'Maybe later.') },
+  });
 
+  await cms.open();
+
+  const editor = await openEntry(page, 'Second Post');
+
+  // Closed while the editor is open, before the next check could notice
+  github.deleteBranch('cms/posts/second-post');
   await editor.getByRole('textbox', { name: 'Body' }).fill('Now or never.');
   await editor.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByRole('alertdialog', { name: 'Error' })).toContainText(
-    /doesn’t have the .*cms\/posts\/third-post.* branch/,
+  await page
+    .getByRole('alertdialog', { name: 'Send for Review' })
+    .getByRole('button', { name: 'Later' })
+    .click();
+
+  await expect
+    .poll(() => github.readFile('content/posts/second-post.md', 'cms/posts/second-post'))
+    .toBe(post('Second Post', 'Now or never.'));
+  expect(closed.state).toBe('closed');
+  expect(github.getOpenPullRequests('cms/posts/second-post')).toHaveLength(1);
+});
+
+test('refuses to publish a commit pushed since the editor was opened, though the list has caught up', async ({
+  cms,
+  github,
+  page,
+}) => {
+  const pullRequest = openEntryPullRequest(github, {
+    slug: 'second-post',
+    files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+    status: 'pending_publish',
+  });
+
+  await page.clock.install();
+  await cms.open();
+  await openEntry(page, 'Second Post');
+
+  // Someone who can push but not merge adds a commit nobody has reviewed, and the pull requests are
+  // read again while the editor still shows the version that was reviewed
+  github.commit(
+    { 'content/posts/second-post.md': post('Second Post', 'Not what was reviewed.') },
+    { branch: 'cms/posts/second-post', author: github.colleague },
   );
+
+  const reloaded = page.waitForRequest(
+    (request) =>
+      request.url() === github.graphqlURL && !!request.postData()?.includes('pullRequests('),
+  );
+
+  await page.clock.fastForward('05:01');
+  await reloaded;
+  await publishEntry(page);
+
+  await expect(page.getByRole('alert')).toContainText(
+    'The entry has been changed since you opened it.',
+  );
+  expect(pullRequest.state).toBe('open');
+  expect(github.readFile('content/posts/second-post.md')).toBeUndefined();
 });

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { detectWorkflowConflict } from '$lib/services/workflow/conflict';
-import { loadUnpublishedEntries } from '$lib/services/workflow/load';
+import { reloadUnpublishedEntries } from '$lib/services/workflow/load';
 
 // `backend.current` is derived state, so it’s read-only on the real module. The mock stands in
 // with a plain object the tests can point at whichever backend they need
@@ -12,7 +12,7 @@ const { backend, getUnpublishedEntryByDraft } = vi.hoisted(() => ({
 
 vi.mock('$lib/services/backends', () => ({ backend }));
 vi.mock('$lib/services/workflow', () => ({ getUnpublishedEntryByDraft }));
-vi.mock('$lib/services/workflow/load', () => ({ loadUnpublishedEntries: vi.fn() }));
+vi.mock('$lib/services/workflow/load', () => ({ reloadUnpublishedEntries: vi.fn() }));
 
 /** The branch head the draft last committed. */
 const HEAD = 'abc123';
@@ -42,7 +42,7 @@ describe('detectWorkflowConflict', () => {
   beforeEach(() => {
     fetchBranchHead = vi.fn(async () => HEAD);
     backend.current = { workflow: { fetchBranchHead } };
-    vi.mocked(loadUnpublishedEntries).mockResolvedValue(undefined);
+    vi.mocked(reloadUnpublishedEntries).mockResolvedValue(false);
     getUnpublishedEntryByDraft.mockReturnValue(undefined);
   });
 
@@ -51,7 +51,7 @@ describe('detectWorkflowConflict', () => {
 
     expect(fetchBranchHead).toHaveBeenCalledWith('cms/posts/hello');
     // The head is a small request; only a branch that has moved costs the reload
-    expect(loadUnpublishedEntries).not.toHaveBeenCalled();
+    expect(reloadUnpublishedEntries).not.toHaveBeenCalled();
   });
 
   test('reports a colleague’s change to the entry', async () => {
@@ -69,7 +69,23 @@ describe('detectWorkflowConflict', () => {
       canOverwrite: true,
     });
 
-    expect(loadUnpublishedEntries).toHaveBeenCalled();
+    // A reload already in flight may have listed the pull requests before the branch moved
+    expect(reloadUnpublishedEntries).toHaveBeenCalledWith({ fresh: true });
+  });
+
+  test('compares with the entry as it was when the reload fails', async () => {
+    const error = new Error('Failed to send the request');
+    const spy = vi.spyOn(console, 'error').mockReturnValue(undefined);
+    const draft = createDraft();
+
+    fetchBranchHead.mockResolvedValue('def456');
+    vi.mocked(reloadUnpublishedEntries).mockRejectedValue(error);
+    getUnpublishedEntryByDraft.mockReturnValue(draft.originalEntry);
+
+    await expect(detectWorkflowConflict(draft)).resolves.toBeUndefined();
+
+    expect(spy).toHaveBeenCalledWith('Failed to reload the unpublished entries.', error);
+    spy.mockRestore();
   });
 
   test('reports the entry as deleted when it’s gone from the branch', async () => {
@@ -108,12 +124,14 @@ describe('detectWorkflowConflict', () => {
     await expect(detectWorkflowConflict(draft)).resolves.toMatchObject({ canOverwrite: false });
   });
 
-  test('leaves a branch that is gone to the pull request listing', async () => {
-    // Merged or closed outside the CMS: a separate known issue, not a change to save over
+  test('drops the pull request of a branch that is gone, with nothing to save over', async () => {
+    // Merged or closed outside the CMS: the reload takes the pull request off the store, so the
+    // save starts a new one rather than failing on the missing branch
     fetchBranchHead.mockResolvedValue(undefined);
 
     await expect(detectWorkflowConflict(createDraft())).resolves.toBeUndefined();
-    expect(loadUnpublishedEntries).not.toHaveBeenCalled();
+    expect(reloadUnpublishedEntries).toHaveBeenCalledWith({ fresh: true });
+    expect(getUnpublishedEntryByDraft).not.toHaveBeenCalled();
   });
 
   test('lets the save go ahead when the branch can’t be read', async () => {

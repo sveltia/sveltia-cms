@@ -3,12 +3,22 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { checkForRemoteChanges, MIN_CHECK_GAP } from '$lib/services/backends/refresh';
+import {
+  checkForWorkflowChanges,
+  WORKFLOW_CHECK_INTERVAL,
+  WORKFLOW_RETURN_GAP,
+} from '$lib/services/workflow/load';
 
 import { REMOTE_CHECK_INTERVAL, startRemoteChangePolling, stopRemoteChangePolling } from './poll';
 
 vi.mock('$lib/services/backends/refresh', () => ({
   checkForRemoteChanges: vi.fn(),
   MIN_CHECK_GAP: 10 * 1000,
+}));
+vi.mock('$lib/services/workflow/load', () => ({
+  checkForWorkflowChanges: vi.fn(),
+  WORKFLOW_CHECK_INTERVAL: 5 * 60 * 1000,
+  WORKFLOW_RETURN_GAP: 30 * 1000,
 }));
 
 /**
@@ -24,6 +34,7 @@ describe('remote change polling', () => {
     vi.useFakeTimers();
     setVisibility('visible');
     vi.mocked(checkForRemoteChanges).mockResolvedValue(undefined);
+    vi.mocked(checkForWorkflowChanges).mockResolvedValue(false);
   });
 
   afterEach(() => {
@@ -93,6 +104,56 @@ describe('remote change polling', () => {
 
     await vi.advanceTimersByTimeAsync(REMOTE_CHECK_INTERVAL);
     expect(checkForRemoteChanges).toHaveBeenCalledTimes(2);
+    consoleSpy.mockRestore();
+  });
+
+  test('checks the unpublished entries after the repository', async () => {
+    /** @type {string[]} */
+    const calls = [];
+
+    vi.mocked(checkForRemoteChanges).mockImplementation(async () => {
+      calls.push('branch');
+
+      return undefined;
+    });
+    vi.mocked(checkForWorkflowChanges).mockImplementation(async () => {
+      calls.push('workflow');
+
+      return false;
+    });
+    startRemoteChangePolling();
+
+    await vi.advanceTimersByTimeAsync(REMOTE_CHECK_INTERVAL);
+    // A merge on the Git service moves the branch, so the published version is fetched before the
+    // unpublished entries are reloaded
+    expect(calls).toEqual(['branch', 'workflow']);
+    // The pull requests cost more to list, so they’re left alone for longer unless the branch moved
+    expect(checkForWorkflowChanges).toHaveBeenCalledWith({ maxAge: WORKFLOW_CHECK_INTERVAL });
+  });
+
+  test('checks the unpublished entries sooner as the user comes back to the tab', async () => {
+    startRemoteChangePolling();
+    await vi.advanceTimersByTimeAsync(MIN_CHECK_GAP);
+
+    window.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(checkForWorkflowChanges).toHaveBeenCalledWith({ maxAge: WORKFLOW_RETURN_GAP });
+  });
+
+  test('checks the unpublished entries even when the repository check fails', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const error = new Error('offline');
+
+    vi.mocked(checkForRemoteChanges).mockRejectedValueOnce(error);
+    vi.mocked(checkForWorkflowChanges).mockRejectedValueOnce(error);
+    startRemoteChangePolling();
+
+    await vi.advanceTimersByTimeAsync(REMOTE_CHECK_INTERVAL);
+    expect(checkForWorkflowChanges).toHaveBeenCalledTimes(1);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to check the unpublished entries for changes.',
+      error,
+    );
     consoleSpy.mockRestore();
   });
 

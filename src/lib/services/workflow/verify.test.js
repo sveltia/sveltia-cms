@@ -11,6 +11,7 @@ import { unpublishedEntries } from '$lib/services/workflow';
 import {
   findUnexpectedChanges,
   getWorkflowErrorMessage,
+  pinReviewedHead,
   PUBLISH_REFUSED,
   verifyMergeState,
 } from '$lib/services/workflow/verify';
@@ -721,6 +722,51 @@ describe('workflow/verify', () => {
           ],
         }),
       ).toBeUndefined();
+    });
+  });
+
+  describe('pinReviewedHead', () => {
+    const entry = /** @type {any} */ ({
+      id: 'hello',
+      workflow: {
+        status: 'pending_publish',
+        pullRequest: { branch: 'cms/posts/hello', headSHA: 'new' },
+      },
+    });
+
+    test('keeps the entry as it is when its head is the reviewed one', () => {
+      expect(pinReviewedHead(entry, 'new')).toBe(entry);
+    });
+
+    test('pins the entry to the reviewed head when a reload has moved it on', async () => {
+      const pinned = pinReviewedHead(entry, 'old');
+
+      expect(pinned).toEqual({
+        ...entry,
+        workflow: {
+          ...entry.workflow,
+          pullRequest: { ...entry.workflow.pullRequest, headSHA: 'old' },
+        },
+      });
+      // The store’s entry is left alone
+      expect(entry.workflow.pullRequest.headSHA).toBe('new');
+      // The commit pushed since is then refused rather than published unseen
+      await expect(
+        verifyMergeState(
+          pinned,
+          /** @type {any} */ ({
+            onConfiguredBranches: true,
+            complete: true,
+            headSHA: 'new',
+            files: [],
+          }),
+          vi.fn(),
+        ),
+      ).rejects.toMatchObject({ message: PUBLISH_REFUSED, cause: { reason: 'entry_changed' } });
+    });
+
+    test('pins the entry to no head when the user hasn’t seen any version of it', () => {
+      expect(pinReviewedHead(entry, undefined).workflow.pullRequest.headSHA).toBeUndefined();
     });
   });
 

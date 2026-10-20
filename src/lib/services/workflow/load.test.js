@@ -1,25 +1,41 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { backend } from '$lib/services/backends';
+import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
+import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { cmsConfig } from '$lib/services/config';
 import {
+  publishingBranches,
   unpublishedEntries,
   unpublishedEntriesLoaded,
   unpublishedEntriesLoading,
   workflowEnabled,
 } from '$lib/services/workflow';
-import { mergeWorkflowAssets } from '$lib/services/workflow/assets';
+import { mergeWorkflowAssets, removeWorkflowAssets } from '$lib/services/workflow/assets';
 import { convertPullRequests } from '$lib/services/workflow/entries';
-import { loadUnpublishedEntries, startLoadingPullRequests } from '$lib/services/workflow/load';
+import {
+  _resetWorkflowLoadState,
+  checkForWorkflowChanges,
+  loadUnpublishedEntries,
+  reloadUnpublishedEntries,
+  startLoadingPullRequests,
+  WORKFLOW_CHECK_INTERVAL,
+} from '$lib/services/workflow/load';
 import { openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
+vi.mock('$lib/services/backends/git/shared/head', () => ({
+  dataGeneration: { current: 0 },
+  repositoryHead: { current: '' },
+}));
+vi.mock('$lib/services/backends/refresh', () => ({ checkForRemoteChanges: vi.fn() }));
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 vi.mock('$lib/services/workflow/open-authoring', () => ({
   openAuthoringInitialized: { current: false },
 }));
 vi.mock('$lib/services/workflow/assets');
 vi.mock('$lib/services/workflow', () => ({
+  publishingBranches: { current: [] },
   unpublishedEntries: { current: [] },
   unpublishedEntriesLoading: { current: false },
   unpublishedEntriesLoaded: { current: false },
@@ -48,6 +64,10 @@ describe('workflow/load', () => {
     unpublishedEntries.current = [];
     unpublishedEntriesLoading.current = false;
     unpublishedEntriesLoaded.current = false;
+    publishingBranches.current = [];
+    repositoryHead.current = 'head-1';
+    dataGeneration.current = 0;
+    _resetWorkflowLoadState();
   });
 
   test('does nothing when the feature is disabled', async () => {
@@ -212,6 +232,348 @@ describe('workflow/load', () => {
       expect(unhandled).not.toHaveBeenCalled();
       expect(consoleError).toHaveBeenCalled();
       expect(unpublishedEntriesLoading.current).toBe(false);
+
+      consoleError.mockRestore();
+    });
+  });
+
+  describe('reloadUnpublishedEntries()', () => {
+    /**
+     * Build an unpublished entry.
+     * @param {string} slug Entry slug, which names the branch.
+     * @param {object} [options] Options.
+     * @param {string} [options.id] Entry ID.
+     * @param {string} [options.title] Entry title.
+     * @param {string} [options.headSHA] Head of the pull request.
+     * @returns {any} Entry.
+     */
+    const createEntry = (slug, { id = `${slug}-id`, title = slug, headSHA = 'a' } = {}) => ({
+      id,
+      slug,
+      locales: { _default: { content: { title } } },
+      workflow: { pullRequest: { branch: `cms/posts/${slug}`, headSHA }, status: 'draft' },
+    });
+
+    /**
+     * Have the next listing return the given entries and assets.
+     * @param {any[]} entries Entries, which stand for their pull requests too.
+     * @param {any[]} [assets] Assets.
+     */
+    const mockListing = (entries, assets = []) => {
+      fetchPullRequests.mockResolvedValue(entries.map(({ workflow }) => workflow.pullRequest));
+      vi.mocked(convertPullRequests).mockResolvedValue({ entries, assets });
+    };
+
+    beforeEach(() => {
+      unpublishedEntriesLoaded.current = true;
+      vi.mocked(checkForRemoteChanges).mockResolvedValue(undefined);
+    });
+
+    test('does nothing until the entries have been loaded once', async () => {
+      unpublishedEntriesLoaded.current = false;
+
+      await expect(reloadUnpublishedEntries()).resolves.toBe(false);
+      expect(fetchPullRequests).not.toHaveBeenCalled();
+    });
+
+    test('does nothing when the feature is not in use, or not ready', async () => {
+      /** @type {any} */ (workflowEnabled).current = false;
+      await expect(reloadUnpublishedEntries()).resolves.toBe(false);
+
+      /** @type {any} */ (workflowEnabled).current = true;
+      /** @type {any} */ (backend).current = {};
+      await expect(reloadUnpublishedEntries()).resolves.toBe(false);
+
+      /** @type {any} */ (backend).current = { workflow: { fetchPullRequests } };
+      /** @type {any} */ (cmsConfig).current = {
+        backend: { name: 'github', open_authoring: true },
+      };
+      await expect(reloadUnpublishedEntries()).resolves.toBe(false);
+
+      expect(fetchPullRequests).not.toHaveBeenCalled();
+    });
+
+    test('merges the pull requests into the store', async () => {
+      const unchanged = createEntry('unchanged');
+      const changed = createEntry('changed');
+      const closed = createEntry('closed');
+      const store = [unchanged, changed, closed];
+
+      unpublishedEntries.current = store;
+      mockListing([
+        createEntry('opened', { id: 'opened-new-id' }),
+        createEntry('unchanged', { id: 'unchanged-new-id' }),
+        createEntry('changed', { id: 'changed-new-id', title: 'Changed', headSHA: 'b' }),
+      ]);
+
+      await expect(reloadUnpublishedEntries()).resolves.toBe(true);
+
+      const [first, second, third] = unpublishedEntries.current;
+
+      // An unchanged entry stays the same object, a changed one keeps its ID, a closed one goes,
+      // and a new one comes last
+      expect(first).toBe(unchanged);
+      expect(second).toMatchObject({
+        id: 'changed-id',
+        locales: { _default: { content: { title: 'Changed' } } },
+      });
+      expect(third).toMatchObject({ id: 'opened-new-id' });
+      expect(unpublishedEntries.current).toHaveLength(3);
+    });
+
+    test('leaves the store as it is when nothing has changed', async () => {
+      const store = [createEntry('hello')];
+
+      unpublishedEntries.current = store;
+      mockListing([createEntry('hello', { id: 'another-id' })]);
+
+      await expect(reloadUnpublishedEntries()).resolves.toBe(false);
+      expect(unpublishedEntries.current).toBe(store);
+      expect(removeWorkflowAssets).not.toHaveBeenCalled();
+      expect(mergeWorkflowAssets).not.toHaveBeenCalled();
+      // Nothing has gone, so the branch isn’t checked either
+      expect(checkForRemoteChanges).not.toHaveBeenCalled();
+    });
+
+    test('replaces the assets of the branches that have changed or gone', async () => {
+      unpublishedEntries.current = [
+        createEntry('kept'),
+        createEntry('changed'),
+        createEntry('closed'),
+      ];
+
+      const changedAsset = { path: 'a.png', workflow: { branch: 'cms/posts/changed' } };
+      const keptAsset = { path: 'b.png', workflow: { branch: 'cms/posts/kept' } };
+
+      mockListing(
+        [createEntry('kept'), createEntry('changed', { headSHA: 'b' })],
+        [changedAsset, keptAsset],
+      );
+
+      await reloadUnpublishedEntries();
+
+      expect(
+        vi
+          .mocked(removeWorkflowAssets)
+          .mock.calls.map(([branch]) => branch)
+          .sort(),
+      ).toEqual(['cms/posts/changed', 'cms/posts/closed']);
+      expect(mergeWorkflowAssets).toHaveBeenCalledWith([changedAsset]);
+    });
+
+    test('fetches the published version before dropping a pull request that has gone', async () => {
+      /** @type {string[]} */
+      const calls = [];
+
+      unpublishedEntries.current = [createEntry('merged')];
+      mockListing([]);
+      vi.mocked(checkForRemoteChanges).mockImplementation(async () => {
+        calls.push('branch');
+
+        return undefined;
+      });
+      vi.mocked(convertPullRequests).mockImplementation(async () => {
+        calls.push('convert');
+
+        return { entries: [], assets: [] };
+      });
+
+      await expect(reloadUnpublishedEntries()).resolves.toBe(true);
+      // The entry is matched against the published one, so that has to be in first
+      expect(calls).toEqual(['branch', 'convert']);
+      expect(unpublishedEntries.current).toEqual([]);
+    });
+
+    test('drops a pull request that has gone even if the branch can’t be checked', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const error = new Error('offline');
+
+      unpublishedEntries.current = [createEntry('closed')];
+      mockListing([]);
+      vi.mocked(checkForRemoteChanges).mockRejectedValue(error);
+
+      await expect(reloadUnpublishedEntries()).resolves.toBe(true);
+      expect(unpublishedEntries.current).toEqual([]);
+      expect(consoleError).toHaveBeenCalledWith(
+        'Failed to check the repository for changes.',
+        error,
+      );
+
+      consoleError.mockRestore();
+    });
+
+    test('keeps the changes made in this tab while the request was on its way', async () => {
+      const saved = createEntry('saved', { title: 'Saved here', headSHA: 'b' });
+      const created = createEntry('created');
+
+      unpublishedEntries.current = [createEntry('saved'), createEntry('discarded')];
+      fetchPullRequests.mockImplementation(async () => {
+        // A save, a new draft and a discard land while the pull requests are being listed
+        unpublishedEntries.current = [saved, created];
+
+        return [];
+      });
+      vi.mocked(convertPullRequests).mockResolvedValue({
+        entries: [createEntry('saved'), createEntry('discarded')],
+        assets: [],
+      });
+
+      await expect(reloadUnpublishedEntries()).resolves.toBe(false);
+      expect(unpublishedEntries.current).toEqual([saved, created]);
+    });
+
+    test('leaves an entry being published to the publish', async () => {
+      const publishing = createEntry('publishing');
+
+      unpublishedEntries.current = [publishing];
+      publishingBranches.current = ['cms/posts/publishing'];
+      mockListing([]);
+
+      await expect(reloadUnpublishedEntries()).resolves.toBe(false);
+      expect(unpublishedEntries.current).toEqual([publishing]);
+    });
+
+    test('drops the results once the site data has been discarded', async () => {
+      const store = [createEntry('hello')];
+
+      unpublishedEntries.current = store;
+
+      // Signed out while the pull requests are being listed…
+      fetchPullRequests.mockImplementationOnce(async () => {
+        dataGeneration.current += 1;
+
+        return [];
+      });
+      await expect(reloadUnpublishedEntries()).resolves.toBe(false);
+
+      // …while the branch is being checked…
+      mockListing([]);
+      vi.mocked(checkForRemoteChanges).mockImplementationOnce(async () => {
+        dataGeneration.current += 1;
+
+        return undefined;
+      });
+      await expect(reloadUnpublishedEntries()).resolves.toBe(false);
+
+      // …or while the entries are being parsed
+      vi.mocked(convertPullRequests).mockImplementationOnce(async () => {
+        dataGeneration.current += 1;
+
+        return { entries: [], assets: [] };
+      });
+      await expect(reloadUnpublishedEntries()).resolves.toBe(false);
+
+      expect(unpublishedEntries.current).toBe(store);
+      expect(convertPullRequests).toHaveBeenCalledTimes(1);
+    });
+
+    test('shares a reload in flight, unless a fresh one is asked for', async () => {
+      const { promise, resolve } = Promise.withResolvers();
+
+      mockListing([]);
+      fetchPullRequests.mockReturnValueOnce(promise);
+
+      const first = reloadUnpublishedEntries();
+      const second = reloadUnpublishedEntries();
+      const fresh = reloadUnpublishedEntries({ fresh: true });
+
+      expect(fetchPullRequests).toHaveBeenCalledOnce();
+      resolve([]);
+      await Promise.all([first, second, fresh]);
+      // The fresh one waited for the first, then listed the pull requests again
+      expect(fetchPullRequests).toHaveBeenCalledTimes(2);
+    });
+
+    test('reports a failure to the caller', async () => {
+      const error = new Error('API error');
+
+      fetchPullRequests.mockRejectedValueOnce(error);
+      await expect(reloadUnpublishedEntries()).rejects.toBe(error);
+
+      // The next reload starts afresh, and a fresh one doesn’t mind the failure of the one before
+      mockListing([]);
+      await expect(reloadUnpublishedEntries()).resolves.toBe(false);
+
+      const { promise, reject } = Promise.withResolvers();
+
+      fetchPullRequests.mockReturnValueOnce(promise);
+
+      const failing = reloadUnpublishedEntries();
+      const fresh = reloadUnpublishedEntries({ fresh: true });
+
+      reject(error);
+      await expect(failing).rejects.toBe(error);
+      await expect(fresh).resolves.toBe(false);
+    });
+  });
+
+  describe('checkForWorkflowChanges()', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      unpublishedEntriesLoaded.current = true;
+      fetchPullRequests.mockResolvedValue([]);
+      vi.mocked(convertPullRequests).mockResolvedValue({ entries: [], assets: [] });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test('reloads the entries once they’re older than the given time', async () => {
+      await loadUnpublishedEntries();
+      expect(fetchPullRequests).toHaveBeenCalledOnce();
+
+      await checkForWorkflowChanges();
+      expect(fetchPullRequests).toHaveBeenCalledOnce();
+
+      vi.advanceTimersByTime(WORKFLOW_CHECK_INTERVAL);
+      await checkForWorkflowChanges();
+      expect(fetchPullRequests).toHaveBeenCalledTimes(2);
+
+      // The reload counts as a load
+      await checkForWorkflowChanges();
+      expect(fetchPullRequests).toHaveBeenCalledTimes(2);
+
+      vi.advanceTimersByTime(1000);
+      await checkForWorkflowChanges({ maxAge: 1000 });
+      expect(fetchPullRequests).toHaveBeenCalledTimes(3);
+    });
+
+    test('reloads the entries straight away once the branch has moved', async () => {
+      await loadUnpublishedEntries();
+
+      // What a pull request merged on the Git service does
+      repositoryHead.current = 'head-2';
+      await checkForWorkflowChanges();
+      expect(fetchPullRequests).toHaveBeenCalledTimes(2);
+
+      await checkForWorkflowChanges();
+      expect(fetchPullRequests).toHaveBeenCalledTimes(2);
+    });
+
+    test('joins a reload in flight', async () => {
+      await loadUnpublishedEntries();
+
+      const { promise, resolve } = Promise.withResolvers();
+
+      fetchPullRequests.mockReturnValueOnce(promise);
+
+      const reload = reloadUnpublishedEntries();
+      const check = checkForWorkflowChanges();
+
+      resolve([]);
+      await Promise.all([reload, check]);
+      expect(fetchPullRequests).toHaveBeenCalledTimes(2);
+    });
+
+    test('tries again on the next check after a failed load', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      fetchPullRequests.mockRejectedValueOnce(new Error('API error'));
+      await loadUnpublishedEntries();
+
+      await checkForWorkflowChanges();
+      expect(fetchPullRequests).toHaveBeenCalledTimes(2);
 
       consoleError.mockRestore();
     });
