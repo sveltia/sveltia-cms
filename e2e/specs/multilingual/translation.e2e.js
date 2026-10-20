@@ -118,7 +118,9 @@ test('translates one field, asking for the API key first', async ({ cms, page })
 
   const dialog = page.getByRole('alertdialog', { name: 'Translate Field' });
 
+  // A typed key is only taken on OK, as one matching the pattern may still be incomplete
   await dialog.getByRole('textbox', { name: 'API Key' }).fill(API_KEY);
+  await dialog.getByRole('button', { name: 'OK' }).click();
   await expect(page.getByRole('status').filter({ hasText: /Field translated from/ })).toBeVisible();
   await expect(field.getByRole('textbox', { name: 'Body' })).toHaveText('FR: Follow the lanterns.');
   // The other fields are left alone
@@ -146,10 +148,11 @@ test('translates every empty field of a locale at once', async ({ cms, page }) =
     arabic.getByRole('button', { name: 'Translate' }).first(),
     page.getByRole('menuitem', { name: /Translate from.*English/ }),
   );
-  await page
-    .getByRole('alertdialog', { name: 'Translate Fields' })
-    .getByRole('textbox', { name: 'API Key' })
-    .fill(API_KEY);
+
+  const keyDialog = page.getByRole('alertdialog', { name: 'Translate Fields' });
+
+  await keyDialog.getByRole('textbox', { name: 'API Key' }).fill(API_KEY);
+  await keyDialog.getByRole('button', { name: 'OK' }).click();
   await expect(
     page.getByRole('status').filter({ hasText: /2 fields translated from/ }),
   ).toBeVisible();

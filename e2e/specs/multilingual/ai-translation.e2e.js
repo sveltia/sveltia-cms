@@ -168,10 +168,12 @@ PROVIDERS.forEach(({ label, endpoint, apiKey, getKey, getPrompts, reply }) => {
         field.getByRole('button', { name: 'Translate' }),
         page.getByRole('menuitem', { name: /Translate from.*English/ }),
       );
-      await page
-        .getByRole('alertdialog', { name: 'Translate Field' })
-        .getByRole('textbox', { name: 'API Key' })
-        .fill(apiKey);
+
+      const keyDialog = page.getByRole('alertdialog', { name: 'Translate Field' });
+
+      // A typed key is only taken on OK, as one matching the pattern may still be incomplete
+      await keyDialog.getByRole('textbox', { name: 'API Key' }).fill(apiKey);
+      await keyDialog.getByRole('button', { name: 'OK' }).click();
       await expect(
         page.getByRole('status').filter({ hasText: /Field translated from/ }),
       ).toBeVisible();
@@ -226,10 +228,12 @@ PROVIDERS.forEach(({ label, endpoint, apiKey, getKey, getPrompts, reply }) => {
         field.getByRole('button', { name: 'Translate' }),
         page.getByRole('menuitem', { name: /Translate from.*English/ }),
       );
-      await page
-        .getByRole('alertdialog', { name: 'Translate Field' })
-        .getByRole('textbox', { name: 'API Key' })
-        .fill(apiKey);
+
+      const keyDialog = page.getByRole('alertdialog', { name: 'Translate Field' });
+
+      // A typed key is only taken on OK, as one matching the pattern may still be incomplete
+      await keyDialog.getByRole('textbox', { name: 'API Key' }).fill(apiKey);
+      await keyDialog.getByRole('button', { name: 'OK' }).click();
 
       await expect(
         page.getByRole('alert').filter({ hasText: 'Translation failed.' }),
