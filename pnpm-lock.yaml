@@ -33,8 +33,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0(svelte@5.57.2(@typescript-eslint/types@8.71.2))
       '@sveltia/ui':
-        specifier: ^0.87.1
-        version: 0.87.1(svelte@5.57.2(@typescript-eslint/types@8.71.2))(typescript@6.0.3)
+        specifier: ^0.87.2
+        version: 0.87.2(svelte@5.57.2(@typescript-eslint/types@8.71.2))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.4
         version: 0.12.4
@@ -1263,8 +1263,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.87.1':
-    resolution: {integrity: sha512-esQrwzOLbmsuqS4GKtHDurb94MJDe9jIuDnwOvm5BCuKr0nhxeXb/aq6Yx4L4morCxO/aEubTNVSUed3d2xOaw==}
+  '@sveltia/ui@0.87.2':
+    resolution: {integrity: sha512-V+Inv/XTn0MiZKOMiTEpvG8awledhrocWVvslCvGDr1qfkxv1HtNr5nLH8AjLXFqFjigeuOcHz6z/YSnrjKl6Q==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -2674,8 +2674,8 @@ packages:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
     engines: {node: '>= 4'}
 
-  ignore@7.0.12:
-    resolution: {integrity: sha512-/8UvqAPU9DGTI9k4mxtf49U37Isfwr8Uts96+SBHIkFxPJnHS0Ew4f00sM4Scd8V8EjM0jUNtVDdv1kPdt35lg==}
+  ignore@7.0.13:
+    resolution: {integrity: sha512-2E8Q6rh+1RRSq/YdaGsNfXsEZy9FVqv6BSSrkmZJP7BnaoPnRfKL+YaofPvP+5rzdk144qSm6i4+hvPgUcbV4Q==}
     engines: {node: '>= 4'}
 
   immutable@5.1.9:
@@ -5124,7 +5124,7 @@ snapshots:
       messageformat: 4.1.0
       svelte: 5.57.2(@typescript-eslint/types@8.71.2)
 
-  '@sveltia/ui@0.87.1(svelte@5.57.2(@typescript-eslint/types@8.71.2))(typescript@6.0.3)':
+  '@sveltia/ui@0.87.2(svelte@5.57.2(@typescript-eslint/types@8.71.2))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.52.0(typescript@6.0.3)
       '@lexical/dragon': 0.52.0(typescript@6.0.3)
@@ -5218,7 +5218,7 @@ snapshots:
       '@typescript-eslint/utils': 8.71.2(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
       '@typescript-eslint/visitor-keys': 8.71.2
       eslint: 9.39.5(supports-color@10.2.2)
-      ignore: 7.0.12
+      ignore: 7.0.13
       natural-compare: 1.4.0
       ts-api-utils: 2.5.0(typescript@6.0.3)
       typescript: 6.0.3
@@ -6677,7 +6677,7 @@ snapshots:
     dependencies:
       '@sindresorhus/merge-streams': 4.0.0
       fast-glob: 3.3.3
-      ignore: 7.0.12
+      ignore: 7.0.13
       is-path-inside: 4.0.0
       micromatch: 4.0.8
       slash: 5.1.0
@@ -6769,7 +6769,7 @@ snapshots:
 
   ignore@5.3.2: {}
 
-  ignore@7.0.12: {}
+  ignore@7.0.13: {}
 
   immutable@5.1.9: {}
 
@@ -7874,7 +7874,7 @@ snapshots:
       globby: 16.2.4
       globjoin: 0.1.4
       html-tags: 5.1.0
-      ignore: 7.0.12
+      ignore: 7.0.13
       import-meta-resolve: 4.2.0
       mathml-tag-names: 4.0.0
       meow: 14.1.0
