@@ -22,6 +22,8 @@ const mockI18nStrings = {
     'OAuth application ID is not defined. Users are required to provide an access token to sign in.',
   'config.error.open_authoring_no_workflow':
     'The `open_authoring` option requires the `editorial_workflow` publish mode.',
+  'config.error.auth_scope_no_repo':
+    'The `auth_scope` option must include `repo` or `public_repo`.',
 };
 
 vi.mock('@sveltia/i18n', async () =>
@@ -971,6 +973,49 @@ describe('parseBackendConfig', () => {
       parseBackendConfig(config, collectors);
 
       expect(collectors.warnings.size).toBe(0);
+    });
+
+    it('should accept a list of scopes that adds `workflow`', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        publish_mode: 'editorial_workflow',
+        backend: {
+          name: 'github',
+          repo: 'owner/repo',
+          open_authoring: true,
+          auth_scope: ['public_repo', 'workflow'],
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(0);
+      expect(collectors.warnings.size).toBe(0);
+    });
+
+    it('should error when a list of scopes has no repository scope', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        publish_mode: 'editorial_workflow',
+        backend: {
+          name: 'github',
+          repo: 'owner/repo',
+          open_authoring: true,
+          auth_scope: ['workflow'],
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect([...collectors.errors]).toEqual([
+        'The `auth_scope` option must include `repo` or `public_repo`.',
+      ]);
     });
 
     it('should error without the editorial workflow publish mode', async () => {

@@ -1984,6 +1984,8 @@ config:
     open_authoring_no_workflow: The `open_authoring` option requires the `editorial_workflow` or `preview` publish mode. See the <a>documentation</a> for details.
     # Don’t localize `auth_methods`
     no_auth_methods: The `auth_methods` option must contain at least one method.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: The `auth_scope` option must include `repo` or `public_repo`.
     missing_media_folder: The media folder is not defined.
     public_folder_relative_path: The configured public folder is invalid. It must be an absolute path starting with “/”.
     public_folder_absolute_url: An absolute URL for the public folder option is not supported in Sveltia CMS.

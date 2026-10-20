@@ -61,7 +61,8 @@ export const init = () => {
     graphql_api_root: graphqlApiRoot = restApiRoot,
     include_credentials: includeCredentials = false,
     // Open Authoring on a public repository only needs `public_repo`, which is a narrower grant to
-    // ask a contributor for than full `repo` access
+    // ask a contributor for than full `repo` access. A list can add `workflow`, which keeps a fork
+    // in sync when the repository’s GitHub Actions workflow files change
     auth_scope: authScope = 'repo',
   } = backend;
 
@@ -82,7 +83,7 @@ export const init = () => {
     tokenPath: '/access_token',
     api: {
       clientId,
-      authScope: `${authScope},user`,
+      authScope: [authScope, 'user'].flat().join(','),
       restBaseURL: normalizeRestBaseURL(restApiRoot),
       graphqlBaseURL: normalizeGraphQLBaseURL(graphqlApiRoot),
       includeCredentials,

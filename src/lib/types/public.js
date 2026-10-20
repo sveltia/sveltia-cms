@@ -2226,9 +2226,14 @@
  * without write access to the repository propose changes from a fork. It requires the
  * `editorial_workflow` publish mode. Default: `false`. See the
  * [documentation](https://sveltiacms.app/en/docs/workflows/open) for details.
- * @property {'repo' | 'public_repo'} [auth_scope] OAuth scope to request when signing in. Default:
- * `repo`. With Open Authoring on a public repository, `public_repo` is enough and asks the
- * contributor for a narrower grant. A private repository always needs `repo`.
+ * @property {'repo' | 'public_repo' | ('repo' | 'public_repo' | 'workflow')[]} [auth_scope] OAuth
+ * scope to request when signing in, or a list of scopes, which must include `repo` or
+ * `public_repo`. Default: `repo`. With Open Authoring on a public repository, `public_repo` is
+ * enough and asks the contributor for a narrower grant. A private repository always needs `repo`.
+ * Adding `workflow` lets the CMS keep a contributor’s fork in sync when your GitHub Actions
+ * workflow files change, at the cost of letting the token change workflows in every repository
+ * the contributor can push to. See the
+ * [documentation](https://sveltiacms.app/en/docs/workflows/open#authentication-scope) for details.
  * @see https://decapcms.org/docs/github-backend/
  * @see https://decapcms.org/docs/editorial-workflows/
  * @see https://decapcms.org/docs/open-authoring/

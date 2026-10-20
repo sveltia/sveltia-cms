@@ -121,6 +121,25 @@ describe('GitHub backend service', () => {
       );
     });
 
+    test('requests each scope of a list', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: BACKEND_NAME,
+          repo: 'owner/repo',
+          branch: 'main',
+          open_authoring: true,
+          auth_scope: ['public_repo', 'workflow'],
+        },
+      });
+
+      init();
+
+      expect(Object.assign).toHaveBeenCalledWith(
+        apiConfig,
+        expect.objectContaining({ authScope: 'public_repo,workflow,user' }),
+      );
+    });
+
     test('returns undefined when backend is not GitHub', () => {
       cmsConfig.current = /** @type {any} */ ({ backend: { name: 'other' } });
 

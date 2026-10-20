@@ -138,6 +138,16 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       errors.add(_('config.error.no_auth_methods'));
     }
 
+    // A list of scopes can add `workflow`, which is no use on its own: without a repository scope
+    // the CMS can’t write to the repository or a fork of it. The schema only checks each scope
+    if (
+      name === 'github' &&
+      Array.isArray(authScope) &&
+      !authScope.some((scope) => scope === 'repo' || scope === 'public_repo')
+    ) {
+      errors.add(_('config.error.auth_scope_no_repo'));
+    }
+
     const allowTokenAuth = !authMethods || authMethods.includes('token');
     const authDocURL = AUTH_DOC_URL.replace('BACKEND_NAME', BACKEND_DOC_SLUGS[name] ?? name);
 
