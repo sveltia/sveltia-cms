@@ -1,7 +1,7 @@
 import { sortItemsByKey } from '$lib/services/common/view';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
-import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder/sort';
+import { getOrderValueGetter } from '$lib/services/contents/collection/entries/reorder/sort';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { SUMMARY_COLUMN_KEY } from '$lib/services/contents/collection/view/table-keys';
 import { getField } from '$lib/services/contents/entry/fields';
@@ -194,23 +194,16 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
 
   // The `_manual` special key sorts by the collection’s reorder field, or by the position in the
   // array. Either way, the entries are sorted the same as in the reorder UI and when they are
-  // renumbered: an entry without a valid number goes last, keeping its place among the others. The
-  // field may not be defined under the collection’s `fields`, so it would otherwise default to a
-  // string sort, and a missing value would come first
-  if (key === '_manual' || key === getOrderFieldKey(collection)) {
-    const sorted = sortEntriesByOrderField(
-      entries,
-      /** @type {InternalEntryCollection} */ (collection),
-    );
-
-    if (order === 'descending') {
-      sorted.reverse();
-    }
-
-    return moveIndexFileToTop(sorted, collection);
-  }
-
-  const { getSortKey, isStringType } = getEntrySortKeyGetter({ collection, key, locale });
+  // renumbered: an entry without a valid number goes last in either order, keeping its place among
+  // the others, as with any other key. The field may not be defined under the collection’s
+  // `fields`, so it would otherwise default to a string sort, and a missing value would come first
+  const { getSortKey, isStringType } =
+    key === '_manual' || key === getOrderFieldKey(collection)
+      ? {
+          getSortKey: getOrderValueGetter(/** @type {InternalEntryCollection} */ (collection)),
+          isStringType: false,
+        }
+      : getEntrySortKeyGetter({ collection, key, locale });
 
   // `sortItemsByKey()` computes the key once per entry, so there’s no need for a lookup table here
   sortItemsByKey(_entries, getSortKey, isStringType, order);

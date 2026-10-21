@@ -159,6 +159,17 @@ describe('Test sortOptions()', () => {
     ).toEqual(['Apple', 'Zebra', 'Mango', 'Bee', 'Yak']);
   });
 
+  test('should sort the options by label when the values only differ in case', () => {
+    const groups = [
+      makeGroup(makeEntry('x', { en: { category: 'news' } }), ['Zebra']),
+      makeGroup(makeEntry('y', { en: { category: 'News' } }), ['Apple']),
+    ];
+
+    expect(
+      labels(sortOptions({ groups, collection, sortBy: { field: 'category' }, locale: 'en' })),
+    ).toEqual(['Apple', 'Zebra']);
+  });
+
   test('should keep the options generated from the same entry together', () => {
     const groups = [
       makeGroup(makeEntry('b', { en: { title: 'B' } }), ['Paris', 'Lyon']),

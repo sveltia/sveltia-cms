@@ -1,6 +1,6 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 
-import { DATE_TIME_FIELDS } from '$lib/services/common/template/constants';
+import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
 import { getFileNameParts } from '$lib/services/common/template/utils';
 import {
   getSharedEntryFileName,
@@ -27,18 +27,8 @@ export const handleDateTimeTag = (tag, dateTimeParts) =>
  * @param {string} tag The template tag.
  * @returns {string | undefined} The UUID value or undefined if not a UUID tag.
  */
-export const handleUuidTag = (tag) => {
-  switch (tag) {
-    case 'uuid':
-      return generateUUID();
-    case 'uuid_short':
-      return generateUUID('short');
-    case 'uuid_shorter':
-      return generateUUID('shorter');
-    default:
-      return undefined;
-  }
-};
+export const handleUuidTag = (tag) =>
+  Object.hasOwn(UUID_TYPES, tag) ? generateUUID(UUID_TYPES[tag].length) : undefined;
 
 /**
  * Handles slug-related template tags.

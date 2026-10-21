@@ -1,3 +1,4 @@
+import { generateUUID } from '@sveltia/utils/crypto';
 import { describe, expect, test } from 'vitest';
 
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
@@ -147,19 +148,16 @@ describe('Template constants', () => {
   });
 
   describe('UUID_TYPES', () => {
-    test('should have uuid type', () => {
-      expect(UUID_TYPES.uuid).toBeDefined();
-      expect(UUID_TYPES.uuid).toBe('uuid');
+    test('should have the uuid type', () => {
+      expect(UUID_TYPES.uuid).toEqual({ length: undefined, pattern: expect.any(String) });
     });
 
-    test('should have uuid_short type', () => {
-      expect(UUID_TYPES.uuid_short).toBeDefined();
-      expect(UUID_TYPES.uuid_short).toBe('uuid_short');
+    test('should have the uuid_short type', () => {
+      expect(UUID_TYPES.uuid_short).toEqual({ length: 'short', pattern: '[0-9a-f]{12}' });
     });
 
-    test('should have uuid_shorter type', () => {
-      expect(UUID_TYPES.uuid_shorter).toBeDefined();
-      expect(UUID_TYPES.uuid_shorter).toBe('uuid_shorter');
+    test('should have the uuid_shorter type', () => {
+      expect(UUID_TYPES.uuid_shorter).toEqual({ length: 'shorter', pattern: '[0-9a-f]{8}' });
     });
 
     test('should be a mapping of tag names', () => {
@@ -167,9 +165,9 @@ describe('Template constants', () => {
       expect(Object.keys(UUID_TYPES)).toHaveLength(3);
     });
 
-    test('should contain only string values', () => {
-      Object.values(UUID_TYPES).forEach((value) => {
-        expect(typeof value).toBe('string');
+    test('should have a pattern matching each generated UUID', () => {
+      Object.values(UUID_TYPES).forEach(({ length, pattern }) => {
+        expect(generateUUID(length)).toMatch(new RegExp(`^${pattern}$`));
       });
     });
   });

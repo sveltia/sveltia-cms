@@ -2,7 +2,6 @@ import { describe, expect, test, vi } from 'vitest';
 
 import {
   evaluateExpression,
-  isValidExpression,
   parseExpression,
 } from '$lib/services/contents/fields/compute/expression';
 
@@ -56,7 +55,7 @@ describe('parseExpression()', () => {
   });
 });
 
-describe('isValidExpression()', () => {
+describe('parseExpression() validity', () => {
   test.each([
     '1',
     '.5',
@@ -75,7 +74,7 @@ describe('isValidExpression()', () => {
     'min(1) + max(1, 2, 3)',
     "{{fields.a | default('0')}} + {{fields.b | default('{{fields.c}}')}}",
   ])('accepts %j', (expression) => {
-    expect(isValidExpression(expression)).toBe(true);
+    expect(parseExpression(expression).tree).toBeDefined();
   });
 
   test.each([
@@ -111,7 +110,7 @@ describe('isValidExpression()', () => {
     'toString(1)',
     'posts-{{fields.slug}}',
   ])('rejects %j', (expression) => {
-    expect(isValidExpression(expression)).toBe(false);
+    expect(parseExpression(expression).tree).toBeUndefined();
   });
 });
 

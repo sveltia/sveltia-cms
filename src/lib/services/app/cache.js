@@ -12,10 +12,12 @@ import { LEGACY_USER_STORAGE_KEYS } from '$lib/services/user/constants';
  * @type {string[]}
  */
 const CACHE_STORE_NAMES = ['file-cache', 'asset-thumbnails', 'asset-hashes'];
+
 /**
  * Prefix shared by all the local storage keys written by the CMS, such as `sveltia-cms.prefs`.
  */
-const LOCAL_STORAGE_KEY_PREFIX = 'sveltia-cms.';
+export const LOCAL_STORAGE_KEY_PREFIX = 'sveltia-cms.';
+
 /**
  * Pattern matching the IndexedDB database names created by the CMS, which are made up of a Git
  * backend name and a repository path, e.g. `github:owner/repo`. Used to leave any database owned by

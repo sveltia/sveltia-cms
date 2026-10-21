@@ -21,14 +21,26 @@ const PDFJS_GET_DOC_OPTIONS = {
 };
 
 /**
+ * @typedef {object} PDFLoadingOptions
+ * @property {Record<string, any>} options Options for `getDocument()`.
+ * @property {() => void} dispose Function to clean up once the loading task has been destroyed.
+ */
+
+/**
  * Get the options for loading a PDF document with PDF.js from UNPKG. The worker is loaded from the
  * same place, and created by PDF.js for each document.
  * @param {import('pdfjs-dist')} pdfjs PDF.js module.
- * @returns {{ options: Record<string, any>, dispose?: () => void }} Options for `getDocument()`,
- * and a function to clean up once the loading task has been destroyed, which isn’t needed here.
+ * @returns {PDFLoadingOptions} Options for `getDocument()`, and a function to clean up once the
+ * loading task has been destroyed, which does nothing here.
  */
 export const createLoadingOptions = (pdfjs) => {
   pdfjs.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
 
-  return { options: PDFJS_GET_DOC_OPTIONS };
+  return {
+    options: PDFJS_GET_DOC_OPTIONS,
+    /**
+     * Nothing to clean up, as PDF.js ends the worker it has created with the loading task.
+     */
+    dispose: () => {},
+  };
 };

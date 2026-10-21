@@ -273,7 +273,10 @@ export const getOptions = ({
           locale,
           fieldConfig,
           refEntries: manuallyOrdered
-            ? sortEntriesByOrderField(refEntries, /** @type {any} */ (collection))
+            ? sortEntriesByOrderField(
+                refEntries,
+                /** @type {InternalEntryCollection} */ (collection),
+              )
             : refEntries,
           entryFilters: resolvedFilters,
           pendingEntries,

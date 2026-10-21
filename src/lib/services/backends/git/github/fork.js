@@ -259,7 +259,7 @@ export const fetchFork = async () => (await fetchForkByName()) ?? fetchForkFromN
  * Wait until a newly requested fork can be read back. GitHub creates a fork asynchronously and the
  * request returns before the copy is complete, so committing to it right away could fail.
  * @param {RepositoryPath} fork Fork to wait for.
- * @param {number} [attemptsLeft] Number of attempts remaining, used for the recursive retry.
+ * @param {number} [attemptsLeft] Number of checks at most, including the first one.
  * @throws {Error} When the fork hasn’t appeared within the allotted time.
  */
 export const waitForFork = async ({ owner, repo }, attemptsLeft) => {

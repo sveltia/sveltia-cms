@@ -26,13 +26,14 @@ import {
   deleteWorkflowEntry,
   discardWorkflowEntries,
   discardWorkflowEntry,
+  publishReviewedEntry,
   publishWorkflowEntry,
   removeUnpublishedEntry,
   saveWorkflowChanges,
   updateWorkflowStatus,
   upsertUnpublishedEntry,
 } from '$lib/services/workflow/save';
-import { verifyMergeState } from '$lib/services/workflow/verify';
+import { pinReviewedHead, verifyMergeState } from '$lib/services/workflow/verify';
 
 vi.mock('$lib/services/api/events');
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
@@ -74,7 +75,13 @@ vi.mock('$lib/services/backends/git/shared/commits');
 vi.mock('$lib/services/backends/save');
 vi.mock('$lib/services/deployments/resolve');
 vi.mock('$lib/services/workflow/deploy');
-vi.mock('$lib/services/workflow/verify', () => ({ verifyMergeState: vi.fn() }));
+vi.mock('$lib/services/workflow/verify', () => ({
+  pinReviewedHead: vi.fn((entry, headSHA) => ({
+    ...entry,
+    workflow: { ...entry.workflow, pullRequest: { ...entry.workflow.pullRequest, headSHA } },
+  })),
+  verifyMergeState: vi.fn(),
+}));
 
 const workflowService = {
   fetchPullRequests: vi.fn(),
@@ -604,6 +611,39 @@ describe('workflow/save', () => {
       expect(unpublishedEntries.current.map((/** @type {any} */ e) => e.id)).toEqual([
         'cms/posts/a',
         'cms/posts/b',
+      ]);
+    });
+  });
+
+  describe('publishReviewedEntry', () => {
+    test('publishes the entry pinned to the head commit of the reviewed version', async () => {
+      const entry = createEntry('cms/posts/hello', 'pending_publish');
+      const reviewed = createEntry('cms/posts/hello', 'pending_publish');
+
+      entry.workflow.pullRequest.headSHA = 'new';
+      reviewed.workflow.pullRequest.headSHA = 'reviewed';
+      upsertUnpublishedEntry(entry);
+
+      await publishReviewedEntry(entry, reviewed);
+
+      expect(pinReviewedHead).toHaveBeenCalledWith(entry, 'reviewed');
+      expect(workflowService.publish).toHaveBeenCalledWith(
+        expect.objectContaining({ branch: 'cms/posts/hello', headSHA: 'reviewed' }),
+      );
+    });
+
+    test('pins no head when the reviewed version has no pull request', async () => {
+      const entry = createEntry('cms/posts/hello', 'pending_publish');
+      const { workflow: _workflow, ...published } = createEntry('cms/posts/hello');
+
+      upsertUnpublishedEntry(entry);
+
+      await publishReviewedEntry(entry, published);
+      await publishReviewedEntry(entry, undefined);
+
+      expect(vi.mocked(pinReviewedHead).mock.calls).toEqual([
+        [entry, undefined],
+        [entry, undefined],
       ]);
     });
   });

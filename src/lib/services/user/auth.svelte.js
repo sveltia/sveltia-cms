@@ -6,7 +6,11 @@ import { goto, parseLocation } from '$lib/services/app/navigation';
 import { backend, backendName, selectBackend } from '$lib/services/backends';
 import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { NOT_COLLABORATOR_ERROR_MESSAGE } from '$lib/services/backends/git/shared/errors';
-import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
+import {
+  createStaleCheck,
+  dataGeneration,
+  repositoryHead,
+} from '$lib/services/backends/git/shared/head';
 import { startRemoteChangePolling, stopRemoteChangePolling } from '$lib/services/backends/poll';
 import { cmsConfig } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
@@ -270,12 +274,7 @@ export const copyMagicLinkPrefs = (copiedPrefs) => {
  */
 const loadRepositoryData = async (_backend) => {
   // Signing out while the data is being loaded discards it, and stops the polling started below
-  const generation = dataGeneration.current;
-  /**
-   * Whether the user has signed out since the load was started.
-   * @returns {boolean} Result.
-   */
-  const isStale = () => generation !== dataGeneration.current;
+  const isStale = createStaleCheck();
   // The pull requests don’t depend on the files, so they’re requested at the same time. That needs
   // the branch they target, though: without one configured, the default branch is only known once
   // the files are being fetched, and every pull request would be dropped as targeting another

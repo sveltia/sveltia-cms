@@ -277,6 +277,18 @@ export const addLinkDefinitions = (blocks) => {
 };
 
 /**
+ * Split the value of a rich text field into the blocks its preview renders one by one.
+ * @param {string} value Markdown or HTML.
+ * @param {object} options Options.
+ * @param {boolean} options.isHTML Whether the value is HTML rather than Markdown.
+ * @returns {string[]} Blocks. See {@link splitHTMLBlocks} and {@link splitMarkdownBlocks}.
+ */
+export const splitPreviewBlocks = (value, { isHTML }) =>
+  // The link reference definitions are added to each Markdown block, as a block is parsed on its
+  // own while a reference link and its definition are usually in different blocks
+  isHTML ? splitHTMLBlocks(value) : addLinkDefinitions(splitMarkdownBlocks(value));
+
+/**
  * A block of a rich text preview with its key.
  * @typedef {{ key: string, block: string }} KeyedBlock
  */

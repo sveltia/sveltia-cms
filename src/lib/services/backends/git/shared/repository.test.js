@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   applyDefaultBranch,
+  createBaseURLsGetter,
   getInstanceURL,
   getRepoURL,
   initRepositoryInfo,
@@ -78,6 +79,26 @@ describe('git/shared/repository', () => {
       ['https://example.com/gitea/api/v1', 'https://example.com/gitea'],
     ])('should get the web interface URL from %s', (restApiRoot, expected) => {
       expect(getInstanceURL(restApiRoot)).toBe(expected);
+    });
+  });
+
+  describe('createBaseURLsGetter', () => {
+    const getBaseURLs = createBaseURLsGetter({ tree: '/-/tree', blob: '/-/blob', commit: '/c' });
+
+    it('should append the path segments and the encoded branch to the repository URL', () => {
+      expect(getBaseURLs('https://example.com/owner/repo', 'cms/posts/c#')).toEqual({
+        treeBaseURL: 'https://example.com/owner/repo/-/tree/cms/posts/c%23',
+        blobBaseURL: 'https://example.com/owner/repo/-/blob/cms/posts/c%23',
+        commitBaseURL: 'https://example.com/owner/repo/c',
+      });
+    });
+
+    it('should point at the repository itself without a branch', () => {
+      expect(getBaseURLs('https://example.com/owner/repo')).toEqual({
+        treeBaseURL: 'https://example.com/owner/repo',
+        blobBaseURL: '',
+        commitBaseURL: 'https://example.com/owner/repo/c',
+      });
     });
   });
 

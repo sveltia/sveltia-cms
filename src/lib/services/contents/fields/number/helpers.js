@@ -1,7 +1,7 @@
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
- * @import { LocaleCode, NumberField } from '$lib/types/public';
+ * @import { ComputeField, Field, LocaleCode, NumberField } from '$lib/types/public';
  */
 
 /**
@@ -24,21 +24,68 @@ export const getNumberFormatter = (canonicalLocale) =>
   );
 
 /**
- * Whether the field stores its value as a floating-point number rather than an integer.
- * @param {NumberField} fieldConfig Field configuration.
+ * Get the `value_type` option of a Number or Compute field, with its default: `int` for a Number
+ * field, and `string` for a Compute field.
+ * @param {NumberField | ComputeField} fieldConfig Field configuration.
+ * @returns {string} Value type.
+ */
+export const getValueType = ({ widget, value_type: valueType }) =>
+  valueType ?? (widget === 'compute' ? 'string' : 'int');
+
+/**
+ * Whether the field stores its value as a floating-point number rather than an integer. A Compute
+ * field with a numeric `value_type` means the same as a Number field’s.
+ * @param {NumberField | ComputeField} fieldConfig Field configuration.
  * @returns {boolean} `true` if the `value_type` is `float` or `float/string`.
  */
-export const isFloatType = ({ value_type: valueType = 'int' }) =>
-  ['float', 'float/string'].includes(valueType);
+export const isFloatType = (fieldConfig) =>
+  ['float', 'float/string'].includes(getValueType(fieldConfig));
 
 /**
  * Whether the field stores its value as a string rather than a number. That’s the case for the
- * `int/string` and `float/string` types, as well as any custom `value_type`.
- * @param {NumberField} fieldConfig Field configuration.
+ * `int/string` and `float/string` types, as well as any custom `value_type`, which includes the
+ * `string` type of a Compute field.
+ * @param {NumberField | ComputeField} fieldConfig Field configuration.
  * @returns {boolean} `true` if the stored value is a string.
  */
-export const isStringOutput = ({ value_type: valueType = 'int' }) =>
-  !['int', 'float'].includes(valueType);
+export const isStringOutput = (fieldConfig) =>
+  !['int', 'float'].includes(getValueType(fieldConfig));
+
+/**
+ * Whether the given field yields a number: a Number field, or a Compute field whose `value_type` is
+ * anything but `string`, which makes its `value` an arithmetic expression. The number may still be
+ * stored as a string; see {@link storesNumber}.
+ * @param {Field} fieldConfig Field configuration.
+ * @returns {boolean} Result.
+ */
+export const yieldsNumber = (fieldConfig) =>
+  fieldConfig.widget === 'number' ||
+  (fieldConfig.widget === 'compute' &&
+    getValueType(/** @type {ComputeField} */ (fieldConfig)) !== 'string');
+
+/**
+ * Whether the given field stores its value as a number: a Number field or a Compute field with the
+ * `int` or `float` value type.
+ * @param {Field} fieldConfig Field configuration.
+ * @returns {boolean} Result.
+ */
+export const storesNumber = (fieldConfig) =>
+  (fieldConfig.widget === 'number' || fieldConfig.widget === 'compute') &&
+  !isStringOutput(/** @type {NumberField | ComputeField} */ (fieldConfig));
+
+/**
+ * Parse the given value as a number, the way a number input does: a number is taken as is, and a
+ * string is parsed as a whole, not just its leading digits like `parseInt()` does, which reads
+ * `12abc` as `12` and `1e3` as `1`.
+ * @param {unknown} value Value.
+ * @returns {number} Number, or `NaN` if the value is a blank string or isn’t a number or a string.
+ */
+export const parseNumber = (value) =>
+  typeof value === 'number'
+    ? value
+    : typeof value === 'string' && value.trim()
+      ? Number(value)
+      : Number.NaN;
 
 /**
  * Cast the given number according to the field’s `value_type`: an integer type drops the fraction.

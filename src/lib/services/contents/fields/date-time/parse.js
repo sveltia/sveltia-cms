@@ -70,15 +70,10 @@ const hasOffsetToken = (format) => FORMAT_OFFSET_TOKEN_REGEX.test(getFormatToken
  * @param {string} format Format string.
  * @returns {boolean} Result.
  */
-export const hasOffsetOutsideFormat = (value, format) => {
-  const tokens = getFormatTokens(format);
-
-  return (
-    OFFSET_SUFFIX_REGEX.test(value) &&
-    FORMAT_TIME_TOKEN_REGEX.test(tokens) &&
-    !FORMAT_OFFSET_TOKEN_REGEX.test(tokens)
-  );
-};
+export const hasOffsetOutsideFormat = (value, format) =>
+  OFFSET_SUFFIX_REGEX.test(value) &&
+  FORMAT_TIME_TOKEN_REGEX.test(getFormatTokens(format)) &&
+  !hasOffsetToken(format);
 
 /**
  * Parse a value in the given format with a Day.js parser. A value with a UTC offset is parsed

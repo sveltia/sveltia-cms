@@ -8,6 +8,7 @@ import { isArrayFileCollection } from '$lib/services/contents/collection/predica
 import { parseCustomSortableFields } from '$lib/services/contents/collection/view/options';
 import { SUMMARY_COLUMN_KEY } from '$lib/services/contents/collection/view/table-keys';
 import { getField } from '$lib/services/contents/entry/fields';
+import { storesNumber } from '$lib/services/contents/fields/number/helpers';
 import { getLocalizedOption } from '$lib/services/contents/i18n/options';
 import { isNumeric } from '$lib/services/utils/number';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
@@ -19,7 +20,7 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
  * SortKey,
  * SortOrder,
  * } from '$lib/types/private';
- * @import { ComputeField, Field, FieldKeyPath, NumberField } from '$lib/types/public';
+ * @import { Field, FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -196,13 +197,8 @@ export const getSortKeyType = ({ key, fieldConfig }) => {
   }
 
   // A Compute field yielding a number has the same `value_type` option, but defaults to `string`
-  if (fieldConfig?.widget === 'number' || fieldConfig?.widget === 'compute') {
-    const { value_type: valueType = fieldConfig.widget === 'number' ? 'int' : 'string' } =
-      /** @type {NumberField | ComputeField} */ (fieldConfig);
-
-    if (valueType === 'int' || valueType === 'float') {
-      return Number;
-    }
+  if (fieldConfig && storesNumber(fieldConfig)) {
+    return Number;
   }
 
   return String;

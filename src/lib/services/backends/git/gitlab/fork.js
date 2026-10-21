@@ -217,7 +217,7 @@ const FORK_READY_STATUSES = ['none', 'finished'];
  * background and the request returns before the copy is complete, so committing to it right away
  * could fail.
  * @param {RepositoryPath} fork Fork to wait for.
- * @param {number} [attemptsLeft] Number of attempts remaining, used for the recursive retry.
+ * @param {number} [attemptsLeft] Number of checks at most, including the first one.
  * @throws {Error} When the fork hasn’t become available within the allotted time, or the import
  * failed outright.
  * @see https://docs.gitlab.com/api/project_import_export/#import-status

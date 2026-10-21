@@ -8,10 +8,9 @@ import {
   canShowMobileSignInDialog,
   createOneOffNotice,
   DEMO_WELCOME_STORAGE_KEY,
-  dismissDemoWelcomeDialog,
+  demoWelcomeNotice,
   getState,
   setState,
-  showDemoWelcomeDialog,
   showDemoWelcomeDialogIfNeeded,
   showMobileSignInDialog,
 } from './onboarding';
@@ -284,13 +283,13 @@ describe('onboarding', () => {
 
   describe('demo welcome dialog', () => {
     beforeEach(() => {
-      showDemoWelcomeDialog.current = false;
+      demoWelcomeNotice.show.current = false;
       /** @type {any} */ (backend).current = { name: 'test-repo' };
       mockIsDemoSite.mockImplementation((name) => name === 'test-repo');
     });
 
     it('should be hidden by default', () => {
-      expect(showDemoWelcomeDialog.current).toBe(false);
+      expect(demoWelcomeNotice.show.current).toBe(false);
     });
 
     it('should show the dialog on a demo site the user hasn’t seen it on yet', async () => {
@@ -299,14 +298,14 @@ describe('onboarding', () => {
       await showDemoWelcomeDialogIfNeeded();
       expect(mockIsDemoSite).toHaveBeenCalledWith('test-repo');
       expect(mockLocalStorageGet).toHaveBeenCalledWith(DEMO_WELCOME_STORAGE_KEY);
-      expect(showDemoWelcomeDialog.current).toBe(true);
+      expect(demoWelcomeNotice.show.current).toBe(true);
     });
 
     it('should not show the dialog again once the user has seen it', async () => {
       mockLocalStorageGet.mockResolvedValue(true);
 
       await showDemoWelcomeDialogIfNeeded();
-      expect(showDemoWelcomeDialog.current).toBe(false);
+      expect(demoWelcomeNotice.show.current).toBe(false);
     });
 
     it('should not show the dialog outside a demo site', async () => {
@@ -314,7 +313,7 @@ describe('onboarding', () => {
 
       await showDemoWelcomeDialogIfNeeded();
       expect(mockLocalStorageGet).not.toHaveBeenCalled();
-      expect(showDemoWelcomeDialog.current).toBe(false);
+      expect(demoWelcomeNotice.show.current).toBe(false);
     });
 
     it('should not show the dialog without a backend', async () => {
@@ -322,27 +321,37 @@ describe('onboarding', () => {
 
       await showDemoWelcomeDialogIfNeeded();
       expect(mockIsDemoSite).toHaveBeenCalledWith(undefined);
-      expect(showDemoWelcomeDialog.current).toBe(false);
+      expect(demoWelcomeNotice.show.current).toBe(false);
     });
 
     it('should show the dialog when the storage can’t be read', async () => {
       mockLocalStorageGet.mockRejectedValue(new Error('denied'));
 
       await showDemoWelcomeDialogIfNeeded();
-      expect(showDemoWelcomeDialog.current).toBe(true);
+      expect(demoWelcomeNotice.show.current).toBe(true);
+    });
+
+    it('should use a local storage key with the CMS prefix', () => {
+      expect(DEMO_WELCOME_STORAGE_KEY).toBe('sveltia-cms.demo-welcome-seen');
     });
 
     it('should remember that the user has seen the dialog', async () => {
       mockLocalStorageSet.mockResolvedValue(undefined);
+      demoWelcomeNotice.show.current = true;
 
-      await dismissDemoWelcomeDialog();
+      demoWelcomeNotice.hide();
+      expect(demoWelcomeNotice.show.current).toBe(false);
       expect(mockLocalStorageSet).toHaveBeenCalledWith(DEMO_WELCOME_STORAGE_KEY, true);
     });
 
     it('should ignore an error while remembering the dismissal', async () => {
       mockLocalStorageSet.mockRejectedValue(new Error('denied'));
 
-      await expect(dismissDemoWelcomeDialog()).resolves.toBeUndefined();
+      // Vitest fails the run on an unhandled rejection, so the error has to be caught
+      expect(() => demoWelcomeNotice.hide()).not.toThrow();
+      await vi.waitFor(() => {
+        expect(mockLocalStorageSet).toHaveBeenCalledWith(DEMO_WELCOME_STORAGE_KEY, true);
+      });
     });
   });
 });

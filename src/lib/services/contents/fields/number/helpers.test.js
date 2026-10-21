@@ -4,8 +4,13 @@ import {
   getNumberFieldValue,
   getNumberFormatter,
   getNumberInputValue,
+  getValueType,
   isFloatType,
   isInvalidNumberValue,
+  isStringOutput,
+  parseNumber,
+  storesNumber,
+  yieldsNumber,
 } from './helpers.js';
 
 /**
@@ -18,6 +23,89 @@ import {
  * @returns {NumberField} Field configuration.
  */
 const createField = (valueType) => ({ name: 'count', widget: 'number', value_type: valueType });
+
+describe('getValueType()', () => {
+  test('returns the `value_type` option', () => {
+    expect(getValueType(createField('float/string'))).toBe('float/string');
+    expect(getValueType(/** @type {any} */ ({ widget: 'compute', value_type: 'int' }))).toBe('int');
+  });
+
+  test('returns the default of the field type', () => {
+    expect(getValueType(createField())).toBe('int');
+    expect(getValueType(/** @type {any} */ ({ widget: 'compute', value: '' }))).toBe('string');
+  });
+});
+
+describe('yieldsNumber()', () => {
+  test('returns true for a Number field', () => {
+    expect(yieldsNumber(createField())).toBe(true);
+    expect(yieldsNumber(createField('int/string'))).toBe(true);
+  });
+
+  test('tells whether a Compute field yields a number', () => {
+    expect(yieldsNumber(/** @type {any} */ ({ widget: 'compute', value: '' }))).toBe(false);
+    expect(yieldsNumber(/** @type {any} */ ({ widget: 'compute', value_type: 'string' }))).toBe(
+      false,
+    );
+    expect(yieldsNumber(/** @type {any} */ ({ widget: 'compute', value_type: 'int' }))).toBe(true);
+    expect(
+      yieldsNumber(/** @type {any} */ ({ widget: 'compute', value_type: 'float/string' })),
+    ).toBe(true);
+  });
+
+  test('returns false for another field type', () => {
+    expect(yieldsNumber({ name: 'title', widget: 'string' })).toBe(false);
+    expect(yieldsNumber({ name: 'title' })).toBe(false);
+  });
+});
+
+describe('storesNumber()', () => {
+  test('tells whether a Number field stores a number', () => {
+    expect(storesNumber(createField())).toBe(true);
+    expect(storesNumber(createField('float'))).toBe(true);
+    expect(storesNumber(createField('int/string'))).toBe(false);
+  });
+
+  test('tells whether a Compute field stores a number', () => {
+    expect(storesNumber(/** @type {any} */ ({ widget: 'compute', value: '' }))).toBe(false);
+    expect(storesNumber(/** @type {any} */ ({ widget: 'compute', value_type: 'int' }))).toBe(true);
+    expect(
+      storesNumber(/** @type {any} */ ({ widget: 'compute', value_type: 'float/string' })),
+    ).toBe(false);
+  });
+
+  test('returns false for another field type', () => {
+    expect(storesNumber({ name: 'title', widget: 'string' })).toBe(false);
+  });
+});
+
+describe('isStringOutput()', () => {
+  test('tells whether a Compute field stores a string', () => {
+    expect(isStringOutput(/** @type {any} */ ({ widget: 'compute', value: '' }))).toBe(true);
+    expect(isStringOutput(/** @type {any} */ ({ widget: 'compute', value_type: 'float' }))).toBe(
+      false,
+    );
+  });
+});
+
+describe('parseNumber()', () => {
+  test('returns a number as is', () => {
+    expect(parseNumber(12.5)).toBe(12.5);
+    expect(parseNumber(Number.NaN)).toBeNaN();
+  });
+
+  test('parses a whole string', () => {
+    expect(parseNumber(' 1e3 ')).toBe(1000);
+    expect(parseNumber('12abc')).toBeNaN();
+  });
+
+  test('returns `NaN` for a blank string or another type', () => {
+    expect(parseNumber('')).toBeNaN();
+    expect(parseNumber('  ')).toBeNaN();
+    expect(parseNumber(null)).toBeNaN();
+    expect(parseNumber(true)).toBeNaN();
+  });
+});
 
 describe('isFloatType()', () => {
   test('returns true for the floating-point types', () => {

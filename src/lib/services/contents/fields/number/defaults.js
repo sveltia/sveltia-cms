@@ -1,6 +1,9 @@
 import {
   getNumberFieldValue,
+  getValueType,
   isInvalidNumberValue,
+  isStringOutput,
+  parseNumber,
 } from '$lib/services/contents/fields/number/helpers';
 
 /**
@@ -20,29 +23,17 @@ const VALUE_TYPES = ['int', 'float', 'int/string', 'float/string'];
  */
 export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
   const config = /** @type {NumberField} */ (fieldConfig);
-  const { default: defaultValue, value_type: valueType = 'int' } = config;
-  const value = dynamicValue ?? defaultValue;
+  const value = dynamicValue ?? config.default;
 
   if (value === undefined) {
-    if (valueType === 'int' || valueType === 'float') {
-      return { [keyPath]: null };
-    }
-
-    return { [keyPath]: '' };
+    return { [keyPath]: isStringOutput(config) ? '' : null };
   }
 
-  if (!VALUE_TYPES.includes(valueType)) {
+  if (!VALUE_TYPES.includes(getValueType(config))) {
     return {};
   }
 
-  // Parse the whole string, not just its leading digits like `parseInt()` does, which reads `12abc`
-  // as `12` and `1e3` as `1`
-  const number =
-    typeof value === 'number'
-      ? value
-      : typeof value === 'string' && value.trim()
-        ? Number(value)
-        : Number.NaN;
+  const number = parseNumber(value);
 
   if (isInvalidNumberValue(number, config)) {
     return {};

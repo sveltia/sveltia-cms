@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
@@ -8,10 +9,12 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import {
   applyForkPullRequestStatus,
   assertBranchAtHead,
+  AUTO_MERGE_POLL,
   commitToNewWorkflowBranch,
   deleteRemoteBranch,
   getMovedHeadMergeState,
   getParentDirs,
+  isPermanentClientError,
   isPullRequestMerged,
   isSquashMergeEnabled,
   openWorkflowPullRequest,
@@ -19,8 +22,13 @@ import {
   saveWorkflowBranch,
   toChangedFilesWithModes,
   updateLabelledStatus,
+  waitForMerge,
 } from './workflow';
 
+vi.mock('@sveltia/utils/misc', async (importOriginal) => ({
+  .../** @type {any} */ (await importOriginal()),
+  sleep: vi.fn(),
+}));
 vi.mock('@sveltia/i18n', async () =>
   (await import('$lib/test/i18n')).createI18nMock({ values: true }),
 );
@@ -571,5 +579,119 @@ describe('applyForkPullRequestStatus()', () => {
 
     expect(fetchAPI).not.toHaveBeenCalled();
     expect(updateDraftState).not.toHaveBeenCalled();
+  });
+});
+
+describe('AUTO_MERGE_POLL', () => {
+  test('reads every 10 seconds for an hour at most', () => {
+    expect(AUTO_MERGE_POLL).toEqual({ interval: 10000, maxDuration: 60 * 60 * 1000 });
+  });
+});
+
+describe('isPermanentClientError()', () => {
+  /**
+   * Create an error with the given HTTP status, as `fetchAPI` throws it.
+   * @param {any} status Status.
+   * @returns {Error} Error.
+   */
+  const createError = (status) => new Error('Failed', { cause: { status } });
+
+  test.each([400, 401, 403, 404, 422, 499])('takes a %i for a permanent error', (status) => {
+    expect(isPermanentClientError(createError(status))).toBe(true);
+  });
+
+  test.each([429, 399, 500, 502, '404', undefined])('doesn’t take a %s for one', (status) => {
+    expect(isPermanentClientError(createError(status))).toBe(false);
+  });
+
+  test('doesn’t take an error without a cause, or no error at all, for one', () => {
+    expect(isPermanentClientError(new Error('Failed to fetch'))).toBe(false);
+    expect(isPermanentClientError(undefined)).toBe(false);
+  });
+});
+
+describe('waitForMerge()', () => {
+  const read = vi.fn();
+  const evaluate = vi.fn();
+  const cancel = vi.fn();
+  const label = 'pull request #1';
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    cancel.mockResolvedValue(undefined);
+  });
+
+  test('waits until the item read is reported merged', async () => {
+    read.mockResolvedValueOnce('open').mockResolvedValueOnce('merged');
+    evaluate.mockImplementation(async (item) => item === 'merged');
+
+    await expect(waitForMerge({ read, evaluate, cancel, label })).resolves.toBeUndefined();
+    expect(sleep).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledWith(10000);
+    expect(evaluate).toHaveBeenNthCalledWith(1, 'open');
+    expect(evaluate).toHaveBeenNthCalledWith(2, 'merged');
+    expect(cancel).not.toHaveBeenCalled();
+  });
+
+  test('passes on an error thrown by the evaluation', async () => {
+    read.mockResolvedValueOnce('closed');
+    evaluate.mockRejectedValueOnce(new Error('Not merged'));
+
+    await expect(waitForMerge({ read, evaluate, cancel, label })).rejects.toThrow('Not merged');
+    expect(read).toHaveBeenCalledOnce();
+  });
+
+  test('keeps waiting through a read that fails for a reason that can pass', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const error = new Error('Failed', { cause: { status: 503 } });
+
+    read.mockRejectedValueOnce(error).mockResolvedValueOnce('merged');
+    evaluate.mockResolvedValue(true);
+
+    await waitForMerge({ read, evaluate, cancel, label });
+
+    expect(warn).toHaveBeenCalledWith('Failed to read pull request #1, still waiting.', error);
+    // A failed read isn’t evaluated
+    expect(evaluate).toHaveBeenCalledOnce();
+    warn.mockRestore();
+  });
+
+  test('gives up on a client error', async () => {
+    const error = new Error('Failed', { cause: { status: 401 } });
+
+    read.mockRejectedValueOnce(error);
+
+    await expect(waitForMerge({ read, evaluate, cancel, label })).rejects.toBe(error);
+    expect(evaluate).not.toHaveBeenCalled();
+    expect(cancel).not.toHaveBeenCalled();
+  });
+
+  test('cancels the auto-merge and gives up once the wait runs out', async () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(0);
+
+    read.mockImplementationOnce(async () => {
+      now.mockReturnValue(AUTO_MERGE_POLL.maxDuration);
+
+      return 'open';
+    });
+    evaluate.mockResolvedValue(false);
+
+    await expect(waitForMerge({ read, evaluate, cancel, label })).rejects.toThrow(
+      'Timed out waiting for pull request #1 to be merged',
+    );
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(read).toHaveBeenCalledOnce();
+    now.mockRestore();
+  });
+
+  test('gives up right away past the given deadline', async () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1000);
+
+    await expect(waitForMerge({ read, evaluate, cancel, label, deadline: 1000 })).rejects.toThrow(
+      'Timed out waiting for pull request #1 to be merged',
+    );
+    expect(read).not.toHaveBeenCalled();
+    expect(sleep).not.toHaveBeenCalled();
+    now.mockRestore();
   });
 });

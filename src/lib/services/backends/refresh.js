@@ -1,7 +1,7 @@
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
 import { advanceRepositoryHead } from '$lib/services/backends/git/shared/file-cache';
-import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
+import { createStaleCheck, repositoryHead } from '$lib/services/backends/git/shared/head';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { allEntries } from '$lib/services/contents';
 import { productionSHA } from '$lib/services/deployments';
@@ -146,12 +146,7 @@ const check = async (service) => {
   const { fetchLastCommit, fetchFiles } = service;
   // The site data may be discarded while the requests are on their way, e.g. by signing out; the
   // results then belong to the previous session and must not be written back
-  const generation = dataGeneration.current;
-  /**
-   * Whether the site data has been discarded since the check was started.
-   * @returns {boolean} Result.
-   */
-  const isStale = () => generation !== dataGeneration.current;
+  const isStale = createStaleCheck();
   const lastCommit = await /** @type {NonNullable<typeof fetchLastCommit>} */ (fetchLastCommit)();
 
   if (isStale() || lastCommit.hash === repositoryHead.current) {

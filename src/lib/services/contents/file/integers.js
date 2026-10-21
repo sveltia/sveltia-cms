@@ -1,5 +1,11 @@
 import { isObject } from '@sveltia/utils/object';
 
+import {
+  JSON_INTEGER_REGEX,
+  rememberUniqueSource,
+} from '$lib/services/contents/file/value-sources';
+import { isPlainObject } from '$lib/services/utils/object';
+
 /**
  * Source text of the integers read from files that a `number` can’t represent exactly, keyed by the
  * number they’re read as, e.g. `12345678901234567890` for `12345678901234567000`. The value is
@@ -18,10 +24,6 @@ const unsafeIntegerSources = new Map();
  * first saves parsing the document in a slower way, which is hardly ever needed.
  */
 const LONG_DIGIT_RUN_REGEX = /\d{16}/;
-/**
- * Regular expression matching the source text of a decimal integer in a JSON document.
- */
-const JSON_INTEGER_REGEX = /^-?\d+$/;
 
 /**
  * Check whether the given document may hold an integer that a `number` can’t represent exactly.
@@ -38,12 +40,7 @@ export const mayHaveUnsafeInteger = (str) => LONG_DIGIT_RUN_REGEX.test(str);
  * @param {string} source Source text of the integer.
  */
 const rememberSource = (number, source) => {
-  const knownSource = unsafeIntegerSources.get(number);
-
-  unsafeIntegerSources.set(
-    number,
-    knownSource === undefined || knownSource === source ? source : null,
-  );
+  rememberUniqueSource(unsafeIntegerSources, number, source);
 };
 
 /**
@@ -148,7 +145,7 @@ export const restoreBigInts = (value) => {
   }
 
   // Leave class instances, such as a `TomlDate`, as they are
-  if (isObject(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value))) {
+  if (isPlainObject(value)) {
     return Object.fromEntries(
       Object.entries(value).map(([key, val]) => [key, restoreBigInts(val)]),
     );

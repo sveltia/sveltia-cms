@@ -16,7 +16,7 @@ import { reloadUnpublishedEntries } from '$lib/services/workflow/load';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import {
   discardWorkflowEntry,
-  publishWorkflowEntry,
+  publishReviewedEntry,
   updateWorkflowStatus,
 } from '$lib/services/workflow/save';
 import { canMoveToStatus, canPublish } from '$lib/services/workflow/validate';
@@ -43,7 +43,7 @@ vi.mock('$lib/services/workflow/save', () => ({
   removeUnpublishedEntry: vi.fn(),
   saveWorkflowChanges: vi.fn(),
   updateWorkflowStatus: vi.fn(),
-  publishWorkflowEntry: vi.fn(),
+  publishReviewedEntry: vi.fn(),
   discardWorkflowEntry: vi.fn(),
   deleteWorkflowEntry: vi.fn(),
   discardWorkflowEntries: vi.fn(),
@@ -122,7 +122,7 @@ describe('WorkflowPage', () => {
     vi.mocked(canMoveToStatus).mockReturnValue(true);
     vi.mocked(canPublish).mockReturnValue(true);
     vi.mocked(updateWorkflowStatus).mockResolvedValue(/** @type {any} */ ({}));
-    vi.mocked(publishWorkflowEntry).mockResolvedValue(undefined);
+    vi.mocked(publishReviewedEntry).mockResolvedValue(undefined);
     vi.mocked(discardWorkflowEntry).mockResolvedValue(undefined);
   });
 
@@ -307,7 +307,7 @@ describe('WorkflowPage', () => {
       .toHaveTextContent(
         'error Error The entry has errors. Please correct them before publishing it.',
       );
-    expect(publishWorkflowEntry).not.toHaveBeenCalled();
+    expect(publishReviewedEntry).not.toHaveBeenCalled();
 
     await page
       .getByRole('list', { name: 'Ready' })
@@ -317,7 +317,8 @@ describe('WorkflowPage', () => {
     await dialog.getByRole('button', { name: 'Publish' }).click();
 
     await vi.waitFor(() =>
-      expect(publishWorkflowEntry).toHaveBeenCalledWith(
+      expect(publishReviewedEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ slug: 'ready-1' }),
         expect.objectContaining({ slug: 'ready-1' }),
       ),
     );
@@ -328,7 +329,7 @@ describe('WorkflowPage', () => {
 
   test('says why a publish was refused', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(publishWorkflowEntry).mockRejectedValue(
+    vi.mocked(publishReviewedEntry).mockRejectedValue(
       new Error('publish_refused', { cause: { reason: 'other_changes', paths: ['src/app.js'] } }),
     );
 
@@ -488,7 +489,8 @@ describe('WorkflowPage', () => {
       );
     await dialog.getByRole('button', { name: 'Delete' }).click();
     await vi.waitFor(() =>
-      expect(publishWorkflowEntry).toHaveBeenCalledWith(
+      expect(publishReviewedEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ slug: 'gone-1' }),
         expect.objectContaining({ slug: 'gone-1' }),
       ),
     );
@@ -574,14 +576,9 @@ describe('WorkflowPage', () => {
     unpublishedEntries.current = [...unpublishedEntries.current.slice(0, 3), reloaded, ...rest];
     await dialog.getByRole('button', { name: 'Publish' }).click();
 
-    // The entry is the one in the store, but the merge stays pinned to the commit the dialog was
+    // The entry is the one in the store, but the merge stays pinned to the version the dialog was
     // opened for, so the colleague’s commit isn’t published unseen
-    await vi.waitFor(() =>
-      expect(publishWorkflowEntry).toHaveBeenCalledWith({
-        ...reloaded,
-        workflow: { ...reloaded.workflow, pullRequest },
-      }),
-    );
+    await vi.waitFor(() => expect(publishReviewedEntry).toHaveBeenCalledWith(reloaded, ready));
     await waitForToastsToHide();
   });
 
@@ -623,7 +620,7 @@ describe('WorkflowPage', () => {
       .element(page.getByRole('alertdialog', { name: 'Delete Entry' }))
       .not.toBeInTheDocument();
 
-    expect(publishWorkflowEntry).not.toHaveBeenCalled();
+    expect(publishReviewedEntry).not.toHaveBeenCalled();
     expect(discardWorkflowEntry).not.toHaveBeenCalled();
   });
 

@@ -26,6 +26,16 @@ export const STATUS_UPDATE_MESSAGES = {
   error: 'workflow.status_change_failed',
 };
 
+/**
+ * Messages of the toast notification reporting a reload of the pull requests at the user’s request.
+ * @type {ToastMessages}
+ */
+export const REFRESH_MESSAGES = {
+  info: 'workflow.refreshing',
+  success: 'workflow.refreshed',
+  error: 'workflow.refresh_failed',
+};
+
 /** @type {ToastMessages} */
 const DELETION_MESSAGES = {
   info: 'workflow.deleting_entry',

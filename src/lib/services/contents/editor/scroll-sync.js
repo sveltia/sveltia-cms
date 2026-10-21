@@ -32,14 +32,28 @@ const eventOptions = { capture: true, passive: true };
 const scrollEventOptions = { passive: true };
 
 /**
+ * Get the top left corner of a pane’s visible area, in the viewport of the pane’s document.
+ * @param {HTMLElement} pane Pane’s content area, or the preview iframe’s root element.
+ * @returns {{ x: number, y: number }} Coordinates in pixels.
+ */
+const getViewOrigin = (pane) => {
+  // The preview iframe’s root element is its viewport, while the content area of the main document
+  // is an element in it
+  if (pane === pane.ownerDocument.documentElement) {
+    return { x: 0, y: 0 };
+  }
+
+  const { left, top } = pane.getBoundingClientRect();
+
+  return { x: left, y: top };
+};
+
+/**
  * Get the top of a pane’s visible area, in the viewport of the pane’s document.
  * @param {HTMLElement} pane Pane’s content area, or the preview iframe’s root element.
  * @returns {number} Top in pixels.
  */
-const getViewTop = (pane) =>
-  // The preview iframe’s root element is its viewport, while the content area of the main document
-  // is an element in it
-  pane === pane.ownerDocument.documentElement ? 0 : pane.getBoundingClientRect().top;
+const getViewTop = (pane) => getViewOrigin(pane).y;
 
 /**
  * Get the top of an element in a pane’s scrollable content: the pane’s scroll position that would
@@ -125,8 +139,7 @@ export const createScrollSync = (props) => {
         return;
       }
 
-      const isIframe = thisPaneContentArea !== contentArea;
-      const { x, y } = isIframe ? { x: 0, y: 0 } : thisPaneContentArea.getBoundingClientRect();
+      const { x, y } = getViewOrigin(thisPaneContentArea);
       const { ownerDocument, scrollTop, scrollHeight, clientHeight } = thisPaneContentArea;
 
       // At the top of this pane, the other one goes to its top as well, rather than bringing the

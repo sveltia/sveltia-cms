@@ -1,5 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
-
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { FETCH_BLOB_IDS_QUERY, fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
 import { getWorkflowRepository } from '$lib/services/backends/git/gitlab/fork';
@@ -20,12 +18,14 @@ import {
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { assertBranchNotMoved } from '$lib/services/backends/git/shared/commits';
 import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
+import { pollUntil, SETTLE_POLL } from '$lib/services/backends/git/shared/poll';
 import {
   assertBranchAtHead,
   commitToNewWorkflowBranch,
   getMovedHeadMergeState,
   isSquashMergeEnabled,
   saveWorkflowBranch,
+  waitForMerge,
 } from '$lib/services/backends/git/shared/workflow';
 import { getAllStatusLabels, getStatusLabel } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -55,7 +55,7 @@ const TRANSIENT_MERGE_STATUSES = ['preparing', 'unchecked', 'checking', 'approva
  * How many times, and how often, the merge status is read while it’s transient. The check
  * usually takes a second or two.
  */
-const MERGE_STATUS_POLL = { attempts: 10, interval: 1000 };
+const MERGE_STATUS_POLL = SETTLE_POLL;
 /**
  * Merge statuses under which a merge request set to auto-merge is still expected to merge on its
  * own: the pipeline hasn’t finished, the mergeability check is being redone once it has, or the
@@ -65,17 +65,11 @@ const MERGE_STATUS_POLL = { attempts: 10, interval: 1000 };
  */
 const AUTO_MERGE_WAIT_STATUSES = [...TRANSIENT_MERGE_STATUSES, 'ci_still_running', 'mergeable'];
 /**
- * How often, and for how long at most, a merge request set to auto-merge is read while GitLab
- * waits for its pipeline. A pipeline takes minutes, so the reads are spaced out. The cap is a
- * safety net for a merge that never lands, e.g. one GitLab has queued but not carried out.
- */
-const AUTO_MERGE_POLL = { interval: 10000, maxDuration: 60 * 60 * 1000 };
-/**
  * How many times, and how often, a merge request is read before it’s merged while its head trails
  * the branch. GitLab refreshes a merge request in the background after a push to its branch, which
  * usually takes a second or two, and refuses to merge it pinned to the new commit until then.
  */
-const MERGE_REQUEST_REFRESH_POLL = { attempts: 10, interval: 1000 };
+const MERGE_REQUEST_REFRESH_POLL = SETTLE_POLL;
 
 /**
  * Fetch all the unpublished entries the signed-in user has in progress.
@@ -213,22 +207,20 @@ export const savePullRequest = async (args) =>
  * stands in the way of an immediate merge, e.g. `ci_still_running`. A transient status is polled
  * until it settles or the attempts run out, in which case the transient status is returned as is.
  * @param {WorkflowPullRequest} pullRequest Merge request.
- * @param {number} [attemptsLeft] Remaining reads, including this one.
  * @returns {Promise<{ state: string | undefined, status: string | undefined }>} State, e.g.
  * `merged`, and detailed merge status.
  * @see https://docs.gitlab.com/api/merge_requests/#merge-status
  */
-const fetchMergeStatus = async (pullRequest, attemptsLeft = MERGE_STATUS_POLL.attempts) => {
-  const { state, detailed_merge_status: status } = await fetchMergeRequest(pullRequest);
+const fetchMergeStatus = (pullRequest) =>
+  pollUntil(
+    async () => {
+      const { state, detailed_merge_status: status } = await fetchMergeRequest(pullRequest);
 
-  if (!TRANSIENT_MERGE_STATUSES.includes(status) || attemptsLeft <= 1) {
-    return { state, status };
-  }
-
-  await sleep(MERGE_STATUS_POLL.interval);
-
-  return fetchMergeStatus(pullRequest, attemptsLeft - 1);
-};
+      return { state, status };
+    },
+    ({ status }) => !TRANSIENT_MERGE_STATUSES.includes(status),
+    MERGE_STATUS_POLL,
+  );
 
 /**
  * Cancel the auto-merge on the given merge request. Failures are ignored: this is called once the
@@ -261,70 +253,63 @@ const cancelAutoMerge = async (pullRequest) => {
  * failure, so the auto-merge is cancelled along with the report: publishing again is what merges
  * the entry from then on.
  * @param {WorkflowPullRequest} pullRequest Merge request.
- * @param {number} [deadline] Time to give up at, as a Unix timestamp in milliseconds.
  * @returns {Promise<void>}
  * @throws {Error} When the merge request won’t be merged, or wasn’t within the time allowed.
  * @see https://github.com/sveltia/sveltia-cms/issues/992
  */
-const waitForAutoMerge = async (
-  pullRequest,
-  deadline = Date.now() + AUTO_MERGE_POLL.maxDuration,
-) => {
-  if (Date.now() >= deadline) {
-    await cancelAutoMerge(pullRequest);
-
-    throw new Error(`Timed out waiting for merge request !${pullRequest.number} to be merged`);
-  }
-
-  await sleep(AUTO_MERGE_POLL.interval);
-
-  const mergeRequest = await fetchMergeRequest(pullRequest).catch((ex) => {
-    const status = ex.cause?.status;
-
-    // A network error or a server error says nothing about the merge, which GitLab carries out on
-    // its own, so keep waiting rather than reporting a failure that hasn’t happened. A client
-    // error won’t go away by itself — the session has ended, or the merge request is gone — so
-    // there’s no point in asking again, except when the limit on requests has been hit
-    if (typeof status === 'number' && status >= 400 && status < 500 && status !== 429) {
-      throw ex;
-    }
-
-    // eslint-disable-next-line no-console
-    console.warn(`Failed to read merge request !${pullRequest.number}, still waiting.`, ex);
-
-    return undefined;
-  });
-
-  if (mergeRequest) {
-    const {
-      state,
-      merge_when_pipeline_succeeds: autoMerge,
-      detailed_merge_status: status,
-    } = mergeRequest;
-
-    if (state === 'merged') {
-      return;
-    }
-
-    // `locked` is the merge in progress
-    const waiting =
-      state === 'locked' ||
-      (state === 'opened' && !!autoMerge && AUTO_MERGE_WAIT_STATUSES.includes(status));
-
-    if (!waiting) {
-      if (state === 'opened' && autoMerge) {
-        await cancelAutoMerge(pullRequest);
+const waitForAutoMerge = (pullRequest) =>
+  waitForMerge({
+    /**
+     * Read the merge request.
+     * @returns {Promise<Record<string, any>>} Merge request returned by the REST API.
+     */
+    read: () => fetchMergeRequest(pullRequest),
+    /**
+     * Check the merge request read.
+     * @param {Record<string, any>} mergeRequest Merge request returned by the REST API.
+     * @returns {Promise<boolean>} Whether the merge request has been merged.
+     * @throws {Error} When the merge request won’t be merged.
+     */
+    evaluate: async (mergeRequest) => {
+      if (!mergeRequest) {
+        return false;
       }
 
-      throw new Error(
-        `Merge request !${pullRequest.number} was not merged: ${state}, ${status}, ` +
-          `auto-merge ${autoMerge ? 'on' : 'off'}`,
-      );
-    }
-  }
+      const {
+        state,
+        merge_when_pipeline_succeeds: autoMerge,
+        detailed_merge_status: status,
+      } = mergeRequest;
 
-  await waitForAutoMerge(pullRequest, deadline);
-};
+      if (state === 'merged') {
+        return true;
+      }
+
+      // `locked` is the merge in progress
+      const waiting =
+        state === 'locked' ||
+        (state === 'opened' && !!autoMerge && AUTO_MERGE_WAIT_STATUSES.includes(status));
+
+      if (!waiting) {
+        if (state === 'opened' && autoMerge) {
+          await cancelAutoMerge(pullRequest);
+        }
+
+        throw new Error(
+          `Merge request !${pullRequest.number} was not merged: ${state}, ${status}, ` +
+            `auto-merge ${autoMerge ? 'on' : 'off'}`,
+        );
+      }
+
+      return false;
+    },
+    /**
+     * Cancel the auto-merge once the wait has run out.
+     * @returns {Promise<void>}
+     */
+    cancel: () => cancelAutoMerge(pullRequest),
+    label: `merge request !${pullRequest.number}`,
+  });
 
 /**
  * Number of files past which GitLab cuts a comparison short by default, without saying so.
@@ -357,40 +342,36 @@ const getDiffStatus = (diff) => {
  * is read again until it does, up to a limit. A branch that has moved on from the commit on record
  * is refused by the check before publishing anyway, so there’s no point in waiting for that.
  * @param {WorkflowPullRequest} pullRequest Merge request.
- * @param {number} [attemptsLeft] Number of reads left.
  * @returns {Promise<{ item: Record<string, any>, branchHead: string | undefined }>} Merge request
  * returned by the REST API, and the branch head, or `undefined` if the merge request isn’t
  * merged into the configured branch from one of this project’s branches, or has no head.
  * @see https://docs.gitlab.com/api/merge_requests/#get-single-mr
  */
-const fetchRefreshedMergeRequest = async (
-  pullRequest,
-  attemptsLeft = MERGE_REQUEST_REFRESH_POLL.attempts,
-) => {
-  const item = await fetchMergeRequest(pullRequest);
+const fetchRefreshedMergeRequest = (pullRequest) =>
+  pollUntil(
+    async () => {
+      const item = await fetchMergeRequest(pullRequest);
 
-  const {
-    sha,
-    target_branch: targetBranch,
-    source_project_id: sourceId,
-    target_project_id: targetId,
-  } = item;
+      const {
+        sha,
+        target_branch: targetBranch,
+        source_project_id: sourceId,
+        target_project_id: targetId,
+      } = item;
 
-  if (!sha || targetBranch !== repository.branch || sourceId !== targetId) {
-    return { item, branchHead: undefined };
-  }
+      if (!sha || targetBranch !== repository.branch || sourceId !== targetId) {
+        return { item, branchHead: undefined };
+      }
 
-  // A branch that’s gone leaves the merge request’s head as the only one there is
-  const branchHead = (await fetchBranchHead(pullRequest.branch)) ?? sha;
+      // A branch that’s gone leaves the merge request’s head as the only one there is
+      const branchHead = (await fetchBranchHead(pullRequest.branch)) ?? sha;
 
-  if (branchHead === sha || branchHead !== pullRequest.headSHA || attemptsLeft <= 1) {
-    return { item, branchHead };
-  }
-
-  await sleep(MERGE_REQUEST_REFRESH_POLL.interval);
-
-  return fetchRefreshedMergeRequest(pullRequest, attemptsLeft - 1);
-};
+      return { item, branchHead };
+    },
+    ({ item, branchHead }) =>
+      branchHead === undefined || branchHead === item.sha || branchHead !== pullRequest.headSHA,
+    MERGE_REQUEST_REFRESH_POLL,
+  );
 
 /**
  * Read the merge request afresh right before it’s merged. The files are listed by comparing the

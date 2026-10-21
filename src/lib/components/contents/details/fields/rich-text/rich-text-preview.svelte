@@ -27,11 +27,9 @@
   import { getValueFormat } from '$lib/services/contents/fields/rich-text';
   import { getEditorComponentDefs } from '$lib/services/contents/fields/rich-text/options';
   import {
-    addLinkDefinitions,
     getFencedCodeLanguages,
     keyBlocks,
-    splitHTMLBlocks,
-    splitMarkdownBlocks,
+    splitPreviewBlocks,
   } from '$lib/services/contents/fields/rich-text/previews/blocks';
   import {
     buildMarkdownWithPreviews,
@@ -182,13 +180,7 @@
    * than by position. See {@link keyBlocks}.
    */
   const keyedBlocks = $derived.by(() => {
-    // The link reference definitions are added to each Markdown block, as a block is parsed on its
-    // own while a reference link and its definition are usually in different blocks
-    const blocks = isHTML
-      ? splitHTMLBlocks(markdown)
-      : addLinkDefinitions(splitMarkdownBlocks(markdown));
-
-    const { list, items } = keyBlocks(blocks, blockItems);
+    const { list, items } = keyBlocks(splitPreviewBlocks(markdown, { isHTML }), blockItems);
 
     blockItems = items;
 

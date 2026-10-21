@@ -9,6 +9,8 @@ import {
   cancelAuthorization,
   createAuthSecrets,
   finishClientSideAuth,
+  formatHandshakeMessage,
+  formatResultMessage,
   getTokens,
   handleAuthFlow,
   handleClientSideAuthPopup,
@@ -16,6 +18,7 @@ import {
   initClientSideAuth,
   initServerSideAuth,
   openPopup,
+  parseResultMessage,
   sendMessage,
   signInToBackend,
   signOut,
@@ -2422,5 +2425,27 @@ describe('git/shared/auth', () => {
         expect(fetch).not.toHaveBeenCalled();
       });
     });
+  });
+});
+
+describe('popup messages', () => {
+  it('should format the handshake message', () => {
+    expect(formatHandshakeMessage('github')).toBe('authorizing:github');
+  });
+
+  it('should format a result message, which parses back', () => {
+    const content = { provider: 'github', token: 'abc' };
+    const message = formatResultMessage('github', 'success', content);
+
+    expect(message).toBe('authorization:github:success:{"provider":"github","token":"abc"}');
+    expect(parseResultMessage('github', message)).toBe(JSON.stringify(content));
+    expect(parseResultMessage('github', formatResultMessage('github', 'error', {}))).toBe('{}');
+  });
+
+  it('should not parse a message for another backend, another status or without a result', () => {
+    expect(parseResultMessage('gitlab', 'authorization:github:success:{}')).toBeUndefined();
+    expect(parseResultMessage('github', 'authorization:github:pending:{}')).toBeUndefined();
+    expect(parseResultMessage('github', 'authorization:github:success:')).toBeUndefined();
+    expect(parseResultMessage('github', 'authorizing:github')).toBeUndefined();
   });
 });

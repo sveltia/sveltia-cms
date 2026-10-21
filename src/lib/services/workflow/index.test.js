@@ -13,6 +13,7 @@ import {
   getUnpublishedEntry,
   getUnpublishedEntryByBranch,
   getUnpublishedEntryByDraft,
+  getUnpublishedEntryById,
   getUnpublishedEntryBySlug,
   hasPublishedVersion,
   isDirectPublishAllowed,
@@ -371,6 +372,20 @@ describe('workflow/index', () => {
 
       expect(getUnpublishedEntryByBranch('cms/posts/hello')).toBe(entry);
       expect(getUnpublishedEntryByBranch('cms/posts/hello-2')).toBeUndefined();
+    });
+  });
+
+  describe('getUnpublishedEntryById', () => {
+    test('finds the current entry in the store by its ID', () => {
+      const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+
+      unpublishedEntries.current = [entry];
+
+      // A copy held since an action started resolves to the entry in the store now
+      expect(getUnpublishedEntryById(/** @type {any} */ ({ ...entry }).id)).toBe(entry);
+      // An entry that has left the board, or none at all
+      expect(getUnpublishedEntryById('posts/gone')).toBeUndefined();
+      expect(getUnpublishedEntryById(undefined)).toBeUndefined();
     });
   });
 

@@ -2,7 +2,7 @@ import equal from 'fast-deep-equal';
 
 import { backend } from '$lib/services/backends';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
+import { createStaleCheck, repositoryHead } from '$lib/services/backends/git/shared/head';
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { cmsConfig } from '$lib/services/config';
 import {
@@ -81,6 +81,18 @@ const isWorkflowReady = () => {
 };
 
 /**
+ * Get the backend’s workflow service, if Editorial Workflow is enabled and the pull requests can be
+ * listed yet.
+ * @returns {NonNullable<BackendService['workflow']> | undefined} Workflow service, or `undefined`
+ * if it’s not in use or not ready.
+ */
+const getReadyWorkflow = () => {
+  const workflow = backend.current?.workflow;
+
+  return workflowEnabled.current && workflow && isWorkflowReady() ? workflow : undefined;
+};
+
+/**
  * Start retrieving the backend’s open pull requests, if Editorial Workflow is enabled. Listing them
  * doesn’t depend on the published entries, so this is called before the files are fetched and the
  * request overlaps that work; {@link loadUnpublishedEntries} then picks the result up once the
@@ -91,9 +103,9 @@ const isWorkflowReady = () => {
  * left for {@link loadUnpublishedEntries} to handle.
  */
 export const startLoadingPullRequests = () => {
-  const workflow = backend.current?.workflow;
+  const workflow = getReadyWorkflow();
 
-  if (!workflowEnabled.current || !workflow || !isWorkflowReady()) {
+  if (!workflow) {
     return undefined;
   }
 
@@ -125,12 +137,7 @@ export const loadUnpublishedEntries = async (pullRequests = startLoadingPullRequ
   // The site data may be discarded while the requests are on their way, e.g. by signing out; the
   // results then belong to the previous session and must not be written back, nor mark the next
   // session’s entries as loaded
-  const generation = dataGeneration.current;
-  /**
-   * Whether the site data has been discarded since the load was started.
-   * @returns {boolean} Result.
-   */
-  const isStale = () => generation !== dataGeneration.current;
+  const isStale = createStaleCheck();
 
   try {
     const { entries, assets } = await convertPullRequests(await pullRequests);
@@ -253,12 +260,7 @@ const findUpToDateBranches = async (workflow, stored, fetched, openBranches) => 
 const reload = async (workflow) => {
   // The site data may be discarded while the requests are on their way, e.g. by signing out; the
   // results then belong to the previous session and must not be written back
-  const generation = dataGeneration.current;
-  /**
-   * Whether the site data has been discarded since the reload was started.
-   * @returns {boolean} Result.
-   */
-  const isStale = () => generation !== dataGeneration.current;
+  const isStale = createStaleCheck();
   const head = repositoryHead.current;
   // The store as it stands before the request, to tell the changes made in this tab in the meantime
   // — a save, a status change, a publish — from the ones the request reports
@@ -377,14 +379,9 @@ const reload = async (workflow) => {
  * @throws {Error} When the backend couldn’t be reached.
  */
 export const reloadUnpublishedEntries = async ({ fresh = false } = {}) => {
-  const workflow = backend.current?.workflow;
+  const workflow = getReadyWorkflow();
 
-  if (
-    !workflowEnabled.current ||
-    !workflow ||
-    !isWorkflowReady() ||
-    !unpublishedEntriesLoaded.current
-  ) {
+  if (!workflow || !unpublishedEntriesLoaded.current) {
     return false;
   }
 

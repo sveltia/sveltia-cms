@@ -1567,7 +1567,7 @@ describe('sortEntries', () => {
     expect(result.map((e) => e.slug)).toEqual(['entry-3', 'entry-2', 'entry-1']);
   });
 
-  test('should put an entry without a valid order value last, like the reorder UI', () => {
+  test('should put an entry without a valid order value last in either order, like the reorder UI', () => {
     const reorderableCollection = { ...mockCollection, reorder: true };
 
     /**
@@ -1600,7 +1600,7 @@ describe('sortEntries', () => {
       sortEntries(entries, reorderableCollection, { key: '_manual', order: 'descending' }).map(
         (e) => e.slug,
       ),
-    ).toEqual(['c', 'a', 'b', 'd']);
+    ).toEqual(['b', 'd', 'a', 'c']);
   });
 
   test('should fall back to the _manual key when the collection has no reorder configuration', () => {

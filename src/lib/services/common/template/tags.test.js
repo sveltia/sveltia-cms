@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { hasTemplateTags, replaceTemplateTags } from './tags';
+import { hasTemplateTags, replaceTemplateTags, splitTemplateTags } from './tags';
 
 describe('hasTemplateTags()', () => {
   test('should return true for simple template tag', () => {
@@ -182,5 +182,30 @@ describe('replaceTemplateTags()', () => {
 
   test('should leave an unterminated template tag unchanged', () => {
     expect(replace("{{title | default('x'")).toBe("{{title | default('x'");
+  });
+});
+
+describe('splitTemplateTags()', () => {
+  test('should split a template into its tags and the literal text around them', () => {
+    expect(splitTemplateTags('posts-{{fields.title | upper}}/{{uuid}}.md')).toEqual({
+      tags: ['fields.title | upper', 'uuid'],
+      literals: ['posts-', '/', '.md'],
+    });
+    expect(splitTemplateTags('{{a}}{{b}}')).toEqual({ tags: ['a', 'b'], literals: ['', '', ''] });
+  });
+
+  test('should return the whole template as a literal if it has no tag', () => {
+    expect(splitTemplateTags('')).toEqual({ tags: [], literals: [''] });
+    expect(splitTemplateTags('plain {{}} text')).toEqual({
+      tags: [],
+      literals: ['plain {{}} text'],
+    });
+  });
+
+  test('should leave a nested tag in a transformation argument in the tag', () => {
+    expect(splitTemplateTags("x{{fields.a | default('{{fields.b}}')}}y")).toEqual({
+      tags: ["fields.a | default('{{fields.b}}')"],
+      literals: ['x', 'y'],
+    });
   });
 });

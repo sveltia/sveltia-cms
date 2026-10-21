@@ -10,7 +10,6 @@ import {
   getListIndex,
   getNumericValue,
   hasUuidTag,
-  isNumericComputeField,
 } from '$lib/services/contents/fields/compute/helpers';
 import { expectLinearTime } from '$lib/test/complexity';
 
@@ -880,23 +879,6 @@ describe('getComputedValue()', () => {
         UUID_REGEX,
       );
     });
-  });
-});
-
-describe('isNumericComputeField()', () => {
-  test('should tell whether the field yields a number', () => {
-    expect(isNumericComputeField(/** @type {any} */ ({ widget: 'compute', value: '' }))).toBe(
-      false,
-    );
-    expect(
-      isNumericComputeField(/** @type {any} */ ({ widget: 'compute', value_type: 'string' })),
-    ).toBe(false);
-    expect(
-      isNumericComputeField(/** @type {any} */ ({ widget: 'compute', value_type: 'int' })),
-    ).toBe(true);
-    expect(
-      isNumericComputeField(/** @type {any} */ ({ widget: 'compute', value_type: 'float/string' })),
-    ).toBe(true);
   });
 });
 

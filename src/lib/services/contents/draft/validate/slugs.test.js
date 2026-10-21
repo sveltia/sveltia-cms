@@ -403,6 +403,13 @@ describe('draft/validate/slugs', () => {
       expect(validateSlug({ slug: 'ab ' })).toBe('invalid');
     });
 
+    it('should allow a plain space when `allowSpaces` is set', () => {
+      expect(validateSlug({ slug: 'Sourdough focaccia', allowSpaces: true })).toBeUndefined();
+      expect(validateSlug({ slug: 'a/b', allowSpaces: true })).toBe('invalid');
+      expect(validateSlug({ slug: 'a\tb', allowSpaces: true })).toBe('invalid');
+      expect(validateSlug({ slug: 'a b', allowSpaces: false })).toBe('invalid');
+    });
+
     // @see https://github.com/sveltia/sveltia-cms/issues/1093
     it('should allow a plain space when the replacement has one', async () => {
       const { cmsConfig } = await import('$lib/services/config');

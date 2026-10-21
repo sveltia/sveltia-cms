@@ -20,4 +20,13 @@ describe('MoveToDialog', () => {
     await userEvent.keyboard('{Enter}');
     expect(onMove).toHaveBeenCalledExactlyOnceWith(49);
   });
+
+  test('submits a valid position with the OK button', async () => {
+    const onMove = vi.fn();
+
+    await render(MoveToDialog, { open: true, index: 0, itemCount: 5, onMove });
+    await page.getByRole('spinbutton', { name: 'Position' }).fill('3');
+    await page.getByRole('button', { name: 'OK' }).click();
+    await vi.waitFor(() => expect(onMove).toHaveBeenCalledExactlyOnceWith(2));
+  });
 });

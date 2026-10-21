@@ -149,6 +149,17 @@ export const getUnpublishedEntryBySlug = ({ collectionName, slug, entry }) => {
 };
 
 /**
+ * Find the unpublished entry with the given ID in the store. The pull requests are read again from
+ * time to time, which can replace an entry while a card is being dragged or a confirmation dialog
+ * is open, or take it off the board altogether if its pull request has been merged or closed in the
+ * meantime; acting on a copy held since then would put stale content back.
+ * @param {string | undefined} id Entry ID, e.g. of the entry as it was when an action started.
+ * @returns {UnpublishedEntry | undefined} Current entry, or `undefined` if there’s none.
+ */
+export const getUnpublishedEntryById = (id) =>
+  id ? unpublishedEntries.current.find((entry) => entry.id === id) : undefined;
+
+/**
  * Find the unpublished entry that corresponds to the given workflow branch.
  * @param {string} branch Branch name.
  * @returns {UnpublishedEntry | undefined} Unpublished entry.

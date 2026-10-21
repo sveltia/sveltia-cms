@@ -6,6 +6,7 @@ import { createRawState } from '$lib/services/utils/state.svelte';
 
 import {
   buildGroupMap,
+  compareSortKeys,
   COMPARISON_OPERATORS,
   getCollapsibleGroupNames,
   getConditionKey,
@@ -761,5 +762,15 @@ describe('Test initViewSettingsStorage()', () => {
     await wait();
 
     expect(mockDB.set).not.toHaveBeenCalled();
+  });
+});
+
+describe('compareSortKeys', () => {
+  test('compares strings locale-aware and numbers by subtraction', () => {
+    expect(compareSortKeys('a', 'b', true)).toBeLessThan(0);
+    expect(compareSortKeys('b', 'a', true)).toBeGreaterThan(0);
+    expect(compareSortKeys('a', 'a', true)).toBe(0);
+    expect(compareSortKeys(2, 10, false)).toBe(-8);
+    expect(compareSortKeys(10, 2, false)).toBe(8);
   });
 });

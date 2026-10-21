@@ -1,5 +1,5 @@
 import { processNestedTemplates } from '$lib/services/common/template/nested';
-import { replaceTemplateTags } from '$lib/services/common/template/tags';
+import { splitTemplateTags } from '$lib/services/common/template/tags';
 import { parseTransformations } from '$lib/services/common/transformations';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
@@ -15,15 +15,10 @@ import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
  * @param {string} template Template.
  * @returns {boolean} Result.
  */
-const hasLocaleTag = (template) => {
-  let found = false;
-
-  replaceTemplateTags(template, (match, placeholder) => {
+const hasLocaleTag = (template) =>
+  splitTemplateTags(template).tags.some((placeholder) => {
     const { value, transformations } = parseTransformations(placeholder);
-
-    if (value === 'locale') {
-      found = true;
-    }
+    let found = value === 'locale';
 
     processNestedTemplates(transformations, (innerTag) => {
       if (hasLocaleTag(`{{${innerTag}}}`)) {
@@ -33,11 +28,8 @@ const hasLocaleTag = (template) => {
       return '';
     });
 
-    return match;
+    return found;
   });
-
-  return found;
-};
 
 /**
  * Parse and validate a Hidden field configuration. The `{{locale}}` tag in the `default` option is

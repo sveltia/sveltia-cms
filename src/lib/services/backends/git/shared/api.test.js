@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { apiConfig, graphqlVars, refreshAccessToken } from './api';
+import { apiConfig, graphqlVars, isRefreshedElsewhere, refreshAccessToken } from './api';
 import * as apiModule from './api';
 
 // Mock @sveltia/i18n
@@ -1106,5 +1106,29 @@ describe('api.js', () => {
 
       expect(bodyObj.variables).toEqual({});
     });
+  });
+});
+
+describe('isRefreshedElsewhere', () => {
+  const sent = { token: 'old-token', refreshToken: 'old-refresh' };
+
+  it('should take tokens that both differ from the ones sent as refreshed', () => {
+    expect(isRefreshedElsewhere({ token: 'new-token', refreshToken: 'new-refresh' }, sent)).toBe(
+      true,
+    );
+  });
+
+  it('should not take tokens of which only one differs as refreshed', () => {
+    expect(isRefreshedElsewhere({ token: 'new-token', refreshToken: 'old-refresh' }, sent)).toBe(
+      false,
+    );
+    expect(isRefreshedElsewhere({ token: 'old-token', refreshToken: 'new-refresh' }, sent)).toBe(
+      false,
+    );
+  });
+
+  it('should not take missing tokens, or ones without an access token, as refreshed', () => {
+    expect(isRefreshedElsewhere(undefined, sent)).toBe(false);
+    expect(isRefreshedElsewhere({ refreshToken: 'new-refresh' }, sent)).toBe(false);
   });
 });

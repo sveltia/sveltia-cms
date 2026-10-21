@@ -26,7 +26,7 @@
   import MoveToDialog from '$lib/components/common/move-to-dialog.svelte';
   import ReorderMenuItems from '$lib/components/common/reorder-menu-items.svelte';
   import { env } from '$lib/services/user/env.svelte';
-  import { getKeyboardMoveTarget, MOVE_TO_EDGE_MIN_ITEMS } from '$lib/services/utils/drag-sorting';
+  import { canMoveToEdge, getKeyboardMoveTarget } from '$lib/services/utils/drag-sorting';
 
   /**
    * @typedef {object} Props
@@ -79,7 +79,7 @@
   let moveToDialogOpen = $state(false);
 
   const showButtons = $derived(part === 'buttons' || (part === 'auto' && !env.hasMouse));
-  const showMenu = $derived(menu && part !== 'handle' && itemCount >= MOVE_TO_EDGE_MIN_ITEMS);
+  const showMenu = $derived(menu && part !== 'handle' && canMoveToEdge(itemCount));
 </script>
 
 {#if showHandle}
@@ -165,8 +165,6 @@
       </Menu>
     {/snippet}
   </MenuButton>
-{/if}
-{#if showMenu}
   <MoveToDialog
     bind:open={moveToDialogOpen}
     {index}

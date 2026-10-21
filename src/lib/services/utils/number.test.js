@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { isNumeric, toFixed } from './number';
+import { isNumeric, roundFloatError, toFixed } from './number';
 
 describe('Test isNumeric()', () => {
   test('returns true for single digit strings', () => {
@@ -48,6 +48,22 @@ describe('Test isNumeric()', () => {
     expect(isNumeric('1-2')).toBe(false);
     expect(isNumeric('1,000')).toBe(false);
     expect(isNumeric('$100')).toBe(false);
+  });
+});
+
+describe('roundFloatError()', () => {
+  test('should round a fraction to 15 significant digits', () => {
+    expect(roundFloatError(0.1 * 3)).toBe(0.3);
+    expect(roundFloatError(0.1 + 0.2)).toBe(0.3);
+    expect(roundFloatError(1 / 3)).toBe(0.333333333333333);
+    expect(roundFloatError(-8.7 * 1.15)).toBe(-10.005);
+  });
+
+  test('should keep an integer as is', () => {
+    expect(roundFloatError(2 ** 60 + 1)).toBe(2 ** 60 + 1);
+    expect(roundFloatError(1234567890123456)).toBe(1234567890123456);
+    expect(roundFloatError(42)).toBe(42);
+    expect(Object.is(roundFloatError(-0), -0)).toBe(true);
   });
 });
 

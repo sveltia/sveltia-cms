@@ -756,6 +756,20 @@ describe('Test parseFrontMatter()', () => {
     ).toEqual({ body: 'Hello' });
   });
 
+  test('ignores the head of front matter in an unknown format', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
+
+    expect(
+      parseFrontMatter({
+        collection: /** @type {any} */ ({ name: 'test-collection', _file: { format: 'x' } }),
+        format: /** @type {any} */ ('x'),
+        text: '---\ntitle: A\n---\n\nHello',
+      }),
+    ).toEqual({ body: 'Hello' });
+  });
+
   test('handles content with only front matter', async () => {
     const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 

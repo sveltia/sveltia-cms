@@ -87,6 +87,16 @@ export const assertResponseOK = async (response, message, { allowNotFound = fals
 };
 
 /**
+ * Get the key prefix to list a folder with.
+ * @param {CloudStorageConfig} config Service configuration.
+ * @param {string} [dirPath] Folder path relative to the configured prefix. Default: the configured
+ * prefix itself.
+ * @returns {string} Key prefix.
+ */
+const getListPrefix = (config, dirPath) =>
+  dirPath ? getFolderKey(config, dirPath) : getPrefix(config);
+
+/**
  * Fetch the objects under the configured prefix, or under a folder below it, page by page.
  * @template T
  * @template {CloudStorageConfig} C
@@ -111,7 +121,7 @@ export const fetchListing = async (
   { maxPages = 10, dirPath, delimiter } = {},
 ) => {
   const credential = provider.requireCredential(options);
-  const prefix = dirPath ? getFolderKey(config, dirPath) : getPrefix(config);
+  const prefix = getListPrefix(config, dirPath);
   /** @type {T[]} */
   const files = [];
   /** @type {string[]} */
@@ -259,7 +269,7 @@ export const searchObjects = async (provider, query, config, options) => {
  * @returns {Promise<string[]>} File names, normalized to NFC.
  */
 const getFileNamesInFolder = async (provider, config, options, dirPath) => {
-  const folderKey = dirPath ? getFolderKey(config, dirPath) : getPrefix(config);
+  const folderKey = getListPrefix(config, dirPath);
 
   const { files } = await fetchListing(provider, config, options, {
     maxPages: Infinity,

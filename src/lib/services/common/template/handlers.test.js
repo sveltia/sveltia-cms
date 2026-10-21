@@ -89,6 +89,7 @@ describe('Template handler functions', () => {
       expect(handleUuidTag('slug')).toBeUndefined();
       expect(handleUuidTag('title')).toBeUndefined();
       expect(handleUuidTag('unknown')).toBeUndefined();
+      expect(handleUuidTag('toString')).toBeUndefined();
     });
   });
 

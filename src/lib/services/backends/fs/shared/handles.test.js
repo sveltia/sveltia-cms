@@ -11,6 +11,7 @@ import {
   hasOtherSpellings,
   isNotFoundError,
   isTypeMismatchError,
+  pickEntryName,
   readFile,
   readFileIfExists,
 } from '$lib/services/backends/fs/shared/handles';
@@ -589,6 +590,26 @@ describe('hasOtherSpellings', () => {
     expect(hasOtherSpellings('cafe\u0301.md')).toBe(true);
     // Kana with a voiced sound mark decomposes too
     expect(hasOtherSpellings('\u304c')).toBe(true);
+  });
+});
+
+describe('pickEntryName', () => {
+  const decomposed = 'cafe\u0301';
+  const composed = decomposed.normalize();
+
+  test('prefers the exact spelling', () => {
+    expect(pickEntryName([decomposed, composed], composed)).toBe(composed);
+    expect(pickEntryName([composed, decomposed], decomposed)).toBe(decomposed);
+  });
+
+  test('finds a name spelled in another normalization form', () => {
+    expect(pickEntryName(['tea', decomposed], composed)).toBe(decomposed);
+    expect(pickEntryName(['tea', composed], decomposed)).toBe(composed);
+  });
+
+  test('returns `undefined` if there’s no such name', () => {
+    expect(pickEntryName(['tea'], composed)).toBeUndefined();
+    expect(pickEntryName([], 'tea')).toBeUndefined();
   });
 });
 

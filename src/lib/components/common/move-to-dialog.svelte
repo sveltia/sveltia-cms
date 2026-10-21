@@ -41,6 +41,20 @@
       position = index + 1;
     }
   });
+
+  /**
+   * Move the item to the entered position, if it’s valid.
+   * @returns {boolean} Whether the item was moved.
+   */
+  const submit = () => {
+    if (target === undefined) {
+      return false;
+    }
+
+    onMove(target);
+
+    return true;
+  };
 </script>
 
 {#if everOpened}
@@ -50,9 +64,7 @@
     title={_('move_to')}
     okDisabled={target === undefined}
     onOk={() => {
-      if (target !== undefined) {
-        onMove(target);
-      }
+      submit();
     }}
   >
     {_('move_to_description', { values: { count: itemCount } })}
@@ -70,8 +82,7 @@
           if (event.key === 'Enter' && !event.isComposing) {
             event.preventDefault();
 
-            if (target !== undefined) {
-              onMove(target);
+            if (submit()) {
               open = false;
             }
           }

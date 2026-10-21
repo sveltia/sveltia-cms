@@ -284,6 +284,16 @@ const getAssetsByFolder = memoizeOnSource(
 const getAssetsBelowFolder = (folderPath) => getAssetsByFolder().get(folderPath) ?? [];
 
 /**
+ * Get a folder path for each of the given entry’s locale files, leaving out a file without one.
+ * @param {Entry} entry Entry.
+ * @param {(path: string) => string | undefined} getFolderPath Function returning the folder path
+ * for a file path.
+ * @returns {string[]} Folder paths.
+ */
+const mapEntryFolderPaths = ({ locales }, getFolderPath) =>
+  Object.values(locales).flatMap(({ path }) => getFolderPath(path) ?? []);
+
+/**
  * Get the folders the given entry occupies by itself. With the `multiple_folders` and
  * `multiple_root_folders` i18n structures, each locale has a folder of its own. When entries are
  * files sharing a folder, there is none.
@@ -292,23 +302,15 @@ const getAssetsBelowFolder = (folderPath) => getAssetsByFolder().get(folderPath)
  * @returns {string[]} Folder paths.
  */
 const getOwnedEntryFolderPaths = (collection, entry) =>
-  /** @type {string[]} */ (
-    Object.values(entry.locales)
-      .map(({ path }) => getOwnedEntryFolderPath(collection, path))
-      .filter((dirPath) => dirPath !== undefined)
-  );
+  mapEntryFolderPaths(entry, (path) => getOwnedEntryFolderPath(collection, path));
 
 /**
  * Get the folders the given entry’s files are stored in.
  * @param {Entry} entry Entry.
  * @returns {string[]} Folder paths.
  */
-const getEntryFolderPaths = ({ locales }) =>
-  /** @type {string[]} */ (
-    Object.values(locales)
-      .map(({ path }) => getPathInfo(path).dirname)
-      .filter((dirPath) => dirPath !== undefined)
-  );
+const getEntryFolderPaths = (entry) =>
+  mapEntryFolderPaths(entry, (path) => getPathInfo(path).dirname);
 
 /**
  * Get a list of assets associated with the given entry.
@@ -414,6 +416,80 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
 };
 
 /**
+ * Get the versions of the relative assets associated with the given entry that the entry has.
+ * @param {object} args Arguments.
+ * @param {Entry} args.entry Entry.
+ * @param {string} args.collectionName Name of a collection that the entry belongs to.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @returns {Asset[]} Assets.
+ */
+const getEntryRelativeAssetVersions = ({ entry, collectionName, fileName }) =>
+  /** @type {Asset[]} */ ([
+    // Two versions of a file can map to the same asset, so the list is deduplicated again
+    ...new Set(
+      getAssociatedAssets({ entry, collectionName, fileName, relative: true })
+        .map((asset) => getEntryAssetVersion(asset, entry))
+        .filter(Boolean),
+    ),
+  ]);
+
+/**
+ * Collect the assets stored outside the folders their entry occupies by itself, which another
+ * entry may refer to.
+ * @param {InternalCollection} collection Collection the entries belong to.
+ * @param {Entry[]} entries Entries.
+ * @param {Asset[][]} assetLists Assets of each entry, in the order of the entries.
+ * @returns {Asset[]} Assets, deduplicated by path.
+ */
+const collectSharedAssets = (collection, entries, assetLists) => {
+  /** @type {Map<string, Asset>} */
+  const sharedAssets = new Map();
+
+  entries.forEach((entry, index) => {
+    const folderPaths = getOwnedEntryFolderPaths(collection, entry);
+
+    assetLists[index].forEach((asset) => {
+      if (!folderPaths.some((folderPath) => asset.path.startsWith(`${folderPath}/`))) {
+        sharedAssets.set(asset.path, asset);
+      }
+    });
+  });
+
+  return [...sharedAssets.values()];
+};
+
+/**
+ * Find the entries referring to each of the given assets. One pass for all the assets, however many
+ * entries are being deleted, over the collection and any other entry stored in the same folders as
+ * the given entries, e.g. that of another collection filtering them.
+ * @param {Asset[]} assets Assets.
+ * @param {Entry[]} entries Entries the assets belong to.
+ * @param {string} collectionName Name of a collection that the entries belong to.
+ * @returns {Map<string, string[]>} IDs of the referring entries, keyed with the asset path.
+ */
+const getReferringEntryIds = (assets, entries, collectionName) => {
+  const folderPaths = new Set(entries.flatMap(getEntryFolderPaths));
+
+  const referringEntries = findEntriesByAssets(
+    assets.map((asset) => ({ asset })),
+    {
+      entries: [
+        ...new Set([
+          ...getEntriesByCollection(collectionName),
+          ...allEntries.current.filter((entry) =>
+            getEntryFolderPaths(entry).some((dirPath) => folderPaths.has(dirPath)),
+          ),
+        ]),
+      ],
+    },
+  );
+
+  return new Map(
+    assets.map((asset, index) => [asset.path, referringEntries[index].map(({ id }) => id)]),
+  );
+};
+
+/**
  * Get the assets stored alongside each of the given entries, which are removed with it. Only a
  * collection whose asset folder is entry-relative stores assets with its entries.
  *
@@ -442,57 +518,17 @@ export const getEntriesRelativeAssets = ({ entries, collectionName, fileName }) 
     return entries.map(() => []);
   }
 
-  const assetLists = entries.map(
-    (entry) =>
-      /** @type {Asset[]} */ ([
-        // Two versions of a file can map to the same asset, so the list is deduplicated again
-        ...new Set(
-          getAssociatedAssets({ entry, collectionName, fileName, relative: true })
-            .map((asset) => getEntryAssetVersion(asset, entry))
-            .filter(Boolean),
-        ),
-      ]),
+  const assetLists = entries.map((entry) =>
+    getEntryRelativeAssetVersions({ entry, collectionName, fileName }),
   );
 
-  /** @type {Map<string, Asset>} */
-  const sharedAssets = new Map();
+  const sharedAssets = collectSharedAssets(collection, entries, assetLists);
 
-  entries.forEach((entry, index) => {
-    const folderPaths = getOwnedEntryFolderPaths(collection, entry);
-
-    assetLists[index].forEach((asset) => {
-      if (!folderPaths.some((folderPath) => asset.path.startsWith(`${folderPath}/`))) {
-        sharedAssets.set(asset.path, asset);
-      }
-    });
-  });
-
-  if (!sharedAssets.size) {
+  if (!sharedAssets.length) {
     return assetLists;
   }
 
-  // One pass for all the assets, however many entries are being deleted, over the collection and
-  // any other entry stored in the same folders, e.g. that of another collection filtering them
-  const assets = [...sharedAssets.values()];
-  const folderPaths = new Set(entries.flatMap(getEntryFolderPaths));
-
-  const referringEntries = findEntriesByAssets(
-    assets.map((asset) => ({ asset })),
-    {
-      entries: [
-        ...new Set([
-          ...getEntriesByCollection(collectionName),
-          ...allEntries.current.filter((entry) =>
-            getEntryFolderPaths(entry).some((dirPath) => folderPaths.has(dirPath)),
-          ),
-        ]),
-      ],
-    },
-  );
-
-  const referringIds = new Map(
-    assets.map((asset, index) => [asset.path, referringEntries[index].map(({ id }) => id)]),
-  );
+  const referringIds = getReferringEntryIds(sharedAssets, entries, collectionName);
 
   return assetLists.map((list, index) =>
     list.filter((asset) =>

@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { findFields, getCanonicalSlugKey, getRootFields, getSubFields, hasField } from './fields';
+import {
+  findFields,
+  getCanonicalSlugKey,
+  getRootFields,
+  getSubFields,
+  hasField,
+  isNonFieldSortKey,
+} from './fields';
 
 /**
  * @import { Field } from '$lib/types/public';
@@ -291,5 +298,28 @@ describe('Test getCanonicalSlugKey()', () => {
     expect(getKey({ cmsConfig: { i18n: { locales: [] } } })).toBeUndefined();
     expect(getKey({ cmsConfig, collection: { name: 'posts' } })).toBeUndefined();
     expect(getKey({ cmsConfig, file: { i18n: false } })).toBeUndefined();
+  });
+});
+
+describe('Test isNonFieldSortKey()', () => {
+  const args = { canonicalSlugKey: 'translationKey', orderFieldKey: 'weight' };
+
+  it('should accept the entry metadata keys and the manual order', () => {
+    ['slug', 'commit_author', 'commit_date', '_manual'].forEach((key) => {
+      expect(isNonFieldSortKey(key, args)).toBe(true);
+    });
+  });
+
+  it('should accept the canonical slug key and the reorder field key', () => {
+    expect(isNonFieldSortKey('translationKey', args)).toBe(true);
+    expect(isNonFieldSortKey('weight', args)).toBe(true);
+  });
+
+  it('should reject any other key, including the summary', () => {
+    expect(isNonFieldSortKey('title', args)).toBe(false);
+    expect(isNonFieldSortKey('_summary', args)).toBe(false);
+    expect(
+      isNonFieldSortKey('weight', { canonicalSlugKey: undefined, orderFieldKey: undefined }),
+    ).toBe(false);
   });
 });

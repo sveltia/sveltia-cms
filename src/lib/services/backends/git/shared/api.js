@@ -215,6 +215,18 @@ const readStoredTokens = async () => {
 };
 
 /**
+ * Check whether the given tokens have replaced the ones a request was sent with: another request,
+ * or another tab, has refreshed them meanwhile, which replaces both.
+ * @param {Partial<AuthTokens> | undefined} tokens Current tokens, if any.
+ * @param {object} sent Tokens the request was sent with.
+ * @param {string | undefined} sent.token OAuth access token.
+ * @param {string | undefined} sent.refreshToken OAuth refresh token.
+ * @returns {tokens is AuthTokens} Result.
+ */
+export const isRefreshedElsewhere = (tokens, { token, refreshToken }) =>
+  !!tokens?.token && tokens.token !== token && tokens.refreshToken !== refreshToken;
+
+/**
  * Take the tokens another tab has refreshed as soon as it stores them, so this tab doesn’t keep
  * using the old ones, which may have been revoked, or later write them back over the new ones.
  * @param {StorageEvent} event `storage` event.
@@ -310,18 +322,14 @@ export const fetchAPI = async (
                 // Another request has refreshed the token since this one was sent, which used up
                 // the refresh token if it’s single-use, so take the new token instead of refreshing
                 // again
-                if (
-                  account?.token &&
-                  account.token !== token &&
-                  account.refreshToken !== refreshToken
-                ) {
+                if (account && isRefreshedElsewhere(account, { token, refreshToken })) {
                   return { token: account.token, refreshToken: account.refreshToken };
                 }
 
                 // The same goes for another tab, which stores the tokens it has refreshed
                 const stored = await readStoredTokens();
 
-                if (stored && stored.token !== token && stored.refreshToken !== refreshToken) {
+                if (stored && isRefreshedElsewhere(stored, { token, refreshToken })) {
                   user.account = { .../** @type {User} */ (user.account), ...stored };
 
                   return stored;

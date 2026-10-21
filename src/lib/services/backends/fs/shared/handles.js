@@ -29,6 +29,24 @@ export const isTypeMismatchError = (ex) =>
 export const hasOtherSpellings = (name) => name.normalize('NFC') !== name.normalize('NFD');
 
 /**
+ * Pick the name a file or folder has among the names of the entries in a directory, which can be
+ * spelled in another Unicode normalization form than the given one. The exact spelling wins.
+ * @param {string[]} names Names of the entries in the directory.
+ * @param {string} name Name to look for.
+ * @returns {string | undefined} Name of the file or folder in the directory, or `undefined` if
+ * there’s none.
+ */
+export const pickEntryName = (names, name) => {
+  if (names.includes(name)) {
+    return name;
+  }
+
+  const normalizedName = name.normalize();
+
+  return names.find((entryName) => entryName.normalize() === normalizedName);
+};
+
+/**
  * Find the name a file or folder has in a directory, which can be spelled in another Unicode
  * normalization form than the given one. The CMS works with names in form C, while a file added on
  * Linux, or by a program on macOS, can have a name in form D, and a file system that compares names
@@ -59,15 +77,7 @@ export const findEntryName = async (dirHandle, name) => {
     }
   }
 
-  const normalizedName = name.normalize();
-
-  for await (const entryName of dirHandle.keys()) {
-    if (entryName.normalize() === normalizedName) {
-      return entryName;
-    }
-  }
-
-  return name;
+  return pickEntryName(await Array.fromAsync(dirHandle.keys()), name) ?? name;
 };
 
 /**

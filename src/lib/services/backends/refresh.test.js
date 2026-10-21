@@ -22,6 +22,15 @@ const mockDataGeneration = vi.hoisted(() => ({ current: 0 }));
 vi.mock('$lib/services/assets', () => ({ allAssets: { current: [] } }));
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
 vi.mock('$lib/services/backends/git/shared/head', () => ({
+  /**
+   * Like the real one, compare the generation at creation with the current one.
+   * @returns {() => boolean} Check.
+   */
+  createStaleCheck: () => {
+    const generation = mockDataGeneration.current;
+
+    return () => generation !== mockDataGeneration.current;
+  },
   dataGeneration: mockDataGeneration,
   repositoryHead: mockRepositoryHead,
 }));

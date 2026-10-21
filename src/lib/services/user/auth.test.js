@@ -120,6 +120,15 @@ vi.mock('$lib/services/backends/branch-access', () => ({
 }));
 
 vi.mock('$lib/services/backends/git/shared/head', () => ({
+  /**
+   * Like the real one, compare the generation at creation with the current one.
+   * @returns {() => boolean} Check.
+   */
+  createStaleCheck: () => {
+    const generation = mockDataGeneration.current;
+
+    return () => generation !== mockDataGeneration.current;
+  },
   dataGeneration: mockDataGeneration,
   repositoryHead: mockRepositoryHead,
 }));

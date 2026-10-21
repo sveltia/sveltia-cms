@@ -22,7 +22,7 @@ import {
   setIndexCache,
 } from '$lib/services/backends/fs/git/repository';
 import { buildTree, serializeTree, writeChangedTrees } from '$lib/services/backends/fs/git/tree';
-import { hasOtherSpellings } from '$lib/services/backends/fs/shared/handles';
+import { hasOtherSpellings, pickEntryName } from '$lib/services/backends/fs/shared/handles';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { textEncoder } from '$lib/services/utils/bytes';
@@ -113,11 +113,7 @@ const getWorkingTreePath = async (fs, entries, path) => {
   const names = [];
 
   for (const segment of splitPath(path)) {
-    const entryNames = await fs.readdir(names.join('/'));
-
-    const name =
-      entryNames.find((entryName) => entryName === segment) ??
-      entryNames.find((entryName) => entryName.normalize() === segment.normalize());
+    const name = pickEntryName(await fs.readdir(names.join('/')), segment);
 
     if (!name) {
       return path;

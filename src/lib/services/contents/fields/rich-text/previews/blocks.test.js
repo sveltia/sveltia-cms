@@ -9,6 +9,7 @@ import {
   keyBlocks,
   splitHTMLBlocks,
   splitMarkdownBlocks,
+  splitPreviewBlocks,
 } from './blocks.js';
 
 describe('splitHTMLBlocks', () => {
@@ -265,5 +266,25 @@ describe('addLinkDefinitions', () => {
       '[a]: /a\n\n```\nB',
     ]);
     expect(addLinkDefinitions(['A'])).toEqual(['A']);
+  });
+});
+
+describe('splitPreviewBlocks', () => {
+  it('splits HTML into its top-level nodes', () => {
+    expect(splitPreviewBlocks('<p>One</p><p>[a]</p>', { isHTML: true })).toEqual([
+      '<p>One</p>',
+      '<p>[a]</p>',
+    ]);
+  });
+
+  it('splits Markdown into blocks with the link reference definitions added to each', () => {
+    expect(splitPreviewBlocks('[a]\n\n[a]: https://example.com', { isHTML: false })).toEqual([
+      '[a]: https://example.com\n\n[a]',
+      '[a]: https://example.com\n\n[a]: https://example.com',
+    ]);
+  });
+
+  it('splits Markdown without link reference definitions as it is', () => {
+    expect(splitPreviewBlocks('One\n\nTwo', { isHTML: false })).toEqual(['One', 'Two']);
   });
 });

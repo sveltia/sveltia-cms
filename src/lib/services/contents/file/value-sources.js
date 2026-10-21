@@ -1,6 +1,8 @@
 import { isObject } from '@sveltia/utils/object';
 import { isMap, isScalar, isSeq } from 'yaml';
 
+import { isPlainObject } from '$lib/services/utils/object';
+
 /**
  * @import { Document, ScalarTag } from 'yaml';
  * @import { ValueSource, ValueSourceMap } from '$lib/types/private';
@@ -43,10 +45,11 @@ const YAML_FLOAT_REGEX = /^[-+]?(?:\.\d+|\d+(?:\.\d*)?)(?:[eE][-+]?\d+)?$/;
  * @see https://www.json.org/json-en.html
  */
 const JSON_NUMBER_REGEX = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][-+]?\d+)?$/;
+
 /**
- * Regular expression matching the source text of an integer in a JSON document.
+ * Regular expression matching the source text of a decimal integer in a JSON document.
  */
-const JSON_INTEGER_REGEX = /^-?\d+$/;
+export const JSON_INTEGER_REGEX = /^-?\d+$/;
 
 /**
  * Check whether the given document may hold a float that is a whole number.
@@ -72,6 +75,20 @@ export const getFloatText = (value) => {
   const text = Object.is(value, -0) ? '-0' : String(value);
 
   return /[.e]/.test(text) ? text : `${text}.0`;
+};
+
+/**
+ * Remember the given source text of a value under the given key, or `null` if another source text
+ * has been remembered for it, as the value’s source text then can’t be told.
+ * @template K
+ * @param {Map<K, string | null>} sources Source text keyed by value.
+ * @param {K} key Key, e.g. the value as it’s read.
+ * @param {string} source Source text.
+ */
+export const rememberUniqueSource = (sources, key, source) => {
+  const knownSource = sources.get(key);
+
+  sources.set(key, knownSource === undefined || knownSource === source ? source : null);
 };
 
 /**
@@ -143,7 +160,7 @@ export const collectYAMLFloatSources = (doc) => {
 export class SourcedValue {
   /**
    * Create a value.
-   * @param {any} value Value.
+   * @param {number} value Value.
    * @param {string} source Source text.
    */
   constructor(value, source) {
@@ -154,7 +171,7 @@ export class SourcedValue {
   /**
    * Get the value, which `JSON.stringify()` and the YAML library write without a replacer or a tag
    * that knows about the source text.
-   * @returns {any} Value.
+   * @returns {number} Value.
    */
   toJSON() {
     return this.value;
@@ -230,6 +247,28 @@ export const rememberValueSources = (path, sourceMap) => {
 };
 
 /**
+ * Get what is remembered for a file before a save from the given map, and let the file after the
+ * save, which may have been renamed, take it over, so it’s saved the same way next time as well. A
+ * new file doesn’t take over what was remembered for a file deleted from the same path.
+ * @template T
+ * @param {Map<string, T>} map What is remembered for each file, keyed by file path.
+ * @param {string | undefined} previousPath Path of the file before the save, if it exists.
+ * @param {string} path Path of the file after the save.
+ * @returns {T | undefined} What is remembered, or `undefined` if nothing is.
+ */
+export const takeOverFileState = (map, previousPath, path) => {
+  const state = previousPath ? map.get(previousPath) : undefined;
+
+  if (state) {
+    map.set(path, state);
+  } else {
+    map.delete(path);
+  }
+
+  return state;
+};
+
+/**
  * Get the source map to save a file with, from the file before the save. The file after the save,
  * which may have been renamed, takes it over, so it’s saved the same way next time as well.
  * @param {object} args Arguments.
@@ -237,18 +276,8 @@ export const rememberValueSources = (path, sourceMap) => {
  * @param {string} args.path Path of the file after the save.
  * @returns {ValueSourceMap | undefined} Source map, or `undefined` if the file has none.
  */
-export const getSavedValueSources = ({ previousPath, path }) => {
-  const sourceMap = previousPath ? valueSources.get(previousPath) : undefined;
-
-  // A new file doesn’t take over what was remembered for a file deleted from the same path
-  if (sourceMap) {
-    valueSources.set(path, sourceMap);
-  } else {
-    valueSources.delete(path);
-  }
-
-  return sourceMap;
-};
+export const getSavedValueSources = ({ previousPath, path }) =>
+  takeOverFileState(valueSources, previousPath, path);
 
 /**
  * Move the source map of a file storing all the entries of an entry collection along with its
@@ -329,7 +358,7 @@ export const restoreValueSources = (
   }
 
   // Leave class instances, such as a `TomlDate`, as they are
-  if (isObject(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value))) {
+  if (isPlainObject(value)) {
     return Object.fromEntries(
       Object.entries(value).map(([key, val]) => [
         key,
@@ -345,16 +374,13 @@ export const restoreValueSources = (
  * Check whether the given source text is a float representing the given number in a document of
  * the given format, so it can be written as it is.
  * @param {string} source Source text.
- * @param {any} value Value.
+ * @param {number} value Value.
  * @param {RegExp} regex Regular expression matching a number in the format. An underscore it lets
  * through, as in a TOML number, is ignored when reading the number.
  * @returns {boolean} Result.
  */
 export const isFloatSource = (source, value, regex) =>
-  typeof value === 'number' &&
-  regex.test(source) &&
-  /[.eE]/.test(source) &&
-  Number(source.replaceAll('_', '')) === value;
+  regex.test(source) && /[.eE]/.test(source) && Number(source.replaceAll('_', '')) === value;
 
 /**
  * Get the text to write a {@link SourcedValue} as in a JSON document.
@@ -394,11 +420,6 @@ export const sourcedValueYAMLTag = {
   stringify: ({ value: sourcedValue }) => {
     const { value, source } = /** @type {SourcedValue} */ (sourcedValue);
 
-    if (isFloatSource(source, value, YAML_FLOAT_REGEX)) {
-      return source;
-    }
-
-    // Only a number can be written as raw text; anything else is written as a quoted string
-    return typeof value === 'number' ? getFloatText(value) : JSON.stringify(String(value));
+    return isFloatSource(source, value, YAML_FLOAT_REGEX) ? source : getFloatText(value);
   },
 };

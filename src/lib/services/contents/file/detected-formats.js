@@ -1,4 +1,5 @@
 import { FRONTMATTER_DELIMITER_MAP } from '$lib/services/contents/file/constants';
+import { takeOverFileState } from '$lib/services/contents/file/value-sources';
 
 /**
  * @import { FileConfig } from '$lib/types/private';
@@ -29,16 +30,11 @@ export const getSavedFileConfig = ({ _file, previousPath, path }) => {
     return _file;
   }
 
-  const format = previousPath ? detectedFrontMatterFormats.get(previousPath) : undefined;
+  const format = takeOverFileState(detectedFrontMatterFormats, previousPath, path);
 
-  // A new file doesn’t take over what was detected for a file deleted from the same path
   if (!format) {
-    detectedFrontMatterFormats.delete(path);
-
     return _file;
   }
-
-  detectedFrontMatterFormats.set(path, format);
 
   return {
     ..._file,

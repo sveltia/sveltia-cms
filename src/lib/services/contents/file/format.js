@@ -6,6 +6,8 @@ import { cmsConfig } from '$lib/services/config';
 import {
   BUILTIN_FILE_FORMATS,
   FRONTMATTER_DELIMITER_MAP,
+  FRONTMATTER_FORMATS,
+  getFormatSyntax,
   TOML_FORMATS,
 } from '$lib/services/contents/file/constants';
 import {
@@ -23,6 +25,7 @@ import {
 
 /**
  * @import { Scalar, ToStringOptions } from 'yaml';
+ * @import { FormatSyntax } from '$lib/services/contents/file/constants';
  * @import { FileConfig, InternalLocaleCode, ValueSourceMap } from '$lib/types/private';
  * @import {
  * FieldKeyPath,
@@ -243,6 +246,44 @@ export const formatYAML = (
 };
 
 /**
+ * Formatter for each syntax, taking the content, the file configuration and the comments to add.
+ * @type {Record<FormatSyntax, (content: RawEntryContent, _file: FileConfig,
+ * comments?: Record<FieldKeyPath, string>) => string>}
+ */
+const FORMATTERS = {
+  /**
+   * Format the given content as YAML, with the comments.
+   * @param {RawEntryContent} content Content.
+   * @param {FileConfig} _file File configuration.
+   * @param {Record<FieldKeyPath, string>} [comments] Comments.
+   * @returns {string} Formatted document.
+   */
+  yaml: (content, { yamlQuote = false }, comments) =>
+    formatYAML(content, undefined, { quote: yamlQuote }, comments),
+  /**
+   * Format the given content as TOML.
+   * @param {RawEntryContent} content Content.
+   * @returns {string} Formatted document.
+   */
+  toml: (content) => formatTOML(content),
+  /**
+   * Format the given content as JSON.
+   * @param {RawEntryContent} content Content.
+   * @returns {string} Formatted document.
+   */
+  json: (content) => formatJSON(content),
+};
+
+/**
+ * Check whether the given format is written as front matter followed by a body, including the
+ * `frontmatter` format, in which a new file gets YAML front matter.
+ * @param {string} format File format.
+ * @returns {boolean} Result.
+ */
+const isFrontMatterFormat = (format) =>
+  format === 'frontmatter' || FRONTMATTER_FORMATS.includes(/** @type {any} */ (format));
+
+/**
  * Format front matter for the given entry content.
  * @param {object} args Arguments.
  * @param {RawEntryContent} args.content Entry content.
@@ -258,10 +299,9 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
     format,
     fmDelimiters,
     bodyField: { key: bodyKey = 'body', inline: bodyInline = false } = {},
-    yamlQuote = false,
   } = _file;
 
-  const [sd, ed] = fmDelimiters ?? ['---', '---'];
+  const [sd, ed] = fmDelimiters ?? FRONTMATTER_DELIMITER_MAP['yaml-frontmatter'];
   let body = '';
 
   if (!bodyInline && Object.hasOwn(content, bodyKey)) {
@@ -287,23 +327,19 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
     return delimiters.includes(firstLine) ? `${sd}\n\n${ed}\n\n${body}\n` : `${body}\n`;
   }
 
-  let head = '';
+  const syntax = isFrontMatterFormat(format) ? getFormatSyntax(format) : undefined;
 
-  if (format === 'frontmatter' || format === 'yaml-frontmatter') {
-    head = formatYAML(content, undefined, { quote: yamlQuote }, comments);
-  } else if (format === 'toml-frontmatter') {
-    head = formatTOML(content);
-  } else if (format === 'json-frontmatter') {
-    head = formatJSON(content);
-
-    // Like Netlify/Decap CMS, strip the outer braces of the object when they double as the
-    // delimiters, so the front matter block is the object itself rather than one wrapped in
-    // another pair of braces
-    if (sd === '{' && ed === '}') {
-      head = head.slice(1, -1).replace(/^\n/, '').replace(/\n$/, '');
-    }
-  } else {
+  if (!syntax) {
     throw new Error(`Unsupported front matter format: ${format}`);
+  }
+
+  let head = FORMATTERS[syntax](content, _file, comments);
+
+  // Like Netlify/Decap CMS, strip the outer braces of the object when they double as the
+  // delimiters, so the front matter block is the object itself rather than one wrapped in another
+  // pair of braces
+  if (syntax === 'json' && sd === '{' && ed === '}') {
+    head = head.slice(1, -1).replace(/^\n/, '').replace(/\n$/, '');
   }
 
   return `${sd}\n${head}\n${ed}\n${!bodyInline && body ? `\n${body}\n` : ''}`;
@@ -321,25 +357,14 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
  * @param {ValueSourceMap} [entry.valueSources] Source text of the values read from the file being
  * overwritten, to write the ones that haven’t changed as they were.
  * @returns {string} Formatted string.
- * @throws {Error} When the format has no built-in formatter, or the content could not be formatted.
+ * @throws {Error} When the content could not be formatted.
  */
 const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources }) => {
-  const { format, yamlQuote = false } = _file;
-
-  if (!BUILTIN_FILE_FORMATS.includes(format)) {
-    throw new Error(
-      customFileFormatRegistry.has(format)
-        ? `Entries in the custom “${format}” format can’t be saved, as no \`toFile\` method was ` +
-            'registered for it with `CMS.registerCustomFormat()`'
-        : `Entries in the unknown “${format}” format can’t be saved`,
-    );
-  }
+  const { format } = _file;
 
   if (format === 'raw') {
     return typeof content.body === 'string' ? `${content.body}\n` : '';
   }
-
-  const isYAML = /^ya?ml$/.test(format);
 
   // Write the values that haven’t changed as they were, e.g. a float that is a whole number rather
   // than as an integer, or a TOML date rather than as a string
@@ -350,19 +375,14 @@ const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources }) 
   }
 
   try {
-    if (isYAML) {
-      return `${formatYAML(content, undefined, { quote: yamlQuote }, comments)}\n`;
+    if (isFrontMatterFormat(format)) {
+      return formatFrontMatter({ content, _file, comments });
     }
 
-    if (format === 'toml') {
-      return `${formatTOML(content)}\n`;
-    }
+    // A built-in format other than `raw` has a syntax
+    const syntax = /** @type {FormatSyntax} */ (getFormatSyntax(format));
 
-    if (format === 'json') {
-      return `${formatJSON(content)}\n`;
-    }
-
-    return formatFrontMatter({ content, _file, comments });
+    return `${FORMATTERS[syntax](content, _file, comments)}\n`;
   } catch (/** @type {any} */ ex) {
     throw new Error(`The entry could not be formatted due to ${ex.name}: ${ex.message}`, {
       cause: ex,
@@ -392,14 +412,24 @@ export const formatEntryFile = async ({ content, _file, comments, valueSources }
   // format it was read in, but the custom formatter is registered under the configured format. Fall
   // back to one registered for the detected format, which is what was used before
   const { format, configuredFormat = format } = _file;
+  const configuredFormatter = customFileFormatRegistry.get(configuredFormat)?.formatter;
+  const customFormat = configuredFormatter ? configuredFormat : format;
 
-  const customFormat = customFileFormatRegistry.get(configuredFormat)?.formatter
-    ? configuredFormat
-    : format;
+  const customFormatter =
+    configuredFormatter ?? customFileFormatRegistry.get(customFormat)?.formatter;
 
-  const customFormatter = customFileFormatRegistry.get(customFormat)?.formatter;
+  const hasBuiltInFormatter = BUILTIN_FILE_FORMATS.includes(format);
 
   if (!customFormatter) {
+    if (!hasBuiltInFormatter) {
+      throw new Error(
+        customFileFormatRegistry.has(format)
+          ? `Entries in the custom “${format}” format can’t be saved, as no \`toFile\` method ` +
+              'was registered for it with `CMS.registerCustomFormat()`'
+          : `Entries in the unknown “${format}” format can’t be saved`,
+      );
+    }
+
     return formatWithBuiltInFormatter({ content, _file, comments, valueSources });
   }
 
@@ -418,7 +448,7 @@ export const formatEntryFile = async ({ content, _file, comments, valueSources }
         throw new TypeError('The `serialize` function must be given the entry content');
       }
 
-      if (!BUILTIN_FILE_FORMATS.includes(format)) {
+      if (!hasBuiltInFormatter) {
         throw new Error(
           `Entries in the custom “${format}” format can’t be serialized, as there’s no built-in ` +
             'formatter for it',

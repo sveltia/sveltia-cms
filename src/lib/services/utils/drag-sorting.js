@@ -90,6 +90,13 @@ export const getKeyboardMoveTarget = ({ key, index, itemCount }) => {
 export const MOVE_TO_EDGE_MIN_ITEMS = 3;
 
 /**
+ * Check if a list has enough items to offer Move to Top, Move to Bottom and Move To.
+ * @param {number} itemCount Total number of items in the list.
+ * @returns {boolean} Result.
+ */
+export const canMoveToEdge = (itemCount) => itemCount >= MOVE_TO_EDGE_MIN_ITEMS;
+
+/**
  * Get the destination index for a position entered in the Move To dialog.
  * @param {object} args Arguments.
  * @param {number | undefined} args.position Entered position. Positions are 1-based, like the

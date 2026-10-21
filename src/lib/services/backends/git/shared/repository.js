@@ -55,6 +55,28 @@ export const getInstanceURL = (restApiRoot) =>
 export const getRepoURL = (restApiRoot, repoPath) => `${getInstanceURL(restApiRoot)}/${repoPath}`;
 
 /**
+ * Create a function to generate base URLs for accessing the repository’s resources on a service’s
+ * web interface, which only differs from another service’s by the path segments that come after the
+ * repository URL.
+ * @param {object} paths Path segments, with a leading slash.
+ * @param {string} paths.tree Path to browse a branch, e.g. `/tree`.
+ * @param {string} paths.blob Path to read a file on a branch, e.g. `/blob`.
+ * @param {string} paths.commit Path to view a commit, e.g. `/commit`.
+ * @returns {(repoURL: string, branch?: string) => RepositoryBaseURLs} Function that takes the base
+ * URL of the repository and the branch name, which can be `undefined` if the branch is not
+ * specified in the CMS configuration, and returns an object containing the tree base URL for
+ * browsing files, the blob base URL for accessing file contents, and the commit base URL.
+ */
+export const createBaseURLsGetter =
+  ({ tree, blob, commit }) =>
+  (repoURL, branch) => ({
+    // A branch name may contain a character that ends a URL path, like `#` in `cms/posts/c#`
+    treeBaseURL: branch ? `${repoURL}${tree}/${encodePathSegments(branch)}` : repoURL,
+    blobBaseURL: branch ? `${repoURL}${blob}/${encodePathSegments(branch)}` : '',
+    commitBaseURL: `${repoURL}${commit}`,
+  });
+
+/**
  * Generate the base URLs for accessing the repository’s resources, pointing the tree and blob URLs
  * at the configured root directory, so a file path relative to it can be appended. Without a
  * branch, the tree base URL is the repository itself and there is no blob base URL, so they’re left

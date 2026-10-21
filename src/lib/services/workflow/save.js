@@ -35,7 +35,7 @@ import {
 import { getBranchName } from '$lib/services/workflow/branch';
 import { trackDeployingEntry } from '$lib/services/workflow/deploy';
 import { isEntryAlreadyPublished, openAuthoring } from '$lib/services/workflow/open-authoring';
-import { verifyMergeState } from '$lib/services/workflow/verify';
+import { pinReviewedHead, verifyMergeState } from '$lib/services/workflow/verify';
 
 /**
  * @import {
@@ -497,6 +497,25 @@ export const publishWorkflowEntry = async (entry) => {
     return promise;
   });
 };
+
+/**
+ * Publish the given entry as the user has reviewed it. The entry comes from the store, which a
+ * reload may have brought a commit pushed since the editor or the confirmation dialog was opened;
+ * the publish is pinned to the head commit of the reviewed version, so that commit isn’t published
+ * unseen. See {@link pinReviewedHead}.
+ * @param {UnpublishedEntry} entry Entry from the store.
+ * @param {Entry | undefined} reviewed Version of the entry the user has reviewed, e.g. the one the
+ * confirmation dialog was opened for, or the original entry of the draft being edited. An entry
+ * without a pull request, or `undefined`, has the publish refused.
+ * @returns {Promise<void>}
+ */
+export const publishReviewedEntry = async (entry, reviewed) =>
+  publishWorkflowEntry(
+    pinReviewedHead(
+      entry,
+      /** @type {UnpublishedEntry | undefined} */ (reviewed)?.workflow?.pullRequest.headSHA,
+    ),
+  );
 
 /**
  * Discard the given unpublished entry by closing the corresponding pull request without merging it.

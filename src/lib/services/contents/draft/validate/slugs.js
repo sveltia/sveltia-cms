@@ -140,13 +140,22 @@ const slugCanHaveSpaces = () =>
  * @param {boolean} [args.required] Whether the slug must be given. An empty slug that isn’t
  * required is valid, as the slug template fills it instead.
  * @param {[string | RegExp, string]} [args.pattern] The collection’s `pattern` slug option.
+ * @param {boolean} [args.allowSpaces] Whether the slug can contain plain spaces. Defaults to
+ * whether the global `sanitize_replacement` slug option contains one.
  * @param {string[]} [args.takenSlugs] Slugs taken by the other entries.
  * @param {InternalLocaleCode} [args.locale] Locale of the slug, used to slugify it the same way it
  * will be saved.
  * @returns {SlugValidationError | undefined} What stops the slug from being used, or `undefined` if
  * it can be used.
  */
-export const validateSlug = ({ slug, required = true, pattern, takenSlugs = [], locale }) => {
+export const validateSlug = ({
+  slug,
+  required = true,
+  pattern,
+  allowSpaces = slugCanHaveSpaces(),
+  takenSlugs = [],
+  locale,
+}) => {
   const trimmedSlug = slug?.trim() ?? '';
 
   if (!trimmedSlug) {
@@ -155,7 +164,7 @@ export const validateSlug = ({ slug, required = true, pattern, takenSlugs = [], 
 
   // A slash or whitespace would break the file path and URL structure. A plain space is fine if the
   // slug is meant to have them; `slugify` turns any run of them into the replacement on save
-  if ((slugCanHaveSpaces() ? /[/]|[^\S ]/ : /[/\s]/).test(/** @type {string} */ (slug))) {
+  if ((allowSpaces ? /[/]|[^\S ]/ : /[/\s]/).test(/** @type {string} */ (slug))) {
     return 'invalid';
   }
 
@@ -238,6 +247,7 @@ export const validateSlugs = (draft) => {
   // An existing entry’s slug is edited as a whole. A new entry’s value can be only a part of the
   // slug, in which case it can’t be told whether the slug is taken
   const isWholeSlug = !isNew || editorValueIsSlug;
+  const allowSpaces = slugCanHaveSpaces();
   // A slug editor that has never been shown, e.g. in a closed sidebar panel, hasn’t set its slug
   // yet, and the slug must still be given
   const locales = new Set([...Object.keys(currentSlugs), ...Object.keys(slugEditor)]);
@@ -252,6 +262,7 @@ export const validateSlugs = (draft) => {
           // template
           required: !isNew || editorRequired,
           pattern,
+          allowSpaces,
           // Only look for other entries when the slug could collide with one
           takenSlugs:
             isWholeSlug && slug?.trim() ? (takenSlugs ??= getTakenSlugs(draft))[locale] : [],

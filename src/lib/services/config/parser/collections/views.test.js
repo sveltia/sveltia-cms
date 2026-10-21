@@ -138,6 +138,19 @@ describe('Test checkViewOptions()', () => {
     expect(mockAddMessage).not.toHaveBeenCalled();
   });
 
+  it('should accept the reorder field, which may not be defined under the fields', () => {
+    check({ fields, reorder: true, sortable_fields: ['title', 'order'] });
+    check({ fields, reorder: { key: 'weight' }, sortable_fields: ['weight'] });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+
+    check({ fields, sortable_fields: ['order'] });
+
+    expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ strKey: 'invalid_sortable_field', values: { name: 'order' } }),
+    );
+  });
+
   it('should accept the canonical slug key when i18n is enabled', () => {
     const cmsConfig = { i18n: { locales: ['en', 'fr'] } };
 

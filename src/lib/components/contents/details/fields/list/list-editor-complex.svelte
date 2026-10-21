@@ -228,6 +228,8 @@
       allSubFields.some(({ i18n: subI18n }) => isFieldTranslatable(subI18n)),
   );
   const isAddDisabled = $derived(isLocked || !hasEditableSubFields);
+  const showReorderControls = $derived(allowReorder && !singleItem);
+  const isReorderDisabled = $derived(isLocked || items.length < 2);
 
   /* eslint-disable jsdoc/require-jsdoc */
   const removedItems = createRemovedItemsState({
@@ -674,6 +676,14 @@
   });
 
   /**
+   * Get a function that moves the item at the given index, for its reorder controls.
+   * @param {number} index List index.
+   * @returns {(to: number, action: string) => void} Function that moves the item to another index,
+   * then restores the focus to the control with the given `data-action`.
+   */
+  const getItemMover = (index) => (to, action) => sorter.move(index, to, action);
+
+  /**
    * Get the thumbnail of a collapsed list item.
    * @param {number} index List index.
    * @param {string} [type] Variable type name of the item, if the list has variable types.
@@ -785,6 +795,7 @@
         {@const type = hasVariableTypes ? item[typeKey] : undefined}
         {@const { typeConfig, unknownType, subFields, summaryTemplate } = resolveType(type)}
         {@const expanded = isExpanded(entryDraft.current, itemKeyPath)}
+        {@const moveItemTo = getItemMover(index)}
         <div
           role="group"
           aria-label={singleItem
@@ -811,28 +822,28 @@
             toggleExpanded={() => updateExpanderStates({ [itemKeyPath]: !expanded })}
           >
             {#snippet centerContent()}
-              {#if allowReorder && !singleItem}
+              {#if showReorderControls}
                 <ReorderControls
                   {index}
                   itemCount={items.length}
-                  disabled={isLocked || items.length < 2}
+                  disabled={isReorderDisabled}
                   icon="drag_handle"
                   part="handle"
                   onGrab={() => sorter.grab(index)}
                   onRelease={sorter.release}
-                  onMove={(to, action) => sorter.move(index, to, action)}
+                  onMove={moveItemTo}
                 />
               {/if}
             {/snippet}
             {#snippet endContent()}
-              {#if allowReorder && !singleItem}
+              {#if showReorderControls}
                 <ReorderControls
                   {index}
                   itemCount={items.length}
-                  disabled={isLocked || items.length < 2}
+                  disabled={isReorderDisabled}
                   part="buttons"
                   menu={false}
-                  onMove={(to, action) => sorter.move(index, to, action)}
+                  onMove={moveItemTo}
                 />
               {/if}
               <ListItemMenu
@@ -846,8 +857,8 @@
                 {hasMaxItems}
                 {isAddDisabled}
                 itemCount={items.length}
-                canReorder={allowReorder && !singleItem && !isLocked}
-                moveItem={(to, action) => sorter.move(index, to, action)}
+                canReorder={showReorderControls && !isLocked}
+                moveItem={moveItemTo}
                 {copyItem}
                 {pasteItem}
                 {addItem}

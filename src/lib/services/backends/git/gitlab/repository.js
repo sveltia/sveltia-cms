@@ -1,15 +1,14 @@
 import { recordBranchAccess } from '$lib/services/backends/branch-access';
 import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
 import {
-  createNoAccessError,
-  createNoWriteAccessError,
+  createPermissionError,
   toRepositoryAccessError,
 } from '$lib/services/backends/git/shared/errors';
 import {
   applyDefaultBranch,
+  createBaseURLsGetter,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
-import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import { RepositoryBaseURLs, RepositoryInfo, RepositoryPath } from '$lib/types/private';
@@ -68,11 +67,10 @@ export const getBranchPath = (branch, repoPath) =>
  * @returns {RepositoryBaseURLs} An object containing the tree base URL for browsing files, and the
  * blob base URL for accessing file contents.
  */
-export const getBaseURLs = (repoURL, branch) => ({
-  // A branch name may contain a character that ends a URL path, like `#` in `cms/posts/c#`
-  treeBaseURL: branch ? `${repoURL}/-/tree/${encodePathSegments(branch)}` : repoURL,
-  blobBaseURL: branch ? `${repoURL}/-/blob/${encodePathSegments(branch)}` : '',
-  commitBaseURL: `${repoURL}/-/commit`,
+export const getBaseURLs = createBaseURLsGetter({
+  tree: '/-/tree',
+  blob: '/-/blob',
+  commit: '/-/commit',
 });
 
 const FETCH_USER_PERMISSIONS_QUERY = `
@@ -124,12 +122,9 @@ export const checkRepositoryAccess = async () => {
     throw toRepositoryAccessError(repository, status === 404 ? undefined : status);
   }
 
-  if (!permissions.found) {
-    throw createNoAccessError(repo);
-  }
-
+  // A project the user can’t see can’t be pushed to either
   if (!permissions.canPush) {
-    throw createNoWriteAccessError(repo);
+    throw createPermissionError(repo, permissions.found);
   }
 };
 

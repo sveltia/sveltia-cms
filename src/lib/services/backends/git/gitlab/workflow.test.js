@@ -1010,6 +1010,17 @@ describe('GitLab Editorial Workflow service', () => {
           );
         });
 
+        test('keeps waiting through a read without a body', async () => {
+          vi.mocked(fetchAPI)
+            .mockResolvedValueOnce(/** @type {any} */ (null))
+            .mockResolvedValueOnce(mergedItem);
+
+          await publish(pullRequest);
+
+          expect(fetchAPI).toHaveBeenCalledTimes(5);
+          expect(sleep).toHaveBeenCalledTimes(2);
+        });
+
         test.each([401, 403, 404])('gives up when a read fails with a %i', async (status) => {
           const error = createError(status);
 

@@ -54,6 +54,35 @@ const AUTH_POPUP_STORAGE_KEY = 'sveltia-cms.auth-popup';
 const getAuthChannelName = (state) => `sveltia-cms.auth.${state}`;
 
 /**
+ * Get the message the auth popup sends its opener to start the handshake, which the opener sends
+ * back to ask for the result. The format is the one Netlify/Decap CMS and its authenticators use.
+ * @param {string} provider Backend name, e.g. `github`.
+ * @returns {string} Message in the `authorizing:{provider}` format.
+ */
+export const formatHandshakeMessage = (provider) => `authorizing:${provider}`;
+
+/**
+ * Get the message the auth popup sends to pass the result of the flow on.
+ * @param {string} provider Backend name, e.g. `github`.
+ * @param {'success' | 'error'} status Whether the flow has succeeded.
+ * @param {Record<string, any>} content Result: the tokens, or the error.
+ * @returns {string} Message in the `authorization:{provider}:{status}:{result}` format, the result
+ * being serialized as JSON.
+ */
+export const formatResultMessage = (provider, status, content) =>
+  `authorization:${provider}:${status}:${JSON.stringify(content)}`;
+
+/**
+ * Extract the result from a message built with {@link formatResultMessage}.
+ * @param {string} provider Backend name, e.g. `github`.
+ * @param {string} data Message.
+ * @returns {string | undefined} Serialized result, or `undefined` if the message isn’t a result
+ * for the given backend, or comes without one.
+ */
+export const parseResultMessage = (provider, data) =>
+  data.match(`^authorization:${provider}:(success|error):(?<result>.+)`)?.groups?.result;
+
+/**
  * Get the flow `state` stored in the auth popup’s session storage.
  * @returns {string | null} State, or `null` if it’s not stored or session storage is unavailable.
  */
@@ -190,9 +219,7 @@ export const authorize = async ({ backendName, authURL, popup, state }) => {
      * @param {string} data Message in the `authorization:{provider}:{status}:{result}` format.
      */
     const handleResult = (data) => {
-      const { result: resultStr } =
-        data.match(`^authorization:${provider}:(success|error):(?<result>.+)`)?.groups ?? {};
-
+      const resultStr = parseResultMessage(provider, data);
       /**
        * @type {{ token: string, refreshToken?: string } | { error: string, errorCode?: string }}
        */
@@ -240,7 +267,7 @@ export const authorize = async ({ backendName, authURL, popup, state }) => {
       }
 
       // First message
-      if (data === `authorizing:${provider}`) {
+      if (data === formatHandshakeMessage(provider)) {
         authPopup.postMessage(data, origin);
 
         return;
@@ -422,7 +449,7 @@ export const sendMessage = ({
     if (state) {
       const channel = new BroadcastChannel(getAuthChannelName(state));
 
-      channel.postMessage(`authorization:${provider}:${_state}:${JSON.stringify(content)}`);
+      channel.postMessage(formatResultMessage(provider, _state, content));
       channel.close();
       window.close();
     }
@@ -440,19 +467,16 @@ export const sendMessage = ({
     if (
       source === window.opener &&
       origin === window.location.origin &&
-      data === `authorizing:${provider}`
+      data === formatHandshakeMessage(provider)
     ) {
-      window.opener?.postMessage(
-        `authorization:${provider}:${_state}:${JSON.stringify(content)}`,
-        origin,
-      );
+      window.opener?.postMessage(formatResultMessage(provider, _state, content), origin);
       // The handshake is complete; remove the listener so repeated auth flows don’t accumulate.
       window.removeEventListener('message', onMessage);
     }
   };
 
   window.addEventListener('message', onMessage);
-  window.opener?.postMessage(`authorizing:${provider}`, window.location.origin);
+  window.opener?.postMessage(formatHandshakeMessage(provider), window.location.origin);
 };
 
 /**

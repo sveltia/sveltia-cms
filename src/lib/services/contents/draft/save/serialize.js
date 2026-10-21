@@ -1,4 +1,4 @@
-import { isObject, toRaw } from '@sveltia/utils/object';
+import { toRaw } from '@sveltia/utils/object';
 import { compare } from '@sveltia/utils/string';
 import { TomlDate } from 'smol-toml';
 
@@ -21,7 +21,12 @@ import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { TOML_FORMATS } from '$lib/services/contents/file/constants';
 import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { hasIndexLikeChildKey, isValueEmpty, unflattenKeys } from '$lib/services/utils/object';
+import {
+  hasIndexLikeChildKey,
+  isPlainObject,
+  isValueEmpty,
+  unflattenKeys,
+} from '$lib/services/utils/object';
 
 /**
  * @import {
@@ -449,7 +454,7 @@ const removeTomlNulls = (value) => {
   }
 
   // Leave class instances, such as a `TomlDate`, as they are
-  if (isObject(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value))) {
+  if (isPlainObject(value)) {
     return Object.fromEntries(
       Object.entries(value)
         .filter(([, val]) => val !== null && val !== undefined)

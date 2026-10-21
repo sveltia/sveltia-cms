@@ -3,6 +3,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  canMoveToEdge,
   focusAfterRemoval,
   focusItemReorderControl,
   focusReorderControl,
@@ -606,6 +607,14 @@ describe('focusAfterRemoval', () => {
 
     // Without a fallback, the focus is left alone
     expect(() => focusAfterRemoval({ index: 0, getTarget: vi.fn(() => null) })).not.toThrow();
+  });
+});
+
+describe('canMoveToEdge', () => {
+  test('requires at least three items', () => {
+    expect(canMoveToEdge(2)).toBe(false);
+    expect(canMoveToEdge(3)).toBe(true);
+    expect(canMoveToEdge(10)).toBe(true);
   });
 });
 

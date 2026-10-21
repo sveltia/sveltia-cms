@@ -6,6 +6,7 @@ import {
   isFloatSource,
   joinKeyPath,
   mayHaveWholeNumberFloat,
+  rememberUniqueSource,
   rememberValueSources,
   restoreValueSources,
 } from '$lib/services/contents/file/value-sources';
@@ -125,9 +126,7 @@ const findWholeNumberFloatSources = (str) => {
       if (!isFloat) {
         integers.add(value);
       } else if (Number.isInteger(value)) {
-        const knownSource = sources.get(value);
-
-        sources.set(value, knownSource === undefined || knownSource === source ? source : null);
+        rememberUniqueSource(sources, value, source);
       }
     });
 
@@ -154,10 +153,7 @@ const findDateSources = (str) => {
     const date = new TomlDate(source);
 
     if (date.isValid()) {
-      const value = date.toISOString();
-      const knownSource = sources.get(value);
-
-      sources.set(value, knownSource === undefined || knownSource === source ? source : null);
+      rememberUniqueSource(sources, date.toISOString(), source);
     }
   });
 

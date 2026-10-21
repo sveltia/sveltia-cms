@@ -9,7 +9,7 @@ import {
   STRING_VALUE_FIELD_TYPES,
 } from '$lib/services/contents/fields';
 import { getTypeSubFields } from '$lib/services/contents/fields/list/subfields';
-import { getNumberFieldValue } from '$lib/services/contents/fields/number/helpers';
+import { getNumberFieldValue, parseNumber } from '$lib/services/contents/fields/number/helpers';
 import { unflattenKeys } from '$lib/services/utils/object';
 
 /**
@@ -33,7 +33,7 @@ const isStringOrNumber = (value) => typeof value === 'string' || typeof value ==
  * doesn’t take the value.
  */
 const conformNumberValue = (value, fieldConfig) => {
-  const number = typeof value === 'number' ? value : value.trim() ? Number(value) : Number.NaN;
+  const number = parseNumber(value);
 
   return Number.isNaN(number)
     ? undefined

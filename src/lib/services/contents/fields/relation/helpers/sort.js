@@ -1,5 +1,6 @@
 import { compare } from '@sveltia/utils/string';
 
+import { compareSortKeys } from '$lib/services/common/view';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getOrderValueGetter } from '$lib/services/contents/collection/entries/reorder/sort';
 import { getEntrySortKeyGetter } from '$lib/services/contents/collection/view/sort';
@@ -28,7 +29,7 @@ import { getEntrySortKeyGetter } from '$lib/services/contents/collection/view/so
  * @returns {{ getSortKey: (entry: Entry) => string | number | undefined, isStringType: boolean }}
  * Sort key getter, and whether the keys are compared as strings.
  */
-const getSortKeyGetter = ({ collection, key, locale }) => {
+const getRelationSortKeyGetter = ({ collection, key, locale }) => {
   if (key === '_manual' || key === getOrderFieldKey(collection)) {
     return { getSortKey: getOrderValueGetter(collection), isStringType: false };
   }
@@ -68,7 +69,7 @@ const getSortKeyGetter = ({ collection, key, locale }) => {
  */
 export const sortOptions = ({ groups, collection, sortBy, locale }) => {
   const { field: key, direction } = sortBy;
-  const { getSortKey, isStringType } = getSortKeyGetter({ collection, key, locale });
+  const { getSortKey, isStringType } = getRelationSortKeyGetter({ collection, key, locale });
   const sign = direction === 'descending' ? -1 : 1;
 
   // Compute the key once per entry rather than in the comparator
@@ -83,9 +84,7 @@ export const sortOptions = ({ groups, collection, sortBy, locale }) => {
       if (a.sortKey === undefined) return 1;
       if (b.sortKey === undefined) return -1;
 
-      const diff = isStringType
-        ? compare(/** @type {string} */ (a.sortKey), /** @type {string} */ (b.sortKey))
-        : /** @type {number} */ (a.sortKey) - /** @type {number} */ (b.sortKey);
+      const diff = compareSortKeys(a.sortKey, b.sortKey, isStringType);
 
       if (diff) {
         return diff * sign;

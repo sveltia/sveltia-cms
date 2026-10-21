@@ -8,7 +8,11 @@ import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFilePath } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { getFrontMatterDelimiters, resolveFileConfig } from '$lib/services/contents/file/config';
-import { FRONTMATTER_FORMATS } from '$lib/services/contents/file/constants';
+import {
+  FRONTMATTER_DELIMITER_MAP,
+  FRONTMATTER_FORMATS,
+  getFormatSyntax,
+} from '$lib/services/contents/file/constants';
 import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
 import {
   mayHaveUnsafeInteger,
@@ -32,6 +36,7 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * InternalCollection,
  * InternalCollectionFile,
  * } from '$lib/types/private';
+ * @import { FormatSyntax } from '$lib/services/contents/file/constants';
  * @import { FileFormat, FrontMatterFormat } from '$lib/types/public';
  */
 
@@ -143,17 +148,9 @@ export const parseYAML = (str, options, path) => {
  * @param {string} text File content.
  * @returns {FrontMatterFormat} Determined format.
  */
-export const detectFrontMatterFormat = (text) => {
-  if (text.startsWith('+++')) {
-    return 'toml-frontmatter';
-  }
-
-  if (text.startsWith('{')) {
-    return 'json-frontmatter';
-  }
-
-  return 'yaml-frontmatter';
-};
+export const detectFrontMatterFormat = (text) =>
+  FRONTMATTER_FORMATS.find((format) => text.startsWith(FRONTMATTER_DELIMITER_MAP[format][0])) ??
+  'yaml-frontmatter';
 
 /**
  * Regular expression to match JSON front matter written by an earlier version of Sveltia CMS, which
@@ -179,6 +176,27 @@ const parseJSONFrontMatterHead = (head, path) => {
   return parseJSON(trimmedHead.startsWith('{') ? trimmedHead : `{${trimmedHead}}`, path);
 };
 
+/**
+ * Parser for each syntax, taking a document and the path of the file it’s read from.
+ * @type {Record<FormatSyntax, (str: string, path?: string) => any>}
+ */
+const PARSERS = {
+  /**
+   * Parse the given YAML document.
+   * @param {string} str Document.
+   * @param {string} [path] Path of the file the document is read from.
+   * @returns {any} Parsed object.
+   */
+  yaml: (str, path) => parseYAML(str, undefined, path),
+  toml: parseTOML,
+  json: parseJSON,
+};
+
+/**
+ * Parser for the head of front matter in each syntax.
+ * @type {Record<FormatSyntax, (head: string, path?: string) => any>}
+ */
+const FRONT_MATTER_PARSERS = { ...PARSERS, json: parseJSONFrontMatterHead };
 /**
  * Cache for front matter regexes, keyed by `${sd}|${ed}` (escaped delimiter pair). Avoids
  * rebuilding the same regex for every entry in a collection (all entries share identical
@@ -216,9 +234,10 @@ export const parseFrontMatter = ({
     bodyField: { key: bodyKey = 'body', inline: bodyInline = false } = {},
   } = resolveFileConfig({ collection, collectionFile, isIndexFile });
 
-  const [startDelimiter, endDelimiter] = (_format === 'frontmatter'
-    ? getFrontMatterDelimiters({ format, delimiter: fmDelimiters })
-    : fmDelimiters) ?? ['---', '---'];
+  const [startDelimiter, endDelimiter] =
+    (_format === 'frontmatter'
+      ? getFrontMatterDelimiters({ format, delimiter: fmDelimiters })
+      : fmDelimiters) ?? FRONTMATTER_DELIMITER_MAP['yaml-frontmatter'];
 
   const sd = escapeRegExp(startDelimiter);
   const ed = escapeRegExp(endDelimiter);
@@ -249,19 +268,8 @@ export const parseFrontMatter = ({
   }
 
   const { head = '', body } = groups;
-  let parsedHead = {};
-
-  if (format === 'yaml-frontmatter') {
-    parsedHead = parseYAML(head, undefined, path);
-  }
-
-  if (format === 'toml-frontmatter') {
-    parsedHead = parseTOML(head, path);
-  }
-
-  if (format === 'json-frontmatter') {
-    parsedHead = parseJSONFrontMatterHead(head, path);
-  }
+  const syntax = FRONTMATTER_FORMATS.includes(format) ? getFormatSyntax(format) : undefined;
+  let parsedHead = syntax ? FRONT_MATTER_PARSERS[syntax](head, path) : {};
 
   if (!parsedHead || typeof parsedHead !== 'object' || Array.isArray(parsedHead)) {
     parsedHead = {};
@@ -355,18 +363,6 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
   }
 
   try {
-    if (format === 'yaml' || format === 'yml') {
-      return parseYAML(text, undefined, path);
-    }
-
-    if (format === 'toml') {
-      return parseTOML(text, path);
-    }
-
-    if (format === 'json') {
-      return parseJSON(text, path);
-    }
-
     if (format === 'frontmatter') {
       const detectedFormat = detectFrontMatterFormat(text);
 
@@ -384,6 +380,13 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
         text,
         path,
       });
+    }
+
+    // Any other format with a syntax is read as a whole
+    const syntax = getFormatSyntax(format);
+
+    if (syntax) {
+      return PARSERS[syntax](text, path);
     }
   } catch (/** @type {any} */ ex) {
     throw new Error(`${path} could not be parsed due to ${ex.name}: ${ex.message}`);

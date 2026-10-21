@@ -11,9 +11,9 @@
   import { isPublishAllowed, publishingBranches } from '$lib/services/workflow';
   import { getPublishDialogStrings } from '$lib/services/workflow/dialogs';
   import { closeWorkflowEntryEditor } from '$lib/services/workflow/editor';
-  import { publishWorkflowEntry } from '$lib/services/workflow/save';
+  import { publishReviewedEntry } from '$lib/services/workflow/save';
   import { canPublish } from '$lib/services/workflow/validate';
-  import { getWorkflowErrorMessage, pinReviewedHead } from '$lib/services/workflow/verify';
+  import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
   /**
    * @import { UnpublishedEntry } from '$lib/types/private';
@@ -72,15 +72,8 @@
     const { collectionName, pullRequest } = entry.workflow;
 
     try {
-      // The entry comes from the store, which a reload may have brought a commit pushed since the
-      // editor was opened; the publish is pinned to the version the editor shows
-      await publishWorkflowEntry(
-        pinReviewedHead(
-          entry,
-          /** @type {UnpublishedEntry | undefined} */ (entryDraft.current?.originalEntry)?.workflow
-            ?.pullRequest.headSHA,
-        ),
-      );
+      // Pinned to the version the editor shows
+      await publishReviewedEntry(entry, entryDraft.current?.originalEntry);
       closeWorkflowEntryEditor({ entryDraft, branch: pullRequest.branch, collectionName });
     } catch (/** @type {any} */ ex) {
       errorMessage = getWorkflowErrorMessage(ex, 'workflow.publishing_entry_failed');

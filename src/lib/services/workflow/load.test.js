@@ -24,10 +24,23 @@ import {
 import { openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
-vi.mock('$lib/services/backends/git/shared/head', () => ({
-  dataGeneration: { current: 0 },
-  repositoryHead: { current: '' },
-}));
+vi.mock('$lib/services/backends/git/shared/head', () => {
+  const generationBox = { current: 0 };
+
+  return {
+    /**
+     * Like the real one, compare the generation at creation with the current one.
+     * @returns {() => boolean} Check.
+     */
+    createStaleCheck: () => {
+      const generation = generationBox.current;
+
+      return () => generation !== generationBox.current;
+    },
+    dataGeneration: generationBox,
+    repositoryHead: { current: '' },
+  };
+});
 vi.mock('$lib/services/backends/refresh', () => ({ checkForRemoteChanges: vi.fn() }));
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 vi.mock('$lib/services/workflow/open-authoring', () => ({

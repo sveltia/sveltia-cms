@@ -2,9 +2,14 @@ import { isObject } from '@sveltia/utils/object';
 
 import { hasComparison } from '$lib/services/common/view';
 import { SUMMARY_SPECIAL_TAGS } from '$lib/services/config/parser/collections/templates';
-import { getCanonicalSlugKey, hasField } from '$lib/services/config/parser/utils/fields';
+import {
+  getCanonicalSlugKey,
+  hasField,
+  isNonFieldSortKey,
+} from '$lib/services/config/parser/utils/fields';
 import { checkFieldReferences } from '$lib/services/config/parser/utils/references';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import {
   parseCustomSortableFields,
   parseViewOptions,
@@ -28,13 +33,6 @@ import {
  * ViewGroups,
  * } from '$lib/types/public';
  */
-
-/**
- * Internal sort keys added by `getSortConfig()` that don’t map to a field: `_summary` for the
- * generated entry summary and `_manual` for the reorder field.
- * @type {string[]}
- */
-const INTERNAL_SORT_KEYS = [SUMMARY_COLUMN_KEY, '_manual'];
 
 /**
  * Validate the name and field key path of each option in the `view_groups` or `view_filters`
@@ -164,10 +162,16 @@ export const checkViewOptions = (context, collectors) => {
 
   if (sortableFields) {
     const { keys, defaultKey } = parseCustomSortableFields(sortableFields);
-    const sortKeys = [...specialKeys, ...INTERNAL_SORT_KEYS];
+    const orderFieldKey = getOrderFieldKey(context.collection);
 
+    // `_summary` sorts by the generated entry summary, which only the entry list has
     [...keys, defaultKey].forEach((key) => {
-      if (key && !sortKeys.includes(key) && !hasField(fields, key)) {
+      if (
+        key &&
+        key !== SUMMARY_COLUMN_KEY &&
+        !isNonFieldSortKey(key, { canonicalSlugKey, orderFieldKey }) &&
+        !hasField(fields, key)
+      ) {
         addMessage({
           strKey: 'invalid_sortable_field',
           values: { name: key },

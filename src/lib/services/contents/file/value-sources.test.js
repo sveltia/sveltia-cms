@@ -8,6 +8,7 @@ import {
   getSavedValueSources,
   mayHaveWholeNumberFloat,
   moveArrayItemSources,
+  rememberUniqueSource,
   rememberValueSources,
   restoreValueSources,
   reviveWholeNumberFloat,
@@ -188,6 +189,21 @@ describe('rememberValueSources()', () => {
   });
 });
 
+describe('rememberUniqueSource()', () => {
+  test('remembers the source text, or `null` once another one is given for the same key', () => {
+    /** @type {Map<number, string | null>} */
+    const sources = new Map();
+
+    rememberUniqueSource(sources, 10, '10.0');
+    rememberUniqueSource(sources, 10, '10.0');
+    expect(sources.get(10)).toBe('10.0');
+    rememberUniqueSource(sources, 10, '1e1');
+    expect(sources.get(10)).toBeNull();
+    rememberUniqueSource(sources, 10, '10.0');
+    expect(sources.get(10)).toBeNull();
+  });
+});
+
 describe('getSavedValueSources()', () => {
   const sourceMap = { a: { value: 10, source: '10.0' } };
 
@@ -298,7 +314,6 @@ describe('getJSONSourceText()', () => {
     // An integer
     expect(getJSONSourceText(new SourcedValue(10, '10'))).toBeUndefined();
     // Not a number
-    expect(getJSONSourceText(new SourcedValue('10', '10.0'))).toBeUndefined();
     expect(getJSONSourceText(new SourcedValue(10, '10.0, "b": 1'))).toBeUndefined();
   });
 });
@@ -339,6 +354,5 @@ describe('sourcedValueYAMLTag', () => {
     expect(stringify(new SourcedValue(10, '10.0\nb: 1'))).toBe('10.0');
     expect(stringify(new SourcedValue(-0, '-0'))).toBe('-0.0');
     expect(stringify(new SourcedValue(1e21, 'x'))).toBe('1e+21');
-    expect(stringify(new SourcedValue('x\ny: 1', 'x\ny: 1'))).toBe('"x\\ny: 1"');
   });
 });

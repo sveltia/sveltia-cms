@@ -5,7 +5,7 @@ import { getField, isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { getKeysByPrefix, getListItemKeys } from '$lib/services/contents/entry/key-paths';
 import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/display';
-import { getNumberFormatter } from '$lib/services/contents/fields/number/helpers';
+import { getNumberFormatter, storesNumber } from '$lib/services/contents/fields/number/helpers';
 import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helpers';
 import { getOptionLabel } from '$lib/services/contents/fields/select/helpers';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
@@ -23,14 +23,12 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * StringTransformation,
  * } from '$lib/types/private';
  * @import {
- * ComputeField,
  * DateTimeField,
  * Field,
  * FieldKeyPath,
  * ListFieldWithSubField,
  * ListFieldWithSubFields,
  * ListFieldWithTypes,
- * NumberField,
  * RelationField,
  * SelectField,
  * } from '$lib/types/public';
@@ -158,26 +156,22 @@ export const getFieldDisplayValue = ({
     }
   }
 
-  // A Compute field yielding a number has the same `value_type` option, but defaults to `string`
-  if (fieldConfig?.widget === 'number' || fieldConfig?.widget === 'compute') {
-    const { value_type: valueType = fieldConfig.widget === 'number' ? 'int' : 'string' } =
-      /** @type {NumberField | ComputeField} */ (fieldConfig);
+  // A number stored by a Number field or a Compute field is formatted for display. An empty field,
+  // stored as `null` or an empty string, or missing, is left empty rather than formatted as `0` or
+  // `NaN`
+  if (
+    fieldConfig &&
+    storesNumber(fieldConfig) &&
+    value !== null &&
+    value !== undefined &&
+    value !== ''
+  ) {
+    const number = Number(value);
 
-    // An empty field, stored as `null` or an empty string, or missing, is left empty rather than
-    // formatted as `0` or `NaN`
-    if (
-      (valueType === 'int' || valueType === 'float') &&
-      value !== null &&
-      value !== undefined &&
-      value !== ''
-    ) {
-      const number = Number(value);
-
-      // Text that isn’t a number, which the editor stores so it can be reported as invalid, is
-      // shown as is rather than as `NaN`
-      if (!Number.isNaN(number)) {
-        value = getNumberFormatter(getCanonicalLocale(locale)).format(number);
-      }
+    // Text that isn’t a number, which the editor stores so it can be reported as invalid, is shown
+    // as is rather than as `NaN`
+    if (!Number.isNaN(number)) {
+      value = getNumberFormatter(getCanonicalLocale(locale)).format(number);
     }
   }
 

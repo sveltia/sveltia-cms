@@ -6,6 +6,7 @@ import { createLoadingOptions } from '$lib/services/utils/media/pdf-options';
 
 /**
  * @import { InternalImageTransformationOptions } from '$lib/types/private';
+ * @import { PDFLoadingOptions } from '$lib/services/utils/media/pdf-options';
  */
 
 /**
@@ -45,7 +46,7 @@ export const renderPDF = async (blob, options = {}) => {
   // `dispose()` instead
   /** @type {import('pdfjs-dist').PDFDocumentLoadingTask | undefined} */
   let loadingTask;
-  /** @type {ReturnType<typeof createLoadingOptions> | undefined} */
+  /** @type {PDFLoadingOptions | undefined} */
   let loadingOptions;
 
   try {
@@ -79,7 +80,7 @@ export const renderPDF = async (blob, options = {}) => {
       // failure to clean up changes nothing for the caller
     }
 
-    loadingOptions?.dispose?.();
+    loadingOptions?.dispose();
   }
 
   return exportCanvasAsBlob(canvas, { format, quality, nativeOnly });

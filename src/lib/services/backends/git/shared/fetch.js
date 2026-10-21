@@ -11,7 +11,7 @@ import {
   restoreCachedFileData,
   updateCache,
 } from '$lib/services/backends/git/shared/file-cache';
-import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
+import { createStaleCheck, repositoryHead } from '$lib/services/backends/git/shared/head';
 import { parseFiles, updateStores } from '$lib/services/backends/git/shared/parse-files';
 import { scopeFileFetchers } from '$lib/services/backends/git/shared/scope';
 import { cmsConfigVersion } from '$lib/services/config';
@@ -210,12 +210,13 @@ const loadContents = async ({
  * the stores have been updated.
  * @param {DebugLogger} args.log Function to trace the loading in the console.
  * @param {string} args.readyMessage Message to log once the site data is ready.
- * @param {number} args.generation Generation of the site data the files were fetched for. If the
- * data has been discarded since, e.g. the user has signed out, nothing is written.
+ * @param {() => boolean} args.isStale Function telling whether the site data the files were
+ * fetched for has been discarded since, e.g. the user has signed out, in which case nothing is
+ * written.
  */
 const finishLoad = async ({
   data,
-  generation,
+  isStale,
   parseKey,
   metaDB,
   lastConfigHash,
@@ -224,7 +225,7 @@ const finishLoad = async ({
   log,
   readyMessage,
 }) => {
-  if (generation !== dataGeneration.current) {
+  if (isStale()) {
     log('Discarded: the site data was reset while loading');
 
     return;
@@ -294,7 +295,7 @@ export const fetchAndParseFiles = async ({
   // entry files that have changed. The key is taken now, as the configuration could change while
   // the files are on their way
   const parseKey = getParseKey(databaseName);
-  const generation = dataGeneration.current;
+  const isStale = createStaleCheck();
   const incremental = !!repositoryHead.current && lastParseKey === parseKey;
   const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
   const cacheDB = new IndexedDB(/** @type {string} */ (databaseName), 'file-cache');
@@ -335,7 +336,7 @@ export const fetchAndParseFiles = async ({
   setLastCommitPublishHint(!hasSkipCIMarker(message));
   await branchAccessPromise;
 
-  const finishArgs = { generation, parseKey, metaDB, lastConfigHash, lastCommitHash, log };
+  const finishArgs = { isStale, parseKey, metaDB, lastConfigHash, lastCommitHash, log };
 
   // Skip fetching files if no files found
   if (!fileList.count) {

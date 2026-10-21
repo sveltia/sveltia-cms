@@ -8,6 +8,16 @@ const NUMERIC_VALUE_REGEX = /^\d+$/;
 export const isNumeric = (value) => NUMERIC_VALUE_REGEX.test(value);
 
 /**
+ * Drop the error of binary floating-point arithmetic from the given number by rounding a fraction
+ * to 15 significant digits, e.g. `0.3` rather than `0.30000000000000004` for `0.1 * 3`. An integer
+ * is exact, and may have more digits, so it’s returned as is, as rounding would change a large one.
+ * @param {number} number Finite number.
+ * @returns {number} Number.
+ */
+export const roundFloatError = (number) =>
+  Number.isInteger(number) ? number : Number(number.toPrecision(15));
+
+/**
  * Move the decimal point of the given number without a floating-point error, by changing the
  * exponent of its string representation.
  * @param {number} number Finite number.
@@ -40,12 +50,11 @@ export const toFixed = (number, decimals) => {
   }
 
   // Use proper mathematical rounding instead of JavaScript’s native `toFixed`, rounding halves
-  // away from zero, so `-1.005` gives `-1.01` like `1.005` gives `1.01`. A fraction is first
-  // limited to 15 significant digits, which drops the floating-point error of an arithmetic result
-  // like `8.7 * 1.15`, i.e. `10.004999999999999`; an integer is exact, and may have more digits.
-  // The decimal point is then moved in the exponent of the string representation rather than by
+  // away from zero, so `-1.005` gives `-1.01` like `1.005` gives `1.01`. The floating-point error
+  // of an arithmetic result like `8.7 * 1.15`, i.e. `10.004999999999999`, is first dropped. The
+  // decimal point is then moved in the exponent of the string representation rather than by
   // multiplying, which would bring in another error: `1.005 * 100` is `100.49999999999999`
-  const value = Math.abs(Number.isInteger(number) ? number : Number(number.toPrecision(15)));
+  const value = Math.abs(roundFloatError(number));
   const rounded = shiftDecimalPoint(Math.round(shiftDecimalPoint(value, decimals)), -decimals);
 
   // Adding zero turns `-0` into `0`
