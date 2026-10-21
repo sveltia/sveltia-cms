@@ -222,6 +222,28 @@ describe('parseComputeFieldConfig', () => {
       });
     });
 
+    test('warns about a field referring to itself by the index of an item', () => {
+      check('{{fields.items.0.id}}-1');
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          strKey: 'compute_field_self_reference',
+          values: { name: 'fields.items.0.id' },
+        }),
+      );
+    });
+
+    test('warns about a field referring to itself in a transformation argument', () => {
+      check("{{fields.title | default('{{fields.items.*.id}}')}}-1");
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          strKey: 'compute_field_self_reference',
+          values: { name: 'fields.items.*.id' },
+        }),
+      );
+    });
+
     test('warns about a field adding itself up', () => {
       check('sum({{fields.items.*.id}})', {}, { value_type: 'int' });
 

@@ -169,9 +169,11 @@ export const parseFileContent = async (file, errors, parsedFileMap) => {
   const customParser = hasCustomParser(file);
 
   if (parsed?.key === key && !customParser) {
+    // Remembered, so the file is saved back in the same format, as when it was parsed
     if (parsed.format) {
-      // Remembered, so the file is saved back in the same format, as when it was parsed
       detectedFrontMatterFormats.set(path, parsed.format);
+    } else {
+      detectedFrontMatterFormats.delete(path);
     }
 
     // Remembered, so the floats that are whole numbers are saved back as they were written

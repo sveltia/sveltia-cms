@@ -57,6 +57,38 @@ const isEscaped = (text, index, from) => {
 };
 
 /**
+ * Match the opening line of a fenced code block. The info string of a backtick fence cannot
+ * contain a backtick, so a line like ```` ```code``` ```` is a code span instead.
+ * @param {string} line Line.
+ * @returns {{ indent: string, char: string, length: number, info: string } | undefined}
+ * Indentation, fence character, fence length and info string, or `undefined` if the line doesn’t
+ * open a fence.
+ * @see https://spec.commonmark.org/0.31.2/#fenced-code-blocks
+ */
+export const matchFenceOpen = (line) => {
+  const [, indent = '', run = '', info = ''] = line.match(FENCE_OPEN_REGEX) ?? [];
+
+  if (!run || (run[0] === '`' && info.includes('`'))) {
+    return undefined;
+  }
+
+  return { indent, char: run[0], length: run.length, info };
+};
+
+/**
+ * Check if the given line closes a fenced code block: a run of the fence character, at least as
+ * long as the opening fence, with nothing else but whitespace.
+ * @param {string} line Line.
+ * @param {{ char: string, length: number }} fence Opening fence. See {@link matchFenceOpen}.
+ * @returns {boolean} Result.
+ */
+export const isFenceClose = (line, { char, length }) => {
+  const closing = line.trim();
+
+  return closing.length >= length && closing === char.repeat(closing.length);
+};
+
+/**
  * Get the ranges of the fenced code blocks and code spans in the given Markdown, where any other
  * syntax is literal text. Indented code blocks are not detected, as an indented line can also be
  * the continuation of a list item.
@@ -104,24 +136,23 @@ export const getCodeRanges = (markdown) => {
     const lineEnd = lineStart + line.length;
 
     if (fence) {
-      const closing = line.trim();
-
-      if (
-        closing.startsWith(fence.char.repeat(fence.length)) &&
-        closing === fence.char.repeat(closing.length)
-      ) {
+      if (isFenceClose(line, fence)) {
         ranges.push([fence.start, lineEnd]);
         fence = undefined;
         textStart = lineEnd;
       }
     } else {
-      const [, indent = '', run = '', info = ''] = line.match(FENCE_OPEN_REGEX) ?? [];
+      const opening = matchFenceOpen(line);
 
-      // The info string of a backtick fence cannot contain a backtick. The range starts with the
-      // fence, so a component matching the fenced block from there isn’t taken for code
-      if (run && !(run[0] === '`' && info.includes('`'))) {
+      // The range starts with the fence, so a component matching the fenced block from there isn’t
+      // taken for code
+      if (opening) {
         addCodeSpans(textStart, lineStart);
-        fence = { start: lineStart + indent.length, char: run[0], length: run.length };
+        fence = {
+          start: lineStart + opening.indent.length,
+          char: opening.char,
+          length: opening.length,
+        };
       }
     }
 

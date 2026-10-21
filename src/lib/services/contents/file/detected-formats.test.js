@@ -35,6 +35,24 @@ describe('getSavedFileConfig()', () => {
     expect(detectedFrontMatterFormats.has('content/new.md')).toBe(false);
   });
 
+  test('forgets the format detected for a file deleted from the path of a new file', () => {
+    // Detected for a file deleted since
+    detectedFrontMatterFormats.set('content/a.md', 'toml-frontmatter');
+
+    expect(getSavedFileConfig({ _file: FRONTMATTER_FILE, path: 'content/a.md' })).toBe(
+      FRONTMATTER_FILE,
+    );
+    expect(detectedFrontMatterFormats.has('content/a.md')).toBe(false);
+    // So the file is saved again with YAML front matter
+    expect(
+      getSavedFileConfig({
+        _file: FRONTMATTER_FILE,
+        previousPath: 'content/a.md',
+        path: 'content/a.md',
+      }),
+    ).toBe(FRONTMATTER_FILE);
+  });
+
   test('keeps the configuration for a file whose format wasn’t detected', () => {
     expect(
       getSavedFileConfig({

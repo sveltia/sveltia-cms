@@ -31,7 +31,10 @@ export const getSavedFileConfig = ({ _file, previousPath, path }) => {
 
   const format = previousPath ? detectedFrontMatterFormats.get(previousPath) : undefined;
 
+  // A new file doesn’t take over what was detected for a file deleted from the same path
   if (!format) {
+    detectedFrontMatterFormats.delete(path);
+
     return _file;
   }
 

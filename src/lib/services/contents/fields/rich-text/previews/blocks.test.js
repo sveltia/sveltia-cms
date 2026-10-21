@@ -87,6 +87,24 @@ describe('splitMarkdownBlocks', () => {
     expect(splitMarkdownBlocks(md)).toEqual([md]);
   });
 
+  it('should close a fence with a longer run of the fence character', () => {
+    const md = '```\ncode\n\n````\n\nnext';
+
+    expect(splitMarkdownBlocks(md)).toEqual(['```\ncode\n\n````', 'next']);
+  });
+
+  it('should not take a code span for a fence, as a backtick fence’s info can’t have a backtick', () => {
+    const md = '```inline``` code\n\npara two\n\npara three';
+
+    expect(splitMarkdownBlocks(md)).toEqual(['```inline``` code', 'para two', 'para three']);
+  });
+
+  it('should allow a backtick in the info string of a tilde fence', () => {
+    const md = '~~~ js `title`\ncode\n\nmore code\n~~~';
+
+    expect(splitMarkdownBlocks(md)).toEqual([md]);
+  });
+
   it('should keep an HTML block element with internal blank lines as one block', () => {
     const md = '<div class="block">\n\ncontent goes here\n\n</div>';
 
@@ -201,6 +219,10 @@ describe('getFencedCodeLanguages', () => {
         '```js\na\n```\n\n   ```css\nb\n```\n\n```js\nc\n```\n\n    ```html\nindented\n```\n\n```\nnone\n```',
       ),
     ).toEqual(['css', 'js']);
+  });
+
+  it('should not take a code span for a fence', () => {
+    expect(getFencedCodeLanguages('```inline``` code\n\n```js\na\n```')).toEqual(['js']);
   });
 
   it('should find the languages of tilde fences and with spaces before them', () => {

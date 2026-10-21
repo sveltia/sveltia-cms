@@ -1,5 +1,9 @@
 import { lexer } from 'marked';
 
+import {
+  isFenceClose,
+  matchFenceOpen,
+} from '$lib/services/contents/fields/rich-text/previews/syntax';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { escapeHTML } from '$lib/services/utils/string';
 
@@ -30,9 +34,17 @@ const VOID_ELEMENTS = new Set([
 ]);
 
 /**
- * Regex to detect the opening line of a fenced code block (backtick or tilde fence).
+ * Match the opening line of a fenced code block at the top level, with at most 3 spaces before the
+ * fence. A fence indented further is within an indented code block or a list item.
+ * @param {string} line Line.
+ * @returns {ReturnType<typeof matchFenceOpen>} Fence. See {@link matchFenceOpen}.
  */
-const FENCE_OPEN_REGEX = /^[ ]{0,3}(`{3,}|~{3,})/;
+const matchBlockFenceOpen = (line) => {
+  const opening = matchFenceOpen(line);
+
+  return opening && /^ {0,3}$/.test(opening.indent) ? opening : undefined;
+};
+
 /**
  * Regex to detect a line that opens an HTML block element, capturing the tag name.
  */
@@ -140,14 +152,8 @@ export const splitMarkdownBlocks = (markdown) => {
     if (fence) {
       current.push(line);
 
-      // Closing fence: same char, at most 3 leading spaces, no trailing content
-      const stripped = line.trimStart();
-
-      if (
-        line.length - stripped.length <= 3 &&
-        stripped.startsWith(fence.char.repeat(fence.length)) &&
-        !/\S/.test(stripped.slice(fence.length))
-      ) {
+      // A closing fence can have at most 3 leading spaces
+      if (line.length - line.trimStart().length <= 3 && isFenceClose(line, fence)) {
         fence = null;
       }
     } else if (rawHTMLBlockEnd) {
@@ -169,13 +175,13 @@ export const splitMarkdownBlocks = (markdown) => {
         htmlBlock = null;
       }
     } else {
-      const fenceMatch = FENCE_OPEN_REGEX.exec(line);
+      const fenceMatch = matchBlockFenceOpen(line);
 
       rawHTMLBlockEnd = fenceMatch ? undefined : getRawHTMLBlockEnd(line);
 
       if (fenceMatch) {
         current.push(line);
-        fence = { char: fenceMatch[1][0], length: fenceMatch[1].length };
+        fence = { char: fenceMatch.char, length: fenceMatch.length };
       } else if (rawHTMLBlockEnd) {
         current.push(line);
       } else {
@@ -312,7 +318,9 @@ export const keyBlocks = (blocks, previousItems) => {
  * @returns {string[]} Unique language names, sorted.
  */
 export const getFencedCodeLanguages = (markdown) =>
-  [...markdown.matchAll(/^ {0,3}(?:`{3,}|~{3,})[ \t]*([^\s`]+)/gm)]
-    .map(([, lang]) => lang)
+  markdown
+    .split('\n')
+    .map((line) => /^[ \t]*([^\s`]+)/.exec(matchBlockFenceOpen(line)?.info ?? '')?.[1])
+    .filter((lang) => lang !== undefined)
     .filter((lang, index, list) => list.indexOf(lang) === index)
     .sort();

@@ -427,6 +427,7 @@ describe('Test parseFileContent() with cached content', () => {
     });
 
     // Remembered for an earlier version of the file
+    detectedFrontMatterFormats.set('posts/a.md', 'toml-frontmatter');
     valueSources.set('posts/a.md', { date: { value: '2024-01-01', source: '2024-01-01' } });
 
     expect(await parseFileContent(file, [])).toEqual({ title: 'Cached' });
