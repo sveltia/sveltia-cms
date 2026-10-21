@@ -13,3 +13,9 @@ However, exceptions may be made in the event of critical security issues affecti
 Please email us at [hello@sveltia.dev](mailto:hello@sveltia.dev). We will respond as soon as possible.
 
 Although we do not offer a bug bounty program, if you report a security vulnerability in good faith, we will gladly acknowledge your contribution in our [security advisory](https://github.com/sveltia/sveltia-cms/security/advisories) and [release notes](https://github.com/sveltia/sveltia-cms/releases).
+
+We do not request CVEs as these are redundant:
+
+- `npm audit` and other tools are [powered by GitHub](https://github.blog/security/supply-chain-security/github-advisory-database-now-powers-npm-audit/) where we publish advisories.
+- Sveltia CMS is not a library that needs to consider downstream consumers.
+- Sveltia CMS’s update process is transparent. The majority of users automatically receive the latest version [via a CDN](https://sveltiacms.app/en/docs/architecture#how-sveltia-cms-works).
