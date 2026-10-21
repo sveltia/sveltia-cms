@@ -5,6 +5,7 @@ import equal from 'fast-deep-equal';
 
 import { createDisplayBlobURL } from '$lib/services/assets/info';
 import { backend } from '$lib/services/backends';
+import { getBackupDatabaseName } from '$lib/services/backends/fs/test';
 import { cmsConfigVersion } from '$lib/services/config';
 import { isDraftReadonly } from '$lib/services/config/readonly';
 import { getIndexFileName } from '$lib/services/contents/collection/entries/index-file';
@@ -450,7 +451,9 @@ export const resetBackupToastState = () => {
 };
 
 createRootEffect(() => {
-  const { databaseName } = backend.current?.repository ?? {};
+  // The test backend has no repository, but its drafts are worth backing up all the same, e.g. on
+  // the demo site
+  const databaseName = getBackupDatabaseName(backend.current);
 
   if (!databaseName) {
     backupDB = null;

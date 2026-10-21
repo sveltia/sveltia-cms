@@ -1860,6 +1860,33 @@ describe('draft/backup', () => {
 
       expect(mockBackupDB.delete).not.toHaveBeenCalled();
     });
+    it('should use a database of its own for the test backend, which has no repository', async () => {
+      vi.resetModules();
+
+      vi.doMock('$lib/services/backends', () => ({
+        backend: { current: { name: 'test-repo' } },
+      }));
+
+      const { IndexedDB: _IndexedDB } = await import('@sveltia/utils/storage');
+
+      vi.mocked(_IndexedDB).mockImplementation(MockIndexedDB);
+
+      const { deleteBackup: _deleteBackup } = await import('./backup');
+
+      await new Promise((resolve) => {
+        setTimeout(resolve);
+      });
+
+      expect(_IndexedDB).toHaveBeenCalledExactlyOnceWith(
+        'test-repo:sveltia-cms-test',
+        'draft-backups',
+        { keyPath: ['collectionName', 'slug'] },
+      );
+
+      await _deleteBackup('posts', 'my-post');
+
+      expect(mockBackupDB.delete).toHaveBeenCalledWith(['posts', 'my-post']);
+    });
   });
 
   describe('backend switch', () => {

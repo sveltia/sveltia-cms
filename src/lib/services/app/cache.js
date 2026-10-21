@@ -1,7 +1,11 @@
 import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
 
 import { backend } from '$lib/services/backends';
-import { TEST_BACKEND_NAME, TEST_BACKEND_ROOT_DIR_NAME } from '$lib/services/backends/fs/test';
+import {
+  getBackupDatabaseName,
+  TEST_BACKEND_NAME,
+  TEST_BACKEND_ROOT_DIR_NAME,
+} from '$lib/services/backends/fs/test';
 import { gitBackendServices } from '$lib/services/backends/git/services';
 import { LEGACY_USER_STORAGE_KEYS } from '$lib/services/user/constants';
 
@@ -19,11 +23,13 @@ const CACHE_STORE_NAMES = ['file-cache', 'asset-thumbnails', 'asset-hashes'];
 export const LOCAL_STORAGE_KEY_PREFIX = 'sveltia-cms.';
 
 /**
- * Pattern matching the IndexedDB database names created by the CMS, which are made up of a Git
- * backend name and a repository path, e.g. `github:owner/repo`. Used to leave any database owned by
- * the site hosting the CMS untouched.
+ * Pattern matching the IndexedDB database names created by the CMS, which are made up of a backend
+ * name and a repository path, e.g. `github:owner/repo`, or the test backend’s own database name.
+ * Used to leave any database owned by the site hosting the CMS untouched.
  */
-const DATABASE_NAME_REGEX = new RegExp(`^(?:${Object.keys(gitBackendServices).join('|')}):`);
+const DATABASE_NAME_REGEX = new RegExp(
+  `^(?:${[...Object.keys(gitBackendServices), TEST_BACKEND_NAME].join('|')}):`,
+);
 
 /**
  * Delete the directory in the origin private file system (OPFS) where the `test-repo` backend keeps
@@ -70,7 +76,7 @@ export const clearFileCache = async () => {
  * @returns {Promise<string[]>} Database names.
  */
 const getDatabaseNames = async () => {
-  const { databaseName } = backend.current?.repository ?? {};
+  const databaseName = getBackupDatabaseName(backend.current);
   const names = new Set(databaseName ? [databaseName] : []);
 
   try {

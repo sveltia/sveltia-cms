@@ -21,6 +21,22 @@ export const TEST_BACKEND_ROOT_DIR_NAME = 'sveltia-cms-test';
  * Name of the test backend.
  */
 export const TEST_BACKEND_NAME = 'test-repo';
+/**
+ * Name of the IndexedDB database holding the test backend’s draft backups. The backend has no
+ * repository, which would otherwise give the database its name.
+ */
+export const TEST_BACKEND_DATABASE_NAME = `${TEST_BACKEND_NAME}:${TEST_BACKEND_ROOT_DIR_NAME}`;
+
+/**
+ * Get the name of the IndexedDB database holding the draft backups of the given backend.
+ * @param {BackendService | null | undefined} backend Backend service.
+ * @returns {string | undefined} Repository database name, {@link TEST_BACKEND_DATABASE_NAME} for
+ * the test backend, which has no repository, or an empty value if the backend has no database.
+ */
+export const getBackupDatabaseName = (backend) =>
+  backend?.name === TEST_BACKEND_NAME
+    ? TEST_BACKEND_DATABASE_NAME
+    : backend?.repository?.databaseName;
 
 const label = 'Test';
 /**

@@ -411,3 +411,23 @@ describe('Test Backend Service', () => {
     });
   });
 });
+
+describe('getBackupDatabaseName()', () => {
+  it('names a database of its own for the test backend, which has no repository', async () => {
+    const { default: testBackend, getBackupDatabaseName } = await import('./test');
+
+    expect(getBackupDatabaseName(testBackend)).toBe('test-repo:sveltia-cms-test');
+  });
+
+  it('uses the repository’s database for another backend', async () => {
+    const { getBackupDatabaseName } = await import('./test');
+
+    expect(
+      getBackupDatabaseName(
+        /** @type {any} */ ({ name: 'github', repository: { databaseName: 'github:a/b' } }),
+      ),
+    ).toBe('github:a/b');
+    expect(getBackupDatabaseName(/** @type {any} */ ({ name: 'local' }))).toBeUndefined();
+    expect(getBackupDatabaseName(undefined)).toBeUndefined();
+  });
+});
