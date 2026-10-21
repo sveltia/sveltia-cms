@@ -177,7 +177,7 @@ export const getAssetByRelativePathAndCollection = ({
       : `/${fieldFolder.internalPath}`
     : /** @type {string | undefined} */ (folderOptions.media_folder);
 
-  const publicFolder =
+  let publicFolder =
     fieldFolder?.publicPath !== undefined
       ? fieldFolder.publicPath
       : /** @type {string | undefined} */ (folderOptions.public_folder);
@@ -197,6 +197,12 @@ export const getAssetByRelativePathAndCollection = ({
   // @see https://github.com/sveltia/sveltia-cms/issues/853
   if (mediaFolder && hasTemplateTags(mediaFolder)) {
     mediaFolder = fillMediaFolderTemplate(mediaFolder, { collection, entry, localeFile });
+  }
+
+  // Resolve them in `public_folder` too, so its prefix can be stripped from the stored path below
+  // @see https://github.com/sveltia/sveltia-cms/issues/1104
+  if (publicFolder && hasTemplateTags(publicFolder)) {
+    publicFolder = fillMediaFolderTemplate(publicFolder, { collection, entry, localeFile });
   }
 
   // Directory of the entry file, which is an empty string for an entry file at the repository root
