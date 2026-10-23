@@ -60,13 +60,13 @@
   // Assets committed alongside an unpublished entry don’t exist on the configured branch yet, so
   // only look at the published entries here
   const publishedEntryAssets = $derived.by(() => {
-    const collectionName = selectedCollection.current?.name;
-
     // Looked up for all the entries at once, as finding the assets other entries use as well takes
-    // a pass over the collection
-    const assetLists = collectionName
-      ? getEntriesRelativeAssets({ entries: publishedEntries, collectionName })
-      : publishedEntries.map(() => []);
+    // a pass over the collection. Entries are only selected within a collection, and without one
+    // the helper finds no assets anyway
+    const assetLists = getEntriesRelativeAssets({
+      entries: publishedEntries,
+      collectionName: /** @type {string} */ (selectedCollection.current?.name),
+    });
 
     return publishedEntries.map((entry, index) => ({ entry, assets: assetLists[index] }));
   });
