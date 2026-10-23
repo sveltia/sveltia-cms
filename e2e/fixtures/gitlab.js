@@ -20,6 +20,8 @@ import { getBlobSHA, MockGitRepository } from './git.js';
  * @property {MockUser} author Author.
  * @property {Date} createdAt Creation date.
  * @property {Date} updatedAt Last update date.
+ * @property {{ login: string, sha?: string }[]} [approvals] Approvals the merge request has been
+ * given.
  * @property {string} [lastHead] Head of the source branch when the merge request was closed or
  * merged, which stays known after the branch is deleted.
  * @property {string} [mergeCommit] SHA of the commit that merged the merge request.
@@ -537,6 +539,49 @@ export class MockGitLab extends MockGitRepository {
 
     if (method === 'PUT' && segments[1] === 'merge') {
       return this.handleMerge(mergeRequest, body ?? {});
+    }
+
+    if (method === 'GET' && segments[1] === 'approvals') {
+      const hasApproved = !!mergeRequest.approvals?.some(({ login }) => login === this.user.login);
+
+      return {
+        json: {
+          user_has_approved: hasApproved,
+          // Like GitLab with “Prevent approval by merge request creator” turned on
+          user_can_approve: !hasApproved && mergeRequest.author.login !== this.user.login,
+        },
+      };
+    }
+
+    if (method === 'POST' && segments[1] === 'approve') {
+      const sha = body?.sha;
+
+      // Like GitLab, refuse an approval pinned to a commit the merge request is no longer at, and a
+      // second approval from the same user
+      if (sha && sha !== this.getMergeRequestHead(mergeRequest).oid) {
+        return { status: 409, json: { message: 'SHA does not match HEAD of source branch' } };
+      }
+
+      if (mergeRequest.approvals?.some(({ login }) => login === this.user.login)) {
+        return { status: 401, json: { message: '401 Unauthorized' } };
+      }
+
+      mergeRequest.approvals = [...(mergeRequest.approvals ?? []), { login: this.user.login, sha }];
+
+      return { status: 201, json: { iid: mergeRequest.iid, approved: true } };
+    }
+
+    if (method === 'POST' && segments[1] === 'unapprove') {
+      // Like GitLab, answer a withdrawal of an approval the user hasn’t given with 404 Not Found
+      if (!mergeRequest.approvals?.some(({ login }) => login === this.user.login)) {
+        return { status: 404, json: { message: '404 Not Found' } };
+      }
+
+      mergeRequest.approvals = mergeRequest.approvals.filter(
+        ({ login }) => login !== this.user.login,
+      );
+
+      return { status: 201, json: { iid: mergeRequest.iid, approved: false } };
     }
 
     return undefined;

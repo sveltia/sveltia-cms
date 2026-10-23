@@ -543,6 +543,11 @@
  * @property {(pullRequest: WorkflowPullRequest, status: WorkflowStatus) =>
  * Promise<WorkflowPullRequest>} updateStatus Function to update the pull request’s status label and
  * draft state.
+ * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} approve Function to approve the
+ * pull request on behalf of the signed-in user, pinned to its `headSHA`, so a branch protection
+ * rule requiring an approval doesn’t stand in the way of publishing it.
+ * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} withdrawApproval Function to
+ * withdraw the signed-in user’s approval of the pull request, if they have given one.
  * @property {(branch: string) => Promise<string | undefined>} fetchBranchHead Function to fetch
  * the commit the workflow branch points at, or `undefined` if the branch is gone. Two editors
  * working on the same entry share its branch, so a save compares this with the head it last

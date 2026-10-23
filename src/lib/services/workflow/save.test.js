@@ -14,6 +14,7 @@ import {
   planCascadeDelete,
 } from '$lib/services/contents/entry/relations/cascade/delete';
 import { refreshProductionSHA } from '$lib/services/deployments/resolve';
+import { user } from '$lib/services/user/account.svelte';
 import {
   getUnpublishedEntryByBranch,
   publishingBranches,
@@ -87,6 +88,8 @@ const workflowService = {
   fetchPullRequests: vi.fn(),
   savePullRequest: vi.fn(),
   updateStatus: vi.fn(),
+  approve: vi.fn(),
+  withdrawApproval: vi.fn(),
   /** The pull request as read right before the merge. */
   fetchMergeState: vi.fn(async () => ({
     headSHA: 'abc',
@@ -663,6 +666,157 @@ describe('workflow/save', () => {
       // Nobody published it from here, so neither the hooks fire nor is the deployment tracked
       expect(callEventHooks).not.toHaveBeenCalled();
       expect(trackDeployingEntry).not.toHaveBeenCalled();
+    });
+
+    describe('approval', () => {
+      /** The colleague who opened the pull request. */
+      const colleague = { name: 'Alex', email: 'alex@example.com', login: 'alex' };
+
+      /**
+       * Create an unpublished entry whose pull request a colleague opened.
+       * @param {string} status Workflow status.
+       * @returns {any} Unpublished entry.
+       */
+      const createColleagueEntry = (status) => {
+        const entry = createEntry('cms/posts/hello', status);
+
+        Object.assign(entry.workflow.pullRequest, { author: colleague, headSHA: 'abc' });
+        upsertUnpublishedEntry(entry);
+
+        return entry;
+      };
+
+      beforeEach(() => {
+        user.account = /** @type {any} */ ({ backendName: 'github', login: 'me' });
+        workflowService.updateStatus.mockImplementation(async (pullRequest, status) => ({
+          ...pullRequest,
+          status,
+        }));
+      });
+
+      afterEach(() => {
+        user.account = undefined;
+      });
+
+      test.each(['draft', 'pending_review'])(
+        'approves the pull request moved from %s to pending_publish',
+        async (status) => {
+          const entry = createColleagueEntry(status);
+
+          await updateWorkflowStatus(entry, 'pending_publish');
+
+          expect(workflowService.approve).toHaveBeenCalledExactlyOnceWith(
+            expect.objectContaining({ number: 1, headSHA: 'abc', status: 'pending_publish' }),
+          );
+          // The pull request is out of the draft state by the time it’s approved
+          expect(workflowService.updateStatus).toHaveBeenCalledBefore(workflowService.approve);
+        },
+      );
+
+      test.each(['draft', 'pending_review'])(
+        'withdraws the approval when the pull request moves from pending_publish to %s',
+        async (status) => {
+          await updateWorkflowStatus(
+            createColleagueEntry('pending_publish'),
+            /** @type {any} */ (status),
+          );
+
+          expect(workflowService.withdrawApproval).toHaveBeenCalledExactlyOnceWith(
+            expect.objectContaining({ number: 1, status }),
+          );
+          expect(workflowService.approve).not.toHaveBeenCalled();
+        },
+      );
+
+      test.each([
+        ['draft', 'pending_review'],
+        ['pending_review', 'draft'],
+        ['pending_deletion', 'pending_publish'],
+      ])('reviews nothing when the pull request moves from %s to %s', async (from, to) => {
+        await updateWorkflowStatus(createColleagueEntry(from), /** @type {any} */ (to));
+
+        expect(workflowService.approve).not.toHaveBeenCalled();
+        expect(workflowService.withdrawApproval).not.toHaveBeenCalled();
+      });
+
+      test('doesn’t withdraw an approval of the user’s own pull request', async () => {
+        const entry = createColleagueEntry('pending_publish');
+
+        entry.workflow.pullRequest.author = { ...colleague, login: 'me' };
+        await updateWorkflowStatus(entry, 'pending_review');
+
+        expect(workflowService.withdrawApproval).not.toHaveBeenCalled();
+      });
+
+      test('keeps the status change when the withdrawal fails', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const error = new Error('Must have admin rights');
+
+        workflowService.withdrawApproval.mockRejectedValueOnce(error);
+
+        const updated = await updateWorkflowStatus(
+          createColleagueEntry('pending_publish'),
+          'pending_review',
+        );
+
+        expect(updated.workflow.status).toBe('pending_review');
+        expect(warn).toHaveBeenCalledWith(
+          'Failed to withdraw the approval of the pull request.',
+          error,
+        );
+        warn.mockRestore();
+      });
+
+      test('doesn’t approve the user’s own pull request', async () => {
+        const entry = createColleagueEntry('pending_review');
+
+        entry.workflow.pullRequest.author = { ...colleague, login: 'me' };
+        await updateWorkflowStatus(entry, 'pending_publish');
+
+        expect(workflowService.approve).not.toHaveBeenCalled();
+      });
+
+      test('approves a pull request whose author is unknown', async () => {
+        const entry = createColleagueEntry('pending_review');
+
+        delete entry.workflow.pullRequest.author;
+        await updateWorkflowStatus(entry, 'pending_publish');
+
+        expect(workflowService.approve).toHaveBeenCalledOnce();
+      });
+
+      test('doesn’t approve with Open Authoring', async () => {
+        forkedRepository.current = /** @type {any} */ ({ owner: 'me', repo: 'repo' });
+        await updateWorkflowStatus(createColleagueEntry('pending_review'), 'pending_publish');
+
+        expect(workflowService.approve).not.toHaveBeenCalled();
+      });
+
+      test('doesn’t approve a branch without a pull request', async () => {
+        const entry = createColleagueEntry('pending_review');
+
+        delete entry.workflow.pullRequest.number;
+        await updateWorkflowStatus(entry, 'pending_publish');
+
+        expect(workflowService.approve).not.toHaveBeenCalled();
+      });
+
+      test('keeps the status change when the approval fails', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const error = new Error('Can not approve');
+
+        workflowService.approve.mockRejectedValueOnce(error);
+
+        const updated = await updateWorkflowStatus(
+          createColleagueEntry('pending_review'),
+          'pending_publish',
+        );
+
+        expect(updated.workflow.status).toBe('pending_publish');
+        expect(getUnpublishedEntryByBranch('cms/posts/hello')).toBe(updated);
+        expect(warn).toHaveBeenCalledWith('Failed to approve the pull request.', error);
+        warn.mockRestore();
+      });
     });
 
     test('keeps the entry in place rather than moving it to the end', async () => {

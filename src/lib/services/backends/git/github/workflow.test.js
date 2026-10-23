@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { mergeRefusedPullRequest } from '$lib/services/backends/git/github/auto-merge';
 import { commitChanges } from '$lib/services/backends/git/github/commits';
 import { repository } from '$lib/services/backends/git/github/repository';
 import githubWorkflow, {
+  approve,
   createBranch,
   discard,
   fetchMergeState,
@@ -13,9 +14,11 @@ import githubWorkflow, {
   publish,
   savePullRequest,
   updateStatus,
+  withdrawApproval,
 } from '$lib/services/backends/git/github/workflow';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 vi.mock('@sveltia/i18n', async () =>
@@ -85,6 +88,8 @@ describe('GitHub Editorial Workflow service', () => {
       fetchPullRequests: expect.any(Function),
       savePullRequest: expect.any(Function),
       updateStatus: expect.any(Function),
+      approve: expect.any(Function),
+      withdrawApproval: expect.any(Function),
       fetchBranchHead: expect.any(Function),
       fetchMergeState: expect.any(Function),
       fetchUnchangedPaths: expect.any(Function),
@@ -962,6 +967,51 @@ describe('GitHub Editorial Workflow service', () => {
         expect(fetchAPI).toHaveBeenCalledOnce();
         expect(mergeRefusedPullRequest).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('approve', () => {
+    test('approves the pull request pinned to its head commit', async () => {
+      await approve(/** @type {any} */ ({ number: 1, headSHA: 'abc' }));
+
+      expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls/1/reviews', {
+        method: 'POST',
+        body: { event: 'APPROVE', commit_id: 'abc' },
+      });
+    });
+  });
+
+  describe('withdrawApproval', () => {
+    beforeEach(() => {
+      user.account = /** @type {any} */ ({ login: 'me' });
+    });
+
+    afterEach(() => {
+      user.account = undefined;
+    });
+
+    test('dismisses the user’s standing approvals of the pull request', async () => {
+      vi.mocked(fetchAPI).mockResolvedValueOnce([
+        { id: 1, state: 'APPROVED', user: { login: 'me' } },
+        { id: 2, state: 'APPROVED', user: { login: 'alex' } },
+        { id: 3, state: 'COMMENTED', user: { login: 'me' } },
+        { id: 4, state: 'DISMISSED', user: { login: 'me' } },
+        { id: 5, state: 'APPROVED', user: null },
+        { id: 6, state: 'APPROVED', user: { login: 'me' } },
+      ]);
+
+      await withdrawApproval(/** @type {any} */ ({ number: 1 }));
+
+      expect(fetchAPI).toHaveBeenNthCalledWith(1, '/repos/owner/repo/pulls/1/reviews?per_page=100');
+      expect(vi.mocked(fetchAPI).mock.calls.slice(1)).toEqual(
+        [1, 6].map((id) => [
+          `/repos/owner/repo/pulls/1/reviews/${id}/dismissals`,
+          {
+            method: 'PUT',
+            body: { message: 'The entry is no longer ready to publish.', event: 'DISMISS' },
+          },
+        ]),
+      );
     });
   });
 

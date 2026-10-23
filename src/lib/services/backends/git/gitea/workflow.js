@@ -34,6 +34,7 @@ import {
   toChangedFilesWithModes,
   updateLabelledStatus,
 } from '$lib/services/backends/git/shared/workflow';
+import { user } from '$lib/services/user/account.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -236,6 +237,43 @@ export const savePullRequest = async (args) =>
  */
 export const updateStatus = (pullRequest, status) =>
   updateLabelledStatus(pullRequest, status, { updateForkStatus, updateLabels, updateDraftState });
+
+/**
+ * Approve the pull request on behalf of the signed-in user, pinned to the head commit the entry was
+ * reviewed at.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoCreatePullReview
+ */
+export const approve = async (pullRequest) => {
+  const { owner, repo } = repository;
+
+  await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`, {
+    method: 'POST',
+    body: { event: 'APPROVED', commit_id: pullRequest.headSHA },
+  });
+};
+
+/**
+ * Withdraw the signed-in user’s approval of the pull request by deleting their approving reviews,
+ * which a reviewer may do with their own, while dismissing one takes a repository administrator.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoListPullReviews
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoDeletePullReview
+ */
+export const withdrawApproval = async (pullRequest) => {
+  const { owner, repo } = repository;
+  const path = `/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`;
+  const reviews = /** @type {Record<string, any>[]} */ (await fetchAllPages(path));
+
+  await Promise.all(
+    reviews
+      .filter(
+        ({ state, dismissed, user: reviewer }) =>
+          state === 'APPROVED' && !dismissed && reviewer?.login === user.account?.login,
+      )
+      .map(({ id }) => fetchAPI(`${path}/${id}`, { method: 'DELETE', responseType: 'raw' })),
+  );
+};
 
 /**
  * Map of the file statuses the REST API reports to {@link WorkflowChangedFile} ones. A copy adds a
@@ -466,6 +504,8 @@ export default {
   fetchPullRequests,
   savePullRequest,
   updateStatus,
+  approve,
+  withdrawApproval,
   fetchBranchHead,
   fetchMergeState,
   fetchUnchangedPaths,

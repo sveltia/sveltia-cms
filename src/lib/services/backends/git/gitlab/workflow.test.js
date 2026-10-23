@@ -5,6 +5,7 @@ import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
 import { fetchPullRequests as fetchLabelledPullRequests } from '$lib/services/backends/git/gitlab/merge-requests';
 import gitlabWorkflow, {
+  approve,
   discard,
   fetchMergeState,
   fetchPullRequests,
@@ -12,6 +13,7 @@ import gitlabWorkflow, {
   publish,
   savePullRequest,
   updateStatus,
+  withdrawApproval,
 } from '$lib/services/backends/git/gitlab/workflow';
 import {
   fetchForkPullRequests,
@@ -142,6 +144,8 @@ describe('GitLab Editorial Workflow service', () => {
       fetchPullRequests: expect.any(Function),
       savePullRequest: expect.any(Function),
       updateStatus: expect.any(Function),
+      approve: expect.any(Function),
+      withdrawApproval: expect.any(Function),
       fetchBranchHead: expect.any(Function),
       fetchMergeState: expect.any(Function),
       fetchUnchangedPaths: expect.any(Function),
@@ -1103,6 +1107,62 @@ describe('GitLab Editorial Workflow service', () => {
 
         expect(fetchAPI).toHaveBeenCalledTimes(1);
       });
+    });
+  });
+
+  describe('approve', () => {
+    test('approves the merge request pinned to its head commit', async () => {
+      vi.mocked(fetchAPI).mockResolvedValueOnce({
+        user_has_approved: false,
+        user_can_approve: true,
+      });
+
+      await approve(/** @type {any} */ ({ number: 1, headSHA: 'abc' }));
+
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        1,
+        `/projects/${PROJECT_ID}/merge_requests/1/approvals`,
+      );
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        2,
+        `/projects/${PROJECT_ID}/merge_requests/1/approve`,
+        { method: 'POST', body: { sha: 'abc' } },
+      );
+    });
+
+    test.each([
+      ['already approved it', { user_has_approved: true, user_can_approve: false }],
+      ['isn’t allowed to', { user_has_approved: false, user_can_approve: false }],
+    ])('doesn’t approve when the user %s', async (_label, state) => {
+      vi.mocked(fetchAPI).mockResolvedValueOnce(state);
+
+      await approve(/** @type {any} */ ({ number: 1, headSHA: 'abc' }));
+
+      expect(fetchAPI).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('withdrawApproval', () => {
+    test('withdraws the user’s approval of the merge request', async () => {
+      vi.mocked(fetchAPI).mockResolvedValueOnce({ user_has_approved: true });
+
+      await withdrawApproval(/** @type {any} */ ({ number: 1 }));
+
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        2,
+        `/projects/${PROJECT_ID}/merge_requests/1/unapprove`,
+        { method: 'POST' },
+      );
+    });
+
+    test('does nothing when the user hasn’t approved it', async () => {
+      vi.mocked(fetchAPI).mockResolvedValueOnce({ user_has_approved: false });
+
+      await withdrawApproval(/** @type {any} */ ({ number: 1 }));
+
+      expect(fetchAPI).toHaveBeenCalledExactlyOnceWith(
+        `/projects/${PROJECT_ID}/merge_requests/1/approvals`,
+      );
     });
   });
 

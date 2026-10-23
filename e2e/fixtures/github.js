@@ -26,6 +26,9 @@ import { MockGitRepository } from './git.js';
  * which stays known after its branch is deleted.
  * @property {{ method: 'merge' | 'squash', title?: string }} [autoMerge] The merge options, once
  * the pull request is set to be merged when its required checks pass.
+ * @property {{ id: number, login: string, commitId?: string }[]} [approvals] Approvals the pull
+ * request has been given and that still stand, not dismissed.
+ * @property {string[]} [dismissals] Messages the pull request’s reviews were dismissed with.
  */
 
 /**
@@ -114,6 +117,11 @@ export class MockGitHub extends MockGitRepository {
    * Whether the API rate limit is exhausted, so the repository can’t be read for now.
    */
   rateLimited = false;
+
+  /**
+   * Number of reviews submitted so far, which gives each one its ID.
+   */
+  reviewCount = 0;
 
   /**
    * Paths of the files whose commit history comes back empty, as for a file deleted since the CMS
@@ -1067,6 +1075,58 @@ export class MockGitHub extends MockGitRepository {
       pullRequest.updatedAt = new Date();
 
       return { json: pullRequest.labels.map((name) => ({ name })) };
+    }
+
+    if (request === 'POST pulls/reviews') {
+      // Like GitHub, refuse an approval of one’s own pull request
+      if (body.event === 'APPROVE' && pullRequest.author.login === this.user.login) {
+        return {
+          status: 422,
+          json: {
+            message: 'Unprocessable Entity',
+            errors: ['Can not approve your own pull request'],
+          },
+        };
+      }
+
+      this.reviewCount += 1;
+
+      const id = this.reviewCount;
+
+      if (body.event === 'APPROVE') {
+        pullRequest.approvals = [
+          ...(pullRequest.approvals ?? []),
+          { id, login: this.user.login, commitId: body.commit_id },
+        ];
+      }
+
+      return { json: { id, state: 'APPROVED', commit_id: body.commit_id } };
+    }
+
+    if (request === 'GET pulls/reviews') {
+      return {
+        json: (pullRequest.approvals ?? []).map(({ id, login, commitId }) => ({
+          id,
+          state: 'APPROVED',
+          commit_id: commitId,
+          user: { login },
+        })),
+      };
+    }
+
+    const [, dismissedId] = request.match(/^PUT pulls\/reviews\/(\d+)\/dismissals$/) ?? [];
+
+    if (dismissedId) {
+      const review = pullRequest.approvals?.find(({ id }) => id === Number(dismissedId));
+
+      if (!review) {
+        return { status: 404, json: { message: 'Not Found' } };
+      }
+
+      pullRequest.approvals = pullRequest.approvals?.filter((approval) => approval !== review);
+      pullRequest.dismissals = [...(pullRequest.dismissals ?? []), body.message];
+
+      return { json: { id: review.id, state: 'DISMISSED' } };
     }
 
     // Like GitHub, answer whether the pull request has been merged with a status alone

@@ -20,6 +20,7 @@ import {
 } from '$lib/services/contents/entry/relations/cascade/delete';
 import { forgetDeployments } from '$lib/services/deployments';
 import { refreshProductionSHA } from '$lib/services/deployments/resolve';
+import { user } from '$lib/services/user/account.svelte';
 import { shareInFlight } from '$lib/services/utils/cache';
 import {
   getUnpublishedEntryByBranch,
@@ -396,8 +397,46 @@ export const saveWorkflowChanges = async ({
 };
 
 /**
+ * Approve the given pull request on behalf of the signed-in user, or withdraw their approval.
+ * Moving an entry to the ready stage is the CMS’s way of approving it, so the approval is recorded
+ * on the Git service too, where a branch protection rule may require one before the pull request
+ * can be merged; moving it back withdraws the approval, so it can’t be merged there on the strength
+ * of it. The Git services don’t let anyone approve their own pull request, and an Open Authoring
+ * contributor’s approval doesn’t count, so neither is attempted. The review is a bonus on top of
+ * the status change, which has already been made, so a failure is only logged: the user may not be
+ * allowed to review, or to dismiss a review on GitHub.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {boolean} approved Whether to approve the pull request rather than withdraw the approval.
+ */
+const reviewPullRequest = async (pullRequest, approved) => {
+  const { number, author } = pullRequest;
+
+  if (
+    openAuthoring.current ||
+    number === undefined ||
+    (!!author?.login && author.login === user.account?.login)
+  ) {
+    return;
+  }
+
+  const workflow = getWorkflowService();
+
+  try {
+    await (approved ? workflow.approve(pullRequest) : workflow.withdrawApproval(pullRequest));
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `Failed to ${approved ? 'approve' : 'withdraw the approval of'} the pull request.`,
+      ex,
+    );
+  }
+};
+
+/**
  * Change the Editorial Workflow status of the given unpublished entry, which updates the label and
- * the draft state on the corresponding pull request.
+ * the draft state on the corresponding pull request. Moving the entry from the drafting or review
+ * stage to the ready stage also approves the pull request, and moving it back withdraws the
+ * approval; see {@link reviewPullRequest}.
  * @param {UnpublishedEntry} entry Unpublished entry.
  * @param {WorkflowStatus} status New status.
  * @returns {Promise<UnpublishedEntry>} Updated entry.
@@ -437,6 +476,16 @@ export const updateWorkflowStatus = async (entry, status) => {
   };
 
   upsertUnpublishedEntry(updatedEntry);
+
+  const { status: prevStatus } = entry.workflow;
+  const editable = ['draft', 'pending_review'];
+
+  // The approval is awaited, so a publish right after doesn’t race it to the merge
+  if (status === 'pending_publish' && editable.includes(prevStatus)) {
+    await reviewPullRequest(newPullRequest, true);
+  } else if (prevStatus === 'pending_publish' && editable.includes(status)) {
+    await reviewPullRequest(newPullRequest, false);
+  }
 
   return updatedEntry;
 };

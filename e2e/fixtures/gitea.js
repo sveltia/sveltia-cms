@@ -26,6 +26,8 @@ import { getBlobSHA, MockGitRepository } from './git.js';
  * @property {string} [mergeBaseSHA] Commit the pull request shared with the configured branch when
  * it was merged, which the instance stores and lists its files from afterwards.
  * @property {MockUser} author Author.
+ * @property {{ id: number, login: string, commitId?: string }[]} [approvals] Approvals the pull
+ * request has been given and that still stand, not deleted.
  */
 
 /**
@@ -64,6 +66,11 @@ export class MockGitea extends MockGitRepository {
    * @type {boolean | undefined}
    */
   forgejo = undefined;
+
+  /**
+   * Number of reviews submitted so far, which gives each one its ID.
+   */
+  reviewCount = 0;
 
   /**
    * Version the instance reports. A Forgejo version carries the Gitea version it’s based on, e.g.
@@ -920,6 +927,57 @@ export class MockGitea extends MockGitRepository {
       }
 
       return { json: this.toPullRequestItem(pullRequest) };
+    }
+
+    if (method === 'GET' && segments[1] === 'reviews' && !segments[2]) {
+      return {
+        json: this.paginate(pullRequest.approvals ?? [], searchParams).map(
+          ({ id, login, commitId }) => ({
+            id,
+            state: 'APPROVED',
+            dismissed: false,
+            commit_id: commitId,
+            user: { login },
+          }),
+        ),
+      };
+    }
+
+    if (method === 'DELETE' && segments[1] === 'reviews' && segments[2]) {
+      const review = pullRequest.approvals?.find(({ id }) => id === Number(segments[2]));
+
+      if (!review) {
+        return { status: 404, json: { message: 'Not Found' } };
+      }
+
+      // Like Gitea, let a reviewer delete only their own review
+      if (review.login !== this.user.login) {
+        return { status: 403, json: { message: 'no permission to delete comment' } };
+      }
+
+      pullRequest.approvals = pullRequest.approvals?.filter((approval) => approval !== review);
+
+      return { status: 204, body: '' };
+    }
+
+    if (method === 'POST' && segments[1] === 'reviews') {
+      // Like Gitea, refuse an approval of one’s own pull request
+      if (body?.event === 'APPROVED' && pullRequest.author.login === this.user.login) {
+        return { status: 422, json: { message: 'approve your own pull is not allowed' } };
+      }
+
+      this.reviewCount += 1;
+
+      const id = this.reviewCount;
+
+      if (body?.event === 'APPROVED') {
+        pullRequest.approvals = [
+          ...(pullRequest.approvals ?? []),
+          { id, login: this.user.login, commitId: body.commit_id },
+        ];
+      }
+
+      return { json: { id, state: 'APPROVED', commit_id: body?.commit_id } };
     }
 
     if (segments[1] === 'merge') {

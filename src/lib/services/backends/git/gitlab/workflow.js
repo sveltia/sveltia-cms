@@ -193,6 +193,63 @@ export const updateStatus = async (pullRequest, status) => {
 };
 
 /**
+ * Get the API path of the given merge request.
+ * @param {WorkflowPullRequest} pullRequest Merge request.
+ * @returns {string} Path.
+ */
+const getMergeRequestPath = (pullRequest) =>
+  `/projects/${getProjectId()}/merge_requests/${pullRequest.number}`;
+
+/**
+ * Fetch whether the signed-in user has approved the merge request, and whether they may.
+ * @param {string} path API path of the merge request.
+ * @returns {Promise<{ hasApproved?: boolean, canApprove?: boolean }>} Approval state.
+ * @see https://docs.gitlab.com/api/merge_request_approvals/
+ */
+const fetchApprovalState = async (path) => {
+  const { user_has_approved: hasApproved, user_can_approve: canApprove } =
+    /** @type {{ user_has_approved?: boolean, user_can_approve?: boolean }} */ (
+      await fetchAPI(`${path}/approvals`)
+    );
+
+  return { hasApproved, canApprove };
+};
+
+/**
+ * Approve the merge request on behalf of the signed-in user, pinned to the head commit the entry
+ * was reviewed at: GitLab refuses the approval if the branch has moved on since. GitLab answers an
+ * approval the user has already given, e.g. after moving the entry back and forth, with 401
+ * Unauthorized, which would be taken for an expired token and refresh it, so the approval state is
+ * checked first.
+ * @param {WorkflowPullRequest} pullRequest Merge request.
+ * @see https://docs.gitlab.com/api/merge_request_approvals/
+ */
+export const approve = async (pullRequest) => {
+  const path = getMergeRequestPath(pullRequest);
+  const { hasApproved, canApprove } = await fetchApprovalState(path);
+
+  if (hasApproved || canApprove === false) {
+    return;
+  }
+
+  await fetchAPI(`${path}/approve`, { method: 'POST', body: { sha: pullRequest.headSHA } });
+};
+
+/**
+ * Withdraw the signed-in user’s approval of the merge request. GitLab answers a withdrawal of an
+ * approval the user hasn’t given with 404 Not Found, so the approval state is checked first.
+ * @param {WorkflowPullRequest} pullRequest Merge request.
+ * @see https://docs.gitlab.com/api/merge_request_approvals/
+ */
+export const withdrawApproval = async (pullRequest) => {
+  const path = getMergeRequestPath(pullRequest);
+
+  if ((await fetchApprovalState(path)).hasApproved) {
+    await fetchAPI(`${path}/unapprove`, { method: 'POST' });
+  }
+};
+
+/**
  * Commit the given changes on the workflow branch, creating the branch and the merge request if
  * they don’t exist yet.
  * @param {WorkflowSaveOptions} args Arguments.
@@ -560,6 +617,8 @@ export default {
   fetchPullRequests,
   savePullRequest,
   updateStatus,
+  approve,
+  withdrawApproval,
   fetchBranchHead,
   fetchMergeState,
   fetchUnchangedPaths,

@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { _resetApiSettings } from '$lib/services/backends/git/gitea/api';
 import { commitChanges } from '$lib/services/backends/git/gitea/commits';
 import giteaWorkflow, {
+  approve,
   discard,
   fetchLabelledPullRequests,
   fetchMergeState,
@@ -11,6 +12,7 @@ import giteaWorkflow, {
   publish,
   savePullRequest,
   updateStatus,
+  withdrawApproval,
 } from '$lib/services/backends/git/gitea/workflow';
 import {
   fetchForkPullRequests,
@@ -18,6 +20,7 @@ import {
 } from '$lib/services/backends/git/gitea/workflow-fork';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 vi.mock('@sveltia/i18n', async () =>
@@ -79,6 +82,8 @@ describe('Gitea Editorial Workflow service', () => {
       fetchPullRequests: expect.any(Function),
       savePullRequest: expect.any(Function),
       updateStatus: expect.any(Function),
+      approve: expect.any(Function),
+      withdrawApproval: expect.any(Function),
       fetchBranchHead: expect.any(Function),
       fetchMergeState: expect.any(Function),
       fetchUnchangedPaths: expect.any(Function),
@@ -971,6 +976,51 @@ describe('Gitea Editorial Workflow service', () => {
       vi.mocked(fetchAPI).mockResolvedValue(new Response('<html>', { status: 500 }));
 
       await expect(publish(pullRequest)).rejects.toThrow('Failed to merge the pull request');
+    });
+  });
+
+  describe('approve', () => {
+    test('approves the pull request pinned to its head commit', async () => {
+      await approve(/** @type {any} */ ({ number: 1, headSHA: 'abc' }));
+
+      expect(fetchAPI).toHaveBeenCalledWith(`${REPO_PATH}/pulls/1/reviews`, {
+        method: 'POST',
+        body: { event: 'APPROVED', commit_id: 'abc' },
+      });
+    });
+  });
+
+  describe('withdrawApproval', () => {
+    beforeEach(() => {
+      user.account = /** @type {any} */ ({ login: 'me' });
+    });
+
+    afterEach(() => {
+      user.account = undefined;
+    });
+
+    test('deletes the user’s standing approvals of the pull request', async () => {
+      vi.mocked(fetchAPI).mockImplementation(async (path) =>
+        path.startsWith(`${REPO_PATH}/pulls/1/reviews?`)
+          ? [
+              { id: 1, state: 'APPROVED', dismissed: false, user: { login: 'me' } },
+              { id: 2, state: 'APPROVED', dismissed: false, user: { login: 'alex' } },
+              { id: 3, state: 'COMMENT', dismissed: false, user: { login: 'me' } },
+              { id: 4, state: 'APPROVED', dismissed: true, user: { login: 'me' } },
+              { id: 5, state: 'APPROVED', dismissed: false, user: null },
+            ]
+          : {},
+      );
+
+      await withdrawApproval(/** @type {any} */ ({ number: 1 }));
+
+      expect(fetchAPI).toHaveBeenCalledWith(`${REPO_PATH}/pulls/1/reviews/1`, {
+        method: 'DELETE',
+        responseType: 'raw',
+      });
+      expect(
+        vi.mocked(fetchAPI).mock.calls.filter(([, options]) => options?.method === 'DELETE'),
+      ).toHaveLength(1);
     });
   });
 

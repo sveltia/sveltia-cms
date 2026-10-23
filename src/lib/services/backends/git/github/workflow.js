@@ -30,6 +30,7 @@ import {
   toChangedFilesWithModes,
   updateLabelledStatus,
 } from '$lib/services/backends/git/shared/workflow';
+import { user } from '$lib/services/user/account.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -465,6 +466,53 @@ export const updateStatus = (pullRequest, status) =>
   updateLabelledStatus(pullRequest, status, { updateForkStatus, updateLabels, updateDraftState });
 
 /**
+ * Approve the pull request on behalf of the signed-in user, pinned to the head commit the entry was
+ * reviewed at.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @see https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request
+ */
+export const approve = async (pullRequest) => {
+  const { owner, repo } = repository;
+
+  await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`, {
+    method: 'POST',
+    body: { event: 'APPROVE', commit_id: pullRequest.headSHA },
+  });
+};
+
+/**
+ * Message a review is dismissed with when the entry is moved back from the ready stage.
+ */
+const WITHDRAWAL_MESSAGE = 'The entry is no longer ready to publish.';
+
+/**
+ * Withdraw the signed-in user’s approval of the pull request. A submitted review can’t be deleted
+ * on GitHub, so it’s dismissed instead, which a branch protection rule may restrict to some users.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @see https://docs.github.com/en/rest/pulls/reviews#list-reviews-for-a-pull-request
+ * @see https://docs.github.com/en/rest/pulls/reviews#dismiss-a-review-for-a-pull-request
+ */
+export const withdrawApproval = async (pullRequest) => {
+  const { owner, repo } = repository;
+  const path = `/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`;
+  const reviews = /** @type {Record<string, any>[]} */ (await fetchAPI(`${path}?per_page=100`));
+
+  await Promise.all(
+    reviews
+      .filter(
+        ({ state, user: reviewer }) =>
+          state === 'APPROVED' && reviewer?.login === user.account?.login,
+      )
+      .map(({ id }) =>
+        fetchAPI(`${path}/${id}/dismissals`, {
+          method: 'PUT',
+          body: { message: WITHDRAWAL_MESSAGE, event: 'DISMISS' },
+        }),
+      ),
+  );
+};
+
+/**
  * Commit the given changes on the workflow branch, creating the branch and the pull request if they
  * don’t exist yet.
  * @param {WorkflowSaveOptions} args Arguments.
@@ -742,6 +790,8 @@ export default {
   fetchPullRequests,
   savePullRequest,
   updateStatus,
+  approve,
+  withdrawApproval,
   fetchBranchHead,
   fetchMergeState,
   fetchUnchangedPaths,

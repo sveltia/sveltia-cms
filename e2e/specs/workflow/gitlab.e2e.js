@@ -153,11 +153,54 @@ test('moves an entry through the review stages', async ({ cms, gitlab, page }) =
 
   await cms.changeStatus(/Status: .*In Review/, 'Ready');
   await expect.poll(() => mergeRequest.labels).toEqual(['sveltia-cms/pending_publish']);
+  // The merge request is the user’s own, which the GitLab doesn’t let them approve
+  expect(mergeRequest.approvals).toBeUndefined();
 
   await cms.changeStatus(/Status: .*Ready/, 'Draft');
   await expect
     .poll(() => ({ labels: mergeRequest.labels, title: mergeRequest.title }))
     .toEqual({ labels: ['sveltia-cms/draft'], title: 'Draft: Update Post “second-post”' });
+});
+
+test('approves a colleague’s merge request while it’s marked as ready', async ({
+  cms,
+  gitlab,
+  page,
+}) => {
+  const mergeRequest = openEntryMergeRequest(gitlab, {
+    slug: 'second-post',
+    files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+    status: 'pending_review',
+  });
+
+  mergeRequest.author = gitlab.colleague;
+
+  await cms.open();
+  await openEntry(page, 'Second Post');
+  await cms.changeStatus(/Status: .*In Review/, 'Ready');
+
+  // The approval is pinned to the commit the entry was reviewed at
+  await expect
+    .poll(() => mergeRequest.approvals)
+    .toEqual([
+      expect.objectContaining({
+        login: gitlab.user.login,
+        sha: gitlab.getMergeRequestHead(mergeRequest).oid,
+      }),
+    ]);
+
+  // Moving the entry back withdraws the approval
+  await cms.changeStatus(/Status: .*Ready/, 'In Review');
+  await expect.poll(() => mergeRequest.approvals).toEqual([]);
+
+  // Moving the entry between the other stages approves nothing
+  await cms.changeStatus(/Status: .*In Review/, 'Draft');
+  await expect.poll(() => mergeRequest.labels).toEqual(['sveltia-cms/draft']);
+  expect(mergeRequest.approvals).toEqual([]);
+
+  // Marking it as ready again approves it again
+  await cms.changeStatus(/Status: .*Draft/, 'Ready');
+  await expect.poll(() => mergeRequest.approvals).toHaveLength(1);
 });
 
 test('keeps a title GitLab doesn’t read as a draft', async ({ cms, gitlab, page }) => {
