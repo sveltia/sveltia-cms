@@ -52,6 +52,13 @@ vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: mockPrefs,
 }));
 
+// Loaded transitively, and a `.svelte.js` module compiles differently for the client runtime this
+// test uses, so leaving it in would mis-merge its coverage with that of the Node-environment tests
+vi.mock('$lib/services/user/env.svelte', () => ({
+  env: {},
+  initUserEnvDetection: vi.fn(),
+}));
+
 describe('draft/backup', () => {
   /** @type {any} */
   const mockBackupDB = {
