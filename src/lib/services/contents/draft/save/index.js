@@ -250,6 +250,8 @@ const preparePendingEntries = async (draft) => {
  * @param {FileChange[]} args.changes File changes.
  * @param {Entry} args.savingEntry Entry to save.
  * @param {Entry[]} args.otherSavingEntries Other entries rewritten or created in the same commit.
+ * @param {PendingEntry[]} args.pendingEntries Entries created from a Relation field, among the
+ * other entries. With Editorial Workflow, they ride along in the entry’s pull request.
  * @param {Asset[]} args.savingAssets Assets to save.
  * @param {CommitOptions} args.options Commit options.
  * @returns {Promise<ChangeResults>} Results.
@@ -262,6 +264,7 @@ const commitChanges = async ({
   changes,
   savingEntry,
   otherSavingEntries,
+  pendingEntries,
   savingAssets,
   options,
 }) => {
@@ -280,6 +283,10 @@ const commitChanges = async ({
           // collection, so an entry doesn’t take the branch of another with the same file name
           slug: savingEntry.slug,
           originalEntry,
+          companions: pendingEntries.map(({ collectionName: name, entry }) => ({
+            collectionName: name,
+            entry,
+          })),
         })
       : await saveChanges({
           changes,
@@ -415,6 +422,7 @@ export const saveEntry = async ({
       ...movedEntries,
       ...pendingEntries.map((pendingEntry) => pendingEntry.entry),
     ],
+    pendingEntries,
     savingAssets,
     options: {
       commitType: draft.isNew || recreate ? 'create' : 'update',

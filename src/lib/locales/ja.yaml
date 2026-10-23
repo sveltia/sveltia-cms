@@ -2367,6 +2367,12 @@ workflow:
   # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
   # the site rather than published to it
   deploying_deletion: 削除
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: '{$entries} も追加されます'
+  # Workflow page: one of the new entries listed by `companion_entries`, named by its collection’s
+  # singular label and its title
+  companion_entry: '{$collection}: {$title}'
 
 # Dialog asking the user for a commit message every time changes are saved, when the site is
 # configured to. The message is recorded in the repository’s history along with the changes

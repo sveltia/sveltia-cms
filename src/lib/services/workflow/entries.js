@@ -2,7 +2,9 @@ import { parseAssetFileInfo } from '$lib/services/backends/git/shared/parse-file
 import { toFileListItem } from '$lib/services/backends/git/shared/tree';
 import { createFileList } from '$lib/services/backends/process';
 import { isInRootDir } from '$lib/services/backends/root-dir';
+import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
+import { getCollection } from '$lib/services/contents/collection';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { parseBranchName } from '$lib/services/workflow/branch';
@@ -10,7 +12,9 @@ import { parseBranchName } from '$lib/services/workflow/branch';
 /**
  * @import {
  * Asset,
+ * BaseEntryListItem,
  * BaseFileListItemProps,
+ * CompanionEntry,
  * Entry,
  * WorkflowStatus,
  * UnpublishedEntry,
@@ -59,6 +63,53 @@ const completeEntry = (entry, previousPaths, deletedPaths) => {
     slug: renamed ? entry.slug : publishedEntry.slug,
     subPath: renamed ? entry.subPath : publishedEntry.subPath,
   };
+};
+
+/**
+ * Parse the new entries of other collections that ride along in a pull request: those created from
+ * a Relation field of the entry the pull request was opened for, and committed with it. A file
+ * that is already on the configured branch isn’t one of them: it belongs to an entry the CMS has
+ * rewritten along with the entry, e.g. to update a reference to it, which the entry list shows as
+ * published. Nor is the file of a file collection, which a Relation field can’t add to, or of a
+ * collection the CMS can’t create entries in: such a file is left for the publish check to refuse.
+ * @param {BaseEntryListItem[]} entryFiles Entry files in the pull request, with their text.
+ * @param {string} collectionName Name of the collection the pull request was opened for.
+ * @returns {Promise<CompanionEntry[]>} Entries.
+ */
+const parseCompanions = async (entryFiles, collectionName) => {
+  /**
+   * Check whether the CMS can create an entry in the given collection.
+   * @param {string} name Collection name.
+   * @returns {boolean} Result.
+   */
+  const isCreatable = (name) => {
+    const collection = getCollection(name);
+
+    return (
+      collection?._type === 'entry' && collection.create !== false && !isReadonly({ collection })
+    );
+  };
+
+  const files = entryFiles.filter(
+    ({ path, folder, text }) =>
+      folder.collectionName !== collectionName &&
+      folder.fileName === undefined &&
+      text !== undefined &&
+      isCreatable(folder.collectionName) &&
+      !findEntryByPaths([path]),
+  );
+
+  const results = await Promise.all(
+    [...Map.groupBy(files, ({ folder }) => folder.collectionName)].map(
+      async ([companionCollectionName, companionFiles]) =>
+        (await prepareEntries(companionFiles)).entries.map((entry) => ({
+          collectionName: companionCollectionName,
+          entry,
+        })),
+    ),
+  );
+
+  return results.flat();
 };
 
 /**
@@ -195,6 +246,7 @@ export const convertPullRequest = async (pullRequest) => {
 
   const { entries } = await prepareEntries(targetFiles);
   const { fileName } = targetFiles[0].folder;
+  const companions = await parseCompanions(entryFiles, collectionName);
 
   return {
     entries: entries.map((entry) => ({
@@ -205,6 +257,7 @@ export const convertPullRequest = async (pullRequest) => {
         collectionName,
         fileName,
         previousPaths,
+        ...(companions.length ? { companions } : {}),
       },
     })),
     assets,

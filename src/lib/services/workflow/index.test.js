@@ -8,6 +8,7 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
 import {
   canMergePullRequest,
   checkPublishedVersion,
+  getCompanionEntries,
   getPublishedVersion,
   getUnpublishedEntriesByCollection,
   getUnpublishedEntry,
@@ -242,6 +243,44 @@ describe('workflow/index', () => {
     test('returns an empty array without a collection name', () => {
       unpublishedEntries.current = [createEntry({ collectionName: 'posts', subPath: 'a' })];
       expect(getUnpublishedEntriesByCollection(undefined)).toEqual([]);
+    });
+  });
+
+  describe('getCompanionEntries', () => {
+    const guides = /** @type {any} */ ({ id: 'guides' });
+    const help = /** @type {any} */ ({ id: 'help' });
+    const jane = /** @type {any} */ ({ id: 'jane' });
+
+    /**
+     * Create an entry with new entries riding along in its pull request.
+     * @param {any[]} [companions] Companion entries.
+     * @returns {any} Unpublished entry.
+     */
+    const createHost = (companions) => ({
+      ...createEntry({ collectionName: 'posts', subPath: 'a' }),
+      workflow: { collectionName: 'posts', companions },
+    });
+
+    test('collects the entries of the collection from every pull request', () => {
+      unpublishedEntries.current = [
+        createHost([
+          { collectionName: 'sections', entry: guides },
+          { collectionName: 'authors', entry: jane },
+        ]),
+        createHost(),
+        createHost([{ collectionName: 'sections', entry: help }]),
+      ];
+
+      expect(getCompanionEntries('sections')).toEqual([guides, help]);
+      expect(getCompanionEntries('tags')).toEqual([]);
+    });
+
+    test('looks in the given entries only', () => {
+      const host = createHost([{ collectionName: 'sections', entry: help }]);
+
+      unpublishedEntries.current = [createHost([{ collectionName: 'sections', entry: guides }])];
+
+      expect(getCompanionEntries('sections', [host])).toEqual([help]);
     });
   });
 

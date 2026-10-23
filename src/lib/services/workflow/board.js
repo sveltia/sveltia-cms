@@ -1,7 +1,12 @@
+import { _ } from '@sveltia/i18n';
+
+import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
+import { getEntrySummary } from '$lib/services/contents/entry/summary';
+import { getListFormatter } from '$lib/services/contents/i18n';
 import { WORKFLOW_STAGES, WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
 
 /**
- * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
+ * @import { InternalLocaleCode, UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
  */
 
 /**
@@ -138,4 +143,40 @@ export const groupEntriesByStatus = (
     })),
     pendingDeletions: entries.filter((entry) => entryStages.get(entry) === 'pending_deletion'),
   };
+};
+
+/**
+ * Get the note listing the new entries that ride along in the pull request of the given entry,
+ * which are published with it, for the entry’s card on the board.
+ * @param {UnpublishedEntry} entry Unpublished entry.
+ * @param {InternalLocaleCode} locale App locale, which the list is formatted for.
+ * @returns {string} Note, e.g. `Also adds Section: Getting Started`, or an empty string if there
+ * are no such entries.
+ */
+export const getCompanionNote = (entry, locale) => {
+  const { companions = [] } = entry.workflow;
+
+  if (!companions.length) {
+    return '';
+  }
+
+  const items = companions.map(({ collectionName, entry: companion }) => {
+    const collection = getCollection(collectionName);
+
+    // The collection may have been removed from the configuration since the entry was saved
+    if (collection?._type !== 'entry') {
+      return companion.slug;
+    }
+
+    return _('workflow.companion_entry', {
+      values: {
+        collection: getCollectionLabel(collection, { useSingular: true }),
+        title: getEntrySummary(collection, companion),
+      },
+    });
+  });
+
+  return _('workflow.companion_entries', {
+    values: { entries: getListFormatter(locale).format(items) },
+  });
 };

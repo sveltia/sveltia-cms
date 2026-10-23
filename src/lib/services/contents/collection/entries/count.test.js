@@ -12,11 +12,20 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
   countCollectionEntries: vi.fn((_collectionName, entries) => entries.length),
 }));
 
-// Only the store is mocked; `mergeUnpublishedEntries` is a pure helper and is used as is
-vi.mock('$lib/services/workflow', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  unpublishedEntries: { current: [] },
-}));
+// Only the store is mocked; `mergeUnpublishedEntries` is a pure helper and is used as is, and so
+// is `getCompanionEntries`, pointed at the store mocked here
+vi.mock('$lib/services/workflow', async (importOriginal) => {
+  const original = /** @type {any} */ (await importOriginal());
+  const store = { current: [] };
+
+  return {
+    ...original,
+    getCompanionEntries: vi.fn((collectionName) =>
+      original.getCompanionEntries(collectionName, store.current),
+    ),
+    unpublishedEntries: store,
+  };
+});
 
 /**
  * Create an entry.
@@ -53,6 +62,24 @@ describe('countQuotaEntries()', () => {
     ]);
 
     expect(countQuotaEntries('posts')).toBe(3);
+  });
+
+  test('counts a new entry riding along in the pull request of another collection’s entry', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue([createEntry('a')]);
+    unpublishedEntries.current = /** @type {any[]} */ ([
+      {
+        ...createEntry('hello', 'pages'),
+        workflow: {
+          collectionName: 'pages',
+          companions: [
+            { collectionName: 'posts', entry: createEntry('new') },
+            { collectionName: 'tags', entry: createEntry('news') },
+          ],
+        },
+      },
+    ]);
+
+    expect(countQuotaEntries('posts')).toBe(2);
   });
 
   test('leaves the counting to countCollectionEntries()', () => {

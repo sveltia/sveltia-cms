@@ -224,8 +224,9 @@ const getReferencingPaths = ({ entry, collection, updatedEntry, deletion }) => {
  * file in an `admin` or `cms` folder, where the CMS itself is served from; when the entry
  * is renamed or deleted, the entries referencing it, which are rewritten; and, in a nested
  * collection with subfolders, the entries below the folder of an entry being moved, which move
- * along with it. A Relation field doesn’t offer to add an entry while an entry is saved through
- * Editorial Workflow, so no other new entry is expected.
+ * along with it; and the new entries of other collections created from a Relation field of the
+ * entry, which the board lists on the entry’s card. Those have to be new on the configured branch
+ * as well: one that has appeared there since would be overwritten.
  * @param {UnpublishedEntry} entry Unpublished entry being published.
  * @param {WorkflowChangedFile[]} files Files the pull request changes.
  * @returns {string[]} Paths of the files that aren’t accounted for.
@@ -238,6 +239,11 @@ export const findUnexpectedChanges = (entry, files) => {
   const currentPaths = getEntryPaths(entry);
   const updatedPaths = updatedEntry ? getEntryPaths(updatedEntry) : [];
   const ownPaths = new Set([...currentPaths, ...updatedPaths]);
+
+  const companionPaths = new Set(
+    (entry.workflow.companions ?? []).flatMap(({ entry: companion }) => getEntryPaths(companion)),
+  );
+
   // Whether the pull request moves the entry: a rename, or a move to another folder of a nested
   // collection, which takes the entries below it and the assets beside it along. Its location is
   // compared rather than its files, as dropping a locale’s file leaves the entry where it is
@@ -266,6 +272,10 @@ export const findUnexpectedChanges = (entry, files) => {
 
     if (ownPaths.has(path)) {
       return true;
+    }
+
+    if (companionPaths.has(path)) {
+      return change === 'added';
     }
 
     const kind = classifyPath(path);

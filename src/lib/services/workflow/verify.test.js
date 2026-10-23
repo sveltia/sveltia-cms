@@ -395,14 +395,40 @@ describe('workflow/verify', () => {
       expect(collectRenameTargets).not.toHaveBeenCalled();
     });
 
-    test('flags a new entry in another collection', () => {
-      // A Relation field doesn’t offer to add an entry while an entry is saved through Editorial
-      // Workflow, so the CMS never commits one along with it
+    test('flags a new entry in another collection the board doesn’t show', () => {
       expect(
         findUnexpectedChanges(createEntry(), [
           { path: 'content/authors/me.md', status: 'added', mode: '100644' },
         ]),
       ).toEqual(['content/authors/me.md']);
+    });
+
+    test('allows the new entries listed on the entry’s card, as long as they’re new', () => {
+      // They were created from a Relation field of the entry and committed along with it
+      // @see https://github.com/sveltia/sveltia-cms/issues/1112
+      const entry = createEntry();
+
+      entry.workflow.companions = [
+        {
+          collectionName: 'authors',
+          entry: createPublishedEntry('me', ['content/authors/me.md', 'content/authors/ja/me.md']),
+        },
+      ];
+
+      expect(
+        findUnexpectedChanges(entry, [
+          { path: 'content/authors/me.md', status: 'added', mode: '100644' },
+          { path: 'content/authors/ja/me.md', status: 'added', mode: '100644' },
+        ]),
+      ).toEqual([]);
+
+      // One that has appeared on the configured branch since would be overwritten
+      expect(
+        findUnexpectedChanges(entry, [
+          { path: 'content/authors/me.md', status: 'modified', mode: '100644' },
+          { path: 'content/authors/ja/me.md', status: 'removed' },
+        ]),
+      ).toEqual(['content/authors/me.md', 'content/authors/ja/me.md']);
     });
 
     test('allows a nested entry to move the entries below its folder along with it', () => {

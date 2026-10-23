@@ -459,6 +459,18 @@
  * @property {string[]} [previousPaths] File paths the entry occupied before the pull request
  * renamed it, which happens when the slug is edited. They’re used to match the draft with its
  * published counterpart, which would otherwise be listed as a separate entry.
+ * @property {CompanionEntry[]} [companions] New entries in other collections that were created
+ * from a Relation field of the entry and committed to its pull request, so they’re reviewed and
+ * published along with it.
+ */
+
+/**
+ * A new entry that rides along in the pull request of another entry, which it was created for from
+ * a Relation field with the quick-add dialog. It isn’t on the board on its own: the pull request
+ * stands for the entry it was opened for.
+ * @typedef {object} CompanionEntry
+ * @property {string} collectionName Name of the collection the entry belongs to.
+ * @property {Entry} entry Entry as it stands on the pull request’s branch.
  */
 
 /**
@@ -1269,6 +1281,20 @@
  * reformatting) have occurred.
  * @property {PendingEntry[]} pendingEntries Entries created from a Relation field while editing
  * this entry, to be saved along with it.
+ * @property {QuickAddHost} [quickAddHost] Entry the pending entries go along with, when this is
+ * the draft of an entry being added with a quick-add dialog. Missing from any other draft, which
+ * is its own host.
+ */
+
+/**
+ * The entry being edited in the editor, which the entries created with quick-add dialogs, nested
+ * ones included, are saved along with.
+ * @typedef {object} QuickAddHost
+ * @property {string} collectionName Name of the collection the entry belongs to.
+ * @property {boolean} workflow Whether the entry is saved through Editorial Workflow, which takes
+ * the new entries into its pull request.
+ * @property {string} [branch] Workflow branch of the entry’s pull request, if it already has one,
+ * which may hold entries created from it earlier.
  */
 
 /**

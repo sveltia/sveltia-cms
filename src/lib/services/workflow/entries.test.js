@@ -11,6 +11,17 @@ vi.mock('$lib/services/backends/git/shared/parse-files', () => ({
   parseAssetFileInfo: vi.fn((file) => ({ ...file, kind: 'image' })),
 }));
 vi.mock('$lib/services/contents/file/process');
+vi.mock('$lib/services/contents/collection', () => ({
+  getCollection: vi.fn(
+    (name) =>
+      /** @type {Record<string, any>} */ ({
+        sections: { name, _type: 'entry' },
+        tiles: { name, _type: 'entry' },
+        fixed: { name, _type: 'entry', create: false },
+        frozen: { name, _type: 'entry', readonly: true },
+      })[name],
+  ),
+}));
 
 /**
  * Create a minimal pull request for testing.
@@ -190,6 +201,92 @@ describe('workflow/entries', () => {
         fileName: undefined,
         previousPaths: [],
       });
+    });
+
+    test('attaches the new entries of other collections riding along in the pull request', async () => {
+      /**
+       * Build an entry file.
+       * @param {string} path File path.
+       * @param {object} folder Collection the file belongs to.
+       * @returns {any} File.
+       */
+      const file = (path, folder) => ({
+        path,
+        text: '#',
+        folder: { fileName: undefined, ...folder },
+      });
+
+      const postFile = file('content/posts/hello.md', { collectionName: 'posts' });
+
+      const sectionFiles = [
+        file('content/sections/en/guides.md', { collectionName: 'sections' }),
+        file('content/sections/fr/guides.md', { collectionName: 'sections' }),
+      ];
+
+      const tileFile = file('content/tiles/help.md', { collectionName: 'tiles' });
+      // An entry rewritten along with the post, e.g. to update a reference, is a published one
+      const rewrittenFile = file('content/tiles/home.md', { collectionName: 'tiles' });
+      // A Relation field can’t add a file to a file collection, nor parse a binary file
+      const settingsFile = file('data/site.yml', { collectionName: 'settings', fileName: 'site' });
+
+      const binaryFile = {
+        ...file('content/tiles/blob.md', { collectionName: 'tiles' }),
+        text: undefined,
+      };
+
+      // Nor would the CMS add an entry to a collection it can’t create entries in
+      const fixedFile = file('content/fixed/a.md', { collectionName: 'fixed' });
+      const frozenFile = file('content/frozen/b.md', { collectionName: 'frozen' });
+      const unknownFile = file('content/gone/c.md', { collectionName: 'gone' });
+
+      allEntries.current = [
+        /** @type {any} */ ({
+          id: 'home',
+          locales: { _default: { path: 'content/tiles/home.md' } },
+        }),
+      ];
+
+      vi.mocked(createFileList).mockReturnValue(
+        /** @type {any} */ ({
+          entryFiles: [
+            postFile,
+            ...sectionFiles,
+            tileFile,
+            rewrittenFile,
+            settingsFile,
+            binaryFile,
+            fixedFile,
+            frozenFile,
+            unknownFile,
+          ],
+          assetFiles: [],
+        }),
+      );
+
+      const section = { id: 's', slug: 'guides', subPath: 'guides', locales: {} };
+      const tile = { id: 't', slug: 'help', subPath: 'help', locales: {} };
+
+      vi.mocked(prepareEntries).mockImplementation(async (files) => ({
+        entries: /** @type {any} */ ({
+          'content/posts/hello.md': [{ id: 'x', slug: 'hello', subPath: 'hello', locales: {} }],
+          'content/sections/en/guides.md': [section],
+          'content/tiles/help.md': [tile],
+        })[files[0].path],
+        errors: [],
+      }));
+
+      const { entries } = await convertPullRequest(
+        createPullRequest({
+          files: [{ path: 'content/posts/hello.md', sha: 'a', size: 1, text: '#', deleted: false }],
+        }),
+      );
+
+      expect(prepareEntries).toHaveBeenCalledWith(sectionFiles);
+      expect(prepareEntries).toHaveBeenCalledWith([tileFile]);
+      expect(entries[0].workflow.companions).toEqual([
+        { collectionName: 'sections', entry: section },
+        { collectionName: 'tiles', entry: tile },
+      ]);
     });
 
     test('picks up the collection file name for a file collection', async () => {

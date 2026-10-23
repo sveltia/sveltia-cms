@@ -8,7 +8,13 @@ import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-or
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
-import { isWorkflowDraft, isWorkflowEnabled, unpublishedEntries } from '$lib/services/workflow';
+import {
+  getUnpublishedEntryByBranch,
+  getUnpublishedEntryByDraft,
+  isWorkflowDraft,
+  isWorkflowEnabled,
+  unpublishedEntries,
+} from '$lib/services/workflow';
 
 import {
   createPendingEntry,
@@ -16,13 +22,14 @@ import {
   getNestedPendingEntries,
   getPendingEntrySlugs,
   getPendingRefEntries,
+  getQuickAddHost,
   getRefEntriesWithPending,
   hasCreationRoom,
   selectPendingEntry,
 } from './quick-add';
 
 /**
- * @import { Entry, EntryDraft, PendingEntry } from '$lib/types/private';
+ * @import { Entry, EntryDraft, PendingEntry, UnpublishedEntry } from '$lib/types/private';
  * @import { RelationField } from '$lib/types/public';
  */
 
@@ -68,13 +75,30 @@ vi.mock('$lib/services/contents/fields/relation/helpers', () => ({
   getRefEntries: vi.fn(() => []),
 }));
 
-// `mergeUnpublishedEntries` is a pure helper and is used as is
-vi.mock('$lib/services/workflow', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  isWorkflowDraft: vi.fn(() => false),
-  isWorkflowEnabled: vi.fn(() => false),
-  unpublishedEntries: { current: [] },
-}));
+// `mergeUnpublishedEntries` is a pure helper and is used as is, and so is `getCompanionEntries`,
+// pointed at the store mocked here
+vi.mock('$lib/services/workflow', async (importOriginal) => {
+  const original = /** @type {any} */ (await importOriginal());
+  const store = { current: [] };
+
+  return {
+    ...original,
+    getCompanionEntries: vi.fn((collectionName, entries = store.current) =>
+      original.getCompanionEntries(collectionName, entries),
+    ),
+    getUnpublishedEntryByBranch: vi.fn(),
+    getUnpublishedEntryByDraft: vi.fn(),
+    isWorkflowDraft: vi.fn(() => false),
+    isWorkflowEnabled: vi.fn(() => false),
+    unpublishedEntries: store,
+  };
+});
+
+beforeEach(() => {
+  vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(undefined);
+  vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(undefined);
+  unpublishedEntries.current = [];
+});
 
 /** @type {RelationField} */
 const fieldConfig = { name: 'tags', widget: 'relation', collection: 'tags' };
@@ -93,6 +117,23 @@ const createPending = (slug, collectionName = 'tags') => ({
   savingAssets: [],
   values: [slug],
 });
+
+/**
+ * Build an entry of the host’s pull request that a new tag rides along in.
+ * @param {string} slug Slug of the tag.
+ * @returns {UnpublishedEntry} Unpublished entry.
+ */
+const createHostEntry = (slug) =>
+  /** @type {any} */ ({
+    workflow: {
+      collectionName: 'posts',
+      pullRequest: { branch: 'cms/posts/hello' },
+      companions: [
+        { collectionName: 'tags', entry: { id: `id-${slug}`, slug, subPath: slug, locales: {} } },
+        { collectionName: 'authors', entry: { id: 'id-jane', slug: 'jane', locales: {} } },
+      ],
+    },
+  });
 
 /**
  * Build a parent draft.
@@ -138,10 +179,46 @@ describe('getCreatableCollection', () => {
     expect(getCollection).not.toHaveBeenCalled();
   });
 
-  it('returns nothing while the entry is saved through Editorial Workflow', () => {
+  it('offers the collection while the entry is saved through Editorial Workflow', () => {
+    // The new entry goes into the entry’s pull request, so the collection’s own review is kept
+    // @see https://github.com/sveltia/sveltia-cms/issues/1112
     vi.mocked(isWorkflowDraft).mockReturnValue(true);
-    expect(getCreatableCollection({ fieldConfig, draft })).toBeUndefined();
-    expect(getCollection).not.toHaveBeenCalled();
+    vi.mocked(isWorkflowEnabled).mockReturnValue(true);
+    expect(getCreatableCollection({ fieldConfig, draft })).toBe(tagCollection);
+    expect(isWorkflowEnabled).not.toHaveBeenCalled();
+  });
+
+  it('returns nothing for the entry’s own collection while it’s saved through Editorial Workflow', () => {
+    const postCollection = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
+
+    vi.mocked(isWorkflowDraft).mockReturnValue(true);
+    vi.mocked(getCollection).mockReturnValue(postCollection);
+    expect(
+      getCreatableCollection({ fieldConfig: { ...fieldConfig, collection: 'posts' }, draft }),
+    ).toBeUndefined();
+
+    vi.mocked(isWorkflowDraft).mockReturnValue(false);
+    expect(
+      getCreatableCollection({ fieldConfig: { ...fieldConfig, collection: 'posts' }, draft }),
+    ).toBe(postCollection);
+  });
+
+  it('follows the host entry in a quick-add dialog', () => {
+    const tagDraft = /** @type {EntryDraft} */ ({
+      ...draft,
+      collectionName: 'authors',
+      quickAddHost: { collectionName: 'tags', workflow: true },
+    });
+
+    // The dialog’s own draft would be saved through Editorial Workflow, but the host decides
+    expect(getCreatableCollection({ fieldConfig, draft: tagDraft })).toBeUndefined();
+    expect(isWorkflowDraft).not.toHaveBeenCalled();
+
+    tagDraft.quickAddHost = { collectionName: 'posts', workflow: false };
+    vi.mocked(isWorkflowDraft).mockReturnValue(true);
+    vi.mocked(isWorkflowEnabled).mockReturnValue(true);
+    expect(getCreatableCollection({ fieldConfig, draft: tagDraft })).toBeUndefined();
+    expect(isWorkflowEnabled).toHaveBeenCalledWith(tagCollection);
   });
 
   it('returns nothing when the collection is missing or is not an entry collection', () => {
@@ -160,6 +237,39 @@ describe('getCreatableCollection', () => {
   it('returns nothing when the collection is read-only', () => {
     vi.mocked(getCollection).mockReturnValue({ ...tagCollection, readonly: true });
     expect(getCreatableCollection({ fieldConfig, draft })).toBeUndefined();
+  });
+});
+
+describe('getQuickAddHost', () => {
+  it('returns the host a quick-add draft has been given', () => {
+    const quickAddHost = { collectionName: 'posts', workflow: true, branch: 'cms/posts/hello' };
+    const draft = /** @type {EntryDraft} */ ({ ...createParentDraft(), quickAddHost });
+
+    expect(getQuickAddHost(draft)).toBe(quickAddHost);
+    expect(isWorkflowDraft).not.toHaveBeenCalled();
+  });
+
+  it('makes any other draft its own host', () => {
+    const draft = createParentDraft();
+
+    vi.mocked(isWorkflowDraft).mockReturnValue(true);
+    vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(createHostEntry('svelte'));
+
+    expect(getQuickAddHost(draft)).toEqual({
+      collectionName: 'posts',
+      workflow: true,
+      branch: 'cms/posts/hello',
+    });
+    expect(getUnpublishedEntryByDraft).toHaveBeenCalledWith(draft);
+
+    vi.mocked(isWorkflowDraft).mockReturnValue(false);
+    vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(undefined);
+
+    expect(getQuickAddHost(draft)).toEqual({
+      collectionName: 'posts',
+      workflow: false,
+      branch: undefined,
+    });
   });
 });
 
@@ -219,6 +329,31 @@ describe('hasCreationRoom', () => {
     expect(hasCreationRoom({ collection, draft: createParentDraft() })).toBe(false);
   });
 
+  it('counts a new entry riding along in another entry’s pull request against the limit', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue(/** @type {any} */ ([{}]));
+    unpublishedEntries.current = [createHostEntry('svelte')];
+
+    expect(
+      hasCreationRoom({ collection: { ...tagCollection, limit: 2 }, draft: createParentDraft() }),
+    ).toBe(false);
+    expect(
+      hasCreationRoom({ collection: { ...tagCollection, limit: 3 }, draft: createParentDraft() }),
+    ).toBe(true);
+  });
+
+  it('counts a pending entry once after it has been saved to the pull request', () => {
+    // The editor may stay open on the draft after the save, which still holds the entry
+    vi.mocked(getEntriesByCollection).mockReturnValue(/** @type {any} */ ([{}]));
+    unpublishedEntries.current = [createHostEntry('svelte')];
+
+    expect(
+      hasCreationRoom({
+        collection: { ...tagCollection, limit: 3 },
+        draft: createParentDraft({ pendingEntries: [createPending('svelte')] }),
+      }),
+    ).toBe(true);
+  });
+
   it('doesn’t count the collection’s index file against the limit', () => {
     const collection = { ...tagCollection, limit: 2 };
 
@@ -257,6 +392,47 @@ describe('getPendingRefEntries', () => {
         refEntries: [{ ...svelte.entry, commitDate: new Date() }],
       }),
     ).toEqual([react.entry]);
+  });
+
+  it('returns the entries an earlier save has committed to the pull request as well', () => {
+    const react = createPending('react');
+    const draft = createParentDraft({ pendingEntries: [react] });
+    const hostEntry = createHostEntry('svelte');
+
+    vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(hostEntry);
+    vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(hostEntry);
+
+    expect(getPendingRefEntries({ draft, fieldConfig, refEntries: [] })).toEqual([
+      react.entry,
+      hostEntry.workflow.companions?.[0].entry,
+    ]);
+    // The entry is looked up afresh, as a save or a reload may have replaced it
+    expect(getUnpublishedEntryByBranch).toHaveBeenCalledWith('cms/posts/hello');
+
+    // An entry that has been published along with the host is among the saved ones
+    expect(
+      getPendingRefEntries({
+        draft,
+        fieldConfig,
+        refEntries: [/** @type {Entry} */ (hostEntry.workflow.companions?.[0].entry)],
+      }),
+    ).toEqual([react.entry]);
+
+    // A pending entry saved to the pull request while the editor stays open is offered once
+    const svelte = createPending('svelte');
+
+    expect(
+      getPendingRefEntries({
+        draft: createParentDraft({ pendingEntries: [react, svelte] }),
+        fieldConfig,
+        refEntries: [],
+      }),
+    ).toEqual([react.entry, svelte.entry]);
+
+    // The host entry may have left the store, e.g. once it has been published
+    vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(undefined);
+
+    expect(getPendingRefEntries({ draft, fieldConfig, refEntries: [] })).toEqual([react.entry]);
   });
 
   it('returns nothing without a draft', () => {
@@ -351,6 +527,20 @@ describe('getPendingEntrySlugs', () => {
       localizedSlugs: undefined,
       canonicalSlug: undefined,
     });
+  });
+
+  it('renames the slug taken by a new entry riding along in a pull request', () => {
+    vi.mocked(getSlugs).mockReturnValue({
+      defaultLocaleSlug: 'svelte',
+      localizedSlugs: undefined,
+      canonicalSlug: undefined,
+    });
+    vi.mocked(getCanonicalSlug).mockReturnValue(undefined);
+    unpublishedEntries.current = [createHostEntry('svelte')];
+
+    expect(
+      getPendingEntrySlugs({ draft, parentDraft: createParentDraft() }).defaultLocaleSlug,
+    ).toBe('svelte-1');
   });
 
   it('does not rename the slug to one taken by a saved entry', () => {

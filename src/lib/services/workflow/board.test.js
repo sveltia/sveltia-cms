@@ -1,13 +1,31 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
+import { getCollection } from '$lib/services/contents/collection';
 import {
   COLUMN_LABELS,
   getBoardAnnouncement,
+  getCompanionNote,
   getDiscardMessages,
   getPublishMessages,
   groupEntriesByStatus,
   STATUS_UPDATE_MESSAGES,
 } from '$lib/services/workflow/board';
+
+vi.mock('@sveltia/i18n', async () =>
+  (await import('$lib/test/i18n')).createI18nMock({
+    strings: {
+      'workflow.companion_entries': 'Also adds {entries}',
+      'workflow.companion_entry': '{collection}: {title}',
+    },
+  }),
+);
+vi.mock('$lib/services/contents/collection', () => ({
+  getCollection: vi.fn(),
+  getCollectionLabel: vi.fn((collection) => collection.label_singular),
+}));
+vi.mock('$lib/services/contents/entry/summary', () => ({
+  getEntrySummary: vi.fn((_collection, entry) => entry.locales._default.content.title),
+}));
 
 describe('COLUMN_LABELS', () => {
   test('uses the plural heading for drafts', () => {
@@ -109,5 +127,47 @@ describe('getBoardAnnouncement()', () => {
       key: 'viewing_preview_workflow',
       values: { draft: 1, deletion: 0 },
     });
+  });
+});
+
+describe('getCompanionNote()', () => {
+  /**
+   * Create an entry of the given collection.
+   * @param {string} collectionName Collection name.
+   * @param {string} slug Slug.
+   * @param {string} title Title.
+   * @returns {any} Companion entry.
+   */
+  const createCompanion = (collectionName, slug, title) => ({
+    collectionName,
+    entry: { slug, locales: { _default: { content: { title } } } },
+  });
+
+  test('lists the new entries riding along in the pull request', () => {
+    vi.mocked(getCollection).mockImplementation(
+      (name) =>
+        /** @type {any} */ ({
+          sections: { _type: 'entry', label_singular: 'Section' },
+          tiles: { _type: 'entry', label_singular: 'Tile' },
+        })[name],
+    );
+
+    const entry = /** @type {any} */ ({
+      workflow: {
+        companions: [
+          createCompanion('sections', 'guides', 'Guides'),
+          createCompanion('tiles', 'help', 'Help'),
+          // A collection removed from the configuration since leaves the slug to go by
+          createCompanion('gone', 'faq', 'FAQ'),
+        ],
+      },
+    });
+
+    expect(getCompanionNote(entry, 'en')).toBe('Also adds Section: Guides, Tile: Help, faq');
+  });
+
+  test('returns an empty string when there’s nothing riding along', () => {
+    expect(getCompanionNote(/** @type {any} */ ({ workflow: {} }), 'en')).toBe('');
+    expect(getCompanionNote(/** @type {any} */ ({ workflow: { companions: [] } }), 'en')).toBe('');
   });
 });

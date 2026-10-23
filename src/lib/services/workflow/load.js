@@ -5,6 +5,7 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createStaleCheck, repositoryHead } from '$lib/services/backends/git/shared/head';
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { cmsConfig } from '$lib/services/config';
+import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import {
   publishingBranches,
   unpublishedEntries,
@@ -17,7 +18,12 @@ import { convertPullRequests } from '$lib/services/workflow/entries';
 import { openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { BackendService, UnpublishedEntry, WorkflowPullRequest } from '$lib/types/private';
+ * @import {
+ * BackendService,
+ * CompanionEntry,
+ * UnpublishedEntry,
+ * WorkflowPullRequest,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -178,9 +184,28 @@ const isSameList = (a = [], b = []) =>
   a.length === b.length && a.every((entry, index) => entry === b[index]);
 
 /**
+ * Give the new entries read afresh from a pull request the IDs of the ones already in the store,
+ * matched by their first file, as they’re parsed with new IDs each time. Without that, the entry
+ * they ride along with would never be the same as before.
+ * @param {CompanionEntry[] | undefined} fetched Entries read from the pull request.
+ * @param {CompanionEntry[] | undefined} existing Entries in the store.
+ * @returns {CompanionEntry[] | undefined} Entries.
+ */
+const carryOverCompanions = (fetched, existing = []) => {
+  const ids = new Map(existing.map(({ entry }) => [getEntryPaths(entry)[0], entry.id]));
+
+  return fetched?.map((companion) => {
+    const id = ids.get(getEntryPaths(companion.entry)[0]);
+
+    return id ? { ...companion, entry: { ...companion.entry, id } } : companion;
+  });
+};
+
+/**
  * Bring the entries read afresh from a pull request in line with the ones already in the store, so
  * the board and the editor don’t lose track of them: each keeps the ID of the entry it replaces,
- * and an entry that hasn’t changed at all stays the same object.
+ * along with those of the new entries riding along with it, and an entry that hasn’t changed at all
+ * stays the same object.
  * @param {UnpublishedEntry[]} fetched Entries read from the pull request.
  * @param {UnpublishedEntry[]} existing Entries of the same branch in the store.
  * @returns {UnpublishedEntry[]} Entries to store.
@@ -193,7 +218,20 @@ const carryOverEntries = (fetched, existing) => {
       return entry;
     }
 
-    const carried = { ...entry, id: previous.id };
+    const { workflow } = entry;
+
+    const carried = {
+      ...entry,
+      id: previous.id,
+      ...(workflow.companions
+        ? {
+            workflow: {
+              ...workflow,
+              companions: carryOverCompanions(workflow.companions, previous.workflow.companions),
+            },
+          }
+        : {}),
+    };
 
     return equal(carried, previous) ? previous : carried;
   });

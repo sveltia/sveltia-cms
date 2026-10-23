@@ -402,6 +402,55 @@ describe('workflow/load', () => {
       expect(checkForRemoteChanges).not.toHaveBeenCalled();
     });
 
+    test('keeps the IDs of the new entries riding along in a pull request', async () => {
+      /**
+       * Build a new section riding along in the pull request of a post.
+       * @param {string} id Entry ID, which is new each time the pull request is read.
+       * @param {string} [slug] Slug.
+       * @returns {any} Companion entry.
+       */
+      const createCompanion = (id, slug = 'guides') => ({
+        collectionName: 'sections',
+        entry: { id, slug, locales: { _default: { path: `content/sections/${slug}.md` } } },
+      });
+
+      /**
+       * Build a post with the given sections riding along.
+       * @param {string} id Entry ID.
+       * @param {any[]} companions Companion entries.
+       * @returns {any} Entry.
+       */
+      const createHost = (id, companions) => {
+        const entry = createEntry('hello', { id });
+
+        entry.workflow.companions = companions;
+
+        return entry;
+      };
+
+      const store = [createHost('hello-id', [createCompanion('guides-id')])];
+
+      unpublishedEntries.current = store;
+      mockListing([createHost('another-id', [createCompanion('another-guides-id')])]);
+
+      // Nothing has changed, although the section has been read with another ID
+      await expect(reloadUnpublishedEntries()).resolves.toBe(false);
+      expect(unpublishedEntries.current).toBe(store);
+
+      // A section added since is new, while the one already there keeps its ID
+      mockListing([
+        createHost('another-id', [
+          createCompanion('another-guides-id'),
+          createCompanion('faq-id', 'faq'),
+        ]),
+      ]);
+
+      await expect(reloadUnpublishedEntries()).resolves.toBe(true);
+      expect(
+        unpublishedEntries.current[0].workflow.companions?.map(({ entry }) => entry.id),
+      ).toEqual(['guides-id', 'faq-id']);
+    });
+
     test('replaces the assets of the branches that have changed or gone', async () => {
       unpublishedEntries.current = [
         createEntry('kept'),

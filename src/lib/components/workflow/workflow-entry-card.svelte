@@ -23,6 +23,7 @@
   import { deployments, productionSHA } from '$lib/services/deployments';
   import { encodePathSegments } from '$lib/services/utils/url';
   import { checkPublishedVersion, isPublishAllowed } from '$lib/services/workflow';
+  import { getCompanionNote } from '$lib/services/workflow/board';
   import { getWorkflowStages } from '$lib/services/workflow/stages';
 
   /**
@@ -89,6 +90,10 @@
       ? getCollectionFileLabel(collectionFile)
       : getEntrySummary(collection, entry);
   });
+  // The new entries created from a Relation field of the entry are published along with it
+  const companionNote = $derived(
+    appLocale.current ? getCompanionNote(entry, appLocale.current) : '',
+  );
   const collectionLabel = $derived(
     appLocale.current && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
   );
@@ -158,6 +163,9 @@ a merged or read-only one, or one with no other stage to move to -->
       <span role="none" class="title"><bdi>{summary}</bdi></span>
     </span>
   </button>
+  {#if companionNote}
+    <p class="companions">{companionNote}</p>
+  {/if}
   <footer role="none">
     <div role="none" class="meta">
       {#if pullRequest.author?.name}
@@ -282,6 +290,13 @@ a merged or read-only one, or one with no other stage to move to -->
   .title {
     font-size: var(--sui-font-size-default);
     line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .companions {
+    margin: 0;
+    color: var(--sui-secondary-foreground-color);
+    font-size: var(--sui-font-size-small);
     overflow-wrap: anywhere;
   }
 

@@ -118,6 +118,22 @@ const createEntry = (branch, status = 'draft') => ({
   },
 });
 
+/**
+ * Create a new entry of another collection riding along in a pull request.
+ * @param {string} slug Slug.
+ * @param {string} [title] Title.
+ * @returns {any} Companion entry.
+ */
+const createCompanion = (slug, title = slug) => ({
+  collectionName: 'sections',
+  entry: {
+    id: `section-${slug}`,
+    slug,
+    subPath: slug,
+    locales: { _default: { slug, path: `content/sections/${slug}.md`, content: { title } } },
+  },
+});
+
 describe('workflow/save', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -498,6 +514,56 @@ describe('workflow/save', () => {
       expect(results.savedEntries[0].id).toBe(existing.id);
     });
 
+    test('records the new entries of other collections committed along with the entry', async () => {
+      const guides = createCompanion('guides');
+
+      workflowService.savePullRequest.mockResolvedValue({
+        commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
+        pullRequest: { branch: 'cms/posts/hello', number: 1, status: 'draft' },
+      });
+
+      const results = await saveWorkflowChanges({ ...args, companions: [guides] });
+
+      expect(/** @type {any} */ (results.savedEntries[0]).workflow.companions).toEqual([guides]);
+    });
+
+    test('keeps the new entries an earlier save has committed to the pull request', async () => {
+      const existing = createEntry('cms/posts/hello');
+      const guides = createCompanion('guides');
+      const help = createCompanion('help');
+
+      existing.workflow.companions = [guides, help];
+      upsertUnpublishedEntry(existing);
+
+      workflowService.savePullRequest.mockResolvedValue({
+        commit: { sha: 'def', date: new Date('2026-01-02'), files: {} },
+        pullRequest: existing.workflow.pullRequest,
+      });
+
+      const results = await saveWorkflowChanges({ ...args, originalEntry: existing });
+
+      expect(/** @type {any} */ (results.savedEntries[0]).workflow.companions).toEqual([
+        guides,
+        help,
+      ]);
+
+      // An entry committed again replaces its earlier version
+      const updatedGuides = createCompanion('guides', 'Guides');
+      const faq = createCompanion('faq');
+
+      const resaved = await saveWorkflowChanges({
+        ...args,
+        originalEntry: existing,
+        companions: [updatedGuides, faq],
+      });
+
+      expect(/** @type {any} */ (resaved.savedEntries[0]).workflow.companions).toEqual([
+        help,
+        updatedGuides,
+        faq,
+      ]);
+    });
+
     test('throws when the backend doesn’t support the feature', async () => {
       /** @type {any} */ (backend).current = {};
 
@@ -689,6 +755,32 @@ describe('workflow/save', () => {
       // The entry is listed as on its way to the site, once the branch head has been refreshed
       expect(refreshProductionSHA).toHaveBeenCalledBefore(vi.mocked(trackDeployingEntry));
       expect(trackDeployingEntry).toHaveBeenCalledWith(entry);
+    });
+
+    test('publishes the new entries riding along in the pull request with the entry', async () => {
+      const entry = createEntry('cms/posts/hello', 'pending_publish');
+      const guides = createCompanion('guides');
+
+      entry.workflow.companions = [guides];
+      upsertUnpublishedEntry(entry);
+
+      allEntries.current = [
+        /** @type {any} */ ({
+          id: 'other',
+          slug: 'other',
+          subPath: 'other',
+          locales: { _default: { slug: 'other', path: 'content/sections/other.md', content: {} } },
+        }),
+      ];
+
+      await publishWorkflowEntry(entry);
+
+      expect(allEntries.current.map((/** @type {any} */ e) => e.id)).toEqual([
+        'other',
+        entry.id,
+        guides.entry.id,
+      ]);
+      expect(allEntries.current.at(-1)).toBe(guides.entry);
     });
 
     test('marks a draft pull request ready before merging it', async () => {
@@ -1157,6 +1249,27 @@ describe('workflow/save', () => {
       expect(entry.workflow.previousPaths).toEqual(['content/posts/hello.md']);
     });
 
+    test('takes the new entries riding along in a reused pull request off its branch', async () => {
+      // They have never been published, so the removal would otherwise publish them
+      const pending = createEntry('cms/posts/hello');
+
+      pending.workflow.companions = [createCompanion('guides')];
+      upsertUnpublishedEntry(pending);
+
+      const entry = await deleteWorkflowEntry(createPublishedEntry(), collection, undefined);
+
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          changes: [
+            { action: 'delete', slug: 'hello', path: 'content/posts/hello.md' },
+            { action: 'delete', slug: 'hello', path: 'content/posts/ja/hello.md' },
+            { action: 'delete', slug: 'hello', path: 'content/sections/guides.md' },
+          ],
+        }),
+      );
+      expect(entry.workflow.companions).toBeUndefined();
+    });
+
     test('keeps track of the commit when the status of a reused pull request can’t be switched', async () => {
       const pending = createEntry('cms/posts/hello');
 
@@ -1462,6 +1575,36 @@ describe('workflow/save', () => {
       await publishWorkflowEntry(entry);
 
       expect(callEventHooks).toHaveBeenCalledWith(expect.objectContaining({ collectionFile }));
+    });
+
+    test('are called for the new entries riding along in the pull request', async () => {
+      const entry = createEntry('cms/posts/hello', 'pending_publish');
+      const guides = createCompanion('guides');
+      const sections = { name: 'sections', _type: 'entry' };
+
+      entry.workflow.companions = [guides, { ...createCompanion('gone'), collectionName: 'gone' }];
+      // Looked up for the post first, then for each of the new entries
+      vi.mocked(getCollection)
+        .mockReturnValueOnce(/** @type {any} */ ({ name: 'posts', _type: 'entry' }))
+        .mockReturnValueOnce(/** @type {any} */ (sections))
+        .mockReturnValueOnce(undefined);
+      upsertUnpublishedEntry(entry);
+      await publishWorkflowEntry(entry);
+
+      // An entry whose collection is no longer configured has no hook to call
+      expect(
+        vi.mocked(callEventHooks).mock.calls.map(([{ type, entry: e }]) => [type, e.id]),
+      ).toEqual([
+        ['prePublish', entry.id],
+        ['prePublish', guides.entry.id],
+        ['postPublish', entry.id],
+        ['postPublish', guides.entry.id],
+      ]);
+      expect(callEventHooks).toHaveBeenCalledWith({
+        type: 'postPublish',
+        entry: guides.entry,
+        collection: sections,
+      });
     });
 
     test('are skipped when the collection is no longer configured', async () => {

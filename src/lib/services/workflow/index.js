@@ -18,6 +18,7 @@ import { getCollectionPublishModeOptions, isLastStage } from '$lib/services/work
  * Entry,
  * InternalCollection,
  * UnpublishedEntry,
+ * UnpublishedEntryProps,
  * WorkflowPullRequest,
  * } from '$lib/types/private';
  * @import { Collection } from '$lib/types/public';
@@ -96,6 +97,20 @@ export const getUnpublishedEntriesByCollection = (collectionName) =>
         ({ workflow }) => workflow.collectionName === collectionName,
       )
     : [];
+
+/**
+ * Get the new entries in the given collection that ride along in the pull request of an entry of
+ * another collection. See {@link UnpublishedEntryProps.companions}.
+ * @param {string} collectionName Collection name.
+ * @param {UnpublishedEntry[]} [entries] Unpublished entries to look in. Defaults to all of them.
+ * @returns {Entry[]} Entries.
+ */
+export const getCompanionEntries = (collectionName, entries = unpublishedEntries.current) =>
+  entries.flatMap(({ workflow }) =>
+    (workflow.companions ?? []).flatMap((companion) =>
+      companion.collectionName === collectionName ? [companion.entry] : [],
+    ),
+  );
 
 /**
  * Find the unpublished entry that matches the given collection name and entry sub path. This is

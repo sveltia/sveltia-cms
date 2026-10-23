@@ -15,7 +15,13 @@ import { updateListFieldForLocales } from '$lib/services/contents/draft/update/l
 import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
 import { renameIfNeeded } from '$lib/services/utils/file';
-import { isWorkflowDraft, isWorkflowEnabled } from '$lib/services/workflow';
+import {
+  getCompanionEntries,
+  getUnpublishedEntryByBranch,
+  getUnpublishedEntryByDraft,
+  isWorkflowDraft,
+  isWorkflowEnabled,
+} from '$lib/services/workflow';
 
 /**
  * @import {
@@ -26,6 +32,7 @@ import { isWorkflowDraft, isWorkflowEnabled } from '$lib/services/workflow';
  * InternalEntryCollection,
  * InternalLocaleCode,
  * PendingEntry,
+ * QuickAddHost,
  * } from '$lib/types/private';
  * @import { FieldKeyPath, RelationField } from '$lib/types/public';
  */
@@ -40,40 +47,70 @@ const getPendingEntriesByCollection = (draft, collectionName) =>
   draft.pendingEntries.filter((pendingEntry) => pendingEntry.collectionName === collectionName);
 
 /**
+ * Get the entry the pending entries of the given draft are saved along with: the entry being
+ * edited, or, in a quick-add dialog, the one the dialog was opened from, however deeply nested.
+ * @param {EntryDraft} draft Draft.
+ * @returns {QuickAddHost} Host entry.
+ */
+export const getQuickAddHost = (draft) =>
+  draft.quickAddHost ?? {
+    collectionName: draft.collectionName,
+    workflow: isWorkflowDraft(draft),
+    branch: getUnpublishedEntryByDraft(draft)?.workflow.pullRequest.branch,
+  };
+
+/**
+ * Get the entries in the given collection that an earlier save of the host entry has committed to
+ * its pull request, along with it. They aren’t in the collection until the pull request is
+ * published.
+ * @param {EntryDraft} draft Draft.
+ * @param {string} collectionName Collection name.
+ * @returns {Entry[]} Entries.
+ */
+const getHostCompanionEntries = (draft, collectionName) => {
+  const { branch } = getQuickAddHost(draft);
+  const hostEntry = branch ? getUnpublishedEntryByBranch(branch) : undefined;
+
+  return hostEntry ? getCompanionEntries(collectionName, [hostEntry]) : [];
+};
+
+/**
  * Get the collection a Relation field can have a new entry created in, so the entry can be
  * referenced right away. That’s the referenced collection, provided it holds entries that can be
  * created: a file/singleton collection has a fixed set of files, and a reference to one of them
  * points at a list item within the file, so there is nothing to create there. Nor can anything be
  * created in a read-only collection.
  *
- * Nothing is offered while the entry being edited is saved through Editorial Workflow: the new
- * entry would go into the pull request along with it, but a pull request stands for a single entry
- * in the workflow, so the new one would be invisible until the pull request is published. Nor is
- * anything offered when the referenced collection itself is under the workflow, as the new entry
- * would be committed along with the entry being edited, skipping the review the collection asks
- * for.
+ * While the host entry is saved through Editorial Workflow, the new entry goes into its pull
+ * request, where it’s reviewed and published along with it. The pull request stands for the host
+ * entry, so the new one is listed on its card rather than on its own, which only works for an
+ * entry of another collection: one of the same collection couldn’t be told apart from the host.
+ * Otherwise, nothing is offered when the referenced collection is under the workflow, as the new
+ * entry would be committed along with the host entry, skipping the review the collection asks for.
  * @param {object} args Arguments.
  * @param {RelationField} args.fieldConfig Field configuration.
  * @param {EntryDraft} args.draft Draft being edited.
  * @returns {InternalEntryCollection | undefined} Collection, or `undefined` if entries can’t be
  * created for the field.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1112
  */
 export const getCreatableCollection = ({
   fieldConfig: { collection: collectionName, file: fileName },
   draft,
 }) => {
-  if (fileName || isWorkflowDraft(draft)) {
+  if (fileName) {
     return undefined;
   }
 
   const collection = getCollection(collectionName);
 
-  if (
-    collection?._type !== 'entry' ||
-    collection.create === false ||
-    isReadonly({ collection }) ||
-    isWorkflowEnabled(collection)
-  ) {
+  if (collection?._type !== 'entry' || collection.create === false || isReadonly({ collection })) {
+    return undefined;
+  }
+
+  const host = getQuickAddHost(draft);
+
+  if (host.workflow ? collectionName === host.collectionName : isWorkflowEnabled(collection)) {
     return undefined;
   }
 
@@ -90,16 +127,23 @@ export const getCreatableCollection = ({
  */
 export const hasCreationRoom = ({ collection, draft }) => {
   const { name, limit = Infinity } = collection;
-
   // The entries only existing in a pull request take up a slot as well, while the collection’s
   // index file, its own page rather than one of the entries in it, doesn’t — see
-  // `countQuotaEntries()`
-  return countQuotaEntries(name) + getPendingEntriesByCollection(draft, name).length < limit;
+  // `countQuotaEntries()`. That includes the new entries riding along in one, which a pending entry
+  // becomes once the draft is saved, while the editor may stay open on the draft
+  const companionIds = new Set(getCompanionEntries(name).map(({ id }) => id));
+
+  const pendingCount = getPendingEntriesByCollection(draft, name).filter(
+    ({ entry }) => !companionIds.has(entry.id),
+  ).length;
+
+  return countQuotaEntries(name) + pendingCount < limit;
 };
 
 /**
  * Get the pending entries of the draft that the given Relation field can refer to, in the shape of
- * the entries the field is offered otherwise.
+ * the entries the field is offered otherwise, followed by the entries an earlier save of the host
+ * entry has committed to its pull request.
  * @param {object} args Arguments.
  * @param {EntryDraft | null | undefined} args.draft Draft being edited.
  * @param {RelationField} args.fieldConfig Field configuration.
@@ -117,11 +161,22 @@ export const getPendingRefEntries = ({
     return [];
   }
 
-  const refEntryIds = new Set(refEntries.map(({ id }) => id));
+  // A pending entry becomes one riding along in the pull request once the draft is saved, while the
+  // editor may stay open on the draft, so each entry is only offered once
+  const seenIds = new Set(refEntries.map(({ id }) => id));
 
-  return getPendingEntriesByCollection(draft, collectionName)
-    .map(({ entry }) => entry)
-    .filter(({ id }) => !refEntryIds.has(id));
+  return [
+    ...getPendingEntriesByCollection(draft, collectionName).map(({ entry }) => entry),
+    ...getHostCompanionEntries(draft, collectionName),
+  ].filter(({ id }) => {
+    if (seenIds.has(id)) {
+      return false;
+    }
+
+    seenIds.add(id);
+
+    return true;
+  });
 };
 
 /**
@@ -156,9 +211,11 @@ export const getPendingEntrySlugs = ({ draft, parentDraft }) => {
   const slugs = getSlugs({ draft, pendingEntries: parentDraft.pendingEntries });
   const { defaultLocaleSlug, localizedSlugs } = slugs;
 
-  const pendingSlugs = getPendingEntriesByCollection(parentDraft, draft.collectionName).map(
-    ({ entry }) => entry.slug,
-  );
+  // The entries riding along in a pull request, this one’s or another’s, aren’t there either
+  const pendingSlugs = [
+    ...getPendingEntriesByCollection(parentDraft, draft.collectionName).map(({ entry }) => entry),
+    ...getCompanionEntries(draft.collectionName),
+  ].map(({ slug }) => slug);
 
   if (renameIfNeeded(defaultLocaleSlug, pendingSlugs) === defaultLocaleSlug) {
     return slugs;

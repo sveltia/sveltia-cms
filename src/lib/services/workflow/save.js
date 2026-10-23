@@ -42,6 +42,7 @@ import { pinReviewedHead, verifyMergeState } from '$lib/services/workflow/verify
  * Asset,
  * CascadeTarget,
  * ChangeResults,
+ * CompanionEntry,
  * Entry,
  * FileChange,
  * CommitOptions,
@@ -90,6 +91,20 @@ const getEventHookArgs = (entry) => {
     collectionFile: fileName ? getCollectionFile(collection, fileName) : undefined,
   };
 };
+
+/**
+ * Resolve the arguments the event hooks need for the new entries that ride along in the pull
+ * request of the given unpublished entry, which are published with it. An entry whose collection
+ * is no longer configured has no hook to call.
+ * @param {UnpublishedEntry} entry Unpublished entry.
+ * @returns {{ entry: Entry, collection: InternalCollection }[]} Arguments for each entry.
+ */
+const getCompanionHookArgs = (entry) =>
+  (entry.workflow.companions ?? []).flatMap(({ collectionName, entry: companion }) => {
+    const collection = getCollection(collectionName);
+
+    return collection ? [{ entry: companion, collection }] : [];
+  });
 
 /**
  * Find the pull request an entry’s changes belong to, and the branch they go to. The branch name is
@@ -161,13 +176,24 @@ export const removeUnpublishedEntry = (branch) => {
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {string[]} args.previousPaths Paths the entry occupied before the pull request.
+ * @param {CompanionEntry[]} args.companions New entries of other collections in the pull request.
  * @returns {UnpublishedEntry} Unpublished entry.
  */
-const storeUnpublishedEntry = (entry, { pullRequest, collectionName, fileName, previousPaths }) => {
+const storeUnpublishedEntry = (
+  entry,
+  { pullRequest, collectionName, fileName, previousPaths, companions },
+) => {
   /** @type {UnpublishedEntry} */
   const unpublishedEntry = {
     ...entry,
-    workflow: { pullRequest, status: pullRequest.status, collectionName, fileName, previousPaths },
+    workflow: {
+      pullRequest,
+      status: pullRequest.status,
+      collectionName,
+      fileName,
+      previousPaths,
+      ...(companions.length ? { companions } : {}),
+    },
   };
 
   upsertUnpublishedEntry(unpublishedEntry);
@@ -231,18 +257,41 @@ const settlePublishedEntry = (
   { deletion = false, cascadedEntries = new Map(), removedPaths = new Set() } = {},
 ) => {
   const { workflow, ...publishedEntry } = entry;
+  // The new entries that rode along in the pull request are published with the entry
+  const companionEntries = deletion ? [] : (workflow.companions ?? []).map(({ entry: e }) => e);
+
   // Include the pre-rename paths, so the entry that the pull request renamed is replaced rather
   // than left behind as a duplicate
-  const paths = new Set(getEntryPaths(entry, { includePrevious: true }));
+  const paths = new Set(
+    [publishedEntry, ...companionEntries].flatMap((e) =>
+      getEntryPaths(e, { includePrevious: true }),
+    ),
+  );
 
   const remaining = allEntries.current
     .filter((e) => !Object.values(e.locales).some(({ path }) => paths.has(path)))
     .map((e) => cascadedEntries.get(e.id) ?? e);
 
-  allEntries.current = deletion ? remaining : [...remaining, publishedEntry];
+  allEntries.current = deletion ? remaining : [...remaining, publishedEntry, ...companionEntries];
 
   clearUnpublishedEntry(workflow.pullRequest, publishWorkflowAssets);
   removePublishedAssets(removedPaths);
+};
+
+/**
+ * Add the given new entries to the ones an earlier save has committed to the pull request, which
+ * are still on the branch. An entry committed again replaces its earlier version.
+ * @param {CompanionEntry[]} existing Entries already in the pull request.
+ * @param {CompanionEntry[]} added Entries committed now.
+ * @returns {CompanionEntry[]} Entries.
+ */
+const mergeCompanions = (existing, added) => {
+  const addedPaths = new Set(added.flatMap(({ entry }) => getEntryPaths(entry)));
+
+  return [
+    ...existing.filter(({ entry }) => !getEntryPaths(entry).some((path) => addedPaths.has(path))),
+    ...added,
+  ];
 };
 
 /**
@@ -258,6 +307,8 @@ const settlePublishedEntry = (
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {string} args.slug Entry slug used for the workflow branch name.
  * @param {Entry} [args.originalEntry] Entry being edited, before the changes.
+ * @param {CompanionEntry[]} [args.companions] New entries of other collections created from a
+ * Relation field of the entry, whose changes are among the ones to be committed.
  * @returns {Promise<ChangeResults>} Change results.
  */
 export const saveWorkflowChanges = async ({
@@ -269,6 +320,7 @@ export const saveWorkflowChanges = async ({
   fileName,
   slug,
   originalEntry,
+  companions = [],
 }) => {
   const workflow = getWorkflowService();
   // The message the user enters goes into the title of a new pull request as well as the commit
@@ -330,6 +382,7 @@ export const saveWorkflowChanges = async ({
       collectionName,
       fileName,
       previousPaths,
+      companions: mergeCompanions(existingEntry?.workflow.companions ?? [], companions),
     },
   );
 
@@ -406,6 +459,8 @@ const mergeWorkflowEntry = async (entry) => {
   let { pullRequest } = entry.workflow;
   const deletion = status === 'pending_deletion';
   const hookArgs = getEventHookArgs(entry);
+  // A removal has taken any new entry off the branch along with it; see `deleteWorkflowEntry()`
+  const companionHookArgs = deletion ? [] : getCompanionHookArgs(entry);
 
   // Merging a removal is what takes the entry off the configured branch, so that’s when the
   // unpublish hooks fire. Nothing is being published, so the publish hooks don’t apply
@@ -423,6 +478,8 @@ const mergeWorkflowEntry = async (entry) => {
   if (hookArgs) {
     await callEventHooks({ ...hookArgs, type: preType });
   }
+
+  await Promise.all(companionHookArgs.map((args) => callEventHooks({ ...args, type: preType })));
 
   // An entry in the drafting stage is kept as a draft pull request, which the Git service refuses
   // to merge. It’s published from there with Preview Workflow or direct publishing, so it’s marked
@@ -473,6 +530,8 @@ const mergeWorkflowEntry = async (entry) => {
   if (hookArgs) {
     await callEventHooks({ ...hookArgs, type: postType });
   }
+
+  await Promise.all(companionHookArgs.map((args) => callEventHooks({ ...args, type: postType })));
 };
 
 /**
@@ -603,6 +662,14 @@ export const deleteWorkflowEntry = async (
   // An entry-relative asset lives with the entry, so it goes in the same pull request rather than
   // being left behind once the removal lands
   const assetPaths = unique(assets.map(({ path }) => path));
+
+  // A reused pull request may hold new entries created from a Relation field of the entry, which
+  // would otherwise be published along with the removal. They have never been published, so taking
+  // them off the branch is all it takes
+  const companionPaths = (existingEntry?.workflow.companions ?? []).flatMap(({ entry: e }) =>
+    getEntryPaths(e),
+  );
+
   // The references are removed from the published entries as they stand on the configured branch,
   // which is where the pull request will land
   const { changes: cascadeChanges } = await buildCascadeDeleteChanges({ targets });
@@ -611,7 +678,7 @@ export const deleteWorkflowEntry = async (
   // the pending changes away with no way back if opening the replacement then failed
   const { commit, pullRequest } = await workflow.savePullRequest({
     changes: [
-      ...[...paths, ...assetPaths].map(
+      ...[...paths, ...assetPaths, ...companionPaths].map(
         (path) => /** @type {FileChange} */ ({ action: 'delete', slug, path }),
       ),
       ...cascadeChanges,
@@ -638,6 +705,7 @@ export const deleteWorkflowEntry = async (
       fileName: collectionFile?.name,
       // Where the entry lives on the configured branch, which a rename has already moved away from
       previousPaths: getPreviousPaths(existingEntry, paths),
+      companions: [],
     });
 
   if (pullRequest.status === 'pending_deletion') {
