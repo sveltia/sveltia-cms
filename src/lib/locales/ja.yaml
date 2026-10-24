@@ -2569,7 +2569,7 @@ prefs:
       not_ready: 現在、変更をコミットできません。{$reason}
     deploy_hook:
       title: デプロイフック
-      description: 「変更を公開」を選択して手動でデプロイを実行する際に呼び出すウェブフック URL を入力してください。GitHub Actions を使用する場合は空欄のままで構いません。
+      description: 「変更を公開」を選択して手動でデプロイを実行する際に呼び出すウェブフック URL を入力してください。GitHub Actions または GitLab CI/CD を使用する場合は空欄のままで構いません。
       # Hook URL input
       url:
         field_label: フック URL

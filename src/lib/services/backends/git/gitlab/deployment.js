@@ -56,6 +56,21 @@ const DEPLOYMENT_STATUS_MAP = {
 };
 
 /**
+ * Manually trigger a deployment by creating a pipeline on the configured branch. Unlike a push
+ * pipeline, one created through the API runs even when the head commit message has `[skip ci]`.
+ * @returns {Promise<Response>} Response.
+ * @see https://docs.gitlab.com/api/pipelines/#create-a-new-pipeline
+ */
+export const triggerDeployment = async () =>
+  /** @type {Promise<Response>} */ (
+    fetchAPI(`/projects/${getProjectId()}/pipeline`, {
+      method: 'POST',
+      body: { ref: repository.branch },
+      responseType: 'raw',
+    })
+  );
+
+/**
  * Fetch the head commit of the configured branch, which is the commit the production site is built
  * from.
  * @returns {Promise<string | undefined>} Commit SHA, or `undefined` if it couldn’t be resolved.

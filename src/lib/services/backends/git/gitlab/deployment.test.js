@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { fetchBranchHeadSHA, fetchDeployments } from '$lib/services/backends/git/gitlab/deployment';
+import {
+  fetchBranchHeadSHA,
+  fetchDeployments,
+  triggerDeployment,
+} from '$lib/services/backends/git/gitlab/deployment';
 import { repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
@@ -35,6 +39,28 @@ describe('GitLab deployment service', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitlab' } });
+  });
+
+  describe('triggerDeployment', () => {
+    test('creates a pipeline on the configured branch', async () => {
+      const mockResponse = { status: 201, ok: true };
+
+      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+
+      await expect(triggerDeployment()).resolves.toBe(mockResponse);
+
+      expect(fetchAPI).toHaveBeenCalledWith(`/projects/${PROJECT_ID}/pipeline`, {
+        method: 'POST',
+        body: { ref: 'main' },
+        responseType: 'raw',
+      });
+    });
+
+    test('propagates API errors', async () => {
+      vi.mocked(fetchAPI).mockRejectedValue(new Error('API Error'));
+
+      await expect(triggerDeployment()).rejects.toThrow('API Error');
+    });
   });
 
   describe('fetchBranchHeadSHA', () => {

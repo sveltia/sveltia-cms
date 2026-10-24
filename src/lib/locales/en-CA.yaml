@@ -2671,7 +2671,7 @@ prefs:
       not_ready: Changes can’t be committed right now. {$reason}
     deploy_hook:
       title: Deploy Hook
-      description: Enter a webhook URL to be called when you manually trigger a deployment by selecting Publish Changes. This can be left blank if you’re using GitHub Actions.
+      description: Enter a webhook URL to be called when you manually trigger a deployment by selecting Publish Changes. This can be left blank if you’re using GitHub Actions or GitLab CI/CD.
       # Hook URL input
       url:
         field_label: Hook URL
