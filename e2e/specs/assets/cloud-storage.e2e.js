@@ -606,6 +606,30 @@ test.describe('Uploadcare', () => {
     );
   });
 
+  test('uploads an image to a project on its own CDN subdomain', async ({ page }) => {
+    // Newer projects serve their files from a subdomain, which the upload response doesn’t tell
+    uploadcare.cdnOrigin = 'https://e2e.ucarecd.net';
+
+    const { cover, dialog } = await openSelectImageDialog(page, 'Uploadcare');
+
+    await enterCredential(dialog, 'Uploadcare', uploadcare.secretKey);
+
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      dialog.getByRole('button', { name: 'Upload' }).click(),
+    ]);
+
+    await chooser.setFiles({ name: 'kite.png', mimeType: 'image/png', buffer: KITE });
+    await expect(dialog.getByRole('option', { name: 'kite.png' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await dialog.getByRole('button', { name: 'Insert' }).click();
+    await expect(cover.getByRole('textbox', { name: 'Cover' })).toHaveText(
+      `https://e2e.ucarecd.net/${uploadcare.files[1].uuid}/`,
+    );
+  });
+
   test('deletes a file in the asset library', async ({ page }) => {
     await page.getByRole('radio', { name: 'Assets' }).click();
     await page.getByRole('option', { name: /^Uploadcare/ }).click();

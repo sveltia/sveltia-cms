@@ -33,6 +33,13 @@ export class MockUploadcare {
   secretKey = '0123456789abcdef0123';
 
   /**
+   * Origin of the CDN the project serves its files from: the legacy one by default, or a subdomain
+   * of its own, like `https://e2e.ucarecd.net`, which newer projects have. Both are served, so it
+   * can be changed after the mock has been installed.
+   */
+  cdnOrigin = 'https://ucarecdn.com';
+
+  /**
    * Stored files, the latest upload last.
    * @type {UploadcareFile[]}
    */
@@ -68,6 +75,24 @@ export class MockUploadcare {
     await context.route('https://api.uploadcare.com/files/**', (route) => this.handleREST(route));
     await context.route('https://upload.uploadcare.com/base/', (route) => this.handleUpload(route));
     await context.route('https://ucarecdn.com/**', (route) => this.handleCDN(route));
+    await context.route('https://*.ucarecd.net/**', (route) => this.handleCDN(route));
+  }
+
+  /**
+   * Describe a file the way the REST API does.
+   * @param {UploadcareFile} file File.
+   * @returns {Record<string, any>} File info.
+   */
+  getFileInfo({ uuid, name, mimeType, body, uploaded }) {
+    return {
+      uuid,
+      original_filename: name,
+      original_file_url: `${this.cdnOrigin}/${uuid}/${name}`,
+      mime_type: mimeType,
+      is_image: mimeType.startsWith('image/'),
+      size: body.length,
+      datetime_uploaded: uploaded.toISOString(),
+    };
   }
 
   /**
@@ -82,7 +107,8 @@ export class MockUploadcare {
   }
 
   /**
-   * Answer a request to the REST API: list the files, or remove some from the storage.
+   * Answer a request to the REST API: list the files, describe one, or remove some from the
+   * storage.
    * @param {Route} route Route.
    */
   async handleREST(route) {
@@ -104,17 +130,17 @@ export class MockUploadcare {
       await fulfill(route, {
         json: {
           next: null,
-          results: [...this.files].reverse().map(({ uuid, name, mimeType, body, uploaded }) => ({
-            uuid,
-            original_filename: name,
-            original_file_url: `https://ucarecdn.com/${uuid}/${name}`,
-            mime_type: mimeType,
-            is_image: mimeType.startsWith('image/'),
-            size: body.length,
-            datetime_uploaded: uploaded.toISOString(),
-          })),
+          results: [...this.files].reverse().map((file) => this.getFileInfo(file)),
         },
       });
+
+      return;
+    }
+
+    const file = method === 'GET' && this.files.find(({ uuid }) => pathname === `/files/${uuid}/`);
+
+    if (file) {
+      await fulfill(route, { json: this.getFileInfo(file) });
 
       return;
     }
