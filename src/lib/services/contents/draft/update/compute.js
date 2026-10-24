@@ -2,7 +2,7 @@ import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svel
 import { getListItemIndexes, indexListItems } from '$lib/services/contents/entry/content-index';
 import { getComputedValue } from '$lib/services/contents/fields/compute/helpers';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
-import { someSubField } from '$lib/services/contents/fields/list/subfields';
+import { getFlatSubFields, someSubField } from '$lib/services/contents/fields/list/subfields';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
@@ -20,8 +20,6 @@ import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
  * ComputeField,
  * Field,
  * FieldKeyPath,
- * FieldWithSubFields,
- * FieldWithTypes,
  * ListField,
  * ListFieldWithSubField,
  * } from '$lib/types/public';
@@ -44,26 +42,6 @@ import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
  * costs no scan at all.
  * @property {ComputeFieldInfo[]} results Collected fields, appended to in place.
  */
-
-/**
- * Get the sub-fields of an Object field or list item, resolving the variable type against the type
- * name stored in the content when the field has the `types` option.
- * @param {Field} field Field configuration.
- * @param {FlattenedEntryContent} valueMap Flattened entry content.
- * @param {FieldKeyPath} keyPath Key path of the object or list item.
- * @returns {Field[]} Sub-fields, or an empty array if the field holds none.
- */
-const getSubFields = (field, valueMap, keyPath) => {
-  const { fields } = /** @type {FieldWithSubFields} */ (field);
-
-  if (fields) {
-    return fields;
-  }
-
-  const { types, typeKey = 'type' } = /** @type {FieldWithTypes} */ (field);
-
-  return types?.find(({ name }) => name === valueMap[`${keyPath}.${typeKey}`])?.fields ?? [];
-};
 
 /**
  * Cache of {@link containsComputeField} results, keyed by the field configuration. Configurations
@@ -109,7 +87,7 @@ const collectFromField = (args) => {
       return;
     }
 
-    getSubFields(field, valueMap, keyPath).forEach((subField) => {
+    (getFlatSubFields(field, valueMap, keyPath) ?? []).forEach((subField) => {
       collectFromField({ ...args, field: subField, keyPath: `${keyPath}.${subField.name}` });
     });
 
@@ -136,7 +114,7 @@ const collectFromField = (args) => {
       return;
     }
 
-    getSubFields(listField, valueMap, itemKeyPath).forEach((subField) => {
+    (getFlatSubFields(listField, valueMap, itemKeyPath) ?? []).forEach((subField) => {
       collectFromField({ ...args, field: subField, keyPath: `${itemKeyPath}.${subField.name}` });
     });
   });

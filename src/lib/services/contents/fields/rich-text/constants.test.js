@@ -2,12 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import { countMatches, expectLinearTime } from '$lib/test/complexity';
 
-import {
-  GLOBAL_IMAGE_REGEX,
-  IMAGE_OR_LINKED_IMAGE_REGEX,
-  IMAGE_REGEX,
-  LINKED_IMAGE_REGEX,
-} from './constants.js';
+import { IMAGE_OR_LINKED_IMAGE_REGEX, IMAGE_REGEX, LINKED_IMAGE_REGEX } from './constants.js';
 
 describe('Test IMAGE_REGEX', () => {
   test('matches simple image markdown syntax', () => {
@@ -237,7 +232,9 @@ describe('Test regex basic functionality', () => {
   });
 });
 
-describe('Test GLOBAL_IMAGE_REGEX', () => {
+describe('Test IMAGE_REGEX with the global flag', () => {
+  const GLOBAL_IMAGE_REGEX = new RegExp(IMAGE_REGEX, 'g');
+
   test('matches multiple images in a single string', () => {
     const markdown = `
 Here is the first image: ![first](image1.jpg)
@@ -487,12 +484,12 @@ describe('Test image regex performance and nesting', () => {
       ['linked image starts', (n) => '[![](a)]('.repeat(n), 1000],
     ]),
   )('matches in linear time: %s', (_name, build, size) => {
+    const globalImageRegex = new RegExp(IMAGE_REGEX, 'g');
     const globalRegex = new RegExp(IMAGE_OR_LINKED_IMAGE_REGEX, 'g');
 
     expectLinearTime(
       build,
-      (markdown) =>
-        countMatches(markdown, GLOBAL_IMAGE_REGEX) + countMatches(markdown, globalRegex),
+      (markdown) => countMatches(markdown, globalImageRegex) + countMatches(markdown, globalRegex),
       size,
     );
   });

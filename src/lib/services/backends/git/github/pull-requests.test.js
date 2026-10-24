@@ -8,7 +8,6 @@ import {
   fetchPullRequestFileList,
   fetchPullRequestFiles,
   parseFileNodes,
-  parseRestFiles,
   updateDraftState,
   updateLabels,
 } from '$lib/services/backends/git/github/pull-requests';
@@ -60,22 +59,6 @@ describe('GitHub pull request helpers', () => {
         { path: 'b.md', sha: '', size: 0, deleted: false, renamed: false },
         { path: 'c.md', sha: '', size: 0, deleted: true, renamed: false },
         { path: 'd.md', sha: '', size: 0, deleted: false, renamed: true },
-      ]);
-    });
-  });
-
-  describe('parseRestFiles', () => {
-    test('converts the REST files to workflow files with the previous path of a rename', () => {
-      expect(
-        parseRestFiles([
-          { filename: 'a.md', status: 'added', patch: '@@' },
-          { filename: 'b.md', status: 'removed' },
-          { filename: 'new.md', status: 'renamed', previous_filename: 'old.md' },
-        ]),
-      ).toEqual([
-        { path: 'a.md', sha: '', size: 0, deleted: false, previousPath: undefined },
-        { path: 'b.md', sha: '', size: 0, deleted: true, previousPath: undefined },
-        { path: 'new.md', sha: '', size: 0, deleted: false, previousPath: 'old.md' },
       ]);
     });
   });

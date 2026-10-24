@@ -16,6 +16,7 @@ import {
 } from '$lib/services/backends/git/github/fork';
 import { fetchDefaultBranchName, repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { NOT_COLLABORATOR_ERROR_MESSAGE } from '$lib/services/backends/git/shared/errors';
 import { cmsConfig } from '$lib/services/config';
 import { user } from '$lib/services/user/account.svelte';
 import {
@@ -56,6 +57,12 @@ const createResponse = (ok, body = {}, { status = undefined, headers = {} } = {}
    */
   json: async () => body,
 });
+
+/**
+ * Create the error the API client throws for a request answered with `404 Not Found`.
+ * @returns {Error} Error.
+ */
+const createNotFoundError = () => new Error('Not Found', { cause: { status: 404 } });
 
 describe('GitHub fork service', () => {
   beforeEach(() => {
@@ -198,7 +205,7 @@ describe('GitHub fork service', () => {
           : createResponse(false, {}, { status: 404, headers: { 'x-oauth-scopes': 'repo, user' } }),
       );
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow('No access to the repository');
+      await expect(fetchRepositoryAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
       expect(_).toHaveBeenCalledWith('repository_no_access', expect.any(Object));
     });
 
@@ -209,7 +216,7 @@ describe('GitHub fork service', () => {
           : createResponse(false, {}, { status: 404 }),
       );
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow('No access to the repository');
+      await expect(fetchRepositoryAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
 
       expect(_).toHaveBeenCalledWith(
         'open_authoring.invitation_pending',
@@ -230,7 +237,7 @@ describe('GitHub fork service', () => {
             ),
       );
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow('No access to the repository');
+      await expect(fetchRepositoryAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
       expect(_).toHaveBeenCalledWith(
         'open_authoring.private_repo_scope_required',
         expect.any(Object),
@@ -243,7 +250,7 @@ describe('GitHub fork service', () => {
         path === '/user/repository_invitations' ? [] : createResponse(false, {}, { status: 404 }),
       );
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow('No access to the repository');
+      await expect(fetchRepositoryAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
       expect(_).toHaveBeenCalledWith('repository_no_access', expect.any(Object));
     });
 
@@ -297,54 +304,63 @@ describe('GitHub fork service', () => {
   describe('fetchForkByName', () => {
     test('ignores a fork that has been transferred to someone else', async () => {
       // GitHub redirects the old location of a transferred repository to the new one
-      vi.mocked(fetchAPI).mockResolvedValue(
-        createResponse(true, {
-          fork: true,
-          full_name: 'some-org/repo',
-          owner: { login: 'some-org' },
-          parent: { full_name: 'Owner/Repo' },
-        }),
-      );
+      vi.mocked(fetchAPI).mockResolvedValue({
+        fork: true,
+        full_name: 'some-org/repo',
+        owner: { login: 'some-org' },
+        parent: { full_name: 'Owner/Repo' },
+      });
 
       await expect(fetchForkByName()).resolves.toBeUndefined();
     });
 
     test('finds the fork on the user’s account', async () => {
-      vi.mocked(fetchAPI).mockResolvedValue(
-        createResponse(true, {
-          fork: true,
-          full_name: 'contributor/repo',
-          owner: { login: 'contributor' },
-          parent: { full_name: 'Owner/Repo' },
-        }),
-      );
+      vi.mocked(fetchAPI).mockResolvedValue({
+        fork: true,
+        full_name: 'contributor/repo',
+        owner: { login: 'contributor' },
+        parent: { full_name: 'Owner/Repo' },
+      });
 
       await expect(fetchForkByName()).resolves.toEqual({ owner: 'contributor', repo: 'repo' });
       expect(fetchAPI).toHaveBeenCalledWith('/repos/contributor/repo', expect.any(Object));
     });
 
     test('returns nothing when there is no such repository', async () => {
-      vi.mocked(fetchAPI).mockResolvedValue(createResponse(false));
+      vi.mocked(fetchAPI).mockRejectedValue(createNotFoundError());
       await expect(fetchForkByName()).resolves.toBeUndefined();
     });
 
     test('ignores a repository that isn’t a fork of the configured one', async () => {
-      vi.mocked(fetchAPI).mockResolvedValue(
-        createResponse(true, { fork: false, full_name: 'contributor/repo' }),
-      );
+      vi.mocked(fetchAPI).mockResolvedValue({ fork: false, full_name: 'contributor/repo' });
 
       await expect(fetchForkByName()).resolves.toBeUndefined();
 
-      vi.mocked(fetchAPI).mockResolvedValue(
-        createResponse(true, {
-          fork: true,
-          full_name: 'contributor/repo',
-          owner: { login: 'contributor' },
-          parent: { full_name: 'someone/else' },
-        }),
-      );
+      vi.mocked(fetchAPI).mockResolvedValue({
+        fork: true,
+        full_name: 'contributor/repo',
+        owner: { login: 'contributor' },
+        parent: { full_name: 'someone/else' },
+      });
 
       await expect(fetchForkByName()).resolves.toBeUndefined();
+    });
+
+    test('passes on a failure other than a missing repository', async () => {
+      // A rate limit or an outage says nothing about whether the fork is there, and reading it as
+      // missing would have the contributor asked to create another one. The API client hands back
+      // a raw response as is, but throws for a failed request of any other type
+      const error = new Error('Service Unavailable', { cause: { status: 503 } });
+
+      vi.mocked(fetchAPI).mockImplementation(async (_path, { responseType } = {}) => {
+        if (responseType === 'raw') {
+          return createResponse(false, {}, { status: 503 });
+        }
+
+        throw error;
+      });
+
+      await expect(fetchForkByName()).rejects.toBe(error);
     });
   });
 
@@ -376,15 +392,21 @@ describe('GitHub fork service', () => {
       await expect(fetchForkFromNetwork()).resolves.toBeUndefined();
     });
 
-    test('returns nothing when there are no forks, or the query fails', async () => {
+    test('returns nothing when there are no forks', async () => {
       vi.mocked(fetchGraphQL).mockResolvedValue({ repository: { forks: { nodes: [] } } });
       await expect(fetchForkFromNetwork()).resolves.toBeUndefined();
 
       vi.mocked(fetchGraphQL).mockResolvedValue({});
       await expect(fetchForkFromNetwork()).resolves.toBeUndefined();
+    });
 
-      vi.mocked(fetchGraphQL).mockRejectedValue(new Error('Bad request'));
-      await expect(fetchForkFromNetwork()).resolves.toBeUndefined();
+    test('passes on a failed query', async () => {
+      // A rate limit or an outage says nothing about whether a renamed fork is there, and reading
+      // it as missing would have the contributor asked to create another one
+      const error = new Error('Service Unavailable', { cause: { status: 503 } });
+
+      vi.mocked(fetchGraphQL).mockRejectedValue(error);
+      await expect(fetchForkFromNetwork()).rejects.toBe(error);
     });
   });
 
@@ -392,7 +414,7 @@ describe('GitHub fork service', () => {
     test('falls back to the network lookup when the conventional name is empty', async () => {
       // GitHub adds a suffix when the name is taken, and forks can be renamed, so the conventional
       // location isn’t always where it is
-      vi.mocked(fetchAPI).mockResolvedValue(createResponse(false, {}, { status: 404 }));
+      vi.mocked(fetchAPI).mockRejectedValue(createNotFoundError());
       vi.mocked(fetchGraphQL).mockResolvedValue({
         repository: {
           forks: {
@@ -405,14 +427,12 @@ describe('GitHub fork service', () => {
     });
 
     test('skips the network lookup when the fork is where it should be', async () => {
-      vi.mocked(fetchAPI).mockResolvedValue(
-        createResponse(true, {
-          fork: true,
-          full_name: 'contributor/repo',
-          owner: { login: 'contributor' },
-          parent: { full_name: 'owner/repo' },
-        }),
-      );
+      vi.mocked(fetchAPI).mockResolvedValue({
+        fork: true,
+        full_name: 'contributor/repo',
+        owner: { login: 'contributor' },
+        parent: { full_name: 'owner/repo' },
+      });
 
       await expect(fetchFork()).resolves.toEqual({ owner: 'contributor', repo: 'repo' });
       expect(fetchGraphQL).not.toHaveBeenCalled();
@@ -499,6 +519,11 @@ describe('GitHub fork service', () => {
   });
 
   describe('initOpenAuthoring', () => {
+    beforeEach(() => {
+      // The contributor has no fork under another name either
+      vi.mocked(fetchGraphQL).mockResolvedValue({ repository: { forks: { nodes: [] } } });
+    });
+
     test('leaves a maintainer on the configured repository', async () => {
       vi.mocked(fetchAPI).mockResolvedValue(
         createResponse(true, { permissions: { push: true }, allow_forking: true }),
@@ -531,14 +556,12 @@ describe('GitHub fork service', () => {
           createResponse(true, { permissions: { push: false }, allow_forking: true }),
         )
         // Fork lookup
-        .mockResolvedValueOnce(
-          createResponse(true, {
-            fork: true,
-            full_name: 'contributor/repo',
-            owner: { login: 'contributor' },
-            parent: { full_name: 'owner/repo' },
-          }),
-        )
+        .mockResolvedValueOnce({
+          fork: true,
+          full_name: 'contributor/repo',
+          owner: { login: 'contributor' },
+          parent: { full_name: 'owner/repo' },
+        })
         // Upstream sync
         .mockResolvedValueOnce(createResponse(true));
 
@@ -567,14 +590,12 @@ describe('GitHub fork service', () => {
         .mockResolvedValueOnce(
           createResponse(true, { permissions: { push: false }, allow_forking: true }),
         )
-        .mockResolvedValueOnce(
-          createResponse(true, {
-            fork: true,
-            full_name: 'contributor/repo',
-            owner: { login: 'contributor' },
-            parent: { full_name: 'owner/repo' },
-          }),
-        )
+        .mockResolvedValueOnce({
+          fork: true,
+          full_name: 'contributor/repo',
+          owner: { login: 'contributor' },
+          parent: { full_name: 'owner/repo' },
+        })
         .mockResolvedValueOnce(createResponse(true));
 
       await initOpenAuthoring();
@@ -596,7 +617,7 @@ describe('GitHub fork service', () => {
           createResponse(true, { permissions: { push: false }, allow_forking: true }),
         )
         // Fork lookup
-        .mockResolvedValueOnce(createResponse(false))
+        .mockRejectedValueOnce(createNotFoundError())
         // Fork creation
         .mockResolvedValueOnce({ full_name: 'contributor/repo' })
         // Polling
@@ -616,7 +637,7 @@ describe('GitHub fork service', () => {
           createResponse(true, { permissions: { push: false }, allow_forking: false }),
         )
         // Fork lookup
-        .mockResolvedValueOnce(createResponse(false, {}, { status: 404 }));
+        .mockRejectedValueOnce(createNotFoundError());
 
       await expect(initOpenAuthoring()).rejects.toThrow('The repository does not allow forking');
 
@@ -631,7 +652,7 @@ describe('GitHub fork service', () => {
         .mockResolvedValueOnce(
           createResponse(true, { permissions: { push: false }, allow_forking: true }),
         )
-        .mockResolvedValueOnce(createResponse(false));
+        .mockRejectedValueOnce(createNotFoundError());
 
       await expect(initOpenAuthoring()).rejects.toThrow(
         'Permission to fork the repository was declined',

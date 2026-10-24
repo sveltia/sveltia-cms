@@ -79,7 +79,6 @@ const flush = async () => {
 };
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
-  LIST_KEY_PATH_REGEX: /\.\d+$/,
   getField: vi.fn(),
 }));
 

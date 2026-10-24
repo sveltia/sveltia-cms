@@ -49,7 +49,6 @@ vi.mock('$lib/services/contents/entry/fields', async (importOriginal) => ({
   getDraftFieldArgs: /** @type {typeof import('$lib/services/contents/entry/fields')} */ (
     await importOriginal()
   ).getDraftFieldArgs,
-  LIST_KEY_PATH_REGEX: /\.\d+$/,
   getField: vi.fn(),
   getFieldKind: vi.fn(() => 'builtin'),
   isFieldMultiple: vi.fn(() => false),

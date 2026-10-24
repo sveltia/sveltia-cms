@@ -5,6 +5,7 @@ import {
   repository,
 } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import {
   createLocalizedError,
   createNoAccessError,
@@ -106,15 +107,16 @@ export const fetchForkByName = async () => {
   const { owner, repo } = repository;
   const userName = /** @type {string} */ (user.account?.login);
 
-  const response = /** @type {Response} */ (
-    await fetchAPI(`/repos/${encodeURIComponent(userName)}/${repo}`, { responseType: 'raw' })
+  // Only a missing repository means there’s no fork at the name. Reading a rate limit or an outage
+  // the same way would have the contributor asked to create another one, so that is passed on
+  const result = /** @type {Record<string, any> | undefined} */ (
+    await fetchAPIOrUndefined(`/repos/${encodeURIComponent(userName)}/${repo}`)
   );
 
-  if (!response.ok) {
+  if (!result) {
     return undefined;
   }
 
-  const result = await response.json();
   const parent = result.parent?.full_name?.toLowerCase();
 
   if (!result.fork || parent !== `${owner}/${repo}`.toLowerCase()) {
@@ -133,8 +135,8 @@ export const fetchForkByName = async () => {
 
 /**
  * Look through the forks the signed-in user owns for one of the configured repository, wherever
- * it’s named. This only runs when {@link fetchForkByName} came up empty, so its worst case is the
- * behavior without it: no fork found, and the contributor asked whether to make one.
+ * it’s named. This only runs when {@link fetchForkByName} came up empty. A failed search is passed
+ * on rather than taken for no fork, which would have the contributor asked to create another one.
  * @returns {Promise<RepositoryPath | undefined>} The fork, or `undefined` if there is none.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoSearch
  */
@@ -144,22 +146,18 @@ export const fetchForkBySearch = async () => {
   const { id, login } = /** @type {User} */ (user.account);
   const repoPath = `${owner}/${repo}`.toLowerCase();
 
-  try {
-    const { data = [] } = /** @type {{ data?: Record<string, any>[] }} */ (
-      await fetchAPI(`/repos/search?uid=${id}&exclusive=true&mode=fork&limit=${MAX_FORKS}`)
-    );
+  const { data = [] } = /** @type {{ data?: Record<string, any>[] }} */ (
+    await fetchAPI(`/repos/search?uid=${id}&exclusive=true&mode=fork&limit=${MAX_FORKS}`)
+  );
 
-    const result = data.find(
-      (item) =>
-        // Check the owner rather than trusting the filter to have applied: committing to someone
-        // else’s fork would fail in a way that’s hard to make sense of
-        item.owner?.login === login && item.parent?.full_name?.toLowerCase() === repoPath,
-    );
+  const result = data.find(
+    (item) =>
+      // Check the owner rather than trusting the filter to have applied: committing to someone
+      // else’s fork would fail in a way that’s hard to make sense of
+      item.owner?.login === login && item.parent?.full_name?.toLowerCase() === repoPath,
+  );
 
-    return result ? toRepositoryPath(result) : undefined;
-  } catch {
-    return undefined;
-  }
+  return result ? toRepositoryPath(result) : undefined;
 };
 
 /**

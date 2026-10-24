@@ -497,7 +497,7 @@ describe('draft/validate/fields', () => {
     });
 
     it('should validate list items when list field has subfields (line 398 else branch)', async () => {
-      // A keyPath ending in '.\d+' (matching LIST_KEY_PATH_REGEX) triggers validateList.
+      // A keyPath ending in '.\d+' (matching ITEM_INDEX_SUFFIX_REGEX) triggers validateList.
       // When getListFieldInfo.hasSubFields=true and the field is not multiple,
       // validateList returns { validateItems: true } → `if (!validateItems)` false branch taken.
       mockEntryDraft.currentValues = {

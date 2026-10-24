@@ -9,7 +9,6 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
 }));
 vi.mock('$lib/services/contents/entry/fields', () => ({
-  LIST_KEY_PATH_REGEX: /\.\d+$/,
   getField: vi.fn(() => null),
 }));
 vi.mock('$lib/services/contents/entry/summary', () => ({

@@ -26,10 +26,10 @@ import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
 import {
   assertBranchAtHead,
   commitToNewWorkflowBranch,
-  getMovedHeadMergeState,
   getParentDirs,
   isPullRequestMerged,
   isSquashMergeEnabled,
+  resolveMergeState,
   saveWorkflowBranch,
   toChangedFilesWithModes,
   updateLabelledStatus,
@@ -360,28 +360,29 @@ export const fetchMergeState = async (pullRequest) => {
   const onConfiguredBranches =
     item.base?.ref === repository.branch && isSameRepositoryPullRequest(item);
 
-  if (!headSHA || !onConfiguredBranches) {
-    return { headSHA, onConfiguredBranches: false, files: [], complete: false };
-  }
-
-  const movedHeadState = getMovedHeadMergeState(pullRequest, headSHA);
-
-  if (movedHeadState) {
-    return movedHeadState;
-  }
-
-  const { files, complete } = await fetchChangedFiles(number, headSHA);
-
-  return {
+  return resolveMergeState({
+    pullRequest,
     headSHA,
     onConfiguredBranches,
-    files: await toChangedFilesWithModes(files, {
-      statusMap: REST_FILE_STATUSES,
-      headSHA,
-      fetchFileModes,
-    }),
-    complete,
-  };
+    /**
+     * List the files the pull request changes at the head commit.
+     * @param {string} sha Head commit.
+     * @returns {Promise<{ files: WorkflowChangedFile[], complete: boolean }>} Files, and whether
+     * the list is complete.
+     */
+    listChangedFiles: async (sha) => {
+      const { files, complete } = await fetchChangedFiles(number, sha);
+
+      return {
+        files: await toChangedFilesWithModes(files, {
+          statusMap: REST_FILE_STATUSES,
+          headSHA: sha,
+          fetchFileModes,
+        }),
+        complete,
+      };
+    },
+  });
 };
 
 /**

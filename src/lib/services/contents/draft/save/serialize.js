@@ -21,6 +21,7 @@ import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { TOML_FORMATS } from '$lib/services/contents/file/constants';
 import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { isNumeric } from '$lib/services/utils/number';
 import {
   hasIndexLikeChildKey,
   isPlainObject,
@@ -185,7 +186,7 @@ const isFieldInLocale = ({ locale, defaultLocale, getFieldArgs }, keyPath) => {
 
   // Skip the list item indexes, which aren’t fields of their own, e.g. `items.0` in `items.0.kv`
   return segments.every((segment, index) => {
-    if (index < segments.length - 1 && /^\d+$/.test(segment)) {
+    if (index < segments.length - 1 && isNumeric(segment)) {
       return true;
     }
 

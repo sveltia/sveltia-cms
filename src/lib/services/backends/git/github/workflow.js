@@ -23,10 +23,11 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
 import {
-  getMovedHeadMergeState,
+  createBranchGoneError,
   getParentDirs,
   isSquashMergeEnabled,
-  openWorkflowPullRequest,
+  resolveMergeState,
+  saveWorkflowBranch,
   toChangedFilesWithModes,
   updateLabelledStatus,
 } from '$lib/services/backends/git/shared/workflow';
@@ -37,7 +38,9 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
+ * CommitOptions,
  * CommitResults,
+ * FileChange,
  * WorkflowPullRequest,
  * WorkflowSaveOptions,
  * WorkflowChangedFile,
@@ -513,59 +516,60 @@ export const withdrawApproval = async (pullRequest) => {
 };
 
 /**
+ * Commit the given changes on a workflow branch that no pull request is known for, creating the
+ * branch from the configured one first.
+ * @param {FileChange[]} changes Changes to be committed.
+ * @param {CommitOptions} options Commit options, with the workflow branch.
+ * @returns {Promise<CommitResults>} Commit results.
+ * @throws {Error} When the branch exists and a pull request is open from it.
+ */
+const commitToNewBranch = async (changes, options) => {
+  const { headOid } = await createBranch(/** @type {string} */ (options.branch));
+
+  return commitChanges(changes, { ...options, headOid });
+};
+
+/**
+ * Commit the given changes onto the branch of an existing pull request, on top of the commit the
+ * entry was loaded or saved at, which the conflict check has just compared with the branch, rather
+ * than whatever the branch points at by the time the commit is made. A commit pushed in between
+ * makes GitHub refuse the save, instead of being taken along unseen and vouched for by the head
+ * recorded afterwards.
+ * @param {FileChange[]} changes Changes to be committed.
+ * @param {CommitOptions} options Commit options, with the workflow branch.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @returns {Promise<CommitResults>} Commit results.
+ */
+const commitToExistingBranch = async (changes, options, pullRequest) => {
+  const { branch = '' } = options;
+
+  try {
+    return await commitChanges(changes, { ...options, headOid: pullRequest.headSHA });
+  } catch (ex) {
+    // The branch can have gone, which GitHub reports as a ref it can’t resolve. A lookup that
+    // fails says nothing about the branch, so GitHub’s error is passed on then
+    const branchGone = await fetchBranchHead(branch).then(
+      (head) => head === undefined,
+      () => false,
+    );
+
+    if (branchGone) {
+      throw createBranchGoneError(branch, getWorkflowRepository());
+    }
+
+    throw ex;
+  }
+};
+
+/**
  * Commit the given changes on the workflow branch, creating the branch and the pull request if they
  * don’t exist yet.
  * @param {WorkflowSaveOptions} args Arguments.
  * @returns {Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} Commit results
  * and the new or updated pull request.
  */
-export const savePullRequest = async ({ changes, options, branch, title, status, pullRequest }) => {
-  // A save onto an existing pull request goes on top of the commit the entry was loaded or saved
-  // at, which the conflict check has just compared with the branch, rather than whatever the branch
-  // points at by the time the commit is made. A commit pushed in between makes GitHub refuse the
-  // save, instead of being taken along unseen and vouched for by the head recorded afterwards
-  const { headOid } = pullRequest ? { headOid: pullRequest.headSHA } : await createBranch(branch);
-  /** @type {CommitResults} */
-  let commit;
-
-  try {
-    commit = await commitChanges(changes, { ...options, branch, headOid });
-  } catch (ex) {
-    // The branch can have gone, e.g. with a pull request merged or closed on GitHub, which is
-    // worth saying in words rather than with GitHub’s message about a ref it can’t resolve. A
-    // lookup that fails says nothing about the branch, so GitHub’s error is passed on then
-    const branchGone =
-      !!pullRequest &&
-      (await fetchBranchHead(branch).then(
-        (head) => head === undefined,
-        () => false,
-      ));
-
-    if (branchGone) {
-      throw createLocalizedError('Failed to save the changes.', 'branch_not_found', {
-        repo: getWorkflowRepository().repo,
-        branch,
-      });
-    }
-
-    throw ex;
-  }
-
-  if (pullRequest) {
-    return { commit, pullRequest };
-  }
-
-  return {
-    commit,
-    pullRequest: await openWorkflowPullRequest({
-      commit,
-      branch,
-      title,
-      status,
-      createPullRequest,
-    }),
-  };
-};
+export const savePullRequest = async (args) =>
+  saveWorkflowBranch(args, { commitToNewBranch, commitToExistingBranch, createPullRequest });
 
 /**
  * Maximum number of files the comparison API lists. A comparison that reaches it may have left
@@ -657,32 +661,33 @@ export const fetchMergeState = async (pullRequest) => {
     base?.repo?.full_name?.toLowerCase() === fullName &&
     head?.repo?.full_name?.toLowerCase() === fullName;
 
-  if (!headSHA || !onConfiguredBranches) {
-    return { headSHA, onConfiguredBranches: false, files: [], complete: false };
-  }
-
-  const movedHeadState = getMovedHeadMergeState(pullRequest, headSHA);
-
-  if (movedHeadState) {
-    return movedHeadState;
-  }
-
-  const encodedBranch = encodePathSegments(/** @type {string} */ (branch));
-
-  const { files = [] } = /** @type {{ files?: Record<string, any>[] }} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/compare/${encodedBranch}...${headSHA}`)
-  );
-
-  return {
+  return resolveMergeState({
+    pullRequest,
     headSHA,
     onConfiguredBranches,
-    files: await toChangedFilesWithModes(files, {
-      statusMap: REST_FILE_STATUSES,
-      headSHA,
-      fetchFileModes,
-    }),
-    complete: files.length < MAX_COMPARE_FILES,
-  };
+    /**
+     * List the files the head commit changes from the configured branch.
+     * @param {string} sha Head commit.
+     * @returns {Promise<{ files: WorkflowChangedFile[], complete: boolean }>} Files, and whether
+     * the comparison listed them all.
+     */
+    listChangedFiles: async (sha) => {
+      const encodedBranch = encodePathSegments(/** @type {string} */ (branch));
+
+      const { files = [] } = /** @type {{ files?: Record<string, any>[] }} */ (
+        await fetchAPI(`/repos/${owner}/${repo}/compare/${encodedBranch}...${sha}`)
+      );
+
+      return {
+        files: await toChangedFilesWithModes(files, {
+          statusMap: REST_FILE_STATUSES,
+          headSHA: sha,
+          fetchFileModes,
+        }),
+        complete: files.length < MAX_COMPARE_FILES,
+      };
+    },
+  });
 };
 
 /**

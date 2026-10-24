@@ -2,7 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Dialog, Spacer, VisibilityObserver } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { onMount, setContext } from 'svelte';
+  import { onMount } from 'svelte';
   import { on } from 'svelte/events';
 
   import Image from '$lib/components/assets/shared/image.svelte';
@@ -17,6 +17,7 @@
   } from '$lib/services/contents/draft/state.svelte';
   import { deferDraftWrite } from '$lib/services/contents/draft/update/deferred';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { setFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
   import {
     getComponentDisplayText,
@@ -102,8 +103,7 @@
    */
   let readonly = $state(false);
 
-  setContext(
-    'field-editor',
+  setFieldEditorContext(
     /** @type {FieldEditorContext} */ ({
       /**
        * Get the names of the components this one is nested in.

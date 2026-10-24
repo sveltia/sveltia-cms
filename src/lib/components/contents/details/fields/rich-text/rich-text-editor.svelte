@@ -12,13 +12,16 @@
     getNearestEditorFromDOMNode,
     $insertNodes as insertNodes,
   } from 'lexical';
-  import { getContext, tick } from 'svelte';
+  import { tick } from 'svelte';
 
   import { EditorComponent } from '$lib/components/contents/details/fields/rich-text/custom-node-features';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
+  import {
+    getFieldEditorContext,
+    isInEditorComponent,
+  } from '$lib/services/contents/editor/field-context';
   import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
   import { getField } from '$lib/services/contents/entry/fields';
   import {
@@ -50,7 +53,7 @@
 
   /**
    * @import { ImageEntry } from '$lib/services/contents/fields/rich-text/images';
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import {
    * EditorComponentDefinition,
    * ImageField,
@@ -69,8 +72,7 @@
 
   const defaultConfig = cmsConfig.current?.field_defaults?.richtext ?? {};
   /* v8 ignore start -- the editor is always rendered within a field editor */
-  /** @type {FieldEditorContext} */
-  const { parentComponentNames, valueStoreKey } = getContext('field-editor') ?? {};
+  const { parentComponentNames, valueStoreKey } = getFieldEditorContext();
   /* v8 ignore stop */
   const inEditorComponent = isInEditorComponent(valueStoreKey);
   const componentName = parentComponentNames.at(-1);

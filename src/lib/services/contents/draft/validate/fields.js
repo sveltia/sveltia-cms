@@ -19,8 +19,8 @@ import {
   getFieldKind,
   isFieldMultiple,
   isFieldRequired,
-  LIST_KEY_PATH_REGEX,
 } from '$lib/services/contents/entry/fields';
+import { ITEM_INDEX_SUFFIX_REGEX } from '$lib/services/contents/entry/key-paths';
 import { MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getCodeField } from '$lib/services/contents/fields/code/validate';
 import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now';
@@ -625,8 +625,8 @@ const validateValueEntry = ({
     }
   });
 
-  const listKeyPath = LIST_KEY_PATH_REGEX.test(keyPath)
-    ? keyPath.replace(LIST_KEY_PATH_REGEX, '')
+  const listKeyPath = ITEM_INDEX_SUFFIX_REGEX.test(keyPath)
+    ? keyPath.replace(ITEM_INDEX_SUFFIX_REGEX, '')
     : undefined;
 
   const listFieldConfig = listKeyPath === undefined ? undefined : getConfig(context, listKeyPath);

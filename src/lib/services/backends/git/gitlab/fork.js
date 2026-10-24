@@ -5,6 +5,7 @@ import {
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import {
   createLocalizedError,
   createNoAccessError,
@@ -137,15 +138,15 @@ export const fetchProjectDetails = async () => {
 export const fetchForkByName = async () => {
   const { owner, repo } = repository;
   const userName = /** @type {string} */ (user.account?.login);
-  /** @type {Record<string, any>} */
-  let result;
 
-  try {
-    result = /** @type {Record<string, any>} */ (
-      await fetchAPI(`/projects/${getProjectId({ owner: userName, repo })}`)
-    );
-  } catch {
-    // The contributor has no project of that name, which is the common case on a first visit
+  // The contributor has no project of that name, which is the common case on a first visit. Only
+  // that means there’s no fork at the path: reading a rate limit or an outage the same way would
+  // have the contributor asked to create another one, so that is passed on
+  const result = /** @type {Record<string, any> | undefined} */ (
+    await fetchAPIOrUndefined(`/projects/${getProjectId({ owner: userName, repo })}`)
+  );
+
+  if (!result) {
     return undefined;
   }
 
@@ -169,35 +170,31 @@ export const fetchForkByName = async () => {
 
 /**
  * Ask the configured project for the fork the signed-in user owns, wherever it’s named. This only
- * runs when {@link fetchForkByName} came up empty, so its worst case is the behavior without it: no
- * fork found, and the contributor asked whether to make one.
+ * runs when {@link fetchForkByName} came up empty. A failure to read the list is passed on rather
+ * than taken for no fork, which would have the contributor asked to create another one.
  * @returns {Promise<RepositoryPath | undefined>} The fork, or `undefined` if there is none.
  * @see https://docs.gitlab.com/api/project_forks/#list-forks-of-a-project
  */
 export const fetchForkFromNetwork = async () => {
   const userName = user.account?.login;
 
-  try {
-    const forks = /** @type {Record<string, any>[]} */ (
-      await fetchAPI(`/projects/${getProjectId()}/forks?owned=true&per_page=${MAX_FORKS}`)
-    );
+  const forks = /** @type {Record<string, any>[]} */ (
+    await fetchAPI(`/projects/${getProjectId()}/forks?owned=true&per_page=${MAX_FORKS}`)
+  );
 
-    // Check the namespace rather than trusting the filter to have applied: committing to a fork in
-    // a group the contributor merely belongs to would put their drafts somewhere unexpected
-    const fork = forks.find(
-      ({ namespace }) => namespace?.kind === 'user' && namespace?.full_path === userName,
-    );
+  // Check the namespace rather than trusting the filter to have applied: committing to a fork in
+  // a group the contributor merely belongs to would put their drafts somewhere unexpected
+  const fork = forks.find(
+    ({ namespace }) => namespace?.kind === 'user' && namespace?.full_path === userName,
+  );
 
-    if (!fork) {
-      return undefined;
-    }
-
-    projectIds.fork = fork.id;
-
-    return parseProjectPath(fork.path_with_namespace);
-  } catch {
+  if (!fork) {
     return undefined;
   }
+
+  projectIds.fork = fork.id;
+
+  return parseProjectPath(fork.path_with_namespace);
 };
 
 /**

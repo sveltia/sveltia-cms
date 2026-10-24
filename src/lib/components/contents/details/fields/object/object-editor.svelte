@@ -7,7 +7,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Checkbox } from '@sveltia/ui';
-  import { getContext, onMount, tick } from 'svelte';
+  import { onMount, tick } from 'svelte';
 
   import RemoveButton from '$lib/components/common/remove-button.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
@@ -21,6 +21,7 @@
     restoreObjectFields,
   } from '$lib/services/contents/draft/update/object';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import {
     getInitialExpanderState,
     isExpanded,
@@ -39,7 +40,6 @@
   /**
    * @import {
    * EntryDraft,
-   * FieldEditorContext,
    * FieldEditorProps,
    * InternalLocaleCode,
    * MediaFieldSource,
@@ -60,12 +60,11 @@
 
   const entryDraft = getEntryDraftContext();
 
-  /** @type {FieldEditorContext} */
   const {
     fieldContext,
     valueStoreKey = 'currentValues',
     parentComponentNames = [],
-  } = getContext('field-editor') ?? {};
+  } = getFieldEditorContext();
   const componentName = parentComponentNames.at(-1);
   // Hide the header/expander if in a single subfield list field because it’s redundant
   const hideHeader = fieldContext === 'single-subfield-list-field';

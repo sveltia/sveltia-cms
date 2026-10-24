@@ -2,7 +2,6 @@ import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  assertResponseOK,
   browseObjects,
   createObjectStorageOperations,
   deleteObjects,
@@ -407,31 +406,6 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
       const asset = /** @type {ExternalAsset} */ ({ id: 'uploads/a.jpg' });
 
       expect(getRenamedPath(config, asset, 'b.jpg')).toBe('b.jpg');
-    });
-  });
-
-  describe('assertResponseOK', () => {
-    it('should resolve when the response is OK', async () => {
-      await expect(
-        assertResponseOK(new Response('ok', { status: 200 }), 'Failed'),
-      ).resolves.toBeUndefined();
-    });
-
-    it('should throw with the response body appended to the message', async () => {
-      await expect(
-        assertResponseOK(new Response('Access Denied', { status: 403 }), 'Failed to list objects'),
-      ).rejects.toThrow(new Error('Failed to list objects: Access Denied'));
-    });
-
-    it('should throw on a 404 response unless it’s allowed', async () => {
-      await expect(
-        assertResponseOK(new Response('Not Found', { status: 404 }), 'Failed'),
-      ).rejects.toThrow('Failed: Not Found');
-      await expect(
-        assertResponseOK(new Response('Not Found', { status: 404 }), 'Failed', {
-          allowNotFound: true,
-        }),
-      ).resolves.toBeUndefined();
     });
   });
 

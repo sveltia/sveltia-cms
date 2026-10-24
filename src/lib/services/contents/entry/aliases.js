@@ -1,3 +1,5 @@
+import { isNumeric } from '$lib/services/utils/number';
+
 /**
  * @import { FlattenedEntryContent, InternalCollection } from '$lib/types/private';
  * @import { Field, FieldKeyPath } from '$lib/types/public';
@@ -50,7 +52,7 @@ export const getAliasKeyPaths = (content, aliasesKey) => {
   const prefix = `${aliasesKey}.`;
 
   return Object.keys(content)
-    .filter((keyPath) => keyPath.startsWith(prefix) && /^\d+$/.test(keyPath.slice(prefix.length)))
+    .filter((keyPath) => keyPath.startsWith(prefix) && isNumeric(keyPath.slice(prefix.length)))
     .sort((a, b) => Number(a.slice(prefix.length)) - Number(b.slice(prefix.length)));
 };
 

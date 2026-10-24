@@ -1,8 +1,7 @@
-import { getContext } from 'svelte';
+import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
 
 /**
  * @import { Component } from 'svelte';
- * @import { FieldEditorContext } from '$lib/types/private';
  */
 
 /**
@@ -12,8 +11,7 @@ import { getContext } from 'svelte';
  * @param {Component<any>} component Component to render.
  */
 export const setExtraHint = (component) => {
-  /** @type {FieldEditorContext} */
-  const { extraHint } = getContext('field-editor') ?? {};
+  const { extraHint } = getFieldEditorContext();
 
   $effect(() => {
     if (extraHint) {

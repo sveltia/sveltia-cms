@@ -114,6 +114,12 @@ export const getKeysByPrefix = (valueMap, prefix, { live = false } = {}) => {
 };
 
 /**
+ * Regular expression to match the index suffix of a list item key path, e.g. `.1` in `tags.1` or
+ * `blocks.0.images.1`, but not in `blocks.0.title`.
+ */
+export const ITEM_INDEX_SUFFIX_REGEX = /\.\d+$/;
+
+/**
  * Regular expression to split a list item key path into its parent key path and item index, e.g.
  * `authors.0` into `authors` and `0`. The parent is matched greedily, so `authors.0.tags.2` yields
  * `authors.0.tags`.

@@ -1,7 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Alert, Menu, MenuButton, Spacer } from '@sveltia/ui';
-  import { getContext, setContext } from 'svelte';
 
   import ErrorBoundary from '$lib/components/common/error-boundary.svelte';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
@@ -17,7 +16,11 @@
   import { canResetField, resetField } from '$lib/services/contents/draft/update/reset';
   import { isFieldChanged, revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
+  import {
+    getFieldEditorContext,
+    isInEditorComponent,
+    setFieldEditorContext,
+  } from '$lib/services/contents/editor/field-context';
   import {
     getEditorFieldConfig,
     getFieldEditorFlags,
@@ -53,8 +56,7 @@
    * @import { CustomField, Field, FieldKeyPath } from '$lib/types/public';
    */
 
-  /** @type {FieldEditorContext} */
-  const parent = getContext('field-editor') ?? {};
+  const parent = getFieldEditorContext();
 
   /**
    * @typedef {object} Props
@@ -207,8 +209,7 @@
     }),
   );
 
-  setContext(
-    'field-editor',
+  setFieldEditorContext(
     // svelte-ignore state_referenced_locally
     /** @type {FieldEditorContext} */ ({
       fieldContext,

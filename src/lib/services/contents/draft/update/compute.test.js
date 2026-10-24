@@ -119,6 +119,16 @@ describe('collectComputeFields()', () => {
     expect(collect(fields, valueMap)).toEqual(['blocks.1.slug']);
   });
 
+  test('should skip a list item of an unknown variable type', () => {
+    const fields = [
+      { name: 'blocks', widget: 'list', types: [{ name: 'card', fields: [SLUG_FIELD] }] },
+    ];
+
+    const valueMap = { 'blocks.0.type': 'gone', 'blocks.1.type': 'card' };
+
+    expect(collect(fields, valueMap)).toEqual(['blocks.1.slug']);
+  });
+
   test('should descend into a nested list', () => {
     const fields = [
       {

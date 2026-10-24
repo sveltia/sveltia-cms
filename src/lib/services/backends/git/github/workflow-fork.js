@@ -8,13 +8,13 @@ import {
   fetchPullRequestFiles,
   MAX_ITEMS,
   parseFileNodes,
-  parseRestFiles,
   updateDraftState,
 } from '$lib/services/backends/git/github/pull-requests';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { pruneForkBranches, updateForkStatusWith } from '$lib/services/backends/git/shared/fork';
+import { parseRestFiles } from '$lib/services/backends/git/shared/pull-requests';
 import { applyForkPullRequestStatus } from '$lib/services/backends/git/shared/workflow';
 import { user } from '$lib/services/user/account.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
@@ -275,7 +275,7 @@ export const fetchForkBranchFileList = async (pullRequest) => {
     await fetchAPI(`/repos/${owner}/${repo}/compare/${base}...${head}?per_page=${MAX_ITEMS.files}`)
   );
 
-  pullRequest.files = parseRestFiles(files);
+  pullRequest.files = parseRestFiles(files, { removedStatus: 'removed' });
 };
 
 /**

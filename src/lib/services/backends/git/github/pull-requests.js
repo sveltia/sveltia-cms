@@ -4,7 +4,10 @@ import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { PULL_REQUEST_DESCRIPTION } from '$lib/services/backends/git/shared/pull-requests';
+import {
+  parseRestFiles,
+  PULL_REQUEST_DESCRIPTION,
+} from '$lib/services/backends/git/shared/pull-requests';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getStatusLabel, replaceStatusLabel } from '$lib/services/workflow/labels';
@@ -48,21 +51,6 @@ export const parseFileNodes = (nodes) =>
   }));
 
 /**
- * Convert the changed files of a pull request or comparison, as listed by the REST API, to workflow
- * files.
- * @param {Record<string, any>[]} files Files.
- * @returns {WorkflowFile[]} Files.
- */
-export const parseRestFiles = (files) =>
-  files.map(({ filename, status, previous_filename: previousPath }) => ({
-    path: filename,
-    sha: '',
-    size: 0,
-    deleted: status === 'removed',
-    previousPath,
-  }));
-
-/**
  * Re-fetch the list of files changed in the given pull request with the REST API, which is the only
  * one that reports the path a renamed file had before. The GraphQL API used by
  * `fetchPullRequests()` has a `RENAMED` change type but no matching previous-path field, so
@@ -80,7 +68,7 @@ export const fetchPullRequestFileList = async (pullRequest) => {
     )
   );
 
-  pullRequest.files = parseRestFiles(files);
+  pullRequest.files = parseRestFiles(files, { removedStatus: 'removed' });
 };
 
 /**

@@ -39,7 +39,7 @@ export const getInheritedI18nOption = ({ fieldConfig, getFieldArgs }) => {
   // Look at the ancestors from the nearest one, skipping the list item indexes, which aren’t fields
   // of their own, e.g. `items` for `items.0.name`
   for (let index = segments.length - 2; index >= 0; index -= 1) {
-    if (!/^\d+$/.test(segments[index])) {
+    if (!isNumeric(segments[index])) {
       const { i18n } =
         getField({ ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') }) ?? {};
 

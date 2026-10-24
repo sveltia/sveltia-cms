@@ -8,16 +8,17 @@
   import { CodeEditor } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { isObject } from '@sveltia/utils/object';
-  import { getContext, tick } from 'svelte';
+  import { tick } from 'svelte';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { deferDraftWrite } from '$lib/services/contents/draft/update/deferred';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { CodeField } from '$lib/types/public';
    */
 
@@ -29,8 +30,7 @@
 
   const entryDraft = getEntryDraftContext();
 
-  /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  const { valueStoreKey = 'currentValues' } = getFieldEditorContext();
 
   /** @type {FieldEditorProps & Props} */
   let {

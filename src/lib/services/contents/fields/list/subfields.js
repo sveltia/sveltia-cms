@@ -1,6 +1,27 @@
 /**
- * @import { Field, VariableFieldType } from '$lib/types/public';
+ * @import { FlattenedEntryContent } from '$lib/types/private';
+ * @import { Field, FieldKeyPath, VariableFieldType } from '$lib/types/public';
  */
+
+/**
+ * Get the subfields of an Object field or a List field item whose value is stored in flattened
+ * content: the field’s `fields`, or, with the `types` option, those of the variable type whose
+ * name is stored under the type key, e.g. `blocks.0.type`.
+ * @param {Field} field Field configuration.
+ * @param {FlattenedEntryContent} valueMap Flattened entry content.
+ * @param {FieldKeyPath} keyPath Key path of the object or list item.
+ * @returns {Field[] | undefined} Subfields, or `undefined` if the field has none, or the stored
+ * type name matches no variable type with subfields.
+ */
+export const getFlatSubFields = (field, valueMap, keyPath) => {
+  const {
+    fields,
+    types,
+    typeKey = 'type',
+  } = /** @type {{ fields?: Field[], types?: VariableFieldType[], typeKey?: string }} */ (field);
+
+  return fields ?? types?.find(({ name }) => name === valueMap[`${keyPath}.${typeKey}`])?.fields;
+};
 
 /**
  * Get the subfields of the variable type with the given name.

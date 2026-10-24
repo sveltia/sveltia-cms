@@ -133,6 +133,26 @@ describe('createDragSorter()', () => {
     expect(sorter.grabbedIndex).toBeUndefined();
   });
 
+  test('gives the reorder controls of an item handlers bound to it', async () => {
+    const { onGrab, onRelease, onMove: moveItem } = sorter.reorderControlProps(2);
+
+    onGrab();
+    expect(sorter.grabbedIndex).toBe(2);
+
+    onRelease();
+    expect(sorter.grabbedIndex).toBeUndefined();
+
+    await moveItem(0, 'move-up');
+    expect(onMove).toHaveBeenCalledWith(2, 0);
+  });
+
+  test('gives the list element its capture-phase drag handlers', () => {
+    expect(sorter.listProps).toEqual({
+      ondragovercapture: sorter.onDragOver,
+      ondropcapture: sorter.onDrop,
+    });
+  });
+
   test('starts a drag with auto-scroll and drag data', () => {
     const event = createEvent();
 

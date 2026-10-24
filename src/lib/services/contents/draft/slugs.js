@@ -14,6 +14,7 @@ import {
 import { getSlugOptions, LEGACY_SLUG_EDITOR_TAG } from '$lib/services/contents/collection/slug';
 import { usesSingleFileStructure } from '$lib/services/contents/i18n/config';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { isNumeric } from '$lib/services/utils/number';
 import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
@@ -209,7 +210,7 @@ export const getNextSlugNumber = ({ draft, pendingEntries = draft.pendingEntries
     .reduce((result, slug) => {
       const name = /** @type {string} */ (stripIndexFileName(collection, slug).split('/').pop());
 
-      return /^\d+$/.test(name) ? Math.max(result, Number(name)) : result;
+      return isNumeric(name) ? Math.max(result, Number(name)) : result;
     }, 0);
 
   return String(max + 1);

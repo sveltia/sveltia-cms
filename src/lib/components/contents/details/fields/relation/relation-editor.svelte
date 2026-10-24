@@ -7,12 +7,12 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Button, Icon } from '@sveltia/ui';
-  import { getContext } from 'svelte';
 
   import QuickAddDialog from '$lib/components/contents/details/fields/relation/quick-add-dialog.svelte';
   import SelectEditor from '$lib/components/contents/details/fields/select/select-editor.svelte';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import { getOptions } from '$lib/services/contents/fields/relation/helpers';
   import {
     getCreatableCollection,
@@ -22,7 +22,7 @@
   } from '$lib/services/contents/fields/relation/quick-add';
 
   /**
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { RelationField, SelectField } from '$lib/types/public';
    */
 
@@ -34,8 +34,7 @@
 
   const entryDraft = getEntryDraftContext();
 
-  /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  const { valueStoreKey = 'currentValues' } = getFieldEditorContext();
 
   /** @type {FieldEditorProps & Props} */
   let {

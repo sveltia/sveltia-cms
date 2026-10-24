@@ -39,12 +39,6 @@ import { isNumeric } from '$lib/services/utils/number';
 const TYPE_MATCH_REGEX = /^(.*?)<([^>]+)>(.*)$/;
 
 /**
- * Regular expression to match the list key path, e.g. `field.0`, `field.1`, etc.
- * @type {RegExp}
- */
-export const LIST_KEY_PATH_REGEX = /\.\d+$/;
-
-/**
  * @type {Map<string, Field | undefined>}
  */
 export const fieldConfigCacheMap = new Map();

@@ -1,5 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
-import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
+import { stripSlashes } from '@sveltia/utils/string';
 
 import {
   allAssetFolders,
@@ -10,12 +10,12 @@ import {
 import { allAssets, focusedAsset } from '$lib/services/assets/state';
 import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { fillTemplate } from '$lib/services/common/template';
-import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
 import { hasTemplateTags } from '$lib/services/common/template/tags';
+import { getTemplatePattern } from '$lib/services/common/template/utils';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
-import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
+import { getEntryCollectionContexts } from '$lib/services/contents/entry/contexts';
 import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 import { createPath, getDirName, resolvePath, stripPathPrefix } from '$lib/services/utils/file';
@@ -335,16 +335,18 @@ export const getAssetByRelativePath = ({
   }
 
   // Stop at the first collection or collection file that has the asset
-  const foundAsset = getAssociatedCollections(entry)
-    .values()
-    .flatMap((collection) => {
-      const collectionFiles = getCollectionFilesByEntry(collection, entry);
-      const args = { path, entry, collection, componentName, typedKeyPath, locale };
-      /** @type {(InternalCollectionFile | undefined)[]} */
-      const files = collectionFiles.length ? collectionFiles : [undefined];
-
-      return files.values().map((file) => getAssetByRelativePathAndCollection({ ...args, file }));
-    })
+  const foundAsset = getEntryCollectionContexts(entry)
+    .map(({ collection, collectionFile: file }) =>
+      getAssetByRelativePathAndCollection({
+        path,
+        entry,
+        collection,
+        file,
+        componentName,
+        typedKeyPath,
+        locale,
+      }),
+    )
     .find(Boolean);
 
   return (
@@ -369,7 +371,7 @@ const publicPathRegexCache = new WeakMap();
 const getPublicPathRegex = (folder) =>
   getOrCreate(publicPathRegexCache, folder, () => {
     const publicPath = folder.publicPath ?? '';
-    const normalizedPath = escapeRegExp(publicPath).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
+    const normalizedPath = getTemplatePattern(publicPath, '.+?');
 
     return new RegExp(`^${normalizedPath}${publicPath ? '(?=\\/|$)' : '$'}`);
   });

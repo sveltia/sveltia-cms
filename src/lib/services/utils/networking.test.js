@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isLocalHostname, isSecureURL, sendRequest } from './networking';
+import { assertResponseOK, isLocalHostname, isSecureURL, sendRequest } from './networking';
 
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn().mockResolvedValue(undefined) }));
 
@@ -560,5 +560,30 @@ describe('sendRequest', () => {
       message: 'Server responded with an error',
       cause: { status: 403 },
     });
+  });
+});
+
+describe('assertResponseOK', () => {
+  test('should resolve when the response is OK', async () => {
+    await expect(
+      assertResponseOK(new Response('ok', { status: 200 }), 'Failed'),
+    ).resolves.toBeUndefined();
+  });
+
+  test('should throw with the response body appended to the message', async () => {
+    await expect(
+      assertResponseOK(new Response('Access Denied', { status: 403 }), 'Failed to list objects'),
+    ).rejects.toThrow(new Error('Failed to list objects: Access Denied'));
+  });
+
+  test('should throw on a 404 response unless it’s allowed', async () => {
+    await expect(
+      assertResponseOK(new Response('Not Found', { status: 404 }), 'Failed'),
+    ).rejects.toThrow('Failed: Not Found');
+    await expect(
+      assertResponseOK(new Response('Not Found', { status: 404 }), 'Failed', {
+        allowNotFound: true,
+      }),
+    ).resolves.toBeUndefined();
   });
 });

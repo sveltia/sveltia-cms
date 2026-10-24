@@ -1007,8 +1007,8 @@ describe('draft/update/copy', () => {
       const { translator } = await import('$lib/services/integrations/translators');
       const { prefs } = await import('$lib/services/user/prefs.svelte');
 
-      // What an HTML-format translator such as Google or DeepL hands back: special characters as
-      // entities, including those it has added itself
+      // What an HTML-format translator such as Google hands back: special characters as entities,
+      // including those it has added itself
       const mockTranslate = vi
         .fn()
         .mockResolvedValue([

@@ -194,6 +194,20 @@ export const commitToNewWorkflowBranch = async ({
 };
 
 /**
+ * Create the error for a save onto a workflow branch that is gone, e.g. with a pull request merged
+ * or closed on the service, which is worth saying in words rather than with the service’s message
+ * about a branch it can’t find.
+ * @param {string} branch Workflow branch name.
+ * @param {RepositoryPath} repository Repository the branch lived in.
+ * @returns {Error} Error.
+ */
+export const createBranchGoneError = (branch, repository) =>
+  createLocalizedError('Failed to save the changes.', 'branch_not_found', {
+    repo: repository.repo,
+    branch,
+  });
+
+/**
  * Make sure the workflow branch of an existing pull request still points at the commit the entry
  * was loaded or saved at, which the conflict check has just compared it with, before committing
  * onto it. Without a head on record there’s nothing to compare, which is refused just the same.
@@ -215,13 +229,8 @@ export const assertBranchAtHead = async ({
 }) => {
   const head = await fetchBranchHead(branch);
 
-  // The branch can have gone, e.g. with a pull request merged or closed on the service, which is
-  // worth saying in words rather than with the service’s message about a branch it can’t find
   if (head === undefined) {
-    throw createLocalizedError('Failed to save the changes.', 'branch_not_found', {
-      repo: getWorkflowRepository().repo,
-      branch,
-    });
+    throw createBranchGoneError(branch, getWorkflowRepository());
   }
 
   // Trying again reloads the entry first, which takes the other commit into account
@@ -325,6 +334,40 @@ export const getMovedHeadMergeState = (pullRequest, headSHA) =>
   headSHA === pullRequest.headSHA
     ? undefined
     : { headSHA, onConfiguredBranches: true, files: [], complete: true };
+
+/**
+ * Work out the merge state of a pull request from its head commit, as read from the service: no
+ * files for a pull request that isn’t between the configured branches, no files either when the
+ * branch has moved on from the commit on record (see {@link getMovedHeadMergeState}), and the files
+ * changed at the head commit otherwise.
+ * @param {object} args Arguments.
+ * @param {WorkflowPullRequest} args.pullRequest Pull request, with the head commit on record.
+ * @param {string | undefined} args.headSHA Commit the pull request’s branch points at now.
+ * @param {boolean} args.onConfiguredBranches Whether the pull request goes from a branch of the
+ * configured repository into its configured branch.
+ * @param {(headSHA: string) => Promise<{ files: WorkflowChangedFile[], complete: boolean }>}
+ * args.listChangedFiles Function to list the files changed at the head commit, and tell whether the
+ * list is complete.
+ * @returns {Promise<WorkflowMergeState>} State.
+ */
+export const resolveMergeState = async ({
+  pullRequest,
+  headSHA,
+  onConfiguredBranches,
+  listChangedFiles,
+}) => {
+  if (!headSHA || !onConfiguredBranches) {
+    return { headSHA, onConfiguredBranches: false, files: [], complete: false };
+  }
+
+  const movedHeadState = getMovedHeadMergeState(pullRequest, headSHA);
+
+  if (movedHeadState) {
+    return movedHeadState;
+  }
+
+  return { headSHA, onConfiguredBranches, ...(await listChangedFiles(headSHA)) };
+};
 
 /**
  * Check whether the given pull request has been merged, on GitHub or Gitea/Forgejo, whose APIs

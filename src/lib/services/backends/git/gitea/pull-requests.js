@@ -12,6 +12,7 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { pollUntil, SETTLE_POLL } from '$lib/services/backends/git/shared/poll';
 import {
   createDraftTitleCodec,
+  parseRestFiles,
   PULL_REQUEST_DESCRIPTION,
 } from '$lib/services/backends/git/shared/pull-requests';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
@@ -247,13 +248,7 @@ export const fetchPullRequestFileList = async (pullRequest) => {
     files = await fetchAllPages(`/repos/${owner}/${repo}/pulls/${number}/files`);
   }
 
-  pullRequest.files = files.map(({ filename, status, previous_filename: previousPath }) => ({
-    path: filename,
-    sha: '',
-    size: 0,
-    deleted: status === 'deleted',
-    previousPath: previousPath || undefined,
-  }));
+  pullRequest.files = parseRestFiles(files, { removedStatus: 'deleted' });
 };
 
 /**

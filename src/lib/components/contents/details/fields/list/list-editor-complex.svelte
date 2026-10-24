@@ -9,7 +9,7 @@
   import { _ } from '@sveltia/i18n';
   import { VisibilityObserver } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import { getContext, onMount } from 'svelte';
+  import { onMount } from 'svelte';
   import { flip } from 'svelte/animate';
 
   import RemoveButton from '$lib/components/common/remove-button.svelte';
@@ -23,7 +23,10 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
+  import {
+    getFieldEditorContext,
+    isInEditorComponent,
+  } from '$lib/services/contents/editor/field-context';
   import { isExpanded, syncExpanderStates } from '$lib/services/contents/editor/fields';
   import {
     getStickyToolbarBottom,
@@ -42,12 +45,17 @@
     getListItemKey,
     isPairedList,
     isSingleItemList,
-    tagListItems,
   } from '$lib/services/contents/fields/list/helpers';
   import {
     createListItem,
     getInitialListExpanderStates,
   } from '$lib/services/contents/fields/list/items';
+  import {
+    insertListItem,
+    moveListItem,
+    removeListItem,
+    restoreListItem,
+  } from '$lib/services/contents/fields/list/mutations';
   import {
     getPastedItemToast,
     showListItemClipboardToast,
@@ -69,7 +77,6 @@
    * @import { SubtreeMemo } from '$lib/services/contents/entry/subtree';
    * @import {
    * ExpanderStateList,
-   * FieldEditorContext,
    * FieldEditorProps,
    * InternalLocaleCode,
    * MediaFieldSource,
@@ -94,9 +101,7 @@
 
   const entryDraft = getEntryDraftContext();
 
-  /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues', parentComponentNames = [] } =
-    getContext('field-editor') ?? {};
+  const { valueStoreKey = 'currentValues', parentComponentNames = [] } = getFieldEditorContext();
   const componentName = parentComponentNames.at(-1);
 
   /** @type {FieldEditorProps & Props} */
@@ -388,8 +393,7 @@
         defaultLocale: inEditorComponent ? targetLocale : draft.defaultLocale,
       });
 
-      valueList.splice(index, replace ? 1 : 0, newItem);
-      expanderStateList.splice(index, replace ? 1 : 0, true);
+      insertListItem({ valueList, expanderStateList }, { index, item: newItem, replace });
       removedItems.remember(valueList, targetLocale);
     });
 
@@ -542,20 +546,17 @@
     removedItems.add(removedItem);
 
     updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
-      if (!hasSingleSubField) {
-        // Track original key paths for existing items before they shift due to the removal, and
-        // give them an ID to tell whether they’re replaced later. See `expectedListState`
-        tagListItems(valueList, keyPath, { assignIds: true });
-      }
-
-      const [value] = valueList.splice(index, 1);
+      // The items are tagged to tell whether they’re replaced later. See `expectedListState`
+      const value = removeListItem(
+        { valueList, expanderStateList },
+        { index, keyPath, tagItems: !hasSingleSubField },
+      );
 
       // Keep the value, so the item can be restored
       if (value !== undefined) {
         values[targetLocale] = value;
       }
 
-      expanderStateList.splice(index, 1);
       removedItems.remember(valueList, targetLocale);
     });
 
@@ -576,13 +577,10 @@
         return;
       }
 
-      if (!hasSingleSubField) {
-        // Track original key paths for existing items before they shift due to the restoration
-        tagListItems(valueList, keyPath);
-      }
-
-      valueList.splice(index, 0, values[targetLocale]);
-      expanderStateList.splice(index, 0, expanded);
+      restoreListItem(
+        { valueList, expanderStateList },
+        { index, item: values[targetLocale], expanded, keyPath, tagItems: !hasSingleSubField },
+      );
       removedItems.remember(valueList, targetLocale);
     });
 
@@ -605,16 +603,10 @@
    */
   const moveItem = (from, to) => {
     updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
-      if (!hasSingleSubField) {
-        // Ensure the IDs are unique before reordering, so that the `each` block below keeps
-        // following each item rather than its position, and track original key paths for correct
-        // revert after reordering
-        tagListItems(valueList, keyPath, { assignIds: true });
-      }
-
-      valueList.splice(to, 0, ...valueList.splice(from, 1));
-      // The expander states are only manipulated with the default locale, so this list may be empty
-      expanderStateList.splice(to, 0, ...expanderStateList.splice(from, 1));
+      moveListItem(
+        { valueList, expanderStateList },
+        { from, to, keyPath, tagItems: !hasSingleSubField },
+      );
       removedItems.remember(valueList, targetLocale);
     });
   };
@@ -674,14 +666,6 @@
     getItemRect: (element) =>
       /** @type {Element} */ (element.lastElementChild).getBoundingClientRect(),
   });
-
-  /**
-   * Get a function that moves the item at the given index, for its reorder controls.
-   * @param {number} index List index.
-   * @returns {(to: number, action: string) => void} Function that moves the item to another index,
-   * then restores the focus to the control with the given `data-action`.
-   */
-  const getItemMover = (index) => (to, action) => sorter.move(index, to, action);
 
   /**
    * Get the thumbnail of a collapsed list item.
@@ -777,8 +761,7 @@
   class="item-list"
   class:collapsed={!parentExpanded}
   bind:this={itemList}
-  ondragovercapture={sorter.onDragOver}
-  ondropcapture={sorter.onDrop}
+  {...sorter.listProps}
 >
   <!-- The display index is the position on screen, which follows a drag preview as well -->
   {#each sorter.displayOrder as index, displayIndex (itemKeys.current[index])}
@@ -795,7 +778,7 @@
         {@const type = hasVariableTypes ? item[typeKey] : undefined}
         {@const { typeConfig, unknownType, subFields, summaryTemplate } = resolveType(type)}
         {@const expanded = isExpanded(entryDraft.current, itemKeyPath)}
-        {@const moveItemTo = getItemMover(index)}
+        {@const reorderControlProps = sorter.reorderControlProps(index)}
         <div
           role="group"
           aria-label={singleItem
@@ -829,9 +812,7 @@
                   disabled={isReorderDisabled}
                   icon="drag_handle"
                   part="handle"
-                  onGrab={() => sorter.grab(index)}
-                  onRelease={sorter.release}
-                  onMove={moveItemTo}
+                  {...reorderControlProps}
                 />
               {/if}
             {/snippet}
@@ -843,7 +824,7 @@
                   disabled={isReorderDisabled}
                   part="buttons"
                   menu={false}
-                  onMove={moveItemTo}
+                  onMove={reorderControlProps.onMove}
                 />
               {/if}
               <ListItemMenu
@@ -858,7 +839,7 @@
                 {isAddDisabled}
                 itemCount={items.length}
                 canReorder={showReorderControls && !isLocked}
-                moveItem={moveItemTo}
+                moveItem={reorderControlProps.onMove}
                 {copyItem}
                 {pasteItem}
                 {addItem}

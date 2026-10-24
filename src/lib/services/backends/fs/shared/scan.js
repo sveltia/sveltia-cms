@@ -2,12 +2,12 @@
 /* eslint-disable no-restricted-syntax */
 
 import { unique } from '@sveltia/utils/array';
-import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
+import { stripSlashes } from '@sveltia/utils/string';
 
 import { TEMP_FILE_PREFIX } from '$lib/services/backends/fs/shared/constants';
 import { GIT_CONFIG_FILE_REGEX } from '$lib/services/backends/git/shared/config';
 import { collectConfiguredPaths } from '$lib/services/backends/git/shared/managed-paths';
-import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
+import { getTemplatePattern } from '$lib/services/common/template/utils';
 import { createPathRegEx } from '$lib/services/utils/file';
 import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
 
@@ -45,9 +45,7 @@ export const getPathRegex = (path) => {
     return /^.+$/;
   }
 
-  return createPathRegEx(path, (segment) =>
-    escapeRegExp(segment).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?'),
-  );
+  return createPathRegEx(path, (segment) => getTemplatePattern(segment, '.+?'));
 };
 
 /**
@@ -61,7 +59,7 @@ export const getPathRegex = (path) => {
 export const getPathPrefixRegex = (path) => {
   const pattern = path
     .split('/')
-    .map((segment) => escapeRegExp(segment).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?'))
+    .map((segment) => getTemplatePattern(segment, '.+?'))
     // Each segment after the first is optional, along with all the segments after it
     .reduceRight(
       (rest, segment, index) => (index === 0 ? `${segment}${rest}` : `(?:\\/${segment}${rest})?`),

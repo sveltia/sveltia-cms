@@ -4,7 +4,6 @@ import { sleep } from '@sveltia/utils/misc';
 
 import { formatFileName } from '$lib/services/assets/file-name';
 import { cmsConfig } from '$lib/services/config/state';
-import { assertResponseOK } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
 import {
   findLibraryOptions,
   resolveLibraryOptions,
@@ -12,6 +11,7 @@ import {
 import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
 import { splitIntoChunks } from '$lib/services/utils/array';
 import { hmacSha256, toHex } from '$lib/services/utils/crypto';
+import { assertResponseOK } from '$lib/services/utils/networking';
 
 /**
  * @import {

@@ -11,6 +11,7 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { filterRealValues } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
+import { ITEM_INDEX_SUFFIX_REGEX } from '$lib/services/contents/entry/key-paths';
 import { getEntryOptions } from '$lib/services/contents/fields/relation/helpers';
 import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 import { unflattenMap } from '$lib/services/utils/object';
@@ -238,7 +239,7 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
   const refEntriesCache = new Map();
 
   Object.entries(valueMap).forEach(([key, value]) => {
-    const keyPath = /** @type {FieldKeyPath} */ (key.replace(/\.\d+$/, ''));
+    const keyPath = /** @type {FieldKeyPath} */ (key.replace(ITEM_INDEX_SUFFIX_REGEX, ''));
     const field = getField({ ...getFieldArgs, keyPath });
 
     // Populate metadata for relation fields by looking up referenced entries

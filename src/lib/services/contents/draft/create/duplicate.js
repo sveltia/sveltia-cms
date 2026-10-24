@@ -12,7 +12,7 @@ import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
 import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/fields/hidden/defaults';
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
-import { isFieldLocalized, isFieldTranslatable } from '$lib/services/contents/i18n/fields';
+import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { createState, getSnapshot } from '$lib/services/utils/state.svelte';
 
 /**
@@ -115,14 +115,14 @@ export const resetUniqueValues = ({
 
     // A Compute field keeps the UUIDs found in its current value when it’s resolved again, so the
     // value has to be cleared for the duplicate to get UUIDs of its own. The field is resolved as
-    // soon as the new draft is in place
+    // soon as the new draft is in place. A duplicated field is left alone in the other locales, as
+    // the default locale’s new value is copied to them, so every locale shares the same UUIDs
     if (
       fieldConfig?.widget === 'compute' &&
-      hasUuidTag(/** @type {ComputeField} */ (fieldConfig).value)
+      hasUuidTag(/** @type {ComputeField} */ (fieldConfig).value) &&
+      (locale === defaultLocale || isFieldTranslatable(fieldConfig.i18n))
     ) {
-      if (locale === defaultLocale || isFieldLocalized(fieldConfig?.i18n)) {
-        valueMap[keyPath] = '';
-      }
+      valueMap[keyPath] = '';
     }
 
     const hidden = findHiddenField({ ...getFieldArgs, keyPath });

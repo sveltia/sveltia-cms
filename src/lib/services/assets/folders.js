@@ -3,8 +3,8 @@ import { escapeRegExp } from '@sveltia/utils/string';
 
 import { isInCmsFolder } from '$lib/services/assets/reserved';
 import { lockedBranch } from '$lib/services/backends/branch-access';
-import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
 import { hasTemplateTags } from '$lib/services/common/template/tags';
+import { getTemplatePattern } from '$lib/services/common/template/utils';
 import { getCustomComponentName } from '$lib/services/contents/fields/rich-text/components/definitions';
 import {
   getLocaleFolderPattern,
@@ -143,7 +143,7 @@ const getEntryRelativePathRegEx = ({ internalPath, internalSubPath, localeFolder
   }
 
   // A template tag further down matches one folder name, e.g. `images/{{slug}}`
-  const subPathPattern = escapeRegExp(subPath).replace(ESCAPED_PLACEHOLDER_REGEX, '[^/]+');
+  const subPathPattern = getTemplatePattern(subPath, '[^/]+');
 
   return new RegExp(`^${localeMatcher}${subPathPattern}\\/`);
 };
@@ -178,7 +178,7 @@ const getAssetFolderPathCache = memoizeOnSource(
       } else {
         // Pre-compile both regex variants so we don’t recreate them on every path lookup.
         // The internal path can contain template tags like `{{slug}}`, which we normalize to `.+?`.
-        const normalizedPath = escapeRegExp(internalPath).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
+        const normalizedPath = getTemplatePattern(internalPath, '.+?');
 
         items.push({
           folder,

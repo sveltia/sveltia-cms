@@ -2,11 +2,9 @@ import { getHash } from '@sveltia/utils/crypto';
 
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { getRelativeKey } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
-import {
-  assertResponseOK,
-  createObjectStorageOperations,
-} from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
+import { createObjectStorageOperations } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
 import { hmacSha256, toHex } from '$lib/services/utils/crypto';
+import { assertResponseOK } from '$lib/services/utils/networking';
 import { encodePathSegments, encodeRFC3986, trimTrailingSlashes } from '$lib/services/utils/url';
 import { parseXml, toArray } from '$lib/services/utils/xml';
 

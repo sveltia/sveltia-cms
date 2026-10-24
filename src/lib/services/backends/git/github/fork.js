@@ -1,12 +1,14 @@
-import { _ } from '@sveltia/i18n';
-
 import {
   fetchDefaultBranchName,
   isRateLimited,
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
+import {
+  createLocalizedError,
+  NOT_COLLABORATOR_ERROR_MESSAGE,
+} from '$lib/services/backends/git/shared/errors';
 import {
   createForkError,
   isOpenAuthoringConfiguredFor,
@@ -73,14 +75,24 @@ export const hasPendingInvitation = async () => {
  * refused. The bare “no access” is true but rarely actionable, and the two cases below are the ones
  * that come up while setting Open Authoring up.
  * @param {Response} response The refused response.
- * @returns {Promise<string>} Message to show.
+ * @returns {Promise<Error>} Error to throw, with the message to show.
  */
-const getNoAccessMessage = async (response) => {
+const getNoAccessError = async (response) => {
   const { owner, repo } = repository;
   const repoPath = `${owner}/${repo}`;
 
+  /**
+   * Create the error with the given message. It carries the shared message, which the sign-in flow
+   * looks for to drop the cached credentials, so the user gets the sign-in form rather than the
+   * same error on every reload, and can sign in again once the cause has been dealt with.
+   * @param {string} key Localized string key.
+   * @returns {Error} Error.
+   */
+  const createError = (key) =>
+    createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, key, { repo: repoPath });
+
   if (await hasPendingInvitation()) {
-    return _('open_authoring.invitation_pending', { values: { repo: repoPath } });
+    return createError('open_authoring.invitation_pending');
   }
 
   // A public repository is readable by any authenticated request, so a refusal means the repository
@@ -90,10 +102,10 @@ const getNoAccessMessage = async (response) => {
   const scopes = response.headers.get('x-oauth-scopes');
 
   if (scopes !== null && !scopes.split(/,\s*/).includes('repo')) {
-    return _('open_authoring.private_repo_scope_required', { values: { repo: repoPath } });
+    return createError('open_authoring.private_repo_scope_required');
   }
 
-  return _('repository_no_access', { values: { repo: repoPath } });
+  return createError('repository_no_access');
 };
 
 /**
@@ -147,9 +159,7 @@ export const fetchRepositoryAccess = async () => {
   // Open Authoring still needs the contributor to be able to read the repository, so being unable
   // to see it is a dead end rather than a reason to fall back to a fork
   if (NO_ACCESS_STATUSES.includes(response.status) && !isRateLimited(response)) {
-    throw new Error('No access to the repository', {
-      cause: new Error(await getNoAccessMessage(response)),
-    });
+    throw await getNoAccessError(response);
   }
 
   // A rate limit or an outage leaves the question unanswered. Reading that as “no write access”
@@ -174,18 +184,18 @@ export const fetchForkByName = async () => {
   const { owner, repo } = repository;
   const userName = /** @type {string} */ (user.account?.login);
 
-  const response = /** @type {Response} */ (
-    await fetchAPI(`/repos/${encodeURIComponent(userName)}/${repo}`, {
+  // Only a missing repository means there’s no fork at the name. Reading a rate limit or an outage
+  // the same way would have the contributor asked to create another one, so that is passed on
+  const result = /** @type {Record<string, any> | undefined} */ (
+    await fetchAPIOrUndefined(`/repos/${encodeURIComponent(userName)}/${repo}`, {
       headers: { Accept: 'application/json' },
-      responseType: 'raw',
     })
   );
 
-  if (!response.ok) {
+  if (!result) {
     return undefined;
   }
 
-  const result = await response.json();
   const parent = result.parent?.full_name?.toLowerCase();
 
   // GitHub redirects a repository that has been transferred, so check that the fork found is still
@@ -220,33 +230,29 @@ const FETCH_USER_FORK_QUERY = `
 
 /**
  * Ask the configured repository for the fork the signed-in user owns, wherever it’s named. This
- * only runs when {@link fetchForkByName} came up empty, so its worst case is the behavior without
- * it: no fork found, and the contributor asked whether to make one.
+ * only runs when {@link fetchForkByName} came up empty. A failed query is passed on rather than
+ * taken for no fork, which would have the contributor asked to create another one.
  * @returns {Promise<RepositoryPath | undefined>} The fork, or `undefined` if there is none.
  * @see https://docs.github.com/en/graphql/reference/objects#repository
  */
 export const fetchForkFromNetwork = async () => {
   const userName = user.account?.login;
 
-  try {
-    const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
-      await fetchGraphQL(FETCH_USER_FORK_QUERY)
-    );
+  const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
+    await fetchGraphQL(FETCH_USER_FORK_QUERY)
+  );
 
-    const [node] = result?.forks?.nodes ?? [];
+  const [node] = result?.forks?.nodes ?? [];
 
-    // Check the owner rather than trusting the filter to have applied: committing to someone
-    // else’s fork would fail in a way that’s hard to make sense of
-    if (node?.owner?.login !== userName) {
-      return undefined;
-    }
-
-    const [forkOwner, forkRepo] = node.nameWithOwner.split('/');
-
-    return { owner: forkOwner, repo: forkRepo };
-  } catch {
+  // Check the owner rather than trusting the filter to have applied: committing to someone
+  // else’s fork would fail in a way that’s hard to make sense of
+  if (node?.owner?.login !== userName) {
     return undefined;
   }
+
+  const [forkOwner, forkRepo] = node.nameWithOwner.split('/');
+
+  return { owner: forkOwner, repo: forkRepo };
 };
 
 /**

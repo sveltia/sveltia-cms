@@ -1,4 +1,8 @@
 /**
+ * @import { WorkflowFile } from '$lib/types/private';
+ */
+
+/**
  * Description the CMS opens an Editorial Workflow pull request or merge request with, which tells a
  * maintainer where it came from.
  */
@@ -41,3 +45,22 @@ export const createDraftTitleCodec = ({ regex, prefix }) => ({
    */
   format: (title, isDraft) => (isDraft ? `${prefix}${title}` : title),
 });
+
+/**
+ * Convert the changed files of a pull request or comparison, as listed by the REST API of GitHub or
+ * Gitea/Forgejo, to workflow files.
+ * @param {Record<string, any>[]} files Files.
+ * @param {object} args Arguments.
+ * @param {string} args.removedStatus Status the service gives a removed file: `removed` on GitHub,
+ * `deleted` on Gitea/Forgejo.
+ * @returns {WorkflowFile[]} Files.
+ */
+export const parseRestFiles = (files, { removedStatus }) =>
+  files.map(({ filename, status, previous_filename: previousPath }) => ({
+    path: filename,
+    sha: '',
+    size: 0,
+    deleted: status === removedStatus,
+    // Gitea/Forgejo gives a file that wasn’t renamed an empty previous path
+    previousPath: previousPath || undefined,
+  }));

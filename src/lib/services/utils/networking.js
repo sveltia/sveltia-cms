@@ -200,3 +200,20 @@ export const sendRequest = async (
 
   throw new Error('Server responded with an error', { cause: { status, message } });
 };
+
+/**
+ * Throw an error with the response body appended to the given message if the request failed.
+ * @param {Response} response Response.
+ * @param {string} message Error message, such as `Failed to list objects`.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.allowNotFound] Whether to accept a `404 Not Found` response.
+ * @returns {Promise<void>}
+ * @throws {Error} When the response status is not OK.
+ */
+export const assertResponseOK = async (response, message, { allowNotFound = false } = {}) => {
+  if (!response.ok && !(allowNotFound && response.status === 404)) {
+    const errorText = await response.text();
+
+    throw new Error(`${message}: ${errorText}`);
+  }
+};

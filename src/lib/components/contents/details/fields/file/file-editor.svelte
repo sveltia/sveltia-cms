@@ -10,7 +10,7 @@
   import { _ } from '@sveltia/i18n';
   import { ConfirmationDialog, TextArea } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import { flushSync, getContext, tick } from 'svelte';
+  import { flushSync, tick } from 'svelte';
   import { flip } from 'svelte/animate';
 
   import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
@@ -25,7 +25,10 @@
     moveMultiValueItem,
     removeMultiValueItem,
   } from '$lib/services/contents/draft/update/list';
-  import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
+  import {
+    getFieldEditorContext,
+    isInEditorComponent,
+  } from '$lib/services/contents/editor/field-context';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
   import { createFolderAssetListing } from '$lib/services/contents/fields/file/listing.svelte';
   import {
@@ -42,7 +45,6 @@
    * @import {
    * AssetFolderInfo,
    * EntryDraft,
-   * FieldEditorContext,
    * FieldEditorProps,
    * InternalLocaleCode,
    * MediaLibraryAssetKind,
@@ -59,12 +61,11 @@
 
   const entryDraft = getEntryDraftContext();
 
-  /** @type {FieldEditorContext} */
   const {
     valueStoreKey = 'currentValues',
     fieldContext = undefined,
     parentComponentNames = [],
-  } = getContext('field-editor') ?? {};
+  } = getFieldEditorContext();
   const inEditorComponent = isInEditorComponent(valueStoreKey);
   const componentName = parentComponentNames.at(-1);
 
@@ -450,13 +451,7 @@
   {#if !!currentValue?.length && !processing}
     {#if multiple}
       {#if Array.isArray(currentValue)}
-        <div
-          role="none"
-          class="item-list"
-          bind:this={itemList}
-          ondragovercapture={sorter.onDragOver}
-          ondropcapture={sorter.onDrop}
-        >
+        <div role="none" class="item-list" bind:this={itemList} {...sorter.listProps}>
           {#each sorter.displayOrder as index (`${currentValue[index]}|${index}`)}
             <!--
               The wrapper is what the `flip` animation moves: `animate:` only works on an element at

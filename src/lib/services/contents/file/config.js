@@ -2,7 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 
 import { customFileFormatRegistry } from '$lib/services/api/registries';
-import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
+import { getTemplatePattern } from '$lib/services/common/template/utils';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getNestedConfig } from '$lib/services/contents/collection/nested';
@@ -135,7 +135,7 @@ const getFilePathMatcher = ({
       entryMatcher = `[^/]+?(?:\\/[^/]+?)${extraSegments}`;
     }
   } else {
-    const escapedSubPath = escapeRegExp(subPath).replace(ESCAPED_PLACEHOLDER_REGEX, '[^/]+?');
+    const escapedSubPath = getTemplatePattern(subPath, '[^/]+?');
     const fileMatcher = `${escapedSubPath}${indexAlternative}`;
 
     if (nestedDepth === undefined) {

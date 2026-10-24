@@ -6,9 +6,9 @@ import {
   compactList,
   dedupeBlockers,
   getFieldBlockers,
-  ITEM_INDEX_SUFFIX_REGEX,
 } from '$lib/services/contents/entry/cascade';
 import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
+import { ITEM_INDEX_SUFFIX_REGEX } from '$lib/services/contents/entry/key-paths';
 import {
   getEntryRelationValues,
   getReferencingRelationFields,

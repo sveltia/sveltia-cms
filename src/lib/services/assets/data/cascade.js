@@ -12,10 +12,10 @@ import {
   compactList,
   dedupeBlockers,
   getFieldBlockers,
-  ITEM_INDEX_SUFFIX_REGEX,
 } from '$lib/services/contents/entry/cascade';
 import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { ITEM_INDEX_SUFFIX_REGEX } from '$lib/services/contents/entry/key-paths';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getValueFormat } from '$lib/services/contents/fields/rich-text';
 import {

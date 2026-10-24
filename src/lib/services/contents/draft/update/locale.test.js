@@ -22,7 +22,9 @@ vi.mock('$lib/services/contents/draft/defaults');
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/fields/date-time/value', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
-  getLocalizedDateTimeValue: vi.fn(({ value, targetLocale }) => `${value} (${targetLocale})`),
+  getLocalizedDateTimeValue: vi.fn(({ fieldConfig, value, targetLocale }) =>
+    fieldConfig.widget === 'datetime' ? `${value} (${targetLocale})` : value,
+  ),
 }));
 
 await useActualDraftFieldArgs();
@@ -349,6 +351,37 @@ describe('draft/update/locale', () => {
       expect(result.label).toBe('English Title');
     });
 
+    it('replaces the locale prefix of a Relation field value copied from the default locale', () => {
+      /** @type {Record<string, any>} */
+      const fieldMap = {
+        author: {
+          name: 'author',
+          widget: 'relation',
+          i18n: 'duplicate',
+          collection: 'authors',
+          value_field: '{{locale}}/{{slug}}',
+        },
+        'tags.0': {
+          name: 'tags',
+          widget: 'relation',
+          i18n: 'duplicate',
+          multiple: true,
+          collection: 'tags',
+          value_field: '{{locale}}/{{slug}}',
+        },
+        title: { name: 'title', widget: 'string', i18n: true },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fieldMap[keyPath]);
+      mockEntryDraft.currentValues.en = { author: 'en/jane', 'tags.0': 'en/news', title: 'Launch' };
+
+      const result = copyDefaultLocaleValues({}, 'fr');
+
+      expect(result.author).toBe('fr/jane');
+      expect(result['tags.0']).toBe('fr/news');
+      expect(result.title).toBe('');
+    });
+
     it('writes a DateTime field value copied from the default locale in the target locale', () => {
       /** @type {Record<string, any>} */
       const fieldMap = {
@@ -362,7 +395,7 @@ describe('draft/update/locale', () => {
       const result = copyDefaultLocaleValues({}, 'fr');
 
       expect(result.date).toBe('1 March 2026 (fr)');
-      expect(getLocalizedDateTimeValue).toHaveBeenCalledOnce();
+      expect(result.title).toBe('');
       expect(getLocalizedDateTimeValue).toHaveBeenCalledWith({
         fieldConfig: fieldMap.date,
         value: '1 March 2026',

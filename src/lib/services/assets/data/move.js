@@ -8,14 +8,10 @@ import { getEntriesByAssets } from '$lib/services/assets/references';
 import { assertOutsideCmsFolders } from '$lib/services/assets/reserved';
 import { saveChanges } from '$lib/services/backends/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
-import {
-  getIndexFile,
-  isCollectionIndexFile,
-} from '$lib/services/contents/collection/entries/index-file';
-import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
+import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
-import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
+import { getEntryCollectionContexts } from '$lib/services/contents/entry/contexts';
 import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { encodeFilePath } from '$lib/services/utils/file';
@@ -110,27 +106,22 @@ export const collectEntryChanges = async ({ entry, savingEntries, changes }) => 
   const draftBaseProps = getDraftBaseProps({ entry });
 
   await Promise.all(
-    getAssociatedCollections(entry).map(async (collection) => {
-      const collectionName = collection.name;
-      const isIndexFile = isCollectionIndexFile(collection, entry);
-      const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
-      const collectionFiles = getCollectionFilesByEntry(collection, entry);
-      const addDataProps = { indexFile, savingEntries, changes };
+    getEntryCollectionContexts(entry).map(({ collection, collectionFile, isIndexFile }) => {
       /** @type {Partial<EntryDraft>} */
-      const draftProps = { ...draftBaseProps, collection, collectionName, isIndexFile };
+      const draftProps = {
+        ...draftBaseProps,
+        collection,
+        collectionName: collection.name,
+        isIndexFile,
+        ...(collectionFile ? { collectionFile, fileName: collectionFile.name } : {}),
+      };
 
-      if (collectionFiles.length) {
-        await Promise.all(
-          collectionFiles.map((collectionFile) =>
-            addSavingEntryData({
-              ...addDataProps,
-              draftProps: { ...draftProps, collectionFile, fileName: collectionFile.name },
-            }),
-          ),
-        );
-      } else {
-        await addSavingEntryData({ ...addDataProps, draftProps });
-      }
+      return addSavingEntryData({
+        draftProps,
+        indexFile: isIndexFile ? getIndexFile(collection) : undefined,
+        savingEntries,
+        changes,
+      });
     }),
   );
 };

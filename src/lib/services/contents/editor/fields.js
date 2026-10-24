@@ -1,7 +1,8 @@
 import { sleep } from '@sveltia/utils/misc';
 import { escapeRegExp } from '@sveltia/utils/string';
 
-import { getField, LIST_KEY_PATH_REGEX } from '$lib/services/contents/entry/fields';
+import { getField } from '$lib/services/contents/entry/fields';
+import { ITEM_INDEX_SUFFIX_REGEX } from '$lib/services/contents/entry/key-paths';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -150,7 +151,7 @@ export const getExpanderKeys = ({
   keyPath.split('.').forEach((_keyPart, index, arr) => {
     const _keyPath = arr.slice(0, index + 1).join('.');
     const config = getField({ ...getFieldArgs, keyPath: _keyPath });
-    const endingWithNumber = LIST_KEY_PATH_REGEX.test(_keyPath);
+    const endingWithNumber = ITEM_INDEX_SUFFIX_REGEX.test(_keyPath);
 
     if (config?.widget === 'object') {
       if (endingWithNumber) {

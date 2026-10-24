@@ -27,6 +27,26 @@ import {
  * @property {() => void} onDragEnd End the drag.
  * @property {(index: number, options?: DragItemOptions) => DragItemProps} itemProps Get the
  * attributes and event handlers to spread on the element of the item at the given index.
+ * @property {DragListProps} listProps Event handlers to spread on the list element.
+ * @property {(index: number) => ReorderControlProps} reorderControlProps Get the event handlers to
+ * spread on the reorder controls of the item at the given index.
+ */
+
+/**
+ * Event handlers of a sortable list element, attached in the capture phase. See
+ * {@link createDragSorter}.
+ * @typedef {object} DragListProps
+ * @property {(event: DragEvent) => void} ondragovercapture `dragover` event handler.
+ * @property {(event: DragEvent) => void} ondropcapture `drop` event handler.
+ */
+
+/**
+ * Event handlers of an item’s reorder controls, returned by {@link DragSorter.reorderControlProps}.
+ * @typedef {object} ReorderControlProps
+ * @property {() => void} onGrab Make the item draggable, when its drag handle is pressed.
+ * @property {() => void} onRelease Make no item draggable, when the drag handle is released.
+ * @property {(to: number, action?: string) => Promise<void>} onMove Move the item to another
+ * position, then move the focus to the control with the given `data-action` on it.
  */
 
 /**
@@ -153,7 +173,8 @@ export const createDragSorter = ({
     }
   };
 
-  return {
+  /** @type {DragSorter} */
+  const sorter = {
     /**
      * Index of the item made draggable by a press on its drag handle. Only the handle starts a
      * drag, so the rest of the item stays selectable and its own controls keep working.
@@ -267,6 +288,40 @@ export const createDragSorter = ({
      */
     onDragEnd: reset,
     /**
+     * Get the event handlers to spread on the list element, which handle a drag in the capture
+     * phase.
+     * @returns {DragListProps} Event handlers.
+     */
+    get listProps() {
+      return { ondragovercapture: sorter.onDragOver, ondropcapture: sorter.onDrop };
+    },
+    /**
+     * Get the event handlers to spread on the reorder controls of the item at the given index.
+     * @param {number} index Item index.
+     * @returns {ReorderControlProps} Event handlers.
+     */
+    reorderControlProps: (index) => ({
+      /**
+       * Make the item draggable.
+       */
+      onGrab: () => {
+        grabbedIndex = index;
+      },
+      /**
+       * Make no item draggable.
+       */
+      onRelease: () => {
+        grabbedIndex = undefined;
+      },
+      /**
+       * Move the item to another position.
+       * @param {number} to Destination index.
+       * @param {string} [action] `data-action` of the reorder control that triggered the move.
+       * @returns {Promise<void>} Resolves once the focus has moved.
+       */
+      onMove: (to, action) => move(index, to, action),
+    }),
+    /**
      * Get the attributes and event handlers to spread on the element of the item at the given
      * index: it’s draggable while its handle is pressed, and its `dragstart` and `dragend` events
      * start and end the drag. The `dragging` class marking the item being dragged is left to the
@@ -297,4 +352,6 @@ export const createDragSorter = ({
       },
     }),
   };
+
+  return sorter;
 };
