@@ -63,6 +63,7 @@ export const isUpdateAvailable = async () => {
   // eslint-disable-next-line no-console
   console.warn(
     `[Sveltia CMS] A new version (${latestVersion}) is available. ` +
+      `You are using version ${userVersion}. ` +
       'Update the pinned version in your script tag or package.json to upgrade.',
   );
 

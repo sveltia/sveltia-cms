@@ -102,6 +102,8 @@ describe('isUpdateAvailable()', () => {
     respondWith({ version: '1.1.0' });
 
     expect(await isUpdateAvailable()).toBe(false);
-    expect(warnMock).toHaveBeenCalledWith(expect.stringContaining('1.1.0'));
+    expect(warnMock).toHaveBeenCalledWith(
+      expect.stringContaining('A new version (1.1.0) is available. You are using version 1.0.0.'),
+    );
   });
 });
