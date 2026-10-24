@@ -71,18 +71,18 @@ describe('Template constants', () => {
       expect(result).toEqual("<<draft | ternary('{{subtitle}}', '{{title}}')>>");
     });
 
-    test('should preserve standalone quoted placeholders inside transformation arguments', () => {
+    test('should replace a quoted placeholder in literal text that looks like a transformation', () => {
       const str = "default('{{title}}')";
       const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
 
-      expect(result).toEqual("default('{{title}}')");
+      expect(result).toEqual("default('<<title>>')");
     });
 
-    test('should preserve quoted placeholders in function argument positions', () => {
+    test('should replace a quoted placeholder in literal text that looks like a function call', () => {
       const str = "foo('{{title}}')";
       const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
 
-      expect(result).toEqual("foo('{{title}}')");
+      expect(result).toEqual("foo('<<title>>')");
     });
 
     test('should replace quoted placeholders when the surrounding delimiter is not a transformation delimiter', () => {

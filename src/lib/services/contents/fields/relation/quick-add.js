@@ -222,11 +222,13 @@ export const getPendingEntrySlugs = ({ draft, parentDraft }) => {
   }
 
   // The new slug has to be free among the saved entries as well, which the slug above was made
-  // unique against, but a renamed one wasn’t
-  const renamedSlug = renameIfNeeded(defaultLocaleSlug, [
-    ...pendingSlugs,
-    ...getEntriesByCollection(draft.collectionName).map(({ slug }) => slug),
-  ]);
+  // unique against, but a renamed one wasn’t. A dot in a slug is part of the name rather than a
+  // file extension, so the number goes at the end
+  const renamedSlug = renameIfNeeded(
+    defaultLocaleSlug,
+    [...pendingSlugs, ...getEntriesByCollection(draft.collectionName).map(({ slug }) => slug)],
+    { hasExtension: false },
+  );
 
   const renamedLocalizedSlugs = localizedSlugs
     ? { ...localizedSlugs, [draft.defaultLocale]: renamedSlug }

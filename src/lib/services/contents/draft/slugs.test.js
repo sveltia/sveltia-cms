@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 import {
   getCanonicalSlug,
@@ -41,6 +41,7 @@ vi.mock('$lib/services/contents/collection/entries', async (importOriginal) => (
 
 vi.mock('$lib/services/workflow', async (importOriginal) => ({
   ...(await importOriginal()),
+  getCompanionEntries: vi.fn(() => []),
   getUnpublishedEntriesByCollection: vi.fn(() => []),
 }));
 
@@ -1482,6 +1483,34 @@ describe('draft/slugs', () => {
         ).toBe('4');
 
         vi.mocked(getEntriesInCollectionFolder).mockReturnValue([]);
+      });
+
+      it('should come after the new entries riding along in the pull request of another entry', () => {
+        vi.mocked(getEntriesInCollectionFolder).mockReturnValueOnce([{ slug: '3', locales: {} }]);
+        vi.mocked(getCompanionEntries).mockReturnValueOnce([{ slug: '4', locales: {} }]);
+
+        expect(getNextSlugNumber({ draft: createDraft() })).toBe('5');
+        expect(getCompanionEntries).toHaveBeenCalledWith('posts');
+      });
+
+      it('should leave out the file name every entry shares in a nested collection', () => {
+        const draft = createDraft();
+
+        // Every entry is stored as `index.md` in a folder of its own
+        draft.collection = {
+          ...draft.collection,
+          fields: [],
+          nested: {},
+          meta: { path: { index_file: 'index' } },
+        };
+
+        vi.mocked(getEntriesInCollectionFolder).mockReturnValueOnce([
+          { slug: '3/index', locales: { en: { slug: '3/index' } } },
+          { slug: 'docs/7/index', locales: {} },
+          { slug: 'index', locales: {} },
+        ]);
+
+        expect(getNextSlugNumber({ draft })).toBe('8');
       });
     });
 

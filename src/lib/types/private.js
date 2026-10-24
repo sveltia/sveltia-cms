@@ -1325,8 +1325,10 @@
  * @property {string} cmsConfigVersion The SHA-1 hash of the CMS configuration file, which is used
  * to verify that the backup can be safely restored.
  * @property {string} collectionName Collection name.
- * @property {string} slug Entry slug. The index file name for a new index file, or an empty string
- * for any other new entry.
+ * @property {string} slug The `subPath` of an existing entry, which is unique in the collection
+ * unlike its slug, or the file name for a collection file. The index file name for a new index
+ * file, or an empty string for any other new entry. A backup taken before the `subPath` was used is
+ * stored under the entry slug.
  * @property {LocaleStateMap} currentLocales Current locale state.
  * @property {LocaleSlugMap} currentSlugs Key is a locale code, value is the current slug.
  * @property {string} [currentPath] Folder the entry will be stored in, relative to the collection

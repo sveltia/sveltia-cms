@@ -29,7 +29,7 @@ import {
 } from '$lib/services/contents/i18n/duplicate-if-empty';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { isValueEmpty } from '$lib/services/utils/object';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
  * @import {
@@ -252,7 +252,9 @@ const countUniqueValues = ({ collection, keyPath, fieldType, edits }) => {
       !getEntryPaths(entry, { includePrevious: true }).some((path) => publishedPaths.has(path)),
   );
 
-  [...published, ...unpublished].forEach((entry) => {
+  // The new entries riding along in the pull request of an entry of another collection have never
+  // been published either
+  [...published, ...unpublished, ...getCompanionEntries(collection.name)].forEach((entry) => {
     const value = normalizeUniqueValue(
       getBulkEditValue({ collection, entry, keyPath, edits }),
       fieldType,

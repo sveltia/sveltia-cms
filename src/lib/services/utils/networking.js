@@ -66,21 +66,22 @@ export const sendRequest = async (
 ) => {
   /** @type {Response} */
   let response;
+  const headers = new Headers(init.headers);
 
   init.cache = 'no-cache';
-  init.headers = new Headers(init.headers);
+  init.headers = headers;
 
-  if (init.headers.has('Authorization') && !isSecureURL(url)) {
+  if (headers.has('Authorization') && !isSecureURL(url)) {
     throw new Error('Refusing to send credentials over an insecure connection');
   }
 
   if (responseType === 'json') {
-    init.headers.set('Accept', 'application/json');
+    headers.set('Accept', 'application/json');
   }
 
   // Serialize a plain object body for any method that accepts one, e.g. `POST`, `PUT` and `PATCH`
   if (isObject(init.body)) {
-    init.headers.set('Content-Type', 'application/json');
+    headers.set('Content-Type', 'application/json');
     init.body = JSON.stringify(init.body);
   }
 
@@ -90,11 +91,42 @@ export const sendRequest = async (
     throw new Error('Failed to send the request', { cause: ex });
   }
 
+  const { ok, status } = response;
+
+  /**
+   * Refresh the OAuth access token and send the request again with the new token.
+   * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself.
+   */
+  const retryWithNewToken = async () => {
+    const [scheme] = headers.get('Authorization')?.split(' ') ?? ['token'];
+    const { token } = await /** @type {() => Promise<AuthTokens>} */ (refreshAccessToken)();
+
+    headers.set('Authorization', `${scheme} ${token}`);
+
+    // Retry the request with the new token. Omit `refreshAccessToken` to avoid infinite loops.
+    return sendRequest(url, init, { responseType });
+  };
+
+  /**
+   * Send the request again after a short delay.
+   * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself.
+   */
+  const retryAfterDelay = async () => {
+    await sleep(1000);
+
+    return sendRequest(url, init, { responseType, refreshAccessToken, retries: retries - 1 });
+  };
+
+  // A raw response is returned as is for the caller to check the status, but a transient 502 error
+  // is still retried and an expired token refreshed, the same as for the other response types
   if (responseType === 'raw') {
-    return response;
+    if (status === 502 && retries > 0) {
+      return retryAfterDelay();
+    }
+
+    return status === 401 && refreshAccessToken ? retryWithNewToken() : response;
   }
 
-  const { ok, status } = response;
   /** @type {any} */
   let result;
 
@@ -133,19 +165,11 @@ export const sendRequest = async (
   // occasionally return 502 errors.
   // @see https://github.com/sveltia/sveltia-cms/issues/695
   if (status === 502 && retries > 0) {
-    await sleep(1000);
-
-    return sendRequest(url, init, { responseType, refreshAccessToken, retries: retries - 1 });
+    return retryAfterDelay();
   }
 
   if (status === 401 && refreshAccessToken) {
-    const [scheme] = init.headers.get('Authorization')?.split(' ') ?? ['token'];
-    const { token } = await refreshAccessToken();
-
-    init.headers.set('Authorization', `${scheme} ${token}`);
-
-    // Retry the request with the new token. Omit `refreshAccessToken` to avoid infinite loops.
-    return sendRequest(url, init, { responseType });
+    return retryWithNewToken();
   }
 
   if (!isObject(result)) {

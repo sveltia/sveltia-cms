@@ -265,13 +265,15 @@ export const withdrawApproval = async (pullRequest) => {
   const path = `/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`;
   const reviews = /** @type {Record<string, any>[]} */ (await fetchAllPages(path));
 
+  // A deletion comes back as `204 No Content`, which can’t be parsed as JSON, so the response is
+  // read as text, while a refusal still throws for the caller to report
   await Promise.all(
     reviews
       .filter(
         ({ state, dismissed, user: reviewer }) =>
           state === 'APPROVED' && !dismissed && reviewer?.login === user.account?.login,
       )
-      .map(({ id }) => fetchAPI(`${path}/${id}`, { method: 'DELETE', responseType: 'raw' })),
+      .map(({ id }) => fetchAPI(`${path}/${id}`, { method: 'DELETE', responseType: 'text' })),
   );
 };
 

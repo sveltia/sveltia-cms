@@ -834,24 +834,35 @@ describe('Gitea Commits Service', () => {
   });
 
   describe('fetchFileCommits', () => {
+    /**
+     * Create a response holding the given commits, the way the commit list comes back.
+     * @param {any[]} commits Raw commits.
+     * @param {boolean} [hasMore] Value of the `X-HasMore` header.
+     * @returns {Response} Response.
+     */
+    const toResponse = (commits, hasMore = false) =>
+      new Response(JSON.stringify(commits), { headers: { 'X-HasMore': String(hasMore) } });
+
     test('fetches and returns commits for a single path', async () => {
-      fetchAPIMock.mockResolvedValue([
-        {
-          sha: 'abc123',
-          commit: {
-            message: 'Update Post “hello”\r\n\r\nWith a body\r\n',
-            author: { name: 'Alice', email: 'alice@example.com', date: '2024-06-01T12:00:00Z' },
+      fetchAPIMock.mockResolvedValueOnce(
+        toResponse([
+          {
+            sha: 'abc123',
+            commit: {
+              message: 'Update Post “hello”\r\n\r\nWith a body\r\n',
+              author: { name: 'Alice', email: 'alice@example.com', date: '2024-06-01T12:00:00Z' },
+            },
+            author: { avatar_url: 'https://example.com/alice.png', login: 'alice' },
           },
-          author: { avatar_url: 'https://example.com/alice.png', login: 'alice' },
-        },
-        {
-          sha: 'def456',
-          commit: {
-            author: { name: 'Bob', email: 'bob@example.com', date: '2024-05-01T10:00:00Z' },
+          {
+            sha: 'def456',
+            commit: {
+              author: { name: 'Bob', email: 'bob@example.com', date: '2024-05-01T10:00:00Z' },
+            },
+            author: { avatar_url: 'https://example.com/bob.png', login: 'bob' },
           },
-          author: { avatar_url: 'https://example.com/bob.png', login: 'bob' },
-        },
-      ]);
+        ]),
+      );
 
       const result = await fetchFileCommits(['content/en/post.md']);
 
@@ -875,31 +886,111 @@ describe('Gitea Commits Service', () => {
         date: new Date('2024-05-01T10:00:00Z'),
       });
       expect(fetchAPIMock).toHaveBeenCalledWith(
-        '/repos/test-owner/test-repo/commits?sha=main&path=content%2Fen%2Fpost.md&limit=100',
+        '/repos/test-owner/test-repo/commits?sha=main&path=content%2Fen%2Fpost.md&limit=100&page=1',
+        { responseType: 'raw' },
       );
+    });
+
+    /**
+     * Create a page of commits.
+     * @param {number} start Index of the first commit.
+     * @param {number} count Number of commits.
+     * @returns {any[]} Raw commits.
+     */
+    const createPage = (start, count) =>
+      Array.from({ length: count }, (_, index) => ({
+        sha: `sha-${start + index}`,
+        commit: {
+          author: {
+            name: 'A',
+            email: 'a@t.com',
+            date: new Date(Date.UTC(2024, 0, 1) - (start + index) * 60_000).toISOString(),
+          },
+        },
+        author: { avatar_url: '', login: 'a' },
+      }));
+
+    test('reads further pages of a file’s history, as the page size ignores `limit`', async () => {
+      fetchAPIMock
+        .mockResolvedValueOnce(toResponse(createPage(0, 50), true))
+        .mockResolvedValueOnce(toResponse(createPage(50, 12)));
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result).toHaveLength(62);
+      expect(fetchAPIMock).toHaveBeenCalledTimes(2);
+      expect(fetchAPIMock).toHaveBeenLastCalledWith(
+        '/repos/test-owner/test-repo/commits?sha=main&path=file.md&limit=100&page=2',
+        { responseType: 'raw' },
+      );
+    });
+
+    test('stops reading a file’s history at 100 commits', async () => {
+      fetchAPIMock.mockImplementation(async (path) => {
+        const page = Number(new URL(path, 'https://x').searchParams.get('page'));
+
+        return toResponse(createPage((page - 1) * 50, 50), true);
+      });
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result).toHaveLength(100);
+      expect(fetchAPIMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('takes no more than 100 commits from a single page', async () => {
+      fetchAPIMock.mockResolvedValueOnce(toResponse(createPage(0, 120), true));
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result).toHaveLength(100);
+      expect(fetchAPIMock).toHaveBeenCalledOnce();
+    });
+
+    test('stops reading a file’s history after 10 pages', async () => {
+      fetchAPIMock.mockImplementation(async (path) => {
+        const page = Number(new URL(path, 'https://x').searchParams.get('page'));
+
+        return toResponse(createPage(page, 1), true);
+      });
+
+      const result = await fetchFileCommits(['file.md']);
+
+      expect(result).toHaveLength(10);
+      expect(fetchAPIMock).toHaveBeenCalledTimes(10);
+    });
+
+    test('throws when the instance responds with an error', async () => {
+      fetchAPIMock.mockResolvedValueOnce(new Response(null, { status: 500 }));
+
+      await expect(fetchFileCommits(['file.md'])).rejects.toThrow('Server responded with an error');
     });
 
     test('deduplicates commits across multiple paths', async () => {
       fetchAPIMock
-        .mockResolvedValueOnce([
-          {
-            sha: 'abc123',
-            commit: { author: { name: 'Alice', email: 'a@t.com', date: '2024-06-01T12:00:00Z' } },
-            author: { avatar_url: '', login: 'alice' },
-          },
-        ])
-        .mockResolvedValueOnce([
-          {
-            sha: 'abc123',
-            commit: { author: { name: 'Alice', email: 'a@t.com', date: '2024-06-01T12:00:00Z' } },
-            author: { avatar_url: '', login: 'alice' },
-          },
-          {
-            sha: 'xyz789',
-            commit: { author: { name: 'Carol', email: 'c@t.com', date: '2024-04-01T08:00:00Z' } },
-            author: { avatar_url: '', login: 'carol' },
-          },
-        ]);
+        .mockResolvedValueOnce(
+          toResponse([
+            {
+              sha: 'abc123',
+              commit: { author: { name: 'Alice', email: 'a@t.com', date: '2024-06-01T12:00:00Z' } },
+              author: { avatar_url: '', login: 'alice' },
+            },
+          ]),
+        )
+        .mockResolvedValueOnce(
+          toResponse([
+            {
+              sha: 'abc123',
+              commit: { author: { name: 'Alice', email: 'a@t.com', date: '2024-06-01T12:00:00Z' } },
+              author: { avatar_url: '', login: 'alice' },
+            },
+            {
+              sha: 'xyz789',
+              commit: { author: { name: 'Carol', email: 'c@t.com', date: '2024-04-01T08:00:00Z' } },
+              author: { avatar_url: '', login: 'carol' },
+            },
+          ]),
+        );
 
       const result = await fetchFileCommits(['content/en/post.md', 'content/fr/post.md']);
 
@@ -909,18 +1000,20 @@ describe('Gitea Commits Service', () => {
     });
 
     test('returns sorted commits in descending date order', async () => {
-      fetchAPIMock.mockResolvedValue([
-        {
-          sha: 'oldest',
-          commit: { author: { name: 'A', email: 'a@t.com', date: '2024-01-01T00:00:00Z' } },
-          author: { avatar_url: '', login: 'a' },
-        },
-        {
-          sha: 'newest',
-          commit: { author: { name: 'B', email: 'b@t.com', date: '2024-12-01T00:00:00Z' } },
-          author: { avatar_url: '', login: 'b' },
-        },
-      ]);
+      fetchAPIMock.mockResolvedValueOnce(
+        toResponse([
+          {
+            sha: 'oldest',
+            commit: { author: { name: 'A', email: 'a@t.com', date: '2024-01-01T00:00:00Z' } },
+            author: { avatar_url: '', login: 'a' },
+          },
+          {
+            sha: 'newest',
+            commit: { author: { name: 'B', email: 'b@t.com', date: '2024-12-01T00:00:00Z' } },
+            author: { avatar_url: '', login: 'b' },
+          },
+        ]),
+      );
 
       const result = await fetchFileCommits(['file.md']);
 
@@ -929,14 +1022,16 @@ describe('Gitea Commits Service', () => {
     });
 
     test('handles missing commit author fields gracefully', async () => {
-      fetchAPIMock.mockResolvedValue([
-        {
-          sha: 'no-author',
-          commit: { author: null },
-          author: null,
-          created: '2024-03-01T00:00:00Z',
-        },
-      ]);
+      fetchAPIMock.mockResolvedValueOnce(
+        toResponse([
+          {
+            sha: 'no-author',
+            commit: { author: null },
+            author: null,
+            created: '2024-03-01T00:00:00Z',
+          },
+        ]),
+      );
 
       const result = await fetchFileCommits(['file.md']);
 
@@ -953,7 +1048,7 @@ describe('Gitea Commits Service', () => {
     });
 
     test('handles empty response', async () => {
-      fetchAPIMock.mockResolvedValue([]);
+      fetchAPIMock.mockImplementation(async () => toResponse([]));
 
       const result = await fetchFileCommits(['file.md']);
 
@@ -962,12 +1057,13 @@ describe('Gitea Commits Service', () => {
 
     test('handles undefined branch (uses empty string fallback)', async () => {
       repository.branch = undefined;
-      fetchAPIMock.mockResolvedValue([]);
+      fetchAPIMock.mockImplementation(async () => toResponse([]));
 
       await fetchFileCommits(['file.md']);
 
       expect(fetchAPIMock).toHaveBeenCalledWith(
-        '/repos/test-owner/test-repo/commits?sha=&path=file.md&limit=100',
+        '/repos/test-owner/test-repo/commits?sha=&path=file.md&limit=100&page=1',
+        { responseType: 'raw' },
       );
 
       repository.branch = 'main';

@@ -59,22 +59,13 @@ export const replaceTemplateTags = (str, replacer) => {
 
       if (!quoteState && char === '}' && nextChar === '}') {
         const closeIndex = cursor;
-        const hasLeadingQuote = str[openIndex - 1] === "'";
-        const hasTrailingQuote = str[closeIndex + 2] === "'";
-        const openingDelimiter = str[openIndex - 2];
-        const closingDelimiter = str[closeIndex + 3];
         const placeholder = str.slice(openIndex + 2, closeIndex);
 
-        /* v8 ignore next */
-        const isNestedTransformationArgument =
-          hasLeadingQuote &&
-          hasTrailingQuote &&
-          ['(', ',', '[', '|'].includes(openingDelimiter ?? '') &&
-          [')', ',', ']'].includes(closingDelimiter ?? '');
-
+        // A tag nested in a transformation argument, as in `default('{{slug}}')`, never gets here:
+        // it’s inside the quotes the outer tag is scanned through, so it’s kept as part of that
+        // tag. A quoted tag found here is in the literal text, e.g. `('{{nickname}}')`, and is
+        // replaced like any other
         if (!placeholder) {
-          result += str.slice(openIndex, closeIndex + 2);
-        } else if (isNestedTransformationArgument) {
           result += str.slice(openIndex, closeIndex + 2);
         } else {
           result += replacer(str.slice(openIndex, closeIndex + 2), placeholder);

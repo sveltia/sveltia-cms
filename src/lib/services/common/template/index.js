@@ -7,7 +7,7 @@ import { cmsConfig } from '$lib/services/config';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
 import { renameIfNeeded } from '$lib/services/utils/file';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';
@@ -17,9 +17,10 @@ import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 /**
  * Creates existing slugs list for uniqueness validation. With Editorial Workflow, the entries that
  * are still in a pull request count as well: a new entry taking the slug of one of them would take
- * its file path and its workflow branch too. Every entry stored in the collection folder counts,
- * including those the collection’s `filter` option leaves out, which can belong to another
- * collection sharing the folder.
+ * its file path and its workflow branch too. So do the new entries riding along in the pull request
+ * of an entry of another collection, whose files would collide when it’s published. Every entry
+ * stored in the collection folder counts, including those the collection’s `filter` option leaves
+ * out, which can belong to another collection sharing the folder.
  * @param {string} collectionName Collection name.
  * @param {string | undefined} locale Locale string.
  * @param {string} [dirPath] Folder within the collection folder the new entry goes to, as chosen
@@ -33,6 +34,7 @@ const getExistingSlugs = (collectionName, locale, dirPath) => {
     [
       ...getEntriesInCollectionFolder(collectionName),
       ...getUnpublishedEntriesByCollection(collectionName),
+      ...getCompanionEntries(collectionName),
     ]
       .map((e) => (locale ? e.locales[locale]?.slug : e.slug))
       .filter(Boolean)
@@ -123,5 +125,8 @@ export const fillTemplate = (template, options) => {
     }
   }
 
-  return renameIfNeeded(slug, getExistingSlugs(collectionName, locale, dirPath));
+  // A dot in a slug is part of the name rather than a file extension, so a number goes at the end
+  return renameIfNeeded(slug, getExistingSlugs(collectionName, locale, dirPath), {
+    hasExtension: false,
+  });
 };

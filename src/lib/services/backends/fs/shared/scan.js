@@ -51,6 +51,48 @@ export const getPathRegex = (path) => {
 };
 
 /**
+ * Create a regular expression that matches the given path and each of the folders leading to it,
+ * e.g. `static`, `static/posts` and `static/posts/images` for `static/{{dirname}}/images`. A
+ * template tag can stand for more than one segment, e.g. `{{dirname}}` for `blog/2024`, so a
+ * folder of any depth matches where a segment has one.
+ * @param {string} path Path.
+ * @returns {RegExp} RegEx.
+ */
+export const getPathPrefixRegex = (path) => {
+  const pattern = path
+    .split('/')
+    .map((segment) => escapeRegExp(segment).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?'))
+    // Each segment after the first is optional, along with all the segments after it
+    .reduceRight(
+      (rest, segment, index) => (index === 0 ? `${segment}${rest}` : `(?:\\/${segment}${rest})?`),
+      '',
+    );
+
+  return new RegExp(`^${pattern}$`);
+};
+
+/**
+ * Check whether the given folder leads to one of the scanning paths, being the path itself or one
+ * of the folders on the way to it.
+ * @param {string} path Folder path, in Unicode normalization form C.
+ * @param {string[]} scanningPaths Scanning paths.
+ * @param {Map<string, RegExp>} pathRegexCache Cache for the regexes of the scanning paths.
+ * @returns {boolean} Result.
+ */
+const leadsToScanningPath = (path, scanningPaths, pathRegexCache) =>
+  scanningPaths.some((scanningPath) => {
+    // Cache regex creation to avoid recreating for the same path
+    let regex = pathRegexCache.get(scanningPath);
+
+    if (!regex) {
+      regex = getPathPrefixRegex(scanningPath);
+      pathRegexCache.set(scanningPath, regex);
+    }
+
+    return regex.test(path);
+  });
+
+/**
  * Delete a temporary file left behind by a save that never finished. When the page is reloaded in
  * the middle of a save, e.g. by a dev server that watches the content files, the temporary file
  * isn’t renamed to its final name, and nothing else would ever remove it. The content isn’t lost,
@@ -81,7 +123,8 @@ const deleteStaleTempFile = async (dirHandle, fileHandle) => {
  * @param {RegExp[]} context.scanningPathsRegEx Regular expressions for scanning paths.
  * @param {FileHandleItem[]} context.fileHandles List of available file handles, appended to once
  * the directory has been scanned.
- * @param {Map<string, RegExp>} context.pathRegexCache Cache for path regexes.
+ * @param {Map<string, RegExp>} context.pathRegexCache Cache for the regexes matching the folders
+ * leading to each scanning path.
  * @param {string} [currentPath] Current directory path (for recursion).
  */
 export const scanDir = async (dirHandle, context, currentPath = '') => {
@@ -126,26 +169,21 @@ export const scanDir = async (dirHandle, context, currentPath = '') => {
         });
       }
 
-      if (handle.kind === 'directory') {
-        // Cache regex creation to avoid recreating for the same path
-        let regex = pathRegexCache.get(normalizedPath);
+      // Descend into a folder inside a scanning path, or one leading to a scanning path, which can
+      // have template tags in the middle, e.g. `static/posts` for `static/{{dirname}}/images`
+      if (
+        handle.kind === 'directory' &&
+        (hasMatchingPath || leadsToScanningPath(normalizedPath, scanningPaths, pathRegexCache))
+      ) {
+        /** @type {FileHandleItem[]} */
+        const subdirFileHandles = [];
 
-        if (!regex) {
-          regex = getPathRegex(normalizedPath);
-          pathRegexCache.set(normalizedPath, regex);
-        }
-
-        if (hasMatchingPath || scanningPaths.some((p) => regex.test(p))) {
-          /** @type {FileHandleItem[]} */
-          const subdirFileHandles = [];
-
-          items.push(subdirFileHandles);
-          subdirectories.push({
-            handle: /** @type {FileSystemDirectoryHandle} */ (handle),
-            path,
-            fileHandles: subdirFileHandles,
-          });
-        }
+        items.push(subdirFileHandles);
+        subdirectories.push({
+          handle: /** @type {FileSystemDirectoryHandle} */ (handle),
+          path,
+          fileHandles: subdirFileHandles,
+        });
       }
     }
   });

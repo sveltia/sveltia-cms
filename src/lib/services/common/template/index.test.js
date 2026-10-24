@@ -26,6 +26,7 @@ vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummaryFromContent: vi.fn(() => 'summary'),
 }));
 vi.mock('$lib/services/workflow', () => ({
+  getCompanionEntries: vi.fn(() => []),
   getUnpublishedEntriesByCollection: vi.fn(() => []),
 }));
 vi.mock('$lib/services/utils/file', async (importOriginal) => ({
@@ -1228,6 +1229,53 @@ describe('fillTemplate()', async () => {
     expect(getUnpublishedEntriesByCollection).toHaveBeenCalledWith(collection.name);
   });
 
+  test('getExistingSlugs includes the new entries riding along in another pull request', async () => {
+    await setupCmsConfig();
+
+    const { getCompanionEntries } = await import('$lib/services/workflow');
+    const { renameIfNeeded } = await import('$lib/services/utils/file');
+
+    // A new entry created from a Relation field of an entry of another collection is only in that
+    // entry’s pull request so far
+    vi.mocked(getCompanionEntries).mockReturnValueOnce([
+      // @ts-ignore
+      { slug: 'new-post', locales: { en: { slug: 'new-post' } } },
+    ]);
+    vi.mocked(renameIfNeeded).mockImplementationOnce((slug, existingSlugs) => {
+      expect(existingSlugs).toEqual(['new-post']);
+
+      return `${slug}-1`;
+    });
+
+    expect(fillTemplate('{{title}}', { collection, content: { title: 'New Post' } })).toBe(
+      'new-post-1',
+    );
+    expect(getCompanionEntries).toHaveBeenCalledWith(collection.name);
+  });
+
+  test('a taken slug with a dot is numbered at the end', async () => {
+    await setupCmsConfig();
+
+    const { getEntriesInCollectionFolder } =
+      await import('$lib/services/contents/collection/entries');
+
+    const { renameIfNeeded } = await import('$lib/services/utils/file');
+
+    const actual = /** @type {typeof import('$lib/services/utils/file')} */ (
+      await vi.importActual('$lib/services/utils/file')
+    );
+
+    vi.mocked(getEntriesInCollectionFolder).mockReturnValueOnce([
+      // @ts-ignore
+      { slug: 'example.com', locales: { en: { slug: 'example.com' } } },
+    ]);
+    vi.mocked(renameIfNeeded).mockImplementationOnce(actual.renameIfNeeded);
+
+    expect(fillTemplate('{{site}}', { collection, content: { site: 'example.com' } })).toBe(
+      'example.com-1',
+    );
+  });
+
   test('getExistingSlugs with locale returns locale-specific slugs', async () => {
     await setupCmsConfig();
 
@@ -1309,15 +1357,15 @@ describe('fillTemplate()', async () => {
     expect(
       fillTemplate('{{title}}', { collection, content: { title: 'Intro' }, dirPath: 'docs' }),
     ).toBe('intro-1');
-    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro', ['intro']);
+    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro', ['intro'], { hasExtension: false });
     expect(
       fillTemplate('{{title}}', { collection, content: { title: 'Intro' }, dirPath: '' }),
     ).toBe('intro-1');
-    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro', ['intro']);
+    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro', ['intro'], { hasExtension: false });
     expect(
       fillTemplate('{{title}}', { collection, content: { title: 'Intro' }, dirPath: 'blog' }),
     ).toBe('intro');
-    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro', []);
+    expect(renameIfNeeded).toHaveBeenLastCalledWith('intro', [], { hasExtension: false });
 
     vi.mocked(getEntriesInCollectionFolder).mockReturnValue([]);
     vi.mocked(renameIfNeeded).mockImplementation((slug) => slug);

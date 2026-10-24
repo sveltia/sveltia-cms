@@ -13,8 +13,18 @@ import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 
 // Mock dependencies
-vi.mock('$lib/services/assets/media-field', () => ({
-  getMediaFieldSource: vi.fn(),
+vi.mock('$lib/services/assets/media-field', () => {
+  const getMediaFieldSource = vi.fn();
+
+  return {
+    getMediaFieldSource,
+    // Like the real one, fall back to the field’s own folder when no component folder applies
+    getRichTextMediaSource: vi.fn(({ componentNames, ...args }) => getMediaFieldSource(args)),
+  };
+});
+
+vi.mock('$lib/services/contents/fields/rich-text/options', () => ({
+  getEditorComponentNames: vi.fn(() => ['image']),
 }));
 
 vi.mock('$lib/services/config', () => ({
@@ -39,6 +49,7 @@ vi.mock('$lib/services/contents/entry/collections', () => ({
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
+  getTypedKeyPath: vi.fn(({ keyPath }) => keyPath.replace(/\.\d+/g, '.*')),
 }));
 
 describe('getEntriesByAssetURL()', () => {
@@ -793,9 +804,85 @@ describe('getEntriesByAssets()', () => {
       entry: a,
       collectionName: 'posts',
       fileName: undefined,
+      typedKeyPath: 'cover',
       locale: 'en',
       value: 'photo.jpg',
+      fieldConfig: { name: 'cover', widget: 'image' },
     });
+  });
+
+  test('resolves a reference against the field’s own media folder', async () => {
+    const { getMediaFieldSource } = await setup();
+    const { getTypedKeyPath } = await import('$lib/services/contents/entry/fields');
+    const { getRichTextMediaSource } = await import('$lib/services/assets/media-field');
+
+    const { getEditorComponentNames } =
+      await import('$lib/services/contents/fields/rich-text/options');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    // An entry-relative collection whose fields have a `media_folder` of their own, like
+    // `images1`: a bare file name only resolves to the asset against the field’s folder
+    const asset = { path: 'posts/a/images1/photo.jpg', name: 'photo.jpg' };
+
+    const content = {
+      'gallery.0.src': 'photo.jpg',
+      'gallery.0.type': 'image',
+      cover: 'photo.jpg',
+      body: '![p](photo.jpg)',
+    };
+
+    const a = createEntry('a', content);
+
+    vi.mocked(isCollectionIndexFile).mockReturnValue(true);
+    vi.mocked(getMediaFieldSource).mockImplementation(({ typedKeyPath, value }) =>
+      ['gallery.*.src', 'body'].includes(typedKeyPath) && value === 'photo.jpg'
+        ? { asset }
+        : undefined,
+    );
+
+    const references = await getAssetReferences([{ asset }], { entries: [a] });
+
+    expect(references.map(({ keyPath }) => keyPath)).toEqual(['gallery.0.src', 'body']);
+    // The variable types along the key path are read from the content
+    expect(getTypedKeyPath).toHaveBeenCalledWith({
+      collectionName: 'posts',
+      fileName: undefined,
+      keyPath: 'gallery.0.src',
+      valueMap: content,
+      isIndexFile: true,
+    });
+    expect(getMediaFieldSource).toHaveBeenCalledWith(
+      expect.objectContaining({
+        typedKeyPath: 'gallery.*.src',
+        fieldConfig: { name: 'gallery.0.src', widget: 'image' },
+      }),
+    );
+    // A media URL in a body is also looked up in the folders of the field’s editor components
+    expect(getEditorComponentNames).toHaveBeenCalledWith({ name: 'body', widget: 'markdown' });
+    expect(getRichTextMediaSource).toHaveBeenCalledWith({
+      entry: a,
+      collectionName: 'posts',
+      fileName: undefined,
+      typedKeyPath: 'body',
+      locale: 'en',
+      value: 'photo.jpg',
+      componentNames: ['image'],
+    });
+  });
+
+  test('works out the typed key path of a field once, however many media it holds', async () => {
+    const { getMediaFieldSource } = await setup();
+    const { getTypedKeyPath } = await import('$lib/services/contents/entry/fields');
+    const asset = { path: 'posts/a/photo.jpg', name: 'photo.jpg' };
+    const a = createEntry('a', { body: '![p](photo.jpg) ![q](other.jpg) ![r](more.jpg)' });
+
+    vi.mocked(getMediaFieldSource).mockReturnValue(undefined);
+
+    expect(await getEntriesByAssets([{ asset }], { entries: [a] })).toEqual([[]]);
+    expect(getMediaFieldSource).toHaveBeenCalledTimes(3);
+    expect(getTypedKeyPath).toHaveBeenCalledTimes(1);
   });
 
   test('resolves a reference relative to the entry file of the locale holding it', async () => {

@@ -188,33 +188,72 @@ export const commitChanges = async (changes, options) => {
 };
 
 /**
+ * Maximum number of commits to fetch for a file, the same as the GitHub and GitLab backends.
+ */
+const MAX_FILE_COMMITS = 100;
+/**
+ * Maximum number of pages to read from a file’s commit history, a safety net against a runaway
+ * loop on an instance configured with a tiny page size.
+ */
+const MAX_FILE_COMMIT_PAGES = 10;
+
+/**
+ * Fetch the commit history of a file, up to {@link MAX_FILE_COMMITS} commits. With a `path` filter,
+ * the instance ignores `limit` and returns `[git] COMMITS_RANGE_SIZE` commits per page, 50 by
+ * default, so the further pages are read while the `X-HasMore` header says there are any. The
+ * header is exposed to cross-origin requests; without it, only the first page is read.
+ * @param {string} path File path.
+ * @returns {Promise<any[]>} Raw commit list.
+ * @throws {Error} When the instance responded with an error.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetAllCommits
+ * @see https://docs.gitea.com/administration/config-cheat-sheet#git-git
+ */
+const fetchFileHistory = async (path) => {
+  const { owner, repo, branch } = repository;
+  /** @type {any[]} */
+  const commits = [];
+
+  for (let page = 1; page <= MAX_FILE_COMMIT_PAGES; page += 1) {
+    // The response is taken as is to read the paging headers
+    const response = /** @type {Response} */ (
+      // eslint-disable-next-line no-await-in-loop
+      await fetchAPI(
+        `/repos/${owner}/${repo}/commits` +
+          `?sha=${encodeURIComponent(branch ?? '')}` +
+          `&path=${encodeURIComponent(path)}&limit=${MAX_FILE_COMMITS}&page=${page}`,
+        { responseType: 'raw' },
+      )
+    );
+
+    if (!response.ok) {
+      throw new Error('Server responded with an error', { cause: { status: response.status } });
+    }
+
+    // eslint-disable-next-line no-await-in-loop
+    commits.push(.../** @type {any[]} */ (await response.json()));
+
+    if (response.headers.get('X-HasMore') !== 'true' || commits.length >= MAX_FILE_COMMITS) {
+      break;
+    }
+  }
+
+  return commits.slice(0, MAX_FILE_COMMITS);
+};
+
+/**
  * Fetch commit history for the given file paths.
  * @param {string[]} paths File paths to fetch commit history for.
  * @returns {Promise<FileCommit[]>} Deduplicated and sorted list of commits.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetAllCommits
  */
-export const fetchFileCommits = async (paths) => {
-  const { owner, repo, branch } = repository;
-
-  return fetchPerPathCommits(
-    paths,
-    (path) =>
-      /** @type {Promise<any[]>} */ (
-        fetchAPI(
-          `/repos/${owner}/${repo}/commits` +
-            `?sha=${encodeURIComponent(branch ?? '')}` +
-            `&path=${encodeURIComponent(path)}&limit=100`,
-        )
-      ),
-    (commit) => ({
-      sha: commit.sha,
-      // A message written on Windows can have CRLF line breaks
-      message: (commit.commit?.message ?? '').split(/\r?\n/)[0],
-      authorName: commit.commit?.author?.name ?? '',
-      authorEmail: commit.commit?.author?.email,
-      authorAvatarURL: commit.author?.avatar_url,
-      authorLogin: commit.author?.login,
-      date: new Date(commit.commit?.author?.date ?? commit.created),
-    }),
-  );
-};
+export const fetchFileCommits = async (paths) =>
+  fetchPerPathCommits(paths, fetchFileHistory, (commit) => ({
+    sha: commit.sha,
+    // A message written on Windows can have CRLF line breaks
+    message: (commit.commit?.message ?? '').split(/\r?\n/)[0],
+    authorName: commit.commit?.author?.name ?? '',
+    authorEmail: commit.commit?.author?.email,
+    authorAvatarURL: commit.author?.avatar_url,
+    authorLogin: commit.author?.login,
+    date: new Date(commit.commit?.author?.date ?? commit.created),
+  }));

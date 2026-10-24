@@ -23,6 +23,18 @@ import { hmacSha256, toHex } from '$lib/services/utils/crypto';
  */
 
 /**
+ * Origin of the legacy CDN, which projects created before September 4, 2025 can still use.
+ * @see https://uploadcare.com/docs/delivery/cdn/
+ */
+const LEGACY_CDN_ORIGIN = 'https://ucarecdn.com';
+/**
+ * Regex matching a URL on a project’s own CDN subdomain, like `https://demo.ucarecd.net/`, which
+ * newer projects serve their files from.
+ * @see https://uploadcare.com/docs/delivery/cdn/
+ */
+const PROJECT_CDN_URL_REGEX = /^https:\/\/[\w-]+\.ucarecd\.net\//i;
+
+/**
  * @typedef {object} UploadcareResource
  * @property {string} uuid File UUID.
  * @property {string} original_filename Original file name.
@@ -151,6 +163,38 @@ const getRESTHeaders = ({ publicKey, secretKey }) => ({
 });
 
 /**
+ * Get the origin of the CDN the project serves its files from: a subdomain of its own, like
+ * `https://demo.ucarecd.net`, or the legacy `https://ucarecdn.com`. The Upload API only returns the
+ * file UUIDs, so the origin is read from the URL the REST API gives for one of the uploaded files,
+ * which uses the domain the project currently serves files from.
+ * @param {string} uuid UUID of an uploaded file.
+ * @param {{ publicKey: string, secretKey: string }} keys Public key and secret key.
+ * @returns {Promise<string>} Origin. The legacy one if the file info can’t be fetched.
+ * @see https://uploadcare.com/docs/api/rest/file/info/
+ * @see https://uploadcare.com/docs/delivery/cdn/
+ */
+const getCDNOrigin = async (uuid, keys) => {
+  try {
+    const response = await fetch(`https://api.uploadcare.com/files/${uuid}/`, {
+      headers: getRESTHeaders(keys),
+    });
+
+    if (response.ok) {
+      /** @type {UploadcareResource} */
+      const { original_file_url: url } = await response.json();
+
+      if (url) {
+        return new URL(url).origin;
+      }
+    }
+  } catch {
+    // The files have been uploaded anyway, so fall back to the legacy CDN
+  }
+
+  return LEGACY_CDN_ORIGIN;
+};
+
+/**
  * Fetch files from Uploadcare API with pagination.
  * @param {MediaLibraryFetchOptions} options Options containing the secret key (apiKey) and kind.
  * @param {object} [config] Additional configuration.
@@ -248,7 +292,8 @@ export const upload = async (files, options) => {
   }
 
   const { fieldConfig } = options;
-  const { publicKey, secretKey } = getKeys(options);
+  const keys = getKeys(options);
+  const { publicKey, secretKey } = keys;
   // Generate signature for secure upload (expires in 30 minutes)
   const expire = Math.floor(Date.now() / 1000) + 1800;
   const signature = await generateSignature(secretKey, expire);
@@ -285,29 +330,39 @@ export const upload = async (files, options) => {
   await assertResponseOK(response, 'Failed to upload files');
 
   const data = await response.json();
+  const entries = Object.entries(data).filter(([key]) => !key.startsWith('UPLOADCARE_'));
+
+  // The options and their `config` exist, as the public key has been read from them
+  const { cdnBase } = /** @type {Record<string, any>} */ (
+    /** @type {UploadcareMediaLibrary} */ (resolveLibraryOptions('uploadcare', fieldConfig)).config
+  );
+
+  // A configured CDN base is used in place of the origin, so there’s no need to look it up then
+  const cdnOrigin =
+    cdnBase === undefined && entries.length
+      ? await getCDNOrigin(entries[0][1], keys)
+      : LEGACY_CDN_ORIGIN;
 
   // Handle both single and multiple file responses
-  const uploadedFiles = Object.entries(data)
-    .filter(([key]) => !key.startsWith('UPLOADCARE_'))
-    .map(([fileName, uuid]) => {
-      const file = fileMap.get(fileName);
-      const mimeType = file?.type || 'application/octet-stream';
-      const isImage = mimeType.startsWith('image/');
+  const uploadedFiles = entries.map(([fileName, uuid]) => {
+    const file = fileMap.get(fileName);
+    const mimeType = file?.type || 'application/octet-stream';
+    const isImage = mimeType.startsWith('image/');
 
-      return {
-        uuid,
-        original_filename: fileName,
-        original_file_url: `https://ucarecdn.com/${uuid}/${fileName}`,
-        size: file?.size || 0,
-        mime_type: mimeType,
-        is_image: isImage,
-        is_ready: true,
-        content_info: null,
-        datetime_uploaded: new Date().toISOString(),
-        datetime_stored: new Date().toISOString(),
-        datetime_removed: null,
-      };
-    });
+    return {
+      uuid,
+      original_filename: fileName,
+      original_file_url: `${cdnOrigin}/${uuid}/${fileName}`,
+      size: file?.size || 0,
+      mime_type: mimeType,
+      is_image: isImage,
+      is_ready: true,
+      content_info: null,
+      datetime_uploaded: new Date().toISOString(),
+      datetime_stored: new Date().toISOString(),
+      datetime_removed: null,
+    };
+  });
 
   return parseResults(uploadedFiles, { fieldConfig });
 };
@@ -347,7 +402,8 @@ export const deleteFiles = async (assets, options) => {
 };
 
 /**
- * Whether the given URL points to a file on the configured Uploadcare CDN.
+ * Whether the given URL points to a file on the configured Uploadcare CDN, or else on the legacy
+ * CDN or a project’s own CDN subdomain.
  * @param {string} url URL.
  * @returns {boolean} Result.
  */
@@ -358,10 +414,14 @@ export const isAssetURL = (url) => {
     return false;
   }
 
-  try {
-    const { origin } = new URL(options.config?.cdnBase ?? 'https://ucarecdn.com/');
+  const cdnBase = options.config?.cdnBase;
 
-    return url.startsWith(`${origin}/`);
+  if (cdnBase === undefined) {
+    return url.startsWith(`${LEGACY_CDN_ORIGIN}/`) || PROJECT_CDN_URL_REGEX.test(url);
+  }
+
+  try {
+    return url.startsWith(`${new URL(cdnBase).origin}/`);
   } catch {
     // A malformed `cdnBase` can’t be matched
     return false;

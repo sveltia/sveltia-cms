@@ -146,6 +146,17 @@ const identifyOperation = async (fs, marker, operation) => {
 };
 
 /**
+ * Check whether a configuration value is true the way Git reads a boolean: `true`, `yes`, `on` and
+ * a number other than zero are true, in any case, as is an option without a value, which the
+ * isomorphic-git library reads as `true`.
+ * @param {any} value Value.
+ * @returns {boolean} Whether the value is true.
+ * @see https://git-scm.com/docs/git-config#Documentation/git-config.txt-boolean
+ */
+const isTrueConfigValue = (value) =>
+  value === true || /^(?:true|yes|on|[+-]?0*[1-9]\d*)$/i.test(String(value).trim());
+
+/**
  * Read a boolean option from the repository’s configuration the way Git does: `true`, `yes`, `on`
  * and a number other than zero are true, in any case, and an option that isn’t set is false.
  * The isomorphic-git library converts the value of a few options, such as `core.ignorecase`, to a
@@ -161,7 +172,7 @@ const getBooleanConfig = async (git, fs, path) => {
   try {
     const value = await git.getConfig({ fs, dir: DIR, path });
 
-    return value === true || /^(?:true|yes|on|[+-]?0*[1-9]\d*)$/i.test(String(value).trim());
+    return isTrueConfigValue(value);
   } catch {
     return false;
   }
@@ -311,8 +322,8 @@ export const inspectRepository = async (repoRootDirHandle, { onLock } = {}) => {
       index,
       indexBuffer,
       indexTree,
-      // Git converts the line endings when adding a file with both values
-      autocrlf: ['true', 'input'].includes(String(autocrlf)),
+      // Git converts the line endings when adding a file with `input` as well as a true value
+      autocrlf: /^input$/i.test(String(autocrlf).trim()) || isTrueConfigValue(autocrlf),
       // Git matches the patterns in `.gitattributes` case-insensitively with the option, which it
       // sets when the repository is cloned or created on a case-insensitive file system
       ignoreCase,

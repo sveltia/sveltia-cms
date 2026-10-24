@@ -1016,11 +1016,32 @@ describe('Gitea Editorial Workflow service', () => {
 
       expect(fetchAPI).toHaveBeenCalledWith(`${REPO_PATH}/pulls/1/reviews/1`, {
         method: 'DELETE',
-        responseType: 'raw',
+        responseType: 'text',
       });
       expect(
         vi.mocked(fetchAPI).mock.calls.filter(([, options]) => options?.method === 'DELETE'),
       ).toHaveLength(1);
+    });
+
+    test('reports a refused deletion', async () => {
+      vi.mocked(fetchAPI).mockImplementation(async (path, options) => {
+        if (options?.method === 'DELETE') {
+          // `sendRequest` throws on an error status unless the response is taken as is
+          if (options.responseType === 'raw') {
+            return new Response(null, { status: 403 });
+          }
+
+          throw new Error('Server responded with an error', { cause: { status: 403 } });
+        }
+
+        return path.startsWith(`${REPO_PATH}/pulls/1/reviews?`)
+          ? [{ id: 1, state: 'APPROVED', dismissed: false, user: { login: 'me' } }]
+          : {};
+      });
+
+      await expect(withdrawApproval(/** @type {any} */ ({ number: 1 }))).rejects.toThrow(
+        'Server responded with an error',
+      );
     });
   });
 

@@ -180,6 +180,22 @@ describe('replaceTemplateTags()', () => {
     );
   });
 
+  test('should replace a quoted tag in the literal text', () => {
+    expect(replace("{{title}} ('{{nickname}}')")).toBe("<<title>> ('<<nickname>>')");
+    expect(replace("['{{lang}}']")).toBe("['<<lang>>']");
+    expect(replace(",'{{x}}',")).toBe(",'<<x>>',");
+    expect(replace("|'{{x}}')")).toBe("|'<<x>>')");
+  });
+
+  test('should keep a tag nested in a transformation argument in the outer tag', () => {
+    expect(replace("{{title | default('{{slug}}')}} ('{{nickname}}')")).toBe(
+      "<<title | default('{{slug}}')>> ('<<nickname>>')",
+    );
+    expect(replace("{{a | ternary( '{{b}}' , '{{c}}' )}}")).toBe(
+      "<<a | ternary( '{{b}}' , '{{c}}' )>>",
+    );
+  });
+
   test('should leave an unterminated template tag unchanged', () => {
     expect(replace("{{title | default('x'")).toBe("{{title | default('x'");
   });

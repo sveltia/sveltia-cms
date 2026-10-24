@@ -8,12 +8,13 @@ import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import {
   getSharedEntryFileName,
+  stripIndexFileName,
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
 import { getSlugOptions, LEGACY_SLUG_EDITOR_TAG } from '$lib/services/contents/collection/slug';
 import { usesSingleFileStructure } from '$lib/services/contents/i18n/config';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
  * @import {
@@ -177,8 +178,10 @@ export const isSlugAutoNumbered = ({ draft, locale, templateOnly = false }) => {
  * Get the slug a new entry is given in a collection whose slug is numbered automatically: the
  * integer after the highest one among the slugs of the entries stored in the collection folder, in
  * any locale, as the other locales share the number, starting from `1`. In a nested collection, the
- * last segment of an entry’s sub path counts. The entries still in a pull request count too, as do
- * the entries created from a Relation field that are saved along with the entry being edited. Like
+ * last segment of an entry’s sub path counts, leaving out the file name every entry shares in the
+ * `subfolders` mode, e.g. `index`. The entries still in a pull request count too, including the new
+ * ones riding along in the pull request of an entry of another collection, as do the entries
+ * created from a Relation field that are saved along with the entry being edited. Like
  * the `auto_increment` option of a Number field, it’s worked out again at save time, so two entries
  * created at the same time can’t take the same number.
  * @param {object} args Arguments.
@@ -189,11 +192,12 @@ export const isSlugAutoNumbered = ({ draft, locale, templateOnly = false }) => {
  * @see https://github.com/sveltia/sveltia-cms/issues/1072
  */
 export const getNextSlugNumber = ({ draft, pendingEntries = draft.pendingEntries }) => {
-  const { collectionName } = draft;
+  const { collection, collectionName } = draft;
 
   const max = [
     ...getEntriesInCollectionFolder(collectionName),
     ...getUnpublishedEntriesByCollection(collectionName),
+    ...getCompanionEntries(collectionName),
     ...pendingEntries
       .filter((pendingEntry) => pendingEntry.collectionName === collectionName)
       .map(({ entry }) => entry),
@@ -203,7 +207,7 @@ export const getNextSlugNumber = ({ draft, pendingEntries = draft.pendingEntries
       ...Object.values(locales).map((content) => content.slug),
     ])
     .reduce((result, slug) => {
-      const name = /** @type {string} */ (slug.split('/').pop());
+      const name = /** @type {string} */ (stripIndexFileName(collection, slug).split('/').pop());
 
       return /^\d+$/.test(name) ? Math.max(result, Number(name)) : result;
     }, 0);

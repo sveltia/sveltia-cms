@@ -13,7 +13,7 @@ import { buildEntryUpdateChanges } from '$lib/services/contents/entry/changes';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 import {
   applyBulkEdits,
@@ -105,6 +105,7 @@ vi.mock('$lib/services/contents/fields/date-time/auto-now', () => ({
 
 vi.mock('$lib/services/workflow', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
+  getCompanionEntries: vi.fn(() => []),
   getUnpublishedEntriesByCollection: vi.fn(() => []),
 }));
 
@@ -666,6 +667,21 @@ describe('validateBulkEdits()', () => {
     expect(validateBulkEdits({ collection, entries, edits: { a: { slug: 'three' } } })).toEqual({
       a: { slug: ['duplicateError'] },
     });
+  });
+
+  test('counts a new entry riding along in the pull request of another entry', () => {
+    const collection = makeCollection();
+    const entries = [makeEntry('a', { slug: 'one' })];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(entries);
+    vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue([]);
+    vi.mocked(getCompanionEntries).mockReturnValue([makeEntry('companion', { slug: 'two' })]);
+
+    expect(validateBulkEdits({ collection, entries, edits: { a: { slug: 'two' } } })).toEqual({
+      a: { slug: ['duplicateError'] },
+    });
+
+    vi.mocked(getCompanionEntries).mockReturnValue([]);
   });
 
   test('counts an entry and its unpublished version renamed by a pull request once', () => {

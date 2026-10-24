@@ -373,7 +373,7 @@ describe('saveAndCommitChanges()', () => {
     expect(git('show', '--format=', '--summary', 'HEAD')).toBe('');
   });
 
-  test.each(['true', 'input'])(
+  test.each(['true', 'input', 'Input', 'TRUE', 'yes', 'on', '1'])(
     'stores text with LF line endings when `core.autocrlf` is %s',
     async (value) => {
       git('config', 'core.autocrlf', value);
@@ -404,6 +404,32 @@ describe('saveAndCommitChanges()', () => {
       expect(
         execFileSync('git', ['cat-file', 'blob', 'HEAD:binary.bin'], { cwd: repoDir }),
       ).toEqual(binary);
+    },
+  );
+
+  test.each(['false', 'off', '0'])(
+    'stores text with CRLF line endings as is when `core.autocrlf` is %s',
+    async (value) => {
+      git('config', 'core.autocrlf', value);
+
+      const changes = [
+        { action: /** @type {const} */ ('create'), path: 'crlf.md', data: 'One\r\nTwo\r\n' },
+      ];
+
+      await saveAndCommitChanges({
+        repoRootDirHandle: createNodeDirectoryHandle(repoDir),
+        changes,
+        options: { commitType: 'create' },
+        save: async () => {
+          write('crlf.md', 'One\r\nTwo\r\n');
+
+          return { sha: 'pseudo', files: {} };
+        },
+      });
+
+      expect(
+        execFileSync('git', ['cat-file', 'blob', 'HEAD:crlf.md'], { cwd: repoDir }).toString(),
+      ).toBe('One\r\nTwo\r\n');
     },
   );
 

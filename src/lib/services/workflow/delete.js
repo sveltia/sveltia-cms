@@ -32,10 +32,11 @@ const deleteBackups = async ({ entries, collection, collectionFile }) => {
   }
 
   await Promise.all(
-    entries.map(async ({ slug }) => {
+    entries.map(async ({ subPath }) => {
       try {
-        // Same as `getBackupSlug()`: a collection file’s backup is stored under the file name
-        await deleteBackup(collection.name, collectionFile?.name ?? slug);
+        // Same as `getBackupSlug()`: a collection file’s backup is stored under the file name, and
+        // an entry’s under its `subPath`, which, unlike the slug, is unique in the collection
+        await deleteBackup(collection.name, collectionFile?.name ?? subPath);
       } catch (ex) {
         // eslint-disable-next-line no-console
         console.error(ex);

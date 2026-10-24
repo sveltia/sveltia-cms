@@ -325,7 +325,7 @@ const finishSave = async ({ draft, savingEntry, pendingEntries, useWorkflow, ski
   // may reload the page right after they’re written, e.g. Eleventy, and a backup that outlives the
   // save would then offer to restore a draft that has already been saved. The changes are saved
   // already, so a backup that can’t be deleted doesn’t fail the save. The backup is stored under
-  // the slug the entry had when it was opened, which a rename leaves behind. A backup scheduled for
+  // the path the entry had when it was opened, which a rename leaves behind. A backup scheduled for
   // a change made just before the save is dropped as well: the editor may stay open on the saved
   // draft for a while, e.g. while asking whether to send it for review, and the backup made then
   // would take the place of the one deleted here and be offered the next time the entry is opened

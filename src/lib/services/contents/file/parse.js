@@ -256,14 +256,18 @@ export const parseFrontMatter = ({
       ),
   );
 
+  // Blank lines or spaces before the front matter block are ignored
+  const trimmedText = text.trimStart();
+
   const groups =
     (format === 'json-frontmatter' && startDelimiter === '{' && endDelimiter === '}'
-      ? text.match(DOUBLE_BRACE_JSON_FRONT_MATTER_REGEX)?.groups
-      : undefined) ?? text.match(regex)?.groups;
+      ? trimmedText.match(DOUBLE_BRACE_JSON_FRONT_MATTER_REGEX)?.groups
+      : undefined) ?? trimmedText.match(regex)?.groups;
 
   if (!groups) {
-    // Support Markdown without a front matter block, particularly for VitePress
-    // The text can be an empty string, but it’s okay to return an empty body
+    // Support Markdown without a front matter block, particularly for VitePress. The body keeps its
+    // leading whitespace, e.g. an indented code block. The text can be an empty string, but it’s
+    // okay to return an empty body
     return { [bodyKey]: text };
   }
 
@@ -348,13 +352,16 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
   // Forget what was read from an earlier version of the file
   valueSources.delete(path);
 
-  // Normalize line breaks
-  text = text.trim().replace(/\r\n?/g, '\n');
+  // Normalize line breaks. The leading whitespace is only dropped where it’s meaningless: the
+  // content of a raw file, and the body of a file without front matter, keep theirs, e.g. an
+  // indented code block at the start of a Markdown file, as a save keeps it
+  text = text.trimEnd().replace(/\r\n?/g, '\n');
 
+  const trimmedText = text.trimStart();
   const customParser = customFileFormatRegistry.get(format)?.parser;
 
   if (customParser) {
-    return customParser(text);
+    return customParser(trimmedText);
   }
 
   // Raw format: return the content as-is
@@ -364,7 +371,7 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
 
   try {
     if (format === 'frontmatter') {
-      const detectedFormat = detectFrontMatterFormat(text);
+      const detectedFormat = detectFrontMatterFormat(trimmedText);
 
       // Remembered, so the file is saved back in the same format
       detectedFrontMatterFormats.set(path, detectedFormat);
@@ -386,7 +393,7 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
     const syntax = getFormatSyntax(format);
 
     if (syntax) {
-      return PARSERS[syntax](text, path);
+      return PARSERS[syntax](trimmedText, path);
     }
   } catch (/** @type {any} */ ex) {
     throw new Error(`${path} could not be parsed due to ${ex.name}: ${ex.message}`);

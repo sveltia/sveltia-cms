@@ -9,7 +9,7 @@ import {
 import { isEntryCollection } from '$lib/services/contents/collection/predicates';
 import { getSlugs, hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { validatePath as _validatePath } from '$lib/services/contents/draft/validate/path';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(),
@@ -21,6 +21,7 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
 }));
 
 vi.mock('$lib/services/workflow', () => ({
+  getCompanionEntries: vi.fn(() => []),
   getUnpublishedEntriesByCollection: vi.fn(() => []),
   mergeUnpublishedEntries: vi.fn((entries) => entries),
   unpublishedEntries: { current: [] },
@@ -279,6 +280,26 @@ describe('validatePath()', () => {
       });
 
       expect(validatePath().validities.en._path.duplicateError).toBe(true);
+    });
+
+    test('rejects a destination already claimed by an entry riding along in a pull request', async () => {
+      // A new entry created from a Relation field of an entry of another collection has taken the
+      // folder in that entry’s pull request
+      vi.mocked(getCompanionEntries).mockReturnValueOnce(
+        /** @type {any} */ ([{ id: 'other', subPath: 'docs/_index' }]),
+      );
+
+      await setDraft({
+        collection: createCollection({ indexFile: '_index' }),
+        currentLocales: { en: true },
+        isNew: false,
+        originalEntry: { id: 'self', subPath: 'guides/_index' },
+        originalPath: 'guides',
+        currentPath: 'docs',
+      });
+
+      expect(validatePath().validities.en._path.duplicateError).toBe(true);
+      expect(getCompanionEntries).toHaveBeenCalledWith('pages');
     });
 
     test('ignores the entry being edited', async () => {

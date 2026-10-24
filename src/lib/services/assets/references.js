@@ -1,15 +1,16 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 
-import { getMediaFieldSource } from '$lib/services/assets/media-field';
+import { getMediaFieldSource, getRichTextMediaSource } from '$lib/services/assets/media-field';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
-import { getField } from '$lib/services/contents/entry/fields';
+import { getField, getTypedKeyPath } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getValueFormat } from '$lib/services/contents/fields/rich-text';
+import { getEditorComponentNames } from '$lib/services/contents/fields/rich-text/options';
 import {
   getRichTextMediaSources,
   MARKDOWN_MEDIA_REGEX,
@@ -29,11 +30,13 @@ import {
  * InternalCollection,
  * InternalCollectionFile,
  * InternalLocaleCode,
+ * MediaFieldSource,
  * } from '$lib/types/private';
  * @import {
  * Field,
  * FieldKeyPath,
  * MarkdownField,
+ * MediaField,
  * RichTextField,
  * } from '$lib/types/public';
  */
@@ -107,18 +110,66 @@ const createMatcher = (targets) => {
 };
 
 /**
+ * Create a function resolving a media field value, or a media URL found in a Markdown or RichText
+ * field value, to the file it points to, the way the editor does to display it, without loading
+ * the file. A relative path is resolved against the field’s own `media_folder`, if any, and the
+ * media URL in a body against those of the editor components the field can contain, too.
+ * @param {object} args Arguments.
+ * @param {Entry} args.entry Entry holding the field.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name.
+ * @param {InternalLocaleCode} [args.locale] Locale the value is found in, which an entry-relative
+ * path is relative to.
+ * @param {FieldKeyPath} args.keyPath Key path of the value.
+ * @param {FlattenedEntryContent} args.valueMap Content holding the value, which tells the variable
+ * types along the key path.
+ * @param {boolean} [args.isIndexFile] Whether the entry is the collection’s special index file.
+ * @param {Field} args.fieldConfig Field config.
+ * @returns {(src: string) => MediaFieldSource | undefined} Function resolving a field value or a
+ * media URL in it.
+ */
+export const createMediaSourceResolver = ({
+  entry,
+  collectionName,
+  fileName,
+  locale,
+  keyPath,
+  valueMap,
+  isIndexFile,
+  fieldConfig,
+}) => {
+  /** @type {string | undefined} */
+  let typedKeyPath;
+
+  return (src) => {
+    // Worked out on the first lookup only, as most values don’t need resolving
+    typedKeyPath ??= getTypedKeyPath({ collectionName, fileName, keyPath, valueMap, isIndexFile });
+
+    const args = { entry, collectionName, fileName, typedKeyPath, locale, value: src };
+    const { widget: fieldType = 'string' } = fieldConfig;
+
+    if (MEDIA_FIELD_TYPES.includes(fieldType)) {
+      return getMediaFieldSource({ ...args, fieldConfig: /** @type {MediaField} */ (fieldConfig) });
+    }
+
+    return getRichTextMediaSource({
+      ...args,
+      componentNames: getEditorComponentNames(
+        /** @type {MarkdownField | RichTextField} */ (fieldConfig),
+      ),
+    });
+  };
+};
+
+/**
  * Get the targets the given field value or image source refers to.
  * @param {AssetReferenceMatcher} matcher Matcher.
  * @param {string} src Field value or image source found in it.
- * @param {object} context Context to resolve the value to an asset with.
- * @param {Entry} context.entry Entry.
- * @param {string} context.collectionName Collection name.
- * @param {string} [context.fileName] Collection file name.
- * @param {InternalLocaleCode} [context.locale] Locale the value is found in, which an
- * entry-relative path is relative to.
+ * @param {(src: string) => MediaFieldSource | undefined} resolve Function resolving the value to
+ * an asset, as returned by {@link createMediaSourceResolver}.
  * @returns {number[]} Indexes of the targets.
  */
-const getMatchingTargets = (matcher, src, { entry, collectionName, fileName, locale }) => {
+const getMatchingTargets = (matcher, src, resolve) => {
   const indexes = matcher.byURL.get(src) ?? [];
 
   if (!matcher.resolves) {
@@ -128,9 +179,7 @@ const getMatchingTargets = (matcher, src, { entry, collectionName, fileName, loc
   // Resolve the value to its asset without loading it. The asset’s blob URL is created once and
   // kept on the asset object, so only the asset being looked up can hold the given one — and
   // there’s no need to download every other asset the entries reference just to compare URLs
-  const { url, asset } =
-    getMediaFieldSource({ entry, collectionName, fileName, locale, value: src }) ?? {};
-
+  const { url, asset } = resolve(src) ?? {};
   const blobURL = url ?? asset?.blobURL;
 
   return [
@@ -233,10 +282,20 @@ const matchField = ({
   }
 
   const { widget: fieldType = 'string' } = field;
-  const context = { entry, collectionName, fileName, locale };
+
+  const resolve = createMediaSourceResolver({
+    entry,
+    collectionName,
+    fileName,
+    locale,
+    keyPath,
+    valueMap: content,
+    isIndexFile,
+    fieldConfig: field,
+  });
 
   if (MEDIA_FIELD_TYPES.includes(fieldType)) {
-    const matched = getMatchingTargets(matcher, value, context);
+    const matched = getMatchingTargets(matcher, value, resolve);
     const newURL = getNewURL(matcher, matched, value);
 
     matched.forEach((index) => indexes.add(index));
@@ -260,7 +319,7 @@ const matchField = ({
       value,
       getValueFormat(/** @type {MarkdownField | RichTextField} */ (field)),
       (src) => {
-        const matched = getMatchingTargets(matcher, src, context);
+        const matched = getMatchingTargets(matcher, src, resolve);
 
         if (!matched.length) {
           return undefined;

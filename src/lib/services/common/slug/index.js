@@ -14,22 +14,23 @@ import { getOrCreate } from '$lib/services/utils/cache';
  */
 
 /**
- * Locales that are supported in the `locale` option of the transliteration library.
- * @see https://github.com/sindresorhus/transliterate/tree/main#locale
+ * Regular expression to match the dots at the beginning of a slug.
  */
-const TRANSLITERATION_LOCALES = ['da', 'de', 'hu', 'nb', 'sr', 'sv', 'tr'];
+const LEADING_DOTS_REGEX = /^\.+/;
 
 /**
  * Global variants of the unsafe character patterns, keyed by the `encoding` option, to replace
  * every unsafe character in a string at once.
  */
 const UNSAFE_CHARS_REGEXES = {
-  unicode: new RegExp(UNSAFE_UNICODE_SLUG_CHARS_REGEX, 'gu'),
+  unicode: new RegExp(UNSAFE_UNICODE_SLUG_CHARS_REGEX, 'gv'),
   ascii: new RegExp(UNSAFE_ASCII_SLUG_CHARS_REGEX, 'g'),
 };
 
 /**
- * @type {Map<string, { consecutivePattern: RegExp, trimPattern: RegExp }>}
+ * Regular expressions to consolidate and trim the replacement characters, keyed by the escaped
+ * replacement.
+ * @type {Map<string, Record<'consecutivePattern' | 'trimPattern' | 'leadingDotsPattern', RegExp>>}
  */
 const slugReplacementRegexCache = new Map();
 
@@ -66,11 +67,12 @@ export const slugify = (
   let slug = string;
 
   if (cleanAccents) {
-    // Remove any accented characters by transliterating them to their ASCII equivalents
+    // Remove any accented characters by transliterating them to their ASCII equivalents. The
+    // library takes a BCP 47 tag and picks the rules for its language, e.g. `tr` for `tr-TR`, and
+    // `nb` for `no`, while ignoring a locale it has no rules for. An underscore, as in `pt_BR`, is
+    // turned into a hyphen it understands
     // @see https://www.npmjs.com/package/@sindresorhus/transliterate
-    slug = transliterate(slug.normalize('NFD'), {
-      locale: locale && TRANSLITERATION_LOCALES.includes(locale) ? locale : undefined,
-    });
+    slug = transliterate(slug.normalize('NFD'), { locale: locale?.replaceAll('_', '-') });
   }
 
   // Turn every unsafe character into a space, which is then replaced below
@@ -81,6 +83,7 @@ export const slugify = (
 
   /** @type {RegExp | undefined} */
   let trimPattern;
+  let leadingDotsPattern = LEADING_DOTS_REGEX;
 
   // Consolidate consecutive replacement characters into a single one and trim them from ends
   if (sanitizeReplacement) {
@@ -90,6 +93,7 @@ export const slugify = (
       // Group the replacement so that a multi-character one is repeated as a whole
       consecutivePattern: new RegExp(`(?:${escapedReplacement})+`, 'g'),
       trimPattern: new RegExp(`^(?:${escapedReplacement})+|(?:${escapedReplacement})+$`, 'g'),
+      leadingDotsPattern: new RegExp(`^(?:\\.|${escapedReplacement})+`),
     }));
 
     slug = slug.replace(cachedSlugRegexes.consecutivePattern, sanitizeReplacement);
@@ -98,8 +102,15 @@ export const slugify = (
     if (trimReplacement) {
       ({ trimPattern } = cachedSlugRegexes);
       slug = slug.replace(trimPattern, '');
+      leadingDotsPattern = cachedSlugRegexes.leadingDotsPattern;
     }
   }
+
+  // Remove leading dots, which the `unicode` encoding allows: a slug starting with one, e.g. from a
+  // title like `.NET Tips`, would make a dot file, which is hidden and skipped when the repository
+  // files are listed, so the entry would be lost from sight once saved. When trimming is enabled,
+  // the replacement characters a dot leaves at the beginning go too, as in `. NET` or `.-.NET`
+  slug = slug.replace(leadingDotsPattern, '');
 
   if (!slug && fallback) {
     slug = generateUUID('short');
@@ -152,8 +163,9 @@ export const validateNewFolderName = ({ takenNames, name }) => {
 
   // A name has to stay a single folder, a leading dot would hide the folder from the site and from
   // most file listings, and slugification can leave nothing to name the folder with. The dot is
-  // looked for in the slugified name, which can start with one even when what was typed didn’t
-  if (!folderName || trimmedName.includes('/') || folderName.startsWith('.')) {
+  // looked for in what was typed: slugification removes it, but a name meant to be hidden is
+  // rejected rather than silently given another one
+  if (!folderName || trimmedName.includes('/') || trimmedName.startsWith('.')) {
     return 'invalid';
   }
 

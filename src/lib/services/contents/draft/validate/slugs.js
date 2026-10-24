@@ -11,7 +11,7 @@ import { getSlugOptions } from '$lib/services/contents/collection/slug';
 import { getNewEntryDirPath } from '$lib/services/contents/draft/slugs';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { getRegex } from '$lib/services/utils/regex';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
  * @import {
@@ -26,8 +26,8 @@ import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
  * What stops a slug from being used: it’s empty, contains a slash or whitespace (other than a plain
- * space, if the slug is meant to have them), doesn’t match the collection’s `pattern` slug option,
- * or is taken by another entry.
+ * space, if the slug is meant to have them) or starts with a dot, doesn’t match the collection’s
+ * `pattern` slug option, or is taken by another entry.
  * @typedef {'empty' | 'invalid' | 'pattern' | 'duplicate'} SlugValidationError
  */
 
@@ -41,7 +41,8 @@ import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
  * so that version has to be recognized as the same entry — otherwise reverting the slug looks like
  * a conflict. The unpublished entries are concatenated rather than swapped over their published
  * versions, because a draft that renamed an entry leaves the published file behind, so both slugs
- * are still in use.
+ * are still in use. The new entries riding along in the pull request of an entry of another
+ * collection count too.
  * @param {EntryDraft} draft Entry draft.
  * @param {object} [options] Options.
  * @param {boolean} [options.inFolder] Whether to include every published entry stored in the
@@ -62,6 +63,7 @@ export const getOtherEntries = (draft, { inFolder = true } = {}) => {
   return [
     ...(inFolder ? getEntriesInCollectionFolder : getEntriesByCollection)(collectionName),
     ...getUnpublishedEntriesByCollection(collectionName),
+    ...getCompanionEntries(collectionName),
   ].filter((entry) => !Object.values(entry.locales).some(({ path }) => ownPaths.has(path)));
 };
 
@@ -165,6 +167,13 @@ export const validateSlug = ({
   // A slash or whitespace would break the file path and URL structure. A plain space is fine if the
   // slug is meant to have them; `slugify` turns any run of them into the replacement on save
   if ((allowSpaces ? /[/]|[^\S ]/ : /[/\s]/).test(/** @type {string} */ (slug))) {
+    return 'invalid';
+  }
+
+  // A file name starting with a dot makes a dot file, which is hidden and skipped when the
+  // repository files are listed, so the entry would be lost once saved. `slugify` removes the dot,
+  // but a slug meant to be hidden is rejected rather than silently saved under another one
+  if (trimmedSlug.startsWith('.')) {
     return 'invalid';
   }
 

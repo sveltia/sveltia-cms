@@ -16,7 +16,7 @@ vi.mock('$lib/services/integrations/media-libraries', () => ({
 }));
 vi.mock('$lib/services/utils/media/image', () => ({
   RASTER_IMAGE_CONVERSION_FORMATS: ['webp', 'jpeg', 'png'],
-  RASTER_IMAGE_EXTENSION_REGEX: /\b(?:avif|gif|heic|heif|jfif|jpe?g|jpe|png|webp)$/i,
+  RASTER_IMAGE_EXTENSION_REGEX: /\.(?:avif|gif|heic|heif|jfif|jpe?g|jpe|png|webp)$/i,
   RASTER_IMAGE_FORMATS: ['heic', 'jpeg', 'jpg', 'png', 'webp'],
   SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/svg+xml'],
   SUPPORTED_IMAGE_TYPES_WITH_HEIC: ['image/jpeg', 'image/png', 'image/svg+xml', 'image/heic'],
@@ -856,6 +856,18 @@ describe('integrations/media-libraries/default', () => {
       const result = await transformFile(noExtFile, transformations);
 
       expect(result.name).toBe('image.webp'); // extension appended with a dot
+    });
+
+    it('should add an extension to a name merely ending with a format name', async () => {
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+      const mockBlob = new Blob(['transformed'], { type: 'image/webp' });
+      const file = new File(['content'], 'logo-png', { type: 'image/png' });
+
+      vi.mocked(transformImage).mockResolvedValue(mockBlob);
+
+      const result = await transformFile(file, /** @type {any} */ ({ png: { format: 'webp' } }));
+
+      expect(result.name).toBe('logo-png.webp');
     });
 
     it('should replace a JPEG alias extension when converting to WebP', async () => {

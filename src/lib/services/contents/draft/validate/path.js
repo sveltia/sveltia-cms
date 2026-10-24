@@ -13,7 +13,7 @@ import {
   keepsOriginalPath,
 } from '$lib/services/contents/draft/save/entry-path';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
  * @import { EntryDraft, LocaleValidityMap } from '$lib/types/private';
@@ -51,7 +51,8 @@ const isPathTaken = (draft) => {
   const { defaultLocaleSlug, localizedSlugs } = getSlugs({ draft });
 
   // The unpublished entries count too, or a folder already claimed by a draft awaiting review
-  // would be handed out twice and the two would collide when the branches are merged. The entry
+  // would be handed out twice and the two would collide when the branches are merged. So do the new
+  // entries riding along in the pull request of an entry of another collection. The entry
   // being edited doesn’t count, and it’s told apart by the draft’s ID rather than the original
   // entry’s: a new entry has no original, yet it’s saved under the draft’s ID, and once it is,
   // the draft is validated again — to see whether the entry can be sent for review — while the
@@ -59,6 +60,7 @@ const isPathTaken = (draft) => {
   const otherEntries = [
     ...getEntriesInCollectionFolder(collection.name),
     ...getUnpublishedEntriesByCollection(collection.name),
+    ...getCompanionEntries(collection.name),
   ].filter((entry) => entry.id !== id);
 
   return Object.entries(currentLocales)

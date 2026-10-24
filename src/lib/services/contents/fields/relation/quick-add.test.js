@@ -529,6 +529,22 @@ describe('getPendingEntrySlugs', () => {
     });
   });
 
+  it('numbers a slug with a dot at the end rather than before the dot', () => {
+    vi.mocked(getSlugs).mockReturnValue({
+      defaultLocaleSlug: 'release-2.0',
+      localizedSlugs: undefined,
+      canonicalSlug: undefined,
+    });
+    vi.mocked(getCanonicalSlug).mockReturnValue(undefined);
+
+    expect(
+      getPendingEntrySlugs({
+        draft,
+        parentDraft: createParentDraft({ pendingEntries: [createPending('release-2.0')] }),
+      }).defaultLocaleSlug,
+    ).toBe('release-2.0-1');
+  });
+
   it('renames the slug taken by a new entry riding along in a pull request', () => {
     vi.mocked(getSlugs).mockReturnValue({
       defaultLocaleSlug: 'svelte',

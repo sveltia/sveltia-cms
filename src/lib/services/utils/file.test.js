@@ -56,6 +56,17 @@ describe('Test renameIfNeeded()', () => {
     expect(renameIfNeeded('my-post', ['my-post-1', 'my-post'])).toEqual('my-post-2');
   });
 
+  test('should number a name without an extension at the end', () => {
+    expect(
+      renameIfNeeded('release-2.0', ['release-2.0', 'release-2.0-1'], { hasExtension: false }),
+    ).toEqual('release-2.0-2');
+    expect(renameIfNeeded('example.com', ['Example.com'], { hasExtension: false })).toEqual(
+      'example.com-1',
+    );
+    // A file name keeps its extension by default
+    expect(renameIfNeeded('example.com', ['example.com'])).toEqual('example-1.com');
+  });
+
   test('should keep a name that isn’t taken, even if numbered variants of it are', () => {
     expect(renameIfNeeded('summer.jpg', ['summer-2023.jpg'])).toEqual('summer.jpg');
     expect(renameIfNeeded('photo.jpg', ['photo-1.jpg', 'photo-2.jpg'])).toEqual('photo.jpg');
@@ -389,11 +400,14 @@ describe('Test resolvePath()', () => {
     expect(resolvePath('//folder/file.txt')).toBe('folder/file.txt'); // Leading empty segments are filtered
   });
 
-  test('should handle dots after all segments are removed', () => {
-    // When .. is encountered but no named segment exists before it (after first segment)
-    // This tests the case where lastIndex === -1 inside the .. handling
-    expect(resolvePath('file.txt/../..')).toBe(''); // .. after removing file.txt finds no segment
-    expect(resolvePath('a/file.txt/../../..')).toBe(''); // Going back 3 times removes all segments
+  test('should keep a `..` that goes up past the named segments', () => {
+    // The path points outside the starting folder, so the excess `..` can’t be dropped
+    expect(resolvePath('file.txt/../..')).toBe('..');
+    expect(resolvePath('a/file.txt/../../..')).toBe('..');
+    expect(resolvePath('a/../../b')).toBe('../b');
+    // A leading `..` isn’t cancelled out by a later one
+    expect(resolvePath('../a/../../b')).toBe('../../b');
+    expect(resolvePath('./a/../../b')).toBe('./../b');
     expect(resolvePath('a/b/file.txt/../..')).toBe('a'); // Going back twice: removes file.txt then b, a remains
     // Case where segment exists after going back
     expect(resolvePath('a/b/c/../../file.txt')).toBe('a/file.txt'); // Go back twice, then file.txt at same level

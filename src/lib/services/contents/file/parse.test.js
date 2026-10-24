@@ -1303,6 +1303,64 @@ describe('Test parseEntryFile()', () => {
     expect(result.published).toBe(true);
   });
 
+  test('keeps the leading whitespace of a raw file', async () => {
+    getCollection.mockReturnValue({ _file: { format: 'raw' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'raw' } });
+
+    const result = await parseEntryFile({ ...entryBase, text: '\n    indented\r\nline\n\n' });
+
+    // The trailing whitespace is still dropped
+    expect(result).toEqual({ body: '\n    indented\nline' });
+  });
+
+  test('keeps the leading whitespace of a Markdown file without front matter', async () => {
+    getCollection.mockReturnValue({ _file: { format: 'frontmatter' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'frontmatter' } });
+
+    const result = await parseEntryFile({
+      ...entryBase,
+      text: '    const code = 1;\n\nText\n',
+    });
+
+    // An indented code block
+    expect(result).toEqual({ body: '    const code = 1;\n\nText' });
+  });
+
+  test('ignores the whitespace before a front matter block', async () => {
+    getCollection.mockReturnValue({ _file: { format: 'frontmatter' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'frontmatter' } });
+
+    expect(
+      await parseEntryFile({ ...entryBase, text: '\n  \n---\ntitle: Test\n---\n\nBody\n' }),
+    ).toEqual({ title: 'Test', body: 'Body' });
+
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    // The format is told by the delimiter after the whitespace
+    vi.mocked(getFrontMatterDelimiters).mockReturnValueOnce(
+      FRONTMATTER_DELIMITER_MAP['toml-frontmatter'],
+    );
+    expect(
+      await parseEntryFile({ ...entryBase, text: '\n+++\ntitle = "Test"\n+++\n\nBody\n' }),
+    ).toEqual({ title: 'Test', body: 'Body' });
+    expect(getFrontMatterDelimiters).toHaveBeenCalledWith(
+      expect.objectContaining({ format: 'toml-frontmatter' }),
+    );
+  });
+
+  test('gives a custom parser the content without the surrounding whitespace', async () => {
+    const customParser = vi.fn().mockReturnValue({});
+
+    customFileFormatRegistry.set('customFormat', { parser: customParser });
+    getCollection.mockReturnValue({ _file: { format: 'customFormat' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'customFormat' } });
+
+    await parseEntryFile({ ...entryBase, text: '\n  custom content\n' });
+
+    expect(customParser).toHaveBeenCalledWith('custom content');
+    customFileFormatRegistry.delete('customFormat');
+  });
+
   test('throws error when collection not found', async () => {
     getCollection.mockReturnValue(null);
 

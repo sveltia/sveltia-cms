@@ -6,7 +6,7 @@ import {
   getEntriesInCollectionFolder,
 } from '$lib/services/contents/collection/entries';
 import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 import {
   validateSlugs as _validateSlugs,
@@ -22,6 +22,7 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesInCollectionFolder: vi.fn(() => []),
 }));
 vi.mock('$lib/services/workflow', () => ({
+  getCompanionEntries: vi.fn(() => []),
   getUnpublishedEntriesByCollection: vi.fn(() => []),
 }));
 vi.mock('$lib/services/contents/collection/nested', async (importOriginal) => ({
@@ -88,6 +89,17 @@ describe('draft/validate/slugs', () => {
       vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue([unpublished]);
 
       expect(getOtherEntries(mockEntryDraft)).toEqual([listed, unlisted, unpublished]);
+    });
+
+    it('should include the new entries riding along in the pull request of another entry', () => {
+      const listed = createEntry('a', { en: 'a' });
+      const companion = createEntry('b', { en: 'b' });
+
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue([listed]);
+      vi.mocked(getCompanionEntries).mockReturnValueOnce([companion]);
+
+      expect(getOtherEntries(mockEntryDraft)).toEqual([listed, companion]);
+      expect(getCompanionEntries).toHaveBeenCalledWith('posts');
     });
 
     it('should include only the entries the collection lists with `inFolder: false`', () => {
@@ -401,6 +413,14 @@ describe('draft/validate/slugs', () => {
       expect(validateSlug({ slug: 'a/b' })).toBe('invalid');
       expect(validateSlug({ slug: 'a b' })).toBe('invalid');
       expect(validateSlug({ slug: 'ab ' })).toBe('invalid');
+    });
+
+    it('should report a leading dot, which would make a hidden dot file', () => {
+      expect(validateSlug({ slug: '.hidden' })).toBe('invalid');
+      expect(validateSlug({ slug: '..' })).toBe('invalid');
+      expect(validateSlug({ slug: ' .net-tips', allowSpaces: true })).toBe('invalid');
+      // A dot elsewhere is fine
+      expect(validateSlug({ slug: 'release-2.0' })).toBeUndefined();
     });
 
     it('should allow a plain space when `allowSpaces` is set', () => {

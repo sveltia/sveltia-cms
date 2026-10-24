@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 import { assignManualSortOrder, getMaxEntryNumber } from './sort-order';
 
@@ -15,6 +15,7 @@ vi.mock('$lib/services/contents/collection/entries/reorder/config', () => ({
 }));
 
 vi.mock('$lib/services/workflow', () => ({
+  getCompanionEntries: vi.fn(() => []),
   getUnpublishedEntriesByCollection: vi.fn(() => []),
 }));
 
@@ -128,5 +129,19 @@ describe('getMaxEntryNumber', () => {
     );
     expect(getEntriesByCollection).toHaveBeenCalledWith('tags');
     expect(getUnpublishedEntriesByCollection).toHaveBeenCalledWith('tags');
+  });
+
+  it('counts the new entries riding along in the pull request of another entry', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue(
+      /** @type {any} */ ([{ locales: { en: { content: { id: 2 } } } }]),
+    );
+    // A new entry created from a Relation field of an entry of another collection, which is saved
+    // to that entry’s pull request, has taken the next number there
+    vi.mocked(getCompanionEntries).mockReturnValueOnce(
+      /** @type {any} */ ([{ locales: { en: { content: { id: 3 } } } }]),
+    );
+
+    expect(getMaxEntryNumber({ collectionName: 'tags', keyPath: 'id', locale: 'en' })).toBe(3);
+    expect(getCompanionEntries).toHaveBeenCalledWith('tags');
   });
 });

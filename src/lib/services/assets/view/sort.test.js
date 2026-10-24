@@ -115,6 +115,28 @@ describe('assets/view/sort', () => {
       expect(result[3].name).toBe('hero-2.png');
     });
 
+    it('should sort by name field with dots in the name', () => {
+      // A natural sort, like the real `compare()`
+      compareMock.mockImplementation((/** @type {string} */ a, /** @type {string} */ b) =>
+        String(a).localeCompare(String(b), undefined, { numeric: true }),
+      );
+
+      const folder = createMockAssetFolder({ internalPath: '/images', publicPath: '/images' });
+
+      const assets = ['v1.10.png', 'v1.2.png', 'v1.3.png'].map((name) => ({
+        name,
+        path: `/images/${name}`,
+        sha: name,
+        size: 1024,
+        kind: /** @type {const} */ ('image'),
+        folder,
+      }));
+
+      const result = sortAssets(assets, { key: 'name', order: 'ascending' });
+
+      expect(result.map(({ name }) => name)).toEqual(['v1.2.png', 'v1.3.png', 'v1.10.png']);
+    });
+
     it('should sort by name field in descending order', () => {
       const result = sortAssets(mockAssets, { key: 'name', order: 'descending' });
 
@@ -439,7 +461,8 @@ describe('assets/view/sort', () => {
 
       const result = getValue(asset, 'name');
 
-      expect(result).toBe('my');
+      // Only the extension is removed, including a chained one like `.tar.gz`
+      expect(result).toBe('my.file.name');
     });
 
     it('should handle names without extension', () => {

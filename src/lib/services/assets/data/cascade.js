@@ -1,6 +1,9 @@
-import { getMediaFieldSource } from '$lib/services/assets/media-field';
 import { getAssetReferenceTarget } from '$lib/services/assets/reference-target';
-import { getAssetReferences, getComparableAssetURL } from '$lib/services/assets/references';
+import {
+  createMediaSourceResolver,
+  getAssetReferences,
+  getComparableAssetURL,
+} from '$lib/services/assets/references';
 import { allAssets } from '$lib/services/assets/state';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
@@ -265,6 +268,11 @@ const removeMarkdownMedia = (value, isStale) =>
  * @param {string} [args.fileName] Collection file name.
  * @param {InternalLocaleCode} [args.locale] Locale the field is in, which an entry-relative media
  * URL is relative to.
+ * @param {FieldKeyPath} args.keyPath Key path of the field.
+ * @param {FlattenedEntryContent} args.valueMap Content holding the field.
+ * @param {boolean} [args.isIndexFile] Whether the entry is the collection’s special index file.
+ * @param {MarkdownField | RichTextField} args.fieldConfig Field config, whose own `media_folder`
+ * and those of its editor components a relative media URL may be resolved against.
  * @returns {string} Value without the media.
  */
 export const removeEmbeddedMedia = ({
@@ -276,7 +284,22 @@ export const removeEmbeddedMedia = ({
   collectionName,
   fileName,
   locale,
+  keyPath,
+  valueMap,
+  isIndexFile,
+  fieldConfig,
 }) => {
+  const resolve = createMediaSourceResolver({
+    entry,
+    collectionName,
+    fileName,
+    locale,
+    keyPath,
+    valueMap,
+    isIndexFile,
+    fieldConfig,
+  });
+
   /**
    * Check whether a media URL points at a deleted asset.
    * @param {string} src URL.
@@ -292,8 +315,7 @@ export const removeEmbeddedMedia = ({
     }
 
     // Resolve the path the way the editor does to display it, without loading the asset
-    const path = getMediaFieldSource({ entry, collectionName, fileName, locale, value: src })?.asset
-      ?.path;
+    const path = resolve(src)?.asset?.path;
 
     return path !== undefined && paths.has(path);
   };
@@ -326,15 +348,21 @@ export const removeAssetReferences = ({ content, references, urls, paths = new S
 
     if (!MEDIA_FIELD_TYPES.includes(fieldType)) {
       // The reference is an image or other media embedded in a Markdown or rich text field
+      const richTextField = /** @type {MarkdownField | RichTextField} */ (fieldConfig);
+
       updatedContent[keyPath] = removeEmbeddedMedia({
         value: content[keyPath],
-        format: getValueFormat(/** @type {MarkdownField | RichTextField} */ (fieldConfig)),
+        format: getValueFormat(richTextField),
         urls,
         paths,
         entry,
         collectionName: collection.name,
         fileName: collectionFile?.name,
         locale,
+        keyPath,
+        valueMap: content,
+        isIndexFile: isCollectionIndexFile(collection, entry),
+        fieldConfig: richTextField,
       });
 
       fields.set(keyPath, fieldConfig);
