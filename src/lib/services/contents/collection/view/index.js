@@ -192,7 +192,7 @@ export const listedEntries = createDerivedState(() => {
   }
 
   /**
-   * Limit the entries to the folder currently browsed in a nested collection.
+   * Limit the entries to the folder currently browsed in a collection with nested entries.
    * @param {Entry[]} entries Entries to be filtered.
    * @returns {Entry[]} Filtered entries.
    */

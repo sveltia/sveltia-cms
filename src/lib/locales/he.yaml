@@ -1423,7 +1423,7 @@ edit_slug_error:
   invalid: המזהה בכתובת אינו יכול להכיל תווים מיוחדים, ובכללם לוכסנים ורווחים.
   duplicate: המזהה הזה כבר משמש פריט אחר.
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: תיקיית האב
 new_parent_folder: תיקייה חדשה

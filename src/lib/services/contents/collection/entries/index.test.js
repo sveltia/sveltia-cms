@@ -977,7 +977,7 @@ describe('canCreateIndexFile()', () => {
     expect(result).toBe(false);
   });
 
-  test('ignores a nested collection’s index file listed in the collection', async () => {
+  test('ignores the index file of nested entries listed in the collection', async () => {
     const { getIndexFile, isCollectionIndexFile } =
       await import('$lib/services/contents/collection/entries/index-file');
 

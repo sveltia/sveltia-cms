@@ -129,9 +129,9 @@ const getUpdatedEntry = (entry) => {
 };
 
 /**
- * Get the paths below the given entry’s folder in a nested collection with subfolders, which moving
- * the entry moves along with it. An entry at the top of the collection has no folder of its own,
- * and nothing can be moved with it.
+ * Get the paths below the given entry’s folder among nested entries stored in subfolders, which
+ * moving the entry moves along with it. An entry at the top of the collection has no folder of its
+ * own, and nothing can be moved with it.
  * @param {InternalCollection | undefined} collection Collection.
  * @param {Entry} entry Entry as it stands on the configured branch.
  * @returns {string[]} Paths of the descendant entries, as they stand on the configured branch.
@@ -154,7 +154,7 @@ const getDescendantPaths = (collection, entry) => {
 
 /**
  * Get the folders below which the given entry’s descendants land once it has moved, which are the
- * folders of its own files in a nested collection with subfolders.
+ * folders of its own files among nested entries stored in subfolders.
  * @param {InternalCollection | undefined} collection Collection.
  * @param {Entry} entry Entry as it stands on the pull request’s branch.
  * @returns {string[]} Folder paths, each with a trailing slash.

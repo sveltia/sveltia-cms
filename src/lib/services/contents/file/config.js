@@ -96,8 +96,8 @@ export const detectFileFormat = ({ extension, format }) => {
  * @param {string} [args.subPath] Normalized `path` collection option.
  * @param {string} [args.indexFileName] File name for index file inclusion. Typically `_index`.
  * @param {number} [args.nestedDepth] Maximum number of path segments below the collection folder,
- * for a nested collection. `undefined` for a regular collection, where an entry is always a direct
- * child of the collection folder.
+ * for a collection with nested entries. `undefined` for a regular collection, where an entry is
+ * always a direct child of the collection folder.
  * @param {string} [args.entrySuffix] Lookahead pattern for what follows an entry’s sub path (the
  * locale and extension) when the index file has an extension of its own.
  * @param {string} [args.indexSuffix] Lookahead pattern for what follows the index file’s sub path,
@@ -141,9 +141,9 @@ const getFilePathMatcher = ({
     if (nestedDepth === undefined) {
       entryMatcher = fileMatcher;
     } else {
-      // In a nested collection, the `path` option says where an entry sits within the folder
-      // holding it, not within the collection folder, so any number of folders can come first —
-      // down to the configured depth, which the `path` option itself already takes some of
+      // In a collection with nested entries, the `path` option says where an entry sits within the
+      // folder holding it, not within the collection folder, so any number of folders can come
+      // first — down to the configured depth, which the `path` option itself already takes some of
       const remainingDepth = Number.isFinite(nestedDepth)
         ? Math.max(0, nestedDepth - subPath.split('/').length)
         : undefined;
@@ -182,7 +182,7 @@ const getFilePathMatcher = ({
  * @param {FileExtension} [args.indexFileExtension] File extension of the index file, if it can
  * differ from the entries’. Default: `extension`.
  * @param {number} [args.nestedDepth] Maximum number of path segments below the collection folder,
- * for a nested collection.
+ * for a collection with nested entries.
  * @param {InternalI18nOptions} args._i18n I18n configuration.
  * @returns {RegExp} Regular expression.
  */

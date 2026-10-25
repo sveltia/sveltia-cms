@@ -72,8 +72,8 @@ export const getOtherEntries = (draft, { inFolder = true } = {}) => {
  * A locale-agnostic slug, under the `_` key, can collide with another entry’s slug in any locale.
  * The entry’s own original slug in a locale never counts as taken in that locale; in another
  * locale, it can be another entry’s slug, which would be overwritten. For a new entry placed with
- * the path editor of a nested collection, only the entries in the chosen folder count, by their
- * file names, because the slug of an entry there is its sub path.
+ * the path editor of a collection with nested entries, only the entries in the chosen folder count,
+ * by their file names, because the slug of an entry there is its sub path.
  * @param {EntryDraft} draft Entry draft.
  * @param {InternalLocaleCode[]} [locales] Locales to get the taken slugs for. Default: the locales
  * of the draft’s slugs.

@@ -90,8 +90,8 @@ export const buildPathByStructure = ({
  * folder named after the localized slug.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @param {string} args.slug Entry slug in the locale. For an existing entry in a nested collection,
- * that’s the entry’s sub path in the locale.
+ * @param {string} args.slug Entry slug in the locale. For an existing entry in a collection with
+ * nested entries, that’s the entry’s sub path in the locale.
  * @param {string | undefined} args.indexFileName File name shared by every entry in the collection,
  * if any.
  * @param {InternalLocaleCode} args.locale Locale code.

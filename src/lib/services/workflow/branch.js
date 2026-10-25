@@ -45,10 +45,11 @@ const getBranchPrefix = () => joinPrefix(getRootDir());
 export const getBranchListPrefix = () => joinPrefix('');
 
 /**
- * Encode an entry slug for use in a branch name. A slug in a nested collection is a path, and Git
- * can’t hold a branch `cms/pages/about` alongside `cms/pages/about/us`, because the former would
- * have to be both a ref and a directory. So the slashes are percent-encoded, which keeps each entry
- * to a single path segment. `%` is encoded as well, so the encoding can be reversed exactly.
+ * Encode an entry slug for use in a branch name. A slug in a collection with nested entries is a
+ * path, and Git can’t hold a branch `cms/pages/about` alongside `cms/pages/about/us`, because the
+ * former would have to be both a ref and a directory. So the slashes are percent-encoded, which
+ * keeps each entry to a single path segment. `%` is encoded as well, so the encoding can be
+ * reversed exactly.
  * @param {string} slug Entry slug, e.g. `about/us`.
  * @returns {string} Encoded slug, e.g. `about%2Fus`.
  */

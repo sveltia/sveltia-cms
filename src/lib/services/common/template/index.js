@@ -24,9 +24,9 @@ import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/ser
  * @param {string} collectionName Collection name.
  * @param {string | undefined} locale Locale string.
  * @param {string} [dirPath] Folder within the collection folder the new entry goes to, as chosen
- * with the path editor of a nested collection. The slug of an entry there is its sub path, e.g.
- * `docs/intro`, so only the entries directly in the folder are taken into account, by their file
- * names.
+ * with the path editor of a collection with nested entries. The slug of an entry there is its sub
+ * path, e.g. `docs/intro`, so only the entries directly in the folder are taken into account, by
+ * their file names.
  * @returns {string[]} List of existing slugs.
  */
 const getExistingSlugs = (collectionName, locale, dirPath) => {

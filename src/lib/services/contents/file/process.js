@@ -369,7 +369,7 @@ export const shouldSkipIndexFile = (path, fileName, collection, subPathTemplate,
   // 2. The collection is an entry collection and index file inclusion is enabled
   // 3. The collection is an entry collection and the `path` option value ends with `_index` and
   // the extension is `md`
-  // 4. The collection is a nested collection where every entry is stored as `_index.md`
+  // 4. The collection has nested entries, and every entry is stored as `_index.md`
   return !(
     !!fileName ||
     getIndexFile(collection)?.name === '_index' ||

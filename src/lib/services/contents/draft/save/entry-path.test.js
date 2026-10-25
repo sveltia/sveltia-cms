@@ -1148,7 +1148,7 @@ describe('contents/draft/save/entry-path', () => {
     // @see https://github.com/sveltia/sveltia-cms/issues/962
 
     /**
-     * Create a nested collection with localized slugs and the path editor enabled.
+     * Create a collection of nested entries with localized slugs and the path editor enabled.
      * @param {object} [overrides] Property overrides.
      * @returns {any} Collection.
      */

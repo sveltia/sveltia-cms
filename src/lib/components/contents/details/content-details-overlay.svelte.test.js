@@ -537,7 +537,7 @@ describe('ContentDetailsOverlay', () => {
   });
 
   test('highlights the path editor on request', async () => {
-    // A nested collection with the path editor, and a folder to choose from
+    // Nested entries with the path editor, and a folder to choose from
     await initTestConfig({
       i18n: {
         structure: /** @type {const} */ ('multiple_folders'),

@@ -423,7 +423,7 @@ const formatEntrySummary = (
  * available.
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
  * @param {string} [options.template] Summary template that overrides the collection’s `summary`
- * option. Used for the folder labels in a nested collection’s tree, which have their own
+ * option. Used for the folder labels in the tree of nested entries, which have their own
  * `nested.summary` option, and the template columns of the entry list’s table view.
  * @param {boolean} [options.useIndexFileLabel] Whether to use the label of the collection’s index
  * file as its summary, instead of formatting it. Default: `true`. A table view column showing a

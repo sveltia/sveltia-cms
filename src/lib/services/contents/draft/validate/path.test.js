@@ -33,7 +33,7 @@ vi.mock('$lib/services/contents/draft/slugs', () => ({
 }));
 
 /**
- * Create a nested collection with the path editor enabled.
+ * Create a collection of nested entries with the path editor enabled.
  * @param {object} [options] Options.
  * @param {boolean} [options.subfolders] Whether the collection uses the `subfolders` mode.
  * @param {boolean} [options.metaPath] Whether the path editor is enabled.

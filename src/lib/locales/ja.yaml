@@ -1324,7 +1324,7 @@ edit_slug_error:
   invalid: スラッグにはスラッシュや空白を含む特殊文字を使用できません。
   duplicate: このスラッグは他のエントリーに使われています。
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: 親フォルダー
 new_parent_folder: 新しいフォルダー

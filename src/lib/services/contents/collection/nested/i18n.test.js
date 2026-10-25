@@ -44,7 +44,7 @@ const entry = (id, subPaths) => ({
 });
 
 /**
- * Create a nested collection with localized slugs.
+ * Create a collection of nested entries with localized slugs.
  * @param {object} [overrides] Property overrides.
  * @returns {any} Collection.
  */
@@ -102,7 +102,7 @@ describe('getOwnFolderName()', () => {
 });
 
 describe('hasLocalizedFolders()', () => {
-  test('is true for a nested collection with an index file and localized slugs', () => {
+  test('is true for nested entries with an index file and localized slugs', () => {
     expect(hasLocalizedFolders(createCollection())).toBe(true);
   });
 

@@ -2241,7 +2241,7 @@ describe('draft/save/changes', () => {
     });
   });
 
-  describe('createSavingEntryData for a nested collection', () => {
+  describe('createSavingEntryData for a collection with nested entries', () => {
     it('should use the sub path as the entry slug', async () => {
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');

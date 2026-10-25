@@ -2100,8 +2100,8 @@
  * `filename_template` media library option. The `{{filename}}` and `{{extension}}` tags then stand
  * for its name without the extension and its extension.
  * @property {string} [dirPath] Folder within the collection folder a new entry goes to, as chosen
- * with the path editor of a nested collection. A filled slug then only has to be unique among the
- * entries in that folder.
+ * with the path editor of a collection with nested entries. A filled slug then only has to be
+ * unique among the entries in that folder.
  */
 
 /**

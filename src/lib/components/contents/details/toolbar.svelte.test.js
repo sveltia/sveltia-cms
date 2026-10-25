@@ -1066,7 +1066,7 @@ describe('Toolbar', () => {
     expect(menu.getByRole('menuitem', { name: 'Delete Entry' }).elements()).toHaveLength(0);
   });
 
-  test('goes back to the folder being browsed in a nested collection', async () => {
+  test('goes back to the folder being browsed in a collection with nested entries', async () => {
     await initTestConfig({
       collections: [
         {

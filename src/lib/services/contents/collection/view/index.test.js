@@ -95,7 +95,7 @@ vi.mock('$lib/services/contents/collection', () => ({
 
 vi.mock('$lib/services/contents/collection/predicates', () => ({
   isArrayFileCollection: vi.fn((collection) => !!collection?._file?.arrayFile),
-  // Used by the nested collection helpers, which the entry list runs through
+  // Used by the nested entry helpers, which the entry list runs through
   isEntryCollection: vi.fn(
     (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
   ),
@@ -1417,7 +1417,7 @@ describe('collection/view/index', () => {
       expect(state.remaining).toBe(7);
     });
 
-    test('quota counts every entry in a nested collection, not just the listed folder', async () => {
+    test('quota counts every nested entry, not just the listed folder', async () => {
       const mockEntries = /** @type {any[]} */ ([
         { id: '1', slug: '_index', subPath: '_index' },
         { id: '2', slug: 'docs/_index', subPath: 'docs/_index' },
@@ -1465,7 +1465,7 @@ describe('collection/view/index', () => {
       expect(collectionState.current.creationDisabled).toBe(false);
     });
 
-    test('quota leaves out the index file of a nested collection', async () => {
+    test('quota leaves out the index file of a collection with nested entries', async () => {
       const mockEntries = /** @type {any[]} */ ([
         { id: '1', slug: '_index', subPath: '_index', _isIndexFile: true },
         { id: '2', slug: 'docs/_index', subPath: 'docs/_index' },

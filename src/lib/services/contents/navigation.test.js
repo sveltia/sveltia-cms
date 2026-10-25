@@ -357,7 +357,7 @@ describe('resolveContentsRoute()', () => {
       expect(announcedPageStatus.current).toBe('create_entry_announcement');
     });
 
-    test('creates a new entry in the folder given as `path` in a nested collection', () => {
+    test('creates a new entry in the folder given as `path` for nested entries', () => {
       vi.mocked(getMetaPathConfig).mockReturnValue(/** @type {any} */ ({}));
       window.history.replaceState({ index: true }, '');
       visit('/collections/posts/new', { path: 'sub' });

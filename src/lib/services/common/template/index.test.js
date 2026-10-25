@@ -1642,7 +1642,7 @@ describe('fillTemplate()', async () => {
   });
 });
 
-describe('fillTemplate() for a nested collection', () => {
+describe('fillTemplate() for a collection with nested entries', () => {
   /** @type {any} */
   const collection = {
     name: 'pages',

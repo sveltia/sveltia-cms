@@ -51,9 +51,9 @@ export const handleSlugTag = (tag, context) => {
 
   const slug = currentSlug ?? getEntrySummaryFromContent(content, { identifierField });
 
-  // In a nested collection, an entry’s slug is its path within the collection folder, which ends
-  // with the file name shared by every entry, e.g. `guides/intro/_index`. That file name is an
-  // implementation detail of the content folder, not part of the entry’s URL.
+  // In a collection with nested entries, an entry’s slug is its path within the collection folder,
+  // which ends with the file name shared by every entry, e.g. `guides/intro/_index`. That file name
+  // is an implementation detail of the content folder, not part of the entry’s URL.
   // @see https://github.com/decaporg/decap-cms/issues/4963
   if (type === 'preview_path' && collection) {
     // The collection’s own index file stands for the root of the preview path, so nothing is left

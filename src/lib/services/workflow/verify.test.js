@@ -537,8 +537,8 @@ describe('workflow/verify', () => {
     });
 
     test.each([
-      ['an entry at the top of a nested collection', { subfolders: true }, 'index', 'pages'],
-      ['a nested collection without subfolders', { subfolders: false }, 'about/index', 'pages'],
+      ['a nested entry at the top level', { subfolders: true }, 'index', 'pages'],
+      ['nested entries without subfolders', { subfolders: false }, 'about/index', 'pages'],
       ['a collection that is no longer configured', { subfolders: true }, 'about/index', 'gone'],
     ])('moves nothing along with %s', (_label, nested, subPath, collectionName) => {
       vi.mocked(getNestedConfig).mockReturnValue(/** @type {any} */ (nested));

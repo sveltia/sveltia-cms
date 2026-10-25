@@ -67,11 +67,11 @@ const randomValueMaps = new WeakMap();
 export const getRandomValues = (draft) => getOrCreate(randomValueMaps, draft, () => new Map());
 
 /**
- * Get the folder a new entry goes to, as chosen with the path editor of a nested collection, when
- * the entry’s file is named after its slug. The slug of an entry in such a collection is its sub
- * path, e.g. `docs/intro`, so a new slug has to be unique among the entries in that folder rather
- * than compared with the sub paths of every entry. Where every entry shares one file name, the
- * entry gets a folder of its own, which is checked with the path instead.
+ * Get the folder a new entry goes to, as chosen with the path editor of a collection with nested
+ * entries, when the entry’s file is named after its slug. The slug of an entry in such a collection
+ * is its sub path, e.g. `docs/intro`, so a new slug has to be unique among the entries in that
+ * folder rather than compared with the sub paths of every entry. Where every entry shares one file
+ * name, the entry gets a folder of its own, which is checked with the path instead.
  * @param {EntryDraft} draft Entry draft.
  * @returns {string | undefined} Folder path without leading and trailing slashes, or `undefined`
  * if the entry isn’t new or the path editor doesn’t decide where it goes.
@@ -178,11 +178,11 @@ export const isSlugAutoNumbered = ({ draft, locale, templateOnly = false }) => {
 /**
  * Get the slug a new entry is given in a collection whose slug is numbered automatically: the
  * integer after the highest one among the slugs of the entries stored in the collection folder, in
- * any locale, as the other locales share the number, starting from `1`. In a nested collection, the
- * last segment of an entry’s sub path counts, leaving out the file name every entry shares in the
- * `subfolders` mode, e.g. `index`. The entries still in a pull request count too, including the new
- * ones riding along in the pull request of an entry of another collection, as do the entries
- * created from a Relation field that are saved along with the entry being edited. Like
+ * any locale, as the other locales share the number, starting from `1`. In a collection with nested
+ * entries, the last segment of an entry’s sub path counts, leaving out the file name every entry
+ * shares in the `subfolders` mode, e.g. `index`. The entries still in a pull request count too,
+ * including the new ones riding along in the pull request of an entry of another collection, as do
+ * the entries created from a Relation field that are saved along with the entry being edited. Like
  * the `auto_increment` option of a Number field, it’s worked out again at save time, so two entries
  * created at the same time can’t take the same number.
  * @param {object} args Arguments.
@@ -255,8 +255,8 @@ export const getLocalizedSlug = ({
   // slug to avoid changing URLs unexpectedly.
   if (isNew || !originalLocales[locale]) {
     // Every locale shares the number given to the default locale, unless a slug is typed in. The
-    // slug of an existing entry in a nested collection is its sub path, of which the number is the
-    // last segment, as a filled template would be
+    // slug of an existing entry in a collection with nested entries is its sub path, of which the
+    // number is the last segment, as a filled template would be
     if (isSlugAutoNumbered({ draft, locale, templateOnly })) {
       return /** @type {string} */ (defaultLocaleSlug.split('/').pop());
     }

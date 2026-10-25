@@ -9,8 +9,8 @@ import {
   getNestedConfig,
   getNestedIndexFileName,
   getSharedEntryFileName,
+  hasNestedEntries,
   isDescendantPath,
-  isNestedCollection,
   isNestedFolder,
   nestedFilterPath,
   stripIndexFileName,
@@ -23,7 +23,7 @@ vi.mock('$lib/services/contents/collection/predicates', () => ({
 }));
 
 /**
- * Create an entry with only the properties the nested collection helpers read.
+ * Create an entry with only the properties the nested entry helpers read.
  * @param {string} subPath Entry’s sub path.
  * @returns {any} Entry.
  */
@@ -80,10 +80,10 @@ describe('getNestedConfig()', () => {
   });
 });
 
-describe('isNestedCollection()', () => {
+describe('hasNestedEntries()', () => {
   test('returns true only for a nested entry collection', () => {
-    expect(isNestedCollection({ name: 'pages', folder: 'content/pages', nested: {} })).toBe(true);
-    expect(isNestedCollection({ name: 'pages', folder: 'content/pages' })).toBe(false);
+    expect(hasNestedEntries({ name: 'pages', folder: 'content/pages', nested: {} })).toBe(true);
+    expect(hasNestedEntries({ name: 'pages', folder: 'content/pages' })).toBe(false);
   });
 });
 
@@ -181,7 +181,7 @@ describe('getMetaPathConfig()', () => {
 });
 
 describe('getNestedIndexFileName()', () => {
-  test('returns the shared file name of a nested collection', () => {
+  test('returns the shared file name of a collection with nested entries', () => {
     expect(
       getNestedIndexFileName({
         name: 'pages',

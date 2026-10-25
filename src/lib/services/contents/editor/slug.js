@@ -6,7 +6,7 @@ import { isDraftReadonly } from '$lib/services/config/readonly';
 import {
   getEntryDirPath,
   getSharedEntryFileName,
-  isNestedCollection,
+  hasNestedEntries,
 } from '$lib/services/contents/collection/nested';
 import { getFolderName, getOwnFolderName } from '$lib/services/contents/collection/nested/i18n';
 import { getSlugOptions } from '$lib/services/contents/collection/slug';
@@ -32,9 +32,9 @@ export const hasEntrySlug = (draft) =>
 /**
  * Check whether the slug of an existing entry can be updated. The collection’s `editable` slug
  * option has to allow it, and the entry has to be identified by a name of its own: an entry in a
- * nested collection that doesn’t store every entry as an index file is identified by its path
- * within the collection folder, which can’t be renamed without relocating the entry. An entry
- * awaiting deletion is read-only, and so is an entry in a read-only collection.
+ * collection with nested entries that doesn’t store every entry as an index file is identified by
+ * its path within the collection folder, which can’t be renamed without relocating the entry. An
+ * entry awaiting deletion is read-only, and so is an entry in a read-only collection.
  * @param {EntryDraft | null | undefined} draft Entry draft.
  * @returns {boolean} Result.
  */
@@ -55,7 +55,7 @@ export const canUpdateSlug = (draft) => {
     draft
   );
 
-  if (isNestedCollection(collection) && !getSharedEntryFileName(collection)) {
+  if (hasNestedEntries(collection) && !getSharedEntryFileName(collection)) {
     return false;
   }
 

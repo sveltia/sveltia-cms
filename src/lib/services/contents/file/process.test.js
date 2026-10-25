@@ -38,7 +38,7 @@ vi.mock('$lib/services/contents/collection', () => ({
 }));
 
 vi.mock('$lib/services/contents/collection/predicates', () => ({
-  // Used by the nested collection helpers, which the index file check runs through
+  // Used by the nested entry helpers, which the index file check runs through
   isEntryCollection: vi.fn(
     (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
   ),

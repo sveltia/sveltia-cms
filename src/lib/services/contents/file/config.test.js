@@ -177,7 +177,7 @@ describe('Test getEntryPathRegEx()', () => {
     expect('content/post.md'.match(omitted)?.groups?.subPath).toBe('post');
   });
 
-  test('generates regex for a nested collection with an unlimited depth', () => {
+  test('generates regex for nested entries with an unlimited depth', () => {
     const _i18n = {
       ...baseI18nOptions,
       structureMap: {
@@ -202,7 +202,7 @@ describe('Test getEntryPathRegEx()', () => {
     expect('content/pages/a/b/c/_index.md'.match(regex)?.groups?.subPath).toBe('a/b/c/_index');
   });
 
-  test('generates regex for a nested collection with a limited depth', () => {
+  test('generates regex for nested entries with a limited depth', () => {
     const _i18n = {
       ...baseI18nOptions,
       structureMap: {
@@ -227,7 +227,7 @@ describe('Test getEntryPathRegEx()', () => {
     expect('content/pages/a/b/_index.md'.match(regex)).toBe(null);
   });
 
-  test('generates regex for a nested collection with a subPath template', () => {
+  test('generates regex for nested entries with a subPath template', () => {
     // A page bundle collection puts each entry in its own folder, and nesting means that folder can
     // itself sit below others
     const _i18n = {
@@ -783,7 +783,7 @@ describe('Test getEntryPathRegEx()', () => {
       expect(regex.test('posts/postsXdata.json')).toBe(false);
     });
 
-    test('works with the path option and a nested collection', () => {
+    test('works with the path option and a collection with nested entries', () => {
       const _i18n = { ...baseI18nOptions, structureMap };
 
       const regex = getEntryPathRegEx({

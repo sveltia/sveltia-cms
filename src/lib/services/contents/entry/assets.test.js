@@ -1368,11 +1368,11 @@ describe('getAssociatedAssets', () => {
 
   describe('assets owned by a descendant entry', () => {
     /**
-     * Set up a nested collection where `pages/about` holds the entry being looked at and
-     * `pages/about/team` holds another one.
+     * Set up a collection with nested entries where `pages/about` holds the entry being looked at
+     * and `pages/about/team` holds another one.
      * @param {any[]} assets Assets to expose through the store.
      */
-    const setupNestedCollection = (assets) => {
+    const setupNestedEntries = (assets) => {
       mockGetCollection.mockReturnValue({ name: 'pages', _type: 'entry' });
       mockIsCollectionIndexFile.mockReturnValue(false);
       mockGetField.mockReturnValue(undefined);
@@ -1402,7 +1402,7 @@ describe('getAssociatedAssets', () => {
       const ownAsset = /** @type {any} */ ({ path: 'pages/about/parent.jpg' });
       const childAsset = /** @type {any} */ ({ path: 'pages/about/team/child.jpg' });
 
-      setupNestedCollection([ownAsset, childAsset]);
+      setupNestedEntries([ownAsset, childAsset]);
       mockGetEntriesByCollection.mockReturnValue([parentEntry, childEntry]);
 
       expect(
@@ -1413,7 +1413,7 @@ describe('getAssociatedAssets', () => {
     test('leaves out the assets in a subfolder of a descendant entry’s folder', () => {
       const childAsset = /** @type {any} */ ({ path: 'pages/about/team/images/child.jpg' });
 
-      setupNestedCollection([childAsset]);
+      setupNestedEntries([childAsset]);
       mockGetEntriesByCollection.mockReturnValue([parentEntry, childEntry]);
 
       expect(
@@ -1424,7 +1424,7 @@ describe('getAssociatedAssets', () => {
     test('keeps the assets in a subfolder that holds no entry', () => {
       const ownAsset = /** @type {any} */ ({ path: 'pages/about/images/parent.jpg' });
 
-      setupNestedCollection([ownAsset]);
+      setupNestedEntries([ownAsset]);
       mockGetEntriesByCollection.mockReturnValue([parentEntry, childEntry]);
 
       expect(
@@ -1440,7 +1440,7 @@ describe('getAssociatedAssets', () => {
         locales: { en: { path: 'README.md', content: { title: 'Readme' } } },
       });
 
-      setupNestedCollection([ownAsset]);
+      setupNestedEntries([ownAsset]);
       mockGetEntriesByCollection.mockReturnValue([rootEntry, parentEntry, childEntry]);
 
       expect(
@@ -1451,7 +1451,7 @@ describe('getAssociatedAssets', () => {
     test('keeps its own assets when looking at the descendant', () => {
       const childAsset = /** @type {any} */ ({ path: 'pages/about/team/child.jpg' });
 
-      setupNestedCollection([/** @type {any} */ ({ path: 'pages/about/parent.jpg' }), childAsset]);
+      setupNestedEntries([/** @type {any} */ ({ path: 'pages/about/parent.jpg' }), childAsset]);
       mockGetEntriesByCollection.mockReturnValue([parentEntry, childEntry]);
 
       expect(
@@ -1472,7 +1472,7 @@ describe('getAssociatedAssets', () => {
         },
       });
 
-      setupNestedCollection([enAsset, deAsset]);
+      setupNestedEntries([enAsset, deAsset]);
       mockGetEntriesByCollection.mockReturnValue([entry]);
 
       expect(getAssociatedAssets({ entry, collectionName: 'pages', relative: true })).toEqual([
@@ -1495,7 +1495,7 @@ describe('getAssociatedAssets', () => {
         locales: { en: { path: 'pages/contact.md', content: { title: 'Contact' } } },
       });
 
-      setupNestedCollection([sharedAsset]);
+      setupNestedEntries([sharedAsset]);
       mockGetEntriesByCollection.mockReturnValue([entry, sibling]);
       mockGetOwnedEntryFolderPath.mockReturnValueOnce(undefined);
 

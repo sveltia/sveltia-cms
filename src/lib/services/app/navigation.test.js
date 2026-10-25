@@ -1670,7 +1670,7 @@ describe('navigation', () => {
       );
     });
 
-    it('returns the folder being browsed in a nested collection, encoded', () => {
+    it('returns the folder being browsed in a collection with nested entries, encoded', () => {
       expect(
         getEntryEditorBackPath({ collectionName: 'docs', dirPath: 'guides/getting started' }),
       ).toBe('/collections/docs/filter/guides/getting%20started');

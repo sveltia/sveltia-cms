@@ -1091,7 +1091,7 @@ edit_slug_error:
   invalid: Der Slug darf keine Sonderzeichen enthalten, auch keine Schrägstriche und Leerzeichen.
   duplicate: Dieser Slug wird bereits von einem anderen Eintrag verwendet.
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: Übergeordneter Ordner
 new_parent_folder: Neuer Ordner

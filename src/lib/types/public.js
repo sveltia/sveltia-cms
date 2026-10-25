@@ -1790,8 +1790,8 @@
  */
 
 /**
- * Nested collection options.
- * @typedef {object} NestedCollectionOptions
+ * Nested entry options.
+ * @typedef {object} NestedEntryOptions
  * @property {number} [depth] Maximum number of path segments below the collection folder, which is
  * both the depth of the collection tree and the depth at which entry files are looked up. Default:
  * `Infinity`.
@@ -1800,7 +1800,7 @@
  * @property {boolean} [subfolders] Whether each entry is stored as an index file in its own
  * subfolder. If `false`, entries are regular files placed directly in the folders. Default: `true`.
  * @see https://decapcms.org/docs/collection-nested/
- * @see https://sveltiacms.app/en/docs/collections/entries/nested#nested-collection-options
+ * @see https://sveltiacms.app/en/docs/collections/entries/nested#nested-entry-options
  */
 
 /**
@@ -2012,10 +2012,10 @@
  * [documentation](https://sveltiacms.app/en/docs/collections/entries/views#sorting) for details.
  * @property {ViewFilter[] | ViewFilters} [view_filters] View filters to be used in the entry list.
  * @property {ViewGroup[] | ViewGroups} [view_groups] View groups to be used in the entry list.
- * @property {NestedCollectionOptions} [nested] Options for a nested collection, which shows the
- * entries in a folder tree and lets the user organize them in subfolders.
- * @property {CollectionMetaData} [meta] Meta data for a nested collection, which enables the entry
- * path editor. It has no effect without the `nested` option.
+ * @property {NestedEntryOptions} [nested] Options for a collection with nested entries, which shows
+ * the entries in a folder tree and lets the user organize them in subfolders.
+ * @property {CollectionMetaData} [meta] Meta data for a collection with nested entries, which
+ * enables the entry path editor. It has no effect without the `nested` option.
  * @property {CollectionIndexFile | boolean} [index_file] Index file inclusion options. If `true`,
  * the default index file name is `_index`, which is used for Hugo’s special index file. See the
  * [documentation](https://sveltiacms.app/en/docs/collections/entries/listings#managing-hugo-s-special-index-file)
@@ -2525,8 +2525,8 @@
  * @property {boolean} [show_preview_links] Whether to show links to entries on the live site and
  * on deploy previews. Default: `true`.
  * @property {SlugOptions} [slug] Slug options, which apply to entry slugs and to the names of entry
- * folders created or renamed in a nested collection. They also apply to uploaded asset file names
- * and new asset folder names if the `slugify_filename` media library option is enabled.
+ * folders created or renamed in a collection with nested entries. They also apply to uploaded asset
+ * file names and new asset folder names if the `slugify_filename` media library option is enabled.
  * @property {(Collection | CollectionDivider)[]} [collections] Set of collections. The list can
  * also contain dividers, which are used to group collections in the collection list. Either
  * `collections` or `singletons` option must be defined.

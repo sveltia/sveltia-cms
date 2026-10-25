@@ -1091,7 +1091,7 @@ edit_slug_error:
   invalid: Slug må ikke indeholde specialtegn, herunder skråstreger og mellemrum.
   duplicate: Dette slug bruges allerede til et andet dokument.
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: Overordnet mappe
 new_parent_folder: Ny mappe

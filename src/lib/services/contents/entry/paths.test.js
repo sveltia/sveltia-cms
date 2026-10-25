@@ -132,7 +132,7 @@ describe('getEntryDirName()', () => {
    * @param {string} args.basePath Normalized `folder` option.
    * @param {I18nFileStructure} [args.structure] I18n structure. Omit to disable i18n.
    * @param {boolean} [args.omitDefaultLocaleFromFilePath] Whether to omit the default locale.
-   * @param {number} [args.nestedDepth] Nested collection depth.
+   * @param {number} [args.nestedDepth] Nested entry depth.
    * @param {string} [args.subPath] Normalized `path` option.
    * @returns {{ basePath: string, fullPathRegEx: RegExp }} File configuration.
    */

@@ -131,10 +131,11 @@ const getEntryRelativePathRegEx = ({ internalPath, internalSubPath, localeFolder
   // A collection at the repository root, e.g. `folder: .`, has an empty folder path, below which
   // every file in the repository would count as its asset. Limit the folder to its media subfolder
   // instead, e.g. `images/` and the folders below it for `media_folder: images`. An entry in a
-  // subfolder of a nested collection keeps its own `images` folder there, which is left out, since
-  // any folder named like that would match. Media stored next to the entries (no subfolder), out of
-  // the repository (`../`) or in a folder named after each entry (a leading tag like `{{slug}}`)
-  // can’t be told apart from the other files in the repository, so the folder matches nothing then
+  // subfolder of a collection with nested entries keeps its own `images` folder there, which is
+  // left out, since any folder named like that would match. Media stored next to the entries (no
+  // subfolder), out of the repository (`../`) or in a folder named after each entry (a leading tag
+  // like `{{slug}}`) can’t be told apart from the other files in the repository, so the folder
+  // matches nothing then
   const subPath = /** @type {string} */ (internalSubPath);
   const [firstSegment] = subPath.split('/');
 

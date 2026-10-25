@@ -1493,7 +1493,7 @@ describe('draft/slugs', () => {
         expect(getCompanionEntries).toHaveBeenCalledWith('posts');
       });
 
-      it('should leave out the file name every entry shares in a nested collection', () => {
+      it('should leave out the file name every nested entry shares', () => {
         const draft = createDraft();
 
         // Every entry is stored as `index.md` in a folder of its own

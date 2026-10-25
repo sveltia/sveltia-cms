@@ -33,7 +33,7 @@ describe('workflow/branch', () => {
 
     test('encodes slashes in a slug', () => {
       // Git can’t hold a branch `cms/pages/about` next to `cms/pages/about/ethos`, so a page and
-      // its sub-page in a nested collection couldn’t both be in draft
+      // its sub-page in a collection with nested entries couldn’t both be in draft
       expect(getBranchName({ collectionName: 'pages', slug: 'about' })).toBe('cms/pages/about');
       expect(getBranchName({ collectionName: 'pages', slug: 'about/ethos' })).toBe(
         'cms/pages/about%2Fethos',

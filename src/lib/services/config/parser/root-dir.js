@@ -37,8 +37,8 @@ const countLevelsUp = (path) => {
  * entry-relative media folder can climb back up from.
  * @param {InternalCmsConfig} config CMS configuration.
  * @param {AssetFolderInfo} folder Asset folder.
- * @returns {number | undefined} Number of levels, or `undefined` if it can’t be told, as for a
- * nested collection, or for an editor component used anywhere.
+ * @returns {number | undefined} Number of levels, or `undefined` if it can’t be told, as for
+ * nested entries, or for an editor component used anywhere.
  */
 const getEntryDepth = (config, { collectionName, fileName }) => {
   // A file is where it’s configured to be

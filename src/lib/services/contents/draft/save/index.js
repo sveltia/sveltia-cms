@@ -106,7 +106,8 @@ const buildChanges = async ({ draft, slugs, recreate }) => {
 
     changes.push(...cascadeChanges);
 
-    // Moving an entry in a nested collection takes everything below it to the new location
+    // Moving an entry in a collection with nested entries takes everything below it to the new
+    // location
     const { changes: moveChanges, savingEntries: movedEntries } = await buildNestedMoveChanges({
       collection,
       originalEntry,

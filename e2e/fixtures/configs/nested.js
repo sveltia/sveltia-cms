@@ -1,8 +1,8 @@
 import { createPNG } from '../files.js';
 
 /**
- * A site with two nested collections: pages that each live in a folder of their own as an
- * `index.md` file, with a summary and a thumbnail in the entry list, and Hugo-style docs whose
+ * A site with two collections of nested entries: pages that each live in a folder of their own as
+ * an `index.md` file, with a summary and a thumbnail in the entry list, and Hugo-style docs whose
  * entries are regular files, with a `_index.md` section page at the top of the collection.
  */
 export const NESTED_CONFIG = {

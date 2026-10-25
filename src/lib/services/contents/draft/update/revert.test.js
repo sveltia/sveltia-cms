@@ -95,8 +95,8 @@ describe('draft/update/revert', () => {
     });
 
     it('restores the slugs', () => {
-      // A slug edited with the slug editor names the file, or the folder in a nested collection, so
-      // a full revert undoes the rename too
+      // A slug edited with the slug editor names the file, or the folder in a collection with
+      // nested entries, so a full revert undoes the rename too
       mockEntryDraft.originalSlugs = { en: 'company', ja: 'kaisha' };
       mockEntryDraft.currentSlugs = { en: 'company', ja: 'kigyou' };
 

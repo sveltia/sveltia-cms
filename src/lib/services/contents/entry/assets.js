@@ -379,8 +379,8 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
     entryFolderPaths.forEach((entryFolderPath) => {
       /**
        * Check whether the given folder belongs to an entry stored below this one, which owns the
-       * files in it. In a nested collection, an entry can have others stored beneath it, and each
-       * of those keeps its media in its own folder.
+       * files in it. In a collection with nested entries, an entry can have others stored beneath
+       * it, and each of those keeps its media in its own folder.
        * @param {string} assetFolderPath Folder holding an asset, at or below the entry folder.
        * @returns {boolean} Result.
        */

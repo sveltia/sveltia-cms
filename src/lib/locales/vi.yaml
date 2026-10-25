@@ -1072,7 +1072,7 @@ edit_slug_error:
   invalid: Đường dẫn tĩnh không được chứa ký tự đặc biệt, kể cả dấu gạch chéo và dấu cách.
   duplicate: Đường dẫn tĩnh này đang được một bài viết khác sử dụng.
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: Thư mục cha
 new_parent_folder: Thư mục mới
