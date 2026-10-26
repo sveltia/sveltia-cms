@@ -16,6 +16,7 @@ const getMock = vi.hoisted(() => vi.fn());
 const fetchAPIMock = vi.hoisted(() => vi.fn());
 const encodeBase64Mock = vi.hoisted(() => vi.fn());
 const createCommitMessageMock = vi.hoisted(() => vi.fn());
+const signOffCommitMessageMock = vi.hoisted(() => vi.fn((message) => message));
 
 vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 
@@ -30,6 +31,7 @@ vi.mock('@sveltia/utils/file', () => ({
 vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
   .../** @type {any} */ (await importOriginal()),
   createCommitMessage: createCommitMessageMock,
+  signOffCommitMessage: signOffCommitMessageMock,
 }));
 
 vi.mock('$lib/services/backends/git/gitea/repository', async (importOriginal) => {
@@ -241,6 +243,24 @@ describe('Gitea Commits Service', () => {
 
       expect(createCommitMessageMock).toHaveBeenCalledWith(mockChanges, mockOptions);
       expect(encodeBase64Mock).toHaveBeenCalledTimes(2);
+    });
+
+    test('should send the signed-off commit message', async () => {
+      const signedOff = 'Add new file\n\nSigned-off-by: John Doe <john.doe@example.com>';
+
+      signOffCommitMessageMock.mockReturnValueOnce(signedOff);
+      fetchAPIMock.mockResolvedValue({
+        commit: { sha: 'new-commit-sha', created: '2023-01-15T10:30:00Z' },
+        files: [],
+      });
+
+      await commitChanges([], { commitType: 'update' });
+
+      expect(signOffCommitMessageMock).toHaveBeenCalledWith('Add new file');
+      expect(fetchAPIMock).toHaveBeenCalledWith(
+        `/repos/${mockOwner}/${mockRepo}/contents`,
+        expect.objectContaining({ body: expect.objectContaining({ message: signedOff }) }),
+      );
     });
 
     test('should handle move operation correctly', async () => {

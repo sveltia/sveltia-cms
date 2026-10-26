@@ -19,6 +19,7 @@ import {
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { signOffCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
@@ -29,6 +30,7 @@ vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
   .../** @type {any} */ (await importOriginal()),
   createCommitMessage: vi.fn().mockReturnValue('Test commit message'),
+  signOffCommitMessage: vi.fn((message) => message),
 }));
 vi.mock('$lib/services/backends/git/shared/head', () => ({
   repositoryHead: { current: '' },
@@ -228,6 +230,47 @@ describe('GitHub commits service', () => {
           'content/test-entry.md': { sha: 'file-sha-1' },
           'content/updated-entry.md': { sha: 'file-sha-2' },
         },
+      });
+    });
+
+    test('sends a signed-off message as a headline and a body', async () => {
+      vi.mocked(signOffCommitMessage).mockReturnValueOnce(
+        'Test commit message\n\nSigned-off-by: Test User <test@example.com>',
+      );
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({
+          repository: { ref: { target: { history: { nodes: [{ oid: 'base-sha' }] } } } },
+        })
+        .mockResolvedValueOnce({
+          createCommitOnBranch: {
+            commit: { oid: 'new-commit-sha', committedDate: '2023-01-01T00:00:00Z' },
+          },
+        });
+
+      await commitChanges([], /** @type {any} */ ({ commitType: 'update' }));
+
+      expect(signOffCommitMessage).toHaveBeenCalledWith('Test commit message');
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.input.message).toEqual({
+        headline: 'Test commit message',
+        body: 'Signed-off-by: Test User <test@example.com>',
+      });
+    });
+
+    test('sends a message without a body as a headline only', async () => {
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({
+          repository: { ref: { target: { history: { nodes: [{ oid: 'base-sha' }] } } } },
+        })
+        .mockResolvedValueOnce({
+          createCommitOnBranch: {
+            commit: { oid: 'new-commit-sha', committedDate: '2023-01-01T00:00:00Z' },
+          },
+        });
+
+      await commitChanges([], /** @type {any} */ ({ commitType: 'update' }));
+
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.input.message).toEqual({
+        headline: 'Test commit message',
       });
     });
 

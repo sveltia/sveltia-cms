@@ -10,6 +10,7 @@ import {
   createCommitMessage,
   createLastCommitError,
   dedupeFileCommits,
+  signOffCommitMessage,
 } from '$lib/services/backends/git/shared/commits';
 import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
@@ -238,6 +239,19 @@ export const isUploadFailure = (ex) =>
   UPLOAD_FAILURE_STATUSES.includes(ex?.cause?.status);
 
 /**
+ * Split a commit message into the headline and the body, as the GraphQL API takes them separately
+ * and joins them with a blank line. The body is left out if there is none.
+ * @param {string} message Commit message.
+ * @returns {{ headline: string, body?: string }} Message parts.
+ */
+const splitCommitMessage = (message) => {
+  const [headline, ...rest] = message.split(/\r?\n/);
+  const body = rest.join('\n').trim();
+
+  return body ? { headline, body } : { headline };
+};
+
+/**
  * Commit the given additions and deletions on top of the given head.
  * @param {object} args Arguments.
  * @param {string} args.owner Repository owner.
@@ -295,7 +309,7 @@ const createCommit = async ({
       additions: additions.map(({ path, contents }) => ({ path, contents })),
       deletions,
     },
-    message: { headline: message },
+    message: splitCommitMessage(message),
   };
 
   try {
@@ -358,7 +372,7 @@ export const commitChanges = async (changes, options) => {
     new Set(deletions.map(({ path }) => path)),
   );
 
-  const message = createCommitMessage(changes, options);
+  const message = signOffCommitMessage(createCommitMessage(changes, options));
   let expectedHeadOid = await getExpectedHeadOid(options);
   let payloadSize = INITIAL_COMMIT_PAYLOAD_SIZE;
   // Smallest payload that has timed out, which the following commits stay below, as the speed

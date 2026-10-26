@@ -10,6 +10,7 @@ import {
   dedupeFileCommits,
   fetchPerPathCommits,
   hasSkipCIMarker,
+  signOffCommitMessage,
 } from './commits';
 import { MAX_CONCURRENT_REQUESTS } from './concurrency';
 
@@ -885,6 +886,161 @@ describe('git/shared/commits', () => {
         },
       );
     });
+  });
+
+  describe('signOffCommitMessage', () => {
+    /**
+     * Enable the option for a user with an email.
+     */
+    const enableSignOff = () => {
+      mockCmsConfig.backend = { ...mockCmsConfig.backend, signoff_commits: true };
+      mockUser.email = 'test@example.com';
+    };
+
+    it('should leave the message as it is when the option is not enabled', () => {
+      mockUser.email = 'test@example.com';
+
+      expect(signOffCommitMessage('Update Post “hello”')).toBe('Update Post “hello”');
+
+      mockCmsConfig.backend = { ...mockCmsConfig.backend, signoff_commits: false };
+
+      expect(signOffCommitMessage('Update Post “hello”')).toBe('Update Post “hello”');
+    });
+
+    it('should leave the message as it is when there is no configuration', () => {
+      const { backend } = mockCmsConfig;
+
+      mockCmsConfig.backend = undefined;
+
+      expect(signOffCommitMessage('Update Post “hello”')).toBe('Update Post “hello”');
+
+      mockCmsConfig.backend = backend;
+    });
+
+    it('should add the trailer after a blank line', () => {
+      enableSignOff();
+
+      expect(signOffCommitMessage('[skip ci] Update Post “hello” +2')).toBe(
+        '[skip ci] Update Post “hello” +2\n\nSigned-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should drop trailing white space before adding the trailer', () => {
+      enableSignOff();
+
+      expect(signOffCommitMessage('Update Post “hello”\n\n')).toBe(
+        'Update Post “hello”\n\nSigned-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should add the trailer after a blank line to a one-paragraph message like a trailer', () => {
+      enableSignOff();
+
+      expect(signOffCommitMessage('Fix: typo')).toBe(
+        'Fix: typo\n\nSigned-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should add the trailer to the trailer block the message ends with', () => {
+      enableSignOff();
+
+      expect(
+        signOffCommitMessage('Update Post “hello”\r\n\r\nCo-authored-by: Jane <jane@example.com>'),
+      ).toBe(
+        'Update Post “hello”\r\n\r\nCo-authored-by: Jane <jane@example.com>\n' +
+          'Signed-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should add the trailer after a blank line when the last paragraph is not trailers', () => {
+      enableSignOff();
+
+      expect(signOffCommitMessage('Update Post “hello”\n\nSee: the guide\nfor details')).toBe(
+        'Update Post “hello”\n\nSee: the guide\nfor details\n\n' +
+          'Signed-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should not duplicate a trailer the message already has', () => {
+      enableSignOff();
+
+      const message = 'Update Post “hello”\n\nsigned-off-by: Test User <TEST@example.com>  ';
+
+      expect(signOffCommitMessage(message)).toBe(message);
+    });
+
+    it('should fill a template with the same trailer only once', () => {
+      enableSignOff();
+      mockCmsConfig.backend.commit_messages = {
+        update: 'Update {{slug}}\n\nSigned-off-by: {{author-name}} <{{author-email}}>',
+      };
+
+      const message = createCommitMessage([{ path: 'a.md', slug: 'hello' }], {
+        commitType: 'update',
+      });
+
+      expect(signOffCommitMessage(message)).toBe(
+        'Update hello\n\nSigned-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should not add a trailer when the message has a sign-off with the same email', () => {
+      enableSignOff();
+
+      const message = 'Update hello\n\nSigned-off-by: test-user <test@example.com>';
+
+      expect(signOffCommitMessage(message)).toBe(message);
+    });
+
+    it('should add the trailer to a message with a different sign-off', () => {
+      enableSignOff();
+
+      expect(signOffCommitMessage('Update\n\nSigned-off-by: Bot <bot@example.com>')).toBe(
+        'Update\n\nSigned-off-by: Bot <bot@example.com>\n' +
+          'Signed-off-by: Test User <test@example.com>',
+      );
+    });
+
+    it('should fall back to the login name, then to the email', () => {
+      enableSignOff();
+      mockUser.name = null;
+
+      expect(signOffCommitMessage('Update')).toBe(
+        'Update\n\nSigned-off-by: test-user <test@example.com>',
+      );
+
+      mockUser.login = '';
+
+      expect(signOffCommitMessage('Update')).toBe(
+        'Update\n\nSigned-off-by: test@example.com <test@example.com>',
+      );
+    });
+
+    it('should strip line breaks and angle brackets from the profile values', () => {
+      enableSignOff();
+      mockUser.name = 'Test\nUser <admin>';
+      mockUser.email = ' <test@example.com>\n';
+
+      expect(signOffCommitMessage('Update')).toBe(
+        'Update\n\nSigned-off-by: Test User admin <test@example.com>',
+      );
+    });
+
+    it.each([[''], [null], [undefined], [' <> ']])(
+      'should leave the trailer out with a warning when the email is %j',
+      (email) => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        enableSignOff();
+        mockUser.email = email;
+
+        expect(signOffCommitMessage('Update')).toBe('Update');
+        expect(warn).toHaveBeenCalledOnce();
+        expect(warn.mock.calls[0][0]).toContain('signoff_commits');
+
+        warn.mockRestore();
+      },
+    );
   });
 });
 

@@ -8,6 +8,7 @@ import {
   createCommitMessage,
   createLastCommitError,
   fetchPerPathCommits,
+  signOffCommitMessage,
 } from '$lib/services/backends/git/shared/commits';
 import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
@@ -108,7 +109,7 @@ export const commitChanges = async (changes, options) => {
   const { owner, repo } = options.branch ? getWorkflowRepository() : repository;
   // An Editorial Workflow change lands on a workflow branch rather than the configured one
   const { branch = repository.branch, startBranch } = options;
-  const commitMessage = createCommitMessage(changes, options);
+  const commitMessage = signOffCommitMessage(createCommitMessage(changes, options));
   const { name, email } = /** @type {User} */ (user.account);
   const date = new Date().toJSON();
 

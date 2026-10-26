@@ -8,7 +8,10 @@ import {
 } from '$lib/services/backends/git/gitlab/commits';
 import { repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
+import {
+  createCommitMessage,
+  signOffCommitMessage,
+} from '$lib/services/backends/git/shared/commits';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { getGitHash } from '$lib/services/utils/file';
 import { forkedRepository, openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -39,6 +42,7 @@ vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
   .../** @type {any} */ (await importOriginal()),
   createCommitMessage: vi.fn(),
+  signOffCommitMessage: vi.fn((message) => message),
 }));
 vi.mock('$lib/services/backends/git/shared/head', () => ({
   repositoryHead: { current: '' },
@@ -194,6 +198,28 @@ describe('GitLab commits service', () => {
           '/projects/test-owner%2Ftest-repo/repository/commits',
           expect.objectContaining({
             body: expect.not.objectContaining({ start_project: expect.anything() }),
+          }),
+        );
+      });
+
+      test('sends the signed-off commit message', async () => {
+        signInAs(undefined);
+
+        const [changes, options] = createStartBranchArgs();
+        const signedOff = 'Create new post\n\nSigned-off-by: Test User <test@example.com>';
+
+        vi.mocked(createCommitMessage).mockReturnValue('Create new post');
+        vi.mocked(signOffCommitMessage).mockReturnValueOnce(signedOff);
+        vi.mocked(fetchAPI).mockResolvedValue({ id: 'c1', committed_date: '2023-01-01T12:00:00Z' });
+        vi.mocked(getGitHash).mockResolvedValue('file123');
+
+        await commitChanges(changes, options);
+
+        expect(signOffCommitMessage).toHaveBeenCalledWith('Create new post');
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/projects/test-owner%2Ftest-repo/repository/commits',
+          expect.objectContaining({
+            body: expect.objectContaining({ commit_message: signedOff }),
           }),
         );
       });

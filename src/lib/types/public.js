@@ -2195,6 +2195,12 @@
  * with a space in between. The message made from the template is used as is if the text box is
  * left empty. Default: `false`. See the
  * [documentation](https://sveltiacms.app/en/docs/backends#commit-messages) for details.
+ * @property {boolean} [signoff_commits] Whether to add a `Signed-off-by: Name <email>` trailer
+ * to every commit the CMS makes, with the name and email of the signed-in user, as required by
+ * projects that enforce the [Developer Certificate of Origin](https://developercertificate.org/).
+ * The merge commit made when an Editorial Workflow entry is published doesn’t get the trailer. If
+ * the Git host doesn’t share the user’s email, e.g. on GitHub for a user without a public email,
+ * the trailer is left out with a warning in the browser console. Default: `false`.
  * @property {AuthMethodName[]} [auth_methods] Allowed authentication methods. Default: both `oauth`
  * and `token` are allowed. To restrict sign-in options, specify only the methods you want to
  * enable, e.g. `[oauth]` to disable access token sign-in, or `[token]` to disable OAuth sign-in. An
