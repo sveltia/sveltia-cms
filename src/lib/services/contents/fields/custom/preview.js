@@ -1,7 +1,7 @@
 import { getImmutable } from '$lib/services/api/immutable';
+import { getMetaDataPath } from '$lib/services/api/preview-data';
 import { isReactComponent } from '$lib/services/api/react';
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
-import { ITEM_INDEX_SUFFIX_REGEX } from '$lib/services/contents/entry/key-paths';
 import { getFieldConfigMap, getPreviewData } from '$lib/services/contents/fields/custom/helpers';
 
 /**
@@ -53,16 +53,14 @@ export const buildPreviewProps = ({
     return undefined;
   }
 
-  const { entryMap, fieldsMetaData, getAsset } = getPreviewData({ draft, locale });
-  // `getMetaData()` keys the metadata by the full key path, with any trailing list index removed
-  const metadataKey = keyPath.replace(ITEM_INDEX_SUFFIX_REGEX, '');
+  const { entryMap, getFieldArgs, fieldsMetaData, getAsset } = getPreviewData({ draft, locale });
 
   /** @type {CustomFieldPreviewProps} */
   return {
     value: currentValue,
     field: getFieldConfigMap(fieldConfig),
     metadata: /** @type {MapOf<any>} */ (
-      fieldsMetaData.get(metadataKey) ?? getImmutable().fromJS({})
+      fieldsMetaData.getIn(getMetaDataPath({ getFieldArgs, keyPath })) ?? getImmutable().fromJS({})
     ),
     getAsset,
     entry: entryMap,

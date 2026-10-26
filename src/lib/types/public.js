@@ -2931,9 +2931,15 @@
  * @property {GetAsset} getAsset Function that returns the asset item for a given path. Returns
  * `undefined` if the asset is not found.
  * @property {MapOf<Record<string, any>>} fieldsMetaData Immutable Map of metadata from all fields
- * in the entry, keyed by field key path, e.g. `author` or `details.author`. For a Relation field,
- * it contains the referenced entry content in the `{ [collectionName]: { [value]: content } }`
- * structure, where `content` is a flattened object with key paths like `address.city` as keys.
+ * in the entry, keyed by field name. The metadata of a field in an Object or List field is nested
+ * under the parent field’s name, merging all the List items, and the single subfield of a List
+ * field is keyed by its own name, e.g. `fieldsMetaData.getIn(['details', 'author'])`. For a
+ * Relation field, it contains the referenced entry content in the
+ * `{ [collectionName]: { [value]: content } }` structure, where `content` is a flattened object
+ * with key paths like `address.city` as keys. The metadata of a nested field is also available
+ * under its flattened key path without a trailing List item index, e.g. `details.author` or
+ * `books.0.author`, but this is deprecated.
+ * @see https://decapcms.org/docs/customization/#accessing-metadata
  */
 
 /**
@@ -3098,11 +3104,10 @@
  * @property {MapOf<CustomField>} field Immutable Map of current field configuration. Use
  * `field.get('name')` to access properties.
  * @property {MapOf<any>} metadata Immutable Map of any available metadata for the current field,
- * extracted from `fieldsMetaData` using the field’s key path as key, e.g. `details.author` for a
- * field nested in an Object field or `authors.0.name` for one in a List item. A trailing index is
- * removed, so the subfield of a List field with a single `field` uses the List field’s key path,
- * e.g. `tags` instead of `tags.0`. For relation fields, contains referenced entry data. It’s an
- * empty Map if there is no metadata.
+ * extracted from `fieldsMetaData` with the names of the field and its parent fields, e.g.
+ * `['details', 'author']` for a field nested in an Object field, `['authors', 'name']` for one in
+ * a List item, or `['tags', 'tag']` for the subfield `tag` of a List field with a single `field`.
+ * For relation fields, contains referenced entry data. It’s an empty Map if there is no metadata.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  * @see https://sveltiacms.app/en/docs/api/field-types
  */

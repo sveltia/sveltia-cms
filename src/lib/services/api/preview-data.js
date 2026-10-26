@@ -14,6 +14,7 @@ import { getField } from '$lib/services/contents/entry/fields';
 import { ITEM_INDEX_SUFFIX_REGEX } from '$lib/services/contents/entry/key-paths';
 import { getEntryOptions } from '$lib/services/contents/fields/relation/helpers';
 import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
+import { isNumeric } from '$lib/services/utils/number';
 import { unflattenMap } from '$lib/services/utils/object';
 
 /**
@@ -29,7 +30,14 @@ import { unflattenMap } from '$lib/services/utils/object';
  * InternalLocaleCode,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
- * @import { ApiAsset, ApiEntry, FieldKeyPath, GetAsset, RelationField } from '$lib/types/public';
+ * @import {
+ * ApiAsset,
+ * ApiEntry,
+ * FieldKeyPath,
+ * GetAsset,
+ * ListFieldWithSubField,
+ * RelationField,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -223,23 +231,59 @@ const getReferencedEntryLookup = (entries, locale, fieldConfig) =>
   );
 
 /**
+ * Get the path of a field’s metadata in `fieldsMetaData`, the way Netlify/Decap CMS nests it: each
+ * Object or List field passes the metadata of its subfields up under its own name, merging the
+ * metadata of all the List items. A List item index is therefore dropped, along with the index of a
+ * multi-value field like a Relation field with the `multiple` option, except that a List field with
+ * a single `field` passes the subfield’s metadata up under the subfield’s name.
+ * @param {object} args Arguments.
+ * @param {Omit<GetFieldArgs, 'keyPath'>} args.getFieldArgs Arguments for getField function.
+ * @param {FieldKeyPath} args.keyPath Field key path, e.g. `books.0.author` or `tags.0`.
+ * @returns {string[]} Metadata path, e.g. `['books', 'author']` or `['tags', 'tag']`.
+ */
+export const getMetaDataPath = ({ getFieldArgs, keyPath }) => {
+  const segments = keyPath.split('.');
+
+  return segments.flatMap((segment, index) => {
+    if (!isNumeric(segment)) {
+      return [segment];
+    }
+
+    const parentField = getField({
+      ...getFieldArgs,
+      keyPath: /** @type {FieldKeyPath} */ (segments.slice(0, index).join('.')),
+    });
+
+    const { field: subField } = /** @type {ListFieldWithSubField} */ (parentField ?? {});
+
+    return parentField?.widget === 'list' && subField ? [subField.name] : [];
+  });
+};
+
+/**
  * Get metadata for fields. For relation fields, looks up and stores the referenced entry content
- * keyed by collection name and value, matching the `fieldsMetaData` structure expected by
- * Netlify/Decap CMS preview templates and custom field types.
+ * keyed by collection name and value, matching the `fieldsMetaData` structure of Netlify/Decap CMS
+ * preview templates and custom field types: the metadata of a field nested in an Object or List
+ * field is found under the parent field’s name, as {@link getMetaDataPath} describes, e.g.
+ * `fieldsMetaData.getIn(['books', 'author', 'authors', 'jane'])`. For backward compatibility, it’s
+ * also stored under the flattened key path of a nested field, e.g. `books.0.author`, with any
+ * trailing List item index removed.
  * @param {object} args Arguments.
  * @param {InternalLocaleCode} args.locale Current locale.
  * @param {Omit<GetFieldArgs, 'keyPath'>} args.getFieldArgs Arguments for getField function.
  * @returns {import('immutable').MapOf<any>} Immutable Map of entry metadata.
+ * @see https://decapcms.org/docs/customization/#accessing-metadata
  */
 export const getMetaData = ({ locale, getFieldArgs }) => {
   const { valueMap = {} } = getFieldArgs;
+  // Use null-prototype objects, so a name or value like `constructor` or `__proto__` is an own key
   /** @type {Record<string, any>} */
-  const metaData = {};
+  const metaData = Object.create(null);
   /** @type {Map<string, Entry[]>} */
   const refEntriesCache = new Map();
 
   Object.entries(valueMap).forEach(([key, value]) => {
-    const keyPath = /** @type {FieldKeyPath} */ (key.replace(ITEM_INDEX_SUFFIX_REGEX, ''));
+    const keyPath = /** @type {FieldKeyPath} */ (key);
     const field = getField({ ...getFieldArgs, keyPath });
 
     // Populate metadata for relation fields by looking up referenced entries
@@ -274,15 +318,31 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
 
       const defaultLocale = getCollection(refCollection)?._i18n.defaultLocale;
 
-      metaData[keyPath] ??= {};
-      metaData[keyPath][refCollection] ??= {};
       // Fall back to the referenced collection’s default locale, then `_default` (no i18n), the
       // same way the field’s options are looked up
-      metaData[keyPath][refCollection][value] = (
+      const content = (
         refEntry?.locales[locale] ??
         (defaultLocale ? refEntry?.locales[defaultLocale] : undefined) ??
         refEntry?.locales._default
       )?.content;
+
+      const legacyKey = key.replace(ITEM_INDEX_SUFFIX_REGEX, '');
+
+      // A top-level field’s legacy key is the same as its metadata path
+      const paths = [
+        getMetaDataPath({ getFieldArgs, keyPath }),
+        ...(legacyKey.includes('.') ? [[legacyKey]] : []),
+      ];
+
+      paths.forEach((path) => {
+        const fieldMetaData = [...path, refCollection].reduce((parent, name) => {
+          parent[name] ??= Object.create(null);
+
+          return parent[name];
+        }, metaData);
+
+        fieldMetaData[value] = content;
+      });
     }
   });
 
