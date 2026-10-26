@@ -192,9 +192,46 @@ describe('RichTextEditor', () => {
       minimal: true,
     });
 
-    expect(container.querySelector('.wrapper')).toHaveClass('minimal');
     await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
+    // Sveltia UI makes the editor compact
+    expect(container.querySelector('.sui.text-editor')).toHaveClass('minimal');
     expect(page.getByRole('button', { name: 'Italic' }).elements()).toHaveLength(0);
+  });
+
+  test('keeps a single-line field on one line, with the inline buttons only', async () => {
+    const { props, container } = await renderEditor('One', {
+      multiline: false,
+      buttons: ['bold', 'heading-one', 'quote'],
+    });
+
+    const editor = page.getByRole('textbox');
+
+    await expect.element(editor).toHaveTextContent('One');
+    expect(container.querySelector('.sui.text-editor')).toHaveClass('single-line');
+    await expect.element(editor).toHaveAttribute('aria-multiline', 'false');
+    await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
+    expect(page.getByRole('button', { name: 'Show Text Style Options' }).elements()).toHaveLength(
+      0,
+    );
+
+    await userEvent.click(editor);
+    await userEvent.keyboard('{End}{Enter} two');
+    await expect.poll(() => props.currentValue).toBe('One two');
+  });
+
+  test('takes the compact and single-line options from the field defaults', async () => {
+    cmsConfig.current = /** @type {any} */ ({
+      field_defaults: { richtext: { minimal: true, multiline: false } },
+    });
+
+    const { container } = await renderEditor('One');
+
+    await expect.element(page.getByRole('textbox')).toHaveTextContent('One');
+
+    const wrapper = container.querySelector('.sui.text-editor');
+
+    expect(wrapper).toHaveClass('minimal');
+    expect(wrapper).toHaveClass('single-line');
   });
 
   test('tracks a pending update while typing', async () => {
@@ -341,6 +378,29 @@ describe('RichTextEditor', () => {
         new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: text }),
       );
     await expect.poll(() => props.currentValue).not.toContain('plain');
+  });
+
+  test('inserts a pasted image within the paragraph of a single-line field', async () => {
+    const { props } = await renderEditor('Hello', { multiline: false });
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+    await userEvent.click(editor);
+    await userEvent.keyboard('{End}');
+
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.items.add(await createMockImageFile({ name: 'pasted.png' }));
+    editor.element().dispatchEvent(
+      new ClipboardEvent('paste', {
+        bubbles: true,
+        cancelable: true,
+        clipboardData: dataTransfer,
+      }),
+    );
+
+    await expect.poll(() => props.currentValue).toMatch(/^Hello!\[\]\(blob:[^)]+\)$/);
+    expect(editor.element().querySelectorAll('p')).toHaveLength(1);
   });
 
   test('inserts no dropped or pasted image into a read-only field', async () => {

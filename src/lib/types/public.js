@@ -1073,8 +1073,15 @@
  * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
  * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
  * details.
- * @property {boolean} [minimal] Whether to limit the editor height to 240 pixels, making the
- * content scrollable. Default: `false`.
+ * @property {boolean} [minimal] Whether to make the editor compact: it starts with the height of a
+ * single line and stops growing at 240 pixels, making the content scrollable. Default: `false`.
+ * @property {boolean} [multiline] Whether the content can span multiple paragraphs and lines.
+ * Default: `true`. With `false`, the editor keeps the content in a single paragraph, which suits a
+ * title or caption with inline formatting: the Enter key doesn’t start a new line, and the
+ * paragraphs and lines of pasted text are joined with spaces. Only the inline formatting buttons
+ * (`bold`, `italic`, `strikethrough`, `code` and `link`) and inline editor components, like
+ * `image`, can be used then, and the HTML output format has no raw mode. A stored value with
+ * several paragraphs is kept as is until the content is edited.
  * @property {RichTextEditorButtonName[]} [buttons] Names of formatting buttons and menu items to be
  * enabled in the editor UI. Default: all the supported button names except `align`.
  * @property {(RichTextEditorComponentName | string)[]} [editor_components] Names of components to

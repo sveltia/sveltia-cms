@@ -531,6 +531,74 @@ test.describe('minimal', () => {
         true,
       );
     });
+
+    test('starts with the height of a single line', async ({ cms, page }) => {
+      const { body } = await openNote({ cms, page, body: 'Short.' });
+
+      await expect(body).toContainText('Short.');
+      // One line plus the padding, well below the 120 pixels a multiline editor starts with
+      expect((await body.boundingBox())?.height).toBeLessThan(80);
+    });
+  });
+});
+
+test.describe('multiline', () => {
+  test.describe('turned off', () => {
+    test.use({
+      config: noteConfig({
+        multiline: false,
+        buttons: ['bold', 'italic', 'link', 'heading-one', 'quote'],
+      }),
+    });
+
+    test('keeps the text on one line as the user types and pastes', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'One line.' });
+
+      await expect(body).toHaveAttribute('aria-multiline', 'false');
+      await expect(field.getByRole('button', { name: 'Bold' })).toBeVisible();
+      // The block-level buttons are left out
+      await expect(field.getByRole('button', { name: 'Show Text Style Options' })).toHaveCount(0);
+
+      await moveCaretToEnd(body);
+      await page.keyboard.press('Enter');
+      await page.keyboard.press('Shift+Enter');
+      await page.keyboard.type(' Two.');
+      await body.evaluate((element) => {
+        const clipboardData = new DataTransfer();
+
+        clipboardData.setData('text/plain', ' Three.\n\nFour.\nFive.');
+        element.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true }));
+      });
+      await expect(body.locator('p')).toHaveCount(1);
+      await saveAndExpect({ cms, editor, body: 'One line. Two. Three. Four. Five.' });
+    });
+
+    test('keeps the Markdown source on one line too', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'One line.' });
+
+      await field.getByRole('button', { name: 'Edit in Markdown' }).click();
+      await expect(body).toHaveValue('One line.');
+      await body.evaluate((/** @type {HTMLTextAreaElement} */ textarea) => {
+        textarea.focus();
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      });
+      await page.keyboard.press('Enter');
+      await page.keyboard.type(' **Two.**');
+      await expect(body).toHaveValue('One line. **Two.**');
+      await saveAndExpect({ cms, editor, body: 'One line. **Two.**' });
+    });
+
+    test('keeps a stored value with several paragraphs until it’s edited', async ({
+      cms,
+      page,
+    }) => {
+      const { editor, body } = await openNote({ cms, page, body: 'One.\n\nTwo.' });
+
+      await expect(body.locator('p')).toHaveText('One. Two.');
+      await moveCaretToEnd(body);
+      await page.keyboard.type(' Three.');
+      await saveAndExpect({ cms, editor, body: 'One. Two. Three.' });
+    });
   });
 });
 

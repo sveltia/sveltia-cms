@@ -109,6 +109,7 @@
     use_emoji_autocomplete: useEmojiAutocomplete = defaultConfig.use_emoji_autocomplete ?? true,
     use_markdown_shortcuts: useMarkdownShortcuts = defaultConfig.use_markdown_shortcuts ?? true,
     minimal = defaultConfig.minimal ?? false,
+    multiline = defaultConfig.multiline ?? true,
   } = $derived(fieldConfig);
   const format = $derived(getValueFormat(fieldConfig));
   const modes = $derived(_modes.map((name) => NODE_NAME_MAP[name]).filter(Boolean));
@@ -214,7 +215,10 @@
       const _src = src;
 
       editor.update(() => {
-        insertNodes([imageComponent.createNode({ src: _src, alt }), createParagraphNode()]);
+        const node = imageComponent.createNode({ src: _src, alt });
+
+        // Start a new paragraph after the image, unless the field holds a single one
+        insertNodes(multiline ? [node, createParagraphNode()] : [node]);
       });
     }
   };
@@ -333,7 +337,7 @@
   });
 </script>
 
-<div role="none" class="wrapper" class:minimal bind:this={wrapper}>
+<div role="none" class="wrapper" bind:this={wrapper}>
   {#await sleep() then}
     <!--
       Reset the editor when the configuration changes. It happens when fields are reordered or
@@ -349,6 +353,8 @@
         {components}
         {useEmojiAutocomplete}
         {useMarkdownShortcuts}
+        {minimal}
+        {multiline}
         bind:value={inputValue}
         bind:pending
         flex
@@ -374,15 +380,6 @@
   .wrapper {
     --sui-paragraph-margin: 20px;
     display: contents;
-
-    &.minimal {
-      :global {
-        :is([role='textbox'], textarea) {
-          overflow: auto;
-          max-height: 240px;
-        }
-      }
-    }
 
     :global {
       @media (width < 768px) {
