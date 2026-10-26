@@ -35,7 +35,7 @@ jobs:
       - name: Checkout the branch
         uses: actions/checkout@v7.0.1
       - name: Install pnpm and Node.js
-        uses: pnpm/setup@v3.0.0
+        uses: pnpm/setup@v3.1.2
         with:
           version: latest
           runtime: node@26
