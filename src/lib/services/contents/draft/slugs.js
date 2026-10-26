@@ -4,6 +4,7 @@ import { fillTemplate } from '$lib/services/common/template';
 import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { parseTransformations } from '$lib/services/common/transformations';
+import { cmsConfig } from '$lib/services/config';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import {
@@ -12,6 +13,7 @@ import {
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
 import { getSlugOptions, LEGACY_SLUG_EDITOR_TAG } from '$lib/services/contents/collection/slug';
+import { extractDateTime } from '$lib/services/contents/entry';
 import { usesSingleFileStructure } from '$lib/services/contents/i18n/config';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { isNumeric } from '$lib/services/utils/number';
@@ -87,6 +89,49 @@ export const getNewEntryDirPath = (draft) => {
 };
 
 /**
+ * Names of the DateTime field that holds an entry’s date, as inferred by Decap CMS.
+ * @type {string[]}
+ */
+const ENTRY_DATE_FIELD_NAMES = ['date', 'publishDate', 'publish_date'];
+
+/**
+ * Get the date/time parts that fill the date/time tags, e.g. `{{year}}`, in a new entry’s slug and
+ * path templates. Like Decap CMS, they come from the entry’s date, which is the value of the first
+ * DateTime field named `date`, `publishDate` or `publish_date` in the default locale, so that a
+ * backdated post is named after its own date. A date/time is read in UTC, or in the browser’s time
+ * zone with the `timezone` slug option set to `local`, while a date-only value is read as written.
+ * As the slug is only filled for a new entry, changing the date later doesn’t rename the file.
+ * @param {EntryDraft} draft Entry draft.
+ * @returns {Record<string, string> | undefined} Date/time parts, or `undefined` if the collection
+ * has no such field or it’s empty, in which case the time of the save is used.
+ * @see https://github.com/decaporg/decap-website/pull/183
+ */
+export const getEntryDateTimeParts = (draft) => {
+  const { collection, collectionFile, currentValues } = draft;
+
+  const {
+    fields = [],
+    _i18n: { defaultLocale },
+  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+
+  const dateFieldName = fields.find(
+    ({ widget, name }) => widget === 'datetime' && ENTRY_DATE_FIELD_NAMES.includes(name),
+  )?.name;
+
+  if (!dateFieldName) {
+    return undefined;
+  }
+
+  return extractDateTime({
+    dateFieldName,
+    fields,
+    content: currentValues[defaultLocale] ?? {},
+    locale: defaultLocale,
+    timeZone: cmsConfig.current?.slug?.timezone === 'local' ? 'local' : 'UTC',
+  });
+};
+
+/**
  * Get base options for {@link fillTemplate}.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -107,6 +152,7 @@ export const getFillSlugOptions = ({ draft }) => {
       _slug: currentSlugs?.[defaultLocale] ?? currentSlugs?._,
     },
     locale: defaultLocale,
+    dateTimeParts: getEntryDateTimeParts(draft),
     isIndexFile,
     randomValues: getRandomValues(draft),
   };
@@ -279,6 +325,8 @@ export const getLocalizedSlug = ({
         // Slug candidate for the current locale
         _slug,
       },
+      // The entry’s date is shared by every locale
+      dateTimeParts: getEntryDateTimeParts(draft),
       isIndexFile,
       randomValues: getRandomValues(draft),
     });

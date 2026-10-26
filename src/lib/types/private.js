@@ -2090,7 +2090,7 @@
  * `preview_path` or `media_folder`.
  * @property {InternalLocaleCode} [locale] Locale. Required if the `type` is `preview_path`.
  * @property {Record<string, string>} [dateTimeParts] Map of date/time parts. Required if the `type`
- * is `preview_path`.
+ * is `preview_path`. Otherwise, it defaults to the current time.
  * @property {boolean} [isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  * @property {Map<string, string>} [randomValues] Random values generated for the entry so far,

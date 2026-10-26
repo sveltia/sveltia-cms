@@ -3867,4 +3867,21 @@ describe('Test getAssetFolderPaths()', () => {
 
     expect(createEntryPath).toHaveBeenCalledWith({ draft, locale: 'de', slug: 'about' });
   });
+
+  test('fills date/time tags with the time of the save rather than the entry’s date', () => {
+    const draft = /** @type {any} */ ({ collection, isIndexFile: false });
+
+    vi.mocked(getFillSlugOptions).mockReturnValue(
+      /** @type {any} */ ({ collection, content: {}, dateTimeParts: { year: '2000' } }),
+    );
+    vi.mocked(createEntryPath).mockReturnValue('content/blog/hello/index.md');
+
+    expect(
+      getAssetFolderPaths({
+        draft,
+        defaultLocaleSlug: 'hello',
+        folder: { ...folder, entryRelative: false, internalPath: 'static/{{year}}' },
+      }).resolvedInternalPath,
+    ).toBe(`static/${new Date().getUTCFullYear()}`);
+  });
 });

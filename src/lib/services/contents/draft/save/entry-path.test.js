@@ -24,6 +24,11 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
 }));
 
+vi.mock('$lib/services/contents/draft/slugs', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getEntryDateTimeParts: vi.fn(() => ({ year: '2020' })),
+}));
+
 vi.mock('$lib/services/workflow', () => ({
   mergeUnpublishedEntries: vi.fn((entries) => entries),
   unpublishedEntries: { current: [] },
@@ -591,6 +596,7 @@ describe('contents/draft/save/entry-path', () => {
           collection: draft.collection,
           locale: 'en',
           currentSlug: 'my-post',
+          dateTimeParts: { year: '2020' },
         }),
       );
       expect(result).toBe('posts/2024/my-post.md');

@@ -6,7 +6,8 @@ import { getEditor } from '../../fixtures/ui.js';
 test.use({ config: MONOLINGUAL_CONFIG });
 
 test.beforeEach(async ({ cms, page }) => {
-  // The `{{year}}` and `{{month}}` slug tags come from the time of saving, not the entry date
+  // The `{{year}}` and `{{month}}` slug tags come from the post’s date, or the time of saving if
+  // it’s empty
   await page.clock.install({ time: new Date('2026-05-10T12:00:00Z') });
   await cms.open();
   await cms.seed(MONOLINGUAL_FILES);
@@ -49,7 +50,7 @@ test('creates a post with every field type filled in', async ({ cms, page }) => 
 
   await expect
     .poll(
-      async () => (await cms.readRepo())['content/posts/2026-05-comet-watch-tonight-s-guide.md'],
+      async () => (await cms.readRepo())['content/posts/2026-04-comet-watch-tonight-s-guide.md'],
     )
     .toBe(
       [

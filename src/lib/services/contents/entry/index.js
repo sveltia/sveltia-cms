@@ -40,9 +40,11 @@ dayjs.extend(dayjsUTC);
  * @param {Field[]} args.fields Fields.
  * @param {FlattenedEntryContent} args.content Entry content.
  * @param {InternalLocaleCode} [args.locale] Locale of the content.
+ * @param {'UTC' | 'local'} [args.timeZone] Time zone to read a date/time value in instead of the
+ * field’s own: `UTC`, or `local` for the browser’s. A date-only value is always read as written.
  * @returns {Record<string, string> | undefined} Date and time parts.
  */
-export const extractDateTime = ({ dateFieldName, fields, content, locale }) => {
+export const extractDateTime = ({ dateFieldName, fields, content, locale, timeZone }) => {
   const fieldConfig = dateFieldName
     ? fields.find(({ widget, name }) => widget === 'datetime' && name === dateFieldName)
     : fields.find(({ widget }) => widget === 'datetime');
@@ -65,10 +67,14 @@ export const extractDateTime = ({ dateFieldName, fields, content, locale }) => {
   // Read the parts in the time zone `getDate()` parsed the value in: a date without a custom format
   // is UTC midnight, while one in a custom format is the browser’s midnight, and a date/time is
   // shown in the field’s custom time zone if any, like in the input
-  const timeZone =
+  const fieldTimeZone =
     utc || outputUTC || (dateOnly && !format) ? 'UTC' : dateOnly ? undefined : singleCustomTimeZone;
 
-  return getDateTimeParts({ date, timeZone });
+  if (timeZone && !dateOnly) {
+    return getDateTimeParts({ date, timeZone: timeZone === 'UTC' ? 'UTC' : undefined });
+  }
+
+  return getDateTimeParts({ date, timeZone: fieldTimeZone });
 };
 
 /**

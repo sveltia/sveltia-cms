@@ -265,6 +265,8 @@ export const getAssetFolderPaths = ({ draft, locale, slug, defaultLocaleSlug, fo
     fillSlugOptions: {
       ...getFillSlugOptions({ draft }),
       type: 'media_folder',
+      // The date/time tags in a media folder stand for the time of the save, not the entry’s date
+      dateTimeParts: undefined,
       currentSlug: defaultLocaleSlug,
       // Resolve against the locale being edited: with a `multiple_folders` or
       // `multiple_root_folders` i18n structure each locale has a folder of its own, and an asset

@@ -374,3 +374,53 @@ test.describe('`timezone: local`', () => {
     await expectPosts(cms, ['2026-05-11-late-night.md']);
   });
 });
+
+test.describe('entry date', () => {
+  test.use({
+    config: makeConfig(undefined, {
+      slug: '{{year}}-{{month}}-{{day}}-{{title}}',
+      path: '{{year}}/{{slug}}',
+      fields: [
+        { name: 'title', label: 'Title' },
+        {
+          name: 'publish_date',
+          label: 'Publish Date',
+          widget: 'datetime',
+          input_timezone: 'Asia/Tokyo',
+          required: false,
+        },
+      ],
+    }),
+  });
+
+  test('fills the date tags with the post’s date in UTC, once', async ({ cms, page }) => {
+    await page.clock.setFixedTime(new Date('2026-05-10T07:08:00Z'));
+    await start(cms);
+
+    const editor = getEditor(page);
+
+    // A backdated post is named after its date, which is still the previous day in UTC
+    await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+    await editor.getByRole('textbox', { name: 'Title', exact: true }).fill('Old News');
+    await editor
+      .getByRole('textbox', { name: 'Publish Date', exact: true })
+      .fill('2020-01-02T08:30');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expectPosts(cms, ['2020/2020-01-01-old-news.md']);
+
+    // Without a date, the time of saving is used
+    await createPost(page, 'Fresh');
+    await expectPosts(cms, ['2020/2020-01-01-old-news.md', '2026/2026-05-10-fresh.md']);
+
+    // Changing the date later doesn’t rename the file
+    await reopenPost(page, 'Old News');
+    await editor
+      .getByRole('textbox', { name: 'Publish Date', exact: true })
+      .fill('2021-06-07T08:30');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect
+      .poll(async () => (await cms.readRepo())['content/posts/2020/2020-01-01-old-news.md'])
+      .toContain('publish_date: 2021-06-07T08:30:00+09:00');
+    await expectPosts(cms, ['2020/2020-01-01-old-news.md', '2026/2026-05-10-fresh.md']);
+  });
+});

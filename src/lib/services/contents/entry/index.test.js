@@ -1373,6 +1373,52 @@ describe('Test extractDateTime() in different time zones', () => {
       ).toBe('2026-01-14');
     });
   });
+
+  test('reads a date/time in the given time zone instead of the field’s own', () => {
+    const fields = [{ name: 'date', widget: 'datetime', input_timezone: 'Asia/Tokyo' }];
+    const content = { date: '2026-01-15T08:00:00+09:00' };
+
+    inTimeZones(() => {
+      expect(extractDateTime({ fields, content, timeZone: 'UTC' })).toEqual(
+        expect.objectContaining({ year: '2026', month: '01', day: '14', hour: '23' }),
+      );
+    });
+
+    const { TZ } = process.env;
+
+    process.env.TZ = 'America/New_York';
+
+    try {
+      expect(extractDateTime({ fields, content, timeZone: 'local' })).toEqual(
+        expect.objectContaining({ year: '2026', month: '01', day: '14', hour: '18' }),
+      );
+    } finally {
+      process.env.TZ = TZ;
+    }
+  });
+
+  test('keeps the date of a date-only field in any given time zone', () => {
+    inTimeZones(() => {
+      /** @type {('UTC' | 'local')[]} */ (['UTC', 'local']).forEach((timeZone) => {
+        expect(
+          extractDateTime({
+            fields: [{ name: 'date', widget: 'datetime', time_format: false }],
+            content: { date: '2026-01-15' },
+            timeZone,
+          }),
+        ).toEqual(expect.objectContaining({ year: '2026', month: '01', day: '15', hour: '00' }));
+        expect(
+          extractDateTime({
+            fields: [
+              { name: 'date', widget: 'datetime', time_format: false, format: 'DD/MM/YYYY' },
+            ],
+            content: { date: '15/01/2026' },
+            timeZone,
+          }),
+        ).toEqual(expect.objectContaining({ year: '2026', month: '01', day: '15', hour: '00' }));
+      });
+    });
+  });
 });
 
 describe('Test fillEntryPathTemplate()', () => {

@@ -9,7 +9,8 @@ import { getEditor } from '../../fixtures/ui.js';
 test.use({ config: MONOLINGUAL_CONFIG });
 
 test.beforeEach(async ({ cms, page }) => {
-  // The `{{year}}` and `{{month}}` slug tags come from the time of saving
+  // The `{{year}}` and `{{month}}` slug tags come from the post’s date, or the time of saving if
+  // it’s empty
   await page.clock.install({ time: new Date('2026-05-10T12:00:00Z') });
   await cms.open();
   await cms.seed(MONOLINGUAL_FILES);
@@ -43,8 +44,9 @@ test('duplicates an entry', async ({ cms, page }) => {
   await editor.getByRole('textbox', { name: 'Title' }).fill('Second Light');
   await editor.getByRole('button', { name: 'Save' }).click();
 
+  // The copy keeps the original’s date, which it’s named after
   await expect
-    .poll(async () => (await cms.readRepo())['content/posts/2026-05-second-light.md'])
+    .poll(async () => (await cms.readRepo())['content/posts/2026-01-second-light.md'])
     .toBe(
       MONOLINGUAL_FILES['content/posts/2026-01-first-light.md']
         .replace('First Light', 'Second Light')

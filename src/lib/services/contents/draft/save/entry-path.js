@@ -14,7 +14,7 @@ import {
   localizeDirPath,
 } from '$lib/services/contents/collection/nested/i18n';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
-import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+import { getEntryDateTimeParts, hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { getLocalePath } from '$lib/services/contents/i18n';
 import {
@@ -223,6 +223,7 @@ export const createEntryPath = ({ draft, locale, slug }) => {
             locale,
             content: currentValues[defaultLocale],
             currentSlug: slug,
+            dateTimeParts: getEntryDateTimeParts(draft),
           })
         : slug;
 
