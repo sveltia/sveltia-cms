@@ -1,4 +1,4 @@
-import gitea from '$lib/services/backends/git/gitea';
+import gitea, { forgejo } from '$lib/services/backends/git/gitea';
 import github from '$lib/services/backends/git/github';
 import gitlab from '$lib/services/backends/git/gitlab';
 import { scopeBackendService } from '$lib/services/backends/git/shared/scope';
@@ -18,4 +18,5 @@ export const gitBackendServices = {
   github: scopeBackendService(github),
   gitlab: scopeBackendService(gitlab),
   gitea: scopeBackendService(gitea),
+  forgejo: scopeBackendService(forgejo),
 };

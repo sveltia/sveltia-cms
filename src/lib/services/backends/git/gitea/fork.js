@@ -1,3 +1,4 @@
+import { BACKEND_NAMES } from '$lib/services/backends/git/gitea/constants';
 import { instance } from '$lib/services/backends/git/gitea/instance';
 import {
   fetchDefaultBranchName,
@@ -22,6 +23,7 @@ import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
  * @import { RepositoryPath, User } from '$lib/types/private';
+ * @import { GitBackendName } from '$lib/types/public';
  */
 
 /**
@@ -31,11 +33,12 @@ import { encodePathSegments } from '$lib/services/utils/url';
 const MAX_FORKS = 50;
 
 /**
- * Check whether Open Authoring is turned on for this backend in the site configuration: see
- * {@link isOpenAuthoringConfiguredFor}.
+ * Check whether Open Authoring is turned on for this backend, configured as either `gitea` or
+ * `forgejo`, in the site configuration: see {@link isOpenAuthoringConfiguredFor}.
  * @returns {boolean} `true` if the `open_authoring` backend option is enabled.
  */
-export const isOpenAuthoringConfigured = () => isOpenAuthoringConfiguredFor('gitea');
+export const isOpenAuthoringConfigured = () =>
+  BACKEND_NAMES.some((name) => isOpenAuthoringConfiguredFor(/** @type {GitBackendName} */ (name)));
 
 /**
  * Get the repository that receives the CMS’s commits: the signed-in user’s fork when the current

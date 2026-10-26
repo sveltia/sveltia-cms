@@ -1876,6 +1876,8 @@ config:
     unsupported_backend_suggestion: <a>サポートされているバックエンド</a> のいずれかを使用してください。
     missing_repository: リポジトリが定義されていません。
     invalid_repository: 設定されているリポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。
+    # Don’t localize `api_root`
+    missing_api_root: '`api_root` オプションが定義されていません。Forgejo バックエンドではこの設定が必須です。'
     invalid_root_dir: 設定されているルートディレクトリが正しくありません。この設定は「..」を含まない、リポジトリ内のパスでなければなりません。
     invalid_root_dir_branch: '設定されているルートディレクトリは `editorial_workflow` および `preview` 公開モードのブランチ名に使用できません。パスの各部分は、ドットで始まったり「.lock」で終わったりせず、スペースやコロン、アスタリスクなどの特殊文字を含まないようにしてください。'
     path_outside_root_dir: パス「{$path}」はルートディレクトリの外を指しています。CMS はルートディレクトリの外のファイルを一覧表示できません。

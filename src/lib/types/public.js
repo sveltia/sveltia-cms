@@ -2131,7 +2131,7 @@
 
 /**
  * Supported Git backend name.
- * @typedef {'github' | 'gitlab' | 'gitea'} GitBackendName
+ * @typedef {'github' | 'gitlab' | 'gitea' | 'forgejo'} GitBackendName
  */
 
 /**
@@ -2358,8 +2358,28 @@
  */
 
 /**
+ * Forgejo backend properties that differ from those of the Gitea/Forgejo backend.
+ * @typedef {object} ForgejoBackendProps
+ * @property {'forgejo'} name Backend name.
+ * @property {string} api_root REST API endpoint of the Forgejo instance, e.g.
+ * `https://codeberg.org/api/v1`.
+ * @property {string} [base_url] OAuth base URL, which is the URL of the Forgejo instance, including
+ * the subpath if it’s served under one. Default: `api_root` without the `/api/v1` path, e.g.
+ * `https://codeberg.org`.
+ * @see https://decapcms.org/docs/forgejo-backend/
+ * @see https://sveltiacms.app/en/docs/backends/gitea-forgejo
+ */
+
+/**
+ * Forgejo backend, as named in Decap CMS. It’s the same as the Gitea/Forgejo backend, except that
+ * the `api_root` option is required and the OAuth base URL is derived from it.
+ * @typedef {GitBackendProps & Omit<GiteaBackendProps, 'name' | 'api_root' | 'base_url'> &
+ * ForgejoBackendProps} ForgejoBackend
+ */
+
+/**
  * Git-based backend.
- * @typedef {GitHubBackend | GitLabBackend | GiteaBackend} GitBackend
+ * @typedef {GitHubBackend | GitLabBackend | GiteaBackend | ForgejoBackend} GitBackend
  */
 
 /**

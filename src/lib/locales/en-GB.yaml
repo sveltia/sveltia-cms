@@ -1974,6 +1974,8 @@ config:
     unsupported_backend_suggestion: Use one of the <a>supported backends</a> instead.
     missing_repository: The repository is not defined.
     invalid_repository: The configured repository is invalid. It must be in “owner/repo” format.
+    # Don’t localize `api_root`
+    missing_api_root: The `api_root` option is not defined. It’s required for the Forgejo backend.
     invalid_root_dir: The root directory is invalid. It must be a path within the repository, without “..”.
     invalid_root_dir_branch: The root directory can’t be used in the branch names of the `editorial_workflow` and `preview` publish modes. No part of its path can start with a dot, end with “.lock” or contain a space or a special character such as a colon or an asterisk.
     path_outside_root_dir: The path “{$path}” leads outside the root directory, where the CMS can’t list files.

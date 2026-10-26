@@ -2,6 +2,10 @@ import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 
 import { unsupportedBackends, validBackendNames } from '$lib/services/backends';
+import {
+  FORGEJO_BACKEND_NAME,
+  BACKEND_NAMES as GITEA_BACKEND_NAMES,
+} from '$lib/services/backends/git/gitea/constants';
 import { gitBackendServices } from '$lib/services/backends/git/services';
 import { normalizeRootDir } from '$lib/services/backends/root-dir';
 import { warnDeprecation } from '$lib/services/config/deprecations';
@@ -38,7 +42,7 @@ const AUTH_DOC_URL = 'https://sveltiacms.app/en/docs/backends/BACKEND_NAME#authe
  * Backend names whose documentation page has a different slug.
  * @type {Record<string, string>}
  */
-const BACKEND_DOC_SLUGS = { gitea: 'gitea-forgejo' };
+const BACKEND_DOC_SLUGS = { gitea: 'gitea-forgejo', forgejo: 'gitea-forgejo' };
 const OPEN_AUTHORING_DOC_URL = 'https://sveltiacms.app/en/docs/workflows/open';
 /**
  * Backend options that hold the URL of an API or authentication server and have to be absolute. A
@@ -127,11 +131,12 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       auth_methods: authMethods,
       // @ts-ignore GitHub/GitLab only
       auth_type: authType,
-      // @ts-ignore GitLab/Gitea only
+      // @ts-ignore GitLab/Gitea/Forgejo only
       app_id: appId,
       open_authoring: openAuthoring,
       // @ts-ignore GitHub only
       auth_scope: authScope,
+      api_root: apiRoot,
     } = /** @type {GitBackend} */ (backend);
 
     if (Array.isArray(authMethods) && !authMethods.length) {
@@ -157,6 +162,12 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
       // A configured but malformed repository is a separate problem from a missing one, and
       // reporting both for the same option only reads as noise
       errors.add(_('config.error.invalid_repository'));
+    }
+
+    // The Forgejo backend has no default instance: unlike the Gitea backend, which falls back to
+    // Gitea.com, it derives the instance URL from the API root, as Decap CMS does
+    if (name === FORGEJO_BACKEND_NAME && apiRoot === undefined) {
+      errors.add(_('config.error.missing_api_root'));
     }
 
     if (authType === 'implicit') {
@@ -205,7 +216,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     // sign in with a token. If token auth is explicitly disabled as well, we issue an error because
     // there is no working sign-in method available.
     // @see https://github.com/sveltia/sveltia-cms/issues/721
-    if (name === 'gitea' && !appId) {
+    if (GITEA_BACKEND_NAMES.includes(name) && !appId) {
       if (allowTokenAuth) {
         warnings.add(_('config.warning.oauth_no_app_id'));
       } else {

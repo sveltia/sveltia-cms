@@ -88,7 +88,12 @@ describe('Gitea fork service', () => {
   });
 
   describe('isOpenAuthoringConfigured', () => {
-    test('is true only with the Gitea backend and the option on', () => {
+    test('is true only with the Gitea or Forgejo backend and the option on', () => {
+      expect(isOpenAuthoringConfigured()).toBe(true);
+
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'forgejo', open_authoring: true },
+      });
       expect(isOpenAuthoringConfigured()).toBe(true);
 
       cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitea' } });

@@ -395,6 +395,56 @@ test.describe('Gitea', () => {
   });
 });
 
+// The `forgejo` backend of Decap CMS: the instance URL comes from `api_root`, without `base_url`,
+// and the branch is left to the repository’s default
+test.describe('Forgejo', () => {
+  test.use({
+    config: {
+      ...GITEA_CONFIG,
+      backend: {
+        name: 'forgejo',
+        repo: 'sveltia/e2e-site',
+        api_root: 'https://codeberg.org/api/v1',
+        app_id: 'e2e-client',
+      },
+    },
+  });
+
+  test.beforeEach(({ gitea }) => {
+    Object.assign(gitea, {
+      apiRoot: 'https://codeberg.org/api/v1',
+      version: '13.0.3+gitea-1.22.0',
+    });
+    gitea.commit(FIRST_POST);
+  });
+
+  test('signs in with an authorization code exchanged in the popup', async ({
+    cms,
+    gitea,
+    page,
+  }) => {
+    const requests = await mockOAuthProvider(page, {
+      authorizeURL: 'https://codeberg.org/login/oauth/authorize',
+      tokenURL: 'https://codeberg.org/login/oauth/access_token',
+      mock: gitea,
+    });
+
+    await cms.open();
+    await page.getByRole('button', { name: /^Sign In with .*Codeberg/ }).click();
+
+    await expect(page.getByRole('row', { name: /First Post/ })).toBeVisible();
+    expect(requests.authorize[0].get('client_id')).toBe('e2e-client');
+    expect(requests.token).toHaveLength(1);
+  });
+
+  test('signs in with an access token', async ({ cms, gitea, page }) => {
+    await cms.open();
+    await signInWithToken(page, gitea.token);
+
+    await expect(page.getByRole('row', { name: /First Post/ })).toBeVisible();
+  });
+});
+
 /**
  * Get the address of the link to the token page in the dialog the sign-in page offers for an
  * access token.

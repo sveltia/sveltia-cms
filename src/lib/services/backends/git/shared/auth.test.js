@@ -415,23 +415,26 @@ describe('git/shared/auth', () => {
       vi.useRealTimers();
     });
 
-    it('should reject when popup is closed prematurely (Gitea)', async () => {
-      vi.useFakeTimers();
-      mockPopup.closed = false;
+    it.each(['gitea', 'forgejo'])(
+      'should reject when popup is closed prematurely (%s)',
+      async (backendName) => {
+        vi.useFakeTimers();
+        mockPopup.closed = false;
 
-      const authPromise = authorize({
-        backendName: 'gitea',
-        authURL: 'https://localhost:3000/',
-        popup: mockPopup,
-      });
+        const authPromise = authorize({
+          backendName,
+          authURL: 'https://localhost:3000/',
+          popup: mockPopup,
+        });
 
-      mockPopup.closed = true;
-      vi.advanceTimersByTime(1000);
+        mockPopup.closed = true;
+        vi.advanceTimersByTime(1000);
 
-      await expect(authPromise).rejects.toThrow('Authentication aborted');
+        await expect(authPromise).rejects.toThrow('Authentication aborted');
 
-      vi.useRealTimers();
-    });
+        vi.useRealTimers();
+      },
+    );
 
     it('should not treat a popup on the GitLab sign-in page as closed', async () => {
       vi.useFakeTimers();
@@ -1360,11 +1363,11 @@ describe('git/shared/auth', () => {
       });
     });
 
-    it('should handle Gitea PKCE auth flow', async () => {
+    it.each(['gitea', 'forgejo'])('should handle %s PKCE auth flow', async (name) => {
       mockWindow.open.mockReturnValue(mockPopup);
       cmsConfig.current = /** @type {any} */ ({
         backend: {
-          name: 'gitea',
+          name,
           site_domain: 'gitea.example.com',
         },
       });
@@ -1397,13 +1400,13 @@ describe('git/shared/auth', () => {
       expect(messageHandler).toBeDefined();
 
       messageHandler({
-        data: 'authorizing:gitea',
+        data: `authorizing:${name}`,
         origin: 'https://localhost:3000',
         source: mockPopup,
       });
 
       messageHandler({
-        data: `authorization:gitea:success:${JSON.stringify({
+        data: `authorization:${name}:success:${JSON.stringify({
           token: 'gitea-token',
           refreshToken: 'gitea-refresh-token',
         })}`,
