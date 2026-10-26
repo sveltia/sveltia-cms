@@ -498,9 +498,10 @@ describe('Test slugify()', () => {
       },
     };
 
-    // Trailing dots preserved, but not leading ones, which would make a hidden dot file
-    expect(slugify('.Hello World.')).toBe('hello.world.');
-    expect(slugify('...Hello...World...')).toBe('hello.world.'); // Consecutive dots consolidated
+    // Neither leading dots, which would make a hidden dot file, nor trailing ones, which a branch
+    // name can’t end with, are preserved
+    expect(slugify('.Hello World.')).toBe('hello.world');
+    expect(slugify('...Hello...World...')).toBe('hello.world'); // Consecutive dots consolidated
   });
 
   test('trim option with empty replacement character', async () => {
@@ -1118,11 +1119,54 @@ describe('Test slugify()', () => {
     expect(slugify('.-.NET')).toBe('net');
     expect(slugify('!.htaccess')).toBe('htaccess');
     // Dots elsewhere are kept
-    expect(slugify('Node.js v1.0.')).toBe('node.js-v1.0.');
+    expect(slugify('Node.js v1.0')).toBe('node.js-v1.0');
     // The fallback applies when nothing is left
     expect(slugify('...')).toMatch(/^[0-9a-f]{12}$/);
     expect(slugify('. . .')).toMatch(/^[0-9a-f]{12}$/);
     expect(slugify('...', { fallback: false })).toBe('');
+  });
+
+  test('trailing dots are removed', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'unicode', clean_accents: false, sanitize_replacement: '-' },
+    };
+
+    // A branch name can’t end with a dot, and Windows drops it from a file name
+    expect(slugify('Hello world.')).toBe('hello-world');
+    expect(slugify('Node.js v1.0.')).toBe('node.js-v1.0');
+    expect(slugify('Wait...')).toBe('wait');
+    expect(slugify('Wait .')).toBe('wait');
+    expect(slugify('Wait.-.')).toBe('wait');
+    // The fallback applies when nothing is left
+    expect(slugify('. . .', { fallback: false })).toBe('');
+  });
+
+  test('trailing dots are removed without trimming the replacement characters', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'unicode', sanitize_replacement: '-', trim: false },
+    };
+
+    expect(slugify('Hello world.')).toBe('hello-world');
+    expect(slugify('Wait .')).toBe('wait-');
+  });
+
+  test('trailing dots left by a cut are removed', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'unicode', sanitize_replacement: '-', maxlength: 6 },
+    };
+
+    expect(slugify('Hello. World')).toBe('hello');
+
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'unicode', sanitize_replacement: '-', trim: false, maxlength: 6 },
+    };
+
+    expect(slugify('Hello. World')).toBe('hello');
+    expect(slugify('Hello World')).toBe('hello-');
   });
 
   test('leading dots are removed with the ascii encoding', async () => {

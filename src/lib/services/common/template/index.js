@@ -148,6 +148,13 @@ export const fillTemplate = (template, options) => {
     }
   }
 
+  // `slugify` removes the trailing dots of a value, but the template may still end with one, as in
+  // `{{title}}.`, which a branch name can’t end with. A replacement character in front of it goes
+  // as well, like after a cut
+  if (slug.endsWith('.')) {
+    slug = trimCutEnd(slug);
+  }
+
   const existingSlugs = getExistingSlugs(collectionName, locale, dirPath);
   /**
    * Make the given slug unique. A dot in a slug is part of the name rather than a file extension,

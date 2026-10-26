@@ -17,6 +17,10 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * Regular expression to match the dots at the beginning of a slug.
  */
 const LEADING_DOTS_REGEX = /^\.+/;
+/**
+ * Regular expression to match the dots at the end of a slug.
+ */
+const TRAILING_DOTS_REGEX = /\.+$/;
 
 /**
  * Global variants of the unsafe character patterns, keyed by the `encoding` option, to replace
@@ -30,7 +34,8 @@ const UNSAFE_CHARS_REGEXES = {
 /**
  * Regular expressions to consolidate and trim the replacement characters, keyed by the escaped
  * replacement.
- * @type {Map<string, Record<'consecutivePattern' | 'trimPattern' | 'leadingDotsPattern', RegExp>>}
+ * @type {Map<string, Record<'consecutivePattern' | 'trimPattern' | 'leadingDotsPattern' |
+ * 'trailingDotsPattern', RegExp>>}
  */
 const slugReplacementRegexCache = new Map();
 
@@ -81,9 +86,8 @@ export const slugify = (
   // Replace all the spaces with replacers (hyphens by default)
   slug = slug.trim().replaceAll(/\s+/g, sanitizeReplacement);
 
-  /** @type {RegExp | undefined} */
-  let trimPattern;
   let leadingDotsPattern = LEADING_DOTS_REGEX;
+  let trailingDotsPattern = TRAILING_DOTS_REGEX;
 
   // Consolidate consecutive replacement characters into a single one and trim them from ends
   if (sanitizeReplacement) {
@@ -94,15 +98,15 @@ export const slugify = (
       consecutivePattern: new RegExp(`(?:${escapedReplacement})+`, 'g'),
       trimPattern: new RegExp(`^(?:${escapedReplacement})+|(?:${escapedReplacement})+$`, 'g'),
       leadingDotsPattern: new RegExp(`^(?:\\.|${escapedReplacement})+`),
+      trailingDotsPattern: new RegExp(`(?:\\.|${escapedReplacement})+$`),
     }));
 
     slug = slug.replace(cachedSlugRegexes.consecutivePattern, sanitizeReplacement);
 
     // Trim replacement characters from the beginning and end
     if (trimReplacement) {
-      ({ trimPattern } = cachedSlugRegexes);
-      slug = slug.replace(trimPattern, '');
-      leadingDotsPattern = cachedSlugRegexes.leadingDotsPattern;
+      slug = slug.replace(cachedSlugRegexes.trimPattern, '');
+      ({ leadingDotsPattern, trailingDotsPattern } = cachedSlugRegexes);
     }
   }
 
@@ -112,6 +116,12 @@ export const slugify = (
   // the replacement characters a dot leaves at the beginning go too, as in `. NET` or `.-.NET`
   slug = slug.replace(leadingDotsPattern, '');
 
+  // Remove trailing dots as well, e.g. from a title like `Hello world.`: a Git branch name can’t
+  // end with one, so the entry couldn’t be saved with Editorial Workflow, and Windows drops it from
+  // a file name, which would no longer match the path in the repository. When trimming is enabled,
+  // the replacement characters a dot leaves at the end go too, as in `Wait .`
+  slug = slug.replace(trailingDotsPattern, '');
+
   if (!slug && fallback) {
     slug = generateUUID('short');
   }
@@ -119,10 +129,8 @@ export const slugify = (
   if (typeof maxLength === 'number' && slug.length > maxLength) {
     slug = truncate(slug, maxLength, { ellipsis: '' });
 
-    // Trim the replacement character the cut may leave at the end
-    if (trimPattern) {
-      slug = slug.replace(trimPattern, '');
-    }
+    // Trim the dots and replacement characters the cut may leave at the end
+    slug = slug.replace(trailingDotsPattern, '');
   }
 
   if (lowercase) {

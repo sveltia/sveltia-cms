@@ -812,6 +812,21 @@ describe('fillTemplate()', async () => {
       expect(fill('a'.repeat(300), { name: 'c'.repeat(60) })).toBe('a'.repeat(179));
     });
 
+    test('removes dots at the end of the template', async () => {
+      await setSlugOptions();
+      expect(
+        fillTemplate('{{title}}.', { collection: uncappedCollection, content: { title: 'Hi' } }),
+      ).toBe('hi');
+      expect(
+        fillTemplate('{{title}}-.', { collection: uncappedCollection, content: { title: 'Hi' } }),
+      ).toBe('hi');
+      // A replacement not followed by a dot is left alone
+      expect(
+        fillTemplate('{{title}}-', { collection: uncappedCollection, content: { title: 'Hi' } }),
+      ).toBe('hi-');
+      expect(fill('Hello world.')).toBe('hello-world');
+    });
+
     test('removes dots left at the end by the cut', async () => {
       await setSlugOptions();
       expect(fill(`${'a'.repeat(198)}.. b`)).toBe('a'.repeat(198));
