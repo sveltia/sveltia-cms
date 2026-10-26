@@ -8,6 +8,11 @@ import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/
 import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
 import { renameIfNeeded } from '$lib/services/utils/file';
 import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import {
+  getMaxSlugBytes,
+  getSlugByteLength,
+  truncateSlugBytes,
+} from '$lib/services/workflow/branch';
 
 /**
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';
@@ -110,23 +115,57 @@ export const fillTemplate = (template, options) => {
     return slug;
   }
 
-  // Truncate a long slug if needed, and remove the replacement character the cut may leave at the
-  // end, which is a hyphen by default but can be configured with `slug.sanitize_replacement`. Like
-  // `slugify`, leave the end alone if the slug isn’t cut or `slug.trim` is turned off, so a slug
-  // can still end with the replacement
+  const { sanitize_replacement: replacement = '-', trim = true } = slugOptions ?? {};
+
+  // A cut may leave the replacement character at the end, which is a hyphen by default but can be
+  // configured with `slug.sanitize_replacement`, and dots, which a branch name can’t end with
+  const cutEndRegex = new RegExp(
+    replacement && trim ? `(?:${escapeRegExp(replacement)}|\\.)+$` : '\\.+$',
+  );
+
+  /**
+   * Remove the characters a cut may leave at the end of a slug. Like `slugify`, leave the
+   * replacement alone if `slug.trim` is turned off, so a slug can still end with it.
+   * @param {string} str Truncated slug.
+   * @returns {string} Trimmed slug.
+   */
+  const trimCutEnd = (str) => str.replace(cutEndRegex, '');
+  let maxBytes = Infinity;
+
+  // Truncate a long slug if the `slug.maxlength` option is set. Leave the end alone if the slug
+  // isn’t cut
   if (typeof maxlength === 'number') {
-    const { sanitize_replacement: replacement = '-', trim = true } = slugOptions ?? {};
     const truncated = truncate(slug, maxlength, { ellipsis: '' });
 
-    if (truncated !== slug && replacement && trim) {
-      slug = truncated.replace(new RegExp(`(?:${escapeRegExp(replacement)})+$`), '');
-    } else {
-      slug = truncated;
+    slug = truncated === slug ? slug : trimCutEnd(truncated);
+  } else {
+    // Otherwise, cap the slug in bytes so the file name and the Editorial Workflow branch name stay
+    // valid. Existing entries are never renamed, since this only applies to a new slug
+    maxBytes = getMaxSlugBytes({ collectionName, dirPath });
+
+    if (getSlugByteLength(slug) > maxBytes) {
+      slug = trimCutEnd(truncateSlugBytes(slug, maxBytes));
     }
   }
 
-  // A dot in a slug is part of the name rather than a file extension, so a number goes at the end
-  return renameIfNeeded(slug, getExistingSlugs(collectionName, locale, dirPath), {
-    hasExtension: false,
-  });
+  const existingSlugs = getExistingSlugs(collectionName, locale, dirPath);
+  /**
+   * Make the given slug unique. A dot in a slug is part of the name rather than a file extension,
+   * so a number goes at the end.
+   * @param {string} str Slug.
+   * @returns {string} Unique slug.
+   */
+  const rename = (str) => renameIfNeeded(str, existingSlugs, { hasExtension: false });
+  let uniqueSlug = rename(slug);
+
+  // If the number pushes the slug over the cap, the slug in front of it gives way, so the number
+  // stays distinct, like Decap CMS. Another number may be needed then, so try again
+  while (maxBytes !== Infinity && getSlugByteLength(uniqueSlug) > maxBytes) {
+    const suffixBytes = getSlugByteLength(uniqueSlug) - getSlugByteLength(slug);
+
+    slug = trimCutEnd(truncateSlugBytes(slug, maxBytes - suffixBytes));
+    uniqueSlug = rename(slug);
+  }
+
+  return uniqueSlug;
 };

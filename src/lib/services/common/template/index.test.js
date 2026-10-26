@@ -762,6 +762,135 @@ describe('fillTemplate()', async () => {
     ).toBe('hello-');
   });
 
+  describe('default slug byte cap', () => {
+    /** @type {InternalEntryCollection} */
+    const uncappedCollection = { ...collection, slug_length: undefined };
+
+    /**
+     * Set the `slug` options.
+     * @param {Record<string, any>} [slug] Options.
+     */
+    const setSlugOptions = async (slug = {}) => {
+      // @ts-ignore
+      (await import('$lib/services/config')).cmsConfig = {
+        current: { backend: { name: 'github' }, collections: [collection], slug },
+      };
+    };
+
+    /**
+     * Fill the `{{title}}` template for a new entry.
+     * @param {string} title Entry title.
+     * @param {Partial<InternalEntryCollection>} [overrides] Collection options to override.
+     * @returns {string} Slug.
+     */
+    const fill = (title, overrides = {}) =>
+      fillTemplate('{{title}}', {
+        collection: { ...uncappedCollection, ...overrides },
+        content: { title },
+      });
+
+    test('caps a long slug at 200 bytes and trims the hyphen left at the end', async () => {
+      await setSlugOptions();
+      // `word-` repeated 40 times makes 200 bytes, of which the last hyphen is removed
+      expect(fill('word '.repeat(60))).toBe(`${'word-'.repeat(39)}word`);
+    });
+
+    test('counts bytes rather than characters, never cutting a character apart', async () => {
+      await setSlugOptions();
+      // 3 bytes per character, so 66 characters (198 bytes) fit
+      expect(fill('日本語'.repeat(30))).toBe('日本語'.repeat(22));
+      expect(fill(`a${'日'.repeat(100)}`)).toBe(`a${'日'.repeat(66)}`);
+    });
+
+    test('leaves a slug of 200 bytes as is', async () => {
+      await setSlugOptions();
+      expect(fill('a'.repeat(200))).toBe('a'.repeat(200));
+    });
+
+    test('leaves room for a long collection name in the workflow branch name', async () => {
+      await setSlugOptions();
+      expect(fill('a'.repeat(300), { name: 'c'.repeat(60) })).toBe('a'.repeat(179));
+    });
+
+    test('removes dots left at the end by the cut', async () => {
+      await setSlugOptions();
+      expect(fill(`${'a'.repeat(198)}.. b`)).toBe('a'.repeat(198));
+    });
+
+    test('keeps the hyphen but removes dots left at the end with `trim: false`', async () => {
+      await setSlugOptions({ trim: false });
+      expect(fill('word '.repeat(60))).toBe('word-'.repeat(40));
+      expect(fill(`${'a'.repeat(198)}.. b`)).toBe('a'.repeat(198));
+    });
+
+    test('lets an explicit `maxlength` win, counted in characters', async () => {
+      await setSlugOptions({ maxlength: 300 });
+      expect(fill('word '.repeat(60))).toBe(`${'word-'.repeat(59)}word`);
+      expect(fill('日'.repeat(100))).toBe('日'.repeat(100));
+    });
+
+    test('lets the legacy `slug_length` option win', async () => {
+      await setSlugOptions();
+      expect(fill('日'.repeat(100), { slug_length: 250 })).toBe('日'.repeat(100));
+    });
+
+    test('removes dots left at the end by a cut with `maxlength`', async () => {
+      await setSlugOptions({ maxlength: 6 });
+      expect(fill('Hello. World')).toBe('hello');
+    });
+
+    test('shortens the slug so a number added for uniqueness fits', async () => {
+      await setSlugOptions();
+
+      const { getEntriesInCollectionFolder } =
+        await import('$lib/services/contents/collection/entries');
+
+      const { renameIfNeeded } = await import('$lib/services/utils/file');
+
+      vi.mocked(renameIfNeeded).mockImplementation((slug, existingSlugs) =>
+        existingSlugs.includes(slug) ? `${slug}-1` : slug,
+      );
+
+      // The number goes after the shortened slug, which is taken too
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValueOnce([
+        // @ts-ignore
+        { slug: 'a'.repeat(200), locales: {} },
+        // @ts-ignore
+        { slug: 'a'.repeat(198), locales: {} },
+      ]);
+      expect(fill('a'.repeat(250))).toBe(`${'a'.repeat(198)}-1`);
+
+      // The shortened slug is free, so it needs no number
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValueOnce([
+        // @ts-ignore
+        { slug: 'a'.repeat(199), locales: {} },
+      ]);
+      expect(fill('a'.repeat(199))).toBe('a'.repeat(198));
+
+      // A hyphen left before the number by the cut is removed
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValueOnce([
+        // @ts-ignore
+        { slug: `${'a'.repeat(197)}-b`, locales: {} },
+        // @ts-ignore
+        { slug: 'a'.repeat(197), locales: {} },
+      ]);
+      expect(fill(`${'a'.repeat(197)} b`)).toBe(`${'a'.repeat(197)}-1`);
+
+      vi.mocked(renameIfNeeded).mockImplementation((slug) => slug);
+    });
+
+    test('doesn’t cap a path filled with an existing slug', async () => {
+      await setSlugOptions();
+      expect(
+        fillTemplate('{{slug}}/index', {
+          collection: uncappedCollection,
+          content: {},
+          currentSlug: 'a'.repeat(300),
+        }),
+      ).toBe(`${'a'.repeat(300)}/index`);
+    });
+  });
+
   test('legacy slug_length overrides config maxlength option', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig = {
