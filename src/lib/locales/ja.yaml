@@ -1963,6 +1963,8 @@ config:
     unsupported_bulk_edit_field: '`bulk_edit` オプションの `fields` リストで指定された `{$name}` フィールドは一括編集できません。対応しているのは、読み取り専用でなく、`multiple` オプションが無効で、保存時に自動設定されない Boolean、Color、DateTime、Number、Relation、Select、String フィールドのみです。'
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: '`sortable_fields` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: '`sortable_fields` オプションで `default_sort` オプションを指定できる項目は 1 つだけです。'
     # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
     invalid_table_column_field: '`{$option}` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
     # {$name} is the field name from the configuration; Don’t localize `view_groups`

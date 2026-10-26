@@ -129,6 +129,39 @@ describe('Test checkViewOptions()', () => {
     );
   });
 
+  it('should validate sortable fields in the Decap CMS object format', () => {
+    check({
+      fields,
+      sortable_fields: ['title', { field: 'author.name', label: 'Author', default_sort: 'desc' }],
+    });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+
+    check({ fields, sortable_fields: ['title', { field: 'published_date', default_sort: true }] });
+
+    expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        strKey: 'invalid_sortable_field',
+        values: { name: 'published_date' },
+      }),
+    );
+  });
+
+  it('should add an error when more than one sortable field has `default_sort`', () => {
+    check({
+      fields,
+      sortable_fields: [
+        { field: 'title', default_sort: 'asc' },
+        { field: 'author.name', default_sort: false },
+        { field: 'images.0.src', default_sort: 'desc' },
+      ],
+    });
+
+    expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ strKey: 'multiple_sortable_field_defaults' }),
+    );
+  });
+
   it('should accept entry metadata and internal sort keys', () => {
     check({
       fields,

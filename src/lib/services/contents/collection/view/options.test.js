@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 
-import { isValidArray, parseCustomSortableFields, parseViewOptions } from './options';
+import {
+  hasDefaultSort,
+  isValidArray,
+  parseCustomSortableFields,
+  parseViewOptions,
+} from './options';
 
 describe('Test parseViewOptions()', () => {
   test('returns empty options for undefined input', () => {
@@ -217,5 +222,75 @@ describe('Test parseCustomSortableFields()', () => {
     expect(parseCustomSortableFields(/** @type {any} */ (undefined))).toEqual({ keys: [] });
     expect(parseCustomSortableFields(/** @type {any} */ ('string'))).toEqual({ keys: [] });
     expect(parseCustomSortableFields(/** @type {any} */ (123))).toEqual({ keys: [] });
+  });
+
+  test('parses Decap CMS sortable field objects mixed with field names', () => {
+    expect(
+      parseCustomSortableFields([
+        'title',
+        { field: 'date', label: 'Publish date', default_sort: 'desc' },
+        { field: 'author' },
+        'commit_date',
+      ]),
+    ).toStrictEqual({
+      keys: ['title', 'date', 'author', 'commit_date'],
+      labels: { date: 'Publish date' },
+      defaultKey: 'date',
+      defaultOrder: 'descending',
+    });
+  });
+
+  test('sorts in ascending order by default with `asc` or `true`', () => {
+    expect(parseCustomSortableFields([{ field: 'title', default_sort: 'asc' }])).toStrictEqual({
+      keys: ['title'],
+      defaultKey: 'title',
+      defaultOrder: 'ascending',
+    });
+
+    expect(parseCustomSortableFields([{ field: 'title', default_sort: true }])).toStrictEqual({
+      keys: ['title'],
+      defaultKey: 'title',
+      defaultOrder: 'ascending',
+    });
+  });
+
+  test('ignores `default_sort: false` and uses the first of multiple defaults', () => {
+    expect(
+      parseCustomSortableFields([
+        { field: 'title', default_sort: false },
+        { field: 'date', default_sort: 'asc' },
+        { field: 'author', default_sort: 'desc' },
+      ]),
+    ).toStrictEqual({
+      keys: ['title', 'date', 'author'],
+      defaultKey: 'date',
+      defaultOrder: 'ascending',
+    });
+  });
+
+  test('ignores invalid items and blank labels', () => {
+    expect(
+      parseCustomSortableFields(
+        /** @type {any} */ ([
+          'title',
+          null,
+          123,
+          { label: 'No field' },
+          { field: 'date', label: '  ' },
+          { field: 'author', label: 42 },
+        ]),
+      ),
+    ).toStrictEqual({ keys: ['title', 'date', 'author'] });
+  });
+});
+
+describe('Test hasDefaultSort()', () => {
+  test('detects an item with the `default_sort` option enabled', () => {
+    expect(hasDefaultSort({ field: 'title', default_sort: true })).toBe(true);
+    expect(hasDefaultSort({ field: 'title', default_sort: 'asc' })).toBe(true);
+    expect(hasDefaultSort({ field: 'title', default_sort: 'desc' })).toBe(true);
+    expect(hasDefaultSort({ field: 'title', default_sort: false })).toBe(false);
+    expect(hasDefaultSort({ field: 'title' })).toBe(false);
+    expect(hasDefaultSort('title')).toBe(false);
   });
 });

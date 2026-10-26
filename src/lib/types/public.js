@@ -1639,6 +1639,18 @@
  */
 
 /**
+ * A sortable field definition in the `sortable_fields` list, which is compatible with Decap CMS.
+ * It can be mixed with field names in the same list.
+ * @typedef {object} SortableField
+ * @property {FieldKeyPath} field A field name to be sorted by.
+ * @property {string} [label] Label of the field in the Sort menu. Default: the field’s label.
+ * @property {'asc' | 'desc' | boolean} [default_sort] Whether to sort the entries by this field by
+ * default, and in which direction: `asc` or `true` for ascending, `desc` for descending. Only one
+ * field can have this option. The user’s own sort choice, which is remembered, takes precedence.
+ * @see https://decapcms.org/docs/configuration-options/#sortable_fields
+ */
+
+/**
  * A collection’s advanced sortable fields definition, which is compatible with Static CMS.
  * @typedef {object} SortableFields
  * @property {FieldKeyPath[]} fields A list of sortable field names.
@@ -2006,10 +2018,11 @@
  * @property {string} [summary] Entry summary template displayed in the entry list, e.g.
  * `{{title}} ({{date | date('YYYY-MM-DD')}})`. Default: the value of the `identifier_field`,
  * `title`, `name` or `label` field, or the first heading in the `body` field.
- * @property {FieldKeyPath[] | SortableFields} [sortable_fields] Custom sortable fields. Default:
- * `title`, `name`, `date`, `author` and `description`, or the `identifier_field` in place of
- * `title`, as long as the fields exist. For a Git backend, `commit_author` and `commit_date` are
- * also available, and added to the list if `author` and `date` are not included. See the
+ * @property {(FieldKeyPath | SortableField)[] | SortableFields} [sortable_fields] Custom sortable
+ * fields. Default: `title`, `name`, `date`, `author` and `description`, or the `identifier_field`
+ * in place of `title`, as long as the fields exist. For a Git backend, `commit_author` and
+ * `commit_date` are also available, and added to the list if `author` and `date` are not included.
+ * Each list item can be a field name or a {@link SortableField} object. See the
  * [documentation](https://sveltiacms.app/en/docs/collections/entries/views#sorting) for details.
  * @property {ViewFilter[] | ViewFilters} [view_filters] View filters to be used in the entry list.
  * @property {ViewGroup[] | ViewGroups} [view_groups] View groups to be used in the entry list.

@@ -2061,6 +2061,8 @@ config:
     unsupported_bulk_edit_field: The `{$name}` field in the `fields` list of the `bulk_edit` option can’t be edited in bulk. Only a Boolean, Color, DateTime, Number, Relation, Select or String field that isn’t read-only, doesn’t have the `multiple` option enabled and isn’t set automatically on save is supported.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: The `sortable_fields` option refers to a field named `{$name}`, but no such field is defined in the collection.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: Only one item in the `sortable_fields` option can have the `default_sort` option.
     # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
     invalid_table_column_field: The `{$option}` option refers to a field named `{$name}`, but no such field is defined in the collection.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`

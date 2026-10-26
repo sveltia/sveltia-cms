@@ -11,6 +11,7 @@ import { checkFieldReferences } from '$lib/services/config/parser/utils/referenc
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import {
+  hasDefaultSort,
   parseCustomSortableFields,
   parseViewOptions,
 } from '$lib/services/contents/collection/view/options';
@@ -164,8 +165,9 @@ export const checkViewOptions = (context, collectors) => {
     const { keys, defaultKey } = parseCustomSortableFields(sortableFields);
     const orderFieldKey = getOrderFieldKey(context.collection);
 
-    // `_summary` sorts by the generated entry summary, which only the entry list has
-    [...keys, defaultKey].forEach((key) => {
+    // `_summary` sorts by the generated entry summary, which only the entry list has. The default
+    // key is also in the list in the Decap CMS format, so it’s checked once
+    new Set([...keys, defaultKey]).forEach((key) => {
       if (
         key &&
         key !== SUMMARY_COLUMN_KEY &&
@@ -180,6 +182,11 @@ export const checkViewOptions = (context, collectors) => {
         });
       }
     });
+
+    // Only one item in the Decap CMS format can have `default_sort`; the first one is used
+    if (Array.isArray(sortableFields) && sortableFields.filter(hasDefaultSort).length > 1) {
+      addMessage({ strKey: 'multiple_sortable_field_defaults', context, collectors });
+    }
   }
 
   // The columns of the table view, given with `table_columns` or its Static CMS alias
