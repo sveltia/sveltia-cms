@@ -102,6 +102,10 @@
  * @property {boolean} [localGitCommits] Whether the local backend commits the saved changes to the
  * current branch of the local Git repository, like the `MODE=git` option of Netlify/Decap CMS’s
  * local proxy server. Default: `false`.
+ * @property {Pick<User, 'backendName' | 'id' | 'login'>} [magicLinkAccount] Account that a magic
+ * link signed in to, if the API keys, log-in credentials and deploy hook came with the link. They
+ * belong to that account, so they’re removed once another account is signed in to, or the session
+ * ends.
  */
 
 /**

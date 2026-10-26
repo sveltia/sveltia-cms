@@ -624,7 +624,12 @@ describe('auth service', () => {
       mockLocalStorage.get.mockResolvedValue(cachedUser);
       mockBackendStore.current = mockBackend;
       mockCmsConfigStore.current = mockCmsConfig;
-      mockBackend.signIn.mockResolvedValue({ token: 'magic-token' });
+      mockBackend.signIn.mockResolvedValue({
+        backendName: 'github',
+        id: 1,
+        login: 'alice',
+        token: 'magic-token',
+      });
       mockBackend.fetchFiles.mockResolvedValue(undefined);
 
       await Promise.all([authModule.signInAutomatically(), answerMagicLinkPrompt(true)]);
@@ -636,8 +641,11 @@ describe('auth service', () => {
         refreshToken: undefined,
         auto: true,
       });
-      // Should apply copied prefs from magic link
-      expect(mockPrefs).toMatchObject({ theme: 'dark' });
+      // Should apply copied prefs from magic link, marked as the link account’s
+      expect(mockPrefs).toEqual({
+        theme: 'dark',
+        magicLinkAccount: { backendName: 'github', id: 1, login: 'alice' },
+      });
       // Should remove token from URL
       expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
     });
@@ -1127,6 +1135,77 @@ describe('auth service', () => {
       expect(mockPrefs.logins).toEqual({ cloud: 'user password' });
     });
 
+    it('should drop the credentials copied with a magic link on an auth error', async () => {
+      const cachedUser = { token: 'test-token', backendName: 'github' };
+
+      mockLocalStorage.get.mockResolvedValue(cachedUser);
+      mockBackendStore.current = mockBackend;
+      mockCmsConfigStore.current = mockCmsConfig;
+      mockBackend.signIn.mockResolvedValue(cachedUser);
+
+      const fetchError = new Error('Fetch failed');
+
+      fetchError.cause = { status: 401 };
+      mockBackend.fetchFiles.mockRejectedValue(fetchError);
+
+      Object.assign(mockPrefs, {
+        apiKeys: { deepl: 'deepl-key' },
+        logins: { cloud: 'user password' },
+        deployHookURL: 'https://example.com/hook',
+        deployHookAuthHeader: 'Bearer secret',
+        theme: 'dark',
+        magicLinkAccount: { backendName: 'github', id: 1, login: 'alice' },
+      });
+
+      await authModule.signInAutomatically();
+
+      expect(auth.unauthenticated).toBe(true);
+      expect(mockPrefs).toEqual({ apiKeys: {}, theme: 'dark' });
+    });
+
+    it('should drop the credentials copied with a magic link to another account', async () => {
+      // Left in storage by another tab, signed in with a magic link while this one was signed in
+      // to the cached account
+      const cachedUser = { token: 'test-token', backendName: 'github', id: 2, login: 'bob' };
+
+      mockLocalStorage.get.mockResolvedValue(cachedUser);
+      mockBackendStore.current = mockBackend;
+      mockCmsConfigStore.current = mockCmsConfig;
+      mockBackend.signIn.mockResolvedValue(cachedUser);
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      Object.assign(mockPrefs, {
+        apiKeys: { deepl: 'deepl-key' },
+        theme: 'dark',
+        magicLinkAccount: { backendName: 'github', id: 1, login: 'alice' },
+      });
+
+      await authModule.signInAutomatically();
+
+      expect(mockUser.account).toEqual(cachedUser);
+      expect(mockPrefs).toEqual({ apiKeys: {}, theme: 'dark' });
+    });
+
+    it('should keep the credentials copied with a magic link to the cached account', async () => {
+      const cachedUser = { token: 'test-token', backendName: 'github', id: 1, login: 'alice' };
+
+      const magicLinkPrefs = {
+        apiKeys: { deepl: 'deepl-key' },
+        magicLinkAccount: { backendName: 'github', id: 1, login: 'alice' },
+      };
+
+      mockLocalStorage.get.mockResolvedValue(cachedUser);
+      mockBackendStore.current = mockBackend;
+      mockCmsConfigStore.current = mockCmsConfig;
+      mockBackend.signIn.mockResolvedValue(cachedUser);
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+      Object.assign(mockPrefs, structuredClone(magicLinkPrefs));
+
+      await authModule.signInAutomatically();
+
+      expect(mockPrefs).toEqual(magicLinkPrefs);
+    });
+
     it('should handle fetch files failure with non-auth error', async () => {
       const cachedUser = { token: 'test-token', backendName: 'github' };
 
@@ -1226,28 +1305,39 @@ describe('auth service', () => {
   });
 
   describe('copyMagicLinkPrefs', () => {
+    /** @type {any} */
+    const alice = { backendName: 'github', id: 1, login: 'alice', token: 'token-a' };
+
     it('should drop the existing deploy hook header when the link sets a new URL', () => {
       Object.assign(mockPrefs, {
         deployHookURL: 'https://api.netlify.com/build_hooks/mine',
         deployHookAuthHeader: 'Bearer secret',
       });
 
-      authModule.copyMagicLinkPrefs({ deployHookURL: 'https://evil.example/hook', theme: 'dark' });
+      authModule.copyMagicLinkPrefs(
+        { deployHookURL: 'https://evil.example/hook', theme: 'dark' },
+        alice,
+      );
 
-      expect(mockPrefs).toEqual({ deployHookURL: 'https://evil.example/hook', theme: 'dark' });
+      expect(mockPrefs).toEqual({
+        deployHookURL: 'https://evil.example/hook',
+        theme: 'dark',
+        magicLinkAccount: { backendName: 'github', id: 1, login: 'alice' },
+      });
     });
 
     it('should copy the deploy hook URL and header together', () => {
       Object.assign(mockPrefs, { deployHookAuthHeader: 'Bearer old' });
 
-      authModule.copyMagicLinkPrefs({
-        deployHookURL: 'https://example.com/hook',
-        deployHookAuthHeader: 'Bearer new',
-      });
+      authModule.copyMagicLinkPrefs(
+        { deployHookURL: 'https://example.com/hook', deployHookAuthHeader: 'Bearer new' },
+        alice,
+      );
 
       expect(mockPrefs).toEqual({
         deployHookURL: 'https://example.com/hook',
         deployHookAuthHeader: 'Bearer new',
+        magicLinkAccount: { backendName: 'github', id: 1, login: 'alice' },
       });
     });
 
@@ -1257,12 +1347,44 @@ describe('auth service', () => {
         deployHookAuthHeader: 'Bearer secret',
       });
 
-      authModule.copyMagicLinkPrefs({ theme: 'light' });
+      authModule.copyMagicLinkPrefs({ theme: 'light' }, alice);
 
       expect(mockPrefs).toEqual({
         deployHookURL: 'https://example.com/hook',
         deployHookAuthHeader: 'Bearer secret',
         theme: 'light',
+        magicLinkAccount: { backendName: 'github', id: 1, login: 'alice' },
+      });
+    });
+
+    it('should not let the link mark its credentials as another account’s', () => {
+      authModule.copyMagicLinkPrefs(
+        { apiKeys: { deepl: 'key' }, magicLinkAccount: { backendName: 'github', login: 'bob' } },
+        alice,
+      );
+
+      expect(mockPrefs).toEqual({
+        apiKeys: { deepl: 'key' },
+        magicLinkAccount: { backendName: 'github', id: 1, login: 'alice' },
+      });
+    });
+
+    it('should drop the credentials copied with an earlier link', () => {
+      Object.assign(mockPrefs, {
+        apiKeys: { deepl: 'old-key' },
+        logins: { cloud: 'user password' },
+        deployHookURL: 'https://example.com/hook',
+        deployHookAuthHeader: 'Bearer secret',
+        theme: 'dark',
+        magicLinkAccount: { backendName: 'github', id: 2, login: 'bob' },
+      });
+
+      authModule.copyMagicLinkPrefs({ apiKeys: { deepl: 'new-key' } }, alice);
+
+      expect(mockPrefs).toEqual({
+        apiKeys: { deepl: 'new-key' },
+        theme: 'dark',
+        magicLinkAccount: { backendName: 'github', id: 1, login: 'alice' },
       });
     });
   });
@@ -1410,6 +1532,60 @@ describe('auth service', () => {
       expect(auth.signInError.message).not.toBe('');
       // Should NOT clear the cached token for non-auth errors like missing branches
       expect(mockLocalStorage.set).not.toHaveBeenCalledWith('sveltia-cms.user', {});
+    });
+
+    it('should drop the credentials copied with a magic link to another account', async () => {
+      Object.assign(mockPrefs, {
+        apiKeys: { deepl: 'deepl-key' },
+        logins: { cloud: 'user password' },
+        deployHookURL: 'https://example.com/hook',
+        deployHookAuthHeader: 'Bearer secret',
+        theme: 'dark',
+        magicLinkAccount: { backendName: 'github', id: 1, login: 'alice' },
+      });
+
+      /** @type {any} */
+      let prefsWhenSignedIn;
+
+      mockBackendStore.current = mockBackend;
+      mockBackend.signIn.mockResolvedValue({ backendName: 'github', id: 2, login: 'bob' });
+      mockBackend.fetchFiles.mockImplementation(async () => {
+        prefsWhenSignedIn = { ...mockPrefs };
+      });
+
+      await authModule.signInManually('github', 'manual-token');
+
+      expect(prefsWhenSignedIn).toEqual({ apiKeys: {}, theme: 'dark' });
+      expect(mockPrefs).toEqual({ apiKeys: {}, theme: 'dark' });
+    });
+
+    it('should keep the credentials copied with a magic link to the same account', async () => {
+      const magicLinkPrefs = {
+        apiKeys: { deepl: 'deepl-key' },
+        theme: 'dark',
+        magicLinkAccount: { backendName: 'github', id: 1, login: 'alice' },
+      };
+
+      Object.assign(mockPrefs, structuredClone(magicLinkPrefs));
+      mockBackendStore.current = mockBackend;
+      mockBackend.signIn.mockResolvedValue({ backendName: 'github', id: 1, login: 'alice' });
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      await authModule.signInManually('github', 'manual-token');
+
+      expect(mockPrefs).toEqual(magicLinkPrefs);
+    });
+
+    it('should keep the credentials that didn’t come with a magic link', async () => {
+      Object.assign(mockPrefs, { apiKeys: { deepl: 'deepl-key' }, logins: { cloud: 'a b' } });
+
+      mockBackendStore.current = mockBackend;
+      mockBackend.signIn.mockResolvedValue({ token: 'manual-token' });
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      await authModule.signInManually('github', 'manual-token');
+
+      expect(mockPrefs).toEqual({ apiKeys: { deepl: 'deepl-key' }, logins: { cloud: 'a b' } });
     });
   });
 
