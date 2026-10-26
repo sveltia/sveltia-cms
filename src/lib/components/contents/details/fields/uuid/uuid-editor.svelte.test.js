@@ -112,8 +112,8 @@ describe('UuidEditor', () => {
     await expect.element(page.getByRole('textbox')).toHaveAttribute('aria-readonly', 'true');
   });
 
-  // `FieldEditor` lets the deprecated `read_only` option switch off the default, but not a lock
-  test('follows the readonly prop, whatever the deprecated `read_only` option', async () => {
+  // `FieldEditor` lets the `read_only` option switch off the default, but not a lock
+  test('follows the readonly prop, whatever the `read_only` option', async () => {
     await renderEditor({ config: { read_only: false }, props: { readonly: true } });
     await expect.element(page.getByRole('textbox')).toHaveAttribute('aria-readonly', 'true');
   });

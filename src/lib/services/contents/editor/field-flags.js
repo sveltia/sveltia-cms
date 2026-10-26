@@ -93,7 +93,7 @@ export const getFieldEditorFlags = ({
     hidden: isCompute || (autoSet && isNew),
     readonly:
       // The `readonly` option defaults to `true` for the UUID field type, which can be unlocked,
-      // also with the deprecated `read_only` option
+      // also with the field type’s own `read_only` option, as in Decap CMS
       (readonlyOption ??
         (fieldType === 'uuid' && /** @type {UuidField} */ (fieldConfig).read_only !== false)) ||
       subfieldsReadonly ||

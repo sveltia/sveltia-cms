@@ -364,7 +364,7 @@ describe('FieldEditor', () => {
       .not.toHaveAttribute('aria-readonly', 'true');
   });
 
-  test('lets the deprecated `read_only` option unlock a UUID field, but not a locked one', async () => {
+  test('lets the `read_only` option unlock a UUID field, but not a locked one', async () => {
     /** @type {Field} */
     const fieldConfig = { name: 'id', widget: 'uuid', read_only: false };
     const { container } = await renderEditor({ fieldConfig, values: { id: 'abc' } });

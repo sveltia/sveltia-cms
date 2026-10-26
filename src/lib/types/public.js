@@ -1398,10 +1398,11 @@
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {boolean} [use_b32_encoding] Whether to encode the value with Base32, which makes a
  * 26-character lowercase ID instead of a 36-character UUID. Default: `false`.
- * @property {boolean} [read_only] Whether to make the field read-only. Default: `true`.
- * DEPRECATED: Use the `readonly` common field option instead, which defaults to `true` for the UUID
- * field type.
- * @see https://github.com/decaporg/decap-cms/pull/6675
+ * @property {boolean} [read_only] Whether to make the field read-only. Default: `true`. The
+ * `readonly` common field option, which also defaults to `true` for the UUID field type, takes
+ * precedence if both are set.
+ * @see https://decapcms.org/docs/widgets/uuid/
+ * @see https://sveltiacms.app/en/docs/fields/uuid
  */
 
 /**

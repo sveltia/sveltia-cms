@@ -102,7 +102,7 @@ describe('Test getFieldEditorFlags()', () => {
     ).toBe(false);
   });
 
-  test('lets the deprecated read_only option unlock a UUID field, but not override a lock', () => {
+  test('lets the read_only option unlock a UUID field, but not override a lock', () => {
     /** @type {Field} */
     const fieldConfig = { name: 'id', widget: 'uuid', read_only: false };
 

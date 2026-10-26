@@ -9,7 +9,6 @@ describe('Test warnedOnceMap', () => {
       slug_length: false,
       slug_editor_tag: false,
       yaml_quote: false,
-      uuid_read_only: false,
       save_all_locales: false,
       automatic_deployments: false,
       multiple_folders_i18n_root: false,
@@ -30,7 +29,6 @@ describe('Test warningMessages', () => {
   test('should contain all deprecation warning messages', () => {
     expect(warningMessages).toHaveProperty('slug_length');
     expect(warningMessages).toHaveProperty('yaml_quote');
-    expect(warningMessages).toHaveProperty('uuid_read_only');
     expect(warningMessages).toHaveProperty('save_all_locales');
     expect(warningMessages).toHaveProperty('automatic_deployments');
     expect(warningMessages).toHaveProperty('multiple_folders_i18n_root');
@@ -60,12 +58,6 @@ describe('Test warningMessages', () => {
     expect(warningMessages.yaml_quote).toContain('yaml_quote');
     expect(warningMessages.yaml_quote).toContain('deprecated');
     expect(warningMessages.yaml_quote).toContain('output.yaml.quote');
-  });
-
-  test('should contain useful information in uuid_read_only message', () => {
-    expect(warningMessages.uuid_read_only).toContain('read_only');
-    expect(warningMessages.uuid_read_only).toContain('readonly');
-    expect(warningMessages.uuid_read_only).toContain('UUID field type');
   });
 
   test('should contain useful information in save_all_locales message', () => {
@@ -131,7 +123,6 @@ describe('Test warnDeprecation()', () => {
     // This test verifies that beforeEach properly resets the map
     expect(warnedOnceMap.slug_length).toBe(false);
     expect(warnedOnceMap.yaml_quote).toBe(false);
-    expect(warnedOnceMap.uuid_read_only).toBe(false);
     expect(warnedOnceMap.save_all_locales).toBe(false);
     expect(warnedOnceMap.automatic_deployments).toBe(false);
     expect(warnedOnceMap.multiple_folders_i18n_root).toBe(false);
@@ -141,7 +132,6 @@ describe('Test warnDeprecation()', () => {
     // Even though warnings won't be displayed in tests, the function should not throw
     expect(() => warnDeprecation('slug_length')).not.toThrow();
     expect(() => warnDeprecation('yaml_quote')).not.toThrow();
-    expect(() => warnDeprecation('uuid_read_only')).not.toThrow();
     expect(() => warnDeprecation('save_all_locales')).not.toThrow();
     expect(() => warnDeprecation('automatic_deployments')).not.toThrow();
     expect(() => warnDeprecation('multiple_folders_i18n_root')).not.toThrow();

@@ -6,9 +6,7 @@
 -->
 <script>
   import { TextInput } from '@sveltia/ui';
-  import { onMount } from 'svelte';
 
-  import { warnDeprecation } from '$lib/services/config/deprecations';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import {
     getFieldEditorContext,
@@ -66,13 +64,6 @@
       }
     },
   );
-
-  onMount(() => {
-    // @todo Remove the option prior to the 1.0 release.
-    if ('read_only' in fieldConfig) {
-      warnDeprecation('uuid_read_only');
-    }
-  });
 </script>
 
 <TextInput
