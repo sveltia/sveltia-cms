@@ -171,6 +171,33 @@ describe('pattern-based inline component node', () => {
     expect(mounted[0].setValues).toHaveBeenCalledExactlyOnceWith({ page: 'Undone' });
   });
 
+  it('should show empty data once a change is undone back to a component without data', () => {
+    const { editor } = insert(createDef(), [6, 6]);
+
+    /**
+     * Set the data of the component node.
+     * @param {Record<string, any> | undefined} props Data.
+     */
+    const setProps = (props) => {
+      editor.update(
+        () => {
+          const node = $getRoot()
+            .getFirstChild()
+            .getChildren()
+            .find((child) => child.getType().startsWith('x-wikilink'));
+
+          node.getWritable().__props = props;
+        },
+        { discrete: true },
+      );
+    };
+
+    setProps({ page: 'Edited' });
+    setProps(undefined);
+
+    expect(mounted[0].setValues).toHaveBeenLastCalledWith({});
+  });
+
   it('should restore the selected text if `onInsert` cancels the insertion', async () => {
     const onInsert = vi.fn(async () => null);
     const { editor } = insert(createDef({ onInsert }), [6, 11]);
