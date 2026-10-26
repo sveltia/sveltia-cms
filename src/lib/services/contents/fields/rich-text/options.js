@@ -2,6 +2,7 @@ import { customComponentRegistry } from '$lib/services/api/registries';
 import { cmsConfig } from '$lib/services/config';
 import {
   BUILTIN_COMPONENTS,
+  BUTTON_COMPONENTS,
   BUTTON_NAME_MAP,
   COMPONENT_NAME_PREFIX_REGEX,
 } from '$lib/services/contents/fields/rich-text';
@@ -55,11 +56,6 @@ export const getEditorComponentDefs = (fieldConfig) =>
       .map((name) => getComponentDef(name))
       .filter((def) => !!def)
   );
-
-/**
- * Built-in editor components implemented as buttons in Sveltia UI rather than as editor components.
- */
-const BUTTON_COMPONENTS = ['code-block', 'table', 'hr'];
 
 /**
  * Get the toolbar buttons of a rich text editor. The `code-block`, `table` and `hr` components are

@@ -16,6 +16,7 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
 /**
  * @import {
  * InternalEntryCollection,
+ * ParsedSortableFields,
  * SortingConditions,
  * SortKey,
  * SortOrder,
@@ -65,8 +66,7 @@ export const SPECIAL_SORT_KEYS = Object.keys(SPECIAL_SORT_KEY_TYPES);
 /**
  * Get default sort keys for the entry collection.
  * @param {FieldKeyPath | undefined} customIdField Custom ID field key path.
- * @returns {{ keys: string[], defaultKey?: string, defaultOrder?: SortOrder }} Parsed sortable
- * fields configuration.
+ * @returns {ParsedSortableFields} Parsed sortable fields configuration.
  */
 export const getDefaultSortKeys = (customIdField) => {
   if (customIdField) {
@@ -109,7 +109,7 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
   // Copy the keys, which can be the configured `sortable_fields` array itself, before adding any
   let keys = [...parsed.keys];
   let { defaultKey, defaultOrder } = parsed;
-  const { labels } = /** @type {{ labels?: Record<string, string> }} */ (parsed);
+  const { labels } = parsed;
 
   // Special handling for summary field: if the collection has a summary template defined, we add
   // `_summary` as a special sort key, which uses the generated summary value

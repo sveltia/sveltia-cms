@@ -138,7 +138,7 @@ describe('pattern-based inline component node', () => {
     expect(mounted[0].component).toBe(InlinePatternComponent);
     expect(mounted[0].props).toMatchObject({ label: 'Wikilink', onEdit, values: undefined });
     expect(typeof mounted[0].props.toPreview).toBe('function');
-    expect(typeof mounted[0].props.toBlock).toBe('function');
+    expect(typeof mounted[0].props.toInline).toBe('function');
   });
 
   it('should fill in the component with the data `onInsert` returns', async () => {

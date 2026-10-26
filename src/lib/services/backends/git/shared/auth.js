@@ -3,7 +3,7 @@ import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 
-import { BACKEND_NAMES as GITEA_BACKEND_NAMES } from '$lib/services/backends/git/gitea/constants';
+import { isGiteaBackendName } from '$lib/services/backends/git/gitea/constants';
 import {
   requestAccessToken,
   apiConfig as sharedApiConfig,
@@ -207,7 +207,7 @@ export const authorize = async ({ backendName, authURL, popup, state }) => {
 
     // The timer doesn’t work with GitLab: the same header makes `closed` `true` while the popup is
     // still open. The user can cancel the sign-in instead
-    if (backendName === 'github' || GITEA_BACKEND_NAMES.includes(backendName)) {
+    if (backendName === 'github' || isGiteaBackendName(backendName)) {
       timer = setInterval(() => {
         if (authPopup.closed) {
           cancel();
@@ -647,7 +647,7 @@ export const handleAuthFlow = async ({ auto, apiConfig }) => {
   const authArgs = { backendName, authURL, scope: authScope };
 
   // Gitea/Forgejo backend only supports PKCE at this time
-  if (GITEA_BACKEND_NAMES.includes(backendName) || authType === 'pkce') {
+  if (isGiteaBackendName(backendName) || authType === 'pkce') {
     const inPopup = isAuthPopup();
 
     if (inPopup) {

@@ -2,9 +2,9 @@ import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { getPathInfo } from '@sveltia/utils/file';
 
 import { formatFileName } from '$lib/services/assets/file-name';
+import { getSlugTimeZone } from '$lib/services/common/slug';
 import { replaceTemplatePlaceholder } from '$lib/services/common/template/replacers';
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
-import { cmsConfig } from '$lib/services/config';
 import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
 
 /**
@@ -27,16 +27,12 @@ import { getIdentifierFieldName } from '$lib/services/contents/collection/identi
  * to the `slugify_filename` media library option.
  * @returns {AssetNameTemplate} Template.
  */
-export const createAssetNameTemplate = (template, { slugificationEnabled = false } = {}) => {
-  const timeZone = cmsConfig.current?.slug?.timezone === 'local' ? undefined : 'UTC';
-
-  return {
-    template,
-    slugificationEnabled,
-    randomValues: new Map(),
-    dateTimeParts: getDateTimeParts({ timeZone }),
-  };
-};
+export const createAssetNameTemplate = (template, { slugificationEnabled = false } = {}) => ({
+  template,
+  slugificationEnabled,
+  randomValues: new Map(),
+  dateTimeParts: getDateTimeParts({ timeZone: getSlugTimeZone() }),
+});
 
 /**
  * Fill the `filename_template` media library option to get the name of an uploaded file. The tag

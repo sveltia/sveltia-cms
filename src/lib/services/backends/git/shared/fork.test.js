@@ -47,6 +47,14 @@ describe('shared fork service', () => {
       expect(isOpenAuthoringConfiguredFor('gitea')).toBe(true);
     });
 
+    test('is on with the option for one of the given backend names', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'forgejo', open_authoring: true },
+      });
+      expect(isOpenAuthoringConfiguredFor(['gitea', 'forgejo'])).toBe(true);
+      expect(isOpenAuthoringConfiguredFor(['github', 'gitlab'])).toBe(false);
+    });
+
     test('is off without the option, with another backend, or without a config', () => {
       cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitea' } });
       expect(isOpenAuthoringConfiguredFor('gitea')).toBe(false);

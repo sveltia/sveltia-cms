@@ -13,7 +13,7 @@ const wrappers = [];
  * @param {Record<string, any>} data Data.
  * @returns {string} Markdown.
  */
-const toBlock = ({ page: name = '' }) => `[[${name}]]`;
+const toInline = ({ page: name = '' }) => `[[${name}]]`;
 /**
  * Convert wikilink data to a preview.
  * @param {Record<string, any>} data Data.
@@ -45,7 +45,7 @@ const renderComponent = async (props, { readonly = false } = {}) => {
       componentName: 'x-wikilink',
       label: 'Wikilink',
       toPreview,
-      toBlock,
+      toInline,
       values: { page: 'Home' },
       onChange,
       ...props,

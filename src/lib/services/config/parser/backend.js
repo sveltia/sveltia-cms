@@ -4,7 +4,7 @@ import { isObject } from '@sveltia/utils/object';
 import { unsupportedBackends, validBackendNames } from '$lib/services/backends';
 import {
   FORGEJO_BACKEND_NAME,
-  BACKEND_NAMES as GITEA_BACKEND_NAMES,
+  isGiteaBackendName,
 } from '$lib/services/backends/git/gitea/constants';
 import { gitBackendServices } from '$lib/services/backends/git/services';
 import { normalizeRootDir } from '$lib/services/backends/root-dir';
@@ -216,7 +216,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     // sign in with a token. If token auth is explicitly disabled as well, we issue an error because
     // there is no working sign-in method available.
     // @see https://github.com/sveltia/sveltia-cms/issues/721
-    if (GITEA_BACKEND_NAMES.includes(name) && !appId) {
+    if (isGiteaBackendName(name) && !appId) {
       if (allowTokenAuth) {
         warnings.add(_('config.warning.oauth_no_app_id'));
       } else {

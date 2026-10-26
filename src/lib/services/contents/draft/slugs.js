@@ -4,7 +4,6 @@ import { fillTemplate } from '$lib/services/common/template';
 import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { parseTransformations } from '$lib/services/common/transformations';
-import { cmsConfig } from '$lib/services/config';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import {
@@ -127,7 +126,7 @@ export const getEntryDateTimeParts = (draft) => {
     fields,
     content: currentValues[defaultLocale] ?? {},
     locale: defaultLocale,
-    timeZone: cmsConfig.current?.slug?.timezone === 'local' ? 'local' : 'UTC',
+    inSlugTimeZone: true,
   });
 };
 

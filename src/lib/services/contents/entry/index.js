@@ -5,6 +5,7 @@ import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
 import dayjsUTC from 'dayjs/plugin/utc';
 
 import { backend } from '$lib/services/backends';
+import { getSlugTimeZone } from '$lib/services/common/slug';
 import { fillTemplate } from '$lib/services/common/template';
 import { DATE_TIME_TEMPLATE_REGEX } from '$lib/services/common/template/constants';
 import { cmsConfig } from '$lib/services/config';
@@ -40,11 +41,12 @@ dayjs.extend(dayjsUTC);
  * @param {Field[]} args.fields Fields.
  * @param {FlattenedEntryContent} args.content Entry content.
  * @param {InternalLocaleCode} [args.locale] Locale of the content.
- * @param {'UTC' | 'local'} [args.timeZone] Time zone to read a date/time value in instead of the
- * field’s own: `UTC`, or `local` for the browser’s. A date-only value is always read as written.
+ * @param {boolean} [args.inSlugTimeZone] Whether to read a date/time value in the time zone of the
+ * slug template tags instead of the field’s own. See `getSlugTimeZone()`. A date-only value is
+ * always read as written.
  * @returns {Record<string, string> | undefined} Date and time parts.
  */
-export const extractDateTime = ({ dateFieldName, fields, content, locale, timeZone }) => {
+export const extractDateTime = ({ dateFieldName, fields, content, locale, inSlugTimeZone }) => {
   const fieldConfig = dateFieldName
     ? fields.find(({ widget, name }) => widget === 'datetime' && name === dateFieldName)
     : fields.find(({ widget }) => widget === 'datetime');
@@ -70,8 +72,8 @@ export const extractDateTime = ({ dateFieldName, fields, content, locale, timeZo
   const fieldTimeZone =
     utc || outputUTC || (dateOnly && !format) ? 'UTC' : dateOnly ? undefined : singleCustomTimeZone;
 
-  if (timeZone && !dateOnly) {
-    return getDateTimeParts({ date, timeZone: timeZone === 'UTC' ? 'UTC' : undefined });
+  if (inSlugTimeZone && !dateOnly) {
+    return getDateTimeParts({ date, timeZone: getSlugTimeZone() });
   }
 
   return getDateTimeParts({ date, timeZone: fieldTimeZone });

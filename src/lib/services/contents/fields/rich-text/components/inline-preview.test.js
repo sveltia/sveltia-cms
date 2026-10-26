@@ -15,19 +15,19 @@ vi.mock('$lib/services/api/react-dom', () => ({
   loadReactDom: vi.fn(() => Promise.resolve()),
 }));
 
-const toBlock = ({ page = '' }) => `[[${page}]]`;
+const toInline = ({ page = '' }) => `[[${page}]]`;
 
 describe('getInlinePreview', () => {
   it('should return a string preview', () => {
     expect(
-      getInlinePreview({ toPreview: ({ page }) => `**${page}**`, toBlock }, { page: 'A' }),
+      getInlinePreview({ toPreview: ({ page }) => `**${page}**`, toInline }, { page: 'A' }),
     ).toEqual({ preview: '**A**', text: '' });
   });
 
   it('should return an element preview', () => {
     const element = document.createElement('a');
 
-    expect(getInlinePreview({ toPreview: () => element, toBlock }, {})).toEqual({
+    expect(getInlinePreview({ toPreview: () => element, toInline }, {})).toEqual({
       preview: element,
       text: '',
     });
@@ -36,13 +36,13 @@ describe('getInlinePreview', () => {
   it('should return a React element preview', () => {
     const element = createElement('a', null, 'A');
 
-    expect(getInlinePreview({ toPreview: () => element, toBlock }, {}).preview).toBe(element);
+    expect(getInlinePreview({ toPreview: () => element, toInline }, {}).preview).toBe(element);
   });
 
   it('should fall back to the Markdown without a preview', () => {
-    expect(getInlinePreview({ toBlock }, { page: 'A' })).toEqual({ text: '[[A]]' });
+    expect(getInlinePreview({ toInline }, { page: 'A' })).toEqual({ text: '[[A]]' });
     expect(
-      getInlinePreview({ toPreview: () => /** @type {any} */ (42), toBlock }, { page: 'A' }),
+      getInlinePreview({ toPreview: () => /** @type {any} */ (42), toInline }, { page: 'A' }),
     ).toEqual({
       text: '[[A]]',
     });
@@ -55,7 +55,7 @@ describe('getInlinePreview', () => {
           toPreview: () => {
             throw new Error('Broken');
           },
-          toBlock,
+          toInline,
         },
         { page: 'A' },
       ),
@@ -66,14 +66,14 @@ describe('getInlinePreview', () => {
     expect(
       getInlinePreview(
         {
-          toBlock: () => {
+          toInline: () => {
             throw new Error('Broken');
           },
         },
         {},
       ),
     ).toEqual({ text: '' });
-    expect(getInlinePreview({ toBlock: () => /** @type {any} */ (undefined) }, {})).toEqual({
+    expect(getInlinePreview({ toInline: () => /** @type {any} */ (undefined) }, {})).toEqual({
       text: '',
     });
   });
@@ -81,7 +81,7 @@ describe('getInlinePreview', () => {
   it('should pass an asset getter that finds nothing', () => {
     const toPreview = vi.fn(() => '');
 
-    getInlinePreview({ toPreview, toBlock }, { page: 'A' });
+    getInlinePreview({ toPreview, toInline }, { page: 'A' });
 
     expect(toPreview).toHaveBeenCalledWith({ page: 'A' }, expect.any(Function), undefined);
     expect(/** @type {any} */ (toPreview.mock.calls[0])[1]('/a.png')).toBeUndefined();

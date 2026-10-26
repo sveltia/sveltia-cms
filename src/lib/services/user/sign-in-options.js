@@ -1,5 +1,5 @@
 import { getAuthRoot } from '$lib/services/backends/git/gitea/config';
-import { BACKEND_NAMES as GITEA_BACKEND_NAMES } from '$lib/services/backends/git/gitea/constants';
+import { isGiteaBackendName } from '$lib/services/backends/git/gitea/constants';
 
 /**
  * @import { Backend, ForgejoBackend, GitBackend, GiteaBackend } from '$lib/types/public';
@@ -30,7 +30,7 @@ export const getSignInOptions = (backendConfig, backendLabel) => {
   const isTestRepo = name === 'test-repo';
   const { auth_methods: authMethods } = /** @type {GitBackend} */ (backendConfig);
   const giteaConfig = /** @type {GiteaBackend | ForgejoBackend} */ (backendConfig);
-  const isGitea = GITEA_BACKEND_NAMES.includes(name);
+  const isGitea = isGiteaBackendName(name);
 
   return {
     serviceLabel:

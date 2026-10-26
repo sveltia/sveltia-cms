@@ -36,14 +36,21 @@ const FORK_POLL = {
  * Check whether Open Authoring is turned on for the given backend in the site configuration. It
  * doesn’t mean the signed-in user is actually contributing through a fork: a user who can write to
  * the configured repository keeps working on it directly. Use the `openAuthoring` store for that.
- * @param {GitBackend['name']} name Backend name, e.g. `github`.
+ * @param {GitBackend['name'] | GitBackend['name'][]} name Backend name, e.g. `github`, or the names
+ * of a backend that has more than one, e.g. `gitea` and `forgejo`.
  * @returns {boolean} `true` if the given backend is configured, with the `open_authoring` option
  * enabled.
  */
 export const isOpenAuthoringConfiguredFor = (name) => {
   const { backend } = cmsConfig.current ?? {};
+  const names = Array.isArray(name) ? name : [name];
 
-  return backend?.name === name && 'open_authoring' in backend && backend.open_authoring === true;
+  return (
+    !!backend &&
+    /** @type {string[]} */ (names).includes(backend.name) &&
+    'open_authoring' in backend &&
+    backend.open_authoring === true
+  );
 };
 
 /**

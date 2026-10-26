@@ -3,7 +3,11 @@ import { isObject } from '@sveltia/utils/object';
 import { getViewConditions } from '$lib/services/common/view';
 
 /**
- * @import { FilteringConditions, GroupingConditions, SortOrder } from '$lib/types/private';
+ * @import {
+ * FilteringConditions,
+ * GroupingConditions,
+ * ParsedSortableFields,
+ * } from '$lib/types/private';
  * @import { SortableField, SortableFields, ViewFilter, ViewGroup } from '$lib/types/public';
  */
 
@@ -65,8 +69,7 @@ export const hasDefaultSort = (item) => {
  * sortable field object with the `field`, `label` and `default_sort` options. Invalid items are
  * ignored; they are reported by the configuration validator.
  * @param {(string | SortableField)[]} items List items.
- * @returns {{ keys: string[], labels?: Record<string, string>, defaultKey?: string, defaultOrder?:
- * SortOrder }} Parsed sortable fields configuration.
+ * @returns {ParsedSortableFields} Parsed sortable fields configuration.
  */
 const parseSortableFieldList = (items) => {
   /** @type {string[]} */
@@ -117,9 +120,7 @@ const parseSortableFieldList = (items) => {
  * Parse custom sortable fields configuration.
  * @param {(string | SortableField)[] | SortableFields} customSortableFields Custom sortable fields
  * configuration.
- * @returns {{ keys: string[], labels?: Record<string, string>, defaultKey?: string, defaultOrder?:
- * SortOrder }} Parsed sortable fields configuration. `labels` maps a key to the custom label given
- * in the Decap CMS object format.
+ * @returns {ParsedSortableFields} Parsed sortable fields configuration.
  */
 export const parseCustomSortableFields = (customSortableFields) => {
   // Netlify/Decap CMS compatibility: if `sortable_fields` is an array, it should be treated as a

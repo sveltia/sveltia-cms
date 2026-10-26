@@ -1374,22 +1374,35 @@ describe('Test extractDateTime() in different time zones', () => {
     });
   });
 
-  test('reads a date/time in the given time zone instead of the field’s own', () => {
+  /**
+   * Set the `slug.timezone` option.
+   * @param {'utc' | 'local'} timezone Option value.
+   */
+  const setSlugTimeZone = async (timezone) => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = { current: { slug: { timezone } } };
+  };
+
+  test('reads a date/time in the slug time zone instead of the field’s own', async () => {
     const fields = [{ name: 'date', widget: 'datetime', input_timezone: 'Asia/Tokyo' }];
     const content = { date: '2026-01-15T08:00:00+09:00' };
 
+    await setSlugTimeZone('utc');
+
     inTimeZones(() => {
-      expect(extractDateTime({ fields, content, timeZone: 'UTC' })).toEqual(
+      expect(extractDateTime({ fields, content, inSlugTimeZone: true })).toEqual(
         expect.objectContaining({ year: '2026', month: '01', day: '14', hour: '23' }),
       );
     });
+
+    await setSlugTimeZone('local');
 
     const { TZ } = process.env;
 
     process.env.TZ = 'America/New_York';
 
     try {
-      expect(extractDateTime({ fields, content, timeZone: 'local' })).toEqual(
+      expect(extractDateTime({ fields, content, inSlugTimeZone: true })).toEqual(
         expect.objectContaining({ year: '2026', month: '01', day: '14', hour: '18' }),
       );
     } finally {
@@ -1397,14 +1410,17 @@ describe('Test extractDateTime() in different time zones', () => {
     }
   });
 
-  test('keeps the date of a date-only field in any given time zone', () => {
-    inTimeZones(() => {
-      /** @type {('UTC' | 'local')[]} */ (['UTC', 'local']).forEach((timeZone) => {
+  test.each([['utc'], ['local']])(
+    'keeps the date of a date-only field with the `%s` slug time zone',
+    async (timezone) => {
+      await setSlugTimeZone(/** @type {'utc' | 'local'} */ (timezone));
+
+      inTimeZones(() => {
         expect(
           extractDateTime({
             fields: [{ name: 'date', widget: 'datetime', time_format: false }],
             content: { date: '2026-01-15' },
-            timeZone,
+            inSlugTimeZone: true,
           }),
         ).toEqual(expect.objectContaining({ year: '2026', month: '01', day: '15', hour: '00' }));
         expect(
@@ -1413,12 +1429,12 @@ describe('Test extractDateTime() in different time zones', () => {
               { name: 'date', widget: 'datetime', time_format: false, format: 'DD/MM/YYYY' },
             ],
             content: { date: '15/01/2026' },
-            timeZone,
+            inSlugTimeZone: true,
           }),
         ).toEqual(expect.objectContaining({ year: '2026', month: '01', day: '15', hour: '00' }));
       });
-    });
-  });
+    },
+  );
 });
 
 describe('Test fillEntryPathTemplate()', () => {

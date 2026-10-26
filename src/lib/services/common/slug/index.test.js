@@ -1,6 +1,12 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { getNewFolderName, slugify, validateNewFolderName } from '$lib/services/common/slug';
+import {
+  getNewFolderName,
+  getSlugTimeZone,
+  slugify,
+  trimSlugEnd,
+  validateNewFolderName,
+} from '$lib/services/common/slug';
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
@@ -17,6 +23,42 @@ vi.mock('$lib/services/contents/entry/summary', () => ({
 vi.mock('$lib/services/utils/file', () => ({
   renameIfNeeded: vi.fn((slug) => slug),
 }));
+
+describe('Test getSlugTimeZone()', () => {
+  test.each([
+    ['no configuration', undefined, 'UTC'],
+    ['no `timezone` option', { slug: {} }, 'UTC'],
+    ['`timezone: utc`', { slug: { timezone: 'utc' } }, 'UTC'],
+    ['`timezone: local`', { slug: { timezone: 'local' } }, undefined],
+  ])('returns the time zone with %s', async (_label, config, expected) => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = config;
+
+    expect(getSlugTimeZone()).toBe(expected);
+  });
+});
+
+describe('Test trimSlugEnd()', () => {
+  test.each([
+    ['the default options', undefined, 'hello-world.-.', 'hello-world'],
+    ['a custom replacement', { sanitize_replacement: '_' }, 'hello_world._', 'hello_world'],
+    ['trimming turned off', { trim: false }, 'hello-world-.', 'hello-world-'],
+    ['an empty replacement', { sanitize_replacement: '' }, 'hello-world-..', 'hello-world-'],
+  ])('removes the dots at the end with %s', async (_label, slug, input, expected) => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = slug ? { slug } : undefined;
+
+    expect(trimSlugEnd(input)).toBe(expected);
+  });
+
+  test('removes a replacement character at the end, and leaves dots inside alone', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = undefined;
+
+    expect(trimSlugEnd('hello-world-')).toBe('hello-world');
+    expect(trimSlugEnd('v1.0-notes')).toBe('v1.0-notes');
+  });
+});
 
 describe('Test slugify()', () => {
   test('basic slugification with default settings', async () => {

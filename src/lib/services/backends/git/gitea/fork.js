@@ -38,7 +38,7 @@ const MAX_FORKS = 50;
  * @returns {boolean} `true` if the `open_authoring` backend option is enabled.
  */
 export const isOpenAuthoringConfigured = () =>
-  BACKEND_NAMES.some((name) => isOpenAuthoringConfiguredFor(/** @type {GitBackendName} */ (name)));
+  isOpenAuthoringConfiguredFor(/** @type {GitBackendName[]} */ (BACKEND_NAMES));
 
 /**
  * Get the repository that receives the CMS’s commits: the signed-in user’s fork when the current

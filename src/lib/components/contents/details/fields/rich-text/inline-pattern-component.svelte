@@ -18,8 +18,8 @@
    * @property {string} label Component label.
    * @property {ResolvedEditorComponentDefinition['toPreview']} [toPreview] Function to convert the
    * component data to its preview.
-   * @property {ResolvedEditorComponentDefinition['toBlock']} toBlock The component’s `toInline`
-   * function, which converts the component data to Markdown.
+   * @property {ResolvedEditorComponentDefinition['toBlock']} toInline Function to convert the
+   * component data to Markdown.
    * @property {InlineEditorComponentDefinition['onEdit']} [onEdit] Function called when the
    * component is clicked, returning its new data.
    * @property {Record<string, any> | undefined} values Initial component data.
@@ -32,7 +32,7 @@
     componentName,
     label,
     toPreview,
-    toBlock,
+    toInline,
     onEdit,
     values,
     onChange = () => undefined,
@@ -66,7 +66,7 @@
   /**
    * Preview of the component shown within the text.
    */
-  const preview = $derived(getInlinePreview({ toPreview, toBlock }, data));
+  const preview = $derived(getInlinePreview({ toPreview, toInline }, data));
 
   /**
    * Get the wrapper element.

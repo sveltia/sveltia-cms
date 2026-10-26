@@ -1792,6 +1792,17 @@
  */
 
 /**
+ * Sortable fields of an entry collection, parsed from the `sortable_fields` option or made from the
+ * default sort keys.
+ * @typedef {object} ParsedSortableFields
+ * @property {string[]} keys Sort keys.
+ * @property {Record<string, string>} [labels] Custom labels keyed by sort key, given in the Decap
+ * CMS object format of the `sortable_fields` option.
+ * @property {string} [defaultKey] Default sort key.
+ * @property {SortOrder} [defaultOrder] Default sort order.
+ */
+
+/**
  * Sort key shown in the Sort menu.
  * @typedef {object} SortKey
  * @property {string} key Key, such as a field name or a special key like `commit_date`.

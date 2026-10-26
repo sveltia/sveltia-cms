@@ -21,15 +21,9 @@ vi.mock('$lib/services/backends/git/gitea/commits', () => ({
   fetchLastCommit: vi.fn(),
 }));
 
-vi.mock('$lib/services/backends/git/gitea/constants', () => ({
+vi.mock('$lib/services/backends/git/gitea/constants', async (importOriginal) => ({
+  ...(await importOriginal()),
   BACKEND_LABEL: 'Gitea',
-  BACKEND_NAME: 'gitea',
-  BACKEND_NAMES: ['gitea', 'forgejo'],
-  DEFAULT_API_ROOT: 'https://gitea.com/api/v1',
-  DEFAULT_AUTH_PATH: 'login/oauth/authorize',
-  DEFAULT_AUTH_ROOT: 'https://gitea.com',
-  FORGEJO_BACKEND_LABEL: 'Forgejo',
-  FORGEJO_BACKEND_NAME: 'forgejo',
 }));
 
 vi.mock('$lib/services/backends/git/gitea/deployment', () => ({

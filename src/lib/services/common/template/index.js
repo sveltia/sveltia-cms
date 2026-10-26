@@ -1,6 +1,7 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import { escapeRegExp, truncate } from '@sveltia/utils/string';
+import { truncate } from '@sveltia/utils/string';
 
+import { getSlugTimeZone, trimSlugEnd } from '$lib/services/common/slug';
 import { replaceTemplatePlaceholder } from '$lib/services/common/template/replacers';
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { cmsConfig } from '$lib/services/config';
@@ -87,13 +88,12 @@ export const fillTemplate = (template, options) => {
   const slugOptions = cmsConfig.current?.slug;
   // @todo Remove the legacy option prior to the 1.0 release.
   const maxlength = legacySlugLength ?? slugOptions?.maxlength;
-  const timeZone = slugOptions?.timezone === 'local' ? undefined : 'UTC';
 
   /** @type {ReplaceContext} */
   const context = {
     replaceSubContext: {
       ...options,
-      dateTimeParts: dateTimeParts ?? getDateTimeParts({ timeZone }),
+      dateTimeParts: dateTimeParts ?? getDateTimeParts({ timeZone: getSlugTimeZone() }),
       identifierField,
       basePath,
       fullPathRegEx,
@@ -115,21 +115,9 @@ export const fillTemplate = (template, options) => {
     return slug;
   }
 
-  const { sanitize_replacement: replacement = '-', trim = true } = slugOptions ?? {};
-
   // A cut may leave the replacement character at the end, which is a hyphen by default but can be
-  // configured with `slug.sanitize_replacement`, and dots, which a branch name can’t end with
-  const cutEndRegex = new RegExp(
-    replacement && trim ? `(?:${escapeRegExp(replacement)}|\\.)+$` : '\\.+$',
-  );
-
-  /**
-   * Remove the characters a cut may leave at the end of a slug. Like `slugify`, leave the
-   * replacement alone if `slug.trim` is turned off, so a slug can still end with it.
-   * @param {string} str Truncated slug.
-   * @returns {string} Trimmed slug.
-   */
-  const trimCutEnd = (str) => str.replace(cutEndRegex, '');
+  // configured with `slug.sanitize_replacement`, and dots, which a branch name can’t end with; they
+  // go with `trimSlugEnd()`
   let maxBytes = Infinity;
 
   // Truncate a long slug if the `slug.maxlength` option is set. Leave the end alone if the slug
@@ -137,14 +125,14 @@ export const fillTemplate = (template, options) => {
   if (typeof maxlength === 'number') {
     const truncated = truncate(slug, maxlength, { ellipsis: '' });
 
-    slug = truncated === slug ? slug : trimCutEnd(truncated);
+    slug = truncated === slug ? slug : trimSlugEnd(truncated);
   } else {
     // Otherwise, cap the slug in bytes so the file name and the Editorial Workflow branch name stay
     // valid. Existing entries are never renamed, since this only applies to a new slug
     maxBytes = getMaxSlugBytes({ collectionName, dirPath });
 
     if (getSlugByteLength(slug) > maxBytes) {
-      slug = trimCutEnd(truncateSlugBytes(slug, maxBytes));
+      slug = trimSlugEnd(truncateSlugBytes(slug, maxBytes));
     }
   }
 
@@ -152,7 +140,7 @@ export const fillTemplate = (template, options) => {
   // `{{title}}.`, which a branch name can’t end with. A replacement character in front of it goes
   // as well, like after a cut
   if (slug.endsWith('.')) {
-    slug = trimCutEnd(slug);
+    slug = trimSlugEnd(slug);
   }
 
   const existingSlugs = getExistingSlugs(collectionName, locale, dirPath);
@@ -170,7 +158,7 @@ export const fillTemplate = (template, options) => {
   while (maxBytes !== Infinity && getSlugByteLength(uniqueSlug) > maxBytes) {
     const suffixBytes = getSlugByteLength(uniqueSlug) - getSlugByteLength(slug);
 
-    slug = trimCutEnd(truncateSlugBytes(slug, maxBytes - suffixBytes));
+    slug = trimSlugEnd(truncateSlugBytes(slug, maxBytes - suffixBytes));
     uniqueSlug = rename(slug);
   }
 

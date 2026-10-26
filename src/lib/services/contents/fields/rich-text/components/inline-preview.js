@@ -19,13 +19,16 @@ import { sanitizeRichTextHTML } from '$lib/services/contents/fields/rich-text/sa
  * editor: the output of `toPreview`, or that of `toInline` as plain text if the former is missing
  * or returns another type of value. A function that throws, e.g. by reading a missing value, is
  * treated as if it returned nothing, so a broken component doesn’t break the editor.
- * @param {Pick<ResolvedEditorComponentDefinition, 'toPreview' | 'toBlock'>} componentDef Component
- * definition, whose `toBlock` is the component’s `toInline`.
+ * @param {object} functions Functions of the component.
+ * @param {ResolvedEditorComponentDefinition['toPreview']} [functions.toPreview] Function to convert
+ * the component data to its preview.
+ * @param {ResolvedEditorComponentDefinition['toBlock']} functions.toInline Function to convert the
+ * component data to Markdown, which the resolved definition holds as `toBlock`.
  * @param {Record<string, any>} data Component data.
  * @returns {{ preview?: string | HTMLElement | ReactElement, text: string }} The preview, if any,
  * and the text to show otherwise, which is an empty string if `toInline` fails as well.
  */
-export const getInlinePreview = ({ toPreview, toBlock }, data) => {
+export const getInlinePreview = ({ toPreview, toInline }, data) => {
   /** @type {unknown} */
   let preview;
   let text = '';
@@ -41,7 +44,7 @@ export const getInlinePreview = ({ toPreview, toBlock }, data) => {
   }
 
   try {
-    text = String(toBlock(data) ?? '');
+    text = String(toInline(data) ?? '');
   } catch {
     //
   }

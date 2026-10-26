@@ -389,7 +389,8 @@ export const createCustomNodeClass = (componentDef) => {
               // `getComponentDef()` falls back to the registered name if the label is omitted
               label: /** @type {string} */ (label),
               toPreview,
-              toBlock,
+              // The resolved definition holds the component’s `toInline` function as `toBlock`
+              toInline: toBlock,
               onEdit: inlinePattern.onEdit,
               values: this.__props,
               onChange,

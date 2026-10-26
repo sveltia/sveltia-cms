@@ -10,11 +10,11 @@ import { getAuthRoot } from '$lib/services/backends/git/gitea/config';
 import {
   BACKEND_LABEL,
   BACKEND_NAME,
-  BACKEND_NAMES,
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   FORGEJO_BACKEND_LABEL,
   FORGEJO_BACKEND_NAME,
+  isGiteaBackendName,
 } from '$lib/services/backends/git/gitea/constants';
 import { fetchBranchHeadSHA, fetchDeployments } from '$lib/services/backends/git/gitea/deployment';
 import { fetchBlob, fetchDirSHA, fetchFiles } from '$lib/services/backends/git/gitea/files';
@@ -37,7 +37,7 @@ import { isWorkflowConfigured } from '$lib/services/workflow/config';
 export const init = () => {
   const { backend } = cmsConfig.current ?? {};
 
-  if (!backend || !BACKEND_NAMES.includes(backend.name)) {
+  if (!backend || !isGiteaBackendName(backend.name)) {
     return undefined;
   }
 

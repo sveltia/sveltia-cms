@@ -1,6 +1,10 @@
-import { customComponentRegistry } from '$lib/services/api/registries';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
-import { isInlinePatternComponent } from '$lib/services/contents/fields/rich-text/components/inline-pattern';
+import {
+  BUTTON_COMPONENTS,
+  DEFAULT_BUTTONS,
+  INLINE_BUTTONS,
+} from '$lib/services/contents/fields/rich-text';
+import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { isInlineComponentDef } from '$lib/services/contents/fields/rich-text/components/utils';
 
 /**
@@ -18,46 +22,32 @@ const UNSUPPORTED_OPTIONS = [
 ];
 
 /**
- * Buttons that format a whole block, which a single-line field can’t use. An unknown button name
- * is reported against the JSON schema instead.
+ * Buttons that format a whole block, which a single-line field can’t use: all the buttons but the
+ * inline ones, including `align`, which isn’t enabled by default. An unknown button name is
+ * reported against the JSON schema instead.
+ * @type {string[]}
  */
 const BLOCK_BUTTONS = [
-  'heading-one',
-  'heading-two',
-  'heading-three',
-  'heading-four',
-  'heading-five',
-  'heading-six',
-  'quote',
-  'bulleted-list',
-  'numbered-list',
+  ...DEFAULT_BUTTONS.filter((name) => !INLINE_BUTTONS.includes(name)),
   'align',
 ];
 
 /**
- * Built-in editor components that are blocks, which a single-line field can’t hold.
- */
-const BLOCK_COMPONENTS = ['code-block', 'table', 'hr'];
-
-/**
- * Check whether the given editor component is a block, which a single-line field can’t hold. A
- * custom component is one unless it’s matched within a paragraph; an unknown one isn’t reported
- * here.
+ * Check whether the given editor component is a block, which a single-line field can’t hold. The
+ * built-in ones implemented as buttons are, while any other one is unless its resolved definition
+ * is matched within a paragraph, as a pattern-based inline component or the built-in `image` is.
+ * An unknown component isn’t reported here.
  * @param {string} name Component name.
  * @returns {boolean} Result.
  */
 const isBlockComponent = (name) => {
-  if (BLOCK_COMPONENTS.includes(name)) {
+  if (/** @type {string[]} */ (BUTTON_COMPONENTS).includes(name)) {
     return true;
   }
 
-  const definition = customComponentRegistry.get(name);
+  const definition = getComponentDef(name);
 
-  return (
-    !!definition &&
-    !isInlinePatternComponent(definition) &&
-    !isInlineComponentDef(/** @type {any} */ (definition))
-  );
+  return !!definition && !isInlineComponentDef(definition);
 };
 
 /**

@@ -40,6 +40,61 @@ const UNSAFE_CHARS_REGEXES = {
 const slugReplacementRegexCache = new Map();
 
 /**
+ * Get the regular expressions to consolidate and trim the given replacement character.
+ * @param {string} replacement Non-empty `sanitize_replacement` option value.
+ * @returns {Record<'consecutivePattern' | 'trimPattern' | 'leadingDotsPattern' |
+ * 'trailingDotsPattern', RegExp>} Regular expressions.
+ */
+const getReplacementRegexes = (replacement) => {
+  const escapedReplacement = escapeRegExp(replacement);
+
+  return getOrCreate(slugReplacementRegexCache, escapedReplacement, () => ({
+    // Group the replacement so that a multi-character one is repeated as a whole
+    consecutivePattern: new RegExp(`(?:${escapedReplacement})+`, 'g'),
+    trimPattern: new RegExp(`^(?:${escapedReplacement})+|(?:${escapedReplacement})+$`, 'g'),
+    leadingDotsPattern: new RegExp(`^(?:\\.|${escapedReplacement})+`),
+    trailingDotsPattern: new RegExp(`(?:\\.|${escapedReplacement})+$`),
+  }));
+};
+
+/**
+ * Get the regular expression that matches what a slug can’t end with: dots, which a Git branch name
+ * can’t end with, and replacement characters, unless the `slug.trim` option is turned off, so a
+ * slug can still end with a replacement character then.
+ * @param {InternalCmsConfig['slug']} [slugOptions] Global slug options.
+ * @returns {RegExp} Regular expression.
+ */
+const getTrailingDotsPattern = ({ sanitize_replacement: replacement = '-', trim = true } = {}) =>
+  replacement && trim
+    ? getReplacementRegexes(replacement).trailingDotsPattern
+    : TRAILING_DOTS_REGEX;
+
+/**
+ * Remove the dots and replacement characters from the end of a slug, e.g. one cut down to a maximum
+ * length, or filled from a template ending with a dot. It follows the global `slug` options, like
+ * {@link slugify}: with `slug.trim` turned off, only dots are removed.
+ * @param {string} slug Slug.
+ * @returns {string} Slug.
+ */
+export const trimSlugEnd = (slug) =>
+  slug.replace(
+    getTrailingDotsPattern(/** @type {InternalCmsConfig} */ (cmsConfig.current)?.slug),
+    '',
+  );
+
+/**
+ * Get the time zone the date/time tags of a slug, entry path or file name template are filled in,
+ * according to the global `slug.timezone` option: UTC by default, for compatibility with
+ * Netlify/Decap CMS, or the user’s local time zone with `local`.
+ * @returns {'UTC' | undefined} Time zone to pass to `getDateTimeParts()`, where `undefined` stands
+ * for the local time zone.
+ */
+export const getSlugTimeZone = () =>
+  /** @type {InternalCmsConfig} */ (cmsConfig.current)?.slug?.timezone === 'local'
+    ? undefined
+    : 'UTC';
+
+/**
  * Slugify the given string to be used as a filename or URL slug, based on the `slug` configuration.
  * This function can be used for both entry slugs and asset file names.
  * @param {string} string String to be normalized.
@@ -87,28 +142,24 @@ export const slugify = (
   slug = slug.trim().replaceAll(/\s+/g, sanitizeReplacement);
 
   let leadingDotsPattern = LEADING_DOTS_REGEX;
-  let trailingDotsPattern = TRAILING_DOTS_REGEX;
 
   // Consolidate consecutive replacement characters into a single one and trim them from ends
   if (sanitizeReplacement) {
-    const escapedReplacement = escapeRegExp(sanitizeReplacement);
-
-    const cachedSlugRegexes = getOrCreate(slugReplacementRegexCache, escapedReplacement, () => ({
-      // Group the replacement so that a multi-character one is repeated as a whole
-      consecutivePattern: new RegExp(`(?:${escapedReplacement})+`, 'g'),
-      trimPattern: new RegExp(`^(?:${escapedReplacement})+|(?:${escapedReplacement})+$`, 'g'),
-      leadingDotsPattern: new RegExp(`^(?:\\.|${escapedReplacement})+`),
-      trailingDotsPattern: new RegExp(`(?:\\.|${escapedReplacement})+$`),
-    }));
+    const cachedSlugRegexes = getReplacementRegexes(sanitizeReplacement);
 
     slug = slug.replace(cachedSlugRegexes.consecutivePattern, sanitizeReplacement);
 
     // Trim replacement characters from the beginning and end
     if (trimReplacement) {
       slug = slug.replace(cachedSlugRegexes.trimPattern, '');
-      ({ leadingDotsPattern, trailingDotsPattern } = cachedSlugRegexes);
+      ({ leadingDotsPattern } = cachedSlugRegexes);
     }
   }
+
+  const trailingDotsPattern = getTrailingDotsPattern({
+    sanitize_replacement: sanitizeReplacement,
+    trim: trimReplacement,
+  });
 
   // Remove leading dots, which the `unicode` encoding allows: a slug starting with one, e.g. from a
   // title like `.NET Tips`, would make a dot file, which is hidden and skipped when the repository

@@ -15,6 +15,14 @@ export const FORGEJO_BACKEND_LABEL = 'Forgejo';
  */
 export const BACKEND_NAMES = [BACKEND_NAME, FORGEJO_BACKEND_NAME];
 
+/**
+ * Check if the given backend name is served by the Gitea/Forgejo implementation: `gitea`, or
+ * `forgejo` as named in Decap CMS.
+ * @param {string | undefined} name Backend name.
+ * @returns {boolean} Result.
+ */
+export const isGiteaBackendName = (name) => !!name && BACKEND_NAMES.includes(name);
+
 export const DEFAULT_API_ROOT = 'https://gitea.com/api/v1';
 export const DEFAULT_AUTH_ROOT = 'https://gitea.com';
 export const DEFAULT_AUTH_PATH = 'login/oauth/authorize';
