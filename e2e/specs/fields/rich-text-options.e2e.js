@@ -534,6 +534,57 @@ test.describe('minimal', () => {
   });
 });
 
+test.describe('pattern', () => {
+  /** Options of a Markdown field limited to inline formatting, as in issue #1118. */
+  const INLINE_OPTIONS = {
+    widget: 'markdown',
+    minimal: true,
+    buttons: ['bold', 'italic', 'strikethrough', 'code', 'link'],
+    editor_components: [],
+    required: false,
+  };
+
+  test.describe('single line', () => {
+    test.use({
+      config: noteConfig({ ...INLINE_OPTIONS, pattern: ['^[^\\n]*$', 'Enter a single line'] }),
+    });
+
+    test('rejects a second paragraph', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'One line.' });
+      const error = field.getByRole('alert');
+
+      await moveCaretToEnd(body);
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('Second.');
+      await editor.getByRole('button', { name: 'Save' }).click();
+      await expect(error).toContainText('Enter a single line');
+      expect((await cms.readRepo())[NOTE_PATH]).toBe(noteFile('One line.'));
+
+      // Remove the second paragraph and its break, then add the text to the first one
+      await selectText(body, 'Second.');
+      await page.keyboard.press('Backspace');
+      await page.keyboard.press('Backspace');
+      await page.keyboard.type(' Second.');
+      await expect(error).toHaveCount(0);
+      await saveAndExpect({ cms, editor, body: 'One line. Second.' });
+    });
+  });
+
+  test.describe('any pattern', () => {
+    test.use({ config: noteConfig({ ...INLINE_OPTIONS, pattern: ['^[^a]*$', 'No letter a'] }) });
+
+    test('rejects a value that doesn’t match', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({ cms, page, body: 'Sun.' });
+
+      await moveCaretToEnd(body);
+      await page.keyboard.type(' Moon and stars.');
+      await editor.getByRole('button', { name: 'Save' }).click();
+      await expect(field.getByRole('alert')).toContainText('No letter a');
+      expect((await cms.readRepo())[NOTE_PATH]).toBe(noteFile('Sun.'));
+    });
+  });
+});
+
 test.describe('Markdown shortcuts', () => {
   test.describe('default', () => {
     test.use({ config: noteConfig({}) });
