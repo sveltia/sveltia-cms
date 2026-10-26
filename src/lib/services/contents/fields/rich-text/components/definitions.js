@@ -2,6 +2,10 @@ import { _ } from '@sveltia/i18n';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
 import {
+  isInlinePatternComponent,
+  resolveInlinePatternComponent,
+} from '$lib/services/contents/fields/rich-text/components/inline-pattern';
+import {
   escapeTitle,
   unescapeTitle,
 } from '$lib/services/contents/fields/rich-text/components/utils';
@@ -12,6 +16,7 @@ import {
 import { escapeAttr } from '$lib/services/utils/string';
 
 /**
+ * @import { ResolvedEditorComponentDefinition } from '$lib/types/private';
  * @import { EditorComponentDefinition } from '$lib/types/public';
  */
 
@@ -228,18 +233,21 @@ export const getCustomComponentName = (name) => {
  * Get a component definition.
  * @param {string} name Component name. For a custom component, this can be either the name
  * registered with the API or the prefixed ID of its definition. See {@link getCustomComponentName}.
- * @returns {EditorComponentDefinition | undefined} Definition.
+ * @returns {ResolvedEditorComponentDefinition | undefined} Definition. A pattern-based inline
+ * component is converted to the shape of a field-based one with `resolveInlinePatternComponent()`.
  */
 export const getComponentDef = (name) => {
   const customComponentName = getCustomComponentName(name);
 
   if (customComponentName) {
+    const registeredDef = customComponentRegistry.get(customComponentName);
+
+    const customComponentDef = isInlinePatternComponent(registeredDef)
+      ? resolveInlinePatternComponent(registeredDef)
+      : /** @type {EditorComponentDefinition} */ (registeredDef);
+
     // Add a prefix to the component ID to avoid conflicts with built-in components and Lexical’s
     // built-in node types, such as `code`.
-    const customComponentDef = /** @type {EditorComponentDefinition} */ (
-      customComponentRegistry.get(customComponentName)
-    );
-
     return {
       ...customComponentDef,
       id: `x-${customComponentName}`,

@@ -564,6 +564,32 @@ describe('definitions', () => {
       expect(result?.toPreview).toBe(customComponent.toPreview);
     });
 
+    it('should resolve a pattern-based inline component', () => {
+      const onInsert = vi.fn();
+
+      customComponentRegistry.set('wikilink', {
+        id: 'wikilink',
+        type: 'inline',
+        pattern: /^\[\[(.+?)\]\]/,
+        trigger: '[[',
+        fromInline: (match) => ({ page: match[1] }),
+        toInline: ({ page = '' }) => `[[${page}]]`,
+        onInsert,
+      });
+
+      const result = getComponentDef('wikilink');
+
+      expect(result?.id).toBe('x-wikilink');
+      expect(result?.label).toBe('wikilink');
+      expect(result?.fields).toEqual([]);
+      expect(result?.pattern).toEqual(/\[\[(.+?)\]\]/);
+      // The trigger text is no toolbar UI
+      expect(result?.trigger).toBeUndefined();
+      expect(result?.inlinePattern).toEqual({ trigger: '[[', onInsert, onEdit: undefined });
+      expect(result?.fromBlock?.(/** @type {any} */ (['[[A]]', 'A']))).toEqual({ page: 'A' });
+      expect(result?.toBlock({ page: 'A' })).toBe('[[A]]');
+    });
+
     it('should fall back to the registered name for a custom component without a label', () => {
       customComponentRegistry.set('no-label', {
         id: 'no-label',

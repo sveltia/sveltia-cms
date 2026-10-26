@@ -2156,6 +2156,8 @@ config:
     unsupported_ignored_option: '`{$prop}` オプションは Sveltia CMS ではサポートされていません。このオプションは無視されます。'
     # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
     publish_mode_stages_ignored: '`publish_mode` の `stages` オプションは `editorial_workflow` 公開モードでのみ有効なため、`{$type}` では無視されます。'
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: 'このインラインコンポーネントの `pattern` に `m` または `s` フラグが付いているか改行に一致するようになっていますが、インラインコンポーネントは段落内でのみ照合されます。'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: '`picker_utc` と新しいタイムゾーンオプション (`input_timezone` または `output_utc`) の両方が設定されています。新しいオプションが優先されます。設定から `picker_utc` を削除することを検討してください。'
     # Don’t localize `localize_format` and `format`

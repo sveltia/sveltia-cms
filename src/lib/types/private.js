@@ -11,6 +11,7 @@
  * CustomField,
  * DateTimeFieldProps,
  * DateTimeInputType,
+ * EditorComponentDefinition,
  * EntryCollection,
  * Field,
  * FieldKeyPath,
@@ -22,6 +23,7 @@
  * FrontMatterFormat,
  * GitBackendName,
  * I18nFileStructure,
+ * InlineEditorComponentDefinition,
  * LocaleCode,
  * MediaField,
  * RasterImageFormat,
@@ -2337,6 +2339,25 @@
  * @property {readonly (string | number)[]} [customArgs] Arguments of a transformation that isn’t
  * built-in, which may be a custom one registered with `CMS.registerStringTransformation()`. Only
  * present if the arguments are given in parentheses and can be parsed.
+ */
+
+/**
+ * Options of a pattern-based inline editor component that the editor handles on its own, kept on
+ * its resolved definition. See {@link InlineEditorComponentDefinition}.
+ * @typedef {object} InlinePatternOptions
+ * @property {string} [trigger] Literal text every instance starts with.
+ * @property {InlineEditorComponentDefinition['onInsert']} [onInsert] Function called when the
+ * component is inserted from the toolbar.
+ * @property {InlineEditorComponentDefinition['onEdit']} [onEdit] Function called when the
+ * component is clicked.
+ */
+
+/**
+ * Editor component definition resolved with `getComponentDef()`. A pattern-based inline component
+ * is converted to the shape of a field-based one without fields, with its own options kept in
+ * `inlinePattern`.
+ * @typedef {EditorComponentDefinition & { inlinePattern?: InlinePatternOptions }}
+ * ResolvedEditorComponentDefinition
  */
 
 export {};

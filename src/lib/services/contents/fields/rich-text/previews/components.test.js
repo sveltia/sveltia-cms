@@ -419,6 +419,26 @@ describe('buildMarkdownWithPreviews', () => {
     expect(previewMap.get(key)).toBe('<span class="tag">foo</span>');
   });
 
+  it('should only match a pattern-based inline component where its trigger is found', () => {
+    /** @type {import('$lib/types/private').ResolvedEditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'x-mention',
+        label: 'Mention',
+        fields: [],
+        // Without the trigger, any word would be a mention
+        pattern: /@?(?<user>[a-z]+)/,
+        toBlock: ({ user }) => `@${user}`,
+        toPreview: ({ user }) => `<b>${user}</b>`,
+        inlinePattern: { trigger: '@' },
+      },
+    ];
+
+    const { markdown } = buildMarkdownWithPreviews('hi @bob, `@code`', componentDefs);
+
+    expect(markdown).toBe('hi <b>bob</b>, `@code`');
+  });
+
   it('should handle multiple instances of the same component', () => {
     /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
     const componentDefs = [

@@ -173,12 +173,14 @@ vi.mock('$lib/components/contents/details/fields/rich-text/editor-component.svel
 
 vi.mock('$lib/services/contents/fields/rich-text/components/utils', async (importOriginal) => ({
   ...(await importOriginal()),
-  isMultiLinePattern: vi.fn((pattern) => pattern.multiline || pattern.dotAll),
+  isInlineComponentDef: vi.fn(
+    ({ pattern, inlinePattern }) => !!inlinePattern || !(pattern.multiline || pattern.dotAll),
+  ),
   normalizeProps: vi.fn((props) => props),
 }));
 
 // Import mocked functions after they're mocked
-const { isMultiLinePattern } =
+const { isInlineComponentDef } =
   await import('$lib/services/contents/fields/rich-text/components/utils');
 
 describe('createCustomNodeClass', () => {
@@ -256,7 +258,7 @@ describe('createCustomNodeClass', () => {
     });
 
     it('should handle inline nodes correctly', () => {
-      vi.mocked(isMultiLinePattern).mockReturnValue(false);
+      vi.mocked(isInlineComponentDef).mockReturnValue(true);
 
       const CustomNode = createCustomNodeClass(mockComponentDef);
       const node = new CustomNode();
@@ -265,7 +267,7 @@ describe('createCustomNodeClass', () => {
     });
 
     it('should handle block nodes correctly', () => {
-      vi.mocked(isMultiLinePattern).mockReturnValue(true);
+      vi.mocked(isInlineComponentDef).mockReturnValue(false);
 
       const CustomNode = createCustomNodeClass(mockComponentDef);
       const node = new CustomNode();
@@ -390,7 +392,7 @@ describe('createCustomNodeClass', () => {
         pattern: /^```test[\s\S]*?```$/m,
       };
 
-      vi.mocked(isMultiLinePattern).mockReturnValue(true);
+      vi.mocked(isInlineComponentDef).mockReturnValue(false);
 
       const CustomNode = createCustomNodeClass(multilineComponentDef);
       const node = new CustomNode();

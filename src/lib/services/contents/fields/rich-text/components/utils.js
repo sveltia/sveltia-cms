@@ -2,6 +2,7 @@ import { isInternalPropKey } from '$lib/services/contents/fields/internal-props'
 import { flattenKeys, unflattenKeys } from '$lib/services/utils/object';
 
 /**
+ * @import { ResolvedEditorComponentDefinition } from '$lib/types/private';
  * @import { EditorComponentDefinition } from '$lib/types/public';
  */
 
@@ -12,6 +13,17 @@ import { flattenKeys, unflattenKeys } from '$lib/services/utils/object';
  */
 export const isMultiLinePattern = ({ multiline, dotAll, source }) =>
   multiline || dotAll || source.includes('[\\s\\S]') || source.includes('[\\S\\s]');
+
+/**
+ * Check if the given component is inline, which means it’s matched within a paragraph and rendered
+ * within the text. A pattern-based inline component always is; any other component is if its
+ * pattern is not multiline.
+ * @param {Pick<ResolvedEditorComponentDefinition, 'pattern' | 'inlinePattern'>} componentDef
+ * Component definition.
+ * @returns {boolean} Result.
+ */
+export const isInlineComponentDef = ({ pattern, inlinePattern }) =>
+  !!inlinePattern || !isMultiLinePattern(pattern);
 
 /**
  * Get the subject of each complex selector in the given selector list, the compound selector after

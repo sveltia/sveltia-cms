@@ -7,6 +7,7 @@ import {
   escapeTitle,
   getParentComponentNames,
   getSelectorTagNames,
+  isInlineComponentDef,
   isMultiLinePattern,
   isValidSelector,
   normalizeProps,
@@ -78,6 +79,17 @@ describe('utils', () => {
       const result = isMultiLinePattern(pattern);
 
       expect(result).toBe(true);
+    });
+  });
+
+  describe('isInlineComponentDef', () => {
+    it('should tell a component with a single-line pattern', () => {
+      expect(isInlineComponentDef({ pattern: /\[\[(.+?)\]\]/ })).toBe(true);
+      expect(isInlineComponentDef({ pattern: /^<aside>[\s\S]*?<\/aside>$/m })).toBe(false);
+    });
+
+    it('should always tell a pattern-based inline component', () => {
+      expect(isInlineComponentDef({ pattern: /a[\s\S]b/s, inlinePattern: {} })).toBe(true);
     });
   });
 

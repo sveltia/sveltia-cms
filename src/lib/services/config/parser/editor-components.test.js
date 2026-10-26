@@ -87,4 +87,22 @@ describe('parseEditorComponent()', () => {
     check({ mode: 'dialog', fields: [] });
     expect(addMessage).not.toHaveBeenCalled();
   });
+
+  test('warns about a pattern-based inline component with a multiline pattern', () => {
+    check({ type: 'inline', pattern: /\[\[[\s\S]+?\]\]/, fields: undefined });
+    check({ type: 'inline', pattern: /^@\w+$/m, fields: undefined });
+    expect(addMessage).toHaveBeenCalledTimes(2);
+    expect(addMessage).toHaveBeenCalledWith({
+      type: 'warning',
+      strKey: 'inline_component_multiline_pattern',
+      context: { cmsConfig, componentName: 'mention' },
+      collectors,
+    });
+  });
+
+  test('says nothing about a pattern-based inline component with a single-line pattern', () => {
+    // The fields aren’t checked, even with the `inline` mode, as the component has none
+    check({ type: 'inline', mode: 'inline', pattern: /@\w+/, fields: undefined });
+    expect(addMessage).not.toHaveBeenCalled();
+  });
 });

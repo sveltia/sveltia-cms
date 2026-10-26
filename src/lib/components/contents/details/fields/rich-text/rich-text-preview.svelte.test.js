@@ -185,7 +185,7 @@ describe('RichTextPreview', () => {
       // eslint-disable-next-line jsdoc/require-jsdoc
       toBlock: ({ text }) => `:::note ${text}`,
       // eslint-disable-next-line jsdoc/require-jsdoc
-      toPreview: ({ text }) => {
+      toPreview: (/** @type {Record<string, any>} */ { text }) => {
         const element = document.createElement('strong');
 
         element.className = 'note-preview';

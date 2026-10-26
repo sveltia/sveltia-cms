@@ -1,4 +1,5 @@
 import { getImmutable, immutableLoaded } from '$lib/services/api/immutable';
+import { findInlineMatches } from '$lib/services/contents/fields/rich-text/components/inline-pattern';
 import { supportsHTML } from '$lib/services/contents/fields/rich-text/components/utils';
 import { IMAGE_OR_LINKED_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
 import {
@@ -12,6 +13,7 @@ import { getOrCreate } from '$lib/services/utils/cache';
 /**
  * @import { List, MapOf } from 'immutable';
  * @import { ReactElement } from 'react';
+ * @import { ResolvedEditorComponentDefinition } from '$lib/types/private';
  * @import {
  * ApiAsset,
  * EditorComponentDefinition,
@@ -171,7 +173,7 @@ const getGlobalPattern = (pattern) => {
 
 /**
  * @typedef {object} ComponentMatch
- * @property {EditorComponentDefinition} def Matched component definition.
+ * @property {ResolvedEditorComponentDefinition} def Matched component definition.
  * @property {RegExpExecArray} match Match result.
  * @property {number} index Start index of the match.
  * @property {number} end End index of the match (exclusive).
@@ -204,7 +206,7 @@ const isMatchWithinPreviewValues = ({ match, index, end }, regions) =>
  * nested `richtext` field, including any nested component syntax, rather than a partially
  * substituted string. This makes the result independent of the component registration order.
  * @param {string} string String to search.
- * @param {EditorComponentDefinition[]} componentDefs Component definitions.
+ * @param {ResolvedEditorComponentDefinition[]} componentDefs Component definitions.
  * @param {PreviewRegion[]} [regions] Regions of the string previews substituted on the previous
  * pass, if any. On a later pass, only a match within one of these regions that comes from a
  * field value is kept; the rest of the string has already been scanned.
@@ -218,7 +220,13 @@ const findOutermostMatches = (string, componentDefs, regions) => {
   const codeRanges = getCodeRanges(string);
 
   componentDefs.forEach((def, order) => {
-    string.matchAll(getGlobalPattern(def.pattern)).forEach((match) => {
+    // A pattern-based inline component is only matched where its trigger text is found, if any,
+    // just like in the rich text editor
+    const matches = def.inlinePattern
+      ? findInlineMatches(string, def.pattern, def.inlinePattern)
+      : string.matchAll(getGlobalPattern(def.pattern));
+
+    matches.forEach((match) => {
       const candidate = {
         def,
         match,
@@ -479,7 +487,7 @@ const substituteMatches = (context, { string, matches }) => {
  * A string preview isn’t searched for nested components; an element preview can render its nested
  * content with `CMS.renderRichText()`.
  * @param {string} html The raw HTML field value.
- * @param {EditorComponentDefinition[]} componentDefs The resolved component definitions.
+ * @param {ResolvedEditorComponentDefinition[]} componentDefs The resolved component definitions.
  * @param {Map<string, ComponentPreview>} [previousPreviewMap] Preview map from the previous run.
  * @param {GetAsset} [getAsset] Asset getter passed to `toPreview()`.
  * @returns {{
@@ -566,7 +574,7 @@ const buildHTMLWithPreviews = (html, componentDefs, previousPreviewMap, getAsset
  * not any the preview template reproduces by itself. An element preview, on the other hand, can
  * render its nested content with `CMS.renderRichText()`, which runs this whole process recursively.
  * @param {string | undefined} currentValue The raw Markdown field value.
- * @param {EditorComponentDefinition[]} componentDefs The resolved component definitions.
+ * @param {ResolvedEditorComponentDefinition[]} componentDefs The resolved component definitions.
  * @param {Map<string, ComponentPreview>} [previousPreviewMap] Preview map from the previous run, if
  * any. Keys are content hashes, so an entry can be reused as long as the matched block is
  * unchanged. This avoids calling `toPreview()` again for every unmodified component on each

@@ -1,17 +1,20 @@
 import { IMPORT_UPDATE_TAG } from '@sveltia/ui';
 import {
   $hasUpdateTag,
+  $createTextNode as createTextNode,
   DecoratorNode,
   getNearestEditorFromDOMNode,
+  $getNodeByKey as getNodeByKey,
   HISTORY_MERGE_TAG,
   SKIP_DOM_SELECTION_TAG,
 } from 'lexical';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
 import EditorComponent from '$lib/components/contents/details/fields/rich-text/editor-component.svelte';
+import InlinePatternComponent from '$lib/components/contents/details/fields/rich-text/inline-pattern-component.svelte';
 import {
   getSelectorTagNames,
-  isMultiLinePattern,
+  isInlineComponentDef,
   normalizeProps,
   supportsHTML,
 } from '$lib/services/contents/fields/rich-text/components/utils';
@@ -32,10 +35,16 @@ import {
  * SerializedLexicalNode,
  * } from 'lexical';
  * @import { ReactElement } from 'react';
- * @import { EditorComponentDefinition } from '$lib/types/public';
+ * @import { ResolvedEditorComponentDefinition } from '$lib/types/private';
  */
 
 const TAG_NAME_REGEX = /^<(?<tagName>[a-z]+)/i;
+/**
+ * Mounted pattern-based inline components, keyed by their element, so a node can hand the latest
+ * data to its component in `updateDOM()`, which only receives the element.
+ * @type {WeakMap<HTMLElement, { setValues: (values: Record<string, any>) => void }>}
+ */
+const inlineComponents = new WeakMap();
 
 /**
  * Get the name of the HTML tag that a component renders, so that the equivalent tag in a pasted
@@ -84,7 +93,7 @@ const callWithEmptyProps = (method, args = []) => {
 
 /**
  * Dynamically create a custom {@link DecoratorNode} class.
- * @param {EditorComponentDefinition} componentDef Component definition passed with the
+ * @param {ResolvedEditorComponentDefinition} componentDef Component definition passed with the
  * `CMS.registerEditorComponent()` API.
  * @returns {any} Custom node class.
  */
@@ -97,16 +106,19 @@ export const createCustomNodeClass = (componentDef) => {
     summary,
     thumbnail,
     fields,
-    pattern,
     toBlock,
     toPreview,
     htmlSelector,
     fromBlockHTML,
     toBlockHTML,
+    inlinePattern,
   } = componentDef;
 
-  const inline = !isMultiLinePattern(pattern);
+  const inline = isInlineComponentDef(componentDef);
   const htmlSupported = supportsHTML(componentDef);
+  // A pattern-based inline component has no fields to fill in from a pasted element, so it’s never
+  // imported from one
+  const guessTagName = !htmlSupported && !inlinePattern;
 
   // The selector has been validated when the component was registered
   const htmlTagNames = htmlSupported
@@ -114,12 +126,12 @@ export const createCustomNodeClass = (componentDef) => {
     : [];
 
   // Without the HTML syntax, guess the element from the preview to convert a pasted element
-  const preview = htmlSupported
-    ? undefined
-    : callWithEmptyProps(toPreview, [getNoAsset, getComponentFieldList(componentDef)]);
+  const preview = guessTagName
+    ? callWithEmptyProps(toPreview, [getNoAsset, getComponentFieldList(componentDef)])
+    : undefined;
 
-  const block = htmlSupported ? undefined : callWithEmptyProps(toBlock);
-  const tagName = htmlSupported ? undefined : getTagName(preview, block);
+  const block = guessTagName ? callWithEmptyProps(toBlock) : undefined;
+  const tagName = guessTagName ? getTagName(preview, block) : undefined;
 
   /**
    * Get the field values of the component from the given element, using the `htmlSelector` and
@@ -147,6 +159,15 @@ export const createCustomNodeClass = (componentDef) => {
      * @type {Record<string, any> | undefined}
      */
     __props;
+
+    /**
+     * Text that was selected when a pattern-based inline component with the `onInsert` option
+     * was inserted from the toolbar, which the component replaces once `onInsert` has returned its
+     * data. It’s only set on the node created for the insertion, and not copied to a clone, so
+     * `onInsert` is called once.
+     * @type {string | undefined}
+     */
+    __selectedText;
 
     /**
      * Create a new {@link CustomNode} instance.
@@ -221,6 +242,7 @@ export const createCustomNodeClass = (componentDef) => {
       const isAddedByUser =
         !!lexicalEditor && !$hasUpdateTag(IMPORT_UPDATE_TAG) && !$hasUpdateTag(HISTORY_MERGE_TAG);
 
+      const { __selectedText: selectedText } = this;
       /** @type {HTMLElement} */
       let wrapper;
       /** @type {LexicalEditor | null} */
@@ -303,28 +325,102 @@ export const createCustomNodeClass = (componentDef) => {
         );
       };
 
-      component = mount(EditorComponent, {
-        target: document.createElement('div'),
-        props: {
-          componentName,
-          // `getComponentDef()` falls back to the registered name if the label is omitted
-          label: /** @type {string} */ (label),
-          collapsed,
-          mode,
-          inline,
-          summary,
-          thumbnail,
-          fields,
-          values: this.__props,
-          onChange,
-        },
-      });
+      /**
+       * Get the data of a new pattern-based inline component with its `onInsert` function, then
+       * fill in the component, or restore the text it has replaced if the insertion is cancelled.
+       * The update is merged into the insertion in the history, so the whole insertion is undone at
+       * once.
+       * @param {string} replacedText Text the component has replaced.
+       */
+      const insertInlineComponent = async (replacedText) => {
+        /** @type {unknown} */
+        let data;
+
+        try {
+          // The text is only remembered for a component with the function
+          const { onInsert } = /** @type {Required<NonNullable<typeof inlinePattern>>} */ (
+            inlinePattern
+          );
+
+          data = await onInsert({ selectedText: replacedText });
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error(error);
+        }
+
+        editor ??= getNearestEditorFromDOMNode(wrapper);
+
+        editor?.update(
+          () => {
+            const node = /** @type {CustomNode | null} */ (getNodeByKey(this.getKey()));
+
+            // A component removed while waiting takes its element out of the editor, which then
+            // isn’t found above, so this is only a safeguard
+            /* v8 ignore next 3 */
+            if (!node) {
+              return;
+            }
+
+            if (data && typeof data === 'object') {
+              node.getWritable().__props = /** @type {Record<string, any>} */ (data);
+              node.selectNext(0, 0);
+            } else if (replacedText) {
+              const textNode = createTextNode(replacedText);
+
+              node.replace(textNode);
+              textNode.select(0, replacedText.length);
+            } else {
+              node.selectPrevious();
+              node.remove();
+            }
+          },
+          { discrete: true, tag: HISTORY_MERGE_TAG },
+        );
+
+        // `onInsert` may have opened a dialog, which has taken the focus
+        editor?.focus();
+      };
+
+      component = inlinePattern
+        ? mount(InlinePatternComponent, {
+            target: document.createElement('div'),
+            props: {
+              componentName,
+              // `getComponentDef()` falls back to the registered name if the label is omitted
+              label: /** @type {string} */ (label),
+              toPreview,
+              toBlock,
+              onEdit: inlinePattern.onEdit,
+              values: this.__props,
+              onChange,
+            },
+          })
+        : mount(EditorComponent, {
+            target: document.createElement('div'),
+            props: {
+              componentName,
+              // `getComponentDef()` falls back to the registered name if the label is omitted
+              label: /** @type {string} */ (label),
+              collapsed,
+              mode,
+              inline,
+              summary,
+              thumbnail,
+              fields,
+              values: this.__props,
+              onChange,
+            },
+          });
 
       // Wait for the component to be mounted
       // @see https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
       flushSync();
 
       wrapper = /** @type {HTMLElement} */ (component.getElement());
+
+      if (inlinePattern) {
+        inlineComponents.set(wrapper, /** @type {any} */ (component));
+      }
 
       window.requestAnimationFrame(() => {
         // Lexical inserts the element as soon as it’s created, so one that’s still detached won’t
@@ -338,10 +434,16 @@ export const createCustomNodeClass = (componentDef) => {
           return;
         }
 
-        // Focus the wrapper of a new component if the parent field is editable. This is necessary
-        // because `i18n: duplicate` field is rendered as a read-only textbox in non-default
-        // locales, which may steal focus from the wrapper of the default locale
-        if (isAddedByUser && wrapper.closest('[role="textbox"][aria-readonly="false"]')) {
+        if (inlinePattern) {
+          // A pattern-based inline component leaves the caret in the text after it, where Lexical
+          // has put it. One inserted from the toolbar with the `onInsert` option gets its data now
+          if (isAddedByUser && selectedText !== undefined) {
+            insertInlineComponent(selectedText);
+          }
+        } else if (isAddedByUser && wrapper.closest('[role="textbox"][aria-readonly="false"]')) {
+          // Focus the wrapper of a new component if the parent field is editable. This is necessary
+          // because `i18n: duplicate` field is rendered as a read-only textbox in non-default
+          // locales, which may steal focus from the wrapper of the default locale
           wrapper.focus();
         }
 
@@ -467,10 +569,18 @@ export const createCustomNodeClass = (componentDef) => {
     }
 
     /**
-     * Update the DOM.
-     * @returns {boolean} Result.
+     * Update the DOM. A pattern-based inline component shows the data of the latest node, which
+     * changes when `onInsert` or `onEdit` returns data, or the change is undone or redone; the
+     * element is kept, and the component is told about the data instead.
+     * @param {CustomNode} prevNode Previous version of the node.
+     * @param {HTMLElement} dom Element created with {@link createDOM}.
+     * @returns {boolean} Whether to create the element again, which is never needed.
      */
-    updateDOM() {
+    updateDOM(prevNode, dom) {
+      if (inlinePattern && prevNode.__props !== this.__props) {
+        inlineComponents.get(dom)?.setValues(this.__props ?? {});
+      }
+
       return false;
     }
   }

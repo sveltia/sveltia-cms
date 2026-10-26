@@ -623,4 +623,63 @@ describe('RichTextEditor', () => {
       .poll(() => props.currentValue)
       .toContain('![Photo](https://example.com/photo.png)');
   });
+
+  test('edits and inserts a pattern-based inline component', async () => {
+    const onEdit = vi.fn(async () => ({ page: 'About' }));
+    const onInsert = vi.fn(async () => ({ page: 'Now' }));
+
+    customComponentRegistry.set('wikilink', {
+      id: 'wikilink',
+      label: 'Wikilink',
+      type: 'inline',
+      pattern: /\[\[(?<page>[^\]]+)\]\]/,
+      trigger: '[[',
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      toInline: ({ page: name = '' }) => `[[${name}]]`,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      toPreview: ({ page: name = '' }) => `<a href="/${name}">${name}</a>`,
+      onEdit,
+      onInsert,
+    });
+
+    try {
+      const { props } = await renderEditor('See [[Home]] now');
+      const editor = page.getByRole('textbox');
+      const wikilink = editor.getByRole('button', { name: 'Wikilink' });
+
+      await expect.element(wikilink).toHaveTextContent('Home');
+
+      // Clicking the component edits its data
+      await wikilink.click();
+      await expect.element(wikilink).toHaveTextContent('About');
+      expect(onEdit).toHaveBeenCalledExactlyOnceWith({ data: { page: 'Home' } });
+      await expect.poll(() => props.currentValue).toBe('See [[About]] now');
+
+      // Select the last word, and let the editor pick up the selection
+      const textNode = /** @type {Text} */ (
+        [...editor.element().querySelectorAll('span[data-lexical-text]')].at(-1)?.firstChild
+      );
+
+      const range = document.createRange();
+
+      range.setStart(textNode, 1);
+      range.setEnd(textNode, 4);
+      window.getSelection()?.removeAllRanges();
+      window.getSelection()?.addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+      await new Promise((resolve) => {
+        requestAnimationFrame(resolve);
+      });
+
+      // The component inserted from the toolbar replaces the selected text
+      await page.getByRole('button', { name: 'Insert' }).click();
+      await page.getByRole('menuitem', { name: 'Wikilink' }).click();
+      await vi.waitFor(() =>
+        expect(onInsert).toHaveBeenCalledExactlyOnceWith({ selectedText: 'now' }),
+      );
+      await expect.poll(() => props.currentValue).toBe('See [[About]] [[Now]]');
+    } finally {
+      customComponentRegistry.delete('wikilink');
+    }
+  });
 });

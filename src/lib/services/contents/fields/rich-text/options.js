@@ -10,8 +10,8 @@ import { supportsHTML } from '$lib/services/contents/fields/rich-text/components
 
 /**
  * @import { TextEditorNodeType } from '@sveltia/ui';
+ * @import { ResolvedEditorComponentDefinition } from '$lib/types/private';
  * @import {
- * EditorComponentDefinition,
  * MarkdownField,
  * RichTextEditorButtonName,
  * RichTextField,
@@ -47,10 +47,10 @@ export const getEditorComponentNames = (fieldConfig) => {
  * Get the definitions of the editor components enabled for the given RichText/Markdown field,
  * leaving out any unknown component.
  * @param {MarkdownField | RichTextField} fieldConfig Field configuration.
- * @returns {EditorComponentDefinition[]} Component definitions.
+ * @returns {ResolvedEditorComponentDefinition[]} Component definitions.
  */
 export const getEditorComponentDefs = (fieldConfig) =>
-  /** @type {EditorComponentDefinition[]} */ (
+  /** @type {ResolvedEditorComponentDefinition[]} */ (
     getEditorComponentNames(fieldConfig)
       .map((name) => getComponentDef(name))
       .filter((def) => !!def)
@@ -104,7 +104,7 @@ export const getRootFieldName = (keyPath) => /** @type {string} */ (keyPath.matc
  * option. See {@link resolveAllowNestedComponents}.
  * @param {boolean} args.inEditorComponent Whether the editor is within an editor component.
  * @param {string[]} args.parentComponentNames IDs of the editor components the editor is within.
- * @returns {EditorComponentDefinition[]} Component definitions.
+ * @returns {ResolvedEditorComponentDefinition[]} Component definitions.
  */
 export const getAvailableComponentDefs = ({
   fieldConfig,

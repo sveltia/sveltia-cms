@@ -279,4 +279,70 @@ describe('CMS.registerEditorComponent()', () => {
     });
     expect(preloadImmutable).toHaveBeenCalledOnce();
   });
+
+  describe('pattern-based inline components', () => {
+    const inlineDefinition = {
+      id: 'wikilink',
+      label: 'Wikilink',
+      type: /** @type {const} */ ('inline'),
+      pattern: /\[\[(.+?)\]\]/,
+      trigger: '[[',
+      fromInline: (/** @type {RegExpMatchArray} */ match) => ({ page: match[1] }),
+      toInline: ({ page = '' }) => `[[${page}]]`,
+      toPreview: ({ page = '' }) => `<a>${page}</a>`,
+      onInsert: async () => ({ page: 'A' }),
+      onEdit: async () => null,
+    };
+
+    test('registers a valid definition without fields', async () => {
+      const { customComponentRegistry } = await import('$lib/services/api/registries');
+
+      expect(() => registerEditorComponent(inlineDefinition)).not.toThrow();
+      expect(customComponentRegistry.get('wikilink')).toBe(inlineDefinition);
+    });
+
+    test('accepts `fromBlock` and `toBlock` in place of the inline functions', () => {
+      expect(() =>
+        registerEditorComponent(
+          /** @type {any} */ ({
+            id: 'legacy',
+            type: 'inline',
+            pattern: /@\w+/,
+            fromBlock: () => ({}),
+            toBlock: () => '',
+          }),
+        ),
+      ).not.toThrow();
+    });
+
+    test('throws if `toInline` is missing', () => {
+      expect(() =>
+        registerEditorComponent({ ...inlineDefinition, toInline: /** @type {any} */ (undefined) }),
+      ).toThrow('The `definition.toInline` must be a function');
+    });
+
+    test.each(['fromInline', 'toPreview', 'onInsert', 'onEdit'])(
+      'throws if `%s` is not a function',
+      (name) => {
+        expect(() => registerEditorComponent({ ...inlineDefinition, [name]: 'x' })).toThrow(
+          `The \`definition.${name}\` must be a function`,
+        );
+      },
+    );
+
+    test('throws if `trigger` is not a non-empty string', () => {
+      expect(() =>
+        registerEditorComponent({ ...inlineDefinition, trigger: /** @type {any} */ (1) }),
+      ).toThrow('The `definition.trigger` must be a non-empty string');
+      expect(() => registerEditorComponent({ ...inlineDefinition, trigger: '' })).toThrow(
+        TypeError,
+      );
+    });
+
+    test('throws if `pattern` is not a RegExp', () => {
+      expect(() =>
+        registerEditorComponent({ ...inlineDefinition, pattern: /** @type {any} */ ('x') }),
+      ).toThrow('The `definition.pattern` must be a RegExp');
+    });
+  });
 });

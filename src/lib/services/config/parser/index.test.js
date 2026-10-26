@@ -280,6 +280,38 @@ describe('Config Parser', () => {
       );
     });
 
+    it('should not parse fields for a pattern-based inline component', () => {
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: { name: 'github', repo: 'user/repo' },
+        media_folder: '/media',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      mockCustomComponentRegistry.set('wikilink', {
+        type: 'inline',
+        pattern: /\[\[(.+?)\]\]/,
+        // eslint-disable-next-line jsdoc/require-jsdoc
+        toInline: () => '',
+      });
+
+      parseCmsConfig(config, collectors);
+
+      expect(
+        mockParseFields.mock.calls.filter(([, context]) => context?.componentName === 'wikilink'),
+      ).toEqual([]);
+      expect([...collectors.errors]).toEqual([]);
+    });
+
     it('should check the options of custom editor components', () => {
       const collectors = createCollectors();
 

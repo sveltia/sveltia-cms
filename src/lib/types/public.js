@@ -2731,6 +2731,78 @@
  */
 
 /**
+ * Context passed to the `onInsert` function of an inline editor component.
+ * @typedef {object} InlineEditorComponentInsertContext
+ * @property {string} selectedText Text selected in the rich text editor when the component is
+ * inserted, which the component replaces. An empty string if nothing is selected.
+ */
+
+/**
+ * Context passed to the `onEdit` function of an inline editor component.
+ * @typedef {object} InlineEditorComponentEditContext
+ * @property {Record<string, any>} data Current data of the component.
+ */
+
+/**
+ * Pattern-based inline editor component options, compatible with Decap CMS. Unlike the
+ * {@link EditorComponentDefinition}, the component has no fields to edit: its data comes from the
+ * Markdown it matches within a paragraph, and the editor shows its preview right within the text.
+ * The data can be changed with the `onInsert` and `onEdit` functions, e.g. to pick a page to link
+ * to in a custom dialog. Such a component is available in a RichText or Markdown field with the
+ * default `markdown` format, but not with the `html` format.
+ * @typedef {object} InlineEditorComponentDefinition
+ * @property {string} id Unique identifier for the component.
+ * @property {string} [label] Label of the component to be displayed in the editor UI. Default: the
+ * `id` value.
+ * @property {string} [icon] Name of a [Material Symbols
+ * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
+ * @property {'inline'} type Component type, which must be `inline`.
+ * @property {RegExp} pattern Regular expression to find the component within a paragraph, e.g.
+ * `/\[\[(?<page>[^\]]+)\]\]/` for a wikilink. A leading `^` is ignored, and so are the `g` and
+ * `y` flags. Use a non-greedy quantifier, like `.+?`, or a specific character class, so the match
+ * doesn’t run on to the next instance on the same line.
+ * @property {string} [trigger] Literal text every instance starts with, e.g. `[[` or `@`. If
+ * given, the editor finds the instances by looking for this text, and only matches the `pattern`
+ * where it’s found, instead of running the pattern across the paragraph. Unlike the `trigger`
+ * option of a {@link EditorComponentDefinition}, it doesn’t choose the toolbar UI: the component
+ * is always placed under the Insert menu.
+ * @property {(match: RegExpMatchArray) => Record<string, any>} [fromInline] Function to convert
+ * the matching result to the component data. This can be omitted if the `pattern` regex contains
+ * named capturing groups, which are then used as the data.
+ * @property {(data: Record<string, any>) => string} toInline Function to convert the component
+ * data to Markdown content. It’s called with an empty object for a component inserted without
+ * `onInsert`, so it must handle missing values.
+ * @property {(data: Record<string, any>, getAsset: GetAsset) => string | HTMLElement |
+ * ReactElement} [toPreview] Function to convert the component data to its preview, which is shown
+ * both within the text in the rich text editor and in the preview pane. A string is
+ * parsed as inline Markdown/HTML and sanitized in the editor; the preview pane handles the value
+ * like the one of an {@link EditorComponentDefinition}. Without this function, the editor shows the
+ * output of `toInline` as plain text.
+ * @property {(context: InlineEditorComponentInsertContext) => Promise<Record<string, any> | null |
+ * undefined> | Record<string, any> | null | undefined} [onInsert] Function called when the
+ * component is inserted from the toolbar in the rich text mode, returning the data of the new
+ * component. The component replaces the selected text. Return `null` or `undefined` to cancel the
+ * insertion, which leaves the selected text as is. Without this function, the component is
+ * inserted with empty data. In the plain text mode, the output of `toInline` for empty data is
+ * inserted instead.
+ * @property {(context: InlineEditorComponentEditContext) => Promise<Record<string, any> | null |
+ * undefined> | Record<string, any> | null | undefined} [onEdit] Function called when the component
+ * is clicked in the rich text editor, or activated with the Enter or Space key, returning the new
+ * data of the component. Return `null` or `undefined` to leave the component unchanged. Without
+ * this function, the component can’t be edited in the rich text mode, only removed.
+ * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
+ * @see https://sveltiacms.app/en/docs/api/editor-components
+ */
+
+/**
+ * Custom rich text editor component options passed to `CMS.registerEditorComponent()`: either a
+ * field-based component, or a pattern-based inline component with the `type` option set to
+ * `inline`.
+ * @typedef {EditorComponentDefinition | InlineEditorComponentDefinition}
+ * CustomEditorComponentDefinition
+ */
+
+/**
  * Options for the `CMS.renderRichText()` API.
  * @typedef {object} RenderRichTextOptions
  * @property {Partial<Omit<RichTextField, 'widget'>>} [fieldConfig] RichText field options to be
