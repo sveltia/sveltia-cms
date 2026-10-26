@@ -19,7 +19,9 @@ vi.mock('$lib/services/assets/media-field', () => {
   return {
     getMediaFieldSource,
     // Like the real one, fall back to the field’s own folder when no component folder applies
-    getRichTextMediaSource: vi.fn(({ componentNames, ...args }) => getMediaFieldSource(args)),
+    getRichTextMediaSource: vi.fn(({ componentNames: _componentNames, ...args }) =>
+      getMediaFieldSource(args),
+    ),
   };
 });
 

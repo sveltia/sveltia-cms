@@ -288,7 +288,7 @@ describe('Token refresh across tabs', () => {
   });
 
   it('should take a stored token without a refresh token', async () => {
-    const { refreshToken, ...account } = ALICE;
+    const { refreshToken: _refreshToken, ...account } = ALICE;
     const tab = await openTab(account);
     const [onStorageChange] = storageListeners;
 

@@ -486,6 +486,7 @@ describe('Test custom transformations', () => {
     expect(
       applyCustomTransformation({
         method: 'thenable',
+        // oxlint-disable-next-line unicorn/no-thenable -- a thenable is what the test is about
         transform: vi.fn(() => ({ then })),
         value: 'value',
       }),

@@ -163,14 +163,16 @@ export const createMemoryDirectoryHandle = (name = 'root') => {
 
       children.delete(entryName);
     },
+    // Each listing is a snapshot, so a child removed or added while it’s iterated, e.g. by a
+    // `removeEntry()` call between two steps, doesn’t change it
     keys: async function* keys() {
-      yield* [...children.keys()];
+      yield* Array.from(children.keys());
     },
     values: async function* values() {
-      yield* [...children.values()];
+      yield* Array.from(children.values());
     },
     entries: async function* entries() {
-      yield* [...children.entries()];
+      yield* Array.from(children.entries());
     },
     isSameEntry: async (/** @type {any} */ other) => other === handle,
   };

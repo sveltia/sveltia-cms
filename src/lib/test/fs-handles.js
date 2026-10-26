@@ -76,7 +76,7 @@ export const createMockDirectoryHandle = (name = 'root', children = new Map()) =
   // Lists the children, so a name spelled in another Unicode normalization form can be looked up
   keys: /** @type {any} */ (
     vi.fn(async function* keys() {
-      yield* [...children.keys()];
+      yield* children.keys();
     })
   ),
   values: vi.fn(),
