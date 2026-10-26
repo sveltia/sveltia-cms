@@ -4,7 +4,7 @@ export const BACKEND_LABEL = 'Gitea / Forgejo';
 /**
  * Name of the backend Decap CMS 3.15 introduced for Forgejo. It’s served by the same
  * implementation, except that the instance URL is derived from the required `api_root` option.
- * @see https://decapcms.org/docs/forgejo-backend/
+ * @see https://decapcms.org/docs/gitea-backend/#forgejo-backend
  */
 export const FORGEJO_BACKEND_NAME = 'forgejo';
 export const FORGEJO_BACKEND_LABEL = 'Forgejo';

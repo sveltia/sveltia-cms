@@ -705,7 +705,8 @@ describe('RichTextEditor', () => {
     try {
       const { props } = await renderEditor('See [[Home]] now');
       const editor = page.getByRole('textbox');
-      const wikilink = editor.getByRole('button', { name: 'Wikilink' });
+      // The button is named after its preview, which changes, and described with the label
+      const wikilink = editor.getByTitle('Wikilink');
 
       await expect.element(wikilink).toHaveTextContent('Home');
 

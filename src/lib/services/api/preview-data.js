@@ -235,7 +235,8 @@ const getReferencedEntryLookup = (entries, locale, fieldConfig) =>
  * Object or List field passes the metadata of its subfields up under its own name, merging the
  * metadata of all the List items. A List item index is therefore dropped, along with the index of a
  * multi-value field like a Relation field with the `multiple` option, except that a List field with
- * a single `field` passes the subfield’s metadata up under the subfield’s name.
+ * a single `field` passes the subfield’s metadata up under the subfield’s name. A numeric segment
+ * is only an index if it doesn’t name a subfield of an Object field, e.g. `years.2024`.
  * @param {object} args Arguments.
  * @param {Omit<GetFieldArgs, 'keyPath'>} args.getFieldArgs Arguments for getField function.
  * @param {FieldKeyPath} args.keyPath Field key path, e.g. `books.0.author` or `tags.0`.
@@ -245,7 +246,8 @@ export const getMetaDataPath = ({ getFieldArgs, keyPath }) => {
   const segments = keyPath.split('.');
 
   return segments.flatMap((segment, index) => {
-    if (!isNumeric(segment)) {
+    // A top-level segment is always a field name
+    if (!index || !isNumeric(segment)) {
       return [segment];
     }
 
@@ -253,6 +255,10 @@ export const getMetaDataPath = ({ getFieldArgs, keyPath }) => {
       ...getFieldArgs,
       keyPath: /** @type {FieldKeyPath} */ (segments.slice(0, index).join('.')),
     });
+
+    if (parentField?.widget === 'object') {
+      return [segment];
+    }
 
     const { field: subField } = /** @type {ListFieldWithSubField} */ (parentField ?? {});
 
@@ -326,13 +332,22 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
         refEntry?.locales._default
       )?.content;
 
-      const legacyKey = key.replace(ITEM_INDEX_SUFFIX_REGEX, '');
+      const metaDataPath = getMetaDataPath({ getFieldArgs, keyPath });
 
-      // A top-level field’s legacy key is the same as its metadata path
-      const paths = [
-        getMetaDataPath({ getFieldArgs, keyPath }),
-        ...(legacyKey.includes('.') ? [[legacyKey]] : []),
-      ];
+      // The legacy key drops a trailing index, but not a numeric subfield name, which the metadata
+      // path keeps
+      const legacyKey =
+        metaDataPath.at(-1) === key.split('.').at(-1)
+          ? key
+          : key.replace(ITEM_INDEX_SUFFIX_REGEX, '');
+
+      // Keep the legacy key unless it’s the same as the metadata path, as for a top-level field. It
+      // differs for a nested field, e.g. `books.0.author`, and for the single subfield of a List
+      // field, e.g. `tags`, whose metadata path is `['tags', 'tag']`
+      const paths =
+        metaDataPath.length === 1 && metaDataPath[0] === legacyKey
+          ? [metaDataPath]
+          : [metaDataPath, [legacyKey]];
 
       paths.forEach((path) => {
         const fieldMetaData = [...path, refCollection].reduce((parent, name) => {

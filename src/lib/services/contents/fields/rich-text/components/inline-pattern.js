@@ -137,7 +137,7 @@ export const findInlineMatches = (string, pattern, { trigger } = {}, limit = Inf
 /**
  * Create the regular expression a text match transformer imports an inline component with. Lexical
  * matches the text with `String.prototype.match()`, which calls the `Symbol.match` method, so the
- * method is replaced to find the first instance with {@link findInlineMatches}, honouring the
+ * method is replaced to find the first instance with {@link findInlineMatches}, honoring the
  * `trigger` option.
  * @param {RegExp} pattern Pattern returned by {@link getInlinePattern}.
  * @param {InlinePatternOptions} options Options of the component.

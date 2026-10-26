@@ -63,20 +63,32 @@ describe('InlinePatternComponent', () => {
   test('renders the string preview within the text', async () => {
     await renderComponent({});
 
-    const wrapper = page.getByRole('img', { name: 'Wikilink' });
+    const wrapper = page.getByRole('group', { name: 'Wikilink' });
 
     await expect.element(wrapper).toHaveAttribute('contenteditable', 'false');
     await expect.element(wrapper).toHaveAttribute('data-component-name', 'x-wikilink');
     await expect.element(wrapper).toHaveAttribute('title', 'Wikilink');
     await expect.element(wrapper).toHaveTextContent('Home');
+    // The preview stays readable by assistive technology
     await expect
-      .element(wrapper.getByRole('link', { includeHidden: true }))
+      .element(wrapper.getByRole('link', { name: 'Home' }))
       .toHaveAttribute('href', '/Home');
+  });
+
+  test('takes the accessible name of an editable component from its preview', async () => {
+    await renderComponent({ onEdit: vi.fn(async () => null) });
+
+    const button = page.getByRole('button', { name: 'Home' });
+
+    await expect.element(button).toHaveAccessibleDescription('Wikilink');
+    await expect.element(button).not.toHaveAttribute('aria-label');
   });
 
   test('shows the Markdown without a preview', async () => {
     await renderComponent({ toPreview: undefined });
-    await expect.element(page.getByRole('img', { name: 'Wikilink' })).toHaveTextContent('[[Home]]');
+    await expect
+      .element(page.getByRole('group', { name: 'Wikilink' }))
+      .toHaveTextContent('[[Home]]');
   });
 
   test('renders a React element preview', async () => {
@@ -90,7 +102,7 @@ describe('InlinePatternComponent', () => {
 
   test('can’t be edited without `onEdit`, only removed', async () => {
     const { onChange } = await renderComponent({});
-    const wrapper = page.getByRole('img', { name: 'Wikilink' });
+    const wrapper = page.getByRole('group', { name: 'Wikilink' });
 
     await wrapper.click();
     expect(onChange).not.toHaveBeenCalled();
@@ -105,7 +117,7 @@ describe('InlinePatternComponent', () => {
   test('updates the data with the result of `onEdit` on click', async () => {
     const onEdit = vi.fn(async () => ({ page: 'About' }));
     const { onChange } = await renderComponent({ onEdit });
-    const button = page.getByRole('button', { name: 'Wikilink' });
+    const button = page.getByRole('button');
 
     await button.click();
 
@@ -120,7 +132,7 @@ describe('InlinePatternComponent', () => {
     const onEdit = vi.fn(async () => null);
     const { onChange } = await renderComponent({ onEdit });
 
-    /** @type {HTMLElement} */ (page.getByRole('button', { name: 'Wikilink' }).element()).focus();
+    /** @type {HTMLElement} */ (page.getByRole('button').element()).focus();
     await userEvent.keyboard('{Enter}');
     await expect.poll(() => onEdit.mock.calls.length).toBe(1);
     await userEvent.keyboard(' ');
@@ -128,7 +140,7 @@ describe('InlinePatternComponent', () => {
 
     // `null` leaves the component unchanged
     expect(onChange).not.toHaveBeenCalled();
-    await expect.element(page.getByRole('button', { name: 'Wikilink' })).toHaveTextContent('Home');
+    await expect.element(page.getByRole('button')).toHaveTextContent('Home');
   });
 
   test('doesn’t call `onEdit` again while it’s in progress', async () => {
@@ -144,7 +156,7 @@ describe('InlinePatternComponent', () => {
 
     await renderComponent({ onEdit });
 
-    const button = page.getByRole('button', { name: 'Wikilink' });
+    const button = page.getByRole('button');
 
     await button.click();
     await button.click();
@@ -162,7 +174,7 @@ describe('InlinePatternComponent', () => {
     const onEdit = vi.fn(() => Promise.reject(error));
     const { onChange } = await renderComponent({ onEdit });
 
-    await page.getByRole('button', { name: 'Wikilink' }).click();
+    await page.getByRole('button').click();
 
     await expect.poll(() => consoleError.mock.calls.length).toBe(1);
     expect(consoleError).toHaveBeenCalledWith(error);
@@ -173,7 +185,7 @@ describe('InlinePatternComponent', () => {
   test('can’t be edited or removed in a read-only field', async () => {
     const onEdit = vi.fn();
     const { onChange } = await renderComponent({ onEdit }, { readonly: true });
-    const button = page.getByRole('button', { name: 'Wikilink' });
+    const button = page.getByRole('button');
 
     // The read-only state is looked up once the component is in place
     await expect.poll(() => button.element().classList.contains('editable')).toBe(false);
@@ -194,13 +206,13 @@ describe('InlinePatternComponent', () => {
 
     component.setValues({ page: 'Blog' });
 
-    await expect.element(page.getByRole('img', { name: 'Wikilink' })).toHaveTextContent('Blog');
+    await expect.element(page.getByRole('group', { name: 'Wikilink' })).toHaveTextContent('Blog');
   });
 
   test('can be removed without a change handler', async () => {
     await renderComponent({ onChange: undefined });
 
-    const wrapper = page.getByRole('img', { name: 'Wikilink' });
+    const wrapper = page.getByRole('group', { name: 'Wikilink' });
 
     /** @type {HTMLElement} */ (wrapper.element()).focus();
     await userEvent.keyboard('{Backspace}');
@@ -209,6 +221,6 @@ describe('InlinePatternComponent', () => {
 
   test('shows empty data for a new component', async () => {
     await renderComponent({ toPreview: undefined, values: undefined });
-    await expect.element(page.getByRole('img', { name: 'Wikilink' })).toHaveTextContent('[[]]');
+    await expect.element(page.getByRole('group', { name: 'Wikilink' })).toHaveTextContent('[[]]');
   });
 });

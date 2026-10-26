@@ -123,16 +123,17 @@
 
 <!-- The preview of the component, right within the text. It opens the developer’s own UI on click
 unless there is no `onEdit` function; it can still be focused then, to be removed with the Backspace
-or Delete key -->
+or Delete key. The preview, e.g. a linked page name, is what assistive technology reads: a button
+takes its name from it and the label as its description, while a group keeps it readable -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <span
   bind:this={wrapper}
-  role={onEdit ? 'button' : 'img'}
+  role={onEdit ? 'button' : 'group'}
   class="component inline-pattern"
   class:editable={!!onEdit && !readonly}
   contenteditable="false"
   tabindex="0"
-  aria-label={label}
+  aria-label={onEdit ? undefined : label}
   title={label}
   data-component-name={componentName}
   onclick={(event) => {

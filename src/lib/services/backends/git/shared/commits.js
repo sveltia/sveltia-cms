@@ -210,6 +210,12 @@ const TRAILER_LINE_REGEX = /^[A-Za-z0-9-]+:\s*\S/;
  * @returns {string} Cleaned value.
  */
 const cleanTrailerValue = (value) => (value ?? '').replace(/[\s<>]+/g, ' ').trim();
+/**
+ * Signed-in user accounts that have been warned about their missing email, so the warning is only
+ * shown once per sign-in rather than for every commit.
+ * @type {WeakSet<User>}
+ */
+const accountsWarnedAboutEmail = new WeakSet();
 
 /**
  * Add a `Signed-off-by` trailer with the signed-in user’s name and email to the given commit
@@ -217,7 +223,7 @@ const cleanTrailerValue = (value) => (value ?? '').replace(/[\s<>]+/g, ' ').trim
  * the message already ends with, if any, and otherwise follows a blank line. A message that already
  * carries a sign-off with the user’s email, e.g. from a custom `commit_messages` template, is left
  * as it is. When the Git host doesn’t share the user’s email, as GitHub does for a user without a
- * public email, the trailer is left out with a warning.
+ * public email, the trailer is left out with a warning, shown once per sign-in.
  * @param {string} message Commit message.
  * @returns {string} Message, possibly with the trailer.
  * @see https://github.com/decaporg/decap-cms/pull/7766
@@ -227,15 +233,19 @@ export const signOffCommitMessage = (message) => {
     return message;
   }
 
-  const { email, login, name } = /** @type {User} */ (user.account);
+  const { account } = /** @type {{ account: User }} */ (user);
+  const { email, login, name } = account;
   const cleanEmail = cleanTrailerValue(email);
 
   if (!cleanEmail) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      'The `signoff_commits` option is enabled, but the Git host doesn’t share your email ' +
-        'address, so commits are made without a `Signed-off-by` trailer.',
-    );
+    if (!accountsWarnedAboutEmail.has(account)) {
+      accountsWarnedAboutEmail.add(account);
+      // eslint-disable-next-line no-console
+      console.warn(
+        'The `signoff_commits` option is enabled, but the Git host doesn’t share your email ' +
+          'address, so commits are made without a `Signed-off-by` trailer.',
+      );
+    }
 
     return message;
   }

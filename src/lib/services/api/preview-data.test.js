@@ -658,6 +658,13 @@ describe('React Helpers', () => {
         getMetaDataPath({ getFieldArgs: { collectionName: 'posts' }, keyPath: 'unknown.0.name' }),
       ).toEqual(['unknown', 'name']);
     });
+
+    it('should keep a numeric top-level field name', () => {
+      expect(
+        getMetaDataPath({ getFieldArgs: { collectionName: 'posts' }, keyPath: '2024.author' }),
+      ).toEqual(['2024', 'author']);
+      expect(mockGetField).not.toHaveBeenCalled();
+    });
   });
 
   describe('getMetaData', () => {
@@ -1115,9 +1122,30 @@ describe('React Helpers', () => {
       });
 
       it('for the single Relation subfield of a List field, under the subfield’s name', () => {
+        const metadata = { authors: { jane: { name: 'Jane' }, john: { name: 'John' } } };
+
+        // The List field’s own name holds the legacy metadata too
         expect(build({ 'tags.0': 'jane', 'tags.1': 'john' })).toEqual({
-          tags: { tag: { authors: { jane: { name: 'Jane' }, john: { name: 'John' } } } },
+          tags: { tag: metadata, ...metadata },
         });
+      });
+
+      it('for a Relation field in an Object field with a numeric name', () => {
+        const metadata = { authors: { jane: { name: 'Jane' } } };
+
+        fields.years = { widget: 'object', fields: [{ ...relation, name: '2024' }] };
+        // The mock looks a numeric segment up as `*`
+        fields['years.*'] = relation;
+
+        try {
+          expect(build({ 'years.2024': 'jane' })).toEqual({
+            years: { 2024: metadata },
+            'years.2024': metadata,
+          });
+        } finally {
+          delete fields.years;
+          delete fields['years.*'];
+        }
       });
 
       it('for a field name and value that are also `Object.prototype` members', () => {

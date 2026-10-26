@@ -2373,7 +2373,7 @@
  * @property {string} [base_url] OAuth base URL, which is the URL of the Forgejo instance, including
  * the subpath if it’s served under one. Default: `api_root` without the `/api/v1` path, e.g.
  * `https://codeberg.org`.
- * @see https://decapcms.org/docs/forgejo-backend/
+ * @see https://decapcms.org/docs/gitea-backend/#forgejo-backend
  * @see https://sveltiacms.app/en/docs/backends/gitea-forgejo
  */
 
@@ -2944,8 +2944,8 @@
  * Relation field, it contains the referenced entry content in the
  * `{ [collectionName]: { [value]: content } }` structure, where `content` is a flattened object
  * with key paths like `address.city` as keys. The metadata of a nested field is also available
- * under its flattened key path without a trailing List item index, e.g. `details.author` or
- * `books.0.author`, but this is deprecated.
+ * under its flattened key path without a trailing List item index, e.g. `details.author`,
+ * `books.0.author` or `tags` for the single subfield of a List field, but this is deprecated.
  * @see https://decapcms.org/docs/customization/#accessing-metadata
  */
 

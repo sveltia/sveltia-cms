@@ -27,6 +27,11 @@ const mockUser = vi.hoisted(() => ({
   email: '',
 }));
 
+// The signed-in user, whose account can be swapped for one of its own
+const mockAccount = vi.hoisted(() => ({ account: /** @type {any} */ (undefined) }));
+
+mockAccount.account = mockUser;
+
 // Whether the commit is being made by an Open Authoring contributor
 const mockState = vi.hoisted(() => ({ openAuthoring: false }));
 
@@ -51,7 +56,7 @@ vi.mock('$lib/services/contents/collection', () => ({
 }));
 
 vi.mock('$lib/services/user/account.svelte', () => ({
-  user: { account: mockUser },
+  user: mockAccount,
 }));
 
 describe('git/shared/commits', () => {
@@ -1032,13 +1037,21 @@ describe('git/shared/commits', () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         enableSignOff();
-        mockUser.email = email;
+        // Each case signs in with an account of its own, as the warning is shown once per account
+        mockAccount.account = { ...mockUser, email };
 
-        expect(signOffCommitMessage('Update')).toBe('Update');
-        expect(warn).toHaveBeenCalledOnce();
-        expect(warn.mock.calls[0][0]).toContain('signoff_commits');
+        try {
+          expect(signOffCommitMessage('Update')).toBe('Update');
+          expect(warn).toHaveBeenCalledOnce();
+          expect(warn.mock.calls[0][0]).toContain('signoff_commits');
 
-        warn.mockRestore();
+          // Another commit by the same user isn’t warned about again
+          expect(signOffCommitMessage('Update again')).toBe('Update again');
+          expect(warn).toHaveBeenCalledOnce();
+        } finally {
+          mockAccount.account = mockUser;
+          warn.mockRestore();
+        }
       },
     );
   });
