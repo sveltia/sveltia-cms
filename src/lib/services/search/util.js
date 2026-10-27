@@ -22,18 +22,36 @@ export const getNormalizedValueCache = (owner) =>
   getOrCreate(persistentCaches, owner, () => new Map());
 
 /**
- * Match the combining marks that follow a letter of a script where they are accents or optional
- * vowel points a query can leave out: Latin, Greek, Cyrillic, Hebrew and Arabic. Elsewhere a mark
- * is part of the spelling — Japanese kana voicing marks (`ビ` vs `ヒ`), Devanagari vowel signs,
- * Thai tone marks — so stripping it would make unrelated words match. The same goes for the breve
- * of the Cyrillic `й` and `ў`, which are letters of their own, unlike `ё`, commonly written `е`.
+ * Match a letter of a script where the combining marks following it are accents or optional vowel
+ * points a query can leave out — Latin, Greek, Hebrew and Arabic, or Cyrillic in its own group —
+ * along with the run of marks. Elsewhere a mark is part of the spelling — Japanese kana voicing
+ * marks (`ビ` vs `ヒ`), Devanagari vowel signs, Thai tone marks — so stripping it would make
+ * unrelated words match. The run is matched with the letter rather than with a lookbehind, which
+ * would scan the run back from every mark in it and take quadratic time over a long one.
  */
 const ACCENT_REGEX = new RegExp(
-  `(?<=[${['Latin', 'Greek', 'Hebrew', 'Arabic']
+  `([${['Latin', 'Greek', 'Hebrew', 'Arabic']
     .map((script) => `\\p{Script=${script}}`)
-    .join('')}]\\p{M}*)\\p{M}|(?<=\\p{Script=Cyrillic}\\p{M}*)[\\p{M}--[\\u0306]]`,
+    .join('')}])\\p{M}+|(\\p{Script=Cyrillic})(\\p{M}+)`,
   'gv',
 );
+
+/**
+ * Match the combining marks of a run following a Cyrillic letter that are stripped: all but the
+ * breve of `й` and `ў`, which are letters of their own, unlike `ё`, commonly written `е`.
+ */
+const CYRILLIC_ACCENT_REGEX = /[\p{M}--[\u0306]]/gv;
+
+/**
+ * Strip the accents from the given match of {@link ACCENT_REGEX}.
+ * @param {string} _match Whole match.
+ * @param {string | undefined} base Letter of a script whose marks are all stripped.
+ * @param {string | undefined} cyrillic Cyrillic letter.
+ * @param {string | undefined} marks Marks following the Cyrillic letter.
+ * @returns {string} Letter with the marks it keeps.
+ */
+const stripAccents = (_match, base, cyrillic, marks) =>
+  base ?? `${cyrillic}${/** @type {string} */ (marks).replace(CYRILLIC_ACCENT_REGEX, '')}`;
 
 /**
  * Match a string made of ASCII characters only.
@@ -63,7 +81,11 @@ export const normalize = (value) => {
     return value.toLocaleLowerCase();
   }
 
-  return value.normalize('NFD').replace(ACCENT_REGEX, '').toLocaleLowerCase().normalize('NFC');
+  return value
+    .normalize('NFD')
+    .replace(ACCENT_REGEX, stripAccents)
+    .toLocaleLowerCase()
+    .normalize('NFC');
 };
 
 /**

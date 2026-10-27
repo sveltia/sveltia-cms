@@ -63,6 +63,18 @@ describe('normalize', () => {
     // Composed and decomposed forms still match each other
     expect(normalize('ビール')).toBe(normalize('ビール'.normalize('NFD')));
   });
+
+  it('should keep the breve among other marks following a Cyrillic letter', () => {
+    expect(normalize('и́̆̈')).toBe('й');
+  });
+
+  it('should strip a long run of marks in linear time', () => {
+    // A lookbehind scanning the run back from every mark took minutes over these
+    const marks = '́'.repeat(200_000);
+
+    expect(normalize(`a${marks}b`)).toBe('ab');
+    expect(normalize(`а${marks}б`)).toBe('аб');
+  });
 });
 
 describe('hasMatch', () => {
