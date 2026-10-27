@@ -14,7 +14,7 @@ If you discover a security vulnerability in our product, please email us at [hel
 
 Although we do not offer a bug bounty program, if you report a security vulnerability in good faith, we will gladly acknowledge your contribution in our [security advisory](https://github.com/sveltia/sveltia-cms/security/advisories) and [release notes](https://github.com/sveltia/sveltia-cms/releases).
 
-We don’t normally request CVEs because we think they’re redundant. However, we may ask for a CVE if any high-severity or critical vulnerability is found.
+We don’t usually request CVEs as we consider them to be redundant for the following reasons. However, we may ask for a CVE if any high-severity or critical vulnerability is found.
 
 - `npm audit` and other tools are [powered by GitHub](https://github.blog/security/supply-chain-security/github-advisory-database-now-powers-npm-audit/) where we publish advisories.
 - Sveltia CMS is not a library that needs to consider downstream consumers.
