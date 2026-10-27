@@ -10,7 +10,7 @@ However, exceptions may be made in the event of critical security issues affecti
 
 ## Reporting a Vulnerability
 
-Please email us at [hello@sveltia.dev](mailto:hello@sveltia.dev). We will respond as soon as possible.
+If you discover a security vulnerability in our product, please email us at [hello@sveltia.dev](mailto:hello@sveltia.dev) with the details and your GitHub handle so that we can give you credit. Provided the maintainer is online, we will usually implement and ship a fix within a few hours and get back to you.
 
 Although we do not offer a bug bounty program, if you report a security vulnerability in good faith, we will gladly acknowledge your contribution in our [security advisory](https://github.com/sveltia/sveltia-cms/security/advisories) and [release notes](https://github.com/sveltia/sveltia-cms/releases).
 
