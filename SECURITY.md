@@ -14,8 +14,9 @@ If you discover a security vulnerability in our product, please email us at [hel
 
 Although we do not offer a bug bounty program, if you report a security vulnerability in good faith, we will gladly acknowledge your contribution in our [security advisory](https://github.com/sveltia/sveltia-cms/security/advisories) and [release notes](https://github.com/sveltia/sveltia-cms/releases).
 
-We do not request CVEs as these are redundant:
+We don’t normally request CVEs because we think they’re redundant. However, we may ask for a CVE if any high-severity or critical vulnerability is found.
 
 - `npm audit` and other tools are [powered by GitHub](https://github.blog/security/supply-chain-security/github-advisory-database-now-powers-npm-audit/) where we publish advisories.
 - Sveltia CMS is not a library that needs to consider downstream consumers.
-- Sveltia CMS’s update process is transparent. The majority of users automatically receive the latest version [via a CDN](https://sveltiacms.app/en/docs/architecture#how-sveltia-cms-works).
+- The CMS’s update process is transparent. The majority of users automatically receive the latest version [via a CDN](https://sveltiacms.app/en/docs/architecture#how-sveltia-cms-works).
+- The CMS is intended for a single developer or a small trusted team. For most of the issues, the practical impacts are very limited. So, using an unpatched version isn’t necessarily less safe, but users are encouraged to always use the latest version for the latest improvements.
