@@ -34,7 +34,7 @@ import {
   updateWorkflowStatus,
   upsertUnpublishedEntry,
 } from '$lib/services/workflow/save';
-import { pinReviewedHead, verifyMergeState } from '$lib/services/workflow/verify';
+import { checkReviewedHead, verifyMergeState } from '$lib/services/workflow/verify';
 
 vi.mock('$lib/services/api/events');
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
@@ -77,10 +77,7 @@ vi.mock('$lib/services/backends/save');
 vi.mock('$lib/services/deployments/resolve');
 vi.mock('$lib/services/workflow/deploy');
 vi.mock('$lib/services/workflow/verify', () => ({
-  pinReviewedHead: vi.fn((entry, headSHA) => ({
-    ...entry,
-    workflow: { ...entry.workflow, pullRequest: { ...entry.workflow.pullRequest, headSHA } },
-  })),
+  checkReviewedHead: vi.fn(),
   verifyMergeState: vi.fn(),
 }));
 
@@ -114,7 +111,7 @@ const createEntry = (branch, status = 'draft') => ({
   subPath: 'hello',
   locales: { _default: { slug: 'hello', path: 'content/posts/hello.md', content: {} } },
   workflow: {
-    pullRequest: { branch, number: 1, status },
+    pullRequest: { branch, number: 1, files: [], status },
     status,
     collectionName: 'posts',
     fileName: undefined,
@@ -206,7 +203,7 @@ describe('workflow/save', () => {
       };
       workflowService.savePullRequest.mockResolvedValue({
         commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
-        pullRequest: { branch: 'cms/apps/site/posts/hello', number: 1, status: 'draft' },
+        pullRequest: { branch: 'cms/apps/site/posts/hello', number: 1, files: [], status: 'draft' },
       });
 
       await saveWorkflowChanges(args);
@@ -228,7 +225,7 @@ describe('workflow/save', () => {
       }));
       workflowService.savePullRequest.mockResolvedValue({
         commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
-        pullRequest: { branch: 'cms/posts/hello', number: 1, status: 'draft' },
+        pullRequest: { branch: 'cms/posts/hello', number: 1, files: [], status: 'draft' },
       });
 
       await saveWorkflowChanges(args);
@@ -257,7 +254,7 @@ describe('workflow/save', () => {
           date: new Date('2026-01-01'),
           files: { 'static/img.png': { sha: 'blob-sha' } },
         },
-        pullRequest: { branch: 'cms/posts/hello', number: 1, status: 'draft' },
+        pullRequest: { branch: 'cms/posts/hello', number: 1, files: [], status: 'draft' },
       });
 
       allAssets.current = [
@@ -292,7 +289,7 @@ describe('workflow/save', () => {
     test('falls back to the locally computed asset SHA', async () => {
       workflowService.savePullRequest.mockResolvedValue({
         commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
-        pullRequest: { branch: 'cms/posts/hello', number: 1, status: 'draft' },
+        pullRequest: { branch: 'cms/posts/hello', number: 1, files: [], status: 'draft' },
       });
 
       const results = await saveWorkflowChanges({
@@ -303,8 +300,90 @@ describe('workflow/save', () => {
       expect(results.savedAssets[0].sha).toBe('local');
     });
 
+    test('records the files of the commit on the pull request until it’s read again', async () => {
+      // A publish right after the save checks the files against what the commit wrote
+      const image = new File(['png'], 'image.png');
+
+      workflowService.savePullRequest.mockResolvedValue({
+        commit: {
+          sha: 'new',
+          date: new Date('2026-01-01'),
+          files: {
+            'content/posts/hello-world.md': { sha: 'entry-sha' },
+            'content/pages/home.md': { sha: 'home-sha' },
+            'static/image.png': { sha: 'image-sha' },
+          },
+        },
+        pullRequest: {
+          branch: 'cms/posts/hello',
+          number: 1,
+          status: 'draft',
+          headSHA: 'old',
+          files: [
+            {
+              path: 'content/posts/hello.md',
+              sha: 'old-sha',
+              size: 5,
+              text: 'hello',
+              deleted: false,
+            },
+            { path: 'static/kept.png', sha: 'kept-sha', size: 3, deleted: false },
+          ],
+        },
+      });
+
+      const results = await saveWorkflowChanges({
+        ...args,
+        changes: [
+          {
+            action: 'move',
+            path: 'content/posts/hello-world.md',
+            previousPath: 'content/posts/hello.md',
+            data: 'hello world',
+          },
+          { action: 'update', path: 'content/pages/home.md', data: 'home' },
+          { action: 'create', path: 'static/image.png', data: image },
+          { action: 'delete', path: 'static/old.png' },
+        ],
+      });
+
+      expect(/** @type {any} */ (results.savedEntries[0]).workflow.pullRequest).toMatchObject({
+        headSHA: 'new',
+        files: [
+          { path: 'content/posts/hello.md', sha: '', size: 0, deleted: true },
+          { path: 'static/kept.png', sha: 'kept-sha', size: 3, deleted: false },
+          {
+            path: 'content/posts/hello-world.md',
+            sha: 'entry-sha',
+            size: 11,
+            text: 'hello world',
+            deleted: false,
+          },
+          { path: 'content/pages/home.md', sha: 'home-sha', size: 4, text: 'home', deleted: false },
+          { path: 'static/image.png', sha: 'image-sha', size: 3, text: undefined, deleted: false },
+          { path: 'static/old.png', sha: '', size: 0, deleted: true },
+        ],
+      });
+    });
+
+    test('records a file the commit has no ID for with an empty one', async () => {
+      workflowService.savePullRequest.mockResolvedValue({
+        commit: { sha: 'new', date: new Date('2026-01-01'), files: {} },
+        pullRequest: { branch: 'cms/posts/hello', number: 1, status: 'draft', files: [] },
+      });
+
+      const results = await saveWorkflowChanges({
+        ...args,
+        changes: [{ action: 'create', path: 'static/image.png', data: undefined }],
+      });
+
+      expect(/** @type {any} */ (results.savedEntries[0]).workflow.pullRequest.files).toEqual([
+        { path: 'static/image.png', sha: '', size: 0, text: undefined, deleted: false },
+      ]);
+    });
+
     test('creates a pull request on the first save', async () => {
-      const pullRequest = { branch: 'cms/posts/hello', number: 1, status: 'draft' };
+      const pullRequest = { branch: 'cms/posts/hello', number: 1, files: [], status: 'draft' };
 
       workflowService.savePullRequest.mockResolvedValue({
         commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
@@ -324,7 +403,11 @@ describe('workflow/save', () => {
       // The head commit is taken from the commit results, so the deploy preview lookup points at
       // the build for this save rather than the previous one
       expect(/** @type {any} */ (results.savedEntries[0]).workflow).toEqual({
-        pullRequest: { ...pullRequest, headSHA: 'abc' },
+        pullRequest: {
+          ...pullRequest,
+          headSHA: 'abc',
+          files: [{ path: 'content/posts/hello.md', sha: '', size: 0, text: '', deleted: false }],
+        },
         status: 'draft',
         collectionName: 'posts',
         fileName: undefined,
@@ -369,7 +452,7 @@ describe('workflow/save', () => {
       workflowService.savePullRequest.mockImplementation(
         async (/** @type {any} */ { branch, status }) => ({
           commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
-          pullRequest: { branch, number: 1, status },
+          pullRequest: { branch, number: 1, files: [], status },
         }),
       );
 
@@ -480,7 +563,7 @@ describe('workflow/save', () => {
     test('starts a new pull request when the entry has no branch yet', async () => {
       workflowService.savePullRequest.mockResolvedValue({
         commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
-        pullRequest: { branch: 'cms/posts/hello', number: 1, status: 'draft' },
+        pullRequest: { branch: 'cms/posts/hello', number: 1, files: [], status: 'draft' },
       });
 
       // A published entry carries no workflow information
@@ -522,7 +605,7 @@ describe('workflow/save', () => {
 
       workflowService.savePullRequest.mockResolvedValue({
         commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
-        pullRequest: { branch: 'cms/posts/hello', number: 1, status: 'draft' },
+        pullRequest: { branch: 'cms/posts/hello', number: 1, files: [], status: 'draft' },
       });
 
       const results = await saveWorkflowChanges({ ...args, companions: [guides] });
@@ -722,7 +805,7 @@ describe('workflow/save', () => {
           );
 
           expect(workflowService.withdrawApproval).toHaveBeenCalledExactlyOnceWith(
-            expect.objectContaining({ number: 1, status }),
+            expect.objectContaining({ number: 1, files: [], status }),
           );
           expect(workflowService.approve).not.toHaveBeenCalled();
         },
@@ -836,23 +919,40 @@ describe('workflow/save', () => {
   });
 
   describe('publishReviewedEntry', () => {
-    test('publishes the entry pinned to the head commit of the reviewed version', async () => {
+    test('publishes the entry once it’s checked to be the reviewed version', async () => {
       const entry = createEntry('cms/posts/hello', 'pending_publish');
       const reviewed = createEntry('cms/posts/hello', 'pending_publish');
 
-      entry.workflow.pullRequest.headSHA = 'new';
-      reviewed.workflow.pullRequest.headSHA = 'reviewed';
+      entry.workflow.pullRequest.headSHA = 'abc';
+      reviewed.workflow.pullRequest.headSHA = 'abc';
       upsertUnpublishedEntry(entry);
 
       await publishReviewedEntry(entry, reviewed);
 
-      expect(pinReviewedHead).toHaveBeenCalledWith(entry, 'reviewed');
+      expect(checkReviewedHead).toHaveBeenCalledWith(entry, 'abc');
       expect(workflowService.publish).toHaveBeenCalledWith(
-        expect.objectContaining({ branch: 'cms/posts/hello', headSHA: 'reviewed' }),
+        expect.objectContaining({ branch: 'cms/posts/hello', headSHA: 'abc' }),
       );
     });
 
-    test('pins no head when the reviewed version has no pull request', async () => {
+    test('publishes nothing when the entry isn’t the reviewed version', async () => {
+      const entry = createEntry('cms/posts/hello', 'pending_publish');
+      const reviewed = createEntry('cms/posts/hello', 'pending_publish');
+      const error = new Error('publish_refused');
+
+      entry.workflow.pullRequest.headSHA = 'new';
+      reviewed.workflow.pullRequest.headSHA = 'reviewed';
+      upsertUnpublishedEntry(entry);
+      vi.mocked(checkReviewedHead).mockImplementationOnce(() => {
+        throw error;
+      });
+
+      await expect(publishReviewedEntry(entry, reviewed)).rejects.toBe(error);
+      expect(checkReviewedHead).toHaveBeenCalledWith(entry, 'reviewed');
+      expect(workflowService.publish).not.toHaveBeenCalled();
+    });
+
+    test('checks against no head when the reviewed version has no pull request', async () => {
       const entry = createEntry('cms/posts/hello', 'pending_publish');
       const { workflow: _workflow, ...published } = createEntry('cms/posts/hello');
 
@@ -861,7 +961,7 @@ describe('workflow/save', () => {
       await publishReviewedEntry(entry, published);
       await publishReviewedEntry(entry, undefined);
 
-      expect(vi.mocked(pinReviewedHead).mock.calls).toEqual([
+      expect(vi.mocked(checkReviewedHead).mock.calls).toEqual([
         [entry, undefined],
         [entry, undefined],
       ]);
@@ -1172,7 +1272,7 @@ describe('workflow/save', () => {
       // A new pull request opens at the status it was asked for; an existing one is returned as is
       workflowService.savePullRequest.mockImplementation(
         async (/** @type {any} */ { status, pullRequest }) => ({
-          pullRequest: pullRequest ?? { branch: 'cms/posts/hello', number: 7, status },
+          pullRequest: pullRequest ?? { branch: 'cms/posts/hello', number: 7, files: [], status },
           commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
         }),
       );
@@ -1290,7 +1390,7 @@ describe('workflow/save', () => {
         savingEntries: [target.entry],
       });
 
-      await deleteWorkflowEntry(entry, collection, undefined);
+      const deleted = await deleteWorkflowEntry(entry, collection, undefined);
 
       expect(planCascadeDelete).toHaveBeenCalledWith({
         collection,
@@ -1298,6 +1398,15 @@ describe('workflow/save', () => {
         entries: [entry],
       });
       expect(buildCascadeDeleteChanges).toHaveBeenCalledWith({ targets: [target] });
+      // The rewrite is recorded on the pull request, so publishing right away can check it
+      expect(/** @type {any} */ (deleted).workflow.pullRequest).toMatchObject({
+        headSHA: 'abc',
+        files: [
+          { path: 'content/posts/hello.md', deleted: true },
+          { path: 'content/posts/ja/hello.md', deleted: true },
+          { path: 'content/posts/post-1.md', text: 'tag: ""', deleted: false },
+        ],
+      });
       // Once the removal lands, no reference is left dangling
       expect(workflowService.savePullRequest).toHaveBeenCalledWith(
         expect.objectContaining({

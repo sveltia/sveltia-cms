@@ -36,7 +36,7 @@ import {
 import { getBranchName } from '$lib/services/workflow/branch';
 import { trackDeployingEntry } from '$lib/services/workflow/deploy';
 import { isEntryAlreadyPublished, openAuthoring } from '$lib/services/workflow/open-authoring';
-import { pinReviewedHead, verifyMergeState } from '$lib/services/workflow/verify';
+import { checkReviewedHead, verifyMergeState } from '$lib/services/workflow/verify';
 
 /**
  * @import {
@@ -47,10 +47,12 @@ import { pinReviewedHead, verifyMergeState } from '$lib/services/workflow/verify
  * Entry,
  * FileChange,
  * CommitOptions,
+ * CommitResults,
  * InternalCollection,
  * InternalCollectionFile,
  * UnpublishedEntry,
  * WorkflowBackendService,
+ * WorkflowFile,
  * WorkflowPullRequest,
  * WorkflowStatus,
  * } from '$lib/types/private';
@@ -143,6 +145,54 @@ const resolveWorkflowBranch = ({ collectionName, slug, entry }) => {
  */
 const getPreviousPaths = (existingEntry, paths) =>
   existingEntry?.workflow.previousPaths?.length ? existingEntry.workflow.previousPaths : paths;
+
+/**
+ * Bring the files of the given pull request in line with the given commit made to its branch, so
+ * they describe the branch at its new head until the pull request is read again. Publishing checks
+ * the files the CMS writes along with an entry against their text, and the assets it moves against
+ * their Git object ID, so publishing right after a save would otherwise be refused, or compared
+ * with the branch as it stood before.
+ * @param {WorkflowFile[]} files Files of the pull request before the commit.
+ * @param {FileChange[]} changes Changes committed.
+ * @param {CommitResults} commit Commit results.
+ * @returns {WorkflowFile[]} Files.
+ */
+const applyCommitToFiles = (files, changes, commit) => {
+  /** @type {Map<string, WorkflowFile>} */
+  const fileMap = new Map(files.map((file) => [file.path, file]));
+
+  /**
+   * Record the given file as deleted.
+   * @param {string} path File path.
+   */
+  const remove = (path) => {
+    fileMap.set(path, { path, sha: '', size: 0, deleted: true });
+  };
+
+  changes.forEach(({ action, path, previousPath, data }) => {
+    if (previousPath) {
+      remove(previousPath);
+    }
+
+    if (action === 'delete') {
+      remove(path);
+
+      return;
+    }
+
+    const text = typeof data === 'string' ? data : undefined;
+
+    fileMap.set(path, {
+      path,
+      sha: commit.files[path]?.sha ?? '',
+      size: text === undefined ? (data?.size ?? 0) : new Blob([text]).size,
+      text,
+      deleted: false,
+    });
+  });
+
+  return [...fileMap.values()];
+};
 
 /**
  * Replace or append the given unpublished entry in the {@link unpublishedEntries} store, keyed by
@@ -379,7 +429,11 @@ export const saveWorkflowChanges = async ({
       // The backend returns the existing pull request as is when there already is one, so the head
       // commit it carries is the one from before this save. Point it at the new commit, so the
       // deploy preview lookup doesn’t keep reporting the previous build until the next full load
-      pullRequest: { ...pullRequest, headSHA: commit.sha },
+      pullRequest: {
+        ...pullRequest,
+        headSHA: commit.sha,
+        files: applyCommitToFiles(pullRequest.files, changes, commit),
+      },
       collectionName,
       fileName,
       previousPaths,
@@ -609,21 +663,21 @@ export const publishWorkflowEntry = async (entry) => {
 /**
  * Publish the given entry as the user has reviewed it. The entry comes from the store, which a
  * reload may have brought a commit pushed since the editor or the confirmation dialog was opened;
- * the publish is pinned to the head commit of the reviewed version, so that commit isn’t published
- * unseen. See {@link pinReviewedHead}.
+ * that commit isn’t published unseen. See {@link checkReviewedHead}.
  * @param {UnpublishedEntry} entry Entry from the store.
  * @param {Entry | undefined} reviewed Version of the entry the user has reviewed, e.g. the one the
  * confirmation dialog was opened for, or the original entry of the draft being edited. An entry
  * without a pull request, or `undefined`, has the publish refused.
  * @returns {Promise<void>}
  */
-export const publishReviewedEntry = async (entry, reviewed) =>
-  publishWorkflowEntry(
-    pinReviewedHead(
-      entry,
-      /** @type {UnpublishedEntry | undefined} */ (reviewed)?.workflow?.pullRequest.headSHA,
-    ),
+export const publishReviewedEntry = async (entry, reviewed) => {
+  checkReviewedHead(
+    entry,
+    /** @type {UnpublishedEntry | undefined} */ (reviewed)?.workflow?.pullRequest.headSHA,
   );
+
+  return publishWorkflowEntry(entry);
+};
 
 /**
  * Discard the given unpublished entry by closing the corresponding pull request without merging it.
@@ -725,13 +779,16 @@ export const deleteWorkflowEntry = async (
 
   // Reuse any open pull request rather than discarding it first: closing it up front would throw
   // the pending changes away with no way back if opening the replacement then failed
+  /** @type {FileChange[]} */
+  const changes = [
+    ...[...paths, ...assetPaths, ...companionPaths].map(
+      (path) => /** @type {FileChange} */ ({ action: 'delete', slug, path }),
+    ),
+    ...cascadeChanges,
+  ];
+
   const { commit, pullRequest } = await workflow.savePullRequest({
-    changes: [
-      ...[...paths, ...assetPaths, ...companionPaths].map(
-        (path) => /** @type {FileChange} */ ({ action: 'delete', slug, path }),
-      ),
-      ...cascadeChanges,
-    ],
+    changes,
     options,
     branch,
     title: createCommitMessage(toRepoChanges(titleChanges), options),
@@ -741,15 +798,18 @@ export const deleteWorkflowEntry = async (
     pullRequest: existingEntry?.workflow.pullRequest,
   });
 
+  // A reused pull request carries the files and the head commit from before this one, which
+  // publishing compares with the branch
+  const files = applyCommitToFiles(pullRequest.files, changes, commit);
+
   /**
-   * Store the entry with the given pull request, pointed at the new commit: a reused pull request
-   * carries the head commit from before this one, which publishing compares with the branch.
+   * Store the entry with the given pull request, pointed at the new commit.
    * @param {WorkflowPullRequest} pr Pull request.
    * @returns {UnpublishedEntry} Unpublished entry.
    */
   const store = (pr) =>
     storeUnpublishedEntry(entry, {
-      pullRequest: { ...pr, headSHA: commit.sha },
+      pullRequest: { ...pr, headSHA: commit.sha, files },
       collectionName,
       fileName: collectionFile?.name,
       // Where the entry lives on the configured branch, which a rename has already moved away from
