@@ -19,4 +19,5 @@ We don’t usually request CVEs as we consider them to be redundant for the foll
 - `npm audit` and other tools are [powered by GitHub](https://github.blog/security/supply-chain-security/github-advisory-database-now-powers-npm-audit/) where we publish advisories.
 - Sveltia CMS is not a library that needs to consider downstream consumers.
 - The CMS’s update process is transparent. The majority of users automatically receive the latest version [via a CDN](https://sveltiacms.app/en/docs/architecture#how-sveltia-cms-works).
-- The CMS is intended for a single developer or a small trusted team. For most of the issues, the practical impacts are very limited. So, using an unpatched version isn’t necessarily less safe, but users are encouraged to always use the latest version for the latest improvements.
+- This is a Git-based headless CMS. This makes certain types of vulnerability, such as stored XSS and ReDoS, highly unlikely to be exploited, since the commit log reveals the identity of the attacker.
+- The CMS is intended for use by a single developer or a small, trusted team. In practice, the impact of most vulnerabilities is very limited, so using an unpatched version isn’t necessarily any less safe. However, users are still encouraged to use the latest version to benefit from the latest improvements.
