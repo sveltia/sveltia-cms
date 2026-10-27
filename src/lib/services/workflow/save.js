@@ -185,7 +185,7 @@ const applyCommitToFiles = (files, changes, commit) => {
     fileMap.set(path, {
       path,
       sha: commit.files[path]?.sha ?? '',
-      size: text === undefined ? (data?.size ?? 0) : new Blob([text]).size,
+      size: typeof data === 'string' ? new Blob([data]).size : (data?.size ?? 0),
       text,
       deleted: false,
     });

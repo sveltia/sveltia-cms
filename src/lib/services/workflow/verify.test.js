@@ -75,7 +75,7 @@ vi.mock('$lib/services/contents/entry/cascade', () => ({
    * @returns {Promise<any>} Changes.
    */
   buildTargetChanges: vi.fn(async ({ targets }) => ({
-    changes: targets.flatMap(({ entry }) =>
+    changes: targets.flatMap((/** @type {any} */ { entry }) =>
       Object.values(entry.locales).map(({ path }) => ({
         action: 'update',
         path,
