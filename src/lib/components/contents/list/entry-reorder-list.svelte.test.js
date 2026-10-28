@@ -236,6 +236,13 @@ describe('EntryReorderList', () => {
     source.dispatchEvent(new DragEvent('dragend', { bubbles: true }));
     await expect.poll(getTitles).toEqual(['B', 'A', 'C']);
     expect(reorderDirty.current).toBe(true);
+    // The rows are numbered in their new order
+    expect(
+      page
+        .getByRole('row')
+        .elements()
+        .map((el) => el.getAttribute('aria-rowindex')),
+    ).toEqual(['1', '2', '3']);
   });
 
   test('keeps listing an entry that has gone from the collection', async () => {
@@ -254,8 +261,8 @@ describe('EntryReorderList', () => {
       createMockEntry({ slug: 'a', content: { _default: { title: 'A', order: 1 } } }),
       createMockEntry({ slug: 'b', content: { _default: { title: 'B', order: 2 } } }),
     ]);
-    await expect.element(rows.nth(2)).not.toHaveAttribute('aria-rowindex');
-    expect(getTitles()).toEqual(['A', 'B', 'C']);
+    await expect.poll(getTitles).toEqual(['A', 'B', 'C']);
+    await expect.element(rows.nth(2)).toHaveAttribute('aria-rowindex', '3');
   });
 
   test('lists the entries group by group', async () => {

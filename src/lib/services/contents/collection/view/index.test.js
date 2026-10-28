@@ -567,29 +567,51 @@ describe('collection/view/index', () => {
     expect(getEntriesByCollection).toHaveBeenCalledWith('posts');
   });
 
-  test('listedEntryIndexMap maps each entry ID to its position in listedEntries', async () => {
+  test('listedEntryIndexMap maps each entry ID to its position in the displayed order', async () => {
     /** @type {any} */
     const mockEntries = [
       { id: 'a', slug: 'post-a', locales: {}, sha: 'a' },
       { id: 'b', slug: 'post-b', locales: {}, sha: 'b' },
       { id: 'c', slug: 'post-c', locales: {}, sha: 'c' },
+      { id: 'd', slug: 'post-d', locales: {}, sha: 'd' },
     ];
 
     vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    // Sorted in reverse, filtered without `b`, then split into two groups
+    vi.mocked(sortEntries).mockImplementation((entries) => [...entries].reverse());
+    vi.mocked(filterEntries).mockImplementation((entries) =>
+      entries.filter((/** @type {any} */ { id }) => id !== 'b'),
+    );
+    vi.mocked(groupEntries).mockImplementation((entries) => [
+      { name: 'first', entries: entries.slice(0, 1) },
+      { name: 'rest', entries: entries.slice(1) },
+    ]);
 
     _allEntries.current = mockEntries;
     await wait();
-    _selectedCollection.current = /** @type {any} */ ({ name: 'posts', folder: '_posts' });
+    _selectedCollection.current = /** @type {any} */ ({
+      name: 'posts',
+      folder: '_posts',
+      _type: 'entry',
+    });
     await wait();
+    currentView.current = /** @type {any} */ ({
+      type: 'list',
+      sort: { key: 'title', order: 'descending' },
+      filters: [{ field: 'status', pattern: 'published' }],
+      group: { field: 'category' },
+    });
 
     const indexMap = listedEntryIndexMap.current;
 
     expect([...indexMap]).toEqual([
-      ['a', 0],
-      ['b', 1],
-      ['c', 2],
+      ['d', 0],
+      ['c', 1],
+      ['a', 2],
     ]);
-    // Unknown entries are absent, so callers fall back to -1
+    // Filtered-out and unknown entries are absent, so callers omit the row index
+    expect(indexMap.get('b')).toBeUndefined();
     expect(indexMap.get('missing')).toBeUndefined();
   });
 
@@ -640,6 +662,7 @@ describe('collection/view/index', () => {
       // Restore the pass-through implementations, which earlier tests replace with fixed lists
       vi.mocked(sortEntries).mockImplementation((entries) => entries);
       vi.mocked(filterEntries).mockImplementation((entries) => entries);
+      vi.mocked(groupEntries).mockImplementation((entries) => [{ name: '*', entries }]);
       _allEntries.current = publishedEntries;
       await wait();
       _selectedCollection.current = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
@@ -711,6 +734,18 @@ describe('collection/view/index', () => {
       // The draft for `needed` replaces the published entry instead
       expect(read(listedUnpublishedEntries).map((/** @type {any} */ e) => e.id)).toEqual([
         'draft-brand-new',
+      ]);
+    });
+
+    test('listedEntryIndexMap puts the never-published drafts first', async () => {
+      _unpublishedEntries.current = [createDraft('needed'), createDraft('brand-new')];
+      await wait();
+
+      // They are listed in a separate group above the published entries
+      expect([...read(listedEntryIndexMap)]).toEqual([
+        ['draft-brand-new', 0],
+        ['draft-needed', 1],
+        ['p2', 2],
       ]);
     });
 

@@ -159,14 +159,13 @@ describe('EntryList', () => {
           .map((el) => el.querySelector('.title')?.textContent?.trim()),
       )
       .toEqual(['World', 'Hello']);
-    // The data rows come after the header row
+    // The data rows come after the header row, numbered in the order they are shown
     expect(
       grid
         .getByRole('row')
         .elements()
         .slice(1)
-        .map((el) => el.getAttribute('aria-rowindex'))
-        .sort(),
+        .map((el) => el.getAttribute('aria-rowindex')),
     ).toEqual(['2', '3']);
   });
 
@@ -362,6 +361,17 @@ describe('EntryList', () => {
 
     await expect.element(grid).toHaveAttribute('aria-rowcount', '2');
     await expect.poll(() => grid.getByRole('row').elements().length).toBe(2);
+    // The entry rows are numbered across both groups, the unpublished one first. Each group also
+    // has a header row, which isn’t numbered
+    await expect
+      .poll(() =>
+        grid
+          .getByRole('row')
+          .elements()
+          .filter((el) => !el.querySelector('[role="columnheader"]'))
+          .map((el) => el.getAttribute('aria-rowindex')),
+      )
+      .toEqual(['1', '2']);
     await expect
       .poll(() =>
         grid

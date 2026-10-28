@@ -265,16 +265,6 @@ export const listedUnpublishedEntries = createDerivedState(() => {
 });
 
 /**
- * Map from entry ID to the entry’s index in {@link listedEntries}, used by list rows to resolve
- * their `aria-rowindex` in O(1). Rows are appended by an infinite scroller and never unmounted, so
- * once a large collection has been scrolled through, an `indexOf()` per row would make every
- * subsequent list update O(n²).
- */
-export const listedEntryIndexMap = createDerivedState(
-  () => new Map(listedEntries.current.map((entry, index) => [entry.id, index])),
-);
-
-/**
  * Threshold for when to show a warning about nearing the quota of entries in an entry collection.
  * This is used in the UI to provide feedback to users when they are close to reaching the maximum
  * number of entries allowed in a collection, based on the collection’s quota settings.
@@ -397,6 +387,18 @@ const shownEntries = createDerivedState(
       ...listedUnpublishedEntries.current,
       ...entryGroups.current.flatMap(({ entries }) => entries),
     ]),
+);
+
+/**
+ * Map from entry ID to the entry’s row index in the list, used by list rows to resolve their
+ * `aria-rowindex` in O(1). The index follows the displayed order of {@link shownEntries}: the
+ * unpublished entries come first, then the entries of every group, sorted and filtered, as the rows
+ * of every group make up one grid. Rows are appended by an infinite scroller and never unmounted,
+ * so once a large collection has been scrolled through, an `indexOf()` per row would make every
+ * subsequent list update O(n²).
+ */
+export const listedEntryIndexMap = createDerivedState(
+  () => new Map([...shownEntries.current].map((entry, index) => [entry.id, index])),
 );
 
 /**
