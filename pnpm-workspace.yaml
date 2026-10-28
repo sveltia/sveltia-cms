@@ -1,7 +1,15 @@
+# cSpell:ignore gcqx
+
 allowBuilds:
   unrs-resolver: false
 
 engineStrict: true
+
+auditConfig:
+  ignoreGhsas:
+    # deepmerge: low severity, unpatched
+    # https://github.com/advisories/GHSA-gcqx-w48m-w2h4
+    - GHSA-gcqx-w48m-w2h4
 
 minimumReleaseAge: 1440
 
