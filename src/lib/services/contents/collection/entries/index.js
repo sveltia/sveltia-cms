@@ -103,11 +103,15 @@ export const matchesCollectionFilter = (collection, entry) => {
 
   const { field, pattern, values } = condition;
 
+  // The filter is matched against the stored value, like Decap CMS does, so a Relation field isn’t
+  // resolved to the label of the referenced entry. Resolving it would also look up the entries of
+  // the referenced collection, which loops forever if that’s this collection
   const value = getPropertyValue({
     entry,
     locale: collection._i18n.defaultLocale,
     collectionName: collection.name,
     key: field,
+    resolveRef: false,
   });
 
   // A multi-value field, such as a List field or a Relation field with `multiple: true`, yields an

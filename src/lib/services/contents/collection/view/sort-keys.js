@@ -190,7 +190,8 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
  * the key.
  */
 export const getSortKeyType = ({ key, fieldConfig }) => {
-  if (key in SPECIAL_SORT_KEY_TYPES) {
+  // A field named after an `Object.prototype` member, e.g. `constructor`, isn’t a special key
+  if (Object.hasOwn(SPECIAL_SORT_KEY_TYPES, key)) {
     return SPECIAL_SORT_KEY_TYPES[key];
   }
 

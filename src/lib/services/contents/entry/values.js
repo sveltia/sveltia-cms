@@ -87,9 +87,10 @@ export const getFieldDisplayValue = ({
   // member when the entry lacks the field
   let value = Object.hasOwn(valueMap, keyPath) ? valueMap[keyPath] : undefined;
 
-  // If the field doesn’t exist in `valueMap` and transformations are applied, return empty string
+  // If the field doesn’t exist in `valueMap` and transformations are applied, apply them to an
+  // empty string, like an entry summary does, so that `default()` can fill in the missing value
   if (value === undefined && transformations?.length) {
-    return '';
+    return String(applyTransformations({ fieldConfig, value: '', transformations, locale }));
   }
 
   if (fieldConfig?.widget === 'datetime') {

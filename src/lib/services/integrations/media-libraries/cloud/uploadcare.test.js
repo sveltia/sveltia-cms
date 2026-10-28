@@ -594,6 +594,42 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       expect(results[0].downloadURL).toBe('https://ucarecdn.com/abc123/image.jpg');
     });
 
+    it('should encode the filename in downloadURL when autoFilename is true', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: {
+          uploadcare: {
+            config: {
+              publicKey: mockPublicKey,
+            },
+            settings: {
+              autoFilename: true,
+            },
+          },
+        },
+      });
+
+      const results = parseResults([
+        {
+          uuid: 'abc123',
+          original_filename: 'photo #1 (50%).jpg',
+          original_file_url: 'https://ucarecdn.com/abc123/photo%20%231%20(50%25).jpg',
+          size: 12345,
+          mime_type: 'image/jpeg',
+          is_image: true,
+          is_ready: true,
+          content_info: null,
+          datetime_uploaded: '2025-01-01T00:00:00.000Z',
+          datetime_stored: '2025-01-01T00:00:00.000Z',
+          datetime_removed: null,
+        },
+      ]);
+
+      expect(results[0].downloadURL).toBe(
+        'https://ucarecdn.com/abc123/photo%20%231%20%2850%25%29.jpg',
+      );
+      expect(results[0].fileName).toBe('photo #1 (50%).jpg');
+    });
+
     it('should not include filename when autoFilename is false', () => {
       cmsConfig.current = /** @type {any} */ ({
         media_libraries: {

@@ -1102,6 +1102,15 @@ describe('Test getSortKeyType()', () => {
     expect(getSortKeyType({ key: 'commit_date', fieldConfig: undefined })).toBe(Date);
   });
 
+  test('does not take a field named after an `Object.prototype` member for a special key', () => {
+    const fieldConfig = { name: 'constructor', widget: 'string' };
+
+    expect(getSortKeyType({ key: 'constructor', fieldConfig })).toBe(String);
+    expect(
+      getSortKeyType({ key: 'valueOf', fieldConfig: { ...fieldConfig, name: 'valueOf' } }),
+    ).toBe(String);
+  });
+
   test('returns Boolean for boolean fields', () => {
     const booleanField = { name: 'published', widget: 'boolean' };
 

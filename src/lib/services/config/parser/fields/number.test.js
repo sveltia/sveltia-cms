@@ -99,11 +99,16 @@ describe('parseNumberFieldConfig', () => {
     expectMessages([]);
   });
 
-  test('parses a string default the way the runtime does', () => {
-    // `parseInt()` and `parseFloat()` stop at the first character that is not part of a number
-    checkDefault('1.5', 'int');
+  test('parses a string default as a whole, the way the runtime does', () => {
+    // The runtime drops a default with trailing characters, which `parseInt()` would ignore
+    checkDefault('10px', 'int');
     checkDefault('3px', 'float');
-    expectMessages([]);
+    checkDefault('1.5', 'int');
+    expectMessages([
+      { strKey: 'number_field_default_not_integer', values: { value: '10px', valueType: 'int' } },
+      { strKey: 'number_field_default_not_number', values: { value: '3px', valueType: 'float' } },
+      { strKey: 'number_field_default_not_integer', values: { value: '1.5', valueType: 'int' } },
+    ]);
   });
 
   test('reports a default that is not an integer for the integer value types', () => {

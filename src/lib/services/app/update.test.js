@@ -83,6 +83,31 @@ describe('isUpdateAvailable()', () => {
     expect(warnMock).not.toHaveBeenCalled();
   });
 
+  test('is false when the CDN reports an older version', async () => {
+    const script = document.createElement('script');
+
+    script.src = 'https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js';
+    document.head.append(script);
+    respondWith({ version: '0.9.10' });
+
+    expect(await isUpdateAvailable()).toBe(false);
+    expect(warnMock).not.toHaveBeenCalled();
+  });
+
+  test('compares the versions part by part as numbers', async () => {
+    const script = document.createElement('script');
+
+    script.src = 'https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js';
+    document.head.append(script);
+    respondWith({ version: '1.0.10' });
+
+    expect(await isUpdateAvailable()).toBe(true);
+
+    respondWith({ version: '1.0.0.1' });
+
+    expect(await isUpdateAvailable()).toBe(true);
+  });
+
   test('is true when the script is loaded unpinned from the CDN', async () => {
     const script = document.createElement('script');
 

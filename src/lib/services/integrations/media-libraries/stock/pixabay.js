@@ -2,6 +2,7 @@ import {
   fetchJSON,
   getSupportedLocale,
 } from '$lib/services/integrations/media-libraries/stock/utils';
+import { escapeHTML } from '$lib/services/utils/string';
 
 /**
  * @import {
@@ -64,7 +65,7 @@ export const parseResults = (results) =>
       downloadURL: largeImageURL,
       fileName: /** @type {string} */ (previewURL.split('/').pop()).replace('_150.', '_1280.'),
       kind: 'image',
-      credit: `<a href="${pageURL}">Photo by ${user} on Pixabay</a>`,
+      credit: `<a href="${pageURL}">Photo by ${escapeHTML(user)} on Pixabay</a>`,
     }),
   );
 

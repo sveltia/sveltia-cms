@@ -12,6 +12,7 @@ import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
 import { splitIntoChunks } from '$lib/services/utils/array';
 import { hmacSha256, toHex } from '$lib/services/utils/crypto';
 import { assertResponseOK } from '$lib/services/utils/networking';
+import { encodeRFC3986 } from '$lib/services/utils/url';
 
 /**
  * @import {
@@ -117,9 +118,11 @@ export const parseResults = (results, { fieldConfig } = {}) => {
       id: uuid,
       description: fileName,
       previewURL: `${baseURL}${isImage ? '-/preview/400x400/' : ''}`,
+      // The file name is encoded, as it can contain characters like `#` or `%` that would end or
+      // garble the URL path, or a space or parenthesis that would break a Markdown link
       downloadURL:
         `${baseURL}${isImage && defaultOperations ? `-${defaultOperations}` : ''}` +
-        `${autoFilename ? fileName : ''}`,
+        `${autoFilename ? encodeRFC3986(fileName) : ''}`,
       fileName,
       lastModified: new Date(timestamp),
       size,

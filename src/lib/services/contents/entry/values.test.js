@@ -910,6 +910,23 @@ describe('Test getFieldDisplayValue()', () => {
       expect(result).toBe('some value');
     });
 
+    test('should apply the `default` transformation to a missing field value', () => {
+      const args = { collectionName: 'posts', keyPath: 'alt', locale: 'en' };
+      const transformations = [{ method: 'default', args: { defaultValue: 'Untitled' } }];
+
+      expect(getFieldDisplayValue({ ...args, valueMap: {}, transformations })).toBe('Untitled');
+      expect(getFieldDisplayValue({ ...args, valueMap: { alt: '' }, transformations })).toBe(
+        'Untitled',
+      );
+      expect(
+        getFieldDisplayValue({
+          ...args,
+          valueMap: {},
+          transformations: [{ method: 'upper', args: {} }],
+        }),
+      ).toBe('');
+    });
+
     test('should not take an `Object.prototype` member for a missing field value', () => {
       const result = getFieldDisplayValue({
         collectionName: 'posts',

@@ -3,6 +3,7 @@ import {
   fetchPagedResults,
   getSupportedLocale,
 } from '$lib/services/integrations/media-libraries/stock/utils';
+import { escapeHTML } from '$lib/services/utils/string';
 
 /**
  * @import {
@@ -59,7 +60,7 @@ export const parseResults = (results) =>
     downloadURL: large2x,
     fileName: `pexels-${photographer.split(/\s+/).join('-').toLowerCase()}-${id}.jpg`,
     kind: 'image',
-    credit: `<a href="${url}">Photo by ${photographer} on Pexels</a>`,
+    credit: `<a href="${url}">Photo by ${escapeHTML(photographer)} on Pexels</a>`,
   }));
 
 /**

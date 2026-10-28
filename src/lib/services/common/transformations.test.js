@@ -320,6 +320,20 @@ describe('Test applyTransformation()', () => {
     expect(slugifyValue('')).toBe(slugifyValue(''));
   });
 
+  test('string transformations treat a missing value as empty, so `default` still applies', () => {
+    [undefined, null].forEach((value) => {
+      ['upper', 'lower', 'truncate(3)', 'slugify'].forEach((transformation) => {
+        expect(
+          applyTransformations({
+            value,
+            transformations: parseTransformations(`title | ${transformation} | default('none')`)
+              .transformations,
+          }),
+        ).toBe('none');
+      });
+    });
+  });
+
   test('unknown transformation returns string value', () => {
     expect(
       applyTransformation({
@@ -571,7 +585,8 @@ describe('Test individual transformation functions', () => {
     test('should convert non-string values to uppercase', () => {
       expect(applyUpperCaseTransformation(123)).toBe('123');
       expect(applyUpperCaseTransformation(true)).toBe('TRUE');
-      expect(applyUpperCaseTransformation(null)).toBe('NULL');
+      expect(applyUpperCaseTransformation(null)).toBe('');
+      expect(applyUpperCaseTransformation(undefined)).toBe('');
     });
   });
 
@@ -585,7 +600,8 @@ describe('Test individual transformation functions', () => {
     test('should convert non-string values to lowercase', () => {
       expect(applyLowerCaseTransformation(123)).toBe('123');
       expect(applyLowerCaseTransformation(true)).toBe('true');
-      expect(applyLowerCaseTransformation(null)).toBe('null');
+      expect(applyLowerCaseTransformation(null)).toBe('');
+      expect(applyLowerCaseTransformation(undefined)).toBe('');
     });
   });
 

@@ -1,4 +1,5 @@
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
+import { parseNumber } from '$lib/services/contents/fields/number/helpers';
 
 /**
  * @import { FieldParserArgs, UnsupportedOption } from '$lib/types/private';
@@ -44,11 +45,8 @@ const checkDefaultValue = ({ config, context, collectors }) => {
     return;
   }
 
-  // Parse a string the same way the runtime does
-  const value =
-    typeof defaultValue === 'string'
-      ? (isInteger ? Number.parseInt : Number.parseFloat)(defaultValue)
-      : defaultValue;
+  // Parse a string the same way the runtime does: as a whole, so a default like `10px` is reported
+  const value = parseNumber(defaultValue);
 
   if (isInteger ? !Number.isInteger(value) : !Number.isFinite(value)) {
     addMessage({

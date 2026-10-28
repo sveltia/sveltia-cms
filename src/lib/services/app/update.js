@@ -43,6 +43,21 @@ export const getLatestVersion = async () => {
 };
 
 /**
+ * Check whether the given version is newer than the running one. The versions are compared part by
+ * part as numbers, so `0.10.0` is newer than `0.9.0`. An older version can be reported right after
+ * a release, while the CDN still serves a cached `package.json`, and that’s not an update.
+ * @param {string} latestVersion Latest published version, e.g. `1.2.3`.
+ * @returns {boolean} Result.
+ */
+const isNewerVersion = (latestVersion) => {
+  const latest = latestVersion.split('.').map(Number);
+  const current = userVersion.split('.').map(Number);
+  const index = latest.findIndex((part, i) => part !== (current[i] ?? 0));
+
+  return index > -1 && latest[index] > (current[index] ?? 0);
+};
+
+/**
  * Check whether a new version of the application is available, and whether a reload would pick it
  * up. It would if the script is loaded from the CDN without a version pinned. If it’s pinned in the
  * script tag or installed via npm, a reload won’t update the instance, so a console warning is
@@ -52,7 +67,7 @@ export const getLatestVersion = async () => {
 export const isUpdateAvailable = async () => {
   const latestVersion = await getLatestVersion();
 
-  if (!latestVersion || latestVersion === userVersion) {
+  if (!latestVersion || !isNewerVersion(latestVersion)) {
     return false;
   }
 

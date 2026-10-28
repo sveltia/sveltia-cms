@@ -33,13 +33,20 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
     // A single value is taken as a whole, as it may contain a comma, e.g. `Smith, John`
     const token = dynamicValue.trim();
 
-    return { [keyPath]: token ? toOptionValue(token) : '' };
+    return {
+      [keyPath]: token ? toOptionValue(token) : getEmptyOptionValue(getOptionValue(firstOption)),
+    };
   }
 
   // A default can be given as an option object, whose `value` is what gets saved
   const value =
     dynamicValue !== undefined
-      ? dynamicValue.split(/,\s*/).map((val) => toOptionValue(val.trim()))
+      ? dynamicValue
+          .split(/,\s*/)
+          .map((val) => val.trim())
+          // Filter out empty strings, as in `?tags=` or `?tags=a,,b`, which would add empty items
+          .filter((val) => val !== '')
+          .map(toOptionValue)
       : Array.isArray(defaultValue)
         ? defaultValue.map(getOptionValue)
         : getOptionValue(defaultValue);

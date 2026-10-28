@@ -347,6 +347,52 @@ describe('Test getEntryPreviewURL()', () => {
     expect(result).toBe('https://example.com/2024/01/test-entry');
   });
 
+  test('takes a field that isn’t translated from the default locale', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = {
+      current: { show_preview_links: true, _baseURL: 'https://example.com' },
+    };
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    vi.mocked(fillTemplate).mockReturnValue('ja/2024/test');
+
+    // The date is only stored in the default locale’s file
+    const entry = {
+      ...mockEntry,
+      locales: {
+        ...mockEntry.locales,
+        ja: { ...mockEntry.locales.ja, content: {} },
+      },
+    };
+
+    const result = getEntryPreviewURL(entry, 'ja', {
+      ...mockCollection,
+      preview_path: '/{{locale}}/{{year}}/{{slug}}',
+      fields: [
+        { name: 'title', widget: 'string', i18n: true },
+        { name: 'date', widget: 'datetime', format: 'YYYY-MM-DDTHH:mm:ssZ' },
+        { name: 'tags', widget: 'list', i18n: false },
+      ],
+    });
+
+    expect(fillTemplate).toHaveBeenCalledWith(
+      '/{{locale}}/{{year}}/{{slug}}',
+      expect.objectContaining({
+        locale: 'ja',
+        // The translated title isn’t taken from the default locale
+        content: { date: '2024-01-15T10:30:00Z', tags: ['test', 'example'] },
+        dateTimeParts: expect.objectContaining({ year: '2024' }),
+      }),
+    );
+    expect(result).toBe('https://example.com/ja/2024/test');
+  });
+
   test('handles specific datetime field in preview path', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig = {

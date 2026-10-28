@@ -15,6 +15,7 @@ import {
 } from '$lib/services/contents/collection/entries/index-file';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/parse';
+import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
 import { omitLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
 import { encodePathSegments } from '$lib/services/utils/url';
 
@@ -149,6 +150,9 @@ export const fillEntryPathTemplate = ({
  * @param {string} [args.slug] Entry slug for the locale.
  * @param {string} [args.path] Entry file path for the locale.
  * @param {FlattenedEntryContent} [args.content] Entry content for the locale.
+ * @param {FlattenedEntryContent} [args.defaultContent] Entry content for the default locale. A
+ * field that isn’t translated, like a date, is only stored in the default locale, so its value is
+ * taken from there unless the locale’s content has one.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  * @returns {string | undefined} Path on the live site, or `undefined` if it cannot be determined,
@@ -161,6 +165,7 @@ export const getPreviewPath = ({
   slug,
   path: entryFilePath,
   content,
+  defaultContent,
   isIndexFile = false,
 }) => {
   const {
@@ -183,15 +188,28 @@ export const getPreviewPath = ({
     template = omitLocalePlaceholder(template) ?? template;
   }
 
+  const fields = indexFile?.fields ?? regularFields;
+
+  // Only the fields that aren’t translated are taken from the default locale: a translated field
+  // missing in the locale has no value there, and borrowing another locale’s would give a wrong URL
+  const sharedContent =
+    locale === defaultLocale || !defaultContent
+      ? {}
+      : Object.fromEntries(
+          Object.entries(defaultContent).filter(([keyPath]) =>
+            isFieldI18nDisabled(fields.find(({ name }) => name === keyPath.split('.')[0])?.i18n),
+          ),
+        );
+
   return fillEntryPathTemplate({
     pathTemplate: template,
     dateFieldName,
-    fields: indexFile?.fields ?? regularFields,
+    fields,
     collection,
     locale,
     slug,
     entryFilePath,
-    content,
+    content: { ...sharedContent, ...content },
     isIndexFile,
   });
 };
@@ -238,6 +256,7 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile, op
     slug,
     path,
     content,
+    defaultContent: entry.locales[(collectionFile ?? collection)._i18n.defaultLocale]?.content,
     isIndexFile: isCollectionIndexFile(collection, entry),
   });
 

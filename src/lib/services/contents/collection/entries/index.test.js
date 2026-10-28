@@ -619,6 +619,8 @@ describe('matchesCollectionFilter()', () => {
       locale: 'en',
       collectionName: 'posts',
       key: 'status',
+      // A Relation field is matched by its stored value, not by the referenced entry’s label
+      resolveRef: false,
     });
   });
 

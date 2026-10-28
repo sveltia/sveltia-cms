@@ -16,7 +16,13 @@ vi.mock('$lib/services/contents/entry', () => ({
 const createDraft = (overrides = {}) => ({
   isNew: false,
   isIndexFile: false,
-  collection: { name: 'posts', _type: 'entry', preview_path: '/posts/{{slug}}' },
+  collection: {
+    name: 'posts',
+    _type: 'entry',
+    preview_path: '/posts/{{slug}}',
+    _i18n: { defaultLocale: 'en' },
+  },
+  currentValues: {},
   collectionFile: undefined,
   originalEntry: {
     id: 'posts/old-slug',
@@ -146,6 +152,28 @@ describe('Test addAlias()', () => {
     );
   });
 
+  test('should pass the default locale content, which holds the fields that aren’t translated', () => {
+    const draft = createDraft({
+      originalEntry: {
+        slug: 'old-slug',
+        locales: {
+          en: { slug: 'old-slug', path: 'en/old-slug.md', content: { date: '2024-01-01' } },
+          fr: { slug: 'ancien', path: 'fr/ancien.md', content: { title: 'Ancien' } },
+        },
+      },
+      currentValues: { en: { date: '2025-01-01' }, fr: { title: 'Nouveau' } },
+    });
+
+    addAlias({ draft, locale: 'fr', slug: 'nouveau', path: 'fr/nouveau.md', content: {} });
+
+    expect(getPreviewPath).toHaveBeenCalledWith(
+      expect.objectContaining({ slug: 'ancien', defaultContent: { date: '2024-01-01' } }),
+    );
+    expect(getPreviewPath).toHaveBeenCalledWith(
+      expect.objectContaining({ slug: 'nouveau', defaultContent: { date: '2025-01-01' } }),
+    );
+  });
+
   test('should do nothing for a collection file, whose slug is fixed', () => {
     const draft = createDraft({
       collection: { name: 'pages', _type: 'file' },
@@ -166,6 +194,7 @@ describe('Test addAlias()', () => {
         name: 'posts',
         _type: 'entry',
         preview_path: '/posts/{{slug}}',
+        _i18n: { defaultLocale: 'en' },
         aliases_field: 'redirect_from',
       },
     });
@@ -197,6 +226,7 @@ describe('Test addAlias()', () => {
         name: 'posts',
         _type: 'entry',
         preview_path: '/posts/{{slug}}',
+        _i18n: { defaultLocale: 'en' },
         aliases_field: false,
       },
     });
