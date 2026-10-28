@@ -150,13 +150,13 @@ export const getEntryThumbnail = async (collection, entry) => {
  * thumbnail comes with an object URL of its own, so an entry list that renders its rows again, or
  * is left, would otherwise keep a thumbnail in memory for each time it was shown. Call it from an
  * effect and return the result, so the thumbnail is released when the effect reruns or is
- * destroyed:
- * `$effect(() => loadEntryThumbnail(collection, entry, (src) => { thumbnail = src; }))`.
+ * destroyed. Releasing doesn’t call back, so the caller stops showing the thumbnail by other means,
+ * e.g. by keeping the entry it was loaded for alongside it; the revocation waits until no element
+ * displays the URL.
  * @param {InternalEntryCollection} collection Entry’s collection.
  * @param {Entry} entry Entry.
- * @param {(src: string | undefined) => void} onLoad Function called with the thumbnail URL once
- * it’s loaded, and with `undefined` when it’s released, so the image stops pointing at it. It’s not
- * called for an entry without a thumbnail, or when the thumbnail can’t be loaded.
+ * @param {(src: string) => void} onLoad Function called with the thumbnail URL once it’s loaded.
+ * It’s not called for an entry without a thumbnail, or when the thumbnail can’t be loaded.
  * @returns {() => void} Function to release the thumbnail.
  */
 export const loadEntryThumbnail = (collection, entry, onLoad) => {
@@ -189,14 +189,10 @@ export const loadEntryThumbnail = (collection, entry, onLoad) => {
   return () => {
     released = true;
 
-    if (thumbnail) {
-      onLoad(undefined);
-
-      // The revocation waits for the next frame and skips a URL an element still displays, so an
-      // image being removed along with the row doesn’t lose its source midway
-      if (thumbnail.owned) {
-        revokeBlobURLIfNeeded(thumbnail.src);
-      }
+    // The revocation waits for the next frame and skips a URL an element still displays, so an
+    // image being removed along with the row doesn’t lose its source midway
+    if (thumbnail?.owned) {
+      revokeBlobURLIfNeeded(thumbnail.src);
     }
   };
 };

@@ -78,6 +78,7 @@
    * @import {
    * ExpanderStateList,
    * FieldEditorProps,
+   * FlattenedEntryContent,
    * InternalLocaleCode,
    * MediaFieldSource,
    * RemovedListItem,
@@ -612,17 +613,29 @@
   };
 
   /**
+   * Get the values to summarize a list item with. Called from the item’s markup, this only depends
+   * on the item’s own values, so typing in one item doesn’t make every collapsed item work out its
+   * summary and thumbnail again; a summary only ever reads the values of its item.
+   * @param {number} index List index.
+   * @returns {FlattenedEntryContent} Entry values.
+   */
+  const getItemValueMap = (index) =>
+    getFieldValueMapSnapshot(entryDraft.current, locale, `${keyPath}.${index}`, valueStoreKey);
+
+  /**
    * Format the summary template.
    * @param {number} index List index.
    * @param {string} [summaryTemplate] Summary template, e.g. `{{fields.slug}}`.
+   * @param {FlattenedEntryContent} [itemValueMap] Entry values to read the item’s values from.
+   * Defaults to those of the whole list.
    * @returns {string} Formatted summary.
    */
-  const _formatSummary = (index, summaryTemplate) =>
+  const _formatSummary = (index, summaryTemplate, itemValueMap = valueMap) =>
     formatSummary({
       collectionName,
       fileName,
       keyPath,
-      valueMap,
+      valueMap: itemValueMap,
       locale,
       summaryTemplate,
       hasSingleSubField,
@@ -682,7 +695,7 @@
       type,
       hasSingleSubField,
       componentName,
-      valueMap,
+      valueMap: getItemValueMap(index),
       locale,
     });
 
@@ -883,7 +896,7 @@
               hint={readonly || !typeConfig
                 ? undefined
                 : getLocalizedOption({ config: typeConfig, option: 'hint', locale })}
-              getSummary={() => _formatSummary(index, summaryTemplate)}
+              getSummary={() => _formatSummary(index, summaryTemplate, getItemValueMap(index))}
               getThumbnail={() => getThumbnail(index, type)}
               summaryContent={customSummary ? customSummaryContent : undefined}
             />

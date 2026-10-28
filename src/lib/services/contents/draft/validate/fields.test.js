@@ -1115,6 +1115,45 @@ describe('draft/validate/fields', () => {
         expect(mockEntryDraft.validities.en.tags.rangeUnderflow).toBe(true);
       });
 
+      it('should revalidate the parent List field only when a key path is added', async () => {
+        const { getListFieldInfo } = await import('$lib/services/contents/fields/list/helpers');
+
+        getListFieldInfo.mockReturnValue({ hasSubFields: true });
+        vi.mocked(getField).mockImplementation(({ keyPath }) =>
+          keyPath === 'authors'
+            ? { name: 'authors', widget: 'list', max: 1, fields: [{ name: 'name' }] }
+            : { name: 'name', widget: 'string' },
+        );
+
+        const listValidity = { valid: true };
+        const valueMap = { 'authors.0.name': 'A', 'authors.1.name': 'B' };
+
+        mockEntryDraft.validities.en.authors = listValidity;
+
+        // A value changed in an existing item leaves the item count as it was
+        revalidateField({
+          draft: mockEntryDraft,
+          locale: 'en',
+          keyPath: 'authors.1.name',
+          value: 'B',
+          valueMap,
+          keyAdded: false,
+        });
+
+        expect(mockEntryDraft.validities.en.authors).toBe(listValidity);
+
+        // A new item is counted
+        revalidateField({
+          draft: mockEntryDraft,
+          locale: 'en',
+          keyPath: 'authors.1.name',
+          value: 'B',
+          valueMap,
+        });
+
+        expect(mockEntryDraft.validities.en.authors.rangeOverflow).toBe(true);
+      });
+
       it('should keep the existing validity if the field is not validated', () => {
         const validity = { valid: true };
 

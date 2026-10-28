@@ -667,6 +667,103 @@ describe('assets/info', () => {
       expect(result).toBe(undefined);
     });
 
+    it('should keep the thumbnails in memory without a database', async () => {
+      _resetThumbnailDB();
+      mockBackend.repository = undefined;
+
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+      const transformImageMock = vi.mocked(transformImage);
+
+      transformImageMock.mockClear();
+      transformImageMock.mockResolvedValue(new Blob(['thumbnail'], { type: 'image/webp' }));
+
+      /**
+       * Create an asset with the given SHA.
+       * @param {number} index Index.
+       * @returns {any} Asset.
+       */
+      const createAsset = (index) => ({
+        ...mockAsset,
+        sha: `sha-${index}`,
+        file: new File(['content'], `${index}.jpg`, { type: 'image/jpeg' }),
+      });
+
+      const first = createAsset(0);
+
+      // Generated once, then read from memory, whether or not the lookup is cache-only
+      expect(await getAssetThumbnailURL(first)).toBe('blob:mock-url');
+      expect(await getAssetThumbnailURL(first)).toBe('blob:mock-url');
+      expect(await getAssetThumbnailURL(first, { cacheOnly: true })).toBe('blob:mock-url');
+      expect(await hasCachedThumbnail(first.sha)).toBe(true);
+      expect(transformImageMock).toHaveBeenCalledOnce();
+
+      // The least recently used thumbnail is dropped once 500 are kept
+      for (let index = 1; index <= 500; index += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        await getAssetThumbnailURL(createAsset(index));
+      }
+
+      expect(await hasCachedThumbnail(first.sha)).toBe(false);
+      expect(await hasCachedThumbnail('sha-500')).toBe(true);
+      expect(transformImageMock).toHaveBeenCalledTimes(501);
+    });
+
+    it('should move a thumbnail asked for again up the generation queue', async () => {
+      _resetThumbnailDB();
+      mockBackend.repository = undefined;
+
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+      const transformImageMock = vi.mocked(transformImage);
+      /** @type {string[]} */
+      const started = [];
+      /** @type {(() => void)[]} */
+      const finishers = [];
+
+      transformImageMock.mockClear();
+      transformImageMock.mockImplementation(async (/** @type {any} */ file) => {
+        started.push(file.name);
+        await new Promise((resolve) => {
+          finishers.push(() => resolve(undefined));
+        });
+
+        return new Blob(['thumbnail'], { type: 'image/webp' });
+      });
+
+      /**
+       * Create an asset with the given name.
+       * @param {string} name Name.
+       * @returns {any} Asset.
+       */
+      const createAsset = (name) => ({
+        ...mockAsset,
+        sha: `sha-${name}`,
+        file: new File(['content'], name, { type: 'image/jpeg' }),
+      });
+
+      const [first, second, ...rest] = ['a', 'b', 'c', 'd', 'e', 'f'].map(createAsset);
+      // The four slots are taken, then `e` and `f` are queued, `f` going first
+      const requests = [first, second, ...rest].map((asset) => getAssetThumbnailURL(asset));
+
+      await vi.waitFor(() => expect(started).toEqual(['a', 'b', 'c', 'd']));
+
+      // `e` is asked for again, e.g. by a row now on screen, so it goes before `f`
+      requests.push(getAssetThumbnailURL(rest[2]));
+      finishers.shift()?.();
+      await vi.waitFor(() => expect(started).toHaveLength(5));
+      expect(started.at(-1)).toBe('e');
+
+      // The rest finishes in turn
+      while (finishers.length || started.length < 6) {
+        finishers.shift()?.();
+        // eslint-disable-next-line no-await-in-loop
+        await Promise.resolve();
+      }
+
+      await Promise.all(requests);
+      expect(started).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
+      transformImageMock.mockReset();
+    });
+
     it('should return a cached thumbnail in cache-only mode', async () => {
       // The preceding tests leave the database disabled
       _resetThumbnailDB();

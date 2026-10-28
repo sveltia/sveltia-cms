@@ -1,9 +1,8 @@
 import { sleep } from '@sveltia/utils/misc';
-import { escapeRegExp } from '@sveltia/utils/string';
 
+import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
 import { getField } from '$lib/services/contents/entry/fields';
-import { ITEM_INDEX_SUFFIX_REGEX } from '$lib/services/contents/entry/key-paths';
-import { getOrCreate } from '$lib/services/utils/cache';
+import { getKeysByPrefix, ITEM_INDEX_SUFFIX_REGEX } from '$lib/services/contents/entry/key-paths';
 
 /**
  * @import {
@@ -14,11 +13,6 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * @import { FieldKeyPath, ObjectField, ListField } from '$lib/types/public';
  */
 
-/**
- * Cache of pre-compiled regexes keyed by cleaned key path.
- * @type {Map<string, RegExp>}
- */
-const expanderRegexCache = new Map();
 /**
  * Expander state changes accumulated by {@link syncExpanderStates}, waiting to be written to the
  * entry draft, keyed by draft. A draft has no entry when no flush is scheduled for it.
@@ -63,17 +57,15 @@ export const getInitialExpanderState = ({ draft, key, locale, collapsed = false 
   }
 
   if (collapsed === 'auto') {
-    const valueMap = draft.currentValues?.[locale] ?? {};
-    const cleanKey = key.replace(/#$/, '');
+    // This runs for every item of a list as it’s rendered, so the direct children are looked up in
+    // the shared snapshot’s sorted key index, rather than by going through every value of the
+    // draft’s live values each time
+    const valueMap = getValueMapSnapshot(draft, locale);
+    const prefix = `${key.replace(/#$/, '')}.`;
 
-    // Pre-compile and cache the regex — same key path is queried on every editor render.
-    const regex = getOrCreate(
-      expanderRegexCache,
-      cleanKey,
-      () => new RegExp(`^${escapeRegExp(cleanKey)}\\.[^\\.]+$`),
+    return !getKeysByPrefix(valueMap, prefix).some(
+      (keyPath) => !keyPath.slice(prefix.length).includes('.') && !!valueMap[keyPath],
     );
-
-    return !Object.entries(valueMap).some(([keyPath, value]) => regex.test(keyPath) && !!value);
   }
 
   return !collapsed;

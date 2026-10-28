@@ -567,6 +567,69 @@ export const getAssetsByFolder = (folder) =>
   allAssets.current.filter((asset) => isAssetInFolder(asset, folder));
 
 /**
+ * Get a key that two asset folders share exactly when {@link isAssetInFolder} would put the assets
+ * of one in the other: the path alone for a folder with a fixed path, every property it compares
+ * for an entry-relative folder.
+ * @param {AssetFolderInfo} folder Folder info.
+ * @returns {string} Key.
+ */
+const getAssetFolderMatchKey = ({
+  entryRelative,
+  collectionName,
+  fileName,
+  typedKeyPath,
+  isIndexFile,
+  internalPath,
+  internalSubPath,
+  publicPath,
+  hasTemplateTags: _hasTemplateTags,
+}) =>
+  JSON.stringify(
+    entryRelative
+      ? [
+          collectionName,
+          fileName,
+          typedKeyPath,
+          isIndexFile,
+          internalPath,
+          internalSubPath,
+          publicPath,
+          _hasTemplateTags,
+        ]
+      : [internalPath],
+  );
+
+/**
+ * Number of assets in each folder, keyed by {@link getAssetFolderMatchKey}, counted in one pass
+ * over {@link allAssets} and kept until the assets change.
+ */
+const getAssetCountsByFolder = memoizeOnSource(
+  () => allAssets.current,
+  (assets) => {
+    /** @type {Map<string, number>} */
+    const counts = new Map();
+
+    assets.forEach(({ folder }) => {
+      const key = getAssetFolderMatchKey(folder);
+
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    });
+
+    return counts;
+  },
+);
+
+/**
+ * Count the assets stored in the given collection defined folder. This is the length of
+ * {@link getAssetsByFolder}, without going through every asset for each folder, as the folder list
+ * does for every folder whenever an asset is added, removed or renamed.
+ * @param {AssetFolderInfo} folder Folder info.
+ * @returns {number} Number of assets.
+ */
+export const countAssetsInFolder = (folder) =>
+  getAssetCountsByFolder().get(getAssetFolderMatchKey(folder)) ?? 0;
+
+/**
  * Get a list of assets stored in the given internal directory.
  * @param {string} dirname Directory path. An empty string for the repository root.
  * @returns {Asset[]} Assets.

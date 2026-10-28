@@ -3,7 +3,6 @@ import { getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { isURL } from '@sveltia/utils/string';
 import merge from 'deepmerge';
-import { stringify } from 'yaml';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
 import {
@@ -156,7 +155,14 @@ export const initCmsConfig = async (manualConfig) => {
       throw new Error('Errors found in configuration');
     }
 
-    cmsConfigVersion.current = await getHash(stringify(config));
+    // JSON is serialized far faster than YAML, which takes tens of milliseconds for a configuration
+    // with hundreds of collections. A big integer, which a TOML file can hold, is written as text,
+    // as `JSON.stringify()` can’t serialize it otherwise
+    cmsConfigVersion.current = await getHash(
+      JSON.stringify(config, (_key, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    );
 
     // eslint-disable-next-line no-console
     console.debug('CMS configuration:', config);

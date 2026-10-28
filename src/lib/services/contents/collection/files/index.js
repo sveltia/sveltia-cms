@@ -1,5 +1,5 @@
 import { cmsConfig } from '$lib/services/config';
-import { allEntries, allEntryFolders } from '$lib/services/contents';
+import { allEntryFolders, findEntryByPaths } from '$lib/services/contents';
 import { getCollection, getValidCollections } from '$lib/services/contents/collection';
 import { getValidCollectionFiles } from '$lib/services/contents/collection/predicates';
 
@@ -107,11 +107,9 @@ export const getCollectionFileEntry = (collectionName, fileName) => {
     return undefined;
   }
 
-  const validPaths = new Set(Object.values(folderInfo.filePathMap));
-
-  return allEntries.current.find((entry) =>
-    Object.values(entry.locales).some(({ path }) => validPaths.has(path)),
-  );
+  // Relation fields look this up for every option list they build, so the entries are found
+  // through the path index rather than by going through all of them
+  return findEntryByPaths(Object.values(folderInfo.filePathMap));
 };
 
 /**

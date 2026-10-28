@@ -150,4 +150,59 @@ describe('createConcurrencyLimiter()', () => {
     // The slots are free again once everything has settled
     await expect(limit(async () => 'next')).resolves.toBe('next');
   });
+
+  test('starts the most recently queued task first when asked to', async () => {
+    const limit = createConcurrencyLimiter(1, { lastInFirstOut: true });
+    const deferreds = [0, 1, 2, 3].map(() => Promise.withResolvers());
+    /** @type {number[]} */
+    const started = [];
+
+    const results = deferreds.map(({ promise }, index) =>
+      limit(() => {
+        started.push(index);
+
+        return promise;
+      }),
+    );
+
+    await Promise.resolve();
+    expect(started).toEqual([0]);
+
+    deferreds.forEach(({ resolve }) => resolve('done'));
+    await Promise.all(results);
+    expect(started).toEqual([0, 3, 2, 1]);
+  });
+
+  test.each([
+    [false, [0, 2, 1, 3]],
+    [true, [0, 2, 3, 1]],
+  ])('moves a queued task up when prioritized (last in, first out: %s)', async (lifo, order) => {
+    const limit = createConcurrencyLimiter(1, { lastInFirstOut: lifo });
+    const deferreds = [0, 1, 2, 3].map(() => Promise.withResolvers());
+    /** @type {number[]} */
+    const started = [];
+
+    const results = deferreds.map(({ promise }, index) =>
+      limit(
+        () => {
+          started.push(index);
+
+          return promise;
+        },
+        // The second task is queued without a key
+        { key: index === 1 ? undefined : `task-${index}` },
+      ),
+    );
+
+    await Promise.resolve();
+    // The running task, an unknown key and a missing one are left alone
+    limit.prioritize('task-0');
+    limit.prioritize('missing');
+    limit.prioritize(undefined);
+    limit.prioritize('task-2');
+
+    deferreds.forEach(({ resolve }) => resolve('done'));
+    await Promise.all(results);
+    expect(started).toEqual(order);
+  });
 });

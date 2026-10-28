@@ -95,6 +95,11 @@ const LIST_ITEM_SUBFIELD_REGEX = /\.\d+(?=\.)/g;
  * is the list’s key path.
  */
 const LIST_ITEM_INDEX_REGEX = /\.\d+(?=\.|$)/g;
+/**
+ * Regular expression matching what follows a list’s key path in the key path of one of its direct
+ * items, e.g. `.3` in `tags.3`, but not `.0.name` in `speakers.0.name`.
+ */
+const DIRECT_ITEM_SUFFIX_REGEX = /^\.\d+$/;
 
 /**
  * Compute the validation messages of a field from its validity state, if it has one, and record
@@ -358,18 +363,23 @@ const revalidateSingleField = ({ draft, locale, keyPath, value, valueMap }) => {
 /**
  * Re-validate a single field right after its value has been updated or deleted, so the error state
  * and message shown for the field reflect what the user has just done. The List fields the value is
- * an item of, or is in an item of, are re-validated as well, since their item count may have
- * changed, e.g. `tags` for `tags.3` and `speakers` for `speakers.0.name`. This is a no-op until the
- * entry has been validated once, which normally happens on a save attempt, because no error is
- * displayed before that.
+ * an item of are re-validated as well, e.g. `tags` for `tags.3`, as their items are validated as
+ * part of them. So are the List fields the value is in an item of, e.g. `speakers` for
+ * `speakers.0.name`, but only when a key path has been added or deleted, as only their item count
+ * may have changed: counting the items means going through the whole entry, which isn’t done again
+ * on every keystroke. This is a no-op until the entry has been validated once, which normally
+ * happens on a save attempt, because no error is displayed before that.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft, modified in place.
  * @param {LocaleCode} args.locale Locale of the updated field.
  * @param {FieldKeyPath} args.keyPath Key path of the updated field.
  * @param {any} args.value Updated field value, or `undefined` if the value has been deleted.
  * @param {FlattenedEntryContent} args.valueMap Entry values for the locale.
+ * @param {boolean} [args.keyAdded] Whether the key path has been added or deleted rather than
+ * having its value changed. Defaults to `true`, so the List fields are re-validated unless the
+ * caller knows the key path existed already.
  */
-export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => {
+export const revalidateField = ({ draft, locale, keyPath, value, valueMap, keyAdded = true }) => {
   revalidateSingleField({ draft, locale, keyPath, value, valueMap });
 
   const mapKeyInfo = getMapKeyInfo(getDraftFieldArgs(draft, { keyPath, valueMap }));
@@ -397,6 +407,13 @@ export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => 
 
   [...keyPath.matchAll(LIST_ITEM_INDEX_REGEX)].forEach(({ index }) => {
     const listKeyPath = keyPath.slice(0, index);
+
+    // An item of a list without subfields, or a value of a multiple Relation or Select field, is
+    // validated as part of the list. A value inside an item only counts towards the item count
+    if (!keyAdded && !DIRECT_ITEM_SUFFIX_REGEX.test(keyPath.slice(index))) {
+      return;
+    }
+
     const getFieldArgs = getDraftFieldArgs(draft, { keyPath: listKeyPath, valueMap });
     const listFieldConfig = getField(getFieldArgs);
 

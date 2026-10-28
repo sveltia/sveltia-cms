@@ -51,7 +51,7 @@ describe('EntryResultItem', () => {
     });
 
     const { container } = await render(EntryResultItem, {
-      result: { entry, points: 1, locale: '_default', keyPath: 'title' },
+      result: { id: entry.id, entry, points: 1, locale: '_default', keyPath: 'title' },
     });
 
     await expect.element(page.getByRole('row')).toHaveTextContent('Posts Hello, world!');
@@ -70,7 +70,7 @@ describe('EntryResultItem', () => {
     });
 
     const { container } = await render(EntryResultItem, {
-      result: { entry, points: 1, locale: '_default', keyPath: 'title' },
+      result: { id: entry.id, entry, points: 1, locale: '_default', keyPath: 'title' },
     });
 
     await expect
@@ -86,7 +86,7 @@ describe('EntryResultItem', () => {
       content: { _default: { title: 'My Site' } },
     });
 
-    await render(EntryResultItem, { result: { entry, points: 1 } });
+    await render(EntryResultItem, { result: { id: entry.id, entry, points: 1 } });
 
     await expect.element(page.getByRole('row')).toHaveTextContent('Settings General');
   });

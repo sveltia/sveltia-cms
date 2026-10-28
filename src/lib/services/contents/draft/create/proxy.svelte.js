@@ -386,7 +386,7 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
 
   return createValueMap(target, {
     // eslint-disable-next-line jsdoc/require-jsdoc
-    onSet: (obj, /** @type {FieldKeyPath} */ keyPath, value, previousValue) => {
+    onSet: (obj, /** @type {FieldKeyPath} */ keyPath, value, previousValue, added) => {
       // Skip the rest in some cases
       if ([canonicalSlugKey].includes(keyPath)) {
         return;
@@ -397,7 +397,7 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
       // Update the validity and validation message in real time if validation has already been
       // performed. A value without a field of its own may be a KeyValue pair, which is validated
       // as part of its field, so that’s left to `revalidateField()` to tell
-      revalidateField({ draft, locale: sourceLanguage, keyPath, value, valueMap });
+      revalidateField({ draft, locale: sourceLanguage, keyPath, value, valueMap, keyAdded: added });
 
       // Copy value to other locales
       if (fieldConfig && shouldAutoDuplicate(fieldConfig, getFieldArgs)) {

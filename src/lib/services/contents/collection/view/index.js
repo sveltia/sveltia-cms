@@ -373,7 +373,13 @@ export const entryGroups = createDerivedState(() => {
 
   const { current: group } = groupConditions;
 
-  return groupEntries(filteredEntries.current, collection, group, viewTime.current);
+  return groupEntries(
+    filteredEntries.current,
+    collection,
+    group,
+    viewTime.current,
+    sortConditions.current,
+  );
 });
 
 /**

@@ -321,6 +321,12 @@ describe('collection/view/index', () => {
     expect(sortEntries).toHaveBeenCalledTimes(2);
     expect(filterEntries).toHaveBeenCalledTimes(3);
     expect(groupEntries).toHaveBeenCalledTimes(3);
+    // The groups follow the sort order, which is passed in rather than read from the view, so
+    // that another change to the view doesn’t make the groups anew
+    expect(vi.mocked(groupEntries).mock.lastCall?.[4]).toEqual({
+      key: 'title',
+      order: 'descending',
+    });
   });
 
   test('entryGroups skips processing for file/singleton collections', async () => {
@@ -2185,7 +2191,13 @@ describe('collection/view/index', () => {
       expect(viewTime.current).toEqual(start);
       expect(entryGroups.current).toEqual([{ name: '*', entries }]);
       expect(filterEntries).toHaveBeenLastCalledWith(entries, collection, filters, start);
-      expect(groupEntries).toHaveBeenLastCalledWith(entries, collection, undefined, start);
+      expect(groupEntries).toHaveBeenLastCalledWith(
+        entries,
+        collection,
+        undefined,
+        start,
+        undefined,
+      );
 
       vi.clearAllMocks();
       vi.advanceTimersByTime(60000);
@@ -2196,7 +2208,13 @@ describe('collection/view/index', () => {
       expect(viewTime.current).toEqual(tick);
       expect(entryGroups.current).toEqual([{ name: '*', entries }]);
       expect(filterEntries).toHaveBeenLastCalledWith(entries, collection, filters, tick);
-      expect(groupEntries).toHaveBeenLastCalledWith(entries, collection, undefined, tick);
+      expect(groupEntries).toHaveBeenLastCalledWith(
+        entries,
+        collection,
+        undefined,
+        tick,
+        undefined,
+      );
 
       // The timer is stopped once the filter is removed
       currentView.current = { type: 'list', filters: [] };

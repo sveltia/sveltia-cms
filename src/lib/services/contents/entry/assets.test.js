@@ -344,7 +344,8 @@ describe('loadEntryThumbnail', () => {
     expect(onLoad).toHaveBeenCalledExactlyOnceWith('blob:thumb');
 
     release();
-    expect(onLoad).toHaveBeenLastCalledWith(undefined);
+    // Releasing doesn’t call back: no state is written while the caller is being torn down
+    expect(onLoad).toHaveBeenCalledOnce();
     expect(mockRevokeBlobURLIfNeeded).toHaveBeenCalledExactlyOnceWith('blob:thumb');
   });
 
@@ -358,7 +359,7 @@ describe('loadEntryThumbnail', () => {
 
     await settle();
     release();
-    expect(onLoad).toHaveBeenLastCalledWith(undefined);
+    expect(onLoad).toHaveBeenCalledOnce();
     expect(mockRevokeBlobURLIfNeeded).not.toHaveBeenCalled();
   });
 

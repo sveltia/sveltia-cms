@@ -34,7 +34,7 @@ export const scanEntry = ({ entry, terms, normalizedValueCache = undefined }) =>
   // An entry that every associated collection filters out can’t be opened — the content editor
   // would show “Entry not found” — so it must not be listed as a result at all
   if (!collections.length) {
-    return { entry, points: 0, locale, keyPath };
+    return { id: entry.id, entry, points: 0, locale, keyPath };
   }
 
   collections.forEach((collection) => {
@@ -81,7 +81,7 @@ export const scanEntry = ({ entry, terms, normalizedValueCache = undefined }) =>
     }).length;
   });
 
-  return { entry, points, locale, keyPath };
+  return { id: entry.id, entry, points, locale, keyPath };
 };
 
 /**

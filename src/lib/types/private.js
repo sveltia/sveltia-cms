@@ -1101,6 +1101,8 @@
 /**
  * Search result for an entry.
  * @typedef {object} EntrySearchResult
+ * @property {string} id ID of the entry, which keys the result in the list, so a row keeps showing
+ * the same entry when the results are reordered.
  * @property {Entry} entry Entry that matched the search terms.
  * @property {number} points Points scored for the entry based on matches.
  * @property {InternalLocaleCode} [locale] First matching locale, if available.
@@ -2373,6 +2375,20 @@
  * `inlinePattern`.
  * @typedef {EditorComponentDefinition & { inlinePattern?: InlinePatternOptions }}
  * ResolvedEditorComponentDefinition
+ */
+
+/**
+ * Options for a task given to a {@link ConcurrencyLimiter}.
+ * @typedef {object} ConcurrencyLimiterTaskOptions
+ * @property {any} [key] Key identifying the queued task, so it can be moved up the queue with
+ * `prioritize()`.
+ */
+
+/**
+ * Function running a task when there is room, created with `createConcurrencyLimiter()`, along
+ * with its `prioritize()` method.
+ * @typedef {(<T>(task: () => Promise<T>, options?: ConcurrencyLimiterTaskOptions) => Promise<T>)
+ * & { prioritize: (key: any) => void }} ConcurrencyLimiter
  */
 
 export {};

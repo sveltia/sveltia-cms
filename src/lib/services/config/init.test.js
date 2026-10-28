@@ -519,6 +519,28 @@ describe('config/init', () => {
       await initCmsConfig();
 
       expect(cmsConfigVersion.current).toBe('config-hash-123');
+      // The configuration is serialized as JSON
+      expect(JSON.parse(getHashMock.mock.lastCall?.[0])).toMatchObject(mockConfig);
+    });
+
+    it('should hash a configuration holding a big integer', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      fetchcmsConfigMock.mockResolvedValue({
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            folder: 'posts',
+            fields: [{ name: 'count', widget: 'number', default: 9007199254740993n }],
+          },
+        ],
+      });
+
+      await initCmsConfig();
+
+      expect(getHashMock.mock.lastCall?.[0]).toContain('"default":"9007199254740993"');
     });
 
     it('should handle validation errors', async () => {

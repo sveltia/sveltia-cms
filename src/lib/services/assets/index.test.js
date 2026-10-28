@@ -7,6 +7,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  countAssetsInFolder,
   fillInternalPathTemplate,
   getAssetByAbsolutePath,
   getAssetByInternalPath,
@@ -1107,6 +1108,8 @@ describe('assets/index', () => {
 
       const result = getAssetsByFolder(folder);
 
+      expect(countAssetsInFolder(folder)).toBe(getAssetsByFolder(folder).length);
+
       expect(result).toEqual([matchingAsset]);
     });
 
@@ -1126,6 +1129,7 @@ describe('assets/index', () => {
 
       expect(isAssetInFolder(/** @type {any} */ (matchingAsset), folder)).toBe(true);
       expect(getAssetsByFolder(folder)).toEqual([matchingAsset]);
+      expect(countAssetsInFolder(folder)).toBe(getAssetsByFolder(folder).length);
     });
 
     it('should return empty array when no assets match', () => {
@@ -1146,6 +1150,8 @@ describe('assets/index', () => {
       allAssets.current = [asset];
 
       const result = getAssetsByFolder(folder);
+
+      expect(countAssetsInFolder(folder)).toBe(getAssetsByFolder(folder).length);
 
       expect(result).toEqual([]);
     });
@@ -1193,8 +1199,15 @@ describe('assets/index', () => {
       // The asset is assigned to the field-level folder, but every folder with its path lists it,
       // while a folder nested in it keeps its own assets
       expect(getAssetsByFolder(assetCollectionFolder)).toEqual([asset]);
+      expect(countAssetsInFolder(assetCollectionFolder)).toBe(
+        getAssetsByFolder(assetCollectionFolder).length,
+      );
       expect(getAssetsByFolder(collectionFolder)).toEqual([asset]);
+      expect(countAssetsInFolder(collectionFolder)).toBe(
+        getAssetsByFolder(collectionFolder).length,
+      );
       expect(getAssetsByFolder(nestedFolder)).toEqual([nestedAsset]);
+      expect(countAssetsInFolder(nestedFolder)).toBe(getAssetsByFolder(nestedFolder).length);
     });
 
     it('should only return the assets of the same entry-relative folder', () => {
@@ -1228,8 +1241,12 @@ describe('assets/index', () => {
 
       // An entry-relative folder’s path is the collection’s, so it isn’t shared by path
       expect(getAssetsByFolder({ ...postsFolder })).toEqual([asset]);
+      expect(countAssetsInFolder({ ...postsFolder })).toBe(1);
       expect(getAssetsByFolder(pagesFolder)).toEqual([]);
+      expect(countAssetsInFolder(pagesFolder)).toBe(0);
+      expect(countAssetsInFolder(pagesFolder)).toBe(getAssetsByFolder(pagesFolder).length);
       expect(getAssetsByFolder(fixedFolder)).toEqual([fixedAsset]);
+      expect(countAssetsInFolder(fixedFolder)).toBe(getAssetsByFolder(fixedFolder).length);
     });
   });
 

@@ -101,7 +101,10 @@ describe('EntryList', () => {
     await expect
       .poll(() => grid.element().querySelector('.image img')?.getAttribute('src'))
       .toBe(TEST_IMAGE_URL);
-    expect(grid.element().querySelector('.image .preview')).toHaveClass('icon');
+    // The thumbnail is loaded once the row has stayed in view for a moment
+    await expect
+      .poll(() => grid.element().querySelector('.image .preview')?.classList.contains('icon'))
+      .toBe(true);
 
     await grid.getByRole('row', { name: 'World' }).click();
     await expect.poll(() => window.location.hash).toBe('#/collections/posts/entries/world');
@@ -143,7 +146,10 @@ describe('EntryList', () => {
     await expect
       .poll(() => container.querySelector('[data-key="category"]')?.textContent?.trim())
       .toBe('news');
-    expect(grid.element().querySelector('.image .preview')).toHaveClass('icon');
+    // The thumbnail is loaded once the row has stayed in view for a moment
+    await expect
+      .poll(() => grid.element().querySelector('.image .preview')?.classList.contains('icon'))
+      .toBe(true);
 
     // The header sorts the entries
     await grid.getByRole('columnheader', { name: 'Title' }).getByRole('button').click();
