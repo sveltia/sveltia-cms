@@ -40,11 +40,11 @@ import {
 
 const TAG_NAME_REGEX = /^<(?<tagName>[a-z]+)/i;
 /**
- * Mounted pattern-based inline components, keyed by their element, so a node can hand the latest
- * data to its component in `updateDOM()`, which only receives the element.
+ * Mounted components, keyed by their element, so a node can hand the latest data to its component
+ * in `updateDOM()`, which only receives the element.
  * @type {WeakMap<HTMLElement, { setValues: (values: Record<string, any>) => void }>}
  */
-const inlineComponents = new WeakMap();
+const mountedComponents = new WeakMap();
 
 /**
  * Get the name of the HTML tag that a component renders, so that the equivalent tag in a pasted
@@ -205,21 +205,24 @@ export const createCustomNodeClass = (componentDef) => {
     }
 
     /**
-     * Import JSON.
-     * @param {SerializedLexicalNode} serializedNode Input.
+     * Import JSON, as exported by {@link exportJSON}, e.g. when a component is pasted or moved by
+     * dragging. The base `updateFromJSON()` only restores Lexical’s own node state, so the field
+     * properties are read here.
+     * @param {SerializedLexicalNode & { props?: Record<string, any> }} serializedNode Input.
      * @returns {CustomNode} New node.
      */
     static importJSON(serializedNode) {
-      return new CustomNode().updateFromJSON(serializedNode);
+      return new CustomNode(serializedNode.props).updateFromJSON(serializedNode);
     }
 
     /**
-     * Export the node as JSON.
-     * @returns {SerializedLexicalNode} Output.
+     * Export the node as JSON. The field properties are kept under a key of their own, so a field
+     * named `type` or `version` doesn’t clash with Lexical’s keys.
+     * @returns {SerializedLexicalNode & { props: Record<string, any> }} Output.
      */
     exportJSON() {
       return {
-        ...normalizeProps(this.__props ?? {}),
+        props: normalizeProps(this.__props ?? {}),
         type: componentName,
         version: 1,
       };
@@ -419,9 +422,7 @@ export const createCustomNodeClass = (componentDef) => {
 
       wrapper = /** @type {HTMLElement} */ (component.getElement());
 
-      if (inlinePattern) {
-        inlineComponents.set(wrapper, /** @type {any} */ (component));
-      }
+      mountedComponents.set(wrapper, /** @type {any} */ (component));
 
       window.requestAnimationFrame(() => {
         // Lexical inserts the element as soon as it’s created, so one that’s still detached won’t
@@ -570,16 +571,16 @@ export const createCustomNodeClass = (componentDef) => {
     }
 
     /**
-     * Update the DOM. A pattern-based inline component shows the data of the latest node, which
-     * changes when `onInsert` or `onEdit` returns data, or the change is undone or redone; the
-     * element is kept, and the component is told about the data instead.
+     * Update the DOM. A component shows the data of the latest node, which changes when a field is
+     * edited, `onInsert` or `onEdit` returns data, or the change is undone or redone; the element
+     * is kept, and the component is told about the data instead.
      * @param {CustomNode} prevNode Previous version of the node.
      * @param {HTMLElement} dom Element created with {@link createDOM}.
      * @returns {boolean} Whether to create the element again, which is never needed.
      */
     updateDOM(prevNode, dom) {
-      if (inlinePattern && prevNode.__props !== this.__props) {
-        inlineComponents.get(dom)?.setValues(this.__props ?? {});
+      if (prevNode.__props !== this.__props) {
+        mountedComponents.get(dom)?.setValues(this.__props ?? {});
       }
 
       return false;

@@ -31,6 +31,7 @@
   import { validateComponentValues } from '$lib/services/contents/fields/rich-text/components/validate';
   import {
     deleteKeysByPrefix,
+    deleteOwnKeysByPrefix,
     flattenWithPrefix,
     getValuesByPrefix,
     reconcileComponentValues,
@@ -256,6 +257,12 @@
    */
   let previousValues = undefined;
   /**
+   * Whether `values` has just been replaced with the data of the node with {@link setValues}, e.g.
+   * after an undo, so the values are written to the draft as they are, and not reported back to the
+   * node, which would add a step to the history and drop what can be redone.
+   */
+  let valuesFromNode = false;
+  /**
    * Whether the component has been unmounted, after which a deferred write must not put its values
    * back into the draft. A plain variable, as it’s read outside of any reactive context.
    */
@@ -293,6 +300,18 @@
   const attachEntryDraft = (element) => {
     if (entryDraft) {
       setEntryDraftRoot(element, entryDraft);
+    }
+  };
+
+  /**
+   * Replace the component values with the data of the node, which changes without the component
+   * knowing when the change is undone or redone.
+   * @param {Record<string, any>} newValues New values.
+   */
+  export const setValues = (newValues) => {
+    if (!equal(newValues, values)) {
+      valuesFromNode = true;
+      values = newValues;
     }
   };
 
@@ -473,6 +492,10 @@
     () => [values, locale, keyPath],
     () => {
       if (entryDraft?.current && locale && keyPath) {
+        const fromNode = valuesFromNode;
+
+        valuesFromNode = false;
+
         const reconciledValues = reconcileComponentValues({
           values,
           fields,
@@ -484,6 +507,11 @@
         // Only reassign when something actually changed, or this would run forever
         if (reconciledValues !== values) {
           values = reconciledValues;
+        }
+
+        // The node already holds these values, so they don’t have to be reported to it (block mode)
+        if (fromNode) {
+          previousValues = values;
         }
 
         if (!equal(values, currentValues)) {
@@ -507,6 +535,12 @@
             }
 
             if (!unmounted) {
+              // The node’s data replaces the values as a whole, e.g. a list item an undo removes,
+              // while the components nested in the fields keep theirs
+              if (fromNode) {
+                deleteOwnKeysByPrefix(draft[valueStoreKey][locale], keyPathPrefix);
+              }
+
               Object.assign(draft[valueStoreKey][locale], flatValues);
             }
           });

@@ -41,6 +41,12 @@
   let showErrorToast = $state(false);
   let errorMessage = $state('');
   let showValidationToast = $state(false);
+  /**
+   * Incremented when a status change fails or is blocked, to render the menu items again: a menu
+   * item checks itself once clicked, and would otherwise stay checked, so the stage couldn’t be
+   * picked again to retry.
+   */
+  let itemsVersion = $state(0);
 
   // The stages the collection is configured with, and the one the entry is in. A pull request whose
   // label isn’t among the stages is shown in the nearest earlier one
@@ -66,6 +72,7 @@
     // before it moves towards being published
     if (!canMoveToStatus({ entry, status: newStatus, draft: entryDraft.current })) {
       showValidationToast = true;
+      itemsVersion += 1;
 
       return;
     }
@@ -85,6 +92,7 @@
       ) {
         errorMessage = getWorkflowErrorMessage(ex, 'workflow.status_change_failed');
         showErrorToast = true;
+        itemsVersion += 1;
         // eslint-disable-next-line no-console
         console.error(ex);
       }
@@ -110,15 +118,17 @@
   >
     {#snippet popup()}
       <Menu ariaLabel={_('workflow.change_entry_status')}>
-        {#each stages as _status (_status)}
-          <MenuItemRadio
-            label={_(WORKFLOW_STATUS_LABELS[_status])}
-            checked={_status === status}
-            onChange={() => {
-              changeStatus(_status);
-            }}
-          />
-        {/each}
+        {#key itemsVersion}
+          {#each stages as _status (_status)}
+            <MenuItemRadio
+              label={_(WORKFLOW_STATUS_LABELS[_status])}
+              checked={_status === status}
+              onChange={() => {
+                changeStatus(_status);
+              }}
+            />
+          {/each}
+        {/key}
       </Menu>
     {/snippet}
   </MenuButton>

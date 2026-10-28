@@ -30,10 +30,15 @@
  */
 
 /**
+ * Name of a cloud media storage service with an S3-compatible API.
+ * @typedef {'aws_s3' | 'backblaze_b2' | 'bunny_storage' | 'cloudflare_r2' | 'digitalocean_spaces' |
+ * 'scaleway_object_storage' | 'supabase_storage'} S3MediaLibraryName
+ */
+
+/**
  * Cloud media storage name.
- * @typedef {'cloudinary' | 'uploadcare' | 'aws_s3' | 'azure_blob_storage' | 'backblaze_b2' |
- * 'bunny_storage' | 'cloudflare_r2' | 'digitalocean_spaces' | 'scaleway_object_storage' |
- * 'supabase_storage'} CloudMediaLibraryName
+ * @typedef {'cloudinary' | 'uploadcare' | 'azure_blob_storage' | S3MediaLibraryName}
+ * CloudMediaLibraryName
  */
 
 /**
@@ -289,6 +294,45 @@
  */
 
 /**
+ * Options of a named media storage in the legacy `media_library` option, identified by its `name`,
+ * so the options are checked against those of that storage.
+ * @typedef {(CloudinaryMediaLibrary & { name: 'cloudinary' }) |
+ * (UploadcareMediaLibrary & { name: 'uploadcare' }) |
+ * (S3MediaLibrary & { name: S3MediaLibraryName }) |
+ * (AzureMediaLibrary & { name: 'azure_blob_storage' }) |
+ * (StockMediaLibrary & { name: 'stock_assets' })} NamedLegacyMediaLibrary
+ */
+
+/**
+ * Global legacy media storage option, which applies to the default media storage without a `name`.
+ * @typedef {(DefaultMediaLibrary & { name?: 'default' }) | NamedLegacyMediaLibrary}
+ * GlobalLegacyMediaLibrary
+ */
+
+/**
+ * Field-level legacy media storage option without a `name`, which applies to the storage named in
+ * the global `media_library` option, so its options can be those of any storage.
+ * @typedef {MediaLibrary & { name?: undefined }} UnnamedLegacyMediaLibrary
+ */
+
+/**
+ * Options of a named media storage in the field-level legacy `media_library` option. They’re merged
+ * over the global options of the same storage, so the options the storage requires, such as an S3
+ * `bucket`, can be left to the global ones.
+ * @typedef {(CloudinaryMediaLibrary & { name: 'cloudinary' }) |
+ * (UploadcareMediaLibrary & { name: 'uploadcare' }) |
+ * (Partial<S3MediaLibrary> & { name: S3MediaLibraryName }) |
+ * (Partial<AzureMediaLibrary> & { name: 'azure_blob_storage' }) |
+ * (StockMediaLibrary & { name: 'stock_assets' })} FieldNamedLegacyMediaLibrary
+ */
+
+/**
+ * Field-level legacy media storage option.
+ * @typedef {(DefaultMediaLibrary & { name: 'default' }) | FieldNamedLegacyMediaLibrary |
+ * UnnamedLegacyMediaLibrary} FieldLegacyMediaLibrary
+ */
+
+/**
  * Unified media storage option that supports multiple storage providers. See the
  * [documentation](https://sveltiacms.app/en/docs/media#configuration) for details.
  * @typedef {object} MediaLibraries
@@ -436,12 +480,6 @@
  */
 
 /**
- * Field-level media storage options.
- * @typedef {object} FieldMediaLibraryOptions
- * @property {MediaLibraryName} [name] Library name.
- */
-
-/**
  * Media field properties.
  * @typedef {object} MediaFieldProps
  * @property {string | string[]} [default] Default value. Accepts a file path or complete URL. If
@@ -466,7 +504,7 @@
  * collection-level `media_folder` value.
  * @property {string} [public_folder] Public media folder path for the field. Default:
  * `media_folder` option value.
- * @property {MediaLibrary & FieldMediaLibraryOptions} [media_library] Legacy media storage option
+ * @property {FieldLegacyMediaLibrary} [media_library] Legacy media storage option
  * that allows only one library. It overrides the global options of the same library in the same way
  * as `media_libraries`; without a `name`, it applies to the library named in the global
  * `media_library` option. Use `media_libraries` instead to support multiple libraries.
@@ -2408,12 +2446,6 @@
  */
 
 /**
- * Global media storage options.
- * @typedef {object} GlobalMediaLibraryOptions
- * @property {MediaLibraryName} [name] Library name. Default: `default`, the internal media storage.
- */
-
-/**
  * Custom logo options.
  * @typedef {object} LogoOptions
  * @property {string} [src] Absolute URL or absolute path to the site logo that will be displayed on
@@ -2548,7 +2580,7 @@
  * public URL, e.g. `/images/uploads`. A leading slash is added if missing, while a relative path
  * starting with `./` or `../` and a full URL are not allowed. Default: `/` followed by the
  * `media_folder` option value.
- * @property {MediaLibrary & GlobalMediaLibraryOptions} [media_library] Legacy media storage option
+ * @property {GlobalLegacyMediaLibrary} [media_library] Legacy media storage option
  * that allows only one library. Use `media_libraries` instead to support multiple storage
  * providers. If both options define the same library, `media_libraries` takes precedence.
  * @property {MediaLibraries} [media_libraries] Unified media storage option that supports multiple

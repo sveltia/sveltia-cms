@@ -25,6 +25,21 @@ export const deleteKeysByPrefix = (valueMap, keyPathPrefix) => {
 };
 
 /**
+ * Remove the values of a rich text editor component’s own fields from the given flattened value
+ * map, leaving those of the components nested in its rich text fields, whose keys carry a prefix
+ * of their own, e.g. `body:c12:text:c34:alt` within `body:c12:`. The map is modified in place.
+ * @param {Record<string, any>} valueMap Flattened value map.
+ * @param {string} keyPathPrefix Key path prefix of the component, e.g. `body:c12:`.
+ */
+export const deleteOwnKeysByPrefix = (valueMap, keyPathPrefix) => {
+  Object.keys(valueMap).forEach((key) => {
+    if (key.startsWith(keyPathPrefix) && !key.slice(keyPathPrefix.length).includes(':')) {
+      delete valueMap[key];
+    }
+  });
+};
+
+/**
  * Flatten the values of a rich text editor component, and prefix the keys with the component’s key
  * path prefix, so they can be stored in the `extraValues` of an entry draft.
  * @param {Record<string, any>} values Component values.

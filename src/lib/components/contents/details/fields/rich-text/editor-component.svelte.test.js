@@ -172,6 +172,41 @@ describe('EditorComponent', () => {
       );
     });
 
+    test('takes the values of the node, e.g. after an undo, without reporting them', async () => {
+      const { draft, onChange, component } = await renderComponent({
+        values: { title: 'Hello', url: 'https://example.com' },
+      });
+
+      const title = page.getByRole('group', { name: 'Card' }).getByRole('textbox', {
+        name: 'Title',
+      });
+
+      await expect.element(title).toHaveValue('Hello');
+      await vi.waitFor(() => expect(onChange).toHaveBeenCalled());
+      onChange.mockClear();
+
+      component.setValues({ title: 'Undone' });
+
+      await expect.element(title).toHaveValue('Undone');
+      // The node’s data replaces the stored values as a whole
+      await expect.poll(() => getStoredValues(draft).title).toBe('Undone');
+      expect(getStoredValues(draft).url).not.toBe('https://example.com');
+      // The node already holds the values, so reporting them would add a step to the history
+      expect(onChange).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'update' }));
+
+      // The same values are ignored
+      component.setValues({ title: 'Undone' });
+      await title.fill('Edited');
+      await vi.waitFor(() =>
+        expect(onChange).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            type: 'update',
+            detail: expect.objectContaining({ title: 'Edited' }),
+          }),
+        ),
+      );
+    });
+
     test('handles the keys pressed within the block', async () => {
       const { onChange, wrapper } = await renderComponent({ values: { title: 'Hello' } });
       const block = /** @type {HTMLElement} */ (wrapper.querySelector('.component'));

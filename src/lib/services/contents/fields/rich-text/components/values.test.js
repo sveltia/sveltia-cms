@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import {
   deleteKeysByPrefix,
+  deleteOwnKeysByPrefix,
   flattenWithPrefix,
   getValuesByPrefix,
   reconcileComponentValues,
@@ -24,6 +25,26 @@ describe('contents/fields/rich-text/components/values', () => {
 
     test('does nothing without a map', () => {
       expect(() => deleteKeysByPrefix(undefined, 'body:c1:')).not.toThrow();
+    });
+  });
+
+  describe('deleteOwnKeysByPrefix()', () => {
+    test('removes the keys of the component’s own fields, keeping nested components’', () => {
+      const valueMap = {
+        title: 'Title',
+        'body:c1:src': 'a.jpg',
+        'body:c1:tags.0': 'x',
+        'body:c1:text:c3:alt': 'Nested',
+        'body:c2:src': 'b.jpg',
+      };
+
+      deleteOwnKeysByPrefix(valueMap, 'body:c1:');
+
+      expect(valueMap).toEqual({
+        title: 'Title',
+        'body:c1:text:c3:alt': 'Nested',
+        'body:c2:src': 'b.jpg',
+      });
     });
   });
 
