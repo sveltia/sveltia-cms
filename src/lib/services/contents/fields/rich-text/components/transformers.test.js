@@ -538,12 +538,13 @@ describe('createTransformer', () => {
       it('should leave a match followed by text on its last line as text', () => {
         const pattern = /^<aside>(?<text>[\s\S]*?)<\/aside>/;
 
+        // Lexical escapes a `<` in text on export; the editor keeps raw HTML with a transformer
         expect(roundTrip(pattern, '<aside>Note</aside> trailing text\n\nNext')).toEqual({
-          markdown: '<aside>Note</aside> trailing text\n\nNext',
+          markdown: '&#60;aside>Note&#60;/aside> trailing text\n\nNext',
           nodes: ['paragraph', 'paragraph'],
         });
         expect(roundTrip(pattern, '<aside>\nNote\n</aside> trailing\n\nNext').markdown).toBe(
-          '<aside>\nNote\n</aside> trailing\n\nNext',
+          '&#60;aside>\nNote\n&#60;/aside> trailing\n\nNext',
         );
         // Whitespace alone doesn’t count
         expect(roundTrip(pattern, '<aside>Note</aside>  \n\nNext').nodes).toEqual([
