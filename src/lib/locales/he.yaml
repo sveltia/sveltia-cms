@@ -16,6 +16,7 @@
 # 5. Terms that collide in English are kept apart: Collection is אוסף,
 #    Content is תוכן, Asset is קובץ מדיה, File is קובץ, Entry is פריט.
 
+
 # ==============================================================================
 # Common Actions
 # ==============================================================================
@@ -193,6 +194,8 @@ sign_in_error:
 backend_unsupported_version: ממשק {$name} דורש את {$name} בגרסה {$version} ומעלה.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: אין לכם גישה למאגר „{$repo}”.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_write_access: אין לכם הרשאת כתיבה למאגר „{$repo}”.
 repository_not_found: המאגר „{$repo}” אינו קיים.
 repository_empty: למאגר „{$repo}” אין ענפים.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
@@ -222,6 +225,7 @@ entry_parse_errors: |
   .match $count
     one {{ אירעה שגיאה בפענוח קובץ של פריט. בדקו את מסוף הדפדפן לפרטים. }}
     *   {{ אירעו שגיאות בפענוח קובצי פריטים. בדקו את מסוף הדפדפן לפרטים. }}
+
 # ==============================================================================
 # Authentication and Account
 # ==============================================================================
@@ -252,6 +256,14 @@ signed_in_as_x: מחוברים כ-{$name}
 working_with_local_repo: עובדים עם מאגר מקומי
 working_with_test_repo: עובדים עם מאגר לבדיקה
 working_in_demo_mode: מצב הדגמה
+
+# Demo welcome dialog: shown once after signing in to a demo site, where the test repository is
+# seeded with sample content and the changes are only stored in the browser
+demo_welcome:
+  title: ברוכים הבאים להדגמה של Sveltia CMS
+  description: אתם מוזמנים להתנסות במערכת ולערוך את תוכן הדוגמה. השינויים שלכם נשמרים בדפדפן הזה בלבד. שום דבר אינו מתפרסם ברשת, ואיש מלבדכם אינו רואה אותם.
+  reset_hint: כדי להתחיל מחדש עם התוכן המקורי, בחרו „מחיקת כל הנתונים” בהגדרות, בלשונית ניהול נתונים.
+  button_label: אפשר להתחיל
 
 # Account menu: action items for sign-out and app installation
 sign_out: התנתקות
@@ -432,6 +444,7 @@ viewing_x_collection: |
     one {{ אתם צופים באוסף „{$collection}”, שיש בו פריט אחד. }}
     two {{ אתם צופים באוסף „{$collection}”, שיש בו שני פריטים. }}
     *   {{ אתם צופים באוסף „{$collection}”, שיש בו {$count} פריטים. }}
+
 # Asset folder view announcements with asset counts
 # {$folder} is the folder label and {$count} is the number of assets in it
 viewing_x_asset_folder: |
@@ -441,6 +454,7 @@ viewing_x_asset_folder: |
     one {{ אתם צופים בתיקיית המדיה „{$folder}”, שיש בה קובץ אחד. }}
     two {{ אתם צופים בתיקיית המדיה „{$folder}”, שיש בה שני קבצים. }}
     *   {{ אתם צופים בתיקיית המדיה „{$folder}”, שיש בה {$count} קבצים. }}
+
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: אלה קובצי המדיה ב{$service}.
@@ -562,6 +576,7 @@ loading_entries: |
   .match $count
     one {{ טוען פריט… }}
     *   {{ טוען פריטים… }}
+
 # Error message when entry cannot be found
 entry_not_found: הפריט לא נמצא.
 
@@ -574,6 +589,7 @@ creating_entries_disabled_by_quota: |
     one {{ לא ניתן להוסיף פריטים חדשים לאוסף הזה, מפני שהוא הגיע למכסה של פריט אחד. }}
     two {{ לא ניתן להוסיף פריטים חדשים לאוסף הזה, מפני שהוא הגיע למכסה של שני פריטים. }}
     *   {{ לא ניתן להוסיף פריטים חדשים לאוסף הזה, מפני שהוא הגיע למכסה של {$quota} פריטים. }}
+
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
   .input {$quota :integer}
@@ -588,6 +604,7 @@ creating_entries_nearing_quota: |
     *   one {{ האוסף הזה מתקרב למכסה של {$quota} פריטים. אפשר ליצור עוד פריט אחד בלבד. }}
     *   two {{ האוסף הזה מתקרב למכסה של {$quota} פריטים. אפשר ליצור עוד שני פריטים בלבד. }}
     *   *   {{ האוסף הזה מתקרב למכסה של {$quota} פריטים. אפשר ליצור עוד {$remaining} פריטים בלבד. }}
+
 # Read-only restrictions set with the `readonly` option: advisory messages
 readonly_cms: המערכת במצב קריאה בלבד. אפשר לצפות בתוכן ובקובצי המדיה אך לא לבצע שינויים.
 readonly_collection: האוסף הזה לקריאה בלבד. אפשר לצפות בתוכן שלו אך לא לבצע שינויים.
@@ -629,6 +646,7 @@ viewing_entry_search_results: |
     one {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצא פריט אחד. }}
     two {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצאו שני פריטים. }}
     *   {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצאו {$count} פריטים. }}
+
 # Asset search results with counts
 # {$terms} is the search query and {$count} is the number of matching assets
 viewing_asset_search_results: |
@@ -638,6 +656,7 @@ viewing_asset_search_results: |
     one {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצא קובץ אחד. }}
     two {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצאו שני קבצים. }}
     *   {{ אלה תוצאות החיפוש עבור „{$terms}”. נמצאו {$count} קבצים. }}
+
 # Result count labels
 # Used in search result headings to show counts
 # {$count} is the number of matching entries
@@ -648,6 +667,7 @@ x_entries: |
     one {{ פריט אחד }}
     two {{ שני פריטים }}
     *   {{ {$count} פריטים }}
+
 # {$count} is the number of matching assets
 x_assets: |
   .input {$count :integer}
@@ -656,6 +676,7 @@ x_assets: |
     one {{ קובץ אחד }}
     two {{ שני קבצים }}
     *   {{ {$count} קבצים }}
+
 # Empty state messages
 no_files_found: לא נמצאו קבצים.
 no_entries_found: לא נמצאו פריטים.
@@ -699,6 +720,7 @@ enter_new_name_for_folder: |
     one {{ הזינו שם חדש למטה. קובץ המדיה שבתיקייה יועבר יחד איתה, וכל פריט שמשתמש בו יתעדכן. }}
     two {{ הזינו שם חדש למטה. שני קובצי המדיה שבתיקייה יועברו יחד איתה, וכל פריט שמשתמש בהם יתעדכן. }}
     *   {{ הזינו שם חדש למטה. {$count} קובצי המדיה שבתיקייה יועברו יחד איתה, וכל פריט שמשתמש בהם יתעדכן. }}
+
 # Rename Folder dialog body text for a cloud storage service, whose files are hotlinked from the
 # entries, so a move changes the URLs and the entries aren’t updated
 enter_new_name_for_external_folder: |
@@ -708,6 +730,7 @@ enter_new_name_for_external_folder: |
     one {{ הזינו שם חדש למטה. הקובץ שבתיקייה יועבר יחד איתה וכתובתו תשתנה, לכן עדכנו כל פריט שמשתמש בו. }}
     two {{ הזינו שם חדש למטה. שני הקבצים שבתיקייה יועברו יחד איתה וכתובותיהם ישתנו, לכן עדכנו כל פריט שמשתמש בהם. }}
     *   {{ הזינו שם חדש למטה. {$count} הקבצים שבתיקייה יועברו יחד איתה וכתובותיהם ישתנו, לכן עדכנו כל פריט שמשתמש בהם. }}
+
 # Rename Folder dialog for a cloud storage service: warning shown when entries link to files in the
 # folder, which aren’t updated. {$count} is the number of entries
 renaming_external_folder_breaks_links: |
@@ -716,6 +739,7 @@ renaming_external_folder_breaks_links: |
     one {{ פריט אחד מקשר לקובץ בתיקייה הזו. הפריט לא יתעדכן, ולכן הקישור יישבר לאחר שינוי שם התיקייה. }}
     two {{ שני פריטים מקשרים לקבצים בתיקייה הזו. הפריטים לא יתעדכנו, ולכן הקישורים יישברו לאחר שינוי שם התיקייה. }}
     *   {{ {$count} פריטים מקשרים לקבצים בתיקייה הזו. הפריטים לא יתעדכנו, ולכן הקישורים יישברו לאחר שינוי שם התיקייה. }}
+
 # Delete Folder confirmation
 # {$name} is the folder name and {$count} is the number of assets in the folder
 confirm_deleting_folder: |
@@ -725,6 +749,7 @@ confirm_deleting_folder: |
     one {{ למחוק את התיקייה „{$name}” ואת קובץ המדיה שבתוכה? }}
     two {{ למחוק את התיקייה „{$name}” ואת שני קובצי המדיה שבתוכה? }}
     *   {{ למחוק את התיקייה „{$name}” ואת {$count} קובצי המדיה שבתוכה? }}
+
 # Progress and error messages while the folder is being renamed or deleted
 renaming_folder: משנה את שם התיקייה…
 renaming_folder_failed: לא ניתן לשנות את שם התיקייה.
@@ -760,6 +785,7 @@ enter_new_name_for_asset: |
     one {{ הזינו שם חדש למטה. גם פריט אחד שמשתמש בקובץ המדיה יתעדכן. }}
     two {{ הזינו שם חדש למטה. גם שני פריטים שמשתמשים בקובץ המדיה יתעדכנו. }}
     *   {{ הזינו שם חדש למטה. גם {$count} פריטים שמשתמשים בקובץ המדיה יתעדכנו. }}
+
 # Rename Asset dialog for a file on a cloud storage service: warning shown when entries link to the
 # file, which aren’t updated. {$count} is the number of entries
 renaming_external_asset_breaks_links: |
@@ -768,6 +794,7 @@ renaming_external_asset_breaks_links: |
     one {{ פריט אחד מקשר לקובץ הזה. הפריט לא יתעדכן, ולכן הקישור יישבר לאחר שינוי שם הקובץ. }}
     two {{ שני פריטים מקשרים לקובץ הזה. הפריטים לא יתעדכנו, ולכן הקישורים יישברו לאחר שינוי שם הקובץ. }}
     *   {{ {$count} פריטים מקשרים לקובץ הזה. הפריטים לא יתעדכנו, ולכן הקישורים יישברו לאחר שינוי שם הקובץ. }}
+
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: שם הקובץ אינו יכול להיות ריק.
@@ -811,6 +838,7 @@ drop_files_or_click_to_browse: |
   .match $count
     one {{ גררו קובץ לכאן או לחצו לבחירה… }}
     *   {{ גררו קבצים לכאן או לחצו לבחירה… }}
+
 # Partial drop zone text (ends with inline button)
 # {$count} is the number of files expected by the current picker mode
 # After the “or” text, the inline buttons are rendered with the localized strings
@@ -819,6 +847,7 @@ drop_files_or: |
   .match $count
     one {{ גררו קובץ לכאן או }}
     *   {{ גררו קבצים לכאן או }}
+
 # Image-specific drop zone text
 # {$count} is the number of image files expected by the current picker mode
 # After the “or” text, the inline buttons are rendered with the localized strings
@@ -827,6 +856,7 @@ drop_image_files_or: |
   .match $count
     one {{ גררו קובץ תמונה לכאן או }}
     *   {{ גררו קובצי תמונה לכאן או }}
+
 # File picker and clipboard actions used by upload controls
 browse: עיון
 # Generic clipboard paste action used by non-image file fields
@@ -845,6 +875,7 @@ drop_files_here: |
   .match $count
     one {{ גררו קובץ לכאן }}
     *   {{ גררו קבצים לכאן }}
+
 # File type validation errors
 unsupported_file_type: סוג קובץ שאינו נתמך
 # {$type} is the expected asset type label, such as image or document
@@ -858,6 +889,7 @@ choose_files: |
   .match $count
     one {{ בחירת קובץ }}
     *   {{ בחירת קבצים }}
+
 # ==============================================================================
 # Delete Confirmations
 # ==============================================================================
@@ -870,12 +902,14 @@ delete_assets: |
   .match $count
     one {{ מחיקת קובץ מדיה }}
     *   {{ מחיקת קובצי מדיה }}
+
 # {$count} is the number of selected assets
 delete_selected_assets: |
   .input {$count :integer}
   .match $count
     one {{ מחיקת קובץ המדיה הנבחר }}
     *   {{ מחיקת קובצי המדיה הנבחרים }}
+
 confirm_deleting_this_asset: למחוק את קובץ המדיה הזה?
 # {$count} is the number of selected assets
 confirm_deleting_selected_assets: |
@@ -884,6 +918,7 @@ confirm_deleting_selected_assets: |
     one {{ למחוק את קובץ המדיה הנבחר? }}
     two {{ למחוק את שני קובצי המדיה הנבחרים? }}
     *   {{ למחוק את {$count} קובצי המדיה הנבחרים? }}
+
 confirm_deleting_all_assets: למחוק את כל קובצי המדיה?
 # Note added to the confirmation when entries use the assets being deleted; the references are
 # removed in the same commit. {$count} is the number of entries using them
@@ -893,6 +928,7 @@ deleting_referenced_assets_note: |
     one {{ גם ההפניה אליו בפריט אחד תוסר. }}
     two {{ גם ההפניות אליו בשני פריטים יוסרו. }}
     *   {{ גם ההפניות אליו ב-{$count} פריטים יוסרו. }}
+
 # Shown in place of the confirmation when removing the references would leave a field in an entry
 # invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
 # listed below the message, each with the validation error it would have. {$count} is the number of
@@ -902,6 +938,7 @@ cannot_delete_referenced_assets: |
   .match $count
     one {{ לא ניתן למחוק את קובץ המדיה הזה, מפני שהשדות הבאים בפריטים שמשתמשים בו לא יהיו תקינים בלעדיו. עדכנו קודם את הפריטים האלה. }}
     *   {{ לא ניתן למחוק את קובצי המדיה האלה, מפני שהשדות הבאים בפריטים שמשתמשים בהם לא יהיו תקינים בלעדיהם. עדכנו קודם את הפריטים האלה. }}
+
 # Error shown in the asset deletion dialog when the entries using the assets couldn’t be looked up,
 # so the deletion can’t go ahead. {$count} is the number of assets being deleted
 checking_asset_references_failed: |
@@ -909,6 +946,7 @@ checking_asset_references_failed: |
   .match $count
     one {{ לא ניתן לבדוק אילו פריטים משתמשים בקובץ המדיה הזה. סגרו את החלון ונסו שוב. }}
     *   {{ לא ניתן לבדוק אילו פריטים משתמשים בקובצי המדיה האלה. סגרו את החלון ונסו שוב. }}
+
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action
 delete_entries: |
@@ -916,12 +954,14 @@ delete_entries: |
   .match $count
     one {{ מחיקת פריט }}
     *   {{ מחיקת פריטים }}
+
 # {$count} is the number of selected entries
 delete_selected_entries: |
   .input {$count :integer}
   .match $count
     one {{ מחיקת הפריט הנבחר }}
     *   {{ מחיקת הפריטים הנבחרים }}
+
 confirm_deleting_this_entry: למחוק את הפריט הזה?
 confirm_deleting_this_entry_with_assets: למחוק את הפריט הזה ואת קובצי המדיה המשויכים אליו?
 # Error notification shown when an entry could not be deleted
@@ -933,6 +973,7 @@ confirm_deleting_selected_entries: |
     one {{ למחוק את הפריט הנבחר? }}
     two {{ למחוק את שני הפריטים הנבחרים? }}
     *   {{ למחוק את {$count} הפריטים הנבחרים? }}
+
 # {$count} is the number of selected entries whose associated assets would also be removed
 confirm_deleting_selected_entries_with_assets: |
   .input {$count :integer}
@@ -940,6 +981,7 @@ confirm_deleting_selected_entries_with_assets: |
     one {{ למחוק את הפריט הנבחר ואת קובצי המדיה המשויכים אליו? }}
     two {{ למחוק את שני הפריטים הנבחרים ואת קובצי המדיה המשויכים אליהם? }}
     *   {{ למחוק את {$count} הפריטים הנבחרים ואת קובצי המדיה המשויכים אליהם? }}
+
 confirm_deleting_all_entries: למחוק את כל הפריטים?
 confirm_deleting_all_entries_with_assets: למחוק את כל הפריטים ואת קובצי המדיה המשויכים אליהם?
 # Note added to the confirmation when other entries reference the entries being deleted through
@@ -951,6 +993,7 @@ deleting_referenced_entries_note: |
     one {{ גם ההפניה אליו בפריט אחר תוסר. }}
     two {{ גם ההפניות אליו בשני פריטים אחרים יוסרו. }}
     *   {{ גם ההפניות אליו ב-{$count} פריטים אחרים יוסרו. }}
+
 # Shown in place of the confirmation when removing the references would leave a Relation field in
 # another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
 # The fields are listed below the message, each with the validation error it would have. {$count}
@@ -960,6 +1003,7 @@ cannot_delete_referenced_entries: |
   .match $count
     one {{ לא ניתן למחוק את הפריט הזה, מפני שהשדות הבאים בפריטים אחרים לא יהיו תקינים בלעדיו. עדכנו קודם את הפריטים האלה. }}
     *   {{ לא ניתן למחוק את הפריטים האלה, מפני שהשדות הבאים בפריטים אחרים לא יהיו תקינים בלעדיהם. עדכנו קודם את הפריטים האלה. }}
+
 # ==============================================================================
 # Entry Reordering
 # ==============================================================================
@@ -1000,6 +1044,7 @@ bulk_edit_count: |
     one {{ שינוי אחד }}
     two {{ שני שינויים }}
     *   {{ {$count} שינויים }}
+
 # Bulk edit error messages
 bulk_edit_invalid: חלק מהערכים אינם תקינים. תקנו את השדות המסומנים ונסו שוב.
 saving_bulk_edits_failed: שמירת השינויים נכשלה. נסו שוב.
@@ -1019,6 +1064,7 @@ processing_files: |
   .match $count
     one {{ מעבד קובץ. זה עשוי לקחת זמן. }}
     *   {{ מעבד קבצים. זה עשוי לקחת זמן. }}
+
 # Uploading section aria-label
 uploading_files: מעלה קבצים
 
@@ -1035,6 +1081,7 @@ confirm_uploading_files: |
     one {{ הקובץ הזה יישמר בתיקייה „{$folder}”: }}
     two {{ שני הקבצים האלה יישמרו בתיקייה „{$folder}”: }}
     *   {{ {$count} הקבצים האלה יישמרו בתיקייה „{$folder}”: }}
+
 # File size validation
 # Warning section for files exceeding size limits
 oversized_files: קבצים גדולים מדי
@@ -1044,6 +1091,7 @@ warning_oversized_files: |
   .match $count
     one {{ לא ניתן להעלות את הקובץ הזה מפני שהוא חורג מהגודל המרבי, {$size}. הקטינו אותו או בחרו קובץ אחר. }}
     *   {{ לא ניתן להעלות את הקבצים האלה מפני שהם חורגים מהגודל המרבי, {$size}. הקטינו אותם או בחרו קבצים אחרים. }}
+
 # File integrity validation
 # Warning section for files that cannot be decoded
 invalid_files: קבצים לא תקינים
@@ -1053,6 +1101,7 @@ warning_invalid_files: |
   .match $count
     one {{ לא ניתן להעלות את הקובץ הזה מפני שהוא פגום, או שתוכנו אינו תואם לסיומת שלו. זה קורה לעיתים קרובות כששם התמונה שונה במקום שהיא הומרה, למשל תמונת HEIC שנשמרה כקובץ JPEG. המירו את הקובץ ונסו שוב. }}
     *   {{ לא ניתן להעלות את הקבצים האלה מפני שהם פגומים, או שתוכנם אינו תואם לסיומות שלהם. זה קורה לעיתים קרובות כששמות התמונות שונו במקום שהן הומרו, למשל תמונות HEIC שנשמרו כקובצי JPEG. המירו את הקבצים ונסו שוב. }}
+
 # {$count} is the number of files that are not of a type the field accepts, even once transformed
 # {$types} is the list of accepted file types, such as “.pdf or .txt”
 warning_unsupported_files: |
@@ -1060,6 +1109,7 @@ warning_unsupported_files: |
   .match $count
     one {{ לא ניתן להעלות את הקובץ הזה מפני שאינו מאחד הסוגים הבאים: {$types}. }}
     *   {{ לא ניתן להעלות את הקבצים האלה מפני שאינם מאחד הסוגים הבאים: {$types}. }}
+
 # {$count} is the number of files that are not of an image type the field accepts
 # {$types} is the list of accepted image formats, such as “PNG or WebP”
 warning_unsupported_image_files: |
@@ -1067,6 +1117,7 @@ warning_unsupported_image_files: |
   .match $count
     one {{ לא ניתן להעלות את הקובץ הזה מפני שמתקבלת רק תמונה מהסוגים הבאים: {$types}. }}
     *   {{ לא ניתן להעלות את הקבצים האלה מפני שמתקבלות רק תמונות מהסוגים הבאים: {$types}. }}
+
 # File format validation when replacing an asset
 # Warning section for replacement files that are in a different format
 mismatched_files: קבצים שאינם תואמים
@@ -1076,6 +1127,7 @@ warning_mismatched_files: |
   .match $count
     one {{ הקובץ הזה אינו יכול להחליף את „{$name}” מפני שהוא בפורמט אחר. המירו אותו לאותו פורמט ונסו שוב. }}
     *   {{ הקבצים האלה אינם יכולים להחליף את „{$name}” מפני שהם בפורמט אחר. המירו אותם לאותו פורמט ונסו שוב. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -1084,6 +1136,7 @@ file_name_conflict_confirmation: |
     one {{ קובץ בשם הזה כבר קיים בתיקייה. להחליף אותו? }}
     two {{ שני קבצים בשמות האלה כבר קיימים בתיקייה. להחליף אותם? }}
     *   {{ {$count} קבצים בשמות האלה כבר קיימים בתיקייה. להחליף אותם? }}
+
 # {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
 file_name_conflict_confirmation_with_name: |
   .input {$count :integer}
@@ -1092,6 +1145,7 @@ file_name_conflict_confirmation_with_name: |
     one {{ קובץ בשם „{$name}” כבר קיים בתיקייה. להחליף אותו? }}
     two {{ שני קבצים בשמות האלה כבר קיימים בתיקייה. להחליף אותם? }}
     *   {{ {$count} קבצים בשמות האלה כבר קיימים בתיקייה. להחליף אותם? }}
+
 file_name_conflict_resolution: טיפול בהתנגשות שמות קבצים
 # Option to keep both files (rename the new one)
 keep_both: שמירת שניהם
@@ -1142,6 +1196,7 @@ entry_validation_errors: |
     one {{ בשדה אחד יש שגיאה. תקנו אותה כדי לשמור את הפריט. }}
     two {{ בשני שדות יש שגיאות. תקנו אותן כדי לשמור את הפריט. }}
     *   {{ ב-{$count} שדות יש שגיאות. תקנו אותן כדי לשמור את הפריט. }}
+
 # Button on the validation error toast that opens the Validation panel listing the errors
 show_errors: הצגת השגיאות
 
@@ -1158,18 +1213,21 @@ entry_saved: |
     one {{ הפריט נשמר. }}
     two {{ שני פריטים נשמרו. }}
     *   {{ {$count} פריטים נשמרו. }}
+
 entry_saved_and_published: |
   .input {$count :integer}
   .match $count
     one {{ הפריט נשמר ופורסם. }}
     two {{ שני פריטים נשמרו ופורסמו. }}
     *   {{ {$count} פריטים נשמרו ופורסמו. }}
+
 entries_deleted: |
   .input {$count :integer}
   .match $count
     one {{ הפריט נמחק. }}
     two {{ שני פריטים נמחקו. }}
     *   {{ {$count} פריטים נמחקו. }}
+
 # Asset operations
 # {$count} is the number of assets or asset-derived values affected by the operation
 assets_saved: |
@@ -1178,60 +1236,70 @@ assets_saved: |
     one {{ קובץ המדיה נשמר. }}
     two {{ שני קובצי מדיה נשמרו. }}
     *   {{ {$count} קובצי מדיה נשמרו. }}
+
 assets_saved_and_published: |
   .input {$count :integer}
   .match $count
     one {{ קובץ המדיה נשמר ופורסם. }}
     two {{ שני קובצי מדיה נשמרו ופורסמו. }}
     *   {{ {$count} קובצי מדיה נשמרו ופורסמו. }}
+
 asset_urls_copied: |
   .input {$count :integer}
   .match $count
     one {{ הכתובת הועתקה. }}
     two {{ שתי כתובות הועתקו. }}
     *   {{ {$count} כתובות הועתקו. }}
+
 asset_paths_copied: |
   .input {$count :integer}
   .match $count
     one {{ נתיב הקובץ הועתק. }}
     two {{ שני נתיבי קבצים הועתקו. }}
     *   {{ {$count} נתיבי קבצים הועתקו. }}
+
 asset_ids_copied: |
   .input {$count :integer}
   .match $count
     one {{ מזהה הקובץ הועתק. }}
     two {{ שני מזהי קבצים הועתקו. }}
     *   {{ {$count} מזהי קבצים הועתקו. }}
+
 asset_data_copied: |
   .input {$count :integer}
   .match $count
     one {{ נתוני הקובץ הועתקו. }}
     two {{ נתוני שני קבצים הועתקו. }}
     *   {{ נתוני {$count} קבצים הועתקו. }}
+
 assets_downloaded: |
   .input {$count :integer}
   .match $count
     one {{ קובץ המדיה הורד. }}
     two {{ שני קובצי מדיה הורדו. }}
     *   {{ {$count} קובצי מדיה הורדו. }}
+
 assets_moved: |
   .input {$count :integer}
   .match $count
     one {{ קובץ המדיה הועבר. }}
     two {{ שני קובצי מדיה הועברו. }}
     *   {{ {$count} קובצי מדיה הועברו. }}
+
 assets_renamed: |
   .input {$count :integer}
   .match $count
     one {{ שם קובץ המדיה שונה. }}
     two {{ שמות שני קובצי מדיה שונו. }}
     *   {{ שמות {$count} קובצי מדיה שונו. }}
+
 assets_deleted: |
   .input {$count :integer}
   .match $count
     one {{ קובץ המדיה נמחק. }}
     two {{ שני קובצי מדיה נמחקו. }}
     *   {{ {$count} קובצי מדיה נמחקו. }}
+
 folder_created: התיקייה נוצרה.
 # Folder info panel in the Asset Library sidebar
 folder_path: נתיב התיקייה
@@ -1244,6 +1312,7 @@ x_folders: |
     one {{ תיקייה אחת }}
     two {{ שתי תיקיות }}
     *   {{ {$count} תיקיות }}
+
 folder_renamed: שם התיקייה שונה.
 folder_deleted: התיקייה נמחקה.
 
@@ -1397,6 +1466,7 @@ translate_fields: |
   .match $count
     one {{ תרגום שדה }}
     *   {{ תרגום שדות }}
+
 translate_from: תרגום מ…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: תרגום מ{$locale}
@@ -1458,6 +1528,7 @@ editor:
         one {{ שדה אחד תורגם מ{$source}. }}
         two {{ שני שדות תורגמו מ{$source}. }}
         *   {{ {$count} שדות תורגמו מ{$source}. }}
+
   copy:
     none: אין מה להעתיק.
     # {$source} is the source language name and {$count} is the number of copied fields
@@ -1468,6 +1539,7 @@ editor:
         one {{ שדה אחד הועתק מ{$source}. }}
         two {{ שני שדות הועתקו מ{$source}. }}
         *   {{ {$count} שדות הועתקו מ{$source}. }}
+
 # ==============================================================================
 # Field Validation
 # ==============================================================================
@@ -1491,6 +1563,7 @@ validation:
         one {{ יש לבחור אפשרות אחת לפחות. }}
         two {{ יש לבחור שתי אפשרויות לפחות. }}
         *   {{ יש לבחור {$min} אפשרויות לפחות. }}
+
     # {$min} is the minimum number of list items
     add: |
       .input {$min :integer}
@@ -1498,6 +1571,7 @@ validation:
         one {{ יש להוסיף פריט אחד לפחות. }}
         two {{ יש להוסיף שני פריטים לפחות. }}
         *   {{ יש להוסיף {$min} פריטים לפחות. }}
+
   # Maximum value/count exceeded
   range_overflow:
     # {$max} is the maximum allowed value, already formatted for the input type
@@ -1512,6 +1586,7 @@ validation:
         one {{ אי אפשר לבחור יותר מאפשרות אחת. }}
         two {{ אי אפשר לבחור יותר משתי אפשרויות. }}
         *   {{ אי אפשר לבחור יותר מ-{$max} אפשרויות. }}
+
     # {$max} is the maximum number of list items
     add: |
       .input {$max :integer}
@@ -1519,12 +1594,15 @@ validation:
         one {{ אי אפשר להוסיף יותר מפריט אחד. }}
         two {{ אי אפשר להוסיף יותר משני פריטים. }}
         *   {{ אי אפשר להוסיף יותר מ-{$max} פריטים. }}
+
   # String length constraints
   # {$min :integer} and {$max :integer} are character-count limits
   too_short: |
     יש להזין לפחות {$min} תווים.
+
   too_long: |
     אפשר להזין עד {$max} תווים.
+
   # Type validation errors
   type_mismatch:
     number: הזינו מספר.
@@ -1533,6 +1611,10 @@ validation:
 
   # Value used for the same field in another entry of the collection
   value_not_unique: הערך הזה כבר משמש פריט אחר.
+  # Key of a keyed List field item used for another item of the same list
+  key_not_unique: המפתח הזה כבר משמש פריט אחר.
+  # Key of a keyed List field item that is a whole number, which doesn’t keep its order in a map
+  key_numeric: המפתח אינו יכול להיות מספר שלם, מפני שהפריטים יאבדו את סדרם.
 
   # Custom field validation error
   invalid_value: ערך לא תקין.
@@ -1571,6 +1653,13 @@ entry_sidebar:
   backlinks:
     title: הפניות נכנסות
     no_entries: אף פריט אינו מפנה לפריט הזה.
+
+# Status shown next to the Save button while an entry with many new files is being saved
+# {$done} and {$total} are the number of files prepared and to prepare, or the number of commits
+# made and the estimated number of commits in all
+save_progress:
+  preparing: 'מכין קבצים: {$done} מתוך {$total}'
+  committing: 'שומר ב-GitHub: {$done} מתוך כ-{$total} גרסאות'
 
 # Entry save error dialog
 saving_entry:
@@ -1638,12 +1727,14 @@ public_urls: |
   .match $count
     one {{ כתובת ציבורית }}
     *   {{ כתובות ציבוריות }}
+
 # {$count} is the number of selected assets
 file_paths: |
   .input {$count :integer}
   .match $count
     one {{ נתיב הקובץ }}
     *   {{ נתיבי הקבצים }}
+
 # Identifier of a file on a cloud storage service, e.g. an object key or a UUID
 # {$count} is the number of selected assets
 file_ids: |
@@ -1651,6 +1742,7 @@ file_ids: |
   .match $count
     one {{ מזהה הקובץ }}
     *   {{ מזהי הקבצים }}
+
 file_data: נתוני הקובץ
 
 # ==============================================================================
@@ -1684,6 +1776,15 @@ map_lat_lng: מפה המציגה קו רוחב {$latitude}, קו אורך {$long
 remove_this_item: הסרת הפריט
 move_up: העברה למעלה
 move_down: העברה למטה
+# Menu of a list item or file with the extra reorder actions, shown in a list of 3 or more items
+reorder_options: אפשרויות סידור
+move_to_top: העברה לראש הרשימה
+move_to_bottom: העברה לסוף הרשימה
+# Opens a dialog asking for the position to move a list item to
+move_to: העברה אל…
+# Dialog asking for the new position of an item. {$count} is the number of items in the list
+move_to_description: הזינו מיקום בין 1 ל-{$count}.
+move_to_position: מיקום
 # aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
 # or moved with the arrow keys while the handle has focus
 reorder_item: שינוי מיקום הפריט
@@ -1693,6 +1794,9 @@ list_item_value: ערך הפריט
 # aria-label for each item of a List field, giving its position in the list
 # {$position} is the 1-based position of the item, {$count} is the number of items
 list_item_position: פריט {$position} מתוך {$count}
+# Message shown in place of a removed List field item or Object field, next to a Restore button
+# that puts it back
+item_removed: הפריט הוסר.
 
 # Add item button label, also used by the Relation field to create a new entry in the referenced
 # collection, with the collection’s singular label
@@ -1705,7 +1809,32 @@ add_x: הוספת {$name}
 list_item_options: אפשרויות פריט הרשימה
 add_item_above: הוספת פריט מעל
 add_item_below: הוספת פריט מתחת
+paste_item_above: הדבקה מעל
+paste_item_below: הדבקה מתחת
+paste_item_to_replace: הדבקה במקום
 
+# List item clipboard
+# Button in the list toolbar to paste a copied item, from any list in any entry, at the end of the
+# list, or at the start with the `add_to_top` option
+paste_item: הדבקת פריט
+list_item_copied: הפריט הועתק.
+# ⋮ stands for the icon of the item menu button; keep it, along with the button’s aria-label
+no_list_item_to_paste: אין פריט מועתק להדבקה. כדי להעתיק, פתחו את תפריט ⋮ (אפשרויות פריט הרשימה) של פריט ובחרו „העתקה”.
+list_item_not_compatible: הפריט שהועתק אינו מתאים לרשימה הזו.
+# {$count} is the number of the values left out, as the list doesn’t have the fields
+list_item_pasted_without_values: |
+  .input {$count :integer}
+  .match $count
+    one {{ הפריט הודבק. ערך אחד שהרשימה אינה מקבלת הושמט. }}
+    two {{ הפריט הודבק. שני ערכים שהרשימה אינה מקבלת הושמטו. }}
+    *   {{ הפריט הודבק. {$count} ערכים שהרשימה אינה מקבלת הושמטו. }}
+# {$count} is the number of the files the pasted item references that couldn’t be found
+list_item_pasted_without_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ הפריט הודבק, אך קובץ שהוא משתמש בו לא נמצא. בדקו את שדות הקבצים בפריט. }}
+    two {{ הפריט הודבק, אך שני קבצים שהוא משתמש בהם לא נמצאו. בדקו את שדות הקבצים בפריט. }}
+    *   {{ הפריט הודבק, אך {$count} קבצים שהוא משתמש בהם לא נמצאו. בדקו את שדות הקבצים בפריט. }}
 # Variable-type list selector
 select_list_type: בחירת סוג הפריט
 
@@ -1754,6 +1883,7 @@ assets_dialog:
       one {{ תיקייה אחת נבחרה }}
       two {{ שתי תיקיות נבחרו }}
       *   {{ {$count} תיקיות נבחרו }}
+
   no_subfolders: אין תיקיות משנה בתיקייה הזו.
 
   # Asset folder options
@@ -1809,6 +1939,7 @@ character_counter:
       one {{ הוזן תו אחד. מינימום: {$min}. מקסימום: {$max}. }}
       two {{ הוזנו שני תווים. מינימום: {$min}. מקסימום: {$max}. }}
       *   {{ הוזנו {$count} תווים. מינימום: {$min}. מקסימום: {$max}. }}
+
   # {$count} is the current character count and {$min} is the minimum allowed count
   min: |
     .input {$count :integer}
@@ -1817,6 +1948,7 @@ character_counter:
       one {{ הוזן תו אחד. מינימום: {$min}. }}
       two {{ הוזנו שני תווים. מינימום: {$min}. }}
       *   {{ הוזנו {$count} תווים. מינימום: {$min}. }}
+
   # {$count} is the current character count and {$max} is the maximum allowed count
   max: |
     .input {$count :integer}
@@ -1825,6 +1957,7 @@ character_counter:
       one {{ הוזן תו אחד. מקסימום: {$max}. }}
       two {{ הוזנו שני תווים. מקסימום: {$max}. }}
       *   {{ הוזנו {$count} תווים. מקסימום: {$max}. }}
+
 # YouTube video player iframe title
 youtube_video_player: נגן הווידאו של YouTube
 
@@ -1924,6 +2057,7 @@ config:
     .match $count
       one {{ יש שגיאה בתצורת המערכת. פתרו את הבעיה ונסו שוב. }}
       *   {{ יש שגיאות בתצורת המערכת. פתרו את הבעיות ונסו שוב. }}
+
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
@@ -1942,6 +2076,7 @@ config:
       .match $count
         one {{ כתובת קובץ התצורה חייבת להשתמש בפרוטוקול HTTPS או בכתובת localhost. }}
         *   {{ כתובות קובצי התצורה חייבות להשתמש בפרוטוקול HTTPS או בכתובות localhost. }}
+
     fetch_failed: לא ניתן היה לאחזר את קובץ התצורה.
     # {$status} is the HTTP status code returned while fetching the config file
     fetch_failed_not_ok: תגובת ה-HTTP חזרה עם קוד {$status}.
@@ -1963,6 +2098,8 @@ config:
     unsupported_backend_suggestion: השתמשו באחד <a>השירותים הנתמכים</a> במקום זאת.
     missing_repository: לא הוגדר מאגר.
     invalid_repository: המאגר שהוגדר אינו תקין. עליו להיות בתבנית „owner/repo”.
+    # Don’t localize `api_root`
+    missing_api_root: האפשרות `api_root` אינה מוגדרת. היא נדרשת עבור שירות Forgejo.
     invalid_root_dir: תיקיית השורש אינה תקינה. עליה להיות נתיב בתוך המאגר, בלי „..”.
     invalid_root_dir_branch: לא ניתן להשתמש בתיקיית השורש בשמות הענפים של מצבי הפרסום `editorial_workflow` ו-`preview`. אף חלק בנתיב שלה אינו יכול להתחיל בנקודה, להסתיים ב-„.lock” או להכיל רווח או תו מיוחד כגון נקודתיים או כוכבית.
     path_outside_root_dir: הנתיב „{$path}” מוביל אל מחוץ לתיקיית השורש, שם המערכת אינה יכולה להציג קבצים.
@@ -1973,6 +2110,8 @@ config:
     open_authoring_no_workflow: האפשרות `open_authoring` מחייבת את מצב הפרסום `editorial_workflow` או `preview`. ראו <a>תיעוד</a> לפרטים.
     # Don’t localize `auth_methods`
     no_auth_methods: האפשרות `auth_methods` חייבת לכלול שיטה אחת לפחות.
+    # Don’t localize `auth_scope`, `repo` and `public_repo`
+    auth_scope_no_repo: האפשרות `auth_scope` חייבת לכלול את `repo` או את `public_repo`.
     missing_media_folder: לא הוגדרה תיקיית מדיה.
     public_folder_relative_path: התיקייה הציבורית שהוגדרה אינה תקינה. עליה להיות נתיב מוחלט המתחיל ב-„/”.
     public_folder_absolute_url: כתובת מוחלטת עבור אפשרות התיקייה הציבורית אינה נתמכת ב-Sveltia CMS.
@@ -2048,6 +2187,8 @@ config:
     unsupported_bulk_edit_field: לא ניתן לערוך בצורה מרוכזת את השדה `{$name}` שברשימת `fields` של האפשרות `bulk_edit`. נתמך רק שדה מסוג בוליאני, צבע, תאריך ושעה, מספר, קשר, בחירה או מחרוזת, שאינו לקריאה בלבד, שהאפשרות `multiple` אינה מופעלת בו, ושאינו נקבע אוטומטית בשמירה.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: האפשרות `sortable_fields` מפנה לשדה בשם `{$name}`, אך שדה כזה אינו מוגדר באוסף.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: רק לפריט אחד באפשרות `sortable_fields` יכולה להיות האפשרות `default_sort`.
     # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
     invalid_table_column_field: האפשרות `{$option}` מפנה לשדה בשם `{$name}`, אך שדה כזה אינו מוגדר באוסף.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
@@ -2144,6 +2285,24 @@ config:
     list_field_default_missing_type: האפשרות `default` של שדה List מכילה פריט ללא המאפיין `{$typeKey}`, שמזהה אחד מ-`types`.
     # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
     list_field_invalid_default_type: האפשרות `default` של שדה List מכילה פריט שהמאפיין `{$typeKey}` שלו הוא `{$value}`, אך הוא אינו אחד מ-`types`.
+    # Don’t localize `map_key_field`, `fields` and `types`
+    list_field_map_key_no_subfields: האפשרות `map_key_field` של שדה List מחייבת את האפשרות `fields` או `types`, מפני שכל מפתח נלקח מתת-שדה.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_not_found: האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך אין תת-שדה בשם הזה.
+    # {$name} is the subfield name, and {$type} is the variable type name; Don’t localize `map_key_field`
+    list_field_map_key_missing_in_type: האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך לסוג `{$type}` אין תת-שדה בשם הזה.
+    # {$name} is the subfield name, and {$widget} is its field type; Don’t localize `map_key_field`
+    list_field_map_key_invalid_type: האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך עליו להיות שדה מחרוזת, קשר או בחירה, ולא שדה `{$widget}`.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `multiple`
+    list_field_map_key_multiple: האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך תת-השדה אינו יכול לקבל ערכים מרובים, מפני שכל פריט זקוק למפתח יחיד. הסירו את האפשרות `multiple` שלו.
+    # {$name} is the subfield name; Don’t localize `map_key_field`
+    list_field_map_key_option_not_string: האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך הערכים באפשרויות של תת-השדה חייבים להיות מחרוזות, מפני שכל מפתח נשמר כמחרוזת.
+    # {$name} is the subfield name; Don’t localize `map_key_field` and `required`
+    list_field_map_key_not_required: האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך תת-השדה אינו יכול להיות רשות, מפני שכל פריט זקוק למפתח. הסירו את האפשרות `required` שלו.
+    # {$name} is the subfield name; Don’t localize `map_key_field`, `i18n: false` and `i18n: duplicate`
+    list_field_map_key_not_localized: 'האפשרות `map_key_field` של שדה List מפנה אל `{$name}`, אך תת-השדה אינו יכול לשאת `i18n: false`, מפני שהפריטים זקוקים למפתח בכל שפה. השתמשו ב-`i18n: duplicate` או הסירו את האפשרות.'
+    # Don’t localize `i18n`, `duplicate_if_empty`, `multiple` and `true`
+    duplicate_if_empty_multiple: 'האפשרות `i18n: duplicate_if_empty` אינה נתמכת בשדה שיש בו האפשרות `multiple`, ולכן השדה פועל כמו שדה עם `i18n: true`.'
     # Don’t localize `default` and `multiple`
     invalid_default_multiple: האפשרות `default` חייבת להיות מערך מפני שהאפשרות `multiple` היא `true`.
     invalid_default_single: האפשרות `default` חייבת להיות ערך יחיד ולא מערך, מפני שהאפשרות `multiple` אינה `true`.
@@ -2157,6 +2316,10 @@ config:
     code_field_invalid_default_object: האפשרות `default` של שדה Code חייבת להיות מחרוזת מפני שהאפשרות `output_code_only` היא `true`.
     # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
     code_field_invalid_default_key: לאפשרות `default` של שדה Code יש את המאפיין `{$key}`, אך האפשרות `keys` מתירה רק את `{$code}` ואת `{$lang}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_invalid_expression: האפשרות `value` של שדה Compute חייבת להיות ביטוי חשבוני תקין, כמו `\{\{fields.price\}\} * \{\{fields.quantity\}\}`, מפני שהאפשרות `value_type` היא `{$valueType}`.
+    # {$valueType} is the configured value type; Don’t localize `value` and `value_type`
+    compute_field_uuid_in_expression: האפשרות `value` של שדה Compute אינה יכולה להשתמש בתג UUID כגון `\{\{uuid\}\}`, מפני שהאפשרות `value_type` היא `{$valueType}`, שהופכת אותה לביטוי חשבוני.
     # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
     number_field_default_not_integer: האפשרות `default` של שדה Number מוגדרת כ-`{$value}`, אך עליה להיות מספר שלם מפני שהאפשרות `value_type` היא `{$valueType}`.
     number_field_default_not_number: האפשרות `default` של שדה Number מוגדרת כ-`{$value}`, אך עליה להיות מספר מפני שהאפשרות `value_type` היא `{$valueType}`.
@@ -2176,6 +2339,9 @@ config:
     relation_field_invalid_display_field: שדה התצוגה `{$field}` שאליו מפנים אינו תקין או שאינו מוגדר.
     relation_field_invalid_search_field: שדה החיפוש `{$field}` שאליו מפנים אינו תקין או שאינו מוגדר.
     relation_field_invalid_filter_field: שדה הסינון `{$field}` שאליו מפנים אינו תקין או שאינו מוגדר.
+    relation_field_invalid_sort_field: שדה המיון `{$field}` שאליו מפנים אינו תקין או שאינו מוגדר.
+    # Don’t localize `sort_by` and `file`
+    relation_field_sort_by_file_ignored: האפשרות `sort_by` אינה חלה על קשר לקובץ, שהאפשרויות שלו נגזרות מסדר פריטי הרשימה. המערכת תתעלם ממנה.
     unexpected: שגיאה בלתי צפויה
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -2212,8 +2378,24 @@ config:
     unsupported_ignored_option: האפשרות `{$prop}` אינה נתמכת ב-Sveltia CMS. המערכת תתעלם ממנה.
     # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
     publish_mode_stages_ignored: האפשרות `stages` של `publish_mode` חלה רק על מצב הפרסום `editorial_workflow`, ולכן המערכת מתעלמת ממנה עם `{$type}`.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: ל-`pattern` של הרכיב המוטבע הזה יש את הדגל `m` או `s`, או שהוא מתאים לשבירות שורה, אך רכיב מוטבע מזוהה בתוך פסקה בלבד.
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'המערכת מתעלמת מהפריט `{$name}` של האפשרות `{$option}`, מפני ששדה עם `multiline: false` יכול להכיל תוכן מוטבע בלבד.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: גם `picker_utc` וגם אפשרויות אזור הזמן החדשות (`input_timezone` או `output_utc`) מוגדרות. לאפשרויות החדשות יש עדיפות. שקלו להסיר את `picker_utc` מהתצורה שלכם.
+    # Don’t localize `localize_format` and `format`
+    localize_format_without_format: לאפשרות `localize_format` אין השפעה, מפני שלשדה אין אפשרות `format` והערך שלו נשמר בתבנית ISO 8601.
+    # {$name} is a template tag like `fields.lines.*.price`; Don’t localize `value`, `*` and `sum()`
+    compute_field_wildcard_without_item: האפשרות `value` של שדה Compute מפנה אל `{$name}`, אך השדה אינו נמצא בפריט של הרשימה ש-`*` מייצג, ולכן היא אינה מניבה דבר. רק פונקציה מצרפת כגון `sum()` יכולה להשתמש בכל פריטי הרשימה.
+    # {$name} is a template tag like `fields.lines.*.amount`; Don’t localize `value`
+    compute_field_self_reference: האפשרות `value` של שדה Compute מפנה אל השדה עצמו בתור `{$name}`, ולכן ערכו משתנה בכל חישוב ולעולם אינו מתייצב.
+    # {$name} is a template tag like `fields.total`; Don’t localize `value`
+    compute_field_reference_cycle: האפשרות `value` של שדה Compute מפנה אל `{$name}`, שדה Compute אחר שמפנה בחזרה לשדה הזה, ישירות או דרך שדות אחרים, ולכן ערכיהם לעולם אינם מתייצבים.
+    # Don’t localize `localize_format`, `true` and `de`
+    localize_format_without_i18n: האפשרות `localize_format` היא `true`, אך i18n אינו מופעל באוסף, ולכן הערך נכתב באנגלית. הגדירו את האפשרות לקוד שפה כגון `de` במקום זאת.
+    # {$locale} is the locale code from the configuration; Don’t localize `localize_format`
+    localize_format_unsupported_locale: האפשרות `localize_format` מוגדרת כ-`{$locale}`, שאינה שפה נתמכת, ולכן הערך נכתב באנגלית.
     # Don’t localize `preview_path`
     preview_path_no_date_field: האפשרות `preview_path` משתמשת בתגי תאריך ושעה, אך לאוסף אין שדה DateTime לקרוא מהם, ולכן קישור התצוגה המקדימה לא יוצג.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
@@ -2236,6 +2418,10 @@ config:
     empty_public_folder: האפשרות `public_folder` היא מחרוזת ריקה, ולכן נתיב ה-`media_folder` משמש לנתיבי קובצי המדיה הנשמרים בפריטים במקום זאת. הסירו את האפשרות, או הגדירו אותה לנתיב שברצונכם להשתמש בו, כגון `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: האפשרות `{$option}` אינה מוגדרת בסכמת התצורה של Sveltia CMS. המערכת תתעלם ממנה. בדקו אם יש שגיאת כתיב או שגיאת תחביר.
+    # Don’t localize `default_localized`, `default` and `i18n`
+    default_localized_without_i18n: לאפשרות `default_localized` אין השפעה, מפני ש-i18n אינו מופעל באוסף. השתמשו באפשרות `default` במקום זאת.
+    # {$locale} is a locale code from the configuration; Don’t localize `default_localized`
+    default_localized_unknown_locale: לאפשרות `default_localized` יש ערך עבור `{$locale}`, שאינה אחת משפות האוסף, ולכן הערך לעולם אינו בשימוש.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'ראו את הערות התאימות לפרטים: {$link}'
@@ -2306,6 +2492,7 @@ workflow:
       one {{ הפריט סומן למחיקה. }}
       two {{ שני פריטים סומנו למחיקה. }}
       *   {{ {$count} פריטים סומנו למחיקה. }}
+
   # Toast notification shown after the unpublished changes to an entry have been thrown away
   changes_discarded: |
     .input {$count :integer}
@@ -2313,6 +2500,7 @@ workflow:
       one {{ השינויים בוטלו. }}
       two {{ השינויים בשני פריטים בוטלו. }}
       *   {{ השינויים ב-{$count} פריטים בוטלו. }}
+
   # Toast notifications shown while a deletion is being called off, and once that has completed
   cancelling_deletion: מבטל מחיקה…
   deletion_cancelled: המחיקה בוטלה.
@@ -2333,6 +2521,14 @@ workflow:
   status_updated: הסטטוס עודכן.
   # Error notification when the status could not be changed
   status_change_failed: שינוי הסטטוס נכשל. אפשר לנסות שוב.
+  # Workflow page: toolbar button that reads the pull requests again, to pick up the changes made
+  # by anyone else since the board was loaded, and the toast notifications shown while doing so and
+  # once done
+  refresh: רענון
+  refreshing: מרענן…
+  refreshed: הלוח מעודכן.
+  # Error notification when the board could not be refreshed
+  refresh_failed: רענון הלוח נכשל. אפשר לנסות שוב.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
   status_change_blocked: יש שגיאות בפריט. צריך לתקן אותן לפני שינוי הסטטוס.
@@ -2371,6 +2567,7 @@ workflow:
     .match $count
       one {{ הוא טרם פורסם, ולכן השינויים שלא פורסמו יבוטלו. גרסה מפורסמת, אם קיימת, תישאר. }}
       *   {{ הם טרם פורסמו, ולכן השינויים שלא פורסמו יבוטלו. גרסאות מפורסמות, אם קיימות, יישארו. }}
+
   # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
   # the number of selected entries that are unpublished.
   deleting_unpublished_note_some: |
@@ -2379,6 +2576,7 @@ workflow:
       one {{ אחד מהם טרם פורסם, ולכן השינויים שלא פורסמו בו יבוטלו. כל גרסה שפורסמה תישאר מפורסמת. }}
       two {{ שניים מהם טרם פורסמו, ולכן השינויים שלא פורסמו בהם יבוטלו. כל גרסה שפורסמה תישאר מפורסמת. }}
       *   {{ {$count} מהם טרם פורסמו, ולכן השינויים שלא פורסמו בהם יבוטלו. כל גרסה שפורסמה תישאר מפורסמת. }}
+
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
   confirm_publishing_entry_after_build: לפרסם את הפריט הזה? השינויים שלכם יעלו לאוויר לאחר בנייה מחדש של האתר.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
@@ -2410,6 +2608,12 @@ workflow:
   # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
   # the site rather than published to it
   deploying_deletion: מחיקה
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: מוסיף גם את {$entries}
+  # Workflow page: one of the new entries listed by `companion_entries`, named by its collection’s
+  # singular label and its title
+  companion_entry: '{$collection}: {$title}'
 
 # Dialog asking the user for a commit message every time changes are saved, when the site is
 # configured to. The message is recorded in the repository’s history along with the changes
