@@ -6,7 +6,6 @@ import {
   filterRealValues,
   suspendAutoDuplication,
 } from '$lib/services/contents/draft';
-import { getInheritedI18nOption } from '$lib/services/contents/draft/create/proxy.svelte';
 import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
 import { getDraftFieldArgs } from '$lib/services/contents/entry/fields';
 import { deleteSubtree } from '$lib/services/contents/entry/subtree';
@@ -14,6 +13,7 @@ import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/du
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { localizeDefaultValue } from '$lib/services/contents/i18n/options';
+import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import {

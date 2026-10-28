@@ -4,13 +4,21 @@ import { render } from 'vitest-browser-svelte';
 
 import { getCollection } from '$lib/services/contents/collection';
 import { deployments, deployPollTimedOut, productionSHA } from '$lib/services/deployments';
-import { pageLiveness } from '$lib/services/deployments/ping';
+import { pageLiveness, pingURL } from '$lib/services/deployments/ping';
 import { openNewTab } from '$lib/services/utils/window';
 import { createMockEntry, initTestConfig } from '$lib/test/config';
 
 import PreviewLinkButton from './preview-link-button.svelte';
 
 vi.mock('$lib/services/utils/window', () => ({ openNewTab: vi.fn() }));
+
+// Spy on the liveness check while still running it
+vi.mock('$lib/services/deployments/ping', async (importOriginal) => {
+  /** @type {typeof import('$lib/services/deployments/ping')} */
+  const actual = await importOriginal();
+
+  return { ...actual, pingURL: vi.fn(actual.pingURL) };
+});
 
 const entry = createMockEntry({ slug: 'hello' });
 const pullRequest = /** @type {any} */ ({ number: 1, headSHA: 'abc' });
@@ -137,6 +145,25 @@ describe('PreviewLinkButton', () => {
       .toEqual({
         'https://example.com/posts/world': 'unknown',
       });
+  });
+
+  test('checks a page found missing again once the build is reported finished', async () => {
+    productionSHA.current = 'main';
+    deployments.current = { main: { state: 'pending', checkedTime: 0 } };
+
+    await renderButton({ entry: createMockEntry({ slug: 'built' }) });
+
+    const url = 'https://example.com/posts/built';
+
+    await vi.waitFor(() => {
+      expect(pingURL).toHaveBeenLastCalledWith(url, { recheckPending: false });
+    });
+
+    deployments.current = { main: { state: 'ready', checkedTime: 0 } };
+
+    await vi.waitFor(() => {
+      expect(pingURL).toHaveBeenLastCalledWith(url, { recheckPending: true });
+    });
   });
 
   test('renders nothing without a preview path', async () => {

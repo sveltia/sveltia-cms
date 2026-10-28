@@ -835,8 +835,10 @@ describe('React Helpers', () => {
         fieldConfig: field,
         refEntry: alice,
       });
-      expect(result.authors.authors['en/Alice-b']['name.first']).toBe('Alice');
-      expect(result.authors.authors['en/Bob-']['name.first']).toBe('Bob');
+      // The referenced entry’s data is nested, not flattened
+      expect(result.authors.authors['en/Alice-b'].name.first).toBe('Alice');
+      expect(result.authors.authors['en/Bob-'].name.first).toBe('Bob');
+      expect(result.authors.authors['en/Bob-']).not.toHaveProperty(['name.first']);
       expect(result.authors.authors.missing).toBeUndefined();
     });
 

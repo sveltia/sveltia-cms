@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import {
   filterAndPrepareEntries,
@@ -8,6 +8,11 @@ import {
 /**
  * @import { Entry } from '$lib/types/private';
  */
+
+// The `team` field isn’t localized, so it’s only stored in the default locale
+vi.mock('$lib/services/contents/i18n/shared-values', () => ({
+  isFieldInLocale: vi.fn(({ keyPath }) => keyPath !== 'team'),
+}));
 
 describe('Test filterAndPrepareEntries()', () => {
   /** Plain entry collection, where a slug is a name rather than a path. */
@@ -403,6 +408,38 @@ describe('Test filterAndPrepareEntries()', () => {
     expect(result[0].content).toEqual({ title: 'Article A' });
   });
 
+  test('should read a field that isn’t localized from the default locale', () => {
+    /** @type {Entry[]} */
+    const authors = ['red', 'blue'].map((team) => ({
+      id: team,
+      slug: team,
+      subPath: team,
+      locales: {
+        en: { slug: team, path: `en/${team}.md`, content: { name: team, team, status: 'on' } },
+        ja: { slug: team, path: `ja/${team}.md`, content: { name: team } },
+      },
+    }));
+
+    /**
+     * Filter the authors in Japanese.
+     * @param {string} field Field to filter by.
+     * @param {string} value Value to match.
+     * @returns {string[]} Slugs of the matching authors.
+     */
+    const filter = (field, value) =>
+      filterAndPrepareEntries({
+        refEntries: authors,
+        collection,
+        locale: 'ja',
+        defaultLocale: 'en',
+        entryFilters: [{ field, values: [value] }],
+      }).map(({ refEntry }) => refEntry.slug);
+
+    expect(filter('team', 'red')).toEqual(['red']);
+    // A localized field missing in the locale isn’t read from the default locale
+    expect(filter('status', 'on')).toEqual([]);
+  });
+
   test('should still fall back to _default if defaultLocale is not available', () => {
     /** @type {Entry[]} */
     const entriesWithOnlyDefault = [
@@ -443,6 +480,24 @@ describe('Test resolveFilterValues()', () => {
     const result = resolveFilterValues(filters, { uuid: 'abc-123' });
 
     expect(result[0].values).toEqual(['abc-123']);
+  });
+
+  test('should resolve {{fields.x}} against the shared values of a field that isn’t localized', () => {
+    const filters = [{ field: 'team', values: ['{{fields.team}}', '{{fields.status}}'] }];
+
+    const sharedValues = {
+      values: { team: 'red', status: 'on' },
+      /**
+       * Check whether the field isn’t localized.
+       * @param {string} keyPath Key path.
+       * @returns {boolean} Result.
+       */
+      isShared: (keyPath) => keyPath === 'team',
+    };
+
+    expect(resolveFilterValues(filters, {}, undefined, sharedValues)).toEqual([
+      { field: 'team', exclude: undefined, values: ['red'] },
+    ]);
   });
 
   test('should drop template values that cannot be resolved', () => {

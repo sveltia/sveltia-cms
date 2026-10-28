@@ -1,3 +1,4 @@
+import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
 import { getPreviewPath } from '$lib/services/contents/entry';
 import {
   getAliasesKey,
@@ -90,7 +91,8 @@ export const addAlias = ({ draft, locale, content, slug, path }) => {
       slug,
       path,
       content,
-      defaultContent: draft.currentValues[defaultLocale],
+      // A snapshot, which is replaced rather than changed as the draft is edited
+      defaultContent: getValueMapSnapshot(draft, defaultLocale),
     }),
   );
 

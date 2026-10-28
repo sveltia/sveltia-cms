@@ -200,6 +200,38 @@ describe('prefs service', () => {
     expect(mockAppLocale.current).toBe('ja');
   });
 
+  it('should not let a slow locale load override a locale picked later', async () => {
+    mockLocalStorage.get.mockResolvedValue({ locale: 'ja' });
+
+    const { prefs } = await import('./prefs.svelte.js');
+
+    await wait();
+
+    /** @type {() => void} */
+    let resolveFrench = () => undefined;
+
+    // The French strings are fetched from the CDN, while English ones are bundled
+    mockWaitLocale.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          /** Finish loading the French strings. */
+          resolveFrench = () => resolve(undefined);
+        }),
+    );
+    prefs.locale = 'fr';
+    await wait();
+    prefs.locale = 'en-US';
+    await wait();
+
+    expect(mockAppLocale.current).toBe('en-US');
+
+    resolveFrench();
+    await wait();
+
+    expect(mockAppLocale.current).toBe('en-US');
+    expect(prefs.locale).toBe('en-US');
+  });
+
   it('should keep the stored locale when its strings cannot be loaded on startup', async () => {
     // `initAppLocale()` has already set the initial locale by the time the stored preference is
     // applied, so there is a “previous” locale that must not be persisted here

@@ -5,7 +5,6 @@ import { TomlDate } from 'smol-toml';
 import { cmsConfig } from '$lib/services/config';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
-import { getInheritedI18nOption } from '$lib/services/contents/draft/create/proxy.svelte';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getAliasesKey, getAliasKeyPaths } from '$lib/services/contents/entry/aliases';
 import {
@@ -19,9 +18,8 @@ import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/con
 import { convertMapLists, getMapKeyField } from '$lib/services/contents/fields/list/map';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { TOML_FORMATS } from '$lib/services/contents/file/constants';
-import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
+import { isFieldInLocale } from '$lib/services/contents/i18n/shared-values';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { isNumeric } from '$lib/services/utils/number';
 import {
   hasIndexLikeChildKey,
   isPlainObject,
@@ -170,36 +168,6 @@ const isOpaqueField = (field) =>
  */
 
 /**
- * Check whether the field at the given key path belongs in the locale’s content. Every field does
- * in the default locale, but in another locale, only one that is localized along with all of its
- * ancestors, as the others are left out of that locale’s content.
- * @param {FinalizeContext} ctx Context.
- * @param {string} keyPath Concrete key path of the field.
- * @returns {boolean} Result.
- */
-const isFieldInLocale = ({ locale, defaultLocale, getFieldArgs }, keyPath) => {
-  if (locale === defaultLocale) {
-    return true;
-  }
-
-  const segments = keyPath.split('.');
-
-  // Skip the list item indexes, which aren’t fields of their own, e.g. `items.0` in `items.0.kv`
-  return segments.every((segment, index) => {
-    if (index < segments.length - 1 && isNumeric(segment)) {
-      return true;
-    }
-
-    const args = { ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') };
-    const fieldConfig = getField(args);
-
-    return (
-      !!fieldConfig && isFieldLocalized(getInheritedI18nOption({ fieldConfig, getFieldArgs: args }))
-    );
-  });
-};
-
-/**
  * Copy a KeyValue field’s key-value pairs to the sorted property map.
  * @param {FinalizeContext} ctx Context.
  * @param {string} keyPath Concrete key path of the field.
@@ -234,7 +202,7 @@ const copyKeyValueField = (ctx, keyPath, field) => {
   if (!pairKeyPaths.length) {
     // A field that isn’t in the locale’s content, e.g. one that isn’t translatable in a locale
     // other than the default, doesn’t get the empty object either
-    if (Object.hasOwn(unsortedMap, keyPath) || isFieldInLocale(ctx, keyPath)) {
+    if (Object.hasOwn(unsortedMap, keyPath) || isFieldInLocale({ ...ctx, keyPath })) {
       // Any other value, such as a string where the file doesn’t hold an object, is left as is
       unsortedMap[keyPath] ??= {};
       copyProperty({ ...copyArgs, key: keyPath, field });

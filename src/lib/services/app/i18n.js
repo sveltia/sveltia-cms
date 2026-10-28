@@ -221,7 +221,10 @@ const loadLocaleStrings = async (locale) => {
     appLocaleLoadError.current = { locale };
     throw ex;
   } finally {
-    appLocaleLoading.current = undefined;
+    // Another locale may have started loading in the meantime, whose notice stays
+    if (appLocaleLoading.current === locale) {
+      appLocaleLoading.current = undefined;
+    }
   }
 };
 

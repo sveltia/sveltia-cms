@@ -4,6 +4,8 @@ import { compareSortKeys } from '$lib/services/common/view';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getOrderValueGetter } from '$lib/services/contents/collection/entries/reorder/sort';
 import { getEntrySortKeyGetter } from '$lib/services/contents/collection/view/sort';
+import { SPECIAL_SORT_KEYS } from '$lib/services/contents/collection/view/sort-keys';
+import { isFieldInLocale } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import {
@@ -42,14 +44,27 @@ const getRelationSortKeyGetter = ({ collection, key, locale }) => {
       ? current
       : getEntrySortKeyGetter({ collection, key, locale: defaultLocale });
 
+  // A field that isn’t localized is only stored in the default locale, so it’s always read there
+  const isSharedField =
+    locale !== defaultLocale &&
+    !SPECIAL_SORT_KEYS.includes(key) &&
+    !isFieldInLocale({
+      getFieldArgs: { collectionName: collection.name, valueMap: {} },
+      locale,
+      defaultLocale,
+      keyPath: key,
+    });
+
   /**
    * Get the sort key of an entry from the current locale, or the default locale if the entry has no
-   * content in the current locale.
+   * content in the current locale or the field isn’t localized.
    * @param {Entry} entry Referenced entry.
    * @returns {string | number | undefined} Sort key.
    */
   const getSortKey = (entry) =>
-    entry.locales[locale] ? current.getSortKey(entry) : fallback.getSortKey(entry);
+    entry.locales[locale] && !isSharedField
+      ? current.getSortKey(entry)
+      : fallback.getSortKey(entry);
 
   return { getSortKey, isStringType: current.isStringType };
 };

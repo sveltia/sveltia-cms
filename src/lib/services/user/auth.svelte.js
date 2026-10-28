@@ -208,13 +208,26 @@ export const parseMagicLink = () => {
  * @returns {Promise<Record<string, any> | undefined>} Cached user info, or undefined if not found.
  */
 export const getUserCache = async () => {
-  // Read the keys one at a time, stopping at the first hit
-  const userCache = await [USER_STORAGE_KEY, ...LEGACY_USER_STORAGE_KEYS].reduce(
-    async (previous, key) => (await previous) || LocalStorage.get(key),
-    /** @type {Promise<any>} */ (Promise.resolve(undefined)),
-  );
+  /**
+   * Check whether the given value is a cached user.
+   * @param {any} value Stored value.
+   * @returns {boolean} Result.
+   */
+  const isUserCache = (value) => isObject(value) && typeof value.backendName === 'string';
 
-  return isObject(userCache) && typeof userCache.backendName === 'string' ? userCache : undefined;
+  // Read the keys one at a time, stopping at the first hit. The empty object left by signing out of
+  // Sveltia CMS isn’t one, so a later sign-in with Netlify/Decap CMS is still picked up
+  return [USER_STORAGE_KEY, ...LEGACY_USER_STORAGE_KEYS].reduce(async (previous, key) => {
+    const found = await previous;
+
+    if (found) {
+      return found;
+    }
+
+    const value = await LocalStorage.get(key);
+
+    return isUserCache(value) ? value : undefined;
+  }, /** @type {Promise<Record<string, any> | undefined>} */ (Promise.resolve(undefined)));
 };
 
 /**

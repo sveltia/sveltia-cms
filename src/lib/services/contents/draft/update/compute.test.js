@@ -312,6 +312,27 @@ describe('updateComputedValues(draft)', () => {
     expect(draft.currentValues.fr.slug).toBe('post-Bonjour');
   });
 
+  test('should read a field that isn’t localized from the default locale', () => {
+    draft.collection._i18n = { i18nEnabled: true, defaultLocale: 'en' };
+    draft.fields = [
+      { name: 'title', i18n: true },
+      { name: 'price' },
+      { name: 'slug', widget: 'compute', value: '{{fields.title}}-{{fields.price}}', i18n: true },
+    ];
+    draft.currentLocales = { en: true, fr: true };
+    // The price is only stored in the default locale
+    draft.currentValues = {
+      en: { title: 'Hello', price: 5, slug: '' },
+      fr: { title: 'Bonjour', slug: '' },
+    };
+
+    updateComputedValues(draft);
+
+    expect(draft.currentValues.en.slug).toBe('Hello-5');
+    expect(draft.currentValues.fr.slug).toBe('Bonjour-5');
+    expect(draft.currentValues.fr).not.toHaveProperty('price');
+  });
+
   test('should use the collection file’s i18n config when there is one', () => {
     draft.collectionFile = { _i18n: { i18nEnabled: true, defaultLocale: 'fr' } };
     draft.currentLocales = { en: true, fr: true };
@@ -338,6 +359,42 @@ describe('updateComputedValues(draft)', () => {
     updateComputedValues(draft);
 
     expect(draft.extraValues.fr['body:c1:slug']).toBe('');
+  });
+
+  test('should leave a rich text editor component without a Compute field alone', () => {
+    vi.mocked(getComponentDef).mockReturnValue(
+      /** @type {any} */ ({ fields: [{ name: 'caption' }] }),
+    );
+
+    draft.extraValues.en = { 'body:c1:__sc_component_name': 'image', 'body:c1:caption': 'A' };
+
+    updateComputedValues(draft);
+
+    expect(draft.extraValues.en).toEqual({
+      'body:c1:__sc_component_name': 'image',
+      'body:c1:caption': 'A',
+    });
+  });
+
+  test('should let a rich text editor component read an untranslated entry field', () => {
+    vi.mocked(getComponentDef).mockReturnValue(
+      /** @type {any} */ ({
+        fields: [
+          { name: 'caption' },
+          { name: 'label', widget: 'compute', value: '{{fields.price}}' },
+        ],
+      }),
+    );
+
+    draft.collection._i18n = { i18nEnabled: true, defaultLocale: 'en' };
+    draft.currentLocales = { en: true, fr: true };
+    // The price is only stored in the default locale
+    draft.currentValues = { en: { title: 'Hello', price: 5 }, fr: { title: 'Bonjour' } };
+    draft.extraValues.fr = { 'body:c1:__sc_component_name': 'image', 'body:c1:caption': 'A' };
+
+    updateComputedValues(draft);
+
+    expect(draft.extraValues.fr['body:c1:label']).toBe('5');
   });
 
   test('should follow the items of a list the editor isn’t rendering', () => {

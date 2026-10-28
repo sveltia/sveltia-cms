@@ -11,6 +11,7 @@ import {
   followsDefaultLocale,
   getMainValueKeyPath,
 } from '$lib/services/contents/i18n/duplicate-if-empty';
+import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -19,38 +20,6 @@ import { isNumeric } from '$lib/services/utils/number';
  */
 
 const PATH_MATCH_REGEX = /(?<path>.+?)\.[^.]*$/;
-
-/**
- * Get the `i18n` option that applies to the given field: its own, or, if the field has none, that
- * of the nearest ancestor that has one, such as the List or Object field it belongs to.
- * @param {object} args Arguments.
- * @param {Field} args.fieldConfig Field configuration.
- * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
- * path of the field.
- * @returns {Field['i18n']} Option, or `undefined` if neither the field nor its ancestors have one.
- */
-export const getInheritedI18nOption = ({ fieldConfig, getFieldArgs }) => {
-  if (fieldConfig.i18n !== undefined) {
-    return fieldConfig.i18n;
-  }
-
-  const segments = getFieldArgs.keyPath.split('.');
-
-  // Look at the ancestors from the nearest one, skipping the list item indexes, which aren’t fields
-  // of their own, e.g. `items` for `items.0.name`
-  for (let index = segments.length - 2; index >= 0; index -= 1) {
-    if (!isNumeric(segments[index])) {
-      const { i18n } =
-        getField({ ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') }) ?? {};
-
-      if (i18n !== undefined) {
-        return i18n;
-      }
-    }
-  }
-
-  return undefined;
-};
 
 /**
  * Check if the given field’s value is duplicated from the default locale to the other locales. That

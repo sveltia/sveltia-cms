@@ -36,6 +36,11 @@ export const prefs = $state({});
  * Whether the stored locale preference has been applied to the app locale.
  */
 let storedLocaleApplied = false;
+/**
+ * Incremented as each locale switch starts. The strings of a locale fetched from the CDN can arrive
+ * after the user has picked another one, so only the latest switch is applied once loaded.
+ */
+let localeSwitchCount = 0;
 
 /**
  * Locale that best matches the browser’s language settings, used while the language preference is
@@ -128,10 +133,18 @@ $effect.root(() => {
     const switchedByUser = storedLocaleApplied && localePref !== AUTO_PREF_VALUE;
 
     storedLocaleApplied = true;
+    localeSwitchCount += 1;
+
+    const switchCount = localeSwitchCount;
 
     // Load the strings first if the locale is not bundled with the app, so the UI won’t briefly
     // fall back to the default locale. The loader is registered in `initAppLocale()`.
     waitLocale(locale).then(() => {
+      // Another locale has been picked in the meantime, which wins
+      if (switchCount !== localeSwitchCount) {
+        return;
+      }
+
       if (locale in dictionary) {
         appLocale.set(locale);
       } else if (switchedByUser && previousLocale) {

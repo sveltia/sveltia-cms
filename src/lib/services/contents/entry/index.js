@@ -15,8 +15,8 @@ import {
 } from '$lib/services/contents/collection/entries/index-file';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/parse';
-import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
 import { omitLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
+import { addSharedValues } from '$lib/services/contents/i18n/shared-values';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
@@ -188,28 +188,26 @@ export const getPreviewPath = ({
     template = omitLocalePlaceholder(template) ?? template;
   }
 
-  const fields = indexFile?.fields ?? regularFields;
-
-  // Only the fields that aren’t translated are taken from the default locale: a translated field
-  // missing in the locale has no value there, and borrowing another locale’s would give a wrong URL
-  const sharedContent =
-    locale === defaultLocale || !defaultContent
-      ? {}
-      : Object.fromEntries(
-          Object.entries(defaultContent).filter(([keyPath]) =>
-            isFieldI18nDisabled(fields.find(({ name }) => name === keyPath.split('.')[0])?.i18n),
-          ),
-        );
-
   return fillEntryPathTemplate({
     pathTemplate: template,
     dateFieldName,
-    fields,
+    fields: indexFile?.fields ?? regularFields,
     collection,
     locale,
     slug,
     entryFilePath,
-    content: { ...sharedContent, ...content },
+    // A field that isn’t translated has no value in another locale’s content
+    content: addSharedValues({
+      getFieldArgs: {
+        collectionName: collection.name,
+        fileName: collectionFile?.name,
+        isIndexFile,
+      },
+      locale,
+      defaultLocale,
+      content,
+      defaultContent,
+    }),
     isIndexFile,
   });
 };

@@ -182,6 +182,10 @@ describe('Test sortOptions()', () => {
   });
 
   test('should read the value from the current locale, falling back to the default locale', () => {
+    vi.mocked(getField).mockReturnValue(
+      /** @type {Field} */ ({ name: 'title', widget: 'string', i18n: true }),
+    );
+
     const groups = [
       makeGroup(makeEntry('a', { en: { title: 'Zucchini' }, fr: { title: 'Courgette' } }), ['A']),
       makeGroup(makeEntry('b', { en: { title: 'Eggplant' } }), ['B']),
@@ -193,6 +197,22 @@ describe('Test sortOptions()', () => {
 
     expect(
       labels(sortOptions({ groups, collection, sortBy: { field: 'title' }, locale: 'en' })),
+    ).toEqual(['B', 'A']);
+  });
+
+  test('should read a field that isn’t localized from the default locale', () => {
+    vi.mocked(getField).mockReturnValue(
+      /** @type {Field} */ ({ name: 'rank', widget: 'number', i18n: false }),
+    );
+
+    // The rank is only stored in the default locale
+    const groups = [
+      makeGroup(makeEntry('a', { en: { rank: 2 }, fr: { title: 'A' } }), ['A']),
+      makeGroup(makeEntry('b', { en: { rank: 1 }, fr: { title: 'B' } }), ['B']),
+    ];
+
+    expect(
+      labels(sortOptions({ groups, collection, sortBy: { field: 'rank' }, locale: 'fr' })),
     ).toEqual(['B', 'A']);
   });
 

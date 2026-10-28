@@ -7,6 +7,7 @@ import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
+import { addSharedValues } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import {
@@ -235,12 +236,33 @@ const updateLocaleComputedValues = ({ draft, valueStoreKey, locale, valueMap, ta
       ? collectComponentComputeFields(valueMap, getIndex)
       : collectComputeFields({ fields, valueMap, getIndex });
 
+  // Nothing to resolve, e.g. in a rich text field that holds no editor component with a Compute
+  // field, so the values aren’t prepared either
+  if (!computeFields.length) {
+    return false;
+  }
+
   let changed = false;
+
+  /**
+   * The entry’s values in the locale. In another locale than the default, the fields that aren’t
+   * localized, which only hold a value in the default locale, are added, so a Compute field
+   * referring to one gets the same value in every locale.
+   * @type {FlattenedEntryContent}
+   */
+  const entryValues = addSharedValues({
+    getFieldArgs: { collectionName, fileName, isIndexFile },
+    locale,
+    defaultLocale,
+    content: valueStoreKey === 'extraValues' ? getValueMapSnapshot(draft, locale) : valueMap,
+    defaultContent: getValueMapSnapshot(draft, defaultLocale),
+  });
+
   /**
    * Values to compute the fields from: the snapshot, until a field changes.
    * @type {FlattenedEntryContent}
    */
-  let values = valueMap;
+  let values = valueStoreKey === 'extraValues' ? valueMap : entryValues;
 
   computeFields.forEach(({ keyPath, fieldConfig }) => {
     // The values of a rich text editor component belong to the document text, which is edited in
@@ -268,7 +290,7 @@ const updateLocaleComputedValues = ({ draft, valueStoreKey, locale, valueMap, ta
             keyPathPrefix: /** @type {RegExpMatchArray} */ (
               keyPath.match(COMPONENT_NAME_PREFIX_REGEX)
             )[0],
-            entryValueMap: getValueMapSnapshot(draft, locale),
+            entryValueMap: entryValues,
           }
         : {}),
     });

@@ -20,6 +20,7 @@
     hasCreationRoom,
     selectPendingEntry,
   } from '$lib/services/contents/fields/relation/quick-add';
+  import { getDraftSharedValues } from '$lib/services/contents/i18n/shared-values';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';
@@ -71,6 +72,12 @@
       refEntries,
       currentLocaleValues,
       currentSlug,
+      // A filter can refer to a field that isn’t localized, which only has a value in the default
+      // locale. The values of a rich text editor component are localized along with the document
+      sharedValues:
+        valueStoreKey === 'currentValues'
+          ? getDraftSharedValues(entryDraft.current, locale)
+          : undefined,
       // A label can refer to another pending entry through a Relation field of the entry
       pendingEntries: entryDraft.current?.pendingEntries,
     }),

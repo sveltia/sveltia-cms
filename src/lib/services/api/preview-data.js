@@ -326,12 +326,15 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
 
       // Fall back to the referenced collection’s default locale, then `_default` (no i18n), the
       // same way the field’s options are looked up
-      const content = (
+      const flatContent = (
         refEntry?.locales[locale] ??
         (defaultLocale ? refEntry?.locales[defaultLocale] : undefined) ??
         refEntry?.locales._default
       )?.content;
 
+      // The referenced entry’s data is nested like that of the entry itself, as in Netlify/Decap
+      // CMS, so a subfield is read with `getIn(['author', 'authors', 'jane', 'name', 'first'])`
+      const content = flatContent ? unflattenMap(flatContent) : undefined;
       const metaDataPath = getMetaDataPath({ getFieldArgs, keyPath });
 
       // The legacy key drops a trailing index, but not a numeric subfield name, which the metadata

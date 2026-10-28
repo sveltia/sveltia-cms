@@ -380,6 +380,19 @@ describe('auth service', () => {
       expect(mockLocalStorage.get).toHaveBeenCalledWith('decap-cms-user');
     });
 
+    it('should look past the empty object left by signing out', async () => {
+      const cachedUser = { token: 'cached-token', backendName: 'github' };
+
+      mockLocalStorage.get.mockImplementation((key) => {
+        if (key === 'sveltia-cms.user') return Promise.resolve({});
+        if (key === 'decap-cms-user') return Promise.resolve(cachedUser);
+
+        return Promise.resolve(null);
+      });
+
+      expect(await authModule.getUserCache()).toEqual(cachedUser);
+    });
+
     it('should fallback to netlify-cms user cache', async () => {
       const cachedUser = { token: 'cached-token', backendName: 'github' };
 

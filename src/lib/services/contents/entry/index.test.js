@@ -371,15 +371,23 @@ describe('Test getEntryPreviewURL()', () => {
       },
     };
 
-    const result = getEntryPreviewURL(entry, 'ja', {
+    const collection = {
       ...mockCollection,
+      // Another name than the other tests use, whose field lookups are cached
+      name: 'articles',
       preview_path: '/{{locale}}/{{year}}/{{slug}}',
       fields: [
         { name: 'title', widget: 'string', i18n: true },
         { name: 'date', widget: 'datetime', format: 'YYYY-MM-DDTHH:mm:ssZ' },
         { name: 'tags', widget: 'list', i18n: false },
       ],
-    });
+    };
+
+    const { getCollection } = await import('$lib/services/contents/collection');
+
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ (collection));
+
+    const result = getEntryPreviewURL(entry, 'ja', /** @type {any} */ (collection));
 
     expect(fillTemplate).toHaveBeenCalledWith(
       '/{{locale}}/{{year}}/{{slug}}',
