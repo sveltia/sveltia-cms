@@ -120,7 +120,7 @@ describe('AccountMenu', () => {
     document.body.appendChild(menuButton);
 
     try {
-      await render(AccountMenu, { menuButton: /** @type {any} */ (menuButton) });
+      await render(AccountMenu, { menuButton });
       await page.getByRole('menuitem', { name: 'Settings' }).click();
 
       const dialog = page.getByRole('dialog', { name: 'Settings' });

@@ -285,8 +285,13 @@ export const confirmMagicLink = async (token) => {
     return undefined;
   }
 
+  // Copy the narrowed value rather than cast it in the object literal: esrap, which Svelte prints
+  // compiled code with, turns a cast property value named like its key, e.g.
+  // `{ a: /** @type {T} */ (a) }`, into invalid shorthand
+  const _account = account;
+
   const confirmed = await new Promise((resolve) => {
-    auth.magicLinkConfirmation = { account: /** @type {User} */ (account), resolve };
+    auth.magicLinkConfirmation = { account: _account, resolve };
   });
 
   auth.magicLinkConfirmation = undefined;

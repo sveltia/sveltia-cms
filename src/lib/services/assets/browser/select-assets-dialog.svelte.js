@@ -171,8 +171,12 @@ export const getPickedFolderPublicPaths = ({
     ? selectedSubfolderPaths.map((path) => getRelativePath(path, /** @type {string} */ (basePath)))
     : [subfolderPath];
 
+  // Cast outside the object literal: esrap, which Svelte prints compiled code with, turns a cast
+  // property value named like its key, e.g. `{ a: /** @type {T} */ (a) }`, into invalid shorthand
+  const _folder = /** @type {AssetFolderInfo} */ (folder);
+
   return subfolderPaths.map((path) =>
-    getFolderPublicPath({ folder: /** @type {AssetFolderInfo} */ (folder), subfolderPath: path }),
+    getFolderPublicPath({ folder: _folder, subfolderPath: path }),
   );
 };
 
