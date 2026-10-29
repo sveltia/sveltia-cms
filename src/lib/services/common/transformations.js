@@ -6,6 +6,7 @@ import dayjsUTC from 'dayjs/plugin/utc';
 
 import { customStringTransformationRegistry } from '$lib/services/api/registries';
 import { slugify } from '$lib/services/common/slug';
+import { getAdjacentChar } from '$lib/services/common/template/tags';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getFormatLocale } from '$lib/services/contents/fields/date-time/locales';
 import {
@@ -171,7 +172,8 @@ const parseTransformation = (transformation) => {
  * Split a string containing a value and transformations at the pipe (`|`) characters, except for
  * those within a quoted transformation argument like `default('Untitled | Draft')`. A single quote
  * only opens an argument after `(` or `,`, and only closes it before `,` or `)`, so an apostrophe
- * within an argument, as in `default('Don't')`, doesn’t throw off the parsing.
+ * within an argument, as in `default('Don't')`, doesn’t throw off the parsing. Only the whitespace
+ * next to each quote is looked at, so the string is parsed in linear time.
  * @param {string} string The string to be split.
  * @returns {string[]} Trimmed segments.
  */
@@ -181,11 +183,15 @@ const splitTransformations = (string) => {
   let segment = '';
   let quoted = false;
 
-  [...string].forEach((char, index) => {
+  // Go through the UTF-16 code units, which the quote lookups index into. A surrogate pair is
+  // never a quote or a pipe, so its halves are just added to the segment one after the other
+  for (let index = 0; index < string.length; index += 1) {
+    const char = string[index];
+
     if (char === "'") {
-      if (!quoted && /[(,]\s*$/.test(string.slice(0, index))) {
+      if (!quoted && ['(', ','].includes(getAdjacentChar(string, index, -1))) {
         quoted = true;
-      } else if (quoted && /^\s*[,)]/.test(string.slice(index + 1))) {
+      } else if (quoted && [',', ')'].includes(getAdjacentChar(string, index, 1))) {
         quoted = false;
       }
     }
@@ -196,7 +202,7 @@ const splitTransformations = (string) => {
     } else {
       segment += char;
     }
-  });
+  }
 
   segments.push(segment.trim());
 

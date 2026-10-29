@@ -72,6 +72,27 @@ describe('Test parseTransformations()', () => {
       ],
     });
   });
+
+  test('finds a closing quote after an emoji', () => {
+    expect(parseTransformations("title | default('🎉 | 🎊') | upper")).toEqual({
+      value: 'title',
+      transformations: [
+        { method: 'default', args: { defaultValue: '🎉 | 🎊' } },
+        { method: 'upper', args: {} },
+      ],
+    });
+  });
+
+  test('parses a long run of quoted arguments in linear time', () => {
+    // Slicing the string around every quote took over 30 seconds here. The value can come from a
+    // URL, as the default value of a Hidden field in a new entry
+    const args = "', ".repeat(200_000);
+    const { value, transformations } = parseTransformations(`title | f(${args}) | upper`);
+
+    expect(value).toBe('title');
+    expect(transformations).toHaveLength(2);
+    expect(transformations[1]).toEqual({ method: 'upper', args: {} });
+  });
 });
 
 describe('Test parseTransformations() with transformations that are not built-in', () => {

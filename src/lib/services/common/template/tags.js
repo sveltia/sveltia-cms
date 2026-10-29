@@ -7,7 +7,7 @@ import { TAG_PLACEHOLDER, TEMPLATE_TAG_REGEX } from '$lib/services/common/templa
  * @param {-1 | 1} step `-1` to look backward, `1` to look forward.
  * @returns {string} Character, or an empty string if there is none.
  */
-const getAdjacentChar = (str, index, step) => {
+export const getAdjacentChar = (str, index, step) => {
   let cursor = index + step;
 
   while (/\s/.test(str[cursor] ?? '')) {
