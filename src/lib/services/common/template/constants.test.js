@@ -28,6 +28,11 @@ describe('Template constants', () => {
       expect(TEMPLATE_TAG_REGEX.test('title}}')).toBe(false);
     });
 
+    test('should not match an escaped tag', () => {
+      expect(TEMPLATE_TAG_REGEX.test('\\{{title}}')).toBe(false);
+      expect('\\{{title}}-{{slug}}'.match(TEMPLATE_TAG_REGEX)?.[0]).toBe('{{slug}}');
+    });
+
     test('should match first occurrence only', () => {
       const str = '{{title}}-{{slug}}';
       const match = str.match(TEMPLATE_TAG_REGEX);

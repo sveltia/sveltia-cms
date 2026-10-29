@@ -199,6 +199,19 @@ describe('replaceTemplateTags()', () => {
   test('should leave an unterminated template tag unchanged', () => {
     expect(replace("{{title | default('x'")).toBe("{{title | default('x'");
   });
+
+  test('should output an escaped template tag as is without the backslash', () => {
+    expect(replace('portfolio/\\{{ title | slugify }}/index.html')).toBe(
+      'portfolio/{{ title | slugify }}/index.html',
+    );
+    expect(replace('\\{{title}}')).toBe('{{title}}');
+    expect(replace('{{title}}\\{{slug}}-{{year}}')).toBe('<<title>>{{slug}}-<<year>>');
+    expect(replace("\\{{title | default('}}')}}")).toBe("{{title | default('}}')}}");
+  });
+
+  test('should leave an unterminated escaped template tag unchanged', () => {
+    expect(replace('\\{{title')).toBe('\\{{title');
+  });
 });
 
 describe('splitTemplateTags()', () => {

@@ -66,6 +66,11 @@ describe('checkFieldReferences', () => {
       expectReported(['titel', 'fields.slug', 'author.email']);
     });
 
+    test('skips an escaped tag', () => {
+      check({ template: '\\{{ page.url }}/\\{{titel}}-{{title}}' });
+      expectReported([]);
+    });
+
     test('checks the tag name in front of a transformation', () => {
       check({ template: '{{date | date("YYYY")}}-{{titel | truncate(20)}}' });
       expectReported(['titel']);

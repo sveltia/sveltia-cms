@@ -20,7 +20,9 @@ const getAdjacentChar = (str, index, step) => {
 /**
  * Replace template tags in a string while leaving nested template tags inside transformation
  * arguments untouched. For example, this keeps `default('{{title}}')` from being treated as a
- * separate replacement target when the outer template is processed.
+ * separate replacement target when the outer template is processed. A tag escaped with a backslash,
+ * e.g. `\{{ title | slugify }}`, is output as is without the backslash, so a template meant for
+ * another tool, like a static site generator, can be passed through.
  * @param {string} str The string containing template tags.
  * @param {(match: string, placeholder: string) => string} replacer Replacement callback.
  * @returns {string} Result of the replacements.
@@ -60,6 +62,14 @@ export const replaceTemplateTags = (str, replacer) => {
       if (!quoteState && char === '}' && nextChar === '}') {
         const closeIndex = cursor;
         const placeholder = str.slice(openIndex + 2, closeIndex);
+
+        // An escaped tag is kept as is, minus the backslash. The backslash is always at the end of
+        // the literal text just added to the result, because a preceding tag ends with `}}`
+        if (str[openIndex - 1] === '\\') {
+          result = `${result.slice(0, -1)}${str.slice(openIndex, closeIndex + 2)}`;
+          searchIndex = closeIndex + 2;
+          break;
+        }
 
         // A tag nested in a transformation argument, as in `default('{{slug}}')`, never gets here:
         // it’s inside the quotes the outer tag is scanned through, so it’s kept as part of that

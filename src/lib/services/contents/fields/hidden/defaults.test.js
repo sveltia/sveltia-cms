@@ -100,6 +100,20 @@ describe('Test getDefaultValueMap()', () => {
     expect(result).toEqual({ identifier: 'prefix-en-suffix' });
   });
 
+  test('should keep an escaped template tag for another tool, without the backslash', () => {
+    /** @type {HiddenField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      default: 'portfolio/\\{{ title | slugify }}/{{locale}}/index.html',
+    };
+
+    const keyPath = 'permalink';
+    const locale = 'en';
+    const result = getDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale: locale });
+
+    expect(result).toEqual({ permalink: 'portfolio/{{ title | slugify }}/en/index.html' });
+  });
+
   test('should replace {{datetime}} placeholder with formatted datetime', () => {
     /** @type {HiddenField} */
     const fieldConfig = {

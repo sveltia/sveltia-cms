@@ -83,6 +83,19 @@ describe('processNestedTemplates()', () => {
     ]);
   });
 
+  test('keeps an escaped template without the backslash', () => {
+    /** @type {StringTransformation[]} */
+    const transformations = [
+      { method: 'default', args: { defaultValue: '\\{{ page.url }}-{{title}}' } },
+      { method: 'custom', args: {}, customArgs: ['\\{{title}}', 1] },
+    ];
+
+    expect(processNestedTemplates(transformations, resolveTag)).toEqual([
+      { method: 'default', args: { defaultValue: '{{ page.url }}-[title]' } },
+      { method: 'custom', args: {}, customArgs: ['{{title}}', 1] },
+    ]);
+  });
+
   test('resolves every template in an argument', () => {
     /** @type {StringTransformation[]} */
     const transformations = [

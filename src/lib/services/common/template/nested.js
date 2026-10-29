@@ -1,7 +1,4 @@
-import {
-  TEMPLATE_TAG_REGEX,
-  TEMPLATE_TAG_REPLACE_REGEX,
-} from '$lib/services/common/template/constants';
+import { replaceTemplateTags } from '$lib/services/common/template/tags';
 
 /**
  * @import { StringTransformation } from '$lib/types/private';
@@ -9,15 +6,14 @@ import {
 
 /**
  * Resolve the nested template tags in a transformation argument, e.g. `{{fields.title}}` or
- * `{{fields.first_name}} {{fields.last_name}}`, keeping the text around them.
+ * `{{fields.first_name}} {{fields.last_name}}`, keeping the text around them. An escaped tag, e.g.
+ * `\{{title}}`, is kept without the backslash.
  * @param {string} value The transformation argument value.
  * @param {(tag: string) => string} resolveTag Function to resolve a nested tag.
  * @returns {string} Resolved value.
  */
 const resolveNestedTemplateValues = (value, resolveTag) =>
-  value.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, (_match, /** @type {string} */ innerTag) =>
-    String(resolveTag(innerTag) ?? ''),
-  );
+  replaceTemplateTags(value, (_match, innerTag) => String(resolveTag(innerTag) ?? ''));
 
 /**
  * Process nested template tags in transformation arguments (e.g., `default('{{fields.title}}')`).
@@ -67,7 +63,7 @@ export const processNestedTemplates = (transformations, resolveTag) =>
     /** @type {(string | number)[] | undefined} */
     let newCustomArgs;
 
-    if (customArgs?.some((arg) => typeof arg === 'string' && TEMPLATE_TAG_REGEX.test(arg))) {
+    if (customArgs?.some((arg) => typeof arg === 'string' && arg.includes('{{'))) {
       newCustomArgs = customArgs.map((arg) =>
         typeof arg === 'string' ? resolveNestedTemplateValues(arg, resolveTag) : arg,
       );

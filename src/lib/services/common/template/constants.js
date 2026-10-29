@@ -2,9 +2,10 @@
  * Simple regex to check if a string contains template tags. This can be used for a quick check
  * before performing more expensive operations like regex replacement. The `g` flag should not be
  * used here because we only need to know if at least one match exists, and using `test()` with a
- * global regex can lead to unexpected results due to the internal state of the regex engine.
+ * global regex can lead to unexpected results due to the internal state of the regex engine. A tag
+ * escaped with a backslash, e.g. `\{{title}}`, isn’t matched; see `replaceTemplateTags()`.
  */
-export const TEMPLATE_TAG_REGEX = /{{(.+?)}}/;
+export const TEMPLATE_TAG_REGEX = /(?<!\\){{(.+?)}}/;
 
 /**
  * Regex to match and replace template tags like {{slug}}.
