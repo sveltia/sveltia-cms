@@ -5,6 +5,7 @@ import backblazeB2 from './s3/backblaze-b2';
 import bunnyStorage from './s3/bunny-storage';
 import cloudflareR2 from './s3/cloudflare-r2';
 import digitaloceanSpaces from './s3/digitalocean-spaces';
+import neonObjectStorage from './s3/neon-object-storage';
 import scaleway from './s3/scaleway';
 import supabase from './s3/supabase';
 import uploadcare from './uploadcare';
@@ -26,6 +27,7 @@ export const allCloudStorageServices = {
   cloudflare_r2: cloudflareR2, // S3-compatible
   cloudinary,
   digitalocean_spaces: digitaloceanSpaces, // S3-compatible
+  neon_object_storage: neonObjectStorage, // S3-compatible
   scaleway_object_storage: scaleway, // S3-compatible
   supabase_storage: supabase, // S3-compatible
   uploadcare,

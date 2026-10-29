@@ -1826,6 +1826,9 @@ cloud_storage:
   digitalocean_spaces:
     auth_key_label: シークレットアクセスキー
 
+  neon_object_storage:
+    auth_key_label: シークレットアクセスキー
+
 # ==============================================================================
 # Configuration Validation
 # ==============================================================================
