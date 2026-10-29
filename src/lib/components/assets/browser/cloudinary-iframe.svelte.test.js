@@ -2,13 +2,18 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { dialogOpen } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
+import {
+  consoleLoaded,
+  dialogOpen,
+  FRAME_ORIGIN,
+} from '$lib/services/integrations/media-libraries/cloud/cloudinary';
 import { initTestConfig } from '$lib/test/config';
 
 import CloudinaryIframe from './cloudinary-iframe.svelte';
 
 describe('CloudinaryIframe', () => {
   beforeEach(() => {
+    consoleLoaded.current = false;
     dialogOpen.current = false;
   });
 
@@ -48,6 +53,41 @@ describe('CloudinaryIframe', () => {
     // Dismissing the modal closes the library
     await userEvent.keyboard('{Escape}');
     await expect.poll(() => dialogOpen.current).toBe(false);
+  });
+
+  test('notes the console has loaded, even before the Cloudinary panel is shown', async () => {
+    await initTestConfig({
+      media_libraries: { cloudinary: { config: { cloud_name: 'demo', api_key: '123' } } },
+    });
+
+    await render(CloudinaryIframe);
+
+    // Messages from elsewhere, or of another type, are ignored
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: JSON.stringify({ type: 'consoleLoaded' }),
+        origin: 'https://evil.example',
+      }),
+    );
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: JSON.stringify({ type: 'ML_WIDGET_HIDE' }),
+        origin: FRAME_ORIGIN,
+      }),
+    );
+    expect(consoleLoaded.current).toBe(false);
+
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: JSON.stringify({ type: 'consoleLoaded' }),
+        origin: FRAME_ORIGIN,
+      }),
+    );
+    expect(consoleLoaded.current).toBe(true);
+
+    // A new iframe, e.g. after signing in again, has yet to load the console
+    await render(CloudinaryIframe);
+    expect(consoleLoaded.current).toBe(false);
   });
 
   test('renders nothing without the credentials', async () => {

@@ -3,12 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cmsConfig } from '$lib/services/config/state';
 
 import cloudinaryService, {
+  FRAME_ORIGIN,
   getCloudConfig,
   getLibraryOptions,
   getMergedLibraryOptions,
   isAssetURL,
   isEnabled,
   optionCacheMap,
+  parseMessage,
 } from './cloudinary';
 
 // Mock dependencies while preserving the real writable implementation used by the module.
@@ -497,6 +499,41 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
     it('should be false when the service is not configured', () => {
       cmsConfig.current = /** @type {any} */ ({});
       expect(isAssetURL('https://res.cloudinary.com/demo/image/upload/a.jpg')).toBe(false);
+    });
+  });
+
+  describe('parseMessage', () => {
+    /**
+     * Create a message event.
+     * @param {any} data Message data.
+     * @param {string} [origin] Origin.
+     * @returns {MessageEvent} Event.
+     */
+    const createEvent = (data, origin = FRAME_ORIGIN) =>
+      /** @type {MessageEvent} */ ({ data, origin });
+
+    it('should parse a JSON message from the console', () => {
+      expect(parseMessage(createEvent('{"type":"consoleLoaded"}'))).toEqual({
+        type: 'consoleLoaded',
+      });
+    });
+
+    it('should accept an object message from the console', () => {
+      expect(parseMessage(createEvent({ type: 'consoleLoaded' }))).toEqual({
+        type: 'consoleLoaded',
+      });
+    });
+
+    it('should ignore a message from elsewhere', () => {
+      expect(
+        parseMessage(createEvent('{"type":"consoleLoaded"}', 'https://evil.example')),
+      ).toBeUndefined();
+    });
+
+    it('should ignore a message in an unknown format', () => {
+      expect(parseMessage(createEvent('not json'))).toBeUndefined();
+      expect(parseMessage(createEvent(42))).toBeUndefined();
+      expect(parseMessage(createEvent('"text"'))).toBeUndefined();
     });
   });
 

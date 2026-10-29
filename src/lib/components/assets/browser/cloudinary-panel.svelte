@@ -9,7 +9,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, EmptyState } from '@sveltia/ui';
-  import { isObject } from '@sveltia/utils/object';
   import { onMount } from 'svelte';
 
   import {
@@ -20,6 +19,7 @@
     dialogOpen,
     FRAME_ORIGIN,
     getMergedLibraryOptions,
+    parseMessage,
   } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
   import { openNewTab } from '$lib/services/utils/window';
 
@@ -124,23 +124,14 @@
   };
 
   /**
-   * Handle messages received from the Cloudinary Media Library iframe.
+   * Handle messages received from the Cloudinary Media Library iframe. The `consoleLoaded` message
+   * is handled by the iframe component instead, as it can arrive before this panel is mounted.
    * @param {MessageEvent} event The message event.
    */
-  const onMessage = ({ origin, data }) => {
-    if (origin !== FRAME_ORIGIN) {
-      return;
-    }
+  const onMessage = (event) => {
+    const data = parseMessage(event);
 
-    if (typeof data === 'string') {
-      try {
-        data = JSON.parse(data);
-      } catch {
-        return;
-      }
-    }
-
-    if (!isObject(data)) {
+    if (!data) {
       return;
     }
 
@@ -150,10 +141,6 @@
     if (data.type === 'login' && data.consoleDomain) {
       activated.current = true;
       dialogOpen.current = true;
-    }
-
-    if (data.type === 'consoleLoaded') {
-      consoleLoaded.current = true;
     }
 
     if (data.type === 'ML_WIDGET_INSERT_DATA') {

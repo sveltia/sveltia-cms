@@ -178,14 +178,15 @@ describe('CloudinaryPanel', () => {
     const postMessage = vi.spyOn(/** @type {Window} */ (iframe.contentWindow), 'postMessage');
 
     try {
+      // The iframe component has received the `consoleLoaded` message before the panel is shown
+      consoleLoaded.current = true;
+
       await render(CloudinaryPanel, {
         onSelect: vi.fn(),
         kind: 'image',
         multiple: true,
         fieldConfig: /** @type {any} */ ({ name: 'image', widget: 'image', max: 3 }),
       });
-
-      receiveMessage({ type: 'consoleLoaded' });
 
       await vi.waitFor(() => expect(postMessage).toHaveBeenCalled());
       expect(JSON.parse(postMessage.mock.calls[0][0])).toEqual({
@@ -227,7 +228,8 @@ describe('CloudinaryPanel', () => {
         media_libraries: { cloudinary: { config: { cloud_name: 'demo', max_files: 5 } } },
       });
       await render(CloudinaryPanel, { onSelect: vi.fn() });
-      receiveMessage({ type: 'consoleLoaded' });
+      expect(postMessage).not.toHaveBeenCalled();
+      consoleLoaded.current = true;
       await vi.waitFor(() => expect(postMessage).toHaveBeenCalled());
       // A File field shows every type of file, rather than the raw files only
       expect(getSentConfig()).toEqual({
@@ -243,7 +245,6 @@ describe('CloudinaryPanel', () => {
         onSelect: vi.fn(),
         fieldConfig: /** @type {any} */ ({ name: 'file', widget: 'file' }),
       });
-      receiveMessage({ type: 'consoleLoaded' });
       await vi.waitFor(() => expect(postMessage).toHaveBeenCalledTimes(3));
       expect(getSentConfig().max_files).toBe(20);
     } finally {
@@ -277,8 +278,8 @@ describe('CloudinaryPanel', () => {
         },
       });
       // Even for an Image field, the configured type wins
+      consoleLoaded.current = true;
       await render(CloudinaryPanel, { onSelect: vi.fn(), kind: 'image' });
-      receiveMessage({ type: 'consoleLoaded' });
       await vi.waitFor(() => expect(postMessage).toHaveBeenCalled());
       expect(JSON.parse(postMessage.mock.calls.at(-1)?.[0]).data.config.folder).toEqual({
         path: 'clips',

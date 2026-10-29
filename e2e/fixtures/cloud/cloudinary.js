@@ -127,7 +127,6 @@ export class MockCloudinary {
   /**
    * Serve the media library widget, which the CMS embeds in an iframe. It tells the CMS it has
    * loaded, records the config the CMS sends, and lists the images with a button to insert each.
-   * The real widget’s timing of the `consoleLoaded` message isn’t known, so this one repeats it.
    * @param {Route} route Route.
    */
   async serveWidget(route) {
@@ -140,17 +139,14 @@ export class MockCloudinary {
       body: `<!doctype html><body><script>
         const assets = ${JSON.stringify(assets)};
 
-        // Tell the CMS the widget is ready until it answers, as the CMS only listens once the
-        // Cloudinary panel is shown, which can be long after the iframe has loaded
-        const timer = setInterval(() => {
-          window.parent.postMessage(JSON.stringify({ type: 'consoleLoaded' }), '*');
-        }, 100);
+        // Tell the CMS the widget is ready, once, as soon as it has loaded. That is usually long
+        // before the Cloudinary panel is shown (#1125)
+        window.parent.postMessage(JSON.stringify({ type: 'consoleLoaded' }), '*');
 
         window.addEventListener('message', ({ data }) => {
           const { type, data: payload } = JSON.parse(data);
 
           if (type === 'ML_WIDGET_SHOW') {
-            clearInterval(timer);
             window.recordCloudinaryWidgetConfig(payload.config);
           }
         });

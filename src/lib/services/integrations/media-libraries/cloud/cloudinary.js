@@ -1,3 +1,5 @@
+import { isObject } from '@sveltia/utils/object';
+
 import { cmsConfig } from '$lib/services/config/state';
 import {
   findLibraryOptions,
@@ -141,6 +143,28 @@ export const isAssetURL = (url) => {
   const { cloudName } = getCloudConfig();
 
   return !!cloudName && url.startsWith(`https://res.cloudinary.com/${cloudName}/`);
+};
+
+/**
+ * Parse a message from the Cloudinary Media Library console, which sends a JSON string.
+ * @param {MessageEvent} event The message event.
+ * @returns {Record<string, any> | undefined} Message data, or `undefined` if the message comes
+ * from elsewhere or is in an unknown format.
+ */
+export const parseMessage = ({ origin, data }) => {
+  if (origin !== FRAME_ORIGIN) {
+    return undefined;
+  }
+
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      return undefined;
+    }
+  }
+
+  return isObject(data) ? data : undefined;
 };
 
 /**

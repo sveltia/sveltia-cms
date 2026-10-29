@@ -5,15 +5,33 @@
 
   import {
     CONSOLE_BASE_URL,
+    consoleLoaded,
     dialogOpen,
     FRAME_SRC_PARAMS,
     getLibraryOptions,
+    parseMessage,
   } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
 
   let src = $state('');
   let mlId = $state('');
 
+  /**
+   * Handle the `consoleLoaded` message from the iframe. It’s handled here rather than in the
+   * Cloudinary panel, because the iframe is loaded at startup and can send the message before the
+   * panel is mounted, in which case the panel would never configure the widget.
+   * @param {MessageEvent} event The message event.
+   * @see https://github.com/sveltia/sveltia-cms/issues/1125
+   */
+  const onMessage = (event) => {
+    if (parseMessage(event)?.type === 'consoleLoaded') {
+      consoleLoaded.current = true;
+    }
+  };
+
   onMount(() => {
+    // A new iframe, e.g. after signing in again, has to load the console first
+    consoleLoaded.current = false;
+
     const options = getLibraryOptions();
 
     if (!options) {
@@ -42,6 +60,8 @@
     src = `${CONSOLE_BASE_URL}/cms?${params}`;
   });
 </script>
+
+<svelte:window onmessage={onMessage} />
 
 {#if src}
   <!-- Keep the content so that the iframe is not destroyed when the modal is closed -->
