@@ -7,7 +7,8 @@ engineStrict: true
 
 auditConfig:
   ignoreGhsas:
-    # deepmerge: low severity, unpatched
+    # deepmerge: low severity, unpatched. Only used at build time by `@sveltejs/vite-plugin-svelte`;
+    # the CMS itself uses `@fastify/deepmerge` instead
     # https://github.com/advisories/GHSA-gcqx-w48m-w2h4
     - GHSA-gcqx-w48m-w2h4
 

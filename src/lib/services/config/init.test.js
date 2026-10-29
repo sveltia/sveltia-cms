@@ -275,6 +275,28 @@ describe('config/init', () => {
       expect(config?.collections.map((/** @type {any} */ c) => c.name)).toEqual(['posts', 'pages']);
     });
 
+    it('should not let the file config set the prototype of the merged config', async () => {
+      const { initCmsConfig } = await import('./init');
+      const { validateConfigSchema } = await import('$lib/services/config/schema');
+
+      // `JSON.parse()` creates own `__proto__` keys, unlike an object literal
+      const fileConfig = JSON.parse(
+        '{"__proto__":{"polluted":true},"backend":{"__proto__":{"x":1},"name":"github"}}',
+      );
+
+      fetchcmsConfigMock.mockResolvedValue(fileConfig);
+
+      await initCmsConfig(/** @type {any} */ ({ media_folder: 'uploads' }));
+
+      const { config } = /** @type {any} */ (vi.mocked(validateConfigSchema).mock.calls[0][0]);
+
+      expect(Object.getPrototypeOf(config)).toBe(Object.prototype);
+      expect(Object.getPrototypeOf(config.backend)).toBe(Object.prototype);
+      expect(config.polluted).toBeUndefined();
+      expect(config.backend.x).toBeUndefined();
+      expect(config).toEqual({ backend: { name: 'github' }, media_folder: 'uploads' });
+    });
+
     it('should throw error when manual config is not an object', async () => {
       const { initCmsConfig } = await import('./init');
 

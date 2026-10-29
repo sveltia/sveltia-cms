@@ -1,8 +1,8 @@
+import deepmerge from '@fastify/deepmerge';
 import { _ } from '@sveltia/i18n';
 import { getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { isURL } from '@sveltia/utils/string';
-import merge from 'deepmerge';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
 import {
@@ -29,6 +29,10 @@ import { prefs } from '$lib/services/user/prefs.svelte';
  */
 
 const { DEV } = import.meta.env;
+/**
+ * Deep merge two config objects, concatenating arrays.
+ */
+const merge = deepmerge();
 
 /**
  * Update the entry and asset folder lists based on the given configuration.
