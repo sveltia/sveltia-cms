@@ -34,13 +34,18 @@ test.beforeEach(async ({ github }) => {
 
 /**
  * Get the color of the centre pixel of an image, with each channel rounded to 0 or 255, as the
- * thumbnail can be slightly off the original color.
+ * thumbnail can be slightly off the original color. The preview sets its `src` once it has been
+ * looked up, which takes a frame or two, so this returns `null` until the image has loaded instead
+ * of throwing, which would stop `expect.poll()` rather than have it try again. `decode()` isn’t
+ * used for the same reason: Chrome rejects it for an image whose loading is still settling.
  * @param {Locator} image Image.
- * @returns {Promise<number[]>} Red, green and blue values.
+ * @returns {Promise<number[] | null>} Red, green and blue values, or `null` if not loaded yet.
  */
 const getColor = (image) =>
-  image.evaluate(async (/** @type {HTMLImageElement} */ img) => {
-    await img.decode();
+  image.evaluate((/** @type {HTMLImageElement} */ img) => {
+    if (!img.complete || !img.naturalWidth) {
+      return null;
+    }
 
     const canvas = document.createElement('canvas');
     const context = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d'));
