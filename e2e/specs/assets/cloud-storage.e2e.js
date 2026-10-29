@@ -466,6 +466,55 @@ test.describe('Cloudflare R2', () => {
   });
 });
 
+/**
+ * S3 endpoint of the Neon branch, as shown as `AWS_ENDPOINT_URL_S3` in the Neon Console.
+ */
+const NEON_ENDPOINT = 'https://br-e2e-branch-a1b2c3d4.storage.c-1.us-east-2.aws.neon.tech';
+
+test.describe('Neon Object Storage', () => {
+  test.use({
+    config: createConfig({
+      neon_object_storage: {
+        access_key_id: 'nak_live_0123456789abcdef0123456789abcdef',
+        bucket: 'e2e-bucket',
+        endpoint: NEON_ENDPOINT,
+      },
+    }),
+  });
+
+  test('picks an image, which the entry links to at the branch endpoint', async ({ cms, page }) => {
+    // Neon is addressed with the bucket in the path, and signed for the region in the endpoint’s
+    // hostname. A `public_read` bucket serves its objects at the same URL without a signature.
+    const neon = new MockS3({
+      bucket: 'e2e-bucket',
+      region: 'us-east-2',
+      baseURL: `${NEON_ENDPOINT}/e2e-bucket`,
+    });
+
+    neon.accessKeyId = 'nak_live_0123456789abcdef0123456789abcdef';
+    neon.secretAccessKey = `nsk_live_${'0123456789abcdef'.repeat(4)}`;
+    neon.put({ 'sunset.png': SUNSET });
+    await neon.install(page);
+    await cms.open();
+    await cms.signIn();
+
+    const { cover, dialog } = await openSelectImageDialog(page, 'Neon Object Storage');
+
+    await enterCredential(dialog, 'Neon Object Storage', neon.secretAccessKey);
+    await selectOption(
+      dialog
+        .getByRole('listbox', { name: 'Available Images' })
+        .getByRole('option', { name: 'sunset.png' }),
+    );
+    await dialog.getByRole('button', { name: 'Insert' }).click();
+
+    await expect(cover.getByRole('textbox', { name: 'Cover' })).toHaveText(
+      `${NEON_ENDPOINT}/e2e-bucket/sunset.png`,
+    );
+    expect(neon.refused).toEqual([]);
+  });
+});
+
 test.describe('Azure Blob Storage', () => {
   test.use({
     config: createConfig({
