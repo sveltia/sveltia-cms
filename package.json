@@ -70,7 +70,7 @@
     "htm": "^3.1.1",
     "immutable": "^5.1.9",
     "isomorphic-dompurify": "^4.6.0",
-    "isomorphic-git": "^1.44.5",
+    "isomorphic-git": "^1.44.7",
     "leaflet": "^1.9.4",
     "lexical": "^0.53.0",
     "marked": "^18.1.2",
@@ -84,7 +84,7 @@
     "sanitize-filename": "^1.6.4",
     "smol-toml": "^1.9.1",
     "svgo": "^4.1.0",
-    "terra-draw": "^1.38.0",
+    "terra-draw": "^1.39.0",
     "terra-draw-leaflet-adapter": "1.0.3",
     "turndown": "^7.2.4",
     "yaml": "^2.9.1"
