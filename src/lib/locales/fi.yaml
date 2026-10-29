@@ -1488,6 +1488,10 @@ cloud_storage:
       requested: Kirjaudutaan sisään…
       error: Käyttäjätunnus tai salasana on virheellinen. Tarkista tiedot ja yritä uudelleen.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Salainen pääsyavain
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Cloudinary-mediakirjasto
@@ -1499,15 +1503,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: Salainen API-avain
-
-  aws_s3:
-    auth_key_label: Salainen pääsyavain
-
-  cloudflare_r2:
-    auth_key_label: Salainen pääsyavain
-
-  digitalocean_spaces:
-    auth_key_label: Salainen pääsyavain
 
 # ==============================================================================
 # Configuration Validation

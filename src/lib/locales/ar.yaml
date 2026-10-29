@@ -1708,6 +1708,10 @@ cloud_storage:
       requested: جارٍ تسجيل الدخول…
       error: اسم المستخدم أو كلمة المرور غير صحيحة. يرجى التحقق والمحاولة مرة أخرى.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: مفتاح الوصول السري
+
   # Service-specific configurations
   cloudinary:
     iframe_title: مكتبة وسائط Cloudinary
@@ -1719,15 +1723,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: مفتاح السر الخاص بـ API
-
-  aws_s3:
-    auth_key_label: مفتاح الوصول السري
-
-  cloudflare_r2:
-    auth_key_label: مفتاح الوصول السري
-
-  digitalocean_spaces:
-    auth_key_label: مفتاح الوصول السري
 
 # ==============================================================================
 # Configuration Validation

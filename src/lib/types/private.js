@@ -630,6 +630,9 @@
  * authentication. `none` means the service requires no authentication. `password` means the service
  * requires username/password for authentication. `widget` means the service provides its own widget
  * for file selection, and authentication is handled by the widget.
+ * @property {'s3'} [compatibleAPI] API the service is compatible with, e.g. `s3` for an
+ * S3-compatible service. Services with the same API share some localized strings, such as the
+ * credential label, unless they define their own.
  * @property {string} [developerURL] URL of the page that provides the API/developer service.
  * @property {string} [apiKeyURL] URL of the page that provides an API key.
  * @property {RegExp} [apiKeyPattern] API key pattern.

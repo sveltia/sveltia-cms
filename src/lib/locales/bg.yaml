@@ -1488,6 +1488,10 @@ cloud_storage:
       requested: Влизане…
       error: Потребителското име или паролата са грешни. Проверете ги и опитайте отново.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Таен ключ за достъп
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Медийна библиотека на Cloudinary
@@ -1499,15 +1503,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: Таен API ключ
-
-  aws_s3:
-    auth_key_label: Таен ключ за достъп
-
-  cloudflare_r2:
-    auth_key_label: Таен ключ за достъп
-
-  digitalocean_spaces:
-    auth_key_label: Таен ключ за достъп
 
 # ==============================================================================
 # Configuration Validation

@@ -1481,6 +1481,10 @@ cloud_storage:
       requested: در حال ورود…
       error: نام کاربری یا رمز عبور اشتباه است. لطفاً دوباره بررسی کرده و تلاش کنید.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: کلید دسترسی سرّی
+
   # Service-specific configurations
   cloudinary:
     iframe_title: کتابخانه رسانه Cloudinary
@@ -1492,15 +1496,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: کلید سرّی API
-
-  aws_s3:
-    auth_key_label: کلید دسترسی سرّی
-
-  cloudflare_r2:
-    auth_key_label: کلید دسترسی سرّی
-
-  digitalocean_spaces:
-    auth_key_label: کلید دسترسی سرّی
 
 # ==============================================================================
 # Configuration Validation

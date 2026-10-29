@@ -1455,6 +1455,10 @@ cloud_storage:
       requested: Đang đăng nhập…
       error: Tên người dùng hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại và thử lại.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Khóa truy cập bí mật
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Thư viện phương tiện Cloudinary
@@ -1466,15 +1470,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: Khóa API bí mật
-
-  aws_s3:
-    auth_key_label: Khóa truy cập bí mật
-
-  cloudflare_r2:
-    auth_key_label: Khóa truy cập bí mật
-
-  digitalocean_spaces:
-    auth_key_label: Khóa truy cập bí mật
 
 # ==============================================================================
 # Configuration Validation

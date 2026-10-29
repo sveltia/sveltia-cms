@@ -40,6 +40,24 @@ describe('CloudServiceAuth', () => {
     expect(onAuth).toHaveBeenCalledOnce();
   });
 
+  test('asks for the credential an S3-compatible service shares with the others', async () => {
+    await render(CloudServiceAuth, {
+      serviceProps: /** @type {any} */ ({
+        serviceType: 'cloud_storage',
+        serviceId: 'example',
+        serviceLabel: 'Example Storage',
+        authType: 'api_key',
+        compatibleAPI: 's3',
+      }),
+    });
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'Enter your \u2068Secret Access Key\u2069 for \u2068Example Storage\u2069.',
+      );
+  });
+
   test('signs in to a cloud storage service with a username and password', async () => {
     const signIn = vi.fn().mockResolvedValue(true);
     const onAuth = vi.fn();

@@ -11,7 +11,10 @@
   import { Button, EmptyState, SecretInput, TextInput } from '@sveltia/ui';
   import { sanitize } from 'isomorphic-dompurify';
 
-  import { getServiceDescription } from '$lib/services/integrations/service-description';
+  import {
+    getAuthKeyLabel,
+    getServiceDescription,
+  } from '$lib/services/integrations/service-description';
   import { saveApiKey } from '$lib/services/user/api-keys';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
@@ -42,6 +45,7 @@
     serviceId = '',
     serviceLabel = '',
     authType = 'api_key',
+    compatibleAPI,
     developerURL = '',
     apiKeyURL = '',
     apiKeyPattern,
@@ -73,9 +77,7 @@
           default: _(`cloud_storage.auth.${authType}.${authState}`, {
             values: {
               service: serviceLabel,
-              key: _(`cloud_storage.${serviceId}.auth_key_label`, {
-                default: _(`cloud_storage.auth.${authType}.key_label`),
-              }),
+              key: getAuthKeyLabel({ serviceId, compatibleAPI, authType }),
             },
           }),
         }),

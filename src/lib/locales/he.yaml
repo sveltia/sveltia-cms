@@ -1887,6 +1887,10 @@ cloud_storage:
       requested: מתחבר…
       error: שם המשתמש או הסיסמה שגויים. בדקו אותם ונסו שוב.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: מפתח גישה סודי
+
   # Service-specific configurations
   cloudinary:
     iframe_title: ספריית המדיה של Cloudinary
@@ -1899,17 +1903,8 @@ cloud_storage:
   uploadcare:
     auth_key_label: מפתח סוד API
 
-  aws_s3:
-    auth_key_label: מפתח גישה סודי
-
   bunny_storage:
     auth_key_label: סיסמת אזור האחסון
-
-  cloudflare_r2:
-    auth_key_label: מפתח גישה סודי
-
-  digitalocean_spaces:
-    auth_key_label: מפתח גישה סודי
 
 # ==============================================================================
 # Configuration Validation

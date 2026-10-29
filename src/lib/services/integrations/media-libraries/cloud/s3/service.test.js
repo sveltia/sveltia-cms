@@ -72,6 +72,7 @@ describe('integrations/media-libraries/cloud/s3/service', () => {
         showServiceLink: true,
         hotlinking: true,
         authType: 'api_key',
+        compatibleAPI: 's3',
         ...definition,
       });
     });

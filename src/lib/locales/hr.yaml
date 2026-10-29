@@ -1542,6 +1542,10 @@ cloud_storage:
       requested: Prijava u tijeku…
       error: Korisničko ime ili lozinka nisu točni. Provjerite ih i pokušajte ponovno.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Tajni pristupni ključ
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Cloudinary medijska biblioteka
@@ -1553,15 +1557,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: Tajni API ključ
-
-  aws_s3:
-    auth_key_label: Tajni pristupni ključ
-
-  cloudflare_r2:
-    auth_key_label: Tajni pristupni ključ
-
-  digitalocean_spaces:
-    auth_key_label: Tajni pristupni ključ
 
 # ==============================================================================
 # Configuration Validation

@@ -38,6 +38,9 @@ import { isS3ObjectUrl, s3Operations } from './core';
  * @augments {ObjectStorageService<S3Config>}
  */
 export class S3CompatibleService extends ObjectStorageService {
+  /** @type {'s3'} */
+  compatibleAPI = 's3';
+
   /**
    * Initialize an `S3CompatibleService` instance with the given service definition.
    * @param {S3CompatibleServiceOptions} options Service definition.

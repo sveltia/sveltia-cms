@@ -1424,6 +1424,10 @@ cloud_storage:
       requested: 登入中……
       error: 使用者名稱或密碼不正確。請檢查後再試一次。
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: 私密存取金鑰
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Cloudinary 媒體庫
@@ -1435,15 +1439,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: API 金鑰
-
-  aws_s3:
-    auth_key_label: 私密存取金鑰
-
-  cloudflare_r2:
-    auth_key_label: 私密存取金鑰
-
-  digitalocean_spaces:
-    auth_key_label: 私密存取金鑰
 
 # ==============================================================================
 # Configuration Validation

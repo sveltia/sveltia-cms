@@ -1488,6 +1488,10 @@ cloud_storage:
       requested: Anmeldung läuft…
       error: Benutzername oder Passwort ist falsch. Bitte prüfen und erneut versuchen.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Geheimer Zugriffsschlüssel
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Cloudinary-Medienbibliothek
@@ -1499,15 +1503,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: Geheimer API-Schlüssel
-
-  aws_s3:
-    auth_key_label: Geheimer Zugriffsschlüssel
-
-  cloudflare_r2:
-    auth_key_label: Geheimer Zugriffsschlüssel
-
-  digitalocean_spaces:
-    auth_key_label: Geheimer Zugriffsschlüssel
 
 # ==============================================================================
 # Configuration Validation

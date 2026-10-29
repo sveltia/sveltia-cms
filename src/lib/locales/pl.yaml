@@ -1578,6 +1578,10 @@ cloud_storage:
       requested: Logowanie…
       error: Nazwa użytkownika lub hasło są nieprawidłowe. Sprawdź je i spróbuj ponownie.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Tajny klucz dostępu
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Biblioteka multimediów Cloudinary
@@ -1589,15 +1593,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: Tajny klucz API
-
-  aws_s3:
-    auth_key_label: Tajny klucz dostępu
-
-  cloudflare_r2:
-    auth_key_label: Tajny klucz dostępu
-
-  digitalocean_spaces:
-    auth_key_label: Tajny klucz dostępu
 
 # ==============================================================================
 # Configuration Validation

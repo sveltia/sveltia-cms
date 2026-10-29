@@ -1580,6 +1580,10 @@ cloud_storage:
       requested: Вхід…
       error: Логін або пароль неправильні. Перевірте ще раз і спробуйте знову.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Секретний ключ доступу
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Медіабібліотека Cloudinary
@@ -1591,15 +1595,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: Секретний ключ API
-
-  aws_s3:
-    auth_key_label: Секретний ключ доступу
-
-  cloudflare_r2:
-    auth_key_label: Секретний ключ доступу
-
-  digitalocean_spaces:
-    auth_key_label: Секретний ключ доступу
 
 # ==============================================================================
 # Configuration Validation

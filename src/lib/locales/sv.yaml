@@ -1488,6 +1488,10 @@ cloud_storage:
       requested: Loggar in…
       error: Användarnamn eller lösenord är felaktigt. Kontrollera och försök igen.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Hemlig åtkomstnyckel
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Cloudinary mediabibliotek
@@ -1498,15 +1502,6 @@ cloud_storage:
     open_library: Öppna Cloudinary
 
   uploadcare:
-    auth_key_label: Hemlig åtkomstnyckel
-
-  aws_s3:
-    auth_key_label: Hemlig åtkomstnyckel
-
-  cloudflare_r2:
-    auth_key_label: Hemlig åtkomstnyckel
-
-  digitalocean_spaces:
     auth_key_label: Hemlig åtkomstnyckel
 
 # ==============================================================================

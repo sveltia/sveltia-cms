@@ -1488,6 +1488,10 @@ cloud_storage:
       requested: Accesso in corso…
       error: Nome utente o password non corretti. Ricontrolla e riprova.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Secret Access Key
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Libreria multimediale Cloudinary
@@ -1499,15 +1503,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: API Secret Key
-
-  aws_s3:
-    auth_key_label: Secret Access Key
-
-  cloudflare_r2:
-    auth_key_label: Secret Access Key
-
-  digitalocean_spaces:
-    auth_key_label: Secret Access Key
 
 # ==============================================================================
 # Configuration Validation

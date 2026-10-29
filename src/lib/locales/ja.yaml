@@ -1805,6 +1805,10 @@ cloud_storage:
       requested: ログイン中…
       error: ユーザー名またはパスワードが間違っています。確認の上、再度お試しください。
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: シークレットアクセスキー
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Cloudinary メディアライブラリ
@@ -1817,20 +1821,14 @@ cloud_storage:
   uploadcare:
     auth_key_label: API Secret Key
 
-  aws_s3:
-    auth_key_label: シークレットアクセスキー
+  azure_blob_storage:
+    auth_key_label: SAS トークン
+
+  backblaze_b2:
+    auth_key_label: アプリケーションキー
 
   bunny_storage:
     auth_key_label: ストレージゾーンパスワード
-
-  cloudflare_r2:
-    auth_key_label: シークレットアクセスキー
-
-  digitalocean_spaces:
-    auth_key_label: シークレットアクセスキー
-
-  neon_object_storage:
-    auth_key_label: シークレットアクセスキー
 
 # ==============================================================================
 # Configuration Validation

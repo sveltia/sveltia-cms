@@ -1393,6 +1393,10 @@ cloud_storage:
       requested: 로그인하는 중…
       error: 사용자 이름 또는 비밀번호가 올바르지 않습니다. 다시 확인한 후 시도하십시오.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: 시크릿 액세스 키
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Cloudinary 미디어 라이브러리
@@ -1404,15 +1408,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: API 시크릿 키
-
-  aws_s3:
-    auth_key_label: 시크릿 액세스 키
-
-  cloudflare_r2:
-    auth_key_label: 시크릿 액세스 키
-
-  digitalocean_spaces:
-    auth_key_label: 시크릿 액세스 키
 
 # ==============================================================================
 # Configuration Validation

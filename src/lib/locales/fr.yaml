@@ -1488,6 +1488,10 @@ cloud_storage:
       requested: Connexion…
       error: Le nom d’utilisateur ou le mot de passe est incorrect. Veuillez le vérifier et réessayer.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Clé d’accès secrète
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Médiathèque Cloudinary
@@ -1499,15 +1503,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: Clé secrète API
-
-  aws_s3:
-    auth_key_label: Clé d’accès secrète
-
-  cloudflare_r2:
-    auth_key_label: Clé d’accès secrète
-
-  digitalocean_spaces:
-    auth_key_label: Clé d’accès secrète
 
 # ==============================================================================
 # Configuration Validation

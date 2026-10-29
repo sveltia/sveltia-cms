@@ -1488,6 +1488,10 @@ cloud_storage:
       requested: Bezig met inloggen…
       error: De gebruikersnaam of het wachtwoord is onjuist. Controleer deze en probeer het opnieuw.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Secret access key
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Cloudinary-mediabibliotheek
@@ -1499,15 +1503,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: API secret key
-
-  aws_s3:
-    auth_key_label: Secret access key
-
-  cloudflare_r2:
-    auth_key_label: Secret access key
-
-  digitalocean_spaces:
-    auth_key_label: Secret access key
 
 # ==============================================================================
 # Configuration Validation

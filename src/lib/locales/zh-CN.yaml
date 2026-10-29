@@ -1418,6 +1418,10 @@ cloud_storage:
       requested: 登录中……
       error: 用户名或密码不正确。请检查后重试。
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: 秘密访问密钥
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Cloudinary 媒体库
@@ -1429,15 +1433,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: API 密钥
-
-  aws_s3:
-    auth_key_label: 秘密访问密钥
-
-  cloudflare_r2:
-    auth_key_label: 秘密访问密钥
-
-  digitalocean_spaces:
-    auth_key_label: 秘密访问密钥
 
 # ==============================================================================
 # Configuration Validation

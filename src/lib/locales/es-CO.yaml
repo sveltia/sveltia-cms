@@ -1488,6 +1488,10 @@ cloud_storage:
       requested: Iniciando sesión…
       error: El nombre de usuario o la contraseña son incorrectos. Verifícalos e inténtalo de nuevo.
 
+  # Shared by the S3-compatible services, unless overridden below
+  s3:
+    auth_key_label: Clave de acceso secreta
+
   # Service-specific configurations
   cloudinary:
     iframe_title: Biblioteca multimedia de Cloudinary
@@ -1499,15 +1503,6 @@ cloud_storage:
 
   uploadcare:
     auth_key_label: Clave secreta de API
-
-  aws_s3:
-    auth_key_label: Clave de acceso secreta
-
-  cloudflare_r2:
-    auth_key_label: Clave de acceso secreta
-
-  digitalocean_spaces:
-    auth_key_label: Clave de acceso secreta
 
 # ==============================================================================
 # Configuration Validation
