@@ -3,6 +3,7 @@ import { isObject } from '@sveltia/utils/object';
 import { preloadImmutable } from '$lib/services/api/immutable';
 import { customComponentRegistry } from '$lib/services/api/registries';
 import { assertDefinition, assertOption, assertValid } from '$lib/services/api/validate';
+import { normalizeEditorComponentTemplates } from '$lib/services/config/templates';
 import { isInlinePatternComponent } from '$lib/services/contents/fields/rich-text/components/inline-pattern';
 import {
   getSelectorTagNames,
@@ -119,6 +120,9 @@ const registerEditorComponent = (definition) => {
     validateInlineDefinition(definition);
   } else {
     validateBlockDefinition(definition);
+    // Like the configuration, the templates are written in their canonical form, e.g. `{{ slug }}`
+    // as `{{slug}}`
+    normalizeEditorComponentTemplates(definition);
   }
 
   customComponentRegistry.set(definition.id, definition);

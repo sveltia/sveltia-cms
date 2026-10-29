@@ -19,6 +19,7 @@ import { fetchCmsConfig } from '$lib/services/config/loader';
 import { parseCmsConfig } from '$lib/services/config/parser';
 import { checkRootDirPaths } from '$lib/services/config/parser/root-dir';
 import { getConfigSchemas, validateConfigSchema } from '$lib/services/config/schema';
+import { normalizeConfigTemplates } from '$lib/services/config/templates';
 import { allEntryFolders } from '$lib/services/contents';
 import { loadDayjsLocales } from '$lib/services/contents/fields/date-time/locales';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -95,11 +96,17 @@ export const initCmsConfig = async (manualConfig) => {
       rawConfig = await fetchCmsConfig();
     }
 
-    // Store the raw config so it can be used in the parser and config viewer
+    // Store the raw config so it can be used in the config viewer
     Object.assign(rawCmsConfig, rawConfig);
 
-    validateConfigSchema({ config: rawConfig, schemas: getConfigSchemas(), collectors });
-    parseCmsConfig(rawConfig, collectors);
+    // Write the template tags in their canonical form, e.g. `{{ slug }}` as `{{slug}}`, before
+    // anything reads them. The copy also keeps the user’s object as it is
+    const config = /** @type {InternalCmsConfig} */ (
+      normalizeConfigTemplates(structuredClone(rawConfig))
+    );
+
+    validateConfigSchema({ config, schemas: getConfigSchemas(), collectors });
+    parseCmsConfig(config, collectors);
 
     if (collectors.errors.size) {
       collectors.errors.forEach((warning) => {
@@ -116,9 +123,6 @@ export const initCmsConfig = async (manualConfig) => {
         console.warn(warning);
       });
     }
-
-    /** @type {InternalCmsConfig} */
-    const config = structuredClone(rawConfig);
 
     // Set the site URL for development or production. See also `/src/lib/components/app.svelte`
     config._siteURL =

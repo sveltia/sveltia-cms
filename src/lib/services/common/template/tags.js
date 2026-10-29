@@ -25,9 +25,12 @@ export const getAdjacentChar = (str, index, step) => {
  * another tool, like a static site generator, can be passed through.
  * @param {string} str The string containing template tags.
  * @param {(match: string, placeholder: string) => string} replacer Replacement callback.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.unescape] Whether to remove the backslash from an escaped tag. Turn it
+ * off to keep the template as it is besides the replacements.
  * @returns {string} Result of the replacements.
  */
-export const replaceTemplateTags = (str, replacer) => {
+export const replaceTemplateTags = (str, replacer, { unescape = true } = {}) => {
   let result = '';
   let searchIndex = 0;
 
@@ -66,7 +69,8 @@ export const replaceTemplateTags = (str, replacer) => {
         // An escaped tag is kept as is, minus the backslash. The backslash is always at the end of
         // the literal text just added to the result, because a preceding tag ends with `}}`
         if (str[openIndex - 1] === '\\') {
-          result = `${result.slice(0, -1)}${str.slice(openIndex, closeIndex + 2)}`;
+          result = unescape ? result.slice(0, -1) : result;
+          result += str.slice(openIndex, closeIndex + 2);
           searchIndex = closeIndex + 2;
           break;
         }

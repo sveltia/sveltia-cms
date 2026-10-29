@@ -177,7 +177,7 @@ const parseTransformation = (transformation) => {
  * @param {string} string The string to be split.
  * @returns {string[]} Trimmed segments.
  */
-const splitTransformations = (string) => {
+export const splitTransformations = (string) => {
   /** @type {string[]} */
   const segments = [];
   let segment = '';

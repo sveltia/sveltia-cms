@@ -32,6 +32,20 @@ describe('CMS.registerEditorComponent()', () => {
     expect(() => registerEditorComponent(validDefinition)).not.toThrow();
   });
 
+  test('normalizes the template tags of a field-based component', () => {
+    const definition = {
+      ...validDefinition,
+      id: 'normalized-component',
+      summary: '{{ fields.id }}',
+      fields: [{ name: 'id', widget: 'compute', value: '{{ fields.key|upper }}' }],
+    };
+
+    registerEditorComponent(definition);
+
+    expect(definition.summary).toBe('{{fields.id}}');
+    expect(definition.fields[0].value).toBe('{{fields.key | upper}}');
+  });
+
   test('throws TypeError if definition is not an object', () => {
     // @ts-ignore
     expect(() => registerEditorComponent(null)).toThrow(TypeError);

@@ -209,6 +209,14 @@ describe('replaceTemplateTags()', () => {
     expect(replace("\\{{title | default('}}')}}")).toBe("{{title | default('}}')}}");
   });
 
+  test('should keep the backslash of an escaped template tag if unescaping is disabled', () => {
+    expect(
+      replaceTemplateTags('\\{{title}}-{{slug}}', (_match, tag) => `<<${tag}>>`, {
+        unescape: false,
+      }),
+    ).toBe('\\{{title}}-<<slug>>');
+  });
+
   test('should leave an unterminated escaped template tag unchanged', () => {
     expect(replace('\\{{title')).toBe('\\{{title');
   });

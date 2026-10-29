@@ -275,6 +275,37 @@ describe('config/init', () => {
       expect(config?.collections.map((/** @type {any} */ c) => c.name)).toEqual(['posts', 'pages']);
     });
 
+    it('should normalize the template tags without changing the raw config', async () => {
+      const { initCmsConfig } = await import('./init');
+      const { rawCmsConfig } = await import('$lib/services/config');
+      const { validateConfigSchema } = await import('$lib/services/config/schema');
+
+      fetchcmsConfigMock.mockResolvedValue({
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            folder: 'posts',
+            slug: '{{ year }}-{{ title|lower }}',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      });
+
+      await initCmsConfig();
+
+      const { config } = /** @type {any} */ (vi.mocked(validateConfigSchema).mock.calls[0][0]);
+
+      expect(config.collections[0].slug).toBe('{{year}}-{{title | lower}}');
+      expect(/** @type {any} */ (cmsConfig.current)?.collections[0].slug).toBe(
+        '{{year}}-{{title | lower}}',
+      );
+      expect(/** @type {any} */ (rawCmsConfig).collections[0].slug).toBe(
+        '{{ year }}-{{ title|lower }}',
+      );
+    });
+
     it('should not let the file config set the prototype of the merged config', async () => {
       const { initCmsConfig } = await import('./init');
       const { validateConfigSchema } = await import('$lib/services/config/schema');
