@@ -178,6 +178,22 @@ describe('integrations/media-libraries/stock/unsplash', () => {
         expect(results[0].fileName).toBe('no-name-99999-unsplash.jpg');
       });
 
+      it('should escape the user name in the credit', () => {
+        const [result] = parseResults(
+          /** @type {any} */ ([
+            {
+              id: '1',
+              description: 'Test photo',
+              alt_description: '',
+              urls: { regular: 'https://example.com/r.jpg', thumb: 'https://example.com/t.jpg' },
+              user: { username: 'smith', name: 'Smith & <Jones>' },
+            },
+          ]),
+        );
+
+        expect(result.credit).toContain('>Smith &amp; &lt;Jones&gt;</a>');
+      });
+
       it('should properly format credit links', () => {
         const mockApiResults = /** @type {any} */ ([
           {

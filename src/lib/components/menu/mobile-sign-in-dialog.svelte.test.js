@@ -28,13 +28,31 @@ describe('MobileSignInDialog', () => {
     await expect.element(dialog).toBeVisible();
     await expect.element(dialog.getByText(/Scan the QR code/)).toBeVisible();
 
-    // The QR code is drawn once the dialog is open
+    // The QR code is drawn once the dialog is open and the library is loaded. A blank canvas is
+    // already 300 pixels wide but fully transparent, so check for the dark modules instead
     await expect
-      .poll(
-        () =>
-          /** @type {HTMLCanvasElement | null} */ (document.querySelector('dialog canvas'))?.width,
-      )
-      .toBeGreaterThan(0);
+      .poll(() => {
+        const canvas = /** @type {HTMLCanvasElement | null} */ (
+          document.querySelector('dialog canvas')
+        );
+
+        const context = canvas?.getContext('2d');
+
+        if (!canvas || !context) {
+          return false;
+        }
+
+        const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+
+        // Look for an opaque black pixel
+        return data.some(
+          (value, index) =>
+            index % 4 === 3 &&
+            value === 255 &&
+            data[index - 3] + data[index - 2] + data[index - 1] === 0,
+        );
+      })
+      .toBe(true);
 
     await dialog.getByRole('button', { name: 'Close' }).click();
     await expect.poll(() => showMobileSignInDialog.current).toBe(false);

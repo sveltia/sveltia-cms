@@ -132,6 +132,44 @@ describe('RelationEditor', () => {
     expect(getOptions).toHaveBeenLastCalledWith(expect.objectContaining({ currentSlug: 'shared' }));
   });
 
+  test('passes the values of the fields that aren’t localized in another locale', async () => {
+    const props = {
+      locale: 'ja',
+      keyPath: 'author',
+      typedKeyPath: 'author',
+      fieldId: 'author',
+      fieldLabel: 'Author',
+      fieldConfig,
+      currentValue: '',
+    };
+
+    const draftArgs = {
+      fields: [fieldConfig],
+      i18n: { i18nEnabled: true, defaultLocale: 'en', allLocales: ['en', 'ja'] },
+      values: { en: { title: 'Hello', team: 'red' }, ja: { title: 'こんにちは' } },
+    };
+
+    await renderWithDraft(RelationEditor, { draft: createMockDraft(draftArgs), props });
+
+    // The field isn’t found in the test config, so it’s taken as one that isn’t localized
+    expect(getOptions).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        sharedValues: expect.objectContaining({ values: { title: 'Hello', team: 'red' } }),
+      }),
+    );
+
+    // The values of a rich text editor component are localized along with the document
+    await renderWithDraft(RelationEditor, {
+      draft: createMockDraft(draftArgs),
+      props,
+      context: { 'field-editor': { valueStoreKey: 'extraValues' } },
+    });
+
+    expect(getOptions).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sharedValues: undefined }),
+    );
+  });
+
   test('offers the pending entries of the draft along with the saved ones', async () => {
     const pendingEntry = /** @type {Entry} */ ({ id: 'new-member', slug: 'new-member' });
 

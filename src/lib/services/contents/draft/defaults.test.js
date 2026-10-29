@@ -401,6 +401,26 @@ describe('Test populateDefaultValue()', () => {
     expect(content.custom_field).toBe('Custom Default');
   });
 
+  test.each([0, false])('should keep a falsy default value of %s', (defaultValue) => {
+    /** @type {FlattenedEntryContent} */
+    const content = {};
+
+    populateDefaultValue({
+      content,
+      keyPath: 'custom_field',
+      fieldConfig: /** @type {Field} */ ({
+        name: 'custom_field',
+        widget: 'custom',
+        default: defaultValue,
+      }),
+      locale: 'en',
+      defaultLocale: 'en',
+      dynamicValues: {},
+    });
+
+    expect(content.custom_field).toBe(defaultValue);
+  });
+
   test('should use empty string for unknown field without default', () => {
     /** @type {FlattenedEntryContent} */
     const content = {};

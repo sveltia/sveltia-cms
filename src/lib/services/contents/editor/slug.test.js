@@ -1,10 +1,7 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  getSharedEntryFileName,
-  isNestedCollection,
-} from '$lib/services/contents/collection/nested';
+import { getSharedEntryFileName, hasNestedEntries } from '$lib/services/contents/collection/nested';
 import { getSlugs, hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { getOtherEntries } from '$lib/services/contents/draft/validate/slugs';
 import { getUnpublishedEntryByDraft } from '$lib/services/workflow';
@@ -23,7 +20,7 @@ import {
 vi.mock('$lib/services/contents/collection/nested', async (importOriginal) => ({
   ...(await importOriginal()),
   getSharedEntryFileName: vi.fn(),
-  isNestedCollection: vi.fn(() => false),
+  hasNestedEntries: vi.fn(() => false),
 }));
 vi.mock('$lib/services/contents/draft/slugs', () => ({
   getSlugs: vi.fn(),
@@ -60,7 +57,7 @@ const createDraft = (overrides = {}) => ({
 describe('contents/editor/slug', () => {
   beforeEach(() => {
     vi.mocked(getSharedEntryFileName).mockReturnValue(undefined);
-    vi.mocked(isNestedCollection).mockReturnValue(false);
+    vi.mocked(hasNestedEntries).mockReturnValue(false);
     vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(undefined);
     vi.mocked(hasLocalizedSlugs).mockReturnValue(false);
   });
@@ -116,8 +113,8 @@ describe('contents/editor/slug', () => {
       );
     });
 
-    it('should be false for an entry identified by its path in a nested collection', () => {
-      vi.mocked(isNestedCollection).mockReturnValue(true);
+    it('should be false for an entry identified by its path among nested entries', () => {
+      vi.mocked(hasNestedEntries).mockReturnValue(true);
       expect(canUpdateSlug(createDraft())).toBe(false);
 
       // Unless every entry is an index file within a folder of its own

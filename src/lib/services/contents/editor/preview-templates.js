@@ -1,4 +1,4 @@
-import { createElement } from 'react';
+import { createElement, useLayoutEffect, useRef } from 'react';
 import { mount, unmount } from 'svelte';
 
 import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
@@ -16,7 +16,7 @@ import { unflattenMap } from '$lib/services/utils/object';
 
 /**
  * @import { MapOf } from 'immutable';
- * @import { ReactElement } from 'react';
+ * @import { ReactElement, RefObject } from 'react';
  * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
  * @import { Entry, EntryDraft, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
  * @import {
@@ -29,39 +29,68 @@ import { unflattenMap } from '$lib/services/utils/object';
  */
 
 /**
- * Create a field preview mounting function.
+ * Mount a Svelte component for field preview.
  * @param {object} args Arguments.
+ * @param {HTMLElement} args.target The DOM element to mount the Svelte component into.
  * @param {EntryDraftState} args.entryDraft Entry draft state of the editor. The mounted component
  * is outside the Svelte component tree, so the state has to be passed to it as a mount context.
  * @param {InternalLocaleCode} args.locale Current locale.
- * @returns {(target: HTMLElement, keyPath: FieldKeyPath, fieldConfig: Field) => Record<string,
- * any>} Function that mounts a field preview component.
+ * @param {FieldKeyPath} args.keyPath The key path of the field to preview.
+ * @param {Field} args.fieldConfig Configuration of the field.
+ * @returns {Record<string, any>} The mounted Svelte component instance.
  */
-export const createFieldPreviewMounter =
-  ({ entryDraft, locale }) =>
-  /**
-   * Mount a Svelte component for field preview.
-   * @param {HTMLElement} target The DOM element to mount the Svelte component into.
-   * @param {FieldKeyPath} keyPath The key path of the field to preview.
-   * @param {Field} fieldConfig Configuration of the field.
-   * @returns {Record<string, any>} The mounted Svelte component instance.
-   */
-  (target, keyPath, fieldConfig) =>
-    mount(FieldPreview, {
-      target,
-      context: createEntryDraftMountContext(entryDraft),
-      props: { keyPath, typedKeyPath: '', locale, fieldConfig, showLabel: false },
+export const mountFieldPreview = ({ target, entryDraft, locale, keyPath, fieldConfig }) =>
+  mount(FieldPreview, {
+    target,
+    context: createEntryDraftMountContext(entryDraft),
+    props: { keyPath, typedKeyPath: '', locale, fieldConfig, showLabel: false },
+  });
+
+/**
+ * React component rendering the preview of a field, which `widgetFor()` returns. It’s defined once,
+ * so that React keeps the preview mounted when the template renders again, as it does on every
+ * change to the entry. The preview follows the draft by itself, so it’s only mounted again when it
+ * has to show another field or locale: remounting it on every keystroke would make an image flash,
+ * a map reinitialize and the preview lose its state.
+ * @param {object} props Props.
+ * @param {EntryDraftState} props.entryDraft Entry draft state of the editor.
+ * @param {InternalLocaleCode} props.locale Current locale.
+ * @param {FieldKeyPath} props.keyPath The key path of the field to preview.
+ * @param {Field} props.fieldConfig Configuration of the field.
+ * @returns {ReactElement} A div the field preview is mounted into.
+ */
+export const FieldWidget = ({ entryDraft, locale, keyPath, fieldConfig }) => {
+  /** @type {RefObject<HTMLDivElement | null>} */
+  const ref = useRef(null);
+
+  useLayoutEffect(() => {
+    const component = mountFieldPreview({
+      target: /** @type {HTMLDivElement} */ (ref.current),
+      entryDraft,
+      locale,
+      keyPath,
+      fieldConfig,
     });
+
+    return () => {
+      unmount(component);
+    };
+  }, [entryDraft, locale, keyPath, fieldConfig]);
+
+  return createElement('div', { ref });
+};
 
 /**
  * Create a widget preview function for React preview templates.
- * @param {(target: HTMLElement, keyPath: FieldKeyPath, fieldConfig: Field) => Record<string, any>}
- * mountComponent Function to mount Svelte components for field preview.
- * @param {Omit<GetFieldArgs, 'keyPath'>} getFieldArgs Arguments for getField function.
+ * @param {object} args Arguments.
+ * @param {EntryDraftState} args.entryDraft Entry draft state of the editor, used by the field
+ * previews.
+ * @param {InternalLocaleCode} args.locale Current locale.
+ * @param {Omit<GetFieldArgs, 'keyPath'>} args.getFieldArgs Arguments for getField function.
  * @returns {(keyPath: string) => ReactElement | null} Function that creates widget previews.
  */
 export const createWidgetFor =
-  (mountComponent, getFieldArgs) =>
+  ({ entryDraft, locale, getFieldArgs }) =>
   /**
    * Get a widget preview component for a field.
    * @param {string} keyPath Field key path.
@@ -76,22 +105,7 @@ export const createWidgetFor =
       return null;
     }
 
-    /** @type {Record<string, any>} */
-    let component;
-
-    /**
-     * Mount or unmount the Svelte component when the div is added or removed from the DOM.
-     * @param {HTMLElement | null} div The div element to mount the Svelte component into.
-     */
-    const ref = (div) => {
-      if (div) {
-        component = mountComponent(div, keyPath, fieldConfig);
-      } else if (component) {
-        unmount(component);
-      }
-    };
-
-    return createElement('div', { ref });
+    return createElement(FieldWidget, { entryDraft, locale, keyPath, fieldConfig });
   };
 
 /**
@@ -217,9 +231,7 @@ export const preparePreviewTemplateProps = ({ entryDraft, draft, locale }) => {
     locale,
   });
 
-  // Create factory functions with bound dependencies
-  const mountFieldPreview = createFieldPreviewMounter({ entryDraft, locale });
-  const widgetFor = createWidgetFor(mountFieldPreview, getFieldArgs);
+  const widgetFor = createWidgetFor({ entryDraft, locale, getFieldArgs });
 
   return {
     entry: entryMap,

@@ -1387,7 +1387,7 @@ edit_slug_error:
   invalid: The slug cannot contain special characters, including slashes and spaces.
   duplicate: This slug is used for another entry.
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: Parent Folder
 new_parent_folder: New Folder
@@ -1977,6 +1977,8 @@ config:
     unsupported_backend_suggestion: Use one of the <a>supported backends</a> instead.
     missing_repository: The repository is not defined.
     invalid_repository: The configured repository is invalid. It must be in “owner/repo” format.
+    # Don’t localize `api_root`
+    missing_api_root: The `api_root` option is not defined. It’s required for the Forgejo backend.
     invalid_root_dir: The root directory is invalid. It must be a path within the repository, without “..”.
     invalid_root_dir_branch: The root directory can’t be used in the branch names of the `editorial_workflow` and `preview` publish modes. No part of its path can start with a dot, end with “.lock” or contain a space or a special character such as a colon or an asterisk.
     path_outside_root_dir: The path “{$path}” leads outside the root directory, where the CMS can’t list files.
@@ -2064,6 +2066,8 @@ config:
     unsupported_bulk_edit_field: The `{$name}` field in the `fields` list of the `bulk_edit` option can’t be edited in bulk. Only a Boolean, Color, DateTime, Number, Relation, Select or String field that isn’t read-only, doesn’t have the `multiple` option enabled and isn’t set automatically on save is supported.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: The `sortable_fields` option refers to a field named `{$name}`, but no such field is defined in the collection.
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: Only one item in the `sortable_fields` option can have the `default_sort` option.
     # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
     invalid_table_column_field: The `{$option}` option refers to a field named `{$name}`, but no such field is defined in the collection.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
@@ -2253,6 +2257,10 @@ config:
     unsupported_ignored_option: The `{$prop}` option is not supported in Sveltia CMS. It will be ignored.
     # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
     publish_mode_stages_ignored: The `stages` option of `publish_mode` only applies to the `editorial_workflow` publish mode, so it’s ignored with `{$type}`.
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: The `pattern` of this inline component has the `m` or `s` flag or matches line breaks, but an inline component is only matched within a paragraph.
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: 'The `{$name}` item of the `{$option}` option is ignored, as a field with `multiline: false` can only hold inline content.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Both `picker_utc` and newer timezone options (`input_timezone` or `output_utc`) are set. The new options take precedence. Consider removing `picker_utc` from your configuration.
     # Don’t localize `localize_format` and `format`
@@ -2472,6 +2480,12 @@ workflow:
   # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
   # the site rather than published to it
   deploying_deletion: Deletion
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: Also adds {$entries}
+  # Workflow page: one of the new entries listed by `companion_entries`, named by its collection’s
+  # singular label and its title
+  companion_entry: '{$collection}: {$title}'
 
 # Dialog asking the user for a commit message every time changes are saved, when the site is
 # configured to. The message is recorded in the repository’s history along with the changes
@@ -2668,7 +2682,7 @@ prefs:
       not_ready: Changes can’t be committed right now. {$reason}
     deploy_hook:
       title: Deploy Hook
-      description: Enter a webhook URL to be called when you manually trigger a deployment by selecting Publish Changes. This can be left blank if you’re using GitHub Actions.
+      description: Enter a webhook URL to be called when you manually trigger a deployment by selecting Publish Changes. This can be left blank if you’re using GitHub Actions or GitLab CI/CD.
       # Hook URL input
       url:
         field_label: Hook URL

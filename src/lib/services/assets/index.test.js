@@ -7,6 +7,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  countAssetsInFolder,
   fillInternalPathTemplate,
   getAssetByAbsolutePath,
   getAssetByInternalPath,
@@ -1107,6 +1108,8 @@ describe('assets/index', () => {
 
       const result = getAssetsByFolder(folder);
 
+      expect(countAssetsInFolder(folder)).toBe(getAssetsByFolder(folder).length);
+
       expect(result).toEqual([matchingAsset]);
     });
 
@@ -1126,6 +1129,7 @@ describe('assets/index', () => {
 
       expect(isAssetInFolder(/** @type {any} */ (matchingAsset), folder)).toBe(true);
       expect(getAssetsByFolder(folder)).toEqual([matchingAsset]);
+      expect(countAssetsInFolder(folder)).toBe(getAssetsByFolder(folder).length);
     });
 
     it('should return empty array when no assets match', () => {
@@ -1146,6 +1150,8 @@ describe('assets/index', () => {
       allAssets.current = [asset];
 
       const result = getAssetsByFolder(folder);
+
+      expect(countAssetsInFolder(folder)).toBe(getAssetsByFolder(folder).length);
 
       expect(result).toEqual([]);
     });
@@ -1193,8 +1199,15 @@ describe('assets/index', () => {
       // The asset is assigned to the field-level folder, but every folder with its path lists it,
       // while a folder nested in it keeps its own assets
       expect(getAssetsByFolder(assetCollectionFolder)).toEqual([asset]);
+      expect(countAssetsInFolder(assetCollectionFolder)).toBe(
+        getAssetsByFolder(assetCollectionFolder).length,
+      );
       expect(getAssetsByFolder(collectionFolder)).toEqual([asset]);
+      expect(countAssetsInFolder(collectionFolder)).toBe(
+        getAssetsByFolder(collectionFolder).length,
+      );
       expect(getAssetsByFolder(nestedFolder)).toEqual([nestedAsset]);
+      expect(countAssetsInFolder(nestedFolder)).toBe(getAssetsByFolder(nestedFolder).length);
     });
 
     it('should only return the assets of the same entry-relative folder', () => {
@@ -1228,8 +1241,12 @@ describe('assets/index', () => {
 
       // An entry-relative folder’s path is the collection’s, so it isn’t shared by path
       expect(getAssetsByFolder({ ...postsFolder })).toEqual([asset]);
+      expect(countAssetsInFolder({ ...postsFolder })).toBe(1);
       expect(getAssetsByFolder(pagesFolder)).toEqual([]);
+      expect(countAssetsInFolder(pagesFolder)).toBe(0);
+      expect(countAssetsInFolder(pagesFolder)).toBe(getAssetsByFolder(pagesFolder).length);
       expect(getAssetsByFolder(fixedFolder)).toEqual([fixedAsset]);
+      expect(countAssetsInFolder(fixedFolder)).toBe(getAssetsByFolder(fixedFolder).length);
     });
   });
 
@@ -2582,6 +2599,76 @@ describe('assets/index', () => {
       );
       // The resolved 'abc' folder (not the literal '{{filename}}') must be used
       expect(createPath).toHaveBeenCalledWith(['source/_posts', 'abc', 'img0.jpg']);
+    });
+
+    it('should resolve template tags in public_folder before stripping it from the stored path', async () => {
+      // An absolute `media_folder` and an entry-relative `public_folder` that both have `{{slug}}`:
+      // the raw `public_folder` never matched the stored value, so the whole value was appended to
+      // the `media_folder` and the asset couldn’t be found
+      // @see https://github.com/sveltia/sveltia-cms/issues/1104
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+      const { fillTemplate } = await import('$lib/services/common/template');
+      const { hasTemplateTags } = await import('$lib/services/common/template/tags');
+
+      const mockAsset = {
+        path: 'assets/realisations/my-project/photo-1.jpg',
+        name: 'photo-1.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: createMockAssetFolder({
+          collectionName: 'realisations',
+          internalPath: 'assets/realisations/{{slug}}',
+          publicPath: '../../assets/realisations/{{slug}}',
+        }),
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-project',
+        slug: 'my-project',
+        locales: {
+          en: {
+            path: 'content/realisations/my-project.md',
+            sha: 'sha123',
+            slug: 'my-project',
+            content: { cover: '../../assets/realisations/my-project/photo-1.jpg' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'realisations',
+        folder: 'content/realisations',
+        media_folder: '/assets/realisations/{{slug}}',
+        public_folder: '../../assets/realisations/{{slug}}',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      vi.mocked(hasTemplateTags).mockReturnValueOnce(true).mockReturnValueOnce(true);
+      vi.mocked(fillTemplate)
+        .mockReturnValueOnce('/assets/realisations/my-project')
+        .mockReturnValueOnce('../../assets/realisations/my-project');
+      vi.mocked(createPath).mockReturnValue('assets/realisations/my-project/photo-1.jpg');
+      vi.mocked(resolvePath).mockReturnValue('assets/realisations/my-project/photo-1.jpg');
+      allAssets.current = [mockAsset];
+
+      const result = getAssetByRelativePathAndCollection({
+        path: '../../assets/realisations/my-project/photo-1.jpg',
+        entry: mockEntry,
+        collection: mockCollection,
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(fillTemplate).toHaveBeenCalledWith(
+        '../../assets/realisations/{{slug}}',
+        expect.objectContaining({
+          type: 'media_folder',
+          collection: mockCollection,
+          entryFilePath: 'content/realisations/my-project.md',
+        }),
+      );
+      // The resolved `public_folder` prefix is stripped, leaving only the file name
+      expect(createPath).toHaveBeenCalledWith(['assets/realisations/my-project', 'photo-1.jpg']);
     });
   });
 

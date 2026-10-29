@@ -6,7 +6,11 @@ import { goto, parseLocation } from '$lib/services/app/navigation';
 import { backend, backendName, selectBackend } from '$lib/services/backends';
 import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { NOT_COLLABORATOR_ERROR_MESSAGE } from '$lib/services/backends/git/shared/errors';
-import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
+import {
+  createStaleCheck,
+  dataGeneration,
+  repositoryHead,
+} from '$lib/services/backends/git/shared/head';
 import { startRemoteChangePolling, stopRemoteChangePolling } from '$lib/services/backends/poll';
 import { cmsConfig } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
@@ -58,31 +62,59 @@ export const auth = $state({
 });
 
 /**
- * Clear the cached user token so the sign-in form is shown on next load. The user caches left by
- * Netlify/Decap CMS, which may also hold a token, are removed as well.
- */
-const clearUserCache = async () => {
-  await Promise.all([
-    LocalStorage.set(USER_STORAGE_KEY, {}),
-    ...LEGACY_USER_STORAGE_KEYS.map((key) => LocalStorage.delete(key)),
-  ]);
-  user.account = undefined;
-  auth.unauthenticated = true;
-};
-
-/**
  * Remove the API keys and log-in credentials for integrations, such as translation services and
  * cloud storage, from the user preferences, so they don’t remain on the device once the user has
  * signed out. The deploy hook URL and its `Authorization` header go too, as either can carry a
  * secret that triggers a deployment. Other preferences, like the theme and language, are kept. This
- * is only done on an explicit sign-out, not when an expired or revoked token sends the user back to
- * the sign-in form.
+ * is done on an explicit sign-out, but not when an expired or revoked token sends the user back to
+ * the sign-in form, unless the credentials came with a magic link: see
+ * {@link clearMagicLinkCredentials}.
  */
 const clearIntegrationCredentials = () => {
   prefs.apiKeys = {};
   delete prefs.logins;
   delete prefs.deployHookURL;
   delete prefs.deployHookAuthHeader;
+  delete prefs.magicLinkAccount;
+};
+
+/**
+ * Remove the integration credentials copied with a magic link once the session it started has
+ * ended, however it ended. Since anyone can craft a link, they may be someone else’s: left on the
+ * device, they would carry over to the user’s own account, sending its uploads to someone else’s
+ * cloud storage, its translations through someone else’s API keys and its deployments to someone
+ * else’s hook. They’re kept as long as the link’s account is signed in, also on the next visit.
+ * Checking the account, rather than only clearing them where a session ends, also covers another
+ * tab, which doesn’t see the preferences this one has changed: signing in to another account there
+ * leaves the credentials in storage until they’re loaded with that account’s session.
+ * @param {User} [account] Account starting a session. Omit it when the session has ended.
+ */
+const clearMagicLinkCredentials = (account) => {
+  const { magicLinkAccount } = prefs;
+
+  if (
+    magicLinkAccount &&
+    (magicLinkAccount.backendName !== account?.backendName ||
+      magicLinkAccount.id !== account?.id ||
+      magicLinkAccount.login !== account?.login)
+  ) {
+    clearIntegrationCredentials();
+  }
+};
+
+/**
+ * Clear the cached user token so the sign-in form is shown on next load. The user caches left by
+ * Netlify/Decap CMS, which may also hold a token, are removed as well, and so are the credentials
+ * copied with a magic link.
+ */
+const clearUserCache = async () => {
+  clearMagicLinkCredentials();
+  await Promise.all([
+    LocalStorage.set(USER_STORAGE_KEY, {}),
+    ...LEGACY_USER_STORAGE_KEYS.map((key) => LocalStorage.delete(key)),
+  ]);
+  user.account = undefined;
+  auth.unauthenticated = true;
 };
 
 /**
@@ -176,13 +208,26 @@ export const parseMagicLink = () => {
  * @returns {Promise<Record<string, any> | undefined>} Cached user info, or undefined if not found.
  */
 export const getUserCache = async () => {
-  // Read the keys one at a time, stopping at the first hit
-  const userCache = await [USER_STORAGE_KEY, ...LEGACY_USER_STORAGE_KEYS].reduce(
-    async (previous, key) => (await previous) || LocalStorage.get(key),
-    /** @type {Promise<any>} */ (Promise.resolve(undefined)),
-  );
+  /**
+   * Check whether the given value is a cached user.
+   * @param {any} value Stored value.
+   * @returns {boolean} Result.
+   */
+  const isUserCache = (value) => isObject(value) && typeof value.backendName === 'string';
 
-  return isObject(userCache) && typeof userCache.backendName === 'string' ? userCache : undefined;
+  // Read the keys one at a time, stopping at the first hit. The empty object left by signing out of
+  // Sveltia CMS isn’t one, so a later sign-in with Netlify/Decap CMS is still picked up
+  return [USER_STORAGE_KEY, ...LEGACY_USER_STORAGE_KEYS].reduce(async (previous, key) => {
+    const found = await previous;
+
+    if (found) {
+      return found;
+    }
+
+    const value = await LocalStorage.get(key);
+
+    return isUserCache(value) ? value : undefined;
+  }, /** @type {Promise<Record<string, any> | undefined>} */ (Promise.resolve(undefined)));
 };
 
 /**
@@ -252,15 +297,22 @@ export const confirmMagicLink = async (token) => {
 /**
  * Copy the user preferences passed with a magic link. The deploy hook URL and its `Authorization`
  * header are only copied together, so a link that has a URL but no header can’t leave the header
- * already on this device to be sent to the new URL.
+ * already on this device to be sent to the new URL. The integration credentials are then marked as
+ * belonging to the account the link signs in to, which the link itself can’t override.
  * @param {Record<string, any>} copiedPrefs Preferences passed with the link.
+ * @param {User} account Account the link signs in to.
  */
-export const copyMagicLinkPrefs = (copiedPrefs) => {
+export const copyMagicLinkPrefs = (copiedPrefs, account) => {
+  // Credentials copied with an earlier link mustn’t stay for those this one lacks
+  clearMagicLinkCredentials();
+
   if ('deployHookURL' in copiedPrefs) {
     delete prefs.deployHookAuthHeader;
   }
 
-  Object.assign(prefs, copiedPrefs);
+  Object.assign(prefs, copiedPrefs, {
+    magicLinkAccount: { backendName: account.backendName, id: account.id, login: account.login },
+  });
 };
 
 /**
@@ -269,6 +321,8 @@ export const copyMagicLinkPrefs = (copiedPrefs) => {
  * @param {BackendService} _backend Backend.
  */
 const loadRepositoryData = async (_backend) => {
+  // Signing out while the data is being loaded discards it, and stops the polling started below
+  const isStale = createStaleCheck();
   // The pull requests don’t depend on the files, so they’re requested at the same time. That needs
   // the branch they target, though: without one configured, the default branch is only known once
   // the files are being fetched, and every pull request would be dropped as targeting another
@@ -277,7 +331,18 @@ const loadRepositoryData = async (_backend) => {
   const pullRequests = branchKnown ? startLoadingPullRequests() : undefined;
 
   await _backend.fetchFiles();
+
+  // The pull requests requested early belong to the previous session as well, and are dropped
+  if (isStale()) {
+    return;
+  }
+
   await loadUnpublishedEntries(pullRequests);
+
+  if (isStale()) {
+    return;
+  }
+
   // The deploy state is a nicety, so it’s resolved in the background rather than delaying the UI.
   // The files were loaded from the branch head, which is the commit the production site is built
   // from, so it isn’t fetched again
@@ -338,9 +403,12 @@ export const signInAutomatically = async () => {
   // Use the cached user to start fetching files
   user.account = /** @type {User} */ (_user);
 
-  // Copy user preferences passed with QR code
+  // Copy user preferences passed with QR code, or drop the credentials copied with a link to
+  // another account
   if (verified && copiedPrefs) {
-    copyMagicLinkPrefs(copiedPrefs);
+    copyMagicLinkPrefs(copiedPrefs, user.account);
+  } else {
+    clearMagicLinkCredentials(user.account);
   }
 
   try {
@@ -406,6 +474,7 @@ export const signInManually = async (_backendName, token) => {
     return;
   }
 
+  clearMagicLinkCredentials(_user);
   user.account = _user;
 
   try {

@@ -1,12 +1,13 @@
 import { FIELD_TAG_PREFIX_REGEX, UUID_TYPES } from '$lib/services/common/template/constants';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
-import { replaceTemplateTags } from '$lib/services/common/template/tags';
+import { splitTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { parseTransformations } from '$lib/services/common/transformations';
 import { getRootFields } from '$lib/services/config/parser/utils/fields';
 import { checkFieldReferences } from '$lib/services/config/parser/utils/references';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
 import { parseExpression } from '$lib/services/contents/fields/compute/expression';
+import { yieldsNumber } from '$lib/services/contents/fields/number/helpers';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -62,16 +63,46 @@ const getTags = (value, numeric) => {
     return tree ? tags : [];
   }
 
-  /** @type {ExpressionTag[]} */
-  const tags = [];
+  return splitTemplateTags(value).tags.map((content) => ({ content, allItems: false }));
+};
 
-  replaceTemplateTags(value, (match, content) => {
-    tags.push({ content, allItems: false });
+/**
+ * Regular expression matching a variable type name in a typed key path, e.g. `<product>`.
+ */
+const TYPE_NAME_REGEX = /<[^>]*>/g;
+/**
+ * Regular expression matching a list index in a key path, e.g. `.0` in `lines.0.price`.
+ */
+const LIST_INDEX_REGEX = /(?<=^|\.)\d+(?=\.|$)/g;
 
-    return match;
+/**
+ * Get the fields the given template tag refers to: the tag itself, if it’s a `{{fields.*}}` tag,
+ * and the tags in its transformation arguments, like `{{fields.title}}` in
+ * `default('{{fields.title}}')`, which the runtime resolves as well.
+ * @param {string} content Content of the tag, e.g. `fields.title | upper`.
+ * @returns {{ tagName: string, keyPath: string }[]} The name of each tag, e.g.
+ * `fields.lines.0.price`, and the key path it refers to, with a `*` for every list index as in the
+ * key path of the field, e.g. `lines.*.price`.
+ */
+const getFieldReferences = (content) => {
+  const { value: tagName, transformations } = parseTransformations(content);
+  /** @type {{ tagName: string, keyPath: string }[]} */
+  const references = [];
+
+  if (FIELD_TAG_PREFIX_REGEX.test(tagName)) {
+    references.push({
+      tagName,
+      keyPath: stripFieldTagPrefix(tagName).replace(LIST_INDEX_REGEX, '*'),
+    });
+  }
+
+  processNestedTemplates(transformations, (innerTag) => {
+    references.push(...getFieldReferences(innerTag));
+
+    return '';
   });
 
-  return tags;
+  return references;
 };
 
 /**
@@ -86,10 +117,24 @@ const getTags = (value, numeric) => {
  */
 const checkFieldTags = ({ context, collectors }, tags) => {
   // Drop the variable type names, as in `lines.*<product>.amount`
-  const ownKeyPath = (context.typedKeyPath ?? '').replace(/<[^>]*>/g, '');
+  const ownKeyPath = (context.typedKeyPath ?? '').replace(TYPE_NAME_REGEX, '');
   const ownSegments = ownKeyPath.split('.');
 
   tags.forEach(({ content, allItems }) => {
+    const selfReference = getFieldReferences(content).find(({ keyPath }) => keyPath === ownKeyPath);
+
+    if (selfReference) {
+      addMessage({
+        type: 'warning',
+        strKey: 'compute_field_self_reference',
+        values: { name: selfReference.tagName },
+        context,
+        collectors,
+      });
+
+      return;
+    }
+
     const { value: tagName } = parseTransformations(content);
 
     if (!FIELD_TAG_PREFIX_REGEX.test(tagName)) {
@@ -97,18 +142,6 @@ const checkFieldTags = ({ context, collectors }, tags) => {
     }
 
     const keyPath = stripFieldTagPrefix(tagName);
-
-    if (keyPath === ownKeyPath) {
-      addMessage({
-        type: 'warning',
-        strKey: 'compute_field_self_reference',
-        values: { name: tagName },
-        context,
-        collectors,
-      });
-
-      return;
-    }
 
     if (allItems) {
       return;
@@ -144,41 +177,6 @@ const checkFieldTags = ({ context, collectors }, tags) => {
  */
 
 /**
- * Regular expression matching a variable type name in a typed key path, e.g. `<product>`.
- */
-const TYPE_NAME_REGEX = /<[^>]*>/g;
-/**
- * Regular expression matching a list index in a key path, e.g. `.0` in `lines.0.price`.
- */
-const LIST_INDEX_REGEX = /(?<=^|\.)\d+(?=\.|$)/g;
-
-/**
- * Get the key paths of the fields the given template tag refers to: the tag itself, if it’s a
- * `{{fields.*}}` tag, and the tags in its transformation arguments, like `{{fields.title}}` in
- * `default('{{fields.title}}')`, which the runtime resolves as well. A list index is replaced with
- * a `*`, as in the key path of the field.
- * @param {string} content Content of the tag, e.g. `fields.title | upper`.
- * @returns {string[]} Key paths.
- */
-const getFieldReferences = (content) => {
-  const { value: tagName, transformations } = parseTransformations(content);
-  /** @type {string[]} */
-  const keyPaths = [];
-
-  if (FIELD_TAG_PREFIX_REGEX.test(tagName)) {
-    keyPaths.push(stripFieldTagPrefix(tagName).replace(LIST_INDEX_REGEX, '*'));
-  }
-
-  processNestedTemplates(transformations, (innerTag) => {
-    keyPaths.push(...getFieldReferences(innerTag));
-
-    return '';
-  });
-
-  return keyPaths;
-};
-
-/**
  * Collect the Compute fields in the given field list, at any depth.
  * @param {any} fields Field list. A value that isn’t a list is reported against the JSON schema.
  * @param {string} [typedKeyPath] Typed key path of the field holding the list, if any.
@@ -209,12 +207,12 @@ const collectFromTypes = (types, typedKeyPath) =>
  * @returns {ComputeFieldNode[]} Fields.
  */
 const collectFromField = (field, typedKeyPath) => {
-  const { widget = 'string', value, value_type: valueType = 'string' } = field ?? {};
+  const { widget = 'string', value } = field ?? {};
 
   if (widget === 'compute') {
     const references = new Set(
-      (typeof value === 'string' ? getTags(value, valueType !== 'string') : []).flatMap(
-        ({ content }) => getFieldReferences(content),
+      (typeof value === 'string' ? getTags(value, yieldsNumber(field)) : []).flatMap(
+        ({ content }) => getFieldReferences(content).map(({ keyPath }) => keyPath),
       ),
     );
 
@@ -360,21 +358,22 @@ const getReferenceCycles = (fields) =>
  * @param {FieldParserArgs} args Arguments.
  */
 export const parseComputeFieldConfig = ({ config, context, collectors }) => {
-  const { value, value_type: valueType = 'string' } = /** @type {ComputeField} */ (config);
+  const { value } = /** @type {ComputeField} */ (config);
+  const numeric = yieldsNumber(config);
   // The fields of a custom editor component aren’t known here, so only a field of a collection or
   // file can be checked
   const fields = getRootFields(context);
 
   // A value of another type is reported against the JSON schema
   if (typeof value === 'string') {
-    if (valueType !== 'string') {
+    if (numeric) {
       checkExpression({ config, context, collectors });
     }
 
     // The key path of a field of a custom editor component is relative to the component, while a
     // tag can refer to a field of the entry as well
     if (!context.componentName) {
-      checkFieldTags({ config, context, collectors }, getTags(value, valueType !== 'string'));
+      checkFieldTags({ config, context, collectors }, getTags(value, numeric));
     }
   }
 

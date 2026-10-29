@@ -8,11 +8,13 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
 import {
   canMergePullRequest,
   checkPublishedVersion,
+  getCompanionEntries,
   getPublishedVersion,
   getUnpublishedEntriesByCollection,
   getUnpublishedEntry,
   getUnpublishedEntryByBranch,
   getUnpublishedEntryByDraft,
+  getUnpublishedEntryById,
   getUnpublishedEntryBySlug,
   hasPublishedVersion,
   isDirectPublishAllowed,
@@ -244,6 +246,44 @@ describe('workflow/index', () => {
     });
   });
 
+  describe('getCompanionEntries', () => {
+    const guides = /** @type {any} */ ({ id: 'guides' });
+    const help = /** @type {any} */ ({ id: 'help' });
+    const jane = /** @type {any} */ ({ id: 'jane' });
+
+    /**
+     * Create an entry with new entries riding along in its pull request.
+     * @param {any[]} [companions] Companion entries.
+     * @returns {any} Unpublished entry.
+     */
+    const createHost = (companions) => ({
+      ...createEntry({ collectionName: 'posts', subPath: 'a' }),
+      workflow: { collectionName: 'posts', companions },
+    });
+
+    test('collects the entries of the collection from every pull request', () => {
+      unpublishedEntries.current = [
+        createHost([
+          { collectionName: 'sections', entry: guides },
+          { collectionName: 'authors', entry: jane },
+        ]),
+        createHost(),
+        createHost([{ collectionName: 'sections', entry: help }]),
+      ];
+
+      expect(getCompanionEntries('sections')).toEqual([guides, help]);
+      expect(getCompanionEntries('tags')).toEqual([]);
+    });
+
+    test('looks in the given entries only', () => {
+      const host = createHost([{ collectionName: 'sections', entry: help }]);
+
+      unpublishedEntries.current = [createHost([{ collectionName: 'sections', entry: guides }])];
+
+      expect(getCompanionEntries('sections', [host])).toEqual([help]);
+    });
+  });
+
   describe('getUnpublishedEntry', () => {
     test('finds the entry by collection name and sub path', () => {
       unpublishedEntries.current = [
@@ -371,6 +411,20 @@ describe('workflow/index', () => {
 
       expect(getUnpublishedEntryByBranch('cms/posts/hello')).toBe(entry);
       expect(getUnpublishedEntryByBranch('cms/posts/hello-2')).toBeUndefined();
+    });
+  });
+
+  describe('getUnpublishedEntryById', () => {
+    test('finds the current entry in the store by its ID', () => {
+      const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+
+      unpublishedEntries.current = [entry];
+
+      // A copy held since an action started resolves to the entry in the store now
+      expect(getUnpublishedEntryById(/** @type {any} */ ({ ...entry }).id)).toBe(entry);
+      // An entry that has left the board, or none at all
+      expect(getUnpublishedEntryById('posts/gone')).toBeUndefined();
+      expect(getUnpublishedEntryById(undefined)).toBeUndefined();
     });
   });
 

@@ -210,7 +210,7 @@ describe('Test resolveAssetFolderPaths()', () => {
     });
   });
 
-  test('nested collection, absolute media and public folders with the entry’s folder', async () => {
+  test('nested entries, absolute media and public folders with the entry’s folder', async () => {
     // @see https://github.com/decaporg/decap-cms/issues/7752
     /** @type {any} */
     const collection = {
@@ -1634,7 +1634,7 @@ describe('Test resolveAssetFolderPaths()', () => {
     expect(result.resolvedInternalPath).toBeDefined();
   });
 
-  describe('nested collection without a `path` option', () => {
+  describe('nested entries without a `path` option', () => {
     const pagesFolder = {
       collectionName: 'pages',
       entryRelative: true,
@@ -1645,7 +1645,7 @@ describe('Test resolveAssetFolderPaths()', () => {
     };
 
     /**
-     * Create a nested collection that stores every entry as an index file.
+     * Create a collection with nested entries that stores every entry as an index file.
      * @param {object} [options] Options.
      * @param {boolean} [options.subfolders] Whether the collection uses the `subfolders` mode.
      * @param {InternalI18nOptions} [options.i18n] I18n options.
@@ -3716,7 +3716,7 @@ describe('Test getOwnedEntryFolderPath()', () => {
     );
   });
 
-  test('returns the folder holding the index file of a nested collection', () => {
+  test('returns the folder holding the index file of a collection with nested entries', () => {
     const collection = createCollection({
       nested: { depth: 100 },
       meta: { path: { index_file: '_index' } },
@@ -3866,5 +3866,22 @@ describe('Test getAssetFolderPaths()', () => {
     getAssetFolderPaths({ draft, defaultLocaleSlug: 'about', folder });
 
     expect(createEntryPath).toHaveBeenCalledWith({ draft, locale: 'de', slug: 'about' });
+  });
+
+  test('fills date/time tags with the time of the save rather than the entry’s date', () => {
+    const draft = /** @type {any} */ ({ collection, isIndexFile: false });
+
+    vi.mocked(getFillSlugOptions).mockReturnValue(
+      /** @type {any} */ ({ collection, content: {}, dateTimeParts: { year: '2000' } }),
+    );
+    vi.mocked(createEntryPath).mockReturnValue('content/blog/hello/index.md');
+
+    expect(
+      getAssetFolderPaths({
+        draft,
+        defaultLocaleSlug: 'hello',
+        folder: { ...folder, entryRelative: false, internalPath: 'static/{{year}}' },
+      }).resolvedInternalPath,
+    ).toBe(`static/${new Date().getUTCFullYear()}`);
   });
 });

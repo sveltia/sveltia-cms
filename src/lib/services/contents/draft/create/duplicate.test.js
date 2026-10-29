@@ -472,7 +472,26 @@ describe('contents/draft/create/duplicate', () => {
       expect(newDraft.currentValues.ja['items.1.id']).toBe('new-uuid-ja');
     });
 
-    it('should clear a compute field holding a UUID', async () => {
+    it('should clear a translatable compute field holding a UUID in every locale', async () => {
+      mockEntryDraft.currentValues.en.id = 'post-de305d54-75b4-431b-adb2-eb6b9e546014';
+      mockEntryDraft.currentValues.ja.id = 'post-de305d54-75b4-431b-adb2-eb6b9e546014';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'id') {
+          return { widget: 'compute', value: 'post-{{uuid}}', i18n: true };
+        }
+
+        return undefined;
+      });
+
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      // The field is resolved again, with a new UUID, once the draft is in place
+      expect(newDraft.currentValues.en.id).toBe('');
+      expect(newDraft.currentValues.ja.id).toBe('');
+    });
+
+    it('should clear a duplicated compute field holding a UUID only in the default locale', async () => {
       mockEntryDraft.currentValues.en.id = 'post-de305d54-75b4-431b-adb2-eb6b9e546014';
       mockEntryDraft.currentValues.ja.id = 'post-de305d54-75b4-431b-adb2-eb6b9e546014';
 
@@ -486,9 +505,9 @@ describe('contents/draft/create/duplicate', () => {
 
       const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
 
-      // The field is resolved again, with a new UUID, once the draft is in place
+      // The default locale’s new value is copied to the other locales once it’s resolved
       expect(newDraft.currentValues.en.id).toBe('');
-      expect(newDraft.currentValues.ja.id).toBe('');
+      expect(newDraft.currentValues.ja.id).toBe('post-de305d54-75b4-431b-adb2-eb6b9e546014');
     });
 
     it('should not clear a compute field holding a UUID for non-default locale when i18n is false', async () => {

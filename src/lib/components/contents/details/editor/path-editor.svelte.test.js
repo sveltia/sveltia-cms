@@ -389,7 +389,7 @@ describe('PathEditor', () => {
     await expect.element(page.getByRole('button', { name: 'New Folder' })).toBeEnabled();
   });
 
-  test('renders nothing for a nested collection without entries', async () => {
+  test('renders nothing while a collection of nested entries is empty', async () => {
     const draft = createMockDraft({
       collectionName: 'empty-pages',
       draft: { collection: getCollection('empty-pages'), currentPath: '' },

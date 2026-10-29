@@ -2,9 +2,15 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { collectScanningPaths, getPathRegex, scanDir } from '$lib/services/backends/fs/shared/scan';
+import {
+  collectScanningPaths,
+  getPathPrefixRegex,
+  getPathRegex,
+  scanDir,
+} from '$lib/services/backends/fs/shared/scan';
 import { createMockAssetFolder } from '$lib/test/factories';
 import { createMockDirectoryHandle, createMockFileHandle } from '$lib/test/fs-handles';
+import { createMemoryDirectoryHandle, writeMemoryFile } from '$lib/test/memory-fs-handles';
 
 vi.mock('@sveltia/utils/misc', () => ({
   sleep: vi.fn(async () => {}),
@@ -97,6 +103,46 @@ describe('getPathRegex', () => {
     expect(regex.test('hello.txt')).toBe(true);
     // Should not match empty path
     expect(regex.test('')).toBe(false);
+  });
+});
+
+describe('getPathPrefixRegex', () => {
+  test('should match the path and each folder leading to it', () => {
+    const regex = getPathPrefixRegex('static/images/uploads');
+
+    expect(regex.test('static')).toBe(true);
+    expect(regex.test('static/images')).toBe(true);
+    expect(regex.test('static/images/uploads')).toBe(true);
+    expect(regex.test('static/images/uploads/2024')).toBe(false);
+    expect(regex.test('static/img')).toBe(false);
+    expect(regex.test('stat')).toBe(false);
+    expect(regex.test('other')).toBe(false);
+  });
+
+  test('should match the folders leading to a path with a template tag in the middle', () => {
+    const regex = getPathPrefixRegex('static/{{dirname}}/images');
+
+    expect(regex.test('static')).toBe(true);
+    expect(regex.test('static/posts')).toBe(true);
+    expect(regex.test('static/posts/images')).toBe(true);
+    // A tag can stand for more than one segment
+    expect(regex.test('static/blog/2024')).toBe(true);
+    expect(regex.test('other/posts')).toBe(false);
+  });
+
+  test('should match the literal part of a segment with a template tag', () => {
+    const regex = getPathPrefixRegex('static/img-{{year}}/uploads');
+
+    expect(regex.test('static/img-2024')).toBe(true);
+    expect(regex.test('static/img-2024/uploads')).toBe(true);
+    expect(regex.test('static/other')).toBe(false);
+  });
+
+  test('should escape special characters', () => {
+    const regex = getPathPrefixRegex('app/(pages)/{{slug}}');
+
+    expect(regex.test('app/(pages)')).toBe(true);
+    expect(regex.test('app/pages')).toBe(false);
   });
 });
 
@@ -347,9 +393,8 @@ describe('scanDir', () => {
   });
 
   test('should use cached regex when pathRegexCache already has an entry for the path (L168 false)', async () => {
-    // When scanDir is called with currentPath='parent', the directory entry 'nested' becomes
-    // path='parent/nested'. Pre-populate the cache with that full path key so the cache-hit
-    // branch fires: !regex === false → L168 false covered.
+    // The cache is keyed by the scanning path. Pre-populate it with 'parent/nested' so the
+    // cache-hit branch fires: !regex === false → L168 false covered.
     const cachedRegex = /nested/;
     const prePopulatedCache = new Map([['parent/nested', cachedRegex]]);
     const nestedDirHandle = createMockDirectoryHandle('nested');
@@ -631,6 +676,57 @@ describe('getAllFiles', () => {
     const result = await getAllFiles(rootDirHandle);
 
     expect(result).toEqual([]);
+  });
+  test('finds files and folders whose names are spelled in normalization form D', async () => {
+    const decomposed = 'cafe\u0301';
+    const composed = decomposed.normalize();
+
+    allEntryFolders.current = [
+      /** @type {any} */ ({ collectionName: 'posts', folderPathMap: { _: `${composed}/posts` } }),
+      /** @type {any} */ ({ collectionName: 'pages', filePathMap: { _: `pages/${composed}.md` } }),
+    ];
+    // A configured path in form D is matched too
+    allAssetFolders.current = [
+      createMockAssetFolder({ collectionName: undefined, internalPath: `media/${decomposed}` }),
+    ];
+
+    const rootDirHandle = createMemoryDirectoryHandle();
+
+    await writeMemoryFile(rootDirHandle, `${decomposed}/posts/${decomposed}.md`, '');
+    await writeMemoryFile(rootDirHandle, `pages/${decomposed}.md`, '');
+    await writeMemoryFile(rootDirHandle, `media/${composed}/${decomposed}.png`, '');
+    await writeMemoryFile(rootDirHandle, 'pages/other.md', '');
+
+    const { getAllFiles } = await import('$lib/services/backends/fs/shared/scan');
+    const result = await getAllFiles(rootDirHandle);
+
+    // The paths and names are in form C, while the handles keep the names on the disk
+    expect(result.map(({ path, name, handle }) => [path, name, handle?.name])).toEqual([
+      [`${composed}/posts/${composed}.md`, `${composed}.md`, `${decomposed}.md`],
+      [`pages/${composed}.md`, `${composed}.md`, `${decomposed}.md`],
+      [`media/${composed}/${composed}.png`, `${composed}.png`, `${decomposed}.png`],
+    ]);
+  });
+
+  test('finds files in a folder with a template tag in the middle of its path', async () => {
+    allAssetFolders.current = [
+      createMockAssetFolder({ collectionName: 'posts', internalPath: 'static/{{dirname}}/images' }),
+    ];
+
+    const rootDirHandle = createMemoryDirectoryHandle();
+
+    await writeMemoryFile(rootDirHandle, 'static/posts/images/a.png', '');
+    await writeMemoryFile(rootDirHandle, 'static/blog/2024/images/b.png', '');
+    await writeMemoryFile(rootDirHandle, 'static/posts/other/c.png', '');
+    await writeMemoryFile(rootDirHandle, 'src/posts/images/d.png', '');
+
+    const { getAllFiles } = await import('$lib/services/backends/fs/shared/scan');
+    const result = await getAllFiles(rootDirHandle);
+
+    expect(result.map(({ path }) => path)).toEqual([
+      'static/posts/images/a.png',
+      'static/blog/2024/images/b.png',
+    ]);
   });
 });
 

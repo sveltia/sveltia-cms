@@ -10,7 +10,7 @@
   import MoveToDialog from '$lib/components/common/move-to-dialog.svelte';
   import ReorderMenuItems from '$lib/components/common/reorder-menu-items.svelte';
   import { getFieldLabel } from '$lib/services/contents/i18n/options';
-  import { MOVE_TO_EDGE_MIN_ITEMS } from '$lib/services/utils/drag-sorting';
+  import { canMoveToEdge } from '$lib/services/utils/drag-sorting';
 
   /**
    * @import { InternalLocaleCode } from '$lib/types/private';
@@ -58,7 +58,7 @@
     addItem,
   } = $props();
 
-  const showReorder = $derived(canReorder && itemCount >= MOVE_TO_EDGE_MIN_ITEMS);
+  const showReorder = $derived(canReorder && canMoveToEdge(itemCount));
   let moveToDialogOpen = $state(false);
 </script>
 

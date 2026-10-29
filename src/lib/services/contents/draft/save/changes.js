@@ -6,7 +6,7 @@ import { globalAssetFolder } from '$lib/services/assets/folders';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
-import { isNestedCollection } from '$lib/services/contents/collection/nested';
+import { hasNestedEntries } from '$lib/services/contents/collection/nested';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { filterRealValues } from '$lib/services/contents/draft';
 import { addAlias } from '$lib/services/contents/draft/save/aliases';
@@ -55,10 +55,11 @@ const getSubPath = ({ collection: { _file }, path, fallback }) =>
   _file.fullPathRegEx ? (path.match(_file.fullPathRegEx)?.groups?.subPath ?? fallback) : fallback;
 
 /**
- * Get the canonical slug for an entry in a nested collection, where an entry is identified by its
- * path within the collection folder rather than by a bare slug. Linking the localized files by the
- * slug alone would take two entries with the same slug in different folders for one entry once
- * they’re read back from the repository, so it’s the default locale’s sub path that links them.
+ * Get the canonical slug for an entry in a collection with nested entries, where an entry is
+ * identified by its path within the collection folder rather than by a bare slug. Linking the
+ * localized files by the slug alone would take two entries with the same slug in different folders
+ * for one entry once they’re read back from the repository, so it’s the default locale’s sub path
+ * that links them.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {EntrySlugVariants} args.slugs Entry slugs.
@@ -69,7 +70,7 @@ const getSubPath = ({ collection: { _file }, path, fallback }) =>
 const getNestedCanonicalSlug = ({ draft, slugs: { defaultLocaleSlug, localizedSlugs } }) => {
   const { collection, defaultLocale } = draft;
 
-  if (!localizedSlugs || !isNestedCollection(collection)) {
+  if (!localizedSlugs || !hasNestedEntries(collection)) {
     return undefined;
   }
 
@@ -510,11 +511,11 @@ export const createSavingEntryData = async ({
     Object.values(localizedEntryMap)[0];
 
   const subPath = getSubPath({ collection: entryCollection, path, fallback: defaultLocaleSlug });
-  // In a nested collection, an entry is identified by its path within the collection folder rather
-  // than by a file name, so that’s also the slug the entry gets when it’s read back from the
-  // repository. Use it here as well, or the entry saved in this session would differ from the same
-  // entry after a reload.
-  const nested = isNestedCollection(collection);
+  // In a collection with nested entries, an entry is identified by its path within the collection
+  // folder rather than by a file name, so that’s also the slug the entry gets when it’s read back
+  // from the repository. Use it here as well, or the entry saved in this session would differ from
+  // the same entry after a reload.
+  const nested = hasNestedEntries(collection);
 
   /** @type {Entry} */
   const savingEntry = {

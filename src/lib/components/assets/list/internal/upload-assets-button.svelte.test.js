@@ -7,7 +7,7 @@ import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { showUploadAssetsDialog } from '$lib/services/assets/view';
 import { lockedBranch } from '$lib/services/backends/branch-access';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
-import { initTestConfig } from '$lib/test/config';
+import { initTestConfig, serveMediaFolderAtSiteRoot } from '$lib/test/config';
 
 import UploadAssetsButton from './upload-assets-button.svelte';
 
@@ -59,6 +59,8 @@ describe('UploadAssetsButton', () => {
   });
 
   test('is disabled within a folder the CMS is served from', async () => {
+    serveMediaFolderAtSiteRoot();
+
     selectedAssetFolder.current = globalAssetFolder.current;
     selectedSubfolderPath.current = 'cms';
 

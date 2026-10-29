@@ -65,3 +65,51 @@ test('warns about an empty public folder and saves the media folder path', async
     .toBe('---\ntitle: Kite\ncover: /static/images/kite.png\n---\n');
   expect(await cms.readRepoFile('static/images/kite.png')).toEqual(kite);
 });
+
+test.describe('template tags in an entry-relative public folder', () => {
+  // An Astro-like site that keeps each entry’s images in a folder named after its slug, outside
+  // the content folder, and refers to them with a path relative to the entry
+  // @see https://github.com/sveltia/sveltia-cms/issues/1104
+  test.use({
+    config: {
+      backend: { name: 'test-repo' },
+      media_folder: 'public/images',
+      public_folder: '/images',
+      collections: [
+        {
+          name: 'realisations',
+          label: 'Realisations',
+          folder: 'content/realisations',
+          media_folder: '/assets/realisations/{{slug}}',
+          public_folder: '../../assets/realisations/{{slug}}',
+          fields: [
+            { name: 'title', label: 'Title' },
+            { name: 'cover', label: 'Cover', widget: 'image' },
+          ],
+        },
+      ],
+    },
+  });
+
+  test('shows an image referred to by a path with the resolved public folder', async ({
+    cms,
+    page,
+  }) => {
+    await cms.open();
+    await cms.seed({
+      'assets/realisations/my-project/photo-1.png': createPNG({ color: [200, 100, 50] }),
+      'content/realisations/my-project.md':
+        '---\ntitle: My Project\ncover: ../../assets/realisations/my-project/photo-1.png\n---\n',
+    });
+    await cms.signIn();
+    await page.getByRole('row', { name: 'My Project' }).click();
+
+    const field = getEditor(page).getByRole('group', { name: '“\u2068Cover\u2069” Field' });
+    // The thumbnail is decorative, with an empty `alt`, so it has no role
+    const thumbnail = field.locator('img');
+
+    await expect(thumbnail).toBeVisible();
+    // The image is found and decoded, not a broken one
+    await expect.poll(() => thumbnail.evaluate((img) => img.naturalWidth)).toBeGreaterThan(0);
+  });
+});

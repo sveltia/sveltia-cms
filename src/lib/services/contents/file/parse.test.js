@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { FRONTMATTER_DELIMITER_MAP } from '$lib/services/contents/file/constants';
 import {
+  formatEntryFile,
   formatFrontMatter,
   formatJSON,
   formatTOML,
@@ -19,6 +21,7 @@ import {
   parseTOML,
   parseYAML,
 } from '$lib/services/contents/file/parse';
+import { valueSources } from '$lib/services/contents/file/value-sources';
 
 // Mock external dependencies
 vi.mock('$lib/services/contents/collection', () => ({
@@ -126,6 +129,21 @@ notifications = true
     // The parseTOML function uses toRaw to convert Date objects to strings
     expect(typeof result.created).toBe('string');
     expect(typeof result.modified).toBe('string');
+  });
+
+  test('remembers the source text of the dates in a file', () => {
+    valueSources.clear();
+
+    expect(parseTOML('created = 2023-01-01T10:00:00Z', 'a.toml')).toEqual({
+      created: '2023-01-01T10:00:00.000Z',
+    });
+    expect(valueSources.get('a.toml')).toEqual({
+      created: { value: '2023-01-01T10:00:00.000Z', source: '2023-01-01T10:00:00Z' },
+    });
+
+    // A document that isn’t read from a file, e.g. the CMS configuration, leaves nothing behind
+    parseTOML('created = 2023-01-01T10:00:00Z');
+    expect(valueSources.size).toBe(1);
   });
 
   test('parses TOML with arrays', () => {
@@ -264,7 +282,13 @@ describe('Integers a number can’t represent exactly', () => {
     expect(formatTOML(parsed)).toBe(toml);
   });
 
-  test('are written back as they were read from front matter', () => {
+  test('are written back as they were read from front matter', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    vi.mocked(getFrontMatterDelimiters).mockImplementation(
+      ({ format }) => FRONTMATTER_DELIMITER_MAP[format],
+    );
+
     const collection = /** @type {any} */ ({
       _file: { format: 'frontmatter', extension: 'md' },
     });
@@ -280,7 +304,7 @@ describe('Integers a number can’t represent exactly', () => {
       expect(
         formatFrontMatter({
           content,
-          _file: { ...collection._file, format, fmDelimiters: undefined },
+          _file: { ...collection._file, format, fmDelimiters: FRONTMATTER_DELIMITER_MAP[format] },
         }),
       ).toBe(`${text}\n`);
     });
@@ -395,6 +419,70 @@ describe('Test parseFrontMatter()', () => {
       }).body,
     ).toBe('\nThis is the content body.');
   });
+
+  test('ignores trailing spaces and tabs after the delimiters', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
+
+    const mockCollection = /** @type {any} */ ({
+      name: 'test-collection',
+      _file: {
+        format: 'frontmatter',
+        fmDelimiters: ['---', '---'],
+      },
+    });
+
+    expect(
+      parseFrontMatter({
+        collection: mockCollection,
+        format: 'yaml-frontmatter',
+        text: '---  \ntitle: Test Post\n---\t\n\nThis is the content body.',
+      }),
+    ).toEqual({ title: 'Test Post', body: 'This is the content body.' });
+
+    // Without a body
+    expect(
+      parseFrontMatter({
+        collection: mockCollection,
+        format: 'yaml-frontmatter',
+        text: '--- \ntitle: Test Post\n--- ',
+      }).title,
+    ).toBe('Test Post');
+
+    // Other text on a delimiter line is not a delimiter
+    expect(
+      parseFrontMatter({
+        collection: mockCollection,
+        format: 'yaml-frontmatter',
+        text: '--- x\ntitle: Test Post\n---\n',
+      }),
+    ).toEqual({ body: '--- x\ntitle: Test Post\n---\n' });
+  });
+
+  test.each([
+    ['yaml-frontmatter', ['---', '---'], '---\nfoo: bar\n---\nText'],
+    ['toml-frontmatter', ['+++', '+++'], '+++\nfoo = 1\n+++\nText'],
+    ['json-frontmatter', ['{', '}'], '{\n"foo": 1\n}\nText'],
+  ])(
+    'reads back a %s body starting with a delimiter line as written',
+    async (format, delimiters, body) => {
+      const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+      /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(delimiters);
+
+      const _file = /** @type {any} */ ({ format, fmDelimiters: delimiters });
+      const text = formatFrontMatter({ content: { body }, _file });
+
+      expect(
+        parseFrontMatter({
+          collection: /** @type {any} */ ({ name: 'test-collection', _file }),
+          format: /** @type {any} */ (format),
+          text: text.trim(),
+        }),
+      ).toEqual({ body });
+    },
+  );
 
   test('parses TOML front matter', async () => {
     const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
@@ -665,6 +753,20 @@ describe('Test parseFrontMatter()', () => {
     ).toEqual({ body: 'Hello' });
     expect(
       parseFrontMatter({ ...args, format: 'json-frontmatter', text: '---\n---\n\nHello' }),
+    ).toEqual({ body: 'Hello' });
+  });
+
+  test('ignores the head of front matter in an unknown format', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
+
+    expect(
+      parseFrontMatter({
+        collection: /** @type {any} */ ({ name: 'test-collection', _file: { format: 'x' } }),
+        format: /** @type {any} */ ('x'),
+        text: '---\ntitle: A\n---\n\nHello',
+      }),
     ).toEqual({ body: 'Hello' });
   });
 
@@ -971,6 +1073,41 @@ describe('Test parseEntryFile()', () => {
     expect(result.tags).toEqual(['tag1', 'tag2']);
   });
 
+  test('remembers the source text of the dates in a TOML file', async () => {
+    getCollection.mockReturnValue({ _file: { format: 'toml' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'toml' } });
+    valueSources.clear();
+
+    const result = await parseEntryFile({ ...entryBase, text: 'date = 1979-05-27 07:32:00\n' });
+
+    expect(result).toEqual({ date: '1979-05-27T07:32:00.000' });
+    expect(valueSources.get(entryBase.path)).toEqual({
+      date: { value: '1979-05-27T07:32:00.000', source: '1979-05-27 07:32:00' },
+    });
+
+    // The dates of an earlier version of the file are forgotten
+    await parseEntryFile({ ...entryBase, text: 'date = "TBD"\n' });
+    expect(valueSources.has(entryBase.path)).toBe(false);
+  });
+
+  test('remembers the source text of the dates in TOML front matter', async () => {
+    getCollection.mockReturnValue({ _file: { format: 'toml-frontmatter' } });
+    getCollectionFile.mockReturnValue({
+      _file: { format: 'toml-frontmatter', fmDelimiters: ['+++', '+++'] },
+    });
+    valueSources.clear();
+
+    const result = await parseEntryFile({
+      ...entryBase,
+      text: '+++\ntime = 12:30:00\n+++\n\nAt 12:30:00.000.\n',
+    });
+
+    expect(result).toEqual({ time: '12:30:00.000', body: 'At 12:30:00.000.' });
+    expect(valueSources.get(entryBase.path)).toEqual({
+      time: { value: '12:30:00.000', source: '12:30:00' },
+    });
+  });
+
   test('parses JSON format', async () => {
     getCollection.mockReturnValue({
       _file: { format: 'json' },
@@ -1164,6 +1301,64 @@ describe('Test parseEntryFile()', () => {
 
     expect(result.title).toBe('Test Post');
     expect(result.published).toBe(true);
+  });
+
+  test('keeps the leading whitespace of a raw file', async () => {
+    getCollection.mockReturnValue({ _file: { format: 'raw' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'raw' } });
+
+    const result = await parseEntryFile({ ...entryBase, text: '\n    indented\r\nline\n\n' });
+
+    // The trailing whitespace is still dropped
+    expect(result).toEqual({ body: '\n    indented\nline' });
+  });
+
+  test('keeps the leading whitespace of a Markdown file without front matter', async () => {
+    getCollection.mockReturnValue({ _file: { format: 'frontmatter' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'frontmatter' } });
+
+    const result = await parseEntryFile({
+      ...entryBase,
+      text: '    const code = 1;\n\nText\n',
+    });
+
+    // An indented code block
+    expect(result).toEqual({ body: '    const code = 1;\n\nText' });
+  });
+
+  test('ignores the whitespace before a front matter block', async () => {
+    getCollection.mockReturnValue({ _file: { format: 'frontmatter' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'frontmatter' } });
+
+    expect(
+      await parseEntryFile({ ...entryBase, text: '\n  \n---\ntitle: Test\n---\n\nBody\n' }),
+    ).toEqual({ title: 'Test', body: 'Body' });
+
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    // The format is told by the delimiter after the whitespace
+    vi.mocked(getFrontMatterDelimiters).mockReturnValueOnce(
+      FRONTMATTER_DELIMITER_MAP['toml-frontmatter'],
+    );
+    expect(
+      await parseEntryFile({ ...entryBase, text: '\n+++\ntitle = "Test"\n+++\n\nBody\n' }),
+    ).toEqual({ title: 'Test', body: 'Body' });
+    expect(getFrontMatterDelimiters).toHaveBeenCalledWith(
+      expect.objectContaining({ format: 'toml-frontmatter' }),
+    );
+  });
+
+  test('gives a custom parser the content without the surrounding whitespace', async () => {
+    const customParser = vi.fn().mockReturnValue({});
+
+    customFileFormatRegistry.set('customFormat', { parser: customParser });
+    getCollection.mockReturnValue({ _file: { format: 'customFormat' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'customFormat' } });
+
+    await parseEntryFile({ ...entryBase, text: '\n  custom content\n' });
+
+    expect(customParser).toHaveBeenCalledWith('custom content');
+    customFileFormatRegistry.delete('customFormat');
   });
 
   test('throws error when collection not found', async () => {
@@ -1464,5 +1659,223 @@ describe('Test parseEntryFile()', () => {
     expect(result.body).toBe('Value in frontmatter');
     // Separate content should be ignored when body is in frontmatter
     expect(result.body).not.toContain('Content after delimiter');
+  });
+});
+
+describe('Floats that are whole numbers', () => {
+  /** @type {any} */
+  let getCollection;
+  const floats = { price: { value: 10, source: '10.0' } };
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    valueSources.clear();
+    _resetUnsafeIntegerSources();
+    getCollection = (await import('$lib/services/contents/collection')).getCollection;
+  });
+
+  /**
+   * Parse an entry file of the given format.
+   * @param {string} format File format.
+   * @param {string} text File content.
+   * @param {string} [path] File path.
+   * @returns {Promise<any>} Parsed content.
+   */
+  const parse = (format, text, path = 'posts/a.md') => {
+    getCollection.mockReturnValue({
+      _file: {
+        format,
+        fmDelimiters: format === 'json-frontmatter' ? ['{', '}'] : undefined,
+      },
+    });
+
+    return parseEntryFile({
+      text,
+      path,
+      folder: { collectionName: 'posts' },
+      name: 'a.md',
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+    });
+  };
+
+  test('are remembered only when a path is given', () => {
+    expect(parseYAML('price: 10.0')).toEqual({ price: 10 });
+    expect(parseJSON('{"price":10.0}')).toEqual({ price: 10 });
+    expect(valueSources.size).toBe(0);
+
+    expect(parseYAML('price: 10.0', undefined, 'a.yml')).toEqual({ price: 10 });
+    expect(parseJSON('{"price":10.0}', 'a.json')).toEqual({ price: 10 });
+    expect(valueSources.get('a.yml')).toEqual(floats);
+    expect(valueSources.get('a.json')).toEqual(floats);
+  });
+
+  test('aren’t looked for in a document without a candidate', () => {
+    expect(parseYAML('price: 10', undefined, 'a.yml')).toEqual({ price: 10 });
+    expect(parseJSON('{"price":10}', 'a.json')).toEqual({ price: 10 });
+    expect(valueSources.size).toBe(0);
+  });
+
+  test('aren’t remembered for a document with none', () => {
+    expect(parseYAML('version: "1.0"', undefined, 'a.yml')).toEqual({ version: '1.0' });
+    expect(parseJSON('{"version":"1.0"}', 'a.json')).toEqual({ version: '1.0' });
+    expect(valueSources.size).toBe(0);
+  });
+
+  test('are remembered along with an integer a number can’t represent exactly', () => {
+    expect(parseYAML('big: 12345678901234567890\nprice: 10.0', undefined, 'a.yml')).toEqual({
+      big: 12345678901234567000,
+      price: 10,
+    });
+    expect(parseJSON('{"big":12345678901234567890,"price":10.0}', 'a.json')).toEqual({
+      big: 12345678901234567000,
+      price: 10,
+    });
+    expect(getUnsafeIntegerSource(12345678901234567000)).toBe('12345678901234567890');
+    expect(valueSources.get('a.yml')).toEqual(floats);
+    expect(valueSources.get('a.json')).toEqual(floats);
+  });
+
+  test('don’t hide a YAML error or warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    try {
+      expect(() => parseYAML('price: 10.0\nprice: 1', undefined, 'a.yml')).toThrow(
+        /Map keys must be unique/,
+      );
+      expect(parseYAML('price: !foo 10.0', undefined, 'a.yml')).toEqual({ price: '10.0' });
+      expect(warn).toHaveBeenCalledOnce();
+    } finally {
+      warn.mockRestore();
+    }
+
+    expect(valueSources.size).toBe(0);
+  });
+
+  test('are remembered for each file format', async () => {
+    await parse('yaml', 'price: 10.0', 'a.yml');
+    await parse('yml', 'price: 10.0', 'b.yml');
+    await parse('json', '{"price":10.0}', 'a.json');
+    await parse('yaml-frontmatter', '---\nprice: 10.0\n---\nBody', 'a.md');
+    await parse('json-frontmatter', '{\n"price": 10.0\n}\nBody', 'b.md');
+    await parse('frontmatter', '---\nprice: 10.0\n---\nBody', 'c.md');
+    await parse('toml', 'price = 10.0', 'a.toml');
+    await parse('toml-frontmatter', '---\nprice = 10.0\n---\nBody', 'e.md');
+
+    expect([...valueSources.keys()]).toEqual([
+      'a.yml',
+      'b.yml',
+      'a.json',
+      'a.md',
+      'b.md',
+      'c.md',
+      'a.toml',
+      'e.md',
+    ]);
+    valueSources.forEach((sourceMap) => {
+      expect(sourceMap).toEqual(floats);
+    });
+  });
+
+  test('are forgotten once the file is parsed again without them', async () => {
+    await parse('yaml', 'price: 10.0', 'a.yml');
+    expect(valueSources.has('a.yml')).toBe(true);
+
+    await parse('yaml', 'price: 10', 'a.yml');
+    expect(valueSources.has('a.yml')).toBe(false);
+  });
+
+  describe('round-trip', () => {
+    /**
+     * Parse an entry file and format the content back.
+     * @param {string} format File format.
+     * @param {string} text File content.
+     * @param {(content: any) => void} [edit] Function editing the content.
+     * @returns {Promise<string>} Formatted file content.
+     */
+    const roundTrip = async (format, text, edit) => {
+      const content = await parse(format, text);
+
+      edit?.(content);
+
+      return formatEntryFile({
+        content,
+        _file: /** @type {any} */ ({
+          format,
+          fmDelimiters: format === 'json-frontmatter' ? ['{', '}'] : undefined,
+        }),
+        valueSources: valueSources.get('posts/a.md'),
+      });
+    };
+
+    const yaml =
+      'price: 10.0\ndiff: -3.0\nsize: 1e3\ncount: 10\nrate: 1.5\nlist:\n  - 2.0\n  - 2\n';
+
+    const json =
+      '{\n  "price": 10.0,\n  "diff": -3.0,\n  "size": 1e3,\n  "count": 10,\n  "rate": 1.5,\n' +
+      '  "list": [\n    2.0,\n    2\n  ]\n}\n';
+
+    test('keeps untouched floats as floats and integers as integers', async () => {
+      expect(await roundTrip('yaml', yaml)).toBe(yaml);
+      expect(await roundTrip('json', json)).toBe(json);
+      expect(await roundTrip('yaml-frontmatter', `---\n${yaml}---\n\nBody\n`)).toBe(
+        `---\n${yaml}---\n\nBody\n`,
+      );
+      expect(await roundTrip('json-frontmatter', `${json.trim()}\n\nBody\n`)).toBe(
+        `${json.trim()}\n\nBody\n`,
+      );
+    });
+
+    test('saves an edited value as edited', async () => {
+      /**
+       * Edit the content.
+       * @param {any} content Content.
+       */
+      const edit = (content) => {
+        content.price = 12;
+        content.list[0] = 3;
+        content.count = 11;
+      };
+
+      expect(await roundTrip('yaml', yaml, edit)).toBe(
+        'price: 12\ndiff: -3.0\nsize: 1e3\ncount: 11\nrate: 1.5\nlist:\n  - 3\n  - 2\n',
+      );
+      expect(await roundTrip('json', json, edit)).toBe(
+        json.replace('10.0', '12').replace('2.0', '3').replace('10,', '11,'),
+      );
+    });
+
+    test('keeps an untouched float as it was written', async () => {
+      expect(await roundTrip('yaml', 'a: 10.\nb: +1.0\nc: .1e2\nd: 1E+3\ne: !!float 2.0\n')).toBe(
+        'a: 10.\nb: +1.0\nc: .1e2\nd: 1E+3\ne: 2.0\n',
+      );
+      expect(await roundTrip('json', '{"a": 1E+3, "b": 10.00, "c": -0.0}')).toBe(
+        '{\n  "a": 1E+3,\n  "b": 10.00,\n  "c": -0.0\n}\n',
+      );
+    });
+
+    test('keeps untouched floats in TOML as floats and integers as integers', async () => {
+      const toml =
+        'price = 10.0\ndiff = -3.0\nsize = 1e3\ncount = 11\nrate = 1.5\nlist = [ 2.0, 3 ]\n' +
+        'big = 2_000.0\ntitle = "Top 10"\n\n[meta]\nweight = 5.0\n';
+
+      expect(await roundTrip('toml', toml)).toBe(toml);
+      expect(
+        await roundTrip('toml', toml, (content) => {
+          content.price = 12;
+          content.list[0] = 4;
+        }),
+      ).toBe(toml.replace('10.0', '12').replace('2.0', '4'));
+    });
+
+    test('writes a number written both as a float and as an integer in TOML as it is', async () => {
+      expect(await roundTrip('toml', 'a = 10.0\nb = 10\nc = 2.0\nd = "2"\n')).toBe(
+        'a = 10\nb = 10\nc = 2.0\nd = "2"\n',
+      );
+      expect(await roundTrip('toml-frontmatter', '---\na = 10.0\n---\n\nBody\n')).toBe(
+        '---\na = 10.0\n---\n\nBody\n',
+      );
+    });
   });
 });

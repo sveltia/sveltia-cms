@@ -190,6 +190,27 @@ describe('Test getSortConfig()', async () => {
     });
   });
 
+  test('Decap CMS sortable_fields with objects', () => {
+    expect(
+      getSortConfig({
+        collection: {
+          ...collectionBase,
+          sortable_fields: [
+            'title',
+            { field: 'date', label: 'Publish date', default_sort: 'desc' },
+            { field: 'description' },
+          ],
+        },
+        isCommitAuthorAvailable: false,
+        isCommitDateAvailable: false,
+      }),
+    ).toStrictEqual({
+      keys: ['title', 'date', 'description'],
+      labels: { date: 'Publish date' },
+      default: { key: 'date', order: 'descending' },
+    });
+  });
+
   test('does not modify the configured sortable_fields', () => {
     const simpleFields = ['title'];
     const advancedFields = ['title'];
@@ -1081,6 +1102,15 @@ describe('Test getSortKeyType()', () => {
     expect(getSortKeyType({ key: 'commit_date', fieldConfig: undefined })).toBe(Date);
   });
 
+  test('does not take a field named after an `Object.prototype` member for a special key', () => {
+    const fieldConfig = { name: 'constructor', widget: 'string' };
+
+    expect(getSortKeyType({ key: 'constructor', fieldConfig })).toBe(String);
+    expect(
+      getSortKeyType({ key: 'valueOf', fieldConfig: { ...fieldConfig, name: 'valueOf' } }),
+    ).toBe(String);
+  });
+
   test('returns Boolean for boolean fields', () => {
     const booleanField = { name: 'published', widget: 'boolean' };
 
@@ -1326,6 +1356,36 @@ describe('Test sortKeys state', () => {
       { key: 'title', label: 'title' },
       { key: 'price', label: 'Price', type: 'number' },
       { key: 'code', label: 'Code' },
+    ]);
+
+    // Clean up
+    selectedCollection.current = undefined;
+  });
+
+  test('uses the labels given in the Decap CMS format', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    /** @type {Record<string, any>} */
+    const fields = {
+      title: { name: 'title', label: 'Title', widget: 'string' },
+      date: { name: 'date', label: 'Date', widget: 'datetime' },
+    };
+
+    vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+    allEntries.current = [];
+    selectedCollection.current = /** @type {any} */ ({
+      name: 'posts',
+      _type: 'entry',
+      folder: 'content/posts',
+      sortable_fields: ['title', { field: 'date', label: 'Publish date', default_sort: 'desc' }],
+      fields: Object.values(fields),
+      _i18n: { i18nEnabled: false },
+    });
+
+    expect(sortKeys.current).toEqual([
+      { key: 'title', label: 'Title' },
+      { key: 'date', label: 'Publish date' },
     ]);
 
     // Clean up

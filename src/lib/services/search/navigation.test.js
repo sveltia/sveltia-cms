@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { parseLocation } from '$lib/services/app/navigation';
 import { searchMode, searchTerms } from '$lib/services/search';
 
 import { isSearchResultsPath, isSearchRoute } from './navigation';
@@ -9,6 +10,15 @@ describe('isSearchRoute', () => {
     // Reset stores to initial state before each test
     searchMode.current = null;
     searchTerms.current = '';
+  });
+
+  it('should read back the terms from the URL the search input has encoded them in', () => {
+    ['.', '..', '%2E', 'a/../b', '50% off?#1'].forEach((terms) => {
+      const { path } = parseLocation(`https://example.com/#/search/${encodeURIComponent(terms)}`);
+
+      expect(isSearchRoute(path)).toBe(true);
+      expect(searchTerms.current).toBe(terms);
+    });
   });
 
   describe('route matching', () => {

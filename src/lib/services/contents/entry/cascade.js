@@ -30,11 +30,6 @@ import { getFieldLabel } from '$lib/services/contents/i18n/options';
  */
 
 /**
- * Matches the index suffix of a multi-value field’s item key path, e.g. `.1` in `tags.1`.
- */
-export const ITEM_INDEX_SUFFIX_REGEX = /\.\d+$/;
-
-/**
  * Remove some items from a multi-value field, which stores each of its values under its own index,
  * and renumber the rest, so that the remaining items are stored under consecutive indexes again.
  * @param {object} args Arguments.

@@ -14,7 +14,7 @@
   import { _ } from '@sveltia/i18n';
   import { TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { getContext, tick } from 'svelte';
+  import { tick } from 'svelte';
   import { flip } from 'svelte/animate';
 
   import RemoveButton from '$lib/components/common/remove-button.svelte';
@@ -22,6 +22,7 @@
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
+  import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import { isSingleItemList } from '$lib/services/contents/fields/list/helpers';
   import { getDirection } from '$lib/services/contents/i18n';
   import { focusAfterRemoval } from '$lib/services/utils/drag-sorting';
@@ -30,7 +31,7 @@
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { SimpleListField } from '$lib/types/public';
    */
 
@@ -40,8 +41,7 @@
    * @property {string[]} currentValue Field value.
    */
 
-  /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  const { valueStoreKey = 'currentValues' } = getFieldEditorContext();
   const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorProps & Props} */
@@ -191,13 +191,7 @@
   );
 </script>
 
-<div
-  role="none"
-  class="item-list"
-  bind:this={itemList}
-  ondragovercapture={sorter.onDragOver}
-  ondropcapture={sorter.onDrop}
->
+<div role="none" class="item-list" bind:this={itemList} {...sorter.listProps}>
   {#each sorter.displayOrder as index (rows.ids[index])}
     <div
       role="none"
@@ -211,9 +205,7 @@
           {index}
           itemCount={rows.values.length}
           disabled={!hasMultipleItems}
-          onGrab={() => sorter.grab(index)}
-          onRelease={sorter.release}
-          onMove={(to, action) => sorter.move(index, to, action)}
+          {...sorter.reorderControlProps(index)}
         />
       {/if}
       <TextInput

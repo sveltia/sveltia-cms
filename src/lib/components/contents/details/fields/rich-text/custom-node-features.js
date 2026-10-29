@@ -1,3 +1,5 @@
+import { $getSelection as getSelection } from 'lexical';
+
 import { createCustomNodeClass } from '$lib/components/contents/details/fields/rich-text/custom-node';
 import { createTransformer } from '$lib/services/contents/fields/rich-text/components/transformers';
 import { getOrCreate } from '$lib/services/utils/cache';
@@ -5,7 +7,7 @@ import { getOrCreate } from '$lib/services/utils/cache';
 /**
  * @import { LexicalNode } from 'lexical';
  * @import { Transformer } from '@lexical/markdown';
- * @import { EditorComponentDefinition } from '$lib/types/public';
+ * @import { ResolvedEditorComponentDefinition } from '$lib/types/private';
  */
 
 /**
@@ -27,7 +29,7 @@ export const featureCacheMap = new Map();
 /**
  * Dynamically create a custom {@link DecoratorNode} class and related features for the Lexical
  * editor to enable support for rich text editor components.
- * @param {EditorComponentDefinition} componentDef Component definition passed with the
+ * @param {ResolvedEditorComponentDefinition} componentDef Component definition passed with the
  * `CMS.registerEditorComponent()` API.
  * @returns {LexicalNodeFeatures} The {@link CustomNode} class, a method to create a new node, and
  * the transformer definition.
@@ -39,8 +41,23 @@ export const createLexicalNodeFeatures = (componentDef) => {
 
   return {
     node: CustomNode,
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    createNode: (props) => new CustomNode(props),
+    /**
+     * Create a new node. A pattern-based inline component with the `onInsert` option, created
+     * without data when it’s inserted from the toolbar, remembers the selected text it replaces,
+     * which `onInsert` receives. The function runs within the editor update that inserts the node,
+     * where the selection can still be read.
+     * @param {Record<string, any>} [props] Field properties.
+     * @returns {LexicalNode} Node.
+     */
+    createNode: (props) => {
+      const node = new CustomNode(props);
+
+      if (!props && componentDef.inlinePattern?.onInsert) {
+        node.__selectedText = getSelection()?.getTextContent() ?? '';
+      }
+
+      return node;
+    },
     transformer: createTransformer({ componentDef, CustomNode }),
   };
 };
@@ -51,7 +68,7 @@ export const createLexicalNodeFeatures = (componentDef) => {
 export class EditorComponent {
   /**
    * Create an `EditorComponent` instance.
-   * @param {EditorComponentDefinition} componentDef Component definition passed with the
+   * @param {ResolvedEditorComponentDefinition} componentDef Component definition passed with the
    * `CMS.registerEditorComponent()` API.
    */
   constructor(componentDef) {

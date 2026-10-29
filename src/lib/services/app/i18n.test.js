@@ -621,6 +621,54 @@ describe('i18n', () => {
       expect(appLocaleLoading.current).toBeUndefined();
     });
 
+    it('should keep the loading state of a locale that started loading later', async () => {
+      /** @type {Record<string, (value: any) => void>} */
+      const resolvers = {};
+
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(
+          (/** @type {string} */ url) =>
+            new Promise((resolve) => {
+              resolvers[url.includes('/ja.') ? 'ja' : 'other'] = resolve;
+            }),
+        ),
+      );
+
+      const { appLocaleLoading, initAppLocale } = await import('./i18n.js');
+
+      initAppLocale();
+
+      const loaders = Object.fromEntries(
+        /** @type {[string, () => Promise<any>][]} */ (mockRegister.mock.calls),
+      );
+
+      const otherLocale = Object.keys(loaders).find((locale) => locale !== 'ja');
+      const jaPromise = loaders.ja();
+
+      await vi.waitFor(() => {
+        expect(appLocaleLoading.current).toBe('ja');
+      });
+
+      const otherPromise = loaders[/** @type {string} */ (otherLocale)]();
+
+      await vi.waitFor(() => {
+        expect(appLocaleLoading.current).toBe(otherLocale);
+      });
+
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      resolvers.ja({ ok: true, json: () => Promise.resolve({}) });
+      await jaPromise;
+
+      expect(appLocaleLoading.current).toBe(otherLocale);
+
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      resolvers.other({ ok: true, json: () => Promise.resolve({}) });
+      await otherPromise;
+
+      expect(appLocaleLoading.current).toBeUndefined();
+    });
+
     it('should reset the loading state when the CDN request fails', async () => {
       vi.stubGlobal(
         'fetch',

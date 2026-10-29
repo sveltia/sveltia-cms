@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { isNumeric, toFixed } from './number';
+import { isNumeric, roundFloatError, toFixed } from './number';
 
 describe('Test isNumeric()', () => {
   test('returns true for single digit strings', () => {
@@ -51,6 +51,22 @@ describe('Test isNumeric()', () => {
   });
 });
 
+describe('roundFloatError()', () => {
+  test('should round a fraction to 15 significant digits', () => {
+    expect(roundFloatError(0.1 * 3)).toBe(0.3);
+    expect(roundFloatError(0.1 + 0.2)).toBe(0.3);
+    expect(roundFloatError(1 / 3)).toBe(0.333333333333333);
+    expect(roundFloatError(-8.7 * 1.15)).toBe(-10.005);
+  });
+
+  test('should keep an integer as is', () => {
+    expect(roundFloatError(2 ** 60 + 1)).toBe(2 ** 60 + 1);
+    expect(roundFloatError(1234567890123456)).toBe(1234567890123456);
+    expect(roundFloatError(42)).toBe(42);
+    expect(Object.is(roundFloatError(-0), -0)).toBe(true);
+  });
+});
+
 describe('toFixed', () => {
   test('should convert a number to a fixed decimal string with 2 decimal places', () => {
     expect(toFixed(123.456, 2)).toBe(123.46);
@@ -67,6 +83,35 @@ describe('toFixed', () => {
   test('should handle rounding correctly', () => {
     expect(toFixed(123.444, 2)).toBe(123.44);
     expect(toFixed(123.445, 2)).toBe(123.45);
+  });
+
+  test('should round without a floating-point error', () => {
+    expect(toFixed(1.005, 2)).toBe(1.01);
+    expect(toFixed(8.7 * 1.15, 2)).toBe(10.01);
+    expect(toFixed(0.1 + 0.2, 1)).toBe(0.3);
+    expect(toFixed(1.23e-7, 8)).toBe(1.2e-7);
+    expect(toFixed(1e21, 2)).toBe(1e21);
+  });
+
+  test('should keep every digit of a large integer', () => {
+    expect(toFixed(Number.MAX_SAFE_INTEGER, 0)).toBe(Number.MAX_SAFE_INTEGER);
+    expect(toFixed(-Number.MAX_SAFE_INTEGER, 2)).toBe(-Number.MAX_SAFE_INTEGER);
+  });
+
+  test('should round halves away from zero', () => {
+    expect(toFixed(2.5, 0)).toBe(3);
+    expect(toFixed(-2.5, 0)).toBe(-3);
+    expect(toFixed(-1.005, 2)).toBe(-1.01);
+  });
+
+  test('should round to tens, hundreds and so on with negative decimals', () => {
+    expect(toFixed(1250, -2)).toBe(1300);
+    expect(toFixed(-1250, -2)).toBe(-1300);
+  });
+
+  test('should return zero rather than negative zero', () => {
+    expect(toFixed(-0.001, 2)).toBe(0);
+    expect(toFixed(0, 2)).toBe(0);
   });
 
   test('should return NaN if the input is not a number', () => {

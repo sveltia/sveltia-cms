@@ -1161,7 +1161,7 @@ edit_slug_error:
   invalid: Слаг не може містити спеціальних символів, зокрема косих рисок і пробілів.
   duplicate: Цей слаг використовується для іншого запису.
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: Батьківська тека
 new_parent_folder: Нова тека

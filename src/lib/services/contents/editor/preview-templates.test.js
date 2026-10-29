@@ -12,11 +12,12 @@ import * as svelte from 'svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  createFieldPreviewMounter,
   createWidgetFor,
   createWidgetsFor,
   createWidgetsMap,
+  FieldWidget,
   getCollectionByName,
+  mountFieldPreview,
   preparePreviewTemplateProps,
 } from './preview-templates';
 
@@ -33,6 +34,7 @@ const {
   mockGetField,
   mockConvertEntryToMap,
   mockCreateElement,
+  mockUseLayoutEffect,
   mockBuildPreviewData,
 } = vi.hoisted(() => ({
   mockGetCollection: vi.fn(() => ({
@@ -42,6 +44,7 @@ const {
   mockGetField: vi.fn(() => ({ widget: 'text' })),
   mockConvertEntryToMap: vi.fn(() => ({})),
   mockCreateElement: vi.fn((tag, props) => ({ type: tag, ...props })),
+  mockUseLayoutEffect: vi.fn(),
   mockBuildPreviewData: vi.fn(() => ({
     entryMap: {},
     valueMap: {},
@@ -58,6 +61,13 @@ vi.mock('flat', () => ({
 vi.mock('react', () => ({
   createContext: vi.fn(() => ({})),
   createElement: mockCreateElement,
+  useLayoutEffect: mockUseLayoutEffect,
+  /**
+   * Create a ref object.
+   * @param {any} initialValue Initial value.
+   * @returns {{ current: any }} Ref.
+   */
+  useRef: (initialValue) => ({ current: initialValue }),
 }));
 
 vi.mock('svelte', () => {
@@ -148,22 +158,15 @@ describe('Preview Templates', () => {
     });
   });
 
-  describe('createFieldPreviewMounter', () => {
-    it('should return a mounter function', () => {
-      const mounter = createFieldPreviewMounter({ entryDraft: mockEntryDraft, locale: 'en' });
-
-      expect(typeof mounter).toBe('function');
-    });
-
+  describe('mountFieldPreview', () => {
     it('should provide the entry draft state to the mounted component as a context', () => {
       const entryDraft = { current: { collectionName: 'posts' } };
-      const mounter = createFieldPreviewMounter({ entryDraft, locale: 'en' });
       /** @type {any} */
-      const mockTarget = {};
+      const target = {};
       /** @type {any} */
       const fieldConfig = { name: 'title', widget: 'text' };
 
-      mounter(mockTarget, 'title', fieldConfig);
+      mountFieldPreview({ target, entryDraft, locale: 'en', keyPath: 'title', fieldConfig });
 
       expect(vi.mocked(svelte.mount)).toHaveBeenCalledTimes(1);
 
@@ -171,7 +174,7 @@ describe('Preview Templates', () => {
 
       // The component is mounted outside the Svelte component tree, so `getEntryDraftContext()` in
       // the component only works if the state is passed as a mount context
-      expect(options.target).toBe(mockTarget);
+      expect(options.target).toBe(target);
       expect(options.context).toBeInstanceOf(Map);
       expect(options.context.get('entry-draft')).toBe(entryDraft);
       expect(options.props).toEqual({
@@ -184,100 +187,95 @@ describe('Preview Templates', () => {
     });
   });
 
+  describe('FieldWidget', () => {
+    it('should mount the field preview into its div until the dependencies change', () => {
+      const component = { destroy: vi.fn() };
+      const entryDraft = { current: { collectionName: 'posts' } };
+      /** @type {any} */
+      const fieldConfig = { name: 'title', widget: 'text' };
+
+      vi.mocked(svelte.mount).mockReturnValue(component);
+
+      const element = /** @type {any} */ (
+        FieldWidget(
+          /** @type {any} */ ({ entryDraft, locale: 'en', keyPath: 'title', fieldConfig }),
+        )
+      );
+
+      expect(element.type).toBe('div');
+      expect(svelte.mount).not.toHaveBeenCalled();
+
+      const [effect, dependencies] = mockUseLayoutEffect.mock.calls[0];
+
+      // React only runs the effect again, mounting the preview again, when one of these changes
+      expect(dependencies).toEqual([entryDraft, 'en', 'title', fieldConfig]);
+
+      /** @type {any} */
+      const div = {};
+
+      element.ref.current = div;
+
+      const cleanup = effect();
+
+      expect(vi.mocked(svelte.mount).mock.calls[0][1].target).toBe(div);
+      expect(vi.mocked(svelte.mount).mock.calls[0][1].props.keyPath).toBe('title');
+      expect(svelte.unmount).not.toHaveBeenCalled();
+
+      cleanup();
+
+      expect(svelte.unmount).toHaveBeenCalledWith(component);
+    });
+  });
+
   describe('createWidgetFor', () => {
     /** @type {any} */
     const getFieldArgs = { collectionName: 'posts', valueMap: {} };
+    /** @type {any} */
+    const entryDraft = { current: { collectionName: 'posts' } };
 
     it('should return a widget factory function', () => {
-      const mockMountFieldPreview = /** @type {any} */ (vi.fn());
-      const widgetFor = createWidgetFor(mockMountFieldPreview, getFieldArgs);
+      const widgetFor = createWidgetFor({ entryDraft, locale: 'en', getFieldArgs });
 
       expect(typeof widgetFor).toBe('function');
     });
 
-    it('should create a React element with ref callback', () => {
-      const mockMountFieldPreview = vi.fn(() => ({ destroy: vi.fn() }));
-      const widgetFor = createWidgetFor(mockMountFieldPreview, getFieldArgs);
+    it('should create a field widget element', () => {
+      const widgetFor = createWidgetFor({ entryDraft, locale: 'en', getFieldArgs });
       const element = /** @type {any} */ (widgetFor('field.name'));
 
-      expect(element).toHaveProperty('type', 'div');
-      expect(element).toHaveProperty('ref');
-      expect(typeof element.ref).toBe('function');
+      expect(element).toEqual({
+        type: FieldWidget,
+        entryDraft,
+        locale: 'en',
+        keyPath: 'field.name',
+        fieldConfig: { widget: 'text' },
+      });
       expect(mockGetField).toHaveBeenCalledWith({ ...getFieldArgs, keyPath: 'field.name' });
+      expect(svelte.mount).not.toHaveBeenCalled();
+    });
+
+    it('should create elements of the same component each time the template renders', () => {
+      // The props are prepared again on every change to the entry. A new component, or a new ref
+      // callback, would make React mount the field preview again each time
+      const first = /** @type {any} */ (
+        createWidgetFor({ entryDraft, locale: 'en', getFieldArgs })('field.name')
+      );
+
+      const second = /** @type {any} */ (
+        createWidgetFor({ entryDraft, locale: 'en', getFieldArgs })('field.name')
+      );
+
+      expect(second.type).toBe(first.type);
+      expect(second).toEqual(first);
     });
 
     it('should return `null` for a key path without a field configuration', () => {
-      const mockMountFieldPreview = vi.fn();
-      const widgetFor = createWidgetFor(mockMountFieldPreview, getFieldArgs);
+      const widgetFor = createWidgetFor({ entryDraft, locale: 'en', getFieldArgs });
 
       mockGetField.mockReturnValueOnce(/** @type {any} */ (undefined));
 
       expect(widgetFor('missing')).toBeNull();
       expect(mockCreateElement).not.toHaveBeenCalled();
-    });
-
-    it('should mount and unmount components via ref callback', () => {
-      const mockComponent = { destroy: vi.fn() };
-      const mockMountFieldPreview = vi.fn(() => mockComponent);
-      /** @type {((element: HTMLElement | null) => void) | undefined} */
-      let capturedRefCallback;
-
-      mockCreateElement.mockReturnValue({ type: 'div', ref: null });
-
-      // Set up the mock to capture the ref callback
-      mockCreateElement.mockImplementationOnce((tag, props) => {
-        capturedRefCallback = props.ref;
-        return { type: tag, ref: props.ref };
-      });
-
-      const widgetFor = createWidgetFor(mockMountFieldPreview, getFieldArgs);
-
-      widgetFor('field.name');
-
-      expect(capturedRefCallback).toBeDefined();
-
-      // Mount by calling ref with an element
-      /** @type {any} */
-      const mockDiv = {};
-
-      // @ts-ignore
-      capturedRefCallback(mockDiv);
-
-      expect(mockMountFieldPreview).toHaveBeenCalledWith(mockDiv, 'field.name', {
-        widget: 'text',
-      });
-
-      // Unmount by calling ref with null
-      if (capturedRefCallback) {
-        capturedRefCallback(null);
-      }
-
-      expect(vi.mocked(svelte.unmount)).toHaveBeenCalledWith(mockComponent);
-    });
-
-    it('should handle ref callback when component is not set', () => {
-      const mockMountFieldPreview = vi.fn();
-      /** @type {((element: HTMLElement | null) => void) | undefined} */
-      let capturedRefCallback;
-
-      // Set up the mock to capture the ref callback
-      mockCreateElement.mockImplementationOnce((tag, props) => {
-        capturedRefCallback = props.ref;
-        return { type: tag, ref: props.ref };
-      });
-
-      const widgetFor = createWidgetFor(mockMountFieldPreview, getFieldArgs);
-
-      widgetFor('field.name');
-
-      expect(capturedRefCallback).toBeDefined();
-
-      // Call ref with null when component is not set
-      // This should not throw or cause issues
-      // @ts-ignore
-      capturedRefCallback(null);
-
-      expect(vi.mocked(svelte.unmount)).not.toHaveBeenCalled();
     });
   });
 
@@ -612,13 +610,6 @@ describe('Preview Templates', () => {
 
     it('should mount field previews for `widgetFor()` with the entry draft state', () => {
       const entryDraft = { current: { collectionName: 'posts' } };
-      /** @type {((element: HTMLElement | null) => void) | undefined} */
-      let capturedRefCallback;
-
-      mockCreateElement.mockImplementationOnce((tag, props) => {
-        capturedRefCallback = props.ref;
-        return { type: tag, ref: props.ref };
-      });
 
       const { widgetFor } = preparePreviewTemplateProps({
         entryDraft,
@@ -632,19 +623,11 @@ describe('Preview Templates', () => {
         locale: 'en',
       });
 
-      widgetFor('title');
+      const element = /** @type {any} */ (widgetFor('title'));
 
-      /** @type {any} */
-      const div = {};
-
-      capturedRefCallback?.(div);
-
-      expect(vi.mocked(svelte.mount)).toHaveBeenCalledTimes(1);
-
-      const [, options] = vi.mocked(svelte.mount).mock.calls[0];
-
-      expect(options.target).toBe(div);
-      expect(options.context.get('entry-draft')).toBe(entryDraft);
+      expect(element.type).toBe(FieldWidget);
+      expect(element.entryDraft).toBe(entryDraft);
+      expect(element.locale).toBe('en');
       expect(mockGetField).toHaveBeenCalledWith({
         collectionName: 'posts',
         fileName: undefined,

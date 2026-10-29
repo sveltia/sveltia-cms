@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import {
   createDraftTitleCodec,
+  parseRestFiles,
   PULL_REQUEST_DESCRIPTION,
 } from '$lib/services/backends/git/shared/pull-requests';
 
@@ -29,5 +30,39 @@ describe('createDraftTitleCodec', () => {
   test('adds the prefix only to a draft', () => {
     expect(format('Title', true)).toBe('Draft: Title');
     expect(format('Title', false)).toBe('Title');
+  });
+});
+
+describe('parseRestFiles', () => {
+  test('converts the REST files to workflow files with the previous path of a rename', () => {
+    expect(
+      parseRestFiles(
+        [
+          { filename: 'a.md', status: 'added', patch: '@@' },
+          { filename: 'b.md', status: 'removed' },
+          { filename: 'new.md', status: 'renamed', previous_filename: 'old.md' },
+        ],
+        { removedStatus: 'removed' },
+      ),
+    ).toEqual([
+      { path: 'a.md', sha: '', size: 0, deleted: false, previousPath: undefined },
+      { path: 'b.md', sha: '', size: 0, deleted: true, previousPath: undefined },
+      { path: 'new.md', sha: '', size: 0, deleted: false, previousPath: 'old.md' },
+    ]);
+  });
+
+  test('takes the service’s status for a removed file and an empty previous path as none', () => {
+    expect(
+      parseRestFiles(
+        [
+          { filename: 'a.md', status: 'deleted', previous_filename: '' },
+          { filename: 'b.md', status: 'removed', previous_filename: '' },
+        ],
+        { removedStatus: 'deleted' },
+      ),
+    ).toEqual([
+      { path: 'a.md', sha: '', size: 0, deleted: true, previousPath: undefined },
+      { path: 'b.md', sha: '', size: 0, deleted: false, previousPath: undefined },
+    ]);
   });
 });

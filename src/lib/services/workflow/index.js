@@ -18,6 +18,7 @@ import { getCollectionPublishModeOptions, isLastStage } from '$lib/services/work
  * Entry,
  * InternalCollection,
  * UnpublishedEntry,
+ * UnpublishedEntryProps,
  * WorkflowPullRequest,
  * } from '$lib/types/private';
  * @import { Collection } from '$lib/types/public';
@@ -98,6 +99,20 @@ export const getUnpublishedEntriesByCollection = (collectionName) =>
     : [];
 
 /**
+ * Get the new entries in the given collection that ride along in the pull request of an entry of
+ * another collection. See {@link UnpublishedEntryProps.companions}.
+ * @param {string} collectionName Collection name.
+ * @param {UnpublishedEntry[]} [entries] Unpublished entries to look in. Defaults to all of them.
+ * @returns {Entry[]} Entries.
+ */
+export const getCompanionEntries = (collectionName, entries = unpublishedEntries.current) =>
+  entries.flatMap(({ workflow }) =>
+    (workflow.companions ?? []).flatMap((companion) =>
+      companion.collectionName === collectionName ? [companion.entry] : [],
+    ),
+  );
+
+/**
  * Find the unpublished entry that matches the given collection name and entry sub path. This is
  * used to open the entry editor with the pull request’s version of the entry rather than the
  * published version.
@@ -147,6 +162,17 @@ export const getUnpublishedEntryBySlug = ({ collectionName, slug, entry }) => {
       getEntryPaths(unpublishedEntry, { includePrevious: true }).some((path) => paths.has(path)),
   );
 };
+
+/**
+ * Find the unpublished entry with the given ID in the store. The pull requests are read again from
+ * time to time, which can replace an entry while a card is being dragged or a confirmation dialog
+ * is open, or take it off the board altogether if its pull request has been merged or closed in the
+ * meantime; acting on a copy held since then would put stale content back.
+ * @param {string | undefined} id Entry ID, e.g. of the entry as it was when an action started.
+ * @returns {UnpublishedEntry | undefined} Current entry, or `undefined` if there’s none.
+ */
+export const getUnpublishedEntryById = (id) =>
+  id ? unpublishedEntries.current.find((entry) => entry.id === id) : undefined;
 
 /**
  * Find the unpublished entry that corresponds to the given workflow branch.

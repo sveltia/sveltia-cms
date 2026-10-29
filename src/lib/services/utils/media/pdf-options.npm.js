@@ -1,6 +1,12 @@
 import jbig2URL from 'pdfjs-dist/wasm/jbig2.wasm?url';
 import openjpegURL from 'pdfjs-dist/wasm/openjpeg.wasm?url';
 
+import { getOrCreateAsync } from '$lib/services/utils/cache';
+
+/**
+ * @import { PDFLoadingOptions } from '$lib/services/utils/media/pdf-options';
+ */
+
 /**
  * URLs of the WebAssembly image decoders bundled with the npm build, keyed with the file name the
  * PDF.js worker asks for: JPEG 2000 and JBIG2 images would otherwise be left out of a thumbnail.
@@ -34,26 +40,16 @@ const fetchWasm = async (fileName) => {
     throw new Error(`${fileName} isn’t bundled`);
   }
 
-  let promise = wasmCache.get(fileName);
-
-  if (!promise) {
-    promise = fetch(WASM_URLS[fileName]).then(async (response) => {
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${fileName}: ${response.status}`);
-      }
-
-      return new Uint8Array(await response.arrayBuffer());
-    });
-
-    promise.catch(() => {
-      wasmCache.delete(fileName);
-    });
-
-    wasmCache.set(fileName, promise);
-  }
-
   // PDF.js posts the bytes to the worker without transferring them, so the cache keeps its copy
-  return promise;
+  return getOrCreateAsync(wasmCache, fileName, async () => {
+    const response = await fetch(WASM_URLS[fileName]);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${fileName}: ${response.status}`);
+    }
+
+    return new Uint8Array(await response.arrayBuffer());
+  });
 };
 
 /**
@@ -85,8 +81,8 @@ export class BundledDataFactory {
  * as a module worker a consumer’s bundler picks up like any other, and handed to PDF.js through a
  * `PDFWorker`, which PDF.js doesn’t end when the loading task is destroyed; `dispose()` does.
  * @param {import('pdfjs-dist')} pdfjs PDF.js module.
- * @returns {{ options: Record<string, any>, dispose: () => void }} Options for `getDocument()`,
- * and a function to end the worker once the loading task has been destroyed.
+ * @returns {PDFLoadingOptions} Options for `getDocument()`, and a function to end the worker once
+ * the loading task has been destroyed.
  * @throws {Error} When PDF.js can’t take the worker, which is then ended.
  */
 export const createLoadingOptions = (pdfjs) => {

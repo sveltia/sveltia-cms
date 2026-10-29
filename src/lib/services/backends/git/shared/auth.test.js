@@ -6,8 +6,11 @@ import { cmsConfig } from '$lib/services/config';
 
 import {
   authorize,
+  cancelAuthorization,
   createAuthSecrets,
   finishClientSideAuth,
+  formatHandshakeMessage,
+  formatResultMessage,
   getTokens,
   handleAuthFlow,
   handleClientSideAuthPopup,
@@ -15,6 +18,7 @@ import {
   initClientSideAuth,
   initServerSideAuth,
   openPopup,
+  parseResultMessage,
   sendMessage,
   signInToBackend,
   signOut,
@@ -48,6 +52,69 @@ vi.mock('@sveltia/i18n', () => ({
   _: (key) => `Translated: ${key}`,
 }));
 
+/**
+ * Fake `BroadcastChannel` that, like a browser, delivers a message to every other open channel of
+ * the same name, only synchronously.
+ */
+class FakeBroadcastChannel {
+  /** @type {Set<FakeBroadcastChannel>} */
+  static channels = new Set();
+
+  /**
+   * Constructor.
+   * @param {string} name Channel name.
+   */
+  constructor(name) {
+    this.name = name;
+    /** @type {((event: { data: any }) => void) | null} */
+    this.onmessage = null;
+    FakeBroadcastChannel.channels.add(this);
+  }
+
+  /**
+   * Post a message to the other channels of the same name.
+   * @param {any} data Data.
+   */
+  postMessage(data) {
+    FakeBroadcastChannel.channels.forEach((channel) => {
+      if (channel !== this && channel.name === this.name) {
+        channel.onmessage?.({ data });
+      }
+    });
+  }
+
+  /**
+   * Close the channel.
+   */
+  close() {
+    FakeBroadcastChannel.channels.delete(this);
+  }
+}
+
+/**
+ * Get the names of the open channels.
+ * @returns {string[]} Names.
+ */
+const getOpenChannelNames = () => [...FakeBroadcastChannel.channels].map(({ name }) => name);
+
+/**
+ * Create a mock session storage backed by a `Map`.
+ * @returns {Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>} Storage.
+ */
+const createMockSessionStorage = () => {
+  const store = new Map();
+
+  return {
+    getItem: vi.fn((key) => store.get(key) ?? null),
+    setItem: vi.fn((key, value) => {
+      store.set(key, String(value));
+    }),
+    removeItem: vi.fn((key) => {
+      store.delete(key);
+    }),
+  };
+};
+
 describe('git/shared/auth', () => {
   /** @type {any} */
   let mockWindow;
@@ -63,6 +130,8 @@ describe('git/shared/auth', () => {
       removeEventListener: vi.fn(),
       location: { hostname: 'localhost', origin: 'https://localhost:3000', pathname: '/' },
       opener: { postMessage: vi.fn() },
+      sessionStorage: createMockSessionStorage(),
+      close: vi.fn(),
     };
 
     mockPopup = {
@@ -83,10 +152,15 @@ describe('git/shared/auth', () => {
     vi.mocked(LocalStorage.set).mockResolvedValue();
     vi.mocked(LocalStorage.get).mockResolvedValue({});
     vi.mocked(LocalStorage.delete).mockResolvedValue();
+
+    FakeBroadcastChannel.channels.clear();
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
+    cancelAuthorization.current = undefined;
   });
 
   afterEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
   describe('inAuthPopup store', () => {
@@ -337,6 +411,55 @@ describe('git/shared/auth', () => {
       vi.advanceTimersByTime(1000);
 
       await expect(authPromise).rejects.toThrow('Authentication aborted');
+
+      vi.useRealTimers();
+    });
+
+    it.each(['gitea', 'forgejo'])(
+      'should reject when popup is closed prematurely (%s)',
+      async (backendName) => {
+        vi.useFakeTimers();
+        mockPopup.closed = false;
+
+        const authPromise = authorize({
+          backendName,
+          authURL: 'https://localhost:3000/',
+          popup: mockPopup,
+        });
+
+        mockPopup.closed = true;
+        vi.advanceTimersByTime(1000);
+
+        await expect(authPromise).rejects.toThrow('Authentication aborted');
+
+        vi.useRealTimers();
+      },
+    );
+
+    it('should not treat a popup on the GitLab sign-in page as closed', async () => {
+      vi.useFakeTimers();
+      // GitLab’s `Cross-Origin-Opener-Policy` makes `closed` read `true` while the popup is open
+      mockPopup.closed = true;
+
+      const authPromise = authorize({
+        backendName: 'gitlab',
+        authURL: 'https://localhost:3000/',
+        popup: mockPopup,
+      });
+
+      vi.advanceTimersByTime(5000);
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: `authorization:gitlab:success:${JSON.stringify({ token: 'gitlab-token' })}`,
+        origin: 'https://localhost:3000',
+        source: mockPopup,
+      });
+
+      await expect(authPromise).resolves.toEqual({ token: 'gitlab-token' });
 
       vi.useRealTimers();
     });
@@ -1013,6 +1136,78 @@ describe('git/shared/auth', () => {
       expect(mockWindow.location.href).toBe('https://gitlab.com/oauth/authorize?params');
     });
 
+    it('should report a denied authorization to the opener', async () => {
+      vi.mocked(LocalStorage.get).mockResolvedValue({
+        csrfToken: 'test-csrf',
+        codeVerifier: 'test-verifier',
+        realAuthURL: 'https://gitlab.com/oauth/authorize?params',
+      });
+
+      mockWindow.location.search =
+        '?error=access_denied&error_description=The+user+denied+the+request&state=test-csrf';
+      mockWindow.location.href = '';
+
+      await handleClientSideAuthPopup({
+        backendName: 'gitlab',
+        apiConfig: { clientId: 'test-client', tokenURL: 'https://gitlab.com/oauth/token' },
+      });
+
+      // The authorization page isn’t shown again
+      expect(mockWindow.location.href).toBe('');
+      expect(LocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.auth');
+      expect(mockWindow.opener.postMessage).toHaveBeenCalledWith(
+        'authorizing:gitlab',
+        'https://localhost:3000',
+      );
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:gitlab',
+        origin: 'https://localhost:3000',
+        source: mockWindow.opener,
+      });
+
+      expect(mockWindow.opener.postMessage).toHaveBeenLastCalledWith(
+        `authorization:gitlab:error:${JSON.stringify({
+          provider: 'gitlab',
+          error: 'The user denied the request',
+          errorCode: 'AUTH_CODE_REQUEST_FAILED',
+        })}`,
+        'https://localhost:3000',
+      );
+    });
+
+    it('should report a failed authorization without a description', async () => {
+      mockWindow.location.search = '?error=server_error';
+
+      await handleClientSideAuthPopup({
+        backendName: 'gitea',
+        apiConfig: { clientId: 'test-client', tokenURL: 'https://gitea.com/login/oauth/token' },
+      });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: 'authorizing:gitea',
+        origin: 'https://localhost:3000',
+        source: mockWindow.opener,
+      });
+
+      expect(mockWindow.opener.postMessage).toHaveBeenLastCalledWith(
+        `authorization:gitea:error:${JSON.stringify({
+          provider: 'gitea',
+          error: 'server_error',
+          errorCode: 'AUTH_CODE_REQUEST_FAILED',
+        })}`,
+        'https://localhost:3000',
+      );
+    });
+
     it('should do nothing when no auth data is stored', async () => {
       vi.mocked(LocalStorage.get).mockResolvedValue(null);
 
@@ -1168,11 +1363,11 @@ describe('git/shared/auth', () => {
       });
     });
 
-    it('should handle Gitea PKCE auth flow', async () => {
+    it.each(['gitea', 'forgejo'])('should handle %s PKCE auth flow', async (name) => {
       mockWindow.open.mockReturnValue(mockPopup);
       cmsConfig.current = /** @type {any} */ ({
         backend: {
-          name: 'gitea',
+          name,
           site_domain: 'gitea.example.com',
         },
       });
@@ -1205,13 +1400,13 @@ describe('git/shared/auth', () => {
       expect(messageHandler).toBeDefined();
 
       messageHandler({
-        data: 'authorizing:gitea',
+        data: `authorizing:${name}`,
         origin: 'https://localhost:3000',
         source: mockPopup,
       });
 
       messageHandler({
-        data: `authorization:gitea:success:${JSON.stringify({
+        data: `authorization:${name}:success:${JSON.stringify({
           token: 'gitea-token',
           refreshToken: 'gitea-refresh-token',
         })}`,
@@ -1265,6 +1460,61 @@ describe('git/shared/auth', () => {
       const result = await handleAuthFlow({ auto: true, apiConfig });
 
       expect(result).toBeUndefined();
+    });
+
+    it('should start the PKCE flow when the CMS was opened from another origin', async () => {
+      mockWindow.opener = {
+        /**
+         * Reading a property of a cross-origin opener throws.
+         * @throws {DOMException} Always.
+         */
+        get origin() {
+          throw new DOMException(
+            'Blocked a frame from accessing a cross-origin frame',
+            'SecurityError',
+          );
+        },
+      };
+      mockWindow.name = '';
+      mockWindow.open.mockReturnValue(mockPopup);
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'gitea', site_domain: 'gitea.example.com' },
+      });
+
+      const apiConfig = {
+        clientId: 'gitea-client-id',
+        authScope: 'api',
+        authURL: 'https://gitea.example.com/login/oauth/authorize',
+        tokenURL: 'https://gitea.example.com/login/oauth/token',
+      };
+
+      const authPromise = handleAuthFlow({ auto: false, apiConfig });
+
+      await vi.waitFor(() => {
+        expect(mockWindow.addEventListener).toHaveBeenCalledWith(
+          'message',
+          expect.any(Function),
+          expect.any(Object),
+        );
+      });
+
+      expect(mockWindow.open).toHaveBeenCalledWith(
+        'https://localhost:3000/',
+        'auth',
+        expect.any(String),
+      );
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      messageHandler({
+        data: `authorization:gitea:success:${JSON.stringify({ token: 'gitea-token' })}`,
+        origin: 'https://localhost:3000',
+        source: mockPopup,
+      });
+
+      await expect(authPromise).resolves.toEqual({ token: 'gitea-token' });
     });
 
     it('should return undefined when in auth popup for Gitea', async () => {
@@ -1694,5 +1944,511 @@ describe('git/shared/auth', () => {
         expect.any(String),
       );
     });
+  });
+
+  describe('popup severed from its opener', () => {
+    // GitLab’s sign-in page is served with `Cross-Origin-Opener-Policy: same-origin`, so the popup
+    // comes back to the CMS without `window.opener` or `window.name`, and its result travels over a
+    // `BroadcastChannel` named after the flow’s `state` instead
+    const tokenMessage = `authorization:gitlab:success:${JSON.stringify({
+      provider: 'gitlab',
+      token: 'gitlab-token',
+      refreshToken: 'gitlab-refresh-token',
+    })}`;
+
+    /**
+     * Post a message on a channel, as the popup would.
+     * @param {string} name Channel name.
+     * @param {any} data Data.
+     */
+    const broadcast = (name, data) => {
+      const channel = new BroadcastChannel(name);
+
+      channel.postMessage(data);
+      channel.close();
+    };
+
+    /**
+     * Mock a successful token response.
+     */
+    const mockTokenResponse = () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        /**
+         * Mock JSON response.
+         * @returns {Promise<object>} Token response.
+         */
+        json: async () => ({
+          access_token: 'gitlab-token',
+          refresh_token: 'gitlab-refresh-token',
+        }),
+      });
+    };
+
+    const apiConfig = {
+      clientId: 'gitlab-client-id',
+      authScope: 'api',
+      authURL: 'https://gitlab.com/oauth/authorize',
+      tokenURL: 'https://gitlab.com/oauth/token',
+    };
+
+    describe('authorize', () => {
+      it('should resolve with the token sent over the flow’s channel', async () => {
+        const authPromise = authorize({
+          backendName: 'gitlab',
+          authURL: 'https://localhost:3000/',
+          popup: mockPopup,
+          state: 'test-csrf',
+        });
+
+        expect(getOpenChannelNames()).toEqual(['sveltia-cms.auth.test-csrf']);
+
+        broadcast('sveltia-cms.auth.test-csrf', tokenMessage);
+
+        await expect(authPromise).resolves.toEqual({
+          provider: 'gitlab',
+          token: 'gitlab-token',
+          refreshToken: 'gitlab-refresh-token',
+        });
+        expect(mockPopup.close).toHaveBeenCalled();
+        expect(getOpenChannelNames()).toEqual([]);
+        expect(cancelAuthorization.current).toBeUndefined();
+      });
+
+      it('should reject with the error sent over the flow’s channel', async () => {
+        const authPromise = authorize({
+          backendName: 'gitlab',
+          authURL: 'https://localhost:3000/',
+          popup: mockPopup,
+          state: 'test-csrf',
+        });
+
+        broadcast(
+          'sveltia-cms.auth.test-csrf',
+          `authorization:gitlab:error:${JSON.stringify({ error: 'Denied' })}`,
+        );
+
+        await expect(authPromise).rejects.toMatchObject({
+          message: 'Authentication failed',
+          cause: { message: 'Denied' },
+        });
+        expect(getOpenChannelNames()).toEqual([]);
+      });
+
+      it('should ignore a token sent for another flow’s state', async () => {
+        const authPromise = authorize({
+          backendName: 'gitlab',
+          authURL: 'https://localhost:3000/',
+          popup: mockPopup,
+          state: 'test-csrf',
+        });
+
+        const settled = vi.fn();
+
+        authPromise.then(settled, settled);
+
+        broadcast('sveltia-cms.auth.wrong-csrf', tokenMessage);
+        // Non-string data is not a result either
+        broadcast('sveltia-cms.auth.test-csrf', { token: 'injected-token' });
+        await Promise.resolve();
+
+        expect(settled).not.toHaveBeenCalled();
+        expect(getOpenChannelNames()).toEqual(['sveltia-cms.auth.test-csrf']);
+
+        cancelAuthorization.current();
+
+        await expect(authPromise).rejects.toMatchObject({ name: 'AbortError' });
+      });
+
+      it('should not listen on any channel without a state', async () => {
+        mockWindow.open.mockReturnValue(mockPopup);
+
+        const authPromise = authorize({
+          backendName: 'github',
+          authURL: 'https://github.com/login/oauth/authorize',
+        });
+
+        expect(getOpenChannelNames()).toEqual([]);
+
+        cancelAuthorization.current();
+
+        await expect(authPromise).rejects.toMatchObject({ name: 'AbortError' });
+      });
+
+      it('should let the user cancel a sign-in whose popup can’t be checked', async () => {
+        const authPromise = authorize({
+          backendName: 'gitlab',
+          authURL: 'https://localhost:3000/',
+          popup: mockPopup,
+          state: 'test-csrf',
+        });
+
+        expect(cancelAuthorization.current).toEqual(expect.any(Function));
+
+        cancelAuthorization.current();
+
+        await expect(authPromise).rejects.toMatchObject({
+          message: 'Authentication aborted',
+          name: 'AbortError',
+        });
+        expect(mockPopup.close).toHaveBeenCalled();
+        expect(cancelAuthorization.current).toBeUndefined();
+        expect(getOpenChannelNames()).toEqual([]);
+        // The message listener is detached too
+        expect(mockWindow.addEventListener.mock.calls[0][2].signal.aborted).toBe(true);
+      });
+
+      it('should clear the cancel function when the popup is found closed', async () => {
+        vi.useFakeTimers();
+
+        const authPromise = authorize({
+          backendName: 'github',
+          authURL: 'https://localhost:3000/',
+          popup: mockPopup,
+        });
+
+        mockPopup.closed = true;
+        vi.advanceTimersByTime(1000);
+
+        await expect(authPromise).rejects.toMatchObject({ name: 'AbortError' });
+        expect(cancelAuthorization.current).toBeUndefined();
+
+        vi.useRealTimers();
+      });
+    });
+
+    describe('initClientSideAuth', () => {
+      const args = {
+        backendName: 'gitlab',
+        clientId: 'test-client-id',
+        authURL: 'https://gitlab.com/oauth/authorize',
+        scope: 'api',
+      };
+
+      it('should accept the result over the channel named after the state', async () => {
+        mockWindow.open.mockReturnValue(mockPopup);
+
+        const authPromise = initClientSideAuth(args);
+
+        await vi.waitFor(() => {
+          expect(getOpenChannelNames()).toEqual(['sveltia-cms.auth.uuid123456789012']);
+        });
+
+        expect(LocalStorage.set).toHaveBeenCalledWith(
+          'sveltia-cms.auth',
+          expect.objectContaining({ csrfToken: 'uuid123456789012' }),
+        );
+
+        broadcast('sveltia-cms.auth.uuid123456789012', tokenMessage);
+
+        await expect(authPromise).resolves.toMatchObject({ token: 'gitlab-token' });
+        expect(LocalStorage.delete).not.toHaveBeenCalled();
+      });
+
+      it('should remove the stored secret when the sign-in is cancelled', async () => {
+        mockWindow.open.mockReturnValue(mockPopup);
+
+        const authPromise = initClientSideAuth(args);
+
+        await vi.waitFor(() => {
+          expect(cancelAuthorization.current).toEqual(expect.any(Function));
+        });
+
+        cancelAuthorization.current();
+
+        await expect(authPromise).rejects.toMatchObject({ name: 'AbortError' });
+        // A severed popup could otherwise still finish the flow the user has given up on
+        expect(LocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.auth');
+      });
+    });
+
+    describe('sendMessage', () => {
+      beforeEach(() => {
+        mockWindow.opener = null;
+      });
+
+      it('should send the result over the channel and close the popup', () => {
+        const receiver = new BroadcastChannel('sveltia-cms.auth.test-csrf');
+
+        receiver.onmessage = vi.fn();
+
+        sendMessage({
+          provider: 'gitlab',
+          state: 'test-csrf',
+          token: 'gitlab-token',
+          refreshToken: 'gitlab-refresh-token',
+        });
+
+        expect(receiver.onmessage).toHaveBeenCalledWith({ data: tokenMessage });
+        expect(mockWindow.close).toHaveBeenCalled();
+        expect(mockWindow.addEventListener).not.toHaveBeenCalled();
+        expect(getOpenChannelNames()).toEqual(['sveltia-cms.auth.test-csrf']);
+
+        receiver.close();
+      });
+
+      it('should do nothing without a state', () => {
+        sendMessage({ provider: 'gitlab', token: 'gitlab-token' });
+
+        expect(getOpenChannelNames()).toEqual([]);
+        expect(mockWindow.close).not.toHaveBeenCalled();
+        expect(mockWindow.addEventListener).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('handleClientSideAuthPopup', () => {
+      it('should remember the flow before leaving for the authorization site', async () => {
+        vi.mocked(LocalStorage.get).mockResolvedValue({
+          csrfToken: 'test-csrf',
+          codeVerifier: 'test-verifier',
+          realAuthURL: 'https://gitlab.com/oauth/authorize?params',
+        });
+
+        mockWindow.location.search = '';
+
+        await handleClientSideAuthPopup({ backendName: 'gitlab', apiConfig });
+
+        expect(mockWindow.sessionStorage.getItem('sveltia-cms.auth-popup')).toBe('test-csrf');
+        expect(mockWindow.location.href).toBe('https://gitlab.com/oauth/authorize?params');
+      });
+
+      it('should report a denied authorization over the channel', async () => {
+        mockWindow.opener = null;
+        mockWindow.sessionStorage.setItem('sveltia-cms.auth-popup', 'test-csrf');
+        mockWindow.location.search = '?error=access_denied&state=test-csrf';
+
+        const receiver = new BroadcastChannel('sveltia-cms.auth.test-csrf');
+
+        receiver.onmessage = vi.fn();
+
+        await handleClientSideAuthPopup({ backendName: 'gitlab', apiConfig });
+
+        expect(receiver.onmessage).toHaveBeenCalledWith({
+          data: `authorization:gitlab:error:${JSON.stringify({
+            provider: 'gitlab',
+            error: 'access_denied',
+            errorCode: 'AUTH_CODE_REQUEST_FAILED',
+          })}`,
+        });
+        expect(mockWindow.sessionStorage.getItem('sveltia-cms.auth-popup')).toBeNull();
+        expect(LocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.auth');
+
+        receiver.close();
+      });
+
+      it('should keep going when session storage is unavailable', async () => {
+        vi.mocked(LocalStorage.get).mockResolvedValue({
+          csrfToken: 'test-csrf',
+          realAuthURL: 'https://gitlab.com/oauth/authorize?params',
+        });
+
+        mockWindow.location.search = '';
+        mockWindow.sessionStorage.setItem.mockImplementation(() => {
+          throw new DOMException('Access denied', 'SecurityError');
+        });
+
+        await handleClientSideAuthPopup({ backendName: 'gitlab', apiConfig });
+
+        expect(mockWindow.location.href).toBe('https://gitlab.com/oauth/authorize?params');
+      });
+    });
+
+    describe('finishClientSideAuth', () => {
+      beforeEach(() => {
+        mockWindow.opener = null;
+        mockWindow.location.href = 'https://localhost:3000/admin?code=test-code&state=test-csrf';
+      });
+
+      it('should never send a token for a wrong state', async () => {
+        vi.mocked(LocalStorage.get).mockResolvedValue({
+          csrfToken: 'test-csrf',
+          codeVerifier: 'test-verifier',
+        });
+        mockTokenResponse();
+        mockWindow.sessionStorage.setItem('sveltia-cms.auth-popup', 'wrong-csrf');
+
+        const realFlow = new BroadcastChannel('sveltia-cms.auth.test-csrf');
+        const wrongFlow = new BroadcastChannel('sveltia-cms.auth.wrong-csrf');
+
+        realFlow.onmessage = vi.fn();
+        wrongFlow.onmessage = vi.fn();
+
+        await finishClientSideAuth({
+          backendName: 'gitlab',
+          apiConfig,
+          code: 'test-code',
+          state: 'wrong-csrf',
+        });
+
+        expect(fetch).not.toHaveBeenCalled();
+        expect(realFlow.onmessage).not.toHaveBeenCalled();
+        expect(wrongFlow.onmessage).toHaveBeenCalledWith({
+          data: `authorization:gitlab:error:${JSON.stringify({
+            provider: 'gitlab',
+            error: 'Translated: sign_in_error.CSRF_DETECTED',
+            errorCode: 'CSRF_DETECTED',
+          })}`,
+        });
+        expect(wrongFlow.onmessage.mock.calls[0][0].data).not.toContain('token');
+        expect(LocalStorage.delete).toHaveBeenCalledWith('sveltia-cms.auth');
+        expect(mockWindow.sessionStorage.getItem('sveltia-cms.auth-popup')).toBeNull();
+
+        realFlow.close();
+        wrongFlow.close();
+      });
+
+      it('should report a failed token request over the channel', async () => {
+        vi.mocked(LocalStorage.get).mockResolvedValue({
+          csrfToken: 'test-csrf',
+          codeVerifier: 'test-verifier',
+        });
+        global.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+
+        const receiver = new BroadcastChannel('sveltia-cms.auth.test-csrf');
+
+        receiver.onmessage = vi.fn();
+
+        await finishClientSideAuth({
+          backendName: 'gitlab',
+          apiConfig,
+          code: 'test-code',
+          state: 'test-csrf',
+        });
+
+        expect(receiver.onmessage.mock.calls[0][0].data).toContain('TOKEN_REQUEST_FAILED');
+
+        receiver.close();
+      });
+
+      it('should report a malformed token response over the channel', async () => {
+        vi.mocked(LocalStorage.get).mockResolvedValue({
+          csrfToken: 'test-csrf',
+          codeVerifier: 'test-verifier',
+        });
+        global.fetch = vi.fn().mockResolvedValue({
+          /**
+           * Mock JSON response.
+           * @throws {SyntaxError} Always.
+           */
+          json: async () => {
+            throw new SyntaxError('Unexpected token');
+          },
+        });
+
+        const receiver = new BroadcastChannel('sveltia-cms.auth.test-csrf');
+
+        receiver.onmessage = vi.fn();
+
+        await finishClientSideAuth({
+          backendName: 'gitlab',
+          apiConfig,
+          code: 'test-code',
+          state: 'test-csrf',
+        });
+
+        expect(receiver.onmessage.mock.calls[0][0].data).toContain('MALFORMED_RESPONSE');
+
+        receiver.close();
+      });
+    });
+
+    describe('handleAuthFlow', () => {
+      beforeEach(() => {
+        cmsConfig.current = /** @type {any} */ ({
+          backend: { name: 'gitlab', auth_type: 'pkce' },
+        });
+        inAuthPopup.current = false;
+        mockWindow.opener = null;
+        mockWindow.name = '';
+        mockWindow.location.href = 'https://localhost:3000/admin?code=test-code&state=test-csrf';
+        mockWindow.location.search = '?code=test-code&state=test-csrf';
+        vi.mocked(LocalStorage.get).mockResolvedValue({
+          csrfToken: 'test-csrf',
+          codeVerifier: 'test-verifier',
+        });
+        mockTokenResponse();
+      });
+
+      it('should finish the flow in a popup that remembers it, and send the token back', async () => {
+        mockWindow.sessionStorage.setItem('sveltia-cms.auth-popup', 'test-csrf');
+
+        const opener = authorize({
+          backendName: 'gitlab',
+          authURL: 'https://localhost:3000/admin',
+          popup: mockPopup,
+          state: 'test-csrf',
+        });
+
+        await expect(handleAuthFlow({ auto: true, apiConfig })).resolves.toBeUndefined();
+
+        expect(inAuthPopup.current).toBe(true);
+        await expect(opener).resolves.toEqual({
+          provider: 'gitlab',
+          token: 'gitlab-token',
+          refreshToken: 'gitlab-refresh-token',
+        });
+        expect(mockWindow.close).toHaveBeenCalled();
+        expect(mockWindow.sessionStorage.getItem('sveltia-cms.auth-popup')).toBeNull();
+      });
+
+      it('should not mistake a tab for the popup when the state doesn’t match', async () => {
+        mockWindow.sessionStorage.setItem('sveltia-cms.auth-popup', 'other-csrf');
+
+        await expect(handleAuthFlow({ auto: true, apiConfig })).resolves.toBeUndefined();
+
+        expect(inAuthPopup.current).toBe(false);
+        expect(fetch).not.toHaveBeenCalled();
+        expect(LocalStorage.delete).not.toHaveBeenCalled();
+      });
+
+      it('should not mistake a tab without a remembered flow for the popup', async () => {
+        await expect(handleAuthFlow({ auto: true, apiConfig })).resolves.toBeUndefined();
+
+        expect(inAuthPopup.current).toBe(false);
+        expect(fetch).not.toHaveBeenCalled();
+      });
+
+      it('should not mistake a tab without a state for the popup', async () => {
+        mockWindow.sessionStorage.setItem('sveltia-cms.auth-popup', 'test-csrf');
+        mockWindow.location.search = '?code=test-code';
+
+        await expect(handleAuthFlow({ auto: true, apiConfig })).resolves.toBeUndefined();
+
+        expect(inAuthPopup.current).toBe(false);
+        expect(fetch).not.toHaveBeenCalled();
+      });
+
+      it('should not treat the tab as the popup when session storage is unavailable', async () => {
+        mockWindow.sessionStorage.getItem.mockImplementation(() => {
+          throw new DOMException('Access denied', 'SecurityError');
+        });
+
+        await expect(handleAuthFlow({ auto: true, apiConfig })).resolves.toBeUndefined();
+
+        expect(inAuthPopup.current).toBe(false);
+        expect(fetch).not.toHaveBeenCalled();
+      });
+    });
+  });
+});
+
+describe('popup messages', () => {
+  it('should format the handshake message', () => {
+    expect(formatHandshakeMessage('github')).toBe('authorizing:github');
+  });
+
+  it('should format a result message, which parses back', () => {
+    const content = { provider: 'github', token: 'abc' };
+    const message = formatResultMessage('github', 'success', content);
+
+    expect(message).toBe('authorization:github:success:{"provider":"github","token":"abc"}');
+    expect(parseResultMessage('github', message)).toBe(JSON.stringify(content));
+    expect(parseResultMessage('github', formatResultMessage('github', 'error', {}))).toBe('{}');
+  });
+
+  it('should not parse a message for another backend, another status or without a result', () => {
+    expect(parseResultMessage('gitlab', 'authorization:github:success:{}')).toBeUndefined();
+    expect(parseResultMessage('github', 'authorization:github:pending:{}')).toBeUndefined();
+    expect(parseResultMessage('github', 'authorization:github:success:')).toBeUndefined();
+    expect(parseResultMessage('github', 'authorizing:github')).toBeUndefined();
   });
 });

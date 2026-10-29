@@ -122,6 +122,65 @@ describe('dependencies', () => {
       ).toEqual(['https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js']);
     });
 
+    it('should pin the chunk to the running version when the CMS was loaded from UNPKG without it', () => {
+      // The unversioned URL serves the latest release, which may be newer than a cached script
+      expect(
+        getChunkURLs('react-dom', 'https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js'),
+      ).toEqual(['https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js']);
+      expect(getChunkURLs('git', 'https://unpkg.com/@sveltia/cms@^9/dist/sveltia-cms.js')).toEqual([
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/git.js',
+      ]);
+    });
+
+    it('should pin the chunk to the running version on jsDelivr', () => {
+      expect(
+        getChunkURLs('react-dom', 'https://cdn.jsdelivr.net/npm/@sveltia/cms/dist/sveltia-cms.js'),
+      ).toEqual([
+        'https://cdn.jsdelivr.net/npm/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+      ]);
+      expect(
+        getChunkURLs(
+          'react-dom',
+          'https://cdn.jsdelivr.net/npm/@sveltia/cms@latest/dist/sveltia-cms.js',
+        ),
+      ).toEqual([
+        'https://cdn.jsdelivr.net/npm/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+      ]);
+      expect(
+        getChunkURLs(
+          'react-dom',
+          'https://cdn.jsdelivr.net/npm/@sveltia/cms@9.9.9/dist/sveltia-cms.js',
+        ),
+      ).toEqual([
+        'https://cdn.jsdelivr.net/npm/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+      ]);
+    });
+
+    it('should keep the host of a path starting with two slashes', () => {
+      expect(
+        getChunkURLs('git', 'https://example.com//evil.example/@sveltia/cms@latest/dist/cms.js'),
+      ).toEqual([
+        'https://example.com//evil.example/@sveltia/cms@9.9.9/dist/chunks/git.js',
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/git.js',
+      ]);
+    });
+
+    it('should keep a self-hosted copy of the package as it is', () => {
+      // No version in the path doesn’t mean the latest release outside a CDN
+      expect(
+        getChunkURLs(
+          'react-dom',
+          'https://example.com/node_modules/@sveltia/cms/dist/sveltia-cms.js',
+        ),
+      ).toEqual([
+        'https://example.com/node_modules/@sveltia/cms/dist/chunks/react-dom.js',
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+      ]);
+    });
+
     it('should only have UNPKG when the script’s URL is unknown', () => {
       // An empty base, as the IIFE build has when given `type="module"`
       expect(getChunkURLs('react-dom', '')).toEqual([

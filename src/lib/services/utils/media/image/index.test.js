@@ -50,6 +50,10 @@ describe('Image Constants', () => {
     expect(RASTER_IMAGE_EXTENSION_REGEX.test('test.heif')).toBe(true);
     expect(RASTER_IMAGE_EXTENSION_REGEX.test('test.svg')).toBe(false);
     expect(RASTER_IMAGE_EXTENSION_REGEX.test('test.txt')).toBe(false);
+    // The extension has to follow a dot, not any word boundary
+    expect(RASTER_IMAGE_EXTENSION_REGEX.test('logo-png')).toBe(false);
+    expect(RASTER_IMAGE_EXTENSION_REGEX.test('png')).toBe(false);
+    expect('logo.png'.replace(RASTER_IMAGE_EXTENSION_REGEX, '')).toBe('logo');
   });
 
   test('VECTOR_IMAGE_FORMATS should contain expected formats', () => {
@@ -64,6 +68,7 @@ describe('Image Constants', () => {
     expect(VECTOR_IMAGE_EXTENSION_REGEX.test('test.svg')).toBe(true);
     expect(VECTOR_IMAGE_EXTENSION_REGEX.test('test.png')).toBe(false);
     expect(VECTOR_IMAGE_EXTENSION_REGEX.test('test.txt')).toBe(false);
+    expect(VECTOR_IMAGE_EXTENSION_REGEX.test('logo-svg')).toBe(false);
   });
 
   test('SUPPORTED_IMAGE_FORMATS should include both raster and vector formats', () => {

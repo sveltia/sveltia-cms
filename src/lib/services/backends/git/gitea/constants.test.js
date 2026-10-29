@@ -3,9 +3,13 @@ import { describe, expect, test } from 'vitest';
 import {
   BACKEND_LABEL,
   BACKEND_NAME,
+  BACKEND_NAMES,
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
+  FORGEJO_BACKEND_LABEL,
+  FORGEJO_BACKEND_NAME,
+  isGiteaBackendName,
   MIN_FORGEJO_VERSION,
   MIN_GITEA_VERSION,
 } from '$lib/services/backends/git/gitea/constants';
@@ -17,6 +21,25 @@ describe('Gitea constants', () => {
 
   test('exports correct backend label', () => {
     expect(BACKEND_LABEL).toBe('Gitea / Forgejo');
+  });
+
+  test('exports correct Forgejo backend name and label', () => {
+    expect(FORGEJO_BACKEND_NAME).toBe('forgejo');
+    expect(FORGEJO_BACKEND_LABEL).toBe('Forgejo');
+  });
+
+  test.each([
+    ['gitea', true],
+    ['forgejo', true],
+    ['github', false],
+    ['', false],
+    [undefined, false],
+  ])('tells whether %j is served by the Gitea/Forgejo backend', (name, expected) => {
+    expect(isGiteaBackendName(name)).toBe(expected);
+  });
+
+  test('exports both backend names', () => {
+    expect(BACKEND_NAMES).toEqual(['gitea', 'forgejo']);
   });
 
   test('exports correct default API root', () => {

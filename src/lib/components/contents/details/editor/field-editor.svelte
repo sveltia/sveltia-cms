@@ -1,7 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Alert, Menu, MenuButton, Spacer } from '@sveltia/ui';
-  import { getContext, setContext } from 'svelte';
 
   import ErrorBoundary from '$lib/components/common/error-boundary.svelte';
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
@@ -17,7 +16,11 @@
   import { canResetField, resetField } from '$lib/services/contents/draft/update/reset';
   import { isFieldChanged, revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
+  import {
+    getFieldEditorContext,
+    isInEditorComponent,
+    setFieldEditorContext,
+  } from '$lib/services/contents/editor/field-context';
   import {
     getEditorFieldConfig,
     getFieldEditorFlags,
@@ -53,8 +56,7 @@
    * @import { CustomField, Field, FieldKeyPath } from '$lib/types/public';
    */
 
-  /** @type {FieldEditorContext} */
-  const parent = getContext('field-editor') ?? {};
+  const parent = getFieldEditorContext();
 
   /**
    * @typedef {object} Props
@@ -118,17 +120,6 @@
 
   /** @type {{ current: Component | undefined }} */
   const extraHint = createRawState();
-
-  setContext(
-    'field-editor',
-    // svelte-ignore state_referenced_locally
-    /** @type {FieldEditorContext} */ ({
-      fieldContext,
-      parentComponentNames: [...(parent.parentComponentNames ?? []), componentName].filter(Boolean),
-      extraHint,
-      valueStoreKey,
-    }),
-  );
 
   const inEditorComponent = $derived(isInEditorComponent(valueStoreKey));
   const { widget: fieldType = 'string' } = $derived(fieldConfig);
@@ -207,15 +198,34 @@
   );
   /* v8 ignore stop */
   const autoSet = $derived(autoNow || autoIncrement);
-  const { hidden, readonly } = $derived(
+  const { hidden, readonly, subfieldsReadonly } = $derived(
     getFieldEditorFlags({
       fieldConfig,
       autoSet,
       locked,
       isDuplicated,
       isNew: !!entryDraft.current?.isNew,
+      parentReadonly: !!parent.readonly,
     }),
   );
+
+  setFieldEditorContext(
+    // svelte-ignore state_referenced_locally
+    /** @type {FieldEditorContext} */ ({
+      fieldContext,
+      parentComponentNames: [...(parent.parentComponentNames ?? []), componentName].filter(Boolean),
+      extraHint,
+      valueStoreKey,
+      /**
+       * Get whether the subfields can’t be edited because this field can’t be.
+       * @returns {boolean} Result.
+       */
+      get readonly() {
+        return subfieldsReadonly;
+      },
+    }),
+  );
+
   // A field can be restored to its default value or cleared, unless it can’t be edited or its keys
   // follow the default locale, as with a KeyValue field using the `duplicate_keys` i18n strategy
   const canReset = $derived(!inEditorComponent && !readonly && !areKeysDuplicated);

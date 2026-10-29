@@ -83,6 +83,25 @@ describe('AssetPreview', () => {
       .toBe(true);
   });
 
+  test('shows a lazily loaded asset and its thumbnail once they’re in view', async () => {
+    const file = new File([PNG_BYTES], 'lazy.png', { type: 'image/png' });
+    const asset = createMockAsset({ name: 'lazy.png', file, asset: { unsaved: true } });
+    // The full-size image, then a thumbnail, which is looked up once it has been in view a moment
+    const { container } = await render(AssetPreview, { kind: 'image', asset, dissolve: false });
+
+    const { container: tileContainer } = await render(AssetPreview, {
+      kind: 'image',
+      asset,
+      variant: 'tile',
+      dissolve: false,
+    });
+
+    await expect.poll(() => container.querySelector('img')?.getAttribute('src')).toMatch(/^blob:/);
+    await expect
+      .poll(() => tileContainer.querySelector('img')?.getAttribute('src'))
+      .toMatch(/^blob:/);
+  });
+
   test('shows a fallback icon when the image fails to load', async () => {
     const onError = vi.fn();
 

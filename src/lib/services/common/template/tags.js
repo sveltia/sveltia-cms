@@ -1,4 +1,21 @@
-import { TEMPLATE_TAG_REGEX } from '$lib/services/common/template/constants';
+import { TAG_PLACEHOLDER, TEMPLATE_TAG_REGEX } from '$lib/services/common/template/constants';
+
+/**
+ * Get the closest character before or after the given position that isn’t whitespace.
+ * @param {string} str String.
+ * @param {number} index Position to start from, excluded.
+ * @param {-1 | 1} step `-1` to look backward, `1` to look forward.
+ * @returns {string} Character, or an empty string if there is none.
+ */
+const getAdjacentChar = (str, index, step) => {
+  let cursor = index + step;
+
+  while (/\s/.test(str[cursor] ?? '')) {
+    cursor += step;
+  }
+
+  return str[cursor] ?? '';
+};
 
 /**
  * Replace template tags in a string while leaving nested template tags inside transformation
@@ -29,30 +46,26 @@ export const replaceTemplateTags = (str, replacer) => {
       const char = str[cursor];
       const nextChar = str[cursor + 1];
 
-      if (char === "'" && !quoteState) {
-        quoteState = true;
-      } else if (char === "'" && quoteState) {
-        quoteState = false;
+      // Like `splitTransformations()`, a quote only opens a transformation argument after `(` or
+      // `,`, and only closes it before `,` or `)`, so an apostrophe, as in `default('Don't')`,
+      // doesn’t throw off the parsing
+      if (char === "'") {
+        if (!quoteState && ['(', ','].includes(getAdjacentChar(str, cursor, -1))) {
+          quoteState = true;
+        } else if (quoteState && [',', ')'].includes(getAdjacentChar(str, cursor, 1))) {
+          quoteState = false;
+        }
       }
 
       if (!quoteState && char === '}' && nextChar === '}') {
         const closeIndex = cursor;
-        const hasLeadingQuote = str[openIndex - 1] === "'";
-        const hasTrailingQuote = str[closeIndex + 2] === "'";
-        const openingDelimiter = str[openIndex - 2];
-        const closingDelimiter = str[closeIndex + 3];
         const placeholder = str.slice(openIndex + 2, closeIndex);
 
-        /* v8 ignore next */
-        const isNestedTransformationArgument =
-          hasLeadingQuote &&
-          hasTrailingQuote &&
-          ['(', ',', '[', '|'].includes(openingDelimiter ?? '') &&
-          [')', ',', ']'].includes(closingDelimiter ?? '');
-
+        // A tag nested in a transformation argument, as in `default('{{slug}}')`, never gets here:
+        // it’s inside the quotes the outer tag is scanned through, so it’s kept as part of that
+        // tag. A quoted tag found here is in the literal text, e.g. `('{{nickname}}')`, and is
+        // replaced like any other
         if (!placeholder) {
-          result += str.slice(openIndex, closeIndex + 2);
-        } else if (isNestedTransformationArgument) {
           result += str.slice(openIndex, closeIndex + 2);
         } else {
           result += replacer(str.slice(openIndex, closeIndex + 2), placeholder);
@@ -72,6 +85,28 @@ export const replaceTemplateTags = (str, replacer) => {
   }
 
   return result;
+};
+
+/**
+ * Split a template into the contents of its template tags and the literal text around them, finding
+ * the tags like {@link replaceTemplateTags} does.
+ * @param {string} str The string containing template tags.
+ * @returns {{ tags: string[], literals: string[] }} Content of each tag in the order they appear,
+ * e.g. `fields.title | upper` for `{{fields.title | upper}}`, and the literal text before each tag
+ * followed by the trailing text, so there is one more literal than tags. Joining the literals with
+ * `TAG_PLACEHOLDER` gives the template with each tag replaced by the placeholder.
+ */
+export const splitTemplateTags = (str) => {
+  /** @type {string[]} */
+  const tags = [];
+
+  const literals = replaceTemplateTags(str, (_match, placeholder) => {
+    tags.push(placeholder);
+
+    return TAG_PLACEHOLDER;
+  }).split(TAG_PLACEHOLDER);
+
+  return { tags, literals };
 };
 
 /**

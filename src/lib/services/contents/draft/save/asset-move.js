@@ -17,7 +17,7 @@ import { getEntryAssetVersion } from '$lib/services/workflow/assets';
  * @param {Entry} args.savingEntry Same entry with its new paths.
  * @returns {Map<string, string>} Key is the old folder path, value is the new one.
  */
-const getMovedFolders = ({ collection, originalEntry, savingEntry }) => {
+export const getMovedFolders = ({ collection, originalEntry, savingEntry }) => {
   /** @type {Map<string, string>} */
   const movedFolders = new Map();
 

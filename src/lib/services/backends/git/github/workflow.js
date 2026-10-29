@@ -1,5 +1,4 @@
-import { sleep } from '@sveltia/utils/misc';
-
+import { mergeRefusedPullRequest } from '$lib/services/backends/git/github/auto-merge';
 import { commitChanges } from '$lib/services/backends/git/github/commits';
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
@@ -24,20 +23,24 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
 import {
-  getMovedHeadMergeState,
+  createBranchGoneError,
   getParentDirs,
   isSquashMergeEnabled,
-  openWorkflowPullRequest,
+  resolveMergeState,
+  saveWorkflowBranch,
   toChangedFilesWithModes,
   updateLabelledStatus,
 } from '$lib/services/backends/git/shared/workflow';
+import { user } from '$lib/services/user/account.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
+ * CommitOptions,
  * CommitResults,
+ * FileChange,
  * WorkflowPullRequest,
  * WorkflowSaveOptions,
  * WorkflowChangedFile,
@@ -466,59 +469,107 @@ export const updateStatus = (pullRequest, status) =>
   updateLabelledStatus(pullRequest, status, { updateForkStatus, updateLabels, updateDraftState });
 
 /**
+ * Approve the pull request on behalf of the signed-in user, pinned to the head commit the entry was
+ * reviewed at.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @see https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request
+ */
+export const approve = async (pullRequest) => {
+  const { owner, repo } = repository;
+
+  await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`, {
+    method: 'POST',
+    body: { event: 'APPROVE', commit_id: pullRequest.headSHA },
+  });
+};
+
+/**
+ * Message a review is dismissed with when the entry is moved back from the ready stage.
+ */
+const WITHDRAWAL_MESSAGE = 'The entry is no longer ready to publish.';
+
+/**
+ * Withdraw the signed-in user’s approval of the pull request. A submitted review can’t be deleted
+ * on GitHub, so it’s dismissed instead, which a branch protection rule may restrict to some users.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @see https://docs.github.com/en/rest/pulls/reviews#list-reviews-for-a-pull-request
+ * @see https://docs.github.com/en/rest/pulls/reviews#dismiss-a-review-for-a-pull-request
+ */
+export const withdrawApproval = async (pullRequest) => {
+  const { owner, repo } = repository;
+  const path = `/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`;
+  const reviews = /** @type {Record<string, any>[]} */ (await fetchAPI(`${path}?per_page=100`));
+
+  await Promise.all(
+    reviews
+      .filter(
+        ({ state, user: reviewer }) =>
+          state === 'APPROVED' && reviewer?.login === user.account?.login,
+      )
+      .map(({ id }) =>
+        fetchAPI(`${path}/${id}/dismissals`, {
+          method: 'PUT',
+          body: { message: WITHDRAWAL_MESSAGE, event: 'DISMISS' },
+        }),
+      ),
+  );
+};
+
+/**
+ * Commit the given changes on a workflow branch that no pull request is known for, creating the
+ * branch from the configured one first.
+ * @param {FileChange[]} changes Changes to be committed.
+ * @param {CommitOptions} options Commit options, with the workflow branch.
+ * @returns {Promise<CommitResults>} Commit results.
+ * @throws {Error} When the branch exists and a pull request is open from it.
+ */
+const commitToNewBranch = async (changes, options) => {
+  const { headOid } = await createBranch(/** @type {string} */ (options.branch));
+
+  return commitChanges(changes, { ...options, headOid });
+};
+
+/**
+ * Commit the given changes onto the branch of an existing pull request, on top of the commit the
+ * entry was loaded or saved at, which the conflict check has just compared with the branch, rather
+ * than whatever the branch points at by the time the commit is made. A commit pushed in between
+ * makes GitHub refuse the save, instead of being taken along unseen and vouched for by the head
+ * recorded afterwards.
+ * @param {FileChange[]} changes Changes to be committed.
+ * @param {CommitOptions} options Commit options, with the workflow branch.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @returns {Promise<CommitResults>} Commit results.
+ */
+const commitToExistingBranch = async (changes, options, pullRequest) => {
+  const { branch = '' } = options;
+
+  try {
+    return await commitChanges(changes, { ...options, headOid: pullRequest.headSHA });
+  } catch (ex) {
+    // The branch can have gone, which GitHub reports as a ref it can’t resolve. A lookup that
+    // fails says nothing about the branch, so GitHub’s error is passed on then
+    const branchGone = await fetchBranchHead(branch).then(
+      (head) => head === undefined,
+      () => false,
+    );
+
+    if (branchGone) {
+      throw createBranchGoneError(branch, getWorkflowRepository());
+    }
+
+    throw ex;
+  }
+};
+
+/**
  * Commit the given changes on the workflow branch, creating the branch and the pull request if they
  * don’t exist yet.
  * @param {WorkflowSaveOptions} args Arguments.
  * @returns {Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} Commit results
  * and the new or updated pull request.
  */
-export const savePullRequest = async ({ changes, options, branch, title, status, pullRequest }) => {
-  // A save onto an existing pull request goes on top of the commit the entry was loaded or saved
-  // at, which the conflict check has just compared with the branch, rather than whatever the branch
-  // points at by the time the commit is made. A commit pushed in between makes GitHub refuse the
-  // save, instead of being taken along unseen and vouched for by the head recorded afterwards
-  const { headOid } = pullRequest ? { headOid: pullRequest.headSHA } : await createBranch(branch);
-  /** @type {CommitResults} */
-  let commit;
-
-  try {
-    commit = await commitChanges(changes, { ...options, branch, headOid });
-  } catch (ex) {
-    // The branch can have gone, e.g. with a pull request merged or closed on GitHub, which is
-    // worth saying in words rather than with GitHub’s message about a ref it can’t resolve. A
-    // lookup that fails says nothing about the branch, so GitHub’s error is passed on then
-    const branchGone =
-      !!pullRequest &&
-      (await fetchBranchHead(branch).then(
-        (head) => head === undefined,
-        () => false,
-      ));
-
-    if (branchGone) {
-      throw createLocalizedError('Failed to save the changes.', 'branch_not_found', {
-        repo: getWorkflowRepository().repo,
-        branch,
-      });
-    }
-
-    throw ex;
-  }
-
-  if (pullRequest) {
-    return { commit, pullRequest };
-  }
-
-  return {
-    commit,
-    pullRequest: await openWorkflowPullRequest({
-      commit,
-      branch,
-      title,
-      status,
-      createPullRequest,
-    }),
-  };
-};
+export const savePullRequest = async (args) =>
+  saveWorkflowBranch(args, { commitToNewBranch, commitToExistingBranch, createPullRequest });
 
 /**
  * Maximum number of files the comparison API lists. A comparison that reaches it may have left
@@ -610,32 +661,33 @@ export const fetchMergeState = async (pullRequest) => {
     base?.repo?.full_name?.toLowerCase() === fullName &&
     head?.repo?.full_name?.toLowerCase() === fullName;
 
-  if (!headSHA || !onConfiguredBranches) {
-    return { headSHA, onConfiguredBranches: false, files: [], complete: false };
-  }
-
-  const movedHeadState = getMovedHeadMergeState(pullRequest, headSHA);
-
-  if (movedHeadState) {
-    return movedHeadState;
-  }
-
-  const encodedBranch = encodePathSegments(/** @type {string} */ (branch));
-
-  const { files = [] } = /** @type {{ files?: Record<string, any>[] }} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/compare/${encodedBranch}...${headSHA}`)
-  );
-
-  return {
+  return resolveMergeState({
+    pullRequest,
     headSHA,
     onConfiguredBranches,
-    files: await toChangedFilesWithModes(files, {
-      statusMap: REST_FILE_STATUSES,
-      headSHA,
-      fetchFileModes,
-    }),
-    complete: files.length < MAX_COMPARE_FILES,
-  };
+    /**
+     * List the files the head commit changes from the configured branch.
+     * @param {string} sha Head commit.
+     * @returns {Promise<{ files: WorkflowChangedFile[], complete: boolean }>} Files, and whether
+     * the comparison listed them all.
+     */
+    listChangedFiles: async (sha) => {
+      const encodedBranch = encodePathSegments(/** @type {string} */ (branch));
+
+      const { files = [] } = /** @type {{ files?: Record<string, any>[] }} */ (
+        await fetchAPI(`/repos/${owner}/${repo}/compare/${encodedBranch}...${sha}`)
+      );
+
+      return {
+        files: await toChangedFilesWithModes(files, {
+          statusMap: REST_FILE_STATUSES,
+          headSHA: sha,
+          fetchFileModes,
+        }),
+        complete: files.length < MAX_COMPARE_FILES,
+      };
+    },
+  });
 };
 
 /**
@@ -668,254 +720,6 @@ export const fetchUnchangedPaths = async ({ headSHA, paths }) => {
 };
 
 /**
- * Rollup states of a commit’s checks under which a pull request set to auto-merge is still expected
- * to merge on its own: a check is running, or hasn’t reported yet.
- * @see https://docs.github.com/en/graphql/reference/enums#statusstate
- */
-const PENDING_CHECK_STATES = ['PENDING', 'EXPECTED'];
-/**
- * Review decisions that stop a pull request from being merged whatever its checks say, so
- * auto-merge would wait for a review rather than for the checks.
- * @see https://docs.github.com/en/graphql/reference/enums#pullrequestreviewdecision
- */
-const BLOCKING_REVIEW_DECISIONS = ['REVIEW_REQUIRED', 'CHANGES_REQUESTED'];
-/**
- * How often, and for how long at most, a pull request set to auto-merge is read while GitHub waits
- * for its required checks. A check takes minutes, so the reads are spaced out. The cap is a safety
- * net for a merge that never lands, e.g. one waiting for a check that never reports.
- */
-const AUTO_MERGE_POLL = { interval: 10000, maxDuration: 60 * 60 * 1000 };
-
-/**
- * Query to fetch what tells a pull request GitHub can merge once its required checks pass from one
- * it won’t merge at all.
- * @see https://docs.github.com/en/graphql/reference/objects#pullrequest
- */
-const FETCH_MERGE_READINESS_QUERY = `
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      pullRequest(number: $number) {
-        id
-        state
-        merged
-        mergeStateStatus
-        reviewDecision
-        viewerCanEnableAutoMerge
-        autoMergeRequest {
-          enabledAt
-        }
-        commits(last: 1) {
-          nodes {
-            commit {
-              statusCheckRollup {
-                state
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-const ENABLE_AUTO_MERGE_MUTATION = `
-  mutation($input: EnablePullRequestAutoMergeInput!) {
-    enablePullRequestAutoMerge(input: $input) {
-      clientMutationId
-    }
-  }
-`;
-
-const DISABLE_AUTO_MERGE_MUTATION = `
-  mutation($input: DisablePullRequestAutoMergeInput!) {
-    disablePullRequestAutoMerge(input: $input) {
-      clientMutationId
-    }
-  }
-`;
-
-/**
- * Read the pull request’s merge state over the GraphQL API, which, unlike the REST API, tells a
- * required check still running from any other reason GitHub has to refuse a merge.
- * @param {WorkflowPullRequest} pullRequest Pull request.
- * @returns {Promise<Record<string, any> | undefined>} Pull request node, with the rollup state of
- * its head commit’s checks as `checkState`, or `undefined` if it’s not found.
- */
-const fetchMergeReadiness = async (pullRequest) => {
-  const { owner, repo } = repository;
-
-  const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
-    await fetchGraphQL(FETCH_MERGE_READINESS_QUERY, { owner, repo, number: pullRequest.number })
-  );
-
-  const node = result?.pullRequest;
-
-  if (!node) {
-    return undefined;
-  }
-
-  return { ...node, checkState: node.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state };
-};
-
-/**
- * Check whether a pull request GitHub refused to merge is only waiting for its required checks, so
- * it can be set to auto-merge. A pull request also blocked by something else — a failed check, a
- * review still required, a conflict — would sit there unmerged while the CMS waits for it, so it’s
- * left as a refusal. The same goes for a repository that doesn’t allow auto-merge.
- * @param {Record<string, any>} node Pull request node from {@link fetchMergeReadiness}.
- * @returns {boolean} Result.
- */
-const isWaitingForChecks = (node) =>
-  node.state === 'OPEN' &&
-  node.mergeStateStatus === 'BLOCKED' &&
-  // GitHub doesn’t offer to enable an auto-merge that’s already on, e.g. one set by an earlier
-  // publish whose wait was cut short by closing the page
-  (!!node.viewerCanEnableAutoMerge || !!node.autoMergeRequest) &&
-  PENDING_CHECK_STATES.includes(node.checkState) &&
-  !BLOCKING_REVIEW_DECISIONS.includes(node.reviewDecision);
-
-/**
- * Cancel the auto-merge on the given pull request. Failures are ignored: this is called once the
- * publish is being reported as failed, and a pull request that has just been merged or closed has
- * no auto-merge left to cancel.
- * @param {string} nodeId Pull request node ID.
- * @param {number} number Pull request number.
- * @see https://docs.github.com/en/graphql/reference/mutations#disablepullrequestautomerge
- */
-const cancelAutoMerge = async (nodeId, number) => {
-  try {
-    await fetchGraphQL(DISABLE_AUTO_MERGE_MUTATION, { input: { pullRequestId: nodeId } });
-  } catch (/** @type {any} */ ex) {
-    // eslint-disable-next-line no-console
-    console.warn(`Failed to cancel the auto-merge on pull request #${number}.`, ex);
-  }
-};
-
-/**
- * Wait for GitHub to merge a pull request that has been set to auto-merge. The pull request is read
- * every so often until it’s merged, in which case this resolves, or until it’s clear that the merge
- * won’t happen on its own: a check has failed, a new commit or someone on GitHub has cancelled the
- * auto-merge, the pull request has been closed, or the wait has run out. Those are reported as
- * errors, so the entry stays on the Editorial Workflow board rather than being taken for
- * published. GitHub keeps the auto-merge armed after a failed check, in case it’s re-run by hand,
- * but a merge made that way would happen behind the CMS’s back once it has reported a failure, so
- * the auto-merge is cancelled along with the report: publishing again is what merges the entry from
- * then on.
- * @param {WorkflowPullRequest} pullRequest Pull request.
- * @param {string} nodeId Pull request node ID.
- * @param {number} [deadline] Time to give up at, as a Unix timestamp in milliseconds.
- * @returns {Promise<void>}
- * @throws {Error} When the pull request won’t be merged, or wasn’t within the time allowed.
- */
-const waitForAutoMerge = async (
-  pullRequest,
-  nodeId,
-  deadline = Date.now() + AUTO_MERGE_POLL.maxDuration,
-) => {
-  const { number } = pullRequest;
-
-  if (Date.now() >= deadline) {
-    await cancelAutoMerge(nodeId, /** @type {number} */ (number));
-
-    throw new Error(`Timed out waiting for pull request #${number} to be merged`);
-  }
-
-  await sleep(AUTO_MERGE_POLL.interval);
-
-  const node = await fetchMergeReadiness(pullRequest).catch((ex) => {
-    const status = ex.cause?.status;
-
-    // A network error or a server error says nothing about the merge, which GitHub carries out on
-    // its own, so keep waiting rather than reporting a failure that hasn’t happened. A client
-    // error won’t go away by itself — the session has ended, say — so there’s no point in asking
-    // again, except when the limit on requests has been hit
-    if (typeof status === 'number' && status >= 400 && status < 500 && status !== 429) {
-      throw ex;
-    }
-
-    // eslint-disable-next-line no-console
-    console.warn(`Failed to read pull request #${number}, still waiting.`, ex);
-
-    return null;
-  });
-
-  if (node !== null) {
-    if (node?.merged) {
-      return;
-    }
-
-    const { state, autoMergeRequest, checkState } = node ?? {};
-    const autoMerge = !!autoMergeRequest;
-    const failed = !PENDING_CHECK_STATES.includes(checkState) && checkState !== 'SUCCESS';
-
-    if (state !== 'OPEN' || !autoMerge || failed) {
-      if (state === 'OPEN' && autoMerge) {
-        await cancelAutoMerge(nodeId, /** @type {number} */ (number));
-      }
-
-      throw new Error(
-        `Pull request #${number} was not merged: ${state}, checks ${checkState}, ` +
-          `auto-merge ${autoMerge ? 'on' : 'off'}`,
-      );
-    }
-  }
-
-  await waitForAutoMerge(pullRequest, nodeId, deadline);
-};
-
-/**
- * Set a pull request that’s waiting for its required checks to auto-merge, pinned to the commit the
- * entry was loaded or saved at, unless it’s set already.
- * @param {object} args Arguments.
- * @param {WorkflowPullRequest} args.pullRequest Pull request.
- * @param {Record<string, any>} args.node Pull request node from {@link fetchMergeReadiness}.
- * @param {boolean} args.squash Whether to squash the commits.
- * @param {() => Promise<any>} args.merge Function to merge the pull request right away.
- * @returns {Promise<boolean>} Whether GitHub is to merge the pull request once the checks pass,
- * rather than having merged it already.
- */
-const scheduleAutoMerge = async ({ pullRequest, node, squash, merge }) => {
-  if (node.autoMergeRequest) {
-    return true;
-  }
-
-  const { title, headSHA } = pullRequest;
-
-  try {
-    await fetchGraphQL(ENABLE_AUTO_MERGE_MUTATION, {
-      input: {
-        pullRequestId: node.id,
-        mergeMethod: squash ? 'SQUASH' : 'MERGE',
-        commitHeadline: title,
-        ...(headSHA ? { expectedHeadOid: headSHA } : {}),
-      },
-    });
-
-    return true;
-  } catch {
-    // The response can have been lost after GitHub turned auto-merge on, which a merge now would be
-    // refused for while the checks run, so the pull request is read again first
-    const latest = await fetchMergeReadiness(pullRequest);
-
-    // GitHub may even have merged it by now, which leaves only the branch cleanup to do
-    if (latest?.merged) {
-      return false;
-    }
-
-    if (latest?.autoMergeRequest) {
-      return true;
-    }
-
-    // Otherwise the checks can have passed since the merge was refused, in which case GitHub
-    // refuses auto-merge on a pull request it can merge right away, so it’s merged now instead. A
-    // refusal of that is the error to report
-    await merge();
-
-    return false;
-  }
-};
-
-/**
  * Merge the pull request and delete the workflow branch. The merge is pinned to the commit the
  * entry was loaded or saved at, so a commit pushed to the branch since — after the entry has been
  * reviewed — makes GitHub refuse the merge rather than take it along unseen. Branch protection or a
@@ -923,7 +727,10 @@ const scheduleAutoMerge = async ({ pullRequest, node, squash, merge }) => {
  * immediate merge while they’re running, which is likely right after the entry is saved. In that
  * case, the pull request is set to auto-merge instead, pinned to the same commit, and GitHub merges
  * it once the checks have passed. Scheduling the merge is not the same as making it: a check can
- * still fail, so this resolves only once the merge has landed.
+ * still fail, so this resolves only once the merge has landed. GitHub also refuses the merge while
+ * it’s still working out whether the pull request can be merged, which it does in the background
+ * after a push, so the pull request is read again until that settles, and merged or set to
+ * auto-merge then. See {@link mergeRefusedPullRequest} for that part.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @see https://docs.github.com/en/rest/pulls/pulls#merge-a-pull-request
  * @see https://docs.github.com/en/graphql/reference/mutations#enablepullrequestautomerge
@@ -955,20 +762,7 @@ export const publish = async (pullRequest) => {
       throw ex;
     }
 
-    const node = await fetchMergeReadiness(pullRequest);
-
-    // It has been merged already — by a maintainer on GitHub while this board was open, say.
-    // That’s the outcome the user asked for, so it’s the branch cleanup below that’s left to do
-    // rather than an error to report
-    if (!node?.merged) {
-      if (!node || !isWaitingForChecks(node)) {
-        throw ex;
-      }
-
-      if (await scheduleAutoMerge({ pullRequest, node, squash, merge })) {
-        await waitForAutoMerge(pullRequest, node.id);
-      }
-    }
+    await mergeRefusedPullRequest({ pullRequest, squash, merge, refusal: ex });
   }
 
   await deleteBranch(pullRequest.branch);
@@ -1001,6 +795,8 @@ export default {
   fetchPullRequests,
   savePullRequest,
   updateStatus,
+  approve,
+  withdrawApproval,
   fetchBranchHead,
   fetchMergeState,
   fetchUnchangedPaths,

@@ -192,7 +192,7 @@ export const listedEntries = createDerivedState(() => {
   }
 
   /**
-   * Limit the entries to the folder currently browsed in a nested collection.
+   * Limit the entries to the folder currently browsed in a collection with nested entries.
    * @param {Entry[]} entries Entries to be filtered.
    * @returns {Entry[]} Filtered entries.
    */
@@ -263,16 +263,6 @@ export const listedUnpublishedEntries = createDerivedState(() => {
 
   return entries;
 });
-
-/**
- * Map from entry ID to the entry’s index in {@link listedEntries}, used by list rows to resolve
- * their `aria-rowindex` in O(1). Rows are appended by an infinite scroller and never unmounted, so
- * once a large collection has been scrolled through, an `indexOf()` per row would make every
- * subsequent list update O(n²).
- */
-export const listedEntryIndexMap = createDerivedState(
-  () => new Map(listedEntries.current.map((entry, index) => [entry.id, index])),
-);
 
 /**
  * Threshold for when to show a warning about nearing the quota of entries in an entry collection.
@@ -383,8 +373,39 @@ export const entryGroups = createDerivedState(() => {
 
   const { current: group } = groupConditions;
 
-  return groupEntries(filteredEntries.current, collection, group, viewTime.current);
+  return groupEntries(
+    filteredEntries.current,
+    collection,
+    group,
+    viewTime.current,
+    sortConditions.current,
+  );
 });
+
+/**
+ * Entries the entry list shows, the unpublished ones included, which the selection is limited to.
+ * The entries in a collapsed group count as shown, as Select All selects them too.
+ * @type {{ readonly current: Set<Entry> }}
+ */
+const shownEntries = createDerivedState(
+  () =>
+    new Set([
+      ...listedUnpublishedEntries.current,
+      ...entryGroups.current.flatMap(({ entries }) => entries),
+    ]),
+);
+
+/**
+ * Map from entry ID to the entry’s row index in the list, used by list rows to resolve their
+ * `aria-rowindex` in O(1). The index follows the displayed order of {@link shownEntries}: the
+ * unpublished entries come first, then the entries of every group, sorted and filtered, as the rows
+ * of every group make up one grid. Rows are appended by an infinite scroller and never unmounted,
+ * so once a large collection has been scrolled through, an `indexOf()` per row would make every
+ * subsequent list update O(n²).
+ */
+export const listedEntryIndexMap = createDerivedState(
+  () => new Map([...shownEntries.current].map((entry, index) => [entry.id, index])),
+);
 
 /**
  * Restore the view settings of the given entry collection from {@link entryListSettings}, falling
@@ -533,14 +554,19 @@ export const setBulkEditMode = (value) => {
 };
 
 // Restore the view settings when a different entry collection is selected. The entries are also
-// tracked, because the available sort keys depend on them
+// tracked, because the available sort keys depend on them. While the collection is being reordered,
+// the saved view is the one from before reordering, which exiting the mode restores, so a change to
+// the entries, like an asset upload or the commit metadata arriving, mustn’t restore it midway. The
+// snapshot is only there in reorder mode, and switching collections discards it after this runs
 createRootEffect(() => {
   const collection = selectedCollection.current;
   const { current: _allEntries } = allEntries;
 
   if (collection?._type === 'entry') {
     untrack(() => {
-      restoreView(collection, _allEntries);
+      if (viewBeforeReorder.current?.collectionName !== collection.name) {
+        restoreView(collection, _allEntries);
+      }
     });
   }
 });
@@ -582,6 +608,23 @@ createRootEffect(() => {
   if (untrack(() => prefs.devModeEnabled)) {
     // eslint-disable-next-line no-console
     console.info('listedEntries', entries);
+  }
+});
+
+// Drop the entries the view no longer shows from the selection, e.g. an event that a `{{now}}`
+// filter hides as time goes by, which doesn’t change the listed entries or the filters. The shown
+// entries are only computed while something is selected, as nothing else may need them
+createRootEffect(() => {
+  const selected = selectedEntries.current;
+
+  if (!selected.length) {
+    return;
+  }
+
+  const { current: shown } = shownEntries;
+
+  if (selected.some((entry) => !shown.has(entry))) {
+    selectedEntries.current = selected.filter((entry) => shown.has(entry));
   }
 });
 

@@ -23,6 +23,7 @@ import {
   createMockExternalAsset,
   createMockImageFile,
   initTestConfig,
+  serveMediaFolderAtSiteRoot,
   setAssets,
 } from '$lib/test/config';
 
@@ -327,6 +328,8 @@ describe('SelectAssetsDialog', () => {
     });
 
     test('neither creates nor uploads anything in a folder the CMS is served from', async () => {
+      serveMediaFolderAtSiteRoot();
+
       assets.push(
         createMockAsset({
           name: 'logo.png',

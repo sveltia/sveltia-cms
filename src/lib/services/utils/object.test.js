@@ -6,6 +6,7 @@ import {
   escapeKeySegment,
   flattenKeys,
   hasIndexLikeChildKey,
+  isPlainObject,
   isValueEmpty,
   unescapeKeySegment,
   unflattenKeys,
@@ -289,6 +290,23 @@ describe('unflattenMap()', () => {
   test('passes nullish content through, like the `flat` library does', () => {
     expect(unflattenMap(undefined)).toBeUndefined();
     expect(unflattenMap(null)).toBeNull();
+  });
+});
+
+describe('isPlainObject()', () => {
+  test('returns true for a plain object', () => {
+    expect(isPlainObject({})).toBe(true);
+    expect(isPlainObject({ a: 1 })).toBe(true);
+    expect(isPlainObject(Object.create(null))).toBe(true);
+  });
+
+  test('returns false for anything else', () => {
+    expect(isPlainObject([])).toBe(false);
+    expect(isPlainObject(null)).toBe(false);
+    expect(isPlainObject(undefined)).toBe(false);
+    expect(isPlainObject('a')).toBe(false);
+    expect(isPlainObject(new Date())).toBe(false);
+    expect(isPlainObject(new TomlDate('2024-01-01'))).toBe(false);
   });
 });
 

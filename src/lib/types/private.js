@@ -11,6 +11,7 @@
  * CustomField,
  * DateTimeFieldProps,
  * DateTimeInputType,
+ * EditorComponentDefinition,
  * EntryCollection,
  * Field,
  * FieldKeyPath,
@@ -22,6 +23,7 @@
  * FrontMatterFormat,
  * GitBackendName,
  * I18nFileStructure,
+ * InlineEditorComponentDefinition,
  * LocaleCode,
  * MediaField,
  * RasterImageFormat,
@@ -100,6 +102,10 @@
  * @property {boolean} [localGitCommits] Whether the local backend commits the saved changes to the
  * current branch of the local Git repository, like the `MODE=git` option of Netlify/Decap CMS’s
  * local proxy server. Default: `false`.
+ * @property {Pick<User, 'backendName' | 'id' | 'login'>} [magicLinkAccount] Account that a magic
+ * link signed in to, if the API keys, log-in credentials and deploy hook came with the link. They
+ * belong to that account, so they’re removed once another account is signed in to, or the session
+ * ends.
  */
 
 /**
@@ -459,6 +465,18 @@
  * @property {string[]} [previousPaths] File paths the entry occupied before the pull request
  * renamed it, which happens when the slug is edited. They’re used to match the draft with its
  * published counterpart, which would otherwise be listed as a separate entry.
+ * @property {CompanionEntry[]} [companions] New entries in other collections that were created
+ * from a Relation field of the entry and committed to its pull request, so they’re reviewed and
+ * published along with it.
+ */
+
+/**
+ * A new entry that rides along in the pull request of another entry, which it was created for from
+ * a Relation field with the quick-add dialog. It isn’t on the board on its own: the pull request
+ * stands for the entry it was opened for.
+ * @typedef {object} CompanionEntry
+ * @property {string} collectionName Name of the collection the entry belongs to.
+ * @property {Entry} entry Entry as it stands on the pull request’s branch.
  */
 
 /**
@@ -531,6 +549,11 @@
  * @property {(pullRequest: WorkflowPullRequest, status: WorkflowStatus) =>
  * Promise<WorkflowPullRequest>} updateStatus Function to update the pull request’s status label and
  * draft state.
+ * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} approve Function to approve the
+ * pull request on behalf of the signed-in user, pinned to its `headSHA`, so a branch protection
+ * rule requiring an approval doesn’t stand in the way of publishing it.
+ * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} withdrawApproval Function to
+ * withdraw the signed-in user’s approval of the pull request, if they have given one.
  * @property {(branch: string) => Promise<string | undefined>} fetchBranchHead Function to fetch
  * the commit the workflow branch points at, or `undefined` if the branch is gone. Two editors
  * working on the same entry share its branch, so a save compares this with the head it last
@@ -765,6 +788,23 @@
  * @property {RawEntryContent} content Parsed content.
  * @property {FrontMatterFormat} [format] Front matter format detected in the text, for a file whose
  * format is `frontmatter`.
+ * @property {ValueSourceMap} [valueSources] Source text of the values that the parsed content
+ * can’t tell apart from others, e.g. a float that is a whole number.
+ */
+
+/**
+ * Source text of a value that the parsed content can’t tell apart from others, so it can be saved
+ * as it was read as long as it hasn’t been edited. A float that is a whole number, e.g. `10.0`, is
+ * held as the same `number` as an integer.
+ * @typedef {object} ValueSource
+ * @property {any} value Value in the parsed content, e.g. `10`.
+ * @property {string} source Source text of the value, e.g. `10.0`.
+ */
+
+/**
+ * Source text of the values in a file that the parsed content can’t tell apart from others, keyed
+ * by the key path of the value in the file, e.g. `price` or `items.0.price`.
+ * @typedef {Record<string, ValueSource>} ValueSourceMap
  */
 
 /**
@@ -778,6 +818,9 @@
  * @typedef {object} FileConfig
  * @property {FileExtension} extension File extension.
  * @property {FileFormat} format File format.
+ * @property {FileFormat} [configuredFormat] Format given in the configuration, when it differs from
+ * `format`: `frontmatter` for an existing file of a collection in that format, which is saved in
+ * the front matter format detected in the file. A custom formatter is looked up by this format.
  * @property {string} [basePath] Normalized `folder` collection option, relative to the project root
  * folder. Entry collection only.
  * @property {string} [subPath] Normalized `path` collection option, relative to `basePath`. Entry
@@ -1058,6 +1101,8 @@
 /**
  * Search result for an entry.
  * @typedef {object} EntrySearchResult
+ * @property {string} id ID of the entry, which keys the result in the list, so a row keeps showing
+ * the same entry when the results are reordered.
  * @property {Entry} entry Entry that matched the search terms.
  * @property {number} points Points scored for the entry based on matches.
  * @property {InternalLocaleCode} [locale] First matching locale, if available.
@@ -1249,6 +1294,20 @@
  * reformatting) have occurred.
  * @property {PendingEntry[]} pendingEntries Entries created from a Relation field while editing
  * this entry, to be saved along with it.
+ * @property {QuickAddHost} [quickAddHost] Entry the pending entries go along with, when this is
+ * the draft of an entry being added with a quick-add dialog. Missing from any other draft, which
+ * is its own host.
+ */
+
+/**
+ * The entry being edited in the editor, which the entries created with quick-add dialogs, nested
+ * ones included, are saved along with.
+ * @typedef {object} QuickAddHost
+ * @property {string} collectionName Name of the collection the entry belongs to.
+ * @property {boolean} workflow Whether the entry is saved through Editorial Workflow, which takes
+ * the new entries into its pull request.
+ * @property {string} [branch] Workflow branch of the entry’s pull request, if it already has one,
+ * which may hold entries created from it earlier.
  */
 
 /**
@@ -1274,14 +1333,22 @@
  * @property {string} cmsConfigVersion The SHA-1 hash of the CMS configuration file, which is used
  * to verify that the backup can be safely restored.
  * @property {string} collectionName Collection name.
- * @property {string} slug Entry slug. An empty string for a new entry.
+ * @property {string} slug The `subPath` of an existing entry, which is unique in the collection
+ * unlike its slug, or the file name for a collection file. The index file name for a new index
+ * file, or an empty string for any other new entry. A backup taken before the `subPath` was used is
+ * stored under the entry slug.
  * @property {LocaleStateMap} currentLocales Current locale state.
  * @property {LocaleSlugMap} currentSlugs Key is a locale code, value is the current slug.
+ * @property {string} [currentPath] Folder the entry will be stored in, relative to the collection
+ * folder, as edited with the path editor. Only set when the collection’s `meta.path` option is
+ * enabled. Missing from a backup taken before it was introduced.
  * @property {LocaleContentMap} currentValues Key is a locale code, value is a flattened object
  * containing all the current field values while editing.
  * @property {EntryFileMap} files Files to be uploaded.
  * @property {PendingEntry[]} [pendingEntries] Entries created from a Relation field, to be saved
  * along with the entry. Missing from a backup taken before they were introduced.
+ * @property {Entry} [baseEntry] Existing entry the edits were made to, as it was when the draft was
+ * opened. Missing from a backup of a new entry, and from one taken before it was introduced.
  */
 
 /**
@@ -1513,6 +1580,8 @@
  * @property {GitTreeNode} indexTree Tree built from the index as inspected.
  * @property {boolean} autocrlf Whether `core.autocrlf` is `true` or `input`, which makes Git store
  * text with LF line endings.
+ * @property {boolean} ignoreCase Whether `core.ignorecase` is `true`, which makes Git match the
+ * patterns in `.gitattributes` case-insensitively.
  */
 
 /**
@@ -1729,6 +1798,17 @@
  */
 
 /**
+ * Sortable fields of an entry collection, parsed from the `sortable_fields` option or made from the
+ * default sort keys.
+ * @typedef {object} ParsedSortableFields
+ * @property {string[]} keys Sort keys.
+ * @property {Record<string, string>} [labels] Custom labels keyed by sort key, given in the Decap
+ * CMS object format of the `sortable_fields` option.
+ * @property {string} [defaultKey] Default sort key.
+ * @property {SortOrder} [defaultOrder] Default sort order.
+ */
+
+/**
  * Sort key shown in the Sort menu.
  * @typedef {object} SortKey
  * @property {string} key Key, such as a field name or a special key like `commit_date`.
@@ -1892,6 +1972,8 @@
  * @property {DraftValueStoreKey} valueStoreKey Key to store the values in {@link EntryDraft}.
  * @property {{ current: Component | undefined }} [extraHint] Component to render an extra hint in
  * the field editor.
+ * @property {boolean} [readonly] Whether the subfields can’t be edited, as the List or Object
+ * field, or the rich text editor component, they belong to can’t be.
  */
 
 /**
@@ -2027,7 +2109,7 @@
  * `preview_path` or `media_folder`.
  * @property {InternalLocaleCode} [locale] Locale. Required if the `type` is `preview_path`.
  * @property {Record<string, string>} [dateTimeParts] Map of date/time parts. Required if the `type`
- * is `preview_path`.
+ * is `preview_path`. Otherwise, it defaults to the current time.
  * @property {boolean} [isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  * @property {Map<string, string>} [randomValues] Random values generated for the entry so far,
@@ -2037,8 +2119,8 @@
  * `filename_template` media library option. The `{{filename}}` and `{{extension}}` tags then stand
  * for its name without the extension and its extension.
  * @property {string} [dirPath] Folder within the collection folder a new entry goes to, as chosen
- * with the path editor of a nested collection. A filled slug then only has to be unique among the
- * entries in that folder.
+ * with the path editor of a collection with nested entries. A filled slug then only has to be
+ * unique among the entries in that folder.
  */
 
 /**
@@ -2274,6 +2356,39 @@
  * @property {readonly (string | number)[]} [customArgs] Arguments of a transformation that isn’t
  * built-in, which may be a custom one registered with `CMS.registerStringTransformation()`. Only
  * present if the arguments are given in parentheses and can be parsed.
+ */
+
+/**
+ * Options of a pattern-based inline editor component that the editor handles on its own, kept on
+ * its resolved definition. See {@link InlineEditorComponentDefinition}.
+ * @typedef {object} InlinePatternOptions
+ * @property {string} [trigger] Literal text every instance starts with.
+ * @property {InlineEditorComponentDefinition['onInsert']} [onInsert] Function called when the
+ * component is inserted from the toolbar.
+ * @property {InlineEditorComponentDefinition['onEdit']} [onEdit] Function called when the
+ * component is clicked.
+ */
+
+/**
+ * Editor component definition resolved with `getComponentDef()`. A pattern-based inline component
+ * is converted to the shape of a field-based one without fields, with its own options kept in
+ * `inlinePattern`.
+ * @typedef {EditorComponentDefinition & { inlinePattern?: InlinePatternOptions }}
+ * ResolvedEditorComponentDefinition
+ */
+
+/**
+ * Options for a task given to a {@link ConcurrencyLimiter}.
+ * @typedef {object} ConcurrencyLimiterTaskOptions
+ * @property {any} [key] Key identifying the queued task, so it can be moved up the queue with
+ * `prioritize()`.
+ */
+
+/**
+ * Function running a task when there is room, created with `createConcurrencyLimiter()`, along
+ * with its `prioritize()` method.
+ * @typedef {(<T>(task: () => Promise<T>, options?: ConcurrencyLimiterTaskOptions) => Promise<T>)
+ * & { prioritize: (key: any) => void }} ConcurrencyLimiter
  */
 
 export {};

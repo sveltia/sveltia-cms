@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isSecureURL, sendRequest } from './networking';
+import { assertResponseOK, isLocalHostname, isSecureURL, sendRequest } from './networking';
 
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn().mockResolvedValue(undefined) }));
 
@@ -8,6 +8,22 @@ vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn().mockResolvedValue(undefin
 const mockFetch = vi.fn();
 
 global.fetch = mockFetch;
+
+describe('isLocalHostname', () => {
+  test('should accept localhost, its subdomains and the loopback addresses', () => {
+    ['localhost', 'mysite.localhost', '127.0.0.1', '[::1]'].forEach((hostname) => {
+      expect(isLocalHostname(hostname)).toBe(true);
+    });
+  });
+
+  test('should reject other hostnames', () => {
+    ['example.com', 'localhost.example.com', 'notlocalhost', '192.168.0.1', '::1'].forEach(
+      (hostname) => {
+        expect(isLocalHostname(hostname)).toBe(false);
+      },
+    );
+  });
+});
 
 describe('isSecureURL', () => {
   test('should allow HTTPS URLs', () => {
@@ -172,6 +188,78 @@ describe('sendRequest', () => {
     const result = await sendRequest('https://api.example.com/data', {}, { responseType: 'raw' });
 
     expect(result).toBe(mockResponse);
+  });
+
+  test('should refresh the token on 401 for a raw response', async () => {
+    const mockRefreshFunction = vi.fn().mockResolvedValue({ token: 'new-token' });
+    const mockSuccessResponse = { ok: true, status: 200 };
+
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+    mockFetch.mockResolvedValueOnce(mockSuccessResponse);
+
+    const result = await sendRequest(
+      'https://api.example.com/data',
+      { headers: { Authorization: 'Bearer old-token' } },
+      { responseType: 'raw', refreshAccessToken: mockRefreshFunction },
+    );
+
+    expect(mockRefreshFunction).toHaveBeenCalledOnce();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch.mock.calls[1][1].headers.get('Authorization')).toBe('Bearer new-token');
+    expect(result).toBe(mockSuccessResponse);
+  });
+
+  test('should return a raw 401 response as is after the token has been refreshed', async () => {
+    const mockRefreshFunction = vi.fn().mockResolvedValue({ token: 'new-token' });
+    const mockErrorResponse = { ok: false, status: 401 };
+
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+
+    const result = await sendRequest(
+      'https://api.example.com/data',
+      { headers: { Authorization: 'token old-token' } },
+      { responseType: 'raw', refreshAccessToken: mockRefreshFunction },
+    );
+
+    expect(mockRefreshFunction).toHaveBeenCalledOnce();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result).toBe(mockErrorResponse);
+  });
+
+  test('should retry once on 502 for a raw response', async () => {
+    const { sleep } = await import('@sveltia/utils/misc');
+    const mockErrorResponse = { ok: false, status: 502 };
+    const mockSuccessResponse = { ok: true, status: 200 };
+
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+    mockFetch.mockResolvedValueOnce(mockSuccessResponse);
+
+    const result = await sendRequest('https://api.example.com/data', {}, { responseType: 'raw' });
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledWith(1000);
+    expect(result).toBe(mockSuccessResponse);
+
+    // The retry is made once only
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+
+    expect(await sendRequest('https://api.example.com/data', {}, { responseType: 'raw' })).toBe(
+      mockErrorResponse,
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(4);
+  });
+
+  test('should return a raw 401 response as is without a token refresh function', async () => {
+    const mockErrorResponse = { ok: false, status: 401 };
+
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+
+    const result = await sendRequest('https://api.example.com/data', {}, { responseType: 'raw' });
+
+    expect(mockFetch).toHaveBeenCalledOnce();
+    expect(result).toBe(mockErrorResponse);
   });
 
   test('should throw error when fetch fails', async () => {
@@ -472,5 +560,30 @@ describe('sendRequest', () => {
       message: 'Server responded with an error',
       cause: { status: 403 },
     });
+  });
+});
+
+describe('assertResponseOK', () => {
+  test('should resolve when the response is OK', async () => {
+    await expect(
+      assertResponseOK(new Response('ok', { status: 200 }), 'Failed'),
+    ).resolves.toBeUndefined();
+  });
+
+  test('should throw with the response body appended to the message', async () => {
+    await expect(
+      assertResponseOK(new Response('Access Denied', { status: 403 }), 'Failed to list objects'),
+    ).rejects.toThrow(new Error('Failed to list objects: Access Denied'));
+  });
+
+  test('should throw on a 404 response unless it’s allowed', async () => {
+    await expect(
+      assertResponseOK(new Response('Not Found', { status: 404 }), 'Failed'),
+    ).rejects.toThrow('Failed: Not Found');
+    await expect(
+      assertResponseOK(new Response('Not Found', { status: 404 }), 'Failed', {
+        allowNotFound: true,
+      }),
+    ).resolves.toBeUndefined();
   });
 });

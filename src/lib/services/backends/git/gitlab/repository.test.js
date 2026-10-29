@@ -87,6 +87,14 @@ describe('GitLab repository service', () => {
       });
     });
 
+    test('encodes a branch name with a character that ends a URL path', () => {
+      const repoURL = 'https://gitlab.com/owner/repo';
+      const result = getBaseURLs(repoURL, 'cms/posts/c#');
+
+      expect(result.treeBaseURL).toBe(`${repoURL}/-/tree/cms/posts/c%23`);
+      expect(result.blobBaseURL).toBe(`${repoURL}/-/blob/cms/posts/c%23`);
+    });
+
     test('handles undefined branch', () => {
       const repoURL = 'https://gitlab.com/owner/repo';
       const result = getBaseURLs(repoURL, undefined);

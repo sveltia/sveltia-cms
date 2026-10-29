@@ -66,6 +66,28 @@ describe('QuickSearchBar', () => {
     expect(parseLocation().path).toBe('/search/50% off?#1');
   });
 
+  test('searches for terms that look like dot segments of a path', async () => {
+    searchMode.current = 'contents';
+
+    await render(QuickSearchBar, {});
+
+    const input = page.getByRole('searchbox');
+
+    await input.fill('.');
+    await expect.poll(() => window.location.hash).toBe('#/search/.');
+    expect(parseLocation().path).toBe('/search/.');
+
+    await input.fill('..');
+    await expect.poll(() => window.location.hash).toBe('#/search/..');
+    expect(parseLocation().path).toBe('/search/..');
+    expect(searchTerms.current).toBe('..');
+
+    // The results page has been replaced as the terms changed, so clearing them goes back to
+    // where the search started
+    await page.getByRole('button', { name: 'Clear' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections');
+  });
+
   test('restores the current search terms', async () => {
     const { origin, pathname } = window.location;
 

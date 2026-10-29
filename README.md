@@ -1,18 +1,18 @@
 # Sveltia CMS
 
-[Sveltia CMS](https://sveltiacms.app/en/) is a leading Git-based headless CMS for [Jamstack](https://jamstack.org/) sites. It’s open source, free, and a complete modern rewrite of Netlify CMS, now known as Decap CMS, which has been incredibly neglected for years.
+[Sveltia CMS](https://sveltiacms.app/en/) is a leading Git-based headless CMS for static sites. It’s open source, free, and a complete modern rewrite of Netlify CMS, now known as Decap CMS, which has been neglected for years.
 
 Designed for content editors and developers alike, Sveltia CMS delivers a great UX/DX, [powerful features](https://sveltiacms.app/en/features), and [first-class internationalization (i18n) support](https://sveltiacms.app/en/features/i18n) — all in a small, maintenance-free, single-page web application served from a CDN. Its generic-purpose approach makes it suitable for a wide range of projects, from personal blogs and portfolios to marketing sites and knowledge bases.
 
-As the [successor to Netlify/Decap CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), we continue to deal with issues reported in their repository, of which 390 have now been solved in Sveltia CMS (850 including duplicates). It incorporates numerous enhancements while maintaining high compatibility with existing installations. A growing number of projects, including U.S. government agencies, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS to enjoy its significantly improved performance, security, reliability, and experience.
+As the [successor to Netlify/Decap CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), we continue to deal with issues reported in their repository, of which 390 have now been solved in Sveltia CMS (860 including duplicates). It incorporates numerous enhancements while maintaining high compatibility with existing installations. A growing number of projects, including U.S. government agencies, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS to enjoy its significantly improved performance, security, reliability, and experience.
 
-Sveltia CMS is [framework-agnostic](https://sveltiacms.app/en/docs/frameworks) and hosting platform-independent. It’s an excellent option for those moving away from a traditional CMS and looking for a lightweight headless CMS that works well with Astro, Eleventy, Hugo, or any other static site generator (SSG). It also works well with vanilla JavaScript and custom tooling.
+Sveltia CMS is [framework-agnostic](https://sveltiacms.app/en/docs/frameworks) and hosting platform-independent. It’s an excellent option for those moving away from a traditional CMS and looking for a lightweight headless CMS that works well with Astro, Eleventy, or any other static site generator (SSG). It also works well with vanilla JavaScript and custom tooling.
 
-Explore 680 real-world examples in our [showcase](https://sveltiacms.app/en/showcase), including 185 sites migrated from Netlify/Decap CMS and 100 sites from WordPress, or visit the [documentation](https://sveltiacms.app/en/docs) to get started. You can also try out the CMS on a [demo site](https://demo.sveltiacms.app/) without any installation.
+Explore 710 real-world examples in our [showcase](https://sveltiacms.app/en/showcase), including 190 sites migrated from Netlify/Decap CMS and 105 sites from WordPress, or visit the [documentation](https://sveltiacms.app/en/docs) to get started. You can also try out the CMS on a [demo site](https://demo.sveltiacms.app/) without any installation.
 
 [![Sveltia CMS: Fast, Git-based, Headless, Modern UX, Mobile Support, I18n Support, Open Source](https://sveltiacms.app/images/highlights/cover.webp)](https://sveltiacms.app/en/)
 
-[![850 Netlify/Decap CMS issues solved in Sveltia CMS (including duplicates)](https://sveltiacms.app/images/highlights/decap-issues.webp?2026101511)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
+[![860 Netlify/Decap CMS issues solved in Sveltia CMS (including duplicates)](https://sveltiacms.app/images/highlights/decap-issues.webp?20261028)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
 
 [![See it in action. Visit Sveltia CMS Showcase](https://sveltiacms.app/images/highlights/showcase.webp)](https://sveltiacms.app/en/showcase)
 

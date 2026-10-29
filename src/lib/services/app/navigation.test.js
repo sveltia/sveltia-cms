@@ -240,6 +240,26 @@ describe('navigation', () => {
       expect(parseLocation('https://example.com/#[x]').path).toBe('/[x]');
     });
 
+    it('should keep dot segments in the path rather than resolving them', () => {
+      expect(parseLocation('https://example.com/#/search/.').path).toBe('/search/.');
+      expect(parseLocation('https://example.com/#/search/..').path).toBe('/search/..');
+      expect(parseLocation('https://example.com/#/search/%2E%2E').path).toBe('/search/..');
+      expect(parseLocation('https://example.com/#/collections/../assets').path).toBe(
+        '/collections/../assets',
+      );
+    });
+
+    it('should end the path and the query at a second hash', () => {
+      expect(parseLocation('https://example.com/#/collections#x')).toEqual({
+        path: '/collections',
+        params: {},
+      });
+      expect(parseLocation('https://example.com/#/assets?a=1?2#b=3')).toEqual({
+        path: '/assets',
+        params: { a: '1?2' },
+      });
+    });
+
     it('should keep a hash starting with two slashes in the path', () => {
       expect(parseLocation('https://example.com/#//example.org/a').path).toBe('//example.org/a');
     });
@@ -1650,7 +1670,7 @@ describe('navigation', () => {
       );
     });
 
-    it('returns the folder being browsed in a nested collection, encoded', () => {
+    it('returns the folder being browsed in a collection with nested entries, encoded', () => {
       expect(
         getEntryEditorBackPath({ collectionName: 'docs', dirPath: 'guides/getting started' }),
       ).toBe('/collections/docs/filter/guides/getting%20started');

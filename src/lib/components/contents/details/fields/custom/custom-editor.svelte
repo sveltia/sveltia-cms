@@ -36,9 +36,8 @@
 </script>
 
 <script>
-  import { isObject } from '@sveltia/utils/object';
   import { createElement } from 'react';
-  import { getContext, onMount, untrack } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   import AssetPicker from '$lib/components/contents/details/fields/custom/asset-picker.svelte';
   import { assetURLUpdates } from '$lib/services/api/asset-proxy';
@@ -46,19 +45,22 @@
   import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
   import { createReactRoot, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
+  import { updateFieldValue } from '$lib/services/contents/draft/update';
   import {
     registerCustomFieldInstance,
     triggerCustomFieldValidation,
     unregisterCustomFieldInstance,
   } from '$lib/services/contents/draft/validate/custom-fields';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
+  import {
+    getFieldEditorContext,
+    isInEditorComponent,
+  } from '$lib/services/contents/editor/field-context';
   import { buildControlProps, resolveControl } from '$lib/services/contents/fields/custom/editor';
   import { addFileToDraft } from '$lib/services/contents/fields/custom/files';
 
   /**
-   * @import { FieldEditorContext, FieldEditorProps, InternalLocaleCode } from '$lib/types/private';
+   * @import { FieldEditorProps, InternalLocaleCode } from '$lib/types/private';
    * @import {
    * CustomField,
    * CustomFieldAddFileOptions,
@@ -78,9 +80,7 @@
 
   const entryDraft = getEntryDraftContext();
 
-  /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues', parentComponentNames = [] } =
-    getContext('field-editor') ?? {};
+  const { valueStoreKey = 'currentValues', parentComponentNames = [] } = getFieldEditorContext();
   const inEditorComponent = isInEditorComponent(valueStoreKey);
 
   /** @type {FieldEditorProps & Props} */
@@ -140,11 +140,7 @@
       return;
     }
 
-    if (Array.isArray(value) || isObject(value)) {
-      updateNonPrimitiveValue({ draft, valueStoreKey, locale, keyPath, i18n, value });
-    } else {
-      draft[valueStoreKey][locale][keyPath] = value;
-    }
+    updateFieldValue({ draft, valueStoreKey, locale, keyPath, i18n, value });
   };
 
   /**

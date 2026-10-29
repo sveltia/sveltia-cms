@@ -8,11 +8,7 @@
   import { Dialog } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
-  import {
-    dismissDemoWelcomeDialog,
-    showDemoWelcomeDialog,
-    showDemoWelcomeDialogIfNeeded,
-  } from '$lib/services/app/onboarding';
+  import { demoWelcomeNotice, showDemoWelcomeDialogIfNeeded } from '$lib/services/app/onboarding';
 
   onMount(() => {
     showDemoWelcomeDialogIfNeeded();
@@ -20,14 +16,14 @@
 </script>
 
 <Dialog
-  bind:open={showDemoWelcomeDialog.current}
+  bind:open={demoWelcomeNotice.show.current}
   title={_('demo_welcome.title')}
   size="small"
   okLabel={_('demo_welcome.button_label')}
   showCancel={false}
   onClose={() => {
     // Covers the button, the Escape key and any other way out
-    dismissDemoWelcomeDialog();
+    demoWelcomeNotice.hide();
   }}
 >
   <p>{_('demo_welcome.description')}</p>

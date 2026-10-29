@@ -541,14 +541,75 @@ describe('prepareListItemPaste()', () => {
         pairs: { a: 'b' },
         hidden: [1],
         select: [],
-        image: [1],
+        image: ['1'],
         relation: null,
-        strings: ['a', 1],
+        strings: ['a', '1'],
         object: { kind: 'a' },
         empty: {},
       });
       // `boolean`, `select`, the `strings` object, `extra` and `a`
       expect(result?.droppedCount).toBe(5);
+    });
+
+    test('converts a number or text to the type of the field it’s pasted into', async () => {
+      /** @type {ComplexListField} */
+      const fieldConfig = {
+        name: 'items',
+        widget: 'list',
+        fields: [
+          { name: 'title', widget: 'string' },
+          { name: 'body', widget: 'text' },
+          { name: 'date', widget: 'datetime' },
+          { name: 'count', widget: 'number' },
+          { name: 'price', widget: 'number', value_type: 'float' },
+          { name: 'code', widget: 'number', value_type: 'int/string' },
+          { name: 'invalid', widget: 'number' },
+          { name: 'empty', widget: 'number' },
+          { name: 'flag', widget: 'boolean' },
+          { name: 'select', widget: 'select', options: [1, 2], multiple: true },
+          { name: 'tags', widget: 'list', field: { name: 'tag', widget: 'string' } },
+          { name: 'counts', widget: 'list', field: { name: 'count', widget: 'number' } },
+        ],
+      };
+
+      const result = await paste(
+        {
+          values: {
+            en: {
+              title: 1,
+              body: 2.5,
+              date: 2026,
+              count: ' 12 ',
+              price: '1e3',
+              code: 7,
+              invalid: '12abc',
+              empty: '',
+              flag: true,
+              select: [1],
+              tags: [1, 'a'],
+              counts: ['1', 2, 'b'],
+            },
+          },
+        },
+        { fieldConfig },
+      );
+
+      expect(result?.items.en).toEqual({
+        title: '1',
+        body: '2.5',
+        date: '2026',
+        count: 12,
+        price: 1000,
+        code: '7',
+        invalid: null,
+        empty: null,
+        flag: true,
+        select: [1],
+        tags: ['1', 'a'],
+        counts: [1, 2],
+      });
+      // `invalid`, `empty` and the `b` item
+      expect(result?.droppedCount).toBe(3);
     });
 
     test('rejects a value that doesn’t fit a list', async () => {

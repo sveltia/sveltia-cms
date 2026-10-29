@@ -146,6 +146,39 @@ const identifyOperation = async (fs, marker, operation) => {
 };
 
 /**
+ * Check whether a configuration value is true the way Git reads a boolean: `true`, `yes`, `on` and
+ * a number other than zero are true, in any case, as is an option without a value, which the
+ * isomorphic-git library reads as `true`.
+ * @param {any} value Value.
+ * @returns {boolean} Whether the value is true.
+ * @see https://git-scm.com/docs/git-config#Documentation/git-config.txt-boolean
+ */
+const isTrueConfigValue = (value) =>
+  value === true || /^(?:true|yes|on|[+-]?0*[1-9]\d*)$/i.test(String(value).trim());
+
+/**
+ * Read a boolean option from the repository’s configuration the way Git does: `true`, `yes`, `on`
+ * and a number other than zero are true, in any case, and an option that isn’t set is false.
+ * The isomorphic-git library converts the value of a few options, such as `core.ignorecase`, to a
+ * boolean, but throws on a number or an empty value, which Git never writes itself; such a value is
+ * read as false.
+ * @param {any} git Isomorphic-git module.
+ * @param {GitFileSystem} fs File system.
+ * @param {string} path Name of the option.
+ * @returns {Promise<boolean>} Value.
+ * @see https://git-scm.com/docs/git-config#Documentation/git-config.txt-boolean
+ */
+const getBooleanConfig = async (git, fs, path) => {
+  try {
+    const value = await git.getConfig({ fs, dir: DIR, path });
+
+    return isTrueConfigValue(value);
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Check whether the CMS can commit to a repository on the user’s computer right now, and gather
  * what it needs to do so. It can if it understands the repository’s format, knows who the author
  * is, and the index, the files staged for the next commit, matches the current commit: a commit
@@ -179,15 +212,18 @@ export const inspectRepository = async (repoRootDirHandle, { onLock } = {}) => {
   const fs = createGitFileSystem(repoRootDirHandle, { Buffer: git.Buffer });
 
   // isomorphic-git only reads the repository’s own configuration, not the user’s global one
-  const [objectFormat, refStorage, name, email, autocrlf] = await Promise.all(
-    [
-      'extensions.objectformat',
-      'extensions.refstorage',
-      'user.name',
-      'user.email',
-      'core.autocrlf',
-    ].map((path) => git.getConfig({ fs, dir: DIR, path })),
-  );
+  const [[objectFormat, refStorage, name, email, autocrlf], ignoreCase] = await Promise.all([
+    Promise.all(
+      [
+        'extensions.objectformat',
+        'extensions.refstorage',
+        'user.name',
+        'user.email',
+        'core.autocrlf',
+      ].map((path) => git.getConfig({ fs, dir: DIR, path })),
+    ),
+    getBooleanConfig(git, fs, 'core.ignorecase'),
+  ]);
 
   if ((objectFormat && objectFormat !== 'sha1') || (refStorage && refStorage !== 'files')) {
     return { ready: false, reason: 'unsupported_repository' };
@@ -286,8 +322,11 @@ export const inspectRepository = async (repoRootDirHandle, { onLock } = {}) => {
       index,
       indexBuffer,
       indexTree,
-      // Git converts the line endings when adding a file with both values
-      autocrlf: ['true', 'input'].includes(String(autocrlf)),
+      // Git converts the line endings when adding a file with `input` as well as a true value
+      autocrlf: /^input$/i.test(String(autocrlf).trim()) || isTrueConfigValue(autocrlf),
+      // Git matches the patterns in `.gitattributes` case-insensitively with the option, which it
+      // sets when the repository is cloned or created on a case-insensitive file system
+      ignoreCase,
     },
   };
 };

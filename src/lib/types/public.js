@@ -30,10 +30,15 @@
  */
 
 /**
+ * Name of a cloud media storage service with an S3-compatible API.
+ * @typedef {'aws_s3' | 'backblaze_b2' | 'bunny_storage' | 'cloudflare_r2' | 'digitalocean_spaces' |
+ * 'neon_object_storage' | 'scaleway_object_storage' | 'supabase_storage'} S3MediaLibraryName
+ */
+
+/**
  * Cloud media storage name.
- * @typedef {'cloudinary' | 'uploadcare' | 'aws_s3' | 'azure_blob_storage' | 'backblaze_b2' |
- * 'bunny_storage' | 'cloudflare_r2' | 'digitalocean_spaces' | 'neon_object_storage' |
- * 'scaleway_object_storage' | 'supabase_storage'} CloudMediaLibraryName
+ * @typedef {'cloudinary' | 'uploadcare' | 'azure_blob_storage' | S3MediaLibraryName}
+ * CloudMediaLibraryName
  */
 
 /**
@@ -295,6 +300,45 @@
  */
 
 /**
+ * Options of a named media storage in the legacy `media_library` option, identified by its `name`,
+ * so the options are checked against those of that storage.
+ * @typedef {(CloudinaryMediaLibrary & { name: 'cloudinary' }) |
+ * (UploadcareMediaLibrary & { name: 'uploadcare' }) |
+ * (S3MediaLibrary & { name: S3MediaLibraryName }) |
+ * (AzureMediaLibrary & { name: 'azure_blob_storage' }) |
+ * (StockMediaLibrary & { name: 'stock_assets' })} NamedLegacyMediaLibrary
+ */
+
+/**
+ * Global legacy media storage option, which applies to the default media storage without a `name`.
+ * @typedef {(DefaultMediaLibrary & { name?: 'default' }) | NamedLegacyMediaLibrary}
+ * GlobalLegacyMediaLibrary
+ */
+
+/**
+ * Field-level legacy media storage option without a `name`, which applies to the storage named in
+ * the global `media_library` option, so its options can be those of any storage.
+ * @typedef {MediaLibrary & { name?: undefined }} UnnamedLegacyMediaLibrary
+ */
+
+/**
+ * Options of a named media storage in the field-level legacy `media_library` option. They’re merged
+ * over the global options of the same storage, so the options the storage requires, such as an S3
+ * `bucket`, can be left to the global ones.
+ * @typedef {(CloudinaryMediaLibrary & { name: 'cloudinary' }) |
+ * (UploadcareMediaLibrary & { name: 'uploadcare' }) |
+ * (Partial<S3MediaLibrary> & { name: S3MediaLibraryName }) |
+ * (Partial<AzureMediaLibrary> & { name: 'azure_blob_storage' }) |
+ * (StockMediaLibrary & { name: 'stock_assets' })} FieldNamedLegacyMediaLibrary
+ */
+
+/**
+ * Field-level legacy media storage option.
+ * @typedef {(DefaultMediaLibrary & { name: 'default' }) | FieldNamedLegacyMediaLibrary |
+ * UnnamedLegacyMediaLibrary} FieldLegacyMediaLibrary
+ */
+
+/**
  * Unified media storage option that supports multiple storage providers. See the
  * [documentation](https://sveltiacms.app/en/docs/media#configuration) for details.
  * @typedef {object} MediaLibraries
@@ -444,12 +488,6 @@
  */
 
 /**
- * Field-level media storage options.
- * @typedef {object} FieldMediaLibraryOptions
- * @property {MediaLibraryName} [name] Library name.
- */
-
-/**
  * Media field properties.
  * @typedef {object} MediaFieldProps
  * @property {string | string[]} [default] Default value. Accepts a file path or complete URL. If
@@ -474,7 +512,7 @@
  * collection-level `media_folder` value.
  * @property {string} [public_folder] Public media folder path for the field. Default:
  * `media_folder` option value.
- * @property {MediaLibrary & FieldMediaLibraryOptions} [media_library] Legacy media storage option
+ * @property {FieldLegacyMediaLibrary} [media_library] Legacy media storage option
  * that allows only one library. It overrides the global options of the same library in the same way
  * as `media_libraries`; without a `name`, it applies to the library named in the global
  * `media_library` option. Use `media_libraries` instead to support multiple libraries.
@@ -1081,8 +1119,15 @@
  * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
  * See the [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for
  * details.
- * @property {boolean} [minimal] Whether to limit the editor height to 240 pixels, making the
- * content scrollable. Default: `false`.
+ * @property {boolean} [minimal] Whether to make the editor compact: it starts with the height of a
+ * single line and stops growing at 240 pixels, making the content scrollable. Default: `false`.
+ * @property {boolean} [multiline] Whether the content can span multiple paragraphs and lines.
+ * Default: `true`. With `false`, the editor keeps the content in a single paragraph, which suits a
+ * title or caption with inline formatting: the Enter key doesn’t start a new line, and the
+ * paragraphs and lines of pasted text are joined with spaces. Only the inline formatting buttons
+ * (`bold`, `italic`, `strikethrough`, `code` and `link`) and inline editor components, like
+ * `image`, can be used then, and the HTML output format has no raw mode. A stored value with
+ * several paragraphs is kept as is until the content is edited.
  * @property {RichTextEditorButtonName[]} [buttons] Names of formatting buttons and menu items to be
  * enabled in the editor UI. Default: all the supported button names except `align`.
  * @property {(RichTextEditorComponentName | string)[]} [editor_components] Names of components to
@@ -1406,10 +1451,11 @@
  * @property {string} [prefix] A string to be prepended to the value. Default: empty string.
  * @property {boolean} [use_b32_encoding] Whether to encode the value with Base32, which makes a
  * 26-character lowercase ID instead of a 36-character UUID. Default: `false`.
- * @property {boolean} [read_only] Whether to make the field read-only. Default: `true`.
- * DEPRECATED: Use the `readonly` common field option instead, which defaults to `true` for the UUID
- * field type.
- * @see https://github.com/decaporg/decap-cms/pull/6675
+ * @property {boolean} [read_only] Whether to make the field read-only. Default: `true`. The
+ * `readonly` common field option, which also defaults to `true` for the UUID field type, takes
+ * precedence if both are set.
+ * @see https://decapcms.org/docs/widgets/uuid/
+ * @see https://sveltiacms.app/en/docs/fields/uuid
  */
 
 /**
@@ -1646,6 +1692,18 @@
  */
 
 /**
+ * A sortable field definition in the `sortable_fields` list, which is compatible with Decap CMS.
+ * It can be mixed with field names in the same list.
+ * @typedef {object} SortableField
+ * @property {FieldKeyPath} field A field name to be sorted by.
+ * @property {string} [label] Label of the field in the Sort menu. Default: the field’s label.
+ * @property {'asc' | 'desc' | boolean} [default_sort] Whether to sort the entries by this field by
+ * default, and in which direction: `asc` or `true` for ascending, `desc` for descending. Only one
+ * field can have this option. The user’s own sort choice, which is remembered, takes precedence.
+ * @see https://decapcms.org/docs/configuration-options/#sortable_fields
+ */
+
+/**
  * A collection’s advanced sortable fields definition, which is compatible with Static CMS.
  * @typedef {object} SortableFields
  * @property {FieldKeyPath[]} fields A list of sortable field names.
@@ -1798,8 +1856,8 @@
  */
 
 /**
- * Nested collection options.
- * @typedef {object} NestedCollectionOptions
+ * Nested entry options.
+ * @typedef {object} NestedEntryOptions
  * @property {number} [depth] Maximum number of path segments below the collection folder, which is
  * both the depth of the collection tree and the depth at which entry files are looked up. Default:
  * `Infinity`.
@@ -1808,7 +1866,7 @@
  * @property {boolean} [subfolders] Whether each entry is stored as an index file in its own
  * subfolder. If `false`, entries are regular files placed directly in the folders. Default: `true`.
  * @see https://decapcms.org/docs/collection-nested/
- * @see https://sveltiacms.app/en/docs/collections/entries/nested#nested-collection-options
+ * @see https://sveltiacms.app/en/docs/collections/entries/nested#nested-entry-options
  */
 
 /**
@@ -2013,17 +2071,18 @@
  * @property {string} [summary] Entry summary template displayed in the entry list, e.g.
  * `{{title}} ({{date | date('YYYY-MM-DD')}})`. Default: the value of the `identifier_field`,
  * `title`, `name` or `label` field, or the first heading in the `body` field.
- * @property {FieldKeyPath[] | SortableFields} [sortable_fields] Custom sortable fields. Default:
- * `title`, `name`, `date`, `author` and `description`, or the `identifier_field` in place of
- * `title`, as long as the fields exist. For a Git backend, `commit_author` and `commit_date` are
- * also available, and added to the list if `author` and `date` are not included. See the
+ * @property {(FieldKeyPath | SortableField)[] | SortableFields} [sortable_fields] Custom sortable
+ * fields. Default: `title`, `name`, `date`, `author` and `description`, or the `identifier_field`
+ * in place of `title`, as long as the fields exist. For a Git backend, `commit_author` and
+ * `commit_date` are also available, and added to the list if `author` and `date` are not included.
+ * Each list item can be a field name or a {@link SortableField} object. See the
  * [documentation](https://sveltiacms.app/en/docs/collections/entries/views#sorting) for details.
  * @property {ViewFilter[] | ViewFilters} [view_filters] View filters to be used in the entry list.
  * @property {ViewGroup[] | ViewGroups} [view_groups] View groups to be used in the entry list.
- * @property {NestedCollectionOptions} [nested] Options for a nested collection, which shows the
- * entries in a folder tree and lets the user organize them in subfolders.
- * @property {CollectionMetaData} [meta] Meta data for a nested collection, which enables the entry
- * path editor. It has no effect without the `nested` option.
+ * @property {NestedEntryOptions} [nested] Options for a collection with nested entries, which shows
+ * the entries in a folder tree and lets the user organize them in subfolders.
+ * @property {CollectionMetaData} [meta] Meta data for a collection with nested entries, which
+ * enables the entry path editor. It has no effect without the `nested` option.
  * @property {CollectionIndexFile | boolean} [index_file] Index file inclusion options. If `true`,
  * the default index file name is `_index`, which is used for Hugo’s special index file. See the
  * [documentation](https://sveltiacms.app/en/docs/collections/entries/listings#managing-hugo-s-special-index-file)
@@ -2125,7 +2184,7 @@
 
 /**
  * Supported Git backend name.
- * @typedef {'github' | 'gitlab' | 'gitea'} GitBackendName
+ * @typedef {'github' | 'gitlab' | 'gitea' | 'forgejo'} GitBackendName
  */
 
 /**
@@ -2189,6 +2248,12 @@
  * with a space in between. The message made from the template is used as is if the text box is
  * left empty. Default: `false`. See the
  * [documentation](https://sveltiacms.app/en/docs/backends#commit-messages) for details.
+ * @property {boolean} [signoff_commits] Whether to add a `Signed-off-by: Name <email>` trailer
+ * to every commit the CMS makes, with the name and email of the signed-in user, as required by
+ * projects that enforce the [Developer Certificate of Origin](https://developercertificate.org/).
+ * The merge commit made when an Editorial Workflow entry is published doesn’t get the trailer. If
+ * the Git host doesn’t share the user’s email, e.g. on GitHub for a user without a public email,
+ * the trailer is left out with a warning in the browser console. Default: `false`.
  * @property {AuthMethodName[]} [auth_methods] Allowed authentication methods. Default: both `oauth`
  * and `token` are allowed. To restrict sign-in options, specify only the methods you want to
  * enable, e.g. `[oauth]` to disable access token sign-in, or `[token]` to disable OAuth sign-in. An
@@ -2346,8 +2411,28 @@
  */
 
 /**
+ * Forgejo backend properties that differ from those of the Gitea/Forgejo backend.
+ * @typedef {object} ForgejoBackendProps
+ * @property {'forgejo'} name Backend name.
+ * @property {string} api_root REST API endpoint of the Forgejo instance, e.g.
+ * `https://codeberg.org/api/v1`.
+ * @property {string} [base_url] OAuth base URL, which is the URL of the Forgejo instance, including
+ * the subpath if it’s served under one. Default: `api_root` without the `/api/v1` path, e.g.
+ * `https://codeberg.org`.
+ * @see https://decapcms.org/docs/gitea-backend/#forgejo-backend
+ * @see https://sveltiacms.app/en/docs/backends/gitea-forgejo
+ */
+
+/**
+ * Forgejo backend, as named in Decap CMS. It’s the same as the Gitea/Forgejo backend, except that
+ * the `api_root` option is required and the OAuth base URL is derived from it.
+ * @typedef {GitBackendProps & Omit<GiteaBackendProps, 'name' | 'api_root' | 'base_url'> &
+ * ForgejoBackendProps} ForgejoBackend
+ */
+
+/**
  * Git-based backend.
- * @typedef {GitHubBackend | GitLabBackend | GiteaBackend} GitBackend
+ * @typedef {GitHubBackend | GitLabBackend | GiteaBackend | ForgejoBackend} GitBackend
  */
 
 /**
@@ -2366,12 +2451,6 @@
 /**
  * Backend options.
  * @typedef {GitBackend | TestBackend} Backend
- */
-
-/**
- * Global media storage options.
- * @typedef {object} GlobalMediaLibraryOptions
- * @property {MediaLibraryName} [name] Library name. Default: `default`, the internal media storage.
  */
 
 /**
@@ -2509,7 +2588,7 @@
  * public URL, e.g. `/images/uploads`. A leading slash is added if missing, while a relative path
  * starting with `./` or `../` and a full URL are not allowed. Default: `/` followed by the
  * `media_folder` option value.
- * @property {MediaLibrary & GlobalMediaLibraryOptions} [media_library] Legacy media storage option
+ * @property {GlobalLegacyMediaLibrary} [media_library] Legacy media storage option
  * that allows only one library. Use `media_libraries` instead to support multiple storage
  * providers. If both options define the same library, `media_libraries` takes precedence.
  * @property {MediaLibraries} [media_libraries] Unified media storage option that supports multiple
@@ -2533,8 +2612,8 @@
  * @property {boolean} [show_preview_links] Whether to show links to entries on the live site and
  * on deploy previews. Default: `true`.
  * @property {SlugOptions} [slug] Slug options, which apply to entry slugs and to the names of entry
- * folders created or renamed in a nested collection. They also apply to uploaded asset file names
- * and new asset folder names if the `slugify_filename` media library option is enabled.
+ * folders created or renamed in a collection with nested entries. They also apply to uploaded asset
+ * file names and new asset folder names if the `slugify_filename` media library option is enabled.
  * @property {(Collection | CollectionDivider)[]} [collections] Set of collections. The list can
  * also contain dividers, which are used to group collections in the collection list. Either
  * `collections` or `singletons` option must be defined.
@@ -2566,9 +2645,19 @@
  */
 
 /**
+ * Context passed to a custom file formatter.
+ * @typedef {object} FileFormatterContext
+ * @property {(value: any) => Promise<string>} serialize Function to format the given entry content
+ * with the built-in formatter for the format, using the same options as when no custom formatter
+ * is registered, e.g. the front matter delimiters and the `output` options. The given content
+ * isn’t modified. Only available for a custom format registered under a built-in name, such as
+ * `yaml-frontmatter`; otherwise it throws an error.
+ */
+
+/**
  * Entry file formatter for a custom file format. It receives the entry content as an object and
  * returns the file content. The output is trimmed and a trailing line break is added.
- * @typedef {(value: any) => string | Promise<string>} FileFormatter
+ * @typedef {(value: any, context: FileFormatterContext) => string | Promise<string>} FileFormatter
  * @see https://decapcms.org/docs/custom-formatters/
  * @see https://sveltiacms.app/en/docs/api/file-formats
  */
@@ -2686,6 +2775,78 @@
  * `CMS.renderRichText()` to render it within an `HTMLElement` preview.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  * @see https://sveltiacms.app/en/docs/api/editor-components
+ */
+
+/**
+ * Context passed to the `onInsert` function of an inline editor component.
+ * @typedef {object} InlineEditorComponentInsertContext
+ * @property {string} selectedText Text selected in the rich text editor when the component is
+ * inserted, which the component replaces. An empty string if nothing is selected.
+ */
+
+/**
+ * Context passed to the `onEdit` function of an inline editor component.
+ * @typedef {object} InlineEditorComponentEditContext
+ * @property {Record<string, any>} data Current data of the component.
+ */
+
+/**
+ * Pattern-based inline editor component options, compatible with Decap CMS. Unlike the
+ * {@link EditorComponentDefinition}, the component has no fields to edit: its data comes from the
+ * Markdown it matches within a paragraph, and the editor shows its preview right within the text.
+ * The data can be changed with the `onInsert` and `onEdit` functions, e.g. to pick a page to link
+ * to in a custom dialog. Such a component is available in a RichText or Markdown field with the
+ * default `markdown` format, but not with the `html` format.
+ * @typedef {object} InlineEditorComponentDefinition
+ * @property {string} id Unique identifier for the component.
+ * @property {string} [label] Label of the component to be displayed in the editor UI. Default: the
+ * `id` value.
+ * @property {string} [icon] Name of a [Material Symbols
+ * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
+ * @property {'inline'} type Component type, which must be `inline`.
+ * @property {RegExp} pattern Regular expression to find the component within a paragraph, e.g.
+ * `/\[\[(?<page>[^\]]+)\]\]/` for a wikilink. A leading `^` is ignored, and so are the `g` and
+ * `y` flags. Use a non-greedy quantifier, like `.+?`, or a specific character class, so the match
+ * doesn’t run on to the next instance on the same line.
+ * @property {string} [trigger] Literal text every instance starts with, e.g. `[[` or `@`. If
+ * given, the editor finds the instances by looking for this text, and only matches the `pattern`
+ * where it’s found, instead of running the pattern across the paragraph. Unlike the `trigger`
+ * option of a {@link EditorComponentDefinition}, it doesn’t choose the toolbar UI: the component
+ * is always placed under the Insert menu.
+ * @property {(match: RegExpMatchArray) => Record<string, any>} [fromInline] Function to convert
+ * the matching result to the component data. This can be omitted if the `pattern` regex contains
+ * named capturing groups, which are then used as the data.
+ * @property {(data: Record<string, any>) => string} toInline Function to convert the component
+ * data to Markdown content. It’s called with an empty object for a component inserted without
+ * `onInsert`, so it must handle missing values.
+ * @property {(data: Record<string, any>, getAsset: GetAsset) => string | HTMLElement |
+ * ReactElement} [toPreview] Function to convert the component data to its preview, which is shown
+ * both within the text in the rich text editor and in the preview pane. A string is
+ * parsed as inline Markdown/HTML and sanitized in the editor; the preview pane handles the value
+ * like the one of an {@link EditorComponentDefinition}. Without this function, the editor shows the
+ * output of `toInline` as plain text.
+ * @property {(context: InlineEditorComponentInsertContext) => Promise<Record<string, any> | null |
+ * undefined> | Record<string, any> | null | undefined} [onInsert] Function called when the
+ * component is inserted from the toolbar in the rich text mode, returning the data of the new
+ * component. The component replaces the selected text. Return `null` or `undefined` to cancel the
+ * insertion, which leaves the selected text as is. Without this function, the component is
+ * inserted with empty data. In the plain text mode, the output of `toInline` for empty data is
+ * inserted instead.
+ * @property {(context: InlineEditorComponentEditContext) => Promise<Record<string, any> | null |
+ * undefined> | Record<string, any> | null | undefined} [onEdit] Function called when the component
+ * is clicked in the rich text editor, or activated with the Enter or Space key, returning the new
+ * data of the component. Return `null` or `undefined` to leave the component unchanged. Without
+ * this function, the component can’t be edited in the rich text mode, only removed.
+ * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
+ * @see https://sveltiacms.app/en/docs/api/editor-components
+ */
+
+/**
+ * Custom rich text editor component options passed to `CMS.registerEditorComponent()`: either a
+ * field-based component, or a pattern-based inline component with the `type` option set to
+ * `inline`.
+ * @typedef {EditorComponentDefinition | InlineEditorComponentDefinition}
+ * CustomEditorComponentDefinition
  */
 
 /**
@@ -2817,9 +2978,15 @@
  * @property {GetAsset} getAsset Function that returns the asset item for a given path. Returns
  * `undefined` if the asset is not found.
  * @property {MapOf<Record<string, any>>} fieldsMetaData Immutable Map of metadata from all fields
- * in the entry, keyed by field key path, e.g. `author` or `details.author`. For a Relation field,
- * it contains the referenced entry content in the `{ [collectionName]: { [value]: content } }`
- * structure, where `content` is a flattened object with key paths like `address.city` as keys.
+ * in the entry, keyed by field name. The metadata of a field in an Object or List field is nested
+ * under the parent field’s name, merging all the List items, and the single subfield of a List
+ * field is keyed by its own name, e.g. `fieldsMetaData.getIn(['details', 'author'])`. For a
+ * Relation field, it contains the referenced entry content in the
+ * `{ [collectionName]: { [value]: content } }` structure, where `content` is a flattened object
+ * with key paths like `address.city` as keys. The metadata of a nested field is also available
+ * under its flattened key path without a trailing List item index, e.g. `details.author`,
+ * `books.0.author` or `tags` for the single subfield of a List field, but this is deprecated.
+ * @see https://decapcms.org/docs/customization/#accessing-metadata
  */
 
 /**
@@ -2984,11 +3151,10 @@
  * @property {MapOf<CustomField>} field Immutable Map of current field configuration. Use
  * `field.get('name')` to access properties.
  * @property {MapOf<any>} metadata Immutable Map of any available metadata for the current field,
- * extracted from `fieldsMetaData` using the field’s key path as key, e.g. `details.author` for a
- * field nested in an Object field or `authors.0.name` for one in a List item. A trailing index is
- * removed, so the subfield of a List field with a single `field` uses the List field’s key path,
- * e.g. `tags` instead of `tags.0`. For relation fields, contains referenced entry data. It’s an
- * empty Map if there is no metadata.
+ * extracted from `fieldsMetaData` with the names of the field and its parent fields, e.g.
+ * `['details', 'author']` for a field nested in an Object field, `['authors', 'name']` for one in
+ * a List item, or `['tags', 'tag']` for the subfield `tag` of a List field with a single `field`.
+ * For relation fields, contains referenced entry data. It’s an empty Map if there is no metadata.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  * @see https://sveltiacms.app/en/docs/api/field-types
  */

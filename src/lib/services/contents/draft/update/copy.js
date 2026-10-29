@@ -292,9 +292,8 @@ export const translateFields = async ({
 
   try {
     // A translator without Markdown support takes HTML, e.g. Google Translate with the `html`
-    // format and DeepL with HTML tag handling. A Markdown value is converted to HTML for it, a
-    // plain text value is escaped, so that its special characters are read as text, and an HTML
-    // value is passed as is
+    // format. A Markdown value is converted to HTML for it, a plain text value is escaped, so that
+    // its special characters are read as text, and an HTML value is passed as is
     const translatedValues = await translate(
       Object.entries(copingFieldMap).map(([, { value, format }]) =>
         markdownSupported || format === 'html'

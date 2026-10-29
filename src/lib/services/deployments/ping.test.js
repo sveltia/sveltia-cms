@@ -87,6 +87,19 @@ describe('Preview page liveness', () => {
     expect(sendRequest).toHaveBeenCalledTimes(2);
   });
 
+  test('checks a missing page again once its build is reported finished', async () => {
+    vi.mocked(sendRequest).mockResolvedValueOnce(/** @type {any} */ ({ ok: false, status: 404 }));
+    await pingURL(`${origin}/a`);
+
+    vi.mocked(sendRequest).mockResolvedValueOnce(/** @type {any} */ ({ ok: true, status: 200 }));
+    await expect(pingURL(`${origin}/a`, { recheckPending: true })).resolves.toBe('ready');
+    expect(pageLiveness.current[`${origin}/a`]).toBe('ready');
+
+    // A page found live isn’t checked again within the cache window
+    await pingURL(`${origin}/a`, { recheckPending: true });
+    expect(sendRequest).toHaveBeenCalledTimes(2);
+  });
+
   test('leaves the store untouched when the result is unchanged', async () => {
     vi.mocked(sendRequest).mockResolvedValue(/** @type {any} */ ({ ok: true, status: 200 }));
 

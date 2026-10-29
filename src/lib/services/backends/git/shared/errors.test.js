@@ -5,6 +5,7 @@ import {
   createLocalizedError,
   createNoAccessError,
   createNoWriteAccessError,
+  createPermissionError,
   getErrorMessage,
   NOT_COLLABORATOR_ERROR_MESSAGE,
   toRepositoryAccessError,
@@ -85,6 +86,23 @@ describe('createNoAccessError', () => {
 
     expect(error.message).toBe(NOT_COLLABORATOR_ERROR_MESSAGE);
     expect(getErrorMessage(error, 'fallback')).toBe('repository_no_access:{"repo":"repo"}');
+  });
+});
+
+describe('createPermissionError', () => {
+  it('should say write access is missing to a user who can read the repository', () => {
+    expect(getErrorMessage(createPermissionError('repo', true), 'fallback')).toBe(
+      'repository_no_write_access:{"repo":"repo"}',
+    );
+  });
+
+  it('should say there is no access to a user who can’t', () => {
+    expect(getErrorMessage(createPermissionError('repo', false), 'fallback')).toBe(
+      'repository_no_access:{"repo":"repo"}',
+    );
+    expect(getErrorMessage(createPermissionError('repo'), 'fallback')).toBe(
+      'repository_no_access:{"repo":"repo"}',
+    );
   });
 });
 

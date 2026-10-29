@@ -1124,7 +1124,7 @@ edit_slug_error:
   invalid: Slug nesmí obsahovat speciální znaky, včetně lomítek a mezer.
   duplicate: Tento slug je již použit u jiné položky.
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: Nadřazená složka
 new_parent_folder: Nová složka

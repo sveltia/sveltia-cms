@@ -1,9 +1,9 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 import { escapeRegExp } from '@sveltia/utils/string';
 
-import { FIELD_TAG_PREFIX_REGEX } from '$lib/services/common/template/constants';
+import { FIELD_TAG_PREFIX_REGEX, UUID_TYPES } from '$lib/services/common/template/constants';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
-import { replaceTemplateTags } from '$lib/services/common/template/tags';
+import { replaceTemplateTags, splitTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { getListItemIndexes, indexListItems } from '$lib/services/contents/entry/content-index';
@@ -14,10 +14,11 @@ import {
   getNumberFormatter,
   isFloatType,
   isStringOutput,
+  yieldsNumber,
 } from '$lib/services/contents/fields/number/helpers';
 import { getListFormatter } from '$lib/services/contents/i18n';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { isNumeric } from '$lib/services/utils/number';
+import { isNumeric, roundFloatError } from '$lib/services/utils/number';
 
 /**
  * @import {
@@ -26,34 +27,10 @@ import { isNumeric } from '$lib/services/utils/number';
  * ListItemIndex,
  * StringTransformation,
  * } from '$lib/types/private';
- * @import { ComputeField, FieldKeyPath, LocaleCode, NumberField } from '$lib/types/public';
+ * @import { ComputeField, Field, FieldKeyPath, LocaleCode } from '$lib/types/public';
+ * @import { ListFormatter } from '$lib/services/contents/i18n';
  */
 
-/**
- * Length argument of {@link generateUUID} for each UUID tag, keyed by tag name.
- * @type {Record<string, 'short' | 'shorter' | undefined>}
- */
-const UUID_TAG_LENGTHS = {
-  uuid: undefined,
-  uuid_short: 'short',
-  uuid_shorter: 'shorter',
-};
-
-/**
- * Regular expression source matching the value each UUID tag generates, keyed by tag name.
- * @type {Record<string, string>}
- */
-const UUID_TAG_PATTERNS = {
-  uuid: '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',
-  uuid_short: '[0-9a-f]{12}',
-  uuid_shorter: '[0-9a-f]{8}',
-};
-
-/**
- * Placeholder standing in for a template tag while the template’s literal text is escaped for a
- * regular expression. It can’t appear in a template.
- */
-const TAG_PLACEHOLDER = '\0';
 /**
  * UUIDs generated for the Compute fields of a locale’s content, keyed by the content and then by
  * the field’s key path, in the order of the UUID tags in the template. The content maps live as
@@ -63,16 +40,18 @@ const TAG_PLACEHOLDER = '\0';
 const generatedUuidMap = new WeakMap();
 
 /**
- * Get the list index found in the given key path, which is the second-to-last segment, e.g. `2` for
- * `authors.2.slug`.
+ * Get the index of the list item the field is in, which is the last numeric segment of the given
+ * key path: `2` for `authors.2.slug`, for `lines.2.meta.n` in an Object field of a list item, and
+ * for `lines.2`, the item itself of a list with a single subfield. In a nested list, it’s the index
+ * of the innermost item, e.g. `3` for `sections.1.authors.3.slug`.
  * @param {FieldKeyPath} keyPath Key path of the field.
  * @returns {number | undefined} Index, or `undefined` if the field is not in a list item.
  * @see https://github.com/sveltia/sveltia-cms/issues/172
  */
 export const getListIndex = (keyPath) => {
-  const [index] = keyPath.split('.').splice(-2, 1);
+  const index = keyPath.split('.').findLast(isNumeric);
 
-  return index && isNumeric(index) ? Number(index) : undefined;
+  return index === undefined ? undefined : Number(index);
 };
 
 /**
@@ -80,7 +59,7 @@ export const getListIndex = (keyPath) => {
  * @param {string} tagName Tag name.
  * @returns {boolean} Result.
  */
-const isUuidTag = (tagName) => Object.hasOwn(UUID_TAG_PATTERNS, tagName);
+const isUuidTag = (tagName) => Object.hasOwn(UUID_TYPES, tagName);
 
 /**
  * A UUID tag found in a value template.
@@ -107,17 +86,9 @@ const isUuidTag = (tagName) => Object.hasOwn(UUID_TAG_PATTERNS, tagName);
  * regular expression, which captures the UUID of each extractable tag in that order.
  */
 const parseUuidTags = (valueTemplate) => {
-  /** @type {string[]} */
-  const tagNames = [];
-
-  const literals = replaceTemplateTags(valueTemplate, (_match, placeholder) => {
-    tagNames.push(parseTransformations(placeholder).value);
-
-    return TAG_PLACEHOLDER;
-  })
-    .split(TAG_PLACEHOLDER)
-    .map(escapeRegExp);
-
+  const { tags, literals: rawLiterals } = splitTemplateTags(valueTemplate);
+  const tagNames = tags.map((placeholder) => parseTransformations(placeholder).value);
+  const literals = rawLiterals.map(escapeRegExp);
   const firstOtherIndex = tagNames.findIndex((tagName) => !isUuidTag(tagName));
   const lastOtherIndex = tagNames.findLastIndex((tagName) => !isUuidTag(tagName));
 
@@ -132,7 +103,7 @@ const parseUuidTags = (valueTemplate) => {
   const build = (start, end) =>
     tagNames
       .slice(start, end)
-      .map((tagName, i) => `${literals[start + i]}(${UUID_TAG_PATTERNS[tagName]})`)
+      .map((tagName, i) => `${literals[start + i]}(${UUID_TYPES[tagName].pattern})`)
       .join('') + literals[end];
 
   const source =
@@ -197,7 +168,7 @@ const getUuids = ({ valueTemplate, keyPath, valueMap }) => {
   let generatedUuids = cache.get(keyPath);
 
   if (generatedUuids?.length !== uuidTags.length) {
-    generatedUuids = uuidTags.map(({ tagName }) => generateUUID(UUID_TAG_LENGTHS[tagName]));
+    generatedUuids = uuidTags.map(({ tagName }) => generateUUID(UUID_TYPES[tagName].length));
     cache.set(keyPath, generatedUuids);
   }
 
@@ -221,15 +192,6 @@ const getUuids = ({ valueTemplate, keyPath, valueMap }) => {
 };
 
 /**
- * Check whether the given Compute field yields a number, which is the case when its `value_type`
- * option is anything but `string`. Its `value` is then an arithmetic expression.
- * @param {ComputeField} fieldConfig Field configuration.
- * @returns {boolean} Result.
- */
-export const isNumericComputeField = ({ value_type: valueType = 'string' }) =>
-  valueType !== 'string';
-
-/**
  * Convert the result of a Compute field’s arithmetic expression into the value to be stored,
  * according to the field’s `value_type`. A result with a fraction is rounded to 15 significant
  * digits, so the error of binary floating-point arithmetic doesn’t end up in the file, e.g. `0.3`
@@ -244,17 +206,12 @@ export const isNumericComputeField = ({ value_type: valueType = 'string' }) =>
 export const getNumericValue = (result, fieldConfig) => {
   // The value type means the same as a Number field’s, including a custom one, which is treated
   // like `int/string`
-  const numberFieldConfig = /** @type {NumberField} */ (/** @type {unknown} */ (fieldConfig));
-  const stringOutput = isStringOutput(numberFieldConfig);
-  const integer = !isFloatType(numberFieldConfig);
+  const stringOutput = isStringOutput(fieldConfig);
+  const integer = !isFloatType(fieldConfig);
 
   // Adding zero turns `-0` into `0`
   const number =
-    result === undefined
-      ? undefined
-      : (integer || Number.isInteger(result)
-          ? Math.round(result)
-          : Number(result.toPrecision(15))) + 0;
+    result === undefined ? undefined : (integer ? Math.round(result) : roundFloatError(result)) + 0;
 
   if (number === undefined || (integer && !Number.isSafeInteger(number))) {
     return stringOutput ? '' : null;
@@ -277,7 +234,7 @@ export const formatComputedValue = ({ value, fieldConfig, canonicalLocale }) => 
   const string = String(value ?? '');
   const number = Number(value);
 
-  return isNumericComputeField(fieldConfig) && string.trim() && Number.isFinite(number)
+  return yieldsNumber(fieldConfig) && string.trim() && Number.isFinite(number)
     ? getNumberFormatter(canonicalLocale).format(number)
     : string;
 };
@@ -377,6 +334,133 @@ const getComponentValues = (valueMap, keyPathPrefix) =>
   );
 
 /**
+ * What a Compute field’s `value` template is resolved against, shared by the functions resolving
+ * its template tags; see {@link getComputedValue} for the properties taken from its arguments.
+ * @typedef {object} ComputeContext
+ * @property {FieldKeyPath} keyPath Key path of the field.
+ * @property {InternalLocaleCode} locale Locale code.
+ * @property {FlattenedEntryContent} valueMap Flattened entry content, or the content of the
+ * `extraValues` store for a field of a rich text editor component.
+ * @property {string} collectionName Collection name.
+ * @property {string} [fileName] Collection file name.
+ * @property {boolean} isIndexFile Whether the entry is the collection’s special index file.
+ * @property {string} keyPathPrefix Key path prefix of the rich text editor component instance the
+ * field belongs to, or an empty string.
+ * @property {FlattenedEntryContent} entryValueMap Flattened entry content, for a field of a rich
+ * text editor component.
+ * @property {string | undefined} componentName Name of the component the field belongs to.
+ * @property {boolean} numeric Whether the template is an arithmetic expression.
+ * @property {ListFormatter} listFormatter Formatter for a list of values.
+ * @property {FlattenedEntryContent} [componentValues] Values of the component instance, without
+ * the key path prefix, once {@link getFieldTagSource} has needed them.
+ */
+
+/**
+ * Get the content and the component the given key path refers to.
+ * @param {ComputeContext} context Context.
+ * @param {FieldKeyPath} fieldKeyPath Key path from a `{{fields.*}}` tag.
+ * @returns {FieldTagSource} Source.
+ */
+const getFieldTagSource = (context, fieldKeyPath) => {
+  const { keyPath, valueMap, keyPathPrefix, componentName, collectionName, fileName, isIndexFile } =
+    context;
+
+  if (!keyPathPrefix) {
+    return { valueMap, ownKeyPath: keyPath };
+  }
+
+  const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath: fieldKeyPath };
+
+  if (componentName && getField({ ...getFieldArgs, componentName })) {
+    context.componentValues ??= getComponentValues(valueMap, keyPathPrefix);
+
+    return {
+      valueMap: context.componentValues,
+      componentName,
+      ownKeyPath: keyPath.slice(keyPathPrefix.length),
+    };
+  }
+
+  // The component sits in the rich text field whose key path starts the prefix, e.g.
+  // `lines.2.body` for `lines.2.body:c12:`, which is in the same list items as the component
+  return { valueMap: context.entryValueMap, ownKeyPath: keyPathPrefix.split(':')[0] };
+};
+
+/**
+ * Check whether the stored value of the given field is inserted as is rather than its display
+ * value. That’s a number, including the value of a Compute field that yields one, and, in an
+ * arithmetic expression, the stored value of a Select or Relation field, e.g. `5` rather than its
+ * label `Express (5)`, including that of an item of a multiple one, which has no display value.
+ * @param {Field | undefined} fieldConfig Configuration of the field the tag refers to.
+ * @param {boolean} numeric Whether the template is an arithmetic expression.
+ * @returns {boolean} Result.
+ */
+const usesRawValue = (fieldConfig, numeric) =>
+  !!fieldConfig &&
+  (yieldsNumber(fieldConfig) ||
+    (numeric && (fieldConfig.widget === 'select' || fieldConfig.widget === 'relation')));
+
+/**
+ * Resolve a `{{fields.*}}` tag for a single field.
+ * @param {ComputeContext} context Context.
+ * @param {FieldKeyPath} fieldKeyPath Key path of the field, without any `*`, unless it couldn’t be
+ * resolved.
+ * @param {FieldTagSource} source Where the tag is resolved.
+ * @param {StringTransformation[]} transformations Transformations of the tag.
+ * @returns {string} Resolved value.
+ */
+const resolveFieldTag = (context, fieldKeyPath, source, transformations) => {
+  const { locale, collectionName, fileName, isIndexFile, numeric, listFormatter } = context;
+  const { valueMap: sourceValueMap, componentName: sourceComponentName } = source;
+
+  const getFieldArgs = {
+    collectionName,
+    fileName,
+    componentName: sourceComponentName,
+    valueMap: sourceValueMap,
+    keyPath: fieldKeyPath,
+    isIndexFile,
+  };
+
+  // Let `getFieldDisplayValue()` apply the transformations, so they get the raw value and the field
+  // configuration: a boolean for `ternary` rather than `'false'`, which is truthy, and the stored
+  // date for `date` rather than the localized display value. A value missing from the content, like
+  // that of a List field, which is stored under its item key paths, or an unset field, would come
+  // back empty whatever the transformations, breaking `default`, so the transformations are applied
+  // to its display value instead.
+  const rawValue = sourceValueMap[fieldKeyPath];
+  const hasRawValue = rawValue !== undefined;
+
+  // A number is inserted as stored rather than formatted for display, so a template like
+  // `/p/{{fields.sku}}` doesn’t give `/p/123,456`, and an arithmetic expression can use it
+  if (hasRawValue) {
+    const sourceFieldConfig = getField(getFieldArgs);
+
+    if (usesRawValue(sourceFieldConfig, numeric)) {
+      // The transformations get a string as they would get the display value, so `0` isn’t taken
+      // as empty by `default`
+      const value = String(rawValue ?? '');
+
+      return transformations.length
+        ? applyTransformations({ fieldConfig: sourceFieldConfig, value, transformations, locale })
+        : value;
+    }
+  }
+
+  const fieldValue = getFieldDisplayValue({
+    ...getFieldArgs,
+    locale,
+    transformations: hasRawValue ? transformations : undefined,
+  });
+
+  const value = Array.isArray(fieldValue) ? listFormatter.format(fieldValue) : String(fieldValue);
+
+  return !hasRawValue && transformations.length
+    ? applyTransformations({ value, transformations, locale })
+    : value;
+};
+
+/**
  * Resolve the `value` template of a Compute field.
  * @param {object} args Arguments.
  * @param {ComputeField} args.fieldConfig Field configuration.
@@ -409,7 +493,7 @@ export const getComputedValue = ({
   entryValueMap = {},
 }) => {
   const { value: valueTemplate = '' } = fieldConfig;
-  const numeric = isNumericComputeField(fieldConfig);
+  const numeric = yieldsNumber(fieldConfig);
 
   // A lone `{{index}}` yields the number itself rather than its string representation, so that the
   // value is written to the file as a number. A numeric `value_type` decides the type itself
@@ -417,103 +501,24 @@ export const getComputedValue = ({
     return getListIndex(keyPath) ?? '';
   }
 
-  const listFormatter = getListFormatter(locale);
   // A UUID can’t be an operand of an arithmetic expression, and the configuration parser reports
   // one used there, so none is generated
   const uuids = numeric ? [] : getUuids({ valueTemplate, keyPath, valueMap });
-  const componentName = keyPathPrefix ? valueMap[`${keyPathPrefix}__sc_component_name`] : undefined;
-  /** @type {FlattenedEntryContent | undefined} */
-  let componentValues;
   let uuidIndex = 0;
 
-  /**
-   * Get the content and the component the given key path refers to.
-   * @param {FieldKeyPath} fieldKeyPath Key path from a `{{fields.*}}` tag.
-   * @returns {FieldTagSource} Source.
-   */
-  const getFieldTagSource = (fieldKeyPath) => {
-    if (!keyPathPrefix) {
-      return { valueMap, ownKeyPath: keyPath };
-    }
-
-    const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath: fieldKeyPath };
-
-    if (componentName && getField({ ...getFieldArgs, componentName })) {
-      componentValues ??= getComponentValues(valueMap, keyPathPrefix);
-
-      return {
-        valueMap: componentValues,
-        componentName,
-        ownKeyPath: keyPath.slice(keyPathPrefix.length),
-      };
-    }
-
-    // The component sits in the rich text field whose key path starts the prefix, e.g.
-    // `lines.2.body` for `lines.2.body:c12:`, which is in the same list items as the component
-    return { valueMap: entryValueMap, ownKeyPath: keyPathPrefix.split(':')[0] };
-  };
-
-  /**
-   * Resolve a `{{fields.*}}` tag for a single field.
-   * @param {FieldKeyPath} fieldKeyPath Key path of the field, without any `*`, unless it couldn’t
-   * be resolved.
-   * @param {FieldTagSource} source Where the tag is resolved.
-   * @param {StringTransformation[]} transformations Transformations of the tag.
-   * @returns {string} Resolved value.
-   */
-  const resolveFieldTag = (fieldKeyPath, source, transformations) => {
-    const { valueMap: sourceValueMap, componentName: sourceComponentName } = source;
-
-    const getFieldArgs = {
-      collectionName,
-      fileName,
-      componentName: sourceComponentName,
-      valueMap: sourceValueMap,
-      keyPath: fieldKeyPath,
-      isIndexFile,
-    };
-
-    // Let `getFieldDisplayValue()` apply the transformations, so they get the raw value and the
-    // field configuration: a boolean for `ternary` rather than `'false'`, which is truthy, and the
-    // stored date for `date` rather than the localized display value. A value missing from the
-    // content, like that of a List field, which is stored under its item key paths, or an unset
-    // field, would come back empty whatever the transformations, breaking `default`, so the
-    // transformations are applied to its display value instead.
-    const rawValue = sourceValueMap[fieldKeyPath];
-    const hasRawValue = rawValue !== undefined;
-
-    // A number is inserted as stored rather than formatted for display, so a template like
-    // `/p/{{fields.sku}}` doesn’t give `/p/123,456`, and an arithmetic expression can use it. That
-    // includes the value of a Compute field that yields a number
-    if (hasRawValue) {
-      const sourceFieldConfig = getField(getFieldArgs);
-
-      if (
-        sourceFieldConfig?.widget === 'number' ||
-        (sourceFieldConfig?.widget === 'compute' &&
-          isNumericComputeField(/** @type {ComputeField} */ (sourceFieldConfig)))
-      ) {
-        // The transformations get a string as they would get the display value, so `0` isn’t
-        // taken as empty by `default`
-        const value = String(rawValue ?? '');
-
-        return transformations.length
-          ? applyTransformations({ fieldConfig: sourceFieldConfig, value, transformations, locale })
-          : value;
-      }
-    }
-
-    const fieldValue = getFieldDisplayValue({
-      ...getFieldArgs,
-      locale,
-      transformations: hasRawValue ? transformations : undefined,
-    });
-
-    const value = Array.isArray(fieldValue) ? listFormatter.format(fieldValue) : String(fieldValue);
-
-    return !hasRawValue && transformations.length
-      ? applyTransformations({ value, transformations, locale })
-      : value;
+  /** @type {ComputeContext} */
+  const context = {
+    keyPath,
+    locale,
+    valueMap,
+    collectionName,
+    fileName,
+    isIndexFile,
+    keyPathPrefix,
+    entryValueMap,
+    componentName: keyPathPrefix ? valueMap[`${keyPathPrefix}__sc_component_name`] : undefined,
+    numeric,
+    listFormatter: getListFormatter(locale),
   };
 
   /**
@@ -545,7 +550,7 @@ export const getComputedValue = ({
 
     if (FIELD_TAG_PREFIX_REGEX.test(tagName)) {
       const fieldKeyPath = stripFieldTagPrefix(tagName);
-      const source = getFieldTagSource(fieldKeyPath);
+      const source = getFieldTagSource(context, fieldKeyPath);
 
       const fieldKeyPaths = expandWildcards({
         fieldKeyPath,
@@ -555,12 +560,14 @@ export const getComputedValue = ({
       });
 
       if (allItems) {
-        return fieldKeyPaths.map((_keyPath) => resolveFieldTag(_keyPath, source, transformations));
+        return fieldKeyPaths.map((_keyPath) =>
+          resolveFieldTag(context, _keyPath, source, transformations),
+        );
       }
 
       // A `*` that doesn’t stand for the current item resolves to nothing, as it did before
       // wildcards were supported
-      return resolveFieldTag(fieldKeyPaths[0] ?? fieldKeyPath, source, transformations);
+      return resolveFieldTag(context, fieldKeyPaths[0] ?? fieldKeyPath, source, transformations);
     }
 
     if (!isUuidTag(tagName)) {

@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import {
   getAllSubFields,
+  getFlatSubFields,
   getTypeSubFields,
   getValueSubFields,
   someSubField,
@@ -87,5 +88,30 @@ describe('someSubField', () => {
     predicate.mockClear();
     expect(someSubField(field, predicate, cache)).toBe(true);
     expect(predicate).not.toHaveBeenCalled();
+  });
+});
+
+describe('getFlatSubFields()', () => {
+  test('returns the subfields of a field with them', () => {
+    const fields = [{ name: 'title' }];
+
+    expect(getFlatSubFields(/** @type {any} */ ({ name: 'obj', fields }), {}, 'obj')).toBe(fields);
+  });
+
+  test('returns the subfields of the variable type named in the content', () => {
+    const field = /** @type {any} */ ({ name: 'blocks', types });
+
+    expect(getFlatSubFields(field, { 'blocks.0.type': 'a' }, 'blocks.0')).toBe(types[0].fields);
+    expect(
+      getFlatSubFields({ ...field, typeKey: 'kind' }, { 'blocks.0.kind': 'a' }, 'blocks.0'),
+    ).toBe(types[0].fields);
+  });
+
+  test('returns nothing for an unknown type or a field without subfields', () => {
+    const field = /** @type {any} */ ({ name: 'blocks', types });
+
+    expect(getFlatSubFields(field, { 'blocks.0.type': 'unknown' }, 'blocks.0')).toBeUndefined();
+    expect(getFlatSubFields(field, {}, 'blocks.0')).toBeUndefined();
+    expect(getFlatSubFields(/** @type {any} */ ({ name: 'text' }), {}, 'text')).toBeUndefined();
   });
 });

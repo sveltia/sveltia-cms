@@ -66,6 +66,7 @@ words:
   - exif
   - exifr
   - fanout
+  - fastify
   - FedRAMP
   - filechooser
   - Flavored
@@ -183,7 +184,9 @@ words:
   - Sveltia
   - templatized
   - Typecheck
+  - ucarecd
   - unadded
+  - unapprove
   - unflatten
   - unflattened
   - unflattening
@@ -204,6 +207,7 @@ words:
   - weba
   - webformat
   - whitespaces
+  - wikilink
   - worktree
   - worktrees
   - xhigh

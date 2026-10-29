@@ -1,6 +1,12 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { getNewFolderName, slugify, validateNewFolderName } from '$lib/services/common/slug';
+import {
+  getNewFolderName,
+  getSlugTimeZone,
+  slugify,
+  trimSlugEnd,
+  validateNewFolderName,
+} from '$lib/services/common/slug';
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
@@ -9,7 +15,6 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
 }));
 vi.mock('$lib/services/contents/entry/fields', () => ({
-  LIST_KEY_PATH_REGEX: /\.\d+$/,
   getField: vi.fn(() => null),
 }));
 vi.mock('$lib/services/contents/entry/summary', () => ({
@@ -18,6 +23,42 @@ vi.mock('$lib/services/contents/entry/summary', () => ({
 vi.mock('$lib/services/utils/file', () => ({
   renameIfNeeded: vi.fn((slug) => slug),
 }));
+
+describe('Test getSlugTimeZone()', () => {
+  test.each([
+    ['no configuration', undefined, 'UTC'],
+    ['no `timezone` option', { slug: {} }, 'UTC'],
+    ['`timezone: utc`', { slug: { timezone: 'utc' } }, 'UTC'],
+    ['`timezone: local`', { slug: { timezone: 'local' } }, undefined],
+  ])('returns the time zone with %s', async (_label, config, expected) => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = config;
+
+    expect(getSlugTimeZone()).toBe(expected);
+  });
+});
+
+describe('Test trimSlugEnd()', () => {
+  test.each([
+    ['the default options', undefined, 'hello-world.-.', 'hello-world'],
+    ['a custom replacement', { sanitize_replacement: '_' }, 'hello_world._', 'hello_world'],
+    ['trimming turned off', { trim: false }, 'hello-world-.', 'hello-world-'],
+    ['an empty replacement', { sanitize_replacement: '' }, 'hello-world-..', 'hello-world-'],
+  ])('removes the dots at the end with %s', async (_label, slug, input, expected) => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = slug ? { slug } : undefined;
+
+    expect(trimSlugEnd(input)).toBe(expected);
+  });
+
+  test('removes a replacement character at the end, and leaves dots inside alone', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = undefined;
+
+    expect(trimSlugEnd('hello-world-')).toBe('hello-world');
+    expect(trimSlugEnd('v1.0-notes')).toBe('v1.0-notes');
+  });
+});
 
 describe('Test slugify()', () => {
   test('basic slugification with default settings', async () => {
@@ -185,8 +226,24 @@ describe('Test slugify()', () => {
     expect(slugify('Björk')).toBe('bjoerk'); // Default without locale
 
     // Unsupported locales fall back to default transliteration
-    expect(slugify('Björk', { locale: 'en' })).toBe('bjoerk'); // 'en' not in TRANSLITERATION_LOCALES
-    expect(slugify('Björk', { locale: 'fr' })).toBe('bjoerk'); // 'fr' not in TRANSLITERATION_LOCALES
+    expect(slugify('Björk', { locale: 'en' })).toBe('bjoerk'); // No English rules
+    expect(slugify('Björk', { locale: 'fr' })).toBe('bjoerk'); // No French rules
+    expect(slugify('Björk', { locale: '_default' })).toBe('bjoerk'); // Default locale key
+    expect(slugify('Björk', { locale: '' })).toBe('bjoerk');
+
+    // A locale with a region uses the rules for its language
+    expect(slugify('Şükrü', { locale: 'tr' })).toBe('sukru');
+    expect(slugify('Şükrü', { locale: 'tr-TR' })).toBe('sukru');
+    expect(slugify('Şükrü', { locale: 'tr_TR' })).toBe('sukru');
+    expect(slugify('Björk', { locale: 'sv-SE' })).toBe('bjork');
+    expect(slugify('Ђорђе', { locale: 'sr-RS' })).toBe('djordje');
+    expect(slugify('Ærø', { locale: 'da-DK' })).toBe('aeroe');
+
+    // Norwegian uses the Norwegian Bokmål rules
+    expect(slugify('Blåbær', { locale: 'nb' })).toBe('blaabaer');
+    expect(slugify('Blåbær', { locale: 'nb-NO' })).toBe('blaabaer');
+    expect(slugify('Blåbær', { locale: 'no' })).toBe('blaabaer');
+    expect(slugify('Blåbær')).toBe('blabaer'); // Default without locale
 
     // locale option has no effect when clean_accents is false
     // @ts-ignore
@@ -483,8 +540,10 @@ describe('Test slugify()', () => {
       },
     };
 
-    expect(slugify('.Hello World.')).toBe('.hello.world.'); // Leading and trailing dots preserved
-    expect(slugify('...Hello...World...')).toBe('.hello.world.'); // Consecutive dots consolidated but not trimmed
+    // Neither leading dots, which would make a hidden dot file, nor trailing ones, which a branch
+    // name can’t end with, are preserved
+    expect(slugify('.Hello World.')).toBe('hello.world');
+    expect(slugify('...Hello...World...')).toBe('hello.world'); // Consecutive dots consolidated
   });
 
   test('trim option with empty replacement character', async () => {
@@ -1088,6 +1147,118 @@ describe('Test slugify()', () => {
     expect(resultPreserveCase).toMatch(/^[0-9a-f]{12}$/); // UUIDs are always lowercase
   });
 
+  test('leading dots are removed', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'unicode', clean_accents: false, sanitize_replacement: '-' },
+    };
+
+    // A dot file would be hidden and skipped when listing the repository files
+    expect(slugify('.NET Tips')).toBe('net-tips');
+    expect(slugify('...Ready')).toBe('ready');
+    expect(slugify('...-ready')).toBe('ready');
+    expect(slugify('. NET')).toBe('net');
+    expect(slugify('.-.NET')).toBe('net');
+    expect(slugify('!.htaccess')).toBe('htaccess');
+    // Dots elsewhere are kept
+    expect(slugify('Node.js v1.0')).toBe('node.js-v1.0');
+    // The fallback applies when nothing is left
+    expect(slugify('...')).toMatch(/^[0-9a-f]{12}$/);
+    expect(slugify('. . .')).toMatch(/^[0-9a-f]{12}$/);
+    expect(slugify('...', { fallback: false })).toBe('');
+  });
+
+  test('trailing dots are removed', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'unicode', clean_accents: false, sanitize_replacement: '-' },
+    };
+
+    // A branch name can’t end with a dot, and Windows drops it from a file name
+    expect(slugify('Hello world.')).toBe('hello-world');
+    expect(slugify('Node.js v1.0.')).toBe('node.js-v1.0');
+    expect(slugify('Wait...')).toBe('wait');
+    expect(slugify('Wait .')).toBe('wait');
+    expect(slugify('Wait.-.')).toBe('wait');
+    // The fallback applies when nothing is left
+    expect(slugify('. . .', { fallback: false })).toBe('');
+  });
+
+  test('trailing dots are removed without trimming the replacement characters', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'unicode', sanitize_replacement: '-', trim: false },
+    };
+
+    expect(slugify('Hello world.')).toBe('hello-world');
+    expect(slugify('Wait .')).toBe('wait-');
+  });
+
+  test('trailing dots left by a cut are removed', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'unicode', sanitize_replacement: '-', maxlength: 6 },
+    };
+
+    expect(slugify('Hello. World')).toBe('hello');
+
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'unicode', sanitize_replacement: '-', trim: false, maxlength: 6 },
+    };
+
+    expect(slugify('Hello. World')).toBe('hello');
+    expect(slugify('Hello World')).toBe('hello-');
+  });
+
+  test('leading dots are removed with the ascii encoding', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'ascii', sanitize_replacement: '-' },
+    };
+
+    expect(slugify('.NET Tips')).toBe('net-tips');
+  });
+
+  test('leading dots are removed without trimming the replacement characters', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'unicode', sanitize_replacement: '-', trim: false },
+    };
+
+    expect(slugify('.NET Tips')).toBe('net-tips');
+    expect(slugify('. NET')).toBe('-net');
+  });
+
+  test('leading dots are removed with an empty replacement', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'unicode', sanitize_replacement: '' },
+    };
+
+    expect(slugify('.NET Tips')).toBe('nettips');
+    expect(slugify('. .NET')).toBe('net');
+  });
+
+  test('zero-width non-joiners and joiners are kept', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'unicode', clean_accents: false, sanitize_replacement: '-' },
+    };
+
+    const zwnj = String.fromCodePoint(0x200c);
+    const zwj = String.fromCodePoint(0x200d);
+    const persian = `\u0645\u06cc${zwnj}\u062e\u0648\u0627\u0647\u0645`;
+    const family = ['\u{1f468}', '\u{1f469}', '\u{1f467}'].join(zwj);
+
+    expect(slugify(persian)).toBe(persian);
+    expect(slugify(family)).toBe(family);
+    // Other format characters, like the bidi controls, are still replaced
+    expect(slugify(`a${String.fromCodePoint(0x2068)}b${String.fromCodePoint(0x200e)}c`)).toBe(
+      'a-b-c',
+    );
+  });
+
   test('should produce consistent results across repeated calls with the same replacement character', async () => {
     // Uses a replacement character (~) not used in any other test to guarantee a cache miss on
     // the first call, so the second call exercises the slugReplacementRegexCache hit path.
@@ -1141,9 +1312,9 @@ describe('Test getNewFolderName()', () => {
     expect(getNewFolderName('Hello World')).toBe('hello');
   });
 
-  test('keeps a leading dot, which makes the folder hidden', async () => {
+  test('drops a leading dot, which would make the folder hidden', async () => {
     await setUpConfig();
-    expect(getNewFolderName('.config')).toBe('.config');
+    expect(getNewFolderName('.config')).toBe('config');
   });
 
   test('returns an empty string instead of a random name when nothing usable is left', async () => {
@@ -1195,9 +1366,11 @@ describe('Test validateNewFolderName()', () => {
     expect(validateNewFolderName({ takenNames, name: '.config' })).toBe('invalid');
   });
 
-  test('rejects a name that only becomes hidden once it’s slugified', async () => {
+  test('accepts a name whose leading dot only comes after a character slugification removes', async () => {
     await setUpConfig();
-    expect(validateNewFolderName({ takenNames, name: '!.config' })).toBe('invalid');
+    // The slug would start with a dot, which slugification removes, so the folder isn’t hidden
+    expect(validateNewFolderName({ takenNames, name: '!.config' })).toBeUndefined();
+    expect(validateNewFolderName({ takenNames: ['config'], name: '!.config' })).toBe('duplicate');
   });
 
   test('rejects a name that slugifies to nothing', async () => {

@@ -221,6 +221,43 @@ describe('CustomEditor', () => {
     expect(draft.currentValues._default['stars.y']).toBe(2);
   });
 
+  test('clears a non-primitive value, dropping its key paths', async () => {
+    /**
+     * A control storing a list, which it can clear.
+     * @param {any} props Control props.
+     * @returns {any} React element.
+     */
+    const TagsControl = ({ onChange }) => {
+      /**
+       * Report a list value.
+       * @returns {void} Nothing.
+       */
+      const set = () => onChange(['a', 'b']);
+      /**
+       * Clear the value.
+       * @returns {void} Nothing.
+       */
+      const clear = () => onChange(null);
+
+      return createElement(
+        'div',
+        null,
+        createElement('button', { type: 'button', onClick: set }, 'Set'),
+        createElement('button', { type: 'button', onClick: clear }, 'Clear'),
+      );
+    };
+
+    const { draft } = await renderEditor(undefined, TagsControl);
+
+    await page.getByRole('button', { name: 'Set' }).click();
+    await expect.poll(() => draft.currentValues._default['stars.1']).toBe('b');
+    await page.getByRole('button', { name: 'Clear' }).click();
+
+    // The items would otherwise still make up the old value, so the control couldn’t be cleared
+    await expect.poll(() => draft.currentValues._default.stars).toBeNull();
+    expect(Object.keys(draft.currentValues._default)).toEqual(['stars']);
+  });
+
   test('lets the control add a file to the draft', async () => {
     reports.length = 0;
 

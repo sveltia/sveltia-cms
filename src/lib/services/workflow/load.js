@@ -1,9 +1,11 @@
 import equal from 'fast-deep-equal';
 
 import { backend } from '$lib/services/backends';
-import { dataGeneration, repositoryHead } from '$lib/services/backends/git/shared/head';
+import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { createStaleCheck, repositoryHead } from '$lib/services/backends/git/shared/head';
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { cmsConfig } from '$lib/services/config';
+import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import {
   publishingBranches,
   unpublishedEntries,
@@ -16,7 +18,12 @@ import { convertPullRequests } from '$lib/services/workflow/entries';
 import { openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { BackendService, UnpublishedEntry, WorkflowPullRequest } from '$lib/types/private';
+ * @import {
+ * BackendService,
+ * CompanionEntry,
+ * UnpublishedEntry,
+ * WorkflowPullRequest,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -80,6 +87,18 @@ const isWorkflowReady = () => {
 };
 
 /**
+ * Get the backend’s workflow service, if Editorial Workflow is enabled and the pull requests can be
+ * listed yet.
+ * @returns {NonNullable<BackendService['workflow']> | undefined} Workflow service, or `undefined`
+ * if it’s not in use or not ready.
+ */
+const getReadyWorkflow = () => {
+  const workflow = backend.current?.workflow;
+
+  return workflowEnabled.current && workflow && isWorkflowReady() ? workflow : undefined;
+};
+
+/**
  * Start retrieving the backend’s open pull requests, if Editorial Workflow is enabled. Listing them
  * doesn’t depend on the published entries, so this is called before the files are fetched and the
  * request overlaps that work; {@link loadUnpublishedEntries} then picks the result up once the
@@ -90,9 +109,9 @@ const isWorkflowReady = () => {
  * left for {@link loadUnpublishedEntries} to handle.
  */
 export const startLoadingPullRequests = () => {
-  const workflow = backend.current?.workflow;
+  const workflow = getReadyWorkflow();
 
-  if (!workflowEnabled.current || !workflow || !isWorkflowReady()) {
+  if (!workflow) {
     return undefined;
   }
 
@@ -121,20 +140,28 @@ export const loadUnpublishedEntries = async (pullRequests = startLoadingPullRequ
   }
 
   const head = repositoryHead.current;
+  // The site data may be discarded while the requests are on their way, e.g. by signing out; the
+  // results then belong to the previous session and must not be written back, nor mark the next
+  // session’s entries as loaded
+  const isStale = createStaleCheck();
 
   try {
     const { entries, assets } = await convertPullRequests(await pullRequests);
 
-    unpublishedEntries.current = entries;
-    mergeWorkflowAssets(assets);
-    recordLoad(head);
+    if (!isStale()) {
+      unpublishedEntries.current = entries;
+      mergeWorkflowAssets(assets);
+      recordLoad(head);
+    }
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
   } finally {
-    unpublishedEntriesLoading.current = false;
-    // Mark as loaded even on failure, so a deep link isn’t stuck on the loading state forever
-    unpublishedEntriesLoaded.current = true;
+    if (!isStale()) {
+      unpublishedEntriesLoading.current = false;
+      // Mark as loaded even on failure, so a deep link isn’t stuck on the loading state forever
+      unpublishedEntriesLoaded.current = true;
+    }
   }
 };
 
@@ -157,9 +184,28 @@ const isSameList = (a = [], b = []) =>
   a.length === b.length && a.every((entry, index) => entry === b[index]);
 
 /**
+ * Give the new entries read afresh from a pull request the IDs of the ones already in the store,
+ * matched by their first file, as they’re parsed with new IDs each time. Without that, the entry
+ * they ride along with would never be the same as before.
+ * @param {CompanionEntry[] | undefined} fetched Entries read from the pull request.
+ * @param {CompanionEntry[] | undefined} existing Entries in the store.
+ * @returns {CompanionEntry[] | undefined} Entries.
+ */
+const carryOverCompanions = (fetched, existing = []) => {
+  const ids = new Map(existing.map(({ entry }) => [getEntryPaths(entry)[0], entry.id]));
+
+  return fetched?.map((companion) => {
+    const id = ids.get(getEntryPaths(companion.entry)[0]);
+
+    return id ? { ...companion, entry: { ...companion.entry, id } } : companion;
+  });
+};
+
+/**
  * Bring the entries read afresh from a pull request in line with the ones already in the store, so
  * the board and the editor don’t lose track of them: each keeps the ID of the entry it replaces,
- * and an entry that hasn’t changed at all stays the same object.
+ * along with those of the new entries riding along with it, and an entry that hasn’t changed at all
+ * stays the same object.
  * @param {UnpublishedEntry[]} fetched Entries read from the pull request.
  * @param {UnpublishedEntry[]} existing Entries of the same branch in the store.
  * @returns {UnpublishedEntry[]} Entries to store.
@@ -172,12 +218,75 @@ const carryOverEntries = (fetched, existing) => {
       return entry;
     }
 
-    const carried = { ...entry, id: previous.id };
+    const { workflow } = entry;
+
+    const carried = {
+      ...entry,
+      id: previous.id,
+      ...(workflow.companions
+        ? {
+            workflow: {
+              ...workflow,
+              companions: carryOverCompanions(workflow.companions, previous.workflow.companions),
+            },
+          }
+        : {}),
+    };
 
     return equal(carried, previous) ? previous : carried;
   });
 
   return isSameList(entries, existing) ? existing : entries;
+};
+
+/**
+ * Get the head commit the given entries of a branch were read at.
+ * @param {UnpublishedEntry[]} [entries] Entries of the branch.
+ * @returns {string | undefined} Git object ID, if any.
+ */
+const getHeadSHA = (entries) => entries?.[0]?.workflow.pullRequest.headSHA;
+
+/**
+ * Find the branches whose entries in the store are more recent than what the listing reports. A Git
+ * service can report a pull request as of an earlier commit for a moment after a push: Gitea and
+ * Forgejo work out the changed files from a reference they move to the branch head in the
+ * background, and the head GitHub reports for a pull request may trail its branch as well. Taking
+ * that snapshot would roll back the entry just saved in this tab, and the next save, made on top of
+ * the older head, would be refused as a conflict. So where the heads differ, the branch is read,
+ * which is a small request: if it still points at the head in the store, nothing has been committed
+ * since, and the listing is the one behind. Anything else it reports for the pull request, such as
+ * a label changed on the Git service, comes in with the next reload. A snapshot that yields no
+ * entry at all, with none of the files listed yet, is behind just the same. A branch that can’t be
+ * read leaves the listing to be taken as it is.
+ * @param {NonNullable<BackendService['workflow']>} workflow Workflow service.
+ * @param {Map<string, UnpublishedEntry[]>} stored Entries in the store, keyed by branch.
+ * @param {Map<string, UnpublishedEntry[]>} fetched Entries read from the pull requests, keyed by
+ * branch.
+ * @param {Set<string>} openBranches Branches of the pull requests listed.
+ * @returns {Promise<Set<string>>} Branches whose entries in the store are to be kept.
+ */
+const findUpToDateBranches = async (workflow, stored, fetched, openBranches) => {
+  /** @type {Set<string>} */
+  const branches = new Set();
+
+  const candidates = [...stored.keys()].filter((branch) => {
+    const head = getHeadSHA(stored.get(branch));
+
+    return openBranches.has(branch) && !!head && head !== getHeadSHA(fetched.get(branch));
+  });
+
+  await runConcurrently(candidates, async (branch) => {
+    try {
+      if ((await workflow.fetchBranchHead(branch)) === getHeadSHA(stored.get(branch))) {
+        branches.add(branch);
+      }
+    } catch (ex) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to check the workflow branch for changes.', ex);
+    }
+  });
+
+  return branches;
 };
 
 /**
@@ -189,12 +298,7 @@ const carryOverEntries = (fetched, existing) => {
 const reload = async (workflow) => {
   // The site data may be discarded while the requests are on their way, e.g. by signing out; the
   // results then belong to the previous session and must not be written back
-  const generation = dataGeneration.current;
-  /**
-   * Whether the site data has been discarded since the reload was started.
-   * @returns {boolean} Result.
-   */
-  const isStale = () => generation !== dataGeneration.current;
+  const isStale = createStaleCheck();
   const head = repositoryHead.current;
   // The store as it stands before the request, to tell the changes made in this tab in the meantime
   // — a save, a status change, a publish — from the ones the request reports
@@ -231,6 +335,12 @@ const reload = async (workflow) => {
   }
 
   const fetched = groupByBranch(entries);
+  const upToDate = await findUpToDateBranches(workflow, before, fetched, openBranches);
+
+  if (isStale()) {
+    return false;
+  }
+
   const current = groupByBranch(unpublishedEntries.current);
   const publishing = new Set(publishingBranches.current);
   /** @type {Set<string>} */
@@ -245,8 +355,13 @@ const reload = async (workflow) => {
     const existing = current.get(branch) ?? [];
 
     // A change made in this tab while the request was on its way is more recent than what the
-    // request reports, and so is an entry being published, which leaves the store once merged
-    if (publishing.has(branch) || !isSameList(existing, before.get(branch))) {
+    // request reports, and so is an entry being published, which leaves the store once merged, and
+    // one whose branch hasn’t moved since it was stored
+    if (
+      publishing.has(branch) ||
+      upToDate.has(branch) ||
+      !isSameList(existing, before.get(branch))
+    ) {
       return existing;
     }
 
@@ -302,14 +417,9 @@ const reload = async (workflow) => {
  * @throws {Error} When the backend couldn’t be reached.
  */
 export const reloadUnpublishedEntries = async ({ fresh = false } = {}) => {
-  const workflow = backend.current?.workflow;
+  const workflow = getReadyWorkflow();
 
-  if (
-    !workflowEnabled.current ||
-    !workflow ||
-    !isWorkflowReady() ||
-    !unpublishedEntriesLoaded.current
-  ) {
+  if (!workflow || !unpublishedEntriesLoaded.current) {
     return false;
   }
 

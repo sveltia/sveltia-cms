@@ -14,7 +14,7 @@ import {
   localizeDirPath,
 } from '$lib/services/contents/collection/nested/i18n';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
-import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+import { getEntryDateTimeParts, hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { getLocalePath } from '$lib/services/contents/i18n';
 import {
@@ -90,8 +90,8 @@ export const buildPathByStructure = ({
  * folder named after the localized slug.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @param {string} args.slug Entry slug in the locale. For an existing entry in a nested collection,
- * that’s the entry’s sub path in the locale.
+ * @param {string} args.slug Entry slug in the locale. For an existing entry in a collection with
+ * nested entries, that’s the entry’s sub path in the locale.
  * @param {string | undefined} args.indexFileName File name shared by every entry in the collection,
  * if any.
  * @param {InternalLocaleCode} args.locale Locale code.
@@ -223,6 +223,7 @@ export const createEntryPath = ({ draft, locale, slug }) => {
             locale,
             content: currentValues[defaultLocale],
             currentSlug: slug,
+            dateTimeParts: getEntryDateTimeParts(draft),
           })
         : slug;
 

@@ -1,3 +1,5 @@
+import { sleep } from '@sveltia/utils/misc';
+
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { createDraftPullRequest } from '$lib/services/backends/git/shared/fork';
@@ -192,6 +194,20 @@ export const commitToNewWorkflowBranch = async ({
 };
 
 /**
+ * Create the error for a save onto a workflow branch that is gone, e.g. with a pull request merged
+ * or closed on the service, which is worth saying in words rather than with the service’s message
+ * about a branch it can’t find.
+ * @param {string} branch Workflow branch name.
+ * @param {RepositoryPath} repository Repository the branch lived in.
+ * @returns {Error} Error.
+ */
+export const createBranchGoneError = (branch, repository) =>
+  createLocalizedError('Failed to save the changes.', 'branch_not_found', {
+    repo: repository.repo,
+    branch,
+  });
+
+/**
  * Make sure the workflow branch of an existing pull request still points at the commit the entry
  * was loaded or saved at, which the conflict check has just compared it with, before committing
  * onto it. Without a head on record there’s nothing to compare, which is refused just the same.
@@ -213,13 +229,8 @@ export const assertBranchAtHead = async ({
 }) => {
   const head = await fetchBranchHead(branch);
 
-  // The branch can have gone, e.g. with a pull request merged or closed on the service, which is
-  // worth saying in words rather than with the service’s message about a branch it can’t find
   if (head === undefined) {
-    throw createLocalizedError('Failed to save the changes.', 'branch_not_found', {
-      repo: getWorkflowRepository().repo,
-      branch,
-    });
+    throw createBranchGoneError(branch, getWorkflowRepository());
   }
 
   // Trying again reloads the entry first, which takes the other commit into account
@@ -325,6 +336,40 @@ export const getMovedHeadMergeState = (pullRequest, headSHA) =>
     : { headSHA, onConfiguredBranches: true, files: [], complete: true };
 
 /**
+ * Work out the merge state of a pull request from its head commit, as read from the service: no
+ * files for a pull request that isn’t between the configured branches, no files either when the
+ * branch has moved on from the commit on record (see {@link getMovedHeadMergeState}), and the files
+ * changed at the head commit otherwise.
+ * @param {object} args Arguments.
+ * @param {WorkflowPullRequest} args.pullRequest Pull request, with the head commit on record.
+ * @param {string | undefined} args.headSHA Commit the pull request’s branch points at now.
+ * @param {boolean} args.onConfiguredBranches Whether the pull request goes from a branch of the
+ * configured repository into its configured branch.
+ * @param {(headSHA: string) => Promise<{ files: WorkflowChangedFile[], complete: boolean }>}
+ * args.listChangedFiles Function to list the files changed at the head commit, and tell whether the
+ * list is complete.
+ * @returns {Promise<WorkflowMergeState>} State.
+ */
+export const resolveMergeState = async ({
+  pullRequest,
+  headSHA,
+  onConfiguredBranches,
+  listChangedFiles,
+}) => {
+  if (!headSHA || !onConfiguredBranches) {
+    return { headSHA, onConfiguredBranches: false, files: [], complete: false };
+  }
+
+  const movedHeadState = getMovedHeadMergeState(pullRequest, headSHA);
+
+  if (movedHeadState) {
+    return movedHeadState;
+  }
+
+  return { headSHA, onConfiguredBranches, ...(await listChangedFiles(headSHA)) };
+};
+
+/**
  * Check whether the given pull request has been merged, on GitHub or Gitea/Forgejo, whose APIs
  * share the endpoint. It answers with a status rather than a body: `204 No Content` when it has,
  * `404 Not Found` when it hasn’t. Both services answer a merge request for any pull request that
@@ -396,4 +441,80 @@ export const applyForkPullRequestStatus = async (
       await updateDraftState(pullRequest, false);
     }
   }
+};
+
+/**
+ * How often, and for how long at most, a pull request set to auto-merge is read while the service
+ * waits for its required checks or pipeline. Those take minutes, so the reads are spaced out. The
+ * cap is a safety net for a merge that never lands, e.g. one waiting for a check that never
+ * reports, or one the service has queued but not carried out.
+ */
+export const AUTO_MERGE_POLL = { interval: 10000, maxDuration: 60 * 60 * 1000 };
+
+/**
+ * Check whether the given error is a client error that won’t go away by itself — the session has
+ * ended, or the pull request is gone, say — so there’s no point in sending the request again. The
+ * limit on requests having been hit is the exception: that one passes.
+ * @param {any} ex Error thrown by `fetchAPI` or `fetchGraphQL`.
+ * @returns {boolean} Result.
+ */
+export const isPermanentClientError = (ex) => {
+  const status = ex?.cause?.status;
+
+  return typeof status === 'number' && status >= 400 && status < 500 && status !== 429;
+};
+
+/**
+ * Wait for the service to merge a pull request that has been set to auto-merge. The pull request is
+ * read every so often and handed to `evaluate`, until that reports it merged, in which case this
+ * resolves, or throws because the merge won’t happen on its own, or until the wait has run out, in
+ * which case the auto-merge is cancelled and an error is thrown. A failed read says nothing about
+ * the merge, which the service carries out on its own, so it’s only logged and the wait goes on,
+ * unless it’s a client error that asking again won’t fix: see {@link isPermanentClientError}.
+ * @template T
+ * @param {object} args Arguments.
+ * @param {() => Promise<T>} args.read Function to read the pull request.
+ * @param {(item: T) => Promise<boolean>} args.evaluate Function to check the pull request read,
+ * which resolves to `true` if it has been merged, or `false` to keep waiting, and throws if it
+ * won’t be merged.
+ * @param {() => Promise<void>} args.cancel Function to cancel the auto-merge, which doesn’t throw.
+ * @param {string} args.label Name of the pull request for the messages, e.g. `pull request #1`.
+ * @param {number} [args.deadline] Time to give up at, as a Unix timestamp in milliseconds.
+ * @returns {Promise<void>}
+ * @throws {Error} When the pull request won’t be merged, or wasn’t within the time allowed.
+ */
+export const waitForMerge = async ({
+  read,
+  evaluate,
+  cancel,
+  label,
+  deadline = Date.now() + AUTO_MERGE_POLL.maxDuration,
+}) => {
+  if (Date.now() >= deadline) {
+    await cancel();
+
+    throw new Error(`Timed out waiting for ${label} to be merged`);
+  }
+
+  await sleep(AUTO_MERGE_POLL.interval);
+
+  /** @type {{ item: T } | undefined} */
+  let result;
+
+  try {
+    result = { item: await read() };
+  } catch (/** @type {any} */ ex) {
+    if (isPermanentClientError(ex)) {
+      throw ex;
+    }
+
+    // eslint-disable-next-line no-console
+    console.warn(`Failed to read ${label}, still waiting.`, ex);
+  }
+
+  if (result && (await evaluate(result.item))) {
+    return;
+  }
+
+  await waitForMerge({ read, evaluate, cancel, label, deadline });
 };

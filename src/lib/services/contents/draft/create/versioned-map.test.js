@@ -45,8 +45,25 @@ describe('contents/draft/create/versioned-map', () => {
     delete valueMap.title;
 
     // The value held before the write is passed along
-    expect(onSet).toHaveBeenCalledWith(expect.any(Object), 'title', 'B', 'A');
+    expect(onSet).toHaveBeenCalledWith(expect.any(Object), 'title', 'B', 'A', false);
     expect(onDelete).toHaveBeenCalledWith(expect.any(Object), 'title', 'B');
+  });
+
+  test('tells the hook whether the key path has just been added', () => {
+    const onSet = vi.fn();
+    const valueMap = createValueMap({ title: 'A' }, { onSet });
+
+    valueMap.title = 'B';
+    valueMap.body = 'Text';
+    delete valueMap.title;
+    valueMap.title = 'C';
+
+    expect(onSet.mock.calls.map(([, keyPath, , , added]) => [keyPath, added])).toEqual([
+      ['title', false],
+      ['body', true],
+      // A key path deleted and written again counts as added
+      ['title', true],
+    ]);
   });
 
   test('lists the keys in the order they were last written in', () => {

@@ -1,5 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
-import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
+import { stripSlashes } from '@sveltia/utils/string';
 
 import {
   allAssetFolders,
@@ -10,12 +10,12 @@ import {
 import { allAssets, focusedAsset } from '$lib/services/assets/state';
 import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { fillTemplate } from '$lib/services/common/template';
-import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
 import { hasTemplateTags } from '$lib/services/common/template/tags';
+import { getTemplatePattern } from '$lib/services/common/template/utils';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
-import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
+import { getEntryCollectionContexts } from '$lib/services/contents/entry/contexts';
 import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 import { createPath, getDirName, resolvePath, stripPathPrefix } from '$lib/services/utils/file';
@@ -177,7 +177,7 @@ export const getAssetByRelativePathAndCollection = ({
       : `/${fieldFolder.internalPath}`
     : /** @type {string | undefined} */ (folderOptions.media_folder);
 
-  const publicFolder =
+  let publicFolder =
     fieldFolder?.publicPath !== undefined
       ? fieldFolder.publicPath
       : /** @type {string | undefined} */ (folderOptions.public_folder);
@@ -197,6 +197,12 @@ export const getAssetByRelativePathAndCollection = ({
   // @see https://github.com/sveltia/sveltia-cms/issues/853
   if (mediaFolder && hasTemplateTags(mediaFolder)) {
     mediaFolder = fillMediaFolderTemplate(mediaFolder, { collection, entry, localeFile });
+  }
+
+  // Resolve them in `public_folder` too, so its prefix can be stripped from the stored path below
+  // @see https://github.com/sveltia/sveltia-cms/issues/1104
+  if (publicFolder && hasTemplateTags(publicFolder)) {
+    publicFolder = fillMediaFolderTemplate(publicFolder, { collection, entry, localeFile });
   }
 
   // Directory of the entry file, which is an empty string for an entry file at the repository root
@@ -329,16 +335,18 @@ export const getAssetByRelativePath = ({
   }
 
   // Stop at the first collection or collection file that has the asset
-  const foundAsset = getAssociatedCollections(entry)
-    .values()
-    .flatMap((collection) => {
-      const collectionFiles = getCollectionFilesByEntry(collection, entry);
-      const args = { path, entry, collection, componentName, typedKeyPath, locale };
-      /** @type {(InternalCollectionFile | undefined)[]} */
-      const files = collectionFiles.length ? collectionFiles : [undefined];
-
-      return files.values().map((file) => getAssetByRelativePathAndCollection({ ...args, file }));
-    })
+  const foundAsset = getEntryCollectionContexts(entry)
+    .map(({ collection, collectionFile: file }) =>
+      getAssetByRelativePathAndCollection({
+        path,
+        entry,
+        collection,
+        file,
+        componentName,
+        typedKeyPath,
+        locale,
+      }),
+    )
     .find(Boolean);
 
   return (
@@ -363,7 +371,7 @@ const publicPathRegexCache = new WeakMap();
 const getPublicPathRegex = (folder) =>
   getOrCreate(publicPathRegexCache, folder, () => {
     const publicPath = folder.publicPath ?? '';
-    const normalizedPath = escapeRegExp(publicPath).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
+    const normalizedPath = getTemplatePattern(publicPath, '.+?');
 
     return new RegExp(`^${normalizedPath}${publicPath ? '(?=\\/|$)' : '$'}`);
   });
@@ -557,6 +565,69 @@ export const isAssetInFolder = ({ folder: assetFolder }, folder) => {
  */
 export const getAssetsByFolder = (folder) =>
   allAssets.current.filter((asset) => isAssetInFolder(asset, folder));
+
+/**
+ * Get a key that two asset folders share exactly when {@link isAssetInFolder} would put the assets
+ * of one in the other: the path alone for a folder with a fixed path, every property it compares
+ * for an entry-relative folder.
+ * @param {AssetFolderInfo} folder Folder info.
+ * @returns {string} Key.
+ */
+const getAssetFolderMatchKey = ({
+  entryRelative,
+  collectionName,
+  fileName,
+  typedKeyPath,
+  isIndexFile,
+  internalPath,
+  internalSubPath,
+  publicPath,
+  hasTemplateTags: _hasTemplateTags,
+}) =>
+  JSON.stringify(
+    entryRelative
+      ? [
+          collectionName,
+          fileName,
+          typedKeyPath,
+          isIndexFile,
+          internalPath,
+          internalSubPath,
+          publicPath,
+          _hasTemplateTags,
+        ]
+      : [internalPath],
+  );
+
+/**
+ * Number of assets in each folder, keyed by {@link getAssetFolderMatchKey}, counted in one pass
+ * over {@link allAssets} and kept until the assets change.
+ */
+const getAssetCountsByFolder = memoizeOnSource(
+  () => allAssets.current,
+  (assets) => {
+    /** @type {Map<string, number>} */
+    const counts = new Map();
+
+    assets.forEach(({ folder }) => {
+      const key = getAssetFolderMatchKey(folder);
+
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    });
+
+    return counts;
+  },
+);
+
+/**
+ * Count the assets stored in the given collection defined folder. This is the length of
+ * {@link getAssetsByFolder}, without going through every asset for each folder, as the folder list
+ * does for every folder whenever an asset is added, removed or renamed.
+ * @param {AssetFolderInfo} folder Folder info.
+ * @returns {number} Number of assets.
+ */
+export const countAssetsInFolder = (folder) =>
+  getAssetCountsByFolder().get(getAssetFolderMatchKey(folder)) ?? 0;
 
 /**
  * Get a list of assets stored in the given internal directory.

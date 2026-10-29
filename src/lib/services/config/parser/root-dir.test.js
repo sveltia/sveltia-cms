@@ -209,7 +209,7 @@ describe('checkRootDirPaths()', () => {
         check({
           config,
           assetFolders: [
-            // A nested collection
+            // Nested entries
             {
               collectionName: 'wiki',
               internalPath: 'wiki',

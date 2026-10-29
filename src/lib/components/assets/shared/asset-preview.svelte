@@ -15,6 +15,7 @@
   import { requestFlushSync } from '$lib/services/utils/render';
   import { createLatestGuard } from '$lib/services/utils/scheduling';
   import { watchAsync } from '$lib/services/utils/state.svelte';
+  import { whenThumbnailShown } from '$lib/services/utils/visibility';
 
   /**
    * @import { Asset, AssetKind } from '$lib/types/private';
@@ -192,6 +193,33 @@
   };
 
   /**
+   * Function to stop the pending {@link waitForSteadyVisibility} call, if any, once another one is
+   * made or the component has been destroyed. Kept outside the reactive graph like
+   * {@link ownedURLs}, as the cleanup reads it.
+   * @type {(() => void) | undefined}
+   */
+  let cancelThumbnailWait = undefined;
+
+  /**
+   * Wait until the given thumbnail is to be shown: right away if it’s in view, or once it has
+   * scrolled into view and stayed there for a moment. A thumbnail in a grid being scrolled quickly
+   * then doesn’t queue its generation ahead of the ones the user stops at, and no layout is forced
+   * to find out, which matters with a thumbnail per tile. The promise is left pending if another
+   * wait starts or the component is destroyed first: only the latest lookup is acted on, and an
+   * earlier wait isn’t left to observe the same element alongside this one.
+   * @param {HTMLElement} element Element.
+   * @returns {Promise<void>} Promise resolved once the thumbnail is to be shown.
+   */
+  const waitForSteadyVisibility = (element) =>
+    new Promise((resolve) => {
+      cancelThumbnailWait?.();
+      cancelThumbnailWait = whenThumbnailShown(element, () => {
+        cancelThumbnailWait = undefined;
+        resolve();
+      });
+    });
+
+  /**
    * Update the {@link resolvedSrc} value.
    */
   const updateSrc = async () => {
@@ -206,7 +234,11 @@
     const thumbnail = isThumbnail;
 
     if (loading === 'lazy') {
-      await waitForVisibility(mediaElement);
+      if (thumbnail) {
+        await waitForSteadyVisibility(mediaElement);
+      } else {
+        await waitForVisibility(mediaElement);
+      }
     }
 
     /** @type {string | undefined} */
@@ -455,6 +487,8 @@
       if (mediaElement) {
         removeVisibilityResolver(mediaElement);
       }
+
+      cancelThumbnailWait?.();
     };
   });
 </script>

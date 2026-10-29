@@ -1,4 +1,9 @@
-import { FIELD_TAG_PREFIX_REGEX } from '$lib/services/common/template/constants';
+import { escapeRegExp } from '@sveltia/utils/string';
+
+import {
+  ESCAPED_PLACEHOLDER_REGEX,
+  FIELD_TAG_PREFIX_REGEX,
+} from '$lib/services/common/template/constants';
 
 /**
  * @import { InternalCollection } from '$lib/types/private';
@@ -48,3 +53,14 @@ export const getFileNameParts = (path, localeSuffixes = []) => {
  */
 export const getFileNameLocaleSuffixes = ({ _i18n }) =>
   _i18n?.structureMap?.i18nMultiFile ? _i18n.allLocales : [];
+
+/**
+ * Get a regular expression pattern matching the given path template, with each template tag, e.g.
+ * `{{slug}}`, replaced with the given wildcard and anything else matched literally.
+ * @param {string} template Path template, e.g. `images/{{slug}}`.
+ * @param {string} wildcard Pattern to match a template tag with, e.g. `[^/]+` for one path segment
+ * or `.+?` for any number of them.
+ * @returns {string} Pattern.
+ */
+export const getTemplatePattern = (template, wildcard) =>
+  escapeRegExp(template).replace(ESCAPED_PLACEHOLDER_REGEX, wildcard);

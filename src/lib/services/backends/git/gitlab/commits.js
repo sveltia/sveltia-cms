@@ -8,6 +8,7 @@ import {
   createCommitMessage,
   createLastCommitError,
   fetchPerPathCommits,
+  signOffCommitMessage,
 } from '$lib/services/backends/git/shared/commits';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
@@ -122,7 +123,8 @@ export const commitChanges = async (changes, options) => {
   );
 
   const endpoint = `/projects/${getProjectId(fork)}/repository/commits`;
-  const body = { branch, commit_message: createCommitMessage(changes, options), actions };
+  const commitMessage = signOffCommitMessage(createCommitMessage(changes, options));
+  const body = { branch, commit_message: commitMessage, actions };
   const { startBranch } = options;
   // With Open Authoring the branch is created in the contributor’s fork, but starts from the head
   // of the configured project rather than the fork’s own copy of it, so a fork that has fallen

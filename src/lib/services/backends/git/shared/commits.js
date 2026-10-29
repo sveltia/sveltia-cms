@@ -199,6 +199,83 @@ export const createCommitMessage = (changes, options) => {
 };
 
 /**
+ * A Git trailer line: a token of letters, digits and hyphens, a colon and a value.
+ * @see https://git-scm.com/docs/git-interpret-trailers
+ */
+const TRAILER_LINE_REGEX = /^[A-Za-z0-9-]+:\s*\S/;
+/**
+ * Clean up a user profile value for a commit trailer. Line breaks and angle brackets would break
+ * the trailer, though a Git host doesn’t allow them in a name or an email.
+ * @param {string | null | undefined} value Value. A field the host leaves empty can be `null`.
+ * @returns {string} Cleaned value.
+ */
+const cleanTrailerValue = (value) => (value ?? '').replace(/[\s<>]+/g, ' ').trim();
+/**
+ * Signed-in user accounts that have been warned about their missing email, so the warning is only
+ * shown once per sign-in rather than for every commit.
+ * @type {WeakSet<User>}
+ */
+const accountsWarnedAboutEmail = new WeakSet();
+
+/**
+ * Add a `Signed-off-by` trailer with the signed-in user’s name and email to the given commit
+ * message, if the `signoff_commits` backend option is enabled. The trailer joins the trailer block
+ * the message already ends with, if any, and otherwise follows a blank line. A message that already
+ * carries a sign-off with the user’s email, e.g. from a custom `commit_messages` template, is left
+ * as it is. When the Git host doesn’t share the user’s email, as GitHub does for a user without a
+ * public email, the trailer is left out with a warning, shown once per sign-in.
+ * @param {string} message Commit message.
+ * @returns {string} Message, possibly with the trailer.
+ * @see https://github.com/decaporg/decap-cms/pull/7766
+ */
+export const signOffCommitMessage = (message) => {
+  if (!getBackendOptions().signoff_commits) {
+    return message;
+  }
+
+  const { account } = /** @type {{ account: User }} */ (user);
+  const { email, login, name } = account;
+  const cleanEmail = cleanTrailerValue(email);
+
+  if (!cleanEmail) {
+    if (!accountsWarnedAboutEmail.has(account)) {
+      accountsWarnedAboutEmail.add(account);
+      // eslint-disable-next-line no-console
+      console.warn(
+        'The `signoff_commits` option is enabled, but the Git host doesn’t share your email ' +
+          'address, so commits are made without a `Signed-off-by` trailer.',
+      );
+    }
+
+    return message;
+  }
+
+  const author = cleanTrailerValue(name) || cleanTrailerValue(login) || cleanEmail;
+  const text = message.trimEnd();
+  const emailSuffix = `<${cleanEmail}>`.toLowerCase();
+
+  // The user has already signed off if a trailer has their email, whichever name it goes with
+  if (
+    text.split(/\r?\n/).some((line) => {
+      const normalized = line.trim().toLowerCase();
+
+      return normalized.startsWith('signed-off-by:') && normalized.endsWith(emailSuffix);
+    })
+  ) {
+    return message;
+  }
+
+  const paragraphs = text.split(/\r?\n\s*\r?\n/);
+  const lastParagraph = /** @type {string} */ (paragraphs.at(-1));
+
+  const endsWithTrailers =
+    paragraphs.length > 1 &&
+    lastParagraph.split(/\r?\n/).every((line) => TRAILER_LINE_REGEX.test(line));
+
+  return `${text}${endsWithTrailers ? '\n' : '\n\n'}Signed-off-by: ${author} <${cleanEmail}>`;
+};
+
+/**
  * Merge the commit histories of several files into one list. A commit touching more than one of the
  * files appears in each history, so only its first occurrence is kept.
  * @param {FileCommit[]} commits Commits, possibly with duplicates.

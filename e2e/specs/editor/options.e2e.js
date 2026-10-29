@@ -9,7 +9,8 @@ import { getEditor } from '../../fixtures/ui.js';
 test.use({ config: MONOLINGUAL_CONFIG });
 
 test.beforeEach(async ({ cms, page }) => {
-  // The `{{year}}` and `{{month}}` slug tags come from the time of saving
+  // The `{{year}}` and `{{month}}` slug tags come from the post’s date, or the time of saving if
+  // it’s empty
   await page.clock.install({ time: new Date('2026-05-10T12:00:00Z') });
   await cms.open();
   await cms.seed(MONOLINGUAL_FILES);
@@ -43,8 +44,9 @@ test('duplicates an entry', async ({ cms, page }) => {
   await editor.getByRole('textbox', { name: 'Title' }).fill('Second Light');
   await editor.getByRole('button', { name: 'Save' }).click();
 
+  // The copy keeps the original’s date, which it’s named after
   await expect
-    .poll(async () => (await cms.readRepo())['content/posts/2026-05-second-light.md'])
+    .poll(async () => (await cms.readRepo())['content/posts/2026-01-second-light.md'])
     .toBe(
       MONOLINGUAL_FILES['content/posts/2026-01-first-light.md']
         .replace('First Light', 'Second Light')
@@ -323,6 +325,57 @@ test.describe('sync scrolling', () => {
     await page.mouse.wheel(0, -5000);
     await expect.poll(() => editArea.evaluate((element) => element.scrollTop)).toBe(0);
     await expect.poll(() => previewArea.evaluate((element) => element.scrollTop)).toBe(0);
+  });
+
+  test('aligns the field at the top of one pane with the same spot in the other', async ({
+    page,
+  }) => {
+    const { editArea, previewArea } = await openLongNight(page);
+
+    /**
+     * Get how far the top of the scrolled pane is into the Body field, and how far the other pane
+     * is off from the same spot in its own Body field.
+     * @param {Locator} thisArea Scrolling area of the pane being scrolled.
+     * @param {Locator} thatArea Scrolling area of the other pane.
+     * @returns {Promise<{ ratio: number, error: number }>} Ratio within the field, and the error in
+     * pixels.
+     */
+    const measure = async (thisArea, thatArea) => {
+      /**
+       * Get where the Body field is relative to the top of a pane.
+       * @param {Locator} area Scrolling area.
+       * @returns {Promise<{ offset: number, height: number }>} Offset of the top of the pane into
+       * the field, and the field’s height.
+       */
+      const getPosition = (area) =>
+        area.evaluate((element) => {
+          const field = /** @type {Element} */ (element.querySelector('[data-key-path="body"]'));
+          const { top, height } = field.getBoundingClientRect();
+
+          return { offset: element.getBoundingClientRect().top - top, height };
+        });
+
+      const [thisPosition, thatPosition] = await Promise.all([
+        getPosition(thisArea),
+        getPosition(thatArea),
+      ]);
+
+      const ratio = thisPosition.offset / thisPosition.height;
+
+      return { ratio, error: Math.abs(thatPosition.offset - ratio * thatPosition.height) };
+    };
+
+    // The fields above the body, and the panes’ own headers and padding, used to throw the preview
+    // off by about a hundred pixels, and the editor by about fifty the other way
+    await editArea.hover();
+    await page.mouse.wheel(0, 2000);
+    await expect.poll(async () => (await measure(editArea, previewArea)).error).toBeLessThan(2);
+    expect((await measure(editArea, previewArea)).ratio).toBeGreaterThan(0);
+
+    await previewArea.hover();
+    await page.mouse.wheel(0, 400);
+    await expect.poll(async () => (await measure(previewArea, editArea)).error).toBeLessThan(2);
+    expect((await measure(previewArea, editArea)).ratio).toBeGreaterThan(0);
   });
 
   test('scrolls the preview to the focused field', async ({ page }) => {

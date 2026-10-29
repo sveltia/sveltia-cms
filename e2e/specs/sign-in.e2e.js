@@ -72,10 +72,15 @@ const mockAuthenticator = async (page, { state, content = {} }) => {
  * @param {MockGitRepository} args.mock Mocked repository, whose token is handed out.
  * @param {string} [args.state] State to send back instead of the one the CMS sent, as a forged
  * redirect would.
+ * @param {'submit' | 'stay'} [args.signInPage] Show a sign-in page first, as GitLab does for a user
+ * who isn’t signed in: `submit` for the user to sign in, which sends the popup on to the CMS, or
+ * `stay` for the page to wait. Like GitLab’s, it’s served with `Cross-Origin-Opener-Policy:
+ * same-origin`, which severs the popup from the CMS: the popup comes back without `window.opener`
+ * or `window.name`, and the CMS sees it as closed.
  * @returns {Promise<{ authorize: URLSearchParams[], token: Record<string, any>[] }>} Requests
  * received so far.
  */
-const mockOAuthProvider = async (page, { authorizeURL, tokenURL, mock, state }) => {
+const mockOAuthProvider = async (page, { authorizeURL, tokenURL, mock, state, signInPage }) => {
   /** @type {{ authorize: URLSearchParams[], token: Record<string, any>[] }} */
   const requests = { authorize: [], token: [] };
   const context = page.context();
@@ -89,6 +94,20 @@ const mockOAuthProvider = async (page, { authorizeURL, tokenURL, mock, state }) 
       code: 'e2e-code',
       state: state ?? /** @type {string} */ (params.get('state')),
     }).toString();
+
+    if (signInPage) {
+      return route.fulfill({
+        contentType: 'text/html',
+        headers: { 'cross-origin-opener-policy': 'same-origin' },
+        body: `<!doctype html><title>Sign in</title><script>
+          if (${signInPage === 'submit'}) {
+            setTimeout(() => {
+              location.href = ${JSON.stringify(redirectURL.href)};
+            }, 500);
+          }
+        </script>`,
+      });
+    }
 
     return route.fulfill({ status: 302, headers: { location: redirectURL.href } });
   });
@@ -267,6 +286,59 @@ test.describe('GitLab with PKCE', () => {
       }),
     ]);
   });
+
+  test('signs in through a sign-in page that severs the popup from the CMS', async ({
+    cms,
+    gitlab,
+    page,
+  }) => {
+    const requests = await mockOAuthProvider(page, {
+      authorizeURL: 'https://gitlab.com/oauth/authorize',
+      tokenURL: 'https://gitlab.com/oauth/token',
+      mock: gitlab,
+      signInPage: 'submit',
+    });
+
+    await cms.open();
+
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.getByRole('button', { name: /^Sign In with .*GitLab/ }).click(),
+    ]);
+
+    // The popup can’t post the token back to the CMS, so it sends it over a channel and closes
+    // itself, as the CMS can’t close it any more
+    await expect(page.getByRole('row', { name: /First Post/ })).toBeVisible();
+    await expect.poll(() => popup.isClosed()).toBe(true);
+    expect(requests.token).toHaveLength(1);
+  });
+
+  test('lets the user cancel a sign-in whose popup was severed', async ({ cms, gitlab, page }) => {
+    const requests = await mockOAuthProvider(page, {
+      authorizeURL: 'https://gitlab.com/oauth/authorize',
+      tokenURL: 'https://gitlab.com/oauth/token',
+      mock: gitlab,
+      signInPage: 'stay',
+    });
+
+    await cms.open();
+
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.getByRole('button', { name: /^Sign In with .*GitLab/ }).click(),
+    ]);
+
+    await expect(popup).toHaveTitle('Sign in');
+    // The CMS can’t tell whether the user has closed the popup on the sign-in page
+    await popup.close();
+    await expect(page.getByRole('alert').filter({ hasText: 'Signing in…' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Cancel' }).click();
+
+    await expect(page.getByText('Authentication aborted. Please try again.')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Sign In with .*GitLab/ })).toBeVisible();
+    expect(requests.token).toEqual([]);
+  });
 });
 
 test.describe('Gitea', () => {
@@ -313,6 +385,56 @@ test.describe('Gitea', () => {
     ).toBeVisible();
     // The code isn’t exchanged for a token
     expect(requests.token).toEqual([]);
+  });
+
+  test('signs in with an access token', async ({ cms, gitea, page }) => {
+    await cms.open();
+    await signInWithToken(page, gitea.token);
+
+    await expect(page.getByRole('row', { name: /First Post/ })).toBeVisible();
+  });
+});
+
+// The `forgejo` backend of Decap CMS: the instance URL comes from `api_root`, without `base_url`,
+// and the branch is left to the repository’s default
+test.describe('Forgejo', () => {
+  test.use({
+    config: {
+      ...GITEA_CONFIG,
+      backend: {
+        name: 'forgejo',
+        repo: 'sveltia/e2e-site',
+        api_root: 'https://codeberg.org/api/v1',
+        app_id: 'e2e-client',
+      },
+    },
+  });
+
+  test.beforeEach(({ gitea }) => {
+    Object.assign(gitea, {
+      apiRoot: 'https://codeberg.org/api/v1',
+      version: '13.0.3+gitea-1.22.0',
+    });
+    gitea.commit(FIRST_POST);
+  });
+
+  test('signs in with an authorization code exchanged in the popup', async ({
+    cms,
+    gitea,
+    page,
+  }) => {
+    const requests = await mockOAuthProvider(page, {
+      authorizeURL: 'https://codeberg.org/login/oauth/authorize',
+      tokenURL: 'https://codeberg.org/login/oauth/access_token',
+      mock: gitea,
+    });
+
+    await cms.open();
+    await page.getByRole('button', { name: /^Sign In with .*Codeberg/ }).click();
+
+    await expect(page.getByRole('row', { name: /First Post/ })).toBeVisible();
+    expect(requests.authorize[0].get('client_id')).toBe('e2e-client');
+    expect(requests.token).toHaveLength(1);
   });
 
   test('signs in with an access token', async ({ cms, gitea, page }) => {

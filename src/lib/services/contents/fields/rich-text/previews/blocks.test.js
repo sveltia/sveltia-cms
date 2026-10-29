@@ -3,10 +3,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  addLinkDefinitions,
   getFencedCodeLanguages,
+  getLinkDefinitions,
   keyBlocks,
   splitHTMLBlocks,
   splitMarkdownBlocks,
+  splitPreviewBlocks,
 } from './blocks.js';
 
 describe('splitHTMLBlocks', () => {
@@ -85,6 +88,24 @@ describe('splitMarkdownBlocks', () => {
     expect(splitMarkdownBlocks(md)).toEqual([md]);
   });
 
+  it('should close a fence with a longer run of the fence character', () => {
+    const md = '```\ncode\n\n````\n\nnext';
+
+    expect(splitMarkdownBlocks(md)).toEqual(['```\ncode\n\n````', 'next']);
+  });
+
+  it('should not take a code span for a fence, as a backtick fence’s info can’t have a backtick', () => {
+    const md = '```inline``` code\n\npara two\n\npara three';
+
+    expect(splitMarkdownBlocks(md)).toEqual(['```inline``` code', 'para two', 'para three']);
+  });
+
+  it('should allow a backtick in the info string of a tilde fence', () => {
+    const md = '~~~ js `title`\ncode\n\nmore code\n~~~';
+
+    expect(splitMarkdownBlocks(md)).toEqual([md]);
+  });
+
   it('should keep an HTML block element with internal blank lines as one block', () => {
     const md = '<div class="block">\n\ncontent goes here\n\n</div>';
 
@@ -120,6 +141,42 @@ describe('splitMarkdownBlocks', () => {
     const md = '<div>\nline one\n\nline two\n</div>';
 
     expect(splitMarkdownBlocks(md)).toEqual([md]);
+  });
+
+  it('should keep an HTML comment with internal blank lines as one block', () => {
+    expect(splitMarkdownBlocks('A\n\n<!-- one\n\ntwo -->\nB\n\nC')).toEqual([
+      'A',
+      '<!-- one\n\ntwo -->\nB',
+      'C',
+    ]);
+    expect(splitMarkdownBlocks('<!-- one -->\n\nA')).toEqual(['<!-- one -->', 'A']);
+    // An unclosed comment runs to the end
+    expect(splitMarkdownBlocks('  <!--\n\nA')).toEqual(['  <!--\n\nA']);
+  });
+
+  it('should keep other raw HTML blocks with internal blank lines as one block', () => {
+    [
+      '<script>\na();\n\nb();\n</script>',
+      '<PRE\n\n</pre>',
+      '<?php\n\necho 1; ?>',
+      '<!DOCTYPE\n\nhtml>',
+      '<![CDATA[\n\n]]>',
+    ].forEach((block) => {
+      expect(splitMarkdownBlocks(`${block}\n\nA`)).toEqual([block, 'A']);
+    });
+  });
+
+  it('should keep a list whose items continue after a blank line as one block', () => {
+    expect(splitMarkdownBlocks('- a\n\n  more of a\n\n\n- b\n\nAfter')).toEqual([
+      '- a\n\n  more of a\n\n\n- b',
+      'After',
+    ]);
+    expect(splitMarkdownBlocks('Intro\n1. a\n\n2) b\n\n')).toEqual(['Intro\n1. a\n\n2) b']);
+    expect(splitMarkdownBlocks('- a\n\nAfter\n\n  indented')).toEqual([
+      '- a',
+      'After',
+      '  indented',
+    ]);
   });
 
   it('should correctly parse two HTML blocks using the same tag (exercises tag regex cache)', () => {
@@ -165,7 +222,69 @@ describe('getFencedCodeLanguages', () => {
     ).toEqual(['css', 'js']);
   });
 
+  it('should not take a code span for a fence', () => {
+    expect(getFencedCodeLanguages('```inline``` code\n\n```js\na\n```')).toEqual(['js']);
+  });
+
+  it('should find the languages of tilde fences and with spaces before them', () => {
+    expect(getFencedCodeLanguages('~~~ruby\na\n~~~\n\n```` python title\nb\n````')).toEqual([
+      'python',
+      'ruby',
+    ]);
+  });
+
   it('should return an empty list without code blocks', () => {
     expect(getFencedCodeLanguages('text')).toEqual([]);
+  });
+});
+
+describe('getLinkDefinitions', () => {
+  it('should get the link reference definitions', () => {
+    expect(
+      getLinkDefinitions(
+        splitMarkdownBlocks(
+          '[a]: /a\n\nText [a] [b] [c]\n\n> [b]: /b "B"\n\n- item\n\n  [c]:\n  /c\n\n[A]: /duplicate',
+        ),
+      ),
+      // The first definition of a label wins, which is the one coming first
+    ).toBe('[a]: /a\n[b]: /b "B"\n[c]:\n/c\n[A]: /duplicate');
+  });
+
+  it('should leave out what is not a definition', () => {
+    expect(
+      getLinkDefinitions(splitMarkdownBlocks('Text\n[a]: /a\n\n```\n[b]: /b\n\n```\n\n`[c]: /c`')),
+    ).toBe('');
+    expect(getLinkDefinitions(['No definitions'])).toBe('');
+  });
+});
+
+describe('addLinkDefinitions', () => {
+  it('should add the definitions to the start of each block', () => {
+    expect(addLinkDefinitions(['A', '[a]: /a', '```\nB'])).toEqual([
+      '[a]: /a\n\nA',
+      '[a]: /a\n\n[a]: /a',
+      '[a]: /a\n\n```\nB',
+    ]);
+    expect(addLinkDefinitions(['A'])).toEqual(['A']);
+  });
+});
+
+describe('splitPreviewBlocks', () => {
+  it('splits HTML into its top-level nodes', () => {
+    expect(splitPreviewBlocks('<p>One</p><p>[a]</p>', { isHTML: true })).toEqual([
+      '<p>One</p>',
+      '<p>[a]</p>',
+    ]);
+  });
+
+  it('splits Markdown into blocks with the link reference definitions added to each', () => {
+    expect(splitPreviewBlocks('[a]\n\n[a]: https://example.com', { isHTML: false })).toEqual([
+      '[a]: https://example.com\n\n[a]',
+      '[a]: https://example.com\n\n[a]: https://example.com',
+    ]);
+  });
+
+  it('splits Markdown without link reference definitions as it is', () => {
+    expect(splitPreviewBlocks('One\n\nTwo', { isHTML: false })).toEqual(['One', 'Two']);
   });
 });

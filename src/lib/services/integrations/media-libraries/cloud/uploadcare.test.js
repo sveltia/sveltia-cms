@@ -594,6 +594,42 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       expect(results[0].downloadURL).toBe('https://ucarecdn.com/abc123/image.jpg');
     });
 
+    it('should encode the filename in downloadURL when autoFilename is true', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: {
+          uploadcare: {
+            config: {
+              publicKey: mockPublicKey,
+            },
+            settings: {
+              autoFilename: true,
+            },
+          },
+        },
+      });
+
+      const results = parseResults([
+        {
+          uuid: 'abc123',
+          original_filename: 'photo #1 (50%).jpg',
+          original_file_url: 'https://ucarecdn.com/abc123/photo%20%231%20(50%25).jpg',
+          size: 12345,
+          mime_type: 'image/jpeg',
+          is_image: true,
+          is_ready: true,
+          content_info: null,
+          datetime_uploaded: '2025-01-01T00:00:00.000Z',
+          datetime_stored: '2025-01-01T00:00:00.000Z',
+          datetime_removed: null,
+        },
+      ]);
+
+      expect(results[0].downloadURL).toBe(
+        'https://ucarecdn.com/abc123/photo%20%231%20%2850%25%29.jpg',
+      );
+      expect(results[0].fileName).toBe('photo #1 (50%).jpg');
+    });
+
     it('should not include filename when autoFilename is false', () => {
       cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
@@ -1485,7 +1521,14 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
           body: expect.any(FormData),
         }),
       );
-      expect(fetch).toHaveBeenCalledTimes(1);
+      // The CDN origin is looked up with the REST API, which isn’t mocked here
+      expect(fetch).toHaveBeenCalledWith('https://api.uploadcare.com/files/abc-123/', {
+        headers: {
+          Accept: 'application/vnd.uploadcare-v0.7+json',
+          Authorization: `Uploadcare.Simple ${mockPublicKey}:${mockSecretKey}`,
+        },
+      });
+      expect(fetch).toHaveBeenCalledTimes(2);
     });
 
     it('should upload multiple files successfully', async () => {
@@ -1509,6 +1552,93 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe('abc-123');
       expect(result[1].id).toBe('def-456');
+      // The origin is looked up once for all the files
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should give the uploaded files the URL of the project’s own CDN', async () => {
+      const mockFile1 = new File(['content 1'], 'file1.jpg', { type: 'image/jpeg' });
+      const mockFile2 = new File(['content 2'], 'file2.png', { type: 'image/png' });
+
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(
+          /** @type {any} */ ({
+            ok: true,
+            json: vi.fn().mockResolvedValue({ 'file1.jpg': 'abc-123', 'file2.png': 'def-456' }),
+          }),
+        )
+        .mockResolvedValueOnce(
+          /** @type {any} */ ({
+            ok: true,
+            json: vi.fn().mockResolvedValue({
+              uuid: 'abc-123',
+              original_file_url: 'https://demo.ucarecd.net/abc-123/file1.jpg',
+            }),
+          }),
+        );
+
+      const result = await upload([mockFile1, mockFile2], { apiKey: mockSecretKey });
+
+      expect(result.map(({ previewURL }) => previewURL)).toEqual([
+        'https://demo.ucarecd.net/abc-123/-/preview/400x400/',
+        'https://demo.ucarecd.net/def-456/-/preview/400x400/',
+      ]);
+      expect(result[1].downloadURL).toBe('https://demo.ucarecd.net/def-456/');
+    });
+
+    it.each([
+      ['the file info request fails', { ok: false, status: 500 }],
+      ['the file has no URL', { ok: true, json: vi.fn().mockResolvedValue({ uuid: 'abc-123' }) }],
+    ])('should fall back to the legacy CDN when %s', async (_label, infoResponse) => {
+      const mockFile = new File(['test content'], 'test.jpg', { type: 'image/jpeg' });
+
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(
+          /** @type {any} */ ({
+            ok: true,
+            json: vi.fn().mockResolvedValue({ 'test.jpg': 'abc-123' }),
+          }),
+        )
+        .mockResolvedValueOnce(/** @type {any} */ (infoResponse));
+
+      const result = await upload([mockFile], { apiKey: mockSecretKey });
+
+      expect(result[0].downloadURL).toBe('https://ucarecdn.com/abc-123/');
+    });
+
+    it('should not look up the CDN origin when a CDN base is configured', async () => {
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: {
+          uploadcare: { config: { publicKey: mockPublicKey, cdnBase: 'https://cdn.example.com' } },
+        },
+      });
+
+      const mockFile = new File(['test content'], 'test.jpg', { type: 'image/jpeg' });
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ 'test.jpg': 'abc-123' }),
+        }),
+      );
+
+      const result = await upload([mockFile], { apiKey: mockSecretKey });
+
+      expect(result[0].downloadURL).toBe('https://cdn.example.com/abc-123/');
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not look up the CDN origin when no file was uploaded', async () => {
+      const mockFile = new File(['test content'], 'test.jpg', { type: 'image/jpeg' });
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ UPLOADCARE_PUB_KEY: mockPublicKey }),
+        }),
+      );
+
+      expect(await upload([mockFile], { apiKey: mockSecretKey })).toEqual([]);
       expect(fetch).toHaveBeenCalledTimes(1);
     });
 
@@ -1745,6 +1875,10 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     it('should match the default CDN or the configured one', () => {
       expect(uploadcareService).toMatchObject({ isAssetURL });
       expect(isAssetURL('https://ucarecdn.com/uuid/a.jpg')).toBe(true);
+      // A project’s own CDN subdomain
+      expect(isAssetURL('https://demo.ucarecd.net/uuid/a.jpg')).toBe(true);
+      expect(isAssetURL('https://ucarecd.net/uuid/a.jpg')).toBe(false);
+      expect(isAssetURL('https://demo.ucarecd.net.example.com/uuid/a.jpg')).toBe(false);
       expect(isAssetURL('https://example.com/a.jpg')).toBe(false);
 
       cmsConfig.current = /** @type {any} */ ({
@@ -1755,6 +1889,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
 
       expect(isAssetURL('https://cdn.example.com/uuid/')).toBe(true);
       expect(isAssetURL('https://ucarecdn.com/uuid/a.jpg')).toBe(false);
+      expect(isAssetURL('https://demo.ucarecd.net/uuid/a.jpg')).toBe(false);
     });
 
     it('should be false when the service is not configured', () => {

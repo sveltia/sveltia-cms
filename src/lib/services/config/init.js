@@ -1,9 +1,8 @@
+import deepmerge from '@fastify/deepmerge';
 import { _ } from '@sveltia/i18n';
 import { getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { isURL } from '@sveltia/utils/string';
-import merge from 'deepmerge';
-import { stringify } from 'yaml';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
 import {
@@ -30,6 +29,10 @@ import { prefs } from '$lib/services/user/prefs.svelte';
  */
 
 const { DEV } = import.meta.env;
+/**
+ * Deep merge two config objects, concatenating arrays.
+ */
+const merge = deepmerge();
 
 /**
  * Update the entry and asset folder lists based on the given configuration.
@@ -124,10 +127,14 @@ export const initCmsConfig = async (manualConfig) => {
     // opaque `null` origin of a `file:` page or a sandboxed frame, which leaves no base for links
     config._baseURL = isURL(config._siteURL) ? new URL(config._siteURL).origin : '';
 
-    // Handle root collection folder variants, particularly for VitePress
+    // Handle root collection folder variants, particularly for VitePress: `.`, `./` and `/` all
+    // mean the root folder. A leading `./` is removed from any other folder, e.g. `./content`
     config.collections?.forEach((collection) => {
-      if ('folder' in collection && (collection.folder === '.' || collection.folder === '/')) {
-        collection.folder = '';
+      // The JSON schema has checked that `folder` is a string
+      if ('folder' in collection) {
+        collection.folder = /** @type {string} */ (collection.folder)
+          .replace(/^\.(?:\/|$)/, '')
+          .replace(/^\/$/, '');
       }
     });
 
@@ -152,7 +159,14 @@ export const initCmsConfig = async (manualConfig) => {
       throw new Error('Errors found in configuration');
     }
 
-    cmsConfigVersion.current = await getHash(stringify(config));
+    // JSON is serialized far faster than YAML, which takes tens of milliseconds for a configuration
+    // with hundreds of collections. A big integer, which a TOML file can hold, is written as text,
+    // as `JSON.stringify()` can’t serialize it otherwise
+    cmsConfigVersion.current = await getHash(
+      JSON.stringify(config, (_key, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    );
 
     // eslint-disable-next-line no-console
     console.debug('CMS configuration:', config);

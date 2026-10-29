@@ -7,7 +7,7 @@ import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { showNewSubfolderDialog } from '$lib/services/assets/view';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
-import { initTestConfig } from '$lib/test/config';
+import { initTestConfig, serveMediaFolderAtSiteRoot } from '$lib/test/config';
 
 import NewFolderButton from './new-folder-button.svelte';
 
@@ -69,6 +69,8 @@ describe('NewFolderButton', () => {
   });
 
   test('is disabled within a folder the CMS is served from', async () => {
+    serveMediaFolderAtSiteRoot();
+
     selectedSubfolderPath.current = 'admin';
 
     await render(NewFolderButton);

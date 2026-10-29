@@ -15,6 +15,7 @@ import { convertMapLists, getMapKeyField } from '$lib/services/contents/fields/l
 import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
 import { mayHaveUnsafeInteger } from '$lib/services/contents/file/integers';
 import { hasCustomParser, parseEntryFile } from '$lib/services/contents/file/parse';
+import { valueSources } from '$lib/services/contents/file/value-sources';
 import {
   usesMultiFileStructure,
   usesSingleFileStructure,
@@ -145,6 +146,7 @@ const cacheParsedContent = ({ parsedFileMap, path, key, content }) => {
       // Copied, as the content is processed further, and the copy has to be cached as parsed
       content: structuredClone(content),
       format: detectedFrontMatterFormats.get(path),
+      valueSources: valueSources.get(path),
     });
   } catch {
     // Content the database can’t store either; the file is just parsed again next time
@@ -167,9 +169,18 @@ export const parseFileContent = async (file, errors, parsedFileMap) => {
   const customParser = hasCustomParser(file);
 
   if (parsed?.key === key && !customParser) {
+    // Remembered, so the file is saved back in the same format, as when it was parsed
     if (parsed.format) {
-      // Remembered, so the file is saved back in the same format, as when it was parsed
       detectedFrontMatterFormats.set(path, parsed.format);
+    } else {
+      detectedFrontMatterFormats.delete(path);
+    }
+
+    // Remembered, so the floats that are whole numbers are saved back as they were written
+    if (parsed.valueSources) {
+      valueSources.set(path, parsed.valueSources);
+    } else {
+      valueSources.delete(path);
     }
 
     return parsed.content;
@@ -358,7 +369,7 @@ export const shouldSkipIndexFile = (path, fileName, collection, subPathTemplate,
   // 2. The collection is an entry collection and index file inclusion is enabled
   // 3. The collection is an entry collection and the `path` option value ends with `_index` and
   // the extension is `md`
-  // 4. The collection is a nested collection where every entry is stored as `_index.md`
+  // 4. The collection has nested entries, and every entry is stored as `_index.md`
   return !(
     !!fileName ||
     getIndexFile(collection)?.name === '_index' ||

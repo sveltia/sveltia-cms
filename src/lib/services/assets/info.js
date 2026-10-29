@@ -283,6 +283,54 @@ let thumbnailDB = undefined;
  * @type {Map<string, Promise<Blob | undefined>>}
  */
 const pendingThumbnailBlobs = new Map();
+/**
+ * Maximum number of thumbnails kept in {@link memoryThumbnailCache}. A thumbnail is a few dozen
+ * kilobytes, so this stays within a few dozen megabytes.
+ */
+const MEMORY_THUMBNAIL_CACHE_SIZE = 500;
+/**
+ * Thumbnails kept in memory, keyed by asset SHA, for a backend without a database to cache them in,
+ * like the test backend. Without it, a thumbnail would be generated again each time a list row
+ * showing it is rendered. The least recently used one is dropped first.
+ * @type {Map<string, Blob>}
+ */
+const memoryThumbnailCache = new Map();
+
+/**
+ * Keep the given thumbnail in {@link memoryThumbnailCache}, dropping the least recently used one if
+ * the cache is full.
+ * @param {string} sha Asset SHA.
+ * @param {Blob} blob Thumbnail blob.
+ */
+const cacheThumbnailInMemory = (sha, blob) => {
+  memoryThumbnailCache.delete(sha);
+  memoryThumbnailCache.set(sha, blob);
+
+  if (memoryThumbnailCache.size > MEMORY_THUMBNAIL_CACHE_SIZE) {
+    memoryThumbnailCache.delete(/** @type {string} */ (memoryThumbnailCache.keys().next().value));
+  }
+};
+
+/**
+ * Get the cached thumbnail of the given asset, from the database if there is one, from memory
+ * otherwise.
+ * @param {string} sha Asset SHA.
+ * @returns {Promise<Blob | undefined>} Thumbnail blob, if cached.
+ */
+const getCachedThumbnail = async (sha) => {
+  if (thumbnailDB) {
+    return thumbnailDB.get(sha);
+  }
+
+  const blob = memoryThumbnailCache.get(sha);
+
+  if (blob) {
+    // Mark it as the most recently used
+    cacheThumbnailInMemory(sha, blob);
+  }
+
+  return blob;
+};
 
 /* v8 ignore next */
 /**
@@ -292,6 +340,7 @@ const pendingThumbnailBlobs = new Map();
 export const _resetThumbnailDB = () => {
   thumbnailDB = undefined;
   pendingThumbnailBlobs.clear();
+  memoryThumbnailCache.clear();
 };
 
 /**
@@ -305,9 +354,11 @@ const initThumbnailDB = () => {
 
 /**
  * Limit the thumbnails being generated at the same time. Each one decodes the full-size image, so a
- * folder of photos shown for the first time would otherwise hold all of them in memory at once.
+ * folder of photos shown for the first time would otherwise hold all of them in memory at once. The
+ * latest request goes first: in a list being scrolled, that’s a thumbnail now on screen, which
+ * would otherwise wait behind every one requested for the rows scrolled past.
  */
-const limitThumbnailGeneration = createConcurrencyLimiter(4);
+const limitThumbnailGeneration = createConcurrencyLimiter(4, { lastInFirstOut: true });
 
 /**
  * Get a thumbnail blob for the given asset, generating it from the original file if it’s not in the
@@ -316,17 +367,23 @@ const limitThumbnailGeneration = createConcurrencyLimiter(4);
  * @returns {Promise<Blob | undefined>} Thumbnail blob.
  */
 const resolveThumbnailBlob = async (asset) => {
+  const { sha } = asset;
   /** @type {Blob | undefined} */
-  let thumbnailBlob = await thumbnailDB?.get(asset.sha);
+  let thumbnailBlob = await getCachedThumbnail(sha);
 
   if (!thumbnailBlob) {
     const transform = isPDF(asset.name) ? renderPDF : transformImage;
 
-    thumbnailBlob = await limitThumbnailGeneration(async () =>
-      transform(await getThumbnailSourceBlob(asset), THUMBNAIL_TRANSFORM_OPTIONS),
+    thumbnailBlob = await limitThumbnailGeneration(
+      async () => transform(await getThumbnailSourceBlob(asset), THUMBNAIL_TRANSFORM_OPTIONS),
+      { key: sha },
     );
 
-    await thumbnailDB?.set(asset.sha, thumbnailBlob);
+    if (thumbnailDB) {
+      await thumbnailDB.set(sha, thumbnailBlob);
+    } else {
+      cacheThumbnailInMemory(sha, thumbnailBlob);
+    }
   }
 
   return thumbnailBlob;
@@ -349,7 +406,7 @@ export const hasCachedThumbnail = async (sha) => {
     return !!(await pending.catch(() => undefined));
   }
 
-  return !!(await thumbnailDB?.get(sha));
+  return !!(await getCachedThumbnail(sha));
 };
 
 /**
@@ -371,9 +428,16 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
 
   if (cacheOnly && !pendingThumbnailBlobs.has(sha)) {
     // Nothing is being generated for this asset, so stick to a cache lookup as requested
-    const cachedBlob = await thumbnailDB?.get(sha);
+    const cachedBlob = await getCachedThumbnail(sha);
 
     return cachedBlob ? URL.createObjectURL(cachedBlob) : undefined;
+  }
+
+  // The generation of a thumbnail asked for again, e.g. by a row now on screen after one scrolled
+  // past, is moved up the queue. As the latest request goes first, it would otherwise wait behind
+  // every one made since it was first queued
+  if (!cacheOnly && pendingThumbnailBlobs.has(sha)) {
+    limitThumbnailGeneration.prioritize(sha);
   }
 
   // A `cacheOnly` caller joins an in-flight resolution rather than reading the database again: the

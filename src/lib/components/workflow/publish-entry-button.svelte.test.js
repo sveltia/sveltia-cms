@@ -5,7 +5,7 @@ import { mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { publishingBranches } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
-import { publishWorkflowEntry } from '$lib/services/workflow/save';
+import { publishReviewedEntry } from '$lib/services/workflow/save';
 import { canPublish } from '$lib/services/workflow/validate';
 import { createMockWorkflowEntry, initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
@@ -18,7 +18,7 @@ vi.mock('$lib/services/workflow/save', () => ({
   removeUnpublishedEntry: vi.fn(),
   saveWorkflowChanges: vi.fn(),
   updateWorkflowStatus: vi.fn(),
-  publishWorkflowEntry: vi.fn(),
+  publishReviewedEntry: vi.fn(),
   discardWorkflowEntry: vi.fn(),
   deleteWorkflowEntry: vi.fn(),
   discardWorkflowEntries: vi.fn(),
@@ -67,7 +67,7 @@ describe('PublishEntryButton', () => {
   });
 
   test('publishes the entry after confirmation, then leaves the editor', async () => {
-    vi.mocked(publishWorkflowEntry).mockResolvedValue(undefined);
+    vi.mocked(publishReviewedEntry).mockResolvedValue(undefined);
 
     const entry = createEntry('pending_publish');
 
@@ -87,13 +87,13 @@ describe('PublishEntryButton', () => {
       );
     await dialog.getByRole('button', { name: 'Publish' }).click();
 
-    await vi.waitFor(() => expect(publishWorkflowEntry).toHaveBeenCalledWith(entry));
+    await vi.waitFor(() => expect(publishReviewedEntry).toHaveBeenCalledWith(entry, entry));
     await expect.poll(() => entryDraft.current).toBe(null);
     await expect.poll(() => window.location.hash).toBe('#/collections/posts');
   });
 
   test('publishes the version the editor shows, not one a reload has brought in', async () => {
-    vi.mocked(publishWorkflowEntry).mockResolvedValue(undefined);
+    vi.mocked(publishReviewedEntry).mockResolvedValue(undefined);
 
     // The editor was opened at one commit, and the pull requests have been read again since a
     // commit nobody has reviewed was pushed to the branch
@@ -111,16 +111,8 @@ describe('PublishEntryButton', () => {
       .getByRole('button', { name: 'Publish' })
       .click();
 
-    // Pinned to the reviewed commit, so the merge is refused rather than taking the push along
-    await vi.waitFor(() =>
-      expect(publishWorkflowEntry).toHaveBeenCalledWith(
-        expect.objectContaining({
-          workflow: expect.objectContaining({
-            pullRequest: expect.objectContaining({ headSHA: 'reviewed' }),
-          }),
-        }),
-      ),
-    );
+    // Pinned to the reviewed version, so the merge is refused rather than taking the push along
+    await vi.waitFor(() => expect(publishReviewedEntry).toHaveBeenCalledWith(reloaded, reviewed));
   });
 
   test('leaves another entry’s draft alone when the merge lands late', async () => {
@@ -128,7 +120,7 @@ describe('PublishEntryButton', () => {
       Promise.withResolvers()
     );
 
-    vi.mocked(publishWorkflowEntry).mockReturnValue(merging);
+    vi.mocked(publishReviewedEntry).mockReturnValue(merging);
 
     const entry = createEntry('pending_publish');
     const otherEntry = createEntry('draft', 'world');
@@ -140,7 +132,7 @@ describe('PublishEntryButton', () => {
 
     await page.getByRole('button', { name: 'Publish Entry' }).click();
     await page.getByRole('alertdialog').getByRole('button', { name: 'Publish' }).click();
-    await vi.waitFor(() => expect(publishWorkflowEntry).toHaveBeenCalledWith(entry));
+    await vi.waitFor(() => expect(publishReviewedEntry).toHaveBeenCalledWith(entry, entry));
 
     // The merge waits for a pipeline, and the author opens another entry meanwhile
     const otherDraft = createEntryDraft(otherEntry);
@@ -181,7 +173,7 @@ describe('PublishEntryButton', () => {
   });
 
   test('reports a failure to publish', async () => {
-    vi.mocked(publishWorkflowEntry).mockRejectedValue(new Error('Boom'));
+    vi.mocked(publishReviewedEntry).mockRejectedValue(new Error('Boom'));
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const { entryDraft } = await renderWithDraft(PublishEntryButton, {
@@ -200,7 +192,7 @@ describe('PublishEntryButton', () => {
   });
 
   test('says what stands in the way when trying again wouldn’t help', async () => {
-    vi.mocked(publishWorkflowEntry).mockRejectedValue(
+    vi.mocked(publishReviewedEntry).mockRejectedValue(
       createLocalizedError(
         'Cannot publish as an Open Authoring contributor',
         'open_authoring.publish_unsupported',
@@ -234,7 +226,7 @@ describe('PublishEntryButton', () => {
       'The entry has been changed since you opened it. Reload the page to review the latest version before publishing it.',
     ],
   ])('says why a publish was refused: %s', async (reason, message) => {
-    vi.mocked(publishWorkflowEntry).mockRejectedValue(
+    vi.mocked(publishReviewedEntry).mockRejectedValue(
       new Error('publish_refused', { cause: { reason, paths: [] } }),
     );
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -294,7 +286,7 @@ describe('PublishEntryButton', () => {
     await page.getByRole('button', { name: 'Publish Entry' }).click();
     await page.getByRole('alertdialog').getByRole('button', { name: 'Publish' }).click();
 
-    expect(publishWorkflowEntry).not.toHaveBeenCalled();
+    expect(publishReviewedEntry).not.toHaveBeenCalled();
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent(

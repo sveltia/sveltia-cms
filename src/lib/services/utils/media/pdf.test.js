@@ -21,11 +21,11 @@ vi.mock('$lib/services/utils/media/pdf-options', () => ({
  * PDF.js whose `getDocument()` is the given function.
  * @param {(...args: any[]) => any} getDocument `getDocument()` implementation.
  * @param {object} [args] Arguments.
- * @param {(() => void) | undefined} [args.dispose] `dispose()` returned with the loading options.
+ * @param {() => void} [args.dispose] `dispose()` returned with the loading options.
  * @returns {Promise<{ renderPDF: typeof import('./pdf').renderPDF, pdfjs: any }>} `renderPDF` and
  * the mocked PDF.js module.
  */
-const importWithPDFJS = async (getDocument, { dispose } = {}) => {
+const importWithPDFJS = async (getDocument, { dispose = () => {} } = {}) => {
   vi.resetModules();
 
   const { loadModule } = await import('$lib/services/app/dependencies');

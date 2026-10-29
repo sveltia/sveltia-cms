@@ -12,6 +12,7 @@ import {
   createGetAsset,
   getAssociatedPreviewAssets,
   getMetaData,
+  getMetaDataPath,
 } from './preview-data';
 
 // Mock dependencies using vi.hoisted()
@@ -649,6 +650,23 @@ describe('React Helpers', () => {
     });
   });
 
+  describe('getMetaDataPath', () => {
+    it('should drop the index of a missing or non-List parent field', () => {
+      mockGetField.mockReturnValue(undefined);
+
+      expect(
+        getMetaDataPath({ getFieldArgs: { collectionName: 'posts' }, keyPath: 'unknown.0.name' }),
+      ).toEqual(['unknown', 'name']);
+    });
+
+    it('should keep a numeric top-level field name', () => {
+      expect(
+        getMetaDataPath({ getFieldArgs: { collectionName: 'posts' }, keyPath: '2024.author' }),
+      ).toEqual(['2024', 'author']);
+      expect(mockGetField).not.toHaveBeenCalled();
+    });
+  });
+
   describe('getMetaData', () => {
     it('should return empty metadata when no relation fields', () => {
       mockGetField.mockReturnValueOnce({ widget: 'text' });
@@ -794,7 +812,8 @@ describe('React Helpers', () => {
         value_field: '{{locale}}/{{fields.name.first}}-{{tags.*}}',
       };
 
-      mockGetField.mockReturnValueOnce(field).mockReturnValueOnce(field).mockReturnValueOnce(field);
+      // The parent key path `authors` of a value resolves to the Relation field too
+      mockGetField.mockReturnValue(field);
       mockGetEntriesByCollection.mockReturnValueOnce([alice, bob]);
       // What the Relation field stores, including one value per list item
       mockGetEntryOptions
@@ -816,8 +835,10 @@ describe('React Helpers', () => {
         fieldConfig: field,
         refEntry: alice,
       });
-      expect(result.authors.authors['en/Alice-b']['name.first']).toBe('Alice');
-      expect(result.authors.authors['en/Bob-']['name.first']).toBe('Bob');
+      // The referenced entry’s data is nested, not flattened
+      expect(result.authors.authors['en/Alice-b'].name.first).toBe('Alice');
+      expect(result.authors.authors['en/Bob-'].name.first).toBe('Bob');
+      expect(result.authors.authors['en/Bob-']).not.toHaveProperty(['name.first']);
       expect(result.authors.authors.missing).toBeUndefined();
     });
 
@@ -1036,6 +1057,132 @@ describe('React Helpers', () => {
 
       expect(result instanceof ImmutableMap).toBe(true);
     });
+
+    describe('nests the metadata of a field like Decap CMS', () => {
+      const relation = { widget: 'relation', collection: 'authors', value_field: '{{slug}}' };
+
+      /** @type {Record<string, any>} */
+      const fields = {
+        author: relation,
+        authors: { ...relation, multiple: true },
+        'authors.*': { ...relation, multiple: true },
+        info: { widget: 'object', fields: [{ ...relation, name: 'author' }] },
+        'info.author': relation,
+        books: { widget: 'list', fields: [{ ...relation, name: 'author' }] },
+        'books.*.author': relation,
+        tags: { widget: 'list', field: { ...relation, name: 'tag' } },
+        'tags.*': relation,
+        items: { widget: 'list', field: { widget: 'object', name: 'item', fields: [] } },
+        'items.*.author': relation,
+      };
+
+      const jane = { slug: 'jane', locales: { en: { content: { name: 'Jane' } } } };
+      const john = { slug: 'john', locales: { en: { content: { name: 'John' } } } };
+
+      /**
+       * Build the metadata of the given content.
+       * @param {Record<string, string>} valueMap Flattened content.
+       * @returns {any} Metadata as a plain object.
+       */
+      const build = (valueMap) => {
+        mockGetField.mockImplementation(({ keyPath }) => fields[keyPath.replace(/\.\d+/g, '.*')]);
+        mockGetEntriesByCollection.mockReturnValue([jane, john]);
+
+        return getMetaData({
+          locale: 'en',
+          getFieldArgs: { collectionName: 'posts', valueMap },
+        }).toJS();
+      };
+
+      it('for a top-level Relation field', () => {
+        expect(build({ author: 'jane' })).toEqual({
+          author: { authors: { jane: { name: 'Jane' } } },
+        });
+      });
+
+      it('for a Relation field with the `multiple` option', () => {
+        expect(build({ 'authors.0': 'jane', 'authors.1': 'john' })).toEqual({
+          authors: { authors: { jane: { name: 'Jane' }, john: { name: 'John' } } },
+        });
+      });
+
+      it('for a Relation field in an Object field, also keeping the flattened key path', () => {
+        const metadata = { authors: { jane: { name: 'Jane' } } };
+
+        expect(build({ 'info.author': 'jane' })).toEqual({
+          info: { author: metadata },
+          'info.author': metadata,
+        });
+      });
+
+      it('for a Relation field in List items, merging the items', () => {
+        expect(build({ 'books.0.author': 'jane', 'books.1.author': 'john' })).toEqual({
+          books: { author: { authors: { jane: { name: 'Jane' }, john: { name: 'John' } } } },
+          'books.0.author': { authors: { jane: { name: 'Jane' } } },
+          'books.1.author': { authors: { john: { name: 'John' } } },
+        });
+      });
+
+      it('for the single Relation subfield of a List field, under the subfield’s name', () => {
+        const metadata = { authors: { jane: { name: 'Jane' }, john: { name: 'John' } } };
+
+        // The List field’s own name holds the legacy metadata too
+        expect(build({ 'tags.0': 'jane', 'tags.1': 'john' })).toEqual({
+          tags: { tag: metadata, ...metadata },
+        });
+      });
+
+      it('for a Relation field in an Object field with a numeric name', () => {
+        const metadata = { authors: { jane: { name: 'Jane' } } };
+
+        fields.years = { widget: 'object', fields: [{ ...relation, name: '2024' }] };
+        // The mock looks a numeric segment up as `*`
+        fields['years.*'] = relation;
+
+        try {
+          expect(build({ 'years.2024': 'jane' })).toEqual({
+            years: { 2024: metadata },
+            'years.2024': metadata,
+          });
+        } finally {
+          delete fields.years;
+          delete fields['years.*'];
+        }
+      });
+
+      it('for a field name and value that are also `Object.prototype` members', () => {
+        fields.constructor = relation;
+        jane.slug = '__proto__';
+
+        try {
+          build({ constructor: '__proto__' });
+
+          // Read the Immutable Map, as `toJS()` would turn `__proto__` back into the prototype
+          const result = getMetaData({
+            locale: 'en',
+            getFieldArgs: { collectionName: 'posts', valueMap: { constructor: '__proto__' } },
+          });
+
+          expect(result.keySeq().toArray()).toEqual(['constructor']);
+          expect(result.getIn(['constructor', 'authors', '__proto__']).toJS()).toEqual({
+            name: 'Jane',
+          });
+          expect(Object.hasOwn(Object, 'authors')).toBe(false);
+        } finally {
+          delete fields.constructor;
+          jane.slug = 'jane';
+        }
+      });
+
+      it('for a Relation field in the single Object subfield of a List field', () => {
+        const metadata = { authors: { jane: { name: 'Jane' } } };
+
+        expect(build({ 'items.0.author': 'jane' })).toEqual({
+          items: { item: { author: metadata } },
+          'items.0.author': metadata,
+        });
+      });
+    });
   });
 
   describe('getAssociatedPreviewAssets', () => {
@@ -1124,7 +1271,6 @@ describe('React Helpers', () => {
       expect(result[0].name).toBe('image1.jpg');
     });
   });
-
   describe('buildPreviewData', () => {
     beforeEach(() => {
       mockGetField.mockReset();

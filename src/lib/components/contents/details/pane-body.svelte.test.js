@@ -7,9 +7,10 @@ import {
   customPreviewStyleRegistry,
   customPreviewTemplateRegistry,
 } from '$lib/services/api/registries';
+import { getCollection } from '$lib/services/contents/collection';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { createRawState } from '$lib/services/utils/state.svelte';
-import { initTestConfig } from '$lib/test/config';
+import { createMockEntry, initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import PaneBody from './pane-body.svelte';
@@ -79,8 +80,7 @@ const renderPane = async (pane, draftProps = {}) => {
 const createThatPane = () => {
   const element = document.createElement('div');
 
-  element.style.cssText =
-    'height: 100px; overflow: auto; position: relative; scroll-behavior: auto;';
+  element.style.cssText = 'height: 100px; overflow: auto; scroll-behavior: auto;';
   element.innerHTML =
     '<div style="height: 200px"></div>' +
     '<div data-key-path="title" style="height: 100px"></div>' +
@@ -193,6 +193,33 @@ describe('PaneBody', () => {
     expect(draft.currentValues.fr).toBeDefined();
   });
 
+  test.each([
+    ['read-only', { collection: { ...getCollection('posts'), readonly: true } }],
+    [
+      'awaiting deletion',
+      {
+        isNew: false,
+        originalEntry: {
+          ...createMockEntry({ slug: 'hello' }),
+          workflow: { status: 'pending_deletion' },
+        },
+      },
+    ],
+  ])('doesn’t offer to enable a locale of an entry that’s %s', async (_label, draftProps) => {
+    const { draft } = await renderPane(
+      { mode: 'edit', locale: 'fr' },
+      { currentLocales: { en: true, fr: false }, ...draftProps },
+    );
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'The \u2068French\u2069 content is now disabled. It will be deleted when you save the entry.',
+      );
+    expect(page.getByRole('button').elements()).toHaveLength(0);
+    expect(draft.currentLocales.fr).toBe(false);
+  });
+
   test('renders nothing for a disabled locale in the preview mode', async () => {
     // The settings may not be loaded yet
     entryEditorSettings.current = undefined;
@@ -221,9 +248,21 @@ describe('PaneBody', () => {
       area.style.height = '100px';
       area.insertAdjacentHTML('beforeend', '<div style="height: 1000px"></div>');
 
-      // The top of the pane shows the Title field, so the other pane scrolls to its own Title field
+      // The top of the pane shows the Title field, so the other pane scrolls to the same spot in
+      // its own Title field, which is 200px down its content however far the pane is from the top
+      // of the page
+      await wheel(area, 10);
+
+      const title = /** @type {HTMLElement} */ (area.querySelector('[data-key-path="title"]'));
+      const { top, height } = title.getBoundingClientRect();
+      const ratio = (area.getBoundingClientRect().top - top) / height;
+
+      expect(ratio).toBeGreaterThan(0);
+      expect(thatPane.scrollTop).toBeCloseTo(200 + ratio * 100, 0);
+
+      // At the top of the pane, the other pane goes to its top too
       await wheel(area, 0);
-      expect(thatPane.scrollTop).toBeCloseTo(200 - area.getBoundingClientRect().y, 0);
+      expect(thatPane.scrollTop).toBe(0);
 
       // The top of the pane shows no field, so the other pane scrolls proportionally
       await wheel(area, area.scrollHeight);
@@ -232,7 +271,7 @@ describe('PaneBody', () => {
       // The other pane doesn’t have the field
       thatPane.querySelector('[data-key-path]')?.removeAttribute('data-key-path');
       thatPane.scrollTop = 50;
-      await wheel(area, 0);
+      await wheel(area, 10);
       expect(thatPane.scrollTop).toBe(50);
 
       // Syncing can be turned off, and is off until the settings are loaded

@@ -1159,7 +1159,7 @@ describe('draft/save/index', () => {
       );
     });
 
-    it('should leave the pending entries out of the Editorial Workflow entry', async () => {
+    it('should record the pending entries as riding along in the pull request', async () => {
       const svelte = createPendingEntry('svelte');
 
       mockDraft.currentValues = { en: { title: 'Test Post', 'tags.0': 'svelte' } };
@@ -1180,6 +1180,9 @@ describe('draft/save/index', () => {
           changes: expect.arrayContaining(svelte.changes),
           savingEntry: expect.objectContaining({ id: 'test-id' }),
           savingAssets: expect.arrayContaining(svelte.savingAssets),
+          // They’re reviewed and published along with the entry, which lists them
+          // @see https://github.com/sveltia/sveltia-cms/issues/1112
+          companions: [{ collectionName: svelte.collectionName, entry: svelte.entry }],
         }),
       );
     });

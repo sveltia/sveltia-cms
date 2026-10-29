@@ -13,6 +13,7 @@ const mockI18nStrings = {
   'config.error.unsupported_backend_suggestion': 'Please check the supported backends.',
   'config.error.missing_repository': 'Missing repository',
   'config.error.invalid_repository': 'Invalid repository format',
+  'config.error.missing_api_root': 'Missing API root',
   'config.error.invalid_root_dir': 'Invalid root directory',
   'config.error.invalid_root_dir_branch': 'Root directory not usable in branch names',
   'config.error.oauth_implicit_flow': 'OAuth implicit flow is not supported',
@@ -43,7 +44,7 @@ vi.mock('$lib/services/config/deprecations', () => ({
 }));
 
 vi.mock('$lib/services/backends', () => ({
-  validBackendNames: ['github', 'gitlab', 'gitea', 'local', 'test-repo'],
+  validBackendNames: ['github', 'gitlab', 'gitea', 'forgejo', 'local', 'test-repo'],
   unsupportedBackends: {
     azure: { label: 'Azure DevOps' },
     bitbucket: { label: 'Bitbucket' },
@@ -56,6 +57,7 @@ vi.mock('$lib/services/backends/git/services', () => ({
     github: { name: 'github' },
     gitlab: { name: 'gitlab' },
     gitea: { name: 'gitea' },
+    forgejo: { name: 'forgejo' },
   },
 }));
 
@@ -423,6 +425,94 @@ describe('parseBackendConfig', () => {
       const [error] = [...collectors.errors];
 
       expect(error).toBe('Invalid repository format');
+    });
+  });
+
+  describe('Forgejo backend', () => {
+    it('should accept a Forgejo backend with the API root', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: {
+          name: 'forgejo',
+          repo: 'owner/repo',
+          app_id: 'app',
+          api_root: 'https://codeberg.org/api/v1',
+        },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(0);
+      expect(collectors.warnings.size).toBe(0);
+    });
+
+    it('should error when the Forgejo backend has no API root', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+      /** @type {any} */
+      const config = { backend: { name: 'forgejo', repo: 'owner/repo', app_id: 'app' } };
+
+      parseBackendConfig(config, collectors);
+
+      expect([...collectors.errors]).toEqual(['Missing API root']);
+    });
+
+    it('should not require the API root with the Gitea backend', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+      /** @type {any} */
+      const config = { backend: { name: 'gitea', repo: 'owner/repo', app_id: 'app' } };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(0);
+    });
+
+    it('should warn when the Forgejo backend has no app_id', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: { name: 'forgejo', repo: 'owner/repo', api_root: 'https://codeberg.org/api/v1' },
+      };
+
+      parseBackendConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(0);
+      expect([...collectors.warnings][0]).toContain('OAuth application ID is not defined');
+    });
+
+    it('should link to the Gitea/Forgejo documentation', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+      const original = mockI18nStrings['config.error.oauth_implicit_flow'];
+
+      mockI18nStrings['config.error.oauth_implicit_flow'] = 'Not supported. <a>Learn more</a>';
+
+      /** @type {any} */
+      const config = {
+        backend: {
+          name: 'forgejo',
+          repo: 'owner/repo',
+          app_id: 'app',
+          api_root: 'https://codeberg.org/api/v1',
+          auth_type: 'implicit',
+        },
+      };
+
+      try {
+        parseBackendConfig(config, collectors);
+      } finally {
+        mockI18nStrings['config.error.oauth_implicit_flow'] = original;
+      }
+
+      expect([...collectors.errors][0]).toContain(
+        'href="https://sveltiacms.app/en/docs/backends/gitea-forgejo#authentication"',
+      );
     });
   });
 

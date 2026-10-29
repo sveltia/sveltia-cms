@@ -1,11 +1,13 @@
 import { _ } from '@sveltia/i18n';
+import { LocalStorage } from '@sveltia/utils/storage';
 
 import { user } from '$lib/services/user/account.svelte';
+import { USER_STORAGE_KEY } from '$lib/services/user/constants';
 import { isSecureURL, sendRequest } from '$lib/services/utils/networking';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
- * @import { ApiEndpointConfig, AuthTokens, FetchApiOptions } from '$lib/types/private';
+ * @import { ApiEndpointConfig, AuthTokens, FetchApiOptions, User } from '$lib/types/private';
  */
 
 /**
@@ -112,7 +114,18 @@ const requestTokenRefresh = async ({ clientId, tokenURL, refreshToken }) => {
   }
 
   // Update the user store with the new token and refresh token
-  user.account = user.account ? { ...user.account, token, refreshToken } : user.account;
+  if (user.account) {
+    user.account = { ...user.account, token, refreshToken };
+
+    // Store them right away, before the lock is released, rather than waiting for the store to be
+    // saved, so another tab whose token has expired as well takes them instead of refreshing with
+    // the old refresh token, which a service like GitLab revokes once it’s used
+    try {
+      await LocalStorage.set(USER_STORAGE_KEY, user.account);
+    } catch {
+      //
+    }
+  }
 
   return { token, refreshToken };
 };
@@ -139,6 +152,109 @@ export const refreshAccessToken = ({ clientId, tokenURL, refreshToken }) => {
 
   return promise;
 };
+
+/**
+ * Name of the Web Lock held while refreshing the OAuth access token, shared by all the tabs.
+ */
+const TOKEN_REFRESH_LOCK_NAME = 'sveltia-cms.token-refresh';
+
+/**
+ * Run a function while holding the token refresh lock, so only one tab at a time refreshes the
+ * token, as a refresh token may only be used once. Without the Web Locks API, the function simply
+ * runs.
+ * @template T
+ * @param {() => Promise<T>} func Function to run.
+ * @returns {Promise<T>} Result of the function.
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Web_Locks_API
+ */
+const withTokenRefreshLock = (func) => {
+  const locks = globalThis.navigator?.locks;
+
+  return locks ? locks.request(TOKEN_REFRESH_LOCK_NAME, func) : func();
+};
+
+/**
+ * Get the tokens of a stored user if it’s the same account as the current user.
+ * @param {any} storedUser User stored by any tab.
+ * @returns {AuthTokens | undefined} Tokens, or `undefined` if the stored user is another account,
+ * has no refresh token while the current user has one, or no one is signed in.
+ */
+const getStoredTokens = (storedUser) => {
+  const { account } = user;
+
+  const refreshToken = isNonEmptyString(storedUser?.refreshToken)
+    ? storedUser.refreshToken
+    : undefined;
+
+  if (
+    !account ||
+    !isNonEmptyString(storedUser?.token) ||
+    storedUser.backendName !== account.backendName ||
+    storedUser.id !== account.id ||
+    // Don’t lose the refresh token
+    (!!account.refreshToken && !refreshToken)
+  ) {
+    return undefined;
+  }
+
+  return { token: storedUser.token, refreshToken };
+};
+
+/**
+ * Read the tokens of the current user from the storage, where another tab may have saved the ones
+ * it has refreshed.
+ * @returns {Promise<AuthTokens | undefined>} Tokens, or `undefined` if the stored user is another
+ * account, or the storage can’t be read.
+ */
+const readStoredTokens = async () => {
+  try {
+    return getStoredTokens(await LocalStorage.get(USER_STORAGE_KEY));
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Check whether the given tokens have replaced the ones a request was sent with: another request,
+ * or another tab, has refreshed them meanwhile, which replaces both.
+ * @param {Partial<AuthTokens> | undefined} tokens Current tokens, if any.
+ * @param {object} sent Tokens the request was sent with.
+ * @param {string | undefined} sent.token OAuth access token.
+ * @param {string | undefined} sent.refreshToken OAuth refresh token.
+ * @returns {tokens is AuthTokens} Result.
+ */
+export const isRefreshedElsewhere = (tokens, { token, refreshToken }) =>
+  !!tokens?.token && tokens.token !== token && tokens.refreshToken !== refreshToken;
+
+/**
+ * Take the tokens another tab has refreshed as soon as it stores them, so this tab doesn’t keep
+ * using the old ones, which may have been revoked, or later write them back over the new ones.
+ * @param {StorageEvent} event `storage` event.
+ */
+const onUserStorageChange = ({ key, newValue }) => {
+  if (key !== USER_STORAGE_KEY || !newValue) {
+    return;
+  }
+
+  /** @type {any} */
+  let storedUser;
+
+  try {
+    storedUser = JSON.parse(newValue);
+  } catch {
+    return;
+  }
+
+  const tokens = getStoredTokens(storedUser);
+  // The account is there if the tokens are
+  const { account } = /** @type {{ account: User }} */ (user);
+
+  if (tokens && (tokens.token !== account.token || tokens.refreshToken !== account.refreshToken)) {
+    user.account = { ...account, ...tokens };
+  }
+};
+
+globalThis.addEventListener?.('storage', onUserStorageChange);
 
 /**
  * Send a request to the REST or GraphQL API of a Git-based service with authentication. This
@@ -183,6 +299,10 @@ export const fetchAPI = async (
   refreshToken ??= _user?.refreshToken;
   headers.Authorization = `${authScheme} ${token}`;
 
+  // Whether the request is sent with the current user’s tokens, rather than with ones being signed
+  // in with, while the user store may still hold a previous session of another account
+  const isUserToken = !!_user && token === _user.token && refreshToken === _user.refreshToken;
+
   return sendRequest(
     `${baseURL}${path}`,
     {
@@ -194,21 +314,30 @@ export const fetchAPI = async (
     {
       responseType,
       refreshAccessToken: refreshToken
-        ? async () => {
-            const { account } = user;
+        ? () =>
+            withTokenRefreshLock(async () => {
+              if (isUserToken) {
+                const { account } = user;
 
-            // Another request has refreshed the token since this one was sent, which used up the
-            // refresh token if it’s single-use, so take the new token instead of refreshing again
-            if (
-              account?.token &&
-              account.token !== token &&
-              account.refreshToken !== refreshToken
-            ) {
-              return { token: account.token, refreshToken: account.refreshToken };
-            }
+                // Another request has refreshed the token since this one was sent, which used up
+                // the refresh token if it’s single-use, so take the new token instead of refreshing
+                // again
+                if (account && isRefreshedElsewhere(account, { token, refreshToken })) {
+                  return { token: account.token, refreshToken: account.refreshToken };
+                }
 
-            return refreshAccessToken({ clientId, tokenURL, refreshToken });
-          }
+                // The same goes for another tab, which stores the tokens it has refreshed
+                const stored = await readStoredTokens();
+
+                if (stored && isRefreshedElsewhere(stored, { token, refreshToken })) {
+                  user.account = { .../** @type {User} */ (user.account), ...stored };
+
+                  return stored;
+                }
+              }
+
+              return refreshAccessToken({ clientId, tokenURL, refreshToken });
+            })
         : undefined,
     },
   );

@@ -3,6 +3,7 @@ import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 
+import { isGiteaBackendName } from '$lib/services/backends/git/gitea/constants';
 import {
   requestAccessToken,
   apiConfig as sharedApiConfig,
@@ -26,6 +27,97 @@ import { createRawState } from '$lib/services/utils/state.svelte';
  * Whether the app is running in the authentication popup window.
  */
 export const inAuthPopup = createRawState(false);
+
+/**
+ * Function that cancels the pending authentication, so the user can get out of a sign-in whose
+ * popup was closed without the app noticing, or `undefined` if no popup is pending.
+ * @type {{ current: (() => void) | undefined }}
+ */
+export const cancelAuthorization = createRawState();
+
+/**
+ * Local storage key for the temporary secrets of the client-side Authorization Code Flow.
+ */
+const AUTH_SECRETS_STORAGE_KEY = 'sveltia-cms.auth';
+/**
+ * Session storage key under which the auth popup keeps the `state` of its flow, so it can still
+ * recognize itself when it comes back without a window opener and window name. See
+ * {@link isAuthPopup}.
+ */
+const AUTH_POPUP_STORAGE_KEY = 'sveltia-cms.auth-popup';
+/**
+ * Get the name of the `BroadcastChannel` that carries the result of a client-side flow from the
+ * auth popup to the window that opened it, when the two have been severed. The name is tied to the
+ * flow’s `state`, so another flow, or a window that doesn’t know the `state`, can’t take part.
+ * @param {string} state Authorization state, which is the CSRF token of the flow.
+ * @returns {string} Channel name.
+ */
+const getAuthChannelName = (state) => `sveltia-cms.auth.${state}`;
+
+/**
+ * Get the message the auth popup sends its opener to start the handshake, which the opener sends
+ * back to ask for the result. The format is the one Netlify/Decap CMS and its authenticators use.
+ * @param {string} provider Backend name, e.g. `github`.
+ * @returns {string} Message in the `authorizing:{provider}` format.
+ */
+export const formatHandshakeMessage = (provider) => `authorizing:${provider}`;
+
+/**
+ * Get the message the auth popup sends to pass the result of the flow on.
+ * @param {string} provider Backend name, e.g. `github`.
+ * @param {'success' | 'error'} status Whether the flow has succeeded.
+ * @param {Record<string, any>} content Result: the tokens, or the error.
+ * @returns {string} Message in the `authorization:{provider}:{status}:{result}` format, the result
+ * being serialized as JSON.
+ */
+export const formatResultMessage = (provider, status, content) =>
+  `authorization:${provider}:${status}:${JSON.stringify(content)}`;
+
+/**
+ * Extract the result from a message built with {@link formatResultMessage}.
+ * @param {string} provider Backend name, e.g. `github`.
+ * @param {string} data Message.
+ * @returns {string | undefined} Serialized result, or `undefined` if the message isn’t a result
+ * for the given backend, or comes without one.
+ */
+export const parseResultMessage = (provider, data) =>
+  data.match(`^authorization:${provider}:(success|error):(?<result>.+)`)?.groups?.result;
+
+/**
+ * Get the flow `state` stored in the auth popup’s session storage.
+ * @returns {string | null} State, or `null` if it’s not stored or session storage is unavailable.
+ */
+const getAuthPopupState = () => {
+  try {
+    return window.sessionStorage.getItem(AUTH_POPUP_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Store the flow `state` in the auth popup’s session storage, or remove it.
+ * @param {string} [state] State. Omit to remove it.
+ */
+const setAuthPopupState = (state) => {
+  try {
+    if (state) {
+      window.sessionStorage.setItem(AUTH_POPUP_STORAGE_KEY, state);
+    } else {
+      window.sessionStorage.removeItem(AUTH_POPUP_STORAGE_KEY);
+    }
+  } catch {
+    //
+  }
+};
+
+/**
+ * Remove the temporary secrets of the client-side flow, as the flow is over.
+ */
+const clearAuthSecrets = async () => {
+  setAuthPopupState();
+  await LocalStorage.delete(AUTH_SECRETS_STORAGE_KEY);
+};
 
 /**
  * Create the error thrown when the user closes the authentication popup, which callers tell apart
@@ -59,13 +151,16 @@ export const openPopup = ({ authURL }) => {
  * @param {string} args.authURL Authentication site URL.
  * @param {Window | null} [args.popup] Optional pre-opened popup window. If not provided, a new
  * popup will be opened.
+ * @param {string} [args.state] Authorization state of a client-side flow. If provided, the result
+ * is also accepted over the flow’s `BroadcastChannel`, for when the popup comes back without a
+ * window opener.
  * @returns {Promise<AuthTokens>} Auth access token and refresh token.
  * @throws {Error} When authentication failed or the popup window is closed before the auth process
  * is complete.
  * @see https://decapcms.org/docs/backends-overview/
  * @see https://sveltiacms.app/en/docs/backends
  */
-export const authorize = async ({ backendName, authURL, popup }) => {
+export const authorize = async ({ backendName, authURL, popup, state }) => {
   const authPopup = popup ?? openPopup({ authURL });
 
   // Without a popup, there’s no window the result could come from
@@ -78,48 +173,54 @@ export const authorize = async ({ backendName, authURL, popup }) => {
     // user closes the popup: otherwise each cancelled sign-in would leave a listener — and the
     // popup and promise callbacks it captures — attached to the window for the rest of the session.
     const controller = new AbortController();
+    const provider = backendName;
+    /**
+     * Channel the popup sends the result over when it comes back without a window opener: GitLab’s
+     * sign-in page is served with `Cross-Origin-Opener-Policy: same-origin`, which severs the popup
+     * from this window, so neither window can post a message to the other any more.
+     */
+    const channel = state ? new BroadcastChannel(getAuthChannelName(state)) : undefined;
+    /**
+     * Timer to check if the popup is closed.
+     * @type {ReturnType<typeof setInterval> | undefined}
+     */
+    let timer;
 
     /**
-     * Timer to check if the popup is closed. This doesn’t work with GitLab; `window.closed` will
-     * always be `true`.
+     * Stop listening for the result.
      */
-    const timer =
-      backendName === 'github'
-        ? setInterval(() => {
-            if (authPopup.closed) {
-              controller.abort();
-              clearInterval(timer);
-              reject(createAbortError());
-            }
-          }, 1000)
-        : 0;
+    const cleanUp = () => {
+      controller.abort();
+      clearInterval(timer);
+      channel?.close();
+      cancelAuthorization.current = undefined;
+    };
 
     /**
-     * Message event handler. Only messages from the popup itself are handled, so another window,
-     * even on the same origin, can neither take part in the handshake nor inject a token.
-     * @param {object} args Arguments.
-     * @param {string} args.origin Origin URL.
-     * @param {string} args.data Passed data.
-     * @param {MessageEventSource | null} args.source Window that sent the message.
+     * Give up on the authentication, because the popup was closed or the user cancelled it.
      */
-    const handler = ({ origin, data, source }) => {
-      if (source !== authPopup || origin !== new URL(authURL).origin || typeof data !== 'string') {
-        return;
-      }
+    const cancel = () => {
+      cleanUp();
+      authPopup.close();
+      reject(createAbortError());
+    };
 
-      const provider = backendName;
+    // The timer doesn’t work with GitLab: the same header makes `closed` `true` while the popup is
+    // still open. The user can cancel the sign-in instead
+    if (backendName === 'github' || isGiteaBackendName(backendName)) {
+      timer = setInterval(() => {
+        if (authPopup.closed) {
+          cancel();
+        }
+      }, 1000);
+    }
 
-      // First message
-      if (data === `authorizing:${provider}`) {
-        authPopup.postMessage(data, origin);
-
-        return;
-      }
-
-      // Second message
-      const { result: resultStr } =
-        data.match(`^authorization:${provider}:(success|error):(?<result>.+)`)?.groups ?? {};
-
+    /**
+     * Settle the promise with the result sent by the popup.
+     * @param {string} data Message in the `authorization:{provider}:{status}:{result}` format.
+     */
+    const handleResult = (data) => {
+      const resultStr = parseResultMessage(provider, data);
       /**
        * @type {{ token: string, refreshToken?: string } | { error: string, errorCode?: string }}
        */
@@ -149,12 +250,50 @@ export const authorize = async ({ backendName, authURL, popup }) => {
         );
       }
 
-      controller.abort();
-      clearInterval(timer);
+      cleanUp();
       authPopup.close();
     };
 
+    /**
+     * Message event handler. Only messages from the popup itself are handled, so another window,
+     * even on the same origin, can neither take part in the handshake nor inject a token.
+     * @param {object} args Arguments.
+     * @param {string} args.origin Origin URL.
+     * @param {string} args.data Passed data.
+     * @param {MessageEventSource | null} args.source Window that sent the message.
+     */
+    const handler = ({ origin, data, source }) => {
+      if (source !== authPopup || origin !== new URL(authURL).origin || typeof data !== 'string') {
+        return;
+      }
+
+      // First message
+      if (data === formatHandshakeMessage(provider)) {
+        authPopup.postMessage(data, origin);
+
+        return;
+      }
+
+      // Second message
+      handleResult(data);
+    };
+
     window.addEventListener('message', handler, { signal: controller.signal });
+
+    if (channel) {
+      /**
+       * Channel message handler. There’s no handshake here: only a window that knows the `state`
+       * can post to the channel.
+       * @param {MessageEvent} event Event.
+       */
+      channel.onmessage = ({ data }) => {
+        if (typeof data === 'string') {
+          handleResult(data);
+        }
+      };
+    }
+
+    cancelAuthorization.current = cancel;
   });
 };
 
@@ -256,7 +395,7 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
   });
 
   // Store the temporary secret and real auth URL
-  await LocalStorage.set('sveltia-cms.auth', {
+  await LocalStorage.set(AUTH_SECRETS_STORAGE_KEY, {
     csrfToken,
     codeVerifier,
     realAuthURL: `${authURL}?${params}`,
@@ -271,26 +410,53 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
     throw createAbortError();
   }
 
-  return authorize({
-    backendName,
-    authURL: redirectURL,
-    popup,
-  });
+  try {
+    return await authorize({ backendName, authURL: redirectURL, popup, state: csrfToken });
+  } catch (ex) {
+    // The popup may still be open if it was severed from this window, so make sure it can’t finish
+    // the flow the user has given up on
+    await LocalStorage.delete(AUTH_SECRETS_STORAGE_KEY);
+
+    throw ex;
+  }
 };
 
 /**
- * Communicate with the window opener as part of {@link finishClientSideAuth}.
+ * Communicate with the window opener as part of {@link finishClientSideAuth}. If the popup has no
+ * opener because it was severed from it, the result is sent over the flow’s `BroadcastChannel`
+ * instead, and the popup closes itself, as the opener can no longer close it.
  * @param {object} args Options.
  * @param {string} [args.provider] Backend name, e,g. `github`.
+ * @param {string} [args.state] Authorization state of the flow, which names the channel. Tokens
+ * must only be sent once the state has been verified.
  * @param {string} [args.token] OAuth access token.
  * @param {string} [args.refreshToken] OAuth refresh token.
  * @param {string} [args.error] Error message when an OAuth token is not available.
  * @param {string} [args.errorCode] Error code to be used to localize the error message in Sveltia
  * CMS.
  */
-export const sendMessage = ({ provider = 'unknown', token, refreshToken, error, errorCode }) => {
+export const sendMessage = ({
+  provider = 'unknown',
+  state,
+  token,
+  refreshToken,
+  error,
+  errorCode,
+}) => {
   const _state = error ? 'error' : 'success';
   const content = error ? { provider, error, errorCode } : { provider, token, refreshToken };
+
+  if (!window.opener) {
+    if (state) {
+      const channel = new BroadcastChannel(getAuthChannelName(state));
+
+      channel.postMessage(formatResultMessage(provider, _state, content));
+      channel.close();
+      window.close();
+    }
+
+    return;
+  }
 
   /**
    * Listener for messages from the window opener. The tokens are only sent back to the opener, and
@@ -302,19 +468,16 @@ export const sendMessage = ({ provider = 'unknown', token, refreshToken, error, 
     if (
       source === window.opener &&
       origin === window.location.origin &&
-      data === `authorizing:${provider}`
+      data === formatHandshakeMessage(provider)
     ) {
-      window.opener?.postMessage(
-        `authorization:${provider}:${_state}:${JSON.stringify(content)}`,
-        origin,
-      );
+      window.opener?.postMessage(formatResultMessage(provider, _state, content), origin);
       // The handshake is complete; remove the listener so repeated auth flows don’t accumulate.
       window.removeEventListener('message', onMessage);
     }
   };
 
   window.addEventListener('message', onMessage);
-  window.opener?.postMessage(`authorizing:${provider}`, window.location.origin);
+  window.opener?.postMessage(formatHandshakeMessage(provider), window.location.origin);
 };
 
 /**
@@ -333,16 +496,17 @@ export const sendMessage = ({ provider = 'unknown', token, refreshToken, error, 
 export const finishClientSideAuth = async ({ backendName, apiConfig, code, state }) => {
   const { clientId, tokenURL, includeCredentials = false } = apiConfig;
   const { origin, pathname } = new URL(window.location.href);
-  const { csrfToken, codeVerifier } = (await LocalStorage.get('sveltia-cms.auth')) ?? {};
+  const { csrfToken, codeVerifier } = (await LocalStorage.get(AUTH_SECRETS_STORAGE_KEY)) ?? {};
   const provider = backendName;
   const redirectURL = `${origin}${pathname}`;
 
   // Remove the temporary secret
-  await LocalStorage.delete('sveltia-cms.auth');
+  await clearAuthSecrets();
 
   if (!csrfToken || !codeVerifier || state !== csrfToken) {
     return sendMessage({
       provider,
+      state,
       error: _('sign_in_error.CSRF_DETECTED'),
       errorCode: 'CSRF_DETECTED',
     });
@@ -367,6 +531,7 @@ export const finishClientSideAuth = async ({ backendName, apiConfig, code, state
   if (!response) {
     return sendMessage({
       provider,
+      state,
       error: _('sign_in_error.TOKEN_REQUEST_FAILED'),
       errorCode: 'TOKEN_REQUEST_FAILED',
     });
@@ -377,12 +542,13 @@ export const finishClientSideAuth = async ({ backendName, apiConfig, code, state
   } catch {
     return sendMessage({
       provider,
+      state,
       error: _('sign_in_error.MALFORMED_RESPONSE'),
       errorCode: 'MALFORMED_RESPONSE',
     });
   }
 
-  return sendMessage({ provider, token, refreshToken, error });
+  return sendMessage({ provider, state, token, refreshToken, error });
 };
 
 /**
@@ -396,17 +562,65 @@ export const handleClientSideAuthPopup = async ({ backendName, apiConfig }) => {
   inAuthPopup.current = true;
 
   const { search } = window.location;
-  const { code, state } = Object.fromEntries(new URLSearchParams(search));
+
+  const {
+    code,
+    state,
+    error,
+    error_description: errorDescription,
+  } = Object.fromEntries(new URLSearchParams(search));
 
   if (code && state) {
     await finishClientSideAuth({ backendName, apiConfig, code, state });
+  } else if (error) {
+    // The user denied access, or the authorization failed, e.g. `?error=access_denied&state=…`.
+    // Report it to the opener, which would otherwise wait forever, instead of showing the
+    // authorization page again, and remove the temporary secret as the flow is over
+    await clearAuthSecrets();
+
+    sendMessage({
+      provider: backendName,
+      state,
+      error: errorDescription || error,
+      errorCode: 'AUTH_CODE_REQUEST_FAILED',
+    });
   } else {
-    const { realAuthURL } = (await LocalStorage.get('sveltia-cms.auth')) ?? {};
+    const { csrfToken, realAuthURL } = (await LocalStorage.get(AUTH_SECRETS_STORAGE_KEY)) ?? {};
 
     if (realAuthURL) {
+      // Remember the flow, as the popup may come back from the authorization site without a window
+      // opener and window name
+      setAuthPopupState(csrfToken);
       window.location.href = realAuthURL;
     }
   }
+};
+
+/**
+ * Check whether the app is running in the authentication popup window opened by
+ * {@link initClientSideAuth}.
+ *
+ * A page served with `Cross-Origin-Opener-Policy: same-origin`, like GitLab’s sign-in page, severs
+ * the popup from its opener, and Chromium also clears the window name, so the popup comes back to
+ * the redirect URL without either. It then recognizes itself by the flow `state` it stored in its
+ * session storage before leaving for the authorization site: session storage belongs to the tab,
+ * so another tab, even one opened with the callback URL, can’t be mistaken for the popup.
+ * @returns {boolean} Result.
+ */
+const isAuthPopup = () => {
+  try {
+    if (window.opener) {
+      return window.opener.origin === window.location.origin && window.name === 'auth';
+    }
+  } catch {
+    // Reading the origin of a cross-origin opener, e.g. a page linking to the CMS that opened it in
+    // a new tab, throws a `SecurityError`, which would otherwise make every sign-in fail
+    return false;
+  }
+
+  const state = new URLSearchParams(window.location.search).get('state');
+
+  return !!state && state === getAuthPopupState();
 };
 
 /**
@@ -433,8 +647,8 @@ export const handleAuthFlow = async ({ auto, apiConfig }) => {
   const authArgs = { backendName, authURL, scope: authScope };
 
   // Gitea/Forgejo backend only supports PKCE at this time
-  if (backendName === 'gitea' || authType === 'pkce') {
-    const inPopup = window.opener?.origin === window.location.origin && window.name === 'auth';
+  if (isGiteaBackendName(backendName) || authType === 'pkce') {
+    const inPopup = isAuthPopup();
 
     if (inPopup) {
       // We are in the auth popup window; let’s get the OAuth flow done

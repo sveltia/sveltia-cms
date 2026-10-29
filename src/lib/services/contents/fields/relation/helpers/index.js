@@ -31,6 +31,7 @@ import { getOrCreateBounded } from '$lib/services/utils/cache';
  * RelationOptionGroup,
  * } from '$lib/types/private';
  * @import { FieldKeyPath, RelationField, RelationFieldFilterOptions } from '$lib/types/public';
+ * @import { SharedValues } from '$lib/services/contents/i18n/shared-values';
  */
 
 /**
@@ -206,6 +207,9 @@ export const getRefEntries = ({ collection: collectionName, file: fileName }) =>
  * templates are ignored.
  * @param {PendingEntry[]} [args.pendingEntries] Entries created from a Relation field of the draft
  * being edited, so the labels referring to one of them through another Relation field resolve.
+ * @param {SharedValues} [args.sharedValues] Values of the fields of the entry being edited that
+ * aren’t localized, to resolve `{{fields.fieldName}}` template strings referring to one of them in
+ * another locale than the default.
  * @returns {RelationOption[]} Options, sorted as the `sort_by` option defines, or by label unless
  * the field references a file or a collection kept in a manual order.
  */
@@ -216,12 +220,20 @@ export const getOptions = ({
   currentLocaleValues = undefined,
   currentSlug = undefined,
   pendingEntries = undefined,
+  sharedValues = undefined,
 }) => {
   const { collection: collectionName, file: fileName, filters, sort_by: sortBy } = fieldConfig;
+
   // Resolve template strings in filter values against the current entry’s locale content and slug.
   // The resolved values are also baked into the cache key so stale options are not returned when
   // the relevant field value changes while the user is editing.
-  const resolvedFilters = resolveFilterValues(filters ?? [], currentLocaleValues, currentSlug);
+  const resolvedFilters = resolveFilterValues(
+    filters ?? [],
+    currentLocaleValues,
+    currentSlug,
+    sharedValues,
+  );
+
   // Use object identity for `fieldConfig` and `refEntries` instead of `JSON.stringify`, which would
   // serialize the entire entries array (potentially hundreds of entries × many fields). The
   // resolved template values are included as a plain string so the cache is invalidated when the
@@ -273,7 +285,10 @@ export const getOptions = ({
           locale,
           fieldConfig,
           refEntries: manuallyOrdered
-            ? sortEntriesByOrderField(refEntries, /** @type {any} */ (collection))
+            ? sortEntriesByOrderField(
+                refEntries,
+                /** @type {InternalEntryCollection} */ (collection),
+              )
             : refEntries,
           entryFilters: resolvedFilters,
           pendingEntries,

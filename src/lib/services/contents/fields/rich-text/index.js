@@ -44,16 +44,19 @@ export const NODE_NAME_MAP = {
 };
 
 /**
+ * Buttons that format text within a paragraph, the only ones a field with `multiline: false` can
+ * use. The other buttons format a whole block.
+ * @type {RichTextEditorButtonName[]}
+ */
+export const INLINE_BUTTONS = ['bold', 'italic', 'strikethrough', 'code', 'link'];
+
+/**
  * The default `buttons` property options. `align` is left out: it has to be enabled with the
  * `buttons` option.
  * @type {RichTextEditorButtonName[]}
  */
 export const DEFAULT_BUTTONS = [
-  'bold',
-  'italic',
-  'strikethrough',
-  'code',
-  'link',
+  ...INLINE_BUTTONS,
   'heading-one',
   'heading-two',
   'heading-three',
@@ -90,6 +93,13 @@ export const BUTTON_NAME_MAP = {
   table: 'table',
   hr: 'horizontal-rule',
 };
+
+/**
+ * Built-in editor components implemented as buttons in Sveltia UI rather than as editor components.
+ * They’re all blocks.
+ * @type {('code-block' | 'table' | 'hr')[]}
+ */
+export const BUTTON_COMPONENTS = ['code-block', 'table', 'hr'];
 
 /**
  * Built-in editor component names enabled by default. `code-block` is a button in Sveltia CMS, but

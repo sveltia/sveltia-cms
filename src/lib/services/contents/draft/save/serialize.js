@@ -5,7 +5,6 @@ import { TomlDate } from 'smol-toml';
 import { cmsConfig } from '$lib/services/config';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
-import { getInheritedI18nOption } from '$lib/services/contents/draft/create/proxy.svelte';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getAliasesKey, getAliasKeyPaths } from '$lib/services/contents/entry/aliases';
 import {
@@ -19,9 +18,14 @@ import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/con
 import { convertMapLists, getMapKeyField } from '$lib/services/contents/fields/list/map';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { TOML_FORMATS } from '$lib/services/contents/file/constants';
-import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
+import { isFieldInLocale } from '$lib/services/contents/i18n/shared-values';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { hasIndexLikeChildKey, isValueEmpty, unflattenKeys } from '$lib/services/utils/object';
+import {
+  hasIndexLikeChildKey,
+  isPlainObject,
+  isValueEmpty,
+  unflattenKeys,
+} from '$lib/services/utils/object';
 
 /**
  * @import {
@@ -164,36 +168,6 @@ const isOpaqueField = (field) =>
  */
 
 /**
- * Check whether the field at the given key path belongs in the locale’s content. Every field does
- * in the default locale, but in another locale, only one that is localized along with all of its
- * ancestors, as the others are left out of that locale’s content.
- * @param {FinalizeContext} ctx Context.
- * @param {string} keyPath Concrete key path of the field.
- * @returns {boolean} Result.
- */
-const isFieldInLocale = ({ locale, defaultLocale, getFieldArgs }, keyPath) => {
-  if (locale === defaultLocale) {
-    return true;
-  }
-
-  const segments = keyPath.split('.');
-
-  // Skip the list item indexes, which aren’t fields of their own, e.g. `items.0` in `items.0.kv`
-  return segments.every((segment, index) => {
-    if (index < segments.length - 1 && /^\d+$/.test(segment)) {
-      return true;
-    }
-
-    const args = { ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') };
-    const fieldConfig = getField(args);
-
-    return (
-      !!fieldConfig && isFieldLocalized(getInheritedI18nOption({ fieldConfig, getFieldArgs: args }))
-    );
-  });
-};
-
-/**
  * Copy a KeyValue field’s key-value pairs to the sorted property map.
  * @param {FinalizeContext} ctx Context.
  * @param {string} keyPath Concrete key path of the field.
@@ -228,7 +202,7 @@ const copyKeyValueField = (ctx, keyPath, field) => {
   if (!pairKeyPaths.length) {
     // A field that isn’t in the locale’s content, e.g. one that isn’t translatable in a locale
     // other than the default, doesn’t get the empty object either
-    if (Object.hasOwn(unsortedMap, keyPath) || isFieldInLocale(ctx, keyPath)) {
+    if (Object.hasOwn(unsortedMap, keyPath) || isFieldInLocale({ ...ctx, keyPath })) {
       // Any other value, such as a string where the file doesn’t hold an object, is left as is
       unsortedMap[keyPath] ??= {};
       copyProperty({ ...copyArgs, key: keyPath, field });
@@ -436,6 +410,31 @@ const finalizeContent = ({
 };
 
 /**
+ * Remove `null` and `undefined` from the given value for TOML output, as TOML has no null. An item
+ * of a list, e.g. an empty optional Number field in a simple list, is dropped, as smol-toml throws
+ * on it. An object property is dropped too: smol-toml skips it in a table but writes an invalid
+ * inline table, e.g. for an object in a nested list.
+ * @param {any} value Value.
+ * @returns {any} Value without `null` and `undefined`. Arrays and plain objects are copied.
+ */
+const removeTomlNulls = (value) => {
+  if (Array.isArray(value)) {
+    return value.filter((item) => item !== null && item !== undefined).map(removeTomlNulls);
+  }
+
+  // Leave class instances, such as a `TomlDate`, as they are
+  if (isPlainObject(value)) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, val]) => val !== null && val !== undefined)
+        .map(([key, val]) => [key, removeTomlNulls(val)]),
+    );
+  }
+
+  return value;
+};
+
+/**
  * Serialize the content for the output.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -475,7 +474,8 @@ export const serializeContent = ({ draft, locale, valueMap, format }) => {
   });
 
   // Store the List fields with the `map_key_field` option as maps
-  const content = convertMapLists(finalizedContent, fields, false);
+  const mappedContent = convertMapLists(finalizedContent, fields, false);
+  const content = isTomlOutput ? removeTomlNulls(mappedContent) : mappedContent;
 
   // Handle a special case: top-level List field. TOML doesn’t support top-level arrays, so we
   // ignore the `root` option for such cases, unless the list is stored as a map

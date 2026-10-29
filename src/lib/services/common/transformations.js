@@ -250,14 +250,14 @@ export const parseTransformations = (string) =>
  * @param {any} value The value to be transformed to uppercase.
  * @returns {string} The uppercase string representation of the input value.
  */
-export const applyUpperCaseTransformation = (value) => String(value).toUpperCase();
+export const applyUpperCaseTransformation = (value) => String(value ?? '').toUpperCase();
 
 /**
  * Transform the input value to a string and returns it in lowercase.
  * @param {any} value The value to be transformed to lowercase.
  * @returns {string} The lowercase string representation of the input value.
  */
-export const applyLowerCaseTransformation = (value) => String(value).toLowerCase();
+export const applyLowerCaseTransformation = (value) => String(value ?? '').toLowerCase();
 
 /**
  * Transform the input value to a formatted string based on the provided format and time zone
@@ -325,7 +325,7 @@ export const ternaryTransformation = (value, { truthyValue, falsyValue }) =>
  * @returns {string} The truncated string with ellipsis if applicable.
  */
 export const applyTruncateTransformation = (value, { max, ellipsis = '…' }) =>
-  truncate(String(value), Number(max), { ellipsis });
+  truncate(String(value ?? ''), Number(max), { ellipsis });
 
 /**
  * Names of the custom transformations that have failed, keyed by the function, so the error is
@@ -403,7 +403,7 @@ export const applyTransformation = ({ fieldConfig, value, transformation, locale
       // Don’t fall back to a random UUID for an empty value; the transformation is used in Compute
       // fields, where a value that changes on every render causes an infinite update loop
       // @see https://github.com/sveltia/sveltia-cms/issues/946
-      return slugify(String(value), { fallback: false, locale });
+      return slugify(String(value ?? ''), { fallback: false, locale });
     case 'date':
       return applyDateTransformation(
         value,

@@ -12,7 +12,6 @@ import {
   prepareConditions,
 } from '$lib/services/contents/collection/view/conditions';
 import { parseViewOptions } from '$lib/services/contents/collection/view/options';
-import { currentView } from '$lib/services/contents/collection/view/settings';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getPropertyValue } from '$lib/services/contents/entry/values';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
@@ -23,6 +22,7 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
  * GroupingConditions,
  * InternalCollection,
  * InternalEntryCollection,
+ * SortingConditions,
  * } from '$lib/types/private';
  * @import { DateTimeField, ViewGroup, ViewGroups } from '$lib/types/public';
  */
@@ -129,13 +129,23 @@ const groupEntriesByComparison = (entries, collection, conditions, now) => {
  * @param {InternalCollection} collection Collection that the entries belong to.
  * @param {GroupingConditions | null | undefined} conditions Grouping conditions.
  * @param {Date} [now] Current date and time, which the template tags in the conditions resolve to.
+ * @param {SortingConditions} [sortCondition] Sorting conditions of the view. The groups follow a
+ * descending sort on the field they’re grouped by. This is passed in rather than read from the
+ * current view, so the groups aren’t made anew when any other part of the view changes, such as a
+ * group being collapsed.
  * @returns {{ name: string, entries: Entry[] }[]} Grouped entries, where each group object contains
  * a name, displayed with `getGroupLabel()`, and an entry list. When ungrouped, there will still be
  * one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  * @see https://sveltiacms.app/en/docs/collections/entries/views#grouping
  */
-export const groupEntries = (entries, collection, conditions, now = new Date()) => {
+export const groupEntries = (
+  entries,
+  collection,
+  conditions,
+  now = new Date(),
+  sortCondition = undefined,
+) => {
   const { field, pattern } = conditions ?? { field: '', pattern: undefined };
 
   if (!field) {
@@ -155,8 +165,6 @@ export const groupEntries = (entries, collection, conditions, now = new Date()) 
     name: collectionName,
     _i18n: { defaultLocale: locale },
   } = collection;
-
-  const sortCondition = currentView.current.sort;
 
   const sortedGroups = buildGroupMap(entries, pattern, (entry) =>
     getPropertyValue({ entry, locale, collectionName, key: field }),

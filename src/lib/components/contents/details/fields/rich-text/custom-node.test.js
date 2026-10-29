@@ -121,9 +121,8 @@ vi.mock('lexical', () => {
       };
     }
 
-    updateFromJSON(serializedNode) {
-      this.__props = serializedNode.__props || {};
-
+    // Like Lexical’s, this only restores the node state, not a subclass’s own properties
+    updateFromJSON() {
       return this;
     }
 
@@ -173,12 +172,14 @@ vi.mock('$lib/components/contents/details/fields/rich-text/editor-component.svel
 
 vi.mock('$lib/services/contents/fields/rich-text/components/utils', async (importOriginal) => ({
   ...(await importOriginal()),
-  isMultiLinePattern: vi.fn((pattern) => pattern.multiline || pattern.dotAll),
+  isInlineComponentDef: vi.fn(
+    ({ pattern, inlinePattern }) => !!inlinePattern || !(pattern.multiline || pattern.dotAll),
+  ),
   normalizeProps: vi.fn((props) => props),
 }));
 
 // Import mocked functions after they're mocked
-const { isMultiLinePattern } =
+const { isInlineComponentDef } =
   await import('$lib/services/contents/fields/rich-text/components/utils');
 
 describe('createCustomNodeClass', () => {
@@ -256,7 +257,7 @@ describe('createCustomNodeClass', () => {
     });
 
     it('should handle inline nodes correctly', () => {
-      vi.mocked(isMultiLinePattern).mockReturnValue(false);
+      vi.mocked(isInlineComponentDef).mockReturnValue(true);
 
       const CustomNode = createCustomNodeClass(mockComponentDef);
       const node = new CustomNode();
@@ -265,7 +266,7 @@ describe('createCustomNodeClass', () => {
     });
 
     it('should handle block nodes correctly', () => {
-      vi.mocked(isMultiLinePattern).mockReturnValue(true);
+      vi.mocked(isInlineComponentDef).mockReturnValue(false);
 
       const CustomNode = createCustomNodeClass(mockComponentDef);
       const node = new CustomNode();
@@ -291,7 +292,7 @@ describe('createCustomNodeClass', () => {
       const CustomNode = createCustomNodeClass(mockComponentDef);
 
       const serializedNode = {
-        __props: { title: 'Imported Title' },
+        props: { title: 'Imported Title' },
         type: 'test-component',
         version: 1,
       };
@@ -299,7 +300,9 @@ describe('createCustomNodeClass', () => {
       const node = CustomNode.importJSON(serializedNode);
 
       expect(node).toBeInstanceOf(CustomNode);
-      // The updateFromJSON method should be called on the new instance
+      // The field properties survive a copy and paste, which goes through the JSON
+      expect(node.__props).toEqual({ title: 'Imported Title' });
+      expect(CustomNode.importJSON(node.exportJSON()).__props).toEqual({ title: 'Imported Title' });
     });
 
     it('should have exportJSON method', () => {
@@ -309,7 +312,7 @@ describe('createCustomNodeClass', () => {
       const exported = node.exportJSON();
 
       expect(exported).toEqual({
-        title: 'Export Title',
+        props: { title: 'Export Title' },
         type: 'test-component',
         version: 1,
       });
@@ -321,6 +324,7 @@ describe('createCustomNodeClass', () => {
       const exported = node.exportJSON();
 
       expect(exported).toEqual({
+        props: {},
         type: 'test-component',
         version: 1,
       });
@@ -331,7 +335,7 @@ describe('createCustomNodeClass', () => {
       const node = new CustomNode();
 
       const serializedNode = {
-        __props: { title: 'Updated Title' },
+        props: { title: 'Updated Title' },
         type: 'test-component',
         version: 1,
       };
@@ -339,7 +343,6 @@ describe('createCustomNodeClass', () => {
       const result = node.updateFromJSON(serializedNode);
 
       expect(result).toBe(node);
-      expect(node.__props).toEqual(serializedNode.__props);
     });
 
     it('should handle DOM conversion', () => {
@@ -381,6 +384,8 @@ describe('createCustomNodeClass', () => {
       const shouldUpdate = node.updateDOM(prevNode, domElement, config);
 
       expect(typeof shouldUpdate).toBe('boolean');
+      // A node whose data hasn’t changed leaves its component alone
+      expect(node.updateDOM(new CustomNode(props), domElement, config)).toBe(false);
     });
 
     it('should handle different component patterns', () => {
@@ -390,7 +395,7 @@ describe('createCustomNodeClass', () => {
         pattern: /^```test[\s\S]*?```$/m,
       };
 
-      vi.mocked(isMultiLinePattern).mockReturnValue(true);
+      vi.mocked(isInlineComponentDef).mockReturnValue(false);
 
       const CustomNode = createCustomNodeClass(multilineComponentDef);
       const node = new CustomNode();

@@ -7,7 +7,7 @@
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { appNumberFormatter } from '$lib/services/app/i18n';
   import { goto } from '$lib/services/app/navigation';
-  import { getAssetsByFolder } from '$lib/services/assets';
+  import { countAssetsInFolder } from '$lib/services/assets';
   import {
     enabledCloudServices,
     externalAssetCounts,
@@ -185,9 +185,10 @@
               {#snippet endIcon()}
                 {#key allAssets.current}
                   {#await sleep() then}
-                    {@const count = (
-                      internalPath !== undefined ? getAssetsByFolder(folder) : allAssets.current
-                    ).length}
+                    {@const count =
+                      internalPath !== undefined
+                        ? countAssetsInFolder(folder)
+                        : allAssets.current.length}
                     <span class="count" aria-label="({_('x_assets', { values: { count } })})">
                       {appNumberFormatter.current.format(count)}
                     </span>

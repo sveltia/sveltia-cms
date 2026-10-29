@@ -1,3 +1,4 @@
+import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
 import { getPreviewPath } from '$lib/services/contents/entry';
 import {
   getAliasesKey,
@@ -70,6 +71,7 @@ export const addAlias = ({ draft, locale, content, slug, path }) => {
   }
 
   const getPreviewPathArgs = { collection, locale };
+  const { defaultLocale } = collection._i18n;
 
   // Use the original content, as fields referenced by the `preview_path` template, such as a date,
   // may have been edited along with the slug
@@ -79,10 +81,20 @@ export const addAlias = ({ draft, locale, content, slug, path }) => {
       slug: originalSlug,
       path: originalPath,
       content: originalContent,
+      defaultContent: originalEntry.locales[defaultLocale]?.content,
     }),
   );
 
-  const currentPath = normalizePath(getPreviewPath({ ...getPreviewPathArgs, slug, path, content }));
+  const currentPath = normalizePath(
+    getPreviewPath({
+      ...getPreviewPathArgs,
+      slug,
+      path,
+      content,
+      // A snapshot, which is replaced rather than changed as the draft is edited
+      defaultContent: getValueMapSnapshot(draft, defaultLocale),
+    }),
+  );
 
   // The `preview_path` template may not contain the slug at all, in which case the path is
   // unchanged and an alias would just point the page at itself

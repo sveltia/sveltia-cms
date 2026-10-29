@@ -1,5 +1,6 @@
+import { createInlineMatcher } from '$lib/services/contents/fields/rich-text/components/inline-pattern';
 import {
-  isMultiLinePattern,
+  isInlineComponentDef,
   normalizeProps,
 } from '$lib/services/contents/fields/rich-text/components/utils';
 
@@ -10,13 +11,13 @@ import {
  * TextMatchTransformer,
  * Transformer,
  * } from '@lexical/markdown';
- * @import { EditorComponentDefinition } from '$lib/types/public';
+ * @import { ResolvedEditorComponentDefinition } from '$lib/types/private';
  */
 
 /**
  * Create a singleline/inline or multiline transformer for the given component definition.
  * @param {object} args Arguments.
- * @param {EditorComponentDefinition} args.componentDef Component definition passed with the
+ * @param {ResolvedEditorComponentDefinition} args.componentDef Component definition passed with the
  * `CMS.registerEditorComponent()` API.
  * @param {any} args.CustomNode Lexical node class implementation.
  * @returns {Transformer} Transformer.
@@ -33,7 +34,7 @@ import {
  * @see https://github.com/facebook/lexical/blob/main/packages/lexical-markdown/src/__tests__/unit/LexicalMarkdown.test.ts#L117-L224
  */
 export const createTransformer = ({ componentDef, CustomNode }) => {
-  const { id: componentName, pattern, fromBlock, toBlock } = componentDef;
+  const { id: componentName, pattern, fromBlock, toBlock, inlinePattern } = componentDef;
   const nonGlobalPattern = new RegExp(pattern.source, pattern.flags.replace('g', ''));
   /**
    * Get node properties from the given regex match array.
@@ -61,7 +62,7 @@ export const createTransformer = ({ componentDef, CustomNode }) => {
     return null;
   };
 
-  if (isMultiLinePattern(pattern)) {
+  if (!isInlineComponentDef(componentDef)) {
     return /** @type {MultilineElementTransformer} */ ({
       /* eslint-disable jsdoc/require-jsdoc */
       type: 'multiline-element',
@@ -79,7 +80,16 @@ export const createTransformer = ({ componentDef, CustomNode }) => {
         }
 
         const matchArray = matchString.match(nonGlobalPattern);
-        const endLineIndex = startLineIndex + matchString.split('\n').length - 1;
+        // A newline at the end of the match only ends its last line
+        const matchLines = matchString.replace(/\n$/, '').split('\n');
+        const endLineIndex = startLineIndex + matchLines.length - 1;
+
+        // The node replaces every line the match spans, so leave a match followed by any text on
+        // its last line as text, like one preceded by text on its first line, rather than drop that
+        // text, e.g. ` trailing` in `<aside>Note</aside> trailing`. The lines then round-trip as is
+        if (lines[endLineIndex].slice(/** @type {string} */ (matchLines.at(-1)).length).trim()) {
+          return null;
+        }
 
         if (!matchArray) {
           // this should not happen
@@ -100,7 +110,10 @@ export const createTransformer = ({ componentDef, CustomNode }) => {
     /* eslint-disable jsdoc/require-jsdoc */
     type: 'text-match',
     dependencies: [CustomNode],
-    importRegExp: nonGlobalPattern,
+    // A pattern-based inline component is only matched where its trigger text is found, if any
+    importRegExp: inlinePattern
+      ? createInlineMatcher(nonGlobalPattern, inlinePattern)
+      : nonGlobalPattern,
     regExp: nonGlobalPattern,
     replace: (textNode, matchArray) => {
       textNode.replace(new CustomNode(getProps(matchArray)));

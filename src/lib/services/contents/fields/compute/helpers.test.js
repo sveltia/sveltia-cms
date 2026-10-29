@@ -10,8 +10,8 @@ import {
   getListIndex,
   getNumericValue,
   hasUuidTag,
-  isNumericComputeField,
 } from '$lib/services/contents/fields/compute/helpers';
+import { expectLinearTime } from '$lib/test/complexity';
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
@@ -62,6 +62,16 @@ describe('getListIndex()', () => {
     expect(getListIndex('sections.1.authors.3.slug')).toBe(3);
   });
 
+  test('should read the index of the item an Object field is in', () => {
+    expect(getListIndex('lines.2.meta.n')).toBe(2);
+    expect(getListIndex('sections.1.authors.3.meta.links.n')).toBe(3);
+  });
+
+  test('should read the index of a list item that is the field itself', () => {
+    expect(getListIndex('lines.2')).toBe(2);
+    expect(getListIndex('sections.1.tags.0')).toBe(0);
+  });
+
   test('should return undefined outside a list item', () => {
     expect(getListIndex('slug')).toBeUndefined();
     expect(getListIndex('author.slug')).toBeUndefined();
@@ -71,6 +81,11 @@ describe('getListIndex()', () => {
 describe('getComputedValue()', () => {
   test('should return the index itself for a lone index template', () => {
     expect(getComputedValue(getArgs('{{index}}', 'authors.2.slug'))).toBe(2);
+  });
+
+  test('should resolve the index of the list item an Object field is in', () => {
+    expect(getComputedValue(getArgs('{{index}}', 'lines.2.meta.n'))).toBe(2);
+    expect(getComputedValue(getArgs('No. {{index}}', 'lines.2.meta.n'))).toBe('No. 2');
   });
 
   test('should return an empty string for a lone index template outside a list', () => {
@@ -344,6 +359,41 @@ describe('getComputedValue()', () => {
         43,
       );
       expect(getFieldDisplayValue).toHaveBeenCalledOnce();
+    });
+
+    test('should use the stored value of a Select or Relation field', () => {
+      /** @type {Record<string, any>} */
+      const choiceFieldMap = {
+        shipping: {
+          name: 'shipping',
+          widget: 'select',
+          options: [
+            { label: 'Standard', value: 0 },
+            { label: 'Express', value: 5 },
+          ],
+        },
+        'extras.0': { name: 'extras', widget: 'select', multiple: true, options: [1, 2, 3] },
+        'extras.1': { name: 'extras', widget: 'select', multiple: true, options: [1, 2, 3] },
+        weight: { name: 'weight', widget: 'relation', collection: 'sizes', value_field: 'kg' },
+        qty: { name: 'qty', widget: 'number' },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => choiceFieldMap[keyPath]);
+      vi.mocked(getFieldDisplayValue).mockReturnValue('');
+
+      const valueMap = { shipping: 5, 'extras.0': 1, 'extras.1': 3, weight: '2.5', qty: 2 };
+
+      expect(
+        getComputedValue(getNumericArgs('{{fields.shipping}} + {{fields.qty}}', 'int', valueMap)),
+      ).toBe(7);
+      expect(getComputedValue(getNumericArgs('sum({{fields.extras.*}})', 'int', valueMap))).toBe(4);
+      expect(getComputedValue(getNumericArgs('count({{fields.extras.*}})', 'int', valueMap))).toBe(
+        2,
+      );
+      expect(
+        getComputedValue(getNumericArgs('{{fields.weight}} * {{fields.qty}}', 'float', valueMap)),
+      ).toBe(5);
+      expect(getFieldDisplayValue).not.toHaveBeenCalled();
     });
 
     test('should leave the value empty for a field that isn’t a number', () => {
@@ -809,15 +859,19 @@ describe('getComputedValue()', () => {
     });
 
     test('should reject a long value that doesn’t match in linear time', () => {
-      // A wildcard per tag would make this take minutes
+      // A wildcard per tag would make the time grow with the cube of the length
       vi.mocked(getFieldDisplayValue).mockReturnValue('x');
 
-      const valueMap = { slug: 'ab-'.repeat(10_000) };
       const args = getArgs('{{fields.a}}-{{fields.b}}-{{fields.c}}-{{uuid_shorter}}');
-      const start = performance.now();
 
-      expect(getComputedValue({ ...args, valueMap })).toMatch(/^x-x-x-[0-9a-f]{8}$/);
-      expect(performance.now() - start).toBeLessThan(1000);
+      expect(getComputedValue({ ...args, valueMap: { slug: 'ab-'.repeat(100) } })).toMatch(
+        /^x-x-x-[0-9a-f]{8}$/,
+      );
+      expectLinearTime(
+        (n) => ({ slug: 'ab-'.repeat(n) }),
+        (valueMap) => getComputedValue({ ...args, valueMap }),
+        200,
+      );
     });
 
     test('should ignore a non-string current value', () => {
@@ -825,23 +879,6 @@ describe('getComputedValue()', () => {
         UUID_REGEX,
       );
     });
-  });
-});
-
-describe('isNumericComputeField()', () => {
-  test('should tell whether the field yields a number', () => {
-    expect(isNumericComputeField(/** @type {any} */ ({ widget: 'compute', value: '' }))).toBe(
-      false,
-    );
-    expect(
-      isNumericComputeField(/** @type {any} */ ({ widget: 'compute', value_type: 'string' })),
-    ).toBe(false);
-    expect(
-      isNumericComputeField(/** @type {any} */ ({ widget: 'compute', value_type: 'int' })),
-    ).toBe(true);
-    expect(
-      isNumericComputeField(/** @type {any} */ ({ widget: 'compute', value_type: 'float/string' })),
-    ).toBe(true);
   });
 });
 

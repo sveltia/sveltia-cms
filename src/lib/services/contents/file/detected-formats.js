@@ -1,4 +1,5 @@
 import { FRONTMATTER_DELIMITER_MAP } from '$lib/services/contents/file/constants';
+import { takeOverFileState } from '$lib/services/contents/file/value-sources';
 
 /**
  * @import { FileConfig } from '$lib/types/private';
@@ -29,17 +30,16 @@ export const getSavedFileConfig = ({ _file, previousPath, path }) => {
     return _file;
   }
 
-  const format = previousPath ? detectedFrontMatterFormats.get(previousPath) : undefined;
+  const format = takeOverFileState(detectedFrontMatterFormats, previousPath, path);
 
   if (!format) {
     return _file;
   }
 
-  detectedFrontMatterFormats.set(path, format);
-
   return {
     ..._file,
     format,
+    configuredFormat: _file.format,
     fmDelimiters: _file.fmDelimiters ?? FRONTMATTER_DELIMITER_MAP[format],
   };
 };

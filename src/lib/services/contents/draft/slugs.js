@@ -8,12 +8,15 @@ import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import {
   getSharedEntryFileName,
+  stripIndexFileName,
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
 import { getSlugOptions, LEGACY_SLUG_EDITOR_TAG } from '$lib/services/contents/collection/slug';
+import { extractDateTime } from '$lib/services/contents/entry';
 import { usesSingleFileStructure } from '$lib/services/contents/i18n/config';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { isNumeric } from '$lib/services/utils/number';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
  * @import {
@@ -65,11 +68,11 @@ const randomValueMaps = new WeakMap();
 export const getRandomValues = (draft) => getOrCreate(randomValueMaps, draft, () => new Map());
 
 /**
- * Get the folder a new entry goes to, as chosen with the path editor of a nested collection, when
- * the entry’s file is named after its slug. The slug of an entry in such a collection is its sub
- * path, e.g. `docs/intro`, so a new slug has to be unique among the entries in that folder rather
- * than compared with the sub paths of every entry. Where every entry shares one file name, the
- * entry gets a folder of its own, which is checked with the path instead.
+ * Get the folder a new entry goes to, as chosen with the path editor of a collection with nested
+ * entries, when the entry’s file is named after its slug. The slug of an entry in such a collection
+ * is its sub path, e.g. `docs/intro`, so a new slug has to be unique among the entries in that
+ * folder rather than compared with the sub paths of every entry. Where every entry shares one file
+ * name, the entry gets a folder of its own, which is checked with the path instead.
  * @param {EntryDraft} draft Entry draft.
  * @returns {string | undefined} Folder path without leading and trailing slashes, or `undefined`
  * if the entry isn’t new or the path editor doesn’t decide where it goes.
@@ -82,6 +85,49 @@ export const getNewEntryDirPath = (draft) => {
   }
 
   return stripSlashes(/** @type {string} */ (currentPath));
+};
+
+/**
+ * Names of the DateTime field that holds an entry’s date, as inferred by Decap CMS.
+ * @type {string[]}
+ */
+const ENTRY_DATE_FIELD_NAMES = ['date', 'publishDate', 'publish_date'];
+
+/**
+ * Get the date/time parts that fill the date/time tags, e.g. `{{year}}`, in a new entry’s slug and
+ * path templates. Like Decap CMS, they come from the entry’s date, which is the value of the first
+ * DateTime field named `date`, `publishDate` or `publish_date` in the default locale, so that a
+ * backdated post is named after its own date. A date/time is read in UTC, or in the browser’s time
+ * zone with the `timezone` slug option set to `local`, while a date-only value is read as written.
+ * As the slug is only filled for a new entry, changing the date later doesn’t rename the file.
+ * @param {EntryDraft} draft Entry draft.
+ * @returns {Record<string, string> | undefined} Date/time parts, or `undefined` if the collection
+ * has no such field or it’s empty, in which case the time of the save is used.
+ * @see https://github.com/decaporg/decap-website/pull/183
+ */
+export const getEntryDateTimeParts = (draft) => {
+  const { collection, collectionFile, currentValues } = draft;
+
+  const {
+    fields = [],
+    _i18n: { defaultLocale },
+  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+
+  const dateFieldName = fields.find(
+    ({ widget, name }) => widget === 'datetime' && ENTRY_DATE_FIELD_NAMES.includes(name),
+  )?.name;
+
+  if (!dateFieldName) {
+    return undefined;
+  }
+
+  return extractDateTime({
+    dateFieldName,
+    fields,
+    content: currentValues[defaultLocale] ?? {},
+    locale: defaultLocale,
+    inSlugTimeZone: true,
+  });
 };
 
 /**
@@ -105,6 +151,7 @@ export const getFillSlugOptions = ({ draft }) => {
       _slug: currentSlugs?.[defaultLocale] ?? currentSlugs?._,
     },
     locale: defaultLocale,
+    dateTimeParts: getEntryDateTimeParts(draft),
     isIndexFile,
     randomValues: getRandomValues(draft),
   };
@@ -176,8 +223,10 @@ export const isSlugAutoNumbered = ({ draft, locale, templateOnly = false }) => {
 /**
  * Get the slug a new entry is given in a collection whose slug is numbered automatically: the
  * integer after the highest one among the slugs of the entries stored in the collection folder, in
- * any locale, as the other locales share the number, starting from `1`. In a nested collection, the
- * last segment of an entry’s sub path counts. The entries still in a pull request count too, as do
+ * any locale, as the other locales share the number, starting from `1`. In a collection with nested
+ * entries, the last segment of an entry’s sub path counts, leaving out the file name every entry
+ * shares in the `subfolders` mode, e.g. `index`. The entries still in a pull request count too,
+ * including the new ones riding along in the pull request of an entry of another collection, as do
  * the entries created from a Relation field that are saved along with the entry being edited. Like
  * the `auto_increment` option of a Number field, it’s worked out again at save time, so two entries
  * created at the same time can’t take the same number.
@@ -189,11 +238,12 @@ export const isSlugAutoNumbered = ({ draft, locale, templateOnly = false }) => {
  * @see https://github.com/sveltia/sveltia-cms/issues/1072
  */
 export const getNextSlugNumber = ({ draft, pendingEntries = draft.pendingEntries }) => {
-  const { collectionName } = draft;
+  const { collection, collectionName } = draft;
 
   const max = [
     ...getEntriesInCollectionFolder(collectionName),
     ...getUnpublishedEntriesByCollection(collectionName),
+    ...getCompanionEntries(collectionName),
     ...pendingEntries
       .filter((pendingEntry) => pendingEntry.collectionName === collectionName)
       .map(({ entry }) => entry),
@@ -203,9 +253,9 @@ export const getNextSlugNumber = ({ draft, pendingEntries = draft.pendingEntries
       ...Object.values(locales).map((content) => content.slug),
     ])
     .reduce((result, slug) => {
-      const name = /** @type {string} */ (slug.split('/').pop());
+      const name = /** @type {string} */ (stripIndexFileName(collection, slug).split('/').pop());
 
-      return /^\d+$/.test(name) ? Math.max(result, Number(name)) : result;
+      return isNumeric(name) ? Math.max(result, Number(name)) : result;
     }, 0);
 
   return String(max + 1);
@@ -250,8 +300,8 @@ export const getLocalizedSlug = ({
   // slug to avoid changing URLs unexpectedly.
   if (isNew || !originalLocales[locale]) {
     // Every locale shares the number given to the default locale, unless a slug is typed in. The
-    // slug of an existing entry in a nested collection is its sub path, of which the number is the
-    // last segment, as a filled template would be
+    // slug of an existing entry in a collection with nested entries is its sub path, of which the
+    // number is the last segment, as a filled template would be
     if (isSlugAutoNumbered({ draft, locale, templateOnly })) {
       return /** @type {string} */ (defaultLocaleSlug.split('/').pop());
     }
@@ -274,6 +324,8 @@ export const getLocalizedSlug = ({
         // Slug candidate for the current locale
         _slug,
       },
+      // The entry’s date is shared by every locale
+      dateTimeParts: getEntryDateTimeParts(draft),
       isIndexFile,
       randomValues: getRandomValues(draft),
     });

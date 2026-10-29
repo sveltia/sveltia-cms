@@ -2,11 +2,12 @@ import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svel
 import { getListItemIndexes, indexListItems } from '$lib/services/contents/entry/content-index';
 import { getComputedValue } from '$lib/services/contents/fields/compute/helpers';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
-import { someSubField } from '$lib/services/contents/fields/list/subfields';
+import { getFlatSubFields, someSubField } from '$lib/services/contents/fields/list/subfields';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
+import { addSharedValues } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import {
@@ -20,8 +21,6 @@ import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
  * ComputeField,
  * Field,
  * FieldKeyPath,
- * FieldWithSubFields,
- * FieldWithTypes,
  * ListField,
  * ListFieldWithSubField,
  * } from '$lib/types/public';
@@ -44,26 +43,6 @@ import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
  * costs no scan at all.
  * @property {ComputeFieldInfo[]} results Collected fields, appended to in place.
  */
-
-/**
- * Get the sub-fields of an Object field or list item, resolving the variable type against the type
- * name stored in the content when the field has the `types` option.
- * @param {Field} field Field configuration.
- * @param {FlattenedEntryContent} valueMap Flattened entry content.
- * @param {FieldKeyPath} keyPath Key path of the object or list item.
- * @returns {Field[]} Sub-fields, or an empty array if the field holds none.
- */
-const getSubFields = (field, valueMap, keyPath) => {
-  const { fields } = /** @type {FieldWithSubFields} */ (field);
-
-  if (fields) {
-    return fields;
-  }
-
-  const { types, typeKey = 'type' } = /** @type {FieldWithTypes} */ (field);
-
-  return types?.find(({ name }) => name === valueMap[`${keyPath}.${typeKey}`])?.fields ?? [];
-};
 
 /**
  * Cache of {@link containsComputeField} results, keyed by the field configuration. Configurations
@@ -109,7 +88,7 @@ const collectFromField = (args) => {
       return;
     }
 
-    getSubFields(field, valueMap, keyPath).forEach((subField) => {
+    (getFlatSubFields(field, valueMap, keyPath) ?? []).forEach((subField) => {
       collectFromField({ ...args, field: subField, keyPath: `${keyPath}.${subField.name}` });
     });
 
@@ -136,7 +115,7 @@ const collectFromField = (args) => {
       return;
     }
 
-    getSubFields(listField, valueMap, itemKeyPath).forEach((subField) => {
+    (getFlatSubFields(listField, valueMap, itemKeyPath) ?? []).forEach((subField) => {
       collectFromField({ ...args, field: subField, keyPath: `${itemKeyPath}.${subField.name}` });
     });
   });
@@ -257,12 +236,33 @@ const updateLocaleComputedValues = ({ draft, valueStoreKey, locale, valueMap, ta
       ? collectComponentComputeFields(valueMap, getIndex)
       : collectComputeFields({ fields, valueMap, getIndex });
 
+  // Nothing to resolve, e.g. in a rich text field that holds no editor component with a Compute
+  // field, so the values aren’t prepared either
+  if (!computeFields.length) {
+    return false;
+  }
+
   let changed = false;
+
+  /**
+   * The entry’s values in the locale. In another locale than the default, the fields that aren’t
+   * localized, which only hold a value in the default locale, are added, so a Compute field
+   * referring to one gets the same value in every locale.
+   * @type {FlattenedEntryContent}
+   */
+  const entryValues = addSharedValues({
+    getFieldArgs: { collectionName, fileName, isIndexFile },
+    locale,
+    defaultLocale,
+    content: valueStoreKey === 'extraValues' ? getValueMapSnapshot(draft, locale) : valueMap,
+    defaultContent: getValueMapSnapshot(draft, defaultLocale),
+  });
+
   /**
    * Values to compute the fields from: the snapshot, until a field changes.
    * @type {FlattenedEntryContent}
    */
-  let values = valueMap;
+  let values = valueStoreKey === 'extraValues' ? valueMap : entryValues;
 
   computeFields.forEach(({ keyPath, fieldConfig }) => {
     // The values of a rich text editor component belong to the document text, which is edited in
@@ -290,7 +290,7 @@ const updateLocaleComputedValues = ({ draft, valueStoreKey, locale, valueMap, ta
             keyPathPrefix: /** @type {RegExpMatchArray} */ (
               keyPath.match(COMPONENT_NAME_PREFIX_REGEX)
             )[0],
-            entryValueMap: getValueMapSnapshot(draft, locale),
+            entryValueMap: entryValues,
           }
         : {}),
     });

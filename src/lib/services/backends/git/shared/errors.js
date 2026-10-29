@@ -64,6 +64,17 @@ export const createNoWriteAccessError = (repo) =>
   createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_write_access', { repo });
 
 /**
+ * Create the error to throw when the signed-in user can’t push to the configured repository: one
+ * saying write access is missing if they can at least read it, or one saying there is no access at
+ * all otherwise. See {@link createNoWriteAccessError} and {@link createNoAccessError}.
+ * @param {string} repo Repository name.
+ * @param {boolean} [canRead] Whether the user can read the repository.
+ * @returns {Error} Error to throw.
+ */
+export const createPermissionError = (repo, canRead) =>
+  canRead ? createNoWriteAccessError(repo) : createNoAccessError(repo);
+
+/**
  * Create the error to throw when the configured repository couldn’t be read while checking the
  * signed-in user’s access to it. A refusal means the user has no access, and the shared message is
  * what the sign-in flow looks for to drop the cached credentials, so the user gets the sign-in form

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { updateNonPrimitiveValue as _updateNonPrimitiveValue } from '.';
+import { updateNonPrimitiveValue as _updateNonPrimitiveValue, updateFieldValue } from '.';
 
 const { isAutoDuplicationEnabled } = vi.hoisted(() => ({
   isAutoDuplicationEnabled: vi.fn(() => true),
@@ -893,6 +893,124 @@ describe('draft/update/index', () => {
       expect(result.currentValues.en.other).toBe('keep');
       // New value should be added
       expect(result.currentValues.en['user.age']).toBe(30);
+    });
+  });
+
+  describe('updateFieldValue', () => {
+    it('should clear a list value with a primitive, dropping the items', () => {
+      /** @type {any} */
+      const draft = {
+        currentValues: { en: { title: 'Post', tags: [], 'tags.0': 'a', 'tags.1': 'b', body: 'x' } },
+      };
+
+      updateFieldValue({
+        draft,
+        valueStoreKey: 'currentValues',
+        locale: 'en',
+        keyPath: 'tags',
+        i18n: false,
+        value: null,
+      });
+
+      // The key stays where it was, so the saved file keeps the field order
+      expect(Object.entries(draft.currentValues.en)).toEqual([
+        ['title', 'Post'],
+        ['tags', null],
+        ['body', 'x'],
+      ]);
+    });
+
+    it('should clear an object value with a primitive, dropping the properties', () => {
+      /** @type {any} */
+      const draft = {
+        currentValues: {
+          en: { 'location.lat': 1, 'location.lng': 2, 'location.label.text': 'Home', other: 1 },
+        },
+      };
+
+      updateFieldValue({
+        draft,
+        valueStoreKey: 'currentValues',
+        locale: 'en',
+        keyPath: 'location',
+        i18n: false,
+        value: '',
+      });
+
+      expect(draft.currentValues.en).toEqual({ other: 1, location: '' });
+    });
+
+    it('should leave the fields with a similar name alone', () => {
+      /** @type {any} */
+      const draft = { currentValues: { en: { tags: 'a', 'tagsExtra.0': 'b', tagsMore: 'c' } } };
+
+      updateFieldValue({
+        draft,
+        valueStoreKey: 'currentValues',
+        locale: 'en',
+        keyPath: 'tags',
+        i18n: false,
+        value: 'z',
+      });
+
+      expect(draft.currentValues.en).toEqual({ tags: 'z', 'tagsExtra.0': 'b', tagsMore: 'c' });
+    });
+
+    it('should write a primitive to the target locales only', () => {
+      /** @type {any} */
+      const draft = {
+        currentValues: { en: { 'tags.0': 'a' }, ja: { 'tags.0': 'あ' } },
+        extraValues: { en: {}, ja: {} },
+      };
+
+      updateFieldValue({
+        draft,
+        valueStoreKey: 'currentValues',
+        locale: 'en',
+        keyPath: 'tags',
+        i18n: true,
+        value: null,
+      });
+
+      expect(draft.currentValues).toEqual({ en: { tags: null }, ja: { 'tags.0': 'あ' } });
+
+      updateFieldValue({
+        draft,
+        valueStoreKey: 'currentValues',
+        locale: 'en',
+        keyPath: 'tags',
+        i18n: 'duplicate',
+        value: 'x',
+      });
+
+      expect(draft.currentValues).toEqual({ en: { tags: 'x' }, ja: { tags: 'x' } });
+    });
+
+    it('should store a list or object value under its key paths', () => {
+      /** @type {any} */
+      const draft = { currentValues: { en: { tags: null } } };
+
+      updateFieldValue({
+        draft,
+        valueStoreKey: 'currentValues',
+        locale: 'en',
+        keyPath: 'tags',
+        i18n: false,
+        value: ['a', 'b'],
+      });
+
+      expect(draft.currentValues.en).toEqual({ tags: [], 'tags.0': 'a', 'tags.1': 'b' });
+
+      updateFieldValue({
+        draft,
+        valueStoreKey: 'currentValues',
+        locale: 'en',
+        keyPath: 'tags',
+        i18n: false,
+        value: { x: 1 },
+      });
+
+      expect(draft.currentValues.en).toEqual({ tags: {}, 'tags.x': 1 });
     });
   });
 });

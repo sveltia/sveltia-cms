@@ -134,6 +134,8 @@ describe('searchEntries basic functionality', () => {
     expect(result).toHaveProperty('points');
     expect(typeof result.points).toBe('number');
     expect(result.points).toBeGreaterThanOrEqual(0);
+    // The result is keyed by the entry ID in the list
+    expect(result.id).toBe(entry.id);
   });
 
   it('should normalize the entry’s own values through a cache tied to the entry', async () => {

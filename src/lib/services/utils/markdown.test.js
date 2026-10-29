@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
+import { expectLinearTime } from '$lib/test/complexity';
+
 import { removeMarkdownSyntax, stripMarkdown } from './markdown';
 
 describe('removeMarkdownSyntax', () => {
@@ -275,15 +277,10 @@ describe('removeMarkdownSyntax', () => {
     expect(removeMarkdownSyntax('~~~~strike~~~~')).toBe('strike');
   });
 
-  test('should finish quickly with a long run of alternating delimiters', () => {
+  test('should process a long run of alternating delimiters in linear time', () => {
     // A run of mixed delimiters with no closing run used to take minutes to process, because the
     // delimiter could be any length and every length was tried against the rest of the string
-    const input = `${'*_'.repeat(20000)}${'a'.repeat(20000)}`;
-    const start = performance.now();
-
-    removeMarkdownSyntax(input);
-
-    expect(performance.now() - start).toBeLessThan(200);
+    expectLinearTime((n) => `${'*_'.repeat(n)}${'a'.repeat(n)}`, removeMarkdownSyntax, 500);
   });
 });
 

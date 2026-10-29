@@ -19,6 +19,7 @@
   import { retainDeployPolling } from '$lib/services/deployments/poll';
   import {
     checkPublishedVersion,
+    getUnpublishedEntryById,
     isPendingDeletion,
     publishingBranches,
     unpublishedEntries,
@@ -30,6 +31,7 @@
     getDiscardMessages,
     getPublishMessages,
     groupEntriesByStatus,
+    REFRESH_MESSAGES,
     STATUS_UPDATE_MESSAGES,
   } from '$lib/services/workflow/board';
   import { deployingEntries } from '$lib/services/workflow/deploy';
@@ -37,7 +39,7 @@
   import { reloadUnpublishedEntries } from '$lib/services/workflow/load';
   import {
     discardWorkflowEntry,
-    publishWorkflowEntry,
+    publishReviewedEntry,
     updateWorkflowStatus,
   } from '$lib/services/workflow/save';
   import {
@@ -47,7 +49,7 @@
     workflowPageLabelKey,
   } from '$lib/services/workflow/stages';
   import { canMoveToStatus, canPublish } from '$lib/services/workflow/validate';
-  import { getWorkflowErrorMessage, pinReviewedHead } from '$lib/services/workflow/verify';
+  import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
   /**
    * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -122,6 +124,47 @@
   let announced = false;
 
   /**
+   * Show the given message with a toast notification.
+   * @param {'info' | 'success' | 'error'} status Status of the message.
+   * @param {string} message Localized message.
+   */
+  const notify = (status, message) => {
+    toastStatus = status;
+    toastMessage = message;
+    showToast = true;
+  };
+
+  /**
+   * Report the progress and the result of a request with a toast notification.
+   * @param {Promise<any>} request Request being performed.
+   * @param {ToastMessages} messages I18n string keys for each state.
+   * @param {() => void} onSettled Function called once the request has settled.
+   * @param {(ex: any) => string} [getErrorMessage] Function returning the localized message for
+   * the given failure. The `error` message by default.
+   */
+  const reportRequest = async (
+    request,
+    messages,
+    onSettled,
+    getErrorMessage = () => _(messages.error),
+  ) => {
+    notify('info', _(messages.info));
+
+    // The toast is shown again with the result in case it has already been dismissed while the
+    // request was in flight
+    try {
+      await request;
+      notify('success', _(messages.success));
+    } catch (/** @type {any} */ ex) {
+      notify('error', getErrorMessage(ex));
+      // eslint-disable-next-line no-console
+      console.error(ex);
+    } finally {
+      onSettled();
+    }
+  };
+
+  /**
    * Report the progress and the result of an Editorial Workflow action with a toast notification.
    * The entry’s controls stay disabled until the request settles, so a second action can’t be
    * started against the same pull request while the first one is still in flight.
@@ -135,55 +178,32 @@
     const { branch } = entry.workflow.pullRequest;
 
     busyBranches = [...busyBranches, branch];
-    toastStatus = 'info';
-    toastMessage = _(messages.info);
-    showToast = true;
 
-    try {
-      await request;
-      toastStatus = 'success';
-      toastMessage = _(messages.success);
-    } catch (/** @type {any} */ ex) {
-      toastStatus = 'error';
+    await reportRequest(
+      request,
+      messages,
+      () => {
+        busyBranches = busyBranches.filter((_branch) => _branch !== branch);
+      },
       // A failure that trying again wouldn’t fix says why, e.g. a publish refused over what the
       // pull request holds, or another request open from the branch
-      toastMessage = getWorkflowErrorMessage(ex, messages.error);
-      // eslint-disable-next-line no-console
-      console.error(ex);
-    } finally {
-      busyBranches = busyBranches.filter((_branch) => _branch !== branch);
-    }
-
-    // Show the toast again in case it has already been dismissed while the request was in flight
-    showToast = true;
+      (ex) => getWorkflowErrorMessage(ex, messages.error),
+    );
   };
 
   /**
    * Read the pull requests again, to pick up what anyone else has changed since the board was
    * loaded, without waiting for the next scheduled check, and report the result with a toast
-   * notification.
+   * notification. A reload already in flight, such as a scheduled check, may have listed the pull
+   * requests before the button was clicked, so the board is reloaded again after it rather than
+   * joining it.
    */
   const refresh = async () => {
     refreshing = true;
-    toastStatus = 'info';
-    toastMessage = _('workflow.refreshing');
-    showToast = true;
 
-    try {
-      await reloadUnpublishedEntries();
-      toastStatus = 'success';
-      toastMessage = _('workflow.refreshed');
-    } catch (/** @type {any} */ ex) {
-      toastStatus = 'error';
-      toastMessage = _('workflow.refresh_failed');
-      // eslint-disable-next-line no-console
-      console.error(ex);
-    } finally {
+    await reportRequest(reloadUnpublishedEntries({ fresh: true }), REFRESH_MESSAGES, () => {
       refreshing = false;
-    }
-
-    // Show the toast again in case it has already been dismissed while the request was in flight
-    showToast = true;
+    });
   };
 
   /**
@@ -193,9 +213,7 @@
    * @param {string} messageKey I18n string key of the message to show.
    */
   const reportValidationErrors = (messageKey) => {
-    toastStatus = 'error';
-    toastMessage = _(messageKey);
-    showToast = true;
+    notify('error', _(messageKey));
   };
 
   /**
@@ -217,22 +235,11 @@
   };
 
   /**
-   * Get the version of the given entry that’s in the store now. The pull requests are read again
-   * from time to time, which can replace the entry while a card is being dragged or a confirmation
-   * dialog is open, or take it off the board altogether if its pull request has been merged or
-   * closed in the meantime; acting on the copy held since then would put stale content back.
-   * @param {UnpublishedEntry | undefined} entry Entry as it was when the action started.
-   * @returns {UnpublishedEntry | undefined} Current entry, or `undefined` if it has left the board.
-   */
-  const getCurrentEntry = (entry) =>
-    entry ? unpublishedEntries.current.find(({ id }) => id === entry.id) : undefined;
-
-  /**
    * Move the dragged entry to the given column, which changes the label on the pull request.
    * @param {WorkflowStatus} status New status.
    */
   const moveEntry = async (status) => {
-    const entry = getCurrentEntry(draggedEntry);
+    const entry = getUnpublishedEntryById(draggedEntry?.id);
 
     draggedEntry = undefined;
     dropTarget = undefined;
@@ -407,7 +414,7 @@
   title={discardDialogStrings.title}
   okLabel={discardDialogStrings.label}
   onOk={async () => {
-    const entry = getCurrentEntry(targetEntry);
+    const entry = getUnpublishedEntryById(targetEntry?.id);
 
     if (entry) {
       await runAction(
@@ -426,7 +433,7 @@
   title={publishDialogStrings.title}
   okLabel={publishDialogStrings.label}
   onOk={async () => {
-    const entry = getCurrentEntry(targetEntry);
+    const entry = getUnpublishedEntryById(targetEntry?.id);
 
     if (!entry) {
       return;
@@ -440,9 +447,8 @@
 
     await runAction(
       entry,
-      // Pinned to the version the dialog was opened for, so a commit a reload has brought in since
-      // isn’t published unseen
-      publishWorkflowEntry(pinReviewedHead(entry, targetEntry?.workflow.pullRequest.headSHA)),
+      // Pinned to the version the dialog was opened for
+      publishReviewedEntry(entry, targetEntry),
       getPublishMessages(isPendingDeletion(entry)),
     );
   }}

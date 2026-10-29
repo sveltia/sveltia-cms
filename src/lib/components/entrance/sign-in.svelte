@@ -5,6 +5,7 @@
 
   import { allBackendServices } from '$lib/services/backends';
   import { isDemoSite } from '$lib/services/backends/fs/seed';
+  import { cancelAuthorization } from '$lib/services/backends/git/shared/auth';
   import { cmsConfig } from '$lib/services/config';
   import { auth, signInAutomatically, signInManually } from '$lib/services/user/auth.svelte';
   import { env } from '$lib/services/user/env.svelte';
@@ -68,6 +69,13 @@
 <div role="none" class="buttons">
   {#if auth.signingIn}
     <div role="alert" class="message">{_('signing_in')}</div>
+    {#if cancelAuthorization.current}
+      <!--
+        The app can’t always tell when the user closes the sign-in popup, e.g. when GitLab’s sign-in
+        page has severed it from this window, so let the user get out of the pending sign-in
+      -->
+      <Button variant="secondary" label={_('cancel')} onclick={cancelAuthorization.current} />
+    {/if}
   {:else if backend}
     {#if showLocalBackendOption}
       <Button

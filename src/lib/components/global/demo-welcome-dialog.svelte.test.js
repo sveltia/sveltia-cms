@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { DEMO_WELCOME_STORAGE_KEY, showDemoWelcomeDialog } from '$lib/services/app/onboarding';
+import { DEMO_WELCOME_STORAGE_KEY, demoWelcomeNotice } from '$lib/services/app/onboarding';
 import { backendName } from '$lib/services/backends';
 
 import DemoWelcomeDialog from './demo-welcome-dialog.svelte';
@@ -21,7 +21,7 @@ describe('DemoWelcomeDialog', () => {
     });
     document.head.append(seedLink);
     backendName.current = 'test-repo';
-    showDemoWelcomeDialog.current = false;
+    demoWelcomeNotice.show.current = false;
     await LocalStorage.delete(DEMO_WELCOME_STORAGE_KEY);
   });
 
@@ -29,7 +29,7 @@ describe('DemoWelcomeDialog', () => {
     vi.restoreAllMocks();
     seedLink.remove();
     backendName.current = undefined;
-    showDemoWelcomeDialog.current = false;
+    demoWelcomeNotice.show.current = false;
     await LocalStorage.delete(DEMO_WELCOME_STORAGE_KEY);
   });
 
@@ -44,7 +44,7 @@ describe('DemoWelcomeDialog', () => {
     await expect.element(dialog.getByText(/To start over/)).toBeVisible();
 
     await dialog.getByRole('button', { name: 'Get Started' }).click();
-    await expect.poll(() => showDemoWelcomeDialog.current).toBe(false);
+    await expect.poll(() => demoWelcomeNotice.show.current).toBe(false);
     await expect.poll(() => LocalStorage.get(DEMO_WELCOME_STORAGE_KEY)).toBe(true);
 
     // The next visit doesn’t show it again. Wait for the stored flag to be read first, which would
@@ -56,7 +56,7 @@ describe('DemoWelcomeDialog', () => {
     await vi.waitFor(() => expect(getItem).toHaveBeenCalledWith(DEMO_WELCOME_STORAGE_KEY));
     await expect(getItem.mock.results[0].value).resolves.toBe(true);
     await tick();
-    expect(showDemoWelcomeDialog.current).toBe(false);
+    expect(demoWelcomeNotice.show.current).toBe(false);
     expect(page.getByRole('dialog').elements()).toHaveLength(0);
   });
 
@@ -67,7 +67,7 @@ describe('DemoWelcomeDialog', () => {
       .toBeVisible();
 
     await userEvent.keyboard('{Escape}');
-    await expect.poll(() => showDemoWelcomeDialog.current).toBe(false);
+    await expect.poll(() => demoWelcomeNotice.show.current).toBe(false);
     await expect.poll(() => LocalStorage.get(DEMO_WELCOME_STORAGE_KEY)).toBe(true);
   });
 
@@ -75,7 +75,7 @@ describe('DemoWelcomeDialog', () => {
     seedLink.remove();
     await render(DemoWelcomeDialog, {});
 
-    expect(showDemoWelcomeDialog.current).toBe(false);
+    expect(demoWelcomeNotice.show.current).toBe(false);
     expect(page.getByRole('dialog').elements()).toHaveLength(0);
   });
 });

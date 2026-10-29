@@ -556,14 +556,63 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
       expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining('..'), expect.anything());
     });
 
-    it('should fall back to the original file name when it has no file name', async () => {
+    it('should reject a file name that has nothing left once sanitized', async () => {
       const file = new File(['content'], '/', { type: 'image/jpeg' });
 
-      vi.mocked(fetch).mockResolvedValue(new Response('', { status: 201 }));
+      vi.mocked(fetch).mockResolvedValue(new Response(buildListXml([]), { status: 200 }));
 
-      const assets = await uploadBlobs([file], config, { apiKey: token });
+      await expect(uploadBlobs([file], config, { apiKey: token })).rejects.toThrow(
+        'Invalid file name: /',
+      );
+      expect(fetch).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ method: 'PUT' }),
+      );
+    });
 
-      expect(assets[0].fileName).toBe('/');
+    it('should list the folder with a delimiter and rename a file whose name is taken', async () => {
+      const prefixedConfig = { ...config, prefix: 'uploads/' };
+
+      // The service sums up a subfolder in a blob prefix, which isn’t a file
+      const listXml = [
+        '<?xml version="1.0" encoding="utf-8"?>',
+        `<EnumerationResults ContainerName="${container}"><Blobs>`,
+        '<BlobPrefix><Name>uploads/2024/photo.jpg/</Name></BlobPrefix>',
+        '<Blob><Name>uploads/2024/photo.jpg</Name></Blob>',
+        '<Blob><Name>uploads/2024/notes.txt</Name></Blob>',
+        '</Blobs><NextMarker /></EnumerationResults>',
+      ].join('');
+
+      vi.mocked(fetch).mockImplementation(async (_url, init) =>
+        init?.method === 'PUT'
+          ? new Response('', { status: 201 })
+          : new Response(listXml, { status: 200 }),
+      );
+
+      const assets = await uploadBlobs(
+        [
+          new File(['1'], 'photo.jpg', { type: 'image/jpeg' }),
+          new File(['2'], 'photo.jpg', { type: 'image/jpeg' }),
+          new File(['3'], 'beach.jpg', { type: 'image/jpeg' }),
+        ],
+        prefixedConfig,
+        { apiKey: token, dirPath: '2024' },
+      );
+
+      expect(assets.map(({ id }) => id)).toEqual([
+        'uploads/2024/photo-1.jpg',
+        'uploads/2024/photo-2.jpg',
+        'uploads/2024/beach.jpg',
+      ]);
+
+      const listUrl = new URL(String(vi.mocked(fetch).mock.calls[0][0]));
+
+      expect(listUrl.searchParams.get('prefix')).toBe('uploads/2024/');
+      expect(listUrl.searchParams.get('delimiter')).toBe('/');
+      expect(fetch).not.toHaveBeenCalledWith(
+        `${containerURL}/uploads/2024/photo.jpg?${token}`,
+        expect.anything(),
+      );
     });
 
     it('should upload multiple files', async () => {
@@ -577,7 +626,8 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
       const assets = await uploadBlobs(files, config, { apiKey: token });
 
       expect(assets.map(({ fileName }) => fileName)).toEqual(['first.jpg', 'second.jpg']);
-      expect(fetch).toHaveBeenCalledTimes(2);
+      // A listing of the folder, then an upload for each file
+      expect(fetch).toHaveBeenCalledTimes(3);
     });
 
     it('should return an empty array when there is no file', async () => {
@@ -597,7 +647,9 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
     it('should throw when the upload fails', async () => {
       const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
 
-      vi.mocked(fetch).mockResolvedValue(new Response('AuthorizationFailure', { status: 403 }));
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(new Response(buildListXml([]), { status: 200 }))
+        .mockResolvedValue(new Response('AuthorizationFailure', { status: 403 }));
 
       await expect(uploadBlobs([file], config, { apiKey: token })).rejects.toThrow(
         'Failed to upload file test.jpg: AuthorizationFailure',
@@ -979,7 +1031,8 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
         dirPath: '2024/summer',
       });
 
-      expect(fetch).toHaveBeenCalledExactlyOnceWith(
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(fetch).toHaveBeenLastCalledWith(
         `${containerURL}/uploads/2024/summer/photo.jpg?${token}`,
         expect.objectContaining({ method: 'PUT' }),
       );

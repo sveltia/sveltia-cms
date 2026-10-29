@@ -180,12 +180,30 @@ describe('eraseAllData()', () => {
   });
 
   test('works without a database when the backend has none', async () => {
-    backend.current = { name: 'test-repo' };
+    backend.current = { name: 'local', repository: { databaseName: '' } };
 
     await eraseAllData();
 
     expect(deleteDatabase).not.toHaveBeenCalled();
     expect(removeEntry).toHaveBeenCalledWith('sveltia-cms-test', { recursive: true });
+  });
+
+  test('deletes the test backend’s database, which isn’t named after a repository', async () => {
+    backend.current = { name: 'test-repo' };
+    vi.stubGlobal('indexedDB', { deleteDatabase });
+
+    await eraseAllData();
+
+    expect(deleteDatabase).toHaveBeenCalledExactlyOnceWith('test-repo:sveltia-cms-test');
+    expect(removeEntry).toHaveBeenCalledWith('sveltia-cms-test', { recursive: true });
+  });
+
+  test('deletes the test backend’s database left behind', async () => {
+    databases.mockResolvedValue([{ name: 'test-repo:sveltia-cms-test' }, { name: 'test-repo' }]);
+
+    await eraseAllData();
+
+    expect(deleteDatabase).toHaveBeenCalledExactlyOnceWith('test-repo:sveltia-cms-test');
   });
 
   test('falls back to the current database when enumeration is unavailable', async () => {

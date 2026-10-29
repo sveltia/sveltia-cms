@@ -219,6 +219,33 @@ describe('Test getDefaultValueMap()', () => {
       expect(result).toEqual({ category: '' });
     });
 
+    test('should clear a single select with non-string options for an empty dynamicValue', () => {
+      /** @type {SelectField} */
+      const fieldConfig = { ...baseFieldConfig, options: [1, 2], multiple: false };
+
+      expect(
+        getDefaultValueMap({
+          fieldConfig,
+          keyPath: 'count',
+          locale: '_default',
+          defaultLocale: '_default',
+          dynamicValue: ' ',
+        }),
+      ).toEqual({ count: null });
+    });
+
+    test('should not add empty items for an empty dynamicValue of a multiple select', () => {
+      /** @type {SelectField} */
+      const fieldConfig = { ...baseFieldConfig, options: ['a', 'b'], multiple: true };
+      const args = { fieldConfig, keyPath: 'tags', locale: '_default', defaultLocale: '_default' };
+
+      expect(getDefaultValueMap({ ...args, dynamicValue: '' })).toEqual({ tags: [] });
+      expect(getDefaultValueMap({ ...args, dynamicValue: 'a,,b' })).toEqual({
+        'tags.0': 'a',
+        'tags.1': 'b',
+      });
+    });
+
     test('should handle undefined dynamicValue', () => {
       /** @type {SelectField} */
       const fieldConfig = {

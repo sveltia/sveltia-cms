@@ -1091,7 +1091,7 @@ edit_slug_error:
   invalid: De slug mag geen speciale tekens bevatten, waaronder schuine strepen en spaties.
   duplicate: Deze slug is al in gebruik voor een ander item.
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: Bovenliggende map
 new_parent_folder: Nieuwe map

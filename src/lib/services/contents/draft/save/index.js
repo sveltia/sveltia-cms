@@ -106,7 +106,8 @@ const buildChanges = async ({ draft, slugs, recreate }) => {
 
     changes.push(...cascadeChanges);
 
-    // Moving an entry in a nested collection takes everything below it to the new location
+    // Moving an entry in a collection with nested entries takes everything below it to the new
+    // location
     const { changes: moveChanges, savingEntries: movedEntries } = await buildNestedMoveChanges({
       collection,
       originalEntry,
@@ -250,6 +251,8 @@ const preparePendingEntries = async (draft) => {
  * @param {FileChange[]} args.changes File changes.
  * @param {Entry} args.savingEntry Entry to save.
  * @param {Entry[]} args.otherSavingEntries Other entries rewritten or created in the same commit.
+ * @param {PendingEntry[]} args.pendingEntries Entries created from a Relation field, among the
+ * other entries. With Editorial Workflow, they ride along in the entry’s pull request.
  * @param {Asset[]} args.savingAssets Assets to save.
  * @param {CommitOptions} args.options Commit options.
  * @returns {Promise<ChangeResults>} Results.
@@ -262,6 +265,7 @@ const commitChanges = async ({
   changes,
   savingEntry,
   otherSavingEntries,
+  pendingEntries,
   savingAssets,
   options,
 }) => {
@@ -280,6 +284,10 @@ const commitChanges = async ({
           // collection, so an entry doesn’t take the branch of another with the same file name
           slug: savingEntry.slug,
           originalEntry,
+          companions: pendingEntries.map(({ collectionName: name, entry }) => ({
+            collectionName: name,
+            entry,
+          })),
         })
       : await saveChanges({
           changes,
@@ -318,7 +326,7 @@ const finishSave = async ({ draft, savingEntry, pendingEntries, useWorkflow, ski
   // may reload the page right after they’re written, e.g. Eleventy, and a backup that outlives the
   // save would then offer to restore a draft that has already been saved. The changes are saved
   // already, so a backup that can’t be deleted doesn’t fail the save. The backup is stored under
-  // the slug the entry had when it was opened, which a rename leaves behind. A backup scheduled for
+  // the path the entry had when it was opened, which a rename leaves behind. A backup scheduled for
   // a change made just before the save is dropped as well: the editor may stay open on the saved
   // draft for a while, e.g. while asking whether to send it for review, and the backup made then
   // would take the place of the one deleted here and be offered the next time the entry is opened
@@ -415,6 +423,7 @@ export const saveEntry = async ({
       ...movedEntries,
       ...pendingEntries.map((pendingEntry) => pendingEntry.entry),
     ],
+    pendingEntries,
     savingAssets,
     options: {
       commitType: draft.isNew || recreate ? 'create' : 'update',

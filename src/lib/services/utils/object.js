@@ -51,6 +51,15 @@ const isNumericStringKey = (key) => !Number.isNaN(Number(key)) && !INDEX_KEY_REG
 const prefixStringKey = (key) => (isNumericStringKey(key) ? `${STRING_KEY_PREFIX}${key}` : key);
 
 /**
+ * Check whether the given value is a plain object: an object created with an object literal or
+ * `Object.create(null)`, not an array or a class instance such as a `Date` or a `TomlDate`.
+ * @param {any} value Value.
+ * @returns {value is Record<string, any>} Result.
+ */
+export const isPlainObject = (value) =>
+  isObject(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value));
+
+/**
  * Remove {@link STRING_KEY_PREFIX} from the object keys in the given value, recursively.
  * @param {any} value Value unflattened with prefixed key segments.
  * @returns {any} Value with the original keys. Arrays are updated in place, while plain objects are
@@ -66,7 +75,7 @@ const restoreStringKeys = (value) => {
   }
 
   // Leave class instances, such as a `Date`, as they are
-  if (isObject(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value))) {
+  if (isPlainObject(value)) {
     return Object.fromEntries(
       Object.entries(value).map(([key, val]) => [
         key.startsWith(STRING_KEY_PREFIX) ? key.slice(STRING_KEY_PREFIX.length) : key,
@@ -265,6 +274,4 @@ export const isValueEmpty = (value) =>
   value === null ||
   value === '' ||
   (Array.isArray(value) && !value.length) ||
-  (isObject(value) &&
-    [Object.prototype, null].includes(Object.getPrototypeOf(value)) &&
-    !Object.keys(value).length);
+  (isPlainObject(value) && !Object.keys(value).length);

@@ -4,9 +4,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { saveProgress } from '$lib/services/backends/commit-progress';
 import {
   commitChanges,
+  estimateRemainingCommits,
   fetchFileCommits,
   fetchLastCommit,
   getNextPayloadSize,
+  getPayloadSize,
   INITIAL_COMMIT_PAYLOAD_SIZE,
   isUploadFailure,
   MAX_COMMIT_PAYLOAD_SIZE,
@@ -17,6 +19,7 @@ import {
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { signOffCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
@@ -27,6 +30,7 @@ vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
   .../** @type {any} */ (await importOriginal()),
   createCommitMessage: vi.fn().mockReturnValue('Test commit message'),
+  signOffCommitMessage: vi.fn((message) => message),
 }));
 vi.mock('$lib/services/backends/git/shared/head', () => ({
   repositoryHead: { current: '' },
@@ -226,6 +230,47 @@ describe('GitHub commits service', () => {
           'content/test-entry.md': { sha: 'file-sha-1' },
           'content/updated-entry.md': { sha: 'file-sha-2' },
         },
+      });
+    });
+
+    test('sends a signed-off message as a headline and a body', async () => {
+      vi.mocked(signOffCommitMessage).mockReturnValueOnce(
+        'Test commit message\n\nSigned-off-by: Test User <test@example.com>',
+      );
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({
+          repository: { ref: { target: { history: { nodes: [{ oid: 'base-sha' }] } } } },
+        })
+        .mockResolvedValueOnce({
+          createCommitOnBranch: {
+            commit: { oid: 'new-commit-sha', committedDate: '2023-01-01T00:00:00Z' },
+          },
+        });
+
+      await commitChanges([], /** @type {any} */ ({ commitType: 'update' }));
+
+      expect(signOffCommitMessage).toHaveBeenCalledWith('Test commit message');
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.input.message).toEqual({
+        headline: 'Test commit message',
+        body: 'Signed-off-by: Test User <test@example.com>',
+      });
+    });
+
+    test('sends a message without a body as a headline only', async () => {
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({
+          repository: { ref: { target: { history: { nodes: [{ oid: 'base-sha' }] } } } },
+        })
+        .mockResolvedValueOnce({
+          createCommitOnBranch: {
+            commit: { oid: 'new-commit-sha', committedDate: '2023-01-01T00:00:00Z' },
+          },
+        });
+
+      await commitChanges([], /** @type {any} */ ({ commitType: 'update' }));
+
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.input.message).toEqual({
+        headline: 'Test commit message',
       });
     });
 
@@ -758,6 +803,31 @@ describe('GitHub commits service', () => {
     });
   });
 
+  describe('getPayloadSize', () => {
+    test('adds up the size of the encoded contents', () => {
+      expect(getPayloadSize(/** @type {any[]} */ ([{ contents: 'abc' }, { contents: 'de' }]))).toBe(
+        5,
+      );
+    });
+
+    test('takes no additions for an empty payload', () => {
+      expect(getPayloadSize([])).toBe(0);
+    });
+  });
+
+  describe('estimateRemainingCommits', () => {
+    test('divides the payload by the commit size, rounding up', () => {
+      const queue = /** @type {any[]} */ ([{ contents: 'a'.repeat(150) }, { contents: 'a' }]);
+
+      expect(estimateRemainingCommits(queue, 100)).toBe(2);
+      expect(estimateRemainingCommits(queue, 50)).toBe(4);
+    });
+
+    test('counts the last commit even without additions left', () => {
+      expect(estimateRemainingCommits([], 100)).toBe(1);
+    });
+  });
+
   describe('getNextPayloadSize', () => {
     test('targets five seconds of upload at the measured speed', () => {
       // 6 MB in 12 seconds is 0.5 MB a second
@@ -1059,7 +1129,7 @@ describe('GitHub commits service', () => {
      * @param {any} input Mutation input.
      * @returns {number} Size.
      */
-    const getPayloadSize = ({ fileChanges }) =>
+    const getInputPayloadSize = ({ fileChanges }) =>
       fileChanges.additions.reduce(
         (/** @type {number} */ total, /** @type {any} */ { contents }) => total + contents.length,
         0,
@@ -1102,9 +1172,9 @@ describe('GitHub commits service', () => {
         const { input } = /** @type {any} */ (variables);
 
         inputs.push(input);
-        now += (getPayloadSize(input) / (speed * MB)) * 1000;
+        now += (getInputPayloadSize(input) / (speed * MB)) * 1000;
 
-        if (getPayloadSize(input) > failAbove || inputs.length === failAt) {
+        if (getInputPayloadSize(input) > failAbove || inputs.length === failAt) {
           throw error;
         }
 
@@ -1194,6 +1264,37 @@ describe('GitHub commits service', () => {
         'sha-2',
       ]);
       expect(result.sha).toBe('sha-3');
+    });
+
+    test('keeps the commits below the size that has timed out for the rest of the save', async () => {
+      // A 1 MB commit takes a second, which suggests 5 MB, but 2 MB has timed out already
+      const inputs = mockAPI({ failAbove: 1.5 * MB });
+
+      const result = await commitChanges(
+        createChanges(4),
+        /** @type {any} */ ({ commitType: 'update' }),
+      );
+
+      expect(getPaths(inputs)).toEqual([
+        ['images/0.webp', 'images/1.webp'],
+        ['images/0.webp'],
+        ['images/1.webp'],
+        ['images/2.webp'],
+        ['images/3.webp', 'content/entry.json'],
+      ]);
+      expect(result.sha).toBe('sha-5');
+    });
+
+    test('grows the commits again on a connection that has never timed out', async () => {
+      // 2 MB in a second suggests 10 MB, which takes every remaining file
+      const inputs = mockAPI({ speed: 2 });
+
+      await commitChanges(createChanges(6), /** @type {any} */ ({ commitType: 'update' }));
+
+      expect(getPaths(inputs)).toEqual([
+        ['images/0.webp', 'images/1.webp'],
+        ['images/2.webp', 'images/3.webp', 'images/4.webp', 'images/5.webp', 'content/entry.json'],
+      ]);
     });
 
     test('doesn’t retry when the branch has moved after a timed-out commit', async () => {

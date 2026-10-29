@@ -1,9 +1,10 @@
-import { sleep } from '@sveltia/utils/misc';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { mergeRefusedPullRequest } from '$lib/services/backends/git/github/auto-merge';
 import { commitChanges } from '$lib/services/backends/git/github/commits';
 import { repository } from '$lib/services/backends/git/github/repository';
 import githubWorkflow, {
+  approve,
   createBranch,
   discard,
   fetchMergeState,
@@ -13,15 +14,17 @@ import githubWorkflow, {
   publish,
   savePullRequest,
   updateStatus,
+  withdrawApproval,
 } from '$lib/services/backends/git/github/workflow';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
-vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
 vi.mock('@sveltia/i18n', async () =>
   (await import('$lib/test/i18n')).createI18nMock({ values: true }),
 );
+vi.mock('$lib/services/backends/git/github/auto-merge');
 vi.mock('$lib/services/backends/git/github/commits');
 vi.mock('$lib/services/backends/git/github/files');
 vi.mock('$lib/services/backends/git/github/repository', () => ({
@@ -85,6 +88,8 @@ describe('GitHub Editorial Workflow service', () => {
       fetchPullRequests: expect.any(Function),
       savePullRequest: expect.any(Function),
       updateStatus: expect.any(Function),
+      approve: expect.any(Function),
+      withdrawApproval: expect.any(Function),
       fetchBranchHead: expect.any(Function),
       fetchMergeState: expect.any(Function),
       fetchUnchangedPaths: expect.any(Function),
@@ -915,48 +920,31 @@ describe('GitHub Editorial Workflow service', () => {
           cause: { status, message: 'Pull Request is not mergeable' },
         });
 
-      /**
-       * Create the pull request node the merge readiness query returns.
-       * @param {Record<string, any>} [overrides] Properties to override.
-       * @param {string | null} [checkState] Rollup state of the head commit’s checks, or `null`
-       * for a commit without checks.
-       * @returns {{ repository: { pullRequest: Record<string, any> } }} Query result.
-       */
-      const createReadiness = (overrides = {}, checkState = 'PENDING') => ({
-        repository: {
-          pullRequest: {
-            id: 'PR_1',
-            state: 'OPEN',
-            merged: false,
-            mergeStateStatus: 'BLOCKED',
-            reviewDecision: null,
-            viewerCanEnableAutoMerge: true,
-            autoMergeRequest: null,
-            commits: {
-              nodes: [{ commit: { statusCheckRollup: checkState ? { state: checkState } : null } }],
-            },
-            ...overrides,
-          },
-        },
-      });
+      test('makes what it can of a 405, then deletes the branch', async () => {
+        // Everything that stops a merge comes back as a 405
+        const refusal = createError(405);
 
-      const autoMergeOn = { autoMergeRequest: { enabledAt: '2026-01-01T00:00:00Z' } };
-
-      test('takes a pull request merged on GitHub meanwhile as published', async () => {
-        // Everything that stops a merge, this one included, comes back as a 405
-        vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-        vi.mocked(fetchGraphQL).mockResolvedValueOnce(
-          createReadiness({ state: 'MERGED', merged: true }, 'SUCCESS'),
-        );
+        mockStores({ backend: { name: 'github', squash_merges: true } });
+        vi.mocked(fetchAPI).mockRejectedValueOnce(refusal).mockResolvedValueOnce({});
 
         await publish(pullRequest);
 
-        expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('mergeStateStatus'), {
-          owner: 'owner',
-          repo: 'repo',
-          number: 1,
+        expect(mergeRefusedPullRequest).toHaveBeenCalledWith({
+          pullRequest,
+          squash: true,
+          merge: expect.any(Function),
+          refusal,
         });
-        // The branch is tidied up as after a merge made here
+
+        // The merge function handed over makes the same merge again, pinned to the same commit
+        const [[{ merge }]] = vi.mocked(mergeRefusedPullRequest).mock.calls;
+
+        await merge();
+
+        expect(fetchAPI).toHaveBeenNthCalledWith(3, '/repos/owner/repo/pulls/1/merge', {
+          method: 'PUT',
+          body: { merge_method: 'squash', commit_title: 'Create Post', sha: 'abc123' },
+        });
         expect(fetchAPI).toHaveBeenNthCalledWith(
           2,
           '/repos/owner/repo/git/refs/heads/cms/posts/hello',
@@ -964,31 +952,11 @@ describe('GitHub Editorial Workflow service', () => {
         );
       });
 
-      test.each([
-        ['a conflict', { mergeStateStatus: 'DIRTY' }, 'PENDING'],
-        ['a branch that must be updated first', { mergeStateStatus: 'BEHIND' }, 'PENDING'],
-        ['a failed check', {}, 'FAILURE'],
-        ['a check that errored', {}, 'ERROR'],
-        ['a commit without checks', {}, null],
-        ['a review still required', { reviewDecision: 'REVIEW_REQUIRED' }, 'PENDING'],
-        ['changes requested', { reviewDecision: 'CHANGES_REQUESTED' }, 'PENDING'],
-        ['a repository without auto-merge', { viewerCanEnableAutoMerge: false }, 'PENDING'],
-        ['a closed pull request', { state: 'CLOSED' }, 'PENDING'],
-      ])('reports a refusal because of %s', async (_label, overrides, checkState) => {
+      test('leaves the branch alone when the pull request won’t be merged', async () => {
         vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-        vi.mocked(fetchGraphQL).mockResolvedValueOnce(createReadiness(overrides, checkState));
+        vi.mocked(mergeRefusedPullRequest).mockRejectedValueOnce(new Error('Not merged'));
 
-        await expect(publish(pullRequest)).rejects.toThrow('Server responded with an error');
-        // Neither auto-merge nor the branch is touched
-        expect(fetchGraphQL).toHaveBeenCalledOnce();
-        expect(fetchAPI).toHaveBeenCalledOnce();
-      });
-
-      test('reports a refusal for a pull request that can’t be found', async () => {
-        vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-        vi.mocked(fetchGraphQL).mockResolvedValueOnce({ repository: { pullRequest: null } });
-
-        await expect(publish(pullRequest)).rejects.toThrow('Server responded with an error');
+        await expect(publish(pullRequest)).rejects.toThrow('Not merged');
         expect(fetchAPI).toHaveBeenCalledOnce();
       });
 
@@ -997,254 +965,53 @@ describe('GitHub Editorial Workflow service', () => {
 
         await expect(publish(pullRequest)).rejects.toThrow('Server responded with an error');
         expect(fetchAPI).toHaveBeenCalledOnce();
-        expect(fetchGraphQL).not.toHaveBeenCalled();
+        expect(mergeRefusedPullRequest).not.toHaveBeenCalled();
       });
+    });
+  });
 
-      // @see https://github.com/sveltia/sveltia-cms/issues/1094
-      describe('while a required check is running', () => {
-        test('sets the pull request to auto-merge and waits for the merge', async () => {
-          mockStores({ backend: { name: 'github', squash_merges: true } });
-          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-          vi.mocked(fetchGraphQL)
-            .mockResolvedValueOnce(createReadiness({}, 'EXPECTED'))
-            .mockResolvedValueOnce({})
-            .mockResolvedValueOnce(createReadiness(autoMergeOn, 'PENDING'))
-            .mockResolvedValueOnce(createReadiness(autoMergeOn, 'SUCCESS'))
-            .mockResolvedValueOnce(
-              createReadiness({ ...autoMergeOn, state: 'MERGED', merged: true }, 'SUCCESS'),
-            );
+  describe('approve', () => {
+    test('approves the pull request pinned to its head commit', async () => {
+      await approve(/** @type {any} */ ({ number: 1, headSHA: 'abc' }));
 
-          await publish(pullRequest);
+      expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls/1/reviews', {
+        method: 'POST',
+        body: { event: 'APPROVE', commit_id: 'abc' },
+      });
+    });
+  });
 
-          // Pinned to the commit the entry was checked at, as the REST merge is
-          expect(fetchGraphQL).toHaveBeenNthCalledWith(
-            2,
-            expect.stringContaining('enablePullRequestAutoMerge'),
-            {
-              input: {
-                pullRequestId: 'PR_1',
-                mergeMethod: 'SQUASH',
-                commitHeadline: 'Create Post',
-                expectedHeadOid: 'abc123',
-              },
-            },
-          );
-          expect(fetchGraphQL).toHaveBeenCalledTimes(5);
-          expect(sleep).toHaveBeenCalledTimes(3);
-          expect(sleep).toHaveBeenCalledWith(10000);
-          // The branch is deleted once the merge has landed
-          expect(fetchAPI).toHaveBeenLastCalledWith(
-            '/repos/owner/repo/git/refs/heads/cms/posts/hello',
-            expect.objectContaining({ method: 'DELETE' }),
-          );
-        });
+  describe('withdrawApproval', () => {
+    beforeEach(() => {
+      user.account = /** @type {any} */ ({ login: 'me' });
+    });
 
-        test('uses a regular merge, unpinned without a known head', async () => {
-          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-          vi.mocked(fetchGraphQL)
-            .mockResolvedValueOnce(createReadiness())
-            .mockResolvedValueOnce({})
-            .mockResolvedValueOnce(createReadiness({ merged: true }, 'SUCCESS'));
+    afterEach(() => {
+      user.account = undefined;
+    });
 
-          await publish({ ...pullRequest, headSHA: undefined });
+    test('dismisses the user’s standing approvals of the pull request', async () => {
+      vi.mocked(fetchAPI).mockResolvedValueOnce([
+        { id: 1, state: 'APPROVED', user: { login: 'me' } },
+        { id: 2, state: 'APPROVED', user: { login: 'alex' } },
+        { id: 3, state: 'COMMENTED', user: { login: 'me' } },
+        { id: 4, state: 'DISMISSED', user: { login: 'me' } },
+        { id: 5, state: 'APPROVED', user: null },
+        { id: 6, state: 'APPROVED', user: { login: 'me' } },
+      ]);
 
-          expect(fetchGraphQL).toHaveBeenNthCalledWith(2, expect.any(String), {
-            input: { pullRequestId: 'PR_1', mergeMethod: 'MERGE', commitHeadline: 'Create Post' },
-          });
-        });
+      await withdrawApproval(/** @type {any} */ ({ number: 1 }));
 
-        test('waits for an auto-merge that’s already on without setting it again', async () => {
-          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-          vi.mocked(fetchGraphQL)
-            .mockResolvedValueOnce(
-              createReadiness({ ...autoMergeOn, viewerCanEnableAutoMerge: false }),
-            )
-            .mockResolvedValueOnce(createReadiness({ merged: true }, 'SUCCESS'));
-
-          await publish(pullRequest);
-
-          expect(fetchGraphQL).toHaveBeenCalledTimes(2);
-          expect(fetchGraphQL).not.toHaveBeenCalledWith(
-            expect.stringContaining('enablePullRequestAutoMerge'),
-            expect.anything(),
-          );
-          expect(fetchAPI).toHaveBeenLastCalledWith(
-            '/repos/owner/repo/git/refs/heads/cms/posts/hello',
-            expect.objectContaining({ method: 'DELETE' }),
-          );
-        });
-
-        test('merges right away if the checks pass before auto-merge is set', async () => {
-          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405)).mockResolvedValueOnce({});
-          vi.mocked(fetchGraphQL)
-            .mockResolvedValueOnce(createReadiness())
-            .mockRejectedValueOnce(new Error('Pull request is in clean status'))
-            .mockResolvedValueOnce(createReadiness({}, 'SUCCESS'));
-
-          await publish(pullRequest);
-
-          expect(fetchAPI).toHaveBeenNthCalledWith(2, '/repos/owner/repo/pulls/1/merge', {
+      expect(fetchAPI).toHaveBeenNthCalledWith(1, '/repos/owner/repo/pulls/1/reviews?per_page=100');
+      expect(vi.mocked(fetchAPI).mock.calls.slice(1)).toEqual(
+        [1, 6].map((id) => [
+          `/repos/owner/repo/pulls/1/reviews/${id}/dismissals`,
+          {
             method: 'PUT',
-            body: { merge_method: 'merge', commit_title: 'Create Post', sha: 'abc123' },
-          });
-          expect(sleep).not.toHaveBeenCalled();
-          expect(fetchAPI).toHaveBeenLastCalledWith(
-            '/repos/owner/repo/git/refs/heads/cms/posts/hello',
-            expect.objectContaining({ method: 'DELETE' }),
-          );
-        });
-
-        test('waits for an auto-merge turned on despite a lost response', async () => {
-          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-          vi.mocked(fetchGraphQL)
-            .mockResolvedValueOnce(createReadiness())
-            .mockRejectedValueOnce(new Error('Failed to fetch'))
-            .mockResolvedValueOnce(createReadiness(autoMergeOn))
-            .mockResolvedValueOnce(createReadiness({ merged: true }, 'SUCCESS'));
-
-          await publish(pullRequest);
-
-          // No second merge, which GitHub would refuse while the checks run
-          expect(fetchAPI).toHaveBeenCalledTimes(2);
-          expect(fetchAPI).toHaveBeenLastCalledWith(
-            '/repos/owner/repo/git/refs/heads/cms/posts/hello',
-            expect.objectContaining({ method: 'DELETE' }),
-          );
-        });
-
-        test('takes an auto-merge that landed despite a lost response as published', async () => {
-          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-          vi.mocked(fetchGraphQL)
-            .mockResolvedValueOnce(createReadiness())
-            .mockRejectedValueOnce(new Error('Failed to fetch'))
-            .mockResolvedValueOnce(createReadiness({ merged: true }, 'SUCCESS'));
-
-          await publish(pullRequest);
-
-          expect(sleep).not.toHaveBeenCalled();
-          expect(fetchGraphQL).toHaveBeenCalledTimes(3);
-          expect(fetchAPI).toHaveBeenCalledTimes(2);
-          expect(fetchAPI).toHaveBeenLastCalledWith(
-            '/repos/owner/repo/git/refs/heads/cms/posts/hello',
-            expect.objectContaining({ method: 'DELETE' }),
-          );
-        });
-
-        test('reports a refusal of the merge that follows a failed auto-merge', async () => {
-          vi.mocked(fetchAPI)
-            .mockRejectedValueOnce(createError(405))
-            .mockRejectedValueOnce(new Error('Still not mergeable'));
-          vi.mocked(fetchGraphQL)
-            .mockResolvedValueOnce(createReadiness())
-            .mockRejectedValueOnce(new Error('Pull request is in clean status'))
-            .mockResolvedValueOnce({ repository: { pullRequest: null } });
-
-          await expect(publish(pullRequest)).rejects.toThrow('Still not mergeable');
-          expect(fetchAPI).toHaveBeenCalledTimes(2);
-        });
-
-        test.each([
-          ['a check fails', { ...autoMergeOn }, 'FAILURE', true],
-          ['the pull request is closed', { ...autoMergeOn, state: 'CLOSED' }, 'PENDING', false],
-          ['the auto-merge is cancelled', {}, 'PENDING', false],
-        ])('reports a failure once %s', async (_label, overrides, checkState, cancels) => {
-          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-          vi.mocked(fetchGraphQL)
-            .mockResolvedValueOnce(createReadiness())
-            .mockResolvedValueOnce({})
-            .mockResolvedValueOnce(createReadiness(overrides, checkState));
-
-          await expect(publish(pullRequest)).rejects.toThrow('Pull request #1 was not merged');
-
-          if (cancels) {
-            // The auto-merge GitHub keeps armed is cancelled, so a re-run check can’t merge the
-            // entry behind the CMS’s back
-            expect(fetchGraphQL).toHaveBeenLastCalledWith(
-              expect.stringContaining('disablePullRequestAutoMerge'),
-              { input: { pullRequestId: 'PR_1' } },
-            );
-          } else {
-            expect(fetchGraphQL).toHaveBeenCalledTimes(3);
-          }
-
-          // The branch is left alone
-          expect(fetchAPI).toHaveBeenCalledOnce();
-        });
-
-        test('reports a failure once the pull request is gone', async () => {
-          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-          vi.mocked(fetchGraphQL)
-            .mockResolvedValueOnce(createReadiness())
-            .mockResolvedValueOnce({})
-            .mockResolvedValueOnce({ repository: null });
-
-          await expect(publish(pullRequest)).rejects.toThrow(
-            'Pull request #1 was not merged: undefined',
-          );
-        });
-
-        test('keeps waiting through a failed read', async () => {
-          const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-          vi.mocked(fetchGraphQL)
-            .mockResolvedValueOnce(createReadiness())
-            .mockResolvedValueOnce({})
-            .mockRejectedValueOnce(new Error('Failed to fetch'))
-            .mockRejectedValueOnce(createError(502))
-            .mockRejectedValueOnce(createError(429))
-            .mockResolvedValueOnce(createReadiness({ merged: true }, 'SUCCESS'));
-
-          await publish(pullRequest);
-
-          expect(warn).toHaveBeenCalledTimes(3);
-          expect(fetchAPI).toHaveBeenLastCalledWith(
-            '/repos/owner/repo/git/refs/heads/cms/posts/hello',
-            expect.objectContaining({ method: 'DELETE' }),
-          );
-          warn.mockRestore();
-        });
-
-        test('gives up on a client error', async () => {
-          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-          vi.mocked(fetchGraphQL)
-            .mockResolvedValueOnce(createReadiness())
-            .mockResolvedValueOnce({})
-            .mockRejectedValueOnce(createError(401));
-
-          await expect(publish(pullRequest)).rejects.toThrow('Server responded with an error');
-          expect(fetchGraphQL).toHaveBeenCalledTimes(3);
-        });
-
-        test('gives up and cancels the auto-merge once the wait runs out', async () => {
-          const now = vi.spyOn(Date, 'now').mockReturnValue(0);
-
-          vi.mocked(fetchAPI).mockRejectedValueOnce(createError(405));
-          vi.mocked(fetchGraphQL)
-            .mockResolvedValueOnce(createReadiness())
-            .mockResolvedValueOnce({})
-            .mockImplementationOnce(async () => {
-              now.mockReturnValue(60 * 60 * 1000);
-
-              return createReadiness(autoMergeOn, 'PENDING');
-            })
-            .mockRejectedValueOnce(new Error('Not allowed'));
-
-          const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-          await expect(publish(pullRequest)).rejects.toThrow(
-            'Timed out waiting for pull request #1 to be merged',
-          );
-          // A failure to cancel is only logged
-          expect(fetchGraphQL).toHaveBeenLastCalledWith(
-            expect.stringContaining('disablePullRequestAutoMerge'),
-            { input: { pullRequestId: 'PR_1' } },
-          );
-          expect(warn).toHaveBeenCalledOnce();
-          warn.mockRestore();
-          now.mockRestore();
-        });
-      });
+            body: { message: 'The entry is no longer ready to publish.', event: 'DISMISS' },
+          },
+        ]),
+      );
     });
   });
 

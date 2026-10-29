@@ -1,4 +1,7 @@
+import { onTestFinished } from 'vitest';
+
 import { allAssets } from '$lib/services/assets/state';
+import { cmsConfig } from '$lib/services/config';
 import { initCmsConfig } from '$lib/services/config/init';
 import { allEntries } from '$lib/services/contents';
 import { collectionCacheMap } from '$lib/services/contents/collection';
@@ -50,6 +53,22 @@ export const initTestConfig = async (config = {}) => {
       ...config,
     }),
   );
+};
+
+/**
+ * Publish the global media folder at the root of the site for the current test, as with a
+ * `public_folder` of `/`, so an `admin` or `cms` folder within it is one the CMS may be served
+ * from.
+ */
+export const serveMediaFolderAtSiteRoot = () => {
+  const config = /** @type {NonNullable<typeof cmsConfig.current>} */ (cmsConfig.current);
+  const { public_folder: publicFolder } = config;
+
+  config.public_folder = '/';
+
+  onTestFinished(() => {
+    config.public_folder = publicFolder;
+  });
 };
 
 /**

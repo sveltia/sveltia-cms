@@ -172,11 +172,54 @@ test('moves an entry through the review stages', async ({ cms, gitea, page }) =>
 
   await cms.changeStatus(/Status: .*In Review/, 'Ready');
   await expect.poll(() => pullRequest.labels).toEqual(['sveltia-cms/pending_publish']);
+  // The pull request is the user’s own, which the Gitea doesn’t let them approve
+  expect(pullRequest.approvals).toBeUndefined();
 
   await cms.changeStatus(/Status: .*Ready/, 'Draft');
   await expect
     .poll(() => ({ labels: pullRequest.labels, title: pullRequest.title }))
     .toEqual({ labels: ['sveltia-cms/draft'], title: 'WIP: Update Post “second-post”' });
+});
+
+test('approves a colleague’s pull request while it’s marked as ready', async ({
+  cms,
+  gitea,
+  page,
+}) => {
+  const pullRequest = openEntryPullRequest(gitea, {
+    slug: 'second-post',
+    files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+    status: 'pending_review',
+  });
+
+  pullRequest.author = gitea.colleague;
+
+  await cms.open();
+  await openEntry(page, 'Second Post');
+  await cms.changeStatus(/Status: .*In Review/, 'Ready');
+
+  // The approval is pinned to the commit the entry was reviewed at
+  await expect
+    .poll(() => pullRequest.approvals)
+    .toEqual([
+      expect.objectContaining({
+        login: gitea.user.login,
+        commitId: gitea.getPullRequestHeadSHA(pullRequest),
+      }),
+    ]);
+
+  // Moving the entry back withdraws the approval
+  await cms.changeStatus(/Status: .*Ready/, 'In Review');
+  await expect.poll(() => pullRequest.approvals).toEqual([]);
+
+  // Moving the entry between the other stages approves nothing
+  await cms.changeStatus(/Status: .*In Review/, 'Draft');
+  await expect.poll(() => pullRequest.labels).toEqual(['sveltia-cms/draft']);
+  expect(pullRequest.approvals).toEqual([]);
+
+  // Marking it as ready again approves it again
+  await cms.changeStatus(/Status: .*Draft/, 'Ready');
+  await expect.poll(() => pullRequest.approvals).toHaveLength(1);
 });
 
 test('keeps the other labels of a pull request', async ({ cms, gitea, page }) => {

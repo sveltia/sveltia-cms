@@ -53,7 +53,7 @@
       ? getTableColumns({ collection, sortKeys: sortKeys.current.map(({ key }) => key) })
       : [],
   );
-  const allEntries = $derived(entryGroups.current.flatMap(({ entries }) => entries));
+  const hasEntries = $derived(entryGroups.current.some(({ entries }) => entries.length));
   // Changes when the entries are sorted, filtered or grouped differently, which starts the list
   // again from the top: the rows are rendered anew a chunk at a time, rather than every row loaded
   // so far being rendered at once in the new order, and the list is scrolled back to the top
@@ -104,7 +104,7 @@
   {#if collection}
     {#if bulkEditing.current}
       <EntryBulkEditList {collection} />
-    {:else if allEntries.length || listedUnpublishedEntries.current.length}
+    {:else if hasEntries || listedUnpublishedEntries.current.length}
       <ListingGrid
         {viewType}
         id="entry-list"

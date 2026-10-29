@@ -10,6 +10,7 @@ import { parseMediaLibraries } from '$lib/services/config/parser/media-libraries
 import { parsePublishMode } from '$lib/services/config/parser/publish-mode';
 import { parseSlugConfig } from '$lib/services/config/parser/slug';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
+import { isInlinePatternComponent } from '$lib/services/contents/fields/rich-text/components/inline-pattern';
 import { isHttpURL, isNonEmptyString } from '$lib/services/utils/string';
 
 /**
@@ -89,6 +90,10 @@ export const parseCmsConfig = (cmsConfig, collectors) => {
   // @todo Figure out how to handle lazy-loaded components, as they may not be parsed here.
   customComponentRegistry.forEach((definition, componentName) => {
     parseEditorComponent({ definition, componentName, cmsConfig, collectors });
-    parseFields(definition.fields, { cmsConfig, componentName }, collectors);
+
+    // A pattern-based inline component has no fields
+    if (!isInlinePatternComponent(definition)) {
+      parseFields(definition.fields, { cmsConfig, componentName }, collectors);
+    }
   });
 };

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   applyDefaultBranch,
+  createBaseURLsGetter,
   getInstanceURL,
   getRepoURL,
   initRepositoryInfo,
@@ -78,6 +79,26 @@ describe('git/shared/repository', () => {
       ['https://example.com/gitea/api/v1', 'https://example.com/gitea'],
     ])('should get the web interface URL from %s', (restApiRoot, expected) => {
       expect(getInstanceURL(restApiRoot)).toBe(expected);
+    });
+  });
+
+  describe('createBaseURLsGetter', () => {
+    const getBaseURLs = createBaseURLsGetter({ tree: '/-/tree', blob: '/-/blob', commit: '/c' });
+
+    it('should append the path segments and the encoded branch to the repository URL', () => {
+      expect(getBaseURLs('https://example.com/owner/repo', 'cms/posts/c#')).toEqual({
+        treeBaseURL: 'https://example.com/owner/repo/-/tree/cms/posts/c%23',
+        blobBaseURL: 'https://example.com/owner/repo/-/blob/cms/posts/c%23',
+        commitBaseURL: 'https://example.com/owner/repo/c',
+      });
+    });
+
+    it('should point at the repository itself without a branch', () => {
+      expect(getBaseURLs('https://example.com/owner/repo')).toEqual({
+        treeBaseURL: 'https://example.com/owner/repo',
+        blobBaseURL: '',
+        commitBaseURL: 'https://example.com/owner/repo/c',
+      });
     });
   });
 
@@ -252,6 +273,35 @@ describe('git/shared/repository', () => {
       // The token page belongs to the instance, not the repository
       expect(getTokenPageURL).toHaveBeenCalledWith('https://github.com');
       expect(getBaseURLs).toHaveBeenCalledWith('https://github.com/owner/repo', 'main');
+    });
+
+    it('should ignore a trailing slash in the REST API root URL', () => {
+      const github = initRepositoryInfo(
+        { ...REPOSITORY_INFO_PLACEHOLDER },
+        { ...args, restApiRoot: 'https://api.github.com/' },
+      );
+
+      expect(github).toMatchObject({
+        repoURL: 'https://github.com/owner/repo',
+        tokenPageURL: 'https://github.com/tokens',
+        isSelfHosted: false,
+      });
+
+      const gitlab = initRepositoryInfo(
+        { ...REPOSITORY_INFO_PLACEHOLDER },
+        {
+          ...args,
+          service: 'gitlab',
+          label: 'GitLab',
+          restApiRoot: 'https://gitlab.com/api/v4//',
+          defaultApiRoot: 'https://gitlab.com/api/v4',
+        },
+      );
+
+      expect(gitlab).toMatchObject({
+        repoURL: 'https://gitlab.com/owner/repo',
+        isSelfHosted: false,
+      });
     });
 
     it('should scope the database and the base URLs to the root directory', () => {

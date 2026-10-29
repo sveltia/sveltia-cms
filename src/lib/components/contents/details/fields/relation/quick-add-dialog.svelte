@@ -31,6 +31,7 @@
   import {
     createPendingEntry,
     getNestedPendingEntries,
+    getQuickAddHost,
   } from '$lib/services/contents/fields/relation/quick-add';
   import { createRawState } from '$lib/services/utils/state.svelte';
 
@@ -104,6 +105,10 @@
     // as well, and a nested quick-add takes them into account when it names and counts entries
     /* v8 ignore next -- the dialog is only opened from a field editor while the draft is there */
     draft.pendingEntries = [...(parentDraft.current?.pendingEntries ?? [])];
+    // The new entry is saved along with the entry being edited, which decides what can be added
+    // from the Relation fields of the new entry in turn
+    /* v8 ignore next -- the dialog is only opened from a field editor while the draft is there */
+    draft.quickAddHost = parentDraft.current ? getQuickAddHost(parentDraft.current) : undefined;
     entryDraft.current = draft;
     pane.current = { mode: 'edit', locale: defaultLocale };
     added = false;

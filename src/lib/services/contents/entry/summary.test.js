@@ -8,6 +8,7 @@ import {
   sanitizeEntrySummary,
 } from '$lib/services/contents/entry/summary';
 import { getEntryPathRegEx } from '$lib/services/contents/file/config';
+import { expectLinearTime } from '$lib/test/complexity';
 
 /**
  * @import { Entry, InternalCollection, LocalizedEntry } from '$lib/types/private';
@@ -739,23 +740,22 @@ describe('Test getEntrySummaryFromContent()', () => {
     expect(getEntrySummaryFromContent({ body: 'Text # Not a header' })).toBe('');
   });
 
-  test('should find a header in linear time', () => {
-    const bodies = [
-      `# a${' '.repeat(100_000)}b`,
-      `# a${' '.repeat(100_000)}{#b`,
-      `# a${' {#'.repeat(50_000)}`,
-      `${'#'.repeat(100_000)}x`,
-      '# \n'.repeat(50_000),
-    ];
+  test.each(
+    /** @type {[string, (n: number) => string][]} */ ([
+      ['spaces in a header', (n) => `# a${' '.repeat(n)}b`],
+      ['spaces before an unclosed anchor', (n) => `# a${' '.repeat(n)}{#b`],
+      ['anchor starts', (n) => `# a${' {#'.repeat(n)}`],
+      ['header markers', (n) => `${'#'.repeat(n)}x`],
+      ['empty headers', (n) => '# \n'.repeat(n)],
+    ]),
+  )('should find a header in linear time: %s', (_name, build) => {
+    expectLinearTime(build, (body) => getEntrySummaryFromContent({ body }), 2000);
+  });
 
-    bodies.forEach((body) => {
-      const start = performance.now();
-
-      getEntrySummaryFromContent({ body });
-      expect(performance.now() - start).toBeLessThan(50);
-    });
-
-    expect(getEntrySummaryFromContent({ body: bodies[0] })).toBe(`a${' '.repeat(100_000)}b`);
+  test('should find a header with a long run of spaces', () => {
+    expect(getEntrySummaryFromContent({ body: `# a${' '.repeat(100_000)}b` })).toBe(
+      `a${' '.repeat(100_000)}b`,
+    );
   });
 
   test('should return empty string when nothing found', () => {

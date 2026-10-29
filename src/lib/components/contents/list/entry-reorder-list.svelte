@@ -21,7 +21,6 @@
   import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder/sort';
   import {
     entryGroups,
-    listedEntryIndexMap,
     reorderDirty,
     reorderedEntries,
   } from '$lib/services/contents/collection/view';
@@ -87,17 +86,22 @@
   const getLocalEntries = (name, entries) => reorderGroups[name] ?? entries;
   /* v8 ignore stop */
 
-  /**
-   * Get the 1-based `aria-rowindex` of an entry, or `undefined` for an entry that isn’t in the
-   * listed index, so the attribute is omitted rather than set to an invalid value.
-   * @param {Entry} entry Entry.
-   * @returns {number | undefined} Row index.
-   */
-  const rowIndex = (entry) => {
-    const index = listedEntryIndexMap.current.get(entry.id);
+  // Map from entry ID to the entry’s 0-based row index, which follows the order being edited across
+  // the groups, as the rows of every group make up one grid
+  const rowIndexMap = $derived(
+    new Map(
+      entryGroups.current
+        .flatMap(({ name, entries }) => getLocalEntries(name, entries))
+        .map((entry, index) => [entry.id, index]),
+    ),
+  );
 
-    return index === undefined ? undefined : index + 1;
-  };
+  /**
+   * Get the 1-based `aria-rowindex` of a listed entry.
+   * @param {Entry} entry Entry.
+   * @returns {number} Row index.
+   */
+  const rowIndex = (entry) => /** @type {number} */ (rowIndexMap.get(entry.id)) + 1;
 
   /**
    * Move an entry within a group from one index to another, and mark the new order as unsaved.

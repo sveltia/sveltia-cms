@@ -378,7 +378,7 @@ describe('isCollectionIndexFile()', () => {
     );
   });
 
-  test('doesn’t take a nested collection’s index file for its own', () => {
+  test('doesn’t take the index file of a collection with nested entries for its own', () => {
     // A `pages` collection on the content root with the `path` option claims a `posts` collection’s
     // own index file, which carries the slug computed by `posts`
     // @see https://github.com/sveltia/sveltia-cms/issues/1005

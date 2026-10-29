@@ -14,6 +14,7 @@ import { syncDuplicateKeys } from '$lib/services/contents/fields/key-value/dupli
 import { alignPairOrder } from '$lib/services/contents/fields/key-value/pairs';
 import { hasRequiredSingleItem } from '$lib/services/contents/fields/list/defaults';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
+import { getFlatSubFields } from '$lib/services/contents/fields/list/subfields';
 import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
 import {
   isDuplicateIfEmptyField,
@@ -378,10 +379,10 @@ const getSubFields = ({ field, content, keyPath, variableTypes }) => {
     return { fields, variableTypes };
   }
 
-  const { types, typeKey = 'type' } = /** @type {FieldWithTypes} */ (field);
+  const { typeKey = 'type' } = /** @type {FieldWithTypes} */ (field);
   const typeKeyPath = `${keyPath}.${typeKey}`;
   const typeName = content[typeKeyPath];
-  const typeFields = types?.find(({ name }) => name === typeName)?.fields;
+  const typeFields = getFlatSubFields(field, content, keyPath);
 
   return {
     fields: typeFields,

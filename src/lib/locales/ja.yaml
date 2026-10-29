@@ -1324,7 +1324,7 @@ edit_slug_error:
   invalid: スラッグにはスラッシュや空白を含む特殊文字を使用できません。
   duplicate: このスラッグは他のエントリーに使われています。
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: 親フォルダー
 new_parent_folder: 新しいフォルダー
@@ -1879,6 +1879,8 @@ config:
     unsupported_backend_suggestion: <a>サポートされているバックエンド</a> のいずれかを使用してください。
     missing_repository: リポジトリが定義されていません。
     invalid_repository: 設定されているリポジトリが正しくありません。この設定は「owner/repo」形式でなければなりません。
+    # Don’t localize `api_root`
+    missing_api_root: '`api_root` オプションが定義されていません。Forgejo バックエンドではこの設定が必須です。'
     invalid_root_dir: 設定されているルートディレクトリが正しくありません。この設定は「..」を含まない、リポジトリ内のパスでなければなりません。
     invalid_root_dir_branch: '設定されているルートディレクトリは `editorial_workflow` および `preview` 公開モードのブランチ名に使用できません。パスの各部分は、ドットで始まったり「.lock」で終わったりせず、スペースやコロン、アスタリスクなどの特殊文字を含まないようにしてください。'
     path_outside_root_dir: パス「{$path}」はルートディレクトリの外を指しています。CMS はルートディレクトリの外のファイルを一覧表示できません。
@@ -1966,6 +1968,8 @@ config:
     unsupported_bulk_edit_field: '`bulk_edit` オプションの `fields` リストで指定された `{$name}` フィールドは一括編集できません。対応しているのは、読み取り専用でなく、`multiple` オプションが無効で、保存時に自動設定されない Boolean、Color、DateTime、Number、Relation、Select、String フィールドのみです。'
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
     invalid_sortable_field: '`sortable_fields` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
+    # Don’t localize `sortable_fields` and `default_sort`
+    multiple_sortable_field_defaults: '`sortable_fields` オプションで `default_sort` オプションを指定できる項目は 1 つだけです。'
     # {$option} is `table_columns` or `summary_fields`, and {$name} is the field name from the configuration
     invalid_table_column_field: '`{$option}` オプションで指定された `{$name}` フィールドは、コレクションに定義されていません。'
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
@@ -2155,6 +2159,10 @@ config:
     unsupported_ignored_option: '`{$prop}` オプションは Sveltia CMS ではサポートされていません。このオプションは無視されます。'
     # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`
     publish_mode_stages_ignored: '`publish_mode` の `stages` オプションは `editorial_workflow` 公開モードでのみ有効なため、`{$type}` では無視されます。'
+    # Don’t localize `pattern`, `m` and `s`
+    inline_component_multiline_pattern: 'このインラインコンポーネントの `pattern` に `m` または `s` フラグが付いているか改行に一致するようになっていますが、インラインコンポーネントは段落内でのみ照合されます。'
+    # {$name} is a button or component name and {$option} is `buttons` or `editor_components`; Don’t localize them and `multiline: false`
+    single_line_block_item: '`multiline: false` のフィールドにはインラインのコンテンツしか入れられないため、`{$option}` オプションの `{$name}` は無視されます。'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: '`picker_utc` と新しいタイムゾーンオプション (`input_timezone` または `output_utc`) の両方が設定されています。新しいオプションが優先されます。設定から `picker_utc` を削除することを検討してください。'
     # Don’t localize `localize_format` and `format`
@@ -2370,6 +2378,12 @@ workflow:
   # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
   # the site rather than published to it
   deploying_deletion: 削除
+  # Workflow page: note on a card listing the new entries that were created from a Relation field
+  # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
+  companion_entries: '{$entries} も追加されます'
+  # Workflow page: one of the new entries listed by `companion_entries`, named by its collection’s
+  # singular label and its title
+  companion_entry: '{$collection}: {$title}'
 
 # Dialog asking the user for a commit message every time changes are saved, when the site is
 # configured to. The message is recorded in the repository’s history along with the changes
@@ -2566,7 +2580,7 @@ prefs:
       not_ready: 現在、変更をコミットできません。{$reason}
     deploy_hook:
       title: デプロイフック
-      description: 「変更を公開」を選択して手動でデプロイを実行する際に呼び出すウェブフック URL を入力してください。GitHub Actions を使用する場合は空欄のままで構いません。
+      description: 「変更を公開」を選択して手動でデプロイを実行する際に呼び出すウェブフック URL を入力してください。GitHub Actions または GitLab CI/CD を使用する場合は空欄のままで構いません。
       # Hook URL input
       url:
         field_label: フック URL

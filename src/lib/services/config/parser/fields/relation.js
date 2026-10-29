@@ -4,10 +4,13 @@ import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/consta
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { hasSlugTag } from '$lib/services/config/parser/collections/array-file';
 import { checkMultipleDefault } from '$lib/services/config/parser/utils/defaults';
-import { getCanonicalSlugKey, hasField } from '$lib/services/config/parser/utils/fields';
+import {
+  getCanonicalSlugKey,
+  hasField,
+  isNonFieldSortKey,
+} from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
-import { METADATA_KEYS } from '$lib/services/contents/collection/view/table-keys';
 import { getPublishMode, isWorkflowMode } from '$lib/services/workflow/config';
 
 /**
@@ -35,12 +38,6 @@ import { getPublishMode, isWorkflowMode } from '$lib/services/workflow/config';
  * @type {string[]}
  */
 const SPECIAL_TEMPLATE_TAGS = ['slug', 'locale'];
-/**
- * Keys that the `field` of the `sort_by` option can have without referring to a field: the entry
- * metadata keys like `slug`, and `_manual` for the manual order, the same as `sortable_fields`.
- * @type {string[]}
- */
-const SPECIAL_SORT_KEYS = [...METADATA_KEYS, '_manual'];
 
 /**
  * Unsupported options for Relation fields.
@@ -163,9 +160,7 @@ const checkFieldReferences = ({
     !fileName &&
     typeof sortField === 'string' &&
     sortField &&
-    !SPECIAL_SORT_KEYS.includes(sortField) &&
-    sortField !== canonicalSlugKey &&
-    sortField !== orderFieldKey &&
+    !isNonFieldSortKey(sortField, { canonicalSlugKey, orderFieldKey }) &&
     !hasField(fields, sortField)
   ) {
     addMessage({

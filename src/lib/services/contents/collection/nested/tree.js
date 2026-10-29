@@ -14,7 +14,7 @@ import { getOrCreate } from '$lib/services/utils/cache';
  */
 
 /**
- * A folder within a nested collection, shown as an item in the collection tree.
+ * A folder within a collection with nested entries, shown as an item in the collection tree.
  * @typedef {object} NestedTreeNode
  * @property {string} path Directory path relative to the collection folder, without leading and
  * trailing slashes.
@@ -124,7 +124,7 @@ const getNodeLabel = ({ collection, path, indexEntry, summaryTemplate, locale })
 };
 
 /**
- * Build a folder tree for a nested collection.
+ * Build a folder tree for a collection with nested entries.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection.
  * @param {Entry[]} args.entries Entries in the collection.
@@ -134,7 +134,7 @@ const getNodeLabel = ({ collection, path, indexEntry, summaryTemplate, locale })
  * is left out along with everything below it.
  * @param {InternalLocaleCode} [args.locale] Locale to label the folders in.
  * @returns {NestedTreeNode[]} Top-level folders, sorted by label. An empty array if the collection
- * is not a nested collection or has no folder to show.
+ * has no nested entries or has no folder to show.
  */
 const buildTree = ({
   collection,
@@ -193,8 +193,9 @@ const buildTree = ({
 };
 
 /**
- * Build the folder tree shown below a nested collection in the primary sidebar. Only folders are
- * included; the entries themselves are listed in the main area once a folder is selected.
+ * Build the folder tree shown below a collection with nested entries in the primary sidebar. Only
+ * folders are included; the entries themselves are listed in the main area once a folder is
+ * selected.
  *
  * In the default `subfolders` mode, a folder that has no subfolder of its own is left out, because
  * such a folder is an entry rather than a container: it holds nothing but its own index file, and
@@ -203,7 +204,7 @@ const buildTree = ({
  * @param {InternalCollection} args.collection Collection.
  * @param {Entry[]} args.entries Entries in the collection.
  * @returns {NestedTreeNode[]} Top-level folders, sorted by label. An empty array if the collection
- * is not a nested collection or has no subfolder.
+ * has no nested entries or has no subfolder.
  */
 export const getNestedTree = ({ collection, entries }) =>
   buildTree({ collection, entries, pruneLeaves: true });

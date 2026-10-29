@@ -7,7 +7,12 @@ import { focusedAsset, uploadingAssets } from '$lib/services/assets/state';
 import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { currentView } from '$lib/services/assets/view/settings';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
-import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
+import {
+  createMockAsset,
+  initTestConfig,
+  serveMediaFolderAtSiteRoot,
+  setAssets,
+} from '$lib/test/config';
 
 import AssetList from './asset-list.svelte';
 
@@ -114,6 +119,8 @@ describe('AssetList', () => {
   });
 
   test('doesn’t offer to upload within a folder the CMS is served from', async () => {
+    serveMediaFolderAtSiteRoot();
+
     setAssets([]);
     selectedAssetFolder.current = globalAssetFolder.current;
     selectedSubfolderPath.current = 'admin';

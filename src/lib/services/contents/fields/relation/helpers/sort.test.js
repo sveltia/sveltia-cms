@@ -159,6 +159,17 @@ describe('Test sortOptions()', () => {
     ).toEqual(['Apple', 'Zebra', 'Mango', 'Bee', 'Yak']);
   });
 
+  test('should sort the options by label when the values only differ in case', () => {
+    const groups = [
+      makeGroup(makeEntry('x', { en: { category: 'news' } }), ['Zebra']),
+      makeGroup(makeEntry('y', { en: { category: 'News' } }), ['Apple']),
+    ];
+
+    expect(
+      labels(sortOptions({ groups, collection, sortBy: { field: 'category' }, locale: 'en' })),
+    ).toEqual(['Apple', 'Zebra']);
+  });
+
   test('should keep the options generated from the same entry together', () => {
     const groups = [
       makeGroup(makeEntry('b', { en: { title: 'B' } }), ['Paris', 'Lyon']),
@@ -171,6 +182,10 @@ describe('Test sortOptions()', () => {
   });
 
   test('should read the value from the current locale, falling back to the default locale', () => {
+    vi.mocked(getField).mockReturnValue(
+      /** @type {Field} */ ({ name: 'title', widget: 'string', i18n: true }),
+    );
+
     const groups = [
       makeGroup(makeEntry('a', { en: { title: 'Zucchini' }, fr: { title: 'Courgette' } }), ['A']),
       makeGroup(makeEntry('b', { en: { title: 'Eggplant' } }), ['B']),
@@ -182,6 +197,22 @@ describe('Test sortOptions()', () => {
 
     expect(
       labels(sortOptions({ groups, collection, sortBy: { field: 'title' }, locale: 'en' })),
+    ).toEqual(['B', 'A']);
+  });
+
+  test('should read a field that isn’t localized from the default locale', () => {
+    vi.mocked(getField).mockReturnValue(
+      /** @type {Field} */ ({ name: 'rank', widget: 'number', i18n: false }),
+    );
+
+    // The rank is only stored in the default locale
+    const groups = [
+      makeGroup(makeEntry('a', { en: { rank: 2 }, fr: { title: 'A' } }), ['A']),
+      makeGroup(makeEntry('b', { en: { rank: 1 }, fr: { title: 'B' } }), ['B']),
+    ];
+
+    expect(
+      labels(sortOptions({ groups, collection, sortBy: { field: 'rank' }, locale: 'fr' })),
     ).toEqual(['B', 'A']);
   });
 

@@ -105,6 +105,15 @@ describe('EntryStatusMenu', () => {
       .toHaveTextContent(
         'error Error The entry has errors. Please correct them before changing the status.',
       );
+
+    // The entry is still in the drafting stage, which the menu says when it’s opened again
+    await page.getByRole('button', { name: 'Status: \u2068Draft\u2069' }).click();
+    await expect
+      .element(page.getByRole('menuitemradio', { name: 'Draft' }))
+      .toHaveAttribute('aria-checked', 'true');
+    await expect
+      .element(page.getByRole('menuitemradio', { name: 'Ready' }))
+      .toHaveAttribute('aria-checked', 'false');
     await waitForToastsToHide();
   });
 
@@ -119,6 +128,14 @@ describe('EntryStatusMenu', () => {
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent('error Error Couldn’t change the status. Please try again.');
+
+    // The stage can be picked again to try again
+    await page.getByRole('button', { name: 'Status: \u2068Draft\u2069' }).click();
+    await expect
+      .element(page.getByRole('menuitemradio', { name: 'In Review' }))
+      .toHaveAttribute('aria-checked', 'false');
+    await page.getByRole('menuitemradio', { name: 'In Review' }).click();
+    await vi.waitFor(() => expect(updateWorkflowStatus).toHaveBeenCalledTimes(2));
     await waitForToastsToHide();
   });
 

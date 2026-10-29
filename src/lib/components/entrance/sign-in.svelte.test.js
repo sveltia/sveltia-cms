@@ -3,6 +3,7 @@ import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { repository } from '$lib/services/backends/git/github/repository';
+import { cancelAuthorization } from '$lib/services/backends/git/shared/auth';
 import { cmsConfig } from '$lib/services/config';
 import { auth, signInAutomatically, signInManually } from '$lib/services/user/auth.svelte';
 import { env } from '$lib/services/user/env.svelte';
@@ -36,6 +37,7 @@ describe('SignIn', () => {
     auth.signInError = { message: '', context: 'authentication' };
     auth.signingIn = false;
     auth.magicLinkConfirmation = undefined;
+    cancelAuthorization.current = undefined;
     env.isLocalHost = true;
     env.isLocalBackendSupported = true;
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github', repo: 'acme/site' } });
@@ -194,6 +196,22 @@ describe('SignIn', () => {
     expect(signInAutomatically).not.toHaveBeenCalled();
     await expect.element(page.getByRole('alert')).toHaveTextContent('Signing in…');
     expect(page.getByRole('button').elements()).toHaveLength(0);
+  });
+
+  test('lets the user cancel a sign-in waiting for the popup', async () => {
+    const cancel = vi.fn();
+
+    auth.signingIn = true;
+    cancelAuthorization.current = cancel;
+
+    await render(SignIn, {});
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Signing in…');
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    expect(cancel).toHaveBeenCalledOnce();
+
+    // The button goes away with the pending sign-in
+    cancelAuthorization.current = undefined;
+    await expect.element(page.getByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
   });
 
   test('signs in with the Enter key in the token dialog', async () => {

@@ -179,7 +179,7 @@ const resolveListingRoute = ({
     return showNotFound(state, 'page_not_found');
   }
 
-  // A nested collection’s folder is browsed at `/collections/{name}/filter/{path}`, while the
+  // A folder of nested entries is browsed at `/collections/{name}/filter/{path}`, while the
   // collection route itself always shows the root folder. The editor routes leave the folder
   // alone, so closing the editor returns the user to where they were.
   nestedFilterPath.current = routeType === 'filter' ? (subPath ?? '') : '';
@@ -262,7 +262,7 @@ const resolveEntryRoute = ({
   params,
 }) => {
   if (routeType === 'new' && !subPath) {
-    // Decap CMS passes the folder for a new entry in a nested collection as `?path=`
+    // Decap CMS passes the folder for a new entry in a collection with nested entries as `?path=`
     const initialPath = getMetaPathConfig(collection) ? params.path : undefined;
 
     if (initialPath !== undefined) {
@@ -295,8 +295,8 @@ const resolveEntryRoute = ({
   if (routeType === 'entries' && subPath) {
     const originalEntry =
       getUnpublishedEntry({ collectionName, subPath }) ??
-      // Not `listedEntries`, which a nested collection limits to the folder being browsed,
-      // while an entry can also be opened with a deep link
+      // Not `listedEntries`, which a collection with nested entries limits to the folder being
+      // browsed, while an entry can also be opened with a deep link
       getEntriesByCollection(collectionName).find((entry) => entry.subPath === subPath);
 
     if (!originalEntry) {

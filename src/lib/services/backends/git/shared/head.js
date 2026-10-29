@@ -15,3 +15,15 @@ export const repositoryHead = createRawState('');
  * putting them back into the stores, where the next user would find them.
  */
 export const dataGeneration = { current: 0 };
+
+/**
+ * Create a check telling whether the site data has been discarded since the call, e.g. by signing
+ * out. A fetch started in one session uses it to drop its results once that session is over.
+ * @returns {() => boolean} Function returning `true` if the {@link dataGeneration} has changed
+ * since the check was created.
+ */
+export const createStaleCheck = () => {
+  const generation = dataGeneration.current;
+
+  return () => generation !== dataGeneration.current;
+};

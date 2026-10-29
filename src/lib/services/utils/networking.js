@@ -6,11 +6,20 @@ import { isObject } from '@sveltia/utils/object';
  */
 
 /**
- * Regular expression to match `localhost` and its subdomains like `mysite.localhost`, which
- * browsers treat as a secure context over HTTP.
+ * Regular expression to match `localhost` and its subdomains like `mysite.localhost`.
+ */
+const LOCALHOST_REGEX = /^(.+\.)?localhost$/;
+
+/**
+ * Check if a hostname refers to the local computer, which browsers treat as a secure context over
+ * HTTP: `localhost` and its subdomains like `mysite.localhost`, and the IPv4 and IPv6 loopback
+ * addresses, the latter written in brackets as `URL` and `location` give it.
+ * @param {string} hostname Hostname, e.g. `location.hostname`.
+ * @returns {boolean} Whether the hostname is local.
  * @see https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts
  */
-export const LOCALHOST_REGEX = /^(.+\.)?localhost$/;
+export const isLocalHostname = (hostname) =>
+  ['127.0.0.1', '[::1]'].includes(hostname) || LOCALHOST_REGEX.test(hostname);
 
 /**
  * Check if a URL can be requested without exposing credentials over an insecure transport.
@@ -27,11 +36,7 @@ export const isSecureURL = (
   try {
     const { hostname, protocol } = new URL(url, baseURL);
 
-    return (
-      protocol === 'https:' ||
-      ['127.0.0.1', '[::1]'].includes(hostname) ||
-      LOCALHOST_REGEX.test(hostname)
-    );
+    return protocol === 'https:' || isLocalHostname(hostname);
   } catch {
     return false;
   }
@@ -61,21 +66,22 @@ export const sendRequest = async (
 ) => {
   /** @type {Response} */
   let response;
+  const headers = new Headers(init.headers);
 
   init.cache = 'no-cache';
-  init.headers = new Headers(init.headers);
+  init.headers = headers;
 
-  if (init.headers.has('Authorization') && !isSecureURL(url)) {
+  if (headers.has('Authorization') && !isSecureURL(url)) {
     throw new Error('Refusing to send credentials over an insecure connection');
   }
 
   if (responseType === 'json') {
-    init.headers.set('Accept', 'application/json');
+    headers.set('Accept', 'application/json');
   }
 
   // Serialize a plain object body for any method that accepts one, e.g. `POST`, `PUT` and `PATCH`
   if (isObject(init.body)) {
-    init.headers.set('Content-Type', 'application/json');
+    headers.set('Content-Type', 'application/json');
     init.body = JSON.stringify(init.body);
   }
 
@@ -85,11 +91,42 @@ export const sendRequest = async (
     throw new Error('Failed to send the request', { cause: ex });
   }
 
+  const { ok, status } = response;
+
+  /**
+   * Refresh the OAuth access token and send the request again with the new token.
+   * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself.
+   */
+  const retryWithNewToken = async () => {
+    const [scheme] = headers.get('Authorization')?.split(' ') ?? ['token'];
+    const { token } = await /** @type {() => Promise<AuthTokens>} */ (refreshAccessToken)();
+
+    headers.set('Authorization', `${scheme} ${token}`);
+
+    // Retry the request with the new token. Omit `refreshAccessToken` to avoid infinite loops.
+    return sendRequest(url, init, { responseType });
+  };
+
+  /**
+   * Send the request again after a short delay.
+   * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself.
+   */
+  const retryAfterDelay = async () => {
+    await sleep(1000);
+
+    return sendRequest(url, init, { responseType, refreshAccessToken, retries: retries - 1 });
+  };
+
+  // A raw response is returned as is for the caller to check the status, but a transient 502 error
+  // is still retried and an expired token refreshed, the same as for the other response types
   if (responseType === 'raw') {
-    return response;
+    if (status === 502 && retries > 0) {
+      return retryAfterDelay();
+    }
+
+    return status === 401 && refreshAccessToken ? retryWithNewToken() : response;
   }
 
-  const { ok, status } = response;
   /** @type {any} */
   let result;
 
@@ -128,19 +165,11 @@ export const sendRequest = async (
   // occasionally return 502 errors.
   // @see https://github.com/sveltia/sveltia-cms/issues/695
   if (status === 502 && retries > 0) {
-    await sleep(1000);
-
-    return sendRequest(url, init, { responseType, refreshAccessToken, retries: retries - 1 });
+    return retryAfterDelay();
   }
 
   if (status === 401 && refreshAccessToken) {
-    const [scheme] = init.headers.get('Authorization')?.split(' ') ?? ['token'];
-    const { token } = await refreshAccessToken();
-
-    init.headers.set('Authorization', `${scheme} ${token}`);
-
-    // Retry the request with the new token. Omit `refreshAccessToken` to avoid infinite loops.
-    return sendRequest(url, init, { responseType });
+    return retryWithNewToken();
   }
 
   if (!isObject(result)) {
@@ -170,4 +199,21 @@ export const sendRequest = async (
   }
 
   throw new Error('Server responded with an error', { cause: { status, message } });
+};
+
+/**
+ * Throw an error with the response body appended to the given message if the request failed.
+ * @param {Response} response Response.
+ * @param {string} message Error message, such as `Failed to list objects`.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.allowNotFound] Whether to accept a `404 Not Found` response.
+ * @returns {Promise<void>}
+ * @throws {Error} When the response status is not OK.
+ */
+export const assertResponseOK = async (response, message, { allowNotFound = false } = {}) => {
+  if (!response.ok && !(allowNotFound && response.status === 404)) {
+    const errorText = await response.text();
+
+    throw new Error(`${message}: ${errorText}`);
+  }
 };

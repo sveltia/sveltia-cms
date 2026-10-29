@@ -1,4 +1,4 @@
-import { LOCALHOST_REGEX } from '$lib/services/utils/networking';
+import { isLocalHostname } from '$lib/services/utils/networking';
 
 /**
  * Reactive environment detection state for the CMS.
@@ -33,8 +33,9 @@ export const initUserEnvDetection = () => {
     matchMedia,
   } = globalThis;
 
-  // Local editing needs a secure context, either `http://localhost` or `http://*.localhost`
-  env.isLocalHost = hostname === '127.0.0.1' || LOCALHOST_REGEX.test(hostname);
+  // Local editing needs a secure context, e.g. `http://localhost`, `http://*.localhost` or
+  // `http://[::1]`
+  env.isLocalHost = isLocalHostname(hostname);
   env.isLocalBackendSupported = 'showDirectoryPicker' in globalThis;
   env.isBrave = userAgentData?.brands.some(({ brand }) => brand === 'Brave') ?? false;
   env.isMacOS = userAgentData?.platform === 'macOS' || platform.startsWith('Mac');

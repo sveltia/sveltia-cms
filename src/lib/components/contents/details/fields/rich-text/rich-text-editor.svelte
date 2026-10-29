@@ -12,13 +12,16 @@
     getNearestEditorFromDOMNode,
     $insertNodes as insertNodes,
   } from 'lexical';
-  import { getContext, tick } from 'svelte';
+  import { tick } from 'svelte';
 
   import { EditorComponent } from '$lib/components/contents/details/fields/rich-text/custom-node-features';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { isInEditorComponent } from '$lib/services/contents/editor/field-context';
+  import {
+    getFieldEditorContext,
+    isInEditorComponent,
+  } from '$lib/services/contents/editor/field-context';
   import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
   import { getField } from '$lib/services/contents/entry/fields';
   import {
@@ -50,7 +53,7 @@
 
   /**
    * @import { ImageEntry } from '$lib/services/contents/fields/rich-text/images';
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import {
    * EditorComponentDefinition,
    * ImageField,
@@ -69,8 +72,7 @@
 
   const defaultConfig = cmsConfig.current?.field_defaults?.richtext ?? {};
   /* v8 ignore start -- the editor is always rendered within a field editor */
-  /** @type {FieldEditorContext} */
-  const { parentComponentNames, valueStoreKey } = getContext('field-editor') ?? {};
+  const { parentComponentNames, valueStoreKey } = getFieldEditorContext();
   /* v8 ignore stop */
   const inEditorComponent = isInEditorComponent(valueStoreKey);
   const componentName = parentComponentNames.at(-1);
@@ -107,6 +109,7 @@
     use_emoji_autocomplete: useEmojiAutocomplete = defaultConfig.use_emoji_autocomplete ?? true,
     use_markdown_shortcuts: useMarkdownShortcuts = defaultConfig.use_markdown_shortcuts ?? true,
     minimal = defaultConfig.minimal ?? false,
+    multiline = defaultConfig.multiline ?? true,
   } = $derived(fieldConfig);
   const format = $derived(getValueFormat(fieldConfig));
   const modes = $derived(_modes.map((name) => NODE_NAME_MAP[name]).filter(Boolean));
@@ -212,7 +215,10 @@
       const _src = src;
 
       editor.update(() => {
-        insertNodes([imageComponent.createNode({ src: _src, alt }), createParagraphNode()]);
+        const node = imageComponent.createNode({ src: _src, alt });
+
+        // Start a new paragraph after the image, unless the field holds a single one
+        insertNodes(multiline ? [node, createParagraphNode()] : [node]);
       });
     }
   };
@@ -222,6 +228,12 @@
    * @param {ClipboardEvent} event `paste` event.
    */
   const onPaste = async (event) => {
+    // Lexical applies an update even while the editor isn’t editable, so nothing is inserted to a
+    // read-only field, nor is the file added to the draft
+    if (readonly) {
+      return;
+    }
+
     const { target } = event;
     const images = await getPastedImages(event);
 
@@ -235,6 +247,11 @@
    * @param {DragEvent} event `drop` event.
    */
   const onDrop = async (event) => {
+    // Same as above
+    if (readonly) {
+      return;
+    }
+
     const { target } = event;
     const images = await getDroppedImages(event);
 
@@ -320,7 +337,7 @@
   });
 </script>
 
-<div role="none" class="wrapper" class:minimal bind:this={wrapper}>
+<div role="none" class="wrapper" bind:this={wrapper}>
   {#await sleep() then}
     <!--
       Reset the editor when the configuration changes. It happens when fields are reordered or
@@ -336,6 +353,8 @@
         {components}
         {useEmojiAutocomplete}
         {useMarkdownShortcuts}
+        {minimal}
+        {multiline}
         bind:value={inputValue}
         bind:pending
         flex
@@ -361,15 +380,6 @@
   .wrapper {
     --sui-paragraph-margin: 20px;
     display: contents;
-
-    &.minimal {
-      :global {
-        :is([role='textbox'], textarea) {
-          overflow: auto;
-          max-height: 240px;
-        }
-      }
-    }
 
     :global {
       @media (width < 768px) {

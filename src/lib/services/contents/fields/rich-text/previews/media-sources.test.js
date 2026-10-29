@@ -11,6 +11,7 @@ import {
   replaceRichTextMediaSources,
   rewriteMediaStartTag,
 } from '$lib/services/contents/fields/rich-text/previews/media-sources';
+import { countMatches, expectLinearTime } from '$lib/test/complexity';
 
 describe('MARKDOWN_IMAGE_REGEX', () => {
   test('matches simple markdown image', () => {
@@ -106,22 +107,18 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
   });
 
   test.each([
-    ['unclosed images', '![a]('.repeat(20000)],
-    ['unclosed alt texts', '!['.repeat(20000)],
-    ['unclosed alt texts with a bracket at the end', `${'!['.repeat(20000)}]x`],
-    ['bracketed alt texts', '![a]'.repeat(20000)],
-    ['unclosed titles', `![a](x${' "'.repeat(20000)}`],
-    ['unclosed images with titles', '![a](x "'.repeat(20000)],
-    ['spaces before an unclosed title', `![a](x${' '.repeat(20000)}"${'a'.repeat(20000)}`],
-    ['escaped quotes', `![a](x "${'\\"'.repeat(20000)}`],
-  ])('matches in linear time: %s', (_label, text) => {
-    const start = performance.now();
-    const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
-    const duration = performance.now() - start;
-
-    expect(matches).toHaveLength(0);
+    ['unclosed images', (n) => '![a]('.repeat(n)],
+    ['unclosed alt texts', (n) => '!['.repeat(n)],
+    ['unclosed alt texts with a bracket at the end', (n) => `${'!['.repeat(n)}]x`],
+    ['bracketed alt texts', (n) => '![a]'.repeat(n)],
+    ['unclosed titles', (n) => `![a](x${' "'.repeat(n)}`],
+    ['unclosed images with titles', (n) => '![a](x "'.repeat(n)],
+    ['spaces before an unclosed title', (n) => `![a](x${' '.repeat(n)}"${'a'.repeat(n)}`],
+    ['escaped quotes', (n) => `![a](x "${'\\"'.repeat(n)}`],
+  ])('matches in linear time: %s', (_label, build) => {
+    expect(countMatches(build(100), MARKDOWN_IMAGE_REGEX)).toBe(0);
     // The previous pattern took well over a minute with some of these inputs
-    expect(duration).toBeLessThan(200);
+    expectLinearTime(build, (text) => countMatches(text, MARKDOWN_IMAGE_REGEX), 100);
   });
 });
 
@@ -148,13 +145,11 @@ describe('MARKDOWN_MEDIA_REGEX', () => {
   });
 
   test('matches in linear time', () => {
-    const text = `${'<img src="a.png" '.repeat(20000)}${'<video '.repeat(20000)}`;
-    const start = performance.now();
+    const build = (n) => `${'<img src="a.png" '.repeat(n)}${'<video '.repeat(n)}`;
 
     // None of the tags is closed
-    expect([...text.matchAll(MARKDOWN_MEDIA_REGEX)]).toEqual([]);
-
-    expect(performance.now() - start).toBeLessThan(200);
+    expect(countMatches(build(100), MARKDOWN_MEDIA_REGEX)).toBe(0);
+    expectLinearTime(build, (text) => countMatches(text, MARKDOWN_MEDIA_REGEX), 1000);
   });
 });
 

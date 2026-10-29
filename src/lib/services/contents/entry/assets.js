@@ -7,7 +7,9 @@ import { getAssetFolder, getAssetFoldersByPath } from '$lib/services/assets/fold
 import { revokeBlobURLIfNeeded } from '$lib/services/assets/info';
 import { canCreateThumbnail } from '$lib/services/assets/kinds';
 import { getMediaFieldSource, getMediaFieldURL } from '$lib/services/assets/media-field';
+import { findEntriesByAssets } from '$lib/services/assets/references';
 import { allAssets } from '$lib/services/assets/state';
+import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
@@ -21,7 +23,7 @@ import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
 /**
- * @import { Asset, Entry, InternalEntryCollection } from '$lib/types/private';
+ * @import { Asset, Entry, InternalCollection, InternalEntryCollection } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
 
@@ -148,13 +150,13 @@ export const getEntryThumbnail = async (collection, entry) => {
  * thumbnail comes with an object URL of its own, so an entry list that renders its rows again, or
  * is left, would otherwise keep a thumbnail in memory for each time it was shown. Call it from an
  * effect and return the result, so the thumbnail is released when the effect reruns or is
- * destroyed:
- * `$effect(() => loadEntryThumbnail(collection, entry, (src) => { thumbnail = src; }))`.
+ * destroyed. Releasing doesn’t call back, so the caller stops showing the thumbnail by other means,
+ * e.g. by keeping the entry it was loaded for alongside it; the revocation waits until no element
+ * displays the URL.
  * @param {InternalEntryCollection} collection Entry’s collection.
  * @param {Entry} entry Entry.
- * @param {(src: string | undefined) => void} onLoad Function called with the thumbnail URL once
- * it’s loaded, and with `undefined` when it’s released, so the image stops pointing at it. It’s not
- * called for an entry without a thumbnail, or when the thumbnail can’t be loaded.
+ * @param {(src: string) => void} onLoad Function called with the thumbnail URL once it’s loaded.
+ * It’s not called for an entry without a thumbnail, or when the thumbnail can’t be loaded.
  * @returns {() => void} Function to release the thumbnail.
  */
 export const loadEntryThumbnail = (collection, entry, onLoad) => {
@@ -187,14 +189,10 @@ export const loadEntryThumbnail = (collection, entry, onLoad) => {
   return () => {
     released = true;
 
-    if (thumbnail) {
-      onLoad(undefined);
-
-      // The revocation waits for the next frame and skips a URL an element still displays, so an
-      // image being removed along with the row doesn’t lose its source midway
-      if (thumbnail.owned) {
-        revokeBlobURLIfNeeded(thumbnail.src);
-      }
+    // The revocation waits for the next frame and skips a URL an element still displays, so an
+    // image being removed along with the row doesn’t lose its source midway
+    if (thumbnail?.owned) {
+      revokeBlobURLIfNeeded(thumbnail.src);
     }
   };
 };
@@ -282,6 +280,35 @@ const getAssetsByFolder = memoizeOnSource(
 const getAssetsBelowFolder = (folderPath) => getAssetsByFolder().get(folderPath) ?? [];
 
 /**
+ * Get a folder path for each of the given entry’s locale files, leaving out a file without one.
+ * @param {Entry} entry Entry.
+ * @param {(path: string) => string | undefined} getFolderPath Function returning the folder path
+ * for a file path.
+ * @returns {string[]} Folder paths.
+ */
+const mapEntryFolderPaths = ({ locales }, getFolderPath) =>
+  Object.values(locales).flatMap(({ path }) => getFolderPath(path) ?? []);
+
+/**
+ * Get the folders the given entry occupies by itself. With the `multiple_folders` and
+ * `multiple_root_folders` i18n structures, each locale has a folder of its own. When entries are
+ * files sharing a folder, there is none.
+ * @param {InternalCollection} collection Collection the entry belongs to.
+ * @param {Entry} entry Entry.
+ * @returns {string[]} Folder paths.
+ */
+const getOwnedEntryFolderPaths = (collection, entry) =>
+  mapEntryFolderPaths(entry, (path) => getOwnedEntryFolderPath(collection, path));
+
+/**
+ * Get the folders the given entry’s files are stored in.
+ * @param {Entry} entry Entry.
+ * @returns {string[]} Folder paths.
+ */
+const getEntryFolderPaths = (entry) =>
+  mapEntryFolderPaths(entry, (path) => getPathInfo(path).dirname);
+
+/**
  * Get a list of assets associated with the given entry.
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry.
@@ -341,22 +368,15 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
     // folder of its own, so the entry’s assets are spread across all of them. Only a folder the
     // entry occupies by itself counts: when entries are files sharing a folder, the other files in
     // it can belong to any of them, so none of those is this entry’s to move or delete
-    const entryFolderPaths = new Set(
-      /** @type {string[]} */ (
-        Object.values(entry.locales)
-          .map(({ path }) => getOwnedEntryFolderPath(collection, path))
-          .filter((dirPath) => dirPath !== undefined)
-      ),
-    );
-
+    const entryFolderPaths = new Set(getOwnedEntryFolderPaths(collection, entry));
     const existingPaths = new Set(assets.map(({ path }) => path));
     const entryIdsByFolder = getEntryIdsByFolder(collectionName);
 
     entryFolderPaths.forEach((entryFolderPath) => {
       /**
        * Check whether the given folder belongs to an entry stored below this one, which owns the
-       * files in it. In a nested collection, an entry can have others stored beneath it, and each
-       * of those keeps its media in its own folder.
+       * files in it. In a collection with nested entries, an entry can have others stored beneath
+       * it, and each of those keeps its media in its own folder.
        * @param {string} assetFolderPath Folder holding an asset, at or below the entry folder.
        * @returns {boolean} Result.
        */
@@ -392,27 +412,135 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
 };
 
 /**
- * Get the assets stored alongside the given entry, which are moved or removed with it. Only a
+ * Get the versions of the relative assets associated with the given entry that the entry has.
+ * @param {object} args Arguments.
+ * @param {Entry} args.entry Entry.
+ * @param {string} args.collectionName Name of a collection that the entry belongs to.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @returns {Asset[]} Assets.
+ */
+const getEntryRelativeAssetVersions = ({ entry, collectionName, fileName }) =>
+  /** @type {Asset[]} */ ([
+    // Two versions of a file can map to the same asset, so the list is deduplicated again
+    ...new Set(
+      getAssociatedAssets({ entry, collectionName, fileName, relative: true })
+        .map((asset) => getEntryAssetVersion(asset, entry))
+        .filter(Boolean),
+    ),
+  ]);
+
+/**
+ * Collect the assets stored outside the folders their entry occupies by itself, which another
+ * entry may refer to.
+ * @param {InternalCollection} collection Collection the entries belong to.
+ * @param {Entry[]} entries Entries.
+ * @param {Asset[][]} assetLists Assets of each entry, in the order of the entries.
+ * @returns {Asset[]} Assets, deduplicated by path.
+ */
+const collectSharedAssets = (collection, entries, assetLists) => {
+  /** @type {Map<string, Asset>} */
+  const sharedAssets = new Map();
+
+  entries.forEach((entry, index) => {
+    const folderPaths = getOwnedEntryFolderPaths(collection, entry);
+
+    assetLists[index].forEach((asset) => {
+      if (!folderPaths.some((folderPath) => asset.path.startsWith(`${folderPath}/`))) {
+        sharedAssets.set(asset.path, asset);
+      }
+    });
+  });
+
+  return [...sharedAssets.values()];
+};
+
+/**
+ * Find the entries referring to each of the given assets. One pass for all the assets, however many
+ * entries are being deleted, over the collection and any other entry stored in the same folders as
+ * the given entries, e.g. that of another collection filtering them.
+ * @param {Asset[]} assets Assets.
+ * @param {Entry[]} entries Entries the assets belong to.
+ * @param {string} collectionName Name of a collection that the entries belong to.
+ * @returns {Map<string, string[]>} IDs of the referring entries, keyed with the asset path.
+ */
+const getReferringEntryIds = (assets, entries, collectionName) => {
+  const folderPaths = new Set(entries.flatMap(getEntryFolderPaths));
+
+  const referringEntries = findEntriesByAssets(
+    assets.map((asset) => ({ asset })),
+    {
+      entries: [
+        ...new Set([
+          ...getEntriesByCollection(collectionName),
+          ...allEntries.current.filter((entry) =>
+            getEntryFolderPaths(entry).some((dirPath) => folderPaths.has(dirPath)),
+          ),
+        ]),
+      ],
+    },
+  );
+
+  return new Map(
+    assets.map((asset, index) => [asset.path, referringEntries[index].map(({ id }) => id)]),
+  );
+};
+
+/**
+ * Get the assets stored alongside each of the given entries, which are removed with it. Only a
  * collection whose asset folder is entry-relative stores assets with its entries.
+ *
+ * An asset outside the folders an entry occupies by itself, as when the entries are files sharing a
+ * folder, is left out if another entry of the collection refers to it too: a duplicated entry keeps
+ * referring to the original’s files there, and would be left with broken links. That includes
+ * another of the given entries, so a file shared by two entries deleted together stays behind
+ * rather than being deleted with either, which the other may still need, e.g. while its deletion
+ * awaits review.
+ * @param {object} args Arguments.
+ * @param {Entry[]} args.entries Entries.
+ * @param {string} args.collectionName Name of a collection that the entries belong to.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @returns {Asset[][]} Assets of each entry, in the order of the entries, or empty lists unless the
+ * collection stores them with the entries. The entries of a collection storing all of them in one
+ * file share the folder of the file, and an asset there can be used by any of them, so none of the
+ * assets belongs to one entry alone. Only the versions an entry has are returned: a file another
+ * pull request put at the same path isn’t the entry’s to remove.
+ */
+export const getEntriesRelativeAssets = ({ entries, collectionName, fileName }) => {
+  const collection = getAssetFolder({ collectionName, fileName })?.entryRelative
+    ? getCollection(collectionName)
+    : undefined;
+
+  if (!collection || isArrayFileCollection(collection)) {
+    return entries.map(() => []);
+  }
+
+  const assetLists = entries.map((entry) =>
+    getEntryRelativeAssetVersions({ entry, collectionName, fileName }),
+  );
+
+  const sharedAssets = collectSharedAssets(collection, entries, assetLists);
+
+  if (!sharedAssets.length) {
+    return assetLists;
+  }
+
+  const referringIds = getReferringEntryIds(sharedAssets, entries, collectionName);
+
+  return assetLists.map((list, index) =>
+    list.filter((asset) =>
+      (referringIds.get(asset.path) ?? []).every((id) => id === entries[index].id),
+    ),
+  );
+};
+
+/**
+ * Get the assets stored alongside the given entry, which are removed with it. See
+ * {@link getEntriesRelativeAssets} for which ones.
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry.
  * @param {string} args.collectionName Name of a collection that the entry belongs to.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @returns {Asset[]} Assets, or an empty list unless the collection stores them with the entry.
- * The entries of a collection storing all of them in one file share the folder of the file, and an
- * asset there can be used by any of them, so none of the assets belongs to one entry alone. Only
- * the versions the entry has are returned: a file another pull request put at the same path isn’t
- * the entry’s to remove.
  */
 export const getEntryRelativeAssets = ({ entry, collectionName, fileName }) =>
-  getAssetFolder({ collectionName, fileName })?.entryRelative &&
-  !isArrayFileCollection(getCollection(collectionName))
-    ? /** @type {Asset[]} */ ([
-        // Two versions of a file can map to the same asset, so the list is deduplicated again
-        ...new Set(
-          getAssociatedAssets({ entry, collectionName, fileName, relative: true })
-            .map((asset) => getEntryAssetVersion(asset, entry))
-            .filter(Boolean),
-        ),
-      ])
-    : [];
+  getEntriesRelativeAssets({ entries: [entry], collectionName, fileName })[0];

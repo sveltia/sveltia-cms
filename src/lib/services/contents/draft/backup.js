@@ -1,11 +1,14 @@
 import { getBlobRegex } from '@sveltia/utils/file';
 import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
+import equal from 'fast-deep-equal';
 
 import { createDisplayBlobURL } from '$lib/services/assets/info';
 import { backend } from '$lib/services/backends';
+import { getBackupDatabaseName } from '$lib/services/backends/fs/test';
 import { cmsConfigVersion } from '$lib/services/config';
 import { isDraftReadonly } from '$lib/services/config/readonly';
+import { getIndexFileName } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { isDraftModified, suspendAutoDuplication } from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
@@ -17,6 +20,7 @@ import { createDeepState, createRootEffect, getSnapshot } from '$lib/services/ut
 /**
  * @import {
  * AssetFolderInfo,
+ * Entry,
  * EntryDraft,
  * EntryDraftBackup,
  * LocaleContentMap,
@@ -94,11 +98,43 @@ export const getBackup = async (collectionName, slug = '') => {
 };
 
 /**
- * Get the slug part of the key a draft’s backup is stored under.
+ * Get the slug part of the key a draft’s backup is stored under. For an existing entry, it’s the
+ * entry’s `subPath`, which is its file path relative to the collection folder, rather than its
+ * slug. The collection `path` option, like `{{year}}/{{slug}}`, lets two entries share a slug, as
+ * `2023/hello` and `2024/hello` do, and a backup stored under the slug would be offered to,
+ * restored to, or deleted with the other entry. The `subPath` is the same as the slug for the
+ * common `{{slug}}` path, so the backups stored before the change are still found there.
  * @param {EntryDraft} draft Draft.
- * @returns {string} Entry slug. An empty string for a new entry.
+ * @returns {string} The file name for a collection file, or the entry’s `subPath` for an existing
+ * entry. The index file name, e.g. `_index`, for a new index file, which has fields of its own, so
+ * its backup mustn’t be offered to a new entry or the other way round. An empty string for any
+ * other new entry.
  */
-export const getBackupSlug = ({ fileName, originalEntry }) => fileName ?? originalEntry?.slug ?? '';
+export const getBackupSlug = ({ collection, fileName, isIndexFile, originalEntry }) =>
+  fileName ??
+  originalEntry?.subPath ??
+  (isIndexFile ? /** @type {string} */ (getIndexFileName(collection)) : '');
+
+/**
+ * Get the backup of the given draft, if there is one. A backup made from another entry than the one
+ * the draft is for is ignored: its values belong to that entry, and restoring it would also put the
+ * draft on that entry, so a save would write to the other entry’s file. Such a backup can be one
+ * stored under the slug before the backups of existing entries were keyed by their `subPath`. It’s
+ * left alone, as it’s not this draft’s to discard.
+ * @param {EntryDraft} draft Draft.
+ * @returns {Promise<EntryDraftBackup | null>} Backup.
+ */
+const getDraftBackup = async (draft) => {
+  const backup = await getBackup(draft.collectionName, getBackupSlug(draft));
+  // Missing from a backup of a new entry, and from one taken before the base entry was stored
+  const baseSubPath = backup?.baseEntry?.subPath;
+
+  if (baseSubPath !== undefined && baseSubPath !== draft.originalEntry?.subPath) {
+    return null;
+  }
+
+  return backup;
+};
 
 /**
  * Check if the given draft is for an existing entry stored in a file with the other entries of the
@@ -128,9 +164,12 @@ export const saveBackup = async (draft) => {
   const {
     collectionName,
     currentLocales = {},
+    currentPath,
     currentSlugs = {},
     currentValues = {},
     files,
+    isNew,
+    originalEntry,
     pendingEntries = [],
   } = draft;
 
@@ -147,6 +186,8 @@ export const saveBackup = async (draft) => {
       slug,
       currentLocales: /** @type {LocaleStateMap} */ (toRaw(currentLocales)),
       currentSlugs: /** @type {LocaleSlugMap} */ (toRaw(currentSlugs)),
+      // The folder chosen with the path editor, which only a collection with `meta.path` has
+      ...(currentPath !== undefined ? { currentPath } : {}),
       currentValues: /** @type {LocaleContentMap} */ (toRaw(currentValues)),
       files: Object.fromEntries(
         Object.entries(files).map(
@@ -173,6 +214,9 @@ export const saveBackup = async (draft) => {
       ),
       // The entries hold `File` objects among their changes, so a JSON round trip won’t do
       pendingEntries: getSnapshot(pendingEntries),
+      // The version of an existing entry the edits were made to, so a restore can tell whether
+      // someone else has changed the entry since
+      ...(!isNew && originalEntry ? { baseEntry: getSnapshot(originalEntry) } : {}),
     };
 
     await backupDB?.put(backup);
@@ -221,19 +265,65 @@ const createFileURLs = async ({ currentValues, files }) => {
 };
 
 /**
+ * Put the draft back on the version of its entry the backup was made from, if the entry has been
+ * changed since. The draft has been made from the entry as it is now, so saving the restored edits
+ * would otherwise silently undo the other change: the entry would look unchanged since the draft
+ * was opened. Now the editor tells the user about the change, and saving asks before overwriting
+ * it, as if the draft had been open all along.
+ * @param {object} args Arguments.
+ * @param {Entry} [args.baseEntry] Entry the backup was made from. Missing from a backup of a new
+ * entry, and from one taken before it was introduced.
+ * @param {EntryDraft} args.draft Entry draft the backup is restored to.
+ */
+const restoreBaseEntry = ({ baseEntry, draft }) => {
+  const { originalEntry, originalLocales } = draft;
+
+  if (
+    !baseEntry ||
+    !originalEntry ||
+    equal(baseEntry.locales, getSnapshot(originalEntry.locales))
+  ) {
+    return;
+  }
+
+  draft.originalEntry = baseEntry;
+  // The locales the entry had then, so a save doesn’t delete a locale added since, which the
+  // backup knows nothing about
+  draft.originalLocales = Object.fromEntries(
+    Object.keys(originalLocales).map((locale) => [locale, !!baseEntry.locales[locale]?.content]),
+  );
+};
+
+/**
  * Restore a draft backup to the given entry draft.
  * @param {object} args Arguments.
  * @param {EntryDraftBackup} args.backup Backup to restore.
  * @param {EntryDraft} args.draft Entry draft to restore the backup to.
  */
 export const restoreBackup = async ({ backup, draft }) => {
-  const { currentLocales, currentSlugs, currentValues, files, pendingEntries = [] } = backup;
+  const {
+    baseEntry,
+    currentLocales,
+    currentPath,
+    currentSlugs,
+    currentValues,
+    files,
+    pendingEntries = [],
+  } = backup;
+
   // Created up front, because the draft is updated in one go below
   const fileURLs = await createFileURLs(backup);
 
   suspendAutoDuplication(() => {
     draft.currentLocales = currentLocales;
     draft.currentSlugs = currentSlugs;
+
+    // Missing from a backup taken before the folder was stored, which then leaves the entry where
+    // it is
+    if (currentPath !== undefined) {
+      draft.currentPath = currentPath;
+    }
+
     // The entries created from a Relation field are what the restored values refer to
     draft.pendingEntries = pendingEntries;
 
@@ -312,6 +402,9 @@ export const restoreBackup = async ({ backup, draft }) => {
         draft.originalValues[locale] = {};
       }
     });
+
+    // After the order field has been reconciled with the entry as it is now
+    restoreBaseEntry({ baseEntry, draft });
   });
 };
 
@@ -328,7 +421,7 @@ export const restoreBackupIfNeeded = async ({ draft }) => {
 
   const { collectionName } = draft;
   const slug = getBackupSlug(draft);
-  const backup = await getBackup(collectionName, slug);
+  const backup = await getDraftBackup(draft);
 
   if (!backup) {
     return;
@@ -370,7 +463,7 @@ export const showBackupToastIfNeeded = async (draft) => {
     return;
   }
 
-  const backup = await getBackup(draft.collectionName, getBackupSlug(draft));
+  const backup = await getDraftBackup(draft);
 
   if (backup) {
     backupToastState.current = { restored: false, deleted: false, saved: true };
@@ -385,7 +478,9 @@ export const resetBackupToastState = () => {
 };
 
 createRootEffect(() => {
-  const { databaseName } = backend.current?.repository ?? {};
+  // The test backend has no repository, but its drafts are worth backing up all the same, e.g. on
+  // the demo site
+  const databaseName = getBackupDatabaseName(backend.current);
 
   if (!databaseName) {
     backupDB = null;

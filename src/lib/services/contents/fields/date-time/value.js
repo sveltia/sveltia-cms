@@ -20,8 +20,12 @@ dayjs.extend(dayjsLocalizedFormat);
 dayjs.extend(dayjsUTC);
 dayjs.extend(dayjsTimeZone);
 
-const DATE_ONLY_MATCH_REGEX = /^(?<date>\d{4}-[01]\d-[0-3]\d)\b/;
-const TIME_SUFFIX_MATCH_REGEX = /(?:^|T)(?<time>[0-2]\d:[0-5]\d)\b/;
+/**
+ * Match a date, alone or at UTC midnight. The entry list shows such a value as the date it’s
+ * written with, and any other value as an instant in the browser’s time zone, like the input does.
+ */
+const DATE_ONLY_MATCH_REGEX = /^(?<date>\d{4}-[01]\d-[0-3]\d)(?:T00:00(?::00)?(?:\.000)?Z)?$/;
+const TIME_SUFFIX_MATCH_REGEX = /(?:^|T)(?<time>[0-2]\d:[0-5]\d)(?!\d)/;
 const TIME_WITH_SECONDS_REGEX = /(?:^|T)[0-2]\d:[0-5]\d:[0-5]\d/;
 
 /**

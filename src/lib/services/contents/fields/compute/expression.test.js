@@ -2,7 +2,6 @@ import { describe, expect, test, vi } from 'vitest';
 
 import {
   evaluateExpression,
-  isValidExpression,
   parseExpression,
 } from '$lib/services/contents/fields/compute/expression';
 
@@ -56,7 +55,7 @@ describe('parseExpression()', () => {
   });
 });
 
-describe('isValidExpression()', () => {
+describe('parseExpression() validity', () => {
   test.each([
     '1',
     '.5',
@@ -75,7 +74,7 @@ describe('isValidExpression()', () => {
     'min(1) + max(1, 2, 3)',
     "{{fields.a | default('0')}} + {{fields.b | default('{{fields.c}}')}}",
   ])('accepts %j', (expression) => {
-    expect(isValidExpression(expression)).toBe(true);
+    expect(parseExpression(expression).tree).toBeDefined();
   });
 
   test.each([
@@ -111,7 +110,7 @@ describe('isValidExpression()', () => {
     'toString(1)',
     'posts-{{fields.slug}}',
   ])('rejects %j', (expression) => {
-    expect(isValidExpression(expression)).toBe(false);
+    expect(parseExpression(expression).tree).toBeUndefined();
   });
 });
 
@@ -143,6 +142,9 @@ describe('evaluateExpression()', () => {
     expect(evaluate('round(1.23456, 2)')).toBe(1.23);
     expect(evaluate('round(1.23456, 2.9)')).toBe(1.23);
     expect(evaluate('round(1234, -2)')).toBe(1200);
+    expect(evaluate('round(1.005, 2)')).toBe(1.01);
+    expect(evaluate('round(8.7 * 1.15, 2)')).toBe(10.01);
+    expect(evaluate('round(-2.5)')).toBe(-3);
   });
 
   test('evaluates the aggregate functions over every item', () => {

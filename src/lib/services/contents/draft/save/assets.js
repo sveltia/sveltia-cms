@@ -69,8 +69,8 @@ const fillTemplateIfNeeded = (pathString, fillSlugOptions) =>
   pathString.includes('{{') ? fillTemplate(pathString, fillSlugOptions) : pathString;
 
 /**
- * Check whether an entry file is the index file that every entry in a nested collection is stored
- * as, which makes the folder holding it the entry’s own.
+ * Check whether an entry file is the index file that every entry in a collection with nested
+ * entries is stored as, which makes the folder holding it the entry’s own.
  * @param {string} filePath Entry file path without its extension.
  * @param {string | undefined} indexFileName Shared index file name, if the collection has one.
  * @returns {boolean} Result.
@@ -100,9 +100,9 @@ const isSharedIndexFile = (filePath, indexFileName) => {
  * getOwnedEntryFolderPath(collection, 'content/blog/hello-world/index.md') // `{{slug}}/index`
  * // => 'content/blog/hello-world'
  * @example
- * // Every entry in a nested collection is an index file, with or without a `path` option
- * getOwnedEntryFolderPath(collection, 'content/pages/about/_index.md') // `index_file: _index`
- * // => 'content/pages/about'
+ * // Every entry in a collection with nested entries is an index file, with or without a `path`
+ * option getOwnedEntryFolderPath(collection, 'content/pages/about/_index.md') // `index_file:
+ * _index` // => 'content/pages/about'
  * @example
  * // The slug is the last segment here, so the entry file sits next to the folder named after it
  * // with a `{{year}}/{{month}}/{{slug}}` path option
@@ -265,6 +265,8 @@ export const getAssetFolderPaths = ({ draft, locale, slug, defaultLocaleSlug, fo
     fillSlugOptions: {
       ...getFillSlugOptions({ draft }),
       type: 'media_folder',
+      // The date/time tags in a media folder stand for the time of the save, not the entry’s date
+      dateTimeParts: undefined,
       currentSlug: defaultLocaleSlug,
       // Resolve against the locale being edited: with a `multiple_folders` or
       // `multiple_root_folders` i18n structure each locale has a folder of its own, and an asset

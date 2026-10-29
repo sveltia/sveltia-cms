@@ -79,7 +79,6 @@ const flush = async () => {
 };
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
-  LIST_KEY_PATH_REGEX: /\.\d+$/,
   getField: vi.fn(),
 }));
 
@@ -943,14 +942,23 @@ describe('editor/fields', () => {
       expect(typeof result).toBe('boolean');
     });
 
-    it('should reuse cached regex on repeated calls with the same key', () => {
-      // Calling twice with the same key exercises the expanderRegexCache hit path.
-      mockState.currentValues = { en: { 'section.title': 'Hi' } };
+    it('should collapse with auto only when a direct subfield has a value', () => {
+      /**
+       * Get the state of the `section` object for the given values.
+       * @param {Record<string, any>} values Values.
+       * @returns {boolean} Whether the object is expanded.
+       */
+      const getState = (values) => {
+        mockState.currentValues = { en: values };
 
-      const result1 = getInitialExpanderState({ key: 'section#', locale: 'en', collapsed: 'auto' });
-      const result2 = getInitialExpanderState({ key: 'section#', locale: 'en', collapsed: 'auto' });
+        return getInitialExpanderState({ key: 'section#', locale: 'en', collapsed: 'auto' });
+      };
 
-      expect(result1).toBe(result2);
+      expect(getState({ 'section.title': 'Hi' })).toBe(false);
+      expect(getState({ 'section.title': '' })).toBe(true);
+      // Neither a value further down nor one of a field whose name starts the same way counts
+      expect(getState({ 'section.meta.title': 'Hi', 'sections.title': 'Hi' })).toBe(true);
+      expect(getState({ 'other.title': 'Hi', 'section.body': 'Text' })).toBe(false);
     });
 
     it('should use existing state if available', () => {

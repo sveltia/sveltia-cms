@@ -34,11 +34,19 @@ vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: {} },
 }));
 
-vi.mock('$lib/services/assets/references', async (importOriginal) => ({
-  .../** @type {Record<string, any>} */ (await importOriginal()),
-  getAssetReferences: vi.fn(async () => []),
-  getComparableAssetURL: vi.fn((url) => url.replace('https://example.com', '')),
-}));
+vi.mock('$lib/services/assets/references', async (importOriginal) => {
+  const mediaField = await import('$lib/services/assets/media-field');
+
+  return {
+    .../** @type {Record<string, any>} */ (await importOriginal()),
+    getAssetReferences: vi.fn(async () => []),
+    getComparableAssetURL: vi.fn((url) => url.replace('https://example.com', '')),
+    // Resolve a media URL with the mocked `getMediaFieldSource()`, given the context as is
+    createMediaSourceResolver: vi.fn(
+      (context) => (src) => mediaField.getMediaFieldSource({ ...context, value: src }),
+    ),
+  };
+});
 
 vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   isCollectionIndexFile: vi.fn(() => false),
@@ -75,7 +83,9 @@ const { getAssetPublicURL } = await import('$lib/services/assets/info');
 const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
 const { cmsConfig } = await import('$lib/services/config');
 const { allEntries } = await import('$lib/services/contents');
-const { getAssetReferences } = await import('$lib/services/assets/references');
+
+const { createMediaSourceResolver, getAssetReferences } =
+  await import('$lib/services/assets/references');
 
 const { isCollectionIndexFile } =
   await import('$lib/services/contents/collection/entries/index-file');
@@ -308,13 +318,15 @@ describe('removeEmbeddedMedia()', () => {
       }),
     ).toBe(' ![b](b.png)');
     // The image is resolved relative to the locale’s entry file
-    expect(getMediaFieldSource).toHaveBeenCalledWith({
-      entry,
-      collectionName: 'posts',
-      fileName: undefined,
-      locale: 'fr',
-      value: 'a.png',
-    });
+    expect(getMediaFieldSource).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entry,
+        collectionName: 'posts',
+        fileName: undefined,
+        locale: 'fr',
+        value: 'a.png',
+      }),
+    );
   });
 
   test('leaves an image alone that resolves to nothing', async () => {
@@ -556,6 +568,40 @@ describe('removeAssetReferences()', () => {
         paths: new Set(['content/posts/fr/a/a.png']),
       }),
     ).toEqual({ content: { body: '' }, fields: new Map([['body', bodyField]]) });
+  });
+
+  test('resolves the images of a reference against the field’s own media folder', async () => {
+    const field = { ...bodyField, media_folder: 'images1' };
+    const content = { 'sections.0.body': '![a](a.png)', 'sections.0.type': 'text' };
+    const post = createPost('a', content);
+
+    isCollectionIndexFile.mockReturnValue(true);
+    getMediaFieldSource.mockImplementation(({ fieldConfig }) =>
+      fieldConfig === field ? { asset: { path: 'content/posts/a/images1/a.png' } } : undefined,
+    );
+
+    expect(
+      await removeAssetReferences({
+        content,
+        references: [createReference(post, 'sections.0.body', field)],
+        urls: new Set(),
+        paths: new Set(['content/posts/a/images1/a.png']),
+      }),
+    ).toEqual({
+      content: { 'sections.0.body': '', 'sections.0.type': 'text' },
+      fields: new Map([['sections.0.body', field]]),
+    });
+    // The key path and the content tell the typed key path the field’s folder is registered under
+    expect(createMediaSourceResolver).toHaveBeenCalledWith({
+      entry: post,
+      collectionName: 'posts',
+      fileName: undefined,
+      locale: '_default',
+      keyPath: 'sections.0.body',
+      valueMap: content,
+      isIndexFile: true,
+      fieldConfig: field,
+    });
   });
 
   test('handles several fields at once', async () => {

@@ -2,6 +2,7 @@
 
 import { sleep } from '@sveltia/utils/misc';
 
+import { formatFileName } from '$lib/services/assets/file-name';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { filterAssetsByQuery } from '$lib/services/integrations/media-libraries/cloud/search';
 import {
@@ -27,6 +28,18 @@ import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
  */
 
 /**
+ * Parameters of the request for a page of objects, made by an {@link ObjectStorageProvider}.
+ * @template {CloudStorageConfig} C Service configuration type.
+ * @typedef {object} ListPageParams
+ * @property {C} config Service configuration.
+ * @property {string} credential Credential, such as a SAS token or a secret access key.
+ * @property {string} prefix Prefix to list the objects under.
+ * @property {string} [cursor] Continuation cursor of the page.
+ * @property {string} [delimiter] Delimiter, such as `/`, to leave out the objects whose key
+ * contains it after the prefix: those in subfolders.
+ */
+
+/**
  * Operations that differ between object storage services, such as Azure Blob Storage and the
  * S3-compatible services, which otherwise list, upload and delete files the same way. Each
  * operation handles the transport, including authorization, of a single request.
@@ -36,10 +49,9 @@ import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
  * @property {(options: MediaLibraryFetchOptions) => string} requireCredential Function to get the
  * credential, such as a SAS token or a secret access key, from the fetch options. It throws when no
  * credential was provided.
- * @property {(params: { config: C, credential: string, prefix: string, cursor?: string }) =>
- * Promise<{ items: T[], cursor?: string }>} listPage Function to fetch a page of objects under the
- * given prefix, starting at the given continuation cursor. The returned cursor is `undefined` on
- * the last page.
+ * @property {(params: ListPageParams<C>) => Promise<{ items: T[], cursor?: string }>} listPage
+ * Function to fetch a page of objects under the given prefix, starting at the given continuation
+ * cursor. The returned cursor is `undefined` on the last page.
  * @property {(item: T) => string} getKey Function to get the key of a listed object.
  * @property {(items: T[], config: C, credential: string) => ExternalAsset[]} parseResults Function
  * to convert objects into the `ExternalAsset` format.
@@ -58,21 +70,14 @@ import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
  */
 
 /**
- * Throw an error with the response body appended to the given message if the request failed.
- * @param {Response} response Response.
- * @param {string} message Error message, such as `Failed to list objects`.
- * @param {object} [options] Options.
- * @param {boolean} [options.allowNotFound] Whether to accept a `404 Not Found` response.
- * @returns {Promise<void>}
- * @throws {Error} When the response status is not OK.
+ * Get the key prefix to list a folder with.
+ * @param {CloudStorageConfig} config Service configuration.
+ * @param {string} [dirPath] Folder path relative to the configured prefix. Default: the configured
+ * prefix itself.
+ * @returns {string} Key prefix.
  */
-export const assertResponseOK = async (response, message, { allowNotFound = false } = {}) => {
-  if (!response.ok && !(allowNotFound && response.status === 404)) {
-    const errorText = await response.text();
-
-    throw new Error(`${message}: ${errorText}`);
-  }
-};
+const getListPrefix = (config, dirPath) =>
+  dirPath ? getFolderKey(config, dirPath) : getPrefix(config);
 
 /**
  * Fetch the objects under the configured prefix, or under a folder below it, page by page.
@@ -86,13 +91,20 @@ export const assertResponseOK = async (response, message, { allowNotFound = fals
  * fetch every page.
  * @param {string} [params.dirPath] Path of the folder to list, at any depth, relative to the
  * configured prefix. Default: the configured prefix itself.
+ * @param {string} [params.delimiter] Delimiter to list the folder with, such as `/` to leave out
+ * the objects in its subfolders. Default: none, listing the folder at any depth.
  * @returns {Promise<{ files: T[], folders: string[], truncated: boolean }>} Objects, split into the
  * files and the folder placeholders, the latter given as folder paths relative to the prefix, and
  * whether the listing was cut short by the page limit, leaving some objects out.
  */
-export const fetchListing = async (provider, config, options, { maxPages = 10, dirPath } = {}) => {
+export const fetchListing = async (
+  provider,
+  config,
+  options,
+  { maxPages = 10, dirPath, delimiter } = {},
+) => {
   const credential = provider.requireCredential(options);
-  const prefix = dirPath ? getFolderKey(config, dirPath) : getPrefix(config);
+  const prefix = getListPrefix(config, dirPath);
   /** @type {T[]} */
   const files = [];
   /** @type {string[]} */
@@ -101,7 +113,13 @@ export const fetchListing = async (provider, config, options, { maxPages = 10, d
 
   const items = await fetchPages(
     async (/** @type {string | undefined} */ cursor) => {
-      const result = await provider.listPage({ config, credential, prefix, cursor });
+      const result = await provider.listPage({
+        config,
+        credential,
+        prefix,
+        cursor,
+        ...(delimiter && { delimiter }),
+      });
 
       // The paging stops at the last page, which has no cursor, or at the page limit, in which
       // case the cursor of the last page fetched points to the objects left out
@@ -220,7 +238,40 @@ export const searchObjects = async (provider, query, config, options) => {
 };
 
 /**
- * Upload files one by one to the folder given in the fetch options.
+ * Get the names of the files directly in the given folder, so that an upload can avoid them. The
+ * folder is listed with a delimiter, as the services then sum up each subfolder in a single entry,
+ * so even the root of a large bucket only takes a request per 1,000 files right in it. The listing
+ * is followed to the end, as a name left out would let an upload overwrite that file.
+ * @template T
+ * @template {CloudStorageConfig} C
+ * @param {ObjectStorageProvider<T, C>} provider Service provider.
+ * @param {C} config Service configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the credential).
+ * @param {string} dirPath Folder path relative to the configured prefix, or an empty string for the
+ * prefix itself.
+ * @returns {Promise<string[]>} File names, normalized to NFC.
+ */
+const getFileNamesInFolder = async (provider, config, options, dirPath) => {
+  const folderKey = getListPrefix(config, dirPath);
+
+  const { files } = await fetchListing(provider, config, options, {
+    maxPages: Infinity,
+    dirPath,
+    delimiter: '/',
+  });
+
+  return (
+    files
+      .map((item) => provider.getKey(item).slice(folderKey.length).normalize())
+      // A service that ignores the delimiter lists the files in the subfolders as well
+      .filter((name) => !name.includes('/'))
+  );
+};
+
+/**
+ * Upload files one by one to the folder given in the fetch options. A file whose name is taken in
+ * the folder, by an existing file or by one uploaded before it, is renamed with a number suffix,
+ * like `photo-1.jpg`, rather than overwriting it, the way an upload to the repository is.
  * @template T
  * @template {CloudStorageConfig} C
  * @param {ObjectStorageProvider<T, C>} provider Service provider.
@@ -228,6 +279,7 @@ export const searchObjects = async (provider, query, config, options) => {
  * @param {C} config Service configuration.
  * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the credential).
  * @returns {Promise<ExternalAsset[]>} Uploaded assets.
+ * @throws {Error} When a file name has nothing left once sanitized, such as `..`.
  */
 export const uploadObjects = async (provider, files, config, options) => {
   if (files.length === 0) {
@@ -236,16 +288,32 @@ export const uploadObjects = async (provider, files, config, options) => {
 
   const credential = provider.requireCredential(options);
   const { dirPath = '' } = options;
+  const takenNames = await getFileNamesInFolder(provider, config, options, dirPath);
+
+  // Name every file before uploading any, so that an invalid name stops the batch before it starts.
+  // Two files can end up with one name, e.g. `photo.jpg` and `photo.png` both converted to WebP, or
+  // `a/photo.jpg` and `b/photo.jpg` from a dropped folder, so each name is taken in turn
+  const keys = files.map((file) => {
+    // Extract only the filename to prevent path traversal via crafted File objects
+    const baseName = file.name.split(/[/\\]/).filter(Boolean).at(-1) ?? '';
+    const fileName = formatFileName(baseName, { assetNamesInSameFolder: takenNames });
+
+    // Sanitizing drops a name like `..`, which would otherwise point the key outside the folder
+    if (!fileName) {
+      throw new Error(`Invalid file name: ${file.name}`);
+    }
+
+    takenNames.push(fileName);
+
+    return getFileKey(config, dirPath ? `${dirPath}/${fileName}` : fileName);
+  });
+
   /** @type {T[]} */
   const uploadedObjects = [];
 
   // eslint-disable-next-line no-restricted-syntax
-  for (const file of files) {
-    // Extract only the filename to prevent path traversal via crafted File objects
-    const sanitizedName = file.name.split(/[/\\]/).filter(Boolean).at(-1) ?? file.name;
-    const key = getFileKey(config, dirPath ? `${dirPath}/${sanitizedName}` : sanitizedName);
-
-    uploadedObjects.push(await provider.putObject({ key, file, config, credential }));
+  for (const [index, file] of files.entries()) {
+    uploadedObjects.push(await provider.putObject({ key: keys[index], file, config, credential }));
 
     // Wait a bit between uploads
     if (files.length > 1) {

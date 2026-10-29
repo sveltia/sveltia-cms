@@ -89,6 +89,7 @@ describe('Template handler functions', () => {
       expect(handleUuidTag('slug')).toBeUndefined();
       expect(handleUuidTag('title')).toBeUndefined();
       expect(handleUuidTag('unknown')).toBeUndefined();
+      expect(handleUuidTag('toString')).toBeUndefined();
     });
   });
 
@@ -139,9 +140,10 @@ describe('Template handler functions', () => {
       ).toBe('');
     });
 
-    describe('nested collections', () => {
+    describe('nested entries', () => {
       /**
-       * Create a context for a nested collection whose entries all share one file name.
+       * Create a context for a collection with nested entries whose entries all share one file
+       * name.
        * @param {Record<string, any>} overrides Override values for the context.
        * @returns {Parameters<typeof handleSlugTag>[1]} The slug handler context.
        */

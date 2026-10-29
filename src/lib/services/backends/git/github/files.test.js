@@ -48,7 +48,6 @@ const stopProgress = vi.hoisted(() => vi.fn());
 vi.mock('$lib/services/backends/git/shared/progress', () => ({
   startSimulatedProgress: vi.fn(() => stopProgress),
 }));
-vi.mock('mime', () => ({ default: { getType: vi.fn() } }));
 
 const mockGetRootDir = vi.hoisted(() => vi.fn(() => ''));
 
@@ -797,98 +796,48 @@ describe('GitHub files service', () => {
       );
     });
 
-    test('handles text content with correct MIME type', async () => {
-      const asset = /** @type {any} */ ({
-        sha: 'test-sha',
-        path: 'file.svg',
-      });
+    test('keeps the content of an SVG file', async () => {
+      const asset = /** @type {any} */ ({ sha: 'test-sha', path: 'file.svg' });
 
-      const mockResponse = {
-        ok: true,
-        headers: new Map([['Content-Type', 'image/svg+xml']]),
-        text: vi.fn().mockResolvedValue('<svg></svg>'),
-      };
-
-      const mockMime = await import('mime');
-
-      vi.mocked(mockMime.default.getType).mockReturnValue('image/svg+xml');
-
-      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+      vi.mocked(fetchAPI).mockResolvedValue(
+        new Response('<svg></svg>', { headers: { 'Content-Type': 'text/plain; charset=utf-8' } }),
+      );
 
       const result = await fetchBlob(asset);
 
-      expect(mockResponse.text).toHaveBeenCalled();
       expect(result).toBeInstanceOf(Blob);
-      expect(result.type).toBe('image/svg+xml');
+      expect(await result.text()).toBe('<svg></svg>');
     });
 
-    test('falls back to text/plain for unknown MIME types', async () => {
-      const asset = /** @type {any} */ ({
-        sha: 'test-sha',
-        path: 'file.unknown',
-      });
+    test('keeps the UTF-8 BOM of a text file', async () => {
+      const asset = /** @type {any} */ ({ sha: 'csv-sha', path: 'data.csv' });
+      const bytes = new Uint8Array([0xef, 0xbb, 0xbf, 0x61, 0x2c, 0x62]);
 
-      const mockResponse = {
-        ok: true,
-        headers: new Map([['Content-Type', 'text/plain']]),
-        text: vi.fn().mockResolvedValue('text content'),
-      };
-
-      const mockMime = await import('mime');
-
-      vi.mocked(mockMime.default.getType).mockReturnValue(null);
-
-      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+      vi.mocked(fetchAPI).mockResolvedValue(
+        new Response(bytes, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } }),
+      );
 
       const result = await fetchBlob(asset);
 
-      expect(result.type).toBe('text/plain');
+      expect(new Uint8Array(await result.arrayBuffer())).toEqual(bytes);
     });
 
-    test('handles text files with JSON content', async () => {
-      const asset = /** @type {any} */ ({
-        sha: 'json-sha',
-        path: 'data.json',
-      });
+    test.each([
+      // `café` in Latin-1, which decoding and re-encoding as UTF-8 would turn into `caf\xC3\xA9`
+      ['iso-8859-1', [0x63, 0x61, 0x66, 0xe9]],
+      // `hi` in UTF-16LE with a BOM
+      ['utf-16le', [0xff, 0xfe, 0x68, 0x00, 0x69, 0x00]],
+    ])('keeps the bytes of a text file served as %s', async (charset, values) => {
+      const asset = /** @type {any} */ ({ sha: 'txt-sha', path: 'legacy.txt' });
+      const bytes = new Uint8Array(values);
 
-      const mockResponse = {
-        ok: true,
-        headers: new Map([['Content-Type', 'application/json']]),
-        text: vi.fn().mockResolvedValue('{"key":"value"}'),
-      };
-
-      const mockMime = await import('mime');
-
-      vi.mocked(mockMime.default.getType).mockReturnValue('application/json');
-
-      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+      vi.mocked(fetchAPI).mockResolvedValue(
+        new Response(bytes, { headers: { 'Content-Type': `text/plain; charset=${charset}` } }),
+      );
 
       const result = await fetchBlob(asset);
 
-      expect(result.type).toBe('application/json');
-    });
-
-    test('handles text files with Markdown content', async () => {
-      const asset = /** @type {any} */ ({
-        sha: 'md-sha',
-        path: 'README.md',
-      });
-
-      const mockResponse = {
-        ok: true,
-        headers: new Map([['Content-Type', 'text/markdown']]),
-        text: vi.fn().mockResolvedValue('# Readme'),
-      };
-
-      const mockMime = await import('mime');
-
-      vi.mocked(mockMime.default.getType).mockReturnValue('text/markdown');
-
-      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
-
-      const result = await fetchBlob(asset);
-
-      expect(result.type).toBe('text/markdown');
+      expect(new Uint8Array(await result.arrayBuffer())).toEqual(bytes);
     });
 
     test('throws instead of returning an error response as the file content', async () => {

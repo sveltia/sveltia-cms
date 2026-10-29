@@ -3,18 +3,33 @@ import { Document, isMap, visit } from 'yaml';
 
 import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { cmsConfig } from '$lib/services/config';
-import { FRONTMATTER_FORMATS } from '$lib/services/contents/file/constants';
+import {
+  BUILTIN_FILE_FORMATS,
+  FRONTMATTER_DELIMITER_MAP,
+  FRONTMATTER_FORMATS,
+  getFormatSyntax,
+  TOML_FORMATS,
+} from '$lib/services/contents/file/constants';
 import {
   getUnsafeIntegerSource,
   hasUnsafeIntegerSources,
   restoreBigInts,
 } from '$lib/services/contents/file/integers';
+import { restoreTomlValueSources } from '$lib/services/contents/file/toml-sources';
+import {
+  getJSONSourceText,
+  restoreValueSources,
+  SourcedValue,
+  sourcedValueYAMLTag,
+} from '$lib/services/contents/file/value-sources';
 
 /**
  * @import { Scalar, ToStringOptions } from 'yaml';
- * @import { FileConfig, InternalLocaleCode } from '$lib/types/private';
+ * @import { FormatSyntax } from '$lib/services/contents/file/constants';
+ * @import { FileConfig, InternalLocaleCode, ValueSourceMap } from '$lib/types/private';
  * @import {
  * FieldKeyPath,
+ * FileFormatterContext,
  * JsonFormatOptions,
  * RawEntryContent,
  * YamlFormatOptions,
@@ -29,16 +44,24 @@ import {
 const getRawJSON = () => /** @type {{ rawJSON?: (text: string) => any }} */ (JSON).rawJSON;
 
 /**
- * Create a `JSON.stringify()` replacer that writes an integer read from a file, which a `number`
- * can’t represent exactly, as it was read.
+ * Create a `JSON.stringify()` replacer that writes a {@link SourcedValue} as its source text, and
+ * an integer read from a file, which a `number` can’t represent exactly, as it was read. The
+ * replacer is given what `toJSON()` returns, so a {@link SourcedValue} is looked up in the holder.
  * @param {(text: string) => any} rawJSON `JSON.rawJSON()`.
- * @returns {(key: string, value: any) => any} Replacer.
+ * @returns {(this: any, key: string, value: any) => any} Replacer.
  */
-const createUnsafeIntegerReplacer = (rawJSON) => (_key, value) => {
-  const source = getUnsafeIntegerSource(value);
+const createReplacer = (rawJSON) =>
+  // eslint-disable-next-line func-names
+  function (key, value) {
+    const original = this[key];
 
-  return source === undefined ? value : rawJSON(source);
-};
+    const source =
+      original instanceof SourcedValue
+        ? getJSONSourceText(original)
+        : getUnsafeIntegerSource(value);
+
+    return source === undefined ? value : rawJSON(source);
+  };
 
 /**
  * Format the given object as a JSON document using the built-in method.
@@ -57,9 +80,10 @@ export const formatJSON = (obj, options = cmsConfig.current?.output?.json ?? {})
 
   return JSON.stringify(
     obj,
-    // Write an integer that a `number` can’t represent exactly as it was read. A browser without
+    // Write a value that hasn’t changed since it was read, e.g. a float that is a whole number, as
+    // it was read, and so an integer that a `number` can’t represent exactly. A browser without
     // `JSON.rawJSON()` writes the number
-    hasUnsafeIntegerSources() && rawJSON ? createUnsafeIntegerReplacer(rawJSON) : undefined,
+    rawJSON ? createReplacer(rawJSON) : undefined,
     indentStyle === 'tab' ? '\t'.repeat(indentSize) : indentSize,
   ).trim();
 };
@@ -189,7 +213,9 @@ export const formatYAML = (
     singleQuote: !(legacyQuote || quote === 'double'),
   };
 
-  const doc = new Document(obj);
+  // Write a value that hasn’t changed since it was read, e.g. a float that is a whole number, as it
+  // was read
+  const doc = new Document(obj, { customTags: [sourcedValueYAMLTag] });
 
   // Quote the strings, including keys, that a YAML 1.1 parser would read as a boolean or a number,
   // which a YAML 1.2 parser doesn’t, so the `yaml` library writes them plain. Don’t use the
@@ -220,6 +246,44 @@ export const formatYAML = (
 };
 
 /**
+ * Formatter for each syntax, taking the content, the file configuration and the comments to add.
+ * @type {Record<FormatSyntax, (content: RawEntryContent, _file: FileConfig,
+ * comments?: Record<FieldKeyPath, string>) => string>}
+ */
+const FORMATTERS = {
+  /**
+   * Format the given content as YAML, with the comments.
+   * @param {RawEntryContent} content Content.
+   * @param {FileConfig} _file File configuration.
+   * @param {Record<FieldKeyPath, string>} [comments] Comments.
+   * @returns {string} Formatted document.
+   */
+  yaml: (content, { yamlQuote = false }, comments) =>
+    formatYAML(content, undefined, { quote: yamlQuote }, comments),
+  /**
+   * Format the given content as TOML.
+   * @param {RawEntryContent} content Content.
+   * @returns {string} Formatted document.
+   */
+  toml: (content) => formatTOML(content),
+  /**
+   * Format the given content as JSON.
+   * @param {RawEntryContent} content Content.
+   * @returns {string} Formatted document.
+   */
+  json: (content) => formatJSON(content),
+};
+
+/**
+ * Check whether the given format is written as front matter followed by a body, including the
+ * `frontmatter` format, in which a new file gets YAML front matter.
+ * @param {string} format File format.
+ * @returns {boolean} Result.
+ */
+const isFrontMatterFormat = (format) =>
+  format === 'frontmatter' || FRONTMATTER_FORMATS.includes(/** @type {any} */ (format));
+
+/**
  * Format front matter for the given entry content.
  * @param {object} args Arguments.
  * @param {RawEntryContent} args.content Entry content.
@@ -235,10 +299,9 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
     format,
     fmDelimiters,
     bodyField: { key: bodyKey = 'body', inline: bodyInline = false } = {},
-    yamlQuote = false,
   } = _file;
 
-  const [sd, ed] = fmDelimiters ?? ['---', '---'];
+  const [sd, ed] = fmDelimiters ?? FRONTMATTER_DELIMITER_MAP['yaml-frontmatter'];
   let body = '';
 
   if (!bodyInline && Object.hasOwn(content, bodyKey)) {
@@ -253,35 +316,37 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
     }
   }
 
-  // Support Markdown without a front matter block, particularly for VitePress
+  // Support Markdown without a front matter block, particularly for VitePress. A body starting with
+  // a delimiter line would be read back as front matter, though, so it gets an empty block above
+  // it. Any default delimiter counts, as the `frontmatter` format is detected from the first line.
+  // The blank line inside the block keeps the parser from taking the body’s delimiter as the end
   if (!Object.keys(content).length) {
-    return `${body}\n`;
+    const firstLine = body.split('\n', 1)[0].trimEnd();
+    const delimiters = [sd, ...Object.values(FRONTMATTER_DELIMITER_MAP).map(([d]) => d)];
+
+    return delimiters.includes(firstLine) ? `${sd}\n\n${ed}\n\n${body}\n` : `${body}\n`;
   }
 
-  let head = '';
+  const syntax = isFrontMatterFormat(format) ? getFormatSyntax(format) : undefined;
 
-  if (format === 'frontmatter' || format === 'yaml-frontmatter') {
-    head = formatYAML(content, undefined, { quote: yamlQuote }, comments);
-  } else if (format === 'toml-frontmatter') {
-    head = formatTOML(content);
-  } else if (format === 'json-frontmatter') {
-    head = formatJSON(content);
-
-    // Like Netlify/Decap CMS, strip the outer braces of the object when they double as the
-    // delimiters, so the front matter block is the object itself rather than one wrapped in
-    // another pair of braces
-    if (sd === '{' && ed === '}') {
-      head = head.slice(1, -1).replace(/^\n/, '').replace(/\n$/, '');
-    }
-  } else {
+  if (!syntax) {
     throw new Error(`Unsupported front matter format: ${format}`);
+  }
+
+  let head = FORMATTERS[syntax](content, _file, comments);
+
+  // Like Netlify/Decap CMS, strip the outer braces of the object when they double as the
+  // delimiters, so the front matter block is the object itself rather than one wrapped in another
+  // pair of braces
+  if (syntax === 'json' && sd === '{' && ed === '}') {
+    head = head.slice(1, -1).replace(/^\n/, '').replace(/\n$/, '');
   }
 
   return `${sd}\n${head}\n${ed}\n${!bodyInline && body ? `\n${body}\n` : ''}`;
 };
 
 /**
- * Format raw entry content.
+ * Format raw entry content with the built-in formatter for its format.
  * @param {object} entry File entry.
  * @param {RawEntryContent | Record<InternalLocaleCode, RawEntryContent>} entry.content Content
  * object. Note that this method may modify the `content` (the `body` property will be removed if
@@ -289,61 +354,125 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
  * @param {FileConfig} entry._file Entry file configuration.
  * @param {Record<FieldKeyPath, string>} [entry.comments] Comments to add before the keys, keyed by
  * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
- * @returns {Promise<string>} Formatted string.
- * @throws {Error} When the format has no formatter, neither a custom one nor a built-in one, or the
- * content could not be formatted. Writing an empty file instead would wipe the entry’s content.
+ * @param {ValueSourceMap} [entry.valueSources] Source text of the values read from the file being
+ * overwritten, to write the ones that haven’t changed as they were.
+ * @returns {string} Formatted string.
+ * @throws {Error} When the content could not be formatted.
  */
-export const formatEntryFile = async ({ content, _file, comments }) => {
-  const { format, yamlQuote = false } = _file;
-  const customFormatter = customFileFormatRegistry.get(format)?.formatter;
-
-  if (customFormatter) {
-    const output = await customFormatter(content);
-
-    if (typeof output !== 'string') {
-      throw new TypeError(
-        `The \`toFile\` method registered for the custom “${format}” format must return a string`,
-      );
-    }
-
-    return `${output.trim()}\n`;
-  }
+const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources }) => {
+  const { format } = _file;
 
   if (format === 'raw') {
     return typeof content.body === 'string' ? `${content.body}\n` : '';
   }
 
-  const isYAML = /^ya?ml$/.test(format);
-
-  const isFrontMatter =
-    format === 'frontmatter' || FRONTMATTER_FORMATS.includes(/** @type {any} */ (format));
-
-  if (!isYAML && format !== 'toml' && format !== 'json' && !isFrontMatter) {
-    throw new Error(
-      customFileFormatRegistry.has(format)
-        ? `Entries in the custom “${format}” format can’t be saved, as no \`toFile\` method was ` +
-            'registered for it with `CMS.registerCustomFormat()`'
-        : `Entries in the unknown “${format}” format can’t be saved`,
-    );
+  // Write the values that haven’t changed as they were, e.g. a float that is a whole number rather
+  // than as an integer, or a TOML date rather than as a string
+  if (valueSources) {
+    content = TOML_FORMATS.includes(format)
+      ? restoreTomlValueSources(content, valueSources)
+      : restoreValueSources(content, valueSources);
   }
 
   try {
-    if (isYAML) {
-      return `${formatYAML(content, undefined, { quote: yamlQuote }, comments)}\n`;
+    if (isFrontMatterFormat(format)) {
+      return formatFrontMatter({ content, _file, comments });
     }
 
-    if (format === 'toml') {
-      return `${formatTOML(content)}\n`;
-    }
+    // A built-in format other than `raw` has a syntax
+    const syntax = /** @type {FormatSyntax} */ (getFormatSyntax(format));
 
-    if (format === 'json') {
-      return `${formatJSON(content)}\n`;
-    }
-
-    return formatFrontMatter({ content, _file, comments });
+    return `${FORMATTERS[syntax](content, _file, comments)}\n`;
   } catch (/** @type {any} */ ex) {
     throw new Error(`The entry could not be formatted due to ${ex.name}: ${ex.message}`, {
       cause: ex,
     });
   }
+};
+
+/**
+ * Format raw entry content, with the custom formatter registered for its format if any, or with the
+ * built-in one. A custom formatter can call the built-in one with the `serialize` function it’s
+ * given, e.g. to run the output through a code formatter.
+ * @param {object} entry File entry.
+ * @param {RawEntryContent | Record<InternalLocaleCode, RawEntryContent>} entry.content Content
+ * object. Note that this method may modify the `content` (the `body` property will be removed if
+ * exists) so it shouldn’t be a reference to an existing object.
+ * @param {FileConfig} entry._file Entry file configuration.
+ * @param {Record<FieldKeyPath, string>} [entry.comments] Comments to add before the keys, keyed by
+ * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
+ * @param {ValueSourceMap} [entry.valueSources] Source text of the values read from the file being
+ * overwritten, to write the ones that haven’t changed as they were.
+ * @returns {Promise<string>} Formatted string.
+ * @throws {Error} When the format has no formatter, neither a custom one nor a built-in one, or the
+ * content could not be formatted. Writing an empty file instead would wipe the entry’s content.
+ */
+export const formatEntryFile = async ({ content, _file, comments, valueSources }) => {
+  // An existing file of a collection in the `frontmatter` format is saved in the front matter
+  // format it was read in, but the custom formatter is registered under the configured format. Fall
+  // back to one registered for the detected format, which is what was used before
+  const { format, configuredFormat = format } = _file;
+  const configuredFormatter = customFileFormatRegistry.get(configuredFormat)?.formatter;
+  const customFormat = configuredFormatter ? configuredFormat : format;
+
+  const customFormatter =
+    configuredFormatter ?? customFileFormatRegistry.get(customFormat)?.formatter;
+
+  const hasBuiltInFormatter = BUILTIN_FILE_FORMATS.includes(format);
+
+  if (!customFormatter) {
+    if (!hasBuiltInFormatter) {
+      throw new Error(
+        customFileFormatRegistry.has(format)
+          ? `Entries in the custom “${format}” format can’t be saved, as no \`toFile\` method ` +
+              'was registered for it with `CMS.registerCustomFormat()`'
+          : `Entries in the unknown “${format}” format can’t be saved`,
+      );
+    }
+
+    return formatWithBuiltInFormatter({ content, _file, comments, valueSources });
+  }
+
+  /** @type {FileFormatterContext} */
+  const context = {
+    /**
+     * Format the given content with the built-in formatter.
+     * @param {any} data Entry content.
+     * @returns {Promise<string>} Formatted string.
+     * @throws {Error} When the format has no built-in formatter, or the content could not be
+     * formatted.
+     */
+    serialize: async (data) => {
+      // Formatting an empty object instead would wipe the entry’s content
+      if (typeof data !== 'object' || data === null) {
+        throw new TypeError('The `serialize` function must be given the entry content');
+      }
+
+      if (!hasBuiltInFormatter) {
+        throw new Error(
+          `Entries in the custom “${format}” format can’t be serialized, as there’s no built-in ` +
+            'formatter for it',
+        );
+      }
+
+      return formatWithBuiltInFormatter({
+        // Copy the content, as the built-in formatter takes the body out of it
+        content: Array.isArray(data) ? [...data] : { ...data },
+        _file,
+        comments,
+        valueSources,
+      });
+    },
+  };
+
+  const output = await customFormatter(content, context);
+
+  if (typeof output !== 'string') {
+    throw new TypeError(
+      `The \`toFile\` method registered for the custom “${customFormat}” format must return ` +
+        'a string',
+    );
+  }
+
+  return `${output.trim()}\n`;
 };

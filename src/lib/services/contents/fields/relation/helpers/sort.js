@@ -1,8 +1,11 @@
 import { compare } from '@sveltia/utils/string';
 
+import { compareSortKeys } from '$lib/services/common/view';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getOrderValueGetter } from '$lib/services/contents/collection/entries/reorder/sort';
 import { getEntrySortKeyGetter } from '$lib/services/contents/collection/view/sort';
+import { SPECIAL_SORT_KEYS } from '$lib/services/contents/collection/view/sort-keys';
+import { isFieldInLocale } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import {
@@ -28,7 +31,7 @@ import { getEntrySortKeyGetter } from '$lib/services/contents/collection/view/so
  * @returns {{ getSortKey: (entry: Entry) => string | number | undefined, isStringType: boolean }}
  * Sort key getter, and whether the keys are compared as strings.
  */
-const getSortKeyGetter = ({ collection, key, locale }) => {
+const getRelationSortKeyGetter = ({ collection, key, locale }) => {
   if (key === '_manual' || key === getOrderFieldKey(collection)) {
     return { getSortKey: getOrderValueGetter(collection), isStringType: false };
   }
@@ -41,14 +44,27 @@ const getSortKeyGetter = ({ collection, key, locale }) => {
       ? current
       : getEntrySortKeyGetter({ collection, key, locale: defaultLocale });
 
+  // A field that isn’t localized is only stored in the default locale, so it’s always read there
+  const isSharedField =
+    locale !== defaultLocale &&
+    !SPECIAL_SORT_KEYS.includes(key) &&
+    !isFieldInLocale({
+      getFieldArgs: { collectionName: collection.name, valueMap: {} },
+      locale,
+      defaultLocale,
+      keyPath: key,
+    });
+
   /**
    * Get the sort key of an entry from the current locale, or the default locale if the entry has no
-   * content in the current locale.
+   * content in the current locale or the field isn’t localized.
    * @param {Entry} entry Referenced entry.
    * @returns {string | number | undefined} Sort key.
    */
   const getSortKey = (entry) =>
-    entry.locales[locale] ? current.getSortKey(entry) : fallback.getSortKey(entry);
+    entry.locales[locale] && !isSharedField
+      ? current.getSortKey(entry)
+      : fallback.getSortKey(entry);
 
   return { getSortKey, isStringType: current.isStringType };
 };
@@ -68,7 +84,7 @@ const getSortKeyGetter = ({ collection, key, locale }) => {
  */
 export const sortOptions = ({ groups, collection, sortBy, locale }) => {
   const { field: key, direction } = sortBy;
-  const { getSortKey, isStringType } = getSortKeyGetter({ collection, key, locale });
+  const { getSortKey, isStringType } = getRelationSortKeyGetter({ collection, key, locale });
   const sign = direction === 'descending' ? -1 : 1;
 
   // Compute the key once per entry rather than in the comparator
@@ -83,9 +99,7 @@ export const sortOptions = ({ groups, collection, sortBy, locale }) => {
       if (a.sortKey === undefined) return 1;
       if (b.sortKey === undefined) return -1;
 
-      const diff = isStringType
-        ? compare(/** @type {string} */ (a.sortKey), /** @type {string} */ (b.sortKey))
-        : /** @type {number} */ (a.sortKey) - /** @type {number} */ (b.sortKey);
+      const diff = compareSortKeys(a.sortKey, b.sortKey, isStringType);
 
       if (diff) {
         return diff * sign;

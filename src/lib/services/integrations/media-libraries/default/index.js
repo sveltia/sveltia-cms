@@ -210,7 +210,7 @@ export const transformFile = async (file, transformations) => {
   const [, newFormat] = blob.type.split('/');
 
   const newFileName = RASTER_IMAGE_EXTENSION_REGEX.test(file.name)
-    ? file.name.replace(RASTER_IMAGE_EXTENSION_REGEX, newFormat)
+    ? file.name.replace(RASTER_IMAGE_EXTENSION_REGEX, `.${newFormat}`)
     : `${file.name}.${newFormat}`;
 
   return new File([blob], newFileName, { type: blob.type });

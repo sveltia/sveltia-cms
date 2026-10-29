@@ -87,9 +87,9 @@ export const processEntry = ({
   } = collection;
 
   const { allFieldNames, hasListFields } = templates;
-  // In a nested collection an entry’s slug is its path within the collection folder, ending with
-  // the file name shared by every entry. A reference to the entry leaves that name out, the same
-  // way a preview path does
+  // In a collection with nested entries an entry’s slug is its path within the collection folder,
+  // ending with the file name shared by every entry. A reference to the entry leaves that name out,
+  // the same way a preview path does
   const slug = stripIndexFileName(collection, refEntry.slug);
   const isIndexFile = isCollectionIndexFile(collection, refEntry);
   /** @type {GetFieldArgs} */

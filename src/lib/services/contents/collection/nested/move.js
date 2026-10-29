@@ -111,7 +111,7 @@ const moveEntry = ({ entry, dirMove, localeDirMoves }) => {
 };
 
 /**
- * Refresh the canonical slug of a moved entry. In a nested collection with localized slugs, the
+ * Refresh the canonical slug of a moved entry. Among nested entries with localized slugs, the
  * localized files are linked by the default locale’s sub path, which has just changed, so each file
  * gets the new one, or the link would go stale and stop matching the entry’s own location.
  * @param {object} args Arguments.
@@ -223,7 +223,7 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
 };
 
 /**
- * Build the file changes that move the whole subtree of a nested collection entry along with the
+ * Build the file changes that move the whole subtree of a nested entry along with the
  * entry itself. In the `subfolders` mode, an entry stored as the index file owns the folder it’s
  * stored in, so relocating it with the path editor has to take everything below that folder with
  * it, or the descendants would be orphaned in a folder that no longer has an entry of its own.

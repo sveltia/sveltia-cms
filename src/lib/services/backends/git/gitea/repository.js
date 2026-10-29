@@ -1,12 +1,12 @@
 import { recordBranchAccess } from '$lib/services/backends/branch-access';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import {
-  createNoAccessError,
-  createNoWriteAccessError,
+  createPermissionError,
   toRepositoryAccessError,
 } from '$lib/services/backends/git/shared/errors';
 import {
   applyDefaultBranch,
+  createBaseURLsGetter,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
@@ -56,10 +56,10 @@ export const _resetRepositoryInfoCache = () => {
  * @returns {RepositoryBaseURLs} An object containing the tree base URL for browsing files, and the
  * blob base URL for accessing file contents.
  */
-export const getBaseURLs = (repoURL, branch) => ({
-  treeBaseURL: branch ? `${repoURL}/src/branch/${branch}` : repoURL,
-  blobBaseURL: branch ? `${repoURL}/src/branch/${branch}` : '',
-  commitBaseURL: `${repoURL}/commit`,
+export const getBaseURLs = createBaseURLsGetter({
+  tree: '/src/branch',
+  blob: '/src/branch',
+  commit: '/commit',
 });
 
 /**
@@ -125,7 +125,7 @@ export const checkRepositoryAccess = async () => {
   if (!result.permissions?.push) {
     // A repository that comes back without read permission, e.g. one with limited visibility, isn’t
     // one the user can work with at all, so it’s no access rather than missing write access
-    throw result.permissions?.pull ? createNoWriteAccessError(repo) : createNoAccessError(repo);
+    throw createPermissionError(repo, result.permissions?.pull);
   }
 };
 

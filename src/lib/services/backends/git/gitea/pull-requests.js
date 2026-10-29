@@ -1,6 +1,5 @@
 import { unique } from '@sveltia/utils/array';
 import { isTextFileType } from '@sveltia/utils/file';
-import { sleep } from '@sveltia/utils/misc';
 import mime from 'mime';
 
 import { fetchAllPages, fetchPages } from '$lib/services/backends/git/gitea/api';
@@ -10,8 +9,10 @@ import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { pollUntil, SETTLE_POLL } from '$lib/services/backends/git/shared/poll';
 import {
   createDraftTitleCodec,
+  parseRestFiles,
   PULL_REQUEST_DESCRIPTION,
 } from '$lib/services/backends/git/shared/pull-requests';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
@@ -165,7 +166,7 @@ export const fetchPullRequestHeadRef = async (number) => {
  * head in the background once a commit is pushed, so a list read right after a save can still
  * describe the commit before it.
  */
-const FILE_LIST_POLL = { attempts: 10, interval: 1000 };
+const FILE_LIST_POLL = SETTLE_POLL;
 /**
  * How many times the changed files are read for the board, which only waits a moment for the
  * reference to catch up. A list that still describes another commit then is shown as of that
@@ -195,36 +196,30 @@ const getListedCommit = ({ contents_url: url }) => {
  * If it doesn’t, the list can’t vouch for the commit, and is reported as incomplete.
  * @param {number} number Pull request number.
  * @param {string} headSHA Git object ID of the commit.
- * @param {number} [attemptsLeft] Remaining reads, including this one.
+ * @param {number} [attempts] Number of reads at most, including the first one.
  * @returns {Promise<{ files: Record<string, any>[], complete: boolean, commit?: string }>} Files,
  * whether they are every file changed as of the commit, and the commit they were listed at, if
  * they name a single one.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetPullRequestFiles
  */
-export const fetchChangedFiles = async (
-  number,
-  headSHA,
-  attemptsLeft = FILE_LIST_POLL.attempts,
-) => {
-  const { owner, repo } = repository;
-  const { items, complete } = await fetchPages(`/repos/${owner}/${repo}/pulls/${number}/files`);
+export const fetchChangedFiles = (number, headSHA, attempts = FILE_LIST_POLL.attempts) =>
+  pollUntil(
+    async () => {
+      const { owner, repo } = repository;
+      const { items, complete } = await fetchPages(`/repos/${owner}/${repo}/pulls/${number}/files`);
 
-  const listedCommits = items.length
-    ? [...new Set(items.map((file) => getListedCommit(file)))]
-    : [await fetchPullRequestHeadRef(number)];
+      const listedCommits = items.length
+        ? [...new Set(items.map((file) => getListedCommit(file)))]
+        : [await fetchPullRequestHeadRef(number)];
 
-  // The single commit every file was listed at, if they agree on one
-  const commit = listedCommits.length === 1 ? (listedCommits[0] ?? undefined) : undefined;
-  const current = commit === headSHA;
+      // The single commit every file was listed at, if they agree on one
+      const commit = listedCommits.length === 1 ? (listedCommits[0] ?? undefined) : undefined;
 
-  if (current || attemptsLeft <= 1) {
-    return { files: items, complete: complete && current, commit };
-  }
-
-  await sleep(FILE_LIST_POLL.interval);
-
-  return fetchChangedFiles(number, headSHA, attemptsLeft - 1);
-};
+      return { files: items, complete: complete && commit === headSHA, commit };
+    },
+    ({ commit }) => commit === headSHA,
+    { ...FILE_LIST_POLL, attempts },
+  );
 
 /**
  * Fetch the list of files changed in the given pull request as of its head commit, the one a
@@ -253,13 +248,7 @@ export const fetchPullRequestFileList = async (pullRequest) => {
     files = await fetchAllPages(`/repos/${owner}/${repo}/pulls/${number}/files`);
   }
 
-  pullRequest.files = files.map(({ filename, status, previous_filename: previousPath }) => ({
-    path: filename,
-    sha: '',
-    size: 0,
-    deleted: status === 'deleted',
-    previousPath: previousPath || undefined,
-  }));
+  pullRequest.files = parseRestFiles(files, { removedStatus: 'deleted' });
 };
 
 /**

@@ -1,4 +1,5 @@
-import { replaceTemplateTags } from '$lib/services/common/template/tags';
+import { TAG_PLACEHOLDER } from '$lib/services/common/template/constants';
+import { splitTemplateTags } from '$lib/services/common/template/tags';
 import { getOrCreateBounded } from '$lib/services/utils/cache';
 import { toFixed } from '$lib/services/utils/number';
 
@@ -54,11 +55,18 @@ import { toFixed } from '$lib/services/utils/number';
  */
 
 /**
- * Placeholder standing in for a template tag while the expression is tokenized, so the value the
- * tag resolves to is always a single operand: a field holding `2) * (3` can’t change the structure
- * of the expression. It can’t appear in a template.
+ * A function available in an expression.
+ * @typedef {object} ExpressionFunction
+ * @property {number} minArgs Minimum number of arguments.
+ * @property {number} maxArgs Maximum number of arguments.
+ * @property {(...args: number[]) => number} [fn] Function computing the result from the arguments.
+ * Only for a function that isn’t an aggregate one.
+ * @property {(values: number[]) => number | undefined} [aggregate] Function computing the result
+ * from the values of the arguments, which makes it an aggregate function. `undefined` if there is
+ * no result.
+ * @property {boolean} [anyValue] Whether an aggregate function takes any value of a template tag
+ * covering every item, rather than only numbers. The values it gets are then all `0`.
  */
-const TAG_PLACEHOLDER = '\0';
 
 /**
  * Regular expression matching a token at the current position, preceded by any whitespace.
@@ -71,11 +79,44 @@ const TOKEN_REGEX =
  * number, without the hexadecimal and other notations `Number()` would accept.
  */
 const OPERAND_REGEX = /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[-+]?\d+)?$/i;
+/**
+ * Sum up the given values.
+ * @param {number[]} values Values.
+ * @returns {number} Sum.
+ */
+const sum = (values) => values.reduce((total, value) => total + value, 0);
+/**
+ * Compute the average of the given values.
+ * @param {number[]} values Values.
+ * @returns {number | undefined} Average, or `undefined` if there is no value.
+ */
+const average = (values) => (values.length ? sum(values) / values.length : undefined);
+/**
+ * Get the largest of the given values.
+ * @param {number[]} values Values.
+ * @returns {number | undefined} Largest value, or `undefined` if there is no value.
+ */
+const maximum = (values) => (values.length ? Math.max(...values) : undefined);
+/**
+ * Get the smallest of the given values.
+ * @param {number[]} values Values.
+ * @returns {number | undefined} Smallest value, or `undefined` if there is no value.
+ */
+const minimum = (values) => (values.length ? Math.min(...values) : undefined);
+/**
+ * Count the given values.
+ * @param {number[]} values Values.
+ * @returns {number} Number of values.
+ */
+const count = (values) => values.length;
 
 /**
- * Functions available in an expression that take numbers, with the number of arguments each one
- * accepts.
- * @type {Record<string, { minArgs: number, maxArgs: number, fn: (...args: number[]) => number }>}
+ * Functions available in an expression, keyed by name. An aggregate function, `avg`, `count`,
+ * `max`, `min` or `sum`, takes any number of arguments. A template tag passed directly to one
+ * covers every item of a list, like `{{fields.lines.*.amount}}`, and its empty values are left out,
+ * so an item that has yet to be filled in doesn’t empty the result. `count` counts the values,
+ * whatever they are; the others compute from numbers.
+ * @type {Record<string, ExpressionFunction>}
  */
 const FUNCTIONS = {
   abs: { minArgs: 1, maxArgs: 1, fn: Math.abs },
@@ -93,16 +134,17 @@ const FUNCTIONS = {
      */
     fn: (value, digits = 0) => toFixed(value, Math.trunc(digits)),
   },
+  avg: { minArgs: 1, maxArgs: Infinity, aggregate: average },
+  count: { minArgs: 1, maxArgs: Infinity, aggregate: count, anyValue: true },
+  max: { minArgs: 1, maxArgs: Infinity, aggregate: maximum },
+  min: { minArgs: 1, maxArgs: Infinity, aggregate: minimum },
+  sum: { minArgs: 1, maxArgs: Infinity, aggregate: sum },
 };
 
 /**
- * Aggregate functions available in an expression, which take any number of arguments: `avg`,
- * `count`, `max`, `min` and `sum`. A template tag passed directly to one covers every item of a
- * list, like `{{fields.lines.*.amount}}`, and its empty values are left out, so an item that has
- * yet to be filled in doesn’t empty the result. `count` counts the values, whatever they are; the
- * others compute from numbers.
+ * Maximum number of parsed expressions to cache.
  */
-const AGGREGATE_FUNCTIONS = ['avg', 'count', 'max', 'min', 'sum'];
+const PARSED_EXPRESSION_CACHE_SIZE = 100;
 /**
  * Cache of parsed expressions, keyed by the expression. A Compute field is resolved whenever
  * anything in the draft changes, while its expression only changes with the configuration.
@@ -112,8 +154,9 @@ const parsedExpressionCache = new Map();
 
 /**
  * Split the given expression into tokens.
- * @param {string} expression Expression with its template tags replaced by
- * {@link TAG_PLACEHOLDER}.
+ * @param {string} expression Expression with its template tags replaced by `TAG_PLACEHOLDER`, so
+ * the value a tag resolves to is always a single operand: a field holding `2) * (3` can’t change
+ * the structure of the expression.
  * @returns {ExpressionToken[] | undefined} Tokens, or `undefined` if the expression has a character
  * that can’t start a token.
  */
@@ -252,20 +295,14 @@ const buildTree = (tokens) => {
       position += 1;
 
       const { name } = token;
-      const aggregate = AGGREGATE_FUNCTIONS.includes(name);
+      const func = Object.hasOwn(FUNCTIONS, name) ? FUNCTIONS[name] : undefined;
+      const args = func && accept('(') ? parseArgs() : undefined;
 
-      const { minArgs, maxArgs } = aggregate
-        ? { minArgs: 1, maxArgs: Infinity }
-        : (FUNCTIONS[name] ?? {});
-
-      const args =
-        (aggregate || Object.hasOwn(FUNCTIONS, name)) && accept('(') ? parseArgs() : undefined;
-
-      if (!args || args.length < minArgs || args.length > maxArgs) {
+      if (!func || !args || args.length < func.minArgs || args.length > func.maxArgs) {
         return undefined;
       }
 
-      if (aggregate) {
+      if (func.aggregate) {
         args.forEach((arg) => {
           if (arg.type === 'tag') {
             allItemsTagIndexes.add(arg.index);
@@ -332,16 +369,8 @@ export const parseExpression = (expression) =>
     parsedExpressionCache,
     expression,
     () => {
-      /** @type {string[]} */
-      const contents = [];
-
-      const tokens = tokenize(
-        replaceTemplateTags(expression, (_match, placeholder) => {
-          contents.push(placeholder);
-
-          return TAG_PLACEHOLDER;
-        }),
-      );
+      const { tags: contents, literals } = splitTemplateTags(expression);
+      const tokens = tokenize(literals.join(TAG_PLACEHOLDER));
 
       const { tree, allItemsTagIndexes } = tokens
         ? buildTree(tokens)
@@ -355,15 +384,15 @@ export const parseExpression = (expression) =>
         })),
       };
     },
-    100,
+    PARSED_EXPRESSION_CACHE_SIZE,
   );
 
 /**
- * Check whether the given arithmetic expression is valid.
- * @param {string} expression Expression.
- * @returns {boolean} Result.
+ * Normalize the value a template tag has resolved to into a string without surrounding whitespace.
+ * @param {unknown} value Resolved value.
+ * @returns {string} String. Empty for `null` and `undefined`.
  */
-export const isValidExpression = (expression) => !!parseExpression(expression).tree;
+const normalizeValue = (value) => String(value ?? '').trim();
 
 /**
  * Convert the value a template tag has resolved to into an operand.
@@ -371,7 +400,7 @@ export const isValidExpression = (expression) => !!parseExpression(expression).t
  * @returns {number | undefined} Number, or `undefined` if the value is empty or isn’t a number.
  */
 const toOperand = (value) => {
-  const string = String(value ?? '').trim();
+  const string = normalizeValue(value);
 
   return OPERAND_REGEX.test(string) ? Number(string) : undefined;
 };
@@ -381,11 +410,11 @@ const toOperand = (value) => {
  * @param {unknown} value Value.
  * @returns {boolean} Result.
  */
-const isEmptyValue = (value) => !String(value ?? '').trim();
+const isEmptyValue = (value) => !normalizeValue(value);
 
 /**
  * Evaluate a call of an aggregate function.
- * @param {string} name Function name.
+ * @param {ExpressionFunction} func Function, which has the `aggregate` property.
  * @param {ExpressionNode[]} args Arguments.
  * @param {ExpressionOperand[]} operands Values of the template tags, by index.
  * @param {(node: ExpressionNode) => number | undefined} evaluate Function evaluating an argument
@@ -393,7 +422,7 @@ const isEmptyValue = (value) => !String(value ?? '').trim();
  * @returns {number | undefined} Result, or `undefined` if a value isn’t a number, or there is no
  * value to compute the average, the maximum or the minimum of.
  */
-const evaluateAggregate = (name, args, operands, evaluate) => {
+const evaluateAggregate = (func, args, operands, evaluate) => {
   /** @type {number[]} */
   const values = [];
 
@@ -405,7 +434,7 @@ const evaluateAggregate = (name, args, operands, evaluate) => {
       // eslint-disable-next-line no-restricted-syntax
       for (const value of operand.filter((_value) => !isEmptyValue(_value))) {
         // Anything counts, while the others need a number
-        const number = name === 'count' ? 0 : toOperand(value);
+        const number = func.anyValue ? 0 : toOperand(value);
 
         if (number === undefined) {
           return undefined;
@@ -424,25 +453,7 @@ const evaluateAggregate = (name, args, operands, evaluate) => {
     }
   }
 
-  if (name === 'count') {
-    return values.length;
-  }
-
-  const sum = values.reduce((total, value) => total + value, 0);
-
-  if (name === 'sum') {
-    return sum;
-  }
-
-  if (!values.length) {
-    return undefined;
-  }
-
-  if (name === 'avg') {
-    return sum / values.length;
-  }
-
-  return name === 'max' ? Math.max(...values) : Math.min(...values);
+  return /** @type {NonNullable<ExpressionFunction['aggregate']>} */ (func.aggregate)(values);
 };
 
 /**
@@ -472,17 +483,19 @@ const evaluateNode = (node, operands) => {
   }
 
   if (node.type === 'call') {
-    if (AGGREGATE_FUNCTIONS.includes(node.name)) {
-      return evaluateAggregate(node.name, node.args, operands, (arg) =>
-        evaluateNode(arg, operands),
-      );
+    const func = FUNCTIONS[node.name];
+
+    if (func.aggregate) {
+      return evaluateAggregate(func, node.args, operands, (arg) => evaluateNode(arg, operands));
     }
 
     const args = node.args.map((arg) => evaluateNode(arg, operands));
 
     return args.includes(undefined)
       ? undefined
-      : FUNCTIONS[node.name].fn(.../** @type {number[]} */ (args));
+      : /** @type {NonNullable<ExpressionFunction['fn']>} */ (func.fn)(
+          .../** @type {number[]} */ (args),
+        );
   }
 
   const left = evaluateNode(node.left, operands);

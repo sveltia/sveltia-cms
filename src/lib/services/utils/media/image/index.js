@@ -22,15 +22,17 @@ export const RASTER_IMAGE_TYPES = RASTER_IMAGE_FORMATS.filter((format) => format
   (format) => `image/${format}`,
 );
 /**
- * Regex matching a raster image file extension at the end of a file name. JPEG files can also have
- * a `.jpe` or `.jfif` extension, and HEIC files a `.heif` extension, so those aliases are included.
+ * Regex matching a raster image file extension, along with its dot, at the end of a file name. JPEG
+ * files can also have a `.jpe` or `.jfif` extension, and HEIC files a `.heif` extension, so those
+ * aliases are included.
  */
-export const RASTER_IMAGE_EXTENSION_REGEX = /\b(?:avif|gif|heic|heif|jfif|jpe?g|jpe|png|webp)$/i;
+export const RASTER_IMAGE_EXTENSION_REGEX = /\.(?:avif|gif|heic|heif|jfif|jpe?g|jpe|png|webp)$/i;
 
 /** @type {VectorImageFormat[]} */
 export const VECTOR_IMAGE_FORMATS = ['svg'];
 export const VECTOR_IMAGE_TYPES = ['image/svg+xml'];
-export const VECTOR_IMAGE_EXTENSION_REGEX = /\b(?:svg)$/i;
+/** Regex matching a vector image file extension, along with its dot, at the end of a file name. */
+export const VECTOR_IMAGE_EXTENSION_REGEX = /\.(?:svg)$/i;
 
 export const SUPPORTED_IMAGE_FORMATS = [...RASTER_IMAGE_FORMATS, ...VECTOR_IMAGE_FORMATS];
 export const SUPPORTED_IMAGE_TYPES = [...RASTER_IMAGE_TYPES, ...VECTOR_IMAGE_TYPES];

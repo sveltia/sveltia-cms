@@ -10,15 +10,16 @@ describe('createLoadingOptions', () => {
   it('points PDF.js to its worker and data files on UNPKG', () => {
     const pdfjs = /** @type {any} */ ({ GlobalWorkerOptions: { workerSrc: '' } });
     const base = 'https://unpkg.com/pdfjs-dist@6.4.299';
+    const { options, dispose } = createLoadingOptions(pdfjs);
 
-    expect(createLoadingOptions(pdfjs)).toEqual({
-      options: {
-        cMapUrl: `${base}/cmaps/`,
-        iccUrl: `${base}/iccs/`,
-        standardFontDataUrl: `${base}/standard_fonts/`,
-        wasmUrl: `${base}/wasm/`,
-      },
+    expect(options).toEqual({
+      cMapUrl: `${base}/cmaps/`,
+      iccUrl: `${base}/iccs/`,
+      standardFontDataUrl: `${base}/standard_fonts/`,
+      wasmUrl: `${base}/wasm/`,
     });
     expect(pdfjs.GlobalWorkerOptions.workerSrc).toBe(`${base}/build/pdf.worker.min.mjs`);
+    // Nothing to clean up, as PDF.js ends the worker it created along with the loading task
+    expect(dispose()).toBeUndefined();
   });
 });

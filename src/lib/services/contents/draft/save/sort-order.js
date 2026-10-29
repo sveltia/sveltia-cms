@@ -1,7 +1,7 @@
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
  * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
@@ -11,7 +11,8 @@ import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 /**
  * Get the highest number stored under the given key path by the entries of a collection, in the
  * given locale. The entries still in a pull request count too, as a new entry saved with
- * Editorial Workflow has taken its number as well. A value that isn’t a finite number is ignored,
+ * Editorial Workflow has taken its number as well, including the new entries riding along in the
+ * pull request of an entry of another collection. A value that isn’t a finite number is ignored,
  * and so is a negative one, as the result is never below zero.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Entry collection name.
@@ -23,6 +24,7 @@ export const getMaxEntryNumber = ({ collectionName, keyPath, locale }) =>
   [
     ...getEntriesByCollection(collectionName),
     ...getUnpublishedEntriesByCollection(collectionName),
+    ...getCompanionEntries(collectionName),
   ].reduce((max, entry) => {
     const value = Number(entry.locales[locale]?.content?.[keyPath]);
 

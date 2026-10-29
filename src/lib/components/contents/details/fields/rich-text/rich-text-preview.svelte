@@ -4,10 +4,16 @@
   @see https://decapcms.org/docs/widgets/#Markdown
   @see https://sveltiacms.app/en/docs/fields/richtext
 -->
+<script module>
+  import { addMarkedExtensions } from '$lib/services/contents/fields/rich-text/previews/marked';
+
+  // Only once, not for each preview
+  addMarkedExtensions();
+</script>
+
 <script>
-  import { highlightCodeToHTML, loadCodeHighlighter } from '@sveltia/ui';
-  import { parse, use } from 'marked';
-  import markedBidi from 'marked-bidi';
+  import { loadCodeHighlighter } from '@sveltia/ui';
+  import { parse } from 'marked';
   import { isValidElement } from 'react';
   import { onMount, tick } from 'svelte';
   import { SvelteMap, SvelteSet } from 'svelte/reactivity';
@@ -23,8 +29,7 @@
   import {
     getFencedCodeLanguages,
     keyBlocks,
-    splitHTMLBlocks,
-    splitMarkdownBlocks,
+    splitPreviewBlocks,
   } from '$lib/services/contents/fields/rich-text/previews/blocks';
   import {
     buildMarkdownWithPreviews,
@@ -41,6 +46,7 @@
 
   /**
    * @import { ReactElement } from 'react';
+   * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
    * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { ApiAsset, MarkdownField, RichTextField } from '$lib/types/public';
    * @import {
@@ -55,22 +61,12 @@
    * @property {string | undefined} currentValue Field value.
    */
 
+  /**
+   * Entry draft state of the editor. It’s missing when `CMS.renderRichText()` mounts the preview
+   * outside a Svelte update, e.g. from a React effect, where no component context can be inherited.
+   * @type {EntryDraftState | undefined}
+   */
   const entryDraft = getEntryDraftContext();
-
-  use(markedBidi());
-
-  use({
-    renderer: {
-      // Add syntax highlighting for code blocks using Shiki. This is done in the renderer to ensure
-      // it runs before sanitization, allowing the highlighted HTML to be preserved in the preview.
-      // Shiki loads its engine and grammars on demand, so this returns nothing until the language
-      // is ready; `preloadHighlighter()` below fetches it and triggers a re-render.
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      code({ text, lang }) {
-        return (lang ? highlightCodeToHTML(text, lang) : undefined) ?? false;
-      },
-    },
-  });
 
   const defaultConfig = cmsConfig.current?.field_defaults?.richtext ?? {};
   /** @type {SvelteMap<HTMLElement, ReturnType<typeof createReactRoot>>} */
@@ -132,11 +128,9 @@
    */
   let requestedLanguages = '';
 
-  const entry = $derived(entryDraft.current?.originalEntry);
-  /* v8 ignore start -- the preview is only rendered while the draft is there */
-  const collectionName = $derived(entryDraft.current?.collectionName ?? '');
-  /* v8 ignore stop */
-  const fileName = $derived(entryDraft.current?.fileName);
+  const entry = $derived(entryDraft?.current?.originalEntry);
+  const collectionName = $derived(entryDraft?.current?.collectionName ?? '');
+  const fileName = $derived(entryDraft?.current?.fileName);
   const { sanitize_preview: doSanitize = defaultConfig.sanitize_preview ?? true } =
     $derived(fieldConfig);
   const format = $derived(getValueFormat(fieldConfig));
@@ -152,7 +146,7 @@
       entry,
       collectionName,
       fileName,
-      files: entryDraft.current?.files,
+      files: entryDraft?.current?.files,
       typedKeyPath,
       componentNames,
       locale,
@@ -186,10 +180,7 @@
    * than by position. See {@link keyBlocks}.
    */
   const keyedBlocks = $derived.by(() => {
-    const { list, items } = keyBlocks(
-      (isHTML ? splitHTMLBlocks : splitMarkdownBlocks)(markdown),
-      blockItems,
-    );
+    const { list, items } = keyBlocks(splitPreviewBlocks(markdown, { isHTML }), blockItems);
 
     blockItems = items;
 

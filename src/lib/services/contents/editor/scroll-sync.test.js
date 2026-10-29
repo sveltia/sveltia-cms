@@ -61,10 +61,27 @@ const setup = (overrides = {}) => {
 };
 
 /**
+ * Put a content area below its top, where the other pane is synced to it rather than simply going
+ * to its top along with it. A real element without a layout can’t be scrolled, so the position is
+ * defined on it instead.
+ * @param {HTMLElement} area Content area.
+ * @param {number} [scrollTop] Position.
+ */
+const setScrollTop = (area, scrollTop = 100) => {
+  Object.defineProperty(area, 'scrollTop', {
+    configurable: true,
+    writable: true,
+    value: scrollTop,
+  });
+};
+
+/**
  * Make the pane the one the user is scrolling, and let it scroll.
  * @param {any} state Pane state.
+ * @param {number} [scrollTop] Position the pane is scrolled to.
  */
-const scrollByUser = (state) => {
+const scrollByUser = (state, scrollTop = 100) => {
+  setScrollTop(state.thisPaneContentArea, scrollTop);
   state.thisPaneContentArea.dispatchEvent(new Event('wheel'));
   state.thisPaneContentArea.dispatchEvent(new Event('scroll'));
 };
@@ -99,6 +116,25 @@ beforeEach(async () => {
   };
 
   service = await import('./scroll-sync');
+});
+
+describe('getContentTop()', () => {
+  test('measures an element from the top of the pane’s content in the main document', () => {
+    // The element is 290px below the top of the pane, which has been scrolled by 50px
+    const element = { getBoundingClientRect: () => ({ top: 300, height: 40 }) };
+    const pane = createThatPane();
+
+    expect(service.getContentTop(pane, element)).toBe(340);
+  });
+
+  test('measures an element from the top of the viewport in the preview iframe', () => {
+    const element = { getBoundingClientRect: () => ({ top: 300, height: 40 }) };
+    const pane = createThatPane();
+
+    pane.ownerDocument.documentElement = pane;
+
+    expect(service.getContentTop(pane, element)).toBe(350);
+  });
 });
 
 describe('getThatScrollTop()', () => {
@@ -208,12 +244,28 @@ describe('createScrollSync() scroll syncing', () => {
     expect(state.thatPaneContentArea.scrollTop).toBe(321);
   });
 
+  test('scrolls the other pane to its top along with this one', () => {
+    const { state, controller } = setup();
+    const thisField = document.createElement('div');
+
+    thisField.dataset.keyPath = 'title';
+    document.elementsFromPoint = vi.fn(() => [thisField]);
+    controller.initialize();
+    scrollByUser(state, 0);
+
+    // The field at the top isn’t aligned, which would leave the padding above it out of view
+    expect(document.elementsFromPoint).not.toHaveBeenCalled();
+    expect(state.thatPaneContentArea.scrollTop).toBe(0);
+  });
+
   test('aligns the matching field of the other pane', () => {
     mocks.getFieldAlignedScrollTop.mockReturnValue(77);
 
     const { state, controller } = setup();
     const thisField = document.createElement('div');
-    const thatField = { offsetTop: 400, clientHeight: 60 };
+    // The field’s offset parent isn’t the pane, so only its position on the screen tells where it
+    // is in the pane
+    const thatField = { offsetTop: 0, getBoundingClientRect: () => ({ top: 410, height: 60 }) };
 
     thisField.dataset.keyPath = 'body';
     thisField.getBoundingClientRect = () => ({ top: 5, height: 30 });
@@ -225,7 +277,7 @@ describe('createScrollSync() scroll syncing', () => {
     expect(state.thatPaneContentArea.querySelector).toHaveBeenCalledWith('[data-key-path="body"]');
 
     expect(mocks.getFieldAlignedScrollTop).toHaveBeenCalledWith(
-      expect.objectContaining({ targetOffsetTop: 400, targetHeight: 60, top: 5, height: 30 }),
+      expect.objectContaining({ targetTop: 450, targetHeight: 60, top: 5, height: 30 }),
     );
 
     expect(state.thatPaneContentArea.scrollTop).toBe(77);
@@ -239,6 +291,7 @@ describe('createScrollSync() scroll syncing', () => {
     state.contentArea.contains = () => true;
     controller.setPreviewFrame(iframe);
     controller.initialize();
+    setScrollTop(root);
     // The scroll events of the frame’s root element come from its document
     state.thisPaneContentArea.dispatchEvent(new Event('wheel'));
     document.dispatchEvent(new Event('scroll'));
@@ -264,7 +317,9 @@ describe('createScrollSync() scroll syncing', () => {
     expect(mocks.getFieldAlignedScrollTop).not.toHaveBeenCalled();
 
     // The top of the pane is not within the field
-    state.thatPaneContentArea.querySelector = vi.fn(() => ({ offsetTop: 1, clientHeight: 1 }));
+    state.thatPaneContentArea.querySelector = vi.fn(() => ({
+      getBoundingClientRect: () => ({ top: 1, height: 1 }),
+    }));
     scrollByUser(state);
 
     expect(mocks.getFieldAlignedScrollTop).toHaveBeenCalled();
@@ -299,6 +354,7 @@ describe('createScrollSync() scroll syncing', () => {
     const { state, controller } = setup();
 
     controller.initialize();
+    setScrollTop(state.thisPaneContentArea);
     state.thisPaneContentArea.dispatchEvent(new Event('touchstart'));
     state.thisPaneContentArea.dispatchEvent(new Event('scroll'));
 
@@ -322,6 +378,7 @@ describe('createScrollSync() scroll syncing', () => {
 
     first.controller.initialize();
     second.controller.initialize();
+    setScrollTop(first.state.thisPaneContentArea);
     first.state.thisPaneContentArea.dispatchEvent(new Event('wheel'));
     second.controller.destroy();
     first.state.thisPaneContentArea.dispatchEvent(new Event('scroll'));
@@ -387,6 +444,7 @@ describe('createScrollSync().onFocusIn()', () => {
     );
 
     // The panes must not chase each other: this pane is the scroll source
+    setScrollTop(state.thisPaneContentArea);
     state.thisPaneContentArea.dispatchEvent(new Event('scroll'));
 
     expect(mocks.getProportionalScrollTop).toHaveBeenCalled();

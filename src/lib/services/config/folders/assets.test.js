@@ -2332,6 +2332,49 @@ describe('config/folders/assets', () => {
       });
     });
 
+    it.each([
+      ['./', ''],
+      ['./docs', 'docs'],
+    ])(
+      'should remove a leading `./` from a `%s` collection folder for a relative field-level folder',
+      (folder, internalPath) => {
+        vi.mocked(getValidCollections).mockReturnValue([
+          // @ts-ignore - simplified collection for testing
+          { name: 'docs', folder: internalPath },
+        ]);
+        vi.mocked(getValidCollectionFiles).mockReturnValue([]);
+
+        const config = {
+          backend: { name: 'git-gateway' },
+          media_folder: 'static',
+          public_folder: '/assets',
+          collections: [],
+        };
+
+        // The parser context holds the raw collection, whose `folder` hasn’t been normalized
+        const fieldMediaFolders = [
+          {
+            fieldConfig: { media_folder: 'images' },
+            context: {
+              collection: { name: 'docs', folder },
+              collectionFile: undefined,
+              typedKeyPath: 'cover',
+              isIndexFile: false,
+            },
+          },
+        ];
+
+        // @ts-ignore - simplified config for testing
+        const result = getAllAssetFolders(config, fieldMediaFolders);
+
+        expect(result.find((f) => f.typedKeyPath === 'cover')).toMatchObject({
+          internalPath,
+          internalSubPath: 'images',
+          entryRelative: true,
+        });
+      },
+    );
+
     it('should skip field-level media folders for invalid collections', () => {
       vi.mocked(getValidCollections).mockReturnValue([
         // @ts-ignore - simplified collection for testing

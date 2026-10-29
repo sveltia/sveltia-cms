@@ -9,7 +9,8 @@
  * @param {InternalCollection} [args.collection] Collection the entry belongs to.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file, if the entry is one. A
  * collection file is part of the collection definition, so it can’t be duplicated.
- * @param {boolean} args.isIndexFile Whether the entry is the index file of a nested collection.
+ * @param {boolean} args.isIndexFile Whether the entry is the index file of a collection with nested
+ * entries.
  * @param {boolean} args.readonly Whether the entry is read-only.
  * @param {boolean} args.creationDisabled Whether creating new entries is currently disabled.
  * @returns {boolean} Result.
@@ -90,7 +91,8 @@ export const getSaveFailure = (ex) => {
  * @param {object} args Arguments.
  * @param {InternalCollection} [args.collection] Collection the entry belongs to.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file, if the entry is one.
- * @param {boolean} args.isIndexFile Whether the entry is the index file of a nested collection.
+ * @param {boolean} args.isIndexFile Whether the entry is the index file of a collection with nested
+ * entries.
  * @param {boolean} args.hasPullRequest Whether the entry has a pull request.
  * @param {boolean} args.workflowEnabled Whether the collection uses Editorial Workflow.
  * @param {boolean} args.publishedVersionExists Whether the entry has a published version.

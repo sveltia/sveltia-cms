@@ -20,6 +20,7 @@ describe('Backend Services Index', () => {
       expect(allBackendServices).toHaveProperty('github');
       expect(allBackendServices).toHaveProperty('gitlab');
       expect(allBackendServices).toHaveProperty('gitea');
+      expect(allBackendServices).toHaveProperty('forgejo');
       expect(allBackendServices).toHaveProperty('local');
       expect(allBackendServices).toHaveProperty('test-repo');
     });
@@ -51,6 +52,7 @@ describe('Backend Services Index', () => {
       expect(validBackendNames).toContain('github');
       expect(validBackendNames).toContain('gitlab');
       expect(validBackendNames).toContain('gitea');
+      expect(validBackendNames).toContain('forgejo');
       expect(validBackendNames).toContain('test-repo');
     });
 
@@ -87,6 +89,8 @@ describe('Backend Services Index', () => {
       expect(gitBackendServices).toHaveProperty('github');
       expect(gitBackendServices).toHaveProperty('gitlab');
       expect(gitBackendServices).toHaveProperty('gitea');
+      expect(gitBackendServices).toHaveProperty('forgejo');
+      expect(gitBackendServices.forgejo.name).toBe('forgejo');
     });
   });
 

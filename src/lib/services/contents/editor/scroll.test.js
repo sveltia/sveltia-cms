@@ -64,34 +64,36 @@ describe('getProportionalScrollTop()', () => {
 
 describe('getFieldAlignedScrollTop()', () => {
   test('aligns the matching field at the same relative position', () => {
-    // The top of the content area is a quarter of the way through the field
+    // The top of the content area is a quarter of the way through the field, so the other pane is
+    // scrolled a quarter of the way through the matching field, wherever the panes are on the
+    // screen
     expect(
       getFieldAlignedScrollTop({
         y: 100,
         top: 50,
         height: 200,
-        targetOffsetTop: 600,
+        targetTop: 600,
+        targetHeight: 400,
+      }),
+    ).toBe(700);
+    expect(
+      getFieldAlignedScrollTop({
+        y: 100,
+        top: 100,
+        height: 200,
+        targetTop: 600,
         targetHeight: 400,
       }),
     ).toBe(600);
     expect(
       getFieldAlignedScrollTop({
         y: 100,
-        top: 100,
-        height: 200,
-        targetOffsetTop: 600,
-        targetHeight: 400,
-      }),
-    ).toBe(500);
-    expect(
-      getFieldAlignedScrollTop({
-        y: 100,
         top: -100,
         height: 200,
-        targetOffsetTop: 600,
+        targetTop: 600,
         targetHeight: 400,
       }),
-    ).toBe(900);
+    ).toBe(1000);
   });
 
   test('gives up when the top of the content area is outside the field', () => {
@@ -100,7 +102,7 @@ describe('getFieldAlignedScrollTop()', () => {
         y: 100,
         top: 150,
         height: 200,
-        targetOffsetTop: 600,
+        targetTop: 600,
         targetHeight: 400,
       }),
     ).toBeUndefined();
@@ -109,7 +111,7 @@ describe('getFieldAlignedScrollTop()', () => {
         y: 100,
         top: -150,
         height: 200,
-        targetOffsetTop: 600,
+        targetTop: 600,
         targetHeight: 400,
       }),
     ).toBeUndefined();

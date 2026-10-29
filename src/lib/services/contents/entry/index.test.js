@@ -347,6 +347,60 @@ describe('Test getEntryPreviewURL()', () => {
     expect(result).toBe('https://example.com/2024/01/test-entry');
   });
 
+  test('takes a field that isn’t translated from the default locale', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = {
+      current: { show_preview_links: true, _baseURL: 'https://example.com' },
+    };
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    vi.mocked(fillTemplate).mockReturnValue('ja/2024/test');
+
+    // The date is only stored in the default locale’s file
+    const entry = {
+      ...mockEntry,
+      locales: {
+        ...mockEntry.locales,
+        ja: { ...mockEntry.locales.ja, content: {} },
+      },
+    };
+
+    const collection = {
+      ...mockCollection,
+      // Another name than the other tests use, whose field lookups are cached
+      name: 'articles',
+      preview_path: '/{{locale}}/{{year}}/{{slug}}',
+      fields: [
+        { name: 'title', widget: 'string', i18n: true },
+        { name: 'date', widget: 'datetime', format: 'YYYY-MM-DDTHH:mm:ssZ' },
+        { name: 'tags', widget: 'list', i18n: false },
+      ],
+    };
+
+    const { getCollection } = await import('$lib/services/contents/collection');
+
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ (collection));
+
+    const result = getEntryPreviewURL(entry, 'ja', /** @type {any} */ (collection));
+
+    expect(fillTemplate).toHaveBeenCalledWith(
+      '/{{locale}}/{{year}}/{{slug}}',
+      expect.objectContaining({
+        locale: 'ja',
+        // The translated title isn’t taken from the default locale
+        content: { date: '2024-01-15T10:30:00Z', tags: ['test', 'example'] },
+        dateTimeParts: expect.objectContaining({ year: '2024' }),
+      }),
+    );
+    expect(result).toBe('https://example.com/ja/2024/test');
+  });
+
   test('handles specific datetime field in preview path', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig = {
@@ -1373,6 +1427,68 @@ describe('Test extractDateTime() in different time zones', () => {
       ).toBe('2026-01-14');
     });
   });
+
+  /**
+   * Set the `slug.timezone` option.
+   * @param {'utc' | 'local'} timezone Option value.
+   */
+  const setSlugTimeZone = async (timezone) => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = { current: { slug: { timezone } } };
+  };
+
+  test('reads a date/time in the slug time zone instead of the field’s own', async () => {
+    const fields = [{ name: 'date', widget: 'datetime', input_timezone: 'Asia/Tokyo' }];
+    const content = { date: '2026-01-15T08:00:00+09:00' };
+
+    await setSlugTimeZone('utc');
+
+    inTimeZones(() => {
+      expect(extractDateTime({ fields, content, inSlugTimeZone: true })).toEqual(
+        expect.objectContaining({ year: '2026', month: '01', day: '14', hour: '23' }),
+      );
+    });
+
+    await setSlugTimeZone('local');
+
+    const { TZ } = process.env;
+
+    process.env.TZ = 'America/New_York';
+
+    try {
+      expect(extractDateTime({ fields, content, inSlugTimeZone: true })).toEqual(
+        expect.objectContaining({ year: '2026', month: '01', day: '14', hour: '18' }),
+      );
+    } finally {
+      process.env.TZ = TZ;
+    }
+  });
+
+  test.each([['utc'], ['local']])(
+    'keeps the date of a date-only field with the `%s` slug time zone',
+    async (timezone) => {
+      await setSlugTimeZone(/** @type {'utc' | 'local'} */ (timezone));
+
+      inTimeZones(() => {
+        expect(
+          extractDateTime({
+            fields: [{ name: 'date', widget: 'datetime', time_format: false }],
+            content: { date: '2026-01-15' },
+            inSlugTimeZone: true,
+          }),
+        ).toEqual(expect.objectContaining({ year: '2026', month: '01', day: '15', hour: '00' }));
+        expect(
+          extractDateTime({
+            fields: [
+              { name: 'date', widget: 'datetime', time_format: false, format: 'DD/MM/YYYY' },
+            ],
+            content: { date: '15/01/2026' },
+            inSlugTimeZone: true,
+          }),
+        ).toEqual(expect.objectContaining({ year: '2026', month: '01', day: '15', hour: '00' }));
+      });
+    },
+  );
 });
 
 describe('Test fillEntryPathTemplate()', () => {

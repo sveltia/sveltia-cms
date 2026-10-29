@@ -1,13 +1,19 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import { escapeRegExp, truncate } from '@sveltia/utils/string';
+import { truncate } from '@sveltia/utils/string';
 
+import { getSlugTimeZone, trimSlugEnd } from '$lib/services/common/slug';
 import { replaceTemplatePlaceholder } from '$lib/services/common/template/replacers';
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { cmsConfig } from '$lib/services/config';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
 import { renameIfNeeded } from '$lib/services/utils/file';
-import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import {
+  getMaxSlugBytes,
+  getSlugByteLength,
+  truncateSlugBytes,
+} from '$lib/services/workflow/branch';
 
 /**
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';
@@ -17,15 +23,16 @@ import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 /**
  * Creates existing slugs list for uniqueness validation. With Editorial Workflow, the entries that
  * are still in a pull request count as well: a new entry taking the slug of one of them would take
- * its file path and its workflow branch too. Every entry stored in the collection folder counts,
- * including those the collection’s `filter` option leaves out, which can belong to another
- * collection sharing the folder.
+ * its file path and its workflow branch too. So do the new entries riding along in the pull request
+ * of an entry of another collection, whose files would collide when it’s published. Every entry
+ * stored in the collection folder counts, including those the collection’s `filter` option leaves
+ * out, which can belong to another collection sharing the folder.
  * @param {string} collectionName Collection name.
  * @param {string | undefined} locale Locale string.
  * @param {string} [dirPath] Folder within the collection folder the new entry goes to, as chosen
- * with the path editor of a nested collection. The slug of an entry there is its sub path, e.g.
- * `docs/intro`, so only the entries directly in the folder are taken into account, by their file
- * names.
+ * with the path editor of a collection with nested entries. The slug of an entry there is its sub
+ * path, e.g. `docs/intro`, so only the entries directly in the folder are taken into account, by
+ * their file names.
  * @returns {string[]} List of existing slugs.
  */
 const getExistingSlugs = (collectionName, locale, dirPath) => {
@@ -33,6 +40,7 @@ const getExistingSlugs = (collectionName, locale, dirPath) => {
     [
       ...getEntriesInCollectionFolder(collectionName),
       ...getUnpublishedEntriesByCollection(collectionName),
+      ...getCompanionEntries(collectionName),
     ]
       .map((e) => (locale ? e.locales[locale]?.slug : e.slug))
       .filter(Boolean)
@@ -80,13 +88,12 @@ export const fillTemplate = (template, options) => {
   const slugOptions = cmsConfig.current?.slug;
   // @todo Remove the legacy option prior to the 1.0 release.
   const maxlength = legacySlugLength ?? slugOptions?.maxlength;
-  const timeZone = slugOptions?.timezone === 'local' ? undefined : 'UTC';
 
   /** @type {ReplaceContext} */
   const context = {
     replaceSubContext: {
       ...options,
-      dateTimeParts: dateTimeParts ?? getDateTimeParts({ timeZone }),
+      dateTimeParts: dateTimeParts ?? getDateTimeParts({ timeZone: getSlugTimeZone() }),
       identifierField,
       basePath,
       fullPathRegEx,
@@ -108,20 +115,52 @@ export const fillTemplate = (template, options) => {
     return slug;
   }
 
-  // Truncate a long slug if needed, and remove the replacement character the cut may leave at the
-  // end, which is a hyphen by default but can be configured with `slug.sanitize_replacement`. Like
-  // `slugify`, leave the end alone if the slug isn’t cut or `slug.trim` is turned off, so a slug
-  // can still end with the replacement
+  // A cut may leave the replacement character at the end, which is a hyphen by default but can be
+  // configured with `slug.sanitize_replacement`, and dots, which a branch name can’t end with; they
+  // go with `trimSlugEnd()`
+  let maxBytes = Infinity;
+
+  // Truncate a long slug if the `slug.maxlength` option is set. Leave the end alone if the slug
+  // isn’t cut
   if (typeof maxlength === 'number') {
-    const { sanitize_replacement: replacement = '-', trim = true } = slugOptions ?? {};
     const truncated = truncate(slug, maxlength, { ellipsis: '' });
 
-    if (truncated !== slug && replacement && trim) {
-      slug = truncated.replace(new RegExp(`(?:${escapeRegExp(replacement)})+$`), '');
-    } else {
-      slug = truncated;
+    slug = truncated === slug ? slug : trimSlugEnd(truncated);
+  } else {
+    // Otherwise, cap the slug in bytes so the file name and the Editorial Workflow branch name stay
+    // valid. Existing entries are never renamed, since this only applies to a new slug
+    maxBytes = getMaxSlugBytes({ collectionName, dirPath });
+
+    if (getSlugByteLength(slug) > maxBytes) {
+      slug = trimSlugEnd(truncateSlugBytes(slug, maxBytes));
     }
   }
 
-  return renameIfNeeded(slug, getExistingSlugs(collectionName, locale, dirPath));
+  // `slugify` removes the trailing dots of a value, but the template may still end with one, as in
+  // `{{title}}.`, which a branch name can’t end with. A replacement character in front of it goes
+  // as well, like after a cut
+  if (slug.endsWith('.')) {
+    slug = trimSlugEnd(slug);
+  }
+
+  const existingSlugs = getExistingSlugs(collectionName, locale, dirPath);
+  /**
+   * Make the given slug unique. A dot in a slug is part of the name rather than a file extension,
+   * so a number goes at the end.
+   * @param {string} str Slug.
+   * @returns {string} Unique slug.
+   */
+  const rename = (str) => renameIfNeeded(str, existingSlugs, { hasExtension: false });
+  let uniqueSlug = rename(slug);
+
+  // If the number pushes the slug over the cap, the slug in front of it gives way, so the number
+  // stays distinct, like Decap CMS. Another number may be needed then, so try again
+  while (maxBytes !== Infinity && getSlugByteLength(uniqueSlug) > maxBytes) {
+    const suffixBytes = getSlugByteLength(uniqueSlug) - getSlugByteLength(slug);
+
+    slug = trimSlugEnd(truncateSlugBytes(slug, maxBytes - suffixBytes));
+    uniqueSlug = rename(slug);
+  }
+
+  return uniqueSlug;
 };

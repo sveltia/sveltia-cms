@@ -42,9 +42,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  // `aria-rowindex` is 1-based, unlike the index map. `undefined` for an entry that has never been
-  // published, as those are listed in a separate group above `listedEntries`. The attribute is then
-  // omitted rather than set to an invalid index.
+  // `aria-rowindex` is 1-based, unlike the index map. `undefined` for an entry that isn’t listed,
+  // e.g. one filtered out, so the attribute is omitted rather than set to an invalid index.
   const rowIndex = $derived.by(() => {
     const index = listedEntryIndexMap.current.get(entry.id);
 

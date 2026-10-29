@@ -1091,7 +1091,7 @@ edit_slug_error:
   invalid: Sluggen får inte innehålla specialtecken, inklusive snedstreck och mellanslag.
   duplicate: Denna slugg används för en annan post.
 
-# Entry path editing in a nested collection
+# Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: Överordnad mapp
 new_parent_folder: Ny mapp

@@ -81,3 +81,33 @@ export const BUILTIN_FILE_FORMATS = [
  * @type {FileFormat[]}
  */
 export const TOML_FORMATS = ['toml', 'toml-frontmatter'];
+
+/**
+ * Syntax of a file format: YAML, TOML or JSON.
+ * @typedef {'yaml' | 'toml' | 'json'} FormatSyntax
+ */
+
+/**
+ * Map of the built-in file formats, other than `raw`, to the syntax of the file, or of its front
+ * matter block. A new file in the `frontmatter` format gets YAML front matter.
+ * @type {Record<string, FormatSyntax>}
+ */
+const FORMAT_SYNTAX_MAP = {
+  yml: 'yaml',
+  yaml: 'yaml',
+  toml: 'toml',
+  json: 'json',
+  frontmatter: 'yaml',
+  'yaml-frontmatter': 'yaml',
+  'toml-frontmatter': 'toml',
+  'json-frontmatter': 'json',
+};
+
+/**
+ * Get the syntax of the given file format: that of the whole file, or of its front matter block.
+ * @param {string} format File format.
+ * @returns {FormatSyntax | undefined} Syntax, or `undefined` for the `raw` format or a format
+ * without a built-in parser and formatter.
+ */
+export const getFormatSyntax = (format) =>
+  Object.hasOwn(FORMAT_SYNTAX_MAP, format) ? FORMAT_SYNTAX_MAP[format] : undefined;

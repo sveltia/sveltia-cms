@@ -8,6 +8,7 @@ import { isArrayFileCollection } from '$lib/services/contents/collection/predica
 import { parseCustomSortableFields } from '$lib/services/contents/collection/view/options';
 import { SUMMARY_COLUMN_KEY } from '$lib/services/contents/collection/view/table-keys';
 import { getField } from '$lib/services/contents/entry/fields';
+import { storesNumber } from '$lib/services/contents/fields/number/helpers';
 import { getLocalizedOption } from '$lib/services/contents/i18n/options';
 import { isNumeric } from '$lib/services/utils/number';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
@@ -15,11 +16,12 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
 /**
  * @import {
  * InternalEntryCollection,
+ * ParsedSortableFields,
  * SortingConditions,
  * SortKey,
  * SortOrder,
  * } from '$lib/types/private';
- * @import { ComputeField, Field, FieldKeyPath, NumberField } from '$lib/types/public';
+ * @import { Field, FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -64,8 +66,7 @@ export const SPECIAL_SORT_KEYS = Object.keys(SPECIAL_SORT_KEY_TYPES);
 /**
  * Get default sort keys for the entry collection.
  * @param {FieldKeyPath | undefined} customIdField Custom ID field key path.
- * @returns {{ keys: string[], defaultKey?: string, defaultOrder?: SortOrder }} Parsed sortable
- * fields configuration.
+ * @returns {ParsedSortableFields} Parsed sortable fields configuration.
  */
 export const getDefaultSortKeys = (customIdField) => {
   if (customIdField) {
@@ -89,8 +90,8 @@ export const getDefaultSortKeys = (customIdField) => {
  * author. Available for some Git-based backends.
  * @param {boolean} args.isCommitDateAvailable Whether the entries in the collection have a commit
  * date. Available for some Git-based backends.
- * @returns {{ keys: string[], default: SortingConditions }} A list of sortable fields and default
- * sort conditions.
+ * @returns {{ keys: string[], labels?: Record<string, string>, default: SortingConditions }} A list
+ * of sortable fields, custom labels given in the configuration, and default sort conditions.
  */
 export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDateAvailable }) => {
   const {
@@ -108,6 +109,7 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
   // Copy the keys, which can be the configured `sortable_fields` array itself, before adding any
   let keys = [...parsed.keys];
   let { defaultKey, defaultOrder } = parsed;
+  const { labels } = parsed;
 
   // Special handling for summary field: if the collection has a summary template defined, we add
   // `_summary` as a special sort key, which uses the generated summary value
@@ -171,6 +173,7 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
 
   return {
     keys,
+    labels,
     default: {
       key: defaultKey,
       order: defaultOrder,
@@ -187,7 +190,8 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
  * the key.
  */
 export const getSortKeyType = ({ key, fieldConfig }) => {
-  if (key in SPECIAL_SORT_KEY_TYPES) {
+  // A field named after an `Object.prototype` member, e.g. `constructor`, isn’t a special key
+  if (Object.hasOwn(SPECIAL_SORT_KEY_TYPES, key)) {
     return SPECIAL_SORT_KEY_TYPES[key];
   }
 
@@ -196,13 +200,8 @@ export const getSortKeyType = ({ key, fieldConfig }) => {
   }
 
   // A Compute field yielding a number has the same `value_type` option, but defaults to `string`
-  if (fieldConfig?.widget === 'number' || fieldConfig?.widget === 'compute') {
-    const { value_type: valueType = fieldConfig.widget === 'number' ? 'int' : 'string' } =
-      /** @type {NumberField | ComputeField} */ (fieldConfig);
-
-    if (valueType === 'int' || valueType === 'float') {
-      return Number;
-    }
+  if (fieldConfig && storesNumber(fieldConfig)) {
+    return Number;
   }
 
   return String;
@@ -244,10 +243,11 @@ export const getSortKeyLabel = ({ collection, key }) => {
 };
 
 /**
- * List of available sort keys for the selected entry collection. `getSortKeyLabel()` may return a
- * localized label, and it reads the current app locale, so the list is also recomputed when the
- * locale changes. A key sorted as a number is marked as such, so that the sort menu words its
- * orders for one, e.g. “small to large”.
+ * List of available sort keys for the selected entry collection. A key is labelled with the
+ * `label` given in the `sortable_fields` option, if any. `getSortKeyLabel()` may return a localized
+ * label, and it reads the current app locale, so the list is also recomputed when the locale
+ * changes. A key sorted as a number is marked as such, so that the sort menu words its orders for
+ * one, e.g. “small to large”.
  * @type {{ readonly current: SortKey[] }}
  */
 export const sortKeys = createDerivedState(() => {
@@ -260,7 +260,7 @@ export const sortKeys = createDerivedState(() => {
 
   const { current: _allEntries } = allEntries;
 
-  const { keys } = getSortConfig({
+  const { keys, labels } = getSortConfig({
     collection,
     isCommitAuthorAvailable: _allEntries.some((entry) => !!entry.commitAuthor),
     isCommitDateAvailable: _allEntries.some((entry) => !!entry.commitDate),
@@ -269,7 +269,7 @@ export const sortKeys = createDerivedState(() => {
   return keys.map((key) => {
     const fieldConfig = getField({ collectionName: collection.name, keyPath: key });
     /** @type {SortKey} */
-    const sortKey = { key, label: getSortKeyLabel({ collection, key }) };
+    const sortKey = { key, label: labels?.[key] ?? getSortKeyLabel({ collection, key }) };
 
     if (getSortKeyType({ key, fieldConfig }) === Number) {
       sortKey.type = 'number';

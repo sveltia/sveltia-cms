@@ -4,9 +4,7 @@ import { checkExternalAssetsAvailability } from '$lib/services/assets/external/a
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
-import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
+import { getEntryCollectionContexts } from '$lib/services/contents/entry/contexts';
 import { getField } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
@@ -92,19 +90,19 @@ export const createLinkedAsset = (url, isImage) => {
  * @returns {string[]} Widget names.
  */
 const getFieldWidgets = (entry, content, keyPath) =>
-  getAssociatedCollections(entry).flatMap((collection) => {
-    const collectionName = collection.name;
-    const isIndexFile = isCollectionIndexFile(collection, entry);
-    const collectionFiles = getCollectionFilesByEntry(collection, entry);
+  getEntryCollectionContexts(entry)
+    .map(({ collection, collectionFile, isIndexFile }) => {
+      const field = getField({
+        collectionName: collection.name,
+        fileName: collectionFile?.name,
+        valueMap: content,
+        keyPath,
+        isIndexFile,
+      });
 
-    const fields = collectionFiles.length
-      ? collectionFiles.map(({ name: fileName }) =>
-          getField({ collectionName, fileName, valueMap: content, keyPath, isIndexFile }),
-        )
-      : [getField({ collectionName, valueMap: content, keyPath, isIndexFile })];
-
-    return fields.map((field) => field?.widget ?? 'string');
-  });
+      return field?.widget ?? 'string';
+    })
+    .toArray();
 
 /**
  * Collect the files linked from the File/Image fields of the given entries. A URL used by more than

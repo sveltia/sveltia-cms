@@ -5,6 +5,7 @@ import {
   getListItemKeys,
   getWildcardKeyPathPattern,
   isKeyPathWithin,
+  ITEM_INDEX_SUFFIX_REGEX,
 } from '$lib/services/contents/entry/key-paths';
 
 describe('getKeysByPrefix()', () => {
@@ -158,5 +159,20 @@ describe('getWildcardKeyPathPattern()', () => {
 
     expect(regex.test('a\\d+.3')).toBe(true);
     expect(regex.test('a5.3')).toBe(false);
+  });
+});
+
+describe('ITEM_INDEX_SUFFIX_REGEX', () => {
+  test('matches a list item key path', () => {
+    expect(ITEM_INDEX_SUFFIX_REGEX.test('field.0')).toBe(true);
+    expect(ITEM_INDEX_SUFFIX_REGEX.test('field.999')).toBe(true);
+    expect(ITEM_INDEX_SUFFIX_REGEX.test('nested.field.0')).toBe(true);
+    expect('blocks.0.images.1'.replace(ITEM_INDEX_SUFFIX_REGEX, '')).toBe('blocks.0.images');
+  });
+
+  test('doesn’t match any other key path', () => {
+    expect(ITEM_INDEX_SUFFIX_REGEX.test('field')).toBe(false);
+    expect(ITEM_INDEX_SUFFIX_REGEX.test('field.name')).toBe(false);
+    expect(ITEM_INDEX_SUFFIX_REGEX.test('field.0.subfield')).toBe(false);
   });
 });

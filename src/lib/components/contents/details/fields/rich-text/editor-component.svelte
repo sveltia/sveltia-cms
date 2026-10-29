@@ -2,7 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Dialog, Spacer, VisibilityObserver } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { onMount, setContext } from 'svelte';
+  import { onMount } from 'svelte';
   import { on } from 'svelte/events';
 
   import Image from '$lib/components/assets/shared/image.svelte';
@@ -17,16 +17,21 @@
   } from '$lib/services/contents/draft/state.svelte';
   import { deferDraftWrite } from '$lib/services/contents/draft/update/deferred';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { setFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
   import {
     getComponentDisplayText,
     getComponentDisplayValues,
   } from '$lib/services/contents/fields/rich-text/components/summary';
   import { getComponentThumbnail } from '$lib/services/contents/fields/rich-text/components/thumbnail';
-  import { getParentComponentNames } from '$lib/services/contents/fields/rich-text/components/utils';
+  import {
+    getParentComponentNames,
+    observeReadonly,
+  } from '$lib/services/contents/fields/rich-text/components/utils';
   import { validateComponentValues } from '$lib/services/contents/fields/rich-text/components/validate';
   import {
     deleteKeysByPrefix,
+    deleteOwnKeysByPrefix,
     flattenWithPrefix,
     getValuesByPrefix,
     reconcileComponentValues,
@@ -92,9 +97,14 @@
    * @type {string[]}
    */
   let parentComponentNames = $state.raw([]);
+  /**
+   * Whether the rich text field this component is in can’t be edited, e.g. with the `readonly`
+   * option or in a locale that follows the default one. It’s also looked up through the DOM, and
+   * handed down to the field editors below, which are otherwise unaware of it.
+   */
+  let readonly = $state(false);
 
-  setContext(
-    'field-editor',
+  setFieldEditorContext(
     /** @type {FieldEditorContext} */ ({
       /**
        * Get the names of the components this one is nested in.
@@ -102,6 +112,13 @@
        */
       get parentComponentNames() {
         return parentComponentNames;
+      },
+      /**
+       * Get whether the fields can’t be edited.
+       * @returns {boolean} Result.
+       */
+      get readonly() {
+        return readonly;
       },
     }),
   );
@@ -223,7 +240,7 @@
       event.preventDefault();
     }
 
-    if (target === wrapper && event.key === 'Backspace') {
+    if (target === wrapper && event.key === 'Backspace' && !readonly) {
       onChange(new CustomEvent('remove'));
     }
   };
@@ -240,10 +257,21 @@
    */
   let previousValues = undefined;
   /**
+   * Whether `values` has just been replaced with the data of the node with {@link setValues}, e.g.
+   * after an undo, so the values are written to the draft as they are, and not reported back to the
+   * node, which would add a step to the history and drop what can be redone.
+   */
+  let valuesFromNode = false;
+  /**
    * Whether the component has been unmounted, after which a deferred write must not put its values
    * back into the draft. A plain variable, as it’s read outside of any reactive context.
    */
   let unmounted = false;
+  /**
+   * Observer following the read-only state of the rich text field this component is in.
+   * @type {MutationObserver | undefined}
+   */
+  let readonlyObserver = undefined;
 
   /**
    * Current values for the editor component. These values are stored in the {@link entryDraft}
@@ -272,6 +300,18 @@
   const attachEntryDraft = (element) => {
     if (entryDraft) {
       setEntryDraftRoot(element, entryDraft);
+    }
+  };
+
+  /**
+   * Replace the component values with the data of the node, which changes without the component
+   * knowing when the change is undone or redone.
+   * @param {Record<string, any>} newValues New values.
+   */
+  export const setValues = (newValues) => {
+    if (!equal(newValues, values)) {
+      valuesFromNode = true;
+      values = newValues;
     }
   };
 
@@ -411,6 +451,9 @@
       entryDraft = getEntryDraftByElement(wrapper);
       // Before the locale and key path, which render the field editors: they read the names once
       parentComponentNames = getParentComponentNames(wrapper);
+      readonlyObserver = observeReadonly(wrapper, (value) => {
+        readonly = value;
+      });
 
       const localeContainer = /** @type {HTMLElement} */ (wrapper?.closest('[data-locale]'));
       const keyPathContainer = /** @type {HTMLElement} */ (wrapper?.closest('[data-key-path]'));
@@ -435,6 +478,7 @@
       const draft = entryDraft?.current;
 
       unmounted = true;
+      readonlyObserver?.disconnect();
 
       // Remove the values and validities from the draft when the component is unmounted
       if (draft) {
@@ -448,6 +492,10 @@
     () => [values, locale, keyPath],
     () => {
       if (entryDraft?.current && locale && keyPath) {
+        const fromNode = valuesFromNode;
+
+        valuesFromNode = false;
+
         const reconciledValues = reconcileComponentValues({
           values,
           fields,
@@ -459,6 +507,11 @@
         // Only reassign when something actually changed, or this would run forever
         if (reconciledValues !== values) {
           values = reconciledValues;
+        }
+
+        // The node already holds these values, so they don’t have to be reported to it (block mode)
+        if (fromNode) {
+          previousValues = values;
         }
 
         if (!equal(values, currentValues)) {
@@ -482,6 +535,12 @@
             }
 
             if (!unmounted) {
+              // The node’s data replaces the values as a whole, e.g. a list item an undo removes,
+              // while the components nested in the fields keep theirs
+              if (fromNode) {
+                deleteOwnKeysByPrefix(draft[valueStoreKey][locale], keyPathPrefix);
+              }
+
               Object.assign(draft[valueStoreKey][locale], flatValues);
             }
           });
@@ -570,7 +629,10 @@
 
       if (event.key === 'Backspace') {
         event.preventDefault();
-        onChange(new CustomEvent('remove'));
+
+        if (!readonly) {
+          onChange(new CustomEvent('remove'));
+        }
       }
     }}
   >
@@ -617,21 +679,26 @@
         {/if}
       </div>
       {#snippet footer()}
-        <Button
-          variant="secondary"
-          label={_('remove')}
-          onclick={() => {
-            handleRemove();
-          }}
-        />
+        <!-- A read-only component can only be viewed, so the dialog can only be dismissed -->
+        {#if !readonly}
+          <Button
+            variant="secondary"
+            label={_('remove')}
+            onclick={() => {
+              handleRemove();
+            }}
+          />
+        {/if}
         <Spacer flex={true} />
-        <Button
-          variant="primary"
-          label={_(isNewComponent ? 'insert' : 'update')}
-          onclick={() => {
-            handleOk();
-          }}
-        />
+        {#if !readonly}
+          <Button
+            variant="primary"
+            label={_(isNewComponent ? 'insert' : 'update')}
+            onclick={() => {
+              handleOk();
+            }}
+          />
+        {/if}
         <Button
           variant="secondary"
           label={_('cancel')}
@@ -685,11 +752,13 @@
       bind:expanded
     >
       {#snippet endContent()}
-        <RemoveButton
-          onclick={() => {
-            onChange(new CustomEvent('remove'));
-          }}
-        />
+        {#if !readonly}
+          <RemoveButton
+            onclick={() => {
+              onChange(new CustomEvent('remove'));
+            }}
+          />
+        {/if}
       {/snippet}
     </ObjectHeader>
     {#if hasFields}

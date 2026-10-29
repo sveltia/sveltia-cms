@@ -11,7 +11,7 @@ import { waitForToastsToHide } from '$lib/test/toast';
 import QuickAddDialog from './quick-add-dialog.svelte';
 
 /**
- * @import { InternalEntryCollection, PendingEntry } from '$lib/types/private';
+ * @import { InternalEntryCollection, PendingEntry, QuickAddHost } from '$lib/types/private';
  * @import { RelationField } from '$lib/types/public';
  */
 
@@ -42,11 +42,21 @@ const createPending = (collectionName, slug) => ({
  * @param {object} [options] Options.
  * @param {string} [options.collectionName] Name of the collection to create an entry in.
  * @param {PendingEntry[]} [options.pendingEntries] Entries pending on the parent draft.
+ * @param {QuickAddHost} [options.quickAddHost] Host entry of the parent draft, when that’s the
+ * draft of another quick-add dialog.
  * @returns {Promise<{ draft: any, props: any, onAdd: any }>} Parent draft, props and the `onAdd`
  * callback.
  */
-const renderDialog = async ({ collectionName = 'tags', pendingEntries = [] } = {}) => {
-  const draft = createMockDraft({ fields: [fieldConfig], draft: { pendingEntries } });
+const renderDialog = async ({
+  collectionName = 'tags',
+  pendingEntries = [],
+  quickAddHost = undefined,
+} = {}) => {
+  const draft = createMockDraft({
+    fields: [fieldConfig],
+    draft: { pendingEntries, ...(quickAddHost ? { quickAddHost } : {}) },
+  });
+
   const onAdd = vi.fn();
 
   const props = $state({
@@ -189,6 +199,42 @@ describe('QuickAddDialog', () => {
     await expect.poll(() => props.open).toBe(false);
     // The inherited entry isn’t added again, the nested one comes along
     expect(draft.pendingEntries).toEqual([inherited, nested, pendingEntry]);
+  });
+
+  test('tells the new entry which entry it’s saved along with', async () => {
+    // It decides what can be added from the Relation fields of the new entry in turn
+    // @see https://github.com/sveltia/sveltia-cms/issues/1112
+    /** @type {QuickAddHost | undefined} */
+    let quickAddHost;
+
+    vi.mocked(createPendingEntry).mockImplementation(async ({ draft: subDraft }) => {
+      ({ quickAddHost } = subDraft);
+
+      return createPending('tags', 'svelte');
+    });
+
+    const { draft, props } = await renderDialog();
+    const dialog = page.getByRole('dialog', { name: /Creating.*Tag/ });
+
+    await dialog.getByRole('textbox', { name: 'Title' }).fill('Svelte');
+    await dialog.getByRole('button', { name: 'Add' }).click();
+    await expect.poll(() => props.open).toBe(false);
+    // The parent draft is the entry being edited, so it’s the host
+    expect(quickAddHost).toEqual({
+      collectionName: draft.collectionName,
+      workflow: false,
+      branch: undefined,
+    });
+
+    // A nested dialog passes on the host it has been given
+    const host = { collectionName: 'posts', workflow: true, branch: 'cms/posts/hello' };
+    const nested = await renderDialog({ quickAddHost: host });
+    const nestedDialog = page.getByRole('dialog', { name: /Creating.*Tag/ });
+
+    await nestedDialog.getByRole('textbox', { name: 'Title' }).fill('React');
+    await nestedDialog.getByRole('button', { name: 'Add' }).click();
+    await expect.poll(() => nested.props.open).toBe(false);
+    expect(quickAddHost).toEqual(host);
   });
 
   test('reports the invalid fields instead of adding the entry', async () => {

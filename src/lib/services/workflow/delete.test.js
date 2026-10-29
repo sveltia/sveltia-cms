@@ -20,11 +20,11 @@ const collection = { name: 'posts' };
 /** @type {any} */
 const collectionFile = { name: 'about' };
 /** @type {any} */
-const draft = { slug: 'draft', workflow: { status: 'draft' } };
+const draft = { slug: 'draft', subPath: '2024/draft', workflow: { status: 'draft' } };
 /** @type {any} */
-const entryA = { slug: 'a' };
+const entryA = { slug: 'a', subPath: '2024/a' };
 /** @type {any} */
-const entryB = { slug: 'b' };
+const entryB = { slug: 'b', subPath: '2024/b' };
 /** @type {any} */
 const assetA = { path: 'content/posts/a/image.png' };
 
@@ -143,8 +143,8 @@ describe('deleteOrDiscardEntries', () => {
     });
     expect(cancelBackup).toHaveBeenCalled();
     expect(deleteBackup).toHaveBeenCalledTimes(2);
-    expect(deleteBackup).toHaveBeenCalledWith('posts', 'draft');
-    expect(deleteBackup).toHaveBeenCalledWith('posts', 'a');
+    expect(deleteBackup).toHaveBeenCalledWith('posts', '2024/draft');
+    expect(deleteBackup).toHaveBeenCalledWith('posts', '2024/a');
   });
 
   test('deletes the draft backups of the entries whose deletion is requested', async () => {
@@ -156,8 +156,8 @@ describe('deleteOrDiscardEntries', () => {
       collection,
       useWorkflow: true,
     });
-    expect(deleteBackup).toHaveBeenCalledWith('posts', 'a');
-    expect(deleteBackup).toHaveBeenCalledWith('posts', 'b');
+    expect(deleteBackup).toHaveBeenCalledWith('posts', '2024/a');
+    expect(deleteBackup).toHaveBeenCalledWith('posts', '2024/b');
   });
 
   test('deletes the draft backup of a collection file under its name', async () => {

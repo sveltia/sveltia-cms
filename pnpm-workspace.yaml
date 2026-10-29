@@ -1,18 +1,23 @@
+# cSpell:ignore gcqx
+
 allowBuilds:
   unrs-resolver: false
 
+engineStrict: true
+
 auditConfig:
   ignoreGhsas:
-    # braces, used only in Stylelint
-    # https://github.com/advisories/GHSA-vfj7-8cjw-p6xm
-    - GHSA-vfj7-8cjw-p6xm
-
-engineStrict: true
+    # deepmerge: low severity, unpatched. Only used at build time by `@sveltejs/vite-plugin-svelte`;
+    # the CMS itself uses `@fastify/deepmerge` instead
+    # https://github.com/advisories/GHSA-gcqx-w48m-w2h4
+    - GHSA-gcqx-w48m-w2h4
 
 minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
   - '@sveltia/*'
+  - lexical
+  - '@lexical/*'
 
 overrides:
   # esrap 2.3.3 wraps any node carrying a leading `/** @type {...} */` comment in parentheses,
@@ -21,12 +26,3 @@ overrides:
   # breaks the build and tests. Pin to the last good release until the upstream fix lands.
   # https://github.com/sveltejs/svelte/issues/18643
   esrap: 2.3.2
-
-patchedDependencies:
-  # The table plugin’s `pointerdown` handler, on the window, also takes a click in a rich text
-  # editor nested in an editor component for its own: it looks up the nested table in the parent
-  # editor and throws, and the recovery moves the selection back to the parent and scrolls to it.
-  # Leave a click whose nearest editor is another one to that editor, like
-  # `isSelectionWithinEditor()` does. Remove once the upstream fix lands.
-  # https://github.com/facebook/lexical/issues/9355
-  '@lexical/table@0.52.0': patches/@lexical__table@0.52.0.patch

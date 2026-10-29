@@ -539,6 +539,22 @@ describe('Google Translator Service', () => {
         expect(normalizeLanguage('unsupported-Latn')).toBeUndefined();
       });
 
+      it('should use the script a region implies when there is no script code', () => {
+        // Punjabi in Pakistan is written in the Arabic script, and Google’s `pa` in Gurmukhi
+        expect(normalizeLanguage('pa-PK')).toBe('pa-Arab');
+        expect(normalizeLanguage('pa_pk')).toBe('pa-Arab');
+        expect(normalizeLanguage('pa-IN')).toBe('pa');
+        // Serbian in Montenegro is written in Latin, and Google’s `sr` is Cyrillic
+        expect(normalizeLanguage('sr-ME')).toBeUndefined();
+        expect(normalizeLanguage('sr-RS')).toBe('sr');
+        expect(normalizeLanguage('az-IR')).toBeUndefined();
+        expect(normalizeLanguage('zh-US')).toBe('zh-TW');
+        expect(normalizeLanguage('zh-MY')).toBe('zh-CN');
+        expect(normalizeLanguage('es-419')).toBe('es');
+        // Not a valid language code
+        expect(normalizeLanguage('unsupported-US')).toBeUndefined();
+      });
+
       it('should map the Norwegian nb code to no', () => {
         expect(normalizeLanguage('nb')).toBe('no');
         expect(normalizeLanguage('nb-NO')).toBe('no');

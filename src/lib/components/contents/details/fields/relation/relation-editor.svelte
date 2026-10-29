@@ -7,12 +7,12 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Button, Icon } from '@sveltia/ui';
-  import { getContext } from 'svelte';
 
   import QuickAddDialog from '$lib/components/contents/details/fields/relation/quick-add-dialog.svelte';
   import SelectEditor from '$lib/components/contents/details/fields/select/select-editor.svelte';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import { getOptions } from '$lib/services/contents/fields/relation/helpers';
   import {
     getCreatableCollection,
@@ -20,9 +20,10 @@
     hasCreationRoom,
     selectPendingEntry,
   } from '$lib/services/contents/fields/relation/quick-add';
+  import { getDraftSharedValues } from '$lib/services/contents/i18n/shared-values';
 
   /**
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { RelationField, SelectField } from '$lib/types/public';
    */
 
@@ -34,8 +35,7 @@
 
   const entryDraft = getEntryDraftContext();
 
-  /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  const { valueStoreKey = 'currentValues' } = getFieldEditorContext();
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -72,6 +72,12 @@
       refEntries,
       currentLocaleValues,
       currentSlug,
+      // A filter can refer to a field that isn’t localized, which only has a value in the default
+      // locale. The values of a rich text editor component are localized along with the document
+      sharedValues:
+        valueStoreKey === 'currentValues'
+          ? getDraftSharedValues(entryDraft.current, locale)
+          : undefined,
       // A label can refer to another pending entry through a Relation field of the entry
       pendingEntries: entryDraft.current?.pendingEntries,
     }),

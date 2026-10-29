@@ -215,13 +215,14 @@ const getRevertedPairedListKeyPaths = ({ draft, keyPath }) => {
  * List or Object type, this will likely match multiple fields.
  */
 export const revertChanges = ({ draft, locale: targetLanguage = '', keyPath = '' }) => {
-  const { currentValues, originalPath, originalSlugs } = draft;
+  const { currentValues, originalLocales, originalPath, originalSlugs } = draft;
   const { allLocales, defaultLocale } = getDraftI18nConfig(draft);
   const locales = targetLanguage ? [targetLanguage] : allLocales;
   // Reverting one field or one locale only touches values. Reverting everything restores where the
   // entry goes as well — the folder chosen with the path editor and the slugs, which name the file
-  // or its folder in each locale — or a move or rename would survive the revert and still be
-  // committed on the next save
+  // or its folder in each locale — and which locales it’s output in, or a move, rename or disabled
+  // locale would survive the revert and still be committed on the next save, which deletes the file
+  // of a locale left disabled
   const revertsEverything = !targetLanguage && !keyPath;
 
   locales.forEach((locale) => {
@@ -249,6 +250,7 @@ export const revertChanges = ({ draft, locale: targetLanguage = '', keyPath = ''
   });
 
   if (revertsEverything) {
+    draft.currentLocales = { ...originalLocales };
     draft.currentPath = originalPath;
     draft.currentSlugs = { ...originalSlugs };
   }

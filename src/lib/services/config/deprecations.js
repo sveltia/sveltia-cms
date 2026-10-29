@@ -7,7 +7,6 @@ export const warnedOnceMap = {
   slug_length: false,
   slug_editor_tag: false,
   yaml_quote: false,
-  uuid_read_only: false,
   save_all_locales: false,
   automatic_deployments: false,
   multiple_folders_i18n_root: false,
@@ -33,9 +32,6 @@ export const warningMessages = {
     'The `yaml_quote` collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
     'Use the global `output.yaml.quote` option instead. `yaml_quote: true` is equivalent to ' +
     '`quote: double`. https://sveltiacms.app/en/docs/data-output#controlling-data-output',
-  uuid_read_only:
-    'The `read_only` option for the UUID field type is deprecated and will be removed in Sveltia ' +
-    'CMS 1.0. Use the `readonly` option instead.',
   save_all_locales:
     'The `save_all_locales` i18n option is deprecated and will be removed in Sveltia CMS 1.0. ' +
     'Use the `initial_locales` option instead. `save_all_locales: false` is equivalent to ' +

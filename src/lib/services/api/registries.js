@@ -9,14 +9,14 @@ import { SvelteMap } from 'svelte/reactivity';
  * CustomFieldSchema,
  * CustomFieldSummary,
  * CustomPreviewTemplate,
- * EditorComponentDefinition,
+ * CustomEditorComponentDefinition,
  * StringTransformer,
  * } from '$lib/types/public';
  */
 
 /**
  * Custom components registered using the `CMS.registerEditorComponent` API.
- * @type {Map<string, EditorComponentDefinition>}
+ * @type {Map<string, CustomEditorComponentDefinition>}
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */

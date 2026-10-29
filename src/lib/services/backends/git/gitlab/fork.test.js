@@ -222,6 +222,15 @@ describe('GitLab Open Authoring service', () => {
 
       await expect(fetchForkByName()).resolves.toBeUndefined();
     });
+
+    test('passes on a failure other than a missing project', async () => {
+      // A rate limit or an outage says nothing about whether the fork is there, and reading it as
+      // missing would have the contributor asked to create another one
+      const error = new Error('Service Unavailable', { cause: { status: 503 } });
+
+      vi.mocked(fetchAPI).mockRejectedValue(error);
+      await expect(fetchForkByName()).rejects.toBe(error);
+    });
   });
 
   describe('fetchForkFromNetwork', () => {
@@ -257,16 +266,20 @@ describe('GitLab Open Authoring service', () => {
       await expect(fetchForkFromNetwork()).resolves.toBeUndefined();
     });
 
-    test('gives up when the list can’t be read', async () => {
-      vi.mocked(fetchAPI).mockRejectedValue(new Error('Forbidden'));
-      await expect(fetchForkFromNetwork()).resolves.toBeUndefined();
+    test('passes on a failure to read the list', async () => {
+      // A rate limit or an outage says nothing about whether a renamed fork is there, and reading
+      // it as missing would have the contributor asked to create another one
+      const error = new Error('Service Unavailable', { cause: { status: 503 } });
+
+      vi.mocked(fetchAPI).mockRejectedValue(error);
+      await expect(fetchForkFromNetwork()).rejects.toBe(error);
     });
   });
 
   describe('fetchFork', () => {
     test('falls back to the fork list when the default path is empty', async () => {
       vi.mocked(fetchAPI)
-        .mockRejectedValueOnce(new Error('Not Found'))
+        .mockRejectedValueOnce(new Error('Not Found', { cause: { status: 404 } }))
         .mockResolvedValueOnce([
           {
             id: 77,
@@ -505,6 +518,11 @@ describe('GitLab Open Authoring service', () => {
 
         if (path === `/projects/${PROJECT_ID}`) {
           return { id: 42 };
+        }
+
+        // The contributor has no fork under another name either
+        if (path.startsWith(`/projects/${PROJECT_ID}/forks?`)) {
+          return [];
         }
 
         // The fork’s own path: not found before the fork is made, ready right after

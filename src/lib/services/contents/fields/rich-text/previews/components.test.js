@@ -4,6 +4,8 @@
 import { fromJS, isList } from 'immutable';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { getBuiltInComponentDefs } from '$lib/services/contents/fields/rich-text/components/definitions';
+
 import {
   buildMarkdownWithPreviews,
   encodeImageSrc,
@@ -417,6 +419,26 @@ describe('buildMarkdownWithPreviews', () => {
     expect(previewMap.get(key)).toBe('<span class="tag">foo</span>');
   });
 
+  it('should only match a pattern-based inline component where its trigger is found', () => {
+    /** @type {import('$lib/types/private').ResolvedEditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'x-mention',
+        label: 'Mention',
+        fields: [],
+        // Without the trigger, any word would be a mention
+        pattern: /@?(?<user>[a-z]+)/,
+        toBlock: ({ user }) => `@${user}`,
+        toPreview: ({ user }) => `<b>${user}</b>`,
+        inlinePattern: { trigger: '@' },
+      },
+    ];
+
+    const { markdown } = buildMarkdownWithPreviews('hi @bob, `@code`', componentDefs);
+
+    expect(markdown).toBe('hi <b>bob</b>, `@code`');
+  });
+
   it('should handle multiple instances of the same component', () => {
     /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
     const componentDefs = [
@@ -547,6 +569,166 @@ describe('buildMarkdownWithPreviews', () => {
     const { markdown } = buildMarkdownWithPreviews('![alt](my image.png)', []);
 
     expect(markdown).toBe('![alt](my%20image.png)');
+  });
+
+  it('should encode the spaces in a linked image, but not in code', () => {
+    const { markdown } = buildMarkdownWithPreviews(
+      '[![a](my image.png "A title")](my page.html) `![b](my image.png)`\n\n```\n![c](d e.png)\n```',
+      [],
+    );
+
+    expect(markdown).toBe(
+      '[![a](my%20image.png "A title")](my%20page.html) `![b](my image.png)`\n\n```\n![c](d e.png)\n```',
+    );
+  });
+
+  it('should leave a link with a title as is, so Marked takes the title apart', () => {
+    const markdown = '[![a](my image.png)](https://example.com "Home") [![b](c.png)](d \'e\')';
+
+    expect(buildMarkdownWithPreviews(markdown, []).markdown).toBe(
+      '[![a](my%20image.png)](https://example.com "Home") [![b](c.png)](d \'e\')',
+    );
+  });
+
+  it('should leave the built-in images to Marked', () => {
+    const markdown = '![a](b.png)\nSome **bold** caption\n\n[![c](d.png)](e.html) `![f](g.png)`';
+    const result = buildMarkdownWithPreviews(markdown, getBuiltInComponentDefs());
+
+    expect(result.markdown).toBe(markdown);
+    expect(result.previewMap.size).toBe(0);
+  });
+
+  describe('component syntax in code', () => {
+    /** @type {import('$lib/types/public').EditorComponentDefinition[]} */
+    const componentDefs = [
+      {
+        id: 'note',
+        label: 'Note',
+        fields: [],
+        pattern: /\[note\](?<content>.*?)\[\/note\]/gs,
+        toBlock: ({ content }) => `[note]${content}[/note]`,
+        toPreview: ({ content }) => `<b>${content}</b>`,
+      },
+      {
+        id: 'mermaid',
+        label: 'Mermaid',
+        fields: [],
+        pattern: /^```mermaid\n(?<code>[\s\S]*?)\n```$/m,
+        toBlock: ({ code }) => `\`\`\`mermaid\n${code}\n\`\`\``,
+        toPreview: ({ code }) => `<i>${code}</i>`,
+      },
+    ];
+
+    it('should leave a component within a code span or fenced code block as is', () => {
+      const { markdown } = buildMarkdownWithPreviews(
+        'Use `[note]A[/note]` for [note]B[/note]\n\n~~~\n[note]C[/note]\n~~~',
+        componentDefs,
+      );
+
+      expect(markdown).toBe('Use `[note]A[/note]` for <b>B</b>\n\n~~~\n[note]C[/note]\n~~~');
+    });
+
+    it('should substitute a component made of an indented fenced code block', () => {
+      const { markdown } = buildMarkdownWithPreviews('- Item\n\n  ```mermaid\ngraph\n```', [
+        { ...componentDefs[1], pattern: /```mermaid\n(?<code>[\s\S]*?)\n```/ },
+      ]);
+
+      expect(markdown).toBe('- Item\n\n  <i>graph</i>');
+    });
+
+    it('should substitute a component made of a fenced code block', () => {
+      const { markdown } = buildMarkdownWithPreviews(
+        '```mermaid\ngraph\n```\n\n```js\n[note]A[/note]\n```',
+        componentDefs,
+      );
+
+      expect(markdown).toBe('<i>graph</i>\n\n```js\n[note]A[/note]\n```');
+    });
+  });
+
+  describe('string preview starting an HTML block', () => {
+    /**
+     * Build the Markdown with a component whose preview is the given HTML.
+     * @param {string} markdown Markdown.
+     * @param {(text: string) => string} toPreview Preview builder.
+     * @returns {string} Result.
+     */
+    const build = (markdown, toPreview = (text) => `<div class="note">${text}</div>`) =>
+      buildMarkdownWithPreviews(markdown, [
+        {
+          id: 'note',
+          label: 'Note',
+          fields: [],
+          pattern: /:::note (?<text>\w+)/,
+          toBlock: ({ text }) => `:::note ${text}`,
+          toPreview: ({ text }) => toPreview(text),
+        },
+      ]).markdown;
+
+    it('should end the block before the next line, so it’s still parsed as Markdown', () => {
+      expect(build(':::note A\nSome **bold** text')).toBe(
+        '<div class="note">A</div>\n\nSome **bold** text',
+      );
+      expect(build('Text\n   :::note A tail\nNext\n\n:::note B\nNext')).toBe(
+        'Text\n   <div class="note">A</div> tail\n\nNext\n\n<div class="note">B</div>\n\nNext',
+      );
+      // A lone tag of another element, unless it follows a paragraph
+      expect(
+        build(':::note A\nNext\nText\n:::note B\nNext', (text) => `<x-note a="${text}">`),
+      ).toBe('<x-note a="A">\n\nNext\nText\n<x-note a="B">\nNext');
+      // A multi-line preview
+      expect(build(':::note A\nNext', (text) => `<figure>\n${text}\n</figure>`)).toBe(
+        '<figure>\nA\n</figure>\n\nNext',
+      );
+    });
+
+    it('should leave the following lines as is where the block doesn’t change them', () => {
+      // Not at the start of a line, or indented as code
+      expect(build('Text :::note A\nNext')).toBe('Text <div class="note">A</div>\nNext');
+      expect(build('    :::note A\nNext')).toBe('    <div class="note">A</div>\nNext');
+      // No following line with text
+      expect(build(':::note A\n\nNext')).toBe('<div class="note">A</div>\n\nNext');
+      expect(build(':::note A')).toBe('<div class="note">A</div>');
+      // Not an HTML block
+      expect(build(':::note A\nNext', (text) => `<b>${text}</b>`)).toBe('<b>A</b>\nNext');
+      // Within an HTML block of the Markdown already
+      expect(build('<div>\n:::note A\nNext\n</div>')).toBe(
+        '<div>\n<div class="note">A</div>\nNext\n</div>',
+      );
+      // A preview with a blank line ends the block itself
+      expect(build(':::note A\nNext', (text) => `<div>${text}\n\n</div>`)).toBe(
+        '<div>A\n\n</div>\nNext',
+      );
+    });
+
+    it('should end the block after the line of a later match on the same line', () => {
+      expect(build(':::note A :::note B\nNext')).toBe(
+        '<div class="note">A</div> <div class="note">B</div>\n\nNext',
+      );
+    });
+
+    it('should end the block after the next component when it spans the line end', () => {
+      const { markdown } = buildMarkdownWithPreviews(':::note A [x]\n[/x]\nNext', [
+        {
+          id: 'note',
+          label: 'Note',
+          fields: [],
+          pattern: /:::note (?<text>\w+)/,
+          toBlock: ({ text }) => `:::note ${text}`,
+          toPreview: ({ text }) => `<div>${text}</div>`,
+        },
+        {
+          id: 'x',
+          label: 'X',
+          fields: [],
+          pattern: /\[x\]\n\[\/x\]/,
+          toBlock: () => '[x]\n[/x]',
+          toPreview: () => '<hr>',
+        },
+      ]);
+
+      expect(markdown).toBe('<div>A</div> <hr>\n\nNext');
+    });
   });
 
   it('should assign a suffix key to duplicate component matches', () => {

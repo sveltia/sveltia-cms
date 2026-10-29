@@ -720,7 +720,16 @@ describe('contents/draft/create/proxy.svelte', () => {
         keyPath: 'count',
         value: 42,
         valueMap: draft.currentValues.en,
+        keyAdded: true,
       });
+
+      // The key path is known now, which tells the List fields the value may be in that their item
+      // count hasn’t changed
+      draft.currentValues.en.count = 43;
+
+      expect(revalidateField).toHaveBeenLastCalledWith(
+        expect.objectContaining({ keyPath: 'count', value: 43, keyAdded: false }),
+      );
     });
 
     it('should revalidate a deleted field in real time', () => {

@@ -341,6 +341,7 @@ describe('GitLab backend service', () => {
         fetchDirSHA,
         commitChanges,
         fetchFileCommits,
+        triggerDeployment: expect.any(Function),
         fetchBranchHeadSHA: expect.any(Function),
         fetchDeployments: expect.any(Function),
         workflow: expect.any(Object),

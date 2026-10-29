@@ -10,7 +10,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { TextInput } from '@sveltia/ui';
-  import { getContext, tick } from 'svelte';
+  import { tick } from 'svelte';
   import { flip } from 'svelte/animate';
 
   import RemoveButton from '$lib/components/common/remove-button.svelte';
@@ -20,6 +20,7 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { deferDraftWrite } from '$lib/services/contents/draft/update/deferred';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import {
     getPairs,
     getPairsToSave,
@@ -36,7 +37,7 @@
   import { createStableDerivedState, watch } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { KeyValueField } from '$lib/types/public';
    */
 
@@ -48,8 +49,7 @@
 
   const entryDraft = getEntryDraftContext();
 
-  /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  const { valueStoreKey = 'currentValues' } = getFieldEditorContext();
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -302,11 +302,7 @@
         {/if}
       </tr>
     </thead>
-    <tbody
-      bind:this={tableBody}
-      ondragovercapture={sorter.onDragOver}
-      ondropcapture={sorter.onDrop}
-    >
+    <tbody bind:this={tableBody} {...sorter.listProps}>
       {#each sorter.displayOrder as index (rows.ids[index])}
         <tr
           bind:this={rowElements[index]}
@@ -321,9 +317,7 @@
                   {index}
                   itemCount={rows.values.length}
                   disabled={rows.values.length < 2}
-                  onGrab={() => sorter.grab(index)}
-                  onRelease={sorter.release}
-                  onMove={(to, action) => sorter.move(index, to, action)}
+                  {...sorter.reorderControlProps(index)}
                 />
               </div>
             </td>

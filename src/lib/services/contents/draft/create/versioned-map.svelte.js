@@ -67,9 +67,10 @@ export const getSubtreeVersion = (valueMap, keyPath) => {
  * @param {object} [hooks] Functions called after a value is written or deleted through the proxy,
  * whether or not it has actually changed.
  * @param {(
- * obj: FlattenedEntryContent, keyPath: FieldKeyPath, value: any, previousValue: any
+ * obj: FlattenedEntryContent, keyPath: FieldKeyPath, value: any, previousValue: any,
+ * added: boolean
  * ) => void} [hooks.onSet] Function called after a value is written, also taking the value the key
- * path held before.
+ * path held before and whether the key path has just been added to the map.
  * @param {(obj: FlattenedEntryContent, keyPath: FieldKeyPath, previousValue: any) => void}
  * [hooks.onDelete] Function called after a value is deleted, also taking the value the key path
  * held before.
@@ -159,6 +160,7 @@ export const createValueMap = (target = {}, { onSet, onDelete } = {}) => {
     // eslint-disable-next-line jsdoc/require-jsdoc
     set: (obj, /** @type {FieldKeyPath} */ keyPath, value) => {
       const previousValue = obj[keyPath];
+      const added = !(keyPath in obj);
 
       if (previousValue !== value) {
         obj[keyPath] = value;
@@ -167,7 +169,7 @@ export const createValueMap = (target = {}, { onSet, onDelete } = {}) => {
         countWrite(keyPath);
       }
 
-      onSet?.(obj, keyPath, value, previousValue);
+      onSet?.(obj, keyPath, value, previousValue, added);
 
       return true;
     },

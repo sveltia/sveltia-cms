@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { hasTemplateTags } from './tags';
+import { hasTemplateTags, replaceTemplateTags, splitTemplateTags } from './tags';
 
 describe('hasTemplateTags()', () => {
   test('should return true for simple template tag', () => {
@@ -150,5 +150,78 @@ describe('hasTemplateTags()', () => {
   test('should work with newlines and special whitespace', () => {
     expect(hasTemplateTags('line1\n{{title}}\nline2')).toBe(true);
     expect(hasTemplateTags('tab\t{{slug}}\ttab')).toBe(true);
+  });
+});
+
+describe('replaceTemplateTags()', () => {
+  /**
+   * Replace the template tags in the given string with markers.
+   * @param {string} str String.
+   * @returns {string} Result.
+   */
+  const replace = (str) => replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
+
+  test('should not take an apostrophe in a transformation argument as a quote', () => {
+    expect(replace("{{title | default('Don't')}} {{body}}")).toBe(
+      "<<title | default('Don't')>> <<body>>",
+    );
+    expect(replace("{{draft | ternary('It's a draft' , 'Isn't')}} {{body}}")).toBe(
+      "<<draft | ternary('It's a draft' , 'Isn't')>> <<body>>",
+    );
+  });
+
+  test('should not take an apostrophe outside a transformation argument as a quote', () => {
+    expect(replace("{{it's}} {{body}}")).toBe("<<it's>> <<body>>");
+  });
+
+  test('should keep closing braces in a quoted transformation argument', () => {
+    expect(replace("{{title | default( '}}' )}} {{body}}")).toBe(
+      "<<title | default( '}}' )>> <<body>>",
+    );
+  });
+
+  test('should replace a quoted tag in the literal text', () => {
+    expect(replace("{{title}} ('{{nickname}}')")).toBe("<<title>> ('<<nickname>>')");
+    expect(replace("['{{lang}}']")).toBe("['<<lang>>']");
+    expect(replace(",'{{x}}',")).toBe(",'<<x>>',");
+    expect(replace("|'{{x}}')")).toBe("|'<<x>>')");
+  });
+
+  test('should keep a tag nested in a transformation argument in the outer tag', () => {
+    expect(replace("{{title | default('{{slug}}')}} ('{{nickname}}')")).toBe(
+      "<<title | default('{{slug}}')>> ('<<nickname>>')",
+    );
+    expect(replace("{{a | ternary( '{{b}}' , '{{c}}' )}}")).toBe(
+      "<<a | ternary( '{{b}}' , '{{c}}' )>>",
+    );
+  });
+
+  test('should leave an unterminated template tag unchanged', () => {
+    expect(replace("{{title | default('x'")).toBe("{{title | default('x'");
+  });
+});
+
+describe('splitTemplateTags()', () => {
+  test('should split a template into its tags and the literal text around them', () => {
+    expect(splitTemplateTags('posts-{{fields.title | upper}}/{{uuid}}.md')).toEqual({
+      tags: ['fields.title | upper', 'uuid'],
+      literals: ['posts-', '/', '.md'],
+    });
+    expect(splitTemplateTags('{{a}}{{b}}')).toEqual({ tags: ['a', 'b'], literals: ['', '', ''] });
+  });
+
+  test('should return the whole template as a literal if it has no tag', () => {
+    expect(splitTemplateTags('')).toEqual({ tags: [], literals: [''] });
+    expect(splitTemplateTags('plain {{}} text')).toEqual({
+      tags: [],
+      literals: ['plain {{}} text'],
+    });
+  });
+
+  test('should leave a nested tag in a transformation argument in the tag', () => {
+    expect(splitTemplateTags("x{{fields.a | default('{{fields.b}}')}}y")).toEqual({
+      tags: ["fields.a | default('{{fields.b}}')"],
+      literals: ['x', 'y'],
+    });
   });
 });

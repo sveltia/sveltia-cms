@@ -8,7 +8,8 @@ import { getEditor } from '../../fixtures/ui.js';
  */
 
 /**
- * Pages in a nested collection, each in a folder of its own, saved with Editorial Workflow.
+ * Pages in a collection with nested entries, each in a folder of its own, saved with Editorial
+ * Workflow.
  */
 test.use({
   config: {

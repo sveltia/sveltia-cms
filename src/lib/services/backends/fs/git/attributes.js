@@ -10,11 +10,14 @@
  * against the path relative to the directory of the file, and one without against the file name at
  * any depth, like a `.gitignore` pattern.
  * @param {string} pattern Pattern.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.ignoreCase] Whether to match the path case-insensitively, like Git does
+ * when `core.ignorecase` is `true`.
  * @returns {RegExp} Regular expression.
  * @see https://git-scm.com/docs/gitattributes#_description
  * @see https://git-scm.com/docs/gitignore#_pattern_format
  */
-export const globToRegExp = (pattern) => {
+export const globToRegExp = (pattern, { ignoreCase = false } = {}) => {
   const anchored = pattern.includes('/');
   const glob = pattern.replace(/^\//, '');
   let source = '';
@@ -47,16 +50,18 @@ export const globToRegExp = (pattern) => {
     }
   }
 
-  return new RegExp(anchored ? `^${source}$` : `(?:^|/)${source}$`);
+  return new RegExp(anchored ? `^${source}$` : `(?:^|/)${source}$`, ignoreCase ? 'i' : '');
 };
 
 /**
  * Parse the rules in a `.gitattributes` file that set or unset the `filter` attribute, which Git
  * LFS uses with the `lfs` value.
  * @param {string} text Content of the file.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.ignoreCase] Whether to match the paths case-insensitively.
  * @returns {GitFilterRule[]} Rules.
  */
-export const parseFilterRules = (text) =>
+export const parseFilterRules = (text, { ignoreCase = false } = {}) =>
   text.split(/\r?\n/).flatMap((line) => {
     const [pattern, ...attributes] = line.trim().split(/\s+/);
 
@@ -68,7 +73,9 @@ export const parseFilterRules = (text) =>
 
     const attribute = attributes.findLast((attr) => /^[-!]?filter(?:=|$)/.test(attr));
 
-    return attribute ? [{ regex: globToRegExp(pattern), lfs: attribute === 'filter=lfs' }] : [];
+    return attribute
+      ? [{ regex: globToRegExp(pattern, { ignoreCase }), lfs: attribute === 'filter=lfs' }]
+      : [];
   });
 
 /**
@@ -77,9 +84,12 @@ export const parseFilterRules = (text) =>
  * to the actual file, which only Git LFS can create.
  * @param {GitFileSystem} fs File system.
  * @param {string[]} paths File paths, relative to the repository root.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.ignoreCase] Whether to match the paths case-insensitively, like Git
+ * does when `core.ignorecase` is `true`, e.g. `IMG_1234.JPG` with a `*.jpg` pattern.
  * @returns {Promise<string | undefined>} Path of the first file tracked with Git LFS, if any.
  */
-export const findLfsTrackedPath = async (fs, paths) => {
+export const findLfsTrackedPath = async (fs, paths, { ignoreCase = false } = {}) => {
   /** @type {Map<string, Promise<GitFilterRule[]>>} */
   const cache = new Map();
 
@@ -93,7 +103,7 @@ export const findLfsTrackedPath = async (fs, paths) => {
 
     if (!rules) {
       rules = /** @type {Promise<string>} */ (fs.readFile(path, { encoding: 'utf8' })).then(
-        parseFilterRules,
+        (text) => parseFilterRules(text, { ignoreCase }),
         () => [],
       );
       cache.set(path, rules);

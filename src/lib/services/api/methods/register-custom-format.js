@@ -21,7 +21,9 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * built-in parser for the format name, if any; without `toFile`, they are formatted likewise. If
  * the format name isn’t a built-in one, such as `yaml` or `json`, omit neither: without `fromFile`,
  * files in the format can’t be loaded, and without `toFile`, saving an entry fails with an error,
- * leaving the file untouched. A warning is logged when either is missing.
+ * leaving the file untouched. A warning is logged when either is missing. `toFile` is also given a
+ * context with a `serialize` function, which formats the content with the built-in formatter for
+ * a built-in format name, so its output can be post-processed, e.g. with a code formatter.
  * @throws {TypeError} If `name` or `extension` is not a non-empty string, or if `fromFile` or
  * `toFile` is given but not a function.
  * @throws {Error} If neither `fromFile` nor `toFile` is provided.

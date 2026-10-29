@@ -1,8 +1,10 @@
 import { addMessage } from '$lib/services/config/parser/utils/validator';
+import { isInlinePatternComponent } from '$lib/services/contents/fields/rich-text/components/inline-pattern';
+import { isMultiLinePattern } from '$lib/services/contents/fields/rich-text/components/utils';
 
 /**
  * @import { ConfigParserCollectors } from '$lib/types/private';
- * @import { CmsConfig, EditorComponentDefinition, Field } from '$lib/types/public';
+ * @import { CmsConfig, CustomEditorComponentDefinition, Field } from '$lib/types/public';
  */
 
 /**
@@ -41,21 +43,34 @@ export const isInlineComponentFieldList = (fields) => {
 
 /**
  * Parse and validate the definition of a custom editor component registered with the
- * `CMS.registerEditorComponent()` API, apart from its fields, which are parsed like any other.
+ * `CMS.registerEditorComponent()` API, apart from its fields, which are parsed like any other. A
+ * pattern-based inline component has no fields, but its pattern has to match within a paragraph:
+ * one with the `m` or `s` flag, or `[\s\S]`, is meant to span lines, which it can’t.
  * @param {object} args Arguments.
- * @param {EditorComponentDefinition} args.definition Component definition.
+ * @param {CustomEditorComponentDefinition} args.definition Component definition.
  * @param {string} args.componentName Name the component is registered with.
  * @param {CmsConfig} args.cmsConfig CMS configuration.
  * @param {ConfigParserCollectors} args.collectors Collectors.
  */
 export const parseEditorComponent = ({ definition, componentName, cmsConfig, collectors }) => {
+  const context = { cmsConfig, componentName };
+
+  if (isInlinePatternComponent(definition)) {
+    if (isMultiLinePattern(definition.pattern)) {
+      addMessage({
+        type: 'warning',
+        strKey: 'inline_component_multiline_pattern',
+        context,
+        collectors,
+      });
+    }
+
+    return;
+  }
+
   const { mode, fields } = definition;
 
   if (mode === 'inline' && !isInlineComponentFieldList(fields)) {
-    addMessage({
-      strKey: 'invalid_inline_component_fields',
-      context: { cmsConfig, componentName },
-      collectors,
-    });
+    addMessage({ strKey: 'invalid_inline_component_fields', context, collectors });
   }
 };

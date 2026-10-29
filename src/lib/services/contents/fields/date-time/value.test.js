@@ -1078,6 +1078,57 @@ describe('getInputValue', () => {
   });
 });
 
+describe('getInputValue in a time zone west of UTC', () => {
+  /**
+   * Run a function in the given browser time zone.
+   * @param {string} timeZone IANA time zone name.
+   * @param {() => void} fn Function to run.
+   */
+  const withTimeZone = (timeZone, fn) => {
+    const { TZ } = process.env;
+
+    process.env.TZ = timeZone;
+
+    try {
+      fn();
+    } finally {
+      process.env.TZ = TZ;
+    }
+  };
+
+  test('shows the date of a date-only value stored at UTC midnight', () => {
+    /** @type {DateTimeField} */
+    const fieldConfig = { ...baseFieldConfig, time_format: false };
+
+    withTimeZone('America/Los_Angeles', () => {
+      [
+        '2026-01-15',
+        '2026-01-15T00:00Z',
+        '2026-01-15T00:00:00Z',
+        '2026-01-15T00:00:00.000Z',
+      ].forEach((currentValue) => {
+        expect(getInputValue({ currentValue, fieldConfig })).toBe('2026-01-15');
+      });
+
+      // Any other time is an instant, which the entry list also shows in the browser’s time zone
+      expect(getInputValue({ currentValue: '2026-01-15T05:00:00Z', fieldConfig })).toBe(
+        '2026-01-14',
+      );
+    });
+  });
+
+  test('shows the time of a time-only value with a UTC offset but no seconds', () => {
+    /** @type {DateTimeField} */
+    const fieldConfig = { ...baseFieldConfig, date_format: false, input_timezone: 'utc' };
+
+    withTimeZone('America/Los_Angeles', () => {
+      ['14:30Z', '14:30:00Z', '2026-01-15T14:30Z'].forEach((currentValue) => {
+        expect(getInputValue({ currentValue, fieldConfig })).toBe('14:30');
+      });
+    });
+  });
+});
+
 describe('shouldUpdateValue', () => {
   /** @type {DateTimeField} */
   const fieldConfig = { ...baseFieldConfig };

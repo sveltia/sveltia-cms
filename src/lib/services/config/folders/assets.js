@@ -155,9 +155,10 @@ export const normalizeAssetFolder = ({
     typedKeyPath,
     isIndexFile,
     internalPath: entryRelative
-      ? // A root collection folder can be written as `.`, `./` or `/`. The configuration passed to
-        // the parser still holds the raw value, which field-level folders are resolved against
-        stripSlashes(baseFolder ?? '').replace(/^\.$/, '')
+      ? // A root collection folder can be written as `.`, `./` or `/`, and any other folder can
+        // start with `./`. The configuration passed to the parser still holds the raw value, which
+        // field-level folders are resolved against
+        stripSlashes(baseFolder ?? '').replace(/^\.(?:\/|$)/, '')
       : stripSlashes(mediaFolder),
     internalSubPath: entryRelative ? stripSlashes(mediaFolder) : undefined,
     publicPath:

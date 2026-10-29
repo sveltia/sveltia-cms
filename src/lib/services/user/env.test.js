@@ -126,6 +126,14 @@ describe('env service', () => {
       expect(env.isLocalHost).toBe(true);
     });
 
+    it('should detect the IPv6 loopback address and set isLocalHost', () => {
+      vi.stubGlobal('location', { hostname: '[::1]' });
+
+      initUserEnvDetection();
+
+      expect(env.isLocalHost).toBe(true);
+    });
+
     it('should detect subdomain localhost and set isLocalHost', () => {
       vi.stubGlobal('location', { hostname: 'example.localhost' });
 

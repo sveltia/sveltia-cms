@@ -60,7 +60,7 @@ describe('CreateEntryButton', () => {
     await expect.poll(() => window.location.hash).toBe('#/collections/docs/new?path=guides');
   });
 
-  test('offers to create the index file of a nested collection', async () => {
+  test('offers to create the index file of a collection with nested entries', async () => {
     selectedCollection.current = getCollection('docs');
 
     await render(CreateEntryButton, { collectionName: 'docs', label: 'New' });

@@ -412,6 +412,57 @@ describe('Test getFieldDisplayValue()', () => {
       ).toBe('_svelte_');
     });
 
+    test('should resolve each item of a list field with a non-string subfield', () => {
+      mockGetCollection.mockReturnValue(
+        // @ts-expect-error - Simplified mock for testing
+        {
+          ...mockCollection,
+          fields: [
+            { name: 'counts', widget: 'list', field: { name: 'count', widget: 'number' } },
+            { name: 'flags', widget: 'list', field: { name: 'flag', widget: 'boolean' } },
+            {
+              name: 'levels',
+              widget: 'list',
+              field: {
+                name: 'level',
+                widget: 'select',
+                options: [
+                  { label: 'Low', value: 1 },
+                  { label: 'High', value: 'high' },
+                ],
+              },
+            },
+          ],
+        },
+      );
+      mockGetOptionLabel.mockImplementation(
+        ({ valueMap, keyPath }) =>
+          /** @type {Record<string, string>} */ ({ 1: 'Low', high: 'High' })[valueMap[keyPath]],
+      );
+
+      const valueMap = {
+        'counts.0': 1200,
+        'counts.1': 3.5,
+        'flags.0': true,
+        'flags.1': false,
+        'levels.0': 1,
+        'levels.1': 'high',
+      };
+
+      /**
+       * Get the display value of a list field.
+       * @param {string} keyPath Key path.
+       * @returns {string} Display value.
+       */
+      const getValue = (keyPath) =>
+        // Another test checks that the formatter for `en` is created, so it mustn’t be cached here
+        getFieldDisplayValue({ collectionName: 'posts', valueMap, keyPath, locale: 'en-CA' });
+
+      expect(getValue('counts')).toBe('1,200, 3.5');
+      expect(getValue('flags')).toBe('true, false');
+      expect(getValue('levels')).toBe('Low, High');
+    });
+
     test('should reuse cached regex when getFieldDisplayValue is called twice with the same keyPath', () => {
       // Exercises the listItemDisplayRegexCache hit path added by the perf optimisation.
       const valueMap = {
@@ -857,6 +908,23 @@ describe('Test getFieldDisplayValue()', () => {
       });
 
       expect(result).toBe('some value');
+    });
+
+    test('should apply the `default` transformation to a missing field value', () => {
+      const args = { collectionName: 'posts', keyPath: 'alt', locale: 'en' };
+      const transformations = [{ method: 'default', args: { defaultValue: 'Untitled' } }];
+
+      expect(getFieldDisplayValue({ ...args, valueMap: {}, transformations })).toBe('Untitled');
+      expect(getFieldDisplayValue({ ...args, valueMap: { alt: '' }, transformations })).toBe(
+        'Untitled',
+      );
+      expect(
+        getFieldDisplayValue({
+          ...args,
+          valueMap: {},
+          transformations: [{ method: 'upper', args: {} }],
+        }),
+      ).toBe('');
     });
 
     test('should not take an `Object.prototype` member for a missing field value', () => {

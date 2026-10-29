@@ -1,14 +1,16 @@
 // @ts-nocheck
 /* eslint-disable max-classes-per-file, new-cap, no-extend-native */
 
+import { $convertFromMarkdownString, $convertToMarkdownString } from '@lexical/markdown';
+import { $getRoot, createEditor, DecoratorNode } from 'lexical';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createTransformer } from './transformers.js';
-import { isMultiLinePattern, normalizeProps } from './utils.js';
+import { isInlineComponentDef, normalizeProps } from './utils.js';
 
 // Mock dependencies
 vi.mock('./utils.js', () => ({
-  isMultiLinePattern: vi.fn(),
+  isInlineComponentDef: vi.fn(),
   normalizeProps: vi.fn((props) => props),
 }));
 
@@ -62,7 +64,7 @@ describe('createTransformer', () => {
 
   describe('inline/singleline transformers', () => {
     beforeEach(() => {
-      vi.mocked(isMultiLinePattern).mockReturnValue(false);
+      vi.mocked(isInlineComponentDef).mockReturnValue(true);
     });
 
     it('should create a text-match transformer for inline patterns', () => {
@@ -215,7 +217,7 @@ describe('createTransformer', () => {
 
   describe('multiline/block transformers', () => {
     beforeEach(() => {
-      vi.mocked(isMultiLinePattern).mockReturnValue(true);
+      vi.mocked(isInlineComponentDef).mockReturnValue(false);
     });
 
     it('should create a multiline-element transformer for multiline patterns', () => {
@@ -407,11 +409,314 @@ describe('createTransformer', () => {
 
       expect(result).toBeUndefined();
     });
+
+    describe('with the Lexical Markdown conversion', () => {
+      /**
+       * Minimal block decorator node standing in for the custom node class.
+       */
+      class AsideNode extends DecoratorNode {
+        /**
+         * Get the node type.
+         * @returns {string} Type.
+         */
+        static getType() {
+          return 'aside';
+        }
+
+        /**
+         * Clone the node.
+         * @param {AsideNode} node Node.
+         * @returns {AsideNode} Clone.
+         */
+        static clone(node) {
+          return new AsideNode(node.__props, node.__key);
+        }
+
+        /**
+         * Constructor.
+         * @param {Record<string, any>} [props] Properties.
+         * @param {string} [key] Node key.
+         */
+        constructor(props = {}, key = undefined) {
+          super(key);
+          this.__props = props;
+        }
+
+        /**
+         * Create the DOM, unused without a root element.
+         * @returns {HTMLElement} Element.
+         */
+        createDOM() {
+          return document.createElement('div');
+        }
+
+        /**
+         * Update the DOM.
+         * @returns {boolean} Whether to create the DOM again.
+         */
+        updateDOM() {
+          return false;
+        }
+
+        /**
+         * Whether the node is inline.
+         * @returns {boolean} Result.
+         */
+        isInline() {
+          return false;
+        }
+
+        /**
+         * Decorate the node.
+         * @returns {null} Nothing.
+         */
+        decorate() {
+          return null;
+        }
+      }
+
+      /**
+       * Import the given Markdown into an editor with a transformer for the given pattern, then
+       * export it again.
+       * @param {RegExp} pattern Component pattern.
+       * @param {string} markdown Markdown.
+       * @returns {{ markdown: string, nodes: string[] }} Exported Markdown and the types of the
+       * top-level nodes.
+       */
+      const roundTrip = (pattern, markdown) => {
+        const transformer = createTransformer({
+          componentDef: {
+            id: 'aside',
+            label: 'Aside',
+            fields: [{ name: 'text', widget: 'string' }],
+            pattern,
+            /**
+             * Convert properties to block.
+             * @param {Record<string, any>} props Properties.
+             * @returns {string} Block string.
+             */
+            toBlock: ({ text }) => `<aside>${text}</aside>`,
+          },
+          CustomNode: AsideNode,
+        });
+
+        const editor = createEditor({
+          nodes: [AsideNode],
+          /**
+           * Rethrow an error.
+           * @param {Error} error Error.
+           * @throws {Error} The error.
+           */
+          onError: (error) => {
+            throw error;
+          },
+        });
+
+        let result = { markdown: '', nodes: [] };
+
+        editor.update(() => $convertFromMarkdownString(markdown, [transformer]), {
+          discrete: true,
+        });
+        editor.read(() => {
+          result = {
+            markdown: $convertToMarkdownString([transformer]),
+            nodes: $getRoot()
+              .getChildren()
+              .map((node) => node.getType()),
+          };
+        });
+
+        return result;
+      };
+
+      it('should convert a match that spans whole lines', () => {
+        expect(
+          roundTrip(/^<aside>(?<text>[\s\S]*?)<\/aside>/, '<aside>Note</aside>\n\nNext'),
+        ).toEqual({ markdown: '<aside>Note</aside>\n\nNext', nodes: ['aside', 'paragraph'] });
+      });
+
+      it('should leave a match followed by text on its last line as text', () => {
+        const pattern = /^<aside>(?<text>[\s\S]*?)<\/aside>/;
+
+        // Lexical escapes a `<` in text on export; the editor keeps raw HTML with a transformer
+        expect(roundTrip(pattern, '<aside>Note</aside> trailing text\n\nNext')).toEqual({
+          markdown: '&#60;aside>Note&#60;/aside> trailing text\n\nNext',
+          nodes: ['paragraph', 'paragraph'],
+        });
+        expect(roundTrip(pattern, '<aside>\nNote\n</aside> trailing\n\nNext').markdown).toBe(
+          '&#60;aside>\nNote\n&#60;/aside> trailing\n\nNext',
+        );
+        // Whitespace alone doesn’t count
+        expect(roundTrip(pattern, '<aside>Note</aside>  \n\nNext').nodes).toEqual([
+          'aside',
+          'paragraph',
+        ]);
+      });
+
+      it('should keep the line after a match that ends with a newline', () => {
+        // Blocks are exported with a blank line between them
+        expect(
+          roundTrip(/^<aside>(?<text>[\s\S]*?)<\/aside>\n/, '<aside>Note</aside>\nNext'),
+        ).toEqual({ markdown: '<aside>Note</aside>\n\nNext', nodes: ['aside', 'paragraph'] });
+      });
+    });
+  });
+
+  describe('pattern-based inline components', () => {
+    /**
+     * Inline node for the conversion tests.
+     */
+    class MentionNode extends DecoratorNode {
+      /**
+       * Get the node type.
+       * @returns {string} Type.
+       */
+      static getType() {
+        return 'x-mention';
+      }
+
+      /**
+       * Clone the given node.
+       * @param {MentionNode} node Node.
+       * @returns {MentionNode} New node.
+       */
+      static clone(node) {
+        return new MentionNode(node.__props, node.__key);
+      }
+
+      /**
+       * Create a new node.
+       * @param {Record<string, any>} [props] Properties.
+       * @param {string} [key] Node key.
+       */
+      constructor(props = {}, key = undefined) {
+        super(key);
+        this.__props = props;
+      }
+
+      /**
+       * Create the DOM, unused without a root element.
+       * @returns {HTMLElement} Element.
+       */
+      createDOM() {
+        return document.createElement('span');
+      }
+
+      /**
+       * Update the DOM.
+       * @returns {boolean} Whether to create the DOM again.
+       */
+      updateDOM() {
+        return false;
+      }
+
+      /**
+       * Whether the node is inline.
+       * @returns {boolean} Result.
+       */
+      isInline() {
+        return true;
+      }
+
+      /**
+       * Decorate the node.
+       * @returns {null} Nothing.
+       */
+      decorate() {
+        return null;
+      }
+    }
+
+    /**
+     * Import the given Markdown with a mention component, then export it again.
+     * @param {string} markdown Markdown.
+     * @param {string} [trigger] Trigger text.
+     * @returns {{ markdown: string, nodes: string[][], props: Record<string, any>[] }} Exported
+     * Markdown, the types of the nodes in each paragraph and the properties of the mentions.
+     */
+    const roundTrip = (markdown, trigger) => {
+      const transformer = createTransformer({
+        componentDef: {
+          id: 'x-mention',
+          label: 'Mention',
+          fields: [],
+          // Without the trigger, any word would be a mention
+          pattern: /@?(?<user>[a-z]+)/,
+          // eslint-disable-next-line jsdoc/require-jsdoc
+          toBlock: ({ user = '' }) => `@${user}`,
+          inlinePattern: { trigger },
+        },
+        CustomNode: MentionNode,
+      });
+
+      const editor = createEditor({
+        nodes: [MentionNode],
+        /**
+         * Rethrow an error.
+         * @param {Error} error Error.
+         * @throws {Error} The error.
+         */
+        onError: (error) => {
+          throw error;
+        },
+      });
+
+      let result = { markdown: '', nodes: [], props: [] };
+
+      editor.update(() => $convertFromMarkdownString(markdown, [transformer]), {
+        discrete: true,
+      });
+      editor.read(() => {
+        const paragraphs = $getRoot().getChildren();
+
+        result = {
+          markdown: $convertToMarkdownString([transformer]),
+          nodes: paragraphs.map((paragraph) =>
+            paragraph.getChildren().map((node) => node.getType()),
+          ),
+          props: paragraphs.flatMap((paragraph) =>
+            paragraph
+              .getChildren()
+              .filter((node) => node.getType() === 'x-mention')
+              .map((node) => node.__props),
+          ),
+        };
+      });
+
+      return result;
+    };
+
+    beforeEach(() => {
+      vi.mocked(isInlineComponentDef).mockReturnValue(true);
+    });
+
+    it('should only import the instances starting with the trigger', () => {
+      expect(roundTrip('hi @bob, meet @alice', '@')).toEqual({
+        markdown: 'hi @bob, meet @alice',
+        nodes: [['text', 'x-mention', 'text', 'x-mention']],
+        props: [{ user: 'bob' }, { user: 'alice' }],
+      });
+    });
+
+    it('should match the pattern across the text without a trigger', () => {
+      expect(roundTrip('hi @bob', undefined).props).toEqual([{ user: 'hi' }, { user: 'bob' }]);
+    });
+
+    it('should keep the text around an instance', () => {
+      expect(roundTrip('這是一個@bob，請點擊！\n\nImportant @x note', '@')).toEqual({
+        markdown: '這是一個@bob，請點擊！\n\nImportant @x note',
+        nodes: [
+          ['text', 'x-mention', 'text'],
+          ['text', 'x-mention', 'text'],
+        ],
+        props: [{ user: 'bob' }, { user: 'x' }],
+      });
+    });
   });
 
   describe('edge cases', () => {
     it('should handle custom nodes without props', () => {
-      vi.mocked(isMultiLinePattern).mockReturnValue(false);
+      vi.mocked(isInlineComponentDef).mockReturnValue(true);
 
       const transformer = createTransformer({
         componentDef: mockComponentDef,
@@ -429,7 +734,7 @@ describe('createTransformer', () => {
     });
 
     it('should handle components without toBlock method', () => {
-      vi.mocked(isMultiLinePattern).mockReturnValue(false);
+      vi.mocked(isInlineComponentDef).mockReturnValue(true);
 
       const componentDefWithoutToBlock = {
         ...mockComponentDef,
@@ -445,7 +750,7 @@ describe('createTransformer', () => {
     });
 
     it('should handle empty match groups', () => {
-      vi.mocked(isMultiLinePattern).mockReturnValue(false);
+      vi.mocked(isInlineComponentDef).mockReturnValue(true);
 
       const componentDefWithoutFromBlock = {
         ...mockComponentDef,

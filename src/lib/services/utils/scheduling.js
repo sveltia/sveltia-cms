@@ -1,6 +1,10 @@
 import { sleep } from '@sveltia/utils/misc';
 
 /**
+ * @import { ConcurrencyLimiter, ConcurrencyLimiterTaskOptions } from '$lib/types/private';
+ */
+
+/**
  * Hand control back to the browser so it can paint and handle input, then continue. Long
  * CPU-bound loops call this between chunks of work, which keeps the tab responsive and the progress
  * indicator moving. `scheduler.yield()` resumes ahead of other queued tasks where it’s supported;
@@ -93,19 +97,33 @@ export const createLatestGuard = () => {
  * memory-heavy work requested from many places at once, such as decoding full-size images, which
  * would otherwise all be held in memory together.
  * @param {number} concurrency Maximum number of tasks in flight.
- * @returns {<T>(task: () => Promise<T>) => Promise<T>} Function running a task when there is room,
- * and resolving or rejecting with its outcome.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.lastInFirstOut] Whether to start the most recently queued task first,
+ * rather than the oldest one. This suits work requested for what’s on screen, like the thumbnails
+ * of a list being scrolled: what was asked for last is what the user is looking at now.
+ * @returns {ConcurrencyLimiter} Function running a task when there is room, and resolving or
+ * rejecting with its outcome. Its `prioritize()` method makes the queued task with the given key,
+ * if any, the next one to start, e.g. when it’s asked for again.
  */
-export const createConcurrencyLimiter = (concurrency) => {
+export const createConcurrencyLimiter = (concurrency, { lastInFirstOut = false } = {}) => {
   let running = 0;
-  /** @type {(() => void)[]} */
+  /** @type {{ start: () => void, key: any }[]} */
   const queue = [];
 
-  return async (task) => {
+  /**
+   * Run the given task when there is room.
+   * @template T
+   * @param {() => Promise<T>} task Task.
+   * @param {ConcurrencyLimiterTaskOptions} [options] Options.
+   * @returns {Promise<T>} Outcome of the task.
+   */
+  const limit = async (task, { key = undefined } = {}) => {
     if (running >= concurrency) {
-      await new Promise((resolve) => {
-        queue.push(() => resolve(undefined));
-      });
+      await /** @type {Promise<void>} */ (
+        new Promise((resolve) => {
+          queue.push({ start: resolve, key });
+        })
+      );
     } else {
       running += 1;
     }
@@ -114,13 +132,34 @@ export const createConcurrencyLimiter = (concurrency) => {
       return await task();
     } finally {
       // Hand the slot straight to the next task in the queue, if any, so the count stays the same
-      const next = queue.shift();
+      const next = lastInFirstOut ? queue.pop() : queue.shift();
 
       if (next) {
-        next();
+        next.start();
       } else {
         running -= 1;
       }
     }
   };
+
+  /**
+   * Make the queued task with the given key, if any, the next one to start.
+   * @param {any} key Task key.
+   */
+  const prioritize = (key) => {
+    // A task queued without a key can’t be singled out
+    const index = key === undefined ? -1 : queue.findIndex((item) => item.key === key);
+
+    if (index > -1) {
+      const [item] = queue.splice(index, 1);
+
+      if (lastInFirstOut) {
+        queue.push(item);
+      } else {
+        queue.unshift(item);
+      }
+    }
+  };
+
+  return Object.assign(limit, { prioritize });
 };

@@ -6,12 +6,15 @@ import {
   fetchFileCommits,
   fetchLastCommit,
 } from '$lib/services/backends/git/gitea/commits';
+import { getAuthRoot } from '$lib/services/backends/git/gitea/config';
 import {
   BACKEND_LABEL,
   BACKEND_NAME,
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
-  DEFAULT_AUTH_ROOT,
+  FORGEJO_BACKEND_LABEL,
+  FORGEJO_BACKEND_NAME,
+  isGiteaBackendName,
 } from '$lib/services/backends/git/gitea/constants';
 import { fetchBranchHeadSHA, fetchDeployments } from '$lib/services/backends/git/gitea/deployment';
 import { fetchBlob, fetchDirSHA, fetchFiles } from '$lib/services/backends/git/gitea/files';
@@ -23,36 +26,39 @@ import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
 /**
  * @import { BackendService, RepositoryInfo } from '$lib/types/private';
+ * @import { ForgejoBackend, GiteaBackend } from '$lib/types/public';
  */
 
 /**
- * Initialize the Gitea/Forgejo backend.
+ * Initialize the Gitea/Forgejo backend, configured as either the `gitea` or `forgejo` backend.
  * @returns {RepositoryInfo | undefined} Repository info, or nothing when the configured backend is
  * not Gitea/Forgejo.
  */
 export const init = () => {
   const { backend } = cmsConfig.current ?? {};
 
-  if (backend?.name !== BACKEND_NAME) {
+  if (!backend || !isGiteaBackendName(backend.name)) {
     return undefined;
   }
 
+  const options = /** @type {GiteaBackend | ForgejoBackend} */ (backend);
+
   const {
+    name: service,
     repo: projectPath,
     branch,
-    base_url: authRoot = DEFAULT_AUTH_ROOT,
     auth_endpoint: authPath = DEFAULT_AUTH_PATH,
     app_id: clientId = '',
     // https://HOSTNAME/api/v1 or https://HOSTNAME/PATH/api/v1
     api_root: restApiRoot = DEFAULT_API_ROOT,
     include_credentials: includeCredentials = false,
-  } = backend;
+  } = options;
 
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
 
   initGitBackend(repository, {
-    service: BACKEND_NAME,
-    label: BACKEND_LABEL,
+    service,
+    label: service === FORGEJO_BACKEND_NAME ? FORGEJO_BACKEND_LABEL : BACKEND_LABEL,
     owner,
     repo,
     branch,
@@ -60,7 +66,7 @@ export const init = () => {
     defaultApiRoot: DEFAULT_API_ROOT,
     getTokenPageURL,
     getBaseURLs,
-    authRoot,
+    authRoot: getAuthRoot(options),
     authPath,
     tokenPath: '/access_token',
     api: {
@@ -86,7 +92,7 @@ export const init = () => {
 /**
  * @type {BackendService}
  */
-export default {
+const gitea = {
   isGit: true,
   name: BACKEND_NAME,
   label: BACKEND_LABEL,
@@ -104,3 +110,12 @@ export default {
   fetchDeployments,
   workflow,
 };
+
+/**
+ * The same service under the name of the Forgejo backend introduced in Decap CMS 3.15, so its
+ * configuration works unchanged.
+ * @type {BackendService}
+ */
+export const forgejo = { ...gitea, name: FORGEJO_BACKEND_NAME, label: FORGEJO_BACKEND_LABEL };
+
+export default gitea;
