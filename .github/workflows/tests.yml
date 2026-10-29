@@ -38,9 +38,7 @@ jobs:
         uses: pnpm/setup@v3.1.2
         with:
           version: latest
-          # 26.13.0 causes CI errors due to missing SHASUMS256.txt
-          # https://nodejs.org/download/release/v26.13.0/
-          runtime: node@26.12.1
+          runtime: node@26
           cache: true
       # The browser is cached per Playwright version, which pins the Chromium build. The tests run
       # headless, so only the headless shell is installed, not the full browser. The system packages
