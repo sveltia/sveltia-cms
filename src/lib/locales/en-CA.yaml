@@ -154,6 +154,9 @@ work_with_local_repo_description_no_repo: Once prompted, select the root directo
 work_with_test_repo: Work with Test Repository
 # Button label for the test repository when sample content is seeded, e.g. on a demo site
 start_demo: Start Demo
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: Your browser can’t save the files of the test repository. Please update it to the latest version or use another browser.
 
 # Authentication errors
 # Error messages shown during sign-in failures

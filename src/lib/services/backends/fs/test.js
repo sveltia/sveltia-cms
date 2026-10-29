@@ -1,3 +1,5 @@
+import { _ } from '@sveltia/i18n';
+
 import { seedTestRepository } from '$lib/services/backends/fs/seed';
 import {
   getDirectoryHandle,
@@ -7,6 +9,7 @@ import {
 import { loadFiles } from '$lib/services/backends/fs/shared/load';
 import { saveChanges } from '$lib/services/backends/fs/shared/save';
 import { dataLoaded } from '$lib/services/contents';
+import { env } from '$lib/services/user/env.svelte';
 
 /**
  * @import { Asset, BackendService, CommitResults, FileChange, User } from '$lib/types/private';
@@ -55,9 +58,17 @@ const init = () => undefined;
  * repository is seeded with the files listed in the `<link rel="cms-seed-url">` manifest, if any.
  * @returns {Promise<User>} User info. Since we don’t have any details for the local user, just
  * return the backend name.
+ * @throws {Error} If the browser can’t write files to the OPFS. The sign-in page disables the
+ * option then, but a user cached from an earlier session would still be signed in automatically.
  * @see https://web.dev/articles/origin-private-file-system
  */
 const signIn = async () => {
+  if (!env.isTestBackendSupported) {
+    throw new Error('Unsupported browser', {
+      cause: { message: _('test_repo_unsupported_browser') },
+    });
+  }
+
   try {
     const storageDirHandle = await navigator.storage.getDirectory();
 

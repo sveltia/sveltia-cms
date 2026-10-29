@@ -3,11 +3,11 @@ import { generateUUID } from '@sveltia/utils/crypto';
 import { escapeRegExp, truncate } from '@sveltia/utils/string';
 
 import {
+  getUnsafeUnicodeSlugCharsRegex,
   UNSAFE_ASCII_SLUG_CHARS_REGEX,
-  UNSAFE_UNICODE_SLUG_CHARS_REGEX,
 } from '$lib/services/common/slug/constants';
 import { cmsConfig } from '$lib/services/config';
-import { getOrCreate } from '$lib/services/utils/cache';
+import { getOrCreate, lazy } from '$lib/services/utils/cache';
 
 /**
  * @import { InternalCmsConfig } from '$lib/types/private';
@@ -24,12 +24,13 @@ const TRAILING_DOTS_REGEX = /\.+$/;
 
 /**
  * Global variants of the unsafe character patterns, keyed by the `encoding` option, to replace
- * every unsafe character in a string at once.
+ * every unsafe character in a string at once. They’re created on first use, as the `v` flag would
+ * throw while the bundle loads in an unsupported browser.
  */
-const UNSAFE_CHARS_REGEXES = {
-  unicode: new RegExp(UNSAFE_UNICODE_SLUG_CHARS_REGEX, 'gv'),
+const getUnsafeCharsRegexes = lazy(() => ({
+  unicode: new RegExp(getUnsafeUnicodeSlugCharsRegex(), 'gv'),
   ascii: new RegExp(UNSAFE_ASCII_SLUG_CHARS_REGEX, 'g'),
-};
+}));
 
 /**
  * Regular expressions to consolidate and trim the replacement characters, keyed by the escaped
@@ -136,7 +137,7 @@ export const slugify = (
   }
 
   // Turn every unsafe character into a space, which is then replaced below
-  slug = slug.replaceAll(UNSAFE_CHARS_REGEXES[encoding === 'ascii' ? 'ascii' : 'unicode'], ' ');
+  slug = slug.replaceAll(getUnsafeCharsRegexes()[encoding === 'ascii' ? 'ascii' : 'unicode'], ' ');
 
   // Replace all the spaces with replacers (hyphens by default)
   slug = slug.trim().replaceAll(/\s+/g, sanitizeReplacement);

@@ -28,6 +28,85 @@ test.describe('on a subdomain of localhost', () => {
   });
 });
 
+test.describe('in an outdated browser', () => {
+  test('asks to update the browser instead of leaving the page blank', async ({ cms, page }) => {
+    // Act like Safari 16, which lacks the `v` regular expression flag the bundle uses, along with
+    // the Base64 conversion the browser check looks for. The bundle turns a `v`-flag literal into
+    // a `RegExp()` call, which throws there, so one created while the bundle loads would stop it
+    // before the message is shown
+    await page.addInitScript(() => {
+      /**
+       * Throw like a browser lacking the `v` flag if it’s given.
+       * @param {any[]} args `RegExp()` arguments.
+       * @throws {SyntaxError} If the flags include `v`.
+       */
+      const checkFlags = ([, flags]) => {
+        if (String(flags ?? '').includes('v')) {
+          throw new SyntaxError('Invalid regular expression: invalid flags');
+        }
+      };
+
+      globalThis.RegExp = new Proxy(RegExp, {
+        /**
+         * Check the flags of `new RegExp()`.
+         * @param {RegExpConstructor} target `RegExp`.
+         * @param {any[]} args Arguments.
+         * @param {NewableFunction} newTarget Constructor.
+         * @returns {RegExp} Regular expression.
+         */
+        construct: (target, args, newTarget) => {
+          checkFlags(args);
+
+          return Reflect.construct(target, args, newTarget);
+        },
+        /**
+         * Check the flags of `RegExp()` called without `new`.
+         * @param {RegExpConstructor} target `RegExp`.
+         * @param {any} thisArg `this`.
+         * @param {any[]} args Arguments.
+         * @returns {RegExp} Regular expression.
+         */
+        apply: (target, thisArg, args) => {
+          checkFlags(args);
+
+          return Reflect.apply(target, thisArg, args);
+        },
+      });
+
+      // @ts-ignore
+      delete Uint8Array.fromBase64;
+    });
+
+    await cms.open();
+    await expect(
+      page.getByText(
+        'Your browser is not supported. Please update it to the latest version or use another ' +
+          'browser.',
+      ),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Work with Test Repository' })).toBeHidden();
+  });
+});
+
+test.describe('in a browser that can’t write to the origin private file system', () => {
+  test('explains why the test repository is unavailable', async ({ cms, page }) => {
+    // Act like Safari before version 26
+    await page.addInitScript(() => {
+      // @ts-ignore
+      delete FileSystemFileHandle.prototype.createWritable;
+    });
+
+    await cms.open();
+    await expect(page.getByRole('button', { name: 'Work with Test Repository' })).toBeDisabled();
+    await expect(
+      page.getByText(
+        'Your browser can’t save the files of the test repository. Please update it to the ' +
+          'latest version or use another browser.',
+      ),
+    ).toBeVisible();
+  });
+});
+
 test.describe('with an invalid config', () => {
   test.use({ config: { backend: { name: 'test-repo' }, media_folder: 'static/images' } });
 

@@ -36,6 +36,12 @@ vi.mock('$lib/services/contents', () => ({
   },
 }));
 
+const mockEnv = vi.hoisted(() => ({ isTestBackendSupported: true }));
+
+vi.mock('$lib/services/user/env.svelte', () => ({
+  env: mockEnv,
+}));
+
 describe('Test Backend Service', () => {
   /** @type {BackendService} */
   let testBackend;
@@ -44,6 +50,7 @@ describe('Test Backend Service', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockEnv.isTestBackendSupported = true;
 
     // Mock root directory handle
     mockRootHandle = {
@@ -155,6 +162,18 @@ describe('Test Backend Service', () => {
 
       // @ts-ignore - Testing actual implementation signature
       await expect(testBackend.signIn()).resolves.toEqual({ backendName: 'test-repo' });
+    });
+
+    it('should throw without touching the OPFS when the browser can’t write files to it', async () => {
+      mockEnv.isTestBackendSupported = false;
+
+      // @ts-ignore - Testing actual implementation signature
+      await expect(testBackend.signIn()).rejects.toMatchObject({
+        message: 'Unsupported browser',
+        cause: { message: 'test_repo_unsupported_browser' },
+      });
+      expect(navigator.storage.getDirectory).not.toHaveBeenCalled();
+      expect(mockSeedTestRepository).not.toHaveBeenCalled();
     });
   });
 

@@ -8,6 +8,8 @@ export const env = $state({
   isLocalHost: false,
   /** Whether the local backend is supported. */
   isLocalBackendSupported: false,
+  /** Whether the test backend is supported. */
+  isTestBackendSupported: true,
   /** Whether the browser is Brave. */
   isBrave: false,
   /** Whether the operating system is macOS. */
@@ -37,6 +39,12 @@ export const initUserEnvDetection = () => {
   // `http://[::1]`
   env.isLocalHost = isLocalHostname(hostname);
   env.isLocalBackendSupported = 'showDirectoryPicker' in globalThis;
+  // The test backend saves files to the origin private file system (OPFS), which Safari before
+  // version 26 can create but not write to, so the files would be left empty. Without the OPFS,
+  // e.g. in an insecure context, the files are only kept in memory, which works anywhere
+  env.isTestBackendSupported =
+    !globalThis.FileSystemFileHandle ||
+    'createWritable' in globalThis.FileSystemFileHandle.prototype;
   env.isBrave = userAgentData?.brands.some(({ brand }) => brand === 'Brave') ?? false;
   env.isMacOS = userAgentData?.platform === 'macOS' || platform.startsWith('Mac');
 

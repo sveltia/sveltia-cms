@@ -1,4 +1,4 @@
-import { getOrCreate } from '$lib/services/utils/cache';
+import { getOrCreate, lazy } from '$lib/services/utils/cache';
 
 /**
  * @typedef {Map<string, string>} NormalizedValueCache
@@ -22,28 +22,32 @@ export const getNormalizedValueCache = (owner) =>
   getOrCreate(persistentCaches, owner, () => new Map());
 
 /**
- * Match a letter of a script where the combining marks following it are accents or optional vowel
- * points a query can leave out — Latin, Greek, Hebrew and Arabic, or Cyrillic in its own group —
- * along with the run of marks. Elsewhere a mark is part of the spelling — Japanese kana voicing
- * marks (`ビ` vs `ヒ`), Devanagari vowel signs, Thai tone marks — so stripping it would make
+ * Get the regular expressions to strip accents, created on first use, as the `v` flag would throw
+ * while the bundle loads in an unsupported browser.
+ *
+ * `accent` matches a letter of a script where the combining marks following it are accents or
+ * optional vowel points a query can leave out — Latin, Greek, Hebrew and Arabic, or Cyrillic in its
+ * own group — along with the run of marks. Elsewhere a mark is part of the spelling — Japanese kana
+ * voicing marks (`ビ` vs `ヒ`), Devanagari vowel signs, Thai tone marks — so stripping it would make
  * unrelated words match. The run is matched with the letter rather than with a lookbehind, which
  * would scan the run back from every mark in it and take quadratic time over a long one.
+ *
+ * `cyrillicAccent` matches the combining marks of a run following a Cyrillic letter that are
+ * stripped: all but the breve of `й` and `ў`, which are letters of their own, unlike `ё`, commonly
+ * written `е`.
  */
-const ACCENT_REGEX = new RegExp(
-  `([${['Latin', 'Greek', 'Hebrew', 'Arabic']
-    .map((script) => `\\p{Script=${script}}`)
-    .join('')}])\\p{M}+|(\\p{Script=Cyrillic})(\\p{M}+)`,
-  'gv',
-);
+const getAccentRegexes = lazy(() => ({
+  accent: new RegExp(
+    `([${['Latin', 'Greek', 'Hebrew', 'Arabic']
+      .map((script) => `\\p{Script=${script}}`)
+      .join('')}])\\p{M}+|(\\p{Script=Cyrillic})(\\p{M}+)`,
+    'gv',
+  ),
+  cyrillicAccent: /[\p{M}--[\u0306]]/gv,
+}));
 
 /**
- * Match the combining marks of a run following a Cyrillic letter that are stripped: all but the
- * breve of `й` and `ў`, which are letters of their own, unlike `ё`, commonly written `е`.
- */
-const CYRILLIC_ACCENT_REGEX = /[\p{M}--[\u0306]]/gv;
-
-/**
- * Strip the accents from the given match of {@link ACCENT_REGEX}.
+ * Strip the accents from the given match of the `accent` pattern of {@link getAccentRegexes}.
  * @param {string} _match Whole match.
  * @param {string | undefined} base Letter of a script whose marks are all stripped.
  * @param {string | undefined} cyrillic Cyrillic letter.
@@ -51,7 +55,8 @@ const CYRILLIC_ACCENT_REGEX = /[\p{M}--[\u0306]]/gv;
  * @returns {string} Letter with the marks it keeps.
  */
 const stripAccents = (_match, base, cyrillic, marks) =>
-  base ?? `${cyrillic}${/** @type {string} */ (marks).replace(CYRILLIC_ACCENT_REGEX, '')}`;
+  base ??
+  `${cyrillic}${/** @type {string} */ (marks).replace(getAccentRegexes().cyrillicAccent, '')}`;
 
 /**
  * Match a string made of ASCII characters only.
@@ -83,7 +88,7 @@ export const normalize = (value) => {
 
   return value
     .normalize('NFD')
-    .replace(ACCENT_REGEX, stripAccents)
+    .replace(getAccentRegexes().accent, stripAccents)
     .toLocaleLowerCase()
     .normalize('NFC');
 };

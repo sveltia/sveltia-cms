@@ -114,3 +114,24 @@ export const memoizeOnSource = (getSource, build) => {
     return cache.value;
   };
 };
+
+/**
+ * Create a getter for a value that is built on first use rather than when the module is loaded.
+ * This is how a regular expression with the `v` flag is kept: the bundle turns its literal into a
+ * `RegExp()` call for browsers lacking the flag, which throws in those, e.g. Safari 16, and a throw
+ * while the bundle loads would leave the page blank instead of showing the unsupported browser
+ * message.
+ * @template V
+ * @param {() => V} create Function building the value.
+ * @returns {() => V} Function returning the value.
+ */
+export const lazy = (create) => {
+  /** @type {{ value: V } | undefined} */
+  let cache;
+
+  return () => {
+    cache ??= { value: create() };
+
+    return cache.value;
+  };
+};

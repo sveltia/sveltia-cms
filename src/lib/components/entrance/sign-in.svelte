@@ -25,6 +25,7 @@
   const backend = $derived(allBackendServices[backendName]);
   const isTestRepo = $derived(backendName === 'test-repo');
   const isDemo = $derived(isDemoSite(backendName));
+  const testRepoUnsupported = $derived(isTestRepo && !env.isTestBackendSupported);
   // The test repository has no `repo` option, and the name only goes with the local option
   const repositoryName = $derived(
     /** @type {GitBackend} */ (configuredBackend).repo?.split('/').pop(),
@@ -116,11 +117,14 @@
           : isTestRepo
             ? _('work_with_test_repo')
             : _('sign_in_with_x', { values: { service: serviceLabel } })}
-        disabled={oauthOptionDisabled}
+        disabled={oauthOptionDisabled || testRepoUnsupported}
         onclick={async () => {
           await signInManually(backendName);
         }}
       />
+      {#if testRepoUnsupported}
+        <div role="alert">{_('test_repo_unsupported_browser')}</div>
+      {/if}
     {/if}
     {#if !isTestRepo && !tokenOptionHidden}
       <Button

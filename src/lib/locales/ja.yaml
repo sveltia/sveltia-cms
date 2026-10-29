@@ -154,6 +154,9 @@ work_with_local_repo_description_no_repo: ダイアログが表示されたら�
 work_with_test_repo: テストリポジトリで作業
 # Button label for the test repository when sample content is seeded, e.g. on a demo site
 start_demo: デモを開始
+# Shown below the disabled test repository option in a browser that can’t save files to its
+# storage, e.g. Safari before version 26
+test_repo_unsupported_browser: お使いのブラウザーはテストリポジトリのファイルを保存できません。最新バージョンに更新するか、別のブラウザーを使ってください。
 
 # Authentication errors
 # Error messages shown during sign-in failures

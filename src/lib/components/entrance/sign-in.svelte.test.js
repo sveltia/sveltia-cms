@@ -40,6 +40,7 @@ describe('SignIn', () => {
     cancelAuthorization.current = undefined;
     env.isLocalHost = true;
     env.isLocalBackendSupported = true;
+    env.isTestBackendSupported = true;
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github', repo: 'acme/site' } });
   });
 
@@ -152,6 +153,34 @@ describe('SignIn', () => {
     } finally {
       link.remove();
     }
+  });
+
+  test('explains why the test repository is unavailable', async () => {
+    env.isTestBackendSupported = false;
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'test-repo' } });
+
+    await render(SignIn, {});
+
+    await expect
+      .element(page.getByRole('button', { name: 'Work with Test Repository' }))
+      .toHaveAttribute('aria-disabled', 'true');
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'Your browser can’t save the files of the test repository. Please update it to the ' +
+          'latest version or use another browser.',
+      );
+  });
+
+  test('keeps the other backends available where the test repository is not', async () => {
+    env.isTestBackendSupported = false;
+
+    await render(SignIn, {});
+
+    await expect
+      .element(page.getByRole('button', { name: /^Sign In with .*GitHub/ }))
+      .not.toHaveAttribute('aria-disabled', 'true');
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
   });
 
   test('offers nothing for an unknown backend', async () => {

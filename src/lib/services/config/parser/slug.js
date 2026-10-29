@@ -1,6 +1,6 @@
 import {
+  getUnsafeUnicodeSlugCharsRegex,
   UNSAFE_ASCII_SLUG_CHARS_REGEX,
-  UNSAFE_UNICODE_SLUG_CHARS_REGEX,
 } from '$lib/services/common/slug/constants';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
 
@@ -30,7 +30,7 @@ export const parseSlugConfig = (cmsConfig, collectors) => {
   }
 
   const unsafeCharsRegex =
-    encoding === 'ascii' ? UNSAFE_ASCII_SLUG_CHARS_REGEX : UNSAFE_UNICODE_SLUG_CHARS_REGEX;
+    encoding === 'ascii' ? UNSAFE_ASCII_SLUG_CHARS_REGEX : getUnsafeUnicodeSlugCharsRegex();
 
   if (unsafeCharsRegex.test(replacement.replaceAll(' ', ''))) {
     addMessage({
