@@ -6,7 +6,7 @@ import {
 } from '$lib/services/common/template/constants';
 
 /**
- * @import { InternalCollection } from '$lib/types/private';
+ * @import { InternalCollection, InternalCollectionFile } from '$lib/types/private';
  */
 
 /**
@@ -45,10 +45,11 @@ export const getFileNameParts = (path, localeSuffixes = []) => {
 };
 
 /**
- * Get the locale codes that can follow an entry file name in the given collection, which are only
- * there with the `multiple_files` i18n structure.
- * @param {InternalCollection} collection Collection. Its i18n configuration can be missing from a
- * partial collection object, which is then treated as not localized.
+ * Get the locale codes that can follow an entry file name in the given collection or collection
+ * file, which are only there with the `multiple_files` i18n structure.
+ * @param {InternalCollection | InternalCollectionFile} collection Collection or collection
+ * file. Its i18n configuration can be missing from a partial collection object, which is then
+ * treated as not localized.
  * @returns {string[]} Locale codes.
  */
 export const getFileNameLocaleSuffixes = ({ _i18n }) =>

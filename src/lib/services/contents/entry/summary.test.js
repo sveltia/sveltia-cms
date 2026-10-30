@@ -1,6 +1,8 @@
-import { describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 
+import { allEntries, allEntryFolders } from '$lib/services/contents';
 import {
+  getCollectionFileSummary,
   getEntrySummary,
   getEntrySummaryFromContent,
   replace,
@@ -1954,5 +1956,244 @@ describe('Test getEntrySummary() caching', () => {
 
     expect(getEntrySummary(collection, entry, { locale: 'en' })).toBe('Hello');
     expect(getEntrySummary(collection, otherEntry, { locale: 'en' })).toBe('World');
+  });
+});
+
+describe('Test getEntrySummary() with a collection file or an index file', () => {
+  const i18n = /** @type {any} */ ({ defaultLocale: '_default', allLocales: ['_default'] });
+  /**
+   * Build a collection file.
+   * @param {Record<string, any>} props Collection file properties.
+   * @returns {any} Collection file.
+   */
+  const createFile = (props) => ({ fields: [], _file: {}, _i18n: i18n, ...props });
+
+  /** @type {InternalCollection} */
+  const fileCollection = /** @type {any} */ ({
+    name: 'settings',
+    _type: 'file',
+    files: [],
+    _fileMap: {
+      general: createFile({
+        name: 'general',
+        label: 'General',
+        file: 'data/general.yml',
+        summary: '{{theme}} — {{filename}}',
+      }),
+      titled: createFile({
+        name: 'titled',
+        label: 'Titled',
+        file: 'data/titled.yml',
+        summary: '**{{title}}**',
+      }),
+      social: createFile({ name: 'social', file: 'data/social.yml' }),
+    },
+    _i18n: i18n,
+    _thumbnailFieldNames: [],
+  });
+
+  /**
+   * Build an entry collection with an index file.
+   * @param {any} indexFile The `index_file` option value.
+   * @returns {InternalCollection} Collection.
+   */
+  const createEntryCollection = (indexFile) =>
+    /** @type {any} */ ({
+      name: 'tags',
+      folder: 'content/tags',
+      fields: [],
+      summary: '{{title}} (tag)',
+      index_file: indexFile,
+      _type: 'entry',
+      _file: { basePath: 'content/tags', fullPathRegEx: /^content\/tags\/(?<subPath>.+)\.md$/ },
+      _i18n: i18n,
+      _thumbnailFieldNames: [],
+    });
+
+  /**
+   * Build an entry.
+   * @param {string} path File path.
+   * @param {Record<string, any>} [content] Content.
+   * @returns {Entry} Entry.
+   */
+  const createEntry = (path, content = {}) => {
+    const slug = /** @type {string} */ (path.split('/').pop()?.split('.')[0]);
+
+    return { id: path, slug, subPath: slug, locales: { _default: { slug, path, content } } };
+  };
+
+  test('formats the file’s own summary template', () => {
+    const entry = createEntry('data/general.yml', { theme: 'dark' });
+
+    expect(getEntrySummary(fileCollection, entry, { fileName: 'general', useTemplate: true })).toBe(
+      'dark — general',
+    );
+  });
+
+  test('returns the file label without `useTemplate` or with a given template', () => {
+    const entry = createEntry('data/general.yml', { theme: 'dark' });
+
+    expect(getEntrySummary(fileCollection, entry, { fileName: 'general' })).toBe('General');
+    expect(
+      getEntrySummary(fileCollection, entry, {
+        fileName: 'general',
+        useTemplate: true,
+        template: '{{filename}}',
+      }),
+    ).toBe('General');
+  });
+
+  test('returns the file label or name without a summary template', () => {
+    const entry = createEntry('data/social.yml');
+
+    expect(getEntrySummary(fileCollection, entry, { fileName: 'social', useTemplate: true })).toBe(
+      'social',
+    );
+  });
+
+  test('falls back to the file label for an empty `{{title}}`', () => {
+    const entry = createEntry('data/titled.yml');
+
+    expect(
+      getEntrySummary(fileCollection, entry, {
+        fileName: 'titled',
+        useTemplate: true,
+        allowMarkdown: true,
+      }),
+    ).toBe('<strong>Titled</strong>');
+  });
+
+  test('reads the file in its own default locale', () => {
+    /** @type {InternalCollection} */
+    const collection = /** @type {any} */ ({
+      ...fileCollection,
+      _fileMap: {
+        about: createFile({
+          name: 'about',
+          file: 'data/about.{{locale}}.yml',
+          summary: '{{headline}}',
+          _i18n: { defaultLocale: 'ja', allLocales: ['en', 'ja'] },
+        }),
+      },
+    });
+
+    /** @type {Entry} */
+    const entry = {
+      id: 'about',
+      slug: 'about',
+      subPath: 'about',
+      locales: {
+        en: { slug: 'about', path: 'data/about.en.yml', content: { headline: 'Hello' } },
+        ja: { slug: 'about', path: 'data/about.ja.yml', content: { headline: 'こんにちは' } },
+      },
+    };
+
+    expect(getEntrySummary(collection, entry, { fileName: 'about', useTemplate: true })).toBe(
+      'こんにちは',
+    );
+  });
+
+  test('keys the cache on the file name', () => {
+    const entry = createEntry('data/general.yml', { theme: 'dark' });
+
+    expect(getEntrySummary(fileCollection, entry, { useTemplate: true })).toBe('general');
+    expect(getEntrySummary(fileCollection, entry, { fileName: 'general', useTemplate: true })).toBe(
+      'dark — general',
+    );
+  });
+
+  test('formats the index file’s own summary template', () => {
+    const collection = createEntryCollection({
+      label: 'Tag Index',
+      summary: '{{theme}}: {{title}}',
+    });
+
+    const entry = createEntry('content/tags/_index.md', { theme: 'dark' });
+
+    expect(getEntrySummary(collection, entry, { useTemplate: true })).toBe('dark: Tag Index');
+    expect(getEntrySummary(collection, entry)).toBe('Tag Index');
+    // A given template, such as `nested.summary`, doesn’t apply to the index file
+    expect(getEntrySummary(collection, entry, { useTemplate: true, template: '{{slug}}' })).toBe(
+      'Tag Index',
+    );
+    // The collection’s template still applies to the other entries
+    expect(
+      getEntrySummary(collection, createEntry('content/tags/net.md', { title: '.Net' }), {
+        useTemplate: true,
+      }),
+    ).toBe('.Net (tag)');
+  });
+
+  test('returns the index file label without a summary template of its own', () => {
+    const collection = createEntryCollection({ label: 'Tag Index' });
+    const entry = createEntry('content/tags/_index.md');
+
+    expect(getEntrySummary(collection, entry, { useTemplate: true })).toBe('Tag Index');
+  });
+});
+
+describe('Test getCollectionFileSummary()', () => {
+  const i18n = /** @type {any} */ ({ defaultLocale: '_default', allLocales: ['_default'] });
+
+  /** @type {InternalCollection} */
+  const collection = /** @type {any} */ ({
+    name: 'settings',
+    _type: 'file',
+    files: [],
+    _fileMap: {
+      general: { name: 'general', file: 'data/general.yml', summary: '**{{theme}}**', _i18n: i18n },
+      social: { name: 'social', label: 'Social', file: 'data/social.yml', _i18n: i18n },
+    },
+    _i18n: i18n,
+    _thumbnailFieldNames: [],
+  });
+
+  /** @type {Entry} */
+  const entry = {
+    id: 'general',
+    slug: 'general',
+    subPath: 'general',
+    locales: {
+      _default: { slug: 'general', path: 'data/general.yml', content: { theme: 'dark' } },
+    },
+  };
+
+  beforeAll(() => {
+    allEntryFolders.current = /** @type {any} */ ([
+      {
+        collectionName: 'settings',
+        fileName: 'general',
+        filePathMap: { _default: 'data/general.yml' },
+      },
+      {
+        collectionName: 'settings',
+        fileName: 'social',
+        filePathMap: { _default: 'data/social.yml' },
+      },
+    ]);
+  });
+
+  afterAll(() => {
+    allEntryFolders.current = [];
+    allEntries.current = [];
+  });
+
+  test('formats the summary of a file with the `summary` option', () => {
+    allEntries.current = [entry];
+
+    expect(getCollectionFileSummary(collection, 'general')).toBe('<strong>dark</strong>');
+  });
+
+  test('returns `undefined` for a file that doesn’t exist yet', () => {
+    allEntries.current = [];
+
+    expect(getCollectionFileSummary(collection, 'general')).toBeUndefined();
+  });
+
+  test('returns `undefined` for a file without the `summary` option or an unknown file', () => {
+    allEntries.current = [entry];
+
+    expect(getCollectionFileSummary(collection, 'social')).toBeUndefined();
+    expect(getCollectionFileSummary(collection, 'unknown')).toBeUndefined();
   });
 });

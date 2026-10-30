@@ -221,6 +221,88 @@ describe('Collections Parser', () => {
       );
     });
 
+    it('should error when the index file summary refers to a field it doesn’t have', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          fields: [{ name: 'title', widget: 'string' }],
+          index_file: {
+            summary: '{{title}} {{theme}} {{locales}}',
+            fields: [{ name: 'theme', widget: 'string' }],
+          },
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      // `theme` is one of the index file’s fields, and `title` and `locales` are special tags
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'option_field_not_found' }),
+      );
+
+      context.collection.index_file.summary = '{{subtitle}}';
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'option_field_not_found',
+          values: { option: 'summary', name: 'subtitle' },
+          context: expect.objectContaining({ isIndexFile: true }),
+        }),
+      );
+    });
+
+    it('should not check the index file summary without any fields', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts', folder: 'content/posts', index_file: { summary: '{{x}}' } },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'option_field_not_found' }),
+      );
+    });
+
+    it('should check the index file summary against the collection’s fields', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          fields: [{ name: 'title', widget: 'string' }],
+          index_file: { summary: '{{fields.title}} {{theme}}' },
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'option_field_not_found',
+          values: { option: 'summary', name: 'theme' },
+        }),
+      );
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ values: { option: 'summary', name: 'fields.title' } }),
+      );
+    });
+
     it('should error when the filter refers to a field that is not defined', async () => {
       const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();

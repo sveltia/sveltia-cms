@@ -2,6 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 
 import { checkBodyField, isFormatMismatch } from '$lib/services/config/parser/collections/format';
 import { checkPreviewPath } from '$lib/services/config/parser/collections/preview';
+import { checkSummaryTemplate } from '$lib/services/config/parser/collections/templates';
 import { parseFields } from '$lib/services/config/parser/fields';
 import { checkI18nOverrides } from '$lib/services/config/parser/i18n';
 import { checkFolderTemplateTags } from '$lib/services/config/parser/media';
@@ -32,7 +33,7 @@ import {
 export const parseCollectionFile = (context, collectors) => {
   const { cmsConfig, collection, collectionFile } = context;
   // @ts-ignore singleton files don’t have `format` property on their files
-  const { file, format = collection.format, fields, i18n } = collectionFile;
+  const { file, format = collection.format, fields, i18n, summary } = collectionFile;
 
   const { preview_path: previewPath, preview_path_date_field: previewPathDateField } =
     collectionFile;
@@ -103,6 +104,9 @@ export const parseCollectionFile = (context, collectors) => {
     context,
     collectors,
   });
+
+  // Validate the `summary` option against the file’s fields, like an entry collection’s
+  checkSummaryTemplate({ template: summary, fields, context, collectors });
 };
 
 /**

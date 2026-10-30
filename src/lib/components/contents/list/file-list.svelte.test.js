@@ -4,7 +4,7 @@ import { render } from 'vitest-browser-svelte';
 
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
 import { unpublishedEntries } from '$lib/services/workflow';
-import { initTestConfig } from '$lib/test/config';
+import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
 import FileList from './file-list.svelte';
 
@@ -26,11 +26,40 @@ describe('FileList', () => {
             { name: 'social', file: 'data/social.yml', fields: [{ name: 'x', widget: 'string' }] },
           ],
         },
+        {
+          name: 'pages',
+          label: 'Pages',
+          files: [
+            {
+              name: 'home',
+              label: 'Home',
+              icon: 'home',
+              file: 'content/home.md',
+              summary: '{{theme}} **{{headline}}**',
+              fields: [
+                {
+                  name: 'theme',
+                  widget: 'select',
+                  options: [{ label: 'Dark Mode', value: 'dark' }],
+                },
+                { name: 'headline', widget: 'string' },
+              ],
+            },
+            {
+              name: 'about',
+              label: 'About',
+              file: 'content/about.md',
+              summary: '{{title}}!',
+              fields: [{ name: 'title', widget: 'string' }],
+            },
+          ],
+        },
       ],
     });
   });
 
   beforeEach(() => {
+    setEntries([]);
     unpublishedEntries.current = [];
     window.location.hash = '#/collections/settings';
   });
@@ -66,6 +95,44 @@ describe('FileList', () => {
     await expect
       .element(page.getByRole('row', { name: /General/ }))
       .toHaveTextContent('settings General Draft');
+  });
+
+  test('shows the summary of a file with the `summary` option, formatted with its fields', async () => {
+    setEntries([
+      createMockEntry({
+        slug: 'home',
+        folder: 'content',
+        content: { _default: { theme: 'dark', headline: 'Welcome' } },
+      }),
+    ]);
+    selectedCollection.current = getCollection('pages');
+
+    await render(FileList, {});
+
+    const grid = page.getByRole('grid', { name: 'Files' });
+
+    await expect.poll(() => grid.getByRole('row').elements().length).toBe(2);
+    await expect.element(grid.getByRole('row').nth(0)).toHaveTextContent('home Dark Mode Welcome');
+    expect(grid.getByRole('row').nth(0).element().querySelector('strong')?.textContent).toBe(
+      'Welcome',
+    );
+    // A file that doesn’t exist yet is labelled
+    await expect.element(grid.getByRole('row').nth(1)).toHaveTextContent('About');
+  });
+
+  test('updates a summary when the file is saved or created', async () => {
+    selectedCollection.current = getCollection('pages');
+
+    await render(FileList, {});
+
+    const row = page.getByRole('grid', { name: 'Files' }).getByRole('row').nth(1);
+
+    await expect.element(row).toHaveTextContent('About');
+
+    setEntries([
+      createMockEntry({ slug: 'about', folder: 'content', content: { _default: { title: 'Us' } } }),
+    ]);
+    await expect.element(row).toHaveTextContent('Us!');
   });
 
   test('reports an empty collection', async () => {

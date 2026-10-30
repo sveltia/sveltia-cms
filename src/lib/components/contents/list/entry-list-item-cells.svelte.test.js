@@ -33,6 +33,23 @@ describe('EntryListItemCells', () => {
           ],
         },
         {
+          name: 'docs',
+          folder: 'content/docs',
+          fields: [{ name: 'title', widget: 'string' }],
+          index_file: {
+            label: 'Docs Home',
+            summary: '{{title}} · {{status}}',
+            fields: [
+              { name: 'title', widget: 'string' },
+              {
+                name: 'status',
+                widget: 'select',
+                options: [{ label: 'Up to Date', value: 'ok' }],
+              },
+            ],
+          },
+        },
+        {
           name: 'items',
           folder: 'content/items',
           thumbnail: 'image',
@@ -127,6 +144,28 @@ describe('EntryListItemCells', () => {
     await expect.poll(() => other.querySelector('.image')).not.toBeNull();
     expect(other.querySelector('.image img')).toBeNull();
     expect(other.querySelector('.icon.home')).toBeNull();
+  });
+
+  test('shows the index file’s own summary, formatted with its fields', async () => {
+    env.isSmallScreen = false;
+    env.isMediumScreen = false;
+
+    const { container } = await render(EntryListItemCells, {
+      collection: /** @type {any} */ (getCollection('docs')),
+      entry: createMockEntry({
+        slug: '_index',
+        folder: 'content/docs',
+        content: { _default: { status: 'ok' } },
+      }),
+      viewType: 'list',
+      showCheckbox: true,
+    });
+
+    // An empty `{{title}}` falls back to the label
+    expect(container.querySelector('.title bdi')).toHaveTextContent('Docs Home · Up to Date');
+    expect(container.querySelector('.title .icon.home')).not.toBeNull();
+    // The checkbox is named after the plain label
+    await expect.element(page.getByRole('checkbox', { name: /Docs Home/ })).toBeInTheDocument();
   });
 
   test('shows the thumbnail as an icon in the list view', async () => {

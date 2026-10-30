@@ -75,16 +75,13 @@ export const getIndexFile = (collection) => {
     const { index_file: config } = /** @type {any} */ (collection);
     const file = config === true ? {} : config;
 
+    // Every option is kept, so a new one needs no change here. The ones left out, such as
+    // `extension`, `fields` and `editor`, are inherited from the collection or global config
     indexFile = {
+      ...file,
       name,
       label: file.label || _('index_file'),
       icon: file.icon ?? 'home',
-      // The following properties are inherited from the collection file, collection or global
-      // config
-      extension: file.extension,
-      format: file.format,
-      fields: file.fields,
-      editor: file.editor,
     };
   }
 

@@ -12,7 +12,10 @@ import { checkBodyField, isFormatMismatch } from '$lib/services/config/parser/co
 import { checkIdentifierField } from '$lib/services/config/parser/collections/identifier';
 import { checkPreviewPath } from '$lib/services/config/parser/collections/preview';
 import { checkSlugOptions } from '$lib/services/config/parser/collections/slug';
-import { checkCollectionTemplates } from '$lib/services/config/parser/collections/templates';
+import {
+  checkCollectionTemplates,
+  checkSummaryTemplate,
+} from '$lib/services/config/parser/collections/templates';
 import { checkViewOptions } from '$lib/services/config/parser/collections/views';
 import { parseFields } from '$lib/services/config/parser/fields';
 import { checkI18nOverrides } from '$lib/services/config/parser/i18n';
@@ -175,6 +178,7 @@ export const parseEntryCollection = (context, collectors) => {
         extension: indexExtension,
         format: indexFormat,
         fields: indexFields,
+        summary: indexSummary,
       } = /** @type {CollectionIndexFile} */ (index_file);
 
       const hasOwnFormat = indexExtension !== undefined || indexFormat !== undefined;
@@ -190,6 +194,14 @@ export const parseEntryCollection = (context, collectors) => {
           collectors,
         });
       }
+
+      // Validate the index file’s `summary` option against the fields it uses
+      checkSummaryTemplate({
+        template: indexSummary,
+        fields: indexFileFields,
+        context: indexFileContext,
+        collectors,
+      });
     }
   }
 

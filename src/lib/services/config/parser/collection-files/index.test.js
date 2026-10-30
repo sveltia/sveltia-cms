@@ -50,6 +50,53 @@ describe('Collection Files Parser', () => {
   });
 
   describe('parseCollectionFile', () => {
+    it('should error when the summary refers to a field the file doesn’t have', async () => {
+      const { parseCollectionFile } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'settings' },
+        collectionFile: {
+          name: 'general',
+          file: 'data/general.yml',
+          summary: '{{title}} {{theme}} {{locales}} {{colour}}',
+          fields: [{ name: 'theme', widget: 'string' }],
+        },
+      };
+
+      parseCollectionFile(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledOnce();
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'option_field_not_found',
+          values: { option: 'summary', name: 'colour' },
+          context,
+        }),
+      );
+    });
+
+    it('should not check the summary of a file without fields', async () => {
+      const { parseCollectionFile } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'settings' },
+        collectionFile: { name: 'general', file: 'data/general.yml', summary: '{{theme}}' },
+      };
+
+      parseCollectionFile(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledOnce();
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'collection_file_no_fields' }),
+      );
+    });
+
     it('should parse field configurations in a collection file', async () => {
       const { parseCollectionFile } = await import('.');
       const collectors = createCollectors();

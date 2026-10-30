@@ -4,7 +4,7 @@ import { getConfiguredSlugTemplate } from '$lib/services/contents/collection/slu
 
 /**
  * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
- * @import { EntryCollection } from '$lib/types/public';
+ * @import { EntryCollection, Field } from '$lib/types/public';
  */
 
 /**
@@ -38,6 +38,30 @@ export const SUMMARY_SPECIAL_TAGS = [
   'title',
   'fields.title',
 ];
+
+/**
+ * Check the `summary` option of an entry collection, a collection file or an index file against
+ * the fields it can refer to. Nothing is checked without fields, which is reported separately.
+ * @param {object} args Arguments.
+ * @param {any} args.template The `summary` option value.
+ * @param {Field[] | undefined} args.fields Fields the template can refer to.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+export const checkSummaryTemplate = ({ template, fields, context, collectors }) => {
+  if (!fields?.length) {
+    return;
+  }
+
+  checkFieldReferences({
+    option: 'summary',
+    template,
+    specialTags: SUMMARY_SPECIAL_TAGS,
+    fields,
+    context,
+    collectors,
+  });
+};
 
 /**
  * Check the templates of an entry collection that refer to its fields: the `slug`, `path` and
@@ -77,12 +101,7 @@ export const checkCollectionTemplates = ({ collection, context, collectors }) =>
     specialTags: SLUG_SPECIAL_TAGS,
   });
 
-  checkFieldReferences({
-    ...args,
-    option: 'summary',
-    template: summary,
-    specialTags: SUMMARY_SPECIAL_TAGS,
-  });
+  checkSummaryTemplate({ ...args, template: summary });
 
   // The `thumbnail` option lists key paths rather than a template; a boolean turns the thumbnails
   // on or off

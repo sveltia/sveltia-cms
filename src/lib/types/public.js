@@ -1616,6 +1616,10 @@
  * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the collection
  * file list and other places. See the
  * [documentation](https://sveltiacms.app/en/docs/collections#icons) for details.
+ * @property {string} [summary] Summary template displayed in the file list of a file collection in
+ * place of the label, e.g. `Home Page ({{locales}})`. It can use the file’s fields and the same
+ * special tags and transformations as an entry collection’s `summary` option; `{{title}}` falls
+ * back to the label without a `title` field. Default: the `label` option value.
  * @property {string} file File path relative to the project root.
  * @property {Field[]} fields Set of fields to be included in the file.
  * @property {string} [media_folder] Internal media folder path for the collection. This overrides
@@ -1907,6 +1911,11 @@
  * @property {string} [icon] Name of a [Material Symbols
  * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
  * Default: `home`.
+ * @property {string} [summary] Summary template displayed in place of the label in the entry list,
+ * search results and other places where the collection’s `summary` option applies to the entries,
+ * e.g. `{{title}} ({{locales}})`. It can use the index file’s fields and the same special tags and
+ * transformations as the collection’s `summary` option; `{{title}}` falls back to the label without
+ * a `title` field. Default: the `label` option value.
  * @property {Field[]} [fields] Set of fields for the index file. If omitted, the regular entry
  * collection `fields` will be used instead.
  * @property {EditorOptions} [editor] Editor view options.
