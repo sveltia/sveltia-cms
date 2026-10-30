@@ -17,6 +17,7 @@ import { pruneForkBranches, updateForkStatusWith } from '$lib/services/backends/
 import {
   getPullRequestPath,
   getRepositoryPath,
+  isSameRepository,
 } from '$lib/services/backends/git/shared/repository';
 import { applyForkPullRequestStatus } from '$lib/services/backends/git/shared/workflow';
 import { user } from '$lib/services/user/account.svelte';
@@ -68,7 +69,7 @@ export const isForkPullRequest = (item) => {
 
   return (
     !!fork &&
-    item.head?.repo?.full_name?.toLowerCase() === `${fork.owner}/${fork.repo}`.toLowerCase() &&
+    isSameRepository(item.head?.repo?.full_name, fork) &&
     item.base?.ref === repository.branch &&
     userId !== undefined &&
     item.user?.id === userId

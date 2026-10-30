@@ -25,6 +25,7 @@ import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
 import {
   getPullRequestPath,
   getRepositoryPath,
+  isSameRepository,
 } from '$lib/services/backends/git/shared/repository';
 import {
   approvePullRequest,
@@ -638,19 +639,18 @@ const fetchFileModes = async ({ headSHA, paths }) => {
  * @see https://docs.github.com/en/rest/commits/commits#compare-two-commits
  */
 export const fetchMergeState = async (pullRequest) => {
-  const { owner, repo, branch } = repository;
+  const { branch } = repository;
 
   const { head, base } = /** @type {Record<string, any>} */ (
     await fetchAPI(getPullRequestPath(repository, pullRequest.number))
   );
 
   const headSHA = /** @type {string | undefined} */ (head?.sha);
-  const fullName = `${owner}/${repo}`.toLowerCase();
 
   const onConfiguredBranches =
     base?.ref === branch &&
-    base?.repo?.full_name?.toLowerCase() === fullName &&
-    head?.repo?.full_name?.toLowerCase() === fullName;
+    isSameRepository(base?.repo?.full_name, repository) &&
+    isSameRepository(head?.repo?.full_name, repository);
 
   return resolveMergeState({
     pullRequest,

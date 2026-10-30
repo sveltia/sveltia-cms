@@ -18,6 +18,7 @@ import {
   runOpenAuthoringSetUp,
   setUpForkFor,
 } from '$lib/services/backends/git/shared/fork';
+import { isSameRepository } from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -136,7 +137,7 @@ export const fetchProjectDetails = async () => {
  * @see https://docs.gitlab.com/api/projects/#get-a-single-project
  */
 export const fetchForkByName = async () => {
-  const { owner, repo } = repository;
+  const { repo } = repository;
   const userName = /** @type {string} */ (user.account?.login);
 
   // The contributor has no project of that name, which is the common case on a first visit. Only
@@ -150,9 +151,7 @@ export const fetchForkByName = async () => {
     return undefined;
   }
 
-  const parent = result.forked_from_project?.path_with_namespace?.toLowerCase();
-
-  if (parent !== `${owner}/${repo}`.toLowerCase()) {
+  if (!isSameRepository(result.forked_from_project?.path_with_namespace, repository)) {
     return undefined;
   }
 

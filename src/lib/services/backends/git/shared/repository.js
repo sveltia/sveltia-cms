@@ -67,6 +67,17 @@ export const getRepositoryPath = ({ owner, repo }) =>
   `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
 
 /**
+ * Check whether a full repository name returned by a Git service, like `full_name` on GitHub and
+ * Gitea/Forgejo or `path_with_namespace` on GitLab, names the given repository. The services treat
+ * owner and repository names as case-insensitive, so they’re compared that way.
+ * @param {string | undefined} fullName Full name, e.g. `Owner/Repo`.
+ * @param {RepositoryPath} repository Repository to compare with.
+ * @returns {boolean} Result. `false` if no name is given.
+ */
+export const isSameRepository = (fullName, { owner, repo }) =>
+  typeof fullName === 'string' && fullName.toLowerCase() === `${owner}/${repo}`.toLowerCase();
+
+/**
  * Get the REST API path of the given pull request on GitHub or Gitea/Forgejo.
  * @param {RepositoryPath} repository Repository holding the pull request.
  * @param {number | undefined} number Pull request number.

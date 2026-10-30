@@ -16,8 +16,10 @@ import {
   resolveWorkflowRepository,
   runOpenAuthoringSetUp,
   setUpForkFor,
+  warnForkNotFastForwarded,
+  warnForkSyncError,
 } from '$lib/services/backends/git/shared/fork';
-import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
+import { getRepositoryPath, isSameRepository } from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -54,16 +56,13 @@ const NO_ACCESS_STATUSES = [403, 404];
  * @see https://docs.github.com/en/rest/collaborators/invitations#list-repository-invitations-for-the-authenticated-user
  */
 export const hasPendingInvitation = async () => {
-  const { owner, repo } = repository;
-  const repoPath = `${owner}/${repo}`.toLowerCase();
-
   try {
     const invitations = /** @type {Record<string, any>[]} */ (
       await fetchAPI('/user/repository_invitations')
     );
 
-    return invitations.some(
-      ({ repository: invited }) => invited?.full_name?.toLowerCase() === repoPath,
+    return invitations.some(({ repository: invited }) =>
+      isSameRepository(invited?.full_name, repository),
     );
   } catch {
     // The list is a nicety; failing to read it just means there’s nothing extra to say
@@ -182,7 +181,7 @@ export const fetchRepositoryAccess = async () => {
  * @see https://docs.github.com/en/rest/repos/repos#get-a-repository
  */
 export const fetchForkByName = async () => {
-  const { owner, repo } = repository;
+  const { repo } = repository;
   const userName = /** @type {string} */ (user.account?.login);
 
   // Only a missing repository means there’s no fork at the name. Reading a rate limit or an outage
@@ -197,13 +196,11 @@ export const fetchForkByName = async () => {
     return undefined;
   }
 
-  const parent = result.parent?.full_name?.toLowerCase();
-
   // GitHub redirects a repository that has been transferred, so check that the fork found is still
   // the user’s own, the way {@link fetchForkFromNetwork} does
   if (
     !result.fork ||
-    parent !== `${owner}/${repo}`.toLowerCase() ||
+    !isSameRepository(result.parent?.full_name, repository) ||
     result.owner?.login?.toLowerCase() !== userName.toLowerCase()
   ) {
     return undefined;
@@ -328,21 +325,20 @@ export const createFork = async () => {
  * @param {RepositoryPath} fork Fork to update.
  * @see https://docs.github.com/en/rest/branches/branches#sync-a-fork-branch-with-the-upstream-repository
  */
-export const syncFork = async ({ owner, repo }) => {
+export const syncFork = async (fork) => {
   /** @type {Response | undefined} */
   let response;
 
   try {
     response = /** @type {Response} */ (
-      await fetchAPI(`${getRepositoryPath({ owner, repo })}/merge-upstream`, {
+      await fetchAPI(`${getRepositoryPath(fork)}/merge-upstream`, {
         method: 'POST',
         body: { branch: repository.branch },
         responseType: 'raw',
       })
     );
   } catch (/** @type {any} */ ex) {
-    // eslint-disable-next-line no-console
-    console.warn(`Failed to sync the ${owner}/${repo} fork with the upstream repository.`, ex);
+    warnForkSyncError(fork, ex);
 
     return;
   }
@@ -351,10 +347,7 @@ export const syncFork = async ({ owner, repo }) => {
   // is a state the CMS can’t resolve on the contributor’s behalf. It’s also refused when the update
   // would change GitHub Actions workflow files and the OAuth token lacks the `workflow` scope
   if (!response.ok) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `The ${owner}/${repo} fork could not be fast-forwarded to the upstream repository.`,
-    );
+    warnForkNotFastForwarded(fork);
   }
 };
 

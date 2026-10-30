@@ -18,6 +18,8 @@ import {
   runOpenAuthoringSetUp,
   setUpForkFor,
   updateForkStatusWith,
+  warnForkNotFastForwarded,
+  warnForkSyncError,
 } from '$lib/services/backends/git/shared/fork';
 import { cmsConfig } from '$lib/services/config';
 import {
@@ -457,6 +459,34 @@ describe('shared fork service', () => {
       ).resolves.toBeUndefined();
 
       expect(deleteBranch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('fork sync warnings', () => {
+    const fork = { owner: 'contributor', repo: 'site' };
+
+    test('warns about a sync request that failed, with the error', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const error = new Error('Network error');
+
+      warnForkSyncError(fork, error);
+
+      expect(warn).toHaveBeenCalledWith(
+        'Failed to sync the contributor/site fork with the upstream repository.',
+        error,
+      );
+      warn.mockRestore();
+    });
+
+    test('warns about a fork that can’t be fast-forwarded', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      warnForkNotFastForwarded(fork);
+
+      expect(warn).toHaveBeenCalledWith(
+        'The contributor/site fork could not be fast-forwarded to the upstream repository.',
+      );
+      warn.mockRestore();
     });
   });
 

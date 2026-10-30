@@ -5,6 +5,7 @@ import { cmsConfig } from '$lib/services/config';
 import {
   ENTRY_ALREADY_PUBLISHED,
   forkedRepository,
+  getForkPath,
   openAuthoring,
   openAuthoringInitialized,
   requestForkPermission,
@@ -330,6 +331,31 @@ export const checkMergedBranch = async ({ branch, mergedSHA, fetchBranchHead, de
   }
 
   throw createLocalizedError(ENTRY_ALREADY_PUBLISHED, 'open_authoring.entry_already_published');
+};
+
+/**
+ * Report that a request to bring the contributor’s fork up to date with the upstream repository
+ * failed. The fork still works when it trails the upstream, it just makes for a noisier pull
+ * request, so this only warns.
+ * @param {RepositoryPath} fork Fork.
+ * @param {any} error Error the request failed with.
+ */
+export const warnForkSyncError = (fork, error) => {
+  // eslint-disable-next-line no-console
+  console.warn(`Failed to sync the ${getForkPath(fork)} fork with the upstream repository.`, error);
+};
+
+/**
+ * Report that the contributor’s fork can’t be fast-forwarded to the upstream repository, e.g.
+ * because it has commits of its own on the branch, which the CMS can’t resolve on their behalf.
+ * Like {@link warnForkSyncError}, this only warns.
+ * @param {RepositoryPath} fork Fork.
+ */
+export const warnForkNotFastForwarded = (fork) => {
+  // eslint-disable-next-line no-console
+  console.warn(
+    `The ${getForkPath(fork)} fork could not be fast-forwarded to the upstream repository.`,
+  );
 };
 
 /**
