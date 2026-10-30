@@ -2,3 +2,4 @@
 *.test.js linguist-generated
 bench/** linguist-generated
 e2e/** linguist-generated
+src/lib/test/** linguist-generated
