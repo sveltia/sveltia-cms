@@ -5,7 +5,7 @@
     getInlinePreview,
     renderInlinePreview,
   } from '$lib/services/contents/fields/rich-text/components/inline-preview';
-  import { observeReadonly } from '$lib/services/contents/fields/rich-text/components/utils';
+  import { followReadonly } from '$lib/services/contents/fields/rich-text/components/utils';
 
   /**
    * @import { ResolvedEditorComponentDefinition } from '$lib/types/private';
@@ -57,11 +57,6 @@
    * Whether the `onEdit` function is in progress, so another click doesn’t call it again.
    */
   let editing = false;
-  /**
-   * Observer following the read-only state of the rich text field this component is in.
-   * @type {MutationObserver | undefined}
-   */
-  let readonlyObserver = undefined;
 
   /**
    * Preview of the component shown within the text.
@@ -108,17 +103,11 @@
     }
   };
 
-  onMount(() => {
-    window.requestAnimationFrame(() => {
-      readonlyObserver = observeReadonly(wrapper, (value) => {
-        readonly = value;
-      });
-    });
-
-    return () => {
-      readonlyObserver?.disconnect();
-    };
-  });
+  onMount(() =>
+    followReadonly(wrapper, (value) => {
+      readonly = value;
+    }),
+  );
 </script>
 
 <!-- The preview of the component, right within the text. It opens the developer’s own UI on click

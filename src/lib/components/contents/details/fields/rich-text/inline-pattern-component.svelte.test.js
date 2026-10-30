@@ -197,6 +197,44 @@ describe('InlinePatternComponent', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  test('doesn’t follow the read-only state once unmounted before the next frame', async () => {
+    // Hold the frames back, so the component can be unmounted before the next one comes
+    /** @type {Map<number, FrameRequestCallback>} */
+    const frames = new Map();
+    let lastFrame = 0;
+
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      lastFrame += 1;
+      frames.set(lastFrame, callback);
+
+      return lastFrame;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+      frames.delete(id);
+    });
+
+    const textbox = document.createElement('div');
+
+    textbox.setAttribute('role', 'textbox');
+    document.body.appendChild(textbox);
+    wrappers.push(textbox);
+
+    const { unmount } = await render(InlinePatternComponent, {
+      target: textbox,
+      props: /** @type {any} */ ({ componentName: 'x-wikilink', label: 'Wikilink', toInline }),
+    });
+
+    await unmount();
+
+    const observe = vi.spyOn(MutationObserver.prototype, 'observe');
+
+    frames.forEach((callback) => callback(performance.now()));
+    vi.restoreAllMocks();
+
+    // No observer is left behind, writing to the state of the removed component
+    expect(observe).not.toHaveBeenCalled();
+  });
+
   test('shows the data set by the node', async () => {
     const { component } = await renderComponent({});
 

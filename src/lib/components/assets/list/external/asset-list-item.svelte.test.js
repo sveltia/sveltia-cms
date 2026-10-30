@@ -3,6 +3,7 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import {
+  externalAssets,
   externalAssetSearchTerms,
   focusedExternalAsset,
   focusedExternalSubfolder,
@@ -29,13 +30,14 @@ describe('AssetListItem', () => {
     focusedExternalSubfolder.current = undefined;
     externalAssetSearchTerms.current = '';
     externalAssetAvailability.current = {};
+    externalAssets.current = undefined;
   });
 
   test('shows the path in place of the name while a folder service is searched', async () => {
     selectedCloudService.current = createMockCloudService({ browse: vi.fn() });
     focusedExternalSubfolder.current = { name: 'images', path: 'images' };
 
-    await render(AssetListItem, { asset, index: 0, viewType: 'list' });
+    await render(AssetListItem, { asset, viewType: 'list' });
 
     await expect.element(page.getByRole('row', { name: 'photo.png' })).toBeInTheDocument();
 
@@ -49,7 +51,13 @@ describe('AssetListItem', () => {
   });
 
   test('reflects the position and selection of the asset in the list', async () => {
-    await render(AssetListItem, { asset, index: 2, viewType: 'grid' });
+    externalAssets.current = [
+      createMockExternalAsset({ fileName: 'a.png' }),
+      createMockExternalAsset({ fileName: 'b.png' }),
+      asset,
+    ];
+
+    await render(AssetListItem, { asset, viewType: 'grid' });
 
     const row = page.getByRole('row', { name: 'photo.png' });
 
@@ -67,7 +75,7 @@ describe('AssetListItem', () => {
   test('focuses the asset and opens the details on double click', async () => {
     window.location.hash = '#/assets/-/test_cloud';
 
-    await render(AssetListItem, { asset, index: 0, viewType: 'list' });
+    await render(AssetListItem, { asset, viewType: 'list' });
 
     const row = page.getByRole('row', { name: 'photo.png' });
 
@@ -88,7 +96,6 @@ describe('AssetListItem', () => {
 
     const { container } = await render(AssetListItem, {
       asset: linkedAsset,
-      index: 0,
       viewType: 'grid',
     });
 
@@ -117,7 +124,6 @@ describe('AssetListItem', () => {
 
     const { container } = await render(AssetListItem, {
       asset: linkedAsset,
-      index: 0,
       viewType: 'grid',
     });
 
@@ -128,7 +134,6 @@ describe('AssetListItem', () => {
     // The list view keeps the title, and the badge with it
     const { container: list } = await render(AssetListItem, {
       asset: linkedAsset,
-      index: 0,
       viewType: 'list',
     });
 
@@ -138,7 +143,7 @@ describe('AssetListItem', () => {
   test('has no status cell on a cloud storage service', async () => {
     externalAssetAvailability.current = { [asset.id]: false };
 
-    const { container } = await render(AssetListItem, { asset, index: 0, viewType: 'list' });
+    const { container } = await render(AssetListItem, { asset, viewType: 'list' });
 
     await expect.element(page.getByRole('row', { name: 'photo.png' })).toBeInTheDocument();
     expect(container.querySelector('.status')).toBeNull();

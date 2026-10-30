@@ -75,10 +75,20 @@
       // The file could not be loaded; leave the media info out
     }
 
-    const _usedEntries = await getExternalAssetUsedEntries(_asset);
+    try {
+      const _usedEntries = await getExternalAssetUsedEntries(_asset);
 
-    if (isLatest()) {
-      usedEntries = _usedEntries;
+      if (isLatest()) {
+        usedEntries = _usedEntries;
+      }
+    } catch (/** @type {any} */ ex) {
+      // eslint-disable-next-line no-console
+      console.error(ex);
+
+      if (isLatest()) {
+        // Stop showing the used entries as being loaded
+        usedEntries = [];
+      }
     }
   };
 

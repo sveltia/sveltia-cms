@@ -7,12 +7,10 @@
 -->
 <script>
   import { createElement } from 'react';
-  import { onMount } from 'svelte';
 
   import { assetURLUpdates } from '$lib/services/api/asset-proxy';
   import { fieldStateContext } from '$lib/services/api/field-state';
-  import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
-  import { createReactRoot, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
+  import { createReactRenderer } from '$lib/services/api/react-dom.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { buildPreviewProps } from '$lib/services/contents/fields/custom/preview';
@@ -45,18 +43,16 @@
   /** @type {HTMLDivElement | undefined} */
   let container = $state();
   /**
-   * React root, created on the first render. Not reactive, as the effect rendering the component
-   * assigns it, and would otherwise run again right away.
-   * @type {ReturnType<typeof createReactRoot> | undefined}
+   * Renderer of the preview, which is a React component receiving Immutable Maps.
    */
-  let reactRoot;
+  const reactRenderer = createReactRenderer(() => container);
 
   /**
    * Render the React component with the current props.
    */
   const renderComponent = () => {
     /* v8 ignore next 3 -- the effect below only calls this once everything is ready */
-    if (!container || !immutableLoaded.current || !reactDomLoaded.current) {
+    if (!reactRenderer.ready) {
       return;
     }
 
@@ -70,11 +66,9 @@
     });
 
     if (props) {
-      reactRoot ??= createReactRoot(container);
-
       // Provide the state of this field to any built-in field preview reused within the custom
       // preview, which is typically given an ad hoc field configuration that doesn’t describe it
-      reactRoot.render(
+      reactRenderer.render(
         createElement(
           fieldStateContext.Provider,
           { value: { locale, keyPath } },
@@ -83,21 +77,6 @@
       );
     }
   };
-
-  onMount(() => {
-    // The preview is a React component receiving Immutable Maps. Both libraries are normally loaded
-    // by the time the editor opens, as `CMS.registerFieldType()` starts loading them, but wait for
-    // them in any case; the effect below renders the preview once they’re there
-    /* v8 ignore next 4 -- the libraries are bundled with the tests, so loading can’t fail */
-    Promise.all([loadImmutable(), loadReactDom()]).catch((/** @type {Error} */ error) => {
-      // eslint-disable-next-line no-console
-      console.error(error);
-    });
-
-    return () => {
-      reactRoot?.unmount();
-    };
-  });
 
   $effect(() => {
     // A custom preview receives `entry` and `fieldsMetaData` and may render values from any field,
@@ -109,7 +88,7 @@
     void assetURLUpdates.current;
 
     // Render the preview once the container and the library are ready, then keep it up to date
-    if (immutableLoaded.current && reactDomLoaded.current && container) {
+    if (reactRenderer.ready) {
       renderComponent();
     }
   });

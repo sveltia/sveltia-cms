@@ -1,33 +1,30 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, EmptyState, Toast } from '@sveltia/ui';
-  import { isTextFileType } from '@sveltia/utils/file';
+  import { Alert, Toast } from '@sveltia/ui';
   import { onDestroy, untrack } from 'svelte';
 
+  import AssetPreviewContent from '$lib/components/assets/list/asset-preview-content.svelte';
   import DeleteAssetsButton from '$lib/components/assets/list/delete-assets-button.svelte';
   import DetailsOverlay from '$lib/components/assets/list/details-overlay.svelte';
   import DownloadAssetsButton from '$lib/components/assets/list/download-assets-button.svelte';
   import CopyAssetsButton from '$lib/components/assets/list/internal/copy-assets-button.svelte';
   import EditOptionsButton from '$lib/components/assets/list/internal/edit-options-button.svelte';
   import InfoPanel from '$lib/components/assets/list/internal/info-panel.svelte';
-  import TextPreview from '$lib/components/assets/list/text-preview.svelte';
-  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import NotFound from '$lib/components/global/not-found.svelte';
   import { goBack } from '$lib/services/app/navigation';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
-  import { deleteAssets } from '$lib/services/assets/data/delete';
+  import { commitAssetDeletion } from '$lib/services/assets/data/delete-commit';
   import {
     assetsLocked,
     hasReadonlyAsset,
     selectedAssetFolder,
   } from '$lib/services/assets/folders';
   import { getAssetBlob, preloadAssets } from '$lib/services/assets/info';
-  import { canPreviewAsset, isMediaKind } from '$lib/services/assets/kinds';
+  import { canPreviewAsset } from '$lib/services/assets/kinds';
   import { getAssetFolderHistoryState, showAssetDetails } from '$lib/services/assets/navigation';
   import { overlaidAsset } from '$lib/services/assets/state';
   import { browsedDirPath } from '$lib/services/assets/subfolders';
   import { assetGroups, getAdjacentAssets } from '$lib/services/assets/view';
-  import { runCommit } from '$lib/services/backends/commit-prompt';
   import { isSearchResultsPath } from '$lib/services/search/navigation';
   import { encodePathSegments } from '$lib/services/utils/url';
 
@@ -40,13 +37,18 @@
    * The blob most recently loaded, along with the asset it was loaded for. Kept together so the
    * preview never reads a blob that belongs to another asset: once an asset has been renamed or
    * moved on the file system, the blob read before the move points at a file that no longer exists.
-   * @type {{ asset: Asset, blob: Blob } | undefined}
+   * The blob is missing if it couldn’t be read.
+   * @type {{ asset: Asset, blob?: Blob } | undefined}
    */
   let loaded = $state.raw();
   let deletingFailed = $state(false);
 
   const asset = $derived(overlaidAsset.current);
-  const blob = $derived(loaded?.asset === asset ? /** @type {Blob} */ (loaded?.blob) : undefined);
+  /** Whether the blob of the shown asset is still being read. */
+  const pending = $derived(loaded?.asset !== asset);
+  /* v8 ignore start -- only read while the asset is shown, by which time `loaded` is set */
+  const blob = $derived(pending ? undefined : loaded?.blob);
+  /* v8 ignore stop */
   const kind = $derived(asset?.kind);
   const blobURL = $derived(asset?.blobURL);
   const name = $derived(asset?.name ?? '');
@@ -100,7 +102,16 @@
 
     if (current) {
       (async () => {
-        const _blob = await getAssetBlob(current);
+        /** @type {Blob | undefined} */
+        let _blob;
+
+        try {
+          _blob = await getAssetBlob(current);
+        } catch (/** @type {any} */ ex) {
+          // The preview is shown as unavailable
+          // eslint-disable-next-line no-console
+          console.error(ex);
+        }
 
         // The user may have switched to another asset in the meantime
         if (overlaidAsset.current === current) {
@@ -132,10 +143,9 @@
       {assets}
       disabled={assetsLocked.current || hasReadonlyAsset(assets)}
       deleteAssets={async (_assets) => {
-        const { ok, cancelled } = await runCommit(() => deleteAssets(_assets));
+        const { ok, failed } = await commitAssetDeletion(_assets);
 
-        // A cancellation at the commit message prompt isn’t a failure
-        if (!ok && !cancelled) {
+        if (failed) {
           deletingFailed = true;
         }
 
@@ -157,28 +167,16 @@
   {#snippet preview()}
     {#if !asset}
       <NotFound message={_('file_not_found')} {backPath} />
-    {:else if kind && isMediaKind(kind)}
-      <AssetPreview
-        {kind}
-        {asset}
-        blurBackground={['image', 'video'].includes(kind)}
-        checkerboard={kind === 'image'}
-        alt={kind === 'image' ? name : undefined}
-        controls={['audio', 'video'].includes(kind)}
-        loading="eager"
-        dissolve={false}
-        holdTransition={true}
-      />
-    {:else if blob?.type === 'application/pdf'}
-      <iframe src={blobURL} title={name} sandbox="allow-scripts"></iframe>
-    {:else if blob?.type && isTextFileType(blob.type)}
-      {#await asset.text ?? blob.text() then text}
-        <TextPreview {text} {name} />
-      {/await}
     {:else}
-      <EmptyState>
-        <span role="alert">{_('preview_unavailable')}</span>
-      </EmptyState>
+      <AssetPreviewContent
+        {kind}
+        {name}
+        type={blob?.type}
+        {asset}
+        src={blobURL}
+        {pending}
+        getText={() => asset.text ?? /** @type {Blob} */ (blob).text()}
+      />
     {/if}
   {/snippet}
   {#snippet info()}

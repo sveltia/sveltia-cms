@@ -330,10 +330,18 @@
         &:dir(rtl) {
           &::view-transition-old(page-root) {
             animation: 100ms ease-in both slide-out-to-right-rtl;
+
+            @media (prefers-reduced-motion) {
+              animation: none;
+            }
           }
 
           &::view-transition-new(page-root) {
             animation: 100ms ease-in both slide-in-from-left-rtl;
+
+            @media (prefers-reduced-motion) {
+              animation: none;
+            }
           }
         }
       }
@@ -362,10 +370,18 @@
         &:dir(rtl) {
           &::view-transition-old(page-root) {
             animation: 100ms ease-in both slide-out-to-left-rtl;
+
+            @media (prefers-reduced-motion) {
+              animation: none;
+            }
           }
 
           &::view-transition-new(page-root) {
             animation: 100ms ease-in both slide-in-from-right-rtl;
+
+            @media (prefers-reduced-motion) {
+              animation: none;
+            }
           }
         }
       }

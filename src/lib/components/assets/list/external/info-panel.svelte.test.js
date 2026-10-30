@@ -176,6 +176,54 @@ describe('InfoPanel', () => {
     expect(getSections(container)['Used in']).toBe('None');
   });
 
+  test('stops loading the used entries once they can’t be looked up', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.mocked(getExternalAssetUsedEntries).mockRejectedValueOnce(new Error('offline'));
+
+    try {
+      const { container } = await render(InfoPanel, {
+        asset: createMockExternalAsset({ fileName: 'notes.pdf' }),
+      });
+
+      await expect.poll(() => getSections(container)['Used in']).toBe('None');
+      expect(error).toHaveBeenCalledWith(new Error('offline'));
+    } finally {
+      error.mockRestore();
+    }
+  });
+
+  test('ignores a failure to look up the used entries of an asset focused earlier', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { promise, reject } = Promise.withResolvers();
+
+    vi.mocked(getExternalAssetUsedEntries).mockReturnValueOnce(/** @type {any} */ (promise));
+
+    try {
+      const { promise: secondPromise, resolve: resolveSecond } = Promise.withResolvers();
+      const first = createMockExternalAsset({ fileName: 'first.pdf' });
+      const second = createMockExternalAsset({ fileName: 'second.pdf' });
+      const { container, rerender } = await render(InfoPanel, { asset: first });
+
+      await expect.poll(() => vi.mocked(getExternalAssetUsedEntries).mock.calls.length).toBe(1);
+      vi.mocked(getExternalAssetUsedEntries).mockReturnValueOnce(
+        /** @type {any} */ (secondPromise),
+      );
+      await rerender({ asset: second });
+      await expect.poll(() => vi.mocked(getExternalAssetUsedEntries).mock.calls.length).toBe(2);
+
+      reject(new Error('stale'));
+      await sleep(50);
+      // The second asset’s entries are still being looked up
+      expect(getSections(container)['Used in']).toBe('Loading…');
+
+      resolveSecond([]);
+      await expect.poll(() => getSections(container)['Used in']).toBe('None');
+    } finally {
+      error.mockRestore();
+    }
+  });
+
   test('tells that a linked file couldn’t be loaded', async () => {
     const asset = createMockExternalAsset({
       fileName: 'gone.pdf',

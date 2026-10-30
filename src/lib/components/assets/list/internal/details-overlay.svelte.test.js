@@ -171,6 +171,75 @@ describe('DetailsOverlay', () => {
     await expect.poll(() => container.querySelector('iframe')?.title).toBe('doc.pdf');
   });
 
+  test('shows a loading state, not an unavailable preview, while the file is being read', async () => {
+    const { promise, resolve: resolveFile } = Promise.withResolvers();
+
+    const slowAsset = createMockAsset({
+      name: 'slow.pdf',
+      asset: {
+        blobURL: undefined,
+        handle: /** @type {any} */ ({
+          /**
+           * Get the file.
+           * @returns {Promise<File>} File.
+           */
+          getFile: () => promise,
+        }),
+      },
+    });
+
+    overlaidAsset.current = slowAsset;
+
+    const { container } = await render(DetailsOverlay);
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Loading…');
+    resolveFile(new File(['%PDF-1.4'], 'slow.pdf', { type: 'application/pdf' }));
+    await expect.poll(() => container.querySelector('iframe')?.title).toBe('slow.pdf');
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
+  });
+
+  test('shows a loading state while a text file is being read, and reports a failure', async () => {
+    const { promise, reject: rejectText } = Promise.withResolvers();
+    const file = new File(['Hello'], 'broken.txt', { type: 'text/plain' });
+
+    /**
+     * Read the file, which takes a while, then fails.
+     * @returns {Promise<string>} Content.
+     */
+    file.text = () => promise;
+
+    overlaidAsset.current = createMockAsset({ name: 'broken.txt', file });
+
+    await render(DetailsOverlay);
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Loading…');
+    rejectText(new Error('NotReadableError'));
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Preview Unavailable.');
+  });
+
+  test('reports a file that can’t be read', async () => {
+    overlaidAsset.current = createMockAsset({
+      name: 'lost.pdf',
+      asset: {
+        handle: /** @type {any} */ ({
+          /**
+           * Get the file.
+           * @returns {Promise<File>} File.
+           */
+          getFile: () => Promise.reject(new DOMException('Gone', 'NotFoundError')),
+        }),
+      },
+    });
+
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await render(DetailsOverlay);
+
+    await expect.element(page.getByRole('alert')).toHaveTextContent('Preview Unavailable.');
+    expect(error).toHaveBeenCalled();
+    error.mockRestore();
+  });
+
   test('has no preview for a binary file', async () => {
     overlaidAsset.current = zipAsset;
 

@@ -27,6 +27,7 @@ import {
   getGroupValue,
   getSortValue,
   groupExternalAssets,
+  listedExternalAssetIndexMap,
   listedExternalAssets,
   listedExternalSubfolders,
   pruneHiddenAssets,
@@ -445,6 +446,37 @@ describe('assets/external/view', () => {
 
       currentView.current = { type: 'grid', group: { field: 'domain' } };
       expect(externalAssetGroups.current).toEqual({ 'cdn.example.com': externalAssets.current });
+    });
+  });
+
+  describe('listedExternalAssetIndexMap', () => {
+    it('should number the listed assets across the groups', () => {
+      externalAssets.current = assets.map((asset) => ({
+        ...asset,
+        downloadURL: `https://${asset.kind === 'image' ? 'b' : 'a'}.example.com/${asset.id}`,
+      }));
+      currentView.current = { type: 'grid', group: { field: 'domain' } };
+
+      // The rows of every group make up one grid, so the index runs across the groups
+      expect([...listedExternalAssetIndexMap.current]).toEqual([
+        [guide.id, 0],
+        [hero2.id, 1],
+        [hero.id, 2],
+      ]);
+      expect(listedExternalAssetIndexMap.current.get('missing')).toBeUndefined();
+    });
+
+    it('should offset the index by the listed subfolders', () => {
+      selectedCloudService.current = /** @type {any} */ ({ serviceId: 'aws_s3', browse: vi.fn() });
+      externalFolders.current = ['images/empty'];
+      externalAssets.current = assets;
+      selectedExternalDirPath.current = 'images';
+
+      expect(listedExternalSubfolders.current).toHaveLength(1);
+      expect([...listedExternalAssetIndexMap.current]).toEqual([
+        [hero2.id, 1],
+        [hero.id, 2],
+      ]);
     });
   });
 

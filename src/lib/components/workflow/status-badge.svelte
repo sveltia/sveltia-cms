@@ -6,10 +6,11 @@
 <script>
   import { _ } from '@sveltia/i18n';
 
+  import StatusPill from '$lib/components/common/status-pill.svelte';
   import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
 
   /**
-   * @import { WorkflowStatus } from '$lib/types/private';
+   * @import { StatusPillTone, WorkflowStatus } from '$lib/types/private';
    */
 
   /**
@@ -23,51 +24,21 @@
     status,
     /* eslint-enable prefer-const */
   } = $props();
+
+  /**
+   * Pill color tone for each status.
+   * @type {Record<WorkflowStatus, StatusPillTone>}
+   */
+  const TONES = {
+    draft: 'info',
+    pending_review: 'warning',
+    pending_publish: 'success',
+    pending_deletion: 'error',
+  };
 </script>
 
-<span role="none" class="status-badge {status}">
-  {_(WORKFLOW_STATUS_LABELS[status])}
-</span>
-
-<style>
-  /*
-   * Filled pill following the same background/foreground/border recipe as the Alert and Infobar
-   * components, so the colors adapt to both the light and dark themes. The border does most of the
-   * work in dark mode, where the alert background is nearly the same as the row background.
-   */
-
-  .status-badge {
-    display: inline-block;
-    border-width: 1px;
-    border-style: solid;
-    border-radius: 12px;
-    padding: 1px 6px;
-    font-size: var(--sui-font-size-x-small);
-    line-height: var(--sui-line-height-compact);
-    white-space: nowrap;
-
-    &.draft {
-      border-color: var(--sui-info-border-color);
-      background-color: var(--sui-info-background-color);
-      color: var(--sui-info-foreground-color);
-    }
-
-    &.pending_review {
-      border-color: var(--sui-warning-border-color);
-      background-color: var(--sui-warning-background-color);
-      color: var(--sui-warning-foreground-color);
-    }
-
-    &.pending_publish {
-      border-color: var(--sui-success-border-color);
-      background-color: var(--sui-success-background-color);
-      color: var(--sui-success-foreground-color);
-    }
-
-    &.pending_deletion {
-      border-color: var(--sui-error-border-color);
-      background-color: var(--sui-error-background-color);
-      color: var(--sui-error-foreground-color);
-    }
-  }
-</style>
+<StatusPill
+  tone={TONES[status]}
+  label={_(WORKFLOW_STATUS_LABELS[status])}
+  class="status-badge {status}"
+/>

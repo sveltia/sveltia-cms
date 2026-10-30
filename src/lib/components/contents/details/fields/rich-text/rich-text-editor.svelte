@@ -12,7 +12,6 @@
     getNearestEditorFromDOMNode,
     $insertNodes as insertNodes,
   } from 'lexical';
-  import { tick } from 'svelte';
 
   import { EditorComponent } from '$lib/components/contents/details/fields/rich-text/custom-node-features';
   import { cmsConfig } from '$lib/services/config';
@@ -22,7 +21,7 @@
     getFieldEditorContext,
     isInEditorComponent,
   } from '$lib/services/contents/editor/field-context';
-  import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
+  import { trackPendingWhile } from '$lib/services/contents/editor/pending.svelte';
   import { getField } from '$lib/services/contents/entry/fields';
   import {
     getAssetLibraryFolderMap,
@@ -318,23 +317,7 @@
   // While the editor holds a change made by the user, register it as a pending update: the editor
   // converts the content to Markdown with a short delay, so a save right after a change would
   // otherwise validate and write the previous value
-  $effect(() => {
-    if (!pending) {
-      return undefined;
-    }
-
-    /** @type {PromiseWithResolvers<void>} */
-    const { promise, resolve } = Promise.withResolvers();
-
-    trackPendingFieldUpdate(promise);
-
-    // Settle once the value has reached `currentValue` through the bindings and effects, or when
-    // the editor goes away
-    return async () => {
-      await tick();
-      resolve();
-    };
-  });
+  trackPendingWhile(() => pending);
 </script>
 
 <div role="none" class="wrapper" bind:this={wrapper}>

@@ -1,3 +1,4 @@
+import { validateItemCount } from '$lib/services/contents/draft/validate/validity';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getPairsFromContent } from '$lib/services/contents/fields/key-value/pairs';
 import { stripComponentNamePrefix } from '$lib/services/contents/fields/rich-text';
@@ -70,13 +71,7 @@ export const validateKeyValueField = ({
     ([key, value]) => key.trim() || value,
   );
 
-  if (required && !pairs.length) {
-    validity.valueMissing = true;
-  } else if (typeof min === 'number' && pairs.length < min) {
-    validity.rangeUnderflow = true;
-  } else if (typeof max === 'number' && pairs.length > max) {
-    validity.rangeOverflow = true;
-  }
+  validateItemCount(validity, { count: pairs.length, required, min, max });
 
   return { skip: false, keyPath: _keyPath, empty: !pairs.length };
 };

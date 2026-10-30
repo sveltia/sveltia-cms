@@ -142,6 +142,23 @@ describe('reorderEntries()', () => {
     expect(saveChanges).not.toHaveBeenCalled();
   });
 
+  test('writes nothing to a collection made read-only since reorder mode was entered', async () => {
+    const collection = makeCollection({ readonly: true });
+
+    const entries = [
+      makeEntry('b', { title: 'B', order: 2 }),
+      makeEntry('a', { title: 'A', order: 1 }),
+    ];
+
+    const result = await reorderEntries(collection, entries);
+
+    expect(result).toBe(0);
+
+    const { saveChanges } = await import('$lib/services/backends/save');
+
+    expect(saveChanges).not.toHaveBeenCalled();
+  });
+
   test('saves changed entries with updated order field', async () => {
     const collection = makeCollection();
 

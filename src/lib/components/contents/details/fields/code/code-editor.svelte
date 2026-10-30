@@ -8,13 +8,12 @@
   import { CodeEditor } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { isObject } from '@sveltia/utils/object';
-  import { tick } from 'svelte';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { deferDraftWrite } from '$lib/services/contents/draft/update/deferred';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
-  import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
+  import { trackPendingWhile } from '$lib/services/contents/editor/pending.svelte';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
@@ -155,23 +154,7 @@
   // While the editor holds a change made by the user, register it as a pending update: the editor
   // passes the code on with a short delay, so a save right after a change would otherwise validate
   // and write the previous value
-  $effect(() => {
-    if (!pending) {
-      return undefined;
-    }
-
-    /** @type {PromiseWithResolvers<void>} */
-    const { promise, resolve } = Promise.withResolvers();
-
-    trackPendingFieldUpdate(promise);
-
-    // Settle once the value has reached the draft, which `setCurrentValue()` writes in a microtask,
-    // or when the editor goes away
-    return async () => {
-      await tick();
-      resolve();
-    };
-  });
+  trackPendingWhile(() => pending);
 </script>
 
 {#await sleep() then}

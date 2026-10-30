@@ -408,6 +408,11 @@
  */
 
 /**
+ * Color tone of a status pill, following the Alert and Infobar components of Sveltia UI.
+ * @typedef {'info' | 'warning' | 'success' | 'error'} StatusPillTone
+ */
+
+/**
  * An entry whose pull request has been merged, and whose change is on its way to the site.
  * @typedef {object} DeployingEntry
  * @property {UnpublishedEntry} entry Entry as it was published, with the workflow properties it

@@ -37,3 +37,23 @@ export const finalizeValidity = (validity) => {
 
   return finalized;
 };
+
+/**
+ * Flag the given validity state when a field holding a number of items, like a List or KeyValue
+ * field, has too few or too many of them, or none at all while it’s required.
+ * @param {EntryValidityState} validity Validity state to update in place.
+ * @param {object} args Arguments.
+ * @param {number} args.count Number of items.
+ * @param {boolean} args.required Whether the field is required.
+ * @param {any} args.min The field’s `min` option. Ignored unless it’s a number.
+ * @param {any} args.max The field’s `max` option. Ignored unless it’s a number.
+ */
+export const validateItemCount = (validity, { count, required, min, max }) => {
+  if (required && !count) {
+    validity.valueMissing = true;
+  } else if (typeof min === 'number' && count < min) {
+    validity.rangeUnderflow = true;
+  } else if (typeof max === 'number' && count > max) {
+    validity.rangeOverflow = true;
+  }
+};

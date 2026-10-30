@@ -189,6 +189,30 @@ export const observeReadonly = (element, callback) => {
 };
 
 /**
+ * Follow the read-only state of the rich text editor the given component is in, like
+ * {@link observeReadonly}, from the next frame on: Lexical mounts the component before putting it
+ * in the editor, so the textbox can’t be found right away.
+ * @param {Element | undefined} element Element of a component.
+ * @param {(readonly: boolean) => void} callback Function called with the state once the frame has
+ * come, and again whenever it changes.
+ * @returns {() => void} Function to stop following the state once the component is gone. If the
+ * frame hasn’t come by then, the callback is never called.
+ */
+export const followReadonly = (element, callback) => {
+  /** @type {MutationObserver | undefined} */
+  let observer;
+
+  const frame = window.requestAnimationFrame(() => {
+    observer = observeReadonly(element, callback);
+  });
+
+  return () => {
+    window.cancelAnimationFrame(frame);
+    observer?.disconnect();
+  };
+};
+
+/**
  * Unescape the title of a Markdown image, like `T \"q\"` in `![a](/a.png "T \"q\"")`, so the
  * field shows `T "q"`. A backslash before an ASCII punctuation character escapes it, as anywhere
  * else in Markdown, while one before any other character is a literal backslash.

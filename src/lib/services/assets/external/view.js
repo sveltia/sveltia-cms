@@ -347,6 +347,23 @@ export const externalAssetGroups = createDerivedState(() =>
 );
 
 /**
+ * Map from asset ID to the asset’s row index in the list, used by list rows to resolve their
+ * `aria-rowindex` in O(1). The index is counted across the groups rather than within each one, as
+ * the rows of every group make up one grid. The subfolders come first, so they offset the index.
+ * Like `listedAssetIndexMap` for repository assets.
+ * @type {{ readonly current: Map<string, number> }}
+ */
+export const listedExternalAssetIndexMap = createDerivedState(() => {
+  const offset = listedExternalSubfolders.current.length;
+
+  return new Map(
+    Object.values(externalAssetGroups.current)
+      .flat(1)
+      .map(({ id }, index) => [id, index + offset]),
+  );
+});
+
+/**
  * Drop the selected and focused assets that are no longer listed, so that the toolbar actions
  * never operate on an asset the user can’t see, e.g. one hidden by the search terms or the file
  * type filter. The selection survives a change of the sort order, as the assets stay listed.

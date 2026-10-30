@@ -1,3 +1,4 @@
+import { validateItemCount } from '$lib/services/contents/draft/validate/validity';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -79,13 +80,7 @@ export const validateListField = ({
 
   const size = Array.isArray(value) && !!value.length ? value.length : countItems();
 
-  if (required && !size) {
-    validity.valueMissing = true;
-  } else if (typeof min === 'number' && size < min) {
-    validity.rangeUnderflow = true;
-  } else if (typeof max === 'number' && size > max) {
-    validity.rangeOverflow = true;
-  }
+  validateItemCount(validity, { count: size, required, min, max });
 
   return { skip: false, empty: !size };
 };

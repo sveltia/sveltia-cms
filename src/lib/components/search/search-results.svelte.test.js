@@ -5,7 +5,13 @@ import { render } from 'vitest-browser-svelte';
 import { announcedPageStatus } from '$lib/services/app/navigation';
 import { searchMode, searchTerms } from '$lib/services/search';
 import { env } from '$lib/services/user/env.svelte';
-import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
+import {
+  createMockAsset,
+  createMockEntry,
+  initTestConfig,
+  setAssets,
+  setEntries,
+} from '$lib/test/config';
 
 import SearchResults from './search-results.svelte';
 
@@ -30,6 +36,7 @@ describe('SearchResults', () => {
     await render(SearchResults, {});
 
     await expect.element(page.getByRole('toolbar')).toHaveTextContent('Search Results');
+    await expect.element(page.getByRole('group', { name: 'Entries' })).toBeInTheDocument();
 
     const grid = page.getByRole('grid', { name: 'Entries' });
 
@@ -54,6 +61,24 @@ describe('SearchResults', () => {
   test('lists the assets matching the terms', async () => {
     searchMode.current = 'assets';
     searchTerms.current = 'photo';
+    setAssets([createMockAsset({ name: 'photo.png' }), createMockAsset({ name: 'report.pdf' })]);
+
+    await render(SearchResults, {});
+    await expect.element(page.getByRole('group', { name: 'Assets' })).toBeInTheDocument();
+
+    const grid = page.getByRole('grid', { name: 'Assets' });
+
+    await expect.element(grid).toHaveAttribute('aria-rowcount', '1');
+    await expect.element(grid.getByRole('row')).toHaveTextContent('draft Global Assets photo.png');
+    expect(announcedPageStatus.current).toBe(
+      'You’re now viewing search results for “\u2068photo\u2069”. We’ve found one asset.',
+    );
+  });
+
+  test('reports when no asset matches', async () => {
+    searchMode.current = 'assets';
+    searchTerms.current = 'photo';
+    setAssets([]);
 
     await render(SearchResults, {});
     await expect.element(page.getByText('No files found.')).toBeVisible();

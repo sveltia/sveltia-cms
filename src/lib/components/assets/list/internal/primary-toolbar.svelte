@@ -12,7 +12,7 @@
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
-  import { deleteAssets } from '$lib/services/assets/data/delete';
+  import { commitAssetDeletion } from '$lib/services/assets/data/delete-commit';
   import {
     assetsLocked,
     canCreateAsset,
@@ -27,7 +27,6 @@
   import { browsingCmsFolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { lockedBranch } from '$lib/services/backends/branch-access';
-  import { runCommit } from '$lib/services/backends/commit-prompt';
   import { getReadonlyMessage } from '$lib/services/config/readonly';
   import { env } from '$lib/services/user/env.svelte';
   import { createPath } from '$lib/services/utils/file';
@@ -109,12 +108,13 @@
       {assets}
       disabled={assetsLocked.current || hasReadonlyAsset(assets)}
       deleteAssets={async (_assets) => {
-        const { ok, cancelled } = await runCommit(() => deleteAssets(_assets));
+        const { ok, failed } = await commitAssetDeletion(_assets);
 
-        // A cancellation at the commit message prompt isn’t a failure
-        if (!ok && !cancelled) {
+        if (failed) {
           deletingFailed = true;
         }
+
+        return ok;
       }}
       planDeletion={planAssetDeletion}
       buttonDescription={_('delete_selected_assets', { values: { count: assets.length } })}

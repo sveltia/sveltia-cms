@@ -1,12 +1,9 @@
-import { saveChanges } from '$lib/services/backends/save';
-import {
-  contentUpdatesToast,
-  UPDATE_TOAST_DEFAULT_STATE,
-} from '$lib/services/contents/collection/data';
+import { isConfigReadonly } from '$lib/services/config/readonly';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder/sort';
+import { saveEntryUpdates } from '$lib/services/contents/collection/entries/save';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import {
@@ -137,27 +134,17 @@ const buildArrayFileReorderChanges = (collection, orderedEntries) => {
  * @returns {Promise<number>} Number of entries actually updated.
  */
 export const reorderEntries = async (collection, orderedEntries) => {
+  // The collection could have been made read-only since the entries were put in reorder mode, e.g.
+  // by a configuration reload, in which case nothing is written, like with a bulk edit
+  if (isConfigReadonly({ collection })) {
+    return 0;
+  }
+
   const { changes, savingEntries } = isArrayFileCollection(collection)
     ? buildArrayFileReorderChanges(collection, orderedEntries)
     : await buildReorderChanges(collection, orderedEntries);
 
-  if (!changes.length) {
-    return 0;
-  }
-
-  await saveChanges({
-    changes,
-    savingEntries,
-    options: { commitType: 'update', collection },
-  });
-
-  contentUpdatesToast.current = {
-    ...UPDATE_TOAST_DEFAULT_STATE,
-    saved: true,
-    count: savingEntries.length,
-  };
-
-  return savingEntries.length;
+  return saveEntryUpdates({ collection, changes, savingEntries });
 };
 
 /**

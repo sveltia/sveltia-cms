@@ -25,8 +25,8 @@
   } from '$lib/services/contents/fields/rich-text/components/summary';
   import { getComponentThumbnail } from '$lib/services/contents/fields/rich-text/components/thumbnail';
   import {
+    followReadonly,
     getParentComponentNames,
-    observeReadonly,
   } from '$lib/services/contents/fields/rich-text/components/utils';
   import { validateComponentValues } from '$lib/services/contents/fields/rich-text/components/validate';
   import {
@@ -267,11 +267,6 @@
    * back into the draft. A plain variable, as it’s read outside of any reactive context.
    */
   let unmounted = false;
-  /**
-   * Observer following the read-only state of the rich text field this component is in.
-   * @type {MutationObserver | undefined}
-   */
-  let readonlyObserver = undefined;
 
   /**
    * Current values for the editor component. These values are stored in the {@link entryDraft}
@@ -446,14 +441,22 @@
   );
 
   onMount(() => {
+    // Requested before the frame below, so the state is known by the time the field editors render
+    const stopFollowingReadonly = followReadonly(wrapper, (value) => {
+      readonly = value;
+    });
+
     window.requestAnimationFrame(() => {
+      // The component may have been removed before the frame came, e.g. by an undo right after
+      // inserting it, in which case it must neither write to the draft nor open the dialog
+      if (unmounted) {
+        return;
+      }
+
       // Get the draft state, locale and key path from the closest containers
       entryDraft = getEntryDraftByElement(wrapper);
       // Before the locale and key path, which render the field editors: they read the names once
       parentComponentNames = getParentComponentNames(wrapper);
-      readonlyObserver = observeReadonly(wrapper, (value) => {
-        readonly = value;
-      });
 
       const localeContainer = /** @type {HTMLElement} */ (wrapper?.closest('[data-locale]'));
       const keyPathContainer = /** @type {HTMLElement} */ (wrapper?.closest('[data-key-path]'));
@@ -478,7 +481,7 @@
       const draft = entryDraft?.current;
 
       unmounted = true;
-      readonlyObserver?.disconnect();
+      stopFollowingReadonly();
 
       // Remove the values and validities from the draft when the component is unmounted
       if (draft) {

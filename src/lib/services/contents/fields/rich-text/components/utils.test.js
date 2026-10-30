@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   escapeTitle,
+  followReadonly,
   getParentComponentNames,
   getSelectorTagNames,
   isInlineComponentDef,
@@ -335,6 +336,71 @@ describe('observeReadonly', () => {
       undefined,
     );
     expect(observeReadonly(undefined, callback)).toBe(undefined);
+    expect(callback).not.toHaveBeenCalled();
+  });
+});
+
+describe('followReadonly', () => {
+  /**
+   * Wait for the next frame.
+   * @returns {Promise<void>} Promise.
+   */
+  const nextFrame = () =>
+    new Promise((resolve) => {
+      window.requestAnimationFrame(() => resolve(undefined));
+    });
+
+  it('should follow the read-only state from the next frame on', async () => {
+    document.body.innerHTML =
+      '<div role="textbox" aria-readonly="true"><p><span id="component"></span></p></div>';
+
+    const textbox = /** @type {HTMLElement} */ (document.querySelector('[role="textbox"]'));
+    const callback = vi.fn();
+    const stop = followReadonly(document.querySelector('#component') ?? undefined, callback);
+
+    expect(callback).not.toHaveBeenCalled();
+
+    await nextFrame();
+    expect(callback).toHaveBeenLastCalledWith(true);
+
+    textbox.setAttribute('aria-readonly', 'false');
+    await vi.waitFor(() => {
+      expect(callback).toHaveBeenLastCalledWith(false);
+    });
+
+    stop();
+    textbox.setAttribute('aria-readonly', 'true');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 10);
+    });
+    expect(callback).toHaveBeenCalledTimes(2);
+  });
+
+  it('should never call the callback if stopped before the frame', async () => {
+    document.body.innerHTML =
+      '<div role="textbox" aria-readonly="true"><p><span id="component"></span></p></div>';
+
+    const textbox = /** @type {HTMLElement} */ (document.querySelector('[role="textbox"]'));
+    const callback = vi.fn();
+    const stop = followReadonly(document.querySelector('#component') ?? undefined, callback);
+
+    stop();
+    await nextFrame();
+    textbox.setAttribute('aria-readonly', 'false');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 10);
+    });
+    expect(callback).not.toHaveBeenCalled();
+  });
+
+  it('should do nothing outside an editor', async () => {
+    document.body.innerHTML = '<span id="component"></span>';
+
+    const callback = vi.fn();
+    const stop = followReadonly(document.querySelector('#component') ?? undefined, callback);
+
+    await nextFrame();
+    stop();
     expect(callback).not.toHaveBeenCalled();
   });
 });
