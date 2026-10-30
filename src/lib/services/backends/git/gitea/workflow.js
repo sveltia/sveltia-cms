@@ -24,6 +24,10 @@ import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
 import {
+  getPullRequestPath,
+  getRepositoryPath,
+} from '$lib/services/backends/git/shared/repository';
+import {
   approvePullRequest,
   assertBranchAtHead,
   commitToNewWorkflowBranch,
@@ -63,7 +67,6 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoListPullRequests
  */
 export const fetchLabelledPullRequests = async () => {
-  const { owner, repo } = repository;
   const statusLabels = getAllStatusLabels();
 
   // The status labels are matched by the API rather than by {@link parsePullRequest}, so the item
@@ -72,7 +75,7 @@ export const fetchLabelledPullRequests = async () => {
   // endpoint takes label IDs and matches a pull request carrying any of them, so the IDs are looked
   // up first. The issue endpoint takes names instead, but only matches an item carrying all of
   // them, which no pull request does once more than one status label exists
-  const labelIds = (await fetchAllPages(`/repos/${owner}/${repo}/labels`))
+  const labelIds = (await fetchAllPages(`${getRepositoryPath(repository)}/labels`))
     .filter(({ name }) => statusLabels.includes(name))
     .map(({ id }) => id);
 
@@ -84,7 +87,7 @@ export const fetchLabelledPullRequests = async () => {
   const labelQuery = labelIds.map((id) => `&labels=${id}`).join('');
 
   const items = await fetchAllPages(
-    `/repos/${owner}/${repo}/pulls?state=open&sort=recentupdate${labelQuery}`,
+    `${getRepositoryPath(repository)}/pulls?state=open&sort=recentupdate${labelQuery}`,
   );
 
   // A pull request carrying more than one status label is listed once for each. The list reports
@@ -96,7 +99,7 @@ export const fetchLabelledPullRequests = async () => {
 
   await runConcurrently(numbers, async (number) => {
     const item = /** @type {Record<string, any>} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/pulls/${number}`)
+      await fetchAPI(getPullRequestPath(repository, number))
     );
 
     const pullRequest = parsePullRequest(item);
@@ -137,8 +140,9 @@ export const fetchPullRequests = async () =>
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoListPullRequests
  */
 const fetchOpenPullRequest = async (branch) => {
-  const { owner, repo } = repository;
-  const items = await fetchAllPages(`/repos/${owner}/${repo}/pulls?state=open&sort=recentupdate`);
+  const items = await fetchAllPages(
+    `${getRepositoryPath(repository)}/pulls?state=open&sort=recentupdate`,
+  );
 
   // A pull request from a fork can have a head branch of the same name, but it isn’t this branch
   return items.find((item) => item.head?.ref === branch && isSameRepositoryPullRequest(item));
@@ -256,8 +260,7 @@ export const approve = (pullRequest) => approvePullRequest(repository, pullReque
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoDeletePullReview
  */
 export const withdrawApproval = async (pullRequest) => {
-  const { owner, repo } = repository;
-  const path = `/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`;
+  const path = `${getPullRequestPath(repository, pullRequest.number)}/reviews`;
   const reviews = /** @type {Record<string, any>[]} */ (await fetchAllPages(path));
 
   // A deletion comes back as `204 No Content`, which can’t be parsed as JSON, so the response is
@@ -305,14 +308,13 @@ const CONTENT_TYPE_MODES = {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetContentsList
  */
 const fetchFileModes = async ({ headSHA, paths }) => {
-  const { owner, repo } = repository;
   /** @type {Map<string, string>} */
   const modes = new Map();
 
   await runConcurrently(getParentDirs(paths), async (dir) => {
     const entries = /** @type {Record<string, any>[]} */ (
       await fetchAPI(
-        `/repos/${owner}/${repo}/contents${dir ? `/${encodePathSegments(dir)}` : ''}` +
+        `${getRepositoryPath(repository)}/contents${dir ? `/${encodePathSegments(dir)}` : ''}` +
           `?ref=${encodeURIComponent(headSHA)}`,
       )
     );
@@ -336,12 +338,11 @@ const fetchFileModes = async ({ headSHA, paths }) => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetPullRequest
  */
 export const fetchMergeState = async (pullRequest) => {
-  const { owner, repo } = repository;
   const { number } = /** @type {{ number: number }} */ (pullRequest);
 
   // The head commit of a single pull request is the branch’s own, read when asked
   const item = /** @type {Record<string, any>} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/pulls/${number}`)
+    await fetchAPI(getPullRequestPath(repository, number))
   );
 
   const headSHA = /** @type {string | undefined} */ (item.head?.sha);
@@ -415,14 +416,13 @@ export const fetchUnchangedPaths = async ({ headSHA, paths }) => {
 export const publish = async (pullRequest) => {
   checkPublishAllowed();
 
-  const { owner, repo } = repository;
   const { number } = pullRequest;
   const squash = isSquashMergeEnabled();
 
   // A successful merge comes back as `200 OK` with an empty body, which can’t be parsed as JSON, so
   // the response is taken as is and the error case is handled here
   const response = /** @type {Response} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/pulls/${number}/merge`, {
+    await fetchAPI(`${getPullRequestPath(repository, number)}/merge`, {
       method: 'POST',
       responseType: 'raw',
       body: {

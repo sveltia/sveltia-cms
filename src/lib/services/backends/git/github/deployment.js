@@ -7,6 +7,7 @@ import {
   findURLInSummary,
   resolveDeployments,
 } from '$lib/services/backends/git/shared/deployment';
+import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { splitIntoChunks } from '$lib/services/utils/array';
 
 /**
@@ -19,17 +20,14 @@ import { splitIntoChunks } from '$lib/services/utils/array';
  * @returns {Promise<Response>} Response.
  * @see https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event
  */
-export const triggerDeployment = async () => {
-  const { owner, repo } = repository;
-
-  return /** @type {Promise<Response>} */ (
-    fetchAPI(`/repos/${owner}/${repo}/dispatches`, {
+export const triggerDeployment = async () =>
+  /** @type {Promise<Response>} */ (
+    fetchAPI(`${getRepositoryPath(repository)}/dispatches`, {
       method: 'POST',
       body: { event_type: 'sveltia-cms-publish' },
       responseType: 'raw',
     })
   );
-};
 
 /**
  * Maximum number of commits to look up in one GraphQL request, and deployments to read per commit.

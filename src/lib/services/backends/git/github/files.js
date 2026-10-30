@@ -16,6 +16,7 @@ import { mapConcurrently, runConcurrently } from '$lib/services/backends/git/sha
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
+import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { encodePathSegments } from '$lib/services/utils/url';
@@ -43,11 +44,12 @@ import { encodePathSegments } from '$lib/services/utils/url';
  * @see https://docs.github.com/en/rest/git/trees#get-a-tree
  */
 const fetchTree = async (treeRef, recursive) => {
-  const { owner, repo } = repository;
   const query = recursive ? '?recursive=1' : '';
 
   return /** @type {{ tree: GitTreeEntry[], truncated: boolean }} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/git/trees/${encodePathSegments(treeRef)}${query}`)
+    await fetchAPI(
+      `${getRepositoryPath(repository)}/git/trees/${encodePathSegments(treeRef)}${query}`,
+    )
   );
 };
 
@@ -209,7 +211,7 @@ export const getFileMetadataFragment = ({ path }) => `
  */
 const requestBlob = async ({ owner, repo, sha, responseType }) =>
   /** @type {Promise<string | Response>} */ (
-    fetchAPI(`/repos/${owner}/${repo}/git/blobs/${sha}`, {
+    fetchAPI(`${getRepositoryPath({ owner, repo })}/git/blobs/${sha}`, {
       headers: { Accept: 'application/vnd.github.raw' },
       responseType,
     })

@@ -7,6 +7,7 @@ import {
 import {
   applyDefaultBranch,
   createBaseURLsGetter,
+  getRepositoryPath,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
 
@@ -56,10 +57,10 @@ export const isRateLimited = ({ status, headers }) =>
  * @see https://docs.github.com/en/rest/repos/repos#get-a-repository
  */
 export const checkRepositoryAccess = async () => {
-  const { owner, repo } = repository;
+  const { repo } = repository;
 
   const response = /** @type {Response} */ (
-    await fetchAPI(`/repos/${owner}/${repo}`, {
+    await fetchAPI(getRepositoryPath(repository), {
       headers: { Accept: 'application/json' },
       responseType: 'raw',
     })

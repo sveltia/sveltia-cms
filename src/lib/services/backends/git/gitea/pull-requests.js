@@ -15,6 +15,10 @@ import {
   parseRestFiles,
   PULL_REQUEST_DESCRIPTION,
 } from '$lib/services/backends/git/shared/pull-requests';
+import {
+  getPullRequestPath,
+  getRepositoryPath,
+} from '$lib/services/backends/git/shared/repository';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
 import {
@@ -142,11 +146,10 @@ export const parsePullRequest = (item) => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetGitRef
  */
 export const fetchPullRequestHeadRef = async (number) => {
-  const { owner, repo } = repository;
   const ref = `refs/pull/${number}/head`;
 
   const result = /** @type {Record<string, any> | Record<string, any>[] | undefined} */ (
-    await fetchAPIOrUndefined(`/repos/${owner}/${repo}/git/${ref}`)
+    await fetchAPIOrUndefined(`${getRepositoryPath(repository)}/git/${ref}`)
   );
 
   if (!result) {
@@ -205,8 +208,9 @@ const getListedCommit = ({ contents_url: url }) => {
 export const fetchChangedFiles = (number, headSHA, attempts = FILE_LIST_POLL.attempts) =>
   pollUntil(
     async () => {
-      const { owner, repo } = repository;
-      const { items, complete } = await fetchPages(`/repos/${owner}/${repo}/pulls/${number}/files`);
+      const { items, complete } = await fetchPages(
+        `${getPullRequestPath(repository, number)}/files`,
+      );
 
       const listedCommits = items.length
         ? [...new Set(items.map((file) => getListedCommit(file)))]
@@ -234,7 +238,6 @@ export const fetchChangedFiles = (number, headSHA, attempts = FILE_LIST_POLL.att
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetPullRequestFiles
  */
 export const fetchPullRequestFileList = async (pullRequest) => {
-  const { owner, repo } = repository;
   const { number, headSHA } = /** @type {{ number: number, headSHA?: string }} */ (pullRequest);
   /** @type {Record<string, any>[]} */
   let files;
@@ -245,7 +248,7 @@ export const fetchPullRequestFileList = async (pullRequest) => {
     files = result.files;
     pullRequest.headSHA = result.commit;
   } else {
-    files = await fetchAllPages(`/repos/${owner}/${repo}/pulls/${number}/files`);
+    files = await fetchAllPages(`${getPullRequestPath(repository, number)}/files`);
   }
 
   pullRequest.files = parseRestFiles(files, { removedStatus: 'deleted' });
@@ -277,13 +280,13 @@ export const fetchPullRequestFileContent = async (pullRequest, file) => {
   // A workflow branch lives in the contributor’s fork with Open Authoring, so that’s where the file
   // has to be read from. It’s read at the head commit rather than the branch, so the content shown
   // is that of the commit a publish is pinned to, even if the branch moves on while the board loads
-  const { owner, repo } = getWorkflowRepository();
   const { path } = file;
   const ref = pullRequest.headSHA ?? pullRequest.branch;
 
   const result = /** @type {Record<string, any> | undefined} */ (
     await fetchAPIOrUndefined(
-      `/repos/${owner}/${repo}/contents/${encodePathSegments(path)}?ref=${encodeURIComponent(ref)}`,
+      `${getRepositoryPath(getWorkflowRepository())}/contents/${encodePathSegments(path)}` +
+        `?ref=${encodeURIComponent(ref)}`,
     )
   );
 
@@ -333,10 +336,10 @@ export const fetchPullRequestFileContents = async (pullRequest) => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetBranch
  */
 export const fetchBranchHead = async (branch) => {
-  const { owner, repo } = getWorkflowRepository();
-
   const result = /** @type {{ commit?: { id?: string } } | undefined} */ (
-    await fetchAPIOrUndefined(`/repos/${owner}/${repo}/branches/${encodePathSegments(branch)}`)
+    await fetchAPIOrUndefined(
+      `${getRepositoryPath(getWorkflowRepository())}/branches/${encodePathSegments(branch)}`,
+    )
   );
 
   return result?.commit?.id;
@@ -349,11 +352,9 @@ export const fetchBranchHead = async (branch) => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoDeleteBranch
  */
 export const deleteBranch = async (branch) => {
-  const { owner, repo } = getWorkflowRepository();
-
   await deleteRemoteBranch({
     branch,
-    path: `/repos/${owner}/${repo}/branches/${encodePathSegments(branch)}`,
+    path: `${getRepositoryPath(getWorkflowRepository())}/branches/${encodePathSegments(branch)}`,
     goneStatuses: [404],
   });
 };
@@ -365,9 +366,7 @@ export const deleteBranch = async (branch) => {
  * @see https://docs.gitea.com/api/next/#tag/issue/operation/issueCreateLabel
  */
 export const createStatusLabel = async (status) => {
-  const { owner, repo } = repository;
-
-  await fetchAPI(`/repos/${owner}/${repo}/labels`, {
+  await fetchAPI(`${getRepositoryPath(repository)}/labels`, {
     method: 'POST',
     body: {
       name: getStatusLabel(status),
@@ -392,8 +391,7 @@ export const createStatusLabel = async (status) => {
  * @see https://docs.gitea.com/api/next/#tag/issue/operation/issueReplaceLabels
  */
 export const applyLabels = async (number, labels, status, method) => {
-  const { owner, repo } = repository;
-  const path = `/repos/${owner}/${repo}/issues/${number}/labels`;
+  const path = `${getRepositoryPath(repository)}/issues/${number}/labels`;
   const statusLabel = getStatusLabel(status);
 
   const result = /** @type {Record<string, any>[]} */ (
@@ -417,11 +415,10 @@ export const applyLabels = async (number, labels, status, method) => {
  * @see https://docs.gitea.com/api/next/#tag/issue/operation/issueGetLabels
  */
 export const updateLabels = async (pullRequest, status) => {
-  const { owner, repo } = repository;
   const { number } = pullRequest;
 
   const labels = /** @type {Record<string, any>[]} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/issues/${number}/labels`)
+    await fetchAPI(`${getRepositoryPath(repository)}/issues/${number}/labels`)
   );
 
   const newLabels = replaceStatusLabel(
@@ -440,10 +437,9 @@ export const updateLabels = async (pullRequest, status) => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoEditPullRequest
  */
 export const updateDraftState = async (pullRequest, isDraft) => {
-  const { owner, repo } = repository;
   const { number, title } = pullRequest;
 
-  await fetchAPI(`/repos/${owner}/${repo}/pulls/${number}`, {
+  await fetchAPI(getPullRequestPath(repository, number), {
     method: 'PATCH',
     body: { title: wipTitle.format(title, isDraft) },
   });
@@ -460,12 +456,12 @@ export const updateDraftState = async (pullRequest, isDraft) => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoCreatePullRequest
  */
 export const createPullRequest = async ({ branch, title, status }) => {
-  const { owner, repo, branch: baseBranch } = repository;
+  const { branch: baseBranch } = repository;
   const fork = forkedRepository.current;
   const isDraft = status === 'draft';
 
   const result = /** @type {Record<string, any>} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/pulls`, {
+    await fetchAPI(`${getRepositoryPath(repository)}/pulls`, {
       method: 'POST',
       body: {
         title: wipTitle.format(title, isDraft),
@@ -521,7 +517,8 @@ const getSourcePath = ({ action, path, previousPath }) =>
 export const fetchFileSHA = async (path, ref, { owner, repo } = getWorkflowRepository()) => {
   const result = /** @type {Record<string, any> | undefined} */ (
     await fetchAPIOrUndefined(
-      `/repos/${owner}/${repo}/contents/${encodePathSegments(path)}?ref=${encodeURIComponent(ref)}`,
+      `${getRepositoryPath({ owner, repo })}/contents/${encodePathSegments(path)}` +
+        `?ref=${encodeURIComponent(ref)}`,
     )
   );
 

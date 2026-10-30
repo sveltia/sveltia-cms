@@ -15,6 +15,7 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { pruneForkBranches, updateForkStatusWith } from '$lib/services/backends/git/shared/fork';
 import { parseRestFiles } from '$lib/services/backends/git/shared/pull-requests';
+import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { applyForkPullRequestStatus } from '$lib/services/backends/git/shared/workflow';
 import { user } from '$lib/services/user/account.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
@@ -265,14 +266,16 @@ export const fetchForkBranches = async () => {
  * @see https://docs.github.com/en/rest/commits/commits#compare-two-commits
  */
 export const fetchForkBranchFileList = async (pullRequest) => {
-  const { owner, repo, branch: baseBranch } = repository;
+  const { branch: baseBranch } = repository;
   // A comparison across repositories identifies the head branch by the fork’s owner
   const { owner: headOwner } = getWorkflowRepository();
   const base = encodePathSegments(/** @type {string} */ (baseBranch));
   const head = `${encodeURIComponent(headOwner)}:${encodePathSegments(pullRequest.branch)}`;
 
   const { files = [] } = /** @type {{ files?: Record<string, any>[] }} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/compare/${base}...${head}?per_page=${MAX_ITEMS.files}`)
+    await fetchAPI(
+      `${getRepositoryPath(repository)}/compare/${base}...${head}?per_page=${MAX_ITEMS.files}`,
+    )
   );
 
   pullRequest.files = parseRestFiles(files, { removedStatus: 'removed' });

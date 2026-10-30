@@ -23,6 +23,10 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
 import {
+  getPullRequestPath,
+  getRepositoryPath,
+} from '$lib/services/backends/git/shared/repository';
+import {
   approvePullRequest,
   createBranchGoneError,
   discardPullRequest,
@@ -295,9 +299,7 @@ const fetchOpenPullRequests = async (branch) => {
  * @see https://docs.github.com/en/rest/git/refs#update-a-reference
  */
 const resetBranch = async (branch, sha) => {
-  const { owner, repo } = repository;
-
-  await fetchAPI(`/repos/${owner}/${repo}/git/refs/heads/${encodePathSegments(branch)}`, {
+  await fetchAPI(`${getRepositoryPath(repository)}/git/refs/heads/${encodePathSegments(branch)}`, {
     method: 'PATCH',
     body: { sha, force: true },
   });
@@ -338,14 +340,14 @@ const tryCreateRef = async (repositoryId, branch, oid) => {
  * @see https://docs.github.com/en/rest/commits/commits#compare-two-commits
  */
 const fetchForkMergeBase = async (forkOwner, forkBranch) => {
-  const { owner, repo, branch } = repository;
+  const { branch } = repository;
   const base = encodePathSegments(/** @type {string} */ (branch));
   // A comparison across repositories identifies the head branch by the fork’s owner
   const head = `${encodeURIComponent(forkOwner)}:${encodePathSegments(forkBranch)}`;
 
   try {
     const { merge_base_commit: mergeBase } = /** @type {Record<string, any>} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/compare/${base}...${head}?per_page=1`)
+      await fetchAPI(`${getRepositoryPath(repository)}/compare/${base}...${head}?per_page=1`)
     );
 
     return mergeBase?.sha;
@@ -491,8 +493,7 @@ const WITHDRAWAL_MESSAGE = 'The entry is no longer ready to publish.';
  * @see https://docs.github.com/en/rest/pulls/reviews#dismiss-a-review-for-a-pull-request
  */
 export const withdrawApproval = async (pullRequest) => {
-  const { owner, repo } = repository;
-  const path = `/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`;
+  const path = `${getPullRequestPath(repository, pullRequest.number)}/reviews`;
   const reviews = /** @type {Record<string, any>[]} */ (await fetchAPI(`${path}?per_page=100`));
 
   await Promise.all(
@@ -640,7 +641,7 @@ export const fetchMergeState = async (pullRequest) => {
   const { owner, repo, branch } = repository;
 
   const { head, base } = /** @type {Record<string, any>} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}`)
+    await fetchAPI(getPullRequestPath(repository, pullRequest.number))
   );
 
   const headSHA = /** @type {string | undefined} */ (head?.sha);
@@ -665,7 +666,7 @@ export const fetchMergeState = async (pullRequest) => {
       const encodedBranch = encodePathSegments(/** @type {string} */ (branch));
 
       const { files = [] } = /** @type {{ files?: Record<string, any>[] }} */ (
-        await fetchAPI(`/repos/${owner}/${repo}/compare/${encodedBranch}...${sha}`)
+        await fetchAPI(`${getRepositoryPath(repository)}/compare/${encodedBranch}...${sha}`)
       );
 
       return {
@@ -729,7 +730,6 @@ export const fetchUnchangedPaths = async ({ headSHA, paths }) => {
 export const publish = async (pullRequest) => {
   checkPublishAllowed();
 
-  const { owner, repo } = repository;
   const { number, title, headSHA } = pullRequest;
   const squash = isSquashMergeEnabled();
 
@@ -738,7 +738,7 @@ export const publish = async (pullRequest) => {
    * @returns {Promise<any>} Response.
    */
   const merge = () =>
-    fetchAPI(`/repos/${owner}/${repo}/pulls/${number}/merge`, {
+    fetchAPI(`${getPullRequestPath(repository, number)}/merge`, {
       method: 'PUT',
       body: { merge_method: squash ? 'squash' : 'merge', commit_title: title, sha: headSHA },
     });

@@ -3,6 +3,7 @@ import { sleep } from '@sveltia/utils/misc';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { createDraftPullRequest } from '$lib/services/backends/git/shared/fork';
+import { getPullRequestPath } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
 import { user } from '$lib/services/user/account.svelte';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -382,9 +383,9 @@ export const resolveMergeState = async ({
  * @see https://docs.github.com/en/rest/pulls/pulls#check-if-a-pull-request-has-been-merged
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoPullRequestIsMerged
  */
-export const isPullRequestMerged = async ({ owner, repo }, number) => {
+export const isPullRequestMerged = async (repository, number) => {
   const response = /** @type {Response} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/pulls/${number}/merge`, { responseType: 'raw' })
+    await fetchAPI(`${getPullRequestPath(repository, number)}/merge`, { responseType: 'raw' })
   );
 
   return response.ok;
@@ -399,8 +400,8 @@ export const isPullRequestMerged = async ({ owner, repo }, number) => {
  * @see https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoEditPullRequest
  */
-export const reopenPullRequest = async ({ owner, repo }, number) => {
-  await fetchAPI(`/repos/${owner}/${repo}/pulls/${number}`, {
+export const reopenPullRequest = async (repository, number) => {
+  await fetchAPI(getPullRequestPath(repository, number), {
     method: 'PATCH',
     body: { state: 'open' },
   });
@@ -416,8 +417,8 @@ export const reopenPullRequest = async ({ owner, repo }, number) => {
  * @see https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoCreatePullReview
  */
-export const approvePullRequest = async ({ owner, repo }, pullRequest, event) => {
-  await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`, {
+export const approvePullRequest = async (repository, pullRequest, event) => {
+  await fetchAPI(`${getPullRequestPath(repository, pullRequest.number)}/reviews`, {
     method: 'POST',
     body: { event, commit_id: pullRequest.headSHA },
   });
@@ -450,13 +451,13 @@ export const findOwnApprovals = (reviews) =>
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoEditPullRequest
  */
 export const discardPullRequest = async (
-  { owner, repo },
+  repository,
   pullRequest,
   { deleteBranch, closedStatuses = [] },
 ) => {
   if (pullRequest.number !== undefined) {
     try {
-      await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}`, {
+      await fetchAPI(getPullRequestPath(repository, pullRequest.number), {
         method: 'PATCH',
         body: { state: 'closed' },
       });

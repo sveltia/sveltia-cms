@@ -6,7 +6,7 @@ import { prefs } from '$lib/services/user/prefs.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
- * @import { RepositoryBaseURLs, RepositoryInfo } from '$lib/types/private';
+ * @import { RepositoryBaseURLs, RepositoryInfo, RepositoryPath } from '$lib/types/private';
  * @import { BackendName } from '$lib/types/public';
  */
 
@@ -53,6 +53,27 @@ export const getInstanceURL = (restApiRoot) =>
  * @returns {string} Base URL for the repository.
  */
 export const getRepoURL = (restApiRoot, repoPath) => `${getInstanceURL(restApiRoot)}/${repoPath}`;
+
+/**
+ * Get the REST API path of the given repository on GitHub or Gitea/Forgejo, whose APIs address a
+ * repository the same way. The owner and repository names are encoded, though a valid name never
+ * needs it.
+ * @param {RepositoryPath} repository Repository.
+ * @returns {string} Path, e.g. `/repos/owner/repo`.
+ * @see https://docs.github.com/en/rest/repos/repos#get-a-repository
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
+ */
+export const getRepositoryPath = ({ owner, repo }) =>
+  `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+
+/**
+ * Get the REST API path of the given pull request on GitHub or Gitea/Forgejo.
+ * @param {RepositoryPath} repository Repository holding the pull request.
+ * @param {number | undefined} number Pull request number.
+ * @returns {string} Path, e.g. `/repos/owner/repo/pulls/1`.
+ */
+export const getPullRequestPath = (repository, number) =>
+  `${getRepositoryPath(repository)}/pulls/${number}`;
 
 /**
  * Create a function to generate base URLs for accessing the repository’s resources on a service’s

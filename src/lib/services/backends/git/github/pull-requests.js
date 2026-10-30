@@ -8,6 +8,10 @@ import {
   parseRestFiles,
   PULL_REQUEST_DESCRIPTION,
 } from '$lib/services/backends/git/shared/pull-requests';
+import {
+  getPullRequestPath,
+  getRepositoryPath,
+} from '$lib/services/backends/git/shared/repository';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getStatusLabel, replaceStatusLabel } from '$lib/services/workflow/labels';
@@ -60,11 +64,9 @@ export const parseFileNodes = (nodes) =>
  * @see https://docs.github.com/en/rest/pulls/pulls#list-pull-requests-files
  */
 export const fetchPullRequestFileList = async (pullRequest) => {
-  const { owner, repo } = repository;
-
   const files = /** @type {Record<string, any>[]} */ (
     await fetchAPI(
-      `/repos/${owner}/${repo}/pulls/${pullRequest.number}/files?per_page=${MAX_ITEMS.files}`,
+      `${getPullRequestPath(repository, pullRequest.number)}/files?per_page=${MAX_ITEMS.files}`,
     )
   );
 
@@ -196,11 +198,11 @@ export const fetchBranchHead = async (branch) => {
  * @see https://docs.github.com/en/rest/git/refs#delete-a-reference
  */
 export const deleteBranch = async (branch) => {
-  const { owner, repo } = getWorkflowRepository();
+  const repoPath = getRepositoryPath(getWorkflowRepository());
 
   await deleteRemoteBranch({
     branch,
-    path: `/repos/${owner}/${repo}/git/refs/heads/${encodePathSegments(branch)}`,
+    path: `${repoPath}/git/refs/heads/${encodePathSegments(branch)}`,
     // GitHub answers a missing reference with a 422 rather than a 404
     goneStatuses: [404, 422],
   });
@@ -214,13 +216,11 @@ export const deleteBranch = async (branch) => {
  * @see https://docs.github.com/en/rest/issues/issues#update-an-issue
  */
 export const updateLabels = async (pullRequest, status) => {
-  const { owner, repo } = repository;
-
   // Read the labels from the pulls endpoint: the issues endpoint's `GET` needs issue access, which
   // a fine-grained token created from the token page doesn't have, while its `PATCH` also accepts
   // pull request access. @see https://github.com/sveltia/sveltia-cms/issues/1014
   const { labels = [] } = /** @type {{ labels?: { name: string }[] }} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}`)
+    await fetchAPI(getPullRequestPath(repository, pullRequest.number))
   );
 
   const newLabels = replaceStatusLabel(
@@ -228,7 +228,7 @@ export const updateLabels = async (pullRequest, status) => {
     status,
   );
 
-  await fetchAPI(`/repos/${owner}/${repo}/issues/${pullRequest.number}`, {
+  await fetchAPI(`${getRepositoryPath(repository)}/issues/${pullRequest.number}`, {
     method: 'PATCH',
     body: { labels: newLabels },
   });
@@ -271,12 +271,12 @@ export const updateDraftState = async (pullRequest, isDraft) => {
  * @see https://docs.github.com/en/rest/issues/labels#add-labels-to-an-issue
  */
 export const createPullRequest = async ({ branch, title, status }) => {
-  const { owner, repo, branch: baseBranch } = repository;
+  const { branch: baseBranch } = repository;
   const fork = forkedRepository.current;
   const isDraft = status === 'draft';
 
   const result = /** @type {Record<string, any>} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/pulls`, {
+    await fetchAPI(`${getRepositoryPath(repository)}/pulls`, {
       method: 'POST',
       body: {
         title,
@@ -308,7 +308,7 @@ export const createPullRequest = async ({ branch, title, status }) => {
   if (!fork) {
     // A brand-new pull request has no label to preserve, so add the status label outright rather
     // than reading the current list first like {@link updateLabels} has to
-    await fetchAPI(`/repos/${owner}/${repo}/issues/${result.number}/labels`, {
+    await fetchAPI(`${getRepositoryPath(repository)}/issues/${result.number}/labels`, {
       method: 'POST',
       body: { labels: [getStatusLabel(status)] },
     });

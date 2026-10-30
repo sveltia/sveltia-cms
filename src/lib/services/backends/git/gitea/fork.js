@@ -18,6 +18,7 @@ import {
   runOpenAuthoringSetUp,
   setUpForkFor,
 } from '$lib/services/backends/git/shared/fork';
+import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
 
@@ -113,7 +114,7 @@ export const fetchForkByName = async () => {
   // Only a missing repository means there’s no fork at the name. Reading a rate limit or an outage
   // the same way would have the contributor asked to create another one, so that is passed on
   const result = /** @type {Record<string, any> | undefined} */ (
-    await fetchAPIOrUndefined(`/repos/${encodeURIComponent(userName)}/${repo}`)
+    await fetchAPIOrUndefined(getRepositoryPath({ owner: userName, repo }))
   );
 
   if (!result) {
@@ -202,7 +203,7 @@ const isRepositoryNameTaken = async (name) => {
   const userName = /** @type {string} */ (user.account?.login);
 
   const response = /** @type {Response} */ (
-    await fetchAPI(`/repos/${encodeURIComponent(userName)}/${name}`, { responseType: 'raw' })
+    await fetchAPI(getRepositoryPath({ owner: userName, repo: name }), { responseType: 'raw' })
   );
 
   return response.ok;
@@ -217,7 +218,7 @@ const isRepositoryNameTaken = async (name) => {
  */
 export const createFork = async () => {
   const { owner, repo } = repository;
-  const endpoint = `/repos/${owner}/${repo}/forks`;
+  const endpoint = `${getRepositoryPath(repository)}/forks`;
 
   const result = await requestForkWithFallbackName({
     repoPath: `${owner}/${repo}`,
@@ -262,7 +263,7 @@ const fetchForgejoSyncState = async ({ owner, repo }, branch) => {
     fork_commit: forkCommit,
     base_commit: baseCommit,
   } = /** @type {{ allowed?: boolean, fork_commit?: string, base_commit?: string }} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/sync_fork/${encodePathSegments(branch)}`)
+    await fetchAPI(`${getRepositoryPath({ owner, repo })}/sync_fork/${encodePathSegments(branch)}`)
   );
 
   if (forkCommit && forkCommit === baseCommit) {
@@ -313,8 +314,8 @@ export const syncFork = async (fork) => {
     response = /** @type {Response} */ (
       await fetchAPI(
         instance.isForgejo
-          ? `/repos/${owner}/${repo}/sync_fork/${encodePathSegments(branch)}`
-          : `/repos/${owner}/${repo}/merge-upstream`,
+          ? `${getRepositoryPath(fork)}/sync_fork/${encodePathSegments(branch)}`
+          : `${getRepositoryPath(fork)}/merge-upstream`,
         {
           method: 'POST',
           ...(instance.isForgejo ? {} : { body: { branch } }),
@@ -353,7 +354,7 @@ export const checkForkBranch = async ({ owner, repo }) => {
   const { branch } = /** @type {{ branch: string }} */ (repository);
 
   const response = /** @type {Response} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePathSegments(branch)}`, {
+    await fetchAPI(`${getRepositoryPath({ owner, repo })}/branches/${encodePathSegments(branch)}`, {
       responseType: 'raw',
     })
   );

@@ -14,6 +14,10 @@ import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { pruneForkBranches, updateForkStatusWith } from '$lib/services/backends/git/shared/fork';
+import {
+  getPullRequestPath,
+  getRepositoryPath,
+} from '$lib/services/backends/git/shared/repository';
 import { applyForkPullRequestStatus } from '$lib/services/backends/git/shared/workflow';
 import { user } from '$lib/services/user/account.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
@@ -37,11 +41,10 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoListBranches
  */
 export const fetchForkBranchList = async () => {
-  const { owner, repo } = getWorkflowRepository();
   const prefix = getBranchListPrefix();
   // The instance can’t filter by prefix, so every branch is listed. A fork holds few besides the
   // workflow ones, so it’s a page or two in practice
-  const branches = await fetchAllPages(`/repos/${owner}/${repo}/branches`);
+  const branches = await fetchAllPages(`${getRepositoryPath(getWorkflowRepository())}/branches`);
 
   return branches.filter(({ name }) => name.startsWith(prefix));
 };
@@ -83,11 +86,11 @@ export const isForkPullRequest = (item) => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoListPullRequests
  */
 export const fetchForkPullRequestMap = async () => {
-  const { owner, repo } = repository;
   const login = /** @type {string} */ (user.account?.login);
 
   const items = await fetchAllPages(
-    `/repos/${owner}/${repo}/pulls?state=all&sort=recentupdate&poster=${encodeURIComponent(login)}`,
+    `${getRepositoryPath(repository)}/pulls` +
+      `?state=all&sort=recentupdate&poster=${encodeURIComponent(login)}`,
   );
 
   /** @type {Map<string, Record<string, any>>} */
@@ -168,12 +171,11 @@ export const parseForkBranch = (node, pullRequest) => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoCompareDiff
  */
 export const fetchForkBranchFileList = async (pullRequest) => {
-  const { owner, repo } = getWorkflowRepository();
   const base = encodePathSegments(/** @type {string} */ (repository.branch));
   const head = encodePathSegments(pullRequest.headSHA ?? pullRequest.branch);
 
   const { commits = [] } = /** @type {{ commits?: Record<string, any>[] }} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/compare/${base}...${head}`)
+    await fetchAPI(`${getRepositoryPath(getWorkflowRepository())}/compare/${base}...${head}`)
   );
 
   /** @type {Map<string, WorkflowFile>} */
@@ -252,10 +254,8 @@ export const fetchForkPullRequests = async () => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetPullRequest
  */
 const fetchForkRequestState = async ({ number }) => {
-  const { owner, repo } = repository;
-
   const item = /** @type {Record<string, any>} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/pulls/${number}`)
+    await fetchAPI(getPullRequestPath(repository, number))
   );
 
   return {

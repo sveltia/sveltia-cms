@@ -7,6 +7,7 @@ import {
 import {
   applyDefaultBranch,
   createBaseURLsGetter,
+  getRepositoryPath,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
@@ -68,7 +69,6 @@ export const getBaseURLs = createBaseURLsGetter({
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
 export const getRepositoryInfo = () => {
-  const { owner, repo } = repository;
   const userId = user.account?.id;
 
   // Another user may have signed in on the same page, e.g. after a read-only account was refused,
@@ -81,7 +81,7 @@ export const getRepositoryInfo = () => {
   return getOrCreateAsync(
     repositoryInfoCache,
     userId,
-    () => /** @type {Promise<Record<string, any>>} */ (fetchAPI(`/repos/${owner}/${repo}`)),
+    () => /** @type {Promise<Record<string, any>>} */ (fetchAPI(getRepositoryPath(repository))),
   );
 };
 
@@ -92,12 +92,11 @@ export const getRepositoryInfo = () => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetBranch
  */
 export const fetchBranch = async () => {
-  const { owner, repo } = repository;
   const branch = String(repository.branch);
   const userId = user.account?.id;
 
   const result = /** @type {Record<string, any>} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePathSegments(branch)}`)
+    await fetchAPI(`${getRepositoryPath(repository)}/branches/${encodePathSegments(branch)}`)
   );
 
   lastBranchResponse = { branch, userId, result };
@@ -138,7 +137,7 @@ export const checkRepositoryAccess = async () => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetBranch
  */
 export const checkBranchAccess = async () => {
-  const { owner, repo, branch } = repository;
+  const { branch } = repository;
   // Read the response the last commit was just fetched with, if it’s for this branch and user. It’s
   // only used once, so a later check doesn’t go by permissions fetched long ago
   const cached = lastBranchResponse;
@@ -149,7 +148,7 @@ export const checkBranchAccess = async () => {
     const result = /** @type {{ user_can_push?: boolean, user_can_merge?: boolean }} */ (
       cached?.branch === _branch && cached.userId === user.account?.id
         ? cached.result
-        : await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePathSegments(_branch)}`)
+        : await fetchAPI(`${getRepositoryPath(repository)}/branches/${encodePathSegments(_branch)}`)
     );
 
     return { canPush: result.user_can_push, canMerge: result.user_can_merge };

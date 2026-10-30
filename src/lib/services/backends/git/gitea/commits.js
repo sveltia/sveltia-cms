@@ -13,6 +13,7 @@ import {
 } from '$lib/services/backends/git/shared/commits';
 import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
 import { repositoryHead } from '$lib/services/backends/git/shared/head';
+import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
 
@@ -78,7 +79,7 @@ const getKnownSha = async ({ action, path, previousPath, previousSha }, workflow
   // A workflow branch has moved on from the configured one, so the file is looked up on the branch
   // the commit lands on, in the repository it lives in. The Editorial Workflow service resolves
   // these ahead of the commit, so this is a fallback rather than the usual path
-  const { owner, repo } = workflowBranch ? getWorkflowRepository() : repository;
+  const repoPath = getRepositoryPath(workflowBranch ? getWorkflowRepository() : repository);
   const ref = workflowBranch ?? repositoryHead.current;
   const knownPath = (action === 'move' && previousPath) || path;
 
@@ -89,7 +90,7 @@ const getKnownSha = async ({ action, path, previousPath, previousSha }, workflow
   const filePath = encodePathSegments(knownPath);
 
   const { sha } = /** @type {{ sha: string }} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/contents/${filePath}?ref=${encodeURIComponent(ref)}`)
+    await fetchAPI(`${repoPath}/contents/${filePath}?ref=${encodeURIComponent(ref)}`)
   );
 
   return sha;
@@ -107,7 +108,7 @@ export const commitChanges = async (changes, options) => {
 
   // A workflow branch lives in the contributor’s fork with Open Authoring, while the configured
   // branch is only ever committed to by someone who can write to the configured repository
-  const { owner, repo } = options.branch ? getWorkflowRepository() : repository;
+  const repoPath = getRepositoryPath(options.branch ? getWorkflowRepository() : repository);
   // An Editorial Workflow change lands on a workflow branch rather than the configured one
   const { branch = repository.branch, startBranch } = options;
   const commitMessage = signOffCommitMessage(createCommitMessage(changes, options));
@@ -146,7 +147,7 @@ export const commitChanges = async (changes, options) => {
 
   try {
     response = /** @type {CommitResponse} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/contents`, {
+      await fetchAPI(`${repoPath}/contents`, {
         method: 'POST',
         body: {
           // `new_branch` creates the target branch from `branch` as part of the commit.
@@ -207,7 +208,7 @@ const MAX_FILE_COMMIT_PAGES = 10;
  * @see https://docs.gitea.com/administration/config-cheat-sheet#git-git
  */
 const fetchFileHistory = async (path) => {
-  const { owner, repo, branch } = repository;
+  const { branch } = repository;
   /** @type {any[]} */
   const commits = [];
 
@@ -216,7 +217,7 @@ const fetchFileHistory = async (path) => {
     const response = /** @type {Response} */ (
       // eslint-disable-next-line no-await-in-loop
       await fetchAPI(
-        `/repos/${owner}/${repo}/commits` +
+        `${getRepositoryPath(repository)}/commits` +
           `?sha=${encodeURIComponent(branch ?? '')}` +
           `&path=${encodeURIComponent(path)}&limit=${MAX_FILE_COMMITS}&page=${page}`,
         { responseType: 'raw' },

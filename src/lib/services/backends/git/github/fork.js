@@ -17,6 +17,7 @@ import {
   runOpenAuthoringSetUp,
   setUpForkFor,
 } from '$lib/services/backends/git/shared/fork';
+import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -124,7 +125,7 @@ export const fetchRepositoryAccess = async () => {
   const repoPath = `${owner}/${repo}`;
 
   const response = /** @type {Response} */ (
-    await fetchAPI(`/repos/${owner}/${repo}`, {
+    await fetchAPI(getRepositoryPath(repository), {
       headers: { Accept: 'application/json' },
       responseType: 'raw',
     })
@@ -187,7 +188,7 @@ export const fetchForkByName = async () => {
   // Only a missing repository means there’s no fork at the name. Reading a rate limit or an outage
   // the same way would have the contributor asked to create another one, so that is passed on
   const result = /** @type {Record<string, any> | undefined} */ (
-    await fetchAPIOrUndefined(`/repos/${encodeURIComponent(userName)}/${repo}`, {
+    await fetchAPIOrUndefined(getRepositoryPath({ owner: userName, repo }), {
       headers: { Accept: 'application/json' },
     })
   );
@@ -278,7 +279,7 @@ export const waitForFork = async ({ owner, repo }, attemptsLeft) => {
      */
     checkFork: async () => {
       const response = /** @type {Response} */ (
-        await fetchAPI(`/repos/${owner}/${repo}`, {
+        await fetchAPI(getRepositoryPath({ owner, repo }), {
           headers: { Accept: 'application/json' },
           responseType: 'raw',
         })
@@ -304,7 +305,7 @@ export const createFork = async () => {
 
   try {
     result = /** @type {Record<string, any>} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/forks`, { method: 'POST' })
+      await fetchAPI(`${getRepositoryPath(repository)}/forks`, { method: 'POST' })
     );
   } catch (/** @type {any} */ ex) {
     throw createForkError(`${owner}/${repo}`, ex);
@@ -333,7 +334,7 @@ export const syncFork = async ({ owner, repo }) => {
 
   try {
     response = /** @type {Response} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/merge-upstream`, {
+      await fetchAPI(`${getRepositoryPath({ owner, repo })}/merge-upstream`, {
         method: 'POST',
         body: { branch: repository.branch },
         responseType: 'raw',

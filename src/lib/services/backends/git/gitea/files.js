@@ -20,6 +20,7 @@ import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import { mapConcurrently, runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
+import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { dataLoadedProgress } from '$lib/services/contents';
@@ -90,14 +91,13 @@ export const _resetDirLookup = () => {
  * @returns {Promise<string | undefined>} Tree SHA, or `undefined` if the directory doesn’t exist.
  */
 const lookUpDirSHA = async (ref, dirPath) => {
-  const { owner, repo } = repository;
   const { dirname, basename } = getPathInfo(dirPath);
   const parentPath = dirname ? `/${encodePathSegments(dirname)}` : '';
 
   // Missing when the parent directory doesn’t exist either
   const entries = /** @type {{ type: string, name: string, sha: string }[] | undefined} */ (
     await fetchAPIOrUndefined(
-      `/repos/${owner}/${repo}/contents${parentPath}?ref=${encodeURIComponent(ref)}`,
+      `${getRepositoryPath(repository)}/contents${parentPath}?ref=${encodeURIComponent(ref)}`,
     )
   );
 
@@ -145,7 +145,7 @@ export const fetchDirSHA = async (ref, dirPath) => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/GetTree
  */
 export const fetchFileList = async (lastHash) => {
-  const { owner, repo, branch } = repository;
+  const { branch } = repository;
   const commitRef = /** @type {string} */ (lastHash ?? branch);
   const rootDir = getRootDir();
   const treeSHA = rootDir ? await fetchDirSHA(commitRef, rootDir) : commitRef;
@@ -155,7 +155,7 @@ export const fetchFileList = async (lastHash) => {
   }
 
   const treePath = encodePathSegments(treeSHA);
-  const requestPath = `/repos/${owner}/${repo}/git/trees/${treePath}?recursive=1`;
+  const requestPath = `${getRepositoryPath(repository)}/git/trees/${treePath}?recursive=1`;
   const prefix = rootDir ? `${rootDir}/` : '';
 
   /**
@@ -256,7 +256,8 @@ export const parseFileContents = async (fetchingFiles, results) => {
 const requestRawFile = async ({ owner, repo, path, ref }) =>
   /** @type {Promise<string>} */ (
     fetchAPI(
-      `/repos/${owner}/${repo}/raw/${encodePathSegments(path)}?ref=${encodeURIComponent(ref)}`,
+      `${getRepositoryPath({ owner, repo })}/raw/${encodePathSegments(path)}` +
+        `?ref=${encodeURIComponent(ref)}`,
       {
         responseType: 'text',
       },
@@ -344,8 +345,8 @@ export const fetchFileContents = async (fetchingFiles, lastHash) => {
   const commitRef = String(lastHash ?? branch);
 
   const requestPath = isForgejo
-    ? `/repos/${owner}/${repo}/git/blobs`
-    : `/repos/${owner}/${repo}/file-contents?ref=${encodeURIComponent(commitRef)}`;
+    ? `${getRepositoryPath(repository)}/git/blobs`
+    : `${getRepositoryPath(repository)}/file-contents?ref=${encodeURIComponent(commitRef)}`;
 
   // Forgejo uses `sha` as the identifier for files, while Gitea uses `path`. Each item in the
   // response carries the same field, which is how a result is matched to the file it was requested
@@ -494,12 +495,12 @@ export const fetchBlob = async (asset) => {
   const { path } = asset;
   // An asset attached to an unpublished entry only exists on the workflow branch, so that’s where
   // it has to be read from — in the contributor’s fork with Open Authoring
-  const { owner, repo } = asset.workflow ? getWorkflowRepository() : repository;
+  const repoPath = getRepositoryPath(asset.workflow ? getWorkflowRepository() : repository);
   const ref = asset.workflow?.branch ?? repository.branch;
   const refAndPath = `${encodePathSegments(String(ref))}/${encodePathSegments(path)}`;
 
   return /** @type {Promise<Blob>} */ (
-    fetchAPI(`/repos/${owner}/${repo}/media/${refAndPath}`, {
+    fetchAPI(`${repoPath}/media/${refAndPath}`, {
       responseType: 'blob',
     })
   );

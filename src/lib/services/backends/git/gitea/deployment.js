@@ -2,6 +2,7 @@ import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { collectSafely, resolveDeployments } from '$lib/services/backends/git/shared/deployment';
+import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
@@ -39,7 +40,7 @@ const COMMIT_STATUS_MAP = {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetBranch
  */
 export const fetchBranchHeadSHA = async () => {
-  const { owner, repo, branch } = repository;
+  const { branch } = repository;
 
   if (!branch) {
     // The default branch hasn’t been detected yet
@@ -47,7 +48,7 @@ export const fetchBranchHeadSHA = async () => {
   }
 
   const result = /** @type {Record<string, any>} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePathSegments(branch)}`)
+    await fetchAPI(`${getRepositoryPath(repository)}/branches/${encodePathSegments(branch)}`)
   );
 
   return result?.commit?.id ?? undefined;
@@ -66,11 +67,10 @@ export const fetchBranchHeadSHA = async () => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetCombinedStatusByRef
  */
 const collectStatusCandidates = async (sha, candidateMap) => {
-  const { owner, repo } = repository;
-
   const result = /** @type {Record<string, any>} */ (
     await fetchAPI(
-      `/repos/${owner}/${repo}/commits/${encodeURIComponent(sha)}/status?limit=${MAX_ITEMS}`,
+      `${getRepositoryPath(repository)}/commits/${encodeURIComponent(sha)}/status` +
+        `?limit=${MAX_ITEMS}`,
     )
   );
 
