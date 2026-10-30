@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { hasTemplateTags, replaceTemplateTags, splitTemplateTags } from './tags';
+import { getTemplateTags, hasTemplateTags, replaceTemplateTags, splitTemplateTags } from './tags';
 
 describe('hasTemplateTags()', () => {
   test('should return true for simple template tag', () => {
@@ -244,5 +244,32 @@ describe('splitTemplateTags()', () => {
       tags: ["fields.a | default('{{fields.b}}')"],
       literals: ['x', 'y'],
     });
+  });
+});
+
+describe('getTemplateTags()', () => {
+  test('returns each tag with its content and name', () => {
+    expect(getTemplateTags('{{ fields.title | upper }}/{{slug}}')).toEqual([
+      {
+        tag: '{{ fields.title | upper }}',
+        content: ' fields.title | upper ',
+        name: 'fields.title',
+      },
+      { tag: '{{slug}}', content: 'slug', name: 'slug' },
+    ]);
+  });
+
+  test('skips escaped tags and tags nested in a transformation argument', () => {
+    expect(getTemplateTags("\\{{slug}} {{title | default('{{slug}}')}}")).toEqual([
+      {
+        tag: "{{title | default('{{slug}}')}}",
+        content: "title | default('{{slug}}')",
+        name: 'title',
+      },
+    ]);
+  });
+
+  test('returns an empty array without tags', () => {
+    expect(getTemplateTags('plain')).toEqual([]);
   });
 });

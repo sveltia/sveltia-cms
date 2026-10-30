@@ -124,6 +124,28 @@ export const splitTemplateTags = (str) => {
 };
 
 /**
+ * Get the template tags in a string, finding them like {@link replaceTemplateTags} does, so a tag
+ * escaped with a backslash or nested in a transformation argument isn’t one.
+ * @param {string} str The string containing template tags.
+ * @returns {{ tag: string, content: string, name: string }[]} Each tag in the order they appear,
+ * e.g. `{{ fields.title | upper }}`, with its content between the braces and its name, the content
+ * before any transformation, e.g. `fields.title`. A name never contains a pipe, so it’s found even
+ * when a transformation argument does.
+ */
+export const getTemplateTags = (str) => {
+  /** @type {{ tag: string, content: string, name: string }[]} */
+  const tags = [];
+
+  replaceTemplateTags(str, (tag, content) => {
+    tags.push({ tag, content, name: content.split('|')[0].trim() });
+
+    return tag;
+  });
+
+  return tags;
+};
+
+/**
  * Checks if a string contains template tags.
  * @param {string} str The string to check.
  * @returns {boolean} True if the string contains template tags, false otherwise.

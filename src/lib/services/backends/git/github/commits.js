@@ -10,6 +10,7 @@ import {
   createCommitMessage,
   createLastCommitError,
   dedupeFileCommits,
+  MAX_FILE_COMMITS,
   signOffCommitMessage,
 } from '$lib/services/backends/git/shared/commits';
 import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
@@ -493,7 +494,7 @@ export const fetchFileCommits = async (paths) => {
       ref(qualifiedName: $branch) {
         target {
           ... on Commit {
-            history(first: 100, path: ${JSON.stringify(path)}) {
+            history(first: ${MAX_FILE_COMMITS}, path: ${JSON.stringify(path)}) {
               nodes {
                 oid
                 messageHeadline

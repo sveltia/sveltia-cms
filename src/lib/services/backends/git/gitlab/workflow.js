@@ -9,6 +9,7 @@ import {
   fetchPullRequests as fetchLabelledPullRequests,
   fetchMergeRequest,
   fetchOpenMergeRequests,
+  getMergeRequestPath,
 } from '$lib/services/backends/git/gitlab/merge-requests';
 import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import {
@@ -176,7 +177,7 @@ export const updateStatus = async (pullRequest, status) => {
   const isDraft = status === 'draft';
   const title = draftTitle.format(pullRequest.title, isDraft);
 
-  await fetchAPI(`/projects/${getProjectId()}/merge_requests/${pullRequest.number}`, {
+  await fetchAPI(getMergeRequestPath(pullRequest.number), {
     method: 'PUT',
     body: {
       title,
@@ -191,14 +192,6 @@ export const updateStatus = async (pullRequest, status) => {
 
   return { ...pullRequest, status, updatedDate: new Date() };
 };
-
-/**
- * Get the API path of the given merge request.
- * @param {WorkflowPullRequest} pullRequest Merge request.
- * @returns {string} Path.
- */
-const getMergeRequestPath = (pullRequest) =>
-  `/projects/${getProjectId()}/merge_requests/${pullRequest.number}`;
 
 /**
  * Fetch whether the signed-in user has approved the merge request, and whether they may.
@@ -225,7 +218,7 @@ const fetchApprovalState = async (path) => {
  * @see https://docs.gitlab.com/api/merge_request_approvals/
  */
 export const approve = async (pullRequest) => {
-  const path = getMergeRequestPath(pullRequest);
+  const path = getMergeRequestPath(pullRequest.number);
   const { hasApproved, canApprove } = await fetchApprovalState(path);
 
   if (hasApproved || canApprove === false) {
@@ -242,7 +235,7 @@ export const approve = async (pullRequest) => {
  * @see https://docs.gitlab.com/api/merge_request_approvals/
  */
 export const withdrawApproval = async (pullRequest) => {
-  const path = getMergeRequestPath(pullRequest);
+  const path = getMergeRequestPath(pullRequest.number);
 
   if ((await fetchApprovalState(path)).hasApproved) {
     await fetchAPI(`${path}/unapprove`, { method: 'POST' });
@@ -288,11 +281,9 @@ const fetchMergeStatus = (pullRequest) =>
  */
 const cancelAutoMerge = async (pullRequest) => {
   try {
-    await fetchAPI(
-      `/projects/${getProjectId()}/merge_requests/${pullRequest.number}` +
-        '/cancel_merge_when_pipeline_succeeds',
-      { method: 'POST' },
-    );
+    const path = getMergeRequestPath(pullRequest.number);
+
+    await fetchAPI(`${path}/cancel_merge_when_pipeline_succeeds`, { method: 'POST' });
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.warn(`Failed to cancel the auto-merge on merge request !${pullRequest.number}.`, ex);
@@ -577,7 +568,7 @@ export const publish = async (pullRequest) => {
   checkPublishAllowed();
 
   const squash = isSquashMergeEnabled();
-  const path = `/projects/${getProjectId()}/merge_requests/${pullRequest.number}/merge`;
+  const path = `${getMergeRequestPath(pullRequest.number)}/merge`;
 
   const body = {
     squash,
@@ -619,7 +610,7 @@ export const publish = async (pullRequest) => {
 export const discard = async (pullRequest) => {
   // An Open Authoring draft has no merge request yet, so deleting the branch is all there is to do
   if (pullRequest.number !== undefined) {
-    await fetchAPI(`/projects/${getProjectId()}/merge_requests/${pullRequest.number}`, {
+    await fetchAPI(getMergeRequestPath(pullRequest.number), {
       method: 'PUT',
       body: { state_event: 'close' },
     });

@@ -8,7 +8,7 @@ import { cmsConfig } from '$lib/services/config';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
 import { renameIfNeeded } from '$lib/services/utils/file';
-import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getPullRequestEntries } from '$lib/services/workflow';
 import {
   getMaxSlugBytes,
   getSlugByteLength,
@@ -37,11 +37,7 @@ import {
  */
 const getExistingSlugs = (collectionName, locale, dirPath) => {
   const slugs = /** @type {string[]} */ (
-    [
-      ...getEntriesInCollectionFolder(collectionName),
-      ...getUnpublishedEntriesByCollection(collectionName),
-      ...getCompanionEntries(collectionName),
-    ]
+    [...getEntriesInCollectionFolder(collectionName), ...getPullRequestEntries(collectionName)]
       .map((e) => (locale ? e.locales[locale]?.slug : e.slug))
       .filter(Boolean)
   );

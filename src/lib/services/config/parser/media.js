@@ -2,23 +2,16 @@
 
 import { _ } from '@sveltia/i18n';
 
-import {
-  DATE_TIME_FIELDS,
-  TEMPLATE_TAG_REPLACE_REGEX,
-  UUID_TYPES,
-} from '$lib/services/common/template/constants';
+import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
+import { getTemplateTags } from '$lib/services/common/template/tags';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
+import { FOLDER_OPTIONS } from '$lib/services/config/templates';
 import { CLOUD_MEDIA_LIBRARY_NAMES } from '$lib/services/integrations/media-libraries/cloud';
 
 /**
  * @import { CmsConfig } from '$lib/types/public';
  * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
  */
-
-/**
- * Options that set an asset folder path.
- */
-const FOLDER_OPTIONS = ['media_folder', 'public_folder'];
 
 /**
  * Template tags that the `media_folder` and `public_folder` options of a collection, a collection
@@ -62,10 +55,7 @@ export const checkFolderTemplateTags = ({ config, isGlobal = false, context, col
       return;
     }
 
-    [...folder.matchAll(TEMPLATE_TAG_REPLACE_REGEX)].forEach(([tag, inner]) => {
-      // A transformation follows the tag name after a pipe
-      const name = inner.split('|')[0].trim();
-
+    getTemplateTags(folder).forEach(({ tag, name }) => {
       if (!isGlobal && (GLOBAL_FOLDER_TAGS.includes(tag) || FOLDER_TEMPLATE_TAGS.includes(name))) {
         return;
       }

@@ -113,6 +113,18 @@ export const getCompanionEntries = (collectionName, entries = unpublishedEntries
   );
 
 /**
+ * Get the entries in the given collection that pull requests hold: its unpublished entries, and the
+ * new entries riding along in the pull request of an entry of another collection. They take up a
+ * slug, a file path or a number as much as the published entries do.
+ * @param {string} collectionName Collection name.
+ * @returns {Entry[]} Entries.
+ */
+export const getPullRequestEntries = (collectionName) => [
+  ...getUnpublishedEntriesByCollection(collectionName),
+  ...getCompanionEntries(collectionName),
+];
+
+/**
  * Find the unpublished entry that matches the given collection name and entry sub path. This is
  * used to open the entry editor with the pull request’s version of the entry rather than the
  * published version.
@@ -239,6 +251,29 @@ export const isWorkflowDraft = ({ collection, collectionName, fileName, original
  */
 export const isPendingDeletion = (entry) =>
   /** @type {UnpublishedEntry | undefined} */ (entry)?.workflow?.status === 'pending_deletion';
+
+/**
+ * Get the entries deleted along with the given unpublished entry. A selection of entries is deleted
+ * with the same reference rewrite in each pull request, so the other entries of the same
+ * collection, or collection file, awaiting deletion count as part of it. The entry is matched by
+ * ID, as the store may have replaced it with a copy since it was read.
+ * @param {UnpublishedEntry} entry Unpublished entry awaiting deletion.
+ * @returns {UnpublishedEntry[]} The entry, followed by the others awaiting deletion.
+ */
+export const getDeletionSelection = (entry) => {
+  const { collectionName, fileName } = entry.workflow;
+
+  return [
+    entry,
+    ...unpublishedEntries.current.filter(
+      (e) =>
+        e.id !== entry.id &&
+        isPendingDeletion(e) &&
+        e.workflow.collectionName === collectionName &&
+        e.workflow.fileName === fileName,
+    ),
+  ];
+};
 
 /**
  * Check whether the signed-in user can merge the given pull request, which is what publishing an

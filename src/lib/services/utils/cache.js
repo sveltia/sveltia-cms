@@ -18,8 +18,95 @@ export const getOrCreate = (cache, key, create) => {
 };
 
 /**
+ * Mark the given entry of a `Map` as the most recently used one. A `Map` iterates in insertion
+ * order, so re-inserting the key moves it to the end.
+ * @template K, V
+ * @param {Map<K, V>} map Map.
+ * @param {K} key Key of an existing entry.
+ * @returns {V} Value of the entry.
+ */
+const touchEntry = (map, key) => {
+  const value = /** @type {V} */ (map.get(key));
+
+  map.delete(key);
+  map.set(key, value);
+
+  return value;
+};
+
+/**
+ * Store a value in a `Map` as its most recently used entry, then evict the least recently used one,
+ * which is the first key, if the map holds more than `maxSize` entries.
+ * @template K, V
+ * @param {Map<K, V>} map Map.
+ * @param {K} key Key.
+ * @param {V} value Value.
+ * @param {number} maxSize Maximum number of entries to retain.
+ */
+const setEntry = (map, key, value, maxSize) => {
+  map.delete(key);
+  map.set(key, value);
+
+  if (map.size > maxSize) {
+    map.delete(/** @type {K} */ (map.keys().next().value));
+  }
+};
+
+/**
+ * @template K, V
+ * @typedef {object} LRUMap
+ * @property {(key: K) => boolean} has Check if the key has an entry.
+ * @property {(key: K) => V | undefined} get Get the value of the key, marking it as recently used.
+ * @property {(key: K, value: V) => void} set Store a value, evicting the least recently used entry
+ * if the map is full.
+ * @property {() => void} clear Remove all the entries.
+ */
+
+/**
+ * Create a map holding at most `maxSize` entries, which evicts the least recently used one once the
+ * limit is exceeded. Reading an entry with `get` marks it as recently used; `has` doesn’t.
+ * @template K, V
+ * @param {number} maxSize Maximum number of entries to retain.
+ * @returns {LRUMap<K, V>} Map.
+ */
+export const createLRUMap = (maxSize) => {
+  /** @type {Map<K, V>} */
+  const map = new Map();
+
+  return {
+    /**
+     * Check if the key has an entry, without marking it as recently used.
+     * @param {K} key Key.
+     * @returns {boolean} Result.
+     */
+    has: (key) => map.has(key),
+    /**
+     * Get the value of the key, marking the entry as recently used.
+     * @param {K} key Key.
+     * @returns {V | undefined} Value, if any.
+     */
+    get: (key) => (map.has(key) ? touchEntry(map, key) : undefined),
+    /**
+     * Store a value, evicting the least recently used entry if the map is full.
+     * @param {K} key Key.
+     * @param {V} value Value.
+     */
+    set: (key, value) => {
+      setEntry(map, key, value, maxSize);
+    },
+    /**
+     * Remove all the entries.
+     */
+    clear: () => {
+      map.clear();
+    },
+  };
+};
+
+/**
  * Get a value from a cache `Map` holding at most `maxSize` entries, creating and storing it if
- * absent. The least recently used entry is evicted once the limit is exceeded.
+ * absent. The least recently used entry is evicted once the limit is exceeded, as in
+ * {@link createLRUMap}.
  *
  * Use this instead of {@link getOrCreate} whenever the cache key includes something the user can
  * keep changing — a field value, a resolved filter, an object identity that is replaced every time
@@ -34,24 +121,12 @@ export const getOrCreate = (cache, key, create) => {
  */
 export const getOrCreateBounded = (cache, key, create, maxSize) => {
   if (cache.has(key)) {
-    const value = /** @type {V} */ (cache.get(key));
-
-    // A `Map` iterates in insertion order, so re-inserting the key moves it to the end, marking it
-    // as the most recently used entry
-    cache.delete(key);
-    cache.set(key, value);
-
-    return value;
+    return touchEntry(cache, key);
   }
 
   const value = create();
 
-  cache.set(key, value);
-
-  if (cache.size > maxSize) {
-    // The first key is the least recently used one
-    cache.delete(/** @type {K} */ (cache.keys().next().value));
-  }
+  setEntry(cache, key, value, maxSize);
 
   return value;
 };

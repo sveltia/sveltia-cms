@@ -1,8 +1,8 @@
 import {
   DEFAULT_TRANSFORMATION_REGEX,
   FIELD_TAG_PREFIX_REGEX,
-  TEMPLATE_TAG_REPLACE_REGEX,
 } from '$lib/services/common/template/constants';
+import { getTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { findFields, hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
@@ -50,11 +50,7 @@ export const checkFieldReferences = ({
   const references = [];
 
   if (typeof template === 'string') {
-    [...template.matchAll(TEMPLATE_TAG_REPLACE_REGEX)].forEach(([, tag]) => {
-      // A transformation follows the tag name after a pipe. The name itself never contains one,
-      // so the first segment is the key path even when an argument does
-      const keyPath = tag.split('|')[0].trim();
-
+    getTemplateTags(template).forEach(({ content: tag, name: keyPath }) => {
       if (
         DEFAULT_TRANSFORMATION_REGEX.test(tag) ||
         (prefixedOnly && !FIELD_TAG_PREFIX_REGEX.test(keyPath)) ||

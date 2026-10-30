@@ -9,7 +9,9 @@ import {
   canMergePullRequest,
   checkPublishedVersion,
   getCompanionEntries,
+  getDeletionSelection,
   getPublishedVersion,
+  getPullRequestEntries,
   getUnpublishedEntriesByCollection,
   getUnpublishedEntry,
   getUnpublishedEntryByBranch,
@@ -281,6 +283,59 @@ describe('workflow/index', () => {
       unpublishedEntries.current = [createHost([{ collectionName: 'sections', entry: guides }])];
 
       expect(getCompanionEntries('sections', [host])).toEqual([help]);
+    });
+  });
+
+  describe('getDeletionSelection', () => {
+    /**
+     * Create an entry awaiting deletion.
+     * @param {string} subPath Sub path.
+     * @param {object} [workflow] Workflow property overrides.
+     * @returns {any} Unpublished entry.
+     */
+    const createDeletion = (subPath, workflow = {}) => {
+      const entry = createEntry({ collectionName: 'posts', subPath });
+
+      return {
+        ...entry,
+        workflow: { ...entry.workflow, status: 'pending_deletion', ...workflow },
+      };
+    };
+
+    test('lists the entry, then the others of its collection awaiting deletion', () => {
+      const entry = createDeletion('a');
+      const other = createDeletion('b');
+      const draft = createDeletion('c', { status: 'draft' });
+      const elsewhere = createDeletion('d', { collectionName: 'pages' });
+      const file = createDeletion('e', { fileName: 'home' });
+
+      unpublishedEntries.current = [other, entry, draft, elsewhere, file];
+
+      expect(getDeletionSelection(entry)).toEqual([entry, other]);
+      expect(getDeletionSelection(file)).toEqual([file]);
+
+      // A copy of the entry the store has replaced since isn’t listed a second time
+      expect(getDeletionSelection({ ...entry })).toEqual([{ ...entry }, other]);
+    });
+  });
+
+  describe('getPullRequestEntries', () => {
+    test('lists the unpublished entries of the collection, then the companions', () => {
+      const guides = /** @type {any} */ ({ id: 'guides' });
+      const section = createEntry({ collectionName: 'sections', subPath: 'about' });
+
+      const host = {
+        ...createEntry({ collectionName: 'posts', subPath: 'a' }),
+        workflow: {
+          collectionName: 'posts',
+          companions: [{ collectionName: 'sections', entry: guides }],
+        },
+      };
+
+      unpublishedEntries.current = [host, section];
+
+      expect(getPullRequestEntries('sections')).toEqual([section, guides]);
+      expect(getPullRequestEntries('tags')).toEqual([]);
     });
   });
 

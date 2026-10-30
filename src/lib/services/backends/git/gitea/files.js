@@ -23,6 +23,7 @@ import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { dataLoadedProgress } from '$lib/services/contents';
+import { createLRUMap } from '$lib/services/utils/cache';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
@@ -32,6 +33,7 @@ import { encodePathSegments } from '$lib/services/utils/url';
  * BaseFileListItemProps,
  * RepositoryContentsMap,
  * } from '$lib/types/private';
+ * @import { LRUMap } from '$lib/services/utils/cache';
  */
 
 /**
@@ -64,15 +66,15 @@ import { encodePathSegments } from '$lib/services/utils/url';
  */
 const DEFAULT_MAX_BLOB_SIZE = 10485760;
 /**
- * Directories recently looked up at a commit, with their tree SHAs. The check for remote changes
- * looks up the old and new heads at the same time, so more than one is kept.
- * @type {Map<string, string | undefined>}
- */
-const dirLookups = new Map();
-/**
  * Maximum number of entries in {@link dirLookups}.
  */
 const MAX_DIR_LOOKUPS = 4;
+/**
+ * Directories recently looked up at a commit, with their tree SHAs. The check for remote changes
+ * looks up the old and new heads at the same time, so more than one is kept.
+ * @type {LRUMap<string, string | undefined>}
+ */
+const dirLookups = createLRUMap(MAX_DIR_LOOKUPS);
 
 /**
  * Forget the directory lookups. Used in tests.
@@ -128,11 +130,6 @@ export const fetchDirSHA = async (ref, dirPath) => {
 
   if (/^[\da-f]{40,64}$/.test(ref)) {
     dirLookups.set(key, sha);
-
-    // Forget the oldest one
-    if (dirLookups.size > MAX_DIR_LOOKUPS) {
-      dirLookups.delete(/** @type {string} */ (dirLookups.keys().next().value));
-    }
   }
 
   return sha;

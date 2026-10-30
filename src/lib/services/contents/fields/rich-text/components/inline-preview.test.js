@@ -8,12 +8,13 @@ import {
   renderInlinePreview,
 } from '$lib/services/contents/fields/rich-text/components/inline-preview';
 
-const { render, unmount } = vi.hoisted(() => ({ render: vi.fn(), unmount: vi.fn() }));
+const { mountReactNode, unmount } = vi.hoisted(() => {
+  const _unmount = vi.fn();
 
-vi.mock('$lib/services/api/react-dom', () => ({
-  createReactRoot: vi.fn(() => ({ render, unmount })),
-  loadReactDom: vi.fn(() => Promise.resolve()),
-}));
+  return { mountReactNode: vi.fn(() => _unmount), unmount: _unmount };
+});
+
+vi.mock('$lib/services/api/react-dom', () => ({ mountReactNode }));
 
 const toInline = ({ page = '' }) => `[[${page}]]`;
 
@@ -127,30 +128,16 @@ describe('renderInlinePreview', () => {
     expect(onUnmount).toHaveBeenCalledOnce();
   });
 
-  it('should mount a React element once the library is loaded', async () => {
+  it('should mount a React element, and unmount it once removed', () => {
     const preview = createElement('a', null, 'A');
     const remove = renderInlinePreview(element, { preview, text: '' });
 
-    await vi.waitFor(() => {
-      expect(render).toHaveBeenCalledWith(preview);
-    });
+    expect(mountReactNode).toHaveBeenCalledWith(element, preview);
+    expect(unmount).not.toHaveBeenCalled();
 
     remove();
 
     expect(unmount).toHaveBeenCalledOnce();
-  });
-
-  it('should not mount a React element removed before the library is loaded', async () => {
-    const remove = renderInlinePreview(element, {
-      preview: createElement('a', null, 'A'),
-      text: '',
-    });
-
-    remove();
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(render).not.toHaveBeenCalled();
   });
 
   it('should show the text without a preview', () => {

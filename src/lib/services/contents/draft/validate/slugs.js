@@ -11,7 +11,7 @@ import { getSlugOptions } from '$lib/services/contents/collection/slug';
 import { getNewEntryDirPath } from '$lib/services/contents/draft/slugs';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { getRegex } from '$lib/services/utils/regex';
-import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getPullRequestEntries } from '$lib/services/workflow';
 
 /**
  * @import {
@@ -62,8 +62,7 @@ export const getOtherEntries = (draft, { inFolder = true } = {}) => {
 
   return [
     ...(inFolder ? getEntriesInCollectionFolder : getEntriesByCollection)(collectionName),
-    ...getUnpublishedEntriesByCollection(collectionName),
-    ...getCompanionEntries(collectionName),
+    ...getPullRequestEntries(collectionName),
   ].filter((entry) => !Object.values(entry.locales).some(({ path }) => ownPaths.has(path)));
 };
 

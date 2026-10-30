@@ -23,7 +23,10 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
 import {
+  approvePullRequest,
   createBranchGoneError,
+  discardPullRequest,
+  findOwnApprovals,
   getParentDirs,
   isSquashMergeEnabled,
   resolveMergeState,
@@ -31,7 +34,6 @@ import {
   toChangedFilesWithModes,
   updateLabelledStatus,
 } from '$lib/services/backends/git/shared/workflow';
-import { user } from '$lib/services/user/account.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -472,16 +474,9 @@ export const updateStatus = (pullRequest, status) =>
  * Approve the pull request on behalf of the signed-in user, pinned to the head commit the entry was
  * reviewed at.
  * @param {WorkflowPullRequest} pullRequest Pull request.
- * @see https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request
+ * @returns {Promise<void>}
  */
-export const approve = async (pullRequest) => {
-  const { owner, repo } = repository;
-
-  await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`, {
-    method: 'POST',
-    body: { event: 'APPROVE', commit_id: pullRequest.headSHA },
-  });
-};
+export const approve = (pullRequest) => approvePullRequest(repository, pullRequest, 'APPROVE');
 
 /**
  * Message a review is dismissed with when the entry is moved back from the ready stage.
@@ -501,17 +496,12 @@ export const withdrawApproval = async (pullRequest) => {
   const reviews = /** @type {Record<string, any>[]} */ (await fetchAPI(`${path}?per_page=100`));
 
   await Promise.all(
-    reviews
-      .filter(
-        ({ state, user: reviewer }) =>
-          state === 'APPROVED' && reviewer?.login === user.account?.login,
-      )
-      .map(({ id }) =>
-        fetchAPI(`${path}/${id}/dismissals`, {
-          method: 'PUT',
-          body: { message: WITHDRAWAL_MESSAGE, event: 'DISMISS' },
-        }),
-      ),
+    findOwnApprovals(reviews).map(({ id }) =>
+      fetchAPI(`${path}/${id}/dismissals`, {
+        method: 'PUT',
+        body: { message: WITHDRAWAL_MESSAGE, event: 'DISMISS' },
+      }),
+    ),
   );
 };
 
@@ -771,21 +761,10 @@ export const publish = async (pullRequest) => {
 /**
  * Close the pull request without merging it, and delete the workflow branch.
  * @param {WorkflowPullRequest} pullRequest Pull request.
- * @see https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request
+ * @returns {Promise<void>}
  */
-export const discard = async (pullRequest) => {
-  const { owner, repo } = repository;
-
-  // An Open Authoring draft has no pull request yet, so deleting the branch is all there is to do
-  if (pullRequest.number !== undefined) {
-    await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}`, {
-      method: 'PATCH',
-      body: { state: 'closed' },
-    });
-  }
-
-  await deleteBranch(pullRequest.branch);
-};
+export const discard = (pullRequest) =>
+  discardPullRequest(repository, pullRequest, { deleteBranch });
 
 /**
  * GitHub’s Editorial Workflow implementation.

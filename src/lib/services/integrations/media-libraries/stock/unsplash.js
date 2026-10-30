@@ -3,7 +3,7 @@ import {
   fetchPagedResults,
   getSupportedLocale,
 } from '$lib/services/integrations/media-libraries/stock/utils';
-import { escapeHTML } from '$lib/services/utils/string';
+import { escapeAttr, escapeHTML } from '$lib/services/utils/string';
 
 /**
  * @import {
@@ -72,7 +72,7 @@ export const parseResults = (results) =>
       fileName: `${name.split(/\s+/).join('-').toLowerCase()}-${id}-unsplash.jpg`,
       kind: 'image',
       credit:
-        `Photo by <a href="https://unsplash.com/@${username}?${CREDIT_LINK_PARAMS}">${escapeHTML(name)}</a> on ` +
+        `Photo by <a href="https://unsplash.com/@${escapeAttr(username)}?${CREDIT_LINK_PARAMS}">${escapeHTML(name)}</a> on ` +
         `<a href="https://unsplash.com/?${CREDIT_LINK_PARAMS}">Unsplash</a>`,
       downloadTrackingURL: links?.download_location,
     }),

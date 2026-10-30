@@ -147,9 +147,16 @@ describe('normalizeConfigTemplates()', () => {
           table_columns: ['title', '{{ locales }}', { field: '{{ dirname }}', label: 'Dir' }],
           summary_fields: ['{{ filename }}'],
           thumbnail: ['cover', '/images/{{ slug }}.webp'],
-          view_filters: [{ label: 'Past', field: 'date', lt: '{{ now }}' }],
+          view_filters: [
+            { label: 'Past', field: 'date', lt: '{{ now }}' },
+            { label: 'Today', field: 'date', pattern: '^{{ today }}' },
+          ],
           view_groups: { groups: [{ label: 'Year', field: 'date', in: ['{{ now }}'] }] },
           fields: [{ name: 'lang', widget: 'hidden', default: '{{ locale }}' }],
+          index_file: {
+            summary: '{{ title }} ({{ locales }})',
+            fields: [{ name: 'lang', widget: 'hidden', default: '{{ locale }}' }],
+          },
         },
         {
           name: 'docs',
@@ -163,6 +170,7 @@ describe('normalizeConfigTemplates()', () => {
             {
               name: 'home',
               file: 'content/{{ locale }}/home.md',
+              summary: 'Home ({{ locales }})',
               preview_path: '/{{ locale }}/',
               i18n: { canonical_slug: { value: '{{ fields.key }}' } },
               fields: [{ name: 'lang', widget: 'hidden', default: '{{ locale }}' }],
@@ -195,9 +203,16 @@ describe('normalizeConfigTemplates()', () => {
           table_columns: ['title', '{{locales}}', { field: '{{dirname}}', label: 'Dir' }],
           summary_fields: ['{{filename}}'],
           thumbnail: ['cover', '/images/{{slug}}.webp'],
-          view_filters: [{ label: 'Past', field: 'date', lt: '{{now}}' }],
+          view_filters: [
+            { label: 'Past', field: 'date', lt: '{{now}}' },
+            { label: 'Today', field: 'date', pattern: '^{{today}}' },
+          ],
           view_groups: { groups: [{ label: 'Year', field: 'date', in: ['{{now}}'] }] },
           fields: [{ name: 'lang', widget: 'hidden', default: '{{locale}}' }],
+          index_file: {
+            summary: '{{title}} ({{locales}})',
+            fields: [{ name: 'lang', widget: 'hidden', default: '{{locale}}' }],
+          },
         },
         {
           name: 'docs',
@@ -211,6 +226,7 @@ describe('normalizeConfigTemplates()', () => {
             {
               name: 'home',
               file: 'content/{{locale}}/home.md',
+              summary: 'Home ({{locales}})',
               preview_path: '/{{locale}}/',
               i18n: { canonical_slug: { value: '{{fields.key}}' } },
               fields: [{ name: 'lang', widget: 'hidden', default: '{{locale}}' }],

@@ -1,7 +1,7 @@
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
-import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getPullRequestEntries } from '$lib/services/workflow';
 
 /**
  * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
@@ -21,15 +21,14 @@ import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/ser
  * @returns {number} Highest number, or `0` if no entry has a positive one.
  */
 export const getMaxEntryNumber = ({ collectionName, keyPath, locale }) =>
-  [
-    ...getEntriesByCollection(collectionName),
-    ...getUnpublishedEntriesByCollection(collectionName),
-    ...getCompanionEntries(collectionName),
-  ].reduce((max, entry) => {
-    const value = Number(entry.locales[locale]?.content?.[keyPath]);
+  [...getEntriesByCollection(collectionName), ...getPullRequestEntries(collectionName)].reduce(
+    (max, entry) => {
+      const value = Number(entry.locales[locale]?.content?.[keyPath]);
 
-    return Number.isFinite(value) && value > max ? value : max;
-  }, 0);
+      return Number.isFinite(value) && value > max ? value : max;
+    },
+    0,
+  );
 
 /**
  * For new entries in reorder-enabled entry collections, assign a fresh manual sort order to the

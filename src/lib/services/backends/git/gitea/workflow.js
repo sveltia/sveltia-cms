@@ -24,8 +24,11 @@ import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
 import {
+  approvePullRequest,
   assertBranchAtHead,
   commitToNewWorkflowBranch,
+  discardPullRequest,
+  findOwnApprovals,
   getParentDirs,
   isPullRequestMerged,
   isSquashMergeEnabled,
@@ -34,7 +37,6 @@ import {
   toChangedFilesWithModes,
   updateLabelledStatus,
 } from '$lib/services/backends/git/shared/workflow';
-import { user } from '$lib/services/user/account.svelte';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -242,16 +244,9 @@ export const updateStatus = (pullRequest, status) =>
  * Approve the pull request on behalf of the signed-in user, pinned to the head commit the entry was
  * reviewed at.
  * @param {WorkflowPullRequest} pullRequest Pull request.
- * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoCreatePullReview
+ * @returns {Promise<void>}
  */
-export const approve = async (pullRequest) => {
-  const { owner, repo } = repository;
-
-  await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`, {
-    method: 'POST',
-    body: { event: 'APPROVED', commit_id: pullRequest.headSHA },
-  });
-};
+export const approve = (pullRequest) => approvePullRequest(repository, pullRequest, 'APPROVED');
 
 /**
  * Withdraw the signed-in user’s approval of the pull request by deleting their approving reviews,
@@ -268,12 +263,9 @@ export const withdrawApproval = async (pullRequest) => {
   // A deletion comes back as `204 No Content`, which can’t be parsed as JSON, so the response is
   // read as text, while a refusal still throws for the caller to report
   await Promise.all(
-    reviews
-      .filter(
-        ({ state, dismissed, user: reviewer }) =>
-          state === 'APPROVED' && !dismissed && reviewer?.login === user.account?.login,
-      )
-      .map(({ id }) => fetchAPI(`${path}/${id}`, { method: 'DELETE', responseType: 'text' })),
+    findOwnApprovals(reviews).map(({ id }) =>
+      fetchAPI(`${path}/${id}`, { method: 'DELETE', responseType: 'text' }),
+    ),
   );
 };
 
@@ -474,30 +466,16 @@ export const publish = async (pullRequest) => {
 /**
  * Close the pull request without merging it, and delete the workflow branch.
  * @param {WorkflowPullRequest} pullRequest Pull request.
- * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoEditPullRequest
+ * @returns {Promise<void>}
  */
-export const discard = async (pullRequest) => {
-  const { owner, repo } = repository;
-
-  // An Open Authoring draft has no pull request yet, so deleting the branch is all there is to do
-  if (pullRequest.number !== undefined) {
-    try {
-      await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}`, {
-        method: 'PATCH',
-        body: { state: 'closed' },
-      });
-    } catch (/** @type {any} */ ex) {
-      // The pull request was merged after the board was loaded, which the instance reports as a
-      // precondition failure on any state change. There’s nothing left to close, and the branch is
-      // still worth tidying up, so carry on
-      if (ex.cause?.status !== 412) {
-        throw ex;
-      }
-    }
-  }
-
-  await deleteBranch(pullRequest.branch);
-};
+export const discard = (pullRequest) =>
+  discardPullRequest(repository, pullRequest, {
+    deleteBranch,
+    // The pull request was merged after the board was loaded, which the instance reports as a
+    // precondition failure on any state change. There’s nothing left to close, and the branch is
+    // still worth tidying up, so carry on
+    closedStatuses: [412],
+  });
 
 /**
  * Gitea/Forgejo’s Editorial Workflow implementation.

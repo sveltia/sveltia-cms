@@ -178,7 +178,7 @@ describe('integrations/media-libraries/stock/unsplash', () => {
         expect(results[0].fileName).toBe('no-name-99999-unsplash.jpg');
       });
 
-      it('should escape the user name in the credit', () => {
+      it('should escape the user name and the link in the credit', () => {
         const [result] = parseResults(
           /** @type {any} */ ([
             {
@@ -186,11 +186,12 @@ describe('integrations/media-libraries/stock/unsplash', () => {
               description: 'Test photo',
               alt_description: '',
               urls: { regular: 'https://example.com/r.jpg', thumb: 'https://example.com/t.jpg' },
-              user: { username: 'smith', name: 'Smith & <Jones>' },
+              user: { username: 'smith"&', name: 'Smith & <Jones>' },
             },
           ]),
         );
 
+        expect(result.credit).toContain('href="https://unsplash.com/@smith&quot;&amp;?');
         expect(result.credit).toContain('>Smith &amp; &lt;Jones&gt;</a>');
       });
 

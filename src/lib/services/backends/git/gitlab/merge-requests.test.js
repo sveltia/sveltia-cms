@@ -9,6 +9,7 @@ import {
   fetchMergeRequestFileList,
   fetchOpenMergeRequests,
   fetchPullRequests,
+  getMergeRequestPath,
   parseDiff,
   parseMergeRequest,
   toMergeRequest,
@@ -84,6 +85,12 @@ describe('GitLab merge requests', () => {
     forkedRepository.current = undefined;
     vi.mocked(fetchAPI).mockResolvedValue({});
     vi.mocked(fetchGraphQL).mockResolvedValue({});
+  });
+
+  describe('getMergeRequestPath', () => {
+    test('returns the path of the merge request on the configured project', () => {
+      expect(getMergeRequestPath(3)).toBe(`/projects/${PROJECT_ID}/merge_requests/3`);
+    });
   });
 
   describe('draftTitle.strip', () => {

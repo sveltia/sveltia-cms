@@ -23,6 +23,7 @@ import { refreshProductionSHA } from '$lib/services/deployments/resolve';
 import { user } from '$lib/services/user/account.svelte';
 import { shareInFlight } from '$lib/services/utils/cache';
 import {
+  getDeletionSelection,
   getUnpublishedEntryByBranch,
   getUnpublishedEntryBySlug,
   publishingBranches,
@@ -594,18 +595,19 @@ const mergeWorkflowEntry = async (entry) => {
 
   await workflow.publish(pullRequest);
 
-  // A removal also rewrote the entries referencing the deleted one, so the store is brought up to
-  // date with those as well, or they would show the stale references until the next reload. The
-  // references are worked out again rather than remembered from when the pull request was opened,
-  // because the entries may have been reloaded since; this has to happen while the deleted entry
-  // is still in the store, as it’s what the references are matched against
+  // A removal also rewrote the entries referencing the deleted one and the rest of the selection it
+  // was deleted with, so the store is brought up to date with those as well, or they would show the
+  // stale references until the next reload. The references are worked out again rather than
+  // remembered from when the pull request was opened, because the entries may have been reloaded
+  // since; this has to happen while the deleted entry is still in the store, as it’s what the
+  // references are matched against
   /** @type {Map<string, Entry>} */
   const cascadedEntries = new Map(
     deletion && hookArgs
       ? planCascadeDelete({
           collection: hookArgs.collection,
           collectionFile: hookArgs.collectionFile,
-          entries: [entry],
+          entries: getDeletionSelection(entry),
         }).targets.map(({ entry: target }) => [target.id, target])
       : [],
   );

@@ -30,6 +30,15 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
  */
 
 /**
+ * Get the REST API path of the given merge request on the configured project, which is where a
+ * merge request opened from a fork lives as well.
+ * @param {number | undefined} number Merge request `iid`.
+ * @returns {string} Path.
+ */
+export const getMergeRequestPath = (number) =>
+  `/projects/${getProjectId()}/merge_requests/${number}`;
+
+/**
  * Maximum numbers of items to retrieve from the REST API: open merge requests, changed files per
  * merge request, Open Authoring branches in the contributor’s fork, and the contributor’s own merge
  * requests those branches are matched against. Editorial Workflow is not meant to hold a huge
@@ -175,7 +184,7 @@ export const fetchMergeRequestFileList = async (mergeRequest) => {
   const [branchHead, diffs] = await Promise.all([
     fetchBranchHead(branch),
     /** @type {Promise<Record<string, any>[]>} */ (
-      fetchAPI(`${projectPath}/merge_requests/${number}/diffs?per_page=${MAX_ITEMS.files}`)
+      fetchAPI(`${getMergeRequestPath(number)}/diffs?per_page=${MAX_ITEMS.files}`)
     ),
   ]);
 
@@ -450,6 +459,4 @@ export const fetchOpenMergeRequests = async (branch) => {
  * @see https://docs.gitlab.com/api/merge_requests/#get-single-mr
  */
 export const fetchMergeRequest = async (pullRequest) =>
-  /** @type {Record<string, any>} */ (
-    await fetchAPI(`/projects/${getProjectId()}/merge_requests/${pullRequest.number}`)
-  );
+  /** @type {Record<string, any>} */ (await fetchAPI(getMergeRequestPath(pullRequest.number)));

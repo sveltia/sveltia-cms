@@ -41,11 +41,23 @@ vi.mock('$lib/services/contents/collection/entries', async (importOriginal) => (
   getEntriesInCollectionFolder: vi.fn(() => []),
 }));
 
-vi.mock('$lib/services/workflow', async (importOriginal) => ({
-  ...(await importOriginal()),
-  getCompanionEntries: vi.fn(() => []),
-  getUnpublishedEntriesByCollection: vi.fn(() => []),
-}));
+vi.mock('$lib/services/workflow', async (importOriginal) => {
+  /** @type {import('vitest').Mock<(name: string) => any[]>} */
+  const companionEntries = vi.fn(() => []);
+  /** @type {import('vitest').Mock<(name: string) => any[]>} */
+  const unpublishedEntriesByCollection = vi.fn(() => []);
+
+  return {
+    ...(await importOriginal()),
+    getCompanionEntries: companionEntries,
+    getUnpublishedEntriesByCollection: unpublishedEntriesByCollection,
+    // Mirror the real helper so the tests can drive it through the two it combines
+    getPullRequestEntries: vi.fn((/** @type {string} */ name) => [
+      ...unpublishedEntriesByCollection(name),
+      ...companionEntries(name),
+    ]),
+  };
+});
 
 vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(() => ({ name: 'index' })),
@@ -154,6 +166,12 @@ describe('draft/slugs', () => {
     it('should be false without the localize flag', () => {
       expect(hasLocalizedSlugs(createCollection({ slug: '{{title}}' }))).toBe(false);
       expect(hasLocalizedSlugs(createCollection({ slug: undefined }))).toBe(false);
+    });
+
+    it('should be false when the localize flag is only in an escaped tag', () => {
+      expect(
+        hasLocalizedSlugs(createCollection({ slug: '{{title}}-\\{{title | localize}}' })),
+      ).toBe(false);
     });
 
     it('should be false with a single-file structure', () => {

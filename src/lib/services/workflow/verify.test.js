@@ -94,7 +94,6 @@ vi.mock('$lib/services/contents/entry/relations/cascade/delete', () => ({
 vi.mock('$lib/services/contents/entry/relations/cascade/update', () => ({
   collectRenameTargets: vi.fn(() => []),
 }));
-vi.mock('$lib/services/workflow', () => ({ unpublishedEntries: { current: [] } }));
 
 /**
  * Create a published entry.
@@ -518,7 +517,11 @@ describe('workflow/verify', () => {
       });
 
       // Another entry of the collection deleted in the same selection, and one of another
-      const sibling = createEntry({ status: 'pending_deletion', paths: ['content/posts/b.md'] });
+      const sibling = {
+        ...createEntry({ status: 'pending_deletion', paths: ['content/posts/b.md'] }),
+        id: 'sibling',
+      };
+
       const other = createEntry({ status: 'pending_deletion', collectionName: 'authors' });
       const pending = createEntry({ paths: ['content/posts/c.md'] });
 

@@ -4,6 +4,7 @@ import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { createDraftPullRequest } from '$lib/services/backends/git/shared/fork';
 import { cmsConfig } from '$lib/services/config';
+import { user } from '$lib/services/user/account.svelte';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
@@ -403,6 +404,70 @@ export const reopenPullRequest = async ({ owner, repo }, number) => {
     method: 'PATCH',
     body: { state: 'open' },
   });
+};
+
+/**
+ * Approve a pull request on behalf of the signed-in user, on GitHub or Gitea/Forgejo, whose REST
+ * APIs share the endpoint, pinned to the head commit the entry was reviewed at.
+ * @param {RepositoryPath} repository Repository holding the pull request.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {string} event Review event that approves it, which the services name differently:
+ * `APPROVE` on GitHub, `APPROVED` on Gitea/Forgejo.
+ * @see https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoCreatePullReview
+ */
+export const approvePullRequest = async ({ owner, repo }, pullRequest, event) => {
+  await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}/reviews`, {
+    method: 'POST',
+    body: { event, commit_id: pullRequest.headSHA },
+  });
+};
+
+/**
+ * Pick the signed-in user’s standing approvals from the reviews of a pull request, as listed by
+ * the GitHub or Gitea/Forgejo REST API. GitHub gives a dismissed review a state of its own, while
+ * Gitea/Forgejo keeps the state and flags it as dismissed.
+ * @param {Record<string, any>[]} reviews Reviews returned by the REST API.
+ * @returns {Record<string, any>[]} Approving reviews of the user.
+ */
+export const findOwnApprovals = (reviews) =>
+  reviews.filter(
+    ({ state, dismissed, user: reviewer }) =>
+      state === 'APPROVED' && !dismissed && reviewer?.login === user.account?.login,
+  );
+
+/**
+ * Close a pull request without merging it, on GitHub or Gitea/Forgejo, whose REST APIs share the
+ * endpoint, and delete its branch. An Open Authoring draft has no pull request yet, so deleting the
+ * branch is all there is to do for it.
+ * @param {RepositoryPath} repository Repository holding the pull request.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {object} service Service-specific values.
+ * @param {(branch: string) => Promise<void>} service.deleteBranch Function to delete the branch.
+ * @param {number[]} [service.closedStatuses] HTTP status codes a refusal to close the pull request
+ * comes with when there’s nothing left to close, in which case the branch is still deleted.
+ * @see https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoEditPullRequest
+ */
+export const discardPullRequest = async (
+  { owner, repo },
+  pullRequest,
+  { deleteBranch, closedStatuses = [] },
+) => {
+  if (pullRequest.number !== undefined) {
+    try {
+      await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}`, {
+        method: 'PATCH',
+        body: { state: 'closed' },
+      });
+    } catch (/** @type {any} */ ex) {
+      if (!closedStatuses.includes(ex.cause?.status)) {
+        throw ex;
+      }
+    }
+  }
+
+  await deleteBranch(pullRequest.branch);
 };
 
 /**

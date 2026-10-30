@@ -1,7 +1,7 @@
 import { parseInline } from 'marked';
 import { isValidElement } from 'react';
 
-import { createReactRoot, loadReactDom } from '$lib/services/api/react-dom';
+import { mountReactNode } from '$lib/services/api/react-dom';
 import { getNoAsset } from '$lib/services/contents/fields/rich-text/previews/components';
 import { sanitizeRichTextHTML } from '$lib/services/contents/fields/rich-text/sanitize';
 
@@ -52,17 +52,6 @@ export const getInlinePreview = ({ toPreview, toInline }, data) => {
   return { text };
 };
 
-/* v8 ignore start -- the library is bundled with the tests, so loading can’t fail */
-/**
- * Report a failure to load the React DOM library.
- * @param {Error} error Error.
- */
-const reportLoadError = (error) => {
-  // eslint-disable-next-line no-console
-  console.error(error);
-};
-/* v8 ignore stop */
-
 /**
  * Render the preview of a pattern-based inline component into the given element. A string is
  * parsed as inline Markdown, so `**bold**` or a link work as well as HTML, and always sanitized, as
@@ -92,22 +81,8 @@ export const renderInlinePreview = (element, { preview, text }) => {
   }
 
   if (preview) {
-    const root = createReactRoot(element);
-    let removed = false;
-
     // `react-dom` is only loaded once a preview actually needs it
-    loadReactDom()
-      .then(() => {
-        if (!removed) {
-          root.render(preview);
-        }
-      })
-      .catch(reportLoadError);
-
-    return () => {
-      removed = true;
-      root.unmount();
-    };
+    return mountReactNode(element, preview);
   }
 
   element.textContent = text;

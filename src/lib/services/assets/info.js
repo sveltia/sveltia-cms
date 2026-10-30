@@ -11,7 +11,7 @@ import {
 } from '$lib/services/common/template/constants';
 import { cmsConfig } from '$lib/services/config';
 import { getEntryFolderPath } from '$lib/services/contents/entry/paths';
-import { shareInFlight } from '$lib/services/utils/cache';
+import { createLRUMap, shareInFlight } from '$lib/services/utils/cache';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 import { createPath, createPathRegEx, encodeFilePath, getDirName } from '$lib/services/utils/file';
 import { createInertSVG } from '$lib/services/utils/media/image/svg';
@@ -24,6 +24,7 @@ import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
+ * @import { LRUMap } from '$lib/services/utils/cache';
  * @import {
  * Asset,
  * AssetFolderInfo,
@@ -31,6 +32,10 @@ import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
  * InternalCmsConfig,
  * InternalLocaleCode,
  * } from '$lib/types/private';
+ */
+
+/**
+ * @typedef {Pick<IndexedDB, 'get' | 'set'> | LRUMap<string, Blob>} ThumbnailStore
  */
 
 /**
@@ -273,8 +278,12 @@ export const getAssetBlobURL = async (asset) => {
   return asset.blobURL;
 };
 
-/** @type {IndexedDB | null | undefined} */
-let thumbnailDB = undefined;
+/**
+ * Where the thumbnails are cached, keyed by asset SHA: the database if the backend has one, the
+ * {@link memoryThumbnailCache} otherwise. It’s picked by {@link initThumbnailStore}.
+ * @type {ThumbnailStore | undefined}
+ */
+let thumbnailStore = undefined;
 /**
  * Thumbnail blob resolutions currently in flight, keyed by asset SHA. Generating a thumbnail means
  * a database read and, on a miss, decoding and transforming the full-size image, so concurrent
@@ -292,64 +301,33 @@ const MEMORY_THUMBNAIL_CACHE_SIZE = 500;
  * Thumbnails kept in memory, keyed by asset SHA, for a backend without a database to cache them in,
  * like the test backend. Without it, a thumbnail would be generated again each time a list row
  * showing it is rendered. The least recently used one is dropped first.
- * @type {Map<string, Blob>}
+ * @type {LRUMap<string, Blob>}
  */
-const memoryThumbnailCache = new Map();
-
+const memoryThumbnailCache = createLRUMap(MEMORY_THUMBNAIL_CACHE_SIZE);
 /**
- * Keep the given thumbnail in {@link memoryThumbnailCache}, dropping the least recently used one if
- * the cache is full.
- * @param {string} sha Asset SHA.
- * @param {Blob} blob Thumbnail blob.
- */
-const cacheThumbnailInMemory = (sha, blob) => {
-  memoryThumbnailCache.delete(sha);
-  memoryThumbnailCache.set(sha, blob);
-
-  if (memoryThumbnailCache.size > MEMORY_THUMBNAIL_CACHE_SIZE) {
-    memoryThumbnailCache.delete(/** @type {string} */ (memoryThumbnailCache.keys().next().value));
-  }
-};
-
-/**
- * Get the cached thumbnail of the given asset, from the database if there is one, from memory
- * otherwise.
+ * Get the cached thumbnail of the given asset, once {@link initThumbnailStore} has been called.
  * @param {string} sha Asset SHA.
  * @returns {Promise<Blob | undefined>} Thumbnail blob, if cached.
  */
-const getCachedThumbnail = async (sha) => {
-  if (thumbnailDB) {
-    return thumbnailDB.get(sha);
-  }
-
-  const blob = memoryThumbnailCache.get(sha);
-
-  if (blob) {
-    // Mark it as the most recently used
-    cacheThumbnailInMemory(sha, blob);
-  }
-
-  return blob;
-};
+const getCachedThumbnail = async (sha) => /** @type {ThumbnailStore} */ (thumbnailStore).get(sha);
 
 /* v8 ignore next */
 /**
  * Reset the thumbnail database. This is used in tests to reset the state of the thumbnail database
  * between tests.
  */
-export const _resetThumbnailDB = () => {
-  thumbnailDB = undefined;
+export const _resetThumbnailStore = () => {
+  thumbnailStore = undefined;
   pendingThumbnailBlobs.clear();
   memoryThumbnailCache.clear();
 };
 
 /**
- * Initialize {@link thumbnailDB} if it hasn’t been initialized yet.
+ * Initialize {@link thumbnailStore} if it hasn’t been initialized yet.
  */
-const initThumbnailDB = () => {
-  if (thumbnailDB === undefined) {
-    thumbnailDB = getRepositoryDatabase(backend.current?.repository, 'asset-thumbnails') ?? null;
-  }
+const initThumbnailStore = () => {
+  thumbnailStore ??=
+    getRepositoryDatabase(backend.current?.repository, 'asset-thumbnails') ?? memoryThumbnailCache;
 };
 
 /**
@@ -379,11 +357,7 @@ const resolveThumbnailBlob = async (asset) => {
       { key: sha },
     );
 
-    if (thumbnailDB) {
-      await thumbnailDB.set(sha, thumbnailBlob);
-    } else {
-      cacheThumbnailInMemory(sha, thumbnailBlob);
-    }
+    await /** @type {ThumbnailStore} */ (thumbnailStore).set(sha, thumbnailBlob);
   }
 
   return thumbnailBlob;
@@ -398,7 +372,7 @@ const resolveThumbnailBlob = async (asset) => {
  * flight is awaited, as the outcome is what matters.
  */
 export const hasCachedThumbnail = async (sha) => {
-  initThumbnailDB();
+  initThumbnailStore();
 
   const pending = pendingThumbnailBlobs.get(sha);
 
@@ -422,7 +396,7 @@ export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) =>
     return undefined;
   }
 
-  initThumbnailDB();
+  initThumbnailStore();
 
   const { sha } = asset;
 

@@ -1,17 +1,21 @@
 // @ts-nocheck
 import { sleep } from '@sveltia/utils/misc';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { user } from '$lib/services/user/account.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 import {
   applyForkPullRequestStatus,
+  approvePullRequest,
   assertBranchAtHead,
   AUTO_MERGE_POLL,
   commitToNewWorkflowBranch,
   deleteRemoteBranch,
+  discardPullRequest,
+  findOwnApprovals,
   getMovedHeadMergeState,
   getParentDirs,
   isPermanentClientError,
@@ -520,6 +524,101 @@ describe('reopenPullRequest()', () => {
       method: 'PATCH',
       body: { state: 'open' },
     });
+  });
+});
+
+describe('approvePullRequest()', () => {
+  beforeEach(() => {
+    vi.mocked(fetchAPI).mockResolvedValue({});
+  });
+
+  test('approves the pull request with the given event, pinned to its head commit', async () => {
+    await approvePullRequest({ owner: 'owner', repo: 'repo' }, { number: 1, headSHA: 'abc' }, 'X');
+
+    expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls/1/reviews', {
+      method: 'POST',
+      body: { event: 'X', commit_id: 'abc' },
+    });
+  });
+});
+
+describe('findOwnApprovals()', () => {
+  beforeEach(() => {
+    user.account = /** @type {any} */ ({ login: 'me' });
+  });
+
+  afterEach(() => {
+    user.account = undefined;
+  });
+
+  test('picks the user’s approvals that haven’t been dismissed', () => {
+    const reviews = [
+      { id: 1, state: 'APPROVED', user: { login: 'me' } },
+      { id: 2, state: 'APPROVED', user: { login: 'alex' } },
+      { id: 3, state: 'COMMENTED', user: { login: 'me' } },
+      { id: 4, state: 'DISMISSED', user: { login: 'me' } },
+      { id: 5, state: 'APPROVED', dismissed: true, user: { login: 'me' } },
+      { id: 6, state: 'APPROVED', user: null },
+      { id: 7, state: 'APPROVED', dismissed: false, user: { login: 'me' } },
+    ];
+
+    expect(findOwnApprovals(reviews).map(({ id }) => id)).toEqual([1, 7]);
+  });
+});
+
+describe('discardPullRequest()', () => {
+  const repository = { owner: 'owner', repo: 'repo' };
+  /**
+   * Create the error `fetchAPI` throws on a refused request.
+   * @param {number} status HTTP status code.
+   * @returns {Error} Error.
+   */
+  const refusal = (status) => new Error('Server responded with an error', { cause: { status } });
+
+  test('closes the pull request and deletes the branch', async () => {
+    const deleteBranch = vi.fn();
+
+    vi.mocked(fetchAPI).mockResolvedValue({});
+    await discardPullRequest(repository, { number: 1, branch: 'b' }, { deleteBranch });
+
+    expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls/1', {
+      method: 'PATCH',
+      body: { state: 'closed' },
+    });
+    expect(deleteBranch).toHaveBeenCalledWith('b');
+  });
+
+  test('only deletes the branch of a draft without a pull request', async () => {
+    const deleteBranch = vi.fn();
+
+    await discardPullRequest(repository, { branch: 'b' }, { deleteBranch });
+
+    expect(fetchAPI).not.toHaveBeenCalled();
+    expect(deleteBranch).toHaveBeenCalledWith('b');
+  });
+
+  test('carries on when the refusal comes with one of the given statuses', async () => {
+    const deleteBranch = vi.fn();
+
+    vi.mocked(fetchAPI).mockRejectedValue(refusal(412));
+    await discardPullRequest(
+      repository,
+      { number: 1, branch: 'b' },
+      { deleteBranch, closedStatuses: [412] },
+    );
+
+    expect(deleteBranch).toHaveBeenCalledWith('b');
+  });
+
+  test('reports any other refusal, leaving the branch alone', async () => {
+    const deleteBranch = vi.fn();
+
+    vi.mocked(fetchAPI).mockRejectedValue(refusal(412));
+    await expect(
+      discardPullRequest(repository, { number: 1, branch: 'b' }, { deleteBranch }),
+    ).rejects.toThrow('Server responded with an error');
+
+    expect(deleteBranch).not.toHaveBeenCalled();
   });
 });
 

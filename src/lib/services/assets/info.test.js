@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   _resetAssetBlobCache,
   _resetRevocationQueue,
-  _resetThumbnailDB,
+  _resetThumbnailStore,
   cacheAssetBlob,
   createDisplayBlobURL,
   getAssetBlob,
@@ -646,20 +646,18 @@ describe('assets/info', () => {
       expect(result).toBe(undefined);
     });
 
-    it('should set thumbnailDB to null when backend has no databaseName', async () => {
-      // Covers L121 false branch (repository ?? {}) and L123 false branch (null thumbnailDB)
-      _resetThumbnailDB();
+    it('should fall back to the memory store when the backend has no repository', async () => {
+      _resetThumbnailStore();
       mockBackend.repository = undefined;
 
-      // With thumbnailDB=null, get() returns undefined (null?.get === undefined)
+      // Nothing has been cached in memory yet
       const result = await getAssetThumbnailURL(mockAsset, { cacheOnly: true });
 
       expect(result).toBe(undefined);
     });
 
-    it('should set thumbnailDB to null when databaseName is falsy', async () => {
-      // Covers L123 false branch: databaseName ? new IndexedDB(...) : null
-      _resetThumbnailDB();
+    it('should fall back to the memory store when the database name is falsy', async () => {
+      _resetThumbnailStore();
       mockBackend.repository = { databaseName: null };
 
       const result = await getAssetThumbnailURL(mockAsset, { cacheOnly: true });
@@ -668,7 +666,7 @@ describe('assets/info', () => {
     });
 
     it('should keep the thumbnails in memory without a database', async () => {
-      _resetThumbnailDB();
+      _resetThumbnailStore();
       mockBackend.repository = undefined;
 
       const { transformImage } = await import('$lib/services/utils/media/image/transform');
@@ -709,7 +707,7 @@ describe('assets/info', () => {
     });
 
     it('should move a thumbnail asked for again up the generation queue', async () => {
-      _resetThumbnailDB();
+      _resetThumbnailStore();
       mockBackend.repository = undefined;
 
       const { transformImage } = await import('$lib/services/utils/media/image/transform');
@@ -766,7 +764,7 @@ describe('assets/info', () => {
 
     it('should return a cached thumbnail in cache-only mode', async () => {
       // The preceding tests leave the database disabled
-      _resetThumbnailDB();
+      _resetThumbnailStore();
       mockBackend.repository = { databaseName: 'test-db' };
 
       const cachedBlob = new Blob(['cached'], { type: 'image/webp' });

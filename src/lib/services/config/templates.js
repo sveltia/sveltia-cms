@@ -1,6 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { normalizeTemplateTags } from '$lib/services/common/template/normalize';
+import { COMPARISON_OPERATORS } from '$lib/services/common/view';
 import { getSubFields } from '$lib/services/config/parser/utils/fields';
 
 /**
@@ -11,7 +12,7 @@ import { getSubFields } from '$lib/services/config/parser/utils/fields';
  * Options of a collection, a collection file or a field that hold an asset folder path, which can
  * contain template tags.
  */
-const FOLDER_OPTIONS = ['media_folder', 'public_folder'];
+export const FOLDER_OPTIONS = ['media_folder', 'public_folder'];
 
 /**
  * Options of each field type, besides {@link FOLDER_OPTIONS}, that hold a template. A field type’s
@@ -28,10 +29,11 @@ const FIELD_TEMPLATE_OPTIONS = {
 };
 
 /**
- * Options of a view filter or group that compare a field value with another value, which can be a
- * template tag like `{{now}}`.
+ * Options of a view filter or group that match or compare a field value with another value, which
+ * can contain a template tag like `{{now}}`. The `empty` operator takes a boolean, which
+ * {@link normalizeOptions} leaves as is.
  */
-const VIEW_COMPARISON_OPTIONS = ['eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'in', 'not_in'];
+const VIEW_COMPARISON_OPTIONS = ['pattern', ...COMPARISON_OPERATORS];
 
 /**
  * Normalize the template tags in the given options of an object, in place. An option can be a
@@ -124,7 +126,7 @@ const normalizeCollectionFileTemplates = (file) => {
     return;
   }
 
-  normalizeOptions(file, ['file', 'preview_path', ...FOLDER_OPTIONS]);
+  normalizeOptions(file, ['file', 'summary', 'preview_path', ...FOLDER_OPTIONS]);
   normalizeI18nTemplates(file);
   normalizeFieldTemplates(file.fields);
 };
@@ -152,7 +154,7 @@ const normalizeCollectionTemplates = (collection) => {
     return;
   }
 
-  const { slug, nested, table_columns: tableColumns, files } = collection;
+  const { slug, nested, table_columns: tableColumns, index_file: indexFile, files } = collection;
 
   // `folder` and `file` (an entry collection stored in one file) can contain `{{locale}}`
   normalizeOptions(collection, [
@@ -180,6 +182,12 @@ const normalizeCollectionTemplates = (collection) => {
   }
 
   normalizeFieldTemplates(collection.fields);
+
+  // An index file can have a `summary` and fields of its own
+  if (isObject(indexFile)) {
+    normalizeOptions(indexFile, ['summary']);
+    normalizeFieldTemplates(indexFile.fields);
+  }
 
   if (Array.isArray(files)) {
     files.forEach(normalizeCollectionFileTemplates);

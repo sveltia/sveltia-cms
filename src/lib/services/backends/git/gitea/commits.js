@@ -8,6 +8,7 @@ import {
   createCommitMessage,
   createLastCommitError,
   fetchPerPathCommits,
+  MAX_FILE_COMMITS,
   signOffCommitMessage,
 } from '$lib/services/backends/git/shared/commits';
 import { checkDirectCommitAllowed } from '$lib/services/backends/git/shared/fork';
@@ -188,10 +189,6 @@ export const commitChanges = async (changes, options) => {
   };
 };
 
-/**
- * Maximum number of commits to fetch for a file, the same as the GitHub and GitLab backends.
- */
-const MAX_FILE_COMMITS = 100;
 /**
  * Maximum number of pages to read from a file’s commit history, a safety net against a runaway
  * loop on an instance configured with a tiny page size.

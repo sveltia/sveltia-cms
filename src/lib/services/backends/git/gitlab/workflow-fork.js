@@ -6,6 +6,7 @@ import {
   fetchBranchHead,
   fetchMergeRequest,
   fetchMergeRequestFileContents,
+  getMergeRequestPath,
   MAX_ITEMS,
   parseDiff,
   toMergeRequest,
@@ -274,7 +275,7 @@ const getStatusChange = ({ status, title, state, draft }) => {
  */
 const applyStatusChange = async (number, body) => {
   if (Object.keys(body).length) {
-    await fetchAPI(`/projects/${getProjectId()}/merge_requests/${number}`, { method: 'PUT', body });
+    await fetchAPI(getMergeRequestPath(number), { method: 'PUT', body });
   }
 };
 

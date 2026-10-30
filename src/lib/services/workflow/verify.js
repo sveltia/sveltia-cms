@@ -17,7 +17,7 @@ import { buildTargetChanges } from '$lib/services/contents/entry/cascade';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { planCascadeDelete } from '$lib/services/contents/entry/relations/cascade/delete';
 import { collectRenameTargets } from '$lib/services/contents/entry/relations/cascade/update';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { getDeletionSelection } from '$lib/services/workflow';
 import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
 /**
@@ -146,23 +146,14 @@ const getUpdatedEntry = (entry) => {
  * @returns {CascadeTarget[]} Referencing entries, with their references rewritten.
  */
 const getReferencingTargets = ({ entry, collection, updatedEntry, deletion }) => {
-  const { collectionName, fileName } = entry.workflow;
+  const { fileName } = entry.workflow;
   const collectionFile = fileName ? getCollectionFile(collection, fileName) : undefined;
 
   return deletion
     ? planCascadeDelete({
         collection,
         collectionFile,
-        entries: [
-          entry,
-          ...unpublishedEntries.current.filter(
-            (e) =>
-              e !== entry &&
-              e.workflow.status === 'pending_deletion' &&
-              e.workflow.collectionName === collectionName &&
-              e.workflow.fileName === fileName,
-          ),
-        ],
+        entries: getDeletionSelection(entry),
       }).targets
     : collectRenameTargets({
         collection,

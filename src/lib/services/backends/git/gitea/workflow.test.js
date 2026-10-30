@@ -1004,10 +1004,7 @@ describe('Gitea Editorial Workflow service', () => {
         path.startsWith(`${REPO_PATH}/pulls/1/reviews?`)
           ? [
               { id: 1, state: 'APPROVED', dismissed: false, user: { login: 'me' } },
-              { id: 2, state: 'APPROVED', dismissed: false, user: { login: 'alex' } },
-              { id: 3, state: 'COMMENT', dismissed: false, user: { login: 'me' } },
-              { id: 4, state: 'APPROVED', dismissed: true, user: { login: 'me' } },
-              { id: 5, state: 'APPROVED', dismissed: false, user: null },
+              { id: 2, state: 'APPROVED', dismissed: true, user: { login: 'me' } },
             ]
           : {},
       );

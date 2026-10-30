@@ -8,6 +8,7 @@ import {
   createCommitMessage,
   createLastCommitError,
   fetchPerPathCommits,
+  MAX_FILE_COMMITS,
   signOffCommitMessage,
 } from '$lib/services/backends/git/shared/commits';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
@@ -229,7 +230,7 @@ export const fetchFileCommits = async (paths) => {
         fetchAPI(
           `/projects/${projectId}/repository/commits` +
             `?ref_name=${encodeURIComponent(branch ?? '')}` +
-            `&path=${encodeURIComponent(path)}&per_page=100`,
+            `&path=${encodeURIComponent(path)}&per_page=${MAX_FILE_COMMITS}`,
         )
       ),
     (commit) => ({

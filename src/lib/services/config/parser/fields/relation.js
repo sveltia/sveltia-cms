@@ -1,6 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
 
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import { getTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { hasSlugTag } from '$lib/services/config/parser/collections/array-file';
 import { checkMultipleDefault } from '$lib/services/config/parser/utils/defaults';
@@ -88,7 +88,7 @@ const checkFieldReference = ({
   context,
   collectors,
 }) => {
-  const tags = [...reference.matchAll(TEMPLATE_TAG_REPLACE_REGEX)].map(([, tag]) => tag);
+  const tags = getTemplateTags(reference).map(({ content }) => content);
 
   // A plain field name like `userId` is equivalent to `{{userId}}`, meaning that `slug` refers to
   // the `slug` field while `{{slug}}` refers to the entry slug

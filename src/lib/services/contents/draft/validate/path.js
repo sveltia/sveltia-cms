@@ -13,7 +13,7 @@ import {
   keepsOriginalPath,
 } from '$lib/services/contents/draft/save/entry-path';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
-import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getPullRequestEntries } from '$lib/services/workflow';
 
 /**
  * @import { EntryDraft, LocaleValidityMap } from '$lib/types/private';
@@ -59,8 +59,7 @@ const isPathTaken = (draft) => {
   // saved entry already sits at the destination
   const otherEntries = [
     ...getEntriesInCollectionFolder(collection.name),
-    ...getUnpublishedEntriesByCollection(collection.name),
-    ...getCompanionEntries(collection.name),
+    ...getPullRequestEntries(collection.name),
   ].filter((entry) => entry.id !== id);
 
   return Object.entries(currentLocales)

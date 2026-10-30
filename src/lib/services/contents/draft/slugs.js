@@ -2,6 +2,7 @@ import { stripSlashes } from '@sveltia/utils/string';
 
 import { fillTemplate } from '$lib/services/common/template';
 import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
+import { getTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { parseTransformations } from '$lib/services/common/transformations';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
@@ -16,7 +17,7 @@ import { extractDateTime } from '$lib/services/contents/entry';
 import { usesSingleFileStructure } from '$lib/services/contents/i18n/config';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { isNumeric } from '$lib/services/utils/number';
-import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
+import { getPullRequestEntries } from '$lib/services/workflow';
 
 /**
  * @import {
@@ -131,13 +132,21 @@ export const getEntryDateTimeParts = (draft) => {
 };
 
 /**
+ * Get the slug typed in the slug editor of the given locale, or the one shared by every locale.
+ * @param {EntryDraft} draft Entry draft.
+ * @param {string} locale Locale.
+ * @returns {string | undefined} Slug.
+ */
+const getCurrentSlug = ({ currentSlugs }, locale) => currentSlugs?.[locale] ?? currentSlugs?._;
+
+/**
  * Get base options for {@link fillTemplate}.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @returns {FillTemplateOptions} Options.
  */
 export const getFillSlugOptions = ({ draft }) => {
-  const { collection, collectionFile, currentSlugs, currentValues, files, isIndexFile } = draft;
+  const { collection, collectionFile, currentValues, files, isIndexFile } = draft;
 
   const {
     _i18n: { defaultLocale },
@@ -148,7 +157,7 @@ export const getFillSlugOptions = ({ draft }) => {
     content: {
       ...resolveBlobURLs(currentValues[defaultLocale], files),
       // Slug candidate for the default locale
-      _slug: currentSlugs?.[defaultLocale] ?? currentSlugs?._,
+      _slug: getCurrentSlug(draft, defaultLocale),
     },
     locale: defaultLocale,
     dateTimeParts: getEntryDateTimeParts(draft),
@@ -165,10 +174,9 @@ export const getFillSlugOptions = ({ draft }) => {
  * @returns {boolean} Result.
  */
 const hasTypedSlug = ({ draft, locale }) => {
-  const { currentSlugs, slugEditor } = draft;
-  const editorValue = currentSlugs?.[locale] ?? currentSlugs?._;
+  const editorValue = getCurrentSlug(draft, locale);
 
-  return !!slugEditor[locale] && !!editorValue?.trim();
+  return !!draft.slugEditor[locale] && !!editorValue?.trim();
 };
 
 /**
@@ -242,8 +250,7 @@ export const getNextSlugNumber = ({ draft, pendingEntries = draft.pendingEntries
 
   const max = [
     ...getEntriesInCollectionFolder(collectionName),
-    ...getUnpublishedEntriesByCollection(collectionName),
-    ...getCompanionEntries(collectionName),
+    ...getPullRequestEntries(collectionName),
     ...pendingEntries
       .filter((pendingEntry) => pendingEntry.collectionName === collectionName)
       .map(({ entry }) => entry),
@@ -278,22 +285,8 @@ export const getLocalizedSlug = ({
   defaultLocaleSlug,
   templateOnly = false,
 }) => {
-  const {
-    isNew,
-    collection,
-    collectionFile,
-    originalLocales,
-    currentSlugs,
-    currentValues,
-    files,
-    isIndexFile,
-  } = draft;
-
-  const {
-    _i18n: { defaultLocale },
-  } = collectionFile ?? collection;
-
-  const _slug = currentSlugs?.[locale] ?? currentSlugs?._;
+  const { isNew, originalLocales, currentValues, files } = draft;
+  const _slug = getCurrentSlug(draft, locale);
 
   // When creating a new entry or enabling a locale for an existing entry, we need to fill the slug
   // template to generate the initial slug for the new locale. For other cases, we keep the existing
@@ -306,13 +299,16 @@ export const getLocalizedSlug = ({
       return /** @type {string} */ (defaultLocaleSlug.split('/').pop());
     }
 
+    // The entry’s date and random values are shared by every locale
+    const options = getFillSlugOptions({ draft });
+
     return fillTemplate(getSlugTemplate({ draft, locale, templateOnly }), {
-      collection,
+      ...options,
       locale,
       content: {
         // Merge the default locale content and localized content. A field that isn’t localized
         // only exists in the default locale, so its value is kept from there
-        ...resolveBlobURLs(currentValues[defaultLocale], files),
+        ...options.content,
         ...resolveBlobURLs(
           Object.fromEntries(
             localizingKeyPaths
@@ -324,10 +320,6 @@ export const getLocalizedSlug = ({
         // Slug candidate for the current locale
         _slug,
       },
-      // The entry’s date is shared by every locale
-      dateTimeParts: getEntryDateTimeParts(draft),
-      isIndexFile,
-      randomValues: getRandomValues(draft),
     });
   }
 
@@ -353,7 +345,7 @@ const getLocalizingKeyPaths = (collection) => {
   /** @type {Set<string>} */
   const keyPaths = new Set();
 
-  [...template.matchAll(/{{(.+?)}}/g)].forEach(([, placeholder]) => {
+  getTemplateTags(template).forEach(({ content: placeholder }) => {
     // Leave out the transformations, e.g. `upper` in `{{title | upper | localize}}`. The `localize`
     // flag can come anywhere among them; it’s a no-op when the template is filled
     const { value, transformations } = parseTransformations(placeholder);
@@ -486,7 +478,7 @@ export const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fil
  * @returns {EntrySlugVariants} Slugs.
  */
 export const getSlugs = ({ draft, templateOnly = false, pendingEntries = undefined }) => {
-  const { isNew, collection, collectionFile, fileName, currentSlugs, isIndexFile } = draft;
+  const { isNew, collection, collectionFile, fileName, isIndexFile } = draft;
 
   if (isIndexFile) {
     return {
@@ -519,9 +511,7 @@ export const getSlugs = ({ draft, templateOnly = false, pendingEntries = undefin
 
   const defaultLocaleSlug =
     fileName ??
-    (isNew
-      ? getNewEntrySlug()
-      : /** @type {string} */ (currentSlugs?.[defaultLocale] ?? currentSlugs?._));
+    (isNew ? getNewEntrySlug() : /** @type {string} */ (getCurrentSlug(draft, defaultLocale)));
 
   const localizedSlugs = getLocalizedSlugs({ draft, defaultLocaleSlug, templateOnly });
 

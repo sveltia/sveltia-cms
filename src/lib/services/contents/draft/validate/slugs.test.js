@@ -21,10 +21,22 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
   getEntriesInCollectionFolder: vi.fn(() => []),
 }));
-vi.mock('$lib/services/workflow', () => ({
-  getCompanionEntries: vi.fn(() => []),
-  getUnpublishedEntriesByCollection: vi.fn(() => []),
-}));
+vi.mock('$lib/services/workflow', () => {
+  /** @type {import('vitest').Mock<(name: string) => any[]>} */
+  const companionEntries = vi.fn(() => []);
+  /** @type {import('vitest').Mock<(name: string) => any[]>} */
+  const unpublishedEntriesByCollection = vi.fn(() => []);
+
+  return {
+    getCompanionEntries: companionEntries,
+    getUnpublishedEntriesByCollection: unpublishedEntriesByCollection,
+    // Mirror the real helper so the tests can drive it through the two it combines
+    getPullRequestEntries: vi.fn((/** @type {string} */ name) => [
+      ...unpublishedEntriesByCollection(name),
+      ...companionEntries(name),
+    ]),
+  };
+});
 vi.mock('$lib/services/contents/collection/nested', async (importOriginal) => ({
   ...(await importOriginal()),
   getSharedEntryFileName: vi.fn(),

@@ -994,17 +994,14 @@ describe('GitHub Editorial Workflow service', () => {
       vi.mocked(fetchAPI).mockResolvedValueOnce([
         { id: 1, state: 'APPROVED', user: { login: 'me' } },
         { id: 2, state: 'APPROVED', user: { login: 'alex' } },
-        { id: 3, state: 'COMMENTED', user: { login: 'me' } },
-        { id: 4, state: 'DISMISSED', user: { login: 'me' } },
-        { id: 5, state: 'APPROVED', user: null },
-        { id: 6, state: 'APPROVED', user: { login: 'me' } },
+        { id: 3, state: 'APPROVED', user: { login: 'me' } },
       ]);
 
       await withdrawApproval(/** @type {any} */ ({ number: 1 }));
 
       expect(fetchAPI).toHaveBeenNthCalledWith(1, '/repos/owner/repo/pulls/1/reviews?per_page=100');
       expect(vi.mocked(fetchAPI).mock.calls.slice(1)).toEqual(
-        [1, 6].map((id) => [
+        [1, 3].map((id) => [
           `/repos/owner/repo/pulls/1/reviews/${id}/dismissals`,
           {
             method: 'PUT',

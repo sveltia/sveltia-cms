@@ -327,6 +327,11 @@ export const assertBranchNotMoved = async (expectedHead, fetchLastCommit) => {
 };
 
 /**
+ * Maximum number of commits to fetch for a file’s history, the same on every service.
+ */
+export const MAX_FILE_COMMITS = 100;
+
+/**
  * Fetch the commit history of each of the given files with a separate request, keeping only a few
  * requests in flight at a time so a long list doesn’t trigger a Too Many Requests error, then merge
  * the histories into one list.

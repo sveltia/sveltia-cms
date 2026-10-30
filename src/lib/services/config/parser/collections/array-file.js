@@ -1,6 +1,6 @@
 import { getPathInfo } from '@sveltia/utils/file';
 
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import { getTemplateTags } from '$lib/services/common/template/tags';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
 import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
 import { getPublishMode, isWorkflowMode } from '$lib/services/workflow/config';
@@ -35,9 +35,7 @@ const UNSUPPORTED_OPTIONS = [
  */
 export const hasSlugTag = (template) =>
   // A tag can come with transformations, e.g. `{{slug | upper}}`
-  [...template.matchAll(TEMPLATE_TAG_REPLACE_REGEX)].some(
-    ([, tag]) => tag.split('|')[0].trim() === 'slug',
-  );
+  getTemplateTags(template).some(({ name }) => name === 'slug');
 
 /**
  * Validate an entry collection storing all the entries in one file, defined with the `file` option.

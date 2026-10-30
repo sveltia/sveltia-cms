@@ -1,5 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { hasTemplateTags } from '$lib/services/common/template/tags';
+
 /**
  * @import { EntryCollection } from '$lib/types/public';
  */
@@ -24,11 +26,6 @@ export const METADATA_KEYS = ['slug', 'commit_author', 'commit_date'];
 export const METADATA_TEMPLATE_TAGS = ['dirname', 'filename', 'extension', 'locales'];
 
 /**
- * Regular expression matching a template column key, which contains a template tag like `{{…}}`.
- */
-const TEMPLATE_TAG_REGEX = /\{\{.+?\}\}/;
-
-/**
  * Regular expression matching a template made of a single tag without transformations, e.g.
  * `{{locales}}` or `{{fields.date}}`, capturing the tag name.
  */
@@ -40,7 +37,7 @@ export const SINGLE_TAG_REGEX = /^\{\{\s*(?:fields\.)?([^\s|{}]+)\s*\}\}$/;
  * @param {string} key Column key.
  * @returns {boolean} Result.
  */
-export const isTemplateColumnKey = (key) => TEMPLATE_TAG_REGEX.test(key);
+export const isTemplateColumnKey = (key) => hasTemplateTags(key);
 
 /**
  * Get the columns configured for a collection’s table view with the `table_columns` option, or its

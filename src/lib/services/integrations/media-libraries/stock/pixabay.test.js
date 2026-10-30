@@ -88,7 +88,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
     });
 
     describe('parseResults', () => {
-      it('should escape the user name in the credit', () => {
+      it('should escape the user name and the link in the credit', () => {
         /** @type {any} */
         const [result] = parseResults([
           {
@@ -98,14 +98,15 @@ describe('integrations/media-libraries/stock/pixabay', () => {
             largeImageURL: 'https://example.com/a_1280.jpg',
             imageWidth: 640,
             imageHeight: 480,
-            pageURL: 'https://pixabay.com/photos/a-1/',
+            pageURL: 'https://pixabay.com/photos/a-1/?a=1&b="2"',
             tags: 'a',
             user: 'Smith & <Jones>',
           },
         ]);
 
         expect(result.credit).toBe(
-          '<a href="https://pixabay.com/photos/a-1/">Photo by Smith &amp; &lt;Jones&gt; on Pixabay</a>',
+          '<a href="https://pixabay.com/photos/a-1/?a=1&amp;b=&quot;2&quot;">' +
+            'Photo by Smith &amp; &lt;Jones&gt; on Pixabay</a>',
         );
       });
 

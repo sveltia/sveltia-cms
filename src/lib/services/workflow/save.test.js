@@ -1670,6 +1670,26 @@ describe('workflow/save', () => {
       expect(allEntries.current).toEqual([rewrittenPost, other]);
     });
 
+    test('brings the references to the whole selection up to date once a removal lands', async () => {
+      const first = createEntry('cms/posts/hello', 'pending_deletion');
+      const second = { ...createEntry('cms/posts/world', 'pending_deletion'), id: 'world' };
+      const elsewhere = createEntry('cms/pages/about', 'pending_deletion');
+
+      elsewhere.id = 'about';
+      elsewhere.workflow.collectionName = 'pages';
+      unpublishedEntries.current = [first, second, elsewhere];
+
+      await publishWorkflowEntry(first);
+
+      // The pull request removed the references to every entry of the selection, as the publish
+      // check expects, so the store has to drop them all, not only those to the published entry
+      expect(planCascadeDelete).toHaveBeenCalledWith({
+        collection: { name: 'posts', _type: 'entry' },
+        collectionFile: undefined,
+        entries: [first, second],
+      });
+    });
+
     test('leaves the store alone when a regular publish lands', async () => {
       const entry = createEntry('cms/posts/hello', 'pending_publish');
 
