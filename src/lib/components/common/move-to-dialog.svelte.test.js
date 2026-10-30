@@ -21,6 +21,23 @@ describe('MoveToDialog', () => {
     expect(onMove).toHaveBeenCalledExactlyOnceWith(49);
   });
 
+  test('ignores the Enter key confirming an IME conversion', async () => {
+    const onMove = vi.fn();
+
+    await render(MoveToDialog, { open: true, index: 0, itemCount: 5, onMove });
+
+    const input = page.getByRole('spinbutton', { name: 'Position' });
+
+    await input.fill('3');
+    input
+      .element()
+      .dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true }),
+      );
+    expect(onMove).not.toHaveBeenCalled();
+    await expect.element(input).toBeVisible();
+  });
+
   test('submits a valid position with the OK button', async () => {
     const onMove = vi.fn();
 
