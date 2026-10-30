@@ -6,9 +6,9 @@ Designed for content editors and developers alike, Sveltia CMS delivers a great 
 
 As the [successor to Netlify/Decap CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), we continue to deal with issues reported in their repository, of which 390 have now been solved in Sveltia CMS (860 including duplicates). It incorporates numerous enhancements while maintaining high compatibility with existing installations. A growing number of projects, including U.S. government agencies, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS to enjoy its significantly improved performance, security, reliability, and experience.
 
-Sveltia CMS is [framework-agnostic](https://sveltiacms.app/en/docs/frameworks) and hosting platform-independent. It’s an excellent option for those moving away from a traditional CMS and looking for a lightweight headless CMS that works well with Astro, Eleventy, or any other static site generator (SSG). It also works well with vanilla JavaScript and custom tooling.
+Sveltia CMS is [framework-agnostic](https://sveltiacms.app/en/docs/frameworks). It’s an excellent option for those moving away from a traditional CMS and looking for a lightweight headless CMS that works well with Astro, Eleventy, or any other static site generator (SSG). It also works well with vanilla JavaScript and custom tooling.
 
-Explore 725 real-world examples in our [showcase](https://sveltiacms.app/en/showcase), including 195 sites migrated from Netlify/Decap CMS and 110 sites from WordPress, or visit the [documentation](https://sveltiacms.app/en/docs) to get started. You can also try out the CMS on a [demo site](https://demo.sveltiacms.app/) without any installation.
+Explore 730 real-world examples in our [showcase](https://sveltiacms.app/en/showcase), including 195 sites migrated from Netlify/Decap CMS and 110 sites from WordPress, or visit the [documentation](https://sveltiacms.app/en/docs) to get started. You can also try out the CMS on a [demo site](https://demo.sveltiacms.app/) without any installation.
 
 [![Sveltia CMS: Fast, Git-based, Headless, Modern UX, Mobile Support, I18n Support, Open Source](https://sveltiacms.app/images/highlights/cover.webp)](https://sveltiacms.app/en/)
 
