@@ -30,6 +30,43 @@ export const getField = (scope, label, { exact = false } = {}) =>
   );
 
 /**
+ * Get the radio buttons of a field, which a Select or Relation field with a few options shows.
+ * @param {Page} page Page.
+ * @param {string} label Field label.
+ * @returns {Locator} Radio buttons.
+ */
+export const getRadioOptions = (page, label) =>
+  getEditor(page).getByRole('radiogroup', { name: label, exact: true }).getByRole('radio');
+
+/**
+ * Check the options a field shows as radio buttons, in order. A radio button’s label is its
+ * accessible name, not its text content.
+ * @param {Page} page Page.
+ * @param {string} label Field label.
+ * @param {string[]} names Option labels.
+ */
+export const expectRadioOptions = async (page, label, names) => {
+  const options = getRadioOptions(page, label);
+
+  await expect(options).toHaveCount(names.length);
+  await Promise.all(
+    names.map((name, index) => expect(options.nth(index)).toHaveAccessibleName(name)),
+  );
+};
+
+/**
+ * Pick an option of a field that shows its options as radio buttons.
+ * @param {Page} page Page.
+ * @param {string} label Field label.
+ * @param {string} name Option label.
+ */
+export const pickRadioOption = async (page, label, name) => {
+  await getRadioOptions(page, label)
+    .and(page.getByRole('radio', { name, exact: true }))
+    .click();
+};
+
+/**
  * Open a collection from the sidebar.
  * @param {Page} page Page.
  * @param {string} name Collection label.

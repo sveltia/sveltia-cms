@@ -2,6 +2,11 @@ import { NESTED_CONFIG, NESTED_FILES } from '../../fixtures/configs/nested.js';
 import { expect, test } from '../../fixtures/test.js';
 import { getEditor, getEntryRows } from '../../fixtures/ui.js';
 
+/**
+ * @import { Page } from '@playwright/test';
+ * @import { CMS } from '../../fixtures/test.js';
+ */
+
 test.use({ config: NESTED_CONFIG });
 
 test.beforeEach(async ({ cms, page }) => {
@@ -167,7 +172,12 @@ test('moves an entry to another folder', async ({ cms, page }) => {
     ]);
 });
 
-test('creates the index file with the New button’s menu', async ({ cms, page }) => {
+/**
+ * Create the index file titled “Documentation” with the New button’s menu, and save it.
+ * @param {CMS} cms CMS.
+ * @param {Page} page Page.
+ */
+const createIndexFile = async (cms, page) => {
   await cms.chooseMenuItem(
     page.getByRole('button', { name: 'More Options' }),
     page.getByRole('menuitem', { name: 'Section Page' }),
@@ -177,7 +187,11 @@ test('creates the index file with the New button’s menu', async ({ cms, page }
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Documentation');
   await editor.getByRole('button', { name: 'Save' }).click();
+  await expect(editor).toBeHidden();
+};
 
+test('creates the index file with the New button’s menu', async ({ cms, page }) => {
+  await createIndexFile(cms, page);
   await expect
     .poll(async () => (await cms.readRepo())['content/docs/_index.md'])
     .toBe('---\ntitle: Documentation\n---\n');
@@ -187,4 +201,25 @@ test('creates the index file with the New button’s menu', async ({ cms, page }
   await expect(page.getByRole('button', { name: 'More Options' })).toHaveCount(0);
   // The index file is listed with its label rather than its title, first
   await expect(getEntryRows(page)).toHaveText([/Section Page/, /FAQ/]);
+});
+
+test.describe('with a `summary` for the index file', () => {
+  test.use({
+    config: {
+      ...NESTED_CONFIG,
+      collections: NESTED_CONFIG.collections.map((collection) =>
+        collection.name === 'docs'
+          ? {
+              ...collection,
+              index_file: { ...collection.index_file, summary: '{{title}} (Overview)' },
+            }
+          : collection,
+      ),
+    },
+  });
+
+  test('lists the index file with its summary rather than its label', async ({ cms, page }) => {
+    await createIndexFile(cms, page);
+    await expect(getEntryRows(page)).toHaveText([/Documentation \(Overview\)/, /FAQ/]);
+  });
 });

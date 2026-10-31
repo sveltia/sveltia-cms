@@ -77,3 +77,43 @@ test('edits the singleton’s fields of different types', async ({ cms, page }) 
       show_comments: false,
     });
 });
+
+test.describe('with a `summary` for each file', () => {
+  test.use({
+    config: {
+      ...MONOLINGUAL_CONFIG,
+      collections: MONOLINGUAL_CONFIG.collections.map((collection) =>
+        collection.name === 'pages'
+          ? {
+              ...collection,
+              files: collection.files.map((file) => ({
+                ...file,
+                // `{{title}}` falls back to the label of a file without a `title` field
+                summary:
+                  file.name === 'about' ? '{{title | upper}}' : '{{title}} in {{office.city}}',
+              })),
+            }
+          : collection,
+      ),
+    },
+  });
+
+  test('lists the files with their summaries, updated once saved', async ({ page }) => {
+    const rows = page.getByRole('grid', { name: 'Files' }).getByRole('row');
+
+    await page.getByRole('treeitem', { name: 'Pages' }).click();
+    await expect(rows).toHaveText([/ABOUT US/, /Contact Page in Toronto/]);
+
+    await rows.filter({ hasText: 'Contact Page' }).click();
+
+    const editor = getEditor(page);
+
+    await editor
+      .getByRole('group', { name: /Office/ })
+      .getByRole('textbox', { name: 'City' })
+      .fill('Vancouver');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect(editor).toBeHidden();
+    await expect(rows).toHaveText([/ABOUT US/, /Contact Page in Vancouver/]);
+  });
+});

@@ -175,6 +175,86 @@ test.describe('with `skip_ci` on', () => {
   });
 });
 
+test.describe('with `signoff_commits` on', () => {
+  test.use({
+    config: {
+      ...COLLECTION_OPTIONS_CONFIG,
+      backend: {
+        ...GITHUB_CONFIG.backend,
+        signoff_commits: true,
+        commit_messages: {
+          update: 'Update {{path}}\n\nRefs: #12',
+          delete: 'Delete {{slug}}\n\nSigned-off-by: Mona <MONA@example.com>',
+        },
+      },
+    },
+  });
+
+  test('adds a sign-off trailer, joining the trailers of the template', async ({
+    cms,
+    github,
+    page,
+  }) => {
+    const editor = await openFAQ(page, /Who can join\?/);
+
+    await editor.getByRole('textbox', { name: 'Answer' }).fill('Anyone in the neighborhood.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect.poll(() => github.received).toHaveLength(1);
+    expect(github.received[0].message).toEqual({
+      headline: 'Update content/faqs/who-can-join.md',
+      body: 'Refs: #12\nSigned-off-by: Mona Lisa <mona@example.com>',
+    });
+
+    // A template that already signs off with the user’s email is left as it is
+    await openFAQ(page, /Are tools provided\?/);
+    await cms.chooseMenuItem(
+      page.getByRole('button', { name: 'Show Editor Options' }),
+      page.getByRole('menuitem', { name: 'Delete Entry' }),
+    );
+    await page
+      .getByRole('alertdialog', { name: 'Delete Entry' })
+      .getByRole('button', { name: 'Delete' })
+      .click();
+    await expect.poll(() => github.received).toHaveLength(2);
+    expect(github.received[1].message).toEqual({
+      headline: 'Delete are-tools-provided',
+      body: 'Signed-off-by: Mona <MONA@example.com>',
+    });
+  });
+});
+
+test.describe('with `signoff_commits` on and no public email', () => {
+  test.use({
+    config: {
+      ...COLLECTION_OPTIONS_CONFIG,
+      backend: { ...GITHUB_CONFIG.backend, signoff_commits: true },
+    },
+  });
+
+  test('commits without the trailer and warns about it', async ({ github, page }) => {
+    // The user is fetched again on the reload
+    github.user = { ...github.user, email: null };
+
+    const warnings = /** @type {string[]} */ ([]);
+
+    page.on('console', (message) => {
+      if (message.type() === 'warning') {
+        warnings.push(message.text());
+      }
+    });
+    await page.reload();
+    await openCollection(page, 'FAQs');
+
+    const editor = await openFAQ(page, /Who can join\?/);
+
+    await editor.getByRole('textbox', { name: 'Answer' }).fill('Anyone in the neighborhood.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect.poll(() => github.received).toHaveLength(1);
+    expect(github.received[0].message).toEqual({ headline: 'Update FAQ “who-can-join”' });
+    expect(warnings).toContainEqual(expect.stringContaining('`signoff_commits`'));
+  });
+});
+
 test.describe('with `prompt_commit_messages` set to `prefix`', () => {
   test.use({
     config: {

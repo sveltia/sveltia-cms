@@ -1,5 +1,11 @@
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, getField } from '../../fixtures/ui.js';
+import {
+  expectRadioOptions,
+  getEditor,
+  getField,
+  getRadioOptions,
+  pickRadioOption,
+} from '../../fixtures/ui.js';
 
 /**
  * Options shared by the Relation fields referring to a dish. Up to 10 options are shown as radio
@@ -158,43 +164,6 @@ const signIn = async ({ cms, menu }) => {
   await cms.signIn();
 };
 
-/**
- * Get the radio buttons of a field, which a Select or Relation field with a few options shows.
- * @param {import('@playwright/test').Page} page Page.
- * @param {string} label Field label.
- * @returns {import('@playwright/test').Locator} Radio buttons.
- */
-const getOptions = (page, label) =>
-  getEditor(page).getByRole('radiogroup', { name: label, exact: true }).getByRole('radio');
-
-/**
- * Check the options a field offers, in order. A radio button’s label is its accessible name, not
- * its text content.
- * @param {import('@playwright/test').Page} page Page.
- * @param {string} label Field label.
- * @param {string[]} names Option labels.
- */
-const expectOptions = async (page, label, names) => {
-  const options = getOptions(page, label);
-
-  await expect(options).toHaveCount(names.length);
-  await Promise.all(
-    names.map((name, index) => expect(options.nth(index)).toHaveAccessibleName(name)),
-  );
-};
-
-/**
- * Pick an option of a field.
- * @param {import('@playwright/test').Page} page Page.
- * @param {string} label Field label.
- * @param {string} name Option label.
- */
-const pick = async (page, label, name) => {
-  await getOptions(page, label)
-    .and(page.getByRole('radio', { name, exact: true }))
-    .click();
-};
-
 test.describe('menus', () => {
   test('offer only the dishes matching fixed values, and save the one picked', async ({
     cms,
@@ -205,9 +174,9 @@ test.describe('menus', () => {
     await getEditor(page).getByRole('textbox', { name: 'Title' }).fill('Tasting');
 
     // The options are sorted by label, after the one clearing the optional field
-    await expectOptions(page, 'Dessert', ['(None)', 'Kulfi', 'Mochi']);
+    await expectRadioOptions(page, 'Dessert', ['(None)', 'Kulfi', 'Mochi']);
     // `exclude` turns the filter around: anything but a dessert
-    await expectOptions(page, 'Chef’s Pick', [
+    await expectRadioOptions(page, 'Chef’s Pick', [
       '(None)',
       'Butter Chicken',
       'Miso Soup',
@@ -215,8 +184,8 @@ test.describe('menus', () => {
       'Vegetable Curry',
     ]);
 
-    await pick(page, 'Dessert', 'Mochi');
-    await pick(page, 'Chef’s Pick', 'Ramen');
+    await pickRadioOption(page, 'Dessert', 'Mochi');
+    await pickRadioOption(page, 'Chef’s Pick', 'Ramen');
     await getEditor(page).getByRole('button', { name: 'Save' }).click();
 
     await expect
@@ -232,15 +201,15 @@ test.describe('menus', () => {
     await page.getByRole('button', { name: 'Create New Entry' }).first().click();
 
     // No cuisine is picked yet: the tag is resolved to an empty value, which no dish matches
-    await expectOptions(page, 'Main', ['(None)']);
+    await expectRadioOptions(page, 'Main', ['(None)']);
 
-    await pick(page, 'Cuisine', 'Japanese');
-    await expectOptions(page, 'Main', ['(None)', 'Ramen']);
+    await pickRadioOption(page, 'Cuisine', 'Japanese');
+    await expectRadioOptions(page, 'Main', ['(None)', 'Ramen']);
 
-    await pick(page, 'Cuisine', 'Indian');
-    await expectOptions(page, 'Main', ['(None)', 'Butter Chicken', 'Vegetable Curry']);
+    await pickRadioOption(page, 'Cuisine', 'Indian');
+    await expectRadioOptions(page, 'Main', ['(None)', 'Butter Chicken', 'Vegetable Curry']);
 
-    await pick(page, 'Main', 'Butter Chicken');
+    await pickRadioOption(page, 'Main', 'Butter Chicken');
     await getEditor(page).getByRole('textbox', { name: 'Title' }).fill('Tasting');
     await getEditor(page).getByRole('button', { name: 'Save' }).click();
 
@@ -260,7 +229,7 @@ test.describe('menus', () => {
     await page.getByRole('row', { name: /Tasting/ }).click();
 
     // A dish matches when one of its tags is one of the diets
-    await expectOptions(page, 'Side', [
+    await expectRadioOptions(page, 'Side', [
       '(None)',
       'Butter Chicken',
       'Kulfi',
@@ -273,17 +242,23 @@ test.describe('menus', () => {
 
     // The options follow the list as an item is removed or edited
     await diets.getByRole('button', { name: 'Remove' }).last().click();
-    await expectOptions(page, 'Side', ['(None)', 'Miso Soup', 'Mochi', 'Vegetable Curry']);
+    await expectRadioOptions(page, 'Side', ['(None)', 'Miso Soup', 'Mochi', 'Vegetable Curry']);
 
     await diets.getByRole('textbox', { name: 'Diet' }).fill('gluten-free');
-    await expectOptions(page, 'Side', ['(None)', 'Butter Chicken', 'Kulfi', 'Miso Soup', 'Mochi']);
+    await expectRadioOptions(page, 'Side', [
+      '(None)',
+      'Butter Chicken',
+      'Kulfi',
+      'Miso Soup',
+      'Mochi',
+    ]);
 
     // An avoided tag rules out a dish, even one matching a diet
     const avoid = getField(page, 'Avoid');
 
     await avoid.getByRole('button', { name: /Add.*Avoid/ }).click();
     await avoid.getByRole('textbox', { name: 'Avoided Tag' }).fill('vegan');
-    await expectOptions(page, 'Side', ['(None)', 'Butter Chicken', 'Kulfi']);
+    await expectRadioOptions(page, 'Side', ['(None)', 'Butter Chicken', 'Kulfi']);
   });
 
   test('offer every side while the lists are empty, and follow a tag to the other list', async ({
@@ -292,18 +267,18 @@ test.describe('menus', () => {
   }) => {
     await signIn({ cms, menu: 'title: Tasting\ndiets:\n  - vegan\navoid: []\n' });
     await page.getByRole('row', { name: /Tasting/ }).click();
-    await expectOptions(page, 'Side', ['(None)', 'Miso Soup', 'Mochi', 'Vegetable Curry']);
+    await expectRadioOptions(page, 'Side', ['(None)', 'Miso Soup', 'Mochi', 'Vegetable Curry']);
 
     // An empty list puts no constraint on the options
     await getField(page, 'Diets').getByRole('button', { name: 'Remove' }).click();
-    await expect(getOptions(page, 'Side')).toHaveCount(7);
+    await expect(getRadioOptions(page, 'Side')).toHaveCount(7);
 
     // The same tag avoided now rules out the dishes it picked before
     const avoid = getField(page, 'Avoid');
 
     await avoid.getByRole('button', { name: /Add.*Avoid/ }).click();
     await avoid.getByRole('textbox', { name: 'Avoided Tag' }).fill('vegan');
-    await expectOptions(page, 'Side', ['(None)', 'Butter Chicken', 'Kulfi', 'Ramen']);
+    await expectRadioOptions(page, 'Side', ['(None)', 'Butter Chicken', 'Kulfi', 'Ramen']);
   });
 });
 
@@ -313,7 +288,7 @@ test.describe('dishes', () => {
     await page.getByRole('treeitem', { name: 'Dishes' }).click();
     await page.getByRole('row', { name: /Mochi/ }).click();
 
-    await expectOptions(page, 'Pairs With', [
+    await expectRadioOptions(page, 'Pairs With', [
       '(None)',
       'Butter Chicken',
       'Kulfi',
@@ -322,7 +297,7 @@ test.describe('dishes', () => {
       'Vegetable Curry',
     ]);
 
-    await pick(page, 'Pairs With', 'Miso Soup');
+    await pickRadioOption(page, 'Pairs With', 'Miso Soup');
     await getEditor(page).getByRole('button', { name: 'Save' }).click();
 
     await expect
@@ -337,7 +312,7 @@ test.describe('dishes', () => {
     await getEditor(page).getByRole('textbox', { name: 'Name' }).fill('Mochi');
 
     // The `{{slug}}` tag is ignored, so even a dish with the slug the new one will get is offered
-    await expectOptions(page, 'Pairs With', [
+    await expectRadioOptions(page, 'Pairs With', [
       '(None)',
       'Butter Chicken',
       'Kulfi',

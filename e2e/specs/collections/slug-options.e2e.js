@@ -133,6 +133,27 @@ test.describe('default options', () => {
     // The part after the dot isn’t a file extension
     await expectPosts(cms, ['node.js-tips-1.md', 'node.js-tips.md']);
   });
+
+  test('drops the dots at the end, which a branch name can’t end with', async ({ cms, page }) => {
+    await start(cms);
+    await createPost(page, 'Wait for it...');
+    await expectPosts(cms, ['wait-for-it.md']);
+    // The hyphen a space before the dot leaves goes as well
+    await createPost(page, 'The end .');
+    await expectPosts(cms, ['the-end.md', 'wait-for-it.md']);
+    await reopenPost(page, 'Wait for it...');
+  });
+
+  test('caps a long slug at 200 bytes without breaking a character apart', async ({
+    cms,
+    page,
+  }) => {
+    await start(cms);
+    await createPost(page, 'a'.repeat(250));
+    // A Japanese character takes 3 bytes, so 66 of them fit
+    await createPost(page, 'あ'.repeat(80));
+    await expectPosts(cms, [`${'a'.repeat(200)}.md`, `${'あ'.repeat(66)}.md`]);
+  });
 });
 
 test.describe('`encoding: ascii`', () => {
