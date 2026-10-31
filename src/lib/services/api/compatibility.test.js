@@ -8,7 +8,7 @@ describe('COMPATIBILITY_URL', () => {
 
     expect(url.protocol).toBe('https:');
     expect(url.hostname).toBe('sveltiacms.app');
-    expect(url.hash).toBe('#features-not-to-be-implemented');
+    expect(url.hash).toBe('#compatibility');
   });
 });
 
