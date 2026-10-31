@@ -11,6 +11,9 @@ auditConfig:
     # the CMS itself uses `@fastify/deepmerge` instead
     # https://github.com/advisories/GHSA-gcqx-w48m-w2h4
     - GHSA-gcqx-w48m-w2h4
+    # minimatch: Only used by some dev dependencies; no patch available for older versions
+    # https://github.com/advisories/GHSA-g3hv-75wg-m249
+    - GHSA-g3hv-75wg-m249
 
 minimumReleaseAge: 1440
 
@@ -19,4 +22,6 @@ minimumReleaseAgeExclude:
 
 overrides:
   glob@>=9.0.0 <=14.0.1: ^14.0.2
-  minimatch@<11.0.1: ^11.0.1
+  # Only the `legacy` entry point of `eslint-config-airbnb-extended` loads this unmaintained plugin;
+  # its flat config uses `eslint-plugin-import-x` instead
+  eslint-plugin-import: '-'
