@@ -1,3 +1,5 @@
+import { DOCS_BASE_URL } from '$lib/services/app';
+
 /**
  * Mapping of deprecation warnings that have been issued once. This prevents flooding the console
  * with repeated warnings.
@@ -27,32 +29,34 @@ export const warningMessages = {
     'and will be removed in Sveltia CMS 1.0. Use the `slug` collection option’s object form ' +
     'instead: `{{fields._slug}}` is equivalent to `slug: { editable: true }`, and ' +
     '`{{fields._slug | localize}}` is equivalent to `slug: { editable: true, i18n: true }`. ' +
-    'https://sveltiacms.app/en/docs/collections/entries/slugs#making-slugs-editable',
+    `${DOCS_BASE_URL}/collections/entries/slugs#making-slugs-editable`,
   yaml_quote:
     'The `yaml_quote` collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
     'Use the global `output.yaml.quote` option instead. `yaml_quote: true` is equivalent to ' +
-    '`quote: double`. https://sveltiacms.app/en/docs/data-output#controlling-data-output',
+    '`quote: double`. ' +
+    `${DOCS_BASE_URL}/data-output#controlling-data-output`,
   save_all_locales:
     'The `save_all_locales` i18n option is deprecated and will be removed in Sveltia CMS 1.0. ' +
     'Use the `initial_locales` option instead. `save_all_locales: false` is equivalent to ' +
     '`initial_locales: all`. ' +
-    'https://sveltiacms.app/en/docs/i18n/options#disabling-non-default-locale-content',
+    `${DOCS_BASE_URL}/i18n/options#disabling-non-default-locale-content`,
   automatic_deployments:
     'The `automatic_deployments` backend option is deprecated and will be removed in Sveltia CMS ' +
     '1.0. Use the `skip_ci` option instead. `automatic_deployments: false` is equivalent to ' +
     '`skip_ci: true`, and `automatic_deployments: true` is equivalent to `skip_ci: false`. ' +
-    'https://sveltiacms.app/en/docs/deployments#disabling-automatic-deployments',
+    `${DOCS_BASE_URL}/deployments#disabling-automatic-deployments`,
   multiple_folders_i18n_root:
     'The `multiple_folders_i18n_root` i18n structure is deprecated and will be removed in ' +
     'Sveltia CMS 1.0. Use the `multiple_root_folders` structure instead. ' +
-    'https://sveltiacms.app/en/docs/i18n/structures#multiple-root-folders',
+    `${DOCS_BASE_URL}/i18n/structures#multiple-root-folders`,
   omit_default_locale_from_filename:
     'The `omit_default_locale_from_filename` i18n option is deprecated and will be removed in ' +
     'Sveltia CMS 1.0. Use the `omit_default_locale_from_file_path` option instead. ' +
-    'https://sveltiacms.app/en/docs/i18n/structures',
+    `${DOCS_BASE_URL}/i18n/structures`,
   logo_url:
     'The `logo_url` option is deprecated and will be removed in a future version of Sveltia CMS. ' +
-    'Use the `logo.src` option instead. https://sveltiacms.app/en/docs/customization#custom-logo',
+    'Use the `logo.src` option instead. ' +
+    `${DOCS_BASE_URL}/customization#custom-logo`,
 };
 
 /**

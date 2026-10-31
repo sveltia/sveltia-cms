@@ -3,6 +3,7 @@
   import { Button, ConfirmationDialog, Icon, PromptDialog, Spacer } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
+  import { DOCS_BASE_URL } from '$lib/services/app';
   import { allBackendServices } from '$lib/services/backends';
   import { isDemoSite } from '$lib/services/backends/fs/seed';
   import { cancelAuthorization } from '$lib/services/backends/git/shared/auth';
@@ -92,7 +93,7 @@
           {#if env.isBrave}
             {@html makeLink(
               _('local_workflow.disabled'),
-              'https://sveltiacms.app/en/docs/workflows/local#enabling-file-system-access-api-in-brave',
+              `${DOCS_BASE_URL}/workflows/local#enabling-file-system-access-api-in-brave`,
             )}
           {:else}
             {_('local_workflow.unsupported_browser')}

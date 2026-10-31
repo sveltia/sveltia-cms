@@ -1,6 +1,8 @@
 import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 
+import { COMPATIBILITY_URL } from '$lib/services/api/compatibility';
+import { DOCS_BASE_URL } from '$lib/services/app';
 import { unsupportedBackends, validBackendNames } from '$lib/services/backends';
 import {
   FORGEJO_BACKEND_NAME,
@@ -31,19 +33,14 @@ const UNSUPPORTED_OPTIONS = [
   { type: 'warning', prop: 'use_graphql', strKey: 'unsupported_ignored_option' },
 ];
 
-const UNSUPPORTED_BACKEND_DOC_URL =
-  'https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented';
-
-const UNSUPPORTED_BACKEND_SUGGESTION_URL =
-  'https://sveltiacms.app/en/docs/backends#supported-backends';
-
-const AUTH_DOC_URL = 'https://sveltiacms.app/en/docs/backends/BACKEND_NAME#authentication';
+const UNSUPPORTED_BACKEND_SUGGESTION_URL = `${DOCS_BASE_URL}/backends#supported-backends`;
+const AUTH_DOC_URL = `${DOCS_BASE_URL}/backends/BACKEND_NAME#authentication`;
 /**
  * Backend names whose documentation page has a different slug.
  * @type {Record<string, string>}
  */
 const BACKEND_DOC_SLUGS = { gitea: 'gitea-forgejo', forgejo: 'gitea-forgejo' };
-const OPEN_AUTHORING_DOC_URL = 'https://sveltiacms.app/en/docs/workflows/open';
+const OPEN_AUTHORING_DOC_URL = `${DOCS_BASE_URL}/workflows/open`;
 /**
  * Backend options that hold the URL of an API or authentication server and have to be absolute. A
  * relative or scheme-less URL would either make the backend throw while it’s being set up, leaving
@@ -98,7 +95,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
 
     const message = makeLink(
       _(`config.error.unsupported_${type}_backend`, { values: { name: label } }),
-      UNSUPPORTED_BACKEND_DOC_URL,
+      COMPATIBILITY_URL,
     );
 
     const suggestion = makeLink(

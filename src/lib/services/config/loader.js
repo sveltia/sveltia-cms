@@ -2,6 +2,7 @@ import deepmerge from '@fastify/deepmerge';
 import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 
+import { DOCS_BASE_URL } from '$lib/services/app';
 import {
   DEV_CONFIG_PATH,
   DEV_SITE_URL,
@@ -19,10 +20,8 @@ import { makeLink } from '$lib/services/utils/string';
  * @property {string} [type] MIME type.
  */
 
-const LOAD_CONFIG_DOC_URL =
-  'https://sveltiacms.app/en/docs/api/initialization#providing-a-full-configuration';
-
-const SCHEMA_TIP_URL = 'https://sveltiacms.app/en/docs/config-basics#validation-and-autocomplete';
+const LOAD_CONFIG_DOC_URL = `${DOCS_BASE_URL}/api/initialization#providing-a-full-configuration`;
+const SCHEMA_TIP_URL = `${DOCS_BASE_URL}/config-basics#validation-and-autocomplete`;
 /**
  * Deep merge any number of config objects, concatenating arrays.
  */

@@ -2,6 +2,7 @@
   import { _ } from '@sveltia/i18n';
 
   import ApiKeySection from '$lib/components/settings/controls/api-key-section.svelte';
+  import { DOCS_BASE_URL } from '$lib/services/app';
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import {
     allStockAssetProviders,
@@ -47,7 +48,7 @@
   description={enabledCloudServiceEntries.length
     ? _('prefs.media.cloud_storage.api_keys.description')
     : _('prefs.media.cloud_storage.no_services')}
-  docsURL="https://sveltiacms.app/en/docs/media"
+  docsURL="{DOCS_BASE_URL}/media"
   entries={enabledCloudServiceEntries}
   getFieldLabel={(service) => _('prefs.media.cloud_storage.field_label', { values: { service } })}
   {onChange}
@@ -57,7 +58,7 @@
   description={enabledStockAssetProviderEntries.length
     ? _('prefs.media.stock_photos.api_keys.description')
     : _('prefs.media.stock_photos.no_services')}
-  docsURL="https://sveltiacms.app/en/docs/integrations/stock-photos"
+  docsURL="{DOCS_BASE_URL}/integrations/stock-photos"
   entries={enabledStockAssetProviderEntries}
   getFieldLabel={(service) => _('prefs.media.stock_photos.field_label', { values: { service } })}
   {onChange}

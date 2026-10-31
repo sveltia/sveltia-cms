@@ -1,8 +1,9 @@
+import { DOCS_BASE_URL } from '$lib/services/app';
+
 /**
  * Documentation explaining why the CMS must be served as a static file.
  */
-export const LIVE_RELOAD_DOCS_URL =
-  'https://sveltiacms.app/en/docs/workflows/local#troubleshooting';
+export const LIVE_RELOAD_DOCS_URL = `${DOCS_BASE_URL}/workflows/local#troubleshooting`;
 
 /**
  * Check if the CMS is running on a page that a framework’s development server renders and reloads

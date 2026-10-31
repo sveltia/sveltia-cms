@@ -1,10 +1,11 @@
+import { DOCS_BASE_URL } from '$lib/services/app';
+
 /**
  * URL for documentation on unsupported features and compatibility between Netlify/Decap CMS and
  * Sveltia CMS. When users call an unsupported API function, they will see a warning in the console
  * with a link to this documentation.
  */
-export const COMPATIBILITY_URL =
-  'https://sveltiacms.app/en/docs/migration/netlify-decap-cms#features-not-to-be-implemented';
+export const COMPATIBILITY_URL = `${DOCS_BASE_URL}/migration/netlify-decap-cms#compatibility`;
 
 /**
  * List of API functions in Netlify/Decap CMS that we don’t plan to support in Sveltia CMS, either
