@@ -79,20 +79,12 @@ const isReferencedIn = (sources, { collectionName, values }) =>
   );
 
 /**
- * Get the pending entries of the given draft that are still referenced, so they can be saved along
- * with the entry. An entry was created from a Relation field and selected there right away, so it’s
- * only wanted as long as one of the values it goes by is still held by a field in one of the
- * locales, including a field of a rich text editor component. A deselected entry is left out of
- * the save rather than created for nothing. A pending entry can also be referenced by another
- * pending entry rather than by the entry being edited, when it was created from a Relation field of
- * that entry’s quick-add dialog, so the referenced set is grown until no more entries are reached,
- * and one referenced only by a deselected entry is left out along with it.
- * @param {EntryDraft} draft Draft to save.
- * @returns {PendingEntry[]} Pending entries, in the order they were added, detached from the
- * reactive draft: they go into the entry and asset stores, whose consumers may clone them, which a
- * `$state` proxy can’t be.
+ * Get the pending entries of the given draft that are still referenced, as they are on the draft.
+ * See {@link getReferencedPendingEntries}, which detaches them for saving.
+ * @param {EntryDraft} draft Draft.
+ * @returns {Set<PendingEntry>} Referenced pending entries.
  */
-export const getReferencedPendingEntries = (draft) => {
+export const getReferencedPendingEntrySet = (draft) => {
   const sources = getDraftValueSources(draft);
   /** @type {Set<PendingEntry>} */
   const referenced = new Set();
@@ -117,6 +109,26 @@ export const getReferencedPendingEntries = (draft) => {
   while (grow()) {
     // Keep going until no more entries are reached
   }
+
+  return referenced;
+};
+
+/**
+ * Get the pending entries of the given draft that are still referenced, so they can be saved along
+ * with the entry. An entry was created from a Relation field and selected there right away, so it’s
+ * only wanted as long as one of the values it goes by is still held by a field in one of the
+ * locales, including a field of a rich text editor component. A deselected entry is left out of
+ * the save rather than created for nothing. A pending entry can also be referenced by another
+ * pending entry rather than by the entry being edited, when it was created from a Relation field of
+ * that entry’s quick-add dialog, so the referenced set is grown until no more entries are reached,
+ * and one referenced only by a deselected entry is left out along with it.
+ * @param {EntryDraft} draft Draft to save.
+ * @returns {PendingEntry[]} Pending entries, in the order they were added, detached from the
+ * reactive draft: they go into the entry and asset stores, whose consumers may clone them, which a
+ * `$state` proxy can’t be.
+ */
+export const getReferencedPendingEntries = (draft) => {
+  const referenced = getReferencedPendingEntrySet(draft);
 
   return draft.pendingEntries
     .filter((pendingEntry) => referenced.has(pendingEntry))

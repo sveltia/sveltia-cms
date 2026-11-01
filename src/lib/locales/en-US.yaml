@@ -1746,12 +1746,33 @@ opacity: Opacity
 # Select field: empty option placeholder
 unselected_option: (None)
 
-# Relation field: creating a referenced entry without leaving the editor
+# Relation field: creating or editing a referenced entry without leaving the editor
 relation_field:
   # Note shown in the dialog. {$name} is the singular label of the referenced collection
   save_together_hint: The new {$name} will be saved along with the entry you’re editing.
   # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
   add_failed: The {$name} couldn’t be added. Check the browser console for details.
+  # Title of the dialog to edit an entry selected in the field. {$name} is the singular label of the
+  # referenced collection
+  edit_entry_title: Editing {$name}
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  edit_together_hint: Your changes to the {$name} will be saved along with the entry you’re editing.
+  # Error shown when the changes couldn’t be prepared. {$name} is the singular label of the collection
+  edit_failed: The changes to the {$name} couldn’t be applied. Check the browser console for details.
+  # Error shown when the changes would move the entry to another file path, e.g. through a path
+  # template using a field. {$name} is the singular label of the collection
+  move_unsupported: These changes would move the {$name} to another location, which can only be done by editing it on its own.
+  # Error shown when saving, if someone else has changed an entry edited from the field since. {$name}
+  # is the summary of that entry
+  edit_conflict: “{$name}” has been changed by someone else since you edited it. Open it again from the field to review your changes against the latest version.
+  # Error shown when saving, if someone else has deleted an entry edited from the field since.
+  # {$name} is the summary of that entry
+  edit_deleted: “{$name}” has been deleted by someone else since you edited it. Remove it from the field to save the entry.
+  # Accessible label of the menu listing the selected entries that can be edited
+  select_entry_to_edit: Select an Entry to Edit
+  # Warning shown in the dialog when an entry edited from the field has been changed by someone else
+  # since. {$name} is the singular label of the collection
+  changed_since_edit: This {$name} has been changed by someone else since you edited it. Your changes are shown on top of the latest version. Review them before updating.
 
 # Select Assets dialog
 assets_dialog:

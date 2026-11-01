@@ -578,17 +578,21 @@ export const createSavingEntryData = async ({
 };
 
 /**
- * Prepare an entry created from a Relation field for the commit of the entry referring to it: call
- * the `preSave` event hooks, which are held back until then, so they don’t run for an entry that is
- * discarded along with the draft. If a hook updates the entry, its file changes are built again
- * from the updated content; the other changes, like the assets uploaded with the entry, are kept.
+ * Prepare an entry created or edited from a Relation field for the commit of the entry referring to
+ * it: call the `preSave` event hooks, which are held back until then, so they don’t run for an
+ * entry that is discarded along with the draft. If a hook updates the entry, its file changes are
+ * built again from the updated content, each the same way as before: created for a new entry, and
+ * updated for an existing one; the other changes, like the assets uploaded with the entry, are
+ * kept.
  * The pending entry itself is left as is, so a retry after a failed commit starts over from it.
  * @param {PendingEntry} pendingEntry Pending entry.
  * @returns {Promise<PendingEntry>} Pending entry to commit.
  */
 export const preparePendingEntryCommit = async (pendingEntry) => {
-  const { collectionName, entry, changes } = pendingEntry;
-  // Quick-add only creates entries in an entry collection, see `getCreatableCollection()`
+  const { collectionName, entry, changes, baseEntry } = pendingEntry;
+  const isNew = !baseEntry;
+  // Quick-add only creates and edits entries in an entry collection, see `getCreatableCollection()`
+  // and `canEditEntry()`
   const collection = /** @type {InternalEntryCollection} */ (getCollection(collectionName));
 
   /** @type {Entry} */
@@ -602,7 +606,7 @@ export const preparePendingEntryCommit = async (pendingEntry) => {
     ),
   };
 
-  await callEventHooks({ type: 'preSave', entry: savingEntry, collection, isNew: true });
+  await callEventHooks({ type: 'preSave', entry: savingEntry, collection, isNew });
 
   // A hook updating the entry replaces the content of the locales
   const updated = Object.entries(savingEntry.locales).some(
@@ -624,7 +628,7 @@ export const preparePendingEntryCommit = async (pendingEntry) => {
     entry: savingEntry,
     cacheDB: resolveCacheDB(),
     /**
-     * Plan the creation of a file of the entry.
+     * Plan the change to a file of the entry, the same as the one planned when the entry was added.
      * @param {InternalLocaleCode} [locale] Locale of the file, or `undefined` for the single
      * file.
      * @returns {EntryFilePlan | undefined} Planned change, or `undefined` if the entry has no file
@@ -633,9 +637,20 @@ export const preparePendingEntryCommit = async (pendingEntry) => {
     planChange: (locale) => {
       const localizedEntry = savingEntry.locales[locale ?? defaultLocale];
 
-      return localizedEntry
-        ? { action: 'create', slug: localizedEntry.slug, path: localizedEntry.path }
-        : undefined;
+      if (!localizedEntry) {
+        return undefined;
+      }
+
+      const { slug, path } = localizedEntry;
+
+      // An existing entry has a change planned for each of its files when it’s added: an update,
+      // or a creation for a locale turned on. It’s never a move, see `isPendingEntryMoved()`
+      const { action } = isNew
+        ? { action: /** @type {const} */ ('create') }
+        : /** @type {FileChange} */ (changes.find((change) => change.path === path));
+
+      // The file is looked up to update it, unless it’s to be created
+      return { action, slug, path, currentPath: action === 'create' ? undefined : path };
     },
   });
 

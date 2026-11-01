@@ -3251,6 +3251,45 @@ describe('draft/save/changes', () => {
       },
     );
 
+    it('should keep updating the files of an existing entry a hook has updated', async () => {
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const { callEventHooks } = await import('$lib/services/api/events');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(getCollection).mockReturnValue(createCollection(true));
+      vi.mocked(serializeContent).mockImplementation(({ valueMap }) => valueMap);
+      vi.mocked(formatEntryFile).mockImplementation(async ({ content }) => content.title);
+      vi.mocked(callEventHooks).mockImplementation(async ({ entry }) => {
+        entry.locales.en.content = { title: 'Svelte 5' };
+      });
+
+      const locales = {
+        en: { slug: 'svelte', path: 'tags/svelte.en.md', content: { title: 'Svelte' } },
+        // A locale turned on in the dialog, which gets a file of its own
+        fr: { slug: 'svelte', path: 'tags/svelte.fr.md', content: { title: 'Svelte' } },
+      };
+
+      const pendingEntry = {
+        ...createPendingEntry(locales),
+        changes: [
+          { action: 'update', path: 'tags/svelte.en.md', data: 'old' },
+          { action: 'create', path: 'tags/svelte.fr.md', data: 'old' },
+        ],
+        baseEntry: { id: 'id-svelte', slug: 'svelte', subPath: 'svelte', locales: {} },
+      };
+
+      const result = await preparePendingEntryCommit(/** @type {any} */ (pendingEntry));
+
+      expect(callEventHooks).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'preSave', isNew: false }),
+      );
+      expect(result.changes).toMatchObject([
+        { action: 'update', slug: 'svelte', path: 'tags/svelte.en.md', data: 'Svelte 5' },
+        { action: 'create', slug: 'svelte', path: 'tags/svelte.fr.md', data: 'Svelte' },
+      ]);
+    });
+
     it('should skip a locale the entry has no file in', async () => {
       const { getCollection } = await import('$lib/services/contents/collection');
       const { callEventHooks } = await import('$lib/services/api/events');

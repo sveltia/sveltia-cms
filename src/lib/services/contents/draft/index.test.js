@@ -257,6 +257,39 @@ describe('draft/index', () => {
       expect(isDraftModified(draft)).toBe(false);
     });
 
+    it('should return true when an existing entry has been edited from a Relation field', () => {
+      const draft = {
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { tag: 'svelte' } },
+        currentValues: { en: { tag: 'svelte' } },
+        extraValues: { en: {} },
+        pendingEntries: [{ collectionName: 'tags', entry: { locales: {} }, values: ['react'] }],
+      };
+
+      // A new entry is only added along with a change to the field selecting it
+      expect(isDraftModified(draft)).toBe(false);
+
+      // Not referenced anymore, so it’s left out of the save
+      draft.pendingEntries.push({
+        collectionName: 'tags',
+        entry: { locales: {} },
+        values: ['vue'],
+        baseEntry: {},
+      });
+      expect(isDraftModified(draft)).toBe(false);
+
+      draft.pendingEntries.push({
+        collectionName: 'tags',
+        entry: { locales: {} },
+        values: ['svelte'],
+        baseEntry: {},
+      });
+      expect(isDraftModified(draft)).toBe(true);
+    });
+
     it('should return true when the pairs of a KeyValue field are reordered', () => {
       vi.mocked(isPairOrderModified).mockReturnValueOnce(true);
 

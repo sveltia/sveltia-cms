@@ -65,9 +65,18 @@ const optionsInProgress = new Set();
  * the saved entry list, then by the pending entry list. A nested Relation field resolves a label
  * for each entry its parent field references, and a new merged array on each call would give the
  * option cache a new key every time, building the whole option list again for every label.
- * @type {WeakMap<Entry[], WeakMap<PendingEntry[], { count: number, entries: Entry[] }>>}
+ * @type {WeakMap<Entry[], WeakMap<PendingEntry[], { key: string, entries: Entry[] }>>}
  */
 const mergedEntriesCache = new WeakMap();
+
+/**
+ * Get a key telling the given pending entries apart from another set, or the same array after a
+ * change, by the identities of the entries.
+ * @param {PendingEntry[]} [pendingEntries] Pending entries.
+ * @returns {string} Key.
+ */
+const getPendingEntriesKey = (pendingEntries = []) =>
+  pendingEntries.map((pendingEntry) => getObjectId(pendingEntry)).join(',');
 
 /**
  * Add the entries pending on the draft being edited that belong to the given collection to the
@@ -92,10 +101,11 @@ const withPendingEntries = (entries, collectionName, pendingEntries = []) => {
   }
 
   const cached = pendingCache.get(pendingEntries);
+  // The pending entries are held in a reactive array that changes in place, so the entries’ own
+  // identities tell a change apart: an entry opened again and changed is replaced with a new object
+  const key = getPendingEntriesKey(pendingEntries);
 
-  // The pending entries are held in a reactive array that grows in place, so the count tells a
-  // change apart, as they are only ever added while the draft is edited
-  if (cached?.count === pendingEntries.length) {
+  if (cached?.key === key) {
     return cached.entries;
   }
 
@@ -103,9 +113,23 @@ const withPendingEntries = (entries, collectionName, pendingEntries = []) => {
     .filter((pendingEntry) => pendingEntry.collectionName === collectionName)
     .map(({ entry }) => entry);
 
-  const merged = pending.length ? [...entries, ...pending] : entries;
+  // An existing entry edited from a Relation field takes the place of its saved version
+  const pendingMap = new Map(pending.map((entry) => [entry.id, entry]));
 
-  pendingCache.set(pendingEntries, { count: pendingEntries.length, entries: merged });
+  const merged = pending.length
+    ? [
+        ...entries.map((entry) => {
+          const edited = pendingMap.get(entry.id);
+
+          pendingMap.delete(entry.id);
+
+          return edited ?? entry;
+        }),
+        ...pendingMap.values(),
+      ]
+    : entries;
+
+  pendingCache.set(pendingEntries, { key, entries: merged });
 
   return merged;
 };
@@ -241,9 +265,9 @@ export const getOptions = ({
   // can move from one filter to another, and by type, as a number doesn’t match its string.
   const resolvedKey = JSON.stringify(resolvedFilters.map(({ values }) => values));
   const ids = `${getObjectId(fieldConfig)}|${getObjectId(refEntries)}`;
-  // The pending entries are held in a reactive array that grows in place, so its identity doesn’t
-  // tell them apart; the count does, as they are only ever added while the draft is edited
-  const cacheKey = `${locale}|${ids}|${pendingEntries?.length ?? 0}|${resolvedKey}`;
+  // The pending entries are held in a reactive array that changes in place, so its identity doesn’t
+  // tell them apart; theirs do, as an entry opened again and changed is replaced with a new object
+  const cacheKey = `${locale}|${ids}|${getPendingEntriesKey(pendingEntries)}|${resolvedKey}`;
 
   // The options are requested again while being built: no option is available at this level, so
   // a reference is shown with its stored value

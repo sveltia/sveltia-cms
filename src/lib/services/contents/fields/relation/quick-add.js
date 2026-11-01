@@ -1,24 +1,35 @@
 import { unique } from '@sveltia/utils/array';
+import { escapeRegExp } from '@sveltia/utils/string';
 
 import { isReadonly } from '$lib/services/config/readonly';
+import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { countQuotaEntries } from '$lib/services/contents/collection/entries/count';
-import { getReferencedPendingEntries } from '$lib/services/contents/draft/pending-entries';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+import { getDraftValues, isDraftModified } from '$lib/services/contents/draft';
+import { getReferencedPendingEntrySet } from '$lib/services/contents/draft/pending-entries';
 import {
   createSavingEntryData,
   removeDisabledLocales,
 } from '$lib/services/contents/draft/save/changes';
+import { compareWithStore } from '$lib/services/contents/draft/save/conflict';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
+import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
+import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
 import { renameIfNeeded } from '$lib/services/utils/file';
+import { getSnapshot } from '$lib/services/utils/state.svelte';
 import {
   getCompanionEntries,
+  getUnpublishedEntry,
   getUnpublishedEntryByBranch,
   getUnpublishedEntryByDraft,
+  isPendingDeletion,
   isWorkflowDraft,
   isWorkflowEnabled,
 } from '$lib/services/workflow';
@@ -47,6 +58,16 @@ const getPendingEntriesByCollection = (draft, collectionName) =>
   draft.pendingEntries.filter((pendingEntry) => pendingEntry.collectionName === collectionName);
 
 /**
+ * Get the pending entries of the given draft that are new to the given collection, leaving out the
+ * existing entries edited from a Relation field, which already take up a slot, a slug and a number.
+ * @param {EntryDraft} draft Draft being edited.
+ * @param {string} collectionName Collection name.
+ * @returns {PendingEntry[]} Pending entries.
+ */
+const getNewPendingEntriesByCollection = (draft, collectionName) =>
+  getPendingEntriesByCollection(draft, collectionName).filter(({ baseEntry }) => !baseEntry);
+
+/**
  * Get the entry the pending entries of the given draft are saved along with: the entry being
  * edited, or, in a quick-add dialog, the one the dialog was opened from, however deeply nested.
  * @param {EntryDraft} draft Draft.
@@ -57,7 +78,21 @@ export const getQuickAddHost = (draft) =>
     collectionName: draft.collectionName,
     workflow: isWorkflowDraft(draft),
     branch: getUnpublishedEntryByDraft(draft)?.workflow.pullRequest.branch,
+    entryIds: [draft.id],
   };
+
+/**
+ * Get the host to give the draft of a quick-add dialog opened from the given draft: the same host,
+ * along with the given draft’s own entry, so none of the entries being edited in the dialogs opened
+ * so far can be edited again from a nested dialog, where its changes would be overwritten.
+ * @param {EntryDraft} parentDraft Draft the dialog is opened from.
+ * @returns {QuickAddHost} Host entry.
+ */
+export const getNestedQuickAddHost = (parentDraft) => {
+  const host = getQuickAddHost(parentDraft);
+
+  return { ...host, entryIds: unique([...host.entryIds, parentDraft.id]) };
+};
 
 /**
  * Get the entries in the given collection that an earlier save of the host entry has committed to
@@ -133,7 +168,7 @@ export const hasCreationRoom = ({ collection, draft }) => {
   // becomes once the draft is saved, while the editor may stay open on the draft
   const companionIds = new Set(getCompanionEntries(name).map(({ id }) => id));
 
-  const pendingCount = getPendingEntriesByCollection(draft, name).filter(
+  const pendingCount = getNewPendingEntriesByCollection(draft, name).filter(
     ({ entry }) => !companionIds.has(entry.id),
   ).length;
 
@@ -182,14 +217,26 @@ export const getPendingRefEntries = ({
 /**
  * Get the entries the given Relation field refers to, followed by the pending entries of the draft
  * it can refer to: the entries created from the field, or another one referring to the same
- * collection, are offered and shown along with the saved ones until they’re saved too.
+ * collection, are offered and shown along with the saved ones until they’re saved too. An entry
+ * edited from such a field is offered as edited, in its own place.
  * @param {object} args Arguments.
  * @param {EntryDraft | null | undefined} args.draft Draft being edited.
  * @param {RelationField} args.fieldConfig Field configuration.
  * @returns {Entry[]} Entries.
  */
 export const getRefEntriesWithPending = ({ draft, fieldConfig }) => {
-  const refEntries = getRefEntries(fieldConfig);
+  const savedEntries = getRefEntries(fieldConfig);
+
+  const editedEntries = new Map(
+    (draft ? getPendingEntriesByCollection(draft, fieldConfig.collection) : [])
+      .filter(({ baseEntry }) => !!baseEntry)
+      .map(({ entry }) => [entry.id, entry]),
+  );
+
+  const refEntries = editedEntries.size
+    ? savedEntries.map((entry) => editedEntries.get(entry.id) ?? entry)
+    : savedEntries;
+
   const pendingEntries = getPendingRefEntries({ draft, fieldConfig, refEntries });
 
   return pendingEntries.length ? [...refEntries, ...pendingEntries] : refEntries;
@@ -203,17 +250,20 @@ export const getRefEntriesWithPending = ({ draft, fieldConfig }) => {
  * derive from it.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Draft of the entry to be added.
- * @param {EntryDraft} args.parentDraft Draft being edited, holding the pending entries.
+ * @param {PendingEntry[]} args.pendingEntries Entries pending on the draft being edited, apart
+ * from an earlier version of the entry to be added, if it’s added again after a change.
  * @returns {EntrySlugVariants} Slugs.
  */
-export const getPendingEntrySlugs = ({ draft, parentDraft }) => {
+export const getPendingEntrySlugs = ({ draft, pendingEntries }) => {
   // A numbered slug comes after the ones the entries pending on the parent draft have taken
-  const slugs = getSlugs({ draft, pendingEntries: parentDraft.pendingEntries });
+  const slugs = getSlugs({ draft, pendingEntries });
   const { defaultLocaleSlug, localizedSlugs } = slugs;
 
   // The entries riding along in a pull request, this one’s or another’s, aren’t there either
   const pendingSlugs = [
-    ...getPendingEntriesByCollection(parentDraft, draft.collectionName).map(({ entry }) => entry),
+    ...pendingEntries
+      .filter((pendingEntry) => pendingEntry.collectionName === draft.collectionName)
+      .map(({ entry }) => entry),
     ...getCompanionEntries(draft.collectionName),
   ].map(({ slug }) => slug);
 
@@ -247,10 +297,11 @@ export const getPendingEntrySlugs = ({ draft, parentDraft }) => {
 };
 
 /**
- * Turn the draft of a new entry into a pending entry of the draft being edited: the entry is
- * prepared for saving the same way any entry is, and the file changes are held on the parent draft
- * until that one is saved. The draft of the new entry has to be valid; the caller checks that, as
- * it also reports the errors.
+ * Turn the draft of an entry into a pending entry of the draft being edited: the entry is prepared
+ * for saving the same way any entry is, and the file changes are held on the parent draft until
+ * that one is saved. The draft can be a new entry, an entry already pending on the parent draft
+ * that is opened again, or an existing entry being edited. The draft has to be valid; the caller
+ * checks that, as it also reports the errors.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Draft of the entry to be added.
  * @param {EntryDraft} args.parentDraft Draft being edited.
@@ -259,48 +310,176 @@ export const getPendingEntrySlugs = ({ draft, parentDraft }) => {
  * @returns {Promise<PendingEntry>} Pending entry.
  */
 export const createPendingEntry = async ({ draft, parentDraft, fieldConfig }) => {
-  const { collectionName } = draft;
-  // Each entry added takes the next order and number, the same way an entry saved on its own would
-  const pendingEntryCount = getPendingEntriesByCollection(parentDraft, collectionName).length;
+  const { id, isNew, collectionName, originalEntry } = draft;
+  // The values the draft holds before they’re prepared for saving, blob URLs included, so the entry
+  // can be opened again. Taken before the save-time values below are assigned, which the entry
+  // gets anew when it’s added again
+  const source = getDraftValues(draft);
+  // An entry added again after a change takes the place of its earlier version
+  const otherPendingEntries = parentDraft.pendingEntries.filter(({ entry }) => entry.id !== id);
+  const newPendingEntries = getNewPendingEntriesByCollection(parentDraft, collectionName);
+  const index = newPendingEntries.findIndex(({ entry }) => entry.id === id);
+  // Each new entry takes the next order and number, the same way an entry saved on its own would.
+  // One added again keeps its place among the others
+  const offset = index > -1 ? index : newPendingEntries.length;
 
-  assignManualSortOrder(draft, pendingEntryCount);
-  assignAutoIncrementValues(draft, pendingEntryCount);
+  if (isNew) {
+    assignManualSortOrder(draft, offset);
+  }
 
-  const slugs = getPendingEntrySlugs({ draft, parentDraft });
+  assignAutoIncrementValues(draft, offset);
+  // The dates are set when the entry is added rather than when it’s saved along with the parent,
+  // which is when the changes were made
+  assignAutoNowValues(draft);
+
+  // An existing entry keeps its slug; the slug editor isn’t offered for it in the dialog
+  const slugs = isNew
+    ? getPendingEntrySlugs({ draft, pendingEntries: otherPendingEntries })
+    : getSlugs({ draft });
+
   // The `preSave` event hooks are called when the entry is actually saved, along with the parent
   const prepared = await createSavingEntryData({ draft, slugs, runPreSave: false });
   const { changes, savingAssets } = prepared;
   // The locales turned off have no file to save, so they’re left out of the entry the stores get
   const savingEntry = removeDisabledLocales(prepared.savingEntry);
+
   // The value can be localized, e.g. `{{locale}}/{{slug}}`, so collect it for every locale the
   // parent entry has
-  const { pendingEntries } = parentDraft;
-
   const values = unique(
     Object.keys(parentDraft.currentValues).flatMap((locale) =>
-      getEntryOptions({ locale, fieldConfig, refEntry: savingEntry, pendingEntries }).map(
-        ({ value }) => value,
-      ),
+      getEntryOptions({
+        locale,
+        fieldConfig,
+        refEntry: savingEntry,
+        pendingEntries: otherPendingEntries,
+      }).map(({ value }) => value),
     ),
   );
 
-  return { collectionName, entry: savingEntry, changes, savingAssets, values };
+  return {
+    collectionName,
+    entry: savingEntry,
+    changes,
+    savingAssets,
+    values,
+    ...(isNew || !originalEntry ? {} : { baseEntry: getSnapshot(originalEntry) }),
+    source,
+  };
+};
+
+/**
+ * Work out what the quick-add dialog opens to edit the given entry: the pending entry it stands
+ * for, if it has been added or edited from the parent draft already, and the version of an existing
+ * entry the dialog’s draft is built from. That’s the latest version of the entry, so a change made
+ * by someone else since the entry was edited is picked up, and reported, rather than undone without
+ * notice. An entry deleted since is edited from the version it was edited from.
+ * @param {object} args Arguments.
+ * @param {PendingEntry[]} args.pendingEntries Entries pending on the parent draft.
+ * @param {Entry} [args.entry] Entry to edit, as the field offers it. `undefined` for a new entry.
+ * @returns {{ pendingEntry?: PendingEntry, baseEntry?: Entry, changedSince: boolean }} Pending
+ * entry, base entry, and whether the entry has been changed by someone else since it was edited.
+ */
+export const getEditTarget = ({ pendingEntries, entry }) => {
+  if (!entry) {
+    return { changedSince: false };
+  }
+
+  const pendingEntry = pendingEntries.find(({ entry: { id } }) => id === entry.id);
+
+  if (!pendingEntry) {
+    return { baseEntry: entry, changedSince: false };
+  }
+
+  const { baseEntry } = pendingEntry;
+
+  if (!baseEntry) {
+    return { pendingEntry, changedSince: false };
+  }
+
+  const latestEntry = allEntries.current.find(({ id }) => id === baseEntry.id);
+
+  return {
+    pendingEntry,
+    baseEntry: latestEntry ?? baseEntry,
+    changedSince: !!latestEntry && !!compareWithStore(baseEntry),
+  };
+};
+
+/**
+ * Check whether saving the given pending entry would move one of its files, e.g. when the path
+ * template of the collection uses a field that has been changed. Moving an entry takes the entries
+ * nested under it and the assets stored next to it along, and rewrites the entries referencing it,
+ * which a save of the entry on its own does, but not one along with another entry.
+ * @param {PendingEntry} pendingEntry Pending entry.
+ * @returns {boolean} Result.
+ */
+export const isPendingEntryMoved = ({ baseEntry, changes }) =>
+  !!baseEntry && changes.some(({ action }) => action === 'move');
+
+/**
+ * Take back the values assigned to the given draft when it was turned into the given pending entry,
+ * e.g. the `auto_now` dates, if the entry isn’t added after all. They would otherwise count as a
+ * change to the draft, so an entry put back as it was would be saved for nothing. A value is only
+ * taken back while it’s still the one the entry was prepared with, so anything typed in the
+ * meantime is kept.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Draft of the entry that wasn’t added.
+ * @param {PendingEntry} args.pendingEntry Pending entry made from the draft.
+ */
+export const revertSaveTimeValues = ({ draft, pendingEntry: { entry, source } }) => {
+  Object.entries(source?.currentValues ?? {}).forEach(([locale, valueMap]) => {
+    const preparedValues = entry.locales[locale]?.content ?? {};
+    const currentValueMap = draft.currentValues[locale];
+
+    // The values are only ever assigned to the fields the draft already has
+    Object.entries(valueMap).forEach(([keyPath, value]) => {
+      if (
+        currentValueMap[keyPath] !== value &&
+        currentValueMap[keyPath] === preparedValues[keyPath]
+      ) {
+        currentValueMap[keyPath] = value;
+      }
+    });
+  });
+};
+
+/**
+ * Add the given pending entries to the draft being edited. An entry already pending there, which
+ * has been opened again and changed, takes the place of its earlier version.
+ * @param {EntryDraft} draft Draft being edited.
+ * @param {PendingEntry[]} pendingEntries Pending entries to add.
+ */
+export const addPendingEntries = (draft, pendingEntries) => {
+  pendingEntries.forEach((pendingEntry) => {
+    const index = draft.pendingEntries.findIndex(({ entry }) => entry.id === pendingEntry.entry.id);
+
+    if (index > -1) {
+      draft.pendingEntries[index] = pendingEntry;
+    } else {
+      draft.pendingEntries.push(pendingEntry);
+    }
+  });
 };
 
 /**
  * Get the pending entries to carry over to the draft being edited from the draft of an entry that
- * is being added to it: the entries created from the Relation fields of that entry with a nested
- * quick-add dialog, as long as the entry still refers to them. The ones the draft inherited from
- * the parent when it was started are already there.
+ * is being added to it: the entries created or edited from the Relation fields of that entry with a
+ * nested quick-add dialog, as long as the entry still refers to them. The ones the draft inherited
+ * from the parent when it was started are already there, unless they’ve been changed since.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Draft of the entry being added.
  * @param {EntryDraft} args.parentDraft Draft being edited.
  * @returns {PendingEntry[]} Pending entries.
  */
 export const getNestedPendingEntries = ({ draft, parentDraft }) => {
-  const parentIds = new Set(parentDraft.pendingEntries.map(({ entry }) => entry.id));
+  const referenced = getReferencedPendingEntrySet(draft);
 
-  return getReferencedPendingEntries(draft).filter(({ entry }) => !parentIds.has(entry.id));
+  return draft.pendingEntries
+    .filter(
+      (pendingEntry) =>
+        referenced.has(pendingEntry) && !parentDraft.pendingEntries.includes(pendingEntry),
+    )
+    .map((pendingEntry) => getSnapshot(pendingEntry));
 };
 
 /**
@@ -362,5 +541,205 @@ export const selectPendingEntry = ({
     valueStoreKey,
     keyPath,
     manipulate,
+  });
+};
+
+/**
+ * Check whether the given draft of an existing entry, opened in the quick-add dialog, has been left
+ * as it was, in which case there’s nothing to save along with the parent: adding it anyway would
+ * rewrite the entry’s files for nothing. An entry edited before is still added again, as the user
+ * may have undone the earlier changes, which then have to replace them. The entries the draft
+ * inherited from the parent don’t count as a change, while those added from its own Relation
+ * fields do.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Draft of the entry opened in the dialog.
+ * @param {EntryDraft} args.parentDraft Draft being edited.
+ * @returns {boolean} Result.
+ */
+export const isEditUnchanged = ({ draft, parentDraft }) =>
+  !draft.isNew &&
+  !parentDraft.pendingEntries.some(({ entry }) => entry.id === draft.id) &&
+  !isDraftModified({ ...draft, pendingEntries: [] }) &&
+  !getNestedPendingEntries({ draft, parentDraft }).length;
+
+/**
+ * Replace the values the given Relation field holds for an entry that has been changed with the
+ * quick-add dialog, in every locale, if the change has changed the values the entry goes by, e.g.
+ * the title of an entry referenced by its title, or the slug of a new entry that follows its title.
+ * The field would otherwise be left pointing at an entry that no longer goes by the value.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Draft being edited.
+ * @param {FieldKeyPath} args.keyPath Key path of the Relation field.
+ * @param {DraftValueStoreKey} args.valueStoreKey Key to store the values in {@link EntryDraft}.
+ * @param {RelationField} args.fieldConfig Field configuration.
+ * @param {Entry} args.previousEntry Entry as it was before the change.
+ * @param {Entry} args.entry Entry as it is now.
+ */
+export const replaceEntryValues = ({
+  draft,
+  keyPath,
+  valueStoreKey,
+  fieldConfig,
+  previousEntry,
+  entry,
+}) => {
+  const { pendingEntries } = draft;
+  const keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
+
+  Object.entries(draft[valueStoreKey]).forEach(([locale, valueMap]) => {
+    /**
+     * Get the values the given entry goes by in the locale.
+     * @param {Entry} refEntry Entry.
+     * @returns {any[]} Values.
+     */
+    const getValues = (refEntry) =>
+      getEntryOptions({ locale, fieldConfig, refEntry, pendingEntries }).map(({ value }) => value);
+
+    const oldValues = getValues(previousEntry);
+    const newValues = getValues(entry);
+
+    // The values can only be paired if there are as many of them, which is the case unless a list
+    // field used in the templates has gained or lost an item
+    if (oldValues.length !== newValues.length) {
+      return;
+    }
+
+    const replacements = new Map(
+      oldValues
+        .map((value, index) => /** @type {[any, any]} */ ([value, newValues[index]]))
+        .filter(([oldValue, newValue]) => oldValue !== newValue),
+    );
+
+    if (!replacements.size) {
+      return;
+    }
+
+    const keyPaths = fieldConfig.multiple
+      ? Object.keys(valueMap).filter((key) => keyPathRegex.test(key))
+      : [keyPath];
+
+    keyPaths.forEach((key) => {
+      if (replacements.has(valueMap[key])) {
+        valueMap[key] = replacements.get(valueMap[key]);
+      }
+    });
+  });
+};
+
+/**
+ * Check whether the given entry, referenced by a Relation field, can be edited with the quick-add
+ * dialog, and saved along with the entry being edited. An entry created from a Relation field can
+ * be changed until it’s saved. An existing entry can be edited if it’s in an entry collection where
+ * it can be saved on its own, provided it’s not the entry being edited itself. The entry is saved
+ * on the configured branch, so nothing is offered while Editorial Workflow is involved, either for
+ * the entry being edited or for the referenced one, which would then skip the review; nor for an
+ * entry that has a pull request of its own. An entry stored in a file with the other entries of the
+ * collection isn’t offered either, as two entries edited in the same file couldn’t be saved at
+ * once, nor the collection’s index file, which has fields of its own.
+ * @param {object} args Arguments.
+ * @param {RelationField} args.fieldConfig Field configuration.
+ * @param {EntryDraft} args.draft Draft being edited.
+ * @param {Entry} args.entry Referenced entry.
+ * @returns {boolean} Result.
+ */
+export const canEditEntry = ({
+  fieldConfig: { collection: collectionName, file },
+  draft,
+  entry,
+}) => {
+  const pendingEntry = getPendingEntriesByCollection(draft, collectionName).find(
+    (_pendingEntry) => _pendingEntry.entry.id === entry.id,
+  );
+
+  // The dialog can only be opened again with the values of the draft, which an entry added before
+  // they were kept doesn’t have
+  if (pendingEntry && !pendingEntry.source) {
+    return false;
+  }
+
+  if (pendingEntry && !pendingEntry.baseEntry) {
+    return true;
+  }
+
+  const collection = getCollection(collectionName);
+
+  if (
+    file ||
+    collection?._type !== 'entry' ||
+    isArrayFileCollection(collection) ||
+    isCollectionIndexFile(collection, entry) ||
+    isReadonly({ collection }) ||
+    isEntryReadonly(entry) ||
+    isPendingDeletion(entry)
+  ) {
+    return false;
+  }
+
+  const host = getQuickAddHost(draft);
+
+  if (
+    host.workflow ||
+    isWorkflowEnabled(collection) ||
+    !!getUnpublishedEntry({ collectionName, subPath: entry.subPath })
+  ) {
+    return false;
+  }
+
+  return entry.id !== draft.id && !host.entryIds.includes(entry.id);
+};
+
+/**
+ * Get the entries selected in the given Relation field that can be edited with the quick-add
+ * dialog. A value matching more than one entry, e.g. a title two entries share, can’t tell which
+ * entry it refers to, so it’s left out.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Draft being edited.
+ * @param {InternalLocaleCode} args.locale Locale being edited.
+ * @param {RelationField} args.fieldConfig Field configuration.
+ * @param {Entry[]} args.refEntries Entries the field can refer to, pending ones included. See
+ * {@link getRefEntriesWithPending}.
+ * @param {any} args.currentValue Field value: a single value, or a list of values if the field
+ * allows multiple values.
+ * @returns {{ value: any, label: string, entry: Entry }[]} Selected entries with the value and the
+ * label they’re selected by.
+ */
+export const getEditableEntries = ({ draft, locale, fieldConfig, refEntries, currentValue }) => {
+  const values = (Array.isArray(currentValue) ? currentValue : [currentValue]).filter(
+    (value) => value !== undefined && value !== null && value !== '',
+  );
+
+  if (!values.length) {
+    return [];
+  }
+
+  const { pendingEntries } = draft;
+  const valueSet = new Set(values);
+
+  // Only the options going by a selected value are kept
+  const options = refEntries.flatMap((entry) =>
+    getEntryOptions({ locale, fieldConfig, refEntry: entry, pendingEntries })
+      .filter(({ value }) => valueSet.has(value))
+      .map(({ label, value }) => ({ value, label, entry })),
+  );
+
+  // Two values can go by the same entry, e.g. two items of a list field used as the value, which is
+  // then offered once
+  const seenIds = new Set();
+
+  return values.flatMap((value) => {
+    const matches = options.filter((option) => option.value === value);
+
+    if (
+      matches.length === 0 ||
+      matches.some(({ entry }) => entry.id !== matches[0].entry.id) ||
+      seenIds.has(matches[0].entry.id) ||
+      !canEditEntry({ fieldConfig, draft, entry: matches[0].entry })
+    ) {
+      return [];
+    }
+
+    seenIds.add(matches[0].entry.id);
+
+    return [matches[0]];
   });
 };

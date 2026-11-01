@@ -1,6 +1,9 @@
+import { _ } from '@sveltia/i18n';
+
 import { callEventHooks } from '$lib/services/api/events';
 import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
+import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { saveChanges } from '$lib/services/backends/save';
 import { getReadonlyMessage, isDraftReadonly } from '$lib/services/config/readonly';
 import { getCollection } from '$lib/services/contents/collection';
@@ -10,20 +13,24 @@ import {
 } from '$lib/services/contents/collection/data';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
 import { cancelBackup, deleteBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
-import { getReferencedPendingEntries } from '$lib/services/contents/draft/pending-entries';
+import {
+  getReferencedPendingEntries,
+  getReferencedPendingEntrySet,
+} from '$lib/services/contents/draft/pending-entries';
 import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
 import {
   createSavingEntryData,
   preparePendingEntryCommit,
   removeDisabledLocales,
 } from '$lib/services/contents/draft/save/changes';
-import { detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
+import { compareWithStore, detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
 import { validateAndRevealErrors } from '$lib/services/contents/draft/validate/reveal';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade/update';
+import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { setLastCommitPublishHint } from '$lib/services/deployments';
@@ -147,6 +154,59 @@ const buildChanges = async ({ draft, slugs, recreate }) => {
 };
 
 /**
+ * Make sure no one else has changed the existing entries edited from a Relation field since the
+ * edits were made, which saving them would undo. Unlike the entry being edited, such an entry can’t
+ * be saved over the change: its edits are only reviewed in the quick-add dialog, which picks up the
+ * latest version of the entry when it’s opened again.
+ * @param {EntryDraft} draft Draft to save.
+ * @param {object} options Options.
+ * @param {boolean} options.remoteChecked Whether the repository has just been checked for changes,
+ * which then isn’t done again.
+ * @throws {Error} A `saving_failed` error naming the entry that has been changed or deleted.
+ */
+const checkPendingEntryConflicts = async (draft, { remoteChecked }) => {
+  // The entries are only read, so they’re not copied
+  const editedEntries = [...getReferencedPendingEntrySet(draft)].filter(
+    ({ baseEntry }) => !!baseEntry,
+  );
+
+  if (!editedEntries.length) {
+    return;
+  }
+
+  if (!remoteChecked) {
+    try {
+      await checkForRemoteChanges();
+    } catch (ex) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to check the repository for changes.', ex);
+    }
+  }
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const { collectionName, entry, baseEntry } of editedEntries) {
+    const conflict = compareWithStore(/** @type {Entry} */ (baseEntry));
+
+    if (conflict) {
+      const collection = /** @type {InternalCollection} */ (getCollection(collectionName));
+      const name = getEntrySummary(collection, entry);
+
+      // A deleted entry can’t be edited again, so it has to be deselected instead
+      throw new Error('saving_failed', {
+        cause: new Error(
+          _(
+            conflict.type === 'deleted'
+              ? 'relation_field.edit_deleted'
+              : 'relation_field.edit_conflict',
+            { values: { name } },
+          ),
+        ),
+      });
+    }
+  }
+};
+
+/**
  * Make sure the entry draft can be saved: it’s editable, its values are valid, and no one else has
  * changed the entry since the draft was opened, unless the user has said to save over it.
  * @param {object} args Arguments.
@@ -191,6 +251,11 @@ const checkSavable = async ({ draft, useWorkflow, overwrite, publish }) => {
     throw new Error('save_conflict', { cause: conflict });
   }
 
+  // `detectEntryConflict()` checks the repository for an existing entry saved on the branch
+  await checkPendingEntryConflicts(draft, {
+    remoteChecked: !useWorkflow && !draft.isNew && !!draft.originalEntry,
+  });
+
   return conflict;
 };
 
@@ -205,7 +270,7 @@ const assignSaveTimeValues = (draft) => {
   // The entries added to the same collection from a Relation field have already taken the orders
   // and numbers after the highest ones, so the new entry comes after them
   const pendingEntryCount = draft.pendingEntries.filter(
-    (pendingEntry) => pendingEntry.collectionName === collectionName,
+    (pendingEntry) => pendingEntry.collectionName === collectionName && !pendingEntry.baseEntry,
   ).length;
 
   if (isNew && collection._type === 'entry') {
@@ -348,21 +413,23 @@ const finishSave = async ({ draft, savingEntry, pendingEntries, useWorkflow, ski
   });
 
   await Promise.all(
-    pendingEntries.map(({ collectionName: pendingCollectionName, entry }) =>
+    pendingEntries.map(({ collectionName: pendingCollectionName, entry, baseEntry }) =>
       callEventHooks({
         type: 'postSave',
         entry,
         collection: /** @type {InternalCollection} */ (getCollection(pendingCollectionName)),
-        isNew: true,
+        isNew: !baseEntry,
       }),
     ),
   );
 
   updateStores({ useWorkflow, skipCI, count });
 
-  if (originalEntry) {
-    clearEntryHistoryCache(originalEntry.id);
-  }
+  [originalEntry, ...pendingEntries.map(({ baseEntry }) => baseEntry)].forEach((entry) => {
+    if (entry) {
+      clearEntryHistoryCache(entry.id);
+    }
+  });
 };
 
 /**

@@ -6,24 +6,26 @@
 -->
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { Button, Icon } from '@sveltia/ui';
+  import { Button, Icon, Menu, MenuButton, MenuItem } from '@sveltia/ui';
 
   import QuickAddDialog from '$lib/components/contents/details/fields/relation/quick-add-dialog.svelte';
   import SelectEditor from '$lib/components/contents/details/fields/select/select-editor.svelte';
-  import { getCollectionLabel } from '$lib/services/contents/collection';
+  import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import { getOptions } from '$lib/services/contents/fields/relation/helpers';
   import {
     getCreatableCollection,
+    getEditableEntries,
     getRefEntriesWithPending,
     hasCreationRoom,
+    replaceEntryValues,
     selectPendingEntry,
   } from '$lib/services/contents/fields/relation/quick-add';
   import { getDraftSharedValues } from '$lib/services/contents/i18n/shared-values';
 
   /**
-   * @import { FieldEditorProps } from '$lib/types/private';
+   * @import { Entry, FieldEditorProps, InternalEntryCollection } from '$lib/types/private';
    * @import { RelationField, SelectField } from '$lib/types/public';
    */
 
@@ -54,6 +56,16 @@
   } = $props();
 
   let showQuickAddDialog = $state(false);
+  /**
+   * Entry to edit with the dialog, or `undefined` to create a new one.
+   * @type {Entry | undefined}
+   */
+  let editingEntry = $state.raw();
+  /**
+   * Whether the dialog has been opened, which keeps it mounted while it closes, even if the field
+   * no longer offers to create or edit an entry by then.
+   */
+  let dialogOpened = $state(false);
 
   // The entries created from this field, or another one referring to the same collection, are
   // offered along with the saved ones until they’re saved too
@@ -92,14 +104,44 @@
       !!entryDraft.current &&
       hasCreationRoom({ collection: creatableCollection, draft: entryDraft.current }),
   );
-  /* v8 ignore start -- only read while the button is rendered, which needs the collection */
+  // The selected entries that can be edited with the dialog
+  const editableEntries = $derived(
+    readonly || !entryDraft.current
+      ? []
+      : getEditableEntries({
+          draft: entryDraft.current,
+          locale,
+          fieldConfig,
+          refEntries,
+          currentValue,
+        }),
+  );
+  // The collection the dialog creates or edits an entry in. An entry can only be edited in an
+  // entry collection, see `canEditEntry()`
+  const refCollection = $derived(
+    /** @type {InternalEntryCollection} */ (getCollection(fieldConfig.collection)),
+  );
+  const dialogCollection = $derived(
+    creatableCollection ?? (editableEntries.length ? refCollection : undefined),
+  );
+  /* v8 ignore start -- only read while a button is rendered, which needs the collection */
   // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label
-  const creatableName = $derived(
-    creatableCollection && appLocale.current
-      ? getCollectionLabel(creatableCollection, { useSingular: true })
+  const collectionName = $derived(
+    dialogCollection && appLocale.current
+      ? getCollectionLabel(dialogCollection, { useSingular: true })
       : '',
   );
   /* v8 ignore stop */
+
+  /**
+   * Open the dialog to create a new entry, or edit the given one.
+   * @param {Entry} [entry] Entry to edit.
+   */
+  const openDialog = (entry) => {
+    dialogOpened = true;
+    editingEntry = entry;
+    showQuickAddDialog = true;
+  };
 </script>
 
 <div role="none" class="wrapper">
@@ -115,38 +157,84 @@
     {required}
     {invalid}
   />
-  {#if creatableCollection}
+  {#if dialogCollection}
     <div role="none" class="actions">
-      <Button
-        variant="tertiary"
-        size="small"
-        label={_('add_x', { values: { name: creatableName } })}
-        disabled={!canCreate}
-        aria-haspopup="dialog"
-        onclick={() => {
-          showQuickAddDialog = true;
-        }}
-      >
-        {#snippet startIcon()}
-          <Icon name="add" />
-        {/snippet}
-      </Button>
+      {#if creatableCollection}
+        <Button
+          variant="tertiary"
+          size="small"
+          label={_('add_x', { values: { name: collectionName } })}
+          disabled={!canCreate}
+          aria-haspopup="dialog"
+          onclick={() => {
+            openDialog();
+          }}
+        >
+          {#snippet startIcon()}
+            <Icon name="add" />
+          {/snippet}
+        </Button>
+      {/if}
+      {#if fieldConfig.multiple && editableEntries.length}
+        <MenuButton
+          variant="tertiary"
+          size="small"
+          label={_('edit_x', { values: { name: collectionName } })}
+        >
+          {#snippet startIcon()}
+            <Icon name="edit" />
+          {/snippet}
+          {#snippet endIcon()}{/snippet}
+          {#snippet popup()}
+            <Menu ariaLabel={_('relation_field.select_entry_to_edit')}>
+              {#each editableEntries as { label, entry } (entry.id)}
+                <MenuItem
+                  {label}
+                  aria-haspopup="dialog"
+                  onclick={() => {
+                    openDialog(entry);
+                  }}
+                />
+              {/each}
+            </Menu>
+          {/snippet}
+        </MenuButton>
+      {:else if editableEntries.length}
+        {@const [{ label, entry }] = editableEntries}
+        <Button
+          variant="tertiary"
+          size="small"
+          label={_('edit_x', { values: { name: label } })}
+          aria-haspopup="dialog"
+          onclick={() => {
+            openDialog(entry);
+          }}
+        >
+          {#snippet startIcon()}
+            <Icon name="edit" />
+          {/snippet}
+        </Button>
+      {/if}
     </div>
+  {/if}
+  {#if dialogCollection || dialogOpened}
     <QuickAddDialog
       bind:open={showQuickAddDialog}
-      collection={creatableCollection}
+      collection={refCollection}
       {fieldConfig}
-      onAdd={(pendingEntry) => {
+      entry={editingEntry}
+      onAdd={(pendingEntry, previousEntry) => {
         /* v8 ignore next -- the entry is only added while the draft is being edited */
-        if (entryDraft.current) {
-          selectPendingEntry({
-            draft: entryDraft.current,
-            locale,
-            keyPath,
-            valueStoreKey,
-            fieldConfig,
-            pendingEntry,
-          });
+        if (!entryDraft.current) {
+          return;
+        }
+
+        const args = { draft: entryDraft.current, keyPath, valueStoreKey, fieldConfig };
+
+        if (previousEntry) {
+          replaceEntryValues({ ...args, previousEntry, entry: pendingEntry.entry });
+        } else {
+          selectPendingEntry({ ...args, locale, pendingEntry });
         }
       }}
     />

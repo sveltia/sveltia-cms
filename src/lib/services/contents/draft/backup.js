@@ -1,5 +1,4 @@
 import { getBlobRegex } from '@sveltia/utils/file';
-import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
 
@@ -10,7 +9,11 @@ import { cmsConfigVersion } from '$lib/services/config';
 import { isDraftReadonly } from '$lib/services/config/readonly';
 import { getIndexFileName } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
-import { isDraftModified, suspendAutoDuplication } from '$lib/services/contents/draft';
+import {
+  getDraftValues,
+  isDraftModified,
+  suspendAutoDuplication,
+} from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { updateObject } from '$lib/services/contents/draft/update/list';
 import { hasChildKeys, indexContent } from '$lib/services/contents/entry/content-index';
@@ -19,13 +22,10 @@ import { createDeepState, createRootEffect, getSnapshot } from '$lib/services/ut
 
 /**
  * @import {
- * AssetFolderInfo,
  * Entry,
  * EntryDraft,
  * EntryDraftBackup,
- * LocaleContentMap,
- * LocaleSlugMap,
- * LocaleStateMap,
+ * EntryDraftValues,
  * } from '$lib/types/private';
  */
 
@@ -161,57 +161,17 @@ export const saveBackup = async (draft) => {
     return;
   }
 
-  const {
-    collectionName,
-    currentLocales = {},
-    currentPath,
-    currentSlugs = {},
-    currentValues = {},
-    files,
-    isNew,
-    originalEntry,
-    pendingEntries = [],
-  } = draft;
-
+  const { collectionName, isNew, originalEntry, pendingEntries = [] } = draft;
   const slug = getBackupSlug(draft);
 
   if (isDraftModified(draft)) {
-    // The draft is a `$state` proxy, which IndexedDB can’t clone, so every part of the backup has
-    // to be copied to a plain object. `File` objects are cloneable as they are
     /** @type {EntryDraftBackup} */
     const backup = {
       timestamp: new Date(),
       cmsConfigVersion: /** @type {string} */ (cmsConfigVersion.current),
       collectionName,
       slug,
-      currentLocales: /** @type {LocaleStateMap} */ (toRaw(currentLocales)),
-      currentSlugs: /** @type {LocaleSlugMap} */ (toRaw(currentSlugs)),
-      // The folder chosen with the path editor, which only a collection with `meta.path` has
-      ...(currentPath !== undefined ? { currentPath } : {}),
-      currentValues: /** @type {LocaleContentMap} */ (toRaw(currentValues)),
-      files: Object.fromEntries(
-        Object.entries(files).map(
-          ([blobURL, { file, folder, replace, subfolderPath, nameTemplate }]) => [
-            blobURL,
-            {
-              file,
-              folder: folder ? /** @type {AssetFolderInfo} */ (toRaw(folder)) : folder,
-              replace,
-              subfolderPath,
-              // The random values are kept in a `Map`, which a JSON round trip would lose
-              ...(nameTemplate
-                ? {
-                    nameTemplate: {
-                      ...nameTemplate,
-                      randomValues: new Map(nameTemplate.randomValues),
-                      dateTimeParts: { ...nameTemplate.dateTimeParts },
-                    },
-                  }
-                : {}),
-            },
-          ],
-        ),
-      ),
+      ...getDraftValues(draft),
       // The entries hold `File` objects among their changes, so a JSON round trip won’t do
       pendingEntries: getSnapshot(pendingEntries),
       // The version of an existing entry the edits were made to, so a restore can tell whether
@@ -233,7 +193,7 @@ export const saveBackup = async (draft) => {
  * Create a new blob URL for every file referenced in the given backup. The old URLs are dead once
  * the page has been reloaded. A file can be a copy of an asset in the repository, e.g. an SVG image
  * copied when the entry was duplicated, so the URLs are made for display.
- * @param {EntryDraftBackup} backup Backup to restore.
+ * @param {EntryDraftValues} backup Backup to restore.
  * @returns {Promise<Map<File, string>>} New blob URLs keyed by file. A file referenced more than
  * once gets one URL.
  */
@@ -295,9 +255,11 @@ const restoreBaseEntry = ({ baseEntry, draft }) => {
 };
 
 /**
- * Restore a draft backup to the given entry draft.
+ * Restore a draft backup to the given entry draft. It also restores the values of an entry draft
+ * kept elsewhere, e.g. those of an entry added with a quick-add dialog, which is opened again.
  * @param {object} args Arguments.
- * @param {EntryDraftBackup} args.backup Backup to restore.
+ * @param {EntryDraftValues & Pick<EntryDraftBackup, 'pendingEntries' | 'baseEntry'>} args.backup
+ * Backup to restore.
  * @param {EntryDraft} args.draft Entry draft to restore the backup to.
  */
 export const restoreBackup = async ({ backup, draft }) => {

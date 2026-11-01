@@ -1318,15 +1318,18 @@
  * the new entries into its pull request.
  * @property {string} [branch] Workflow branch of the entry’s pull request, if it already has one,
  * which may hold entries created from it earlier.
+ * @property {string[]} entryIds IDs of the entry and, in a nested quick-add dialog, the entries
+ * being edited in the dialogs it was opened from, none of which can be edited from a dialog.
  */
 
 /**
- * An entry created with the quick-add dialog of a Relation field while another entry is being
- * edited. It’s kept on that entry’s draft and saved in the same commit as the entry, rather than on
- * its own, so the two never go out of sync. Everything needed to commit it is prepared as soon as
- * it’s added, because the preparation replaces the blob URLs in the content with asset paths, which
- * can only be done once. The `preSave` event hooks are the exception: they’re only called when the
- * entry is committed, so they don’t run for an entry that is discarded along with the draft.
+ * An entry created or edited with the quick-add dialog of a Relation field while another entry is
+ * being edited. It’s kept on that entry’s draft and saved in the same commit as the entry, rather
+ * than on its own, so the two never go out of sync. Everything needed to commit it is prepared as
+ * soon as it’s added, because the preparation replaces the blob URLs in the content with asset
+ * paths, which can only be done once. The `preSave` event hooks are the exception: they’re only
+ * called when the entry is committed, so they don’t run for an entry that is discarded along with
+ * the draft.
  * @typedef {object} PendingEntry
  * @property {string} collectionName Name of the collection the entry belongs to.
  * @property {Entry} entry Entry as it will be saved.
@@ -1334,6 +1337,17 @@
  * @property {Asset[]} savingAssets Assets to be saved along with the entry.
  * @property {any[]} values Values the Relation field that created the entry stores for it, in any
  * of the parent entry’s locales. The entry is only saved while one of them is still there.
+ * @property {Entry} [baseEntry] Existing entry the changes were made to, as it was when the edit
+ * started, so the save can tell whether someone else has changed it since. Missing from a new
+ * entry.
+ * @property {EntryDraftValues} [source] Values of the dialog’s draft, blob URLs included, so the
+ * entry can be opened in the dialog again. Missing from an entry added before it was introduced.
+ */
+
+/**
+ * The values of an entry draft that a backup restores, see {@link EntryDraftBackup}.
+ * @typedef {Pick<EntryDraftBackup, 'currentLocales' | 'currentSlugs' | 'currentPath' |
+ * 'currentValues' | 'files'>} EntryDraftValues
  */
 
 /**
