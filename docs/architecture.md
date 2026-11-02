@@ -94,3 +94,81 @@ C4Component
 | Authentication and provider backends | `src/lib/services/user/`, `src/lib/services/backends/` |
 | Deployment integrations and shared helpers | `src/lib/services/deployments/`, `integrations/`, `common/`, `utils/` |
 | Localization and shared types | `src/lib/locales/`, `src/lib/types/` |
+
+## Important abstractions
+
+The code is organized around a few contracts that let the UI and domain logic avoid depending on a
+specific provider or file format.
+
+| Abstraction | Contract and purpose | Where to look |
+| --- | --- | --- |
+| Public compatibility and extension API | `CMS`, `init()`, and registration methods preserve the Netlify/Decap CMS integration surface and let sites add fields, previews, pages, formats, and transformations. | `src/lib/main.js`, `src/lib/services/api/index.js`, `src/lib/services/api/registries.js` |
+| Backend service | The internal `BackendService` contract standardizes sign-in, file loading, commits, and optional Git/workflow operations. `selectBackend()` chooses and initializes the implementation from site configuration. | `src/lib/types/private.js`, `src/lib/services/backends/index.js` |
+| Shared Git backend services | Provider modules supply their URLs, auth details, and provider-specific API operations; shared Git services handle common API, auth, repository, and workflow behavior. | `src/lib/services/backends/git/{github,gitlab,gitea,shared}/` |
+| Browser-local repository | The local backend implements the same file and save workflow using browser file-system handles, optionally wrapping a configured Git provider for remote operations. | `src/lib/services/backends/fs/local.js`, `src/lib/services/backends/fs/shared/`, `src/lib/services/backends/fs/git/` |
+| Content file formats | Parsers and formatters convert repository files to/from entry data. Built-in and registered custom formats are selected through configuration and the format registry. | `src/lib/services/contents/file/`, `src/lib/services/api/registries.js` |
+| External services | Deployment, media library, and other integrations are expressed through service-specific configuration and capabilities rather than being part of the editor UI itself. | `src/lib/services/deployments/`, `src/lib/services/integrations/`, `src/lib/types/private.js` |
+
+These are architectural seams, not a promise that every provider or integration supports every
+optional capability. Check the relevant service contract and current implementations before adding
+or assuming support.
+
+## Typical data flow
+
+```mermaid
+sequenceDiagram
+  actor Editor
+  participant UI as Svelte UI
+  participant Config as Configuration services
+  participant Domain as Content and workflow services
+  participant Backend as Selected backend service
+  participant Provider as Git provider API
+
+  Editor->>UI: Open CMS
+  UI->>Config: Load and validate site configuration
+  Config->>Backend: Select configured backend
+  Editor->>UI: Edit and save an entry
+  UI->>Domain: Update draft and request save
+  Domain->>Backend: Commit file changes
+  Backend->>Provider: Write changes (Git backend)
+  Provider-->>Backend: Commit result
+  Backend-->>Domain: Save result
+  Domain-->>UI: Update entry and workflow state
+  UI-->>Editor: Show saved status
+```
+
+In the local backend, the save targets browser-accessible files instead; a Git commit is optional
+and uses the configured remote Git service when one is available.
+
+## Language, types, and build
+
+Application source is JavaScript (`.js`) and Svelte (`.svelte`), not TypeScript source. Types are
+written as TypeScript-flavoured JSDoc, with public CMS/configuration types in
+`src/lib/types/public.js` and internal contracts in `src/lib/types/private.js`. `jsconfig.json`
+enables strict `checkJs` checking and maps `$lib` to `src/lib`; `pnpm check:svelte` runs
+`svelte-check` over the Svelte and JavaScript sources. During the production build, TypeScript's
+compiler emits declaration files from the documented JavaScript API, and the build generates the
+published CMS configuration JSON schema from the public types.
+
+Vite builds the browser entry at `src/lib/main.js` into `package/dist/sveltia-cms.js` (IIFE) and
+`package/dist/sveltia-cms.mjs` (ES module). The Git, QR code, and React DOM modules are separate
+on-demand chunks under `package/dist/chunks/`. The build also assembles the npm package and its
+types, schema, and locale assets. `package/` is generated output; make source changes under `src/`
+or build scripts/configuration rather than editing built files.
+
+## Developing and validating changes
+
+Use the Node version in `.nvmrc` and pnpm. After installing dependencies with `pnpm install`, run
+`pnpm dev` for the Vite development server. Tests are colocated as `*.test.js`: unit tests run under
+Vitest's `unit` project, Svelte component tests run in Chromium under its `browser` project, and
+cross-module browser flows live in `e2e/specs/` and use Playwright against the production bundle.
+Useful checks are `pnpm check:svelte`, `pnpm check:eslint`, `pnpm check:prettier`, `pnpm test:unit`,
+and `pnpm test:components`; run `pnpm build` before end-to-end tests. `pnpm check` and `pnpm test`
+run the broader local suites.
+
+Prefer putting behavior in a service module and testing it with unit tests; component tests should
+cover the remaining markup, accessibility, bindings, and events. Use an end-to-end test when the
+behavior crosses module or backend boundaries. For provider, storage, or public API changes, follow
+an existing implementation and its tests so the contract remains consistent. See
+[`CONTRIBUTING.md`](../CONTRIBUTING.md) for the repository's current contribution policy and
+project guidance.
