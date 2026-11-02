@@ -20,6 +20,7 @@ Explore 730 real-world examples in our [showcase](https://sveltiacms.app/en/show
 
 We provide comprehensive documentation to help you get started and make the most of Sveltia CMS:
 
+- [Architecture](docs/architecture.md): C4 diagrams and a source map of the application
 - [Introduction](https://sveltiacms.app/en/docs/intro): Product highlights, use cases, project goals
 - [Getting Started](https://sveltiacms.app/en/docs/start): Step-by-step setup instructions
 - [Migration Guides](https://sveltiacms.app/en/docs/migration): Instructions for migrating from other CMSs
