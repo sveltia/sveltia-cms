@@ -5,8 +5,11 @@ import { isInRootDir } from '$lib/services/backends/root-dir';
 import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
+import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { prepareEntries } from '$lib/services/contents/file/process';
+import { usesMultiFileStructure } from '$lib/services/contents/i18n/config';
 import { parseBranchName } from '$lib/services/workflow/branch';
 
 /**
@@ -23,22 +26,74 @@ import { parseBranchName } from '$lib/services/workflow/branch';
  */
 
 /**
+ * Get the key that links the localized files of an entry with the multi-file i18n structure, as
+ * {@link prepareEntries} does: the canonical slug if one of the files has it, or the sub path.
+ * @param {Entry} entry Entry.
+ * @param {string} canonicalSlugKey Property name of the canonical slug.
+ * @returns {string} Key.
+ */
+const getLinkingKey = (entry, canonicalSlugKey) =>
+  Object.values(entry.locales)
+    .map(({ content }) => content[canonicalSlugKey])
+    .find((value) => typeof value === 'string') ?? entry.subPath;
+
+/**
+ * Find the published version of an entry parsed from a pull request.
+ * @param {object} args Arguments.
+ * @param {Entry} args.entry Entry parsed from the pull request.
+ * @param {string[]} args.previousPaths File paths the pull request renamed the entry from.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name.
+ * @returns {Entry | undefined} Published entry.
+ */
+const findPublishedEntry = ({ entry, previousPaths, collectionName, fileName }) => {
+  // `allEntries` holds the version currently on the configured branch
+  const publishedEntry = findEntryByPaths(new Set([...getEntryPaths(entry), ...previousPaths]));
+
+  if (publishedEntry) {
+    return publishedEntry;
+  }
+
+  // A locale turned on for the entry adds a file the published version doesn’t have, so a pull
+  // request carrying only that file shares no path with it. Link the files the way the entry list
+  // does instead: a collection file by its name, and an entry by its canonical slug or sub path
+  if (fileName) {
+    return getCollectionFileEntry(collectionName, fileName);
+  }
+
+  const collection = getCollection(collectionName);
+
+  // Other structures keep every locale in the same file, which a path always finds
+  if (!collection || !usesMultiFileStructure(collection._i18n.structureMap)) {
+    return undefined;
+  }
+
+  const canonicalSlugKey = collection._i18n.canonicalSlug.key;
+  const linkingKey = getLinkingKey(entry, canonicalSlugKey);
+
+  return getEntriesByCollection(collectionName).find(
+    (published) => getLinkingKey(published, canonicalSlugKey) === linkingKey,
+  );
+};
+
+/**
  * Fill in the parts of an unpublished entry that the pull request doesn’t carry. With the
  * multi-file i18n structure, an entry is spread over one file per locale and only the changed ones
  * are committed, so the rest have to come from the published version. Without them the editor shows
  * the untouched locales as disabled, and an entry whose default locale file isn’t in the pull
  * request has no slug at all, because the slug is read from that file alone.
- * @param {Entry} entry Entry parsed from the pull request.
- * @param {string[]} previousPaths File paths the pull request renamed the entry from.
- * @param {Set<string>} deletedPaths File paths the pull request deletes. A locale turned off for
- * the entry has its file deleted, so it’s left out rather than brought back from the published
+ * @param {object} args Arguments.
+ * @param {Entry} args.entry Entry parsed from the pull request.
+ * @param {string[]} args.previousPaths File paths the pull request renamed the entry from.
+ * @param {Set<string>} args.deletedPaths File paths the pull request deletes. A locale turned off
+ * for the entry has its file deleted, so it’s left out rather than brought back from the published
  * version.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name.
  * @returns {Entry} Entry with the unchanged locales merged in.
  */
-const completeEntry = (entry, previousPaths, deletedPaths) => {
-  const paths = new Set([...getEntryPaths(entry), ...previousPaths]);
-  // `allEntries` holds the version currently on the configured branch
-  const publishedEntry = findEntryByPaths(paths);
+const completeEntry = ({ entry, previousPaths, deletedPaths, collectionName, fileName }) => {
+  const publishedEntry = findPublishedEntry({ entry, previousPaths, collectionName, fileName });
 
   if (!publishedEntry) {
     return entry;
@@ -250,7 +305,7 @@ export const convertPullRequest = async (pullRequest) => {
 
   return {
     entries: entries.map((entry) => ({
-      ...completeEntry(entry, previousPaths, deletedPaths),
+      ...completeEntry({ entry, previousPaths, deletedPaths, collectionName, fileName }),
       workflow: {
         pullRequest,
         status: pullRequest.status,

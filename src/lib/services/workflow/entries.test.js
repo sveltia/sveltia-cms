@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createFileList } from '$lib/services/backends/process';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
+import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { convertPullRequest, convertPullRequests } from '$lib/services/workflow/entries';
 
@@ -19,8 +21,30 @@ vi.mock('$lib/services/contents/collection', () => ({
         tiles: { name, _type: 'entry' },
         fixed: { name, _type: 'entry', create: false },
         frozen: { name, _type: 'entry', readonly: true },
+        guides: {
+          name,
+          _type: 'entry',
+          _i18n: {
+            structureMap: { i18nMultiFolder: true },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        places: {
+          name,
+          _type: 'entry',
+          _i18n: {
+            structureMap: { i18nSingleFile: true },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
       })[name],
   ),
+}));
+vi.mock('$lib/services/contents/collection/entries', () => ({
+  getEntriesByCollection: vi.fn(() => []),
+}));
+vi.mock('$lib/services/contents/collection/files', () => ({
+  getCollectionFileEntry: vi.fn(),
 }));
 
 /**
@@ -639,6 +663,156 @@ describe('workflow/entries', () => {
 
         expect(Object.keys(entries[0].locales)).toEqual(['en']);
         expect(entries[0].slug).toBe('new');
+      });
+
+      describe('a locale turned on for a published entry', () => {
+        /**
+         * Run a pull request that only adds the file of a locale turned on for a published entry,
+         * a path the published entry doesn’t have.
+         * @param {object} args Arguments.
+         * @param {string} args.collectionName Collection name.
+         * @param {string} args.path Path of the added file.
+         * @param {any} args.entry Entry parsed from the added file.
+         * @param {string} [args.fileName] Collection file name.
+         * @returns {Promise<any>} Converted entry.
+         */
+        const convertAdded = async ({ collectionName, path, entry, fileName }) => {
+          vi.mocked(createFileList).mockReturnValue(
+            /** @type {any} */ ({
+              entryFiles: [{ path, text: 'x', folder: { collectionName, fileName } }],
+              assetFiles: [],
+            }),
+          );
+          vi.mocked(prepareEntries).mockResolvedValue({ entries: [entry], errors: [] });
+
+          const { entries } = await convertPullRequest(
+            createPullRequest({
+              branch: `cms/${collectionName}/kyoto`,
+              files: [{ path, sha: 'a', size: 1, text: 'x', deleted: false }],
+            }),
+          );
+
+          return entries[0];
+        };
+
+        /**
+         * Create a published entry.
+         * @param {string} subPath Sub path.
+         * @param {Record<string, any>} [content] English content.
+         * @returns {any} Entry.
+         */
+        const published = (subPath, content = {}) => ({
+          id: subPath,
+          slug: subPath,
+          subPath,
+          locales: { en: { slug: subPath, path: `content/en/guides/${subPath}.md`, content } },
+        });
+
+        test('finds the published entry by its sub path', async () => {
+          // Saving the entry with Japanese turned on and English unchanged commits the Japanese
+          // file only. Without the published English locale, the editor showed it as disabled
+          vi.mocked(getEntriesByCollection).mockReturnValue([
+            published('nara'),
+            published('kyoto'),
+          ]);
+
+          const entry = await convertAdded({
+            collectionName: 'guides',
+            path: 'content/ja/guides/kyoto.md',
+            entry: {
+              id: 'draft',
+              slug: 'kyoto',
+              subPath: 'kyoto',
+              locales: {
+                ja: {
+                  slug: 'kyoto',
+                  path: 'content/ja/guides/kyoto.md',
+                  content: { title: '京都' },
+                },
+              },
+            },
+          });
+
+          expect(getEntriesByCollection).toHaveBeenCalledWith('guides');
+          expect(entry.locales.en.path).toBe('content/en/guides/kyoto.md');
+          expect(Object.keys(entry.locales).toSorted()).toEqual(['en', 'ja']);
+          expect(entry.locales.ja.content.title).toBe('京都');
+        });
+
+        test('finds the published entry by its canonical slug', async () => {
+          // With a localized slug, the Japanese file has a sub path of its own, linked to the
+          // English one by the translation key, which also outranks a matching sub path
+          vi.mocked(getEntriesByCollection).mockReturnValue([
+            published('kyoto-no-tera', { translationKey: 'nara' }),
+            published('kyoto-temples', { translationKey: 'kyoto-temples' }),
+          ]);
+
+          const entry = await convertAdded({
+            collectionName: 'guides',
+            path: 'content/ja/guides/kyoto-no-tera.md',
+            entry: {
+              id: 'draft',
+              slug: 'kyoto-no-tera',
+              subPath: 'kyoto-no-tera',
+              locales: {
+                ja: {
+                  slug: 'kyoto-no-tera',
+                  path: 'content/ja/guides/kyoto-no-tera.md',
+                  content: { translationKey: 'kyoto-temples' },
+                },
+              },
+            },
+          });
+
+          expect(entry.locales.en.path).toBe('content/en/guides/kyoto-temples.md');
+          expect(Object.keys(entry.locales).toSorted()).toEqual(['en', 'ja']);
+          expect(entry.slug).toBe('kyoto-temples');
+        });
+
+        test('finds the published collection file by its name', async () => {
+          vi.mocked(getCollectionFileEntry).mockReturnValue(
+            /** @type {any} */ ({
+              id: 'about',
+              slug: 'about',
+              subPath: 'content/pages/about.en.md',
+              locales: { en: { slug: 'about', path: 'content/pages/about.en.md', content: {} } },
+            }),
+          );
+
+          const entry = await convertAdded({
+            collectionName: 'pages',
+            fileName: 'about',
+            path: 'content/pages/about.ja.md',
+            entry: {
+              id: 'draft',
+              slug: 'about',
+              subPath: 'content/pages/about.ja.md',
+              locales: { ja: { slug: 'about', path: 'content/pages/about.ja.md', content: {} } },
+            },
+          });
+
+          expect(getCollectionFileEntry).toHaveBeenCalledWith('pages', 'about');
+          expect(Object.keys(entry.locales).toSorted()).toEqual(['en', 'ja']);
+        });
+
+        test('leaves an entry alone when its locales share a file', async () => {
+          // A new file of a single-file collection is a new entry, whatever its sub path
+          vi.mocked(getEntriesByCollection).mockReturnValue([published('kyoto')]);
+
+          const entry = await convertAdded({
+            collectionName: 'places',
+            path: 'data/places/kyoto.yml',
+            entry: {
+              id: 'draft',
+              slug: 'kyoto',
+              subPath: 'kyoto',
+              locales: { ja: { slug: 'kyoto', path: 'data/places/kyoto.yml', content: {} } },
+            },
+          });
+
+          expect(getEntriesByCollection).not.toHaveBeenCalled();
+          expect(Object.keys(entry.locales)).toEqual(['ja']);
+        });
       });
 
       describe('a locale turned off for a published entry', () => {

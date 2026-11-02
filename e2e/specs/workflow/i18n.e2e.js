@@ -117,3 +117,43 @@ test('offers no backup of a draft saved right after turning a locale off', async
   await expect(page.getByRole('alertdialog', { name: 'Restore Draft' })).toHaveCount(0);
   await expect(body).toHaveValue('Hello again!');
 });
+
+test('keeps the published locales of an entry a locale was turned on for', async ({
+  cms,
+  github,
+  page,
+}) => {
+  github.commit({ [JA_PATH]: null });
+  await cms.open();
+  await page.getByRole('row', { name: /First Post/ }).click();
+
+  const japanese = await showLocale(page, 1, 'Japanese');
+
+  await japanese.getByRole('button', { name: /Enable.*Japanese/ }).click();
+  await japanese.getByRole('textbox', { name: 'Title' }).fill('最初の投稿');
+  await japanese.getByRole('textbox', { name: 'Body' }).fill('こんにちは世界！');
+  await getEditor(page).getByRole('button', { name: 'Save' }).click();
+  await page
+    .getByRole('alertdialog', { name: 'Send for Review' })
+    .getByRole('button', { name: 'Later' })
+    .click();
+  await expect.poll(() => github.readFile(JA_PATH, 'cms/posts/first-post')).toBeDefined();
+
+  // English is unchanged, so the pull request only adds the Japanese file, a path the published
+  // entry doesn’t have. Read back from the pull request, the entry used to lose its English locale,
+  // which the editor then showed as disabled
+  expect(github.getPullRequestFiles(github.pullRequests[0])).toEqual([
+    { path: JA_PATH, changeType: 'ADDED' },
+  ]);
+  await page.reload();
+
+  const english = getEditPane(page, 'English');
+
+  // The editor reopens with the panes it had
+  await expect(english.getByRole('textbox', { name: 'Body' })).toHaveValue('Hello, world!');
+  await expect(english.getByRole('radio', { name: /^English\b/ })).toHaveAccessibleName('English');
+  await expect(english.getByRole('alert')).toHaveCount(0);
+  await expect(getEditPane(page, 'Japanese').getByRole('textbox', { name: 'Body' })).toHaveValue(
+    'こんにちは世界！',
+  );
+});
