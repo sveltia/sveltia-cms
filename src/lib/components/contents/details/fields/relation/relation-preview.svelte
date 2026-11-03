@@ -8,7 +8,10 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getOptions } from '$lib/services/contents/fields/relation/helpers';
   import { getPreviewLabels } from '$lib/services/contents/fields/relation/helpers/preview';
-  import { getRefEntriesWithPending } from '$lib/services/contents/fields/relation/quick-add';
+  import {
+    getRefEntriesWithPending,
+    getUnlistedEntries,
+  } from '$lib/services/contents/fields/relation/quick-add';
   import { getCanonicalLocale, getDirection, getListFormatter } from '$lib/services/contents/i18n';
 
   /**
@@ -41,7 +44,7 @@
       locale,
       fieldConfig,
       refEntries,
-      pendingEntries: entryDraft.current?.pendingEntries,
+      pendingEntries: getUnlistedEntries(entryDraft.current),
     }),
   );
   const refValues = $derived(getPreviewLabels({ fieldConfig, currentValue, options }));

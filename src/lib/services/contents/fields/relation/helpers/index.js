@@ -26,9 +26,9 @@ import { getOrCreateBounded } from '$lib/services/utils/cache';
  * FlattenedEntryContent,
  * InternalEntryCollection,
  * InternalLocaleCode,
- * PendingEntry,
  * RelationOption,
  * RelationOptionGroup,
+ * UnlistedEntry,
  * } from '$lib/types/private';
  * @import { FieldKeyPath, RelationField, RelationFieldFilterOptions } from '$lib/types/public';
  * @import { SharedValues } from '$lib/services/contents/i18n/shared-values';
@@ -61,54 +61,40 @@ const MAX_OPTION_CACHE_SIZE = 100;
  */
 const optionsInProgress = new Set();
 /**
+ * Maximum number of merged entry lists kept for each saved entry list by
+ * {@link withPendingEntries}.
+ */
+const MAX_MERGED_ENTRIES_CACHE_SIZE = 10;
+/**
  * Cache of the saved entries merged with the pending ones by {@link withPendingEntries}, keyed by
- * the saved entry list, then by the pending entry list. A nested Relation field resolves a label
- * for each entry its parent field references, and a new merged array on each call would give the
- * option cache a new key every time, building the whole option list again for every label.
- * @type {WeakMap<Entry[], WeakMap<PendingEntry[], { key: string, entries: Entry[] }>>}
+ * the saved entry list, then by the identities of the pending entries. A nested Relation field
+ * resolves a label for each entry its parent field references, and a new merged array on each call
+ * would give the option cache a new key every time, building the whole option list again for every
+ * label. The pending entries are keyed by their identities rather than by the list, which can be
+ * put together anew on each call.
+ * @type {WeakMap<Entry[], Map<string, Entry[]>>}
  */
 const mergedEntriesCache = new WeakMap();
 
 /**
  * Get a key telling the given pending entries apart from another set, or the same array after a
  * change, by the identities of the entries.
- * @param {PendingEntry[]} [pendingEntries] Pending entries.
+ * @param {UnlistedEntry[]} [pendingEntries] Entries not yet among the saved ones.
  * @returns {string} Key.
  */
 const getPendingEntriesKey = (pendingEntries = []) =>
   pendingEntries.map((pendingEntry) => getObjectId(pendingEntry)).join(',');
 
 /**
- * Add the entries pending on the draft being edited that belong to the given collection to the
- * given saved entries, so a reference to one of them resolves before they are saved. The saved
- * entries are returned as they are when there’s nothing to add, keeping their identity for the
- * option cache; otherwise the merged list is kept as long as the pending entries stay the same.
+ * Merge the given entries not yet among the saved ones that belong to the given collection into the
+ * saved entries. An existing entry takes the place of its saved version, and the later of two
+ * versions of the same entry wins.
  * @param {Entry[]} entries Saved entries.
  * @param {string} collectionName Collection name.
- * @param {PendingEntry[]} [pendingEntries] Pending entries of any collection.
+ * @param {UnlistedEntry[]} pendingEntries Entries not yet among the saved ones, of any collection.
  * @returns {Entry[]} Entries.
  */
-const withPendingEntries = (entries, collectionName, pendingEntries = []) => {
-  if (!pendingEntries.length) {
-    return entries;
-  }
-
-  let pendingCache = mergedEntriesCache.get(entries);
-
-  if (!pendingCache) {
-    pendingCache = new WeakMap();
-    mergedEntriesCache.set(entries, pendingCache);
-  }
-
-  const cached = pendingCache.get(pendingEntries);
-  // The pending entries are held in a reactive array that changes in place, so the entries’ own
-  // identities tell a change apart: an entry opened again and changed is replaced with a new object
-  const key = getPendingEntriesKey(pendingEntries);
-
-  if (cached?.key === key) {
-    return cached.entries;
-  }
-
+const mergeEntries = (entries, collectionName, pendingEntries) => {
   const pending = pendingEntries
     .filter((pendingEntry) => pendingEntry.collectionName === collectionName)
     .map(({ entry }) => entry);
@@ -116,7 +102,7 @@ const withPendingEntries = (entries, collectionName, pendingEntries = []) => {
   // An existing entry edited from a Relation field takes the place of its saved version
   const pendingMap = new Map(pending.map((entry) => [entry.id, entry]));
 
-  const merged = pending.length
+  return pending.length
     ? [
         ...entries.map((entry) => {
           const edited = pendingMap.get(entry.id);
@@ -128,10 +114,41 @@ const withPendingEntries = (entries, collectionName, pendingEntries = []) => {
         ...pendingMap.values(),
       ]
     : entries;
+};
 
-  pendingCache.set(pendingEntries, { key, entries: merged });
+/**
+ * Add the entries not yet among the saved ones that belong to the given collection to the given
+ * saved entries, so a reference to one of them resolves: the entries pending on the draft being
+ * edited, and those in the pull request its host entry has been saved to. The saved entries are
+ * returned as they are when there’s nothing to add, keeping their identity for the option cache;
+ * otherwise the merged list is kept as long as the pending entries stay the same.
+ * @param {Entry[]} entries Saved entries.
+ * @param {string} collectionName Collection name.
+ * @param {UnlistedEntry[]} [pendingEntries] Entries not yet among the saved ones, of any
+ * collection.
+ * @returns {Entry[]} Entries.
+ */
+const withPendingEntries = (entries, collectionName, pendingEntries = []) => {
+  if (!pendingEntries.length) {
+    return entries;
+  }
 
-  return merged;
+  let pendingCache = mergedEntriesCache.get(entries);
+
+  if (!pendingCache) {
+    pendingCache = new Map();
+    mergedEntriesCache.set(entries, pendingCache);
+  }
+
+  // The pending entries of a draft are held in a reactive array that changes in place, so the
+  // entries’ own identities tell a change apart: an entry opened again and changed is replaced with
+  // a new object
+  return getOrCreateBounded(
+    pendingCache,
+    getPendingEntriesKey(pendingEntries),
+    () => mergeEntries(entries, collectionName, pendingEntries),
+    MAX_MERGED_ENTRIES_CACHE_SIZE,
+  );
 };
 
 /**
@@ -143,9 +160,9 @@ const withPendingEntries = (entries, collectionName, pendingEntries = []) => {
  * @param {Entry[]} args.refEntries Referenced entries.
  * @param {RelationFieldFilterOptions[]} [args.entryFilters] Entry filters with any template strings
  * already resolved.
- * @param {PendingEntry[]} [args.pendingEntries] Entries created from a Relation field of the draft
- * being edited. A label template can refer to another Relation field of the referenced entry, and
- * the entry that one points at may be pending too.
+ * @param {UnlistedEntry[]} [args.pendingEntries] Entries not yet among the saved ones. A label
+ * template can refer to another Relation field of the referenced entry, and the entry that one
+ * points at may be one of them too.
  * @returns {RelationOptionGroup[]} Options grouped by referenced entry, unsorted.
  */
 const buildOptionGroups = ({
@@ -229,8 +246,8 @@ export const getRefEntries = ({ collection: collectionName, file: fileName }) =>
  * @param {string} [args.currentSlug] Current slug of the entry being edited. Required to resolve
  * `{{slug}}` template strings in filter `values`. When omitted (e.g. new entry draft), `{{slug}}`
  * templates are ignored.
- * @param {PendingEntry[]} [args.pendingEntries] Entries created from a Relation field of the draft
- * being edited, so the labels referring to one of them through another Relation field resolve.
+ * @param {UnlistedEntry[]} [args.pendingEntries] Entries not yet among the saved ones, so the
+ * labels referring to one of them through another Relation field resolve.
  * @param {SharedValues} [args.sharedValues] Values of the fields of the entry being edited that
  * aren’t localized, to resolve `{{fields.fieldName}}` template strings referring to one of them in
  * another locale than the default.
@@ -339,8 +356,8 @@ export const getOptions = ({
  * @param {InternalLocaleCode} args.locale Locale of the entry holding the Relation field.
  * @param {RelationField} args.fieldConfig Field configuration.
  * @param {Entry} args.refEntry Referenced entry.
- * @param {PendingEntry[]} [args.pendingEntries] Entries created from a Relation field of the draft
- * being edited. See {@link buildOptions}.
+ * @param {UnlistedEntry[]} [args.pendingEntries] Entries not yet among the saved ones. See
+ * {@link buildOptions}.
  * @returns {RelationOption[]} Options, in the order the templates produce them. Empty if the
  * referenced collection is gone or the entry has no content in any usable locale.
  */
@@ -354,8 +371,8 @@ export const getEntryOptions = ({ locale, fieldConfig, refEntry, pendingEntries 
  * @param {FlattenedEntryContent} args.valueMap Object holding current entry values.
  * @param {FieldKeyPath} args.keyPath Field key path, e.g. `author.name`.
  * @param {InternalLocaleCode} args.locale Locale.
- * @param {PendingEntry[]} [args.pendingEntries] Entries created from a Relation field of the draft
- * being edited, which the value can refer to before they are saved.
+ * @param {UnlistedEntry[]} [args.pendingEntries] Entries not yet among the saved ones, which the
+ * value can refer to.
  * @returns {any | any[]} Resolved field value(s).
  */
 export const getReferencedOptionLabel = ({

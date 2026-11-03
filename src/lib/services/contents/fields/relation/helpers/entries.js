@@ -15,8 +15,8 @@ import { replaceTemplateFields } from '$lib/services/contents/fields/relation/he
  * GetFieldArgs,
  * InternalCollection,
  * InternalLocaleCode,
- * PendingEntry,
  * RelationOption,
+ * UnlistedEntry,
  * } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
@@ -65,8 +65,8 @@ const excludeOptionsWithoutValue = (options) => options.filter(({ value }) => !!
  * @param {string} [params.fileName] File name.
  * @param {InternalLocaleCode} params.locale Current locale.
  * @param {string} params.identifierField Identifier field.
- * @param {PendingEntry[]} [params.pendingEntries] Entries created from a Relation field of the
- * draft being edited, which a Relation field of the entry can refer to before they are saved.
+ * @param {UnlistedEntry[]} [params.pendingEntries] Entries not yet among the saved ones, which a
+ * Relation field of the entry can refer to.
  * @returns {RelationOption[]} Array of relation options.
  */
 export const processEntry = ({

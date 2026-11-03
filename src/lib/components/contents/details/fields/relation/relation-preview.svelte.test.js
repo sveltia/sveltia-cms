@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
+import { unpublishedEntries } from '$lib/services/workflow';
 import { createMockDraft } from '$lib/test/draft';
 import { renderFieldPreview } from '$lib/test/field.svelte';
 
 import RelationPreview from './relation-preview.svelte';
 
 /**
- * @import { Entry, PendingEntry } from '$lib/types/private';
+ * @import { Entry, PendingEntry, QuickAddHost } from '$lib/types/private';
  * @import { RelationField } from '$lib/types/public';
  */
 
@@ -30,24 +31,26 @@ const refEntries = /** @type {Entry[]} */ ([{ id: 'melvin-lucas' }, { id: 'elsie
  * @param {object} [options] Options.
  * @param {string} [options.locale] Locale.
  * @param {PendingEntry[]} [options.pendingEntries] Pending entries on the draft.
+ * @param {QuickAddHost} [options.quickAddHost] Entry the draft is saved along with.
  * @returns {Promise<HTMLElement>} Container.
  */
 const renderPreview = async (
   currentValue,
   config = {},
-  { locale = 'en', pendingEntries = [] } = {},
+  { locale = 'en', pendingEntries = [], quickAddHost = undefined } = {},
 ) =>
   (
     await renderFieldPreview(RelationPreview, {
       fieldConfig: { ...fieldConfig, ...config },
       locale,
       currentValue,
-      draft: createMockDraft({ fields: [fieldConfig], draft: { pendingEntries } }),
+      draft: createMockDraft({ fields: [fieldConfig], draft: { pendingEntries, quickAddHost } }),
     })
   ).container;
 
 describe('RelationPreview', () => {
   beforeEach(() => {
+    unpublishedEntries.current = [];
     vi.mocked(getRefEntries).mockReturnValue(refEntries);
     vi.mocked(getOptions).mockReturnValue([
       { label: 'Melvin Lucas', value: 'melvin-lucas', searchValue: 'Melvin Lucas' },
@@ -113,6 +116,56 @@ describe('RelationPreview', () => {
         expect.objectContaining({ collectionName: 'tags' }),
       ],
     });
+  });
+
+  test('resolves the labels against the entries in the pull request of the host entry', async () => {
+    // An earlier save of the host entry has committed a new entry and changed an existing one in
+    // its pull request, which a label can refer to through a Relation field of the entry
+    const companions = [
+      {
+        collectionName: 'teams',
+        entry: /** @type {Entry} */ ({ id: 'new-team', slug: 'new-team' }),
+      },
+      {
+        collectionName: 'teams',
+        entry: /** @type {Entry} */ ({ id: 'old-team', slug: 'old-team' }),
+        edited: true,
+      },
+    ];
+
+    const pendingEntry = {
+      collectionName: 'teams',
+      entry: /** @type {Entry} */ ({ id: 'old-team', slug: 'old-team' }),
+      changes: [],
+      savingAssets: [],
+      values: ['old-team'],
+    };
+
+    unpublishedEntries.current = [
+      /** @type {any} */ ({
+        id: 'hello',
+        workflow: { pullRequest: { branch: 'cms/posts/hello' }, companions },
+      }),
+    ];
+
+    await renderPreview(
+      'melvin-lucas',
+      {},
+      {
+        pendingEntries: [pendingEntry],
+        quickAddHost: {
+          collectionName: 'posts',
+          workflow: true,
+          branch: 'cms/posts/hello',
+          entryIds: ['hello'],
+        },
+      },
+    );
+
+    // The entries pending on the draft come last, so they take the place of an earlier version
+    expect(getOptions).toHaveBeenCalledWith(
+      expect.objectContaining({ pendingEntries: [...companions, pendingEntry] }),
+    );
   });
 
   test('marks the paragraph with the language and direction', async () => {

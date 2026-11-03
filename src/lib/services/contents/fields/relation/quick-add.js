@@ -49,6 +49,7 @@ import { getUnpublishedEntryLabel } from '$lib/services/workflow/board';
  * InternalLocaleCode,
  * PendingEntry,
  * QuickAddHost,
+ * UnlistedEntry,
  * UnpublishedEntry,
  * } from '$lib/types/private';
  * @import { FieldKeyPath, RelationField } from '$lib/types/public';
@@ -107,6 +108,27 @@ const getHostCompanionEntries = (draft, collectionName) => {
   const hostEntry = getHostUnpublishedEntry(draft);
 
   return hostEntry ? getCompanionEntries(collectionName, [hostEntry]) : [];
+};
+
+/**
+ * Get the entries a Relation field value of the given draft can refer to before they’re among the
+ * entries of their collection: those an earlier save of the host entry has created or changed in
+ * its pull request, and the entries pending on the draft, which come last, so they take the place
+ * of an earlier version. A label resolved through a Relation field of a referenced entry finds them
+ * there, as they aren’t in the collection until they’re saved, or the pull request is published.
+ * @param {EntryDraft | null | undefined} draft Draft being edited.
+ * @param {PendingEntry[]} [pendingEntries] Pending entries to include. Default: those of the draft.
+ * @returns {UnlistedEntry[] | undefined} Entries, or `undefined` without a draft.
+ */
+export const getUnlistedEntries = (draft, pendingEntries = undefined) => {
+  if (!draft) {
+    return undefined;
+  }
+
+  const entries = pendingEntries ?? draft.pendingEntries;
+  const companions = getHostUnpublishedEntry(draft)?.workflow.companions ?? [];
+
+  return companions.length ? [...companions, ...entries] : entries;
 };
 
 /**
@@ -387,7 +409,7 @@ export const createPendingEntry = async ({ draft, parentDraft, fieldConfig }) =>
         locale,
         fieldConfig,
         refEntry: savingEntry,
-        pendingEntries: otherPendingEntries,
+        pendingEntries: getUnlistedEntries(parentDraft, otherPendingEntries),
       }).map(({ value }) => value),
     ),
   );
@@ -660,7 +682,7 @@ export const replaceEntryValues = ({
   previousEntry,
   entry,
 }) => {
-  const { pendingEntries } = draft;
+  const pendingEntries = getUnlistedEntries(draft);
 
   Object.entries(draft[valueStoreKey]).forEach(([locale, valueMap]) => {
     /**
@@ -791,7 +813,7 @@ export const getEditableEntries = ({ draft, locale, fieldConfig, refEntries, cur
     return [];
   }
 
-  const { pendingEntries } = draft;
+  const pendingEntries = getUnlistedEntries(draft);
   const valueSet = new Set(values);
 
   // Only the options going by a selected value are kept, grouped by the value

@@ -1348,6 +1348,14 @@
  */
 
 /**
+ * An entry a Relation field can refer to before it’s among the entries of its collection: one
+ * pending on the draft being edited, see {@link PendingEntry}, or one riding along in the pull
+ * request the draft’s host entry has been saved to, see {@link CompanionEntry}. An existing entry
+ * takes the place of its saved version.
+ * @typedef {Pick<PendingEntry, 'collectionName' | 'entry'>} UnlistedEntry
+ */
+
+/**
  * The values of an entry draft that a backup restores, see {@link EntryDraftBackup}.
  * @typedef {Pick<EntryDraftBackup, 'currentLocales' | 'currentSlugs' | 'currentPath' |
  * 'currentValues' | 'files'>} EntryDraftValues

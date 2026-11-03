@@ -1706,6 +1706,18 @@ describe('Test getOptions()', async () => {
         expect(getFieldDisplayValue).toHaveBeenCalledTimes(callCount);
         expect(optionCacheMap.size).toBe(cacheSize);
 
+        // So is a list put together anew with the same entries, as the entries in the pull request
+        // of the host entry are added to those of the draft on each call
+        expect(
+          getReferencedOptionLabel({
+            ...args,
+            valueMap: { author: 'jane-doe' },
+            pendingEntries: [...pendingEntries],
+          }),
+        ).toBe('Jane');
+        expect(getFieldDisplayValue).toHaveBeenCalledTimes(callCount);
+        expect(optionCacheMap.size).toBe(cacheSize);
+
         // An entry added to the same array is picked up
         pendingEntries.push(createPendingMember('john-doe', 'John'));
 

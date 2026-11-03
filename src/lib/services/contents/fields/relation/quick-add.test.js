@@ -43,6 +43,7 @@ import {
   getPendingRefEntries,
   getQuickAddHost,
   getRefEntriesWithPending,
+  getUnlistedEntries,
   hasCreationRoom,
   isEditUnchanged,
   isPendingEntryMoved,
@@ -227,6 +228,32 @@ const createParentDraft = ({ pendingEntries = [], currentValues = { en: {} } } =
     expanderStates: { _: {} },
     pendingEntries,
   });
+
+describe('getUnlistedEntries', () => {
+  it('returns the entries pending on the draft without a pull request', () => {
+    const pendingEntries = [createPending('react')];
+    const draft = createParentDraft({ pendingEntries });
+
+    expect(getUnlistedEntries(undefined)).toBeUndefined();
+    expect(getUnlistedEntries(draft)).toBe(pendingEntries);
+  });
+
+  it('puts the entries in the pull request of the host entry before the pending ones', () => {
+    const react = createPending('react');
+    const vue = createPending('vue');
+    const draft = createParentDraft({ pendingEntries: [react] });
+    const hostEntry = createHostEntry('svelte');
+
+    vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(hostEntry);
+    vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(hostEntry);
+
+    expect(getUnlistedEntries(draft)).toEqual([...(hostEntry.workflow.companions ?? []), react]);
+    expect(getUnlistedEntries(draft, [vue])).toEqual([
+      ...(hostEntry.workflow.companions ?? []),
+      vue,
+    ]);
+  });
+});
 
 describe('getCreatableCollection', () => {
   const draft = createParentDraft();

@@ -18,6 +18,7 @@
     getCreatableCollection,
     getEditableEntries,
     getRefEntriesWithPending,
+    getUnlistedEntries,
     hasCreationRoom,
     replaceEntryValues,
     selectPendingEntry,
@@ -91,7 +92,7 @@
           ? getDraftSharedValues(entryDraft.current, locale)
           : undefined,
       // A label can refer to another pending entry through a Relation field of the entry
-      pendingEntries: entryDraft.current?.pendingEntries,
+      pendingEntries: getUnlistedEntries(entryDraft.current),
     }),
   });
   const creatableCollection = $derived(

@@ -19,8 +19,8 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * FlattenedEntryContent,
  * GetFieldArgs,
  * InternalLocaleCode,
- * PendingEntry,
  * StringTransformation,
+ * UnlistedEntry,
  * } from '$lib/types/private';
  * @import {
  * DateTimeField,
@@ -56,8 +56,8 @@ const isRichTextField = (fieldConfig) =>
  * @param {StringTransformation[]} [args.transformations] String transformations.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
- * @param {PendingEntry[]} [args.pendingEntries] Entries created from a Relation field of the draft
- * being edited, which a Relation field value can refer to before they are saved.
+ * @param {UnlistedEntry[]} [args.pendingEntries] Entries not yet among the saved ones, which a
+ * Relation field value can refer to.
  * @param {boolean} [args.plainText] Whether to remove the Markdown syntax and HTML tags from a Rich
  * Text field value, e.g. for a summary.
  * @returns {string} Resolved display value.
