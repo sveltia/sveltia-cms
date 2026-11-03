@@ -4,7 +4,7 @@ import { loadImmutable } from '$lib/services/api/immutable';
 import { createEntryMap } from '$lib/services/api/preview-data';
 import { eventHookRegistry } from '$lib/services/api/registries';
 import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
-import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
+import { getEntryDisplayLocale, getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import { user } from '$lib/services/user/account.svelte';
 import { flattenKeys } from '$lib/services/utils/object';
 
@@ -98,17 +98,20 @@ export const callEventHooks = async ({
   }
 
   const { slug, locales } = entry;
-  const otherLocales = Object.keys(locales).filter((locale) => locale !== defaultLocale);
+  // A multi-file i18n entry can be missing its default locale file, in which case another locale
+  // stands in for it: the hooks get its data as the main data, which is written back to it, so it’s
+  // not one of the other locales
+  const mainLocale = /** @type {string} */ (getEntryDisplayLocale(locales, defaultLocale));
+  const otherLocales = Object.keys(locales).filter((locale) => locale !== mainLocale);
   const associatedAssets = getAssociatedAssets({ entry, collectionName, fileName });
 
   // We need to use a for loop here to call handlers sequentially
   // eslint-disable-next-line no-restricted-syntax
   for (const hook of hooks) {
-    // Read the content on every iteration, so a hook sees the changes made by the previous ones. A
-    // multi-file i18n entry can be missing its default locale file, in which case any locale stands
-    // in rather than the destructuring throwing
+    // Read the content on every iteration, so a hook sees the changes made by the previous ones. An
+    // entry without any locale file gets empty data rather than the destructuring throwing
     const { content, path } = /** @type {LocalizedEntry} */ (
-      getEntryLocaleFile(entry, { defaultLocale }) ?? {}
+      getEntryLocaleFile(entry, { locale: mainLocale }) ?? {}
     );
 
     let updatedMap;
@@ -147,7 +150,7 @@ export const callEventHooks = async ({
       const map = updatedMap.toJS();
 
       if (isObject(map.data) && isObject(map.i18n)) {
-        locales[defaultLocale].content = flattenKeys(map.data);
+        locales[mainLocale].content = flattenKeys(map.data);
 
         otherLocales.forEach((locale) => {
           if (isObject(map.i18n[locale]?.data)) {
@@ -156,7 +159,7 @@ export const callEventHooks = async ({
         });
       } else {
         // `map` is always a plain object here (guaranteed by `isMap(updatedMap)` above)
-        locales[defaultLocale].content = flattenKeys(map);
+        locales[mainLocale].content = flattenKeys(map);
       }
     }
   }

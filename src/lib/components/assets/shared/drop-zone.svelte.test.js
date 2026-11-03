@@ -24,6 +24,7 @@ const createDropEvent = (files) => {
     value: {
       dropEffect: '',
       items: files.map((file) => ({
+        kind: 'file',
         /**
          * Get the entry.
          * @returns {any} File entry.
@@ -161,6 +162,41 @@ describe('DropZone', () => {
       setTimeout(resolve, 100);
     });
     expect(document.querySelector('[role="alertdialog"]')).toBeNull();
+  });
+
+  test('ignores a drop without files, like text or a link', async () => {
+    const onDrop = vi.fn();
+    // The Asset Library accepts any file type
+    const { container } = await render(DropZone, { multiple: true, onDrop });
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.setData('text/plain', 'https://example.com/');
+    getTarget(container).dispatchEvent(
+      new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }),
+    );
+    // An empty folder holds no files either
+    getTarget(container).dispatchEvent(createDropEvent([]));
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+    expect(document.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(onDrop).not.toHaveBeenCalled();
+  });
+
+  test('ignores text dropped on a zone accepting certain types only', async () => {
+    const { container } = await render(DropZone, { accept: 'image/png', showUploadButton: true });
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.setData('text/plain', 'hello');
+    getTarget(container).dispatchEvent(
+      new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }),
+    );
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
   });
 
   test('shows the drop indicator while dragging over the zone', async () => {

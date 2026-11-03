@@ -20,7 +20,16 @@ const FIELDS = {
   'author.id': { name: 'id', widget: 'string', i18n: false },
   links: { name: 'links', widget: 'list', i18n: false },
   'links.url': { name: 'url', widget: 'string', i18n: true },
+  tags: { name: 'tags', widget: 'list', i18n: true },
+  kv: { name: 'kv', widget: 'keyvalue', i18n: true },
+  ids: { name: 'ids', widget: 'list' },
 };
+
+/**
+ * Fields whose values have no field of their own, as an item of a List field without subfields or
+ * a KeyValue pair, for which `getField` returns `undefined`.
+ */
+const FIELDS_WITHOUT_SUBFIELDS = ['tags', 'kv', 'ids'];
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getDraftFieldArgs: vi.fn(({ collectionName, fileName, isIndexFile }, args = {}) => ({
@@ -29,7 +38,11 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
     isIndexFile,
     ...args,
   })),
-  getField: vi.fn(({ keyPath }) => FIELDS[keyPath.replace(/\.\d+/g, '')]),
+  getField: vi.fn(({ keyPath }) =>
+    FIELDS_WITHOUT_SUBFIELDS.includes(keyPath.split('.')[0]) && keyPath.includes('.')
+      ? undefined
+      : FIELDS[keyPath.replace(/\.\d+/g, '')],
+  ),
 }));
 
 const getFieldArgs = { collectionName: 'posts', isIndexFile: false };
@@ -76,6 +89,13 @@ describe('isFieldInLocale()', () => {
     expect(isFieldInLocale({ ...args, keyPath: 'links.0.url' })).toBe(false);
     expect(isFieldInLocale({ ...args, keyPath: 'unknown' })).toBe(false);
   });
+
+  test('takes a value without a field of its own to be localized along with its ancestor', () => {
+    expect(isFieldInLocale({ ...args, keyPath: 'tags.1' })).toBe(true);
+    expect(isFieldInLocale({ ...args, keyPath: 'kv.a' })).toBe(true);
+    expect(isFieldInLocale({ ...args, keyPath: 'tags.0.x' })).toBe(true);
+    expect(isFieldInLocale({ ...args, keyPath: 'ids.0' })).toBe(false);
+  });
 });
 
 describe('addSharedValues()', () => {
@@ -104,6 +124,17 @@ describe('addSharedValues()', () => {
       'author.id': 'j1',
       'links.0.url': 'https://example.com',
     });
+  });
+
+  test('doesn’t add the extra items of a localized List field without subfields', () => {
+    expect(
+      addSharedValues({
+        getFieldArgs,
+        ...locales,
+        content: { 'tags.0': 'a' },
+        defaultContent: { 'tags.0': 'x', 'tags.1': 'y', 'kv.a': '1', 'ids.0': 'i1' },
+      }),
+    ).toEqual({ 'tags.0': 'a', 'ids.0': 'i1' });
   });
 
   test('doesn’t fill in a localized field missing in the locale', () => {

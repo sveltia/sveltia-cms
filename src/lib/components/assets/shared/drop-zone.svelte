@@ -167,13 +167,17 @@
 
     dragging = false;
 
+    // A drop without any file, like text or a link, is ignored. Check this before the scan, as the
+    // items are no longer available once the event has been handled
+    const hasFiles = Array.from(event.dataTransfer.items).some(({ kind }) => kind === 'file');
+
     const filteredFileList = await scanFiles(event.dataTransfer, {
       accept: filterDroppedFiles ? accept : undefined,
     });
 
     if (filteredFileList.length) {
       updateFileList(filteredFileList);
-    } else if (filterDroppedFiles) {
+    } else if (filterDroppedFiles && accept && hasFiles) {
       typeMismatch = true;
     }
   }}

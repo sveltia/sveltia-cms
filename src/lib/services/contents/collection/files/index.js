@@ -1,7 +1,10 @@
+import { stripSlashes } from '@sveltia/utils/string';
+
 import { cmsConfig } from '$lib/services/config';
 import { allEntryFolders, findEntryByPaths } from '$lib/services/contents';
 import { getCollection, getValidCollections } from '$lib/services/contents/collection';
 import { getValidCollectionFiles } from '$lib/services/contents/collection/predicates';
+import { getLocalePath } from '$lib/services/contents/i18n';
 
 /**
  * @import {
@@ -71,7 +74,8 @@ export const getCollectionFileLabel = (file) => file.label || file.name;
 /**
  * Get a file/singleton collection’s file configurations that matches the given entry. One file can
  * theoretically appear in multiple collections files depending on the configuration, so that the
- * result is an array.
+ * result is an array. A file is matched by the path of any locale of the entry, as the file of the
+ * default locale may not exist when the locales are stored in separate files.
  * @param {InternalCollection} collection Collection.
  * @param {Entry} entry Entry.
  * @returns {InternalCollectionFile[]} Collection files.
@@ -82,8 +86,14 @@ export const getCollectionFilesByEntry = (collection, entry) => {
     return [];
   }
 
-  return Object.values(collection._fileMap).filter(
-    ({ _file, _i18n }) => _file.fullPath === entry.locales[_i18n.defaultLocale]?.path,
+  return Object.values(collection._fileMap).filter(({ file, _file, _i18n }) =>
+    Object.entries(entry.locales).some(
+      ([locale, { path }]) =>
+        path ===
+        (locale === _i18n.defaultLocale
+          ? _file.fullPath
+          : getLocalePath({ _i18n, locale, path: stripSlashes(file) })),
+    ),
   );
 };
 

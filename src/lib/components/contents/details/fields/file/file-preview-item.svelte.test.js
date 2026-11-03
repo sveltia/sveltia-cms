@@ -127,6 +127,8 @@ describe('FilePreviewItem', () => {
     expect((await renderItem('')).querySelector('p')).toBeNull();
     expect((await renderItem('  ')).querySelector('p')).toBeNull();
     expect((await renderItem('blob:abc')).querySelector('p')).toBeNull();
+    // A blank item in a list of files is `null`
+    expect((await renderItem(/** @type {any} */ (null))).querySelector('p')).toBeNull();
   });
 
   test('ignores the preview of an earlier value resolved after the current one', async () => {

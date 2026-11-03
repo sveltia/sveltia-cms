@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { loadModule } from '$lib/services/app/dependencies';
-import { getField } from '$lib/services/contents/entry/fields';
+import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 
 import {
   copyFields,
@@ -526,7 +526,8 @@ describe('draft/update/copy', () => {
         'note.0': 'Hi',
         extra: 'Unknown',
       };
-      mockEntryDraft.currentValues.ja = {};
+      // The list item exists in the target locale
+      mockEntryDraft.currentValues.ja = { 'links.0.url': 'https://example.com' };
 
       /** @type {Record<string, any>} */
       const fields = {
@@ -564,6 +565,80 @@ describe('draft/update/copy', () => {
 
       // A key without a field isn’t copied either
       expect(Object.keys(result)).toEqual(['title', 'links.0.title', 'tags.0']);
+    });
+
+    it('should not copy into a list item the target locale lacks or has of another type', () => {
+      const quoteText = { name: 'text', i18n: true, widget: 'string' };
+      const imageAlt = { name: 'alt', i18n: true, widget: 'string' };
+
+      const blocks = {
+        name: 'blocks',
+        i18n: true,
+        widget: 'list',
+        types: [
+          { name: 'quote', fields: [quoteText] },
+          { name: 'image', fields: [imageAlt] },
+        ],
+      };
+
+      const tags = { name: 'tags', i18n: true, widget: 'list' };
+
+      mockEntryDraft.currentValues.en = {
+        'blocks.0.type': 'quote',
+        'blocks.0.text': 'Hello',
+        'blocks.0.tags.0': 'food',
+        'blocks.1.type': 'quote',
+        'blocks.1.text': 'World',
+        'blocks.1.tags.0': 'drink',
+      };
+      mockEntryDraft.currentValues.fr = {
+        'blocks.0.type': 'image',
+        'blocks.0.alt': 'Chat',
+      };
+
+      vi.mocked(getDraftFieldArgs).mockImplementation((draft, args) => ({ ...args }));
+      // A variable type item resolves to the subfields of its own type
+      vi.mocked(getField).mockImplementation(({ keyPath, valueMap }) => {
+        if (keyPath === 'blocks') {
+          return blocks;
+        }
+
+        const [, index, name] = keyPath.match(/^blocks\.(\d+)\.(\w+)$/) ?? [];
+        const type = valueMap?.[`blocks.${index}.type`];
+
+        if (name === 'tags' && type === 'quote') {
+          return tags;
+        }
+
+        if (name === 'text' && type === 'quote') {
+          return quoteText;
+        }
+
+        if (name === 'alt' && type === 'image') {
+          return imageAlt;
+        }
+
+        return undefined;
+      });
+
+      const options = { sourceLanguage: 'en', targetLanguage: 'fr', translate: false };
+
+      // The first item is an image in the target locale, and the second one is missing there
+      expect(getCopyingFieldMap({ draft: mockEntryDraft, options })).toEqual({});
+
+      // Once the target locale has matching items, the values are copied, including the items of
+      // a List field without subfields, which don’t have to exist yet
+      mockEntryDraft.currentValues.fr = {
+        'blocks.0.type': 'quote',
+        'blocks.1.type': 'quote',
+      };
+
+      expect(Object.keys(getCopyingFieldMap({ draft: mockEntryDraft, options }))).toEqual([
+        'blocks.0.text',
+        'blocks.0.tags.0',
+        'blocks.1.text',
+        'blocks.1.tags.0',
+      ]);
     });
 
     it('should not copy into a subfield the editor hides in the target locale', () => {

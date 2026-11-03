@@ -447,6 +447,27 @@ describe('GitLab files service', () => {
       expect(parseFileContents({ fetchingFiles, blobs })['image.png'].text).toBeUndefined();
       expect(parseFileContents({ fetchingFiles, blobs: {} })['image.png'].text).toBeUndefined();
     });
+    test('leaves an entry without content uncached', () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'binary.md', sha: 'sha1', size: 0, name: 'binary.md', type: 'entry' },
+        { path: 'missing.yml', sha: 'sha2', size: 0, name: 'missing.yml', type: 'config' },
+        { path: 'image.png', sha: 'sha3', size: 0, name: 'image.png', type: 'asset' },
+      ]);
+
+      const blobs = /** @type {Record<string, any>} */ ({ 'binary.md': { rawTextBlob: null } });
+      const result = parseFileContents({ fetchingFiles, blobs });
+
+      // Without `meta`, the file isn’t marked as fetched, so it’s requested again on the next load
+      expect(result['binary.md']).toEqual({
+        sha: 'sha1',
+        size: 0,
+        text: undefined,
+        meta: undefined,
+      });
+      expect(result['missing.yml'].meta).toBeUndefined();
+      // An asset’s content is never requested
+      expect(result['image.png'].meta).toEqual({});
+    });
   });
 
   describe('fetchBlobBatch', () => {
@@ -897,6 +918,55 @@ describe('GitLab files service', () => {
       expect(fetchGraphQL).toHaveBeenCalledWith(
         expect.stringContaining('blobs(ref: $branch, paths: $paths)'),
         { branch: 'last-commit-sha', paths: ['file1.md'] },
+      );
+    });
+
+    test('reads a blob cut short by GitLab from the raw file endpoint', async () => {
+      const files = /** @type {any} */ ([
+        { path: 'dir/large.md', sha: 'sha1', type: 'entry', size: 0, name: 'large.md' },
+        { path: 'small.md', sha: 'sha2', type: 'entry', size: 0, name: 'small.md' },
+      ]);
+
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        project: {
+          repository: {
+            blobs: {
+              nodes: [
+                { path: 'dir/large.md', size: '20000000', rawTextBlob: 'partial' },
+                // `é` is 2 bytes in UTF-8, so the text is complete
+                { path: 'small.md', size: '2', rawTextBlob: 'é' },
+              ],
+            },
+          },
+        },
+      });
+      vi.mocked(fetchAPI).mockResolvedValueOnce('full content');
+
+      const result = await fetchFileContents(files, 'last-commit-sha');
+
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][0]).toMatch(/\ssize\s/);
+      expect(fetchAPI).toHaveBeenCalledOnce();
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/projects/test-owner%2Ftest-repo/repository/files/dir%2Flarge.md/raw?ref=last-commit-sha',
+        { responseType: 'text' },
+      );
+      expect(result['dir/large.md'].text).toBe('full content');
+      expect(result['small.md'].text).toBe('é');
+
+      // Read at the branch without a commit
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        project: {
+          repository: {
+            blobs: { nodes: [{ path: 'dir/large.md', size: '10', rawTextBlob: 'partial' }] },
+          },
+        },
+      });
+      vi.mocked(fetchAPI).mockResolvedValueOnce('full text');
+
+      expect((await fetchFileContents([files[0]]))['dir/large.md'].text).toBe('full text');
+      expect(fetchAPI).toHaveBeenLastCalledWith(
+        '/projects/test-owner%2Ftest-repo/repository/files/dir%2Flarge.md/raw?ref=main',
+        { responseType: 'text' },
       );
     });
 

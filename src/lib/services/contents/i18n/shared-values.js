@@ -73,6 +73,7 @@ export const isFieldInLocale = ({ getFieldArgs, locale, defaultLocale, keyPath }
   }
 
   const segments = keyPath.split('.');
+  let hasAncestor = false;
 
   // Skip the list item indexes, which aren’t fields of their own, e.g. `items.0` in `items.0.kv`
   return segments.every((segment, index) => {
@@ -83,9 +84,16 @@ export const isFieldInLocale = ({ getFieldArgs, locale, defaultLocale, keyPath }
     const args = { ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') };
     const fieldConfig = getField(args);
 
-    return (
-      !!fieldConfig && isFieldLocalized(getInheritedI18nOption({ fieldConfig, getFieldArgs: args }))
-    );
+    // A value without a field of its own, e.g. an item of a List field without subfields like
+    // `tags.1`, or a KeyValue pair like `kv.a`, goes along with the nearest ancestor that has one,
+    // which is in the locale if we get here
+    if (!fieldConfig) {
+      return hasAncestor;
+    }
+
+    hasAncestor = true;
+
+    return isFieldLocalized(getInheritedI18nOption({ fieldConfig, getFieldArgs: args }));
   });
 };
 

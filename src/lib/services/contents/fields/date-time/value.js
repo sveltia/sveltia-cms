@@ -1,5 +1,6 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import dayjs from 'dayjs';
+import dayjsAdvancedFormat from 'dayjs/plugin/advancedFormat';
 import dayjsCustomParseFormat from 'dayjs/plugin/customParseFormat';
 import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
 import dayjsTimeZone from 'dayjs/plugin/timezone';
@@ -15,6 +16,7 @@ import { getTimeZoneForStoredValue } from './timezone.js';
  * @import { DateTimeField, Field } from '$lib/types/public';
  */
 
+dayjs.extend(dayjsAdvancedFormat);
 dayjs.extend(dayjsCustomParseFormat);
 dayjs.extend(dayjsLocalizedFormat);
 dayjs.extend(dayjsUTC);
@@ -136,6 +138,32 @@ export const getCurrentDateTime = (
 };
 
 /**
+ * Format an instant in a time zone, as returned by `dayjs.tz()`, with its wall time and offset in
+ * the zone. Day.js keeps such an instance as a `Date` in the browser’s time zone shifted by the
+ * offsets, so formatting it directly shifts a wall time in the browser’s DST gap by an hour. The
+ * wall time is therefore read as UTC, and the offset applied without converting it again. The
+ * Unix timestamp tokens would read that shifted wall time, so the instant’s timestamp is written in
+ * their place.
+ * @param {dayjs.Dayjs} instant Instant in a time zone.
+ * @param {string} format Format string.
+ * @param {string} [localeKey] Day.js locale, as returned by `getFormatLocale()`.
+ * @returns {string} Formatted value.
+ */
+const formatInTimeZone = (instant, format, localeKey) => {
+  const epoch = instant.valueOf();
+  const offset = instant.utcOffset();
+  const wallTime = dayjs.utc(epoch + offset * 60_000);
+
+  const _format = format.replaceAll(/\[[^\]]+]|X|x/g, (token) =>
+    token === 'X' ? `[${Math.floor(epoch / 1000)}]` : token === 'x' ? `[${epoch}]` : token,
+  );
+
+  return (localeKey ? wallTime.locale(localeKey) : wallTime)
+    .utcOffset(offset, true)
+    .format(_format);
+};
+
+/**
  * Get the final storable value from the input value.
  * @param {object} args Arguments.
  * @param {string | undefined} args.inputValue Raw value from the input field.
@@ -189,9 +217,9 @@ export const getCurrentValue = ({
 
   if (format) {
     const localeKey = getFormatLocale(fieldConfig, locale);
-    // When the input is in UTC, parse as UTC; otherwise parse as local (timezone conversion happens
-    // below via `.tz()` or `.utc()`)
-    const parse = getParser(inputTimeZone === 'utc');
+    // Parse the wall time as UTC when the input is in UTC or in a time zone it’s converted from
+    // below, so a time in the browser’s DST gap isn’t shifted; otherwise parse it as local
+    const parse = getParser(!!effectiveTimeZone);
     let parsed = parse(inputValue, inputFormat);
 
     if (!parsed.isValid()) {
@@ -209,18 +237,18 @@ export const getCurrentValue = ({
       return formatInLocale(parsed, format, localeKey);
     }
 
-    // Apply IANA timezone context first, then optionally convert to UTC. Read the wall time in the
-    // zone rather than keeping it with `.tz(zone, true)`, which uses the zone’s offset at the
-    // instant the time was parsed as in the browser’s zone, a different one around a DST change
-    if (effectiveTimeZone) {
-      parsed = dayjs.tz(parsed.format('YYYY-MM-DDTHH:mm:ss'), effectiveTimeZone);
+    if (!effectiveTimeZone) {
+      return formatInLocale(_outputUTC ? parsed.utc() : parsed, format, localeKey);
     }
 
-    if (_outputUTC && inputTimeZone !== 'utc') {
-      parsed = parsed.utc();
-    }
+    // Read the wall time in the zone rather than keeping it with `.tz(zone, true)`, which uses the
+    // zone’s offset at the instant the time was parsed as in the browser’s zone, a different one
+    // around a DST change; then optionally convert to UTC
+    const instant = dayjs.tz(parsed.format('YYYY-MM-DDTHH:mm:ss'), effectiveTimeZone);
 
-    return formatInLocale(parsed, format, localeKey);
+    return _outputUTC
+      ? formatInLocale(instant.utc(), format, localeKey)
+      : formatInTimeZone(instant, format, localeKey);
   }
 
   if (dateOnly) {
@@ -251,7 +279,7 @@ export const getCurrentValue = ({
 
   if (timeZone && inputTimeZone !== 'local') {
     // Preserve the configured custom timezone offset when output_utc is false.
-    return dayjs.tz(inputValue, timeZone).format('YYYY-MM-DDTHH:mm:ssZ');
+    return formatInTimeZone(dayjs.tz(inputValue, timeZone), 'YYYY-MM-DDTHH:mm:ssZ');
   }
 
   return hasSeconds ? inputValue : `${inputValue}${timeSuffix}`;

@@ -10,7 +10,7 @@ import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
 import { getDraftFieldArgs } from '$lib/services/contents/entry/fields';
 import { deleteSubtree } from '$lib/services/contents/entry/subtree';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
-import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
+import { getListFieldInfo, isPairedList } from '$lib/services/contents/fields/list/helpers';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { localizeDefaultValue } from '$lib/services/contents/i18n/options';
 import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
@@ -57,8 +57,8 @@ const PRESERVED_FIELD_TYPES = ['compute', 'hidden', 'uuid'];
  * one. A field without the option of its own is duplicated along with an ancestor using the
  * `duplicate` strategy, but it’s only translatable with an `i18n` option of its own.
  * @property {boolean} [mirror] Whether the content belongs to another locale than the one being
- * reset, which mirrors the default locale’s values of the duplicated fields. Only those fields
- * are reset then.
+ * reset, which mirrors the default locale’s values of the duplicated fields and the items of the
+ * paired List fields. Only those fields are reset then.
  * @property {boolean} [restore] Whether to restore the default values rather than clearing them.
  */
 
@@ -145,8 +145,9 @@ const resetContent = (args) => {
   }
 
   const resettable = mirror
-    ? // Another locale follows the default locale where the field is duplicated
-      i18n === 'duplicate'
+    ? // Another locale follows the default locale where the field is duplicated, and a paired List
+      // field holds the same items in every locale, although their values are translatable
+      i18n === 'duplicate' || isPairedList(fieldConfig)
     : // A field that isn’t translatable follows the default locale, so it can’t be edited in
       // another locale
       locale === defaultLocale || isFieldTranslatable(ownI18n);
@@ -241,7 +242,9 @@ export const canResetField = ({ valueMap, restore = false, ...args }) => {
  * a field in the default locale resets it in the other locales as well where it’s duplicated,
  * whether with its own `duplicate` strategy or along with an ancestor’s. A field using the
  * `duplicate_if_empty` strategy is left alone in the other locales, which take the default locale’s
- * value again as soon as it’s next edited.
+ * value again as soon as it’s next edited. A paired List field loses its items in the other locales
+ * as well, or gets their default items, as its items are the same in every locale. See
+ * {@link isPairedList}.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {Field} args.fieldConfig Field configuration.

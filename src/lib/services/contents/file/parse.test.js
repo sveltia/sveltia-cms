@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { FRONTMATTER_DELIMITER_MAP } from '$lib/services/contents/file/constants';
+import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
 import {
   formatEntryFile,
   formatFrontMatter,
@@ -346,6 +347,18 @@ describe('Test detectFrontMatterFormat()', () => {
     const text = '{\n  "title": "Test",\n  "meta": {\n    "author": "John"\n  }\n}\n\nContent';
 
     expect(detectFrontMatterFormat(text)).toBe('json-frontmatter');
+  });
+
+  test('detects the format by the whole first line', () => {
+    // A body starting with a brace, e.g. a Hugo shortcode, isn’t JSON front matter
+    expect(detectFrontMatterFormat('{{< figure src="a.jpg" >}}\n\nText')).toBe('yaml-frontmatter');
+    expect(detectFrontMatterFormat('{% include note.html %}\n\nText')).toBe('yaml-frontmatter');
+    expect(detectFrontMatterFormat('{/* comment */}\n\nText')).toBe('yaml-frontmatter');
+    expect(detectFrontMatterFormat('+++Text')).toBe('yaml-frontmatter');
+    // Trailing spaces after a delimiter are ignored, as the parser does
+    expect(detectFrontMatterFormat('+++ \ntitle = "Test"\n+++')).toBe('toml-frontmatter');
+    expect(detectFrontMatterFormat('{\t\n"title": "Test"\n}')).toBe('json-frontmatter');
+    expect(detectFrontMatterFormat('{')).toBe('json-frontmatter');
   });
 });
 
@@ -1346,6 +1359,40 @@ describe('Test parseEntryFile()', () => {
     expect(getFrontMatterDelimiters).toHaveBeenCalledWith(
       expect.objectContaining({ format: 'toml-frontmatter' }),
     );
+  });
+
+  test('only remembers the front matter format of a file with a front matter block', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    vi.mocked(getFrontMatterDelimiters).mockImplementation(
+      ({ format }) => FRONTMATTER_DELIMITER_MAP[format],
+    );
+    getCollection.mockReturnValue({ _file: { format: 'frontmatter' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'frontmatter' } });
+
+    const { path } = entryBase;
+
+    try {
+      expect(
+        await parseEntryFile({ ...entryBase, text: '{\n"title": "Test"\n}\n\nBody\n' }),
+      ).toEqual({ title: 'Test', body: 'Body' });
+      expect(detectedFrontMatterFormats.get(path)).toBe('json-frontmatter');
+
+      // A Hugo shortcode at the start of a file without front matter, which the file had once
+      expect(
+        await parseEntryFile({ ...entryBase, text: '{{< figure src="a.jpg" >}}\n\nText\n' }),
+      ).toEqual({ body: '{{< figure src="a.jpg" >}}\n\nText' });
+      expect(detectedFrontMatterFormats.has(path)).toBe(false);
+
+      // A delimiter line without a closing one isn’t a front matter block either
+      expect(await parseEntryFile({ ...entryBase, text: '+++\nText\n' })).toEqual({
+        body: '+++\nText',
+      });
+      expect(detectedFrontMatterFormats.has(path)).toBe(false);
+    } finally {
+      detectedFrontMatterFormats.delete(path);
+      vi.mocked(getFrontMatterDelimiters).mockReset();
+    }
   });
 
   test('gives a custom parser the content without the surrounding whitespace', async () => {

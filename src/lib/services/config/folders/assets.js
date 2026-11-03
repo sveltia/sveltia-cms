@@ -82,6 +82,33 @@ export const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =
     .replace('//', '/');
 
 /**
+ * Replace the `{{media_folder}}` and `{{public_folder}}` tags in a `media_folder` or
+ * `public_folder` option, e.g. `{{media_folder}}/blog`, with the global folders.
+ * @param {string} folder Folder option.
+ * @param {GlobalFolders | undefined} globalFolders Global folders, as returned by
+ * {@link resolveGlobalFolders}.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.isPublicFolder] Whether the option is `public_folder`.
+ * @returns {string | undefined} Folder with the tags replaced, the given folder as is if it has no
+ * such tags, or `undefined` if it has some but the global folders are not available.
+ */
+export const replaceFolderTags = (folder, globalFolders, { isPublicFolder = false } = {}) => {
+  if (!hasTags(folder)) {
+    return folder;
+  }
+
+  if (!globalFolders) {
+    return undefined;
+  }
+
+  const replaced = replaceTags(folder, globalFolders);
+
+  // The tag is replaced with a leading slash, which has to be removed again from a global public
+  // folder starting with `@`, like `@assets/images`, the same way as the global folder itself
+  return isPublicFolder ? removeSlashBeforeAtSign(replaced) : replaced;
+};
+
+/**
  * Get the folder that a relative `media_folder` option of an entry collection is relative to: the
  * collection folder, e.g. `content/posts`, or the folder of the file storing all the entries.
  * @param {Collection | InternalSingletonCollection} collection Collection.
@@ -119,27 +146,20 @@ export const normalizeAssetFolder = ({
   icon,
   isAssetCollection = false,
 }) => {
-  if (hasTags(mediaFolder)) {
-    // Cannot substitute tags without global folder info
-    if (!globalFolders) {
-      return undefined;
-    }
+  const _mediaFolder = replaceFolderTags(mediaFolder, globalFolders);
 
-    mediaFolder = replaceTags(mediaFolder, globalFolders);
+  const _publicFolder =
+    publicFolder === undefined
+      ? _mediaFolder
+      : replaceFolderTags(publicFolder, globalFolders, { isPublicFolder: true });
+
+  // Cannot substitute tags without global folder info
+  if (_mediaFolder === undefined || _publicFolder === undefined) {
+    return undefined;
   }
 
-  if (publicFolder === undefined) {
-    publicFolder = mediaFolder;
-  } else if (hasTags(publicFolder)) {
-    // Cannot substitute tags without global folder info
-    if (!globalFolders) {
-      return undefined;
-    }
-
-    // The tag is replaced with a leading slash, which has to be removed again from a global public
-    // folder starting with `@`, like `@assets/images`, the same way as the global folder itself
-    publicFolder = removeSlashBeforeAtSign(replaceTags(publicFolder, globalFolders));
-  }
+  mediaFolder = _mediaFolder;
+  publicFolder = _publicFolder;
 
   // Normalize `./` prefix: `./images` → `images`, `./` → ``, `.` → ``
   // This must happen after publicFolder defaulting so that `publicPath` preserves the `./` prefix

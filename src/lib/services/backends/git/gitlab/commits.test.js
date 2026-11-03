@@ -311,6 +311,7 @@ describe('GitLab commits service', () => {
             },
           ],
         },
+        retryable: true,
       });
 
       expect(result).toEqual({

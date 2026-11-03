@@ -77,7 +77,7 @@
   <p>
     <AssetPreview {kind} {src} controls={['audio', 'video'].includes(kind)} />
   </p>
-{:else if value.trim() && !value.startsWith('blob:')}
+{:else if typeof value === 'string' && value.trim() && !value.startsWith('blob:')}
   <p>{value}</p>
 {/if}
 

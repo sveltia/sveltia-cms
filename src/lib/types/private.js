@@ -207,6 +207,8 @@
  * store.
  * @property {string} [refreshToken] OAuth refresh token. If not provided, it will be taken from the
  * `user` store.
+ * @property {boolean} [retryable] Whether the request can be sent again after a transient error.
+ * See `sendRequest()`.
  */
 
 /**

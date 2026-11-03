@@ -317,7 +317,9 @@ const createCommit = async ({
     const {
       createCommitOnBranch: { commit },
     } = /** @type {{ createCommitOnBranch: { commit: Record<string, any> }}} */ (
-      await fetchGraphQL(query, { input })
+      // The commit can be sent again after a transient error: one that has already landed is
+      // refused, as the branch no longer points at `expectedHeadOid`
+      await fetchGraphQL(query, { input }, { retryable: true })
     );
 
     return commit;

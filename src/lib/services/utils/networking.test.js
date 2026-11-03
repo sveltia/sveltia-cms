@@ -415,6 +415,175 @@ describe('sendRequest', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
+  test('should not retry a request with side effects on 502', async () => {
+    const mockErrorResponse = {
+      ok: false,
+      status: 502,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ message: 'Bad Gateway' }),
+    };
+
+    mockFetch.mockResolvedValue(mockErrorResponse);
+
+    // A REST request that writes data, which may have taken effect behind the gateway
+    await expect(
+      sendRequest('https://api.example.com/dispatches', {
+        method: 'POST',
+        body: /** @type {any} */ ({ ref: 'main' }),
+      }),
+    ).rejects.toThrow('Server responded with an error');
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    await expect(sendRequest('https://api.example.com/data', { method: 'DELETE' })).rejects.toThrow(
+      'Server responded with an error',
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+
+    // A GraphQL mutation
+    await expect(
+      sendRequest('https://api.example.com/graphql', {
+        method: 'POST',
+        body: /** @type {any} */ ({
+          query: ' mutation($input: CreateCommitOnBranchInput!) { x }',
+          variables: {},
+        }),
+      }),
+    ).rejects.toThrow('Server responded with an error');
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+
+    // A body that isn’t JSON
+    await expect(
+      sendRequest('https://api.example.com/upload', { method: 'PUT', body: 'raw data' }),
+    ).rejects.toThrow('Server responded with an error');
+    expect(mockFetch).toHaveBeenCalledTimes(4);
+
+    // A raw response
+    expect(
+      await sendRequest(
+        'https://api.example.com/pipeline',
+        { method: 'POST', body: /** @type {any} */ ({ ref: 'main' }) },
+        { responseType: 'raw' },
+      ),
+    ).toBe(mockErrorResponse);
+    expect(mockFetch).toHaveBeenCalledTimes(5);
+  });
+
+  test('should retry a request with side effects on 502 when it opts in', async () => {
+    const mockErrorResponse = {
+      ok: false,
+      status: 502,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ message: 'Bad Gateway' }),
+    };
+
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ id: 'commit-sha' }),
+    });
+
+    // A commit that the server refuses to apply twice
+    expect(
+      await sendRequest(
+        'https://api.example.com/commits',
+        { method: 'POST', body: /** @type {any} */ ({ branch: 'main' }) },
+        { retryable: true },
+      ),
+    ).toEqual({ id: 'commit-sha' });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+
+    // A read that opts out
+    mockFetch.mockResolvedValueOnce(mockErrorResponse);
+
+    await expect(
+      sendRequest('https://api.example.com/data', {}, { retryable: false }),
+    ).rejects.toThrow('Server responded with an error');
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
+
+  test('should keep a request retryable after refreshing the token', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ message: 'Unauthorized' }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ message: 'Bad Gateway' }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ id: 'commit-sha' }),
+    });
+
+    const refreshAccessToken = vi.fn().mockResolvedValue({ token: 'new-token' });
+
+    expect(
+      await sendRequest(
+        'https://api.example.com/commits',
+        {
+          method: 'POST',
+          headers: { Authorization: 'token old-token' },
+          body: /** @type {any} */ ({ branch: 'main' }),
+        },
+        { retryable: true, refreshAccessToken },
+      ),
+    ).toEqual({ id: 'commit-sha' });
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
+
+  test('should retry a GraphQL query on 502', async () => {
+    const mockSuccessResponse = { data: { viewer: { login: 'me' } } };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve({ message: 'Bad Gateway' }),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve(mockSuccessResponse),
+    });
+
+    const result = await sendRequest('https://api.example.com/graphql', {
+      method: 'POST',
+      body: /** @type {any} */ ({ query: 'query { viewer { login } }', variables: {} }),
+    });
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(mockSuccessResponse);
+
+    // The serialized body is sent again as is
+    expect(mockFetch.mock.calls[1][1].body).toBe(mockFetch.mock.calls[0][1].body);
+  });
+
+  test('should retry a HEAD request on 502 for a raw response', async () => {
+    const mockSuccessResponse = { ok: true, status: 200 };
+
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 502 });
+    mockFetch.mockResolvedValueOnce(mockSuccessResponse);
+
+    expect(
+      await sendRequest(
+        'https://api.example.com/data',
+        { method: 'head' },
+        { responseType: 'raw' },
+      ),
+    ).toBe(mockSuccessResponse);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
   test('should handle server errors with message', async () => {
     const mockErrorResponse = {
       message: 'Server error message',

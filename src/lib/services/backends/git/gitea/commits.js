@@ -161,6 +161,9 @@ export const commitChanges = async (changes, options) => {
           message: commitMessage,
           files,
         },
+        // The commit can be sent again after a transient error: one that has already landed is
+        // refused, as a created file then exists and a changed file no longer has the given SHA
+        retryable: true,
       })
     );
   } catch (/** @type {any} */ ex) {

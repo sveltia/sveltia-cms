@@ -1248,3 +1248,113 @@ describe('Test getInputValue() with a 12-hour time-only format', () => {
     expect(getInputValue({ currentValue: '14:30', fieldConfig })).toBe('14:30');
   });
 });
+
+describe('Test a custom format with advanced Day.js tokens', () => {
+  test('stores a Unix timestamp and reads it back', () => {
+    [
+      ['X', undefined, '1782865800'],
+      ['x', undefined, '1782865800000'],
+      ['X', 'Asia/Tokyo', '1782833400'],
+      ['x', 'Asia/Tokyo', '1782833400000'],
+    ].forEach(([format, timeZone, expected]) => {
+      /** @type {DateTimeField} */
+      const fieldConfig = { ...baseFieldConfig, format, input_timezone: timeZone };
+      const inputValue = '2026-07-01T00:30';
+      const stored = getCurrentValue({ inputValue, currentValue: '', fieldConfig, timeZone });
+
+      expect(stored).toBe(expected);
+      expect(getInputValue({ currentValue: stored, fieldConfig, timeZone })).toBe(inputValue);
+    });
+  });
+
+  test('stores an ordinal day and reads it back', () => {
+    /** @type {DateTimeField} */
+    const fieldConfig = { ...baseFieldConfig, format: 'MMMM Do, YYYY', time_format: false };
+    const stored = getCurrentValue({ inputValue: '2026-07-01', currentValue: '', fieldConfig });
+
+    expect(stored).toBe('July 1st, 2026');
+    expect(getInputValue({ currentValue: stored, fieldConfig })).toBe('2026-07-01');
+  });
+
+  test('stores an hour from 1 to 24', () => {
+    /** @type {DateTimeField} */
+    const fieldConfig = { ...baseFieldConfig, format: 'YYYY-MM-DD kk:mm' };
+
+    expect(getCurrentValue({ inputValue: '2026-07-01T00:30', currentValue: '', fieldConfig })).toBe(
+      '2026-07-01 24:30',
+    );
+    expect(getCurrentValue({ inputValue: '2026-07-01T13:30', currentValue: '', fieldConfig })).toBe(
+      '2026-07-01 13:30',
+    );
+  });
+});
+
+describe('Test getCurrentValue() in a field time zone with a browser time zone DST gap', () => {
+  /**
+   * Run a function in the given browser time zone.
+   * @param {string} timeZone IANA time zone name.
+   * @param {() => void} fn Function to run.
+   */
+  const withTimeZone = (timeZone, fn) => {
+    const { TZ } = process.env;
+
+    process.env.TZ = timeZone;
+
+    try {
+      fn();
+    } finally {
+      process.env.TZ = TZ;
+    }
+  };
+
+  // New York switches to EDT at 2026-03-08T02:00 local time, so 02:30 doesn’t exist there, but it
+  // does in Tokyo
+  const timeZone = 'Asia/Tokyo';
+  const inputValue = '2026-03-08T02:30';
+
+  test('stores the wall time entered in the field’s time zone', () => {
+    withTimeZone('America/New_York', () => {
+      [
+        [{ format: 'YYYY-MM-DD HH:mm' }, '2026-03-08 02:30'],
+        [{ format: 'YYYY-MM-DD HH:mm', output_utc: true }, '2026-03-07 17:30'],
+        [{ format: 'YYYY-MM-DDTHH:mm:ssZ' }, '2026-03-08T02:30:00+09:00'],
+        [{ format: 'X' }, '1772904600'],
+        [{ format: 'YYYY-MM-DD[T]HH:mm [x]' }, '2026-03-08T02:30 x'],
+        [{}, '2026-03-08T02:30:00+09:00'],
+        [{ output_utc: true }, '2026-03-07T17:30:00Z'],
+      ].forEach(([options, expected]) => {
+        /** @type {DateTimeField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          input_timezone: timeZone,
+          .../** @type {object} */ (options),
+        };
+
+        const stored = getCurrentValue({ inputValue, currentValue: '', fieldConfig, timeZone });
+
+        expect(stored).toBe(expected);
+        expect(getInputValue({ currentValue: stored, fieldConfig, timeZone })).toBe(inputValue);
+      });
+    });
+  });
+
+  test('stores a time in the field’s own DST gap like Day.js resolves it', () => {
+    withTimeZone('Asia/Tokyo', () => {
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        format: 'YYYY-MM-DDTHH:mm:ssZ',
+        input_timezone: 'America/New_York',
+      };
+
+      expect(
+        getCurrentValue({
+          inputValue,
+          currentValue: '',
+          fieldConfig,
+          timeZone: 'America/New_York',
+        }),
+      ).toBe('2026-03-08T03:30:00-04:00');
+    });
+  });
+});

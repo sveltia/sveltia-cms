@@ -433,6 +433,28 @@ describe('getDate in the time zone of the field', () => {
   });
 });
 
+describe('getDate with advanced Day.js tokens', () => {
+  test('reads a Unix timestamp as an instant in any time zone', () => {
+    [undefined, 'utc', 'Asia/Tokyo'].forEach((inputTimeZone) => {
+      [
+        ['X', '1782865800'],
+        ['x', '1782865800000'],
+      ].forEach(([format, currentValue]) => {
+        /** @type {DateTimeField} */
+        const fieldConfig = { ...baseFieldConfig, format, input_timezone: inputTimeZone };
+
+        expect(getDate(currentValue, fieldConfig)?.toISOString()).toBe('2026-07-01T00:30:00.000Z');
+      });
+    });
+  });
+
+  test('reads an ordinal day', () => {
+    expect(
+      getDate('July 1st, 2026', { ...baseFieldConfig, format: 'MMMM Do, YYYY' })?.toISOString(),
+    ).toBe('2026-07-01T00:00:00.000Z');
+  });
+});
+
 describe('isValidDate', () => {
   test('should return true for valid Date objects', () => {
     const validDate = new Date('2023-12-25T14:30:00.000Z');

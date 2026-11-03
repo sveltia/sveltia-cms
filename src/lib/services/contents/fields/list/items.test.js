@@ -113,6 +113,31 @@ describe('createListItem()', () => {
     expect(duplicate).toEqual({ name: 'Bob', __sc_item_id: expect.any(String) });
   });
 
+  test('removes the original positions of the nested items from a duplicate', () => {
+    const valueList = [
+      {
+        name: 'Alice',
+        __sc_item_original_key_path: 'authors.1',
+        books: [
+          { title: 'A', __sc_item_original_key_path: 'authors.0.books.1' },
+          { title: 'B', __sc_item_original_key_path: 'authors.0.books.0' },
+        ],
+        tags: ['x'],
+      },
+    ];
+
+    const item = createListItem({ ...args, valueList, dupIndex: 0 });
+
+    expect(item).toEqual({
+      name: 'Alice',
+      books: [{ title: 'A' }, { title: 'B' }],
+      tags: ['x'],
+      __sc_item_id: expect.any(String),
+    });
+    // The source item keeps them
+    expect(valueList[0].books[0].__sc_item_original_key_path).toBe('authors.0.books.1');
+  });
+
   test('copies a pasted item as a new one', () => {
     const OLD_ID = 'de305d54-75b4-431b-adb2-eb6b9e546014';
     const sourceItem = { name: 'Alice', links: { url: 'https://example.com' }, id: OLD_ID };

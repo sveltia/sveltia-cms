@@ -144,13 +144,20 @@ export const parseYAML = (str, options, path) => {
 };
 
 /**
- * Detect the Markdown front matter serialization format by checking a delimiter in the content.
+ * Detect the Markdown front matter serialization format by checking the first line of the content,
+ * which is the opening delimiter of a front matter block, as Netlify/Decap CMS does. A line that
+ * only starts with a delimiter, e.g. a Hugo shortcode like `{{< figure >}}`, doesn’t count.
  * @param {string} text File content.
  * @returns {FrontMatterFormat} Determined format.
  */
-export const detectFrontMatterFormat = (text) =>
-  FRONTMATTER_FORMATS.find((format) => text.startsWith(FRONTMATTER_DELIMITER_MAP[format][0])) ??
-  'yaml-frontmatter';
+export const detectFrontMatterFormat = (text) => {
+  const firstLine = text.split('\n', 1)[0].trim();
+
+  return (
+    FRONTMATTER_FORMATS.find((format) => firstLine === FRONTMATTER_DELIMITER_MAP[format][0]) ??
+    'yaml-frontmatter'
+  );
+};
 
 /**
  * Regular expression to match JSON front matter written by an earlier version of Sveltia CMS, which
@@ -206,7 +213,7 @@ const FRONT_MATTER_PARSERS = { ...PARSERS, json: parseJSONFrontMatterHead };
 const frontMatterRegexCache = new Map();
 
 /**
- * Parse front matter from a Markdown file.
+ * Parse front matter from a Markdown file, and tell whether the file has a front matter block.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
@@ -217,17 +224,11 @@ const frontMatterRegexCache = new Map();
  * @param {string} args.text File content.
  * @param {string} [args.path] File path, given to remember the source text of the floats that are
  * whole numbers.
- * @returns {Record<string, any>} Parsed front matter and body.
+ * @returns {{ content: Record<string, any>, hasFrontMatter: boolean }} Parsed front matter and
+ * body, and whether the file has a front matter block.
  * @throws {Error} When the front matter block could not be parsed.
  */
-export const parseFrontMatter = ({
-  collection,
-  collectionFile,
-  isIndexFile,
-  format,
-  text,
-  path,
-}) => {
+const parseFrontMatterBlock = ({ collection, collectionFile, isIndexFile, format, text, path }) => {
   const {
     format: _format,
     fmDelimiters,
@@ -268,7 +269,7 @@ export const parseFrontMatter = ({
     // Support Markdown without a front matter block, particularly for VitePress. The body keeps its
     // leading whitespace, e.g. an indented code block. The text can be an empty string, but it’s
     // okay to return an empty body
-    return { [bodyKey]: text };
+    return { content: { [bodyKey]: text }, hasFrontMatter: false };
   }
 
   const { head = '', body } = groups;
@@ -279,7 +280,7 @@ export const parseFrontMatter = ({
     parsedHead = {};
   }
 
-  return {
+  const content = {
     ...parsedHead,
     // The formatter inserts a blank line between the closing delimiter and the body, so the regex
     // above leaves that blank line as a leading line break. Strip it to make the value a faithful
@@ -291,7 +292,18 @@ export const parseFrontMatter = ({
       ? { [bodyKey]: body?.replace(/^\n/, '') }
       : {}),
   };
+
+  return { content, hasFrontMatter: true };
 };
+
+/**
+ * Parse front matter from a Markdown file.
+ * @param {Parameters<typeof parseFrontMatterBlock>[0]} args Arguments. See
+ * {@link parseFrontMatterBlock}.
+ * @returns {Record<string, any>} Parsed front matter and body.
+ * @throws {Error} When the front matter block could not be parsed.
+ */
+export const parseFrontMatter = (args) => parseFrontMatterBlock(args).content;
 
 /**
  * Resolve the collection, collection file and format of the given entry file.
@@ -351,6 +363,7 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
 
   // Forget what was read from an earlier version of the file
   valueSources.delete(path);
+  detectedFrontMatterFormats.delete(path);
 
   // Normalize line breaks. The leading whitespace is only dropped where it’s meaningless: the
   // content of a raw file, and the body of a file without front matter, keep theirs, e.g. an
@@ -370,16 +383,14 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
   }
 
   try {
-    if (format === 'frontmatter') {
-      const detectedFormat = detectFrontMatterFormat(trimmedText);
+    const isDetected = format === 'frontmatter';
 
-      // Remembered, so the file is saved back in the same format
-      detectedFrontMatterFormats.set(path, detectedFormat);
-      format = detectedFormat;
+    if (isDetected) {
+      format = detectFrontMatterFormat(trimmedText);
     }
 
     if (FRONTMATTER_FORMATS.includes(/** @type {any} */ (format))) {
-      return parseFrontMatter({
+      const { content, hasFrontMatter } = parseFrontMatterBlock({
         collection,
         collectionFile,
         isIndexFile,
@@ -387,6 +398,14 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
         text,
         path,
       });
+
+      // Remembered, so the file is saved back in the same format. A file without a front matter
+      // block gets the default one, as a new file does
+      if (isDetected && hasFrontMatter) {
+        detectedFrontMatterFormats.set(path, /** @type {FrontMatterFormat} */ (format));
+      }
+
+      return content;
     }
 
     // Any other format with a syntax is read as a whole

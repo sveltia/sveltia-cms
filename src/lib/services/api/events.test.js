@@ -259,6 +259,67 @@ describe('events module', () => {
       expect(handler).toHaveBeenCalledWith(expect.objectContaining({ entry: expect.any(Object) }));
     });
 
+    it('should write the data updated by a preSave hook back to the locale standing in for the default one', async () => {
+      // A Decap-style handler returning the updated data rather than the whole entry
+      const handler = vi.fn(({ entry }) => entry.get('data').set('title', 'Updated'));
+
+      eventHookRegistry.add(/** @type {any} */ ({ name: 'preSave', handler }));
+
+      const entry = {
+        slug: 'hello',
+        locales: { fr: { content: { title: 'Bonjour' }, path: 'posts/hello.fr.md' } },
+      };
+
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry,
+          collection: { name: 'posts', _i18n: { defaultLocale: 'en' } },
+        }),
+      );
+
+      expect(entry.locales).toEqual({
+        fr: { content: { title: 'Updated' }, path: 'posts/hello.fr.md' },
+      });
+    });
+
+    it('should leave the locale standing in for the default one out of the other locales', async () => {
+      /** @type {any} */
+      let receivedI18n;
+
+      const handler = vi.fn(({ entry }) => {
+        receivedI18n = entry.get('i18n').toJS();
+
+        return entry
+          .setIn(['data', 'title'], 'Updated')
+          .setIn(['i18n', 'ja', 'data', 'title'], '更新');
+      });
+
+      eventHookRegistry.add(/** @type {any} */ ({ name: 'preSave', handler }));
+
+      const entry = {
+        slug: 'hello',
+        locales: {
+          fr: { content: { title: 'Bonjour' }, path: 'posts/hello.fr.md' },
+          ja: { content: { title: 'こんにちは' }, path: 'posts/hello.ja.md' },
+        },
+      };
+
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry,
+          collection: { name: 'posts', _i18n: { defaultLocale: 'en' } },
+        }),
+      );
+
+      expect(receivedI18n).toEqual({ ja: { data: { title: 'こんにちは' } } });
+      expect(entry.locales).toEqual({
+        fr: { content: { title: 'Updated' }, path: 'posts/hello.fr.md' },
+        ja: { content: { title: '更新' }, path: 'posts/hello.ja.md' },
+      });
+    });
+
     it('should handle an entry with no locale at all', async () => {
       const handler = vi.fn();
 

@@ -88,7 +88,60 @@ describe('CodeEditor', () => {
 
     await expect.element(page.getByRole('textbox')).toHaveTextContent('puts 1');
     await expect.element(page.getByRole('combobox')).toHaveTextContent('Ruby');
-    await expect.poll(() => draft.currentValues._default['snippet.language']).toBe('ruby');
+    // Opening the entry leaves the missing language alone
+    await new Promise((resolve) => {
+      setTimeout(resolve, 200);
+    });
+    expect(draft.currentValues._default['snippet.language']).toBeUndefined();
+
+    // Editing the code stores the default language along with it
+    await page.getByRole('textbox').fill('puts 2');
+    await expect.poll(() => draft.currentValues._default['snippet.source']).toBe('puts 2');
+    expect(draft.currentValues._default['snippet.language']).toBe('ruby');
+  });
+
+  test('leaves the stored value as it is until the user edits it', async () => {
+    // A loaded entry has no placeholder for the object, only its flattened properties
+    const values = { 'snippet.code': 'x', 'snippet.lang': 'js' };
+    const { draft } = await renderEditor({ values: { ...values } });
+
+    await expect.element(page.getByRole('textbox')).toHaveTextContent('x');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 200);
+    });
+    expect({ ...draft.currentValues._default }).toEqual(values);
+
+    await page.getByRole('textbox').fill('y');
+    await expect.poll(() => draft.currentValues._default['snippet.code']).toBe('y');
+    expect(draft.currentValues._default.snippet).toEqual({});
+    expect(draft.currentValues._default['snippet.lang']).toBe('js');
+  });
+
+  test('gives a new value the default language', async () => {
+    // A new value comes with an empty code and language
+    const { draft } = await renderEditor({
+      config: { default_language: 'ruby' },
+      values: { snippet: {}, 'snippet.code': '', 'snippet.lang': '' },
+    });
+
+    await expect.element(page.getByRole('combobox')).toHaveTextContent('Ruby');
+    await expect.poll(() => draft.currentValues._default['snippet.lang']).toBe('ruby');
+    expect(draft.currentValues._default['snippet.code']).toBe('');
+  });
+
+  test('stores the code and language of a value missing from the draft once the user types', async () => {
+    const { draft } = await renderEditor({ values: {} });
+
+    await expect.element(page.getByRole('textbox')).toHaveTextContent('');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 200);
+    });
+    expect({ ...draft.currentValues._default }).toEqual({});
+
+    await page.getByRole('textbox').fill('hello');
+    await expect.poll(() => draft.currentValues._default['snippet.code']).toBe('hello');
+    expect(draft.currentValues._default.snippet).toEqual({});
+    expect(draft.currentValues._default['snippet.lang']).toBe('plain');
   });
 
   test('stores the code only when configured so', async () => {
@@ -121,9 +174,17 @@ describe('CodeEditor', () => {
       values: { snippet: 'not an object', 'snippet.lang': 123 },
     });
 
+    await expect.element(page.getByRole('textbox').last()).toHaveTextContent('');
+    // Nothing is replaced until the user edits the value
+    await new Promise((resolve) => {
+      setTimeout(resolve, 200);
+    });
+    expect(other.currentValues._default.snippet).toBe('not an object');
+
+    await page.getByRole('textbox').last().fill('code');
     await expect.poll(() => other.currentValues._default.snippet).toEqual({});
-    expect(other.currentValues._default['snippet.code']).toBe('');
-    // The language selector falls back to plain text
+    expect(other.currentValues._default['snippet.code']).toBe('code');
+    // The language falls back to the default, plain text
     expect(other.currentValues._default['snippet.lang']).toBe('plain');
     expect(draft.currentValues._default.snippet).toBeUndefined();
   });

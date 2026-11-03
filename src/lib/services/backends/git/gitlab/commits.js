@@ -145,6 +145,9 @@ export const commitChanges = async (changes, options) => {
       await fetchAPI(endpoint, {
         method: 'POST',
         body: startBranch ? { ...body, start_branch: startBranch, ...startProject } : body,
+        // The commit can be sent again after a transient error: one that has already landed is
+        // refused, as a created file then exists and a changed file has a newer last commit
+        retryable: true,
       })
     );
   } catch (/** @type {any} */ ex) {

@@ -292,6 +292,45 @@ describe('getCollectionFilesByEntry()', () => {
     expect(result).toHaveLength(0);
   });
 
+  test('matches a file by any locale’s path of the entry', () => {
+    // Only the French file exists
+    const entry = {
+      slug: 'about',
+      subPath: '',
+      locales: { fr: { path: 'content/about.fr.md', slug: 'about', content: {} } },
+      id: 'about-id',
+    };
+
+    const _i18n = { defaultLocale: 'en', omitDefaultLocaleFromFilePath: false };
+
+    const aboutFile = {
+      name: 'about',
+      file: '/content/about.{{locale}}.md',
+      fields: [],
+      _file: { fullPath: 'content/about.en.md' },
+      _i18n,
+    };
+
+    const contactFile = {
+      name: 'contact',
+      file: 'content/contact.{{locale}}.md',
+      fields: [],
+      _file: { fullPath: 'content/contact.en.md' },
+      _i18n,
+    };
+
+    const collection = {
+      name: 'pages',
+      _type: 'file',
+      _i18n,
+      _fileMap: { about: aboutFile, contact: contactFile },
+    };
+
+    expect(
+      getCollectionFilesByEntry(/** @type {any} */ (collection), /** @type {any} */ (entry)),
+    ).toEqual([aboutFile]);
+  });
+
   test('returns empty array when no files match', () => {
     const entry = {
       slug: 'test-entry',

@@ -127,6 +127,26 @@ describe('flattenKeys()', () => {
       hidden: { 0: 'x', 1: { 2: 'y' } },
     });
   });
+
+  test('keeps a `__proto__` key as an own property', () => {
+    // A key that a KeyValue field or a parsed file can hold, unlike one in an object literal
+    const map = flattenKeys(JSON.parse('{ "__proto__": "a", "kv": { "__proto__": "b" } }'));
+
+    expect(Object.getPrototypeOf(map)).toBe(Object.prototype);
+    expect(Object.keys(map)).toEqual(['__proto__', 'kv.__proto__']);
+    expect(Object.getOwnPropertyDescriptor(map, '__proto__')?.value).toBe('a');
+    expect(map['kv.__proto__']).toBe('b');
+    // The placeholder for an object with an index-like key, and an empty value at a prefix
+    expect(
+      Object.getOwnPropertyDescriptor(
+        flattenKeys(JSON.parse('{ "__proto__": { "1": "c" } }')),
+        '__proto__',
+      )?.value,
+    ).toEqual({});
+    expect(
+      Object.getOwnPropertyDescriptor(flattenKeys({}, '__proto__'), '__proto__')?.value,
+    ).toEqual({});
+  });
 });
 
 describe('hasIndexLikeChildKey()', () => {
@@ -220,6 +240,36 @@ describe('unflattenKeys()', () => {
 
     expect(result).toEqual({ a: { '': 'x', date } });
     expect(result.a.date).toBe(date);
+  });
+
+  test('keeps a `__proto__` key as an own property without polluting any prototype', () => {
+    const result = unflattenKeys(
+      JSON.parse('{ "__proto__": "a", "kv.__proto__": "b", "x.__proto__.polluted": true }'),
+    );
+
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(Object.keys(result)).toEqual(['__proto__', 'kv', 'x']);
+    expect(Object.getOwnPropertyDescriptor(result, '__proto__')?.value).toBe('a');
+    expect(Object.getPrototypeOf(result.kv)).toBe(Object.prototype);
+    expect(Object.getOwnPropertyDescriptor(result.kv, '__proto__')?.value).toBe('b');
+    expect(Object.getPrototypeOf(result.x)).toBe(Object.prototype);
+    expect(Object.getOwnPropertyDescriptor(result.x, '__proto__')?.value).toEqual({
+      polluted: true,
+    });
+    expect(/** @type {any} */ ({}).polluted).toBeUndefined();
+  });
+
+  test('round-trips a `__proto__` key along with escaped and numeric string keys', () => {
+    const value = JSON.parse('{ "kv": { "__proto__": { "a.b": 1, "01": 2 } } }');
+    const result = unflattenKeys(flattenKeys(value));
+
+    expect(Object.getOwnPropertyDescriptor(result.kv, '__proto__')?.value).toEqual({
+      'a.b': 1,
+      '01': 2,
+    });
+    expect(
+      Object.getOwnPropertyDescriptor(unflattenMap(flattenKeys(value)).kv, '__proto__')?.value,
+    ).toEqual({ 'a.b': 1, '01': 2 });
   });
 });
 

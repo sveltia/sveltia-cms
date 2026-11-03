@@ -105,6 +105,21 @@ const renewUniqueValues = (obj, fields, renewedUuids) => {
 };
 
 /**
+ * Remove the original key paths of the given duplicated list item and the items of the lists
+ * nested in it, in place. A duplicated or pasted item is a new one, so it mustn’t keep the original
+ * positions of its source, or a revert would treat it as the source item.
+ * @param {any} value Item or a value in it.
+ */
+const removeOriginalKeyPaths = (value) => {
+  if (Array.isArray(value)) {
+    value.forEach(removeOriginalKeyPaths);
+  } else if (isObject(value)) {
+    delete value.__sc_item_original_key_path;
+    Object.values(value).forEach(removeOriginalKeyPaths);
+  }
+};
+
+/**
  * Get the initial expander states of a List field with subfield(s) and its items.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -186,6 +201,8 @@ export const createListItem = ({
     if (sourceItem !== undefined || isDuplicate) {
       const item = structuredClone(isDuplicate ? valueList[dupIndex] : sourceItem);
 
+      removeOriginalKeyPaths(item);
+
       if (hasSingleSubField && field) {
         return renewUniqueValue(item, field, renewedUuids);
       }
@@ -214,9 +231,6 @@ export const createListItem = ({
     // Add a random ID to the new item to ensure it is unique. This is necessary for the `key`
     // attribute in the `each` block.
     newItem.__sc_item_id = crypto.randomUUID();
-    // A duplicated or pasted item is a new one, so it mustn’t keep the original position of its
-    // source, or a revert would treat it as the source item
-    delete newItem.__sc_item_original_key_path;
 
     // Track original key paths for existing items before they shift due to the insertion
     tagListItems(valueList, keyPath);

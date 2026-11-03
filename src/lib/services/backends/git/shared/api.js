@@ -281,6 +281,7 @@ export const fetchAPI = async (
     responseType = 'json',
     token = undefined,
     refreshToken = undefined,
+    retryable = undefined,
   } = {},
 ) => {
   const {
@@ -313,6 +314,7 @@ export const fetchAPI = async (
     },
     {
       responseType,
+      retryable,
       refreshAccessToken: refreshToken
         ? () =>
             withTokenRefreshLock(async () => {
@@ -349,11 +351,14 @@ export const fetchAPI = async (
  * the query. Variables can also be passed as an argument to override the defaults.
  * @param {string} query Query string.
  * @param {Record<string, any>} [variables] Any variable to be applied.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.retryable] Whether the request can be sent again after a transient
+ * error. See {@link sendRequest}.
  * @returns {Promise<Record<string, any>>} Response data.
  * @see https://docs.github.com/en/graphql
  * @see https://docs.gitlab.com/api/graphql/
  */
-export const fetchGraphQL = async (query, variables = {}) => {
+export const fetchGraphQL = async (query, variables = {}, { retryable } = {}) => {
   // Normalize the query by removing line breaks and subsequent space characters. We must be careful
   // as file paths may contain spaces.
   query = query.replace(/\n\s*/g, ' ');
@@ -367,7 +372,7 @@ export const fetchGraphQL = async (query, variables = {}) => {
 
   // Extract `data` from the response
   const { data } = await /** @type {Promise<{ data: Record<string, any> }>} */ (
-    fetchAPI('', { method: 'POST', body: { query, variables }, isGraphQL: true })
+    fetchAPI('', { method: 'POST', body: { query, variables }, isGraphQL: true, retryable })
   );
 
   return data;

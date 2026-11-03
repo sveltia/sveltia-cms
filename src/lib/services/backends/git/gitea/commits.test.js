@@ -239,6 +239,7 @@ describe('Gitea Commits Service', () => {
             },
           ],
         },
+        retryable: true,
       });
 
       expect(createCommitMessageMock).toHaveBeenCalledWith(mockChanges, mockOptions);
@@ -317,6 +318,7 @@ describe('Gitea Commits Service', () => {
             },
           ],
         },
+        retryable: true,
       });
     });
 
@@ -370,6 +372,7 @@ describe('Gitea Commits Service', () => {
             },
           ],
         },
+        retryable: true,
       });
     });
 
@@ -679,6 +682,7 @@ describe('Gitea Commits Service', () => {
             },
           ],
         },
+        retryable: true,
       });
     });
 

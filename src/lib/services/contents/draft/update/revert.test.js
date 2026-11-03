@@ -992,9 +992,62 @@ describe('draft/update/revert', () => {
         originalPrefix: 'sections.0.items.0',
       });
     });
+
+    it('should resolve the items of an outer and a nested list that have both moved', () => {
+      // Item A moved from `sections.0` to `sections.1`, then its nested list was changed, which
+      // tagged its nested items with their key paths at that time
+      const valueMap = {
+        'sections.0.__sc_item_original_key_path': 'sections.1',
+        'sections.1.__sc_item_original_key_path': 'sections.0',
+        'sections.1.items.0.__sc_item_original_key_path': 'sections.1.items.1',
+        'sections.1.items.1.__sc_item_original_key_path': 'sections.1.items.0',
+      };
+
+      expect(resolveOriginalKeyPath(valueMap, 'sections.1.items.0.title')).toEqual({
+        originalKeyPath: 'sections.0.items.1.title',
+        currentPrefix: 'sections.1.items.0',
+        originalPrefix: 'sections.0.items.1',
+      });
+
+      // The nested items were tagged before A moved
+      valueMap['sections.1.items.0.__sc_item_original_key_path'] = 'sections.0.items.1';
+
+      expect(resolveOriginalKeyPath(valueMap, 'sections.1.items.0.title')).toEqual({
+        originalKeyPath: 'sections.0.items.1.title',
+        currentPrefix: 'sections.1.items.0',
+        originalPrefix: 'sections.0.items.1',
+      });
+    });
   });
 
   describe('isFieldChanged', () => {
+    it('should compare a nested item of a moved item with its own original value', () => {
+      const originalValueMap = {
+        'sections.0.items.0.title': 'A1',
+        'sections.0.items.1.title': 'A2',
+        'sections.1.items.0.title': 'B1',
+      };
+
+      // Item A moved to `sections.1`, then a new item was added to the top of its nested list
+      const currentValueMap = {
+        'sections.0.__sc_item_original_key_path': 'sections.1',
+        'sections.0.items.0.title': 'B1',
+        'sections.1.__sc_item_original_key_path': 'sections.0',
+        'sections.1.items.0.title': 'New',
+        'sections.1.items.1.__sc_item_original_key_path': 'sections.1.items.0',
+        'sections.1.items.1.title': 'A1',
+        'sections.1.items.2.__sc_item_original_key_path': 'sections.1.items.1',
+        'sections.1.items.2.title': 'A2',
+      };
+
+      expect(
+        isFieldChanged({ currentValueMap, originalValueMap, keyPath: 'sections.1.items.1.title' }),
+      ).toBe(false);
+      expect(
+        isFieldChanged({ currentValueMap, originalValueMap, keyPath: 'sections.1.items.2.title' }),
+      ).toBe(false);
+    });
+
     it('should compare the value of a simple field', () => {
       expect(
         isFieldChanged({

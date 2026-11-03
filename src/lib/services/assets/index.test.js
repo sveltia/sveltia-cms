@@ -2670,6 +2670,128 @@ describe('assets/index', () => {
       // The resolved `public_folder` prefix is stripped, leaving only the file name
       expect(createPath).toHaveBeenCalledWith(['assets/realisations/my-project', 'photo-1.jpg']);
     });
+
+    describe('with the global folder tags in the collection folders', () => {
+      const entry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        locales: {
+          en: {
+            path: 'src/content/blog/my-post.md',
+            sha: 'sha123',
+            slug: 'my-post',
+            content: { title: 'My Post' },
+          },
+        },
+      });
+
+      /**
+       * Find an asset with the given collection folders and global configuration.
+       * @param {object} args
+       * @param {string} args.path
+       * @param {string} args.assetPath
+       * @param {Record<string, any>} args.folders
+       * @param {Record<string, any> | undefined} args.config
+       * @returns {Promise<any>}
+       */
+      const findAsset = async ({ path, assetPath, folders, config }) => {
+        const { resolvePath, createPath } = await import('$lib/services/utils/file');
+        const { stripSlashes } = await import('@sveltia/utils/string');
+        const { cmsConfig } = await import('$lib/services/config/state');
+
+        const actual = /** @type {Record<string, any>} */ (
+          await vi.importActual('@sveltia/utils/string')
+        );
+
+        vi.mocked(stripSlashes).mockImplementation(actual.stripSlashes);
+        vi.mocked(createPath).mockImplementation((segments) => segments.filter(Boolean).join('/'));
+        vi.mocked(resolvePath).mockImplementation((p) => p);
+        cmsConfig.current = /** @type {any} */ (config);
+        allAssets.current = [/** @type {any} */ ({ path: assetPath, name: 'photo.jpg' })];
+
+        try {
+          return getAssetByRelativePathAndCollection({
+            path,
+            entry,
+            collection: /** @type {any} */ ({
+              name: 'blog',
+              folder: 'src/content/blog',
+              ...folders,
+              _i18n: { defaultLocale: 'en' },
+            }),
+          });
+        } finally {
+          cmsConfig.current = undefined;
+        }
+      };
+
+      it('should replace `{{media_folder}}` with the global media folder', async () => {
+        const result = await findAsset({
+          path: '../../assets/images/blog/photo.jpg',
+          assetPath: 'src/assets/images/blog/photo.jpg',
+          folders: {
+            media_folder: '{{media_folder}}/blog',
+            public_folder: '../../assets/images/blog',
+          },
+          config: { media_folder: 'src/assets/images', public_folder: '/images' },
+        });
+
+        expect(result?.path).toBe('src/assets/images/blog/photo.jpg');
+      });
+
+      it('should replace `{{public_folder}}` with the global public folder', async () => {
+        const result = await findAsset({
+          path: '/images/blog/photo.jpg',
+          assetPath: 'src/assets/images/blog/photo.jpg',
+          folders: {
+            media_folder: '{{media_folder}}/blog',
+            public_folder: '{{public_folder}}/blog',
+          },
+          config: { media_folder: 'src/assets/images', public_folder: '/images' },
+        });
+
+        expect(result?.path).toBe('src/assets/images/blog/photo.jpg');
+      });
+
+      it('should not add a slash before a global public folder starting with `@`', async () => {
+        const result = await findAsset({
+          path: '@assets/blog/photo.jpg',
+          assetPath: 'src/assets/blog/photo.jpg',
+          folders: {
+            media_folder: '{{media_folder}}/blog',
+            public_folder: '{{public_folder}}/blog',
+          },
+          config: { media_folder: 'src/assets', public_folder: '@assets' },
+        });
+
+        expect(result?.path).toBe('src/assets/blog/photo.jpg');
+      });
+
+      it('should leave the tags as they are without the global media folder', async () => {
+        const { fillTemplate } = await import('$lib/services/common/template');
+
+        vi.mocked(fillTemplate).mockReturnValue('');
+
+        const withoutGlobalFolder = await findAsset({
+          path: 'photo.jpg',
+          assetPath: 'src/content/blog/photo.jpg',
+          folders: { media_folder: '{{media_folder}}/blog' },
+          config: { public_folder: '/images' },
+        });
+
+        const withoutConfig = await findAsset({
+          path: 'photo.jpg',
+          assetPath: 'src/content/blog/photo.jpg',
+          folders: { media_folder: '{{media_folder}}/blog' },
+          config: undefined,
+        });
+
+        // The tags are then filled in as entry template tags, as before
+        expect(fillTemplate).toHaveBeenCalledWith('{{media_folder}}/blog', expect.anything());
+        expect(withoutGlobalFolder?.path).toBe('src/content/blog/photo.jpg');
+        expect(withoutConfig?.path).toBe('src/content/blog/photo.jpg');
+      });
+    });
   });
 
   describe('entry-relative assets with a locale folder per locale', () => {

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import dayjsAdvancedFormat from 'dayjs/plugin/advancedFormat';
 import dayjsCustomParseFormat from 'dayjs/plugin/customParseFormat';
 import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
 import dayjsTimeZone from 'dayjs/plugin/timezone';
@@ -29,6 +30,7 @@ import {
  * @import { DateTimeField } from '$lib/types/public';
  */
 
+dayjs.extend(dayjsAdvancedFormat);
 dayjs.extend(dayjsCustomParseFormat);
 dayjs.extend(dayjsLocalizedFormat);
 dayjs.extend(dayjsUTC);

@@ -3,6 +3,7 @@ import { SvelteSet } from 'svelte/reactivity';
 
 import { createLazyModule } from '$lib/services/api/lazy-module';
 import { loadModule } from '$lib/services/app/dependencies';
+import { getListItemMatcher } from '$lib/services/contents/draft/create/proxy.svelte';
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
 import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
@@ -24,6 +25,12 @@ import { escapeHTML } from '$lib/services/utils/string';
  * LocaleContentMap,
  * } from '$lib/types/private';
  * @import { Field, FieldKeyPath, ListField, RichTextField } from '$lib/types/public';
+ */
+
+/**
+ * @typedef {object} OwnerField
+ * @property {FieldKeyPath} keyPath Key path of the field.
+ * @property {Field} field Field configuration.
  */
 
 /**
@@ -139,31 +146,46 @@ const decodeHTMLEntities = (text) =>
 const LIST_ITEM_KEY_PATH_REGEX = /^(.+)\.\d+$/;
 
 /**
- * Get the `i18n` option that decides whether a field can be copied or translated from another
- * locale. Like the editor (`getFieldLocaleAccess()`), the validator and the default values, it’s
- * the field’s own option, so a subfield without one isn’t written in a locale where the editor
- * hides it, even if the List or Object field it belongs to is translatable. An item of a List field
- * without subfields has no configuration of its own, so it takes the option of the List field,
- * which the editor shows as a whole.
+ * Get the field that owns the value at the given key path. It’s the field configured for the key
+ * path, except for an item of a List field without subfields, which has no configuration of its own
+ * and goes along with the List field, which the editor shows as a whole.
  * @param {object} args Arguments.
  * @param {Field | undefined} args.field Field configuration, if the key path has one.
  * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
- * path of the field.
- * @returns {Field['i18n']} Option.
+ * path of the value.
+ * @returns {OwnerField | undefined} Key path and configuration of the owner field, or `undefined`
+ * if the value has none.
  */
-const getCopyI18nOption = ({ field, getFieldArgs }) => {
+const getOwnerField = ({ field, getFieldArgs }) => {
+  const { keyPath } = getFieldArgs;
+
   if (field) {
-    return field.i18n;
+    return { keyPath, field };
   }
 
-  const [, listKeyPath] = getFieldArgs.keyPath.match(LIST_ITEM_KEY_PATH_REGEX) ?? [];
+  const [, listKeyPath] = keyPath.match(LIST_ITEM_KEY_PATH_REGEX) ?? [];
   const listField = listKeyPath ? getField({ ...getFieldArgs, keyPath: listKeyPath }) : undefined;
 
   return listField?.widget === 'list' &&
     !getListFieldInfo(/** @type {ListField} */ (listField)).hasSubFields
-    ? listField.i18n
+    ? { keyPath: listKeyPath, field: listField }
     : undefined;
 };
+
+/**
+ * Check if the value owned by the given field can be written into the target locale’s content. A
+ * value inside the items of a translatable List field is only written where the target locale has
+ * the same item, of the same type, so that no stray item is created there or a value written into
+ * an unrelated item. An item of a List field without subfields is owned by the List field, so only
+ * the items the List field belongs to have to exist. See {@link getListItemMatcher}.
+ * @param {object} args Arguments.
+ * @param {OwnerField} args.owner Owner field of the value, as returned by {@link getOwnerField}.
+ * @param {Omit<GetFieldArgs, 'keyPath'>} args.getFieldArgs Arguments for the `getField` function.
+ * @param {Record<FieldKeyPath, any>} args.content Content of the target locale.
+ * @returns {boolean} Result.
+ */
+const canWriteInLocale = ({ owner: { keyPath, field }, getFieldArgs, content }) =>
+  getListItemMatcher({ fieldConfig: field, getFieldArgs: { ...getFieldArgs, keyPath } })(content);
 
 /**
  * Get a list of fields to be copied or translated from the source locale to the target locale.
@@ -181,18 +203,27 @@ export const getCopyingFieldMap = ({ draft, options }) => {
   return Object.fromEntries(
     Object.entries(valueMap)
       .map(([_keyPath, value]) => {
+        if (keyPath && !isKeyPathWithin(_keyPath, keyPath)) {
+          return null;
+        }
+
         const targetLocaleValue = currentValues[targetLanguage][_keyPath];
         const field = getField({ ...getFieldArgs, keyPath: _keyPath });
         const fieldType = field?.widget ?? 'string';
 
+        const owner = getOwnerField({
+          field,
+          getFieldArgs: { ...getFieldArgs, keyPath: _keyPath },
+        });
+
         if (
-          (keyPath && !isKeyPathWithin(_keyPath, keyPath)) ||
           // Only a translatable field has a value of its own in each locale: a field that isn’t
           // localized is only saved in the default locale, and a duplicated one can’t be edited
-          // in the other locales
-          !isFieldTranslatable(
-            getCopyI18nOption({ field, getFieldArgs: { ...getFieldArgs, keyPath: _keyPath } }),
-          ) ||
+          // in the other locales. Like the editor (`getFieldLocaleAccess()`), the validator and the
+          // default values, it’s the owner field’s own `i18n` option, so a subfield without one
+          // isn’t written in a locale where the editor hides it, even if the List or Object field
+          // it belongs to is translatable
+          !isFieldTranslatable(owner?.field.i18n) ||
           typeof value !== 'string' ||
           !value ||
           ![...TEXT_FIELD_TYPES, 'list'].includes(fieldType) ||
@@ -206,7 +237,13 @@ export const getCopyingFieldMap = ({ draft, options }) => {
           (!keyPath &&
             translate &&
             !!targetLocaleValue &&
-            !(!!field && isDuplicateIfEmptyField(field) && value === targetLocaleValue))
+            !(!!field && isDuplicateIfEmptyField(field) && value === targetLocaleValue)) ||
+          // The owner field is there, as a value without one isn’t translatable
+          !canWriteInLocale({
+            owner: /** @type {OwnerField} */ (owner),
+            getFieldArgs,
+            content: currentValues[targetLanguage],
+          })
         ) {
           return null;
         }

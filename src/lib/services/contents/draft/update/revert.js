@@ -23,33 +23,43 @@ import { isNumeric } from '$lib/services/utils/number';
 /**
  * Resolve the original key path for a field that may be inside a reordered list item. When list
  * items are reordered, added, or removed, each item’s `__sc_item_original_key_path` property tracks
- * where it was originally located.
+ * where it was originally located. Every list item along the key path is resolved, as an item of a
+ * nested list keeps its original index in its own list, while the item holding that list may have
+ * moved as well. Only the index is taken from each tag, since the tag holds the key path at the
+ * time the item was tagged, which may come before or after an outer item was moved.
  * @param {Record<string, any>} valueMap Current flat value map for the locale.
  * @param {FieldKeyPath} keyPath Current field key path.
  * @returns {{ originalKeyPath: FieldKeyPath, currentPrefix: string, originalPrefix: string } |
- * undefined} The resolved paths, or `undefined` if no remapping is needed.
+ * undefined} The resolved paths, or `undefined` if no remapping is needed. The prefixes are the
+ * current and original key paths of the innermost tagged list item.
  */
 export const resolveOriginalKeyPath = (valueMap, keyPath) => {
   const parts = keyPath.split('.');
+  const originalParts = [...parts];
+  let innermostIndex = 0;
 
-  for (let i = parts.length - 1; i >= 1; i -= 1) {
-    if (isNumeric(parts[i])) {
-      const itemPrefix = parts.slice(0, i + 1).join('.');
-      const originalPrefix = valueMap[`${itemPrefix}.__sc_item_original_key_path`];
+  parts.forEach((part, i) => {
+    if (i >= 1 && isNumeric(part)) {
+      /** @type {string | undefined} */
+      const originalItemKeyPath =
+        valueMap[`${parts.slice(0, i + 1).join('.')}.__sc_item_original_key_path`];
 
-      if (originalPrefix !== undefined) {
-        const suffix = parts.slice(i + 1).join('.');
-
-        return {
-          originalKeyPath: suffix ? `${originalPrefix}.${suffix}` : originalPrefix,
-          currentPrefix: itemPrefix,
-          originalPrefix,
-        };
+      if (originalItemKeyPath !== undefined) {
+        originalParts[i] = /** @type {string} */ (originalItemKeyPath.split('.').at(-1));
+        innermostIndex = i;
       }
     }
+  });
+
+  if (!innermostIndex) {
+    return undefined;
   }
 
-  return undefined;
+  return {
+    originalKeyPath: originalParts.join('.'),
+    currentPrefix: parts.slice(0, innermostIndex + 1).join('.'),
+    originalPrefix: originalParts.slice(0, innermostIndex + 1).join('.'),
+  };
 };
 
 /**

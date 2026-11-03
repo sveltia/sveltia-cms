@@ -289,6 +289,22 @@ describe('getDateTimeFieldDisplayValue', () => {
     }
   });
 
+  test('shows a value in a custom format with advanced Day.js tokens as written', () => {
+    [
+      ['X', '1782865800'],
+      ['x', '1782865800000'],
+      ['MMMM Do, YYYY', 'July 1st, 2026'],
+    ].forEach(([format, currentValue]) => {
+      expect(
+        getDateTimeFieldDisplayValue({
+          locale: 'en',
+          fieldConfig: { ...baseFieldConfig, format },
+          currentValue,
+        }),
+      ).toBe(currentValue);
+    });
+  });
+
   test('shows the stored date of a date-only field with a custom input time zone', () => {
     const { TZ } = process.env;
 

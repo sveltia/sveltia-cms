@@ -63,19 +63,21 @@ export const appLogoType = createDerivedState(() => {
  * generate the app icon for the CMS manifest and Apple touch icon.
  * @param {Blob} blob Original image blob.
  * @param {InternalImageTransformationOptions} options Transformation options.
- * @returns {Promise<string>} Data URL of the transformed image.
+ * @returns {Promise<string>} Data URL of the transformed image. Its type is the transformed blob’s,
+ * as the thumbnail options let another format stand in where WebP can’t be encoded natively.
  */
 const getDataURL = async (blob, options) => {
   const transformedBlob = await transformImage(blob, options);
   const data = await encodeBase64(transformedBlob);
 
-  return `data:image/webp;base64,${data}`;
+  return `data:${transformedBlob.type};base64,${data}`;
 };
 
 /**
- * The app icon URL, derived from the app logo URL. It generates a WebP thumbnail of the logo for
- * use in the app manifest and as the Apple touch icon. If the transformation fails, it falls back
- * to no icon. The available sizes are 192x192 and 512x512, which are recommended for PWA support.
+ * The app icon URL, derived from the app logo URL. It generates a WebP thumbnail of the logo, or a
+ * PNG or JPEG one where WebP can’t be encoded natively, for use in the app manifest and as the
+ * Apple touch icon. If the transformation fails, it falls back to no icon. The available sizes are
+ * 192x192 and 512x512, which are recommended for PWA support.
  * @type {{ current: { small: string, large: string } | undefined }}
  * @see https://developer.chrome.com/docs/lighthouse/pwa/installable-manifest
  */
@@ -136,6 +138,8 @@ export const appManifestURL = createDerivedState(() => {
   }
 
   const { origin, pathname } = window.location;
+  // Both icons are transformed the same way, so they have the same type
+  const type = /** @type {RegExpMatchArray} */ (iconURLs.small.match(IMAGE_DATA_URL_REGEX))[1];
 
   const manifest = {
     name: title,
@@ -143,8 +147,8 @@ export const appManifestURL = createDerivedState(() => {
     start_url: `${origin}${pathname}`,
     display: 'standalone',
     icons: [
-      { src: iconURLs.small, sizes: '192x192', type: 'image/webp' },
-      { src: iconURLs.large, sizes: '512x512', type: 'image/webp' },
+      { src: iconURLs.small, sizes: '192x192', type },
+      { src: iconURLs.large, sizes: '512x512', type },
     ],
   };
 

@@ -62,6 +62,15 @@
   const langKeyPath = $derived(`${keyPath}.${outputKeys.lang}`);
 
   /**
+   * Values of {@link code} and {@link lang} right after they were last synced with the draft. The
+   * value is only written back once the user has changed either of them, so opening an entry
+   * doesn’t add the object placeholder or the default language to the stored value, which would
+   * mark the draft as modified. A new value comes with an empty language, though, which is
+   * replaced with the default one right away.
+   */
+  let syncedInputValues = { code: '', lang: '' };
+
+  /**
    * Update {@link code} and {@link lang} based on {@link currentValue}.
    */
   const setInputValue = () => {
@@ -84,10 +93,14 @@
       }
 
       if (typeof _lang !== 'string') {
-        lang = '';
+        // Fall back to the default language rather than an empty one, which the editor replaces
+        // with `plain` on its own, as if the user had picked it
+        lang = defaultLanguage;
       } else if (lang !== _lang) {
         lang = _lang;
       }
+
+      syncedInputValues = { code, lang: valueMap[langKeyPath] === '' ? '' : lang };
     }
   };
 
@@ -103,12 +116,18 @@
       return;
     }
 
+    if (code === syncedInputValues.code && lang === syncedInputValues.lang) {
+      return;
+    }
+
     const draft = entryDraft.current;
 
     /* v8 ignore next 3 -- the editor is only rendered while the draft is there */
     if (!draft) {
       return;
     }
+
+    syncedInputValues = { code, lang };
 
     /** @type {Record<string, any>} */
     const updates = {};
@@ -125,6 +144,7 @@
       updates[langKeyPath] = lang;
     }
 
+    /* v8 ignore next 3 -- only when a change is undone before the previous one reaches the draft */
     if (!Object.keys(updates).length) {
       return;
     }

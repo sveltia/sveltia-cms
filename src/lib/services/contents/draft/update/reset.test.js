@@ -256,6 +256,35 @@ describe('Test resetField()', () => {
     });
   });
 
+  test('should reset the items of a paired List field in the other locales as well', () => {
+    /** @type {Field} */
+    const fieldConfig = {
+      name: 'speakers',
+      widget: 'list',
+      i18n: true,
+      default: [{ name: 'Host' }],
+      fields: [
+        { name: 'name', widget: 'string', i18n: 'duplicate' },
+        { name: 'bio', widget: 'string', i18n: true },
+      ],
+    };
+
+    const draft = createDraft({
+      en: { 'speakers.0.name': 'Ann', 'speakers.0.bio': 'Hi', 'speakers.1.name': 'Bob' },
+      fr: { 'speakers.0.name': 'Ann', 'speakers.0.bio': 'Salut', 'speakers.1.name': 'Bob' },
+    });
+
+    // The items are paired across the locales, so they’re removed from every locale at once
+    resetField({ draft, fieldConfig, keyPath: 'speakers', locale: 'en' });
+    expect(draft.currentValues.en).toEqual({ speakers: [] });
+    expect(draft.currentValues.fr).toEqual({ speakers: [] });
+
+    // Restoring gives every locale the default items
+    resetField({ draft, fieldConfig, keyPath: 'speakers', locale: 'en', restore: true });
+    expect(draft.currentValues.en).toMatchObject({ 'speakers.0.name': 'Host' });
+    expect(draft.currentValues.fr).toEqual(draft.currentValues.en);
+  });
+
   test('should clear a field duplicated along with an ancestor in the other locales', () => {
     const values = { 'venue.name': 'Hall', 'venue.rooms.0': 'r1' };
     const draft = createDraft({ en: { ...values }, fr: { ...values } });

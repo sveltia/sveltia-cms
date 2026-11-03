@@ -294,9 +294,13 @@ describe('GitHub commits service', () => {
       // Only the commit mutation, with no request to look the branch head up first
       expect(fetchGraphQL).toHaveBeenCalledTimes(1);
 
-      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('createCommitOnBranch'), {
-        input: expect.objectContaining({ expectedHeadOid: 'known-head-sha' }),
-      });
+      expect(fetchGraphQL).toHaveBeenCalledWith(
+        expect.stringContaining('createCommitOnBranch'),
+        {
+          input: expect.objectContaining({ expectedHeadOid: 'known-head-sha' }),
+        },
+        { retryable: true },
+      );
     });
 
     test('expects the head the loaded site data reflects on the configured branch', async () => {
@@ -312,9 +316,13 @@ describe('GitHub commits service', () => {
 
       // No lookup: the known head is what the commit must go on top of
       expect(fetchGraphQL).toHaveBeenCalledTimes(1);
-      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('createCommitOnBranch'), {
-        input: expect.objectContaining({ expectedHeadOid: 'loaded-head-sha' }),
-      });
+      expect(fetchGraphQL).toHaveBeenCalledWith(
+        expect.stringContaining('createCommitOnBranch'),
+        {
+          input: expect.objectContaining({ expectedHeadOid: 'loaded-head-sha' }),
+        },
+        { retryable: true },
+      );
     });
 
     test('still looks the head up for a workflow branch', async () => {
@@ -338,6 +346,7 @@ describe('GitHub commits service', () => {
       expect(fetchGraphQL).toHaveBeenLastCalledWith(
         expect.stringContaining('createCommitOnBranch'),
         { input: expect.objectContaining({ expectedHeadOid: 'branch-head-sha' }) },
+        { retryable: true },
       );
     });
 
@@ -527,6 +536,7 @@ describe('GitHub commits service', () => {
             expectedHeadOid: 'base-sha',
           }),
         }),
+        { retryable: true },
       );
     });
 
@@ -1653,6 +1663,7 @@ describe('GitHub commits service', () => {
             },
           }),
         }),
+        { retryable: true },
       );
     });
 

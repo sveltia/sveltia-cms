@@ -118,6 +118,9 @@ export const pingURL = async (url, { recheckPending = false } = {}) => {
     ? request(url)
     : Promise.resolve(/** @type {PageLiveness} */ ('unknown'));
 
+  // Delete the entry first, as setting an existing key keeps its place in the insertion order,
+  // which {@link prune} goes by, and the page just checked could otherwise be the first to go
+  cache.delete(url);
   cache.set(url, { time: Date.now(), promise });
   prune();
 

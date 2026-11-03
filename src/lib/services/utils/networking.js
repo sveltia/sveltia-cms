@@ -43,6 +43,40 @@ export const isSecureURL = (
 };
 
 /**
+ * Check if a request can be sent again after a transient error without side effects: a `GET` or
+ * `HEAD` request, or a GraphQL query, which is sent with `POST` but only reads data. Any other
+ * request, including a GraphQL mutation, may have taken effect behind a gateway that still answered
+ * with an error, so sending it again could create a duplicate commit or deployment, or report a
+ * false conflict.
+ * @param {RequestInit} init Request options, with the body serialized or not.
+ * @returns {boolean} Whether the request is safe to retry.
+ */
+const isRetryableRequest = ({ method = 'GET', body }) => {
+  if (['GET', 'HEAD'].includes(method.toUpperCase())) {
+    return true;
+  }
+
+  /** @type {any} */
+  let data = body;
+
+  if (typeof body === 'string') {
+    try {
+      data = JSON.parse(body);
+    } catch {
+      return false;
+    }
+  }
+
+  // `fetchGraphQL` sends the query as a JSON `query` property, with line breaks removed. An
+  // operation without a keyword, e.g. `{ viewer { login } }`, is a query
+  return (
+    isObject(data) &&
+    typeof data.query === 'string' &&
+    !/^\s*(?:#[^\n]*\n\s*)*mutation\b/.test(data.query)
+  );
+};
+
+/**
  * A `fetch` wrapper to send an HTTP request to an API endpoint, parse the response as JSON or other
  * specified format, and handle errors gracefully.
  * @param {string} url URL.
@@ -55,6 +89,10 @@ export const isSecureURL = (
  * the request will be retried with the new token.
  * @param {number} [options.retries] Number of remaining retries for transient server errors (5xx).
  * Defaults to `1`. Used internally for recursive retries.
+ * @param {boolean} [options.retryable] Whether the request can be sent again after a transient
+ * error. The default is `true` for a request without side effects, as determined by
+ * {@link isRetryableRequest}. A request that writes data can opt in when the server refuses a
+ * repeat of a request that has already taken effect, like a commit guarded by the expected head.
  * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself,
  * depending on the `responseType` option.
  * @throws {Error} When there was an error in the request or response.
@@ -62,7 +100,12 @@ export const isSecureURL = (
 export const sendRequest = async (
   url,
   init = {},
-  { responseType = 'json', refreshAccessToken = undefined, retries = 1 } = {},
+  {
+    responseType = 'json',
+    refreshAccessToken = undefined,
+    retries = 1,
+    retryable = isRetryableRequest(init),
+  } = {},
 ) => {
   /** @type {Response} */
   let response;
@@ -104,7 +147,7 @@ export const sendRequest = async (
     headers.set('Authorization', `${scheme} ${token}`);
 
     // Retry the request with the new token. Omit `refreshAccessToken` to avoid infinite loops.
-    return sendRequest(url, init, { responseType });
+    return sendRequest(url, init, { responseType, retryable });
   };
 
   /**
@@ -114,13 +157,18 @@ export const sendRequest = async (
   const retryAfterDelay = async () => {
     await sleep(1000);
 
-    return sendRequest(url, init, { responseType, refreshAccessToken, retries: retries - 1 });
+    return sendRequest(url, init, {
+      responseType,
+      refreshAccessToken,
+      retries: retries - 1,
+      retryable,
+    });
   };
 
   // A raw response is returned as is for the caller to check the status, but a transient 502 error
   // is still retried and an expired token refreshed, the same as for the other response types
   if (responseType === 'raw') {
-    if (status === 502 && retries > 0) {
+    if (status === 502 && retries > 0 && retryable) {
       return retryAfterDelay();
     }
 
@@ -162,9 +210,9 @@ export const sendRequest = async (
 
   // Retry the request if the server responded with 502 Bad Gateway, which is a transient error that
   // may succeed on retry. This is especially relevant for the GitHub GraphQL API, which is known to
-  // occasionally return 502 errors.
+  // occasionally return 502 errors. Only a request without side effects is retried.
   // @see https://github.com/sveltia/sveltia-cms/issues/695
-  if (status === 502 && retries > 0) {
+  if (status === 502 && retries > 0 && retryable) {
     return retryAfterDelay();
   }
 

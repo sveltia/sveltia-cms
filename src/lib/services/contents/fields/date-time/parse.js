@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import dayjsAdvancedFormat from 'dayjs/plugin/advancedFormat';
 import dayjsCustomParseFormat from 'dayjs/plugin/customParseFormat';
 import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
 import dayjsTimeZone from 'dayjs/plugin/timezone';
@@ -12,6 +13,7 @@ import { getFormatLocale } from './locales.js';
  * @import { DateTimeField } from '$lib/types/public';
  */
 
+dayjs.extend(dayjsAdvancedFormat);
 dayjs.extend(dayjsCustomParseFormat);
 dayjs.extend(dayjsLocalizedFormat);
 dayjs.extend(dayjsUTC);
@@ -37,10 +39,10 @@ export const getParser = (utc) => (utc ? dayjs.utc : dayjs);
  */
 const OFFSET_SUFFIX_REGEX = /\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}(?::?\d{2})?)$/i;
 /**
- * Match an offset token (`Z` or `ZZ`) in a Day.js format, once the escaped text in square brackets
- * has been removed.
+ * Match an offset token (`Z` or `ZZ`) or a Unix timestamp token (`X` or `x`), which is an instant
+ * on its own too, in a Day.js format, once the escaped text in square brackets has been removed.
  */
-const FORMAT_OFFSET_TOKEN_REGEX = /Z/;
+const FORMAT_OFFSET_TOKEN_REGEX = /[XxZ]/;
 /**
  * Match a time token in a Day.js format, including a localized format with a time and a Unix
  * timestamp, once the escaped text in square brackets has been removed.
