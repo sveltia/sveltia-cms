@@ -288,7 +288,9 @@ describe('ExternalAssetsPanel', () => {
 
   test('searches the assets', async () => {
     const list = vi.fn().mockResolvedValue(assets);
-    const search = vi.fn().mockResolvedValue([assets[1]]);
+    // Hold the first search so the transient “Searching…” state can be observed
+    const pending = Promise.withResolvers();
+    const search = vi.fn().mockReturnValueOnce(pending.promise);
 
     const props = $state({
       serviceProps: createMockCloudService({ list, search }),
@@ -301,6 +303,7 @@ describe('ExternalAssetsPanel', () => {
 
     props.searchTerms = ' b ';
     await expect.element(page.getByRole('alert')).toHaveTextContent('Searching…');
+    pending.resolve([assets[1]]);
     await waitForList(1);
     expect(search).toHaveBeenCalledWith('b', expect.anything());
 
