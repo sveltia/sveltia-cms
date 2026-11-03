@@ -165,7 +165,7 @@ describe('makeLink', () => {
     const result = makeLink('Link <a>here</a>', url);
 
     expect(result).toContain(
-      'href="https://example.com/path?q=&quot;test&quot;&amp;other=<value>"',
+      'href="https://example.com/path?q=&quot;test&quot;&amp;other=&lt;value&gt;"',
     );
   });
 
