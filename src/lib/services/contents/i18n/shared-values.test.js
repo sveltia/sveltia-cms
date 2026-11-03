@@ -1,10 +1,13 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { getField } from '$lib/services/contents/entry/fields';
 import {
   addSharedValues,
   getDraftSharedValues,
   getInheritedI18nOption,
+  isDuplicatedField,
   isFieldInLocale,
+  isSyncedField,
 } from '$lib/services/contents/i18n/shared-values';
 
 /**
@@ -23,6 +26,17 @@ const FIELDS = {
   tags: { name: 'tags', widget: 'list', i18n: true },
   kv: { name: 'kv', widget: 'keyvalue', i18n: true },
   ids: { name: 'ids', widget: 'list' },
+  meta: { name: 'meta', widget: 'object', i18n: 'duplicate' },
+  'meta.caption': { name: 'caption', widget: 'string', i18n: true },
+  'meta.box': { name: 'box', widget: 'object', i18n: true },
+  'meta.box.note': { name: 'note', widget: 'string' },
+  'meta.tags': { name: 'tags', widget: 'list' },
+  'meta.tags.label': { name: 'label', widget: 'string' },
+  blocks: { name: 'blocks', widget: 'list', i18n: true },
+  'blocks.text': { name: 'text', widget: 'string' },
+  refs: { name: 'refs', widget: 'list', i18n: 'sync' },
+  'refs.url': { name: 'url', widget: 'string' },
+  'refs.label': { name: 'label', widget: 'string', i18n: true },
 };
 
 /**
@@ -70,6 +84,47 @@ describe('getInheritedI18nOption()', () => {
         getFieldArgs: { ...getFieldArgs, keyPath: 'date', valueMap: {} },
       }),
     ).toBeUndefined();
+  });
+});
+
+/**
+ * Get the arguments to check the field at the given key path.
+ * @param {string} keyPath Key path.
+ * @returns {{ fieldConfig: any, getFieldArgs: any }} Arguments.
+ */
+const getCheckArgs = (keyPath) => ({
+  fieldConfig: FIELDS[keyPath.replace(/\.\d+/g, '')],
+  getFieldArgs: { ...getFieldArgs, keyPath, valueMap: {} },
+});
+
+describe('isDuplicatedField()', () => {
+  test('detects the field’s own `duplicate` or `sync` strategy', () => {
+    expect(isDuplicatedField(getCheckArgs('meta'))).toBe(true);
+    expect(isDuplicatedField(getCheckArgs('refs'))).toBe(true);
+    expect(isDuplicatedField(getCheckArgs('title'))).toBe(false);
+  });
+
+  test('lets an explicit `i18n` option of the field or a nearer ancestor win', () => {
+    expect(isDuplicatedField(getCheckArgs('meta.caption'))).toBe(false);
+    expect(isDuplicatedField(getCheckArgs('meta.box.note'))).toBe(false);
+  });
+
+  test('detects a duplicated ancestor, skipping the list item indexes', () => {
+    expect(isDuplicatedField(getCheckArgs('meta.tags'))).toBe(true);
+    expect(isDuplicatedField(getCheckArgs('meta.tags.0.label'))).toBe(true);
+    expect(isDuplicatedField(getCheckArgs('refs.0.url'))).toBe(true);
+    expect(isDuplicatedField(getCheckArgs('blocks.0.text'))).toBe(false);
+    expect(getField).not.toHaveBeenCalledWith(expect.objectContaining({ keyPath: 'blocks.0' }));
+  });
+});
+
+describe('isSyncedField()', () => {
+  test('detects the field’s own or an ancestor’s `sync` strategy only', () => {
+    expect(isSyncedField(getCheckArgs('refs'))).toBe(true);
+    expect(isSyncedField(getCheckArgs('refs.0.url'))).toBe(true);
+    expect(isSyncedField(getCheckArgs('refs.0.label'))).toBe(false);
+    expect(isSyncedField(getCheckArgs('sku'))).toBe(false);
+    expect(isSyncedField(getCheckArgs('meta.tags.0.label'))).toBe(false);
   });
 });
 

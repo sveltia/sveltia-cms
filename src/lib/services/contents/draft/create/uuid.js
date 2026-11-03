@@ -1,7 +1,7 @@
-import { isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getInitialValue } from '$lib/services/contents/fields/uuid/helpers';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
+import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import {

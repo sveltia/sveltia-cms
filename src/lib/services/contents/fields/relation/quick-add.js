@@ -1,28 +1,28 @@
 import { unique } from '@sveltia/utils/array';
-import { escapeRegExp } from '@sveltia/utils/string';
 
 import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { countQuotaEntries } from '$lib/services/contents/collection/entries/count';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
-import { getCollectionFile, getCollectionFileLabel } from '$lib/services/contents/collection/files';
-import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { getDraftValues, isDraftModified } from '$lib/services/contents/draft';
-import { getReferencedPendingEntrySet } from '$lib/services/contents/draft/pending-entries';
+import { restoreBackup } from '$lib/services/contents/draft/backup';
+import { buildDraft } from '$lib/services/contents/draft/create';
+import {
+  getNewPendingEntriesByCollection,
+  getPendingEntriesByCollection,
+  getReferencedPendingEntrySet,
+} from '$lib/services/contents/draft/pending-entries';
 import {
   createSavingEntryData,
   removeDisabledLocales,
 } from '$lib/services/contents/draft/save/changes';
 import { compareWithStore } from '$lib/services/contents/draft/save/conflict';
-import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
+import { assignSaveTimeValues } from '$lib/services/contents/draft/save/save-time';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
-import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
-import { getEntrySummary } from '$lib/services/contents/entry/summary';
-import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
-import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
+import { isEntryEditableAlong } from '$lib/services/contents/entry/editable';
+import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
 import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
 import { renameIfNeeded } from '$lib/services/utils/file';
 import { getSnapshot } from '$lib/services/utils/state.svelte';
@@ -37,6 +37,7 @@ import {
   isWorkflowDraft,
   isWorkflowEnabled,
 } from '$lib/services/workflow';
+import { getUnpublishedEntryLabel } from '$lib/services/workflow/board';
 
 /**
  * @import {
@@ -53,25 +54,6 @@ import {
  * @import { FieldKeyPath, RelationField } from '$lib/types/public';
  * @import { EntryConflict } from '$lib/services/contents/draft/save/conflict';
  */
-
-/**
- * Get the pending entries of the given draft that belong to the given collection.
- * @param {EntryDraft} draft Draft being edited.
- * @param {string} collectionName Collection name.
- * @returns {PendingEntry[]} Pending entries.
- */
-const getPendingEntriesByCollection = (draft, collectionName) =>
-  draft.pendingEntries.filter((pendingEntry) => pendingEntry.collectionName === collectionName);
-
-/**
- * Get the pending entries of the given draft that are new to the given collection, leaving out the
- * existing entries edited from a Relation field, which already take up a slot, a slug and a number.
- * @param {EntryDraft} draft Draft being edited.
- * @param {string} collectionName Collection name.
- * @returns {PendingEntry[]} Pending entries.
- */
-const getNewPendingEntriesByCollection = (draft, collectionName) =>
-  getPendingEntriesByCollection(draft, collectionName).filter(({ baseEntry }) => !baseEntry);
 
 /**
  * Get the entry the pending entries of the given draft are saved along with: the entry being
@@ -159,18 +141,27 @@ export const compareWithLatest = (draft, baseEntry) => {
 };
 
 /**
+ * Check whether an entry of the given collection can be saved along with the host entry. While the
+ * host entry is saved through Editorial Workflow, the entry goes into its pull request, where it’s
+ * reviewed and published along with it, unless it’s in the same collection: the pull request
+ * stands for the host entry, whose card lists the other entries, so one of the same collection
+ * couldn’t be told apart from it. Otherwise, the entry is committed along with the host entry, so
+ * it can’t be in a collection under the workflow, which would skip the review the collection asks
+ * for.
+ * @param {QuickAddHost} host Host entry.
+ * @param {InternalEntryCollection} collection Collection of the entry.
+ * @returns {boolean} Result.
+ */
+const canSaveAlongHost = (host, collection) =>
+  host.workflow ? collection.name !== host.collectionName : !isWorkflowEnabled(collection);
+
+/**
  * Get the collection a Relation field can have a new entry created in, so the entry can be
  * referenced right away. That’s the referenced collection, provided it holds entries that can be
  * created: a file/singleton collection has a fixed set of files, and a reference to one of them
  * points at a list item within the file, so there is nothing to create there. Nor can anything be
- * created in a read-only collection.
- *
- * While the host entry is saved through Editorial Workflow, the new entry goes into its pull
- * request, where it’s reviewed and published along with it. The pull request stands for the host
- * entry, so the new one is listed on its card rather than on its own, which only works for an
- * entry of another collection: one of the same collection couldn’t be told apart from the host.
- * Otherwise, nothing is offered when the referenced collection is under the workflow, as the new
- * entry would be committed along with the host entry, skipping the review the collection asks for.
+ * created in a read-only collection, or in one whose entries can’t be saved along with the host
+ * entry: see {@link canSaveAlongHost}.
  * @param {object} args Arguments.
  * @param {RelationField} args.fieldConfig Field configuration.
  * @param {EntryDraft} args.draft Draft being edited.
@@ -192,13 +183,7 @@ export const getCreatableCollection = ({
     return undefined;
   }
 
-  const host = getQuickAddHost(draft);
-
-  if (host.workflow ? collectionName === host.collectionName : isWorkflowEnabled(collection)) {
-    return undefined;
-  }
-
-  return collection;
+  return canSaveAlongHost(getQuickAddHost(draft), collection) ? collection : undefined;
 };
 
 /**
@@ -379,14 +364,9 @@ export const createPendingEntry = async ({ draft, parentDraft, fieldConfig }) =>
   // One added again keeps its place among the others
   const offset = index > -1 ? index : newPendingEntries.length;
 
-  if (isNew) {
-    assignManualSortOrder(draft, offset);
-  }
-
-  assignAutoIncrementValues(draft, offset);
   // The dates are set when the entry is added rather than when it’s saved along with the parent,
   // which is when the changes were made
-  assignAutoNowValues(draft);
+  assignSaveTimeValues(draft, offset);
 
   // An existing entry keeps its slug; the slug editor isn’t offered for it in the dialog
   const slugs = isNew
@@ -460,6 +440,46 @@ export const getEditTarget = ({ parentDraft, entry }) => {
     baseEntry: latestEntry ?? baseEntry,
     changedSince: !!latestEntry && !!compareWithLatest(parentDraft, baseEntry),
   };
+};
+
+/**
+ * Build the draft the quick-add dialog edits: a new entry, or the given entry. An entry pending on
+ * the parent draft is opened with the values it was added with, on top of the latest version of the
+ * entry if it’s an existing one, so the changes made by someone else since can be reviewed. See
+ * {@link getEditTarget}.
+ * @param {object} args Arguments.
+ * @param {InternalEntryCollection} args.collection Collection of the entry.
+ * @param {EntryDraft} args.parentDraft Draft the dialog is opened from.
+ * @param {Entry} [args.entry] Entry to edit. `undefined` for a new entry.
+ * @returns {Promise<{ draft: EntryDraft, changedSince: boolean }>} Draft, and whether the entry has
+ * been changed by someone else since it was edited.
+ */
+export const buildQuickAddDraft = async ({ collection, parentDraft, entry }) => {
+  const parentPendingEntries = parentDraft.pendingEntries;
+  const { pendingEntry, baseEntry, changedSince } = getEditTarget({ parentDraft, entry });
+
+  // A new entry starts at the root of the collection folder. The default is the folder being
+  // browsed, which belongs to the parent entry’s collection. The entry kept on the parent draft is
+  // a `$state` proxy, which the draft can’t clone
+  const draft = baseEntry
+    ? buildDraft({ collection, originalEntry: getSnapshot(baseEntry) })
+    : buildDraft({ collection, initialPath: '' });
+
+  if (pendingEntry?.source) {
+    // A new entry keeps its ID, so it takes the place of its earlier version when added again
+    draft.id = pendingEntry.entry.id;
+    // The values are copied, as the restore updates them in place
+    await restoreBackup({ backup: getSnapshot(pendingEntry.source), draft });
+  }
+
+  // The entries pending on the parent draft are offered to the Relation fields of the entry as
+  // well, and a nested quick-add takes them into account when it names and counts entries
+  draft.pendingEntries = [...parentPendingEntries];
+  // The entry is saved along with the entry being edited, which decides what can be added from the
+  // Relation fields of the entry in turn
+  draft.quickAddHost = getNestedQuickAddHost(parentDraft);
+
+  return { draft, changedSince };
 };
 
 /**
@@ -641,7 +661,6 @@ export const replaceEntryValues = ({
   entry,
 }) => {
   const { pendingEntries } = draft;
-  const keyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`);
 
   Object.entries(draft[valueStoreKey]).forEach(([locale, valueMap]) => {
     /**
@@ -672,7 +691,7 @@ export const replaceEntryValues = ({
     }
 
     const keyPaths = fieldConfig.multiple
-      ? Object.keys(valueMap).filter((key) => keyPathRegex.test(key))
+      ? getListItemKeys(valueMap, keyPath, { live: true })
       : [keyPath];
 
     keyPaths.forEach((key) => {
@@ -687,15 +706,10 @@ export const replaceEntryValues = ({
  * Check whether the given entry, referenced by a Relation field, can be edited with the quick-add
  * dialog, and saved along with the entry being edited. An entry created from a Relation field can
  * be changed until it’s saved. An existing entry can be edited if it’s in an entry collection where
- * it can be saved on its own, provided it’s not the entry being edited itself. The entry is saved
- * along with the entry being edited: in its pull request with Editorial Workflow, where it’s
- * reviewed with it, unless it’s in the same collection, as the board couldn’t tell the two apart;
- * on the configured branch otherwise, so nothing is offered for an entry whose collection uses the
- * workflow, which would then skip the review. Nor for an entry that another pull request changes
- * already: its own, or that of another entry it has been edited along with. An entry stored in a
- * file with the other entries of the collection isn’t offered either, as two entries edited in the
- * same file couldn’t be saved at once, nor the collection’s index file, which has fields of its
- * own.
+ * it can be saved on its own, provided it’s not the entry being edited itself, and can be saved
+ * along with the entry being edited: see {@link canSaveAlongHost} and {@link isEntryEditableAlong}.
+ * Nor is an entry offered that another pull request changes already: its own, or that of another
+ * entry it has been edited along with.
  * @param {object} args Arguments.
  * @param {RelationField} args.fieldConfig Field configuration.
  * @param {EntryDraft} args.draft Draft being edited.
@@ -726,10 +740,8 @@ export const canEditEntry = ({
   if (
     file ||
     collection?._type !== 'entry' ||
-    isArrayFileCollection(collection) ||
-    isCollectionIndexFile(collection, entry) ||
     isReadonly({ collection }) ||
-    isEntryReadonly(entry) ||
+    !isEntryEditableAlong(collection, entry) ||
     isPendingDeletion(entry)
   ) {
     return false;
@@ -737,8 +749,7 @@ export const canEditEntry = ({
 
   const host = getQuickAddHost(draft);
 
-  // The entry is saved along with the host entry, see `getCreatableCollection()`
-  if (host.workflow ? collectionName === host.collectionName : isWorkflowEnabled(collection)) {
+  if (!canSaveAlongHost(host, collection)) {
     return false;
   }
 
@@ -783,11 +794,14 @@ export const getEditableEntries = ({ draft, locale, fieldConfig, refEntries, cur
   const { pendingEntries } = draft;
   const valueSet = new Set(values);
 
-  // Only the options going by a selected value are kept
-  const options = refEntries.flatMap((entry) =>
-    getEntryOptions({ locale, fieldConfig, refEntry: entry, pendingEntries })
-      .filter(({ value }) => valueSet.has(value))
-      .map(({ label, value }) => ({ value, label, entry })),
+  // Only the options going by a selected value are kept, grouped by the value
+  const optionsByValue = Map.groupBy(
+    refEntries.flatMap((entry) =>
+      getEntryOptions({ locale, fieldConfig, refEntry: entry, pendingEntries })
+        .filter(({ value }) => valueSet.has(value))
+        .map(({ label, value }) => ({ value, label, entry })),
+    ),
+    ({ value }) => value,
   );
 
   // Two values can go by the same entry, e.g. two items of a list field used as the value, which is
@@ -795,20 +809,20 @@ export const getEditableEntries = ({ draft, locale, fieldConfig, refEntries, cur
   const seenIds = new Set();
 
   return values.flatMap((value) => {
-    const matches = options.filter((option) => option.value === value);
+    const [match, ...others] = optionsByValue.get(value) ?? [];
 
     if (
-      matches.length === 0 ||
-      matches.some(({ entry }) => entry.id !== matches[0].entry.id) ||
-      seenIds.has(matches[0].entry.id) ||
-      !canEditEntry({ fieldConfig, draft, entry: matches[0].entry })
+      !match ||
+      others.some(({ entry }) => entry.id !== match.entry.id) ||
+      seenIds.has(match.entry.id) ||
+      !canEditEntry({ fieldConfig, draft, entry: match.entry })
     ) {
       return [];
     }
 
-    seenIds.add(matches[0].entry.id);
+    seenIds.add(match.entry.id);
 
-    return [matches[0]];
+    return [match];
   });
 };
 
@@ -828,21 +842,5 @@ export const getEditingHostName = (draft) => {
 
   const hostEntry = findEditingUnpublishedEntry(draft.originalEntry);
 
-  if (!hostEntry) {
-    return undefined;
-  }
-
-  const { collectionName, fileName } = hostEntry.workflow;
-  const collection = getCollection(collectionName);
-
-  // The collection may have been removed from the configuration since the entry was saved
-  if (!collection) {
-    return hostEntry.slug;
-  }
-
-  const collectionFile = fileName ? getCollectionFile(collection, fileName) : undefined;
-
-  return collectionFile
-    ? getCollectionFileLabel(collectionFile)
-    : getEntrySummary(collection, hostEntry);
+  return hostEntry ? getUnpublishedEntryLabel(hostEntry) : undefined;
 };

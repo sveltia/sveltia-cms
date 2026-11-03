@@ -1,6 +1,6 @@
 import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
-import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
+import { isFieldLocalized, isFieldMirrored } from '$lib/services/contents/i18n/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { isNumeric } from '$lib/services/utils/number';
 
@@ -56,6 +56,35 @@ export const getInheritedI18nOption = ({ fieldConfig, getFieldArgs }) => {
 };
 
 /**
+ * Check if the given field holds the same value in every locale. That is the case when the field
+ * has the `duplicate` or `sync` i18n strategy, or, if the field has no `i18n` option of its own,
+ * when the nearest ancestor that has one, such as the List or Object field it belongs to, has
+ * either strategy. A duplicated List or Object field then holds the same items and values in every
+ * locale, the way `normalizeContentMap()` copies it when an entry is loaded, while a subfield
+ * explicitly made translatable keeps a value of its own in each locale.
+ * @param {object} args Arguments.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
+ * path of the field.
+ * @returns {boolean} Whether the value is duplicated.
+ */
+export const isDuplicatedField = (args) => isFieldMirrored(getInheritedI18nOption(args));
+
+/**
+ * Check if the given field uses the `sync` i18n strategy, either with an `i18n` option of its own
+ * or along with the nearest ancestor that has one. Unlike a `duplicate` field, which can only be
+ * edited in the default locale, such a field can be edited in any locale, and the value is copied
+ * from there to the others.
+ * @param {object} args Arguments.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
+ * path of the field.
+ * @returns {boolean} Result.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1128
+ */
+export const isSyncedField = (args) => getInheritedI18nOption(args) === 'sync';
+
+/**
  * Check whether the field at the given key path belongs in a locale’s content. Every field does in
  * the default locale, but in another locale, only one that is localized along with all of its
  * ancestors, as the others are left out of that locale’s content when it’s saved.
@@ -74,6 +103,12 @@ export const isFieldInLocale = ({ getFieldArgs, locale, defaultLocale, keyPath }
 
   const segments = keyPath.split('.');
   let hasAncestor = false;
+  /**
+   * `i18n` option of the nearest field so far that has one, which a field without one of its own
+   * goes along with. See {@link getInheritedI18nOption}, which looks the ancestors up instead.
+   * @type {Field['i18n']}
+   */
+  let inheritedI18n;
 
   // Skip the list item indexes, which aren’t fields of their own, e.g. `items.0` in `items.0.kv`
   return segments.every((segment, index) => {
@@ -81,8 +116,10 @@ export const isFieldInLocale = ({ getFieldArgs, locale, defaultLocale, keyPath }
       return true;
     }
 
-    const args = { ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') };
-    const fieldConfig = getField(args);
+    const fieldConfig = getField({
+      ...getFieldArgs,
+      keyPath: segments.slice(0, index + 1).join('.'),
+    });
 
     // A value without a field of its own, e.g. an item of a List field without subfields like
     // `tags.1`, or a KeyValue pair like `kv.a`, goes along with the nearest ancestor that has one,
@@ -92,8 +129,9 @@ export const isFieldInLocale = ({ getFieldArgs, locale, defaultLocale, keyPath }
     }
 
     hasAncestor = true;
+    inheritedI18n = fieldConfig.i18n !== undefined ? fieldConfig.i18n : inheritedI18n;
 
-    return isFieldLocalized(getInheritedI18nOption({ fieldConfig, getFieldArgs: args }));
+    return isFieldLocalized(inheritedI18n);
   });
 };
 

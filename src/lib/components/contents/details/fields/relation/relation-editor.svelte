@@ -121,15 +121,14 @@
   const refCollection = $derived(
     /** @type {InternalEntryCollection} */ (getCollection(fieldConfig.collection)),
   );
-  const dialogCollection = $derived(
-    creatableCollection ?? (editableEntries.length ? refCollection : undefined),
-  );
-  /* v8 ignore start -- only read while a button is rendered, which needs the collection */
-  // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label
+  // Whether an entry can be created or edited with the dialog. The collection that can have an
+  // entry created in is the referenced one, see `getCreatableCollection()`
+  const hasDialogActions = $derived(!!creatableCollection || !!editableEntries.length);
+  /* v8 ignore start -- the app locale is always set once the UI strings are loaded */
+  // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label. Only
+  // read while a button is rendered, which needs the collection
   const collectionName = $derived(
-    dialogCollection && appLocale.current
-      ? getCollectionLabel(dialogCollection, { useSingular: true })
-      : '',
+    appLocale.current ? getCollectionLabel(refCollection, { useSingular: true }) : '',
   );
   /* v8 ignore stop */
 
@@ -157,7 +156,7 @@
     {required}
     {invalid}
   />
-  {#if dialogCollection}
+  {#if hasDialogActions}
     <div role="none" class="actions">
       {#if creatableCollection}
         <Button
@@ -217,7 +216,7 @@
       {/if}
     </div>
   {/if}
-  {#if dialogCollection || dialogOpened}
+  {#if hasDialogActions || dialogOpened}
     <QuickAddDialog
       bind:open={showQuickAddDialog}
       collection={refCollection}

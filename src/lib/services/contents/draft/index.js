@@ -2,7 +2,7 @@ import { isObject, toRaw } from '@sveltia/utils/object';
 import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
-import { getReferencedPendingEntrySet } from '$lib/services/contents/draft/pending-entries';
+import { getReferencedEditedEntries } from '$lib/services/contents/draft/pending-entries';
 import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
 import { INTERNAL_PROP_PREFIX } from '$lib/services/contents/fields/internal-props';
 import { isPairOrderModified } from '$lib/services/contents/fields/key-value/order';
@@ -270,10 +270,8 @@ export const isDraftModified = (draft) => {
     // Reordering the pairs of a KeyValue field changes no value, only the order they are saved in
     isPairOrderModified({ draft, isRealKey, locales }) ||
     // An existing entry edited from a Relation field is saved along with the entry, which may
-    // otherwise be left as it was, as long as the entry still refers to it. The cheap check comes
-    // first, as this runs on every change, and the entries are looked up without being copied
-    (!!draft.pendingEntries?.some(({ baseEntry }) => !!baseEntry) &&
-      [...getReferencedPendingEntrySet(draft)].some(({ baseEntry }) => !!baseEntry))
+    // otherwise be left as it was, as long as the entry still refers to it
+    getReferencedEditedEntries(draft).length > 0
   );
 };
 

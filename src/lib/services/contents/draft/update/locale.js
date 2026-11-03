@@ -1,11 +1,7 @@
 import { toRaw } from '@sveltia/utils/object';
 
 import { suspendAutoDuplication } from '$lib/services/contents/draft';
-import {
-  createProxy,
-  getListItemMatcher,
-  isDuplicatedField,
-} from '$lib/services/contents/draft/create/proxy.svelte';
+import { createProxy, getListItemMatcher } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
@@ -22,6 +18,7 @@ import {
   isFieldMirrored,
   isFieldTranslatable,
 } from '$lib/services/contents/i18n/fields';
+import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';

@@ -8,7 +8,7 @@ import { getKeyValueField } from '$lib/services/contents/fields/key-value/pairs'
 import { getPairedListKeyPaths } from '$lib/services/contents/fields/list/helpers';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
-import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
+import { isSyncedField } from '$lib/services/contents/i18n/shared-values';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -133,10 +133,7 @@ export const revertFields = ({
         isFieldTranslatable(fieldConfig?.i18n) ||
         fieldConfig?.i18n === 'duplicate_keys' ||
         (!!fieldConfig &&
-          getInheritedI18nOption({
-            fieldConfig,
-            getFieldArgs: { ...getFieldArgs, keyPath: _keyPath },
-          }) === 'sync')
+          isSyncedField({ fieldConfig, getFieldArgs: { ...getFieldArgs, keyPath: _keyPath } }))
       ) {
         if (reset) {
           delete currentValues[locale][_keyPath];

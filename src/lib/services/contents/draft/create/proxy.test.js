@@ -10,8 +10,6 @@ import {
   copyMirroredValue,
   createProxy,
   getListItemMatcher,
-  isDuplicatedField,
-  isSyncedField,
 } from './proxy.svelte.js';
 
 const {
@@ -909,13 +907,20 @@ describe('contents/draft/create/proxy.svelte', () => {
     it('should delete properties from other locales when auto-duplication is enabled', () => {
       getField.mockReturnValue({ widget: 'string', i18n: 'duplicate' });
 
-      const draft = createDraft({ values: { en: { title: 'Title' }, ja: { title: 'Title' } } });
+      const draft = createDraft({
+        locales: ['en', 'ja', 'fr'],
+        values: { en: { title: 'Title' }, ja: { title: 'Title' }, fr: { body: 'Body' } },
+      });
 
       delete draft.currentValues.en.title;
 
       expect(draft.currentValues.en.title).toBeUndefined();
       expect(draft.currentValues.ja.title).toBeUndefined();
       expect('title' in draft.currentValues.ja).toBe(false);
+      // A locale without the value is left alone, rather than having a deletion of its own handled
+      expect(revalidateField).toHaveBeenCalledWith(expect.objectContaining({ locale: 'ja' }));
+      expect(revalidateField).not.toHaveBeenCalledWith(expect.objectContaining({ locale: 'fr' }));
+      expect({ ...draft.currentValues.fr }).toEqual({ body: 'Body' });
     });
 
     it('should not delete from other locales when auto-duplication is suspended', () => {
@@ -946,93 +951,6 @@ describe('contents/draft/create/proxy.svelte', () => {
 
       expect(draft.currentValues.en.other).toBeUndefined();
       expect(draft.currentValues.ja.other).toBe('x');
-    });
-  });
-
-  describe('isDuplicatedField', () => {
-    /** @type {Record<string, any>} */
-    const fields = {
-      title: { name: 'title', widget: 'string', i18n: true },
-      meta: { name: 'meta', widget: 'object', i18n: 'duplicate' },
-      'meta.caption': { name: 'caption', widget: 'string', i18n: true },
-      'meta.box': { name: 'box', widget: 'object', i18n: true },
-      'meta.box.note': { name: 'note', widget: 'string' },
-      'meta.tags': { name: 'tags', widget: 'list' },
-      'meta.tags.0.label': { name: 'label', widget: 'string' },
-      blocks: { name: 'blocks', widget: 'list', i18n: true },
-      'blocks.0.text': { name: 'text', widget: 'string' },
-    };
-
-    beforeEach(() => {
-      getField.mockImplementation(({ keyPath }) => fields[keyPath]);
-    });
-
-    /**
-     * Check the field at the given key path.
-     * @param {string} keyPath Key path.
-     * @returns {boolean} Result.
-     */
-    const check = (keyPath) =>
-      isDuplicatedField({
-        fieldConfig: fields[keyPath],
-        getFieldArgs: { collectionName: 'posts', keyPath },
-      });
-
-    it('should detect the field’s own duplicate strategy', () => {
-      expect(check('meta')).toBe(true);
-      expect(check('title')).toBe(false);
-    });
-
-    it('should let an explicit `i18n` option of the field or a nearer ancestor win', () => {
-      expect(check('meta.caption')).toBe(false);
-      expect(check('meta.box.note')).toBe(false);
-    });
-
-    it('should detect a duplicated ancestor, skipping the list item indexes', () => {
-      expect(check('meta.tags')).toBe(true);
-      expect(check('meta.tags.0.label')).toBe(true);
-      expect(check('blocks.0.text')).toBe(false);
-      expect(getField).not.toHaveBeenCalledWith(expect.objectContaining({ keyPath: 'blocks.0' }));
-    });
-
-    it('should detect the `sync` strategy as well', () => {
-      fields.links = { name: 'links', widget: 'list', i18n: 'sync' };
-      fields['links.0.url'] = { name: 'url', widget: 'string' };
-
-      expect(check('links')).toBe(true);
-      expect(check('links.0.url')).toBe(true);
-    });
-  });
-
-  describe('isSyncedField', () => {
-    /** @type {Record<string, any>} */
-    const fields = {
-      title: { name: 'title', widget: 'string', i18n: 'duplicate' },
-      links: { name: 'links', widget: 'list', i18n: 'sync' },
-      'links.0.url': { name: 'url', widget: 'string' },
-      'links.0.label': { name: 'label', widget: 'string', i18n: true },
-    };
-
-    beforeEach(() => {
-      getField.mockImplementation(({ keyPath }) => fields[keyPath]);
-    });
-
-    /**
-     * Check the field at the given key path.
-     * @param {string} keyPath Key path.
-     * @returns {boolean} Result.
-     */
-    const check = (keyPath) =>
-      isSyncedField({
-        fieldConfig: fields[keyPath],
-        getFieldArgs: { collectionName: 'posts', keyPath },
-      });
-
-    it('should detect the field’s own or an ancestor’s `sync` strategy only', () => {
-      expect(check('links')).toBe(true);
-      expect(check('links.0.url')).toBe(true);
-      expect(check('links.0.label')).toBe(false);
-      expect(check('title')).toBe(false);
     });
   });
 

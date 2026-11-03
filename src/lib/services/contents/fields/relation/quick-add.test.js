@@ -4,6 +4,8 @@ import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getDraftValues, isDraftModified } from '$lib/services/contents/draft';
+import { restoreBackup } from '$lib/services/contents/draft/backup';
+import { buildDraft } from '$lib/services/contents/draft/create';
 import { getReferencedPendingEntrySet } from '$lib/services/contents/draft/pending-entries';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { compareWithStore } from '$lib/services/contents/draft/save/conflict';
@@ -26,6 +28,7 @@ import {
 
 import {
   addPendingEntries,
+  buildQuickAddDraft,
   canEditEntry,
   compareWithLatest,
   createPendingEntry,
@@ -49,7 +52,13 @@ import {
 } from './quick-add';
 
 /**
- * @import { Entry, EntryDraft, PendingEntry, UnpublishedEntry } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * EntryDraft,
+ * InternalEntryCollection,
+ * PendingEntry,
+ * UnpublishedEntry,
+ * } from '$lib/types/private';
  * @import { RelationField } from '$lib/types/public';
  */
 
@@ -81,6 +90,12 @@ vi.mock('$lib/services/contents/draft', async (importOriginal) => ({
   isDraftModified: vi.fn(),
 }));
 
+vi.mock('$lib/services/contents/draft/backup', () => ({
+  restoreBackup: vi.fn(),
+}));
+vi.mock('$lib/services/contents/draft/create', () => ({
+  buildDraft: vi.fn(() => ({ id: 'built' })),
+}));
 vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummary: vi.fn(),
 }));
@@ -88,7 +103,8 @@ vi.mock('$lib/services/contents/entry/readonly', () => ({
   isEntryReadonly: vi.fn(() => false),
 }));
 
-vi.mock('$lib/services/contents/draft/pending-entries', () => ({
+vi.mock('$lib/services/contents/draft/pending-entries', async (importOriginal) => ({
+  .../** @type {any} */ (await importOriginal()),
   getReferencedPendingEntrySet: vi.fn(),
 }));
 
@@ -757,7 +773,13 @@ describe('getPendingEntrySlugs', () => {
 
 describe('createPendingEntry', () => {
   const draft = /** @type {EntryDraft} */ (
-    /** @type {any} */ ({ id: 'new', isNew: true, collectionName: 'tags', defaultLocale: 'en' })
+    /** @type {any} */ ({
+      id: 'new',
+      isNew: true,
+      collectionName: 'tags',
+      defaultLocale: 'en',
+      collection: { _type: 'entry' },
+    })
   );
 
   const source = /** @type {any} */ ({ currentValues: { en: { title: 'Svelte' } }, files: {} });
@@ -1529,6 +1551,47 @@ describe('getEditTarget', () => {
       baseEntry: pendingEntry.baseEntry,
       changedSince: false,
     });
+  });
+});
+
+describe('buildQuickAddDraft', () => {
+  const collection = /** @type {InternalEntryCollection} */ ({ name: 'tags' });
+
+  beforeEach(() => {
+    allEntries.current = [];
+    vi.mocked(compareWithStore).mockReturnValue(undefined);
+  });
+
+  it('builds a new entry at the root of the collection folder', async () => {
+    const parentDraft = /** @type {EntryDraft} */ ({ ...createParentDraft(), id: 'hello' });
+    const { draft, changedSince } = await buildQuickAddDraft({ collection, parentDraft });
+
+    expect(buildDraft).toHaveBeenCalledWith({ collection, initialPath: '' });
+    expect(restoreBackup).not.toHaveBeenCalled();
+    expect(changedSince).toBe(false);
+    expect(draft.id).toBe('built');
+    expect(draft.pendingEntries).toEqual([]);
+    expect(draft.quickAddHost?.entryIds).toEqual(['hello']);
+  });
+
+  it('builds an existing entry from its version, restoring the values it was added with', async () => {
+    const pendingEntry = { ...createPending('svelte'), source: /** @type {any} */ ({ a: 1 }) };
+    const parentDraft = createParentDraft({ pendingEntries: [pendingEntry] });
+    const { entry } = createPending('react');
+
+    await buildQuickAddDraft({ collection, parentDraft, entry });
+    expect(buildDraft).toHaveBeenLastCalledWith({ collection, originalEntry: entry });
+
+    const { draft } = await buildQuickAddDraft({
+      collection,
+      parentDraft,
+      entry: pendingEntry.entry,
+    });
+
+    expect(draft.id).toBe(pendingEntry.entry.id);
+    expect(restoreBackup).toHaveBeenCalledWith({ backup: { a: 1 }, draft });
+    expect(draft.pendingEntries).toEqual([pendingEntry]);
+    expect(draft.pendingEntries).not.toBe(parentDraft.pendingEntries);
   });
 });
 

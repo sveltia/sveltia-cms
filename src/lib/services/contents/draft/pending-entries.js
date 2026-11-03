@@ -21,6 +21,25 @@ import { getSnapshot } from '$lib/services/utils/state.svelte';
  */
 
 /**
+ * Get the pending entries of the given draft that belong to the given collection.
+ * @param {EntryDraft} draft Draft being edited.
+ * @param {string} collectionName Collection name.
+ * @returns {PendingEntry[]} Pending entries.
+ */
+export const getPendingEntriesByCollection = (draft, collectionName) =>
+  draft.pendingEntries.filter((pendingEntry) => pendingEntry.collectionName === collectionName);
+
+/**
+ * Get the pending entries of the given draft that are new to the given collection, leaving out the
+ * existing entries edited from a Relation field, which already take up a slot, a slug and a number.
+ * @param {EntryDraft} draft Draft being edited.
+ * @param {string} collectionName Collection name.
+ * @returns {PendingEntry[]} Pending entries.
+ */
+export const getNewPendingEntriesByCollection = (draft, collectionName) =>
+  getPendingEntriesByCollection(draft, collectionName).filter(({ baseEntry }) => !baseEntry);
+
+/**
  * Get the values the entry being edited holds: the field values in every locale, and the values of
  * the rich text editor components, which are stored apart.
  * @param {EntryDraft} draft Draft.
@@ -112,6 +131,18 @@ export const getReferencedPendingEntrySet = (draft) => {
 
   return referenced;
 };
+
+/**
+ * Get the existing entries edited from a Relation field that the given draft still refers to, as
+ * they are on the draft. The cheap check comes first, as this runs on every change: nothing is
+ * looked up unless the draft has such an entry at all.
+ * @param {EntryDraft} draft Draft.
+ * @returns {PendingEntry[]} Edited pending entries.
+ */
+export const getReferencedEditedEntries = (draft) =>
+  draft.pendingEntries?.some(({ baseEntry }) => !!baseEntry)
+    ? [...getReferencedPendingEntrySet(draft)].filter(({ baseEntry }) => !!baseEntry)
+    : [];
 
 /**
  * Get the pending entries of the given draft that are still referenced, so they can be saved along

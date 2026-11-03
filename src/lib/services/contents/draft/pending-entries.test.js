@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getField } from '$lib/services/contents/entry/fields';
 import { createState } from '$lib/services/utils/state.svelte';
 
-import { getReferencedPendingEntries } from './pending-entries';
+import {
+  getNewPendingEntriesByCollection,
+  getPendingEntriesByCollection,
+  getReferencedPendingEntries,
+} from './pending-entries';
 
 /**
  * @import { EntryDraft, PendingEntry } from '$lib/types/private';
@@ -93,6 +97,21 @@ beforeEach(() => {
  */
 const isPendingEntryReferenced = (draft, pendingEntry) =>
   getReferencedPendingEntries({ ...draft, pendingEntries: [pendingEntry] }).length === 1;
+
+describe('getPendingEntriesByCollection', () => {
+  it('should return the pending entries of the given collection, new or edited', () => {
+    const tag = createPendingEntry('tags', 'news');
+    const editedTag = { ...createPendingEntry('tags', 'old'), baseEntry: /** @type {any} */ ({}) };
+
+    const draft = createDraft({
+      pendingEntries: [tag, createPendingEntry('authors', 'a'), editedTag],
+    });
+
+    expect(getPendingEntriesByCollection(draft, 'tags')).toEqual([tag, editedTag]);
+    expect(getNewPendingEntriesByCollection(draft, 'tags')).toEqual([tag]);
+    expect(getNewPendingEntriesByCollection(draft, 'pages')).toEqual([]);
+  });
+});
 
 describe('getReferencedPendingEntries: direct references', () => {
   it('finds the value in any locale', () => {

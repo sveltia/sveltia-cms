@@ -12,6 +12,7 @@ import {
   getCompanionEntries,
   getDeletionSelection,
   getEditedCompanionEntries,
+  getEditedCompanionPaths,
   getPublishedVersion,
   getPullRequestEntries,
   getUnpublishedEntriesByCollection,
@@ -311,6 +312,46 @@ describe('workflow/index', () => {
       // A new entry isn’t edited
       expect(findEditingUnpublishedEntry(jane)).toBeUndefined();
       expect(findEditingUnpublishedEntry(guides)).toBeUndefined();
+    });
+
+    test('collects the paths of the edited entries on both branches, found by ID', () => {
+      /**
+       * Create an entry with the given locale file paths.
+       * @param {string} id Entry ID.
+       * @param {string[]} paths File paths.
+       * @returns {any} Entry.
+       */
+      const createPathEntry = (id, paths) => ({
+        id,
+        locales: Object.fromEntries(paths.map((path, index) => [`l${index}`, { path }])),
+      });
+
+      allEntries.current = [
+        createPathEntry('ada', ['authors/ada.md', 'authors/ja/ada.md']),
+        createPathEntry('grace', ['authors/grace.md']),
+      ];
+
+      expect(
+        getEditedCompanionPaths([
+          // Renamed on the branch, and the Japanese locale turned off
+          {
+            collectionName: 'authors',
+            entry: createPathEntry('ada', ['authors/ada-l.md']),
+            edited: true,
+          },
+          // No longer on the configured branch
+          {
+            collectionName: 'authors',
+            entry: createPathEntry('alan', ['authors/alan.md']),
+            edited: true,
+          },
+          // A new one isn’t edited
+          { collectionName: 'authors', entry: createPathEntry('grace', ['authors/grace.md']) },
+        ]),
+      ).toEqual({
+        paths: ['authors/ada-l.md', 'authors/alan.md'],
+        publishedPaths: new Set(['authors/ada.md', 'authors/ja/ada.md']),
+      });
     });
   });
 

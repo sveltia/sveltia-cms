@@ -4,7 +4,7 @@ import { getAssetFolder } from '$lib/services/assets/folders';
 import { findEntriesByAssets } from '$lib/services/assets/references';
 import { allAssets } from '$lib/services/assets/state';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
-import { findEntryByPaths } from '$lib/services/contents';
+import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
 import { getMovedFolders } from '$lib/services/contents/draft/save/asset-move';
@@ -57,7 +57,10 @@ vi.mock('$lib/services/backends/process', () => ({
 vi.mock('$lib/services/assets/folders', () => ({ getAssetFolder: vi.fn() }));
 vi.mock('$lib/services/assets/references', () => ({ findEntriesByAssets: vi.fn() }));
 vi.mock('$lib/services/assets/state', () => ({ allAssets: { current: [] } }));
-vi.mock('$lib/services/contents', () => ({ findEntryByPaths: vi.fn() }));
+vi.mock('$lib/services/contents', () => ({
+  allEntries: { current: [] },
+  findEntryByPaths: vi.fn(),
+}));
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn((name) => ({ name })),
 }));
@@ -144,10 +147,11 @@ const createEntry = ({
 });
 
 /**
- * Make {@link findEntryByPaths} find the given published entries.
+ * Make {@link findEntryByPaths} and {@link allEntries} find the given published entries.
  * @param {any[]} entries Published entries.
  */
 const mockPublishedEntries = (entries) => {
+  allEntries.current = /** @type {any} */ (entries);
   vi.mocked(findEntryByPaths).mockImplementation((paths) => {
     const set = new Set(paths);
 

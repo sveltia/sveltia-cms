@@ -7,6 +7,7 @@ import {
   getCompanionNotes,
   getDiscardMessages,
   getPublishMessages,
+  getUnpublishedEntryLabel,
   groupEntriesByStatus,
   STATUS_UPDATE_MESSAGES,
 } from '$lib/services/workflow/board';
@@ -131,6 +132,37 @@ describe('getBoardAnnouncement()', () => {
   });
 });
 
+describe('getUnpublishedEntryLabel()', () => {
+  const entry = /** @type {any} */ ({
+    slug: 'hello',
+    locales: { _default: { content: { title: 'Hello' } } },
+    workflow: { collectionName: 'posts' },
+  });
+
+  test('names the entry by its summary, or the collection file by its label', () => {
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ ({ name: 'posts' }));
+    expect(getUnpublishedEntryLabel(entry)).toBe('Hello');
+
+    vi.mocked(getCollection).mockReturnValue(
+      /** @type {any} */ ({
+        name: 'pages',
+        _fileMap: { about: { name: 'about', label: 'About' } },
+      }),
+    );
+    expect(
+      getUnpublishedEntryLabel({
+        ...entry,
+        workflow: { collectionName: 'pages', fileName: 'about' },
+      }),
+    ).toBe('About');
+  });
+
+  test('falls back to the slug when the collection has been removed', () => {
+    vi.mocked(getCollection).mockReturnValue(undefined);
+    expect(getUnpublishedEntryLabel(entry)).toBe('hello');
+  });
+});
+
 describe('getCompanionNotes()', () => {
   /**
    * Create an entry of the given collection.
@@ -167,6 +199,8 @@ describe('getCompanionNotes()', () => {
     });
 
     expect(getCompanionNotes(entry, 'en')).toEqual(['Also adds Section: Guides, Tile: Help, faq']);
+    // Nothing is listed until the app locale is set
+    expect(getCompanionNotes(entry, undefined)).toEqual([]);
   });
 
   test('lists the existing entries changed in the pull request apart from the new ones', () => {

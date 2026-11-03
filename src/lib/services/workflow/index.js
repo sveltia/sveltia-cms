@@ -1,3 +1,5 @@
+import { unique } from '@sveltia/utils/array';
+
 import { backend } from '$lib/services/backends';
 import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { cmsConfig } from '$lib/services/config';
@@ -15,6 +17,7 @@ import { getCollectionPublishModeOptions, isLastStage } from '$lib/services/work
 
 /**
  * @import {
+ * CompanionEntry,
  * Entry,
  * InternalCollection,
  * UnpublishedEntry,
@@ -99,6 +102,23 @@ export const getUnpublishedEntriesByCollection = (collectionName) =>
     : [];
 
 /**
+ * Get the entries in the given collection that ride along in the pull requests of the given
+ * unpublished entries, either the new ones or the existing ones changed there.
+ * @param {string} collectionName Collection name.
+ * @param {UnpublishedEntry[]} entries Unpublished entries to look in.
+ * @param {boolean} edited Whether to get the existing entries rather than the new ones.
+ * @returns {Entry[]} Entries.
+ */
+const filterCompanionEntries = (collectionName, entries, edited) =>
+  entries.flatMap(({ workflow }) =>
+    (workflow.companions ?? []).flatMap((companion) =>
+      companion.collectionName === collectionName && !!companion.edited === edited
+        ? [companion.entry]
+        : [],
+    ),
+  );
+
+/**
  * Get the new entries in the given collection that ride along in the pull request of an entry of
  * another collection. See {@link UnpublishedEntryProps.companions}. The existing entries changed in
  * such a pull request are left out: see {@link getEditedCompanionEntries}.
@@ -107,11 +127,7 @@ export const getUnpublishedEntriesByCollection = (collectionName) =>
  * @returns {Entry[]} Entries.
  */
 export const getCompanionEntries = (collectionName, entries = unpublishedEntries.current) =>
-  entries.flatMap(({ workflow }) =>
-    (workflow.companions ?? []).flatMap((companion) =>
-      companion.collectionName === collectionName && !companion.edited ? [companion.entry] : [],
-    ),
-  );
+  filterCompanionEntries(collectionName, entries, false);
 
 /**
  * Get the existing entries in the given collection that have been changed in the pull request of an
@@ -122,11 +138,31 @@ export const getCompanionEntries = (collectionName, entries = unpublishedEntries
  * @returns {Entry[]} Entries.
  */
 export const getEditedCompanionEntries = (collectionName, entries = unpublishedEntries.current) =>
-  entries.flatMap(({ workflow }) =>
-    (workflow.companions ?? []).flatMap((companion) =>
-      companion.collectionName === collectionName && companion.edited ? [companion.entry] : [],
+  filterCompanionEntries(collectionName, entries, true);
+
+/**
+ * Get the paths of the existing entries a pull request changes along with its entry: those they
+ * have on its branch, and those their published versions have on the configured branch, where the
+ * pull request can only change or remove a file. A published version is found by ID, which an
+ * edited companion keeps, so one the pull request has renamed is found as well.
+ * @param {CompanionEntry[]} companions Entries riding along in the pull request.
+ * @returns {{ paths: string[], publishedPaths: Set<string> }} Paths on the branch, and those on the
+ * configured branch.
+ */
+export const getEditedCompanionPaths = (companions) => {
+  const editedEntries = companions.flatMap(({ entry, edited }) => (edited ? [entry] : []));
+
+  return {
+    paths: unique(editedEntries.flatMap((entry) => getEntryPaths(entry))),
+    publishedPaths: new Set(
+      editedEntries.flatMap(({ id }) => {
+        const publishedEntry = allEntries.current.find((entry) => entry.id === id);
+
+        return publishedEntry ? getEntryPaths(publishedEntry) : [];
+      }),
     ),
-  );
+  };
+};
 
 /**
  * Find the unpublished entry whose pull request changes the given existing entry along with it,

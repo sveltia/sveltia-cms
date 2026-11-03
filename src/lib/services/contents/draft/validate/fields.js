@@ -43,7 +43,7 @@ import {
 import { isOptionValue } from '$lib/services/contents/fields/select/helpers';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
-import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
+import { isSyncedField } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import {
@@ -174,10 +174,7 @@ export const validateAnyField = (args) => {
     !componentName && // Don’t skip validation if the field is within a rich text editor component
     locale !== defaultLocale &&
     (!i18nEnabled || isFieldI18nDisabled(i18n) || i18n === 'duplicate') &&
-    !(
-      fieldConfig.i18n === undefined &&
-      getInheritedI18nOption({ fieldConfig, getFieldArgs }) === 'sync'
-    )
+    !isSyncedField({ fieldConfig, getFieldArgs })
   ) {
     return undefined;
   }

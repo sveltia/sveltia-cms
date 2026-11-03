@@ -17,7 +17,7 @@ import { buildTargetChanges } from '$lib/services/contents/entry/cascade';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { planCascadeDelete } from '$lib/services/contents/entry/relations/cascade/delete';
 import { collectRenameTargets } from '$lib/services/contents/entry/relations/cascade/update';
-import { getDeletionSelection } from '$lib/services/workflow';
+import { getDeletionSelection, getEditedCompanionPaths } from '$lib/services/workflow';
 import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
 /**
@@ -320,24 +320,13 @@ export const findUnexpectedChanges = async (entry, files) => {
     companions.flatMap(({ entry: companion, edited }) => (edited ? [] : getEntryPaths(companion))),
   );
 
-  const editedCompanions = companions.filter(({ edited }) => edited);
-
   // The files the edited entries have on the configured branch, which the pull request can only
   // change or remove: one it adds is an entry that has appeared there since, which would be
   // overwritten
-  const editedPublishedPaths = new Set(
-    editedCompanions.flatMap(({ entry: companion }) => {
-      const publishedEntry = findEntryByPaths(getEntryPaths(companion));
+  const { paths: editedPaths, publishedPaths: editedPublishedPaths } =
+    getEditedCompanionPaths(companions);
 
-      return publishedEntry ? getEntryPaths(publishedEntry) : [];
-    }),
-  );
-
-  const editedCompanionPaths = new Set([
-    ...editedCompanions.flatMap(({ entry: companion }) => getEntryPaths(companion)),
-    ...editedPublishedPaths,
-  ]);
-
+  const editedCompanionPaths = new Set([...editedPaths, ...editedPublishedPaths]);
   // Whether the pull request moves the entry: a rename, or a move to another folder of a nested
   // collection, which takes the entries below it and the assets beside it along. Its location is
   // compared rather than its files, as dropping a locale’s file leaves the entry where it is

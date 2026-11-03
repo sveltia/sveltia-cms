@@ -25,6 +25,7 @@ import { user } from '$lib/services/user/account.svelte';
 import { shareInFlight } from '$lib/services/utils/cache';
 import {
   getDeletionSelection,
+  getEditedCompanionPaths,
   getUnpublishedEntryByBranch,
   getUnpublishedEntryBySlug,
   publishingBranches,
@@ -719,21 +720,7 @@ const getDeletionTitleChanges = (entry) => [
 const getEditedCompanionRevertChanges = async (unpublishedEntry, slug) => {
   const { companions = [], pullRequest } = unpublishedEntry.workflow;
   const changedPaths = new Set(pullRequest.files.map(({ path }) => path));
-
-  const publishedPaths = new Set(
-    companions.flatMap(({ entry, edited }) => {
-      const publishedEntry = edited
-        ? allEntries.current.find(({ id }) => id === entry.id)
-        : undefined;
-
-      return publishedEntry ? getEntryPaths(publishedEntry) : [];
-    }),
-  );
-
-  const paths = unique(
-    companions.flatMap(({ entry, edited }) => (edited ? getEntryPaths(entry) : [])),
-  );
-
+  const { paths, publishedPaths } = getEditedCompanionPaths(companions);
   const cacheDB = resolveCacheDB();
 
   return Promise.all(

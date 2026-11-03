@@ -11,8 +11,7 @@ import {
   followsDefaultLocale,
   getMainValueKeyPath,
 } from '$lib/services/contents/i18n/duplicate-if-empty';
-import { isFieldMirrored } from '$lib/services/contents/i18n/fields';
-import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
+import { isDuplicatedField, isSyncedField } from '$lib/services/contents/i18n/shared-values';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -21,35 +20,6 @@ import { isNumeric } from '$lib/services/utils/number';
  */
 
 const PATH_MATCH_REGEX = /(?<path>.+?)\.[^.]*$/;
-
-/**
- * Check if the given field holds the same value in every locale. That is the case when the field
- * has the `duplicate` or `sync` i18n strategy, or, if the field has no `i18n` option of its own,
- * when the nearest ancestor that has one, such as the List or Object field it belongs to, has
- * either strategy. A duplicated List or Object field then holds the same items and values in every
- * locale, the way `normalizeContentMap()` copies it when an entry is loaded, while a subfield
- * explicitly made translatable keeps a value of its own in each locale.
- * @param {object} args Arguments.
- * @param {Field} args.fieldConfig Field configuration.
- * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
- * path of the field.
- * @returns {boolean} Whether the value is duplicated.
- */
-export const isDuplicatedField = (args) => isFieldMirrored(getInheritedI18nOption(args));
-
-/**
- * Check if the given field uses the `sync` i18n strategy, either with an `i18n` option of its own
- * or along with the nearest ancestor that has one. Unlike a `duplicate` field, which can only be
- * edited in the default locale, such a field can be edited in any locale, and the value is copied
- * from there to the others.
- * @param {object} args Arguments.
- * @param {Field} args.fieldConfig Field configuration.
- * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
- * path of the field.
- * @returns {boolean} Result.
- * @see https://github.com/sveltia/sveltia-cms/issues/1128
- */
-export const isSyncedField = (args) => getInheritedI18nOption(args) === 'sync';
 
 /**
  * Get a function to check if a duplicated field can be copied to, or deleted from, another locale
@@ -159,7 +129,7 @@ const hasParentInLocale = ({ getFieldArgs, content }) => {
  * @param {(content: FlattenedEntryContent, targetLanguage: LocaleCode) => void} callback Function
  * called with the content and code of the target locale.
  */
-const forEachTargetLocale = (
+const forEachCopyTargetLocale = (
   { draft, getFieldArgs, sourceLanguage, matchesListItems },
   callback,
 ) => {
@@ -191,7 +161,7 @@ export const copyMirroredValue = ({ draft, getFieldArgs, fieldConfig, sourceLang
   const { keyPath } = getFieldArgs;
   const matchesListItems = getListItemMatcher({ fieldConfig, getFieldArgs });
 
-  forEachTargetLocale(
+  forEachCopyTargetLocale(
     { draft, getFieldArgs, sourceLanguage, matchesListItems },
     (content, targetLanguage) => {
       // Keep the source `value` intact, as it’s used for the remaining target locales
@@ -253,7 +223,7 @@ export const copyDefaultLocaleValueIfEmpty = ({
     getFieldArgs: { ...getFieldArgs, keyPath: fieldKeyPath },
   });
 
-  forEachTargetLocale(
+  forEachCopyTargetLocale(
     { draft, getFieldArgs, sourceLanguage, matchesListItems },
     (content, targetLanguage) => {
       const targetMainValue = content[mainKeyPath];
@@ -443,15 +413,14 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
         const matchesListItems = getListItemMatcher({ fieldConfig, getFieldArgs });
 
         suspendAutoDuplication(() => {
-          Object.entries(draft.currentValues).forEach(([targetLanguage, content]) => {
-            if (
-              targetLanguage !== sourceLanguage &&
-              keyPath in content &&
-              matchesListItems(content)
-            ) {
-              delete content[keyPath];
-            }
-          });
+          forEachCopyTargetLocale(
+            { draft, getFieldArgs, sourceLanguage, matchesListItems },
+            (content) => {
+              if (keyPath in content) {
+                delete content[keyPath];
+              }
+            },
+          );
         });
       }
 

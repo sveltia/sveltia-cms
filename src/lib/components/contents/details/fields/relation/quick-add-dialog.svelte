@@ -18,8 +18,6 @@
   import LocaleSwitcher from '$lib/components/contents/details/locale-switcher.svelte';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { revokeDraftFileURLs } from '$lib/services/contents/draft';
-  import { restoreBackup } from '$lib/services/contents/draft/backup';
-  import { buildDraft } from '$lib/services/contents/draft/create';
   import { initEntryDraftEditor } from '$lib/services/contents/draft/editor.svelte';
   import {
     EntryDraftState,
@@ -33,15 +31,14 @@
   import { needsSlugInput } from '$lib/services/contents/editor/slug';
   import {
     addPendingEntries,
+    buildQuickAddDraft,
     createPendingEntry,
-    getEditTarget,
     getNestedPendingEntries,
-    getNestedQuickAddHost,
     isEditUnchanged,
     isPendingEntryMoved,
     revertSaveTimeValues,
   } from '$lib/services/contents/fields/relation/quick-add';
-  import { createRawState, getSnapshot } from '$lib/services/utils/state.svelte';
+  import { createRawState } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { Entry, EntryDraft, EntryEditorPane, InternalEntryCollection, PendingEntry }
@@ -114,9 +111,18 @@
   const editing = $derived(!!previousEntry);
 
   /**
-   * Start a draft for the dialog: a new entry, or the entry to edit. An entry pending on the parent
-   * draft is opened with the values it was added with, on top of the latest version of the entry
-   * if it’s an existing one, so the changes made by someone else since can be reviewed.
+   * Show the error toast for an unexpected error, and log the error.
+   * @param {unknown} ex Error.
+   */
+  const reportError = (ex) => {
+    showErrorToast = true;
+    // eslint-disable-next-line no-console
+    console.error(ex);
+  };
+
+  /**
+   * Start a draft for the dialog: a new entry, or the entry to edit. See
+   * {@link buildQuickAddDraft}.
    */
   const startDraft = async () => {
     draftCount += 1;
@@ -128,24 +134,11 @@
     changedSince = false;
 
     // The dialog is only opened from a field editor while the draft is there
-    const parent = /** @type {EntryDraft} */ (parentDraft.current);
-    const parentPendingEntries = parent.pendingEntries;
-    const target = getEditTarget({ parentDraft: parent, entry: editingEntry });
-    const { pendingEntry, baseEntry } = target;
-
-    // A new entry starts at the root of the collection folder. The default is the folder being
-    // browsed, which belongs to the parent entry’s collection. The entry kept on the parent draft
-    // is a `$state` proxy, which the draft can’t clone
-    const draft = baseEntry
-      ? buildDraft({ collection, originalEntry: getSnapshot(baseEntry) })
-      : buildDraft({ collection, initialPath: '' });
-
-    if (pendingEntry?.source) {
-      // A new entry keeps its ID, so it takes the place of its earlier version when added again
-      draft.id = pendingEntry.entry.id;
-      // The values are copied, as the restore updates them in place
-      await restoreBackup({ backup: getSnapshot(pendingEntry.source), draft });
-    }
+    const { draft, changedSince: changedSinceEdited } = await buildQuickAddDraft({
+      collection,
+      parentDraft: /** @type {EntryDraft} */ (parentDraft.current),
+      entry: editingEntry,
+    });
 
     // The dialog may have been closed, or opened again for another entry, in the meantime
     if (count !== draftCount || !open) {
@@ -154,15 +147,9 @@
       return;
     }
 
-    // The entries pending on the parent draft are offered to the Relation fields of the entry as
-    // well, and a nested quick-add takes them into account when it names and counts entries
-    draft.pendingEntries = [...parentPendingEntries];
-    // The entry is saved along with the entry being edited, which decides what can be added from
-    // the Relation fields of the entry in turn
-    draft.quickAddHost = getNestedQuickAddHost(parent);
     entryDraft.current = draft;
     pane.current = { mode: 'edit', locale: defaultLocale };
-    changedSince = target.changedSince;
+    changedSince = changedSinceEdited;
     added = false;
   };
 
@@ -240,9 +227,7 @@
       added = true;
       open = false;
     } catch (ex) {
-      showErrorToast = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
+      reportError(ex);
     } finally {
       adding = false;
     }
@@ -251,11 +236,7 @@
   $effect(() => {
     if (open) {
       untrack(() => {
-        startDraft().catch((ex) => {
-          showErrorToast = true;
-          // eslint-disable-next-line no-console
-          console.error(ex);
-        });
+        startDraft().catch(reportError);
       });
     }
   });

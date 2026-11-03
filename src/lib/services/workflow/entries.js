@@ -6,11 +6,9 @@ import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
-import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+import { isEntryEditableAlong } from '$lib/services/contents/entry/editable';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
-import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { usesMultiFileStructure } from '$lib/services/contents/i18n/config';
 import { parseBranchName } from '$lib/services/workflow/branch';
@@ -162,23 +160,6 @@ const parseCompanions = async (entryFiles, collectionName, deletedPaths) => {
    */
   const isCreatable = (name) => getEntryCollection(name).create !== false;
 
-  /**
-   * Check whether the CMS can change the given existing entry of the given collection along with
-   * another entry. See `canEditEntry()`.
-   * @param {string} name Collection name.
-   * @param {Entry} entry Published entry.
-   * @returns {boolean} Result.
-   */
-  const isEditable = (name, entry) => {
-    const collection = getEntryCollection(name);
-
-    return (
-      !isArrayFileCollection(collection) &&
-      !isCollectionIndexFile(collection, entry) &&
-      !isEntryReadonly(entry)
-    );
-  };
-
   // Neither kind can be in a collection the CMS can’t write to, so its files aren’t parsed at all
   const files = entryFiles.filter(({ folder, text }) => {
     const collection = getCollection(folder.collectionName);
@@ -208,7 +189,7 @@ const parseCompanions = async (entryFiles, collectionName, deletedPaths) => {
               : [];
           }
 
-          if (!isEditable(companionCollectionName, publishedEntry)) {
+          if (!isEntryEditableAlong(getEntryCollection(companionCollectionName), publishedEntry)) {
             return [];
           }
 

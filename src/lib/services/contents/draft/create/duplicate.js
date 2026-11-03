@@ -3,7 +3,7 @@ import { getEntryDirPath, getSharedEntryFileName } from '$lib/services/contents/
 import { STATIC_DRAFT_KEYS } from '$lib/services/contents/draft';
 import { getSlugEditorProp } from '$lib/services/contents/draft/create';
 import { copyEntryRelativeAssets } from '$lib/services/contents/draft/create/duplicate-assets';
-import { createProxy, isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
+import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { fillUuidValues } from '$lib/services/contents/draft/create/uuid';
 import { showDuplicateToast } from '$lib/services/contents/editor';
 import { getAliasesKey, removeAliases } from '$lib/services/contents/entry/aliases';
@@ -13,6 +13,7 @@ import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/servic
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
+import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';
 import { createState, getSnapshot } from '$lib/services/utils/state.svelte';
 
 /**

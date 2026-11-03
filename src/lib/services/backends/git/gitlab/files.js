@@ -428,6 +428,21 @@ export const parseFileContents = ({ fetchingFiles, blobs }) =>
   );
 
 /**
+ * Get the API path to read the raw content of a repository file.
+ * @param {object} args Arguments.
+ * @param {string} args.projectId Project ID.
+ * @param {string} args.path File path.
+ * @param {string} args.ref Branch name or commit SHA to read the file at.
+ * @param {boolean} [args.lfs] Whether to return the content of a file tracked by Git LFS rather
+ * than its pointer.
+ * @returns {string} API path.
+ * @see https://docs.gitlab.com/api/repository_files/#get-raw-file-from-repository
+ */
+const getRawFilePath = ({ projectId, path, ref, lfs = false }) =>
+  `/projects/${projectId}/repository/files/${encodeURIComponent(path)}/raw` +
+  `?${lfs ? 'lfs=true&' : ''}ref=${encodeURIComponent(ref)}`;
+
+/**
  * Read the full text of the blobs that GitLab has cut short. The GraphQL API caps the data of each
  * blob, so a text shorter in bytes than the blob is requested again with the raw file endpoint.
  * @param {Record<string, BlobItem>} blobs Blobs mapped by file path. Updated in place.
@@ -449,11 +464,9 @@ const fetchTruncatedBlobs = async (blobs, ref) => {
 
   await mapConcurrently(truncated, async ([path, blob]) => {
     blob.rawTextBlob = /** @type {string} */ (
-      await fetchAPI(
-        `/projects/${getProjectId()}/repository/files` +
-          `/${encodeURIComponent(path)}/raw?ref=${encodeURIComponent(ref)}`,
-        { responseType: 'text' },
-      )
+      await fetchAPI(getRawFilePath({ projectId: getProjectId(), path, ref }), {
+        responseType: 'text',
+      })
     );
   });
 };
@@ -526,10 +539,6 @@ export const fetchBlob = async (asset) => {
   const projectId = getProjectId(workflow ? getWorkflowRepository() : undefined);
 
   return /** @type {Promise<Blob>} */ (
-    fetchAPI(
-      `/projects/${projectId}/repository/files` +
-        `/${encodeURIComponent(path)}/raw?lfs=true&ref=${encodeURIComponent(ref)}`,
-      { responseType: 'blob' },
-    )
+    fetchAPI(getRawFilePath({ projectId, path, ref, lfs: true }), { responseType: 'blob' })
   );
 };

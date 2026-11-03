@@ -15,8 +15,9 @@ import {
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
 import { cancelBackup, deleteBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
 import {
+  getNewPendingEntriesByCollection,
+  getReferencedEditedEntries,
   getReferencedPendingEntries,
-  getReferencedPendingEntrySet,
 } from '$lib/services/contents/draft/pending-entries';
 import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
 import {
@@ -25,15 +26,13 @@ import {
   removeDisabledLocales,
 } from '$lib/services/contents/draft/save/changes';
 import { detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
-import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
+import { assignSaveTimeValues } from '$lib/services/contents/draft/save/save-time';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
 import { validateAndRevealErrors } from '$lib/services/contents/draft/validate/reveal';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade/update';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
-import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
-import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { compareWithLatest } from '$lib/services/contents/fields/relation/quick-add';
 import { setLastCommitPublishHint } from '$lib/services/deployments';
 import { getUnpublishedEntryByDraft, isWorkflowDraft } from '$lib/services/workflow';
@@ -169,9 +168,7 @@ const buildChanges = async ({ draft, slugs, recreate }) => {
  */
 const checkPendingEntryConflicts = async (draft, { remoteChecked }) => {
   // The entries are only read, so they’re not copied
-  const editedEntries = [...getReferencedPendingEntrySet(draft)].filter(
-    ({ baseEntry }) => !!baseEntry,
-  );
+  const editedEntries = getReferencedEditedEntries(draft);
 
   if (!editedEntries.length) {
     return;
@@ -260,33 +257,6 @@ const checkSavable = async ({ draft, useWorkflow, overwrite, publish }) => {
   });
 
   return conflict;
-};
-
-/**
- * Assign the values that are only given when the entry draft is saved: the manual sort order of a
- * new entry, the auto-increment numbers and the `auto_now` dates.
- * @param {EntryDraft} draft Draft to save, updated in place.
- */
-const assignSaveTimeValues = (draft) => {
-  const { isNew, collection, collectionName } = draft;
-
-  // The entries added to the same collection from a Relation field have already taken the orders
-  // and numbers after the highest ones, so the new entry comes after them
-  const pendingEntryCount = draft.pendingEntries.filter(
-    (pendingEntry) => pendingEntry.collectionName === collectionName && !pendingEntry.baseEntry,
-  ).length;
-
-  if (isNew && collection._type === 'entry') {
-    assignManualSortOrder(draft, pendingEntryCount);
-  }
-
-  // Number the auto-increment Number fields at save time for the same reason, before the slugs are
-  // created, so a slug template can use the number
-  assignAutoIncrementValues(draft, pendingEntryCount);
-
-  // Set the DateTime fields with the `auto_now` option at save time rather than when the draft was
-  // created, so the value tells when the entry was actually saved
-  assignAutoNowValues(draft);
 };
 
 /**
@@ -470,7 +440,9 @@ export const saveEntry = async ({
   const useWorkflow = publish ? !!getUnpublishedEntryByDraft(draft) : isWorkflowDraft(draft);
   const conflict = await checkSavable({ draft, useWorkflow, overwrite, publish });
 
-  assignSaveTimeValues(draft);
+  // The entries added to the same collection from a Relation field have already taken the orders
+  // and numbers after the highest ones, so the new entry comes after them
+  assignSaveTimeValues(draft, getNewPendingEntriesByCollection(draft, draft.collectionName).length);
 
   const slugs = getSlugs({ draft });
   // Saving over a deletion writes the entry anew, as its files and the assets stored with it are

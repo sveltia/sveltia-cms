@@ -70,7 +70,7 @@
   import { getDraftObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
   import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
   import { getFieldLabel, getLocalizedOption } from '$lib/services/contents/i18n/options';
-  import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
+  import { isSyncedField } from '$lib/services/contents/i18n/shared-values';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { createStableDerivedState } from '$lib/services/utils/state.svelte';
 
@@ -193,10 +193,10 @@
   const synced = $derived(
     !inEditorComponent &&
       locale !== defaultLocale &&
-      getInheritedI18nOption({
+      isSyncedField({
         fieldConfig,
         getFieldArgs: { collectionName, fileName, isIndexFile, keyPath, valueMap },
-      }) === 'sync',
+      }),
   );
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
   /**

@@ -15,15 +15,11 @@
   import { goto } from '$lib/services/app/navigation';
   import { isReadonly } from '$lib/services/config/readonly';
   import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
-  import {
-    getCollectionFile,
-    getCollectionFileLabel,
-  } from '$lib/services/contents/collection/files';
-  import { getEntrySummary } from '$lib/services/contents/entry/summary';
+  import { getCollectionFile } from '$lib/services/contents/collection/files';
   import { deployments, productionSHA } from '$lib/services/deployments';
   import { encodePathSegments } from '$lib/services/utils/url';
   import { checkPublishedVersion, isPublishAllowed } from '$lib/services/workflow';
-  import { getCompanionNotes } from '$lib/services/workflow/board';
+  import { getCompanionNotes, getUnpublishedEntryLabel } from '$lib/services/workflow/board';
   import { getWorkflowStages } from '$lib/services/workflow/stages';
 
   /**
@@ -80,22 +76,12 @@
   const deployState = $derived(
     (deploySHA ? deployments.current[deploySHA]?.state : undefined) ?? 'unknown',
   );
-  const summary = $derived.by(() => {
-    // `appLocale.current` is a key, because the labels can be localized
-    if (!appLocale.current || !collection) {
-      return entry.slug;
-    }
-
-    return collectionFile
-      ? getCollectionFileLabel(collectionFile)
-      : getEntrySummary(collection, entry);
-  });
   /* v8 ignore start -- the app locale is always set once the UI strings are loaded */
-  // The entries created or edited from a Relation field of the entry are published along with it
-  const companionNotes = $derived(
-    appLocale.current ? getCompanionNotes(entry, appLocale.current) : [],
-  );
+  // `appLocale.current` is a key, because the labels can be localized
+  const summary = $derived(appLocale.current ? getUnpublishedEntryLabel(entry) : entry.slug);
   /* v8 ignore stop */
+  // The entries created or edited from a Relation field of the entry are published along with it
+  const companionNotes = $derived(getCompanionNotes(entry, appLocale.current));
   const collectionLabel = $derived(
     appLocale.current && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
   );

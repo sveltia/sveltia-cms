@@ -1,14 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { isDraftModified } from '$lib/services/contents/draft';
-import {
-  createProxy,
-  getListItemMatcher,
-  isDuplicatedField,
-} from '$lib/services/contents/draft/create/proxy.svelte';
+import { createProxy, getListItemMatcher } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getLocalizedDateTimeValue } from '$lib/services/contents/fields/date-time/value';
+import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';
 import { useActualDraftFieldArgs } from '$lib/test/fields';
 
 import {
@@ -18,6 +15,10 @@ import {
 } from './locale';
 
 vi.mock('$lib/services/contents/draft/create/proxy.svelte');
+vi.mock('$lib/services/contents/i18n/shared-values', async (importOriginal) => ({
+  .../** @type {any} */ (await importOriginal()),
+  isDuplicatedField: vi.fn(),
+}));
 vi.mock('$lib/services/contents/draft/defaults');
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/fields/date-time/value', async (importOriginal) => ({
