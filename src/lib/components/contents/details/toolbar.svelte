@@ -181,11 +181,13 @@
   const controlsDisabled = $derived(disabled || busy);
   // A change still on its way to the draft counts, so a save can be started right after it
   const modified = $derived(isNew || entryDraft.modified || fieldUpdatePending.current);
+  /* v8 ignore start -- only read in the deletion dialog, which a new entry doesn’t offer */
   const associatedAssets = $derived(
     collectionName && originalEntry
       ? getEntryRelativeAssets({ entry: originalEntry, collectionName, fileName })
       : [],
   );
+  /* v8 ignore stop */
   // Look the entry up in the store rather than using `originalEntry` directly, so the status button
   // stays in sync when the status is changed elsewhere, e.g. on the Editorial Workflow page
   const unpublishedEntry = $derived(

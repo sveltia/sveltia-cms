@@ -13,9 +13,16 @@
   import { env } from '$lib/services/user/env.svelte';
   import { encodePathSegments } from '$lib/services/utils/url';
 
+  /**
+   * @import { AssetFolderInfo } from '$lib/types/private';
+   */
+
   const folder = $derived(getAssetFolder({ collectionName: selectedCollection.current?.name }));
+  // Only read while the folder is shown below, so the folder is always there
   const assets = $derived(
-    folder ? allAssets.current.filter((asset) => isAssetInFolder(asset, folder)) : [],
+    allAssets.current.filter((asset) =>
+      isAssetInFolder(asset, /** @type {AssetFolderInfo} */ (folder)),
+    ),
   );
   const internalPath = $derived(folder?.internalPath);
   // Can’t upload assets if collection assets are saved at entry-relative paths, or the folder is

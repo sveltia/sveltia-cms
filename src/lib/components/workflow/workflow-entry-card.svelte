@@ -90,10 +90,12 @@
       ? getCollectionFileLabel(collectionFile)
       : getEntrySummary(collection, entry);
   });
+  /* v8 ignore start -- the app locale is always set once the UI strings are loaded */
   // The new entries created from a Relation field of the entry are published along with it
   const companionNote = $derived(
     appLocale.current ? getCompanionNote(entry, appLocale.current) : '',
   );
+  /* v8 ignore stop */
   const collectionLabel = $derived(
     appLocale.current && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
   );

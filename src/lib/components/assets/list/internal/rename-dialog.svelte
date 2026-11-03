@@ -40,15 +40,20 @@
       : undefined,
   );
   const { dirname = '', basename = '' } = $derived(getPathInfo(asset?.path ?? ''));
-  const otherNames = $derived(
+  /**
+   * Names of the other files next to the asset, and those of the subfolders there, which a file
+   * can’t take either.
+   */
+  const { otherNames, folderNames } = $derived(
     asset
-      ? getAssetsByDirName(dirname)
-          .map((a) => a.name)
-          .filter((n) => n !== asset.name)
-      : [],
+      ? {
+          otherNames: getAssetsByDirName(dirname)
+            .map((a) => a.name)
+            .filter((n) => n !== asset.name),
+          folderNames: getFolderNamesInDir(dirname),
+        }
+      : { otherNames: [], folderNames: [] },
   );
-  /** Names of the subfolders next to the asset, which a file can’t take either. */
-  const folderNames = $derived(asset ? getFolderNamesInDir(dirname) : []);
 
   /**
    * Rename the asset by moving it to a new path. Also, update the URL hash silently to reflect the

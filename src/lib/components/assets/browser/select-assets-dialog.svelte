@@ -267,7 +267,8 @@
     getTakenNames({
       subfolders,
       fileNames: panelAssets.map(({ name }) => name),
-      dirPath: browsingSubfolders ? browsedPath : undefined,
+      // Only read by the new folder dialog, which is there while subfolders are browsed
+      dirPath: browsedPath,
     }),
   );
   /** Label of the selected folder, at the start of the breadcrumb. */

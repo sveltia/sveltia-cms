@@ -62,7 +62,7 @@
     details = { ...defaultAssetDetails, usedEntries: undefined };
 
     try {
-      const _details = _asset ? await getAssetDetails(_asset) : { ...defaultAssetDetails };
+      const _details = await getAssetDetails(_asset);
 
       if (!isLatest()) {
         return;
@@ -70,7 +70,7 @@
 
       details = _details;
       // A late result lands on the object replaced since, so it needs no check
-      details.usedEntries = _asset ? await getAssetUsedEntries(_asset) : [];
+      details.usedEntries = await getAssetUsedEntries(_asset);
     } catch (/** @type {any} */ ex) {
       // The file couldn’t be downloaded, so only the basic info is shown
       // eslint-disable-next-line no-console

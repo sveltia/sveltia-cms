@@ -148,6 +148,10 @@ describe('RemoteChangeInfobar', () => {
           'If you save now, the entry will be created again.',
       );
     expect(alert.getByRole('button', { name: 'Reload Entry' }).query()).toBeNull();
+
+    // The deletion can be dismissed too
+    await page.getByRole('button', { name: 'Dismiss' }).click();
+    await expect.element(alert).not.toBeInTheDocument();
   });
 
   test('can be dismissed, and comes back when the entry is changed again', async () => {

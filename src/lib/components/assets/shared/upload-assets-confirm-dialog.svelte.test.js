@@ -106,14 +106,15 @@ describe('UploadAssetsConfirmDialog', () => {
     }
   });
 
-  test('is worded as a replacement when replacing an asset', async () => {
+  test('is worded as a replacement when replacing an asset, then replaces it', async () => {
+    vi.mocked(saveAssets).mockResolvedValue(undefined);
+
     await render(UploadAssetsConfirmDialog, {});
 
-    uploadingAssets.current = {
-      folder: globalAssetFolder.current,
-      files: [image],
-      originalAssets: [/** @type {any} */ ({ name: 'old.png', folder: globalAssetFolder.current })],
-    };
+    const folder = globalAssetFolder.current;
+    const originalAssets = [/** @type {any} */ ({ name: 'old.png', folder })];
+
+    uploadingAssets.current = { folder, files: [image], originalAssets };
 
     const dialog = page.getByRole('alertdialog', { name: 'Replace Asset' });
 
@@ -124,6 +125,16 @@ describe('UploadAssetsConfirmDialog', () => {
         '“\u2068old.png\u2069” will be replaced with this file: photo.png PNG image · \u206870\u2069 bytes close',
       );
     await expect.element(dialog.getByRole('button', { name: 'Replace' })).toBeVisible();
+
+    await dialog.getByRole('button', { name: 'Replace' }).click();
+
+    await vi.waitFor(() =>
+      expect(saveAssets).toHaveBeenCalledWith(
+        { files: [image], folder, originalAssets },
+        { commitType: 'uploadMedia' },
+      ),
+    );
+    await expect.poll(() => uploadingAssets.current.files).toEqual([]);
   });
 
   test('clears the selection when cancelled', async () => {

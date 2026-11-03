@@ -186,6 +186,8 @@ describe('EditorComponent', () => {
       onChange.mockClear();
 
       component.setValues({ title: 'Undone' });
+      // The same values passed again before they’re taken are ignored
+      component.setValues({ title: 'Undone' });
 
       await expect.element(title).toHaveValue('Undone');
       // The node’s data replaces the stored values as a whole
@@ -194,7 +196,7 @@ describe('EditorComponent', () => {
       // The node already holds the values, so reporting them would add a step to the history
       expect(onChange).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'update' }));
 
-      // The same values are ignored
+      // Taking the node’s values again doesn’t keep a later edit from being reported
       component.setValues({ title: 'Undone' });
       await title.fill('Edited');
       await vi.waitFor(() =>

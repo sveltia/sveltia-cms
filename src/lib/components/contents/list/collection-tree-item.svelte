@@ -14,6 +14,7 @@
   import { env } from '$lib/services/user/env.svelte';
 
   /**
+   * @import { InternalCollection } from '$lib/types/private';
    * @import { Collection } from '$lib/types/public';
    */
 
@@ -54,11 +55,13 @@
     'files' in collection ? collection.files.length : countCollectionEntries(name, entries),
   );
 
-  const treeNodes = $derived.by(() => {
-    const internalCollection = getCollection(name);
-
-    return internalCollection ? getNestedTree({ collection: internalCollection, entries }) : [];
-  });
+  // The collection comes from the configuration, which only has valid ones once it’s loaded
+  const treeNodes = $derived(
+    getNestedTree({
+      collection: /** @type {InternalCollection} */ (getCollection(name)),
+      entries,
+    }),
+  );
 
   let expanded = $state(false);
 

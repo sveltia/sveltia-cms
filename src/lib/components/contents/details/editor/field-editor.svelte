@@ -131,10 +131,9 @@
   );
   const isList = $derived(fieldType === 'list' || multiple);
   const originalValues = $derived(entryDraft.current?.originalValues);
-  const { i18nEnabled, allLocales, defaultLocale } = $derived(
-    getDraftI18nConfig(entryDraft.current),
-  );
-  const otherLocales = $derived(i18nEnabled ? allLocales.filter((l) => l !== locale) : []);
+  const { allLocales, defaultLocale } = $derived(getDraftI18nConfig(entryDraft.current));
+  // Without i18n, the only locale is the one being edited, which leaves none
+  const otherLocales = $derived(allLocales.filter((l) => l !== locale));
   // Only the field’s own values are depended on, so the editor isn’t updated whenever another
   // field in the entry changes
   const valueMap = $derived(
