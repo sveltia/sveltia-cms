@@ -21,8 +21,10 @@ export const apiLabel = 'Gemini API';
 export const developerURL = 'https://ai.google.dev/gemini-api/docs';
 export const apiKeyURL = 'https://aistudio.google.com/api-keys';
 // Anchored, so a key for another service entered while this one is selected isn’t accepted and sent
-// to the wrong API
-export const apiKeyPattern = /^AIza[a-zA-Z0-9_-]{35}$/;
+// to the wrong API. Google AI Studio now issues `AQ.` authentication keys alongside the legacy
+// `AIza` ones.
+// @see https://discuss.ai.google.dev/t/gemini-api-key-start-from-aq/171575
+export const apiKeyPattern = /^(?:AIza[a-zA-Z0-9_-]{35}|AQ\.[a-zA-Z0-9._-]{20,})$/;
 
 /**
  * Send a message to the Google Gemini API and return the response text.

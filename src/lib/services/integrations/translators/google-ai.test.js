@@ -65,7 +65,10 @@ describe('Gemini Translator Service', () => {
     });
 
     it('should validate API key pattern', () => {
-      const validApiKey = 'AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567';
+      const validApiKeys = [
+        'AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567',
+        'AQ.Ab8RN6KxYz1234567890abcdefGHIJ-_klmnop.qrstuv',
+      ];
 
       const invalidApiKeys = [
         'AIza-invalid',
@@ -73,9 +76,14 @@ describe('Gemini Translator Service', () => {
         '',
         'AIzaShort',
         'BIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567',
+        'AQ.short',
+        'AQ-Ab8RN6KxYz1234567890abcdefGHIJ',
+        'AQ.Ab8RN6KxYz1234567890 abcdefGHIJ',
       ];
 
-      expect(geminiTranslator.apiKeyPattern.test(validApiKey)).toBe(true);
+      validApiKeys.forEach((key) => {
+        expect(geminiTranslator.apiKeyPattern.test(key)).toBe(true);
+      });
 
       invalidApiKeys.forEach((key) => {
         expect(geminiTranslator.apiKeyPattern.test(key)).toBe(false);
