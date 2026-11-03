@@ -1675,6 +1675,10 @@ relation_field:
   edit_deleted: 「{$name}」は、あなたが編集した後に他のユーザーによって削除されました。エントリーを保存するには、フィールドから外してください。
   # Accessible label of the menu listing the selected entries that can be edited
   select_entry_to_edit: 編集するエントリーを選択
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: このエントリーへの変更が「{$name}」と一緒に公開されるのを待っています。ここで保存すると、そのエントリーの公開時に両方の変更が統合されますが、変更が重なっている場合は失敗することがあります。
   # Warning shown in the dialog when an entry edited from the field has been changed by someone else
   # since. {$name} is the singular label of the collection
   changed_since_edit: この {$name} は、あなたが編集した後に他のユーザーによって変更されました。最新版の上にあなたの変更内容が表示されています。更新する前に確認してください。
@@ -2403,8 +2407,11 @@ workflow:
   # Workflow page: note on a card listing the new entries that were created from a Relation field
   # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
   companion_entries: '{$entries} も追加されます'
-  # Workflow page: one of the new entries listed by `companion_entries`, named by its collection’s
-  # singular label and its title
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: '{$entries} も変更されます'
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
   companion_entry: '{$collection}: {$title}'
 
 # Dialog asking the user for a commit message every time changes are saved, when the site is

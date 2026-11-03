@@ -13,13 +13,35 @@ vi.mock('$lib/services/backends/git/shared/parse-files', () => ({
   parseAssetFileInfo: vi.fn((file) => ({ ...file, kind: 'image' })),
 }));
 vi.mock('$lib/services/contents/file/process');
+vi.mock('$lib/services/contents/entry/readonly', () => ({
+  isEntryReadonly: vi.fn((entry) => entry.id === 'pinned'),
+}));
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(
     (name) =>
       /** @type {Record<string, any>} */ ({
-        sections: { name, _type: 'entry' },
-        tiles: { name, _type: 'entry' },
-        fixed: { name, _type: 'entry', create: false },
+        sections: {
+          name,
+          _type: 'entry',
+          _file: {},
+          _i18n: { structureMap: {}, canonicalSlug: { key: 'translationKey' } },
+        },
+        tiles: {
+          name,
+          _type: 'entry',
+          _file: {},
+          _i18n: {
+            structureMap: { i18nMultiFolder: true },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        fixed: {
+          name,
+          _type: 'entry',
+          create: false,
+          _file: {},
+          _i18n: { structureMap: {}, canonicalSlug: { key: 'translationKey' } },
+        },
         frozen: { name, _type: 'entry', readonly: true },
         guides: {
           name,
@@ -227,7 +249,7 @@ describe('workflow/entries', () => {
       });
     });
 
-    test('attaches the new entries of other collections riding along in the pull request', async () => {
+    test('attaches the entries of other collections riding along in the pull request', async () => {
       /**
        * Build an entry file.
        * @param {string} path File path.
@@ -248,8 +270,12 @@ describe('workflow/entries', () => {
       ];
 
       const tileFile = file('content/tiles/help.md', { collectionName: 'tiles' });
-      // An entry rewritten along with the post, e.g. to update a reference, is a published one
-      const rewrittenFile = file('content/tiles/home.md', { collectionName: 'tiles' });
+      // A published entry edited along with the post, or rewritten to update a reference
+      const editedFile = file('content/tiles/home.md', { collectionName: 'tiles' });
+      // Not one the CMS can change along with the post, e.g. in a read-only collection
+      const lockedFile = file('content/frozen/locked.md', { collectionName: 'frozen' });
+      // Nor a read-only entry
+      const pinnedFile = file('content/tiles/pinned.md', { collectionName: 'tiles' });
       // A Relation field can’t add a file to a file collection, nor parse a binary file
       const settingsFile = file('data/site.yml', { collectionName: 'settings', fileName: 'site' });
 
@@ -266,7 +292,21 @@ describe('workflow/entries', () => {
       allEntries.current = [
         /** @type {any} */ ({
           id: 'home',
-          locales: { _default: { path: 'content/tiles/home.md' } },
+          slug: 'home',
+          subPath: 'home',
+          locales: { _default: { path: 'content/tiles/home.md', content: { title: 'Home' } } },
+        }),
+        /** @type {any} */ ({
+          id: 'pinned',
+          slug: 'pinned',
+          subPath: 'pinned',
+          locales: { _default: { path: 'content/tiles/pinned.md', content: {} } },
+        }),
+        /** @type {any} */ ({
+          id: 'locked',
+          slug: 'locked',
+          subPath: 'locked',
+          locales: { _default: { path: 'content/frozen/locked.md', content: {} } },
         }),
       ];
 
@@ -276,7 +316,9 @@ describe('workflow/entries', () => {
             postFile,
             ...sectionFiles,
             tileFile,
-            rewrittenFile,
+            editedFile,
+            pinnedFile,
+            lockedFile,
             settingsFile,
             binaryFile,
             fixedFile,
@@ -290,12 +332,41 @@ describe('workflow/entries', () => {
       const section = { id: 's', slug: 'guides', subPath: 'guides', locales: {} };
       const tile = { id: 't', slug: 'help', subPath: 'help', locales: {} };
 
+      const home = {
+        id: 'parsed',
+        slug: 'home',
+        subPath: 'home',
+        locales: { _default: { path: 'content/tiles/home.md', content: { title: 'Welcome' } } },
+      };
+
+      const locked = {
+        id: 'parsed-locked',
+        slug: 'locked',
+        subPath: 'locked',
+        locales: { _default: { path: 'content/frozen/locked.md', content: {} } },
+      };
+
+      /** @type {Record<string, any[]>} */
+      const parsedEntries = {
+        'content/posts/hello.md': [{ id: 'x', slug: 'hello', subPath: 'hello', locales: {} }],
+        'content/sections/en/guides.md': [section],
+        'content/tiles/help.md': [tile],
+        'content/tiles/home.md': [home],
+        'content/frozen/locked.md': [locked],
+        'content/tiles/pinned.md': [
+          {
+            id: 'parsed-pinned',
+            slug: 'pinned',
+            subPath: 'pinned',
+            locales: { _default: { path: 'content/tiles/pinned.md', content: {} } },
+          },
+        ],
+        // A new entry in a collection the CMS can’t create entries in
+        'content/fixed/a.md': [{ id: 'f', slug: 'a', subPath: 'a', locales: {} }],
+      };
+
       vi.mocked(prepareEntries).mockImplementation(async (files) => ({
-        entries: /** @type {any} */ ({
-          'content/posts/hello.md': [{ id: 'x', slug: 'hello', subPath: 'hello', locales: {} }],
-          'content/sections/en/guides.md': [section],
-          'content/tiles/help.md': [tile],
-        })[files[0].path],
+        entries: files.flatMap(({ path }) => parsedEntries[path] ?? []),
         errors: [],
       }));
 
@@ -306,10 +377,119 @@ describe('workflow/entries', () => {
       );
 
       expect(prepareEntries).toHaveBeenCalledWith(sectionFiles);
-      expect(prepareEntries).toHaveBeenCalledWith([tileFile]);
+      expect(prepareEntries).toHaveBeenCalledWith([tileFile, editedFile, pinnedFile]);
+      // The files of a collection the CMS can’t write to aren’t parsed
+      expect(prepareEntries).not.toHaveBeenCalledWith([lockedFile]);
       expect(entries[0].workflow.companions).toEqual([
         { collectionName: 'sections', entry: section },
         { collectionName: 'tiles', entry: tile },
+        // An existing entry keeps the ID of its published version
+        { collectionName: 'tiles', entry: { ...home, id: 'home' }, edited: true },
+      ]);
+    });
+
+    test('keeps a locale file an edited entry adds, wherever entries can be created', async () => {
+      // Turning on a locale for an existing entry adds its file, which isn’t a new entry
+      const enFile = {
+        path: 'content/fixed/a.md',
+        text: '#',
+        folder: { collectionName: 'fixed', fileName: undefined },
+      };
+
+      const frFile = { ...enFile, path: 'content/fixed/fr/a.md' };
+
+      allEntries.current = [
+        /** @type {any} */ ({
+          id: 'a',
+          slug: 'a',
+          subPath: 'a',
+          locales: { en: { path: 'content/fixed/a.md', content: {} } },
+        }),
+      ];
+
+      const postFile = {
+        path: 'content/posts/hello.md',
+        text: '#',
+        folder: { collectionName: 'posts', fileName: undefined },
+      };
+
+      vi.mocked(createFileList).mockReturnValue(
+        /** @type {any} */ ({ entryFiles: [postFile, enFile, frFile], assetFiles: [] }),
+      );
+
+      const parsed = {
+        id: 'parsed',
+        slug: 'a',
+        subPath: 'a',
+        locales: {
+          en: { path: 'content/fixed/a.md', content: {} },
+          fr: { path: 'content/fixed/fr/a.md', content: {} },
+        },
+      };
+
+      const post = { id: 'x', slug: 'hello', subPath: 'hello', locales: {} };
+
+      vi.mocked(prepareEntries).mockImplementation(async (files) => ({
+        entries: /** @type {any} */ (files[0].path === 'content/fixed/a.md' ? [parsed] : [post]),
+        errors: [],
+      }));
+
+      const { entries } = await convertPullRequest(createPullRequest({ files: [] }));
+
+      expect(prepareEntries).toHaveBeenCalledWith([enFile, frFile]);
+      expect(entries[0].workflow.companions).toEqual([
+        { collectionName: 'fixed', entry: { ...parsed, id: 'a' }, edited: true },
+      ]);
+    });
+
+    test('tells an edit that only turns on a locale from a new entry', async () => {
+      const frFile = {
+        path: 'content/tiles/fr/home.md',
+        text: '#',
+        folder: { collectionName: 'tiles', fileName: undefined },
+      };
+
+      const postFile = {
+        path: 'content/posts/hello.md',
+        text: '#',
+        folder: { collectionName: 'posts', fileName: undefined },
+      };
+
+      const published = {
+        id: 'home',
+        slug: 'home',
+        subPath: 'home',
+        locales: { en: { path: 'content/tiles/home.md', content: { title: 'Home' } } },
+      };
+
+      const parsed = {
+        id: 'parsed',
+        slug: 'home',
+        subPath: 'home',
+        locales: { fr: { path: 'content/tiles/fr/home.md', content: { title: 'Accueil' } } },
+      };
+
+      const post = { id: 'x', slug: 'hello', subPath: 'hello', locales: {} };
+
+      allEntries.current = [/** @type {any} */ (published)];
+      vi.mocked(getEntriesByCollection).mockReturnValue([/** @type {any} */ (published)]);
+      vi.mocked(createFileList).mockReturnValue(
+        /** @type {any} */ ({ entryFiles: [postFile, frFile], assetFiles: [] }),
+      );
+      vi.mocked(prepareEntries).mockImplementation(async (files) => ({
+        entries: /** @type {any} */ (files[0] === frFile ? [parsed] : [post]),
+        errors: [],
+      }));
+
+      const { entries } = await convertPullRequest(createPullRequest({ files: [] }));
+
+      expect(getEntriesByCollection).toHaveBeenCalledWith('tiles');
+      expect(entries[0].workflow.companions).toEqual([
+        {
+          collectionName: 'tiles',
+          entry: { ...published, locales: { ...published.locales, ...parsed.locales } },
+          edited: true,
+        },
       ]);
     });
 

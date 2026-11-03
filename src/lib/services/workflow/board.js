@@ -6,7 +6,12 @@ import { getListFormatter } from '$lib/services/contents/i18n';
 import { WORKFLOW_STAGES, WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
 
 /**
- * @import { InternalLocaleCode, UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
+ * @import {
+ * CompanionEntry,
+ * InternalLocaleCode,
+ * UnpublishedEntry,
+ * WorkflowStatus,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -146,37 +151,55 @@ export const groupEntriesByStatus = (
 };
 
 /**
- * Get the note listing the new entries that ride along in the pull request of the given entry,
- * which are published with it, for the entry’s card on the board.
+ * Get the notes listing the entries that ride along in the pull request of the given entry, which
+ * are published with it, for the entry’s card on the board: one for the new entries, and one for
+ * the existing entries it changes.
  * @param {UnpublishedEntry} entry Unpublished entry.
- * @param {InternalLocaleCode} locale App locale, which the list is formatted for.
- * @returns {string} Note, e.g. `Also adds Section: Getting Started`, or an empty string if there
- * are no such entries.
+ * @param {InternalLocaleCode} locale App locale, which the lists are formatted for.
+ * @returns {string[]} Notes, e.g. `Also adds Section: Getting Started` and `Also changes Author:
+ * Ada Lovelace`, without the one for which there are no entries.
  */
-export const getCompanionNote = (entry, locale) => {
+export const getCompanionNotes = (entry, locale) => {
   const { companions = [] } = entry.workflow;
 
-  if (!companions.length) {
-    return '';
-  }
-
-  const items = companions.map(({ collectionName, entry: companion }) => {
-    const collection = getCollection(collectionName);
-
-    // The collection may have been removed from the configuration since the entry was saved
-    if (collection?._type !== 'entry') {
-      return companion.slug;
+  /**
+   * Get a note listing the given entries.
+   * @param {CompanionEntry[]} entries Entries.
+   * @param {string} key Message key of the note.
+   * @returns {string[]} Note, or nothing if there are no entries.
+   */
+  const getNote = (entries, key) => {
+    if (!entries.length) {
+      return [];
     }
 
-    return _('workflow.companion_entry', {
-      values: {
-        collection: getCollectionLabel(collection, { useSingular: true }),
-        title: getEntrySummary(collection, companion),
-      },
-    });
-  });
+    const items = entries.map(({ collectionName, entry: companion }) => {
+      const collection = getCollection(collectionName);
 
-  return _('workflow.companion_entries', {
-    values: { entries: getListFormatter(locale).format(items) },
-  });
+      // The collection may have been removed from the configuration since the entry was saved
+      if (collection?._type !== 'entry') {
+        return companion.slug;
+      }
+
+      return _('workflow.companion_entry', {
+        values: {
+          collection: getCollectionLabel(collection, { useSingular: true }),
+          title: getEntrySummary(collection, companion),
+        },
+      });
+    });
+
+    return [_(key, { values: { entries: getListFormatter(locale).format(items) } })];
+  };
+
+  return [
+    ...getNote(
+      companions.filter(({ edited }) => !edited),
+      'workflow.companion_entries',
+    ),
+    ...getNote(
+      companions.filter(({ edited }) => edited),
+      'workflow.edited_companion_entries',
+    ),
+  ];
 };

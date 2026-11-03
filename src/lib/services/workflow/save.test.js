@@ -9,6 +9,7 @@ import { getCommitAuthor } from '$lib/services/backends/save';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
+import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import {
   buildCascadeDeleteChanges,
   planCascadeDelete,
@@ -74,6 +75,7 @@ vi.mock('$lib/services/backends/commit-prompt', () => ({
 }));
 vi.mock('$lib/services/backends/git/shared/commits');
 vi.mock('$lib/services/backends/save');
+vi.mock('$lib/services/contents/draft/save/file-changes', () => ({ resolveCacheDB: vi.fn() }));
 vi.mock('$lib/services/deployments/resolve');
 vi.mock('$lib/services/workflow/deploy');
 vi.mock('$lib/services/workflow/verify', () => ({
@@ -1531,6 +1533,152 @@ describe('workflow/save', () => {
         }),
       );
       expect(entry.workflow.companions).toBeUndefined();
+    });
+
+    test('puts the existing entries changed in a reused pull request back as published', async () => {
+      // They’re published entries, so taking them off the branch would delete them from the site
+      // @see https://github.com/sveltia/sveltia-cms/issues/1129
+      const pending = createEntry('cms/posts/hello');
+
+      /** @type {Record<string, string>} */
+      const publishedTexts = {
+        'content/authors/ada.md': 'name: Ada',
+        'content/authors/ja/ada.md': 'name: エイダ',
+      };
+
+      allEntries.current = [
+        /** @type {any} */ ({
+          id: 'ada',
+          slug: 'ada',
+          subPath: 'ada',
+          locales: {
+            en: { path: 'content/authors/ada.md' },
+            ja: { path: 'content/authors/ja/ada.md' },
+            de: { path: 'content/authors/de/ada.md' },
+          },
+        }),
+      ];
+
+      pending.workflow.companions = [
+        createCompanion('guides'),
+        {
+          collectionName: 'authors',
+          entry: {
+            id: 'ada',
+            slug: 'ada',
+            subPath: 'ada',
+            // Japanese turned off, French turned on, German left alone
+            locales: {
+              en: { path: 'content/authors/ada.md' },
+              fr: { path: 'content/authors/fr/ada.md' },
+              de: { path: 'content/authors/de/ada.md' },
+            },
+          },
+          edited: true,
+        },
+        {
+          collectionName: 'authors',
+          // Deleted from the configured branch since, so there’s nothing to put back
+          entry: { id: 'alan', slug: 'alan', subPath: 'alan', locales: {} },
+          edited: true,
+        },
+      ];
+      pending.workflow.pullRequest.files = [
+        { path: 'content/sections/guides.md' },
+        { path: 'content/authors/ada.md' },
+        { path: 'content/authors/ja/ada.md', deleted: true },
+        { path: 'content/authors/fr/ada.md' },
+      ];
+      upsertUnpublishedEntry(pending);
+      vi.mocked(resolveCacheDB).mockReturnValue(
+        /** @type {any} */ ({ get: vi.fn(async (path) => ({ text: publishedTexts[path] })) }),
+      );
+
+      await deleteWorkflowEntry(createPublishedEntry(), collection, undefined);
+
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          changes: [
+            { action: 'delete', slug: 'hello', path: 'content/posts/hello.md' },
+            { action: 'delete', slug: 'hello', path: 'content/posts/ja/hello.md' },
+            { action: 'delete', slug: 'hello', path: 'content/sections/guides.md' },
+            {
+              action: 'update',
+              slug: 'hello',
+              path: 'content/authors/ada.md',
+              data: 'name: Ada',
+            },
+            { action: 'delete', slug: 'hello', path: 'content/authors/fr/ada.md' },
+            {
+              action: 'create',
+              slug: 'hello',
+              path: 'content/authors/ja/ada.md',
+              data: 'name: エイダ',
+            },
+          ],
+        }),
+      );
+    });
+
+    test('leaves a changed entry to the reference rewrite of the deletion', async () => {
+      // The rewrite is made from the configured branch, so putting the entry back first would
+      // only write the same file twice in the commit
+      const pending = createEntry('cms/posts/hello');
+      const rewrite = { action: 'update', slug: 'ada', path: 'content/authors/ada.md', data: 'x' };
+
+      allEntries.current = [
+        /** @type {any} */ ({ id: 'ada', locales: { en: { path: 'content/authors/ada.md' } } }),
+      ];
+      pending.workflow.companions = [
+        {
+          collectionName: 'authors',
+          entry: { id: 'ada', locales: { en: { path: 'content/authors/ada.md' } } },
+          edited: true,
+        },
+      ];
+      pending.workflow.pullRequest.files = [{ path: 'content/authors/ada.md' }];
+      upsertUnpublishedEntry(pending);
+      vi.mocked(resolveCacheDB).mockReturnValue(
+        /** @type {any} */ ({ get: vi.fn(async () => ({ text: 'name: Ada' })) }),
+      );
+      vi.mocked(buildCascadeDeleteChanges).mockResolvedValue(
+        /** @type {any} */ ({ changes: [rewrite], savingEntries: [] }),
+      );
+
+      await deleteWorkflowEntry(createPublishedEntry(), collection, undefined);
+
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          changes: [
+            { action: 'delete', slug: 'hello', path: 'content/posts/hello.md' },
+            { action: 'delete', slug: 'hello', path: 'content/posts/ja/hello.md' },
+            rewrite,
+          ],
+        }),
+      );
+    });
+
+    test('refuses to delete when a changed entry can’t be put back as published', async () => {
+      const pending = createEntry('cms/posts/hello');
+
+      allEntries.current = [
+        /** @type {any} */ ({ id: 'ada', locales: { en: { path: 'content/authors/ada.md' } } }),
+      ];
+      pending.workflow.companions = [
+        {
+          collectionName: 'authors',
+          entry: { id: 'ada', locales: { en: { path: 'content/authors/ada.md' } } },
+          edited: true,
+        },
+      ];
+      pending.workflow.pullRequest.files = [{ path: 'content/authors/ada.md' }];
+      upsertUnpublishedEntry(pending);
+      vi.mocked(resolveCacheDB).mockReturnValue(undefined);
+
+      await expect(
+        deleteWorkflowEntry(createPublishedEntry(), collection, undefined),
+      ).rejects.toThrow('The published version of content/authors/ada.md could not be found.');
+      expect(workflowService.savePullRequest).not.toHaveBeenCalled();
     });
 
     test('keeps track of the commit when the status of a reused pull request can’t be switched', async () => {

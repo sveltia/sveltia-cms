@@ -100,7 +100,8 @@ export const getUnpublishedEntriesByCollection = (collectionName) =>
 
 /**
  * Get the new entries in the given collection that ride along in the pull request of an entry of
- * another collection. See {@link UnpublishedEntryProps.companions}.
+ * another collection. See {@link UnpublishedEntryProps.companions}. The existing entries changed in
+ * such a pull request are left out: see {@link getEditedCompanionEntries}.
  * @param {string} collectionName Collection name.
  * @param {UnpublishedEntry[]} [entries] Unpublished entries to look in. Defaults to all of them.
  * @returns {Entry[]} Entries.
@@ -108,7 +109,35 @@ export const getUnpublishedEntriesByCollection = (collectionName) =>
 export const getCompanionEntries = (collectionName, entries = unpublishedEntries.current) =>
   entries.flatMap(({ workflow }) =>
     (workflow.companions ?? []).flatMap((companion) =>
-      companion.collectionName === collectionName ? [companion.entry] : [],
+      companion.collectionName === collectionName && !companion.edited ? [companion.entry] : [],
+    ),
+  );
+
+/**
+ * Get the existing entries in the given collection that have been changed in the pull request of an
+ * entry of another collection, as they stand on its branch. See
+ * {@link UnpublishedEntryProps.companions}.
+ * @param {string} collectionName Collection name.
+ * @param {UnpublishedEntry[]} [entries] Unpublished entries to look in. Defaults to all of them.
+ * @returns {Entry[]} Entries.
+ */
+export const getEditedCompanionEntries = (collectionName, entries = unpublishedEntries.current) =>
+  entries.flatMap(({ workflow }) =>
+    (workflow.companions ?? []).flatMap((companion) =>
+      companion.collectionName === collectionName && companion.edited ? [companion.entry] : [],
+    ),
+  );
+
+/**
+ * Find the unpublished entry whose pull request changes the given existing entry along with it,
+ * the entry having been edited from a Relation field.
+ * @param {Entry} entry Published entry.
+ * @returns {UnpublishedEntry | undefined} Unpublished entry.
+ */
+export const findEditingUnpublishedEntry = (entry) =>
+  unpublishedEntries.current.find(({ workflow }) =>
+    (workflow.companions ?? []).some(
+      (companion) => companion.edited && companion.entry.id === entry.id,
     ),
   );
 

@@ -7,6 +7,7 @@ import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { countQuotaEntries } from '$lib/services/contents/collection/entries/count';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { getCollectionFile, getCollectionFileLabel } from '$lib/services/contents/collection/files';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { getDraftValues, isDraftModified } from '$lib/services/contents/draft';
 import { getReferencedPendingEntrySet } from '$lib/services/contents/draft/pending-entries';
@@ -19,13 +20,16 @@ import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-or
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
+import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
 import { renameIfNeeded } from '$lib/services/utils/file';
 import { getSnapshot } from '$lib/services/utils/state.svelte';
 import {
+  findEditingUnpublishedEntry,
   getCompanionEntries,
+  getEditedCompanionEntries,
   getUnpublishedEntry,
   getUnpublishedEntryByBranch,
   getUnpublishedEntryByDraft,
@@ -44,8 +48,10 @@ import {
  * InternalLocaleCode,
  * PendingEntry,
  * QuickAddHost,
+ * UnpublishedEntry,
  * } from '$lib/types/private';
  * @import { FieldKeyPath, RelationField } from '$lib/types/public';
+ * @import { EntryConflict } from '$lib/services/contents/draft/save/conflict';
  */
 
 /**
@@ -95,18 +101,61 @@ export const getNestedQuickAddHost = (parentDraft) => {
 };
 
 /**
- * Get the entries in the given collection that an earlier save of the host entry has committed to
- * its pull request, along with it. They aren’t in the collection until the pull request is
+ * Get the unpublished entry the host entry of the given draft has been saved as, whose pull request
+ * holds the entries created or edited from it earlier.
+ * @param {EntryDraft} draft Draft.
+ * @returns {UnpublishedEntry | undefined} Unpublished entry, or `undefined` if the host entry has
+ * no pull request.
+ */
+const getHostUnpublishedEntry = (draft) => {
+  const { branch } = getQuickAddHost(draft);
+
+  return branch ? getUnpublishedEntryByBranch(branch) : undefined;
+};
+
+/**
+ * Get the new entries in the given collection that an earlier save of the host entry has committed
+ * to its pull request, along with it. They aren’t in the collection until the pull request is
  * published.
  * @param {EntryDraft} draft Draft.
  * @param {string} collectionName Collection name.
  * @returns {Entry[]} Entries.
  */
 const getHostCompanionEntries = (draft, collectionName) => {
-  const { branch } = getQuickAddHost(draft);
-  const hostEntry = branch ? getUnpublishedEntryByBranch(branch) : undefined;
+  const hostEntry = getHostUnpublishedEntry(draft);
 
   return hostEntry ? getCompanionEntries(collectionName, [hostEntry]) : [];
+};
+
+/**
+ * Get the given existing entry as it is now for the host entry of the given draft: as an earlier
+ * save of the host entry has created or changed it in its pull request, or as it is on the
+ * configured branch.
+ * @param {EntryDraft} draft Draft.
+ * @param {string} id Entry ID.
+ * @returns {Entry | undefined} Entry, or `undefined` if it has been deleted.
+ */
+export const getLatestEntry = (draft, id) => {
+  const hostEntry = getHostUnpublishedEntry(draft);
+
+  return (
+    (hostEntry?.workflow.companions ?? []).find(({ entry }) => entry.id === id)?.entry ??
+    allEntries.current.find((entry) => entry.id === id)
+  );
+};
+
+/**
+ * Compare the given version of an existing entry edited from a Relation field with the entry as it
+ * is now for the host entry of the given draft, to tell whether someone else has changed it since.
+ * See {@link getLatestEntry}.
+ * @param {EntryDraft} draft Draft.
+ * @param {Entry} baseEntry Version of the entry the edits were made to.
+ * @returns {EntryConflict | undefined} The conflict, if any.
+ */
+export const compareWithLatest = (draft, baseEntry) => {
+  const latestEntry = getLatestEntry(draft, baseEntry.id);
+
+  return compareWithStore(baseEntry, { entries: latestEntry ? [latestEntry] : [] });
 };
 
 /**
@@ -218,7 +267,8 @@ export const getPendingRefEntries = ({
  * Get the entries the given Relation field refers to, followed by the pending entries of the draft
  * it can refer to: the entries created from the field, or another one referring to the same
  * collection, are offered and shown along with the saved ones until they’re saved too. An entry
- * edited from such a field is offered as edited, in its own place.
+ * edited from such a field is offered as edited, in its own place, including one an earlier save
+ * of the host entry has changed in its pull request.
  * @param {object} args Arguments.
  * @param {EntryDraft | null | undefined} args.draft Draft being edited.
  * @param {RelationField} args.fieldConfig Field configuration.
@@ -226,12 +276,18 @@ export const getPendingRefEntries = ({
  */
 export const getRefEntriesWithPending = ({ draft, fieldConfig }) => {
   const savedEntries = getRefEntries(fieldConfig);
+  const hostEntry = draft ? getHostUnpublishedEntry(draft) : undefined;
 
-  const editedEntries = new Map(
-    (draft ? getPendingEntriesByCollection(draft, fieldConfig.collection) : [])
+  // An entry edited from the field since is offered as edited, and one changed in the pull request
+  // of the host entry by an earlier save as it stands there
+  const editedEntries = new Map([
+    ...(hostEntry ? getEditedCompanionEntries(fieldConfig.collection, [hostEntry]) : []).map(
+      (entry) => /** @type {[string, Entry]} */ ([entry.id, entry]),
+    ),
+    ...(draft ? getPendingEntriesByCollection(draft, fieldConfig.collection) : [])
       .filter(({ baseEntry }) => !!baseEntry)
-      .map(({ entry }) => [entry.id, entry]),
-  );
+      .map(({ entry }) => /** @type {[string, Entry]} */ ([entry.id, entry])),
+  ]);
 
   const refEntries = editedEntries.size
     ? savedEntries.map((entry) => editedEntries.get(entry.id) ?? entry)
@@ -372,19 +428,20 @@ export const createPendingEntry = async ({ draft, parentDraft, fieldConfig }) =>
  * for, if it has been added or edited from the parent draft already, and the version of an existing
  * entry the dialog’s draft is built from. That’s the latest version of the entry, so a change made
  * by someone else since the entry was edited is picked up, and reported, rather than undone without
- * notice. An entry deleted since is edited from the version it was edited from.
+ * notice. An entry deleted since is edited from the version it was edited from. See
+ * {@link getLatestEntry}.
  * @param {object} args Arguments.
- * @param {PendingEntry[]} args.pendingEntries Entries pending on the parent draft.
+ * @param {EntryDraft} args.parentDraft Draft being edited, holding the pending entries.
  * @param {Entry} [args.entry] Entry to edit, as the field offers it. `undefined` for a new entry.
  * @returns {{ pendingEntry?: PendingEntry, baseEntry?: Entry, changedSince: boolean }} Pending
  * entry, base entry, and whether the entry has been changed by someone else since it was edited.
  */
-export const getEditTarget = ({ pendingEntries, entry }) => {
+export const getEditTarget = ({ parentDraft, entry }) => {
   if (!entry) {
     return { changedSince: false };
   }
 
-  const pendingEntry = pendingEntries.find(({ entry: { id } }) => id === entry.id);
+  const pendingEntry = parentDraft.pendingEntries.find(({ entry: { id } }) => id === entry.id);
 
   if (!pendingEntry) {
     return { baseEntry: entry, changedSince: false };
@@ -396,12 +453,12 @@ export const getEditTarget = ({ pendingEntries, entry }) => {
     return { pendingEntry, changedSince: false };
   }
 
-  const latestEntry = allEntries.current.find(({ id }) => id === baseEntry.id);
+  const latestEntry = getLatestEntry(parentDraft, baseEntry.id);
 
   return {
     pendingEntry,
     baseEntry: latestEntry ?? baseEntry,
-    changedSince: !!latestEntry && !!compareWithStore(baseEntry),
+    changedSince: !!latestEntry && !!compareWithLatest(parentDraft, baseEntry),
   };
 };
 
@@ -631,11 +688,14 @@ export const replaceEntryValues = ({
  * dialog, and saved along with the entry being edited. An entry created from a Relation field can
  * be changed until it’s saved. An existing entry can be edited if it’s in an entry collection where
  * it can be saved on its own, provided it’s not the entry being edited itself. The entry is saved
- * on the configured branch, so nothing is offered while Editorial Workflow is involved, either for
- * the entry being edited or for the referenced one, which would then skip the review; nor for an
- * entry that has a pull request of its own. An entry stored in a file with the other entries of the
- * collection isn’t offered either, as two entries edited in the same file couldn’t be saved at
- * once, nor the collection’s index file, which has fields of its own.
+ * along with the entry being edited: in its pull request with Editorial Workflow, where it’s
+ * reviewed with it, unless it’s in the same collection, as the board couldn’t tell the two apart;
+ * on the configured branch otherwise, so nothing is offered for an entry whose collection uses the
+ * workflow, which would then skip the review. Nor for an entry that another pull request changes
+ * already: its own, or that of another entry it has been edited along with. An entry stored in a
+ * file with the other entries of the collection isn’t offered either, as two entries edited in the
+ * same file couldn’t be saved at once, nor the collection’s index file, which has fields of its
+ * own.
  * @param {object} args Arguments.
  * @param {RelationField} args.fieldConfig Field configuration.
  * @param {EntryDraft} args.draft Draft being edited.
@@ -677,10 +737,18 @@ export const canEditEntry = ({
 
   const host = getQuickAddHost(draft);
 
+  // The entry is saved along with the host entry, see `getCreatableCollection()`
+  if (host.workflow ? collectionName === host.collectionName : isWorkflowEnabled(collection)) {
+    return false;
+  }
+
+  // Another pull request changes the entry already: its own, or that of another entry it has been
+  // edited along with
+  const editingEntry = findEditingUnpublishedEntry(entry);
+
   if (
-    host.workflow ||
-    isWorkflowEnabled(collection) ||
-    !!getUnpublishedEntry({ collectionName, subPath: entry.subPath })
+    !!getUnpublishedEntry({ collectionName, subPath: entry.subPath }) ||
+    (!!editingEntry && editingEntry.workflow.pullRequest.branch !== host.branch)
   ) {
     return false;
   }
@@ -742,4 +810,39 @@ export const getEditableEntries = ({ draft, locale, fieldConfig, refEntries, cur
 
     return [matches[0]];
   });
+};
+
+/**
+ * Get the name of the entry whose pull request changes the entry of the given draft along with it,
+ * the entry having been edited from a Relation field of that entry. Saving the draft on its own
+ * then changes the entry in two places, which Git combines or refuses to combine when the pull
+ * request is published.
+ * @param {EntryDraft | null | undefined} draft Draft being edited.
+ * @returns {string | undefined} Name of the entry, e.g. its title, or `undefined` if no other pull
+ * request changes the entry.
+ */
+export const getEditingHostName = (draft) => {
+  if (!draft || draft.isNew || !draft.originalEntry) {
+    return undefined;
+  }
+
+  const hostEntry = findEditingUnpublishedEntry(draft.originalEntry);
+
+  if (!hostEntry) {
+    return undefined;
+  }
+
+  const { collectionName, fileName } = hostEntry.workflow;
+  const collection = getCollection(collectionName);
+
+  // The collection may have been removed from the configuration since the entry was saved
+  if (!collection) {
+    return hostEntry.slug;
+  }
+
+  const collectionFile = fileName ? getCollectionFile(collection, fileName) : undefined;
+
+  return collectionFile
+    ? getCollectionFileLabel(collectionFile)
+    : getEntrySummary(collection, hostEntry);
 };

@@ -6,6 +6,7 @@ import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shar
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { saveChanges } from '$lib/services/backends/save';
 import { getReadonlyMessage, isDraftReadonly } from '$lib/services/config/readonly';
+import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
@@ -23,7 +24,7 @@ import {
   preparePendingEntryCommit,
   removeDisabledLocales,
 } from '$lib/services/contents/draft/save/changes';
-import { compareWithStore, detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
+import { detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
@@ -33,6 +34,7 @@ import { buildCascadeChanges } from '$lib/services/contents/entry/relations/casc
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
+import { compareWithLatest } from '$lib/services/contents/fields/relation/quick-add';
 import { setLastCommitPublishHint } from '$lib/services/deployments';
 import { getUnpublishedEntryByDraft, isWorkflowDraft } from '$lib/services/workflow';
 import { detectWorkflowConflict } from '$lib/services/workflow/conflict';
@@ -155,9 +157,10 @@ const buildChanges = async ({ draft, slugs, recreate }) => {
 
 /**
  * Make sure no one else has changed the existing entries edited from a Relation field since the
- * edits were made, which saving them would undo. Unlike the entry being edited, such an entry can’t
- * be saved over the change: its edits are only reviewed in the quick-add dialog, which picks up the
- * latest version of the entry when it’s opened again.
+ * edits were made, which saving them would undo. With Editorial Workflow, an entry an earlier save
+ * has changed in the pull request is compared with its version there. Unlike the entry being
+ * edited, such an entry can’t be saved over the change: its edits are only reviewed in the
+ * quick-add dialog, which picks up the latest version of the entry when it’s opened again.
  * @param {EntryDraft} draft Draft to save.
  * @param {object} options Options.
  * @param {boolean} options.remoteChecked Whether the repository has just been checked for changes,
@@ -185,7 +188,7 @@ const checkPendingEntryConflicts = async (draft, { remoteChecked }) => {
 
   // eslint-disable-next-line no-restricted-syntax
   for (const { collectionName, entry, baseEntry } of editedEntries) {
-    const conflict = compareWithStore(/** @type {Entry} */ (baseEntry));
+    const conflict = compareWithLatest(draft, /** @type {Entry} */ (baseEntry));
 
     if (conflict) {
       const collection = /** @type {InternalCollection} */ (getCollection(collectionName));
@@ -349,9 +352,14 @@ const commitChanges = async ({
           // collection, so an entry doesn’t take the branch of another with the same file name
           slug: savingEntry.slug,
           originalEntry,
-          companions: pendingEntries.map(({ collectionName: name, entry }) => ({
+          companions: pendingEntries.map(({ collectionName: name, entry, baseEntry }) => ({
             collectionName: name,
             entry,
+            // A new entry an earlier save has committed to the pull request can be edited again
+            // too, but it’s still a new one
+            ...(baseEntry && allEntries.current.some(({ id }) => id === entry.id)
+              ? { edited: true }
+              : {}),
           })),
         })
       : await saveChanges({

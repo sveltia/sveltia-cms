@@ -8,8 +8,10 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
 import {
   canMergePullRequest,
   checkPublishedVersion,
+  findEditingUnpublishedEntry,
   getCompanionEntries,
   getDeletionSelection,
+  getEditedCompanionEntries,
   getPublishedVersion,
   getPullRequestEntries,
   getUnpublishedEntriesByCollection,
@@ -283,6 +285,32 @@ describe('workflow/index', () => {
       unpublishedEntries.current = [createHost([{ collectionName: 'sections', entry: guides }])];
 
       expect(getCompanionEntries('sections', [host])).toEqual([help]);
+    });
+
+    test('tells the existing entries changed in a pull request apart from the new ones', () => {
+      const ada = /** @type {any} */ ({ id: 'ada' });
+      const alan = /** @type {any} */ ({ id: 'alan' });
+
+      const host = createHost([
+        { collectionName: 'authors', entry: jane },
+        { collectionName: 'authors', entry: ada, edited: true },
+      ]);
+
+      unpublishedEntries.current = [
+        host,
+        createHost(),
+        createHost([{ collectionName: 'authors', entry: alan, edited: true }]),
+      ];
+
+      expect(getCompanionEntries('authors')).toEqual([jane]);
+      expect(getEditedCompanionEntries('authors')).toEqual([ada, alan]);
+      expect(getEditedCompanionEntries('authors', [host])).toEqual([ada]);
+      expect(getEditedCompanionEntries('sections')).toEqual([]);
+
+      expect(findEditingUnpublishedEntry(ada)).toBe(host);
+      // A new entry isn’t edited
+      expect(findEditingUnpublishedEntry(jane)).toBeUndefined();
+      expect(findEditingUnpublishedEntry(guides)).toBeUndefined();
     });
   });
 

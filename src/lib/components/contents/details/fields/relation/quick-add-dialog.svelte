@@ -127,9 +127,10 @@
     previousEntry = editingEntry;
     changedSince = false;
 
-    /* v8 ignore next -- the dialog is only opened from a field editor while the draft is there */
-    const parentPendingEntries = parentDraft.current?.pendingEntries ?? [];
-    const target = getEditTarget({ pendingEntries: parentPendingEntries, entry: editingEntry });
+    // The dialog is only opened from a field editor while the draft is there
+    const parent = /** @type {EntryDraft} */ (parentDraft.current);
+    const parentPendingEntries = parent.pendingEntries;
+    const target = getEditTarget({ parentDraft: parent, entry: editingEntry });
     const { pendingEntry, baseEntry } = target;
 
     // A new entry starts at the root of the collection folder. The default is the folder being
@@ -158,10 +159,7 @@
     draft.pendingEntries = [...parentPendingEntries];
     // The entry is saved along with the entry being edited, which decides what can be added from
     // the Relation fields of the entry in turn
-    /* v8 ignore next -- the dialog is only opened from a field editor while the draft is there */
-    draft.quickAddHost = parentDraft.current
-      ? getNestedQuickAddHost(parentDraft.current)
-      : undefined;
+    draft.quickAddHost = getNestedQuickAddHost(parent);
     entryDraft.current = draft;
     pane.current = { mode: 'edit', locale: defaultLocale };
     changedSince = target.changedSince;

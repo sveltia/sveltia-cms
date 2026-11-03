@@ -27,10 +27,13 @@ import { formatDate } from '$lib/services/utils/date';
  * Compare the draft’s original entry with the one in the store to tell whether the entry has been
  * changed since the draft was opened.
  * @param {Entry} originalEntry Entry the draft was made from.
+ * @param {object} [options] Options.
+ * @param {Entry[]} [options.entries] Entries holding the entry as it is now. Defaults to those on
+ * the configured branch.
  * @returns {EntryConflict | undefined} The conflict, if any.
  */
-export const compareWithStore = (originalEntry) => {
-  const current = allEntries.current.find(({ id }) => id === originalEntry.id);
+export const compareWithStore = (originalEntry, { entries = allEntries.current } = {}) => {
+  const current = entries.find(({ id }) => id === originalEntry.id);
   const canOverwrite = originalEntry.arrayIndex === undefined;
 
   if (!current) {

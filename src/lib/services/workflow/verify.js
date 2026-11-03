@@ -292,9 +292,12 @@ const getUsedAssetPaths = (entry, paths) => {
  * CMS itself is served from; in a collection storing assets with the entries, those of the
  * published entry, which are removed when it’s deleted, or moved as they are when it’s moved; the
  * files of the other entries the CMS rewrites along with it, exactly as it writes them (see
- * {@link getExpectedRewrites}); and the new entries of other collections created from a Relation
- * field of the entry, which the board lists on the entry’s card. Those have to be new on the
- * configured branch as well: one that has appeared there since would be overwritten.
+ * {@link getExpectedRewrites}); and the entries of other collections created or edited from a
+ * Relation field of the entry, which the board lists on the entry’s card. A new one has to be new
+ * on the configured branch as well: one that has appeared there since would be overwritten. An
+ * edited one can have its published files changed or removed, a locale turned off removing one,
+ * and new ones added for a locale turned on, but not have a published file added: that’s an entry
+ * that has appeared on the configured branch since.
  *
  * The content of the files is that of the pull request as loaded, which is that of the commit the
  * merge is pinned to: see {@link verifyMergeState}.
@@ -311,10 +314,29 @@ export const findUnexpectedChanges = async (entry, files) => {
   const updatedPaths = updatedEntry ? getEntryPaths(updatedEntry) : [];
   const ownPaths = new Set([...currentPaths, ...updatedPaths]);
   const branchFiles = new Map(pullRequest.files.map((file) => [file.path, file]));
+  const { companions = [] } = entry.workflow;
 
   const companionPaths = new Set(
-    (entry.workflow.companions ?? []).flatMap(({ entry: companion }) => getEntryPaths(companion)),
+    companions.flatMap(({ entry: companion, edited }) => (edited ? [] : getEntryPaths(companion))),
   );
+
+  const editedCompanions = companions.filter(({ edited }) => edited);
+
+  // The files the edited entries have on the configured branch, which the pull request can only
+  // change or remove: one it adds is an entry that has appeared there since, which would be
+  // overwritten
+  const editedPublishedPaths = new Set(
+    editedCompanions.flatMap(({ entry: companion }) => {
+      const publishedEntry = findEntryByPaths(getEntryPaths(companion));
+
+      return publishedEntry ? getEntryPaths(publishedEntry) : [];
+    }),
+  );
+
+  const editedCompanionPaths = new Set([
+    ...editedCompanions.flatMap(({ entry: companion }) => getEntryPaths(companion)),
+    ...editedPublishedPaths,
+  ]);
 
   // Whether the pull request moves the entry: a rename, or a move to another folder of a nested
   // collection, which takes the entries below it and the assets beside it along. Its location is
@@ -366,6 +388,10 @@ export const findUnexpectedChanges = async (entry, files) => {
 
     if (companionPaths.has(path)) {
       return change === 'added';
+    }
+
+    if (editedCompanionPaths.has(path)) {
+      return change !== 'added' || !editedPublishedPaths.has(path);
     }
 
     if (!kind) {

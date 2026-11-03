@@ -472,18 +472,21 @@
  * @property {string[]} [previousPaths] File paths the entry occupied before the pull request
  * renamed it, which happens when the slug is edited. They’re used to match the draft with its
  * published counterpart, which would otherwise be listed as a separate entry.
- * @property {CompanionEntry[]} [companions] New entries in other collections that were created
- * from a Relation field of the entry and committed to its pull request, so they’re reviewed and
- * published along with it.
+ * @property {CompanionEntry[]} [companions] Entries in other collections that were created or
+ * edited from a Relation field of the entry and committed to its pull request, so they’re reviewed
+ * and published along with it.
  */
 
 /**
- * A new entry that rides along in the pull request of another entry, which it was created for from
- * a Relation field with the quick-add dialog. It isn’t on the board on its own: the pull request
- * stands for the entry it was opened for.
+ * An entry that rides along in the pull request of another entry, which it was created or edited
+ * for from a Relation field with the quick-add dialog. It isn’t on the board on its own: the pull
+ * request stands for the entry it was opened for, whose card lists it.
  * @typedef {object} CompanionEntry
  * @property {string} collectionName Name of the collection the entry belongs to.
- * @property {Entry} entry Entry as it stands on the pull request’s branch.
+ * @property {Entry} entry Entry as it stands on the pull request’s branch. An existing entry keeps
+ * the ID of its published version.
+ * @property {boolean} [edited] Whether the entry is an existing one that the pull request changes,
+ * rather than a new one.
  */
 
 /**

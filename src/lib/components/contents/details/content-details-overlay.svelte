@@ -18,6 +18,7 @@
 
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
+  import PendingEditInfobar from '$lib/components/contents/details/pending-edit-infobar.svelte';
   import RemoteChangeInfobar from '$lib/components/contents/details/remote-change-infobar.svelte';
   import SidebarSheet from '$lib/components/contents/details/sidebar/sidebar-sheet.svelte';
   import Sidebar from '$lib/components/contents/details/sidebar/sidebar.svelte';
@@ -515,6 +516,7 @@
       </EmptyState>
     {:else}
       <RemoteChangeInfobar />
+      <PendingEditInfobar />
       <div role="none" class="body" onpointerdown={markInteracted} onkeydown={markInteracted}>
         {#key `${collectionName}|${fileName}|${isIndexFile}`}
           <div role="none" class="content-area">

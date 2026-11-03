@@ -12,6 +12,7 @@ import { getCommitAuthor } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
+import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import {
   buildCascadeDeleteChanges,
@@ -51,6 +52,7 @@ import { checkReviewedHead, verifyMergeState } from '$lib/services/workflow/veri
  * CommitResults,
  * InternalCollection,
  * InternalCollectionFile,
+ * RepositoryFileInfo,
  * UnpublishedEntry,
  * WorkflowBackendService,
  * WorkflowFile,
@@ -705,6 +707,61 @@ const getDeletionTitleChanges = (entry) => [
 ];
 
 /**
+ * Get the changes that put the existing entries a pull request has changed along with its entry
+ * back the way they are on the configured branch, which is where the pull request will land, so
+ * publishing it leaves them alone. Only the files the pull request changes are written: those it
+ * has added are removed, and the others get the text the configured branch has.
+ * @param {UnpublishedEntry} unpublishedEntry Unpublished entry whose pull request is reused.
+ * @param {string} slug Slug of the entry, for the commit message.
+ * @returns {Promise<FileChange[]>} Changes.
+ * @throws {Error} When the text of a file on the configured branch isn’t known.
+ */
+const getEditedCompanionRevertChanges = async (unpublishedEntry, slug) => {
+  const { companions = [], pullRequest } = unpublishedEntry.workflow;
+  const changedPaths = new Set(pullRequest.files.map(({ path }) => path));
+
+  const publishedPaths = new Set(
+    companions.flatMap(({ entry, edited }) => {
+      const publishedEntry = edited
+        ? allEntries.current.find(({ id }) => id === entry.id)
+        : undefined;
+
+      return publishedEntry ? getEntryPaths(publishedEntry) : [];
+    }),
+  );
+
+  const paths = unique(
+    companions.flatMap(({ entry, edited }) => (edited ? getEntryPaths(entry) : [])),
+  );
+
+  const cacheDB = resolveCacheDB();
+
+  return Promise.all(
+    unique([...paths, ...publishedPaths])
+      .filter((path) => changedPaths.has(path))
+      .map(async (path) => {
+        if (!publishedPaths.has(path)) {
+          return /** @type {FileChange} */ ({ action: 'delete', slug, path });
+        }
+
+        const text = /** @type {RepositoryFileInfo | undefined} */ (await cacheDB?.get(path))?.text;
+
+        if (text === undefined) {
+          throw new Error(`The published version of ${path} could not be found.`);
+        }
+
+        // A file the pull request deletes, e.g. that of a locale turned off, is created again
+        return /** @type {FileChange} */ ({
+          action: paths.includes(path) ? 'update' : 'create',
+          slug,
+          path,
+          data: text,
+        });
+      }),
+  );
+};
+
+/**
  * Delete the given published entry through Editorial Workflow: instead of committing the removal
  * straight to the configured branch, open a pull request that removes it, so taking an entry off
  * the site is reviewed and released like any other change. The entry stays on the site until that
@@ -770,10 +827,14 @@ export const deleteWorkflowEntry = async (
 
   // A reused pull request may hold new entries created from a Relation field of the entry, which
   // would otherwise be published along with the removal. They have never been published, so taking
-  // them off the branch is all it takes
-  const companionPaths = (existingEntry?.workflow.companions ?? []).flatMap(({ entry: e }) =>
-    getEntryPaths(e),
+  // them off the branch is all it takes. The existing entries edited along with it are put back
+  const companionPaths = (existingEntry?.workflow.companions ?? []).flatMap(
+    ({ entry: e, edited }) => (edited ? [] : getEntryPaths(e)),
   );
+
+  const companionRevertChanges = existingEntry
+    ? await getEditedCompanionRevertChanges(existingEntry, slug)
+    : [];
 
   // The references are removed from the published entries as they stand on the configured branch,
   // which is where the pull request will land
@@ -786,6 +847,8 @@ export const deleteWorkflowEntry = async (
     ...[...paths, ...assetPaths, ...companionPaths].map(
       (path) => /** @type {FileChange} */ ({ action: 'delete', slug, path }),
     ),
+    // A file the references are removed from is written from the configured branch anyway
+    ...companionRevertChanges.filter(({ path }) => !cascadeChanges.some((c) => c.path === path)),
     ...cascadeChanges,
   ];
 

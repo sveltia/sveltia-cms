@@ -6,6 +6,7 @@ import { lockedBranch } from '$lib/services/backends/branch-access';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { saveChanges } from '$lib/services/backends/save';
+import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
@@ -1192,7 +1193,7 @@ describe('draft/save/index', () => {
         await saveEntry();
 
         expect(checkForRemoteChanges).toHaveBeenCalledOnce();
-        expect(compareWithStore).toHaveBeenCalledWith(svelte.baseEntry);
+        expect(compareWithStore).toHaveBeenCalledWith(svelte.baseEntry, { entries: [] });
         expect(saveChanges).toHaveBeenCalledWith(
           expect.objectContaining({ changes: expect.arrayContaining(svelte.changes) }),
         );
@@ -1218,7 +1219,38 @@ describe('draft/save/index', () => {
         // `detectEntryConflict()` has checked it already
         expect(detectEntryConflict).toHaveBeenCalledWith(mockDraft);
         expect(checkForRemoteChanges).not.toHaveBeenCalled();
-        expect(compareWithStore).toHaveBeenCalledWith(svelte.baseEntry);
+        expect(compareWithStore).toHaveBeenCalledWith(svelte.baseEntry, { entries: [] });
+      });
+
+      it('should record an edited entry as changed in the pull request', async () => {
+        const svelte = createPendingEdit('svelte');
+        // A new entry an earlier save has committed to the pull request stays a new one
+        const react = createPendingEdit('react');
+
+        allEntries.current = [svelte.baseEntry];
+        mockDraft.currentValues = {
+          en: { title: 'Test Post', 'tags.0': 'svelte', 'tags.1': 'react' },
+        };
+        mockDraft.pendingEntries = [svelte, react];
+        vi.mocked(isWorkflowDraft).mockReturnValue(true);
+
+        vi.mocked(saveWorkflowChanges).mockResolvedValue({
+          commit: { sha: 'abc', files: {} },
+          savedEntries: [{ id: 'test-id', slug: 'test-post', locales: {} }],
+          savedAssets: [],
+        });
+
+        await saveEntry();
+
+        expect(saveWorkflowChanges).toHaveBeenCalledWith(
+          expect.objectContaining({
+            companions: [
+              { collectionName: svelte.collectionName, entry: svelte.entry, edited: true },
+              { collectionName: react.collectionName, entry: react.entry },
+            ],
+          }),
+        );
+        allEntries.current = [];
       });
 
       it('should not check the repository without an edited entry', async () => {

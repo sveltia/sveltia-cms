@@ -10,10 +10,12 @@ import { compareWithStore } from '$lib/services/contents/draft/save/conflict';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
+import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { assignAutoIncrementValues } from '$lib/services/contents/fields/number/auto-increment';
 import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
 import {
+  findEditingUnpublishedEntry,
   getUnpublishedEntry,
   getUnpublishedEntryByBranch,
   getUnpublishedEntryByDraft,
@@ -25,10 +27,13 @@ import {
 import {
   addPendingEntries,
   canEditEntry,
+  compareWithLatest,
   createPendingEntry,
   getCreatableCollection,
   getEditableEntries,
+  getEditingHostName,
   getEditTarget,
+  getLatestEntry,
   getNestedPendingEntries,
   getNestedQuickAddHost,
   getPendingEntrySlugs,
@@ -76,6 +81,9 @@ vi.mock('$lib/services/contents/draft', async (importOriginal) => ({
   isDraftModified: vi.fn(),
 }));
 
+vi.mock('$lib/services/contents/entry/summary', () => ({
+  getEntrySummary: vi.fn(),
+}));
 vi.mock('$lib/services/contents/entry/readonly', () => ({
   isEntryReadonly: vi.fn(() => false),
 }));
@@ -116,8 +124,12 @@ vi.mock('$lib/services/workflow', async (importOriginal) => {
 
   return {
     ...original,
+    findEditingUnpublishedEntry: vi.fn(),
     getCompanionEntries: vi.fn((collectionName, entries = store.current) =>
       original.getCompanionEntries(collectionName, entries),
+    ),
+    getEditedCompanionEntries: vi.fn((collectionName, entries = store.current) =>
+      original.getEditedCompanionEntries(collectionName, entries),
     ),
     getUnpublishedEntry: vi.fn(),
     getUnpublishedEntryByBranch: vi.fn(),
@@ -129,6 +141,7 @@ vi.mock('$lib/services/workflow', async (importOriginal) => {
 });
 
 beforeEach(() => {
+  vi.mocked(findEditingUnpublishedEntry).mockReturnValue(undefined);
   vi.mocked(getUnpublishedEntry).mockReturnValue(undefined);
   vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(undefined);
   vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(undefined);
@@ -566,6 +579,33 @@ describe('getRefEntriesWithPending', () => {
       vue,
       react.entry,
     ]);
+  });
+
+  it('offers an entry an earlier save of the host entry has changed as it stands there', () => {
+    const svelte = createPendingEdit('svelte');
+    const react = createPendingEdit('react');
+    const saved = [{ ...svelte.entry, commitDate: new Date() }, react.entry];
+    const changedSvelte = { ...svelte.entry, slug: 'svelte-5' };
+    const changedReact = { ...react.entry, slug: 'react-19' };
+    const draft = createParentDraft({ pendingEntries: [react] });
+
+    const hostEntry = /** @type {any} */ ({
+      workflow: {
+        pullRequest: { branch: 'cms/posts/hello' },
+        companions: [
+          { collectionName: 'tags', entry: changedSvelte, edited: true },
+          { collectionName: 'tags', entry: changedReact, edited: true },
+        ],
+      },
+    });
+
+    vi.mocked(isWorkflowDraft).mockReturnValue(true);
+    vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(hostEntry);
+    vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(hostEntry);
+    vi.mocked(getRefEntries).mockReturnValue(saved);
+
+    // An entry edited again since is offered as edited
+    expect(getRefEntriesWithPending({ draft, fieldConfig })).toEqual([changedSvelte, react.entry]);
   });
 
   it('returns the saved entries as they are when nothing is pending', () => {
@@ -1297,19 +1337,46 @@ describe('canEditEntry', () => {
     ).toBe(false);
   });
 
-  it('refuses an entry while Editorial Workflow is involved', () => {
+  it('allows an entry of another collection to go into the pull request of the draft', () => {
     const draft = createParentDraft();
 
     vi.mocked(isWorkflowDraft).mockReturnValue(true);
-    expect(canEditEntry({ fieldConfig, draft, entry })).toBe(false);
+    // Even if the collection uses the workflow, as it’s reviewed along with the draft
+    vi.mocked(isWorkflowEnabled).mockReturnValue(true);
+    expect(canEditEntry({ fieldConfig, draft, entry })).toBe(true);
 
-    vi.mocked(isWorkflowDraft).mockReturnValue(false);
+    // An entry of the same collection couldn’t be told apart from the draft on the board
+    vi.mocked(getCollection).mockReturnValue({ ...collection, name: 'posts' });
+    expect(
+      canEditEntry({ fieldConfig: { ...fieldConfig, collection: 'posts' }, draft, entry }),
+    ).toBe(false);
+  });
+
+  it('refuses an entry that would skip the review, or another pull request changes', () => {
+    const draft = createParentDraft();
+
+    // Saved on the configured branch along with the draft
     vi.mocked(isWorkflowEnabled).mockReturnValue(true);
     expect(canEditEntry({ fieldConfig, draft, entry })).toBe(false);
 
     vi.mocked(isWorkflowEnabled).mockReturnValue(false);
     vi.mocked(getUnpublishedEntry).mockReturnValue(/** @type {any} */ ({}));
     expect(canEditEntry({ fieldConfig, draft, entry })).toBe(false);
+    vi.mocked(getUnpublishedEntry).mockReturnValue(undefined);
+
+    // Edited along with another entry
+    vi.mocked(findEditingUnpublishedEntry).mockReturnValue(
+      /** @type {any} */ ({ workflow: { pullRequest: { branch: 'cms/posts/other' } } }),
+    );
+    expect(canEditEntry({ fieldConfig, draft, entry })).toBe(false);
+    expect(findEditingUnpublishedEntry).toHaveBeenCalledWith(entry);
+
+    // Edited along with the draft by an earlier save
+    vi.mocked(isWorkflowDraft).mockReturnValue(true);
+    vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(
+      /** @type {any} */ ({ workflow: { pullRequest: { branch: 'cms/posts/other' } } }),
+    );
+    expect(canEditEntry({ fieldConfig, draft, entry })).toBe(true);
   });
 
   it('refuses the entry being edited itself', () => {
@@ -1417,15 +1484,16 @@ describe('getEditTarget', () => {
   });
 
   it('creates a new entry without an entry to edit', () => {
-    expect(getEditTarget({ pendingEntries: [], entry: undefined })).toEqual({
+    expect(getEditTarget({ parentDraft: createParentDraft(), entry: undefined })).toEqual({
       changedSince: false,
     });
   });
 
   it('edits an existing entry from the version the field offers', () => {
     const { entry } = createPending('svelte');
+    const parentDraft = createParentDraft({ pendingEntries: [createPending('react')] });
 
-    expect(getEditTarget({ pendingEntries: [createPending('react')], entry })).toEqual({
+    expect(getEditTarget({ parentDraft, entry })).toEqual({
       baseEntry: entry,
       changedSince: false,
     });
@@ -1433,8 +1501,9 @@ describe('getEditTarget', () => {
 
   it('opens a new pending entry again on its own', () => {
     const pendingEntry = createPending('svelte');
+    const parentDraft = createParentDraft({ pendingEntries: [pendingEntry] });
 
-    expect(getEditTarget({ pendingEntries: [pendingEntry], entry: pendingEntry.entry })).toEqual({
+    expect(getEditTarget({ parentDraft, entry: pendingEntry.entry })).toEqual({
       pendingEntry,
       changedSince: false,
     });
@@ -1443,11 +1512,12 @@ describe('getEditTarget', () => {
   it('opens an edited entry again on top of its latest version, telling if it has changed', () => {
     const pendingEntry = createPendingEdit('svelte');
     const latest = /** @type {Entry} */ ({ ...pendingEntry.entry, locales: {} });
-    const args = { pendingEntries: [pendingEntry], entry: pendingEntry.entry };
+    const parentDraft = createParentDraft({ pendingEntries: [pendingEntry] });
+    const args = { parentDraft, entry: pendingEntry.entry };
 
     allEntries.current = [latest];
     expect(getEditTarget(args)).toEqual({ pendingEntry, baseEntry: latest, changedSince: false });
-    expect(compareWithStore).toHaveBeenCalledWith(pendingEntry.baseEntry);
+    expect(compareWithStore).toHaveBeenCalledWith(pendingEntry.baseEntry, { entries: [latest] });
 
     vi.mocked(compareWithStore).mockReturnValue({ type: 'modified', canOverwrite: true });
     expect(getEditTarget(args).changedSince).toBe(true);
@@ -1459,5 +1529,112 @@ describe('getEditTarget', () => {
       baseEntry: pendingEntry.baseEntry,
       changedSince: false,
     });
+  });
+});
+
+describe('getLatestEntry', () => {
+  const published = /** @type {Entry} */ ({ id: 'id-svelte', slug: 'svelte', locales: {} });
+  const changed = /** @type {Entry} */ ({ ...published, locales: { en: /** @type {any} */ ({}) } });
+
+  beforeEach(() => {
+    allEntries.current = [published];
+  });
+
+  it('returns the entry on the configured branch', () => {
+    expect(getLatestEntry(createParentDraft(), 'id-svelte')).toBe(published);
+    expect(getLatestEntry(createParentDraft(), 'id-other')).toBeUndefined();
+  });
+
+  it('returns the entry as an earlier save of the host entry has created or changed it', () => {
+    const draft = createParentDraft();
+
+    const hostEntry = /** @type {any} */ ({
+      workflow: {
+        pullRequest: { branch: 'cms/posts/hello' },
+        companions: [
+          // A new entry an earlier save has created can be edited again too
+          { collectionName: 'tags', entry: { ...published, id: 'id-new' } },
+          { collectionName: 'tags', entry: changed, edited: true },
+        ],
+      },
+    });
+
+    vi.mocked(isWorkflowDraft).mockReturnValue(true);
+    vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(hostEntry);
+    vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(hostEntry);
+    expect(getLatestEntry(draft, 'id-svelte')).toBe(changed);
+    expect(getUnpublishedEntryByBranch).toHaveBeenCalledWith('cms/posts/hello');
+    expect(getLatestEntry(draft, 'id-new')).toEqual({ ...published, id: 'id-new' });
+
+    // Without companions
+    vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(
+      /** @type {any} */ ({ workflow: { pullRequest: { branch: 'cms/posts/hello' } } }),
+    );
+    expect(getLatestEntry(draft, 'id-svelte')).toBe(published);
+  });
+
+  it('compares a version with the latest one', () => {
+    vi.mocked(compareWithStore).mockReturnValue(undefined);
+    expect(compareWithLatest(createParentDraft(), published)).toBeUndefined();
+    expect(compareWithStore).toHaveBeenCalledWith(published, { entries: [published] });
+
+    allEntries.current = [];
+    compareWithLatest(createParentDraft(), published);
+    expect(compareWithStore).toHaveBeenLastCalledWith(published, { entries: [] });
+  });
+});
+
+describe('getEditingHostName', () => {
+  const draft = /** @type {EntryDraft} */ (
+    /** @type {any} */ ({ isNew: false, originalEntry: { id: 'id-ada', slug: 'ada' } })
+  );
+
+  /**
+   * Build the unpublished entry of a post.
+   * @param {object} [workflow] Workflow properties.
+   * @returns {any} Unpublished entry.
+   */
+  const createPostEntry = (workflow = {}) => ({
+    slug: 'hello',
+    locales: { _default: { content: { title: 'Hello' } } },
+    workflow: { collectionName: 'posts', ...workflow },
+  });
+
+  beforeEach(() => {
+    vi.mocked(getEntrySummary).mockReturnValue('Hello World');
+  });
+
+  it('returns nothing without an existing entry that another pull request changes', () => {
+    expect(getEditingHostName(undefined)).toBeUndefined();
+    expect(getEditingHostName(/** @type {any} */ ({ isNew: true }))).toBeUndefined();
+    expect(getEditingHostName(/** @type {any} */ ({ isNew: false }))).toBeUndefined();
+    expect(getEditingHostName(draft)).toBeUndefined();
+    expect(findEditingUnpublishedEntry).toHaveBeenCalledWith(draft.originalEntry);
+  });
+
+  it('names the entry whose pull request changes the entry', () => {
+    const posts = { name: 'posts', _type: 'entry' };
+
+    vi.mocked(findEditingUnpublishedEntry).mockReturnValue(createPostEntry());
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ (posts));
+    expect(getEditingHostName(draft)).toBe('Hello World');
+    expect(getEntrySummary).toHaveBeenCalledWith(posts, expect.objectContaining({ slug: 'hello' }));
+
+    // A file of a file collection
+    vi.mocked(findEditingUnpublishedEntry).mockReturnValue(
+      createPostEntry({ collectionName: 'pages', fileName: 'home' }),
+    );
+    vi.mocked(getCollection).mockReturnValue(
+      /** @type {any} */ ({
+        name: 'pages',
+        _type: 'file',
+        _fileMap: { home: { name: 'home', label: 'Home Page' } },
+      }),
+    );
+    expect(getEditingHostName(draft)).toBe('Home Page');
+
+    // A collection removed from the configuration since leaves the slug to go by
+    vi.mocked(getCollection).mockReturnValue(undefined);
+    expect(getEditingHostName(draft)).toBe('hello');
   });
 });

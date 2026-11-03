@@ -683,6 +683,53 @@ describe('workflow/verify', () => {
       ).toEqual(['content/authors/me.md', 'content/authors/ja/me.md']);
     });
 
+    test('allows the existing entries listed on the entry’s card as changed', async () => {
+      // They were edited from a Relation field of the entry and committed along with it
+      // @see https://github.com/sveltia/sveltia-cms/issues/1129
+      const entry = createEntry();
+
+      mockPublishedEntries([
+        createPublishedEntry('ada', ['content/authors/ada.md', 'content/authors/ja/ada.md']),
+      ]);
+
+      entry.workflow.companions = [
+        {
+          collectionName: 'authors',
+          // The Japanese locale has been turned off
+          entry: createPublishedEntry('ada', [
+            'content/authors/ada.md',
+            'content/authors/fr/ada.md',
+          ]),
+          edited: true,
+        },
+        {
+          collectionName: 'authors',
+          // Not on the configured branch any more
+          entry: createPublishedEntry('alan', ['content/authors/alan.md']),
+          edited: true,
+        },
+      ];
+
+      expect(
+        await findUnexpectedChanges(entry, [
+          { path: 'content/authors/ada.md', status: 'modified', mode },
+          { path: 'content/authors/ja/ada.md', status: 'removed' },
+          { path: 'content/authors/fr/ada.md', status: 'added', mode },
+          { path: 'content/authors/alan.md', status: 'modified', mode },
+          // Not one of them
+          { path: 'content/authors/grace.md', status: 'modified', mode },
+        ]),
+      ).toEqual(['content/authors/grace.md']);
+
+      // A published file added by the pull request is an entry that has appeared on the configured
+      // branch since the pull request added it, which would be overwritten
+      expect(
+        await findUnexpectedChanges(entry, [
+          { path: 'content/authors/ada.md', status: 'added', mode },
+        ]),
+      ).toEqual(['content/authors/ada.md']);
+    });
+
     test('allows a nested entry to move the entries below its folder, as moved', async () => {
       const published = createPublishedEntry(
         'about',

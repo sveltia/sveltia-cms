@@ -23,7 +23,7 @@
   import { deployments, productionSHA } from '$lib/services/deployments';
   import { encodePathSegments } from '$lib/services/utils/url';
   import { checkPublishedVersion, isPublishAllowed } from '$lib/services/workflow';
-  import { getCompanionNote } from '$lib/services/workflow/board';
+  import { getCompanionNotes } from '$lib/services/workflow/board';
   import { getWorkflowStages } from '$lib/services/workflow/stages';
 
   /**
@@ -91,9 +91,9 @@
       : getEntrySummary(collection, entry);
   });
   /* v8 ignore start -- the app locale is always set once the UI strings are loaded */
-  // The new entries created from a Relation field of the entry are published along with it
-  const companionNote = $derived(
-    appLocale.current ? getCompanionNote(entry, appLocale.current) : '',
+  // The entries created or edited from a Relation field of the entry are published along with it
+  const companionNotes = $derived(
+    appLocale.current ? getCompanionNotes(entry, appLocale.current) : [],
   );
   /* v8 ignore stop */
   const collectionLabel = $derived(
@@ -165,9 +165,9 @@ a merged or read-only one, or one with no other stage to move to -->
       <span role="none" class="title"><bdi>{summary}</bdi></span>
     </span>
   </button>
-  {#if companionNote}
-    <p class="companions">{companionNote}</p>
-  {/if}
+  {#each companionNotes as note (note)}
+    <p class="companions">{note}</p>
+  {/each}
   <footer role="none">
     <div role="none" class="meta">
       {#if pullRequest.author?.name}

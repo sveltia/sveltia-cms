@@ -6,8 +6,11 @@ import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
+import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { usesMultiFileStructure } from '$lib/services/contents/i18n/config';
 import { parseBranchName } from '$lib/services/workflow/branch';
@@ -19,6 +22,7 @@ import { parseBranchName } from '$lib/services/workflow/branch';
  * BaseFileListItemProps,
  * CompanionEntry,
  * Entry,
+ * InternalEntryCollection,
  * WorkflowStatus,
  * UnpublishedEntry,
  * WorkflowPullRequest,
@@ -90,11 +94,18 @@ const findPublishedEntry = ({ entry, previousPaths, collectionName, fileName }) 
  * version.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name.
+ * @param {Entry} [args.publishedEntry] Published version of the entry, if already known. Looked up
+ * otherwise.
  * @returns {Entry} Entry with the unchanged locales merged in.
  */
-const completeEntry = ({ entry, previousPaths, deletedPaths, collectionName, fileName }) => {
-  const publishedEntry = findPublishedEntry({ entry, previousPaths, collectionName, fileName });
-
+const completeEntry = ({
+  entry,
+  previousPaths,
+  deletedPaths,
+  collectionName,
+  fileName,
+  publishedEntry = findPublishedEntry({ entry, previousPaths, collectionName, fileName }),
+}) => {
   if (!publishedEntry) {
     return entry;
   }
@@ -121,46 +132,103 @@ const completeEntry = ({ entry, previousPaths, deletedPaths, collectionName, fil
 };
 
 /**
- * Parse the new entries of other collections that ride along in a pull request: those created from
- * a Relation field of the entry the pull request was opened for, and committed with it. A file
- * that is already on the configured branch isn’t one of them: it belongs to an entry the CMS has
- * rewritten along with the entry, e.g. to update a reference to it, which the entry list shows as
- * published. Nor is the file of a file collection, which a Relation field can’t add to, or of a
- * collection the CMS can’t create entries in: such a file is left for the publish check to refuse.
+ * Parse the entries of other collections that ride along in a pull request: those created or
+ * edited from a Relation field of the entry the pull request was opened for, and committed with it.
+ * A new entry is one the configured branch doesn’t have yet, in a collection the CMS can create
+ * entries in. An existing one is changed in the pull request; its unchanged locales come from the
+ * published version, whose ID it keeps. That’s also how the CMS rewrites another entry along with
+ * the entry, e.g. to update a reference to it on a rename, so such an entry is listed as edited
+ * too.
+ * A file of a file collection, which a Relation field can’t add to or edit, or of a collection the
+ * CMS can’t write to that way, isn’t one of them: such a file is left for the publish check to
+ * refuse.
  * @param {BaseEntryListItem[]} entryFiles Entry files in the pull request, with their text.
  * @param {string} collectionName Name of the collection the pull request was opened for.
+ * @param {Set<string>} deletedPaths File paths the pull request deletes, such as the file of a
+ * locale turned off for an edited entry.
  * @returns {Promise<CompanionEntry[]>} Entries.
  */
-const parseCompanions = async (entryFiles, collectionName) => {
+const parseCompanions = async (entryFiles, collectionName, deletedPaths) => {
+  /**
+   * Get the given entry collection, which the files are filtered for below.
+   * @param {string} name Collection name.
+   * @returns {InternalEntryCollection} Collection.
+   */
+  const getEntryCollection = (name) => /** @type {InternalEntryCollection} */ (getCollection(name));
   /**
    * Check whether the CMS can create an entry in the given collection.
    * @param {string} name Collection name.
    * @returns {boolean} Result.
    */
-  const isCreatable = (name) => {
-    const collection = getCollection(name);
+  const isCreatable = (name) => getEntryCollection(name).create !== false;
+
+  /**
+   * Check whether the CMS can change the given existing entry of the given collection along with
+   * another entry. See `canEditEntry()`.
+   * @param {string} name Collection name.
+   * @param {Entry} entry Published entry.
+   * @returns {boolean} Result.
+   */
+  const isEditable = (name, entry) => {
+    const collection = getEntryCollection(name);
 
     return (
-      collection?._type === 'entry' && collection.create !== false && !isReadonly({ collection })
+      !isArrayFileCollection(collection) &&
+      !isCollectionIndexFile(collection, entry) &&
+      !isEntryReadonly(entry)
     );
   };
 
-  const files = entryFiles.filter(
-    ({ path, folder, text }) =>
+  // Neither kind can be in a collection the CMS can’t write to, so its files aren’t parsed at all
+  const files = entryFiles.filter(({ folder, text }) => {
+    const collection = getCollection(folder.collectionName);
+
+    return (
       folder.collectionName !== collectionName &&
       folder.fileName === undefined &&
       text !== undefined &&
-      isCreatable(folder.collectionName) &&
-      !findEntryByPaths([path]),
-  );
+      collection?._type === 'entry' &&
+      !isReadonly({ collection })
+    );
+  });
 
   const results = await Promise.all(
     [...Map.groupBy(files, ({ folder }) => folder.collectionName)].map(
       async ([companionCollectionName, companionFiles]) =>
-        (await prepareEntries(companionFiles)).entries.map((entry) => ({
-          collectionName: companionCollectionName,
-          entry,
-        })),
+        (await prepareEntries(companionFiles)).entries.flatMap((entry) => {
+          const publishedEntry = findPublishedEntry({
+            entry,
+            previousPaths: [],
+            collectionName: companionCollectionName,
+          });
+
+          if (!publishedEntry) {
+            return isCreatable(companionCollectionName)
+              ? [{ collectionName: companionCollectionName, entry }]
+              : [];
+          }
+
+          if (!isEditable(companionCollectionName, publishedEntry)) {
+            return [];
+          }
+
+          return [
+            {
+              collectionName: companionCollectionName,
+              entry: {
+                ...completeEntry({
+                  entry,
+                  previousPaths: [],
+                  deletedPaths,
+                  collectionName: companionCollectionName,
+                  publishedEntry,
+                }),
+                id: publishedEntry.id,
+              },
+              edited: true,
+            },
+          ];
+        }),
     ),
   );
 
@@ -301,7 +369,7 @@ export const convertPullRequest = async (pullRequest) => {
 
   const { entries } = await prepareEntries(targetFiles);
   const { fileName } = targetFiles[0].folder;
-  const companions = await parseCompanions(entryFiles, collectionName);
+  const companions = await parseCompanions(entryFiles, collectionName, deletedPaths);
 
   return {
     entries: entries.map((entry) => ({

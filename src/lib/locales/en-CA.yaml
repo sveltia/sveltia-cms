@@ -1763,6 +1763,10 @@ relation_field:
   edit_deleted: “{$name}” has been deleted by someone else since you edited it. Remove it from the field to save the entry.
   # Accessible label of the menu listing the selected entries that can be edited
   select_entry_to_edit: Select an Entry to Edit
+  # Warning shown in the editor of an entry that has been edited from a Relation field of another
+  # entry, while the changes wait in that entry’s pull request. {$name} is the summary of that
+  # entry
+  edited_with_entry: Changes to this entry are waiting to be published along with “{$name}”. If you save it now, the two sets of changes will be combined when that entry is published, which may fail if they overlap.
   # Warning shown in the dialog when an entry edited from the field has been changed by someone else
   # since. {$name} is the singular label of the collection
   changed_since_edit: This {$name} has been changed by someone else since you edited it. Your changes are shown on top of the latest version. Review them before updating.
@@ -2505,8 +2509,11 @@ workflow:
   # Workflow page: note on a card listing the new entries that were created from a Relation field
   # of the entry and are published along with it, e.g. “Also adds Section: Getting Started”
   companion_entries: Also adds {$entries}
-  # Workflow page: one of the new entries listed by `companion_entries`, named by its collection’s
-  # singular label and its title
+  # Workflow page: note on a card listing the existing entries that were edited from a Relation
+  # field of the entry and are published along with it, e.g. “Also changes Author: Ada Lovelace”
+  edited_companion_entries: Also changes {$entries}
+  # Workflow page: one of the entries listed by `companion_entries` or `edited_companion_entries`,
+  # named by its collection’s singular label and its title
   companion_entry: '{$collection}: {$title}'
 
 # Dialog asking the user for a commit message every time changes are saved, when the site is
