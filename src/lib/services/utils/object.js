@@ -33,15 +33,6 @@ const ESCAPED_KEY_REGEX = /[\uE000\uE001]/;
  */
 const STRING_KEY_PREFIX = '\u0000';
 /**
- * Object key that an assignment or the `flat` library doesn’t take as an own property, as it’s the
- * prototype accessor. A KeyValue field or a parsed file can still hold it as a key.
- */
-const PROTO_KEY = '__proto__';
-/**
- * Regular expression testing whether a key path has a {@link PROTO_KEY} segment.
- */
-const PROTO_KEY_PATH_REGEX = /(?:^|\.)__proto__(?:\.|$)/;
-/**
  * Regular expression matching a key segment that is a list index.
  */
 const INDEX_KEY_REGEX = /^(?:0|[1-9]\d*)$/;
@@ -175,32 +166,13 @@ export const flattenKeys = (value, prefix) => {
   const map = {};
 
   /**
-   * Set a value in the map. A top-level {@link PROTO_KEY} key path is defined as an own property,
-   * as assigning it would set the prototype of the map instead.
-   * @param {string} keyPath Key path.
-   * @param {any} val Value.
-   */
-  const set = (keyPath, val) => {
-    if (keyPath === PROTO_KEY) {
-      Object.defineProperty(map, keyPath, {
-        value: val,
-        writable: true,
-        enumerable: true,
-        configurable: true,
-      });
-    } else {
-      map[keyPath] = val;
-    }
-  };
-
-  /**
    * Add the properties of an object or array to the map.
    * @param {Record<string, any> | any[]} object Object or array.
    * @param {string} [parentKeyPath] Key path of the object or array.
    */
   const step = (object, parentKeyPath) => {
     if (parentKeyPath !== undefined && hasIndexLikeKey(object)) {
-      set(parentKeyPath, {});
+      map[parentKeyPath] = {};
     }
 
     Object.entries(object).forEach(([key, val]) => {
@@ -210,7 +182,7 @@ export const flattenKeys = (value, prefix) => {
       if (isNonEmptyCollection(val)) {
         step(val, keyPath);
       } else {
-        set(keyPath, val);
+        map[keyPath] = val;
       }
     });
   };
@@ -218,7 +190,7 @@ export const flattenKeys = (value, prefix) => {
   if (isNonEmptyCollection(value)) {
     step(value, prefix);
   } else if (prefix !== undefined) {
-    set(prefix, value);
+    map[prefix] = value;
   }
 
   return map;
@@ -231,25 +203,6 @@ export const flattenKeys = (value, prefix) => {
  * @returns {string} Transformed segment.
  */
 const transformSegment = (segment) => prefixStringKey(unescapeKeySegment(segment));
-
-/**
- * Prefix the {@link PROTO_KEY} segments of the given map entries with {@link STRING_KEY_PREFIX}, as
- * the `flat` library drops them to prevent prototype pollution. They’re restored as own properties
- * after unflattening. It’s done on the whole key paths rather than while unflattening, because the
- * library also assigns every whole key path to an object first.
- * @param {[string, any][]} entries Map entries.
- * @returns {Record<string, any>} Map with the segments prefixed.
- */
-const prefixProtoKeys = (entries) =>
-  Object.fromEntries(
-    entries.map(([key, value]) => [
-      key
-        .split('.')
-        .map((segment) => (segment === PROTO_KEY ? `${STRING_KEY_PREFIX}${segment}` : segment))
-        .join('.'),
-      value,
-    ]),
-  );
 
 /**
  * Unflatten a map of dot-notated keys with the `flat` library, while keeping every key segment that
@@ -279,18 +232,13 @@ export const unflattenKeys = (map) => {
     );
   }
 
-  const hasProtoKey = entries.some(([key]) => PROTO_KEY_PATH_REGEX.test(key));
-
   if (
-    !hasProtoKey &&
     !entries.some(([key]) => ESCAPED_KEY_REGEX.test(key) || key.split('.').some(isNumericStringKey))
   ) {
     return unflatten(map);
   }
 
-  return restoreStringKeys(
-    unflatten(hasProtoKey ? prefixProtoKeys(entries) : map, { transformKey: transformSegment }),
-  );
+  return restoreStringKeys(unflatten(map, { transformKey: transformSegment }));
 };
 
 /**
