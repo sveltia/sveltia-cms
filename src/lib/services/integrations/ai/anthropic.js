@@ -18,6 +18,8 @@ const headers = {
   'anthropic-dangerous-direct-browser-access': 'true',
 };
 
+export const serviceId = 'anthropic';
+export const serviceLabel = 'Anthropic Claude';
 export const apiLabel = 'Anthropic API';
 export const developerURL = 'https://docs.claude.com/en/api/overview';
 export const apiKeyURL = 'https://platform.claude.com/settings/keys';

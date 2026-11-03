@@ -4,6 +4,7 @@
 
   /**
    * @import {
+   * AiService,
    * MediaLibraryService,
    * SettingsPanelOnChangeArgs,
    * TranslationService,
@@ -14,10 +15,10 @@
    * @typedef {object} Props
    * @property {string} title Section heading.
    * @property {string} description Description shown below the heading. Its `<a>` tag links to
-   * `docsURL`.
-   * @property {string} docsURL URL of the relevant documentation.
-   * @property {[string, MediaLibraryService | TranslationService][]} entries Services listed in the
-   * section, as `[serviceId, service]` pairs.
+   * `docsURL`, if given.
+   * @property {string} [docsURL] URL of the relevant documentation.
+   * @property {[string, AiService | MediaLibraryService | TranslationService][]} entries
+   * Services listed in the section, as `[serviceId, service]` pairs.
    * @property {(serviceLabel: string) => string} getFieldLabel Function to get the accessible label
    * of the API key input for the given service label.
    * @property {(detail: SettingsPanelOnChangeArgs) => void} [onChange] `change` event handler.
@@ -28,7 +29,7 @@
     /* eslint-disable prefer-const */
     title,
     description,
-    docsURL,
+    docsURL = undefined,
     entries,
     getFieldLabel,
     onChange = undefined,
@@ -39,7 +40,11 @@
 <section>
   <h3>{title}</h3>
   <p>
-    {@html makeLink(description, docsURL)}
+    {#if docsURL}
+      {@html makeLink(description, docsURL)}
+    {:else}
+      {description}
+    {/if}
   </p>
   {#each entries as [serviceId, service] (serviceId)}
     {@const label = service.serviceLabel}

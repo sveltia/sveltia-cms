@@ -13,8 +13,6 @@ import { createAiTranslationService } from './ai-translation.js';
  */
 export default createAiTranslationService({
   ai,
-  serviceId: 'mistral',
-  serviceLabel: 'Mistral',
   model: 'mistral-small-latest',
   extraOptions: { reasoning: 'none' },
 });

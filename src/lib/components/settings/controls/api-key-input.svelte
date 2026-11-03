@@ -8,6 +8,7 @@
 
   /**
    * @import {
+   * AiService,
    * MediaLibraryService,
    * SettingsPanelOnChangeArgs,
    * TranslationService,
@@ -17,8 +18,8 @@
   /**
    * @typedef {object} Props
    * @property {string} serviceId The ID of the service for which the API key is being input.
-   * @property {MediaLibraryService | TranslationService} service The service for which the API key
-   * is being input.
+   * @property {AiService | MediaLibraryService | TranslationService} service The service for
+   * which the API key is being input.
    * @property {string} [ariaLabel] Custom aria-label for the input.
    * @property {(detail: SettingsPanelOnChangeArgs) => void} [onChange] `change` event handler.
    */

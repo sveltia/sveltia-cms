@@ -7,6 +7,7 @@ import { getLocaleLabel } from '$lib/services/contents/i18n';
 /**
  * @import {
  * AiCompletionOptions,
+ * AiService,
  * LanguagePair,
  * TranslationOptions,
  * TranslationService,
@@ -175,23 +176,13 @@ const createAiTranslate =
  * Create a translation service backed by an AI service. Every AI service supports Markdown content
  * and preserves formatting.
  * @param {object} args Arguments.
- * @param {object} args.ai The service’s AI module.
- * @param {string} args.ai.apiLabel Label for the service used in error messages.
- * @param {string} args.ai.developerURL URL of the service’s developer site.
- * @param {string} args.ai.apiKeyURL URL of the page to create an API key.
- * @param {RegExp} args.ai.apiKeyPattern Pattern of a valid API key.
- * @param {(options: AiCompletionOptions) => Promise<string>} args.ai.complete AI completion
- * function.
- * @param {string} args.serviceId Service ID.
- * @param {string} args.serviceLabel Service label.
+ * @param {AiService} args.ai The service’s AI module.
  * @param {string} args.model Model identifier to use for translation.
  * @param {object} [args.extraOptions] Extra options to pass to `complete`.
  * @returns {TranslationService} Translation service.
  */
 export const createAiTranslationService = ({
-  ai: { apiLabel, developerURL, apiKeyURL, apiKeyPattern, complete },
-  serviceId,
-  serviceLabel,
+  ai: { serviceId, serviceLabel, apiLabel, developerURL, apiKeyURL, apiKeyPattern, complete },
   model,
   extraOptions,
 }) => ({

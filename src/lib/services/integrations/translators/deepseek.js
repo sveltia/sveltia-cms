@@ -13,8 +13,6 @@ import { createAiTranslationService } from './ai-translation.js';
  */
 export default createAiTranslationService({
   ai,
-  serviceId: 'deepseek',
-  serviceLabel: 'DeepSeek',
   model: 'deepseek-flash',
   extraOptions: { reasoning: 'none' },
 });

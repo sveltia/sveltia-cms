@@ -9,6 +9,9 @@ import { panels } from '.';
 vi.mock('$lib/components/settings/panels/accessibility-panel.svelte', () => ({
   default: {},
 }));
+vi.mock('$lib/components/settings/panels/ai-panel.svelte', () => ({
+  default: {},
+}));
 vi.mock('$lib/components/settings/panels/appearance-panel.svelte', () => ({
   default: {},
 }));
@@ -79,6 +82,16 @@ describe('Settings panels', () => {
     expect(mediaPanel).toBeDefined();
     expect(mediaPanel?.icon).toBe('photo_library');
     expect(mediaPanel?.component).toBeDefined();
+  });
+
+  test('should have AI panel before accessibility panel', () => {
+    const panelList = panels.current;
+    const index = panelList.findIndex((panel) => panel.key === 'ai');
+
+    expect(panelList[index]?.icon).toBe('auto_awesome');
+    expect(panelList[index]?.component).toBeDefined();
+    expect(panelList[index]?.enabled).toBeUndefined();
+    expect(panelList[index + 1]?.key).toBe('accessibility');
   });
 
   test('should have accessibility panel', () => {

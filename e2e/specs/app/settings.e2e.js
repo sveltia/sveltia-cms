@@ -63,6 +63,7 @@ test('opens and closes the Settings dialog', async ({ cms, page }) => {
     /Language/,
     /Contents/,
     /Media/,
+    /AI/,
     /Accessibility/,
     /Developer/,
     /Data Management/,

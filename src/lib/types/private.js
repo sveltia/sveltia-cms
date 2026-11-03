@@ -724,6 +724,20 @@
  */
 
 /**
+ * Generic AI service, such as a large language model provider.
+ * @typedef {object} AiService
+ * @property {string} serviceId Service ID, also used as the key of the API key in the user
+ * preferences.
+ * @property {string} serviceLabel Service label.
+ * @property {string} apiLabel API label, used in error messages.
+ * @property {string} developerURL URL of the page that provides the API/developer service.
+ * @property {string} apiKeyURL URL of the page that provides an API key.
+ * @property {RegExp} apiKeyPattern API key pattern.
+ * @property {(options: AiCompletionOptions) => Promise<string>} complete Function to send a
+ * message and return the response text.
+ */
+
+/**
  * Translation language pair.
  * @typedef {object} LanguagePair
  * @property {string} sourceLanguage Source language.

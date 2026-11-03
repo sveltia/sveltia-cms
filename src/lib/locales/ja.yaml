@@ -2533,7 +2533,7 @@ prefs:
         select_service: サービスを選択
       api_keys:
         title: 翻訳サービス API キー
-        description: <a>翻訳サービス</a> の API キーを管理します。
+        description: <a>翻訳サービス</a> の API キーを管理します。汎用 AI サービスの API キーは AI 設定で管理できます。
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: '{$service} キー'
@@ -2566,6 +2566,16 @@ prefs:
       # {$service} is the cloud storage service name
       field_label: '{$service} API キー'
       no_services: 利用可能な <a>クラウドストレージサービス</a> はありません。
+
+  # AI panel
+  ai:
+    title: AI
+    api_keys:
+      title: AI サービス API キー
+      description: AI サービスの API キーを管理します。
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: '{$service} API キー'
 
   # Accessibility panel
   accessibility:

@@ -1,3 +1,4 @@
+import { allAiServices } from '$lib/services/integrations/ai';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 
@@ -24,6 +25,16 @@ export const allTranslationServices = {
   mistral,
   openai,
 };
+
+/**
+ * Dedicated machine translation services, whose API keys are managed on the Internationalization
+ * settings panel. The others are backed by a generic AI service, whose API key is managed on the AI
+ * settings panel.
+ * @type {Record<string, TranslationService>}
+ */
+export const machineTranslationServices = Object.fromEntries(
+  Object.entries(allTranslationServices).filter(([serviceId]) => !(serviceId in allAiServices)),
+);
 
 /**
  * Translation service selected in the user preferences.

@@ -21,6 +21,7 @@ describe('SettingsDialog', () => {
       'language Language',
       'library_books Contents',
       'photo_library Media',
+      'auto_awesome AI',
       'accessibility_new Accessibility',
       'code_xml Developer',
       'database Data Management',

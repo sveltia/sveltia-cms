@@ -11,6 +11,8 @@ import { responses } from './api.js';
 
 const endpoint = 'https://api.openai.com/v1/responses';
 
+export const serviceId = 'openai';
+export const serviceLabel = 'OpenAI GPT';
 export const apiLabel = 'OpenAI API';
 export const developerURL = 'https://platform.openai.com/docs/overview';
 export const apiKeyURL = 'https://platform.openai.com/api-keys';

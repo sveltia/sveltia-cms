@@ -15,8 +15,6 @@ import { createAiTranslationService } from './ai-translation.js';
  */
 export default createAiTranslationService({
   ai,
-  serviceId: 'google-ai',
-  serviceLabel: 'Google Gemini',
   model: 'gemini-3.5-flash-lite',
   extraOptions: { responseFormat: 'application/json' },
 });

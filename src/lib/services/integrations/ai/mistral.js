@@ -11,6 +11,8 @@ import { chatCompletions } from './api.js';
 
 const endpoint = 'https://api.mistral.ai/v1/chat/completions';
 
+export const serviceId = 'mistral';
+export const serviceLabel = 'Mistral';
 export const apiLabel = 'Mistral AI API';
 export const developerURL = 'https://docs.mistral.ai/';
 export const apiKeyURL = 'https://console.mistral.ai/home?profile_dialog=api-keys';

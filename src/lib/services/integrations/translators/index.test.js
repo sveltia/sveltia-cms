@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { allTranslationServices, translator } from '.';
+import { allTranslationServices, machineTranslationServices, translator } from '.';
 
 // Mock the individual translator services
 vi.mock('./google.js', () => ({
@@ -179,6 +179,12 @@ describe('Translator Services Index', () => {
       expect(allTranslationServices.google.markdownSupported).toBe(false);
       expect(allTranslationServices.openai.markdownSupported).toBe(true);
       expect(allTranslationServices.deepseek.markdownSupported).toBe(true);
+    });
+  });
+
+  describe('machineTranslationServices', () => {
+    it('should only include the dedicated machine translation services', () => {
+      expect(machineTranslationServices).toEqual({ google: allTranslationServices.google });
     });
   });
 

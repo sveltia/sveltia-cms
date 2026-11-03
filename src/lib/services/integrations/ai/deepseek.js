@@ -11,6 +11,8 @@ import { chatCompletions } from './api.js';
 
 const endpoint = 'https://api.deepseek.com/chat/completions';
 
+export const serviceId = 'deepseek';
+export const serviceLabel = 'DeepSeek';
 export const apiLabel = 'DeepSeek API';
 export const developerURL = 'https://api-docs.deepseek.com/';
 export const apiKeyURL = 'https://platform.deepseek.com/api_keys';

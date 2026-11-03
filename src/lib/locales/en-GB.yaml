@@ -2635,7 +2635,7 @@ prefs:
         select_service: Select Service
       api_keys:
         title: Translation Service API Keys
-        description: Manage API keys for <a>translation services</a>.
+        description: Manage API keys for <a>translation services</a>. API keys for generic AI services can be managed in the AI settings.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
       field_label: '{$service} Key'
@@ -2668,6 +2668,16 @@ prefs:
       # {$service} is the cloud storage service name
       field_label: '{$service} API Key'
       no_services: No <a>cloud storage services</a> are configured.
+
+  # AI panel
+  ai:
+    title: AI
+    api_keys:
+      title: AI Service API Keys
+      description: Manage API keys for AI services.
+    # API key input label, e.g., “OpenAI GPT API Key”
+    # {$service} is the AI service name
+    field_label: '{$service} API Key'
 
   # Accessibility panel
   accessibility:

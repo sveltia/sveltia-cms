@@ -13,8 +13,6 @@ import { createAiTranslationService } from './ai-translation.js';
  */
 export default createAiTranslationService({
   ai,
-  serviceId: 'openai',
-  serviceLabel: 'OpenAI GPT',
   model: 'gpt-6-luna',
   // Keep the reasoning short, as its tokens are taken from the output budget the translation needs
   extraOptions: { reasoning: 'low' },

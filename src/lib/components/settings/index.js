@@ -1,4 +1,5 @@
 import AccessibilityPanel from '$lib/components/settings/panels/accessibility-panel.svelte';
+import AiPanel from '$lib/components/settings/panels/ai-panel.svelte';
 import AppearancePanel from '$lib/components/settings/panels/appearance-panel.svelte';
 import ContentsPanel from '$lib/components/settings/panels/contents-panel.svelte';
 import DataPanel from '$lib/components/settings/panels/data-panel.svelte';
@@ -29,6 +30,7 @@ export const panels = createDerivedState(() => [
     enabled: (cmsConfig.current?.i18n?.locales?.length ?? 0) > 1,
   },
   { key: 'media', icon: 'photo_library', component: MediaPanel },
+  { key: 'ai', icon: 'auto_awesome', component: AiPanel },
   { key: 'accessibility', icon: 'accessibility_new', component: AccessibilityPanel },
   { key: 'developer', icon: 'code_xml', component: DeveloperPanel },
   { key: 'data', icon: 'database', component: DataPanel },
