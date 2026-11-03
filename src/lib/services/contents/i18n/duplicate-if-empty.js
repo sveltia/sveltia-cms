@@ -9,7 +9,8 @@ import { isValueEmpty } from '$lib/services/utils/object';
 
 /**
  * Field types supporting the `duplicate_if_empty` i18n strategy: those holding a single, simple
- * value. A File or Image field only supports it when it doesn’t accept multiple files.
+ * value. A File, Image, Relation or Select field only supports it when it doesn’t accept multiple
+ * values.
  */
 export const DUPLICATE_IF_EMPTY_FIELD_TYPES = [
   'code',
@@ -18,7 +19,9 @@ export const DUPLICATE_IF_EMPTY_FIELD_TYPES = [
   'image',
   'markdown',
   'number',
+  'relation',
   'richtext',
+  'select',
   'string',
   'text',
 ];

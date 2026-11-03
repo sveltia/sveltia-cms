@@ -583,6 +583,46 @@ describe('contents/draft/create/proxy.svelte', () => {
       expect(draft.currentValues.ja.other).toBeUndefined();
     });
 
+    it('should fill in the option of a `duplicate_if_empty` Select or Relation field', () => {
+      /** @type {Record<string, any>} */
+      const fields = {
+        size: { name: 'size', widget: 'select', options: [1, 2], i18n: 'duplicate_if_empty' },
+        author: {
+          name: 'author',
+          widget: 'relation',
+          collection: 'authors',
+          value_field: '{{locale}}/{{slug}}',
+          i18n: 'duplicate_if_empty',
+        },
+      };
+
+      getField.mockImplementation(({ keyPath }) => fields[keyPath]);
+
+      const draft = createDraft({ locales: ['en', 'fr', 'ja'], values: { ja: { size: 2 } } });
+
+      draft.currentValues.en.size = 1;
+
+      expect(draft.currentValues.fr.size).toBe(1);
+      expect(draft.currentValues.ja.size).toBe(2);
+
+      // The locale prefix of a related entry is replaced with the target locale, both when the
+      // value is copied and when a locale that follows the default locale is told apart
+      draft.currentValues.en.author = 'en/alice';
+      draft.currentValues.ja.author = 'ja/carol';
+      draft.currentValues.en.author = 'en/bob';
+
+      expect(draft.currentValues.fr.author).toBe('fr/bob');
+      expect(draft.currentValues.ja.author).toBe('ja/carol');
+
+      // A field taking multiple values works like a translatable one. Each value is stored under a
+      // numbered key path, which resolves to the field itself
+      fields.tags = { ...fields.size, name: 'tags', multiple: true };
+      fields['tags.0'] = fields.tags;
+      draft.currentValues.en['tags.0'] = 1;
+
+      expect(draft.currentValues.fr['tags.0']).toBeUndefined();
+    });
+
     it('should duplicate values to other locales when i18n is duplicate', () => {
       getField.mockReturnValue({ widget: 'string', i18n: 'duplicate' });
 

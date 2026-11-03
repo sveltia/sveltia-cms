@@ -92,6 +92,33 @@ describe('checkCommonFieldOptions', () => {
     check({ min: 5, max: null });
     expect(addMessage).not.toHaveBeenCalled();
   });
+
+  test('accepts the `duplicate_if_empty` i18n strategy for a single value', () => {
+    ['image', 'file', 'relation', 'select'].forEach((widget) => {
+      check({ widget, i18n: 'duplicate_if_empty' });
+      check({ widget, multiple: false, i18n: 'duplicate_if_empty' });
+      check({ widget, multiple: true, i18n: true });
+    });
+
+    // A field type that doesn’t support the strategy at all isn’t reported for `multiple`
+    check({ widget: 'custom', multiple: true, i18n: 'duplicate_if_empty' });
+
+    expect(addMessage).not.toHaveBeenCalled();
+  });
+
+  test('reports the `duplicate_if_empty` i18n strategy for multiple values', () => {
+    ['image', 'file', 'relation', 'select'].forEach((widget) => {
+      vi.mocked(addMessage).mockClear();
+      check({ widget, multiple: true, i18n: 'duplicate_if_empty' });
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith({
+        type: 'warning',
+        strKey: 'duplicate_if_empty_multiple',
+        context,
+        collectors,
+      });
+    });
+  });
 });
 
 describe('checkCommonFieldOptions with localized default values', () => {

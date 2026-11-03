@@ -36,22 +36,19 @@ describe('Test isDuplicateIfEmptyField()', () => {
   });
 
   test('does not match an unsupported field type', () => {
-    ['boolean', 'list', 'object', 'relation', 'select', 'keyvalue', 'uuid'].forEach((widget) => {
+    ['boolean', 'list', 'object', 'keyvalue', 'uuid'].forEach((widget) => {
       expect(isDuplicateIfEmptyField({ name: 'f', widget, i18n: 'duplicate_if_empty' })).toBe(
         false,
       );
     });
   });
 
-  test('does not match a field taking multiple files', () => {
-    expect(
-      isDuplicateIfEmptyField({
-        name: 'f',
-        widget: 'image',
-        multiple: true,
-        i18n: 'duplicate_if_empty',
-      }),
-    ).toBe(false);
+  test('does not match a field taking multiple values', () => {
+    ['file', 'image', 'relation', 'select'].forEach((widget) => {
+      expect(
+        isDuplicateIfEmptyField({ name: 'f', widget, multiple: true, i18n: 'duplicate_if_empty' }),
+      ).toBe(false);
+    });
   });
 });
 

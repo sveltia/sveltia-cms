@@ -437,9 +437,9 @@
  * non-default locales and automatically copies the default locale’s value to them.
  * `duplicate_if_empty` copies the default locale’s value to non-default locales only where the
  * value is empty, or still the same as the default locale’s value, while the field can be edited
- * in every locale. It’s not supported for a File or Image field that accepts multiple files.
- * `translate` and `none` are aliases of `true` and `false`, respectively. This option only works
- * when i18n is set up with the global and collection-level `i18n` option. See the
+ * in every locale. It’s not supported for a File, Image, Relation or Select field that accepts
+ * multiple values. `translate` and `none` are aliases of `true` and `false`, respectively. This
+ * option only works when i18n is set up with the global and collection-level `i18n` option. See the
  * [documentation](https://sveltiacms.app/en/docs/i18n/options#field-level-configuration) for
  * details.
  */
@@ -1347,7 +1347,7 @@
 
 /**
  * Relation field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
+ * @typedef {SimpleCommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
  * RelationFieldProps & MultiOptionFieldProps & UniqueValueProps} RelationField
  */
 
@@ -1384,7 +1384,7 @@
 
 /**
  * Select field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
+ * @typedef {SimpleCommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
  * SelectFieldProps & MultiOptionFieldProps & UniqueValueProps} SelectField
  */
 

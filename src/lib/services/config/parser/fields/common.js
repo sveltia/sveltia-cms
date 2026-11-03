@@ -1,6 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { addMessage, checkRegex } from '$lib/services/config/parser/utils/validator';
+import { MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 
 /**
@@ -57,10 +58,28 @@ const checkLocalizedDefault = ({ config, context, collectors }) => {
  * Check the options that any field type can have. A `pattern` that can’t be compiled makes the
  * field skip its validation, and a range whose lower bound is above its upper bound can’t be
  * satisfied, but neither is reported at runtime, nor is a localized default value that’s unused.
+ * The `duplicate_if_empty` i18n strategy only supports a single value, so a field taking several
+ * works like a translatable one, which is reported too.
  * @param {FieldParserArgs} args Arguments.
  */
 export const checkCommonFieldOptions = ({ config, context, collectors }) => {
-  const { pattern } = /** @type {Record<string, any>} */ (config);
+  const {
+    widget: fieldType = 'string',
+    pattern,
+    multiple,
+    i18n,
+  } = /** @type {Record<string, any>} */ (config);
+
+  // Without a File or Image field’s own `multiple` option, whether the field takes several files
+  // depends on the media library options, which are resolved at runtime, so only an explicit option
+  // is checked. Any other field type doesn’t support the strategy at all, whatever its options
+  if (
+    MULTI_VALUE_FIELD_TYPES.includes(fieldType) &&
+    multiple === true &&
+    i18n === 'duplicate_if_empty'
+  ) {
+    addMessage({ type: 'warning', strKey: 'duplicate_if_empty_multiple', context, collectors });
+  }
 
   // The `pattern` option is a `[regex, message]` pair; anything else is reported against the JSON
   // schema

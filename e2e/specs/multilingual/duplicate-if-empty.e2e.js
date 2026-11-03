@@ -26,6 +26,13 @@ const CONFIG = {
         { name: 'title', label: 'Title', i18n: 'duplicate_if_empty' },
         { name: 'summary', label: 'Summary', widget: 'text', i18n: 'duplicate_if_empty' },
         { name: 'rank', label: 'Rank', widget: 'number', i18n: 'duplicate_if_empty' },
+        {
+          name: 'category',
+          label: 'Category',
+          widget: 'select',
+          options: ['News', 'Tips'],
+          i18n: 'duplicate_if_empty',
+        },
       ],
     },
   ],
@@ -42,9 +49,14 @@ test.use({ config: CONFIG });
 
 test.beforeEach(async ({ cms, page }) => {
   await cms.open();
-  // The French post has a title of its own, but no summary or rank
+  // The French post has a title of its own, but no summary, rank or category
   await cms.seed({
-    'content/posts/hello.en.md': getPost({ title: 'Hello', summary: 'Summary', rank: 1 }),
+    'content/posts/hello.en.md': getPost({
+      title: 'Hello',
+      summary: 'Summary',
+      rank: 1,
+      category: 'News',
+    }),
     'content/posts/hello.fr.md': getPost({ title: 'Bonjour', summary: '' }),
   });
   await cms.signIn();
@@ -57,6 +69,7 @@ test('fills in the empty values of another locale from the default locale', asyn
   await expect(french.getByRole('textbox', { name: 'Title' })).toHaveValue('Bonjour');
   await expect(french.getByRole('textbox', { name: 'Summary' })).toHaveValue('Summary');
   await expect(french.getByRole('spinbutton', { name: 'Rank' })).toHaveValue('1');
+  await expect(french.getByRole('radio', { name: 'News' })).toBeChecked();
   // The values can be edited in the locale
   await expect(french.getByRole('textbox', { name: 'Summary' })).toBeEditable();
   // Filling in the values is no change of the user’s
@@ -81,15 +94,19 @@ test('keeps another locale in sync until it gets a value of its own', async ({ c
   await english.getByRole('spinbutton', { name: 'Rank' }).fill('2');
   await expect(french.getByRole('spinbutton', { name: 'Rank' })).toHaveValue('5');
 
+  // So does a Select field’s option
+  await english.getByRole('radio', { name: 'Tips' }).click();
+  await expect(french.getByRole('radio', { name: 'Tips' })).toBeChecked();
+
   await save(page);
 
   const files = await cms.readRepo();
 
   expect(files['content/posts/hello.en.md']).toBe(
-    getPost({ title: 'Hello World', summary: 'New', rank: 2 }),
+    getPost({ title: 'Hello World', summary: 'New', rank: 2, category: 'Tips' }),
   );
   expect(files['content/posts/hello.fr.md']).toBe(
-    getPost({ title: 'Bonjour', summary: 'New', rank: 5 }),
+    getPost({ title: 'Bonjour', summary: 'New', rank: 5, category: 'Tips' }),
   );
 });
 
