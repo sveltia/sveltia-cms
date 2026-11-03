@@ -34,8 +34,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0(svelte@5.57.3(@typescript-eslint/types@8.72.1))
       '@sveltia/ui':
-        specifier: ^0.88.3
-        version: 0.88.3(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)
+        specifier: ^0.89.0
+        version: 0.89.0(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.13.2
         version: 0.13.2
@@ -1210,16 +1210,16 @@ packages:
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
-  '@shikijs/langs@4.5.0':
-    resolution: {integrity: sha512-wwBTqwduXSz0X4v9Qa2EWeFaYJEw1clCncWjoRNQRbVDu3SPRTRWucnouYapKj3b8Q+sk/41Vbc4B5c8nuYzLA==}
+  '@shikijs/langs@4.6.0':
+    resolution: {integrity: sha512-1yMEX3oCVV54LUq/ovfpRkDQoYDkcvjSWFFa/YLUDMiSoRzMi2uxLJYbv41ahT8Lu9lFMaa7hecd3Q39trqUyg==}
     engines: {node: '>=20'}
 
-  '@shikijs/themes@4.5.0':
-    resolution: {integrity: sha512-zGb87H3UBbpuI4yoh5UguB1XbU+2BDU3kflM7UfZ+Cy2hWo9lBtqjSVK20gmLY6ukYl040hAypGXMgud9vul8Q==}
+  '@shikijs/themes@4.6.0':
+    resolution: {integrity: sha512-qHAVAs80RiGD+IRuH9G+JPDOEc9A/kHsng4EzCUCwB9bLzW6Z0y9WETh2YyCcADJBmfrIaJ1Jp7KBNP6FHkgtQ==}
     engines: {node: '>=20'}
 
-  '@shikijs/types@4.5.0':
-    resolution: {integrity: sha512-drtPrtD8N0DENyD2cyt6Ajy+IWsiCLgMxODwLTpvH1UsN6a9jf90tNTPjqwHvA+0Lzu9e0txk8DjfqH1p9UJRw==}
+  '@shikijs/types@4.6.0':
+    resolution: {integrity: sha512-+ENG1adsKt/X7cRYw1Nl7BEpBmPOjmQ7bR/eGmHuMlT8gtOFf3KEi5l31DJYyAWhW6Y6bjP1plU7FmaxWGENFw==}
     engines: {node: '>=20'}
 
   '@shikijs/vscode-textmate@10.1.0':
@@ -1264,8 +1264,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.88.3':
-    resolution: {integrity: sha512-c4dO66i75L6fpgB3MJr1rvhFLf/waWa7pFIRjyhQy2FZ36TJYz3iuPM6RnihMiwK+gBzNNpZ6pU80X+8xo4NCA==}
+  '@sveltia/ui@0.89.0':
+    resolution: {integrity: sha512-79HbbdLZBCOdxK/1NXmBO9F/DZufsGk2fxcNb+8Q2UhRavcfsHd1kA29wJObCTEp/ZqWRCD9EEmmkylxh1qxuw==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -5063,15 +5063,15 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
-  '@shikijs/langs@4.5.0':
+  '@shikijs/langs@4.6.0':
     dependencies:
-      '@shikijs/types': 4.5.0
+      '@shikijs/types': 4.6.0
 
-  '@shikijs/themes@4.5.0':
+  '@shikijs/themes@4.6.0':
     dependencies:
-      '@shikijs/types': 4.5.0
+      '@shikijs/types': 4.6.0
 
-  '@shikijs/types@4.5.0':
+  '@shikijs/types@4.6.0':
     dependencies:
       '@shikijs/vscode-textmate': 10.1.0
       '@types/hast': 3.0.5
@@ -5114,7 +5114,7 @@ snapshots:
       messageformat: 4.1.0
       svelte: 5.57.3(@typescript-eslint/types@8.72.1)
 
-  '@sveltia/ui@0.88.3(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)':
+  '@sveltia/ui@0.89.0(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.53.0(typescript@6.0.3)
       '@lexical/dragon': 0.53.0(typescript@6.0.3)
@@ -5128,8 +5128,8 @@ snapshots:
       '@lexical/selection': 0.53.0(typescript@6.0.3)
       '@lexical/table': 0.53.0(typescript@6.0.3)
       '@lexical/utils': 0.53.0(typescript@6.0.3)
-      '@shikijs/langs': 4.5.0
-      '@shikijs/themes': 4.5.0
+      '@shikijs/langs': 4.6.0
+      '@shikijs/themes': 4.6.0
       '@sveltia/i18n': 1.5.0(svelte@5.57.3(@typescript-eslint/types@8.72.1))
       '@sveltia/utils': 0.13.2
       lexical: 0.53.0(typescript@6.0.3)
