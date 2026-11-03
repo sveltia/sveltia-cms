@@ -1,6 +1,7 @@
 import { locale as appLocale } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 
+import { isFieldMirrored } from '$lib/services/contents/i18n/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -124,8 +125,9 @@ export const getFieldLabel = ({ config, locale }) =>
 
 /**
  * Apply the localized default value of a field for the given content locale. Unlike the UI text
- * options, a default value is content, so only the content locale is matched. A duplicated field
- * takes the default locale’s value, as it’s copied from there to the other locales.
+ * options, a default value is content, so only the content locale is matched. A field using the
+ * `duplicate` or `sync` i18n strategy takes the default locale’s value, as it holds the same value
+ * in every locale.
  * @param {object} args Arguments.
  * @param {Field} args.fieldConfig Field configuration.
  * @param {InternalLocaleCode} args.locale Content locale.
@@ -145,7 +147,7 @@ export const localizeDefaultValue = ({ fieldConfig, locale, defaultLocale }) => 
     fieldConfig
   );
 
-  const targetLocale = fieldConfig.i18n === 'duplicate' ? defaultLocale : locale;
+  const targetLocale = isFieldMirrored(fieldConfig.i18n) ? defaultLocale : locale;
 
   return /** @type {Field} */ (
     Object.hasOwn(map, targetLocale) ? { ...rest, default: map[targetLocale] } : rest

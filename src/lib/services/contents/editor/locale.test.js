@@ -1,15 +1,15 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getFieldLocaleAccess } from '$lib/services/contents/editor/locale';
+import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import { EntryDraft } from '$lib/types/private';
  * @import { Field } from '$lib/types/public';
  */
 
-vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
-  isDuplicatedField: vi.fn(({ fieldConfig }) => fieldConfig.i18n === 'duplicate'),
+vi.mock('$lib/services/contents/i18n/shared-values', () => ({
+  getInheritedI18nOption: vi.fn(({ fieldConfig }) => fieldConfig.i18n),
 }));
 
 const draft = /** @type {EntryDraft} */ (
@@ -25,7 +25,7 @@ const valueMap = { title: 'Hello' };
 
 /**
  * Get the access to a field in a locale.
- * @param {Field['i18n'] | 'duplicate_keys'} i18n Field-level `i18n` option.
+ * @param {Field['i18n'] | 'duplicate_keys' | 'sync'} i18n Field-level `i18n` option.
  * @param {string} locale Locale.
  * @param {object} [options] Options.
  * @param {EntryDraft} [options.entryDraft] Entry draft.
@@ -47,24 +47,27 @@ describe('getFieldLocaleAccess()', () => {
     expect(getAccess(false, 'en')).toEqual({
       canTranslate: false,
       isDuplicated: false,
+      isSynced: false,
       areKeysDuplicated: false,
       isShown: true,
     });
     expect(getAccess('duplicate', 'en')).toEqual({
       canTranslate: false,
       isDuplicated: false,
+      isSynced: false,
       areKeysDuplicated: false,
       isShown: true,
     });
     expect(getAccess(true, 'en').canTranslate).toBe(true);
     // The ancestors aren’t looked up for the default locale
-    expect(isDuplicatedField).not.toHaveBeenCalled();
+    expect(getInheritedI18nOption).not.toHaveBeenCalled();
   });
 
   test('shows a translatable field in another locale', () => {
     expect(getAccess(true, 'ja')).toEqual({
       canTranslate: true,
       isDuplicated: false,
+      isSynced: false,
       areKeysDuplicated: false,
       isShown: true,
     });
@@ -75,6 +78,7 @@ describe('getFieldLocaleAccess()', () => {
     expect(getAccess(false, 'ja')).toEqual({
       canTranslate: false,
       isDuplicated: false,
+      isSynced: false,
       areKeysDuplicated: false,
       isShown: false,
     });
@@ -84,10 +88,11 @@ describe('getFieldLocaleAccess()', () => {
     expect(getAccess('duplicate', 'ja')).toEqual({
       canTranslate: false,
       isDuplicated: true,
+      isSynced: false,
       areKeysDuplicated: false,
       isShown: true,
     });
-    expect(isDuplicatedField).toHaveBeenCalledWith({
+    expect(getInheritedI18nOption).toHaveBeenCalledWith({
       fieldConfig: { name: 'title', widget: 'string', i18n: 'duplicate' },
       getFieldArgs: {
         collectionName: 'posts',
@@ -99,10 +104,28 @@ describe('getFieldLocaleAccess()', () => {
     });
   });
 
+  test('shows a synced field in another locale, where it can be edited', () => {
+    expect(getAccess('sync', 'ja')).toEqual({
+      canTranslate: false,
+      isDuplicated: false,
+      isSynced: true,
+      areKeysDuplicated: false,
+      isShown: true,
+    });
+    expect(getAccess('sync', 'en')).toEqual({
+      canTranslate: false,
+      isDuplicated: false,
+      isSynced: false,
+      areKeysDuplicated: false,
+      isShown: true,
+    });
+  });
+
   test('shows a KeyValue field whose keys are duplicated in another locale', () => {
     expect(getAccess('duplicate_keys', 'ja')).toEqual({
       canTranslate: false,
       isDuplicated: false,
+      isSynced: false,
       areKeysDuplicated: true,
       isShown: true,
     });
@@ -112,16 +135,25 @@ describe('getFieldLocaleAccess()', () => {
     expect(getAccess('duplicate', 'ja', { inEditorComponent: true })).toEqual({
       canTranslate: false,
       isDuplicated: true,
+      isSynced: false,
+      areKeysDuplicated: false,
+      isShown: true,
+    });
+    expect(getAccess('sync', 'ja', { inEditorComponent: true })).toEqual({
+      canTranslate: false,
+      isDuplicated: false,
+      isSynced: false,
       areKeysDuplicated: false,
       isShown: true,
     });
     expect(getAccess(undefined, 'ja', { inEditorComponent: true })).toEqual({
       canTranslate: false,
       isDuplicated: false,
+      isSynced: false,
       areKeysDuplicated: false,
       isShown: true,
     });
-    expect(isDuplicatedField).not.toHaveBeenCalled();
+    expect(getInheritedI18nOption).not.toHaveBeenCalled();
   });
 
   test('uses the collection file’s i18n options', () => {
@@ -133,6 +165,7 @@ describe('getFieldLocaleAccess()', () => {
     expect(getAccess(true, 'ja', { entryDraft })).toEqual({
       canTranslate: false,
       isDuplicated: false,
+      isSynced: false,
       areKeysDuplicated: false,
       isShown: false,
     });
@@ -142,6 +175,7 @@ describe('getFieldLocaleAccess()', () => {
     expect(getAccess('duplicate', '_default', { entryDraft: /** @type {any} */ (null) })).toEqual({
       canTranslate: false,
       isDuplicated: false,
+      isSynced: false,
       areKeysDuplicated: false,
       isShown: true,
     });

@@ -762,6 +762,16 @@ describe('Test hasDuplicatedSubField()', () => {
     ).toBe(true);
   });
 
+  test('should find a subfield using the `sync` strategy', () => {
+    expect(
+      hasDuplicatedSubField(
+        /** @type {any} */ ({
+          fields: [translatable, { name: 'url', widget: 'string', i18n: 'sync' }],
+        }),
+      ),
+    ).toBe(true);
+  });
+
   test('should find a subfield using the `duplicate_if_empty` strategy', () => {
     expect(
       hasDuplicatedSubField(

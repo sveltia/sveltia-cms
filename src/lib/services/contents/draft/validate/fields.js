@@ -43,6 +43,7 @@ import {
 import { isOptionValue } from '$lib/services/contents/fields/select/helpers';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
+import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import {
@@ -167,11 +168,16 @@ export const validateAnyField = (args) => {
 
   const { i18nEnabled, defaultLocale } = getDraftI18nConfig(draft);
 
-  // Skip validation on non-editable fields
+  // Skip validation on non-editable fields. A field without an `i18n` option of its own can still
+  // be edited in another locale along with an ancestor using the `sync` strategy
   if (
     !componentName && // Don’t skip validation if the field is within a rich text editor component
     locale !== defaultLocale &&
-    (!i18nEnabled || isFieldI18nDisabled(i18n) || i18n === 'duplicate')
+    (!i18nEnabled || isFieldI18nDisabled(i18n) || i18n === 'duplicate') &&
+    !(
+      fieldConfig.i18n === undefined &&
+      getInheritedI18nOption({ fieldConfig, getFieldArgs }) === 'sync'
+    )
   ) {
     return undefined;
   }

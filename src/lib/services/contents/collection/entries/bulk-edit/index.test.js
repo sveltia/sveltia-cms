@@ -353,7 +353,8 @@ describe('applyBulkEdits()', () => {
     const collection = makeCollection({
       fields: [
         { name: 'title', widget: 'string', i18n: true },
-        { name: 'draft', widget: 'boolean', i18n: 'duplicate' },
+        // A synced field holds the same value in every locale as well
+        { name: 'draft', widget: 'boolean', i18n: 'sync' },
         { name: 'rank', widget: 'number' },
         {
           name: 'tag',

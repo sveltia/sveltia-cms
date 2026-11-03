@@ -697,6 +697,64 @@ describe('contents/draft/create/normalize', () => {
       expect(content).toEqual({ 'author.name': 'Me' });
     });
 
+    it('should copy a `sync` field missing in another locale from the default locale', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/1128
+      const fields = [
+        { name: 'title', widget: 'string', i18n: 'sync', default: 'Untitled' },
+        { name: 'rank', widget: 'number', i18n: 'sync' },
+        { name: 'meta', widget: 'keyvalue', i18n: 'sync' },
+      ];
+
+      const content = normalizeContent({
+        fields,
+        // A value the locale already has is left alone, even if it differs
+        content: { rank: 2, 'meta.b': '2', 'meta.a': '1' },
+        locale: 'ja',
+        defaultLocale: 'en',
+        defaultLocaleContent: { title: 'Hello', rank: 1, 'meta.a': '1', 'meta.b': '2' },
+      });
+
+      expect(content).toEqual({ title: 'Hello', rank: 2, 'meta.a': '1', 'meta.b': '2' });
+      // The pairs are put in the default locale’s order
+      expect(Object.keys(content).filter((key) => key.startsWith('meta.'))).toEqual([
+        'meta.a',
+        'meta.b',
+      ]);
+    });
+
+    it('should copy a subfield missing in another locale along with a mirrored ancestor', () => {
+      // e.g. a subfield added to the configuration after the other locales were saved
+      const fields = ['duplicate', 'sync'].map((i18n) => ({
+        name: i18n,
+        widget: 'object',
+        i18n,
+        fields: [
+          { name: 'name', widget: 'string' },
+          { name: 'url', widget: 'string', default: 'https://example.com' },
+        ],
+      }));
+
+      const content = normalizeContent({
+        fields,
+        content: { 'duplicate.name': 'Me', 'sync.name': 'Me' },
+        locale: 'ja',
+        defaultLocale: 'en',
+        defaultLocaleContent: {
+          'duplicate.name': 'Me',
+          'duplicate.url': 'https://a',
+          'sync.name': 'Me',
+          'sync.url': 'https://b',
+        },
+      });
+
+      expect(content).toEqual({
+        'duplicate.name': 'Me',
+        'duplicate.url': 'https://a',
+        'sync.name': 'Me',
+        'sync.url': 'https://b',
+      });
+    });
+
     it('should fill in a `duplicate_if_empty` field missing or empty in another locale', () => {
       // https://github.com/sveltia/sveltia-cms/issues/120
       const fields = [

@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
   isFieldI18nDisabled,
   isFieldLocalized,
+  isFieldMirrored,
   isFieldTranslatable,
 } from '$lib/services/contents/i18n/fields';
 
@@ -15,6 +16,7 @@ const OPTIONS = [
   'duplicate',
   'duplicate_keys',
   'duplicate_if_empty',
+  'sync',
   'none',
 ];
 
@@ -31,13 +33,20 @@ describe('Test isFieldTranslatable()', () => {
   });
 });
 
+describe('Test isFieldMirrored()', () => {
+  test('matches `duplicate` and `sync` only', () => {
+    expect(getMatches(isFieldMirrored)).toEqual(['duplicate', 'sync']);
+  });
+});
+
 describe('Test isFieldLocalized()', () => {
-  test('matches `true`, `translate`, `duplicate` and `duplicate_if_empty` only', () => {
+  test('matches the translatable and mirrored options only', () => {
     expect(getMatches(isFieldLocalized)).toEqual([
       true,
       'translate',
       'duplicate',
       'duplicate_if_empty',
+      'sync',
     ]);
   });
 });

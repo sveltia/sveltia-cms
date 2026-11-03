@@ -70,6 +70,7 @@
   import { getDraftObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
   import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
   import { getFieldLabel, getLocalizedOption } from '$lib/services/contents/i18n/options';
+  import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { createStableDerivedState } from '$lib/services/utils/state.svelte';
 
@@ -187,6 +188,16 @@
   const valueMap = $derived(
     getFieldValueMapSnapshot(entryDraft.current, locale, keyPath, valueStoreKey),
   );
+  // A list using the `sync` i18n strategy, with its own option or along with an ancestor, is kept
+  // the same in every locale while it can be edited in any of them, subfields included
+  const synced = $derived(
+    !inEditorComponent &&
+      locale !== defaultLocale &&
+      getInheritedI18nOption({
+        fieldConfig,
+        getFieldArgs: { collectionName, fileName, isIndexFile, keyPath, valueMap },
+      }) === 'sync',
+  );
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
   /**
    * What the items were last assembled from, so they’re only assembled again once they’ve changed.
@@ -231,6 +242,7 @@
   const hasEditableSubFields = $derived(
     locale === defaultLocale ||
       inEditorComponent ||
+      synced ||
       allSubFields.some(({ i18n: subI18n }) => isFieldTranslatable(subI18n)),
   );
   const isAddDisabled = $derived(isLocked || !hasEditableSubFields);

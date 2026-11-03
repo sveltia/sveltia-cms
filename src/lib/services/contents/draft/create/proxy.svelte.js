@@ -1,7 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { resolveCollectionAndFile } from '$lib/services/contents/collection/files';
-import { isAutoDuplicationEnabled } from '$lib/services/contents/draft';
+import { isAutoDuplicationEnabled, suspendAutoDuplication } from '$lib/services/contents/draft';
 import { createValueMap } from '$lib/services/contents/draft/create/versioned-map.svelte';
 import { revalidateField } from '$lib/services/contents/draft/validate/fields';
 import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
@@ -11,6 +11,7 @@ import {
   followsDefaultLocale,
   getMainValueKeyPath,
 } from '$lib/services/contents/i18n/duplicate-if-empty';
+import { isFieldMirrored } from '$lib/services/contents/i18n/fields';
 import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
 import { isNumeric } from '$lib/services/utils/number';
 
@@ -22,19 +23,33 @@ import { isNumeric } from '$lib/services/utils/number';
 const PATH_MATCH_REGEX = /(?<path>.+?)\.[^.]*$/;
 
 /**
- * Check if the given field’s value is duplicated from the default locale to the other locales. That
- * is the case when the field has the `duplicate` i18n strategy, or, if the field has no `i18n`
- * option of its own, when the nearest ancestor that has one, such as the List or Object field it
- * belongs to, has the `duplicate` strategy. A duplicated List or Object field then holds the same
- * items and values in every locale, the way `normalizeContentMap()` copies it when an entry is
- * loaded, while a subfield explicitly made translatable keeps a value of its own in each locale.
+ * Check if the given field holds the same value in every locale. That is the case when the field
+ * has the `duplicate` or `sync` i18n strategy, or, if the field has no `i18n` option of its own,
+ * when the nearest ancestor that has one, such as the List or Object field it belongs to, has
+ * either strategy. A duplicated List or Object field then holds the same items and values in every
+ * locale, the way `normalizeContentMap()` copies it when an entry is loaded, while a subfield
+ * explicitly made translatable keeps a value of its own in each locale.
  * @param {object} args Arguments.
  * @param {Field} args.fieldConfig Field configuration.
  * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
  * path of the field.
  * @returns {boolean} Whether the value is duplicated.
  */
-export const isDuplicatedField = (args) => getInheritedI18nOption(args) === 'duplicate';
+export const isDuplicatedField = (args) => isFieldMirrored(getInheritedI18nOption(args));
+
+/**
+ * Check if the given field uses the `sync` i18n strategy, either with an `i18n` option of its own
+ * or along with the nearest ancestor that has one. Unlike a `duplicate` field, which can only be
+ * edited in the default locale, such a field can be edited in any locale, and the value is copied
+ * from there to the others.
+ * @param {object} args Arguments.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
+ * path of the field.
+ * @returns {boolean} Result.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1128
+ */
+export const isSyncedField = (args) => getInheritedI18nOption(args) === 'sync';
 
 /**
  * Get a function to check if a duplicated field can be copied to, or deleted from, another locale
@@ -162,7 +177,9 @@ const forEachTargetLocale = (
 };
 
 /**
- * Copy the default locale value to other locales if the field’s i18n strategy is `duplicate`.
+ * Copy a value written in the source locale to the other locales, as the field holds the same
+ * value in every locale: the source is the default locale for a field using the `duplicate` i18n
+ * strategy, and any locale for one using `sync`.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function.
@@ -170,13 +187,7 @@ const forEachTargetLocale = (
  * @param {LocaleCode} args.sourceLanguage Source locale.
  * @param {any} args.value Value to copy to other locales.
  */
-export const copyDefaultLocaleValue = ({
-  draft,
-  getFieldArgs,
-  fieldConfig,
-  sourceLanguage,
-  value,
-}) => {
+export const copyMirroredValue = ({ draft, getFieldArgs, fieldConfig, sourceLanguage, value }) => {
   const { keyPath } = getFieldArgs;
   const matchesListItems = getListItemMatcher({ fieldConfig, getFieldArgs });
 
@@ -286,7 +297,8 @@ export const copyDefaultLocaleValueIfEmpty = ({
 /**
  * Create a Proxy holding a locale’s field values, which revalidates a field as its value is written
  * or deleted, and automatically copies the value to the other locales if the field’s i18n strategy
- * is `duplicate`, or to those where the field is empty if the strategy is `duplicate_if_empty`.
+ * is `duplicate` or `sync`, or to those where the field is empty if the strategy is
+ * `duplicate_if_empty`.
  *
  * The values are held in a value map created with {@link createValueMap}.
  * @param {object} args Arguments.
@@ -325,13 +337,19 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
     isAutoDuplicationEnabled() && sourceLanguage === defaultLocale;
 
   /**
-   * Check if auto-duplication should be performed for the given field.
+   * Check if auto-duplication should be performed for the given field: a value written in the
+   * default locale is copied if the field holds the same value in every locale, and one written in
+   * another locale only if the field uses the `sync` strategy, as a `duplicate` field can’t be
+   * edited there.
    * @param {Field} fieldConfig Field configuration.
    * @param {GetFieldArgs} getFieldArgs Arguments for the `getField` function.
    * @returns {boolean} True if auto-duplication should be performed.
    */
   const shouldAutoDuplicate = (fieldConfig, getFieldArgs) =>
-    isDefaultLocaleSource() && isDuplicatedField({ fieldConfig, getFieldArgs });
+    isAutoDuplicationEnabled() &&
+    (sourceLanguage === defaultLocale
+      ? isDuplicatedField({ fieldConfig, getFieldArgs })
+      : isSyncedField({ fieldConfig, getFieldArgs }));
 
   /**
    * Get field configuration for the given key path.
@@ -399,9 +417,12 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
       // as part of its field, so that’s left to `revalidateField()` to tell
       revalidateField({ draft, locale: sourceLanguage, keyPath, value, valueMap, keyAdded: added });
 
-      // Copy value to other locales
+      // Copy value to other locales. The copies would otherwise be copied on again from each of
+      // them, as a `sync` field is copied from any locale
       if (fieldConfig && shouldAutoDuplicate(fieldConfig, getFieldArgs)) {
-        copyDefaultLocaleValue({ draft, getFieldArgs, fieldConfig, sourceLanguage, value });
+        suspendAutoDuplication(() => {
+          copyMirroredValue({ draft, getFieldArgs, fieldConfig, sourceLanguage, value });
+        });
       }
 
       // Copy value to other locales where the field is empty
@@ -421,14 +442,16 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
       if (fieldConfig && shouldAutoDuplicate(fieldConfig, getFieldArgs)) {
         const matchesListItems = getListItemMatcher({ fieldConfig, getFieldArgs });
 
-        Object.entries(draft.currentValues).forEach(([targetLanguage, content]) => {
-          if (
-            targetLanguage !== sourceLanguage &&
-            keyPath in content &&
-            matchesListItems(content)
-          ) {
-            delete content[keyPath];
-          }
+        suspendAutoDuplication(() => {
+          Object.entries(draft.currentValues).forEach(([targetLanguage, content]) => {
+            if (
+              targetLanguage !== sourceLanguage &&
+              keyPath in content &&
+              matchesListItems(content)
+            ) {
+              delete content[keyPath];
+            }
+          });
         });
       }
 

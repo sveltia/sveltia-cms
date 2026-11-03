@@ -20,6 +20,7 @@ import {
   isDuplicateIfEmptyField,
   isFieldEmpty,
 } from '$lib/services/contents/i18n/duplicate-if-empty';
+import { isFieldMirrored } from '$lib/services/contents/i18n/fields';
 
 /**
  * @import {
@@ -461,10 +462,12 @@ const normalizeField = (args) => {
       return;
     }
 
-    // A `duplicate` field mirrors the default locale, so take the value from there rather than
-    // filling in the configured default, which may not be what the default locale actually holds
+    // A `duplicate` or `sync` field mirrors the default locale, so take the value from there rather
+    // than filling in the configured default, which may not be what the default locale actually
+    // holds. That includes a subfield duplicated along with its Object or List field, e.g. one
+    // added to the configuration after the other locales were saved
     if (
-      field.i18n === 'duplicate' &&
+      isFieldMirrored(i18n) &&
       sourceContent &&
       copyFromDefaultLocale({
         content,
@@ -502,7 +505,7 @@ const normalizeField = (args) => {
   // other locales in that order as soon as it’s rendered. Put them in that order now, so merely
   // opening an entry whose locales list the pairs in different orders doesn’t count as a change
   if (fieldType === 'keyvalue') {
-    if (i18n === 'duplicate' && sourceContent) {
+    if (isFieldMirrored(i18n) && sourceContent) {
       alignPairOrder({ content, referenceContent: sourceContent, keyPath });
     }
 

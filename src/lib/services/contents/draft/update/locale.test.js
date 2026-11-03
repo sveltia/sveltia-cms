@@ -119,15 +119,20 @@ describe('draft/update/locale', () => {
       expect(visited).toEqual(['ja']);
     });
 
-    it('should visit every locale for a duplicate field', () => {
-      /** @type {string[]} */
-      const visited = [];
+    it('should visit every locale for a duplicate or sync field', () => {
+      ['duplicate', 'sync'].forEach((i18n) => {
+        /** @type {string[]} */
+        const visited = [];
 
-      forEachTargetLocale({ valueStore, locale: 'ja', i18n: 'duplicate' }, (_valueMap, _locale) => {
-        visited.push(_locale);
+        forEachTargetLocale(
+          { valueStore, locale: 'ja', i18n: /** @type {any} */ (i18n) },
+          (_valueMap, _locale) => {
+            visited.push(_locale);
+          },
+        );
+
+        expect(visited).toEqual(['en', 'ja', 'fr']);
       });
-
-      expect(visited).toEqual(['en', 'ja', 'fr']);
     });
 
     it('should visit every locale for a field in a duplicated List or Object field', () => {

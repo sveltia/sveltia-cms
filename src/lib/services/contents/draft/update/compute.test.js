@@ -312,6 +312,20 @@ describe('updateComputedValues(draft)', () => {
     expect(draft.currentValues.fr.slug).toBe('post-Bonjour');
   });
 
+  test('should compute a synced field in the default locale only', () => {
+    // The value proxy copies the value to the other locales; computing it there as well would copy
+    // a different value back whenever the template reads a translatable field
+    draft.collection._i18n = { i18nEnabled: true, defaultLocale: 'en' };
+    draft.fields[1].i18n = 'sync';
+    draft.currentLocales = { en: true, fr: true };
+    draft.currentValues.fr = { title: 'Bonjour', slug: '' };
+
+    updateComputedValues(draft);
+
+    expect(draft.currentValues.en.slug).toBe('post-Hello');
+    expect(draft.currentValues.fr.slug).toBe('');
+  });
+
   test('should read a field that isn’t localized from the default locale', () => {
     draft.collection._i18n = { i18nEnabled: true, defaultLocale: 'en' };
     draft.fields = [

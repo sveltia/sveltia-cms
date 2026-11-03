@@ -191,14 +191,16 @@ describe('Test localizeDefaultValue()', () => {
     ).toHaveProperty('default', ['car repair']);
   });
 
-  test('uses the default locale’s value for a duplicated field', () => {
-    expect(
-      localizeDefaultValue({
-        fieldConfig: /** @type {Field} */ ({ ...fieldConfig, i18n: 'duplicate' }),
-        locale: 'fr',
-        defaultLocale: 'de',
-      }),
-    ).toHaveProperty('default', ['autoreparatur']);
+  test('uses the default locale’s value for a duplicated or synced field', () => {
+    ['duplicate', 'sync'].forEach((i18n) => {
+      expect(
+        localizeDefaultValue({
+          fieldConfig: /** @type {Field} */ ({ ...fieldConfig, i18n }),
+          locale: 'fr',
+          defaultLocale: 'de',
+        }),
+      ).toHaveProperty('default', ['autoreparatur']);
+    });
   });
 
   test('returns the configuration as is without localized default values', () => {

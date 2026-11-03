@@ -19,6 +19,7 @@ import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import {
   isFieldI18nDisabled,
   isFieldLocalized,
+  isFieldMirrored,
   isFieldTranslatable,
 } from '$lib/services/contents/i18n/fields';
 
@@ -30,8 +31,9 @@ import {
 /**
  * Run the given callback for every locale a field update has to be written to.
  *
- * A field with the `duplicate` i18n strategy holds the same value in every locale, so an update has
- * to reach all of them; any other field is written to the given locale only.
+ * A field with the `duplicate` or `sync` i18n strategy holds the same value in every locale, so an
+ * update has to reach all of them, whichever locale it’s made in; any other field is written to the
+ * given locale only.
  *
  * The draft proxy duplicates a `duplicate` field on its own whenever a value is assigned, which
  * would write every value twice here, so the callback runs with that suspended. Suspensions nest,
@@ -64,7 +66,7 @@ export const forEachTargetLocale = ({ valueStore, locale, i18n, draft, keyPath }
   const fieldConfig = getFieldArgs ? getField(getFieldArgs) : undefined;
 
   const duplicated =
-    i18n === 'duplicate' ||
+    isFieldMirrored(i18n) ||
     (!!getFieldArgs &&
       isDuplicatedField({
         fieldConfig: fieldConfig ?? /** @type {Field} */ ({ i18n }),
@@ -119,7 +121,8 @@ export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPat
     const { widget: fieldType = 'text' } = field;
 
     // A field without an `i18n` option of its own is duplicated along with a List or Object field
-    // using the `duplicate` strategy, so it has to be kept rather than removed as non-i18n
+    // using the `duplicate` or `sync` strategy, so it has to be kept rather than removed as
+    // non-i18n
     const i18n =
       field.i18n ??
       (isDuplicatedField({ fieldConfig: field, getFieldArgs: { ...getFieldArgs, keyPath } })

@@ -192,7 +192,9 @@ export const collectComponentComputeFields = (valueMap, getIndex) => {
 /**
  * Check whether a field’s value has to be computed for the given locale. This mirrors the condition
  * under which the editor shows the field: a field that can’t be edited in a locale doesn’t hold a
- * value there either, and writing one would add it to the saved file.
+ * value there either, and writing one would add it to the saved file. A field using the `sync` i18n
+ * strategy is only computed in the default locale, from which the value is copied to the others:
+ * computed in each locale from a translatable field, it would be copied back and forth for good.
  * @param {object} args Arguments.
  * @param {Field} args.fieldConfig Field configuration.
  * @param {InternalLocaleCode} args.locale Locale code.
@@ -201,7 +203,8 @@ export const collectComponentComputeFields = (valueMap, getIndex) => {
  * @returns {boolean} Result.
  */
 const isLocaleTarget = ({ fieldConfig, locale, defaultLocale, i18nEnabled }) =>
-  locale === defaultLocale || (i18nEnabled && isFieldLocalized(fieldConfig.i18n));
+  locale === defaultLocale ||
+  (i18nEnabled && isFieldLocalized(fieldConfig.i18n) && fieldConfig.i18n !== 'sync');
 
 /**
  * Resolve every Compute field in the given locale’s content and write the results back. The content

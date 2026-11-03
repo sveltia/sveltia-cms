@@ -300,6 +300,30 @@ describe('Test resetField()', () => {
     expect(draft.currentValues.en).toEqual({ 'venue.name': 'Hall', 'venue.rooms': [] });
     expect(draft.currentValues.fr).toEqual({ 'venue.name': 'Hall', 'venue.rooms': [] });
   });
+  test('should clear a synced field in every locale, whichever locale it’s cleared in', () => {
+    // https://github.com/sveltia/sveltia-cms/issues/1128
+    /** @type {Field} */
+    const fieldConfig = {
+      name: 'author',
+      widget: 'object',
+      i18n: true,
+      fields: [
+        { name: 'name', widget: 'string', i18n: true },
+        { name: 'url', widget: 'string', i18n: 'sync' },
+        // Can’t be edited in another locale
+        { name: 'bio', widget: 'string', i18n: 'duplicate' },
+      ],
+    };
+
+    const values = { 'author.name': 'Melvin', 'author.url': 'https://a', 'author.bio': 'Hi' };
+    const draft = createDraft({ en: { ...values }, fr: { ...values }, ja: { ...values } });
+
+    resetField({ draft, fieldConfig, keyPath: 'author', locale: 'fr' });
+
+    expect(draft.currentValues.fr).toEqual({ ...values, 'author.name': '', 'author.url': '' });
+    expect(draft.currentValues.en).toEqual({ ...values, 'author.url': '' });
+    expect(draft.currentValues.ja).toEqual({ ...values, 'author.url': '' });
+  });
 });
 
 describe('Test canResetField()', () => {

@@ -6,23 +6,33 @@ import { getValueMapVersion } from '$lib/services/contents/draft/create/versione
 import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
 
 import {
-  copyDefaultLocaleValue,
   copyDefaultLocaleValueIfEmpty,
+  copyMirroredValue,
   createProxy,
   getListItemMatcher,
   isDuplicatedField,
+  isSyncedField,
 } from './proxy.svelte.js';
 
-const { resolveCollectionAndFile, getField, revalidateField, isAutoDuplicationEnabled } =
-  vi.hoisted(() => ({
-    resolveCollectionAndFile: vi.fn(),
-    getField: vi.fn(),
-    revalidateField: vi.fn(),
-    isAutoDuplicationEnabled: vi.fn(() => true),
-  }));
+const {
+  resolveCollectionAndFile,
+  getField,
+  revalidateField,
+  isAutoDuplicationEnabled,
+  suspendAutoDuplication,
+} = vi.hoisted(() => ({
+  resolveCollectionAndFile: vi.fn(),
+  getField: vi.fn(),
+  revalidateField: vi.fn(),
+  isAutoDuplicationEnabled: vi.fn(() => true),
+  suspendAutoDuplication: vi.fn((/** @type {() => any} */ fn) => fn()),
+}));
 
 vi.mock('$lib/services/contents/collection/files', () => ({ resolveCollectionAndFile }));
-vi.mock('$lib/services/contents/draft', () => ({ isAutoDuplicationEnabled }));
+vi.mock('$lib/services/contents/draft', () => ({
+  isAutoDuplicationEnabled,
+  suspendAutoDuplication,
+}));
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField,
   /**
@@ -88,14 +98,14 @@ describe('contents/draft/create/proxy.svelte', () => {
     isAutoDuplicationEnabled.mockReturnValue(true);
   });
 
-  describe('copyDefaultLocaleValue', () => {
+  describe('copyMirroredValue', () => {
     /**
-     * Run {@link copyDefaultLocaleValue} against a draft made of plain value maps.
+     * Run {@link copyMirroredValue} against a draft made of plain value maps.
      * @param {Record<string, object>} currentValues Values per locale.
      * @param {object} args Arguments other than the draft.
      */
     const copy = (currentValues, args) => {
-      copyDefaultLocaleValue({ draft: { currentValues }, ...args });
+      copyMirroredValue({ draft: { currentValues }, ...args });
     };
 
     it('should copy value to other locales but not the source locale', () => {
@@ -710,6 +720,72 @@ describe('contents/draft/create/proxy.svelte', () => {
       expect(draft.currentValues.ja.related).toBe('ja/my-post');
     });
 
+    describe('a field using the `sync` strategy', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/1128
+      beforeEach(() => {
+        // Suspend the duplication for real, so a copy isn’t copied on again
+        suspendAutoDuplication.mockImplementation((fn) => {
+          isAutoDuplicationEnabled.mockReturnValue(false);
+
+          try {
+            return fn();
+          } finally {
+            isAutoDuplicationEnabled.mockReturnValue(true);
+          }
+        });
+      });
+
+      it('should copy a value written in any locale to the other locales', () => {
+        getField.mockReturnValue({
+          widget: 'relation',
+          i18n: 'sync',
+          value_field: '{{locale}}/{{slug}}',
+        });
+
+        const draft = createDraft({ locales: ['en', 'fr', 'ja'] });
+
+        draft.currentValues.fr.related = 'fr/my-post';
+
+        expect(draft.currentValues.en.related).toBe('en/my-post');
+        expect(draft.currentValues.ja.related).toBe('ja/my-post');
+        // The copies aren’t copied on again from the locales they’re written to
+        expect(suspendAutoDuplication).toHaveBeenCalledOnce();
+        expect(getLocalizedFieldValue).toHaveBeenCalledTimes(2);
+
+        draft.currentValues.en.related = 'en/other-post';
+
+        expect(draft.currentValues.fr.related).toBe('fr/other-post');
+        expect(draft.currentValues.ja.related).toBe('ja/other-post');
+      });
+
+      it('should delete a value deleted in any locale from the other locales', () => {
+        getField.mockReturnValue({ widget: 'string', i18n: 'sync' });
+
+        const draft = createDraft({
+          locales: ['en', 'fr', 'ja'],
+          values: { en: { title: 'Hi' }, fr: { title: 'Hi' }, ja: { title: 'Hi' } },
+        });
+
+        delete draft.currentValues.ja.title;
+
+        expect('title' in draft.currentValues.en).toBe(false);
+        expect('title' in draft.currentValues.fr).toBe(false);
+        expect(suspendAutoDuplication).toHaveBeenCalledOnce();
+      });
+
+      it('should not copy a value while auto-duplication is suspended', () => {
+        getField.mockReturnValue({ widget: 'string', i18n: 'sync' });
+        isAutoDuplicationEnabled.mockReturnValue(false);
+
+        const draft = createDraft();
+
+        draft.currentValues.ja.title = 'Title';
+
+        expect(draft.currentValues.en.title).toBeUndefined();
+        isAutoDuplicationEnabled.mockReturnValue(true);
+      });
+    });
+
     it('should skip revalidation and duplication for the canonical slug field', () => {
       getField.mockReturnValue({ widget: 'string', i18n: 'duplicate' });
 
@@ -917,6 +993,46 @@ describe('contents/draft/create/proxy.svelte', () => {
       expect(check('meta.tags.0.label')).toBe(true);
       expect(check('blocks.0.text')).toBe(false);
       expect(getField).not.toHaveBeenCalledWith(expect.objectContaining({ keyPath: 'blocks.0' }));
+    });
+
+    it('should detect the `sync` strategy as well', () => {
+      fields.links = { name: 'links', widget: 'list', i18n: 'sync' };
+      fields['links.0.url'] = { name: 'url', widget: 'string' };
+
+      expect(check('links')).toBe(true);
+      expect(check('links.0.url')).toBe(true);
+    });
+  });
+
+  describe('isSyncedField', () => {
+    /** @type {Record<string, any>} */
+    const fields = {
+      title: { name: 'title', widget: 'string', i18n: 'duplicate' },
+      links: { name: 'links', widget: 'list', i18n: 'sync' },
+      'links.0.url': { name: 'url', widget: 'string' },
+      'links.0.label': { name: 'label', widget: 'string', i18n: true },
+    };
+
+    beforeEach(() => {
+      getField.mockImplementation(({ keyPath }) => fields[keyPath]);
+    });
+
+    /**
+     * Check the field at the given key path.
+     * @param {string} keyPath Key path.
+     * @returns {boolean} Result.
+     */
+    const check = (keyPath) =>
+      isSyncedField({
+        fieldConfig: fields[keyPath],
+        getFieldArgs: { collectionName: 'posts', keyPath },
+      });
+
+    it('should detect the field’s own or an ancestor’s `sync` strategy only', () => {
+      expect(check('links')).toBe(true);
+      expect(check('links.0.url')).toBe(true);
+      expect(check('links.0.label')).toBe(false);
+      expect(check('title')).toBe(false);
     });
   });
 

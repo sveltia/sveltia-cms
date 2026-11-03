@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { isAutoDuplicationEnabled } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
 import { useActualDraftFieldArgs } from '$lib/test/fields';
 
@@ -223,6 +224,42 @@ describe('draft/update/revert', () => {
       expect(currentValues.en['tag.0']).toBe('Original Item');
       expect(currentValues.en.tags).toBe('Modified Tags');
       expect(currentValues.en.tagline).toBe('Modified Tagline');
+    });
+
+    it('should revert every locale to its own values when reverting everything', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/1128
+      const getFieldImpl = vi.mocked(getField).getMockImplementation();
+      /** @type {boolean[]} */
+      const autoDuplication = [];
+
+      vi.mocked(getField).mockImplementation((args) => {
+        autoDuplication.push(isAutoDuplicationEnabled());
+
+        return args.keyPath === 'tag'
+          ? { name: 'tag', widget: 'string', i18n: 'sync' }
+          : getFieldImpl?.(args);
+      });
+
+      // The locales’ original values differ, e.g. as the files were edited elsewhere
+      mockEntryDraft.currentValues.en.tag = 'Edited';
+      mockEntryDraft.currentValues.ja.tag = 'Edited';
+      mockEntryDraft.originalValues.en.tag = 'Tag';
+      mockEntryDraft.originalValues.ja.tag = 'Étiquette';
+
+      revertChanges();
+
+      expect(mockEntryDraft.currentValues.en.tag).toBe('Tag');
+      expect(mockEntryDraft.currentValues.ja.tag).toBe('Étiquette');
+      // Nothing is copied from one locale to another meanwhile
+      expect(autoDuplication).not.toContain(true);
+
+      // Reverting one locale reverts the field there, and the value proxy copies it to the others
+      mockEntryDraft.currentValues.ja.tag = 'Edited';
+      autoDuplication.length = 0;
+      revertChanges({ locale: 'ja' });
+
+      expect(mockEntryDraft.currentValues.ja.tag).toBe('Étiquette');
+      expect(autoDuplication).not.toContain(false);
     });
 
     it('should only revert translatable fields in non-default locale', () => {
@@ -586,6 +623,40 @@ describe('draft/update/revert', () => {
 
       expect(currentValues.ja.title).toBe('Original Japanese Title');
       expect(currentValues.ja.date).toBe('Modified Date');
+    });
+
+    it('should revert a synced field in non-default locale', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/1128
+      const currentValues = {
+        ja: { date: 'Modified Date', 'links.0.url': 'Modified URL' },
+      };
+
+      /** @type {Record<string, any>} */
+      const fields = {
+        date: { name: 'date', widget: 'datetime', i18n: 'sync' },
+        links: { name: 'links', widget: 'list', i18n: 'sync' },
+        // Synced along with the List field
+        'links.0.url': { name: 'url', widget: 'string' },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+      revertFields({
+        locale: 'ja',
+        isDefaultLocale: false,
+        keyPath: '',
+        getFieldArgs: {
+          valueMap: { date: 'Original Date', 'links.0.url': 'Original URL' },
+          collectionName: 'posts',
+          fileName: undefined,
+          keyPath: '',
+          isIndexFile: false,
+        },
+        currentValues,
+        reset: false,
+      });
+
+      expect(currentValues.ja).toEqual({ date: 'Original Date', 'links.0.url': 'Original URL' });
     });
 
     it('should revert all fields in default locale', () => {

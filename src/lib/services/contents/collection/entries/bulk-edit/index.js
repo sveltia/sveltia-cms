@@ -23,6 +23,7 @@ import {
   followsDefaultLocale,
   isDuplicateIfEmptyField,
 } from '$lib/services/contents/i18n/duplicate-if-empty';
+import { isFieldMirrored } from '$lib/services/contents/i18n/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { isValueEmpty } from '$lib/services/utils/object';
 import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
@@ -181,7 +182,7 @@ export const applyBulkEdits = ({ collection, entry, entryEdits }) => {
       }
 
       if (
-        fieldConfig?.i18n === 'duplicate' ||
+        isFieldMirrored(fieldConfig?.i18n) ||
         (fillEmpty &&
           followsDefaultLocale({
             fieldConfig: /** @type {Field} */ (fieldConfig),

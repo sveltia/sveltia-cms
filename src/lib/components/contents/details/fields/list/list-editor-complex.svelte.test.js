@@ -1158,6 +1158,43 @@ describe('ListEditorComplex (more)', () => {
     await expect.element(page.getByRole('button', { name: 'Remove' })).toBeDisabled();
   });
 
+  test('can be edited in another locale and writes a change to every locale when synced', async () => {
+    // https://github.com/sveltia/sveltia-cms/issues/1128
+    const syncedField = { ...authorsField, i18n: /** @type {const} */ ('sync') };
+
+    const draft = createMockDraft({
+      fields: [syncedField],
+      i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        initialLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structure: /** @type {const} */ ('multiple_folders'),
+      },
+      values: {
+        en: { 'authors.0.name': 'Melvin' },
+        fr: { 'authors.0.name': 'Melvin' },
+      },
+    });
+
+    await renderWithDraft(ListEditorComplex, {
+      draft,
+      props: {
+        locale: 'fr',
+        keyPath: 'authors',
+        typedKeyPath: 'authors',
+        fieldId: 'authors',
+        fieldLabel: 'Authors',
+        fieldConfig: syncedField,
+      },
+    });
+
+    await expect.element(page.getByRole('button', { name: /Add\W+Author/ })).toBeEnabled();
+    await page.getByRole('button', { name: 'Remove' }).click();
+    await expect.poll(() => draft.currentValues.fr['authors.0.name']).toBeUndefined();
+    expect(draft.currentValues.en['authors.0.name']).toBeUndefined();
+  });
+
   test('locks the items of a read-only field', async () => {
     // e.g. a List field duplicated in another locale along with its Object field
     await renderEditor(

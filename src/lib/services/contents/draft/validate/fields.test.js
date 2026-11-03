@@ -423,6 +423,36 @@ describe('draft/validate/fields', () => {
       expect(result.validities.ja.title).toBeUndefined();
     });
 
+    it('should validate a field kept in sync across the locales in every locale', () => {
+      // https://github.com/sveltia/sveltia-cms/issues/1128
+      mockEntryDraft.currentLocales = { en: true, ja: true };
+      mockEntryDraft.currentValues = {
+        en: { title: '', 'links.0.url': '' },
+        ja: { title: '', 'links.0.url': '' },
+      };
+
+      /** @type {Record<string, any>} */
+      const fields = {
+        title: { name: 'title', widget: 'string', i18n: 'sync', required: true },
+        links: { name: 'links', widget: 'list', i18n: 'sync' },
+        // Edited in every locale along with the List field
+        'links.0.url': { name: 'url', widget: 'string', required: true },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+      vi.mocked(isFieldRequired).mockReturnValue(true);
+
+      const result = validateFields('currentValues');
+
+      expect(result.validities.ja.title).toMatchObject({ valueMissing: true, valid: false });
+      expect(result.validities.ja['links.0.url']).toMatchObject({ valueMissing: true });
+
+      // A subfield of a duplicated List field can’t be edited in another locale
+      fields.links = { ...fields.links, i18n: 'duplicate' };
+
+      expect(validateFields('currentValues').validities.ja['links.0.url']).toBeUndefined();
+    });
+
     it('should skip fields when getField returns undefined', () => {
       mockEntryDraft.currentValues = {
         en: {

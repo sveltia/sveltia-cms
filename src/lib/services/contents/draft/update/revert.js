@@ -1,6 +1,6 @@
 import equal from 'fast-deep-equal';
 
-import { collectFieldValues } from '$lib/services/contents/draft';
+import { collectFieldValues, suspendAutoDuplication } from '$lib/services/contents/draft';
 import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
@@ -8,6 +8,7 @@ import { getKeyValueField } from '$lib/services/contents/fields/key-value/pairs'
 import { getPairedListKeyPaths } from '$lib/services/contents/fields/list/helpers';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
+import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -125,10 +126,17 @@ export const revertFields = ({
         // A KeyValue pair is governed by its field
         getKeyValueField({ ...getFieldArgs, keyPath: _keyPath });
 
+      // A field using the `sync` i18n strategy, with its own option or along with an ancestor, can
+      // be edited in any locale, and the value proxy copies the reverted value to the others
       if (
         isDefaultLocale ||
         isFieldTranslatable(fieldConfig?.i18n) ||
-        fieldConfig?.i18n === 'duplicate_keys'
+        fieldConfig?.i18n === 'duplicate_keys' ||
+        (!!fieldConfig &&
+          getInheritedI18nOption({
+            fieldConfig,
+            getFieldArgs: { ...getFieldArgs, keyPath: _keyPath },
+          }) === 'sync')
       ) {
         if (reset) {
           delete currentValues[locale][_keyPath];
@@ -227,7 +235,6 @@ const getRevertedPairedListKeyPaths = ({ draft, keyPath }) => {
 export const revertChanges = ({ draft, locale: targetLanguage = '', keyPath = '' }) => {
   const { currentValues, originalLocales, originalPath, originalSlugs } = draft;
   const { allLocales, defaultLocale } = getDraftI18nConfig(draft);
-  const locales = targetLanguage ? [targetLanguage] : allLocales;
   // Reverting one field or one locale only touches values. Reverting everything restores where the
   // entry goes as well — the folder chosen with the path editor and the slugs, which name the file
   // or its folder in each locale — and which locales it’s output in, or a move, rename or disabled
@@ -235,9 +242,19 @@ export const revertChanges = ({ draft, locale: targetLanguage = '', keyPath = ''
   // of a locale left disabled
   const revertsEverything = !targetLanguage && !keyPath;
 
-  locales.forEach((locale) => {
-    revertLocale({ draft, keyPath, locale });
-  });
+  if (targetLanguage) {
+    revertLocale({ draft, keyPath, locale: targetLanguage });
+  } else {
+    // Every locale gets its own original values back, including those of the fields holding the
+    // same value in every locale, so nothing is copied from one locale to another. Otherwise a
+    // `sync` field reverted in one locale would overwrite the original value of another locale,
+    // which may differ if the files were edited elsewhere
+    suspendAutoDuplication(() => {
+      allLocales.forEach((locale) => {
+        revertLocale({ draft, keyPath, locale, revertAll: true });
+      });
+    });
+  }
 
   // The items of a paired List field are added, removed and moved in every locale at once, so
   // reverting them in the default locale alone would leave them out of line with the other locales
