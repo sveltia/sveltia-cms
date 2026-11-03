@@ -1,4 +1,4 @@
-import { selectText } from '../../fixtures/rich-text.js';
+import { moveCaretToEnd, selectText } from '../../fixtures/rich-text.js';
 import { expect, test } from '../../fixtures/test.js';
 import { getEditor } from '../../fixtures/ui.js';
 
@@ -65,19 +65,6 @@ const openNote = async ({ cms, page, body }) => {
   await expect(editor.getByRole('textbox', { name: 'Title' }).first()).toHaveValue('Note');
 
   return { editor, field, body: field.getByRole('textbox', { name: 'Body' }) };
-};
-
-/**
- * Move the caret to the end of a rich text editor. The End key doesn’t do that on macOS, so set the
- * selection directly, which the editor picks up.
- * @param {Locator} textbox Editor.
- */
-const moveCaretToEnd = async (textbox) => {
-  await textbox.evaluate((element) => {
-    /** @type {HTMLElement} */ (element).focus();
-    window.getSelection()?.selectAllChildren(element);
-    window.getSelection()?.collapseToEnd();
-  });
 };
 
 /**

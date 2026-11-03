@@ -3,6 +3,7 @@ import {
   MULTILINGUAL_CONFIG,
   MULTILINGUAL_FILES,
 } from '../../fixtures/configs/multilingual.js';
+import { moveCaretToEnd } from '../../fixtures/rich-text.js';
 import { expect, test } from '../../fixtures/test.js';
 
 import { getEditPane, getPreviewPane, openEntry, save, showLocale } from './helpers.js';
@@ -54,11 +55,7 @@ test('lays out the Arabic rich text editor right to left', async ({ page }) => {
   await expect(body).toHaveAttribute('dir', 'rtl');
   // A new paragraph follows the editor, although it has no text to take a direction from. Put the
   // caret at the end, as a click would split the paragraph; the End key doesn’t move it on macOS
-  await body.evaluate((element) => {
-    /** @type {HTMLElement} */ (element).focus();
-    window.getSelection()?.selectAllChildren(element);
-    window.getSelection()?.collapseToEnd();
-  });
+  await moveCaretToEnd(body);
   await page.keyboard.press('Enter');
   await expect(body.locator('p')).toHaveCount(2);
   await expect(body.locator('p').nth(1)).toHaveText('');

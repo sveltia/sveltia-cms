@@ -41,3 +41,23 @@ export const selectText = async (textbox, text) => {
     });
   }, text);
 };
+
+/**
+ * Move the caret to the end of a rich text editor, or of an element within it such as a table cell.
+ * The End key does that on Linux and Windows but not on macOS, so set the selection directly. As
+ * with {@link selectText}, fire `selectionchange` and wait for the editor to have handled it: until
+ * then, the editor acts on its own copy of the previous selection, so a toolbar button or a `paste`
+ * event dispatched right away would replace whatever was selected before.
+ * @param {Locator} target Editor, or an element within it.
+ */
+export const moveCaretToEnd = async (target) => {
+  await target.evaluate(async (element) => {
+    /** @type {HTMLElement} */ (element).focus();
+    window.getSelection()?.selectAllChildren(element);
+    window.getSelection()?.collapseToEnd();
+    document.dispatchEvent(new Event('selectionchange'));
+    await new Promise((resolve) => {
+      requestAnimationFrame(resolve);
+    });
+  });
+};

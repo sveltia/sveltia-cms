@@ -1,11 +1,11 @@
 import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/monolingual.js';
 import { createPNG } from '../../fixtures/files.js';
-import { selectText } from '../../fixtures/rich-text.js';
+import { moveCaretToEnd, selectText } from '../../fixtures/rich-text.js';
 import { expect, test } from '../../fixtures/test.js';
 import { getEditor } from '../../fixtures/ui.js';
 
 /**
- * @import { Locator, Page } from '@playwright/test';
+ * @import { Page } from '@playwright/test';
  */
 
 test.use({ config: MONOLINGUAL_CONFIG });
@@ -68,19 +68,6 @@ const CANONICAL_BODY = [
 ].join('\n');
 
 const RICH_POST_PATH = 'content/posts/2026-04-rich-post.md';
-
-/**
- * Move the caret to the end of a rich text editor. The End key does that on Linux and Windows but
- * not on macOS, so set the selection directly, which the editor picks up.
- * @param {Locator} textbox Editor.
- */
-const moveCaretToEnd = async (textbox) => {
-  await textbox.evaluate((element) => {
-    /** @type {HTMLElement} */ (element).focus();
-    window.getSelection()?.selectAllChildren(element);
-    window.getSelection()?.collapseToEnd();
-  });
-};
 
 /**
  * Open the First Light post and wait for its body in the rich text editor.
@@ -273,10 +260,7 @@ test.describe('editor components in a table', () => {
 
     // Place the caret at the end of a cell
     await body.getByRole('cell', { name: 'Here' }).click();
-    await body.getByRole('cell', { name: 'Here' }).evaluate((cell) => {
-      window.getSelection()?.selectAllChildren(cell);
-      window.getSelection()?.collapseToEnd();
-    });
+    await moveCaretToEnd(body.getByRole('cell', { name: 'Here' }));
     // The image component is inline, so it’s offered in a cell
     await field.getByRole('button', { name: 'Image', exact: true }).click();
 
