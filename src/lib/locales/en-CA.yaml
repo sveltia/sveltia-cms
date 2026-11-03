@@ -759,6 +759,8 @@ enter_new_name_for_asset_error:
   duplicate: This file name is used for another asset.
   # A name starting with a dot hides the file, which the CMS wouldn’t list any more
   leading_dot: File name cannot start with a dot.
+  # The name of a file next to the asset that isn’t an asset, like an entry file
+  file_duplicate: Another file with this name already exists here.
   # The name of a folder next to the file
   folder_duplicate: A folder with this name already exists here.
 # Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
@@ -1253,6 +1255,9 @@ edit_singleton_announcement: You’re now editing the “{$file}” file.
 # Shown when CI skip is enabled/disabled
 save_and_publish: Save and Publish
 save_without_publishing: Save without Publishing
+# Shown disabled in place of `save_and_publish` while entries created or edited from a Relation
+# field are in a collection whose review can’t be skipped with the `direct_publish` option
+save_and_publish_needs_review: Save and Publish (Related Entries Need Review)
 
 # Editor options menu
 show_editor_options: Show Editor Options

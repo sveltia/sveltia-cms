@@ -18,6 +18,7 @@ import {
   getAssetsByDirName,
   getAssetsByFolder,
   getDuplicateFiles,
+  getTakenNamesInDir,
   isAssetInFolder,
   isRelativePath,
 } from '$lib/services/assets';
@@ -34,7 +35,8 @@ import {
   selectedOrFocusedAssets,
   uploadingAssets,
 } from '$lib/services/assets/state';
-import { createMockAssetFolder } from '$lib/test/factories';
+import { allEntries } from '$lib/services/contents';
+import { createMockAsset, createMockAssetFolder } from '$lib/test/factories';
 
 // Mock all dependencies
 vi.mock('@sveltia/utils/file', async (importOriginal) => {
@@ -1247,6 +1249,30 @@ describe('assets/index', () => {
       expect(countAssetsInFolder(pagesFolder)).toBe(getAssetsByFolder(pagesFolder).length);
       expect(getAssetsByFolder(fixedFolder)).toEqual([fixedAsset]);
       expect(countAssetsInFolder(fixedFolder)).toBe(getAssetsByFolder(fixedFolder).length);
+    });
+  });
+
+  describe('getTakenNamesInDir', () => {
+    it('should list the assets, the other files and the subfolders in the directory', () => {
+      allAssets.current = [
+        createMockAsset({ name: 'photo.jpg', folderPath: 'content/posts/hello' }),
+        createMockAsset({ name: 'icon.png', folderPath: 'content/posts/hello/images' }),
+        createMockAsset({ name: 'other.jpg', folderPath: 'content/posts/other' }),
+      ];
+      allEntries.current = /** @type {any[]} */ ([
+        { locales: { _default: { path: 'content/posts/hello/index.md' } } },
+      ]);
+
+      try {
+        expect(getTakenNamesInDir('content/posts/hello')).toEqual([
+          'photo.jpg',
+          'index.md',
+          'images',
+        ]);
+      } finally {
+        allAssets.current = [];
+        allEntries.current = [];
+      }
     });
   });
 

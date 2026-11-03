@@ -11,6 +11,7 @@ import { createSavingEntryData } from '$lib/services/contents/draft/save/changes
 import { compareWithStore } from '$lib/services/contents/draft/save/conflict';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
+import { getField } from '$lib/services/contents/entry/fields';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
@@ -75,6 +76,11 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
     (_collectionName, entries) =>
       entries.filter((/** @type {any} */ { _isIndexFile }) => !_isIndexFile).length,
   ),
+}));
+
+vi.mock('$lib/services/contents/entry/fields', async (importOriginal) => ({
+  .../** @type {any} */ (await importOriginal()),
+  getField: vi.fn(),
 }));
 
 vi.mock('$lib/services/contents/draft/save/conflict', () => ({
@@ -1119,6 +1125,27 @@ describe('selectPendingEntry', () => {
     });
   });
 
+  it('resolves the value against the entries in the pull request of the host entry', () => {
+    const draft = createParentDraft({ currentValues: { en: { tag: '' } } });
+    const hostEntry = createHostEntry('react');
+
+    vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(hostEntry);
+    vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(hostEntry);
+
+    selectPendingEntry({
+      draft,
+      locale: 'en',
+      keyPath: 'tag',
+      valueStoreKey: 'currentValues',
+      fieldConfig: { ...fieldConfig, name: 'tag' },
+      pendingEntry,
+    });
+
+    expect(getEntryOptions).toHaveBeenCalledWith(
+      expect.objectContaining({ pendingEntries: hostEntry.workflow.companions }),
+    );
+  });
+
   it('adds the value to a multiple-value field', () => {
     const draft = createParentDraft({ currentValues: { en: { title: 'Hi', 'tags.0': 'react' } } });
 
@@ -1224,11 +1251,28 @@ describe('selectPendingEntry', () => {
 describe('replaceEntryValues', () => {
   const previousEntry = /** @type {Entry} */ ({ id: 'svelte', slug: 'svelte', locales: {} });
   const entry = /** @type {Entry} */ ({ id: 'svelte', slug: 'svelte-js', locales: {} });
+  const multipleFieldConfig = { ...fieldConfig, name: 'related', multiple: true };
 
   beforeEach(() => {
     vi.mocked(getEntryOptions).mockImplementation(({ locale, refEntry }) => [
       { label: refEntry.slug, value: `${locale}/${refEntry.slug}`, searchValue: '' },
     ]);
+    // `tag` and the items of `related` and `items.*.tag` point at the `tags` collection, `category`
+    // elsewhere
+    vi.mocked(getField).mockImplementation(
+      ({ keyPath }) =>
+        /** @type {any} */ (
+          keyPath === 'tag' || /^items\.\d+\.tag$/.test(keyPath)
+            ? fieldConfig
+            : /^related\.\d+$/.test(keyPath)
+              ? multipleFieldConfig
+              : keyPath === 'category'
+                ? { ...fieldConfig, collection: 'categories' }
+                : keyPath === 'title'
+                  ? { name: 'title', widget: 'string' }
+                  : undefined
+        ),
+    );
   });
 
   it('replaces the value of a single-value field in every locale', () => {
@@ -1258,28 +1302,90 @@ describe('replaceEntryValues', () => {
     });
   });
 
-  it('replaces the matching items of a multiple-value field', () => {
+  it('replaces the values of every Relation field pointing at the collection', () => {
     const draft = createParentDraft({
       currentValues: {
-        en: { 'tags.0': 'en/react', 'tags.1': 'en/svelte', 'tags.1.x': 'en/svelte', other: 'x' },
+        en: {
+          title: 'en/svelte',
+          tag: 'en/react',
+          'related.0': 'en/react',
+          'related.1': 'en/svelte',
+          'items.0.tag': 'en/svelte',
+          'items.0.other': 'en/svelte',
+          category: 'en/svelte',
+        },
+      },
+    });
+
+    replaceEntryValues({
+      draft,
+      keyPath: 'tag',
+      valueStoreKey: 'currentValues',
+      fieldConfig,
+      previousEntry,
+      entry,
+    });
+
+    expect(draft.currentValues.en).toEqual({
+      title: 'en/svelte',
+      tag: 'en/react',
+      'related.0': 'en/react',
+      'related.1': 'en/svelte-js',
+      'items.0.tag': 'en/svelte-js',
+      'items.0.other': 'en/svelte',
+      category: 'en/svelte',
+    });
+    // Each field’s values are worked out with its own configuration, once per locale
+    expect(getEntryOptions).toHaveBeenCalledWith(
+      expect.objectContaining({ fieldConfig: multipleFieldConfig, refEntry: previousEntry }),
+    );
+    expect(
+      vi
+        .mocked(getEntryOptions)
+        .mock.calls.filter(([args]) => args.fieldConfig === fieldConfig && args.refEntry === entry),
+    ).toHaveLength(1);
+  });
+
+  it('replaces the value of the field in the values of a rich text editor component', () => {
+    const draft = /** @type {any} */ ({
+      ...createParentDraft({ currentValues: { en: { tag: 'en/svelte' } } }),
+      extraValues: {
+        en: { 'tags.0': 'en/svelte', 'tags.1': 'en/react', label: 'en/svelte' },
+        fr: { 'tags.0': 'fr/svelte' },
       },
     });
 
     replaceEntryValues({
       draft,
       keyPath: 'tags',
-      valueStoreKey: 'currentValues',
+      valueStoreKey: 'extraValues',
       fieldConfig: { ...fieldConfig, multiple: true },
       previousEntry,
       entry,
     });
 
-    expect(draft.currentValues.en).toEqual({
-      'tags.0': 'en/react',
-      'tags.1': 'en/svelte-js',
-      'tags.1.x': 'en/svelte',
-      other: 'x',
+    expect(draft.extraValues).toEqual({
+      en: { 'tags.0': 'en/svelte-js', 'tags.1': 'en/react', label: 'en/svelte' },
+      fr: { 'tags.0': 'fr/svelte-js' },
     });
+    // The entry’s own fields are updated as well
+    expect(draft.currentValues.en.tag).toBe('en/svelte-js');
+
+    const singleDraft = /** @type {any} */ ({
+      ...createParentDraft(),
+      extraValues: { en: { tag: 'en/svelte' } },
+    });
+
+    replaceEntryValues({
+      draft: singleDraft,
+      keyPath: 'tag',
+      valueStoreKey: 'extraValues',
+      fieldConfig,
+      previousEntry,
+      entry,
+    });
+
+    expect(singleDraft.extraValues.en.tag).toBe('en/svelte-js');
   });
 
   it('leaves the values alone if they have not changed, or cannot be paired', () => {
@@ -1426,6 +1532,54 @@ describe('canEditEntry', () => {
       /** @type {any} */ ({ workflow: { pullRequest: { branch: 'cms/posts/other' } } }),
     );
     expect(canEditEntry({ fieldConfig, draft, entry })).toBe(true);
+  });
+
+  it('refuses an entry changed on the configured branch since the pull request was opened', () => {
+    const draft = createParentDraft();
+
+    const hostEntry = /** @type {any} */ ({
+      workflow: {
+        pullRequest: { branch: 'cms/posts/hello', createdDate: new Date('2026-01-02T00:00:00Z') },
+      },
+    });
+
+    /**
+     * Check whether the entry last committed at the given date can be edited.
+     * @param {string} date Commit date.
+     * @returns {boolean} Result.
+     */
+    const canEditAt = (date) =>
+      canEditEntry({ fieldConfig, draft, entry: { ...entry, commitDate: new Date(date) } });
+
+    vi.mocked(isWorkflowDraft).mockReturnValue(true);
+    vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(hostEntry);
+    vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(hostEntry);
+    vi.mocked(findEditingUnpublishedEntry).mockReturnValue(undefined);
+
+    expect(canEditAt('2026-01-01T00:00:00Z')).toBe(true);
+    expect(canEditAt('2026-01-03T00:00:00Z')).toBe(false);
+    // Without the commit date, there’s nothing to tell
+    expect(canEditEntry({ fieldConfig, draft, entry })).toBe(true);
+
+    // The pull request changes the entry already, so its branch has the entry as it is now
+    vi.mocked(findEditingUnpublishedEntry).mockReturnValue(hostEntry);
+    expect(canEditAt('2026-01-03T00:00:00Z')).toBe(true);
+    vi.mocked(findEditingUnpublishedEntry).mockReturnValue(undefined);
+
+    // So does an entry created in the pull request by an earlier save
+    hostEntry.workflow.companions = [{ collectionName: 'tags', entry: { id: entry.id } }];
+    expect(canEditAt('2026-01-03T00:00:00Z')).toBe(true);
+    delete hostEntry.workflow.companions;
+
+    // Without a pull request, the entry is saved on the configured branch
+    vi.mocked(findEditingUnpublishedEntry).mockReturnValue(undefined);
+    vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(undefined);
+    expect(canEditAt('2026-01-03T00:00:00Z')).toBe(true);
+
+    // The pull request has gone in the meantime
+    vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(hostEntry);
+    vi.mocked(getUnpublishedEntryByBranch).mockReturnValue(undefined);
+    expect(canEditAt('2026-01-03T00:00:00Z')).toBe(true);
   });
 
   it('refuses the entry being edited itself', () => {

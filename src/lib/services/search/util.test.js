@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
+import { emulateTurkishLowerCase } from '$lib/test/locale';
+
 import { getNormalizedValueCache, hasAllMatches, hasMatch, normalize, tokenize } from './util';
 
 describe('normalize', () => {
+  it('should lowercase regardless of the browser’s locale', () => {
+    emulateTurkishLowerCase();
+
+    expect(normalize('Introduction')).toBe('introduction');
+    expect(normalize('İstanbul Intro')).toBe('istanbul intro');
+  });
+
   it('should normalize basic strings', () => {
     expect(normalize('Hello World')).toBe('hello world');
     expect(normalize('UPPERCASE')).toBe('uppercase');

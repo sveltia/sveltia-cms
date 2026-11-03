@@ -1,7 +1,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import equal from 'fast-deep-equal';
 
-import { getAssetsByDirName } from '$lib/services/assets';
+import { getAssetsByDirName, getTakenNamesInDir } from '$lib/services/assets';
 import { formatFileName, isSameFileName } from '$lib/services/assets/file-name';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { getPendingFileName } from '$lib/services/assets/name';
@@ -340,9 +340,10 @@ const getVacatedAssetFolderPath = ({ draft, locale, entryFilePath, folderPath })
  * @param {string} [args.subfolderPath] Subfolder below the folder the file is saved to, picked
  * while browsing the folder in the asset picker.
  * @returns {{ assetFolderPaths: ResolvedAssetFolderPaths, assetNamesInSameFolder: string[],
- * assetNamesMovingIn: string[], savingAssetProps: SavingAsset }} Arguments.
- * `assetNamesMovingIn` lists the assets moved to the folder in the same save, which take their
- * names with them. See {@link getVacatedAssetFolderPath}.
+ * takenNamesInSameFolder: string[], assetNamesMovingIn: string[], savingAssetProps: SavingAsset }}
+ * Arguments. `takenNamesInSameFolder` adds the names of the other files and the subfolders there,
+ * which a new file can’t take or replace. `assetNamesMovingIn` lists the assets moved to the folder
+ * in the same save, which take their names with them. See {@link getVacatedAssetFolderPath}.
  */
 export const getAssetSavingInfo = ({
   draft,
@@ -387,6 +388,7 @@ export const getAssetSavingInfo = ({
   return {
     assetFolderPaths,
     assetNamesInSameFolder: getNames(resolvedInternalPath),
+    takenNamesInSameFolder: getTakenNamesInDir(resolvedInternalPath),
     assetNamesMovingIn: vacatedFolderPath ? getNames(vacatedFolderPath) : [],
     savingAssetProps: { collectionName, folder },
   };
@@ -436,6 +438,7 @@ export const replaceBlobURL = async ({
   const {
     savingAssetProps,
     assetNamesInSameFolder,
+    takenNamesInSameFolder,
     assetNamesMovingIn,
     assetFolderPaths: { resolvedInternalPath, resolvedPublicPath },
   } = getAssetSavingInfo({ draft, locale, slug, defaultLocaleSlug, folder, subfolderPath });
@@ -469,18 +472,27 @@ export const replaceBlobURL = async ({
     const pendingFileName = getPendingFileName({ draft, item, defaultLocaleSlug });
     const namesInSave = savingAssetsInSameFolder.map((f) => f.name.normalize());
     const ownName = replace ? formatFileName(pendingFileName) : undefined;
+    /**
+     * Check if the given name is in the given list, ignoring case.
+     * @param {string[]} names Names.
+     * @param {string} name Name.
+     * @returns {boolean} Result.
+     */
+    const hasName = (names, name) => names.some((n) => n.toLowerCase() === name.toLowerCase());
 
     // Only the first of the files with the same name in this save replaces the existing file;
-    // another one gets a name of its own, or it would overwrite the first one
+    // another one gets a name of its own, or it would overwrite the first one. Nor can a file
+    // replace anything but an asset, e.g. an entry file next to it
     const replacing =
       ownName !== undefined &&
-      !namesInSave.some((name) => name.toLowerCase() === ownName.toLowerCase());
+      !hasName(namesInSave, ownName) &&
+      (hasName(assetNamesInSameFolder, ownName) || !hasName(takenNamesInSameFolder, ownName));
 
     fileName = replacing
       ? ownName
       : formatFileName(pendingFileName, {
           assetNamesInSameFolder: [
-            ...assetNamesInSameFolder,
+            ...takenNamesInSameFolder,
             ...assetNamesMovingIn,
             ...namesInSave,
           ],

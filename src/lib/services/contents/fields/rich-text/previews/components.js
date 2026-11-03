@@ -95,18 +95,31 @@ const hashString = (str) => {
  * @see https://github.com/markedjs/marked/issues/1639
  */
 export const encodeImageSrc = (...args) => {
-  const { alt, src, title, alt2, src2, title2, link } = args.at(-1);
+  const { alt, src, title, singleQuotedTitle, alt2, src2, title2, singleQuotedTitle2, link } =
+    args.at(-1);
 
   if (src2 !== undefined) {
     // A link with a quote may have a title, which has to be kept apart
     const eLink = /["']/.test(link) ? link : link.replaceAll(' ', '%20');
 
-    return `[${encodeImageSrc({ alt: alt2, src: src2, title: title2 })}](${eLink})`;
+    const img = encodeImageSrc({
+      alt: alt2,
+      src: src2,
+      title: title2,
+      singleQuotedTitle: singleQuotedTitle2,
+    });
+
+    return `[${img}](${eLink})`;
   }
 
   const eSrc = src.replaceAll(' ', '%20');
 
-  return title ? `![${alt}](${eSrc} "${title}")` : `![${alt}](${eSrc})`;
+  // The title is kept in the quotes it’s written in, as it can contain the other kind
+  return title
+    ? `![${alt}](${eSrc} "${title}")`
+    : singleQuotedTitle
+      ? `![${alt}](${eSrc} '${singleQuotedTitle}')`
+      : `![${alt}](${eSrc})`;
 };
 
 /**

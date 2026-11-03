@@ -24,6 +24,8 @@
    * must not duplicate.
    * @property {string[]} [folderNames] Names of the subfolders in the same folder, which the new
    * name must not duplicate either.
+   * @property {string[]} [fileNames] Names of the files in the same folder that aren’t assets, like
+   * entry files, which the new name must not duplicate either.
    * @property {number} [usedEntryCount] Number of entries using the asset, mentioned in the dialog
    * body because they will be updated as well.
    * @property {string} [warning] Warning shown below the dialog body, e.g. that entries linking to
@@ -45,6 +47,7 @@
     name,
     otherNames,
     folderNames = [],
+    fileNames = [],
     usedEntryCount = 0,
     warning = undefined,
     blockedMessage = undefined,
@@ -77,7 +80,13 @@
   const extensionChanged = $derived(!isEquivalentFileExtension(oldExtension, newExtension));
 
   const error = $derived(
-    validateAssetName({ name: trimmedName, fileName: finalName, otherNames, folderNames }),
+    validateAssetName({
+      name: trimmedName,
+      fileName: finalName,
+      otherNames,
+      folderNames,
+      fileNames,
+    }),
   );
 
   const invalid = $derived(!!error);

@@ -226,7 +226,7 @@ const removeHTMLMedia = (value, isStale) => {
 const removeMarkdownMedia = (value, isStale) =>
   // Cut from the end, so the positions of the earlier matches stay valid
   [...value.matchAll(MARKDOWN_MEDIA_REGEX)].reduceRight((text, match) => {
-    const { index, 0: markup, 1: src, 2: tag } = match;
+    const { index, 0: markup, groups: { src = '', tag = undefined } = {} } = match;
 
     if (tag === undefined) {
       return isStale(src) ? cutMarkup(text, index, markup.length) : text;

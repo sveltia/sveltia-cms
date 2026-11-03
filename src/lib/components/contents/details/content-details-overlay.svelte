@@ -370,7 +370,8 @@
       void $state.snapshot(draft.currentSlugs);
       // The files map holds `File` objects, which can’t be snapshotted; a file can be replaced
       Object.values(draft.files).forEach(({ file }) => void file);
-      void draft.pendingEntries.length;
+      // A pending entry opened again and changed takes the place of its earlier version
+      draft.pendingEntries.forEach((pendingEntry) => void pendingEntry);
       void draft.interacted;
     }
 
@@ -386,8 +387,11 @@
     }
   });
 
+  // The pane state key also changes between the files of a file/singleton collection, which share
+  // the collection
   watch(
     () => [
+      paneStateKey,
       collection,
       showSecondPane,
       showPreview,

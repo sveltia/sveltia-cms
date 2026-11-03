@@ -945,6 +945,33 @@ describe('getEntriesByAssets()', () => {
     });
   });
 
+  test('finds and replaces a URL whose spaces are encoded, keeping them encoded', async () => {
+    await setup();
+
+    const content = {
+      cover: '/uploads/My Photo.jpg',
+      body: '![a](/uploads/My%20Photo.jpg) ![b](/uploads/Other.jpg)',
+    };
+
+    const a = createEntry('a', content);
+    const b = createEntry('b', { body: 'Only ![a](/uploads/My%20Photo.jpg)' });
+
+    expect(await getEntriesByAssets([{ url: '/uploads/My Photo.jpg' }], { entries: [b] })).toEqual([
+      [b],
+    ]);
+
+    const results = await getEntriesByAssets(
+      [{ url: '/uploads/My Photo.jpg', newURL: '/uploads/New Photo.jpg' }],
+      { entries: [a] },
+    );
+
+    expect(results).toEqual([[a]]);
+    expect(content).toEqual({
+      cover: '/uploads/New Photo.jpg',
+      body: '![a](/uploads/New%20Photo.jpg) ![b](/uploads/Other.jpg)',
+    });
+  });
+
   test('replaces a reference with the URL a function returns for it', async () => {
     const { getMediaFieldSource } = await setup();
     const asset = { path: 'posts/a/photo.jpg', name: 'photo.jpg' };

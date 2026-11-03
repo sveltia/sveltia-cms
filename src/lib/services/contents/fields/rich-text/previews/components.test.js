@@ -5,6 +5,7 @@ import { fromJS, isList } from 'immutable';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getBuiltInComponentDefs } from '$lib/services/contents/fields/rich-text/components/definitions';
+import { IMAGE_OR_LINKED_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
 
 import {
   buildMarkdownWithPreviews,
@@ -40,6 +41,16 @@ describe('encodeImageSrc', () => {
     const result = encodeImageSrc(...args);
 
     expect(result).toBe('![alt text](my%20image.png)');
+  });
+
+  it('should keep a title in single quotes apart from the URL', () => {
+    const markdown = "![a](my image.png 'Say \"hi\"') [![b](c d.png 't')](e)";
+
+    expect(
+      markdown.replace(new RegExp(IMAGE_OR_LINKED_IMAGE_REGEX, 'g'), (...args) =>
+        encodeImageSrc(...args),
+      ),
+    ).toBe("![a](my%20image.png 'Say \"hi\"') [![b](c%20d.png 't')](e)");
   });
 
   it('should encode spaces in image URLs with title', () => {

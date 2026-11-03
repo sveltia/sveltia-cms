@@ -14,6 +14,7 @@ vi.mock('$lib/services/user/account.svelte', () => ({
 }));
 
 /**
+ * @import { FlattenedEntryContent } from '$lib/types/private';
  * @import { ObjectField } from '$lib/types/public';
  */
 
@@ -403,6 +404,87 @@ describe('Test getDefaultValueMap()', () => {
       expect(result).toEqual({
         'metadata.title': 'Default Title',
       });
+    });
+
+    test('should fill the subfields with their dynamic values given with the dot notation', () => {
+      /** @type {FlattenedEntryContent} */
+      const content = {};
+
+      // As documented: `?title=My%20First%20Post&author.name=John%20Doe`, at any depth
+      populateDefaultValue({
+        content,
+        keyPath: 'author',
+        fieldConfig: {
+          ...baseFieldConfig,
+          name: 'author',
+          fields: [
+            { name: 'name', widget: 'string' },
+            { name: 'age', widget: 'number' },
+            { name: 'bio', widget: 'string', default: 'None' },
+            {
+              name: 'address',
+              widget: 'object',
+              fields: [{ name: 'city', widget: 'string' }],
+            },
+          ],
+        },
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValues: {
+          title: 'My First Post',
+          'author.name': 'John Doe',
+          'author.age': '42',
+          'author.address.city': 'Toronto',
+        },
+      });
+
+      expect(content).toEqual({
+        'author.name': 'John Doe',
+        'author.age': 42,
+        'author.bio': 'None',
+        'author.address.city': 'Toronto',
+      });
+    });
+
+    test('should create an optional Object field with dynamic values for its subfields', () => {
+      const fieldConfig = {
+        ...baseFieldConfig,
+        name: 'meta',
+        required: false,
+        fields: [
+          { name: 'source', widget: 'string' },
+          { name: 'note', widget: 'string', required: false },
+        ],
+      };
+
+      /** @type {FlattenedEntryContent} */
+      const content = {};
+
+      populateDefaultValue({
+        content,
+        keyPath: 'meta',
+        fieldConfig,
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValues: { 'meta.source': 'newsletter', metadata: 'x' },
+      });
+
+      expect(content).toEqual({ 'meta.source': 'newsletter', 'meta.note': '' });
+
+      // Without any, the field is left empty
+      /** @type {FlattenedEntryContent} */
+      const emptyContent = {};
+
+      populateDefaultValue({
+        content: emptyContent,
+        keyPath: 'meta',
+        fieldConfig,
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValues: { metadata: 'x' },
+      });
+
+      expect(emptyContent).toEqual({ meta: null });
     });
   });
 

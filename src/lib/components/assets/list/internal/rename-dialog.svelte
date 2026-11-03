@@ -10,10 +10,11 @@
   import { getAssetUsedEntries } from '$lib/services/assets/details';
   import { getAssetFolderHistoryState } from '$lib/services/assets/navigation';
   import { renamingAsset } from '$lib/services/assets/state';
-  import { getFolderNamesInDir } from '$lib/services/assets/subfolders';
+  import { getFolderNamesInDir, getNonAssetFileNamesInDir } from '$lib/services/assets/subfolders';
   import { runCommit } from '$lib/services/backends/commit-prompt';
   import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
+  import { createPath } from '$lib/services/utils/file';
   import { watchAsync } from '$lib/services/utils/state.svelte';
   import { encodePathSegments } from '$lib/services/utils/url';
 
@@ -44,15 +45,17 @@
    * Names of the other files next to the asset, and those of the subfolders there, which a file
    * can’t take either.
    */
-  const { otherNames, folderNames } = $derived(
+  const { otherNames, fileNames, folderNames } = $derived(
     asset
       ? {
           otherNames: getAssetsByDirName(dirname)
             .map((a) => a.name)
             .filter((n) => n !== asset.name),
+          // An entry file next to the asset would be overwritten
+          fileNames: getNonAssetFileNamesInDir(dirname),
           folderNames: getFolderNamesInDir(dirname),
         }
-      : { otherNames: [], folderNames: [] },
+      : { otherNames: [], fileNames: [], folderNames: [] },
   );
 
   /**
@@ -67,7 +70,8 @@
     }
 
     const oldPath = asset.path;
-    const newPath = `${dirname}/${newName}`;
+    // An asset in a root media folder has no directory
+    const newPath = createPath([dirname, newName]);
 
     const { ok, cancelled } = await runCommit(() =>
       moveAssets('rename', [{ asset, path: newPath }]),
@@ -107,6 +111,7 @@
   bind:open
   name={basename}
   {otherNames}
+  {fileNames}
   {folderNames}
   usedEntryCount={usedEntries.length}
   {blockedMessage}

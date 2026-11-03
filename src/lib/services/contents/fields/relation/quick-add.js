@@ -12,6 +12,7 @@ import {
   getNewPendingEntriesByCollection,
   getPendingEntriesByCollection,
   getReferencedPendingEntrySet,
+  isRelationFieldOf,
 } from '$lib/services/contents/draft/pending-entries';
 import {
   createSavingEntryData,
@@ -22,6 +23,7 @@ import { assignSaveTimeValues } from '$lib/services/contents/draft/save/save-tim
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
 import { isEntryEditableAlong } from '$lib/services/contents/entry/editable';
+import { getField } from '$lib/services/contents/entry/fields';
 import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
 import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
 import { renameIfNeeded } from '$lib/services/utils/file';
@@ -45,6 +47,7 @@ import { getUnpublishedEntryLabel } from '$lib/services/workflow/board';
  * Entry,
  * EntryDraft,
  * EntrySlugVariants,
+ * FlattenedEntryContent,
  * InternalEntryCollection,
  * InternalLocaleCode,
  * PendingEntry,
@@ -169,7 +172,8 @@ export const compareWithLatest = (draft, baseEntry) => {
  * stands for the host entry, whose card lists the other entries, so one of the same collection
  * couldn’t be told apart from it. Otherwise, the entry is committed along with the host entry, so
  * it can’t be in a collection under the workflow, which would skip the review the collection asks
- * for.
+ * for. The same goes for publishing the host entry without its review: see `canSkipReviewAlong()`
+ * in the workflow service.
  * @param {QuickAddHost} host Host entry.
  * @param {InternalEntryCollection} collection Collection of the entry.
  * @returns {boolean} Result.
@@ -607,7 +611,8 @@ export const selectPendingEntry = ({
     locale,
     fieldConfig,
     refEntry: pendingEntry.entry,
-    pendingEntries: draft.pendingEntries,
+    // The same entries as the value the pending entry is saved for is worked out with
+    pendingEntries: getUnlistedEntries(draft),
   }).map((option) => option.value);
 
   if (value === undefined) {
@@ -662,10 +667,14 @@ export const isEditUnchanged = ({ draft, parentDraft }) =>
   !getNestedPendingEntries({ draft, parentDraft }).length;
 
 /**
- * Replace the values the given Relation field holds for an entry that has been changed with the
+ * Replace the values the entry being edited holds for an entry that has been changed with the
  * quick-add dialog, in every locale, if the change has changed the values the entry goes by, e.g.
  * the title of an entry referenced by its title, or the slug of a new entry that follows its title.
- * The field would otherwise be left pointing at an entry that no longer goes by the value.
+ * A field would otherwise be left pointing at an entry that no longer goes by the value. Not only
+ * the Relation field the dialog was opened from is updated, but every Relation field of the entry
+ * pointing at the same collection, e.g. `author` and `reviewers` both pointing at `authors`, each
+ * with the values its own `value_field` gives. The values of a rich text editor component, whose
+ * fields can’t be looked up, are only updated in the Relation field the dialog was opened from.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Draft being edited.
  * @param {FieldKeyPath} args.keyPath Key path of the Relation field.
@@ -683,45 +692,97 @@ export const replaceEntryValues = ({
   entry,
 }) => {
   const pendingEntries = getUnlistedEntries(draft);
+  const { collectionName, fileName, isIndexFile } = draft;
+  const refCollectionName = fieldConfig.collection;
 
-  Object.entries(draft[valueStoreKey]).forEach(([locale, valueMap]) => {
+  /**
+   * Get the values to replace in the given locale for the given Relation field, keyed by the values
+   * the entry went by.
+   * @param {InternalLocaleCode} locale Locale.
+   * @param {RelationField} config Field configuration.
+   * @returns {Map<any, any>} Replacements, which are empty if the values haven’t changed, or can’t
+   * be paired, as a list field used in the templates has gained or lost an item.
+   */
+  const getReplacements = (locale, config) => {
     /**
      * Get the values the given entry goes by in the locale.
      * @param {Entry} refEntry Entry.
      * @returns {any[]} Values.
      */
     const getValues = (refEntry) =>
-      getEntryOptions({ locale, fieldConfig, refEntry, pendingEntries }).map(({ value }) => value);
+      getEntryOptions({ locale, fieldConfig: config, refEntry, pendingEntries }).map(
+        ({ value }) => value,
+      );
 
     const oldValues = getValues(previousEntry);
     const newValues = getValues(entry);
 
-    // The values can only be paired if there are as many of them, which is the case unless a list
-    // field used in the templates has gained or lost an item
     if (oldValues.length !== newValues.length) {
-      return;
+      return new Map();
     }
 
-    const replacements = new Map(
+    return new Map(
       oldValues
         .map((value, index) => /** @type {[any, any]} */ ([value, newValues[index]]))
         .filter(([oldValue, newValue]) => oldValue !== newValue),
     );
+  };
 
-    if (!replacements.size) {
-      return;
-    }
-
-    const keyPaths = fieldConfig.multiple
-      ? getListItemKeys(valueMap, keyPath, { live: true })
-      : [keyPath];
-
+  /**
+   * Replace the values held at the given key paths.
+   * @param {FlattenedEntryContent} valueMap Values of a locale.
+   * @param {FieldKeyPath[]} keyPaths Key paths.
+   * @param {Map<any, any>} replacements Replacements.
+   */
+  const replaceValues = (valueMap, keyPaths, replacements) => {
     keyPaths.forEach((key) => {
       if (replacements.has(valueMap[key])) {
         valueMap[key] = replacements.get(valueMap[key]);
       }
     });
+  };
+
+  Object.entries(draft.currentValues).forEach(([locale, valueMap]) => {
+    /**
+     * Replacements for each Relation field found, as the fields of a list share the configuration.
+     * @type {Map<RelationField, Map<any, any>>}
+     */
+    const replacementsByField = new Map();
+
+    Object.keys(valueMap).forEach((key) => {
+      const relationField = getField({
+        collectionName,
+        fileName,
+        isIndexFile,
+        valueMap,
+        keyPath: key,
+      });
+
+      if (!isRelationFieldOf(relationField, refCollectionName)) {
+        return;
+      }
+
+      if (!replacementsByField.has(relationField)) {
+        replacementsByField.set(relationField, getReplacements(locale, relationField));
+      }
+
+      replaceValues(
+        valueMap,
+        [key],
+        /** @type {Map<any, any>} */ (replacementsByField.get(relationField)),
+      );
+    });
   });
+
+  if (valueStoreKey === 'extraValues') {
+    Object.entries(draft.extraValues).forEach(([locale, valueMap]) => {
+      const keyPaths = fieldConfig.multiple
+        ? getListItemKeys(valueMap, keyPath, { live: true })
+        : [keyPath];
+
+      replaceValues(valueMap, keyPaths, getReplacements(locale, fieldConfig));
+    });
+  }
 };
 
 /**
@@ -731,7 +792,10 @@ export const replaceEntryValues = ({
  * it can be saved on its own, provided it’s not the entry being edited itself, and can be saved
  * along with the entry being edited: see {@link canSaveAlongHost} and {@link isEntryEditableAlong}.
  * Nor is an entry offered that another pull request changes already: its own, or that of another
- * entry it has been edited along with.
+ * entry it has been edited along with. Nor one that has been changed on the configured branch since
+ * the pull request of the entry being edited was opened, as its branch, which is never rebased,
+ * still has the entry as it was then, or not at all: the edit would then be refused as an
+ * unexpected change on publishing, or conflict with the newer version when merged.
  * @param {object} args Arguments.
  * @param {RelationField} args.fieldConfig Field configuration.
  * @param {EntryDraft} args.draft Draft being edited.
@@ -784,6 +848,20 @@ export const canEditEntry = ({
     (!!editingEntry && editingEntry.workflow.pullRequest.branch !== host.branch)
   ) {
     return false;
+  }
+
+  // An entry the pull request already changes, or holds as a new entry, is on its branch as it is
+  if (!editingEntry && host.branch && entry.commitDate) {
+    const { pullRequest, companions = [] } =
+      getUnpublishedEntryByBranch(host.branch)?.workflow ?? {};
+
+    if (
+      pullRequest &&
+      entry.commitDate > pullRequest.createdDate &&
+      !companions.some((companion) => companion.entry.id === entry.id)
+    ) {
+      return false;
+    }
   }
 
   return entry.id !== draft.id && !host.entryIds.includes(entry.id);

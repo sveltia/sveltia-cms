@@ -20,6 +20,8 @@ import { createValueMap } from '$lib/services/contents/draft/create/versioned-ma
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { resetCustomFieldValidation } from '$lib/services/contents/draft/validate/custom-fields';
+import { getField } from '$lib/services/contents/entry/fields';
+import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';
 import { createState, getSnapshot } from '$lib/services/utils/state.svelte';
 import { isPendingDeletion } from '$lib/services/workflow';
 
@@ -27,9 +29,11 @@ import { isPendingDeletion } from '$lib/services/workflow';
  * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
  * @import {
  * EntryDraft,
+ * GetFieldArgs,
  * InternalCollection,
  * InternalCollectionFile,
  * InternalEntryCollection,
+ * InternalLocaleCode,
  * LocaleContentMap,
  * LocaleExpanderMap,
  * LocaleSlugMap,
@@ -156,6 +160,45 @@ export const getOriginalPath = ({ collection, originalEntry, initialPath }) => {
 };
 
 /**
+ * Give the Hidden fields that hold the same value in every locale, with the `duplicate` or `sync`
+ * i18n strategy of their own or along with an ancestor, the default locale’s value in the other
+ * locales of a new entry draft. The default values of each locale are created separately, so a
+ * default value like `{{uuid}}` would otherwise differ from one locale to another, just like the
+ * value of a UUID field, which `fillUuidValues()` takes care of.
+ * @param {object} args Arguments.
+ * @param {LocaleContentMap} args.contentMap Flattened content of each locale, modified in place.
+ * @param {InternalLocaleCode} args.defaultLocale Default locale.
+ * @param {Omit<GetFieldArgs, 'keyPath' | 'valueMap'>} args.getFieldArgs Arguments for
+ * {@link getField}, except the key path and value map.
+ */
+export const fillDuplicatedHiddenValues = ({ contentMap, defaultLocale, getFieldArgs }) => {
+  const defaultContent = contentMap[defaultLocale];
+
+  if (!defaultContent) {
+    return;
+  }
+
+  Object.entries(defaultContent).forEach(([keyPath, value]) => {
+    const args = { ...getFieldArgs, keyPath, valueMap: defaultContent };
+    const fieldConfig = getField(args);
+
+    if (
+      fieldConfig?.widget !== 'hidden' ||
+      !isDuplicatedField({ fieldConfig, getFieldArgs: args })
+    ) {
+      return;
+    }
+
+    Object.entries(contentMap).forEach(([locale, content]) => {
+      // Only a locale holding the field gets the value, as one that doesn’t isn’t meant to
+      if (locale !== defaultLocale && keyPath in content) {
+        content[keyPath] = structuredClone(value);
+      }
+    });
+  });
+};
+
+/**
  * Build an entry draft object. This only assembles the values; it’s {@link createDraft} that opens
  * the draft in the editor. A draft can also be built on its own to check an entry that isn’t being
  * edited, in which case the application state is left untouched.
@@ -254,13 +297,17 @@ export const buildDraft = ({
   );
 
   if (isNew) {
-    // Give every UUID field its value up front rather than when its editor is rendered, which may
-    // never happen in a long form or in a locale the user doesn’t open
-    fillUuidValues({
+    const fillArgs = {
       contentMap: originalValues,
       defaultLocale,
       getFieldArgs: { collectionName, fileName, isIndexFile },
-    });
+    };
+
+    // Give every UUID field its value up front rather than when its editor is rendered, which may
+    // never happen in a long form or in a locale the user doesn’t open
+    fillUuidValues(fillArgs);
+    // A Hidden field isn’t rendered at all, while its default value may be generated as well
+    fillDuplicatedHiddenValues(fillArgs);
   } else {
     // Existing entries can predate the current field configuration: a field added since, or an
     // optional field left empty and later made required, is simply absent from the file. Fill those

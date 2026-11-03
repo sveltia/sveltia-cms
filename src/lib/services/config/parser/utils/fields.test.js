@@ -117,6 +117,39 @@ describe('Test findFields()', () => {
     expect(findFields(blocks, 'blocks.meta.src')).toEqual([]);
   });
 
+  it('should resolve a key of a KeyValue or Code field value to the field', () => {
+    /** @type {Field[]} */
+    const valueFields = [
+      { name: 'meta', label: 'Meta', widget: 'keyvalue' },
+      { name: 'snippet', label: 'Snippet', widget: 'code' },
+      { name: 'custom', label: 'Custom', widget: 'code', keys: { code: 'src', lang: 'syntax' } },
+      { name: 'plain', label: 'Plain', widget: 'code', output_code_only: true },
+      {
+        name: 'blocks',
+        label: 'Blocks',
+        widget: 'list',
+        fields: [{ name: 'attrs', label: 'Attributes', widget: 'keyvalue' }],
+      },
+    ];
+
+    // The pairs and the code are stored under the key paths, e.g. `meta.author`, which a template
+    // can refer to
+    expect(findFields(valueFields, 'meta.author')).toEqual([valueFields[0]]);
+    expect(findFields(valueFields, 'snippet.code')).toEqual([valueFields[1]]);
+    expect(findFields(valueFields, 'snippet.lang')).toEqual([valueFields[1]]);
+    expect(findFields(valueFields, 'custom.syntax')).toEqual([valueFields[2]]);
+    expect(findFields(valueFields, 'blocks.0.attrs.id')).toEqual([
+      /** @type {any} */ (valueFields[4]).fields[0],
+    ]);
+
+    // A key the value doesn’t have, or anything below a key, points to nothing
+    expect(findFields(valueFields, 'snippet.name')).toEqual([]);
+    expect(findFields(valueFields, 'custom.code')).toEqual([]);
+    expect(findFields(valueFields, 'plain.code')).toEqual([]);
+    expect(findFields(valueFields, 'meta.author.name')).toEqual([]);
+    expect(findFields(valueFields, 'meta.author.0')).toEqual([]);
+  });
+
   it('should return an empty array for a key path that points to no field', () => {
     expect(findFields(fields, 'date')).toEqual([]);
     expect(findFields(fields, 'author.email')).toEqual([]);

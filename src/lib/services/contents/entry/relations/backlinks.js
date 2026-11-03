@@ -70,9 +70,11 @@ export const getBacklinks = ({ collectionName, fileName, entry }) => {
           return /** @type {EntryBacklink} */ ({
             collectionName: sourceCollectionName,
             collectionLabel: sourceCollection.label || sourceCollectionName,
+            fileName: sourceFileName,
             fieldLabel: getFieldLabel({ config: fieldConfig }),
             entry: sourceEntry,
-            summary: getEntrySummary(sourceCollection, sourceEntry),
+            // A collection file is listed by its label, as in the file list
+            summary: getEntrySummary(sourceCollection, sourceEntry, { fileName: sourceFileName }),
           });
         })
         .filter((backlink) => !!backlink);

@@ -3,8 +3,8 @@ import equal from 'fast-deep-equal';
 import { collectFieldValues, suspendAutoDuplication } from '$lib/services/contents/draft';
 import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
+import { getValueOwnerField } from '$lib/services/contents/entry/owner-field';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
-import { getKeyValueField } from '$lib/services/contents/fields/key-value/pairs';
 import { getPairedListKeyPaths } from '$lib/services/contents/fields/list/helpers';
 import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
@@ -121,19 +121,27 @@ export const revertFields = ({
 
   Object.entries(valueMap).forEach(([_keyPath, value]) => {
     if (!keyPath || isKeyPathWithin(_keyPath, keyPath)) {
-      const fieldConfig =
-        getField({ ...getFieldArgs, keyPath: _keyPath }) ??
-        // A KeyValue pair is governed by its field
-        getKeyValueField({ ...getFieldArgs, keyPath: _keyPath });
+      const ownField = getField({ ...getFieldArgs, keyPath: _keyPath });
+
+      // A value without a field of its own, like a KeyValue pair, an item of a List field without
+      // subfields or the code of a Code field, is governed by the field owning it
+      const field = ownField
+        ? { keyPath: _keyPath, fieldConfig: ownField }
+        : getValueOwnerField({ ...getFieldArgs, keyPath: _keyPath });
+
+      const i18n = field?.fieldConfig.i18n;
 
       // A field using the `sync` i18n strategy, with its own option or along with an ancestor, can
       // be edited in any locale, and the value proxy copies the reverted value to the others
       if (
         isDefaultLocale ||
-        isFieldTranslatable(fieldConfig?.i18n) ||
-        fieldConfig?.i18n === 'duplicate_keys' ||
-        (!!fieldConfig &&
-          isSyncedField({ fieldConfig, getFieldArgs: { ...getFieldArgs, keyPath: _keyPath } }))
+        isFieldTranslatable(i18n) ||
+        i18n === 'duplicate_keys' ||
+        (!!field &&
+          isSyncedField({
+            fieldConfig: field.fieldConfig,
+            getFieldArgs: { ...getFieldArgs, keyPath: field.keyPath },
+          }))
       ) {
         if (reset) {
           delete currentValues[locale][_keyPath];
@@ -254,13 +262,17 @@ export const revertChanges = ({ draft, locale: targetLanguage = '', keyPath = ''
   }
 
   // The items of a paired List field are added, removed and moved in every locale at once, so
-  // reverting them in the default locale alone would leave them out of line with the other locales
+  // reverting them in the default locale alone would leave them out of line with the other locales.
+  // Each locale gets its own original values back, as above, so a subfield using the `sync`
+  // strategy isn’t copied from another locale over the one just reverted
   if (targetLanguage === defaultLocale) {
-    getRevertedPairedListKeyPaths({ draft, keyPath }).forEach((pairedKeyPath) => {
-      allLocales.forEach((locale) => {
-        if (locale !== defaultLocale && currentValues[locale]) {
-          revertLocale({ draft, keyPath: pairedKeyPath, locale, revertAll: true });
-        }
+    suspendAutoDuplication(() => {
+      getRevertedPairedListKeyPaths({ draft, keyPath }).forEach((pairedKeyPath) => {
+        allLocales.forEach((locale) => {
+          if (locale !== defaultLocale && currentValues[locale]) {
+            revertLocale({ draft, keyPath: pairedKeyPath, locale, revertAll: true });
+          }
+        });
       });
     });
   }

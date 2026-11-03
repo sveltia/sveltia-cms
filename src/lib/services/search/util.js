@@ -81,15 +81,16 @@ export const normalize = (value) => {
   }
 
   // ASCII text has nothing to decompose or strip, so it only has to be lowercased, which saves most
-  // of the work for the bulk of the content of many sites
+  // of the work for the bulk of the content of many sites. Not with `toLocaleLowerCase()`, which
+  // can follow the browser’s locale, e.g. turning `I` into `ı` without a dot in Turkish
   if (ASCII_REGEX.test(value)) {
-    return value.toLocaleLowerCase();
+    return value.toLowerCase();
   }
 
   return value
     .normalize('NFD')
     .replace(getAccentRegexes().accent, stripAccents)
-    .toLocaleLowerCase()
+    .toLowerCase()
     .normalize('NFC');
 };
 

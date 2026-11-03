@@ -1141,9 +1141,18 @@
  * @typedef {object} EntryBacklink
  * @property {string} collectionName Source collection name.
  * @property {string} collectionLabel Source collection label.
+ * @property {string} [fileName] Source collection file name, for file/singleton collections.
  * @property {string} fieldLabel Relation field label.
  * @property {Entry} entry Source entry referencing the target.
  * @property {string} summary Display summary for the source entry.
+ */
+
+/**
+ * Field that owns a value stored under a key path without a field configuration of its own, like a
+ * KeyValue pair. See `getValueOwnerField()`.
+ * @typedef {object} OwnerField
+ * @property {FieldKeyPath} keyPath Key path of the field.
+ * @property {Field} fieldConfig Field configuration.
  */
 
 /**
@@ -2132,6 +2141,8 @@
  * @property {LocaleCode} locale Locale code.
  * @property {InternalLocaleCode} defaultLocale Default locale of the entry draft.
  * @property {string} [dynamicValue] Dynamic default value parsed from the URL query string.
+ * @property {Record<string, string>} [dynamicValues] All the dynamic default values of the entry,
+ * keyed by key path, which tell an optional Object field whether its subfields have any.
  * @property {(args: PopulateDefaultValueArgs) => void} [populateDefault] Callback to populate a
  * default value for a sub-field, injected to avoid a circular dependency between field-type
  * defaults and the centralized `populateDefaultValue` dispatcher.

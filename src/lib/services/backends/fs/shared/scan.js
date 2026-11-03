@@ -143,8 +143,15 @@ export const scanDir = async (dirHandle, context, currentPath = '') => {
   // hold a listing slot while waiting for its subdirectories, which could use up every slot
   await limitDirListing(async () => {
     for await (const [name, handle] of dirHandle.entries()) {
-      // Skip hidden files and directories, except for Git configuration files
-      if (name.startsWith('.') && !GIT_CONFIG_FILE_REGEX.test(name)) {
+      // Skip hidden files and directories, except for Git configuration files and a directory a
+      // configured path names, e.g. `.vuepress` in `docs/.vuepress/public/images`, which the Git
+      // backends list as well. Others, like `.git`, are never scanned, even under a folder at the
+      // root of the repository
+      if (
+        name.startsWith('.') &&
+        !GIT_CONFIG_FILE_REGEX.test(name) &&
+        !(handle.kind === 'directory' && scanningPaths.some((p) => p.split('/').includes(name)))
+      ) {
         if (handle.kind === 'file' && name.startsWith(TEMP_FILE_PREFIX)) {
           await deleteStaleTempFile(dirHandle, /** @type {FileSystemFileHandle} */ (handle));
         }

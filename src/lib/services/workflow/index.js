@@ -4,6 +4,7 @@ import { backend } from '$lib/services/backends';
 import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
+import { getCollection } from '$lib/services/contents/collection';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 import { isEntryBranch } from '$lib/services/workflow/branch';
@@ -360,6 +361,24 @@ export const canMergePullRequest = (pullRequest) =>
 const isPublishVisible = (collection) => !openAuthoring.current && collection?.publish !== false;
 
 /**
+ * Check whether the review can be skipped for the entries saved or published along with an entry:
+ * those created or edited from its Relation fields. An entry of another collection under Editorial
+ * Workflow is reviewed along with the entry it rides along with, so it can only skip the review if
+ * its own collection lets it with the `direct_publish` option as well. This is the publishing side
+ * of the rule `canSaveAlongHost()` in the Relation field’s quick-add service applies to saving.
+ * @param {{ collectionName: string }[]} entries Entries saved or published along with the entry.
+ * @returns {boolean} Result.
+ */
+export const canSkipReviewAlong = (entries) =>
+  entries.every(({ collectionName }) => {
+    const collection = getCollection(collectionName);
+
+    return (
+      !isWorkflowEnabled(collection) || getCollectionPublishModeOptions(collection).directPublish
+    );
+  });
+
+/**
  * Check whether the signed-in user gets the control to publish the given unpublished entry, or to
  * carry out its pending deletion. The entry can only be published from the last stage — the
  * drafting stage with Preview Workflow — unless the `direct_publish` publish mode option lets it
@@ -376,8 +395,10 @@ export const isPublishAllowed = (entry, collection) =>
   canMergePullRequest(entry.workflow.pullRequest) &&
   (isPendingDeletion(entry) ||
     isLastStage(entry, collection) ||
-    // Direct publishing bypasses the review, so an entry can be published from any stage
-    getCollectionPublishModeOptions(collection).directPublish);
+    // Direct publishing bypasses the review, so an entry can be published from any stage, as long
+    // as the entries riding along with it can skip theirs
+    (getCollectionPublishModeOptions(collection).directPublish &&
+      canSkipReviewAlong(entry.workflow.companions ?? [])));
 
 /**
  * Check whether the signed-in user gets the option to save the entry being edited and publish it in

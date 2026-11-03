@@ -5,6 +5,7 @@ import { isCmsFolderName, isCmsFolderPath } from '$lib/services/assets/reserved'
 import { allAssets } from '$lib/services/assets/state';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { slugify } from '$lib/services/common/slug';
+import { allEntries } from '$lib/services/contents';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
 import { createPath, getDirName, sanitizeFileName } from '$lib/services/utils/file';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
@@ -231,6 +232,26 @@ export const getFolderNamesInDir = (dirPath) =>
     fileNames: [],
     dirPath,
   });
+
+/**
+ * Get the names of the files right in a directory of the repository that aren’t assets, which a
+ * file renamed or uploaded there can’t take without overwriting them: the entry files, as in a Hugo
+ * page bundle keeping its images next to its `index.md`, and the Git config files like `.gitkeep`.
+ * @param {string} dirPath Directory path. An empty string for the repository root.
+ * @returns {string[]} Names.
+ */
+export const getNonAssetFileNamesInDir = (dirPath) => [
+  ...new Set(
+    [
+      ...allEntries.current.flatMap(({ locales }) =>
+        Object.values(locales).map(({ path }) => path),
+      ),
+      ...gitConfigFiles.current.map(({ path }) => path),
+    ]
+      .filter((path) => getDirName(path) === dirPath)
+      .map((path) => path.slice(path.lastIndexOf('/') + 1)),
+  ),
+];
 
 /**
  * Get the breadcrumb trail of the subfolder being browsed, from the location root down. Each

@@ -463,6 +463,23 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
       });
     });
 
+    it('should refuse to rename a file over another one in its folder', async () => {
+      const asset = /** @type {ExternalAsset} */ ({ id: 'uploads/2024/a.jpg' });
+
+      // The file isn’t necessarily in the listing the user has seen, so the folder is listed again
+      pages = [[{ key: 'uploads/2024/a.jpg' }], [{ key: 'uploads/2024/b.jpg' }]];
+
+      await expect(operations.rename(asset, 'b.jpg', config, options)).rejects.toThrow(
+        'A file named “b.jpg” already exists in the folder.',
+      );
+      expect(provider.copyObject).not.toHaveBeenCalled();
+
+      // The file’s own name isn’t taken
+      await expect(operations.rename(asset, 'a.jpg', config, options)).resolves.toEqual(
+        expect.objectContaining({ id: 'uploads/2024/a.jpg' }),
+      );
+    });
+
     it('should move a file by copying it and deleting the source', async () => {
       const asset = /** @type {ExternalAsset} */ ({ id: 'uploads/a.jpg' });
 

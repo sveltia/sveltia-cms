@@ -65,7 +65,7 @@
             onclick={() => {
               goto(
                 encodePathSegments(
-                  `/collections/${ref.collectionName}/entries/${ref.entry.subPath}`,
+                  `/collections/${ref.collectionName}/entries/${ref.fileName ?? ref.entry.subPath}`,
                 ),
                 { transitionType: 'forwards' },
               );

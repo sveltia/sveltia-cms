@@ -371,6 +371,39 @@ describe('draft/update/revert', () => {
         expect(mockEntryDraft.currentValues).toEqual(mockEntryDraft.originalValues);
       });
     });
+
+    it('should revert the values without a field of their own in another locale', () => {
+      // An item of a List field without subfields, the code of a Code field and a KeyValue pair
+      // aren’t described by a field configuration, so they’re governed by the field owning them
+      /** @type {Record<string, any>} */
+      const fields = {
+        tags: { name: 'tags', widget: 'list', i18n: true },
+        snippet: { name: 'snippet', widget: 'code', i18n: true },
+        links: { name: 'links', widget: 'keyvalue', i18n: 'sync' },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+
+      const original = {
+        'tags.0': 'タグ',
+        'snippet.code': 'a',
+        'snippet.lang': 'js',
+        'links.home': '/ja',
+      };
+
+      mockEntryDraft.originalValues.ja = { ...original };
+      mockEntryDraft.currentValues.ja = {
+        'tags.0': 'タグ 2',
+        'tags.1': 'タグ 3',
+        'snippet.code': 'b',
+        'snippet.lang': 'py',
+        'links.home': '/ja/',
+      };
+
+      revertChanges({ locale: 'ja' });
+
+      expect(mockEntryDraft.currentValues.ja).toEqual(original);
+    });
     // https://github.com/sveltia/sveltia-cms/issues/1065
     describe('with a paired List field', () => {
       const residencesField = {
@@ -484,6 +517,29 @@ describe('draft/update/revert', () => {
         revertChanges({ locale: 'en', keyPath: 'unknown' });
 
         expect(mockEntryDraft.currentValues.ja['details.residences.1.name']).toBeUndefined();
+      });
+
+      it('should revert the items in the other locales to their own values', () => {
+        // A subfield using the `sync` strategy would otherwise be copied from each locale reverted
+        // to the others, including the default locale, so the last one would win, e.g. where the
+        // locales’ original values differ as the files were edited elsewhere
+        const getFieldImpl = vi.mocked(getField).getMockImplementation();
+        /** @type {boolean[]} */
+        const autoDuplication = [];
+
+        vi.mocked(getField).mockImplementation((args) => {
+          // The original values are looked up while they’re restored
+          if (args.valueMap === mockEntryDraft.originalValues.ja) {
+            autoDuplication.push(isAutoDuplicationEnabled());
+          }
+
+          return getFieldImpl?.(args);
+        });
+
+        revertChanges({ locale: 'en', keyPath: 'details.residences' });
+
+        expect(autoDuplication).not.toHaveLength(0);
+        expect(autoDuplication).not.toContain(true);
       });
 
       it('should skip a locale without content', () => {

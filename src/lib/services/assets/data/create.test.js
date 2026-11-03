@@ -5,11 +5,6 @@ import { createMockAssetFolder } from '$lib/test/factories';
 import { createFileList, saveAssets, updateStores } from './create.js';
 
 // Mock dependencies
-vi.mock('$lib/services/assets', () => ({
-  getAssetByInternalPath: vi.fn(),
-  getAssetsByDirName: vi.fn(),
-}));
-
 vi.mock('$lib/services/assets/state', () => ({
   allAssets: { current: undefined },
   focusedAsset: { set: vi.fn() },
@@ -70,15 +65,23 @@ vi.mock('$lib/services/backends/git/shared/integration', () => ({
 }));
 
 // Mock dependencies
-vi.mock('$lib/services/assets', () => ({
-  allAssets: {
-    current: [],
-  },
-  focusedAsset: { current: undefined },
-  overlaidAsset: { current: undefined },
-  getAssetByInternalPath: vi.fn(),
-  getAssetsByDirName: vi.fn().mockReturnValue([]),
-}));
+vi.mock('$lib/services/assets', () => {
+  const getAssetsByDirName = vi.fn().mockReturnValue([]);
+
+  return {
+    allAssets: {
+      current: [],
+    },
+    focusedAsset: { current: undefined },
+    overlaidAsset: { current: undefined },
+    getAssetByInternalPath: vi.fn(),
+    getAssetsByDirName,
+    // Like the real one, the names of the assets, along with those of any other files and folders
+    getTakenNamesInDir: vi.fn((/** @type {string} */ dirPath) =>
+      (getAssetsByDirName(dirPath) ?? []).map((/** @type {any} */ a) => a.name.normalize()),
+    ),
+  };
+});
 
 vi.mock('$lib/services/assets/data', async (importOriginal) => ({
   .../** @type {Record<string, any>} */ (await importOriginal()),
@@ -184,6 +187,25 @@ describe('assets/data/create', () => {
 
       expect(getAssetsByDirName).toHaveBeenCalledWith('');
       expect(result[0].path).toBe('test.jpg');
+    });
+
+    it('should not take the name of another file or a folder in the folder', async () => {
+      const { getTakenNamesInDir } = await import('$lib/services/assets');
+      const { formatFileName } = await import('$lib/services/assets/file-name');
+      const mockFile = new File(['content'], 'index.md', { type: 'text/markdown' });
+
+      vi.mocked(getTakenNamesInDir).mockReturnValueOnce(['index.md', 'images']);
+
+      createFileList({
+        files: [mockFile],
+        folder: createMockAssetFolder({ internalPath: 'content/posts/hello', publicPath: '' }),
+      });
+
+      expect(getTakenNamesInDir).toHaveBeenCalledWith('content/posts/hello');
+      expect(formatFileName).toHaveBeenCalledWith('index.md', {
+        slugificationEnabled: false,
+        assetNamesInSameFolder: ['index.md', 'images'],
+      });
     });
 
     it('should call getAssetsByDirName when folder has internalPath', async () => {

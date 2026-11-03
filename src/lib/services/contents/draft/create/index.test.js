@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 // Mock dependencies
 vi.mock('$lib/services/config', () => ({
@@ -31,6 +31,13 @@ vi.mock('$lib/services/contents/draft/create/uuid', () => ({
   fillUuidValues: vi.fn(),
 }));
 
+// The actual function, unless a test resolves the fields itself
+vi.mock('$lib/services/contents/entry/fields', async (importOriginal) => {
+  const actual = await importOriginal();
+
+  return { ...actual, getField: vi.fn(actual.getField) };
+});
+
 // `populateDefaultValue` is kept intact because `normalizeContentMap()` relies on it to fill in the
 // values missing from an existing entry
 vi.mock('$lib/services/contents/draft/defaults', async (importOriginal) => ({
@@ -48,6 +55,7 @@ const { createProxy } = await import('$lib/services/contents/draft/create/proxy.
 const { createValueMap } = await import('$lib/services/contents/draft/create/versioned-map.svelte');
 const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
 const { fillUuidValues } = await import('$lib/services/contents/draft/create/uuid');
+const { getField } = await import('$lib/services/contents/entry/fields');
 const { cmsConfig } = await import('$lib/services/config');
 const { nestedFilterPath } = await import('$lib/services/contents/collection/nested');
 const { createDraft, getInitialSlugs, getOriginalPath, getSlugEditorProp } = await import('.');
@@ -463,6 +471,70 @@ describe('contents/draft/create/index', () => {
       });
 
       expect(fillUuidValues).not.toHaveBeenCalled();
+    });
+
+    it('should give a duplicated Hidden field the default locale’s value in every locale', () => {
+      const collection = {
+        name: 'posts',
+        _type: 'entry',
+        fields: [
+          { name: 'id', widget: 'hidden', default: '{{uuid}}', i18n: 'duplicate' },
+          { name: 'ids', widget: 'hidden', i18n: 'sync' },
+          { name: 'lang', widget: 'hidden', default: '{{locale}}', i18n: true },
+          { name: 'shared', widget: 'hidden' },
+          { name: 'title', widget: 'string', i18n: 'duplicate' },
+        ],
+        _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
+          allLocales: ['en', 'ja'],
+          initialLocales: ['en', 'ja'],
+          defaultLocale: 'en',
+          canonicalSlug: { key: 'translationKey' },
+        },
+      };
+
+      const getFieldImpl = vi.mocked(getField).getMockImplementation();
+
+      onTestFinished(() => {
+        vi.mocked(getField).mockImplementation(/** @type {any} */ (getFieldImpl));
+      });
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) =>
+        collection.fields.find(({ name }) => name === keyPath),
+      );
+
+      // The default values of each locale are created separately, so a generated one differs
+      getDefaultValues.mockImplementation(({ locale }) => ({
+        id: `${locale}-uuid`,
+        ids: [`${locale}-uuid`],
+        lang: locale,
+        ...(locale === 'en' ? { shared: 'value' } : {}),
+        title: `${locale}-title`,
+      }));
+
+      createDraft({ entryDraft, collection });
+
+      const { originalValues } = entryDraft.current;
+
+      expect(originalValues.ja).toEqual({
+        id: 'en-uuid',
+        ids: ['en-uuid'],
+        lang: 'ja',
+        title: 'ja-title',
+      });
+      // A copy, so the locales don’t share the value
+      expect(originalValues.ja.ids).not.toBe(originalValues.en.ids);
+
+      // A new entry may lack the default locale
+      createDraft({
+        entryDraft,
+        collection: { ...collection, _i18n: { ...collection._i18n, initialLocales: ['ja'] } },
+      });
+
+      expect(entryDraft.current.originalValues).toEqual({
+        ja: { id: 'ja-uuid', ids: ['ja-uuid'], lang: 'ja', title: 'ja-title' },
+      });
     });
 
     it('should create draft for existing entry', () => {

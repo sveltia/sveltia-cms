@@ -1,3 +1,4 @@
+import { getImagePattern } from '$lib/services/contents/fields/rich-text/constants';
 import {
   getMediaElements,
   mapSrcset,
@@ -18,19 +19,12 @@ import {
  */
 
 /**
- * Regular expression to match `![alt](src "title")`, capturing the source. The alt text runs up to
- * the first `](`, so it can contain brackets, and the source up to the first `)` or an optional
- * double-quoted title, which can contain parentheses and escaped quotes.
- *
- * The pattern runs on untrusted Markdown, so it’s written to match in linear time. Every part can
- * only be matched one way, and neither the alt text nor the source can contain `![`, so a failed
- * match at one `![` doesn’t read the text after the next one again. A title is only looked for
- * right after the source’s last non-space character, and it can’t contain an unescaped quote, so
- * each quote is read as the start of a title at most once. An image nested in the alt text or
- * source of an unclosed one is matched on its own instead.
+ * Regular expression to match a Markdown image, capturing its alt text and source as the `alt` and
+ * `src` groups. It’s the same pattern the rich text editor’s image component goes by, so the two
+ * agree on what an image is: see `IMAGE_REGEX` in `rich-text/constants`, which also tells how it
+ * matches in linear time on untrusted Markdown.
  */
-export const MARKDOWN_IMAGE_REGEX =
-  /!\[(?:[^\]\n!]|!(?!\[)|\](?!\())*\]\(((?:[^\n!)]|!(?!\[))+?)(?:(?<!\s)\s+"(?:[^"\\\n]|\\.)*")?\)/g;
+export const MARKDOWN_IMAGE_REGEX = new RegExp(getImagePattern(), 'g');
 
 /**
  * Pattern matching the start tag of a media element, e.g. `<img src="a.png">` or `<video
@@ -53,7 +47,7 @@ const MEDIA_START_TAG_PATTERN = [
  * second group. Both kinds are displayed in the preview, so both refer to the files.
  */
 export const MARKDOWN_MEDIA_REGEX = new RegExp(
-  `${MARKDOWN_IMAGE_REGEX.source}|(${MEDIA_START_TAG_PATTERN})`,
+  `${MARKDOWN_IMAGE_REGEX.source}|(?<tag>${MEDIA_START_TAG_PATTERN})`,
   'gi',
 );
 
@@ -150,43 +144,49 @@ export const rewriteMediaStartTag = ({ value, tag, index, callback }) => {
  * @returns {string} New body.
  */
 const updateMarkdownMediaURLs = (value, callback) =>
-  value.replace(
-    MARKDOWN_MEDIA_REGEX,
-    (
-      markup,
-      /** @type {string | undefined} */ src,
-      /** @type {string | undefined} */ tag,
-      /** @type {number} */ offset,
-    ) => {
-      if (tag !== undefined) {
-        const element = rewriteMediaStartTag({
-          value,
-          tag,
-          index: offset,
-          /**
-           * Leave a URL as is rather than remove it.
-           * @param {string} url URL.
-           * @returns {string | undefined} New URL.
-           */
-          callback: (url) => callback(url) ?? undefined,
-        });
+  value.replace(MARKDOWN_MEDIA_REGEX, (markup, ...args) => {
+    /** @type {Record<string, string | undefined>} */
+    const { alt = '', src, tag } = args.at(-1);
+    /** @type {number} */
+    const offset = args.at(-3);
 
-        return element ? serializeStartTag(element) : markup;
-      }
+    if (tag !== undefined) {
+      const element = rewriteMediaStartTag({
+        value,
+        tag,
+        index: offset,
+        /**
+         * Leave a URL as is rather than remove it.
+         * @param {string} url URL.
+         * @returns {string | undefined} New URL.
+         */
+        callback: (url) => callback(url) ?? undefined,
+      });
 
-      const source = /** @type {string} */ (src);
-      const url = callback(source);
+      return element ? serializeStartTag(element) : markup;
+    }
 
-      if (typeof url !== 'string') {
-        return markup;
-      }
+    const source = /** @type {string} */ (src);
 
-      // The source comes right after the first `](`, as the alt text is matched lazily
-      const start = markup.indexOf('](') + 2;
+    // An image without a source, e.g. `![a]()`, refers to no file
+    if (!source) {
+      return markup;
+    }
 
-      return `${markup.slice(0, start)}${url}${markup.slice(start + source.length)}`;
-    },
-  );
+    // A source can be wrapped in angle brackets, which allow spaces in it, e.g. `<my image.png>`
+    const bracketed = source.length > 2 && source.startsWith('<') && source.endsWith('>');
+    const url = callback(bracketed ? source.slice(1, -1) : source);
+
+    if (typeof url !== 'string') {
+      return markup;
+    }
+
+    // The source comes right after `![`, the alt text and `](`
+    const start = alt.length + 4;
+    const newSource = bracketed ? `<${url}>` : url;
+
+    return `${markup.slice(0, start)}${newSource}${markup.slice(start + source.length)}`;
+  });
 
 /**
  * Pass each media URL in an HTML body to the given callback, and replace it with the result. The

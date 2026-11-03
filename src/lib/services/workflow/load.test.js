@@ -451,6 +451,41 @@ describe('workflow/load', () => {
       ).toEqual(['guides-id', 'faq-id']);
     });
 
+    test('keeps the ID of a new entry whose locales are read in another order', async () => {
+      /**
+       * Build a new section in English and Japanese riding along in the pull request of a post.
+       * @param {string} id Entry ID, which is new each time the pull request is read.
+       * @param {string[]} locales Locales, in the order of the entry’s files.
+       * @returns {any} Entry.
+       */
+      const createHost = (id, locales) => {
+        const entry = createEntry('hello', { id: `hello-${id}` });
+
+        entry.workflow.companions = [
+          {
+            collectionName: 'sections',
+            entry: {
+              id,
+              slug: 'guides',
+              locales: Object.fromEntries(
+                locales.map((locale) => [locale, { path: `content/${locale}/guides.md` }]),
+              ),
+            },
+          },
+        ];
+
+        return entry;
+      };
+
+      unpublishedEntries.current = [createHost('guides-id', ['en', 'ja'])];
+      mockListing([createHost('another-id', ['ja', 'en'])]);
+
+      await reloadUnpublishedEntries();
+      expect(
+        unpublishedEntries.current[0].workflow.companions?.map(({ entry }) => entry.id),
+      ).toEqual(['guides-id']);
+    });
+
     test('replaces the assets of the branches that have changed or gone', async () => {
       unpublishedEntries.current = [
         createEntry('kept'),

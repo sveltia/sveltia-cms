@@ -37,6 +37,26 @@ describe('BacklinksPanel', () => {
             },
           ],
         },
+        {
+          name: 'settings',
+          label: 'Settings',
+          files: [
+            {
+              name: 'general',
+              label: 'General Settings',
+              file: 'content/general.yml',
+              fields: [
+                {
+                  name: 'featured_tag',
+                  widget: 'relation',
+                  collection: 'tags',
+                  value_field: '{{slug}}',
+                  search_fields: ['name'],
+                },
+              ],
+            },
+          ],
+        },
       ],
     });
     setEntries([
@@ -44,6 +64,13 @@ describe('BacklinksPanel', () => {
       createMockEntry({ slug: 'hello', content: { _default: { title: 'Hello', tag: 'svelte' } } }),
       createMockEntry({ slug: 'again', content: { _default: { title: 'Again', tag: 'svelte' } } }),
       createMockEntry({ slug: 'world', content: { _default: { title: 'World', tag: 'react' } } }),
+      createMockEntry({
+        slug: 'general',
+        folder: 'content',
+        extension: 'yml',
+        content: { _default: { featured_tag: 'svelte' } },
+        entry: { subPath: 'content/general.yml' },
+      }),
     ]);
   });
 
@@ -71,6 +98,22 @@ describe('BacklinksPanel', () => {
 
     await group.getByRole('button', { name: 'Hello' }).click();
     await expect.poll(() => window.location.hash).toBe('#/collections/posts/entries/hello');
+  });
+
+  test('opens a collection file by its name', async () => {
+    window.location.hash = '#/collections/tags/entries/svelte';
+
+    await renderWithDraft(BacklinksPanel, {
+      draft: createMockDraft({
+        collectionName: 'tags',
+        draft: { isNew: false, originalEntry: tagEntry },
+      }),
+    });
+
+    const group = page.getByRole('group', { name: 'Settings' });
+
+    await group.getByRole('button', { name: 'General Settings' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections/settings/entries/general');
   });
 
   test('reports an entry without backlinks', async () => {

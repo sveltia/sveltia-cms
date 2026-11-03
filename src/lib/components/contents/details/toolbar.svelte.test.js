@@ -1375,6 +1375,48 @@ describe('Toolbar', () => {
       await expect.poll(() => window.location.hash).toBe('#/collections/posts');
     });
 
+    test('refuses to save and publish along with an entry that has to be reviewed', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: { type: 'editorial_workflow', direct_publish: true },
+        collections: [
+          postsCollection,
+          {
+            name: 'reviewed',
+            folder: 'content/reviewed',
+            // The site-level option is inherited unless turned off
+            publish_mode: { type: 'editorial_workflow', direct_publish: false },
+            fields,
+          },
+        ],
+      });
+
+      const { entryDraft } = await renderToolbar({
+        pendingEntries: [
+          { collectionName: 'reviewed', entry: { id: 'x', locales: {} }, values: ['x'] },
+        ],
+        // Referenced from a rich text editor component
+        extraValues: { _default: { ref: 'x' } },
+      });
+
+      await page.getByRole('button', { name: 'More Options' }).first().click();
+
+      const item = page.getByRole('menuitem', {
+        name: 'Save and Publish (Related Entries Need Review)',
+      });
+
+      await expect.element(item).toHaveAttribute('aria-disabled', 'true');
+      expect(
+        page.getByRole('menuitem', { name: 'Save and Publish', exact: true }).elements(),
+      ).toHaveLength(0);
+
+      // A deselected entry isn’t saved, so it doesn’t count
+      entryDraft.current.extraValues._default.ref = '';
+      await expect
+        .element(page.getByRole('menuitem', { name: 'Save and Publish', exact: true }))
+        .not.toHaveAttribute('aria-disabled', 'true');
+    });
+
     test('saves a draft as usual when direct publishing is enabled', async () => {
       await initTestConfig({
         backend: { name: 'github', repo: 'me/site' },

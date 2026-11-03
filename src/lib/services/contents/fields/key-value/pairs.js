@@ -1,5 +1,5 @@
-import { getField } from '$lib/services/contents/entry/fields';
 import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
+import { getValueOwnerField } from '$lib/services/contents/entry/owner-field';
 import { escapeKeySegment, unescapeKeySegment } from '$lib/services/utils/object';
 
 /**
@@ -16,19 +16,13 @@ export const PAIR_KEY_PATH_REGEX = /\.[^.]*$/;
 /**
  * Get the configuration of the KeyValue field that the given pair belongs to. A pair is stored
  * under an arbitrary key, e.g. `metadata.foo`, that `getField()` can’t resolve on its own, so the
- * field is looked up by the parent key path instead.
- * @param {GetFieldArgs} args Arguments for the {@link getField} function, with a pair’s key path.
+ * field is looked up by the parent key path instead. See {@link getValueOwnerField}.
+ * @param {GetFieldArgs} args Arguments for the `getField()` function, with a pair’s key path.
  * @returns {KeyValueField | undefined} Field configuration, or `undefined` if the key path doesn’t
  * belong to a KeyValue field.
  */
 export const getKeyValueField = (args) => {
-  const { keyPath } = args;
-
-  if (!keyPath.includes('.')) {
-    return undefined;
-  }
-
-  const fieldConfig = getField({ ...args, keyPath: keyPath.replace(PAIR_KEY_PATH_REGEX, '') });
+  const fieldConfig = getValueOwnerField(args)?.fieldConfig;
 
   return fieldConfig?.widget === 'keyvalue'
     ? /** @type {KeyValueField} */ (fieldConfig)

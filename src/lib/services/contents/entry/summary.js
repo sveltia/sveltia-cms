@@ -123,18 +123,30 @@ const getBodyHeader = (markdown) =>
     .find((header) => !!header) ?? '';
 
 /**
+ * Character standing in for a `<` that doesn’t start one of the formatting tags a summary can
+ * contain, from the Private Use Area, so it’s neither parsed as Markdown nor as HTML.
+ */
+const LT_PLACEHOLDER = '\uE000';
+/**
+ * Match a `<` that doesn’t start a `strong`, `em` or `code` tag. Any other tag in a field value is
+ * text, like `<T>` in `Vec<T> in Rust` or `<script>` in a title about it, which would otherwise be
+ * sanitized away, and an unclosed one would take the rest of the summary with it.
+ */
+const NON_FORMATTING_TAG_REGEX = /<(?!\/?(?:strong|em|code)(?:\s[^>]*)?>)/g;
+
+/**
  * Parse the given entry summary as Markdown and sanitize HTML with a few exceptions if the Markdown
  * option is enabled. Also, parse HTML character references (entities).
  * Without the Markdown option, the references are decoded after sanitizing, so the result can
  * contain markup, e.g. `&lt;img&gt;` becomes `<img>`: it’s only safe as text, never with Svelte’s
- * `@html` tag or `innerHTML`.
+ * `@html` tag or `innerHTML`. A raw `<` that doesn’t start a formatting tag is kept as text.
  * @param {string} str Original string.
  * @param {object} [options] Options.
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
  * @returns {string} Parsed string.
  */
 export const sanitizeEntrySummary = (str, { allowMarkdown = false } = {}) => {
-  str = /** @type {string} */ (parseInline(str));
+  str = /** @type {string} */ (parseInline(str.replace(NON_FORMATTING_TAG_REGEX, LT_PLACEHOLDER)));
 
   if (allowMarkdown) {
     str = parseEntities(str);
@@ -151,7 +163,7 @@ export const sanitizeEntrySummary = (str, { allowMarkdown = false } = {}) => {
     str = parseEntities(str);
   }
 
-  return str.trim();
+  return str.replaceAll(LT_PLACEHOLDER, allowMarkdown ? '&lt;' : '<').trim();
 };
 
 /**

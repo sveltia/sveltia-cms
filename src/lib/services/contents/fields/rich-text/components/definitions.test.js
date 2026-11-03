@@ -140,6 +140,20 @@ describe('definitions', () => {
         });
       });
 
+      it('should read a title in single quotes', () => {
+        const groups = { src: '/a.png', alt: 'A [1]', singleQuotedTitle: "It\\'s" };
+
+        expect(IMAGE_COMPONENT.fromBlock({ groups })).toEqual({
+          src: '/a.png',
+          alt: 'A [1]',
+          title: "It's",
+        });
+        // It’s written back in double quotes
+        expect(IMAGE_COMPONENT.toBlock({ src: '/a.png', alt: 'A [1]', title: "It's" })).toBe(
+          '![A [1]](/a.png "It\'s")',
+        );
+      });
+
       it('should handle a missing title or missing groups', () => {
         expect(IMAGE_COMPONENT.fromBlock({ groups: { src: '/a.png', alt: '' } })).toEqual({
           src: '/a.png',
@@ -328,6 +342,18 @@ describe('definitions', () => {
           title: 'Test title',
           link: 'https://example.com',
         });
+      });
+
+      it('should read a title in single quotes', () => {
+        expect(
+          LINKED_IMAGE_COMPONENT.fromBlock({ groups: { src: '/a.png', singleQuotedTitle: 'T' } })
+            .title,
+        ).toBe('T');
+        expect(
+          LINKED_IMAGE_COMPONENT.fromBlock({
+            groups: { src2: '/a.png', singleQuotedTitle2: "It\\'s", link: '/b' },
+          }).title,
+        ).toBe("It's");
       });
 
       it('should unescape the title', () => {

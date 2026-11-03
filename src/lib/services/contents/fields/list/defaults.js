@@ -3,8 +3,9 @@ import { isObject } from '@sveltia/utils/object';
 import { isFieldRequired } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { getSubtreeEntries } from '$lib/services/contents/entry/subtree';
-import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
-import { sanitizeDynamicValue } from '$lib/services/contents/fields/rich-text/defaults';
+import { getDefaultValueMap as getBooleanDefaultValueMap } from '$lib/services/contents/fields/boolean/defaults';
+import { getDefaultValueMap as getNumberDefaultValueMap } from '$lib/services/contents/fields/number/defaults';
+import { getDefaultValueMap as getRichTextDefaultValueMap } from '$lib/services/contents/fields/rich-text/defaults';
 
 /**
  * @import { GetDefaultValueMapFuncArgs, InternalLocaleCode } from '$lib/types/private';
@@ -69,6 +70,43 @@ export const hasRequiredSingleItem = ({ fieldConfig, locale }) =>
   isFieldRequired({ fieldConfig, locale });
 
 /**
+ * Functions converting a dynamic default value to the value of a field, for the field types whose
+ * value isn’t the string given in the URL as is.
+ * @type {Record<string, (args: GetDefaultValueMapFuncArgs) => Record<string, any>>}
+ */
+const DYNAMIC_ITEM_VALUE_FUNCTIONS = {
+  boolean: getBooleanDefaultValueMap,
+  number: getNumberDefaultValueMap,
+  markdown: getRichTextDefaultValueMap,
+  richtext: getRichTextDefaultValueMap,
+};
+
+/**
+ * Convert an item of a dynamic default value, which comes as a string, to the value the single
+ * subfield of a List field holds, the way the subfield’s own dynamic default value is converted,
+ * e.g. a number for a Number subfield, `true` or `false` for a Boolean subfield, or the sanitized
+ * string for a RichText subfield, as the preview may not be sanitized.
+ * @param {string} token Item given in the URL, e.g. `1` in `?ratings=1,2`.
+ * @param {Field | undefined} subfield Single subfield of the List field, if any.
+ * @param {Omit<GetDefaultValueMapFuncArgs, 'fieldConfig' | 'keyPath' | 'dynamicValue'>} args Other
+ * arguments for the subfield’s default value function.
+ * @returns {any} Item value, or `undefined` if the subfield can’t take it, e.g. `abc` for a Number
+ * subfield.
+ */
+const toDynamicItemValue = (token, subfield, args) => {
+  const getValueMap = DYNAMIC_ITEM_VALUE_FUNCTIONS[subfield?.widget ?? 'string'];
+
+  if (!getValueMap) {
+    return token;
+  }
+
+  const fieldConfig = /** @type {Field} */ (subfield);
+  const value = getValueMap({ ...args, fieldConfig, keyPath: '_', dynamicValue: token })._;
+
+  return typeof value === 'string' ? value.trim() : value;
+};
+
+/**
  * Get the default value map for a List field.
  * @param {GetDefaultValueMapFuncArgs} args Arguments.
  * @returns {Record<FieldKeyPath, any>} Default value map.
@@ -83,15 +121,12 @@ export const getDefaultValueMap = (args) => {
   let value;
 
   if (dynamicValue !== undefined) {
-    // Items of a RichText subfield are sanitized like the value of a RichText field, as the preview
-    // may not be sanitized
-    const isRichText = RICH_TEXT_FIELD_TYPES.includes(/** @type {string} */ (subfield?.widget));
-
-    // Filter out empty strings (this handles the case where `dynamicValue` is '')
+    // Filter out empty strings (this handles the case where `dynamicValue` is ''), as well as the
+    // items the subfield can’t take
     value = dynamicValue
       .split(/,\s*/)
-      .map((val) => (isRichText ? sanitizeDynamicValue(val) : val).trim())
-      .filter((val) => val !== '');
+      .map((val) => toDynamicItemValue(val.trim(), subfield, { locale, defaultLocale }))
+      .filter((val) => val !== '' && val !== undefined);
   } else {
     value = Array.isArray(defaultValue) ? defaultValue : [];
   }

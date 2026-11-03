@@ -20,6 +20,7 @@ import {
   GLOBAL_MEDIA_TAG_REGEX,
   MEDIA_TAG_REGEX,
 } from '$lib/services/contents/fields/rich-text/previews/media-urls';
+import { decodeURIComponentSafely } from '$lib/services/utils/url';
 
 /**
  * @import {
@@ -162,6 +163,19 @@ export const createMediaSourceResolver = ({
 };
 
 /**
+ * Get the targets whose URL the given field value or image source holds, as is or encoded, like the
+ * `%20` an editor component writes for a space in a body. The encoded form is how the CMS itself
+ * stores a URL there, and the preview decodes it to find the asset as well.
+ * @param {AssetReferenceMatcher} matcher Matcher.
+ * @param {string} src Field value or image source found in it.
+ * @returns {number[] | undefined} Indexes of the targets, if any.
+ */
+const getURLTargets = (matcher, src) =>
+  matcher.byURL.get(src) ??
+  // Every string value goes through the pre-filter, and only one with a `%` can be decoded
+  (src.includes('%') ? matcher.byURL.get(decodeURIComponentSafely(src)) : undefined);
+
+/**
  * Get the targets the given field value or image source refers to.
  * @param {AssetReferenceMatcher} matcher Matcher.
  * @param {string} src Field value or image source found in it.
@@ -170,7 +184,7 @@ export const createMediaSourceResolver = ({
  * @returns {number[]} Indexes of the targets.
  */
 const getMatchingTargets = (matcher, src, resolve) => {
-  const indexes = matcher.byURL.get(src) ?? [];
+  const indexes = getURLTargets(matcher, src) ?? [];
 
   if (!matcher.resolves) {
     return indexes;
@@ -199,9 +213,16 @@ const getMatchingTargets = (matcher, src, resolve) => {
 const getNewURL = (matcher, indexes, src) =>
   indexes
     .map((index) => {
-      const { newURL } = matcher.targets[index];
+      const { url, newURL } = matcher.targets[index];
 
-      return typeof newURL === 'function' ? newURL(src) : newURL;
+      if (typeof newURL === 'function') {
+        return newURL(src);
+      }
+
+      // A reference holding the URL with its spaces encoded gets the new URL in the same form
+      return newURL && url !== src && url === decodeURIComponentSafely(src)
+        ? newURL.replaceAll(' ', '%20')
+        : newURL;
     })
     .find(Boolean);
 
@@ -216,7 +237,7 @@ const getNewURL = (matcher, indexes, src) =>
  * @returns {boolean} Result.
  */
 const mayReferToTargets = (matcher, value) => {
-  if (matcher.byURL.has(value)) {
+  if (getURLTargets(matcher, value)) {
     return true;
   }
 
@@ -229,13 +250,15 @@ const mayReferToTargets = (matcher, value) => {
    * @param {string[]} sources URLs.
    * @returns {boolean} Result.
    */
-  const hasTarget = (sources) => sources.some((src) => matcher.byURL.has(src));
+  const hasTarget = (sources) => sources.some((src) => !!getURLTargets(matcher, src));
 
   if (hasTarget(getRichTextMediaSources(value, 'markdown'))) {
     return true;
   }
 
-  const tagCount = [...value.matchAll(MARKDOWN_MEDIA_REGEX)].filter(([, , tag]) => tag).length;
+  const tagCount = [...value.matchAll(MARKDOWN_MEDIA_REGEX)].filter(
+    ({ groups }) => groups?.tag,
+  ).length;
 
   return (
     (value.match(GLOBAL_MEDIA_TAG_REGEX)?.length ?? 0) > tagCount &&

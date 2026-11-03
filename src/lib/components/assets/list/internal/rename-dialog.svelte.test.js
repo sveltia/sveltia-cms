@@ -9,7 +9,13 @@ import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { renamingAsset } from '$lib/services/assets/state';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
-import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
+import {
+  createMockAsset,
+  createMockEntry,
+  initTestConfig,
+  setAssets,
+  setEntries,
+} from '$lib/test/config';
 import { expectFileNameSelected } from '$lib/test/dialog';
 import { waitForToastsToHide } from '$lib/test/toast';
 
@@ -154,6 +160,52 @@ describe('RenameDialog', () => {
       );
     } finally {
       await initTestConfig(config);
+    }
+  });
+
+  test('refuses the name of an entry file next to the asset', async () => {
+    setEntries([createMockEntry({ slug: 'index', folder: 'static/uploads' })]);
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = firstAsset;
+
+      const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
+      await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
+      await dialog.getByRole('textbox').fill('index.md');
+      await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
+      await expect
+        .element(dialog.getByText('Another file with this name already exists here.'))
+        .toBeInTheDocument();
+    } finally {
+      setEntries([]);
+    }
+  });
+
+  test('renames an asset at the root of the repository', async () => {
+    const rootAsset = { ...firstAsset, path: 'a.png', folder: { ...firstAsset.folder } };
+
+    rootAsset.folder.internalPath = '';
+    setAssets([rootAsset]);
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = rootAsset;
+
+      const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
+      await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
+      await dialog.getByRole('textbox').fill('c.png');
+      await dialog.getByRole('button', { name: 'Rename' }).click();
+
+      await vi.waitFor(() =>
+        expect(moveAssets).toHaveBeenCalledWith('rename', [{ asset: rootAsset, path: 'c.png' }]),
+      );
+    } finally {
+      setAssets(assets);
     }
   });
 

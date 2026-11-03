@@ -193,6 +193,7 @@ describe('Test formatFileName()', () => {
 describe('Test validateAssetName()', () => {
   const otherNames = ['forest.png', 'cafe\u0301.png'];
   const folderNames = ['sub'];
+  const fileNames = ['index.md'];
 
   /**
    * Validate a name the way the Rename dialog does.
@@ -205,6 +206,7 @@ describe('Test validateAssetName()', () => {
       fileName: name.trim() ? formatFileName(name.trim()) : '',
       otherNames,
       folderNames,
+      fileNames,
     });
 
   test('accepts a name that is not taken', () => {
@@ -230,6 +232,11 @@ describe('Test validateAssetName()', () => {
     expect(validate('Forest.PNG')).toBe('duplicate');
     // Composed `é` matches the decomposed one
     expect(validate('café.png')).toBe('duplicate');
+  });
+
+  test('refuses the name of a file that isn’t an asset', () => {
+    expect(validate('index.md')).toBe('file_duplicate');
+    expect(validate('Index.MD')).toBe('file_duplicate');
   });
 
   test('refuses the name of a folder', () => {

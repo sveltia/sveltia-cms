@@ -1,5 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { getDefaultValueMap as getObjectFieldDefaultValueMap } from '$lib/services/contents/fields/object/defaults';
+
 import { getDefaultValues, populateDefaultValue } from './defaults';
 
 /**
@@ -698,6 +700,42 @@ describe('Test getDefaultValues()', () => {
     expect(result).toEqual({
       title: 'Default Title',
     });
+  });
+
+  test('should pass the dynamic values down to the subfields of an Object field', () => {
+    // A subfield of an Object field can be given a dynamic value with the dot notation
+    vi.mocked(getObjectFieldDefaultValueMap).mockImplementationOnce(
+      ({ keyPath, locale, defaultLocale, populateDefault }) => {
+        /** @type {FlattenedEntryContent} */
+        const content = {};
+
+        populateDefault?.({
+          content,
+          keyPath: `${keyPath}.name`,
+          fieldConfig: { name: 'name', widget: 'string' },
+          locale,
+          defaultLocale,
+          dynamicValues: {},
+        });
+
+        return content;
+      },
+    );
+
+    /** @type {Field[]} */
+    const fields = [
+      { name: 'title', widget: 'string' },
+      { name: 'author', widget: 'object', fields: [{ name: 'name', widget: 'string' }] },
+    ];
+
+    const result = getDefaultValues({
+      fields,
+      locale: 'en',
+      defaultLocale: 'en',
+      dynamicValues: { title: 'My First Post', 'author.name': 'John Doe' },
+    });
+
+    expect(result).toEqual({ title: 'My First Post', 'author.name': 'John Doe' });
   });
 
   test('should handle different locale', () => {

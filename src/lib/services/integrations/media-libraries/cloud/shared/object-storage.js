@@ -443,6 +443,34 @@ export const getRenamedPath = (config, asset, newName) => {
 };
 
 /**
+ * Rename an object, keeping it in its folder. The folder is listed to the end first, as the listing
+ * the user picked the name against can be cut short in a large bucket, and copying the object onto
+ * a file with the new name would overwrite that file.
+ * @template T
+ * @template {CloudStorageConfig} C
+ * @param {ObjectStorageProvider<T, C>} provider Service provider.
+ * @param {ExternalAsset} asset Asset to rename. Its `id` is the object key.
+ * @param {string} newName New file name, without a directory.
+ * @param {C} config Service configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the credential).
+ * @returns {Promise<ExternalAsset>} Renamed asset.
+ * @throws {Error} When another file in the folder has the new name.
+ */
+export const renameObject = async (provider, asset, newName, config, options) => {
+  const newPath = getRenamedPath(config, asset, newName);
+  const dirPath = newPath.split('/').slice(0, -1).join('/');
+  const ownName = getRelativeKey(config, asset.id).split('/').at(-1)?.normalize();
+  const takenNames = await getFileNamesInFolder(provider, config, options, dirPath);
+  const normalizedName = newName.normalize();
+
+  if (takenNames.some((name) => name !== ownName && name === normalizedName)) {
+    throw new Error(`A file named “${newName}” already exists in the folder.`);
+  }
+
+  return moveObject(provider, asset, newPath, config, options);
+};
+
+/**
  * Create the operations of an object storage service, binding the given provider to the shared
  * operations. A file is renamed by moving it within its folder.
  * @template T
@@ -518,7 +546,7 @@ export const createObjectStorageOperations = (provider) => {
      * @returns {Promise<ExternalAsset>} Renamed asset.
      */
     rename: (asset, newName, config, options) =>
-      move(asset, getRenamedPath(config, asset, newName), config, options),
+      renameObject(provider, asset, newName, config, options),
     /**
      * Replace a file, keeping the object key so that the URL stays the same.
      * @param {ExternalAsset} asset Asset to replace.

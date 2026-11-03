@@ -5,6 +5,7 @@ import { isAutoDuplicationEnabled, suspendAutoDuplication } from '$lib/services/
 import { createValueMap } from '$lib/services/contents/draft/create/versioned-map.svelte';
 import { revalidateField } from '$lib/services/contents/draft/validate/fields';
 import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
+import { getValueOwnerField } from '$lib/services/contents/entry/owner-field';
 import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
 import {
   findDuplicateIfEmptyField,
@@ -15,7 +16,12 @@ import { isDuplicatedField, isSyncedField } from '$lib/services/contents/i18n/sh
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
- * @import { EntryDraft, FlattenedEntryContent, GetFieldArgs } from '$lib/types/private';
+ * @import {
+ * EntryDraft,
+ * FlattenedEntryContent,
+ * GetFieldArgs,
+ * OwnerField,
+ * } from '$lib/types/private';
  * @import { Field, FieldKeyPath, LocaleCode } from '$lib/types/public';
  */
 
@@ -152,14 +158,28 @@ const forEachCopyTargetLocale = (
  * strategy, and any locale for one using `sync`.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function.
- * @param {Field} args.fieldConfig Field configuration.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
+ * path of the value.
+ * @param {Field} args.fieldConfig Configuration of the field the value belongs to.
+ * @param {FieldKeyPath} [args.fieldKeyPath] Key path of the field, which differs from the key path
+ * of the value for a value owned by a field, like a KeyValue pair. See {@link getValueOwnerField}.
  * @param {LocaleCode} args.sourceLanguage Source locale.
  * @param {any} args.value Value to copy to other locales.
  */
-export const copyMirroredValue = ({ draft, getFieldArgs, fieldConfig, sourceLanguage, value }) => {
+export const copyMirroredValue = ({
+  draft,
+  getFieldArgs,
+  fieldConfig,
+  fieldKeyPath = getFieldArgs.keyPath,
+  sourceLanguage,
+  value,
+}) => {
   const { keyPath } = getFieldArgs;
-  const matchesListItems = getListItemMatcher({ fieldConfig, getFieldArgs });
+
+  const matchesListItems = getListItemMatcher({
+    fieldConfig,
+    getFieldArgs: { ...getFieldArgs, keyPath: fieldKeyPath },
+  });
 
   forEachCopyTargetLocale(
     { draft, getFieldArgs, sourceLanguage, matchesListItems },
@@ -337,6 +357,27 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
   };
 
   /**
+   * Get the field whose value has to be copied to, or deleted from, the other locales along with
+   * the value at the given key path: the field at the key path or, for a value without a field of
+   * its own, the field owning it. See {@link getValueOwnerField}.
+   * @param {Field | undefined} fieldConfig Configuration of the field at the key path, if any.
+   * @param {GetFieldArgs} getFieldArgs Arguments for the `getField` function, including the key
+   * path of the value.
+   * @returns {OwnerField | undefined} Key path and configuration of the field, or `undefined` if
+   * the value isn’t copied.
+   */
+  const getMirroredField = (fieldConfig, getFieldArgs) => {
+    const field = fieldConfig
+      ? { keyPath: getFieldArgs.keyPath, fieldConfig }
+      : getValueOwnerField(getFieldArgs);
+
+    return field &&
+      shouldAutoDuplicate(field.fieldConfig, { ...getFieldArgs, keyPath: field.keyPath })
+      ? field
+      : undefined;
+  };
+
+  /**
    * Copy a value written to, or deleted from, the default locale to the other locales where the
    * field uses the `duplicate_if_empty` i18n strategy and is empty or in sync with the default
    * locale. See {@link copyDefaultLocaleValueIfEmpty}.
@@ -387,11 +428,20 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
       // as part of its field, so that’s left to `revalidateField()` to tell
       revalidateField({ draft, locale: sourceLanguage, keyPath, value, valueMap, keyAdded: added });
 
+      const mirroredField = getMirroredField(fieldConfig, getFieldArgs);
+
       // Copy value to other locales. The copies would otherwise be copied on again from each of
       // them, as a `sync` field is copied from any locale
-      if (fieldConfig && shouldAutoDuplicate(fieldConfig, getFieldArgs)) {
+      if (mirroredField) {
         suspendAutoDuplication(() => {
-          copyMirroredValue({ draft, getFieldArgs, fieldConfig, sourceLanguage, value });
+          copyMirroredValue({
+            draft,
+            getFieldArgs,
+            fieldConfig: mirroredField.fieldConfig,
+            fieldKeyPath: mirroredField.keyPath,
+            sourceLanguage,
+            value,
+          });
         });
       }
 
@@ -408,9 +458,14 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
         revalidateField({ draft, locale: sourceLanguage, keyPath, value: undefined, valueMap });
       }
 
+      const mirroredField = getMirroredField(fieldConfig, getFieldArgs);
+
       // Remove the property from other locales
-      if (fieldConfig && shouldAutoDuplicate(fieldConfig, getFieldArgs)) {
-        const matchesListItems = getListItemMatcher({ fieldConfig, getFieldArgs });
+      if (mirroredField) {
+        const matchesListItems = getListItemMatcher({
+          fieldConfig: mirroredField.fieldConfig,
+          getFieldArgs: { ...getFieldArgs, keyPath: mirroredField.keyPath },
+        });
 
         suspendAutoDuplication(() => {
           forEachCopyTargetLocale(

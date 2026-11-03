@@ -7,6 +7,7 @@ import {
   trimSlugEnd,
   validateNewFolderName,
 } from '$lib/services/common/slug';
+import { emulateTurkishLowerCase } from '$lib/test/locale';
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
@@ -893,6 +894,17 @@ describe('Test slugify()', () => {
     expect(slugify('HeLLo WoRLd')).toBe('hello-world');
     expect(slugify('CAFÉ')).toBe('café');
     expect(slugify('CafeVIlla')).toBe('cafevilla');
+  });
+
+  test('lowercase option regardless of the browser’s locale', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { encoding: 'ascii', clean_accents: false, sanitize_replacement: '-', lowercase: true },
+    };
+
+    emulateTurkishLowerCase();
+
+    expect(slugify('Introduction to Istanbul')).toBe('introduction-to-istanbul');
   });
 
   test('lowercase option disabled', async () => {

@@ -7,6 +7,7 @@ import { isNumeric } from '$lib/services/utils/number';
  * @import { ConfigParserContext, InternalSingletonCollection } from '$lib/types/private';
  * @import {
  * CmsConfig,
+ * CodeField,
  * Collection,
  * CollectionDivider,
  * CollectionFile,
@@ -82,10 +83,39 @@ export const getSubFields = (field) => {
 };
 
 /**
+ * Check if the given field stores its value as an object whose keys aren’t subfields, so a key path
+ * can point to one of its keys: any key of a KeyValue field, or the code or language key of a Code
+ * field without the `output_code_only` option, e.g. `meta.author` or `snippet.lang`.
+ * @param {Field} field Field configuration.
+ * @param {string} key Key.
+ * @returns {boolean} Result.
+ */
+const hasValueKey = (field, key) => {
+  const { widget: fieldType = 'string' } = field;
+
+  if (fieldType === 'keyvalue') {
+    return true;
+  }
+
+  if (fieldType !== 'code') {
+    return false;
+  }
+
+  const {
+    output_code_only: outputCodeOnly = false,
+    keys: outputKeys = { code: 'code', lang: 'lang' },
+  } = /** @type {CodeField} */ (field);
+
+  return !outputCodeOnly && [outputKeys.code, outputKeys.lang].includes(key);
+};
+
+/**
  * Find the fields the given key path can point to in the given field list. This is a lenient
  * version of `getField()`, which lives in the runtime module graph (stores, backends) this parser
  * runs before, and which needs entry values to resolve variable types. Without those values, a
- * name shared by the subfields of several variable types resolves to each of them.
+ * name shared by the subfields of several variable types resolves to each of them. A key path
+ * pointing to a key of a KeyValue or Code field’s value, e.g. `meta.author`, resolves to the field,
+ * as the value is stored under that key path.
  * @param {Field[]} fields Field list.
  * @param {FieldKeyPath} keyPath Field key path, e.g. `author.name` or `images.0.src`.
  * @returns {Field[]} Field configurations. An empty array if the field is not defined.
@@ -94,10 +124,16 @@ export const findFields = (fields, keyPath) => {
   /** @type {Field[]} */
   let matches = [];
   let isFirstSegment = true;
+  let isValueKey = false;
 
   const isResolved = keyPath.split('.').every((segment) => {
     // Strip the explicit variable type, which is not part of the field name
     const key = segment.replace(EXPLICIT_TYPE_REGEX, '');
+
+    // A key of a field’s value has nothing below it, not even a list item
+    if (isValueKey) {
+      return false;
+    }
 
     // A list item index (`authors.0`) or wildcard (`images.*.src`) doesn’t point to a field itself,
     // so stay at the same level
@@ -106,9 +142,15 @@ export const findFields = (fields, keyPath) => {
     }
 
     const candidates = isFirstSegment ? fields : matches.flatMap((field) => getSubFields(field));
+    const valueKeyFields = isFirstSegment ? [] : matches.filter((field) => hasValueKey(field, key));
 
     isFirstSegment = false;
     matches = candidates.filter(({ name }) => name === key);
+
+    if (!matches.length && valueKeyFields.length) {
+      matches = valueKeyFields;
+      isValueKey = true;
+    }
 
     return !!matches.length;
   });

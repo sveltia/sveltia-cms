@@ -52,10 +52,19 @@ export const isSameFileName = (name1, name2) =>
  * @param {string[]} args.otherNames Names of the other files in the same folder.
  * @param {string[]} [args.folderNames] Names of the subfolders in the same folder. A Git tree can’t
  * hold a file and a folder under one name.
- * @returns {'empty' | 'character' | 'leading_dot' | 'duplicate' | 'folder_duplicate' | undefined}
- * What stops the name from being used, or `undefined` if it can be used.
+ * @param {string[]} [args.fileNames] Names of the files in the same folder that aren’t assets, like
+ * entry files, which a rename would overwrite.
+ * @returns {'empty' | 'character' | 'leading_dot' | 'duplicate' | 'file_duplicate' |
+ * 'folder_duplicate' | undefined} What stops the name from being used, or `undefined` if it can
+ * be used.
  */
-export const validateAssetName = ({ name, fileName, otherNames, folderNames = [] }) => {
+export const validateAssetName = ({
+  name,
+  fileName,
+  otherNames,
+  folderNames = [],
+  fileNames = [],
+}) => {
   if (!name) {
     return 'empty';
   }
@@ -82,6 +91,10 @@ export const validateAssetName = ({ name, fileName, otherNames, folderNames = []
 
   if (isTaken(otherNames)) {
     return 'duplicate';
+  }
+
+  if (isTaken(fileNames)) {
+    return 'file_duplicate';
   }
 
   if (isTaken(folderNames)) {

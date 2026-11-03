@@ -52,6 +52,16 @@ export const populateDefaultValue = ({
   const getDefaultValue = GET_DEFAULT_VALUE_MAP_FUNCTIONS[fieldType];
 
   if (getDefaultValue) {
+    /**
+     * Populate the default value of a subfield. A subfield of an Object field can have a dynamic
+     * value of its own, given with the dot notation, e.g. `?author.name=John`, so the dynamic
+     * values are passed down. Those of a List field item, e.g. `links.0.url`, are ignored above.
+     * @param {PopulateDefaultValueArgs} subfieldArgs Arguments for the subfield.
+     * @returns {void} The `content` object is modified in place.
+     */
+    const populateDefault = (subfieldArgs) =>
+      populateDefaultValue({ ...subfieldArgs, dynamicValues });
+
     Object.assign(
       content,
       getDefaultValue({
@@ -60,7 +70,8 @@ export const populateDefaultValue = ({
         locale,
         defaultLocale,
         dynamicValue,
-        populateDefault: populateDefaultValue,
+        dynamicValues,
+        populateDefault,
       }),
     );
 

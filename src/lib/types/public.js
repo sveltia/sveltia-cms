@@ -930,12 +930,13 @@
  * List field properties.
  * @typedef {object} ListFieldProps
  * @property {'list'} widget Field type.
- * @property {string[] | Record<string, any>[]} [default] Default value. The format depends on how
- * the field is configured, with or without `field`, `fields` or `types`. See the
- * [documentation](https://sveltiacms.app/en/docs/fields/list) for details.
- * @property {Record<LocaleCode, string[] | Record<string, any>[]>} [default_localized] Default
- * values for specific locales, keyed by locale code. A value given for a locale takes precedence
- * over `default` in that locale. See the
+ * @property {any[]} [default] Default value. The format depends on how the field is configured,
+ * with or without `field`, `fields` or `types`: strings for a simple list, values of the subfield
+ * for a list with `field`, e.g. numbers for a Number subfield, or objects for a list with `fields`
+ * or `types`. See the [documentation](https://sveltiacms.app/en/docs/fields/list) for details.
+ * @property {Record<LocaleCode, any[]>} [default_localized] Default values for specific locales,
+ * keyed by locale code. A value given for a locale takes precedence over `default` in that locale.
+ * See the
  * [documentation](https://sveltiacms.app/en/docs/i18n/options#localized-field-options) for details.
  * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`
  * field value.

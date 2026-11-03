@@ -185,17 +185,23 @@ const isSameList = (a = [], b = []) =>
 
 /**
  * Give the new entries read afresh from a pull request the IDs of the ones already in the store,
- * matched by their first file, as they’re parsed with new IDs each time. Without that, the entry
- * they ride along with would never be the same as before.
+ * matched by any of their files, as they’re parsed with new IDs each time. Without that, the entry
+ * they ride along with would never be the same as before. The first file isn’t enough: the locales
+ * of an entry saved in this session are in the configured order, while those of an entry read from
+ * the pull request are in the order its files are listed in.
  * @param {CompanionEntry[] | undefined} fetched Entries read from the pull request.
  * @param {CompanionEntry[] | undefined} existing Entries in the store.
  * @returns {CompanionEntry[] | undefined} Entries.
  */
 const carryOverCompanions = (fetched, existing = []) => {
-  const ids = new Map(existing.map(({ entry }) => [getEntryPaths(entry)[0], entry.id]));
+  const ids = new Map(
+    existing.flatMap(({ entry }) => getEntryPaths(entry).map((path) => [path, entry.id])),
+  );
 
   return fetched?.map((companion) => {
-    const id = ids.get(getEntryPaths(companion.entry)[0]);
+    const id = getEntryPaths(companion.entry)
+      .map((path) => ids.get(path))
+      .find(Boolean);
 
     return id ? { ...companion, entry: { ...companion.entry, id } } : companion;
   });

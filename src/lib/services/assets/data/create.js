@@ -1,4 +1,4 @@
-import { getAssetsByDirName } from '$lib/services/assets';
+import { getAssetsByDirName, getTakenNamesInDir } from '$lib/services/assets';
 import { assetUpdatesToast, refreshFocusedAssets } from '$lib/services/assets/data';
 import { formatFileName } from '$lib/services/assets/file-name';
 import { getAssetKind } from '$lib/services/assets/kinds';
@@ -28,7 +28,8 @@ export const createFileList = (uploadingAssets) => {
   const { slugify_filename: slugificationEnabled = false } = getDefaultMediaLibraryOptions().config;
   const dirPath = getUploadDirPath(uploadingAssets);
   const assetsInSameFolder = dirPath !== undefined ? getAssetsByDirName(dirPath) : [];
-  const assetNamesInSameFolder = assetsInSameFolder.map((a) => a.name.normalize());
+  // A file is never named after an entry file or a subfolder there either
+  const assetNamesInSameFolder = dirPath !== undefined ? getTakenNamesInDir(dirPath) : [];
   /** @type {string[]} */
   const namesInBatch = [];
 

@@ -467,6 +467,36 @@ describe('Test image regex performance and nesting', () => {
     });
   });
 
+  test('matches an alt text with balanced brackets', () => {
+    expect('![Photo [1]](a.jpg)'.match(IMAGE_REGEX)?.groups).toEqual({
+      alt: 'Photo [1]',
+      src: 'a.jpg',
+    });
+    expect('[![Photo [1]](a.jpg)](b)'.match(LINKED_IMAGE_REGEX)?.groups).toEqual({
+      alt2: 'Photo [1]',
+      src2: 'a.jpg',
+      link: 'b',
+    });
+    // An unbalanced bracket starts a link of its own, as in CommonMark
+    expect('![a [b](c.jpg)'.match(IMAGE_REGEX)).toBeNull();
+  });
+
+  test('matches a title in single quotes', () => {
+    expect("![a](my image.jpg 'It’s \\'t\\'')".match(IMAGE_REGEX)?.groups).toEqual({
+      alt: 'a',
+      src: 'my image.jpg',
+      singleQuotedTitle: "It’s \\'t\\'",
+    });
+    expect("[![a](b.jpg 't')](c)".match(LINKED_IMAGE_REGEX)?.groups).toEqual({
+      alt2: 'a',
+      src2: 'b.jpg',
+      singleQuotedTitle2: 't',
+      link: 'c',
+    });
+    // A quote within the file name isn’t a title
+    expect("![a](it's.jpg)".match(IMAGE_REGEX)?.groups?.src).toBe("it's.jpg");
+  });
+
   test('matches a link with an unclosed parenthesis', () => {
     expect('[![a](b)](c(d)'.match(LINKED_IMAGE_REGEX)?.groups?.link).toBe('c(d');
     expect('[![a](b)](c(d)e)'.match(LINKED_IMAGE_REGEX)?.groups?.link).toBe('c(d)e');
@@ -478,6 +508,10 @@ describe('Test image regex performance and nesting', () => {
       ['image starts', (n) => '!['.repeat(n), 1000],
       ['escaped image starts', (n) => '\\!['.repeat(n), 1000],
       ['unclosed titles', (n) => '![](a "'.repeat(n), 1000],
+      ['unclosed single-quoted titles', (n) => "![](a '".repeat(n), 1000],
+      ['unclosed brackets in alt texts', (n) => '![a ['.repeat(n), 1000],
+      ['nested brackets in an alt text', (n) => `![${'[a]'.repeat(n)}`, 4000],
+      ['spaces before an unclosed single-quoted title', (n) => `![](a${' '.repeat(n)}'`, 4000],
       ['trailing spaces', (n) => `![](a${' '.repeat(n)}`, 4000],
       ['spaces before an unclosed title', (n) => `![](a${' '.repeat(n)}"`, 4000],
       ['unclosed link parentheses', (n) => `[![](a)](${'('.repeat(n)}`, 4000],

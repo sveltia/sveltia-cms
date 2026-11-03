@@ -186,7 +186,9 @@ export const slugify = (
   }
 
   if (lowercase) {
-    slug = slug.toLocaleLowerCase();
+    // Not `toLocaleLowerCase()`, which can follow the browser’s locale, e.g. turning `I` into `ı`
+    // without a dot in Turkish, so the same title would get a different slug for another user
+    slug = slug.toLowerCase();
   }
 
   return slug;

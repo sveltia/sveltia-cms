@@ -7,6 +7,7 @@ import {
   getNewPendingEntriesByCollection,
   getPendingEntriesByCollection,
   getReferencedPendingEntries,
+  isRelationFieldOf,
 } from './pending-entries';
 
 /**
@@ -97,6 +98,19 @@ beforeEach(() => {
  */
 const isPendingEntryReferenced = (draft, pendingEntry) =>
   getReferencedPendingEntries({ ...draft, pendingEntries: [pendingEntry] }).length === 1;
+
+describe('isRelationFieldOf', () => {
+  it('tells a Relation field referring to the collection', () => {
+    expect(isRelationFieldOf({ name: 'tag', widget: 'relation', collection: 'tags' }, 'tags')).toBe(
+      true,
+    );
+    expect(
+      isRelationFieldOf({ name: 'tag', widget: 'relation', collection: 'categories' }, 'tags'),
+    ).toBe(false);
+    expect(isRelationFieldOf({ name: 'title', widget: 'string' }, 'tags')).toBe(false);
+    expect(isRelationFieldOf(undefined, 'tags')).toBe(false);
+  });
+});
 
 describe('getPendingEntriesByCollection', () => {
   it('should return the pending entries of the given collection, new or edited', () => {

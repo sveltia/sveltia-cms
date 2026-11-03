@@ -72,7 +72,7 @@ export const IMAGE_COMPONENT = {
   ],
   pattern: IMAGE_REGEX,
   fromBlock: (match) => {
-    const { src, alt, title } = match.groups ?? {};
+    const { src, alt, title = match.groups?.singleQuotedTitle } = match.groups ?? {};
 
     return { src, alt, title: title && unescapeTitle(title) };
   },
@@ -104,12 +104,13 @@ export const LINKED_IMAGE_COMPONENT = {
   fields: [...IMAGE_COMPONENT.fields, { name: 'link', label: 'Link', required: false }],
   pattern: IMAGE_OR_LINKED_IMAGE_REGEX,
   fromBlock: (match) => {
-    const { src, alt, title, src2, alt2, title2, link } = match.groups ?? {};
+    const { src, alt, title, singleQuotedTitle, src2, alt2, title2, singleQuotedTitle2, link } =
+      match.groups ?? {};
 
     return {
       src: (src || src2 || '').trim(),
       alt: (alt || alt2 || '').trim(),
-      title: unescapeTitle(title || title2 || '').trim(),
+      title: unescapeTitle(title || singleQuotedTitle || title2 || singleQuotedTitle2 || '').trim(),
       link: (link || '').trim(),
     };
   },

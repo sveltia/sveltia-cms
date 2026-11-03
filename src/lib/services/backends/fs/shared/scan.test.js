@@ -818,14 +818,16 @@ describe('scanDir - directory recursion scenarios', () => {
     expect(fileHandles.length).toBeGreaterThanOrEqual(0);
   });
 
-  test('should skip hidden directories', async () => {
+  test('should skip hidden directories that no scanning path names', async () => {
     const hiddenDir = createMockDirectoryHandle('.hidden');
+    const gitDir = createMockDirectoryHandle('.git');
     const parentDirHandle = createMockDirectoryHandle('parent');
 
     // @ts-ignore - Mock async iterator
     parentDirHandle.entries = vi.fn(() => ({
       [Symbol.asyncIterator]: async function* parentAsyncIterator2() {
         yield ['.hidden', hiddenDir];
+        yield ['.git', gitDir];
       },
     }));
 
@@ -833,16 +835,50 @@ describe('scanDir - directory recursion scenarios', () => {
       parentDirHandle,
       {
         rootDirHandle,
-        scanningPaths: ['parent/.hidden/file.txt'],
-        scanningPathsRegEx: [/parent\/\.hidden\/file\.txt/],
+        scanningPaths: ['parent'],
+        scanningPathsRegEx: [/^parent(?:\/|$)/],
         fileHandles,
         pathRegexCache: new Map(),
       },
       'parent',
     );
 
-    // Hidden directory should be skipped
+    // Hidden directories should be skipped, even within a scanning path
     expect(hiddenDir.entries).not.toHaveBeenCalled();
+    expect(gitDir.entries).not.toHaveBeenCalled();
+  });
+
+  test('should scan a hidden directory a scanning path names', async () => {
+    const imageHandle = createMockFileHandle('photo.png');
+    const hiddenDir = createMockDirectoryHandle('.vuepress');
+    const parentDirHandle = createMockDirectoryHandle('docs');
+
+    // @ts-ignore - Mock async iterator
+    hiddenDir.entries = vi.fn(() => ({
+      [Symbol.asyncIterator]: async function* hiddenAsyncIterator() {
+        yield ['photo.png', imageHandle];
+      },
+    }));
+    // @ts-ignore - Mock async iterator
+    parentDirHandle.entries = vi.fn(() => ({
+      [Symbol.asyncIterator]: async function* parentAsyncIterator3() {
+        yield ['.vuepress', hiddenDir];
+      },
+    }));
+
+    await scanDir(
+      parentDirHandle,
+      {
+        rootDirHandle,
+        scanningPaths: ['docs/.vuepress'],
+        scanningPathsRegEx: [/^docs\/\.vuepress(?:\/|$)/],
+        fileHandles,
+        pathRegexCache: new Map(),
+      },
+      'docs',
+    );
+
+    expect(fileHandles).toEqual([{ handle: imageHandle, path: 'docs/.vuepress/photo.png' }]);
   });
 
   test('should handle resolve returning null for directory entries', async () => {

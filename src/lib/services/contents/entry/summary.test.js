@@ -542,9 +542,10 @@ describe('Test sanitizeEntrySummary()', () => {
     const input = 'This is **bold** and _italic_ and `code` and <script>alert("xss")</script>';
     const result = sanitizeEntrySummary(input, { allowMarkdown: true });
 
-    // Script tags are completely removed for security
+    // A tag other than a formatting one is kept as text, escaped
     expect(result).toBe(
-      'This is <strong>bold</strong> and <em>italic</em> and <code>code</code> and',
+      'This is <strong>bold</strong> and <em>italic</em> and <code>code</code> and ' +
+        '&lt;script&gt;alert("xss")&lt;/script&gt;',
     );
   });
 
@@ -552,8 +553,22 @@ describe('Test sanitizeEntrySummary()', () => {
     const input = 'This is **bold** and _italic_ and `code` and <script>alert("xss")</script>';
     const result = sanitizeEntrySummary(input, { allowMarkdown: false });
 
-    // All HTML tags are stripped including script content
-    expect(result).toBe('This is bold and italic and code and');
+    // The formatting is stripped, while another tag is kept as text
+    expect(result).toBe('This is bold and italic and code and <script>alert("xss")</script>');
+  });
+
+  test('should keep a tag other than a formatting one as text', () => {
+    expect(sanitizeEntrySummary('Vec<T> in Rust')).toBe('Vec<T> in Rust');
+    expect(sanitizeEntrySummary('Using <script> tags **safely**')).toBe(
+      'Using <script> tags safely',
+    );
+    expect(sanitizeEntrySummary('Vec<T> in **Rust**', { allowMarkdown: true })).toBe(
+      'Vec&lt;T&gt; in <strong>Rust</strong>',
+    );
+    // An unclosed tag doesn’t take the rest of the summary with it
+    expect(sanitizeEntrySummary('The <details> element', { allowMarkdown: true })).toBe(
+      'The &lt;details> element',
+    );
   });
 
   test('should parse HTML character entities', () => {
@@ -1598,9 +1613,12 @@ describe('Additional comprehensive tests for edge cases', () => {
     const input = 'Text <img src="x" onerror="alert(1)"> <iframe src="evil"></iframe>';
     const result = sanitizeEntrySummary(input, { allowMarkdown: true });
 
-    // Dangerous tags should be removed
-    expect(result).not.toContain('onerror');
-    expect(result).not.toContain('iframe');
+    // Dangerous tags are only shown as text
+    expect(result).not.toContain('<img');
+    expect(result).not.toContain('<iframe');
+    expect(result).toBe(
+      'Text &lt;img src="x" onerror="alert(1)"> &lt;iframe src="evil">&lt;/iframe>',
+    );
   });
 
   test('getEntrySummary should handle collection with no summary template', () => {

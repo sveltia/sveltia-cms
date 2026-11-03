@@ -752,20 +752,32 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
       lastModified: new Date('2024-01-01T00:00:00Z'),
     };
 
+    /**
+     * Get an empty listing of a folder, which is listed before a blob is renamed in it.
+     * @returns {Response} Response.
+     */
+    const createEmptyListing = () =>
+      new Response(
+        '<?xml version="1.0" encoding="utf-8"?><EnumerationResults><Blobs /></EnumerationResults>',
+        { status: 200 },
+      );
+
     it('should copy the blob to the new name and delete the original', async () => {
-      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 201 }));
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(createEmptyListing())
+        .mockResolvedValue(new Response(null, { status: 201 }));
 
       const result = await renameBlob(asset, 'renamed.jpg', config, { apiKey: token });
 
-      expect(fetch).toHaveBeenCalledTimes(2);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${containerURL}/images/renamed.jpg?${token}`, {
+      expect(fetch).toHaveBeenCalledTimes(3);
+      expect(fetch).toHaveBeenNthCalledWith(2, `${containerURL}/images/renamed.jpg?${token}`, {
         method: 'PUT',
         headers: {
           'x-ms-blob-type': 'BlockBlob',
           'x-ms-copy-source': `${containerURL}/images/my%20photo.jpg?${token}`,
         },
       });
-      expect(fetch).toHaveBeenNthCalledWith(2, `${containerURL}/images/my%20photo.jpg?${token}`, {
+      expect(fetch).toHaveBeenNthCalledWith(3, `${containerURL}/images/my%20photo.jpg?${token}`, {
         method: 'DELETE',
       });
       expect(result).toEqual(
@@ -780,7 +792,9 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
     });
 
     it('should rename a blob at the container root without metadata', async () => {
-      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 201 }));
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(createEmptyListing())
+        .mockResolvedValue(new Response(null, { status: 201 }));
 
       const result = await renameBlob(
         { ...asset, id: 'photo.jpg', size: undefined, lastModified: undefined },
@@ -790,7 +804,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
       );
 
       expect(fetch).toHaveBeenNthCalledWith(
-        1,
+        2,
         `${containerURL}/renamed.jpg?${token}`,
         expect.anything(),
       );
@@ -806,23 +820,27 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
     });
 
     it('should throw and keep the original while an asynchronous copy is pending', async () => {
-      vi.mocked(fetch).mockResolvedValue(
-        new Response(null, { status: 202, headers: { 'x-ms-copy-status': 'pending' } }),
-      );
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(createEmptyListing())
+        .mockResolvedValue(
+          new Response(null, { status: 202, headers: { 'x-ms-copy-status': 'pending' } }),
+        );
 
       await expect(renameBlob(asset, 'renamed.jpg', config, { apiKey: token })).rejects.toThrow(
         'Failed to copy blob images/my photo.jpg: the copy operation is still pending',
       );
-      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch).toHaveBeenCalledTimes(2);
     });
 
     it('should throw and keep the original when the copy fails', async () => {
-      vi.mocked(fetch).mockResolvedValue(new Response('Forbidden', { status: 403 }));
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(createEmptyListing())
+        .mockResolvedValue(new Response('Forbidden', { status: 403 }));
 
       await expect(renameBlob(asset, 'renamed.jpg', config, { apiKey: token })).rejects.toThrow(
         'Failed to copy blob images/my photo.jpg: Forbidden',
       );
-      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch).toHaveBeenCalledTimes(2);
     });
   });
 

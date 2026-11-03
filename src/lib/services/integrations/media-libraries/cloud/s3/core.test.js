@@ -1059,7 +1059,7 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
     });
 
     it('should rename an object below the prefix within its folder', async () => {
-      vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
+      vi.mocked(fetch).mockImplementation(async () => new Response('', { status: 200 }));
 
       const result = await renameS3Object(
         /** @type {any} */ ({ id: 'uploads/2024/photo.jpg', fileName: 'photo.jpg', size: 12 }),
@@ -1458,7 +1458,8 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
     const asset = { id: 'images/my photo.jpg', fileName: 'my photo.jpg', size: 1234 };
 
     it('should copy the object to the new key and delete the original', async () => {
-      vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
+      // The folder is listed first, then the object is copied and the original deleted
+      vi.mocked(fetch).mockImplementation(async () => new Response('', { status: 200 }));
 
       const result = await renameS3Object(
         asset,
@@ -1467,9 +1468,9 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
         options,
       );
 
-      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(fetch).toHaveBeenCalledTimes(3);
       expect(fetch).toHaveBeenNthCalledWith(
-        1,
+        2,
         'https://test-bucket.s3.us-east-1.amazonaws.com/images/renamed.jpg',
         expect.objectContaining({
           method: 'PUT',
@@ -1481,7 +1482,7 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
         }),
       );
       expect(fetch).toHaveBeenNthCalledWith(
-        2,
+        3,
         'https://test-bucket.s3.us-east-1.amazonaws.com/images/my%20photo.jpg',
         expect.objectContaining({ method: 'DELETE' }),
       );
@@ -1496,7 +1497,8 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
     });
 
     it('should rename an object at the bucket root', async () => {
-      vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
+      // The folder is listed first, then the object is copied and the original deleted
+      vi.mocked(fetch).mockImplementation(async () => new Response('', { status: 200 }));
 
       const result = await renameS3Object(
         { ...asset, id: 'photo.jpg' },
@@ -1506,7 +1508,7 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       );
 
       expect(fetch).toHaveBeenNthCalledWith(
-        1,
+        2,
         'https://test-bucket.s3.us-east-1.amazonaws.com/renamed.jpg',
         expect.anything(),
       );
@@ -1514,7 +1516,8 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
     });
 
     it('should default the size to 0 and omit the ACL when the service sets none', async () => {
-      vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
+      // The folder is listed first, then the object is copied and the original deleted
+      vi.mocked(fetch).mockImplementation(async () => new Response('', { status: 200 }));
 
       const result = await renameS3Object(
         { ...asset, size: undefined },
@@ -1524,7 +1527,7 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       );
 
       expect(fetch).toHaveBeenNthCalledWith(
-        1,
+        2,
         expect.anything(),
         expect.objectContaining({
           headers: expect.not.objectContaining({ 'x-amz-acl': expect.anything() }),
@@ -1542,12 +1545,14 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
     });
 
     it('should throw and keep the original when the copy fails', async () => {
-      vi.mocked(fetch).mockResolvedValue(new Response('Access Denied', { status: 403 }));
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(new Response('', { status: 200 }))
+        .mockResolvedValue(new Response('Access Denied', { status: 403 }));
 
       await expect(renameS3Object(asset, 'renamed.jpg', mockConfig, options)).rejects.toThrow(
         'Failed to copy object images/my photo.jpg: Access Denied',
       );
-      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch).toHaveBeenCalledTimes(2);
     });
   });
 

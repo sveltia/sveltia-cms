@@ -8,7 +8,18 @@ import { getSnapshot } from '$lib/services/utils/state.svelte';
  * GetFieldArgs,
  * PendingEntry,
  * } from '$lib/types/private';
+ * @import { Field, RelationField } from '$lib/types/public';
  */
+
+/**
+ * Check whether the given field is a Relation field referring to the given collection’s entries.
+ * @param {Field | undefined} field Field configuration.
+ * @param {string} collectionName Collection name.
+ * @returns {field is RelationField} Result.
+ */
+export const isRelationFieldOf = (field, collectionName) =>
+  field?.widget === 'relation' &&
+  /** @type {RelationField} */ (field).collection === collectionName;
 
 /**
  * A set of values a pending entry can be referenced from.
@@ -93,7 +104,7 @@ const isReferencedIn = (sources, { collectionName, values }) =>
       const field = getField({ ...fieldArgs, valueMap, keyPath });
 
       // A value in a field that can’t be looked up is given the benefit of the doubt
-      return !field || (field.widget === 'relation' && field.collection === collectionName);
+      return !field || isRelationFieldOf(field, collectionName);
     }),
   );
 

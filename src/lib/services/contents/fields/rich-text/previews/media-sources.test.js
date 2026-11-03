@@ -19,7 +19,7 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
     const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
 
     expect(matches).toHaveLength(1);
-    expect(matches[0][1]).toBe('image.jpg');
+    expect(matches[0].groups?.src).toBe('image.jpg');
   });
 
   test('matches markdown image with title', () => {
@@ -27,7 +27,7 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
     const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
 
     expect(matches).toHaveLength(1);
-    expect(matches[0][1]).toBe('image.jpg');
+    expect(matches[0].groups?.src).toBe('image.jpg');
   });
 
   test('matches multiple images', () => {
@@ -35,8 +35,8 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
     const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
 
     expect(matches).toHaveLength(2);
-    expect(matches[0][1]).toBe('img1.jpg');
-    expect(matches[1][1]).toBe('img2.png');
+    expect(matches[0].groups?.src).toBe('img1.jpg');
+    expect(matches[1].groups?.src).toBe('img2.png');
   });
 
   test('matches images with paths', () => {
@@ -44,7 +44,7 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
     const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
 
     expect(matches).toHaveLength(1);
-    expect(matches[0][1]).toBe('/assets/images/photo.jpg');
+    expect(matches[0].groups?.src).toBe('/assets/images/photo.jpg');
   });
 
   test('does not match incomplete images', () => {
@@ -55,17 +55,17 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
   });
 
   test('matches images with an empty or bracketed alt text', () => {
+    // An unbalanced bracket ends the alt text, as in CommonMark, so `![a]b](odd.jpg)` is no image
     const text = '![](empty.jpg) ![see [1]](note.jpg) ![a]b](odd.jpg)';
     const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
 
-    expect(matches.map(([image, src]) => [image, src])).toEqual([
+    expect(matches.map(({ 0: image, groups }) => [image, groups?.src])).toEqual([
       ['![](empty.jpg)', 'empty.jpg'],
       ['![see [1]](note.jpg)', 'note.jpg'],
-      ['![a]b](odd.jpg)', 'odd.jpg'],
     ]);
   });
 
-  test('matches the source up to the title or the first closing parenthesis', () => {
+  test('matches the source up to the title, like the image editor component', () => {
     const text = [
       '![a](a.jpg "Title (with parens)")',
       '![b](b.jpg  "Escaped \\"quotes\\"")',
@@ -78,14 +78,14 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
 
     const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
 
-    expect(matches.map(([, src]) => src)).toEqual([
+    expect(matches.map(({ groups }) => groups?.src)).toEqual([
       'a.jpg',
       'b.jpg',
-      "c.jpg 'not a title'",
-      'd (1',
+      'c.jpg',
+      'd (1).jpg',
       'my image.jpg',
       'f.jpg',
-      'g.jpg "Unclosed title',
+      // An unclosed title makes it no image, as in CommonMark
     ]);
   });
 
@@ -93,17 +93,21 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
     const text = '![unclosed ![inner](inner.jpg) ![a](unclosed ![b](b.jpg)';
     const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
 
-    expect(matches.map(([image, src]) => [image, src])).toEqual([
+    expect(matches.map(({ 0: image, groups }) => [image, groups?.src])).toEqual([
       ['![inner](inner.jpg)', 'inner.jpg'],
       ['![b](b.jpg)', 'b.jpg'],
     ]);
   });
 
-  test('does not match across lines or with an empty source', () => {
-    const text = '![a\n](a.jpg) ![b](b.jpg\n) ![c]()';
+  test('matches line breaks around the source, as CommonMark does', () => {
+    const text = '![a\n](a.jpg) ![b](b.jpg\n)';
     const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
 
-    expect(matches).toHaveLength(0);
+    expect(matches.map(({ groups }) => groups?.src)).toEqual(['a.jpg', 'b.jpg\n']);
+  });
+
+  test('skips an image without a source', () => {
+    expect(getRichTextMediaSources('![c]() ![d](d.jpg)', 'markdown')).toEqual(['d.jpg']);
   });
 
   test.each([
@@ -276,6 +280,15 @@ describe('replaceRichTextMediaSources()', () => {
         'markdown',
       ),
     ).toBe('image.png ![image.png](blob:1 "image.png") ![a](hero-image.png) ![b](c.png)');
+  });
+
+  test('replaces a Markdown image source wrapped in angle brackets, keeping them', () => {
+    const value = '![a](<my image.png>) ![b](<my image.png> "Title") ![c](<>)';
+
+    expect(getRichTextMediaSources(value, 'markdown')).toEqual(['my image.png', '<>']);
+    expect(
+      replaceRichTextMediaSources(value, new Map([['my image.png', 'new image.png']]), 'markdown'),
+    ).toBe('![a](<new image.png>) ![b](<new image.png> "Title") ![c](<>)');
   });
 
   test('replaces the URLs of the media elements written as raw HTML in Markdown', () => {

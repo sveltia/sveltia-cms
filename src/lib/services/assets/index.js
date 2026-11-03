@@ -8,7 +8,12 @@ import {
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
 import { allAssets, focusedAsset } from '$lib/services/assets/state';
-import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
+import {
+  focusedSubfolder,
+  getFolderNamesInDir,
+  getNonAssetFileNamesInDir,
+  selectedSubfolderPath,
+} from '$lib/services/assets/subfolders';
 import { fillTemplate } from '$lib/services/common/template';
 import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { getTemplatePattern } from '$lib/services/common/template/utils';
@@ -666,6 +671,20 @@ export const countAssetsInFolder = (folder) =>
  */
 export const getAssetsByDirName = (dirname) =>
   allAssets.current.filter((a) => getDirName(a.path) === dirname);
+
+/**
+ * Get the names a new file saved in the given internal directory can’t take: those of the assets,
+ * the entry and Git config files and the subfolders there. A file would overwrite another, and a
+ * Git tree can’t hold a file and a folder under one name.
+ * @param {string} dirname Directory path. An empty string for the repository root.
+ * @returns {string[]} Names, normalized to NFC.
+ */
+export const getTakenNamesInDir = (dirname) =>
+  [
+    ...getAssetsByDirName(dirname).map((a) => a.name),
+    ...getNonAssetFileNamesInDir(dirname),
+    ...getFolderNamesInDir(dirname),
+  ].map((name) => name.normalize());
 
 // Reset the asset selection when a different folder or subfolder is selected
 createRootEffect(() => {
