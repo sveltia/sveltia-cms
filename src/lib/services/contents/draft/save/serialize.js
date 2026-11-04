@@ -14,6 +14,7 @@ import {
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
 import { getWildcardKeyPathPattern } from '$lib/services/contents/entry/key-paths';
+import { getPermalinkKey } from '$lib/services/contents/entry/permalink';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { convertMapLists, getMapKeyField } from '$lib/services/contents/fields/list/map';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
@@ -332,13 +333,15 @@ const copyWildcardField = (ctx, keyPath, field) => {
  * @param {string} [args.canonicalSlugKey] Property name of a canonical slug.
  * @param {string} [args.aliasesKey] Property name of the entry’s URL aliases. Placed right after
  * the canonical slug, ahead of all configured fields, when present in the value map.
+ * @param {string} [args.permalinkKey] Property name of the entry’s permalink. Placed right after
+ * the aliases, ahead of all configured fields, when present in the value map.
  * @param {string} [args.orderKey] Property name of the entry order field. Placed right after the
- * aliases, ahead of all configured fields, when present in the value map.
+ * permalink, ahead of all configured fields, when present in the value map.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  * @param {boolean} [args.isTomlOutput] Whether the output it TOML format.
  * @returns {RawEntryContent} Unflattened entry content sorted by fields. Output order is: canonical
- * slug → aliases → order → configured fields → remainder.
+ * slug → aliases → permalink → order → configured fields → remainder.
  */
 const finalizeContent = ({
   collectionName,
@@ -349,6 +352,7 @@ const finalizeContent = ({
   valueMap,
   canonicalSlugKey,
   aliasesKey,
+  permalinkKey,
   orderKey,
   isIndexFile = false,
   isTomlOutput = false,
@@ -382,6 +386,11 @@ const finalizeContent = ({
     getAliasKeyPaths(unsortedMap, aliasesKey).forEach((keyPath) => {
       copyProperty({ ...copyArgs, key: keyPath });
     });
+  }
+
+  // Add the permalink next so it appears at the top of the output, close to the slug it’s made from
+  if (permalinkKey && Object.hasOwn(unsortedMap, permalinkKey)) {
+    copyProperty({ ...copyArgs, key: permalinkKey });
   }
 
   // Add the order field next so it appears at the top of the output
@@ -468,6 +477,7 @@ export const serializeContent = ({ draft, locale, valueMap, format }) => {
     valueMap,
     canonicalSlugKey,
     aliasesKey: getAliasesKey({ collection, fields }),
+    permalinkKey: getPermalinkKey({ collection, fields }),
     orderKey: getOrderFieldKey(collection),
     isIndexFile,
     isTomlOutput,

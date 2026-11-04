@@ -2126,6 +2126,15 @@
  * effect unless the `preview_path` option is also defined, because that option is what tells the
  * CMS an entry’s path on the live site. It also has no effect if a field with the same name is
  * defined in the `fields` option, in which case the property is left to the editor to manage.
+ * @property {FieldKeyPath | boolean} [permalink_field] Property name used to store the entry’s path
+ * on the live site, filled from the `preview_path` option each time the entry is saved, so a static
+ * site generator can build the page at that path. Default: `false`. Set this to `true` to use
+ * `permalink`, which is what Eleventy reads; its value must then end with a slash or a file
+ * extension, e.g. `portfolio/{{slug}}/`. A value other than a string, such as `false`, which tells
+ * Eleventy not to build the page, is left untouched. It has no effect unless the `preview_path`
+ * option is also defined, or if a field with the same name is defined in the `fields` option, in
+ * which case the property is left to the editor to manage.
+ * @see https://www.11ty.dev/docs/permalinks/
  * @see https://decapcms.org/docs/collection-folder/
  * @see https://sveltiacms.app/en/docs/collections/entries
  */

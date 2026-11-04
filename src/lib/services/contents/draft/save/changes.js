@@ -16,6 +16,7 @@ import {
   buildEntryFileChanges,
   resolveCacheDB,
 } from '$lib/services/contents/draft/save/file-changes';
+import { setPermalink } from '$lib/services/contents/draft/save/permalink';
 import { getCanonicalSlug, getFillSlugOptions } from '$lib/services/contents/draft/slugs';
 import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
@@ -254,8 +255,8 @@ const normalizeFieldValue = async ({ keyPath, value, ...args }) => {
 };
 
 /**
- * Normalize an entry’s content in a locale for saving: add the canonical slug and an alias, then
- * normalize each field value.
+ * Normalize an entry’s content in a locale for saving: add the canonical slug and an alias,
+ * normalize each field value, then add the permalink.
  * @param {NormalizeContentArgs & {
  * locale: InternalLocaleCode, slug: string, path: string, content: FlattenedEntryContent,
  * canonicalSlug: string | undefined, canonicalSlugKey: string }} args Arguments. `content` is
@@ -280,6 +281,10 @@ const normalizeLocaleContent = async ({ path, canonicalSlug, canonicalSlugKey, .
       normalizeFieldValue({ ...args, keyPath, value }),
     ),
   );
+
+  // Store the entry’s path on the live site, if the collection asks for it. It comes last, as the
+  // path can contain a field value, which must no longer be a blob URL
+  setPermalink({ draft, locale, content, slug, path });
 };
 
 /**

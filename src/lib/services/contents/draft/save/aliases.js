@@ -26,6 +26,33 @@ import { isNonEmptyString } from '$lib/services/utils/string';
 const normalizePath = (path) => (path === undefined ? undefined : `/${path.replace(/^\//, '')}`);
 
 /**
+ * Get the path the entry being saved has on the live site, from the `preview_path` option.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} args.locale Locale code.
+ * @param {FlattenedEntryContent} args.content Flattened entry content.
+ * @param {string} args.slug Entry slug for the locale.
+ * @param {string} args.path Entry file path for the locale.
+ * @returns {string | undefined} Site-relative path, or `undefined` if the path is not available.
+ */
+export const getCurrentSitePath = ({ draft, locale, content, slug, path }) => {
+  const { collection } = draft;
+  const { defaultLocale } = collection._i18n;
+
+  return normalizePath(
+    getPreviewPath({
+      collection,
+      locale,
+      slug,
+      path,
+      content,
+      // A snapshot, which is replaced rather than changed as the draft is edited
+      defaultContent: getValueMapSnapshot(draft, defaultLocale),
+    }),
+  );
+};
+
+/**
  * Add the entry’s previous path to the `aliases` list so links to the old path keep working after
  * the slug has been edited. This only applies when the `preview_path` option is defined on the
  * collection, because that option is what allows the CMS to know the entry’s path on the live site.
@@ -70,31 +97,20 @@ export const addAlias = ({ draft, locale, content, slug, path }) => {
     return;
   }
 
-  const getPreviewPathArgs = { collection, locale };
-  const { defaultLocale } = collection._i18n;
-
   // Use the original content, as fields referenced by the `preview_path` template, such as a date,
   // may have been edited along with the slug
   const previousPath = normalizePath(
     getPreviewPath({
-      ...getPreviewPathArgs,
+      collection,
+      locale,
       slug: originalSlug,
       path: originalPath,
       content: originalContent,
-      defaultContent: originalEntry.locales[defaultLocale]?.content,
+      defaultContent: originalEntry.locales[collection._i18n.defaultLocale]?.content,
     }),
   );
 
-  const currentPath = normalizePath(
-    getPreviewPath({
-      ...getPreviewPathArgs,
-      slug,
-      path,
-      content,
-      // A snapshot, which is replaced rather than changed as the draft is edited
-      defaultContent: getValueMapSnapshot(draft, defaultLocale),
-    }),
-  );
+  const currentPath = getCurrentSitePath({ draft, locale, content, slug, path });
 
   // The `preview_path` template may not contain the slug at all, in which case the path is
   // unchanged and an alias would just point the page at itself

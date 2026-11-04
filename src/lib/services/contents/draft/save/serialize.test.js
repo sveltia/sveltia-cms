@@ -982,6 +982,36 @@ describe('Test serializeContent()', () => {
     expect(result.aliases).toEqual(['/posts/old', '/posts/older']);
   });
 
+  test('places the permalink between the aliases and the order field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _type: 'entry',
+        reorder: true,
+        permalink_field: true,
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: 'translationKey' },
+        },
+      },
+      fields: [{ name: 'title', widget: 'string' }],
+      isIndexFile: false,
+    };
+
+    const valueMap = {
+      title: 'Test',
+      order: 3,
+      permalink: '/posts/test/',
+      'aliases.0': '/posts/old',
+    };
+
+    const result = serializeContent({ draft, locale: 'en', valueMap });
+
+    expect(Object.keys(result)).toEqual(['aliases', 'permalink', 'order', 'title']);
+    expect(result.permalink).toBe('/posts/test/');
+  });
+
   test('places the aliases stored under the `aliases_field` property name', () => {
     /** @type {any} */
     const draft = {
