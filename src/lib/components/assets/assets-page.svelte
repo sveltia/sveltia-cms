@@ -99,7 +99,7 @@
     {#if isSearchPage}
       <SearchMainArea />
     {:else if notFound}
-      <PageContainerMainArea aria-label={_('asset_library')}>
+      <PageContainerMainArea id="assets-container" aria-label={_('asset_library')}>
         {#snippet mainContent()}
           <NotFound message={_('asset_folder_not_found')} backPath="/assets" />
         {/snippet}

@@ -100,7 +100,10 @@
       }}
     />
   {/if}
-  <Listbox ariaLabel={_('asset_folder_list')} aria-controls="assets-container">
+  <Listbox
+    ariaLabel={_('asset_folder_list')}
+    aria-controls={isSearchPage || env.isSmallScreen ? undefined : 'assets-container'}
+  >
     {#if folders.length}
       <OptionGroup label={_('asset_location.repository')}>
         {#each folders as folder, index (getAssetFolderKey(folder))}

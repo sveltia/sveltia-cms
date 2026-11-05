@@ -55,7 +55,7 @@
   <Tree
     class={hasAnyNestedEntries ? undefined : 'flat'}
     ariaLabel={_('collection_list')}
-    aria-controls={isSearchPage ? undefined : 'collection-container'}
+    aria-controls={isSearchPage || env.isSmallScreen ? undefined : 'collection-container'}
     expandOnSelect={false}
   >
     {#if collections.length}

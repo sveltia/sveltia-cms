@@ -91,6 +91,10 @@ describe('PrimarySidebar', () => {
 
     expect(container.querySelector('h2')).toHaveTextContent('Contents');
     await expect.element(page.getByRole('searchbox')).toBeVisible();
+    // The sidebar is a page of its own, without the collection it would control
+    await expect
+      .element(page.getByRole('tree', { name: 'Collection List' }))
+      .not.toHaveAttribute('aria-controls');
   });
 
   test('searches from the small-screen search bar', async () => {

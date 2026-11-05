@@ -343,6 +343,10 @@ describe('AssetsPage', () => {
       )
       .toBeInTheDocument();
     await expect.poll(() => announcedPageStatus.current).toBe('Asset folder not found.');
+    // The folder list keeps controlling the main area
+    await expect
+      .element(page.getByRole('main', { name: 'Asset Library' }))
+      .toHaveAttribute('id', 'assets-container');
   });
 
   test('shows the files linked from entries', async () => {
