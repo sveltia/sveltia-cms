@@ -774,6 +774,81 @@ describe('SelectAssetsDialog', () => {
     );
   });
 
+  describe('with a cloud storage prefix made of an entry field', () => {
+    const fieldConfig = {
+      name: 'image',
+      widget: 'image',
+      media_libraries: { test_cloud: { prefix: '{{fields.release}}/' } },
+    };
+
+    test('lists the folder of the entry', async () => {
+      const list = vi.fn().mockResolvedValue([]);
+
+      await renderDialog(
+        {
+          fieldConfig,
+          draft: {
+            collection: { _type: 'entry', name: 'posts', _i18n: { defaultLocale: 'en-US' } },
+            currentValues: { 'en-US': { release: 12 } },
+            files: {},
+          },
+          locale: 'en-US',
+        },
+        { list },
+      );
+
+      await page.getByRole('dialog').getByRole('option', { name: 'Test Cloud' }).click();
+
+      await vi.waitFor(() =>
+        expect(list).toHaveBeenCalledWith(
+          expect.objectContaining({
+            fieldConfig: expect.objectContaining({
+              media_libraries: { test_cloud: { prefix: '12/' } },
+            }),
+          }),
+        ),
+      );
+    });
+
+    test('asks for the value first, without touching the service', async () => {
+      const list = vi.fn().mockResolvedValue([]);
+
+      await renderDialog({ fieldConfig }, { list, upload: vi.fn() });
+
+      const dialog = page.getByRole('dialog');
+
+      await dialog.getByRole('option', { name: 'Test Cloud' }).click();
+
+      await expect
+        .element(dialog.getByRole('alert'))
+        .toMatchTextContent('Fill in the fields this location depends on');
+      await expect.element(dialog.getByRole('button', { name: 'Upload' })).not.toBeInTheDocument();
+      expect(list).not.toHaveBeenCalled();
+    });
+
+    test('leaves pending files out once closed, so they don’t go up later', async () => {
+      const upload = vi.fn();
+      const pendingFiles = [await createMockImageFile({ name: 'pending.png' })];
+
+      const { props, onClose } = await renderDialog(
+        {
+          fieldConfig,
+          pendingFiles,
+          assetLibraryFolderMap: { global: { folder: globalAssetFolder.current, enabled: false } },
+        },
+        { upload },
+      );
+
+      await expect.element(page.getByRole('dialog').getByRole('alert')).toBeInTheDocument();
+      expect(props.pendingFiles).toHaveLength(1);
+
+      await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+      await vi.waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+      expect(props.pendingFiles).toEqual([]);
+      expect(upload).not.toHaveBeenCalled();
+    });
+  });
+
   test('creates a folder on a cloud storage service that has folders', async () => {
     const createFolder = vi.fn().mockResolvedValue(undefined);
 

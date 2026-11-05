@@ -1616,7 +1616,7 @@ describe('fillTemplate()', async () => {
         type: 'preview_path',
         entryFilePath: 'content/posts/2024/my-post.md',
       }),
-    ).toThrow('Unresolvable template tag in preview path: nonexistent');
+    ).toThrow('Unresolvable template tag: nonexistent');
   });
 
   test('fillTemplate is stable for preview_path tags with no matching field', async () => {

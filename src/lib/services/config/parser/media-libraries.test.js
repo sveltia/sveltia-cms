@@ -123,6 +123,54 @@ describe('parseMediaLibraries', () => {
     });
   });
 
+  describe('prefix template tags', () => {
+    /**
+     * Parse a site configuration and return the reported message keys.
+     * @param {Record<string, any>} cmsConfig Site configuration.
+     * @returns {Promise<any[]>} Calls.
+     */
+    const parseSite = async (cmsConfig) => {
+      const { parseMediaLibraries } = await import('./media-libraries.js');
+      const context = { cmsConfig: /** @type {any} */ (cmsConfig) };
+
+      parseMediaLibraries({ config: cmsConfig, context, collectors: createCollectors() });
+
+      return mockAddMessage.mock.calls.map(([args]) => args);
+    };
+
+    it('should warn about a tag in a site-level prefix', async () => {
+      const calls = await parseSite({
+        media_libraries: { aws_s3: { prefix: '{{fields.release}}/' } },
+      });
+
+      expect(calls).toEqual([
+        expect.objectContaining({ type: 'warning', strKey: 'site_library_prefix_template' }),
+      ]);
+    });
+
+    it('should warn about a tag in the legacy site-level option', async () => {
+      const calls = await parseSite({
+        media_library: { name: 'aws_s3', prefix: '{{fields.release}}/' },
+      });
+
+      expect(calls).toHaveLength(1);
+    });
+
+    it('should accept a site-level prefix without tags', async () => {
+      expect(await parseSite({ media_libraries: { aws_s3: { prefix: 'uploads/' } } })).toEqual([]);
+      expect(await parseSite({ media_libraries: { aws_s3: false } })).toEqual([]);
+      expect(await parseSite({})).toEqual([]);
+    });
+
+    it('should accept a tag in a field-level prefix', async () => {
+      const { strKeys } = await parse({
+        media_libraries: { aws_s3: { prefix: '{{fields.release}}/' } },
+      });
+
+      expect(strKeys).toEqual([]);
+    });
+  });
+
   describe('transformations validation', () => {
     it('should accept a valid option map', async () => {
       const { strKeys } = await parseTransformations({

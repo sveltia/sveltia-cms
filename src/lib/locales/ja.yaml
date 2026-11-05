@@ -1708,6 +1708,8 @@ assets_dialog:
   selected_folder: '選択中のフォルダー: {$path}'
   selected_folders: '{$count} 個のフォルダーを選択中'
   no_subfolders: このフォルダーにはサブフォルダーがありません。
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: このロケーションのファイルを参照またはアップロードするには、関連するフィールドに入力してください。
 
   # Asset folder options
   folder:
@@ -2186,6 +2188,8 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth アプリケーション ID が定義されていません。ユーザーがログインするにはアクセストークンを入力する必要があります。
+    # Don’t localize `prefix`
+    site_library_prefix_template: メディアライブラリの `prefix` オプションにテンプレートタグが含まれています。トップレベルには値を埋め込むエントリーがないため、テンプレートタグはフィールドレベルでのみサポートされます。
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}` オプションは Sveltia CMS ではサポートされていません。このオプションは無視されます。'
     # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`

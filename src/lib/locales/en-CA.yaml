@@ -1800,6 +1800,8 @@ assets_dialog:
       one {{ {$count} folder selected }}
       *   {{ {$count} folders selected }}
   no_subfolders: This folder has no subfolders.
+  # Shown for a cloud storage service whose `prefix` option depends on fields of the entry
+  prefix_unresolved: Fill in the fields this location depends on to browse and upload its files.
 
   # Asset folder options
   folder:
@@ -2284,6 +2286,8 @@ config:
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth application ID is not defined. Users are required to provide an access token to sign in.
+    # Don’t localize `prefix`
+    site_library_prefix_template: The `prefix` option of a media library contains template tags, which are only supported at the field level, as there is no entry to fill them with at the top level.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: The `{$prop}` option is not supported in Sveltia CMS. It will be ignored.
     # Don’t localize `stages`, `publish_mode`, `editorial_workflow` and {$type}, which is `preview` or `simple`

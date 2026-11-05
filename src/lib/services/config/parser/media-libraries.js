@@ -1,5 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
 import { RASTER_IMAGE_FORMATS, VECTOR_IMAGE_FORMATS } from '$lib/services/utils/media/image';
 
@@ -110,4 +111,20 @@ export const parseMediaLibraries = ({ config, context, collectors }) => {
       parseTransformations({ transformations: libraryConfig.transformations, context, collectors });
     }
   });
+
+  // There’s no entry to fill the tags with at the site level, unlike in a field
+  if (config === context.cmsConfig) {
+    [mediaLibrary, ...(isObject(mediaLibraries) ? Object.values(mediaLibraries) : [])].forEach(
+      (options) => {
+        if (typeof options?.prefix === 'string' && hasTemplateTags(options.prefix)) {
+          addMessage({
+            type: 'warning',
+            strKey: 'site_library_prefix_template',
+            context,
+            collectors,
+          });
+        }
+      },
+    );
+  }
 };

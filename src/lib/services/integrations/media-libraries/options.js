@@ -21,7 +21,7 @@ export const findLibraryOptions = (libraryName, config) => {
   const options = config?.media_libraries?.[libraryName];
 
   if (options !== undefined && options !== null) {
-    return options;
+    return /** @type {MediaLibraries[T]} */ (options);
   }
 
   const { media_library: legacyOptions } = config ?? {};

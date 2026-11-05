@@ -18,6 +18,7 @@
     isFolderOffered,
     sortServicesByName,
   } from '$lib/services/assets/browser/select-assets-dialog.svelte';
+  import { fillLibraryPrefix } from '$lib/services/assets/external/prefix';
   import { assetsLocked } from '$lib/services/assets/folders';
   import { revokeBlobURLIfNeeded } from '$lib/services/assets/info';
   import { isCmsFolderPath } from '$lib/services/assets/reserved';
@@ -55,7 +56,7 @@
    * SelectAssetsView,
    * SelectedResource,
    * } from '$lib/types/private';
-   * @import { MediaField, StockAssetProviderName } from '$lib/types/public';
+   * @import { MediaField, MediaLibraries, StockAssetProviderName } from '$lib/types/public';
    */
 
   /**
@@ -284,6 +285,19 @@
   const isCloudLibrary = $derived(
     cloudServiceEntries.map(([serviceId]) => serviceId).includes(libraryName),
   );
+  /** Field configuration for the selected service, with its `prefix` option filled, if any. */
+  const filledPrefix = $derived(
+    fillLibraryPrefix({
+      serviceId: /** @type {keyof MediaLibraries} */ (libraryName),
+      fieldConfig,
+      draft,
+      locale,
+    }),
+  );
+  /** Whether the files on the selected cloud storage service can be browsed and uploaded here. */
+  const canBrowseCloudLibrary = $derived(
+    isCloudLibrary && libraryName !== 'cloudinary' && !filledPrefix.unresolved,
+  );
   const isStockLibrary = $derived(
     enabledStockAssetProviderEntries
       .map(([serviceId]) => serviceId)
@@ -396,6 +410,8 @@
     droppedAssets = [];
     assetListing.reset();
     selectedResources = [];
+    // Files that couldn’t be uploaded mustn’t go up the next time the dialog is opened
+    pendingFiles = [];
   };
 
   /**
@@ -447,7 +463,7 @@
 {/snippet}
 
 {#snippet headerItems()}
-  {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary') || (isStockLibrary && libraryName !== 'picsum')}
+  {#if isDefaultLibrary || canBrowseCloudLibrary || (isStockLibrary && libraryName !== 'picsum')}
     {#if selectAssetsView.current}
       <ViewSwitcher {currentView} aria-controls="select-assets-grid" />
     {/if}
@@ -478,7 +494,7 @@
       externalAssetsPanel?.showNewFolderDialog();
     })}
   {/if}
-  {#if !selectFolder && (isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary'))}
+  {#if !selectFolder && (isDefaultLibrary || canBrowseCloudLibrary)}
     <Button
       variant="primary"
       label={_('upload')}
@@ -617,10 +633,14 @@
               open = false;
             }}
           />
+        {:else if libraryName === serviceId && filledPrefix.unresolved}
+          <EmptyState>
+            <span role="alert">{_('assets_dialog.prefix_unresolved')}</span>
+          </EmptyState>
         {:else if libraryName === serviceId}
           <ExternalAssetsPanel
             {kind}
-            {fieldConfig}
+            fieldConfig={filledPrefix.fieldConfig}
             {multiple}
             {searchTerms}
             {serviceProps}

@@ -140,6 +140,43 @@ test.describe('with the legacy `media_library` option', () => {
     });
   });
 
+  test.describe('on a field with the unified option, overriding some of the global options', () => {
+    const [collection] = BASE_CONFIG.collections;
+
+    test.use({
+      config: {
+        ...BASE_CONFIG,
+        media_libraries: {
+          aws_s3: { bucket: 'acme', region: 'us-east-1' },
+          azure_blob_storage: { account_name: 'acme', container: 'media' },
+        },
+        collections: [
+          {
+            ...collection,
+            fields: [
+              ...collection.fields,
+              // The bucket and the container are left to the global options
+              {
+                name: 'cover',
+                widget: 'image',
+                media_libraries: {
+                  aws_s3: { prefix: 'covers/' },
+                  azure_blob_storage: { prefix: 'covers/' },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    test('accepts the options the storage requires being left out', async ({ cms, page }) => {
+      await cms.open();
+      await cms.signIn();
+      await expect(page.getByRole('main', { name: /Posts.*Collection/ })).toBeVisible();
+    });
+  });
+
   test.describe('with an invalid option value', () => {
     test.use({
       config: { ...BASE_CONFIG, media_library: { ...CLOUDINARY, output_filename_only: 'yes' } },

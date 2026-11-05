@@ -2161,7 +2161,7 @@
 /**
  * Options for the `fillTemplate` method.
  * @typedef {object} FillTemplateOptions
- * @property {'preview_path' | 'media_folder'} [type] Slug type.
+ * @property {'preview_path' | 'media_folder' | 'library_prefix'} [type] Slug type.
  * @property {InternalCollection} collection Entry collection.
  * @property {FlattenedEntryContent} content Entry content for the default locale.
  * @property {string} [currentSlug] Entry slug already created for the path.

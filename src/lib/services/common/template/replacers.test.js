@@ -372,7 +372,7 @@ describe('replaceTemplatePlaceholder()', () => {
     const context = createContext({ type: 'preview_path', entryFilePath: 'content/posts/a.md' });
 
     expect(() => replaceTemplatePlaceholder('missing', context)).toThrow(
-      'Unresolvable template tag in preview path: missing',
+      'Unresolvable template tag: missing',
     );
   });
 
@@ -406,7 +406,7 @@ describe('replaceTemplatePlaceholder()', () => {
           'missing | nothing',
           createContext({ type: 'preview_path', entryFilePath: 'content/posts/a.md' }),
         ),
-      ).toThrow('Unresolvable template tag in preview path: missing');
+      ).toThrow('Unresolvable template tag: missing');
     });
 
     test('keeps an empty `default` result as is, even with a custom transformation', () => {

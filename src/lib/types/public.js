@@ -238,7 +238,10 @@
  * the Neon Console, e.g. `https://br-cool-darkness-a1b2c3d4.storage.c-1.us-east-2.aws.neon.tech`.
  * Ignored for the other services, whose endpoints are derived from their own options.
  * @property {string} [prefix] Path prefix within the bucket, e.g. `uploads/`. A trailing slash is
- * added if missing.
+ * added if missing. In the `media_libraries` option of a field, it can contain template tags to
+ * keep the files of an entry in a folder of their own, e.g. `{{fields.release}}/`. Each value is
+ * slugified, and files can’t be listed or uploaded until the fields it depends on are filled in.
+ * The tags aren’t supported at the site level, where there’s no entry to read the values from.
  * @property {boolean} [force_path_style] Whether to use path-style URLs
  * (`https://s3.region.amazonaws.com/bucket/key`) instead of virtual-hosted-style URLs
  * (`https://bucket.s3.region.amazonaws.com/key`) for Amazon S3. Path-style URLs are always used
@@ -277,7 +280,10 @@
  * @property {string} [endpoint] Custom Blob service endpoint including the account, such as a
  * custom domain or the Azurite emulator URL. Overrides `account_name`.
  * @property {string} [prefix] Path prefix within the container, e.g. `uploads/`. A trailing slash
- * is added if missing.
+ * is added if missing. In the `media_libraries` option of a field, it can contain template tags to
+ * keep the files of an entry in a folder of their own, e.g. `{{fields.release}}/`. Each value is
+ * slugified, and files can’t be listed or uploaded until the fields it depends on are filled in.
+ * The tags aren’t supported at the site level, where there’s no entry to read the values from.
  * @property {string} [public_url] Base URL for public asset access. When set, asset download URLs
  * are constructed as `{public_url}/{blob_name}` instead of the Blob service URL. Required unless
  * the container allows anonymous read access, because the URL stored in an entry can’t contain the
@@ -382,6 +388,15 @@
  * storage. Set to `false` to explicitly disable.
  * @property {StockMediaLibrary | false} [stock_assets] Options for the unified stock photo/video
  * media library. Set to `false` to explicitly disable.
+ */
+
+/**
+ * Field-level `media_libraries` option. The options of a storage are merged over the global options
+ * of the same storage, so the options the storage requires, such as an S3 `bucket`, can be left to
+ * the global ones.
+ * @typedef {Omit<MediaLibraries, S3MediaLibraryName | 'azure_blob_storage'> &
+ * { [K in S3MediaLibraryName]?: Partial<S3MediaLibrary> | false } &
+ * { azure_blob_storage?: Partial<AzureMediaLibrary> | false }} FieldMediaLibraries
  */
 
 /**
@@ -538,11 +553,11 @@
  * that allows only one library. It overrides the global options of the same library in the same way
  * as `media_libraries`; without a `name`, it applies to the library named in the global
  * `media_library` option. Use `media_libraries` instead to support multiple libraries.
- * @property {MediaLibraries} [media_libraries] Unified media storage option that supports multiple
- * libraries. Each library’s options, including `all`, are merged over the same library’s global
- * options, one level deep, so a field only needs to set what it overrides: nested objects such as
- * `config` are merged key by key, while other values, including arrays, are replaced. `false`
- * disables the library for the field. Libraries not defined here fall back to the global
+ * @property {FieldMediaLibraries} [media_libraries] Unified media storage option that supports
+ * multiple libraries. Each library’s options, including `all`, are merged over the same library’s
+ * global options, one level deep, so a field only needs to set what it overrides: nested objects
+ * such as `config` are merged key by key, while other values, including arrays, are replaced.
+ * `false` disables the library for the field. Libraries not defined here fall back to the global
  * configuration.
  * @see https://decapcms.org/docs/widgets/#File
  * @see https://decapcms.org/docs/widgets/#Image

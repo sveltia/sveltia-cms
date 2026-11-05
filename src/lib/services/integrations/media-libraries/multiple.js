@@ -3,6 +3,7 @@ import { cmsConfig } from '$lib/services/config';
 /**
  * @import {
  * FieldLegacyMediaLibrary,
+ * FieldMediaLibraries,
  * GlobalLegacyMediaLibrary,
  * MediaField,
  * MediaLibraries,
@@ -11,7 +12,8 @@ import { cmsConfig } from '$lib/services/config';
 
 /**
  * Helper to check `multiple` option in media libraries config.
- * @param {MediaLibraries | undefined} mediaLibraries Media libraries configuration.
+ * @param {MediaLibraries | FieldMediaLibraries | undefined} mediaLibraries Media libraries
+ * configuration.
  * @returns {boolean | undefined} Result of checking if any media library allows multiple files.
  */
 export const hasMultipleInMediaLibraries = (mediaLibraries) => {
