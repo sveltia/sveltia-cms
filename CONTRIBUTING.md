@@ -8,9 +8,9 @@ Donations are primarily used to cover the monthly cost of the Claude Max subscri
 
 ## Bug reports
 
-Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) so we can make the product better for everyone.
+Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) so we can make the product better for everyone. We usually fix bugs within 8 hours of them being reported, but it can take longer if the issue is complex or we’re busy. We appreciate your patience and understanding.
 
-We usually fix bugs within 8 hours of them being reported, but it can take longer if the issue is complex or we’re busy. We appreciate your patience and understanding.
+For security vulnerability reports, see [SECURITY.md](https://github.com/sveltia/sveltia-cms/blob/main/SECURITY.md).
 
 ## Feature requests
 
@@ -18,11 +18,11 @@ You can [request new features](https://github.com/sveltia/sveltia-cms/issues/new
 
 ## Pull requests
 
-For [various reasons](https://github.com/sveltia/sveltia-cms/issues/966#issuecomment-5645271030), pull requests will not be accepted for the time being, except for localization and trivial changes, such as fixing typos or style issues. Please file issues instead. We plan to reevaluate the UI framework, currently Svelte, and create contributor documents after the 2.0 release.
+For [various reasons](https://github.com/sveltia/sveltia-cms/issues/966#issuecomment-5645271030), pull requests will not be accepted for the time being, except for localization and trivial changes, such as fixing typos or style issues. Please file issues instead. We plan to reevaluate the UI framework, currently Svelte, and create contributor documents in the future.
 
 ## Localization
 
-We’re now looking for volunteers to help us translate Sveltia CMS into different languages. If you’re interested in helping, please check out our [localization guide](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
+We’re looking for volunteers to help us translate Sveltia CMS into different languages. If you’re interested in helping, please check out our [localization guide](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
 
 ## Discussions
 
