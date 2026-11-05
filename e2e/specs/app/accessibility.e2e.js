@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/monolingual.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
-import { openCollection, openEntry, openFolder } from '../../fixtures/ui.js';
+import { openCollection, openEntry } from '../../fixtures/ui.js';
 import { getBottomNavigation, PHONE, signIn } from '../mobile/helpers.js';
 
 /**
@@ -175,7 +175,11 @@ test.describe('small screen', () => {
 
   test('has no violations in the asset list', async ({ page }) => {
     await openAssets(page);
-    await openFolder(page, /All Assets/);
+    // Not `openFolder()`: on a small screen, the folder list goes away once a folder is opened
+    await page
+      .getByRole('listbox', { name: 'Asset Folder List' })
+      .getByRole('option', { name: /All Assets/ })
+      .click();
     await expect(page.getByRole('grid', { name: 'Assets' })).toBeVisible();
     await expectNoViolations(page);
   });
