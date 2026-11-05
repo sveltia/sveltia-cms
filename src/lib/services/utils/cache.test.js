@@ -5,7 +5,6 @@ import {
   getOrCreate,
   getOrCreateAsync,
   getOrCreateBounded,
-  lazy,
   memoizeOnSource,
   shareInFlight,
 } from './cache';
@@ -332,28 +331,5 @@ describe('Test memoizeOnSource()', () => {
     expect(getValue()).toBe('x');
     expect(getValue()).toBe('x');
     expect(build).toHaveBeenCalledOnce();
-  });
-});
-
-describe('Test lazy()', () => {
-  test('builds the value on first use only', () => {
-    const create = vi.fn(() => ({}));
-    const getValue = lazy(create);
-
-    expect(create).not.toHaveBeenCalled();
-
-    const value = getValue();
-
-    expect(getValue()).toBe(value);
-    expect(create).toHaveBeenCalledOnce();
-  });
-
-  test('also caches an undefined value', () => {
-    const create = vi.fn(() => undefined);
-    const getValue = lazy(create);
-
-    expect(getValue()).toBeUndefined();
-    expect(getValue()).toBeUndefined();
-    expect(create).toHaveBeenCalledOnce();
   });
 });
