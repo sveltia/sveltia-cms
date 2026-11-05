@@ -4,7 +4,7 @@
 
 Due to limited resources, we do not create branch releases for previous major/minor versions of Sveltia CMS. Instead, we only maintain the latest version.
 
-For example, once version 2.1.0 is released, 2.0.x will no longer be supported. Likewise, once version 3.0.0 is released, 2.x.x will no longer be supported. This means that we do not backport bug fixes to older versions.
+For example, once version 2.1.0 is released, 2.0.x will no longer be supported. Likewise, once version 3.0.0 is released, 2.x.x will no longer be supported. This means that we do not backport security patches and other bug fixes to older versions.
 
 However, exceptions may be made in the event of critical security issues affecting a large number of users.
 
@@ -19,4 +19,4 @@ We don’t usually request CVEs as we consider them to be redundant for the foll
 - `npm audit` and other tools are [powered by GitHub](https://github.blog/security/supply-chain-security/github-advisory-database-now-powers-npm-audit/) where we publish advisories.
 - Sveltia CMS is not a library that needs to consider downstream consumers.
 - The CMS’s update process is transparent. The majority of users automatically receive the latest version [via a CDN](https://sveltiacms.app/en/docs/architecture#how-sveltia-cms-works).
-- This Git-based CMS is intended for use by a single developer or a small, trusted team. It makes certain types of vulnerability, such as stored XSS and ReDoS, highly unlikely to be exploited, since the commit log reveals the attacker’s identity. In practice, the impact of most vulnerabilities is very limited, so using an unpatched version isn’t necessarily any less safe. However, users are still encouraged to use the latest version to benefit from the latest improvements.
+- This Git-based CMS is intended for use by a single developer or a small, trusted team. It makes certain types of vulnerability, such as Stored XSS and ReDoS, highly unlikely to be exploited, since the commit log would easily reveal the attacker’s identity. In practice, the impact of most vulnerabilities is very limited, so using an unpatched version isn’t necessarily any less safe. Nevertheless, users are encouraged to use the latest version to benefit from the latest improvements.
