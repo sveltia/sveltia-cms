@@ -78,6 +78,30 @@ describe('integrations/media-libraries/cloud/shared/service', () => {
     expect(service.resolveConfig(libOptions)).toBe(libOptions);
   });
 
+  it('should use the site-level `label` option as the service label', () => {
+    expect(service.serviceLabel).toBe('Test Service');
+
+    cmsConfig.current = /** @type {any} */ ({
+      media_libraries: { azure_blob_storage: { ...libOptions, label: 'My Storage' } },
+    });
+
+    // Consumers destructure the label from the service object
+    const { serviceLabel } = service;
+
+    expect(serviceLabel).toBe('My Storage');
+  });
+
+  it.each([
+    ['an empty label', { media_libraries: { azure_blob_storage: { label: '' } } }],
+    ['a disabled service', { media_libraries: { azure_blob_storage: false } }],
+    ['an unconfigured service', {}],
+    ['a missing config', undefined],
+  ])('should fall back to the default service label with %s', (_name, config) => {
+    cmsConfig.current = /** @type {any} */ (config);
+
+    expect(service.serviceLabel).toBe('Test Service');
+  });
+
   it('should get the library options from the site or given config', () => {
     expect(service.getLibraryOptions()).toBe(libOptions);
     expect(service.getLibraryOptions(/** @type {any} */ ({}))).toBeUndefined();
@@ -120,7 +144,12 @@ describe('integrations/media-libraries/cloud/shared/service', () => {
 
   it('should pass the library options through the config resolver', () => {
     const resolveConfig = vi.fn((options) => ({ ...options, endpoint: 'https://test' }));
-    const custom = new ObjectStorageService({ ...service, resolveConfig });
+
+    const custom = new ObjectStorageService({
+      ...service,
+      serviceLabel: definition.serviceLabel,
+      resolveConfig,
+    });
 
     expect(custom.getConfig(fetchOptions)).toEqual({ ...libOptions, endpoint: 'https://test' });
     expect(resolveConfig).toHaveBeenCalledWith(libOptions);

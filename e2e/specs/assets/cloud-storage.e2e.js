@@ -379,6 +379,7 @@ test.describe('Self-hosted S3-compatible storage', () => {
       aws_s3: {
         access_key_id: 'GKe2e0000000000000000000000',
         bucket: 'e2e-bucket',
+        label: 'Garage',
         region: 'garage',
         endpoint: 'https://s3.example.com',
         public_url: 'https://web.example.com',
@@ -386,7 +387,7 @@ test.describe('Self-hosted S3-compatible storage', () => {
     }),
   });
 
-  test('accepts a secret key longer than an Amazon S3 one, and picks an image', async ({
+  test('goes by its label, accepts a longer secret key than Amazon S3, and picks an image', async ({
     cms,
     page,
   }) => {
@@ -406,9 +407,9 @@ test.describe('Self-hosted S3-compatible storage', () => {
     await cms.open();
     await cms.signIn();
 
-    const { cover, dialog } = await openSelectImageDialog(page, 'Amazon S3');
+    const { cover, dialog } = await openSelectImageDialog(page, 'Garage');
 
-    await enterCredential(dialog, 'Amazon S3', garage.secretAccessKey);
+    await enterCredential(dialog, 'Garage', garage.secretAccessKey);
     await selectOption(
       dialog
         .getByRole('listbox', { name: 'Available Images' })

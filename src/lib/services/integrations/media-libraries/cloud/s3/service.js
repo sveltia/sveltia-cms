@@ -12,7 +12,7 @@ import { isS3ObjectUrl, s3Operations } from './core';
  * @typedef {object} S3CompatibleServiceOptions
  * @property {keyof MediaLibraries} serviceId Service identifier matching the `media_libraries`
  * key.
- * @property {string} serviceLabel Service label.
+ * @property {string} serviceLabel Default service label, overridden by the `label` library option.
  * @property {string} serviceURL Service URL.
  * @property {string} developerURL URL of the page that provides the API/developer service.
  * @property {string} apiKeyURL URL of the page that provides the secret access key.

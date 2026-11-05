@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { cmsConfig } from '$lib/services/config/state';
 
 import awsS3 from './aws-s3';
 import { S3CompatibleService } from './service';
@@ -9,6 +11,21 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
     bucket: 'my-bucket',
     region: 'us-east-1',
   };
+
+  afterEach(() => {
+    cmsConfig.current = undefined;
+  });
+
+  it('should show a self-hosted server under its `label`', () => {
+    cmsConfig.current = /** @type {any} */ ({
+      media_libraries: {
+        aws_s3: { ...libOptions, endpoint: 'https://s3.example.com', label: 'Garage' },
+      },
+    });
+
+    expect(awsS3.serviceLabel).toBe('Garage');
+    expect(awsS3.isEnabled()).toBe(true);
+  });
 
   it('should have correct service configuration', () => {
     expect(awsS3).toBeInstanceOf(S3CompatibleService);

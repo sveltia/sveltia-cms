@@ -49,7 +49,7 @@ import {
  * @typedef {object} ObjectStorageServiceOptions
  * @property {keyof MediaLibraries} serviceId Service identifier matching the `media_libraries`
  * key.
- * @property {string} serviceLabel Service label.
+ * @property {string} serviceLabel Default service label, overridden by the `label` library option.
  * @property {string} serviceURL Service URL.
  * @property {string} developerURL URL of the page that provides the API/developer service.
  * @property {string} apiKeyURL URL of the page that provides the API key.
@@ -98,7 +98,7 @@ export class ObjectStorageService {
     operations,
   }) {
     this.serviceId = serviceId;
-    this.serviceLabel = serviceLabel;
+    this.defaultServiceLabel = serviceLabel;
     this.serviceURL = serviceURL;
     this.developerURL = developerURL;
     this.apiKeyURL = apiKeyURL;
@@ -107,6 +107,16 @@ export class ObjectStorageService {
     this.isConfigured = isConfigured;
     this.isConfigURL = isConfigURL;
     this.operations = operations;
+  }
+
+  /**
+   * Get the name to show for the service: the site-level `label` option, if any, which lets a
+   * self-hosted server reached through `endpoint` go by its own name, or the default label. It has
+   * to be read on demand, because the service is instantiated before the config is loaded.
+   * @returns {string} Service label.
+   */
+  get serviceLabel() {
+    return this.getLibraryOptions()?.label || this.defaultServiceLabel;
   }
 
   /**

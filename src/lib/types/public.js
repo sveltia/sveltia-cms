@@ -210,6 +210,11 @@
 /**
  * Options for S3-compatible media libraries.
  * @typedef {object} S3MediaLibrary
+ * @property {string} [label] Name to show for the service in the Asset Library, the Select Assets
+ * dialog and the Settings dialog, instead of the default one, e.g. `Garage` for a self-hosted
+ * server configured as `aws_s3`. It’s not localized, and it’s only read from the site-level
+ * options, so it’s ignored in the `media_libraries` option of a field. Default: the service name,
+ * e.g. `Amazon S3`.
  * @property {string} [access_key_id] AWS access key ID or equivalent (safe to store in config).
  * Required for all services except Bunny Storage, where it defaults to `bucket`, as the storage
  * zone name serves as the access key ID.
@@ -262,6 +267,11 @@
  * that allows the `GET`, `PUT` and `OPTIONS` methods along with the `x-ms-blob-type` and
  * `content-type` headers from the CMS’s origin.
  * @typedef {object} AzureMediaLibrary
+ * @property {string} [label] Name to show for the service in the Asset Library, the Select Assets
+ * dialog and the Settings dialog, instead of the default one, e.g. the name of a server configured
+ * with `endpoint`. It’s not localized, and it’s only read from the site-level options, so
+ * it’s ignored in the `media_libraries` option of a field. Default: the service name, e.g.
+ * `Azure Blob Storage`.
  * @property {string} [account_name] Storage account name. Required unless `endpoint` is given.
  * @property {string} container Blob container name.
  * @property {string} [endpoint] Custom Blob service endpoint including the account, such as a
