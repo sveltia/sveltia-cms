@@ -19,7 +19,7 @@ test.beforeEach(async ({ cms, page }) => {
 test('shows the folders by name and lists the files in each', async ({ page }) => {
   const docs = page
     .getByRole('tree', { name: 'Collection List' })
-    .getByRole('treeitem', { name: 'Docs', exact: true });
+    .getByRole('treeitem', { name: /^Docs\b/ });
 
   const rows = getEntryRows(page);
 

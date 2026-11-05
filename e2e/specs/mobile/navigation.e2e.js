@@ -29,9 +29,9 @@ test('shows the bottom navigation instead of the global toolbar', async ({ page 
   await expect(sidebar.getByRole('searchbox', { name: 'Search for contents…' })).toBeVisible();
   await expect(sidebar.getByRole('tree', { name: 'Collection List' })).toMatchAriaSnapshot(`
     - group "Collections":
-      - treeitem "Posts"
-      - treeitem "Authors"
-      - treeitem "Pages"
+      - treeitem /^Posts/
+      - treeitem /^Authors/
+      - treeitem /^Pages/
     - group "Files":
       - treeitem "Site Settings"
   `);

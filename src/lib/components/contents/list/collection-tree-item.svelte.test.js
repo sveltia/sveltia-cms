@@ -70,7 +70,7 @@ describe('CollectionTreeItem', () => {
       { wrapper: Tree },
     );
 
-    const item = page.getByRole('treeitem', { name: 'Pages' });
+    const item = page.getByRole('treeitem', { name: /^Pages/ });
 
     // The folder tree is rendered but collapsed
     await expect.element(item).toHaveTextContent('chevron_right web Pages 2 folder docs');
@@ -123,7 +123,7 @@ describe('CollectionTreeItem', () => {
       );
 
       await expect
-        .element(page.getByRole('treeitem', { name: 'Pages' }))
+        .element(page.getByRole('treeitem', { name: /^Pages/ }))
         .toHaveTextContent('chevron_right web Pages 3 folder docs');
     } finally {
       unpublishedEntries.current = [];
@@ -143,8 +143,9 @@ describe('CollectionTreeItem', () => {
     // `content/sections/_index.md` is the collection’s own page, so only `first` is counted
     // @see https://github.com/sveltia/sveltia-cms/issues/1005
     await expect
-      .element(page.getByRole('treeitem', { name: 'Sections' }))
+      .element(page.getByRole('treeitem', { name: /^Sections/ }))
       .toHaveTextContent('bookmark_manager Sections 1');
+    await expect.element(page.getByLabelText('1 entry')).toHaveTextContent('1');
   });
 
   test('falls back to the collection name', async () => {
@@ -154,6 +155,17 @@ describe('CollectionTreeItem', () => {
       { wrapper: Tree },
     );
 
-    await expect.element(page.getByRole('treeitem', { name: 'notes' })).toBeVisible();
+    await expect.element(page.getByRole('treeitem', { name: /^notes/ })).toBeVisible();
+  });
+
+  test('leaves the label out of a count of zero to match the visible text', async () => {
+    const { container } = await render(
+      CollectionTreeItem,
+      { collection: /** @type {any} */ (getCollection('notes')) },
+      { wrapper: Tree },
+    );
+
+    await expect.element(page.getByRole('treeitem', { name: 'notes 0' })).toBeVisible();
+    expect(container.querySelector('.count')).not.toHaveAttribute('aria-label');
   });
 });

@@ -100,7 +100,7 @@
               <Icon name="bookmark_manager" />
             {/snippet}
             {#snippet endIcon()}
-              <span class="count" aria-label="({_('x_entries', { values: { count } })})">
+              <span class="count" aria-label={_('x_entries', { values: { count } })}>
                 {appNumberFormatter.current.format(count)}
               </span>
             {/snippet}

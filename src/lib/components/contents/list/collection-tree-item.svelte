@@ -94,7 +94,10 @@
     <Icon name={icon || 'bookmark_manager'} />
   {/snippet}
   {#snippet endIcon()}
-    <span class="count" aria-label="({_('x_entries', { values: { count: entryCount } })})">
+    <span
+      class="count"
+      aria-label={entryCount ? _('x_entries', { values: { count: entryCount } }) : undefined}
+    >
       {appNumberFormatter.current.format(entryCount)}
     </span>
   {/snippet}

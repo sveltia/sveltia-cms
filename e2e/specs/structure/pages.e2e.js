@@ -29,7 +29,7 @@ const chooseParentFolder = async (page, label) => {
 
 test('shows the folders in the sidebar and lists the entries in each', async ({ page }) => {
   const collections = page.getByRole('tree', { name: 'Collection List' });
-  const pages = collections.getByRole('treeitem', { name: 'Pages', exact: true });
+  const pages = collections.getByRole('treeitem', { name: /^Pages\b/ });
   const rows = getEntryRows(page);
 
   // A page that holds no other page is an entry, not a folder. The alumni page is deeper than the
@@ -103,7 +103,7 @@ test('creates an entry in another folder chosen with the path editor', async ({ 
   await expect(
     page
       .getByRole('tree', { name: 'Collection List' })
-      .getByRole('treeitem', { name: 'Pages', exact: true })
+      .getByRole('treeitem', { name: /^Pages\b/ })
       .getByRole('treeitem'),
   ).toHaveText([/About Us/, /Contact/]);
 });

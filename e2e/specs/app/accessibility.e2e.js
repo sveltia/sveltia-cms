@@ -25,15 +25,6 @@ const FILES = { ...MONOLINGUAL_FILES, 'static/uploads/photo.png': createPNG() };
 test.use({ config: MONOLINGUAL_CONFIG });
 
 /**
- * Check whether a violation is the known issue with tree items pinned at the end of this file.
- * @param {string} id Rule ID.
- * @param {string} html HTML of the element.
- * @returns {boolean} Result.
- */
-const isKnownIssue = (id, html) =>
-  id === 'label-content-name-mismatch' && /^<[^>]+role="treeitem"/.test(html);
-
-/**
  * Check the page for violations of the WCAG rules with axe.
  * @param {Page} page Page.
  */
@@ -64,9 +55,7 @@ const expectNoViolations = async (page) => {
 
   expect(
     violations.flatMap(({ id, nodes }) =>
-      nodes
-        .filter(({ html }) => !isKnownIssue(id, html))
-        .map(({ target, failureSummary }) => ({ id, target, failureSummary })),
+      nodes.map(({ target, failureSummary }) => ({ id, target, failureSummary })),
     ),
   ).toEqual([]);
 };
@@ -192,20 +181,15 @@ test.describe('small screen', () => {
   });
 });
 
-test.describe('known issues', () => {
-  test.beforeEach(async ({ cms }) => {
-    await cms.start(FILES);
-  });
-
-  // Sveltia UI’s `TreeItem` names the item after its label alone, so the entry count shown next to
-  // it, and the `aria-label` on that count, aren’t part of the name (WCAG 2.5.3). Once the name
-  // includes it, drop the parentheses from that `aria-label`, or the name still won’t contain the
-  // visible “Posts 3”, and remove `isKnownIssue()` along with this test
-  test('leaves the entry count out of a collection name (known issue)', async ({ page }) => {
-    await expect(
-      page
-        .getByRole('tree', { name: 'Collection List' })
-        .getByRole('treeitem', { name: 'Posts', exact: true }),
-    ).toHaveText(/Posts\s*3/);
-  });
+test('has no violations with an empty collection', async ({ cms, page }) => {
+  await cms.start(
+    Object.fromEntries(
+      Object.entries(FILES).filter(([path]) => !path.startsWith('content/authors/')),
+    ),
+  );
+  await openCollection(page, 'Posts');
+  await expect(
+    page.getByRole('tree', { name: 'Collection List' }).getByRole('treeitem', { name: /^Authors/ }),
+  ).toBeVisible();
+  await expectNoViolations(page);
 });

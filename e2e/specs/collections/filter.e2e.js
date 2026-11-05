@@ -18,10 +18,10 @@ test('lists only the entries matching each collection’s filter', async ({ page
 
   // The count next to each collection only includes its own entries, too
   await expect(
-    tree.getByRole('treeitem', { name: /^Events/ }).getByLabel(/\(\W*2\W* entries\)/),
+    tree.getByRole('treeitem', { name: /^Events/ }).getByLabel(/^\W*2\W* entries$/),
   ).toHaveText('2');
   await expect(
-    tree.getByRole('treeitem', { name: /^Workshops/ }).getByLabel(/\(\W*1\W* entry\)/),
+    tree.getByRole('treeitem', { name: /^Workshops/ }).getByLabel(/^\W*1\W* entry$/),
   ).toHaveText('1');
 
   await openCollection(page, 'Events');

@@ -30,7 +30,6 @@ More details are available in the [accessibility section](https://sveltiacms.app
 - Our audit so far has been automated and self-run. The CMS hasn’t been independently audited, so there are likely barriers we don’t know about.
 - On macOS, holding the Option key in a text field types a special character, so `Alt` shortcuts like `Alt+1` don’t work while a text field has focus. Move the focus out of the text field first.
 - Browser pinch-zoom is turned off on many touch devices because we plan to add pinch-zoom to the app itself. Until then, use your browser’s zoom setting or the text size setting of your device.
-- In the collection list, screen readers announce the name of a collection without its entry count. Open the collection to hear the entries.
 - We have no styles of our own for forced colours mode, such as Windows Contrast Themes, so the browser’s defaults apply.
 - We can only speak for the CMS itself. The accessibility of custom preview templates, custom fields and other extensions added to a site is up to the site’s developers.
 
