@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
+ * @import { CMS } from './test.js';
  */
 
 /**
@@ -10,6 +11,30 @@ import { expect } from '@playwright/test';
  * @returns {Locator} Editor.
  */
 export const getEditor = (page) => page.getByRole('group', { name: 'Content Editor' });
+
+/**
+ * Save the entry open in the editor, which takes us back to the entry list.
+ * @param {Locator} editor Content editor.
+ */
+export const saveEntry = async (editor) => {
+  await editor.getByRole('button', { name: 'Save' }).click();
+  await expect(editor).toBeHidden();
+};
+
+/**
+ * Wait for a file to be written with the given content, and check that the old one is gone.
+ * @param {CMS} cms CMS fixture.
+ * @param {string} path Path of the file to wait for.
+ * @param {string} content Expected content.
+ * @param {string} [oldPath] Path of the file that should be gone.
+ */
+export const expectFile = async (cms, path, content, oldPath) => {
+  await expect.poll(async () => (await cms.readRepo())[path]).toBe(content);
+
+  if (oldPath) {
+    expect(await cms.readRepo()).not.toHaveProperty(oldPath);
+  }
+};
 
 /**
  * Get the group of a field in the editor.

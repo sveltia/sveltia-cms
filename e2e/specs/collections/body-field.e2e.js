@@ -1,5 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor, openCollection, openEntry } from '../../fixtures/ui.js';
+import { expectFile, getEditor, openCollection, openEntry, saveEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -74,21 +74,6 @@ const CONFIG = {
 test.use({ config: CONFIG });
 
 /**
- * Open the CMS, seed the repository with the given files and sign in.
- * @param {CMS} cms CMS fixture.
- * @param {Record<string, string>} [files] Files to seed.
- */
-const start = async (cms, files) => {
-  await cms.open();
-
-  if (files) {
-    await cms.seed(files);
-  }
-
-  await cms.signIn();
-};
-
-/**
  * Open an entry from the list of a collection, or a file from a file collection, and check the
  * body the editor shows.
  * @param {Page} page Page.
@@ -115,8 +100,7 @@ const openEntryWithBody = async (page, collectionName, title, body) => {
  */
 const editBody = async (editor) => {
   await editor.getByRole('textbox', { name: 'Body' }).fill('Edited.');
-  await editor.getByRole('button', { name: 'Save' }).click();
-  await expect(editor).toBeHidden();
+  await saveEntry(editor);
 };
 
 /**
@@ -132,18 +116,7 @@ const createEntry = async (page, collectionName) => {
 
   await editor.getByRole('textbox', { name: 'Title', exact: true }).fill('Night Sky');
   await editor.getByRole('textbox', { name: 'Body' }).fill('Look up.');
-  await editor.getByRole('button', { name: 'Save' }).click();
-  await expect(editor).toBeHidden();
-};
-
-/**
- * Wait for a file to be written with the given content.
- * @param {CMS} cms CMS fixture.
- * @param {string} path File path.
- * @param {string} content Expected content.
- */
-const expectFile = async (cms, path, content) => {
-  await expect.poll(async () => (await cms.readRepo())[path]).toBe(content);
+  await saveEntry(editor);
 };
 
 test.describe('`key`', () => {
@@ -151,19 +124,19 @@ test.describe('`key`', () => {
     cms,
     page,
   }) => {
-    await start(cms, { 'content/posts/old.md': '---\ntitle: Old\n---\n\nHello.\n' });
+    await cms.start({ 'content/posts/old.md': '---\ntitle: Old\n---\n\nHello.\n' });
     await editBody(await openEntryWithBody(page, 'posts', 'Old', 'Hello.'));
     await expectFile(cms, 'content/posts/old.md', '---\ntitle: Old\n---\n\nEdited.\n');
   });
 
   test('saves a new entry with the field below the front matter', async ({ cms, page }) => {
-    await start(cms);
+    await cms.start();
     await createEntry(page, 'posts');
     await expectFile(cms, 'content/posts/night-sky.md', '---\ntitle: Night Sky\n---\n\nLook up.\n');
   });
 
   test('keeps a `body` property in the front matter like any other', async ({ cms, page }) => {
-    await start(cms, {
+    await cms.start({
       'content/posts/old.md': '---\ntitle: Old\nbody: Summary\n---\n\nHello.\n',
     });
     await editBody(await openEntryWithBody(page, 'posts', 'Old', 'Hello.'));
@@ -176,7 +149,7 @@ test.describe('`key`', () => {
 
   test('moves the field from the front matter below it', async ({ cms, page }) => {
     // The front matter takes precedence over the text below it, which is dropped
-    await start(cms, {
+    await cms.start({
       'content/posts/old.md': '---\ntitle: Old\ncontent: Hello.\n---\n\nIgnored.\n',
     });
     await editBody(await openEntryWithBody(page, 'posts', 'Old', 'Hello.'));
@@ -184,7 +157,7 @@ test.describe('`key`', () => {
   });
 
   test('works with TOML front matter', async ({ cms, page }) => {
-    await start(cms, { 'content/hugo/old.md': '+++\ntitle = "Old"\n+++\n\nHello.\n' });
+    await cms.start({ 'content/hugo/old.md': '+++\ntitle = "Old"\n+++\n\nHello.\n' });
     await editBody(await openEntryWithBody(page, 'hugo', 'Old', 'Hello.'));
     await expectFile(cms, 'content/hugo/old.md', '+++\ntitle = "Old"\n+++\n\nEdited.\n');
     await createEntry(page, 'hugo');
@@ -198,13 +171,13 @@ test.describe('`key`', () => {
 
 test.describe('`inline: true`', () => {
   test('reads and saves the body in the front matter', async ({ cms, page }) => {
-    await start(cms, { 'content/notes/old.md': '---\ntitle: Old\nbody: Hello.\n---\n' });
+    await cms.start({ 'content/notes/old.md': '---\ntitle: Old\nbody: Hello.\n---\n' });
     await editBody(await openEntryWithBody(page, 'notes', 'Old', 'Hello.'));
     await expectFile(cms, 'content/notes/old.md', '---\ntitle: Old\nbody: Edited.\n---\n');
   });
 
   test('saves a new entry with the body in the front matter', async ({ cms, page }) => {
-    await start(cms);
+    await cms.start();
     await createEntry(page, 'notes');
     await expectFile(
       cms,
@@ -214,14 +187,14 @@ test.describe('`inline: true`', () => {
   });
 
   test('moves the text below the front matter into it', async ({ cms, page }) => {
-    await start(cms, { 'content/notes/old.md': '---\ntitle: Old\n---\n\nHello.\n' });
+    await cms.start({ 'content/notes/old.md': '---\ntitle: Old\n---\n\nHello.\n' });
     await editBody(await openEntryWithBody(page, 'notes', 'Old', 'Hello.'));
     await expectFile(cms, 'content/notes/old.md', '---\ntitle: Old\nbody: Edited.\n---\n');
   });
 
   test('prefers the body in the front matter to the text below it', async ({ cms, page }) => {
     // The front matter takes precedence over the text below it, which is dropped, as with `key`
-    await start(cms, {
+    await cms.start({
       'content/notes/old.md': '---\ntitle: Old\nbody: Hello.\n---\n\nIgnored.\n',
     });
     await editBody(await openEntryWithBody(page, 'notes', 'Old', 'Hello.'));
@@ -231,7 +204,7 @@ test.describe('`inline: true`', () => {
 
 test.describe('file collection', () => {
   test('uses the option of a file over the collection’s', async ({ cms, page }) => {
-    await start(cms, {
+    await cms.start({
       'content/pages/about.md': '---\ntitle: About\n---\n\nHello.\n',
       'content/pages/contact.md': '---\ntitle: Contact\nbody: Write to us.\n---\n',
     });

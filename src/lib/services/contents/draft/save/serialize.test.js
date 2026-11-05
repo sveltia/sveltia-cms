@@ -982,7 +982,7 @@ describe('Test serializeContent()', () => {
     expect(result.aliases).toEqual(['/posts/old', '/posts/older']);
   });
 
-  test('places the permalink between the aliases and the order field', () => {
+  test('places the permalink between the canonical slug and the aliases', () => {
     /** @type {any} */
     const draft = {
       collectionName: 'posts',
@@ -1002,13 +1002,20 @@ describe('Test serializeContent()', () => {
     const valueMap = {
       title: 'Test',
       order: 3,
-      permalink: '/posts/test/',
       'aliases.0': '/posts/old',
+      permalink: '/posts/test/',
+      translationKey: 'abc',
     };
 
     const result = serializeContent({ draft, locale: 'en', valueMap });
 
-    expect(Object.keys(result)).toEqual(['aliases', 'permalink', 'order', 'title']);
+    expect(Object.keys(result)).toEqual([
+      'translationKey',
+      'permalink',
+      'aliases',
+      'order',
+      'title',
+    ]);
     expect(result.permalink).toBe('/posts/test/');
   });
 

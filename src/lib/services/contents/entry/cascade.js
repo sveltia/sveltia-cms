@@ -10,6 +10,7 @@ import {
   createSyntheticDraft,
 } from '$lib/services/contents/entry/changes';
 import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
+import { refreshPermalinks } from '$lib/services/contents/entry/permalink';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getFieldLabel } from '$lib/services/contents/i18n/options';
@@ -173,17 +174,25 @@ export const buildTargetChanges = async ({ targets, cacheDB }) => {
 
   const db = resolveCacheDB(cacheDB);
 
+  const savingTargets = targets.map(({ entry, collection, collectionFile }) => {
+    const isIndexFile = isCollectionIndexFile(collection, entry);
+
+    return {
+      collection,
+      collectionFile,
+      isIndexFile,
+      // A field referenced by the `preview_path` option may have changed
+      entry: refreshPermalinks({ collection, isIndexFile, entry }),
+    };
+  });
+
   const perEntryChanges = await Promise.all(
-    targets.map(({ entry, collection, collectionFile }) =>
+    savingTargets.map(({ entry, collection, collectionFile, isIndexFile }) =>
       buildEntryUpdateChanges({
         collection,
         collectionFile,
         entry,
-        draft: createSyntheticDraft({
-          collection,
-          collectionFile,
-          isIndexFile: isCollectionIndexFile(collection, entry),
-        }),
+        draft: createSyntheticDraft({ collection, collectionFile, isIndexFile }),
         cacheDB: db,
       }),
     ),
@@ -191,6 +200,6 @@ export const buildTargetChanges = async ({ targets, cacheDB }) => {
 
   return {
     changes: perEntryChanges.flat(),
-    savingEntries: targets.map(({ entry }) => entry),
+    savingEntries: savingTargets.map(({ entry }) => entry),
   };
 };

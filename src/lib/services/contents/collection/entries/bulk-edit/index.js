@@ -16,6 +16,7 @@ import {
   createSyntheticDraft,
 } from '$lib/services/contents/entry/changes';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
+import { refreshPermalinks } from '$lib/services/contents/entry/permalink';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
@@ -355,10 +356,13 @@ export const buildBulkEditChanges = async ({ collection, entries, edits }) => {
   const savingEntries = entries
     .filter((entry) => !!edits[entry.id] && currentEntries.has(entry.id))
     .map((entry) =>
-      applyBulkEdits({
+      refreshPermalinks({
         collection,
-        entry: /** @type {Entry} */ (currentEntries.get(entry.id)),
-        entryEdits: edits[entry.id],
+        entry: applyBulkEdits({
+          collection,
+          entry: /** @type {Entry} */ (currentEntries.get(entry.id)),
+          entryEdits: edits[entry.id],
+        }),
       }),
     );
 

@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { lockedBranch } from '$lib/services/backends/branch-access';
+import { getPreviewPath } from '$lib/services/contents/entry';
 import {
   buildTargetChanges,
   compactList,
@@ -20,6 +21,10 @@ vi.mock('$lib/services/contents/draft/validate/fields', () => ({
 
 vi.mock('$lib/services/contents/draft/validate/messages', () => ({
   getFieldValidationMessages: vi.fn(() => ['This field is required.']),
+}));
+
+vi.mock('$lib/services/contents/entry', () => ({
+  getPreviewPath: vi.fn(),
 }));
 
 vi.mock('$lib/services/contents/entry/changes', () => ({
@@ -298,6 +303,29 @@ describe('buildTargetChanges()', () => {
       collectionFile: undefined,
       isIndexFile: false,
     });
+  });
+
+  test('refreshes the permalink, which can depend on the updated field', async () => {
+    const collection = {
+      ...postsCollection,
+      preview_path: 'posts/{{slug}}/',
+      permalink_field: true,
+      _i18n: { defaultLocale: 'en' },
+    };
+
+    const entry = {
+      ...createPost('a'),
+      locales: { en: { slug: 'a', path: 'content/posts/a.md', content: { title: 'A' } } },
+    };
+
+    getPreviewPath.mockReturnValue('posts/a/');
+
+    const { savingEntries } = await buildTargetChanges({ targets: [{ entry, collection }] });
+
+    expect(savingEntries[0].locales.en.content.permalink).toBe('/posts/a/');
+    expect(buildEntryUpdateChanges).toHaveBeenCalledWith(
+      expect.objectContaining({ entry: savingEntries[0] }),
+    );
   });
 
   test('passes the collection file along', async () => {

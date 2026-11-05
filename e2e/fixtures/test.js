@@ -174,6 +174,20 @@ export class CMS {
   }
 
   /**
+   * Open the admin page, seed the repository with the given files, if any, and sign in.
+   * @param {Record<string, string | Buffer>} [files] Files to seed. See {@link seed}.
+   */
+  async start(files) {
+    await this.open();
+
+    if (files) {
+      await this.seed(files);
+    }
+
+    await this.signIn();
+  }
+
+  /**
    * Open a popup, e.g. a menu or a dropdown list, and wait until it’s shown.
    * @param {Locator} trigger Element that opens the popup, e.g. a button or a combobox.
    * @param {Locator} popup Popup, or an element in it.

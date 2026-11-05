@@ -331,17 +331,17 @@ const copyWildcardField = (ctx, keyPath, field) => {
  * enabled.
  * @param {FlattenedEntryContent} args.valueMap Flattened entry content.
  * @param {string} [args.canonicalSlugKey] Property name of a canonical slug.
- * @param {string} [args.aliasesKey] Property name of the entry’s URL aliases. Placed right after
- * the canonical slug, ahead of all configured fields, when present in the value map.
  * @param {string} [args.permalinkKey] Property name of the entry’s permalink. Placed right after
- * the aliases, ahead of all configured fields, when present in the value map.
+ * the canonical slug, ahead of all configured fields, when present in the value map.
+ * @param {string} [args.aliasesKey] Property name of the entry’s URL aliases. Placed right after
+ * the permalink, ahead of all configured fields, when present in the value map.
  * @param {string} [args.orderKey] Property name of the entry order field. Placed right after the
- * permalink, ahead of all configured fields, when present in the value map.
+ * aliases, ahead of all configured fields, when present in the value map.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  * @param {boolean} [args.isTomlOutput] Whether the output it TOML format.
  * @returns {RawEntryContent} Unflattened entry content sorted by fields. Output order is: canonical
- * slug → aliases → permalink → order → configured fields → remainder.
+ * slug → permalink → aliases → order → configured fields → remainder.
  */
 const finalizeContent = ({
   collectionName,
@@ -351,8 +351,8 @@ const finalizeContent = ({
   defaultLocale,
   valueMap,
   canonicalSlugKey,
-  aliasesKey,
   permalinkKey,
+  aliasesKey,
   orderKey,
   isIndexFile = false,
   isTomlOutput = false,
@@ -370,33 +370,21 @@ const finalizeContent = ({
   /** @type {FinalizeContext} */
   const ctx = { locale, defaultLocale, getFieldArgs, unsortedMap, sortedMap, copyArgs };
 
-  // Add the slug first
-  if (canonicalSlugKey && Object.hasOwn(unsortedMap, canonicalSlugKey)) {
-    copyProperty({ ...copyArgs, key: canonicalSlugKey });
-  }
-
-  // Add the URL aliases next so they appear at the top of the output, close to the slug they relate
-  // to. The property normally holds a list, which is flattened into indexed key paths, but copy the
-  // property itself too in case the user stores something else in it
-  if (aliasesKey) {
-    if (Object.hasOwn(unsortedMap, aliasesKey)) {
-      copyProperty({ ...copyArgs, key: aliasesKey });
+  // Add the properties managed by the CMS first, so they appear at the top of the output: the slug,
+  // the permalink and the URL aliases, which relate to it, then the order field. The aliases
+  // normally hold a list, which is flattened into indexed key paths, but the property itself is
+  // copied too in case the user stores something else in it
+  [
+    canonicalSlugKey,
+    permalinkKey,
+    aliasesKey,
+    ...(aliasesKey ? getAliasKeyPaths(unsortedMap, aliasesKey) : []),
+    orderKey,
+  ].forEach((key) => {
+    if (key && Object.hasOwn(unsortedMap, key)) {
+      copyProperty({ ...copyArgs, key });
     }
-
-    getAliasKeyPaths(unsortedMap, aliasesKey).forEach((keyPath) => {
-      copyProperty({ ...copyArgs, key: keyPath });
-    });
-  }
-
-  // Add the permalink next so it appears at the top of the output, close to the slug it’s made from
-  if (permalinkKey && Object.hasOwn(unsortedMap, permalinkKey)) {
-    copyProperty({ ...copyArgs, key: permalinkKey });
-  }
-
-  // Add the order field next so it appears at the top of the output
-  if (orderKey && Object.hasOwn(unsortedMap, orderKey)) {
-    copyProperty({ ...copyArgs, key: orderKey });
-  }
+  });
 
   // Move the listed properties to a new object
   createKeyPathList(fields).forEach((keyPath) => {
@@ -476,8 +464,8 @@ export const serializeContent = ({ draft, locale, valueMap, format }) => {
     defaultLocale,
     valueMap,
     canonicalSlugKey,
-    aliasesKey: getAliasesKey({ collection, fields }),
     permalinkKey: getPermalinkKey({ collection, fields }),
+    aliasesKey: getAliasesKey({ collection, fields }),
     orderKey: getOrderFieldKey(collection),
     isIndexFile,
     isTomlOutput,

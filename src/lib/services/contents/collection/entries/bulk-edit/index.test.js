@@ -27,6 +27,11 @@ import {
   validateBulkEdits,
 } from '.';
 
+vi.mock('$lib/services/contents/entry', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getPreviewPath: vi.fn(({ slug, content }) => `${content.title}/${slug}/`),
+}));
+
 vi.mock('$lib/services/backends/refresh', () => ({
   checkForRemoteChanges: vi.fn(),
 }));
@@ -816,6 +821,25 @@ describe('buildBulkEditChanges()', () => {
       draft: expect.objectContaining({ collectionName: 'posts' }),
       cacheDB: 'cache-db',
     });
+  });
+
+  test('refreshes the permalink, which can depend on the edited field', async () => {
+    const collection = makeCollection({
+      permalink_field: true,
+      preview_path: '{{fields.title}}/{{slug}}/',
+    });
+
+    const entries = [makeEntry('a', { title: 'old', permalink: '/old/a/' })];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(entries);
+
+    const { savingEntries } = await buildBulkEditChanges({
+      collection,
+      entries,
+      edits: { a: { title: 'new' } },
+    });
+
+    expect(savingEntries[0].locales._default.content.permalink).toBe('/new/a/');
   });
 
   test('flattens the changes of an entry stored in several files', async () => {

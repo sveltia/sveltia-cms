@@ -1,5 +1,5 @@
 import { expect, test } from '../../fixtures/test.js';
-import { openEntry } from '../../fixtures/ui.js';
+import { expectFile, openEntry, saveEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -59,17 +59,6 @@ const CONFIG = {
 test.use({ config: CONFIG });
 
 /**
- * Open the CMS, seed the repository with the given files and sign in.
- * @param {CMS} cms CMS fixture.
- * @param {Record<string, string>} files Files to seed.
- */
-const start = async (cms, files) => {
-  await cms.open();
-  await cms.seed(files);
-  await cms.signIn();
-};
-
-/**
  * Give the entry open in the editor another slug in the Slug panel.
  * @param {CMS} cms CMS fixture.
  * @param {Page} page Page.
@@ -90,15 +79,6 @@ const editSlug = async (cms, page, slug) => {
 };
 
 /**
- * Save the entry open in the editor, which takes us back to the entry list.
- * @param {Locator} editor Content editor.
- */
-const save = async (editor) => {
-  await editor.getByRole('button', { name: 'Save' }).click();
-  await expect(editor).toBeHidden();
-};
-
-/**
  * Rename an entry: open it, give it another slug and save it.
  * @param {CMS} cms CMS fixture.
  * @param {Page} page Page.
@@ -110,22 +90,7 @@ const rename = async (cms, page, collectionName, title, slug) => {
   const editor = await openEntry(page, title, { collection: collectionName, exact: true });
 
   await editSlug(cms, page, slug);
-  await save(editor);
-};
-
-/**
- * Wait for a file to be written with the given content, and check that the old one is gone.
- * @param {CMS} cms CMS fixture.
- * @param {string} path Path of the file to wait for.
- * @param {string} content Expected content.
- * @param {string} [oldPath] Path of the file that should be gone.
- */
-const expectFile = async (cms, path, content, oldPath) => {
-  await expect.poll(async () => (await cms.readRepo())[path]).toBe(content);
-
-  if (oldPath) {
-    expect(await cms.readRepo()).not.toHaveProperty(oldPath);
-  }
+  await saveEntry(editor);
 };
 
 test.describe('default `aliases` property', () => {
@@ -133,7 +98,7 @@ test.describe('default `aliases` property', () => {
     cms,
     page,
   }) => {
-    await start(cms, { 'content/posts/hello.md': '---\ntitle: Hello\n---\n\nHi.\n' });
+    await cms.start({ 'content/posts/hello.md': '---\ntitle: Hello\n---\n\nHi.\n' });
     await rename(cms, page, 'posts', 'Hello', 'hello-world');
 
     // The list goes to the top, with a site-relative path
@@ -149,7 +114,7 @@ test.describe('default `aliases` property', () => {
     cms,
     page,
   }) => {
-    await start(cms, { 'content/posts/hello.md': '---\ntitle: Hello\n---\n\nHi.\n' });
+    await cms.start({ 'content/posts/hello.md': '---\ntitle: Hello\n---\n\nHi.\n' });
     await rename(cms, page, 'posts', 'Hello', 'hello-world');
     await expectFile(
       cms,
@@ -178,7 +143,7 @@ test.describe('default `aliases` property', () => {
     cms,
     page,
   }) => {
-    await start(cms, {
+    await cms.start({
       'content/posts/hello.md':
         '---\ntitle: Hello\naliases:\n  - /blog/hello\n  - /old/hello\n---\n\nHi.\n',
     });
@@ -192,7 +157,7 @@ test.describe('default `aliases` property', () => {
   });
 
   test('leaves an `aliases` property that isn’t a list alone', async ({ cms, page }) => {
-    await start(cms, {
+    await cms.start({
       'content/posts/hello.md': '---\ntitle: Hello\naliases: /old/hello\n---\n\nHi.\n',
     });
     await rename(cms, page, 'posts', 'Hello', 'hello-world');
@@ -208,14 +173,14 @@ test.describe('default `aliases` property', () => {
     cms,
     page,
   }) => {
-    await start(cms, {
+    await cms.start({
       'content/posts/hello.md': '---\naliases:\n  - /old/hello\ntitle: Hello\n---\n\nHi.\n',
     });
 
     const editor = await openEntry(page, 'Hello', { collection: 'posts', exact: true });
 
     await editor.getByRole('textbox', { name: 'Body' }).fill('Edited.');
-    await save(editor);
+    await saveEntry(editor);
     await expectFile(
       cms,
       'content/posts/hello.md',
@@ -225,12 +190,12 @@ test.describe('default `aliases` property', () => {
     await page.getByRole('button', { name: 'Create New Entry' }).first().click();
     await editor.getByRole('textbox', { name: 'Title', exact: true }).fill('Fresh');
     await editor.getByRole('textbox', { name: 'Body' }).fill('New.');
-    await save(editor);
+    await saveEntry(editor);
     await expectFile(cms, 'content/posts/fresh.md', '---\ntitle: Fresh\n---\n\nNew.\n');
   });
 
   test('leaves the aliases out of a duplicate', async ({ cms, page }) => {
-    await start(cms, {
+    await cms.start({
       'content/posts/hello.md': '---\naliases:\n  - /old/hello\ntitle: Hello\n---\n\nHi.\n',
     });
 
@@ -241,7 +206,7 @@ test.describe('default `aliases` property', () => {
       page.getByRole('menuitem', { name: 'Duplicate Entry' }),
     );
     await expect(page.getByRole('status').filter({ hasText: 'Entry duplicated' })).toBeVisible();
-    await save(editor);
+    await saveEntry(editor);
 
     // An alias can only redirect to one page
     await expectFile(cms, 'content/posts/hello-1.md', '---\ntitle: Hello\n---\n\nHi.\n');
@@ -254,7 +219,7 @@ test.describe('default `aliases` property', () => {
     cms,
     page,
   }) => {
-    await start(cms, {
+    await cms.start({
       'content/news/flood.md': '---\ntitle: Flood\ncategory: local\n---\n\nRain.\n',
     });
 
@@ -262,7 +227,7 @@ test.describe('default `aliases` property', () => {
 
     await editor.getByRole('radio', { name: 'world' }).click();
     await editSlug(cms, page, 'great-flood');
-    await save(editor);
+    await saveEntry(editor);
     await expectFile(
       cms,
       'content/news/great-flood.md',
@@ -272,7 +237,7 @@ test.describe('default `aliases` property', () => {
   });
 
   test('adds no alias when only a field value changes the path', async ({ cms, page }) => {
-    await start(cms, {
+    await cms.start({
       'content/news/flood.md': '---\ntitle: Flood\ncategory: local\n---\n\nRain.\n',
     });
 
@@ -280,7 +245,7 @@ test.describe('default `aliases` property', () => {
 
     // The aliases follow a change of slug only
     await editor.getByRole('radio', { name: 'world' }).click();
-    await save(editor);
+    await saveEntry(editor);
     await expectFile(
       cms,
       'content/news/flood.md',
@@ -291,7 +256,7 @@ test.describe('default `aliases` property', () => {
 
 test.describe('other `aliases_field` options', () => {
   test.beforeEach(async ({ cms }) => {
-    await start(cms, {
+    await cms.start({
       'content/notes/hello.md': '---\ntitle: Hello\n---\n\nHi.\n',
       'content/drafts/hello.md': '---\ntitle: Hello\n---\n\nHi.\n',
       'content/pages/hello.md': '---\ntitle: Hello\n---\n\nHi.\n',

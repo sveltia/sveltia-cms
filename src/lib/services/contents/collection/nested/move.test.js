@@ -12,9 +12,9 @@ import {
   getSingleFileComments,
 } from '$lib/services/contents/draft/save/content';
 import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
-import { setPermalink } from '$lib/services/contents/draft/save/permalink';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
+import { refreshPermalinks } from '$lib/services/contents/entry/permalink';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 
 vi.mock('$lib/services/common/template', () => ({
@@ -39,8 +39,8 @@ vi.mock('$lib/services/contents/draft/save/serialize', () => ({
   serializeContent: vi.fn(() => ({ title: 'Serialized' })),
 }));
 
-vi.mock('$lib/services/contents/draft/save/permalink', () => ({
-  setPermalink: vi.fn(),
+vi.mock('$lib/services/contents/entry/permalink', () => ({
+  refreshPermalinks: vi.fn(({ entry: _entry }) => _entry),
 }));
 
 vi.mock('$lib/services/contents/entry/changes', () => ({
@@ -254,53 +254,26 @@ describe('buildNestedMoveChanges()', () => {
   });
 
   test('refreshes the permalink of every moved entry', async () => {
-    const permalinkCollection = {
-      ...collection,
-      _type: 'entry',
-      permalink_field: true,
-      fields: [],
-    };
-
-    const descendant = entry('2', 'docs/intro/_index');
-
-    // A locale that was disabled leaves the entry with a path but no content
-    descendant.locales.fr = { path: 'content/pages/fr/docs/intro/_index.md' };
-    vi.mocked(getEntriesByCollection).mockReturnValue([entry('1', 'docs/_index'), descendant]);
-    vi.mocked(setPermalink).mockImplementation(({ content, slug }) => {
-      content.permalink = `/${slug}`;
-    });
-
-    const { savingEntries } = await buildNestedMoveChanges({
-      collection: permalinkCollection,
-      originalEntry: entry('1', 'docs/_index'),
-      savingEntry: entry('1', 'guides/_index'),
-    });
-
-    expect(savingEntries[0].locales.en.content.permalink).toBe('/guides/intro/_index');
-    expect(savingEntries[0].locales.fr).toEqual(descendant.locales.fr);
-    // The content is shared with the entry in the store
-    expect(descendant.locales.en.content).not.toHaveProperty('permalink');
-    expect(setPermalink).toHaveBeenCalledTimes(1);
-    expect(setPermalink.mock.calls[0][0]).toMatchObject({
-      draft: { collection: permalinkCollection, isIndexFile: false },
-      locale: 'en',
-      path: 'content/pages/guides/intro/_index.md',
-    });
-  });
-
-  test('leaves the permalink alone when the collection doesn’t store it', async () => {
     vi.mocked(getEntriesByCollection).mockReturnValue([
       entry('1', 'docs/_index'),
       entry('2', 'docs/intro/_index'),
     ]);
+    vi.mocked(refreshPermalinks).mockImplementationOnce(({ entry: moved }) => ({
+      ...moved,
+      refreshed: true,
+    }));
 
-    await buildNestedMoveChanges({
-      collection: { ...collection, _type: 'entry', fields: [] },
+    const { savingEntries } = await buildNestedMoveChanges({
+      collection,
       originalEntry: entry('1', 'docs/_index'),
       savingEntry: entry('1', 'guides/_index'),
     });
 
-    expect(setPermalink).not.toHaveBeenCalled();
+    expect(refreshPermalinks).toHaveBeenCalledExactlyOnceWith({
+      collection,
+      entry: expect.objectContaining({ subPath: 'guides/intro/_index' }),
+    });
+    expect(savingEntries[0].refreshed).toBe(true);
   });
 
   test('moves the entries up to the collection folder', async () => {

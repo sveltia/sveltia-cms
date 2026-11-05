@@ -1,10 +1,10 @@
 import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-import { getPreviewPath } from '$lib/services/contents/entry';
 import {
   getAliasesKey,
   getAliasKeyPaths,
   removeAliases,
 } from '$lib/services/contents/entry/aliases';
+import { getSitePath } from '$lib/services/contents/entry/site-path';
 import { isValueEmpty } from '$lib/services/utils/object';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
@@ -16,41 +16,6 @@ import { isNonEmptyString } from '$lib/services/utils/string';
  * InternalLocaleCode,
  * } from '$lib/types/private';
  */
-
-/**
- * Normalize the given path so it can be used as an alias. Both Hugo and Zola resolve an alias
- * relative to the current page unless it starts with a slash, so make it site-relative.
- * @param {string | undefined} path Path generated from the `preview_path` template.
- * @returns {string | undefined} Normalized path, or `undefined` if the path is not available.
- */
-const normalizePath = (path) => (path === undefined ? undefined : `/${path.replace(/^\//, '')}`);
-
-/**
- * Get the path the entry being saved has on the live site, from the `preview_path` option.
- * @param {object} args Arguments.
- * @param {EntryDraft} args.draft Entry draft.
- * @param {InternalLocaleCode} args.locale Locale code.
- * @param {FlattenedEntryContent} args.content Flattened entry content.
- * @param {string} args.slug Entry slug for the locale.
- * @param {string} args.path Entry file path for the locale.
- * @returns {string | undefined} Site-relative path, or `undefined` if the path is not available.
- */
-export const getCurrentSitePath = ({ draft, locale, content, slug, path }) => {
-  const { collection } = draft;
-  const { defaultLocale } = collection._i18n;
-
-  return normalizePath(
-    getPreviewPath({
-      collection,
-      locale,
-      slug,
-      path,
-      content,
-      // A snapshot, which is replaced rather than changed as the draft is edited
-      defaultContent: getValueMapSnapshot(draft, defaultLocale),
-    }),
-  );
-};
 
 /**
  * Add the entry’s previous path to the `aliases` list so links to the old path keep working after
@@ -99,18 +64,26 @@ export const addAlias = ({ draft, locale, content, slug, path }) => {
 
   // Use the original content, as fields referenced by the `preview_path` template, such as a date,
   // may have been edited along with the slug
-  const previousPath = normalizePath(
-    getPreviewPath({
-      collection,
-      locale,
-      slug: originalSlug,
-      path: originalPath,
-      content: originalContent,
-      defaultContent: originalEntry.locales[collection._i18n.defaultLocale]?.content,
-    }),
-  );
+  const { defaultLocale } = collection._i18n;
 
-  const currentPath = getCurrentSitePath({ draft, locale, content, slug, path });
+  const previousPath = getSitePath({
+    collection,
+    locale,
+    slug: originalSlug,
+    path: originalPath,
+    content: originalContent,
+    defaultContent: originalEntry.locales[defaultLocale]?.content,
+  });
+
+  const currentPath = getSitePath({
+    collection,
+    locale,
+    slug,
+    path,
+    content,
+    // A snapshot, which is replaced rather than changed as the draft is edited
+    defaultContent: getValueMapSnapshot(draft, defaultLocale),
+  });
 
   // The `preview_path` template may not contain the slug at all, in which case the path is
   // unchanged and an alias would just point the page at itself

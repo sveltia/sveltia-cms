@@ -11,10 +11,10 @@ import {
   buildEntryFileChanges,
   resolveCacheDB,
 } from '$lib/services/contents/draft/save/file-changes';
-import { setPermalink } from '$lib/services/contents/draft/save/permalink';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
-import { getPermalinkKey } from '$lib/services/contents/entry/permalink';
+import { mapEntryContent } from '$lib/services/contents/entry/locales';
+import { refreshPermalinks } from '$lib/services/contents/entry/permalink';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 
 /**
@@ -148,65 +148,11 @@ const updateCanonicalSlug = ({ collection, entry }) => {
           currentSlug: subPath,
         });
 
-  return {
-    ...entry,
-    locales: Object.fromEntries(
-      Object.entries(locales).map(([locale, localizedEntry]) => [
-        locale,
-        localizedEntry.content
-          ? // Copy the content, which is shared with the entry in the store
-            { ...localizedEntry, content: { ...localizedEntry.content, [key]: canonicalSlug } }
-          : localizedEntry,
-      ]),
-    ),
-  };
-};
-
-/**
- * Refresh the permalink of a moved entry, which goes with its path on the live site. The entry
- * doesn’t pass through the editor, so this is the only chance to keep it in step with the new path.
- * @param {object} args Arguments.
- * @param {InternalCollection} args.collection Collection the entry belongs to.
- * @param {Entry} args.entry Moved entry.
- * @returns {Entry} Entry with the permalink updated in every locale that has content. The given
- * entry is returned as is when the collection doesn’t store permalinks.
- */
-const updatePermalink = ({ collection, entry }) => {
-  const { fields } = /** @type {InternalEntryCollection} */ (collection);
-
-  if (!getPermalinkKey({ collection, fields })) {
-    return entry;
-  }
-
-  const localizedEntries = Object.entries(entry.locales);
-
   // Copy the content, which is shared with the entry in the store
-  const currentValues = Object.fromEntries(
-    localizedEntries
-      .filter(([, { content }]) => content)
-      .map(([locale, { content }]) => [locale, { ...content }]),
-  );
-
-  const draft = /** @type {any} */ ({ collection, fields, isIndexFile: false, currentValues });
-
-  return {
-    ...entry,
-    locales: Object.fromEntries(
-      localizedEntries.map(([locale, localizedEntry]) => {
-        const content = currentValues[locale];
-
-        if (!content) {
-          return [locale, localizedEntry];
-        }
-
-        const { slug, path } = localizedEntry;
-
-        setPermalink({ draft, locale, content, slug, path });
-
-        return [locale, { ...localizedEntry, content }];
-      }),
-    ),
-  };
+  return mapEntryContent(entry, ({ localizedEntry: { content } }) => ({
+    ...content,
+    [key]: canonicalSlug,
+  }));
 };
 
 /**
@@ -350,7 +296,7 @@ export const buildNestedMoveChanges = async ({
       ? [
           {
             originalEntry: entry,
-            movedEntry: updatePermalink({
+            movedEntry: refreshPermalinks({
               collection,
               entry: updateCanonicalSlug({ collection, entry: movedEntry }),
             }),

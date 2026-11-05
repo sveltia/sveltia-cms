@@ -1,5 +1,5 @@
-import { expect, test } from '../../fixtures/test.js';
-import { getEditor, openCollection, openEntry } from '../../fixtures/ui.js';
+import { test } from '../../fixtures/test.js';
+import { expectFile, getEditor, openCollection, openEntry, saveEntry } from '../../fixtures/ui.js';
 
 /**
  * @import { Page } from '@playwright/test';
@@ -46,17 +46,6 @@ const CONFIG = {
 test.use({ config: CONFIG });
 
 /**
- * Open the CMS, seed the repository with the given files and sign in.
- * @param {CMS} cms CMS fixture.
- * @param {Record<string, string>} [files] Files to seed.
- */
-const start = async (cms, files = {}) => {
-  await cms.open();
-  await cms.seed(files);
-  await cms.signIn();
-};
-
-/**
  * Create an entry in the given collection.
  * @param {Page} page Page.
  * @param {string} collectionName Collection name.
@@ -69,8 +58,7 @@ const createEntry = async (page, collectionName, title) => {
   const editor = getEditor(page);
 
   await editor.getByRole('textbox', { name: 'Title', exact: true }).fill(title);
-  await editor.getByRole('button', { name: 'Save' }).click();
-  await expect(editor).toBeHidden();
+  await saveEntry(editor);
 };
 
 /**
@@ -84,22 +72,11 @@ const retitle = async (page, collectionName, title, newTitle) => {
   const editor = await openEntry(page, title, { collection: collectionName, exact: true });
 
   await editor.getByRole('textbox', { name: 'Title', exact: true }).fill(newTitle);
-  await editor.getByRole('button', { name: 'Save' }).click();
-  await expect(editor).toBeHidden();
-};
-
-/**
- * Wait for a file to be written with the given content.
- * @param {CMS} cms CMS fixture.
- * @param {string} path File path.
- * @param {string} content Expected content.
- */
-const expectFile = async (cms, path, content) => {
-  await expect.poll(async () => (await cms.readRepo())[path]).toBe(content);
+  await saveEntry(editor);
 };
 
 test('stores the path of a new entry at the top of the front matter', async ({ cms, page }) => {
-  await start(cms);
+  await cms.start();
   await createEntry(page, 'portfolio', 'Hello World');
   await expectFile(
     cms,
@@ -109,7 +86,7 @@ test('stores the path of a new entry at the top of the front matter', async ({ c
 });
 
 test('stores the path of an existing entry, replacing an earlier one', async ({ cms, page }) => {
-  await start(cms, {
+  await cms.start({
     'content/portfolio/hello.md': '---\npermalink: old/index.html\ntitle: Hello\n---\n',
   });
   await retitle(page, 'portfolio', 'Hello', 'Hello again');
@@ -121,7 +98,7 @@ test('stores the path of an existing entry, replacing an earlier one', async ({ 
 });
 
 test('leaves `permalink: false` alone', async ({ cms, page }) => {
-  await start(cms, {
+  await cms.start({
     'content/portfolio/hello.md': '---\npermalink: false\ntitle: Hello\n---\n',
   });
   await retitle(page, 'portfolio', 'Hello', 'Hello again');
@@ -133,7 +110,7 @@ test('leaves `permalink: false` alone', async ({ cms, page }) => {
 });
 
 test('uses a custom property name', async ({ cms, page }) => {
-  await start(cms);
+  await cms.start();
   await createEntry(page, 'notes', 'Hello');
   await expectFile(
     cms,
@@ -143,13 +120,13 @@ test('uses a custom property name', async ({ cms, page }) => {
 });
 
 test('stores nothing without the option', async ({ cms, page }) => {
-  await start(cms);
+  await cms.start();
   await createEntry(page, 'posts', 'Hello');
   await expectFile(cms, 'content/posts/hello.md', '---\ntitle: Hello\n---\n');
 });
 
 test('leaves a configured field of the same name to the editor', async ({ cms, page }) => {
-  await start(cms);
+  await cms.start();
   await createEntry(page, 'docs', 'Hello');
   await expectFile(cms, 'content/docs/hello.md', '---\ntitle: Hello\npermalink: custom/\n---\n');
 });
