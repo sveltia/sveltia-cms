@@ -24,6 +24,10 @@ For [various reasons](https://github.com/sveltia/sveltia-cms/issues/966#issuecom
 
 We’re looking for volunteers to help us translate Sveltia CMS into different languages. If you’re interested in helping, please check out our [localization guide](https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md).
 
+## Documentation
+
+If you spot any mistakes or have any ideas for improving the documentation, please let us know by [filing an issue](https://github.com/sveltia/sveltia-cms/issues/new?labels=documentation).
+
 ## Discussions
 
 Sometimes developers and users ask questions in our [discussion forum](https://github.com/sveltia/sveltia-cms/discussions/categories/q-a) or [Discord](https://discord.com/invite/5hwCGqup5b). If you know the answer, feel free to participate by leaving a comment.
