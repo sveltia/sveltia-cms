@@ -641,6 +641,7 @@
           <ExternalAssetsPanel
             {kind}
             fieldConfig={filledPrefix.fieldConfig}
+            {draft}
             {multiple}
             {searchTerms}
             {serviceProps}

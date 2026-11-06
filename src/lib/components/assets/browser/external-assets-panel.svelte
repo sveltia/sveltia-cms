@@ -41,6 +41,7 @@
 
   /**
    * @import {
+   * EntryDraft,
    * ExternalAsset,
    * MediaLibraryAssetKind,
    * MediaLibraryFetchOptions,
@@ -53,6 +54,8 @@
   /**
    * @typedef {object} Props
    * @property {MediaField} [fieldConfig] File/Image field configuration.
+   * @property {EntryDraft | null} [draft] Draft of the entry the files are selected for, whose
+   * values fill the `filename_template` option of an uploaded file.
    * @property {MediaLibraryAssetKind} [kind] Asset kind.
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
    * @property {string} [searchTerms] Search terms for filtering assets.
@@ -66,6 +69,7 @@
     /* eslint-disable prefer-const */
     kind,
     fieldConfig = undefined,
+    draft = undefined,
     multiple = false,
     searchTerms = '',
     serviceProps,
@@ -261,7 +265,7 @@
       return;
     }
 
-    const prepared = await prepareExternalUploads(files, allMediaLibraryOptions);
+    const prepared = await prepareExternalUploads(files, allMediaLibraryOptions, { draft });
 
     files = prepared.validFiles;
     rejectedFilesAlert?.report(prepared);

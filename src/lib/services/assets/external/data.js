@@ -14,9 +14,11 @@ import {
   selectedExternalAssets,
   selectedExternalDirPath,
 } from '$lib/services/assets/external';
+import { getAssetNameContext } from '$lib/services/assets/name';
 import { partitionProcessedFiles, processFile } from '$lib/services/assets/process';
 import { cmsConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
+import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { normalizeFileNameTemplate } from '$lib/services/integrations/media-libraries/default';
 import { createPath } from '$lib/services/utils/file';
 import { createDeepState, createRawState } from '$lib/services/utils/state.svelte';
@@ -24,6 +26,7 @@ import { createDeepState, createRawState } from '$lib/services/utils/state.svelt
 /**
  * @import {
  * AssetSubfolder,
+ * EntryDraft,
  * ExternalAsset,
  * ExternalFolderListing,
  * MediaLibraryFetchOptions,
@@ -234,14 +237,21 @@ export const loadExternalAssets = async (service) => {
  * @param {object} [extraOptions] Extra options.
  * @param {boolean} [extraOptions.replacing] Whether the file replaces an existing asset, taking
  * over its name, so the file isn’t renamed with the template.
+ * @param {EntryDraft | null} [extraOptions.draft] Draft of the entry the files are added to, whose
+ * current values fill the template. Without one, the entry tags get random values.
  * @returns {Promise<{ validFiles: File[], oversizedFileNames: string[], invalidFileNames: string[]
  * }>} Files that can be uploaded, and the names of the files that were rejected.
  */
-export const prepareExternalUploads = async (files, options, { replacing = false } = {}) => {
+export const prepareExternalUploads = async (files, options, { replacing = false, draft } = {}) => {
   const nameTemplate = replacing ? undefined : normalizeFileNameTemplate(options.filename_template);
 
+  const nameContext =
+    nameTemplate && draft
+      ? getAssetNameContext({ draft, defaultLocaleSlug: getSlugs({ draft }).defaultLocaleSlug })
+      : undefined;
+
   const processed = await Promise.all(
-    files.map((file) => processFile(file, options, { nameTemplate })),
+    files.map((file) => processFile(file, options, { nameTemplate, nameContext })),
   );
 
   const { validFiles, oversizedFiles, invalidFiles } = partitionProcessedFiles(processed);

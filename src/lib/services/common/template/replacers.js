@@ -167,7 +167,8 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
     customStringTransformationRegistry.has(tf.method),
   );
 
-  const isMissingValue = value === undefined;
+  // An empty number field holds `null`, which mustn’t become the word `null`
+  const isMissingValue = value === undefined || value === null;
   const { type, locale } = replaceSubContext;
 
   // A random fallback keeps generated slugs and paths unique, but a `preview_path` is recomputed on
@@ -222,7 +223,7 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
   // A value stands for a single folder of a media library prefix, so it can’t add path segments.
   // Unlike a slug, an empty value doesn’t get a random ID
   if (type === 'library_prefix') {
-    const slug = slugify(sanitizePath(String(value ?? '')), {
+    const slug = slugify(sanitizePath(String(value)), {
       locale,
       maxLength: Infinity,
       fallback: false,

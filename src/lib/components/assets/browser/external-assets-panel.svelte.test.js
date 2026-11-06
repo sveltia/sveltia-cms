@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { prepareExternalUploads } from '$lib/services/assets/external/data';
 import { selectAssetsView } from '$lib/services/contents/editor';
 import { env } from '$lib/services/user/env.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -30,6 +31,7 @@ vi.mock('$lib/services/assets/external/data', async (importOriginal) => {
 
   return {
     ...actual,
+    prepareExternalUploads: vi.fn(actual.prepareExternalUploads),
     fetchExternalAssetBlob: vi.fn(
       async (/** @type {import('$lib/types/private').ExternalAsset} */ asset) =>
         heldDownloads.get(asset.downloadURL) ?? actual.fetchExternalAssetBlob(asset),
@@ -449,6 +451,25 @@ describe('ExternalAssetsPanel', () => {
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent('The service is not configured properly.');
+  });
+
+  test('prepares the uploaded files with the entry draft', async () => {
+    const draft = /** @type {any} */ ({ collection: { name: 'posts' } });
+    const upload = vi.fn().mockResolvedValue([]);
+
+    const { component } = await render(ExternalAssetsPanel, {
+      draft,
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue(assets), upload }),
+      selectedResources: [],
+    });
+
+    await waitForList(2);
+
+    const file = await createMockImageFile({ name: 'c.png' });
+
+    await component.uploadFiles([file]);
+
+    expect(prepareExternalUploads).toHaveBeenCalledWith([file], expect.anything(), { draft });
   });
 
   test('uploads files, selecting them and reporting the rejected ones', async () => {

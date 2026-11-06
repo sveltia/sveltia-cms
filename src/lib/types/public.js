@@ -131,8 +131,9 @@
  * `{{filename}}` and `{{extension}}` for the original file name and extension. The extension is
  * always appended, so the template shouldn’t include it. The values of the tags are slugified, and
  * the entry tags are filled with the default locale’s content when the entry is saved. A file
- * uploaded in the asset library or to a cloud storage service is named right away, without an
- * entry, so only the other tags make sense there; Cloudinary keeps the name as the original file
+ * uploaded to a cloud storage service from an entry is named right away with the content at that
+ * time, and a tag with no value yet gets a random one. A file uploaded in the asset library has no
+ * entry, so only the other tags make sense there. Cloudinary keeps the name as the original file
  * name of an asset whose public ID is generated. A file renamed by hand before saving keeps that
  * name, and a file replacing an existing asset takes over its name. Default: `undefined`, meaning
  * that the original file name is kept, or slugified if the `slugify_filename` option is enabled.

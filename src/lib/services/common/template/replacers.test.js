@@ -283,6 +283,24 @@ describe('replaceTemplateTag()', () => {
 });
 
 describe('replaceTemplatePlaceholder()', () => {
+  test('treats a null value, like that of an empty number field, as missing', () => {
+    const content = { release: null };
+    const randomValues = new Map();
+    const entryFilePath = 'content/posts/my-post.md';
+    const value = replaceTemplatePlaceholder('release', createContext({ content, randomValues }));
+
+    expect(value).toMatch(/^[0-9a-f]{12}$/);
+    expect(() =>
+      replaceTemplatePlaceholder(
+        'release',
+        createContext({ type: 'preview_path', content, entryFilePath }),
+      ),
+    ).toThrow();
+    expect(
+      replaceTemplatePlaceholder("release | default('none')", createContext({ content })),
+    ).toBe('none');
+  });
+
   test('slugifies a field value for a slug', () => {
     const context = createContext({ content: { title: 'Hello World!' } });
 

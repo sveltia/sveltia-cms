@@ -482,6 +482,58 @@ test.describe('Amazon S3 with a prefix made of an entry field', () => {
   });
 });
 
+test.describe('Amazon S3 with a file name made of an entry field', () => {
+  const config = createConfig(
+    {
+      aws_s3: {
+        access_key_id: 'AKIAE2ETESTKEY000000',
+        bucket: 'e2e-bucket',
+        region: 'eu-west-3',
+      },
+    },
+    [{ name: 'release', label: 'Release', widget: 'number', value_type: 'int', required: false }],
+  );
+
+  config.collections[0].fields[1].media_libraries = {
+    all: { filename_template: 'guestpic{{release}}' },
+  };
+  test.use({ config });
+
+  test('names an uploaded file after the field, as filled in at the time', async ({
+    cms,
+    page,
+  }) => {
+    const s3 = new MockS3({ bucket: 'e2e-bucket', region: 'eu-west-3', baseURL: S3_URL });
+    const balloon = createPNG({ color: [0, 128, 255] });
+
+    await s3.install(page);
+    await cms.open();
+    await cms.signIn();
+
+    const { editor, cover, dialog } = await openSelectImageDialog(page, 'Amazon S3');
+
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toBeHidden();
+    await editor.getByRole('spinbutton', { name: 'Release' }).fill('521');
+    await cover.getByRole('button', { name: 'Browse' }).click();
+    await dialog.getByRole('option', { name: 'Amazon S3' }).click();
+    await enterCredential(dialog, 'Amazon S3', s3.secretAccessKey);
+
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      dialog.getByRole('button', { name: 'Upload' }).click(),
+    ]);
+
+    await chooser.setFiles({ name: 'balloon.png', mimeType: 'image/png', buffer: balloon });
+    await expect.poll(() => s3.objects.get('guestpic521.png')?.body).toEqual(balloon);
+    await dialog.getByRole('button', { name: 'Insert' }).click();
+    await expect(cover.getByRole('textbox', { name: 'Cover' })).toHaveText(
+      `${S3_URL}/guestpic521.png`,
+    );
+    expect(s3.refused).toEqual([]);
+  });
+});
+
 test.describe('Cloudflare R2', () => {
   test.use({
     config: createConfig({

@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { cmsConfig } from '$lib/services/config';
 import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
-import { createAssetNameTemplate, fillAssetNameTemplate, getPendingFileName } from './name';
+import {
+  createAssetNameTemplate,
+  fillAssetNameTemplate,
+  getAssetNameContext,
+  getPendingFileName,
+} from './name';
 
 /**
  * @import { EntryDraft, InternalEntryCollection } from '$lib/types/private';
@@ -155,6 +160,38 @@ describe('fillAssetNameTemplate()', () => {
         content: { title: 'Summer Beach' },
       }),
     ).toBe('summer-beach.png');
+  });
+});
+
+describe('getAssetNameContext()', () => {
+  const draft = /** @type {EntryDraft} */ (
+    /** @type {any} */ ({
+      collection,
+      fileName: 'about',
+      isIndexFile: true,
+      defaultLocale: 'en',
+      currentValues: { en: { release: 521 }, fr: { release: 522 } },
+    })
+  );
+
+  test('gets the entry values in the default locale', () => {
+    expect(getAssetNameContext({ draft, defaultLocaleSlug: 'hello' })).toEqual({
+      collection,
+      collectionFileName: 'about',
+      content: { release: 521 },
+      slug: 'hello',
+      isIndexFile: true,
+    });
+  });
+
+  test('fills a template with a number field', () => {
+    expect(
+      fillAssetNameTemplate({
+        nameTemplate: createTemplate('guestpic{{release}}'),
+        originalName: 'photo.png',
+        ...getAssetNameContext({ draft, defaultLocaleSlug: 'hello' }),
+      }),
+    ).toBe('guestpic521.png');
   });
 });
 

@@ -67,6 +67,10 @@ vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
 }));
 
+vi.mock('$lib/services/contents/draft/slugs', () => ({
+  getSlugs: vi.fn(() => ({ defaultLocaleSlug: 'hello' })),
+}));
+
 /**
  * Create a test asset.
  * @param {string} id Asset ID.
@@ -311,6 +315,46 @@ describe('assets/external/data', () => {
 
       expect(processFile).toHaveBeenCalledWith(file, options, {
         nameTemplate: '{{filename}}-{{uuid_short}}',
+      });
+    });
+
+    it('should fill the file name template with the values of the entry draft', async () => {
+      const file = new File(['x'], 'ok.png', { type: 'image/png' });
+      const options = { filename_template: 'guestpic{{release}}' };
+      const content = { release: 521 };
+      const collection = { name: 'posts' };
+
+      const draft = /** @type {any} */ ({
+        collection,
+        fileName: undefined,
+        isIndexFile: false,
+        defaultLocale: 'en',
+        currentValues: { en: content, fr: {} },
+      });
+
+      await prepareExternalUploads([file], options, { draft });
+
+      expect(processFile).toHaveBeenCalledWith(file, options, {
+        nameTemplate: 'guestpic{{release}}',
+        nameContext: {
+          collection,
+          collectionFileName: undefined,
+          content,
+          slug: 'hello',
+          isIndexFile: false,
+        },
+      });
+    });
+
+    it('should work out no entry values without a file name template', async () => {
+      const file = new File(['x'], 'ok.png', { type: 'image/png' });
+      const options = {};
+
+      await prepareExternalUploads([file], options, { draft: /** @type {any} */ ({}) });
+
+      expect(processFile).toHaveBeenCalledWith(file, options, {
+        nameTemplate: undefined,
+        nameContext: undefined,
       });
     });
 
