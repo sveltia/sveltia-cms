@@ -44,14 +44,22 @@ describe('CMS.registerStringTransformation()', () => {
   });
 
   test('throws Error if name is the name of a built-in transformation', () => {
-    ['upper', 'lower', 'slugify', 'date', 'default', 'ternary', 'truncate', 'localize'].forEach(
-      (name) => {
-        expect(() => registerStringTransformation(name, () => '')).toThrow(
-          `The string transformation name "${name}" is reserved for a built-in transformation. ` +
-            'Choose a different name for your custom transformation.',
-        );
-      },
-    );
+    [
+      'upper',
+      'lower',
+      'plainify',
+      'slugify',
+      'date',
+      'default',
+      'ternary',
+      'truncate',
+      'localize',
+    ].forEach((name) => {
+      expect(() => registerStringTransformation(name, () => '')).toThrow(
+        `The string transformation name "${name}" is reserved for a built-in transformation. ` +
+          'Choose a different name for your custom transformation.',
+      );
+    });
 
     expect(customStringTransformationRegistry.size).toBe(0);
   });

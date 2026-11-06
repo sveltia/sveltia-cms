@@ -15,6 +15,7 @@ import {
   parseWithFormatFallback,
 } from '$lib/services/contents/fields/date-time/parse';
 import { getOrCreate, getOrCreateBounded } from '$lib/services/utils/cache';
+import { stripMarkdown } from '$lib/services/utils/markdown';
 
 /**
  * @import { InternalLocaleCode, StringTransformation } from '$lib/types/private';
@@ -61,6 +62,7 @@ export const BUILTIN_STRING_TRANSFORMATIONS = Object.freeze([
   'default',
   'localize',
   'lower',
+  'plainify',
   'slugify',
   'ternary',
   'truncate',
@@ -334,6 +336,14 @@ export const applyTruncateTransformation = (value, { max, ellipsis = '…' }) =>
   truncate(String(value ?? ''), Number(max), { ellipsis });
 
 /**
+ * Convert a Markdown or HTML value to plain text. The result can contain markup, e.g. `&lt;img&gt;`
+ * becomes `<img>`, so it’s only safe as text; see {@link stripMarkdown}.
+ * @param {any} value The value to be converted.
+ * @returns {string} The plain text.
+ */
+export const applyPlainifyTransformation = (value) => stripMarkdown(String(value ?? ''));
+
+/**
  * Names of the custom transformations that have failed, keyed by the function, so the error is
  * logged only once for each, rather than for every entry summary or keystroke. A different
  * function, e.g. a fixed one registered under the same name, starts over.
@@ -405,6 +415,8 @@ export const applyTransformation = ({ fieldConfig, value, transformation, locale
       return applyUpperCaseTransformation(value);
     case 'lower':
       return applyLowerCaseTransformation(value);
+    case 'plainify':
+      return applyPlainifyTransformation(value);
     case 'slugify':
       // Don’t fall back to a random UUID for an empty value; the transformation is used in Compute
       // fields, where a value that changes on every render causes an infinite update loop

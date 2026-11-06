@@ -8,6 +8,7 @@ import {
   applyDateTransformation,
   applyDefaultTransformation,
   applyLowerCaseTransformation,
+  applyPlainifyTransformation,
   applyTransformation,
   applyTransformations,
   applyTruncateTransformation,
@@ -534,6 +535,17 @@ describe('Test custom transformations', () => {
 });
 
 describe('Test applyTransformations()', () => {
+  test('applies plainify before truncate, so the limit counts the visible text', () => {
+    const { transformations } = parseTransformations("body | plainify | truncate(10, '...')");
+
+    expect(
+      applyTransformations({
+        value: '**Welcome** [our guest](https://example.com/a/long/path)',
+        transformations: [...transformations],
+      }),
+    ).toBe('Welcome ou...');
+  });
+
   test('applies multiple transformations in sequence', () => {
     expect(
       applyTransformations({
@@ -835,6 +847,39 @@ describe('Test individual transformation functions', () => {
     test('should handle empty strings as values', () => {
       expect(ternaryTransformation(true, { truthyValue: '', falsyValue: 'No' })).toBe('');
       expect(ternaryTransformation(false, { truthyValue: 'Yes', falsyValue: '' })).toBe('');
+    });
+  });
+
+  describe('applyPlainifyTransformation()', () => {
+    test('should remove inline Markdown syntax', () => {
+      expect(
+        applyPlainifyTransformation(
+          "Hi let's **welcome** this morning [guest](https://example.com/?a=1&b=2)",
+        ),
+      ).toBe("Hi let's welcome this morning guest");
+    });
+
+    test('should remove block Markdown syntax and collapse line breaks', () => {
+      expect(applyPlainifyTransformation('# Episode 1\n\nThe *intro*.\n\n- One\n- Two')).toBe(
+        'Episode 1 The intro. One Two',
+      );
+    });
+
+    test('should remove HTML tags', () => {
+      expect(applyPlainifyTransformation('<p>Hello <b>world</b></p><p>Again</p>')).toBe(
+        'Hello world Again',
+      );
+    });
+
+    test('should handle non-string values', () => {
+      expect(applyPlainifyTransformation(123)).toBe('123');
+      expect(applyPlainifyTransformation(true)).toBe('true');
+    });
+
+    test('should return an empty string for an empty value', () => {
+      expect(applyPlainifyTransformation('')).toBe('');
+      expect(applyPlainifyTransformation(null)).toBe('');
+      expect(applyPlainifyTransformation(undefined)).toBe('');
     });
   });
 
