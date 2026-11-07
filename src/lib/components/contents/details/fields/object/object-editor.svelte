@@ -71,7 +71,6 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     keyPath,
     typedKeyPath,
@@ -81,7 +80,6 @@
     // `FieldEditor` only renders the editor in a locale where the field is shown, and makes it
     // read-only in a locale whose values follow the default locale
     readonly = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const fieldId = $props.id();

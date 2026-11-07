@@ -77,7 +77,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     keyPath,
     typedKeyPath,
@@ -86,7 +85,6 @@
     componentName,
     valueStoreKey = parent.valueStoreKey ?? 'currentValues',
     inline = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const fieldId = $props.id();

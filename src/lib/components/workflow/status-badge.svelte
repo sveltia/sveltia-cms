@@ -19,11 +19,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    status,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { status } = $props();
 
   /**
    * Pill color tone for each status.

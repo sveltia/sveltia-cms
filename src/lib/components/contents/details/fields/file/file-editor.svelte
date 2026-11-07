@@ -42,15 +42,9 @@
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
 
   /**
-   * @import {
-   * AssetFolderInfo,
-   * EntryDraft,
-   * FieldEditorProps,
-   * InternalLocaleCode,
-   * MediaLibraryAssetKind,
-   * SelectedResource,
-   * } from '$lib/types/private';
+   * @import { FieldEditorProps, SelectedResource } from '$lib/types/private';
    * @import { FileField, MediaField } from '$lib/types/public';
+   * @import { FolderAssetListingOptions } from '$lib/services/contents/fields/file/listing.svelte';
    */
 
   /**
@@ -71,7 +65,6 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     keyPath,
     typedKeyPath,
@@ -81,7 +74,6 @@
     required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   let showSelectAssetsDialog = $state(false);
@@ -143,38 +135,20 @@
   const targetFolder = $derived(assetOptions.folder);
   // The existing files a dropped one could replace. One of another type isn’t listed: a dropped
   // file of that type is refused, unless a transformation gives it another name
-  const assetListing = createFolderAssetListing({
+  const assetListing = createFolderAssetListing(
     /**
-     * Get the entry draft.
-     * @returns {EntryDraft | null | undefined} Draft.
+     * Get the listing options.
+     * @returns {FolderAssetListingOptions} Options.
      */
-    getDraft: () => entryDraft.current,
-    /**
-     * Get the target folder.
-     * @returns {AssetFolderInfo | undefined} Folder.
-     */
-    getFolder: () => targetFolder,
-    /**
-     * Get the locale being edited.
-     * @returns {InternalLocaleCode} Locale.
-     */
-    getLocale: () => locale,
-    /**
-     * Get the asset kind.
-     * @returns {MediaLibraryAssetKind | undefined} Kind.
-     */
-    getKind: () => kind,
-    /**
-     * Get the accepted file types.
-     * @returns {string | undefined} Types.
-     */
-    getAccept: () => acceptedTypes,
-    /**
-     * Get whether file names are slugified.
-     * @returns {boolean | undefined} Whether to slugify.
-     */
-    getSlugificationEnabled: () => libraryConfig.slugify_filename,
-  });
+    () => ({
+      draft: entryDraft.current,
+      folder: targetFolder,
+      locale,
+      kind,
+      accept: acceptedTypes,
+      slugificationEnabled: libraryConfig.slugify_filename,
+    }),
+  );
   const multiple = $derived(isMultiple(fieldConfig));
   const itemCount = $derived(Array.isArray(currentValue) ? currentValue.length : 0);
   /** Whether a multiple-file field has as many files as it takes, so no more can be dropped. */

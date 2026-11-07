@@ -22,14 +22,7 @@
    */
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    typedKeyPath,
-    fieldConfig,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, typedKeyPath, fieldConfig, currentValue } = $props();
 </script>
 
 {#if isMultiple(fieldConfig)}

@@ -40,8 +40,7 @@ export const getTokenPageURL = (instanceURL) => {
 /**
  * Sign in with the GitHub REST API.
  * @param {SignInOptions} options Options.
- * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup or
- * the sign-in flow cannot be started.
+ * @returns {Promise<User | void>} User info, or nothing when the sign-in flow cannot be started.
  * @throws {Error} When there was an authentication error.
  */
 export const signIn = (options) => signInToBackend({ options, getUserProfile });

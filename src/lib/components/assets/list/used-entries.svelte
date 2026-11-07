@@ -28,11 +28,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    entries,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { entries } = $props();
 
   /**
    * Entries using the asset, each with the collections it’s listed in. A collection that filters

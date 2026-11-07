@@ -19,11 +19,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    onChange = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { onChange = undefined } = $props();
 
   /**
    * Check whether the saved changes can be committed to the local Git repository. The Settings are

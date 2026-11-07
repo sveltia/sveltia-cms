@@ -18,12 +18,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    maxSize,
-    accept = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { maxSize, accept = undefined } = $props();
 
   let open = $state(false);
   /** @type {string[]} */

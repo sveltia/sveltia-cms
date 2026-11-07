@@ -23,12 +23,7 @@
    */
 
   /** @type {FieldEditorProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    fieldConfig: config,
-    ...rest
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { fieldConfig: config, ...rest } = $props();
 
   const fieldId = $props.id();
   const summaryId = `list-${fieldId}-summary`;

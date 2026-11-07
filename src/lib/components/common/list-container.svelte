@@ -12,12 +12,7 @@
    */
 
   /** @type {Props & Record<string, any>} */
-  let {
-    /* eslint-disable prefer-const */
-    children = undefined,
-    ...rest
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { children = undefined, ...rest } = $props();
 </script>
 
 <div role="group" class="list-container" {...rest}>

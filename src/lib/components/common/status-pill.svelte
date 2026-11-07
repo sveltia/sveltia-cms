@@ -16,13 +16,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    tone,
-    label,
-    class: className = '',
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { tone, label, class: className = '' } = $props();
 </script>
 
 <span role="none" class={['status-pill', tone, className]}>

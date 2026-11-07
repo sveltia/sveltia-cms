@@ -84,7 +84,6 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     fieldId,
     keyPath,
@@ -95,7 +94,6 @@
     readonly = false,
     invalid = false,
     control,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {HTMLDivElement | undefined} */

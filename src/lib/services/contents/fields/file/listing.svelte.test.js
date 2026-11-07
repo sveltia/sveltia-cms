@@ -57,14 +57,14 @@ describe('createFolderAssetListing()', () => {
     let listing = /** @type {any} */ (undefined);
 
     stop = $effect.root(() => {
-      listing = createFolderAssetListing({
-        getDraft: vi.fn(() => draft),
-        getFolder: vi.fn(() => folder),
-        getLocale: vi.fn(() => 'en'),
-        getKind: vi.fn(() => /** @type {'image'} */ ('image')),
-        getAccept: vi.fn(() => 'image/*'),
-        getSlugificationEnabled: vi.fn(() => true),
-      });
+      listing = createFolderAssetListing(() => ({
+        draft,
+        folder,
+        locale: 'en',
+        kind: 'image',
+        accept: 'image/*',
+        slugificationEnabled: true,
+      }));
     });
 
     await wait();
@@ -98,15 +98,15 @@ describe('createFolderAssetListing()', () => {
     let listing = /** @type {any} */ (undefined);
 
     stop = $effect.root(() => {
-      listing = createFolderAssetListing({
-        getDraft: vi.fn(() => undefined),
-        getFolder: vi.fn(() => folder),
-        getLocale: vi.fn(() => undefined),
-        getKind: vi.fn(() => undefined),
-        getAccept: vi.fn(() => undefined),
-        getSlugificationEnabled: vi.fn(() => false),
-        getDroppedAssets: vi.fn(() => dropped.current),
-      });
+      listing = createFolderAssetListing(() => ({
+        draft: undefined,
+        folder,
+        locale: undefined,
+        kind: undefined,
+        accept: undefined,
+        slugificationEnabled: false,
+        droppedAssets: dropped.current,
+      }));
     });
 
     await wait();
@@ -124,5 +124,33 @@ describe('createFolderAssetListing()', () => {
     expect(listAssets).toHaveBeenLastCalledWith(
       expect.objectContaining({ uncheckedFiles: [droppedFile] }),
     );
+  });
+
+  test('only reads the draft’s files again when something they depend on changes', async () => {
+    const accept = createRawState('image/*');
+    /** @type {ReturnType<typeof createFolderAssetListing>} */
+    let listing = /** @type {any} */ (undefined);
+
+    stop = $effect.root(() => {
+      listing = createFolderAssetListing(() => ({
+        draft,
+        folder,
+        locale: 'en',
+        kind: 'image',
+        accept: accept.current,
+        slugificationEnabled: true,
+      }));
+    });
+
+    await wait();
+    expect(getUnsavedAssets).toHaveBeenCalledOnce();
+
+    accept.current = 'image/png';
+    flushSync();
+    await wait();
+
+    expect(listing.listedAssets).toEqual([unsavedAsset, savedAsset]);
+    expect(listAssets).toHaveBeenLastCalledWith(expect.objectContaining({ accept: 'image/png' }));
+    expect(getUnsavedAssets).toHaveBeenCalledOnce();
   });
 });

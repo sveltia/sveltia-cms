@@ -18,7 +18,7 @@ import {
   createSavingEntryData,
   removeDisabledLocales,
 } from '$lib/services/contents/draft/save/changes';
-import { compareWithStore } from '$lib/services/contents/draft/save/conflict';
+import { compareEntries } from '$lib/services/contents/draft/save/conflict';
 import { assignSaveTimeValues } from '$lib/services/contents/draft/save/save-time';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
@@ -159,11 +159,8 @@ export const getLatestEntry = (draft, id) => {
  * @param {Entry} baseEntry Version of the entry the edits were made to.
  * @returns {EntryConflict | undefined} The conflict, if any.
  */
-export const compareWithLatest = (draft, baseEntry) => {
-  const latestEntry = getLatestEntry(draft, baseEntry.id);
-
-  return compareWithStore(baseEntry, { entries: latestEntry ? [latestEntry] : [] });
-};
+export const compareWithLatest = (draft, baseEntry) =>
+  compareEntries(baseEntry, getLatestEntry(draft, baseEntry.id));
 
 /**
  * Check whether an entry of the given collection can be saved along with the host entry. While the

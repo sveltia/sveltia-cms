@@ -24,16 +24,14 @@ import { formatDate } from '$lib/services/utils/date';
  */
 
 /**
- * Compare the draft’s original entry with the one in the store to tell whether the entry has been
- * changed since the draft was opened.
- * @param {Entry} originalEntry Entry the draft was made from.
- * @param {object} [options] Options.
- * @param {Entry[]} [options.entries] Entries holding the entry as it is now. Defaults to those on
- * the configured branch.
+ * Compare the version of an entry that edits were started from with the entry as it is now to tell
+ * whether the entry has been changed since. The caller finds the current entry, as where it’s kept
+ * depends on the caller: the configured branch, a pull request or an earlier save of a host entry.
+ * @param {Entry} originalEntry Version the edits were started from.
+ * @param {Entry | undefined} current Entry as it is now, or `undefined` if it has been deleted.
  * @returns {EntryConflict | undefined} The conflict, if any.
  */
-export const compareWithStore = (originalEntry, { entries = allEntries.current } = {}) => {
-  const current = entries.find(({ id }) => id === originalEntry.id);
+export const compareEntries = (originalEntry, current) => {
   const canOverwrite = originalEntry.arrayIndex === undefined;
 
   if (!current) {
@@ -41,13 +39,26 @@ export const compareWithStore = (originalEntry, { entries = allEntries.current }
   }
 
   // The parsed content is compared rather than the file, so a commit that rewrote the file without
-  // changing what it says doesn’t count. A locale file added or removed does
+  // changing what it says doesn’t count, nor does one that only touched the entry’s assets. A
+  // locale file added or removed does
   if (!equal(current.locales, originalEntry.locales)) {
     return { type: 'modified', entry: current, canOverwrite };
   }
 
   return undefined;
 };
+
+/**
+ * Compare the draft’s original entry with the one on the configured branch to tell whether the
+ * entry has been changed since the draft was opened.
+ * @param {Entry} originalEntry Entry the draft was made from.
+ * @returns {EntryConflict | undefined} The conflict, if any.
+ */
+export const compareWithStore = (originalEntry) =>
+  compareEntries(
+    originalEntry,
+    allEntries.current.find(({ id }) => id === originalEntry.id),
+  );
 
 /**
  * Find out whether saving the draft would overwrite someone else’s change: the repository is

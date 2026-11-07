@@ -36,14 +36,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    keyPath,
-    typedKeyPath,
-    fieldConfig,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, keyPath, typedKeyPath, fieldConfig } = $props();
 
   const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));

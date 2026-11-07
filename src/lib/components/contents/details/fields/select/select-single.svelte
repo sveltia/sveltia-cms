@@ -19,7 +19,6 @@
 
   /** @type {SelectFieldSelectorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     fieldId,
     fieldConfig,
     currentValue = $bindable(),
@@ -27,7 +26,6 @@
     readonly = false,
     invalid = false,
     options,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const { dropdown_threshold: dropdownThreshold = 5 } = $derived(fieldConfig);

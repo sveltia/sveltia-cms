@@ -23,13 +23,7 @@
   const SANITIZE_OPTIONS = { ALLOWED_TAGS: ['wbr'], ALLOWED_ATTR: [] };
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    path,
-    caption,
-    children = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { path, caption, children = undefined } = $props();
 
   const segments = $derived(path ? stripSlashes(path).split('/') : caption ? [caption] : []);
 

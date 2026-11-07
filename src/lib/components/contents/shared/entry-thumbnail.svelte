@@ -25,13 +25,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    collection,
-    entry,
-    variant,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { collection, entry, variant } = $props();
 
   /**
    * Hidden element whose parent, the cell or card holding the thumbnail, is observed to tell when

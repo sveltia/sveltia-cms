@@ -49,13 +49,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    id,
-    thisPane,
-    thatPane = createRawState(null),
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { id, thisPane, thatPane = createRawState(null) } = $props();
 
   const collection = $derived(entryDraft.current?.collection);
   const collectionFile = $derived(entryDraft.current?.collectionFile);

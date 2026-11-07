@@ -26,15 +26,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    otherLocales,
-    keyPath = '',
-    translate = false,
-    submenu = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, otherLocales, keyPath = '', translate = false, submenu = false } = $props();
 
   const useSubmenu = $derived(submenu && otherLocales.length > 1);
 

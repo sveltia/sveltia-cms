@@ -20,13 +20,7 @@
    */
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    fieldConfig,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, fieldConfig, currentValue } = $props();
 
   const listFormatter = $derived(getListFormatter(locale));
   const labels = $derived(getPreviewLabels({ fieldConfig, currentValue }));

@@ -46,7 +46,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     entry,
     locale,
     collection,
@@ -56,7 +55,6 @@
     variant = 'ghost',
     size = 'medium',
     iconic = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   // `pageLiveness.current` is deliberately left out of this derivation. The effect below watches

@@ -20,12 +20,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    node,
-    collectionName,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { node, collectionName } = $props();
 
   const { path, label, children } = $derived(node);
   const isCurrentCollection = $derived(selectedCollection.current?.name === collectionName);

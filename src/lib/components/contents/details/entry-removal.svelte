@@ -57,7 +57,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     deleting = $bindable(false),
     collection,
     collectionFile,
@@ -69,7 +68,6 @@
     pendingDeletion,
     onDone,
     onClose,
-    /* eslint-enable prefer-const */
   } = $props();
 
   let showDeleteDialog = $state(false);

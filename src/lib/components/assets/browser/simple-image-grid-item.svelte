@@ -20,17 +20,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    value,
-    ariaLabel,
-    selected,
-    viewType = 'grid',
-    multiple,
-    onChange,
-    children,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { value, ariaLabel, selected, viewType = 'grid', multiple, onChange, children } = $props();
 </script>
 
 <div role="none" class="wrapper {viewType}">

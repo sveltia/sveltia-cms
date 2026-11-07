@@ -21,14 +21,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    name,
-    path = undefined,
-    folderCount = undefined,
-    assetCount,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { name, path = undefined, folderCount = undefined, assetCount } = $props();
 </script>
 
 {#snippet preview()}

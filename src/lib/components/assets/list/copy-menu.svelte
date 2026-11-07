@@ -23,13 +23,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    items,
-    count,
-    useButton = true,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { items, count, useButton = true } = $props();
 
   /** @type {{ show: boolean, text: string, status: 'success' | 'error' }} */
   const toast = $state({ show: false, text: '', status: 'success' });

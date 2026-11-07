@@ -18,14 +18,12 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     viewType = 'grid',
     gridId = undefined,
     multiple = false,
     ariaLabel = undefined,
     onChange = undefined,
     children = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 </script>
 

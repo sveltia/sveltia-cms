@@ -23,12 +23,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    assets = [],
-    useButton = true,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { assets = [], useButton = true } = $props();
 
   /**
    * Whether the file data can be copied: a single plaintext file or an image the clipboard can take

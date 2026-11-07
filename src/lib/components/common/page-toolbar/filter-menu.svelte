@@ -22,7 +22,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     currentView,
     'aria-controls': ariaControls,
     label = '',
@@ -30,7 +29,6 @@
     multiple = false,
     noneLabel = '',
     filters = [],
-    /* eslint-enable prefer-const */
   } = $props();
 </script>
 

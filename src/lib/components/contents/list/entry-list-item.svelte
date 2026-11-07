@@ -33,14 +33,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    collection,
-    entry,
-    viewType,
-    columns = [],
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { collection, entry, viewType, columns = [] } = $props();
 
   // `aria-rowindex` is 1-based, unlike the index map. `undefined` for an entry that isn’t listed,
   // e.g. one filtered out, so the attribute is omitted rather than set to an invalid index.

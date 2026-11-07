@@ -10,12 +10,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    label,
-    children,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { label, children } = $props();
 
   const sectionId = $props.id();
   const headerId = `${sectionId}-header`;

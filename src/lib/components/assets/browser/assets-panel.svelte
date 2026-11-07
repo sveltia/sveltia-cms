@@ -50,7 +50,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     multiple = false,
     kind = undefined,
     assets = [],
@@ -66,7 +65,6 @@
     onOpenSubfolder = undefined,
     selectedSubfolderPaths = [],
     onSelectSubfolder = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   // Split the search terms into individual words for filtering purposes

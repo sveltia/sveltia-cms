@@ -52,15 +52,7 @@
   const { valueStoreKey = 'currentValues' } = getFieldEditorContext();
 
   /** @type {FieldEditorProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    keyPath,
-    fieldId,
-    fieldConfig,
-    readonly = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, keyPath, fieldId, fieldConfig, readonly = false } = $props();
 
   const {
     i18n = false,

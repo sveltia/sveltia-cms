@@ -29,7 +29,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     open = $bindable(false),
     title,
     okLabel,
@@ -39,7 +38,6 @@
     takenNames,
     onSubmit,
     onClose = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const componentId = $props.id();

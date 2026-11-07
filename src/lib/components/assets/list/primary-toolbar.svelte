@@ -32,15 +32,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    rootLabel,
-    subfolderNames = [],
-    onBrowse,
-    actions = undefined,
-    fab = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { rootLabel, subfolderNames = [], onBrowse, actions = undefined, fab = undefined } = $props();
 
   /** The subfolder being browsed is the title; at the root, the location itself is. */
   const title = $derived(subfolderNames.at(-1) ?? rootLabel);

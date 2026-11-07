@@ -29,13 +29,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    subfolder,
-    rowIndex,
-    viewType,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { subfolder, rowIndex, viewType } = $props();
 
   /**
    * Browse the subfolder. The selected asset folder travels as history state, the same way it does

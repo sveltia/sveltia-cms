@@ -42,7 +42,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     open = $bindable(false),
     name,
     otherNames,
@@ -54,7 +53,6 @@
     slugificationEnabled = false,
     onRename,
     onClose = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const componentId = $props.id();

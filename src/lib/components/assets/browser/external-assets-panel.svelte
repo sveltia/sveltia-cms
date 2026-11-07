@@ -66,7 +66,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     kind,
     fieldConfig = undefined,
     draft = undefined,
@@ -75,7 +74,6 @@
     serviceProps,
     gridId = undefined,
     selectedResources = $bindable([]),
-    /* eslint-enable prefer-const */
   } = $props();
 
   const {

@@ -25,14 +25,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    open = $bindable(false),
-    conflict,
-    onOverwrite,
-    onClose,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { open = $bindable(false), conflict, onOverwrite, onClose } = $props();
 </script>
 
 {#snippet conflictDescription()}

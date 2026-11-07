@@ -29,14 +29,12 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     fileName,
     kind,
     size = undefined,
     hasDimensions = false,
     dimensions = undefined,
     duration = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const { extension = '' } = $derived(getPathInfo(fileName));

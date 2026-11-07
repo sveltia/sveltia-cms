@@ -50,7 +50,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     subFields,
     getSubFieldProps,
@@ -61,7 +60,6 @@
     summaryContent = undefined,
     summaryId = undefined,
     hint = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 </script>
 

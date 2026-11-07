@@ -23,7 +23,6 @@
 
   /** @type {Props & Record<string, any>} */
   let {
-    /* eslint-disable prefer-const */
     open = $bindable(false),
     oldExtension = undefined,
     newExtension = undefined,
@@ -31,7 +30,6 @@
     onOk = undefined,
     onCancel = undefined,
     ...restProps
-    /* eslint-enable prefer-const */
   } = $props();
 
   const type = $derived.by(() => {

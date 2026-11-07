@@ -37,7 +37,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     assets = [],
     disabled = false,
     deleteAssets,
@@ -46,7 +45,6 @@
     dialogDescription = '',
     onDelete = undefined,
     useButton = true,
-    /* eslint-enable prefer-const */
   } = $props();
 
   let showDialog = $state(false);

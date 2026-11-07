@@ -23,13 +23,7 @@
    */
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    fieldConfig,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, fieldConfig, currentValue } = $props();
 
   const { utc, singleCustomTimeZone } = $derived(parseDateTimeConfig(fieldConfig));
   const displayValue = $derived(

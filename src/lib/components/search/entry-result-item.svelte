@@ -35,11 +35,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    result,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { result } = $props();
 
   const { entry, locale, keyPath } = $derived(result);
   const { subPath } = $derived(entry);

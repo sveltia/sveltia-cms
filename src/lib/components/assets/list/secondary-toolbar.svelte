@@ -39,7 +39,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     allItems,
     selectedItems,
     totalCount,
@@ -47,7 +46,6 @@
     groups = [],
     groupNames = [],
     searchTerms = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const hasListedAssets = $derived(!!totalCount);

@@ -38,7 +38,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     name,
     kind,
     asset = undefined,
@@ -51,7 +50,6 @@
     onFocus,
     onPreview,
     status = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /**

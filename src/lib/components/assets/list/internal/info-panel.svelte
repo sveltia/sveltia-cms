@@ -27,12 +27,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    asset,
-    showPreview = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { asset, showPreview = false } = $props();
 
   /** @type {AssetDetails} */
   let details = $state({ ...defaultAssetDetails });

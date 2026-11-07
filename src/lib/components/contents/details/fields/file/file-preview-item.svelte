@@ -23,14 +23,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    value,
-    fieldConfig,
-    typedKeyPath = undefined,
-    locale = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { value, fieldConfig, typedKeyPath = undefined, locale = undefined } = $props();
 
   /** @type {AssetKind | undefined} */
   let kind = $state();

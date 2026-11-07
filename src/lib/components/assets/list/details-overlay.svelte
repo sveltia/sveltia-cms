@@ -49,7 +49,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     title = undefined,
     contentKey = undefined,
     onBack,
@@ -59,7 +58,6 @@
     editOptions,
     preview,
     info = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {HTMLElement | undefined} */

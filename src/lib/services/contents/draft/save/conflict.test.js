@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { allEntries } from '$lib/services/contents';
 
-import { compareWithStore, describeConflict, detectEntryConflict } from './conflict';
+import {
+  compareEntries,
+  compareWithStore,
+  describeConflict,
+  detectEntryConflict,
+} from './conflict';
 
 vi.mock('@sveltia/i18n', async () =>
   (await import('$lib/test/i18n')).createI18nMock({ values: true }),
@@ -25,6 +30,27 @@ const makeEntry = (id, title, extra = {}) => ({
   id,
   locales: { _default: { slug: id, path: `${id}.md`, content: { title } } },
   ...extra,
+});
+
+describe('compareEntries', () => {
+  test('compares the entry it’s given, whatever its ID', () => {
+    const original = makeEntry('a', 'A');
+    const current = makeEntry('a', 'A, revised', { id: 'b' });
+
+    expect(compareEntries(original, makeEntry('a', 'A', { id: 'b' }))).toBeUndefined();
+    expect(compareEntries(original, current)).toEqual({
+      type: 'modified',
+      entry: current,
+      canOverwrite: true,
+    });
+  });
+
+  test('reports an entry that’s no longer there as deleted', () => {
+    expect(compareEntries(makeEntry('a', 'A'), undefined)).toEqual({
+      type: 'deleted',
+      canOverwrite: true,
+    });
+  });
 });
 
 describe('compareWithStore', () => {

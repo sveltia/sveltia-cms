@@ -31,12 +31,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    asset,
-    viewType,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { asset, viewType } = $props();
 
   const selected = $derived(selectedExternalAssetIdSet.current.has(asset.id));
   /**

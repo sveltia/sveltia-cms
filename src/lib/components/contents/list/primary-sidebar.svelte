@@ -20,11 +20,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    isSearchPage = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { isSearchPage = false } = $props();
 
   // @ts-ignore Dividers can be included in the collection list
   const collections = $derived(cmsConfig.current?.collections?.filter(({ hide }) => !hide) ?? []);

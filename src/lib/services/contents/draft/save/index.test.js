@@ -17,7 +17,7 @@ import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reor
 import { cancelBackup, deleteBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
 import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
-import { compareWithStore, detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
+import { compareEntries, detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
@@ -1193,7 +1193,7 @@ describe('draft/save/index', () => {
         await saveEntry();
 
         expect(checkForRemoteChanges).toHaveBeenCalledOnce();
-        expect(compareWithStore).toHaveBeenCalledWith(svelte.baseEntry, { entries: [] });
+        expect(compareEntries).toHaveBeenCalledWith(svelte.baseEntry, undefined);
         expect(saveChanges).toHaveBeenCalledWith(
           expect.objectContaining({ changes: expect.arrayContaining(svelte.changes) }),
         );
@@ -1219,7 +1219,7 @@ describe('draft/save/index', () => {
         // `detectEntryConflict()` has checked it already
         expect(detectEntryConflict).toHaveBeenCalledWith(mockDraft);
         expect(checkForRemoteChanges).not.toHaveBeenCalled();
-        expect(compareWithStore).toHaveBeenCalledWith(svelte.baseEntry, { entries: [] });
+        expect(compareEntries).toHaveBeenCalledWith(svelte.baseEntry, undefined);
       });
 
       it('should record an edited entry as changed in the pull request', async () => {
@@ -1273,7 +1273,7 @@ describe('draft/save/index', () => {
         mockDraft.pendingEntries = [react, svelte];
         // The repository can’t be reached, so what’s known is compared
         vi.mocked(checkForRemoteChanges).mockRejectedValue(new Error('offline'));
-        vi.mocked(compareWithStore).mockImplementation((entry) =>
+        vi.mocked(compareEntries).mockImplementation((entry) =>
           entry.id === 'id-svelte' ? { type: 'modified', canOverwrite: true } : undefined,
         );
 
@@ -1284,7 +1284,7 @@ describe('draft/save/index', () => {
         expect(getEntrySummary).toHaveBeenCalledWith(tagCollection, svelte.entry);
 
         // Deleted since, so it has to be deselected rather than edited again
-        vi.mocked(compareWithStore).mockImplementation((entry) =>
+        vi.mocked(compareEntries).mockImplementation((entry) =>
           entry.id === 'id-svelte' ? { type: 'deleted', canOverwrite: true } : undefined,
         );
 

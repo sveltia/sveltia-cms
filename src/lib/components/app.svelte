@@ -44,11 +44,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    config,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { config } = $props();
 
   // The strings for the default locale are always bundled with the app, so the UI can be rendered
   // right away, even while the strings for another locale are being fetched from the CDN

@@ -17,11 +17,7 @@
    */
 
   /** @type {FieldPreviewProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { currentValue } = $props();
 </script>
 
 {#if currentValue}

@@ -29,7 +29,6 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     fieldId,
     fieldConfig,
@@ -37,7 +36,6 @@
     required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   let inputValue = $state('');

@@ -20,14 +20,7 @@
    */
 
   /** @type {Props & Record<string, any>} */
-  let {
-    /* eslint-disable prefer-const */
-    disabled = false,
-    currentView,
-    types = ['list', 'grid'],
-    ...rest
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { disabled = false, currentView, types = ['list', 'grid'], ...rest } = $props();
 
   /**
    * Icon of each view type.

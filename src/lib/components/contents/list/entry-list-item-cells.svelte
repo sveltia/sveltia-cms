@@ -44,14 +44,12 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     collection,
     entry,
     viewType,
     showCheckbox = false,
     onSelect = undefined,
     columns = [],
-    /* eslint-enable prefer-const */
   } = $props();
 
   // Editorial Workflow information, only present on an unpublished entry

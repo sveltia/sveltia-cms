@@ -13,13 +13,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    label = undefined,
-    disabled = false,
-    onclick,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { label = undefined, disabled = false, onclick } = $props();
 </script>
 
 <Button

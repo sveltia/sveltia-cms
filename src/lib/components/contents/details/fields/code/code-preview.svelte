@@ -22,14 +22,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorProps & Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    keyPath,
-    fieldConfig,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, keyPath, fieldConfig, currentValue } = $props();
 
   const {
     default_language: defaultLanguage = '',

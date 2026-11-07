@@ -17,11 +17,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    asset,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { asset } = $props();
 
   const { path, name, folder, kind } = $derived(asset);
 </script>

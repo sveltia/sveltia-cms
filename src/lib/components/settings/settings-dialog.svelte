@@ -12,12 +12,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    open = $bindable(false),
-    onClose = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { open = $bindable(false), onClose = undefined } = $props();
 
   let selectedPanel = $state('appearance');
 </script>

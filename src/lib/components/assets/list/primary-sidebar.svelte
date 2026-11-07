@@ -42,11 +42,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    isSearchPage = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { isSearchPage = false } = $props();
 
   /* v8 ignore start -- the app locale is loaded before the sidebar is rendered */
   /**

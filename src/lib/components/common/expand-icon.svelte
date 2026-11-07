@@ -8,11 +8,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    expanded = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { expanded = false } = $props();
 </script>
 
 <Icon name={expanded ? 'expand_more' : isRTL() ? 'chevron_left' : 'chevron_right'} />

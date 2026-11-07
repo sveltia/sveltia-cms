@@ -17,12 +17,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    allItems,
-    selectedItems,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { allItems, selectedItems } = $props();
 
   const totalCount = $derived(allItems.length);
   const selectedCount = $derived(selectedItems.current.length);

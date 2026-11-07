@@ -142,7 +142,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     componentName,
     label,
     mode = 'block',
@@ -153,7 +152,6 @@
     fields,
     values,
     onChange = () => undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const fieldId = $props.id();

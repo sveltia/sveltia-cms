@@ -8,7 +8,7 @@ import { restoreBackup } from '$lib/services/contents/draft/backup';
 import { buildDraft } from '$lib/services/contents/draft/create';
 import { getReferencedPendingEntrySet } from '$lib/services/contents/draft/pending-entries';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
-import { compareWithStore } from '$lib/services/contents/draft/save/conflict';
+import { compareEntries } from '$lib/services/contents/draft/save/conflict';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { getField } from '$lib/services/contents/entry/fields';
@@ -84,7 +84,7 @@ vi.mock('$lib/services/contents/entry/fields', async (importOriginal) => ({
 }));
 
 vi.mock('$lib/services/contents/draft/save/conflict', () => ({
-  compareWithStore: vi.fn(),
+  compareEntries: vi.fn(),
 }));
 
 vi.mock('$lib/services/contents/fields/date-time/auto-now', () => ({
@@ -1683,7 +1683,7 @@ describe('getEditableEntries', () => {
 describe('getEditTarget', () => {
   beforeEach(() => {
     allEntries.current = [];
-    vi.mocked(compareWithStore).mockReturnValue(undefined);
+    vi.mocked(compareEntries).mockReturnValue(undefined);
   });
 
   it('creates a new entry without an entry to edit', () => {
@@ -1720,9 +1720,9 @@ describe('getEditTarget', () => {
 
     allEntries.current = [latest];
     expect(getEditTarget(args)).toEqual({ pendingEntry, baseEntry: latest, changedSince: false });
-    expect(compareWithStore).toHaveBeenCalledWith(pendingEntry.baseEntry, { entries: [latest] });
+    expect(compareEntries).toHaveBeenCalledWith(pendingEntry.baseEntry, latest);
 
-    vi.mocked(compareWithStore).mockReturnValue({ type: 'modified', canOverwrite: true });
+    vi.mocked(compareEntries).mockReturnValue({ type: 'modified', canOverwrite: true });
     expect(getEditTarget(args).changedSince).toBe(true);
 
     // Deleted since, so it’s edited from the version it was edited from
@@ -1740,7 +1740,7 @@ describe('buildQuickAddDraft', () => {
 
   beforeEach(() => {
     allEntries.current = [];
-    vi.mocked(compareWithStore).mockReturnValue(undefined);
+    vi.mocked(compareEntries).mockReturnValue(undefined);
   });
 
   it('builds a new entry at the root of the collection folder', async () => {
@@ -1818,13 +1818,13 @@ describe('getLatestEntry', () => {
   });
 
   it('compares a version with the latest one', () => {
-    vi.mocked(compareWithStore).mockReturnValue(undefined);
+    vi.mocked(compareEntries).mockReturnValue(undefined);
     expect(compareWithLatest(createParentDraft(), published)).toBeUndefined();
-    expect(compareWithStore).toHaveBeenCalledWith(published, { entries: [published] });
+    expect(compareEntries).toHaveBeenCalledWith(published, published);
 
     allEntries.current = [];
     compareWithLatest(createParentDraft(), published);
-    expect(compareWithStore).toHaveBeenLastCalledWith(published, { entries: [] });
+    expect(compareEntries).toHaveBeenLastCalledWith(published, undefined);
   });
 });
 

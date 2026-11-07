@@ -22,14 +22,12 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     currentView,
     'aria-controls': ariaControls,
     label = '',
     disabled = false,
     sortKeys = [],
     collectionName = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /**

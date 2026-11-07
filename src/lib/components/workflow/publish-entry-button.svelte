@@ -31,13 +31,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    entry,
-    disabled = false,
-    modified = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { entry, disabled = false, modified = false } = $props();
 
   let showPublishDialog = $state(false);
   let showErrorToast = $state(false);

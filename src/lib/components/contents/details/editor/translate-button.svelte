@@ -25,14 +25,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    size = 'medium',
-    locale,
-    otherLocales,
-    keyPath = '',
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { size = 'medium', locale, otherLocales, keyPath = '' } = $props();
 
   const sourceDisabled = $derived(
     !entryDraft.current?.currentLocales[locale] ||

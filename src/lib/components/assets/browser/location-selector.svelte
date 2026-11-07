@@ -37,7 +37,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     libraryName,
     assetLibraryFolderMap,
     showRepository,
@@ -47,7 +46,6 @@
     stockAssetProviderEntries,
     controlsId,
     onChange,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const Selector = $derived(env.isSmallScreen ? Select : Listbox);

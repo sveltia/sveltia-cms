@@ -29,7 +29,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     accept = undefined,
     disabled = false,
     multiple = false,
@@ -38,7 +37,6 @@
     filterDroppedFiles = true,
     onDrop = undefined,
     children = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {HTMLElement | undefined} */

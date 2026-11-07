@@ -26,11 +26,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    asset,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { asset } = $props();
 
   /** @type {ExternalAssetDetails} */
   let details = $state({});

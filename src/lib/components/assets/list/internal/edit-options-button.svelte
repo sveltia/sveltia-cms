@@ -28,12 +28,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    asset,
-    extraItems = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { asset, extraItems = undefined } = $props();
 
   /** @type {AssetDetails} */
   let details = $state({ ...defaultAssetDetails });

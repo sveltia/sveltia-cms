@@ -15,12 +15,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    text,
-    name,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { text, name } = $props();
 </script>
 
 {#if name.endsWith('.md')}

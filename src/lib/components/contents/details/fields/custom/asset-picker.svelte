@@ -42,13 +42,11 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     fieldConfig,
     typedKeyPath,
     componentName = undefined,
     inEditorComponent = false,
     locale = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const entryDraft = getEntryDraftContext();

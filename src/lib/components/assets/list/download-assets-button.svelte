@@ -22,14 +22,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    assets = [],
-    getName,
-    getBlob,
-    useButton = true,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { assets = [], getName, getBlob, useButton = true } = $props();
 
   /** @type {{ show: boolean, status: 'success' | 'error' }} */
   const toast = $state({ show: false, status: 'success' });

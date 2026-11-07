@@ -37,13 +37,11 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     fieldConfig,
     currentValue = $bindable(),
     // required = true,
     readonly = false,
     invalid = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const { decimals = 7, type: geometryType = 'Point', center, zoom } = $derived(fieldConfig);

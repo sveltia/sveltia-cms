@@ -15,11 +15,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    file,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { file } = $props();
 
   const { name, icon } = $derived(file);
   const label = $derived(file.label || name);

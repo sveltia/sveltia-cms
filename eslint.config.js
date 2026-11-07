@@ -163,6 +163,13 @@ export default [
       'no-nested-ternary': 'off',
       'no-param-reassign': 'off',
       'no-void': 'off',
+      // The core rule wants the props never written back to be `const`, which can’t be done while
+      // `$props()` is destructured along with a `$bindable()` prop. The options are Airbnb’s
+      'prefer-const': 'off',
+      'svelte/prefer-const': [
+        'error',
+        { destructuring: 'any', ignoreReadBeforeAssign: true, excludedRunes: ['$props'] },
+      ],
       // https://github.com/sveltejs/eslint-plugin-svelte#white_check_mark-rules
       'svelte/no-at-html-tags': 'off',
       // Ignore false errors

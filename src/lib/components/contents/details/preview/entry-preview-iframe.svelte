@@ -45,16 +45,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    styleURLs,
-    children,
-    reactComponent,
-    reactProps,
-    onLoad,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, styleURLs, children, reactComponent, reactProps, onLoad } = $props();
 
   /**
    * Track if the iframe has been initialized to avoid duplicate initialization.

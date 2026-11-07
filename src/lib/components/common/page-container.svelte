@@ -20,13 +20,11 @@
 
   /** @type {Props & Record<string, any>} */
   let {
-    /* eslint-disable prefer-const */
     class: className = '',
     uiSettingsKey = undefined,
     primarySidebar = undefined,
     main = undefined,
     ...rest
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** @type {HTMLElement | undefined} */

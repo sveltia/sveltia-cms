@@ -25,12 +25,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    collection,
-    isSearchPage = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { collection, isSearchPage = false } = $props();
 
   const { name, label, icon } = $derived(collection);
   const isCurrentCollection = $derived(selectedCollection.current?.name === name);

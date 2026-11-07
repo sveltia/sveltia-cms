@@ -16,13 +16,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    fieldConfig,
-    locale,
-    currentValue,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { fieldConfig, locale, currentValue } = $props();
 
   const { minlength, maxlength } = $derived(fieldConfig);
   const { count, hasMin, hasMax, invalid } = $derived(

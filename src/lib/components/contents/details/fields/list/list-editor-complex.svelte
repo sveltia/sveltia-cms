@@ -21,24 +21,18 @@
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
   import RemovedItemNotice from '$lib/components/contents/details/fields/object/removed-item-notice.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getFieldEditorContext,
     isInEditorComponent,
   } from '$lib/services/contents/editor/field-context';
-  import { isExpanded, syncExpanderStates } from '$lib/services/contents/editor/fields';
-  import {
-    getStickyToolbarBottom,
-    scrollToAddedListItem,
-  } from '$lib/services/contents/editor/scroll';
+  import { isExpanded } from '$lib/services/contents/editor/fields';
   import { getMemoizedSubtree } from '$lib/services/contents/entry/subtree';
   import { getCustomFieldSummary } from '$lib/services/contents/fields/custom/preview';
   import {
-    copyListItem,
-    prepareListItemPaste,
-    readListItem,
-  } from '$lib/services/contents/fields/list/clipboard';
+    createListActions,
+    LIST_RENDER_DELAY,
+  } from '$lib/services/contents/fields/list/actions.svelte';
   import {
     formatSummary,
     getListFieldInfo,
@@ -46,21 +40,6 @@
     isPairedList,
     isSingleItemList,
   } from '$lib/services/contents/fields/list/helpers';
-  import {
-    createListItem,
-    getInitialListExpanderStates,
-  } from '$lib/services/contents/fields/list/items';
-  import {
-    insertListItem,
-    moveListItem,
-    removeListItem,
-    restoreListItem,
-  } from '$lib/services/contents/fields/list/mutations';
-  import {
-    getPastedItemToast,
-    showListItemClipboardToast,
-  } from '$lib/services/contents/fields/list/paste-toast';
-  import { getNestedExpanderStates } from '$lib/services/contents/fields/list/removed-items';
   import { createRemovedItemsState } from '$lib/services/contents/fields/list/removed-items-state.svelte';
   import {
     getTypedSubKeyPath,
@@ -77,12 +56,9 @@
   /**
    * @import { SubtreeMemo } from '$lib/services/contents/entry/subtree';
    * @import {
-   * ExpanderStateList,
    * FieldEditorProps,
    * FlattenedEntryContent,
-   * InternalLocaleCode,
    * MediaFieldSource,
-   * RemovedListItem,
    * } from '$lib/types/private';
    * @import {
    * ComplexListField,
@@ -108,7 +84,6 @@
 
   /** @type {FieldEditorProps & Props} */
   let {
-    /* eslint-disable prefer-const */
     locale,
     keyPath,
     typedKeyPath,
@@ -116,7 +91,6 @@
     required = true,
     readonly = false,
     summaryId,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const fieldId = $props.id();
@@ -129,10 +103,8 @@
     allow_remove: allowRemove = true,
     allow_duplicate: allowDuplicate = true,
     allow_reorder: allowReorder = true,
-    collapsed,
     summary,
     thumbnail: thumbnailFieldName,
-    minimize_collapsed: minimizeCollapsed = false,
     max = Infinity,
     add_to_top: addToTop = false,
   } = $derived(/** @type {ComplexListField} */ (fieldConfig));
@@ -264,365 +236,38 @@
    * @type {HTMLElement | undefined}
    */
   let topToolbar = $state();
-  /**
-   * The index of the item being added, which is rendered right away rather than once it comes into
-   * view, so it can be scrolled into view and focused at once.
-   * @type {number | undefined}
-   */
-  let addedItemIndex = $state();
-  /**
-   * The item added last, which is followed until it stays in view.
-   * @type {HTMLElement | undefined}
-   */
-  let latestAddedItem;
-  /**
-   * Update the expander states of the list and its items.
-   * @param {Record<string, boolean>} stateMap Map of key path and state.
-   */
-  const updateExpanderStates = (stateMap) => {
-    // The controls are disabled once the draft is gone, so this is only a race with the editor
-    // closing
-    /* v8 ignore next 3 */
-    if (!entryDraft.current) {
-      return;
-    }
-
-    syncExpanderStates({ draft: entryDraft.current, stateMap });
-  };
-
-  /**
-   * Initialize the expander state.
-   */
-  const initializeExpanderState = () => {
-    const draft = entryDraft.current;
-
-    // The editor is mounted with a draft; this is only a race with the editor closing
-    /* v8 ignore next 3 */
-    if (!draft) {
-      return;
-    }
-
-    updateExpanderStates(
-      getInitialListExpanderStates({
-        draft,
-        keyPath,
-        itemCount: items.length,
-        locale,
-        collapsed,
-        minimizeCollapsed,
-      }),
-    );
-  };
-
-  /**
-   * Update the value for the List field with subfield(s).
-   * @param {(arg: {
-   * valueList: any[], expanderStateList: ExpanderStateList, locale: InternalLocaleCode
-   * }) => void} manipulate See {@link updateListFieldForLocales}.
-   */
-  const updateComplexList = (manipulate) => {
-    const draft = entryDraft.current;
-
-    // The items are gone along with the draft, so this is only a race with the editor closing
-    /* v8 ignore next 3 */
-    if (!draft) {
-      return;
-    }
-
-    updateListFieldForLocales({
-      draft,
+  /* eslint-disable jsdoc/require-jsdoc */
+  const listActions = createListActions({
+    entryDraft,
+    fieldId,
+    valueStoreKey,
+    componentName,
+    inEditorComponent,
+    removedItems,
+    resolveType,
+    getListState: () => ({
       locale,
-      i18n,
-      pairedItems,
-      valueStoreKey,
-      keyPath,
-      manipulate,
-    });
-  };
-
-  /**
-   * Get the list item element at the specified index.
-   * @param {number} index Target index.
-   * @returns {HTMLElement | null | undefined} List item element.
-   */
-  const getItem = (index) =>
-    /** @type {HTMLElement | null | undefined} */ (
-      itemList?.children[index]?.querySelector('.item')
-    );
-
-  /**
-   * Add a new subfield to the list.
-   * @param {object} [args] Arguments.
-   * @param {number} [args.index] List index where a new item will be inserted.
-   * @param {number} [args.dupIndex] List index of an item to be duplicated.
-   * @param {string} [args.type] Variable type name. If the field doesn’t have variable types, it
-   * will be `undefined`.
-   * @param {Record<InternalLocaleCode, any>} [args.sourceItems] Pasted item in each locale.
-   * @param {boolean} [args.replace] Whether to replace the item at the index with the new one.
-   */
-  const addItem = async ({
-    index = addToTop ? 0 : items.length,
-    dupIndex,
-    type,
-    sourceItems,
-    replace = false,
-  } = {}) => {
-    const draft = entryDraft.current;
-
-    // The controls are disabled once the draft is gone, so this is only a race with the editor
-    // closing
-    /* v8 ignore next 3 */
-    if (!draft) {
-      return;
-    }
-
-    // Shared by the locales, so a duplicated UUID that is the same in each gets the same new one
-    /** @type {Map<string, string>} */
-    const renewedUuids = new Map();
-
-    addedItemIndex = index;
-
-    // A replaced item keeps its position, so the removed items shown around it stay where they are
-    if (!replace) {
-      removedItems.shift(index);
-    }
-
-    updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
-      const { subFields } = resolveType(type);
-
-      const newItem = createListItem({
-        valueList,
-        keyPath,
-        dupIndex,
-        sourceItem: sourceItems?.[targetLocale],
-        subFields,
-        hasSingleSubField,
-        field,
-        type,
-        types,
-        typeKey,
-        renewedUuids,
-        locale: targetLocale,
-        defaultLocale: inEditorComponent ? targetLocale : draft.defaultLocale,
-      });
-
-      insertListItem({ valueList, expanderStateList }, { index, item: newItem, replace });
-      removedItems.remember(valueList, targetLocale);
-    });
-
-    // Expand the parent if it is collapsed to show the newly added item
-    updateExpanderStates({ [parentExpandedKeyPath]: true });
-
-    await sleep(50);
-    addedItemIndex = undefined;
-
-    const item = getItem(index);
-
-    // The item is rendered right away, so this is only a race with the editor closing
-    /* v8 ignore next 3 */
-    if (!item) {
-      return;
-    }
-
-    // Leave room for the sticky toolbar, which sticks below the toolbars of the rich text editors
-    // the field is in, if any, rather than scroll back for it, which shows as a bump
-    const toolbarBottom = getStickyToolbarBottom(topToolbar);
-
-    latestAddedItem = item;
-    item.style.scrollMarginTop = `${toolbarBottom}px`;
-    // Move focus to the expander button, without scrolling for it
-    item.querySelector('button')?.focus({ preventScroll: true });
-    await scrollToAddedListItem({
-      item,
-      list: /** @type {HTMLElement} */ (itemList),
-      /**
-       * Tell whether another item has been added since.
-       * @returns {boolean} Result.
-       */
-      isOutdated: () => item !== latestAddedItem,
-    });
-  };
-
-  /**
-   * Copy an item to the clipboard, so it can be pasted into this list or another one that takes it,
-   * in any entry.
-   * @param {number} index List index of the item.
-   */
-  const copyItem = async (index) => {
-    const draft = entryDraft.current;
-
-    // The menu is closed along with the editor, so this is only a race with the editor closing
-    /* v8 ignore next 3 */
-    if (!draft) {
-      return;
-    }
-
-    await copyListItem({
-      draft,
-      valueStoreKey,
-      fieldConfig,
       keyPath,
       typedKeyPath,
-      index,
-      locale,
-      pairedItems,
-      componentName,
-    });
-
-    showListItemClipboardToast('success', _('list_item_copied'));
-  };
-
-  /**
-   * Paste a copied item into the list. The values that don’t fit the list are left out, and the
-   * references to the files the item uses are rewritten for the entry.
-   * @param {number} index List index where the item will be inserted.
-   * @param {object} [options] Options.
-   * @param {boolean} [options.replace] Whether to replace the item at the index.
-   */
-  const pasteItem = async (index, { replace = false } = {}) => {
-    const draft = entryDraft.current;
-
-    // The controls are disabled once the draft is gone, so this is only a race with the editor
-    // closing
-    /* v8 ignore next 3 */
-    if (!draft) {
-      return;
-    }
-
-    const copied = await readListItem();
-
-    if (!copied) {
-      showListItemClipboardToast('info', _('no_list_item_to_paste'));
-
-      return;
-    }
-
-    const result = await prepareListItemPaste({
-      draft,
-      valueStoreKey,
-      copied,
       fieldConfig,
-      typedKeyPath,
-      componentName,
-      inEditorComponent,
-    });
+      pairedItems,
+    }),
+    getItemCount: () => items.length,
+    getListElement: () => itemList,
+    getTopToolbar: () => topToolbar,
+  });
+  /* eslint-enable jsdoc/require-jsdoc */
 
-    // Another entry may have been opened while the files were being copied
-    /* v8 ignore next 3 */
-    if (entryDraft.current !== draft) {
-      return;
-    }
-
-    if (!result) {
-      showListItemClipboardToast('error', _('list_item_not_compatible'));
-
-      return;
-    }
-
-    const { type, items: sourceItems, droppedCount, missingFileCount } = result;
-
-    await addItem({ index, type, sourceItems, replace });
-
-    const toast = getPastedItemToast({ droppedCount, missingFileCount });
-
-    if (toast) {
-      showListItemClipboardToast(toast.status, toast.message);
-    }
-  };
-
-  /**
-   * Remove a subfield.
-   * @param {number} index Target index.
-   */
-  const removeItem = async (index) => {
-    const draft = entryDraft.current;
-
-    // The controls are disabled once the draft is gone, so this is only a race with the editor
-    // closing
-    /* v8 ignore next 3 */
-    if (!draft) {
-      return;
-    }
-
-    const id = crypto.randomUUID();
-    /** @type {RemovedListItem['values']} */
-    const values = {};
-
-    const removedItem = {
-      id,
-      index,
-      values,
-      expanded: isExpanded(draft, `${keyPath}.${index}`),
-      nestedExpanderStates: getNestedExpanderStates(draft.expanderStates._, keyPath, index),
-    };
-
-    removedItems.add(removedItem);
-
-    updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
-      // The items are tagged to tell whether they’re replaced later. See `expectedListState`
-      const value = removeListItem(
-        { valueList, expanderStateList },
-        { index, keyPath, tagItems: !hasSingleSubField },
-      );
-
-      // Keep the value, so the item can be restored
-      if (value !== undefined) {
-        values[targetLocale] = value;
-      }
-
-      removedItems.remember(valueList, targetLocale);
-    });
-
-    await sleep(50);
-    // Move focus to the Restore button shown in place of the item, so it can be restored right away
-    document.getElementById(`list-${fieldId}-restore-${id}`)?.focus();
-  };
-
-  /**
-   * Restore a removed item to the position it’s shown at.
-   * @param {RemovedListItem} removedItem Removed item.
-   */
-  const restoreItem = async ({ id, index, values, expanded, nestedExpanderStates }) => {
-    removedItems.drop(id);
-
-    updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
-      if (!(targetLocale in values)) {
-        return;
-      }
-
-      restoreListItem(
-        { valueList, expanderStateList },
-        { index, item: values[targetLocale], expanded, keyPath, tagItems: !hasSingleSubField },
-      );
-      removedItems.remember(valueList, targetLocale);
-    });
-
-    // Put back the expander states of the objects and lists nested in the item
-    updateExpanderStates(
-      Object.fromEntries(
-        nestedExpanderStates.map(([suffix, state]) => [`${keyPath}.${index}${suffix}`, state]),
-      ),
-    );
-
-    await sleep(50);
-    // Move focus to the expander button of the restored item
-    getItem(index)?.querySelector('button')?.focus();
-  };
-
-  /**
-   * Move a subfield to another position in the list.
-   * @param {number} from Source index.
-   * @param {number} to Destination index.
-   */
-  const moveItem = (from, to) => {
-    updateComplexList(({ valueList, expanderStateList, locale: targetLocale }) => {
-      moveListItem(
-        { valueList, expanderStateList },
-        { from, to, keyPath, tagItems: !hasSingleSubField },
-      );
-      removedItems.remember(valueList, targetLocale);
-    });
-  };
+  const {
+    updateExpanderStates,
+    initializeExpanderStates,
+    addItem,
+    copyItem,
+    pasteItem,
+    removeItem,
+    restoreItem,
+    moveItem,
+  } = listActions;
 
   /**
    * Get the values to summarize a list item with. Called from the item’s markup, this only depends
@@ -681,7 +326,7 @@
      * Wait for the moved item to be rendered in its new position.
      * @returns {Promise<void>} Promise.
      */
-    settle: () => sleep(50),
+    settle: () => sleep(LIST_RENDER_DELAY),
     /**
      * Get the bounding rectangle of the item in a wrapper, leaving out the removed items shown
      * before it.
@@ -758,7 +403,7 @@
   });
 
   onMount(() => {
-    initializeExpanderState();
+    initializeExpanderStates();
     warnUnknownTypes();
   });
 </script>
@@ -798,7 +443,7 @@
     <div role="none" class="item-wrapper" animate:flip={{ duration: 200 }}>
       <!-- The items removed from this position are shown before the item now there -->
       {@render removedItemNotices(displayIndex)}
-      <VisibilityObserver eager={index === addedItemIndex}>
+      <VisibilityObserver eager={index === listActions.addedItemIndex}>
         {@const itemKeyPath = `${keyPath}.${index}`}
         {@const type = hasVariableTypes ? item[typeKey] : undefined}
         {@const { typeConfig, unknownType, subFields, summaryTemplate } = resolveType(type)}

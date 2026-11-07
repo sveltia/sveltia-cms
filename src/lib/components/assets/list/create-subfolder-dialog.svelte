@@ -22,13 +22,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    open = $bindable(false),
-    dirPath,
-    takenNames,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { open = $bindable(false), dirPath, takenNames } = $props();
 
   // Committing to a remote repository takes a few seconds, and the dialog is gone by then, so the
   // folder would otherwise be created with nothing on screen to say it’s under way

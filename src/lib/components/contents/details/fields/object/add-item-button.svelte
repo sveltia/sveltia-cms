@@ -21,13 +21,11 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     disabled = false,
     fieldConfig,
     locale = undefined,
     items = [],
     addItem = () => undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const { types } = $derived(/** @type {FieldWithTypes} */ (fieldConfig));

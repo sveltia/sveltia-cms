@@ -16,11 +16,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    onChange = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { onChange = undefined } = $props();
 </script>
 
 <section>

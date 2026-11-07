@@ -14,8 +14,6 @@ import {
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
-  DEFAULT_PKCE_AUTH_PATH,
-  DEFAULT_PKCE_AUTH_ROOT,
 } from '$lib/services/backends/git/github/constants';
 import {
   fetchBranchHeadSHA,
@@ -49,11 +47,8 @@ export const init = () => {
   const {
     repo: projectPath,
     branch,
-    auth_type: authType = '',
-    // @ts-ignore PKCE is not yet supported
-    base_url: authRoot = authType === 'pkce' ? DEFAULT_PKCE_AUTH_ROOT : DEFAULT_AUTH_ROOT,
-    // @ts-ignore PKCE is not yet supported
-    auth_endpoint: authPath = authType === 'pkce' ? DEFAULT_PKCE_AUTH_PATH : DEFAULT_AUTH_PATH,
+    base_url: authRoot = DEFAULT_AUTH_ROOT,
+    auth_endpoint: authPath = DEFAULT_AUTH_PATH,
     app_id: clientId = '',
     // GitHub Enterprise Server: https://HOSTNAME/api/v3
     api_root: restApiRoot = DEFAULT_API_ROOT,

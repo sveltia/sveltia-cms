@@ -29,12 +29,10 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     id,
     thisPane,
     thisPaneContentArea = $bindable(),
     thatPaneContentArea = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const { syncScrolling } = $derived(entryEditorSettings.current ?? {});

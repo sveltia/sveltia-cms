@@ -25,14 +25,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    serviceId,
-    service,
-    ariaLabel,
-    onChange = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { serviceId, service, ariaLabel, onChange = undefined } = $props();
 
   const { apiKeyPattern } = $derived(service);
 

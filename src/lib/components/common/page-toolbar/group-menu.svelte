@@ -29,7 +29,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     currentView,
     'aria-controls': ariaControls,
     label = '',
@@ -37,7 +36,6 @@
     noneLabel = '',
     groups = [],
     groupNames = [],
-    /* eslint-enable prefer-const */
   } = $props();
 
   const collapsibleGroupNames = $derived(getCollapsibleGroupNames(groupNames));

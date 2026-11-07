@@ -45,7 +45,6 @@
   /**
    * @import {
    * Asset,
-   * AssetFolderInfo,
    * AssetLibraryFolderMap,
    * AssetLibraryFolderMapKey,
    * AssetSubfolder,
@@ -57,6 +56,7 @@
    * SelectedResource,
    * } from '$lib/types/private';
    * @import { MediaField, MediaLibraries, StockAssetProviderName } from '$lib/types/public';
+   * @import { FolderAssetListingOptions } from '$lib/services/contents/fields/file/listing.svelte';
    */
 
   /**
@@ -88,7 +88,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     open = $bindable(false),
     multiple = false,
     kind,
@@ -104,7 +103,6 @@
     onSelect = undefined,
     onClose = undefined,
     pendingFiles = $bindable([]),
-    /* eslint-enable prefer-const */
   } = $props();
 
   const elementIdPrefix = $props.id();
@@ -189,44 +187,21 @@
   });
   // Existing files are limited to the accepted types, while the files dropped or picked here are
   // only checked once inserted and processed, as a transformation can change their format
-  const assetListing = createFolderAssetListing({
+  const assetListing = createFolderAssetListing(
     /**
-     * Get the entry draft.
-     * @returns {EntryDraft | null | undefined} Draft.
+     * Get the listing options.
+     * @returns {FolderAssetListingOptions} Options.
      */
-    getDraft: () => draft,
-    /**
-     * Get the selected folder.
-     * @returns {AssetFolderInfo | undefined} Folder.
-     */
-    getFolder: () => selectedFolder,
-    /**
-     * Get the locale the assets are selected for.
-     * @returns {InternalLocaleCode | undefined} Locale.
-     */
-    getLocale: () => locale,
-    /**
-     * Get the asset kind.
-     * @returns {MediaLibraryAssetKind | undefined} Kind.
-     */
-    getKind: () => kind,
-    /**
-     * Get the accepted file types.
-     * @returns {string | undefined} Types.
-     */
-    getAccept: () => accept,
-    /**
-     * Get whether file names are slugified.
-     * @returns {boolean | undefined} Whether to slugify.
-     */
-    getSlugificationEnabled: () =>
-      getDefaultMediaLibraryOptions({ fieldConfig }).config.slugify_filename,
-    /**
-     * Get the assets created from the files dropped here.
-     * @returns {Asset[]} Assets.
-     */
-    getDroppedAssets: () => droppedAssets,
-  });
+    () => ({
+      draft,
+      folder: selectedFolder,
+      locale,
+      kind,
+      accept,
+      slugificationEnabled: getDefaultMediaLibraryOptions({ fieldConfig }).config.slugify_filename,
+      droppedAssets,
+    }),
+  );
   const targetFolderPath = $derived(assetListing.targetFolderPath);
   const listedAssets = $derived(assetListing.listedAssets);
   /**

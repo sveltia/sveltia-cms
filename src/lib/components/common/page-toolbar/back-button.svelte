@@ -10,13 +10,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    'aria-label': ariaLabel,
-    useShortcut = false,
-    onclick = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { 'aria-label': ariaLabel, useShortcut = false, onclick = undefined } = $props();
 </script>
 
 <Button

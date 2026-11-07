@@ -16,12 +16,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    key,
-    onSelectField = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { key, onSelectField = undefined } = $props();
 </script>
 
 {#if key === 'slug'}

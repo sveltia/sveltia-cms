@@ -43,7 +43,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     groups,
     itemKey,
     totalCount,
@@ -55,7 +54,6 @@
     subfolders = undefined,
     hasSubfolders = false,
     emptyAction = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /** Whether any asset is left to show once the filter has been applied. */

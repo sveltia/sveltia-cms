@@ -31,7 +31,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     subfolder,
     rowIndex,
     viewType,
@@ -41,7 +40,6 @@
     onRename = undefined,
     onDelete = undefined,
     actionsDisabled = false,
-    /* eslint-enable prefer-const */
   } = $props();
 
   /**

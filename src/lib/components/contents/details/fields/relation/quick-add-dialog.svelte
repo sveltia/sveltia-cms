@@ -60,15 +60,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    open = $bindable(false),
-    collection,
-    fieldConfig,
-    entry = undefined,
-    onAdd,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { open = $bindable(false), collection, fieldConfig, entry = undefined, onAdd } = $props();
 
   // The parent draft is the one provided by the editor this dialog is opened from. The new entry’s
   // draft is provided to the field editors below in its place, so they edit the new entry

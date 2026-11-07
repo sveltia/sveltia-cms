@@ -14,11 +14,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    label = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { label = undefined } = $props();
 
   /** @type {FilePicker | undefined} */
   let filePicker = $state();

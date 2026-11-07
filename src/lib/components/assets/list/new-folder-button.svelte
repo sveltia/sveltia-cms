@@ -14,12 +14,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    disabled = false,
-    onclick,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { disabled = false, onclick } = $props();
 </script>
 
 <!-- The ghost button becomes a floating button on a small screen, where it needs a surface -->

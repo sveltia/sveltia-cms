@@ -28,7 +28,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     readOnly = false,
     canEdit = false,
     canRename = false,
@@ -38,7 +37,6 @@
     onReplace = undefined,
     extraItems = undefined,
     moreItems = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 </script>
 

@@ -83,11 +83,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    disabled = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { disabled = false } = $props();
 
   let showValidationToast = $state(false);
   // Number of invalid fields when the last save failed validation. A snapshot rather than a live

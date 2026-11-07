@@ -21,12 +21,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    assets = [],
-    useButton = true,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { assets = [], useButton = true } = $props();
 
   /** @type {AssetDetails[]} */
   let assetsDetailList = $state([]);

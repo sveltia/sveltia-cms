@@ -13,13 +13,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    id = undefined,
-    live = 'polite',
-    children,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { id = undefined, live = 'polite', children } = $props();
 </script>
 
 <div role="alert" {id} class="validation" aria-live={live}>

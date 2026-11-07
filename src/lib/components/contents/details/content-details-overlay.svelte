@@ -75,13 +75,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    entryDraft,
-    editorLocale = undefined,
-    loading = false,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { entryDraft, editorLocale = undefined, loading = false } = $props();
 
   // svelte-ignore state_referenced_locally
   setEntryDraftContext(entryDraft);

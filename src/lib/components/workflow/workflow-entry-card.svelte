@@ -43,7 +43,6 @@
 
   /** @type {Props} */
   let {
-    /* eslint-disable prefer-const */
     entry,
     dragging = false,
     busy = false,
@@ -52,7 +51,6 @@
     onDragEnd = undefined,
     onDelete = undefined,
     onPublish = undefined,
-    /* eslint-enable prefer-const */
   } = $props();
 
   const { collectionName, fileName, status, pullRequest } = $derived(entry.workflow);

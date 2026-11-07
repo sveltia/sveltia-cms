@@ -18,11 +18,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    state,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { state } = $props();
 
   /**
    * Labels and pill color tones for the states worth showing. A finished build needs no badge,

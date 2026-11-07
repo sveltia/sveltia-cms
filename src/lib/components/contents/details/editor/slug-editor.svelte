@@ -30,12 +30,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    ariaLabelledby = undefined,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, ariaLabelledby = undefined } = $props();
 
   const fieldId = $props.id();
   const labelId = $derived(ariaLabelledby ?? `${fieldId}-label`);

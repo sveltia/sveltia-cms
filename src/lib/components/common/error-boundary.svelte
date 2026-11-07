@@ -23,12 +23,7 @@
    */
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    scope = 'field',
-    children,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { scope = 'field', children } = $props();
 
   /* v8 ignore start -- reloading the page would tear the test down */
   /**

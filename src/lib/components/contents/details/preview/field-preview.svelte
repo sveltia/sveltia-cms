@@ -26,15 +26,7 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const */
-    locale,
-    keyPath,
-    typedKeyPath,
-    fieldConfig,
-    showLabel = true,
-    /* eslint-enable prefer-const */
-  } = $props();
+  let { locale, keyPath, typedKeyPath, fieldConfig, showLabel = true } = $props();
 
   const { widget: fieldType = 'string' } = $derived(fieldConfig);
   const { preview = true } = $derived(/** @type {VisibleField} */ (fieldConfig));

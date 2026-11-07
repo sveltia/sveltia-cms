@@ -8,8 +8,6 @@ import {
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
-  DEFAULT_PKCE_AUTH_PATH,
-  DEFAULT_PKCE_AUTH_ROOT,
 } from '$lib/services/backends/git/github/constants';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
@@ -246,35 +244,6 @@ describe('GitHub backend service', () => {
           tokenURL: `${customAuthRoot}/${customAuthPath}`,
           restBaseURL: 'https://github.example.com/api/v3',
           graphqlBaseURL: 'https://github.example.com/api/graphql',
-        }),
-      );
-
-      expect(result).toBe(repository);
-    });
-
-    test('initializes with PKCE authentication type', () => {
-      const mockCmsConfig = {
-        backend: {
-          name: BACKEND_NAME,
-          repo: 'owner/repo',
-          branch: 'main',
-          auth_type: 'pkce',
-        },
-      };
-
-      cmsConfig.current = /** @type {any} */ (mockCmsConfig);
-
-      const result = init();
-      const expectedAuthURL = `${DEFAULT_PKCE_AUTH_ROOT}/${DEFAULT_PKCE_AUTH_PATH}`;
-
-      expect(Object.assign).toHaveBeenCalledWith(
-        apiConfig,
-        expect.objectContaining({
-          clientId: '',
-          authURL: expectedAuthURL,
-          tokenURL: expectedAuthURL.replace('/authorize', '/access_token'),
-          restBaseURL: DEFAULT_API_ROOT,
-          graphqlBaseURL: `${DEFAULT_API_ROOT}/graphql`,
         }),
       );
 
