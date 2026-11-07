@@ -63,6 +63,7 @@
     checkPublishedVersion,
     getUnpublishedEntryByDraft,
     isDirectPublishAllowed,
+    isDiscardableDraft,
     isPendingDeletion,
     isWorkflowEnabled,
     workflowEnabled,
@@ -205,6 +206,9 @@
       hasPullRequest: !!unpublishedEntry,
       workflowEnabled: isWorkflowEnabled(collection),
       publishedVersionExists,
+      // Deleting an entry that was never published just throws the draft away; anything else takes
+      // an entry off the site
+      discardsDraft: isDiscardableDraft(unpublishedEntry),
       pendingDeletion,
       readonly,
       openAuthoring: openAuthoring.current,

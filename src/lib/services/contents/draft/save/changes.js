@@ -21,6 +21,8 @@ import { getCanonicalSlug, getFillSlugOptions } from '$lib/services/contents/dra
 import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
+import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
+import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import {
@@ -128,15 +130,28 @@ const replaceBlobURLs = async ({
   keyPath,
   matches,
 }) => {
-  const field = getField({ ...getFieldArgs, valueMap: content, keyPath });
+  const fieldArgs = { ...getFieldArgs, valueMap: content, keyPath };
+  const field = getField(fieldArgs);
+  const { defaultLocale } = getDraftI18nConfig(draft);
+
+  // A file in a field holding the same value in every locale, i.e. a `duplicate` or `sync` field,
+  // is stored once, in the default locale’s folder, rather than in each locale’s folder with the
+  // `multiple_folders` or `multiple_root_folders` i18n structure. Every locale refers to it by the
+  // same path. A file in a translatable field still goes to the folder of its own locale
+  // @see https://sveltiacms.app/en/docs/media/internal#multilingual-entries
+  const isMirrored =
+    locale !== defaultLocale &&
+    !!field &&
+    isDuplicatedField({ fieldConfig: field, getFieldArgs: fieldArgs });
 
   const replaceBlobArgs = {
     draft,
     defaultLocaleSlug,
     changes,
     savingAssets,
-    locale,
-    slug,
+    // The default locale’s slug is used when the slug is omitted
+    locale: isMirrored ? defaultLocale : locale,
+    slug: isMirrored ? undefined : slug,
     keyPath,
     content,
     // Enable encoding for markdown fields to support embedded images

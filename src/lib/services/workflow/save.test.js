@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { callEventHooks } from '$lib/services/api/events';
+import { getAssetBlob } from '$lib/services/assets/info';
 import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
 import { promptCommitMessage } from '$lib/services/backends/commit-prompt';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
+import { createFileList } from '$lib/services/backends/process';
 import { getCommitAuthor } from '$lib/services/backends/save';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
@@ -38,7 +40,11 @@ import {
 import { checkReviewedHead, verifyMergeState } from '$lib/services/workflow/verify';
 
 vi.mock('$lib/services/api/events');
+vi.mock('$lib/services/assets/info', () => ({ getAssetBlob: vi.fn() }));
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
+vi.mock('$lib/services/backends/process', () => ({
+  createFileList: vi.fn(() => ({ entryFiles: [], assetFiles: [] })),
+}));
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(() => ({ name: 'posts', _type: 'entry' })),
 }));
@@ -1679,6 +1685,138 @@ describe('workflow/save', () => {
         deleteWorkflowEntry(createPublishedEntry(), collection, undefined),
       ).rejects.toThrow('The published version of content/authors/ada.md could not be found.');
       expect(workflowService.savePullRequest).not.toHaveBeenCalled();
+    });
+
+    describe('the other files a reused pull request changes', () => {
+      const blob = new Blob(['published image']);
+
+      beforeEach(() => {
+        // Classify the files like the real file list does
+        vi.mocked(createFileList).mockImplementation(
+          (files) =>
+            /** @type {any} */ ({
+              entryFiles: files.filter(({ path }) => path.startsWith('content/')),
+              assetFiles: files.filter(({ path }) => path.startsWith('static/')),
+            }),
+        );
+        vi.mocked(getAssetBlob).mockResolvedValue(blob);
+      });
+
+      afterEach(() => {
+        allAssets.current = [];
+      });
+
+      test('takes them off the branch, or puts them back as published', async () => {
+        const pending = createEntry('cms/posts/hello');
+
+        /** @type {Record<string, any>} */
+        const cache = {
+          'content/posts/other.md': { sha: 'o', size: 1, text: 'related: hello' },
+          'content/posts/hello/child.md': { sha: 'c', size: 1, text: 'title: Child' },
+        };
+
+        allEntries.current = [
+          /** @type {any} */ ({
+            id: 'other',
+            locales: { _default: { path: 'content/posts/other.md' } },
+          }),
+        ];
+        allAssets.current = [
+          // Shadowed by the version the pull request committed
+          /** @type {any} */ ({
+            path: 'static/uploads/logo.png',
+            sha: 'l2',
+            workflow: {
+              branch: 'cms/posts/hello',
+              replacedAsset: { path: 'static/uploads/logo.png', sha: 'l1' },
+            },
+          }),
+          /** @type {any} */ ({ path: 'static/uploads/team.png', sha: 't1' }),
+          /** @type {any} */ ({
+            path: 'static/uploads/new.jpg',
+            sha: 'n1',
+            workflow: { branch: 'cms/posts/hello' },
+          }),
+        ];
+
+        // The entry was renamed and moved, taking the entry below it along and rewriting a
+        // reference to it, and an image was uploaded for it
+        pending.locales = {
+          _default: { slug: 'hello-world', path: 'content/posts/hello-world.md', content: {} },
+        };
+        pending.workflow.previousPaths = ['content/posts/hello.md'];
+        pending.workflow.pullRequest.files = [
+          { path: 'content/posts/hello.md', deleted: true },
+          { path: 'content/posts/hello-world.md', deleted: false },
+          { path: 'content/posts/hello/child.md', deleted: true },
+          { path: 'content/posts/hello-world/child.md', deleted: false },
+          { path: 'content/posts/other.md', deleted: false },
+          { path: 'static/uploads/new.jpg', deleted: false },
+          { path: 'static/uploads/logo.png', deleted: false },
+          { path: 'static/uploads/team.png', deleted: true },
+          // Changed outside the CMS, which can’t tell what it held
+          { path: '.github/workflows/build.yml', deleted: false },
+        ];
+        upsertUnpublishedEntry(pending);
+        vi.mocked(resolveCacheDB).mockReturnValue(
+          /** @type {any} */ ({ get: vi.fn(async (path) => cache[path]) }),
+        );
+
+        const entry = await deleteWorkflowEntry(pending, collection, undefined);
+
+        expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+          expect.objectContaining({
+            changes: [
+              { action: 'delete', slug: 'hello', path: 'content/posts/hello-world.md' },
+              {
+                action: 'create',
+                slug: 'hello',
+                path: 'content/posts/hello/child.md',
+                data: 'title: Child',
+              },
+              { action: 'delete', slug: 'hello', path: 'content/posts/hello-world/child.md' },
+              {
+                action: 'update',
+                slug: 'hello',
+                path: 'content/posts/other.md',
+                data: 'related: hello',
+              },
+              { action: 'delete', slug: 'hello', path: 'static/uploads/new.jpg' },
+              { action: 'update', slug: 'hello', path: 'static/uploads/logo.png', data: blob },
+              { action: 'create', slug: 'hello', path: 'static/uploads/team.png', data: blob },
+            ],
+          }),
+        );
+        expect(getAssetBlob).toHaveBeenCalledWith({ path: 'static/uploads/logo.png', sha: 'l1' });
+        // The asset list no longer offers the versions taken off the branch
+        expect(allAssets.current).toEqual([
+          { path: 'static/uploads/logo.png', sha: 'l1' },
+          { path: 'static/uploads/team.png', sha: 't1' },
+        ]);
+        expect(entry.workflow.previousPaths).toEqual(['content/posts/hello.md']);
+        expect(entry.workflow.pullRequest.files).toContainEqual(
+          expect.objectContaining({ path: 'static/uploads/new.jpg', deleted: true }),
+        );
+      });
+
+      test('refuses to delete when a changed file can’t be put back as published', async () => {
+        const pending = createEntry('cms/posts/hello');
+
+        allEntries.current = [
+          /** @type {any} */ ({
+            id: 'other',
+            locales: { _default: { path: 'content/posts/other.md' } },
+          }),
+        ];
+        pending.workflow.pullRequest.files = [{ path: 'content/posts/other.md', deleted: false }];
+        upsertUnpublishedEntry(pending);
+        vi.mocked(resolveCacheDB).mockReturnValue(undefined);
+
+        await expect(deleteWorkflowEntry(pending, collection, undefined)).rejects.toThrow(
+          'The published version of content/posts/other.md could not be found.',
+        );
+        expect(workflowService.savePullRequest).not.toHaveBeenCalled();
+      });
     });
 
     test('keeps track of the commit when the status of a reused pull request can’t be switched', async () => {

@@ -215,10 +215,13 @@ export const followReadonly = (element, callback) => {
 /**
  * Unescape the title of a Markdown image, like `T \"q\"` in `![a](/a.png "T \"q\"")`, so the
  * field shows `T "q"`. A backslash before an ASCII punctuation character escapes it, as anywhere
- * else in Markdown, while one before any other character is a literal backslash.
- * @param {string} title Title as it appears in Markdown, between the quotes.
- * @returns {string} Unescaped title.
+ * else in Markdown, while one before any other character is a literal backslash. The alt text,
+ * like `Figure \[1` in `![Figure \[1](/a.png)`, is unescaped the same way.
+ * @param {string} title Title or alt text as it appears in Markdown, between the quotes or the
+ * brackets.
+ * @returns {string} Unescaped title or alt text.
  * @see https://spec.commonmark.org/0.31.2/#link-title
+ * @see https://spec.commonmark.org/0.31.2/#backslash-escapes
  */
 export const unescapeTitle = (title) => title.replace(/\\([!-/:-@[-`{-~])/g, '$1');
 
@@ -231,3 +234,14 @@ export const unescapeTitle = (title) => title.replace(/\\([!-/:-@[-`{-~])/g, '$1
  */
 export const escapeTitle = (title) =>
   title.replace(/\\(?=[!-/:-@[-`{-~]|$)/g, '\\\\').replace(/"/g, '\\"');
+
+/**
+ * Escape the alt text of a Markdown image, the counterpart of `unescapeTitle()`, so it can be put
+ * between the brackets of `![…]`: a bracket is escaped, so an unbalanced one doesn’t end the alt
+ * text early or keep it open, as well as a backslash that would otherwise escape the next character
+ * or the closing bracket.
+ * @param {string} alt Alt text.
+ * @returns {string} Escaped alt text.
+ */
+export const escapeAlt = (alt) =>
+  alt.replace(/\\(?=[!-/:-@[-`{-~]|$)/g, '\\\\').replace(/[[\]]/g, '\\$&');

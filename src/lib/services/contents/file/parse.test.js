@@ -1361,6 +1361,38 @@ describe('Test parseEntryFile()', () => {
     );
   });
 
+  test('reads text below whitespace and a delimiter line as a body, not front matter', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    vi.mocked(getFrontMatterDelimiters).mockReturnValue(
+      FRONTMATTER_DELIMITER_MAP['yaml-frontmatter'],
+    );
+    getCollection.mockReturnValue({ _file: { format: 'frontmatter' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'frontmatter' } });
+
+    // A body-only file saved by an earlier version without the protective empty block: the text
+    // between the thematic breaks reads as a YAML string, which can’t be front matter
+    expect(await parseEntryFile({ ...entryBase, text: '\n---\n\nOne\n\n---\n\nTwo\n' })).toEqual({
+      body: '\n---\n\nOne\n\n---\n\nTwo',
+    });
+    expect(detectedFrontMatterFormats.has(entryBase.path)).toBe(false);
+    // Same with a list
+    expect(await parseEntryFile({ ...entryBase, text: '\n---\n- One\n---\nTwo' })).toEqual({
+      body: '\n---\n- One\n---\nTwo',
+    });
+    // Without whitespace before it, the block is still front matter, though not a valid one
+    expect(await parseEntryFile({ ...entryBase, text: '---\nOne\n---\nTwo' })).toEqual({
+      body: 'Two',
+    });
+    // An empty block or one with comments only is front matter
+    expect(await parseEntryFile({ ...entryBase, text: '\n---\n\n---\n\nTwo' })).toEqual({
+      body: 'Two',
+    });
+    expect(await parseEntryFile({ ...entryBase, text: '\n---\n# Note\n---\n\nTwo' })).toEqual({
+      body: 'Two',
+    });
+  });
+
   test('only remembers the front matter format of a file with a front matter block', async () => {
     const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 

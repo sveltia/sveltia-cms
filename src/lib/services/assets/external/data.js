@@ -444,9 +444,10 @@ export const createExternalFolder = async (name) => {
 
 /**
  * Rename a folder on the selected cloud storage service, which moves every asset below it, one by
- * one, along with the placeholder of any empty folder below it. The list is reloaded from the
- * service afterwards, whether or not every move went through, so it never shows a file at a path
- * it no longer has.
+ * one, along with the placeholder of any empty folder below it. The rename is refused if a folder
+ * with the new name already exists, as its files would be overwritten. The list is reloaded from
+ * the service afterwards, whether or not every move went through, so it never shows a file at a
+ * path it no longer has.
  * @param {AssetSubfolder} subfolder Folder to be renamed.
  * @param {string} newName New folder name.
  * @returns {Promise<boolean>} Whether the folder has been renamed.
@@ -473,6 +474,14 @@ export const renameExternalFolder = async ({ path: dirPath }, newName) => {
 
   try {
     const { assets, folders } = await getExternalFolderContents(service, dirPath, fetchOptions);
+    // The destination is listed in full too, as the list the user picked the name against can be
+    // cut short on a service holding many files, and moving the files onto an existing folder
+    // would overwrite its files with the same names
+    const destination = await getExternalFolderContents(service, newDirPath, fetchOptions);
+
+    if (destination.assets.length || destination.folders.length) {
+      throw new Error(`A folder named “${newName}” already exists in the folder.`);
+    }
 
     // Move the files one at a time, as the services do
     // eslint-disable-next-line no-restricted-syntax

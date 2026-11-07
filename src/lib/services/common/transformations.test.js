@@ -84,6 +84,22 @@ describe('Test parseTransformations()', () => {
     });
   });
 
+  test('parses an empty `default` value and `truncate` ellipsis', () => {
+    expect(parseTransformations("title | default('') | truncate(5, '')")).toEqual({
+      value: 'title',
+      transformations: [
+        { method: 'default', args: { defaultValue: '' } },
+        { method: 'truncate', args: { max: '5', ellipsis: '' } },
+      ],
+    });
+  });
+
+  test('leaves a `date` transformation with an empty format unparsed', () => {
+    expect(parseTransformations("date | date('')").transformations).toEqual([
+      { method: "date('')", args: {} },
+    ]);
+  });
+
   test('parses a long run of quoted arguments in linear time', () => {
     // Slicing the string around every quote took over 30 seconds here. The value can come from a
     // URL, as the default value of a Hidden field in a new entry
@@ -535,6 +551,24 @@ describe('Test custom transformations', () => {
 });
 
 describe('Test applyTransformations()', () => {
+  test('applies an empty `default` value and `truncate` ellipsis', () => {
+    /**
+     * Apply the transformations in a placeholder to a value.
+     * @param {string} value Value.
+     * @param {string} placeholder Placeholder like `title | upper`.
+     * @returns {string} Result.
+     */
+    const apply = (value, placeholder) =>
+      applyTransformations({
+        value,
+        transformations: parseTransformations(placeholder).transformations,
+      });
+
+    expect(apply('Hello world', "x | truncate(5, '')")).toBe('Hello');
+    expect(apply('', "x | default('')")).toBe('');
+    expect(apply('', "x | default('') | upper")).toBe('');
+  });
+
   test('applies plainify before truncate, so the limit counts the visible text', () => {
     const { transformations } = parseTransformations("body | plainify | truncate(10, '...')");
 

@@ -17,10 +17,23 @@ import { getDirName, stripPathPrefix } from '$lib/services/utils/file';
  */
 
 /**
- * Get the given locale’s file of an entry. Falls back to the default locale’s file if a default
- * locale is given, then to the first file, when no locale is given or the entry doesn’t have the
- * locale yet. A multi-file i18n entry can be missing its default locale file, e.g. when only
- * `hello.fr.md` exists, in which case another locale stands in for it.
+ * Get the locale to show an entry in when no locale is asked for: the default locale, or the first
+ * locale the entry has if it doesn’t have the default one. A multi-file i18n entry can be missing
+ * its default locale file, e.g. when only `hello.fr.md` exists.
+ * @param {Record<InternalLocaleCode, any>} locales Locales of the entry, keyed by locale code.
+ * @param {InternalLocaleCode} [defaultLocale] Default locale of the entry’s collection. Without it,
+ * the first locale the entry has is used.
+ * @returns {InternalLocaleCode | undefined} Locale, or `undefined` if there are no locales.
+ */
+export const getEntryDisplayLocale = (locales, defaultLocale) =>
+  defaultLocale && locales[defaultLocale] ? defaultLocale : Object.keys(locales)[0];
+
+/**
+ * Get the given locale’s file of an entry. When no locale is given or the entry doesn’t have the
+ * locale yet, falls back to the file of the locale the entry is listed in: the default locale’s
+ * file if a default locale is given, or else the first file. A multi-file i18n entry can be missing
+ * its default locale file, e.g. when only `hello.fr.md` exists, in which case another locale stands
+ * in for it. See {@link getEntryDisplayLocale}.
  * @param {Entry | UnpublishedEntry} entry Entry.
  * @param {object} [options] Options.
  * @param {InternalLocaleCode} [options.locale] Locale.
@@ -30,19 +43,9 @@ import { getDirName, stripPathPrefix } from '$lib/services/utils/file';
  */
 export const getEntryLocaleFile = (entry, { locale, defaultLocale } = {}) =>
   (locale ? entry.locales[locale] : undefined) ??
-  (defaultLocale ? entry.locales[defaultLocale] : undefined) ??
-  Object.values(entry.locales)[0];
-
-/**
- * Get the locale to show an entry in when no locale is asked for: the default locale, or the first
- * locale the entry has if it doesn’t have the default one. A multi-file i18n entry can be missing
- * its default locale file, e.g. when only `hello.fr.md` exists.
- * @param {Record<InternalLocaleCode, any>} locales Locales of the entry, keyed by locale code.
- * @param {InternalLocaleCode} defaultLocale Default locale of the entry’s collection.
- * @returns {InternalLocaleCode | undefined} Locale, or `undefined` if there are no locales.
- */
-export const getEntryDisplayLocale = (locales, defaultLocale) =>
-  locales[defaultLocale] ? defaultLocale : Object.keys(locales)[0];
+  entry.locales[
+    /** @type {InternalLocaleCode} */ (getEntryDisplayLocale(entry.locales, defaultLocale))
+  ];
 
 /**
  * List the distinct paths of the files an entry is made of. A single-file i18n entry lists the same
@@ -59,18 +62,6 @@ export const getEntryPaths = (entry, { includePrevious = false } = {}) => [
     ...((includePrevious && /** @type {UnpublishedEntry} */ (entry).workflow?.previousPaths) || []),
   ]),
 ];
-
-/**
- * Get the folder an entry’s file is stored in. For a multi-file i18n entry, the given locale’s file
- * is used, as each locale has a folder of its own with the `multiple_folders` and
- * `multiple_root_folders` i18n structures. The first locale’s file is used if no locale is given,
- * or the entry doesn’t have the locale yet.
- * @param {Entry | UnpublishedEntry} entry Entry.
- * @param {InternalLocaleCode} [locale] Locale.
- * @returns {string} Folder path, or an empty string if the entry is at the repository root.
- */
-export const getEntryFolderPath = (entry, locale) =>
-  getDirName(/** @type {LocalizedEntry} */ (getEntryLocaleFile(entry, { locale })).path);
 
 /**
  * Get the folder an entry file is stored in, relative to the collection folder, which is what the

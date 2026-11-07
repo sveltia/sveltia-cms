@@ -28,6 +28,7 @@ import {
 import { detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
 import { assignSaveTimeValues } from '$lib/services/contents/draft/save/save-time';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
+import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
 import { validateAndRevealErrors } from '$lib/services/contents/draft/validate/reveal';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
@@ -443,6 +444,10 @@ export const saveEntry = async ({
   // The entries added to the same collection from a Relation field have already taken the orders
   // and numbers after the highest ones, so the new entry comes after them
   assignSaveTimeValues(draft, getNewPendingEntriesByCollection(draft, draft.collectionName).length);
+  // The values are copied for the save right away, while the Compute fields are otherwise only
+  // resolved again by the editor later, so resolve them now: one can refer to a value assigned
+  // above, e.g. `INV-{{fields.number}}` with an auto-increment `number`
+  updateComputedValues(draft);
 
   const slugs = getSlugs({ draft });
   // Saving over a deletion writes the entry anew, as its files and the assets stored with it are

@@ -191,4 +191,36 @@ describe('EditAssetDialog', () => {
       error.mockRestore();
     }
   }, 15000);
+
+  test('reopens with the edited text when saving fails in the dialog opened from the list', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // The edit options menu on the asset list toolbar, without the asset details overlay
+    showAssetOverlay.current = false;
+    vi.mocked(saveAssets).mockRejectedValueOnce(new Error('offline'));
+
+    try {
+      await render(EditAssetDialog);
+
+      editingAsset.current = asset;
+
+      const dialog = page.getByRole('dialog');
+      const textarea = dialog.getByRole('textbox');
+
+      await expect.element(textarea).toHaveValue('Hello');
+      await textarea.fill('Hello, world!');
+      await dialog.getByRole('button', { name: 'Save' }).click();
+      await vi.waitFor(() => expect(saveAssets).toHaveBeenCalledOnce());
+      await expect
+        .poll(() => document.querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error'))
+        .not.toBeNull();
+
+      // The dialog is back with the edited text, so saving can be retried
+      await expect.element(textarea).toHaveValue('Hello, world!');
+      expect(editingAsset.current).toBe(asset);
+      await waitForToastsToHide();
+    } finally {
+      error.mockRestore();
+    }
+  }, 15000);
 });

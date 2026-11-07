@@ -1,7 +1,7 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
-  import { onMount } from 'svelte';
+  import { untrack } from 'svelte';
 
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
   import { backend } from '$lib/services/backends';
@@ -12,7 +12,7 @@
   import { openNewTab } from '$lib/services/utils/window';
 
   /**
-   * @import { FileCommit } from '$lib/types/private';
+   * @import { Entry, FileCommit } from '$lib/types/private';
    */
 
   const entryDraft = getEntryDraftContext();
@@ -29,23 +29,37 @@
   const showMessages = $derived(!!getCommitMessagePromptMode());
 
   /**
-   * Load the commit history for the current entry, using the external cache.
+   * The entry whose history is shown. Saving without closing the editor replaces the draft with one
+   * for the saved entry while the panel stays mounted, so the history is reloaded then.
    */
-  const load = async () => {
-    const entry = entryDraft.current?.originalEntry;
+  const entry = $derived(entryDraft.current?.originalEntry);
 
+  /**
+   * Load the commit history for the given entry, using the external cache. A result that arrives
+   * after the entry has been replaced again is discarded.
+   * @param {Entry} target Entry.
+   */
+  const load = async (target) => {
+    loading = true;
+
+    const result = await fetchEntryHistory(target);
+
+    if (target === entry) {
+      ({ commits, error } = result);
+      loading = false;
+    }
+  };
+
+  $effect(() => {
     /* v8 ignore next 3 -- the panel is only offered for an existing entry */
     if (!entry) {
       return;
     }
 
-    loading = true;
-    ({ commits, error } = await fetchEntryHistory(entry));
-    loading = false;
-  };
+    const target = entry;
 
-  onMount(() => {
-    load();
+    // Don’t let anything the fetch reads become a dependency of the effect
+    untrack(() => load(target));
   });
 </script>
 

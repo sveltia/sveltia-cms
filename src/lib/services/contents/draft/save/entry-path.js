@@ -14,7 +14,11 @@ import {
   localizeDirPath,
 } from '$lib/services/contents/collection/nested/i18n';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
-import { getEntryDateTimeParts, hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+import {
+  getEntryDateTimeParts,
+  getRandomValues,
+  hasLocalizedSlugs,
+} from '$lib/services/contents/draft/slugs';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { getLocalePath } from '$lib/services/contents/i18n';
 import {
@@ -218,12 +222,16 @@ export const createEntryPath = ({ draft, locale, slug }) => {
     : useCustomPath
       ? buildCustomEntryPath({ draft, slug, indexFileName, locale })
       : subPath
-        ? fillTemplate(subPath, {
+        ? // The template is filled with the default locale’s values, as the default locale, so
+          // that every locale, and every call for the same draft, e.g. for the entry file and for
+          // its entry-relative assets, gets the same random values for tags like `{{uuid_short}}`
+          fillTemplate(subPath, {
             collection: entryCollection,
-            locale,
+            locale: defaultLocale,
             content: currentValues[defaultLocale],
             currentSlug: slug,
             dateTimeParts: getEntryDateTimeParts(draft),
+            randomValues: getRandomValues(draft),
           })
         : slug;
 

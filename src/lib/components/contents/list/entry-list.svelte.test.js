@@ -89,13 +89,14 @@ describe('EntryList', () => {
 
     await expect.element(grid).toHaveAttribute('aria-rowcount', '3');
     await expect.poll(() => grid.getByRole('row').elements().length).toBe(3);
-    // The French entry has no title in the default locale to sort by, so it comes last
+    // The French entry has no title in the default locale, so it’s sorted by the title it’s listed
+    // with, like it’s filtered and grouped
     expect(
       grid
         .getByRole('row')
         .elements()
         .map((el) => el.textContent?.trim()),
-    ).toEqual(['Hello', 'World', 'Bonjour']);
+    ).toEqual(['Bonjour', 'Hello', 'World']);
 
     // The thumbnail is shown in the view’s size
     await expect

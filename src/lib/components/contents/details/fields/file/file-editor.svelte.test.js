@@ -659,6 +659,17 @@ describe('FileEditor', () => {
         expect(services.test_cloud.upload).toHaveBeenCalledWith([file], expect.anything()),
       );
     });
+
+    test('takes no dropped files when the only service can’t upload them', async () => {
+      delete services.test_cloud.upload;
+
+      const { container } = await renderEditor(
+        { media_libraries: { default: false, stock_assets: false } },
+        '',
+      );
+
+      expect(container.querySelector('.drop-target')).toBeNull();
+    });
   });
 
   test('accepts HEIC photos only when they are converted on upload', async () => {

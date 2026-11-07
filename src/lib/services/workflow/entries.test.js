@@ -1179,6 +1179,215 @@ describe('workflow/entries', () => {
       });
     });
 
+    describe('other entries of the collection rewritten along with the entry', () => {
+      /**
+       * Create a published entry of the `posts` collection.
+       * @param {string} slug Slug, which is also the sub path.
+       * @returns {any} Entry.
+       */
+      const createPost = (slug) => ({
+        id: `published-${slug}`,
+        slug,
+        subPath: slug,
+        locales: { _default: { slug, path: `content/posts/${slug}.md`, content: {} } },
+      });
+
+      beforeEach(() => {
+        allEntries.current = [
+          createPost('hello'),
+          createPost('other'),
+          createPost('about'),
+          createPost('about/team'),
+        ];
+
+        // Classify the files like the real file list does
+        vi.mocked(createFileList).mockImplementation(
+          (files) =>
+            /** @type {any} */ ({
+              entryFiles: files
+                .filter(({ path }) => path.startsWith('content/posts/'))
+                .map((file) => ({ ...file, folder: { collectionName: 'posts' } })),
+              assetFiles: [],
+            }),
+        );
+
+        vi.mocked(prepareEntries).mockImplementation(async (files) => ({
+          entries: files.map(({ path }) => {
+            const slug = path.replace(/^content\/posts\/(.+)\.md$/, '$1');
+
+            return /** @type {any} */ ({
+              id: `parsed-${slug}`,
+              slug,
+              subPath: slug,
+              locales: { _default: { slug, path, content: {} } },
+            });
+          }),
+          errors: [],
+        }));
+      });
+
+      test('lists the deleted entry rather than an entry whose reference to it was removed', async () => {
+        const pullRequest = createPullRequest({
+          files: [
+            { path: 'content/posts/hello.md', sha: '', size: 0, deleted: true },
+            { path: 'content/posts/other.md', sha: 'b', size: 1, text: 'b', deleted: false },
+          ],
+        });
+
+        pullRequest.status = 'pending_deletion';
+
+        const { entries } = await convertPullRequest(pullRequest);
+
+        expect(entries.map(({ id, workflow }) => [id, workflow.status])).toEqual([
+          ['published-hello', 'pending_deletion'],
+        ]);
+      });
+
+      test('lists the renamed entry alone, found by the slug it was published with', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            files: [
+              {
+                path: 'content/posts/hello-world.md',
+                sha: 'a',
+                size: 1,
+                text: 'a',
+                deleted: false,
+                previousPath: 'content/posts/hello.md',
+              },
+              { path: 'content/posts/other.md', sha: 'b', size: 1, text: 'b', deleted: false },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ slug }) => slug)).toEqual(['hello-world']);
+        expect(entries[0].workflow.previousPaths).toEqual(['content/posts/hello.md']);
+      });
+
+      test('lists the renamed entry alone, found by the slug it was saved with', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/posts/hello-world',
+            files: [
+              {
+                path: 'content/posts/hello-world.md',
+                sha: 'a',
+                size: 1,
+                text: 'a',
+                deleted: false,
+              },
+              { path: 'content/posts/hello.md', sha: '', size: 0, deleted: true },
+              { path: 'content/posts/other.md', sha: 'b', size: 1, text: 'b', deleted: false },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ slug }) => slug)).toEqual(['hello-world']);
+      });
+
+      test('lists the moved entry alone, not the entries below it, once renamed again', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            // The slug the entry was first saved with, which neither the published entry nor the
+            // one in the pull request has any more
+            branch: 'cms/posts/company%2Fabout',
+            files: [
+              {
+                path: 'content/posts/team/about/team.md',
+                sha: 'b',
+                size: 1,
+                text: 'b',
+                deleted: false,
+                previousPath: 'content/posts/about/team.md',
+              },
+              {
+                path: 'content/posts/team/about.md',
+                sha: 'a',
+                size: 1,
+                text: 'a',
+                deleted: false,
+                previousPath: 'content/posts/about.md',
+              },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ slug }) => slug)).toEqual(['team/about']);
+      });
+
+      test('keeps every entry when none of them can be told apart', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/posts/unknown',
+            files: [
+              { path: 'content/posts/hello.md', sha: 'a', size: 1, text: 'a', deleted: false },
+              { path: 'content/posts/other.md', sha: 'b', size: 1, text: 'b', deleted: false },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ slug }) => slug)).toEqual(['hello', 'other']);
+      });
+
+      test('takes the collection file name from the file of the entry', async () => {
+        allEntries.current = [
+          /** @type {any} */ ({
+            id: 'published-site',
+            slug: 'site',
+            subPath: 'site',
+            locales: { _default: { slug: 'site', path: 'data/site.yml', content: {} } },
+          }),
+          /** @type {any} */ ({
+            id: 'published-menu',
+            slug: 'menu',
+            subPath: 'menu',
+            locales: { _default: { slug: 'menu', path: 'data/menu.yml', content: {} } },
+          }),
+        ];
+
+        vi.mocked(createFileList).mockImplementation(
+          (files) =>
+            /** @type {any} */ ({
+              entryFiles: files.map((file) => ({
+                ...file,
+                folder: {
+                  collectionName: 'settings',
+                  fileName: file.path.replace(/^data\/(.+)\.yml$/, '$1'),
+                },
+              })),
+              assetFiles: [],
+            }),
+        );
+
+        vi.mocked(prepareEntries).mockImplementation(async (files) => ({
+          entries: files.map(({ path, folder }) => {
+            const slug = /** @type {string} */ (folder?.fileName);
+
+            return /** @type {any} */ ({
+              id: `parsed-${slug}`,
+              slug,
+              subPath: slug,
+              locales: { _default: { slug, path, content: {} } },
+            });
+          }),
+          errors: [],
+        }));
+
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/settings/site',
+            files: [
+              { path: 'data/menu.yml', sha: 'b', size: 1, text: 'b', deleted: false },
+              { path: 'data/site.yml', sha: 'a', size: 1, text: 'a', deleted: false },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ id }) => id)).toEqual(['parsed-site']);
+        expect(entries[0].workflow.fileName).toBe('site');
+      });
+    });
+
     test('returns nothing when a pull request has no entry file at all', async () => {
       const { entries } = await convertPullRequest(
         createPullRequest({

@@ -14,6 +14,7 @@ import {
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
 import { mapEntryContent } from '$lib/services/contents/entry/locales';
+import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import { refreshPermalinks } from '$lib/services/contents/entry/permalink';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 
@@ -25,6 +26,7 @@ import { resolveFileConfig } from '$lib/services/contents/file/config';
  * InternalCollection,
  * InternalEntryCollection,
  * InternalLocaleCode,
+ * LocalizedEntry,
  * } from '$lib/types/private';
  * @import { EntryFilePlan } from '$lib/services/contents/draft/save/file-changes';
  */
@@ -183,8 +185,15 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
      */
     planChange: (locale) => {
       if (locale === undefined) {
-        const previousPath = originalEntry.locales[defaultLocale].path;
-        const { slug, path } = movedEntry.locales[defaultLocale];
+        // The default locale can be missing from a single-file i18n entry; another locale then
+        // has the same path
+        const { path: previousPath } = /** @type {LocalizedEntry} */ (
+          getEntryLocaleFile(originalEntry, { defaultLocale })
+        );
+
+        const { slug, path } = /** @type {LocalizedEntry} */ (
+          getEntryLocaleFile(movedEntry, { defaultLocale })
+        );
 
         return { action: 'move', slug, path, previousPath, currentPath: previousPath };
       }

@@ -5,8 +5,8 @@ import {
   prepareConditions,
 } from '$lib/services/contents/collection/view/conditions';
 import { parseViewOptions } from '$lib/services/contents/collection/view/options';
+import { getListedEntryValue } from '$lib/services/contents/collection/view/values';
 import { getField } from '$lib/services/contents/entry/fields';
-import { getPropertyValue } from '$lib/services/contents/entry/values';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -71,8 +71,8 @@ export const filterEntries = (entries, collection, filters, now = new Date()) =>
     preparedFilters.every(({ field, conditions }) => {
       // Check both the raw value and referenced value
       const args = { entry, locale, collectionName, key: field };
-      const rawValue = getPropertyValue({ ...args, resolveRef: false });
-      const refValue = getPropertyValue({ ...args });
+      const rawValue = getListedEntryValue({ ...args, resolveRef: false });
+      const refValue = getListedEntryValue({ ...args });
 
       return matchesConditions({ rawValue, refValue, conditions });
     }),

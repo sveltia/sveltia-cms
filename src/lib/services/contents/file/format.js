@@ -319,9 +319,11 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
   // Support Markdown without a front matter block, particularly for VitePress. A body starting with
   // a delimiter line would be read back as front matter, though, so it gets an empty block above
   // it. Any default delimiter counts, as the `frontmatter` format is detected from the first line.
-  // The blank line inside the block keeps the parser from taking the body’s delimiter as the end
+  // The parser skips any whitespace before the block, so the first line is the first one after
+  // that, e.g. a thematic break below a blank line, but the body is written as is. The blank line
+  // inside the block keeps the parser from taking the body’s delimiter as the end
   if (!Object.keys(content).length) {
-    const firstLine = body.split('\n', 1)[0].trimEnd();
+    const firstLine = body.trimStart().split('\n', 1)[0].trimEnd();
     const delimiters = [sd, ...Object.values(FRONTMATTER_DELIMITER_MAP).map(([d]) => d)];
 
     return delimiters.includes(firstLine) ? `${sd}\n\n${ed}\n\n${body}\n` : `${body}\n`;

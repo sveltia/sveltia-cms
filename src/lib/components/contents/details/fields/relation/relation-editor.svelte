@@ -12,6 +12,7 @@
   import SelectEditor from '$lib/components/contents/details/fields/select/select-editor.svelte';
   import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { getBulkEditRowContext } from '$lib/services/contents/editor/bulk-edit-row';
   import { getFieldEditorContext } from '$lib/services/contents/editor/field-context';
   import { getOptions } from '$lib/services/contents/fields/relation/helpers';
   import {
@@ -39,6 +40,8 @@
   const entryDraft = getEntryDraftContext();
 
   const { valueStoreKey = 'currentValues' } = getFieldEditorContext();
+  // The entry of the row in the bulk editor, which has no draft
+  const bulkEditRow = getBulkEditRowContext();
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -69,9 +72,13 @@
   // The entries created from this field, or another one referring to the same collection, are
   // offered along with the saved ones until they’re saved too
   const refEntries = $derived(getRefEntriesWithPending({ draft: entryDraft.current, fieldConfig }));
-  const currentLocaleValues = $derived(entryDraft.current?.[valueStoreKey]?.[locale]);
+  const currentLocaleValues = $derived(
+    entryDraft.current ? entryDraft.current[valueStoreKey]?.[locale] : bulkEditRow?.values,
+  );
   const currentSlug = $derived(
-    entryDraft.current?.currentSlugs[locale] ?? entryDraft.current?.currentSlugs._,
+    entryDraft.current
+      ? (entryDraft.current.currentSlugs[locale] ?? entryDraft.current.currentSlugs._)
+      : bulkEditRow?.slug,
   );
   /** @type {SelectField} */
   const selectFieldConfig = $derived({

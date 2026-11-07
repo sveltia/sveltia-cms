@@ -163,17 +163,49 @@ export const createMediaSourceResolver = ({
 };
 
 /**
- * Get the targets whose URL the given field value or image source holds, as is or encoded, like the
- * `%20` an editor component writes for a space in a body. The encoded form is how the CMS itself
- * stores a URL there, and the preview decodes it to find the asset as well.
+ * Get the form of the given field value or media URL that an asset URL is compared with: the value
+ * as is, then decoded, like the `%20` an editor component writes for a space in a body, which is
+ * how the CMS itself stores a URL there, and the preview decodes it to find the asset as well. A
+ * value with a fragment, like `/uploads/a.jpg#center`, is then looked up without it, the way the
+ * editor finds the asset to display it, see `getAssetByPath()`; the whole value comes first, as an
+ * unencoded file name can contain `#`, like `photo #1.jpg`.
+ * @param {string} src Field value or media URL found in it.
+ * @param {(url: string) => boolean} isAssetURL Function checking whether a URL is one of the asset
+ * URLs being looked for.
+ * @returns {string | undefined} Matching form, if any.
+ */
+export const getMatchingAssetURL = (src, isAssetURL) => {
+  if (isAssetURL(src)) {
+    return src;
+  }
+
+  // Every string value goes through the pre-filter, and only one with a `%` can be decoded
+  const decoded = src.includes('%') ? decodeURIComponentSafely(src) : src;
+
+  if (decoded !== src && isAssetURL(decoded)) {
+    return decoded;
+  }
+
+  const fragmentIndex = src.indexOf('#');
+
+  return fragmentIndex > 0
+    ? getMatchingAssetURL(src.slice(0, fragmentIndex), isAssetURL)
+    : undefined;
+};
+
+/**
+ * Get the targets whose URL the given field value or image source holds, in any of the forms
+ * {@link getMatchingAssetURL} accepts.
  * @param {AssetReferenceMatcher} matcher Matcher.
  * @param {string} src Field value or image source found in it.
  * @returns {number[] | undefined} Indexes of the targets, if any.
  */
-const getURLTargets = (matcher, src) =>
-  matcher.byURL.get(src) ??
-  // Every string value goes through the pre-filter, and only one with a `%` can be decoded
-  (src.includes('%') ? matcher.byURL.get(decodeURIComponentSafely(src)) : undefined);
+const getURLTargets = (matcher, src) => {
+  const { byURL } = matcher;
+  const url = getMatchingAssetURL(src, (key) => byURL.has(key));
+
+  return url === undefined ? undefined : byURL.get(url);
+};
 
 /**
  * Get the targets the given field value or image source refers to.
@@ -204,27 +236,72 @@ const getMatchingTargets = (matcher, src, resolve) => {
 };
 
 /**
- * Get the new URL to replace a reference to the given targets with.
+ * Get the new URL to replace a reference to the given targets with, in the form of the reference.
+ * A fragment the reference has, like `#center`, is kept. In a media field, a reference holding the
+ * URL with its spaces encoded gets the new URL in the same form. In a Markdown or HTML body, a
+ * space in the new URL is encoded as `%20`, as the CMS writes it when inserting a file there, see
+ * `toFieldValue()`, because a Markdown image source can’t hold a space unless wrapped in angle
+ * brackets — except in a reference already holding a space, which is wrapped as such or sits in an
+ * HTML attribute.
  * @param {AssetReferenceMatcher} matcher Matcher.
  * @param {number[]} indexes Indexes of the targets referred to.
  * @param {string} src Reference being replaced.
+ * @param {boolean} [inBody] Whether the reference is a media URL in a Markdown or HTML body.
  * @returns {string | undefined} New URL, if any.
  */
-const getNewURL = (matcher, indexes, src) =>
-  indexes
+const getNewURL = (matcher, indexes, src, inBody = false) => {
+  const fragmentIndex = src.indexOf('#');
+  const path = fragmentIndex > 0 ? src.slice(0, fragmentIndex) : src;
+
+  /**
+   * Put the new URL in the form of the reference.
+   * @param {string} newURL New URL.
+   * @param {string} base Part of the reference the new URL replaces: the whole reference, or the
+   * reference without its fragment.
+   * @param {boolean} [encoded] Whether the reference holds the URL with its spaces encoded.
+   * @returns {string} New reference.
+   */
+  const format = (newURL, base, encoded = false) => {
+    const encode = inBody ? !base.includes(' ') : encoded;
+
+    return `${encode ? newURL.replaceAll(' ', '%20') : newURL}${src.slice(base.length)}`;
+  };
+
+  return indexes
     .map((index) => {
       const { url, newURL } = matcher.targets[index];
 
       if (typeof newURL === 'function') {
-        return newURL(src);
+        // The whole reference first, as an unencoded file name can contain `#`
+        const whole = newURL(src);
+
+        if (whole) {
+          return format(whole, src);
+        }
+
+        const partial = path !== src ? newURL(path) : undefined;
+
+        return partial ? format(partial, path) : undefined;
       }
 
-      // A reference holding the URL with its spaces encoded gets the new URL in the same form
-      return newURL && url !== src && url === decodeURIComponentSafely(src)
-        ? newURL.replaceAll(' ', '%20')
-        : newURL;
+      if (!newURL) {
+        return undefined;
+      }
+
+      // A target matched by URL may have been matched without the reference’s fragment, while one
+      // matched by resolution replaces the whole reference
+      const matched =
+        url === undefined ? undefined : getMatchingAssetURL(src, (key) => key === url);
+
+      const base =
+        matched === undefined || matched === src || matched === decodeURIComponentSafely(src)
+          ? src
+          : path;
+
+      return format(newURL, base, url !== base && url === decodeURIComponentSafely(base));
     })
     .find(Boolean);
+};
 
 /**
  * Check if the given value may refer to any of the targets, from its text alone. A value refers to
@@ -348,7 +425,7 @@ const matchField = ({
           return undefined;
         }
 
-        const newURL = getNewURL(matcher, matched, src);
+        const newURL = getNewURL(matcher, matched, src, true);
 
         matched.forEach((index) => indexes.add(index));
         replacing ||= !!newURL;

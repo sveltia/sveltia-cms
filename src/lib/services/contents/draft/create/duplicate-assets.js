@@ -4,8 +4,8 @@ import {
   getAssetFile,
   rewriteAssetReferences,
 } from '$lib/services/assets/copy';
+import { getOwnedEntryFolderPath } from '$lib/services/assets/entry-folder';
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
-import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getDraftFieldArgs, getField, getTypedKeyPath } from '$lib/services/contents/entry/fields';
 import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';

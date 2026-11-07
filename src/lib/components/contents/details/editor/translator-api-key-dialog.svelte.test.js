@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
@@ -27,6 +27,12 @@ describe('TranslatorApiKeyDialog', () => {
     translatorApiKeyDialogState.current = { show: false, multiple: false };
   });
 
+  afterEach(async () => {
+    // Let the dialog finish closing, so its close handler doesn’t settle the next test’s request
+    translatorApiKeyDialogState.current.show = false;
+    await expect.poll(() => document.querySelector('[role="alertdialog"]')).toBeNull();
+  });
+
   test('saves a valid API key for the selected service', async () => {
     const resolve = vi.fn();
 
@@ -52,13 +58,8 @@ describe('TranslatorApiKeyDialog', () => {
     await input.fill('invalid');
     expect(resolve).not.toHaveBeenCalled();
 
-    // Confirming an invalid key changes nothing either
-    await dialog.getByRole('button', { name: 'OK' }).click();
-    await expect.poll(() => document.querySelector('[role="alertdialog"]')).toBeNull();
-    expect(resolve).not.toHaveBeenCalled();
-
-    translatorApiKeyDialogState.current = { show: true, multiple: true, resolve };
-    await expect.element(dialog).toBeInTheDocument();
+    // An invalid key can’t be confirmed: the dialog would close, leaving the translation waiting
+    await expect.element(dialog.getByRole('button', { name: 'OK' })).toBeDisabled();
 
     // A Google Cloud API key
     const apiKey = 'AIzaSyA1234567890abcdefghijklmnopqrstuvwxyz'.slice(0, 39);
@@ -69,10 +70,15 @@ describe('TranslatorApiKeyDialog', () => {
     expect(resolve).not.toHaveBeenCalled();
     expect(prefs.apiKeys?.google).toBeUndefined();
 
+    await expect.element(dialog.getByRole('button', { name: 'OK' })).toBeEnabled();
     await dialog.getByRole('button', { name: 'OK' }).click();
     await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(apiKey));
     expect(prefs.apiKeys?.google).toBe(apiKey);
     expect(translatorApiKeyDialogState.current.show).toBe(false);
+
+    // The translation isn’t settled again once the dialog has closed
+    await expect.poll(() => document.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(resolve).toHaveBeenCalledOnce();
   });
 
   test('saves a pasted API key without confirmation', async () => {
@@ -155,13 +161,25 @@ describe('TranslatorApiKeyDialog', () => {
 
     translatorApiKeyDialogState.current = { show: true, multiple: false, resolve };
     await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel' }).click();
-    await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith());
+    await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(undefined));
+    resolve.mockClear();
+
+    // Dismissed with the Escape key, with an invalid key entered
+    translatorApiKeyDialogState.current = { show: true, multiple: false, resolve };
+
+    const input = page.getByRole('alertdialog').getByRole('textbox', { name: 'API Key' });
+
+    await input.fill('invalid');
+    await userEvent.keyboard('{Escape}');
+    await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(undefined));
+    expect(prefs.apiKeys?.google).toBeUndefined();
+    resolve.mockClear();
 
     translatorApiKeyDialogState.current = { show: true, multiple: false, resolve };
     await expect.element(page.getByRole('alertdialog')).toBeInTheDocument();
 
     showContentOverlay.current = false;
-    await vi.waitFor(() => expect(resolve).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(undefined));
     expect(translatorApiKeyDialogState.current.show).toBe(false);
   });
 });

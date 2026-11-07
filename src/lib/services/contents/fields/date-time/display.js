@@ -21,11 +21,14 @@ import {
   getDate,
   getStoredValueTimeZone,
   hasOffsetOutsideFormat,
+  hasOffsetToken,
   isValidDate,
   parseWithFormatFallback,
 } from './parse.js';
+import { formatInTimeZone } from './value.js';
 
 /**
+ * @import { Dayjs } from 'dayjs';
  * @import { InternalLocaleCode } from '$lib/types/private';
  * @import { DateTimeField } from '$lib/types/public';
  */
@@ -74,6 +77,45 @@ const getDisplayFormatter = ({ locale, parts, timeZone }) =>
   });
 
 /**
+ * Match a UTC offset written in a value, like `+09:00` or `-0800`.
+ */
+const OFFSET_TEXT_REGEX = /[+-]\d{2}:?\d{2}/g;
+
+/**
+ * Format an instant in the time zone a stored value is read in, so it’s shown with the wall time
+ * and offset the field’s input has. See `getStoredValueTimeZone()`. Only the zone’s offset is taken
+ * from `.tz()`, which creates its instance from the wall time in the browser’s time zone, shifting
+ * one in the browser’s DST gap by an hour.
+ * @param {Dayjs} instant Instant.
+ * @param {string} format Format string.
+ * @param {DateTimeField} fieldConfig Field configuration.
+ * @param {string} [localeKey] Day.js locale, as returned by `getFormatLocale()`.
+ * @returns {string} Formatted value.
+ */
+const formatInFieldTimeZone = (instant, format, fieldConfig, localeKey) => {
+  const timeZone = getStoredValueTimeZone(fieldConfig);
+
+  return timeZone
+    ? formatInTimeZone(instant.utcOffset(instant.tz(timeZone).utcOffset()), format, localeKey)
+    : formatInLocale(instant, format, localeKey);
+};
+
+/**
+ * Check if a value in a format with a UTC offset token is written in the format exactly, with one
+ * of the offsets it contains. Day.js reads such a value as an instant in the browser’s time zone,
+ * so its strict mode would only accept a value written with the browser’s offset.
+ * @param {string} value Stored value.
+ * @param {Dayjs} instant Instant the value was parsed as.
+ * @param {string} format Format string.
+ * @param {string} [localeKey] Day.js locale, as returned by `getFormatLocale()`.
+ * @returns {boolean} Result.
+ */
+const isWrittenWithOffset = (value, instant, format, localeKey) =>
+  [...new Set(value.match(OFFSET_TEXT_REGEX))].some(
+    (offset) => formatInTimeZone(instant.utcOffset(offset), format, localeKey) === value,
+  );
+
+/**
  * Get the display value of a DateTime field.
  * @param {object} args Arguments.
  * @param {InternalLocaleCode} args.locale Locale code.
@@ -99,11 +141,8 @@ export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue
     // written, which is also much faster than converting it to a time zone
     if (hasOffsetOutsideFormat(currentValue, format)) {
       const date = getDate(currentValue, fieldConfig, locale);
-      const timeZone = getStoredValueTimeZone(fieldConfig);
 
-      return date
-        ? formatInLocale(timeZone ? dayjs(date).tz(timeZone) : dayjs(date), format, localeKey)
-        : '';
+      return date ? formatInFieldTimeZone(dayjs(date), format, fieldConfig, localeKey) : '';
     }
 
     const parsed = parseWithFormatFallback({
@@ -114,7 +153,16 @@ export const getDateTimeFieldDisplayValue = ({ locale, fieldConfig, currentValue
     });
 
     if (parsed.isValid()) {
-      return parsed.format(format);
+      if (!hasOffsetToken(format)) {
+        return parsed.format(format);
+      }
+
+      // Day.js reads a value with an offset, or a Unix timestamp, as an instant in the browser’s
+      // time zone. One written in the format is shown as written; any other, like an ISO 8601 value
+      // written before the format was set, is shown in the field’s time zone, like the input does
+      return isWrittenWithOffset(currentValue, parsed, format, localeKey)
+        ? currentValue
+        : formatInFieldTimeZone(parsed, format, fieldConfig, localeKey);
     }
 
     // eslint-disable-next-line no-console

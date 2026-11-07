@@ -1,5 +1,6 @@
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 
 /**
  * @import { Entry, InternalEntryCollection } from '$lib/types/private';
@@ -28,7 +29,9 @@ export const getOrderValueGetter = (collection) => {
   const { defaultLocale } = collection._i18n;
 
   return (entry) => {
-    const raw = entry.locales[defaultLocale]?.content?.[orderKey];
+    // An entry lacking the default locale, e.g. a multi-file i18n entry with only `hello.fr.md`,
+    // has the value in the locale it’s listed in
+    const raw = getEntryLocaleFile(entry, { defaultLocale })?.content?.[orderKey];
 
     // `Number()` turns `null` and a blank string into `0`, so only a number or a non-blank string
     // counts as a value; anything else is missing and sorts last

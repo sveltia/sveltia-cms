@@ -286,6 +286,54 @@ describe('removeEmbeddedMedia()', () => {
     ).toBe('Hello');
   });
 
+  test('removes an image whose source is encoded, wrapped or has a fragment', async () => {
+    // Matched the same way as the references are found: the CMS writes a space as `%20` in a body
+    const urls = new Set(['/uploads/My Photo.jpg', '/uploads/café.jpg']);
+
+    expect(
+      await removeEmbeddedMedia({
+        ...baseArgs,
+        value: [
+          'Hello',
+          '![a](/uploads/My%20Photo.jpg)',
+          '![b](</uploads/My Photo.jpg>) ![c](/uploads/caf%C3%A9.jpg#center)',
+          '<img src="/uploads/My%20Photo.jpg">',
+          'Bye',
+        ].join('\n\n'),
+        urls,
+      }),
+    ).toBe('Hello\n\nBye');
+  });
+
+  test('removes a linked image along with its link', async () => {
+    const urls = new Set(['/uploads/a.png']);
+
+    expect(
+      await removeEmbeddedMedia({
+        ...baseArgs,
+        value: 'Hello\n\n[![A](/uploads/a.png)](/uploads/a.png)\n\nBye',
+        urls,
+      }),
+    ).toBe('Hello\n\nBye');
+
+    // Linking elsewhere, with a title, sharing a line, or next to a linked image left alone
+    expect(
+      await removeEmbeddedMedia({
+        ...baseArgs,
+        value: [
+          'See [![A](/uploads/a.png "A")](https://example.com) here',
+          '[![B](/uploads/b.png)](/uploads/a.png) [x] ![A](/uploads/a.png)',
+        ].join('\n\n'),
+        urls,
+      }),
+    ).toBe('See  here\n\n[![B](/uploads/b.png)](/uploads/a.png) [x] ');
+
+    // An image in brackets that aren’t a link
+    expect(
+      await removeEmbeddedMedia({ ...baseArgs, value: '[![A](/uploads/a.png)] x', urls }),
+    ).toBe('[] x');
+  });
+
   test('leaves the author’s blank lines alone', async () => {
     const value = 'Hello\n\n\n\n![a](/uploads/a.png)\n\n```\nfoo\n\n\nbar\n```\n';
 
@@ -427,6 +475,16 @@ describe('removeEmbeddedMedia() with HTML', () => {
         urls,
       }),
     ).toBe('<p>Hello</p><figure><figcaption>A</figcaption></figure><ul><li></li></ul><p>Text </p>');
+  });
+
+  test('removes an image whose source is encoded or has a fragment', async () => {
+    expect(
+      await removeEmbeddedMedia({
+        ...baseArgs,
+        value: '<p><img src="/uploads/My%20Photo.jpg"></p><p><img src="/uploads/a.png#x"></p>',
+        urls: new Set(['/uploads/My Photo.jpg', '/uploads/a.png']),
+      }),
+    ).toBe('');
   });
 
   test('removes a picture along with its image', async () => {

@@ -182,10 +182,12 @@
    */
   const isDefaultLibraryAvailable = $derived(assetOptions.enabled && !!targetFolder);
   /**
-   * The total number of available media storage providers (default and/or cloud).
+   * The total number of available media storage providers (default and/or cloud) that can take
+   * dropped files. A cloud service without an upload function, like Cloudinary, can’t.
    */
   const totalProviders = $derived(
-    (isDefaultLibraryAvailable ? 1 : 0) + enabledCloudServiceEntries.length,
+    (isDefaultLibraryAvailable ? 1 : 0) +
+      enabledCloudServiceEntries.filter(([, { upload }]) => !!upload).length,
   );
   /**
    * Disable the drop zone if there are no providers or multiple providers are available, to avoid

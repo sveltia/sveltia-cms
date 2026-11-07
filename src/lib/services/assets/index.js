@@ -1,6 +1,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 
+import { getEntryAssetFolderPath } from '$lib/services/assets/entry-folder';
 import {
   allAssetFolders,
   getAssetFolder,
@@ -240,8 +241,19 @@ export const getAssetByRelativePathAndCollection = ({
     publicFolder = fillMediaFolderTemplate(publicFolder, { collection, entry, localeFile });
   }
 
-  // Directory of the entry file, which is an empty string for an entry file at the repository root
-  const entryFolder = getDirName(entryFilePath);
+  // Folder an entry-relative path is resolved against: the one the entry’s relative assets are
+  // saved to, which is the folder the entry occupies if it has one of its own, e.g.
+  // `content/posts/2025/06/hello` for `content/posts/2025/06/hello.md` with a
+  // `{{year}}/{{month}}/{{slug}}` path option, and otherwise the folder of the entry file, which is
+  // an empty string for an entry file at the repository root
+  const entryFileFolder = getDirName(entryFilePath);
+
+  const entryFolder = getEntryAssetFolderPath({
+    collection,
+    entryFilePath,
+    internalPath: entryFileFolder,
+  });
+
   // Strip the `media_folder` prefix from the stored path before joining with `mediaFolder`, to
   // avoid duplication when the stored value already includes the media folder (e.g.
   // `images/photo.jpg`). Also normalize `./` prefix since `./images/photo.jpg` and
@@ -274,6 +286,16 @@ export const getAssetByRelativePathAndCollection = ({
   } else {
     // Original logic: concatenate entryFolder + mediaFolder + localPath for entry-relative folders
     resolvedPath = resolvePath(createPath([entryFolder, mediaFolder, localPath]));
+
+    // An asset stored beside the entry file before the entry had a folder of its own, or placed
+    // there by hand, is still found
+    if (entryFolder !== entryFileFolder && !getAssetPathMap().has(resolvedPath)) {
+      const legacyPath = resolvePath(createPath([entryFileFolder, mediaFolder, localPath]));
+
+      if (getAssetPathMap().has(legacyPath)) {
+        resolvedPath = legacyPath;
+      }
+    }
   }
 
   return getAssetPathMap().get(resolvedPath);
@@ -369,23 +391,32 @@ export const getAssetByRelativePath = ({
     return foundAsset ?? getAssetPathMap().get(path);
   }
 
-  // Stop at the first collection or collection file that has the asset
-  const foundAsset = getEntryCollectionContexts(entry)
-    .map(({ collection, collectionFile: file }) =>
-      getAssetByRelativePathAndCollection({
-        path,
-        entry,
-        collection,
-        file,
-        componentName,
-        typedKeyPath,
-        locale,
-      }),
-    )
-    .find(Boolean);
+  /**
+   * Find the asset relative to the given locale’s entry file, stopping at the first collection or
+   * collection file that has it.
+   * @param {InternalLocaleCode | undefined} _locale Locale.
+   * @returns {Asset | undefined} Asset.
+   */
+  const findAsset = (_locale) =>
+    getEntryCollectionContexts(entry)
+      .map(({ collection, collectionFile: file }) =>
+        getAssetByRelativePathAndCollection({
+          path,
+          entry,
+          collection,
+          file,
+          componentName,
+          typedKeyPath,
+          locale: _locale,
+        }),
+      )
+      .find(Boolean);
 
   return (
-    foundAsset ??
+    findAsset(locale) ??
+    // A file in a duplicated or synced field is stored once, relative to the default locale’s entry
+    // file, which the other locales then share
+    (locale ? findAsset(undefined) : undefined) ??
     // Fall back to exact match at the root folder
     getAssetPathMap().get(path)
   );

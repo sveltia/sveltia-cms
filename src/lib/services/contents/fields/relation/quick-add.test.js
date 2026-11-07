@@ -11,6 +11,7 @@ import { createSavingEntryData } from '$lib/services/contents/draft/save/changes
 import { compareEntries } from '$lib/services/contents/draft/save/conflict';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
+import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
@@ -126,6 +127,10 @@ vi.mock('$lib/services/contents/draft/save/sort-order', () => ({
 
 vi.mock('$lib/services/contents/fields/number/auto-increment', () => ({
   assignAutoIncrementValues: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/draft/update/compute', () => ({
+  updateComputedValues: vi.fn(),
 }));
 
 vi.mock('$lib/services/contents/draft/slugs', () => ({
@@ -856,6 +861,14 @@ describe('createPendingEntry', () => {
     expect(assignManualSortOrder).toHaveBeenCalledWith(draft, 1);
     expect(assignAutoIncrementValues).toHaveBeenCalledWith(draft, 1);
     expect(assignAutoNowValues).toHaveBeenCalledWith(draft);
+    // A Compute field referring to a value assigned above is resolved before the entry is saved
+    expect(updateComputedValues).toHaveBeenCalledWith(draft);
+    expect(vi.mocked(updateComputedValues).mock.invocationCallOrder[0]).toBeGreaterThan(
+      vi.mocked(assignAutoNowValues).mock.invocationCallOrder[0],
+    );
+    expect(vi.mocked(updateComputedValues).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(createSavingEntryData).mock.invocationCallOrder[0],
+    );
     // The `preSave` event hooks are held back until the entry is committed with the parent
     expect(createSavingEntryData).toHaveBeenCalledWith({ draft, slugs, runPreSave: false });
     expect(getEntryOptions).toHaveBeenCalledWith({

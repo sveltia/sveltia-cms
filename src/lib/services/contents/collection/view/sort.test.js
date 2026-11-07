@@ -1837,6 +1837,57 @@ describe('getSortKeyGetter', () => {
 
     expect(result).toBeUndefined();
   });
+
+  test('should read the value from another locale when the entry lacks the default one', () => {
+    vi.mocked(getPropertyValue).mockReturnValue('Bonjour');
+
+    const getter = getSortKeyGetter({
+      key: 'title',
+      type: String,
+      collection: mockCollection,
+      locale: 'en',
+      collectionName: 'posts',
+      dateFieldConfig: undefined,
+      isMarkdownField: false,
+    });
+
+    // A multi-file i18n entry with only `entry-1.fr.md`, which is listed in French
+    const entry = { ...mockEntry, locales: { fr: { ...mockEntry.locales.en } } };
+
+    expect(getter(entry)).toBe('Bonjour');
+    expect(vi.mocked(getPropertyValue)).toHaveBeenCalledWith(
+      expect.objectContaining({ entry, locale: 'fr', key: 'title' }),
+    );
+  });
+
+  test('should treat a multi-value field without any item as having no value', () => {
+    const args = {
+      key: 'authors',
+      collection: mockCollection,
+      locale: 'en',
+      collectionName: 'posts',
+      dateFieldConfig: undefined,
+      isMarkdownField: false,
+    };
+
+    const getString = getSortKeyGetter({ ...args, type: String });
+    const getNumber = getSortKeyGetter({ ...args, type: Number });
+
+    // An empty array would be stringified to an empty string, and converted to `0`
+    vi.mocked(getPropertyValue).mockReturnValue([]);
+    expect(getString(mockEntry)).toBeUndefined();
+    expect(getNumber(mockEntry)).toBeUndefined();
+
+    vi.mocked(getPropertyValue).mockReturnValue([null, '']);
+    expect(getString(mockEntry)).toBeUndefined();
+
+    // Empty items are dropped
+    vi.mocked(getPropertyValue).mockReturnValue(['', 'Alice', null, 'Bob']);
+    expect(getString(mockEntry)).toBe('Alice,Bob');
+
+    vi.mocked(getPropertyValue).mockReturnValue([null, 5]);
+    expect(getNumber(mockEntry)).toBe(5);
+  });
 });
 
 describe('getEntrySortKeyGetter', () => {

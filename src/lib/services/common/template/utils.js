@@ -1,9 +1,7 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
-import {
-  ESCAPED_PLACEHOLDER_REGEX,
-  FIELD_TAG_PREFIX_REGEX,
-} from '$lib/services/common/template/constants';
+import { FIELD_TAG_PREFIX_REGEX } from '$lib/services/common/template/constants';
+import { splitTemplateTags } from '$lib/services/common/template/tags';
 
 /**
  * @import { InternalCollection, InternalCollectionFile } from '$lib/types/private';
@@ -57,11 +55,14 @@ export const getFileNameLocaleSuffixes = ({ _i18n }) =>
 
 /**
  * Get a regular expression pattern matching the given path template, with each template tag, e.g.
- * `{{slug}}`, replaced with the given wildcard and anything else matched literally.
+ * `{{slug}}`, replaced with the given wildcard and anything else matched literally. The tags are
+ * found like `fillTemplate()` finds them, so a tag with a nested template in a transformation
+ * argument, e.g. `{{fields.slug | default('{{title}}')}}`, is replaced as a whole, and an escaped
+ * tag, e.g. `\{{title}}`, is matched literally without the backslash.
  * @param {string} template Path template, e.g. `images/{{slug}}`.
  * @param {string} wildcard Pattern to match a template tag with, e.g. `[^/]+` for one path segment
  * or `.+?` for any number of them.
  * @returns {string} Pattern.
  */
 export const getTemplatePattern = (template, wildcard) =>
-  escapeRegExp(template).replace(ESCAPED_PLACEHOLDER_REGEX, wildcard);
+  splitTemplateTags(template).literals.map(escapeRegExp).join(wildcard);

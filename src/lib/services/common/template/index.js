@@ -67,6 +67,7 @@ const getExistingSlugs = (collectionName, locale, dirPath) => {
 export const fillTemplate = (template, options) => {
   const {
     collection,
+    collectionFile,
     content: valueMap,
     currentSlug,
     locale,
@@ -94,7 +95,13 @@ export const fillTemplate = (template, options) => {
       basePath,
       fullPathRegEx,
     },
-    getFieldArgs: { collectionName, keyPath: '', valueMap, isIndexFile },
+    getFieldArgs: {
+      collectionName,
+      fileName: collectionFile?.name,
+      keyPath: '',
+      valueMap,
+      isIndexFile,
+    },
   };
 
   // Use a negative lookahead assertion to support nested template tags in transformations like

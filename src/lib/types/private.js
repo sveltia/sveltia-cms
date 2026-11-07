@@ -2163,6 +2163,9 @@
  * @typedef {object} FillTemplateOptions
  * @property {'preview_path' | 'media_folder' | 'library_prefix'} [type] Slug type.
  * @property {InternalCollection} collection Entry collection.
+ * @property {InternalCollectionFile} [collectionFile] Collection file being filled. File/singleton
+ * collection only. Its fields are used to look up a field’s options for transformations, and its
+ * i18n configuration decides whether `{{filename}}` drops a locale suffix.
  * @property {FlattenedEntryContent} content Entry content for the default locale.
  * @property {string} [currentSlug] Entry slug already created for the path.
  * @property {string} [entryFilePath] File path of the entry. Required if the `type` is

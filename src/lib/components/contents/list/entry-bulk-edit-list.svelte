@@ -47,7 +47,8 @@
 
   // The field controls are those of the entry editor, some of which look for the draft being
   // edited, e.g. to offer the entries a Relation field can create. There is no draft here, as the
-  // values are kept in the bulk edits, so the controls are given an empty one
+  // values are kept in the bulk edits, so the controls are given an empty one. Each cell provides
+  // the values of its row instead
   setEntryDraftContext(/** @type {EntryDraftState} */ ({ current: undefined }));
 
   const fields = $derived(getBulkEditableFields(collection));
@@ -147,6 +148,8 @@
                       keyPath,
                       edits: bulkEdits.current,
                     })}
+                    {entry}
+                    entryEdits={edits}
                     edited={!!edits && Object.hasOwn(edits, keyPath)}
                     errors={bulkEditErrors.current[entry.id]?.[keyPath]}
                     readonly={bulkEditSaving.current}

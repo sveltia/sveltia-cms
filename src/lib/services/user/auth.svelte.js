@@ -231,6 +231,16 @@ export const getUserCache = async () => {
 };
 
 /**
+ * Get the name of the backend the given cached user signed in with. Netlify/Decap CMS calls the
+ * local backend `proxy`, as it’s served by its local proxy server, while Sveltia CMS calls it
+ * `local`; the other names are those of the `backend.name` option, which both use as is.
+ * @param {Record<string, any> | undefined} _user Cached user info.
+ * @returns {string | undefined} Backend name.
+ */
+const getCachedBackendName = (_user) =>
+  _user?.backendName === 'proxy' ? 'local' : _user?.backendName;
+
+/**
  * Get the backend instance based on the cached user info or site config.
  * @param {Record<string, any> | undefined} _user Cached user info.
  * @returns {BackendService | undefined} Backend instance to be used.
@@ -243,7 +253,7 @@ export const getBackend = (_user) => {
   // correct backend, especially when the user cache is from a different backend than the current
   // site config.
   const _backendName =
-    _user?.backendName === 'local' || _user?.backendName === 'proxy'
+    getCachedBackendName(_user) === 'local'
       ? 'local'
       : /** @type {InternalCmsConfig} */ (cmsConfig.current).backend.name;
 
@@ -377,6 +387,15 @@ export const signInAutomatically = async () => {
 
   // If no cached user info is found, simply return as we cannot sign in automatically
   if (!_user) {
+    return;
+  }
+
+  // A user cached with another backend, e.g. before the site moved from GitLab to GitHub, holds a
+  // token for that service, which mustn’t be sent to the configured one. Netlify/Decap CMS doesn’t
+  // use such a cache either. Clear it, so the sign-in page is shown
+  if (!verified && _backend && getCachedBackendName(_user) !== backendName.current) {
+    await clearUserCache();
+
     return;
   }
 

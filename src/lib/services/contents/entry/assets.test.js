@@ -100,7 +100,7 @@ vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   isCollectionIndexFile: mockIsCollectionIndexFile,
 }));
 
-vi.mock('$lib/services/contents/draft/save/assets', () => ({
+vi.mock('$lib/services/assets/entry-folder', () => ({
   getOwnedEntryFolderPath: mockGetOwnedEntryFolderPath,
 }));
 

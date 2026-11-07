@@ -1,7 +1,7 @@
+import { getOwnedEntryFolderPath } from '$lib/services/assets/entry-folder';
 import { getAssetFolder } from '$lib/services/assets/folders';
 import { getAssetBlob } from '$lib/services/assets/info';
 import { allAssets } from '$lib/services/assets/state';
-import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
 /**

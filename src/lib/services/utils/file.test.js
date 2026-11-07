@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
+import { getTemplatePattern } from '$lib/services/common/template/utils';
 import {
   createPath,
   createPathRegEx,
@@ -653,14 +653,9 @@ describe('Test createPathRegEx()', () => {
   });
 
   test('should handle brackets with template tags', () => {
-    const regex = createPathRegEx('app/(pages)/{{slug}}.md', (segment) => {
-      // First escape special regex chars including parentheses
-      let escaped = segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-      // Then replace escaped template placeholders with wildcard
-      escaped = escaped.replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
-      return escaped;
-    });
+    const regex = createPathRegEx('app/(pages)/{{slug}}.md', (segment) =>
+      getTemplatePattern(segment, '.+?'),
+    );
 
     expect(regex.test('app/(pages)/my-post.md')).toBe(true);
     expect(regex.test('app/(pages)/another.md')).toBe(true);

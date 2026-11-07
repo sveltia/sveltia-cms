@@ -217,6 +217,76 @@ const parseCompanions = async (entryFiles, collectionName, deletedPaths) => {
 };
 
 /**
+ * Pick the entries a pull request was opened for out of those parsed from the files of its
+ * collection. Renaming or deleting an entry rewrites the other entries of the collection that
+ * reference it, in a collection with a Relation field pointing at itself, and moving an entry of a
+ * nested collection moves the entries below it along. Those files are committed to the same branch,
+ * but they belong to the entries the CMS rewrote, which are published as they were written and
+ * aren’t listed: the publish check accounts for them. The branch name tells the entry apart, as it
+ * carries the slug the entry had when the pull request was opened, either its published one or the
+ * one it’s saved with; a new entry, which no other entry can reference yet, is the branch’s as
+ * well. An entry renamed again after the pull request was opened matches neither, so if nothing
+ * else does, the entry the pull request renamed is taken, the one highest up the tree if the
+ * entries below it moved along. Otherwise a pull request that vacates a path of the collection
+ * deletes the entry, which has no file left to parse, while one that doesn’t keeps every entry, so
+ * it doesn’t vanish from the board.
+ * @param {object} args Arguments.
+ * @param {Entry[]} args.entries Entries parsed from the pull request.
+ * @param {string} args.slug Entry slug, or collection file name, the branch name carries.
+ * @param {WorkflowPullRequest} args.pullRequest Pull request.
+ * @param {string[]} args.previousPaths Paths of the collection’s entry files the pull request
+ * renames or deletes.
+ * @returns {Entry[]} Entries of the pull request.
+ */
+const findOwnEntries = ({ entries, slug, pullRequest, previousPaths: vacatedPaths }) => {
+  const renames = new Map(
+    pullRequest.files.flatMap(({ path, previousPath }) =>
+      previousPath ? [[path, previousPath]] : [],
+    ),
+  );
+
+  const candidates = entries.map((entry) => {
+    const paths = getEntryPaths(entry);
+    const previousPaths = paths.flatMap((path) => renames.get(path) ?? []);
+
+    const publishedEntry =
+      findEntryByPaths(paths) ??
+      (previousPaths.length ? findEntryByPaths(previousPaths) : undefined);
+
+    return { entry, publishedEntry, renamed: !!previousPaths.length };
+  });
+
+  const ownEntries = candidates
+    .filter(
+      ({ entry, publishedEntry }) =>
+        !publishedEntry || entry.slug === slug || publishedEntry.slug === slug,
+    )
+    .map(({ entry }) => entry);
+
+  if (ownEntries.length) {
+    return ownEntries;
+  }
+
+  if (!vacatedPaths.length) {
+    return entries;
+  }
+
+  /**
+   * Get the depth of the given entry in its collection.
+   * @param {Entry} entry Entry.
+   * @returns {number} Number of path segments in its sub path.
+   */
+  const getDepth = (entry) => entry.subPath.split('/').length;
+
+  const [movedEntry] = candidates
+    .filter(({ renamed }) => renamed)
+    .map(({ entry }) => entry)
+    .sort((a, b) => getDepth(a) - getDepth(b));
+
+  return movedEntry ? [movedEntry] : [];
+};
+
+/**
  * Contents of one or more pull requests.
  * @typedef {object} PullRequestContents
  * @property {UnpublishedEntry[]} entries Unpublished entries.
@@ -298,11 +368,22 @@ export const convertPullRequest = async (pullRequest) => {
     ({ folder, text }) => folder.collectionName === collectionName && text !== undefined,
   );
 
+  // Other entries of the collection the CMS rewrote along with the entry are left out
+  const ownEntries = targetFiles.length
+    ? findOwnEntries({
+        entries: (await prepareEntries(targetFiles)).entries,
+        slug: parsed.slug,
+        pullRequest,
+        previousPaths,
+      })
+    : [];
+
   // A pull request that only removes entry files has nothing to parse, so reuse the published entry
   // it touches. When it deletes all the entry’s files, it’s an Unpublish, and the published content
   // is what the list and the editor display while the removal awaits publication. Otherwise it only
-  // deletes the files of locales turned off for the entry: it’s an edit without those locales.
-  if (!targetFiles.length) {
+  // deletes the files of locales turned off for the entry: it’s an edit without those locales. The
+  // other files of the collection it may carry are those of the entries a removal rewrites.
+  if (!ownEntries.length) {
     const removedPaths = new Set(previousPaths);
 
     const removedEntries = previousPaths.length
@@ -348,12 +429,13 @@ export const convertPullRequest = async (pullRequest) => {
     };
   }
 
-  const { entries } = await prepareEntries(targetFiles);
-  const { fileName } = targetFiles[0].folder;
+  const ownPaths = new Set(ownEntries.flatMap((entry) => getEntryPaths(entry)));
+  const ownFile = targetFiles.find(({ path }) => ownPaths.has(path)) ?? targetFiles[0];
+  const { fileName } = ownFile.folder;
   const companions = await parseCompanions(entryFiles, collectionName, deletedPaths);
 
   return {
-    entries: entries.map((entry) => ({
+    entries: ownEntries.map((entry) => ({
       ...completeEntry({ entry, previousPaths, deletedPaths, collectionName, fileName }),
       workflow: {
         pullRequest,

@@ -107,6 +107,8 @@ describe('fields/number/auto-increment', () => {
     });
 
     it('should start from 1 when no entry has a number', () => {
+      vi.mocked(getMaxEntryNumber).mockReturnValue(undefined);
+
       const draft = createDraft({ en: { number: '' } });
 
       assignAutoIncrementValues(draft);
@@ -125,6 +127,34 @@ describe('fields/number/auto-increment', () => {
       vi.mocked(getMaxEntryNumber).mockReturnValue(1000);
       assignAutoIncrementValues(draft);
       expect(draft.currentValues.en.number).toBe(1001);
+    });
+
+    it('should start from a `min` option of zero or below when no entry has a number', () => {
+      vi.mocked(getMaxEntryNumber).mockReturnValue(undefined);
+      fields.number.min = 0;
+
+      const draft = createDraft({ en: { number: null } });
+
+      assignAutoIncrementValues(draft);
+      expect(draft.currentValues.en.number).toBe(0);
+
+      fields.number.min = -5;
+      assignAutoIncrementValues(draft);
+      expect(draft.currentValues.en.number).toBe(-5);
+
+      // An entry numbered `0` or below is followed by the next number
+      vi.mocked(getMaxEntryNumber).mockReturnValue(0);
+      assignAutoIncrementValues(draft);
+      expect(draft.currentValues.en.number).toBe(1);
+
+      vi.mocked(getMaxEntryNumber).mockReturnValue(-3);
+      assignAutoIncrementValues(draft);
+      expect(draft.currentValues.en.number).toBe(-2);
+
+      // But never by a number below the `min` option
+      fields.number.min = 0;
+      assignAutoIncrementValues(draft);
+      expect(draft.currentValues.en.number).toBe(0);
     });
 
     it('should round a fractional `min` option or highest number to an integer', () => {
@@ -151,13 +181,24 @@ describe('fields/number/auto-increment', () => {
     });
 
     it('should store the number as a string with a string value type', () => {
-      fields.number.value_type = 'int/string';
+      // A custom type, like the legacy `string`, is stored as a string too, as the editor does
+      ['int/string', 'float/string', 'string'].forEach((valueType) => {
+        fields.number.value_type = valueType;
+
+        const draft = createDraft({ en: { number: '' } });
+
+        assignAutoIncrementValues(draft);
+
+        expect(draft.currentValues.en.number).toBe('1');
+      });
+
+      fields.number.value_type = 'float';
 
       const draft = createDraft({ en: { number: '' } });
 
       assignAutoIncrementValues(draft);
 
-      expect(draft.currentValues.en.number).toBe('1');
+      expect(draft.currentValues.en.number).toBe(1);
     });
 
     it('should overwrite the number a new entry already has, e.g. after being duplicated', () => {

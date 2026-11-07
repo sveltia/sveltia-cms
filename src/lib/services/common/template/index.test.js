@@ -214,6 +214,28 @@ describe('fillTemplate()', async () => {
     expect(getField).toHaveBeenCalledWith(expect.objectContaining({ keyPath: 'published' }));
   });
 
+  test('look up the field config in the given collection file', async () => {
+    await setupCmsConfig();
+
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    vi.mocked(getField).mockClear();
+
+    fillTemplate("/events/{{fields.date | date('YYYY-MM')}}/", {
+      type: 'preview_path',
+      collection: /** @type {any} */ ({ name: 'pages', _type: 'file', _i18n: DEFAULT_I18N_CONFIG }),
+      collectionFile: /** @type {any} */ ({ name: 'event', _i18n: DEFAULT_I18N_CONFIG }),
+      content: { date: '2024-06-15' },
+      locale: '_default',
+      entryFilePath: 'content/event.md',
+    });
+
+    // Without the file name, a DateTime field’s custom `format` would be unknown
+    expect(getField).toHaveBeenCalledWith(
+      expect.objectContaining({ collectionName: 'pages', fileName: 'event', keyPath: 'date' }),
+    );
+  });
+
   test('apply filter', async () => {
     await setupCmsConfig();
 
@@ -529,6 +551,28 @@ describe('fillTemplate()', async () => {
     });
 
     expect(result).toEqual('my.post.md');
+  });
+
+  test('filename extraction from a collection file localized as multiple files', async () => {
+    await setupCmsConfig();
+
+    const multiFileI18n = {
+      ...DEFAULT_I18N_CONFIG,
+      allLocales: ['en', 'fr'],
+      structureMap: { ...DEFAULT_I18N_CONFIG.structureMap, i18nMultiFile: true },
+    };
+
+    const result = fillTemplate('/{{locale}}/{{filename}}/', {
+      type: 'preview_path',
+      // The collection itself isn’t localized as multiple files, but its file is
+      collection: /** @type {any} */ ({ name: 'pages', _type: 'file', _i18n: DEFAULT_I18N_CONFIG }),
+      collectionFile: /** @type {any} */ ({ name: 'about', _i18n: multiFileI18n }),
+      content: {},
+      locale: 'fr',
+      entryFilePath: 'content/pages/about.fr.md',
+    });
+
+    expect(result).toEqual('/fr/about/');
   });
 
   test('custom identifier field', async () => {

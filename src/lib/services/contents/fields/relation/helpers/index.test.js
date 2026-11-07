@@ -1560,6 +1560,38 @@ describe('Test getOptions()', async () => {
         expect(result).toBe('nonexistent-slug');
       });
 
+      test('should resolve a number read from a file, like the preview does', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          collection: 'members',
+          value_field: 'id',
+          display_fields: ['name'],
+        };
+
+        vi.mocked(getEntriesByCollection).mockReturnValue([
+          {
+            id: 'member-3',
+            slug: 'jane',
+            subPath: 'jane',
+            locales: {
+              _default: { ...localizedEntryProps, content: { id: 3, name: 'Jane' } },
+            },
+          },
+        ]);
+        vi.mocked(getFieldDisplayValue).mockImplementation(({ keyPath, valueMap }) =>
+          String(valueMap?.[keyPath]),
+        );
+
+        const args = { fieldConfig, keyPath: 'author', locale };
+
+        expect(getReferencedOptionLabel({ ...args, valueMap: { author: 3 } })).toBe('Jane');
+        expect(getReferencedOptionLabel({ ...args, valueMap: { author: '3' } })).toBe('Jane');
+        expect(getReferencedOptionLabel({ ...args, valueMap: { author: 4 } })).toBe(4);
+        expect(getReferencedOptionLabel({ ...args, valueMap: { author: null } })).toBe(null);
+        expect(getReferencedOptionLabel({ ...args, valueMap: {} })).toBe(undefined);
+      });
+
       test('should resolve a value referring to a pending entry', () => {
         /** @type {RelationField} */
         const fieldConfig = {

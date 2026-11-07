@@ -749,6 +749,22 @@ This is the body content of the post.
     expect(formatFrontMatter({ content: { body: '--- Text' }, _file })).toBe('--- Text\n');
   });
 
+  test('body with whitespace before a delimiter line gets an empty front matter block', () => {
+    /** @type {import('$lib/types/private').FileConfig} */
+    const _file = { format: 'frontmatter', extension: '.md' };
+
+    // The parser skips the whitespace before a front matter block, so a thematic break below a
+    // blank line, or an indented delimiter line, would be read as one; the body is kept as is
+    expect(formatFrontMatter({ content: { body: '\n---\n\nOne\n\n---\n\nTwo' }, _file })).toBe(
+      '---\n\n---\n\n\n---\n\nOne\n\n---\n\nTwo\n',
+    );
+    expect(formatFrontMatter({ content: { body: '  ---\nfoo: 1\n---\nbar' }, _file })).toBe(
+      '---\n\n---\n\n  ---\nfoo: 1\n---\nbar\n',
+    );
+    // An indented code block that isn’t a delimiter
+    expect(formatFrontMatter({ content: { body: '\n    code\n' }, _file })).toBe('\n    code\n\n');
+  });
+
   test('body starting with a TOML delimiter line gets an empty TOML front matter block', () => {
     /** @type {import('$lib/types/private').FileConfig} */
     const _file = {

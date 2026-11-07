@@ -4,9 +4,13 @@ import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reor
 import { getOrderValueGetter } from '$lib/services/contents/collection/entries/reorder/sort';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { SUMMARY_COLUMN_KEY } from '$lib/services/contents/collection/view/table-keys';
+import {
+  getListedEntryValue,
+  isEmptyValue,
+  normalizeMultiValue,
+} from '$lib/services/contents/collection/view/values';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
-import { getPropertyValue } from '$lib/services/contents/entry/values';
 import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getDate } from '$lib/services/contents/fields/date-time/parse';
 import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
@@ -32,13 +36,6 @@ const MARKDOWN_SORT_KEY_LENGTH = 1000;
  * @type {string[]}
  */
 export const MARKDOWN_FIELD_KEYS = ['title', 'summary', 'description'];
-
-/**
- * Check whether a raw field value is empty, so that the entry has nothing to sort by.
- * @param {any} value Raw value.
- * @returns {boolean} Whether the value is `undefined`, `null` or an empty string.
- */
-const isEmptyValue = (value) => value === undefined || value === null || value === '';
 
 /**
  * Get a function that computes the sort key for a single entry. Pre-computing this once (O(n))
@@ -76,7 +73,7 @@ export const getSortKeyGetter = ({
 
   if (dateFieldConfig) {
     return (/** @type {Entry} */ entry) => {
-      const raw = getPropertyValue({ entry, locale, collectionName, key });
+      const raw = getListedEntryValue({ entry, locale, collectionName, key });
       const time = getDate(raw, dateFieldConfig, locale)?.getTime() ?? NaN;
 
       // A date that can’t be parsed is no better than a missing one
@@ -86,7 +83,7 @@ export const getSortKeyGetter = ({
 
   if (type === String) {
     return (/** @type {Entry} */ entry) => {
-      const raw = getPropertyValue({ entry, locale, collectionName, key });
+      const raw = normalizeMultiValue(getListedEntryValue({ entry, locale, collectionName, key }));
 
       if (isEmptyValue(raw)) {
         return undefined;
@@ -102,7 +99,7 @@ export const getSortKeyGetter = ({
 
   if (type === Boolean) {
     return (/** @type {Entry} */ entry) => {
-      const raw = getPropertyValue({ entry, locale, collectionName, key });
+      const raw = getListedEntryValue({ entry, locale, collectionName, key });
 
       return raw === true ? 1 : 0;
     };
@@ -110,7 +107,7 @@ export const getSortKeyGetter = ({
 
   // A number, or the commit date, which is a `Date`
   return (/** @type {Entry} */ entry) => {
-    const raw = getPropertyValue({ entry, locale, collectionName, key });
+    const raw = normalizeMultiValue(getListedEntryValue({ entry, locale, collectionName, key }));
     const num = isEmptyValue(raw) ? NaN : Number(raw);
 
     return Number.isNaN(num) ? undefined : num;

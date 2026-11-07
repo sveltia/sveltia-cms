@@ -4,21 +4,18 @@
 
   import { backupToastState, restoreDialogState } from '$lib/services/contents/draft/backup';
   import { showContentOverlay } from '$lib/services/contents/editor';
+  import { formatBackupTime } from '$lib/services/contents/editor/backup-date';
 
-  const now = $derived(new Date());
-  const { resolve, timestamp } = $derived(restoreDialogState.current);
-  const sameYear = $derived(now.getUTCFullYear() === timestamp?.getUTCFullYear());
-  const sameMonth = $derived(sameYear && now.getUTCMonth() === timestamp?.getUTCMonth());
-  const sameDay = $derived(sameMonth && now.getUTCDate() === timestamp?.getUTCDate());
-  const datetime = $derived(
-    timestamp?.toLocaleString(appLocale.current, {
-      year: sameYear ? undefined : 'numeric',
-      month: sameDay ? undefined : 'short',
-      day: sameDay ? undefined : 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-    }),
-  );
+  const { resolve } = $derived(restoreDialogState.current);
+  /* v8 ignore start -- the time is only read while the dialog is shown, which has a timestamp */
+  // The dialog state is replaced whenever the dialog is opened, so the backup time is compared with
+  // the time it’s opened, while this component stays mounted with the Content Library
+  const datetime = $derived.by(() => {
+    const { timestamp } = restoreDialogState.current;
+
+    return timestamp ? formatBackupTime({ timestamp, locale: appLocale.current }) : undefined;
+  });
+  /* v8 ignore stop */
 
   $effect(() => {
     if (!showContentOverlay.current && restoreDialogState.current.show) {

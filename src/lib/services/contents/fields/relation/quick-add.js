@@ -21,6 +21,7 @@ import {
 import { compareEntries } from '$lib/services/contents/draft/save/conflict';
 import { assignSaveTimeValues } from '$lib/services/contents/draft/save/save-time';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
+import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
 import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
 import { isEntryEditableAlong } from '$lib/services/contents/entry/editable';
 import { getField } from '$lib/services/contents/entry/fields';
@@ -390,6 +391,8 @@ export const createPendingEntry = async ({ draft, parentDraft, fieldConfig }) =>
   // The dates are set when the entry is added rather than when it’s saved along with the parent,
   // which is when the changes were made
   assignSaveTimeValues(draft, offset);
+  // A Compute field may refer to one of those values
+  updateComputedValues(draft);
 
   // An existing entry keeps its slug; the slug editor isn’t offered for it in the dialog
   const slugs = isNew

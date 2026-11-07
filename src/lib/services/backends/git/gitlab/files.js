@@ -446,11 +446,14 @@ const getRawFilePath = ({ projectId, path, ref, lfs = false }) =>
  * Read the full text of the blobs that GitLab has cut short. The GraphQL API caps the data of each
  * blob, so a text shorter in bytes than the blob is requested again with the raw file endpoint.
  * @param {Record<string, BlobItem>} blobs Blobs mapped by file path. Updated in place.
- * @param {string} ref Branch name or commit SHA the blobs were read at.
+ * @param {object} args Arguments.
+ * @param {string} args.ref Branch name or commit SHA the blobs were read at.
+ * @param {string} [args.projectId] ID of the project the blobs were read from, which is the
+ * contributor’s fork for a workflow branch with Open Authoring. Default: the configured project.
  * @see https://docs.gitlab.com/api/graphql/reference/#repositoryblob
  * @see https://docs.gitlab.com/api/repository_files/#get-raw-file-from-repository
  */
-const fetchTruncatedBlobs = async (blobs, ref) => {
+export const fetchTruncatedBlobs = async (blobs, { ref, projectId = getProjectId() }) => {
   const encoder = new TextEncoder();
 
   const truncated = Object.entries(blobs).filter(
@@ -464,7 +467,7 @@ const fetchTruncatedBlobs = async (blobs, ref) => {
 
   await mapConcurrently(truncated, async ([path, blob]) => {
     blob.rawTextBlob = /** @type {string} */ (
-      await fetchAPI(getRawFilePath({ projectId: getProjectId(), path, ref }), {
+      await fetchAPI(getRawFilePath({ projectId, path, ref }), {
         responseType: 'text',
       })
     );
@@ -491,7 +494,9 @@ export const fetchFileContents = async (fetchingFiles, lastHash) => {
   try {
     // The `$branch` variable takes a commit SHA as well as a branch name
     blobs = await fetchBlobs(textPaths, FETCH_BLOBS_QUERY, lastHash ? { branch: lastHash } : {});
-    await fetchTruncatedBlobs(blobs, lastHash ?? /** @type {string} */ (repository.branch));
+    await fetchTruncatedBlobs(blobs, {
+      ref: lastHash ?? /** @type {string} */ (repository.branch),
+    });
   } finally {
     // Also on failure, so the interval doesn’t keep running behind the error message
     stopProgress();

@@ -1,6 +1,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Alert, Dialog, Switch, TextArea, Toast } from '@sveltia/ui';
+  import { untrack } from 'svelte';
 
   import { saveAssets } from '$lib/services/assets/data/create';
   import { getAssetBlob } from '$lib/services/assets/info';
@@ -25,11 +26,18 @@
   /** Whether the edited text is being saved, during which the state is kept for a retry. */
   let saving = false;
   let savingFailed = $state(false);
+  /**
+   * Whether the dialog was opened from the asset details overlay rather than from the asset list.
+   * The dialog closes along with that overlay.
+   */
+  let openedFromOverlay = false;
 
   /**
    * Initialize the state.
    */
   const initState = async () => {
+    // Called from an effect, which shouldn’t rerun when the overlay is opened or closed
+    openedFromOverlay = untrack(() => showAssetOverlay.current);
     blob = await getAssetBlob(/** @type {Asset} */ (asset));
     originalValue = await blob.text();
     currentValue = originalValue;
@@ -81,8 +89,8 @@
         savingFailed = true;
       }
 
-      // The asset details overlay may have been closed in the meantime
-      if (showAssetOverlay.current) {
+      // The asset details overlay the dialog was opened from may have been closed in the meantime
+      if (!openedFromOverlay || showAssetOverlay.current) {
         open = true;
 
         return;
@@ -103,7 +111,7 @@
   });
 
   $effect(() => {
-    if (!showAssetOverlay.current) {
+    if (!showAssetOverlay.current && openedFromOverlay) {
       open = false;
     }
   });

@@ -537,6 +537,25 @@ describe('resolveAssetsRoute()', () => {
       expect(resolveAssetFolderPath).toHaveBeenCalledWith('LICENSE', undefined);
     });
 
+    test('shows the details of an asset in a root media folder', () => {
+      // `showAssetDetails()` navigates to `/assets/photo.jpg` for `photo.jpg` with
+      // `media_folder: /`
+      const rootFolder = /** @type {any} */ ({ internalPath: '' });
+      const photo = /** @type {any} */ ({ name: 'photo.jpg', path: 'photo.jpg' });
+
+      visit('/assets/photo.jpg');
+      allAssetFolders.current = [rootFolder];
+      allAssets.current = [photo];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({ folder: rootFolder, subfolderPath: '' });
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('', undefined);
+      expect(selectedAssetFolder.current).toBe(rootFolder);
+      expect(selectedSubfolderPath.current).toBe('');
+      expect(overlaidAsset.current).toBe(photo);
+      expect(showAssetOverlay.current).toBe(true);
+    });
+
     test('reports a missing file', () => {
       visit('/assets/static/posts/b.png');
       allAssets.current = [asset];

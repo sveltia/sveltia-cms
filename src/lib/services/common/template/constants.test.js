@@ -5,7 +5,6 @@ import { replaceTemplateTags } from '$lib/services/common/template/tags';
 
 import {
   DATE_TIME_FIELDS,
-  ESCAPED_PLACEHOLDER_REGEX,
   TEMPLATE_TAG_REGEX,
   TEMPLATE_TAG_REPLACE_REGEX,
   UUID_TYPES,
@@ -116,20 +115,6 @@ describe('Template constants', () => {
       const result = replaceTemplateTags(str, (_match, tag) => `<<${tag}>>`);
 
       expect(result).toEqual("'<<title>>', '<<locales>>', content/main/<<filename>>.<<extension>>");
-    });
-  });
-
-  describe('ESCAPED_PLACEHOLDER_REGEX', () => {
-    test('should match escaped placeholder patterns', () => {
-      expect(ESCAPED_PLACEHOLDER_REGEX.test('\\{\\{escaped\\}\\}')).toBe(true);
-    });
-
-    test('should have global flag', () => {
-      expect(ESCAPED_PLACEHOLDER_REGEX.global).toBe(true);
-    });
-
-    test('should not match unescaped patterns', () => {
-      expect(ESCAPED_PLACEHOLDER_REGEX.test('{{unescaped}}')).toBe(false);
     });
   });
 

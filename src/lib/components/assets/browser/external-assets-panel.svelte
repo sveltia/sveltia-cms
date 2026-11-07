@@ -255,11 +255,19 @@
   };
 
   /**
+   * Whether files can be uploaded, which takes a service that supports it and the credentials,
+   * which the user may not have provided yet.
+   * @returns {boolean} Result.
+   */
+  export const canUpload = () => hasAuthInfo && !!upload;
+
+  /**
    * Handle `Drop` event to upload files.
    * @param {File[]} files Dropped files.
    */
   export const uploadFiles = async (files) => {
-    if (!upload) {
+    // A request without the credentials would only fail
+    if (!canUpload()) {
       return;
     }
 
@@ -277,7 +285,11 @@
 
     try {
       // The files go to the folder being browsed, or the one the search started from
-      const uploaded = await upload(files, { ...listFetchOptions, dirPath });
+      const uploaded = await /** @type {NonNullable<typeof upload>} */ (upload)(files, {
+        ...listFetchOptions,
+        dirPath,
+      });
+
       const resources = await Promise.all(uploaded.map((asset) => getResource(asset)));
 
       // The uploaded files, listed first and selected, confirm the upload

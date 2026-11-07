@@ -144,6 +144,21 @@ describe('Test filterEntries()', async () => {
     expect(result.map((e) => e.id)).toEqual(['entry1', 'entry3']);
   });
 
+  test('reads the value from another locale when the entry lacks the default one', () => {
+    // A multi-file i18n entry with only `entry4.fr.md`, which is listed in French
+    const entry = { id: 'entry4', locales: { fr: { status: 'published' } } };
+
+    vi.mocked(getPropertyValue).mockImplementation(
+      ({ entry: _entry, locale, key }) => /** @type {any} */ (_entry).locales?.[locale]?.[key],
+    );
+
+    expect(
+      filterEntries(/** @type {any} */ ([entry]), mockCollection, [
+        { field: 'status', pattern: 'published' },
+      ]),
+    ).toEqual([entry]);
+  });
+
   test('filters entries with multiple conditions (AND logic)', () => {
     /** @type {FilteringConditions[]} */
     const filters = [

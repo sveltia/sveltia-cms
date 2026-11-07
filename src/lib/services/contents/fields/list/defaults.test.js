@@ -179,6 +179,40 @@ describe('Test getDefaultValueMap()', () => {
     expect(result).toEqual({ items: [], 'items.0': true, 'items.1': false, 'items.2': false });
   });
 
+  test('should convert dynamicValue items of a Select subfield to the option values', () => {
+    /** @type {[Record<string, any>, string, any[]][]} */
+    const cases = [
+      // A number or boolean option is held as such, while an unknown value is kept as a string
+      [{ widget: 'select', options: [1, 2, 3] }, '1,, 2, 4', [1, 2, '4']],
+      [{ widget: 'select', options: [{ label: 'Yes', value: true }] }, 'true', [true]],
+      // Each item is a single option, even if the subfield allows multiple
+      [{ widget: 'select', options: [1, 2], multiple: true }, '1, 2', [1, 2]],
+      // A Relation field has no options, so its value is a string
+      [{ widget: 'relation', collection: 'authors' }, 'a, b', ['a', 'b']],
+    ];
+
+    cases.forEach(([field, dynamicValue, items]) => {
+      /** @type {ListField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        field: /** @type {any} */ ({ name: 'item', ...field }),
+      };
+
+      const result = getDefaultValueMap({
+        fieldConfig,
+        keyPath: 'items',
+        locale: '_default',
+        defaultLocale: '_default',
+        dynamicValue,
+      });
+
+      expect(result).toEqual({
+        items: [],
+        ...Object.fromEntries(items.map((item, index) => [`items.${index}`, item])),
+      });
+    });
+  });
+
   test('should take a default of numbers for a Number subfield', () => {
     // The `default` option takes the values of the single subfield, which the type has to allow for
     // the configuration to pass the schema validation

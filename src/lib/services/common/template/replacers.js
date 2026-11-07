@@ -68,6 +68,7 @@ export const replaceTemplateTag = (tag, context) => {
   const {
     type,
     collection,
+    collectionFile,
     content,
     entryFilePath,
     locale,
@@ -112,13 +113,14 @@ export const replaceTemplateTag = (tag, context) => {
     return locale;
   }
 
-  // Handle file path related tags
+  // Handle file path related tags. A collection file can be localized differently from its
+  // collection, e.g. as multiple files, so its own i18n configuration decides the locale suffix
   if (type === 'preview_path' || type === 'media_folder') {
     const filePathValue = handleFilePathTag(
       tag,
       entryFilePath,
       basePath,
-      getFileNameLocaleSuffixes(collection),
+      getFileNameLocaleSuffixes(collectionFile ?? collection),
       fullPathRegEx,
     );
 

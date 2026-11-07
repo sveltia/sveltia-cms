@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { allEntries } from '$lib/services/contents';
 import { getField } from '$lib/services/contents/entry/fields';
-import { getEntrySummary } from '$lib/services/contents/entry/summary';
+import {
+  getEntrySummary,
+  isDisplayValueFromOtherEntries,
+} from '$lib/services/contents/entry/summary';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 
 /**
@@ -127,5 +130,64 @@ describe('Test getEntrySummary() caching with Relation fields', () => {
     allEntries.current = [];
 
     expect(getEntrySummary(collection, entry, { useTemplate: true })).toBe('Janet (Title)');
+  });
+
+  test('regenerates a summary with a List field of Relation items once other entries change', () => {
+    const collection = createCollection('{{authors}}');
+    const entry = createEntry('hello');
+
+    vi.mocked(getField).mockReturnValue(
+      /** @type {any} */ ({ name: 'authors', widget: 'list', field: { widget: 'relation' } }),
+    );
+    displayValues.authors = 'Jane';
+
+    expect(getEntrySummary(collection, entry, { useTemplate: true })).toBe('Jane');
+
+    displayValues.authors = 'Janet';
+    allEntries.current = [];
+
+    expect(getEntrySummary(collection, entry, { useTemplate: true })).toBe('Janet');
+  });
+});
+
+describe('Test isDisplayValueFromOtherEntries()', () => {
+  test('returns true for a Relation field', () => {
+    expect(isDisplayValueFromOtherEntries(/** @type {any} */ ({ widget: 'relation' }))).toBe(true);
+  });
+
+  test('returns true for a List field with a Relation subfield, at any depth', () => {
+    const field = /** @type {any} */ ({ widget: 'list', field: { widget: 'relation' } });
+
+    expect(isDisplayValueFromOtherEntries(field)).toBe(true);
+    expect(isDisplayValueFromOtherEntries(/** @type {any} */ ({ widget: 'list', field }))).toBe(
+      true,
+    );
+  });
+
+  test('returns false for a List field whose items are not resolved like a subfield', () => {
+    const subField = { widget: 'relation' };
+
+    // `fields` and `types` take precedence over `field` in the display value
+    expect(
+      isDisplayValueFromOtherEntries(
+        /** @type {any} */ ({ widget: 'list', field: subField, fields: [subField] }),
+      ),
+    ).toBe(false);
+    expect(
+      isDisplayValueFromOtherEntries(
+        /** @type {any} */ ({ widget: 'list', field: subField, types: [] }),
+      ),
+    ).toBe(false);
+    expect(isDisplayValueFromOtherEntries(/** @type {any} */ ({ widget: 'list' }))).toBe(false);
+    expect(
+      isDisplayValueFromOtherEntries(
+        /** @type {any} */ ({ widget: 'list', field: { widget: 'string' } }),
+      ),
+    ).toBe(false);
+  });
+
+  test('returns false for any other field', () => {
+    expect(isDisplayValueFromOtherEntries(/** @type {any} */ ({ widget: 'string' }))).toBe(false);
+    expect(isDisplayValueFromOtherEntries(undefined)).toBe(false);
   });
 });

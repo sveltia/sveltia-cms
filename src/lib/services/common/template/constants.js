@@ -19,11 +19,6 @@ export const TEMPLATE_TAG_REPLACE_REGEX = new RegExp(TEMPLATE_TAG_REGEX.source, 
 export const TAG_PLACEHOLDER = '\0';
 
 /**
- * Regex to match escaped `{{variable}}` placeholders.
- */
-export const ESCAPED_PLACEHOLDER_REGEX = /\\\{\\\{.+?\\\}\\\}/g;
-
-/**
  * Date-time field names that are supported as template tags.
  */
 export const DATE_TIME_FIELDS = ['year', 'month', 'day', 'hour', 'minute', 'second'];

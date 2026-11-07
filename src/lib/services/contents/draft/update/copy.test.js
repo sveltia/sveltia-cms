@@ -8,7 +8,9 @@ import {
   copyFields,
   copyFromLocale,
   getCopyingFieldMap,
+  getListItemStates,
   getTurndownService,
+  isSameListItems,
   isTranslationPending,
   translateFields,
   updateToast,
@@ -1140,6 +1142,185 @@ describe('draft/update/copy', () => {
 
       expect(mockTranslate).toHaveBeenCalledWith(['Q&amp;A'], expect.any(Object));
       expect(currentValues.ja.title).toBe('Q&amp;A');
+    });
+
+    describe('list items changed while the request is in flight', () => {
+      /** @type {(values: string[]) => void} */
+      let respond;
+
+      beforeEach(async () => {
+        const { translator } = await import('$lib/services/integrations/translators');
+        const { prefs } = await import('$lib/services/user/prefs.svelte');
+
+        prefs.apiKeys = { openai: 'test-api-key' };
+
+        translator.current = {
+          serviceId: 'openai',
+          markdownSupported: true,
+          translate: vi.fn(
+            () =>
+              new Promise((resolve) => {
+                respond = resolve;
+              }),
+          ),
+        };
+      });
+
+      /**
+       * Translate `faq.1.q` into Japanese, changing the Japanese values while the request is in
+       * flight.
+       * @param {Record<string, any>} ja Japanese values before the request.
+       * @param {(ja: Record<string, any>) => void} change Function changing the values.
+       * @returns {Promise<Record<string, any>>} Japanese values after the response.
+       */
+      const translateWhile = async (ja, change) => {
+        const currentValues = { en: { 'faq.0.q': 'One', 'faq.1.q': 'Two' }, ja };
+
+        const promise = translateFields({
+          currentValues,
+          options: { sourceLanguage: 'en', targetLanguage: 'ja', keyPath: 'faq.1.q' },
+          copingFieldMap: { 'faq.1.q': { value: 'Two', format: 'plain' } },
+        });
+
+        await vi.waitFor(() => expect(respond).toBeTypeOf('function'));
+        change(currentValues.ja);
+        respond(['Ni']);
+        await promise;
+
+        return currentValues.ja;
+      };
+
+      beforeEach(() => {
+        respond = undefined;
+      });
+
+      it('should not bring back an item removed in the meantime', async () => {
+        const ja = await translateWhile({ 'faq.0.q': '', 'faq.1.q': '' }, (values) => {
+          delete values['faq.1.q'];
+        });
+
+        expect(ja).toEqual({ 'faq.0.q': '' });
+      });
+
+      it('should not write into another item moved to the position', async () => {
+        const ja = await translateWhile({ 'faq.0.q': 'A', 'faq.1.q': 'B' }, (values) => {
+          // The items are tagged with an ID and their original key paths before they’re swapped
+          Object.assign(values, {
+            'faq.0.q': 'B',
+            'faq.0.__sc_item_id': 'id-b',
+            'faq.0.__sc_item_original_key_path': 'faq.1',
+            'faq.1.q': 'A',
+            'faq.1.__sc_item_id': 'id-a',
+            'faq.1.__sc_item_original_key_path': 'faq.0',
+          });
+        });
+
+        expect(ja['faq.1.q']).toBe('A');
+        expect(ja['faq.0.q']).toBe('B');
+      });
+
+      it('should not write into a new item inserted at the position', async () => {
+        const ja = await translateWhile({ 'faq.0.q': '', 'faq.1.q': '' }, (values) => {
+          Object.assign(values, {
+            'faq.0.__sc_item_original_key_path': 'faq.0',
+            'faq.1.q': '',
+            'faq.1.__sc_item_id': 'id-new',
+            'faq.2.q': '',
+            'faq.2.__sc_item_original_key_path': 'faq.1',
+          });
+        });
+
+        expect(ja['faq.1.q']).toBe('');
+      });
+
+      it('should still write into the item once its list is tagged for another change', async () => {
+        const ja = await translateWhile({ 'faq.0.q': '', 'faq.1.q': '' }, (values) => {
+          // Another item is added at the end, so the existing items are tagged where they are
+          Object.assign(values, {
+            'faq.0.__sc_item_original_key_path': 'faq.0',
+            'faq.1.__sc_item_id': 'id-1',
+            'faq.1.__sc_item_original_key_path': 'faq.1',
+            'faq.2.q': '',
+            'faq.2.__sc_item_id': 'id-new',
+          });
+        });
+
+        expect(ja['faq.1.q']).toBe('Ni');
+      });
+
+      it('should still write into a tagged item that keeps its ID', async () => {
+        const ja = await translateWhile(
+          { 'faq.0.q': '', 'faq.1.q': '', 'faq.1.__sc_item_id': 'id-1' },
+          (values) => {
+            values['faq.0.q'] = 'edited';
+          },
+        );
+
+        expect(ja['faq.1.q']).toBe('Ni');
+      });
+    });
+  });
+
+  describe('getListItemStates()', () => {
+    it('should return the state of each list item a key path is in', () => {
+      const content = {
+        'blocks.0.__sc_item_id': 'id-0',
+        'blocks.0.__sc_item_original_key_path': 'blocks.1',
+        'blocks.0.faq.2.q': 'Question',
+      };
+
+      expect(getListItemStates(content, 'blocks.0.faq.2.q')).toEqual([
+        { exists: true, id: 'id-0', originalKeyPath: 'blocks.1' },
+        { exists: true, id: undefined, originalKeyPath: undefined },
+      ]);
+      expect(getListItemStates(content, 'blocks.1.faq.0.q')).toEqual([
+        { exists: false, id: undefined, originalKeyPath: undefined },
+        { exists: false, id: undefined, originalKeyPath: undefined },
+      ]);
+      // A list item without subfields is found by its own key path
+      expect(getListItemStates({ 'tags.0': 'a', 'tags.1': 'b' }, 'tags.1')).toEqual([
+        { exists: true, id: undefined, originalKeyPath: undefined },
+      ]);
+      expect(getListItemStates(content, 'title')).toEqual([]);
+    });
+  });
+
+  describe('isSameListItems()', () => {
+    const state = { exists: true, id: undefined, originalKeyPath: undefined };
+
+    it('should compare the IDs of items tagged before', () => {
+      const before = [{ ...state, id: 'a', originalKeyPath: 'faq.0' }];
+
+      expect(
+        isSameListItems(before, [{ ...state, id: 'a', originalKeyPath: 'faq.0' }], 'faq.1.q'),
+      ).toBe(true);
+      expect(
+        isSameListItems(before, [{ ...state, id: 'b', originalKeyPath: 'faq.0' }], 'faq.1.q'),
+      ).toBe(false);
+    });
+
+    it('should compare the original key paths of items untagged before', () => {
+      expect(isSameListItems([state], [state], 'faq.1.q')).toBe(true);
+      expect(
+        isSameListItems([state], [{ ...state, id: 'a', originalKeyPath: 'faq.1' }], 'faq.1.q'),
+      ).toBe(true);
+      expect(
+        isSameListItems([state], [{ ...state, id: 'a', originalKeyPath: 'faq.0' }], 'faq.1.q'),
+      ).toBe(false);
+      // A new item has an ID but no original key path
+      expect(isSameListItems([state], [{ ...state, id: 'a' }], 'faq.1.q')).toBe(false);
+      expect(isSameListItems([state], [{ ...state, exists: false }], 'faq.1.q')).toBe(false);
+    });
+
+    it('should check every level of nested lists', () => {
+      expect(
+        isSameListItems(
+          [state, state],
+          [state, { ...state, originalKeyPath: 'blocks.0.faq.0' }],
+          'blocks.0.faq.1.q',
+        ),
+      ).toBe(false);
+      expect(isSameListItems([state, state], [state, state], 'blocks.0.faq.1.q')).toBe(true);
     });
   });
 });

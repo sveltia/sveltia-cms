@@ -12,8 +12,11 @@ import {
   prepareConditions,
 } from '$lib/services/contents/collection/view/conditions';
 import { parseViewOptions } from '$lib/services/contents/collection/view/options';
+import {
+  getListedEntryValue,
+  normalizeMultiValue,
+} from '$lib/services/contents/collection/view/values';
 import { getField } from '$lib/services/contents/entry/fields';
-import { getPropertyValue } from '$lib/services/contents/entry/values';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -109,8 +112,8 @@ const groupEntriesByComparison = (entries, collection, conditions, now) => {
 
   entries.forEach((entry) => {
     const args = { entry, locale, collectionName, key: field };
-    const rawValue = getPropertyValue({ ...args, resolveRef: false });
-    const refValue = getPropertyValue({ ...args });
+    const rawValue = getListedEntryValue({ ...args, resolveRef: false });
+    const refValue = getListedEntryValue({ ...args });
 
     (matchesConditions({ rawValue, refValue, conditions: prepared }) ? matched : others).push(
       entry,
@@ -167,7 +170,7 @@ export const groupEntries = (
   } = collection;
 
   const sortedGroups = buildGroupMap(entries, pattern, (entry) =>
-    getPropertyValue({ entry, locale, collectionName, key: field }),
+    normalizeMultiValue(getListedEntryValue({ entry, locale, collectionName, key: field })),
   ).map(([name, _entries]) => ({ name, entries: _entries }));
 
   // Keep the descending order if already sorted, especially on the date field

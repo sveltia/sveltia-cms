@@ -3,6 +3,7 @@ import {
   createMediaSourceResolver,
   getAssetReferences,
   getComparableAssetURL,
+  getMatchingAssetURL,
 } from '$lib/services/assets/references';
 import { allAssets } from '$lib/services/assets/state';
 import { cmsConfig } from '$lib/services/config';
@@ -18,6 +19,7 @@ import { isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { ITEM_INDEX_SUFFIX_REGEX } from '$lib/services/contents/entry/key-paths';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getValueFormat } from '$lib/services/contents/fields/rich-text';
+import { LINKED_IMAGE_REGEX } from '$lib/services/contents/fields/rich-text/constants';
 import {
   MARKDOWN_MEDIA_REGEX,
   rewriteMediaStartTag,
@@ -214,8 +216,35 @@ const removeHTMLMedia = (value, isStale) => {
 };
 
 /**
+ * Sticky version of `LINKED_IMAGE_REGEX`, to tell whether a Markdown image is the content of a
+ * link.
+ */
+const STICKY_LINKED_IMAGE_REGEX = new RegExp(LINKED_IMAGE_REGEX.source, 'y');
+
+/**
+ * Get the length of the linked image starting right before the given Markdown image, e.g.
+ * `[![a](a.png)](a.png)`, if the image is the content of a link.
+ * @param {string} value Markdown.
+ * @param {number} index Position of the image.
+ * @param {string} markup Image.
+ * @returns {number | undefined} Length of the linked image, if any.
+ */
+const getLinkedImageLength = (value, index, markup) => {
+  if (value[index - 1] !== '[') {
+    return undefined;
+  }
+
+  STICKY_LINKED_IMAGE_REGEX.lastIndex = index - 1;
+
+  const [linkedImage] = STICKY_LINKED_IMAGE_REGEX.exec(value) ?? [];
+
+  return linkedImage?.startsWith(`[${markup}](`) ? linkedImage.length : undefined;
+};
+
+/**
  * Remove the media pointing at the deleted assets from a Markdown string: a Markdown image is cut
- * out, and so is an image or a `<source>` written as raw HTML once it has nothing left to display.
+ * out, along with the link it’s the content of, if any, as the link has nothing left to display,
+ * and so is an image or a `<source>` written as raw HTML once it has nothing left to display.
  * The start tag of a video or audio written as raw HTML only loses its URLs pointing at the deleted
  * assets, as its content and end tag aren’t matched along with it.
  * @param {string} value Markdown.
@@ -229,7 +258,18 @@ const removeMarkdownMedia = (value, isStale) =>
     const { index, 0: markup, groups: { src = '', tag = undefined } = {} } = match;
 
     if (tag === undefined) {
-      return isStale(src) ? cutMarkup(text, index, markup.length) : text;
+      // A source can be wrapped in angle brackets, which allow spaces in it, e.g. `<my image.png>`
+      const bracketed = src.length > 2 && src.startsWith('<') && src.endsWith('>');
+
+      if (!isStale(bracketed ? src.slice(1, -1) : src)) {
+        return text;
+      }
+
+      const linkedImageLength = getLinkedImageLength(value, index, markup);
+
+      return linkedImageLength === undefined
+        ? cutMarkup(text, index, markup.length)
+        : cutMarkup(text, index - 1, linkedImageLength);
     }
 
     const element = rewriteMediaStartTag({
@@ -306,7 +346,9 @@ export const removeEmbeddedMedia = ({
    * @returns {boolean} Result.
    */
   const isStale = (src) => {
-    if (urls.has(src)) {
+    // Matched the same way as the references are found, see `getAssetReferences()`, e.g. with a
+    // space encoded as `%20`, as the CMS writes it in a body, or with a fragment
+    if (getMatchingAssetURL(src, (url) => urls.has(url)) !== undefined) {
       return true;
     }
 

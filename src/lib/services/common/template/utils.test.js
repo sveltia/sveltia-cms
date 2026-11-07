@@ -105,4 +105,17 @@ describe('Test getTemplatePattern()', () => {
   test('returns a template without tags escaped', () => {
     expect(getTemplatePattern('uploads', '.+?')).toBe('uploads');
   });
+
+  test('replaces a tag with a nested template in a transformation argument as a whole', () => {
+    const template = "{{fields.slug | default('{{title}}')}}/index";
+    const pattern = getTemplatePattern(template, '[^/]+?');
+
+    expect(pattern).toBe('[^/]+?/index');
+    expect(new RegExp(`^${pattern}$`).test('hello-world/index')).toBe(true);
+    expect(getTemplatePattern("{{a | default('}}')}}-{{b}}", '.+?')).toBe('.+?-.+?');
+  });
+
+  test('matches an escaped tag literally, without the backslash', () => {
+    expect(getTemplatePattern('\\{{title}}/{{slug}}', '.+?')).toBe('\\{\\{title\\}\\}/.+?');
+  });
 });

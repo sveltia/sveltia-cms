@@ -1,5 +1,6 @@
 import { getArrayItemTarget } from '$lib/services/contents/draft/save/changes';
 import { buildEntryFileChanges } from '$lib/services/contents/draft/save/file-changes';
+import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 
 /**
@@ -11,6 +12,7 @@ import { resolveFileConfig } from '$lib/services/contents/file/config';
  * InternalCollectionFile,
  * InternalEntryCollection,
  * InternalLocaleCode,
+ * LocalizedEntry,
  * } from '$lib/types/private';
  * @import { EntryFilePlan } from '$lib/services/contents/draft/save/file-changes';
  */
@@ -73,7 +75,11 @@ export const buildEntryUpdateChanges = async ({
      */
     planChange: (locale) => {
       if (locale === undefined) {
-        const { slug, path } = entry.locales[config._i18n.defaultLocale];
+        // The default locale can be missing from a single-file i18n entry, e.g. when the file was
+        // written before the locale became the default; another locale then has the same path
+        const { slug, path } = /** @type {LocalizedEntry} */ (
+          getEntryLocaleFile(entry, { defaultLocale: config._i18n.defaultLocale })
+        );
 
         return { action: 'update', slug, path, currentPath: path, ...getArrayItemTarget(entry) };
       }

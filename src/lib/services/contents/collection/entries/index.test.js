@@ -624,6 +624,25 @@ describe('matchesCollectionFilter()', () => {
     });
   });
 
+  test('reads the value from another locale when the entry lacks the default one', async () => {
+    const { getPropertyValue } = await import('$lib/services/contents/entry/values');
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'published', value: true },
+    };
+
+    // A multi-file i18n entry with only `hello.fr.md`, which is listed in French
+    const entry = { id: '1', locales: { fr: { content: { published: true } } } };
+
+    vi.mocked(getPropertyValue).mockReturnValue(true);
+
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+    expect(getPropertyValue).toHaveBeenCalledWith(expect.objectContaining({ locale: 'fr' }));
+  });
+
   test('matches the field value against the filter pattern', async () => {
     const { getPropertyValue } = await import('$lib/services/contents/entry/values');
     const { getRegex } = await import('$lib/services/utils/regex');

@@ -195,22 +195,28 @@ export const prepareFieldTemplates = (fieldConfig, identifierField) => {
    */
   const valueField = fieldConfig.value_field;
   /**
+   * Canonical, templatized value field.
+   * @example '{{name.first}}'
+   * @example '{{route}}#{{sections.*.name}}'
+   */
+  const _valueField = normalizeFieldName(valueField || '{{slug}}');
+
+  /**
+   * The entry slug isn’t meant to be shown, so the identifier field is shown by default with the
+   * default value field, whether it’s omitted or written explicitly.
    * @example ['userId']
    * @example ['name.first'] (nested)
    * @example ['cities.*.id', 'cities.*.name'] (with wildcard, multiple)
    * @example ['{{twitterHandle}} - {{followerCount}}'] (template)
    */
-  const displayFields = fieldConfig.display_fields ?? [valueField ?? `{{${identifierField}}}`];
+  const displayFields = fieldConfig.display_fields ?? [
+    _valueField === '{{slug}}' ? `{{${identifierField}}}` : _valueField,
+  ];
+
   /**
    * The format is the same as {@link displayFields}.
    */
   const searchFields = fieldConfig.search_fields ?? displayFields;
-  /**
-   * Canonical, templatized value field.
-   * @example '{{name.first}}'
-   * @example '{{route}}#{{sections.*.name}}'
-   */
-  const _valueField = normalizeFieldName(valueField ?? '{{slug}}');
   /**
    * Canonical, templatized display field.
    * @example '{{twitterHandle}} {{followerCount}}'

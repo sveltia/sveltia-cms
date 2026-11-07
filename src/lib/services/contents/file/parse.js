@@ -276,6 +276,21 @@ const parseFrontMatterBlock = ({ collection, collectionFile, isIndexFile, format
   const syntax = FRONTMATTER_FORMATS.includes(format) ? getFormatSyntax(format) : undefined;
   let parsedHead = syntax ? FRONT_MATTER_PARSERS[syntax](head, path) : {};
 
+  // A Markdown file starting with blank lines or spaces before a delimiter line, e.g. a thematic
+  // break, could be saved without front matter by an earlier version, which only protected a body
+  // starting with the delimiter itself. What lies between that line and the next one is then text,
+  // which YAML reads as a string. A front matter block is a map, so such a file is read as having
+  // no front matter, as it was meant to
+  if (
+    text !== trimmedText &&
+    head.trim() &&
+    parsedHead !== null &&
+    parsedHead !== undefined &&
+    (typeof parsedHead !== 'object' || Array.isArray(parsedHead))
+  ) {
+    return { content: { [bodyKey]: text }, hasFrontMatter: false };
+  }
+
   if (!parsedHead || typeof parsedHead !== 'object' || Array.isArray(parsedHead)) {
     parsedHead = {};
   }

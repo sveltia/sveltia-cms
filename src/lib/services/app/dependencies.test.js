@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   getChunkURLs,
   getLeafletMarkerIconURL,
+  getScriptVersionSpec,
   getUnpkgURL,
   loadChunk,
   loadModule,
@@ -194,6 +195,42 @@ describe('dependencies', () => {
       const [sibling] = getChunkURLs('react-dom');
 
       expect(sibling).toMatch(/^file:\/\/.+\/chunks\/react-dom\.js$/);
+    });
+  });
+
+  describe('getScriptVersionSpec', () => {
+    it('should return an empty string for a CDN URL without a version', () => {
+      expect(getScriptVersionSpec('https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js')).toBe('');
+      // The module version is just as unpinned
+      expect(getScriptVersionSpec('https://unpkg.com/@sveltia/cms/dist/sveltia-cms.mjs')).toBe('');
+      expect(
+        getScriptVersionSpec('https://cdn.jsdelivr.net/npm/@sveltia/cms/dist/sveltia-cms.mjs'),
+      ).toBe('');
+    });
+
+    it('should return the version range or tag in the URL', () => {
+      expect(getScriptVersionSpec('https://unpkg.com/@sveltia/cms@^1/dist/sveltia-cms.js')).toBe(
+        '%5E1',
+      );
+      expect(
+        getScriptVersionSpec('https://cdn.jsdelivr.net/npm/@sveltia/cms@0/dist/sveltia-cms.js'),
+      ).toBe('0');
+    });
+
+    it('should return nothing for a pinned, self-hosted or unknown URL', () => {
+      expect(
+        getScriptVersionSpec('https://unpkg.com/@sveltia/cms@9.9.9/dist/sveltia-cms.js'),
+      ).toBeUndefined();
+      expect(
+        getScriptVersionSpec('https://example.com/node_modules/@sveltia/cms/dist/sveltia-cms.js'),
+      ).toBeUndefined();
+      expect(getScriptVersionSpec('https://example.com/admin/sveltia-cms.js')).toBeUndefined();
+      expect(getScriptVersionSpec('')).toBeUndefined();
+    });
+
+    it('should default to the running script’s URL', () => {
+      // In the test environment, that’s the module’s own URL, which isn’t a CDN URL
+      expect(getScriptVersionSpec()).toBeUndefined();
     });
   });
 

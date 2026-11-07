@@ -529,3 +529,16 @@ export const checkPublishedVersion = (entry) => {
 
   return hasPublishedVersion(entry);
 };
+
+/**
+ * Check if deleting the given entry only discards its draft: an entry with a pull request that has
+ * never been published. Any other entry is taken off the site instead, through a pull request with
+ * Editorial Workflow, as discarding its pull request would leave the published version on the
+ * site. The entry list shows a pull request’s entry in place of the published one it changes, so
+ * both the entry editor and the entry list tell the two apart this way. Like
+ * {@link checkPublishedVersion}, it can be used in a derived state.
+ * @param {Entry | UnpublishedEntry | undefined} entry Entry.
+ * @returns {boolean} Result.
+ */
+export const isDiscardableDraft = (entry) =>
+  !!entry && 'workflow' in entry && !checkPublishedVersion(/** @type {UnpublishedEntry} */ (entry));

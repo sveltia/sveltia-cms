@@ -23,6 +23,7 @@ import {
 } from '$lib/services/backends/git/gitea/pull-requests';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 vi.mock('$lib/services/backends/git/gitea/files');
@@ -31,6 +32,7 @@ vi.mock('$lib/services/backends/git/gitea/repository', () => ({
 }));
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
+vi.mock('$lib/services/contents/folders', () => ({ getEntryFoldersByPath: vi.fn(() => []) }));
 
 const REPO_PATH = '/repos/owner/repo';
 /**
@@ -391,6 +393,24 @@ describe('Gitea pull request service', () => {
       expect(file.text).toBe('# Big');
     });
 
+    test.each([
+      // `application/toml` isn’t counted as a text type
+      ['a TOML file', 'data/big.toml', false],
+      // A custom entry extension has no MIME type at all
+      ['an entry with a custom extension', 'content/posts/big.njk', true],
+    ])('reads %s from the raw endpoint when it’s oversized', async (_label, path, isEntry) => {
+      vi.mocked(getEntryFoldersByPath).mockReturnValue(isEntry ? [/** @type {any} */ ({})] : []);
+      vi.mocked(fetchAPI).mockResolvedValue({ sha: 'sha3', size: 20000000, content: null });
+      vi.mocked(fetchRawFile).mockResolvedValue('title = "Big"');
+
+      const file = /** @type {any} */ ({ path, sha: '', size: 0 });
+
+      await fetchPullRequestFileContent(pullRequest, file);
+
+      expect(fetchRawFile).toHaveBeenCalledWith(path, 'cms/posts/hello');
+      expect(file.text).toBe('title = "Big"');
+    });
+
     test('reads the files at the head commit, which a publish is pinned to', async () => {
       // A branch moved on while the board loads would otherwise show content other than the one
       // published, which the publish check can’t tell, since it compares the commit and the paths
@@ -692,6 +712,34 @@ describe('Gitea pull request service', () => {
 
       expect(getRequestBody().title).toBe('Delete Post “hello”');
       expect(result.status).toBe('pending_deletion');
+    });
+
+    test('records the user who opened the pull request as its author', async () => {
+      vi.mocked(fetchAPI).mockImplementation(async (path) =>
+        path.endsWith('/labels')
+          ? [{ name: 'sveltia-cms/draft' }]
+          : {
+              id: 900,
+              number: 5,
+              user: { id: 7, login: 'alice', full_name: '', email: 'alice@example.com' },
+              created_at: '2026-01-01T00:00:00Z',
+              updated_at: '2026-01-01T00:00:00Z',
+            },
+      );
+
+      const result = await createPullRequest({
+        branch: 'cms/posts/hello',
+        title: 'Create Post “hello”',
+        status: 'draft',
+      });
+
+      // The same author a listed pull request has, so a later save recognizes it as the user’s own
+      expect(result.author).toEqual({
+        name: 'alice',
+        email: 'alice@example.com',
+        id: 7,
+        login: 'alice',
+      });
     });
   });
 

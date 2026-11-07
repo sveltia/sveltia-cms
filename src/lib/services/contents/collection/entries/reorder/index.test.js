@@ -142,6 +142,33 @@ describe('reorderEntries()', () => {
     expect(saveChanges).not.toHaveBeenCalled();
   });
 
+  test('skips an entry lacking the default locale whose order is already correct', async () => {
+    const collection = makeCollection({
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: { i18nMultiFile: true },
+      },
+    });
+
+    // A multi-file i18n entry with only `a.fr.md` was rewritten on every reorder
+    const entries = [
+      {
+        id: 'a',
+        slug: 'a',
+        subPath: 'a',
+        locales: { fr: { slug: 'a', path: 'content/a.fr.md', content: { title: 'A', order: 1 } } },
+      },
+    ];
+
+    expect(await reorderEntries(collection, entries)).toBe(0);
+
+    const { saveChanges } = await import('$lib/services/backends/save');
+
+    expect(saveChanges).not.toHaveBeenCalled();
+  });
+
   test('writes nothing to a collection made read-only since reorder mode was entered', async () => {
     const collection = makeCollection({ readonly: true });
 

@@ -583,10 +583,65 @@ describe('Test copyProperty()', () => {
         field: { name: 'optionalObject', widget: 'object', required: false },
       });
 
-      // Parent and its empty children should all be omitted
-      expect(sortedMap).toEqual({});
+      // Parent and its empty children should all be omitted, while the list item they belong to
+      // is kept as an empty object, so it doesn’t leave a hole in the list
+      expect(sortedMap).toEqual({ 'list.0': {} });
       // Children should also be removed from unsortedMap
       expect(unsortedMap).not.toHaveProperty('list.0.optionalObject.foo');
+    });
+
+    test('keeps an empty list item while omitting its empty properties', () => {
+      isFieldRequired.mockReturnValue(false);
+
+      const field = { name: 'note', widget: 'string', required: false };
+      const args = { locale: 'en', isTomlOutput: false, omitEmptyOptionalFields: true };
+      // A simple list item is kept even if it’s empty, or it’d leave a hole in the list
+      /** @type {FlattenedEntryContent} */
+      let sortedMap = { list: [] };
+
+      copyProperty({ ...args, sortedMap, unsortedMap: { 'list.0': '' }, key: 'list.0', field });
+      expect(sortedMap).toEqual({ list: [], 'list.0': '' });
+
+      // An item that already has another property doesn’t need a placeholder
+      sortedMap = { 'list.0.title': 'Title' };
+      copyProperty({
+        ...args,
+        sortedMap,
+        unsortedMap: { 'list.0.note': '' },
+        key: 'list.0.note',
+        field,
+      });
+      expect(sortedMap).toEqual({ 'list.0.title': 'Title' });
+
+      // Nor does an item with a value of its own
+      sortedMap = { 'list.0': {} };
+      copyProperty({
+        ...args,
+        sortedMap,
+        unsortedMap: { 'list.0.note': '' },
+        key: 'list.0.note',
+        field,
+      });
+      expect(sortedMap).toEqual({ 'list.0': {} });
+
+      // An object property named like an index, e.g. in a KeyValue field or an Object field with
+      // a placeholder, isn’t a list item, so it’s omitted, and so is a property below it
+      sortedMap = { stats: {} };
+      copyProperty({
+        ...args,
+        sortedMap,
+        unsortedMap: { 'stats.2024': '', 'stats.2025.note': '' },
+        key: 'stats.2024',
+        field,
+      });
+      copyProperty({
+        ...args,
+        sortedMap,
+        unsortedMap: { 'stats.2025.note': '' },
+        key: 'stats.2025.note',
+        field,
+      });
+      expect(sortedMap).toEqual({ stats: {} });
     });
 
     test('preserves optional object when at least one child is non-empty', () => {
@@ -2021,6 +2076,57 @@ describe('Test serializeContent()', () => {
       const result = serializeContent({ draft, locale: 'en', valueMap: { test_list: [] } });
 
       expect(result).toEqual({ test_list: [] });
+    });
+
+    test('keeps the empty items of optional lists when omitting empty optional fields', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+      /** @type {any} */
+      const config = cmsConfig;
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'tags',
+        'tags.*',
+        'links',
+        'links.*.label',
+        'links.*.url',
+        'groups',
+        'groups.*.links',
+        'groups.*.links.*.label',
+      ]);
+
+      getField.mockImplementation(({ keyPath }) =>
+        ['tags', 'links', 'groups', 'groups.*.links'].includes(keyPath)
+          ? { name: keyPath, widget: 'list', required: false }
+          : { name: keyPath.split('.').pop(), widget: 'string', required: false },
+      );
+      isFieldRequired.mockImplementation(({ fieldConfig }) => fieldConfig.required !== false);
+      config.current = { output: { omit_empty_optional_fields: true } };
+
+      const valueMap = {
+        tags: [],
+        'tags.0': '',
+        'tags.1': 'b',
+        links: [],
+        'links.0.label': '',
+        'links.0.url': '',
+        'links.1.label': 'L',
+        'links.1.url': '',
+        'groups.0.links.0.label': '',
+        'groups.0.links.1.label': 'G',
+      };
+
+      try {
+        expect(serializeContent({ draft, locale: 'en', valueMap })).toEqual({
+          // An item left empty is an item all the same, which mustn’t become `null`
+          tags: ['', 'b'],
+          // An object item keeps its place, while its empty properties are still omitted
+          links: [{}, { label: 'L' }],
+          groups: [{ links: [{}, { label: 'G' }] }],
+        });
+      } finally {
+        config.current = {};
+        isFieldRequired.mockReset();
+      }
     });
   });
 

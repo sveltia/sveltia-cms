@@ -74,6 +74,7 @@ vi.mock('$lib/services/assets/folders', () => ({
   selectedAssetFolder: { current: undefined },
 }));
 vi.mock('$lib/services/assets/references');
+vi.mock('$lib/services/contents/collection', () => ({ getCollection: vi.fn() }));
 vi.mock('$lib/services/utils/file', async (importOriginal) => {
   const actual = /** @type {Record<string, any>} */ (await importOriginal());
 
@@ -1188,6 +1189,57 @@ describe('assets/info', () => {
       expect(
         getAssetPublicURL(entryRelativeAsset, { pathOnly: true, entry: mockEntry }),
       ).toBeUndefined();
+    });
+
+    it('should return the path relative to the folder named after an entry in subfolders', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const { getCollection } = await import('$lib/services/contents/collection');
+
+      vi.mocked(getPathInfo).mockImplementation(
+        (path) => /** @type {any} */ ({ dirname: path.slice(0, path.lastIndexOf('/')) }),
+      );
+
+      const folder = /** @type {any} */ ({
+        collectionName: 'posts',
+        internalPath: 'content/posts',
+        internalSubPath: '',
+        publicPath: '',
+        entryRelative: true,
+      });
+
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([folder]);
+      // The `path` option puts the entry in subfolders, so its relative assets are saved to a
+      // folder named after it, next to the entry file
+      vi.mocked(getCollection).mockReturnValue(
+        /** @type {any} */ ({
+          name: 'posts',
+          _type: 'entry',
+          _file: { basePath: 'content/posts', subPath: '{{year}}/{{month}}/{{slug}}' },
+        }),
+      );
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        locales: { _default: { path: 'content/posts/2025/06/my-post.md' } },
+      });
+
+      const ownAsset = {
+        ...mockAsset,
+        path: 'content/posts/2025/06/my-post/cover.png',
+        name: 'cover.png',
+        folder,
+      };
+
+      expect(getAssetPublicURL(ownAsset, { pathOnly: true, entry: mockEntry })).toBe('cover.png');
+      expect(getCollection).toHaveBeenCalledWith('posts');
+
+      // An asset next to the entry file isn’t in the entry’s folder, so the reader wouldn’t find it
+      // for a relative value
+      const siblingAsset = { ...ownAsset, path: 'content/posts/2025/06/cover.png' };
+
+      expect(getAssetPublicURL(siblingAsset, { pathOnly: true, entry: mockEntry })).toBeUndefined();
     });
 
     it('should return relative path for entry-relative asset in sub-folder', async () => {

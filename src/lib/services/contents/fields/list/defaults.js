@@ -6,6 +6,7 @@ import { getSubtreeEntries } from '$lib/services/contents/entry/subtree';
 import { getDefaultValueMap as getBooleanDefaultValueMap } from '$lib/services/contents/fields/boolean/defaults';
 import { getDefaultValueMap as getNumberDefaultValueMap } from '$lib/services/contents/fields/number/defaults';
 import { getDefaultValueMap as getRichTextDefaultValueMap } from '$lib/services/contents/fields/rich-text/defaults';
+import { getDefaultValueMap as getSelectDefaultValueMap } from '$lib/services/contents/fields/select/defaults';
 
 /**
  * @import { GetDefaultValueMapFuncArgs, InternalLocaleCode } from '$lib/types/private';
@@ -70,6 +71,16 @@ export const hasRequiredSingleItem = ({ fieldConfig, locale }) =>
   isFieldRequired({ fieldConfig, locale });
 
 /**
+ * Get the default value map of a Select or Relation subfield for one item of a dynamic default
+ * value, which is a single option even if the subfield allows multiple: a number or boolean option
+ * is held as such rather than as a string.
+ * @param {GetDefaultValueMapFuncArgs} args Arguments.
+ * @returns {Record<FieldKeyPath, any>} Default value map.
+ */
+const getOptionItemValueMap = (args) =>
+  getSelectDefaultValueMap({ ...args, fieldConfig: { ...args.fieldConfig, multiple: false } });
+
+/**
  * Functions converting a dynamic default value to the value of a field, for the field types whose
  * value isn’t the string given in the URL as is.
  * @type {Record<string, (args: GetDefaultValueMapFuncArgs) => Record<string, any>>}
@@ -79,6 +90,8 @@ const DYNAMIC_ITEM_VALUE_FUNCTIONS = {
   number: getNumberDefaultValueMap,
   markdown: getRichTextDefaultValueMap,
   richtext: getRichTextDefaultValueMap,
+  relation: getOptionItemValueMap,
+  select: getOptionItemValueMap,
 };
 
 /**
@@ -125,7 +138,10 @@ export const getDefaultValueMap = (args) => {
     // items the subfield can’t take
     value = dynamicValue
       .split(/,\s*/)
-      .map((val) => toDynamicItemValue(val.trim(), subfield, { locale, defaultLocale }))
+      .map((val) => val.trim())
+      // An empty item, as in `?tags=a,,b`, would be the empty value of a Select subfield, `null`
+      .filter((val) => val !== '')
+      .map((val) => toDynamicItemValue(val, subfield, { locale, defaultLocale }))
       .filter((val) => val !== '' && val !== undefined);
   } else {
     value = Array.isArray(defaultValue) ? defaultValue : [];

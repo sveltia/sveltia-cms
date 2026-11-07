@@ -25,6 +25,7 @@ import {
   getUnpublishedEntryBySlug,
   hasPublishedVersion,
   isDirectPublishAllowed,
+  isDiscardableDraft,
   isPendingDeletion,
   isPublishAllowed,
   isWorkflowDraft,
@@ -783,6 +784,30 @@ describe('hasPublishedVersion', () => {
     ];
 
     expect(hasPublishedVersion(entry)).toBe(true);
+  });
+});
+
+describe('isDiscardableDraft', () => {
+  beforeEach(() => {
+    allEntries.current = [];
+  });
+
+  test('is true for an entry with a pull request that has never been published', () => {
+    const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+
+    expect(isDiscardableDraft(entry)).toBe(true);
+
+    // The pull request changes a published entry, which deleting it takes off the site
+    allEntries.current = [
+      /** @type {any} */ ({ id: 'p1', locales: { _default: { path: 'content/posts/hello.md' } } }),
+    ];
+
+    expect(isDiscardableDraft(entry)).toBe(false);
+  });
+
+  test('is false for a published entry or no entry', () => {
+    expect(isDiscardableDraft(/** @type {any} */ ({ id: 'p1', locales: {} }))).toBe(false);
+    expect(isDiscardableDraft(undefined)).toBe(false);
   });
 });
 

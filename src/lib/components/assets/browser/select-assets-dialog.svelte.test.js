@@ -26,6 +26,7 @@ import {
   serveMediaFolderAtSiteRoot,
   setAssets,
 } from '$lib/test/config';
+import { waitForToastsToHide } from '$lib/test/toast';
 
 import SelectAssetsDialog from './select-assets-dialog.svelte';
 
@@ -131,6 +132,16 @@ const isDropIndicatorShownOnDragOver = async () => {
 
   return !!document.querySelector('.drop-indicator');
 };
+
+/**
+ * Get the text of the error toast shown, if any.
+ * @returns {string | undefined} Text.
+ */
+const getErrorToastText = () =>
+  document
+    .querySelector('.sui.toast:not([aria-hidden="true"]) .sui.alert.error')
+    ?.textContent?.replace(/\s+/g, ' ')
+    .trim();
 
 /**
  * Wait for the grid to be listed and activated.
@@ -1235,8 +1246,8 @@ describe('SelectAssetsDialog', () => {
       .toHaveAttribute('aria-selected', 'true');
   });
 
-  test('falls back to a stock photo service for pending files without a cloud service', async () => {
-    await renderDialog({
+  test('reports pending files that no location can take, falling back to a stock photo service', async () => {
+    const { props } = await renderDialog({
       assetLibraryFolderMap: { global: { folder: globalAssetFolder.current, enabled: false } },
       enabledCloudServiceEntries: [],
       pendingFiles: [await createMockImageFile({ name: 'pending.png' })],
@@ -1245,6 +1256,96 @@ describe('SelectAssetsDialog', () => {
     await expect
       .element(page.getByRole('dialog').getByRole('option', { name: 'Lorem Picsum' }))
       .toHaveAttribute('aria-selected', 'true');
+    await expect.poll(getErrorToastText).toBe('error Error Upload failed.');
+    expect(props.pendingFiles).toEqual([]);
+    await waitForToastsToHide();
+  });
+
+  test('reports pending files that Cloudinary can’t take, as it only uploads through its widget', async () => {
+    const { props } = await renderDialog({
+      assetLibraryFolderMap: { global: { folder: globalAssetFolder.current, enabled: false } },
+      enabledCloudServiceEntries: [
+        [
+          'cloudinary',
+          createMockCloudService({ serviceId: 'cloudinary', serviceLabel: 'Cloudinary' }),
+        ],
+      ],
+      pendingFiles: [await createMockImageFile({ name: 'pending.png' })],
+    });
+
+    await expect
+      .element(page.getByRole('dialog').getByRole('option', { name: 'Cloudinary' }))
+      .toHaveAttribute('aria-selected', 'true');
+    await expect.poll(getErrorToastText).toBe('error Error Upload failed.');
+    expect(props.pendingFiles).toEqual([]);
+    await waitForToastsToHide();
+  });
+
+  test('takes the files dropped on the field to the cloud service once signed in', async () => {
+    const upload = vi.fn(async (/** @type {File[]} */ files) =>
+      files.map((file) => createMockExternalAsset({ fileName: file.name })),
+    );
+
+    // The field renders the dialog closed, and opens it once files are dropped on the field, so
+    // the location offered first, Lorem Picsum, was picked before there were files to upload
+    const { props } = await renderDialog(
+      {
+        open: false,
+        pendingFiles: [],
+        assetLibraryFolderMap: { global: { folder: globalAssetFolder.current, enabled: false } },
+        draft: { originalEntry: undefined, files: {} },
+      },
+      { authType: 'api_key', apiKeyPattern: /^[a-z]+$/, upload },
+    );
+
+    const pending = await createMockImageFile({ name: 'pending.png' });
+
+    props.pendingFiles = [pending];
+    props.open = true;
+
+    const dialog = page.getByRole('dialog');
+
+    await expect
+      .element(dialog.getByRole('option', { name: 'Test Cloud' }))
+      .toHaveAttribute('aria-selected', 'true');
+
+    // Nothing is uploaded without the credentials, which the service asks for first
+    const input = dialog.getByRole('textbox', { name: /Test Cloud/ });
+
+    await expect.element(input).toBeInTheDocument();
+    await expect.element(dialog.getByRole('button', { name: 'Upload' })).toBeDisabled();
+    await sleep(100);
+    expect(upload).not.toHaveBeenCalled();
+    expect(props.pendingFiles).toEqual([pending]);
+
+    await input.fill('secret');
+    await vi.waitFor(() =>
+      expect(upload).toHaveBeenCalledWith([pending], expect.objectContaining({ apiKey: 'secret' })),
+    );
+    expect(props.pendingFiles).toEqual([]);
+    await expect.element(dialog.getByRole('button', { name: 'Upload' })).toBeEnabled();
+  });
+
+  test('leaves the pending files out once another location is picked', async () => {
+    const pending = await createMockImageFile({ name: 'pending.png' });
+
+    const { props } = await renderDialog(
+      {
+        pendingFiles: [pending],
+        assetLibraryFolderMap: { global: { folder: globalAssetFolder.current, enabled: false } },
+      },
+      { authType: 'api_key', apiKeyPattern: /^[a-z]+$/, upload: vi.fn() },
+    );
+
+    const dialog = page.getByRole('dialog');
+
+    await expect.element(dialog.getByRole('textbox', { name: /Test Cloud/ })).toBeInTheDocument();
+    expect(props.pendingFiles).toEqual([pending]);
+
+    await dialog.getByRole('option', { name: 'Lorem Picsum' }).click();
+    expect(props.pendingFiles).toEqual([]);
+    // They were meant for the cloud service, so no failure is reported
+    expect(getErrorToastText()).toBeUndefined();
   });
 
   test('opens the Cloudinary library, and closes once assets are picked', async () => {

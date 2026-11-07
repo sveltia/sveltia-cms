@@ -20,6 +20,7 @@ import {
   getRepositoryPath,
 } from '$lib/services/backends/git/shared/repository';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 import { encodePathSegments } from '$lib/services/utils/url';
 import {
   getStatusFromLabels,
@@ -30,6 +31,7 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
+ * CommitAuthor,
  * FileChange,
  * RepositoryPath,
  * WorkflowFile,
@@ -83,6 +85,17 @@ export const isSameRepositoryPullRequest = ({ head, base }) =>
   typeof head?.repo_id === 'number' && head.repo_id !== -1 && head.repo_id === base?.repo_id;
 
 /**
+ * Parse the user who opened a pull request, as the REST API returns it.
+ * @param {Record<string, any> | undefined} user User object.
+ * @returns {CommitAuthor | undefined} Author, or `undefined` if the user is unknown.
+ */
+const parseAuthor = (user) => {
+  const { full_name: fullName, login, email, id } = user ?? {};
+
+  return login ? { name: fullName || login, email: email ?? '', id, login } : undefined;
+};
+
+/**
  * Parse a pull request returned by the REST API.
  * @param {Record<string, any>} item Pull request.
  * @returns {WorkflowPullRequest | undefined} Parsed pull request, or `undefined` if the pull
@@ -116,8 +129,6 @@ export const parsePullRequest = (item) => {
     return undefined;
   }
 
-  const { full_name: fullName, login, email, id } = item.user ?? {};
-
   return {
     number: item.number,
     nodeId: String(item.id),
@@ -128,7 +139,7 @@ export const parsePullRequest = (item) => {
     status,
     createdDate: new Date(item.created_at),
     updatedDate: new Date(item.updated_at),
-    author: login ? { name: fullName || login, email: email ?? '', id, login } : undefined,
+    author: parseAuthor(item.user),
     files: [],
   };
 };
@@ -270,6 +281,21 @@ export const decodeFileText = (content) => {
 };
 
 /**
+ * Check whether the given file holds text, which is worth reading again when an instance omits its
+ * content. An entry file always does, whatever its extension: a custom one like `njk` or `svx` has
+ * no MIME type, and TOML’s `application/toml` isn’t counted as text by `isTextFileType()`.
+ * @param {string} path File path.
+ * @returns {boolean} Result.
+ */
+const isTextFile = (path) => {
+  const type = mime.getType(path) ?? '';
+
+  return (
+    isTextFileType(type) || type === 'application/toml' || !!getEntryFoldersByPath(path).length
+  );
+};
+
+/**
  * Fetch the content of a single file changed in the given pull request, and populate the
  * {@link WorkflowFile} object in place.
  * @param {WorkflowPullRequest} pullRequest Pull request the file belongs to.
@@ -308,7 +334,7 @@ export const fetchPullRequestFileContent = async (pullRequest, file) => {
   // An instance omits the content of an oversized blob, and keeping that empty would wipe the file
   // the next time the entry is saved. Only a text file is worth reading again; the media that make
   // up most of the oversized blobs have no text to store anyway
-  if (!content && file.size && isTextFileType(mime.getType(path) ?? '')) {
+  if (!content && file.size && isTextFile(path)) {
     file.text = await fetchRawFile(path, ref);
   }
 };
@@ -492,6 +518,8 @@ export const createPullRequest = async ({ branch, title, status }) => {
     status,
     createdDate: new Date(result.created_at),
     updatedDate: new Date(result.updated_at),
+    // The signed-in user, which is how a later save recognizes the pull request as their own
+    author: parseAuthor(result.user),
     files: [],
   };
 };

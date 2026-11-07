@@ -1,13 +1,5 @@
 import { UNPKG_BASE_URL, version as userVersion } from '$lib/services/app';
-
-/**
- * URL of the `package.json` of the latest published version.
- */
-const PACKAGE_JSON_URL = `${UNPKG_BASE_URL}/package.json`;
-/**
- * URL of the script that loads the latest version, as opposed to one pinned to a version.
- */
-const SCRIPT_URL = `${UNPKG_BASE_URL}/dist/sveltia-cms.js`;
+import { getScriptVersionSpec } from '$lib/services/app/dependencies';
 
 /**
  * How often to check for a new version.
@@ -24,11 +16,15 @@ export const UPDATE_CACHE_TIMEOUT = 10 * 60 * 1000; // 10 min
 
 /**
  * Get the latest published version of the application.
+ * @param {string} [versionSpec] Version range or tag to resolve, e.g. `^1`, as it appears in the
+ * script URL. The latest release if omitted or empty.
  * @returns {Promise<string | undefined>} Version, or `undefined` if it couldn’t be fetched.
  */
-export const getLatestVersion = async () => {
+export const getLatestVersion = async (versionSpec = '') => {
   try {
-    const response = await fetch(PACKAGE_JSON_URL);
+    const response = await fetch(
+      `${UNPKG_BASE_URL}${versionSpec ? `@${versionSpec}` : ''}/package.json`,
+    );
 
     if (!response.ok) {
       return undefined;
@@ -59,20 +55,32 @@ const isNewerVersion = (latestVersion) => {
 
 /**
  * Check whether a new version of the application is available, and whether a reload would pick it
- * up. It would if the script is loaded from the CDN without a version pinned. If it’s pinned in the
- * script tag or installed via npm, a reload won’t update the instance, so a console warning is
- * shown instead.
+ * up. It would if the script, classic or module, is loaded from the CDN without the exact version,
+ * as long as the new version is within the range in the URL, e.g. `^1`: the URL is resolved the way
+ * the CDN would. If it’s pinned in the script tag, a newer release is outside its range or it’s
+ * installed via npm, a reload won’t update the instance, so a console warning is shown instead.
  * @returns {Promise<boolean>} `true` if a reload would update the application.
  */
 export const isUpdateAvailable = async () => {
+  const versionSpec = getScriptVersionSpec();
+
+  if (versionSpec !== undefined) {
+    const resolvedVersion = await getLatestVersion(versionSpec);
+
+    if (resolvedVersion && isNewerVersion(resolvedVersion)) {
+      return true;
+    }
+
+    // Without a version, the URL already serves the latest release
+    if (!versionSpec) {
+      return false;
+    }
+  }
+
   const latestVersion = await getLatestVersion();
 
   if (!latestVersion || !isNewerVersion(latestVersion)) {
     return false;
-  }
-
-  if (document.querySelector(`script[src="${SCRIPT_URL}"]`)) {
-    return true;
   }
 
   // eslint-disable-next-line no-console

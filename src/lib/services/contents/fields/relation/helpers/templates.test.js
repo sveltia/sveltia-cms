@@ -60,6 +60,38 @@ describe('Test prepareFieldTemplates()', () => {
     expect(result._valueField).toBe('{{slug}}');
   });
 
+  test('should show the identifier field with the default value field, omitted or not', () => {
+    [undefined, '', '{{slug}}'].forEach((valueField) => {
+      const result = prepareFieldTemplates(
+        { widget: 'relation', name: 'author', collection: 'authors', value_field: valueField },
+        'title',
+      );
+
+      expect(result._valueField).toBe('{{slug}}');
+      expect(result._displayField).toBe('{{title}}');
+      expect(result._searchField).toBe('{{title}}');
+    });
+
+    // A field named `slug` or a template with the entry slug is shown as is
+    expect(
+      prepareFieldTemplates(
+        { widget: 'relation', name: 'author', collection: 'authors', value_field: 'slug' },
+        'title',
+      )._displayField,
+    ).toBe('{{fields.slug}}');
+    expect(
+      prepareFieldTemplates(
+        {
+          widget: 'relation',
+          name: 'author',
+          collection: 'authors',
+          value_field: '{{locale}}/{{slug}}',
+        },
+        'title',
+      )._displayField,
+    ).toBe('{{locale}}/{{slug}}');
+  });
+
   test('should prepare templates with display_fields', () => {
     const result = prepareFieldTemplates(
       {

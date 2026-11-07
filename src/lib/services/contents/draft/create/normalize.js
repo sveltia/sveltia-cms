@@ -73,6 +73,16 @@ import { isFieldMirrored } from '$lib/services/contents/i18n/fields';
  * types are up to the developer.
  */
 const OPAQUE_FIELD_TYPES = ['code', 'hidden', 'keyvalue'];
+/**
+ * Values read as `true` in a Boolean field, in lowercase. Besides `true`, a YAML 1.1 parser, which
+ * tools like Jekyll still use, reads `yes`, `on` and `y` as `true`, while the YAML 1.2 parser gives
+ * them as strings. A number is converted to a string first, so `1` is included too.
+ */
+const TRUTHY_BOOLEAN_STRINGS = ['true', 'yes', 'on', 'y', '1'];
+/**
+ * Values read as `false` in a Boolean field, in lowercase. See {@link TRUTHY_BOOLEAN_STRINGS}.
+ */
+const FALSY_BOOLEAN_STRINGS = ['false', 'no', 'off', 'n', '0'];
 
 /**
  * Drop a value stored at a key path that also has children. `unflatten()` lets such a value win and
@@ -133,13 +143,14 @@ const reconcileScalarValue = ({ field, fieldType, keyPath, content, index }) => 
 
   if (fieldType === 'boolean') {
     if (typeof value !== 'boolean') {
-      const normalized = typeof value === 'string' ? value.trim().toLowerCase() : value;
+      const normalized = typeof value === 'string' ? value.trim().toLowerCase() : String(value);
+      const isTrue = TRUTHY_BOOLEAN_STRINGS.includes(normalized);
 
-      if (normalized !== 'true' && normalized !== 'false') {
+      if (!isTrue && !FALSY_BOOLEAN_STRINGS.includes(normalized)) {
         return false;
       }
 
-      content[keyPath] = normalized === 'true';
+      content[keyPath] = isTrue;
     }
 
     return true;

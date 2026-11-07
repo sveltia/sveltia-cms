@@ -14,12 +14,14 @@ import { isDuplicateIfEmptyField } from '$lib/services/contents/i18n/duplicate-i
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { isNumeric } from '$lib/services/utils/number';
 import { escapeHTML } from '$lib/services/utils/string';
 
 /**
  * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
  * @import {
  * EntryDraft,
+ * FlattenedEntryContent,
  * GetFieldArgs,
  * InternalLocaleCode,
  * LocaleContentMap,
@@ -139,6 +141,82 @@ const decodeHTMLEntities = (text) =>
 
     return codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : ref;
   });
+
+/**
+ * @typedef {object} ListItemState
+ * @property {boolean} exists Whether the item exists.
+ * @property {string | undefined} id ID given to the item once it’s added, moved or removed: its
+ * `__sc_item_id` property.
+ * @property {string | undefined} originalKeyPath Key path the item had before the items of its list
+ * were first shifted: its `__sc_item_original_key_path` property.
+ */
+
+/**
+ * Get the state of each list item the given key path is in, from the outermost one, so that it can
+ * be told later whether the key path still points to the same items.
+ * @param {FlattenedEntryContent} content Content of a locale.
+ * @param {FieldKeyPath} keyPath Key path of a value, e.g. `faq.1.question`.
+ * @returns {ListItemState[]} Item states. Empty if the key path is not in a list.
+ */
+export const getListItemStates = (content, keyPath) => {
+  const segments = keyPath.split('.');
+
+  return segments.flatMap((segment, index) => {
+    if (index === 0 || !isNumeric(segment)) {
+      return [];
+    }
+
+    const itemKeyPath = segments.slice(0, index + 1).join('.');
+
+    return [
+      {
+        exists:
+          keyPath in content ||
+          itemKeyPath in content ||
+          Object.keys(content).some((_keyPath) => _keyPath.startsWith(`${itemKeyPath}.`)),
+        id: content[`${itemKeyPath}.__sc_item_id`],
+        originalKeyPath: content[`${itemKeyPath}.__sc_item_original_key_path`],
+      },
+    ];
+  });
+};
+
+/**
+ * Check if the list items a key path is in are still the same ones: none of them has been removed,
+ * or replaced with another item by a removal, insertion or move. An item is tagged with an
+ * ID and its original key path just before its list is first changed by the user, so an item
+ * untagged before may have been tagged since: it’s still the same item if its original key path is
+ * the one it had then. A new item gets an ID but no original key path.
+ * @param {ListItemState[]} before Item states taken before, with {@link getListItemStates}.
+ * @param {ListItemState[]} after Item states taken now, for the same key path.
+ * @param {FieldKeyPath} keyPath Key path of the value.
+ * @returns {boolean} Result.
+ */
+export const isSameListItems = (before, after, keyPath) => {
+  const segments = keyPath.split('.');
+
+  const itemKeyPaths = segments
+    .map((segment, index) => segments.slice(0, index + 1).join('.'))
+    .filter((_keyPath, index) => index > 0 && isNumeric(segments[index]));
+
+  return before.every((state, index) => {
+    const { exists, id, originalKeyPath } = after[index];
+    const itemKeyPath = itemKeyPaths[index];
+
+    if (exists !== state.exists) {
+      return false;
+    }
+
+    if (state.id !== undefined) {
+      return id === state.id;
+    }
+
+    return (
+      (id === undefined || originalKeyPath !== undefined) &&
+      (originalKeyPath ?? itemKeyPath) === (state.originalKeyPath ?? itemKeyPath)
+    );
+  });
+};
 
 /**
  * Regular expression matching the key path of a list item, capturing the key path of the list.
@@ -306,6 +384,16 @@ export const translateFields = async ({
     ]),
   );
 
+  // The list items the fields belong to, as they were when the fields were picked, so that a value
+  // isn’t written into an item that the user has removed or moved while the request is in flight,
+  // which would bring back a removed item or overwrite another one
+  const listItemStates = Object.fromEntries(
+    Object.keys(copingFieldMap).map((_keyPath) => [
+      _keyPath,
+      getListItemStates(currentValues[targetLanguage], _keyPath),
+    ]),
+  );
+
   let apiKey = prefs.apiKeys?.[serviceId];
 
   if (!apiKey) {
@@ -358,7 +446,14 @@ export const translateFields = async ({
     Object.entries(copingFieldMap).forEach(([_keyPath, { format }], index) => {
       const value = translatedValues[index];
 
-      if (!keyPath && currentValues[targetLanguage][_keyPath] !== targetValues[_keyPath]) {
+      if (
+        (!keyPath && currentValues[targetLanguage][_keyPath] !== targetValues[_keyPath]) ||
+        !isSameListItems(
+          listItemStates[_keyPath],
+          getListItemStates(currentValues[targetLanguage], _keyPath),
+          _keyPath,
+        )
+      ) {
         return;
       }
 

@@ -16,16 +16,33 @@
   // eslint-disable-next-line svelte/prefer-writable-derived
   let inputValue = $state('');
 
+  /**
+   * Whether the entered key matches the expected pattern, which is required to confirm the dialog.
+   */
+  const isKeyValid = $derived(!!apiKeyPattern?.test(inputValue.trim()));
+
   $effect(() => {
     // Update the input value when a different translator service is selected
     inputValue = prefs.apiKeys?.[serviceId] ?? '';
   });
 
+  /**
+   * Settle the promise the translation is waiting for, once. The dialog closes in any case: with a
+   * key saved, or cancelled or dismissed, which leaves the translation undone.
+   * @param {string} [apiKey] Saved API key.
+   */
+  const settle = (apiKey) => {
+    const { resolve } = translatorApiKeyDialogState.current;
+
+    translatorApiKeyDialogState.current.show = false;
+    translatorApiKeyDialogState.current.resolve = undefined;
+    resolve?.(apiKey);
+  };
+
   $effect(() => {
     if (!showContentOverlay.current && translatorApiKeyDialogState.current.show) {
       // Close the dialog when the Content Editor is closed
-      translatorApiKeyDialogState.current.show = false;
-      translatorApiKeyDialogState.current.resolve?.();
+      settle();
     }
   });
 
@@ -38,8 +55,7 @@
     const apiKey = saveApiKey(serviceId, inputValue, apiKeyPattern);
 
     if (apiKey !== undefined) {
-      translatorApiKeyDialogState.current.show = false;
-      translatorApiKeyDialogState.current.resolve?.(apiKey);
+      settle(apiKey);
     }
   };
 </script>
@@ -60,9 +76,14 @@
       saveKey();
     }
   }}
+  okDisabled={!isKeyValid}
   onOk={() => saveKey()}
-  onCancel={() => {
-    translatorApiKeyDialogState.current.resolve?.();
+  onClose={() => {
+    // Settle the translation when the dialog is closed without a key being saved, whether it’s
+    // cancelled or dismissed. An OK button click has already saved the key, as the button is
+    // disabled for an invalid one, and settled it. The dialog doesn’t call this when it has been
+    // opened again before it finished closing
+    settle();
   }}
 >
   <TranslatorSelector />

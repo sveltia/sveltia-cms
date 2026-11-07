@@ -1703,6 +1703,80 @@ describe('draft/save/changes', () => {
       expect(vi.mocked(replaceBlobURL)).toHaveBeenCalled();
     });
 
+    it('should store a file in a mirrored field once, in the default locale’s folder', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { replaceBlobURL } = await import('$lib/services/contents/draft/save/assets');
+      const { getField } = await import('$lib/services/contents/entry/fields');
+      const { getBlobRegex } = await import('@sveltia/utils/file');
+
+      /** @type {Record<string, any>} */
+      const fields = {
+        cover: { name: 'cover', widget: 'image', i18n: 'duplicate' },
+        photo: { name: 'photo', widget: 'image', i18n: 'sync' },
+        body: { name: 'body', widget: 'markdown', i18n: true },
+      };
+
+      vi.mocked(createEntryPath).mockImplementation(({ locale }) => `posts/${locale}/hello.md`);
+      vi.mocked(getField).mockImplementation(({ keyPath }) => fields[keyPath]);
+      vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+      vi.mocked(replaceBlobURL).mockResolvedValue(undefined);
+
+      const cover = 'blob:http://localhost:5000/cover';
+      const photo = 'blob:http://localhost:5000/photo';
+      const inline = 'blob:http://localhost:5000/inline';
+      const file = { file: { name: 'image.jpg', size: 1024 }, folder: { entryRelative: true } };
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            defaultLocale: 'en',
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true, de: true },
+        currentValues: {
+          en: { cover, photo, body: 'Hello' },
+          de: { cover, photo, body: inline },
+        },
+        files: { [cover]: file, [photo]: file, [inline]: file },
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'hello',
+        canonicalSlug: undefined,
+        localizedSlugs: { en: 'hello', de: 'hallo' },
+      };
+
+      await createBaseSavingEntryData({ draft, slugs });
+
+      /**
+       * Get the locales and slugs a field value in the given locale is resolved against.
+       * @param {string} locale Locale of the content.
+       * @param {string} keyPath Field key path.
+       * @returns {any[]} Locale and slug of each call.
+       */
+      const getTargets = (locale, keyPath) =>
+        vi
+          .mocked(replaceBlobURL)
+          .mock.calls.map(([args]) => args)
+          .filter((args) => args.keyPath === keyPath)
+          // The German content is told apart by its body, a copy being normalized
+          .filter((args) => (args.content.body === inline) === (locale === 'de'))
+          .map((args) => [args.locale, args.slug]);
+
+      // A `duplicate` or `sync` field’s file goes to the default locale’s folder from every locale
+      expect(getTargets('en', 'cover')).toEqual([['en', 'hello']]);
+      expect(getTargets('de', 'cover')).toEqual([['en', undefined]]);
+      expect(getTargets('de', 'photo')).toEqual([['en', undefined]]);
+      // A file in a translatable field goes to the folder of its own locale
+      expect(getTargets('de', 'body')).toEqual([['de', 'hallo']]);
+    });
+
     it('should fail with a clear error when a file has no folder to be saved to', async () => {
       const { createEntryPath } = await import('./entry-path');
       const { replaceBlobURL } = await import('$lib/services/contents/draft/save/assets');

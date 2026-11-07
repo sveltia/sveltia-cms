@@ -96,6 +96,8 @@ export const getSaveFailure = (ex) => {
  * @param {boolean} args.hasPullRequest Whether the entry has a pull request.
  * @param {boolean} args.workflowEnabled Whether the collection uses Editorial Workflow.
  * @param {boolean} args.publishedVersionExists Whether the entry has a published version.
+ * @param {boolean} args.discardsDraft Whether deleting the entry just throws the draft away, as it
+ * was never published. See `isDiscardableDraft()`.
  * @param {boolean} args.pendingDeletion Whether the entry is awaiting deletion.
  * @param {boolean} args.readonly Whether the entry is read-only.
  * @param {boolean} args.openAuthoring Whether the user is an Open Authoring contributor.
@@ -112,6 +114,7 @@ export const getEntryToolbarState = ({
   hasPullRequest,
   workflowEnabled,
   publishedVersionExists,
+  discardsDraft,
   pendingDeletion,
   readonly,
   openAuthoring,
@@ -123,9 +126,6 @@ export const getEntryToolbarState = ({
   // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves
   // the published version untouched, so it stays available even when deletion is disabled
   const canDelete = !(collection?._type === 'entry' && collection.delete === false);
-  // Deleting an entry that was never published just throws the draft away; anything else takes an
-  // entry off the site
-  const discardsDraft = hasPullRequest && !publishedVersionExists;
   // Taking a published entry off the site is a maintainer’s call. An Open Authoring contributor can
   // discard their own draft, but not propose the removal of something already live
   const canDeleteEntry = canDelete && (discardsDraft || !openAuthoring);

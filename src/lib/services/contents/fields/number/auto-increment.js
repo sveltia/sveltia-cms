@@ -1,6 +1,7 @@
 import { getMaxEntryNumber } from '$lib/services/contents/draft/save/sort-order';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isPerEntryField } from '$lib/services/contents/entry/per-entry';
+import { isStringOutput } from '$lib/services/contents/fields/number/helpers';
 import { isValueEmpty } from '$lib/services/utils/object';
 
 /**
@@ -30,30 +31,31 @@ export const isAutoIncrementField = ({ fieldConfig, ...args }) =>
 /**
  * Get the number to assign to an auto-increment Number field: the integer after the highest one
  * any entry of the collection has, or the field’s `min` option, if it’s higher, so the numbering
- * can start from e.g. `1000`. Without either, the numbering starts from `1`.
+ * can start from e.g. `1000`, or `0`. The first entry is numbered `min`, or `1` without it.
  * @param {object} args Arguments.
  * @param {NumberField} args.fieldConfig Field configuration.
  * @param {InternalCollection} args.collection Entry collection.
  * @param {FieldKeyPath} args.keyPath Field key path.
  * @param {number} args.offset Number of entries already given a number that aren’t in the
  * collection yet.
- * @returns {number | string} Number, as a string if the field’s `value_type` is a string type.
+ * @returns {number | string} Number, as a string if the field stores its value as a string, like
+ * with `value_type: int/string` or a custom type.
  */
 const getNextNumber = ({ fieldConfig, collection, keyPath, offset }) => {
-  const { value_type: valueType = 'int', min } = fieldConfig;
+  const { min } = fieldConfig;
 
-  const max = Math.floor(
-    getMaxEntryNumber({
-      collectionName: collection.name,
-      keyPath,
-      locale: collection._i18n.defaultLocale,
-    }),
-  );
+  const max = getMaxEntryNumber({
+    collectionName: collection.name,
+    keyPath,
+    locale: collection._i18n.defaultLocale,
+  });
 
   const start = typeof min === 'number' && Number.isFinite(min) ? Math.ceil(min) : 1;
-  const next = Math.max(max + 1, start) + offset;
+  // The first entry takes the start number, which can be `0` or negative with the `min` option.
+  // Otherwise the number follows the highest one, but never goes below the start
+  const next = (max === undefined ? start : Math.max(Math.floor(max) + 1, start)) + offset;
 
-  return valueType.endsWith('/string') ? String(next) : next;
+  return isStringOutput(fieldConfig) ? String(next) : next;
 };
 
 /**

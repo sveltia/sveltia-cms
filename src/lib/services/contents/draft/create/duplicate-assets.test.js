@@ -42,7 +42,7 @@ vi.mock('$lib/services/assets/info', () => ({
   createDisplayBlobURL: vi.fn(async (/** @type {Blob} */ blob) => URL.createObjectURL(blob)),
 }));
 
-vi.mock('$lib/services/contents/draft/save/assets', () => ({
+vi.mock('$lib/services/assets/entry-folder', () => ({
   getOwnedEntryFolderPath: mockGetOwnedEntryFolderPath,
 }));
 

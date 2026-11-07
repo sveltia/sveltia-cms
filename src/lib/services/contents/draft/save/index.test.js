@@ -19,6 +19,7 @@ import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/as
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { compareEntries, detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
+import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
@@ -79,6 +80,7 @@ vi.mock('$lib/services/contents/draft/save/changes', async (importOriginal) => {
 });
 vi.mock('$lib/services/contents/draft/save/conflict');
 vi.mock('$lib/services/contents/draft/slugs');
+vi.mock('$lib/services/contents/draft/update/compute');
 vi.mock('$lib/services/contents/draft/validate');
 vi.mock('$lib/services/contents/editor/fields');
 vi.mock('$lib/services/contents/editor/pending');
@@ -418,6 +420,37 @@ describe('draft/save/index', () => {
 
       expect(assignAutoIncrementValues).toHaveBeenCalledWith(mockDraft, 1);
       expect(order).toEqual(['autoIncrement', 'slugs']);
+    });
+
+    it('should resolve the Compute fields again after assigning the save-time values', async () => {
+      const order = [];
+
+      vi.mocked(assignAutoIncrementValues).mockImplementation(() => {
+        order.push('autoIncrement');
+      });
+      vi.mocked(assignAutoNowValues).mockImplementation(() => {
+        order.push('autoNow');
+      });
+      vi.mocked(updateComputedValues).mockImplementation(() => {
+        order.push('compute');
+
+        return true;
+      });
+
+      const createData = vi.mocked(createSavingEntryData).getMockImplementation();
+
+      vi.mocked(createSavingEntryData).mockImplementation((...args) => {
+        order.push('changes');
+
+        return createData(...args);
+      });
+
+      await saveEntry();
+
+      // A Compute field referring to an auto-increment number or an `auto_now` date is saved with
+      // the value just assigned rather than the one from before
+      expect(updateComputedValues).toHaveBeenCalledWith(mockDraft);
+      expect(order).toEqual(['autoIncrement', 'autoNow', 'compute', 'changes']);
     });
 
     it('should not set the auto-now DateTime fields when refusing to save over a change', async () => {

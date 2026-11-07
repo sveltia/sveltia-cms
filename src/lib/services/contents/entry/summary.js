@@ -38,7 +38,13 @@ import { getCommitAuthorName } from '$lib/services/utils/commit-author';
  * InternalCollectionFile,
  * InternalLocaleCode,
  * } from '$lib/types/private';
- * @import { RawEntryContent } from '$lib/types/public';
+ * @import {
+ * Field,
+ * ListFieldWithSubField,
+ * ListFieldWithSubFields,
+ * ListFieldWithTypes,
+ * RawEntryContent,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -251,6 +257,30 @@ export const replaceSub = (tag, context) => {
 let relationLabelResolved = false;
 
 /**
+ * Check whether the display value of the given field is resolved from other entries: a Relation
+ * field shows a label taken from the referenced entry, and so does each item of a List field with a
+ * Relation field as its single subfield, as {@link getFieldDisplayValue} resolves those items like
+ * the subfield itself.
+ * @param {Field | undefined} field Field configuration.
+ * @returns {boolean} Result.
+ */
+export const isDisplayValueFromOtherEntries = (field) => {
+  if (field?.widget === 'relation') {
+    return true;
+  }
+
+  if (field?.widget === 'list') {
+    const { field: subField } = /** @type {ListFieldWithSubField} */ (field);
+    const { fields } = /** @type {ListFieldWithSubFields} */ (field);
+    const { types } = /** @type {ListFieldWithTypes} */ (field);
+
+    return !fields && !types && isDisplayValueFromOtherEntries(subField);
+  }
+
+  return false;
+};
+
+/**
  * Replacer.
  * @param {string} placeholder Field name or one of special tags. May contain transformations.
  * @param {ReplaceContext} context Context.
@@ -286,7 +316,7 @@ export const replace = (placeholder, context) => {
       value = Object.hasOwn(valueMap, keyPath) ? valueMap[keyPath] : undefined;
     } else {
       // A Relation field is displayed with a label taken from the referenced entry
-      if (getField(getFieldArgs)?.widget === 'relation') {
+      if (isDisplayValueFromOtherEntries(getField(getFieldArgs))) {
         relationLabelResolved = true;
       }
 

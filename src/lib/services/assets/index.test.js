@@ -1475,6 +1475,82 @@ describe('assets/index', () => {
       expect(resolvePath).toHaveBeenCalledWith('content/posts/images/photo.jpg');
     });
 
+    it('should resolve a path against the folder named after an entry in subfolders', async () => {
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'content/posts/2025/06/my-post/cover.png',
+        name: 'cover.png',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: createMockAssetFolder({ collectionName: 'posts', internalPath: 'content/posts' }),
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'my-post',
+        slug: 'my-post',
+        subPath: '2025/06/my-post',
+        locales: {
+          en: {
+            path: 'content/posts/2025/06/my-post.md',
+            sha: 'sha123',
+            slug: 'my-post',
+            content: { title: 'My Post' },
+          },
+        },
+      });
+
+      // The `path` option puts the entry in subfolders, so the entry’s relative assets are saved to
+      // a folder named after it, next to the entry file
+      const mockCollection = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        media_folder: '',
+        public_folder: '',
+        _file: { basePath: 'content/posts', subPath: '{{year}}/{{month}}/{{slug}}' },
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      vi.mocked(createPath).mockReturnValue('content/posts/2025/06/my-post/cover.png');
+      vi.mocked(resolvePath).mockReturnValue('content/posts/2025/06/my-post/cover.png');
+      allAssets.current = [mockAsset];
+
+      const result = getAssetByRelativePathAndCollection({
+        path: 'cover.png',
+        entry: mockEntry,
+        collection: mockCollection,
+      });
+
+      expect(result).toEqual(mockAsset);
+      // Not next to the entry file in `content/posts/2025/06`, where the saved asset isn’t
+      expect(createPath).toHaveBeenCalledWith(['content/posts/2025/06/my-post', '', 'cover.png']);
+      expect(createPath).not.toHaveBeenCalledWith(['content/posts/2025/06', '', 'cover.png']);
+
+      // An asset stored next to the entry file, as before the entry had a folder of its own, is
+      // still found
+      const legacyAsset = { ...mockAsset, path: 'content/posts/2025/06/old.png', name: 'old.png' };
+
+      allAssets.current = [mockAsset, legacyAsset];
+      vi.mocked(createPath).mockImplementation((segments) => segments.filter(Boolean).join('/'));
+      vi.mocked(resolvePath).mockImplementation((value) => value);
+
+      expect(
+        getAssetByRelativePathAndCollection({
+          path: 'old.png',
+          entry: mockEntry,
+          collection: mockCollection,
+        }),
+      ).toEqual(legacyAsset);
+      expect(
+        getAssetByRelativePathAndCollection({
+          path: 'missing.png',
+          entry: mockEntry,
+          collection: mockCollection,
+        }),
+      ).toBeUndefined();
+    });
+
     it('should pass componentName to getAssetFolder when resolving a field-level asset', async () => {
       const { resolvePath, createPath } = await import('$lib/services/utils/file');
       const { getAssetFolder } = await import('$lib/services/assets/folders');
@@ -2909,6 +2985,17 @@ describe('assets/index', () => {
       ).toBeUndefined();
     });
 
+    it('should fall back to the default locale’s copy of a file only that locale has', () => {
+      const enOnlyPhoto = createAsset('content/posts/en/hello/cover.jpg');
+
+      allAssets.current = [enPhoto, frPhoto, frOnlyPhoto, enOnlyPhoto];
+
+      // A file in a duplicated or synced field is stored once, beside the default locale’s entry
+      expect(
+        getAssetByPath({ value: 'cover.jpg', entry, collectionName: 'posts', locale: 'fr' }),
+      ).toBe(enOnlyPhoto);
+    });
+
     it('should look beside the default locale’s entry file if the entry lacks the locale', () => {
       expect(
         getAssetByPath({ value: 'photo.jpg', entry, collectionName: 'posts', locale: 'de' }),
@@ -3255,6 +3342,7 @@ describe('assets/index', () => {
       const mockCollection = /** @type {any} */ ({
         name: 'posts',
         _type: 'entry',
+        _file: { basePath: 'content/posts' },
         _i18n: {
           defaultLocale: 'en',
           i18nEnabled: true,
@@ -3311,6 +3399,7 @@ describe('assets/index', () => {
       const mockCollection = /** @type {any} */ ({
         name: 'posts',
         _type: 'entry',
+        _file: { basePath: 'content/posts' },
         _i18n: {
           defaultLocale: 'en',
           i18nEnabled: true,
@@ -3367,6 +3456,7 @@ describe('assets/index', () => {
       const mockCollection = /** @type {any} */ ({
         name: 'posts',
         _type: 'entry',
+        _file: { basePath: 'content/posts' },
         _i18n: {
           defaultLocale: 'en',
           i18nEnabled: true,

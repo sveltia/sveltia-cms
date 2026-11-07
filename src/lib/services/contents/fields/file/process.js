@@ -1,13 +1,13 @@
 import equal from 'fast-deep-equal';
 import { sanitize } from 'isomorphic-dompurify';
 
+import { getEntryAssetFolderPath } from '$lib/services/assets/entry-folder';
 import { isSameFileName } from '$lib/services/assets/file-name';
 import { createDisplayBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { createAssetNameTemplate, getPendingFileName } from '$lib/services/assets/name';
 import { processFile } from '$lib/services/assets/process';
 import { allAssets } from '$lib/services/assets/state';
-import { getEntryAssetFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { isAcceptedFile } from '$lib/services/integrations/media-libraries/default';
 import { createPath, getGitHash } from '$lib/services/utils/file';

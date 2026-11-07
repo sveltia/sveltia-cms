@@ -849,6 +849,45 @@ describe('auth service', () => {
       expect(auth.signingIn).toBe(false);
     });
 
+    it('should not send a token cached for another backend to the configured one', async () => {
+      // Left by a session from when the site used GitLab, before it moved to GitHub
+      mockLocalStorage.get.mockImplementation(async (key) =>
+        key === 'sveltia-cms.user'
+          ? { backendName: 'gitlab', token: 'gitlab-token', refreshToken: 'gitlab-refresh' }
+          : null,
+      );
+      mockBackendStore.current = mockBackend;
+      mockCmsConfigStore.current = mockCmsConfig;
+      mockUser.account = undefined;
+
+      await authModule.signInAutomatically();
+
+      expect(mockBackendName.current).toBe('github');
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+      expect(mockBackend.fetchFiles).not.toHaveBeenCalled();
+      // The cache is cleared, so the sign-in page is shown
+      expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
+      expect(mockLocalStorage.delete).toHaveBeenCalledWith('decap-cms-user');
+      expect(mockLocalStorage.delete).toHaveBeenCalledWith('netlify-cms-user');
+      expect(mockUser.account).toBeUndefined();
+      expect(auth.signingIn).toBe(false);
+      expect(auth.unauthenticated).toBe(true);
+    });
+
+    it('should not send a token Decap CMS cached for another backend to the configured one', async () => {
+      mockLocalStorage.get.mockImplementation(async (key) =>
+        key === 'decap-cms-user' ? { backendName: 'git-gateway', token: 'gateway-token' } : null,
+      );
+      mockBackendStore.current = mockBackend;
+      mockCmsConfigStore.current = mockCmsConfig;
+
+      await authModule.signInAutomatically();
+
+      expect(mockBackend.signIn).not.toHaveBeenCalled();
+      expect(mockLocalStorage.delete).toHaveBeenCalledWith('decap-cms-user');
+      expect(auth.unauthenticated).toBe(true);
+    });
+
     it('should sign in with cached user data and set signingIn state', async () => {
       const cachedUser = {
         token: 'test-token',

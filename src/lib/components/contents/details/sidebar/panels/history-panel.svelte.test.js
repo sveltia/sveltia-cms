@@ -157,4 +157,58 @@ describe('HistoryPanel', () => {
     await renderPanel();
     await expect.element(page.getByText('Failed to load history.')).toBeInTheDocument();
   });
+
+  test('reloads the history once the draft is replaced, e.g. after a save', async () => {
+    const first = createMockEntry({ slug: 'first' });
+    const second = createMockEntry({ slug: 'second' });
+    /** @type {((value: any) => void)[]} */
+    const resolvers = [];
+
+    vi.mocked(fetchEntryHistory).mockImplementation(
+      (target) =>
+        new Promise((resolve) => {
+          resolvers.push(() =>
+            resolve({
+              commits: [
+                {
+                  sha: target.slug,
+                  message: '',
+                  authorName: `Author of ${target.slug}`,
+                  date: new Date('2024-01-15T10:00:00Z'),
+                },
+              ],
+              loading: false,
+              error: false,
+            }),
+          );
+        }),
+    );
+
+    const { entryDraft } = await renderWithDraft(HistoryPanel, {
+      draft: createMockDraft({ draft: { isNew: false, originalEntry: first } }),
+    });
+
+    const panel = page.getByRole('group', { name: 'History' });
+
+    await expect.poll(() => resolvers.length).toBe(1);
+
+    // Saving without closing the editor resets the draft to the saved entry while the panel stays
+    // mounted, before the first history has even arrived
+    entryDraft.current = createMockDraft({ draft: { isNew: false, originalEntry: second } });
+
+    await expect.poll(() => resolvers.length).toBe(2);
+    expect(fetchEntryHistory).toHaveBeenLastCalledWith(second);
+
+    // The stale result for the previous entry is discarded
+    resolvers[0](undefined);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    await expect.element(panel.getByText('Loading…')).toBeInTheDocument();
+    expect(panel.getByText('Author of first').query()).toBeNull();
+
+    resolvers[1](undefined);
+    await expect.element(panel.getByText('Author of second')).toBeInTheDocument();
+    expect(panel.getByText('Author of first').query()).toBeNull();
+  });
 });

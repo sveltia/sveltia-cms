@@ -81,6 +81,23 @@ describe('checkSlugOptions', () => {
         collectors,
       });
     });
+
+    test('ignores a slash in a transformation argument, which never ends up in the slug', () => {
+      check({ slug: "{{title | default('N/A')}}-{{date | date('DD/MM/YYYY')}}" });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('reports a slash in the literal text next to a tag with a transformation', () => {
+      const slug = "{{date | date('YYYY')}}/{{title}}";
+      const context = check({ slug });
+
+      expect(addMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'invalid_slug_slash',
+        values: { slug },
+        context,
+        collectors,
+      });
+    });
   });
 
   describe('pattern', () => {

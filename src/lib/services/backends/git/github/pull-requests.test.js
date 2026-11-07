@@ -4,9 +4,11 @@ import { fetchBlobText } from '$lib/services/backends/git/github/files';
 import {
   createPullRequest,
   deleteBranch,
+  draftUnsupportedRepositories,
   fetchBranchHead,
   fetchPullRequestFileList,
   fetchPullRequestFiles,
+  isDraftUnsupportedError,
   parseFileNodes,
   updateDraftState,
   updateLabels,
@@ -22,6 +24,17 @@ vi.mock('$lib/services/backends/git/github/repository', () => ({
 }));
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
+
+/**
+ * Create the error GitHub answers a draft pull request with in a repository that doesn’t support
+ * drafts, the way `fetchAPI` and `fetchGraphQL` throw it.
+ * @param {number} [status] HTTP status: `422` from the REST API, `200` from the GraphQL API.
+ * @returns {Error} Error.
+ */
+const createDraftUnsupportedError = (status = 422) =>
+  new Error('Server responded with an error', {
+    cause: { status, message: 'Draft pull requests are not supported in this repository.' },
+  });
 
 /**
  * Stub the state read across the workflow service: the site configuration, and the Open Authoring
@@ -41,6 +54,7 @@ describe('GitHub pull request helpers', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockStores();
+    draftUnsupportedRepositories.clear();
     vi.mocked(fetchAPI).mockResolvedValue({});
     vi.mocked(fetchGraphQL).mockResolvedValue({});
   });
@@ -400,6 +414,49 @@ describe('GitHub pull request helpers', () => {
         { input: { pullRequestId: 'PR_1' } },
       );
     });
+
+    test('leaves the draft state alone in a repository without draft pull requests', async () => {
+      vi.mocked(fetchGraphQL).mockRejectedValue(createDraftUnsupportedError(200));
+
+      // The status label records the stage, so the refusal doesn’t fail the status change
+      await expect(
+        updateDraftState(/** @type {any} */ ({ nodeId: 'PR_1' }), true),
+      ).resolves.toBeUndefined();
+
+      // The repository is remembered, so the next change doesn’t ask again
+      await updateDraftState(/** @type {any} */ ({ nodeId: 'PR_1' }), false);
+
+      expect(fetchGraphQL).toHaveBeenCalledOnce();
+    });
+
+    test('passes any other error on', async () => {
+      const error = new Error('Server responded with an error', {
+        cause: { status: 200, message: 'Could not resolve to a node with the global id' },
+      });
+
+      vi.mocked(fetchGraphQL).mockRejectedValue(error);
+
+      await expect(updateDraftState(/** @type {any} */ ({ nodeId: 'PR_1' }), true)).rejects.toBe(
+        error,
+      );
+      expect(draftUnsupportedRepositories.size).toBe(0);
+    });
+  });
+
+  describe('isDraftUnsupportedError', () => {
+    test.each([
+      [createDraftUnsupportedError(422), true],
+      [createDraftUnsupportedError(200), true],
+      // A refusal for another reason
+      [new Error('', { cause: { status: 422, message: 'No commits between main and x' } }), false],
+      // A message about drafts with an unrelated status
+      [createDraftUnsupportedError(403), false],
+      [new Error('', { cause: { status: 422 } }), false],
+      [new Error('Network error'), false],
+      [undefined, false],
+    ])('%#', (error, expected) => {
+      expect(isDraftUnsupportedError(error)).toBe(expected);
+    });
   });
 
   describe('createPullRequest', () => {
@@ -449,6 +506,78 @@ describe('GitHub pull request helpers', () => {
         }),
       );
     });
+
+    test('records the user who opened the pull request as its author', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({ number: 5, user: { login: 'alice', id: 7 } })
+        .mockResolvedValueOnce({});
+
+      const result = await createPullRequest({
+        branch: 'cms/posts/hello',
+        title: 'Create Post “hello”',
+        status: 'draft',
+      });
+
+      // The same author a listed pull request has, so a later save recognizes it as the user’s own
+      expect(result.author).toEqual({ name: 'alice', email: '', id: 7, login: 'alice' });
+    });
+
+    test('opens a regular pull request in a repository without draft pull requests', async () => {
+      vi.mocked(fetchAPI).mockImplementation(async (path, { body } = {}) => {
+        if (path === '/repos/owner/repo/pulls' && /** @type {any} */ (body).draft) {
+          throw createDraftUnsupportedError();
+        }
+
+        return { number: 5 };
+      });
+
+      const result = await createPullRequest({
+        branch: 'cms/posts/hello',
+        title: 'Create Post “hello”',
+        status: 'draft',
+      });
+
+      expect(vi.mocked(fetchAPI).mock.calls.map(([path, opts]) => [path, opts?.body])).toEqual([
+        ['/repos/owner/repo/pulls', expect.objectContaining({ draft: true })],
+        ['/repos/owner/repo/pulls', expect.objectContaining({ draft: false })],
+        // The label still records that the entry is a draft
+        ['/repos/owner/repo/issues/5/labels', { labels: ['sveltia-cms/draft'] }],
+      ]);
+      expect(result).toMatchObject({ number: 5, status: 'draft' });
+
+      // The repository is remembered, so the next pull request is a regular one from the start
+      vi.mocked(fetchAPI).mockClear();
+
+      await createPullRequest({ branch: 'cms/posts/bye', title: 'Bye', status: 'draft' });
+
+      expect(fetchAPI).toHaveBeenNthCalledWith(1, '/repos/owner/repo/pulls', {
+        method: 'POST',
+        body: expect.objectContaining({ draft: false }),
+      });
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
+    });
+
+    test.each([
+      ['another refusal of a draft', 'draft', new Error('', { cause: { status: 422 } })],
+      // A regular pull request has nothing to fall back to
+      [
+        'a draft refusal of a regular pull request',
+        'pending_review',
+        createDraftUnsupportedError(),
+      ],
+    ])('passes %s on', async (_label, status, error) => {
+      vi.mocked(fetchAPI).mockRejectedValue(error);
+
+      await expect(
+        createPullRequest({
+          branch: 'cms/posts/hello',
+          title: 'Hello',
+          status: /** @type {any} */ (status),
+        }),
+      ).rejects.toBe(error);
+      expect(fetchAPI).toHaveBeenCalledOnce();
+      expect(draftUnsupportedRepositories.size).toBe(0);
+    });
   });
 
   describe('Open Authoring', () => {
@@ -467,6 +596,27 @@ describe('GitHub pull request helpers', () => {
           '/repos/contributor/repo/git/refs/heads/cms/contributor/repo/posts/hello',
           expect.objectContaining({ method: 'DELETE' }),
         );
+      });
+    });
+
+    describe('updateDraftState', () => {
+      test('passes a refused draft on, as the draft state records the stage', async () => {
+        const error = createDraftUnsupportedError(200);
+
+        vi.mocked(fetchGraphQL).mockRejectedValue(error);
+
+        await expect(updateDraftState(/** @type {any} */ ({ nodeId: 'PR_1' }), true)).rejects.toBe(
+          error,
+        );
+        expect(draftUnsupportedRepositories.size).toBe(0);
+      });
+
+      test('asks even after the configured repository refused a draft', async () => {
+        draftUnsupportedRepositories.add('/repos/owner/repo');
+
+        await updateDraftState(/** @type {any} */ ({ nodeId: 'PR_1' }), false);
+
+        expect(fetchGraphQL).toHaveBeenCalledOnce();
       });
     });
 

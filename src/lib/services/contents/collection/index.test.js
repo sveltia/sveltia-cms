@@ -309,6 +309,33 @@ describe('getThumbnailFieldNames()', () => {
     expect(getThumbnailFieldNames(collection)).toEqual(['featured.*', 'attachment']);
   });
 
+  test('appends wildcard when the media library configuration allows multiple files', () => {
+    const collection = {
+      name: 'posts',
+      folder: 'content/posts',
+      fields: [
+        {
+          name: 'gallery',
+          widget: 'image',
+          media_library: { name: 'cloudinary', config: { multiple: true } },
+        },
+        { name: 'cover', widget: 'image' },
+        { name: 'single', widget: 'image', multiple: false },
+      ],
+    };
+
+    expect(getThumbnailFieldNames(collection)).toEqual(['gallery.*', 'cover', 'single']);
+
+    // The top-level configuration applies to every field without its own option
+    cmsConfig.current = { media_libraries: { cloudinary: { config: { multiple: true } } } };
+
+    try {
+      expect(getThumbnailFieldNames(collection)).toEqual(['gallery.*', 'cover.*', 'single']);
+    } finally {
+      cmsConfig.current = undefined;
+    }
+  });
+
   test('returns empty array when no image/file fields and no explicit thumbnail', () => {
     const collection = {
       name: 'posts',

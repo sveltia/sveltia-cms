@@ -1,6 +1,7 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 import mime from 'mime';
 
+import { getExistingEntryAssetFolderPath } from '$lib/services/assets/entry-folder';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
 import { canCreateThumbnail, isPDF } from '$lib/services/assets/kinds';
 import { allAssets } from '$lib/services/assets/state';
@@ -10,7 +11,6 @@ import {
   TEMPLATE_TAG_REPLACE_REGEX,
 } from '$lib/services/common/template/constants';
 import { cmsConfig } from '$lib/services/config';
-import { getEntryFolderPath } from '$lib/services/contents/entry/paths';
 import { createLRUMap, shareInFlight } from '$lib/services/utils/cache';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 import { createPath, createPathRegEx, encodeFilePath, getDirName } from '$lib/services/utils/file';
@@ -612,17 +612,23 @@ const resolvePublicFolder = (asset) =>
       asset.folder);
 
 /**
- * Get the path of the given asset in an entry-relative folder, relative to the entry’s folder.
+ * Get the path of the given asset in an entry-relative folder, relative to the folder holding the
+ * entry’s relative assets, which is where the value is resolved against when the asset is found
+ * for it; see `getAssetByRelativePathAndCollection()`.
  * @param {Asset} asset Asset.
  * @param {Entry} [entry] Associated entry. Can be `undefined` when editing a new draft.
  * @param {InternalLocaleCode} [locale] Locale whose entry file the path is relative to.
+ * @param {string} [collectionName] Name of the collection the asset folder belongs to.
  * @returns {string | undefined} Relative path, e.g. `images/photo.jpg`, or `undefined` if it
  * cannot be determined.
  */
-const getEntryRelativePath = (asset, entry, locale) => {
+const getEntryRelativePath = (asset, entry, locale, collectionName) => {
   // A file at the repository root has no folder path
   const assetFolderPath = getDirName(asset.path);
-  const entryFolderPath = entry ? getEntryFolderPath(entry, locale) : undefined;
+
+  const entryFolderPath = entry
+    ? getExistingEntryAssetFolderPath({ entry, locale, collectionName })
+    : undefined;
 
   if (entryFolderPath !== undefined) {
     // If the asset is in the same folder as the entry, return the file name only
@@ -666,12 +672,12 @@ export const getAssetPublicURL = (
   asset,
   { pathOnly = false, allowSpecial = false, entry = undefined, locale = undefined } = {},
 ) => {
-  const { publicPath, entryRelative, hasTemplateTags } = resolvePublicFolder(asset);
+  const { publicPath, entryRelative, hasTemplateTags, collectionName } = resolvePublicFolder(asset);
 
   // Try to determine an entry-relative path if the asset is in the same folder as the entry, or a
   // sub-folder of it
   if (entryRelative) {
-    return pathOnly ? getEntryRelativePath(asset, entry, locale) : undefined;
+    return pathOnly ? getEntryRelativePath(asset, entry, locale, collectionName) : undefined;
   }
 
   const { _baseURL: baseURL = '', output: { encode_file_path: encodingEnabled = false } = {} } =

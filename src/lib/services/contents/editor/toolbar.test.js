@@ -157,6 +157,7 @@ describe('getEntryToolbarState', () => {
     hasPullRequest: false,
     workflowEnabled: false,
     publishedVersionExists: false,
+    discardsDraft: false,
     pendingDeletion: false,
     readonly: false,
     openAuthoring: false,
@@ -175,10 +176,9 @@ describe('getEntryToolbarState', () => {
 
   test('uses Editorial Workflow for a collection that has it or an entry with a pull request', () => {
     expect(getEntryToolbarState({ ...args, workflowEnabled: true }).useWorkflow).toBe(true);
-    expect(getEntryToolbarState({ ...args, hasPullRequest: true })).toMatchObject({
-      useWorkflow: true,
-      discardsDraft: true,
-    });
+    expect(
+      getEntryToolbarState({ ...args, hasPullRequest: true, discardsDraft: true }),
+    ).toMatchObject({ useWorkflow: true, discardsDraft: true });
     expect(
       getEntryToolbarState({ ...args, hasPullRequest: true, publishedVersionExists: true }),
     ).toMatchObject({ discardsDraft: false, removalMenuItems: { discard: true, delete: true } });
@@ -216,7 +216,12 @@ describe('getEntryToolbarState', () => {
       delete: false,
     });
     expect(
-      getEntryToolbarState({ ...args, openAuthoring: true, hasPullRequest: true }).removalMenuItems,
+      getEntryToolbarState({
+        ...args,
+        openAuthoring: true,
+        hasPullRequest: true,
+        discardsDraft: true,
+      }).removalMenuItems,
     ).toEqual({ discard: true, delete: false });
   });
 });

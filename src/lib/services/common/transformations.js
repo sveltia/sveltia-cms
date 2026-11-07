@@ -95,9 +95,9 @@ const OTHER_TRANSFORMATION_ARG_REGEX =
 
 const TRANSFORMATION_PARSERS = Object.entries({
   date: /^date\('(?<format>.+?)'(?:,\s*'(?<timeZone>.+?)')?\)$/,
-  default: /^default\('(?<defaultValue>.+?)'\)$/,
+  default: /^default\('(?<defaultValue>.*?)'\)$/,
   ternary: /^ternary\('(?<truthyValue>.*?)',\s*'(?<falsyValue>.*?)'\)$/,
-  truncate: /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.+?)')?\)$/,
+  truncate: /^truncate\((?<max>\d+)(?:,\s*'(?<ellipsis>.*?)')?\)$/,
 });
 
 /**

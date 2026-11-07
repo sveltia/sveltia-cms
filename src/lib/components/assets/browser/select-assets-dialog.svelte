@@ -1,6 +1,16 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Dialog, EmptyState, FilePicker, Icon, SearchBar, TextInput } from '@sveltia/ui';
+  import {
+    Alert,
+    Button,
+    Dialog,
+    EmptyState,
+    FilePicker,
+    Icon,
+    SearchBar,
+    TextInput,
+    Toast,
+  } from '@sveltia/ui';
   import { untrack } from 'svelte';
 
   import CloudinaryPanel from '$lib/components/assets/browser/cloudinary-panel.svelte';
@@ -131,6 +141,8 @@
   let selectedResources = $state([]);
   /** @type {ExternalAssetsPanel | undefined} */
   let externalAssetsPanel = $state();
+  /** Whether the pending files have been rejected, as the location offered can’t take them. */
+  let pendingFilesRejected = $state(false);
 
   /**
    * View of the asset list, given to the view switcher, which is only rendered once it’s set.
@@ -259,6 +271,13 @@
   );
   const isCloudLibrary = $derived(
     cloudServiceEntries.map(([serviceId]) => serviceId).includes(libraryName),
+  );
+  /**
+   * Whether the selected location can take the pending files: a cloud storage service that supports
+   * uploads. Cloudinary, for one, only takes files through its own widget.
+   */
+  const canTakePendingFiles = $derived(
+    !!cloudServiceEntries.find(([serviceId]) => serviceId === libraryName)?.[1].upload,
   );
   /** Field configuration for the selected service, with its `prefix` option filled, if any. */
   const filledPrefix = $derived(
@@ -420,11 +439,31 @@
     }
   });
 
-  // Upload pending files (e.g. dropped on the file editor) to the cloud service panel once mounted
+  // Upload pending files (e.g. dropped on the file editor) to the cloud service panel once it can
+  // take them, which may only be after the user has provided the credentials
   $effect(() => {
-    if (externalAssetsPanel && isCloudLibrary && pendingFiles.length) {
+    if (isCloudLibrary && pendingFiles.length && externalAssetsPanel?.canUpload()) {
       externalAssetsPanel.uploadFiles(pendingFiles);
       pendingFiles = [];
+    }
+  });
+
+  // Take the pending files to a cloud storage service that can upload them. The dialog stays
+  // mounted while closed, so the location offered first was picked before the files were dropped,
+  // and may be a stock photo service. If no service can take them, e.g. with only Cloudinary, let
+  // the user know rather than leave them out silently
+  $effect(() => {
+    if (!open || !pendingFiles.length || canTakePendingFiles) {
+      return;
+    }
+
+    const [serviceId] = cloudServiceEntries.find(([, { upload }]) => !!upload) ?? [];
+
+    if (serviceId) {
+      libraryName = serviceId;
+    } else {
+      pendingFiles = [];
+      pendingFilesRejected = true;
     }
   });
 </script>
@@ -470,10 +509,11 @@
     })}
   {/if}
   {#if !selectFolder && (isDefaultLibrary || canBrowseCloudLibrary)}
+    <!-- A cloud storage service takes files once the user has provided the credentials -->
     <Button
       variant="primary"
       label={_('upload')}
-      disabled={uploadDisabled}
+      disabled={uploadDisabled || (isCloudLibrary && !externalAssetsPanel?.canUpload())}
       onclick={() => {
         filePicker?.open();
       }}
@@ -538,6 +578,8 @@
         controlsId="{elementIdPrefix}-content-pane"
         onChange={(name) => {
           libraryName = name;
+          // Files dropped on the field were meant for the location first offered
+          pendingFiles = [];
           subfolderPath = '';
           selectedSubfolderPaths = [];
           // The URL entered earlier is still in the text box, so it’s selected again
@@ -633,6 +675,10 @@
 {#if browsingSubfolders}
   <CreateSubfolderDialog bind:open={showNewFolderDialog} dirPath={browsedPath} {takenNames} />
 {/if}
+
+<Toast bind:show={pendingFilesRejected}>
+  <Alert status="error">{_('uploading_files_failed')}</Alert>
+</Toast>
 
 <FilePicker
   bind:this={filePicker}

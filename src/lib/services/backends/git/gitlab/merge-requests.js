@@ -1,4 +1,4 @@
-import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
+import { fetchBlobs, fetchTruncatedBlobs } from '$lib/services/backends/git/gitlab/files';
 import { getWorkflowRepository, projectIds } from '$lib/services/backends/git/gitlab/fork';
 import {
   getBranchPath,
@@ -289,24 +289,27 @@ export const fetchMergeRequestFileContents = async (mergeRequest) => {
 
   // A workflow branch lives in the contributor’s fork with Open Authoring, so that’s where the
   // blobs have to be read from
-  const { owner, repo } = getWorkflowRepository();
+  const workflowRepository = getWorkflowRepository();
+  const { owner, repo } = workflowRepository;
+  // Read at the head commit rather than the branch, so the content shown is that of the commit a
+  // publish is pinned to, even if the branch moves on while the board loads
+  const ref = mergeRequest.headSHA ?? mergeRequest.branch;
 
   // The blobs are fetched in batches, which are split further if the total size of a batch exceeds
   // the API’s limit. An asset committed to a workflow branch is easily large enough to hit it on
   // its own. @see https://docs.gitlab.com/api/graphql/#data-limits
-  const nodes = await fetchBlobNodes(
+  const blobs = await fetchBlobs(
     files.map(({ path }) => path),
     FETCH_BLOBS_QUERY,
-    // Read at the head commit rather than the branch, so the content shown is that of the commit a
-    // publish is pinned to, even if the branch moves on while the board loads
-    { fullPath: `${owner}/${repo}`, branch: mergeRequest.headSHA ?? mergeRequest.branch },
+    { fullPath: `${owner}/${repo}`, branch: ref },
   );
 
-  /** @type {Map<string, Record<string, any>>} */
-  const blobMap = new Map(nodes.map((/** @type {any} */ node) => [node.path, node]));
+  // The API also caps the data of each blob, and keeping a text cut short would commit the
+  // shortened file the next time the entry is saved, so read any such blob again in full
+  await fetchTruncatedBlobs(blobs, { ref, projectId: getProjectId(workflowRepository) });
 
   files.forEach((file) => {
-    const blob = blobMap.get(file.path);
+    const blob = Object.hasOwn(blobs, file.path) ? blobs[file.path] : undefined;
 
     if (blob) {
       Object.assign(file, {

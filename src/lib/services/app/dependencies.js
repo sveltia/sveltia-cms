@@ -52,37 +52,72 @@ export const getLeafletMarkerIconURL = async () =>
 const NPM_CDN_HOSTS = ['unpkg.com', 'cdn.jsdelivr.net'];
 
 /**
- * Pin the URL of the CMS script to the running version if it’s a CDN URL of the package without the
- * exact version, e.g. `https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js` or
+ * Parse the URL of the CMS script if it’s a CDN URL of the package without the exact version, e.g.
+ * `https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js` or
  * `https://cdn.jsdelivr.net/npm/@sveltia/cms@0/dist/sveltia-cms.js`. Such a URL serves the latest
- * matching release, so a chunk resolved against it could come from a newer release than the
- * script, e.g. one cached in the browser from before the release. A version range or tag is pinned
- * on any host, as only a CDN would serve one, but a URL without a version only on a known CDN, as
- * a self-hosted copy can be anywhere, e.g. in `node_modules/@sveltia/cms/dist`.
+ * matching release. A version range or tag counts on any host, as only a CDN would serve one, but a
+ * URL without a version only on a known CDN, as a self-hosted copy can be anywhere, e.g. in
+ * `node_modules/@sveltia/cms/dist`.
  * @param {string} url Script URL.
- * @returns {string} Pinned URL, or the given one if it’s already pinned or not a CDN URL.
+ * @returns {{ url: URL, packagePath: string, versionSpec?: string, filePath: string } | undefined}
+ * Parsed URL with its parts, or `undefined` if it’s pinned to the running version or not a CDN URL.
  */
-const pinScriptURL = (url) => {
-  const pinnedURL = new URL(url);
-  const match = pinnedURL.pathname.match(/^(.*\/@sveltia\/cms)(?:@([^/]*))?(\/.*)$/);
+const parseUnpinnedScriptURL = (url) => {
+  const parsedURL = new URL(url);
+  const match = parsedURL.pathname.match(/^(.*\/@sveltia\/cms)(?:@([^/]*))?(\/.*)$/);
 
   if (!match) {
-    return url;
+    return undefined;
   }
 
   const [, packagePath, versionSpec, filePath] = match;
 
   if (
     versionSpec === version ||
-    (versionSpec === undefined && !NPM_CDN_HOSTS.includes(pinnedURL.host))
+    (versionSpec === undefined && !NPM_CDN_HOSTS.includes(parsedURL.host))
   ) {
+    return undefined;
+  }
+
+  return { url: parsedURL, packagePath, versionSpec, filePath };
+};
+
+/**
+ * Pin the URL of the CMS script to the running version if it’s a CDN URL of the package without the
+ * exact version (see {@link parseUnpinnedScriptURL}). Such a URL serves the latest matching
+ * release, so a chunk resolved against it could come from a newer release than the script, e.g.
+ * one cached in the browser from before the release.
+ * @param {string} url Script URL.
+ * @returns {string} Pinned URL, or the given one if it’s already pinned or not a CDN URL.
+ */
+const pinScriptURL = (url) => {
+  const parsed = parseUnpinnedScriptURL(url);
+
+  if (!parsed) {
     return url;
   }
+
+  const { url: pinnedURL, packagePath, filePath } = parsed;
 
   // Only replace the path, so that the host stays the same whatever the path looks like
   pinnedURL.pathname = `${packagePath}@${version}${filePath}`;
 
   return pinnedURL.href;
+};
+
+/**
+ * Get the version the CDN resolves the URL of the CMS script with, if it’s not pinned to the
+ * running version (see {@link parseUnpinnedScriptURL}), so a reload may load a newer release.
+ * @param {string} [url] Script URL. Defaults to the running script’s URL, if known.
+ * @returns {string | undefined} Version range or tag as it appears in the URL, e.g. `^1` (which
+ * may be percent-encoded) or `latest`, an empty string for a URL without a version, which serves
+ * the latest release, or `undefined` if the URL is pinned, not a CDN URL or unknown, e.g. with the
+ * npm package bundled into a site.
+ */
+export const getScriptVersionSpec = (url = scriptURL) => {
+  const parsed = url ? parseUnpinnedScriptURL(url) : undefined;
+
+  return parsed ? (parsed.versionSpec ?? '') : undefined;
 };
 
 /**

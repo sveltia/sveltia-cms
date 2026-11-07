@@ -132,6 +132,47 @@ describe('DeleteEntriesDialog', () => {
     );
   });
 
+  test('deletes an entry with pending changes rather than only discarding them', async () => {
+    vi.mocked(deleteWorkflowEntries).mockResolvedValue(undefined);
+    contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE };
+
+    // Pending changes to the published entry A, which the list shows in its place
+    const draft = createMockEntry({
+      slug: 'a',
+      content: { _default: { title: 'A (edited)' } },
+      entry: { workflow: /** @type {any} */ ({ status: 'draft', collectionName: 'posts' }) },
+    });
+
+    unpublishedEntries.current = [/** @type {any} */ (draft)];
+    flushSync();
+    selectedEntries.current = [draft];
+
+    await render(DeleteEntriesDialog, { open: true });
+
+    const dialog = page.getByRole('alertdialog');
+
+    // It’s not one that hasn’t been published yet
+    await expect
+      .element(dialog)
+      .toHaveTextContent(
+        'Delete Entry Are you sure you want to delete the selected entry? Delete Cancel',
+      );
+    await dialog.getByRole('button', { name: 'Delete' }).click();
+
+    // The removal goes through the entry’s pull request, even without Editorial Workflow enabled
+    // for the collection, as the entry editor does, so the published version doesn’t stay behind
+    await vi.waitFor(() =>
+      expect(deleteWorkflowEntries).toHaveBeenCalledWith([
+        { entry: draft, collection: getCollection('posts'), assets: [] },
+      ]),
+    );
+    expect(discardWorkflowEntries).not.toHaveBeenCalled();
+    expect(deleteEntries).not.toHaveBeenCalled();
+    expect(contentUpdatesToast.current).toEqual(
+      expect.objectContaining({ deleted: true, deletionPending: true, count: 1 }),
+    );
+  });
+
   test('notes the unpublished entries among the selected ones', async () => {
     const draft = createMockEntry({
       slug: 'd',

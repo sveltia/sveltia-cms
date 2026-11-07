@@ -6,6 +6,7 @@ import {
   resolveInlinePatternComponent,
 } from '$lib/services/contents/fields/rich-text/components/inline-pattern';
 import {
+  escapeAlt,
   escapeTitle,
   unescapeTitle,
 } from '$lib/services/contents/fields/rich-text/components/utils';
@@ -74,12 +75,12 @@ export const IMAGE_COMPONENT = {
   fromBlock: (match) => {
     const { src, alt, title = match.groups?.singleQuotedTitle } = match.groups ?? {};
 
-    return { src, alt, title: title && unescapeTitle(title) };
+    return { src, alt: alt && unescapeTitle(alt), title: title && unescapeTitle(title) };
   },
   toBlock: (props) => {
     const { src = '', alt = '', title = '' } = props;
 
-    return src ? `![${alt}](${src}${title ? ` "${escapeTitle(title)}"` : ''})` : '';
+    return src ? `![${escapeAlt(alt)}](${src}${title ? ` "${escapeTitle(title)}"` : ''})` : '';
   },
   toPreview: (props) => {
     const { src = '', alt = '', title = '' } = props;
@@ -109,14 +110,14 @@ export const LINKED_IMAGE_COMPONENT = {
 
     return {
       src: (src || src2 || '').trim(),
-      alt: (alt || alt2 || '').trim(),
+      alt: unescapeTitle(alt || alt2 || '').trim(),
       title: unescapeTitle(title || singleQuotedTitle || title2 || singleQuotedTitle2 || '').trim(),
       link: (link || '').trim(),
     };
   },
   toBlock: (props) => {
     const { src = '', alt = '', title = '', link = '' } = props;
-    const img = src ? `![${alt}](${src}${title ? ` "${escapeTitle(title)}"` : ''})` : '';
+    const img = src ? `![${escapeAlt(alt)}](${src}${title ? ` "${escapeTitle(title)}"` : ''})` : '';
 
     return img && link ? `[${img}](${link})` : img;
   },

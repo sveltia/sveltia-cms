@@ -149,7 +149,7 @@ export const getCurrentDateTime = (
  * @param {string} [localeKey] Day.js locale, as returned by `getFormatLocale()`.
  * @returns {string} Formatted value.
  */
-const formatInTimeZone = (instant, format, localeKey) => {
+export const formatInTimeZone = (instant, format, localeKey) => {
   const epoch = instant.valueOf();
   const offset = instant.utcOffset();
   const wallTime = dayjs.utc(epoch + offset * 60_000);

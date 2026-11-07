@@ -3,6 +3,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 
 import { getAssetByPath, isRelativePath } from '$lib/services/assets';
+import { getOwnedEntryFolderPath } from '$lib/services/assets/entry-folder';
 import { getAssetFolder, getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { revokeBlobURLIfNeeded } from '$lib/services/assets/info';
 import { canCreateThumbnail } from '$lib/services/assets/kinds';
@@ -14,7 +15,6 @@ import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
-import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { fillEntryPathTemplate } from '$lib/services/contents/entry';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getEntryDisplayLocale } from '$lib/services/contents/entry/paths';

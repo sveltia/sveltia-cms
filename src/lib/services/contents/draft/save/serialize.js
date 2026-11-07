@@ -59,6 +59,54 @@ const getWildcardKeyPathRegex = (keyPath) =>
   );
 
 /**
+ * Regular expression matching a key path ending with a numeric segment, capturing the parent key
+ * path.
+ */
+const INDEXED_KEY_PATH_REGEX = /^(.+)\.\d+$/;
+
+/**
+ * Check if the given key path is an array item, e.g. the item of a List field, in the output. A
+ * numeric segment is unflattened into an array index, unless the parent is already an object in
+ * the sorted property map, like a KeyValue field or an Object field with a subfield named like an
+ * index.
+ * @param {string} key Key path.
+ * @param {FlattenedEntryContent} sortedMap Sorted property map.
+ * @returns {boolean} Result.
+ */
+const isArrayItemKeyPath = (key, sortedMap) => {
+  const [, parentKey] = key.match(INDEXED_KEY_PATH_REGEX) ?? [];
+
+  return parentKey !== undefined && !isPlainObject(sortedMap[parentKey]);
+};
+
+/**
+ * Keep the closest array item the given omitted key path belongs to, e.g. `links.0` for
+ * `links.0.label`, by adding an empty object for it unless it already has a value or another
+ * property. Otherwise an item whose subfields are all omitted would leave a hole in the array,
+ * which is written as `null` in JSON and YAML, and dropped in TOML, shifting the other items.
+ * @param {string} key Omitted key path.
+ * @param {FlattenedEntryContent} sortedMap Sorted property map.
+ */
+const keepArrayItem = (key, sortedMap) => {
+  const segments = key.split('.');
+
+  for (let index = segments.length - 1; index > 0; index -= 1) {
+    const itemKey = segments.slice(0, index).join('.');
+
+    if (isArrayItemKeyPath(itemKey, sortedMap)) {
+      if (
+        !Object.hasOwn(sortedMap, itemKey) &&
+        !Object.keys(sortedMap).some((_key) => _key.startsWith(`${itemKey}.`))
+      ) {
+        sortedMap[itemKey] = {};
+      }
+
+      return;
+    }
+  }
+};
+
+/**
  * Move a property name/value from a unsorted property map to a sorted property map.
  * @param {object} args Arguments.
  * @param {string} args.key Property name.
@@ -111,11 +159,14 @@ export const copyProperty = ({
     }
   }
 
+  // The option omits the empty properties of an object, never the items of an array, which would
+  // leave holes in it
   if (
     omitEmptyOptionalFields &&
     field &&
     !isFieldRequired({ fieldConfig: field, locale }) &&
-    isValueEmpty(value)
+    isValueEmpty(value) &&
+    !isArrayItemKeyPath(key, sortedMap)
   ) {
     const childKeys = Object.keys(unsortedMap).filter((_key) => _key.startsWith(`${key}.`));
 
@@ -129,6 +180,8 @@ export const copyProperty = ({
       childKeys.forEach((_key) => {
         delete unsortedMap[_key];
       });
+
+      keepArrayItem(key, sortedMap);
     }
   } else {
     sortedMap[key] = value;

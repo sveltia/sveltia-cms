@@ -148,10 +148,28 @@ describe('definitions', () => {
           alt: 'A [1]',
           title: "It's",
         });
-        // It’s written back in double quotes
+        // It’s written back in double quotes, with the brackets in the alt text escaped
         expect(IMAGE_COMPONENT.toBlock({ src: '/a.png', alt: 'A [1]', title: "It's" })).toBe(
-          '![A [1]](/a.png "It\'s")',
+          '![A \\[1\\]](/a.png "It\'s")',
         );
+      });
+
+      it('should keep alt text with brackets or backslashes across a round trip', async () => {
+        const { IMAGE_REGEX } = await vi.importActual(
+          '$lib/services/contents/fields/rich-text/constants',
+        );
+
+        [
+          ['smile :]', '![smile :\\]](/a.png)'],
+          ['Figure [1', '![Figure \\[1](/a.png)'],
+          ['C:\\', '![C:\\\\](/a.png)'],
+          ['a\\]b', '![a\\\\\\]b](/a.png)'],
+          ['C:\\Users', '![C:\\Users](/a.png)'],
+          ['A [1]', '![A \\[1\\]](/a.png)'],
+        ].forEach(([alt, markdown]) => {
+          expect(IMAGE_COMPONENT.toBlock({ src: '/a.png', alt })).toBe(markdown);
+          expect(IMAGE_COMPONENT.fromBlock(markdown.match(IMAGE_REGEX)).alt).toBe(alt);
+        });
       });
 
       it('should handle a missing title or missing groups', () => {
@@ -360,6 +378,22 @@ describe('definitions', () => {
         const match = { groups: { src2: '/a.png', alt2: 'A', title2: 'T \\"q\\"', link: '/b' } };
 
         expect(LINKED_IMAGE_COMPONENT.fromBlock(match).title).toBe('T "q"');
+      });
+
+      it('should keep alt text with brackets or backslashes across a round trip', async () => {
+        const { IMAGE_OR_LINKED_IMAGE_REGEX } = await vi.importActual(
+          '$lib/services/contents/fields/rich-text/constants',
+        );
+
+        ['smile :]', 'Figure [1', 'C:\\', ' [a] '].forEach((alt) => {
+          const markdown = LINKED_IMAGE_COMPONENT.toBlock({ src: '/a.png', alt, link: '/b' });
+
+          const props = LINKED_IMAGE_COMPONENT.fromBlock(
+            markdown.match(IMAGE_OR_LINKED_IMAGE_REGEX),
+          );
+
+          expect(props).toEqual({ src: '/a.png', alt: alt.trim(), title: '', link: '/b' });
+        });
       });
 
       it('should handle missing groups', () => {

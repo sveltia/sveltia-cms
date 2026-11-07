@@ -291,6 +291,54 @@ describe('buildNestedMoveChanges()', () => {
     expect(changes[0].path).toBe('content/pages/intro/_index.md');
   });
 
+  test('moves a single-file i18n entry missing the default locale', async () => {
+    /** @type {any} */
+    const i18nCollection = {
+      ...collection,
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: { i18nSingleFile: true },
+      },
+    };
+
+    /**
+     * Create an entry with the French content only.
+     * @param {string} id Entry ID.
+     * @param {string} subPath Entry’s sub path.
+     * @returns {any} Entry.
+     */
+    const frEntry = (id, subPath) => ({
+      id,
+      slug: subPath,
+      subPath,
+      locales: {
+        fr: { slug: subPath, path: `content/pages/${subPath}.md`, content: { title: 'FR' } },
+      },
+    });
+
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      frEntry('1', 'docs/_index'),
+      frEntry('2', 'docs/intro/_index'),
+    ]);
+
+    const { changes } = await buildNestedMoveChanges({
+      collection: i18nCollection,
+      originalEntry: frEntry('1', 'docs/_index'),
+      savingEntry: frEntry('1', 'guides/_index'),
+    });
+
+    expect(changes).toEqual([
+      expect.objectContaining({
+        action: 'move',
+        slug: 'guides/intro/_index',
+        path: 'content/pages/guides/intro/_index.md',
+        previousPath: 'content/pages/docs/intro/_index.md',
+      }),
+    ]);
+  });
+
   test('moves one file per locale with a file-per-locale i18n structure', async () => {
     /** @type {any} */
     const i18nCollection = {

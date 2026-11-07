@@ -444,6 +444,61 @@ describe('GitLab merge requests', () => {
       });
     });
 
+    test.each([
+      ['the configured project', undefined, PROJECT_ID],
+      ['the fork', { owner: 'contributor', repo: 'project' }, 'contributor%2Fproject'],
+    ])(
+      'reads a text cut short by the GraphQL API again in full from %s',
+      async (_label, fork, projectId) => {
+        forkedRepository.current = fork;
+
+        const mergeRequest = /** @type {any} */ ({
+          branch: 'cms/posts/huge',
+          headSHA: 'abc123',
+          files: [
+            { path: 'content/posts/huge.md', sha: '', size: 0, deleted: false },
+            { path: 'content/posts/small.md', sha: '', size: 0, deleted: false },
+          ],
+        });
+
+        // GitLab reports the full size of a blob, but caps the data `rawTextBlob` holds
+        vi.mocked(fetchGraphQL).mockResolvedValue({
+          project: {
+            repository: {
+              blobs: {
+                nodes: [
+                  {
+                    path: 'content/posts/huge.md',
+                    oid: 'sha1',
+                    size: '20000000',
+                    rawTextBlob: '# Huge, partial',
+                  },
+                  {
+                    path: 'content/posts/small.md',
+                    oid: 'sha2',
+                    size: '7',
+                    rawTextBlob: '# Small',
+                  },
+                ],
+              },
+            },
+          },
+        });
+        vi.mocked(fetchAPI).mockResolvedValue('# Huge, in full');
+
+        await fetchMergeRequestFileContents(mergeRequest);
+
+        // Only the truncated blob is read again, from the project and commit it was read at
+        expect(fetchAPI).toHaveBeenCalledOnce();
+        expect(fetchAPI).toHaveBeenCalledWith(
+          `/projects/${projectId}/repository/files/content%2Fposts%2Fhuge.md/raw?ref=abc123`,
+          { responseType: 'text' },
+        );
+        expect(mergeRequest.files[0]).toMatchObject({ size: 20000000, text: '# Huge, in full' });
+        expect(mergeRequest.files[1]).toMatchObject({ size: 7, text: '# Small' });
+      },
+    );
+
     test('marks a file as deleted when the blob is missing', async () => {
       const mergeRequest = /** @type {any} */ ({
         branch: 'cms/posts/hello',
