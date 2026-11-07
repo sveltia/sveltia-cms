@@ -3,6 +3,7 @@ import { Map as ImmutableMap, isMap } from 'immutable';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ExternalAssetProxy } from '$lib/services/api/external-asset-proxy';
+import { warnDeprecation } from '$lib/services/config/deprecations';
 
 import {
   buildEntry,
@@ -48,6 +49,7 @@ const {
   }),
 }));
 
+vi.mock('$lib/services/config/deprecations');
 vi.mock('$lib/services/assets', () => ({
   isAssetInFolder: mockIsAssetInFolder,
 }));
@@ -1148,6 +1150,90 @@ describe('React Helpers', () => {
           delete fields.years;
           delete fields['years.*'];
         }
+      });
+
+      describe('deprecation warning', () => {
+        /**
+         * Build the metadata of the given content as an Immutable Map.
+         * @param {Record<string, string>} valueMap Flattened content.
+         * @returns {any} Metadata.
+         */
+        const buildMap = (valueMap) => {
+          build(valueMap);
+
+          return getMetaData({
+            locale: 'en',
+            getFieldArgs: { collectionName: 'posts', valueMap },
+          });
+        };
+
+        it.each([
+          ['get', (map) => map.get('info.author')],
+          ['getIn', (map) => map.getIn(['info.author', 'authors', 'jane'])],
+        ])('warns about a flat key path read with `%s()`', (_method, read) => {
+          const result = read(buildMap({ 'info.author': 'jane' }));
+
+          expect(result.toJS()).toBeTruthy();
+          expect(warnDeprecation).toHaveBeenCalledExactlyOnceWith('flat_metadata_keys');
+        });
+
+        it('warns about a List item’s flat key path', () => {
+          const map = buildMap({ 'books.0.author': 'jane' });
+
+          expect(map.getIn(['books.0.author', 'authors', 'jane', 'name'])).toBe('Jane');
+          expect(warnDeprecation).toHaveBeenCalledWith('flat_metadata_keys');
+        });
+
+        it('warns about the single subfield’s metadata under the List field’s name', () => {
+          const map = buildMap({ 'tags.0': 'jane' });
+
+          expect(map.getIn(['tags', 'authors', 'jane', 'name'])).toBe('Jane');
+          expect(warnDeprecation).toHaveBeenCalledWith('flat_metadata_keys');
+        });
+
+        it('leaves a Map without deprecated keys alone, like the shared empty Map', () => {
+          expect(Object.hasOwn(buildMap({}), 'get')).toBe(false);
+          expect(Object.hasOwn(ImmutableMap(), 'get')).toBe(false);
+          expect(Object.hasOwn(buildMap({ author: 'jane' }), 'get')).toBe(false);
+        });
+
+        it('keeps the not-set value of a read', () => {
+          const map = buildMap({ 'info.author': 'jane' });
+
+          expect(map.get('unknown', 'fallback')).toBe('fallback');
+          expect(map.getIn(['tags', 'authors'], 'fallback')).toBe('fallback');
+        });
+
+        it('stays quiet about the current paths and about building the Map', () => {
+          const map = buildMap({
+            author: 'jane',
+            'info.author': 'jane',
+            'books.0.author': 'jane',
+            'tags.0': 'jane',
+          });
+
+          expect(map.getIn(['author', 'authors', 'jane', 'name'])).toBe('Jane');
+          expect(map.getIn(['info', 'author', 'authors', 'jane', 'name'])).toBe('Jane');
+          expect(map.getIn(['books', 'author', 'authors', 'jane', 'name'])).toBe('Jane');
+          expect(map.getIn(['tags', 'tag', 'authors', 'jane', 'name'])).toBe('Jane');
+          map.toJS();
+          expect(warnDeprecation).not.toHaveBeenCalled();
+        });
+
+        it('stays quiet about a single subfield named after the referenced collection', () => {
+          fields.writers = { widget: 'list', field: { ...relation, name: 'authors' } };
+          fields['writers.*'] = relation;
+
+          try {
+            const map = buildMap({ 'writers.0': 'jane' });
+
+            expect(map.getIn(['writers', 'authors', 'authors', 'jane', 'name'])).toBe('Jane');
+            expect(warnDeprecation).not.toHaveBeenCalled();
+          } finally {
+            delete fields.writers;
+            delete fields['writers.*'];
+          }
+        });
       });
 
       it('for a field name and value that are also `Object.prototype` members', () => {

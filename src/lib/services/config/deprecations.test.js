@@ -14,6 +14,7 @@ describe('Test warnedOnceMap', () => {
       multiple_folders_i18n_root: false,
       omit_default_locale_from_filename: false,
       logo_url: false,
+      flat_metadata_keys: false,
     });
   });
 
@@ -45,6 +46,7 @@ describe('Test warningMessages', () => {
     expect(warningMessages.slug_length).toContain('slug_length');
     expect(warningMessages.slug_length).toContain('deprecated');
     expect(warningMessages.slug_length).toContain('slug.maxlength');
+    expect(warningMessages.slug_length).toMatch(/\/slugs#global-slug-options$/);
   });
 
   test('should contain useful information in slug_editor_tag message', () => {
@@ -84,6 +86,13 @@ describe('Test warningMessages', () => {
     expect(warningMessages.omit_default_locale_from_filename).toContain(
       'omit_default_locale_from_file_path',
     );
+    expect(warningMessages.omit_default_locale_from_filename).toMatch(/\/i18n\/options$/);
+  });
+
+  test('should contain useful information in flat_metadata_keys message', () => {
+    expect(warningMessages.flat_metadata_keys).toContain('fieldsMetaData');
+    expect(warningMessages.flat_metadata_keys).toContain('deprecated');
+    expect(warningMessages.flat_metadata_keys).toContain('books.0.author');
   });
 
   test('should contain useful information in logo_url message', () => {

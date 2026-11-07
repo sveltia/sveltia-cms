@@ -281,6 +281,11 @@ export const parseCollection = ({ cmsConfig, collection }, collectors) => {
     return;
   }
 
+  // @todo Remove the option prior to the 1.0 release.
+  if (/** @type {Collection} */ (collection).yaml_quote !== undefined) {
+    warnDeprecation('yaml_quote');
+  }
+
   // Validate the `i18n` option against the site-level configuration it builds on. A divider has
   // been ruled out above
   checkI18nOverrides({ cmsConfig, collection: /** @type {Collection} */ (collection) }, collectors);

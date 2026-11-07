@@ -6,6 +6,7 @@ import { isAssetInFolder } from '$lib/services/assets';
 import { getAssetFolder } from '$lib/services/assets/folders';
 import { getMediaFieldSource, getRichTextMediaSource } from '$lib/services/assets/media-field';
 import { allAssets } from '$lib/services/assets/state';
+import { warnDeprecation } from '$lib/services/config/deprecations';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
@@ -267,6 +268,34 @@ export const getMetaDataPath = ({ getFieldArgs, keyPath }) => {
 };
 
 /**
+ * Warn when one of the given keys of an Immutable Map is read. `getIn()` goes through `get()`, so
+ * replacing that method on the instance covers both. A copy made with `set()` and the like loses
+ * the warning, which is fine for a Map that’s only meant to be read. Comparing the Map with
+ * `Immutable.is()` reads every key, so that can warn as well.
+ * @param {MapOf<any>} map Immutable Map.
+ * @param {Set<string>} keys Deprecated keys.
+ */
+const warnOnRead = (map, keys) => {
+  const { get } = map;
+
+  /**
+   * Read a key of the Map, warning if it’s a deprecated one.
+   * @param {string} key Key.
+   * @param {any} [notSetValue] Value to return if the key is not found.
+   * @returns {any} Value.
+   */
+  const getWithWarning = (key, notSetValue) => {
+    if (keys.has(key)) {
+      warnDeprecation('flat_metadata_keys');
+    }
+
+    return get.call(map, key, notSetValue);
+  };
+
+  /** @type {any} */ (map).get = getWithWarning;
+};
+
+/**
  * Get metadata for fields. For relation fields, looks up and stores the referenced entry content
  * keyed by collection name and value, matching the `fieldsMetaData` structure of Netlify/Decap CMS
  * preview templates and custom field types: the metadata of a field nested in an Object or List
@@ -287,6 +316,16 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
   const metaData = Object.create(null);
   /** @type {Map<string, Entry[]>} */
   const refEntriesCache = new Map();
+  /**
+   * Flat key paths at the top level.
+   * @type {Set<string>}
+   */
+  const legacyKeys = new Set();
+  /**
+   * Collection names right under a List field’s name, for a List field with a single `field`.
+   * @type {Map<string, Set<string>>}
+   */
+  const legacyListKeys = new Map();
 
   Object.entries(valueMap).forEach(([key, value]) => {
     const keyPath = /** @type {FieldKeyPath} */ (key);
@@ -352,6 +391,17 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
           ? [metaDataPath]
           : [metaDataPath, [legacyKey]];
 
+      if (paths.length > 1) {
+        // A field name can’t contain a dot, so a key with one is always a flat key path. Otherwise
+        // it’s the List field’s own name, under which the single subfield’s name is the current
+        // path, even if the subfield is named after the collection
+        if (legacyKey.includes('.')) {
+          legacyKeys.add(legacyKey);
+        } else if (metaDataPath[1] !== refCollection) {
+          getOrCreate(legacyListKeys, legacyKey, () => new Set()).add(refCollection);
+        }
+      }
+
       paths.forEach((path) => {
         const fieldMetaData = [...path, refCollection].reduce((parent, name) => {
           parent[name] ??= Object.create(null);
@@ -364,7 +414,18 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
     }
   });
 
-  return /** @type {import('immutable').MapOf<any>} */ (getImmutable().fromJS(metaData));
+  const metaDataMap = /** @type {MapOf<any>} */ (getImmutable().fromJS(metaData));
+
+  // Without any key to watch, leave the Map alone: an empty one is Immutable.js’s shared instance
+  if (legacyKeys.size) {
+    warnOnRead(metaDataMap, legacyKeys);
+  }
+
+  legacyListKeys.forEach((keys, name) => {
+    warnOnRead(/** @type {any} */ (metaDataMap).get(name), keys);
+  });
+
+  return metaDataMap;
 };
 
 /**

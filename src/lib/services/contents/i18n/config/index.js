@@ -1,5 +1,4 @@
 import { cmsConfig } from '$lib/services/config';
-import { warnDeprecation } from '$lib/services/config/deprecations';
 import {
   DEFAULT_CANONICAL_SLUG,
   DEFAULT_LOCALE_KEY,
@@ -212,15 +211,6 @@ export const normalizeI18nConfig = (collection, file) => {
     omit_default_locale_from_preview_path: omitDefaultLocaleFromPreviewPath = false,
   } = config ?? {};
 
-  // @todo Remove the option prior to the 1.0 release.
-  if (config?.save_all_locales !== undefined) {
-    warnDeprecation('save_all_locales');
-  }
-
-  if (omitDefaultLocaleLegacy !== undefined) {
-    warnDeprecation('omit_default_locale_from_filename');
-  }
-
   const {
     key: canonicalSlugKey = DEFAULT_CANONICAL_SLUG.key,
     value: canonicalSlugTemplate = DEFAULT_CANONICAL_SLUG.value,
@@ -244,10 +234,6 @@ export const normalizeI18nConfig = (collection, file) => {
     structureMap,
     file,
   );
-
-  if (structure === 'multiple_folders_i18n_root') {
-    warnDeprecation('multiple_folders_i18n_root');
-  }
 
   return {
     i18nEnabled,
