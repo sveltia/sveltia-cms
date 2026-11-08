@@ -1,13 +1,17 @@
+import { encodeBase64 } from '@sveltia/utils/file';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { saveProgress } from '$lib/services/backends/commit-progress';
 import {
   _resetAvatarURLCache,
+  _resetLandedPaths,
   commitChanges,
   fetchFileCommits,
   fetchLastCommit,
 } from '$lib/services/backends/git/gitlab/commits';
 import { repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import {
   createCommitMessage,
   signOffCommitMessage,
@@ -32,6 +36,14 @@ vi.mock('$lib/services/backends/git/gitlab/repository', () => {
      * @returns {string} URL-encoded project path.
      */
     getProjectId: ({ owner, repo } = mockRepository) => encodeURIComponent(`${owner}/${repo}`),
+    /**
+     * Get the branch path the same way the real module does.
+     * @param {string} branch Branch name.
+     * @param {any} [repoPath] Project holding the branch. Default: the configured project.
+     * @returns {string} Path.
+     */
+    getBranchPath: (branch, { owner, repo } = mockRepository) =>
+      `/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/branches/${branch}`,
   };
 });
 vi.mock('$lib/services/workflow/open-authoring', () => ({
@@ -39,6 +51,7 @@ vi.mock('$lib/services/workflow/open-authoring', () => ({
   openAuthoring: { current: false },
 }));
 vi.mock('$lib/services/backends/git/shared/api');
+vi.mock('$lib/services/backends/git/shared/api-optional');
 vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
   .../** @type {any} */ (await importOriginal()),
   createCommitMessage: vi.fn(),
@@ -433,6 +446,8 @@ describe('GitLab commits service', () => {
       const result = await commitChanges(changes, /** @type {any} */ ({ commitType: 'update' }));
       const { body } = /** @type {any} */ (vi.mocked(fetchAPI).mock.calls[0][1]);
 
+      // The moved image keeps its content, which GitLab takes from the existing blob, so the
+      // move has none, and it goes last, after the entries
       expect(body.actions).toEqual([
         { action: 'delete', file_path: 'images/a.jpg', last_commit_id: 'loaded-head-sha' },
         {
@@ -441,19 +456,17 @@ describe('GitLab commits service', () => {
           encoding: 'base64',
           file_path: 'images/a.jpg',
         },
-        // The moved image keeps its content, which GitLab takes from the existing blob
-        {
-          action: 'move',
-          file_path: 'images/c.jpg',
-          previous_path: 'images/b.jpg',
-          last_commit_id: 'loaded-head-sha',
-        },
         {
           action: 'update',
           content: 'text',
           encoding: 'text',
           file_path: 'posts/d.md',
-          previous_path: undefined,
+          last_commit_id: 'loaded-head-sha',
+        },
+        {
+          action: 'move',
+          file_path: 'images/c.jpg',
+          previous_path: 'images/b.jpg',
           last_commit_id: 'loaded-head-sha',
         },
       ]);
@@ -487,14 +500,7 @@ describe('GitLab commits service', () => {
         '/projects/test-owner%2Ftest-repo/repository/commits',
         expect.objectContaining({
           body: expect.objectContaining({
-            actions: [
-              expect.objectContaining({
-                action: 'delete',
-                file_path: 'to-delete.md',
-                content: '',
-                encoding: 'text',
-              }),
-            ],
+            actions: [{ action: 'delete', file_path: 'to-delete.md' }],
           }),
         }),
       );
@@ -658,6 +664,320 @@ describe('GitLab commits service', () => {
         ).rejects.toBe(serverError);
         expect(fetchGraphQL).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('commitChanges with a large changeset', () => {
+    const MB = 1024 * 1024;
+    /**
+     * Make an image change of the given size.
+     * @param {string} path File path.
+     * @param {number} size Size in bytes.
+     * @returns {any} Change.
+     */
+    const image = (path, size) => ({ action: 'create', path, data: { size } });
+
+    /**
+     * Get the bodies of the commit requests made.
+     * @returns {any[]} Request bodies.
+     */
+    const getBodies = () =>
+      vi.mocked(fetchAPI).mock.calls.map(([, init]) => /** @type {any} */ (init).body);
+
+    /**
+     * Get the actions of each commit request made, as action and path pairs.
+     * @returns {string[][][]} Actions.
+     */
+    const getActions = () =>
+      getBodies().map(({ actions }) =>
+        actions.map((/** @type {any} */ { action, file_path: path }) => [action, path]),
+      );
+
+    /**
+     * Answer each commit request with a new commit on top of the previous one.
+     * @param {Record<number, string>} [parents] Parent of the commit at the given index, if it’s
+     * not the previous commit.
+     */
+    const mockCommits = (parents = {}) => {
+      let index = 0;
+
+      vi.mocked(fetchAPI).mockImplementation(async () => {
+        index += 1;
+
+        return {
+          id: `c${index}`,
+          committed_date: '2026-11-01T12:00:00Z',
+          parent_ids: [parents[index] ?? (index === 1 ? 'head0' : `c${index - 1}`)],
+        };
+      });
+    };
+
+    const uploadFailure = new Error('Failed to send the request');
+
+    beforeEach(() => {
+      // The encoded size follows the file size, so the commits can be sized
+      vi.mocked(encodeBase64).mockImplementation(async (blob) =>
+        'x'.repeat(/** @type {any} */ (blob).size),
+      );
+      vi.mocked(createCommitMessage).mockReturnValue('Create gallery');
+      vi.mocked(getGitHash).mockResolvedValue('hash');
+      repositoryHead.current = 'head0';
+      _resetLandedPaths();
+    });
+
+    test('splits the changes into several commits, with the entry and deletions last', async () => {
+      mockCommits();
+
+      const result = await commitChanges(
+        /** @type {any} */ ([
+          { action: 'update', path: 'gallery/x/index.md', data: '+++\n+++' },
+          image('gallery/x/001.jpg', 40 * MB),
+          image('gallery/x/002.jpg', 40 * MB),
+          { action: 'delete', path: 'gallery/x/old.jpg' },
+        ]),
+        /** @type {any} */ ({ commitType: 'update' }),
+      );
+
+      // Two images don’t fit in a single commit
+      expect(getActions()).toEqual([
+        [['create', 'gallery/x/001.jpg']],
+        [
+          ['create', 'gallery/x/002.jpg'],
+          ['update', 'gallery/x/index.md'],
+          ['delete', 'gallery/x/old.jpg'],
+        ],
+      ]);
+      // The files are checked against the head the site data was loaded at, not the previous
+      // commit, which would be on top of a colleague’s change made in the meantime
+      expect(getBodies()[1].actions[1].last_commit_id).toBe('head0');
+      expect(getBodies()[1].actions[2].last_commit_id).toBe('head0');
+      expect(result.sha).toBe('c2');
+      expect(result.parentSha).toBe('head0');
+      expect(Object.keys(result.files)).toHaveLength(3);
+      expect(saveProgress.current).toBeUndefined();
+    });
+
+    test('reports a colleague’s commit that came in between two commits', async () => {
+      mockCommits({ 2: 'colleague' });
+
+      const result = await commitChanges(
+        /** @type {any} */ ([image('a.jpg', 40 * MB), image('b.jpg', 40 * MB)]),
+        /** @type {any} */ ({ commitType: 'uploadMedia' }),
+      );
+
+      expect(result.parentSha).toBe('colleague');
+    });
+
+    test('only creates the branch with the first commit', async () => {
+      mockCommits();
+
+      await commitChanges(
+        /** @type {any} */ ([image('a.jpg', 40 * MB), image('b.jpg', 40 * MB)]),
+        /** @type {any} */ ({ commitType: 'create', branch: 'cms/x', startBranch: 'main' }),
+      );
+
+      expect(getBodies().map(({ start_branch: startBranch }) => startBranch)).toEqual([
+        'main',
+        undefined,
+      ]);
+    });
+
+    test('moves an image in the last commit, before a file created at the path it frees', async () => {
+      mockCommits();
+
+      await commitChanges(
+        /** @type {any} */ ([
+          { ...image('b.jpg', 40 * MB), action: 'move', previousPath: 'a.jpg' },
+          image('c.jpg', 40 * MB),
+          image('d.jpg', 40 * MB),
+          image('a.jpg', 1),
+        ]),
+        /** @type {any} */ ({ commitType: 'update' }),
+      );
+
+      // The move takes no room, as the content isn’t sent again
+      expect(getActions()).toEqual([
+        [['create', 'c.jpg']],
+        [
+          ['create', 'd.jpg'],
+          ['move', 'b.jpg'],
+          ['create', 'a.jpg'],
+        ],
+      ]);
+      expect(getBodies()[1].actions[1]).not.toHaveProperty('content');
+    });
+
+    test('commits a changeset of a usual size at once', async () => {
+      mockCommits();
+
+      await commitChanges(
+        /** @type {any} */ ([
+          { action: 'create', path: 'gallery/x/index.md', data: '+++\n+++' },
+          image('gallery/x/001.jpg', 30 * MB),
+          image('gallery/x/002.jpg', 30 * MB),
+        ]),
+        /** @type {any} */ ({ commitType: 'create' }),
+      );
+
+      expect(fetchAPI).toHaveBeenCalledOnce();
+    });
+
+    test('retries a commit that is too large with half of the files, and stays at that size', async () => {
+      vi.mocked(fetchAPI)
+        .mockRejectedValueOnce(uploadFailure)
+        .mockResolvedValueOnce({ id: 'c1', committed_date: '2026-11-01T12:00:00Z' })
+        .mockResolvedValueOnce({ id: 'c2', committed_date: '2026-11-01T12:00:00Z' })
+        .mockResolvedValueOnce({ id: 'c3', committed_date: '2026-11-01T12:00:00Z' });
+      // The failed commit hasn’t landed
+      vi.mocked(fetchAPIOrUndefined).mockResolvedValue({ commit: { id: 'head0' } });
+
+      const result = await commitChanges(
+        /** @type {any} */ ([
+          image('a.jpg', 20 * MB),
+          image('b.jpg', 20 * MB),
+          image('c.jpg', 20 * MB),
+        ]),
+        /** @type {any} */ ({ commitType: 'uploadMedia' }),
+      );
+
+      expect(fetchAPIOrUndefined).toHaveBeenCalledWith(
+        '/projects/test-owner%2Ftest-repo/repository/branches/main',
+      );
+      // The instance takes 30 MB at most, so the following commits aren’t made any larger
+      expect(getActions()).toEqual([
+        [
+          ['create', 'a.jpg'],
+          ['create', 'b.jpg'],
+          ['create', 'c.jpg'],
+        ],
+        [['create', 'a.jpg']],
+        [['create', 'b.jpg']],
+        [['create', 'c.jpg']],
+      ]);
+      expect(result.sha).toBe('c3');
+    });
+
+    test('retries the first commit on a workflow branch it was to create', async () => {
+      vi.mocked(fetchAPI)
+        .mockRejectedValueOnce(uploadFailure)
+        .mockResolvedValue({ id: 'c1', committed_date: '2026-11-01T12:00:00Z' });
+      // The branch doesn’t exist yet, so the commit hasn’t landed
+      vi.mocked(fetchAPIOrUndefined).mockResolvedValue(undefined);
+
+      await commitChanges(
+        /** @type {any} */ ([image('a.jpg', 0.5 * MB), image('b.jpg', 0.5 * MB)]),
+        /** @type {any} */ ({ commitType: 'create', branch: 'cms/x', startBranch: 'main' }),
+      );
+
+      expect(getActions()).toEqual([
+        [
+          ['create', 'a.jpg'],
+          ['create', 'b.jpg'],
+        ],
+        [['create', 'a.jpg']],
+        [['create', 'b.jpg']],
+      ]);
+      expect(getBodies().map(({ start_branch: startBranch }) => startBranch)).toEqual([
+        'main',
+        'main',
+        undefined,
+      ]);
+    });
+
+    test('gives up on a failed commit when the branch has moved or can’t be looked up', async () => {
+      vi.mocked(fetchAPI).mockRejectedValue(uploadFailure);
+      vi.mocked(fetchAPIOrUndefined).mockResolvedValueOnce({ commit: { id: 'colleague' } });
+
+      const changes = /** @type {any} */ ([image('a.jpg', 0.5 * MB), image('b.jpg', 0.5 * MB)]);
+      const options = /** @type {any} */ ({ commitType: 'uploadMedia' });
+
+      await expect(commitChanges(changes, options)).rejects.toThrow(uploadFailure);
+      vi.mocked(fetchAPIOrUndefined).mockRejectedValueOnce(new Error('offline'));
+      await expect(commitChanges(changes, options)).rejects.toThrow(uploadFailure);
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
+    });
+
+    test('replaces the files that landed when a split save is retried', async () => {
+      const changes = /** @type {any} */ ([
+        { action: 'create', path: 'gallery/x/index.md', data: '+++\n+++' },
+        image('gallery/x/001.jpg', 40 * MB),
+        image('gallery/x/002.jpg', 40 * MB),
+      ]);
+
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({
+          id: 'c1',
+          committed_date: '2026-11-01T12:00:00Z',
+          parent_ids: ['head0'],
+        })
+        .mockRejectedValueOnce(new Error('Server error', { cause: { status: 500 } }));
+
+      await expect(
+        commitChanges(changes, /** @type {any} */ ({ commitType: 'create' })),
+      ).rejects.toThrow('Server error');
+      // The known head moves on to the commit that landed, so the retry isn’t taken for a remote
+      // change, which would save the images again under new names
+      expect(repositoryHead.current).toBe('c1');
+
+      vi.mocked(fetchAPI).mockReset();
+      mockCommits();
+      await commitChanges(changes, /** @type {any} */ ({ commitType: 'create' }));
+
+      // GitLab refuses to create a file that exists, and the file didn’t exist as of the head
+      expect(getBodies()[0].actions.slice(0, 2)).toEqual([
+        { action: 'delete', file_path: 'gallery/x/001.jpg' },
+        expect.objectContaining({ action: 'create', file_path: 'gallery/x/001.jpg' }),
+      ]);
+
+      // Once the save has gone through, the files are created as usual
+      vi.mocked(fetchAPI).mockReset();
+      mockCommits();
+      await commitChanges(changes, /** @type {any} */ ({ commitType: 'create' }));
+      expect(getActions()[0]).toEqual([['create', 'gallery/x/001.jpg']]);
+    });
+
+    test('keeps the head when a commit landed on top of a colleague’s before a failure', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({
+          id: 'c1',
+          committed_date: '2026-11-01T12:00:00Z',
+          parent_ids: ['colleague'],
+        })
+        .mockRejectedValueOnce(new Error('Server error', { cause: { status: 400 } }));
+      // The branch points at the commit that landed, which isn’t where the save started from
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        project: { repository: { tree: { lastCommit: { sha: 'c1', message: '' } } } },
+      });
+
+      await expect(
+        commitChanges(
+          /** @type {any} */ ([
+            { action: 'update', path: 'gallery/x/index.md', data: '+++\n+++' },
+            image('gallery/x/001.jpg', 40 * MB),
+            image('gallery/x/002.jpg', 40 * MB),
+          ]),
+          /** @type {any} */ ({ commitType: 'update' }),
+        ),
+      ).rejects.toThrow('The branch has moved since the site data was loaded.');
+      // Taking the commit as the head would mean the colleague’s commit is never fetched
+      expect(repositoryHead.current).toBe('head0');
+    });
+
+    test('doesn’t keep track of the files that landed on a workflow branch', async () => {
+      const changes = /** @type {any} */ ([image('a.jpg', 40 * MB), image('b.jpg', 40 * MB)]);
+      const options = /** @type {any} */ ({ commitType: 'create', branch: 'cms/x' });
+
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({ id: 'c1', committed_date: '2026-11-01T12:00:00Z' })
+        .mockRejectedValueOnce(new Error('Server error', { cause: { status: 500 } }));
+
+      await expect(commitChanges(changes, options)).rejects.toThrow('Server error');
+      expect(repositoryHead.current).toBe('head0');
+
+      vi.mocked(fetchAPI).mockReset();
+      mockCommits();
+      await commitChanges(/** @type {any} */ ([changes[0]]), /** @type {any} */ ({}));
+      expect(getActions()).toEqual([[['create', 'a.jpg']]]);
     });
   });
 

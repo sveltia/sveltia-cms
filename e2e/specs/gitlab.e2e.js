@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 import { createPNG } from '../fixtures/files.js';
 import { getBlobSHA } from '../fixtures/git.js';
 import { expect, GITLAB_CONFIG, test } from '../fixtures/test.js';
@@ -193,6 +195,63 @@ test('uploads an image', async ({ cms, gitlab, page }) => {
       content: kite.toString('base64'),
     }),
   ]);
+});
+
+test('splits an upload over the request size limit of the instance into several commits', async ({
+  cms,
+  gitlab,
+  page,
+}) => {
+  // An image padded with random bytes, which don’t compress, takes 1 MB, or 1.3 MB once encoded
+  const files = ['one.png', 'two.png', 'three.png'].map((name) => ({
+    name,
+    mimeType: 'image/png',
+    buffer: Buffer.concat([createPNG({ color: [0, 0, 255] }), randomBytes(1024 * 1024)]),
+  }));
+
+  let refusals = 0;
+
+  // An instance that takes 2 MB at most, like NGINX with a low `client_max_body_size`, answers a
+  // larger request with 413 Content Too Large, without CORS headers
+  await page.route(`${gitlab.apiRoot}/**`, async (route) => {
+    const request = route.request();
+
+    if (
+      request.method() === 'POST' &&
+      request.url().endsWith('/repository/commits') &&
+      (request.postDataBuffer()?.length ?? 0) > 2 * 1024 * 1024
+    ) {
+      refusals += 1;
+      await route.fulfill({ status: 413, contentType: 'text/html', body: '413' });
+    } else {
+      await route.fallback();
+    }
+  });
+
+  await cms.open();
+  await page.getByRole('radio', { name: 'Assets' }).click();
+  await page.getByRole('button', { name: 'Upload New Assets' }).first().click();
+
+  const [chooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page
+      .getByRole('dialog', { name: 'Upload New Assets' })
+      .getByRole('button', { name: 'Choose Files' })
+      .click(),
+  ]);
+
+  await chooser.setFiles(files);
+  await page
+    .getByRole('alertdialog', { name: 'Upload New Assets' })
+    .getByRole('button', { name: 'Upload' })
+    .click();
+
+  await expect
+    .poll(() => files.map(({ name }) => gitlab.head.tree.get(`static/images/${name}`)))
+    .toEqual(files.map(({ buffer }) => getBlobSHA(buffer)));
+  // The three files are sent again in commits of half the size, one file each
+  expect(refusals).toBe(1);
+  expect(gitlab.received.map(({ actions }) => actions.length)).toEqual([1, 1, 1]);
 });
 
 test('renames an image without sending its content again, which keeps it in Git LFS', async ({
