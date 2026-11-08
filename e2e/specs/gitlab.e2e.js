@@ -195,6 +195,44 @@ test('uploads an image', async ({ cms, gitlab, page }) => {
   ]);
 });
 
+test('renames an image without sending its content again, which keeps it in Git LFS', async ({
+  cms,
+  gitlab,
+  page,
+}) => {
+  const sunset = createPNG({ color: [255, 128, 0] });
+
+  gitlab.commit({ 'static/images/sunset.png': sunset });
+
+  const loadedHead = gitlab.head.oid;
+
+  await cms.open();
+  await page.getByRole('radio', { name: 'Assets' }).click();
+  await page.getByRole('row', { name: 'sunset.png' }).click();
+  await cms.chooseMenuItem(
+    page.getByRole('button', { name: 'Show Edit Options' }),
+    page.getByRole('menuitem', { name: 'Rename Asset' }),
+  );
+
+  const dialog = page.getByRole('dialog', { name: /Rename/ });
+
+  await dialog.getByRole('textbox').fill('dusk.png');
+  await dialog.getByRole('button', { name: 'Rename' }).click();
+
+  await expect.poll(() => gitlab.head.tree.get('static/images/dusk.png')).toBe(getBlobSHA(sunset));
+  expect(gitlab.head.tree.has('static/images/sunset.png')).toBe(false);
+  // GitLab takes the existing blob for a move without content, which for a file tracked with Git
+  // LFS is the pointer, while a move with content would commit the bytes as a regular blob
+  expect(gitlab.received[0].actions).toEqual([
+    {
+      action: 'move',
+      file_path: 'static/images/dusk.png',
+      previous_path: 'static/images/sunset.png',
+      last_commit_id: loadedHead,
+    },
+  ]);
+});
+
 test('lists an entry a colleague has added, on the next scheduled check', async ({
   cms,
   gitlab,

@@ -412,6 +412,54 @@ describe('GitLab commits service', () => {
       });
     });
 
+    test('deletes and creates a replaced binary file, and moves one without content, to keep it in LFS', async () => {
+      repositoryHead.current = 'loaded-head-sha';
+
+      const changes = /** @type {any} */ ([
+        { action: 'update', path: 'images/a.jpg', data: new Blob(['a']) },
+        {
+          action: 'move',
+          path: 'images/c.jpg',
+          previousPath: 'images/b.jpg',
+          data: new Blob(['b']),
+        },
+        { action: 'update', path: 'posts/d.md', data: 'text' },
+      ]);
+
+      vi.mocked(createCommitMessage).mockReturnValue('Update');
+      vi.mocked(fetchAPI).mockResolvedValue({ id: 'c1', committed_date: '2023-01-01' });
+      vi.mocked(getGitHash).mockResolvedValue('file123');
+
+      const result = await commitChanges(changes, /** @type {any} */ ({ commitType: 'update' }));
+      const { body } = /** @type {any} */ (vi.mocked(fetchAPI).mock.calls[0][1]);
+
+      expect(body.actions).toEqual([
+        { action: 'delete', file_path: 'images/a.jpg', last_commit_id: 'loaded-head-sha' },
+        {
+          action: 'create',
+          content: 'base64encodedcontent==',
+          encoding: 'base64',
+          file_path: 'images/a.jpg',
+        },
+        // The moved image keeps its content, which GitLab takes from the existing blob
+        {
+          action: 'move',
+          file_path: 'images/c.jpg',
+          previous_path: 'images/b.jpg',
+          last_commit_id: 'loaded-head-sha',
+        },
+        {
+          action: 'update',
+          content: 'text',
+          encoding: 'text',
+          file_path: 'posts/d.md',
+          previous_path: undefined,
+          last_commit_id: 'loaded-head-sha',
+        },
+      ]);
+      expect(Object.keys(result.files)).toEqual(['images/a.jpg', 'images/c.jpg', 'posts/d.md']);
+    });
+
     test('handles delete actions without data', async () => {
       const changes = /** @type {any} */ ([
         {

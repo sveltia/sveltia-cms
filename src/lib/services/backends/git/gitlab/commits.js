@@ -112,16 +112,50 @@ export const commitChanges = async (changes, options) => {
   // too
   const expectedHead = (options.branch ? options.headOid : repositoryHead.current) || undefined;
 
-  const actions = await Promise.all(
-    changes.map(async ({ action, path, previousPath, data = '' }) => ({
-      action,
-      content: typeof data === 'string' ? data : await encodeBase64(data),
-      encoding: typeof data === 'string' ? 'text' : 'base64',
-      file_path: path,
-      previous_path: previousPath,
-      ...(expectedHead && action !== 'create' ? { last_commit_id: expectedHead } : {}),
-    })),
-  );
+  // GitLab only runs a file through its Git LFS handling when it’s created: an `update`, or a
+  // `move` with content, commits the bytes as a regular blob even if `.gitattributes` tracks the
+  // path with LFS. A replaced binary file is therefore deleted and created again in the same commit
+  // instead, which makes the same tree for a file outside LFS. The deletion still carries
+  // `last_commit_id`, so a file someone else has changed since is still refused. A moved binary
+  // file, i.e. an asset, keeps its content, so it’s moved without any: GitLab then takes the
+  // existing blob, which is an LFS pointer for a file tracked with LFS, and the file doesn’t have
+  // to be uploaded again. Text files, like entries, are left as they are
+  // @see https://github.com/sveltia/sveltia-cms/issues/1140
+  const actions = (
+    await Promise.all(
+      changes.map(async ({ action, path, previousPath, data = '' }) => {
+        const isText = typeof data === 'string';
+
+        const lastCommit =
+          expectedHead && action !== 'create' ? { last_commit_id: expectedHead } : {};
+
+        if (!isText && action === 'move') {
+          return [{ action, file_path: path, previous_path: previousPath, ...lastCommit }];
+        }
+
+        const content = isText ? data : await encodeBase64(data);
+        const encoding = isText ? 'text' : 'base64';
+
+        if (!isText && action === 'update') {
+          return [
+            { action: 'delete', file_path: path, ...lastCommit },
+            { action: 'create', content, encoding, file_path: path },
+          ];
+        }
+
+        return [
+          {
+            action,
+            content,
+            encoding,
+            file_path: path,
+            previous_path: previousPath,
+            ...lastCommit,
+          },
+        ];
+      }),
+    )
+  ).flat();
 
   const endpoint = `/projects/${getProjectId(fork)}/repository/commits`;
   const commitMessage = signOffCommitMessage(createCommitMessage(changes, options));

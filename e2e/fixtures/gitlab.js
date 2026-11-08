@@ -1292,8 +1292,18 @@ export class MockGitLab extends MockGitRepository {
           }
 
           if (action === 'move') {
+            const previousSha = /** @type {string} */ (tree.get(previousPath));
+
             tree.delete(previousPath);
             paths.push(previousPath);
+
+            // Like GitLab, a move without content keeps the file’s content
+            if (content === undefined) {
+              tree.set(path, previousSha);
+              paths.push(path);
+
+              return undefined;
+            }
           }
 
           const buffer = Buffer.from(content, encoding === 'base64' ? 'base64' : 'utf8');
