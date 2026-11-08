@@ -47,8 +47,9 @@
 
   // The field controls are those of the entry editor, some of which look for the draft being
   // edited, e.g. to offer the entries a Relation field can create. There is no draft here, as the
-  // values are kept in the bulk edits, so the controls are given an empty one. Each cell provides
-  // the values of its row instead
+  // values are kept in the bulk edits, so the controls are given an empty one, which keeps the
+  // draft-only features off. Each cell provides the values and slug of its row instead, which the
+  // controls read through `getEditorEntryValues()`
   setEntryDraftContext(/** @type {EntryDraftState} */ ({ current: undefined }));
 
   const fields = $derived(getBulkEditableFields(collection));

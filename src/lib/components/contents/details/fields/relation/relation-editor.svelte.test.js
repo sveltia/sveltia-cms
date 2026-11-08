@@ -174,6 +174,9 @@ describe('RelationEditor', () => {
   });
 
   test('reads the entry of the row in the bulk editor, which has no draft', async () => {
+    // The referenced collection allows creating entries, but only from a draft
+    vi.mocked(getCreatableCollection).mockReturnValue(getMemberCollection());
+
     const props = {
       locale: '_default',
       keyPath: 'author',
@@ -194,8 +197,13 @@ describe('RelationEditor', () => {
       expect.objectContaining({
         currentLocaleValues: { title: 'Hello', team: 'red' },
         currentSlug: 'hello',
+        // The bulk editor only edits the default locale, which has every value
+        sharedValues: undefined,
       }),
     );
+    // The row isn’t a draft, so the quick-add dialog, which writes into one, stays off
+    expect(page.getByRole('button', { name: /^Add / }).elements()).toHaveLength(0);
+    expect(getCreatableCollection).not.toHaveBeenCalled();
 
     // Neither a draft nor a row
     await renderWithDraft(RelationEditor, { draft: undefined, props });

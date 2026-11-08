@@ -19,6 +19,7 @@
   import LocationSelector from '$lib/components/assets/browser/location-selector.svelte';
   import CreateSubfolderDialog from '$lib/components/assets/list/create-subfolder-dialog.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
+  import { getPendingUploadAction } from '$lib/services/assets/browser/pending-uploads';
   import {
     getInitialLibraryName,
     getInsertedResources,
@@ -272,13 +273,6 @@
   const isCloudLibrary = $derived(
     cloudServiceEntries.map(([serviceId]) => serviceId).includes(libraryName),
   );
-  /**
-   * Whether the selected location can take the pending files: a cloud storage service that supports
-   * uploads. Cloudinary, for one, only takes files through its own widget.
-   */
-  const canTakePendingFiles = $derived(
-    !!cloudServiceEntries.find(([serviceId]) => serviceId === libraryName)?.[1].upload,
-  );
   /** Field configuration for the selected service, with its `prefix` option filled, if any. */
   const filledPrefix = $derived(
     fillLibraryPrefix({
@@ -439,29 +433,24 @@
     }
   });
 
-  // Upload pending files (e.g. dropped on the file editor) to the cloud service panel once it can
-  // take them, which may only be after the user has provided the credentials
+  // Take the pending files (e.g. dropped on the file editor) to a cloud storage service: upload
+  // them once its panel can take them, select one that can, or report that none can
   $effect(() => {
-    if (isCloudLibrary && pendingFiles.length && externalAssetsPanel?.canUpload()) {
-      externalAssetsPanel.uploadFiles(pendingFiles);
+    const action = getPendingUploadAction({
+      open,
+      pendingFileCount: pendingFiles.length,
+      libraryName,
+      cloudServiceEntries,
+      canUpload: !!externalAssetsPanel?.canUpload(),
+    });
+
+    if (action.type === 'upload') {
+      // The panel is there, as it says it can upload
+      /** @type {ExternalAssetsPanel} */ (externalAssetsPanel).uploadFiles(pendingFiles);
       pendingFiles = [];
-    }
-  });
-
-  // Take the pending files to a cloud storage service that can upload them. The dialog stays
-  // mounted while closed, so the location offered first was picked before the files were dropped,
-  // and may be a stock photo service. If no service can take them, e.g. with only Cloudinary, let
-  // the user know rather than leave them out silently
-  $effect(() => {
-    if (!open || !pendingFiles.length || canTakePendingFiles) {
-      return;
-    }
-
-    const [serviceId] = cloudServiceEntries.find(([, { upload }]) => !!upload) ?? [];
-
-    if (serviceId) {
-      libraryName = serviceId;
-    } else {
+    } else if (action.type === 'switch') {
+      libraryName = action.serviceId;
+    } else if (action.type === 'reject') {
       pendingFiles = [];
       pendingFilesRejected = true;
     }

@@ -859,6 +859,11 @@ describe('draft/update/copy', () => {
       Object.defineProperty(translatorApiKeyDialogState, 'current', {
         configurable: true,
         /**
+         * Get the dialog state, which no earlier request is waiting on.
+         * @returns {any} Dialog state.
+         */
+        get: () => ({ show: false, multiple: false }),
+        /**
          * Resolve the dialog right away.
          * @param {any} state Dialog state.
          */
@@ -889,6 +894,44 @@ describe('draft/update/copy', () => {
 
       // Should not translate without API key
       expect(currentValues.ja.title).toBe('');
+    });
+
+    it('should settle an earlier request still waiting for an API key', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+      const { translatorApiKeyDialogState } = await import('$lib/services/contents/editor');
+      const earlierResolve = vi.fn();
+      /** @type {any} */
+      let state = { show: false, multiple: false, resolve: earlierResolve };
+
+      prefs.apiKeys = {};
+      translator.current = { serviceId: 'google', markdownSupported: false, translate: vi.fn() };
+
+      Object.defineProperty(translatorApiKeyDialogState, 'current', {
+        configurable: true,
+        /**
+         * Get the dialog state.
+         * @returns {any} Dialog state.
+         */
+        get: () => state,
+        /**
+         * Store the dialog state, cancelling the new request right away.
+         * @param {any} newState Dialog state.
+         */
+        set: (newState) => {
+          state = newState;
+          newState.resolve?.(undefined);
+        },
+      });
+
+      await translateFields({
+        currentValues: { en: { title: 'English Title' }, ja: { title: '' } },
+        options: { sourceLanguage: 'en', targetLanguage: 'ja' },
+        copingFieldMap: { title: { value: 'English Title', format: 'plain' } },
+      });
+
+      // The dialog answers the new request only, so the earlier one is settled without a key
+      expect(earlierResolve).toHaveBeenCalledWith();
     });
 
     it('should handle translation API errors gracefully', async () => {

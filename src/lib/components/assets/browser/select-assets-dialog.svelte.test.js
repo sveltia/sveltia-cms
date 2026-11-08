@@ -1261,26 +1261,6 @@ describe('SelectAssetsDialog', () => {
     await waitForToastsToHide();
   });
 
-  test('reports pending files that Cloudinary can’t take, as it only uploads through its widget', async () => {
-    const { props } = await renderDialog({
-      assetLibraryFolderMap: { global: { folder: globalAssetFolder.current, enabled: false } },
-      enabledCloudServiceEntries: [
-        [
-          'cloudinary',
-          createMockCloudService({ serviceId: 'cloudinary', serviceLabel: 'Cloudinary' }),
-        ],
-      ],
-      pendingFiles: [await createMockImageFile({ name: 'pending.png' })],
-    });
-
-    await expect
-      .element(page.getByRole('dialog').getByRole('option', { name: 'Cloudinary' }))
-      .toHaveAttribute('aria-selected', 'true');
-    await expect.poll(getErrorToastText).toBe('error Error Upload failed.');
-    expect(props.pendingFiles).toEqual([]);
-    await waitForToastsToHide();
-  });
-
   test('takes the files dropped on the field to the cloud service once signed in', async () => {
     const upload = vi.fn(async (/** @type {File[]} */ files) =>
       files.map((file) => createMockExternalAsset({ fileName: file.name })),

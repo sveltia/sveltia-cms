@@ -9,6 +9,7 @@ import {
   fetchPullRequestFileList,
   fetchPullRequestFiles,
   MAX_ITEMS,
+  parseAuthor,
   parseFileNodes,
   updateDraftState,
   updateLabels,
@@ -129,24 +130,20 @@ const getFetchPullRequestsQuery = () => `
  * @param {WorkflowStatus} status Status of the pull request.
  * @returns {WorkflowPullRequest} Pull request.
  */
-const toPullRequest = (node, status) => {
-  const { login, name, email, databaseId } = node.author ?? {};
-
-  return {
-    number: node.number,
-    nodeId: node.id,
-    title: node.title,
-    url: node.url,
-    branch: node.headRefName,
-    headSHA: node.headRefOid,
-    status,
-    createdDate: new Date(node.createdAt),
-    updatedDate: new Date(node.updatedAt),
-    author: login ? { name: name ?? login, email: email ?? '', id: databaseId, login } : undefined,
-    files: parseFileNodes(node.files?.nodes ?? []),
-    deletionGroup: parseDeletionGroup(node.body),
-  };
-};
+const toPullRequest = (node, status) => ({
+  number: node.number,
+  nodeId: node.id,
+  title: node.title,
+  url: node.url,
+  branch: node.headRefName,
+  headSHA: node.headRefOid,
+  status,
+  createdDate: new Date(node.createdAt),
+  updatedDate: new Date(node.updatedAt),
+  author: parseAuthor(node.author),
+  files: parseFileNodes(node.files?.nodes ?? []),
+  deletionGroup: parseDeletionGroup(node.body),
+});
 
 /**
  * Parse a pull request node returned by the GraphQL API.

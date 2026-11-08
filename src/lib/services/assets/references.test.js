@@ -8,10 +8,11 @@ import {
   getComparableAssetURL,
   getEntriesByAssets,
   getEntriesByAssetURL,
-  getMatchingAssetURL,
+  matchAssetURL,
 } from '$lib/services/assets/references';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
+import { parseMediaSource } from '$lib/services/contents/fields/rich-text/previews/media-sources';
 
 // Mock dependencies
 vi.mock('$lib/services/assets/media-field', () => {
@@ -708,7 +709,7 @@ describe('getComparableAssetURL()', () => {
   });
 });
 
-describe('getMatchingAssetURL()', () => {
+describe('matchAssetURL()', () => {
   /**
    * Check whether a URL is one of the given ones.
    * @param {string[]} urls URLs.
@@ -717,23 +718,45 @@ describe('getMatchingAssetURL()', () => {
   const isAnyOf = (urls) => (url) => urls.includes(url);
 
   test('matches a value as is, decoded, and without its fragment', () => {
-    expect(getMatchingAssetURL('/a b.jpg', isAnyOf(['/a b.jpg']))).toBe('/a b.jpg');
-    expect(getMatchingAssetURL('/a%20b.jpg', isAnyOf(['/a b.jpg']))).toBe('/a b.jpg');
-    expect(getMatchingAssetURL('/caf%C3%A9.jpg', isAnyOf(['/café.jpg']))).toBe('/café.jpg');
-    expect(getMatchingAssetURL('/a.jpg#x', isAnyOf(['/a.jpg']))).toBe('/a.jpg');
-    expect(getMatchingAssetURL('/a%20b.jpg#x', isAnyOf(['/a b.jpg']))).toBe('/a b.jpg');
+    expect(matchAssetURL('/a b.jpg', isAnyOf(['/a b.jpg']))).toEqual({
+      url: '/a b.jpg',
+      fragment: '',
+      decoded: false,
+    });
+    expect(matchAssetURL('/a%20b.jpg', isAnyOf(['/a b.jpg']))).toEqual({
+      url: '/a b.jpg',
+      fragment: '',
+      decoded: true,
+    });
+    expect(matchAssetURL('/caf%C3%A9.jpg', isAnyOf(['/café.jpg']))?.url).toBe('/café.jpg');
+    expect(matchAssetURL('/a.jpg#x', isAnyOf(['/a.jpg']))).toEqual({
+      url: '/a.jpg',
+      fragment: '#x',
+      decoded: false,
+    });
+    expect(matchAssetURL('/a%20b.jpg#x', isAnyOf(['/a b.jpg']))).toEqual({
+      url: '/a b.jpg',
+      fragment: '#x',
+      decoded: true,
+    });
     // The whole value comes first, as a file name can contain `#`
-    expect(getMatchingAssetURL('/a#1.jpg', isAnyOf(['/a', '/a#1.jpg']))).toBe('/a#1.jpg');
+    expect(matchAssetURL('/a#1.jpg', isAnyOf(['/a', '/a#1.jpg']))?.url).toBe('/a#1.jpg');
     // A `%` that isn’t an escape sequence is left as is
-    expect(getMatchingAssetURL('/50%.jpg', isAnyOf(['/50%.jpg']))).toBe('/50%.jpg');
+    expect(matchAssetURL('/50%.jpg', isAnyOf(['/50%.jpg']))?.url).toBe('/50%.jpg');
+  });
+
+  test('accepts a parsed media URL', () => {
+    expect(
+      matchAssetURL(parseMediaSource('<a b.jpg#x>', 'markdown'), isAnyOf(['a b.jpg'])),
+    ).toEqual({ url: 'a b.jpg', fragment: '#x', decoded: false });
   });
 
   test('returns nothing for a value that matches no URL', () => {
-    expect(getMatchingAssetURL('/b.jpg', isAnyOf(['/a.jpg']))).toBeUndefined();
-    expect(getMatchingAssetURL('/50%.jpg', isAnyOf(['/a.jpg']))).toBeUndefined();
-    expect(getMatchingAssetURL('/b.jpg#x', isAnyOf(['/a.jpg']))).toBeUndefined();
+    expect(matchAssetURL('/b.jpg', isAnyOf(['/a.jpg']))).toBeUndefined();
+    expect(matchAssetURL('/50%.jpg', isAnyOf(['/a.jpg']))).toBeUndefined();
+    expect(matchAssetURL('/b.jpg#x', isAnyOf(['/a.jpg']))).toBeUndefined();
     // A fragment alone points at no file
-    expect(getMatchingAssetURL('#x', isAnyOf(['']))).toBeUndefined();
+    expect(matchAssetURL('#x', isAnyOf(['']))).toBeUndefined();
   });
 });
 
@@ -1120,6 +1143,37 @@ describe('getEntriesByAssets()', () => {
         '<img src="/uploads/my%20photo.jpg">',
       ].join('\n\n'),
       html: '<p><img src="/uploads/my%20photo.jpg"></p>',
+    });
+  });
+
+  test('encodes a new URL by where the reference is written, not by what it holds', async () => {
+    await setup();
+
+    const content = {
+      body: [
+        // A source wrapped in angle brackets is kept unencoded, even if it held no space, while
+        // one that isn’t is encoded, even if it held a space
+        '![a](</uploads/a.jpg>) ![b](/uploads/old name.jpg) ![c](</uploads/a.jpg#x>)',
+        // An HTML attribute holding a space keeps holding it as is
+        '<img src="/uploads/old name.jpg#y">',
+      ].join('\n\n'),
+    };
+
+    const a = createEntry('a', content);
+
+    await getEntriesByAssets(
+      [
+        { url: '/uploads/a.jpg', newURL: '/uploads/my photo.jpg' },
+        { url: '/uploads/old name.jpg', newURL: '/uploads/new name.jpg' },
+      ],
+      { entries: [a] },
+    );
+
+    expect(content).toEqual({
+      body: [
+        '![a](</uploads/my photo.jpg>) ![b](/uploads/new%20name.jpg) ![c](</uploads/my photo.jpg#x>)',
+        '<img src="/uploads/new name.jpg#y">',
+      ].join('\n\n'),
     });
   });
 

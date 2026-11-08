@@ -399,6 +399,9 @@ export const translateFields = async ({
   if (!apiKey) {
     const { promise, resolve } = Promise.withResolvers();
 
+    // An earlier request still waiting for a key, e.g. one whose dialog is closing, is settled
+    // without one, as the dialog now answers this request only
+    translatorApiKeyDialogState.current.resolve?.();
     translatorApiKeyDialogState.current = { show: true, multiple: count > 1, resolve };
 
     // The promise will be resolved once the user enters an API key on the dialog

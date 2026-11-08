@@ -52,9 +52,51 @@ export const MARKDOWN_MEDIA_REGEX = new RegExp(
 );
 
 /**
+ * Where a media URL is written: as the source of a Markdown image, or in an attribute of an HTML
+ * media element, including one written as raw HTML in a Markdown body.
+ * @typedef {'markdown' | 'html'} MediaSourceSyntax
+ */
+
+/**
+ * Media URL parsed from a field value, or from a Markdown image source or an HTML attribute in it.
+ * The `#` starting a fragment can’t be told from one in a file name written unencoded, e.g. `photo
+ * #1.jpg`, so the URL is split at its first `#`, and a reader decides which of the two forms to
+ * go by: the whole URL, or the path without the fragment.
+ * @typedef {object} MediaSource
+ * @property {string} url URL as written, without the angle brackets of a Markdown image source.
+ * @property {string} path URL up to its first `#`, or the whole URL if it has none, or starts with
+ * one, as a fragment alone points at no file.
+ * @property {string} fragment Rest of the URL from its first `#`, or an empty string.
+ * @property {MediaSourceSyntax} [syntax] Where the URL is written, unless it’s a field value as a
+ * whole, as in an Image or File field.
+ * @property {boolean} bracketed Whether the URL is a Markdown image source wrapped in angle
+ * brackets, which allow spaces in it, e.g. `<my image.png>`.
+ */
+
+/**
+ * Parse a media URL.
+ * @param {string} source Field value, Markdown image source as written, including any angle
+ * brackets, or HTML attribute value with the character references decoded.
+ * @param {MediaSourceSyntax} [syntax] Where the URL is written, unless it’s a field value as a
+ * whole.
+ * @returns {MediaSource} Parsed URL.
+ */
+export const parseMediaSource = (source, syntax) => {
+  const bracketed =
+    syntax === 'markdown' && source.length > 2 && source.startsWith('<') && source.endsWith('>');
+
+  const url = bracketed ? source.slice(1, -1) : source;
+  const fragmentIndex = url.indexOf('#');
+  const path = fragmentIndex > 0 ? url.slice(0, fragmentIndex) : url;
+
+  return { url, path, fragment: url.slice(path.length), syntax, bracketed };
+};
+
+/**
  * Function called for each media URL found in a value, returning a new URL to replace it with,
- * `null` to remove it, or `undefined` to leave it as is.
- * @typedef {(url: string) => string | null | undefined} MediaURLCallback
+ * `null` to remove it, or `undefined` to leave it as is. It’s given the URL, and the URL parsed
+ * along with where it’s written.
+ * @typedef {(url: string, source: MediaSource) => string | null | undefined} MediaURLCallback
  */
 
 /**
@@ -78,7 +120,7 @@ export const updateMediaElementURLs = (element, callback) => {
     }
 
     if (name !== 'srcset') {
-      const url = callback(value);
+      const url = callback(value, parseMediaSource(value, 'html'));
 
       if (url === null) {
         element.removeAttribute(name);
@@ -91,7 +133,9 @@ export const updateMediaElementURLs = (element, callback) => {
       return;
     }
 
-    const newValue = mapSrcset(parseSrcset(value), (url) => callback(url));
+    const newValue = mapSrcset(parseSrcset(value), (url) =>
+      callback(url, parseMediaSource(url, 'html')),
+    );
 
     if (newValue === undefined) {
       return;
@@ -158,9 +202,10 @@ const updateMarkdownMediaURLs = (value, callback) =>
         /**
          * Leave a URL as is rather than remove it.
          * @param {string} url URL.
+         * @param {MediaSource} source Parsed URL.
          * @returns {string | undefined} New URL.
          */
-        callback: (url) => callback(url) ?? undefined,
+        callback: (url, source) => callback(url, source) ?? undefined,
       });
 
       return element ? serializeStartTag(element) : markup;
@@ -173,9 +218,8 @@ const updateMarkdownMediaURLs = (value, callback) =>
       return markup;
     }
 
-    // A source can be wrapped in angle brackets, which allow spaces in it, e.g. `<my image.png>`
-    const bracketed = source.length > 2 && source.startsWith('<') && source.endsWith('>');
-    const url = callback(bracketed ? source.slice(1, -1) : source);
+    const parsed = parseMediaSource(source, 'markdown');
+    const url = callback(parsed.url, parsed);
 
     if (typeof url !== 'string') {
       return markup;
@@ -183,7 +227,7 @@ const updateMarkdownMediaURLs = (value, callback) =>
 
     // The source comes right after `![`, the alt text and `](`
     const start = alt.length + 4;
-    const newSource = bracketed ? `<${url}>` : url;
+    const newSource = parsed.bracketed ? `<${url}>` : url;
 
     return `${markup.slice(0, start)}${newSource}${markup.slice(start + source.length)}`;
   });

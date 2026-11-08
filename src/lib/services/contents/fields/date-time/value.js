@@ -8,7 +8,13 @@ import dayjsUTC from 'dayjs/plugin/utc';
 
 import { parseDateTimeConfig } from './config.js';
 import { getFormatLocale } from './locales.js';
-import { formatInLocale, getDate, getParser, parseWithFormatFallback } from './parse.js';
+import {
+  formatInLocale,
+  getDate,
+  getParser,
+  getStoredValueTimeZone,
+  parseWithFormatFallback,
+} from './parse.js';
 import { getTimeZoneForStoredValue } from './timezone.js';
 
 /**
@@ -161,6 +167,25 @@ export const formatInTimeZone = (instant, format, localeKey) => {
   return (localeKey ? wallTime.locale(localeKey) : wallTime)
     .utcOffset(offset, true)
     .format(_format);
+};
+
+/**
+ * Format an instant in the time zone a stored value is read in, so it’s shown with the wall time
+ * and offset the field’s input has. See `getStoredValueTimeZone()`. Only the zone’s offset is taken
+ * from `.tz()`, which creates its instance from the wall time in the browser’s time zone, shifting
+ * one in the browser’s DST gap by an hour.
+ * @param {dayjs.Dayjs} instant Instant.
+ * @param {string} format Format string.
+ * @param {DateTimeField} fieldConfig Field configuration.
+ * @param {string} [localeKey] Day.js locale, as returned by `getFormatLocale()`.
+ * @returns {string} Formatted value.
+ */
+export const formatInFieldTimeZone = (instant, format, fieldConfig, localeKey) => {
+  const timeZone = getStoredValueTimeZone(fieldConfig);
+
+  return timeZone
+    ? formatInTimeZone(instant.utcOffset(instant.tz(timeZone).utcOffset()), format, localeKey)
+    : formatInLocale(instant, format, localeKey);
 };
 
 /**

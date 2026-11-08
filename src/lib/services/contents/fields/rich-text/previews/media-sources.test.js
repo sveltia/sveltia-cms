@@ -8,8 +8,10 @@ import {
   getRichTextMediaSources,
   MARKDOWN_IMAGE_REGEX,
   MARKDOWN_MEDIA_REGEX,
+  parseMediaSource,
   replaceRichTextMediaSources,
   rewriteMediaStartTag,
+  updateRichTextMediaURLs,
 } from '$lib/services/contents/fields/rich-text/previews/media-sources';
 import { countMatches, expectLinearTime } from '$lib/test/complexity';
 
@@ -154,6 +156,61 @@ describe('MARKDOWN_MEDIA_REGEX', () => {
     // None of the tags is closed
     expect(countMatches(build(100), MARKDOWN_MEDIA_REGEX)).toBe(0);
     expectLinearTime(build, (text) => countMatches(text, MARKDOWN_MEDIA_REGEX), 1000);
+  });
+});
+
+describe('parseMediaSource()', () => {
+  test('splits a URL at its first `#`', () => {
+    expect(parseMediaSource('/a b.png')).toEqual({
+      url: '/a b.png',
+      path: '/a b.png',
+      fragment: '',
+      syntax: undefined,
+      bracketed: false,
+    });
+    expect(parseMediaSource('/a#1.png#x', 'html')).toEqual({
+      url: '/a#1.png#x',
+      path: '/a',
+      fragment: '#1.png#x',
+      syntax: 'html',
+      bracketed: false,
+    });
+    // A fragment alone points at no file
+    expect(parseMediaSource('#x')).toMatchObject({ path: '#x', fragment: '' });
+  });
+
+  test('strips the angle brackets of a Markdown image source only', () => {
+    expect(parseMediaSource('<a b.png#x>', 'markdown')).toEqual({
+      url: 'a b.png#x',
+      path: 'a b.png',
+      fragment: '#x',
+      syntax: 'markdown',
+      bracketed: true,
+    });
+    expect(parseMediaSource('<>', 'markdown')).toMatchObject({ url: '<>', bracketed: false });
+    expect(parseMediaSource('<a.png>', 'html')).toMatchObject({ url: '<a.png>', bracketed: false });
+    expect(parseMediaSource('<a.png>')).toMatchObject({ url: '<a.png>', bracketed: false });
+  });
+});
+
+describe('updateRichTextMediaURLs()', () => {
+  test('passes each URL parsed along with where it’s written', () => {
+    const callback = vi.fn(() => undefined);
+
+    updateRichTextMediaURLs(
+      '![a](<a b.png>) ![b](c.png#x) <img src="d.png" srcset="e.png 2x">',
+      'markdown',
+      callback,
+    );
+    updateRichTextMediaURLs('<img src="f.png">', 'html', callback);
+
+    expect(callback.mock.calls).toEqual([
+      ['a b.png', parseMediaSource('<a b.png>', 'markdown')],
+      ['c.png#x', parseMediaSource('c.png#x', 'markdown')],
+      ['d.png', parseMediaSource('d.png', 'html')],
+      ['e.png', parseMediaSource('e.png', 'html')],
+      ['f.png', parseMediaSource('f.png', 'html')],
+    ]);
   });
 });
 

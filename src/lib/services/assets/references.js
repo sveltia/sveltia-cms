@@ -14,6 +14,7 @@ import { getEditorComponentNames } from '$lib/services/contents/fields/rich-text
 import {
   getRichTextMediaSources,
   MARKDOWN_MEDIA_REGEX,
+  parseMediaSource,
   updateRichTextMediaURLs,
 } from '$lib/services/contents/fields/rich-text/previews/media-sources';
 import {
@@ -33,6 +34,7 @@ import { decodeURIComponentSafely } from '$lib/services/utils/url';
  * InternalLocaleCode,
  * MediaFieldSource,
  * } from '$lib/types/private';
+ * @import { MediaSource } from '$lib/services/contents/fields/rich-text/previews/media-sources';
  * @import {
  * Field,
  * FieldKeyPath,
@@ -163,60 +165,79 @@ export const createMediaSourceResolver = ({
 };
 
 /**
- * Get the form of the given field value or media URL that an asset URL is compared with: the value
- * as is, then decoded, like the `%20` an editor component writes for a space in a body, which is
- * how the CMS itself stores a URL there, and the preview decodes it to find the asset as well. A
- * value with a fragment, like `/uploads/a.jpg#center`, is then looked up without it, the way the
- * editor finds the asset to display it, see `getAssetByPath()`; the whole value comes first, as an
- * unencoded file name can contain `#`, like `photo #1.jpg`.
- * @param {string} src Field value or media URL found in it.
+ * @typedef {object} AssetURLMatch
+ * @property {string} url Asset URL matched.
+ * @property {string} fragment Fragment of the media URL left out of the match, or an empty string
+ * if the whole URL matched.
+ * @property {boolean} decoded Whether the media URL holds the asset URL percent-encoded.
+ */
+
+/**
+ * Find the asset URL the given field value or media URL holds: the URL as is, then decoded, like
+ * the `%20` an editor component writes for a space in a body, which is how the CMS itself stores a
+ * URL there, and the preview decodes it to find the asset as well. A URL with a fragment, like
+ * `/uploads/a.jpg#center`, is then looked up without it, the way the editor finds the asset to
+ * display it, see `getAssetByPath()`; the whole URL comes first, as an unencoded file name can
+ * contain `#`, like `photo #1.jpg`.
+ * @param {string | MediaSource} src Field value, or media URL found in it, as parsed by
+ * `parseMediaSource()`.
  * @param {(url: string) => boolean} isAssetURL Function checking whether a URL is one of the asset
  * URLs being looked for.
- * @returns {string | undefined} Matching form, if any.
+ * @returns {AssetURLMatch | undefined} Match, if any.
  */
-export const getMatchingAssetURL = (src, isAssetURL) => {
-  if (isAssetURL(src)) {
-    return src;
+export const matchAssetURL = (src, isAssetURL) => {
+  const { url, path, fragment } = typeof src === 'string' ? parseMediaSource(src) : src;
+
+  // The whole URL, then the path without the fragment, if any
+  /** @type {[string, string][]} */
+  const forms = fragment
+    ? [
+        [url, ''],
+        [path, fragment],
+      ]
+    : [[url, '']];
+
+  for (const [value, rest] of forms) {
+    if (isAssetURL(value)) {
+      return { url: value, fragment: rest, decoded: false };
+    }
+
+    // Every string value goes through the pre-filter, and only one with a `%` can be decoded
+    const decoded = value.includes('%') ? decodeURIComponentSafely(value) : value;
+
+    if (decoded !== value && isAssetURL(decoded)) {
+      return { url: decoded, fragment: rest, decoded: true };
+    }
   }
 
-  // Every string value goes through the pre-filter, and only one with a `%` can be decoded
-  const decoded = src.includes('%') ? decodeURIComponentSafely(src) : src;
-
-  if (decoded !== src && isAssetURL(decoded)) {
-    return decoded;
-  }
-
-  const fragmentIndex = src.indexOf('#');
-
-  return fragmentIndex > 0
-    ? getMatchingAssetURL(src.slice(0, fragmentIndex), isAssetURL)
-    : undefined;
+  return undefined;
 };
 
 /**
- * Get the targets whose URL the given field value or image source holds, in any of the forms
- * {@link getMatchingAssetURL} accepts.
+ * Get the targets whose URL the given field value or media URL holds, in any of the forms
+ * {@link matchAssetURL} accepts.
  * @param {AssetReferenceMatcher} matcher Matcher.
- * @param {string} src Field value or image source found in it.
+ * @param {string | MediaSource} src Field value, or media URL found in it.
  * @returns {number[] | undefined} Indexes of the targets, if any.
  */
 const getURLTargets = (matcher, src) => {
   const { byURL } = matcher;
-  const url = getMatchingAssetURL(src, (key) => byURL.has(key));
+  const match = matchAssetURL(src, (key) => byURL.has(key));
 
-  return url === undefined ? undefined : byURL.get(url);
+  return match && byURL.get(match.url);
 };
 
 /**
- * Get the targets the given field value or image source refers to.
+ * Get the targets the given field value or media URL refers to.
  * @param {AssetReferenceMatcher} matcher Matcher.
- * @param {string} src Field value or image source found in it.
+ * @param {MediaSource} source Field value, or media URL found in it, as parsed by
+ * `parseMediaSource()`.
  * @param {(src: string) => MediaFieldSource | undefined} resolve Function resolving the value to
  * an asset, as returned by {@link createMediaSourceResolver}.
  * @returns {number[]} Indexes of the targets.
  */
-const getMatchingTargets = (matcher, src, resolve) => {
-  const indexes = getURLTargets(matcher, src) ?? [];
+const getMatchingTargets = (matcher, source, resolve) => {
+  const indexes = getURLTargets(matcher, source) ?? [];
 
   if (!matcher.resolves) {
     return indexes;
@@ -225,7 +246,7 @@ const getMatchingTargets = (matcher, src, resolve) => {
   // Resolve the value to its asset without loading it. The asset’s blob URL is created once and
   // kept on the asset object, so only the asset being looked up can hold the given one — and
   // there’s no need to download every other asset the entries reference just to compare URLs
-  const { url, asset } = resolve(src) ?? {};
+  const { url, asset } = resolve(source.url) ?? {};
   const blobURL = url ?? asset?.blobURL;
 
   return [
@@ -237,34 +258,35 @@ const getMatchingTargets = (matcher, src, resolve) => {
 
 /**
  * Get the new URL to replace a reference to the given targets with, in the form of the reference.
- * A fragment the reference has, like `#center`, is kept. In a media field, a reference holding the
- * URL with its spaces encoded gets the new URL in the same form. In a Markdown or HTML body, a
- * space in the new URL is encoded as `%20`, as the CMS writes it when inserting a file there, see
- * `toFieldValue()`, because a Markdown image source can’t hold a space unless wrapped in angle
- * brackets — except in a reference already holding a space, which is wrapped as such or sits in an
- * HTML attribute.
+ * A fragment the reference was matched without, like `#center`, is kept. A space in the new URL is
+ * encoded as `%20` in a Markdown image source, as the CMS writes it when inserting a file there,
+ * see `toFieldValue()`, because the source can’t hold a space unless wrapped in angle brackets —
+ * so not in a source wrapped as such. In an HTML attribute, it’s encoded unless the URL replaced
+ * already holds a space. In a media field, it’s encoded if the reference holds the URL encoded.
  * @param {AssetReferenceMatcher} matcher Matcher.
  * @param {number[]} indexes Indexes of the targets referred to.
- * @param {string} src Reference being replaced.
- * @param {boolean} [inBody] Whether the reference is a media URL in a Markdown or HTML body.
+ * @param {MediaSource} source Reference being replaced, as parsed by `parseMediaSource()`.
  * @returns {string | undefined} New URL, if any.
  */
-const getNewURL = (matcher, indexes, src, inBody = false) => {
-  const fragmentIndex = src.indexOf('#');
-  const path = fragmentIndex > 0 ? src.slice(0, fragmentIndex) : src;
+const getNewURL = (matcher, indexes, source) => {
+  const { url: src, path, fragment, syntax, bracketed } = source;
 
   /**
    * Put the new URL in the form of the reference.
    * @param {string} newURL New URL.
-   * @param {string} base Part of the reference the new URL replaces: the whole reference, or the
-   * reference without its fragment.
-   * @param {boolean} [encoded] Whether the reference holds the URL with its spaces encoded.
+   * @param {string} rest Fragment of the reference the new URL doesn’t replace, if any.
+   * @param {boolean} [decoded] Whether the reference holds the URL percent-encoded.
    * @returns {string} New reference.
    */
-  const format = (newURL, base, encoded = false) => {
-    const encode = inBody ? !base.includes(' ') : encoded;
+  const format = (newURL, rest, decoded = false) => {
+    const encode =
+      syntax === 'markdown'
+        ? !bracketed
+        : syntax === 'html'
+          ? !(rest ? path : src).includes(' ')
+          : decoded;
 
-    return `${encode ? newURL.replaceAll(' ', '%20') : newURL}${src.slice(base.length)}`;
+    return `${encode ? newURL.replaceAll(' ', '%20') : newURL}${rest}`;
   };
 
   return indexes
@@ -276,12 +298,12 @@ const getNewURL = (matcher, indexes, src, inBody = false) => {
         const whole = newURL(src);
 
         if (whole) {
-          return format(whole, src);
+          return format(whole, '');
         }
 
-        const partial = path !== src ? newURL(path) : undefined;
+        const partial = fragment ? newURL(path) : undefined;
 
-        return partial ? format(partial, path) : undefined;
+        return partial ? format(partial, fragment) : undefined;
       }
 
       if (!newURL) {
@@ -290,15 +312,9 @@ const getNewURL = (matcher, indexes, src, inBody = false) => {
 
       // A target matched by URL may have been matched without the reference’s fragment, while one
       // matched by resolution replaces the whole reference
-      const matched =
-        url === undefined ? undefined : getMatchingAssetURL(src, (key) => key === url);
+      const match = url === undefined ? undefined : matchAssetURL(source, (key) => key === url);
 
-      const base =
-        matched === undefined || matched === src || matched === decodeURIComponentSafely(src)
-          ? src
-          : path;
-
-      return format(newURL, base, url !== base && url === decodeURIComponentSafely(base));
+      return format(newURL, match?.fragment ?? '', match?.decoded);
     })
     .find(Boolean);
 };
@@ -395,8 +411,9 @@ const matchField = ({
   });
 
   if (MEDIA_FIELD_TYPES.includes(fieldType)) {
-    const matched = getMatchingTargets(matcher, value, resolve);
-    const newURL = getNewURL(matcher, matched, value);
+    const source = parseMediaSource(value);
+    const matched = getMatchingTargets(matcher, source, resolve);
+    const newURL = getNewURL(matcher, matched, source);
 
     matched.forEach((index) => indexes.add(index));
 
@@ -418,14 +435,14 @@ const matchField = ({
     const replaced = updateRichTextMediaURLs(
       value,
       getValueFormat(/** @type {MarkdownField | RichTextField} */ (field)),
-      (src) => {
-        const matched = getMatchingTargets(matcher, src, resolve);
+      (_url, source) => {
+        const matched = getMatchingTargets(matcher, source, resolve);
 
         if (!matched.length) {
           return undefined;
         }
 
-        const newURL = getNewURL(matcher, matched, src, true);
+        const newURL = getNewURL(matcher, matched, source);
 
         matched.forEach((index) => indexes.add(index));
         replacing ||= !!newURL;

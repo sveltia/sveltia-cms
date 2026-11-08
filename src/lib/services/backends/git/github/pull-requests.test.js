@@ -9,6 +9,7 @@ import {
   fetchPullRequestFileList,
   fetchPullRequestFiles,
   isDraftUnsupportedError,
+  parseAuthor,
   parseFileNodes,
   updateDraftState,
   updateLabels,
@@ -456,6 +457,34 @@ describe('GitHub pull request helpers', () => {
       [undefined, false],
     ])('%#', (error, expected) => {
       expect(isDraftUnsupportedError(error)).toBe(expected);
+    });
+  });
+
+  describe('parseAuthor', () => {
+    test('should parse a user from the REST API, which has no name or email address', () => {
+      expect(parseAuthor({ login: 'octocat', id: 1 })).toEqual({
+        name: 'octocat',
+        email: '',
+        id: 1,
+        login: 'octocat',
+      });
+    });
+
+    test('should parse a user from the GraphQL API', () => {
+      expect(
+        parseAuthor({ login: 'octocat', name: 'Mona', email: 'mona@example.com', databaseId: 2 }),
+      ).toEqual({ name: 'Mona', email: 'mona@example.com', id: 2, login: 'octocat' });
+      expect(parseAuthor({ login: 'octocat', name: null, email: null, databaseId: 2 })).toEqual({
+        name: 'octocat',
+        email: '',
+        id: 2,
+        login: 'octocat',
+      });
+    });
+
+    test('should return undefined for an unknown user', () => {
+      expect(parseAuthor(undefined)).toBeUndefined();
+      expect(parseAuthor({ id: 3 })).toBeUndefined();
     });
   });
 

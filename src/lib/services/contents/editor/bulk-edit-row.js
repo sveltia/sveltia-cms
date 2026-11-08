@@ -6,8 +6,9 @@ import { getContext, setContext } from 'svelte';
  */
 
 /**
- * Entry of a bulk editor row, which the field controls in the row read in place of an entry draft,
- * e.g. to resolve the `{{slug}}` and `{{fields.x}}` templates in the filters of a Relation field.
+ * Entry of a bulk editor row, which the field controls in the row read in place of an entry draft
+ * through `getEditorEntryValues()`, e.g. to resolve the `{{slug}}` and `{{fields.x}}` templates in
+ * the filters of a Relation field.
  * @typedef {object} BulkEditRowContext
  * @property {FlattenedEntryContent} values Values of the entry in the default locale, with the
  * pending edits applied.

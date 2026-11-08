@@ -70,7 +70,8 @@
   const entryValues = $derived(getBulkEditRowValues({ entry, locale, edits }));
   const entrySlug = $derived(getBulkEditRowSlug(entry, locale));
 
-  // There is no draft in the bulk editor, so the control reads the entry of the row from here
+  // There is no draft in the bulk editor, so the control reads the entry of the row from here,
+  // through `getEditorEntryValues()`
   setBulkEditRowContext({
     /**
      * Get the entry’s values.

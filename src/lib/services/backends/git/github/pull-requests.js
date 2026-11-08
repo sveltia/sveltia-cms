@@ -18,7 +18,12 @@ import { getStatusLabel, replaceStatusLabel } from '$lib/services/workflow/label
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { WorkflowFile, WorkflowPullRequest, WorkflowStatus } from '$lib/types/private';
+ * @import {
+ * CommitAuthor,
+ * WorkflowFile,
+ * WorkflowPullRequest,
+ * WorkflowStatus,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -235,6 +240,19 @@ export const updateLabels = async (pullRequest, status) => {
 };
 
 /**
+ * Parse the user who opened a pull request, as the REST or GraphQL API returns it. The REST API
+ * gives the ID as `id` and leaves out the name and email address, while the GraphQL API gives the
+ * ID as `databaseId` and, unless the user keeps them private, the name and email address.
+ * @param {Record<string, any> | undefined} user User object.
+ * @returns {CommitAuthor | undefined} Author, or `undefined` if the user is unknown.
+ */
+export const parseAuthor = (user) => {
+  const { login, name, email, id = user?.databaseId } = user ?? {};
+
+  return login ? { name: name ?? login, email: email ?? '', id, login } : undefined;
+};
+
+/**
  * Repositories, by their API path, that turned out not to support draft pull requests: a private
  * repository on GitHub Free or Pro, or one owned by an organization on GitHub Free. The status
  * label records the stage of an entry anyway, so a pull request there is opened as a regular one,
@@ -354,8 +372,6 @@ export const createPullRequest = async ({ branch, title, status, deletionGroup }
     result = await open(false);
   }
 
-  const { login, id } = result.user ?? {};
-
   /** @type {WorkflowPullRequest} */
   const pullRequest = {
     number: result.number,
@@ -367,10 +383,8 @@ export const createPullRequest = async ({ branch, title, status, deletionGroup }
     status,
     createdDate: new Date(result.created_at),
     updatedDate: new Date(result.updated_at),
-    // The signed-in user, which is how a later save recognizes the pull request as their own. The
-    // REST API doesn’t return the user’s name or email address, so this is what the pull request
-    // list has for a user who keeps them private
-    author: login ? { name: login, email: '', id, login } : undefined,
+    // The signed-in user, which is how a later save recognizes the pull request as their own
+    author: parseAuthor(result.user),
     files: [],
     deletionGroup,
   };
