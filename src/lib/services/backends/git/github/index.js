@@ -26,6 +26,7 @@ import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gi
 import workflow from '$lib/services/backends/git/github/workflow';
 import { graphqlVars } from '$lib/services/backends/git/shared/api';
 import { initGitBackend } from '$lib/services/backends/git/shared/init';
+import { toRepositoryPath } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
 
 /**
@@ -61,7 +62,7 @@ export const init = () => {
     auth_scope: authScope = 'repo',
   } = backend;
 
-  const [owner, repo] = /** @type {string} */ (projectPath).split('/');
+  const { owner, repo } = toRepositoryPath(/** @type {string} */ (projectPath));
 
   initGitBackend(repository, {
     service: BACKEND_NAME,

@@ -9,6 +9,7 @@
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
+  import { getLocalizedOption } from '$lib/services/contents/i18n/options';
   import { env } from '$lib/services/user/env.svelte';
   import { sanitizeHelpText } from '$lib/services/utils/string';
 
@@ -20,7 +21,7 @@
    * MediaFieldSource,
    * TypedFieldKeyPath,
    * } from '$lib/types/private';
-   * @import { Field, FieldKeyPath } from '$lib/types/public';
+   * @import { Field, FieldKeyPath, VariableFieldType } from '$lib/types/public';
    */
 
   /**
@@ -45,7 +46,9 @@
    * @property {Snippet} [summaryContent] Content drawn in place of the summary text while
    * collapsed, e.g. by a custom field type’s summary component.
    * @property {string} [summaryId] `id` of the summary, so the value can be labelled by it.
-   * @property {string} [hint] Help message of the value’s variable type, shown above the subfields.
+   * @property {VariableFieldType} [typeConfig] Configuration of the value’s variable type, whose
+   * help message is shown above the subfields unless the field is read-only.
+   * @property {boolean} [readonly] Whether the field is read-only.
    */
 
   /** @type {Props} */
@@ -59,8 +62,15 @@
     getThumbnail,
     summaryContent = undefined,
     summaryId = undefined,
-    hint = undefined,
+    typeConfig = undefined,
+    readonly = false,
   } = $props();
+
+  const hint = $derived(
+    readonly || !typeConfig
+      ? undefined
+      : getLocalizedOption({ config: typeConfig, option: 'hint', locale }),
+  );
 </script>
 
 {#if unknownType}
@@ -95,6 +105,16 @@
 {/if}
 
 <style>
+  /* The warning fills the Object field value or the List field item, which clips its corners */
+  :global(.object-unknown-type) {
+    overflow: hidden;
+
+    :global(.sui.alert) {
+      border-width: 0;
+      border-radius: 0;
+    }
+  }
+
   .type-hint {
     margin: 0 !important;
     padding: 12px var(--field-editor-padding) 0;

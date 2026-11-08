@@ -6,18 +6,13 @@
   import UsedEntries from '$lib/components/assets/list/used-entries.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
-  import {
-    defaultAssetDetails,
-    getAssetDetails,
-    getAssetUsedEntries,
-  } from '$lib/services/assets/details';
+  import { createAssetDetailsState } from '$lib/services/assets/details-state.svelte';
   import { isMediaKind, isPDF } from '$lib/services/assets/kinds';
   import { getCommitAuthorName } from '$lib/services/utils/commit-author';
   import { formatDate } from '$lib/services/utils/date';
-  import { createLatestGuard } from '$lib/services/utils/scheduling';
 
   /**
-   * @import { Asset, AssetDetails, Entry } from '$lib/types/private';
+   * @import { Asset } from '$lib/types/private';
    */
 
   /**
@@ -29,67 +24,14 @@
   /** @type {Props} */
   let { asset, showPreview = false } = $props();
 
-  /** @type {AssetDetails} */
-  let details = $state({ ...defaultAssetDetails });
+  // The panel stays mounted while the focus moves from one asset to another
+  const details = createAssetDetailsState(() => asset, { withUsedEntries: true });
 
   // @todo Fetch file size and commit info on demand for GitLab
   const { path, size, kind, commitAuthor, commitDate } = $derived(asset);
   const { publicURL, repoBlobURL, dimensions, duration, createdDate, coordinates, usedEntries } =
-    $derived(details);
+    $derived(details.current);
   const canPreview = $derived(isMediaKind(kind) || isPDF(path));
-
-  /**
-   * Guard for {@link updateProps}. The panel stays mounted while the focus moves from one asset
-   * to another, so a slow lookup for an asset focused earlier must not overwrite the details of the
-   * one focused now.
-   */
-  const requestGuard = createLatestGuard();
-
-  /**
-   * Update the properties above.
-   */
-  const updateProps = async () => {
-    const _asset = asset;
-    const isLatest = requestGuard.next();
-
-    // Don’t leave the previous asset’s details on show while this one’s are being retrieved. The
-    // used entries are being looked up as well
-    details = { ...defaultAssetDetails, usedEntries: undefined };
-
-    try {
-      const _details = await getAssetDetails(_asset);
-
-      if (!isLatest()) {
-        return;
-      }
-
-      details = _details;
-    } catch (/** @type {any} */ ex) {
-      // Only the basic info is shown, but the used entries don’t depend on the details
-      // eslint-disable-next-line no-console
-      console.error(ex);
-    }
-
-    /** @type {Entry[]} */
-    let _usedEntries = [];
-
-    try {
-      _usedEntries = await getAssetUsedEntries(_asset);
-    } catch (/** @type {any} */ ex) {
-      // Stop showing the used entries as being loaded
-      // eslint-disable-next-line no-console
-      console.error(ex);
-    }
-
-    if (isLatest()) {
-      details.usedEntries = _usedEntries;
-    }
-  };
-
-  $effect(() => {
-    void [asset];
-    updateProps();
-  });
 </script>
 
 {#snippet preview()}

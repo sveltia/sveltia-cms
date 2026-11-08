@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  addCandidates,
   collectSafely,
   findURLInSummary,
   getPreviewContext,
@@ -711,5 +712,38 @@ describe('collectSafely()', () => {
 
     await expect(collectSafely(vi.fn().mockRejectedValue(ex))).resolves.toBeUndefined();
     expect(warn).toHaveBeenCalledWith('Failed to fetch the deployment info.', ex);
+  });
+});
+
+describe('addCandidates()', () => {
+  test('adds a candidate for each item with a mapped state', () => {
+    /** @type {any[]} */
+    const list = [];
+
+    addCandidates(
+      list,
+      [
+        { name: 'a', status: 'ok' },
+        { name: 'b', status: 'skipped' },
+      ],
+      ({ status }) => (status === 'ok' ? 'ready' : undefined),
+      ({ name }) => ({ name, source: 'status' }),
+    );
+
+    expect(list).toEqual([{ name: 'a', state: 'ready', source: 'status' }]);
+  });
+
+  test('ignores missing items', () => {
+    /** @type {any[]} */
+    const list = [];
+
+    addCandidates(
+      list,
+      null,
+      () => 'ready',
+      () => ({ name: '', source: 'status' }),
+    );
+
+    expect(list).toEqual([]);
   });
 });

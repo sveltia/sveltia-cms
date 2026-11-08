@@ -298,7 +298,7 @@
       {#each sorter.displayOrder as index (rows.ids[index])}
         <tr
           bind:this={rowElements[index]}
-          class:dragging={sorter.dragIndex === index}
+          class:drag-placeholder={sorter.dragIndex === index}
           {...sorter.itemProps(index)}
           animate:flip={{ duration: 200 }}
         >
@@ -449,15 +449,6 @@
     &.reorder div {
       display: flex;
       align-items: center;
-    }
-  }
-
-  tr {
-    /* The dragged row is left as a faint placeholder marking the gap it would drop into, like the
-      items of a List field */
-
-    &.dragging {
-      opacity: 0.25;
     }
   }
 </style>

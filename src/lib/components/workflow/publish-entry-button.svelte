@@ -10,10 +10,9 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { isPublishAllowed, publishingBranches } from '$lib/services/workflow';
   import { getPublishDialogStrings } from '$lib/services/workflow/dialogs';
-  import { closeWorkflowEntryEditor } from '$lib/services/workflow/editor';
+  import { runWorkflowEditorAction } from '$lib/services/workflow/editor';
   import { publishReviewedEntry } from '$lib/services/workflow/save';
   import { canPublish } from '$lib/services/workflow/validate';
-  import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
   /**
    * @import { UnpublishedEntry } from '$lib/types/private';
@@ -54,26 +53,24 @@
    * Publish the entry by merging the pull request, then go back to the entry list.
    */
   const publish = async () => {
-    // An entry can be saved as a draft with its required fields left empty, so it’s checked first
-    if (!canPublish({ entry, draft: entryDraft.current })) {
+    const { blocked, errorMessage: message } = await runWorkflowEditorAction({
+      entry,
+      entryDraft,
+      valid: canPublish({ entry, draft: entryDraft.current }),
+      /**
+       * Merge the pull request, pinned to the version the editor shows.
+       * @returns {Promise<void>} Result.
+       */
+      action: () => publishReviewedEntry(entry, entryDraft.current?.originalEntry),
+      failure: 'workflow.publishing_entry_failed',
+      closeOnSuccess: true,
+    });
+
+    if (blocked) {
       showValidationToast = true;
-
-      return;
-    }
-
-    // Read these up front: publishing takes the entry out of `unpublishedEntries`, and the `entry`
-    // prop is derived from that store, so it’s `undefined` once the merge resolves
-    const { collectionName, pullRequest } = entry.workflow;
-
-    try {
-      // Pinned to the version the editor shows
-      await publishReviewedEntry(entry, entryDraft.current?.originalEntry);
-      closeWorkflowEntryEditor({ entryDraft, branch: pullRequest.branch, collectionName });
-    } catch (/** @type {any} */ ex) {
-      errorMessage = getWorkflowErrorMessage(ex, 'workflow.publishing_entry_failed');
+    } else if (message) {
+      errorMessage = message;
       showErrorToast = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
     }
   };
 </script>

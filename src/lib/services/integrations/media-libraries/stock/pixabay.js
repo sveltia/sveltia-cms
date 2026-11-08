@@ -1,15 +1,12 @@
 import {
-  fetchJSON,
+  createStockFetchers,
   getSupportedLocale,
 } from '$lib/services/integrations/media-libraries/stock/utils';
+import { getBaseName } from '$lib/services/utils/file';
 import { escapeAttr, escapeHTML } from '$lib/services/utils/string';
 
 /**
- * @import {
- * ExternalAsset,
- * MediaLibraryFetchOptions,
- * MediaLibraryService,
- * } from '$lib/types/private';
+ * @import { ExternalAsset, MediaLibraryService } from '$lib/types/private';
  */
 
 /**
@@ -63,7 +60,7 @@ export const parseResults = (results) =>
       description: tags,
       previewURL: webformatURL.replace('_640.', imageWidth > imageHeight ? '_180.' : '_340.'),
       downloadURL: largeImageURL,
-      fileName: /** @type {string} */ (previewURL.split('/').pop()).replace('_150.', '_1280.'),
+      fileName: getBaseName(previewURL).replace('_150.', '_1280.'),
       kind: 'image',
       credit: `<a href="${escapeAttr(pageURL)}">Photo by ${escapeHTML(user)} on Pixabay</a>`,
     }),
@@ -76,47 +73,40 @@ export const parseResults = (results) =>
 export const getLocale = () => getSupportedLocale(SUPPORTED_LOCALES, 'en');
 
 /**
- * Fetch curated pictures.
- * @param {MediaLibraryFetchOptions} options Options.
- * @returns {Promise<ExternalAsset[]>} Assets.
+ * Fetch curated pictures, or search images.
  * @see https://pixabay.com/api/docs/
  * @todo Support video files.
  */
-export const list = async ({ apiKey }) => {
-  const params = new URLSearchParams({
+export const { list, search } = createStockFetchers({
+  listURL: `${ENDPOINT}/`,
+  searchURL: `${ENDPOINT}/`,
+  /**
+   * Get the query parameters to list editors’ choice pictures.
+   * @param {string} apiKey API key.
+   * @returns {Record<string, any>} Parameters.
+   */
+  getListParams: (apiKey) => ({
     ...SEARCH_PARAMS,
     key: apiKey,
     lang: getLocale(),
     editors_choice: String(true),
-  });
-
-  /** @type {FetchResult[]} */
-  const results = (await fetchJSON(`${ENDPOINT}/?${params}`)).hits;
-
-  return parseResults(results);
-};
-
-/**
- * Search images or fetch curated pictures if no query is given.
- * @param {string} query Search query.
- * @param {MediaLibraryFetchOptions} options Options.
- * @returns {Promise<ExternalAsset[]>} Assets.
- * @see https://pixabay.com/api/docs/
- * @todo Support video files.
- */
-export const search = async (query, { apiKey }) => {
-  const params = new URLSearchParams({
+  }),
+  /**
+   * Get the query parameters to search images.
+   * @param {string} query Search query.
+   * @param {string} apiKey API key.
+   * @returns {Record<string, any>} Parameters.
+   */
+  getSearchParams: (query, apiKey) => ({
     ...SEARCH_PARAMS,
     key: apiKey,
     lang: getLocale(),
     q: query,
-  });
-
-  /** @type {FetchResult[]} */
-  const results = (await fetchJSON(`${ENDPOINT}/?${params}`)).hits;
-
-  return parseResults(results);
-};
+  }),
+  listKey: 'hits',
+  searchKey: 'hits',
+  parseResults,
+});
 
 /**
  * @type {MediaLibraryService}

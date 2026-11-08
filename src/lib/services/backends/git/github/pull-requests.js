@@ -4,7 +4,11 @@ import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { parseRestFiles } from '$lib/services/backends/git/shared/pull-requests';
+import {
+  parseRestFiles,
+  parseRestPullRequest,
+  toCommitAuthor,
+} from '$lib/services/backends/git/shared/pull-requests';
 import {
   getPullRequestPath,
   getRepositoryPath,
@@ -244,9 +248,9 @@ export const updateLabels = async (pullRequest, status) => {
  * @returns {CommitAuthor | undefined} Author, or `undefined` if the user is unknown.
  */
 export const parseAuthor = (user) => {
-  const { login, name, email, id = user?.databaseId } = user ?? {};
+  const { id = user?.databaseId } = user ?? {};
 
-  return login ? { name: name ?? login, email: email ?? '', id, login } : undefined;
+  return toCommitAuthor({ ...user, id });
 };
 
 /**
@@ -305,22 +309,15 @@ export const createPullRequest = async ({ branch, title, status, description }) 
     })
   );
 
-  /** @type {WorkflowPullRequest} */
-  const pullRequest = {
-    number: result.number,
+  const pullRequest = parseRestPullRequest(result, {
     nodeId: result.node_id,
     title: result.title,
-    url: result.html_url,
     branch,
-    headSHA: result.head?.sha,
     status,
-    createdDate: new Date(result.created_at),
-    updatedDate: new Date(result.updated_at),
     // The signed-in user, which is how a later save recognizes the pull request as their own
     author: parseAuthor(result.user),
-    files: [],
     description,
-  };
+  });
 
   // Labelling an issue requires write access to the repository, which an Open Authoring contributor
   // doesn’t have. Their status is read from the pull request itself instead

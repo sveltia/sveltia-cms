@@ -592,32 +592,44 @@ export const isPermanentClientError = (ex) => {
 
 /**
  * Wait for the service to merge a pull request that has been set to auto-merge. The pull request is
- * read every so often and handed to `evaluate`, until that reports it merged, in which case this
- * resolves, or throws because the merge won’t happen on its own, or until the wait has run out, in
- * which case the auto-merge is cancelled and an error is thrown. A failed read says nothing about
- * the merge, which the service carries out on its own, so it’s only logged and the wait goes on,
- * unless it’s a client error that asking again won’t fix: see {@link isPermanentClientError}.
+ * read every so often and handed to `check`, until it’s merged, in which case this resolves, or
+ * until it’s clear that the merge won’t happen on its own, or the wait has run out, in which case
+ * an error is thrown. The service keeps the auto-merge armed after a failed check, in case it’s
+ * re-run by hand, but a merge made that way would happen behind the CMS’s back once it has reported
+ * a failure, so the auto-merge is cancelled along with the report: publishing again is what merges
+ * the entry from then on. A failed read says nothing about the merge, which the service carries out
+ * on its own, so it’s only logged and the wait goes on, unless it’s a client error that asking
+ * again won’t fix: see {@link isPermanentClientError}.
  * @template T
  * @param {object} args Arguments.
  * @param {() => Promise<T>} args.read Function to read the pull request.
- * @param {(item: T) => Promise<boolean>} args.evaluate Function to check the pull request read,
- * which resolves to `true` if it has been merged, or `false` to keep waiting, and throws if it
- * won’t be merged.
- * @param {() => Promise<void>} args.cancel Function to cancel the auto-merge, which doesn’t throw.
+ * @param {(item: T) => { merged?: boolean, failure?: string, armed?: boolean }} args.check
+ * Function to check the pull request read: whether it has been merged, if not, a summary of why it
+ * won’t be merged on its own, `undefined` to keep waiting, and whether its auto-merge is still on.
+ * @param {() => Promise<any>} args.cancel Function to cancel the auto-merge. A failure is ignored,
+ * as a pull request that has just been merged or closed has no auto-merge left to cancel.
  * @param {string} args.label Name of the pull request for the messages, e.g. `pull request #1`.
  * @param {number} [args.deadline] Time to give up at, as a Unix timestamp in milliseconds.
  * @returns {Promise<void>}
  * @throws {Error} When the pull request won’t be merged, or wasn’t within the time allowed.
  */
-export const waitForMerge = async ({
-  read,
-  evaluate,
-  cancel,
-  label,
-  deadline = Date.now() + AUTO_MERGE_POLL.maxDuration,
-}) => {
+export const waitForMerge = async (args) => {
+  const { read, check, cancel, label, deadline = Date.now() + AUTO_MERGE_POLL.maxDuration } = args;
+
+  /**
+   * Cancel the auto-merge, reporting a failure rather than throwing it.
+   */
+  const cancelSafely = async () => {
+    try {
+      await cancel();
+    } catch (/** @type {any} */ ex) {
+      // eslint-disable-next-line no-console
+      console.warn(`Failed to cancel the auto-merge on ${label}.`, ex);
+    }
+  };
+
   if (Date.now() >= deadline) {
-    await cancel();
+    await cancelSafely();
 
     throw new Error(`Timed out waiting for ${label} to be merged`);
   }
@@ -638,9 +650,21 @@ export const waitForMerge = async ({
     console.warn(`Failed to read ${label}, still waiting.`, ex);
   }
 
-  if (result && (await evaluate(result.item))) {
-    return;
+  if (result) {
+    const { merged, failure, armed } = check(result.item);
+
+    if (merged) {
+      return;
+    }
+
+    if (failure) {
+      if (armed) {
+        await cancelSafely();
+      }
+
+      throw new Error(`${label[0].toUpperCase()}${label.slice(1)} was not merged: ${failure}`);
+    }
   }
 
-  await waitForMerge({ read, evaluate, cancel, label, deadline });
+  await waitForMerge({ ...args, deadline });
 };

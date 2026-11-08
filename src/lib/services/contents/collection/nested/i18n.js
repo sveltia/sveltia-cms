@@ -9,18 +9,12 @@ import {
   hasNestedEntries,
 } from '$lib/services/contents/collection/nested';
 import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
+import { getBaseName } from '$lib/services/utils/file';
 import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
 /**
  * @import { Entry, InternalCollection, InternalLocaleCode } from '$lib/types/private';
  */
-
-/**
- * Get the name of the folder at the given path.
- * @param {string} dirPath Folder path relative to the collection folder.
- * @returns {string} Last path segment. An empty string for the collection folder itself.
- */
-export const getFolderName = (dirPath) => dirPath.slice(dirPath.lastIndexOf('/') + 1);
 
 /**
  * Get the name of the folder an entry occupies in the given locale, in a collection where every
@@ -30,7 +24,7 @@ export const getFolderName = (dirPath) => dirPath.slice(dirPath.lastIndexOf('/')
  * @returns {string} Folder name, e.g. `guides`. An empty string if the entry is directly in the
  * collection folder, which is the case for the collection’s own index file.
  */
-export const getOwnFolderName = (subPath) => getFolderName(getEntryDirPath(subPath));
+export const getOwnFolderName = (subPath) => getBaseName(getEntryDirPath(subPath));
 
 /**
  * Check whether the folders of a collection with nested entries go by a different name in each

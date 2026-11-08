@@ -2,8 +2,9 @@ import { _ } from '@sveltia/i18n';
 import { getPathInfo } from '@sveltia/utils/file';
 
 import { assetUpdatesToast, refreshFocusedAssets } from '$lib/services/assets/data';
+import { createAssetMoveChange } from '$lib/services/assets/data/move-change';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
-import { getAssetBlob, getAssetPublicURL } from '$lib/services/assets/info';
+import { getAssetPublicURL } from '$lib/services/assets/info';
 import { getEntriesByAssets } from '$lib/services/assets/references';
 import { assertOutsideCmsFolders } from '$lib/services/assets/reserved';
 import { saveChanges } from '$lib/services/backends/save';
@@ -14,7 +15,7 @@ import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getEntryCollectionContexts } from '$lib/services/contents/entry/contexts';
 import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { encodeFilePath } from '$lib/services/utils/file';
+import { encodeFilePath, getBaseName } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -214,7 +215,7 @@ export const collectEntryChangesFromAssets = async ({
     // The new URL is worked out the same way as the current one, so that the public folder, the
     // `encode_file_path` option and template tags are all dealt with alike. A move stays within the
     // asset’s folder, so the folder still applies
-    const newName = newPath.slice(newPath.lastIndexOf('/') + 1);
+    const newName = getBaseName(newPath);
 
     const newURL =
       getAssetPublicURL(
@@ -312,22 +313,10 @@ export const moveAssets = async (
 
   await Promise.all(
     movingAssets.map(async ({ asset, path }) => {
-      const newPath = path;
-      const newName = getPathInfo(newPath).basename;
-      const blob = asset.file ?? (await getAssetBlob(asset));
+      const name = getPathInfo(path).basename;
 
-      savingAssets.push({ ...asset, path: newPath, name: newName });
-
-      changes.push({
-        action: 'move',
-        path: newPath,
-        previousPath: asset.path,
-        previousSha: asset.sha,
-        // Read the bytes up front. A blob backed by the file system points at the file about to be
-        // moved away, and reading it afterwards — to write the copy or to hash it — fails because
-        // there’s nothing at that path anymore
-        data: new File([await blob.arrayBuffer()], newName, { type: blob.type }),
-      });
+      savingAssets.push({ ...asset, path, name });
+      changes.push(await createAssetMoveChange(asset, path, name));
     }),
   );
 

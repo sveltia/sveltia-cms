@@ -24,7 +24,7 @@ import {
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { isSearchRoute } from '$lib/services/search/navigation';
 import { env } from '$lib/services/user/env.svelte';
-import { createPath } from '$lib/services/utils/file';
+import { createPath, getBaseName } from '$lib/services/utils/file';
 import { encodePathSegments } from '$lib/services/utils/url';
 
 /**
@@ -142,7 +142,7 @@ const selectCloudService = (state, serviceId, assetId) => {
     overlaidExternalAssetId.current = assetId;
     showAssetOverlay.current = true;
     announcedPageStatus.current = _('viewing_x_asset_details', {
-      values: { name: assetId.split('/').pop() },
+      values: { name: getBaseName(assetId) },
     });
   } else {
     overlaidExternalAssetId.current = undefined;

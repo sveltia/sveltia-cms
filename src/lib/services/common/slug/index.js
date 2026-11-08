@@ -205,30 +205,55 @@ export const slugify = (
 export const getNewFolderName = (name) => slugify(name.trim(), { fallback: false });
 
 /**
- * Check whether a folder can be given the name typed in, either while creating one with the parent
- * folder picker or while renaming one with the slug editor.
+ * Check whether a folder can be given the name typed in: an entry folder, while creating one with
+ * the parent folder picker or renaming one with the slug editor, or an asset subfolder, with its
+ * own formatting and reserved names.
  * @param {object} args Arguments.
- * @param {string[]} args.takenNames Names of the folders already sharing the parent folder.
+ * @param {string[]} args.takenNames Names already taken in the parent folder.
  * @param {string} args.name Name to check, as typed.
- * @returns {'empty' | 'invalid' | 'duplicate' | undefined} What stops the name from being used, or
- * `undefined` if it can be used.
+ * @param {(name: string) => string} [args.format] Function turning the trimmed name into the folder
+ * name. Default: {@link getNewFolderName}.
+ * @param {(folderName: string) => boolean} [args.isReserved] Function telling whether a folder name
+ * is reserved.
+ * @returns {'empty' | 'invalid' | 'reserved' | 'duplicate' | undefined} What stops the name from
+ * being used, or `undefined` if it can be used.
  */
-export const validateNewFolderName = ({ takenNames, name }) => {
+export const validateNewFolderName = ({
+  takenNames,
+  name,
+  format = getNewFolderName,
+  isReserved = undefined,
+}) => {
   const trimmedName = name.trim();
 
   if (!trimmedName) {
     return 'empty';
   }
 
-  const folderName = getNewFolderName(trimmedName);
+  const folderName = format(trimmedName);
 
   // A name has to stay a single folder, a leading dot would hide the folder from the site and from
-  // most file listings, and slugification can leave nothing to name the folder with. The dot is
-  // looked for in what was typed: slugification removes it, but a name meant to be hidden is
+  // most file listings, and formatting can leave nothing to name the folder with. The dot is looked
+  // for in what was typed as well: slugification removes it, but a name meant to be hidden is
   // rejected rather than silently given another one
-  if (!folderName || trimmedName.includes('/') || trimmedName.startsWith('.')) {
+  if (
+    !folderName ||
+    trimmedName.includes('/') ||
+    trimmedName.startsWith('.') ||
+    folderName.startsWith('.')
+  ) {
     return 'invalid';
   }
 
-  return takenNames.includes(folderName) ? 'duplicate' : undefined;
+  if (isReserved?.(folderName)) {
+    return 'reserved';
+  }
+
+  // A repository is often checked out on a file system that ignores case, where `Docs` and `docs`
+  // would be the same folder
+  const normalizedName = folderName.normalize().toLowerCase();
+
+  return takenNames.some((taken) => taken.normalize().toLowerCase() === normalizedName)
+    ? 'duplicate'
+    : undefined;
 };

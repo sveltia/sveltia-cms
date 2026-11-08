@@ -6,8 +6,10 @@ import {
   fetchBranchHead,
   fetchMergeRequest,
   fetchMergeRequestFileContents,
+  fetchOpenMergeRequests,
   getMergeRequestPath,
   MAX_ITEMS,
+  parseAuthor,
   parseDiff,
   toMergeRequest,
 } from '$lib/services/backends/git/gitlab/merge-requests';
@@ -155,13 +157,11 @@ export const parseForkBranch = (branchInfo, mergeRequest) => {
   // A closed merge request is treated the same as none at all: the contributor took the entry back
   // to the drafting stage, and moving it forward again reopens the request
   const inReview = isOpen && !current.draft;
-  const { name, username, id } = current?.author ?? {};
 
   // A merge request names its author, while a branch on its own only carries the identity Git
   // recorded with the head commit
-  const author = username
-    ? { name: name ?? username, email: '', id, login: username }
-    : authorName && { name: authorName, email: authorEmail ?? '' };
+  const author =
+    parseAuthor(current?.author) ?? (authorName && { name: authorName, email: authorEmail ?? '' });
 
   return {
     number: current?.iid,
@@ -287,32 +287,6 @@ const applyStatusChange = async (number, body) => {
 const MERGE_REQUEST_EXISTS_STATUS = 409;
 
 /**
- * Fetch the open merge request from the given branch in the contributor’s fork to the configured
- * branch, if any. This is only asked about a branch the CMS found no merge request for, so one
- * found here either sits beyond the page {@link fetchForkBranchMergeRequests} reads — a contributor
- * with a long history in the project can have more merge requests than fit in it — or isn’t the
- * contributor’s own.
- * @param {string} branch Branch name.
- * @returns {Promise<Record<string, any> | undefined>} Merge request returned by the REST API, or
- * `undefined` if none is open from the branch.
- * @see https://docs.gitlab.com/api/merge_requests/#list-project-merge-requests
- */
-const fetchOpenForkMergeRequest = async (branch) => {
-  const items = /** @type {Record<string, any>[]} */ (
-    await fetchAPI(
-      `/projects/${getProjectId()}/merge_requests` +
-        `?state=opened&source_branch=${encodeURIComponent(branch)}` +
-        `&per_page=${MAX_ITEMS.mergeRequests}`,
-    )
-  );
-
-  // A merge request from some other project of the contributor’s that happens to have a branch of
-  // the same name, or one to another branch, isn’t the one GitLab refused to open another of
-  // @see https://github.com/sveltia/sveltia-cms/security/advisories/GHSA-p8qh-54q9-2qjx
-  return items.find(isFromForkToBranch);
-};
-
-/**
  * Open the merge request that hands an Open Authoring draft over for review. GitLab refuses a
  * second merge request from a branch that already has one open to the same branch, which is what
  * happens when the entry’s own merge request sat beyond the page the load read and the entry was
@@ -335,7 +309,13 @@ export const createForkMergeRequest = async ({ branch, title, status, descriptio
       throw ex;
     }
 
-    const item = await fetchOpenForkMergeRequest(branch);
+    // The branch had no merge request the CMS found, so one open here either sits beyond the page
+    // {@link fetchForkBranchMergeRequests} reads — a contributor with a long history in the project
+    // can have more merge requests than fit in it — or isn’t the contributor’s own. A merge request
+    // from some other project of the contributor’s that happens to have a branch of the same name,
+    // or one to another branch, isn’t the one GitLab refused to open another of
+    // @see https://github.com/sveltia/sveltia-cms/security/advisories/GHSA-p8qh-54q9-2qjx
+    const [item] = await fetchOpenMergeRequests(branch, isFromForkToBranch);
 
     // Nothing the CMS can make sense of stands in the way, so let GitLab’s own refusal stand
     // rather than claiming the entry is in review

@@ -5,14 +5,13 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, EmptyState, InfiniteScroll, Infobar, Toast } from '@sveltia/ui';
+  import { EmptyState, Infobar } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
   import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
   import PickerBreadcrumb from '$lib/components/assets/browser/picker-breadcrumb.svelte';
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
-  import SubfolderStrip from '$lib/components/assets/browser/subfolder-strip.svelte';
   import SubfolderNameDialog from '$lib/components/assets/list/subfolder-name-dialog.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import CloudServiceAuth from '$lib/components/assets/shared/cloud-service-auth.svelte';
@@ -22,6 +21,7 @@
     getSelectionWithResource,
     trackInsertedExternalAssets,
   } from '$lib/services/assets/browser/select-assets-dialog.svelte';
+  import { runAssetCommit } from '$lib/services/assets/data/commit';
   import { getFetchOptions, mergeUploadedExternalAssets } from '$lib/services/assets/external';
   import {
     fetchExternalAssetBlob,
@@ -129,12 +129,8 @@
    */
   let truncated = $state(false);
   let newFolderDialogOpen = $state(false);
-  let folderCreationFailed = $state(false);
   /** @type {string | undefined} */
   let error = $state();
-  /** Whether files are being uploaded, which shows a progress toast until the upload settles. */
-  let uploading = $state(false);
-  let uploadFailed = $state(false);
   /** @type {RejectedFilesAlertDialog | undefined} */
   let rejectedFilesAlert = $state();
 
@@ -280,30 +276,27 @@
       return;
     }
 
-    uploading = true;
-    uploadFailed = false;
+    const { ok } = await runAssetCommit(
+      async () => {
+        // The files go to the folder being browsed, or the one the search started from
+        const uploaded = await /** @type {NonNullable<typeof upload>} */ (upload)(files, {
+          ...listFetchOptions,
+          dirPath,
+        });
 
-    try {
-      // The files go to the folder being browsed, or the one the search started from
-      const uploaded = await /** @type {NonNullable<typeof upload>} */ (upload)(files, {
-        ...listFetchOptions,
-        dirPath,
-      });
+        const resources = await Promise.all(uploaded.map((asset) => getResource(asset)));
 
-      const resources = await Promise.all(uploaded.map((asset) => getResource(asset)));
+        // The uploaded files, listed first and selected, confirm the upload
+        selectedResources = resources.filter((r) => !!r).slice(0, multiple ? undefined : 1);
+        listedAssets = mergeUploadedExternalAssets(uploaded, listedAssets ?? []);
+      },
+      { progress: 'uploading_files_progress', failure: 'uploading_files_failed' },
+    );
 
-      // The uploaded files, listed first and selected, confirm the upload
-      selectedResources = resources.filter((r) => !!r).slice(0, multiple ? undefined : 1);
-      listedAssets = mergeUploadedExternalAssets(uploaded, listedAssets ?? []);
-    } catch (ex) {
-      uploadFailed = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
+    if (!ok) {
       // The files are uploaded one by one, so those uploaded before the failure are on the service
       // already. Reload the list to show them rather than leave them out until the next reload
       getAssets(searchQuery);
-    } finally {
-      uploading = false;
     }
   };
 
@@ -325,17 +318,19 @@
    * Create a folder in the folder being browsed, which is then listed along with the others.
    * @param {string} name Folder name.
    */
-  const createNewFolder = async (name) => {
+  const createNewFolder = (name) => {
     const path = dirPath ? `${dirPath}/${name}` : name;
 
-    try {
-      await /** @type {NonNullable<typeof createFolder>} */ (createFolder)(path, listFetchOptions);
-      folders = [...folders, path];
-    } catch (ex) {
-      folderCreationFailed = true;
-      // eslint-disable-next-line no-console
-      console.error(ex);
-    }
+    runAssetCommit(
+      async () => {
+        await /** @type {NonNullable<typeof createFolder>} */ (createFolder)(
+          path,
+          listFetchOptions,
+        );
+        folders = [...folders, path];
+      },
+      { failure: 'creating_folder_failed' },
+    );
   };
 
   /**
@@ -497,51 +492,48 @@
       </Infobar>
     {/if}
     <div role="none" class="grid-wrapper">
-      {#if subfolders.length}
-        <SubfolderStrip
-          {subfolders}
-          {viewType}
-          onOpen={({ path }) => {
-            dirPath = path;
-          }}
-        />
-      {/if}
-      <!-- An empty list box would only be a stop for the Tab key, with nothing to move through -->
-      {#if panelAssets.length}
-        <SimpleImageGrid {viewType} {gridId} {multiple} {kind}>
-          <InfiniteScroll items={panelAssets} itemKey="id">
-            {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
-              {@const { id, previewURL, description, kind: _kind } = asset}
-              <SimpleImageGridItem
-                value={id}
-                ariaLabel={description}
-                {viewType}
-                {multiple}
-                selected={isSelected(asset)}
-                onChange={({ detail: { selected } }) => {
-                  onSelectionChange(asset, selected);
-                }}
-              >
-                <AssetPreview
-                  kind={_kind}
-                  src={previewURL}
-                  alt={description}
-                  variant="tile"
-                  crossorigin="anonymous"
-                />
-                {#if viewType === 'list' || (!env.isSmallScreen && !isStockAssets)}
-                  <!-- The path is relative to the folder being browsed -->
-                  <AssetPath
-                    {...isStockAssets
-                      ? { caption: description }
-                      : { path: browsing ? getRelativePath(description, dirPath) : description }}
-                  />
-                {/if}
-              </SimpleImageGridItem>
-            {/snippet}
-          </InfiniteScroll>
-        </SimpleImageGrid>
-      {/if}
+      <SimpleImageGrid
+        {viewType}
+        {gridId}
+        {multiple}
+        {kind}
+        {subfolders}
+        onOpenSubfolder={({ path }) => {
+          dirPath = path;
+        }}
+        items={panelAssets}
+        itemKey="id"
+      >
+        {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
+          {@const { id, previewURL, description, kind: _kind } = asset}
+          <SimpleImageGridItem
+            value={id}
+            ariaLabel={description}
+            {viewType}
+            {multiple}
+            selected={isSelected(asset)}
+            onChange={({ detail: { selected } }) => {
+              onSelectionChange(asset, selected);
+            }}
+          >
+            <AssetPreview
+              kind={_kind}
+              src={previewURL}
+              alt={description}
+              variant="tile"
+              crossorigin="anonymous"
+            />
+            {#if viewType === 'list' || (!env.isSmallScreen && !isStockAssets)}
+              <!-- The path is relative to the folder being browsed -->
+              <AssetPath
+                {...isStockAssets
+                  ? { caption: description }
+                  : { path: browsing ? getRelativePath(description, dirPath) : description }}
+              />
+            {/if}
+          </SimpleImageGridItem>
+        {/snippet}
+      </SimpleImageGrid>
     </div>
   {/if}
 {/snippet}
@@ -566,20 +558,7 @@
   </EmptyState>
 {/if}
 
-<!-- `duration={0}` keeps this up until the upload settles, however long it takes -->
-<Toast show={uploading} duration={0}>
-  <Alert status="info">{_('uploading_files_progress')}</Alert>
-</Toast>
-
-<Toast bind:show={uploadFailed}>
-  <Alert status="error">{_('uploading_files_failed')}</Alert>
-</Toast>
-
 <RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} />
-
-<Toast bind:show={folderCreationFailed}>
-  <Alert status="error">{_('creating_folder_failed')}</Alert>
-</Toast>
 
 {#if createFolder}
   <SubfolderNameDialog

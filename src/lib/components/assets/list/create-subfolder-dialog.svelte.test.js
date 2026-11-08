@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
 import { createSubfolder } from '$lib/services/assets/data/subfolder';
 import { initTestConfig } from '$lib/test/config';
 import { waitForToastsToHide } from '$lib/test/toast';
@@ -30,6 +31,9 @@ describe('CreateSubfolderDialog', () => {
   });
 
   test('creates the folder in the given directory, reporting the progress', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     /**
      * Settle the pending commit.
      * @type {() => void}
@@ -75,6 +79,9 @@ describe('CreateSubfolderDialog', () => {
   }, 15000);
 
   test('creates the folder at the repository root, and reports a failure', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     vi.mocked(createSubfolder).mockRejectedValue(new Error('offline'));
@@ -103,6 +110,9 @@ describe('CreateSubfolderDialog', () => {
   }, 15000);
 
   test('says nothing when the commit is cancelled', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     vi.mocked(createSubfolder).mockRejectedValue(new Error('commit_cancelled'));

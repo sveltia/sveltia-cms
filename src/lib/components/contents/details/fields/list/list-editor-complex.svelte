@@ -457,8 +457,8 @@
                 values: { position: displayIndex + 1, count: items.length },
               })}
           class="item"
-          class:unknown-type={unknownType}
-          class:dragging={sorter.dragIndex === index}
+          class:object-unknown-type={unknownType}
+          class:drag-placeholder={sorter.dragIndex === index}
           {...sorter.itemProps(index, {
             // A nested sortable list starts its own drag; the event just bubbles through here
             ownEventsOnly: true,
@@ -550,9 +550,8 @@
               })}
               {expanded}
               {unknownType}
-              hint={readonly || !typeConfig
-                ? undefined
-                : getLocalizedOption({ config: typeConfig, option: 'hint', locale })}
+              {typeConfig}
+              {readonly}
               getSummary={() => _formatSummary(index, summaryTemplate, getItemValueMap(index))}
               getThumbnail={() => getThumbnail(index, type)}
               summaryContent={customSummary ? customSummaryContent : undefined}
@@ -602,23 +601,6 @@
     border-color: var(--sui-secondary-border-color);
     border-radius: var(--sui-control-medium-border-radius);
     background-color: var(--sui-primary-background-color); /* for dragging opacity */
-
-    &.unknown-type {
-      overflow: hidden;
-
-      :global(.alert) {
-        border-width: 0;
-        border-radius: 0;
-      }
-    }
-
-    /* The dragged item is left as a faint placeholder marking the gap it would drop into. The
-      pointer already carries the browser’s own drag image of it, so showing it twice at full
-      strength would just be confusing. */
-
-    &.dragging {
-      opacity: 0.25;
-    }
 
     /* Like the field menus, the buttons at the end of the header (Move Up/Down, options and
       remove) are shown on hover, and kept visible while a keyboard user is in the item, so the

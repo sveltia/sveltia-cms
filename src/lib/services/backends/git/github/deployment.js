@@ -3,6 +3,7 @@ import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import {
+  addCandidates,
   collectSafely,
   findURLInSummary,
   resolveDeployments,
@@ -159,20 +160,16 @@ const SOURCES = {
      * @param {Record<string, DeployCandidate[]>} candidateMap Map to populate.
      */
     parse: (commit, sha, candidateMap) => {
-      (commit?.status?.contexts ?? []).forEach(
-        (/** @type {Record<string, any>} */ { context, state, targetUrl, description }) => {
-          const mapped = STATUS_STATE_MAP[state];
-
-          if (mapped) {
-            candidateMap[sha].push({
-              name: context ?? '',
-              url: targetUrl ?? undefined,
-              state: mapped,
-              description: description ?? undefined,
-              source: 'status',
-            });
-          }
-        },
+      addCandidates(
+        candidateMap[sha],
+        commit?.status?.contexts,
+        ({ state }) => STATUS_STATE_MAP[state],
+        ({ context, targetUrl, description }) => ({
+          name: context ?? '',
+          url: targetUrl,
+          description,
+          source: 'status',
+        }),
       );
     },
   },
@@ -204,20 +201,16 @@ const SOURCES = {
      * @param {Record<string, DeployCandidate[]>} candidateMap Map to populate.
      */
     parse: (commit, sha, candidateMap) => {
-      (commit?.deployments?.nodes ?? []).forEach(
-        (/** @type {Record<string, any>} */ { environment, latestStatus }) => {
-          const mapped = DEPLOYMENT_STATE_MAP[latestStatus?.state];
-
-          if (mapped) {
-            candidateMap[sha].push({
-              name: environment ?? '',
-              url: latestStatus?.environmentUrl ?? undefined,
-              state: mapped,
-              description: latestStatus?.description ?? undefined,
-              source: 'deployment',
-            });
-          }
-        },
+      addCandidates(
+        candidateMap[sha],
+        commit?.deployments?.nodes,
+        ({ latestStatus }) => DEPLOYMENT_STATE_MAP[latestStatus?.state],
+        ({ environment, latestStatus }) => ({
+          name: environment ?? '',
+          url: latestStatus?.environmentUrl,
+          description: latestStatus?.description,
+          source: 'deployment',
+        }),
       );
     },
   },
@@ -250,32 +243,25 @@ const SOURCES = {
      * @param {Record<string, DeployCandidate[]>} candidateMap Map to populate.
      */
     parse: (commit, sha, candidateMap) => {
-      (commit?.checkSuites?.nodes ?? []).forEach((/** @type {Record<string, any>} */ suite) => {
-        (suite?.checkRuns?.nodes ?? []).forEach(
-          (
-            /** @type {Record<string, any>} */ { name, status, conclusion, detailsUrl, summary },
-          ) => {
-            // A run that hasn’t finished has no conclusion yet, so the status carries the state
-            const mapped = status === 'COMPLETED' ? CHECK_CONCLUSION_MAP[conclusion] : 'pending';
-
-            if (mapped) {
-              candidateMap[sha].push({
-                name: name ?? '',
-                // A URL published in the output is the provider saying where the site went, so it’s
-                // taken at face value. The check’s own link is usually a build page, and is trusted
-                // only when the run names itself a preview, as AWS Amplify’s does
-                url:
-                  findURLInSummary(summary, detailsUrl) ??
-                  (PREVIEW_CHECK_NAME_REGEX.test(name ?? '')
-                    ? (detailsUrl ?? undefined)
-                    : undefined),
-                state: mapped,
-                source: 'check',
-              });
-            }
-          },
-        );
-      });
+      addCandidates(
+        candidateMap[sha],
+        commit?.checkSuites?.nodes?.flatMap(
+          (/** @type {Record<string, any>} */ suite) => suite?.checkRuns?.nodes ?? [],
+        ),
+        // A run that hasn’t finished has no conclusion yet, so the status carries the state
+        ({ status, conclusion }) =>
+          status === 'COMPLETED' ? CHECK_CONCLUSION_MAP[conclusion] : 'pending',
+        ({ name, detailsUrl, summary }) => ({
+          name: name ?? '',
+          // A URL published in the output is the provider saying where the site went, so it’s taken
+          // at face value. The check’s own link is usually a build page, and is trusted only when
+          // the run names itself a preview, as AWS Amplify’s does
+          url:
+            findURLInSummary(summary, detailsUrl) ??
+            (PREVIEW_CHECK_NAME_REGEX.test(name) ? detailsUrl : undefined),
+          source: 'check',
+        }),
+      );
     },
   },
 };

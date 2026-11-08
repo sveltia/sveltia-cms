@@ -35,7 +35,7 @@
     warnUnknownType,
   } from '$lib/services/contents/fields/object/helpers';
   import { getDraftObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
-  import { getFieldLabel, getLocalizedOption } from '$lib/services/contents/i18n/options';
+  import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
   /**
    * @import {
@@ -316,7 +316,7 @@
     bind:this={wrapper}
     role="group"
     class="wrapper"
-    class:unknown-type={unknownType}
+    class:object-unknown-type={unknownType}
     class:expanded={parentExpanded}
     aria-labelledby={labelledBy}
   >
@@ -354,9 +354,8 @@
         })}
         expanded={parentExpanded}
         {unknownType}
-        hint={readonly || !typeConfig
-          ? undefined
-          : getLocalizedOption({ config: typeConfig, option: 'hint', locale })}
+        {typeConfig}
+        {readonly}
         getSummary={() => summaryText}
         getThumbnail={() => thumbnailSource}
         {summaryId}
@@ -374,15 +373,6 @@
     &.expanded,
     &:has(:global(.summary)) {
       border-bottom-width: 2px;
-    }
-
-    &.unknown-type {
-      overflow: hidden;
-
-      :global(.alert) {
-        border-width: 0;
-        border-radius: 0;
-      }
     }
   }
 

@@ -1,24 +1,17 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, Toast } from '@sveltia/ui';
   import { onDestroy, untrack } from 'svelte';
 
   import AssetPreviewContent from '$lib/components/assets/list/asset-preview-content.svelte';
-  import DeleteAssetsButton from '$lib/components/assets/list/delete-assets-button.svelte';
   import DetailsOverlay from '$lib/components/assets/list/details-overlay.svelte';
   import DownloadAssetsButton from '$lib/components/assets/list/download-assets-button.svelte';
   import CopyAssetsButton from '$lib/components/assets/list/internal/copy-assets-button.svelte';
+  import DeleteAssetsButton from '$lib/components/assets/list/internal/delete-assets-button.svelte';
   import EditOptionsButton from '$lib/components/assets/list/internal/edit-options-button.svelte';
   import InfoPanel from '$lib/components/assets/list/internal/info-panel.svelte';
   import NotFound from '$lib/components/global/not-found.svelte';
   import { goBack } from '$lib/services/app/navigation';
-  import { planAssetDeletion } from '$lib/services/assets/data/cascade';
-  import { commitAssetDeletion } from '$lib/services/assets/data/delete-commit';
-  import {
-    assetsLocked,
-    hasReadonlyAsset,
-    selectedAssetFolder,
-  } from '$lib/services/assets/folders';
+  import { selectedAssetFolder } from '$lib/services/assets/folders';
   import { getAssetBlob, preloadAssets } from '$lib/services/assets/info';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
   import { getAssetFolderHistoryState, showAssetDetails } from '$lib/services/assets/navigation';
@@ -41,7 +34,6 @@
    * @type {{ asset: Asset, blob?: Blob } | undefined}
    */
   let loaded = $state.raw();
-  let deletingFailed = $state(false);
 
   const asset = $derived(overlaidAsset.current);
   /** Whether the blob of the shown asset is still being read. */
@@ -126,27 +118,8 @@
   {#snippet actions(useButton)}
     <CopyAssetsButton {assets} {useButton} />
     <DownloadAssetsButton {assets} getName={(a) => a.name} getBlob={getAssetBlob} {useButton} />
-    <!--
-      Deleting a file from the media library commits straight to the configured branch rather than
-      going through review, so it’s not something an Open Authoring contributor or a user who
-      can’t push to the branch can do
-    -->
     <DeleteAssetsButton
       {assets}
-      disabled={assetsLocked.current || hasReadonlyAsset(assets)}
-      deleteAssets={async (_assets) => {
-        const { ok, failed } = await commitAssetDeletion(_assets);
-
-        if (failed) {
-          deletingFailed = true;
-        }
-
-        // On failure, stay on the asset, which is still there
-        return ok;
-      }}
-      planDeletion={planAssetDeletion}
-      buttonDescription={_('delete_assets', { values: { count: 1 } })}
-      dialogDescription={_('confirm_deleting_this_asset')}
       onDelete={() => {
         goBack(backPath, { returnTo: isSearchResultsPath, state: getAssetFolderHistoryState() });
       }}
@@ -177,7 +150,3 @@
     {/if}
   {/snippet}
 </DetailsOverlay>
-
-<Toast bind:show={deletingFailed}>
-  <Alert status="error">{_('deleting_assets_failed')}</Alert>
-</Toast>

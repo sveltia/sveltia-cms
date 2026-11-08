@@ -1,22 +1,11 @@
 import { locale as appLocale } from '@sveltia/i18n';
 
 import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
+import { getLanguageScript } from '$lib/services/utils/locale';
 
 /**
- * Get the language and the likely script of a locale, e.g. `zh-Hant` for `zh-TW` or `zh-HK`, and
- * `zh-Hans` for `zh` or `zh-SG`.
- * @param {string} locale Locale code.
- * @returns {string | undefined} Language and script, or `undefined` if the locale code is invalid.
+ * @import { ExternalAsset, MediaLibraryFetchOptions } from '$lib/types/private';
  */
-const getLanguageScript = (locale) => {
-  try {
-    const { language, script } = new Intl.Locale(locale).maximize();
-
-    return `${language}-${script}`;
-  } catch {
-    return undefined;
-  }
-};
 
 /**
  * Get the best matching locale supported by a stock asset API: the app locale if the API supports
@@ -81,3 +70,106 @@ export const fetchPagedResults = async ({ maxPages, fetchPage, parsePage }) =>
     },
     { maxPages },
   );
+
+/**
+ * Create the `list` and `search` functions of a stock asset provider whose API lists curated
+ * pictures at one endpoint and searches pictures at another.
+ * @template T
+ * @param {object} args Arguments.
+ * @param {string} args.listURL Endpoint to list curated pictures.
+ * @param {string} args.searchURL Endpoint to search pictures.
+ * @param {(apiKey: string) => Record<string, string>} [args.getHeaders] Function to get the
+ * request headers for the given API key. Default: no headers.
+ * @param {(apiKey: string) => Record<string, any>} args.getListParams Function to get the query
+ * parameters to list pictures.
+ * @param {(query: string, apiKey: string) => Record<string, any>} args.getSearchParams Function
+ * to get the query parameters to search pictures.
+ * @param {string} [args.listKey] Property of the list response holding the results. Default: the
+ * response itself.
+ * @param {string} args.searchKey Property of the search response holding the results.
+ * @param {(response: any, page: number) => boolean} [args.hasMore] Function to check whether
+ * another search result page follows, for an API that pages the search results with the `page`
+ * query parameter. Default: the results are fetched in a single request without the parameter.
+ * @param {number} [args.maxPages] Maximum number of search result pages to fetch. Required with
+ * `hasMore`.
+ * @param {(results: T[]) => ExternalAsset[]} args.parseResults Function to convert the results
+ * into the `ExternalAsset` format.
+ * @returns {{
+ * list: (options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>,
+ * search: (query: string, options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>,
+ * }} Functions.
+ */
+export const createStockFetchers = ({
+  listURL,
+  searchURL,
+  getHeaders,
+  getListParams,
+  getSearchParams,
+  listKey,
+  searchKey,
+  maxPages,
+  hasMore,
+  parseResults,
+}) => {
+  /**
+   * Send a request to the API.
+   * @param {string} url Endpoint.
+   * @param {URLSearchParams} params Query parameters.
+   * @param {string} apiKey API key.
+   * @returns {Promise<any>} Parsed response.
+   */
+  const request = (url, params, apiKey) =>
+    fetchJSON(`${url}?${params}`, getHeaders && { headers: getHeaders(apiKey) });
+
+  return {
+    /**
+     * Fetch curated pictures.
+     * @param {MediaLibraryFetchOptions} options Options.
+     * @returns {Promise<ExternalAsset[]>} Assets.
+     */
+    list: async ({ apiKey }) => {
+      const response = await request(listURL, new URLSearchParams(getListParams(apiKey)), apiKey);
+
+      return parseResults(listKey ? response[listKey] : response);
+    },
+    /**
+     * Search images.
+     * @param {string} query Search query.
+     * @param {MediaLibraryFetchOptions} options Options.
+     * @returns {Promise<ExternalAsset[]>} Assets.
+     */
+    search: async (query, { apiKey }) => {
+      const params = new URLSearchParams(getSearchParams(query, apiKey));
+
+      if (!hasMore) {
+        return parseResults((await request(searchURL, params, apiKey))[searchKey]);
+      }
+
+      const results = await fetchPagedResults({
+        maxPages: /** @type {number} */ (maxPages),
+        /**
+         * Fetch a page of search results.
+         * @param {number} page Page number.
+         * @returns {Promise<any>} Response.
+         */
+        fetchPage: (page) => {
+          params.set('page', String(page));
+
+          return request(searchURL, params, apiKey);
+        },
+        /**
+         * Extract the results from a page.
+         * @param {any} response Response.
+         * @param {number} page Page number.
+         * @returns {{ results: T[], hasMore: boolean }} Results and whether another page follows.
+         */
+        parsePage: (response, page) => ({
+          results: response[searchKey],
+          hasMore: hasMore(response, page),
+        }),
+      });
+
+      return parseResults(results);
+    },
+  };
+};

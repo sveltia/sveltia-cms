@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
 import { saveAssets } from '$lib/services/assets/data/create';
 import { editingAsset } from '$lib/services/assets/state';
 import { showAssetOverlay } from '$lib/services/assets/view';
@@ -76,6 +77,9 @@ describe('EditAssetDialog', () => {
   });
 
   test('reports a failure to save, and reopens with the edited text', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     vi.mocked(saveAssets).mockRejectedValueOnce(new Error('offline'));
@@ -147,6 +151,9 @@ describe('EditAssetDialog', () => {
   }, 15000);
 
   test('lets go of the asset when saving fails after the asset details overlay has closed', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     /**
      * Fail the pending save.
@@ -194,6 +201,9 @@ describe('EditAssetDialog', () => {
   }, 15000);
 
   test('reopens with the edited text when saving fails in the dialog opened from the list', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     // The edit options menu on the asset list toolbar, without the asset details overlay

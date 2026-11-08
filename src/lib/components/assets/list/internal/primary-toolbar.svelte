@@ -1,22 +1,19 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { Alert, Infobar, Toast } from '@sveltia/ui';
+  import { Infobar } from '@sveltia/ui';
 
-  import DeleteAssetsButton from '$lib/components/assets/list/delete-assets-button.svelte';
   import DownloadAssetsButton from '$lib/components/assets/list/download-assets-button.svelte';
   import CopyAssetsButton from '$lib/components/assets/list/internal/copy-assets-button.svelte';
+  import DeleteAssetsButton from '$lib/components/assets/list/internal/delete-assets-button.svelte';
   import EditOptionsButton from '$lib/components/assets/list/internal/edit-options-button.svelte';
   import NewFolderButton from '$lib/components/assets/list/internal/new-folder-button.svelte';
   import UploadAssetsButton from '$lib/components/assets/list/internal/upload-assets-button.svelte';
   import PreviewAssetButton from '$lib/components/assets/list/preview-asset-button.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
-  import { planAssetDeletion } from '$lib/services/assets/data/cascade';
-  import { commitAssetDeletion } from '$lib/services/assets/data/delete-commit';
   import {
     assetsLocked,
     canCreateAsset,
-    hasReadonlyAsset,
     selectedAssetFolder,
     targetAssetFolder,
   } from '$lib/services/assets/folders';
@@ -31,8 +28,6 @@
   import { env } from '$lib/services/user/env.svelte';
   import { createPath } from '$lib/services/utils/file';
   import { encodePathSegments } from '$lib/services/utils/url';
-
-  let deletingFailed = $state(false);
 
   const folder = $derived(selectedAssetFolder.current);
   // `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized label
@@ -99,32 +94,7 @@
     />
     <CopyAssetsButton assets={asset ? [asset] : []} />
     <DownloadAssetsButton {assets} getName={(a) => a.name} getBlob={getAssetBlob} />
-    <!--
-        Deleting a file from the media library commits straight to the configured branch rather
-        than going through review, so it’s not something an Open Authoring contributor or a user
-        who can’t push to the branch can do
-      -->
-    <DeleteAssetsButton
-      {assets}
-      disabled={assetsLocked.current || hasReadonlyAsset(assets)}
-      deleteAssets={async (_assets) => {
-        const { ok, failed } = await commitAssetDeletion(_assets);
-
-        if (failed) {
-          deletingFailed = true;
-        }
-
-        return ok;
-      }}
-      planDeletion={planAssetDeletion}
-      buttonDescription={_('delete_selected_assets', { values: { count: assets.length } })}
-      dialogDescription={_(
-        assets.length > 1 && assets.length === listedAssets.current.length
-          ? 'confirm_deleting_all_assets'
-          : 'confirm_deleting_selected_assets',
-        { values: { count: assets.length } },
-      )}
-    />
+    <DeleteAssetsButton {assets} listedCount={listedAssets.current.length} />
     <EditOptionsButton {asset} />
   {/snippet}
   {#snippet fab()}
@@ -136,7 +106,3 @@
     {/if}
   {/snippet}
 </PrimaryToolbar>
-
-<Toast bind:show={deletingFailed}>
-  <Alert status="error">{_('deleting_assets_failed')}</Alert>
-</Toast>

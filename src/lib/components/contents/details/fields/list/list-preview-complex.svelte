@@ -7,17 +7,11 @@
 <script>
   import { VisibilityObserver } from '@sveltia/ui';
 
-  import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
-  import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
+  import SubfieldPreviews from '$lib/components/contents/details/fields/object/subfield-previews.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getFieldValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getMemoizedSubtree } from '$lib/services/contents/entry/subtree';
   import { getListFieldInfo, getListItemKey } from '$lib/services/contents/fields/list/helpers';
-  import {
-    getTypedSubKeyPath,
-    resolveVariableType,
-  } from '$lib/services/contents/fields/object/helpers';
-  import { getFieldLabel } from '$lib/services/contents/i18n/options';
 
   /**
    * @import { SubtreeMemo } from '$lib/services/contents/entry/subtree';
@@ -78,37 +72,15 @@
     the item even before it’s rendered -->
   <div role="none" data-lazy-key-path={itemKeyPath}>
     <VisibilityObserver>
-      {@const { typeConfig, unknownType, subFields } = resolveVariableType({
-        types: hasVariableTypes ? types : undefined,
-        fields: singleSubFields,
-        type,
-      })}
-      {#if unknownType}
-        <!-- Unknown type: a warning is displayed in the editor -->
-      {:else}
-        {@const label = typeConfig ? getFieldLabel({ config: typeConfig, locale }) : undefined}
-        <Subsection {label}>
-          {#each subFields as subField (subField.name)}
-            {@const subFieldKeyPath = hasSingleSubField
-              ? itemKeyPath
-              : `${itemKeyPath}.${subField.name}`}
-            <div role="none" data-lazy-key-path={subFieldKeyPath}>
-              <VisibilityObserver>
-                <FieldPreview
-                  keyPath={subFieldKeyPath}
-                  typedKeyPath={getTypedSubKeyPath({
-                    typedKeyPath: `${typedKeyPath}.*`,
-                    type,
-                    subFieldName: subField.name,
-                  })}
-                  {locale}
-                  fieldConfig={subField}
-                />
-              </VisibilityObserver>
-            </div>
-          {/each}
-        </Subsection>
-      {/if}
+      <SubfieldPreviews
+        {locale}
+        keyPath={itemKeyPath}
+        typedKeyPath="{typedKeyPath}.*"
+        types={hasVariableTypes ? types : undefined}
+        fields={singleSubFields}
+        {type}
+        single={hasSingleSubField}
+      />
     </VisibilityObserver>
   </div>
 {/each}

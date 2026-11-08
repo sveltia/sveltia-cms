@@ -8,7 +8,12 @@
   import { isDemoSite } from '$lib/services/backends/fs/seed';
   import { cancelAuthorization } from '$lib/services/backends/git/shared/auth';
   import { cmsConfig } from '$lib/services/config';
-  import { auth, signInAutomatically, signInManually } from '$lib/services/user/auth.svelte';
+  import {
+    auth,
+    magicLinkConfirmation,
+    signInAutomatically,
+    signInManually,
+  } from '$lib/services/user/auth.svelte';
   import { env } from '$lib/services/user/env.svelte';
   import { getSignInOptions } from '$lib/services/user/sign-in-options';
   import { makeLink } from '$lib/services/utils/string';
@@ -51,7 +56,7 @@
    * Account name to show when the user is asked whether to sign in with a magic link.
    */
   const magicLinkAccountName = $derived.by(() => {
-    const { login, name } = auth.magicLinkConfirmation?.account ?? {};
+    const { login, name } = magicLinkConfirmation.current?.account ?? {};
 
     return login || name || '';
   });
@@ -176,16 +181,16 @@
 </PromptDialog>
 
 <ConfirmationDialog
-  open={!!auth.magicLinkConfirmation}
+  open={!!magicLinkConfirmation.current}
   title={_('sign_in_with_link')}
   okLabel={_('sign_in')}
   onOk={() => {
-    auth.magicLinkConfirmation?.resolve(true);
+    magicLinkConfirmation.current?.respond(true);
   }}
   onClose={() => {
     // Covers the Cancel button, the Escape key and any other way out. Signing in has already
     // settled the prompt, so this leaves it alone
-    auth.magicLinkConfirmation?.resolve(false);
+    magicLinkConfirmation.current?.respond(false);
   }}
 >
   {_('sign_in_with_link_confirmation', {

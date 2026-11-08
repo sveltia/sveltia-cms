@@ -57,6 +57,22 @@ const createImageElement = ({ src = '', alt = '', title = '' }) => {
 };
 
 /**
+ * Create the Markdown image syntax from the image field values.
+ * @param {Record<string, any>} props Field values.
+ * @returns {string} Markdown, or an empty string if the source is not set.
+ */
+const toImageMarkdown = ({ src = '', alt = '', title = '' }) =>
+  src ? `![${escapeAlt(alt)}](${src}${title ? ` "${escapeTitle(title)}"` : ''})` : '';
+
+/**
+ * Create the HTML of an image preview from the image field values.
+ * @param {Record<string, any>} props Field values.
+ * @returns {string} HTML.
+ */
+const toImagePreview = ({ src = '', alt = '', title = '' }) =>
+  `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" title="${escapeAttr(title)}">`;
+
+/**
  * Built-in image component definition. The labels are localized in `getBuiltInComponentDefs()`.
  * @type {EditorComponentDefinition}
  * @see https://decapcms.org/docs/widgets/#Markdown
@@ -77,16 +93,8 @@ export const IMAGE_COMPONENT = {
 
     return { src, alt: alt && unescapeTitle(alt), title: title && unescapeTitle(title) };
   },
-  toBlock: (props) => {
-    const { src = '', alt = '', title = '' } = props;
-
-    return src ? `![${escapeAlt(alt)}](${src}${title ? ` "${escapeTitle(title)}"` : ''})` : '';
-  },
-  toPreview: (props) => {
-    const { src = '', alt = '', title = '' } = props;
-
-    return `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" title="${escapeAttr(title)}">`;
-  },
+  toBlock: toImageMarkdown,
+  toPreview: toImagePreview,
   htmlSelector: 'img',
   fromBlockHTML: getImageProps,
   toBlockHTML: createImageElement,
@@ -116,15 +124,14 @@ export const LINKED_IMAGE_COMPONENT = {
     };
   },
   toBlock: (props) => {
-    const { src = '', alt = '', title = '', link = '' } = props;
-    const img = src ? `![${escapeAlt(alt)}](${src}${title ? ` "${escapeTitle(title)}"` : ''})` : '';
+    const { link = '' } = props;
+    const img = toImageMarkdown(props);
 
     return img && link ? `[${img}](${link})` : img;
   },
   toPreview: (props) => {
-    const { src = '', alt = '', title = '', link = '' } = props;
-    // eslint-disable-next-line @stylistic/max-len
-    const img = `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" title="${escapeAttr(title)}">`;
+    const { link = '' } = props;
+    const img = toImagePreview(props);
 
     return link ? `<a href="${escapeAttr(link)}">${img}</a>` : img;
   },

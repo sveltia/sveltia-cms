@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
 import { saveAssets } from '$lib/services/assets/data/create';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { processedAssets } from '$lib/services/assets/process';
@@ -282,6 +283,9 @@ describe('UploadAssetsConfirmDialog', () => {
   });
 
   test('reports a failure to upload', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(saveAssets).mockRejectedValue(new Error('Boom'));
 

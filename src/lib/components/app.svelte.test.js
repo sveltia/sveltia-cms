@@ -68,6 +68,14 @@ describe('App', () => {
       announcedPageStatus.current,
     );
 
+    // The dragged item of a sortable list is left faint
+    const dragged = document.createElement('div');
+
+    dragged.className = 'drag-placeholder';
+    container.append(dragged);
+    expect(getComputedStyle(dragged).opacity).toBe('0.25');
+    dragged.remove();
+
     // Neither is there until the logo has been processed
     appIconURLs.current = undefined;
     await expect.poll(() => document.querySelector('link[rel="apple-touch-icon"]')).toBeNull();

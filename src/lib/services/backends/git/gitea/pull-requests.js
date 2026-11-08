@@ -13,10 +13,13 @@ import { pollUntil, SETTLE_POLL } from '$lib/services/backends/git/shared/poll';
 import {
   createDraftTitleCodec,
   parseRestFiles,
+  parseRestPullRequest,
+  toCommitAuthor,
 } from '$lib/services/backends/git/shared/pull-requests';
 import {
   getPullRequestPath,
   getRepositoryPath,
+  getRestBranchPath,
 } from '$lib/services/backends/git/shared/repository';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
@@ -88,11 +91,7 @@ export const isSameRepositoryPullRequest = ({ head, base }) =>
  * @param {Record<string, any> | undefined} user User object.
  * @returns {CommitAuthor | undefined} Author, or `undefined` if the user is unknown.
  */
-const parseAuthor = (user) => {
-  const { full_name: fullName, login, email, id } = user ?? {};
-
-  return login ? { name: fullName || login, email: email ?? '', id, login } : undefined;
-};
+const parseAuthor = (user) => toCommitAuthor({ ...user, name: user?.full_name });
 
 /**
  * Parse a pull request returned by the REST API.
@@ -110,7 +109,7 @@ export const parsePullRequest = (item) => {
     return undefined;
   }
 
-  const { ref: branch, sha: headSHA } = item.head ?? {};
+  const { ref: branch } = item.head ?? {};
 
   // A pull request from a fork has its branch in a repository this flow can’t read. Labelling one
   // by hand would otherwise put a card on the board showing the configured repository’s branch of
@@ -128,20 +127,13 @@ export const parsePullRequest = (item) => {
     return undefined;
   }
 
-  return {
-    number: item.number,
-    nodeId: String(item.id),
+  return parseRestPullRequest(item, {
     title: wipTitle.strip(item.title),
-    url: item.html_url,
     branch,
-    headSHA,
     status,
-    createdDate: new Date(item.created_at),
-    updatedDate: new Date(item.updated_at),
     author: parseAuthor(item.user),
-    files: [],
     description: item.body ?? '',
-  };
+  });
 };
 
 /**
@@ -363,9 +355,7 @@ export const fetchPullRequestFileContents = async (pullRequest) => {
  */
 export const fetchBranchHead = async (branch) => {
   const result = /** @type {{ commit?: { id?: string } } | undefined} */ (
-    await fetchAPIOrUndefined(
-      `${getRepositoryPath(getWorkflowRepository())}/branches/${encodePathSegments(branch)}`,
-    )
+    await fetchAPIOrUndefined(getRestBranchPath(getWorkflowRepository(), branch))
   );
 
   return result?.commit?.id;
@@ -380,7 +370,7 @@ export const fetchBranchHead = async (branch) => {
 export const deleteBranch = async (branch) => {
   await deleteRemoteBranch({
     branch,
-    path: `${getRepositoryPath(getWorkflowRepository())}/branches/${encodePathSegments(branch)}`,
+    path: getRestBranchPath(getWorkflowRepository(), branch),
     goneStatuses: [404],
   });
 };
@@ -509,21 +499,14 @@ export const createPullRequest = async ({ branch, title, status, description }) 
     await applyLabels(result.number, [getStatusLabel(status)], status, 'POST');
   }
 
-  return {
-    number: result.number,
-    nodeId: String(result.id),
+  return parseRestPullRequest(result, {
     title,
-    url: result.html_url,
     branch,
-    headSHA: result.head?.sha,
     status,
-    createdDate: new Date(result.created_at),
-    updatedDate: new Date(result.updated_at),
     // The signed-in user, which is how a later save recognizes the pull request as their own
     author: parseAuthor(result.user),
-    files: [],
     description,
-  };
+  });
 };
 
 /**

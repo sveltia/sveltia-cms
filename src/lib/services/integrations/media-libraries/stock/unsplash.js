@@ -1,6 +1,6 @@
 import {
+  createStockFetchers,
   fetchJSON,
-  fetchPagedResults,
   getSupportedLocale,
 } from '$lib/services/integrations/media-libraries/stock/utils';
 import { escapeAttr, escapeHTML } from '$lib/services/utils/string';
@@ -79,60 +79,43 @@ export const parseResults = (results) =>
   );
 
 /**
- * Fetch curated pictures.
- * @param {MediaLibraryFetchOptions} options Options.
- * @returns {Promise<ExternalAsset[]>} Assets.
- * @see https://unsplash.com/documentation
- * @todo Support video files.
+ * Get the request headers for the given API key.
+ * @param {string} apiKey API key.
+ * @returns {Record<string, string>} Headers.
  */
-export const list = async ({ apiKey }) => {
-  const headers = { Authorization: `Client-ID ${apiKey}` };
-  const params = new URLSearchParams(SEARCH_PARAMS);
-  /** @type {FetchResult[]} */
-  const results = await fetchJSON(`${ENDPOINT}/photos?${params}`, { headers });
-
-  return parseResults(results);
-};
+const getHeaders = (apiKey) => ({ Authorization: `Client-ID ${apiKey}` });
 
 /**
- * Search images or fetch curated pictures if no query is given.
- * @param {string} query Search query.
- * @param {MediaLibraryFetchOptions} options Options.
- * @returns {Promise<ExternalAsset[]>} Assets.
+ * Fetch curated pictures, or search images.
  * @see https://unsplash.com/documentation
  * @todo Support video files.
  */
-export const search = async (query, { apiKey }) => {
-  const headers = { Authorization: `Client-ID ${apiKey}` };
-  const params = new URLSearchParams({ ...SEARCH_PARAMS, query, lang: getLocale() });
-
+export const { list, search } = createStockFetchers({
+  listURL: `${ENDPOINT}/photos`,
+  searchURL: `${ENDPOINT}/search/photos`,
+  getHeaders,
   /**
-   * Fetch a page of search results.
-   * @param {number} page Page number.
-   * @returns {Promise<{ results: FetchResult[], total_pages: number }>} Response.
+   * Get the query parameters to list curated pictures.
+   * @returns {Record<string, any>} Parameters.
    */
-  const fetchPage = (page) => {
-    params.set('page', String(page));
-
-    return fetchJSON(`${ENDPOINT}/search/photos?${params}`, { headers });
-  };
-
+  getListParams: () => SEARCH_PARAMS,
   /**
-   * Extract the results from a page.
-   * @param {{ results: FetchResult[], total_pages: number }} response Response.
-   * @param {number} page Page number.
-   * @returns {{ results: FetchResult[], hasMore: boolean }} Results and whether another page
-   * follows.
+   * Get the query parameters to search images.
+   * @param {string} query Search query.
+   * @returns {Record<string, any>} Parameters.
    */
-  const parsePage = ({ results, total_pages: totalPages }, page) => ({
-    results,
-    hasMore: page < totalPages,
-  });
-
-  const results = await fetchPagedResults({ maxPages: 5, fetchPage, parsePage });
-
-  return parseResults(results);
-};
+  getSearchParams: (query) => ({ ...SEARCH_PARAMS, query, lang: getLocale() }),
+  searchKey: 'results',
+  maxPages: 5,
+  /**
+   * Check whether another page of search results follows.
+   * @param {{ total_pages: number }} response Response.
+   * @param {number} page Page number.
+   * @returns {boolean} Result.
+   */
+  hasMore: ({ total_pages: totalPages }, page) => page < totalPages,
+  parseResults,
+});
 
 /**
  * Let Unsplash know a photo has been used, as its API guidelines require. A failure is only logged,
@@ -148,7 +131,7 @@ export const trackDownload = async ({ downloadTrackingURL }, { apiKey }) => {
   }
 
   try {
-    await fetchJSON(downloadTrackingURL, { headers: { Authorization: `Client-ID ${apiKey}` } });
+    await fetchJSON(downloadTrackingURL, { headers: getHeaders(apiKey) });
   } catch (ex) {
     // eslint-disable-next-line no-console
     console.error(ex);

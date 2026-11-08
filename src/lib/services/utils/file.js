@@ -143,6 +143,14 @@ export const createPath = (segments) => segments.filter(Boolean).join('/');
 export const getDirName = (path) => getPathInfo(path).dirname ?? '';
 
 /**
+ * Get the last segment of a path, e.g. the file name of a file path. Unlike `getPathInfo()`, which
+ * ignores trailing slashes, this is an empty string for a path ending with a slash.
+ * @param {string} path Path.
+ * @returns {string} Last path segment, or the path itself if it has no slash.
+ */
+export const getBaseName = (path) => path.slice(path.lastIndexOf('/') + 1);
+
+/**
  * Remove the given directory from the start of a path, if the path sits below it.
  * @param {string} path Path, e.g. `images/photo.jpg`.
  * @param {string | undefined} dir Directory path, e.g. `images`. An empty string or `undefined`

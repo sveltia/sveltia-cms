@@ -1,17 +1,16 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, Toast } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
 
   import RenameDialog from '$lib/components/assets/list/rename-dialog.svelte';
   import { goto, parseLocation } from '$lib/services/app/navigation';
   import { getAssetsByDirName } from '$lib/services/assets';
+  import { runAssetCommit } from '$lib/services/assets/data/commit';
   import { moveAssets } from '$lib/services/assets/data/move';
   import { getAssetUsedEntries } from '$lib/services/assets/details';
   import { getAssetFolderHistoryState } from '$lib/services/assets/navigation';
   import { renamingAsset } from '$lib/services/assets/state';
   import { getFolderNamesInDir, getNonAssetFileNamesInDir } from '$lib/services/assets/subfolders';
-  import { runCommit } from '$lib/services/backends/commit-prompt';
   import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { createPath } from '$lib/services/utils/file';
@@ -23,7 +22,6 @@
    */
 
   let open = $state(false);
-  let renamingFailed = $state(false);
   /** @type {Entry[]} */
   let usedEntries = $state([]);
 
@@ -73,16 +71,11 @@
     // An asset in a root media folder has no directory
     const newPath = createPath([dirname, newName]);
 
-    const { ok, cancelled } = await runCommit(() =>
-      moveAssets('rename', [{ asset, path: newPath }]),
-    );
+    const { ok } = await runAssetCommit(() => moveAssets('rename', [{ asset, path: newPath }]), {
+      failure: 'renaming_asset_failed',
+    });
 
     if (!ok) {
-      // A cancellation at the commit message prompt isn’t a failure
-      if (!cancelled) {
-        renamingFailed = true;
-      }
-
       return;
     }
 
@@ -121,7 +114,3 @@
     renamingAsset.current = undefined;
   }}
 />
-
-<Toast bind:show={renamingFailed}>
-  <Alert status="error">{_('renaming_asset_failed')}</Alert>
-</Toast>

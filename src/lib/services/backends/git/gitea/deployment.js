@@ -1,9 +1,13 @@
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { collectSafely, resolveDeployments } from '$lib/services/backends/git/shared/deployment';
-import { getRepositoryPath } from '$lib/services/backends/git/shared/repository';
-import { encodePathSegments } from '$lib/services/utils/url';
+import {
+  addCandidates,
+  collectSafely,
+  fetchRestBranchHeadSHA,
+  resolveDeployments,
+} from '$lib/services/backends/git/shared/deployment';
+import { getRepositoryPath, getRestBranchPath } from '$lib/services/backends/git/shared/repository';
 
 /**
  * @import { DeployState, DeployStatus, DeployTarget } from '$lib/types/private';
@@ -39,20 +43,8 @@ const COMMIT_STATUS_MAP = {
  * @returns {Promise<string | undefined>} Commit SHA, or `undefined` if it couldn’t be resolved.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetBranch
  */
-export const fetchBranchHeadSHA = async () => {
-  const { branch } = repository;
-
-  if (!branch) {
-    // The default branch hasn’t been detected yet
-    return undefined;
-  }
-
-  const result = /** @type {Record<string, any>} */ (
-    await fetchAPI(`${getRepositoryPath(repository)}/branches/${encodePathSegments(branch)}`)
-  );
-
-  return result?.commit?.id ?? undefined;
-};
+export const fetchBranchHeadSHA = () =>
+  fetchRestBranchHeadSHA(repository.branch, (branch) => getRestBranchPath(repository, branch));
 
 /**
  * Collect deploy candidates from the commit statuses of the given commit, which is the only place
@@ -77,21 +69,19 @@ const collectStatusCandidates = async (sha, candidateMap) => {
   // The statuses come in no particular order, while {@link pickDeployment} expects the newest last.
   // The times are in the server’s own time zone, whose offset can change with daylight saving time,
   // so they’re compared as times rather than as strings
-  /** @type {Record<string, any>[]} */ ([...(result?.statuses ?? [])])
-    .sort((a, b) => Date.parse(a.updated_at) - Date.parse(b.updated_at))
-    .forEach(({ context, status, target_url: targetURL, description }) => {
-      const state = COMMIT_STATUS_MAP[status];
-
-      if (state) {
-        candidateMap[sha].push({
-          name: context ?? '',
-          url: targetURL || undefined,
-          state,
-          description: description || undefined,
-          source: 'status',
-        });
-      }
-    });
+  addCandidates(
+    candidateMap[sha],
+    [...(result?.statuses ?? [])].sort(
+      (a, b) => Date.parse(a.updated_at) - Date.parse(b.updated_at),
+    ),
+    ({ status }) => COMMIT_STATUS_MAP[status],
+    ({ context, target_url: url, description }) => ({
+      name: context ?? '',
+      url,
+      description,
+      source: 'status',
+    }),
+  );
 };
 
 /**

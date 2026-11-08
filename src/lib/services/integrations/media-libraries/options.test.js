@@ -55,6 +55,26 @@ describe('findLibraryOptions()', () => {
     expect(findLibraryOptions('uploadcare', { media_library: legacy })).toBeUndefined();
   });
 
+  test('applies the legacy option to the site default library only, given its name', () => {
+    const legacy = { config: { publicKey: 'legacy' } };
+    const named = { name: 'stock_assets', config: {} };
+
+    cmsConfig.current = { media_library: { config: {} } };
+    expect(findLibraryOptions('default', cmsConfig.current, 'default')).toBe(
+      cmsConfig.current.media_library,
+    );
+    expect(findLibraryOptions('default', { media_library: legacy }, 'default')).toBe(legacy);
+    expect(findLibraryOptions('stock_assets', { media_library: legacy }, 'default')).toBe(
+      undefined,
+    );
+    // A field-level legacy option can’t switch to another library than the site-level one
+    expect(findLibraryOptions('stock_assets', { media_library: named }, 'default')).toBe(undefined);
+    expect(findLibraryOptions('stock_assets', { media_library: named })).toBe(named);
+
+    cmsConfig.current = undefined;
+    expect(findLibraryOptions('default', { media_library: legacy }, 'default')).toBe(legacy);
+  });
+
   test('ignores a `null` library in the `media_libraries` map', () => {
     const legacy = { name: 'uploadcare', config: { publicKey: 'legacy' } };
 

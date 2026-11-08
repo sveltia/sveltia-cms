@@ -77,6 +77,23 @@ const isRetryableRequest = ({ method = 'GET', body }) => {
 };
 
 /**
+ * Send a request with `fetch()`, taking the same arguments, and make sure the response status is
+ * OK.
+ * @param {Parameters<typeof fetch>} args Resource and request options.
+ * @returns {Promise<Response>} Response.
+ * @throws {Error} When the request fails, or the response status is not OK.
+ */
+export const fetchOK = async (...args) => {
+  const response = await fetch(...args);
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  return response;
+};
+
+/**
  * A `fetch` wrapper to send an HTTP request to an API endpoint, parse the response as JSON or other
  * specified format, and handle errors gracefully.
  * @param {string} url URL.

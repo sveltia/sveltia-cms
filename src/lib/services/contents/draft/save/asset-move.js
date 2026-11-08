@@ -1,6 +1,6 @@
+import { createAssetMoveChange } from '$lib/services/assets/data/move-change';
 import { getOwnedEntryFolderPath } from '$lib/services/assets/entry-folder';
 import { getAssetFolder } from '$lib/services/assets/folders';
-import { getAssetBlob } from '$lib/services/assets/info';
 import { allAssets } from '$lib/services/assets/state';
 import { getEntryAssetVersion } from '$lib/services/workflow/assets';
 
@@ -112,19 +112,7 @@ export const buildEntryAssetMoveChanges = async ({
               return;
             }
 
-            const blob = asset.file ?? (await getAssetBlob(asset));
-
-            moveChanges.push({
-              action: 'move',
-              path,
-              previousPath: asset.path,
-              previousSha: asset.sha,
-              // Read the bytes up front. A blob backed by the file system points at the file about
-              // to be moved away, and reading it afterwards — to write the copy or to hash it —
-              // fails because there’s nothing at that path anymore
-              data: new File([await blob.arrayBuffer()], asset.name, { type: blob.type }),
-            });
-
+            moveChanges.push(await createAssetMoveChange(asset, path));
             savingAssets.push({ ...asset, path });
           }),
       ),

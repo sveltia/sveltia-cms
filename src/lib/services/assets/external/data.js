@@ -20,7 +20,7 @@ import { cmsConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { normalizeFileNameTemplate } from '$lib/services/integrations/media-libraries/default';
-import { createPath } from '$lib/services/utils/file';
+import { createPath, getDirName } from '$lib/services/utils/file';
 import { createDeepState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -459,7 +459,7 @@ export const renameExternalFolder = async ({ path: dirPath }, newName) => {
     return false;
   }
 
-  const newDirPath = [...dirPath.split('/').slice(0, -1), newName].join('/');
+  const newDirPath = createPath([getDirName(dirPath), newName]);
   /**
    * Get the path of a file or folder once the folder has been renamed.
    * @param {string} path Current path.

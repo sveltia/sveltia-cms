@@ -146,6 +146,43 @@ export const createStableDerivedState = (getter) => {
 };
 
 /**
+ * Put a request the UI answers, e.g. with a confirmation dialog, in the given box, and wait for the
+ * answer. The request gets a `respond` method that answers it and takes it down. An earlier request
+ * still in the box is answered with the fallback first, as leaving it unresolved would hang
+ * whatever awaits it.
+ * @template {{ respond: (answer: A) => void }} R
+ * @template A
+ * @param {{ current: R | undefined }} state Box holding the pending request.
+ * @param {Omit<R, 'respond'>} props Properties of the request other than `respond`.
+ * @param {A} fallback Answer given to an earlier request.
+ * @returns {Promise<A>} Answer.
+ */
+export const requestAnswer = (state, props, fallback) => {
+  state.current?.respond(fallback);
+
+  return new Promise((resolve) => {
+    const request = /** @type {R} */ ({
+      ...props,
+      /**
+       * Answer the request.
+       * @param {A} answer Answer.
+       */
+      respond: (answer) => {
+        // Only take down the dialog that belongs to this request, so answering a stale one can’t
+        // dismiss a newer one. Resolving an already settled promise does nothing
+        if (state.current === request) {
+          state.current = undefined;
+        }
+
+        resolve(answer);
+      },
+    });
+
+    state.current = request;
+  });
+};
+
+/**
  * Run the given function whenever the reactive state it reads has changed, like `$effect` in a
  * component, but for a service module that lives as long as the app. The function is first run
  * asynchronously, after the current task, and never synchronously on state changes, so a service

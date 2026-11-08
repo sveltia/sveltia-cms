@@ -7,6 +7,7 @@ import {
   THUMBNAIL_TRANSFORM_OPTIONS,
   transformImage,
 } from '$lib/services/utils/media/image/transform';
+import { fetchOK } from '$lib/services/utils/networking';
 import {
   createDerivedState,
   createRawState,
@@ -95,13 +96,7 @@ createRootEffect(() => {
     let iconURLs;
 
     try {
-      const response = await fetch(logoURL);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch logo');
-      }
-
-      const blob = await response.blob();
+      const blob = await (await fetchOK(logoURL)).blob();
 
       const [small, large] = await Promise.all([
         getDataURL(blob, { ...THUMBNAIL_TRANSFORM_OPTIONS, width: 192, height: 192 }),

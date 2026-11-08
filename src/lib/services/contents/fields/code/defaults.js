@@ -1,6 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { getSubtreeEntries } from '$lib/services/contents/entry/subtree';
+import { getCodeKeys } from '$lib/services/contents/fields/code/helpers';
 
 /**
  * @import { CodeField, FieldKeyPath } from '$lib/types/public';
@@ -13,15 +14,11 @@ import { getSubtreeEntries } from '$lib/services/contents/entry/subtree';
  * @returns {Record<FieldKeyPath, any>} Default value map.
  */
 export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
-  const {
-    default: defaultValue,
-    output_code_only: outputCodeOnly = false,
-    keys: outputKeys = { code: 'code', lang: 'lang' },
-  } = /** @type {CodeField} */ (fieldConfig);
-
+  const { default: defaultValue } = /** @type {CodeField} */ (fieldConfig);
+  const outputKeys = getCodeKeys(/** @type {CodeField} */ (fieldConfig));
   const value = dynamicValue !== undefined ? dynamicValue : defaultValue;
 
-  if (outputCodeOnly) {
+  if (!outputKeys) {
     return { [keyPath]: typeof value === 'string' ? value : '' };
   }
 

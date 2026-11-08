@@ -1,7 +1,7 @@
 import { Validator } from '@cfworker/json-schema';
 import { isObject } from '@sveltia/utils/object';
 
-import { decodeSegment, getSegments } from '$lib/services/config/schema/pointer';
+import { decodeSegment, getSegments, resolvePointer } from '$lib/services/config/schema/pointer';
 
 /**
  * @import { OutputUnit } from '@cfworker/json-schema';
@@ -58,23 +58,11 @@ const CONSTRAINT_PARAMS = {
 const resolveKeyword = (schema, location) =>
   getSegments(location).reduce((/** @type {any} */ node, segment) => {
     if (segment === '$ref' && isObject(node) && typeof node.$ref === 'string') {
-      return getSegments(node.$ref).reduce(
-        (/** @type {any} */ target, key) => target?.[key],
-        schema,
-      );
+      return resolvePointer(schema, node.$ref);
     }
 
     return node?.[segment];
   }, schema);
-
-/**
- * Resolve an instance location within the configuration.
- * @param {any} config Raw CMS configuration.
- * @param {string} location Instance location.
- * @returns {any} Value at that location.
- */
-const resolveInstance = (config, location) =>
-  getSegments(location).reduce((/** @type {any} */ value, segment) => value?.[segment], config);
 
 /**
  * Convert one validator output unit into the errors the reporter works with. A unit says which
@@ -91,7 +79,7 @@ const normalizeUnit = ({ keyword, keywordLocation, instanceLocation }, schema, c
 
   if (keyword === 'required') {
     const required = resolveKeyword(schema, keywordLocation);
-    const value = resolveInstance(config, instanceLocation);
+    const value = resolvePointer(config, instanceLocation);
 
     /* v8 ignore next 3 -- the validator only reports `required` for an object, against a schema
     whose `required` is an array; the guard is here in case a location can’t be resolved */

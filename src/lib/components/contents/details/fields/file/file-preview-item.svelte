@@ -73,12 +73,3 @@
 {:else if typeof value === 'string' && value.trim() && !value.startsWith('blob:')}
   <p>{value}</p>
 {/if}
-
-<style>
-  /* Remove the padding to make the image full-width on small screens */
-  @media (width < 768px) {
-    :global([role='document'] section) > p:has(:global(img)) {
-      margin-inline: calc(var(--entry-preview-padding-inline) * -1);
-    }
-  }
-</style>

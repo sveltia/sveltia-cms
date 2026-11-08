@@ -16,8 +16,8 @@
   import { isReadonly } from '$lib/services/config/readonly';
   import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
   import { getCollectionFile } from '$lib/services/contents/collection/files';
+  import { getEntryEditorPath } from '$lib/services/contents/editor/route';
   import { deployments, productionSHA } from '$lib/services/deployments';
-  import { encodePathSegments } from '$lib/services/utils/url';
   import { checkPublishedVersion, isPublishAllowed } from '$lib/services/workflow';
   import { getCompanionNotes, getUnpublishedEntryLabel } from '$lib/services/workflow/board';
   import { getWorkflowStages } from '$lib/services/workflow/stages';
@@ -133,12 +133,9 @@ a merged or read-only one, or one with no other stage to move to -->
     disabled={gone}
     onclick={() => {
       // A collection file is addressed by its name, while its `subPath` is the whole file path
-      goto(
-        encodePathSegments(`/collections/${collectionName}/entries/${fileName ?? entry.subPath}`),
-        {
-          transitionType: 'forwards',
-        },
-      );
+      goto(getEntryEditorPath(collectionName, fileName ?? entry.subPath), {
+        transitionType: 'forwards',
+      });
     }}
   >
     {#if collection?._type === 'entry'}

@@ -5,6 +5,7 @@ import {
   createPath,
   createPathRegEx,
   encodeFilePath,
+  getBaseName,
   getBlob,
   getByteSize,
   getDirName,
@@ -514,6 +515,21 @@ describe('Test getDirName()', () => {
 
   test('should return an empty string for a file at the root', () => {
     expect(getDirName('photo.jpg')).toBe('');
+  });
+});
+
+describe('Test getBaseName()', () => {
+  test('should return the last segment of a path', () => {
+    expect(getBaseName('static/images/photo.jpg')).toBe('photo.jpg');
+    expect(getBaseName('https://example.com/a/b_150.jpg')).toBe('b_150.jpg');
+  });
+
+  test('should return the path itself if it has no slash', () => {
+    expect(getBaseName('photo.jpg')).toBe('photo.jpg');
+  });
+
+  test('should return an empty string for a path ending with a slash', () => {
+    expect(getBaseName('static/images/')).toBe('');
   });
 });
 

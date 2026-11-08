@@ -15,7 +15,7 @@ import { prefs, prefsError } from '$lib/services/user/prefs.svelte';
 import EntrancePage from './entrance-page.svelte';
 
 vi.mock('$lib/services/user/auth.svelte', async () => {
-  const { createState } = await import('$lib/services/utils/state.svelte');
+  const { createRawState, createState } = await import('$lib/services/utils/state.svelte');
 
   return {
     auth: createState({
@@ -23,6 +23,7 @@ vi.mock('$lib/services/user/auth.svelte', async () => {
       unauthenticated: true,
       signingIn: false,
     }),
+    magicLinkConfirmation: createRawState(),
     resetError: vi.fn(),
     logError: vi.fn(),
     parseMagicLink: vi.fn(),

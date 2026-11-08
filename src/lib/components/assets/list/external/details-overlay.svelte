@@ -91,8 +91,6 @@
       <DeleteAssetsButton
         {assets}
         deleteAssets={deleteExternalAssets}
-        buttonDescription={_('delete_assets', { values: { count: 1 } })}
-        dialogDescription={_('confirm_deleting_this_asset')}
         onDelete={() => {
           goBack(backPath);
         }}

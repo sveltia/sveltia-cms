@@ -49,6 +49,27 @@ describe('StringEditor', () => {
     expect(props.currentValue).toBe('world');
   });
 
+  test.each([false, true])(
+    'keeps the value once the field is flagged invalid (multiline: %s)',
+    async (multiline) => {
+      const { props } = await renderFieldEditor(StringEditor, {
+        fieldConfig: /** @type {StringField} */ ({ name: 'handle', widget: 'string' }),
+        fieldLabel: 'Handle',
+        currentValue: 'hello',
+        props: { multiline, invalid: false },
+      });
+
+      const input = page.getByRole('textbox');
+
+      await input.fill('');
+      /** @type {any} */ (props).invalid = true;
+      await expect.element(input).toHaveAttribute('aria-invalid', 'true');
+      await input.fill('world');
+
+      await expect.poll(() => props.currentValue).toBe('world');
+    },
+  );
+
   test('hides the affixes from the input and stores them with the value', async () => {
     const { props } = await renderEditor({
       currentValue: '@vitalik.eth',

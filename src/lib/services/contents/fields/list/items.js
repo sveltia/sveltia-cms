@@ -7,7 +7,7 @@ import {
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getInitialExpanderState } from '$lib/services/contents/editor/fields';
 import { tagListItems } from '$lib/services/contents/fields/list/helpers';
-import { getValueSubFields } from '$lib/services/contents/fields/list/subfields';
+import { getValueSubFields, mapSubValues } from '$lib/services/contents/fields/list/subfields';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { unflattenKeys } from '$lib/services/utils/object';
 
@@ -16,9 +16,6 @@ import { unflattenKeys } from '$lib/services/utils/object';
  * @import {
  * Field,
  * FieldKeyPath,
- * ListFieldWithSubField,
- * ListFieldWithSubFields,
- * ListFieldWithTypes,
  * VariableFieldType,
  * } from '$lib/types/public';
  */
@@ -39,8 +36,8 @@ import { unflattenKeys } from '$lib/services/utils/object';
 /**
  * Renew the unique values in the given field value of a duplicated list item, so the duplicate
  * doesn’t share them with its source, just like a duplicated entry. See
- * {@link getRenewedUniqueValue}. Object and List fields are walked down, and an object or array
- * value is modified in place.
+ * {@link getRenewedUniqueValue}. Object and List fields are walked down, and an object value is
+ * modified in place.
  * @param {any} value Field value.
  * @param {Field} fieldConfig Field configuration.
  * @param {RenewContext} context Context.
@@ -66,34 +63,19 @@ const renewUniqueValue = (value, fieldConfig, context) => {
     return typeof renewed === 'object' && renewed !== null ? structuredClone(renewed) : renewed;
   }
 
-  const { field } = /** @type {ListFieldWithSubField} */ (fieldConfig);
-  const { fields } = /** @type {ListFieldWithSubFields} */ (fieldConfig);
-  const { types, typeKey } = /** @type {ListFieldWithTypes} */ (fieldConfig);
+  return mapSubValues(
+    value,
+    fieldConfig,
+    (obj, fields) => {
+      if (isObject(obj)) {
+        // eslint-disable-next-line no-use-before-define
+        renewUniqueValues(obj, fields, context);
+      }
 
-  /**
-   * Renew the unique values in the given object.
-   * @param {any} obj Object value or list item.
-   */
-  const renewObject = (obj) => {
-    if (isObject(obj)) {
-      // eslint-disable-next-line no-use-before-define
-      renewUniqueValues(obj, getValueSubFields({ value: obj, fields, types, typeKey }), context);
-    }
-  };
-
-  if (fieldType === 'object') {
-    renewObject(value);
-  } else if (Array.isArray(value)) {
-    if (field) {
-      value.forEach((item, index) => {
-        value[index] = renewUniqueValue(item, field, context);
-      });
-    } else {
-      value.forEach(renewObject);
-    }
-  }
-
-  return value;
+      return obj;
+    },
+    (item, field) => renewUniqueValue(item, field, context),
+  );
 };
 
 /**

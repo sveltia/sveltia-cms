@@ -6,7 +6,7 @@ import { render } from 'vitest-browser-svelte';
 import { createSubfolder } from '$lib/services/assets/data/subfolder';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
-import { duplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
+import { duplicatesRequest } from '$lib/services/contents/fields/file/duplicates.svelte';
 import { listAssets } from '$lib/services/contents/fields/file/helpers';
 import { getUnsavedAssets } from '$lib/services/contents/fields/file/process';
 import {
@@ -461,7 +461,7 @@ describe('SelectAssetsDialog', () => {
 
       dropFiles([file]);
       await waitForGrid(3);
-      expect(duplicates.showDialog).toBe(false);
+      expect(duplicatesRequest.current).toBeUndefined();
       await dialog.getByRole('button', { name: 'Insert' }).click();
 
       await vi.waitFor(() =>
@@ -1176,15 +1176,15 @@ describe('SelectAssetsDialog', () => {
     const duplicate = await createMockImageFile({ name: 'a.png', width: 5 });
 
     dropFiles([duplicate]);
-    await expect.poll(() => duplicates.showDialog).toBe(true);
-    duplicates.resolve?.(undefined);
-    await expect.poll(() => duplicates.showDialog).toBe(false);
+    await expect.poll(() => !!duplicatesRequest.current).toBe(true);
+    duplicatesRequest.current?.respond(undefined);
+    await expect.poll(() => !!duplicatesRequest.current).toBe(false);
     await sleep(100);
     expect(document.querySelectorAll('#select-assets-grid [role="option"]')).toHaveLength(3);
 
     dropFiles([duplicate]);
-    await expect.poll(() => duplicates.showDialog).toBe(true);
-    duplicates.resolve?.(true);
+    await expect.poll(() => !!duplicatesRequest.current).toBe(true);
+    duplicatesRequest.current?.respond(true);
     // The new file takes the place of the existing asset in the list
     await expect.poll(() => document.querySelectorAll('.unsaved').length).toBe(1);
     await waitForGrid(3);

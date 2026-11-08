@@ -44,6 +44,12 @@ vi.mock('$lib/services/utils/file', () => ({
    * @returns {string} Path.
    */
   sanitizePath: (path) => path,
+  /**
+   * Get the last segment of a path, as the real function does.
+   * @param {string} path Path.
+   * @returns {string} Last segment.
+   */
+  getBaseName: (path) => path.slice(path.lastIndexOf('/') + 1),
 }));
 
 vi.mock('$lib/services/assets/file-name', () => ({

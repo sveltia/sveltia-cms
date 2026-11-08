@@ -8,7 +8,10 @@ import {
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { createDraftTitleCodec } from '$lib/services/backends/git/shared/pull-requests';
+import {
+  createDraftTitleCodec,
+  toCommitAuthor,
+} from '$lib/services/backends/git/shared/pull-requests';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { splitIntoChunks } from '$lib/services/utils/array';
 import {
@@ -20,6 +23,7 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
+ * CommitAuthor,
  * WorkflowFile,
  * WorkflowPullRequest,
  * WorkflowStatus,
@@ -76,30 +80,35 @@ const getCanMerge = (item) =>
   typeof item.user?.can_merge === 'boolean' ? item.user.can_merge : undefined;
 
 /**
+ * Parse the user who opened a merge request, as the REST API returns it, which leaves out the email
+ * address.
+ * @param {Record<string, any> | undefined} user User object.
+ * @returns {CommitAuthor | undefined} Author, or `undefined` if the user is unknown.
+ */
+export const parseAuthor = (user) =>
+  toCommitAuthor({ login: user?.username, name: user?.name, id: user?.id });
+
+/**
  * Convert a merge request returned by the REST API to a workflow pull request.
  * @param {Record<string, any>} item Merge request.
  * @param {WorkflowStatus} status Status of the merge request.
  * @returns {WorkflowPullRequest} Merge request.
  */
-export const toMergeRequest = (item, status) => {
-  const { name, username, id } = item.author ?? {};
-
-  return {
-    number: item.iid,
-    nodeId: String(item.id),
-    title: draftTitle.strip(item.title),
-    url: item.web_url,
-    branch: item.source_branch,
-    headSHA: item.sha,
-    status,
-    createdDate: new Date(item.created_at),
-    updatedDate: new Date(item.updated_at),
-    author: username ? { name: name ?? username, email: '', id, login: username } : undefined,
-    files: [],
-    canMerge: getCanMerge(item),
-    description: item.description ?? '',
-  };
-};
+export const toMergeRequest = (item, status) => ({
+  number: item.iid,
+  nodeId: String(item.id),
+  title: draftTitle.strip(item.title),
+  url: item.web_url,
+  branch: item.source_branch,
+  headSHA: item.sha,
+  status,
+  createdDate: new Date(item.created_at),
+  updatedDate: new Date(item.updated_at),
+  author: parseAuthor(item.author),
+  files: [],
+  canMerge: getCanMerge(item),
+  description: item.description ?? '',
+});
 
 /**
  * Parse a merge request returned by the REST API.
@@ -433,14 +442,19 @@ export const createPullRequest = async ({ branch, title, status, description }) 
 };
 
 /**
- * Fetch the open merge requests from the given branch of the configured project, whichever branch
- * they go to. A merge request from a fork can have a source branch of the same name, but it isn’t
- * from this branch, so it’s left out.
+ * Fetch the open merge requests from the given branch to the configured project, whichever branch
+ * they go to.
  * @param {string} branch Branch name.
+ * @param {(item: Record<string, any>) => boolean} [isWanted] Function to pick the merge requests to
+ * return. By default, only those from the configured project itself: a merge request from a fork
+ * can have a source branch of the same name, but it isn’t from this branch.
  * @returns {Promise<Record<string, any>[]>} Merge requests returned by the REST API.
  * @see https://docs.gitlab.com/api/merge_requests/#list-project-merge-requests
  */
-export const fetchOpenMergeRequests = async (branch) => {
+export const fetchOpenMergeRequests = async (
+  branch,
+  isWanted = (item) => item.source_project_id === item.target_project_id,
+) => {
   const items = /** @type {Record<string, any>[]} */ (
     await fetchAPI(
       `/projects/${getProjectId()}/merge_requests` +
@@ -449,9 +463,7 @@ export const fetchOpenMergeRequests = async (branch) => {
     )
   );
 
-  return items.filter(
-    ({ source_project_id: sourceId, target_project_id: targetId }) => sourceId === targetId,
-  );
+  return items.filter(isWanted);
 };
 
 /**

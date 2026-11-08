@@ -25,27 +25,41 @@ const createBlocker = () => ({
 });
 
 describe('DeleteAssetsButton', () => {
-  test('asks for confirmation, then deletes the assets', async () => {
+  test('asks for confirmation, then deletes the selected assets', async () => {
     const deleteAssets = vi.fn().mockResolvedValue(undefined);
     const onDelete = vi.fn();
 
-    await render(DeleteAssetsButton, {
-      assets,
-      deleteAssets,
-      onDelete,
-      buttonDescription: 'Delete Selected Assets',
-      dialogDescription: 'Are you sure?',
-    });
+    await render(DeleteAssetsButton, { assets, deleteAssets, onDelete, listedCount: 3 });
 
     await page.getByRole('button', { name: 'Delete Selected Assets' }).click();
 
     const dialog = page.getByRole('alertdialog', { name: 'Delete Assets' });
 
-    await expect.element(dialog).toHaveTextContent('Delete Assets Are you sure? Delete Cancel');
+    await expect
+      .element(dialog)
+      .toHaveTextContent(
+        'Delete Assets Are you sure you want to delete the selected 2 assets? Delete Cancel',
+      );
     await dialog.getByRole('button', { name: 'Delete' }).click();
 
     await vi.waitFor(() => expect(deleteAssets).toHaveBeenCalledWith(assets));
     await vi.waitFor(() => expect(onDelete).toHaveBeenCalledOnce());
+  });
+
+  test('describes the deletion of all the listed assets, or of the asset shown', async () => {
+    await render(DeleteAssetsButton, { assets, deleteAssets: vi.fn(), listedCount: 2 });
+    await page.getByRole('button', { name: 'Delete Selected Assets' }).click();
+    await expect
+      .element(page.getByRole('alertdialog', { name: 'Delete Assets' }))
+      .toMatchTextContent('Are you sure you want to delete all the assets?');
+  });
+
+  test('describes the asset shown in the details overlay', async () => {
+    await render(DeleteAssetsButton, { assets: [assets[0]], deleteAssets: vi.fn() });
+    await page.getByRole('button', { name: 'Delete Asset' }).click();
+    await expect
+      .element(page.getByRole('alertdialog', { name: 'Delete Asset' }))
+      .toMatchTextContent('Are you sure you want to delete this asset?');
   });
 
   test('skips the callback when the deletion is refused', async () => {
@@ -54,7 +68,7 @@ describe('DeleteAssetsButton', () => {
 
     await render(DeleteAssetsButton, { assets: [assets[0]], deleteAssets, onDelete });
 
-    await page.getByRole('button', { name: 'Delete' }).click();
+    await page.getByRole('button', { name: 'Delete Asset' }).click();
     await page
       .getByRole('alertdialog', { name: 'Delete Asset' })
       .getByRole('button', { name: 'Delete' })
@@ -69,8 +83,8 @@ describe('DeleteAssetsButton', () => {
     await expect.element(page.getByRole('button')).toHaveAttribute('aria-disabled', 'true');
 
     await render(DeleteAssetsButton, { assets, deleteAssets: vi.fn(), useButton: false });
-    await expect.element(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
-    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await expect.element(page.getByRole('menuitem', { name: 'Delete Asset' })).toBeVisible();
+    await page.getByRole('menuitem', { name: 'Delete Asset' }).click();
     await expect.element(page.getByRole('alertdialog', { name: 'Delete Assets' })).toBeVisible();
   });
 
@@ -85,11 +99,11 @@ describe('DeleteAssetsButton', () => {
       pageContainer.remove();
     });
 
-    const props = $state({ assets, deleteAssets: vi.fn(), buttonDescription: 'Delete Assets' });
+    const props = $state({ assets, deleteAssets: vi.fn(), listedCount: 2 });
 
     await render(DeleteAssetsButton, props);
 
-    const button = page.getByRole('button', { name: 'Delete Assets' });
+    const button = page.getByRole('button', { name: 'Delete Selected Assets' });
 
     await expect.element(button).toBeEnabled();
     button.element().focus();
@@ -111,15 +125,18 @@ describe('DeleteAssetsButton', () => {
         assets: [assets[0]],
         deleteAssets,
         planDeletion,
-        dialogDescription: 'Are you sure?',
       });
 
-      await page.getByRole('button', { name: 'Delete' }).click();
+      await page.getByRole('button', { name: 'Delete Asset' }).click();
 
       const dialog = page.getByRole('alertdialog', { name: 'Delete Asset' });
 
       // Deleting has to wait for the plan, which decides whether it can go ahead
-      await expect.element(dialog).toHaveTextContent('Delete Asset Are you sure? Delete Cancel');
+      await expect
+        .element(dialog)
+        .toHaveTextContent(
+          'Delete Asset Are you sure you want to delete this asset? Delete Cancel',
+        );
       await expect.element(dialog.getByRole('button', { name: 'Delete' })).toBeDisabled();
       expect(planDeletion).toHaveBeenCalledWith([assets[0]]);
 
@@ -131,7 +148,7 @@ describe('DeleteAssetsButton', () => {
       await expect
         .element(dialog)
         .toHaveTextContent(
-          'Delete Asset Are you sure? The reference to it in an entry will be removed as well. ' +
+          'Delete Asset Are you sure you want to delete this asset? The reference to it in an entry will be removed as well. ' +
             'Delete Cancel',
         );
       await dialog.getByRole('button', { name: 'Delete' }).click();
@@ -149,10 +166,9 @@ describe('DeleteAssetsButton', () => {
           targets: [{ entry: { id: 'post-1' }, collection: { name: 'posts' } }],
           blockers: [createBlocker()],
         }),
-        dialogDescription: 'Are you sure?',
       });
 
-      await page.getByRole('button', { name: 'Delete' }).click();
+      await page.getByRole('button', { name: 'Delete Asset' }).click();
 
       const dialog = page.getByRole('alertdialog', { name: 'Delete Assets' });
 
@@ -160,7 +176,9 @@ describe('DeleteAssetsButton', () => {
         .element(dialog.getByRole('alert'))
         .toMatchTextContent('These assets can’t be deleted');
       // There’s nothing to confirm
-      await expect.element(dialog).not.toMatchTextContent('Are you sure?');
+      await expect
+        .element(dialog)
+        .not.toMatchTextContent('Are you sure you want to delete this asset?');
       await expect
         .element(dialog.getByRole('listitem'))
         .toHaveTextContent('Posts › Post 1 Cover: This field is required.');
@@ -177,10 +195,9 @@ describe('DeleteAssetsButton', () => {
         assets,
         deleteAssets: vi.fn(),
         planDeletion,
-        dialogDescription: 'Are you sure?',
       });
 
-      await page.getByRole('button', { name: 'Delete' }).click();
+      await page.getByRole('button', { name: 'Delete Asset' }).click();
 
       const dialog = page.getByRole('alertdialog', { name: 'Delete Assets' });
 
@@ -189,7 +206,7 @@ describe('DeleteAssetsButton', () => {
       await expect.poll(() => page.getByRole('alertdialog').elements().length).toBe(0);
 
       // The entries have been fixed meanwhile
-      await page.getByRole('button', { name: 'Delete' }).click();
+      await page.getByRole('button', { name: 'Delete Asset' }).click();
       await expect
         .element(page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }))
         .toBeEnabled();
@@ -209,10 +226,9 @@ describe('DeleteAssetsButton', () => {
         assets: [assets[0]],
         deleteAssets: vi.fn(),
         planDeletion,
-        dialogDescription: 'Are you sure?',
       });
 
-      await page.getByRole('button', { name: 'Delete' }).click();
+      await page.getByRole('button', { name: 'Delete Asset' }).click();
 
       const dialog = page.getByRole('alertdialog', { name: 'Delete Asset' });
 
@@ -222,7 +238,7 @@ describe('DeleteAssetsButton', () => {
 
       // The dialog is reopened for another selection while the first plan is still on its way
       await rerender({ assets });
-      await page.getByRole('button', { name: 'Delete' }).click();
+      await page.getByRole('button', { name: 'Delete Asset' }).click();
       expect(planDeletion).toHaveBeenLastCalledWith(assets);
 
       first.resolve({ targets: [], blockers: [createBlocker()] });
@@ -230,7 +246,11 @@ describe('DeleteAssetsButton', () => {
       // The stale plan doesn’t refuse the new deletion
       const reopened = page.getByRole('alertdialog', { name: 'Delete Assets' });
 
-      await expect.element(reopened).toHaveTextContent('Delete Assets Are you sure? Delete Cancel');
+      await expect
+        .element(reopened)
+        .toHaveTextContent(
+          'Delete Assets Are you sure you want to delete this asset? Delete Cancel',
+        );
       await expect.element(reopened.getByRole('button', { name: 'Delete' })).toBeDisabled();
 
       second.resolve({ targets: [], blockers: [] });
@@ -249,10 +269,9 @@ describe('DeleteAssetsButton', () => {
         assets,
         deleteAssets: vi.fn(),
         planDeletion,
-        dialogDescription: 'Are you sure?',
       });
 
-      await page.getByRole('button', { name: 'Delete' }).click();
+      await page.getByRole('button', { name: 'Delete Asset' }).click();
 
       const dialog = page.getByRole('alertdialog', { name: 'Delete Assets' });
 
@@ -262,18 +281,24 @@ describe('DeleteAssetsButton', () => {
           'Couldn’t check which entries use these assets. Close this dialog and try again.',
         );
       // There’s nothing to confirm
-      await expect.element(dialog).not.toMatchTextContent('Are you sure?');
+      await expect
+        .element(dialog)
+        .not.toMatchTextContent('Are you sure you want to delete this asset?');
       await expect.element(dialog.getByRole('button', { name: 'Delete' })).toBeDisabled();
       expect(consoleError).toHaveBeenCalledWith(new Error('Boom'));
 
       await dialog.getByRole('button', { name: 'Cancel' }).click();
       await expect.poll(() => page.getByRole('alertdialog').elements().length).toBe(0);
-      await page.getByRole('button', { name: 'Delete' }).click();
+      await page.getByRole('button', { name: 'Delete Asset' }).click();
 
       const reopened = page.getByRole('alertdialog', { name: 'Delete Assets' });
 
       await expect.element(reopened.getByRole('button', { name: 'Delete' })).toBeEnabled();
-      await expect.element(reopened).toHaveTextContent('Delete Assets Are you sure? Delete Cancel');
+      await expect
+        .element(reopened)
+        .toHaveTextContent(
+          'Delete Assets Are you sure you want to delete this asset? Delete Cancel',
+        );
     });
 
     test('ignores a plan that fails after the dialog has been reopened', async () => {
@@ -289,10 +314,9 @@ describe('DeleteAssetsButton', () => {
         assets: [assets[0]],
         deleteAssets: vi.fn(),
         planDeletion,
-        dialogDescription: 'Are you sure?',
       });
 
-      await page.getByRole('button', { name: 'Delete' }).click();
+      await page.getByRole('button', { name: 'Delete Asset' }).click();
       await page
         .getByRole('alertdialog', { name: 'Delete Asset' })
         .getByRole('button', { name: 'Cancel' })
@@ -300,7 +324,7 @@ describe('DeleteAssetsButton', () => {
       await expect.poll(() => page.getByRole('alertdialog').elements().length).toBe(0);
 
       await rerender({ assets });
-      await page.getByRole('button', { name: 'Delete' }).click();
+      await page.getByRole('button', { name: 'Delete Asset' }).click();
 
       const reopened = page.getByRole('alertdialog', { name: 'Delete Assets' });
 
@@ -350,9 +374,8 @@ describe('DeleteAssetsButton', () => {
           assets: [photo],
           deleteAssets: vi.fn(),
           planDeletion: planAssetDeletion,
-          dialogDescription: 'Are you sure?',
         });
-        await page.getByRole('button', { name: 'Delete' }).click();
+        await page.getByRole('button', { name: 'Delete Asset' }).click();
 
         const dialog = page.getByRole('alertdialog', { name: 'Delete Asset' });
 
@@ -369,9 +392,8 @@ describe('DeleteAssetsButton', () => {
           assets: [cover],
           deleteAssets: vi.fn(),
           planDeletion: planAssetDeletion,
-          dialogDescription: 'Are you sure?',
         });
-        await page.getByRole('button', { name: 'Delete' }).last().click();
+        await page.getByRole('button', { name: 'Delete Asset' }).last().click();
 
         const refusal = page.getByRole('alertdialog', { name: 'Delete Asset' });
 

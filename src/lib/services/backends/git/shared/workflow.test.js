@@ -924,7 +924,7 @@ describe('isPermanentClientError()', () => {
 
 describe('waitForMerge()', () => {
   const read = vi.fn();
-  const evaluate = vi.fn();
+  const check = vi.fn();
   const cancel = vi.fn();
   const label = 'pull request #1';
 
@@ -935,22 +935,50 @@ describe('waitForMerge()', () => {
 
   test('waits until the item read is reported merged', async () => {
     read.mockResolvedValueOnce('open').mockResolvedValueOnce('merged');
-    evaluate.mockImplementation(async (item) => item === 'merged');
+    check.mockImplementation((item) => ({ merged: item === 'merged', armed: true }));
 
-    await expect(waitForMerge({ read, evaluate, cancel, label })).resolves.toBeUndefined();
+    await expect(waitForMerge({ read, check, cancel, label })).resolves.toBeUndefined();
     expect(sleep).toHaveBeenCalledTimes(2);
     expect(sleep).toHaveBeenCalledWith(10000);
-    expect(evaluate).toHaveBeenNthCalledWith(1, 'open');
-    expect(evaluate).toHaveBeenNthCalledWith(2, 'merged');
+    expect(check).toHaveBeenNthCalledWith(1, 'open');
+    expect(check).toHaveBeenNthCalledWith(2, 'merged');
     expect(cancel).not.toHaveBeenCalled();
   });
 
-  test('passes on an error thrown by the evaluation', async () => {
-    read.mockResolvedValueOnce('closed');
-    evaluate.mockRejectedValueOnce(new Error('Not merged'));
+  test('gives up on an item that won’t be merged, cancelling its auto-merge', async () => {
+    read.mockResolvedValueOnce('failed');
+    check.mockReturnValueOnce({ failure: 'OPEN, checks FAILURE', armed: true });
 
-    await expect(waitForMerge({ read, evaluate, cancel, label })).rejects.toThrow('Not merged');
+    await expect(waitForMerge({ read, check, cancel, label })).rejects.toThrow(
+      'Pull request #1 was not merged: OPEN, checks FAILURE',
+    );
     expect(read).toHaveBeenCalledOnce();
+    expect(cancel).toHaveBeenCalledOnce();
+  });
+
+  test('leaves an auto-merge that isn’t on any more', async () => {
+    read.mockResolvedValueOnce('closed');
+    check.mockReturnValueOnce({ failure: 'CLOSED', armed: false });
+
+    await expect(waitForMerge({ read, check, cancel, label })).rejects.toThrow(
+      'Pull request #1 was not merged: CLOSED',
+    );
+    expect(cancel).not.toHaveBeenCalled();
+  });
+
+  test('reports a failure to cancel the auto-merge rather than throwing it', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const error = new Error('Gone');
+
+    read.mockResolvedValueOnce('failed');
+    check.mockReturnValueOnce({ failure: 'FAILURE', armed: true });
+    cancel.mockRejectedValueOnce(error);
+
+    await expect(waitForMerge({ read, check, cancel, label })).rejects.toThrow(
+      'Pull request #1 was not merged: FAILURE',
+    );
+    expect(warn).toHaveBeenCalledWith('Failed to cancel the auto-merge on pull request #1.', error);
+    warn.mockRestore();
   });
 
   test('keeps waiting through a read that fails for a reason that can pass', async () => {
@@ -958,13 +986,13 @@ describe('waitForMerge()', () => {
     const error = new Error('Failed', { cause: { status: 503 } });
 
     read.mockRejectedValueOnce(error).mockResolvedValueOnce('merged');
-    evaluate.mockResolvedValue(true);
+    check.mockReturnValue({ merged: true });
 
-    await waitForMerge({ read, evaluate, cancel, label });
+    await waitForMerge({ read, check, cancel, label });
 
     expect(warn).toHaveBeenCalledWith('Failed to read pull request #1, still waiting.', error);
-    // A failed read isn’t evaluated
-    expect(evaluate).toHaveBeenCalledOnce();
+    // A failed read isn’t checked
+    expect(check).toHaveBeenCalledOnce();
     warn.mockRestore();
   });
 
@@ -973,8 +1001,8 @@ describe('waitForMerge()', () => {
 
     read.mockRejectedValueOnce(error);
 
-    await expect(waitForMerge({ read, evaluate, cancel, label })).rejects.toBe(error);
-    expect(evaluate).not.toHaveBeenCalled();
+    await expect(waitForMerge({ read, check, cancel, label })).rejects.toBe(error);
+    expect(check).not.toHaveBeenCalled();
     expect(cancel).not.toHaveBeenCalled();
   });
 
@@ -986,9 +1014,9 @@ describe('waitForMerge()', () => {
 
       return 'open';
     });
-    evaluate.mockResolvedValue(false);
+    check.mockReturnValue({ armed: true });
 
-    await expect(waitForMerge({ read, evaluate, cancel, label })).rejects.toThrow(
+    await expect(waitForMerge({ read, check, cancel, label })).rejects.toThrow(
       'Timed out waiting for pull request #1 to be merged',
     );
     expect(cancel).toHaveBeenCalledOnce();
@@ -999,7 +1027,7 @@ describe('waitForMerge()', () => {
   test('gives up right away past the given deadline', async () => {
     const now = vi.spyOn(Date, 'now').mockReturnValue(1000);
 
-    await expect(waitForMerge({ read, evaluate, cancel, label, deadline: 1000 })).rejects.toThrow(
+    await expect(waitForMerge({ read, check, cancel, label, deadline: 1000 })).rejects.toThrow(
       'Timed out waiting for pull request #1 to be merged',
     );
     expect(read).not.toHaveBeenCalled();

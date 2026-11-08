@@ -3,7 +3,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { getCollection } from '$lib/services/contents/collection';
 import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
-import { getDirName } from '$lib/services/utils/file';
+import { getBaseName, getDirName } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -34,7 +34,7 @@ const isSharedIndexFile = (filePath, indexFileName) => {
     return false;
   }
 
-  const fileName = filePath.slice(filePath.lastIndexOf('/') + 1);
+  const fileName = getBaseName(filePath);
 
   // The `multiple_files` i18n structure appends the locale to the file name, e.g. `_index.en`
   return fileName === indexFileName || fileName.startsWith(`${indexFileName}.`);
@@ -81,7 +81,7 @@ export const getOwnedEntryFolderPath = (collection, entryFilePath) => {
   const { subPath } = /** @type {InternalEntryCollection} */ (collection)._file;
   // Remove the file extension, which is always present
   const filePath = entryFilePath.substring(0, entryFilePath.lastIndexOf('.'));
-  const lastSubPathSegment = subPath?.includes('/') ? subPath.split('/').at(-1) : undefined;
+  const lastSubPathSegment = subPath?.includes('/') ? getBaseName(subPath) : undefined;
 
   // The entry file has a fixed name within the folder holding it, either because the `path` option
   // ends in one, or because the collection stores every entry as an index file. Either way the

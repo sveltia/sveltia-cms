@@ -5,8 +5,8 @@
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { getEntryEditorPath } from '$lib/services/contents/editor/route';
   import { getBacklinks } from '$lib/services/contents/entry/relations/backlinks';
-  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import { EntryBacklink } from '$lib/types/private';
@@ -63,12 +63,9 @@
             class="ref"
             variant="ghost"
             onclick={() => {
-              goto(
-                encodePathSegments(
-                  `/collections/${ref.collectionName}/entries/${ref.fileName ?? ref.entry.subPath}`,
-                ),
-                { transitionType: 'forwards' },
-              );
+              goto(getEntryEditorPath(ref.collectionName, ref.fileName ?? ref.entry.subPath), {
+                transitionType: 'forwards',
+              });
             }}
           >
             <span class="summary"><bdi>{ref.summary}</bdi></span>

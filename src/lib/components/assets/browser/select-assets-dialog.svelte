@@ -18,6 +18,7 @@
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import LocationSelector from '$lib/components/assets/browser/location-selector.svelte';
   import CreateSubfolderDialog from '$lib/components/assets/list/create-subfolder-dialog.svelte';
+  import NewFolderButton from '$lib/components/assets/list/new-folder-button.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { getPendingUploadAction } from '$lib/services/assets/browser/pending-uploads';
   import {
@@ -457,14 +458,6 @@
   });
 </script>
 
-{#snippet newFolderButton(/** @type {() => void} */ onclick, disabled = false)}
-  <Button variant="ghost" iconic {disabled} aria-label={_('new_folder')} {onclick}>
-    {#snippet startIcon()}
-      <Icon name="create_new_folder" />
-    {/snippet}
-  </Button>
-{/snippet}
-
 {#snippet headerItems()}
   {#if isDefaultLibrary || canBrowseCloudLibrary || (isStockLibrary && libraryName !== 'picsum')}
     {#if selectAssetsView.current}
@@ -488,14 +481,21 @@
       review, so it’s not something an Open Authoring contributor or a user who can’t push to the
       branch can do, nor anyone within a read-only folder
     -->
-    {@render newFolderButton(() => {
-      showNewFolderDialog = true;
-    }, assetsLocked.current || uploadDisabled)}
+    <NewFolderButton
+      floating={false}
+      disabled={assetsLocked.current || uploadDisabled}
+      onclick={() => {
+        showNewFolderDialog = true;
+      }}
+    />
   {:else if isCloudLibrary && externalAssetsPanel?.canCreateFolder()}
     <!-- A folder on a cloud storage service is created by the service, not committed -->
-    {@render newFolderButton(() => {
-      externalAssetsPanel?.showNewFolderDialog();
-    })}
+    <NewFolderButton
+      floating={false}
+      onclick={() => {
+        externalAssetsPanel?.showNewFolderDialog();
+      }}
+    />
   {/if}
   {#if !selectFolder && (isDefaultLibrary || canBrowseCloudLibrary)}
     <!-- A cloud storage service takes files once the user has provided the credentials -->

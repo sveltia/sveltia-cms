@@ -1,7 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { getField } from '$lib/services/contents/entry/fields';
-import { getValueSubFields, someSubField } from '$lib/services/contents/fields/list/subfields';
+import { mapSubValues, someSubField } from '$lib/services/contents/fields/list/subfields';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -118,50 +118,28 @@ const hasMapList = (fieldConfig) =>
  * @returns {any} Converted value. It’s the same value if nothing has changed.
  */
 const convertValue = (value, fieldConfig, toItems) => {
-  const { widget: fieldType = 'string' } = fieldConfig;
-
-  const { fields, types, typeKey } = /** @type {ListFieldWithSubFields & ListFieldWithTypes} */ (
-    fieldConfig
-  );
-
-  /**
-   * Get the subfields of the given value.
-   * @param {any} subValue Object value or list item.
-   * @returns {Field[]} Subfields.
-   */
-  const getSubFields = (subValue) => getValueSubFields({ value: subValue, fields, types, typeKey });
-
   if (!hasMapList(fieldConfig)) {
     return value;
   }
 
-  if (fieldType === 'object') {
-    // eslint-disable-next-line no-use-before-define
-    return convertMapLists(value, getSubFields(value), toItems);
-  }
-
-  if (fieldType !== 'list') {
-    return value;
-  }
-
   const keyField = getMapKeyField(fieldConfig);
-  const { field: subField } = /** @type {{ field?: Field }} */ (fieldConfig);
-  let converted = keyField && toItems ? mapToItems(value, keyField) : value;
+  const source = keyField && toItems ? mapToItems(value, keyField) : value;
 
-  if (Array.isArray(converted)) {
-    const items = converted.map((item) =>
-      subField
-        ? convertValue(item, subField, toItems)
-        : // eslint-disable-next-line no-use-before-define
-          convertMapLists(item, getSubFields(item), toItems),
-    );
+  const converted = mapSubValues(
+    source,
+    fieldConfig,
+    // eslint-disable-next-line no-use-before-define
+    (obj, fields) => convertMapLists(obj, fields, toItems),
+    (item, field) => convertValue(item, field, toItems),
+  );
 
-    if (items.some((item, index) => item !== /** @type {any[]} */ (converted)[index])) {
-      converted = items;
-    }
-  }
+  // Keep the same array if none of the items has changed
+  const result =
+    Array.isArray(converted) && converted.every((item, index) => item === source[index])
+      ? source
+      : converted;
 
-  return keyField && !toItems ? itemsToMap(converted, keyField) : converted;
+  return keyField && !toItems ? itemsToMap(result, keyField) : result;
 };
 
 /**

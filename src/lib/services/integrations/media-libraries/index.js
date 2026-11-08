@@ -1,5 +1,8 @@
-import { cmsConfig } from '$lib/services/config';
-import { mergeLibraryOptions } from '$lib/services/integrations/media-libraries/options';
+import { cmsConfig } from '$lib/services/config/state';
+import {
+  findLibraryOptions,
+  mergeLibraryOptions,
+} from '$lib/services/integrations/media-libraries/options';
 
 /**
  * @import { MediaField, MediaLibraryName } from '$lib/types/public';
@@ -16,52 +19,10 @@ import { mergeLibraryOptions } from '$lib/services/integrations/media-libraries/
 export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } = {}) => {
   const _cmsConfig = cmsConfig.current;
   // The legacy `media_library` option without a name configures the default library
-  const siteLibName = _cmsConfig?.media_library?.name ?? 'default';
-
-  /**
-   * Find the library’s options in the field configuration.
-   * @returns {Record<string, any> | false | undefined} Options, `false` if the library is
-   * explicitly disabled, or `undefined` if the field doesn’t configure the library.
-   */
-  const getFieldOptions = () => {
-    const opts = fieldConfig?.media_libraries?.[libraryName];
-
-    // `media_libraries` (including explicit `false` to disable)
-    if (opts !== undefined && opts !== null) {
-      return opts;
-    }
-
-    // `media_library` (legacy), which applies to the site-level library if it has no name
-    const fieldLib = fieldConfig?.media_library;
-
-    return fieldLib &&
-      siteLibName === libraryName &&
-      (fieldLib.name === libraryName || fieldLib.name === undefined)
-      ? fieldLib
-      : undefined;
-  };
-
-  /**
-   * Find the library’s options in the site configuration.
-   * @returns {Record<string, any> | false | undefined} Options, `false` if the library is
-   * explicitly disabled, or `undefined` if the site doesn’t configure the library.
-   */
-  const getSiteOptions = () => {
-    const opts = _cmsConfig?.media_libraries?.[libraryName];
-
-    // `media_libraries` (including explicit `false` to disable)
-    if (opts !== undefined && opts !== null) {
-      return opts;
-    }
-
-    // `media_library` (legacy)
-    return _cmsConfig?.media_library && siteLibName === libraryName
-      ? _cmsConfig.media_library
-      : undefined;
-  };
-
-  const siteOptions = getSiteOptions();
-  const fieldOptions = getFieldOptions();
+  /** @type {Record<string, any> | false | undefined} */
+  const siteOptions = findLibraryOptions(libraryName, _cmsConfig, 'default');
+  /** @type {Record<string, any> | false | undefined} */
+  const fieldOptions = findLibraryOptions(libraryName, fieldConfig, 'default');
   // The field-level options are merged over the site-level ones
   const opts = mergeLibraryOptions(siteOptions, fieldOptions);
 

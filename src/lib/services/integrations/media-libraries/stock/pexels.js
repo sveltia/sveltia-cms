@@ -1,16 +1,11 @@
 import {
-  fetchJSON,
-  fetchPagedResults,
+  createStockFetchers,
   getSupportedLocale,
 } from '$lib/services/integrations/media-libraries/stock/utils';
 import { escapeAttr, escapeHTML } from '$lib/services/utils/string';
 
 /**
- * @import {
- * ExternalAsset,
- * MediaLibraryFetchOptions,
- * MediaLibraryService,
- * } from '$lib/types/private';
+ * @import { ExternalAsset, MediaLibraryService } from '$lib/types/private';
  */
 
 /**
@@ -64,60 +59,41 @@ export const parseResults = (results) =>
   }));
 
 /**
- * Fetch curated pictures.
- * @param {MediaLibraryFetchOptions} options Options.
- * @returns {Promise<ExternalAsset[]>} Assets.
+ * Fetch curated pictures, or search images.
  * @see https://www.pexels.com/api/documentation/
  * @todo Support video files.
  */
-export const list = async ({ apiKey }) => {
-  const headers = { Authorization: apiKey };
-  const params = new URLSearchParams(SEARCH_PARAMS);
-  /** @type {FetchResult[]} */
-  const results = (await fetchJSON(`${ENDPOINT}/curated?${params}`, { headers })).photos;
-
-  return parseResults(results);
-};
-
-/**
- * Search images or fetch curated pictures if no query is given.
- * @param {string} query Search query.
- * @param {MediaLibraryFetchOptions} options Options.
- * @returns {Promise<ExternalAsset[]>} Assets.
- * @see https://www.pexels.com/api/documentation/
- * @todo Support video files.
- */
-export const search = async (query, { apiKey }) => {
-  const headers = { Authorization: apiKey };
-
-  const params = new URLSearchParams({
-    ...SEARCH_PARAMS,
-    query,
-    locale: getLocale(),
-  });
-
+export const { list, search } = createStockFetchers({
+  listURL: `${ENDPOINT}/curated`,
+  searchURL: `${ENDPOINT}/search`,
   /**
-   * Fetch a page of search results.
-   * @param {number} page Page number.
-   * @returns {Promise<{ photos: FetchResult[], next_page?: string }>} Response.
+   * Get the request headers.
+   * @param {string} apiKey API key.
+   * @returns {Record<string, string>} Headers.
    */
-  const fetchPage = (page) => {
-    params.set('page', String(page));
-
-    return fetchJSON(`${ENDPOINT}/search?${params}`, { headers });
-  };
-
+  getHeaders: (apiKey) => ({ Authorization: apiKey }),
   /**
-   * Extract the results from a page.
-   * @param {{ photos: FetchResult[], next_page?: string }} response Response.
-   * @returns {{ results: FetchResult[], hasMore: boolean }} Results and whether another page
-   * follows.
+   * Get the query parameters to list curated pictures.
+   * @returns {Record<string, any>} Parameters.
    */
-  const parsePage = ({ photos, next_page: nextPage }) => ({ results: photos, hasMore: !!nextPage });
-  const results = await fetchPagedResults({ maxPages: 2, fetchPage, parsePage });
-
-  return parseResults(results);
-};
+  getListParams: () => SEARCH_PARAMS,
+  /**
+   * Get the query parameters to search images.
+   * @param {string} query Search query.
+   * @returns {Record<string, any>} Parameters.
+   */
+  getSearchParams: (query) => ({ ...SEARCH_PARAMS, query, locale: getLocale() }),
+  listKey: 'photos',
+  searchKey: 'photos',
+  maxPages: 2,
+  /**
+   * Check whether another page of search results follows.
+   * @param {{ next_page?: string }} response Response.
+   * @returns {boolean} Result.
+   */
+  hasMore: ({ next_page: nextPage }) => !!nextPage,
+  parseResults,
+});
 
 /**
  * @type {MediaLibraryService}

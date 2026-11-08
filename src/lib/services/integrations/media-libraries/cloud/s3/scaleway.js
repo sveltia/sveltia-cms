@@ -1,11 +1,6 @@
 import { S3CompatibleService } from './service';
 
 /**
- * @import { S3Config } from '$lib/types/private';
- * @import { S3MediaLibrary } from '$lib/types/public';
- */
-
-/**
  * Scaleway Object Storage media library service integration. Scaleway uses the region endpoint for
  * API calls (path-style) and virtual-hosted-style for public asset URLs, unless the user has
  * configured a custom CDN `public_url`. Objects are private by default, even in a public bucket, so
@@ -20,14 +15,9 @@ export default new S3CompatibleService({
   objectAcl: 'public-read',
   apiKeyPattern: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
   /**
-   * Add the Scaleway region endpoint and public URL to the library options.
-   * @param {S3MediaLibrary} libOptions Library options.
-   * @returns {S3Config} Resolved configuration.
+   * Get the host name of the Scaleway API endpoint in the given region.
+   * @param {string | undefined} region Region.
+   * @returns {string} Host name.
    */
-  resolveConfig: (libOptions) => ({
-    ...libOptions,
-    endpoint: `https://s3.${libOptions.region}.scw.cloud`,
-    public_url:
-      libOptions.public_url ?? `https://${libOptions.bucket}.s3.${libOptions.region}.scw.cloud`,
-  }),
+  regionalHost: (region) => `s3.${region}.scw.cloud`,
 });

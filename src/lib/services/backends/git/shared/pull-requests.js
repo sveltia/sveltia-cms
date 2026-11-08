@@ -1,5 +1,5 @@
 /**
- * @import { WorkflowFile, WorkflowPullRequest } from '$lib/types/private';
+ * @import { CommitAuthor, WorkflowFile, WorkflowPullRequest } from '$lib/types/private';
  */
 
 /**
@@ -125,3 +125,35 @@ export const parseRestFiles = (files, { removedStatus }) =>
     // Gitea/Forgejo gives a file that wasn’t renamed an empty previous path
     previousPath: previousPath || undefined,
   }));
+
+/**
+ * Convert the user who opened a pull request or merge request to a commit author. An empty display
+ * name falls back to the user name, like a missing one.
+ * @param {object} user User.
+ * @param {string} [user.login] User name.
+ * @param {string | null} [user.name] Display name.
+ * @param {string | null} [user.email] Email address.
+ * @param {number} [user.id] User ID.
+ * @returns {CommitAuthor | undefined} Author, or `undefined` if the user is unknown.
+ */
+export const toCommitAuthor = ({ login, name, email, id }) =>
+  login ? { name: name || login, email: email ?? '', id, login } : undefined;
+
+/**
+ * Parse a pull request returned by the REST API of GitHub or Gitea/Forgejo, taking the properties
+ * the two services give differently from the caller.
+ * @param {Record<string, any>} item Pull request.
+ * @param {Pick<WorkflowPullRequest, 'title' | 'branch' | 'status' | 'author' | 'description'> &
+ * Partial<WorkflowPullRequest>} overrides Properties to add or override.
+ * @returns {WorkflowPullRequest} Parsed pull request.
+ */
+export const parseRestPullRequest = (item, overrides) => ({
+  number: item.number,
+  nodeId: String(item.id),
+  url: item.html_url,
+  headSHA: item.head?.sha,
+  createdDate: new Date(item.created_at),
+  updatedDate: new Date(item.updated_at),
+  files: [],
+  ...overrides,
+});

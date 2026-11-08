@@ -94,6 +94,7 @@ vi.mock('$lib/services/utils/file', async (importOriginal) => {
   return {
     ...Object.fromEntries(Object.keys(actual).map((key) => [key, vi.fn()])),
     stripPathPrefix: actual.stripPathPrefix,
+    getBaseName: actual.getBaseName,
     getDirName: actual.getDirName,
     sanitizeFileName: actual.sanitizeFileName,
   };

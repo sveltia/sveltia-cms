@@ -309,11 +309,10 @@ export const createFork = async () => {
  * @see https://sveltiacms.app/en/docs/workflows/open
  */
 const setUpOpenAuthoring = async () => {
-  const { owner, repo } = repository;
   let allowForking = false;
 
   await setUpForkFor({
-    repoPath: `${owner}/${repo}`,
+    repository,
     fetchAccess: fetchRepositoryAccess,
     /**
      * Look up the fork, along with the project details, which are needed whether or not there’s a

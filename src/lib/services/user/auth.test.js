@@ -176,10 +176,10 @@ describe('auth service', () => {
    */
   const answerMagicLinkPrompt = async (confirmed) => {
     await vi.waitFor(() => {
-      expect(auth.magicLinkConfirmation).toBeDefined();
+      expect(authModule.magicLinkConfirmation.current).toBeDefined();
     });
 
-    auth.magicLinkConfirmation.resolve(confirmed);
+    authModule.magicLinkConfirmation.current.respond(confirmed);
   };
 
   describe('initial state', () => {
@@ -683,18 +683,18 @@ describe('auth service', () => {
       const signingIn = authModule.signInAutomatically();
 
       await vi.waitFor(() => {
-        expect(auth.magicLinkConfirmation).toBeDefined();
+        expect(authModule.magicLinkConfirmation.current).toBeDefined();
       });
 
       // The account is verified with the token alone, and shown to the user before anything else
-      expect(auth.magicLinkConfirmation.account).toEqual(magicUser);
+      expect(authModule.magicLinkConfirmation.current.account).toEqual(magicUser);
       expect(mockUser.account).toBeUndefined();
       expect(mockBackend.fetchFiles).not.toHaveBeenCalled();
 
-      auth.magicLinkConfirmation.resolve(true);
+      authModule.magicLinkConfirmation.current.respond(true);
       await signingIn;
 
-      expect(auth.magicLinkConfirmation).toBeUndefined();
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
       expect(mockUser.account).toEqual(magicUser);
       expect(mockBackend.fetchFiles).toHaveBeenCalled();
     });
@@ -729,7 +729,7 @@ describe('auth service', () => {
         auto: true,
       });
       expect(mockUser.account).toEqual(cachedUser);
-      expect(auth.magicLinkConfirmation).toBeUndefined();
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
       // The settings in the link are discarded along with it
       expect(mockPrefs.deployHookURL).toBeUndefined();
     });
@@ -774,7 +774,7 @@ describe('auth service', () => {
 
       await authModule.signInAutomatically();
 
-      expect(auth.magicLinkConfirmation).toBeUndefined();
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
       expect(auth.signingIn).toBe(false);
       expect(auth.unauthenticated).toBe(true);
     });
@@ -1331,14 +1331,14 @@ describe('auth service', () => {
       mockBackendStore.current = undefined;
 
       expect(await authModule.confirmMagicLink('magic-token')).toBeUndefined();
-      expect(auth.magicLinkConfirmation).toBeUndefined();
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
     });
 
     it('should return undefined when the token does not resolve to an account', async () => {
       mockBackend.signIn.mockResolvedValue(undefined);
 
       expect(await authModule.confirmMagicLink('magic-token')).toBeUndefined();
-      expect(auth.magicLinkConfirmation).toBeUndefined();
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
     });
 
     it('should return the account once the user has confirmed it', async () => {
@@ -1353,6 +1353,35 @@ describe('auth service', () => {
 
       expect(result).toEqual(account);
       expect(mockBackend.signIn).toHaveBeenCalledWith({ token: 'magic-token', auto: true });
+    });
+
+    it('should decline a pending prompt once another link asks about its account', async () => {
+      const first = { backendName: 'github', token: 'first-token', login: 'first' };
+      const second = { backendName: 'github', token: 'second-token', login: 'second' };
+
+      mockBackend.signIn.mockImplementation(async ({ token }) =>
+        token === 'first-token' ? first : second,
+      );
+
+      const firstConfirmed = authModule.confirmMagicLink('first-token');
+
+      await vi.waitFor(() => {
+        expect(authModule.magicLinkConfirmation.current?.account).toEqual(first);
+      });
+
+      const secondConfirmed = authModule.confirmMagicLink('second-token');
+
+      await vi.waitFor(() => {
+        expect(authModule.magicLinkConfirmation.current?.account).toEqual(second);
+      });
+
+      // The stale prompt is declined rather than left hanging, and the new one stays up
+      await expect(firstConfirmed).resolves.toBeUndefined();
+      expect(authModule.magicLinkConfirmation.current?.account).toEqual(second);
+
+      await Promise.all([secondConfirmed, answerMagicLinkPrompt(true)]);
+      await expect(secondConfirmed).resolves.toEqual(second);
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
     });
   });
 
@@ -1699,6 +1728,24 @@ describe('auth service', () => {
       expect(openAuthoringModule.forkPermissionRequest.current).toBeUndefined();
       await expect(forkPermissionGranted).resolves.toBe(false);
       expect(mockResetDeployingEntries).toHaveBeenCalled();
+    });
+
+    it('should decline a pending magic link prompt', async () => {
+      const account = { backendName: 'github', token: 'magic-token', login: 'me' };
+
+      mockBackend.signIn.mockResolvedValue(account);
+      mockBackend.signOut.mockResolvedValue(undefined);
+
+      const confirmed = authModule.confirmMagicLink('magic-token');
+
+      await vi.waitFor(() => {
+        expect(authModule.magicLinkConfirmation.current).toBeDefined();
+      });
+
+      await authModule.signOut();
+
+      expect(authModule.magicLinkConfirmation.current).toBeUndefined();
+      await expect(confirmed).resolves.toBeUndefined();
     });
 
     it('should sign out even if the backend fails to', async () => {

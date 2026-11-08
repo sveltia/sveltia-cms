@@ -10,8 +10,14 @@ import { getField } from '$lib/services/contents/entry/fields';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Entry, FilteringConditions, InternalEntryCollection } from '$lib/types/private';
- * @import { DateTimeField, ViewFilter, ViewFilters } from '$lib/types/public';
+ * @import {
+ * Entry,
+ * FilteringConditions,
+ * GroupingConditions,
+ * InternalEntryCollection,
+ * InternalLocaleCode,
+ * } from '$lib/types/private';
+ * @import { DateTimeField, ViewFilter, ViewFilters, ViewGroup } from '$lib/types/public';
  */
 
 /**
@@ -26,6 +32,53 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
 export const parseFilterConfig = (filters) =>
   /** @type {{ options: ViewFilter[], default?: FilteringConditions }} */
   (parseViewOptions(filters, 'filters'));
+
+/**
+ * Create a function that checks if an entry satisfies the given filtering or grouping conditions.
+ * The template tags are resolved and the regexes compiled once, rather than for every entry. Both
+ * the raw value of the field and the value it references are checked.
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Collection name.
+ * @param {InternalLocaleCode} args.locale Locale to get the values in.
+ * @param {FilteringConditions | GroupingConditions} args.conditions Conditions.
+ * @param {Date} args.now Current date and time, which the template tags in the conditions resolve
+ * to.
+ * @returns {(entry: Entry) => boolean} Function returning whether an entry matches.
+ */
+export const createEntryMatcher = ({ collectionName, locale, conditions, now }) => {
+  const { field: key } = conditions;
+  const fieldConfig = getField({ collectionName, keyPath: key });
+
+  const dateFieldConfig =
+    fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
+
+  const prepared = prepareConditions(conditions, { dateFieldConfig, now, locale });
+
+  return (entry) => {
+    const args = { entry, locale, collectionName, key };
+
+    return matchesConditions({
+      rawValue: getListedEntryValue({ ...args, resolveRef: false }),
+      refValue: getListedEntryValue(args),
+      conditions: prepared,
+    });
+  };
+};
+
+/**
+ * Create the view filters or groups for the selected entry collection.
+ * @template {ViewFilter | ViewGroup} T
+ * @param {'filters' | 'groups'} type Option type.
+ * @returns {{ readonly current: T[] }} Options. Empty for a file/singleton collection.
+ */
+export const createViewOptionsState = (type) =>
+  createDerivedState(() => {
+    const collection = selectedCollection.current;
+
+    return collection?._type === 'entry'
+      ? /** @type {T[]} */ (parseViewOptions(collection[`view_${type}`], type).options)
+      : [];
+  });
 
 /**
  * Filter the given entries.
@@ -54,42 +107,15 @@ export const filterEntries = (entries, collection, filters, now = new Date()) =>
       conditions.field !== undefined && optionKeys.includes(getConditionKey(conditions)),
   );
 
-  // Resolve the template tags and compile the regexes once per filter instead of for every entry
-  const preparedFilters = validFilters.map((conditions) => {
-    const fieldConfig = getField({ collectionName, keyPath: conditions.field });
-
-    const dateFieldConfig =
-      fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
-
-    return {
-      field: conditions.field,
-      conditions: prepareConditions(conditions, { dateFieldConfig, now, locale }),
-    };
-  });
-
-  return entries.filter((entry) =>
-    preparedFilters.every(({ field, conditions }) => {
-      // Check both the raw value and referenced value
-      const args = { entry, locale, collectionName, key: field };
-      const rawValue = getListedEntryValue({ ...args, resolveRef: false });
-      const refValue = getListedEntryValue({ ...args });
-
-      return matchesConditions({ rawValue, refValue, conditions });
-    }),
+  const matchers = validFilters.map((conditions) =>
+    createEntryMatcher({ collectionName, locale, conditions, now }),
   );
+
+  return entries.filter((entry) => matchers.every((matches) => matches(entry)));
 };
 
 /**
  * View filters for the selected entry collection.
  * @type {{ readonly current: ViewFilter[] }}
  */
-export const viewFilters = createDerivedState(() => {
-  const collection = selectedCollection.current;
-
-  // Disable filters for file/singleton collection
-  if (collection?._type !== 'entry') {
-    return [];
-  }
-
-  return parseFilterConfig(collection.view_filters).options;
-});
+export const viewFilters = createViewOptionsState('filters');

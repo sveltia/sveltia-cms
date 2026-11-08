@@ -153,6 +153,24 @@
  */
 
 /**
+ * An outstanding request asking the user what to do with uploaded files whose names are already
+ * taken, which the UI turns into a conflict resolution dialog.
+ * @typedef {object} DuplicatesRequest
+ * @property {number} count Number of duplicate files.
+ * @property {string} name Name of the first duplicate file.
+ * @property {(replace: boolean | undefined) => void} respond Function to answer the request: `true`
+ * to replace the existing files, `false` to keep both, or `undefined` to cancel.
+ */
+
+/**
+ * An outstanding request asking the user whether to sign in to the account a magic link belongs
+ * to, which the UI turns into a confirmation dialog.
+ * @typedef {object} MagicLinkConfirmationRequest
+ * @property {User} account Account the link signs in to.
+ * @property {(confirmed: boolean) => void} respond Function to answer the request.
+ */
+
+/**
  * An outstanding request for the user’s permission to fork the configured repository, which the UI
  * turns into a confirmation dialog.
  * @typedef {object} ForkPermissionRequest

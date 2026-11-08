@@ -17,6 +17,7 @@ import { mapEntryContent } from '$lib/services/contents/entry/locales';
 import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';
 import { refreshPermalinks } from '$lib/services/contents/entry/permalink';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
+import { getBaseName } from '$lib/services/utils/file';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
@@ -254,11 +255,7 @@ export const buildNestedMoveChanges = async ({
   // An entry only owns its folder when it’s stored as the index file that names every entry in the
   // `subfolders` mode. Otherwise it’s a regular file sharing the folder with its siblings and with
   // whatever is below, none of which moves with it
-  if (
-    !originalEntry ||
-    !indexFileName ||
-    originalEntry.subPath.slice(originalEntry.subPath.lastIndexOf('/') + 1) !== indexFileName
-  ) {
+  if (!originalEntry || !indexFileName || getBaseName(originalEntry.subPath) !== indexFileName) {
     return noChanges;
   }
 

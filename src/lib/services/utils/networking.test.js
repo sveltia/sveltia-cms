@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { assertResponseOK, isLocalHostname, isSecureURL, sendRequest } from './networking';
+import { assertResponseOK, fetchOK, isLocalHostname, isSecureURL, sendRequest } from './networking';
 
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn().mockResolvedValue(undefined) }));
 
@@ -754,5 +754,29 @@ describe('assertResponseOK', () => {
         allowNotFound: true,
       }),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe('fetchOK', () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  test('should pass the arguments through and return an OK response', async () => {
+    const response = new Response('ok', { status: 200 });
+    const init = { headers: { Accept: 'image/*' } };
+
+    mockFetch.mockResolvedValueOnce(response);
+    await expect(fetchOK('https://example.com/a.jpg', init)).resolves.toBe(response);
+    expect(mockFetch).toHaveBeenCalledWith('https://example.com/a.jpg', init);
+
+    mockFetch.mockResolvedValueOnce(response);
+    await fetchOK('https://example.com/b.jpg');
+    expect(mockFetch).toHaveBeenLastCalledWith('https://example.com/b.jpg');
+  });
+
+  test('should throw when the response status is not OK', async () => {
+    mockFetch.mockResolvedValueOnce(new Response('Not Found', { status: 404 }));
+    await expect(fetchOK('https://example.com/a.jpg')).rejects.toThrow(new Error('HTTP 404'));
   });
 });

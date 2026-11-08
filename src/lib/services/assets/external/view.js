@@ -17,7 +17,7 @@ import { currentView } from '$lib/services/assets/view/settings';
 import { getNameSortValue } from '$lib/services/assets/view/sort';
 import { groupItems, sortItemsByKey } from '$lib/services/common/view';
 import { getNormalizedValueCache, hasMatch, normalize } from '$lib/services/search/util';
-import { getDirName } from '$lib/services/utils/file';
+import { getBaseName, getDirName } from '$lib/services/utils/file';
 import {
   createDerivedState,
   createRootEffect,
@@ -329,7 +329,7 @@ export const externalFolderSummary = createDerivedState(() => {
   const dirPath = browsing ? selectedExternalDirPath.current : '';
 
   return {
-    name: dirPath.split('/').at(-1) || service.serviceLabel,
+    name: getBaseName(dirPath) || service.serviceLabel,
     // The service root has no path of its own
     path: dirPath || undefined,
     folderCount: browsing ? listedExternalSubfolders.current.length : undefined,

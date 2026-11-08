@@ -425,6 +425,15 @@ describe('GitHub pull request helpers', () => {
       });
     });
 
+    test('should fall back to the login for an empty display name', () => {
+      expect(parseAuthor({ login: 'octocat', name: '', databaseId: 2 })).toEqual({
+        name: 'octocat',
+        email: '',
+        id: 2,
+        login: 'octocat',
+      });
+    });
+
     test('should return undefined for an unknown user', () => {
       expect(parseAuthor(undefined)).toBeUndefined();
       expect(parseAuthor({ id: 3 })).toBeUndefined();

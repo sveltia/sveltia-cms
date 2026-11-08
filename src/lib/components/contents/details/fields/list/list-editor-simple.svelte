@@ -194,7 +194,7 @@
     <div
       role="none"
       class="item"
-      class:dragging={sorter.dragIndex === index}
+      class:drag-placeholder={sorter.dragIndex === index}
       {...sorter.itemProps(index)}
       animate:flip={{ duration: 200 }}
     >
@@ -265,13 +265,5 @@
     display: flex;
     align-items: center;
     gap: 4px;
-
-    /* The dragged row is left as a faint placeholder marking the gap it would drop into. The
-      pointer already carries the browser’s own drag image of it, so showing it twice at full
-      strength would just be confusing. */
-
-    &.dragging {
-      opacity: 0.25;
-    }
   }
 </style>

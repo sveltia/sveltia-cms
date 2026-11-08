@@ -11,11 +11,10 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { env } from '$lib/services/user/env.svelte';
   import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
-  import { handleEntryAlreadyPublished } from '$lib/services/workflow/editor';
+  import { runWorkflowEditorAction } from '$lib/services/workflow/editor';
   import { updateWorkflowStatus } from '$lib/services/workflow/save';
   import { getStageOfEntry, getStagesOfEntry } from '$lib/services/workflow/stages';
   import { canMoveToStatus } from '$lib/services/workflow/validate';
-  import { getWorkflowErrorMessage } from '$lib/services/workflow/verify';
 
   /**
    * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -63,37 +62,35 @@
       return;
     }
 
-    // An entry can be saved as a draft with its required fields left empty, so it has to be checked
-    // before it moves towards being published
-    if (!canMoveToStatus({ entry, status: newStatus, draft: entryDraft.current })) {
-      showValidationToast = true;
-      itemsVersion += 1;
+    const { blocked, errorMessage: message } = await runWorkflowEditorAction({
+      entry,
+      entryDraft,
+      valid: canMoveToStatus({ entry, status: newStatus, draft: entryDraft.current }),
+      /**
+       * Change the status, flagging the change as under way.
+       * @returns {Promise<UnpublishedEntry>} Updated entry.
+       */
+      action: () => {
+        updating = true;
 
+        return updateWorkflowStatus(entry, newStatus);
+      },
+      failure: 'workflow.status_change_failed',
+      handleAlreadyPublished: true,
+    });
+
+    updating = false;
+
+    if (blocked) {
+      showValidationToast = true;
+    } else if (message) {
+      errorMessage = message;
+      showErrorToast = true;
+    } else {
       return;
     }
 
-    updating = true;
-
-    // Read these up front: an entry that turns out to have been published leaves
-    // `unpublishedEntries`, and the `entry` prop is derived from that store
-    const { collectionName, pullRequest } = entry.workflow;
-
-    try {
-      await updateWorkflowStatus(entry, newStatus);
-    } catch (/** @type {any} */ ex) {
-      // An entry published since it was opened closes the editor instead
-      if (
-        !handleEntryAlreadyPublished(ex, { entryDraft, branch: pullRequest.branch, collectionName })
-      ) {
-        errorMessage = getWorkflowErrorMessage(ex, 'workflow.status_change_failed');
-        showErrorToast = true;
-        itemsVersion += 1;
-        // eslint-disable-next-line no-console
-        console.error(ex);
-      }
-    } finally {
-      updating = false;
-    }
+    itemsVersion += 1;
   };
 </script>
 

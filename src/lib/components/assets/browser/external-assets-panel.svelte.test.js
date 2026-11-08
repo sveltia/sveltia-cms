@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
 import { prepareExternalUploads } from '$lib/services/assets/external/data';
 import { selectAssetsView } from '$lib/services/contents/editor';
 import { env } from '$lib/services/user/env.svelte';
@@ -625,6 +626,9 @@ describe('ExternalAssetsPanel', () => {
   });
 
   test('uploads the files dropped onto the list', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     const upload = vi.fn(async (/** @type {File[]} */ files) =>
       files.map((file) => createMockExternalAsset({ fileName: file.name })),
     );
@@ -689,6 +693,9 @@ describe('ExternalAssetsPanel', () => {
   });
 
   test('reports an upload failure, listing the files uploaded before it', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     // The first file made it to the service before the second one failed
     const uploaded = createMockExternalAsset({ fileName: 'c.png' });
@@ -728,6 +735,9 @@ describe('ExternalAssetsPanel', () => {
   });
 
   test('keeps the progress toast up until a slow upload is done, then hides it', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     /**
      * Finish the upload with the given assets.
      * @type {(assets: any[]) => void}
@@ -992,6 +1002,9 @@ describe('ExternalAssetsPanel', () => {
     });
 
     test('names the service at its root, and reports a failure to create a folder', async () => {
+      // The toasts reporting the commit are rendered by the shared component
+      await render(AssetUpdatesToast, {});
+
       const createFolder = vi.fn().mockRejectedValue(new Error('denied'));
 
       vi.spyOn(console, 'error').mockImplementation(() => {});

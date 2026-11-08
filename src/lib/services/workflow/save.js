@@ -42,6 +42,7 @@ import {
 } from '$lib/services/workflow/assets';
 import { getBranchName } from '$lib/services/workflow/branch';
 import { trackDeployingEntry } from '$lib/services/workflow/deploy';
+import { createUnpublishedEntryProps } from '$lib/services/workflow/entries';
 import { isEntryAlreadyPublished, openAuthoring } from '$lib/services/workflow/open-authoring';
 import { checkReviewedHead, verifyMergeState } from '$lib/services/workflow/verify';
 
@@ -245,14 +246,13 @@ const storeUnpublishedEntry = (
   /** @type {UnpublishedEntry} */
   const unpublishedEntry = {
     ...entry,
-    workflow: {
+    workflow: createUnpublishedEntryProps({
       pullRequest,
-      status: pullRequest.status,
       collectionName,
       fileName,
       previousPaths,
-      ...(companions.length ? { companions } : {}),
-    },
+      companions,
+    }),
   };
 
   upsertUnpublishedEntry(unpublishedEntry);

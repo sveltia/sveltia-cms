@@ -24,6 +24,7 @@ import { getRepositoryPath } from '$lib/services/backends/git/shared/repository'
 import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { getRootDir } from '$lib/services/backends/root-dir';
 import { dataLoadedProgress } from '$lib/services/contents';
+import { splitIntoSizedChunks } from '$lib/services/utils/array';
 import { createLRUMap } from '$lib/services/utils/cache';
 import { encodePathSegments } from '$lib/services/utils/url';
 
@@ -295,37 +296,19 @@ export const fetchRawFile = async (path, ref) => {
  * @param {number} limits.maxResponseSize Maximum combined size of the encoded contents per batch.
  * @returns {BaseFileListItem[][]} Batches.
  */
-export const createBatches = (files, { maxItems, maxResponseSize }) => {
-  /** @type {BaseFileListItem[][]} */
-  const batches = [];
-  /** @type {BaseFileListItem[]} */
-  let batch = [];
-  let batchSize = 0;
-
-  files.forEach((file) => {
-    // An instance measures a response by the size of the Base64-encoded contents it returns, and
-    // the encoding inflates a file by four bytes for every three
-    const encodedSize = ((file.size ?? 0) * 4) / 3;
-
-    // Close the current batch before the file that would push it over either limit. A batch is
-    // never left empty, so a file that exceeds a limit on its own still gets a request of its own
-    // instead of looping forever
-    if (batch.length && (batch.length === maxItems || batchSize + encodedSize > maxResponseSize)) {
-      batches.push(batch);
-      batch = [];
-      batchSize = 0;
-    }
-
-    batch.push(file);
-    batchSize += encodedSize;
+export const createBatches = (files, { maxItems, maxResponseSize }) =>
+  splitIntoSizedChunks(files, {
+    maxItems,
+    maxSize: maxResponseSize,
+    /**
+     * Get the size of a file’s contents once encoded. An instance measures a response by the size
+     * of the Base64-encoded contents it returns, and the encoding inflates a file by four bytes for
+     * every three.
+     * @param {BaseFileListItem} file File.
+     * @returns {number} Encoded size.
+     */
+    getSize: (file) => ((file.size ?? 0) * 4) / 3,
   });
-
-  if (batch.length) {
-    batches.push(batch);
-  }
-
-  return batches;
-};
 
 /**
  * Fetch the metadata of entry/asset files as well as text file contents. Gitea and Forgejo have

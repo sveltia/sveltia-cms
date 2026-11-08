@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { decodeSegment, getSegments } from '$lib/services/config/schema/pointer';
+import { decodeSegment, getSegments, resolvePointer } from '$lib/services/config/schema/pointer';
 
 describe('Test decodeSegment()', () => {
   test('decodes the escaped slash and tilde', () => {
@@ -26,5 +26,18 @@ describe('Test getSegments()', () => {
   test('returns no segments for the root', () => {
     expect(getSegments('#')).toEqual([]);
     expect(getSegments('')).toEqual([]);
+  });
+});
+
+describe('Test resolvePointer()', () => {
+  const root = { definitions: { 'a/b': { list: ['x', 'y'] } } };
+
+  test('resolves a pointer against the document', () => {
+    expect(resolvePointer(root, '#/definitions/a~1b/list/1')).toBe('y');
+    expect(resolvePointer(root, '')).toBe(root);
+  });
+
+  test('returns `undefined` for a pointer that can’t be resolved', () => {
+    expect(resolvePointer(root, '#/definitions/missing/list')).toBeUndefined();
   });
 });

@@ -1,8 +1,16 @@
+import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { pollUntil } from '$lib/services/backends/git/shared/poll';
 import { PULL_REQUEST_DESCRIPTION } from '$lib/services/backends/git/shared/pull-requests';
+import {
+  getRepositoryPath,
+  isSameRepository,
+  toRepositoryPath,
+} from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
+import { user } from '$lib/services/user/account.svelte';
 import {
   ENTRY_ALREADY_PUBLISHED,
   forkedRepository,
@@ -16,6 +24,7 @@ import {
  * @import {
  * CommitOptions,
  * CommitResults,
+ * FetchApiOptions,
  * ForkRequestState,
  * RepositoryInfo,
  * RepositoryPath,
@@ -208,11 +217,12 @@ export const runOpenAuthoringSetUp = async (setUp) => {
  * differ.
  * @template {{ canWrite: boolean }} A
  * @param {object} args Arguments.
- * @param {string} args.repoPath Configured repository path, e.g. `owner/repo`.
+ * @param {RepositoryPath & { branch?: string }} args.repository Configured repository.
  * @param {() => Promise<A>} args.fetchAccess Function to read the signed-in user’s access to the
  * configured repository.
- * @param {() => Promise<void>} [args.prepare] Function to run once the user turns out to be a
- * contributor, before the fork is looked up.
+ * @param {() => Promise<unknown>} [args.fetchDefaultBranchName] Function to resolve the branch name
+ * once the user turns out to be a contributor, before the fork is looked up, if the fork needs it.
+ * It’s otherwise resolved later in the data load.
  * @param {() => Promise<RepositoryPath | undefined>} args.fetchFork Function to look up the user’s
  * existing fork.
  * @param {(fork: RepositoryPath) => Promise<void>} [args.prepareFork] Function to bring an existing
@@ -224,7 +234,7 @@ export const runOpenAuthoringSetUp = async (setUp) => {
  * @see https://sveltiacms.app/en/docs/workflows/open
  */
 export const setUpForkFor = async (args) => {
-  const { repoPath, fetchAccess, prepare, fetchFork, prepareFork, fetchForkingAllowed } = args;
+  const { repository, fetchAccess, fetchFork, prepareFork, fetchForkingAllowed } = args;
   const access = await fetchAccess();
 
   // A maintainer keeps working on the configured repository, as if Open Authoring was off
@@ -232,7 +242,9 @@ export const setUpForkFor = async (args) => {
     return;
   }
 
-  await prepare?.();
+  if (!repository.branch) {
+    await args.fetchDefaultBranchName?.();
+  }
 
   const existingFork = await fetchFork();
 
@@ -244,7 +256,10 @@ export const setUpForkFor = async (args) => {
   }
 
   // Forking can be turned off on the repository or the instance, and the user has to agree to it
-  await ensureForkPermission({ repoPath, allowForking: await fetchForkingAllowed(access) });
+  await ensureForkPermission({
+    repoPath: `${repository.owner}/${repository.repo}`,
+    allowForking: await fetchForkingAllowed(access),
+  });
 
   forkedRepository.current = await args.createFork();
 };
@@ -357,6 +372,81 @@ export const warnForkNotFastForwarded = (fork) => {
   console.warn(
     `The ${getForkPath(fork)} fork could not be fast-forwarded to the upstream repository.`,
   );
+};
+
+/**
+ * Bring the fork’s copy of the given branch up to date with the configured repository, so a new
+ * workflow branch starts from what’s currently on the site and the resulting pull request only
+ * contains the entry being edited. GitHub and Gitea take the same `merge-upstream` request, which
+ * is sent unless another one is given. A failure is logged rather than raised: a fork that has
+ * drifted still works, it just makes for a noisier pull request.
+ * @param {RepositoryPath} fork Fork to update.
+ * @param {string | undefined} branch Branch name.
+ * @param {() => Promise<Response | undefined>} [request] Function to send another request instead,
+ * resolving to `undefined` when it found nothing to send.
+ * @see https://docs.github.com/en/rest/branches/branches#sync-a-fork-branch-with-the-upstream-repository
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoMergeUpstream
+ */
+export const syncForkWith = async (fork, branch, request) => {
+  /** @type {Response | undefined} */
+  let response;
+
+  try {
+    response = /** @type {Response | undefined} */ (
+      await (request
+        ? request()
+        : fetchAPI(`${getRepositoryPath(fork)}/merge-upstream`, {
+            method: 'POST',
+            body: { branch },
+            responseType: 'raw',
+          }))
+    );
+  } catch (/** @type {any} */ ex) {
+    warnForkSyncError(fork, ex);
+
+    return;
+  }
+
+  // The request is refused when the fork has commits of its own on the branch that can’t be
+  // fast-forwarded or merged, which is a state the CMS can’t resolve on the contributor’s behalf.
+  // On GitHub, it’s also refused when the update would change GitHub Actions workflow files and
+  // the OAuth token lacks the `workflow` scope
+  if (response && !response.ok) {
+    warnForkNotFastForwarded(fork);
+  }
+};
+
+/**
+ * Look for the fork at the name GitHub or Gitea/Forgejo gives it by default, which is the parent’s.
+ * This is where it is unless the contributor renamed it, or already had a repository of that name
+ * when the fork was made. A repository that happens to share the name but isn’t a fork of the
+ * configured one is ignored.
+ * @param {RepositoryPath} repository Configured repository.
+ * @param {FetchApiOptions} [options] Request options.
+ * @returns {Promise<RepositoryPath | undefined>} The fork, or `undefined` if it isn’t there.
+ * @see https://docs.github.com/en/rest/repos/repos#get-a-repository
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
+ */
+export const fetchForkByNameFor = async (repository, options) => {
+  const userName = /** @type {string} */ (user.account?.login);
+
+  // Only a missing repository means there’s no fork at the name. Reading a rate limit or an outage
+  // the same way would have the contributor asked to create another one, so that is passed on
+  const result = /** @type {Record<string, any> | undefined} */ (
+    await fetchAPIOrUndefined(
+      getRepositoryPath({ owner: userName, repo: repository.repo }),
+      options,
+    )
+  );
+
+  // The service redirects a request for a repository that was renamed or transferred, so the one
+  // it answered with can sit on an account other than the one asked for. Everything the CMS writes
+  // goes to this repository, so take it only once it’s confirmed to be the signed-in user’s own
+  return result?.fork &&
+    isSameRepository(result.parent?.full_name, repository) &&
+    result.owner?.login?.toLowerCase() === userName.toLowerCase()
+    ? toRepositoryPath(result.full_name)
+    : undefined;
 };
 
 /**

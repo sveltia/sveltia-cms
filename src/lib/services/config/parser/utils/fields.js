@@ -1,4 +1,5 @@
 import { METADATA_KEYS } from '$lib/services/contents/collection/view/table-keys';
+import { isCodeValueKey } from '$lib/services/contents/fields/code/helpers';
 import { DEFAULT_CANONICAL_SLUG } from '$lib/services/contents/i18n/config/constants';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 import { isNumeric } from '$lib/services/utils/number';
@@ -97,16 +98,7 @@ const hasValueKey = (field, key) => {
     return true;
   }
 
-  if (fieldType !== 'code') {
-    return false;
-  }
-
-  const {
-    output_code_only: outputCodeOnly = false,
-    keys: outputKeys = { code: 'code', lang: 'lang' },
-  } = /** @type {CodeField} */ (field);
-
-  return !outputCodeOnly && [outputKeys.code, outputKeys.lang].includes(key);
+  return fieldType === 'code' && isCodeValueKey(/** @type {CodeField} */ (field), key);
 };
 
 /**

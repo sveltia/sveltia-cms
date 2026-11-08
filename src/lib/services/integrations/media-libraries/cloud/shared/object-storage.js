@@ -12,6 +12,7 @@ import {
   getRelativeKey,
 } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
 import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
+import { getBaseName, getDirName } from '$lib/services/utils/file';
 import { isSecureURL } from '$lib/services/utils/networking';
 
 /**
@@ -459,7 +460,7 @@ export const deleteFolderObject = async (provider, dirPath, config, options) => 
  * @returns {string} New path relative to the configured prefix.
  */
 export const getRenamedPath = (config, asset, newName) => {
-  const dirName = getRelativeKey(config, asset.id).split('/').slice(0, -1).join('/');
+  const dirName = getDirName(getRelativeKey(config, asset.id));
 
   return dirName ? `${dirName}/${newName}` : newName;
 };
@@ -480,8 +481,8 @@ export const getRenamedPath = (config, asset, newName) => {
  */
 export const renameObject = async (provider, asset, newName, config, options) => {
   const newPath = getRenamedPath(config, asset, newName);
-  const dirPath = newPath.split('/').slice(0, -1).join('/');
-  const ownName = getRelativeKey(config, asset.id).split('/').at(-1)?.normalize();
+  const dirPath = getDirName(newPath);
+  const ownName = getBaseName(getRelativeKey(config, asset.id)).normalize();
   const takenNames = await getFileNamesInFolder(provider, config, options, dirPath);
   const normalizedName = newName.normalize();
 
@@ -494,109 +495,30 @@ export const renameObject = async (provider, asset, newName, config, options) =>
 
 /**
  * Create the operations of an object storage service, binding the given provider to the shared
- * operations. A file is renamed by moving it within its folder.
+ * operations, which all take it as their first argument. A file is renamed by moving it within its
+ * folder.
  * @template T
  * @template {CloudStorageConfig} C
  * @param {ObjectStorageProvider<T, C>} provider Service provider.
  * @returns {ObjectStorageOperations<C>} Operations.
  */
-export const createObjectStorageOperations = (provider) => {
-  /**
-   * Move a file to another path.
-   * @param {ExternalAsset} asset Asset to move.
-   * @param {string} newPath New path relative to the configured prefix.
-   * @param {C} config Service configuration.
-   * @param {MediaLibraryFetchOptions} options Fetch options.
-   * @returns {Promise<ExternalAsset>} Moved asset.
-   */
-  const move = (asset, newPath, config, options) =>
-    moveObject(provider, asset, newPath, config, options);
-
-  return {
-    /**
-     * List the files under the configured prefix.
-     * @param {C} config Service configuration.
-     * @param {MediaLibraryFetchOptions} options Fetch options.
-     * @returns {Promise<ExternalAsset[]>} Assets.
-     */
-    list: (config, options) => listObjects(provider, config, options),
-    /**
-     * List the files and the empty folders under the configured prefix.
-     * @param {C} config Service configuration.
-     * @param {MediaLibraryFetchOptions} options Fetch options.
-     * @returns {Promise<ExternalFolderListing>} Files and folders.
-     */
-    browse: (config, options) => browseObjects(provider, config, options),
-    /**
-     * List every file and empty folder below a folder, at any depth.
-     * @param {string} dirPath Folder path relative to the configured prefix.
-     * @param {C} config Service configuration.
-     * @param {MediaLibraryFetchOptions} options Fetch options.
-     * @returns {Promise<ExternalFolderListing>} Files and folders.
-     */
-    listFolder: (dirPath, config, options) => listFolderObjects(provider, dirPath, config, options),
-    /**
-     * Search the files under the configured prefix.
-     * @param {string} query Search query.
-     * @param {C} config Service configuration.
-     * @param {MediaLibraryFetchOptions} options Fetch options.
-     * @returns {Promise<ExternalAsset[]>} Assets.
-     */
-    search: (query, config, options) => searchObjects(provider, query, config, options),
-    /**
-     * Upload files to the folder given in the fetch options.
-     * @param {File[]} files Files to upload.
-     * @param {C} config Service configuration.
-     * @param {MediaLibraryFetchOptions} options Fetch options.
-     * @returns {Promise<ExternalAsset[]>} Uploaded assets.
-     */
-    upload: (files, config, options) => uploadObjects(provider, files, config, options),
-    /**
-     * Delete files.
-     * @param {ExternalAsset[]} assets Assets to delete.
-     * @param {C} config Service configuration.
-     * @param {MediaLibraryFetchOptions} options Fetch options.
-     * @returns {Promise<void>}
-     */
-    delete: (assets, config, options) => deleteObjects(provider, assets, config, options),
-    /**
-     * Rename a file, keeping it in its folder.
-     * @param {ExternalAsset} asset Asset to rename.
-     * @param {string} newName New file name, without a directory.
-     * @param {C} config Service configuration.
-     * @param {MediaLibraryFetchOptions} options Fetch options.
-     * @returns {Promise<ExternalAsset>} Renamed asset.
-     */
-    rename: (asset, newName, config, options) =>
-      renameObject(provider, asset, newName, config, options),
-    /**
-     * Replace a file, keeping the object key so that the URL stays the same.
-     * @param {ExternalAsset} asset Asset to replace.
-     * @param {File} file New file.
-     * @param {C} config Service configuration.
-     * @param {MediaLibraryFetchOptions} options Fetch options.
-     * @returns {Promise<ExternalAsset>} Replaced asset.
-     */
-    replace: (asset, file, config, options) =>
-      replaceObject(provider, asset, file, config, options),
-    move,
-    /**
-     * Create an empty folder.
-     * @param {string} dirPath Folder path relative to the configured prefix.
-     * @param {C} config Service configuration.
-     * @param {MediaLibraryFetchOptions} options Fetch options.
-     * @returns {Promise<void>}
-     */
-    createFolder: (dirPath, config, options) =>
-      createFolderObject(provider, dirPath, config, options),
-    /**
-     * Remove the placeholder of a folder.
-     * @param {string} dirPath Folder path relative to the configured prefix.
-     * @param {C} config Service configuration.
-     * @param {MediaLibraryFetchOptions} options Fetch options.
-     * @returns {Promise<void>}
-     */
-    deleteFolder: (dirPath, config, options) =>
-      deleteFolderObject(provider, dirPath, config, options),
-  };
-};
+export const createObjectStorageOperations = (provider) =>
+  /** @type {ObjectStorageOperations<C>} */ (
+    Object.fromEntries(
+      Object.entries(
+        /** @type {Record<string, (...args: any[]) => Promise<any>>} */ ({
+          list: listObjects,
+          browse: browseObjects,
+          listFolder: listFolderObjects,
+          search: searchObjects,
+          upload: uploadObjects,
+          delete: deleteObjects,
+          rename: renameObject,
+          replace: replaceObject,
+          move: moveObject,
+          createFolder: createFolderObject,
+          deleteFolder: deleteFolderObject,
+        }),
+      ).map(([name, operation]) => [name, operation.bind(null, provider)]),
+    )
+  );

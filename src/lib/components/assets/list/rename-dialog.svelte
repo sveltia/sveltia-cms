@@ -7,10 +7,10 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Dialog, TextInput } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { tick } from 'svelte';
 
+  import NameInputDialog from '$lib/components/assets/list/name-input-dialog.svelte';
   import FileExtensionChangeDialog from '$lib/components/assets/shared/file-extension-change-dialog.svelte';
   import { formatFileName, validateAssetName } from '$lib/services/assets/file-name';
   import { showAssetOverlay } from '$lib/services/assets/view';
@@ -55,7 +55,6 @@
     onClose = undefined,
   } = $props();
 
-  const componentId = $props.id();
   const title = $derived(_('rename_x', { values: { name } }));
 
   let confirmationOpen = $state(false);
@@ -130,7 +129,7 @@
   });
 </script>
 
-<Dialog
+<NameInputDialog
   {title}
   bind:open
   okLabel={_('rename')}
@@ -151,40 +150,17 @@
   onOpen={() => {
     selectFileName();
   }}
->
-  {#if blockedMessage}
-    <p role="alert">{blockedMessage}</p>
-  {:else}
-    <p>
-      {_('enter_new_name_for_asset', { values: { count: usedEntryCount } })}
-    </p>
-    {#if warning}
-      <p role="alert" class="warning">{warning}</p>
-    {/if}
-  {/if}
-  <div role="none">
-    <TextInput
-      dir="auto"
-      bind:value={newName}
-      bind:element={inputElement}
-      flex
-      disabled={!!blockedMessage}
-      ariaLabel={title}
-      {invalid}
-      aria-errormessage="{componentId}-error"
-    />
-  </div>
-  {#if !invalid && finalName !== trimmedName}
-    <div role="status" class="note">
-      {_('file_will_be_saved_as', { values: { name: finalName } })}
-    </div>
-  {/if}
-  <div role="none" class="error" id="{componentId}-error">
-    {#if invalid}
-      {_(`enter_new_name_for_asset_error.${error}`)}
-    {/if}
-  </div>
-</Dialog>
+  description={_('enter_new_name_for_asset', { values: { count: usedEntryCount } })}
+  {warning}
+  {blockedMessage}
+  bind:value={newName}
+  bind:element={inputElement}
+  ariaLabel={title}
+  note={!invalid && finalName !== trimmedName
+    ? _('file_will_be_saved_as', { values: { name: finalName } })
+    : undefined}
+  error={invalid ? _(`enter_new_name_for_asset_error.${error}`) : undefined}
+/>
 
 <FileExtensionChangeDialog
   bind:open={confirmationOpen}
@@ -201,31 +177,3 @@
     open = true;
   }}
 />
-
-<style>
-  p {
-    margin: 0 0 8px;
-  }
-
-  div {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .warning {
-    color: var(--sui-warning-foreground-color);
-  }
-
-  .note {
-    margin: 4px 0 0;
-    color: var(--sui-secondary-foreground-color);
-    font-size: var(--sui-font-size-small);
-  }
-
-  .error {
-    margin: 0;
-    color: var(--sui-error-foreground-color);
-    font-size: var(--sui-font-size-small);
-  }
-</style>

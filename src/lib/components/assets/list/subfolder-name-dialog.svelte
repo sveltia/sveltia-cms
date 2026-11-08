@@ -6,8 +6,8 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Dialog, TextInput } from '@sveltia/ui';
 
+  import NameInputDialog from '$lib/components/assets/list/name-input-dialog.svelte';
   import { formatSubfolderName, validateSubfolderName } from '$lib/services/assets/subfolders';
 
   /**
@@ -40,8 +40,6 @@
     onClose = undefined,
   } = $props();
 
-  const componentId = $props.id();
-
   let newName = $state('');
   /**
    * Whether the folder name has been typed in yet. An empty name is only reported once the field
@@ -63,7 +61,7 @@
   });
 </script>
 
-<Dialog
+<NameInputDialog
   {title}
   bind:open
   {okLabel}
@@ -72,49 +70,12 @@
     onSubmit(formatSubfolderName(newName));
   }}
   {onClose}
->
-  <p>{description}</p>
-  {#if warning}
-    <p role="alert" class="warning">{warning}</p>
-  {/if}
-  <div role="none">
-    <TextInput
-      dir="auto"
-      flex
-      bind:value={newName}
-      ariaLabel={_('new_folder_name')}
-      {invalid}
-      aria-errormessage="{componentId}-error"
-      oninput={() => {
-        nameEdited = true;
-      }}
-    />
-  </div>
-  <div role="none" class="error" id="{componentId}-error">
-    {#if invalid}
-      {_(`new_folder_error.${error}`)}
-    {/if}
-  </div>
-</Dialog>
-
-<style>
-  p {
-    margin: 0 0 8px;
-  }
-
-  .warning {
-    color: var(--sui-warning-foreground-color);
-  }
-
-  div {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .error {
-    margin: 0;
-    color: var(--sui-error-foreground-color);
-    font-size: var(--sui-font-size-small);
-  }
-</style>
+  {description}
+  {warning}
+  bind:value={newName}
+  ariaLabel={_('new_folder_name')}
+  oninput={() => {
+    nameEdited = true;
+  }}
+  error={invalid ? _(`new_folder_error.${error}`) : undefined}
+/>

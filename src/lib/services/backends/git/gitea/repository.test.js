@@ -9,6 +9,7 @@ import {
   checkRepositoryAccess,
   fetchBranch,
   fetchDefaultBranchName,
+  fetchRepositoryAccess,
   getBaseURLs,
   getRepositoryInfo,
   repository,
@@ -113,6 +114,21 @@ describe('Gitea Repository Service', () => {
         blobBaseURL: '/src/branch/main',
         commitBaseURL: '/commit',
       });
+    });
+  });
+
+  describe('fetchRepositoryAccess', () => {
+    test('reports read and write access from the repository’s own permissions', async () => {
+      fetchAPIMock.mockResolvedValue({ permissions: { pull: true, push: true } });
+      await expect(fetchRepositoryAccess()).resolves.toEqual({ canRead: true, canWrite: true });
+
+      _resetRepositoryInfoCache();
+      fetchAPIMock.mockResolvedValue({ permissions: { pull: true } });
+      await expect(fetchRepositoryAccess()).resolves.toEqual({ canRead: true, canWrite: false });
+
+      _resetRepositoryInfoCache();
+      fetchAPIMock.mockResolvedValue({});
+      await expect(fetchRepositoryAccess()).resolves.toEqual({ canRead: false, canWrite: false });
     });
   });
 

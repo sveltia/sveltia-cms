@@ -4,6 +4,7 @@ import { flushSync } from 'svelte';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { cmsConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/editor';
+import { getEntryEditorPath } from '$lib/services/contents/editor/route';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 import { decodeURIComponentSafely, encodePathSegments } from '$lib/services/utils/url';
 import { openNewTab } from '$lib/services/utils/window';
@@ -397,12 +398,9 @@ export const redirectLegacyEntryLink = () => {
   // Carry any query string over, so the editor locale and dynamic default values survive
   const query = new URLSearchParams(params).toString();
 
-  goto(
-    `${encodePathSegments(`/collections/${collectionName}/entries/${subPath}`)}${query ? `?${query}` : ''}`,
-    {
-      replaceState: true,
-    },
-  );
+  goto(`${getEntryEditorPath(collectionName, subPath)}${query ? `?${query}` : ''}`, {
+    replaceState: true,
+  });
 
   return true;
 };

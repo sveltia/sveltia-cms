@@ -1,13 +1,13 @@
 import { _ } from '@sveltia/i18n';
 
 import { validateNewFolderName } from '$lib/services/common/slug';
-import { getFolderName } from '$lib/services/contents/collection/nested/i18n';
 import { getSlugOptions, hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
 import {
   getSlugValidationMessage,
   validateSlug,
 } from '$lib/services/contents/draft/validate/slugs';
 import { getLocaleLabel } from '$lib/services/contents/i18n';
+import { getBaseName } from '$lib/services/utils/file';
 
 /**
  * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
@@ -57,7 +57,7 @@ export const getSlugEditRows = ({ draft, ownFolderPaths }) => {
     return Object.entries(ownFolderPaths).map(([locale, dirPath]) => ({
       locale,
       ...getLabel(locale),
-      value: getFolderName(dirPath),
+      value: getBaseName(dirPath),
     }));
   }
 

@@ -10,9 +10,9 @@
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntryIndexMap } from '$lib/services/contents/collection/view';
+  import { getEntryEditorPath } from '$lib/services/contents/editor/route';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { toggleListItem } from '$lib/services/utils/array';
-  import { encodePathSegments } from '$lib/services/utils/url';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
@@ -71,7 +71,7 @@
     updateSelection(event.detail.selected);
   }}
   onclick={() => {
-    goto(encodePathSegments(`/collections/${collection.name}/entries/${entry.subPath}`), {
+    goto(getEntryEditorPath(collection.name, entry.subPath), {
       transitionType: 'forwards',
     });
   }}

@@ -11,8 +11,8 @@
     getCollectionFileLabel,
     getCollectionFilesByEntry,
   } from '$lib/services/contents/collection/files';
+  import { getEntryEditorPath } from '$lib/services/contents/editor/route';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
-  import { encodePathSegments } from '$lib/services/utils/url';
 
   /**
    * @import {
@@ -44,15 +44,10 @@
 {#snippet resultRow(/** @type {RowArgs} */ { collection, collectionFile })}
   <GridRow
     onclick={() => {
-      goto(
-        encodePathSegments(
-          `/collections/${collection.name}/entries/${collectionFile?.name || subPath}`,
-        ),
-        {
-          state: { highlight: { locale, keyPath } },
-          transitionType: 'forwards',
-        },
-      );
+      goto(getEntryEditorPath(collection.name, collectionFile?.name || subPath), {
+        state: { highlight: { locale, keyPath } },
+        transitionType: 'forwards',
+      });
     }}
   >
     <GridCell class="image">

@@ -5,8 +5,10 @@ import {
   getDeletionGroup,
   getPullRequestDescription,
   parseRestFiles,
+  parseRestPullRequest,
   PULL_REQUEST_DESCRIPTION,
   setDeletionGroup,
+  toCommitAuthor,
 } from '$lib/services/backends/git/shared/pull-requests';
 
 describe('shared pull request constants', () => {
@@ -120,5 +122,74 @@ describe('parseRestFiles', () => {
       { path: 'a.md', sha: '', size: 0, deleted: true, previousPath: undefined },
       { path: 'b.md', sha: '', size: 0, deleted: false, previousPath: undefined },
     ]);
+  });
+});
+
+describe('toCommitAuthor()', () => {
+  test('converts a user to an author', () => {
+    expect(
+      toCommitAuthor({ login: 'octocat', name: 'Mona', email: 'mona@example.com', id: 1 }),
+    ).toEqual({ name: 'Mona', email: 'mona@example.com', id: 1, login: 'octocat' });
+  });
+
+  test('falls back to the user name for a missing or empty display name', () => {
+    expect(toCommitAuthor({ login: 'octocat', name: null, email: null })).toEqual({
+      name: 'octocat',
+      email: '',
+      id: undefined,
+      login: 'octocat',
+    });
+    expect(toCommitAuthor({ login: 'octocat', name: '' })).toEqual({
+      name: 'octocat',
+      email: '',
+      id: undefined,
+      login: 'octocat',
+    });
+  });
+
+  test('returns undefined for an unknown user', () => {
+    expect(toCommitAuthor({ id: 1 })).toBeUndefined();
+  });
+});
+
+describe('parseRestPullRequest()', () => {
+  test('parses the common fields and applies the overrides', () => {
+    const author = { name: 'octocat', email: '', id: 1, login: 'octocat' };
+
+    expect(
+      parseRestPullRequest(
+        {
+          number: 5,
+          id: 50,
+          html_url: 'https://example.com/pulls/5',
+          head: { sha: 'abc' },
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-02T00:00:00Z',
+        },
+        { title: 'Title', branch: 'cms/a', status: 'draft', author, description: '' },
+      ),
+    ).toEqual({
+      number: 5,
+      nodeId: '50',
+      title: 'Title',
+      url: 'https://example.com/pulls/5',
+      branch: 'cms/a',
+      headSHA: 'abc',
+      status: 'draft',
+      createdDate: new Date('2026-01-01T00:00:00Z'),
+      updatedDate: new Date('2026-01-02T00:00:00Z'),
+      author,
+      files: [],
+      description: '',
+    });
+  });
+
+  test('leaves the head commit undefined without a head', () => {
+    expect(
+      parseRestPullRequest(
+        { number: 5, id: 50 },
+        { title: '', branch: 'b', status: 'draft', author: undefined, description: '' },
+      ).headSHA,
+    ).toBeUndefined();
   });
 });

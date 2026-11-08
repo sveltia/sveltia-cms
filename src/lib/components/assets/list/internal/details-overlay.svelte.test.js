@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
 import { deleteAssets } from '$lib/services/assets/data/delete';
 import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/folders';
 import { preloadAssets } from '$lib/services/assets/info';
@@ -311,6 +312,8 @@ describe('DetailsOverlay', () => {
     overlaidAsset.current = textAsset;
 
     try {
+      // The failure is reported by the asset updates toast, which the app renders once
+      await render(AssetUpdatesToast, {});
       await render(DetailsOverlay);
       await page.getByRole('button', { name: 'Delete Asset' }).click();
       await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();

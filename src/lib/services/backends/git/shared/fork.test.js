@@ -298,9 +298,9 @@ describe('shared fork service', () => {
      * @returns {any} Arguments.
      */
     const createArgs = ({ canWrite = false, existingFork = undefined } = {}) => ({
-      repoPath: 'owner/repo',
+      repository: { owner: 'owner', repo: 'repo', branch: '' },
       fetchAccess: vi.fn(async () => ({ canWrite, allowForking: true })),
-      prepare: vi.fn(async () => {}),
+      fetchDefaultBranchName: vi.fn(async () => {}),
       fetchFork: vi.fn(async () => existingFork),
       prepareFork: vi.fn(async () => {}),
       fetchForkingAllowed: vi.fn(({ allowForking }) => allowForking),
@@ -311,7 +311,7 @@ describe('shared fork service', () => {
       const args = createArgs({ canWrite: true });
 
       await setUpForkFor(args);
-      expect(args.prepare).not.toHaveBeenCalled();
+      expect(args.fetchDefaultBranchName).not.toHaveBeenCalled();
       expect(args.fetchFork).not.toHaveBeenCalled();
       expect(forkedRepository.current).toBeUndefined();
     });
@@ -320,7 +320,7 @@ describe('shared fork service', () => {
       const args = createArgs({ existingFork: fork });
 
       await setUpForkFor(args);
-      expect(args.prepare).toHaveBeenCalledOnce();
+      expect(args.fetchDefaultBranchName).toHaveBeenCalledOnce();
       expect(args.prepareFork).toHaveBeenCalledWith(fork);
       expect(args.createFork).not.toHaveBeenCalled();
       expect(forkedRepository.current).toEqual(fork);
@@ -343,10 +343,20 @@ describe('shared fork service', () => {
     test('works without the optional hooks', async () => {
       const args = createArgs({ existingFork: fork });
 
-      delete args.prepare;
+      delete args.fetchDefaultBranchName;
       delete args.prepareFork;
 
       await setUpForkFor(args);
+      expect(forkedRepository.current).toEqual(fork);
+    });
+
+    test('doesn’t resolve a branch name that’s known already', async () => {
+      const args = createArgs({ existingFork: fork });
+
+      args.repository.branch = 'main';
+
+      await setUpForkFor(args);
+      expect(args.fetchDefaultBranchName).not.toHaveBeenCalled();
       expect(forkedRepository.current).toEqual(fork);
     });
 

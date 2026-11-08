@@ -7,6 +7,7 @@ import { getRootFields } from '$lib/services/config/parser/utils/fields';
 import { checkFieldReferences } from '$lib/services/config/parser/utils/references';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
 import { parseExpression } from '$lib/services/contents/fields/compute/expression';
+import { forEachSubFieldConfig } from '$lib/services/contents/fields/list/subfields';
 import { yieldsNumber } from '$lib/services/contents/fields/number/helpers';
 import { getOrCreate } from '$lib/services/utils/cache';
 
@@ -177,29 +178,6 @@ const checkFieldTags = ({ context, collectors }, tags) => {
  */
 
 /**
- * Collect the Compute fields in the given field list, at any depth.
- * @param {any} fields Field list. A value that isn’t a list is reported against the JSON schema.
- * @param {string} [typedKeyPath] Typed key path of the field holding the list, if any.
- * @returns {ComputeFieldNode[]} Fields.
- */
-const collectComputeFieldNodes = (fields, typedKeyPath = '') =>
-  (Array.isArray(fields) ? fields : []).flatMap((field) =>
-    // eslint-disable-next-line no-use-before-define
-    collectFromField(field, typedKeyPath ? `${typedKeyPath}.${field?.name}` : `${field?.name}`),
-  );
-
-/**
- * Collect the Compute fields in the variable types of an Object or List field.
- * @param {any} types The `types` option.
- * @param {string} typedKeyPath Typed key path of the object or the list item, without the type.
- * @returns {ComputeFieldNode[]} Fields.
- */
-const collectFromTypes = (types, typedKeyPath) =>
-  (Array.isArray(types) ? types : []).flatMap((type) =>
-    collectComputeFieldNodes(type?.fields, `${typedKeyPath}<${type?.name}>`),
-  );
-
-/**
  * Collect the given field if it’s a Compute field, or the Compute fields below it otherwise. The
  * key paths are built the same way as the field parser builds `typedKeyPath`.
  * @param {any} field Field configuration.
@@ -219,25 +197,19 @@ const collectFromField = (field, typedKeyPath) => {
     return [{ typedKeyPath, keyPath: typedKeyPath.replace(TYPE_NAME_REGEX, ''), references }];
   }
 
-  if (widget === 'object') {
-    return [
-      ...collectComputeFieldNodes(field.fields, typedKeyPath),
-      ...collectFromTypes(field.types, typedKeyPath),
-    ];
-  }
+  /** @type {ComputeFieldNode[]} */
+  const nodes = [];
 
-  if (widget === 'list') {
-    const itemKeyPath = `${typedKeyPath}.*`;
+  forEachSubFieldConfig(
+    field ?? {},
+    typedKeyPath,
+    (subField, subKeyPath) => {
+      nodes.push(...collectFromField(subField, subKeyPath));
+    },
+    true,
+  );
 
-    return [
-      // The single subfield takes the item’s own key path
-      ...(field.field ? collectFromField(field.field, itemKeyPath) : []),
-      ...collectComputeFieldNodes(field.fields, itemKeyPath),
-      ...collectFromTypes(field.types, itemKeyPath),
-    ];
-  }
-
-  return [];
+  return nodes;
 };
 
 /**
@@ -259,7 +231,10 @@ const referenceCycleCacheMap = new WeakMap();
  */
 const getReferenceCycles = (fields) =>
   getOrCreate(referenceCycleCacheMap, fields, () => {
-    const nodes = collectComputeFieldNodes(fields);
+    // The list holds the Compute field being parsed, so it’s an array, unlike a nested one
+    const nodes = /** @type {any[]} */ (fields).flatMap((field) =>
+      collectFromField(field, `${field?.name}`),
+    );
 
     // A reference matches every variable type of the field, as a tag can’t name the type. A field
     // referring to the same key path, in its own type or another, is reported as referring to

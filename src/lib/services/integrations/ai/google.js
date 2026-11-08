@@ -3,11 +3,10 @@
  * @see https://ai.google.dev/api/generate-content
  */
 
-import { isObject } from '@sveltia/utils/object';
-
 import {
   createTruncationError,
   DEFAULT_MAX_TOKENS,
+  joinTextParts,
   postJSON,
 } from '$lib/services/integrations/ai/api';
 
@@ -66,19 +65,5 @@ export const complete = async ({
   }
 
   // The answer can be split into several parts, and a thinking model can add a thought summary
-  /** @type {string[]} */
-  const texts = Array.isArray(candidate?.content?.parts)
-    ? candidate.content.parts
-        .filter(
-          (/** @type {unknown} */ part) =>
-            isObject(part) && !part.thought && typeof part.text === 'string',
-        )
-        .map((/** @type {{ text: string }} */ { text }) => text)
-    : [];
-
-  if (!texts.length) {
-    throw new Error('Invalid response format from Gemini API.');
-  }
-
-  return texts.join('').trim();
+  return joinTextParts(candidate?.content?.parts, (part) => !part.thought, 'Gemini');
 };

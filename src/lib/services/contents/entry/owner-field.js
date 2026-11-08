@@ -1,4 +1,5 @@
 import { getField } from '$lib/services/contents/entry/fields';
+import { getCodeKeys } from '$lib/services/contents/fields/code/helpers';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { isNumeric } from '$lib/services/utils/number';
 
@@ -40,7 +41,7 @@ export const getValueOwnerField = (getFieldArgs) => {
     (fieldType === 'list' &&
       !getListFieldInfo(/** @type {ListField} */ (fieldConfig)).hasSubFields &&
       isNumeric(keyPath.slice(index + 1))) ||
-    (fieldType === 'code' && !(/** @type {CodeField} */ (fieldConfig).output_code_only ?? false));
+    (fieldType === 'code' && !!getCodeKeys(/** @type {CodeField} */ (fieldConfig)));
 
   return owned ? { keyPath: ownerKeyPath, fieldConfig } : undefined;
 };

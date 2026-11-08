@@ -276,7 +276,7 @@
   role="none"
   class="filled"
   class:sortable
-  class:dragging
+  class:drag-placeholder={dragging}
   draggable={grabbed}
   ondragstart={(/** @type {DragEvent} */ event) => {
     onDragStart?.();
@@ -397,14 +397,6 @@
     gap: 12px;
     margin: var(--sui-focus-ring-width);
     background-color: var(--sui-primary-background-color); /* for dragging opacity */
-
-    /* The dragged item is left as a faint placeholder marking the gap it would drop into. The
-      pointer already carries the browser’s own drag image of it, so showing it twice at full
-      strength would just be confusing. */
-
-    &.dragging {
-      opacity: 0.25;
-    }
 
     :global {
       .preview {

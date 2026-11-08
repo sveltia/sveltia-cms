@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
 import { createSubfolder } from '$lib/services/assets/data/subfolder';
 import {
   allAssetFolders,
@@ -122,6 +123,9 @@ describe('NewFolderDialog', () => {
   });
 
   test('creates the folder in the subfolder being browsed, reporting the progress', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     /**
      * Settle the pending commit.
      * @type {() => void}
@@ -186,6 +190,9 @@ describe('NewFolderDialog', () => {
   });
 
   test('reports a failure to create the folder', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     vi.mocked(createSubfolder).mockRejectedValue(new Error('offline'));

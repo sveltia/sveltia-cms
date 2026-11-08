@@ -22,6 +22,7 @@ import { user } from '$lib/services/user/account.svelte';
 import { LEGACY_USER_STORAGE_KEYS, USER_STORAGE_KEY } from '$lib/services/user/constants';
 import { decodeMagicLinkData } from '$lib/services/user/magic-link';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { createRawState, requestAnswer } from '$lib/services/utils/state.svelte';
 import {
   publishingBranches,
   unpublishedEntries,
@@ -36,7 +37,12 @@ import {
 } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { BackendService, InternalCmsConfig, User } from '$lib/types/private';
+ * @import {
+ * BackendService,
+ * InternalCmsConfig,
+ * MagicLinkConfirmationRequest,
+ * User,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -53,13 +59,15 @@ export const auth = $state({
   unauthenticated: true,
   /** Whether a sign-in is in progress. */
   signingIn: false,
-  /**
-   * Account that a magic link signs the user in to, while they’re asked whether to go ahead. The
-   * link can be crafted by anyone, so it’s only used once the user has recognized the account.
-   * @type {{ account: User, resolve: (confirmed: boolean) => void } | undefined}
-   */
-  magicLinkConfirmation: undefined,
 });
+
+/**
+ * The pending request asking the user whether to sign in to the account a magic link belongs to,
+ * which the UI turns into a confirmation dialog. The link can be crafted by anyone, so it’s only
+ * used once the user has recognized the account. It’s `undefined` while no request is outstanding.
+ * @type {{ current: MagicLinkConfirmationRequest | undefined }}
+ */
+export const magicLinkConfirmation = createRawState();
 
 /**
  * Remove the API keys and log-in credentials for integrations, such as translation services and
@@ -299,12 +307,8 @@ export const confirmMagicLink = async (token) => {
   // compiled code with, turns a cast property value named like its key, e.g.
   // `{ a: /** @type {T} */ (a) }`, into invalid shorthand
   const _account = account;
-
-  const confirmed = await new Promise((resolve) => {
-    auth.magicLinkConfirmation = { account: _account, resolve };
-  });
-
-  auth.magicLinkConfirmation = undefined;
+  // An earlier link still waiting for an answer is declined
+  const confirmed = await requestAnswer(magicLinkConfirmation, { account: _account }, false);
 
   return confirmed ? account : undefined;
 };
@@ -539,6 +543,8 @@ export const signOut = async () => {
   unpublishedEntries.current = [];
   unpublishedEntriesLoaded.current = false;
   publishingBranches.current = [];
+  // A magic link still waiting for an answer would sign the user back in
+  magicLinkConfirmation.current?.respond(false);
   // The fork belongs to the signed-out user, so the next user needs Open Authoring set up again
   forkPermissionRequest.current?.respond(false);
   forkedRepository.current = undefined;

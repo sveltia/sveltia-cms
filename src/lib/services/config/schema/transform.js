@@ -1,6 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
 
-import { getSegments } from '$lib/services/config/schema/pointer';
+import { resolvePointer } from '$lib/services/config/schema/pointer';
 
 /**
  * Properties that can discriminate a union of object schemas. The generated schema pins these to a
@@ -33,10 +33,7 @@ const resolveRef = (schema, node) => {
 
     visited.add(current.$ref);
 
-    current = getSegments(current.$ref).reduce(
-      (/** @type {any} */ value, key) => value?.[key],
-      schema,
-    );
+    current = resolvePointer(schema, current.$ref);
   }
 
   return isObject(current) ? current : undefined;

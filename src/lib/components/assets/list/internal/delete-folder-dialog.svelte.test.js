@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
 import { deleteSubfolder } from '$lib/services/assets/data/subfolder';
 import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/folders';
 import { deletingSubfolder } from '$lib/services/assets/subfolders';
@@ -118,6 +119,9 @@ describe('DeleteFolderDialog', () => {
   });
 
   test('reports a failure to delete the folder', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     vi.mocked(deleteSubfolder).mockRejectedValue(new Error('offline'));

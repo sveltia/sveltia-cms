@@ -111,34 +111,52 @@ const parseAiTranslationResponse = (content, expectedCount, serviceLabel) => {
 };
 
 /**
- * Check if the given source and target languages are supported.
- * @param {LanguagePair} languages Language pair.
- * @returns {Promise<boolean>} True if both source and target languages are supported.
+ * Create the functions to check and resolve the language pair of a translation service.
+ * @param {(locale: string) => string | undefined} normalize Function to normalize a locale code to
+ * what the service understands, which returns `undefined` for an unsupported locale.
+ * @returns {{
+ * availability: (languages: LanguagePair) => Promise<boolean>,
+ * resolveLanguages: (sourceLanguage: string, targetLanguage: string) => [string, string],
+ * }} `availability` checks if both the source and target languages are supported, and
+ * `resolveLanguages` normalizes them, throwing when either is not supported.
  */
-export const availability = async ({ sourceLanguage, targetLanguage }) =>
-  !!normalizeLanguage(sourceLanguage) && !!normalizeLanguage(targetLanguage);
+export const createLanguageResolver = (normalize) => ({
+  /**
+   * Check if the given source and target languages are supported.
+   * @param {LanguagePair} languages Language pair.
+   * @returns {Promise<boolean>} Result.
+   */
+  availability: async ({ sourceLanguage, targetLanguage }) =>
+    !!normalize(sourceLanguage) && !!normalize(targetLanguage),
+  /**
+   * Normalize the given source and target languages.
+   * @param {string} sourceLanguage Source locale code.
+   * @param {string} targetLanguage Target locale code.
+   * @returns {[string, string]} Normalized source and target languages.
+   * @throws {Error} When the source or target locale is not supported.
+   */
+  resolveLanguages: (sourceLanguage, targetLanguage) => {
+    const source = normalize(sourceLanguage);
+    const target = normalize(targetLanguage);
+
+    if (!source) {
+      throw new Error('Source locale is not supported.');
+    }
+
+    if (!target) {
+      throw new Error('Target locale is not supported.');
+    }
+
+    return [source, target];
+  },
+});
 
 /**
- * Resolve and validate source and target language names from locale codes.
- * @param {string} sourceLanguage Source locale code.
- * @param {string} targetLanguage Target locale code.
- * @returns {[string, string]} Tuple of [sourceLanguageName, targetLanguageName].
- * @throws {Error} When source or target locale is not supported.
+ * Check if the given source and target languages are supported, or resolve their names, throwing
+ * when either is not supported.
  */
-export const resolveLanguageNames = (sourceLanguage, targetLanguage) => {
-  const sourceLangName = normalizeLanguage(sourceLanguage);
-  const targetLangName = normalizeLanguage(targetLanguage);
-
-  if (!sourceLangName) {
-    throw new Error('Source locale is not supported.');
-  }
-
-  if (!targetLangName) {
-    throw new Error('Target locale is not supported.');
-  }
-
-  return [sourceLangName, targetLangName];
-};
+export const { availability, resolveLanguages: resolveLanguageNames } =
+  createLanguageResolver(normalizeLanguage);
 
 /**
  * Create a `translate` function for an AI-based translation service.

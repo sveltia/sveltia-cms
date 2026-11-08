@@ -1400,4 +1400,40 @@ describe('Test validateNewFolderName()', () => {
     await setUpConfig();
     expect(validateNewFolderName({ takenNames, name: 'Hardware' })).toBe('duplicate');
   });
+
+  /**
+   * Keep a name as typed, unlike the default formatter, which lowercases it.
+   * @param {string} name Name.
+   * @returns {string} Name.
+   */
+  const keepName = (name) => name;
+  /**
+   * Remove a leading colon, like a sanitizer would, which can leave a leading dot behind.
+   * @param {string} name Name.
+   * @returns {string} Name.
+   */
+  const stripColon = (name) => name.replace(/^:/, '');
+
+  test('rejects a name taken in another case, as a file system may ignore it', async () => {
+    await setUpConfig();
+    expect(
+      validateNewFolderName({ takenNames: ['Hardware'], name: 'hardware', format: keepName }),
+    ).toBe('duplicate');
+  });
+
+  test('rejects a leading dot left by the formatter, and a reserved name', () => {
+    expect(validateNewFolderName({ takenNames, name: '.cache', format: keepName })).toBe('invalid');
+    // A dot that only shows up once the name is formatted, e.g. `:.cache` sanitized to `.cache`
+    expect(validateNewFolderName({ takenNames, name: ':.cache', format: stripColon })).toBe(
+      'invalid',
+    );
+    expect(
+      validateNewFolderName({
+        takenNames,
+        name: 'admin',
+        format: keepName,
+        isReserved: RegExp.prototype.test.bind(/^admin$/),
+      }),
+    ).toBe('reserved');
+  });
 });

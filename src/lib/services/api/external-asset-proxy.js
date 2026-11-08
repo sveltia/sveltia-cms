@@ -1,5 +1,7 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 
+import { fetchOK } from '$lib/services/utils/networking';
+
 /**
  * Implement the `ApiAsset` interface for a file on an external location, referred to with a
  * complete URL, e.g. `https://example.com/photo.jpg`, or a URL derived from a cloud storage
@@ -34,13 +36,7 @@ export class ExternalAssetProxy {
    */
   async toBase64() {
     try {
-      const response = await fetch(this.url);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      return encodeBase64(await response.blob());
+      return encodeBase64(await (await fetchOK(this.url)).blob());
     } catch (/** @type {any} */ error) {
       throw new Error(`Failed to encode asset as base64: ${error.message}`);
     }

@@ -25,6 +25,7 @@ import { backend } from '$lib/services/backends';
 import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
 import { getCollectionFile, getCollectionFileLabel } from '$lib/services/contents/collection/files';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { getBaseName } from '$lib/services/utils/file';
 import {
   createDerivedState,
   createRawState,
@@ -163,7 +164,7 @@ export const folderSummary = createDerivedState(() => {
 
   return {
     name:
-      selectedSubfolderPath.current.split('/').at(-1) ||
+      getBaseName(selectedSubfolderPath.current) ||
       // `appLocale.current` is a key, because the label can be localized
       (appLocale.current && getFolderLabelByCollection(folder)),
     // The All Assets folder has no path

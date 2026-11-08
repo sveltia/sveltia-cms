@@ -34,6 +34,31 @@ export const createTruncationError = (apiLabel) =>
   new Error(`The response from the ${apiLabel} API was cut off at the token limit.`);
 
 /**
+ * Join the text parts of a response, which can be split into several parts and include other
+ * kinds of parts, such as thinking blocks.
+ * @param {unknown} parts Parts of the response, expected to be an array.
+ * @param {(part: Record<string, any>) => boolean} isAnswer Function to check whether a part holds
+ * the answer rather than, e.g., a thought.
+ * @param {string} apiLabel API name, e.g. `Messages`, which is followed by `API`.
+ * @returns {string} Joined text, trimmed.
+ * @throws {Error} When the response has no text part.
+ */
+export const joinTextParts = (parts, isAnswer, apiLabel) => {
+  /** @type {string[]} */
+  const texts = Array.isArray(parts)
+    ? parts
+        .filter((part) => isObject(part) && isAnswer(part) && typeof part.text === 'string')
+        .map(({ text }) => text)
+    : [];
+
+  if (!texts.length) {
+    throw new Error(`Invalid response format from ${apiLabel} API.`);
+  }
+
+  return texts.join('').trim();
+};
+
+/**
  * Get the request headers for an API that authenticates with a bearer token.
  * @param {string} apiKey API key.
  * @param {Record<string, string>} headers Additional headers, which take precedence.
@@ -258,19 +283,5 @@ export const messages = async ({
   }
 
   // The response can begin with `thinking` blocks and split the answer into several text blocks
-  /** @type {string[]} */
-  const texts = Array.isArray(data.content)
-    ? data.content
-        .filter(
-          (/** @type {unknown} */ block) =>
-            isObject(block) && block.type === 'text' && typeof block.text === 'string',
-        )
-        .map((/** @type {{ text: string }} */ { text }) => text)
-    : [];
-
-  if (!texts.length) {
-    throw new Error('Invalid response format from Messages API.');
-  }
-
-  return texts.join('').trim();
+  return joinTextParts(data.content, (block) => block.type === 'text', 'Messages');
 };

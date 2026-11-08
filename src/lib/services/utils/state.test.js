@@ -10,6 +10,7 @@ import {
   createStableDerivedState,
   createState,
   getSnapshot,
+  requestAnswer,
   syncValues,
   watch,
   watchAsync,
@@ -203,6 +204,35 @@ describe('createDeepState()', () => {
 
     state.current = { show: false };
     expect(derived.current).toBe(false);
+  });
+});
+
+describe('requestAnswer()', () => {
+  it('puts the request in the box and resolves with the answer', async () => {
+    /** @type {{ current: any }} */
+    const state = createRawState();
+    const promise = requestAnswer(state, { repo: 'owner/repo' }, false);
+
+    expect(state.current.repo).toBe('owner/repo');
+    state.current.respond(true);
+    expect(state.current).toBeUndefined();
+    await expect(promise).resolves.toBe(true);
+  });
+
+  it('answers an earlier request with the fallback, which leaves the newer one up', async () => {
+    /** @type {{ current: any }} */
+    const state = createRawState();
+    const first = requestAnswer(state, { id: 1 }, false);
+    const firstRequest = state.current;
+    const second = requestAnswer(state, { id: 2 }, false);
+
+    await expect(first).resolves.toBe(false);
+    expect(state.current.id).toBe(2);
+    // Answering the stale request again doesn’t take down the newer one
+    firstRequest.respond(true);
+    expect(state.current.id).toBe(2);
+    state.current.respond(true);
+    await expect(second).resolves.toBe(true);
   });
 });
 

@@ -8,11 +8,11 @@ import {
   getSharedEntryFileName,
   hasNestedEntries,
 } from '$lib/services/contents/collection/nested';
-import { getFolderName, getOwnFolderName } from '$lib/services/contents/collection/nested/i18n';
+import { getOwnFolderName } from '$lib/services/contents/collection/nested/i18n';
 import { getSlugOptions, hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getOtherEntries } from '$lib/services/contents/draft/validate/slugs';
-import { createPath } from '$lib/services/utils/file';
+import { createPath, getBaseName } from '$lib/services/utils/file';
 import { getUnpublishedEntryByDraft, isPendingDeletion } from '$lib/services/workflow';
 
 /**
@@ -184,7 +184,7 @@ export const getTakenFolderNames = ({ draft, ownFolderPaths }) => {
           .filter((otherSubPath) => typeof otherSubPath === 'string')
           .map((otherSubPath) => getEntryDirPath(otherSubPath))
           .filter((otherDirPath) => getEntryDirPath(otherDirPath) === parentPath)
-          .map((otherDirPath) => getFolderName(otherDirPath)),
+          .map((otherDirPath) => getBaseName(otherDirPath)),
       ];
     }),
   );

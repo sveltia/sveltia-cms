@@ -145,41 +145,19 @@ const isWaitingForChecks = (node) =>
   !BLOCKING_REVIEW_DECISIONS.includes(node.reviewDecision);
 
 /**
- * Cancel the auto-merge on the given pull request. Failures are ignored: this is called once the
- * publish is being reported as failed, and a pull request that has just been merged or closed has
- * no auto-merge left to cancel.
- * @param {string} nodeId Pull request node ID.
- * @param {number} number Pull request number.
- * @see https://docs.github.com/en/graphql/reference/mutations#disablepullrequestautomerge
- */
-const cancelAutoMerge = async (nodeId, number) => {
-  try {
-    await fetchGraphQL(DISABLE_AUTO_MERGE_MUTATION, { input: { pullRequestId: nodeId } });
-  } catch (/** @type {any} */ ex) {
-    // eslint-disable-next-line no-console
-    console.warn(`Failed to cancel the auto-merge on pull request #${number}.`, ex);
-  }
-};
-
-/**
- * Wait for GitHub to merge a pull request that has been set to auto-merge. The pull request is read
- * every so often until it’s merged, in which case this resolves, or until it’s clear that the merge
- * won’t happen on its own: a check has failed, a new commit or someone on GitHub has cancelled the
- * auto-merge, the pull request has been closed, or the wait has run out. Those are reported as
- * errors, so the entry stays on the Editorial Workflow board rather than being taken for
- * published. GitHub keeps the auto-merge armed after a failed check, in case it’s re-run by hand,
- * but a merge made that way would happen behind the CMS’s back once it has reported a failure, so
- * the auto-merge is cancelled along with the report: publishing again is what merges the entry from
- * then on.
+ * Wait for GitHub to merge a pull request that has been set to auto-merge: see
+ * {@link waitForMerge}. The merge won’t happen on its own once a check has failed, a new commit or
+ * someone on GitHub has cancelled the auto-merge, or the pull request has been closed. Those are
+ * reported as errors, so the entry stays on the Editorial Workflow board rather than being taken
+ * for published.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @param {string} nodeId Pull request node ID.
  * @returns {Promise<void>}
  * @throws {Error} When the pull request won’t be merged, or wasn’t within the time allowed.
+ * @see https://docs.github.com/en/graphql/reference/mutations#disablepullrequestautomerge
  */
-const waitForAutoMerge = async (pullRequest, nodeId) => {
-  const { number } = pullRequest;
-
-  await waitForMerge({
+const waitForAutoMerge = (pullRequest, nodeId) =>
+  waitForMerge({
     /**
      * Read the pull request.
      * @returns {Promise<Record<string, any> | undefined>} Pull request node.
@@ -189,39 +167,29 @@ const waitForAutoMerge = async (pullRequest, nodeId) => {
      * Check the pull request read.
      * @param {Record<string, any> | undefined} node Pull request node, or `undefined` if it’s not
      * found.
-     * @returns {Promise<boolean>} Whether the pull request has been merged.
-     * @throws {Error} When the pull request won’t be merged.
+     * @returns {{ merged?: boolean, failure?: string, armed: boolean }} Result.
      */
-    evaluate: async (node) => {
-      if (node?.merged) {
-        return true;
-      }
-
-      const { state, autoMergeRequest, checkState } = node ?? {};
-      const autoMerge = !!autoMergeRequest;
+    check: (node) => {
+      const { merged, state, autoMergeRequest, checkState } = node ?? {};
+      const armed = state === 'OPEN' && !!autoMergeRequest;
       const failed = !PENDING_CHECK_STATES.includes(checkState) && checkState !== 'SUCCESS';
 
-      if (state !== 'OPEN' || !autoMerge || failed) {
-        if (state === 'OPEN' && autoMerge) {
-          await cancelAutoMerge(nodeId, /** @type {number} */ (number));
-        }
-
-        throw new Error(
-          `Pull request #${number} was not merged: ${state}, checks ${checkState}, ` +
-            `auto-merge ${autoMerge ? 'on' : 'off'}`,
-        );
-      }
-
-      return false;
+      return {
+        merged,
+        failure:
+          armed && !failed
+            ? undefined
+            : `${state}, checks ${checkState}, auto-merge ${autoMergeRequest ? 'on' : 'off'}`,
+        armed,
+      };
     },
     /**
-     * Cancel the auto-merge once the wait has run out.
-     * @returns {Promise<void>}
+     * Cancel the auto-merge.
+     * @returns {Promise<any>} Result.
      */
-    cancel: () => cancelAutoMerge(nodeId, /** @type {number} */ (number)),
-    label: `pull request #${number}`,
+    cancel: () => fetchGraphQL(DISABLE_AUTO_MERGE_MUTATION, { input: { pullRequestId: nodeId } }),
+    label: `pull request #${pullRequest.number}`,
   });
-};
 
 /**
  * Set a pull request that’s waiting for its required checks to auto-merge, pinned to the commit the

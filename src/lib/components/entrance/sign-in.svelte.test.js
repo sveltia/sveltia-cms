@@ -5,22 +5,27 @@ import { render } from 'vitest-browser-svelte';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { cancelAuthorization } from '$lib/services/backends/git/shared/auth';
 import { cmsConfig } from '$lib/services/config';
-import { auth, signInAutomatically, signInManually } from '$lib/services/user/auth.svelte';
+import {
+  auth,
+  magicLinkConfirmation,
+  signInAutomatically,
+  signInManually,
+} from '$lib/services/user/auth.svelte';
 import { env } from '$lib/services/user/env.svelte';
 
 import SignIn from './sign-in.svelte';
 
 // Signing in talks to the backend; only the state and the calls matter here
 vi.mock('$lib/services/user/auth.svelte', async () => {
-  const { createState } = await import('$lib/services/utils/state.svelte');
+  const { createRawState, createState } = await import('$lib/services/utils/state.svelte');
 
   return {
     auth: createState({
       signInError: { message: '', context: 'authentication' },
       unauthenticated: true,
       signingIn: false,
-      magicLinkConfirmation: undefined,
     }),
+    magicLinkConfirmation: createRawState(),
     resetError: vi.fn(),
     logError: vi.fn(),
     parseMagicLink: vi.fn(),
@@ -36,7 +41,7 @@ describe('SignIn', () => {
   beforeEach(() => {
     auth.signInError = { message: '', context: 'authentication' };
     auth.signingIn = false;
-    auth.magicLinkConfirmation = undefined;
+    magicLinkConfirmation.current = undefined;
     cancelAuthorization.current = undefined;
     env.isLocalHost = true;
     env.isLocalBackendSupported = true;
@@ -64,12 +69,16 @@ describe('SignIn', () => {
   });
 
   test('asks before signing in with a magic link, naming the account', async () => {
-    const resolve = vi.fn();
+    const respond = vi.fn();
 
     await render(SignIn, {});
-    auth.magicLinkConfirmation = {
-      account: { backendName: 'github', login: 'octocat', name: 'The Octocat' },
-      resolve,
+    magicLinkConfirmation.current = {
+      account: /** @type {any} */ ({
+        backendName: 'github',
+        login: 'octocat',
+        name: 'The Octocat',
+      }),
+      respond,
     };
 
     const dialog = page.getByRole('alertdialog', { name: 'Sign In with Link' });
@@ -80,27 +89,33 @@ describe('SignIn', () => {
         'This link signs you in as \u2068octocat\u2069 on \u2068GitHub\u2069 and copies the settings',
       );
     await dialog.getByRole('button', { name: 'Sign In' }).click();
-    await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(true));
+    await vi.waitFor(() => expect(respond).toHaveBeenCalledWith(true));
   });
 
   test('declines a magic link when the dialog is cancelled', async () => {
-    const resolve = vi.fn();
+    const respond = vi.fn();
 
     await render(SignIn, {});
-    auth.magicLinkConfirmation = { account: { backendName: 'github', name: 'Octo' }, resolve };
+    magicLinkConfirmation.current = {
+      account: /** @type {any} */ ({ backendName: 'github', name: 'Octo' }),
+      respond,
+    };
 
     const dialog = page.getByRole('alertdialog', { name: 'Sign In with Link' });
 
     // Without a login name, the display name is shown instead
     await expect.element(dialog).toMatchTextContent('signs you in as \u2068Octo\u2069 on');
     await dialog.getByRole('button', { name: 'Cancel' }).click();
-    await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(false));
-    expect(resolve).not.toHaveBeenCalledWith(true);
+    await vi.waitFor(() => expect(respond).toHaveBeenCalledWith(false));
+    expect(respond).not.toHaveBeenCalledWith(true);
   });
 
   test('shows the magic link prompt for an account without a name', async () => {
     await render(SignIn, {});
-    auth.magicLinkConfirmation = { account: { backendName: 'github' }, resolve: vi.fn() };
+    magicLinkConfirmation.current = {
+      account: /** @type {any} */ ({ backendName: 'github' }),
+      respond: vi.fn(),
+    };
 
     await expect
       .element(page.getByRole('alertdialog', { name: 'Sign In with Link' }))

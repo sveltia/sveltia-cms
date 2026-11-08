@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vit
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
 import { deleteAssets } from '$lib/services/assets/data/delete';
 import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/folders';
 import { focusedAsset, selectedAssets } from '$lib/services/assets/state';
@@ -128,6 +129,8 @@ describe('PrimaryToolbar', () => {
     vi.mocked(deleteAssets).mockRejectedValueOnce(new Error('offline'));
 
     try {
+      // The failure is reported by the asset updates toast, which the app renders once
+      await render(AssetUpdatesToast, {});
       await render(PrimaryToolbar);
 
       // The selection is reset whenever the listed assets change, so select the assets afterwards

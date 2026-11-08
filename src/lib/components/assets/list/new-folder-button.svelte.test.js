@@ -32,4 +32,12 @@ describe('NewFolderButton', () => {
     expect(container.querySelector('button')).toHaveClass('secondary');
     expect(container.querySelector('button')).toHaveAttribute('aria-disabled', 'true');
   });
+
+  test('stays a ghost button on a small screen where it doesn’t float', async () => {
+    env.isSmallScreen = true;
+
+    const { container } = await render(NewFolderButton, { onclick: vi.fn(), floating: false });
+
+    expect(container.querySelector('button')).toHaveClass('ghost');
+  });
 });

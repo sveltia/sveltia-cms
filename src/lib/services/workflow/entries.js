@@ -23,6 +23,7 @@ import { parseBranchName } from '$lib/services/workflow/branch';
  * InternalEntryCollection,
  * WorkflowStatus,
  * UnpublishedEntry,
+ * UnpublishedEntryProps,
  * WorkflowPullRequest,
  * } from '$lib/types/private';
  */
@@ -295,6 +296,31 @@ const findOwnEntries = ({ entries, slug, pullRequest, previousPaths: vacatedPath
  */
 
 /**
+ * Create the workflow properties of an unpublished entry, which tie it to its pull request.
+ * @param {object} args Arguments.
+ * @param {WorkflowPullRequest} args.pullRequest Pull request holding the entry.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {string[]} [args.previousPaths] Paths the entry occupied before the pull request.
+ * @param {CompanionEntry[]} [args.companions] New entries of other collections in the pull request.
+ * @returns {UnpublishedEntryProps} Properties.
+ */
+export const createUnpublishedEntryProps = ({
+  pullRequest,
+  collectionName,
+  fileName,
+  previousPaths,
+  companions = [],
+}) => ({
+  pullRequest,
+  status: pullRequest.status,
+  collectionName,
+  fileName,
+  previousPaths,
+  ...(companions.length ? { companions } : {}),
+});
+
+/**
  * Convert the files in the given pull request to entries and assets in the canonical format, so
  * they can be displayed and edited with the regular entry list and editor components.
  * @param {WorkflowPullRequest} pullRequest Pull request.
@@ -402,13 +428,12 @@ export const convertPullRequest = async (pullRequest) => {
           return {
             ...entry,
             locales: Object.fromEntries(remainingLocales),
-            workflow: {
+            workflow: createUnpublishedEntryProps({
               pullRequest,
-              status: pullRequest.status,
               collectionName,
               fileName: vacatedEntryFiles[0].folder.fileName,
               previousPaths,
-            },
+            }),
           };
         }
 
@@ -437,14 +462,13 @@ export const convertPullRequest = async (pullRequest) => {
   return {
     entries: ownEntries.map((entry) => ({
       ...completeEntry({ entry, previousPaths, deletedPaths, collectionName, fileName }),
-      workflow: {
+      workflow: createUnpublishedEntryProps({
         pullRequest,
-        status: pullRequest.status,
         collectionName,
         fileName,
         previousPaths,
-        ...(companions.length ? { companions } : {}),
-      },
+        companions,
+      }),
     })),
     assets,
   };

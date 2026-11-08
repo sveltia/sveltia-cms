@@ -24,11 +24,16 @@ const getProps = (overrides = {}) => ({
 describe('ObjectBody', () => {
   test('warns about a type the field doesn’t define instead of showing anything', async () => {
     const getSummary = vi.fn(() => 'Hello');
+    const { container } = await render(ObjectBody, getProps({ unknownType: true, getSummary }));
+    const alert = page.getByRole('alert');
 
-    await render(ObjectBody, getProps({ unknownType: true, getSummary }));
-
-    await expect.element(page.getByRole('alert')).toMatchTextContent(/due to an unknown type/);
+    await expect.element(alert).toMatchTextContent(/due to an unknown type/);
     expect(getSummary).not.toHaveBeenCalled();
+    // The warning fills the value or item marked with the `object-unknown-type` class
+    container.classList.add('object-unknown-type');
+    expect(getComputedStyle(container).overflow).toBe('hidden');
+    expect(getComputedStyle(alert.element()).borderWidth).toBe('0px');
+    expect(getComputedStyle(alert.element()).borderRadius).toBe('0px');
   });
 
   test('shows the type’s hint above the subfields while expanded', async () => {
@@ -36,7 +41,7 @@ describe('ObjectBody', () => {
 
     const { container } = await render(
       ObjectBody,
-      getProps({ subFields: [], expanded: true, hint }),
+      getProps({ subFields: [], expanded: true, typeConfig: { name: 'hero', fields: [], hint } }),
     );
 
     const element = /** @type {HTMLElement} */ (container.querySelector('.type-hint'));
@@ -46,10 +51,18 @@ describe('ObjectBody', () => {
     );
   });
 
-  test('shows no hint while collapsed, or without one', async () => {
-    const { container } = await render(ObjectBody, getProps({ hint: 'Hint' }));
+  test('shows no hint while collapsed, read-only, or without one', async () => {
+    const typeConfig = { name: 'hero', fields: [], hint: 'Hint' };
+    const { container } = await render(ObjectBody, getProps({ typeConfig }));
 
     expect(container.querySelector('.type-hint')).toBeNull();
+
+    const { container: readonly } = await render(
+      ObjectBody,
+      getProps({ subFields: [], expanded: true, typeConfig, readonly: true }),
+    );
+
+    expect(readonly.querySelector('.type-hint')).toBeNull();
 
     const { container: expanded } = await render(
       ObjectBody,

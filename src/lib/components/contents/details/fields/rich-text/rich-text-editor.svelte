@@ -221,10 +221,14 @@
   };
 
   /**
-   * Handle pasted content. If it includes images, insert them to the editor content.
-   * @param {ClipboardEvent} event `paste` event.
+   * Create a handler for pasted or dropped content. If it includes images, they’re inserted to the
+   * editor content.
+   * @template {ClipboardEvent | DragEvent} E
+   * @param {(event: E) => Promise<ImageEntry[]>} getImages Function getting the images from the
+   * event.
+   * @returns {(event: E) => Promise<void>} Event handler.
    */
-  const onPaste = async (event) => {
+  const createImageHandler = (getImages) => async (event) => {
     // Lexical applies an update even while the editor isn’t editable, so nothing is inserted to a
     // read-only field, nor is the file added to the draft
     if (readonly) {
@@ -232,30 +236,15 @@
     }
 
     const { target } = event;
-    const images = await getPastedImages(event);
+    const images = await getImages(event);
 
     if (images.length) {
       await insertImages({ target, images });
     }
   };
 
-  /**
-   * Handle dropped content. If it includes images, insert them to the editor content.
-   * @param {DragEvent} event `drop` event.
-   */
-  const onDrop = async (event) => {
-    // Same as above
-    if (readonly) {
-      return;
-    }
-
-    const { target } = event;
-    const images = await getDroppedImages(event);
-
-    if (images.length) {
-      await insertImages({ target, images });
-    }
-  };
+  const onPaste = createImageHandler(getPastedImages);
+  const onDrop = createImageHandler(getDroppedImages);
 
   /**
    * Remove the extra values of the components that are no longer present in the editor, shortly

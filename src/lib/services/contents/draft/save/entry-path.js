@@ -8,11 +8,7 @@ import {
   getSharedEntryFileName,
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
-import {
-  getFolderName,
-  getOwnFolderName,
-  localizeDirPath,
-} from '$lib/services/contents/collection/nested/i18n';
+import { getOwnFolderName, localizeDirPath } from '$lib/services/contents/collection/nested/i18n';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
 import {
@@ -26,7 +22,7 @@ import {
   fillLocalePlaceholder,
   hasLocalePlaceholder,
 } from '$lib/services/contents/i18n/placeholder';
-import { createPath } from '$lib/services/utils/file';
+import { createPath, getBaseName } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -119,7 +115,7 @@ export const buildCustomEntryPath = ({ draft, slug, indexFileName, locale }) => 
     // the folder goes by the name in the localized slug; a locale that has just been enabled has a
     // bare slug, which becomes the folder name as it would for a new entry
     const parentPath = localizeDirPath({ collection, dirPath: getEntryDirPath(dirPath), locale });
-    const ownFolderName = localized ? getOwnFolderName(slug) || slug : getFolderName(dirPath);
+    const ownFolderName = localized ? getOwnFolderName(slug) || slug : getBaseName(dirPath);
 
     return createPath([parentPath, ownFolderName, indexFileName]);
   }

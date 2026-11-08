@@ -301,6 +301,14 @@
   }
 
   :global {
+    /* The dragged item of a sortable list is left as a faint placeholder marking the gap it would
+      drop into. The pointer already carries the browser’s own drag image of it, so showing it
+      twice at full strength would just be confusing. */
+
+    .drag-placeholder {
+      opacity: 0.25;
+    }
+
     html:active-view-transition-type(forwards) {
       @media (width < 768px) {
         &::view-transition-old(page-root) {

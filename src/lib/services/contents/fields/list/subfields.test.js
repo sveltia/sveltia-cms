@@ -5,6 +5,7 @@ import {
   getFlatSubFields,
   getTypeSubFields,
   getValueSubFields,
+  mapSubValues,
   someSubField,
 } from '$lib/services/contents/fields/list/subfields';
 
@@ -47,6 +48,51 @@ describe('getValueSubFields', () => {
     expect(getValueSubFields({ value: {} })).toEqual([]);
     expect(getValueSubFields({ value: { type: 'c' }, types })).toEqual([]);
     expect(getValueSubFields({ value: undefined, types })).toEqual([]);
+  });
+});
+
+describe('mapSubValues()', () => {
+  /**
+   * Map an object to its subfield names, and a single subfield item to its field name.
+   * @param {any} value Value.
+   * @param {any} fieldConfig Field configuration.
+   * @returns {any} Result.
+   */
+  const map = (value, fieldConfig) =>
+    mapSubValues(
+      value,
+      fieldConfig,
+      (obj, fields, index) => ({ obj, names: fields.map(({ name }) => name), index }),
+      (item, field, index) => [item, field.name, index],
+    );
+
+  test('maps an Object field value with its subfields', () => {
+    expect(map({ a: 1 }, { widget: 'object', fields: [{ name: 'a' }] })).toEqual({
+      obj: { a: 1 },
+      names: ['a'],
+      index: undefined,
+    });
+  });
+
+  test('maps the items of a List field with a single subfield', () => {
+    expect(map(['x', 'y'], { widget: 'list', field: { name: 'tag' } })).toEqual([
+      ['x', 'tag', 0],
+      ['y', 'tag', 1],
+    ]);
+  });
+
+  test('maps the items of a List field with variable types', () => {
+    expect(map([{ type: 'a' }, { type: 'c' }], { widget: 'list', types })).toEqual([
+      { obj: { type: 'a' }, names: ['title'], index: 0 },
+      { obj: { type: 'c' }, names: [], index: 1 },
+    ]);
+  });
+
+  test('returns any other value as is', () => {
+    const value = { a: 1 };
+
+    expect(map(value, { widget: 'list', fields: [] })).toBe(value);
+    expect(map(['x'], { widget: 'string' })).toEqual(['x']);
   });
 });
 

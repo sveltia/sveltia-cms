@@ -3,6 +3,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
 import { moveAssets } from '$lib/services/assets/data/move';
 import { getAssetUsedEntries } from '$lib/services/assets/details';
 import { selectedAssetFolder } from '$lib/services/assets/folders';
@@ -283,6 +284,9 @@ describe('RenameDialog', () => {
   });
 
   test('reports a failure to rename the asset, leaving the URL alone', async () => {
+    // The toasts reporting the commit are rendered by the shared component
+    await render(AssetUpdatesToast, {});
+
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     window.location.hash = '#/assets/static/uploads/a.png';

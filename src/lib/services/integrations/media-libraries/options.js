@@ -14,10 +14,14 @@ import { cmsConfig } from '$lib/services/config/state';
  * @template {keyof MediaLibraries} T
  * @param {T} libraryName Library name.
  * @param {CmsConfig | MediaField | undefined} config Site or field configuration.
+ * @param {string} [siteDefaultName] Name of the library the site-level legacy option configures
+ * when it has no `name`, e.g. `default`. When given, a legacy option, even a field-level one
+ * naming the library, only applies to the library the site-level legacy option configures.
+ * Default: none, so a nameless site-level legacy option configures no library.
  * @returns {MediaLibraries[T] | undefined} Options, `false` if the library is explicitly disabled,
  * or `undefined` if the library is not configured.
  */
-export const findLibraryOptions = (libraryName, config) => {
+export const findLibraryOptions = (libraryName, config, siteDefaultName) => {
   const options = config?.media_libraries?.[libraryName];
 
   if (options !== undefined && options !== null) {
@@ -25,9 +29,11 @@ export const findLibraryOptions = (libraryName, config) => {
   }
 
   const { media_library: legacyOptions } = config ?? {};
-  const legacyName = legacyOptions?.name ?? cmsConfig.current?.media_library?.name;
+  const siteName = cmsConfig.current?.media_library?.name ?? siteDefaultName;
 
-  return legacyOptions && legacyName === libraryName
+  return legacyOptions &&
+    (legacyOptions.name ?? siteName) === libraryName &&
+    (!siteDefaultName || siteName === libraryName)
     ? /** @type {MediaLibraries[T]} */ (legacyOptions)
     : undefined;
 };

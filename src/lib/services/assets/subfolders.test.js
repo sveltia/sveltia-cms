@@ -597,6 +597,12 @@ describe('assets/subfolders', () => {
       expect(validateSubfolderName({ name: '???', takenNames })).toBe('invalid');
     });
 
+    it('should reject a leading dot even when slugification removes it', () => {
+      _config.slugify_filename = true;
+      expect(validateSubfolderName({ name: '.hidden', takenNames })).toBe('invalid');
+      _config.slugify_filename = false;
+    });
+
     it('should reject a name taken by a folder or file, regardless of case', () => {
       expect(validateSubfolderName({ name: '2024', takenNames })).toBe('duplicate');
       expect(validateSubfolderName({ name: 'photo.JPG', takenNames })).toBe('duplicate');

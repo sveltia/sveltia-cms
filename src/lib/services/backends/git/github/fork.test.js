@@ -6,7 +6,7 @@ import {
   fetchFork,
   fetchForkByName,
   fetchForkFromNetwork,
-  fetchRepositoryAccess,
+  fetchOpenAuthoringAccess,
   getWorkflowRepository,
   hasPendingInvitation,
   initOpenAuthoring,
@@ -25,11 +25,18 @@ import {
   requestForkPermission,
 } from '$lib/services/workflow/open-authoring';
 
-vi.mock('$lib/services/backends/git/github/repository', async (importOriginal) => ({
-  isRateLimited: /** @type {any} */ (await importOriginal()).isRateLimited,
-  repository: { owner: 'owner', repo: 'repo', branch: 'main' },
-  fetchDefaultBranchName: vi.fn(),
-}));
+vi.mock('$lib/services/backends/git/github/repository', async (importOriginal) => {
+  const original = /** @type {any} */ (await importOriginal());
+
+  // The access check runs as it is, on the same repository object as the rest
+  Object.assign(original.repository, { owner: 'owner', repo: 'repo', branch: 'main' });
+
+  return {
+    fetchRepositoryAccess: original.fetchRepositoryAccess,
+    repository: original.repository,
+    fetchDefaultBranchName: vi.fn(),
+  };
+});
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('@sveltia/i18n', async () => (await import('$lib/test/i18n')).createI18nMock());
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
@@ -103,15 +110,17 @@ describe('GitHub fork service', () => {
     });
   });
 
-  describe('fetchRepositoryAccess', () => {
+  describe('fetchOpenAuthoringAccess', () => {
     test('reads the signed-in user’s own permissions off the repository', async () => {
       vi.mocked(fetchAPI).mockResolvedValue(
         createResponse(true, { permissions: { push: true, admin: false }, allow_forking: true }),
       );
 
-      await expect(fetchRepositoryAccess()).resolves.toEqual({
+      await expect(fetchOpenAuthoringAccess()).resolves.toEqual({
+        canRead: false,
         canWrite: true,
         allowForking: true,
+        isPersonalPrivate: false,
       });
 
       // The collaborator endpoint would need administrator access to answer this
@@ -130,7 +139,7 @@ describe('GitHub fork service', () => {
         }),
       );
 
-      await fetchRepositoryAccess();
+      await fetchOpenAuthoringAccess();
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('owned by a personal account'));
       warn.mockRestore();
@@ -148,7 +157,7 @@ describe('GitHub fork service', () => {
         }),
       );
 
-      await fetchRepositoryAccess();
+      await fetchOpenAuthoringAccess();
 
       // An organization repository has the Read role, so a contributor can exist
       vi.mocked(fetchAPI).mockResolvedValue(
@@ -159,7 +168,7 @@ describe('GitHub fork service', () => {
         }),
       );
 
-      await fetchRepositoryAccess();
+      await fetchOpenAuthoringAccess();
 
       expect(warn).not.toHaveBeenCalled();
       warn.mockRestore();
@@ -170,9 +179,11 @@ describe('GitHub fork service', () => {
         createResponse(true, { permissions: { push: false, pull: true }, allow_forking: true }),
       );
 
-      await expect(fetchRepositoryAccess()).resolves.toEqual({
+      await expect(fetchOpenAuthoringAccess()).resolves.toEqual({
+        canRead: true,
         canWrite: false,
         allowForking: true,
+        isPersonalPrivate: false,
       });
     });
 
@@ -181,18 +192,22 @@ describe('GitHub fork service', () => {
         createResponse(true, { permissions: { push: false }, allow_forking: false }),
       );
 
-      await expect(fetchRepositoryAccess()).resolves.toEqual({
+      await expect(fetchOpenAuthoringAccess()).resolves.toEqual({
+        canRead: false,
         canWrite: false,
         allowForking: false,
+        isPersonalPrivate: false,
       });
     });
 
     test('assumes forking is allowed when the field is absent', async () => {
       vi.mocked(fetchAPI).mockResolvedValue(createResponse(true, { permissions: { push: false } }));
 
-      await expect(fetchRepositoryAccess()).resolves.toEqual({
+      await expect(fetchOpenAuthoringAccess()).resolves.toEqual({
+        canRead: false,
         canWrite: false,
         allowForking: true,
+        isPersonalPrivate: false,
       });
     });
 
@@ -205,7 +220,7 @@ describe('GitHub fork service', () => {
           : createResponse(false, {}, { status: 404, headers: { 'x-oauth-scopes': 'repo, user' } }),
       );
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
+      await expect(fetchOpenAuthoringAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
       expect(_).toHaveBeenCalledWith('repository_no_access', expect.any(Object));
     });
 
@@ -216,7 +231,7 @@ describe('GitHub fork service', () => {
           : createResponse(false, {}, { status: 404 }),
       );
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
+      await expect(fetchOpenAuthoringAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
 
       expect(_).toHaveBeenCalledWith(
         'open_authoring.invitation_pending',
@@ -237,7 +252,7 @@ describe('GitHub fork service', () => {
             ),
       );
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
+      await expect(fetchOpenAuthoringAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
       expect(_).toHaveBeenCalledWith(
         'open_authoring.private_repo_scope_required',
         expect.any(Object),
@@ -250,7 +265,7 @@ describe('GitHub fork service', () => {
         path === '/user/repository_invitations' ? [] : createResponse(false, {}, { status: 404 }),
       );
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
+      await expect(fetchOpenAuthoringAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
       expect(_).toHaveBeenCalledWith('repository_no_access', expect.any(Object));
     });
 
@@ -258,7 +273,7 @@ describe('GitHub fork service', () => {
       vi.mocked(fetchAPI).mockResolvedValue(createResponse(false, {}, { status: 401 }));
 
       // The shared message is what makes the sign-in flow drop the cached credentials
-      await expect(fetchRepositoryAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
+      await expect(fetchOpenAuthoringAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
       expect(_).toHaveBeenCalledWith('repository_no_access', expect.any(Object));
       // The invitation and scope hints are about a refusal, which a token that no longer works
       // can’t tell anything about
@@ -270,7 +285,7 @@ describe('GitHub fork service', () => {
         createResponse(false, {}, { status: 403, headers: { 'x-ratelimit-remaining': '0' } }),
       );
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow(
+      await expect(fetchOpenAuthoringAccess()).rejects.toThrow(
         'Failed to check the repository permission.',
       );
     });
@@ -278,7 +293,7 @@ describe('GitHub fork service', () => {
     test('raises on a secondary rate limit', async () => {
       vi.mocked(fetchAPI).mockResolvedValue(createResponse(false, {}, { status: 429 }));
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow(
+      await expect(fetchOpenAuthoringAccess()).rejects.toThrow(
         'Failed to check the repository permission.',
       );
 
@@ -286,7 +301,7 @@ describe('GitHub fork service', () => {
         createResponse(false, {}, { status: 403, headers: { 'retry-after': '60' } }),
       );
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow(
+      await expect(fetchOpenAuthoringAccess()).rejects.toThrow(
         'Failed to check the repository permission.',
       );
     });
@@ -294,7 +309,7 @@ describe('GitHub fork service', () => {
     test('raises when the service is having trouble', async () => {
       vi.mocked(fetchAPI).mockResolvedValue(createResponse(false, {}, { status: 500 }));
 
-      await expect(fetchRepositoryAccess()).rejects.toThrow(
+      await expect(fetchOpenAuthoringAccess()).rejects.toThrow(
         'Failed to check the repository permission.',
       );
     });

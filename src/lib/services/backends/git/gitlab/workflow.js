@@ -279,37 +279,15 @@ const fetchMergeStatus = (pullRequest) =>
   );
 
 /**
- * Cancel the auto-merge on the given merge request. Failures are ignored: this is called once the
- * publish is being reported as failed, and a merge request that has just been merged or closed
- * has no auto-merge left to cancel.
- * @param {WorkflowPullRequest} pullRequest Merge request.
- * @see https://docs.gitlab.com/api/merge_requests/#cancel-merge-when-pipeline-succeeds
- */
-const cancelAutoMerge = async (pullRequest) => {
-  try {
-    const path = getMergeRequestPath(pullRequest.number);
-
-    await fetchAPI(`${path}/cancel_merge_when_pipeline_succeeds`, { method: 'POST' });
-  } catch (/** @type {any} */ ex) {
-    // eslint-disable-next-line no-console
-    console.warn(`Failed to cancel the auto-merge on merge request !${pullRequest.number}.`, ex);
-  }
-};
-
-/**
- * Wait for GitLab to merge a merge request that has been set to auto-merge. The merge request is
- * read every so often until it’s merged, in which case this resolves, or until it’s clear that the
- * merge won’t happen on its own: the pipeline has failed, a new commit has cancelled the
- * auto-merge, the merge request has been closed, or the wait has run out. Those are reported as
- * errors, so the entry stays on the Editorial Workflow board rather than being taken for
- * published. GitLab keeps the auto-merge armed after a failed pipeline, in case a job is retried by
- * hand, but a merge made that way would happen behind the CMS’s back once it has reported a
- * failure, so the auto-merge is cancelled along with the report: publishing again is what merges
- * the entry from then on.
+ * Wait for GitLab to merge a merge request that has been set to auto-merge: see
+ * {@link waitForMerge}. The merge won’t happen on its own once the pipeline has failed, a new
+ * commit has cancelled the auto-merge, or the merge request has been closed. Those are reported as
+ * errors, so the entry stays on the Editorial Workflow board rather than being taken for published.
  * @param {WorkflowPullRequest} pullRequest Merge request.
  * @returns {Promise<void>}
  * @throws {Error} When the merge request won’t be merged, or wasn’t within the time allowed.
  * @see https://github.com/sveltia/sveltia-cms/issues/992
+ * @see https://docs.gitlab.com/api/merge_requests/#cancel-merge-when-pipeline-succeeds
  */
 const waitForAutoMerge = (pullRequest) =>
   waitForMerge({
@@ -321,12 +299,11 @@ const waitForAutoMerge = (pullRequest) =>
     /**
      * Check the merge request read.
      * @param {Record<string, any>} mergeRequest Merge request returned by the REST API.
-     * @returns {Promise<boolean>} Whether the merge request has been merged.
-     * @throws {Error} When the merge request won’t be merged.
+     * @returns {{ merged?: boolean, failure?: string, armed?: boolean }} Result.
      */
-    evaluate: async (mergeRequest) => {
+    check: (mergeRequest) => {
       if (!mergeRequest) {
-        return false;
+        return {};
       }
 
       const {
@@ -335,33 +312,26 @@ const waitForAutoMerge = (pullRequest) =>
         detailed_merge_status: status,
       } = mergeRequest;
 
-      if (state === 'merged') {
-        return true;
-      }
+      const armed = state === 'opened' && !!autoMerge;
 
-      // `locked` is the merge in progress
-      const waiting =
-        state === 'locked' ||
-        (state === 'opened' && !!autoMerge && AUTO_MERGE_WAIT_STATUSES.includes(status));
-
-      if (!waiting) {
-        if (state === 'opened' && autoMerge) {
-          await cancelAutoMerge(pullRequest);
-        }
-
-        throw new Error(
-          `Merge request !${pullRequest.number} was not merged: ${state}, ${status}, ` +
-            `auto-merge ${autoMerge ? 'on' : 'off'}`,
-        );
-      }
-
-      return false;
+      return {
+        merged: state === 'merged',
+        // `locked` is the merge in progress
+        failure:
+          state === 'locked' || (armed && AUTO_MERGE_WAIT_STATUSES.includes(status))
+            ? undefined
+            : `${state}, ${status}, auto-merge ${autoMerge ? 'on' : 'off'}`,
+        armed,
+      };
     },
     /**
-     * Cancel the auto-merge once the wait has run out.
-     * @returns {Promise<void>}
+     * Cancel the auto-merge.
+     * @returns {Promise<any>} Result.
      */
-    cancel: () => cancelAutoMerge(pullRequest),
+    cancel: () =>
+      fetchAPI(`${getMergeRequestPath(pullRequest.number)}/cancel_merge_when_pipeline_succeeds`, {
+        method: 'POST',
+      }),
     label: `merge request !${pullRequest.number}`,
   });
 

@@ -2,6 +2,7 @@ import { getAssetKind } from '$lib/services/assets/kinds';
 import { getRelativeKey } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
 import { createObjectStorageOperations } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
 import { ObjectStorageService } from '$lib/services/integrations/media-libraries/cloud/shared/service';
+import { getBaseName } from '$lib/services/utils/file';
 import { assertResponseOK } from '$lib/services/utils/networking';
 import { encodePathSegments, trimTrailingSlashes } from '$lib/services/utils/url';
 import { parseXml, toArray } from '$lib/services/utils/xml';
@@ -101,7 +102,7 @@ export const parseBlobResults = (blobs, config, token) => {
   const containerUrl = buildContainerUrl(config);
 
   return blobs.map(({ Name: key, Properties: properties = {} }) => {
-    const fileName = key.split('/').pop() || key;
+    const fileName = getBaseName(key) || key;
     const displayKey = getRelativeKey(config, key);
     const encodedKey = encodePathSegments(key);
     const blobUrl = `${containerUrl}/${encodedKey}`;

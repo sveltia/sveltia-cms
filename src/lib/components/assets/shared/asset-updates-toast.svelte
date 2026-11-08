@@ -1,14 +1,15 @@
 <!--
   @component
-  Toasts reporting the result of an asset operation. These live outside the Asset Library, because
-  an asset can be saved from anywhere the upload dialog reaches — dropping a file on the collection
-  assets sidebar, say — and the result should be reported wherever the user happens to be.
+  Toasts reporting the progress and the result of an asset operation. These live outside the Asset
+  Library, because an asset can be saved from anywhere the upload dialog reaches — dropping a file
+  on the collection assets sidebar, say — and the result should be reported wherever the user
+  happens to be.
 -->
 <script>
   import { _ } from '@sveltia/i18n';
   import { Alert, Toast } from '@sveltia/ui';
 
-  import { assetUpdatesToast } from '$lib/services/assets/data';
+  import { assetCommitToast, assetUpdatesToast } from '$lib/services/assets/data';
 </script>
 
 <Toast bind:show={assetUpdatesToast.current.saved}>
@@ -47,4 +48,13 @@
   <Alert status="success">
     {_('assets_deleted', { values: { count: assetUpdatesToast.current.count } })}
   </Alert>
+</Toast>
+
+<!-- `duration={0}` keeps this up until the commit settles, however long it takes -->
+<Toast show={assetCommitToast.current.pending > 0} duration={0}>
+  <Alert status="info">{_(assetCommitToast.current.progress)}</Alert>
+</Toast>
+
+<Toast bind:show={assetCommitToast.current.failed}>
+  <Alert status="error">{_(assetCommitToast.current.failure)}</Alert>
 </Toast>

@@ -122,6 +122,11 @@
   }
 
   @media (width < 768px) {
+    /* Remove the padding to make an image or an embedded video full-width */
+    :global([role='document']) section > :global(p:has(img, iframe)) {
+      margin-inline: calc(var(--entry-preview-padding-inline) * -1);
+    }
+
     /* A top-level field, which is wrapped for the Edit Pane to find it before it’s rendered */
     :global([role='document'] > [data-lazy-key-path]) {
       & > section:is([data-field-type='file'], [data-field-type='image']):has(:global(img)),

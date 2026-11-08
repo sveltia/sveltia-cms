@@ -11,6 +11,7 @@ import { getDraftFieldArgs } from '$lib/services/contents/entry/fields';
 import { deleteSubtree } from '$lib/services/contents/entry/subtree';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getListFieldInfo, isPairedList } from '$lib/services/contents/fields/list/helpers';
+import { getFlatSubFields } from '$lib/services/contents/fields/list/subfields';
 import { isFieldMirrored, isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { localizeDefaultValue } from '$lib/services/contents/i18n/options';
 import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-values';
@@ -26,8 +27,6 @@ import { getInheritedI18nOption } from '$lib/services/contents/i18n/shared-value
  * ComplexListField,
  * Field,
  * FieldKeyPath,
- * FieldWithSubFields,
- * FieldWithTypes,
  * ListField,
  * ObjectField,
  * } from '$lib/types/public';
@@ -111,8 +110,6 @@ const resetContent = (args) => {
       return;
     }
 
-    const { fields } = /** @type {FieldWithSubFields} */ (fieldConfig);
-    const { types, typeKey = 'type' } = /** @type {FieldWithTypes} */ (fieldConfig);
     // With the `i18n` option that applies to the field, so a duplicated field takes the default
     // locale’s localized default
     const objectConfig = /** @type {ObjectField} */ ({ ...fieldConfig, i18n });
@@ -121,10 +118,7 @@ const resetContent = (args) => {
       localizeDefaultValue({ fieldConfig: objectConfig, locale, defaultLocale })
     );
 
-    const type = content[`${keyPath}.${typeKey}`];
-    const subFields = fields ?? types?.find(({ name }) => name === type)?.fields ?? [];
-
-    subFields.forEach((subField) => {
+    (getFlatSubFields(fieldConfig, content, keyPath) ?? []).forEach((subField) => {
       // The default value of the Object field as a whole takes precedence over the subfield’s own,
       // including its localized one
       const subFieldConfig =

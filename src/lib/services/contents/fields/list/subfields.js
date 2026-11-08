@@ -1,6 +1,13 @@
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
- * @import { Field, FieldKeyPath, VariableFieldType } from '$lib/types/public';
+ * @import {
+ * Field,
+ * FieldKeyPath,
+ * ListFieldWithSubField,
+ * ListFieldWithSubFields,
+ * ListFieldWithTypes,
+ * VariableFieldType,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -49,6 +56,44 @@ export const getValueSubFields = ({ value, fields, types, typeKey = 'type' }) =>
   fields ?? (types ? getTypeSubFields(types, value?.[typeKey]) : undefined) ?? [];
 
 /**
+ * Map the values nested in the given Object or List field value: the object itself, or each list
+ * item, either with the list’s single subfield or as an object with its own subfields, resolving
+ * the variable type against the type name stored in the value.
+ * @param {any} value Field value.
+ * @param {Field} fieldConfig Field configuration.
+ * @param {(obj: any, fields: Field[], index?: number) => any} mapObject Function called for an
+ * Object field value, and each item of a List field without a single subfield, with its subfields
+ * and its index if it’s a list item. The value isn’t necessarily an object.
+ * @param {(item: any, field: Field, index: number) => any} mapItem Function called for each item
+ * of a List field with a single subfield.
+ * @returns {any} Result of `mapObject` for an Object field, a new array of the results for the
+ * items of a List field, or the value as is for anything else, e.g. a List field value that isn’t
+ * an array.
+ */
+export const mapSubValues = (value, fieldConfig, mapObject, mapItem) => {
+  const { widget } = fieldConfig;
+  const { field } = /** @type {ListFieldWithSubField} */ (fieldConfig);
+
+  const { fields, types, typeKey } = /** @type {ListFieldWithSubFields & ListFieldWithTypes} */ (
+    fieldConfig
+  );
+
+  if (widget === 'object') {
+    return mapObject(value, getValueSubFields({ value, fields, types, typeKey }));
+  }
+
+  if (widget !== 'list' || !Array.isArray(value)) {
+    return value;
+  }
+
+  return value.map((item, index) =>
+    field
+      ? mapItem(item, field, index)
+      : mapObject(item, getValueSubFields({ value: item, fields, types, typeKey }), index),
+  );
+};
+
+/**
  * Get all the subfields of the given field: the `field` of a List field, its `fields`, and the
  * `fields` of every variable type, whichever it has.
  * @param {Field} field Field configuration.
@@ -66,6 +111,49 @@ export const getAllSubFields = (field) => {
     ...fields,
     ...types.flatMap((type) => type.fields ?? []),
   ];
+};
+
+/**
+ * Call the given function for each subfield of the given Object or List field configuration, one
+ * level down: the single subfield of a List field, which takes the item’s own key path, the
+ * subfields, and those of every variable type. Anything that isn’t a list is skipped, so a raw
+ * configuration can be walked before it’s validated.
+ * @param {Field} field Field configuration.
+ * @param {string} keyPath Key path of the field.
+ * @param {(subField: Field, keyPath: string) => void} callback Function called with each subfield
+ * and its key path, e.g. `blocks.*.src`.
+ * @param {boolean} [typed] Whether to add the variable type name to the key path of its subfields,
+ * e.g. `blocks.*<image>.src`.
+ */
+export const forEachSubFieldConfig = (field, keyPath, callback, typed = false) => {
+  const { widget, field: subField, fields, types } = /** @type {any} */ (field);
+
+  if (widget !== 'object' && widget !== 'list') {
+    return;
+  }
+
+  const prefix = widget === 'list' ? `${keyPath}.*` : keyPath;
+
+  /**
+   * Call the function for each field in the given list.
+   * @param {any} list Field list.
+   * @param {string} path Key path of the object holding the fields.
+   */
+  const visit = (list, path) => {
+    if (Array.isArray(list)) {
+      list.forEach((_field) => callback(_field, `${path}.${_field?.name}`));
+    }
+  };
+
+  if (widget === 'list' && subField) {
+    callback(subField, prefix);
+  }
+
+  visit(fields, prefix);
+
+  if (Array.isArray(types)) {
+    types.forEach((type) => visit(type?.fields, typed ? `${prefix}<${type?.name}>` : prefix));
+  }
 };
 
 /**
