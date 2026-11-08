@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 import {
   getNewFolderName,
@@ -7,7 +7,16 @@ import {
   trimSlugEnd,
   validateNewFolderName,
 } from '$lib/services/common/slug';
+import { loadTransliterator } from '$lib/services/common/slug/transliterate';
 import { emulateTurkishLowerCase } from '$lib/test/locale';
+
+// The `clean_accents` option transliterates with the library the CMS loads from the CDN, so the
+// installed copy is loaded instead
+vi.mock('$lib/services/app/dependencies', () => ({
+  loadModule: vi.fn(() => import('@sindresorhus/transliterate')),
+}));
+
+beforeAll(loadTransliterator);
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },

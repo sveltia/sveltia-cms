@@ -1,6 +1,5 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { getPathInfo } from '@sveltia/utils/file';
-import mime from 'mime';
 
 import { isEquivalentFileExtension } from '$lib/services/utils/file';
 import {
@@ -8,6 +7,7 @@ import {
   SUPPORTED_IMAGE_TYPES,
   VECTOR_IMAGE_EXTENSION_REGEX,
 } from '$lib/services/utils/media/image';
+import mime from '$lib/services/utils/mime';
 import { decodeURIComponentSafely } from '$lib/services/utils/url';
 
 /**

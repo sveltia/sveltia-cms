@@ -19,7 +19,7 @@ vi.mock('@sveltia/utils/file');
 vi.mock('@sveltia/utils/misc');
 vi.mock('@sveltia/utils/storage');
 vi.mock('@sveltia/utils/string');
-vi.mock('mime');
+vi.mock('$lib/services/utils/mime');
 
 /** @type {{ current: any }} */
 const mockBackendState = vi.hoisted(() => ({ current: undefined }));

@@ -1,6 +1,5 @@
 import { isValidFileType } from '@sveltia/utils/file';
 import { isObject } from '@sveltia/utils/object';
-import mime from 'mime';
 
 import { getMediaLibraryOptions } from '$lib/services/integrations/media-libraries';
 import {
@@ -12,6 +11,7 @@ import {
 import { isAnimatedImage } from '$lib/services/utils/media/image/animation';
 import { sniffRasterImageFormat } from '$lib/services/utils/media/image/sniff';
 import { optimizeSVG, transformImage } from '$lib/services/utils/media/image/transform';
+import mime from '$lib/services/utils/mime';
 
 /**
  * @import {

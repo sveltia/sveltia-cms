@@ -7,7 +7,7 @@ import { selectedCustomPageId } from '$lib/services/app/custom-pages';
 import { selectedPageName } from '$lib/services/app/navigation';
 import { selectedCloudService } from '$lib/services/assets/external';
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
-import { backendName } from '$lib/services/backends';
+import { backendName, loadBackendService } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 import { searchMode } from '$lib/services/search';
 import { env } from '$lib/services/user/env.svelte';
@@ -115,7 +115,8 @@ describe('PageSwitcher', () => {
     'adds the workflow page when Editorial Workflow is enabled with the %s backend',
     async (name) => {
       // The page only exists when the backend implements the feature, so each one that does is
-      // checked, not just the first
+      // checked, not just the first. GitLab and Gitea are kept in chunks, loaded before selection
+      await loadBackendService(name);
       backendName.current = name;
       cmsConfig.current = /** @type {any} */ ({
         backend: { name },

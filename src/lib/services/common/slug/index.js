@@ -1,4 +1,3 @@
-import transliterate from '@sindresorhus/transliterate';
 import { generateUUID } from '@sveltia/utils/crypto';
 import { escapeRegExp, truncate } from '@sveltia/utils/string';
 
@@ -6,6 +5,7 @@ import {
   UNSAFE_ASCII_SLUG_CHARS_REGEX,
   UNSAFE_UNICODE_SLUG_CHARS_REGEX,
 } from '$lib/services/common/slug/constants';
+import { transliterateString } from '$lib/services/common/slug/transliterate';
 import { cmsConfig } from '$lib/services/config';
 import { getOrCreate } from '$lib/services/utils/cache';
 
@@ -127,12 +127,8 @@ export const slugify = (
   let slug = string;
 
   if (cleanAccents) {
-    // Remove any accented characters by transliterating them to their ASCII equivalents. The
-    // library takes a BCP 47 tag and picks the rules for its language, e.g. `tr` for `tr-TR`, and
-    // `nb` for `no`, while ignoring a locale it has no rules for. An underscore, as in `pt_BR`, is
-    // turned into a hyphen it understands
-    // @see https://www.npmjs.com/package/@sindresorhus/transliterate
-    slug = transliterate(slug.normalize('NFD'), { locale: locale?.replaceAll('_', '-') });
+    // Remove any accented characters by transliterating them to their ASCII equivalents
+    slug = transliterateString(slug, locale);
   }
 
   // Turn every unsafe character into a space, which is then replaced below

@@ -1,96 +1,64 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
-  allBackendServices,
   backend,
   backendName,
+  loadBackendService,
   selectBackend,
   unsupportedBackends,
   validBackendNames,
 } from '$lib/services/backends';
+import local from '$lib/services/backends/fs/local';
+import testRepo from '$lib/services/backends/fs/test';
 import { gitBackendServices } from '$lib/services/backends/git/services';
+import { cmsConfig } from '$lib/services/config';
 
 describe('Backend Services Index', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('allBackendServices', () => {
-    test('should contain all expected backend services', () => {
-      expect(allBackendServices).toHaveProperty('github');
-      expect(allBackendServices).toHaveProperty('gitlab');
-      expect(allBackendServices).toHaveProperty('gitea');
-      expect(allBackendServices).toHaveProperty('forgejo');
-      expect(allBackendServices).toHaveProperty('local');
-      expect(allBackendServices).toHaveProperty('test-repo');
-    });
-
-    test('should have backend services with required properties', () => {
-      Object.values(allBackendServices).forEach((service) => {
-        expect(service).toHaveProperty('name');
-        expect(service).toHaveProperty('label');
-        expect(service).toHaveProperty('isGit');
-        expect(service).toHaveProperty('init');
-        expect(service).toHaveProperty('signIn');
-        expect(service).toHaveProperty('signOut');
-        expect(service).toHaveProperty('fetchFiles');
-        expect(service).toHaveProperty('commitChanges');
-        expect(typeof service.name).toBe('string');
-        expect(typeof service.label).toBe('string');
-        expect(typeof service.isGit).toBe('boolean');
-        expect(typeof service.init).toBe('function');
-        expect(typeof service.signIn).toBe('function');
-        expect(typeof service.signOut).toBe('function');
-        expect(typeof service.fetchFiles).toBe('function');
-        expect(typeof service.commitChanges).toBe('function');
-      });
-    });
+  afterEach(() => {
+    cmsConfig.current = undefined;
   });
 
   describe('validBackendNames', () => {
-    test('should contain expected backend names', () => {
-      expect(validBackendNames).toContain('github');
-      expect(validBackendNames).toContain('gitlab');
-      expect(validBackendNames).toContain('gitea');
-      expect(validBackendNames).toContain('forgejo');
-      expect(validBackendNames).toContain('test-repo');
+    test('should contain the Git backends and the test repository', () => {
+      expect(validBackendNames).toEqual(['github', 'gitlab', 'gitea', 'forgejo', 'test-repo']);
     });
 
     test('should not contain local backend', () => {
       expect(validBackendNames).not.toContain('local');
     });
-
-    test('should match keys of allBackendServices except local', () => {
-      const expectedNames = Object.keys(allBackendServices).filter((name) => name !== 'local');
-
-      expect(validBackendNames).toEqual(expect.arrayContaining(expectedNames));
-      expect(validBackendNames).toHaveLength(expectedNames.length);
-    });
   });
 
-  describe('gitBackendServices', () => {
-    test('should contain only Git backend services', () => {
-      Object.values(gitBackendServices).forEach((service) => {
-        expect(service.isGit).toBe(true);
-      });
+  describe('loadBackendService', () => {
+    test('returns the backends that are always bundled', async () => {
+      await expect(loadBackendService('github')).resolves.toBe(gitBackendServices.github);
+      await expect(loadBackendService('test-repo')).resolves.toBe(testRepo);
     });
 
-    test('should not contain non-Git backends', () => {
-      const nonGitServices = Object.entries(allBackendServices)
-        .filter(([, service]) => !service.isGit)
-        .map(([name]) => name);
+    test('loads a Git backend kept in a chunk', async () => {
+      const service = await loadBackendService('gitlab');
 
-      nonGitServices.forEach((name) => {
-        expect(gitBackendServices).not.toHaveProperty(name);
-      });
+      expect(service).toMatchObject({ isGit: true, name: 'gitlab', label: 'GitLab' });
+      expect(gitBackendServices.gitlab).toBe(service);
     });
 
-    test('should contain expected Git backends', () => {
-      expect(gitBackendServices).toHaveProperty('github');
-      expect(gitBackendServices).toHaveProperty('gitlab');
-      expect(gitBackendServices).toHaveProperty('gitea');
-      expect(gitBackendServices).toHaveProperty('forgejo');
-      expect(gitBackendServices.forgejo.name).toBe('forgejo');
+    test('loads the configured Git backend along with the local backend', async () => {
+      cmsConfig.current = /** @type {any} */ ({ backend: { name: 'forgejo' } });
+
+      await expect(loadBackendService('local')).resolves.toBe(local);
+      expect(gitBackendServices.forgejo).toMatchObject({ isGit: true, name: 'forgejo' });
+      expect(gitBackendServices.gitea).toMatchObject({ isGit: true, name: 'gitea' });
+    });
+
+    test('returns the local backend without a configuration', async () => {
+      await expect(loadBackendService('local')).resolves.toBe(local);
+    });
+
+    test('returns nothing for an unknown backend', async () => {
+      await expect(loadBackendService('unknown')).resolves.toBeUndefined();
     });
   });
 
@@ -114,48 +82,48 @@ describe('Backend Services Index', () => {
 
     test('should return the backend service when a valid name is set', () => {
       backendName.current = 'github';
+      expect(backend.current).toBe(gitBackendServices.github);
 
-      expect(backend.current).toBe(allBackendServices.github);
+      backendName.current = 'test-repo';
+      expect(backend.current).toBe(testRepo);
     });
   });
 
   describe('selectBackend', () => {
-    beforeEach(() => {
-      selectBackend(undefined);
+    beforeEach(async () => {
+      await selectBackend(undefined);
     });
 
-    test('should select and initialize the backend service', () => {
-      const mockInit = vi.fn();
+    test('should load, select and initialize the backend service', async () => {
+      const service = /** @type {any} */ (await loadBackendService('gitlab'));
+      const mockInit = vi.spyOn(service, 'init').mockReturnValue(undefined);
 
-      allBackendServices.gitlab.init = mockInit;
-
-      expect(selectBackend('gitlab')).toBe(allBackendServices.gitlab);
+      await expect(selectBackend('gitlab')).resolves.toBe(service);
       expect(backendName.current).toBe('gitlab');
-      expect(backend.current).toBe(allBackendServices.gitlab);
+      expect(backend.current).toBe(service);
       expect(mockInit).toHaveBeenCalledTimes(1);
     });
 
-    test('should not initialize the same backend again', () => {
-      const mockInit = vi.fn();
+    test('should not initialize the same backend again', async () => {
+      const service = /** @type {any} */ (await loadBackendService('gitea'));
+      const mockInit = vi.spyOn(service, 'init').mockReturnValue(undefined);
 
-      allBackendServices.gitea.init = mockInit;
-
-      selectBackend('gitea');
-      selectBackend('gitea');
+      await selectBackend('gitea');
+      await selectBackend('gitea');
 
       expect(mockInit).toHaveBeenCalledTimes(1);
     });
 
-    test('should deselect the backend', () => {
-      selectBackend('github');
+    test('should deselect the backend', async () => {
+      await selectBackend('test-repo');
 
-      expect(selectBackend(undefined)).toBeUndefined();
+      await expect(selectBackend(undefined)).resolves.toBeUndefined();
       expect(backendName.current).toBeUndefined();
       expect(backend.current).toBeUndefined();
     });
 
-    test('should return undefined for an unknown backend', () => {
-      expect(selectBackend('unknown')).toBeUndefined();
+    test('should return undefined for an unknown backend', async () => {
+      await expect(selectBackend('unknown')).resolves.toBeUndefined();
       expect(backendName.current).toBe('unknown');
       expect(backend.current).toBeUndefined();
     });

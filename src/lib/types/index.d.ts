@@ -67,3 +67,33 @@ declare module 'virtual:config-schema' {
   const content: Record<string, any> | null;
   export default content;
 }
+
+/**
+ * The version and the dependency ranges of the app, taken from `package.json` by the
+ * `bundlePackageInfo` Vite plugin.
+ */
+declare module 'virtual:package-info' {
+  export const version: string;
+  export const dependencies: Record<string, string>;
+}
+
+/**
+ * The vendor and experimental media types the app needs beyond the standard ones, picked from the
+ * full table of the `mime` package by the `bundleMimeTypes` Vite plugin.
+ */
+declare module 'virtual:mime-other-types' {
+  const types: Record<string, string[]>;
+  export default types;
+}
+
+/**
+ * The modules the backend chunks import from the main bundle, as an array of modules, each an array
+ * of exports, collected by the `collectSharedModules` Vite plugin, along with the global property
+ * to share them on. Empty outside the CDN builds, where the chunks are part of the same module
+ * graph.
+ */
+declare module 'virtual:shared-modules' {
+  const modules: unknown[][];
+  export const sharedModulesKey: string;
+  export default modules;
+}

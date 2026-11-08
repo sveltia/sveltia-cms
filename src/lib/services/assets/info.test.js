@@ -36,7 +36,7 @@ vi.mock('@sveltia/utils/file');
 vi.mock('@sveltia/utils/misc');
 vi.mock('@sveltia/utils/storage');
 vi.mock('@sveltia/utils/string');
-vi.mock('mime');
+vi.mock('$lib/services/utils/mime');
 
 /** @type {{ current: any }} */
 const mockBackendState = vi.hoisted(() => ({ current: undefined }));
@@ -217,7 +217,7 @@ describe('assets/info', () => {
 
       mockBackend.fetchBlob.mockResolvedValue(remoteBlob);
 
-      const { default: mime } = await import('mime');
+      const { default: mime } = await import('$lib/services/utils/mime');
       const mimeMock = vi.mocked(mime);
 
       mimeMock.getType.mockReturnValue('image/jpeg');
@@ -232,7 +232,7 @@ describe('assets/info', () => {
 
     it('should give an SVG image the URL of an inert wrapper, but return the original', async () => {
       const { createInertSVG } = await import('$lib/services/utils/media/image/svg');
-      const { default: mime } = await import('mime');
+      const { default: mime } = await import('$lib/services/utils/mime');
       const svgAsset = { ...mockAsset, path: 'assets/images/test.svg', name: 'test.svg' };
       const wrapper = new Blob(['<svg/>'], { type: 'image/svg+xml' });
 
@@ -268,7 +268,7 @@ describe('assets/info', () => {
 
     it('should not wrap other file types', async () => {
       const { createInertSVG } = await import('$lib/services/utils/media/image/svg');
-      const { default: mime } = await import('mime');
+      const { default: mime } = await import('$lib/services/utils/mime');
 
       vi.mocked(mime).getType.mockReturnValue('image/jpeg');
       mockBackend.fetchBlob.mockResolvedValue(new Blob(['data']));
@@ -372,7 +372,7 @@ describe('assets/info', () => {
 
       mockBackend.fetchBlob.mockResolvedValue(new Blob(['test data'], { type: 'image/jpeg' }));
 
-      const { default: mime } = await import('mime');
+      const { default: mime } = await import('$lib/services/utils/mime');
       const mimeMock = vi.mocked(mime);
 
       mimeMock.getType.mockReturnValue('image/jpeg');
@@ -1833,7 +1833,7 @@ describe('assets/info', () => {
     });
 
     it('should handle mime.getType returning null', async () => {
-      const { default: mime } = await import('mime');
+      const { default: mime } = await import('$lib/services/utils/mime');
       const mimeMock = vi.mocked(mime);
 
       mimeMock.getType.mockReturnValue(null);
@@ -1918,7 +1918,7 @@ describe('assets/info', () => {
     });
 
     it('should handle missing mime type in blob creation', async () => {
-      const { default: mime } = await import('mime');
+      const { default: mime } = await import('$lib/services/utils/mime');
 
       vi.mocked(mime).getType.mockReturnValue('application/octet-stream');
 

@@ -14,6 +14,8 @@ export const BUNDLED_MODULE_LOADERS = {
   // eslint-disable-next-line jsdoc/require-jsdoc
   '@discourse/heic': () => import('@discourse/heic'),
   // eslint-disable-next-line jsdoc/require-jsdoc
+  '@sindresorhus/transliterate': () => import('@sindresorhus/transliterate'),
+  // eslint-disable-next-line jsdoc/require-jsdoc
   '@jsquash/webp': async () => ({ default: encodeWebP }),
   // eslint-disable-next-line jsdoc/require-jsdoc
   exifr: () => import('exifr/dist/lite.esm.mjs'),

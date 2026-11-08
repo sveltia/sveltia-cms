@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { customStringTransformationRegistry } from '$lib/services/api/registries';
+import { loadTransliterator } from '$lib/services/common/slug/transliterate';
 import { cmsConfig } from '$lib/services/config';
 import { getField } from '$lib/services/contents/entry/fields';
 
@@ -9,6 +10,14 @@ import { replaceTemplatePlaceholder, replaceTemplateTag } from './replacers';
 /**
  * @import { ReplaceContext, ReplaceSubContext } from './replacers';
  */
+
+// The `clean_accents` option transliterates with the library the CMS loads from the CDN, so the
+// installed copy is loaded instead
+vi.mock('$lib/services/app/dependencies', () => ({
+  loadModule: vi.fn(() => import('@sindresorhus/transliterate')),
+}));
+
+beforeAll(loadTransliterator);
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },

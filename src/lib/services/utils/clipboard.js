@@ -1,8 +1,8 @@
 import { isTextFileType } from '@sveltia/utils/file';
-import mime from 'mime';
 
 import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 import { transformImage } from '$lib/services/utils/media/image/transform';
+import mime from '$lib/services/utils/mime';
 
 /**
  * Check if the data of a file of the given type can be copied to clipboard. Browsers typically

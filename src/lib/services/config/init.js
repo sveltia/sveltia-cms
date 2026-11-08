@@ -5,6 +5,7 @@ import { isObject } from '@sveltia/utils/object';
 import { isURL } from '@sveltia/utils/string';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
+import { loadTransliterator } from '$lib/services/common/slug/transliterate';
 import {
   cmsConfig,
   cmsConfigErrors,
@@ -143,8 +144,12 @@ export const initCmsConfig = async (manualConfig) => {
     });
 
     // DateTime field values are parsed and formatted synchronously, so the locales they’re written
-    // in have to be ready before the content is loaded
-    await loadDayjsLocales(collectors.formatLocales);
+    // in have to be ready before the content is loaded. So does the library cleaning the accents of
+    // slugs, which are made synchronously as well
+    await Promise.all([
+      loadDayjsLocales(collectors.formatLocales),
+      config.slug?.clean_accents ? loadTransliterator() : undefined,
+    ]);
 
     cmsConfig.current = config;
     updateFolders(config);

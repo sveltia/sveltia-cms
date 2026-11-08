@@ -8,6 +8,7 @@ describe('bundled modules in the npm build', () => {
   it.each([
     ['@discourse/heic', 'decode'],
     ['@jsquash/webp', 'default'],
+    ['@sindresorhus/transliterate', 'default'],
     ['exifr', 'parse'],
     ['immutable', 'Map'],
     ['leaflet', 'map'],

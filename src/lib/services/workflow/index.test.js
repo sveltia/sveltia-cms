@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest';
 
-import { backend, backendName } from '$lib/services/backends';
+import { backend, backendName, loadBackendService } from '$lib/services/backends';
 import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
@@ -135,7 +135,9 @@ describe('workflow/index', () => {
 
     test.each(['github', 'gitlab', 'gitea'])(
       'is true with the %s backend and the editorial_workflow publish mode',
-      (name) => {
+      async (name) => {
+        // GitLab and Gitea are kept in chunks, which are loaded before a backend is selected
+        await loadBackendService(name);
         backendName.current = name;
         cmsConfig.current = /** @type {any} */ ({ publish_mode: 'editorial_workflow' });
         expect(workflowEnabled.current).toBe(true);

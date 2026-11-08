@@ -1,6 +1,5 @@
 import { unique } from '@sveltia/utils/array';
 import { isTextFileType } from '@sveltia/utils/file';
-import mime from 'mime';
 
 import { fetchAllPages, fetchPages } from '$lib/services/backends/git/gitea/api';
 import { fetchRawFile } from '$lib/services/backends/git/gitea/files';
@@ -23,6 +22,7 @@ import {
 } from '$lib/services/backends/git/shared/repository';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
+import mime from '$lib/services/utils/mime';
 import { encodePathSegments } from '$lib/services/utils/url';
 import {
   getStatusFromLabels,

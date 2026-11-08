@@ -249,11 +249,29 @@ const getCachedBackendName = (_user) =>
   _user?.backendName === 'proxy' ? 'local' : _user?.backendName;
 
 /**
+ * Select the backend with the given name, loading it if needed. A failure to load it, e.g. when the
+ * chunk holding a Git backend can’t be fetched, is reported as a sign-in error.
+ * @param {string} _backendName Backend name.
+ * @returns {Promise<BackendService | undefined>} Selected backend service, or `undefined` if it
+ * couldn’t be loaded or there’s no backend with the name.
+ */
+const trySelectBackend = async (_backendName) => {
+  try {
+    return await selectBackend(_backendName);
+  } catch (/** @type {any} */ ex) {
+    logError(ex);
+
+    return undefined;
+  }
+};
+
+/**
  * Get the backend instance based on the cached user info or site config.
  * @param {Record<string, any> | undefined} _user Cached user info.
- * @returns {BackendService | undefined} Backend instance to be used.
+ * @returns {Promise<BackendService | undefined>} Backend instance to be used, or `undefined` if it
+ * couldn’t be loaded.
  */
-export const getBackend = (_user) => {
+export const getBackend = async (_user) => {
   // Determine the backend name based on the user cache or site config. Use the local backend if the
   // user cache is found and the backend name is `local`, which is used by Sveltia CMS, or `proxy`,
   // which is used by Netlify/Decap CMS when running the local proxy server. Otherwise, simply use
@@ -265,7 +283,7 @@ export const getBackend = (_user) => {
       ? 'local'
       : /** @type {InternalCmsConfig} */ (cmsConfig.current).backend.name;
 
-  return selectBackend(_backendName);
+  return trySelectBackend(_backendName);
 };
 
 /**
@@ -278,7 +296,7 @@ export const getBackend = (_user) => {
  * the account, or `undefined` otherwise.
  */
 export const confirmMagicLink = async (token) => {
-  const _backend = getBackend(undefined);
+  const _backend = await getBackend(undefined);
 
   if (!_backend) {
     return undefined;
@@ -387,7 +405,7 @@ export const signInAutomatically = async () => {
   _user ??= await getUserCache();
 
   // Initialize the backend, which is needed on the login page
-  const _backend = getBackend(_user);
+  const _backend = await getBackend(_user);
 
   // If no cached user info is found, simply return as we cannot sign in automatically
   if (!_user) {
@@ -463,7 +481,7 @@ export const signInAutomatically = async () => {
 export const signInManually = async (_backendName, token) => {
   resetError();
 
-  const _backend = selectBackend(_backendName);
+  const _backend = await trySelectBackend(_backendName);
 
   if (!_backend) {
     return;
@@ -533,7 +551,7 @@ export const signOut = async () => {
   await clearUserCache();
   clearIntegrationCredentials();
 
-  selectBackend(undefined);
+  await selectBackend(undefined);
   dataLoaded.current = false;
   // The items of the files storing all the entries of a collection belong to this repository
   arrayFileItems.clear();

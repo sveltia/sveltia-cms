@@ -29,6 +29,7 @@ const SHIKI_PACKAGES = ['@shikijs/langs', '@shikijs/themes'];
  * bundler only rewrites for files of the package itself, see `pdf-options.npm.js`.
  */
 const LIBRARY_PACKAGES = [
+  '@sindresorhus/transliterate',
   'exifr',
   'immutable',
   'leaflet',

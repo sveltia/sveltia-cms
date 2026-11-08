@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { loadChunk } from '$lib/services/app/dependencies';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { cancelAuthorization } from '$lib/services/backends/git/shared/auth';
 import { cmsConfig } from '$lib/services/config';
@@ -35,6 +36,14 @@ vi.mock('$lib/services/user/auth.svelte', async () => {
     signInManually: vi.fn(),
     signOut: vi.fn(),
   };
+});
+
+// The GitLab and Gitea backends are loaded from chunks, which a test can hold back or fail
+vi.mock('$lib/services/app/dependencies', async (importOriginal) => {
+  /** @type {typeof import('$lib/services/app/dependencies')} */
+  const original = await importOriginal();
+
+  return { ...original, loadChunk: vi.fn(original.loadChunk) };
 });
 
 describe('SignIn', () => {
@@ -204,6 +213,91 @@ describe('SignIn', () => {
     const { container } = await render(SignIn, {});
 
     expect(container.querySelector('.buttons')?.children).toHaveLength(0);
+  });
+
+  test('offers nothing for a backend that fails to load', async () => {
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitlab', repo: 'acme/site' } });
+    vi.mocked(loadChunk).mockRejectedValueOnce(new Error('Offline'));
+
+    const { container } = await render(SignIn, {});
+
+    await expect.poll(() => loadChunk).toHaveBeenCalledWith('gitlab');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+    expect(container.querySelector('.buttons')?.children).toHaveLength(0);
+  });
+
+  test('offers the configured backend if it changes while another is being loaded', async () => {
+    /**
+     * Resolve the held back chunk.
+     * @type {(value: any) => void}
+     */
+    let resolveChunk = () => {};
+
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitlab', repo: 'acme/site' } });
+    vi.mocked(loadChunk).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveChunk = resolve;
+      }),
+    );
+
+    await render(SignIn, {});
+
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github', repo: 'acme/site' } });
+
+    await expect
+      .element(page.getByRole('button', { name: /^Sign In with .*GitHub/ }))
+      .toBeVisible();
+
+    resolveChunk({ gitlab: { isGit: true, name: 'gitlab', label: 'GitLab', repository: {} } });
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+    await expect
+      .element(page.getByRole('button', { name: /^Sign In with .*GitHub/ }))
+      .toBeVisible();
+  });
+
+  test('stops offering the previous backend while the configured one is being loaded', async () => {
+    const loadOriginalChunk = /** @type {(name: string) => Promise<any>} */ (
+      vi.mocked(loadChunk).getMockImplementation()
+    );
+
+    /**
+     * Release the held back chunk.
+     * @type {(value?: any) => void}
+     */
+    let releaseChunk = () => {};
+
+    const held = new Promise((resolve) => {
+      releaseChunk = resolve;
+    });
+
+    vi.mocked(loadChunk).mockImplementationOnce(async (name) => {
+      await held;
+
+      return loadOriginalChunk(name);
+    });
+
+    await render(SignIn, {});
+    await expect
+      .element(page.getByRole('button', { name: 'Sign In with \u2068GitHub\u2069' }))
+      .toBeVisible();
+
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitea', repo: 'acme/site' } });
+
+    await expect.poll(() => loadChunk).toHaveBeenCalledWith('gitea');
+    await expect
+      .element(page.getByRole('button', { name: /^Sign In with .*GitHub/ }))
+      .not.toBeInTheDocument();
+
+    releaseChunk();
+
+    await expect
+      .element(page.getByRole('button', { name: 'Sign In with \u2068Gitea / Forgejo\u2069' }))
+      .toBeVisible();
   });
 
   test('explains why the local option is unavailable', async () => {

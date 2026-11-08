@@ -1,3 +1,5 @@
+import { readFile } from 'fs/promises';
+
 import { expect, test } from '../../fixtures/test.js';
 import {
   getEditor,
@@ -164,8 +166,28 @@ test.describe('`encoding: ascii`', () => {
   });
 });
 
+/**
+ * Serve the installed transliterate library in place of the CDN copy the CMS loads for the
+ * `clean_accents` option, so the tests don’t depend on the network.
+ * @param {{ page: Page }} fixtures Fixtures.
+ * @returns {Promise<void>}
+ */
+const serveTransliterator = ({ page }) =>
+  page.route('https://unpkg.com/@sindresorhus/transliterate@*/*.js', async (route) => {
+    const fileName = new URL(route.request().url()).pathname.split('/').pop();
+
+    await route.fulfill({
+      contentType: 'text/javascript',
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: await readFile(
+        new URL(`../../../node_modules/@sindresorhus/transliterate/${fileName}`, import.meta.url),
+      ),
+    });
+  });
+
 test.describe('`clean_accents: true`', () => {
   test.use({ config: makeConfig({ clean_accents: true }) });
+  test.beforeEach(serveTransliterator);
 
   test('transliterates accented letters and punctuation, and keeps other Unicode characters', async ({
     cms,
@@ -181,6 +203,7 @@ test.describe('`clean_accents: true`', () => {
 
 test.describe('`clean_accents: true` with `encoding: ascii`', () => {
   test.use({ config: makeConfig({ encoding: 'ascii', clean_accents: true }) });
+  test.beforeEach(serveTransliterator);
 
   test('transliterates accented letters before dropping non-ASCII characters', async ({
     cms,

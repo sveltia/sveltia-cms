@@ -4,7 +4,7 @@
   import { onMount } from 'svelte';
 
   import { DOCS_BASE_URL } from '$lib/services/app';
-  import { allBackendServices } from '$lib/services/backends';
+  import { loadBackendService } from '$lib/services/backends';
   import { isDemoSite } from '$lib/services/backends/fs/seed';
   import { cancelAuthorization } from '$lib/services/backends/git/shared/auth';
   import { cmsConfig } from '$lib/services/config';
@@ -20,6 +20,7 @@
   import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
   /**
+   * @import { BackendService } from '$lib/types/private';
    * @import { Backend, GitBackend } from '$lib/types/public';
    */
 
@@ -28,7 +29,12 @@
 
   const configuredBackend = $derived(/** @type {Backend} */ (cmsConfig.current?.backend));
   const backendName = $derived(/** @type {string} */ (configuredBackend.name));
-  const backend = $derived(allBackendServices[backendName]);
+  /**
+   * The configured backend service, once loaded: a Git backend other than GitHub is kept in a chunk
+   * of its own, which is only fetched for a site that uses it.
+   * @type {BackendService | undefined}
+   */
+  let backend = $state.raw();
   const isTestRepo = $derived(backendName === 'test-repo');
   const isDemo = $derived(isDemoSite(backendName));
   const testRepoUnsupported = $derived(isTestRepo && !env.isTestBackendSupported);
@@ -61,6 +67,25 @@
     return login || name || '';
   });
   /* v8 ignore stop */
+
+  $effect(() => {
+    const name = backendName;
+
+    // Don’t offer the previous backend while the configured one is being loaded
+    backend = undefined;
+
+    loadBackendService(name).then(
+      (service) => {
+        // The configuration may have changed while the service was being loaded
+        if (name === backendName) {
+          backend = service;
+        }
+      },
+      () => {
+        // The automatic sign-in loads the same service and reports the failure
+      },
+    );
+  });
 
   onMount(() => {
     // Skip automatic sign-in if there’s already an error (e.g. repository access denied), so the

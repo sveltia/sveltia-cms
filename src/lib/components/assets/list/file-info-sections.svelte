@@ -6,11 +6,11 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { getPathInfo } from '@sveltia/utils/file';
-  import mime from 'mime';
 
   import { formatSize } from '$lib/services/assets/file-size';
   import { getFileTypeLabel } from '$lib/services/assets/file-type';
   import { formatDuration } from '$lib/services/utils/media/video';
+  import mime from '$lib/services/utils/mime';
 
   /**
    * @import { AssetKind, MediaDimensions } from '$lib/types/private';

@@ -1,5 +1,4 @@
 import { escapeRegExp } from '@sveltia/utils/string';
-import mime from 'mime';
 
 import { getExistingEntryAssetFolderPath } from '$lib/services/assets/entry-folder';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
@@ -20,6 +19,7 @@ import {
   transformImage,
 } from '$lib/services/utils/media/image/transform';
 import { renderPDF } from '$lib/services/utils/media/pdf';
+import mime from '$lib/services/utils/mime';
 import { createConcurrencyLimiter } from '$lib/services/utils/scheduling';
 
 /**

@@ -55,7 +55,7 @@ vi.mock('$lib/services/app/navigation', () => ({
 vi.mock('$lib/services/backends', () => ({
   backend: mockBackendStore,
   backendName: mockBackendName,
-  selectBackend: vi.fn((name) => {
+  selectBackend: vi.fn(async (name) => {
     mockBackendName.current = name;
 
     return name ? mockBackendStore.current : undefined;
@@ -449,77 +449,92 @@ describe('auth service', () => {
   });
 
   describe('getBackend', () => {
-    it('should return backend and set local backendName when user has local backendName', () => {
+    it('should return backend and set local backendName when user has local backendName', async () => {
       const _user = { token: 'test-token', backendName: 'local' };
 
       mockBackendStore.current = mockBackend;
       mockCmsConfigStore.current = mockCmsConfig;
 
-      const result = authModule.getBackend(_user);
+      const result = await authModule.getBackend(_user);
 
       expect(mockBackendName.current).toEqual('local');
       expect(result).toBe(mockBackend);
     });
 
-    it('should return backend and set local backendName when user has proxy backendName', () => {
+    it('should return backend and set local backendName when user has proxy backendName', async () => {
       const _user = { token: 'test-token', backendName: 'proxy' };
 
       mockBackendStore.current = mockBackend;
       mockCmsConfigStore.current = mockCmsConfig;
 
-      const result = authModule.getBackend(_user);
+      const result = await authModule.getBackend(_user);
 
       // Should convert proxy to local
       expect(mockBackendName.current).toEqual('local');
       expect(result).toBe(mockBackend);
     });
 
-    it('should use backend name from cmsConfig when user has different backendName', () => {
+    it('should use backend name from cmsConfig when user has different backendName', async () => {
       const _user = { token: 'test-token', backendName: 'gitlab' };
 
       mockBackendStore.current = mockBackend;
       mockCmsConfigStore.current = mockCmsConfig;
 
-      const result = authModule.getBackend(_user);
+      const result = await authModule.getBackend(_user);
 
       // Should use the name from cmsConfig (github in this case)
       expect(mockBackendName.current).toEqual('github');
       expect(result).toBe(mockBackend);
     });
 
-    it('should use backend name from cmsConfig when user is undefined', () => {
+    it('should use backend name from cmsConfig when user is undefined', async () => {
       mockBackendStore.current = mockBackend;
       mockCmsConfigStore.current = mockCmsConfig;
 
-      const result = authModule.getBackend(undefined);
+      const result = await authModule.getBackend(undefined);
 
       expect(mockBackendName.current).toEqual('github');
       expect(result).toBe(mockBackend);
     });
 
-    it('should return undefined when backend store returns undefined', () => {
+    it('should return undefined when backend store returns undefined', async () => {
       const _user = { token: 'test-token', backendName: 'github' };
 
       mockBackendStore.current = undefined;
       mockCmsConfigStore.current = mockCmsConfig;
 
-      const result = authModule.getBackend(_user);
+      const result = await authModule.getBackend(_user);
 
       expect(mockBackendName.current).toEqual('github');
       expect(result).toBeUndefined();
     });
 
-    it('should handle user with custom backend name not in local/proxy list', () => {
+    it('should handle user with custom backend name not in local/proxy list', async () => {
       const _user = { token: 'test-token', backendName: 'gitea' };
 
       mockBackendStore.current = mockBackend;
       mockCmsConfigStore.current = mockCmsConfig;
 
-      const result = authModule.getBackend(_user);
+      const result = await authModule.getBackend(_user);
 
       // Should use cmsConfig backend name, not the user's gitea
       expect(mockBackendName.current).toEqual('github');
       expect(result).toBe(mockBackend);
+    });
+
+    it('reports a backend that fails to load as a sign-in error', async () => {
+      const { selectBackend } = await import('$lib/services/backends');
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      mockCmsConfigStore.current = mockCmsConfig;
+      vi.mocked(selectBackend).mockRejectedValueOnce(
+        new Error('Failed to load the gitlab chunk.', { cause: { message: 'Offline' } }),
+      );
+
+      await expect(authModule.getBackend(undefined)).resolves.toBeUndefined();
+      expect(auth.signInError).toEqual({ message: 'Offline', context: 'authentication' });
+
+      consoleSpy.mockRestore();
     });
   });
 

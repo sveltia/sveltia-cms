@@ -6,7 +6,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { EmptyState } from '@sveltia/ui';
-  import mime from 'mime';
 
   import AssetPreviewContent from '$lib/components/assets/list/asset-preview-content.svelte';
   import DeleteAssetsButton from '$lib/components/assets/list/delete-assets-button.svelte';
@@ -29,6 +28,7 @@
   import { externalAssetGroups } from '$lib/services/assets/external/view';
   import { getAdjacentAssets } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
+  import mime from '$lib/services/utils/mime';
 
   /**
    * @import { ViewTransitionType } from '$lib/services/app/navigation';

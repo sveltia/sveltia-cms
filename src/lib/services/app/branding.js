@@ -1,5 +1,4 @@
 import { encodeBase64 } from '@sveltia/utils/file';
-import mime from 'mime';
 
 import SveltiaLogo from '$lib/assets/sveltia-logo.svg?raw&inline';
 import { cmsConfig } from '$lib/services/config';
@@ -7,6 +6,7 @@ import {
   THUMBNAIL_TRANSFORM_OPTIONS,
   transformImage,
 } from '$lib/services/utils/media/image/transform';
+import mime from '$lib/services/utils/mime';
 import { fetchOK } from '$lib/services/utils/networking';
 import {
   createDerivedState,
