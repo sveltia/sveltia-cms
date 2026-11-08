@@ -1,6 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { assertResponseOK, fetchOK, isLocalHostname, isSecureURL, sendRequest } from './networking';
+import {
+  assertResponseOK,
+  fetchOK,
+  getRetryDelay,
+  isLocalHostname,
+  isSecureURL,
+  MAX_RETRY_DELAY,
+  sendRequest,
+} from './networking';
 
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn().mockResolvedValue(undefined) }));
 
@@ -503,6 +511,78 @@ describe('sendRequest', () => {
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
 
+  test.each([429, 503, 504])(
+    'should retry a request without side effects on %i',
+    async (status) => {
+      const { sleep } = await import('@sveltia/utils/misc');
+
+      mockFetch.mockResolvedValueOnce(
+        new Response('busy', { status, headers: { 'Retry-After': '3' } }),
+      );
+      mockFetch.mockResolvedValueOnce(Response.json({ data: 'success' }));
+
+      expect(await sendRequest('https://api.example.com/data')).toEqual({ data: 'success' });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(sleep).toHaveBeenLastCalledWith(3000);
+    },
+  );
+
+  test('should retry a GraphQL query and a raw response on a transient error', async () => {
+    const { sleep } = await import('@sveltia/utils/misc');
+
+    mockFetch.mockResolvedValueOnce(new Response('busy', { status: 503 }));
+    mockFetch.mockResolvedValueOnce(Response.json({ data: { viewer: {} } }));
+    expect(
+      await sendRequest('https://api.example.com/graphql', {
+        method: 'POST',
+        body: /** @type {any} */ ({ query: '{ viewer { login } }' }),
+      }),
+    ).toEqual({ data: { viewer: {} } });
+
+    const okResponse = new Response('ok');
+
+    mockFetch.mockResolvedValueOnce(
+      new Response('busy', { status: 429, headers: { 'Retry-After': '1' } }),
+    );
+    mockFetch.mockResolvedValueOnce(okResponse);
+    expect(await sendRequest('https://api.example.com/data', {}, { responseType: 'raw' })).toBe(
+      okResponse,
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(4);
+    expect(sleep).toHaveBeenLastCalledWith(1000);
+  });
+
+  test('should not retry a request the server asks to send again much later', async () => {
+    const response = new Response('busy', { status: 429, headers: { 'Retry-After': '60' } });
+
+    mockFetch.mockResolvedValue(response);
+
+    await expect(sendRequest('https://api.example.com/data')).rejects.toMatchObject({
+      cause: { status: 429 },
+    });
+    expect(await sendRequest('https://api.example.com/data', {}, { responseType: 'raw' })).toBe(
+      response,
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  // A gateway can time out after a large commit has landed, and the repeat would be refused
+  test.each([429, 503, 504])(
+    'should not retry a request with side effects on %i, even when it opts in',
+    async (status) => {
+      mockFetch.mockResolvedValue(new Response('busy', { status }));
+
+      await expect(
+        sendRequest(
+          'https://api.example.com/commits',
+          { method: 'POST', body: /** @type {any} */ ({ branch: 'main' }) },
+          { retryable: true },
+        ),
+      ).rejects.toMatchObject({ cause: { status } });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    },
+  );
+
   test('should keep a request retryable after refreshing the token', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
@@ -729,6 +809,44 @@ describe('sendRequest', () => {
       message: 'Server responded with an error',
       cause: { status: 403 },
     });
+  });
+});
+
+describe('getRetryDelay', () => {
+  test('should read a number of seconds', () => {
+    expect(getRetryDelay(503, new Headers({ 'Retry-After': '2' }))).toBe(2000);
+    expect(getRetryDelay(429, new Headers({ 'Retry-After': ' 0 ' }))).toBe(0);
+  });
+
+  test('should read an HTTP date', () => {
+    vi.useFakeTimers({ now: new Date('2026-11-08T12:00:00Z') });
+
+    try {
+      expect(
+        getRetryDelay(503, new Headers({ 'Retry-After': 'Sun, 08 Nov 2026 12:00:05 GMT' })),
+      ).toBe(5000);
+      // A date in the past means the request can be sent again right away
+      expect(
+        getRetryDelay(503, new Headers({ 'Retry-After': 'Sun, 08 Nov 2026 11:00:00 GMT' })),
+      ).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('should not retry sooner than the server asks', () => {
+    expect(getRetryDelay(503, new Headers({ 'Retry-After': '10' }))).toBe(MAX_RETRY_DELAY);
+    expect(getRetryDelay(503, new Headers({ 'Retry-After': '11' }))).toBeUndefined();
+    expect(getRetryDelay(429, new Headers({ 'Retry-After': '60' }))).toBeUndefined();
+  });
+
+  test('should wait a second without a valid header, except for a rate limit', () => {
+    expect(getRetryDelay(503, undefined)).toBe(1000);
+    expect(getRetryDelay(504, new Headers())).toBe(1000);
+    expect(getRetryDelay(502, new Headers({ 'Retry-After': 'soon' }))).toBe(1000);
+    // A rate limit without a delay typically lasts until the limit resets, a minute or more later
+    expect(getRetryDelay(429, new Headers())).toBeUndefined();
+    expect(getRetryDelay(429, new Headers({ 'Retry-After': 'soon' }))).toBeUndefined();
   });
 });
 

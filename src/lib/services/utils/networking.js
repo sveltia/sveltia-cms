@@ -77,6 +77,53 @@ const isRetryableRequest = ({ method = 'GET', body }) => {
 };
 
 /**
+ * Statuses of a transient server error, other than 502 Bad Gateway, that a request without side
+ * effects is retried once for: 429 Too Many Requests, 503 Service Unavailable and 504 Gateway
+ * Timeout, which a rate limit or a self-hosted instance under load answers with. A write that opts
+ * in with `retryable` is only retried on 502: a gateway can time out with 504 after a large commit
+ * has landed, and the repeat would be refused as a conflict.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1143
+ */
+const TRANSIENT_STATUSES = [429, 503, 504];
+/**
+ * Wait before a retry when the server doesn’t say how long to wait, in milliseconds.
+ */
+const DEFAULT_RETRY_DELAY = 1000;
+
+/**
+ * Longest wait before a retry, in milliseconds. A request the server asks to send again later than
+ * that isn’t retried, as the wait would look like a hang.
+ */
+export const MAX_RETRY_DELAY = 10 * 1000;
+
+/**
+ * Get how long to wait before sending a request again after a transient error, from the
+ * `Retry-After` header of the response, which gives either a number of seconds or an HTTP date. A
+ * request isn’t to be sent again sooner than the server asks: GitHub may ban an integration that
+ * keeps sending requests while it’s rate limited. A rate limit that doesn’t say how long to wait
+ * typically lasts a minute or more, until the limit resets, so it isn’t retried either.
+ * @param {number} status Response status.
+ * @param {Headers} [headers] Response headers.
+ * @returns {number | undefined} Delay in milliseconds, between `0` and {@link MAX_RETRY_DELAY}, or
+ * `undefined` if the request is not to be retried now.
+ * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Retry-After
+ * @see https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api#exceeding-the-rate-limit
+ */
+export const getRetryDelay = (status, headers) => {
+  const value = headers?.get('Retry-After')?.trim();
+
+  if (value) {
+    const delay = /^\d+$/.test(value) ? Number(value) * 1000 : Date.parse(value) - Date.now();
+
+    if (!Number.isNaN(delay)) {
+      return delay > MAX_RETRY_DELAY ? undefined : Math.max(delay, 0);
+    }
+  }
+
+  return status === 429 ? undefined : DEFAULT_RETRY_DELAY;
+};
+
+/**
  * Send a request with `fetch()`, taking the same arguments, and make sure the response status is
  * OK.
  * @param {Parameters<typeof fetch>} args Resource and request options.
@@ -104,7 +151,7 @@ export const fetchOK = async (...args) => {
  * @param {() => Promise<AuthTokens>} [options.refreshAccessToken] A function to refresh the OAuth
  * access token when the request fails with a 401 Unauthorized status. If this function is provided,
  * the request will be retried with the new token.
- * @param {number} [options.retries] Number of remaining retries for transient server errors (5xx).
+ * @param {number} [options.retries] Number of remaining retries for transient server errors.
  * Defaults to `1`. Used internally for recursive retries.
  * @param {boolean} [options.retryable] Whether the request can be sent again after a transient
  * error. The default is `true` for a request without side effects, as determined by
@@ -167,12 +214,25 @@ export const sendRequest = async (
     return sendRequest(url, init, { responseType, retryable });
   };
 
+  // A transient error that may succeed on retry: 502 Bad Gateway, which the GitHub GraphQL API is
+  // known to occasionally answer with, and, for a request without side effects only, a rate limit
+  // or a self-hosted instance under load
+  // @see https://github.com/sveltia/sveltia-cms/issues/695
+  const retryDelay =
+    retries > 0 &&
+    retryable &&
+    (status === 502 || (TRANSIENT_STATUSES.includes(status) && isRetryableRequest(init)))
+      ? getRetryDelay(status, response.headers)
+      : undefined;
+
+  const shouldRetry = retryDelay !== undefined;
+
   /**
-   * Send the request again after a short delay.
+   * Send the request again after the delay the server asks for, or a short one.
    * @returns {Promise<object | string | Blob | Response>} Response data or `Response` itself.
    */
   const retryAfterDelay = async () => {
-    await sleep(1000);
+    await sleep(/** @type {number} */ (retryDelay));
 
     return sendRequest(url, init, {
       responseType,
@@ -182,10 +242,10 @@ export const sendRequest = async (
     });
   };
 
-  // A raw response is returned as is for the caller to check the status, but a transient 502 error
-  // is still retried and an expired token refreshed, the same as for the other response types
+  // A raw response is returned as is for the caller to check the status, but a transient error is
+  // still retried and an expired token refreshed, the same as for the other response types
   if (responseType === 'raw') {
-    if (status === 502 && retries > 0 && retryable) {
+    if (shouldRetry) {
       return retryAfterDelay();
     }
 
@@ -225,11 +285,7 @@ export const sendRequest = async (
     return result;
   }
 
-  // Retry the request if the server responded with 502 Bad Gateway, which is a transient error that
-  // may succeed on retry. This is especially relevant for the GitHub GraphQL API, which is known to
-  // occasionally return 502 errors. Only a request without side effects is retried.
-  // @see https://github.com/sveltia/sveltia-cms/issues/695
-  if (status === 502 && retries > 0 && retryable) {
+  if (shouldRetry) {
     return retryAfterDelay();
   }
 
