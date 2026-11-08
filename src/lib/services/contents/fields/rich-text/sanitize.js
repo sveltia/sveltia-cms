@@ -29,7 +29,9 @@ export const SANITIZE_OPTIONS = {
  * load a remote resource. The browser expands a shorthand like `background` into its individual
  * properties when parsing the style, so only the harmless part of a shorthand is kept.
  * `text-decoration` is also listed for a DOM implementation that doesn’t expand it; it can’t load
- * anything either way.
+ * anything either way. Likewise, `text-align` is a shorthand for `text-align-all` and
+ * `text-align-last` in CSS Text Level 4, which jsdom implements but browsers don’t yet, so all
+ * three are listed.
  */
 const ALLOWED_STYLE_PROPERTIES = [
   'color',
@@ -42,6 +44,8 @@ const ALLOWED_STYLE_PROPERTIES = [
   'text-decoration-color',
   'text-decoration-thickness',
   'text-align',
+  'text-align-all',
+  'text-align-last',
   'width',
   'height',
   'max-width',
