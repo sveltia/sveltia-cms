@@ -425,3 +425,72 @@ test.describe('with `prompt_commit_messages` on', () => {
     );
   });
 });
+
+test.describe('with a gallery of entry-relative media', () => {
+  test.use({
+    config: {
+      ...GITLAB_CONFIG,
+      collections: [
+        {
+          name: 'galleries',
+          label: 'Galleries',
+          folder: 'content/gallery',
+          path: '{{slug}}/index',
+          media_folder: '.',
+          public_folder: '.',
+          create: true,
+          fields: [{ name: 'title', label: 'Title' }],
+        },
+      ],
+    },
+  });
+
+  test('lists only the folders a colleague’s commit has changed when loading again', async ({
+    cms,
+    gitlab,
+    page,
+  }) => {
+    const png = createPNG();
+
+    gitlab.commit({
+      'content/gallery/spring/index.md': '---\ntitle: Spring\n---\n',
+      'content/gallery/spring/a.png': png,
+      'content/gallery/summer/index.md': '---\ntitle: Summer\n---\n',
+      'content/gallery/summer/b.png': png,
+    });
+
+    /** @type {string[]} */
+    const listed = [];
+
+    page.on('request', (request) => {
+      const url = new URL(request.url());
+
+      if (url.pathname.endsWith('/repository/tree')) {
+        listed.push(url.searchParams.get('path') ?? '');
+      }
+    });
+
+    await cms.open();
+    await expect(page.getByRole('row', { name: 'Summer' })).toBeVisible();
+    expect(listed.sort()).toEqual([
+      'content/gallery',
+      'content/gallery/spring',
+      'content/gallery/summer',
+    ]);
+
+    gitlab.commit({
+      'content/gallery/autumn/index.md': '---\ntitle: Autumn\n---\n',
+      'content/gallery/autumn/c.png': png,
+    });
+    listed.length = 0;
+    await page.reload();
+
+    // The albums that haven’t changed come from the cache
+    await expect(page.getByRole('row', { name: 'Autumn' })).toBeVisible();
+    await expect(page.getByRole('row', { name: 'Spring' })).toBeVisible();
+    expect(listed.sort()).toEqual(['content/gallery', 'content/gallery/autumn']);
+
+    await page.getByRole('radio', { name: 'Assets' }).click();
+    await expect(page.getByRole('row', { name: /^[abc]\.png$/ })).toHaveCount(3);
+  });
+});

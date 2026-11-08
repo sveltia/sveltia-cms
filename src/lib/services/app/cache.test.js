@@ -66,11 +66,12 @@ describe('clearFileCache()', () => {
 
     await clearFileCache();
 
-    expect(IndexedDB).toHaveBeenCalledTimes(3);
+    expect(IndexedDB).toHaveBeenCalledTimes(4);
     expect(IndexedDB).toHaveBeenCalledWith('github:owner/repo', 'file-cache');
+    expect(IndexedDB).toHaveBeenCalledWith('github:owner/repo', 'tree-cache');
     expect(IndexedDB).toHaveBeenCalledWith('github:owner/repo', 'asset-thumbnails');
     expect(IndexedDB).toHaveBeenCalledWith('github:owner/repo', 'asset-hashes');
-    expect(clear).toHaveBeenCalledTimes(3);
+    expect(clear).toHaveBeenCalledTimes(4);
     expect(removeEntry).not.toHaveBeenCalled();
   });
 
@@ -99,6 +100,8 @@ describe('clearFileCache()', () => {
     resolvers[1]();
     await vi.waitFor(() => expect(clear).toHaveBeenCalledTimes(3));
     resolvers[2]();
+    await vi.waitFor(() => expect(clear).toHaveBeenCalledTimes(4));
+    resolvers[3]();
     await expect(promise).resolves.toBeUndefined();
   });
 

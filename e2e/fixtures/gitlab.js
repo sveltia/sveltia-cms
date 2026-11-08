@@ -108,7 +108,7 @@ export class MockGitLab extends MockGitRepository {
   forkPendingRequests = 0;
 
   /**
-   * Maximum number of files in a page of the file list, which GitLab limits to 100.
+   * Maximum number of entries in a page of a directory listing, which GitLab limits to 100.
    */
   treePageSize = 100;
 
@@ -873,6 +873,52 @@ export class MockGitLab extends MockGitRepository {
         : { status: 404, json: { message: '404 Not Found' } };
     }
 
+    // The direct children of a directory at a branch or commit, a page at a time with keyset
+    // pagination: subtrees first, then files, like GitLab. The token of the next page, the index of
+    // its first entry here, comes in the `Link` header
+    if (method === 'GET' && resource === 'tree' && !onFork) {
+      const ref = searchParams.get('ref') ?? this.branch;
+      const commit = this.refs.has(ref) ? this.getHead(ref) : this.getCommit(ref);
+      const dir = searchParams.get('path') ?? '';
+      const prefix = dir ? `${dir}/` : '';
+      const tree = commit?.tree ?? new Map();
+      const paths = [...tree.keys()].filter((path) => path.startsWith(prefix));
+
+      if (!paths.length) {
+        return { status: 404, json: { message: '404 Tree Not Found' } };
+      }
+
+      const names = paths.map((path) => path.slice(prefix.length));
+
+      const subdirectories = new Set(
+        names.filter((name) => name.includes('/')).map((name) => name.split('/')[0]),
+      );
+
+      const entries = [
+        ...[...subdirectories].sort().map((name) => ({
+          type: 'tree',
+          name,
+          id: MockGitRepository.getDirSHA(tree, `${prefix}${name}`),
+        })),
+        ...names
+          .filter((name) => !name.includes('/'))
+          .sort()
+          .map((name) => ({ type: 'blob', name, id: tree.get(`${prefix}${name}`) })),
+      ];
+
+      const start = Number(searchParams.get('page_token') || 0);
+      const end = start + this.treePageSize;
+      const next = new URL(`${this.apiRoot}${pathname}`);
+
+      searchParams.forEach((value, key) => next.searchParams.set(key, value));
+      next.searchParams.set('page_token', String(end));
+
+      return {
+        json: entries.slice(start, end),
+        headers: end < entries.length ? { Link: `<${next.href}>; rel="next"` } : {},
+      };
+    }
+
     /**
      * Get the key a branch of the project being addressed has in {@link refs}.
      * @param {string} branch Branch name.
@@ -1078,36 +1124,6 @@ export class MockGitLab extends MockGitRepository {
                     ),
                   })),
                   pageInfo: { endCursor: '', hasNextPage: false },
-                },
-              },
-            },
-          },
-        },
-      };
-    }
-
-    // The file list, a page at a time, with the index of the next file as the cursor. Like GitLab,
-    // only the files in the directory given as `path` are listed, with full paths
-    if (query.includes('blobs(after:')) {
-      const prefix = variables.path ? `${variables.path}/` : '';
-
-      const entries = [...(head?.tree ?? [])]
-        .filter(([path]) => path.startsWith(prefix))
-        .sort(([a], [b]) => a.localeCompare(b));
-
-      const start = Number(variables.cursor || 0);
-      const end = start + this.treePageSize;
-
-      return {
-        data: {
-          project: {
-            repository: {
-              tree: {
-                blobs: {
-                  nodes: entries
-                    .slice(start, end)
-                    .map(([path, sha]) => ({ type: 'blob', path, sha })),
-                  pageInfo: { endCursor: String(end), hasNextPage: end < entries.length },
                 },
               },
             },

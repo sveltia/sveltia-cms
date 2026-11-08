@@ -12,8 +12,12 @@ import {
   fetchFileContents,
   fetchFileList,
   fetchFiles,
+  fetchTreeListing,
+  getNextPageParams,
   parseFileContents,
   SELF_HOSTED_BLOB_CONCURRENCY,
+  SELF_HOSTED_TREE_CONCURRENCY,
+  TREE_CONCURRENCY,
 } from '$lib/services/backends/git/gitlab/files';
 import {
   getWorkflowRepository,
@@ -31,6 +35,7 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { getManagedPaths } from '$lib/services/backends/git/shared/managed-paths';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
+import { listTrees } from '$lib/services/backends/git/shared/tree-cache';
 import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 // The function returned by `startSimulatedProgress()`, so the tests can verify it’s called
@@ -53,6 +58,7 @@ vi.mock('$lib/services/backends/git/gitlab/fork');
 vi.mock('$lib/services/backends/git/gitlab/repository');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/fetch');
+vi.mock('$lib/services/backends/git/shared/tree-cache');
 vi.mock('$lib/services/backends/git/shared/progress', () => ({
   startSimulatedProgress: vi.fn(() => stopProgress),
 }));
@@ -144,213 +150,199 @@ describe('GitLab files service', () => {
     });
   });
 
-  describe('fetchFileList', () => {
-    test('fetches all files with pagination', async () => {
-      const mockFirstPage = {
-        project: {
-          repository: {
-            tree: {
-              blobs: {
-                nodes: [
-                  { type: 'blob', path: 'file1.md', sha: 'sha1' },
-                  { type: 'blob', path: 'file2.md', sha: 'sha2' },
-                ],
-                pageInfo: {
-                  endCursor: 'cursor1',
-                  hasNextPage: true,
-                },
-              },
-            },
-          },
-        },
-      };
-
-      const mockSecondPage = {
-        project: {
-          repository: {
-            tree: {
-              blobs: {
-                nodes: [{ type: 'blob', path: 'file3.md', sha: 'sha3' }],
-                pageInfo: {
-                  endCursor: 'cursor2',
-                  hasNextPage: false,
-                },
-              },
-            },
-          },
-        },
-      };
-
-      vi.mocked(fetchGraphQL)
-        .mockResolvedValueOnce(mockFirstPage)
-        .mockResolvedValueOnce(mockSecondPage);
-
-      vi.mocked(getPathInfo)
-        .mockReturnValueOnce({ basename: 'file1.md', filename: 'file1', extension: 'md' })
-        .mockReturnValueOnce({ basename: 'file2.md', filename: 'file2', extension: 'md' })
-        .mockReturnValueOnce({ basename: 'file3.md', filename: 'file3', extension: 'md' });
-
-      const result = await fetchFileList();
-
-      expect(fetchGraphQL).toHaveBeenCalledTimes(2);
-      expect(fetchGraphQL).toHaveBeenCalledWith(
-        expect.stringContaining('tree(ref: $branch, recursive: true)'),
-        { cursor: '' },
-      );
-      expect(fetchGraphQL).toHaveBeenCalledWith(
-        expect.stringContaining('query($fullPath: ID!, $branch: String!, $cursor: String!)'),
-        { cursor: '' },
-      );
-      expect(fetchGraphQL).toHaveBeenCalledWith(
-        expect.stringContaining('query($fullPath: ID!, $branch: String!, $cursor: String!)'),
-        { cursor: 'cursor1' },
-      );
-
-      expect(result).toEqual([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
-        { path: 'file2.md', sha: 'sha2', size: 0, name: 'file2.md' },
-        { path: 'file3.md', sha: 'sha3', size: 0, name: 'file3.md' },
-      ]);
+  describe('getNextPageParams', () => {
+    test('takes the token from the next link', () => {
+      expect(
+        getNextPageParams(
+          '<https://gitlab.com/api/v4/projects/1/repository/tree?page_token=abc&per_page=100>; ' +
+            'rel="next", <https://gitlab.com/api/v4/projects/1/repository/tree>; rel="first"',
+        ),
+      ).toEqual({ page_token: 'abc' });
     });
 
-    describe('with a root directory', () => {
-      beforeEach(() => {
-        mockGetRootDir.mockReturnValue('apps/site');
-        vi.mocked(getPathInfo).mockReturnValue({
-          basename: 'a.md',
-          filename: 'a',
-          extension: 'md',
-        });
+    test('takes the page number from an offset-paginated next link', () => {
+      expect(
+        getNextPageParams('<https://gitlab.example.com/api/v4/a?page=2&per_page=100>; rel="next"'),
+      ).toEqual({ page: '2' });
+    });
+
+    test('returns undefined without a next link or its parameters', () => {
+      expect(getNextPageParams(null)).toBeUndefined();
+      expect(getNextPageParams('<https://gitlab.com/a?page_token=x>; rel="first"')).toBeUndefined();
+      expect(getNextPageParams('<https://gitlab.com/a?per_page=100>; rel="next"')).toBeUndefined();
+      expect(getNextPageParams('</a?page_token=x>; rel="next"')).toBeUndefined();
+    });
+  });
+
+  describe('fetchTreeListing', () => {
+    /**
+     * Make a raw response holding a page of a tree listing.
+     * @param {any[]} entries Tree entries.
+     * @param {string} [next] Token of the next page.
+     * @returns {Response} Response.
+     */
+    const makePage = (entries, next) =>
+      new Response(JSON.stringify(entries), {
+        headers: next
+          ? { Link: `<https://gitlab.com/api/v4/x?page_token=${next}&per_page=100>; rel="next"` }
+          : {},
       });
 
-      afterEach(() => {
-        mockGetRootDir.mockReturnValue('');
-      });
-
-      test('lists only the files in the root directory', async () => {
-        vi.mocked(fetchGraphQL).mockResolvedValue({
-          project: {
-            repository: {
-              tree: {
-                blobs: {
-                  nodes: [{ type: 'blob', path: 'apps/site/a.md', sha: 'sha1' }],
-                  pageInfo: { endCursor: 'cursor1', hasNextPage: false },
-                },
-              },
-            },
-          },
-        });
-
-        await expect(fetchFileList()).resolves.toEqual([
-          { path: 'apps/site/a.md', sha: 'sha1', size: 0, name: 'a.md' },
-        ]);
-        expect(fetchGraphQL).toHaveBeenCalledWith(
-          expect.stringMatching(
-            /\$path: String![^]*tree\(ref: \$branch, path: \$path, recursive: true\)/,
+    test('lists the subtrees and files of a directory, a page at a time', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce(
+          makePage(
+            [
+              { type: 'tree', name: 'album', id: 'tree1' },
+              { type: 'blob', name: 'index.md', id: 'blob1' },
+            ],
+            'next1',
           ),
-          { cursor: '', path: 'apps/site' },
+        )
+        .mockResolvedValueOnce(
+          makePage([
+            { type: 'blob', name: 'photo.jpg', id: 'blob2' },
+            { type: 'commit', name: 'theme', id: 'commit1' },
+          ]),
         );
+
+      await expect(fetchTreeListing('content/gallery', 'commit-sha')).resolves.toEqual({
+        trees: [['album', 'tree1']],
+        blobs: [
+          ['index.md', 'blob1'],
+          ['photo.jpg', 'blob2'],
+        ],
       });
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        1,
+        '/projects/test-owner%2Ftest-repo/repository/tree' +
+          '?path=content%2Fgallery&ref=commit-sha&per_page=100&pagination=keyset',
+        { responseType: 'raw' },
+      );
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        2,
+        '/projects/test-owner%2Ftest-repo/repository/tree' +
+          '?path=content%2Fgallery&ref=commit-sha&per_page=100&pagination=keyset&page_token=next1',
+        { responseType: 'raw' },
+      );
+    });
 
-      test('returns an empty list when the root directory has no tree', async () => {
-        vi.mocked(fetchGraphQL).mockResolvedValue({ project: { repository: { tree: null } } });
+    test('lists the repository root without a path', async () => {
+      vi.mocked(fetchAPI).mockResolvedValueOnce(makePage([]));
 
-        await expect(fetchFileList()).resolves.toEqual([]);
-        expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+      await expect(fetchTreeListing('', 'main')).resolves.toEqual({ trees: [], blobs: [] });
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/projects/test-owner%2Ftest-repo/repository/tree' +
+          '?ref=main&per_page=100&pagination=keyset',
+        { responseType: 'raw' },
+      );
+    });
+
+    test('returns an empty listing for a directory that doesn’t exist', async () => {
+      vi.mocked(fetchAPI).mockResolvedValueOnce(new Response('', { status: 404 }));
+
+      await expect(fetchTreeListing('missing', 'main')).resolves.toEqual({ trees: [], blobs: [] });
+    });
+
+    test('throws when a later page goes missing', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce(makePage([{ type: 'blob', name: 'a.jpg', id: 'blob1' }], 'next1'))
+        .mockResolvedValueOnce(new Response('Gone', { status: 404 }));
+
+      await expect(fetchTreeListing('content', 'main')).rejects.toThrow(
+        'Failed to list the files: Gone',
+      );
+    });
+
+    test('throws when a request fails', async () => {
+      vi.mocked(fetchAPI).mockResolvedValueOnce(new Response('Oops', { status: 500 }));
+
+      await expect(fetchTreeListing('content', 'main')).rejects.toThrow(
+        'Failed to list the files: Oops',
+      );
+    });
+  });
+
+  describe('fetchFileList', () => {
+    beforeEach(() => {
+      vi.mocked(getPathInfo).mockImplementation((path) => ({
+        dirname: path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : undefined,
+        basename: /** @type {string} */ (path.split('/').pop()),
+        filename: '',
+      }));
+      vi.mocked(listTrees).mockImplementation(async ({ roots }) =>
+        roots.map(({ path }) => ({ type: 'blob', path: `${path || 'root'}/a.md`, sha: path })),
+      );
+      vi.mocked(repository).isSelfHosted = false;
+    });
+
+    afterEach(() => {
+      mockGetRootDir.mockReturnValue('');
+    });
+
+    test('lists the whole repository from its root at the commit it was given', async () => {
+      const result = await fetchFileList('last-commit-sha');
+
+      expect(listTrees).toHaveBeenCalledExactlyOnceWith({
+        repository,
+        roots: [{ path: '' }],
+        fetchTreeListing: expect.any(Function),
+        cacheable: true,
+        concurrency: TREE_CONCURRENCY,
+      });
+      expect(fetchGraphQL).not.toHaveBeenCalled();
+      expect(result).toEqual([{ path: 'root/a.md', sha: '', size: 0, name: 'a.md' }]);
+
+      // A directory is listed at the same commit
+      vi.mocked(fetchAPI).mockResolvedValueOnce(new Response('[]'));
+      await vi.mocked(listTrees).mock.calls[0][0].fetchTreeListing('content');
+      expect(fetchAPI).toHaveBeenCalledWith(
+        expect.stringContaining('?path=content&ref=last-commit-sha&'),
+        { responseType: 'raw' },
+      );
+    });
+
+    test('doesn’t cache what it lists on the branch, and lists fewer at once when self-hosted', async () => {
+      vi.mocked(repository).isSelfHosted = true;
+
+      await fetchFileList();
+
+      expect(listTrees).toHaveBeenCalledWith(
+        expect.objectContaining({ cacheable: false, concurrency: SELF_HOSTED_TREE_CONCURRENCY }),
+      );
+
+      vi.mocked(fetchAPI).mockResolvedValueOnce(new Response('[]'));
+      await vi.mocked(listTrees).mock.calls[0][0].fetchTreeListing('content');
+      expect(fetchAPI).toHaveBeenCalledWith(expect.stringContaining('&ref=main&'), {
+        responseType: 'raw',
       });
     });
 
-    test('lists the commit it was given rather than the branch', async () => {
-      vi.mocked(fetchGraphQL).mockResolvedValue({
-        project: {
-          repository: {
-            tree: { blobs: { nodes: [], pageInfo: { endCursor: '', hasNextPage: false } } },
-          },
-        },
+    test('lists the root directory by its tree ID', async () => {
+      mockGetRootDir.mockReturnValue('apps/site');
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        project: { repository: { tree: { trees: { nodes: [{ name: 'site', sha: 'tree1' }] } } } },
       });
 
-      await fetchFileList('last-commit-sha');
+      await fetchFileList('commit-sha');
 
-      // The tree is listed at the commit the file cache is keyed on, not at the tip of the branch,
-      // which a push may have moved in the meantime; the `$branch` variable takes a commit SHA
-      expect(fetchGraphQL).toHaveBeenCalledOnce();
-      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('tree(ref: $branch,'), {
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('trees(after:'), {
+        ref: 'commit-sha',
+        path: 'apps',
         cursor: '',
-        branch: 'last-commit-sha',
       });
-    });
-
-    test('filters out non-blob entries', async () => {
-      const mockResponse = {
-        project: {
-          repository: {
-            tree: {
-              blobs: {
-                nodes: [
-                  { type: 'blob', path: 'file.md', sha: 'sha1' },
-                  { type: 'tree', path: 'folder', sha: 'sha2' },
-                ],
-                pageInfo: {
-                  hasNextPage: false,
-                },
-              },
-            },
-          },
-        },
-      };
-
-      vi.mocked(fetchGraphQL).mockResolvedValue(mockResponse);
-      vi.mocked(getPathInfo).mockReturnValue({
-        basename: 'file.md',
-        filename: 'file',
-        extension: 'md',
-      });
-
-      const result = await fetchFileList();
-
-      expect(result).toHaveLength(1);
-      expect(result[0].path).toBe('file.md');
+      expect(listTrees).toHaveBeenCalledWith(
+        expect.objectContaining({ roots: [{ path: 'apps/site', sha: 'tree1' }] }),
+      );
     });
 
     describe('with the folders the CMS manages', () => {
-      /**
-       * Make a response holding a page of the file list.
-       * @param {string[]} paths File paths.
-       * @returns {any} Response.
-       */
-      const makeTreePage = (paths) => ({
-        project: {
-          repository: {
-            tree: {
-              blobs: {
-                nodes: paths.map((path) => ({ type: 'blob', path, sha: `sha-${path}` })),
-                pageInfo: { endCursor: '', hasNextPage: false },
-              },
-            },
-          },
-        },
-      });
-
-      beforeEach(() => {
-        vi.mocked(getPathInfo).mockImplementation((path) => ({
-          basename: /** @type {string} */ (path.split('/').pop()),
-          filename: '',
-        }));
-      });
-
-      afterEach(() => {
-        mockGetRootDir.mockReturnValue('');
-      });
-
-      test('lists the folders at the same time, and looks up the files by path', async () => {
+      test('lists the folders by their tree IDs, and looks up the files by path', async () => {
         mockGetRootDir.mockReturnValue('site');
         vi.mocked(getManagedPaths).mockReturnValueOnce({
-          dirs: ['content', 'static/images'],
+          dirs: ['content', 'static/images', 'missing'],
           files: ['data/settings.yml'],
         });
-
-        /** @type {((value: any) => void)[]} */
-        const pendingTrees = [];
 
         vi.mocked(fetchGraphQL).mockImplementation(async (query, variables) => {
           if (query.includes('oid')) {
@@ -363,29 +355,32 @@ describe('GitLab files service', () => {
             };
           }
 
-          return new Promise((resolve) => {
-            pendingTrees.push(() => resolve(makeTreePage([`${variables?.path}/a.md`])));
-          });
+          const nodes =
+            variables?.path === 'site'
+              ? [{ name: 'content', sha: 'tree-content' }]
+              : [{ name: 'images', sha: 'tree-images' }];
+
+          return { project: { repository: { tree: { trees: { nodes } } } } };
         });
 
-        const resultPromise = fetchFileList('commit-hash');
+        const result = await fetchFileList('commit-hash');
 
-        // Both folders are requested before either has come back
-        await vi.waitFor(() => expect(pendingTrees).toHaveLength(2));
-        expect(fetchGraphQL).toHaveBeenCalledWith(
-          expect.stringContaining('tree(ref: $branch, path: $path, recursive: true)'),
-          { cursor: '', branch: 'commit-hash', path: 'site/content' },
+        // A folder that doesn’t exist is left out
+        expect(listTrees).toHaveBeenCalledWith(
+          expect.objectContaining({
+            roots: [
+              { path: 'site/content', sha: 'tree-content' },
+              { path: 'site/static/images', sha: 'tree-images' },
+            ],
+          }),
         );
         expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('oid'), {
           branch: 'commit-hash',
           paths: ['site/data/settings.yml'],
         });
-
-        pendingTrees.forEach((resolve) => resolve(undefined));
-
-        expect((await resultPromise).map(({ path, sha }) => [path, sha])).toEqual([
-          ['site/content/a.md', 'sha-site/content/a.md'],
-          ['site/static/images/a.md', 'sha-site/static/images/a.md'],
+        expect(result.map(({ path, sha }) => [path, sha])).toEqual([
+          ['site/content/a.md', 'site/content'],
+          ['site/static/images/a.md', 'site/static/images'],
           ['site/data/settings.yml', 'sha-settings'],
         ]);
       });
@@ -405,19 +400,18 @@ describe('GitLab files service', () => {
       });
 
       test('lists the whole root directory when there is nothing in them yet', async () => {
-        mockGetRootDir.mockReturnValue('site');
         vi.mocked(getManagedPaths).mockReturnValueOnce({ dirs: ['content'], files: [] });
-        vi.mocked(fetchGraphQL)
-          .mockResolvedValueOnce(makeTreePage([]))
-          .mockResolvedValueOnce(makeTreePage(['site/config.yml']));
-
-        const result = await fetchFileList();
-
-        expect(fetchGraphQL).toHaveBeenLastCalledWith(expect.any(String), {
-          cursor: '',
-          path: 'site',
+        vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+          project: { repository: { tree: { trees: { nodes: [{ name: 'content', sha: 't1' }] } } } },
         });
-        expect(result.map(({ path }) => path)).toEqual(['site/config.yml']);
+        vi.mocked(listTrees).mockResolvedValueOnce([]);
+
+        const result = await fetchFileList('commit-sha');
+
+        expect(listTrees).toHaveBeenLastCalledWith(
+          expect.objectContaining({ roots: [{ path: '' }] }),
+        );
+        expect(result.map(({ path }) => path)).toEqual(['root/a.md']);
       });
     });
   });
