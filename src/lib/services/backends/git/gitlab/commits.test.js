@@ -44,6 +44,22 @@ vi.mock('$lib/services/backends/git/gitlab/repository', () => {
      */
     getBranchPath: (branch, { owner, repo } = mockRepository) =>
       `/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/branches/${branch}`,
+    /**
+     * Fetch the branch head the same way the real module does.
+     * @param {string} branch Branch name.
+     * @param {any} [repoPath] Project holding the branch. Default: the configured project.
+     * @returns {Promise<string | undefined>} Commit SHA.
+     */
+    fetchProjectBranchHead: async (branch, { owner, repo } = mockRepository) => {
+      const { fetchAPIOrUndefined: fetchOptional } =
+        await import('$lib/services/backends/git/shared/api-optional');
+
+      return /** @type {any} */ (
+        await fetchOptional(
+          `/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/branches/${branch}`,
+        )
+      )?.commit?.id;
+    },
   };
 });
 vi.mock('$lib/services/workflow/open-authoring', () => ({
@@ -506,6 +522,23 @@ describe('GitLab commits service', () => {
       );
 
       expect(result.files).toEqual({});
+    });
+
+    test('moves a file without content when the change carries none', async () => {
+      // A nested collection moves an entry’s files without rewriting them
+      vi.mocked(createCommitMessage).mockReturnValue('Move');
+      vi.mocked(fetchAPI).mockResolvedValue({ id: 'c1', committed_date: '2023-01-01' });
+
+      await commitChanges(
+        /** @type {any} */ ([{ action: 'move', path: 'b/index.md', previousPath: 'a/index.md' }]),
+        /** @type {any} */ ({ commitType: 'update' }),
+      );
+
+      const { body } = /** @type {any} */ (vi.mocked(fetchAPI).mock.calls[0][1]);
+
+      expect(body.actions).toEqual([
+        { action: 'move', file_path: 'b/index.md', previous_path: 'a/index.md' },
+      ]);
     });
 
     describe('guard against a concurrent push', () => {

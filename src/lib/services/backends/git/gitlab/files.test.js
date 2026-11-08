@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import {
+  _resetDirLookup,
   BLOB_CONCURRENCY,
   fetchBlob,
   fetchBlobBatch,
@@ -97,6 +98,7 @@ describe('GitLab files service', () => {
     });
 
     beforeEach(() => {
+      _resetDirLookup();
       vi.mocked(getPathInfo).mockImplementation((path) => {
         const index = path.lastIndexOf('/');
 
@@ -147,6 +149,24 @@ describe('GitLab files service', () => {
       vi.mocked(fetchGraphQL).mockResolvedValueOnce({ project: null });
 
       await expect(fetchDirSHA('abc', 'apps/site')).resolves.toBeUndefined();
+    });
+
+    test('reuses a lookup at a commit, but looks a branch up every time', async () => {
+      const commit = 'a'.repeat(40);
+      const page = makePage([{ name: 'site', sha: 'tree-sha' }]);
+
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce(page)
+        .mockResolvedValueOnce(page)
+        .mockResolvedValueOnce(page);
+
+      await fetchDirSHA(commit, 'apps/site');
+      await expect(fetchDirSHA(commit, 'apps/site')).resolves.toBe('tree-sha');
+      expect(fetchGraphQL).toHaveBeenCalledOnce();
+
+      await fetchDirSHA('main', 'apps/site');
+      await fetchDirSHA('main', 'apps/site');
+      expect(fetchGraphQL).toHaveBeenCalledTimes(3);
     });
   });
 

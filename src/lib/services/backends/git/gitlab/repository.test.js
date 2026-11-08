@@ -5,6 +5,7 @@ import {
   checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
+  fetchProjectBranchHead,
   fetchProjectPermissions,
   getBaseURLs,
   getBranchPath,
@@ -72,6 +73,43 @@ describe('GitLab repository service', () => {
       expect(getBranchPath('cms/posts/hello', { owner: 'contributor', repo: 'project' })).toBe(
         '/projects/contributor%2Fproject/repository/branches/cms%2Fposts%2Fhello',
       );
+    });
+  });
+
+  describe('fetchProjectBranchHead', () => {
+    test('reads the commit the branch points at in the configured project', async () => {
+      Object.assign(repository, { owner: 'group', repo: 'project' });
+      vi.mocked(fetchAPI).mockResolvedValue({ commit: { id: 'abc123' } });
+
+      await expect(fetchProjectBranchHead('main')).resolves.toBe('abc123');
+      expect(fetchAPI).toHaveBeenCalledWith('/projects/group%2Fproject/repository/branches/main');
+    });
+
+    test('reads a branch in another project, such as a contributor’s fork', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({ commit: { id: 'abc123' } });
+
+      await expect(
+        fetchProjectBranchHead('cms/x', { owner: 'contributor', repo: 'project' }),
+      ).resolves.toBe('abc123');
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/projects/contributor%2Fproject/repository/branches/cms%2Fx',
+      );
+    });
+
+    test('answers undefined for a branch that doesn’t exist', async () => {
+      vi.mocked(fetchAPI).mockRejectedValue(
+        new Error('Server responded with an error', { cause: { status: 404 } }),
+      );
+
+      await expect(fetchProjectBranchHead('gone')).resolves.toBeUndefined();
+    });
+
+    test('raises any other failure', async () => {
+      vi.mocked(fetchAPI).mockRejectedValue(
+        new Error('Server responded with an error', { cause: { status: 500 } }),
+      );
+
+      await expect(fetchProjectBranchHead('main')).rejects.toThrow();
     });
   });
 

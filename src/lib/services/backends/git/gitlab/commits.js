@@ -3,12 +3,11 @@ import { encodeBase64 } from '@sveltia/utils/file';
 import { clearSaveProgress, reportCommits } from '$lib/services/backends/commit-progress';
 import { projectIds } from '$lib/services/backends/git/gitlab/fork';
 import {
-  getBranchPath,
+  fetchProjectBranchHead,
   getProjectId,
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import {
   estimateRemainingCommits,
   getPayloadSize,
@@ -33,7 +32,6 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { CommitOptions, CommitResults, FileChange, FileCommit } from '$lib/types/private';
- * @import { RepositoryPath } from '$lib/types/private';
  * @import { FileAddition } from '$lib/services/backends/git/shared/commit-split';
  */
 
@@ -96,18 +94,6 @@ export const fetchLastCommit = async () => {
 
   return { hash, message };
 };
-
-/**
- * Fetch the commit the given branch points at.
- * @param {string} branch Branch name.
- * @param {RepositoryPath} [fork] Contributor’s fork the branch lives in, with Open Authoring.
- * @returns {Promise<string | undefined>} Commit SHA, or `undefined` if the branch doesn’t exist.
- * @see https://docs.gitlab.com/api/branches/#get-single-repository-branch
- */
-const fetchBranchHead = async (branch, fork) =>
-  /** @type {{ commit?: { id?: string } } | undefined} */ (
-    await fetchAPIOrUndefined(getBranchPath(branch, fork))
-  )?.commit?.id;
 
 /**
  * Largest size of the encoded file contents sent in a single commit request (64 MB). The request
@@ -336,7 +322,7 @@ export const commitChanges = async (changes, options) => {
           group.length > 1 &&
           isUploadFailure(ex) &&
           // eslint-disable-next-line no-await-in-loop
-          (await fetchBranchHead(branch, fork).catch(() => null)) === previousHead
+          (await fetchProjectBranchHead(branch, fork).catch(() => null)) === previousHead
         ) {
           queue.unshift(...group);
           payloadSize = Math.floor(groupSize / 2);

@@ -17,6 +17,7 @@ import {
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { createCachedDirSHALookup } from '$lib/services/backends/git/shared/dir-sha';
 import { fetchRepositoryFiles } from '$lib/services/backends/git/shared/files';
 import { getManagedPaths } from '$lib/services/backends/git/shared/managed-paths';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
@@ -75,37 +76,6 @@ const FETCH_SUBTREES_QUERY = `
     }
   }
 `;
-
-/**
- * Find the tree SHA of a directory at the given commit, by listing the subdirectories of the
- * directory that holds it, a page at a time.
- * @param {string} ref Commit SHA or branch name.
- * @param {string} dirPath Directory path relative to the repository root.
- * @returns {Promise<string | undefined>} Tree SHA, or `undefined` if the directory doesn’t exist.
- * @see https://docs.gitlab.com/api/graphql/reference/#tree
- */
-export const fetchDirSHA = async (ref, dirPath) => {
-  const { dirname = '', basename } = getPathInfo(dirPath);
-  let cursor = '';
-
-  for (;;) {
-    const result = /** @type {any} */ (
-      await fetchGraphQL(FETCH_SUBTREES_QUERY, { ref, path: dirname, cursor })
-    );
-
-    const { nodes = [], pageInfo } = result.project?.repository?.tree?.trees ?? {};
-
-    const sha = /** @type {{ name: string, sha: string }[]} */ (nodes).find(
-      ({ name }) => name === basename,
-    )?.sha;
-
-    if (sha || !pageInfo?.hasNextPage) {
-      return sha;
-    }
-
-    cursor = pageInfo.endCursor;
-  }
-};
 
 /**
  * Number of blob batches requested at the same time on GitLab.com. Each batch is a heavy query, so
@@ -325,6 +295,45 @@ export const fetchTreeListing = async (path, ref) => {
     }
   }
 };
+
+/**
+ * Look the tree SHA of a directory up, by listing the subdirectories of the directory that holds
+ * it, a page at a time. Only the subdirectories are listed, unlike the REST API, which lists the
+ * files as well, and the listing stops once the directory has been found.
+ * @param {string} ref Commit SHA or branch name.
+ * @param {string} dirPath Directory path relative to the repository root.
+ * @returns {Promise<string | undefined>} Tree SHA, or `undefined` if the directory doesn’t exist.
+ * @see https://docs.gitlab.com/api/graphql/reference/#tree
+ */
+const lookUpDirSHA = async (ref, dirPath) => {
+  const { dirname = '', basename } = getPathInfo(dirPath);
+  let cursor = '';
+
+  for (;;) {
+    const result = /** @type {any} */ (
+      await fetchGraphQL(FETCH_SUBTREES_QUERY, { ref, path: dirname, cursor })
+    );
+
+    const { nodes = [], pageInfo } = result.project?.repository?.tree?.trees ?? {};
+
+    const sha = /** @type {{ name: string, sha: string }[]} */ (nodes).find(
+      ({ name }) => name === basename,
+    )?.sha;
+
+    if (sha || !pageInfo?.hasNextPage) {
+      return sha;
+    }
+
+    cursor = pageInfo.endCursor;
+  }
+};
+
+// The check for remote changes and the file list look the root directory up at the same commit,
+// so the lookup is made once; `_resetDirLookup` forgets the lookups in tests
+export const { fetchDirSHA, resetDirLookups: _resetDirLookup } = createCachedDirSHALookup(
+  repository,
+  lookUpDirSHA,
+);
 
 /**
  * List the files in the given directories and their subdirectories.

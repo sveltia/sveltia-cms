@@ -1,5 +1,6 @@
 import { recordBranchAccess } from '$lib/services/backends/branch-access';
 import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
+import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import {
   createPermissionError,
   toRepositoryAccessError,
@@ -58,6 +59,20 @@ export const getProjectId = (repoPath) => {
  */
 export const getBranchPath = (branch, repoPath) =>
   `/projects/${getProjectId(repoPath)}/repository/branches/${encodeURIComponent(branch)}`;
+
+/**
+ * Fetch the commit the given branch points at.
+ * @param {string} branch Branch name.
+ * @param {RepositoryPath} [repoPath] Project holding the branch, e.g. the contributor’s fork with
+ * Open Authoring. Default: the configured project.
+ * @returns {Promise<string | undefined>} Commit SHA, or `undefined` if the branch doesn’t exist.
+ * @throws {Error} When the request fails for another reason.
+ * @see https://docs.gitlab.com/api/branches/#get-single-repository-branch
+ */
+export const fetchProjectBranchHead = async (branch, repoPath) =>
+  /** @type {{ commit?: { id?: string } } | undefined} */ (
+    await fetchAPIOrUndefined(getBranchPath(branch, repoPath))
+  )?.commit?.id;
 
 /**
  * Generate base URLs for accessing the repository’s resources.

@@ -220,44 +220,6 @@ describe('Gitea Files Service', () => {
         );
       });
 
-      test('should keep the lookups of both heads a check makes at once', async () => {
-        const [from, to] = ['a'.repeat(40), 'b'.repeat(40)];
-
-        vi.mocked(fetchAPI).mockResolvedValue([{ type: 'dir', name: 'site', sha: 'tree-sha' }]);
-
-        await Promise.all([fetchDirSHA(from, 'apps/site'), fetchDirSHA(to, 'apps/site')]);
-        await fetchDirSHA(from, 'apps/site');
-        await fetchDirSHA(to, 'apps/site');
-
-        expect(fetchAPI).toHaveBeenCalledTimes(2);
-      });
-
-      test('should forget the oldest lookup', async () => {
-        vi.mocked(fetchAPI).mockResolvedValue([{ type: 'dir', name: 'site', sha: 'tree-sha' }]);
-
-        // One more commit than are kept, one at a time
-        // eslint-disable-next-line no-restricted-syntax
-        for (const char of ['a', 'b', 'c', 'd', 'e']) {
-          // eslint-disable-next-line no-await-in-loop
-          await fetchDirSHA(char.repeat(40), 'apps/site');
-        }
-
-        await fetchDirSHA('e'.repeat(40), 'apps/site');
-        expect(fetchAPI).toHaveBeenCalledTimes(5);
-
-        await fetchDirSHA('a'.repeat(40), 'apps/site');
-        expect(fetchAPI).toHaveBeenCalledTimes(6);
-      });
-
-      test('should look a branch up every time, as it moves', async () => {
-        vi.mocked(fetchAPI).mockResolvedValue([{ type: 'dir', name: 'site', sha: 'tree-sha' }]);
-
-        await fetchDirSHA('main', 'apps/site');
-        await fetchDirSHA('main', 'apps/site');
-
-        expect(fetchAPI).toHaveBeenCalledTimes(2);
-      });
-
       test('should return an empty list when the root directory doesn’t exist', async () => {
         vi.mocked(fetchAPI).mockResolvedValueOnce([{ type: 'dir', name: 'other', sha: 'x' }]);
 

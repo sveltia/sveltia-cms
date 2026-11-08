@@ -1,12 +1,12 @@
 import { fetchBlobs, fetchTruncatedBlobs } from '$lib/services/backends/git/gitlab/files';
 import { getWorkflowRepository, projectIds } from '$lib/services/backends/git/gitlab/fork';
 import {
+  fetchProjectBranchHead,
   getBranchPath,
   getProjectId,
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import {
   createDraftTitleCodec,
@@ -165,13 +165,7 @@ export const parseDiff = (diff) => ({
  * which is what a merged or closed merge request leaves behind.
  * @see https://docs.gitlab.com/api/branches/#get-single-repository-branch
  */
-export const fetchBranchHead = async (branch) => {
-  const result = /** @type {{ commit?: { id?: string } } | undefined} */ (
-    await fetchAPIOrUndefined(getBranchPath(branch, getWorkflowRepository()))
-  );
-
-  return result?.commit?.id;
-};
+export const fetchBranchHead = (branch) => fetchProjectBranchHead(branch, getWorkflowRepository());
 
 /**
  * Fetch the list of files changed in the given merge request. GitLab refreshes a merge request in

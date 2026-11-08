@@ -35,7 +35,8 @@ vi.mock('$lib/services/backends/git/gitlab/merge-requests', async (importOrigina
   .../** @type {any} */ (await importOriginal()),
   fetchPullRequests: vi.fn(),
 }));
-vi.mock('$lib/services/backends/git/gitlab/repository', () => {
+vi.mock('$lib/services/backends/git/gitlab/repository', async (importOriginal) => {
+  const { fetchProjectBranchHead } = /** @type {any} */ (await importOriginal());
   const mockRepository = { owner: 'group/sub', repo: 'project', branch: 'main' };
   /**
    * Get the project ID the same way the real module does.
@@ -55,6 +56,9 @@ vi.mock('$lib/services/backends/git/gitlab/repository', () => {
      */
     getBranchPath: (branch, repoPath) =>
       `/projects/${getProjectId(repoPath)}/repository/branches/${encodeURIComponent(branch)}`,
+    // The workflow branch is always looked up in a given project, so the real function, which
+    // only falls back to the configured project without one, can be used
+    fetchProjectBranchHead,
   };
 });
 vi.mock('$lib/services/backends/git/gitlab/workflow-fork');
