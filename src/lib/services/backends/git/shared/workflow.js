@@ -3,7 +3,11 @@ import { sleep } from '@sveltia/utils/misc';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { createDraftPullRequest } from '$lib/services/backends/git/shared/fork';
-import { setDeletionGroup } from '$lib/services/backends/git/shared/pull-requests';
+import {
+  getDeletionGroup,
+  getPullRequestDescription,
+  setDeletionGroup,
+} from '$lib/services/backends/git/shared/pull-requests';
 import { getPullRequestPath } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
 import { user } from '$lib/services/user/account.svelte';
@@ -24,16 +28,17 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
  */
 
 /**
- * Function to open a pull request on the service.
- * @typedef {(args: { branch: string, title: string, status: WorkflowStatus,
- * deletionGroup?: string }) => Promise<WorkflowPullRequest>} CreatePullRequest
+ * Function to open a pull request with the given description on the service.
+ * @typedef {(args: { branch: string, title: string, status: WorkflowStatus, description: string })
+ * => Promise<WorkflowPullRequest>} CreatePullRequest
  */
 
 /**
- * Function to record the given deletion group in the description of an existing pull request on the
- * service, or remove the record if `undefined`.
- * @typedef {(pullRequest: WorkflowPullRequest, deletionGroup: string | undefined) => Promise<void>}
- * UpdateDeletionGroup
+ * Function to update the description of an existing pull request on the service. The current
+ * description is read first and passed to `transform`, which returns the new one, so the rest of a
+ * description a maintainer may have edited is kept as it is.
+ * @typedef {(pullRequest: WorkflowPullRequest, transform: (description: string) => string) =>
+ * Promise<string>} UpdateDescription
  */
 
 /**
@@ -82,6 +87,7 @@ export const deleteRemoteBranch = async ({ branch, path, goneStatuses }) => {
  * @param {string} args.title Pull request title.
  * @param {WorkflowStatus} args.status Status to open the pull request with.
  * @param {string} [args.deletionGroup] Deletion group to record in the pull request description.
+ * See {@link getDeletionGroup}.
  * @param {CreatePullRequest} args.createPullRequest Function to open a pull request on the service.
  * @returns {Promise<WorkflowPullRequest>} New pull request.
  */
@@ -97,7 +103,12 @@ export const openWorkflowPullRequest = async ({
     return createDraftPullRequest({ commit, branch, title });
   }
 
-  return createPullRequest({ branch, title, status, deletionGroup });
+  return createPullRequest({
+    branch,
+    title,
+    status,
+    description: getPullRequestDescription(deletionGroup),
+  });
 };
 
 /**
@@ -113,25 +124,28 @@ export const openWorkflowPullRequest = async ({
  * existing pull request.
  * @param {CreatePullRequest} service.createPullRequest Function to open a pull request on the
  * service.
- * @param {UpdateDeletionGroup} service.updateDeletionGroup Function to record the deletion group in
- * the description of an existing pull request.
+ * @param {UpdateDescription} service.updateDescription Function to update the description of an
+ * existing pull request, which records the deletion group.
  * @returns {Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} Commit results
  * and the new or updated pull request.
  */
 export const saveWorkflowBranch = async (
   { changes, options, branch, title, status, pullRequest, deletionGroup },
-  { commitToNewBranch, commitToExistingBranch, createPullRequest, updateDeletionGroup },
+  { commitToNewBranch, commitToExistingBranch, createPullRequest, updateDescription },
 ) => {
   if (pullRequest) {
     // A reused pull request may be deleted along with other entries, or carry the record of an
     // earlier deletion it no longer belongs to. The record is brought in line before the commit, so
     // a failure leaves the pull request as it was rather than committed with a wrong record
     const recorded =
-      pullRequest.deletionGroup === deletionGroup ? pullRequest : { ...pullRequest, deletionGroup };
-
-    if (recorded !== pullRequest) {
-      await updateDeletionGroup(pullRequest, deletionGroup);
-    }
+      getDeletionGroup(pullRequest) === deletionGroup
+        ? pullRequest
+        : {
+            ...pullRequest,
+            description: await updateDescription(pullRequest, (description) =>
+              setDeletionGroup(description, deletionGroup),
+            ),
+          };
 
     return {
       commit: await commitToExistingBranch(changes, { ...options, branch }, pullRequest),
@@ -431,24 +445,26 @@ export const reopenPullRequest = async (repository, number) => {
 };
 
 /**
- * Record the given deletion group in the description of a pull request on GitHub or Gitea/Forgejo,
- * whose REST APIs share the endpoints, or remove the record. The description is read first, so the
- * rest of it is kept as it is.
+ * Update the description of a pull request on GitHub or Gitea/Forgejo, whose REST APIs share the
+ * endpoints. The current description is read first and passed to `transform`, so the rest of it is
+ * kept as it is.
  * @param {RepositoryPath} repository Repository holding the pull request.
  * @param {WorkflowPullRequest} pullRequest Pull request.
- * @param {string | undefined} deletionGroup Deletion group ID, or `undefined` to remove the record.
+ * @param {(description: string) => string} transform Function to get the new description from the
+ * current one, which is an empty string if the pull request has none.
+ * @returns {Promise<string>} New description.
  * @see https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request
  * @see https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoEditPullRequest
  */
-export const updatePullRequestDeletionGroup = async (repository, pullRequest, deletionGroup) => {
+export const updatePullRequestDescription = async (repository, pullRequest, transform) => {
   const path = getPullRequestPath(repository, pullRequest.number);
   const { body } = /** @type {Record<string, any>} */ (await fetchAPI(path));
+  const description = transform(body ?? '');
 
-  await fetchAPI(path, {
-    method: 'PATCH',
-    body: { body: setDeletionGroup(body, deletionGroup) },
-  });
+  await fetchAPI(path, { method: 'PATCH', body: { body: description } });
+
+  return description;
 };
 
 /**

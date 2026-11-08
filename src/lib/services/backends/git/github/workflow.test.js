@@ -112,15 +112,12 @@ describe('GitHub Editorial Workflow service', () => {
       expect(parsePullRequest(createNode({ baseRefName: 'develop' }))).toBeUndefined();
     });
 
-    test('reads the deletion group recorded in the description', () => {
-      expect(
-        parsePullRequest(
-          createNode({
-            body: 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->',
-          }),
-        )?.deletionGroup,
-      ).toBe('group-1');
-      expect(parsePullRequest(createNode())?.deletionGroup).toBeUndefined();
+    test('keeps the description as it is', () => {
+      const body = 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->';
+
+      expect(parsePullRequest(createNode({ body }))?.description).toBe(body);
+      // The API gives an empty description as `null`
+      expect(parsePullRequest(createNode({ body: null }))?.description).toBe('');
     });
 
     test('parses a CMS-managed pull request', () => {
@@ -146,6 +143,7 @@ describe('GitHub Editorial Workflow service', () => {
             renamed: false,
           },
         ],
+        description: '',
       });
     });
 
@@ -604,7 +602,10 @@ describe('GitHub Editorial Workflow service', () => {
         method: 'PATCH',
         body: { body: 'Edited\n\n<!-- sveltia-cms:deletion-group=group-1 -->' },
       });
-      expect(result.pullRequest).toEqual({ ...pullRequest, deletionGroup: 'group-1' });
+      expect(result.pullRequest).toEqual({
+        ...pullRequest,
+        description: 'Edited\n\n<!-- sveltia-cms:deletion-group=group-1 -->',
+      });
     });
 
     test('saves onto the head the entry was loaded or saved at', async () => {

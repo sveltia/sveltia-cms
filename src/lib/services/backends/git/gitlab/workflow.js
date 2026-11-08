@@ -10,7 +10,7 @@ import {
   fetchMergeRequest,
   fetchOpenMergeRequests,
   getMergeRequestPath,
-  updateDeletionGroup,
+  updateDescription,
 } from '$lib/services/backends/git/gitlab/merge-requests';
 import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import {
@@ -255,7 +255,7 @@ export const savePullRequest = async (args) =>
     commitToNewBranch,
     commitToExistingBranch,
     createPullRequest,
-    updateDeletionGroup,
+    updateDescription,
   });
 
 /**

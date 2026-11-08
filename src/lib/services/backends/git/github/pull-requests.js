@@ -4,10 +4,7 @@ import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import {
-  getPullRequestDescription,
-  parseRestFiles,
-} from '$lib/services/backends/git/shared/pull-requests';
+import { parseRestFiles } from '$lib/services/backends/git/shared/pull-requests';
 import {
   getPullRequestPath,
   getRepositoryPath,
@@ -253,68 +250,28 @@ export const parseAuthor = (user) => {
 };
 
 /**
- * Repositories, by their API path, that turned out not to support draft pull requests: a private
- * repository on GitHub Free or Pro, or one owned by an organization on GitHub Free. The status
- * label records the stage of an entry anyway, so a pull request there is opened as a regular one,
- * and asking for a draft every time would only cost an extra request.
- * @type {Set<string>}
- * @see https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests#draft-pull-requests
- */
-export const draftUnsupportedRepositories = new Set();
-
-/**
- * Check whether the given error is GitHub refusing a draft pull request, because the repository
- * doesn’t support drafts. The REST API answers with `422 Unprocessable Entity`, while the GraphQL
- * API reports the error with `200 OK`; either way, the message is about drafts.
- * @param {any} ex Error thrown by `fetchAPI` or `fetchGraphQL`.
- * @returns {boolean} Result.
- */
-export const isDraftUnsupportedError = (ex) => {
-  const { status, message } = ex?.cause ?? {};
-
-  return [200, 422].includes(status) && typeof message === 'string' && /\bdraft/i.test(message);
-};
-
-/**
  * Convert a pull request to a draft, or mark it ready for review. The REST API cannot toggle the
- * draft state, so the GraphQL API is used here. In a repository that doesn’t support drafts, the
- * pull request is never one, so there’s nothing to toggle: the status label alone records the
- * stage. With Open Authoring, the draft state is what records it, so a refusal is passed on.
+ * draft state, so the GraphQL API is used here.
  * @param {WorkflowPullRequest} pullRequest Pull request.
  * @param {boolean} isDraft Whether the pull request should be a draft.
  * @see https://docs.github.com/en/graphql/reference/mutations#convertpullrequesttodraft
  * @see https://docs.github.com/en/graphql/reference/mutations#markpullrequestreadyforreview
  */
 export const updateDraftState = async (pullRequest, isDraft) => {
-  const repoPath = getRepositoryPath(repository);
-  const isForked = !!forkedRepository.current;
-
-  if (!isForked && draftUnsupportedRepositories.has(repoPath)) {
-    return;
-  }
-
   const mutation = isDraft ? 'convertPullRequestToDraft' : 'markPullRequestReadyForReview';
 
-  try {
-    await fetchGraphQL(
-      `
-        mutation($input: ${isDraft ? 'ConvertPullRequestToDraftInput' : 'MarkPullRequestReadyForReviewInput'}!) {
-          ${mutation}(input: $input) {
-            pullRequest {
-              isDraft
-            }
+  await fetchGraphQL(
+    `
+      mutation($input: ${isDraft ? 'ConvertPullRequestToDraftInput' : 'MarkPullRequestReadyForReviewInput'}!) {
+        ${mutation}(input: $input) {
+          pullRequest {
+            isDraft
           }
         }
-      `,
-      { input: { pullRequestId: pullRequest.nodeId } },
-    );
-  } catch (ex) {
-    if (isForked || !isDraftUnsupportedError(ex)) {
-      throw ex;
-    }
-
-    draftUnsupportedRepositories.add(repoPath);
-  }
+      }
+    `,
+    { input: { pullRequestId: pullRequest.nodeId } },
+  );
 };
 
 /**
@@ -324,53 +281,29 @@ export const updateDraftState = async (pullRequest, isDraft) => {
  * @param {string} args.branch Workflow branch name.
  * @param {string} args.title Pull request title.
  * @param {WorkflowStatus} args.status Status to open the pull request with.
- * @param {string} [args.deletionGroup] Deletion group to record in the description. See
- * {@link WorkflowPullRequest}.
+ * @param {string} args.description Pull request description.
  * @returns {Promise<WorkflowPullRequest>} Created pull request.
  * @see https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request
  * @see https://docs.github.com/en/rest/issues/labels#add-labels-to-an-issue
  */
-export const createPullRequest = async ({ branch, title, status, deletionGroup }) => {
+export const createPullRequest = async ({ branch, title, status, description }) => {
   const { branch: baseBranch } = repository;
   const repoPath = getRepositoryPath(repository);
   const fork = forkedRepository.current;
 
-  /**
-   * Open the pull request.
-   * @param {boolean} draft Whether to open it as a draft.
-   * @returns {Promise<Record<string, any>>} Created pull request.
-   */
-  const open = (draft) =>
-    /** @type {Promise<Record<string, any>>} */ (
-      fetchAPI(`${repoPath}/pulls`, {
-        method: 'POST',
-        body: {
-          title,
-          // A cross-repository pull request identifies its head branch by the fork’s owner
-          head: fork ? `${fork.owner}:${branch}` : branch,
-          base: baseBranch,
-          draft,
-          body: getPullRequestDescription(deletionGroup),
-        },
-      })
-    );
-
-  const isDraft = status === 'draft' && !draftUnsupportedRepositories.has(repoPath);
-  /** @type {Record<string, any>} */
-  let result;
-
-  try {
-    result = await open(isDraft);
-  } catch (ex) {
-    // The repository doesn’t support draft pull requests, so open a regular one instead. The
-    // status label still records that the entry is a draft
-    if (!isDraft || !isDraftUnsupportedError(ex)) {
-      throw ex;
-    }
-
-    draftUnsupportedRepositories.add(repoPath);
-    result = await open(false);
-  }
+  const result = /** @type {Record<string, any>} */ (
+    await fetchAPI(`${repoPath}/pulls`, {
+      method: 'POST',
+      body: {
+        title,
+        // A cross-repository pull request identifies its head branch by the fork’s owner
+        head: fork ? `${fork.owner}:${branch}` : branch,
+        base: baseBranch,
+        draft: status === 'draft',
+        body: description,
+      },
+    })
+  );
 
   /** @type {WorkflowPullRequest} */
   const pullRequest = {
@@ -386,7 +319,7 @@ export const createPullRequest = async ({ branch, title, status, deletionGroup }
     // The signed-in user, which is how a later save recognizes the pull request as their own
     author: parseAuthor(result.user),
     files: [],
-    deletionGroup,
+    description,
   };
 
   // Labelling an issue requires write access to the repository, which an Open Authoring contributor

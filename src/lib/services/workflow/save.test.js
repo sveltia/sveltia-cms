@@ -1960,12 +1960,14 @@ describe('workflow/save', () => {
       const first = createEntry('cms/posts/hello', 'pending_deletion');
       const second = { ...createEntry('cms/posts/world', 'pending_deletion'), id: 'world' };
       const elsewhere = createEntry('cms/pages/about', 'pending_deletion');
+      const record = '<!-- sveltia-cms:deletion-group=';
 
-      first.workflow.pullRequest.deletionGroup = 'group-1';
-      second.workflow.pullRequest.deletionGroup = 'group-1';
+      first.workflow.pullRequest.description = `${record}group-1 -->`;
+      second.workflow.pullRequest.description = `${record}group-1 -->`;
       elsewhere.id = 'about';
       elsewhere.workflow.collectionName = 'pages';
-      elsewhere.workflow.pullRequest.deletionGroup = 'group-1';
+      // A selection is recorded per collection, so another collection’s deletion has its own
+      elsewhere.workflow.pullRequest.description = `${record}group-2 -->`;
       unpublishedEntries.current = [first, second, elsewhere];
 
       await publishWorkflowEntry(first);

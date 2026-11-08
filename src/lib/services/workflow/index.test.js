@@ -394,13 +394,22 @@ describe('workflow/index', () => {
 
   describe('getDeletionSelection', () => {
     /**
+     * Get the pull request properties recording the given deletion group in the description.
+     * @param {string} group Deletion group ID.
+     * @returns {{ description: string }} Properties.
+     */
+    const recordGroup = (group) => ({
+      description: `Automatically generated\n\n<!-- sveltia-cms:deletion-group=${group} -->`,
+    });
+
+    /**
      * Create an entry awaiting deletion.
      * @param {string} subPath Sub path.
      * @param {object} [workflow] Workflow property overrides.
      * @param {object} [pullRequest] Pull request property overrides.
      * @returns {any} Unpublished entry.
      */
-    const createDeletion = (subPath, workflow = {}, pullRequest = { deletionGroup: 'group-1' }) => {
+    const createDeletion = (subPath, workflow = {}, pullRequest = recordGroup('group-1')) => {
       const entry = createEntry({ collectionName: 'posts', subPath });
 
       return {
@@ -418,11 +427,12 @@ describe('workflow/index', () => {
       const entry = createDeletion('a');
       const other = createDeletion('b');
       const draft = createDeletion('c', { status: 'draft' });
-      const elsewhere = createDeletion('d', { collectionName: 'pages' });
-      const file = createDeletion('e', { fileName: 'home' });
+      // A selection is recorded per collection, or collection file, so another one has its own
+      const elsewhere = createDeletion('d', { collectionName: 'pages' }, recordGroup('group-3'));
+      const file = createDeletion('e', { fileName: 'home' }, recordGroup('group-4'));
       // Deleted one at a time, or in another selection
       const lone = createDeletion('f', {}, {});
-      const later = createDeletion('g', {}, { deletionGroup: 'group-2' });
+      const later = createDeletion('g', {}, recordGroup('group-2'));
 
       unpublishedEntries.current = [other, entry, draft, elsewhere, file, lone, later];
 

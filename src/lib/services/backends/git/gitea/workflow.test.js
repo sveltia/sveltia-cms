@@ -334,7 +334,10 @@ describe('Gitea Editorial Workflow service', () => {
           method: 'PATCH',
           body: { body: '<!-- sveltia-cms:deletion-group=group-1 -->' },
         });
-        expect(result.pullRequest).toEqual({ ...pullRequest, deletionGroup: 'group-1' });
+        expect(result.pullRequest).toEqual({
+          ...pullRequest,
+          description: '<!-- sveltia-cms:deletion-group=group-1 -->',
+        });
       });
 
       test('refuses to save onto a branch that has moved on from the commit on record', async () => {

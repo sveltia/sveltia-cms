@@ -12,8 +12,6 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { pollUntil, SETTLE_POLL } from '$lib/services/backends/git/shared/poll';
 import {
   createDraftTitleCodec,
-  getPullRequestDescription,
-  parseDeletionGroup,
   parseRestFiles,
 } from '$lib/services/backends/git/shared/pull-requests';
 import {
@@ -142,7 +140,7 @@ export const parsePullRequest = (item) => {
     updatedDate: new Date(item.updated_at),
     author: parseAuthor(item.user),
     files: [],
-    deletionGroup: parseDeletionGroup(item.body),
+    description: item.body ?? '',
   };
 };
 
@@ -480,12 +478,11 @@ export const updateDraftState = async (pullRequest, isDraft) => {
  * @param {string} args.branch Workflow branch name.
  * @param {string} args.title Pull request title.
  * @param {WorkflowStatus} args.status Status to open the pull request with.
- * @param {string} [args.deletionGroup] Deletion group to record in the description. See
- * {@link WorkflowPullRequest}.
+ * @param {string} args.description Pull request description.
  * @returns {Promise<WorkflowPullRequest>} Created pull request.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoCreatePullRequest
  */
-export const createPullRequest = async ({ branch, title, status, deletionGroup }) => {
+export const createPullRequest = async ({ branch, title, status, description }) => {
   const { branch: baseBranch } = repository;
   const fork = forkedRepository.current;
   const isDraft = status === 'draft';
@@ -498,7 +495,7 @@ export const createPullRequest = async ({ branch, title, status, deletionGroup }
         // A cross-repository pull request identifies its head branch by the fork’s owner
         head: fork ? `${fork.owner}:${branch}` : branch,
         base: baseBranch,
-        body: getPullRequestDescription(deletionGroup),
+        body: description,
       },
     })
   );
@@ -525,7 +522,7 @@ export const createPullRequest = async ({ branch, title, status, deletionGroup }
     // The signed-in user, which is how a later save recognizes the pull request as their own
     author: parseAuthor(result.user),
     files: [],
-    deletionGroup,
+    description,
   };
 };
 

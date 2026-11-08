@@ -322,13 +322,14 @@ const fetchOpenForkMergeRequest = async (branch) => {
  * @param {string} args.branch Workflow branch name.
  * @param {string} args.title Merge request title.
  * @param {WorkflowStatus} args.status Status to open the merge request with.
+ * @param {string} args.description Description to open the merge request with.
  * @returns {Promise<WorkflowPullRequest>} New or adopted merge request.
  * @throws {Error} When the merge request could not be created, including when the one standing in
  * the way is someone else’s.
  */
-export const createForkMergeRequest = async ({ branch, title, status }) => {
+export const createForkMergeRequest = async ({ branch, title, status, description }) => {
   try {
-    return await createPullRequest({ branch, title, status });
+    return await createPullRequest({ branch, title, status, description });
   } catch (/** @type {any} */ ex) {
     if (ex.cause?.status !== MERGE_REQUEST_EXISTS_STATUS) {
       throw ex;

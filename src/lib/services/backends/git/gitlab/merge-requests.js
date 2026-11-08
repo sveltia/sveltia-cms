@@ -8,12 +8,7 @@ import {
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import {
-  createDraftTitleCodec,
-  getPullRequestDescription,
-  parseDeletionGroup,
-  setDeletionGroup,
-} from '$lib/services/backends/git/shared/pull-requests';
+import { createDraftTitleCodec } from '$lib/services/backends/git/shared/pull-requests';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { splitIntoChunks } from '$lib/services/utils/array';
 import {
@@ -102,7 +97,7 @@ export const toMergeRequest = (item, status) => {
     author: username ? { name: name ?? username, email: '', id, login: username } : undefined,
     files: [],
     canMerge: getCanMerge(item),
-    deletionGroup: parseDeletionGroup(item.description),
+    description: item.description ?? '',
   };
 };
 
@@ -398,12 +393,11 @@ export const deleteBranch = async (branch) => {
  * @param {string} args.branch Workflow branch name.
  * @param {string} args.title Merge request title.
  * @param {WorkflowStatus} args.status Status to open the merge request with.
- * @param {string} [args.deletionGroup] Deletion group to record in the description. See
- * {@link WorkflowPullRequest}.
+ * @param {string} args.description Merge request description.
  * @returns {Promise<WorkflowPullRequest>} Created merge request.
  * @see https://docs.gitlab.com/api/merge_requests/#create-merge-request
  */
-export const createPullRequest = async ({ branch, title, status, deletionGroup }) => {
+export const createPullRequest = async ({ branch, title, status, description }) => {
   const isDraft = status === 'draft';
   const fork = forkedRepository.current;
 
@@ -416,7 +410,7 @@ export const createPullRequest = async ({ branch, title, status, deletionGroup }
         title: draftTitle.format(title, isDraft),
         source_branch: branch,
         target_branch: repository.branch,
-        description: getPullRequestDescription(deletionGroup),
+        description,
         remove_source_branch: true,
         ...(fork
           ? {
@@ -435,7 +429,7 @@ export const createPullRequest = async ({ branch, title, status, deletionGroup }
 
   // Keep the given title rather than stripping the draft prefix from the returned one, which would
   // also strip a title that happens to start with a draft indicator such as `WIP:`
-  return { ...toMergeRequest(result, status), title, branch };
+  return { ...toMergeRequest(result, status), title, branch, description };
 };
 
 /**
@@ -470,17 +464,21 @@ export const fetchMergeRequest = async (pullRequest) =>
   /** @type {Record<string, any>} */ (await fetchAPI(getMergeRequestPath(pullRequest.number)));
 
 /**
- * Record the given deletion group in the description of a merge request, or remove the record. The
- * description is read first, so the rest of it is kept as it is.
+ * Update the description of a merge request. The current description is read first and passed to
+ * `transform`, so the rest of it is kept as it is.
  * @param {WorkflowPullRequest} pullRequest Merge request.
- * @param {string | undefined} deletionGroup Deletion group ID, or `undefined` to remove the record.
+ * @param {(description: string) => string} transform Function to get the new description from the
+ * current one, which is an empty string if the merge request has none.
+ * @returns {Promise<string>} New description.
  * @see https://docs.gitlab.com/api/merge_requests/#update-mr
  */
-export const updateDeletionGroup = async (pullRequest, deletionGroup) => {
-  const { description } = await fetchMergeRequest(pullRequest);
+export const updateDescription = async (pullRequest, transform) => {
+  const description = transform((await fetchMergeRequest(pullRequest)).description ?? '');
 
   await fetchAPI(getMergeRequestPath(pullRequest.number), {
     method: 'PUT',
-    body: { description: setDeletionGroup(description, deletionGroup) },
+    body: { description },
   });
+
+  return description;
 };

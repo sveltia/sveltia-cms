@@ -40,7 +40,7 @@ import {
   saveWorkflowBranch,
   toChangedFilesWithModes,
   updateLabelledStatus,
-  updatePullRequestDeletionGroup,
+  updatePullRequestDescription,
 } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels } from '$lib/services/workflow/labels';
@@ -226,14 +226,14 @@ const commitToExistingBranch = async (changes, options, pullRequest) => {
 };
 
 /**
- * Record the given deletion group in the description of the given pull request, or remove the
- * record.
+ * Update the description of the given pull request with the given function.
  * @param {WorkflowPullRequest} pullRequest Pull request.
- * @param {string | undefined} deletionGroup Deletion group ID, or `undefined` to remove the record.
- * @returns {Promise<void>}
+ * @param {(description: string) => string} transform Function to get the new description from the
+ * current one.
+ * @returns {Promise<string>} New description.
  */
-const updateDeletionGroup = (pullRequest, deletionGroup) =>
-  updatePullRequestDeletionGroup(repository, pullRequest, deletionGroup);
+const updateDescription = (pullRequest, transform) =>
+  updatePullRequestDescription(repository, pullRequest, transform);
 
 /**
  * Commit the given changes on the workflow branch, creating the branch and the pull request if they
@@ -247,7 +247,7 @@ export const savePullRequest = async (args) =>
     commitToNewBranch,
     commitToExistingBranch,
     createPullRequest,
-    updateDeletionGroup,
+    updateDescription,
   });
 
 /**

@@ -521,6 +521,7 @@ describe('workflow/verify', () => {
       });
 
       // Another entry of the collection deleted in the same selection, and one of another
+      // collection deleted in a selection of its own
       const sibling = {
         ...createEntry({ status: 'pending_deletion', paths: ['content/posts/b.md'] }),
         id: 'sibling',
@@ -535,9 +536,10 @@ describe('workflow/verify', () => {
         id: 'lone',
       };
 
-      [entry, sibling, other].forEach((e) => {
-        /** @type {any} */ (e.workflow.pullRequest).deletionGroup = 'group-1';
+      [entry, sibling].forEach((e) => {
+        e.workflow.pullRequest.description = '<!-- sveltia-cms:deletion-group=group-1 -->';
       });
+      other.workflow.pullRequest.description = '<!-- sveltia-cms:deletion-group=group-2 -->';
       unpublishedEntries.current = [entry, sibling, other, pending, lone];
       vi.mocked(planCascadeDelete).mockReturnValueOnce(
         /** @type {any} */ ({ targets: [{ entry: home }, { entry: team }], blockers: [] }),

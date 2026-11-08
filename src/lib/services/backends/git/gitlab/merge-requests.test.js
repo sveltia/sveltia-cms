@@ -13,7 +13,7 @@ import {
   parseDiff,
   parseMergeRequest,
   toMergeRequest,
-  updateDeletionGroup,
+  updateDescription,
 } from '$lib/services/backends/git/gitlab/merge-requests';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
@@ -182,17 +182,16 @@ describe('GitLab merge requests', () => {
         updatedDate: new Date('2026-01-02T00:00:00Z'),
         author: { name: 'Me', email: '', id: 7, login: 'me' },
         files: [],
+        description: '',
       });
     });
 
-    test('reads the deletion group recorded in the description', () => {
-      expect(
-        parseMergeRequest(
-          createItem({
-            description: 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->',
-          }),
-        )?.deletionGroup,
-      ).toBe('group-1');
+    test('keeps the description as it is', () => {
+      const description = 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->';
+
+      expect(parseMergeRequest(createItem({ description }))?.description).toBe(description);
+      // The API gives an empty description as `null`
+      expect(parseMergeRequest(createItem({ description: null }))?.description).toBe('');
     });
 
     test('returns undefined for a merge request to another branch', () => {
@@ -807,6 +806,7 @@ describe('GitLab merge requests', () => {
         branch: 'cms/contributor/project/posts/hello',
         title: 'Create Post “hello”',
         status: 'pending_review',
+        description: 'Description',
       });
 
       expect(fetchAPI).toHaveBeenCalledWith(`/projects/${FORK_ID}/merge_requests`, {
@@ -838,6 +838,7 @@ describe('GitLab merge requests', () => {
         branch: 'cms/posts/hello',
         title: 'Create Post “hello”',
         status: 'draft',
+        description: 'Description',
       });
 
       expect(fetchAPI).toHaveBeenCalledWith(`/projects/${PROJECT_ID}/merge_requests`, {
@@ -877,6 +878,7 @@ describe('GitLab merge requests', () => {
         branch: 'cms/posts/hello',
         title: 'Create Post “hello”',
         status: 'draft',
+        description: 'Description',
       });
 
       expect(result.canMerge).toBe(false);
@@ -897,6 +899,7 @@ describe('GitLab merge requests', () => {
         branch: 'cms/posts/wip',
         title: 'WIP: notes',
         status: 'pending_review',
+        description: 'Description',
       });
 
       expect(result).toEqual(
@@ -910,44 +913,60 @@ describe('GitLab merge requests', () => {
     });
   });
 
-  describe('deletion group', () => {
-    test('is recorded in the description of a new merge request', async () => {
-      vi.mocked(fetchAPI).mockImplementation(async (_path, init) => ({
+  describe('description', () => {
+    test('is the one given to a new merge request', async () => {
+      const description = 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->';
+
+      vi.mocked(fetchAPI).mockResolvedValue({
         iid: 5,
         created_at: '2026-01-01T00:00:00Z',
         updated_at: '2026-01-01T00:00:00Z',
-        // The merge request comes back with the description it was created with
-        description: /** @type {any} */ (init)?.body.description,
-      }));
+        // Whatever the service gives back, the merge request carries the description it was
+        // opened with
+        description: null,
+      });
 
       const result = await createPullRequest({
         branch: 'cms/posts/hello',
         title: 'Delete Post “hello”',
         status: 'pending_deletion',
-        deletionGroup: 'group-1',
+        description,
       });
 
       expect(fetchAPI).toHaveBeenCalledWith(`/projects/${PROJECT_ID}/merge_requests`, {
         method: 'POST',
-        body: expect.objectContaining({
-          description: expect.stringContaining('<!-- sveltia-cms:deletion-group=group-1 -->'),
-        }),
+        body: expect.objectContaining({ description }),
       });
-      expect(result.deletionGroup).toBe('group-1');
+      expect(result.description).toBe(description);
     });
 
-    test('is recorded in an existing merge request, keeping the rest of the description', async () => {
+    test('is updated with what the transform makes of the current one', async () => {
+      const transform = vi.fn((/** @type {string} */ description) => `${description}, updated`);
+
       vi.mocked(fetchAPI)
         .mockResolvedValueOnce({ description: 'Edited' })
         .mockResolvedValueOnce({});
 
-      await updateDeletionGroup(/** @type {any} */ ({ number: 5 }), 'group-1');
+      await expect(updateDescription(/** @type {any} */ ({ number: 5 }), transform)).resolves.toBe(
+        'Edited, updated',
+      );
 
+      expect(transform).toHaveBeenCalledWith('Edited');
       expect(fetchAPI).toHaveBeenNthCalledWith(1, getMergeRequestPath(5));
       expect(fetchAPI).toHaveBeenNthCalledWith(2, getMergeRequestPath(5), {
         method: 'PUT',
-        body: { description: 'Edited\n\n<!-- sveltia-cms:deletion-group=group-1 -->' },
+        body: { description: 'Edited, updated' },
       });
+    });
+
+    test('is passed to the transform as an empty string when the merge request has none', async () => {
+      const transform = vi.fn(() => 'New');
+
+      vi.mocked(fetchAPI).mockResolvedValueOnce({ description: null }).mockResolvedValueOnce({});
+
+      await updateDescription(/** @type {any} */ ({ number: 5 }), transform);
+
+      expect(transform).toHaveBeenCalledWith('');
     });
   });
 

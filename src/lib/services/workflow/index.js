@@ -2,6 +2,7 @@ import { unique } from '@sveltia/utils/array';
 
 import { backend } from '$lib/services/backends';
 import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
+import { getDeletionGroup } from '$lib/services/backends/git/shared/pull-requests';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
@@ -320,17 +321,17 @@ export const isPendingDeletion = (entry) =>
 
 /**
  * Get the entries deleted along with the given unpublished entry. A selection of entries is deleted
- * with the same reference rewrite in each pull request, so the other entries of the same
- * collection, or collection file, awaiting deletion in the pull requests recording the same
- * selection count as part of it. An entry deleted on its own, or by a pull request opened before
- * the selection was recorded, rewrites only the references to itself. The entry is matched by ID,
- * as the store may have replaced it with a copy since it was read.
+ * with the same reference rewrite in each pull request, so the other entries awaiting deletion in
+ * the pull requests recording the same selection count as part of it. A selection is recorded per
+ * collection, or collection file, so they all belong to the same one as the entry. An entry deleted
+ * on its own, or by a pull request opened before the selection was recorded, rewrites only the
+ * references to itself. The entry is matched by ID, as the store may have replaced it with a copy
+ * since it was read.
  * @param {UnpublishedEntry} entry Unpublished entry awaiting deletion.
  * @returns {UnpublishedEntry[]} The entry, followed by the others deleted with it.
  */
 export const getDeletionSelection = (entry) => {
-  const { collectionName, fileName, pullRequest } = entry.workflow;
-  const { deletionGroup } = pullRequest;
+  const deletionGroup = getDeletionGroup(entry.workflow.pullRequest);
 
   if (!deletionGroup) {
     return [entry];
@@ -342,9 +343,7 @@ export const getDeletionSelection = (entry) => {
       (e) =>
         e.id !== entry.id &&
         isPendingDeletion(e) &&
-        e.workflow.pullRequest.deletionGroup === deletionGroup &&
-        e.workflow.collectionName === collectionName &&
-        e.workflow.fileName === fileName,
+        getDeletionGroup(e.workflow.pullRequest) === deletionGroup,
     ),
   ];
 };

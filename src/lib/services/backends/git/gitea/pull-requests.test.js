@@ -128,17 +128,19 @@ describe('Gitea pull request service', () => {
         updatedDate: new Date('2026-01-02T00:00:00Z'),
         author: { name: 'Me', email: 'me@example.com', id: 7, login: 'me' },
         files: [],
+        description: '',
       });
     });
 
-    test('reads the deletion group recorded in the description', () => {
-      expect(
-        parsePullRequest(
-          createItem({
-            body: 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->',
-          }),
-        )?.deletionGroup,
-      ).toBe('group-1');
+    test('keeps the description as it is', () => {
+      const body = 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->';
+
+      expect(parsePullRequest(createItem({ body }))?.description).toBe(body);
+    });
+
+    test('gives a pull request without a description an empty one', () => {
+      // The API gives an empty description as `null`
+      expect(parsePullRequest(createItem({ body: null }))?.description).toBe('');
     });
 
     test('returns undefined without a CMS label', () => {
@@ -681,6 +683,7 @@ describe('Gitea pull request service', () => {
         branch: 'cms/posts/hello',
         title: 'Create Post “hello”',
         status: 'draft',
+        description: 'Description',
       });
 
       expect(fetchAPI).toHaveBeenNthCalledWith(1, `${REPO_PATH}/pulls`, {
@@ -689,7 +692,7 @@ describe('Gitea pull request service', () => {
           title: 'WIP: Create Post “hello”',
           head: 'cms/posts/hello',
           base: 'main',
-          body: expect.any(String),
+          body: 'Description',
         },
       });
 
@@ -710,6 +713,7 @@ describe('Gitea pull request service', () => {
         createdDate: new Date('2026-01-01T00:00:00Z'),
         updatedDate: new Date('2026-01-01T00:00:00Z'),
         files: [],
+        description: 'Description',
       });
     });
 
@@ -718,6 +722,7 @@ describe('Gitea pull request service', () => {
         branch: 'cms/posts/hello',
         title: 'Delete Post “hello”',
         status: 'pending_deletion',
+        description: 'Description',
       });
 
       expect(getRequestBody().title).toBe('Delete Post “hello”');
@@ -741,6 +746,7 @@ describe('Gitea pull request service', () => {
         branch: 'cms/posts/hello',
         title: 'Create Post “hello”',
         status: 'draft',
+        description: 'Description',
       });
 
       // The same author a listed pull request has, so a later save recognizes it as the user’s own
@@ -752,16 +758,18 @@ describe('Gitea pull request service', () => {
       });
     });
 
-    test('records the deletion group in the description', async () => {
+    test('opens the pull request with the given description', async () => {
+      const description = 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->';
+
       const result = await createPullRequest({
         branch: 'cms/posts/hello',
         title: 'Delete Post “hello”',
         status: 'pending_deletion',
-        deletionGroup: 'group-1',
+        description,
       });
 
-      expect(getRequestBody().body).toContain('<!-- sveltia-cms:deletion-group=group-1 -->');
-      expect(result.deletionGroup).toBe('group-1');
+      expect(getRequestBody().body).toBe(description);
+      expect(result.description).toBe(description);
     });
   });
 
@@ -988,6 +996,7 @@ describe('Gitea pull request service', () => {
         branch: 'cms/me/repo/posts/hello',
         title: 'Create Post “hello”',
         status: 'pending_review',
+        description: 'Description',
       });
 
       // The pull request is opened on the configured repository, from the fork’s branch

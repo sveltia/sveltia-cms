@@ -1,6 +1,7 @@
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { pollUntil } from '$lib/services/backends/git/shared/poll';
+import { PULL_REQUEST_DESCRIPTION } from '$lib/services/backends/git/shared/pull-requests';
 import { cmsConfig } from '$lib/services/config';
 import {
   ENTRY_ALREADY_PUBLISHED,
@@ -406,8 +407,8 @@ export const pruneForkBranches = async (items, classify, deleteBranch) => {
  * @param {WorkflowStatus} args.status New status.
  * @param {'number' | 'nodeId'} args.requestKey Property of the pull request that identifies the
  * request on the service, `undefined` until one is opened.
- * @param {(args: { branch: string, title: string, status: WorkflowStatus }) =>
- * Promise<WorkflowPullRequest>} args.createRequest Function to open the request.
+ * @param {(args: { branch: string, title: string, status: WorkflowStatus, description: string })
+ * => Promise<WorkflowPullRequest>} args.createRequest Function to open the request.
  * @param {(pullRequest: WorkflowPullRequest) => Promise<ForkRequestState | undefined>}
  * args.fetchRequest Function to read the current state of the request. `undefined` means the
  * request couldn’t be found, in which case the entry carries on with what it knows.
@@ -436,7 +437,7 @@ export const updateForkStatusWith = async (args) => {
   if (pullRequest[requestKey] === undefined) {
     return status === 'draft'
       ? { ...pullRequest, status, updatedDate: new Date() }
-      : createRequest({ branch, title, status });
+      : createRequest({ branch, title, status, description: PULL_REQUEST_DESCRIPTION });
   }
 
   // The request may have been closed, reopened or merged outside the CMS, so read the current state

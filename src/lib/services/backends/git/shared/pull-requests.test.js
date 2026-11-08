@@ -2,8 +2,8 @@ import { describe, expect, test } from 'vitest';
 
 import {
   createDraftTitleCodec,
+  getDeletionGroup,
   getPullRequestDescription,
-  parseDeletionGroup,
   parseRestFiles,
   PULL_REQUEST_DESCRIPTION,
   setDeletionGroup,
@@ -23,13 +23,27 @@ describe('deletion group record', () => {
     expect(getPullRequestDescription('group-1')).toBe(`${PULL_REQUEST_DESCRIPTION}\n\n${RECORD}`);
   });
 
+  /**
+   * Get the deletion group recorded in the given description.
+   * @param {string | undefined} description Description.
+   * @returns {string | undefined} Deletion group ID.
+   */
+  const read = (description) => getDeletionGroup(/** @type {any} */ ({ number: 1, description }));
+
   test('reads the group back from the description', () => {
-    expect(parseDeletionGroup(getPullRequestDescription('group-1'))).toBe('group-1');
-    expect(parseDeletionGroup(PULL_REQUEST_DESCRIPTION)).toBeUndefined();
-    // A description the service returns as `null` when it’s empty
-    expect(parseDeletionGroup(null)).toBeUndefined();
+    expect(read(getPullRequestDescription('group-1'))).toBe('group-1');
+    expect(read(PULL_REQUEST_DESCRIPTION)).toBeUndefined();
+    expect(read('')).toBeUndefined();
+    // An Open Authoring draft, which has no pull request to carry a description
+    expect(read(undefined)).toBeUndefined();
     // Anything but a plain ID isn’t taken as one
-    expect(parseDeletionGroup('<!-- sveltia-cms:deletion-group=a b -->')).toBeUndefined();
+    expect(read('<!-- sveltia-cms:deletion-group=a b -->')).toBeUndefined();
+  });
+
+  test('reads the first record of a description carrying more than one', () => {
+    expect(read(`Edited\n\n${RECORD}\n\n<!-- sveltia-cms:deletion-group=group-2 -->`)).toBe(
+      'group-1',
+    );
   });
 
   test('replaces the record, keeping the rest of the description', () => {
@@ -40,8 +54,17 @@ describe('deletion group record', () => {
       'Edited\n\n<!-- sveltia-cms:deletion-group=group-2 -->',
     );
     expect(setDeletionGroup(`Edited\n\n${RECORD}`, undefined)).toBe('Edited');
-    expect(setDeletionGroup(null, 'group-1')).toBe(RECORD);
-    expect(setDeletionGroup(null, undefined)).toBe('');
+    expect(setDeletionGroup('', 'group-1')).toBe(RECORD);
+    expect(setDeletionGroup('', undefined)).toBe('');
+  });
+
+  test('removes every record, along with the blank lines before it', () => {
+    const description = `Edited\n\n${RECORD}\n\n<!-- sveltia-cms:deletion-group=group-2 -->`;
+
+    expect(setDeletionGroup(description, undefined)).toBe('Edited');
+    expect(setDeletionGroup(description, 'group-3')).toBe(
+      'Edited\n\n<!-- sveltia-cms:deletion-group=group-3 -->',
+    );
   });
 });
 
