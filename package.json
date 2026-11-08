@@ -40,6 +40,7 @@
     "check:stylelint": "stylelint '**/*.{css,scss,svelte}'",
     "check:svelte": "svelte-check",
     "dev": "vite",
+    "find:similar": "node scripts/find-similar-functions.js",
     "format": "prettier --write .",
     "prepublishOnly": "vite build",
     "preview": "vite preview",

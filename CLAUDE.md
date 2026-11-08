@@ -25,6 +25,7 @@ pnpm check:svelte
 pnpm check:oxlint
 pnpm check:cspell
 pnpm check:duplicates # copy-paste detection with jscpd, configured in `.jscpd.json`
+pnpm find:similar     # report functions that look alike, which jscpd misses once they have drifted
 pnpm check:imports    # custom script, more accurate than standard unused-import tools
 pnpm check:audit
 
