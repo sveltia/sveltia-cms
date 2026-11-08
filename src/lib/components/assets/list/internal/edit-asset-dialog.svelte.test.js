@@ -36,7 +36,8 @@ describe('EditAssetDialog', () => {
     editingAsset.current = asset;
 
     const dialog = page.getByRole('dialog', { name: 'Edit \u2068notes.txt\u2069' });
-    const textarea = dialog.getByRole('textbox');
+    // The text area is named after the dialog
+    const textarea = dialog.getByRole('textbox', { name: 'Edit \u2068notes.txt\u2069' });
 
     await expect.element(textarea).toHaveValue('Hello');
     await expect.element(dialog.getByRole('button', { name: 'Save' })).toBeDisabled();

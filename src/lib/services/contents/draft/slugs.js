@@ -1,10 +1,6 @@
 import { stripSlashes } from '@sveltia/utils/string';
 
 import { fillTemplate } from '$lib/services/common/template';
-import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
-import { getTemplateTags } from '$lib/services/common/template/tags';
-import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
-import { parseTransformations } from '$lib/services/common/transformations';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import {
@@ -12,9 +8,14 @@ import {
   stripIndexFileName,
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
-import { getSlugOptions, LEGACY_SLUG_EDITOR_TAG } from '$lib/services/contents/collection/slug';
+import { localizeDirPath } from '$lib/services/contents/collection/nested/i18n';
+import {
+  getLocalizingKeyPaths,
+  getSlugOptions,
+  hasLocalizedSlugs,
+  LEGACY_SLUG_EDITOR_TAG,
+} from '$lib/services/contents/collection/slug';
 import { extractDateTime } from '$lib/services/contents/entry';
-import { usesSingleFileStructure } from '$lib/services/contents/i18n/config';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { isNumeric } from '$lib/services/utils/number';
 import { getPullRequestEntries } from '$lib/services/workflow';
@@ -26,8 +27,8 @@ import { getPullRequestEntries } from '$lib/services/workflow';
  * EntrySlugVariants,
  * FillTemplateOptions,
  * FlattenedEntryContent,
- * InternalCollection,
  * InternalEntryCollection,
+ * InternalLocaleCode,
  * LocaleSlugMap,
  * PendingEntry,
  * } from '$lib/types/private';
@@ -69,23 +70,49 @@ const randomValueMaps = new WeakMap();
 export const getRandomValues = (draft) => getOrCreate(randomValueMaps, draft, () => new Map());
 
 /**
- * Get the folder a new entry goes to, as chosen with the path editor of a collection with nested
- * entries, when the entry’s file is named after its slug. The slug of an entry in such a collection
- * is its sub path, e.g. `docs/intro`, so a new slug has to be unique among the entries in that
- * folder rather than compared with the sub paths of every entry. Where every entry shares one file
- * name, the entry gets a folder of its own, which is checked with the path instead.
+ * Get the folder chosen with the path editor of a collection with nested entries, in the given
+ * locale. The folder is chosen in the default locale; when the slugs are localized, so are the
+ * folders, and the entry’s file in another locale goes to the localized counterpart instead. The
+ * entry’s slug is checked against that folder, and the entry is saved there, so both take it from
+ * here.
  * @param {EntryDraft} draft Entry draft.
- * @returns {string | undefined} Folder path without leading and trailing slashes, or `undefined`
- * if the entry isn’t new or the path editor doesn’t decide where it goes.
+ * @param {InternalLocaleCode} [locale] Locale. Default: the default locale.
+ * @returns {string} Folder path without leading and trailing slashes. An empty string for the
+ * collection folder.
+ * @see https://github.com/sveltia/sveltia-cms/issues/962
  */
-export const getNewEntryDirPath = (draft) => {
-  const { collection, isNew, currentPath } = draft;
+export const getChosenDirPath = ({ collection, currentPath }, locale) =>
+  localizeDirPath({
+    collection,
+    dirPath: stripSlashes(currentPath ?? ''),
+    locale: locale ?? collection._i18n.defaultLocale,
+  });
 
-  if (!isNew || !usesCustomEntryPath(draft) || getSharedEntryFileName(collection)) {
+/**
+ * Get the folder where an entry’s slug is filed as a bare name, as chosen with the path editor of a
+ * collection with nested entries, when the entry’s file is named after its slug. That’s the case
+ * for a new entry, and for a locale just enabled for an existing entry. The slug of an entry in
+ * such a collection is otherwise its sub path, e.g. `docs/intro`, so a new slug has to be unique
+ * among the entries in that folder rather than compared with the sub paths of every entry. Where
+ * every entry shares one file name, the entry gets a folder of its own, which is checked with the
+ * path instead. In another locale, that’s the localized counterpart of the folder; see
+ * {@link getChosenDirPath}.
+ * @param {EntryDraft} draft Entry draft.
+ * @param {InternalLocaleCode} [locale] Locale to get the folder in. Default: the default locale.
+ * @returns {string | undefined} Folder path without leading and trailing slashes, or `undefined`
+ * if the slug in the locale is an existing sub path or the path editor doesn’t decide where it
+ * goes.
+ * @see https://github.com/sveltia/sveltia-cms/issues/962
+ */
+export const getSlugDirPath = (draft, locale) => {
+  const { collection, isNew, originalLocales } = draft;
+  const isNewInLocale = isNew || (!!locale && !originalLocales?.[locale]);
+
+  if (!isNewInLocale || !usesCustomEntryPath(draft) || getSharedEntryFileName(collection)) {
     return undefined;
   }
 
-  return stripSlashes(/** @type {string} */ (currentPath));
+  return getChosenDirPath(draft, locale);
 };
 
 /**
@@ -305,6 +332,7 @@ export const getLocalizedSlug = ({
     return fillTemplate(getSlugTemplate({ draft, locale, templateOnly }), {
       ...options,
       locale,
+      dirPath: getSlugDirPath(draft, locale),
       content: {
         // Merge the default locale content and localized content. A field that isn’t localized
         // only exists in the default locale, so its value is kept from there
@@ -324,64 +352,6 @@ export const getLocalizedSlug = ({
   }
 
   return /** @type {string} */ (_slug);
-};
-
-/**
- * Template tags a slug template can use that don’t refer to a field, and therefore can’t be
- * localized.
- * @type {string[]}
- */
-const NON_FIELD_TAGS = [...DATE_TIME_FIELDS, ...Object.keys(UUID_TYPES), 'slug'];
-
-/**
- * Get the key paths of the fields whose values are localized in the slug, which are the tags in the
- * slug template carrying the `localize` flag, e.g. `{{title | localize}}`. With the slug’s `i18n`
- * option enabled, every field tag in the template is localized.
- * @param {InternalEntryCollection} collection Collection.
- * @returns {string[]} Key paths. An empty array if the slug isn’t localized.
- */
-const getLocalizingKeyPaths = (collection) => {
-  const { template, localized } = getSlugOptions(collection);
-  /** @type {Set<string>} */
-  const keyPaths = new Set();
-
-  getTemplateTags(template).forEach(({ content: placeholder }) => {
-    // Leave out the transformations, e.g. `upper` in `{{title | upper | localize}}`. The `localize`
-    // flag can come anywhere among them; it’s a no-op when the template is filled
-    const { value, transformations } = parseTransformations(placeholder);
-    const keyPath = stripFieldTagPrefix(value);
-
-    if (transformations.some(({ method }) => method === 'localize')) {
-      keyPaths.add(keyPath);
-    } else if (localized && !NON_FIELD_TAGS.includes(keyPath)) {
-      keyPaths.add(keyPath);
-    }
-  });
-
-  return [...keyPaths];
-};
-
-/**
- * Check whether the entries in the given collection get a slug of their own for each locale, which
- * is the case when i18n is enabled with the multiple files or folders structure, and either the
- * slug’s `i18n` option is enabled or the slug template contains the `localize` flag, e.g.
- * `{{title | localize}}`.
- * @param {InternalCollection} collection Collection.
- * @returns {boolean} Result.
- * @see https://sveltiacms.app/en/docs/i18n/slugs#localizing-entry-slugs
- */
-export const hasLocalizedSlugs = (collection) => {
-  const {
-    _i18n: { i18nEnabled, structureMap },
-  } = collection;
-
-  return (
-    // A monolingual collection has only one locale, so there’s nothing to localize
-    i18nEnabled &&
-    !usesSingleFileStructure(structureMap) &&
-    collection._type === 'entry' &&
-    (getSlugOptions(collection).localized || !!getLocalizingKeyPaths(collection).length)
-  );
 };
 
 /**
@@ -505,7 +475,7 @@ export const getSlugs = ({ draft, templateOnly = false, pendingEntries = undefin
 
     return fillTemplate(getSlugTemplate({ draft, locale: defaultLocale, templateOnly }), {
       ...fillSlugOptions,
-      dirPath: getNewEntryDirPath(draft),
+      dirPath: getSlugDirPath(draft),
     });
   };
 

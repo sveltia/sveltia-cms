@@ -161,12 +161,7 @@
     {/if}
     <!-- An empty list box would only be a stop for the Tab key, with nothing to move through -->
     {#if filteredItems.length}
-      <SimpleImageGrid
-        {multiple}
-        {gridId}
-        {viewType}
-        ariaLabel={_(`assets_dialog.available_${kind === 'image' ? 'images' : 'files'}`)}
-      >
+      <SimpleImageGrid {multiple} {gridId} {viewType} {kind}>
         <InfiniteScroll items={filteredItems} itemKey="key">
           {#snippet renderItem(/** @type {{ asset: Asset, relPath: string, key: string }} */ item)}
             {@const { asset, key, relPath } = item}

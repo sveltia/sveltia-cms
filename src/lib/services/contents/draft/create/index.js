@@ -10,15 +10,14 @@ import {
   getMetaPathConfig,
   nestedFilterPath,
 } from '$lib/services/contents/collection/nested';
-import { getSlugOptions } from '$lib/services/contents/collection/slug';
+import { getSlugOptions, hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
 import { revokeDraftFileURLs, STATIC_DRAFT_KEYS } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { normalizeContentMap } from '$lib/services/contents/draft/create/normalize';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
-import { fillUuidValues } from '$lib/services/contents/draft/create/uuid';
+import { fillUuidValues } from '$lib/services/contents/draft/create/unique-values';
 import { createValueMap } from '$lib/services/contents/draft/create/versioned-map.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
-import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { resetCustomFieldValidation } from '$lib/services/contents/draft/validate/custom-fields';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';

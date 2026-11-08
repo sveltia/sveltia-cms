@@ -285,10 +285,11 @@ export const createListActions = ({
       const { field } = /** @type {ListFieldWithSubField} */ (fieldConfig);
       const { types, typeKey = 'type' } = /** @type {ListFieldWithTypes} */ (fieldConfig);
       const index = targetIndex ?? (addToTop ? 0 : getItemCount());
-      // Shared by the locales, so a duplicated UUID that is the same in each gets the same new one
-      /** @type {Map<string, string>} */
+      // Shared by the locales, so a duplicated unique value that is the same in each, like a UUID,
+      // gets the same new one
+      /** @type {Map<any, any>} */
       // eslint-disable-next-line svelte/prefer-svelte-reactivity
-      const renewedUuids = new Map();
+      const renewedValues = new Map();
 
       addedItemIndex = index;
 
@@ -312,7 +313,7 @@ export const createListActions = ({
           type,
           types,
           typeKey,
-          renewedUuids,
+          renewedValues,
           locale: targetLocale,
           defaultLocale: inEditorComponent ? targetLocale : draft.defaultLocale,
         });

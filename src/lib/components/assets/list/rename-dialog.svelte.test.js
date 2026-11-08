@@ -46,7 +46,8 @@ describe('RenameDialog', () => {
     await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
     await expectFileNameSelected(dialog.getByRole('textbox'), 'photo.png');
 
-    await dialog.getByRole('textbox').fill('picture.png');
+    // The input is named after the dialog
+    await dialog.getByRole('textbox', { name: 'Rename \u2068photo.png\u2069' }).fill('picture.png');
     await dialog.getByRole('button', { name: 'Rename' }).click();
 
     // The handler runs once the dialog is closed

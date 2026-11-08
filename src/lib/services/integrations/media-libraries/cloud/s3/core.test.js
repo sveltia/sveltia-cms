@@ -756,6 +756,16 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       );
     });
 
+    it('should refuse to sign a request to a custom endpoint over plain HTTP', async () => {
+      await expect(
+        listS3Objects(
+          { ...mockConfig, endpoint: 'http://s3.example.com' },
+          { kind: undefined, apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' },
+        ),
+      ).rejects.toThrow('Refusing to send credentials over an insecure connection');
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
     it('should handle single Contents item (non-array) response', async () => {
       const xmlResponse =
         '<ListBucketResult>' +

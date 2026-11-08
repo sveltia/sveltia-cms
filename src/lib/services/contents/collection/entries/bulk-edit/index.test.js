@@ -922,6 +922,8 @@ describe('saveBulkEdits()', () => {
       count: 2,
       saved: true,
       deleted: false,
+      // Skipping CI isn’t configured, so the entries aren’t said to be published
+      published: false,
     });
   });
 

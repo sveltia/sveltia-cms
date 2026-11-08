@@ -7,7 +7,8 @@ import {
   getEntriesInCollectionFolder,
 } from '$lib/services/contents/collection/entries';
 import { isEntryCollection } from '$lib/services/contents/collection/predicates';
-import { getSlugs, hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
+import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validatePath as _validatePath } from '$lib/services/contents/draft/validate/path';
 import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
@@ -39,9 +40,13 @@ vi.mock('$lib/services/workflow', () => {
   };
 });
 
-vi.mock('$lib/services/contents/draft/slugs', () => ({
-  getSlugs: vi.fn(() => ({ defaultLocaleSlug: 'new-page' })),
+vi.mock('$lib/services/contents/collection/slug', async (importOriginal) => ({
+  ...(await importOriginal()),
   hasLocalizedSlugs: vi.fn(() => false),
+}));
+vi.mock('$lib/services/contents/draft/slugs', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getSlugs: vi.fn(() => ({ defaultLocaleSlug: 'new-page' })),
 }));
 
 /**

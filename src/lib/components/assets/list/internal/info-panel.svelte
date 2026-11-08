@@ -17,7 +17,7 @@
   import { createLatestGuard } from '$lib/services/utils/scheduling';
 
   /**
-   * @import { Asset, AssetDetails } from '$lib/types/private';
+   * @import { Asset, AssetDetails, Entry } from '$lib/types/private';
    */
 
   /**
@@ -64,17 +64,25 @@
       }
 
       details = _details;
-      // A late result lands on the object replaced since, so it needs no check
-      details.usedEntries = await getAssetUsedEntries(_asset);
     } catch (/** @type {any} */ ex) {
-      // The file couldn’t be downloaded, so only the basic info is shown
+      // Only the basic info is shown, but the used entries don’t depend on the details
       // eslint-disable-next-line no-console
       console.error(ex);
+    }
 
-      if (isLatest()) {
-        // Stop showing the used entries as being loaded
-        details.usedEntries = [];
-      }
+    /** @type {Entry[]} */
+    let _usedEntries = [];
+
+    try {
+      _usedEntries = await getAssetUsedEntries(_asset);
+    } catch (/** @type {any} */ ex) {
+      // Stop showing the used entries as being loaded
+      // eslint-disable-next-line no-console
+      console.error(ex);
+    }
+
+    if (isLatest()) {
+      details.usedEntries = _usedEntries;
     }
   };
 

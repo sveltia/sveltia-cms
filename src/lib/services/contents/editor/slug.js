@@ -9,8 +9,8 @@ import {
   hasNestedEntries,
 } from '$lib/services/contents/collection/nested';
 import { getFolderName, getOwnFolderName } from '$lib/services/contents/collection/nested/i18n';
-import { getSlugOptions } from '$lib/services/contents/collection/slug';
-import { getSlugs, hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+import { getSlugOptions, hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
+import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getOtherEntries } from '$lib/services/contents/draft/validate/slugs';
 import { createPath } from '$lib/services/utils/file';
 import { getUnpublishedEntryByDraft, isPendingDeletion } from '$lib/services/workflow';

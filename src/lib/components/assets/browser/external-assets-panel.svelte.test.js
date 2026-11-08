@@ -59,7 +59,7 @@ const getOption = (id) =>
  * @returns {import('vitest/browser').Locator} Locator.
  */
 const getAssetOptions = () =>
-  page.getByRole('listbox', { name: 'Available Images' }).getByRole('option');
+  page.getByRole('listbox', { name: /^Available (Images|Files)$/ }).getByRole('option');
 
 /**
  * Wait for the list to be rendered.
@@ -92,6 +92,8 @@ describe('ExternalAssetsPanel', () => {
     const { container } = await render(ExternalAssetsPanel, props);
 
     await waitForList(2);
+    // The list is named after the kind of assets being picked
+    await expect.element(page.getByRole('listbox', { name: 'Available Images' })).toBeVisible();
     expect(list).toHaveBeenCalledWith({
       kind: 'image',
       fieldConfig: undefined,
@@ -872,7 +874,16 @@ describe('ExternalAssetsPanel', () => {
 
       // The root lists its folders and none of the files, which are all in folders
       await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
-      expect(getAssetOptions().elements()).toHaveLength(0);
+      // An empty list box would only be a stop for the Tab key
+      expect(page.getByRole('listbox').elements()).toHaveLength(1);
+      // Files of any kind can be picked
+      await page.getByRole('option', { name: 'images' }).click();
+      await expect.element(page.getByRole('listbox', { name: 'Available Files' })).toBeVisible();
+      await page
+        .getByRole('navigation', { name: 'Folder' })
+        .getByRole('button', { name: 'Test Cloud' })
+        .click();
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
       expect(page.getByRole('navigation').elements()).toHaveLength(0);
       expect(component.canCreateFolder()).toBe(false);
 

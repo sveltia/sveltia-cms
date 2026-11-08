@@ -12,6 +12,7 @@ import {
   getRelativeKey,
 } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
 import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
+import { isSecureURL } from '$lib/services/utils/networking';
 
 /**
  * @import {
@@ -70,6 +71,27 @@ import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
  */
 
 /**
+ * Get the credential from the fetch options for a request to the service. A custom `endpoint`, such
+ * as one for an S3-compatible service or an Azurite emulator, must use HTTPS unless it’s on the
+ * local computer, so that the credential, or a SAS token sent in the query string, isn’t exposed
+ * over an insecure connection.
+ * @template T
+ * @template {CloudStorageConfig} C
+ * @param {ObjectStorageProvider<T, C>} provider Service provider.
+ * @param {C} config Service configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the credential).
+ * @returns {string} Credential.
+ * @throws {Error} When the endpoint is insecure, or no credential was provided.
+ */
+const getCredential = (provider, config, options) => {
+  if (config.endpoint && !isSecureURL(config.endpoint)) {
+    throw new Error('Refusing to send credentials over an insecure connection');
+  }
+
+  return provider.requireCredential(options);
+};
+
+/**
  * Get the key prefix to list a folder with.
  * @param {CloudStorageConfig} config Service configuration.
  * @param {string} [dirPath] Folder path relative to the configured prefix. Default: the configured
@@ -103,7 +125,7 @@ export const fetchListing = async (
   options,
   { maxPages = 10, dirPath, delimiter } = {},
 ) => {
-  const credential = provider.requireCredential(options);
+  const credential = getCredential(provider, config, options);
   const prefix = getListPrefix(config, dirPath);
   /** @type {T[]} */
   const files = [];
@@ -286,7 +308,7 @@ export const uploadObjects = async (provider, files, config, options) => {
     return [];
   }
 
-  const credential = provider.requireCredential(options);
+  const credential = getCredential(provider, config, options);
   const { dirPath = '' } = options;
   const takenNames = await getFileNamesInFolder(provider, config, options, dirPath);
 
@@ -335,7 +357,7 @@ export const uploadObjects = async (provider, files, config, options) => {
  * @returns {Promise<void>}
  */
 export const deleteObjects = async (provider, assets, config, options) => {
-  const credential = provider.requireCredential(options);
+  const credential = getCredential(provider, config, options);
 
   // eslint-disable-next-line no-restricted-syntax
   for (const { id: key } of assets) {
@@ -362,7 +384,7 @@ export const deleteObjects = async (provider, assets, config, options) => {
  * @returns {Promise<ExternalAsset>} Replaced asset.
  */
 export const replaceObject = async (provider, asset, file, config, options) => {
-  const credential = provider.requireCredential(options);
+  const credential = getCredential(provider, config, options);
   const object = await provider.putObject({ key: asset.id, file, config, credential });
 
   return provider.parseResults([object], config, credential)[0];
@@ -381,7 +403,7 @@ export const replaceObject = async (provider, asset, file, config, options) => {
  * @returns {Promise<ExternalAsset>} Moved asset.
  */
 export const moveObject = async (provider, asset, newPath, config, options) => {
-  const credential = provider.requireCredential(options);
+  const credential = getCredential(provider, config, options);
   const key = getFileKey(config, newPath);
   const object = await provider.copyObject({ asset, key, config, credential });
 
@@ -402,7 +424,7 @@ export const moveObject = async (provider, asset, newPath, config, options) => {
  * @returns {Promise<void>}
  */
 export const createFolderObject = async (provider, dirPath, config, options) => {
-  const credential = provider.requireCredential(options);
+  const credential = getCredential(provider, config, options);
 
   await provider.putFolderObject({ key: getFolderKey(config, dirPath), config, credential });
 };
@@ -419,7 +441,7 @@ export const createFolderObject = async (provider, dirPath, config, options) => 
  * @returns {Promise<void>}
  */
 export const deleteFolderObject = async (provider, dirPath, config, options) => {
-  const credential = provider.requireCredential(options);
+  const credential = getCredential(provider, config, options);
 
   await provider.deleteObject({
     key: getFolderKey(config, dirPath),

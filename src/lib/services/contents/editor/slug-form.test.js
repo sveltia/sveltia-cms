@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { validateNewFolderName } from '$lib/services/common/slug';
-import { getSlugOptions } from '$lib/services/contents/collection/slug';
-import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+import { getSlugOptions, hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
 import { validateSlug } from '$lib/services/contents/draft/validate/slugs';
 
 import { getSlugEditError, getSlugEditRows } from './slug-form';
@@ -19,8 +18,6 @@ vi.mock('$lib/services/common/slug', () => ({
 }));
 vi.mock('$lib/services/contents/collection/slug', () => ({
   getSlugOptions: vi.fn(() => ({ pattern: undefined })),
-}));
-vi.mock('$lib/services/contents/draft/slugs', () => ({
   hasLocalizedSlugs: vi.fn(() => false),
 }));
 vi.mock('$lib/services/contents/draft/validate/slugs', () => ({

@@ -25,6 +25,7 @@ import {
   collectionState,
   entryGroups,
   listedEntries,
+  listedEntryCount,
   listedEntryIndexMap,
   listedUnpublishedEntries,
   reorderDirty,
@@ -808,6 +809,18 @@ describe('collection/view/index', () => {
 
       expect(sortEntries).toHaveBeenCalled();
       expect(filterEntries).toHaveBeenCalled();
+    });
+
+    test('listedEntryCount counts the never-published drafts a filter hides', async () => {
+      _unpublishedEntries.current = [createDraft('needed'), createDraft('brand-new')];
+      await wait();
+      vi.mocked(filterEntries).mockReturnValue([]);
+      currentView.current = { type: 'list', filters: [{ field: 'draft', pattern: true }] };
+
+      // The filter hides the draft, but the list controls still need it counted, so the filter can
+      // be reset. The draft for `needed` replaces a published entry, so it’s only counted once
+      expect(read(listedUnpublishedEntries)).toEqual([]);
+      expect(read(listedEntryCount)).toBe(3);
     });
 
     test('listedUnpublishedEntries skips sorting when there is nothing to list', async () => {

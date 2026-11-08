@@ -874,7 +874,14 @@ describe('Gitea Commits Service', () => {
             sha: 'abc123',
             commit: {
               message: 'Update Post “hello”\r\n\r\nWith a body\r\n',
-              author: { name: 'Alice', email: 'alice@example.com', date: '2024-06-01T12:00:00Z' },
+              // A rebased or amended commit keeps its author date, but gets a new committer date,
+              // which is what GitHub and GitLab date the history with
+              author: { name: 'Alice', email: 'alice@example.com', date: '2024-05-20T09:00:00Z' },
+              committer: {
+                name: 'Alice',
+                email: 'alice@example.com',
+                date: '2024-06-01T12:00:00Z',
+              },
             },
             author: { avatar_url: 'https://example.com/alice.png', login: 'alice' },
           },
@@ -882,6 +889,7 @@ describe('Gitea Commits Service', () => {
             sha: 'def456',
             commit: {
               author: { name: 'Bob', email: 'bob@example.com', date: '2024-05-01T10:00:00Z' },
+              committer: { date: '2024-05-01T10:00:00Z' },
             },
             author: { avatar_url: 'https://example.com/bob.png', login: 'bob' },
           },
@@ -925,9 +933,8 @@ describe('Gitea Commits Service', () => {
       Array.from({ length: count }, (_, index) => ({
         sha: `sha-${start + index}`,
         commit: {
-          author: {
-            name: 'A',
-            email: 'a@t.com',
+          author: { name: 'A', email: 'a@t.com' },
+          committer: {
             date: new Date(Date.UTC(2024, 0, 1) - (start + index) * 60_000).toISOString(),
           },
         },
@@ -996,7 +1003,10 @@ describe('Gitea Commits Service', () => {
           toResponse([
             {
               sha: 'abc123',
-              commit: { author: { name: 'Alice', email: 'a@t.com', date: '2024-06-01T12:00:00Z' } },
+              commit: {
+                author: { name: 'Alice', email: 'a@t.com' },
+                committer: { date: '2024-06-01T12:00:00Z' },
+              },
               author: { avatar_url: '', login: 'alice' },
             },
           ]),
@@ -1005,12 +1015,18 @@ describe('Gitea Commits Service', () => {
           toResponse([
             {
               sha: 'abc123',
-              commit: { author: { name: 'Alice', email: 'a@t.com', date: '2024-06-01T12:00:00Z' } },
+              commit: {
+                author: { name: 'Alice', email: 'a@t.com' },
+                committer: { date: '2024-06-01T12:00:00Z' },
+              },
               author: { avatar_url: '', login: 'alice' },
             },
             {
               sha: 'xyz789',
-              commit: { author: { name: 'Carol', email: 'c@t.com', date: '2024-04-01T08:00:00Z' } },
+              commit: {
+                author: { name: 'Carol', email: 'c@t.com' },
+                committer: { date: '2024-04-01T08:00:00Z' },
+              },
               author: { avatar_url: '', login: 'carol' },
             },
           ]),
@@ -1028,12 +1044,18 @@ describe('Gitea Commits Service', () => {
         toResponse([
           {
             sha: 'oldest',
-            commit: { author: { name: 'A', email: 'a@t.com', date: '2024-01-01T00:00:00Z' } },
+            commit: {
+              author: { name: 'A', email: 'a@t.com' },
+              committer: { date: '2024-01-01T00:00:00Z' },
+            },
             author: { avatar_url: '', login: 'a' },
           },
           {
             sha: 'newest',
-            commit: { author: { name: 'B', email: 'b@t.com', date: '2024-12-01T00:00:00Z' } },
+            commit: {
+              author: { name: 'B', email: 'b@t.com' },
+              committer: { date: '2024-12-01T00:00:00Z' },
+            },
             author: { avatar_url: '', login: 'b' },
           },
         ]),

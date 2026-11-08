@@ -1,4 +1,6 @@
 import { getField } from '$lib/services/contents/entry/fields';
+import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
+import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/fields/hidden/defaults';
 import { getInitialValue } from '$lib/services/contents/fields/uuid/helpers';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';
@@ -10,8 +12,47 @@ import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';
  * InternalLocaleCode,
  * LocaleContentMap,
  * } from '$lib/types/private';
- * @import { UuidField } from '$lib/types/public';
+ * @import { ComputeField, Field, FieldKeyPath, UuidField } from '$lib/types/public';
  */
+
+/**
+ * Types of the fields whose values are unique to an entry or list item, and renewed when it’s
+ * duplicated. See {@link getRenewedUniqueValue}.
+ * @type {string[]}
+ */
+export const UNIQUE_VALUE_FIELD_TYPES = ['uuid', 'compute', 'hidden'];
+
+/**
+ * Get a new value for the given field of a duplicated entry or list item, so the duplicate doesn’t
+ * share the values unique to its source: a UUID field gets a new UUID, unless it’s empty, which is
+ * filled in later as with a new entry or item; a Compute field with a UUID tag is cleared, as it
+ * keeps the UUIDs found in its current value when it’s resolved again; and a Hidden field gets its
+ * default value again, which can hold a UUID tag as well. Any other field keeps its value.
+ * @param {object} args Arguments.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {any} [args.value] Current value.
+ * @param {InternalLocaleCode} args.locale Locale of the value.
+ * @param {InternalLocaleCode} args.defaultLocale Default locale.
+ * @returns {any} New value.
+ */
+export const getRenewedUniqueValue = ({ fieldConfig, keyPath, value, locale, defaultLocale }) => {
+  const { widget: fieldType } = fieldConfig;
+
+  if (fieldType === 'uuid') {
+    return value ? getInitialValue(/** @type {UuidField} */ (fieldConfig)) : value;
+  }
+
+  if (fieldType === 'compute') {
+    return hasUuidTag(/** @type {ComputeField} */ (fieldConfig).value) ? '' : value;
+  }
+
+  if (fieldType === 'hidden') {
+    return getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale })[keyPath];
+  }
+
+  return value;
+};
 
 /**
  * Regular expression to match the key path of the innermost list item a field belongs to, e.g.

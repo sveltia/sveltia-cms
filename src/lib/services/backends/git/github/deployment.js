@@ -96,6 +96,11 @@ const PREVIEW_CHECK_NAME_REGEX = /preview/i;
  * @see https://docs.github.com/en/graphql/reference/objects#ref
  */
 export const fetchBranchHeadSHA = async () => {
+  if (!repository.branch) {
+    // The default branch hasn’t been detected yet
+    return undefined;
+  }
+
   const { repository: result } = /** @type {Record<string, any>} */ (
     await fetchGraphQL(`
       query($owner: String!, $repo: String!, $branch: String!) {

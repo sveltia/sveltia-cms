@@ -18,6 +18,7 @@
   import NotFound from '$lib/components/global/not-found.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
   import {
+    canPreviewExternalAsset,
     externalAssets,
     getCloudServicePath,
     getExternalAssetPath,
@@ -25,7 +26,7 @@
     selectedCloudService,
   } from '$lib/services/assets/external';
   import { deleteExternalAssets, fetchExternalAssetBlob } from '$lib/services/assets/external/data';
-  import { listedExternalAssets } from '$lib/services/assets/external/view';
+  import { externalAssetGroups } from '$lib/services/assets/external/view';
   import { getAdjacentAssets } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
 
@@ -51,7 +52,11 @@
   const backPath = $derived(getCloudServicePath(service));
   /** The assets right before and after the shown one in the list the overlay was opened from. */
   const { previous, next } = $derived(
-    getAdjacentAssets(listedExternalAssets.current, ({ id }) => id === asset?.id),
+    getAdjacentAssets(
+      externalAssetGroups.current,
+      ({ id }) => id === asset?.id,
+      canPreviewExternalAsset,
+    ),
   );
 
   /**

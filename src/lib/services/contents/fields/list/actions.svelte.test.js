@@ -286,7 +286,7 @@ describe('createListActions()', () => {
         expect.objectContaining({ sourceItem: undefined, locale: 'fr', defaultLocale: 'en' }),
       );
 
-      const [{ renewedUuids: first }, { renewedUuids: second }] = vi
+      const [{ renewedValues: first }, { renewedValues: second }] = vi
         .mocked(createListItem)
         .mock.calls.flat();
 

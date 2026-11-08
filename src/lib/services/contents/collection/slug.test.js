@@ -5,6 +5,7 @@ import {
   getConfiguredSlugTemplate,
   getSlugOptions,
   hasLegacySlugEditorTag,
+  hasLocalizedSlugs,
   LEGACY_LOCALIZED_SLUG_EDITOR_TAG,
   LEGACY_SLUG_EDITOR_TAG,
 } from './slug';
@@ -227,6 +228,96 @@ describe('contents/collection/slug', () => {
         hint: 'Language code',
         pattern,
       });
+    });
+  });
+
+  describe('hasLocalizedSlugs', () => {
+    /**
+     * Create an entry collection.
+     * @param {object} [overrides] Property overrides.
+     * @returns {any} Collection.
+     */
+    const createCollection = (overrides = {}) => ({
+      _type: 'entry',
+      slug: '{{title | localize}}',
+      _i18n: {
+        i18nEnabled: true,
+        structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false },
+      },
+      ...overrides,
+    });
+
+    it('should be true with the localize flag and a multi-file structure', () => {
+      expect(hasLocalizedSlugs(createCollection())).toBe(true);
+      expect(hasLocalizedSlugs(createCollection({ slug: '{{fields.title | localize}}' }))).toBe(
+        true,
+      );
+    });
+
+    it('should be false without the localize flag', () => {
+      expect(hasLocalizedSlugs(createCollection({ slug: '{{title}}' }))).toBe(false);
+      expect(hasLocalizedSlugs(createCollection({ slug: undefined }))).toBe(false);
+    });
+
+    it('should be false when the localize flag is only in an escaped tag', () => {
+      expect(
+        hasLocalizedSlugs(createCollection({ slug: '{{title}}-\\{{title | localize}}' })),
+      ).toBe(false);
+    });
+
+    it('should be false with a single-file structure', () => {
+      expect(
+        hasLocalizedSlugs(
+          createCollection({
+            _i18n: { i18nEnabled: true, structureMap: { i18nSingleFile: true } },
+          }),
+        ),
+      ).toBe(false);
+      expect(
+        hasLocalizedSlugs(
+          createCollection({
+            _i18n: { i18nEnabled: true, structureMap: { i18nSingleFileDefaultRoot: true } },
+          }),
+        ),
+      ).toBe(false);
+    });
+
+    it('should be false for a monolingual collection', () => {
+      const _i18n = { i18nEnabled: false, structureMap: {} };
+
+      expect(hasLocalizedSlugs(createCollection({ _i18n }))).toBe(false);
+      expect(hasLocalizedSlugs(createCollection({ _i18n, slug: { i18n: true } }))).toBe(false);
+    });
+
+    it('should be false for a file collection', () => {
+      expect(hasLocalizedSlugs(createCollection({ _type: 'file' }))).toBe(false);
+    });
+
+    it('should be true with the i18n option of the slug', () => {
+      expect(hasLocalizedSlugs(createCollection({ slug: { i18n: true } }))).toBe(true);
+      expect(hasLocalizedSlugs(createCollection({ slug: { editable: true, i18n: true } }))).toBe(
+        true,
+      );
+      // Even without any field tag to localize
+      expect(
+        hasLocalizedSlugs(createCollection({ slug: { template: '{{uuid}}', i18n: true } })),
+      ).toBe(true);
+    });
+
+    it('should be false when the slug is duplicated', () => {
+      expect(hasLocalizedSlugs(createCollection({ slug: { i18n: 'duplicate' } }))).toBe(false);
+      expect(hasLocalizedSlugs(createCollection({ slug: { editable: true } }))).toBe(false);
+    });
+
+    it('should be false with the i18n option and a single-file structure', () => {
+      expect(
+        hasLocalizedSlugs(
+          createCollection({
+            slug: { i18n: true },
+            _i18n: { i18nEnabled: true, structureMap: { i18nSingleFile: true } },
+          }),
+        ),
+      ).toBe(false);
     });
   });
 });

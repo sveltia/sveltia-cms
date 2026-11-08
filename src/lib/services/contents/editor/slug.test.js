@@ -2,7 +2,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getSharedEntryFileName, hasNestedEntries } from '$lib/services/contents/collection/nested';
-import { getSlugs, hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
+import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getOtherEntries } from '$lib/services/contents/draft/validate/slugs';
 import { getUnpublishedEntryByDraft } from '$lib/services/workflow';
 
@@ -22,9 +23,12 @@ vi.mock('$lib/services/contents/collection/nested', async (importOriginal) => ({
   getSharedEntryFileName: vi.fn(),
   hasNestedEntries: vi.fn(() => false),
 }));
+vi.mock('$lib/services/contents/collection/slug', async (importOriginal) => ({
+  ...(await importOriginal()),
+  hasLocalizedSlugs: vi.fn(() => false),
+}));
 vi.mock('$lib/services/contents/draft/slugs', () => ({
   getSlugs: vi.fn(),
-  hasLocalizedSlugs: vi.fn(() => false),
 }));
 vi.mock('$lib/services/contents/draft/validate/slugs', () => ({
   getOtherEntries: vi.fn(() => []),

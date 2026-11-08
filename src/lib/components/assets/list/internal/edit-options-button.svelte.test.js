@@ -159,7 +159,7 @@ describe('EditOptionsButton', () => {
     }
   });
 
-  test('has no public URL for a file that can’t be read', async () => {
+  test('has a public URL for a file that can’t be read', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     // The test backend can’t download a file that isn’t held in memory
@@ -171,7 +171,8 @@ describe('EditOptionsButton', () => {
         expect.objectContaining({ message: 'Failed to retrieve blob' }),
       ),
     );
-    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeDisabled();
+    // The URL doesn’t depend on the file’s content
+    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
   });
 
   test('ignores the details of an asset focused earlier that arrive late', async () => {

@@ -1,56 +1,69 @@
 import { isObject } from '@sveltia/utils/object';
 
+import {
+  getRenewedUniqueValue,
+  UNIQUE_VALUE_FIELD_TYPES,
+} from '$lib/services/contents/draft/create/unique-values';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getInitialExpanderState } from '$lib/services/contents/editor/fields';
-import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
 import { tagListItems } from '$lib/services/contents/fields/list/helpers';
 import { getValueSubFields } from '$lib/services/contents/fields/list/subfields';
-import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { unflattenKeys } from '$lib/services/utils/object';
 
 /**
  * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
  * @import {
- * ComputeField,
  * Field,
  * FieldKeyPath,
  * ListFieldWithSubField,
  * ListFieldWithSubFields,
  * ListFieldWithTypes,
- * UuidField,
  * VariableFieldType,
  * } from '$lib/types/public';
  */
 
 /**
+ * New values given to the fields of a duplicated item, keyed by the field configuration and the
+ * source item’s value, serialized as JSON.
+ * @typedef {Map<Field, Map<string | undefined, any>>} RenewedValueMap
+ */
+
+/**
+ * @typedef {object} RenewContext
+ * @property {RenewedValueMap} renewedValues New values given to the fields of a duplicated item.
+ * @property {InternalLocaleCode} locale Locale code.
+ * @property {InternalLocaleCode} defaultLocale Default locale code.
+ */
+
+/**
  * Renew the unique values in the given field value of a duplicated list item, so the duplicate
- * doesn’t share them with its source, just like a duplicated entry: a UUID field gets a new UUID,
- * and a Compute field with a UUID tag is cleared so it’s resolved with new UUIDs. Object and List
- * fields are walked down, and an object or array value is modified in place.
+ * doesn’t share them with its source, just like a duplicated entry. See
+ * {@link getRenewedUniqueValue}. Object and List fields are walked down, and an object or array
+ * value is modified in place.
  * @param {any} value Field value.
  * @param {Field} fieldConfig Field configuration.
- * @param {Map<string, string>} renewedUuids New UUIDs keyed by the source item’s UUIDs.
+ * @param {RenewContext} context Context.
  * @returns {any} Renewed value.
  */
-const renewUniqueValue = (value, fieldConfig, renewedUuids) => {
+const renewUniqueValue = (value, fieldConfig, context) => {
   const { widget: fieldType = 'string' } = fieldConfig;
 
-  if (fieldType === 'uuid') {
-    // An empty value is filled in by the field editor, as with a new item
-    return typeof value === 'string' && value
-      ? getOrCreate(renewedUuids, value, () =>
-          getInitialUuidValue(/** @type {UuidField} */ (fieldConfig)),
-        )
-      : value;
-  }
-
-  if (fieldType === 'compute') {
-    return hasUuidTag(/** @type {ComputeField} */ (fieldConfig).value) ? '' : value;
-  }
-
   if (fieldType !== 'object' && fieldType !== 'list') {
-    return value;
+    if (!UNIQUE_VALUE_FIELD_TYPES.includes(fieldType)) {
+      return value;
+    }
+
+    // A value duplicated across the locales gets the same new one in each, while a translatable
+    // one, which differs between the locales, gets one per locale
+    const renewed = getOrCreate(
+      getOrCreate(context.renewedValues, fieldConfig, () => new Map()),
+      JSON.stringify(value),
+      () => getRenewedUniqueValue({ ...context, fieldConfig, keyPath: fieldConfig.name, value }),
+    );
+
+    // An object or array, like a Hidden field’s default, is copied so the locales don’t share it
+    return typeof renewed === 'object' && renewed !== null ? structuredClone(renewed) : renewed;
   }
 
   const { field } = /** @type {ListFieldWithSubField} */ (fieldConfig);
@@ -64,11 +77,7 @@ const renewUniqueValue = (value, fieldConfig, renewedUuids) => {
   const renewObject = (obj) => {
     if (isObject(obj)) {
       // eslint-disable-next-line no-use-before-define
-      renewUniqueValues(
-        obj,
-        getValueSubFields({ value: obj, fields, types, typeKey }),
-        renewedUuids,
-      );
+      renewUniqueValues(obj, getValueSubFields({ value: obj, fields, types, typeKey }), context);
     }
   };
 
@@ -77,7 +86,7 @@ const renewUniqueValue = (value, fieldConfig, renewedUuids) => {
   } else if (Array.isArray(value)) {
     if (field) {
       value.forEach((item, index) => {
-        value[index] = renewUniqueValue(item, field, renewedUuids);
+        value[index] = renewUniqueValue(item, field, context);
       });
     } else {
       value.forEach(renewObject);
@@ -92,14 +101,14 @@ const renewUniqueValue = (value, fieldConfig, renewedUuids) => {
  * place. See {@link renewUniqueValue}.
  * @param {Record<string, any>} obj Object.
  * @param {Field[]} fields Subfields of the object.
- * @param {Map<string, string>} renewedUuids New UUIDs keyed by the source item’s UUIDs.
+ * @param {RenewContext} context Context.
  */
-const renewUniqueValues = (obj, fields, renewedUuids) => {
+const renewUniqueValues = (obj, fields, context) => {
   fields.forEach((fieldConfig) => {
     const { name } = fieldConfig;
 
     if (name in obj) {
-      obj[name] = renewUniqueValue(obj[name], fieldConfig, renewedUuids);
+      obj[name] = renewUniqueValue(obj[name], fieldConfig, context);
     }
   });
 };
@@ -171,11 +180,10 @@ export const getInitialListExpanderStates = ({
  * @param {VariableFieldType[]} [args.types] Variable types of the list, if any, used to find the
  * subfields of a duplicated item.
  * @param {string} args.typeKey Property name holding the variable type name.
- * @param {Map<string, string>} [args.renewedUuids] New UUIDs given to a duplicated item, keyed
- * by the source item’s UUIDs. An item is duplicated in every locale the list is written to, one
- * call each, so pass the same map to all of them: a UUID duplicated across the locales then gets
- * the same new one in each, while a translatable one, which differs between the locales, gets one
- * per locale.
+ * @param {RenewedValueMap} [args.renewedValues] New unique values given to a duplicated item, such
+ * as UUIDs. An item is duplicated in every locale the list is written to, one call each, so pass
+ * the same map to all of them: a value duplicated across the locales then gets the same new one in
+ * each, while a translatable one, which differs between the locales, gets one per locale.
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {InternalLocaleCode} args.defaultLocale Default locale code.
  * @returns {any} New item.
@@ -191,11 +199,12 @@ export const createListItem = ({
   type,
   types,
   typeKey,
-  renewedUuids = new Map(),
+  renewedValues = new Map(),
   locale,
   defaultLocale,
 }) => {
   const newItem = (() => {
+    const context = { renewedValues, locale, defaultLocale };
     const isDuplicate = typeof dupIndex === 'number' && dupIndex in valueList;
 
     if (sourceItem !== undefined || isDuplicate) {
@@ -204,14 +213,14 @@ export const createListItem = ({
       removeOriginalKeyPaths(item);
 
       if (hasSingleSubField && field) {
-        return renewUniqueValue(item, field, renewedUuids);
+        return renewUniqueValue(item, field, context);
       }
 
       if (isObject(item)) {
         renewUniqueValues(
           item,
           getValueSubFields({ value: item, fields: types ? undefined : subFields, types, typeKey }),
-          renewedUuids,
+          context,
         );
       }
 

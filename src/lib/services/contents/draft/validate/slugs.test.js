@@ -35,6 +35,9 @@ vi.mock('$lib/services/workflow', () => {
       ...unpublishedEntriesByCollection(name),
       ...companionEntries(name),
     ]),
+    // Used to look up the localized folders
+    mergeUnpublishedEntries: vi.fn((/** @type {any[]} */ entries) => entries),
+    unpublishedEntries: { current: [] },
   };
 });
 vi.mock('$lib/services/contents/collection/nested', async (importOriginal) => ({
@@ -381,10 +384,62 @@ describe('draft/validate/slugs', () => {
     it('should only count the file names of the entries in the chosen folder', () => {
       mockEntryDraft.currentPath = '/docs/';
 
-      // The folders aren’t localized, so the other locales keep the sub paths
+      // The folders aren’t localized, so every locale’s file goes to the same folder
+      expect(getTakenSlugs(mockEntryDraft)).toEqual({ en: ['intro'], fr: ['intro'] });
+    });
+
+    it('should count the file names in the localized folder of each locale', () => {
+      const entries = [
+        // The folder’s entry is stored beside it, and gives its name in each locale
+        createEntry('1', { en: 'docs', fr: 'documents' }),
+        createEntry('2', { en: 'docs/intro', fr: 'documents/introduction' }),
+        createEntry('3', { en: 'setup', fr: 'installation' }),
+      ];
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(entries);
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue(entries);
+      mockEntryDraft.collection = {
+        ...mockEntryDraft.collection,
+        fields: [],
+        slug: '{{title | localize}}',
+        _i18n: {
+          i18nEnabled: true,
+          defaultLocale: 'en',
+          structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false },
+        },
+      };
+      mockEntryDraft.currentPath = 'docs';
+
+      expect(getTakenSlugs(mockEntryDraft)).toEqual({ en: ['intro'], fr: ['introduction'] });
+    });
+
+    it('should count the file names in the folder of a locale just enabled for an existing entry', () => {
+      const entries = [
+        createEntry('1', { en: 'docs', fr: 'documents' }),
+        createEntry('2', { en: 'docs/intro', fr: 'documents/introduction' }),
+      ];
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(entries);
+      vi.mocked(getEntriesInCollectionFolder).mockReturnValue(entries);
+      mockEntryDraft.collection = {
+        ...mockEntryDraft.collection,
+        fields: [],
+        slug: '{{title | localize}}',
+        _i18n: {
+          i18nEnabled: true,
+          defaultLocale: 'en',
+          structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false },
+        },
+      };
+      mockEntryDraft.isNew = false;
+      mockEntryDraft.originalLocales = { en: true, fr: false };
+      mockEntryDraft.originalPath = 'docs';
+      mockEntryDraft.currentPath = 'docs';
+
+      // The entry already has a sub path in English, which other entries’ sub paths are compared to
       expect(getTakenSlugs(mockEntryDraft)).toEqual({
-        en: ['intro'],
-        fr: ['docs/intro', 'setup', 'docs/guides/start'],
+        en: ['docs', 'docs/intro'],
+        fr: ['introduction'],
       });
     });
 

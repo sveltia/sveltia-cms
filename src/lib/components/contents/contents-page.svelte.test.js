@@ -124,6 +124,47 @@ describe('ContentsPage', () => {
     }
   });
 
+  test('keeps the entry list toolbar while a filter hides every draft', async () => {
+    await initTestConfig({
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          fields,
+          view_filters: [{ label: 'Hello', field: 'title', pattern: 'Hello' }],
+        },
+      ],
+    });
+    setEntries([]);
+    unpublishedEntries.current = [
+      /** @type {any} */ ({
+        ...createMockEntry({ slug: 'draft', content: { _default: { title: 'Draft' } } }),
+        workflow: {
+          status: 'draft',
+          collectionName: 'posts',
+          pullRequest: { number: 1, branch: 'cms/posts/draft' },
+        },
+      }),
+    ];
+    entryListSettings.current = {
+      posts: { type: 'list', filters: [{ field: 'title', pattern: 'Hello' }] },
+    };
+    window.location.hash = '#/collections/posts';
+
+    try {
+      await render(ContentsPage);
+
+      const area = page.getByRole('main', { name: '\u2068Posts\u2069 Collection' });
+
+      // The toolbar holding the filter stays, so the filter can be reset
+      await expect.element(area.getByRole('toolbar', { name: 'Entry List' })).toBeInTheDocument();
+      expect(area.getByRole('row', { name: 'Draft' }).elements()).toHaveLength(0);
+    } finally {
+      unpublishedEntries.current = [];
+    }
+  });
+
   test('redirects the index to the first collection on a large screen', async () => {
     window.location.hash = '#/collections';
 

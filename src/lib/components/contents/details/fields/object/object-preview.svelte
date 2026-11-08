@@ -17,6 +17,7 @@
     resolveVariableType,
   } from '$lib/services/contents/fields/object/helpers';
   import { getFieldLabel } from '$lib/services/contents/i18n/options';
+  import { isValueEmpty } from '$lib/services/utils/object';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
@@ -41,10 +42,16 @@
   const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));
   const valueMap = $derived(getFieldValueMapSnapshot(entryDraft.current, locale, keyPath));
-  // Ask the shared key path index rather than scanning the whole value map; see the same check in
-  // the Object field editor
+  // Ask the shared key path index rather than scanning the whole value map, like the Object field
+  // editor does. Unlike the editor, which asks whether the object is there at all, this asks
+  // whether there’s anything to show: a number, `0` included, is, but `false`, which a Boolean
+  // field holds until it’s turned on, isn’t
   const hasValues = $derived(
-    getKeysByPrefix(valueMap, `${keyPath}.`).some((_keyPath) => !!valueMap[_keyPath]),
+    getKeysByPrefix(valueMap, `${keyPath}.`).some((_keyPath) => {
+      const value = valueMap[_keyPath];
+
+      return value !== false && !isValueEmpty(value);
+    }),
   );
   const hasVariableTypes = $derived(Array.isArray(types));
   const typeKeyPath = $derived(`${keyPath}.${typeKey}`);

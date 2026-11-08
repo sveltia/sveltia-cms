@@ -10,6 +10,7 @@ import {
   dedupeFileCommits,
   fetchPerPathCommits,
   hasSkipCIMarker,
+  isDeployingCommit,
   signOffCommitMessage,
 } from './commits';
 import { MAX_CONCURRENT_REQUESTS } from './concurrency';
@@ -855,6 +856,37 @@ describe('git/shared/commits', () => {
 
     it('should default to the update type', () => {
       expect(createBaseCommitMessage([{ slug: 'a', path: 'a.md' }], {})).toBe('Update  “a”');
+    });
+  });
+
+  describe('isDeployingCommit', () => {
+    it('follows the configuration when the commit doesn’t say', () => {
+      expect(isDeployingCommit({ commitType: 'update' })).toBe(true);
+      expect(isDeployingCommit({})).toBe(true);
+
+      mockCmsConfig.backend.skip_ci = true;
+      expect(isDeployingCommit({ commitType: 'uploadMedia' })).toBe(false);
+
+      mockCmsConfig.backend = { automatic_deployments: false };
+      expect(isDeployingCommit({ commitType: 'create' })).toBe(false);
+    });
+
+    it('lets the commit override the configuration', () => {
+      expect(isDeployingCommit({ commitType: 'update', skipCI: true })).toBe(false);
+
+      mockCmsConfig.backend.skip_ci = true;
+      expect(isDeployingCommit({ commitType: 'update', skipCI: false })).toBe(true);
+    });
+
+    it('always deploys a deletion, so deleted content doesn’t stay online', () => {
+      mockCmsConfig.backend.skip_ci = true;
+      expect(isDeployingCommit({ commitType: 'delete' })).toBe(true);
+      expect(isDeployingCommit({ commitType: 'deleteMedia', skipCI: true })).toBe(true);
+    });
+
+    it('deploys without a configuration', () => {
+      mockCmsConfig.backend = undefined;
+      expect(isDeployingCommit({ commitType: 'update' })).toBe(true);
     });
   });
 

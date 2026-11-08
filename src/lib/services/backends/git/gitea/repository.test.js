@@ -167,13 +167,8 @@ describe('Gitea Repository Service', () => {
       });
     });
 
-    test('should report a missing repository on a 404', async () => {
-      fetchAPIMock.mockRejectedValue(new Error('Not found', { cause: { status: 404 } }));
-
-      await expect(checkRepositoryAccess()).rejects.toThrow('Failed to check repository access');
-    });
-
-    test.each([401, 403])('should report no access on a %i', async (status) => {
+    // A private repository answers someone without access with a 404, as on GitHub
+    test.each([401, 403, 404])('should report no access on a %i', async (status) => {
       fetchAPIMock.mockRejectedValue(new Error('Denied', { cause: { status } }));
 
       await expect(checkRepositoryAccess()).rejects.toMatchObject({

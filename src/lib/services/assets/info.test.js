@@ -1730,7 +1730,13 @@ describe('assets/info', () => {
       mockBackend.fetchBlob.mockResolvedValueOnce(null);
       mockBackend.fetchBlob.mockResolvedValueOnce(new Blob(['test'], { type: 'image/jpeg' }));
 
-      await expect(getAssetDetails(assetWithoutHandle)).rejects.toThrow('Failed to retrieve blob');
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      // The media metadata is left out
+      expect((await getAssetDetails(assetWithoutHandle)).dimensions).toBeUndefined();
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Failed to retrieve blob' }),
+      );
 
       const result = await getAssetDetails(assetWithoutHandle);
 

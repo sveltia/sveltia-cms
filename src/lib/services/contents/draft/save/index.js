@@ -2,7 +2,7 @@ import { _ } from '@sveltia/i18n';
 
 import { callEventHooks } from '$lib/services/api/events';
 import { isCommitCancelled } from '$lib/services/backends/commit-prompt';
-import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
+import { isPublishingCommit } from '$lib/services/backends/git/shared/integration';
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { saveChanges } from '$lib/services/backends/save';
 import { getReadonlyMessage, isDraftReadonly } from '$lib/services/config/readonly';
@@ -35,7 +35,6 @@ import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade/update';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { compareWithLatest } from '$lib/services/contents/fields/relation/quick-add';
-import { setLastCommitPublishHint } from '$lib/services/deployments';
 import { getUnpublishedEntryByDraft, isWorkflowDraft } from '$lib/services/workflow';
 import { detectWorkflowConflict } from '$lib/services/workflow/conflict';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
@@ -56,7 +55,8 @@ import { saveWorkflowChanges } from '$lib/services/workflow/save';
  */
 
 /**
- * Update the application stores with deployment settings.
+ * Tell the user the entry has been saved, and whether it’s being published. What the commit is
+ * expected to do is recorded by {@link saveChanges}, which every commit to the branch goes through.
  * @param {object} args Arguments.
  * @param {boolean} args.useWorkflow Whether the changes went to a pull request rather than the
  * configured branch.
@@ -65,17 +65,13 @@ import { saveWorkflowChanges } from '$lib/services/workflow/save';
  * references to the saved entry up to date.
  */
 const updateStores = ({ useWorkflow, skipCI, count }) => {
-  // With Editorial Workflow, changes go to a pull request, so nothing is published yet
-  const published = !useWorkflow && skipCIConfigured.current && !(skipCI ?? skipCIEnabled.current);
-
   contentUpdatesToast.current = {
     ...UPDATE_TOAST_DEFAULT_STATE,
     saved: true,
-    published,
+    // With Editorial Workflow, changes go to a pull request, so nothing is published yet
+    published: !useWorkflow && isPublishingCommit({ skipCI }),
     count,
   };
-
-  setLastCommitPublishHint(published);
 };
 
 /**

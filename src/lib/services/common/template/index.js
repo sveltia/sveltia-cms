@@ -7,6 +7,7 @@ import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { cmsConfig } from '$lib/services/config';
 import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
 import { getIdentifierFieldName } from '$lib/services/contents/collection/identifier';
+import { getNameInFolder } from '$lib/services/contents/collection/nested';
 import { renameIfNeeded } from '$lib/services/utils/file';
 import { getPullRequestEntries } from '$lib/services/workflow';
 import {
@@ -42,15 +43,9 @@ const getExistingSlugs = (collectionName, locale, dirPath) => {
       .filter(Boolean)
   );
 
-  if (dirPath === undefined) {
-    return slugs;
-  }
-
-  const prefix = dirPath ? `${dirPath}/` : '';
-
-  return slugs
-    .filter((slug) => slug.startsWith(prefix) && !slug.slice(prefix.length).includes('/'))
-    .map((slug) => slug.slice(prefix.length));
+  return dirPath === undefined
+    ? slugs
+    : slugs.flatMap((slug) => getNameInFolder(slug, dirPath) ?? []);
 };
 
 /**

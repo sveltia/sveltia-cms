@@ -10,6 +10,10 @@ vi.mock('$lib/services/backends', () => ({
   backend: { current: undefined },
 }));
 
+vi.mock('$lib/services/backends/git/shared/commits', () => ({
+  isDeployingCommit: vi.fn(() => true),
+}));
+
 describe('git/shared/integration', () => {
   /** @type {{ current: any }} */
   let cmsConfig;
@@ -269,6 +273,26 @@ describe('git/shared/integration', () => {
         backend: { name: 'github', repo: 'test/repo', automatic_deployments: false },
       };
       expect(skipCIEnabled.current).toBe(true);
+    });
+  });
+
+  describe('isPublishingCommit', () => {
+    it('should only report a deploying commit when skipping CI is configured', async () => {
+      const { isDeployingCommit } = await import('$lib/services/backends/git/shared/commits');
+      const { isPublishingCommit } = await import('./integration');
+      const options = { commitType: 'update' };
+
+      // Every commit is published without the option, so it isn’t said each time
+      cmsConfig.current = { backend: { name: 'github', repo: 'test/repo' } };
+      backend.current = { isGit: true };
+      expect(isPublishingCommit(options)).toBe(false);
+
+      cmsConfig.current = { backend: { name: 'github', repo: 'test/repo', skip_ci: false } };
+      expect(isPublishingCommit(options)).toBe(true);
+      expect(isDeployingCommit).toHaveBeenCalledWith(options);
+
+      vi.mocked(isDeployingCommit).mockReturnValueOnce(false);
+      expect(isPublishingCommit(options)).toBe(false);
     });
   });
 });

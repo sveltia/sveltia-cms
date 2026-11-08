@@ -715,7 +715,10 @@ describe('SelectAssetsDialog', () => {
     await dialog.getByRole('option', { name: 'Enter URL' }).click();
     await expect.element(dialog.getByText('Enter URL of the file:')).toBeInTheDocument();
 
-    await dialog.getByRole('textbox').fill(' https://example.com/x.pdf ');
+    // The prompt names the input
+    await dialog
+      .getByRole('textbox', { name: 'Enter URL of the file:' })
+      .fill(' https://example.com/x.pdf ');
     await dialog.getByRole('button', { name: 'Insert' }).click();
 
     await vi.waitFor(() =>
@@ -736,7 +739,9 @@ describe('SelectAssetsDialog', () => {
 
     const insert = dialog.getByRole('button', { name: 'Insert' });
 
-    await dialog.getByRole('textbox').fill('https://example.com/x.png');
+    await dialog
+      .getByRole('textbox', { name: 'Enter URL of the image:' })
+      .fill('https://example.com/x.png');
     await expect.element(insert).toBeEnabled();
     await dialog.getByRole('textbox').fill(' ');
     await expect.element(insert).toBeDisabled();
@@ -748,7 +753,9 @@ describe('SelectAssetsDialog', () => {
     const insert = dialog.getByRole('button', { name: 'Insert' });
 
     await dialog.getByRole('option', { name: 'Enter URL' }).click();
-    await dialog.getByRole('textbox').fill('https://example.com/x.png');
+    await dialog
+      .getByRole('textbox', { name: 'Enter URL of the image:' })
+      .fill('https://example.com/x.png');
     await expect.element(insert).toBeEnabled();
 
     // Nothing is selected in the repository folder

@@ -506,39 +506,42 @@
           }}
         />
       {/if}
-      <SimpleImageGrid {viewType} {gridId} {multiple}>
-        <InfiniteScroll items={panelAssets} itemKey="id">
-          {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
-            {@const { id, previewURL, description, kind: _kind } = asset}
-            <SimpleImageGridItem
-              value={id}
-              ariaLabel={description}
-              {viewType}
-              {multiple}
-              selected={isSelected(asset)}
-              onChange={({ detail: { selected } }) => {
-                onSelectionChange(asset, selected);
-              }}
-            >
-              <AssetPreview
-                kind={_kind}
-                src={previewURL}
-                alt={description}
-                variant="tile"
-                crossorigin="anonymous"
-              />
-              {#if viewType === 'list' || (!env.isSmallScreen && !isStockAssets)}
-                <!-- The path is relative to the folder being browsed -->
-                <AssetPath
-                  {...isStockAssets
-                    ? { caption: description }
-                    : { path: browsing ? getRelativePath(description, dirPath) : description }}
+      <!-- An empty list box would only be a stop for the Tab key, with nothing to move through -->
+      {#if panelAssets.length}
+        <SimpleImageGrid {viewType} {gridId} {multiple} {kind}>
+          <InfiniteScroll items={panelAssets} itemKey="id">
+            {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
+              {@const { id, previewURL, description, kind: _kind } = asset}
+              <SimpleImageGridItem
+                value={id}
+                ariaLabel={description}
+                {viewType}
+                {multiple}
+                selected={isSelected(asset)}
+                onChange={({ detail: { selected } }) => {
+                  onSelectionChange(asset, selected);
+                }}
+              >
+                <AssetPreview
+                  kind={_kind}
+                  src={previewURL}
+                  alt={description}
+                  variant="tile"
+                  crossorigin="anonymous"
                 />
-              {/if}
-            </SimpleImageGridItem>
-          {/snippet}
-        </InfiniteScroll>
-      </SimpleImageGrid>
+                {#if viewType === 'list' || (!env.isSmallScreen && !isStockAssets)}
+                  <!-- The path is relative to the folder being browsed -->
+                  <AssetPath
+                    {...isStockAssets
+                      ? { caption: description }
+                      : { path: browsing ? getRelativePath(description, dirPath) : description }}
+                  />
+                {/if}
+              </SimpleImageGridItem>
+            {/snippet}
+          </InfiniteScroll>
+        </SimpleImageGrid>
+      {/if}
     </div>
   {/if}
 {/snippet}

@@ -2,8 +2,7 @@ import { _ } from '@sveltia/i18n';
 
 import { validateNewFolderName } from '$lib/services/common/slug';
 import { getFolderName } from '$lib/services/contents/collection/nested/i18n';
-import { getSlugOptions } from '$lib/services/contents/collection/slug';
-import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+import { getSlugOptions, hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
 import {
   getSlugValidationMessage,
   validateSlug,

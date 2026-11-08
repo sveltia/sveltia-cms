@@ -7,6 +7,7 @@ import { getCollection, selectedCollection } from '$lib/services/contents/collec
 import { setBulkEditMode, setReorderMode } from '$lib/services/contents/collection/view';
 import { currentView } from '$lib/services/contents/collection/view/settings';
 import { env } from '$lib/services/user/env.svelte';
+import { unpublishedEntries } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
@@ -75,14 +76,50 @@ describe('SecondaryToolbar', () => {
 
     const media = toolbar.getByRole('button', { name: 'Show Assets' });
 
-    // `aria-expanded` and `aria-controls` are only set once the pane is shown
+    // `aria-controls` is only set once the pane, which it points to, is shown
     await expect.element(media).toHaveAttribute('aria-pressed', 'false');
+    await expect.element(media).toHaveAttribute('aria-expanded', 'false');
     await expect.element(media).not.toHaveAttribute('aria-controls');
     await media.click();
     await expect.poll(() => currentView.current.showMedia).toBe(true);
-    await expect
-      .element(toolbar.getByRole('button', { name: 'Hide Assets' }))
-      .toHaveAttribute('aria-controls', 'collection-assets');
+
+    const hide = toolbar.getByRole('button', { name: 'Hide Assets' });
+
+    await expect.element(hide).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(hide).toHaveAttribute('aria-controls', 'collection-assets');
+  });
+
+  test('keeps the controls enabled while a filter hides the drafts', async () => {
+    setEntries([
+      createMockEntry({ slug: 'a', content: { _default: { title: 'A', draft: false } } }),
+    ]);
+    unpublishedEntries.current = [
+      /** @type {any} */ ({
+        ...createMockEntry({ slug: 'new', content: { _default: { title: 'New', draft: false } } }),
+        workflow: {
+          status: 'draft',
+          collectionName: 'posts',
+          pullRequest: { number: 1, branch: 'cms/posts/new' },
+        },
+      }),
+    ];
+    // Neither entry is a draft, so the filter hides both of them. The view is set once the
+    // collection’s own has been restored
+    flushSync();
+    currentView.current = { type: 'list', filters: [{ field: 'draft', pattern: true }] };
+
+    try {
+      await render(SecondaryToolbar, {});
+
+      const toolbar = page.getByRole('toolbar', { name: 'Entry List' });
+
+      await expect.element(toolbar.getByRole('checkbox', { name: 'Select All' })).toBeDisabled();
+      // The never-published draft counts as well, so the filter can still be reset
+      await expect.element(toolbar.getByRole('button', { name: 'Filter' })).toBeEnabled();
+      await expect.element(toolbar.getByRole('button', { name: 'Sort' })).toBeEnabled();
+    } finally {
+      unpublishedEntries.current = [];
+    }
   });
 
   test('leaves out the selector on a small screen', async () => {

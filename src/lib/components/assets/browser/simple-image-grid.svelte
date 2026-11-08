@@ -4,6 +4,7 @@
 
   /**
    * @import { Snippet } from 'svelte';
+   * @import { MediaLibraryAssetKind } from '$lib/types/private';
    */
 
   /**
@@ -11,7 +12,8 @@
    * @property {string} [viewType] View type.
    * @property {string} [gridId] The `id` attribute of the inner listbox.
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
-   * @property {string} [ariaLabel] Accessible name of the list. Defaults to “Available Images”.
+   * @property {MediaLibraryAssetKind} [kind] Kind of the listed assets, which names the list:
+   * images, or files of any kind if `undefined`.
    * @property {(detail: { value: string }) => void} [onChange] Custom `change` event handler.
    * @property {Snippet} [children] Slot content.
    */
@@ -21,7 +23,7 @@
     viewType = 'grid',
     gridId = undefined,
     multiple = false,
-    ariaLabel = undefined,
+    kind = undefined,
     onChange = undefined,
     children = undefined,
   } = $props();
@@ -32,7 +34,7 @@
     id={gridId}
     class={viewType}
     {multiple}
-    ariaLabel={ariaLabel ?? _('assets_dialog.available_images')}
+    ariaLabel={_(`assets_dialog.available_${kind === 'image' ? 'images' : 'files'}`)}
     onChange={(event) => {
       onChange?.(event.detail);
     }}

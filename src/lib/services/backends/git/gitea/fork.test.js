@@ -130,7 +130,8 @@ describe('Gitea fork service', () => {
       await expect(fetchRepositoryAccess()).resolves.toEqual({ canWrite: false });
     });
 
-    test.each([403, 404])('reports no access on a %s', async (status) => {
+    // A 401 means the token has expired or been revoked, which the regular check treats alike
+    test.each([401, 403, 404])('reports no access on a %s', async (status) => {
       vi.mocked(getRepositoryInfo).mockRejectedValue(apiError(status));
 
       // The shared message is what makes the sign-in flow drop the cached credentials

@@ -3,21 +3,24 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 import { cmsConfig } from '$lib/services/config';
-import { getEntriesInCollectionFolder } from '$lib/services/contents/collection/entries';
+import {
+  getEntriesByCollection,
+  getEntriesInCollectionFolder,
+} from '$lib/services/contents/collection/entries';
 import { getCompanionEntries, getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 import {
   getCanonicalSlug,
+  getChosenDirPath,
   getEntryDateTimeParts,
   getFillSlugOptions,
   getLocalizedSlug,
   getLocalizedSlugs,
-  getNewEntryDirPath,
   getNextSlugNumber,
   getRandomValues,
+  getSlugDirPath,
   getSlugs,
   getSlugTemplate,
-  hasLocalizedSlugs,
   isSlugAutoNumbered,
   resolveBlobURLs,
 } from './slugs';
@@ -38,6 +41,7 @@ vi.mock('$lib/services/common/template', () => ({
 
 vi.mock('$lib/services/contents/collection/entries', async (importOriginal) => ({
   ...(await importOriginal()),
+  getEntriesByCollection: vi.fn(() => []),
   getEntriesInCollectionFolder: vi.fn(() => []),
 }));
 
@@ -137,96 +141,6 @@ describe('draft/slugs', () => {
       resolveBlobURLs(valueMap, files);
 
       expect(valueMap.image).toBe(blobURL);
-    });
-  });
-
-  describe('hasLocalizedSlugs', () => {
-    /**
-     * Create an entry collection.
-     * @param {object} [overrides] Property overrides.
-     * @returns {any} Collection.
-     */
-    const createCollection = (overrides = {}) => ({
-      _type: 'entry',
-      slug: '{{title | localize}}',
-      _i18n: {
-        i18nEnabled: true,
-        structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false },
-      },
-      ...overrides,
-    });
-
-    it('should be true with the localize flag and a multi-file structure', () => {
-      expect(hasLocalizedSlugs(createCollection())).toBe(true);
-      expect(hasLocalizedSlugs(createCollection({ slug: '{{fields.title | localize}}' }))).toBe(
-        true,
-      );
-    });
-
-    it('should be false without the localize flag', () => {
-      expect(hasLocalizedSlugs(createCollection({ slug: '{{title}}' }))).toBe(false);
-      expect(hasLocalizedSlugs(createCollection({ slug: undefined }))).toBe(false);
-    });
-
-    it('should be false when the localize flag is only in an escaped tag', () => {
-      expect(
-        hasLocalizedSlugs(createCollection({ slug: '{{title}}-\\{{title | localize}}' })),
-      ).toBe(false);
-    });
-
-    it('should be false with a single-file structure', () => {
-      expect(
-        hasLocalizedSlugs(
-          createCollection({
-            _i18n: { i18nEnabled: true, structureMap: { i18nSingleFile: true } },
-          }),
-        ),
-      ).toBe(false);
-      expect(
-        hasLocalizedSlugs(
-          createCollection({
-            _i18n: { i18nEnabled: true, structureMap: { i18nSingleFileDefaultRoot: true } },
-          }),
-        ),
-      ).toBe(false);
-    });
-
-    it('should be false for a monolingual collection', () => {
-      const _i18n = { i18nEnabled: false, structureMap: {} };
-
-      expect(hasLocalizedSlugs(createCollection({ _i18n }))).toBe(false);
-      expect(hasLocalizedSlugs(createCollection({ _i18n, slug: { i18n: true } }))).toBe(false);
-    });
-
-    it('should be false for a file collection', () => {
-      expect(hasLocalizedSlugs(createCollection({ _type: 'file' }))).toBe(false);
-    });
-
-    it('should be true with the i18n option of the slug', () => {
-      expect(hasLocalizedSlugs(createCollection({ slug: { i18n: true } }))).toBe(true);
-      expect(hasLocalizedSlugs(createCollection({ slug: { editable: true, i18n: true } }))).toBe(
-        true,
-      );
-      // Even without any field tag to localize
-      expect(
-        hasLocalizedSlugs(createCollection({ slug: { template: '{{uuid}}', i18n: true } })),
-      ).toBe(true);
-    });
-
-    it('should be false when the slug is duplicated', () => {
-      expect(hasLocalizedSlugs(createCollection({ slug: { i18n: 'duplicate' } }))).toBe(false);
-      expect(hasLocalizedSlugs(createCollection({ slug: { editable: true } }))).toBe(false);
-    });
-
-    it('should be false with the i18n option and a single-file structure', () => {
-      expect(
-        hasLocalizedSlugs(
-          createCollection({
-            slug: { i18n: true },
-            _i18n: { i18nEnabled: true, structureMap: { i18nSingleFile: true } },
-          }),
-        ),
-      ).toBe(false);
     });
   });
 
@@ -855,7 +769,7 @@ describe('draft/slugs', () => {
     });
   });
 
-  describe('getNewEntryDirPath', () => {
+  describe('getSlugDirPath', () => {
     const collection = {
       _type: 'entry',
       folder: 'content/pages',
@@ -866,20 +780,20 @@ describe('draft/slugs', () => {
     };
 
     it('should return the folder chosen for a new entry named after its slug', () => {
-      expect(getNewEntryDirPath({ collection, isNew: true, currentPath: '/docs/' })).toBe('docs');
+      expect(getSlugDirPath({ collection, isNew: true, currentPath: '/docs/' })).toBe('docs');
       // Clearing the folder of a duplicated entry moves it up to the collection folder
       expect(
-        getNewEntryDirPath({ collection, isNew: true, originalPath: 'docs', currentPath: '' }),
+        getSlugDirPath({ collection, isNew: true, originalPath: 'docs', currentPath: '' }),
       ).toBe('');
     });
 
     it('should return `undefined` when the slug isn’t compared within a folder', () => {
-      expect(getNewEntryDirPath({ collection, isNew: false, currentPath: 'docs' })).toBeUndefined();
-      expect(getNewEntryDirPath({ collection, isNew: true, currentPath: '' })).toBeUndefined();
-      expect(getNewEntryDirPath({ collection, isNew: true })).toBeUndefined();
+      expect(getSlugDirPath({ collection, isNew: false, currentPath: 'docs' })).toBeUndefined();
+      expect(getSlugDirPath({ collection, isNew: true, currentPath: '' })).toBeUndefined();
+      expect(getSlugDirPath({ collection, isNew: true })).toBeUndefined();
       // Every entry shares one file name, so the entry gets a folder of its own
       expect(
-        getNewEntryDirPath({
+        getSlugDirPath({
           collection: { ...collection, meta: { path: { widget: 'string', index_file: 'index' } } },
           isNew: true,
           currentPath: 'docs',
@@ -909,6 +823,88 @@ describe('draft/slugs', () => {
         '{{title}}',
         expect.objectContaining({ dirPath: 'docs' }),
       );
+    });
+
+    describe('with localized slugs', () => {
+      const localizedCollection = {
+        ...collection,
+        name: 'pages',
+        slug: '{{title | localize}}',
+        _i18n: {
+          i18nEnabled: true,
+          defaultLocale: 'en',
+          structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false },
+          canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+        },
+      };
+
+      beforeEach(() => {
+        // The folder’s entry is stored beside it, and gives its name in each locale
+        vi.mocked(getEntriesByCollection).mockReturnValue([
+          { subPath: 'docs', locales: { en: { slug: 'docs' }, fr: { slug: 'documents' } } },
+        ]);
+      });
+
+      it('should return the localized folder for another locale', () => {
+        const draft = { collection: localizedCollection, isNew: true, currentPath: 'docs' };
+
+        expect(getSlugDirPath(draft)).toBe('docs');
+        expect(getSlugDirPath(draft, 'en')).toBe('docs');
+        expect(getSlugDirPath(draft, 'fr')).toBe('documents');
+      });
+
+      it('should return the folder for a locale just enabled for an existing entry', () => {
+        const draft = {
+          collection: localizedCollection,
+          isNew: false,
+          originalLocales: { en: true, fr: false },
+          originalPath: 'docs',
+          currentPath: 'docs',
+        };
+
+        // The slug of a locale the entry already has is its sub path
+        expect(getSlugDirPath(draft, 'en')).toBeUndefined();
+        expect(getSlugDirPath(draft)).toBeUndefined();
+        expect(getSlugDirPath(draft, 'fr')).toBe('documents');
+      });
+
+      it('should give the chosen folder in each locale, which the entry is saved to', () => {
+        const draft = { collection: localizedCollection, isNew: false, currentPath: '/docs/' };
+
+        expect(getChosenDirPath(draft)).toBe('docs');
+        expect(getChosenDirPath(draft, 'en')).toBe('docs');
+        expect(getChosenDirPath(draft, 'fr')).toBe('documents');
+        expect(getChosenDirPath({ ...draft, currentPath: undefined }, 'fr')).toBe('');
+      });
+
+      it('should be passed to the template for each locale’s slug', async () => {
+        const { fillTemplate } = await import('$lib/services/common/template');
+
+        vi.mocked(fillTemplate).mockReturnValue('intro');
+
+        getSlugs({
+          draft: {
+            isNew: true,
+            collection: localizedCollection,
+            currentPath: 'docs',
+            currentSlugs: {},
+            slugEditor: {},
+            originalLocales: {},
+            currentValues: { en: { title: 'Intro' }, fr: { title: 'Introduction' } },
+            currentLocales: { en: true, fr: true },
+            files: {},
+          },
+        });
+
+        expect(fillTemplate).toHaveBeenCalledWith(
+          '{{title | localize}}',
+          expect.objectContaining({ dirPath: 'docs' }),
+        );
+        expect(fillTemplate).toHaveBeenCalledWith(
+          '{{title | localize}}',
+          expect.objectContaining({ locale: 'fr', dirPath: 'documents' }),
+        );
+      });
     });
   });
 

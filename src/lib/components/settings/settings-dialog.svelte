@@ -30,21 +30,19 @@
 >
   <div role="none" class="wrapper">
     <TabList orientation="vertical" ariaLabel={_('categories')}>
-      {#each panels.current as { key, icon, enabled = true } (key)}
-        {#if enabled}
-          <Tab
-            label={_(`prefs.${key}.title`)}
-            selected={key === selectedPanel}
-            aria-controls="prefs-tab-{key}"
-            onSelect={() => {
-              selectedPanel = key;
-            }}
-          >
-            {#snippet startIcon()}
-              <Icon name={icon} />
-            {/snippet}
-          </Tab>
-        {/if}
+      {#each panels.current as { key, icon } (key)}
+        <Tab
+          label={_(`prefs.${key}.title`)}
+          selected={key === selectedPanel}
+          aria-controls="prefs-tab-{key}"
+          onSelect={() => {
+            selectedPanel = key;
+          }}
+        >
+          {#snippet startIcon()}
+            <Icon name={icon} />
+          {/snippet}
+        </Tab>
       {/each}
     </TabList>
     {#each panels.current as { key, component } (key)}

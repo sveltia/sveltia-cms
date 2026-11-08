@@ -14,6 +14,7 @@ import {
 import { LINKED_FILES_SERVICE_ID } from '$lib/services/assets/external/linked';
 import { listSubfolders } from '$lib/services/assets/subfolders';
 import { currentView } from '$lib/services/assets/view/settings';
+import { getNameSortValue } from '$lib/services/assets/view/sort';
 import { groupItems, sortItemsByKey } from '$lib/services/common/view';
 import { getNormalizedValueCache, hasMatch, normalize } from '$lib/services/search/util';
 import { getDirName } from '$lib/services/utils/file';
@@ -81,9 +82,7 @@ export const getSortValue = (asset, key) => {
     return asset.size ?? 0;
   }
 
-  // Exclude the file extension when sorting by name to sort numbered files properly, e.g.
-  // `hero.png`, `hero-1.png`, `hero-2.png` instead of `hero-1.png`, `hero-2.png`, `hero.png`
-  return asset.fileName.split('.')[0];
+  return getNameSortValue(asset.fileName);
 };
 
 /**

@@ -6,9 +6,9 @@ import {
   getEntriesByCollection,
   getEntriesInCollectionFolder,
 } from '$lib/services/contents/collection/entries';
-import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
+import { getNameInFolder, getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { getSlugOptions } from '$lib/services/contents/collection/slug';
-import { getNewEntryDirPath } from '$lib/services/contents/draft/slugs';
+import { getSlugDirPath } from '$lib/services/contents/draft/slugs';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { getRegex } from '$lib/services/utils/regex';
 import { getPullRequestEntries } from '$lib/services/workflow';
@@ -71,37 +71,24 @@ export const getOtherEntries = (draft, { inFolder = true } = {}) => {
  * A locale-agnostic slug, under the `_` key, can collide with another entry’s slug in any locale.
  * The entry’s own original slug in a locale never counts as taken in that locale; in another
  * locale, it can be another entry’s slug, which would be overwritten. For a new entry placed with
- * the path editor of a collection with nested entries, only the entries in the chosen folder count,
- * by their file names, because the slug of an entry there is its sub path.
+ * the path editor of a collection with nested entries, or a locale just enabled for an existing
+ * one, only the entries in the chosen folder count, by their file names, because the slug of an
+ * entry there is otherwise its sub path. With localized slugs, that’s the folder’s localized
+ * counterpart in each locale but the default one. See {@link getSlugDirPath}.
  * @param {EntryDraft} draft Entry draft.
  * @param {InternalLocaleCode[]} [locales] Locales to get the taken slugs for. Default: the locales
  * of the draft’s slugs.
  * @returns {Record<InternalLocaleCode, string[]>} Taken slugs for each locale.
  */
 export const getTakenSlugs = (draft, locales = Object.keys(draft.currentSlugs)) => {
-  const { collection, originalSlugs } = draft;
+  const { originalSlugs } = draft;
   const otherEntries = getOtherEntries(draft);
-  const dirPath = getNewEntryDirPath(draft);
-  const dirPrefix = dirPath ? `${dirPath}/` : '';
-
-  /**
-   * Get the file name of the given slug within the folder chosen with the path editor.
-   * @param {string} slug Slug, which is a sub path.
-   * @returns {string | undefined} File name, or `undefined` if the entry is in another folder.
-   */
-  const getNameInFolder = (slug) => {
-    const name = slug.startsWith(dirPrefix) ? slug.slice(dirPrefix.length) : undefined;
-
-    return name?.includes('/') ? undefined : name;
-  };
 
   return Object.fromEntries(
     locales.map((locale) => {
       const ownSlug = originalSlugs[locale] ?? originalSlugs._;
-
-      // The folder is chosen in the default locale; the localized folders aren’t looked up here
-      const inFolder =
-        dirPath !== undefined && (locale === '_' || locale === collection._i18n.defaultLocale);
+      // A locale-agnostic slug is stored in the folder chosen in the default locale
+      const dirPath = getSlugDirPath(draft, locale === '_' ? undefined : locale);
 
       return [
         locale,
@@ -116,7 +103,7 @@ export const getTakenSlugs = (draft, locales = Object.keys(draft.currentSlugs)) 
               return [];
             }
 
-            const name = inFolder ? getNameInFolder(slug) : slug;
+            const name = dirPath === undefined ? slug : getNameInFolder(slug, dirPath);
 
             return name === undefined ? [] : [name];
           }),

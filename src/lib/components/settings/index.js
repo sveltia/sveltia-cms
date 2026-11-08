@@ -15,20 +15,18 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
  */
 
 /**
- * Settings panels. A panel with `enabled: false` is hidden.
- * @type {{ readonly current: { key: string, icon: string, component: Component,
- * enabled?: boolean }[] }}
+ * Settings panels available with the current configuration. The settings dialog and page both list
+ * these, so a panel left out, like Internationalization for a monolingual site, can’t be reached
+ * through either of them, not even by URL.
+ * @type {{ readonly current: { key: string, icon: string, component: Component }[] }}
  */
 export const panels = createDerivedState(() => [
   { key: 'appearance', icon: 'palette', component: AppearancePanel },
   { key: 'language', icon: 'language', component: LanguagePanel },
   { key: 'contents', icon: 'library_books', component: ContentsPanel },
-  {
-    key: 'i18n',
-    icon: 'translate',
-    component: I18nPanel,
-    enabled: (cmsConfig.current?.i18n?.locales?.length ?? 0) > 1,
-  },
+  ...((cmsConfig.current?.i18n?.locales?.length ?? 0) > 1
+    ? [{ key: 'i18n', icon: 'translate', component: I18nPanel }]
+    : []),
   { key: 'media', icon: 'photo_library', component: MediaPanel },
   { key: 'ai', icon: 'auto_awesome', component: AiPanel },
   { key: 'accessibility', icon: 'accessibility_new', component: AccessibilityPanel },

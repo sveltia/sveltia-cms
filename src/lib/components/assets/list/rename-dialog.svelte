@@ -56,6 +56,7 @@
   } = $props();
 
   const componentId = $props.id();
+  const title = $derived(_('rename_x', { values: { name } }));
 
   let confirmationOpen = $state(false);
   /** @type {HTMLInputElement | undefined} */
@@ -130,7 +131,7 @@
 </script>
 
 <Dialog
-  title={_('rename_x', { values: { name } })}
+  {title}
   bind:open
   okLabel={_('rename')}
   okDisabled={!!blockedMessage || finalName === name || invalid}
@@ -168,6 +169,7 @@
       bind:element={inputElement}
       flex
       disabled={!!blockedMessage}
+      ariaLabel={title}
       {invalid}
       aria-errormessage="{componentId}-error"
     />

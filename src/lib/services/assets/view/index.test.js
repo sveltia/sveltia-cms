@@ -838,30 +838,59 @@ describe('assets/view/index', () => {
       createAsset('images/c.jpg'),
     ];
 
+    const groups = { '*': assets };
+    /**
+     * Allow any asset to be previewed.
+     * @returns {boolean} Result.
+     */
+    const canPreview = () => true;
+
     it('should return the neighbours of an asset in the middle', () => {
-      expect(getAdjacentAssets(assets, ({ path }) => path === 'images/b.jpg')).toEqual({
+      expect(getAdjacentAssets(groups, ({ path }) => path === 'images/b.jpg', canPreview)).toEqual({
         previous: assets[0],
         next: assets[2],
       });
     });
 
     it('should omit the previous asset for the first one', () => {
-      expect(getAdjacentAssets(assets, ({ path }) => path === 'images/a.jpg')).toEqual({
+      expect(getAdjacentAssets(groups, ({ path }) => path === 'images/a.jpg', canPreview)).toEqual({
         previous: undefined,
         next: assets[1],
       });
     });
 
     it('should omit the next asset for the last one', () => {
-      expect(getAdjacentAssets(assets, ({ path }) => path === 'images/c.jpg')).toEqual({
+      expect(getAdjacentAssets(groups, ({ path }) => path === 'images/c.jpg', canPreview)).toEqual({
         previous: assets[1],
         next: undefined,
       });
     });
 
     it('should return nothing when the asset is not listed', () => {
-      expect(getAdjacentAssets(assets, ({ path }) => path === 'images/d.jpg')).toEqual({});
-      expect(getAdjacentAssets([], () => true)).toEqual({});
+      expect(getAdjacentAssets(groups, ({ path }) => path === 'images/d.jpg', canPreview)).toEqual(
+        {},
+      );
+      expect(getAdjacentAssets({}, () => true, canPreview)).toEqual({});
+    });
+
+    it('should move across the groups in the order they are listed', () => {
+      expect(
+        getAdjacentAssets(
+          { A: [assets[0]], B: [assets[1], assets[2]] },
+          ({ path }) => path === 'images/a.jpg',
+          canPreview,
+        ),
+      ).toEqual({ previous: undefined, next: assets[1] });
+    });
+
+    it('should skip the assets that can’t be previewed, but not the current one', () => {
+      expect(
+        getAdjacentAssets(
+          groups,
+          ({ path }) => path === 'images/b.jpg',
+          ({ path }) => path === 'images/c.jpg',
+        ),
+      ).toEqual({ previous: undefined, next: assets[2] });
     });
   });
 

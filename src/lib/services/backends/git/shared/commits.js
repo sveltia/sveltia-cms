@@ -150,21 +150,36 @@ const applyUserMessage = (message, userMessage, mode) => {
 };
 
 /**
+ * Check whether a commit is expected to start a deployment, which is when its message goes without
+ * the skip-CI marker added by {@link createCommitMessage}. The commit’s own `skipCI` option takes
+ * precedence over the `skip_ci` and `automatic_deployments` backend options. To avoid unexpected
+ * data retention, deletions are always deployed.
+ * @param {Partial<CommitOptions>} options Commit options.
+ * @returns {boolean} Result.
+ */
+export const isDeployingCommit = ({ commitType, skipCI }) => {
+  // Read the options rather than `skipCIEnabled`, whose module imports the backends using this one
+  const { skip_ci: skipCIEnabled, automatic_deployments: autoDeploy } = getBackendOptions();
+
+  return (
+    commitType === 'delete' ||
+    commitType === 'deleteMedia' ||
+    !(skipCI ?? (skipCIEnabled === true || autoDeploy === false))
+  );
+};
+
+/**
  * Create a Git commit message.
  * @param {FileChange[]} changes File changes to be saved.
  * @param {CommitOptions} options Commit options.
  * @returns {string} Formatted message.
  */
 export const createCommitMessage = (changes, options) => {
-  const { commitType = 'update', skipCI = undefined, userMessage } = options;
+  const { userMessage } = options;
   const backendOptions = getBackendOptions();
 
-  const {
-    commit_messages: customCommitMessages = {},
-    skip_ci: skipCIEnabled,
-    automatic_deployments: autoDeploy,
-    prompt_commit_messages: promptMode,
-  } = backendOptions;
+  const { commit_messages: customCommitMessages = {}, prompt_commit_messages: promptMode } =
+    backendOptions;
 
   let message = applyUserMessage(
     createBaseCommitMessage(changes, options, backendOptions),
@@ -182,16 +197,11 @@ export const createCommitMessage = (changes, options) => {
   }
 
   // If requested, disable automatic deployments by using the standard `[skip ci]` prefix supported
-  // by major CI/CD providers, including GitHub Actions and Cloudflare Pages. To avoid unexpected
-  // data retention, deployments for deletion commits are not skipped.
+  // by major CI/CD providers, including GitHub Actions and Cloudflare Pages
   // https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs
   // https://docs.gitlab.com/ee/ci/pipelines/#skip-a-pipeline
   // https://developers.cloudflare.com/pages/platform/branch-build-controls/#skip-builds
-  if (
-    !['delete', 'deleteMedia'].includes(commitType) &&
-    // Cannot use the `skipCIEnabled` store here because it leads to an uninitialized store error
-    (skipCI ?? (skipCIEnabled === true || autoDeploy === false))
-  ) {
+  if (!isDeployingCommit(options)) {
     message = `[skip ci] ${message}`;
   }
 

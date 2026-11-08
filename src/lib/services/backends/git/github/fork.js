@@ -8,6 +8,7 @@ import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optio
 import {
   createLocalizedError,
   NOT_COLLABORATOR_ERROR_MESSAGE,
+  toRepositoryAccessError,
 } from '$lib/services/backends/git/shared/errors';
 import {
   createForkError,
@@ -40,13 +41,6 @@ export const isOpenAuthoringConfigured = () => isOpenAuthoringConfiguredFor('git
  * @returns {RepositoryPath} Repository owner and name.
  */
 export const getWorkflowRepository = () => resolveWorkflowRepository(repository);
-
-/**
- * HTTP statuses that mean the signed-in user can’t see the repository at all. A private repository
- * answers a request from someone without access with a 404 rather than a 403, so its existence
- * isn’t leaked.
- */
-const NO_ACCESS_STATUSES = [403, 404];
 
 /**
  * Check whether the signed-in user has an invitation to the configured repository that they haven’t
@@ -156,20 +150,20 @@ export const fetchRepositoryAccess = async () => {
     return { canWrite: !!permissions?.push, allowForking: allowForking !== false };
   }
 
+  // A rate limit shares the 403 status with a refusal, so it’s reported as a failed check rather
+  // than as no access, as reading it as “no write access” would send a maintainer down the fork
+  // path over something passing
+  const status = isRateLimited(response) ? undefined : response.status;
+
   // Open Authoring still needs the contributor to be able to read the repository, so being unable
-  // to see it is a dead end rather than a reason to fall back to a fork
-  if (NO_ACCESS_STATUSES.includes(response.status) && !isRateLimited(response)) {
+  // to see it is a dead end rather than a reason to fall back to a fork. A refusal is worth a hint
+  if (status === 403 || status === 404) {
     throw await getNoAccessError(response);
   }
 
-  // A rate limit or an outage leaves the question unanswered. Reading that as “no write access”
-  // would send a maintainer down the fork path over something passing, and offer to create a copy
-  // of a repository they can already write to, so make the failure visible instead
-  throw createLocalizedError(
-    'Failed to check the repository permission.',
-    'open_authoring.permission_check_failed',
-    { repo: repoPath },
-  );
+  // The rest is mapped the same way as in the regular access check, e.g. an expired token is no
+  // access, so the user gets the sign-in form rather than the same error on every reload
+  throw toRepositoryAccessError(repository, status);
 };
 
 /**

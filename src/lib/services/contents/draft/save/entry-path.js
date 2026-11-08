@@ -14,10 +14,11 @@ import {
   localizeDirPath,
 } from '$lib/services/contents/collection/nested/i18n';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
 import {
+  getChosenDirPath,
   getEntryDateTimeParts,
   getRandomValues,
-  hasLocalizedSlugs,
 } from '$lib/services/contents/draft/slugs';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { getLocalePath } from '$lib/services/contents/i18n';
@@ -111,7 +112,7 @@ export const buildCustomEntryPath = ({ draft, slug, indexFileName, locale }) => 
     // Every entry shares one file name, so a folder is what makes an entry. A new entry therefore
     // gets a folder of its own, named after the slug, within the folder the editor points at
     if (isNew) {
-      return createPath([localizeDirPath({ collection, dirPath, locale }), slug, indexFileName]);
+      return createPath([getChosenDirPath(draft, locale), slug, indexFileName]);
     }
 
     // An existing entry already has such a folder, and the editor points at it. In another locale,
@@ -130,7 +131,8 @@ export const buildCustomEntryPath = ({ draft, slug, indexFileName, locale }) => 
 
   const fileName = originalSubPath ? getPathInfo(originalSubPath).basename : slug;
 
-  return createPath([localizeDirPath({ collection, dirPath, locale }), fileName]);
+  // A slug filed as a bare name has been made unique within the same folder
+  return createPath([getChosenDirPath(draft, locale), fileName]);
 };
 
 /**

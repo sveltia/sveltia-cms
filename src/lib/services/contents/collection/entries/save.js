@@ -1,3 +1,4 @@
+import { isPublishingCommit } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
 import {
   contentUpdatesToast,
@@ -5,7 +6,12 @@ import {
 } from '$lib/services/contents/collection/data';
 
 /**
- * @import { Entry, FileChange, InternalEntryCollection } from '$lib/types/private';
+ * @import {
+ * CommitOptions,
+ * Entry,
+ * FileChange,
+ * InternalEntryCollection,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -22,15 +28,16 @@ export const saveEntryUpdates = async ({ collection, changes, savingEntries }) =
     return 0;
   }
 
-  await saveChanges({
-    changes,
-    savingEntries,
-    options: { commitType: 'update', collection },
-  });
+  /** @type {CommitOptions} */
+  const options = { commitType: 'update', collection };
+
+  await saveChanges({ changes, savingEntries, options });
 
   contentUpdatesToast.current = {
     ...UPDATE_TOAST_DEFAULT_STATE,
     saved: true,
+    // The changes go straight to the branch, like an entry saved without Editorial Workflow
+    published: isPublishingCommit(options),
     count: savingEntries.length,
   };
 

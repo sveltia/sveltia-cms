@@ -257,5 +257,7 @@ export const fetchFileCommits = async (paths) =>
     authorEmail: commit.commit?.author?.email,
     authorAvatarURL: commit.author?.avatar_url,
     authorLogin: commit.author?.login,
-    date: new Date(commit.commit?.author?.date ?? commit.created),
+    // Date it by when it was committed, like GitHub and GitLab do, rather than authored, as a
+    // rebased or cherry-picked commit keeps its author date
+    date: new Date(commit.commit?.committer?.date ?? commit.created),
   }));

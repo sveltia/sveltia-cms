@@ -227,7 +227,7 @@ const deleteBlob = async ({ key, config, credential: token, allowNotFound = fals
  * @see https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob-from-url
  */
 const copyBlob = async ({ asset, key: newKey, config, credential: token }) => {
-  const { id: key, size, lastModified } = asset;
+  const { id: key, size } = asset;
 
   const response = await fetch(buildBlobRequestUrl(config, newKey, token), {
     method: 'PUT',
@@ -247,10 +247,11 @@ const copyBlob = async ({ asset, key: newKey, config, credential: token }) => {
     throw new Error(`Failed to copy blob ${key}: the copy operation is still pending`);
   }
 
+  // The copy is a new blob, modified just now rather than when the source was
   return {
     Name: newKey,
     Properties: {
-      ...(lastModified && { 'Last-Modified': lastModified.toUTCString() }),
+      'Last-Modified': new Date().toUTCString(),
       ...(size && { 'Content-Length': String(size) }),
     },
   };

@@ -134,15 +134,6 @@ describe('toRepositoryAccessError', () => {
     expect(getCause(error)).toBe('repository_no_access:{"repo":"repo"}');
   });
 
-  it('should report a 404 as a missing repository when asked to', () => {
-    const error = toRepositoryAccessError(repository, 404, { reportNotFound: true });
-
-    expect(getCause(error)).toBe('repository_not_found:{"repo":"repo"}');
-    expect(getCause(toRepositoryAccessError(repository, 403, { reportNotFound: true }))).toBe(
-      'repository_no_access:{"repo":"repo"}',
-    );
-  });
-
   it.each([undefined, 429, 500])('should report a failed check for %s', (status) => {
     const error = toRepositoryAccessError(repository, status);
 

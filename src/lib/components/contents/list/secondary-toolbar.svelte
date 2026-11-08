@@ -13,7 +13,7 @@
   import {
     bulkEditing,
     entryGroups,
-    listedEntries,
+    listedEntryCount,
     listedUnpublishedEntries,
     reordering,
   } from '$lib/services/contents/collection/view';
@@ -34,13 +34,9 @@
       : undefined,
   );
   const collectionName = $derived(entryCollection?.name);
-  // The unpublished entries are listed in their own group above the published ones, so they count
-  // towards the list total as well
-  const listedEntryCount = $derived(
-    listedEntries.current.length + listedUnpublishedEntries.current.length,
-  );
-  const hasListedEntries = $derived(!!listedEntryCount);
-  const hasMultipleEntries = $derived(listedEntryCount > 1);
+  // The count includes the entries hidden by a filter, so the menus stay enabled to reset it
+  const hasListedEntries = $derived(!!listedEntryCount.current);
+  const hasMultipleEntries = $derived(listedEntryCount.current > 1);
 </script>
 
 {#if entryCollection && !reordering.current && !bulkEditing.current}
@@ -94,7 +90,7 @@
         disabled={!hasListedEntries || !getAssetFolder({ collectionName })}
         pressed={!!currentView.current.showMedia}
         aria-controls={currentView.current.showMedia ? 'collection-assets' : undefined}
-        aria-expanded={currentView.current.showMedia}
+        aria-expanded={!!currentView.current.showMedia}
         aria-label={_(currentView.current.showMedia ? 'hide_assets' : 'show_assets')}
         onclick={() => {
           currentView.current = {

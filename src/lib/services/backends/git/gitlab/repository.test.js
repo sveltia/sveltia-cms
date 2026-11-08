@@ -5,6 +5,7 @@ import {
   checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
+  fetchProjectPermissions,
   getBaseURLs,
   getBranchPath,
   getProjectId,
@@ -173,6 +174,44 @@ describe('GitLab repository service', () => {
       );
 
       await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+    });
+  });
+
+  describe('fetchProjectPermissions', () => {
+    beforeEach(() => {
+      Object.assign(repository, { owner: 'test-owner', repo: 'test-repo' });
+    });
+
+    test('tells whether the project is visible and whether the user can push to it', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        project: { userPermissions: { pushCode: true } },
+      });
+      await expect(fetchProjectPermissions()).resolves.toEqual({ found: true, canPush: true });
+
+      vi.mocked(fetchGraphQL).mockResolvedValue({ project: null });
+      await expect(fetchProjectPermissions()).resolves.toEqual({ found: false, canPush: false });
+    });
+
+    test.each([401, 403])('treats a %s as no access', async (status) => {
+      // Open Authoring reads the permissions with this as well, so an expired token sends the user
+      // back to the sign-in form there too
+      vi.mocked(fetchGraphQL).mockRejectedValue(
+        new Error('Server responded with an error', { cause: { status } }),
+      );
+
+      await expect(fetchProjectPermissions()).rejects.toThrow(
+        'Not a collaborator of the repository',
+      );
+    });
+
+    test('reports a failed check on a rate limit', async () => {
+      vi.mocked(fetchGraphQL).mockRejectedValue(
+        new Error('Too Many Requests', { cause: { status: 429 } }),
+      );
+
+      await expect(fetchProjectPermissions()).rejects.toThrow(
+        'Failed to check the repository permission.',
+      );
     });
   });
 

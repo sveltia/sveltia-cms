@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { fillUuidValues } from './uuid';
+import { fillUuidValues, getRenewedUniqueValue } from './unique-values';
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
 }));
+vi.mock('$lib/services/user/account.svelte', () => ({ user: { account: {} } }));
 
 const { getField } = await import('$lib/services/contents/entry/fields');
 
@@ -144,5 +145,45 @@ describe('fillUuidValues()', () => {
     fillUuidValues({ contentMap, defaultLocale: 'en', getFieldArgs });
 
     expect(contentMap.fr.uid_duplicate).toBe('');
+  });
+});
+
+describe('getRenewedUniqueValue()', () => {
+  const OLD_ID = '11111111-1111-4111-8111-111111111111';
+  const args = { keyPath: 'x', locale: 'fr', defaultLocale: 'en' };
+
+  test('gives a UUID field a new UUID unless it’s empty', () => {
+    const fieldConfig = { name: 'x', widget: 'uuid', prefix: 'post-' };
+    const value = getRenewedUniqueValue({ ...args, fieldConfig, value: OLD_ID });
+
+    expect(value).toMatch(/^post-[\da-f-]{36}$/);
+    expect(getRenewedUniqueValue({ ...args, fieldConfig, value: '' })).toBe('');
+  });
+
+  test('clears a Compute field with a UUID tag', () => {
+    const fieldConfig = { name: 'x', widget: 'compute', value: 'item-{{uuid_short}}' };
+
+    expect(getRenewedUniqueValue({ ...args, fieldConfig, value: 'item-abc' })).toBe('');
+    expect(
+      getRenewedUniqueValue({
+        ...args,
+        fieldConfig: { name: 'x', widget: 'compute', value: '{{index}}' },
+        value: 1,
+      }),
+    ).toBe(1);
+  });
+
+  test('gives a Hidden field its default value for the locale', () => {
+    const fieldConfig = { name: 'x', widget: 'hidden', default: '{{locale}}-{{uuid}}' };
+
+    expect(getRenewedUniqueValue({ ...args, fieldConfig, value: 'en-old' })).toMatch(
+      /^fr-[\da-f-]{36}$/,
+    );
+  });
+
+  test('keeps the value of any other field', () => {
+    const fieldConfig = { name: 'x', widget: 'string' };
+
+    expect(getRenewedUniqueValue({ ...args, fieldConfig, value: OLD_ID })).toBe(OLD_ID);
   });
 });

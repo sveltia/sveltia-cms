@@ -1,12 +1,13 @@
 import { toRaw } from '@sveltia/utils/object';
 
+import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { suspendAutoDuplication } from '$lib/services/contents/draft';
 import { createProxy, getListItemMatcher } from '$lib/services/contents/draft/create/proxy.svelte';
+import { getRenewedUniqueValue } from '$lib/services/contents/draft/create/unique-values';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getDraftFieldArgs, getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
-import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
 import { getDuplicateKeysFieldKeyPaths } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getPairsFromContent, setPairs } from '$lib/services/contents/fields/key-value/pairs';
 import { getLocalizedFieldValue } from '$lib/services/contents/fields/locale';
@@ -22,7 +23,7 @@ import { isDuplicatedField } from '$lib/services/contents/i18n/shared-values';
 
 /**
  * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
- * @import { ComputeField, Field, FieldKeyPath, HiddenField, UuidField } from '$lib/types/public';
+ * @import { Field, FieldKeyPath, HiddenField, UuidField } from '$lib/types/public';
  */
 
 /**
@@ -85,6 +86,18 @@ export const forEachTargetLocale = ({ valueStore, locale, i18n, draft, keyPath }
 };
 
 /**
+ * Check whether the given field is a Hidden field whose default value is a template, e.g.
+ * `{{uuid}}`, which is filled in for each entry rather than shared by all of them.
+ * @param {Field} field Field configuration.
+ * @returns {boolean} Result.
+ */
+const hasTemplateDefault = (field) => {
+  const { widget, default: defaultValue } = /** @type {HiddenField} */ (field);
+
+  return widget === 'hidden' && typeof defaultValue === 'string' && hasTemplateTags(defaultValue);
+};
+
+/**
  * Populate the given localized content with values from the default locale.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -138,27 +151,24 @@ export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPat
       newContent[keyPath] = content[keyPath] ?? '';
     }
 
-    // A translatable UUID field gets a UUID of its own rather than the default locale’s, just like
-    // each locale of a new draft does (see `fillUuidValues()`). A Compute field generating UUIDs is
-    // cleared for the same reason, as it keeps the UUIDs found in its value when resolved again
+    // A translatable field holding a value unique to the locale gets one of its own rather than the
+    // default locale’s, just like each locale of a new draft does. A UUID field keeps a UUID the
+    // locale already has (see `fillUuidValues()`); a Compute field generating UUIDs is cleared,
+    // and a Hidden field whose default is a template, like `{{locale}}` or `{{uuid}}`, gets it
+    // filled in again (see `getRenewedUniqueValue()`). A Hidden field with a static default is
+    // copied like any other value, so an entry keeps a value saved with an older configuration
     if (isFieldTranslatable(i18n)) {
       if (fieldType === 'uuid') {
         newContent[keyPath] =
           content[keyPath] || getInitialUuidValue(/** @type {UuidField} */ (field));
-      }
-
-      if (fieldType === 'compute' && hasUuidTag(/** @type {ComputeField} */ (field).value)) {
-        newContent[keyPath] = '';
-      }
-    }
-
-    // Support special case for the Hidden field with `default` value set to `{{locale}}`: if the
-    // field value is `{{locale}}`, replace it with the target locale
-    if (fieldType === 'hidden' && isFieldTranslatable(i18n)) {
-      const { default: defaultValue } = /** @type {HiddenField} */ (field);
-
-      if (defaultValue === '{{locale}}') {
-        newContent[keyPath] = targetLanguage;
+      } else if (fieldType === 'compute' || hasTemplateDefault(field)) {
+        newContent[keyPath] = getRenewedUniqueValue({
+          fieldConfig: field,
+          keyPath,
+          value: newContent[keyPath],
+          locale: targetLanguage,
+          defaultLocale,
+        });
       }
     }
 

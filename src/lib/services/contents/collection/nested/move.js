@@ -7,11 +7,11 @@ import {
   getSharedEntryFileName,
   isDescendantPath,
 } from '$lib/services/contents/collection/nested';
+import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
 import {
   buildEntryFileChanges,
   resolveCacheDB,
 } from '$lib/services/contents/draft/save/file-changes';
-import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
 import { mapEntryContent } from '$lib/services/contents/entry/locales';
 import { getEntryLocaleFile } from '$lib/services/contents/entry/paths';

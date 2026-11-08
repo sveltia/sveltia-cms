@@ -8,7 +8,7 @@ import {
   getNestedIndexFileName,
   hasNestedEntries,
 } from '$lib/services/contents/collection/nested';
-import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+import { hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
 import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
 /**

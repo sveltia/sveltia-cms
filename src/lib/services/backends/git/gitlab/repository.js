@@ -92,13 +92,24 @@ const FETCH_USER_PERMISSIONS_QUERY = `
  * @returns {Promise<{ found: boolean, canPush: boolean }>} Whether the project is visible to the
  * user, and whether they can push to it. Open Authoring tells the two apart — a contributor can
  * read the project but not push to it — while the regular access check needs both.
+ * @throws {Error} When the user has no access to the project, e.g. their token has expired, or the
+ * answer couldn’t be determined. See {@link toRepositoryAccessError}.
  * @see https://docs.gitlab.com/api/graphql/reference/#projectpermissions
  * @see https://docs.gitlab.com/user/permissions/
  */
 export const fetchProjectPermissions = async () => {
-  const result = /** @type {{ project: { userPermissions: { pushCode: boolean } } | null }} */ (
-    await fetchGraphQL(FETCH_USER_PERMISSIONS_QUERY)
-  );
+  /** @type {{ project: { userPermissions: { pushCode: boolean } } | null }} */
+  let result;
+
+  try {
+    result = /** @type {typeof result} */ (await fetchGraphQL(FETCH_USER_PERMISSIONS_QUERY));
+  } catch (/** @type {any} */ ex) {
+    const status = ex?.cause?.status;
+
+    // A project the user can’t see comes back as `null` rather than a 404, so a 404 means the
+    // GraphQL endpoint itself is missing, e.g. a misconfigured API root, which is a failed check
+    throw toRepositoryAccessError(repository, status === 404 ? undefined : status);
+  }
 
   return { found: !!result.project, canPush: !!result.project?.userPermissions.pushCode };
 };
@@ -108,23 +119,11 @@ export const fetchProjectPermissions = async () => {
  * @throws {Error} If the user can’t push to the repository, or the access couldn’t be checked.
  */
 export const checkRepositoryAccess = async () => {
-  const { repo } = repository;
-  /** @type {{ found: boolean, canPush: boolean }} */
-  let permissions;
-
-  try {
-    permissions = await fetchProjectPermissions();
-  } catch (/** @type {any} */ ex) {
-    const status = ex?.cause?.status;
-
-    // A project the user can’t see comes back as `null` rather than a 404, so a 404 means the
-    // GraphQL endpoint itself is missing, e.g. a misconfigured API root, which is a failed check
-    throw toRepositoryAccessError(repository, status === 404 ? undefined : status);
-  }
+  const { found, canPush } = await fetchProjectPermissions();
 
   // A project the user can’t see can’t be pushed to either
-  if (!permissions.canPush) {
-    throw createPermissionError(repo, permissions.found);
+  if (!canPush) {
+    throw createPermissionError(repository.repo, found);
   }
 };
 

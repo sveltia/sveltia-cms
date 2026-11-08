@@ -96,6 +96,16 @@ describe('DetailsOverlay', () => {
       .toBe('https://cdn.example.com/images/song.mp3');
   });
 
+  test('skips the assets that can’t be previewed', async () => {
+    overlaidExternalAssetId.current = 'images/song.mp3';
+
+    await render(DetailsOverlay);
+
+    // The archive listed next isn’t opened in the overlay from the list either
+    await expect.element(page.getByRole('button', { name: 'Previous Asset' })).toBeEnabled();
+    await expect.element(page.getByRole('button', { name: 'Next Asset' })).toBeDisabled();
+  });
+
   test('shows a PDF in a frame', async () => {
     overlaidExternalAssetId.current = 'images/doc.pdf';
 

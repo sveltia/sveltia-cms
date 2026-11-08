@@ -217,6 +217,22 @@ export const getEntryDirPath = (subPath) => {
 };
 
 /**
+ * Get the name of an entry within the given folder, which is what a new slug filed in that
+ * folder has to differ from: the slug of an entry in a collection with nested entries is its sub
+ * path, e.g. `docs/intro`, while a new slug is a bare name, e.g. `intro`.
+ * @param {string} subPath Entry’s sub path.
+ * @param {string} dirPath Folder path without leading and trailing slashes. An empty string for the
+ * collection folder.
+ * @returns {string | undefined} Name, or `undefined` if the entry isn’t directly in the folder.
+ */
+export const getNameInFolder = (subPath, dirPath) => {
+  const prefix = dirPath ? `${dirPath}/` : '';
+  const name = subPath.startsWith(prefix) ? subPath.slice(prefix.length) : undefined;
+
+  return name?.includes('/') ? undefined : name;
+};
+
+/**
  * Check if the given entry is stored in the given directory or one of its descendants.
  * @param {string} dirPath Directory path relative to the collection folder. An empty string matches
  * every entry.

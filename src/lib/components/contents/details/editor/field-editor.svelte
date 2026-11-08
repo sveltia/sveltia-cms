@@ -129,7 +129,7 @@
   );
   const isList = $derived(fieldType === 'list' || multiple);
   const originalValues = $derived(entryDraft.current?.originalValues);
-  const { allLocales, defaultLocale } = $derived(getDraftI18nConfig(entryDraft.current));
+  const { allLocales } = $derived(getDraftI18nConfig(entryDraft.current));
   // Without i18n, the only locale is the one being edited, which leaves none
   const otherLocales = $derived(allLocales.filter((l) => l !== locale));
   // Only the field’s own values are depended on, so the editor isn’t updated whenever another
@@ -229,7 +229,8 @@
   // The field’s reset actions are taken right away rather than confirmed in a dialog, so only the
   // availability is used
   const resetMenu = createResetMenuState(() => {
-    const args = { valueMap, fieldConfig, keyPath, locale, defaultLocale };
+    const draft = /** @type {EntryDraft} */ (entryDraft.current);
+    const args = { draft, valueMap, fieldConfig, keyPath, locale };
 
     return {
       restore: canResetField({ ...args, restore: true }),

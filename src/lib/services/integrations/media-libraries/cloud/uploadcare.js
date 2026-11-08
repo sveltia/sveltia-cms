@@ -3,6 +3,7 @@
 import { sleep } from '@sveltia/utils/misc';
 
 import { formatFileName } from '$lib/services/assets/file-name';
+import { getAssetKind, isMediaKind } from '$lib/services/assets/kinds';
 import { cmsConfig } from '$lib/services/config/state';
 import {
   findLibraryOptions,
@@ -16,6 +17,7 @@ import { encodeRFC3986 } from '$lib/services/utils/url';
 
 /**
  * @import {
+ * AssetKind,
  * ExternalAsset,
  * MediaLibraryFetchOptions,
  * MediaLibraryService,
@@ -84,6 +86,20 @@ export const getPublicKey = (fieldConfig) => {
 export const isEnabled = (fieldConfig) => !!getPublicKey(fieldConfig);
 
 /**
+ * Get the kind of an Uploadcare file. The media kinds come from the MIME type, which Uploadcare
+ * detects from the content, and the other kinds from the file name, the way the other storage
+ * services tell them. An SVG image is therefore an image, though Uploadcare doesn’t process it as
+ * one.
+ * @param {UploadcareResource} file File.
+ * @returns {AssetKind} Kind.
+ */
+const getFileKind = ({ mime_type: mimeType, original_filename: fileName }) => {
+  const [type] = mimeType.split('/');
+
+  return isMediaKind(type) ? /** @type {AssetKind} */ (type) : getAssetKind(fileName);
+};
+
+/**
  * Parse API results into ExternalAsset format.
  * @param {UploadcareResource[]} results API results.
  * @param {object} [options] Additional options.
@@ -112,7 +128,6 @@ export const parseResults = (results, { fieldConfig } = {}) => {
 
     const baseURL = `${new URL(cdnBase ?? url).origin}/${uuid}/`;
     const isImage = mimeType.startsWith('image/');
-    const isVideo = mimeType.startsWith('video/');
 
     return {
       id: uuid,
@@ -126,7 +141,7 @@ export const parseResults = (results, { fieldConfig } = {}) => {
       fileName,
       lastModified: new Date(timestamp),
       size,
-      kind: isImage ? 'image' : isVideo ? 'video' : 'other',
+      kind: getFileKind(result),
     };
   });
 };
@@ -229,8 +244,8 @@ export const fetchFiles = async (options, { maxPages = 10, filter } = {}) => {
       // Apply filters: first kind filter if specified, then custom filter if provided
       let { results } = data;
 
-      if (kind === 'image') {
-        results = results.filter((file) => file.is_image);
+      if (kind) {
+        results = results.filter((file) => getFileKind(file) === kind);
       }
 
       if (filter) {

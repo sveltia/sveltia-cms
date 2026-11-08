@@ -254,6 +254,17 @@ describe('GitHub fork service', () => {
       expect(_).toHaveBeenCalledWith('repository_no_access', expect.any(Object));
     });
 
+    test('treats an expired or revoked token as no access, like the regular check', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue(createResponse(false, {}, { status: 401 }));
+
+      // The shared message is what makes the sign-in flow drop the cached credentials
+      await expect(fetchRepositoryAccess()).rejects.toThrow(NOT_COLLABORATOR_ERROR_MESSAGE);
+      expect(_).toHaveBeenCalledWith('repository_no_access', expect.any(Object));
+      // The invitation and scope hints are about a refusal, which a token that no longer works
+      // can’t tell anything about
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+    });
+
     test('raises rather than guessing when the rate limit is exhausted', async () => {
       vi.mocked(fetchAPI).mockResolvedValue(
         createResponse(false, {}, { status: 403, headers: { 'x-ratelimit-remaining': '0' } }),

@@ -6,6 +6,7 @@ import {
   filterNestedEntries,
   getEntryDirPath,
   getMetaPathConfig,
+  getNameInFolder,
   getNestedConfig,
   getNestedIndexFileName,
   getSharedEntryFileName,
@@ -302,6 +303,22 @@ describe('getEntryDirPath()', () => {
 
   test('returns an empty string for an entry in the collection folder', () => {
     expect(getEntryDirPath('_index')).toBe('');
+  });
+});
+
+describe('getNameInFolder()', () => {
+  test('returns the name of an entry directly in the folder', () => {
+    expect(getNameInFolder('docs/intro', 'docs')).toBe('intro');
+    expect(getNameInFolder('a/b/c', 'a/b')).toBe('c');
+    expect(getNameInFolder('setup', '')).toBe('setup');
+  });
+
+  test('returns `undefined` for an entry elsewhere', () => {
+    expect(getNameInFolder('docs/guides/start', 'docs')).toBeUndefined();
+    expect(getNameInFolder('docs/intro', '')).toBeUndefined();
+    expect(getNameInFolder('setup', 'docs')).toBeUndefined();
+    // A folder whose name merely starts with the same characters isn’t the same folder
+    expect(getNameInFolder('docs-old/intro', 'docs')).toBeUndefined();
   });
 });
 

@@ -68,32 +68,17 @@ export const getWorkflowRepository = () => resolveWorkflowRepository(repository)
  */
 export const fetchRepositoryAccess = async () => {
   const { owner, repo } = repository;
-  const repoPath = `${owner}/${repo}`;
-  /** @type {{ found: boolean, canPush: boolean }} */
-  let permissions;
-
-  try {
-    permissions = await fetchProjectPermissions();
-  } catch {
-    // A spent rate limit or an outage leaves the question unanswered. Reading that as “no write
-    // access” would send a maintainer down the fork path over something passing, and offer to make
-    // a copy of a project they can already write to, so make the failure visible instead
-    throw createLocalizedError(
-      'Failed to check the repository permission.',
-      'open_authoring.permission_check_failed',
-      { repo: repoPath },
-    );
-  }
+  const { found, canPush } = await fetchProjectPermissions();
 
   // Open Authoring still needs the contributor to be able to read the project, so being unable to
   // see it is a dead end rather than a reason to fall back to a fork. The shared message is what
   // the sign-in flow looks for to drop the cached credentials, the same as the regular access check
   // does, so the user gets the sign-in form rather than the same error on every reload
-  if (!permissions.found) {
-    throw createNoAccessError(repoPath);
+  if (!found) {
+    throw createNoAccessError(`${owner}/${repo}`);
   }
 
-  return { canWrite: permissions.canPush };
+  return { canWrite: canPush };
 };
 
 /**

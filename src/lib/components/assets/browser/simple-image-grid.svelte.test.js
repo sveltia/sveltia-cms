@@ -17,7 +17,14 @@ const children = createRawSnippet(() => ({
 describe('SimpleImageGrid', () => {
   test('renders a list box with the items', async () => {
     const onChange = vi.fn();
-    const { container } = await render(SimpleImageGrid, { gridId: 'grid', children, onChange });
+
+    const { container } = await render(SimpleImageGrid, {
+      gridId: 'grid',
+      kind: 'image',
+      children,
+      onChange,
+    });
+
     const listbox = page.getByRole('listbox', { name: 'Available Images' });
 
     await expect.element(listbox).toHaveAttribute('id', 'grid');
@@ -25,8 +32,8 @@ describe('SimpleImageGrid', () => {
     expect(listbox.getByRole('option').elements()).toHaveLength(2);
   });
 
-  test('takes another accessible name', async () => {
-    await render(SimpleImageGrid, { ariaLabel: 'Available Files', children });
+  test('is named after files of any kind by default', async () => {
+    await render(SimpleImageGrid, { children });
 
     await expect.element(page.getByRole('listbox', { name: 'Available Files' })).toBeVisible();
   });

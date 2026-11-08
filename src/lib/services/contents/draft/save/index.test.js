@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { callEventHooks } from '$lib/services/api/events';
 import { lockedBranch } from '$lib/services/backends/branch-access';
-import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
+import { skipCIConfigured } from '$lib/services/backends/git/shared/integration';
 import { checkForRemoteChanges } from '$lib/services/backends/refresh';
 import { saveChanges } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
@@ -38,10 +38,18 @@ import { saveWorkflowChanges } from '$lib/services/workflow/save';
 import { saveEntry as _saveEntry } from '.';
 
 vi.mock('$lib/services/backends');
-vi.mock('$lib/services/backends/git/shared/integration', () => ({
-  skipCIConfigured: { current: false },
-  skipCIEnabled: { current: false },
-}));
+vi.mock('$lib/services/backends/git/shared/integration', async () => {
+  const { isDeployingCommit } = await import('$lib/services/backends/git/shared/commits');
+  const configured = { current: false };
+
+  return {
+    skipCIConfigured: configured,
+    // Mirror the real helper so the tests can drive it through the configuration
+    isPublishingCommit: vi.fn(
+      (/** @type {any} */ options) => configured.current && isDeployingCommit(options),
+    ),
+  };
+});
 vi.mock('$lib/services/backends/refresh');
 vi.mock('$lib/services/backends/save');
 vi.mock('$lib/services/contents/collection', async (importOriginal) => ({
@@ -131,7 +139,6 @@ describe('draft/save/index', () => {
     };
 
     /** @type {any} */ (skipCIConfigured).current = true;
-    /** @type {any} */ (skipCIEnabled).current = false;
     vi.mocked(isWorkflowDraft).mockReturnValue(false);
     vi.mocked(getUnpublishedEntryByDraft).mockReturnValue(undefined);
     unpublishedEntries.current = [];
@@ -211,7 +218,9 @@ describe('draft/save/index', () => {
       expect(result.slug).toBe('test-post');
 
       // Nothing is published yet, because the changes only exist in a pull request
-      expect(vi.mocked(setLastCommitPublishHint)).toHaveBeenCalledWith(false);
+      expect(contentUpdatesToast.current).toEqual(expect.objectContaining({ published: false }));
+      // The configured branch hasn’t moved, so what its last commit did still stands
+      expect(vi.mocked(setLastCommitPublishHint)).not.toHaveBeenCalled();
     });
 
     it('should refuse to save a read-only entry', async () => {
@@ -700,8 +709,6 @@ describe('draft/save/index', () => {
         published: true,
         count: 1,
       });
-
-      expect(vi.mocked(setLastCommitPublishHint)).toHaveBeenCalledWith(true);
     });
 
     it('should handle skipCI option', async () => {
@@ -713,8 +720,6 @@ describe('draft/save/index', () => {
         published: false,
         count: 1,
       });
-
-      expect(vi.mocked(setLastCommitPublishHint)).toHaveBeenCalledWith(false);
     });
 
     it('should handle non-git backend', async () => {

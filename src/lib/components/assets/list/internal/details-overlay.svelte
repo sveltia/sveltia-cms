@@ -59,17 +59,9 @@
       `/assets/${browsedDirPath.current ?? selectedAssetFolder.current?.internalPath ?? '-/all'}`,
     ),
   );
-  /**
-   * The assets right before and after the shown one in the list the overlay was opened from. An
-   * asset that can’t be previewed isn’t opened in the overlay from the list, so it’s skipped.
-   */
+  /** The assets right before and after the shown one in the list the overlay was opened from. */
   const { previous, next } = $derived(
-    getAdjacentAssets(
-      Object.values(assetGroups.current)
-        .flat(1)
-        .filter((a) => a.path === asset?.path || canPreviewAsset(a)),
-      (a) => a.path === asset?.path,
-    ),
+    getAdjacentAssets(assetGroups.current, (a) => a.path === asset?.path, canPreviewAsset),
   );
 
   /**

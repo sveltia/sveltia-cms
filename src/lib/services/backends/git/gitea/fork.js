@@ -9,7 +9,7 @@ import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optional';
 import {
   createLocalizedError,
-  createNoAccessError,
+  toRepositoryAccessError,
 } from '$lib/services/backends/git/shared/errors';
 import {
   isOpenAuthoringConfiguredFor,
@@ -74,29 +74,17 @@ const toRepositoryPath = ({ full_name: fullName }) => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
 export const fetchRepositoryAccess = async () => {
-  const { owner, repo } = repository;
-  const repoPath = `${owner}/${repo}`;
   /** @type {Record<string, any>} */
   let result;
 
   try {
     result = await getRepositoryInfo();
   } catch (/** @type {any} */ ex) {
-    // The shared message is what the sign-in flow looks for to drop the cached credentials, the
-    // same as the regular access check does, so the user gets the sign-in form rather than the
-    // same error on every reload
-    if ([403, 404].includes(ex.cause?.status)) {
-      throw createNoAccessError(repoPath);
-    }
-
-    // A rate limit or an outage leaves the question unanswered. Reading that as “no write access”
-    // would send a maintainer down the fork path over something passing, and offer to create a
-    // copy of a repository they can already write to, so make the failure visible instead
-    throw createLocalizedError(
-      'Failed to check the repository permission.',
-      'open_authoring.permission_check_failed',
-      { repo: repoPath },
-    );
+    // The shared mapping is what the regular access check uses: a refusal, including an expired
+    // token, carries the message the sign-in flow looks for to drop the cached credentials, while
+    // a rate limit or an outage is a failed check, as reading it as “no write access” would offer
+    // a maintainer a copy of a repository they can already write to
+    throw toRepositoryAccessError(repository, ex?.cause?.status);
   }
 
   return { canWrite: !!result.permissions?.push };

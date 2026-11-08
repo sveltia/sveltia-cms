@@ -27,7 +27,7 @@ vi.mock('$lib/services/contents/draft/create/versioned-map.svelte', () => ({
   createValueMap: vi.fn((target) => target),
 }));
 
-vi.mock('$lib/services/contents/draft/create/uuid', () => ({
+vi.mock('$lib/services/contents/draft/create/unique-values', () => ({
   fillUuidValues: vi.fn(),
 }));
 
@@ -54,7 +54,7 @@ const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/bac
 const { createProxy } = await import('$lib/services/contents/draft/create/proxy.svelte');
 const { createValueMap } = await import('$lib/services/contents/draft/create/versioned-map.svelte');
 const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
-const { fillUuidValues } = await import('$lib/services/contents/draft/create/uuid');
+const { fillUuidValues } = await import('$lib/services/contents/draft/create/unique-values');
 const { getField } = await import('$lib/services/contents/entry/fields');
 const { cmsConfig } = await import('$lib/services/config');
 const { nestedFilterPath } = await import('$lib/services/contents/collection/nested');

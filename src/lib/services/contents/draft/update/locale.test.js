@@ -20,6 +20,10 @@ vi.mock('$lib/services/contents/i18n/shared-values', async (importOriginal) => (
   isDuplicatedField: vi.fn(),
 }));
 vi.mock('$lib/services/contents/draft/defaults');
+// A Hidden field’s default can take the signed-in user’s details
+vi.mock('$lib/services/user/account.svelte', () => ({
+  user: { account: { email: 'jane@example.com', login: 'jane', name: 'Jane' } },
+}));
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/fields/date-time/value', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
@@ -623,6 +627,38 @@ describe('draft/update/locale', () => {
 
       // Hidden field with default: '{{locale}}' should be replaced with target language
       expect(result.locale_code).toBe('fr');
+    });
+
+    it('should fill in a templated Hidden default again but copy a static one', () => {
+      /** @type {Record<string, any>} */
+      const hiddenFields = {
+        ref: { name: 'ref', widget: 'hidden', i18n: true, default: '{{uuid}}' },
+        created_by: {
+          name: 'created_by',
+          widget: 'hidden',
+          i18n: true,
+          default: '{{author-login}}',
+        },
+        // A template tag escaped with a backslash isn’t one
+        literal: { name: 'literal', widget: 'hidden', i18n: true, default: '\\{{uuid}}' },
+        kind: { name: 'kind', widget: 'hidden', i18n: true, default: 'post' },
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => hiddenFields[keyPath]);
+      mockEntryDraft.currentValues.en = {
+        ref: 'old-uuid',
+        created_by: 'someone',
+        literal: '{{uuid}}',
+        kind: 'page',
+      };
+
+      const result = copyDefaultLocaleValues({}, 'fr');
+
+      expect(result.ref).toMatch(/^[\da-f]{8}-[\da-f]{4}-/);
+      expect(result.created_by).toBe('jane');
+      expect(result.literal).toBe('{{uuid}}');
+      // An entry keeps a value saved with an older configuration
+      expect(result.kind).toBe('page');
     });
 
     it('should replace {{locale}} placeholder for hidden field with i18n: "translate" (lines 53-63)', () => {

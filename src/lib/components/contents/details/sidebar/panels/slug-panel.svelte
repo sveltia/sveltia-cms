@@ -6,8 +6,7 @@
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
   import PanelSection from '$lib/components/contents/details/sidebar/panels/panel-section.svelte';
   import SlugUpdateForm from '$lib/components/contents/details/sidebar/panels/slug-update-form.svelte';
-  import { getSlugOptions } from '$lib/services/contents/collection/slug';
-  import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+  import { getSlugOptions, hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { canUpdateSlug, getSlugPreviews, hasEntrySlug } from '$lib/services/contents/editor/slug';
   import { getLocaleLabel } from '$lib/services/contents/i18n';

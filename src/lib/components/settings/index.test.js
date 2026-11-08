@@ -66,15 +66,6 @@ describe('Settings panels', () => {
     expect(contentsPanel?.component).toBeDefined();
   });
 
-  test('should have i18n panel', () => {
-    const panelList = panels.current;
-    const i18nPanel = panelList.find((panel) => panel.key === 'i18n');
-
-    expect(i18nPanel).toBeDefined();
-    expect(i18nPanel?.icon).toBe('translate');
-    expect(i18nPanel?.component).toBeDefined();
-  });
-
   test('should have media panel', () => {
     const panelList = panels.current;
     const mediaPanel = panelList.find((panel) => panel.key === 'media');
@@ -90,7 +81,6 @@ describe('Settings panels', () => {
 
     expect(panelList[index]?.icon).toBe('auto_awesome');
     expect(panelList[index]?.component).toBeDefined();
-    expect(panelList[index]?.enabled).toBeUndefined();
     expect(panelList[index + 1]?.key).toBe('accessibility');
   });
 
@@ -137,7 +127,12 @@ describe('Settings panels', () => {
     const panelList = panels.current;
     const i18nPanel = panelList.find((panel) => panel.key === 'i18n');
 
-    expect(i18nPanel?.enabled).toBe(true);
+    expect(i18nPanel?.icon).toBe('translate');
+    expect(i18nPanel?.component).toBeDefined();
+    // It’s listed right after the contents panel
+    expect(panelList.at(panelList.indexOf(/** @type {any} */ (i18nPanel)) - 1)?.key).toBe(
+      'contents',
+    );
   });
 
   test('should disable i18n panel when single locale configured', () => {
@@ -154,10 +149,7 @@ describe('Settings panels', () => {
       _baseURL: 'http://localhost',
     };
 
-    const panelList = panels.current;
-    const i18nPanel = panelList.find((panel) => panel.key === 'i18n');
-
-    expect(i18nPanel?.enabled).toBe(false);
+    expect(panels.current.find((panel) => panel.key === 'i18n')).toBeUndefined();
   });
 
   test('should disable i18n panel when no locales configured', () => {
@@ -169,9 +161,6 @@ describe('Settings panels', () => {
       _baseURL: 'http://localhost',
     };
 
-    const panelList = panels.current;
-    const i18nPanel = panelList.find((panel) => panel.key === 'i18n');
-
-    expect(i18nPanel?.enabled).toBe(false);
+    expect(panels.current.find((panel) => panel.key === 'i18n')).toBeUndefined();
   });
 });

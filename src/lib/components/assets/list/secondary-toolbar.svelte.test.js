@@ -41,12 +41,18 @@ describe('SecondaryToolbar', () => {
 
     const infoButton = toolbar.getByRole('button', { name: 'Show Info' });
 
+    // `aria-controls` is only set once the pane, which it points to, is shown
     await expect.element(infoButton).toHaveAttribute('aria-pressed', 'false');
+    await expect.element(infoButton).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(infoButton).not.toHaveAttribute('aria-controls');
     await infoButton.click();
     expect(currentView.current.showInfo).toBe(true);
-    await expect
-      .element(toolbar.getByRole('button', { name: 'Hide Info' }))
-      .toHaveAttribute('aria-pressed', 'true');
+
+    const hideButton = toolbar.getByRole('button', { name: 'Hide Info' });
+
+    await expect.element(hideButton).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(hideButton).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(hideButton).toHaveAttribute('aria-controls', 'asset-info');
   });
 
   test('offers the given grouping options', async () => {

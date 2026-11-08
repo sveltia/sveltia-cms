@@ -610,7 +610,7 @@
       {/if}
       {#if showURLInput && libraryName === 'enter-url'}
         <EmptyState>
-          <div role="none">
+          <div role="none" id="{elementIdPrefix}-url-label">
             {kind === 'image'
               ? _('assets_dialog.enter_image_url')
               : _('assets_dialog.enter_file_url')}
@@ -619,6 +619,7 @@
             dir="ltr"
             bind:value={enteredURL}
             flex
+            aria-labelledby="{elementIdPrefix}-url-label"
             oninput={() => {
               selectedResources = getLocationResources({ libraryName, enteredURL });
             }}

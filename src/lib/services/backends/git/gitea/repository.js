@@ -118,7 +118,7 @@ export const checkRepositoryAccess = async () => {
   try {
     result = await getRepositoryInfo();
   } catch (/** @type {any} */ ex) {
-    throw toRepositoryAccessError(repository, ex?.cause?.status, { reportNotFound: true });
+    throw toRepositoryAccessError(repository, ex?.cause?.status);
   }
 
   if (!result.permissions?.push) {

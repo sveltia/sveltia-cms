@@ -220,13 +220,13 @@ export const listedEntries = createDerivedState(() => {
 });
 
 /**
- * List of unpublished entries for the selected entry collection that have never been published,
- * sorted and filtered with the same view settings as {@link entryGroups}. Unlike an update to an
- * existing entry, which replaces the published version in {@link listedEntries}, these are listed
- * in a separate group above the published entries.
+ * Unpublished entries for the selected entry collection that have never been published, before the
+ * view settings are applied. Unlike an update to an existing entry, which replaces the published
+ * version in {@link listedEntries}, these are listed in a separate group above the published
+ * entries.
  * @type {{ readonly current: Entry[] }}
  */
-export const listedUnpublishedEntries = createDerivedState(() => {
+const newUnpublishedEntries = createDerivedState(() => {
   const { current: _collection } = selectedCollection;
 
   if (_collection?._type !== 'entry' || isRewriting()) {
@@ -237,19 +237,29 @@ export const listedUnpublishedEntries = createDerivedState(() => {
   // rather than by path, which a rename would break
   const swappedIn = new Set(listedEntries.current);
 
-  /** @type {Entry[]} */
-  let entries = filterNestedEntries({
+  return filterNestedEntries({
     collection: _collection,
     entries: unpublishedEntries.current.filter(
       (entry) => entry.workflow.collectionName === _collection.name && !swappedIn.has(entry),
     ),
     dirPath: nestedFilterPath.current,
   });
+});
+
+/**
+ * List of unpublished entries for the selected entry collection that have never been published,
+ * sorted and filtered with the same view settings as {@link entryGroups}. See
+ * {@link newUnpublishedEntries}.
+ * @type {{ readonly current: Entry[] }}
+ */
+export const listedUnpublishedEntries = createDerivedState(() => {
+  let entries = newUnpublishedEntries.current;
 
   if (!entries.length) {
     return [];
   }
 
+  const _collection = /** @type {InternalEntryCollection} */ (selectedCollection.current);
   const { current: sort } = sortConditions;
   const { current: filters } = filterConditions;
 
@@ -263,6 +273,16 @@ export const listedUnpublishedEntries = createDerivedState(() => {
 
   return entries;
 });
+
+/**
+ * Number of entries in the entry list for the selected entry collection, published or not, before
+ * the view filters narrow them down. The list controls depend on this rather than on what’s shown,
+ * so that they stay available, and a filter hiding every entry can be reset.
+ * @type {{ readonly current: number }}
+ */
+export const listedEntryCount = createDerivedState(
+  () => listedEntries.current.length + newUnpublishedEntries.current.length,
+);
 
 /**
  * Threshold for when to show a warning about nearing the quota of entries in an entry collection.
