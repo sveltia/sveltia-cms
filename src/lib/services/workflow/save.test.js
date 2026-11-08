@@ -1961,8 +1961,11 @@ describe('workflow/save', () => {
       const second = { ...createEntry('cms/posts/world', 'pending_deletion'), id: 'world' };
       const elsewhere = createEntry('cms/pages/about', 'pending_deletion');
 
+      first.workflow.pullRequest.deletionGroup = 'group-1';
+      second.workflow.pullRequest.deletionGroup = 'group-1';
       elsewhere.id = 'about';
       elsewhere.workflow.collectionName = 'pages';
+      elsewhere.workflow.pullRequest.deletionGroup = 'group-1';
       unpublishedEntries.current = [first, second, elsewhere];
 
       await publishWorkflowEntry(first);
@@ -1973,6 +1976,24 @@ describe('workflow/save', () => {
         collection: { name: 'posts', _type: 'entry' },
         collectionFile: undefined,
         entries: [first, second],
+      });
+    });
+
+    test('brings only the references to an entry deleted on its own up to date', async () => {
+      const first = createEntry('cms/posts/hello', 'pending_deletion');
+      const second = { ...createEntry('cms/posts/world', 'pending_deletion'), id: 'world' };
+
+      // Deleted one at a time, so each pull request removes only the references to its own entry.
+      // Taking in the other one’s would drop references that are still on the site, and save them
+      // with the next edit if the other deletion is then cancelled
+      unpublishedEntries.current = [first, second];
+
+      await publishWorkflowEntry(first);
+
+      expect(planCascadeDelete).toHaveBeenCalledWith({
+        collection: { name: 'posts', _type: 'entry' },
+        collectionFile: undefined,
+        entries: [first],
       });
     });
 
@@ -2038,6 +2059,15 @@ describe('workflow/save', () => {
           changes: expect.arrayContaining([cascadeChange]),
         }),
       );
+
+      // Both pull requests record the same selection, so publishing either works out the same
+      // rewrite, while an entry of the collection deleted on its own isn’t taken in
+      const [[{ deletionGroup }], [{ deletionGroup: otherGroup }]] = vi.mocked(
+        workflowService.savePullRequest,
+      ).mock.calls;
+
+      expect(deletionGroup).toEqual(expect.any(String));
+      expect(otherGroup).toBe(deletionGroup);
     });
 
     test('plans a selection spanning collections per collection', async () => {
@@ -2062,6 +2092,12 @@ describe('workflow/save', () => {
       );
       expect(planCascadeDelete).toHaveBeenCalledWith(
         expect.objectContaining({ collection: otherCollection, entries: [second] }),
+      );
+
+      // Each entry is the only one of its collection, so it’s planned on its own, with no record
+      expect(workflowService.savePullRequest).toHaveBeenCalledTimes(2);
+      expect(workflowService.savePullRequest).not.toHaveBeenCalledWith(
+        expect.objectContaining({ deletionGroup: expect.anything() }),
       );
     });
 

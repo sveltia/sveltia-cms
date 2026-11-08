@@ -397,31 +397,52 @@ describe('workflow/index', () => {
      * Create an entry awaiting deletion.
      * @param {string} subPath Sub path.
      * @param {object} [workflow] Workflow property overrides.
+     * @param {object} [pullRequest] Pull request property overrides.
      * @returns {any} Unpublished entry.
      */
-    const createDeletion = (subPath, workflow = {}) => {
+    const createDeletion = (subPath, workflow = {}, pullRequest = { deletionGroup: 'group-1' }) => {
       const entry = createEntry({ collectionName: 'posts', subPath });
 
       return {
         ...entry,
-        workflow: { ...entry.workflow, status: 'pending_deletion', ...workflow },
+        workflow: {
+          ...entry.workflow,
+          status: 'pending_deletion',
+          pullRequest: { ...entry.workflow.pullRequest, ...pullRequest },
+          ...workflow,
+        },
       };
     };
 
-    test('lists the entry, then the others of its collection awaiting deletion', () => {
+    test('lists the entry, then the others of its collection deleted with it', () => {
       const entry = createDeletion('a');
       const other = createDeletion('b');
       const draft = createDeletion('c', { status: 'draft' });
       const elsewhere = createDeletion('d', { collectionName: 'pages' });
       const file = createDeletion('e', { fileName: 'home' });
+      // Deleted one at a time, or in another selection
+      const lone = createDeletion('f', {}, {});
+      const later = createDeletion('g', {}, { deletionGroup: 'group-2' });
 
-      unpublishedEntries.current = [other, entry, draft, elsewhere, file];
+      unpublishedEntries.current = [other, entry, draft, elsewhere, file, lone, later];
 
       expect(getDeletionSelection(entry)).toEqual([entry, other]);
       expect(getDeletionSelection(file)).toEqual([file]);
+      expect(getDeletionSelection(later)).toEqual([later]);
 
       // A copy of the entry the store has replaced since isn’t listed a second time
       expect(getDeletionSelection({ ...entry })).toEqual([{ ...entry }, other]);
+    });
+
+    test('lists an entry deleted on its own alone', () => {
+      // Two entries deleted one at a time, or before the selection was recorded: each pull request
+      // removes only the references to its own entry
+      const entry = createDeletion('a', {}, {});
+      const other = createDeletion('b', {}, {});
+
+      unpublishedEntries.current = [other, entry];
+
+      expect(getDeletionSelection(entry)).toEqual([entry]);
     });
   });
 

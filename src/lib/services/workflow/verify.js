@@ -135,9 +135,9 @@ const getUpdatedEntry = (entry) => {
 /**
  * Get the entries whose references to the given entry the CMS rewrites along with it: those
  * referencing its published version when it’s renamed, or when it’s deleted. A selection of entries
- * is deleted with the same rewrite in each pull request, so the references to the other entries of
- * the collection awaiting deletion count as well. The entries are worked out from the published
- * ones, the way the CMS did when it committed the rewrite.
+ * is deleted with the same rewrite in each pull request, so the references to the other entries
+ * deleted with it count as well: see `getDeletionSelection()`. The entries are worked out from the
+ * published ones, the way the CMS did when it committed the rewrite.
  * @param {object} args Arguments.
  * @param {UnpublishedEntry} args.entry Unpublished entry being published.
  * @param {InternalCollection} args.collection Collection the entry belongs to.

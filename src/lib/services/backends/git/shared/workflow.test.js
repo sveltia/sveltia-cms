@@ -26,6 +26,7 @@ import {
   saveWorkflowBranch,
   toChangedFilesWithModes,
   updateLabelledStatus,
+  updatePullRequestDeletionGroup,
   waitForMerge,
 } from './workflow';
 
@@ -183,6 +184,7 @@ describe('saveWorkflowBranch()', () => {
     commitToNewBranch: vi.fn().mockResolvedValue(commit),
     commitToExistingBranch: vi.fn().mockResolvedValue(commit),
     createPullRequest: vi.fn().mockResolvedValue({ number: 2 }),
+    updateDeletionGroup: vi.fn().mockResolvedValue(undefined),
   });
 
   test('commits onto the branch of an existing pull request', async () => {
@@ -202,6 +204,69 @@ describe('saveWorkflowBranch()', () => {
     );
     expect(service.commitToNewBranch).not.toHaveBeenCalled();
     expect(service.createPullRequest).not.toHaveBeenCalled();
+    expect(service.updateDeletionGroup).not.toHaveBeenCalled();
+  });
+
+  test('records the deletion group in an existing pull request before committing', async () => {
+    const service = createService();
+    const pullRequest = { number: 1, headSHA: 'head' };
+
+    service.commitToExistingBranch.mockImplementation(async () => {
+      expect(service.updateDeletionGroup).toHaveBeenCalledWith(pullRequest, 'group-1');
+
+      return commit;
+    });
+
+    await expect(
+      saveWorkflowBranch(
+        {
+          changes,
+          options,
+          branch: 'cms/a',
+          title: 'A',
+          status: 'pending_deletion',
+          pullRequest,
+          deletionGroup: 'group-1',
+        },
+        service,
+      ),
+    ).resolves.toEqual({ commit, pullRequest: { ...pullRequest, deletionGroup: 'group-1' } });
+    expect(service.commitToExistingBranch).toHaveBeenCalledOnce();
+  });
+
+  test('removes the record of a deletion group the pull request no longer belongs to', async () => {
+    const service = createService();
+    const pullRequest = { number: 1, headSHA: 'head', deletionGroup: 'group-1' };
+
+    const { pullRequest: saved } = await saveWorkflowBranch(
+      { changes, options, branch: 'cms/a', title: 'A', status: 'pending_deletion', pullRequest },
+      service,
+    );
+
+    expect(service.updateDeletionGroup).toHaveBeenCalledWith(pullRequest, undefined);
+    expect(saved.deletionGroup).toBeUndefined();
+  });
+
+  test('doesn’t commit when the deletion group can’t be recorded', async () => {
+    const service = createService();
+
+    service.updateDeletionGroup.mockRejectedValue(new Error('Forbidden'));
+
+    await expect(
+      saveWorkflowBranch(
+        {
+          changes,
+          options,
+          branch: 'cms/a',
+          title: 'A',
+          status: 'pending_deletion',
+          pullRequest: { number: 1 },
+          deletionGroup: 'group-1',
+        },
+        service,
+      ),
+    ).rejects.toThrow('Forbidden');
+    expect(service.commitToExistingBranch).not.toHaveBeenCalled();
   });
 
   test('commits on a new branch and opens a pull request for it', async () => {
@@ -222,6 +287,30 @@ describe('saveWorkflowBranch()', () => {
       title: 'A',
       status: 'draft',
     });
+  });
+
+  test('opens a new pull request with the deletion group', async () => {
+    const service = createService();
+
+    await saveWorkflowBranch(
+      {
+        changes,
+        options,
+        branch: 'cms/a',
+        title: 'A',
+        status: 'pending_deletion',
+        deletionGroup: 'group-1',
+      },
+      service,
+    );
+
+    expect(service.createPullRequest).toHaveBeenCalledWith({
+      branch: 'cms/a',
+      title: 'A',
+      status: 'pending_deletion',
+      deletionGroup: 'group-1',
+    });
+    expect(service.updateDeletionGroup).not.toHaveBeenCalled();
   });
 });
 
@@ -523,6 +612,25 @@ describe('reopenPullRequest()', () => {
     expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls/7', {
       method: 'PATCH',
       body: { state: 'open' },
+    });
+  });
+});
+
+describe('updatePullRequestDeletionGroup()', () => {
+  test('records the group in the description, keeping the rest of it', async () => {
+    vi.mocked(fetchAPI).mockResolvedValueOnce({ body: 'Edited by a maintainer' });
+    vi.mocked(fetchAPI).mockResolvedValueOnce({});
+
+    await updatePullRequestDeletionGroup(
+      { owner: 'owner', repo: 'repo' },
+      /** @type {any} */ ({ number: 7 }),
+      'group-1',
+    );
+
+    expect(fetchAPI).toHaveBeenNthCalledWith(1, '/repos/owner/repo/pulls/7');
+    expect(fetchAPI).toHaveBeenNthCalledWith(2, '/repos/owner/repo/pulls/7', {
+      method: 'PATCH',
+      body: { body: 'Edited by a maintainer\n\n<!-- sveltia-cms:deletion-group=group-1 -->' },
     });
   });
 });

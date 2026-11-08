@@ -10,6 +10,7 @@ import {
   fetchMergeRequest,
   fetchOpenMergeRequests,
   getMergeRequestPath,
+  updateDeletionGroup,
 } from '$lib/services/backends/git/gitlab/merge-requests';
 import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import {
@@ -250,7 +251,12 @@ export const withdrawApproval = async (pullRequest) => {
  * and the new or updated merge request.
  */
 export const savePullRequest = async (args) =>
-  saveWorkflowBranch(args, { commitToNewBranch, commitToExistingBranch, createPullRequest });
+  saveWorkflowBranch(args, {
+    commitToNewBranch,
+    commitToExistingBranch,
+    createPullRequest,
+    updateDeletionGroup,
+  });
 
 /**
  * Fetch the merge request’s state and detailed merge status, which names the single check that

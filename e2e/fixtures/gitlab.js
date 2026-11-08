@@ -10,6 +10,7 @@ import { getBlobSHA, MockGitRepository } from './git.js';
  * @property {number} iid Merge request number in the project.
  * @property {number} id Global ID.
  * @property {string} title Title, with a `Draft: ` prefix for a draft.
+ * @property {string} [description] Description.
  * @property {string} sourceBranch Branch the changes come from, as {@link MockGitLab.refs} keys it,
  * so a branch in a fork reads `owner:branch`.
  * @property {number} sourceProjectId ID of the project the source branch lives in, which is the
@@ -228,6 +229,7 @@ export class MockGitLab extends MockGitRepository {
    * Open a merge request, as the CMS or a colleague does.
    * @param {object} args Arguments.
    * @param {string} args.title Title, with a `Draft: ` prefix for a draft.
+   * @param {string} [args.description] Description.
    * @param {string} args.sourceBranch Branch the changes come from.
    * @param {string} [args.targetBranch] Branch the changes go to, the default branch by default.
    * @param {string[]} [args.labels] Label names.
@@ -238,6 +240,7 @@ export class MockGitLab extends MockGitRepository {
    */
   openMergeRequest({
     title,
+    description = '',
     sourceBranch,
     targetBranch = this.branch,
     labels = [],
@@ -251,6 +254,7 @@ export class MockGitLab extends MockGitRepository {
       iid: this.mergeRequests.length + 1,
       id: 1000 + this.mergeRequests.length + 1,
       title,
+      description,
       sourceBranch,
       sourceProjectId,
       targetBranch,
@@ -361,6 +365,7 @@ export class MockGitLab extends MockGitRepository {
     const { iid, id, title, sourceBranch, sourceProjectId, targetBranch, labels, state, author } =
       mergeRequest;
 
+    const { description } = mergeRequest;
     const open = state === 'opened' && this.refs.has(sourceBranch);
     const head = open ? this.getMergeRequestHead(mergeRequest) : undefined;
     // A merge request from a fork names its source branch without the owner prefix the mock keys it
@@ -371,6 +376,7 @@ export class MockGitLab extends MockGitRepository {
       id,
       iid,
       title,
+      description,
       state,
       // GitLab has no draft field to set: the read-only one is derived from the title
       // @see https://docs.gitlab.com/user/project/merge_requests/drafts/
@@ -443,6 +449,7 @@ export class MockGitLab extends MockGitRepository {
       if (method === 'POST') {
         const {
           title,
+          description,
           source_branch: sourceBranch,
           target_branch: targetBranch,
           labels = '',
@@ -462,6 +469,7 @@ export class MockGitLab extends MockGitRepository {
 
         const mergeRequest = this.openMergeRequest({
           title,
+          description,
           sourceBranch: branchKey,
           sourceProjectId: fromFork ? this.forkProjectId : this.projectId,
           targetBranch,
@@ -508,6 +516,10 @@ export class MockGitLab extends MockGitRepository {
 
       if (title !== undefined) {
         mergeRequest.title = title;
+      }
+
+      if (typeof body?.description === 'string') {
+        mergeRequest.description = body.description;
       }
 
       if (addLabels || removeLabels) {

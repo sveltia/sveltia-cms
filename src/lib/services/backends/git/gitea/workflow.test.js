@@ -324,6 +324,19 @@ describe('Gitea Editorial Workflow service', () => {
         expect(result.pullRequest).toBe(pullRequest);
       });
 
+      test('records the deletion group in the pull request', async () => {
+        mockBranch('head1');
+        vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
+
+        const result = await savePullRequest({ ...args, pullRequest, deletionGroup: 'group-1' });
+
+        expect(fetchAPI).toHaveBeenCalledWith(`${REPO_PATH}/pulls/5`, {
+          method: 'PATCH',
+          body: { body: '<!-- sveltia-cms:deletion-group=group-1 -->' },
+        });
+        expect(result.pullRequest).toEqual({ ...pullRequest, deletionGroup: 'group-1' });
+      });
+
       test('refuses to save onto a branch that has moved on from the commit on record', async () => {
         // The instance can’t be told which commit to go on top of, so whatever was pushed since —
         // which the board may not have shown — would go out with the save

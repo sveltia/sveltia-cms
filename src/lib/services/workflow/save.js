@@ -1,4 +1,5 @@
 import { unique } from '@sveltia/utils/array';
+import { generateUUID } from '@sveltia/utils/crypto';
 
 import { callEventHooks } from '$lib/services/api/events';
 import { getAssetBlob } from '$lib/services/assets/info';
@@ -840,6 +841,9 @@ const getOtherFileRevertChanges = async ({ unpublishedEntry, slug, handledPaths 
  * omitted.
  * @param {string} [options.userMessage] Commit message the user has entered, already asked for by
  * {@link deleteWorkflowEntries} for a whole selection. Asked for if omitted and configured.
+ * @param {string} [options.deletionGroup] ID of the selection the entry is deleted with, recorded
+ * in the pull request so publishing can tell which references it removes. Omitted for an entry
+ * deleted on its own.
  * @returns {Promise<UnpublishedEntry>} Entry with the pull request attached.
  * @throws {Error} When the user has cancelled the commit when asked for a commit message.
  * @throws {Error} When removing the references would leave another entry invalid. The dialogs
@@ -851,7 +855,7 @@ export const deleteWorkflowEntry = async (
   collection,
   collectionFile,
   assets = [],
-  { targets = undefined, userMessage = undefined } = {},
+  { targets = undefined, userMessage = undefined, deletionGroup = undefined } = {},
 ) => {
   // Taking a published entry off the site is a maintainer’s call. A contributor can discard their
   // own draft, which leaves the published version alone, but not propose a removal
@@ -942,6 +946,7 @@ export const deleteWorkflowEntry = async (
     // this status avoids the churn of creating a draft and relabelling it a moment later
     status: 'pending_deletion',
     pullRequest: existingEntry?.workflow.pullRequest,
+    deletionGroup,
   });
 
   // A reused pull request carries the files and the head commit from before this one, which
@@ -1004,7 +1009,9 @@ export const discardWorkflowEntries = async (entries) => {
  * selection are worked out once, and every pull request carries the same rewrite; identical changes
  * merge cleanly whichever is published first. The trade-off is that the selection is taken as a
  * whole: if one of the pull requests is then cancelled, the others still remove the references to
- * that entry when they’re published.
+ * that entry when they’re published. Each pull request records the selection it belongs to, so
+ * publishing it works out the same rewrite, rather than taking in the entries of the collection
+ * deleted one at a time, whose pull requests rewrite only the references to their own entry.
  * @param {{ entry: Entry, collection: InternalCollection,
  * collectionFile?: InternalCollectionFile, assets?: Asset[] }[]} items Entries to be deleted, with
  * the context each one needs.
@@ -1022,19 +1029,20 @@ export const deleteWorkflowEntries = async (items) => {
 
   // A selection comes from one entry list, so it’s normally a single group
   const groups = Map.groupBy(items, getKey);
-  /** @type {Map<string, CascadeTarget[]>} */
-  const targetMap = new Map();
+  /** @type {Map<string, { targets: CascadeTarget[], deletionGroup?: string }>} */
+  const planMap = new Map();
 
   groups.forEach((group, key) => {
     const [{ collection, collectionFile }] = group;
 
-    targetMap.set(
-      key,
-      planCascadeDeleteOrThrow(
+    planMap.set(key, {
+      targets: planCascadeDeleteOrThrow(
         { collection, collectionFile, entries: group.map(({ entry }) => entry) },
         'Cannot delete entries that other entries require',
       ),
-    );
+      // An entry deleted alone in its group is planned on its own, which needs no record
+      deletionGroup: group.length > 1 ? generateUUID() : undefined,
+    });
   });
 
   // Ask for a commit message once for the whole selection rather than for each pull request. Each
@@ -1050,7 +1058,7 @@ export const deleteWorkflowEntries = async (items) => {
     const { entry, collection, collectionFile, assets } = item;
 
     await deleteWorkflowEntry(entry, collection, collectionFile, assets, {
-      targets: targetMap.get(getKey(item)),
+      ...planMap.get(getKey(item)),
       // A string, even an empty one, tells the user has been asked already
       userMessage,
     });

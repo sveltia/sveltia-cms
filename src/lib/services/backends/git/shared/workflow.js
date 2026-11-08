@@ -3,6 +3,7 @@ import { sleep } from '@sveltia/utils/misc';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { createDraftPullRequest } from '$lib/services/backends/git/shared/fork';
+import { setDeletionGroup } from '$lib/services/backends/git/shared/pull-requests';
 import { getPullRequestPath } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
 import { user } from '$lib/services/user/account.svelte';
@@ -24,8 +25,15 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * Function to open a pull request on the service.
- * @typedef {(args: { branch: string, title: string, status: WorkflowStatus }) =>
- * Promise<WorkflowPullRequest>} CreatePullRequest
+ * @typedef {(args: { branch: string, title: string, status: WorkflowStatus,
+ * deletionGroup?: string }) => Promise<WorkflowPullRequest>} CreatePullRequest
+ */
+
+/**
+ * Function to record the given deletion group in the description of an existing pull request on the
+ * service, or remove the record if `undefined`.
+ * @typedef {(pullRequest: WorkflowPullRequest, deletionGroup: string | undefined) => Promise<void>}
+ * UpdateDeletionGroup
  */
 
 /**
@@ -73,6 +81,7 @@ export const deleteRemoteBranch = async ({ branch, path, goneStatuses }) => {
  * @param {string} args.branch Workflow branch name.
  * @param {string} args.title Pull request title.
  * @param {WorkflowStatus} args.status Status to open the pull request with.
+ * @param {string} [args.deletionGroup] Deletion group to record in the pull request description.
  * @param {CreatePullRequest} args.createPullRequest Function to open a pull request on the service.
  * @returns {Promise<WorkflowPullRequest>} New pull request.
  */
@@ -81,13 +90,14 @@ export const openWorkflowPullRequest = async ({
   branch,
   title,
   status,
+  deletionGroup,
   createPullRequest,
 }) => {
   if (openAuthoring.current && status === 'draft') {
     return createDraftPullRequest({ commit, branch, title });
   }
 
-  return createPullRequest({ branch, title, status });
+  return createPullRequest({ branch, title, status, deletionGroup });
 };
 
 /**
@@ -103,17 +113,29 @@ export const openWorkflowPullRequest = async ({
  * existing pull request.
  * @param {CreatePullRequest} service.createPullRequest Function to open a pull request on the
  * service.
+ * @param {UpdateDeletionGroup} service.updateDeletionGroup Function to record the deletion group in
+ * the description of an existing pull request.
  * @returns {Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} Commit results
  * and the new or updated pull request.
  */
 export const saveWorkflowBranch = async (
-  { changes, options, branch, title, status, pullRequest },
-  { commitToNewBranch, commitToExistingBranch, createPullRequest },
+  { changes, options, branch, title, status, pullRequest, deletionGroup },
+  { commitToNewBranch, commitToExistingBranch, createPullRequest, updateDeletionGroup },
 ) => {
   if (pullRequest) {
+    // A reused pull request may be deleted along with other entries, or carry the record of an
+    // earlier deletion it no longer belongs to. The record is brought in line before the commit, so
+    // a failure leaves the pull request as it was rather than committed with a wrong record
+    const recorded =
+      pullRequest.deletionGroup === deletionGroup ? pullRequest : { ...pullRequest, deletionGroup };
+
+    if (recorded !== pullRequest) {
+      await updateDeletionGroup(pullRequest, deletionGroup);
+    }
+
     return {
       commit: await commitToExistingBranch(changes, { ...options, branch }, pullRequest),
-      pullRequest,
+      pullRequest: recorded,
     };
   }
 
@@ -126,6 +148,7 @@ export const saveWorkflowBranch = async (
       branch,
       title,
       status,
+      deletionGroup,
       createPullRequest,
     }),
   };
@@ -404,6 +427,27 @@ export const reopenPullRequest = async (repository, number) => {
   await fetchAPI(getPullRequestPath(repository, number), {
     method: 'PATCH',
     body: { state: 'open' },
+  });
+};
+
+/**
+ * Record the given deletion group in the description of a pull request on GitHub or Gitea/Forgejo,
+ * whose REST APIs share the endpoints, or remove the record. The description is read first, so the
+ * rest of it is kept as it is.
+ * @param {RepositoryPath} repository Repository holding the pull request.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {string | undefined} deletionGroup Deletion group ID, or `undefined` to remove the record.
+ * @see https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request
+ * @see https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoEditPullRequest
+ */
+export const updatePullRequestDeletionGroup = async (repository, pullRequest, deletionGroup) => {
+  const path = getPullRequestPath(repository, pullRequest.number);
+  const { body } = /** @type {Record<string, any>} */ (await fetchAPI(path));
+
+  await fetchAPI(path, {
+    method: 'PATCH',
+    body: { body: setDeletionGroup(body, deletionGroup) },
   });
 };
 

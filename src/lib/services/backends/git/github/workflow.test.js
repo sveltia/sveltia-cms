@@ -112,6 +112,17 @@ describe('GitHub Editorial Workflow service', () => {
       expect(parsePullRequest(createNode({ baseRefName: 'develop' }))).toBeUndefined();
     });
 
+    test('reads the deletion group recorded in the description', () => {
+      expect(
+        parsePullRequest(
+          createNode({
+            body: 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->',
+          }),
+        )?.deletionGroup,
+      ).toBe('group-1');
+      expect(parsePullRequest(createNode())?.deletionGroup).toBeUndefined();
+    });
+
     test('parses a CMS-managed pull request', () => {
       const result = parsePullRequest(createNode());
 
@@ -579,6 +590,21 @@ describe('GitHub Editorial Workflow service', () => {
         expect.objectContaining({ headOid: undefined }),
       );
       expect(result.pullRequest).toBe(pullRequest);
+    });
+
+    test('records the deletion group in a reused pull request', async () => {
+      const pullRequest = /** @type {any} */ ({ number: 5, branch: 'cms/posts/hello' });
+
+      vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
+      vi.mocked(fetchAPI).mockResolvedValueOnce({ body: 'Edited' }).mockResolvedValueOnce({});
+
+      const result = await savePullRequest({ ...args, pullRequest, deletionGroup: 'group-1' });
+
+      expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/pulls/5', {
+        method: 'PATCH',
+        body: { body: 'Edited\n\n<!-- sveltia-cms:deletion-group=group-1 -->' },
+      });
+      expect(result.pullRequest).toEqual({ ...pullRequest, deletionGroup: 'group-1' });
     });
 
     test('saves onto the head the entry was loaded or saved at', async () => {

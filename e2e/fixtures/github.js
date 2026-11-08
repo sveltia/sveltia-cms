@@ -1060,6 +1060,7 @@ export class MockGitHub extends MockGitRepository {
 
       Object.assign(pullRequest, {
         ...(body.title !== undefined ? { title: body.title } : {}),
+        ...(body.body !== undefined ? { body: body.body } : {}),
         ...(body.state !== undefined && pullRequest.state !== 'merged'
           ? { state: body.state }
           : {}),
@@ -1215,7 +1216,7 @@ export class MockGitHub extends MockGitRepository {
    * @returns {Record<string, any>} Node.
    */
   toPullRequestNode(pullRequest) {
-    const { number, nodeId, title, state, draft, labels, createdAt, updatedAt, author } =
+    const { number, nodeId, title, body, state, draft, labels, createdAt, updatedAt, author } =
       pullRequest;
 
     const { owner: headOwner, name: headRefName } = splitBranchKey(pullRequest.head);
@@ -1224,6 +1225,7 @@ export class MockGitHub extends MockGitRepository {
       id: nodeId,
       number,
       title,
+      body,
       url: `https://github.com/${this.owner}/${this.repo}/pull/${number}`,
       state: state.toUpperCase(),
       isDraft: draft,

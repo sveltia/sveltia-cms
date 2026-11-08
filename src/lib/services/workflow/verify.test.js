@@ -529,7 +529,16 @@ describe('workflow/verify', () => {
       const other = createEntry({ status: 'pending_deletion', collectionName: 'authors' });
       const pending = createEntry({ paths: ['content/posts/c.md'] });
 
-      unpublishedEntries.current = [entry, sibling, other, pending];
+      // An entry of the collection deleted on its own, whose references aren’t rewritten here
+      const lone = {
+        ...createEntry({ status: 'pending_deletion', paths: ['content/posts/d.md'] }),
+        id: 'lone',
+      };
+
+      [entry, sibling, other].forEach((e) => {
+        /** @type {any} */ (e.workflow.pullRequest).deletionGroup = 'group-1';
+      });
+      unpublishedEntries.current = [entry, sibling, other, pending, lone];
       vi.mocked(planCascadeDelete).mockReturnValueOnce(
         /** @type {any} */ ({ targets: [{ entry: home }, { entry: team }], blockers: [] }),
       );

@@ -459,6 +459,11 @@
  * @property {boolean} [canMerge] Whether the signed-in user can merge the pull request, which
  * decides whether the entry can be published. `undefined` when the backend doesn’t tell, in which
  * case the merge is offered and left to the backend to allow or refuse.
+ * @property {string} [deletionGroup] ID of the selection of entries the pull request was opened
+ * with to delete, recorded in its description. Each entry of a selection gets its own pull request,
+ * and the references to the whole selection are removed in every one of them, so they have to be
+ * told apart from the pull requests deleting other entries of the same collection one at a time.
+ * `undefined` for an entry deleted on its own.
  */
 
 /**
@@ -546,6 +551,8 @@
  * relabelled a moment later.
  * @property {WorkflowPullRequest} [pullRequest] Existing pull request, if the entry has already
  * been saved once.
+ * @property {string} [deletionGroup] ID of the selection of entries deleted together the pull
+ * request belongs to, to be recorded in its description. See {@link WorkflowPullRequest}.
  */
 
 /**

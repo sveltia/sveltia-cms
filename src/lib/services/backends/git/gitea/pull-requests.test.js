@@ -131,6 +131,16 @@ describe('Gitea pull request service', () => {
       });
     });
 
+    test('reads the deletion group recorded in the description', () => {
+      expect(
+        parsePullRequest(
+          createItem({
+            body: 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->',
+          }),
+        )?.deletionGroup,
+      ).toBe('group-1');
+    });
+
     test('returns undefined without a CMS label', () => {
       expect(parsePullRequest(createItem({ labels: [{ name: 'bug' }] }))).toBeUndefined();
       expect(parsePullRequest(createItem({ labels: undefined }))).toBeUndefined();
@@ -740,6 +750,18 @@ describe('Gitea pull request service', () => {
         id: 7,
         login: 'alice',
       });
+    });
+
+    test('records the deletion group in the description', async () => {
+      const result = await createPullRequest({
+        branch: 'cms/posts/hello',
+        title: 'Delete Post “hello”',
+        status: 'pending_deletion',
+        deletionGroup: 'group-1',
+      });
+
+      expect(getRequestBody().body).toContain('<!-- sveltia-cms:deletion-group=group-1 -->');
+      expect(result.deletionGroup).toBe('group-1');
     });
   });
 

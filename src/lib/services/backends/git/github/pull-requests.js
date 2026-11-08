@@ -5,8 +5,8 @@ import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import {
+  getPullRequestDescription,
   parseRestFiles,
-  PULL_REQUEST_DESCRIPTION,
 } from '$lib/services/backends/git/shared/pull-requests';
 import {
   getPullRequestPath,
@@ -306,11 +306,13 @@ export const updateDraftState = async (pullRequest, isDraft) => {
  * @param {string} args.branch Workflow branch name.
  * @param {string} args.title Pull request title.
  * @param {WorkflowStatus} args.status Status to open the pull request with.
+ * @param {string} [args.deletionGroup] Deletion group to record in the description. See
+ * {@link WorkflowPullRequest}.
  * @returns {Promise<WorkflowPullRequest>} Created pull request.
  * @see https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request
  * @see https://docs.github.com/en/rest/issues/labels#add-labels-to-an-issue
  */
-export const createPullRequest = async ({ branch, title, status }) => {
+export const createPullRequest = async ({ branch, title, status, deletionGroup }) => {
   const { branch: baseBranch } = repository;
   const repoPath = getRepositoryPath(repository);
   const fork = forkedRepository.current;
@@ -330,7 +332,7 @@ export const createPullRequest = async ({ branch, title, status }) => {
           head: fork ? `${fork.owner}:${branch}` : branch,
           base: baseBranch,
           draft,
-          body: PULL_REQUEST_DESCRIPTION,
+          body: getPullRequestDescription(deletionGroup),
         },
       })
     );
@@ -370,6 +372,7 @@ export const createPullRequest = async ({ branch, title, status }) => {
     // list has for a user who keeps them private
     author: login ? { name: login, email: '', id, login } : undefined,
     files: [],
+    deletionGroup,
   };
 
   // Labelling an issue requires write access to the repository, which an Open Authoring contributor

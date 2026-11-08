@@ -460,6 +460,27 @@ describe('GitHub pull request helpers', () => {
   });
 
   describe('createPullRequest', () => {
+    test('records the deletion group in the description', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({ number: 5, created_at: '2026-01-01T00:00:00Z' })
+        .mockResolvedValueOnce({});
+
+      const result = await createPullRequest({
+        branch: 'cms/posts/hello',
+        title: 'Delete Post “hello”',
+        status: 'pending_deletion',
+        deletionGroup: 'group-1',
+      });
+
+      expect(fetchAPI).toHaveBeenNthCalledWith(1, '/repos/owner/repo/pulls', {
+        method: 'POST',
+        body: expect.objectContaining({
+          body: expect.stringContaining('<!-- sveltia-cms:deletion-group=group-1 -->'),
+        }),
+      });
+      expect(result.deletionGroup).toBe('group-1');
+    });
+
     test('creates a draft pull request and applies the draft label', async () => {
       vi.mocked(fetchAPI)
         .mockResolvedValueOnce({

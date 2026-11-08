@@ -321,13 +321,20 @@ export const isPendingDeletion = (entry) =>
 /**
  * Get the entries deleted along with the given unpublished entry. A selection of entries is deleted
  * with the same reference rewrite in each pull request, so the other entries of the same
- * collection, or collection file, awaiting deletion count as part of it. The entry is matched by
- * ID, as the store may have replaced it with a copy since it was read.
+ * collection, or collection file, awaiting deletion in the pull requests recording the same
+ * selection count as part of it. An entry deleted on its own, or by a pull request opened before
+ * the selection was recorded, rewrites only the references to itself. The entry is matched by ID,
+ * as the store may have replaced it with a copy since it was read.
  * @param {UnpublishedEntry} entry Unpublished entry awaiting deletion.
- * @returns {UnpublishedEntry[]} The entry, followed by the others awaiting deletion.
+ * @returns {UnpublishedEntry[]} The entry, followed by the others deleted with it.
  */
 export const getDeletionSelection = (entry) => {
-  const { collectionName, fileName } = entry.workflow;
+  const { collectionName, fileName, pullRequest } = entry.workflow;
+  const { deletionGroup } = pullRequest;
+
+  if (!deletionGroup) {
+    return [entry];
+  }
 
   return [
     entry,
@@ -335,6 +342,7 @@ export const getDeletionSelection = (entry) => {
       (e) =>
         e.id !== entry.id &&
         isPendingDeletion(e) &&
+        e.workflow.pullRequest.deletionGroup === deletionGroup &&
         e.workflow.collectionName === collectionName &&
         e.workflow.fileName === fileName,
     ),

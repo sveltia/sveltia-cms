@@ -10,7 +10,9 @@ import { fetchAPIOrUndefined } from '$lib/services/backends/git/shared/api-optio
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import {
   createDraftTitleCodec,
-  PULL_REQUEST_DESCRIPTION,
+  getPullRequestDescription,
+  parseDeletionGroup,
+  setDeletionGroup,
 } from '$lib/services/backends/git/shared/pull-requests';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { splitIntoChunks } from '$lib/services/utils/array';
@@ -100,6 +102,7 @@ export const toMergeRequest = (item, status) => {
     author: username ? { name: name ?? username, email: '', id, login: username } : undefined,
     files: [],
     canMerge: getCanMerge(item),
+    deletionGroup: parseDeletionGroup(item.description),
   };
 };
 
@@ -395,10 +398,12 @@ export const deleteBranch = async (branch) => {
  * @param {string} args.branch Workflow branch name.
  * @param {string} args.title Merge request title.
  * @param {WorkflowStatus} args.status Status to open the merge request with.
+ * @param {string} [args.deletionGroup] Deletion group to record in the description. See
+ * {@link WorkflowPullRequest}.
  * @returns {Promise<WorkflowPullRequest>} Created merge request.
  * @see https://docs.gitlab.com/api/merge_requests/#create-merge-request
  */
-export const createPullRequest = async ({ branch, title, status }) => {
+export const createPullRequest = async ({ branch, title, status, deletionGroup }) => {
   const isDraft = status === 'draft';
   const fork = forkedRepository.current;
 
@@ -411,7 +416,7 @@ export const createPullRequest = async ({ branch, title, status }) => {
         title: draftTitle.format(title, isDraft),
         source_branch: branch,
         target_branch: repository.branch,
-        description: PULL_REQUEST_DESCRIPTION,
+        description: getPullRequestDescription(deletionGroup),
         remove_source_branch: true,
         ...(fork
           ? {
@@ -463,3 +468,19 @@ export const fetchOpenMergeRequests = async (branch) => {
  */
 export const fetchMergeRequest = async (pullRequest) =>
   /** @type {Record<string, any>} */ (await fetchAPI(getMergeRequestPath(pullRequest.number)));
+
+/**
+ * Record the given deletion group in the description of a merge request, or remove the record. The
+ * description is read first, so the rest of it is kept as it is.
+ * @param {WorkflowPullRequest} pullRequest Merge request.
+ * @param {string | undefined} deletionGroup Deletion group ID, or `undefined` to remove the record.
+ * @see https://docs.gitlab.com/api/merge_requests/#update-mr
+ */
+export const updateDeletionGroup = async (pullRequest, deletionGroup) => {
+  const { description } = await fetchMergeRequest(pullRequest);
+
+  await fetchAPI(getMergeRequestPath(pullRequest.number), {
+    method: 'PUT',
+    body: { description: setDeletionGroup(description, deletionGroup) },
+  });
+};

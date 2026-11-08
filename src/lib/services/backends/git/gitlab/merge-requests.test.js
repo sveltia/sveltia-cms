@@ -13,6 +13,7 @@ import {
   parseDiff,
   parseMergeRequest,
   toMergeRequest,
+  updateDeletionGroup,
 } from '$lib/services/backends/git/gitlab/merge-requests';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
@@ -182,6 +183,16 @@ describe('GitLab merge requests', () => {
         author: { name: 'Me', email: '', id: 7, login: 'me' },
         files: [],
       });
+    });
+
+    test('reads the deletion group recorded in the description', () => {
+      expect(
+        parseMergeRequest(
+          createItem({
+            description: 'Automatically generated\n\n<!-- sveltia-cms:deletion-group=group-1 -->',
+          }),
+        )?.deletionGroup,
+      ).toBe('group-1');
     });
 
     test('returns undefined for a merge request to another branch', () => {
@@ -896,6 +907,47 @@ describe('GitLab merge requests', () => {
           author: { name: 'Alice', email: '', id: 1, login: 'alice' },
         }),
       );
+    });
+  });
+
+  describe('deletion group', () => {
+    test('is recorded in the description of a new merge request', async () => {
+      vi.mocked(fetchAPI).mockImplementation(async (_path, init) => ({
+        iid: 5,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+        // The merge request comes back with the description it was created with
+        description: /** @type {any} */ (init)?.body.description,
+      }));
+
+      const result = await createPullRequest({
+        branch: 'cms/posts/hello',
+        title: 'Delete Post “hello”',
+        status: 'pending_deletion',
+        deletionGroup: 'group-1',
+      });
+
+      expect(fetchAPI).toHaveBeenCalledWith(`/projects/${PROJECT_ID}/merge_requests`, {
+        method: 'POST',
+        body: expect.objectContaining({
+          description: expect.stringContaining('<!-- sveltia-cms:deletion-group=group-1 -->'),
+        }),
+      });
+      expect(result.deletionGroup).toBe('group-1');
+    });
+
+    test('is recorded in an existing merge request, keeping the rest of the description', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({ description: 'Edited' })
+        .mockResolvedValueOnce({});
+
+      await updateDeletionGroup(/** @type {any} */ ({ number: 5 }), 'group-1');
+
+      expect(fetchAPI).toHaveBeenNthCalledWith(1, getMergeRequestPath(5));
+      expect(fetchAPI).toHaveBeenNthCalledWith(2, getMergeRequestPath(5), {
+        method: 'PUT',
+        body: { description: 'Edited\n\n<!-- sveltia-cms:deletion-group=group-1 -->' },
+      });
     });
   });
 

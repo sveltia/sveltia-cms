@@ -40,6 +40,7 @@ import {
   saveWorkflowBranch,
   toChangedFilesWithModes,
   updateLabelledStatus,
+  updatePullRequestDeletionGroup,
 } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels } from '$lib/services/workflow/labels';
@@ -225,6 +226,16 @@ const commitToExistingBranch = async (changes, options, pullRequest) => {
 };
 
 /**
+ * Record the given deletion group in the description of the given pull request, or remove the
+ * record.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {string | undefined} deletionGroup Deletion group ID, or `undefined` to remove the record.
+ * @returns {Promise<void>}
+ */
+const updateDeletionGroup = (pullRequest, deletionGroup) =>
+  updatePullRequestDeletionGroup(repository, pullRequest, deletionGroup);
+
+/**
  * Commit the given changes on the workflow branch, creating the branch and the pull request if they
  * don’t exist yet.
  * @param {WorkflowSaveOptions} args Arguments.
@@ -232,7 +243,12 @@ const commitToExistingBranch = async (changes, options, pullRequest) => {
  * and the new or updated pull request.
  */
 export const savePullRequest = async (args) =>
-  saveWorkflowBranch(args, { commitToNewBranch, commitToExistingBranch, createPullRequest });
+  saveWorkflowBranch(args, {
+    commitToNewBranch,
+    commitToExistingBranch,
+    createPullRequest,
+    updateDeletionGroup,
+  });
 
 /**
  * Update the pull request’s status label and draft state. A pull request in the `draft` status is

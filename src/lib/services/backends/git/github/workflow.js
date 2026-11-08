@@ -22,6 +22,7 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { checkPublishAllowed } from '$lib/services/backends/git/shared/fork';
+import { parseDeletionGroup } from '$lib/services/backends/git/shared/pull-requests';
 import {
   getPullRequestPath,
   getRepositoryPath,
@@ -38,6 +39,7 @@ import {
   saveWorkflowBranch,
   toChangedFilesWithModes,
   updateLabelledStatus,
+  updatePullRequestDeletionGroup,
 } from '$lib/services/backends/git/shared/workflow';
 import { encodePathSegments } from '$lib/services/utils/url';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
@@ -65,6 +67,7 @@ const getPullRequestFields = () => `
   number
   title
   url
+  body
   isDraft
   isCrossRepository
   baseRefName
@@ -141,6 +144,7 @@ const toPullRequest = (node, status) => {
     updatedDate: new Date(node.updatedAt),
     author: login ? { name: name ?? login, email: email ?? '', id: databaseId, login } : undefined,
     files: parseFileNodes(node.files?.nodes ?? []),
+    deletionGroup: parseDeletionGroup(node.body),
   };
 };
 
@@ -554,6 +558,16 @@ const commitToExistingBranch = async (changes, options, pullRequest) => {
 };
 
 /**
+ * Record the given deletion group in the description of the given pull request, or remove the
+ * record.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {string | undefined} deletionGroup Deletion group ID, or `undefined` to remove the record.
+ * @returns {Promise<void>}
+ */
+const updateDeletionGroup = (pullRequest, deletionGroup) =>
+  updatePullRequestDeletionGroup(repository, pullRequest, deletionGroup);
+
+/**
  * Commit the given changes on the workflow branch, creating the branch and the pull request if they
  * don’t exist yet.
  * @param {WorkflowSaveOptions} args Arguments.
@@ -561,7 +575,12 @@ const commitToExistingBranch = async (changes, options, pullRequest) => {
  * and the new or updated pull request.
  */
 export const savePullRequest = async (args) =>
-  saveWorkflowBranch(args, { commitToNewBranch, commitToExistingBranch, createPullRequest });
+  saveWorkflowBranch(args, {
+    commitToNewBranch,
+    commitToExistingBranch,
+    createPullRequest,
+    updateDeletionGroup,
+  });
 
 /**
  * Maximum number of files the comparison API lists. A comparison that reaches it may have left
