@@ -1,11 +1,10 @@
-import { readFileSync } from 'fs';
-
 import React from 'react';
 import { build } from 'vite';
 
 import { SHARED_MODULES_KEY_PREFIX, SHARED_REACT_KEY } from '../../src/lib/chunks/constants.js';
 
 import { getChunkModules } from './chunk-modules.js';
+import { readPackageJson, virtualModule } from './utils.js';
 
 /**
  * Parts of the app that are built as separate ES module chunks, keyed by chunk name. A chunk is
@@ -60,16 +59,11 @@ const getAppChunkModules = () => {
  * @returns {string} Property name.
  */
 const getSharedModulesKey = () => {
-  const { version } = JSON.parse(readFileSync('package.json', 'utf-8'));
+  const { version } = readPackageJson();
 
   return `${SHARED_MODULES_KEY_PREFIX}${version}_${getAppChunkModules().layoutId}`;
 };
 
-/**
- * Module specifier the main bundle imports the modules it shares with the app chunks from.
- */
-const SHARED_MODULES_MODULE_ID = 'virtual:shared-modules';
-const RESOLVED_SHARED_MODULES_MODULE_ID = `\0${SHARED_MODULES_MODULE_ID}`;
 /**
  * Prefix of the module IDs the app chunks resolve a shared module to.
  */
@@ -93,27 +87,24 @@ const SHARED_MODULE_LIST_ID = '\0shared-module-list';
 export const collectSharedModules = ({ enabled = false } = {}) => {
   let isBuild = false;
 
-  return {
+  return virtualModule({
     name: 'collect-shared-modules',
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    configResolved: (config) => {
-      isBuild = config.command === 'build';
+    id: 'virtual:shared-modules',
+    hooks: {
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      configResolved: (config) => {
+        isBuild = config.command === 'build';
+      },
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      buildStart: () => {
+        // Read the source again for each CDN build, which `build:watch` runs on every change
+        if (enabled) {
+          appChunkModules = undefined;
+        }
+      },
     },
     // eslint-disable-next-line jsdoc/require-jsdoc
-    buildStart: () => {
-      // Read the source again for each CDN build, which `build:watch` runs on every change
-      if (enabled) {
-        appChunkModules = undefined;
-      }
-    },
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    resolveId: (id) => (id === SHARED_MODULES_MODULE_ID ? RESOLVED_SHARED_MODULES_MODULE_ID : null),
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    load: (id) => {
-      if (id !== RESOLVED_SHARED_MODULES_MODULE_ID) {
-        return null;
-      }
-
+    load: () => {
       if (!enabled || !isBuild) {
         return "export const sharedModulesKey = '';\nexport default [];";
       }
@@ -132,7 +123,7 @@ export const collectSharedModules = ({ enabled = false } = {}) => {
           .join(', ')}];`,
       ].join('\n');
     },
-  };
+  });
 };
 
 /**
@@ -221,11 +212,6 @@ const shareMainModules = () => {
  * Output directory of the chunks, next to the main bundle.
  */
 const CHUNKS_DIR = 'package/dist/chunks';
-/**
- * Module specifier of the shim the `react` package resolves to in a chunk build.
- */
-const REACT_SHIM_MODULE_ID = 'virtual:react-shim';
-const RESOLVED_REACT_SHIM_MODULE_ID = `\0${REACT_SHIM_MODULE_ID}`;
 
 /**
  * In a chunk build, resolve the `react` package to the React instance the main bundle shares on
@@ -234,25 +220,20 @@ const RESOLVED_REACT_SHIM_MODULE_ID = `\0${REACT_SHIM_MODULE_ID}`;
  * dependencies can import whichever they use.
  * @returns {import('vite').Plugin} Vite plugin.
  */
-const shimReact = () => ({
-  name: 'shim-react',
-  // Run before Vite’s own resolver, which would otherwise resolve the package to its files
-  enforce: 'pre',
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  resolveId: (id) => (id === 'react' ? RESOLVED_REACT_SHIM_MODULE_ID : null),
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  load: (id) => {
-    if (id !== RESOLVED_REACT_SHIM_MODULE_ID) {
-      return null;
-    }
-
-    return [
-      `const React = globalThis[${JSON.stringify(SHARED_REACT_KEY)}];`,
-      'export default React;',
-      ...Object.keys(React).map((key) => `export const ${key} = React[${JSON.stringify(key)}];`),
-    ].join('\n');
-  },
-});
+const shimReact = () =>
+  virtualModule({
+    name: 'shim-react',
+    id: 'react',
+    // Run before Vite’s own resolver, which would otherwise resolve the package to its files
+    hooks: { enforce: 'pre' },
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    load: () =>
+      [
+        `const React = globalThis[${JSON.stringify(SHARED_REACT_KEY)}];`,
+        'export default React;',
+        ...Object.keys(React).map((key) => `export const ${key} = React[${JSON.stringify(key)}];`),
+      ].join('\n'),
+  });
 
 /**
  * Build the chunks once the main bundle has been written. They’re built separately because the

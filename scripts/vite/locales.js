@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 import { isObject } from '@sveltia/utils/object';
 import { parse as parseYAML } from 'yaml';
 
+import { resolveModuleDir } from './utils.js';
+
 /**
  * Path to the app’s locale files.
  */
@@ -114,10 +116,7 @@ const parseYAMLFile = async (filePath) =>
  */
 export const generateLocales = async () => {
   // Resolve the path to the locale files bundled with the `@sveltia/ui` package
-  const uiLocalesDir = path.resolve(
-    path.dirname(fileURLToPath(import.meta.resolve('@sveltia/ui'))),
-    'locales',
-  );
+  const uiLocalesDir = path.resolve(resolveModuleDir('@sveltia/ui'), 'locales');
 
   await mkdir(OUTPUT_LOCALES_DIR, { recursive: true });
 

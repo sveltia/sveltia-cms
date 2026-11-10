@@ -1,9 +1,9 @@
-import { existsSync } from 'fs';
-import { cp, mkdir, readFile, writeFile } from 'fs/promises';
+import { cp, mkdir, writeFile } from 'fs/promises';
 
 import { generateLocales } from './locales.js';
 import { getNpmDependencies } from './npm-build.js';
 import { generateSchema, generateTypes } from './schema.js';
+import { readPackageJson } from './utils.js';
 
 /**
  * Packages whose types the generated `d.ts` files import. Those that aren’t dependencies of the npm
@@ -20,62 +20,57 @@ const TYPE_DEPENDENCIES = ['@types/react', 'immutable'];
 export const copyPackageFiles = () => ({
   name: 'copy-package-files',
   apply: 'build',
-  buildStart: {
-    async: true,
-    sequential: false,
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    handler: async () => {
-      const packageJson = JSON.parse(await readFile('package.json', 'utf-8'));
-      const { dependencies, devDependencies } = packageJson;
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  buildStart: async () => {
+    const packageJson = readPackageJson();
+    const { dependencies, devDependencies } = packageJson;
 
-      // Remove unnecessary properties as we only publish compiled bundles
-      delete packageJson.dependencies;
-      delete packageJson.devDependencies;
-      delete packageJson.scripts;
-      // `directory` only points `pnpm publish` at this folder from the repository root, and the
-      // other options are passed on the command line. Kept here, it would make pnpm look for the
-      // manifest in a `package` subfolder when the folder is installed as a local dependency
-      delete packageJson.publishConfig;
+    // Remove unnecessary properties as we only publish compiled bundles
+    delete packageJson.dependencies;
+    delete packageJson.devDependencies;
+    delete packageJson.scripts;
+    // `directory` only points `pnpm publish` at this folder from the repository root, and the
+    // other options are passed on the command line. Kept here, it would make pnpm look for the
+    // manifest in a `package` subfolder when the folder is installed as a local dependency
+    delete packageJson.publishConfig;
 
-      // Needed by the npm build only; the CDN builds are self-contained
-      const npmDependencies = await getNpmDependencies(dependencies);
-      const peerDependencies = TYPE_DEPENDENCIES.filter((key) => !(key in npmDependencies));
+    // Needed by the npm build only; the CDN builds are self-contained
+    const npmDependencies = await getNpmDependencies(dependencies);
+    const peerDependencies = TYPE_DEPENDENCIES.filter((key) => !(key in npmDependencies));
 
-      // Add properties for distribution; paths are relative to `package`
-      Object.assign(packageJson, {
-        peerDependencies: Object.fromEntries(
-          peerDependencies.map((key) => [key, dependencies[key] ?? devDependencies[key]]),
-        ),
-        peerDependenciesMeta: Object.fromEntries(
-          peerDependencies.map((key) => [key, { optional: true }]),
-        ),
-        dependencies: npmDependencies,
-        files: ['dist', 'npm', 'locales', 'schema', 'services', 'types', 'main.d.ts'],
-        main: './npm/index.js',
-        module: './npm/index.js',
-        exports: {
-          '.': {
-            types: './main.d.ts',
-            default: './npm/index.js',
-          },
+    // Add properties for distribution; paths are relative to `package`
+    Object.assign(packageJson, {
+      peerDependencies: Object.fromEntries(
+        peerDependencies.map((key) => [key, dependencies[key] ?? devDependencies[key]]),
+      ),
+      peerDependenciesMeta: Object.fromEntries(
+        peerDependencies.map((key) => [key, { optional: true }]),
+      ),
+      dependencies: npmDependencies,
+      files: ['dist', 'npm', 'locales', 'schema', 'services', 'types', 'main.d.ts'],
+      main: './npm/index.js',
+      module: './npm/index.js',
+      exports: {
+        '.': {
+          types: './main.d.ts',
+          default: './npm/index.js',
         },
-        typesVersions: {
-          '>4.0': {
-            index: ['./main.d.ts'],
-          },
+      },
+      typesVersions: {
+        '>4.0': {
+          index: ['./main.d.ts'],
         },
-      });
+      },
+    });
 
-      if (!existsSync('package')) {
-        await mkdir('package');
-      }
+    // `generateExtraFiles()` may create the directory at the same time
+    await mkdir('package', { recursive: true });
 
-      await Promise.all([
-        writeFile('package/package.json', JSON.stringify(packageJson, null, 2).concat('\n')),
-        cp('LICENSE.txt', 'package/LICENSE.txt'),
-        cp('README.md', 'package/README.md'),
-      ]);
-    },
+    await Promise.all([
+      writeFile('package/package.json', JSON.stringify(packageJson, null, 2).concat('\n')),
+      cp('LICENSE.txt', 'package/LICENSE.txt'),
+      cp('README.md', 'package/README.md'),
+    ]);
   },
 });
 
@@ -86,14 +81,9 @@ export const copyPackageFiles = () => ({
 export const generateExtraFiles = () => ({
   name: 'generate-extra-files',
   apply: 'build',
-  buildStart: {
-    async: true,
-    sequential: false,
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    handler: async () => {
-      await generateTypes();
-      await generateSchema();
-      await generateLocales();
-    },
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  buildStart: async () => {
+    // The schema is generated from the type declarations, while the locales are independent
+    await Promise.all([generateTypes().then(generateSchema), generateLocales()]);
   },
 });

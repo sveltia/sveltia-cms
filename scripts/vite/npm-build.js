@@ -7,9 +7,10 @@
 import { existsSync } from 'fs';
 import { copyFile, readdir, readFile } from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 import { build, normalizePath } from 'vite';
+
+import { resolveModuleDir } from './utils.js';
 
 /**
  * Shiki packages the npm build leaves to the consumer’s bundler rather than bundling: the grammars
@@ -66,13 +67,7 @@ const isNpmExternal = (id) =>
  */
 export const getNpmDependencies = async (appDependencies) => {
   const { dependencies: uiDependencies } = JSON.parse(
-    await readFile(
-      path.resolve(
-        path.dirname(fileURLToPath(import.meta.resolve('@sveltia/ui'))),
-        '../package.json',
-      ),
-      'utf-8',
-    ),
+    await readFile(path.resolve(resolveModuleDir('@sveltia/ui'), '../package.json'), 'utf-8'),
   );
 
   return Object.fromEntries([
@@ -150,10 +145,7 @@ const stripCdnFontFaces = () => {
   // Real path of the component, which Vite and Node both resolve to, whether Sveltia UI is
   // installed from the registry or linked to a local copy
   const componentPath = normalizePath(
-    path.resolve(
-      path.dirname(fileURLToPath(import.meta.resolve('@sveltia/ui'))),
-      'components/util/font-links.svelte',
-    ),
+    path.resolve(resolveModuleDir('@sveltia/ui'), 'components/util/font-links.svelte'),
   );
 
   return {
@@ -346,10 +338,7 @@ export const buildNpm = ({ resolve, define, plugins, locales }) => ({
     // The fonts bundled from Sveltia UI are under the SIL Open Font License, which requires the
     // license to accompany every redistributed copy, but a bundler only emits the files referenced
     // in the code. Copy them next to the font files
-    const fontsDir = path.resolve(
-      path.dirname(fileURLToPath(import.meta.resolve('@sveltia/ui/self-hosted'))),
-      'fonts',
-    );
+    const fontsDir = path.resolve(resolveModuleDir('@sveltia/ui/self-hosted'), 'fonts');
 
     await Promise.all(
       (await readdir(fontsDir))

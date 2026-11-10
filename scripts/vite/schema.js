@@ -1,12 +1,15 @@
 import { exec } from 'child_process';
 import { existsSync } from 'fs';
 import { appendFile, mkdir, readFile, writeFile } from 'fs/promises';
+import { promisify } from 'util';
 
 import { isObject } from '@sveltia/utils/object';
 import { createGenerator } from 'ts-json-schema-generator';
 
 // eslint-disable-next-line import-x/no-useless-path-segments
 import { BUILTIN_FIELD_TYPES } from '../../src/lib/services/contents/fields/index.js';
+
+import { virtualModule } from './utils.js';
 
 /**
  * Path to the generated main type declaration file.
@@ -24,17 +27,19 @@ const SCHEMA_PATH = 'package/schema/sveltia-cms.json';
 /**
  * Generate TypeScript type declaration files from JSDoc comments. This produces `main.d.ts` and
  * `types/public.d.ts`.
+ * @throws {Error} If the compiler fails, rather than leave the files of an earlier build behind.
  * @see https://www.typescriptlang.org/docs/handbook/declaration-files/dts-from-js.html
  */
 export const generateTypes = async () => {
   const command =
     'tsc src/lib/main.js --allowJs --declaration --emitDeclarationOnly --outDir package';
 
-  await new Promise((resolve) => {
-    exec(command, () => {
-      resolve(undefined);
-    });
-  });
+  try {
+    await promisify(exec)(command);
+  } catch (/** @type {any} */ ex) {
+    // The compiler reports its errors on the standard output
+    throw new Error(`Failed to generate the type declarations:\n${ex.stdout || ex.message}`);
+  }
 
   // Re-export all types from `types/public.d.ts` in `main.d.ts` for better DX
   await appendFile(MAIN_TYPE_PATH, "export type * from './types/public';\n");
@@ -161,36 +166,26 @@ export const generateSchema = async () => {
 };
 
 /**
- * Module specifier the app imports the bundled configuration schema from.
- */
-const SCHEMA_MODULE_ID = 'virtual:config-schema';
-const RESOLVED_SCHEMA_MODULE_ID = `\0${SCHEMA_MODULE_ID}`;
-
-/**
  * Bundle the configuration schema with the app, stripped of the documentation that only an editor
  * needs. Validation then costs nothing at runtime beyond the few kilobytes the schema compresses
  * to, and it works offline and under a content security policy that blocks the CDN.
  * @returns {import('vite').Plugin} Vite plugin.
  */
-export const bundleSchema = () => ({
-  name: 'bundle-schema',
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  resolveId: (id) => (id === SCHEMA_MODULE_ID ? RESOLVED_SCHEMA_MODULE_ID : null),
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  load: async (id) => {
-    if (id !== RESOLVED_SCHEMA_MODULE_ID) {
-      return null;
-    }
+export const bundleSchema = () =>
+  virtualModule({
+    name: 'bundle-schema',
+    id: 'virtual:config-schema',
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    load: async () => {
+      // A build writes the schema in `buildStart`, before any module is loaded. The dev server
+      // doesn’t, to keep startup quick, so it reuses whatever the last build left behind — and
+      // exports nothing at all if there was none, which turns validation off.
+      if (!existsSync(SCHEMA_PATH)) {
+        return 'export default null;';
+      }
 
-    // A build writes the schema in `buildStart`, before any module is loaded. The dev server
-    // doesn’t, to keep startup quick, so it reuses whatever the last build left behind — and
-    // exports nothing at all if there was none, which turns validation off.
-    if (!existsSync(SCHEMA_PATH)) {
-      return 'export default null;';
-    }
+      const schema = stripSchemaAnnotations(JSON.parse(await readFile(SCHEMA_PATH, 'utf-8')));
 
-    const schema = stripSchemaAnnotations(JSON.parse(await readFile(SCHEMA_PATH, 'utf-8')));
-
-    return `export default ${JSON.stringify(schema)};`;
-  },
-});
+      return `export default ${JSON.stringify(schema)};`;
+    },
+  });
