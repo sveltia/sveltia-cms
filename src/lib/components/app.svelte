@@ -23,6 +23,7 @@
   import { initAppInstallDetection } from '$lib/services/app/install';
   import {
     announcedPageStatus,
+    hasOverlay,
     mainAreaTitle,
     overlayTitle,
     startViewTransition,
@@ -155,15 +156,19 @@
     around it working; this one catches a failure in those -->
     <ErrorBoundary scope="page">
       <LocaleLoadErrorToast />
-      <UpdateNotification />
       <ForkPermissionDialog />
       <CommitMessageDialog />
-      {#if backend.current}
-        <BackendStatusIndicator />
-      {/if}
-      {#if user.account && dataLoaded.current}
-        <OpenAuthoringIndicator />
-      {/if}
+      <!-- The infobars are covered by the content and asset overlays, so they mustn’t take the
+      focus then. The dialogs stay outside: the commit message one is opened from the editor -->
+      <div role="none" class="infobars" inert={hasOverlay.current}>
+        <UpdateNotification />
+        {#if backend.current}
+          <BackendStatusIndicator />
+        {/if}
+        {#if user.account && dataLoaded.current}
+          <OpenAuthoringIndicator />
+        {/if}
+      </div>
       <div role="none" class="main">
         <ErrorBoundary scope="page">
           {#if user.account && dataLoaded.current && transitioned}
@@ -437,6 +442,10 @@
     position: absolute;
     inset: 0;
     overflow: hidden;
+  }
+
+  .infobars {
+    display: contents;
   }
 
   .main {
