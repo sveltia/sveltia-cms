@@ -133,6 +133,10 @@ test.describe('hidden collection', () => {
     const plot = editor.getByRole('radiogroup', { name: 'Plot' });
 
     await expect(plot.getByRole('radio', { name: 'North Bed' })).toBeChecked();
+    // Nor can a plot be added or edited from the field, which would open the hidden collection’s
+    // editor (#1147)
+    await expect(editor.getByRole('button', { name: 'Add \u2068Plot\u2069' })).toHaveCount(0);
+    await expect(editor.getByRole('button', { name: 'Edit \u2068North Bed\u2069' })).toHaveCount(0);
     await plot.getByRole('radio', { name: 'Herb Spiral' }).click();
     await editor.getByRole('button', { name: 'Save' }).click();
 
