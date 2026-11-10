@@ -4,8 +4,8 @@ import markerIconURL from 'leaflet/dist/images/marker-icon-2x.png?url';
 /**
  * Loaders of the third-party libraries used by the npm build, keyed with the package name. Most
  * are left to the consumer’s bundler, which emits each as a chunk loaded on demand, see
- * `NPM_EXTERNAL_PACKAGES` in `scripts/npm-build.js`; the codecs are bundled, as they need a fix
- * for webpack. The WebP encoder is imported statically: its module is tiny and only loads the
+ * `NPM_EXTERNAL_PACKAGES` in `scripts/vite/npm-build.js`; the codecs are bundled, as they need a
+ * fix for webpack. The WebP encoder is imported statically: its module is tiny and only loads the
  * codecs on demand, while a chunk of its own would need Vite’s preload helper, making that a chunk
  * of its own as well.
  * @type {Record<string, () => Promise<any>>}

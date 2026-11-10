@@ -10,6 +10,6 @@ export const SHARED_REACT_KEY = '__SVELTIA_CMS_REACT__';
  * as an array of modules, each an array of exports. The property name ends with the release
  * version and a hash of that layout, so a chunk built with another main bundle, e.g. one cached by
  * the browser from an earlier release, finds nothing. See `getSharedModulesKey()` in
- * `vite.config.js`.
+ * `scripts/vite/chunks.js`.
  */
 export const SHARED_MODULES_KEY_PREFIX = '__SVELTIA_CMS_MODULES_';

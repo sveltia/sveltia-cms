@@ -8,8 +8,8 @@
  * externally, covering all the CMS configuration options and JavaScript method arguments available
  * on the `CMS` object. This file is automatically converted into a TypeScript type declaration file
  * (`public.d.ts`) and JSON schema (`sveltia-cms.json`) during the build process (see
- * `vite.config.js`), which are then distributed via npm. The outdated Netlify/Decap CMS equivalents
- * can be found below.
+ * `scripts/vite/schema.js`), which are then distributed via npm. The outdated Netlify/Decap CMS
+ * equivalents can be found below.
  * @see https://github.com/decaporg/decap-cms/blob/main/packages/decap-cms-core/index.d.ts
  * @see https://www.schemastore.org/netlify.json
  */
