@@ -353,6 +353,11 @@ describe('getCreatableCollection', () => {
     vi.mocked(getCollection).mockReturnValue({ ...tagCollection, readonly: true });
     expect(getCreatableCollection({ fieldConfig, draft })).toBeUndefined();
   });
+
+  it('returns nothing when the collection is hidden', () => {
+    vi.mocked(getCollection).mockReturnValue({ ...tagCollection, hide: true });
+    expect(getCreatableCollection({ fieldConfig, draft })).toBeUndefined();
+  });
 });
 
 describe('getQuickAddHost', () => {
@@ -1490,6 +1495,10 @@ describe('canEditEntry', () => {
     );
     expect(canEditEntry({ fieldConfig, draft, entry })).toBe(true);
     expect(canEditEntry({ fieldConfig, draft, entry: { ...entry, slug: '_index' } })).toBe(false);
+
+    // A hidden collection isn’t meant to be edited
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ ({ ...collection, hide: true }));
+    expect(canEditEntry({ fieldConfig, draft, entry })).toBe(false);
 
     vi.mocked(getCollection).mockReturnValue(collection);
     vi.mocked(isEntryReadonly).mockReturnValue(true);

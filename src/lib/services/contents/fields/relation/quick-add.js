@@ -184,14 +184,16 @@ const canSaveAlongHost = (host, collection) =>
  * referenced right away. That’s the referenced collection, provided it holds entries that can be
  * created: a file/singleton collection has a fixed set of files, and a reference to one of them
  * points at a list item within the file, so there is nothing to create there. Nor can anything be
- * created in a read-only collection, or in one whose entries can’t be saved along with the host
- * entry: see {@link canSaveAlongHost}.
+ * created in a hidden collection, whose entries aren’t meant to be edited, in a read-only
+ * collection, or in one whose entries can’t be saved along with the host entry: see
+ * {@link canSaveAlongHost}.
  * @param {object} args Arguments.
  * @param {RelationField} args.fieldConfig Field configuration.
  * @param {EntryDraft} args.draft Draft being edited.
  * @returns {InternalEntryCollection | undefined} Collection, or `undefined` if entries can’t be
  * created for the field.
  * @see https://github.com/sveltia/sveltia-cms/issues/1112
+ * @see https://github.com/sveltia/sveltia-cms/issues/1147
  */
 export const getCreatableCollection = ({
   fieldConfig: { collection: collectionName, file: fileName },
@@ -203,7 +205,12 @@ export const getCreatableCollection = ({
 
   const collection = getCollection(collectionName);
 
-  if (collection?._type !== 'entry' || collection.create === false || isReadonly({ collection })) {
+  if (
+    collection?._type !== 'entry' ||
+    collection.hide ||
+    collection.create === false ||
+    isReadonly({ collection })
+  ) {
     return undefined;
   }
 
@@ -788,19 +795,21 @@ export const replaceEntryValues = ({
 /**
  * Check whether the given entry, referenced by a Relation field, can be edited with the quick-add
  * dialog, and saved along with the entry being edited. An entry created from a Relation field can
- * be changed until it’s saved. An existing entry can be edited if it’s in an entry collection where
- * it can be saved on its own, provided it’s not the entry being edited itself, and can be saved
- * along with the entry being edited: see {@link canSaveAlongHost} and {@link isEntryEditableAlong}.
- * Nor is an entry offered that another pull request changes already: its own, or that of another
- * entry it has been edited along with. Nor one that has been changed on the configured branch since
- * the pull request of the entry being edited was opened, as its branch, which is never rebased,
- * still has the entry as it was then, or not at all: the edit would then be refused as an
- * unexpected change on publishing, or conflict with the newer version when merged.
+ * be changed until it’s saved. An existing entry can be edited if it’s in an entry collection that
+ * isn’t hidden, as a hidden one isn’t meant to be edited, and where it can be saved on its own,
+ * provided it’s not the entry being edited itself, and can be saved along with the entry being
+ * edited: see {@link canSaveAlongHost} and {@link isEntryEditableAlong}. Nor is an entry offered
+ * that another pull request changes already: its own, or that of another entry it has been edited
+ * along with. Nor one that has been changed on the configured branch since the pull request of the
+ * entry being edited was opened, as its branch, which is never rebased, still has the entry as it
+ * was then, or not at all: the edit would then be refused as an unexpected change on publishing, or
+ * conflict with the newer version when merged.
  * @param {object} args Arguments.
  * @param {RelationField} args.fieldConfig Field configuration.
  * @param {EntryDraft} args.draft Draft being edited.
  * @param {Entry} args.entry Referenced entry.
  * @returns {boolean} Result.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1147
  */
 export const canEditEntry = ({
   fieldConfig: { collection: collectionName, file },
@@ -826,6 +835,7 @@ export const canEditEntry = ({
   if (
     file ||
     collection?._type !== 'entry' ||
+    collection.hide ||
     isReadonly({ collection }) ||
     !isEntryEditableAlong(collection, entry) ||
     isPendingDeletion(entry)
