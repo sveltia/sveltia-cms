@@ -204,6 +204,44 @@ test.describe('panes', () => {
     await expect(previewPane).toBeHidden();
   });
 
+  test('places the pane swap button over the gutter without sliding it in', async ({ page }) => {
+    // Record the transitions the button runs while the editor opens: it’s placed by the measured
+    // width of the first pane, which starts at 0
+    await page.evaluate(() => {
+      /** @type {any} */ (window).swapButtonTransitions = [];
+      document.addEventListener('transitionrun', ({ target, propertyName }) => {
+        if (/** @type {Element} */ (target).matches('.swap-button')) {
+          /** @type {any} */ (window).swapButtonTransitions.push(propertyName);
+        }
+      });
+    });
+
+    const editor = await openFirstLight(page);
+    const swapButton = editor.getByRole('button', { name: 'Swap Panes' });
+    // The resize handle is the only focusable separator
+    const handle = editor.locator('[role="separator"][tabindex]');
+
+    /**
+     * Get the horizontal centre of an element.
+     * @param {Locator} locator Element.
+     * @returns {Promise<number>} Centre.
+     */
+    const getCenter = async (locator) => {
+      const { x, width } = (await locator.boundingBox()) ?? { x: NaN, width: NaN };
+
+      return Math.round(x + width / 2);
+    };
+
+    await expect.poll(async () => getCenter(swapButton)).toBe(await getCenter(handle));
+    expect(
+      await page.evaluate(() =>
+        /** @type {string[]} */ (/** @type {any} */ (window).swapButtonTransitions).filter((name) =>
+          /left|right|inset/.test(name),
+        ),
+      ),
+    ).toEqual([]);
+  });
+
   test('swaps the panes', async ({ page }) => {
     const editor = await openFirstLight(page);
     const editPane = editor.getByRole('group', { name: 'Edit Content' });

@@ -641,6 +641,8 @@
         border-radius: 50%;
         opacity: 0.5;
         translate: -50%;
+        /* Not `all`: the position would animate from the unmeasured width and lag behind a drag */
+        transition-property: opacity, color, background-color;
 
         &:dir(rtl) {
           translate: 50%;
