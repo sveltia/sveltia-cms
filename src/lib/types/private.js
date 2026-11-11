@@ -1957,7 +1957,11 @@
  * @property {FilteringConditions[]} [filters] One or more filtering conditions.
  * @property {GroupingConditions | null} [group] Grouping conditions.
  * @property {Record<string, string[]>} [collapsedGroups] Names of the groups whose entries are
- * hidden, under each grouping condition’s key. See `getGroupingKey()`.
+ * hidden, under each grouping condition’s key. See `getGroupingKey()`. Used when the groups start
+ * expanded.
+ * @property {Record<string, string[]>} [expandedGroups] Names of the groups whose entries are
+ * shown, under each grouping condition’s key. Used instead of `collapsedGroups` when the view group
+ * has the `collapsed` option enabled, so the groups start collapsed.
  * @property {boolean} [showMedia] Whether to show the Media pane.
  */
 

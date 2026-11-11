@@ -44,10 +44,31 @@ const NOTES = {
   fields: [{ name: 'title', label: 'Title', widget: 'string' }],
 };
 
-describe('EntryList', () => {
-  beforeAll(async () => {
-    await initTestConfig({ collections: [structuredClone(POSTS), structuredClone(NOTES)] });
+/**
+ * Configuration of a collection whose groups start collapsed.
+ */
+const PHOTOS = {
+  name: 'photos',
+  label: 'Photos',
+  folder: 'content/photos',
+  fields: [
+    { name: 'title', label: 'Title', widget: 'string' },
+    { name: 'case', label: 'Case', widget: 'string' },
+  ],
+  view_groups: { groups: [{ name: 'case', label: 'Case', field: 'case', collapsed: true }] },
+};
+
+/**
+ * Load the configuration of all the collections the tests list the entries of.
+ */
+const initConfig = async () => {
+  await initTestConfig({
+    collections: [structuredClone(POSTS), structuredClone(NOTES), structuredClone(PHOTOS)],
   });
+};
+
+describe('EntryList', () => {
+  beforeAll(initConfig);
 
   /**
    * Select the collection, with the given saved view. The view is restored from the settings when
@@ -436,7 +457,7 @@ describe('EntryList', () => {
         .toBe(TEST_IMAGE_URL);
     } finally {
       setReorderMode(false);
-      await initTestConfig({ collections: [structuredClone(POSTS)] });
+      await initConfig();
     }
   });
 
@@ -535,6 +556,48 @@ describe('EntryList', () => {
     expect(currentView.current.collapsedGroups).toEqual({
       '["category"]': ['blog', OTHER_GROUP_NAME],
     });
+  });
+
+  test('starts the groups collapsed with the `collapsed` option, remembering expanded ones', async () => {
+    setEntries([
+      createMockEntry({
+        folder: 'content/photos',
+        slug: 'a',
+        content: { _default: { title: 'A', case: 'one' } },
+      }),
+      createMockEntry({
+        folder: 'content/photos',
+        slug: 'b',
+        content: { _default: { title: 'B', case: 'two' } },
+      }),
+    ]);
+    window.location.hash = '#/collections/photos';
+    entryListSettings.current = {
+      photos: { type: 'list', group: { field: 'case' }, expandedGroups: { '["case"]': ['two'] } },
+    };
+    selectedCollection.current = getCollection('photos');
+
+    await render(EntryList, {});
+
+    const grid = page.getByRole('grid', { name: 'Entries' });
+    const one = grid.getByRole('button', { name: 'one' });
+    const two = grid.getByRole('button', { name: 'two' });
+
+    // A group is collapsed unless the user has expanded it
+    await expect.element(one).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(two).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(grid.getByRole('row', { name: 'B' })).toBeInTheDocument();
+    expect(grid.getByRole('row', { name: 'A' }).elements()).toHaveLength(0);
+
+    await one.click();
+    await expect.element(one).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(grid.getByRole('row', { name: 'A' })).toBeInTheDocument();
+    expect(currentView.current.expandedGroups).toEqual({ '["case"]': ['two', 'one'] });
+    expect(currentView.current.collapsedGroups).toBeUndefined();
+
+    await two.click();
+    await expect.element(two).toHaveAttribute('aria-expanded', 'false');
+    expect(currentView.current.expandedGroups).toEqual({ '["case"]': ['one'] });
   });
 
   test('offers to create an entry when there is none', async () => {

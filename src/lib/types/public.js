@@ -1835,6 +1835,9 @@
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value. Entries are grouped by the matched part of the field value. Without a `pattern` or a
  * comparison option, entries are grouped by the field value itself.
+ * @property {boolean} [collapsed] Whether to collapse the groups by default. Default: `false`. If
+ * set to `true`, every group, including one that appears later, starts collapsed unless the user
+ * has expanded it. The user’s own choice to expand or collapse a group is remembered.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  * @see https://sveltiacms.app/en/docs/collections/entries/views#grouping
  */

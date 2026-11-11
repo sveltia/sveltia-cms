@@ -5,6 +5,7 @@
   import ConditionRadioItems from '$lib/components/common/page-toolbar/condition-radio-items.svelte';
   import {
     getCollapsibleGroupNames,
+    isCollapsedByDefault,
     isGroupCollapsed,
     setAllGroupsCollapsed,
   } from '$lib/services/common/view';
@@ -38,11 +39,16 @@
   } = $props();
 
   const collapsibleGroupNames = $derived(getCollapsibleGroupNames(groupNames));
+  const collapsedByDefault = $derived(isCollapsedByDefault(groups, currentView.current.group));
   const canExpandAll = $derived(
-    collapsibleGroupNames.some((name) => isGroupCollapsed(currentView.current, name)),
+    collapsibleGroupNames.some((name) =>
+      isGroupCollapsed(currentView.current, name, collapsedByDefault),
+    ),
   );
   const canCollapseAll = $derived(
-    collapsibleGroupNames.some((name) => !isGroupCollapsed(currentView.current, name)),
+    collapsibleGroupNames.some(
+      (name) => !isGroupCollapsed(currentView.current, name, collapsedByDefault),
+    ),
   );
 </script>
 
@@ -65,6 +71,7 @@
             currentView.current,
             collapsibleGroupNames,
             false,
+            collapsedByDefault,
           );
         }}
       />
@@ -76,6 +83,7 @@
             currentView.current,
             collapsibleGroupNames,
             true,
+            collapsedByDefault,
           );
         }}
       />
