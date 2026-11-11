@@ -3,9 +3,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createFileList } from '$lib/services/backends/process';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import {
+  getEntriesByCollection,
+  matchesCollectionFilter,
+} from '$lib/services/contents/collection/entries';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { prepareEntries } from '$lib/services/contents/file/process';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 import { convertPullRequest, convertPullRequests } from '$lib/services/workflow/entries';
 
 vi.mock('$lib/services/backends/process');
@@ -51,6 +55,18 @@ vi.mock('$lib/services/contents/collection', () => ({
             canonicalSlug: { key: 'translationKey' },
           },
         },
+        posts: {
+          name,
+          _type: 'entry',
+          _file: {},
+          _i18n: { structureMap: {}, canonicalSlug: { key: 'translationKey' } },
+        },
+        players: {
+          name,
+          _type: 'entry',
+          _file: {},
+          _i18n: { structureMap: {}, canonicalSlug: { key: 'translationKey' } },
+        },
         places: {
           name,
           _type: 'entry',
@@ -64,6 +80,10 @@ vi.mock('$lib/services/contents/collection', () => ({
 }));
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
+  matchesCollectionFilter: vi.fn(() => true),
+}));
+vi.mock('$lib/services/contents/folders', () => ({
+  getEntryFoldersByPath: vi.fn(() => []),
 }));
 vi.mock('$lib/services/contents/collection/files', () => ({
   getCollectionFileEntry: vi.fn(),
@@ -1385,6 +1405,172 @@ describe('workflow/entries', () => {
 
         expect(entries.map(({ id }) => id)).toEqual(['parsed-site']);
         expect(entries[0].workflow.fileName).toBe('site');
+      });
+    });
+
+    // @see https://github.com/sveltia/sveltia-cms/issues/1149
+    describe('collections sharing a folder', () => {
+      /**
+       * Get the `breadcrumb` value the mocked entry file at the given path stores.
+       * @param {string} path File path.
+       * @returns {string} Value.
+       */
+      const getBreadcrumb = (path) => (path.includes('player') ? 'player' : 'post');
+
+      beforeEach(() => {
+        // The file list assigns every file in `src` to `posts`, which comes first in the config
+        vi.mocked(createFileList).mockImplementation(
+          (files) =>
+            /** @type {any} */ ({
+              entryFiles: files.map((file) => ({ ...file, folder: { collectionName: 'posts' } })),
+              assetFiles: [],
+            }),
+        );
+
+        vi.mocked(getEntryFoldersByPath).mockImplementation(() => [
+          { collectionName: 'posts', folderPath: 'src' },
+          { collectionName: 'players', folderPath: 'src' },
+        ]);
+
+        vi.mocked(prepareEntries).mockImplementation(async (files) => ({
+          entries: files.map(({ path, folder }) => {
+            const slug = path.replace(/^src\/(.+)\.md$/, '$1');
+
+            return /** @type {any} */ ({
+              id: `${folder?.collectionName}-${slug}`,
+              slug,
+              subPath: slug,
+              locales: {
+                _default: { slug, path, content: { breadcrumb: getBreadcrumb(path) } },
+              },
+            });
+          }),
+          errors: [],
+        }));
+
+        vi.mocked(matchesCollectionFilter).mockImplementation(
+          (collection, entry) =>
+            entry.locales._default.content.breadcrumb ===
+            (collection.name === 'players' ? 'player' : 'post'),
+        );
+      });
+
+      afterEach(() => {
+        vi.mocked(getEntryFoldersByPath).mockReset().mockReturnValue([]);
+        vi.mocked(matchesCollectionFilter).mockReset().mockReturnValue(true);
+      });
+
+      test('lists the entry under the collection named in the branch, not the first one', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/players/jane-player',
+            files: [{ path: 'src/jane-player.md', sha: 'a', size: 1, text: 'a', deleted: false }],
+          }),
+        );
+
+        expect(entries.map(({ id, workflow }) => [id, workflow.collectionName])).toEqual([
+          ['players-jane-player', 'players'],
+        ]);
+      });
+
+      test('lists the entry of the first collection as before', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/posts/hello',
+            files: [{ path: 'src/hello.md', sha: 'a', size: 1, text: 'a', deleted: false }],
+          }),
+        );
+
+        expect(entries.map(({ id, workflow }) => [id, workflow.collectionName])).toEqual([
+          ['posts-hello', 'posts'],
+        ]);
+      });
+
+      test('hands an entry of the other collection over as a companion', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/players/jane-player',
+            files: [
+              { path: 'src/jane-player.md', sha: 'a', size: 1, text: 'a', deleted: false },
+              { path: 'src/news.md', sha: 'b', size: 1, text: 'b', deleted: false },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ id }) => id)).toEqual(['players-jane-player']);
+        expect(
+          entries[0].workflow.companions?.map(({ collectionName, entry }) => [
+            collectionName,
+            entry.id,
+          ]),
+        ).toEqual([['posts', 'posts-news']]);
+      });
+
+      test('keeps an entry no collection sharing the folder lets in', async () => {
+        vi.mocked(matchesCollectionFilter).mockReturnValue(false);
+
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/players/jane-player',
+            files: [{ path: 'src/jane-player.md', sha: 'a', size: 1, text: 'a', deleted: false }],
+          }),
+        );
+
+        expect(entries.map(({ id }) => id)).toEqual(['players-jane-player']);
+      });
+
+      test('keeps the entry the branch is named after when an edit took it out of the filter', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/posts/jane-player',
+            files: [
+              { path: 'src/jane-player.md', sha: 'a', size: 1, text: 'a', deleted: false },
+              { path: 'src/bob-player.md', sha: 'b', size: 1, text: 'b', deleted: false },
+            ],
+          }),
+        );
+
+        expect(entries.map(({ id }) => id)).toEqual(['posts-jane-player']);
+        expect(
+          entries[0].workflow.companions?.map(({ collectionName, entry }) => [
+            collectionName,
+            entry.id,
+          ]),
+        ).toEqual([['players', 'players-bob-player']]);
+      });
+
+      test('keeps the entries when the filter would hand every one of them over', async () => {
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/players/jane',
+            files: [{ path: 'src/jane-player.md', sha: 'a', size: 1, text: 'a', deleted: false }],
+          }),
+        );
+
+        expect(entries.map(({ id }) => id)).toEqual(['players-jane-player']);
+      });
+
+      test('finds the renamed or deleted entry of the collection named in the branch', async () => {
+        allEntries.current = [
+          /** @type {any} */ ({
+            id: 'published-jane',
+            slug: 'jane',
+            subPath: 'jane',
+            locales: { _default: { slug: 'jane', path: 'src/jane.md', content: {} } },
+          }),
+        ];
+
+        const { entries } = await convertPullRequest(
+          createPullRequest({
+            branch: 'cms/players/jane',
+            files: [{ path: 'src/jane.md', sha: '', size: 0, deleted: true }],
+          }),
+        );
+
+        expect(entries.map(({ id, workflow }) => [id, workflow.collectionName])).toEqual([
+          ['published-jane', 'players'],
+        ]);
+        expect(entries[0].workflow.previousPaths).toEqual(['src/jane.md']);
       });
     });
 

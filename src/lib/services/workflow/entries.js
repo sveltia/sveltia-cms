@@ -5,11 +5,15 @@ import { isInRootDir } from '$lib/services/backends/root-dir';
 import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import {
+  getEntriesByCollection,
+  matchesCollectionFilter,
+} from '$lib/services/contents/collection/entries';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { isEntryEditableAlong } from '$lib/services/contents/entry/editable';
 import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { prepareEntries } from '$lib/services/contents/file/process';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 import { usesMultiFileStructure } from '$lib/services/contents/i18n/config';
 import { parseBranchName } from '$lib/services/workflow/branch';
 
@@ -21,12 +25,70 @@ import { parseBranchName } from '$lib/services/workflow/branch';
  * CompanionEntry,
  * Entry,
  * InternalEntryCollection,
+ * EntryFolderInfo,
  * WorkflowStatus,
  * UnpublishedEntry,
  * UnpublishedEntryProps,
  * WorkflowPullRequest,
  * } from '$lib/types/private';
  */
+
+/**
+ * Get the given entry collection, which is known to exist.
+ * @param {string} name Collection name.
+ * @returns {InternalEntryCollection} Collection.
+ */
+const getEntryCollection = (name) => /** @type {InternalEntryCollection} */ (getCollection(name));
+
+/**
+ * Assign the given entry file to the given collection if its path is in one of the collection’s
+ * folders. Collections can share a folder and tell their entries apart with the `filter` option,
+ * but the file list assigns a file to the first of them only, so a file of the collection a pull
+ * request was opened for may come with the folder of another one.
+ * @param {BaseEntryListItem} file Entry file.
+ * @param {string} collectionName Collection name.
+ * @returns {BaseEntryListItem} Entry file, with the collection’s folder if the path is in it.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1149
+ */
+const assignToCollection = (file, collectionName) => {
+  if (file.folder.collectionName === collectionName) {
+    return file;
+  }
+
+  const folder = getEntryFoldersByPath(file.path).find(
+    (candidate) => candidate.collectionName === collectionName,
+  );
+
+  return folder ? { ...file, folder } : file;
+};
+
+/**
+ * Find the folder of another collection an entry parsed for the given collection belongs to: an
+ * entry the collection’s `filter` option excludes, in a folder it shares with a collection whose
+ * filter the entry passes. That’s an entry of the other collection committed along with the entry
+ * the pull request was opened for, such as one created from a Relation field.
+ * @param {Entry} entry Entry.
+ * @param {string} collectionName Name of the collection the entry was parsed for.
+ * @returns {EntryFolderInfo | undefined} Folder of the other collection, if any.
+ */
+const findOtherCollectionFolder = (entry, collectionName) => {
+  const otherFolders = getEntryFoldersByPath(getEntryPaths(entry)[0]).filter(
+    (folder) => folder.collectionName !== collectionName,
+  );
+
+  if (!otherFolders.length) {
+    return undefined;
+  }
+
+  // Both collections exist, as the entry was parsed from a file in their folders
+  if (matchesCollectionFilter(getEntryCollection(collectionName), entry)) {
+    return undefined;
+  }
+
+  return otherFolders.find((folder) =>
+    matchesCollectionFilter(getEntryCollection(folder.collectionName), entry),
+  );
+};
 
 /**
  * Get the key that links the localized files of an entry with the multi-file i18n structure, as
@@ -148,12 +210,6 @@ const completeEntry = ({
  * @returns {Promise<CompanionEntry[]>} Entries.
  */
 const parseCompanions = async (entryFiles, collectionName, deletedPaths) => {
-  /**
-   * Get the given entry collection, which the files are filtered for below.
-   * @param {string} name Collection name.
-   * @returns {InternalEntryCollection} Collection.
-   */
-  const getEntryCollection = (name) => /** @type {InternalEntryCollection} */ (getCollection(name));
   /**
    * Check whether the CMS can create an entry in the given collection.
    * @param {string} name Collection name.
@@ -351,7 +407,8 @@ export const convertPullRequest = async (pullRequest) => {
       .map(({ path, sha, size, text }) => toFileListItem(path, { sha, size, text }))
   );
 
-  const { entryFiles, assetFiles } = createFileList(files);
+  const { entryFiles: listedEntryFiles, assetFiles } = createFileList(files);
+  let entryFiles = listedEntryFiles.map((file) => assignToCollection(file, collectionName));
 
   // Editing the slug renames the entry file. Keep the path it came from, so the entry list can
   // still match the draft with its published counterpart. Both backends report a rename with the
@@ -365,9 +422,9 @@ export const convertPullRequest = async (pullRequest) => {
   });
 
   const vacatedEntryFiles = vacatedPaths.length
-    ? createFileList(vacatedPaths.map((path) => toFileListItem(path))).entryFiles.filter(
-        ({ folder }) => folder.collectionName === collectionName,
-      )
+    ? createFileList(vacatedPaths.map((path) => toFileListItem(path)))
+        .entryFiles.map((file) => assignToCollection(file, collectionName))
+        .filter(({ folder }) => folder.collectionName === collectionName)
     : [];
 
   const previousPaths = vacatedEntryFiles.map(({ path }) => path);
@@ -390,14 +447,44 @@ export const convertPullRequest = async (pullRequest) => {
   // Only keep the files that belong to the collection indicated by the branch name, so that a file
   // committed along with the entry doesn’t create a bogus entry. A binary file has no text, so it
   // can’t be parsed as an entry either.
-  const targetFiles = entryFiles.filter(
+  let targetFiles = entryFiles.filter(
     ({ folder, text }) => folder.collectionName === collectionName && text !== undefined,
   );
+
+  const parsedEntries = targetFiles.length ? (await prepareEntries(targetFiles)).entries : [];
+
+  // An entry of another collection sharing the folder, which the collection’s filter excludes, is
+  // handed over to that collection, so it’s parsed as an entry committed along with the entry. The
+  // entry the branch is named after stays, even if an edit took it out of the filter, and so do the
+  // entries if none would be left, so the pull request doesn’t vanish from the board
+  const handOverCandidates = parsedEntries.flatMap((entry) => {
+    const folder = entry.slug !== parsed.slug && findOtherCollectionFolder(entry, collectionName);
+
+    return folder ? [{ entry, folder }] : [];
+  });
+
+  const handedOver = handOverCandidates.length < parsedEntries.length ? handOverCandidates : [];
+  const handedOverEntries = new Set(handedOver.map(({ entry }) => entry));
+
+  if (handedOver.length) {
+    /** @type {Map<string, EntryFolderInfo>} */
+    const handedOverFolders = new Map(
+      handedOver.flatMap(({ entry, folder }) => getEntryPaths(entry).map((path) => [path, folder])),
+    );
+
+    entryFiles = entryFiles.map((file) => {
+      const folder = handedOverFolders.get(file.path);
+
+      return folder ? { ...file, folder } : file;
+    });
+
+    targetFiles = targetFiles.filter(({ path }) => !handedOverFolders.has(path));
+  }
 
   // Other entries of the collection the CMS rewrote along with the entry are left out
   const ownEntries = targetFiles.length
     ? findOwnEntries({
-        entries: (await prepareEntries(targetFiles)).entries,
+        entries: parsedEntries.filter((entry) => !handedOverEntries.has(entry)),
         slug: parsed.slug,
         pullRequest,
         previousPaths,

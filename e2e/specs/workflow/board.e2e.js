@@ -1,6 +1,6 @@
 import { openEntryPullRequest, post, WORKFLOW_CONFIG } from '../../fixtures/configs/workflow.js';
 import { expect, test } from '../../fixtures/test.js';
-import { getEditor } from '../../fixtures/ui.js';
+import { getEditor, getEntryRows, openCollection } from '../../fixtures/ui.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -159,4 +159,67 @@ test('opens an entry from its card', async ({ cms, github, page }) => {
   await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Second Post');
   await expect(editor.getByRole('textbox', { name: 'Body' })).toHaveValue('Coming soon.');
   await expect(page.getByRole('button', { name: /Status: .*Draft/ })).toBeVisible();
+});
+
+// @see https://github.com/sveltia/sveltia-cms/issues/1149
+test.describe('with collections sharing a folder', () => {
+  /**
+   * Create a collection of the entries in the `content/posts` folder whose `kind` is its name.
+   * @param {string} name Collection name.
+   * @param {string} label Collection label.
+   * @returns {object} Collection.
+   */
+  const createCollection = (name, label) => ({
+    name,
+    label,
+    folder: 'content/posts',
+    create: true,
+    filter: { field: 'kind', value: name },
+    fields: [
+      { name: 'title', label: 'Title' },
+      { name: 'kind', label: 'Kind', widget: 'hidden', default: name },
+      { name: 'body', label: 'Body', widget: 'markdown' },
+    ],
+  });
+
+  test.use({
+    config: {
+      ...WORKFLOW_CONFIG,
+      collections: [createCollection('posts', 'Posts'), createCollection('players', 'Players')],
+    },
+  });
+
+  test('lists the draft of a collection other than the first one', async ({
+    cms,
+    github,
+    page,
+  }) => {
+    const branch = 'cms/players/jane';
+
+    github.createBranch(branch, github.head.oid);
+    github.commit(
+      { 'content/posts/jane.md': '---\ntitle: Jane\nkind: players\n---\n\nA player.\n' },
+      { branch, author: github.user, message: 'Create Player “jane”' },
+    );
+    github.openPullRequest({
+      title: 'Create Player “jane”',
+      head: branch,
+      draft: true,
+      labels: ['sveltia-cms/draft'],
+      author: github.user,
+    });
+
+    await cms.open();
+
+    const board = await openBoard(page);
+
+    await expect(getCard(board.getByRole('list', { name: 'Drafts' }), 'Jane')).toBeVisible();
+
+    await page.getByRole('radio', { name: 'Contents' }).click();
+    await openCollection(page, 'Players');
+    await expect(getEntryRows(page).filter({ hasText: 'Jane' })).toBeVisible();
+
+    await openCollection(page, 'Posts');
+    await expect(getEntryRows(page).filter({ hasText: 'Jane' })).toHaveCount(0);
+  });
 });
