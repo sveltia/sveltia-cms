@@ -1,12 +1,10 @@
 # Contributing to Sveltia CMS
 
-Sveltia CMS is an open-source project, and we welcome contributions from the community. Donations are most welcome, as they help us to ensure the project’s long-term sustainability. We also encourage users to report bugs, as this helps us to improve the product.
+Sveltia CMS is an open-source project, and we welcome contributions from the community. Donations are most welcome, as they help us to ensure the project’s long-term sustainability. We also encourage users to report bugs, as this helps us to improve the product quality.
 
 ## Donations
 
-Maintainer [@kyoshino](https://github.com/kyoshino) is dedicating significant time to this project and is accepting donations to support his ongoing work. A Claude subscription also incurs a fixed monthly cost of US$100.
-
-If you would like to contribute financially, you can do so via [GitHub Sponsors](https://github.com/sponsors/kyoshino). Your support will help us maintain and improve the Sveltia CMS — it is greatly appreciated!
+Maintainer [@kyoshino](https://github.com/kyoshino) is dedicating significant time to this project. A Claude subscription also incurs a fixed monthly cost of US$100. If you would like to contribute financially, you can do so via [GitHub Sponsors](https://github.com/sponsors/kyoshino). Your support will help us maintain and improve the Sveltia CMS — it is greatly appreciated!
 
 ## Bug reports
 
