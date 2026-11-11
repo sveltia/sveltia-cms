@@ -1,10 +1,12 @@
 # Contributing to Sveltia CMS
 
+Sveltia CMS is an open-source project, and we welcome contributions from the community. Donations are most welcome, as they help us to ensure the project’s long-term sustainability. We also encourage users to report bugs, as this helps us to improve the product.
+
 ## Donations
 
-Maintainer [@kyoshino](https://github.com/kyoshino) is accepting donations to support the project. If you’d like to chip in financially, you can do so through [GitHub Sponsors](https://github.com/sponsors/kyoshino). Your support will help us maintain and improve Sveltia CMS, and we really appreciate it!
+Maintainer [@kyoshino](https://github.com/kyoshino) is dedicating significant time to this project and is accepting donations to support his ongoing work. A Claude subscription also incurs a fixed monthly cost of US$100.
 
-Donations are primarily used to cover the monthly cost of the Claude Max subscription, which is US$100.
+If you would like to contribute financially, you can do so via [GitHub Sponsors](https://github.com/sponsors/kyoshino). Your support will help us maintain and improve the Sveltia CMS — it is greatly appreciated!
 
 ## Bug reports
 
@@ -18,7 +20,7 @@ You can [request new features](https://github.com/sveltia/sveltia-cms/issues/new
 
 ## Pull requests
 
-For [various reasons](https://github.com/sveltia/sveltia-cms/issues/966#issuecomment-5645271030), pull requests will not be accepted for the time being, except for localization and trivial changes, such as fixing typos or style issues. Please file issues instead. We plan to reevaluate the UI framework, currently Svelte, and create contributor documents in the future.
+For [various reasons](https://github.com/sveltia/sveltia-cms/issues/966#issuecomment-5645271030), pull requests will not be accepted for the time being, except for localization and trivial changes, such as fixing typos or style issues. Please file issues instead. We plan to create contributor documents in the future.
 
 ## Localization
 
