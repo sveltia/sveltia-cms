@@ -127,7 +127,7 @@
     "svelte-check": "^4.7.8",
     "ts-json-schema-generator": "^2.9.0",
     "typescript": "^6.0.3",
-    "vite": "^8.3.7",
+    "vite": "^8.3.8",
     "vitest": "^5.1.0",
     "vitest-browser-svelte": "^3.1.0"
   },
