@@ -1,3 +1,5 @@
+import { readdirSync } from 'fs';
+
 import React from 'react';
 import { build } from 'vite';
 
@@ -7,18 +9,22 @@ import { getChunkModules } from './chunk-modules.js';
 import { readPackageJson, virtualModule } from './utils.js';
 
 /**
- * Parts of the app that are built as separate ES module chunks, keyed by chunk name. A chunk is
- * only loaded when needed, with `loadChunk()`, so the main bundle stays smaller. See the entry
- * files for what each chunk is for.
+ * Directory of the chunk entries.
  */
-const CHUNKS = {
-  git: 'src/lib/chunks/git.js',
-  gitea: 'src/lib/chunks/gitea.js',
-  gitlab: 'src/lib/chunks/gitlab.js',
-  map: 'src/lib/chunks/map.js',
-  qrcode: 'src/lib/chunks/qrcode.js',
-  'react-dom': 'src/lib/chunks/react-dom.js',
-};
+const CHUNK_ENTRY_DIR = 'src/lib/chunks';
+
+/**
+ * Parts of the app that are built as separate ES module chunks, keyed by chunk name: every module
+ * in {@link CHUNK_ENTRY_DIR} but the constants, named after the file. A chunk is only loaded when
+ * needed, with `loadChunk()`, so the main bundle stays smaller. See the entry files for what each
+ * chunk is for.
+ * @type {Record<string, string>}
+ */
+const CHUNKS = Object.fromEntries(
+  readdirSync(CHUNK_ENTRY_DIR)
+    .filter((fileName) => fileName.endsWith('.js') && fileName !== 'constants.js')
+    .map((fileName) => [fileName.replace(/\.js$/, ''), `${CHUNK_ENTRY_DIR}/${fileName}`]),
+);
 
 /**
  * Chunks made of app modules rather than a package, which take the modules they share with the rest
@@ -45,9 +51,7 @@ let appChunkModules;
  */
 const getAppChunkModules = () => {
   appChunkModules ??= getChunkModules({
-    entries: Object.keys(APP_CHUNK_DIRS).map(
-      (name) => CHUNKS[/** @type {keyof typeof CHUNKS} */ (name)],
-    ),
+    entries: Object.keys(APP_CHUNK_DIRS).map((name) => CHUNKS[name]),
     ownDirs: Object.values(APP_CHUNK_DIRS),
   });
 

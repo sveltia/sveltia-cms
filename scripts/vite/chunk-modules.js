@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 
+import { parse as parseSvelte } from 'svelte/compiler';
 import { parseAst } from 'vite';
 
 /**
@@ -33,13 +34,15 @@ const LIB_DIR = path.resolve('src/lib');
 const RESOLVE_SUFFIXES = ['', '.js', '.svelte', '/index.js'];
 
 /**
- * Regular expression to match the specifiers of the static and dynamic imports of a module. It
- * works with Svelte components as well, which can’t be parsed as JavaScript. The imports in a JSDoc
- * comment, e.g. an `@import` tag or a `{import('…')}` type, are skipped, as they only import types:
- * those on a line starting with `*`, or after a `/*` on the same line.
+ * Types of the syntax tree nodes that import a module: static imports, re-exports and dynamic
+ * imports.
  */
-const IMPORT_SPECIFIER_REGEX =
-  /(?<=^(?![ \t]*\*)(?:(?!\/\*)[^\n])*?)(?:\bfrom|\bimport)\s*\(?\s*'([^']+)'/gm;
+const IMPORT_NODE_TYPES = new Set([
+  'ImportDeclaration',
+  'ExportNamedDeclaration',
+  'ExportAllDeclaration',
+  'ImportExpression',
+]);
 
 /**
  * Whether the given specifier points to a source module rather than a package.
@@ -121,6 +124,44 @@ const getImports = (file) =>
 
     return [];
   });
+
+/**
+ * Collect the specifiers of the modules imported anywhere in a syntax tree, with a string literal.
+ * @param {unknown} node Node, or an array or other value found in one.
+ * @param {string[]} [specifiers] Specifiers collected so far.
+ * @returns {string[]} Specifiers.
+ */
+const collectImportSpecifiers = (node, specifiers = []) => {
+  if (Array.isArray(node)) {
+    node.forEach((child) => collectImportSpecifiers(child, specifiers));
+  } else if (node && typeof node === 'object') {
+    const { type, source } = /** @type {{ type?: string, source?: { value?: unknown } }} */ (node);
+
+    if (type && IMPORT_NODE_TYPES.has(type) && typeof source?.value === 'string') {
+      specifiers.push(source.value);
+    }
+
+    Object.values(node).forEach((child) => collectImportSpecifiers(child, specifiers));
+  }
+
+  return specifiers;
+};
+
+/**
+ * Get the specifiers of the static and dynamic imports and re-exports of a module or a Svelte
+ * component, which is parsed with the Svelte compiler, as it can’t be parsed as JavaScript. The
+ * comments are left out of the syntax tree, so a JSDoc `@import` tag or `{import('…')}` type, which
+ * only imports types, isn’t counted.
+ * @param {string} file Absolute path of the module.
+ * @returns {string[]} Specifiers.
+ */
+const getImportSpecifiers = (file) => {
+  const source = readFileSync(file, 'utf-8');
+
+  return collectImportSpecifiers(
+    file.endsWith('.svelte') ? parseSvelte(source, { modern: true }) : parseAst(source),
+  );
+};
 
 /**
  * Get the names a declaration binds, including those in a destructuring pattern.
@@ -229,7 +270,7 @@ export const getChunkModules = ({ entries, ownDirs }) => {
   listSourceModules(LIB_DIR)
     .filter((file) => !isInOwnDir(file) && !entryFiles.includes(file))
     .forEach((file) => {
-      [...readFileSync(file, 'utf-8').matchAll(IMPORT_SPECIFIER_REGEX)].forEach(([, specifier]) => {
+      getImportSpecifiers(file).forEach((specifier) => {
         const resolved = isSourceSpecifier(specifier)
           ? resolveSourceModule(specifier, file)
           : undefined;

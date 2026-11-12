@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { mapServices } from '$lib/services/contents/fields/map/services';
+
 import MapEditor from './map-editor.svelte';
 
 // Create the mock up front rather than importing the mocked module, so the test always holds the
@@ -61,6 +63,8 @@ const waitForMap = async (container) => {
 
 describe('MapEditor', () => {
   beforeEach(() => {
+    // Load the services again for each test, as some of them make the loading fail
+    mapServices.reset();
     vi.mocked(searchLocations).mockResolvedValue([]);
   });
 
@@ -145,6 +149,8 @@ describe('MapEditor', () => {
     const { container } = await renderEditor();
 
     await waitForMap(container);
+    // Forget the services loaded with the map
+    mapServices.reset();
     vi.mocked(loadChunk).mockRejectedValueOnce(new Error('Failed to load the map chunk.'));
     await page.getByRole('searchbox').fill('Tokyo');
     await expect.element(page.getByRole('alert')).toHaveTextContent('No results found.');
@@ -278,6 +284,8 @@ describe('MapEditor', () => {
     const { container } = await renderEditor();
 
     await waitForMap(container);
+    // Forget the services loaded with the map
+    mapServices.reset();
     vi.mocked(loadChunk).mockRejectedValueOnce(new Error('Failed to load the map chunk.'));
     await page.getByRole('button', { name: 'Use Your Location' }).click();
     await expect

@@ -12,19 +12,16 @@
   import { onDestroy, tick, untrack } from 'svelte';
 
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
-  import { loadChunk } from '$lib/services/app/dependencies';
+  import { mapServices } from '$lib/services/contents/fields/map/services';
   import { watch, watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
    * @import Leaflet from 'leaflet';
    * @import { MapDrawController } from '$lib/services/contents/fields/map/draw';
    * @import { LocationSearchResult } from '$lib/services/contents/fields/map/geocoding';
+   * @import { MapServices } from '$lib/services/contents/fields/map/services';
    * @import { FieldEditorProps, GeoCoordinates } from '$lib/types/private';
    * @import { MapField } from '$lib/types/public';
-   */
-
-  /**
-   * @typedef {typeof import('$lib/chunks/map')} MapChunk
    */
 
   /**
@@ -65,21 +62,9 @@
 
   /** Whether the component has been destroyed, possibly before the drawing tools are loaded. */
   let destroyed = false;
-  /**
-   * Services of the Map field, loaded along with the drawing tools, before {@link draw} is set.
-   * @type {MapChunk | undefined}
-   */
-  let services;
 
-  /**
-   * Load the services of the Map field, kept in a chunk of their own, as few sites have the field.
-   * @returns {Promise<MapChunk>} Services.
-   */
-  const loadServices = () => loadChunk('map');
-
-  // Fetch the services while Leaflet is loading, rather than once the map is ready. A failure is
-  // left for the calls that need the services to handle
-  loadServices().catch(() => undefined);
+  // Fetch the services while Leaflet is loading, rather than once the map is ready
+  mapServices.preload();
 
   /**
    * Start the drawing tools once the Leaflet map is ready.
@@ -88,9 +73,9 @@
    * @param {Leaflet.Map} args.map Leaflet map instance.
    */
   const onReady = async ({ leaflet, map }) => {
-    const mapServices = await loadServices();
+    const { createMapDrawController, isValidGeoJSON } = await mapServices.load();
 
-    const controller = await mapServices.createMapDrawController({
+    const controller = await createMapDrawController({
       leaflet,
       map,
       geometryType,
@@ -114,12 +99,11 @@
       return;
     }
 
-    services = mapServices;
     draw = controller;
 
     // The watcher below will handle fitting the map to an existing valid value. Apply the
     // configured center/zoom defaults here for the case where there is no valid value
-    if (!currentValue || !mapServices.isValidGeoJSON(currentValue, geometryType)) {
+    if (!currentValue || !isValidGeoJSON(currentValue, geometryType)) {
       controller.showDefaultView({ center, zoom });
     }
   };
@@ -133,11 +117,7 @@
     }
 
     // Validate the value. The services are loaded before the drawing tools
-    const geometry = /** @type {MapChunk} */ (services).parseGeoJSON(
-      currentValue ?? '',
-      geometryType,
-    );
-
+    const geometry = mapServices.get().parseGeoJSON(currentValue ?? '', geometryType);
     const newValue = geometry ? /** @type {string} */ (currentValue) : '';
 
     if (inputValue === newValue) {
@@ -198,19 +178,19 @@
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API
    */
   const useCurrentLocation = async () => {
-    /** @type {MapChunk | undefined} */
-    let mapServices;
+    /** @type {MapServices | undefined} */
+    let services;
     /** @type {GeoCoordinates} */
     let coordinates;
 
     try {
-      mapServices = await loadServices();
-      coordinates = await mapServices.getCurrentPosition();
+      services = await mapServices.load();
+      coordinates = await services.getCurrentPosition();
     } catch (error) {
       showAlertDialog = true;
 
       // A failure to load the services is reported as any other error
-      if (mapServices && error instanceof mapServices.GeolocationUnsupportedError) {
+      if (services && error instanceof services.GeolocationUnsupportedError) {
         errorMessage = _('geolocation_unsupported');
       } else {
         errorMessage = _('geolocation_error_body');
@@ -270,7 +250,7 @@
 
       searching = true;
 
-      return untrack(async () => (await loadServices()).searchLocations(query));
+      return untrack(async () => (await mapServices.load()).searchLocations(query));
     },
     (results) => {
       searchResults = results;

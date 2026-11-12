@@ -146,28 +146,20 @@ export const getChunkURLs = (name, base = scriptURL) => {
 };
 
 /**
- * Source entry of each chunk, for the development server, which serves the app as source modules
- * rather than a built bundle: there’s no built chunk next to the script there, so the entry is
- * imported through Vite instead. Empty in a production build, where this is removed along with the
- * imports, so the chunks stay out of the bundle.
+ * Source entry of each chunk, keyed by chunk name: the file name of an entry in `src/lib/chunks`.
+ * For the development server, which serves the app as source modules rather than a built bundle,
+ * there’s no built chunk next to the script, so the entry is imported through Vite instead; the npm
+ * build leaves the entries to the consumer’s bundler likewise. Empty in a CDN build, where this is
+ * removed along with the imports, so the chunks stay out of the bundle.
  * @type {Record<string, () => Promise<any>>}
  */
 const devChunkLoaders =
   import.meta.env.DEV || import.meta.env.NPM_BUILD
-    ? {
-        // eslint-disable-next-line jsdoc/require-jsdoc
-        git: () => import('$lib/chunks/git.js'),
-        // eslint-disable-next-line jsdoc/require-jsdoc
-        gitea: () => import('$lib/chunks/gitea.js'),
-        // eslint-disable-next-line jsdoc/require-jsdoc
-        gitlab: () => import('$lib/chunks/gitlab.js'),
-        // eslint-disable-next-line jsdoc/require-jsdoc
-        map: () => import('$lib/chunks/map.js'),
-        // eslint-disable-next-line jsdoc/require-jsdoc
-        qrcode: () => import('$lib/chunks/qrcode.js'),
-        // eslint-disable-next-line jsdoc/require-jsdoc
-        'react-dom': () => import('$lib/chunks/react-dom.js'),
-      }
+    ? Object.fromEntries(
+        Object.entries(import.meta.glob(['$lib/chunks/*.js', '!$lib/chunks/constants.js'])).map(
+          ([path, loader]) => [path.replace(/^.*\/|\.js$/g, ''), loader],
+        ),
+      )
     : /* v8 ignore next */ {};
 
 /**
