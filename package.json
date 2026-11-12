@@ -116,7 +116,7 @@
     "oxlint": "^1.93.0",
     "playwright": "^1.65.0",
     "postcss-html": "^2.0.0",
-    "prettier": "^3.9.10",
+    "prettier": "^3.10.0",
     "prettier-plugin-svelte": "^4.1.1",
     "sonda": "^0.14.0",
     "stylelint": "^18.0.0",
