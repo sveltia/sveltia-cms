@@ -47,6 +47,20 @@ test.beforeEach(async ({ cms }) => {
   await cms.open();
   await cms.seed({
     'content/posts/hello.md': '---\ntitle: Hello\nseo:\n  description: Hi\nlinks: []\n---\n',
+    'content/posts/notes.md': [
+      '---',
+      '# Oh hai!',
+      '# Never mind these.',
+      '',
+      '# Shown as the page heading',
+      'title: Notes',
+      'seo:',
+      '  description: Hi',
+      'links:',
+      '  - url: /about',
+      '---',
+      '',
+    ].join('\n'),
   });
   await cms.signIn();
 });
@@ -87,4 +101,56 @@ test('writes the field comments to the front matter without showing them', async
         '',
       ].join('\n'),
     );
+});
+
+test('keeps the comments at the top of the front matter without repeating them', async ({
+  cms,
+  page,
+}) => {
+  await page.getByRole('row', { name: /Notes/ }).click();
+
+  const editor = getEditor(page);
+  const title = editor.getByRole('textbox', { name: 'Title' });
+
+  await expect(title).toHaveValue('Notes');
+  await title.fill('Notes 1');
+  await editor.getByRole('button', { name: 'Save' }).click();
+
+  /**
+   * Get the file as it should be saved with the given title.
+   * @param {string} value Title.
+   * @returns {string} File content.
+   */
+  const expected = (value) =>
+    [
+      '---',
+      '# Oh hai!',
+      '# Never mind these.',
+      '',
+      '# Shown as the page heading',
+      `title: ${value}`,
+      'seo:',
+      '  # Used by search engines',
+      '  # Keep it short',
+      '  description: Hi',
+      '# Related pages',
+      'links:',
+      '  - url: /about',
+      '---',
+      '',
+    ].join('\n');
+
+  await expect
+    .poll(async () => (await cms.readRepo())['content/posts/notes.md'])
+    .toBe(expected('Notes 1'));
+
+  // Saving again doesn’t take the field comment for one at the top of the file
+  await page.getByRole('row', { name: /Notes 1/ }).click();
+  await expect(title).toHaveValue('Notes 1');
+  await title.fill('Notes 2');
+  await editor.getByRole('button', { name: 'Save' }).click();
+
+  await expect
+    .poll(async () => (await cms.readRepo())['content/posts/notes.md'])
+    .toBe(expected('Notes 2'));
 });

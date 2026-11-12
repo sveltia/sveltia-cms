@@ -10,6 +10,7 @@ import {
   getArrayFileCollection,
 } from '$lib/services/contents/file/array';
 import { formatEntryFile } from '$lib/services/contents/file/format';
+import { leadingComments } from '$lib/services/contents/file/leading-comments';
 import { arrayFileItems, createArrayItemEntry } from '$lib/services/contents/file/process';
 import { valueSources } from '$lib/services/contents/file/value-sources';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
@@ -99,6 +100,7 @@ const localesOf = (item, index) => createArrayItemEntry({ collection, item, inde
 beforeEach(() => {
   arrayFileItems.clear();
   valueSources.clear();
+  leadingComments.clear();
   allEntries.current = [];
   // @ts-ignore
   backend.current = undefined;
@@ -437,6 +439,18 @@ describe('Test combineArrayFileChanges()', () => {
     });
 
     expect(valueSources.get(path)).toEqual({ '0.price': b, '1.price': a });
+  });
+
+  test('keeps the comments at the top of the file', async () => {
+    registerArrayFile();
+    arrayFileItems.set(path, [{ title: 'A' }]);
+    leadingComments.set(path, '# Managed by the CMS');
+
+    await combineArrayFileChanges([{ action: 'create', path, slug: 'B', data: '{"title":"B"}' }]);
+
+    expect(formatEntryFile).toHaveBeenLastCalledWith(
+      expect.objectContaining({ leadingComment: '# Managed by the CMS' }),
+    );
   });
 
   test('takes the label of a deleted item from the file', async () => {

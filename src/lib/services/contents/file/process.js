@@ -14,6 +14,7 @@ import { hasRootField } from '$lib/services/contents/entry/fields';
 import { convertMapLists, getMapKeyField } from '$lib/services/contents/fields/list/map';
 import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
 import { mayHaveUnsafeInteger } from '$lib/services/contents/file/integers';
+import { leadingComments } from '$lib/services/contents/file/leading-comments';
 import { hasCustomParser, parseEntryFile } from '$lib/services/contents/file/parse';
 import { valueSources } from '$lib/services/contents/file/value-sources';
 import {
@@ -147,6 +148,7 @@ const cacheParsedContent = ({ parsedFileMap, path, key, content }) => {
       content: structuredClone(content),
       format: detectedFrontMatterFormats.get(path),
       valueSources: valueSources.get(path),
+      leadingComment: leadingComments.get(path),
     });
   } catch {
     // Content the database can’t store either; the file is just parsed again next time
@@ -181,6 +183,13 @@ export const parseFileContent = async (file, errors, parsedFileMap) => {
       valueSources.set(path, parsed.valueSources);
     } else {
       valueSources.delete(path);
+    }
+
+    // Remembered, so the comments at the top of the file are kept on a save
+    if (parsed.leadingComment) {
+      leadingComments.set(path, parsed.leadingComment);
+    } else {
+      leadingComments.delete(path);
     }
 
     return parsed.content;

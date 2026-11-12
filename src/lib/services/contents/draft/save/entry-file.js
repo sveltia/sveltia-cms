@@ -32,9 +32,19 @@ import { formatEntryFile } from '$lib/services/contents/file/format';
  * every locale.
  * @param {ValueSourceMap} [args.valueSources] Source text of the values read from the file being
  * overwritten. See {@link formatEntryFile}.
+ * @param {string} [args.leadingComment] Comments at the top of the file being overwritten. See
+ * {@link formatEntryFile}.
  * @returns {Promise<string>} Formatted file data.
  */
-export const formatEntryData = ({ draft, config, _file, entry, locale, valueSources }) =>
+export const formatEntryData = ({
+  draft,
+  config,
+  _file,
+  entry,
+  locale,
+  valueSources,
+  leadingComment,
+}) =>
   formatEntryFile(
     // The format of `_file` is the one the file is actually saved in, e.g. the front matter format
     // detected in an existing file of a collection in the `frontmatter` format
@@ -44,6 +54,7 @@ export const formatEntryData = ({ draft, config, _file, entry, locale, valueSour
           _file,
           comments: getSingleFileComments({ config, fields: draft.fields }),
           valueSources,
+          leadingComment,
         }
       : {
           content: serializeContent({
@@ -55,5 +66,6 @@ export const formatEntryData = ({ draft, config, _file, entry, locale, valueSour
           _file,
           comments: getFieldComments(draft.fields),
           valueSources,
+          leadingComment,
         },
   );

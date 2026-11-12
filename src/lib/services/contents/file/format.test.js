@@ -1498,6 +1498,75 @@ describe('Test formatEntryFile() with comments', () => {
   });
 });
 
+describe('Test formatEntryFile() with leading comments', () => {
+  const leadingComment = '# Oh hai!\n# Never mind these.';
+
+  test('keeps the comments at the top of a YAML file', async () => {
+    const _file = /** @type {FileConfig} */ ({ format: 'yaml', extension: 'yml' });
+
+    expect(
+      await formatEntryFile({
+        content: { title: 'Hello' },
+        _file,
+        comments: { title: 'Page title' },
+        leadingComment,
+      }),
+    ).toBe('# Oh hai!\n# Never mind these.\n\n# Page title\ntitle: Hello\n');
+  });
+
+  test('keeps the comments at the top of a TOML file', async () => {
+    const _file = /** @type {FileConfig} */ ({ format: 'toml', extension: 'toml' });
+
+    expect(await formatEntryFile({ content: { title: 'Hello' }, _file, leadingComment })).toBe(
+      '# Oh hai!\n# Never mind these.\n\ntitle = "Hello"\n',
+    );
+  });
+
+  test('keeps the comments at the top of YAML and TOML front matter', async () => {
+    const yaml = /** @type {FileConfig} */ ({ format: 'yaml-frontmatter', extension: 'md' });
+
+    const toml = /** @type {FileConfig} */ ({
+      format: 'toml-frontmatter',
+      extension: 'md',
+      fmDelimiters: ['+++', '+++'],
+    });
+
+    expect(
+      await formatEntryFile({
+        content: { title: 'Hello', body: 'Text' },
+        _file: yaml,
+        leadingComment,
+      }),
+    ).toBe('---\n# Oh hai!\n# Never mind these.\n\ntitle: Hello\n---\n\nText\n');
+    expect(
+      await formatEntryFile({
+        content: { title: 'Hello', body: 'Text' },
+        _file: toml,
+        leadingComment,
+      }),
+    ).toBe('+++\n# Oh hai!\n# Never mind these.\n\ntitle = "Hello"\n+++\n\nText\n');
+  });
+
+  test('keeps front matter holding nothing but comments', async () => {
+    const _file = /** @type {FileConfig} */ ({ format: 'yaml-frontmatter', extension: 'md' });
+
+    expect(await formatEntryFile({ content: { body: 'Text' }, _file, leadingComment })).toBe(
+      '---\n# Oh hai!\n# Never mind these.\n---\n\nText\n',
+    );
+    expect(await formatEntryFile({ content: { body: '' }, _file, leadingComment })).toBe(
+      '---\n# Oh hai!\n# Never mind these.\n---\n',
+    );
+  });
+
+  test('ignores the comments in a JSON file', async () => {
+    const _file = /** @type {FileConfig} */ ({ format: 'json', extension: 'json' });
+
+    expect(await formatEntryFile({ content: { title: 'Hello' }, _file, leadingComment })).toBe(
+      '{\n  "title": "Hello"\n}\n',
+    );
+  });
+});
+
 describe('Test formatEntryFile() with the built-in formatter called from a custom one', () => {
   /** @type {string[]} */
   const registered = [];

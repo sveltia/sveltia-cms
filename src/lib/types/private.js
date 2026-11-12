@@ -842,6 +842,8 @@
  * format is `frontmatter`.
  * @property {ValueSourceMap} [valueSources] Source text of the values that the parsed content
  * can’t tell apart from others, e.g. a float that is a whole number.
+ * @property {string} [leadingComment] Comments at the top of a YAML or TOML file, or of its front
+ * matter, which are kept on a save.
  */
 
 /**

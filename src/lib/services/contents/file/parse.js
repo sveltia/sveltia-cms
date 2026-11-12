@@ -19,6 +19,10 @@ import {
   replaceBigInts,
   reviveUnsafeInteger,
 } from '$lib/services/contents/file/integers';
+import {
+  leadingComments,
+  rememberLeadingComment,
+} from '$lib/services/contents/file/leading-comments';
 import { rememberTomlValueSources } from '$lib/services/contents/file/toml-sources';
 import {
   collectJSONFloatSources,
@@ -184,18 +188,28 @@ const parseJSONFrontMatterHead = (head, path) => {
 };
 
 /**
+ * Wrap the given parser so it also remembers the comments at the top of a document read from a
+ * file.
+ * @param {(str: string, path?: string) => any} parser YAML or TOML parser.
+ * @returns {(str: string, path?: string) => any} Parser.
+ */
+const withLeadingComment = (parser) => (str, path) => {
+  const parsed = parser(str, path);
+
+  if (path !== undefined) {
+    rememberLeadingComment(path, str);
+  }
+
+  return parsed;
+};
+
+/**
  * Parser for each syntax, taking a document and the path of the file it’s read from.
  * @type {Record<FormatSyntax, (str: string, path?: string) => any>}
  */
 const PARSERS = {
-  /**
-   * Parse the given YAML document.
-   * @param {string} str Document.
-   * @param {string} [path] Path of the file the document is read from.
-   * @returns {any} Parsed object.
-   */
-  yaml: (str, path) => parseYAML(str, undefined, path),
-  toml: parseTOML,
+  yaml: withLeadingComment((str, path) => parseYAML(str, undefined, path)),
+  toml: withLeadingComment(parseTOML),
   json: parseJSON,
 };
 
@@ -379,6 +393,7 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
   // Forget what was read from an earlier version of the file
   valueSources.delete(path);
   detectedFrontMatterFormats.delete(path);
+  leadingComments.delete(path);
 
   // Normalize line breaks. The leading whitespace is only dropped where it’s meaningless: the
   // content of a raw file, and the body of a file without front matter, keep theirs, e.g. an

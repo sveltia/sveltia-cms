@@ -13,6 +13,7 @@ import {
   _resetUnsafeIntegerSources,
   getUnsafeIntegerSource,
 } from '$lib/services/contents/file/integers';
+import { leadingComments } from '$lib/services/contents/file/leading-comments';
 import {
   detectFrontMatterFormat,
   hasCustomParser,
@@ -1391,6 +1392,56 @@ describe('Test parseEntryFile()', () => {
     expect(await parseEntryFile({ ...entryBase, text: '\n---\n# Note\n---\n\nTwo' })).toEqual({
       body: 'Two',
     });
+  });
+
+  test('remembers the comments at the top of a YAML or TOML file and its front matter', async () => {
+    const { path } = entryBase;
+    const comment = '# Oh hai!\n# Never mind these.';
+
+    try {
+      getCollection.mockReturnValue({ _file: { format: 'yaml' } });
+      getCollectionFile.mockReturnValue({ _file: { format: 'yaml' } });
+
+      expect(await parseEntryFile({ ...entryBase, text: `${comment}\n\ntitle: Test\n` })).toEqual({
+        title: 'Test',
+      });
+      expect(leadingComments.get(path)).toBe(comment);
+
+      getCollection.mockReturnValue({ _file: { format: 'toml' } });
+      getCollectionFile.mockReturnValue({ _file: { format: 'toml' } });
+
+      expect(
+        await parseEntryFile({ ...entryBase, text: `${comment}\n\ntitle = "Test"\n` }),
+      ).toEqual({ title: 'Test' });
+      expect(leadingComments.get(path)).toBe(comment);
+
+      getCollection.mockReturnValue({ _file: { format: 'yaml-frontmatter' } });
+      getCollectionFile.mockReturnValue({ _file: { format: 'yaml-frontmatter' } });
+
+      expect(
+        await parseEntryFile({ ...entryBase, text: `---\n${comment}\n\ntitle: Test\n---\nBody` }),
+      ).toEqual({ title: 'Test', body: 'Body' });
+      expect(leadingComments.get(path)).toBe(comment);
+
+      // Forgotten once the file has none
+      expect(await parseEntryFile({ ...entryBase, text: '---\ntitle: Test\n---\nBody' })).toEqual({
+        title: 'Test',
+        body: 'Body',
+      });
+      expect(leadingComments.has(path)).toBe(false);
+
+      // Nor are they remembered for a JSON file
+      getCollection.mockReturnValue({ _file: { format: 'json' } });
+      getCollectionFile.mockReturnValue({ _file: { format: 'json' } });
+      leadingComments.set(path, comment);
+
+      expect(await parseEntryFile({ ...entryBase, text: '{ "title": "Test" }' })).toEqual({
+        title: 'Test',
+      });
+      expect(leadingComments.has(path)).toBe(false);
+    } finally {
+      leadingComments.delete(path);
+    }
   });
 
   test('only remembers the front matter format of a file with a front matter block', async () => {

@@ -1,6 +1,7 @@
 import { backend } from '$lib/services/backends';
 import { formatEntryData } from '$lib/services/contents/draft/save/entry-file';
 import { getSavedFileConfig } from '$lib/services/contents/file/detected-formats';
+import { getSavedLeadingComment } from '$lib/services/contents/file/leading-comments';
 import { getSavedValueSources } from '$lib/services/contents/file/value-sources';
 import { usesSingleFileStructure } from '$lib/services/contents/i18n/config';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
@@ -125,6 +126,11 @@ export const buildEntryFileChanges = async ({
           valueSources: _file.arrayFile
             ? undefined
             : getSavedValueSources({ previousPath: currentPath, path: change.path }),
+          // Nor do the comments at the top of such a file: a new item has no path of its own to
+          // take them over from, which would make the file forget them before it’s written
+          leadingComment: _file.arrayFile
+            ? undefined
+            : getSavedLeadingComment({ previousPath: currentPath, path: change.path }),
         }),
       ]);
 

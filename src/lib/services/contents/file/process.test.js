@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { version } from '$lib/services/app';
 import { cmsConfigVersion } from '$lib/services/config';
 import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
+import { leadingComments } from '$lib/services/contents/file/leading-comments';
 import { hasCustomParser } from '$lib/services/contents/file/parse';
 import {
   arrayFileItems,
@@ -393,6 +394,7 @@ describe('Test parseFileContent() with cached content', () => {
     vi.clearAllMocks();
     detectedFrontMatterFormats.clear();
     valueSources.clear();
+    leadingComments.clear();
     cmsConfigVersion.current = 'config-hash';
     parseEntryFile = (await import('$lib/services/contents/file/parse')).parseEntryFile;
     parseEntryFile.mockResolvedValue({ title: 'Parsed' });
@@ -533,6 +535,38 @@ describe('Test parseFileContent() with cached content', () => {
     );
 
     expect(valueSources.has('posts/a.md')).toBe(false);
+  });
+
+  test('collects the comments at the top of the file and restores them from the cache', async () => {
+    const parsedFileMap = new Map();
+
+    parseEntryFile.mockImplementation(async () => {
+      leadingComments.set('posts/a.md', '# Note');
+
+      return { title: 'Parsed' };
+    });
+
+    await parseFileContent(createFile(), [], parsedFileMap);
+
+    expect(parsedFileMap.get('posts/a.md')).toEqual({
+      key: getParsedContentKey(),
+      content: { title: 'Parsed' },
+      leadingComment: '# Note',
+    });
+
+    leadingComments.clear();
+
+    await parseFileContent(createFile({ parsed: parsedFileMap.get('posts/a.md') }), []);
+
+    expect(leadingComments.get('posts/a.md')).toBe('# Note');
+
+    // Cached content without them forgets what was remembered before
+    await parseFileContent(
+      createFile({ parsed: { key: getParsedContentKey(), content: { title: 'Parsed' } } }),
+      [],
+    );
+
+    expect(leadingComments.has('posts/a.md')).toBe(false);
   });
 
   test('collects nothing for content that can’t be copied, but still uses it', async () => {

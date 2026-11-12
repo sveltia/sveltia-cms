@@ -10,6 +10,7 @@ import {
   isSingleFileEntry,
   resolveCacheDB,
 } from '$lib/services/contents/draft/save/file-changes';
+import { leadingComments } from '$lib/services/contents/file/leading-comments';
 import { valueSources } from '$lib/services/contents/file/value-sources';
 
 vi.mock('$lib/services/backends', () => ({ backend: { current: null } }));
@@ -240,6 +241,64 @@ describe('buildEntryFileChanges()', () => {
     );
 
     valueSources.clear();
+  });
+
+  test('passes the comments at the top of the file being overwritten', async () => {
+    /**
+     * Plan a file rename.
+     * @returns {any} Planned change.
+     */
+    const planChange = () => ({
+      action: 'move',
+      slug: 'new',
+      path: 'posts/new.md',
+      previousPath: 'posts/old.md',
+      currentPath: 'posts/old.md',
+    });
+
+    leadingComments.clear();
+    leadingComments.set('posts/old.md', '# Note');
+
+    await buildEntryFileChanges({
+      draft,
+      config: singleFileConfig,
+      _file,
+      entry,
+      cacheDB: undefined,
+      planChange,
+    });
+
+    expect(formatEntryData).toHaveBeenLastCalledWith(
+      expect.objectContaining({ leadingComment: '# Note' }),
+    );
+    // The renamed file takes them over
+    expect(leadingComments.get('posts/new.md')).toBe('# Note');
+
+    // A new item of a file storing all the entries leaves that file’s comments alone, as the file
+    // is written as a whole later
+    /**
+     * Plan a new item.
+     * @returns {any} Planned change.
+     */
+    const planCreate = () => ({ action: 'create', slug: 'new', path: 'posts/new.md' });
+
+    leadingComments.set('posts/new.md', '# Note');
+
+    await buildEntryFileChanges({
+      draft,
+      config: singleFileConfig,
+      _file: { format: 'yaml', arrayFile: true },
+      entry,
+      cacheDB: undefined,
+      planChange: planCreate,
+    });
+
+    expect(formatEntryData).toHaveBeenLastCalledWith(
+      expect.objectContaining({ leadingComment: undefined }),
+    );
+    expect(leadingComments.get('posts/new.md')).toBe('# Note');
+
+    leadingComments.clear();
   });
 
   test.each([[{ i18nSingleFile: true }], [{ i18nSingleFileDefaultRoot: true }]])(

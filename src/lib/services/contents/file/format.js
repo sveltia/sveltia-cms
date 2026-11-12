@@ -15,6 +15,7 @@ import {
   hasUnsafeIntegerSources,
   restoreBigInts,
 } from '$lib/services/contents/file/integers';
+import { prependLeadingComment } from '$lib/services/contents/file/leading-comments';
 import { restoreTomlValueSources } from '$lib/services/contents/file/toml-sources';
 import {
   getJSONSourceText,
@@ -34,6 +35,15 @@ import {
  * RawEntryContent,
  * YamlFormatOptions,
  * } from '$lib/types/public';
+ */
+
+/**
+ * Comments to write in a file.
+ * @typedef {object} FormatterComments
+ * @property {Record<FieldKeyPath, string>} [comments] Comments to add before the keys, keyed by
+ * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
+ * @property {string} [leadingComment] Comments at the top of the file being overwritten, or of its
+ * front matter, to keep. YAML and TOML only.
  */
 
 /**
@@ -255,26 +265,32 @@ export const formatYAML = (
 /**
  * Formatter for each syntax, taking the content, the file configuration and the comments to add.
  * @type {Record<FormatSyntax, (content: RawEntryContent, _file: FileConfig,
- * comments?: Record<FieldKeyPath, string>) => string>}
+ * comments?: FormatterComments) => string>}
  */
 const FORMATTERS = {
   /**
    * Format the given content as YAML, with the comments.
    * @param {RawEntryContent} content Content.
    * @param {FileConfig} _file File configuration.
-   * @param {Record<FieldKeyPath, string>} [comments] Comments.
+   * @param {FormatterComments} [comments] Comments.
    * @returns {string} Formatted document.
    */
-  yaml: (content, { yamlQuote = false }, comments) =>
-    formatYAML(content, undefined, { quote: yamlQuote }, comments),
+  yaml: (content, { yamlQuote = false }, { comments, leadingComment } = {}) =>
+    prependLeadingComment(
+      formatYAML(content, undefined, { quote: yamlQuote }, comments),
+      leadingComment,
+    ),
   /**
-   * Format the given content as TOML.
+   * Format the given content as TOML, with the comments at the top.
    * @param {RawEntryContent} content Content.
+   * @param {FileConfig} _file File configuration.
+   * @param {FormatterComments} [comments] Comments.
    * @returns {string} Formatted document.
    */
-  toml: (content) => formatTOML(content),
+  toml: (content, _file, { leadingComment } = {}) =>
+    prependLeadingComment(formatTOML(content), leadingComment),
   /**
-   * Format the given content as JSON.
+   * Format the given content as JSON, which has no comments.
    * @param {RawEntryContent} content Content.
    * @returns {string} Formatted document.
    */
@@ -297,11 +313,13 @@ const isFrontMatterFormat = (format) =>
  * @param {FileConfig} args._file File configuration.
  * @param {Record<FieldKeyPath, string>} [args.comments] Comments to add before the keys, keyed by
  * field key path. YAML only.
+ * @param {string} [args.leadingComment] Comments at the top of the front matter being overwritten.
+ * YAML and TOML only.
  * @returns {string} Formatted front matter.
  * @throws {Error} When the format is not a front matter format, or the content could not be
  * formatted.
  */
-export const formatFrontMatter = ({ content, _file, comments }) => {
+export const formatFrontMatter = ({ content, _file, comments, leadingComment }) => {
   const {
     format,
     fmDelimiters,
@@ -330,6 +348,11 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
   // that, e.g. a thematic break below a blank line, but the body is written as is. The blank line
   // inside the block keeps the parser from taking the body’s delimiter as the end
   if (!Object.keys(content).length) {
+    // A block holding nothing but comments is kept as is
+    if (leadingComment) {
+      return `${sd}\n${leadingComment}\n${ed}\n${body ? `\n${body}\n` : ''}`;
+    }
+
     const firstLine = body.trimStart().split('\n', 1)[0].trimEnd();
     const delimiters = [sd, ...Object.values(FRONTMATTER_DELIMITER_MAP).map(([d]) => d)];
 
@@ -342,7 +365,7 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
     throw new Error(`Unsupported front matter format: ${format}`);
   }
 
-  let head = FORMATTERS[syntax](content, _file, comments);
+  let head = FORMATTERS[syntax](content, _file, { comments, leadingComment });
 
   // Like Netlify/Decap CMS, strip the outer braces of the object when they double as the
   // delimiters, so the front matter block is the object itself rather than one wrapped in another
@@ -365,10 +388,12 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
  * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
  * @param {ValueSourceMap} [entry.valueSources] Source text of the values read from the file being
  * overwritten, to write the ones that haven’t changed as they were.
+ * @param {string} [entry.leadingComment] Comments at the top of the file being overwritten, or of
+ * its front matter, to keep. YAML and TOML only.
  * @returns {string} Formatted string.
  * @throws {Error} When the content could not be formatted.
  */
-const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources }) => {
+const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources, leadingComment }) => {
   const { format } = _file;
 
   if (format === 'raw') {
@@ -385,13 +410,13 @@ const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources }) 
 
   try {
     if (isFrontMatterFormat(format)) {
-      return formatFrontMatter({ content, _file, comments });
+      return formatFrontMatter({ content, _file, comments, leadingComment });
     }
 
     // A built-in format other than `raw` has a syntax
     const syntax = /** @type {FormatSyntax} */ (getFormatSyntax(format));
 
-    return `${FORMATTERS[syntax](content, _file, comments)}\n`;
+    return `${FORMATTERS[syntax](content, _file, { comments, leadingComment })}\n`;
   } catch (/** @type {any} */ ex) {
     throw new Error(`The entry could not be formatted due to ${ex.name}: ${ex.message}`, {
       cause: ex,
@@ -412,11 +437,19 @@ const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources }) 
  * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
  * @param {ValueSourceMap} [entry.valueSources] Source text of the values read from the file being
  * overwritten, to write the ones that haven’t changed as they were.
+ * @param {string} [entry.leadingComment] Comments at the top of the file being overwritten, or of
+ * its front matter, to keep. YAML and TOML only.
  * @returns {Promise<string>} Formatted string.
  * @throws {Error} When the format has no formatter, neither a custom one nor a built-in one, or the
  * content could not be formatted. Writing an empty file instead would wipe the entry’s content.
  */
-export const formatEntryFile = async ({ content, _file, comments, valueSources }) => {
+export const formatEntryFile = async ({
+  content,
+  _file,
+  comments,
+  valueSources,
+  leadingComment,
+}) => {
   // An existing file of a collection in the `frontmatter` format is saved in the front matter
   // format it was read in, but the custom formatter is registered under the configured format. Fall
   // back to one registered for the detected format, which is what was used before
@@ -439,7 +472,7 @@ export const formatEntryFile = async ({ content, _file, comments, valueSources }
       );
     }
 
-    return formatWithBuiltInFormatter({ content, _file, comments, valueSources });
+    return formatWithBuiltInFormatter({ content, _file, comments, valueSources, leadingComment });
   }
 
   /** @type {FileFormatterContext} */
@@ -470,6 +503,7 @@ export const formatEntryFile = async ({ content, _file, comments, valueSources }
         _file,
         comments,
         valueSources,
+        leadingComment,
       });
     },
   };

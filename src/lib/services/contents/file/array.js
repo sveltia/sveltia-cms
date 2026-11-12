@@ -8,6 +8,7 @@ import { isArrayFileCollection } from '$lib/services/contents/collection/predica
 import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 import { formatEntryFile } from '$lib/services/contents/file/format';
+import { leadingComments } from '$lib/services/contents/file/leading-comments';
 import { arrayFileItems, createArrayItemEntry } from '$lib/services/contents/file/process';
 import { moveArrayItemSources, valueSources } from '$lib/services/contents/file/value-sources';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
@@ -264,6 +265,7 @@ export const combineArrayFileChanges = async (changes) => {
           content: /** @type {any} */ (slots.map(({ item }) => item)),
           _file: collection._file,
           valueSources: sourceMap,
+          leadingComment: leadingComments.get(path),
         }),
       };
 
