@@ -30,8 +30,6 @@ export const BUNDLED_MODULE_LOADERS = {
   // eslint-disable-next-line jsdoc/require-jsdoc
   'terra-draw': () => import('terra-draw'),
   // eslint-disable-next-line jsdoc/require-jsdoc
-  'terra-draw-leaflet-adapter': () => import('terra-draw-leaflet-adapter'),
-  // eslint-disable-next-line jsdoc/require-jsdoc
   turndown: () => import('turndown/lib/turndown.browser.es.js'),
 };
 

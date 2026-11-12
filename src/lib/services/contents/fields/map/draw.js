@@ -1,5 +1,6 @@
 import { loadModule } from '$lib/services/app/dependencies';
 import { getGeometryBounds, roundCoordinates } from '$lib/services/contents/fields/map/helpers';
+import { createLeafletAdapter } from '$lib/services/contents/fields/map/leaflet-adapter';
 import { toFixed } from '$lib/services/utils/number';
 
 /**
@@ -103,14 +104,13 @@ export const createMapDrawController = async ({
   isCancelled,
 }) => {
   /** @type {import('terra-draw')} */
-  const { TerraDraw, TerraDrawLineStringMode, TerraDrawPointMode, TerraDrawPolygonMode } =
-    await loadModule('terra-draw', 'dist/terra-draw.module.js');
-
-  /** @type {import('terra-draw-leaflet-adapter')} */
-  const { TerraDrawLeafletAdapter } = await loadModule(
-    'terra-draw-leaflet-adapter',
-    'dist/terra-draw-leaflet-adapter.module.js?module',
-  );
+  const {
+    TerraDraw,
+    TerraDrawExtend,
+    TerraDrawLineStringMode,
+    TerraDrawPointMode,
+    TerraDrawPolygonMode,
+  } = await loadModule('terra-draw', 'dist/terra-draw.module.js');
 
   if (isCancelled()) {
     return undefined;
@@ -125,7 +125,7 @@ export const createMapDrawController = async ({
   const drawMode = geometryType.toLowerCase();
 
   const draw = new TerraDraw({
-    adapter: new TerraDrawLeafletAdapter({ lib: leaflet, map }),
+    adapter: createLeafletAdapter({ TerraDrawExtend, leaflet, map }),
     modes: [new Mode()],
   });
 

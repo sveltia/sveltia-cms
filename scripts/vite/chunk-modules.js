@@ -31,11 +31,16 @@ const LIB_DIR = path.resolve('src/lib');
  * option of the build.
  */
 const RESOLVE_SUFFIXES = ['', '.js', '.svelte', '/index.js'];
+
 /**
  * Regular expression to match the specifiers of the static and dynamic imports of a module. It
- * works with Svelte components as well, which can’t be parsed as JavaScript.
+ * works with Svelte components as well, which can’t be parsed as JavaScript. The imports in a JSDoc
+ * comment, e.g. an `@import` tag or a `{import('…')}` type, are skipped, as they only import types:
+ * those on a line starting with `*`, or after a `/*` on the same line.
  */
-const IMPORT_SPECIFIER_REGEX = /(?:\bfrom|\bimport)\s*\(?\s*'([^']+)'/g;
+const IMPORT_SPECIFIER_REGEX =
+  /(?<=^(?![ \t]*\*)(?:(?!\/\*)[^\n])*?)(?:\bfrom|\bimport)\s*\(?\s*'([^']+)'/gm;
+
 /**
  * Whether the given specifier points to a source module rather than a package.
  * @param {string} specifier Module specifier.

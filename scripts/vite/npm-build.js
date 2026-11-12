@@ -37,7 +37,6 @@ const LIBRARY_PACKAGES = [
   'pdfjs-dist',
   'svgo',
   'terra-draw',
-  'terra-draw-leaflet-adapter',
   'turndown',
 ];
 

@@ -15,18 +15,21 @@ const CHUNKS = {
   git: 'src/lib/chunks/git.js',
   gitea: 'src/lib/chunks/gitea.js',
   gitlab: 'src/lib/chunks/gitlab.js',
+  map: 'src/lib/chunks/map.js',
   qrcode: 'src/lib/chunks/qrcode.js',
   'react-dom': 'src/lib/chunks/react-dom.js',
 };
 
 /**
  * Chunks made of app modules rather than a package, which take the modules they share with the rest
- * of the app from the main bundle, keyed by chunk name: the backends a site may not use. The value
- * is the directory whose modules the chunk owns. See {@link getChunkModules}.
+ * of the app from the main bundle, keyed by chunk name: the backends a site may not use, and the
+ * Map field, which few sites have. The value is the directory whose modules the chunk owns. See
+ * {@link getChunkModules}.
  */
 const APP_CHUNK_DIRS = {
   gitea: 'src/lib/services/backends/git/gitea',
   gitlab: 'src/lib/services/backends/git/gitlab',
+  map: 'src/lib/services/contents/fields/map',
 };
 
 /**

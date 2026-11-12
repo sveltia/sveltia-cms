@@ -21,14 +21,10 @@ vi.mock('$lib/services/app/dependencies', () => ({
       return import('leaflet/dist/leaflet-src.esm.js');
     }
 
-    if (library === 'terra-draw') {
-      return import('terra-draw');
-    }
-
-    return import('terra-draw-leaflet-adapter');
+    return import('terra-draw');
   }),
   getChunkURLs: vi.fn(() => []),
-  loadChunk: vi.fn(),
+  loadChunk: vi.fn(() => import('$lib/chunks/map')),
 }));
 vi.mock('$lib/services/contents/fields/map/geocoding', () => ({ searchLocations }));
 
@@ -124,6 +120,35 @@ describe('MapEditor', () => {
     await waitForMap(container);
     await page.getByRole('searchbox').fill('Nowhere');
     await expect.element(page.getByRole('alert')).toHaveTextContent('No results found.');
+  });
+
+  test('loads the services again once the map is ready if fetching them early fails', async () => {
+    const { loadChunk } = await import('$lib/services/app/dependencies');
+
+    vi.mocked(loadChunk).mockRejectedValueOnce(new Error('Failed to load the map chunk.'));
+
+    const { container } = await renderEditor();
+
+    await waitForMap(container);
+    expect(loadChunk).toHaveBeenCalledTimes(2);
+    // The drawing tools are ready
+    await expect
+      .poll(
+        () =>
+          /** @type {HTMLElement} */ (container.querySelector('.leaflet-container')).style.cursor,
+      )
+      .toBe('crosshair');
+  });
+
+  test('reports no results if the services fail to load', async () => {
+    const { loadChunk } = await import('$lib/services/app/dependencies');
+    const { container } = await renderEditor();
+
+    await waitForMap(container);
+    vi.mocked(loadChunk).mockRejectedValueOnce(new Error('Failed to load the map chunk.'));
+    await page.getByRole('searchbox').fill('Tokyo');
+    await expect.element(page.getByRole('alert')).toHaveTextContent('No results found.');
+    expect(searchLocations).not.toHaveBeenCalled();
   });
 
   test('shows the results for the latest query only, even if an earlier one finishes last', async () => {
@@ -246,6 +271,22 @@ describe('MapEditor', () => {
     await expect.poll(() => document.querySelector('[role="alertdialog"]')).toBeNull();
   });
 
+  test('reports a failure to load the services as a failure to get the location', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { loadChunk } = await import('$lib/services/app/dependencies');
+    const { container } = await renderEditor();
+
+    await waitForMap(container);
+    vi.mocked(loadChunk).mockRejectedValueOnce(new Error('Failed to load the map chunk.'));
+    await page.getByRole('button', { name: 'Use Your Location' }).click();
+    await expect
+      .element(page.getByRole('alertdialog', { name: 'Geolocation Error' }))
+      .toHaveTextContent('Geolocation Error There was an error while retrieving your location. OK');
+    await page.getByRole('button', { name: 'OK' }).click();
+    await expect.poll(() => document.querySelector('[role="alertdialog"]')).toBeNull();
+  });
+
   test('reports a browser without geolocation', async () => {
     const { container } = await renderEditor();
 
@@ -274,7 +315,9 @@ describe('MapEditor', () => {
 
     await waitForMap(container);
     // The drawing library renders the features in its own pane
-    await expect.poll(() => container.querySelectorAll('.leaflet-30-pane path').length).toBe(1);
+    await expect
+      .poll(() => container.querySelectorAll('.leaflet-terra-draw-30-pane path').length)
+      .toBe(1);
 
     // Clicking elsewhere on the map places the point there instead
     const map = /** @type {HTMLElement} */ (container.querySelector('.leaflet-container'));
@@ -299,7 +342,7 @@ describe('MapEditor', () => {
     await expect
       .poll(() => props.currentValue)
       .not.toBe(JSON.stringify({ type: 'Point', coordinates: [139.6917, 35.6895] }));
-    expect(container.querySelectorAll('.leaflet-30-pane path')).toHaveLength(1);
+    expect(container.querySelectorAll('.leaflet-terra-draw-30-pane path')).toHaveLength(1);
   });
 
   test('saves a line drawn on the map once it’s finished', async () => {
@@ -331,7 +374,9 @@ describe('MapEditor', () => {
     const { props, container } = await renderEditor({ decimals: 2 }, value);
 
     await waitForMap(container);
-    await expect.poll(() => container.querySelectorAll('.leaflet-30-pane path').length).toBe(1);
+    await expect
+      .poll(() => container.querySelectorAll('.leaflet-terra-draw-30-pane path').length)
+      .toBe(1);
     expect(props.currentValue).toBe(value);
   });
 
@@ -352,7 +397,9 @@ describe('MapEditor', () => {
 
     await waitForMap(container);
     // Lines are drawn in a pane of their own
-    await expect.poll(() => container.querySelector('.leaflet-10-pane path')).not.toBeNull();
+    await expect
+      .poll(() => container.querySelector('.leaflet-terra-draw-10-pane path'))
+      .not.toBeNull();
 
     await page.getByRole('searchbox').fill('Tokyo');
 
@@ -365,7 +412,7 @@ describe('MapEditor', () => {
 
     // A point is not a valid value for the field
     props.currentValue = JSON.stringify({ type: 'Point', coordinates: [139.69, 35.69] });
-    await expect.poll(() => container.querySelector('.leaflet-10-pane path')).toBeNull();
+    await expect.poll(() => container.querySelector('.leaflet-terra-draw-10-pane path')).toBeNull();
   });
 
   test('ignores an invalid value', async () => {

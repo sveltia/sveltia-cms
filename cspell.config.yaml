@@ -63,6 +63,7 @@ words:
   - DIRC
   - discardable
   - dompurify
+  - Draggability
   - embeddable
   - esbuild
   - esrap
@@ -109,6 +110,7 @@ words:
   - keyvalue
   - Kohei
   - kyoshino
+  - latlng
   - libheif
   - llms
   - longtask
@@ -201,6 +203,7 @@ words:
   - unlocalised
   - unlocalized
   - unpatched
+  - unproject
   - unproxify
   - unreviewed
   - unrs

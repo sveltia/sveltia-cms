@@ -255,6 +255,13 @@ describe('dependencies', () => {
       expect(module.Buffer).toBeTypeOf('function');
     });
 
+    it('should load the Map field chunk from its source entry in development', async () => {
+      const module = await loadChunk('map');
+
+      expect(module.createMapDrawController).toBeTypeOf('function');
+      expect(module.parseGeoJSON).toBeTypeOf('function');
+    });
+
     it('should reject with the last error once every location has failed', async () => {
       // A `file:` URL can’t be imported here, and neither can the CDN
       await expect(loadChunk('unknown')).rejects.toThrow('Failed to load the unknown chunk.');

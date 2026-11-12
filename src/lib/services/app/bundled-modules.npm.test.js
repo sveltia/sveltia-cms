@@ -15,7 +15,6 @@ describe('bundled modules in the npm build', () => {
     ['pdfjs-dist', 'getDocument'],
     ['svgo', 'optimize'],
     ['terra-draw', 'TerraDraw'],
-    ['terra-draw-leaflet-adapter', 'TerraDrawLeafletAdapter'],
     ['turndown', 'default'],
   ])('loads %s', async (library, exportName) => {
     await expect(BUNDLED_MODULE_LOADERS[library]()).resolves.toHaveProperty(exportName);
