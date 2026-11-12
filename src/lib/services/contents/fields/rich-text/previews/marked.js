@@ -1,15 +1,36 @@
 import { highlightCodeToHTML } from '@sveltia/ui';
-import { use } from 'marked';
-import markedBidi from 'marked-bidi';
+import { Renderer, use } from 'marked';
 
 /**
- * @import { Tokens } from 'marked';
+ * @import { RendererObject, Tokens } from 'marked';
  */
 
 /**
  * Whether {@link addMarkedExtensions} has added the extensions.
  */
 let extensionsAdded = false;
+
+/**
+ * Wrap one of Marked’s default block renderers to add `dir="auto"` to the opening tag, so the
+ * browser picks the direction of the block from its first strong character, e.g. right-to-left for
+ * Arabic or Hebrew text.
+ * @param {'heading' | 'list' | 'paragraph'} type Block type.
+ * @returns {(this: Renderer, token: any) => string} Renderer.
+ */
+const withDirAuto = (type) =>
+  function render(token) {
+    return Renderer.prototype[type].call(this, token).replace(/^<(\w+)/, '<$1 dir="auto"');
+  };
+
+/**
+ * Renderers that add `dir="auto"` to the text blocks for bidirectional text support.
+ * @type {RendererObject}
+ */
+const bidiRenderers = {
+  heading: withDirAuto('heading'),
+  list: withDirAuto('list'),
+  paragraph: withDirAuto('paragraph'),
+};
 
 /**
  * Render a code block with syntax highlighting using Shiki. This is done in the renderer to ensure
@@ -36,5 +57,5 @@ export const addMarkedExtensions = () => {
   }
 
   extensionsAdded = true;
-  use(markedBidi(), { renderer: { code: renderCode } });
+  use({ renderer: { ...bidiRenderers, code: renderCode } });
 };

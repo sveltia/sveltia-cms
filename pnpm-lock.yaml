@@ -78,9 +78,6 @@ importers:
       marked:
         specifier: ^18.2.0
         version: 18.2.0
-      marked-bidi:
-        specifier: ^1.0.15
-        version: 1.0.15(marked@18.2.0)
       mime:
         specifier: ^4.1.2
         version: 4.1.2
@@ -2960,11 +2957,6 @@ packages:
 
   magicast@0.5.5:
     resolution: {integrity: sha512-UicdXN8zQ3JHlxVq+28afMXPr1z7WNY6+7EJnzTdQWkTAlMLF5fNCCKxJHBQwGaNGR11581EiQmQzx73+MvszA==}
-
-  marked-bidi@1.0.15:
-    resolution: {integrity: sha512-kNL3nSxUsZEi854rxstqZohjw7L+Mmm1GEpk/RDZzrXzffzg3NArqypygBfVm6VAPeAMv5G3OA694ndh2CXS4A==}
-    peerDependencies:
-      marked: '>= 4 < 19'
 
   marked@18.2.0:
     resolution: {integrity: sha512-KaeL+tAbtvI930q7HE2PN5lYXYdT8EiSmxHlN6F3rsfb57wd5mp5W5TLazpdj4inTQBJdgjYwbs40W/0VUGU+Q==}
@@ -6800,10 +6792,6 @@ snapshots:
       '@babel/parser': 7.29.13
       '@babel/types': 7.29.11
       source-map-js: 1.2.2
-
-  marked-bidi@1.0.15(marked@18.2.0):
-    dependencies:
-      marked: 18.2.0
 
   marked@18.2.0: {}
 

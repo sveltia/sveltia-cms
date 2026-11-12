@@ -76,7 +76,6 @@
     "leaflet": "^1.9.4",
     "lexical": "^0.53.0",
     "marked": "^18.2.0",
-    "marked-bidi": "^1.0.15",
     "mime": "^4.1.2",
     "parse-entities": "^4.0.2",
     "pdfjs-dist": "^6.5.438",
