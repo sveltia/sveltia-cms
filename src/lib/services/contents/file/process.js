@@ -12,11 +12,9 @@ import { resolveCollectionAndFile } from '$lib/services/contents/collection/file
 import { getNestedIndexFileName } from '$lib/services/contents/collection/nested';
 import { hasRootField } from '$lib/services/contents/entry/fields';
 import { convertMapLists, getMapKeyField } from '$lib/services/contents/fields/list/map';
-import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
 import { mayHaveUnsafeInteger } from '$lib/services/contents/file/integers';
-import { leadingComments } from '$lib/services/contents/file/leading-comments';
 import { hasCustomParser, parseEntryFile } from '$lib/services/contents/file/parse';
-import { valueSources } from '$lib/services/contents/file/value-sources';
+import { fileStates, setFileState } from '$lib/services/contents/file/state';
 import {
   usesMultiFileStructure,
   usesSingleFileStructure,
@@ -146,9 +144,8 @@ const cacheParsedContent = ({ parsedFileMap, path, key, content }) => {
       key,
       // Copied, as the content is processed further, and the copy has to be cached as parsed
       content: structuredClone(content),
-      format: detectedFrontMatterFormats.get(path),
-      valueSources: valueSources.get(path),
-      leadingComment: leadingComments.get(path),
+      // Along with what is remembered about the file, so it’s saved back the same way
+      ...fileStates.get(path),
     });
   } catch {
     // Content the database can’t store either; the file is just parsed again next time
@@ -171,28 +168,13 @@ export const parseFileContent = async (file, errors, parsedFileMap) => {
   const customParser = hasCustomParser(file);
 
   if (parsed?.key === key && !customParser) {
-    // Remembered, so the file is saved back in the same format, as when it was parsed
-    if (parsed.format) {
-      detectedFrontMatterFormats.set(path, parsed.format);
-    } else {
-      detectedFrontMatterFormats.delete(path);
-    }
+    const { key: _key, content, ...state } = parsed;
 
-    // Remembered, so the floats that are whole numbers are saved back as they were written
-    if (parsed.valueSources) {
-      valueSources.set(path, parsed.valueSources);
-    } else {
-      valueSources.delete(path);
-    }
+    // Remembered, so the file is saved back the way it was written, as when it was parsed: in the
+    // same front matter format, with the floats that are whole numbers and the comments at the top
+    setFileState(path, state);
 
-    // Remembered, so the comments at the top of the file are kept on a save
-    if (parsed.leadingComment) {
-      leadingComments.set(path, parsed.leadingComment);
-    } else {
-      leadingComments.delete(path);
-    }
-
-    return parsed.content;
+    return content;
   }
 
   try {

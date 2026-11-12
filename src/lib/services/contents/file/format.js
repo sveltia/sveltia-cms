@@ -27,7 +27,7 @@ import {
 /**
  * @import { Scalar, ToStringOptions } from 'yaml';
  * @import { FormatSyntax } from '$lib/services/contents/file/constants';
- * @import { FileConfig, InternalLocaleCode, ValueSourceMap } from '$lib/types/private';
+ * @import { FileConfig, FileState, InternalLocaleCode } from '$lib/types/private';
  * @import {
  * FieldKeyPath,
  * FileFormatterContext,
@@ -35,15 +35,6 @@ import {
  * RawEntryContent,
  * YamlFormatOptions,
  * } from '$lib/types/public';
- */
-
-/**
- * Comments to write in a file.
- * @typedef {object} FormatterComments
- * @property {Record<FieldKeyPath, string>} [comments] Comments to add before the keys, keyed by
- * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
- * @property {string} [leadingComment] Comments at the top of the file being overwritten, or of its
- * front matter, to keep. YAML and TOML only.
  */
 
 /**
@@ -265,36 +256,49 @@ export const formatYAML = (
 /**
  * Formatter for each syntax, taking the content, the file configuration and the comments to add.
  * @type {Record<FormatSyntax, (content: RawEntryContent, _file: FileConfig,
- * comments?: FormatterComments) => string>}
+ * comments?: Record<FieldKeyPath, string>) => string>}
  */
 const FORMATTERS = {
   /**
    * Format the given content as YAML, with the comments.
    * @param {RawEntryContent} content Content.
    * @param {FileConfig} _file File configuration.
-   * @param {FormatterComments} [comments] Comments.
+   * @param {Record<FieldKeyPath, string>} [comments] Comments.
    * @returns {string} Formatted document.
    */
-  yaml: (content, { yamlQuote = false }, { comments, leadingComment } = {}) =>
-    prependLeadingComment(
-      formatYAML(content, undefined, { quote: yamlQuote }, comments),
-      leadingComment,
-    ),
+  yaml: (content, { yamlQuote = false }, comments) =>
+    formatYAML(content, undefined, { quote: yamlQuote }, comments),
   /**
-   * Format the given content as TOML, with the comments at the top.
+   * Format the given content as TOML.
    * @param {RawEntryContent} content Content.
-   * @param {FileConfig} _file File configuration.
-   * @param {FormatterComments} [comments] Comments.
    * @returns {string} Formatted document.
    */
-  toml: (content, _file, { leadingComment } = {}) =>
-    prependLeadingComment(formatTOML(content), leadingComment),
+  toml: (content) => formatTOML(content),
   /**
-   * Format the given content as JSON, which has no comments.
+   * Format the given content as JSON.
    * @param {RawEntryContent} content Content.
    * @returns {string} Formatted document.
    */
   json: (content) => formatJSON(content),
+};
+
+/**
+ * Format the given content in the given syntax, with the comments. The comments at the top of the
+ * file being overwritten are kept in YAML and TOML; JSON has no comments.
+ * @param {object} args Arguments.
+ * @param {FormatSyntax} args.syntax Syntax.
+ * @param {RawEntryContent} args.content Content.
+ * @param {FileConfig} args._file File configuration.
+ * @param {Record<FieldKeyPath, string>} [args.comments] Comments to add before the keys, keyed by
+ * field key path. YAML only.
+ * @param {string} [args.leadingComment] Comments at the top of the file being overwritten, or of
+ * its front matter.
+ * @returns {string} Formatted document.
+ */
+const formatSyntax = ({ syntax, content, _file, comments, leadingComment }) => {
+  const str = FORMATTERS[syntax](content, _file, comments);
+
+  return syntax === 'json' ? str : prependLeadingComment(str, leadingComment);
 };
 
 /**
@@ -365,7 +369,7 @@ export const formatFrontMatter = ({ content, _file, comments, leadingComment }) 
     throw new Error(`Unsupported front matter format: ${format}`);
   }
 
-  let head = FORMATTERS[syntax](content, _file, { comments, leadingComment });
+  let head = formatSyntax({ syntax, content, _file, comments, leadingComment });
 
   // Like Netlify/Decap CMS, strip the outer braces of the object when they double as the
   // delimiters, so the front matter block is the object itself rather than one wrapped in another
@@ -386,14 +390,14 @@ export const formatFrontMatter = ({ content, _file, comments, leadingComment }) 
  * @param {FileConfig} entry._file Entry file configuration.
  * @param {Record<FieldKeyPath, string>} [entry.comments] Comments to add before the keys, keyed by
  * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
- * @param {ValueSourceMap} [entry.valueSources] Source text of the values read from the file being
- * overwritten, to write the ones that haven’t changed as they were.
- * @param {string} [entry.leadingComment] Comments at the top of the file being overwritten, or of
- * its front matter, to keep. YAML and TOML only.
+ * @param {FileState} [entry.state] What is remembered about the file being overwritten: the source
+ * text of the values, to write the ones that haven’t changed as they were, and the comments at the
+ * top, to keep in YAML and TOML.
  * @returns {string} Formatted string.
  * @throws {Error} When the content could not be formatted.
  */
-const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources, leadingComment }) => {
+const formatWithBuiltInFormatter = ({ content, _file, comments, state = {} }) => {
+  const { valueSources, leadingComment } = state;
   const { format } = _file;
 
   if (format === 'raw') {
@@ -416,7 +420,7 @@ const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources, le
     // A built-in format other than `raw` has a syntax
     const syntax = /** @type {FormatSyntax} */ (getFormatSyntax(format));
 
-    return `${FORMATTERS[syntax](content, _file, { comments, leadingComment })}\n`;
+    return `${formatSyntax({ syntax, content, _file, comments, leadingComment })}\n`;
   } catch (/** @type {any} */ ex) {
     throw new Error(`The entry could not be formatted due to ${ex.name}: ${ex.message}`, {
       cause: ex,
@@ -435,21 +439,14 @@ const formatWithBuiltInFormatter = ({ content, _file, comments, valueSources, le
  * @param {FileConfig} entry._file Entry file configuration.
  * @param {Record<FieldKeyPath, string>} [entry.comments] Comments to add before the keys, keyed by
  * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
- * @param {ValueSourceMap} [entry.valueSources] Source text of the values read from the file being
- * overwritten, to write the ones that haven’t changed as they were.
- * @param {string} [entry.leadingComment] Comments at the top of the file being overwritten, or of
- * its front matter, to keep. YAML and TOML only.
+ * @param {FileState} [entry.state] What is remembered about the file being overwritten: the source
+ * text of the values, to write the ones that haven’t changed as they were, and the comments at the
+ * top, to keep in YAML and TOML.
  * @returns {Promise<string>} Formatted string.
  * @throws {Error} When the format has no formatter, neither a custom one nor a built-in one, or the
  * content could not be formatted. Writing an empty file instead would wipe the entry’s content.
  */
-export const formatEntryFile = async ({
-  content,
-  _file,
-  comments,
-  valueSources,
-  leadingComment,
-}) => {
+export const formatEntryFile = async ({ content, _file, comments, state }) => {
   // An existing file of a collection in the `frontmatter` format is saved in the front matter
   // format it was read in, but the custom formatter is registered under the configured format. Fall
   // back to one registered for the detected format, which is what was used before
@@ -472,7 +469,7 @@ export const formatEntryFile = async ({
       );
     }
 
-    return formatWithBuiltInFormatter({ content, _file, comments, valueSources, leadingComment });
+    return formatWithBuiltInFormatter({ content, _file, comments, state });
   }
 
   /** @type {FileFormatterContext} */
@@ -502,8 +499,7 @@ export const formatEntryFile = async ({
         content: Array.isArray(data) ? [...data] : { ...data },
         _file,
         comments,
-        valueSources,
-        leadingComment,
+        state,
       });
     },
   };

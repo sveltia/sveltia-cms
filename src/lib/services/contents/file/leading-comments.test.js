@@ -2,14 +2,13 @@ import { afterEach, describe, expect, test } from 'vitest';
 
 import {
   getLeadingComment,
-  getSavedLeadingComment,
-  leadingComments,
   prependLeadingComment,
   rememberLeadingComment,
 } from '$lib/services/contents/file/leading-comments';
+import { fileStates } from '$lib/services/contents/file/state';
 
 afterEach(() => {
-  leadingComments.clear();
+  fileStates.clear();
 });
 
 describe('Test getLeadingComment()', () => {
@@ -50,26 +49,10 @@ describe('Test getLeadingComment()', () => {
 describe('Test rememberLeadingComment()', () => {
   test('remembers the comments of a file and forgets them once they’re gone', () => {
     rememberLeadingComment('data.yml', '# Note\n\ntitle: Hello');
-    expect(leadingComments.get('data.yml')).toBe('# Note');
+    expect(fileStates.get('data.yml')?.leadingComment).toBe('# Note');
 
     rememberLeadingComment('data.yml', 'title: Hello');
-    expect(leadingComments.has('data.yml')).toBe(false);
-  });
-});
-
-describe('Test getSavedLeadingComment()', () => {
-  test('lets a renamed file take over the comments', () => {
-    leadingComments.set('old.yml', '# Note');
-
-    expect(getSavedLeadingComment({ previousPath: 'old.yml', path: 'new.yml' })).toBe('# Note');
-    expect(leadingComments.get('new.yml')).toBe('# Note');
-  });
-
-  test('returns `undefined` for a new file', () => {
-    leadingComments.set('new.yml', '# Stale');
-
-    expect(getSavedLeadingComment({ path: 'new.yml' })).toBeUndefined();
-    expect(leadingComments.has('new.yml')).toBe(false);
+    expect(fileStates.get('data.yml')?.leadingComment).toBeUndefined();
   });
 });
 

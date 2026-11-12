@@ -1387,7 +1387,7 @@ describe('Test formatEntryFile() with value sources', () => {
    * @returns {Promise<string>} Formatted content.
    */
   const formatAs = (format, content = { price: 10, sizes: [-3, 1000, 7], count: 10, body: 'Hi' }) =>
-    formatEntryFile({ content, _file: createFileConfig(format), valueSources });
+    formatEntryFile({ content, _file: createFileConfig(format), state: { valueSources } });
 
   test('writes the floats that are whole numbers as they were read', async () => {
     expect(await formatAs('yaml')).toBe(
@@ -1440,9 +1440,9 @@ describe('Test formatEntryFile() with the source text of TOML dates', () => {
   test('writes the dates that haven’t changed as they were read in a TOML file', async () => {
     const _file = /** @type {FileConfig} */ ({ format: 'toml', extension: 'toml' });
 
-    expect(await formatEntryFile({ content: { ...content }, _file, valueSources: sourceMap })).toBe(
-      'date = 2024-01-01T10:00:00Z\ntime = "12:45:00.000"\nbody = "Hello."\n',
-    );
+    expect(
+      await formatEntryFile({ content: { ...content }, _file, state: { valueSources: sourceMap } }),
+    ).toBe('date = 2024-01-01T10:00:00Z\ntime = "12:45:00.000"\nbody = "Hello."\n');
   });
 
   test('writes the dates that haven’t changed as they were read in TOML front matter', async () => {
@@ -1452,15 +1452,17 @@ describe('Test formatEntryFile() with the source text of TOML dates', () => {
       fmDelimiters: ['+++', '+++'],
     });
 
-    expect(await formatEntryFile({ content: { ...content }, _file, valueSources: sourceMap })).toBe(
-      '+++\ndate = 2024-01-01T10:00:00Z\ntime = "12:45:00.000"\n+++\n\nHello.\n',
-    );
+    expect(
+      await formatEntryFile({ content: { ...content }, _file, state: { valueSources: sourceMap } }),
+    ).toBe('+++\ndate = 2024-01-01T10:00:00Z\ntime = "12:45:00.000"\n+++\n\nHello.\n');
   });
 
   test('ignores the source map in another format', async () => {
     const _file = /** @type {FileConfig} */ ({ format: 'json', extension: 'json' });
 
-    expect(await formatEntryFile({ content: { ...content }, _file, valueSources: sourceMap })).toBe(
+    expect(
+      await formatEntryFile({ content: { ...content }, _file, state: { valueSources: sourceMap } }),
+    ).toBe(
       '{\n  "date": "2024-01-01T10:00:00.000Z",\n  "time": "12:45:00.000",\n  "body": "Hello."\n}\n',
     );
   });
@@ -1509,7 +1511,7 @@ describe('Test formatEntryFile() with leading comments', () => {
         content: { title: 'Hello' },
         _file,
         comments: { title: 'Page title' },
-        leadingComment,
+        state: { leadingComment },
       }),
     ).toBe('# Oh hai!\n# Never mind these.\n\n# Page title\ntitle: Hello\n');
   });
@@ -1517,9 +1519,9 @@ describe('Test formatEntryFile() with leading comments', () => {
   test('keeps the comments at the top of a TOML file', async () => {
     const _file = /** @type {FileConfig} */ ({ format: 'toml', extension: 'toml' });
 
-    expect(await formatEntryFile({ content: { title: 'Hello' }, _file, leadingComment })).toBe(
-      '# Oh hai!\n# Never mind these.\n\ntitle = "Hello"\n',
-    );
+    expect(
+      await formatEntryFile({ content: { title: 'Hello' }, _file, state: { leadingComment } }),
+    ).toBe('# Oh hai!\n# Never mind these.\n\ntitle = "Hello"\n');
   });
 
   test('keeps the comments at the top of YAML and TOML front matter', async () => {
@@ -1535,14 +1537,14 @@ describe('Test formatEntryFile() with leading comments', () => {
       await formatEntryFile({
         content: { title: 'Hello', body: 'Text' },
         _file: yaml,
-        leadingComment,
+        state: { leadingComment },
       }),
     ).toBe('---\n# Oh hai!\n# Never mind these.\n\ntitle: Hello\n---\n\nText\n');
     expect(
       await formatEntryFile({
         content: { title: 'Hello', body: 'Text' },
         _file: toml,
-        leadingComment,
+        state: { leadingComment },
       }),
     ).toBe('+++\n# Oh hai!\n# Never mind these.\n\ntitle = "Hello"\n+++\n\nText\n');
   });
@@ -1550,10 +1552,10 @@ describe('Test formatEntryFile() with leading comments', () => {
   test('keeps front matter holding nothing but comments', async () => {
     const _file = /** @type {FileConfig} */ ({ format: 'yaml-frontmatter', extension: 'md' });
 
-    expect(await formatEntryFile({ content: { body: 'Text' }, _file, leadingComment })).toBe(
-      '---\n# Oh hai!\n# Never mind these.\n---\n\nText\n',
-    );
-    expect(await formatEntryFile({ content: { body: '' }, _file, leadingComment })).toBe(
+    expect(
+      await formatEntryFile({ content: { body: 'Text' }, _file, state: { leadingComment } }),
+    ).toBe('---\n# Oh hai!\n# Never mind these.\n---\n\nText\n');
+    expect(await formatEntryFile({ content: { body: '' }, _file, state: { leadingComment } })).toBe(
       '---\n# Oh hai!\n# Never mind these.\n---\n',
     );
   });
@@ -1561,9 +1563,9 @@ describe('Test formatEntryFile() with leading comments', () => {
   test('ignores the comments in a JSON file', async () => {
     const _file = /** @type {FileConfig} */ ({ format: 'json', extension: 'json' });
 
-    expect(await formatEntryFile({ content: { title: 'Hello' }, _file, leadingComment })).toBe(
-      '{\n  "title": "Hello"\n}\n',
-    );
+    expect(
+      await formatEntryFile({ content: { title: 'Hello' }, _file, state: { leadingComment } }),
+    ).toBe('{\n  "title": "Hello"\n}\n');
   });
 });
 
@@ -1616,7 +1618,7 @@ describe('Test formatEntryFile() with the built-in formatter called from a custo
     /** @type {ValueSourceMap} */
     const valueSources = { price: { source: '1.0', value: 1 } };
 
-    expect(await formatEntryFile({ content: { price: 1 }, _file, valueSources })).toBe(
+    expect(await formatEntryFile({ content: { price: 1 }, _file, state: { valueSources } })).toBe(
       'price: 1.0\n',
     );
   });

@@ -833,17 +833,28 @@
  */
 
 /**
- * Content parsed from the text of an entry file, along with what it was parsed for.
- * @typedef {object} ParsedFileContent
- * @property {string} key What the content was parsed for: the CMS version and the CMS configuration
- * hash, either of which can change how a file is parsed.
- * @property {RawEntryContent} content Parsed content.
+ * What is remembered about a file when it’s read, so it’s saved back the way it was written.
+ * @typedef {object} FileState
  * @property {FrontMatterFormat} [format] Front matter format detected in the text, for a file whose
- * format is `frontmatter`.
+ * format is `frontmatter`. Such a collection reads YAML, TOML and JSON front matter alike, and an
+ * existing file is saved back in the format it was read in.
  * @property {ValueSourceMap} [valueSources] Source text of the values that the parsed content
  * can’t tell apart from others, e.g. a float that is a whole number.
  * @property {string} [leadingComment] Comments at the top of a YAML or TOML file, or of its front
  * matter, which are kept on a save.
+ */
+
+/**
+ * Content parsed from the text of an entry file, along with what it was parsed for and what is
+ * remembered about the file.
+ * @typedef {object} ParsedFileContentProps
+ * @property {string} key What the content was parsed for: the CMS version and the CMS configuration
+ * hash, either of which can change how a file is parsed.
+ * @property {RawEntryContent} content Parsed content.
+ */
+
+/**
+ * @typedef {ParsedFileContentProps & FileState} ParsedFileContent
  */
 
 /**

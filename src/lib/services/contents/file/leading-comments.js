@@ -1,13 +1,4 @@
-import { takeOverFileState } from '$lib/services/contents/file/value-sources';
-
-/**
- * Comments at the top of each YAML or TOML file, or of its front matter, keyed by file path. The
- * CMS writes the whole file from the entry content on every save, which drops the comments, so the
- * ones at the top, typically a note about the file, are remembered and written back.
- * @type {Map<string, string>}
- * @see https://github.com/decaporg/decap-cms/issues/5099
- */
-export const leadingComments = new Map();
+import { fileStates, updateFileState } from '$lib/services/contents/file/state';
 
 /**
  * Regular expression matching the lines at the top of a YAML or TOML document that are blank or
@@ -42,31 +33,21 @@ export const getLeadingComment = (str) => {
 
 /**
  * Remember the comments at the top of the given document read from the given file, or forget the
- * ones remembered for the file if it has none.
+ * ones remembered for the file if it has none. The CMS writes the whole file from the entry content
+ * on every save, which drops the comments, so the ones at the top, typically a note about the file,
+ * are written back.
  * @param {string} path File path.
  * @param {string} str YAML or TOML document, which is the whole file or its front matter.
+ * @see https://github.com/decaporg/decap-cms/issues/5099
  */
 export const rememberLeadingComment = (path, str) => {
-  const comment = getLeadingComment(str);
+  const leadingComment = getLeadingComment(str);
 
-  if (comment) {
-    leadingComments.set(path, comment);
-  } else {
-    leadingComments.delete(path);
+  // Most files have none to remember or forget; skip updating their state
+  if (leadingComment || fileStates.get(path)?.leadingComment) {
+    updateFileState(path, { leadingComment });
   }
 };
-
-/**
- * Get the comments to write at the top of a file being saved, from the file before the save. The
- * file after the save, which may have been renamed, takes them over, so they’re kept next time as
- * well.
- * @param {object} args Arguments.
- * @param {string} [args.previousPath] Path of the file before the save, if it exists.
- * @param {string} args.path Path of the file after the save.
- * @returns {string | undefined} Comments, or `undefined` if the file has none.
- */
-export const getSavedLeadingComment = ({ previousPath, path }) =>
-  takeOverFileState(leadingComments, previousPath, path);
 
 /**
  * Add the given comments at the top of the given document, followed by a blank line, so they’re

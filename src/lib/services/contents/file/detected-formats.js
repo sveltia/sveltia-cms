@@ -1,5 +1,4 @@
 import { FRONTMATTER_DELIMITER_MAP } from '$lib/services/contents/file/constants';
-import { takeOverFileState } from '$lib/services/contents/file/value-sources';
 
 /**
  * @import { FileConfig } from '$lib/types/private';
@@ -7,32 +6,17 @@ import { takeOverFileState } from '$lib/services/contents/file/value-sources';
  */
 
 /**
- * Front matter format detected in each file of a collection in the `frontmatter` format, keyed by
- * file path. Such a collection reads YAML, TOML and JSON front matter alike, and an existing file
- * is saved back in the format it was read in; only a new file gets YAML front matter.
- * @type {Map<string, FrontMatterFormat>}
- */
-export const detectedFrontMatterFormats = new Map();
-
-/**
  * Get the configuration to save a file with. In a collection in the `frontmatter` format, an
  * existing file keeps the front matter format it was read in, with the default delimiters of that
- * format unless the collection sets its own.
+ * format unless the collection sets its own; only a new file gets YAML front matter.
  * @param {object} args Arguments.
  * @param {FileConfig} args._file Configuration of the collection’s files.
- * @param {string} [args.previousPath] Path of the file before the save, if it exists.
- * @param {string} args.path Path of the file after the save, which takes over the detected format,
- * so the file keeps it once it has been renamed.
+ * @param {FrontMatterFormat} [args.format] Front matter format detected in the file before the
+ * save, if it exists.
  * @returns {FileConfig} Configuration.
  */
-export const getSavedFileConfig = ({ _file, previousPath, path }) => {
-  if (_file.format !== 'frontmatter') {
-    return _file;
-  }
-
-  const format = takeOverFileState(detectedFrontMatterFormats, previousPath, path);
-
-  if (!format) {
+export const getSavedFileConfig = ({ _file, format }) => {
+  if (_file.format !== 'frontmatter' || !format) {
     return _file;
   }
 

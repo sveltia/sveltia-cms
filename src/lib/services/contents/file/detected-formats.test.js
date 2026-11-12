@@ -1,9 +1,6 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
-import {
-  detectedFrontMatterFormats,
-  getSavedFileConfig,
-} from '$lib/services/contents/file/detected-formats';
+import { getSavedFileConfig } from '$lib/services/contents/file/detected-formats';
 
 /**
  * @import { FileConfig } from '$lib/types/private';
@@ -13,66 +10,19 @@ import {
 const FRONTMATTER_FILE = { extension: 'md', format: 'frontmatter', fmDelimiters: undefined };
 
 describe('getSavedFileConfig()', () => {
-  beforeEach(() => {
-    detectedFrontMatterFormats.clear();
-  });
-
   test('keeps the configuration of a collection in another format', () => {
     /** @type {FileConfig} */
     const _file = { extension: 'md', format: 'yaml-frontmatter', fmDelimiters: ['---', '---'] };
 
-    detectedFrontMatterFormats.set('content/a.md', 'toml-frontmatter');
-
-    expect(getSavedFileConfig({ _file, previousPath: 'content/a.md', path: 'content/a.md' })).toBe(
-      _file,
-    );
+    expect(getSavedFileConfig({ _file, format: 'toml-frontmatter' })).toBe(_file);
   });
 
-  test('keeps the configuration for a new file, which gets YAML front matter', () => {
-    expect(getSavedFileConfig({ _file: FRONTMATTER_FILE, path: 'content/new.md' })).toBe(
-      FRONTMATTER_FILE,
-    );
-    expect(detectedFrontMatterFormats.has('content/new.md')).toBe(false);
-  });
-
-  test('forgets the format detected for a file deleted from the path of a new file', () => {
-    // Detected for a file deleted since
-    detectedFrontMatterFormats.set('content/a.md', 'toml-frontmatter');
-
-    expect(getSavedFileConfig({ _file: FRONTMATTER_FILE, path: 'content/a.md' })).toBe(
-      FRONTMATTER_FILE,
-    );
-    expect(detectedFrontMatterFormats.has('content/a.md')).toBe(false);
-    // So the file is saved again with YAML front matter
-    expect(
-      getSavedFileConfig({
-        _file: FRONTMATTER_FILE,
-        previousPath: 'content/a.md',
-        path: 'content/a.md',
-      }),
-    ).toBe(FRONTMATTER_FILE);
-  });
-
-  test('keeps the configuration for a file whose format wasn’t detected', () => {
-    expect(
-      getSavedFileConfig({
-        _file: FRONTMATTER_FILE,
-        previousPath: 'content/a.md',
-        path: 'content/a.md',
-      }),
-    ).toBe(FRONTMATTER_FILE);
+  test('keeps the configuration for a file whose format wasn’t detected, e.g. a new file', () => {
+    expect(getSavedFileConfig({ _file: FRONTMATTER_FILE })).toBe(FRONTMATTER_FILE);
   });
 
   test('saves an existing file in the format it was read in, with its default delimiters', () => {
-    detectedFrontMatterFormats.set('content/a.md', 'toml-frontmatter');
-
-    expect(
-      getSavedFileConfig({
-        _file: FRONTMATTER_FILE,
-        previousPath: 'content/a.md',
-        path: 'content/a.md',
-      }),
-    ).toEqual({
+    expect(getSavedFileConfig({ _file: FRONTMATTER_FILE, format: 'toml-frontmatter' })).toEqual({
       ...FRONTMATTER_FILE,
       format: 'toml-frontmatter',
       configuredFormat: 'frontmatter',
@@ -81,13 +31,10 @@ describe('getSavedFileConfig()', () => {
   });
 
   test('keeps the delimiters the collection sets', () => {
-    detectedFrontMatterFormats.set('content/a.md', 'json-frontmatter');
-
     expect(
       getSavedFileConfig({
         _file: { ...FRONTMATTER_FILE, fmDelimiters: ['~~~', '~~~'] },
-        previousPath: 'content/a.md',
-        path: 'content/a.md',
+        format: 'json-frontmatter',
       }),
     ).toEqual({
       ...FRONTMATTER_FILE,
@@ -95,16 +42,5 @@ describe('getSavedFileConfig()', () => {
       configuredFormat: 'frontmatter',
       fmDelimiters: ['~~~', '~~~'],
     });
-  });
-
-  test('passes the format on to the new path of a renamed file', () => {
-    detectedFrontMatterFormats.set('content/a.md', 'toml-frontmatter');
-    getSavedFileConfig({
-      _file: FRONTMATTER_FILE,
-      previousPath: 'content/a.md',
-      path: 'content/b.md',
-    });
-
-    expect(detectedFrontMatterFormats.get('content/b.md')).toBe('toml-frontmatter');
   });
 });

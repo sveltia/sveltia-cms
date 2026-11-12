@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { FRONTMATTER_DELIMITER_MAP } from '$lib/services/contents/file/constants';
-import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
 import {
   formatEntryFile,
   formatFrontMatter,
@@ -13,7 +12,6 @@ import {
   _resetUnsafeIntegerSources,
   getUnsafeIntegerSource,
 } from '$lib/services/contents/file/integers';
-import { leadingComments } from '$lib/services/contents/file/leading-comments';
 import {
   detectFrontMatterFormat,
   hasCustomParser,
@@ -23,9 +21,21 @@ import {
   parseTOML,
   parseYAML,
 } from '$lib/services/contents/file/parse';
-import { valueSources } from '$lib/services/contents/file/value-sources';
+import { fileStates, updateFileState } from '$lib/services/contents/file/state';
 
 // Mock external dependencies
+
+/**
+ * @import { FileState } from '$lib/types/private';
+ */
+
+/**
+ * Get the files whose value sources are remembered.
+ * @returns {[string, FileState][]} Paths and states.
+ */
+const getFilesWithValueSources = () =>
+  [...fileStates].filter(([, { valueSources }]) => !!valueSources);
+
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),
 }));
@@ -134,18 +144,18 @@ notifications = true
   });
 
   test('remembers the source text of the dates in a file', () => {
-    valueSources.clear();
+    fileStates.clear();
 
     expect(parseTOML('created = 2023-01-01T10:00:00Z', 'a.toml')).toEqual({
       created: '2023-01-01T10:00:00.000Z',
     });
-    expect(valueSources.get('a.toml')).toEqual({
+    expect(fileStates.get('a.toml')?.valueSources).toEqual({
       created: { value: '2023-01-01T10:00:00.000Z', source: '2023-01-01T10:00:00Z' },
     });
 
     // A document that isn’t read from a file, e.g. the CMS configuration, leaves nothing behind
     parseTOML('created = 2023-01-01T10:00:00Z');
-    expect(valueSources.size).toBe(1);
+    expect(getFilesWithValueSources().length).toBe(1);
   });
 
   test('parses TOML with arrays', () => {
@@ -1090,18 +1100,18 @@ describe('Test parseEntryFile()', () => {
   test('remembers the source text of the dates in a TOML file', async () => {
     getCollection.mockReturnValue({ _file: { format: 'toml' } });
     getCollectionFile.mockReturnValue({ _file: { format: 'toml' } });
-    valueSources.clear();
+    fileStates.clear();
 
     const result = await parseEntryFile({ ...entryBase, text: 'date = 1979-05-27 07:32:00\n' });
 
     expect(result).toEqual({ date: '1979-05-27T07:32:00.000' });
-    expect(valueSources.get(entryBase.path)).toEqual({
+    expect(fileStates.get(entryBase.path)?.valueSources).toEqual({
       date: { value: '1979-05-27T07:32:00.000', source: '1979-05-27 07:32:00' },
     });
 
     // The dates of an earlier version of the file are forgotten
     await parseEntryFile({ ...entryBase, text: 'date = "TBD"\n' });
-    expect(valueSources.has(entryBase.path)).toBe(false);
+    expect(fileStates.get(entryBase.path)?.valueSources).toBeUndefined();
   });
 
   test('remembers the source text of the dates in TOML front matter', async () => {
@@ -1109,7 +1119,7 @@ describe('Test parseEntryFile()', () => {
     getCollectionFile.mockReturnValue({
       _file: { format: 'toml-frontmatter', fmDelimiters: ['+++', '+++'] },
     });
-    valueSources.clear();
+    fileStates.clear();
 
     const result = await parseEntryFile({
       ...entryBase,
@@ -1117,7 +1127,7 @@ describe('Test parseEntryFile()', () => {
     });
 
     expect(result).toEqual({ time: '12:30:00.000', body: 'At 12:30:00.000.' });
-    expect(valueSources.get(entryBase.path)).toEqual({
+    expect(fileStates.get(entryBase.path)?.valueSources).toEqual({
       time: { value: '12:30:00.000', source: '12:30:00' },
     });
   });
@@ -1376,7 +1386,7 @@ describe('Test parseEntryFile()', () => {
     expect(await parseEntryFile({ ...entryBase, text: '\n---\n\nOne\n\n---\n\nTwo\n' })).toEqual({
       body: '\n---\n\nOne\n\n---\n\nTwo',
     });
-    expect(detectedFrontMatterFormats.has(entryBase.path)).toBe(false);
+    expect(fileStates.get(entryBase.path)?.format).toBeUndefined();
     // Same with a list
     expect(await parseEntryFile({ ...entryBase, text: '\n---\n- One\n---\nTwo' })).toEqual({
       body: '\n---\n- One\n---\nTwo',
@@ -1405,7 +1415,7 @@ describe('Test parseEntryFile()', () => {
       expect(await parseEntryFile({ ...entryBase, text: `${comment}\n\ntitle: Test\n` })).toEqual({
         title: 'Test',
       });
-      expect(leadingComments.get(path)).toBe(comment);
+      expect(fileStates.get(path)?.leadingComment).toBe(comment);
 
       getCollection.mockReturnValue({ _file: { format: 'toml' } });
       getCollectionFile.mockReturnValue({ _file: { format: 'toml' } });
@@ -1413,7 +1423,7 @@ describe('Test parseEntryFile()', () => {
       expect(
         await parseEntryFile({ ...entryBase, text: `${comment}\n\ntitle = "Test"\n` }),
       ).toEqual({ title: 'Test' });
-      expect(leadingComments.get(path)).toBe(comment);
+      expect(fileStates.get(path)?.leadingComment).toBe(comment);
 
       getCollection.mockReturnValue({ _file: { format: 'yaml-frontmatter' } });
       getCollectionFile.mockReturnValue({ _file: { format: 'yaml-frontmatter' } });
@@ -1421,26 +1431,26 @@ describe('Test parseEntryFile()', () => {
       expect(
         await parseEntryFile({ ...entryBase, text: `---\n${comment}\n\ntitle: Test\n---\nBody` }),
       ).toEqual({ title: 'Test', body: 'Body' });
-      expect(leadingComments.get(path)).toBe(comment);
+      expect(fileStates.get(path)?.leadingComment).toBe(comment);
 
       // Forgotten once the file has none
       expect(await parseEntryFile({ ...entryBase, text: '---\ntitle: Test\n---\nBody' })).toEqual({
         title: 'Test',
         body: 'Body',
       });
-      expect(leadingComments.has(path)).toBe(false);
+      expect(fileStates.get(path)?.leadingComment).toBeUndefined();
 
       // Nor are they remembered for a JSON file
       getCollection.mockReturnValue({ _file: { format: 'json' } });
       getCollectionFile.mockReturnValue({ _file: { format: 'json' } });
-      leadingComments.set(path, comment);
+      updateFileState(path, { leadingComment: comment });
 
       expect(await parseEntryFile({ ...entryBase, text: '{ "title": "Test" }' })).toEqual({
         title: 'Test',
       });
-      expect(leadingComments.has(path)).toBe(false);
+      expect(fileStates.get(path)?.leadingComment).toBeUndefined();
     } finally {
-      leadingComments.delete(path);
+      updateFileState(path, { leadingComment: undefined });
     }
   });
 
@@ -1459,21 +1469,21 @@ describe('Test parseEntryFile()', () => {
       expect(
         await parseEntryFile({ ...entryBase, text: '{\n"title": "Test"\n}\n\nBody\n' }),
       ).toEqual({ title: 'Test', body: 'Body' });
-      expect(detectedFrontMatterFormats.get(path)).toBe('json-frontmatter');
+      expect(fileStates.get(path)?.format).toBe('json-frontmatter');
 
       // A Hugo shortcode at the start of a file without front matter, which the file had once
       expect(
         await parseEntryFile({ ...entryBase, text: '{{< figure src="a.jpg" >}}\n\nText\n' }),
       ).toEqual({ body: '{{< figure src="a.jpg" >}}\n\nText' });
-      expect(detectedFrontMatterFormats.has(path)).toBe(false);
+      expect(fileStates.get(path)?.format).toBeUndefined();
 
       // A delimiter line without a closing one isn’t a front matter block either
       expect(await parseEntryFile({ ...entryBase, text: '+++\nText\n' })).toEqual({
         body: '+++\nText',
       });
-      expect(detectedFrontMatterFormats.has(path)).toBe(false);
+      expect(fileStates.get(path)?.format).toBeUndefined();
     } finally {
-      detectedFrontMatterFormats.delete(path);
+      updateFileState(path, { format: undefined });
       vi.mocked(getFrontMatterDelimiters).mockReset();
     }
   });
@@ -1799,7 +1809,7 @@ describe('Floats that are whole numbers', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    valueSources.clear();
+    fileStates.clear();
     _resetUnsafeIntegerSources();
     getCollection = (await import('$lib/services/contents/collection')).getCollection;
   });
@@ -1833,24 +1843,24 @@ describe('Floats that are whole numbers', () => {
   test('are remembered only when a path is given', () => {
     expect(parseYAML('price: 10.0')).toEqual({ price: 10 });
     expect(parseJSON('{"price":10.0}')).toEqual({ price: 10 });
-    expect(valueSources.size).toBe(0);
+    expect(getFilesWithValueSources().length).toBe(0);
 
     expect(parseYAML('price: 10.0', undefined, 'a.yml')).toEqual({ price: 10 });
     expect(parseJSON('{"price":10.0}', 'a.json')).toEqual({ price: 10 });
-    expect(valueSources.get('a.yml')).toEqual(floats);
-    expect(valueSources.get('a.json')).toEqual(floats);
+    expect(fileStates.get('a.yml')?.valueSources).toEqual(floats);
+    expect(fileStates.get('a.json')?.valueSources).toEqual(floats);
   });
 
   test('aren’t looked for in a document without a candidate', () => {
     expect(parseYAML('price: 10', undefined, 'a.yml')).toEqual({ price: 10 });
     expect(parseJSON('{"price":10}', 'a.json')).toEqual({ price: 10 });
-    expect(valueSources.size).toBe(0);
+    expect(getFilesWithValueSources().length).toBe(0);
   });
 
   test('aren’t remembered for a document with none', () => {
     expect(parseYAML('version: "1.0"', undefined, 'a.yml')).toEqual({ version: '1.0' });
     expect(parseJSON('{"version":"1.0"}', 'a.json')).toEqual({ version: '1.0' });
-    expect(valueSources.size).toBe(0);
+    expect(getFilesWithValueSources().length).toBe(0);
   });
 
   test('are remembered along with an integer a number can’t represent exactly', () => {
@@ -1863,8 +1873,8 @@ describe('Floats that are whole numbers', () => {
       price: 10,
     });
     expect(getUnsafeIntegerSource(12345678901234567000)).toBe('12345678901234567890');
-    expect(valueSources.get('a.yml')).toEqual(floats);
-    expect(valueSources.get('a.json')).toEqual(floats);
+    expect(fileStates.get('a.yml')?.valueSources).toEqual(floats);
+    expect(fileStates.get('a.json')?.valueSources).toEqual(floats);
   });
 
   test('don’t hide a YAML error or warning', () => {
@@ -1880,7 +1890,7 @@ describe('Floats that are whole numbers', () => {
       warn.mockRestore();
     }
 
-    expect(valueSources.size).toBe(0);
+    expect(getFilesWithValueSources().length).toBe(0);
   });
 
   test('are remembered for each file format', async () => {
@@ -1893,7 +1903,7 @@ describe('Floats that are whole numbers', () => {
     await parse('toml', 'price = 10.0', 'a.toml');
     await parse('toml-frontmatter', '---\nprice = 10.0\n---\nBody', 'e.md');
 
-    expect([...valueSources.keys()]).toEqual([
+    expect(getFilesWithValueSources().map(([path]) => path)).toEqual([
       'a.yml',
       'b.yml',
       'a.json',
@@ -1903,17 +1913,17 @@ describe('Floats that are whole numbers', () => {
       'a.toml',
       'e.md',
     ]);
-    valueSources.forEach((sourceMap) => {
+    getFilesWithValueSources().forEach(([, { valueSources: sourceMap }]) => {
       expect(sourceMap).toEqual(floats);
     });
   });
 
   test('are forgotten once the file is parsed again without them', async () => {
     await parse('yaml', 'price: 10.0', 'a.yml');
-    expect(valueSources.has('a.yml')).toBe(true);
+    expect(fileStates.get('a.yml')?.valueSources).toBeDefined();
 
     await parse('yaml', 'price: 10', 'a.yml');
-    expect(valueSources.has('a.yml')).toBe(false);
+    expect(fileStates.get('a.yml')?.valueSources).toBeUndefined();
   });
 
   describe('round-trip', () => {
@@ -1935,7 +1945,7 @@ describe('Floats that are whole numbers', () => {
           format,
           fmDelimiters: format === 'json-frontmatter' ? ['{', '}'] : undefined,
         }),
-        valueSources: valueSources.get('posts/a.md'),
+        state: fileStates.get('posts/a.md'),
       });
     };
 

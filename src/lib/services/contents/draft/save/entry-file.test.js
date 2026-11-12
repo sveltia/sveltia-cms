@@ -61,13 +61,13 @@ describe('formatEntryData()', () => {
   });
 
   test('passes the source text of the values read from the file', async () => {
-    const valueSources = { price: { value: 10, source: '10.0' } };
+    const state = { valueSources: { price: { value: 10, source: '10.0' } } };
 
-    await formatEntryData({ draft, config, _file, entry, valueSources });
-    expect(formatEntryFile).toHaveBeenLastCalledWith(expect.objectContaining({ valueSources }));
+    await formatEntryData({ draft, config, _file, entry, state });
+    expect(formatEntryFile).toHaveBeenLastCalledWith(expect.objectContaining({ state }));
 
-    await formatEntryData({ draft, config, _file, entry, locale: 'ja', valueSources });
-    expect(formatEntryFile).toHaveBeenLastCalledWith(expect.objectContaining({ valueSources }));
+    await formatEntryData({ draft, config, _file, entry, locale: 'ja', state });
+    expect(formatEntryFile).toHaveBeenLastCalledWith(expect.objectContaining({ state }));
   });
 
   test('formats the content of the given locale only', async () => {
@@ -94,20 +94,21 @@ describe('formatEntryData()', () => {
   test('passes on the source text of the TOML dates', async () => {
     const sourceMap = { date: { value: '1979-05-27', source: '1979-05-27' } };
     const tomlFile = { format: 'toml' };
+    const state = { valueSources: sourceMap };
 
-    await formatEntryData({ draft, config, _file: tomlFile, entry, valueSources: sourceMap });
+    await formatEntryData({ draft, config, _file: tomlFile, entry, state });
     await formatEntryData({
       draft,
       config,
       _file: tomlFile,
       entry,
       locale: 'en',
-      valueSources: sourceMap,
+      state,
     });
 
-    expect(vi.mocked(formatEntryFile).mock.calls.map(([args]) => args.valueSources)).toEqual([
-      sourceMap,
-      sourceMap,
+    expect(vi.mocked(formatEntryFile).mock.calls.map(([args]) => args.state)).toEqual([
+      state,
+      state,
     ]);
   });
 });

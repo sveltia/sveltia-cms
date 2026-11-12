@@ -1,11 +1,11 @@
 import { parse, stringify, TomlDate } from 'smol-toml';
 import { beforeEach, describe, expect, test } from 'vitest';
 
+import { fileStates } from '$lib/services/contents/file/state';
 import {
   rememberTomlValueSources,
   restoreTomlValueSources,
 } from '$lib/services/contents/file/toml-sources';
-import { valueSources } from '$lib/services/contents/file/value-sources';
 
 /**
  * @import { ValueSourceMap } from '$lib/types/private';
@@ -19,11 +19,11 @@ import { valueSources } from '$lib/services/contents/file/value-sources';
 const remember = (str) => {
   rememberTomlValueSources({ path: 'a.toml', str, parsed: parse(str) });
 
-  return valueSources.get('a.toml');
+  return fileStates.get('a.toml')?.valueSources;
 };
 
 beforeEach(() => {
-  valueSources.clear();
+  fileStates.clear();
 });
 
 describe('rememberTomlValueSources()', () => {

@@ -13,16 +13,13 @@ import {
   FRONTMATTER_FORMATS,
   getFormatSyntax,
 } from '$lib/services/contents/file/constants';
-import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
 import {
   mayHaveUnsafeInteger,
   replaceBigInts,
   reviveUnsafeInteger,
 } from '$lib/services/contents/file/integers';
-import {
-  leadingComments,
-  rememberLeadingComment,
-} from '$lib/services/contents/file/leading-comments';
+import { rememberLeadingComment } from '$lib/services/contents/file/leading-comments';
+import { fileStates, updateFileState } from '$lib/services/contents/file/state';
 import { rememberTomlValueSources } from '$lib/services/contents/file/toml-sources';
 import {
   collectJSONFloatSources,
@@ -30,7 +27,6 @@ import {
   mayHaveWholeNumberFloat,
   rememberValueSources,
   reviveWholeNumberFloat,
-  valueSources,
 } from '$lib/services/contents/file/value-sources';
 import { getOrCreate } from '$lib/services/utils/cache';
 
@@ -391,9 +387,7 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
   let { format } = resolved;
 
   // Forget what was read from an earlier version of the file
-  valueSources.delete(path);
-  detectedFrontMatterFormats.delete(path);
-  leadingComments.delete(path);
+  fileStates.delete(path);
 
   // Normalize line breaks. The leading whitespace is only dropped where it’s meaningless: the
   // content of a raw file, and the body of a file without front matter, keep theirs, e.g. an
@@ -432,7 +426,7 @@ export const parseEntryFile = async ({ text = '', path, folder }) => {
       // Remembered, so the file is saved back in the same format. A file without a front matter
       // block gets the default one, as a new file does
       if (isDetected && hasFrontMatter) {
-        detectedFrontMatterFormats.set(path, /** @type {FrontMatterFormat} */ (format));
+        updateFileState(path, { format: /** @type {FrontMatterFormat} */ (format) });
       }
 
       return content;

@@ -1,8 +1,7 @@
 import { backend } from '$lib/services/backends';
 import { formatEntryData } from '$lib/services/contents/draft/save/entry-file';
 import { getSavedFileConfig } from '$lib/services/contents/file/detected-formats';
-import { getSavedLeadingComment } from '$lib/services/contents/file/leading-comments';
-import { getSavedValueSources } from '$lib/services/contents/file/value-sources';
+import { takeOverFileState } from '$lib/services/contents/file/state';
 import { usesSingleFileStructure } from '$lib/services/contents/i18n/config';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
@@ -113,24 +112,23 @@ export const buildEntryFileChanges = async ({
         };
       }
 
+      // What is remembered about a file storing all the entries of an entry collection, e.g. the
+      // source map keyed by the position of each item, only applies when the whole file is
+      // formatted, see `combineArrayFileChanges()`. A new item has no path of its own to take it
+      // over from either, which would make the file forget it before it’s written
+      const state = _file.arrayFile
+        ? {}
+        : takeOverFileState({ previousPath: currentPath, path: change.path });
+
       const [previousSha, data] = await Promise.all([
         getPreviousSha({ cacheDB, previousPath: currentPath }),
         formatEntryData({
           draft,
           config,
-          _file: getSavedFileConfig({ _file, previousPath: currentPath, path: change.path }),
+          _file: getSavedFileConfig({ _file, format: state.format }),
           entry,
           locale,
-          // The source map of a file storing all the entries of an entry collection is keyed by
-          // the position of the item, so it only applies when the whole file is formatted
-          valueSources: _file.arrayFile
-            ? undefined
-            : getSavedValueSources({ previousPath: currentPath, path: change.path }),
-          // Nor do the comments at the top of such a file: a new item has no path of its own to
-          // take them over from, which would make the file forget them before it’s written
-          leadingComment: _file.arrayFile
-            ? undefined
-            : getSavedLeadingComment({ previousPath: currentPath, path: change.path }),
+          state,
         }),
       ]);
 
