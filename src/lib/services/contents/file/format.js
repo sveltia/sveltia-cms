@@ -195,13 +195,20 @@ export const formatYAML = (
   legacyOptions = {},
   comments = {},
 ) => {
-  const { indent_size: indent = 2, indent_sequences: indentSeq = true, quote = 'none' } = options;
+  const {
+    indent_size: indent = 2,
+    indent_sequences: indentSeq = true,
+    quote = 'none',
+    block_quote: blockQuote = true,
+  } = options;
+
   const { quote: legacyQuote = false } = legacyOptions;
 
   /** @type {ToStringOptions} */
   const toStringOptions = {
     indent,
     indentSeq,
+    blockQuote,
     lineWidth: 0,
     defaultKeyType: 'PLAIN',
     defaultStringType:

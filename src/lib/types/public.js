@@ -2558,6 +2558,11 @@
  * @property {boolean} [indent_sequences] Whether to indent block sequences. Default: `true`.
  * @property {'none' | 'single' | 'double'} [quote] Default quote type for string values. `none`
  * leaves strings unquoted unless quotes are required. Default: `none`.
+ * @property {boolean | 'literal' | 'folded'} [block_quote] How to write multi-line strings when
+ * `quote` is `none`. `true` or `literal` uses a literal block scalar (`|`), `folded` uses a folded
+ * block scalar (`>`), and `false` uses a quoted string instead of a block scalar. The block
+ * chomping indicator (`-` or `+`) depends on the trailing line breaks of the value. Default:
+ * `true`.
  * @see https://sveltiacms.app/en/docs/data-output#controlling-data-output
  * @see https://eemeli.org/yaml/#tostring-options
  */

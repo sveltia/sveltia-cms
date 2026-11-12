@@ -318,6 +318,26 @@ image:
     );
   });
 
+  test('block_quote', () => {
+    const multiline = { about: 'First.\n\nSecond.', clip: 'Line\n', keep: 'Line\n\n' };
+
+    expect(formatYAML(multiline)).toBe(
+      'about: |-\n  First.\n\n  Second.\nclip: |\n  Line\nkeep: |+\n  Line',
+    );
+    expect(formatYAML(multiline, { block_quote: true })).toBe(formatYAML(multiline));
+    expect(formatYAML(multiline, { block_quote: 'literal' })).toBe(formatYAML(multiline));
+    expect(formatYAML(multiline, { block_quote: 'folded' })).toBe(
+      'about: >-\n  First.\n\n\n  Second.\nclip: >\n  Line\nkeep: >+\n  Line',
+    );
+    expect(formatYAML(multiline, { block_quote: false })).toBe(
+      "about: 'First.\n\n\n  Second.'\nclip: 'Line\n\n  '\nkeep: 'Line\n\n\n  '",
+    );
+    // A quoted default type writes multi-line strings quoted anyway
+    expect(formatYAML(multiline, { quote: 'double', block_quote: 'folded' })).toBe(
+      'about: "First.\\n\\nSecond."\nclip: "Line\\n"\nkeep: "Line\\n\\n"',
+    );
+  });
+
   test('legacyQuote parameter', () => {
     expect(formatYAML(object, {}, { quote: true })).toBe(
       `
