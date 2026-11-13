@@ -1,8 +1,20 @@
 // @ts-nocheck
 /* eslint-disable max-classes-per-file, new-cap, no-extend-native */
 
-import { $convertFromMarkdownString, $convertToMarkdownString } from '@lexical/markdown';
-import { $getRoot, createEditor, DecoratorNode } from 'lexical';
+import {
+  $convertFromMarkdownString,
+  $convertToMarkdownString,
+  registerMarkdownShortcuts,
+} from '@lexical/markdown';
+import {
+  $createParagraphNode,
+  $createTextNode,
+  $getRoot,
+  $getSelection,
+  createEditor,
+  DecoratorNode,
+  KEY_ENTER_COMMAND,
+} from 'lexical';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createTransformer } from './transformers.js';
@@ -399,7 +411,7 @@ describe('createTransformer', () => {
       expect(result).toBe('{% test Test Title %}');
     });
 
-    it('should return undefined for replace method', () => {
+    it('should return false for replace method', () => {
       const transformer = createTransformer({
         componentDef: mockComponentDef,
         CustomNode: mockCustomNode,
@@ -407,7 +419,7 @@ describe('createTransformer', () => {
 
       const result = transformer.replace();
 
-      expect(result).toBeUndefined();
+      expect(result).toBe(false);
     });
 
     describe('with the Lexical Markdown conversion', () => {
@@ -476,14 +488,11 @@ describe('createTransformer', () => {
       }
 
       /**
-       * Import the given Markdown into an editor with a transformer for the given pattern, then
-       * export it again.
+       * Create an editor with a transformer for an `aside` component with the given pattern.
        * @param {RegExp} pattern Component pattern.
-       * @param {string} markdown Markdown.
-       * @returns {{ markdown: string, nodes: string[] }} Exported Markdown and the types of the
-       * top-level nodes.
+       * @returns {{ editor: any, transformer: any }} Editor and transformer.
        */
-      const roundTrip = (pattern, markdown) => {
+      const createAsideEditor = (pattern) => {
         const transformer = createTransformer({
           componentDef: {
             id: 'aside',
@@ -512,6 +521,19 @@ describe('createTransformer', () => {
           },
         });
 
+        return { editor, transformer };
+      };
+
+      /**
+       * Import the given Markdown into an editor with a transformer for the given pattern, then
+       * export it again.
+       * @param {RegExp} pattern Component pattern.
+       * @param {string} markdown Markdown.
+       * @returns {{ markdown: string, nodes: string[] }} Exported Markdown and the types of the
+       * top-level nodes.
+       */
+      const roundTrip = (pattern, markdown) => {
+        const { editor, transformer } = createAsideEditor(pattern);
         let result = { markdown: '', nodes: [] };
 
         editor.update(() => $convertFromMarkdownString(markdown, [transformer]), {
@@ -551,6 +573,50 @@ describe('createTransformer', () => {
           'aside',
           'paragraph',
         ]);
+      });
+
+      describe('with the Markdown shortcuts', () => {
+        /**
+         * Type a character on a new line of an editor with the Markdown shortcuts enabled, then
+         * type the given text or press Enter.
+         * @param {string | null} text Text to type, or `null` to press Enter.
+         * @returns {string} Text content of the editor.
+         */
+        const typeAfterCharacter = (text) => {
+          const { editor, transformer } = createAsideEditor(/^<aside>(?<text>[\s\S]*?)<\/aside>/);
+          const unregister = registerMarkdownShortcuts(editor, [transformer]);
+
+          editor.update(
+            () => {
+              const textNode = $createTextNode('a');
+
+              $getRoot().clear().append($createParagraphNode().append(textNode));
+              textNode.select(1, 1);
+            },
+            { discrete: true },
+          );
+
+          if (text === null) {
+            editor.update(() => editor.dispatchCommand(KEY_ENTER_COMMAND, null), {
+              discrete: true,
+            });
+          } else {
+            editor.update(() => $getSelection().insertText(text), { discrete: true });
+          }
+
+          unregister();
+
+          return editor.read(() => $getRoot().getTextContent());
+        };
+
+        // https://github.com/sveltia/sveltia-cms/issues/1154
+        it('should keep a single character followed by a space', () => {
+          expect(typeAfterCharacter(' ')).toBe('a ');
+        });
+
+        it('should keep a single character followed by Enter', () => {
+          expect(typeAfterCharacter(null)).toBe('a');
+        });
       });
 
       it('should keep the line after a match that ends with a newline', () => {

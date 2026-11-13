@@ -100,7 +100,11 @@ export const createTransformer = ({ componentDef, CustomNode }) => {
 
         return [true, endLineIndex];
       },
-      replace: () => undefined,
+      // The node is created on import by `handleImportAfterStartMatch` above. `false` also makes
+      // the Markdown shortcuts skip the transformer, which would otherwise remove the first
+      // character of a line typed with a space or Enter after it, as `regExpStart` matches any
+      // character
+      replace: () => false,
       export: exportNode,
       /* eslint-enable jsdoc/require-jsdoc */
     });
