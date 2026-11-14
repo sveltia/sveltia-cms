@@ -2553,7 +2553,7 @@ commit_message:
 open_authoring:
   # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
   # label on its OK button. {$repo} is the repository identifier in owner/repo format
-  fork_repository: Fork el repositorio
+  fork_repository: Hacer fork del repositorio
   fork: Fork
   confirm_forking_repository: Para sugerir cambios en “{$repo}”, hay que crear un fork del repositorio en tu cuenta. Tus cambios se guardan en ese fork y un administrador los revisa antes de que se publiquen.
   # Error shown when the user declined the dialog above
