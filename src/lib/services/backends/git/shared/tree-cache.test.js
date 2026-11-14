@@ -174,10 +174,7 @@ describe('listTrees()', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await expect(listGallery()).resolves.toEqual(GALLERY_FILES);
-    expect(consoleError).toHaveBeenCalledWith(
-      'Failed to update the tree cache.',
-      expect.any(Error),
-    );
+    expect(consoleError).toHaveBeenCalledTimes(2);
 
     vi.mocked(IndexedDB).mockClear();
     await expect(listGallery({ repository: {} })).resolves.toEqual(GALLERY_FILES);

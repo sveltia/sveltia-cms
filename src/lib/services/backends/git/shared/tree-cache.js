@@ -1,11 +1,11 @@
 /* eslint-disable no-await-in-loop */
 
 import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { getRepositoryDatabase } from '$lib/services/utils/database';
-
-/**
- * @import { IndexedDB } from '@sveltia/utils/storage';
- */
+import {
+  getRepositoryDatabase,
+  readCacheEntries,
+  updateCacheEntries,
+} from '$lib/services/utils/database';
 
 /**
  * The direct children of a Git tree, each as a `[name, sha]` pair. Names rather than paths are
@@ -28,45 +28,6 @@ import { getRepositoryDatabase } from '$lib/services/utils/database';
  * Name of the IndexedDB store holding the tree listings, keyed with tree IDs.
  */
 export const TREE_CACHE_STORE_NAME = 'tree-cache';
-
-/**
- * Read all the cached tree listings.
- * @param {IndexedDB | undefined} db Database.
- * @returns {Promise<Map<string, TreeListing>>} Listings keyed with tree IDs. Empty if the database
- * is unavailable, e.g. in a private window, so everything is listed then.
- */
-const readCache = async (db) => {
-  try {
-    return new Map(db ? await db.entries() : []);
-  } catch {
-    return new Map();
-  }
-};
-
-/**
- * Store new tree listings, and delete the ones no longer in use.
- * @param {IndexedDB | undefined} db Database.
- * @param {Map<string, TreeListing>} listings New listings keyed with tree IDs.
- * @param {string[]} staleKeys Tree IDs to delete.
- */
-const writeCache = async (db, listings, staleKeys) => {
-  if (!db) {
-    return;
-  }
-
-  try {
-    if (listings.size) {
-      await db.saveEntries([...listings]);
-    }
-
-    if (staleKeys.length) {
-      await db.deleteEntries(staleKeys);
-    }
-  } catch (ex) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to update the tree cache.', ex);
-  }
-};
 
 /**
  * List the files in the given directories and all their subdirectories, a level at a time. A
@@ -97,7 +58,8 @@ export const listTrees = async ({
   concurrency,
 }) => {
   const db = getRepositoryDatabase(repository, TREE_CACHE_STORE_NAME);
-  const cache = await readCache(db);
+  /** @type {Map<string, TreeListing>} */
+  const cache = await readCacheEntries(db);
   /** @type {Map<string, TreeListing>} */
   const fetched = new Map();
   /** @type {Map<string, Promise<TreeListing>>} */
@@ -168,7 +130,7 @@ export const listTrees = async ({
   } finally {
     // Keep what has been listed even if the walk failed, so a retry doesn’t start over, but only
     // prune the trees no longer in the repository once everything has been seen
-    await writeCache(
+    await updateCacheEntries(
       db,
       fetched,
       completed ? [...cache.keys()].filter((sha) => !visited.has(sha)) : [],
