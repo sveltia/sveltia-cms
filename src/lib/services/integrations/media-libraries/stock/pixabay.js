@@ -1,9 +1,9 @@
+import { createLinkedCredit } from '$lib/services/integrations/media-libraries/stock/credit';
 import {
   createStockFetchers,
   getSupportedLocale,
 } from '$lib/services/integrations/media-libraries/stock/utils';
 import { getBaseName } from '$lib/services/utils/file';
-import { escapeAttr, escapeHTML } from '$lib/services/utils/string';
 
 /**
  * @import { ExternalAsset, MediaLibraryService } from '$lib/types/private';
@@ -62,7 +62,7 @@ export const parseResults = (results) =>
       downloadURL: largeImageURL,
       fileName: getBaseName(previewURL).replace('_150.', '_1280.'),
       kind: 'image',
-      credit: `<a href="${escapeAttr(pageURL)}">Photo by ${escapeHTML(user)} on Pixabay</a>`,
+      credit: createLinkedCredit({ name: user, serviceLabel: 'Pixabay', url: pageURL }),
     }),
   );
 

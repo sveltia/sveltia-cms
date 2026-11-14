@@ -1,9 +1,9 @@
+import { createAttributedCredit } from '$lib/services/integrations/media-libraries/stock/credit';
 import {
   createStockFetchers,
   fetchJSON,
   getSupportedLocale,
 } from '$lib/services/integrations/media-libraries/stock/utils';
-import { escapeAttr, escapeHTML } from '$lib/services/utils/string';
 
 /**
  * @import {
@@ -71,9 +71,12 @@ export const parseResults = (results) =>
       downloadURL: regular,
       fileName: `${name.split(/\s+/).join('-').toLowerCase()}-${id}-unsplash.jpg`,
       kind: 'image',
-      credit:
-        `Photo by <a href="https://unsplash.com/@${escapeAttr(username)}?${CREDIT_LINK_PARAMS}">${escapeHTML(name)}</a> on ` +
-        `<a href="https://unsplash.com/?${CREDIT_LINK_PARAMS}">Unsplash</a>`,
+      credit: createAttributedCredit({
+        name,
+        profileURL: `https://unsplash.com/@${username}?${CREDIT_LINK_PARAMS}`,
+        serviceLabel: 'Unsplash',
+        serviceURL: `https://unsplash.com/?${CREDIT_LINK_PARAMS}`,
+      }),
       downloadTrackingURL: links?.download_location,
     }),
   );

@@ -1750,6 +1750,9 @@ assets_dialog:
   photo_credit:
     title: 写真クレジット
     description: '可能であれば以下のクレジットを使ってください:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: '{$field} に挿入'
+    copy_as_markdown: Markdown としてコピー
 
   # Unsaved asset badge
   unsaved: 未保存
@@ -1789,6 +1792,7 @@ editor_components:
   alt: 代替テキスト
   title: タイトル
   link: リンク
+  caption: キャプション
 
 # Key-Value field: column headers and validation
 key_value:

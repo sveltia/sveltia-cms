@@ -1849,6 +1849,9 @@ assets_dialog:
   photo_credit:
     title: Photo Credit
     description: 'Use the following credit if possible:'
+    # {$field} is the label of the Markdown field the credit is added to
+    insert_to_field: Insert to {$field}
+    copy_as_markdown: Copy as Markdown
 
   # Unsaved asset badge
   unsaved: Unsaved
@@ -1891,6 +1894,7 @@ editor_components:
   alt: Alt Text
   title: Title
   link: Link
+  caption: Caption
 
 # Key-Value field: column headers and validation
 key_value:

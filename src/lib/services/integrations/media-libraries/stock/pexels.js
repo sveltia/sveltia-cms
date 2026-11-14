@@ -1,8 +1,8 @@
+import { createLinkedCredit } from '$lib/services/integrations/media-libraries/stock/credit';
 import {
   createStockFetchers,
   getSupportedLocale,
 } from '$lib/services/integrations/media-libraries/stock/utils';
-import { escapeAttr, escapeHTML } from '$lib/services/utils/string';
 
 /**
  * @import { ExternalAsset, MediaLibraryService } from '$lib/types/private';
@@ -55,7 +55,7 @@ export const parseResults = (results) =>
     downloadURL: large2x,
     fileName: `pexels-${photographer.split(/\s+/).join('-').toLowerCase()}-${id}.jpg`,
     kind: 'image',
-    credit: `<a href="${escapeAttr(url)}">Photo by ${escapeHTML(photographer)} on Pexels</a>`,
+    credit: createLinkedCredit({ name: photographer, serviceLabel: 'Pexels', url }),
   }));
 
 /**

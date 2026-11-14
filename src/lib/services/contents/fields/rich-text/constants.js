@@ -74,3 +74,36 @@ export const LINKED_IMAGE_REGEX = new RegExp(
 export const IMAGE_OR_LINKED_IMAGE_REGEX = new RegExp(
   `${IMAGE_REGEX.source}|${LINKED_IMAGE_REGEX.source}`,
 );
+
+/**
+ * Pattern matching the attributes of an HTML start tag, each value in double quotes, as written by
+ * the image components. A value can contain `>`, like an alt text, but not a double quote, which
+ * is escaped. An attribute name can’t contain whitespace, so the pattern matches in linear time.
+ */
+const HTML_ATTRS_PATTERN = String.raw`(?:\s+[^\s"'<>=/]+(?:="[^"]*")?)*\s*`;
+/**
+ * Pattern matching an HTML `<img>` element. See {@link getFigurePattern}.
+ */
+const HTML_IMAGE_PATTERN = String.raw`<img${HTML_ATTRS_PATTERN}\/?>`;
+
+/**
+ * Get the pattern matching an image with a caption, written as an HTML `<figure>` element on a
+ * single line, e.g. `<figure><img src="a.jpg" alt=""><figcaption>Caption</figcaption></figure>`.
+ * Markdown has no syntax for a caption, so the built-in image components write one this way. The
+ * image is captured as `figureContent`, and the caption HTML as `caption`.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.linked] Whether the image can be wrapped in a link.
+ * @returns {string} Pattern.
+ */
+export const getFigurePattern = ({ linked = false } = {}) => {
+  const content = linked
+    ? String.raw`(?:<a${HTML_ATTRS_PATTERN}>${HTML_IMAGE_PATTERN}<\/a>|${HTML_IMAGE_PATTERN})`
+    : HTML_IMAGE_PATTERN;
+
+  return [
+    String.raw`<figure>(?<figureContent>${content})`,
+    // The caption can’t close the figure, which the browser would take as the end of the caption
+    String.raw`<figcaption>(?<caption>(?:[^<\n]|<(?!\/fig(?:caption|ure)>))*)<\/figcaption>`,
+    String.raw`<\/figure>`,
+  ].join('');
+};

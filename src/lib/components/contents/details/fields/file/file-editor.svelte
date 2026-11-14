@@ -7,8 +7,6 @@
   @see https://sveltiacms.app/en/docs/fields/image
 -->
 <script>
-  import { _ } from '@sveltia/i18n';
-  import { ConfirmationDialog, TextArea } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { flushSync, tick } from 'svelte';
   import { flip } from 'svelte/animate';
@@ -18,6 +16,7 @@
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
   import FileEditorItem from '$lib/components/contents/details/fields/file/file-editor-item.svelte';
+  import PhotoCreditDialog from '$lib/components/contents/details/fields/file/photo-credit-dialog.svelte';
   import UploadButton from '$lib/components/contents/details/fields/file/upload-button.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import {
@@ -519,28 +518,14 @@
 
 <RejectedFilesAlertDialog bind:this={rejectedFilesAlert} {maxSize} accept={acceptedTypes} />
 
-<ConfirmationDialog
+<PhotoCreditDialog
   bind:open={showPhotoCreditDialog}
-  title={_('assets_dialog.photo_credit.title')}
-  okLabel={_('copy')}
-  onOk={() => {
-    navigator.clipboard.writeText(photoCredit);
-  }}
->
-  <div role="none">{_('assets_dialog.photo_credit.description')}</div>
-  <div role="none">
-    <TextArea
-      dir="auto"
-      flex
-      readonly
-      value={photoCredit}
-      onclick={(event) => {
-        /** @type {HTMLTextAreaElement} */ (event.target).focus();
-        /** @type {HTMLTextAreaElement} */ (event.target).select();
-      }}
-    />
-  </div>
-</ConfirmationDialog>
+  credit={photoCredit}
+  {locale}
+  {keyPath}
+  {valueStoreKey}
+  {componentName}
+/>
 
 <style>
   .item-list {

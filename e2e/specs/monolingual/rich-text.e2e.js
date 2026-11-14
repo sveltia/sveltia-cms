@@ -421,6 +421,95 @@ test.describe('editor component history and clipboard', () => {
   });
 });
 
+test.describe('image captions', () => {
+  // The fields of a component are only rendered once it’s scrolled into view
+  test.use({ viewport: { width: 1280, height: 4000 } });
+
+  const FIGURE =
+    '<figure><a href="https://example.com/"><img src="/uploads/dome.png" alt="The dome"></a>' +
+    '<figcaption>Photo by <a href="https://example.com/jane?a=1&amp;b=2">Jane</a></figcaption>' +
+    '</figure>';
+
+  /**
+   * Seed a post whose body is the given Markdown, and open it.
+   * @param {object} fixtures Fixtures.
+   * @param {any} fixtures.cms CMS fixture.
+   * @param {Page} fixtures.page Page.
+   * @param {string} body Body Markdown.
+   */
+  const openRichPost = async ({ cms, page }, body) => {
+    await cms.open();
+    await cms.seed({ ...MONOLINGUAL_FILES, [RICH_POST_PATH]: `${FRONT_MATTER}${body}\n` });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Rich Post/ }).click();
+  };
+
+  test('loads an image with a caption as a component, keeping it unchanged', async ({
+    cms,
+    page,
+  }) => {
+    const markdown = `Intro text.\n\n${FIGURE}\n\nOutro.`;
+
+    await openRichPost({ cms, page }, markdown);
+
+    const editor = getEditor(page);
+
+    const component = editor
+      .getByRole('textbox', { name: 'Body' })
+      .getByRole('group', { name: 'Image', exact: true });
+
+    await expect(component.getByRole('textbox', { name: 'Alt Text' })).toHaveValue('The dome');
+    await expect(component.getByRole('textbox', { name: 'Link' })).toHaveValue(
+      'https://example.com/',
+    );
+    await expect(component.getByRole('textbox', { name: 'Caption' })).toHaveValue(
+      'Photo by <a href="https://example.com/jane?a=1&amp;b=2">Jane</a>',
+    );
+    // The preview shows the figure
+    await expect(
+      editor.getByRole('document', { name: 'Content Preview' }).locator('figure figcaption'),
+    ).toHaveText('Photo by Jane');
+    await page.waitForTimeout(1000);
+    await expect(editor.getByRole('button', { name: 'Save' })).toBeDisabled();
+
+    await editor.getByRole('textbox', { name: 'Title' }).first().fill('Rich Post, Revised');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())[RICH_POST_PATH])
+      .toBe(`${FRONT_MATTER.replace('Rich Post', 'Rich Post, Revised')}${markdown}\n`);
+  });
+
+  test('writes an image with a caption as a figure', async ({ cms, page }) => {
+    await openRichPost({ cms, page }, 'Intro text.\n\n![The dome](/uploads/dome.png)\n\nOutro.');
+
+    const editor = getEditor(page);
+
+    const component = editor
+      .getByRole('textbox', { name: 'Body' })
+      .getByRole('group', { name: 'Image', exact: true });
+
+    await component.getByRole('textbox', { name: 'Caption' }).fill('The dome at <em>night</em>');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())[RICH_POST_PATH])
+      .toContain(
+        '\nIntro text.\n\n<figure><img src="/uploads/dome.png" alt="The dome">' +
+          '<figcaption>The dome at <em>night</em></figcaption></figure>\n\nOutro.\n',
+      );
+
+    // Clearing the caption brings the Markdown image back. Saving has closed the editor
+    await page.getByRole('row', { name: /Rich Post/ }).click();
+    await component.getByRole('textbox', { name: 'Caption' }).fill('');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())[RICH_POST_PATH])
+      .toContain('\nIntro text.\n\n![The dome](/uploads/dome.png)\n\nOutro.\n');
+  });
+});
+
 test.describe('existing Markdown', () => {
   test('keeps Markdown in the editor’s style unchanged', async ({ cms, page }) => {
     await cms.open();

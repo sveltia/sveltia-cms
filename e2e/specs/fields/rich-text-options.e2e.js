@@ -490,6 +490,58 @@ test.describe('linked images', () => {
   });
 });
 
+test.describe('image captions in HTML', () => {
+  test.use({ config: noteConfig({ format: 'html' }), viewport: { width: 1280, height: 2000 } });
+
+  // The image component is inline, so Sveltia UI exports it within a paragraph, while a `<figure>`
+  // can’t be in one. Once the paragraph is left out around a component exported as a block-level
+  // element, the figure should be saved as it’s loaded: `<p>Intro.</p><figure>…</figure>`
+  test('loads an image with a caption as a component (known issue)', async ({ cms, page }) => {
+    const figure =
+      '<figure><a href="https://example.com/"><img src="/uploads/dome.png" alt="Dome"></a>' +
+      '<figcaption>Photo by <a href="https://example.com/jane">Jane</a></figcaption></figure>';
+
+    const { editor, field } = await openNote({ cms, page, body: `<p>Intro.</p>${figure}` });
+    const component = field.getByRole('group', { name: 'Image', exact: true });
+
+    await expect(component.getByRole('textbox', { name: 'Caption' })).toHaveValue(
+      'Photo by <a href="https://example.com/jane">Jane</a>',
+    );
+    await expect(component.getByRole('textbox', { name: 'Link' })).toHaveValue(
+      'https://example.com/',
+    );
+    await component.getByRole('textbox', { name: 'Alt Text' }).fill('The dome');
+
+    await saveAndExpect({
+      cms,
+      editor,
+      body: `<p>Intro.</p><p>${figure.replace('"Dome"', '"The dome"')}</p>`,
+    });
+  });
+
+  // The figure should be saved without the paragraph around it, as above
+  test('writes an image with a caption as a figure (known issue)', async ({ cms, page }) => {
+    const { editor, field } = await openNote({
+      cms,
+      page,
+      body: '<p>Intro.</p><p><img src="/uploads/dome.png" alt="Dome"></p>',
+    });
+
+    await field
+      .getByRole('group', { name: 'Image', exact: true })
+      .getByRole('textbox', { name: 'Caption' })
+      .fill('The dome at <em>night</em>');
+
+    await saveAndExpect({
+      cms,
+      editor,
+      body:
+        '<p>Intro.</p><p><figure><img src="/uploads/dome.png" alt="Dome">' +
+        '<figcaption>The dome at <em>night</em></figcaption></figure></p>',
+    });
+  });
+});
+
 test.describe('minimal', () => {
   const LONG_BODY = Array.from({ length: 30 }, (_, index) => `Paragraph ${index + 1}.`).join(
     '\n\n',

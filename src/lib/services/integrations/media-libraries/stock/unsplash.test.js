@@ -214,12 +214,12 @@ describe('integrations/media-libraries/stock/unsplash', () => {
 
         const results = parseResults(mockApiResults);
 
-        expect(results[0].credit).toContain('utm_source=sveltia-cms&utm_medium=referral');
+        expect(results[0].credit).toContain('utm_source=sveltia-cms&amp;utm_medium=referral');
         expect(results[0].credit).toContain(
-          'href="https://unsplash.com/@testuser?utm_source=sveltia-cms&utm_medium=referral"',
+          'href="https://unsplash.com/@testuser?utm_source=sveltia-cms&amp;utm_medium=referral"',
         );
         expect(results[0].credit).toContain(
-          'href="https://unsplash.com/?utm_source=sveltia-cms&utm_medium=referral"',
+          'href="https://unsplash.com/?utm_source=sveltia-cms&amp;utm_medium=referral"',
         );
       });
     });
@@ -401,12 +401,12 @@ describe('integrations/media-libraries/stock/unsplash', () => {
 
       const results = await list({ apiKey: mockApiKey });
 
-      expect(results[0].credit).toContain('utm_source=sveltia-cms&utm_medium=referral');
+      expect(results[0].credit).toContain('utm_source=sveltia-cms&amp;utm_medium=referral');
       expect(results[0].credit).toContain(
-        'href="https://unsplash.com/@photographer?utm_source=sveltia-cms&utm_medium=referral"',
+        'href="https://unsplash.com/@photographer?utm_source=sveltia-cms&amp;utm_medium=referral"',
       );
       expect(results[0].credit).toContain(
-        'href="https://unsplash.com/?utm_source=sveltia-cms&utm_medium=referral"',
+        'href="https://unsplash.com/?utm_source=sveltia-cms&amp;utm_medium=referral"',
       );
     });
   });
@@ -662,12 +662,12 @@ describe('integrations/media-libraries/stock/unsplash', () => {
 
       const results = await search('test', { apiKey: mockApiKey });
 
-      expect(results[0].credit).toContain('utm_source=sveltia-cms&utm_medium=referral');
+      expect(results[0].credit).toContain('utm_source=sveltia-cms&amp;utm_medium=referral');
       expect(results[0].credit).toContain(
-        'href="https://unsplash.com/@johndoe?utm_source=sveltia-cms&utm_medium=referral"',
+        'href="https://unsplash.com/@johndoe?utm_source=sveltia-cms&amp;utm_medium=referral"',
       );
       expect(results[0].credit).toContain(
-        'href="https://unsplash.com/?utm_source=sveltia-cms&utm_medium=referral"',
+        'href="https://unsplash.com/?utm_source=sveltia-cms&amp;utm_medium=referral"',
       );
     });
 

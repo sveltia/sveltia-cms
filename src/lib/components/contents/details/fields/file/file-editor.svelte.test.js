@@ -63,12 +63,24 @@ const createDropEvent = (files) => {
  * @param {Record<string, any>} [values] Flattened values.
  * @param {Record<string, any>} [props] Props to override.
  * @param {Record<string, any>} [context] Field editor context.
+ * @param {any[]} [otherFields] Other fields of the entry.
  * @returns {Promise<{ draft: any, props: any, container: HTMLElement, entryDraft: any }>} Draft,
  * props, container and the draft state, whose `current` can be replaced to open another entry.
  */
-const renderEditor = async (config, currentValue, values = {}, props = {}, context = undefined) => {
+const renderEditor = async (
+  config,
+  currentValue,
+  values = {},
+  props = {},
+  context = undefined,
+  otherFields = [],
+) => {
   const fieldConfig = { name: 'image', widget: 'image', ...config };
-  const draft = createMockDraft({ fields: [fieldConfig], values: { _default: values } });
+
+  const draft = createMockDraft({
+    fields: [fieldConfig, ...otherFields],
+    values: { _default: values },
+  });
 
   const _props = $state({
     locale: '_default',
@@ -573,6 +585,7 @@ describe('FileEditor', () => {
   });
 
   describe('with a cloud storage service', () => {
+    const CREDIT = 'Photo by <a href="https://example.com/melvin?a=1&amp;b=2">Melvin</a>';
     /** @type {any} */
     const services = allCloudStorageServices;
     /** @type {string} */
@@ -587,7 +600,7 @@ describe('FileEditor', () => {
         list: vi.fn().mockResolvedValue([
           createMockExternalAsset({
             fileName: 'cloud.png',
-            asset: { downloadURL: imageURL, previewURL: imageURL, credit: 'Photo by Melvin' },
+            asset: { downloadURL: imageURL, previewURL: imageURL, credit: CREDIT },
           }),
         ]),
         upload: vi.fn(),
@@ -598,12 +611,12 @@ describe('FileEditor', () => {
       delete services.test_cloud;
     });
 
-    test('downloads a selected file, showing the credit', async () => {
-      // Two providers, so nothing can be dropped
-      const { props } = await renderEditor({}, '');
-
-      expect(document.querySelector('.drop-target')).toBeNull();
-
+    /**
+     * Select the image on the test service, and wait for the photo credit dialog.
+     * @param {any} props Editor props.
+     * @returns {Promise<import('vitest/browser').Locator>} Photo credit dialog.
+     */
+    const selectCloudImage = async (props) => {
       await page.getByRole('button', { name: 'Browse' }).click();
 
       const dialog = page.getByRole('dialog', { name: 'Select Image' });
@@ -626,19 +639,41 @@ describe('FileEditor', () => {
 
       const credit = page.getByRole('alertdialog', { name: 'Photo Credit' });
 
-      await expect.element(credit.getByRole('textbox')).toHaveValue('Photo by Melvin');
-      // The text is selected on click, ready to be copied
-      credit
-        .getByRole('textbox')
-        .element()
-        .dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await expect.element(credit.getByRole('textbox')).toHaveFocus();
+      await expect.element(credit.getByRole('textbox')).toHaveValue(CREDIT);
 
+      return credit;
+    };
+
+    test('downloads a selected file, showing the credit', async () => {
+      // Two providers, so nothing can be dropped
+      const { props } = await renderEditor({}, '');
+
+      expect(document.querySelector('.drop-target')).toBeNull();
+
+      const credit = await selectCloudImage(props);
       const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
 
       await credit.getByRole('button', { name: 'Copy' }).click();
-      // The handler runs once the dialog is closed
-      await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith('Photo by Melvin'));
+      expect(writeText).toHaveBeenCalledWith(CREDIT);
+      await expect.element(credit).not.toBeInTheDocument();
+    });
+
+    test('offers to insert the credit into the image component holding the field', async () => {
+      const { draft, props } = await renderEditor(
+        {},
+        '',
+        {},
+        { keyPath: 'body:c1:src' },
+        { valueStoreKey: 'extraValues', parentComponentNames: ['linked-image'] },
+        [{ name: 'body', label: 'Body', widget: 'markdown' }],
+      );
+
+      draft.extraValues._default = {};
+
+      const credit = await selectCloudImage(props);
+
+      await credit.getByRole('button', { name: 'Insert', exact: true }).click();
+      expect(draft.extraValues._default['body:c1:caption']).toBe(CREDIT);
     });
 
     test('hands dropped files to the service when the default library is off', async () => {
