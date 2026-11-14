@@ -23,6 +23,7 @@ import {
   publishingBranches,
   unpublishedEntries,
 } from '$lib/services/workflow';
+import { getUsedAssetPaths } from '$lib/services/workflow/assets';
 import { trackDeployingEntry } from '$lib/services/workflow/deploy';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import {
@@ -88,6 +89,10 @@ vi.mock('$lib/services/workflow/verify', () => ({
   checkReviewedHead: vi.fn(),
   verifyMergeState: vi.fn(),
 }));
+vi.mock('$lib/services/workflow/assets', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getUsedAssetPaths: vi.fn(() => new Set()),
+}));
 
 const workflowService = {
   fetchPullRequests: vi.fn(),
@@ -141,6 +146,31 @@ const createCompanion = (slug, title = slug) => ({
     locales: { _default: { slug, path: `content/sections/${slug}.md`, content: { title } } },
   },
 });
+
+/**
+ * Classify the given files like the real file list does, by their folder.
+ * @param {{ path: string }[]} files Files.
+ * @returns {any} Entry and asset files.
+ */
+const classifyFiles = (files) => ({
+  entryFiles: files.filter(({ path }) => path.startsWith('content/')),
+  assetFiles: files.filter(({ path }) => path.startsWith('static/')),
+});
+
+/**
+ * Find the given asset paths that the given entry or its companions hold in their content.
+ * @param {any} entry Entry.
+ * @param {any[]} companions Companion entries.
+ * @param {string[]} paths Asset paths.
+ * @returns {Set<string>} Paths used.
+ */
+const findUsedAssetPaths = (entry, companions, paths) => {
+  const content = JSON.stringify(
+    [entry, ...companions.map((c) => c.entry)].map(({ locales }) => locales),
+  );
+
+  return new Set(paths.filter((path) => content.includes(path)));
+};
 
 describe('workflow/save', () => {
   beforeEach(() => {
@@ -202,6 +232,10 @@ describe('workflow/save', () => {
     beforeEach(() => {
       vi.mocked(createCommitMessage).mockReturnValue('Create Post “hello”');
       vi.mocked(getCommitAuthor).mockReturnValue({ name: 'Me', email: 'me@example.com' });
+    });
+
+    afterEach(() => {
+      allAssets.current = [];
     });
 
     test('titles the pull request with the paths relative to the repository root', async () => {
@@ -306,6 +340,183 @@ describe('workflow/save', () => {
       });
 
       expect(results.savedAssets[0].sha).toBe('local');
+    });
+
+    test('takes the assets the draft no longer uses off the branch', async () => {
+      const blob = new Blob(['published logo']);
+      const pending = createEntry('cms/posts/hello');
+
+      vi.mocked(createFileList).mockImplementation(classifyFiles);
+      vi.mocked(getUsedAssetPaths).mockImplementation(findUsedAssetPaths);
+      vi.mocked(resolveCacheDB).mockReturnValue(undefined);
+      vi.mocked(getAssetBlob).mockResolvedValue(blob);
+
+      pending.locales._default.content = {
+        image: 'static/uploads/first.webp',
+        logo: 'static/uploads/logo.png',
+        photo: 'static/uploads/kept.png',
+        icon: 'static/uploads/icon.png',
+      };
+      pending.workflow.companions = [createCompanion('intro', 'static/uploads/section.png')];
+      pending.workflow.pullRequest.files = [
+        { path: 'content/posts/hello.md', deleted: false },
+        { path: 'static/uploads/first.webp', deleted: false },
+        { path: 'static/uploads/logo.png', deleted: false },
+        { path: 'static/uploads/kept.png', deleted: false },
+        // Moved by the save, which takes care of it
+        { path: 'static/uploads/icon.png', deleted: false },
+        { path: 'static/uploads/section.png', deleted: false },
+        // Committed outside the CMS, which the publish check refuses instead
+        { path: 'static/uploads/stray.png', deleted: false },
+        // Already removed
+        { path: 'static/uploads/gone.png', deleted: true },
+      ];
+      upsertUnpublishedEntry(pending);
+
+      allAssets.current = [
+        /** @type {any} */ ({
+          path: 'static/uploads/first.webp',
+          sha: 'f1',
+          workflow: { branch: 'cms/posts/hello' },
+        }),
+        // Shadows the published version, which is put back
+        /** @type {any} */ ({
+          path: 'static/uploads/logo.png',
+          sha: 'l2',
+          workflow: {
+            branch: 'cms/posts/hello',
+            replacedAsset: { path: 'static/uploads/logo.png', sha: 'l1' },
+          },
+        }),
+        /** @type {any} */ ({
+          path: 'static/uploads/kept.png',
+          sha: 'k1',
+          workflow: { branch: 'cms/posts/hello' },
+        }),
+      ];
+
+      const changes = [
+        {
+          action: 'update',
+          path: 'content/posts/hello.md',
+          slug: 'hello',
+          data: 'image: static/uploads/second.webp\nphoto: static/uploads/kept.png',
+        },
+        { action: 'create', path: 'static/uploads/second.webp', slug: 'hello', data: new Blob() },
+        {
+          action: 'move',
+          path: 'static/uploads/favicon.png',
+          previousPath: 'static/uploads/icon.png',
+          slug: 'hello',
+        },
+      ];
+
+      workflowService.savePullRequest.mockImplementation(async () => ({
+        commit: {
+          sha: 'new',
+          date: new Date('2026-01-01'),
+          files: {
+            'static/uploads/second.webp': { sha: 's1' },
+            'static/uploads/logo.png': { sha: 'l1' },
+          },
+        },
+        pullRequest: { ...pending.workflow.pullRequest },
+      }));
+
+      const { savedEntries } = await saveWorkflowChanges({
+        ...args,
+        changes,
+        originalEntry: pending,
+        savingEntry: {
+          ...savingEntry,
+          locales: {
+            _default: {
+              ...savingEntry.locales._default,
+              content: {
+                image: 'static/uploads/second.webp',
+                photo: 'static/uploads/kept.png',
+                icon: 'static/uploads/favicon.png',
+              },
+            },
+          },
+        },
+        savingAssets: [{ path: 'static/uploads/second.webp', sha: 'local', name: 'second.webp' }],
+      });
+
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          changes: [
+            ...changes,
+            { action: 'delete', slug: 'hello', path: 'static/uploads/first.webp' },
+            { action: 'update', slug: 'hello', path: 'static/uploads/logo.png', data: blob },
+          ],
+        }),
+      );
+      // The commit message and the title only describe what the user has done
+      expect(promptCommitMessage).toHaveBeenCalledWith(changes, expect.anything());
+      expect(createCommitMessage).toHaveBeenCalledWith(changes, expect.anything());
+      expect(getAssetBlob).toHaveBeenCalledWith({ path: 'static/uploads/logo.png', sha: 'l1' });
+
+      expect(
+        allAssets.current.map((/** @type {any} */ a) => [a.path, a.sha, a.workflow?.branch]),
+      ).toEqual([
+        ['static/uploads/logo.png', 'l1', undefined],
+        ['static/uploads/kept.png', 'k1', 'cms/posts/hello'],
+        ['static/uploads/second.webp', 's1', 'cms/posts/hello'],
+      ]);
+
+      expect(
+        /** @type {any} */ (savedEntries[0]).workflow.pullRequest.files
+          .filter((/** @type {any} */ file) => file.path.startsWith('static/'))
+          .map((/** @type {any} */ file) => [file.path, file.deleted]),
+      ).toEqual([
+        ['static/uploads/first.webp', true],
+        ['static/uploads/logo.png', false],
+        ['static/uploads/kept.png', false],
+        ['static/uploads/icon.png', true],
+        ['static/uploads/section.png', false],
+        ['static/uploads/stray.png', false],
+        ['static/uploads/gone.png', true],
+        ['static/uploads/second.webp', false],
+        ['static/uploads/favicon.png', false],
+      ]);
+    });
+
+    test('leaves an asset it can’t put back on the branch, and saves anyway', async () => {
+      const pending = createEntry('cms/posts/hello');
+
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.mocked(createFileList).mockImplementation(classifyFiles);
+      vi.mocked(getUsedAssetPaths).mockImplementation(findUsedAssetPaths);
+      vi.mocked(resolveCacheDB).mockReturnValue(undefined);
+      vi.mocked(getAssetBlob).mockRejectedValue(new Error('offline'));
+
+      pending.locales._default.content = { logo: 'static/uploads/logo.png' };
+      pending.workflow.pullRequest.files = [{ path: 'static/uploads/logo.png', deleted: false }];
+      upsertUnpublishedEntry(pending);
+
+      allAssets.current = [
+        /** @type {any} */ ({
+          path: 'static/uploads/logo.png',
+          sha: 'l2',
+          workflow: {
+            branch: 'cms/posts/hello',
+            replacedAsset: { path: 'static/uploads/logo.png', sha: 'l1' },
+          },
+        }),
+      ];
+
+      workflowService.savePullRequest.mockResolvedValue({
+        commit: { sha: 'new', date: new Date('2026-01-01'), files: {} },
+        pullRequest: { ...pending.workflow.pullRequest },
+      });
+
+      await saveWorkflowChanges({ ...args, originalEntry: pending });
+
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ changes: args.changes }),
+      );
+      expect(allAssets.current.map((/** @type {any} */ a) => a.sha)).toEqual(['l2']);
     });
 
     test('records the files of the commit on the pull request until it’s read again', async () => {
@@ -1691,14 +1902,7 @@ describe('workflow/save', () => {
       const blob = new Blob(['published image']);
 
       beforeEach(() => {
-        // Classify the files like the real file list does
-        vi.mocked(createFileList).mockImplementation(
-          (files) =>
-            /** @type {any} */ ({
-              entryFiles: files.filter(({ path }) => path.startsWith('content/')),
-              assetFiles: files.filter(({ path }) => path.startsWith('static/')),
-            }),
-        );
+        vi.mocked(createFileList).mockImplementation(classifyFiles);
         vi.mocked(getAssetBlob).mockResolvedValue(blob);
       });
 

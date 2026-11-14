@@ -36,9 +36,11 @@ import {
   unpublishedEntries,
 } from '$lib/services/workflow';
 import {
+  getUsedAssetPaths,
   mergeWorkflowAssets,
   publishWorkflowAssets,
   removeWorkflowAssets,
+  removeWorkflowAssetsAt,
 } from '$lib/services/workflow/assets';
 import { getBranchName } from '$lib/services/workflow/branch';
 import { trackDeployingEntry } from '$lib/services/workflow/deploy';
@@ -354,6 +356,119 @@ const mergeCompanions = (existing, added) => {
 };
 
 /**
+ * Get the published version of the asset at the given path: the asset itself, or the one an asset
+ * committed to a workflow branch shadows.
+ * @param {string} path Asset path.
+ * @returns {Asset | undefined} Asset, or `undefined` if the configured branch has none there.
+ */
+const getPublishedAsset = (path) => {
+  const asset = allAssets.current.find((a) => a.path === path);
+
+  return asset?.workflow ? asset.workflow.replacedAsset : asset;
+};
+
+/**
+ * Get the change that puts the given file of a pull request back the way it is on the configured
+ * branch: a file it has added is removed, one it has changed or removed gets the content the
+ * configured branch has.
+ * @param {WorkflowFile} file File to put back.
+ * @param {string} slug Slug of the entry, for the commit message.
+ * @param {ReturnType<typeof resolveCacheDB>} cacheDB File cache database.
+ * @returns {Promise<FileChange>} Change.
+ * @throws {Error} When the content of the file on the configured branch isn’t known.
+ */
+const getFileRevertChange = async ({ path, deleted }, slug, cacheDB) => {
+  const cache = /** @type {RepositoryFileInfo | undefined} */ (await cacheDB?.get(path));
+  const publishedAsset = getPublishedAsset(path);
+
+  // A file removed by the pull request is on the configured branch, by definition
+  if (!deleted && !cache && !publishedAsset && !findEntryByPaths([path])) {
+    return { action: 'delete', slug, path };
+  }
+
+  const action = deleted ? 'create' : 'update';
+
+  if (cache?.text !== undefined) {
+    return { action, slug, path, data: cache.text };
+  }
+
+  if (publishedAsset) {
+    return /** @type {FileChange} */ ({
+      action,
+      slug,
+      path,
+      data: await getAssetBlob(publishedAsset),
+    });
+  }
+
+  throw new Error(`The published version of ${path} could not be found.`);
+};
+
+/**
+ * Get the changes that take off the workflow branch the assets an earlier save committed for the
+ * given entry that it no longer uses, e.g. an image replaced with another upload while the entry
+ * is still a draft. Nothing references them anymore, so they would be published for nothing, and
+ * the publish check would refuse the pull request because of them. A file the pull request has
+ * added is removed, and one it has changed gets the content the configured branch has. Only the
+ * assets the entry or its companions used before the save are touched: a file committed to the
+ * branch outside the CMS is left for the publish check to refuse.
+ * @param {object} args Arguments.
+ * @param {UnpublishedEntry} args.existingEntry Unpublished entry as it stood before the save.
+ * @param {Entry} args.savingEntry Entry being saved.
+ * @param {CompanionEntry[]} args.companions Entries of other collections in the pull request
+ * after the save.
+ * @param {FileChange[]} args.changes Changes being committed.
+ * @param {string} args.slug Slug of the entry, for the commit message.
+ * @returns {Promise<FileChange[]>} Changes to commit for the assets taken off the branch.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1162
+ */
+const getReplacedAssetChanges = async ({
+  existingEntry,
+  savingEntry,
+  companions,
+  changes,
+  slug,
+}) => {
+  const changedPaths = new Set(
+    changes.flatMap(({ path, previousPath }) => (previousPath ? [path, previousPath] : [path])),
+  );
+
+  const files = existingEntry.workflow.pullRequest.files.filter(
+    ({ path, deleted }) => !deleted && !changedPaths.has(path),
+  );
+
+  const { assetFiles } = createFileList(files.map(({ path }) => toFileListItem(path)));
+
+  const usedPaths = getUsedAssetPaths(
+    existingEntry,
+    existingEntry.workflow.companions ?? [],
+    assetFiles.map(({ path }) => path),
+  );
+
+  const stillUsedPaths = getUsedAssetPaths(savingEntry, companions, [...usedPaths]);
+  const cacheDB = resolveCacheDB();
+
+  // Putting a file back is a bonus on top of the save, so one whose published version can’t be
+  // read is left on the branch for the publish check to report, rather than failing the save
+  const results = await Promise.all(
+    files
+      .filter(({ path }) => usedPaths.has(path) && !stillUsedPaths.has(path))
+      .map(async (file) => {
+        try {
+          return await getFileRevertChange(file, slug, cacheDB);
+        } catch (ex) {
+          // eslint-disable-next-line no-console
+          console.error(ex);
+
+          return undefined;
+        }
+      }),
+  );
+
+  return /** @type {FileChange[]} */ (results.filter(Boolean));
+};
+
+/**
  * Save the given entry changes as a pull request instead of committing them directly to the
  * configured branch. The pull request and the workflow branch are created on the first save, and
  * updated on subsequent saves.
@@ -391,8 +506,24 @@ export const saveWorkflowChanges = async ({
     entry: originalEntry,
   });
 
+  const allCompanions = mergeCompanions(existingEntry?.workflow.companions ?? [], companions);
+
+  // The assets the draft no longer uses go along with the changes, but not into the commit message
+  // or the title, which describe what the user has done
+  const replacedAssetChanges = existingEntry
+    ? await getReplacedAssetChanges({
+        existingEntry,
+        savingEntry,
+        companions: allCompanions,
+        changes,
+        slug,
+      })
+    : [];
+
+  const allChanges = [...changes, ...replacedAssetChanges];
+
   const { commit, pullRequest } = await workflow.savePullRequest({
-    changes,
+    changes: allChanges,
     options: commitOptions,
     branch,
     // The commit message the backend writes names the paths relative to the repository root, so
@@ -440,15 +571,16 @@ export const saveWorkflowChanges = async ({
       pullRequest: {
         ...pullRequest,
         headSHA: commit.sha,
-        files: applyCommitToFiles(pullRequest.files, changes, commit),
+        files: applyCommitToFiles(pullRequest.files, allChanges, commit),
       },
       collectionName,
       fileName,
       previousPaths,
-      companions: mergeCompanions(existingEntry?.workflow.companions ?? [], companions),
+      companions: allCompanions,
     },
   );
 
+  removeWorkflowAssetsAt(branch, new Set(replacedAssetChanges.map(({ path }) => path)));
   mergeWorkflowAssets(savedAssets);
 
   return {
@@ -753,25 +885,12 @@ const getEditedCompanionRevertChanges = async (unpublishedEntry, slug) => {
 };
 
 /**
- * Get the published version of the asset at the given path: the asset itself, or the one an asset
- * committed to a workflow branch shadows.
- * @param {string} path Asset path.
- * @returns {Asset | undefined} Asset, or `undefined` if the configured branch has none there.
- */
-const getPublishedAsset = (path) => {
-  const asset = allAssets.current.find((a) => a.path === path);
-
-  return asset?.workflow ? asset.workflow.replacedAsset : asset;
-};
-
-/**
  * Get the changes that put back the rest of the files a reused pull request changes, other than
  * those the deletion of its entry handles itself, so publishing the removal leaves them as they are
  * on the configured branch: an asset uploaded for the entry, or the entries a rename rewrote or
- * moved along with it. A file it has added is removed, one it has changed or removed gets the
- * content the configured branch has. Only the entry and asset files the CMS commits are touched: a
- * change made outside the CMS is left for the publish check to refuse, as nothing tells whether
- * the file is new or what it held.
+ * moved along with it. See {@link getFileRevertChange}. Only the entry and asset files the CMS
+ * commits are touched: a change made outside the CMS is left for the publish check to refuse, as
+ * nothing tells whether the file is new or what it held.
  * @param {object} args Arguments.
  * @param {UnpublishedEntry} args.unpublishedEntry Unpublished entry whose pull request is reused.
  * @param {string} args.slug Slug of the entry, for the commit message.
@@ -795,32 +914,7 @@ const getOtherFileRevertChanges = async ({ unpublishedEntry, slug, handledPaths 
   return Promise.all(
     files
       .filter(({ path }) => knownPaths.has(path))
-      .map(async ({ path, deleted }) => {
-        const cache = /** @type {RepositoryFileInfo | undefined} */ (await cacheDB?.get(path));
-        const publishedAsset = getPublishedAsset(path);
-
-        // A file removed by the pull request is on the configured branch, by definition
-        if (!deleted && !cache && !publishedAsset && !findEntryByPaths([path])) {
-          return /** @type {FileChange} */ ({ action: 'delete', slug, path });
-        }
-
-        const action = deleted ? 'create' : 'update';
-
-        if (cache?.text !== undefined) {
-          return /** @type {FileChange} */ ({ action, slug, path, data: cache.text });
-        }
-
-        if (publishedAsset) {
-          return /** @type {FileChange} */ ({
-            action,
-            slug,
-            path,
-            data: await getAssetBlob(publishedAsset),
-          });
-        }
-
-        throw new Error(`The published version of ${path} could not be found.`);
-      }),
+      .map((file) => getFileRevertChange(file, slug, cacheDB)),
   );
 };
 

@@ -896,6 +896,84 @@ test.describe('with an image field', () => {
       page.getByRole('grid', { name: 'Assets' }).getByRole('row', { name: 'sunrise.png' }),
     ).toBeVisible();
   });
+
+  test('takes a replaced image off the branch, so the entry can be published', async ({
+    cms,
+    github,
+    page,
+  }) => {
+    const firstImage = createPNG({ color: [255, 128, 0] });
+    const secondImage = createPNG({ color: [0, 128, 255] });
+    const editor = getEditor(page);
+
+    const coverInput = editor
+      .getByRole('group', { name: '“\u2068Cover\u2069” Field' })
+      .locator('input[type="file"]')
+      .first();
+
+    await cms.open();
+    await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+    await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
+    await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
+    await coverInput.setInputFiles({
+      name: 'sunrise.png',
+      mimeType: 'image/png',
+      buffer: firstImage,
+    });
+    await expect(editor.getByRole('button', { name: 'Remove Image' })).toBeVisible();
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Send for Review' })
+      .getByRole('button', { name: 'Later' })
+      .click();
+
+    await expect
+      .poll(() => github.readFile('content/posts/second-post.md', 'cms/posts/second-post'))
+      .toMatch(/cover: \/images\/sunrise\.png/);
+
+    // Replace the image in the same draft
+    await openEntry(page, 'Second Post');
+    await editor.getByRole('button', { name: 'Remove Image' }).click();
+    await coverInput.setInputFiles({
+      name: 'sunset.png',
+      mimeType: 'image/png',
+      buffer: secondImage,
+    });
+    await expect(editor.getByRole('button', { name: 'Remove Image' })).toBeVisible();
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Send for Review' })
+      .getByRole('button', { name: 'Later' })
+      .click();
+
+    await expect
+      .poll(() => github.readFile('content/posts/second-post.md', 'cms/posts/second-post'))
+      .toMatch(/cover: \/images\/sunset\.png/);
+
+    const branchTree = github.getHead('cms/posts/second-post').tree;
+
+    expect(github.blobs.get(branchTree.get('static/images/sunset.png') ?? '')).toEqual(secondImage);
+    // The first upload, which nothing uses anymore, is gone from the branch
+    expect(branchTree.has('static/images/sunrise.png')).toBe(false);
+
+    const [pullRequest] = github.pullRequests;
+
+    await openEntry(page, 'Second Post');
+    await cms.chooseMenuItem(
+      page.getByRole('button', { name: /Status: .*Draft/ }),
+      page.getByRole('menuitemradio', { name: 'Ready' }),
+    );
+    await expect.poll(() => pullRequest.labels).toEqual(['sveltia-cms/pending_publish']);
+    await editor.getByRole('button', { name: 'Publish Entry' }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Publish Entry' })
+      .getByRole('button', { name: 'Publish' })
+      .click();
+
+    await expect.poll(() => pullRequest.state).toBe('merged');
+    expect(github.head.tree.has('static/images/sunset.png')).toBe(true);
+    expect(github.head.tree.has('static/images/sunrise.png')).toBe(false);
+  });
 });
 
 test.describe('without a configured branch', () => {
