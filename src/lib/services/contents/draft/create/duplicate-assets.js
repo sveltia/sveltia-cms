@@ -136,8 +136,9 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
 
     // The asset location is the entry’s own only if the entry has a folder of its own, or the
     // folder is named after the entry with a template tag like `{{slug}}`. Otherwise the folder is
-    // shared with the rest of the collection, and the duplicate can keep referencing the asset
-    if (!folder.entryRelative || !(ownsFolder || folder.hasTemplateTags)) {
+    // shared with the rest of the collection, and the duplicate can keep referencing the asset.
+    // There’s no folder at all if only an external media library is configured
+    if (!folder?.entryRelative || !(ownsFolder || folder.hasTemplateTags)) {
       return;
     }
 

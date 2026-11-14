@@ -108,18 +108,19 @@ export const getAssetLibraryFolderMap = ({
 /**
  * Get the default asset library folder for a File/Image field.
  * @param {AssetLibraryFolderMap} folderMap Asset library folder map.
- * @returns {AssetFolderInfo} Default asset library folder.
+ * @returns {AssetFolderInfo | undefined} Default asset library folder, or `undefined` if no folder
+ * is enabled, which happens when no internal `media_folder` is configured and only an external
+ * media library like Cloudinary is used.
  */
 export const getDefaultAssetFolder = (folderMap) =>
-  // There is always at least one enabled folder in the map, so this will never be undefined
-  /** @type {AssetFolderInfo} */ (Object.values(folderMap).find(({ enabled }) => enabled)?.folder);
+  Object.values(folderMap).find(({ enabled }) => enabled)?.folder;
 
 /**
  * Get the folder the field editor puts a newly picked file in, i.e. The default asset library
  * folder of a File/Image field, so a copy of a file ends up in the same place.
  * @param {Parameters<typeof getAssetLibraryFolderMap>[0]} args Arguments. See
  * {@link getAssetLibraryFolderMap}.
- * @returns {AssetFolderInfo} Folder.
+ * @returns {AssetFolderInfo | undefined} Folder, or `undefined` if there is no internal folder.
  */
 export const getFieldAssetFolder = (args) => getDefaultAssetFolder(getAssetLibraryFolderMap(args));
 
