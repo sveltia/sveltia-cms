@@ -133,7 +133,7 @@ sign_in_with_x: Iniciar sesión con {$service}
 sign_in_using_access_token: Iniciar sesión con un token de acceso
 sign_in_using_access_token_description: Introduce tu token a continuación. Debe tener acceso de lectura/escritura al contenido del repositorio.
 # Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
-sign_in_using_access_token_workflow_note: Como el flujo editorial está activado, también debe tener acceso de lectura/escritura a las ‘pull requests’.
+sign_in_using_access_token_workflow_note: Como el flujo editorial está activado, también debe tener acceso de lectura/escritura a las pull requests.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: Puedes generar un token en la <a>página de configuración de usuario de {$service}</a>.
@@ -184,9 +184,9 @@ repository_no_access: No tienes acceso al repositorio “{$repo}”.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_write_access: No tienes acceso de escritura al repositorio “{$repo}”.
 repository_not_found: El repositorio “{$repo}” no existe.
-repository_empty: El repositorio “{$repo}” no tiene `branches`.
+repository_empty: El repositorio “{$repo}” no tiene branches.
 # {$repo} is the repository identifier, and {$branch} is the configured branch name
-branch_not_found: El repositorio “{$repo}” no tiene la `branch` “{$branch}”.
+branch_not_found: El repositorio “{$repo}” no tiene la branch “{$branch}”.
 # {$repo} is the repository identifier, and {$dir} is the configured root directory
 root_dir_not_found: El directorio raíz “{$dir}” no existe en el repositorio “{$repo}”.
 
@@ -298,18 +298,18 @@ locale_load_failed: No se ha podido cargar la traducción de {$locale}. Inténta
 local_git_not_committed: Tus cambios se han guardado, pero no se ha hecho commit en Git. {$reason} Para guardar solo los archivos, desactiva los commits de Git en Ajustes > Desarrollador.
 local_git_skip_reasons:
   unsupported_repository: Tu repositorio usa una función de Git que el CMS no admite, como un árbol de trabajo vinculado, nombres de objeto SHA-256, el formato reftable, un índice disperso o un índice en la versión 3 o 4, que usan la opción feature.manyFiles y git add -N.
-  missing_identity: Tu nombre y tu dirección de correo electrónico no están definidos en la configuración de Git del repositorio, y el CMS no puede leer tu configuración global. Defínelos en el repositorio con ‘git config --local user.name "Tu nombre"’ y ‘git config --local user.email "tu@example.com"’.
+  missing_identity: Tu nombre y tu dirección de correo electrónico no están definidos en la configuración de Git del repositorio, y el CMS no puede leer tu configuración global. Defínelos en el repositorio con git config --local user.name "Tu nombre" y git config --local user.email "tu@example.com".
   locked: Otro proceso de Git está usando el repositorio. Si no hay ninguno en ejecución, elimina el archivo .git/index.lock.
   # The operation in progress, with how to finish or cancel it
   operation_in_progress:
-    merge: Hay un ‘merge’ en curso. Termínalo con ‘git commit’ o cancélalo con ‘git merge --abort’.
-    rebase: Hay un ‘rebase’ en curso. Termínalo con ‘git rebase --continue’ o cancélalo con ‘git rebase --abort’. Si ya has pasado a otra cosa, ‘git rebase --quit’ lo descarta sin modificar tus archivos.
-    cherry_pick: Hay un ‘cherry-pick’ en curso. Termínalo con ‘git cherry-pick --continue’ o cancélalo con ‘git cherry-pick --abort’.
-    revert: Hay un ‘revert’ en curso. Termínalo con ‘git revert --continue’ o cancélalo con ‘git revert --abort’.
-    am: Hay una aplicación de parches con ‘git am’ en curso. Termínalo con ‘git am --continue’ o cancélalo con ‘git am --abort’.
+    merge: Hay un merge en curso. Termínalo con git commit o cancélalo con git merge --abort.
+    rebase: Hay un rebase en curso. Termínalo con git rebase --continue o cancélalo con git rebase --abort. Si ya has pasado a otra cosa, git rebase --quit lo descarta sin modificar tus archivos.
+    cherry_pick: Hay un cherry-pick en curso. Termínalo con git cherry-pick --continue o cancélalo con git cherry-pick --abort.
+    revert: Hay un revert en curso. Termínalo con git revert --continue o cancélalo con git revert --abort.
+    am: Hay una aplicación de parches con git am en curso. Termínalo con git am --continue o cancélalo con git am --abort.
     conflict: Algunos archivos tienen conflictos. Resuélvelos y prepara primero los resultados para el commit.
-  detached_head: No hay ninguna ‘branch’ activa.
-  staged_changes: Tienes otros cambios preparados para el ‘commit’. Haz commit de ellos o sácalos del área de preparación primero.
+  detached_head: No hay ninguna branch activa.
+  staged_changes: Tienes otros cambios preparados para el commit. Haz commit de ellos o sácalos del área de preparación primero.
   # {$path} is the file path
   lfs: '{$path} está gestionado con Git LFS, en el que el CMS no puede hacer commits.'
   # {$message} is the error message
@@ -585,7 +585,7 @@ readonly_cms: El CMS está en modo de solo lectura. Puedes ver el contenido y lo
 readonly_collection: Esta colección es de solo lectura. Puedes ver su contenido, pero no puedes realizar cambios.
 readonly_entry: Esta entrada es de solo lectura. Puedes verla, pero no puedes realizar cambios.
 readonly_asset_folder: Esta carpeta es de solo lectura. Puedes ver sus recursos, pero no realizar cambios.
-readonly_branch: No tienes permiso para hacer ‘push’ a la `branch` “{$branch}”. Puedes ver este contenido, pero no puedes realizar cambios.
+readonly_branch: No tienes permiso para hacer push a la branch “{$branch}”. Puedes ver este contenido, pero no puedes realizar cambios.
 readonly_reference: La entrada es de solo lectura, así que no se puede eliminar la referencia.
 # {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
 cannot_rename_referenced_entry: 'No se puede renombrar esta entrada porque las siguientes entradas de solo lectura hacen referencia a ella por su nombre actual: {$entries}.'
@@ -1394,11 +1394,11 @@ confirm_clearing_fields: ¿Seguro que quieres borrar todos los campos de esta en
 confirm_clearing_fields_x_locale: ¿Seguro que quieres borrar todos los campos del contenido en {$locale}? Se perderán tus cambios.
 
 # Slug editing
-edit_slug: Editar el ‘slug’
+edit_slug: Editar el slug
 edit_slug_error:
-  empty: El ‘slug’ no puede estar vacío.
-  invalid: El ‘slug’ no puede contener caracteres especiales, incluidas las barras y los espacios.
-  duplicate: Este ‘slug’ ya se usa para otra entrada.
+  empty: El slug no puede estar vacío.
+  invalid: El slug no puede contener caracteres especiales, incluidas las barras y los espacios.
+  duplicate: Este slug ya se usa para otra entrada.
 
 # Entry path editing for nested entries
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
@@ -2020,7 +2020,7 @@ config:
     # Don’t localize `api_root`
     missing_api_root: La opción `api_root` no está definida. Es obligatoria para el backend de Forgejo.
     invalid_root_dir: El directorio raíz no es válido. Debe ser una ruta dentro del repositorio, sin “..”.
-    invalid_root_dir_branch: El directorio raíz no se puede usar en los nombres de la ‘branch’ de los modos de publicación `editorial_workflow` y `preview`. Ninguna parte de su ruta puede empezar por un punto, terminar en “.lock” ni contener un espacio o un carácter especial, como dos puntos o un asterisco.
+    invalid_root_dir_branch: El directorio raíz no se puede usar en los nombres de la branch de los modos de publicación `editorial_workflow` y `preview`. Ninguna parte de su ruta puede empezar por un punto, terminar en “.lock” ni contener un espacio o un carácter especial, como dos puntos o un asterisco.
     path_outside_root_dir: La ruta “{$path}” sale del directorio raíz, donde el CMS no puede listar archivos.
     oauth_implicit_flow: El método de autenticación configurado (flujo implícito) no es compatible con Sveltia CMS. Usa un <a>método de autenticación</a> diferente en su lugar.
     github_pkce_unsupported: La autorización PKCE aún no es compatible debido a las limitaciones de GitHub. Usa un <a>método de autenticación</a> diferente en su lugar.
@@ -2071,7 +2071,7 @@ config:
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: La extensión `{$extension}` no coincide con el formato `{$format}`.
     # {$name} is the field name from the configuration and {$widget} is its field type
-    front_matter_body_field_not_text: El campo `{$name}` se guarda como el cuerpo debajo del ‘front matter’, que solo puede contener texto, no un número, un booleano, una lista o un objeto como hace un campo `{$widget}`. Usa un tipo de campo que contenga texto o cambia el nombre del campo.
+    front_matter_body_field_not_text: El campo `{$name}` se guarda como el cuerpo debajo del front matter, que solo puede contener texto, no un número, un booleano, una lista o un objeto como hace un campo `{$widget}`. Usa un tipo de campo que contenga texto o cambia el nombre del campo.
     # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
     # brackets are escaped with backslashes for MessageFormat 2
     invalid_collection_data_file: La opción `file` `{$file}` no es válida. Debe ser la ruta a un archivo JSON, sin el marcador de posición `\{\{locale\}\}`.
@@ -2553,7 +2553,7 @@ commit_message:
 open_authoring:
   # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
   # label on its OK button. {$repo} is the repository identifier in owner/repo format
-  fork_repository: Bifurcar (‘fork’) el repositorio
+  fork_repository: Fork el repositorio
   fork: Fork
   confirm_forking_repository: Para sugerir cambios en “{$repo}”, hay que crear un fork del repositorio en tu cuenta. Tus cambios se guardan en ese fork y un administrador los revisa antes de que se publiquen.
   # Error shown when the user declined the dialog above
