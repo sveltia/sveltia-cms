@@ -6,6 +6,7 @@ import { lockedBranch } from '$lib/services/backends/branch-access';
 import {
   getReadonlyMessage,
   isConfigReadonly,
+  isDraftConfigReadonly,
   isDraftReadonly,
   isLockedByBranch,
   isReadonly,
@@ -147,6 +148,18 @@ describe('Test isDraftReadonly()', () => {
     cmsConfig.current = { readonly: true };
 
     expect(isDraftReadonly({ collection: {} })).toBe(true);
+  });
+
+  test('locks the draft while the user is asked whether to restore its backup', () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/566
+    cmsConfig.current = {};
+
+    expect(isDraftReadonly({ collection: {}, restorePending: true })).toBe(true);
+    expect(isDraftReadonly({ collection: {}, restorePending: false })).toBe(false);
+    // The configuration alone doesn’t make it read-only
+    expect(isDraftConfigReadonly({ collection: {}, restorePending: true })).toBe(false);
+    expect(isDraftConfigReadonly({ collection: { readonly: true } })).toBe(true);
+    expect(isDraftConfigReadonly(null)).toBe(false);
   });
 });
 

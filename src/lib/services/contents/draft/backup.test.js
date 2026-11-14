@@ -127,6 +127,8 @@ describe('draft/backup', () => {
     mockPrefs.useDraftBackup = true;
     cmsConfigVersion.current = 'v1.0.0';
     backupModule.backupToastState.current = { saved: false, restored: false, deleted: false };
+    // A test may leave the dialog waiting for an answer
+    backupModule.restoreDialogState.current = { show: false };
     vi.mocked(isDraftModified).mockReturnValue(false);
     interacted = false;
   });
@@ -1442,6 +1444,120 @@ describe('draft/backup', () => {
         restored: false,
         deleted: false,
       });
+    });
+  });
+
+  describe('draft lock while the restore dialog is open', () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/566
+    const backup = {
+      timestamp: new Date(),
+      cmsConfigVersion: 'v1.0.0',
+      collectionName: 'posts',
+      slug: 'my-post',
+      currentLocales: { en: true },
+      currentSlugs: { en: 'my-post' },
+      currentValues: { en: { title: 'Backup' } },
+      files: {},
+    };
+
+    /**
+     * Create a draft of an existing entry.
+     * @returns {any} Draft.
+     */
+    const createDraft = () => ({
+      collectionName: 'posts',
+      fileName: undefined,
+      originalEntry: { slug: 'my-post', subPath: 'my-post' },
+      currentLocales: { en: true },
+      currentSlugs: { en: 'my-post' },
+      currentValues: { en: { title: 'Current' } },
+      originalValues: { en: {} },
+      files: {},
+      interacted: false,
+    });
+
+    it.each([
+      ['restored', true],
+      ['discarded', false],
+      ['left unanswered', undefined],
+    ])('should lock the draft until the backup is %s', async (_label, answer) => {
+      mockBackupDB.get.mockResolvedValue(backup);
+
+      const draft = createDraft();
+      const promise = restoreBackupIfNeeded({ draft });
+
+      await vi.waitFor(() => expect(restoreDialogState.current.show).toBe(true));
+      expect(draft.restorePending).toBe(true);
+      restoreDialogState.current.resolve(answer);
+      await promise;
+      expect(draft.restorePending).toBe(false);
+      expect(draft.currentValues.en.title).toBe(answer ? 'Backup' : 'Current');
+    });
+
+    it('should unlock the draft even if the restore fails', async () => {
+      mockBackupDB.get.mockResolvedValue(backup);
+      mockBackupDB.delete.mockRejectedValueOnce(new Error('Failed'));
+
+      const draft = createDraft();
+      const promise = restoreBackupIfNeeded({ draft });
+
+      await vi.waitFor(() => expect(restoreDialogState.current.show).toBe(true));
+      restoreDialogState.current.resolve(false);
+      await expect(promise).rejects.toThrow('Failed');
+      expect(draft.restorePending).toBe(false);
+    });
+
+    it('should not ask about the backup of a draft replaced while it was looked up', async () => {
+      /**
+       * Resolve the first backup lookup.
+       * @type {(value: any) => void}
+       */
+      let resolveLookup = () => {};
+
+      mockBackupDB.get.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveLookup = resolve;
+          }),
+      );
+      mockBackupDB.get.mockResolvedValueOnce(undefined);
+
+      const staleDraft = createDraft();
+      const stale = restoreBackupIfNeeded({ draft: staleDraft });
+
+      // Another entry is opened before the first lookup is done
+      await restoreBackupIfNeeded({ draft: createDraft() });
+      resolveLookup(backup);
+      await stale;
+
+      expect(restoreDialogState.current.show).toBe(false);
+      expect(staleDraft.restorePending).toBeUndefined();
+    });
+
+    it('should close a dialog left open for a draft that has been replaced', async () => {
+      const resolve = vi.fn();
+
+      restoreDialogState.current = { show: true, timestamp: new Date(), resolve };
+      mockBackupDB.get.mockResolvedValue(undefined);
+
+      await restoreBackupIfNeeded({ draft: createDraft() });
+      expect(restoreDialogState.current.show).toBe(false);
+      expect(resolve).toHaveBeenCalledWith();
+      expect(mockBackupDB.delete).not.toHaveBeenCalled();
+
+      // A dialog without a resolver is just closed
+      restoreDialogState.current = { show: true };
+      await restoreBackupIfNeeded({ draft: createDraft() });
+      expect(restoreDialogState.current.show).toBe(false);
+    });
+
+    it('should not lock a draft without a backup', async () => {
+      mockBackupDB.get.mockResolvedValue(undefined);
+
+      const draft = createDraft();
+
+      await restoreBackupIfNeeded({ draft });
+      expect(draft.restorePending).toBeUndefined();
     });
   });
 

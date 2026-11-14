@@ -25,7 +25,7 @@
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { focusOverlay, rememberFocus } from '$lib/services/app/focus';
   import { goto } from '$lib/services/app/navigation';
-  import { getReadonlyMessage, isDraftReadonly } from '$lib/services/config/readonly';
+  import { getReadonlyMessage, isDraftConfigReadonly } from '$lib/services/config/readonly';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { collectionState } from '$lib/services/contents/collection/view';
   import { resetBackupToastState, scheduleBackup } from '$lib/services/contents/draft/backup';
@@ -129,8 +129,9 @@
     quota,
     creationDisabled,
   } = $derived(collectionState.current);
-  // The entry can be viewed but not changed, which the editor says up front
-  const readonly = $derived(isDraftReadonly(entryDraft.current));
+  // The entry can be viewed but not changed, which the editor says up front. It’s also read-only
+  // while the user is asked whether to restore a backup, which the dialog says itself
+  const readonly = $derived(isDraftConfigReadonly(entryDraft.current));
   const [firstPaneSize, secondPaneSize, minPaneSize] = $derived(
     getPaneSizes({ firstPane: editorFirstPane.current, secondPane: editorSecondPane.current }),
   );

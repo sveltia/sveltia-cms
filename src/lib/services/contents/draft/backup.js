@@ -42,6 +42,11 @@ let backupDB = undefined;
  * @type {string | undefined}
  */
 let backupDBName = undefined;
+/**
+ * Incremented as each draft is checked for a backup by {@link restoreBackupIfNeeded}, so only the
+ * latest check can ask about its backup, even if an earlier one is slower to look it up.
+ */
+let restoreCheckCount = 0;
 
 /**
  * Default for {@link backupToastState}.
@@ -371,11 +376,32 @@ export const restoreBackup = async ({ backup, draft }) => {
 };
 
 /**
+ * Drop the backup check of the draft open so far, which a new draft replaces or the closed editor
+ * leaves behind: close its restore dialog, if any, and keep a lookup still under way from opening
+ * one. The dialog doesn’t block the editor, so the draft it was opened for may have been replaced,
+ * e.g. when the user has reloaded the entry.
+ * @returns {number} Number identifying the new check, if any.
+ */
+export const cancelRestoreCheck = () => {
+  // Without an answer, which leaves the backup alone
+  if (restoreDialogState.current.show) {
+    restoreDialogState.current.show = false;
+    restoreDialogState.current.resolve?.();
+  }
+
+  restoreCheckCount += 1;
+
+  return restoreCheckCount;
+};
+
+/**
  * Check if a draft backup is available, and restore it if requested by the user.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft to restore the backup to.
  */
 export const restoreBackupIfNeeded = async ({ draft }) => {
+  const checkCount = cancelRestoreCheck();
+
   // A read-only entry can’t be changed, so leave any backup alone until it can be edited again
   if (!(prefs.useDraftBackup ?? true) || isDraftReadonly(draft) || isArrayItemDraft(draft)) {
     return;
@@ -385,28 +411,39 @@ export const restoreBackupIfNeeded = async ({ draft }) => {
   const slug = getBackupSlug(draft);
   const backup = await getDraftBackup(draft);
 
-  if (!backup) {
+  // Another draft has been opened in the meantime
+  if (!backup || checkCount !== restoreCheckCount) {
     return;
   }
 
   const { timestamp } = backup;
   const { promise, resolve } = Promise.withResolvers();
 
+  // The dialog doesn’t block the editor, so the user can look through the entry before deciding,
+  // but the draft can’t be changed until then
+  draft.restorePending = true;
   restoreDialogState.current = { show: true, timestamp, resolve };
 
-  // The promise will be resolved once the Restore or Discard button is clicked on the dialog
   /** @type {boolean | undefined} */
-  const doRestore = await promise;
+  let doRestore;
 
-  if (doRestore === undefined) {
-    return;
-  }
+  try {
+    // The promise will be resolved once the Restore or Discard button is clicked on the dialog
+    doRestore = await promise;
 
-  if (doRestore) {
-    await restoreBackup({ backup, draft });
-    draft.interacted = true;
-  } else {
-    await deleteBackup(collectionName, slug);
+    if (doRestore === undefined) {
+      return;
+    }
+
+    if (doRestore) {
+      await restoreBackup({ backup, draft });
+      draft.interacted = true;
+    } else {
+      await deleteBackup(collectionName, slug);
+    }
+  } finally {
+    // Even if the restore has failed, so the entry doesn’t stay locked
+    draft.restorePending = false;
   }
 
   backupToastState.current = { restored: doRestore, deleted: !doRestore, saved: false };

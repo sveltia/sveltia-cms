@@ -112,6 +112,16 @@ describe('RemoteChangeInfobar', () => {
     );
   });
 
+  test('asks before reloading while a backup of unsaved changes is on offer', async () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/566
+    await renderInfobar({ restorePending: true });
+
+    setEntries([changedEntry]);
+    await page.getByRole('alert').getByRole('button', { name: 'Reload Entry' }).click();
+    await expect.element(page.getByRole('alertdialog', { name: 'Reload Entry' })).toBeVisible();
+    expect(reloadDraft).not.toHaveBeenCalled();
+  });
+
   test('asks to open the entry again, rather than reloading it, when told by its position', async () => {
     // An entry stored in a file with the other entries: another entry may have moved to its
     // position, which a reload would load instead

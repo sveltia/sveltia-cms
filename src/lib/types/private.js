@@ -1366,6 +1366,10 @@
  * @property {boolean} interacted Whether the user has manually interacted with the entry editor.
  * This prevents auto-backup from triggering when only programmatic changes (e.g. Lexical markdown
  * reformatting) have occurred.
+ * @property {boolean} [restorePending] Whether the user is being asked whether to restore a backup
+ * of the draft. The draft is read-only until the user has answered, so the edits made in the
+ * meantime can’t be lost to the restore, or replace the backup on offer. The editor can still be
+ * scrolled, so the user can look through the entry before deciding.
  * @property {PendingEntry[]} pendingEntries Entries created from a Relation field while editing
  * this entry, to be saved along with it.
  * @property {QuickAddHost} [quickAddHost] Entry the pending entries go along with, when this is

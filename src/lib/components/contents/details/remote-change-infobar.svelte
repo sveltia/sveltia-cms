@@ -19,7 +19,7 @@
   import { isWorkflowDraft } from '$lib/services/workflow';
 
   /**
-   * @import { Entry } from '$lib/types/private';
+   * @import { Entry, EntryDraft } from '$lib/types/private';
    */
 
   const entryDraft = getEntryDraftContext();
@@ -55,6 +55,19 @@
 
     await reloadDraft({ entryDraft, entry: conflict.entry });
   };
+
+  /**
+   * Reload the entry, asking first if there is anything to lose.
+   */
+  const onReloadClick = () => {
+    // Nothing to lose unless the user has edited the entry, or is being asked whether to restore
+    // the edits backed up earlier, which a reload deletes. The button is only shown with a draft
+    if (isDraftModified(draft) || /** @type {EntryDraft} */ (draft).restorePending) {
+      showReloadDialog = true;
+    } else {
+      reload();
+    }
+  };
 </script>
 
 {#if conflict && show}
@@ -71,18 +84,7 @@
     <!-- An entry stored in a file with the other entries is told by its position, so reloading it
     could load another entry that has moved there -->
     {#if conflict.type === 'modified' && conflict.canOverwrite}
-      <Button
-        variant="link"
-        label={_('remote_change.reload_entry')}
-        onclick={() => {
-          // Nothing to lose unless the user has edited the entry
-          if (isDraftModified(draft)) {
-            showReloadDialog = true;
-          } else {
-            reload();
-          }
-        }}
-      />
+      <Button variant="link" label={_('remote_change.reload_entry')} onclick={onReloadClick} />
     {/if}
   </Infobar>
 {/if}

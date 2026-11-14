@@ -95,6 +95,21 @@ describe('BackupFeedback', () => {
     }
   });
 
+  test('leaves the page usable and lets the dialog be moved', async () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/566
+    await render(BackupFeedback);
+
+    restoreDialogState.current = { show: true, timestamp: new Date(), resolve: vi.fn() };
+
+    const dialog = page.getByRole('alertdialog', { name: 'Restore Draft' });
+
+    await expect.element(dialog).toBeVisible();
+    expect(dialog.element().matches(':modal')).toBe(false);
+    // The editor is dimmed, but not blocked
+    expect(dialog.element().classList.contains('backdrop')).toBe(true);
+    expect(dialog.element().querySelector('.header')?.classList.contains('movable')).toBe(true);
+  });
+
   test('closes the dialog along with the editor', async () => {
     const resolve = vi.fn();
 

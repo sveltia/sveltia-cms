@@ -12,7 +12,7 @@ import {
 } from '$lib/services/contents/collection/nested';
 import { getSlugOptions, hasLocalizedSlugs } from '$lib/services/contents/collection/slug';
 import { revokeDraftFileURLs, STATIC_DRAFT_KEYS } from '$lib/services/contents/draft';
-import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
+import { cancelRestoreCheck, restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { normalizeContentMap } from '$lib/services/contents/draft/create/normalize';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { fillUuidValues } from '$lib/services/contents/draft/create/unique-values';
@@ -414,6 +414,9 @@ export const createDraft = ({ entryDraft, ...args }) => {
   // useful
   if (!isPendingDeletion(originalEntry)) {
     restoreBackupIfNeeded({ draft });
+  } else {
+    // The previous draft’s backup isn’t this one’s to ask about
+    cancelRestoreCheck();
   }
 
   return draft;

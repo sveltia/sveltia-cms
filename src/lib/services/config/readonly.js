@@ -48,13 +48,22 @@ export const isReadonly = ({ collection, collectionFile } = {}) =>
   isConfigReadonly({ collection, collectionFile }) || isLockedByBranch(collection);
 
 /**
- * Check whether an entry draft is read-only, which is when its collection or collection file is,
- * or the whole CMS is. The draft can be viewed but not changed or saved.
+ * Check whether an entry draft is read-only because its collection or collection file is, or the
+ * whole CMS is.
  * @param {EntryDraft | null | undefined} draft Entry draft.
  * @returns {boolean} Result.
  */
-export const isDraftReadonly = (draft) =>
+export const isDraftConfigReadonly = (draft) =>
   !!draft && isReadonly({ collection: draft.collection, collectionFile: draft.collectionFile });
+
+/**
+ * Check whether an entry draft is read-only, which is when its collection or collection file is,
+ * or the whole CMS is (see {@link isDraftConfigReadonly}), or while the user is being asked whether
+ * to restore a backup of it. The draft can be viewed but not changed or saved.
+ * @param {EntryDraft | null | undefined} draft Entry draft.
+ * @returns {boolean} Result.
+ */
+export const isDraftReadonly = (draft) => !!draft?.restorePending || isDraftConfigReadonly(draft);
 
 /**
  * Get the message that says something is read-only. The whole CMS being read-only is what users

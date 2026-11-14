@@ -18,6 +18,7 @@ vi.mock('$lib/services/contents/draft', async (importOriginal) => ({
 
 vi.mock('$lib/services/contents/draft/backup', () => ({
   restoreBackupIfNeeded: vi.fn(),
+  cancelRestoreCheck: vi.fn(),
 }));
 
 vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
@@ -50,7 +51,10 @@ const { getIndexFile, isCollectionIndexFile } =
   await import('$lib/services/contents/collection/entries/index-file');
 
 const { revokeDraftFileURLs } = await import('$lib/services/contents/draft');
-const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/backup');
+
+const { cancelRestoreCheck, restoreBackupIfNeeded } =
+  await import('$lib/services/contents/draft/backup');
+
 const { createProxy } = await import('$lib/services/contents/draft/create/proxy.svelte');
 const { createValueMap } = await import('$lib/services/contents/draft/create/versioned-map.svelte');
 const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
@@ -1213,6 +1217,8 @@ describe('contents/draft/create/index', () => {
       createDraft({ entryDraft, collection, originalEntry });
 
       expect(restoreBackupIfNeeded).not.toHaveBeenCalled();
+      // The previous draft’s backup isn’t asked about either
+      expect(cancelRestoreCheck).toHaveBeenCalledOnce();
     });
 
     it('should handle extra values', () => {
