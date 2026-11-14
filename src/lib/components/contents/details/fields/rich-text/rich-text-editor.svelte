@@ -23,10 +23,7 @@
   } from '$lib/services/contents/editor/field-context';
   import { trackPendingWhile } from '$lib/services/contents/editor/pending.svelte';
   import { getField } from '$lib/services/contents/entry/fields';
-  import {
-    getAssetLibraryFolderMap,
-    getDefaultAssetFolder,
-  } from '$lib/services/contents/fields/file/helpers';
+  import { getFieldAssetFolder } from '$lib/services/contents/fields/file/helpers';
   import { processResource } from '$lib/services/contents/fields/file/process';
   import {
     DEFAULT_BUTTONS,
@@ -151,15 +148,7 @@
     components.find(({ id }) => id === 'image' || id === 'linked-image'),
   );
   const targetAssetFolder = $derived(
-    getDefaultAssetFolder(
-      getAssetLibraryFolderMap({
-        collectionName,
-        fileName,
-        componentName,
-        typedKeyPath,
-        isIndexFile,
-      }),
-    ),
+    getFieldAssetFolder({ collectionName, fileName, componentName, typedKeyPath, isIndexFile }),
   );
 
   /**
