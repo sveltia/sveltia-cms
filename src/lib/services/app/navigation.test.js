@@ -141,6 +141,7 @@ describe('navigation', () => {
         href: 'https://example.com/#/collections',
         origin: 'https://example.com',
         pathname: '/',
+        search: '',
         hash: '#/collections',
       },
       writable: true,
@@ -650,6 +651,26 @@ describe('navigation', () => {
         'https://example.com/#/collections/posts',
       );
       expect(document.startViewTransition).toHaveBeenCalled();
+    });
+
+    it('should keep the query string the page was opened with', async () => {
+      window.location.href = 'https://example.com/admin/?site=a#/collections';
+      window.location.pathname = '/admin/';
+      window.location.search = '?site=a';
+
+      await goto('/collections/posts');
+
+      expect(window.history.pushState).toHaveBeenCalledWith(
+        { from: 'https://example.com/admin/?site=a#/collections' },
+        '',
+        'https://example.com/admin/?site=a#/collections/posts',
+      );
+      expect(window.dispatchEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          oldURL: 'https://example.com/admin/?site=a#/collections',
+          newURL: 'https://example.com/admin/?site=a#/collections/posts',
+        }),
+      );
     });
 
     it('should replace state when replaceState is true, keeping the previous entry’s URL', async () => {

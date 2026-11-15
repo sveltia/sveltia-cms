@@ -347,9 +347,10 @@ export const goto = async (
     return;
   }
 
-  const { origin, pathname, hash } = window.location;
-  const oldURL = `${origin}${pathname}${hash}`;
-  const newURL = `${origin}${pathname}#${path}`;
+  // Keep the query string, which the page may have been opened with, as a hash change would
+  const { origin, pathname, search, hash } = window.location;
+  const oldURL = `${origin}${pathname}${search}${hash}`;
+  const newURL = `${origin}${pathname}${search}#${path}`;
   // `from` is the URL of the previous history entry, which {@link goBack} relies on. Replacing the
   // current entry doesn’t change what the previous entry is, so carry the value over; the entry
   // being replaced is gone and must not become `from`, or a direct link followed by an in-place
