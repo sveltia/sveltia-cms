@@ -1,9 +1,5 @@
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
-import {
-  BUTTON_COMPONENTS,
-  DEFAULT_BUTTONS,
-  INLINE_BUTTONS,
-} from '$lib/services/contents/fields/rich-text';
+import { BLOCK_BUTTONS, BUTTON_COMPONENTS } from '$lib/services/contents/fields/rich-text';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { isInlineComponentDef } from '$lib/services/contents/fields/rich-text/components/utils';
 
@@ -19,17 +15,6 @@ import { isInlineComponentDef } from '$lib/services/contents/fields/rich-text/co
 const UNSUPPORTED_OPTIONS = [
   // Deprecated camelCase option in Netlify/Decap CMS config, should be converted to snake_case.
   { prop: 'editorComponents', newProp: 'editor_components' },
-];
-
-/**
- * Buttons that format a whole block, which a single-line field can’t use: all the buttons but the
- * inline ones, including `align`, which isn’t enabled by default. An unknown button name is
- * reported against the JSON schema instead.
- * @type {string[]}
- */
-const BLOCK_BUTTONS = [
-  ...DEFAULT_BUTTONS.filter((name) => !INLINE_BUTTONS.includes(name)),
-  'align',
 ];
 
 /**
@@ -71,7 +56,8 @@ const checkSingleLineOptions = ({ config, context, collectors }) => {
    * @type {[string, string[] | undefined, (name: string) => boolean][]}
    */
   const options = [
-    ['buttons', buttons, (name) => BLOCK_BUTTONS.includes(name)],
+    // An unknown button name is reported against the JSON schema instead
+    ['buttons', buttons, (name) => /** @type {string[]} */ (BLOCK_BUTTONS).includes(name)],
     ['editor_components', editorComponents, isBlockComponent],
   ];
 

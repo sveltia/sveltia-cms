@@ -41,7 +41,7 @@ describe('parseRichTextFieldConfig with `multiline: false`', () => {
       name: 'title',
       widget: 'markdown',
       multiline: false,
-      buttons: ['bold', 'heading-one', 'quote', 'link', 'align', 'unknown'],
+      buttons: ['bold', 'underline', 'heading-one', 'quote', 'link', 'align', 'unknown'],
       editor_components: ['image', 'code-block', 'table', 'hr', 'unknown'],
     };
 

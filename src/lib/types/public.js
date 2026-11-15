@@ -1119,12 +1119,13 @@
  */
 
 /**
- * Supported button name for the rich text editor. `align` shows the text alignment menu, which is
- * only available with the `html` format, as Markdown has no syntax for alignment. It’s not enabled
- * by default; add it to the `buttons` option to enable it.
- * @typedef {'bold' | 'italic' | 'strikethrough' | 'code' | 'link' | 'heading-one' | 'heading-two' |
- * 'heading-three' | 'heading-four' | 'heading-five' | 'heading-six' | 'quote' | 'bulleted-list' |
- * 'numbered-list' | 'align'} RichTextEditorButtonName
+ * Supported button name for the rich text editor. `underline` underlines text with the `<u>`
+ * element, and `align` shows the text alignment menu. Both are only available with the `html`
+ * format, as Markdown has no syntax for them, and neither is enabled by default; add them to the
+ * `buttons` option to enable them.
+ * @typedef {'bold' | 'italic' | 'underline' | 'strikethrough' | 'code' | 'link' | 'heading-one' |
+ * 'heading-two' | 'heading-three' | 'heading-four' | 'heading-five' | 'heading-six' | 'quote' |
+ * 'bulleted-list' | 'numbered-list' | 'align'} RichTextEditorButtonName
  * @see https://decapcms.org/docs/widgets/#Markdown
  * @see https://sveltiacms.app/en/docs/fields/richtext
  */
@@ -1164,11 +1165,12 @@
  * Default: `true`. With `false`, the editor keeps the content in a single paragraph, which suits a
  * title or caption with inline formatting: the Enter key doesn’t start a new line, and the
  * paragraphs and lines of pasted text are joined with spaces. Only the inline formatting buttons
- * (`bold`, `italic`, `strikethrough`, `code` and `link`) and inline editor components, like
- * `image`, can be used then, and the HTML output format has no raw mode. A stored value with
+ * (`bold`, `italic`, `underline`, `strikethrough`, `code` and `link`) and inline editor components,
+ * like `image`, can be used then, and the HTML output format has no raw mode. A stored value with
  * several paragraphs is kept as is until the content is edited.
  * @property {RichTextEditorButtonName[]} [buttons] Names of formatting buttons and menu items to be
- * enabled in the editor UI. Default: all the supported button names except `align`.
+ * enabled in the editor UI. Default: all the supported button names except `underline` and
+ * `align`.
  * @property {(RichTextEditorComponentName | string)[]} [editor_components] Names of components to
  * be enabled in the editor UI. This may include custom component names. Default: all the built-in
  * and registered custom component names, except `table` and `hr`, which have to be listed to

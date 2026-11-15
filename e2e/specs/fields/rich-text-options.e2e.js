@@ -412,6 +412,37 @@ test.describe('text alignment', () => {
   });
 });
 
+test.describe('underline', () => {
+  test.describe('HTML', () => {
+    test.use({ config: noteConfig({ format: 'html', buttons: ['bold', 'underline'] }) });
+
+    test('underlines the selected text, which is saved with `<u>`', async ({ cms, page }) => {
+      const { editor, field, body } = await openNote({
+        cms,
+        page,
+        body: '<p>Register by 1 March</p>',
+      });
+
+      await selectText(body, '1 March');
+      await field.getByRole('button', { name: 'Underline' }).click();
+      await expect(body.locator('.underline')).toHaveText('1 March');
+
+      await saveAndExpect({ cms, editor, body: '<p>Register by <u>1 March</u></p>' });
+    });
+  });
+
+  test.describe('Markdown', () => {
+    test.use({ config: noteConfig({ buttons: ['bold', 'underline'] }) });
+
+    test('offers no underline, which Markdown can’t hold', async ({ cms, page }) => {
+      const { field } = await openNote({ cms, page, body: 'Register by 1 March' });
+
+      await expect(field.getByRole('button', { name: 'Bold' })).toBeVisible();
+      await expect(field.getByRole('button', { name: 'Underline' })).toHaveCount(0);
+    });
+  });
+});
+
 test.describe('link targets', () => {
   test.use({ config: noteConfig({ format: 'html' }) });
 

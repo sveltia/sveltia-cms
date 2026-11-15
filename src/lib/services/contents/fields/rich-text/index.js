@@ -48,15 +48,13 @@ export const NODE_NAME_MAP = {
  * use. The other buttons format a whole block.
  * @type {RichTextEditorButtonName[]}
  */
-export const INLINE_BUTTONS = ['bold', 'italic', 'strikethrough', 'code', 'link'];
+export const INLINE_BUTTONS = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'link'];
 
 /**
- * The default `buttons` property options. `align` is left out: it has to be enabled with the
- * `buttons` option.
+ * Buttons that format a whole block, which a field with `multiline: false` can’t use.
  * @type {RichTextEditorButtonName[]}
  */
-export const DEFAULT_BUTTONS = [
-  ...INLINE_BUTTONS,
+export const BLOCK_BUTTONS = [
   'heading-one',
   'heading-two',
   'heading-three',
@@ -66,7 +64,23 @@ export const DEFAULT_BUTTONS = [
   'bulleted-list',
   'numbered-list',
   'quote',
+  'align',
 ];
+
+/**
+ * Buttons only available with the `html` format, as Markdown has no syntax for them. They’re not
+ * enabled by default: they have to be listed in the `buttons` option.
+ * @type {RichTextEditorButtonName[]}
+ */
+export const HTML_ONLY_BUTTONS = ['underline', 'align'];
+
+/**
+ * The default `buttons` property options: all the buttons but the HTML-only ones.
+ * @type {RichTextEditorButtonName[]}
+ */
+export const DEFAULT_BUTTONS = [...INLINE_BUTTONS, ...BLOCK_BUTTONS].filter(
+  (name) => !HTML_ONLY_BUTTONS.includes(name),
+);
 
 /**
  * Key is a name used in Netlify/Decap CMS, value is a name used in Sveltia UI. The built-in
@@ -76,6 +90,7 @@ export const DEFAULT_BUTTONS = [
 export const BUTTON_NAME_MAP = {
   bold: 'bold',
   italic: 'italic',
+  underline: 'underline',
   strikethrough: 'strikethrough',
   code: 'code',
   link: 'link',
